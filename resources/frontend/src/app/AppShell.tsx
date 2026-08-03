@@ -1,5 +1,5 @@
 /** AppShell — envoltura del shell de la aplicación con layout y rutas. */
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 
 import { PageLayout } from "@/layout/PageLayout";
 

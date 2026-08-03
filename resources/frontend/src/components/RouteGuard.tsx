@@ -2,7 +2,7 @@
  * RouteGuard — protege rutas autenticadas (FR-001-042, DOC-08 §15.1).
  * Si no hay sesión, redirige a /login. El backend sigue siendo autoridad.
  */
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router";
 
 import { useAuth } from "@/app/contexts/AuthContext";
 

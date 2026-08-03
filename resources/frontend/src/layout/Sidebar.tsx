@@ -1,6 +1,6 @@
 /** Sidebar — navegación colapsable (DOC-08 §5). */
 import { Boxes, FileText, Home, LayoutDashboard, Lock, Settings, ShieldCheck, Users } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import { useState } from "react";
 
 import { clsx } from "clsx";

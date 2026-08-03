@@ -3,7 +3,7 @@
  * Confirma antes de abandonar la ruta, refrescar o cerrar la pestaña.
  */
 import { useEffect, useState } from "react";
-import { useBlocker } from "react-router-dom";
+import { useBlocker } from "react-router";
 
 export interface UnsavedChangesGuardProps {
   hasUnsavedChanges: boolean;

@@ -1,6 +1,6 @@
 /** ForbiddenState — acceso prohibido; no revela información de la entidad (DOC-08 §11). */
 import { ShieldX } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 import { Button } from "./Button";
 

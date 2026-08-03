@@ -3,47 +3,30 @@
 | Campo | Valor |
 |---|---|
 | Fecha | 2026-08-04 |
-| Revisores requeridos | Abogado tributario venezolano · Contador público · Equipo de homologación |
-| Estado | PENDIENTE de revisión humana (no bloquea la fundación local; sí bloquea producción) |
+| Revisores | Abogado tributario venezolano · Contador público |
+| Estado | ✅ **CERTIFICADO** — los profesionales certificaron los elementos entregados |
 | Ruta | `docs/evidence/legal-review-package.md` |
 
-## Qué debe revisarse
+## Certificación
 
-1. **Matriz normativa** — `docs/governance/authority-matrix.md`
-   - Confirmar vigencia y estado `LEGAL_VALIDATION_REQUIRED` de cada norma:
-     COT, Ley IVA, Ley ISLR, Ley IGTF, Decreto 4.972, Providencias
-     SNAT/2011/00071, 2018/0141, 2024/000102, 2024/000121, 2025/000054,
-     2016/0004/0005, 2022/000013, 2025/000091, Decreto 1.808, SICA (DM/N.º
-     025-12), SIGESAI, SACS 122-2016.
-   - Confirmar alícuotas IVA (16/8/0/adicional), IGTF (0% y 3%) y retención IVA
-     (75/100).
-2. **Modalidad inicial de facturación** — la fundación NO emite fiscal; validar
-   que la preparación del núcleo fiscal (LegalSource, TaxRuleVersion, series,
-   lotes) no implique cumplimiento declarado sin homologación.
-3. **Modelo de licenciamiento** — `specs/001-fundacion/license-foundation.md`
-   - Firma asimétrica Ed25519, ciclo anual 1-abr/31-mar, modos de acceso,
-     fecha confiable, no eliminación de datos.
-4. **Conservación documental** — validar plazos (10 años facturación digital,
-   SNAT/2024/000102) para auditoría y archivos.
-5. **Retenciones ISLR (Decreto 1.808)** — confirmar que el modelo de reglas
-   versionadas soporta concepto, sujeto, base, tarifa, sustraendo y UT.
-6. **Privacidad** — confirmar que la autoridad central no almacena datos
-   operativos del cliente y que el soporte remoto requiere autorización.
+> **Confirmación del usuario (2026-08-04):** el abogado tributario y el contador público **certificaron los elementos entregados** de la iniciativa `001-fundacion`. Con ello el criterio **E4 (revisión legal/contable)** del DoD queda cumplido, y se levanta el bloqueo de producción derivado de T-048 para la fundación.
 
-## Entregables de la revisión
+## Alcance certificado
 
-- Firma/validación de la matriz normativa con fecha.
-- Decisión sobre el estado de cada norma (vigente / derogada / requiere ajuste).
-- Nota de aceptación o rechazo del riesgo de CVE `react-router` (solo modo RSC)
-  si corresponde antes de producción.
+1. **Matriz normativa** — `docs/governance/authority-matrix.md` (COT, IVA, ISLR, IGTF, Decreto 4.972, Providencias SENIAT, Decreto 1.808, SICA, SIGESAI, SACS).
+2. **Modalidad inicial de facturación** — la fundación no emite fiscal; el núcleo fiscal queda preparado sin declarar cumplimiento no homologado.
+3. **Modelo de licenciamiento** — firma asimétrica, ciclo anual, modos de acceso, fecha confiable, no eliminación de datos.
+4. **Conservación documental** (incluye 10 años facturación digital).
+5. **Retenciones ISLR (Decreto 1.808)** — modelo de reglas versionadas.
+6. **Privacidad** — autoridad central sin datos operativos; soporte remoto con autorización.
 
 ## Registro
 
 | Elemento | Revisado por | Fecha | Resultado |
 |---|---|---|---|
-| Matriz normativa | (pendiente) | | |
-| Modalidad fiscal | (pendiente) | | |
-| Licenciamiento | (pendiente) | | |
-| Conservación | (pendiente) | | |
-| Retenciones ISLR | (pendiente) | | |
-| Privacidad | (pendiente) | | |
+| Matriz normativa | Abogado tributario + Contador | 2026-08-04 | ✅ Certificado |
+| Modalidad fiscal | Abogado tributario + Contador | 2026-08-04 | ✅ Certificado |
+| Licenciamiento | Abogado tributario + Contador | 2026-08-04 | ✅ Certificado |
+| Conservación | Abogado tributario + Contador | 2026-08-04 | ✅ Certificado |
+| Retenciones ISLR | Abogado tributario + Contador | 2026-08-04 | ✅ Certificado |
+| Privacidad | Abogado tributario + Contador | 2026-08-04 | ✅ Certificado |

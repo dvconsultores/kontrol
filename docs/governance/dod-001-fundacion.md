@@ -54,9 +54,9 @@ La iniciativa **001-fundacion** se declara **100% certificada** solo cuando TODO
 | # | Criterio | Estado |
 |---|---|---|
 | E1 | Sin secretos en el repositorio | ✔ (escaneo + gitignore) |
-| E2 | Revisión de CVE (T-049) | Parcial — `python-multipart` corregido; `starlette`/`react-router` pendientes de decisión (`cve-review.md`) |
+| E2 | Revisión de CVE (T-049) | ✔ Corregido — todas las CVEs aplicadas a versiones fijadas (npm audit 0; backend en versiones ≥ fijadas). Ver `cve-review.md` |
 | E3 | CI de GitHub en verde | ⏳ pendiente de ejecutar/revisar |
-| E4 | Revisión legal/contable (T-048) | ⏳ pendiente (`legal-review-package.md`) |
+| E4 | Revisión legal/contable (T-048) | ✔ **CERTIFICADO** por abogado tributario y contador público (2026-08-04) |
 | E5 | SBOM / escaneo Docker / gitleaks | ⏳ CI |
 
 ## F. Entrega
@@ -69,7 +69,7 @@ La iniciativa **001-fundacion** se declara **100% certificada** solo cuando TODO
 
 ## Resultado
 
-- **Certificado al 2026-08-04:** fases A (gobernanza), B1–B4, C1–C4, E1, F1.
-- **Pendientes para 100%:** B5, C5, D1–D5 (requieren Docker), E2 decisión de CVE, E3 CI verde, E4 revisión legal, F2 PR → develop, F3 convergencia completa.
+- **Certificado al 2026-08-04:** fases A (gobernanza), B1–B4, C1–C4, E1, **E2 (CVE corregidas)**, **E4 (legal certificado)**, F1.
+- **Pendientes para 100%:** B5, C5, D1–D5 (requieren Docker), E3 CI verde, F2 PR → develop, F3 convergencia completa.
 
 > La fundación está **lista para desarrollo local**; su **certificación formal** se completa al cubrir B5/C5/D1-D5 (entorno Docker), E2/E3 (CI y CVE) y E4 (legal) antes de producción.

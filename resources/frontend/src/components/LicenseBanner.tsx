@@ -1,5 +1,5 @@
 /** LicenseBanner — banner de estado de licencia (FR-001-067, DOC-08 §15.3). */
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 import { useLicense } from "@/app/contexts/LicenseContext";
 

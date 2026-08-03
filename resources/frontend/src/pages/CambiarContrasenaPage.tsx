@@ -1,6 +1,6 @@
 /** CambiarContrasena — cambio de contraseña (US-005, FR-001-011). */
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 import { apiFetch } from "@/api/client";
 import { useNotifications } from "@/app/contexts/NotificationContext";

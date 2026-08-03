@@ -1,6 +1,6 @@
 /** NotFoundState — 404 con enlace a la lista (DOC-08 §11). */
 import { FileQuestion } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 import { Button } from "./Button";
 

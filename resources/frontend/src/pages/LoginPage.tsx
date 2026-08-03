@@ -1,6 +1,6 @@
 /** Login — inicio de sesión seguro (US-006, FR-001-020/021/023). */
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";

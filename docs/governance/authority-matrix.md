@@ -80,7 +80,7 @@ Cada norma recibe uno de estos estados:
 | Elemento | Estado |
 |---|---|
 | Matriz de autoridad creada | ✔ |
-| Normas con estado `LEGAL_VALIDATION_REQUIRED` | ✔ (todas las fiscales/regulatorias) |
-| Revisión por abogado tributario | Pendiente (requisito antes de producción) |
-| Revisión por contador público | Pendiente |
-| Aprobación | Pendiente |
+| Normas con estado `LEGAL_VALIDATION_REQUIRED` | ✔ (todas las fiscales/regulatorias; se revalidan antes de cada liberación) |
+| Revisión por abogado tributario | ✔ **CERTIFICADO** (2026-08-04) |
+| Revisión por contador público | ✔ **CERTIFICADO** (2026-08-04) |
+| Aprobación | ✔ certificado por los profesionales (ver `docs/evidence/legal-review-package.md`) |

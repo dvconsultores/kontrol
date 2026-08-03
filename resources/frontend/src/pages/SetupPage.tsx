@@ -1,6 +1,6 @@
 /** Setup — asistente seguro de inicialización (US-004, FR-001-010). */
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 import { apiFetch } from "@/api/client";
 import { useNotifications } from "@/app/contexts/NotificationContext";

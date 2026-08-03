@@ -4,7 +4,7 @@ import { LogOut, Lock, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useLicense } from "@/app/contexts/LicenseContext";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 export function Topbar(): React.JSX.Element {
   const { user, logout } = useAuth();

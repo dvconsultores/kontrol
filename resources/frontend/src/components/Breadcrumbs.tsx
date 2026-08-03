@@ -1,6 +1,6 @@
 /** Breadcrumbs — obligatorios en páginas de segundo nivel o superior (DOC-08 §5). */
 import { ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 export interface Crumb {
   label: string;

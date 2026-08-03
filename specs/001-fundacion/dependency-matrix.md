@@ -61,7 +61,8 @@
 | Elemento | Estado |
 |---|---|
 | Matriz de dependencias | ✔ (línea base) |
-| Versiones resueltas en la implementación (T-049 parcial, 2026-08-04) | React 19.2.8 · Vite 5.4.21 (Vite 8 de DOC-08 no existe; se usó la estable disponible) · Tailwind 4.3.3 · React Router 7.18.2 · TanStack Query 5.101.4 · TanStack Table 8.x · TypeScript 5.7 · Vitest 2.x · date-fns 4.x · Lucide 0.469.x |
-| Versiones backend (resueltas, lockfile) | FastAPI 0.115.6 · Pydantic 2.10.4 · SQLAlchemy 2.0.36 · Alembic 1.14.0 · Argon2-cffi 23.1.0 · PyJWT 2.10.1 · pytest 8.3.4 |
-| Versionado final con evidencia | Parcial — T-049 pendiente de revisión de CVE y lockfiles de CI |
+| Versiones finales resueltas (2026-08-04, T-049 con CVE corregidas) | **Frontend:** React 19.2.8 · Vite **6.4.3** · Tailwind 4.3.3 · **react-router 8.3.0** (reemplaza react-router-dom 7.18.2 por CVE) · TanStack Query 5.101.4 · TanStack Table 8.x · TypeScript 5.7 · **Vitest 3.2.7** · date-fns 4.x · Lucide 0.469.x |
+| Versiones backend finales (resueltas, lockfile) | **FastAPI 0.141.1** · starlette **1.3.1** · Pydantic 2.10.4 · SQLAlchemy 2.0.36 · Alembic 1.14.0 · **cryptography 46.0.6** · **PyJWT 2.13.0** · **python-multipart 0.0.31** · Argon2-cffi 23.1.0 · **pytest 9.0.3** |
+| Lockfiles | `requirements.lock` (46 paq.) + `package-lock.json` regenerados |
+| CVE | **0 en npm audit**; backend en versiones ≥ fijadas por pip-audit — ver `docs/evidence/cve-review.md` |
 

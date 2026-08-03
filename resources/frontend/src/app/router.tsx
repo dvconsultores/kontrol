@@ -1,5 +1,5 @@
 /** Definición de rutas con guards (FR-001-042/061, DOC-08 §5). */
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter } from "react-router";
 
 import { AppShell } from "./AppShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";

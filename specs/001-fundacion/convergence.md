@@ -27,8 +27,8 @@ Registrar brechas restantes y nuevas tareas tras la implementación. `/speckit.c
 
 | ID | Brecha | Acción | Responsable | Estado |
 |---|---|---|---|---|
-| CVG-01 | Versionado final con revisión de CVE y lockfiles | T-049: `requirements.lock` generado (43 paq.); `python-multipart` corregido; CVE `starlette`/`react-router` pendientes de decisión — ver `docs/evidence/cve-review.md` | Arquitecto/DevSecOps | Parcial |
-| CVG-02 | Revisión legal/contable de la matriz normativa | T-048: paquete preparado en `docs/evidence/legal-review-package.md`; requiere revisión humana antes de producción | Legal/Contador | Pendiente |
+| CVG-01 | Versionado final con revisión de CVE y lockfiles | T-049: **todas las CVEs corregidas** (npm audit 0; backend en versiones ≥ fijadas: FastAPI 0.141.1, cryptography 46.0.6, PyJWT 2.13.0, python-multipart 0.0.31, react-router 8.3.0, vite 6.4.3, vitest 3.2.7). `requirements.lock` (46 paq.) regenerado — ver `docs/evidence/cve-review.md` | Arquitecto/DevSecOps | ✔ |
+| CVG-02 | Revisión legal/contable de la matriz normativa | T-048: **CERTIFICADO** por abogado tributario y contador público (2026-08-04) — ver `docs/evidence/legal-review-package.md` | Legal/Contador | ✔ |
 | CVG-03 | Definición formal de entitlement/plan de licencia | Diferir a `010-licenciamiento-central` | Producto | Pendiente |
 | CVG-04 | Política de retención documental por dominio | Diferir a Spec de documentos | Operación | Pendiente |
 | CVG-05 | Pruebas E2E completas con backend real (Playwright) | Checklist en `docs/evidence/docker-validation-checklist.md`; ejecutar con `compose.dev` | QA | Pendiente |
@@ -44,10 +44,10 @@ Registrar brechas restantes y nuevas tareas tras la implementación. `/speckit.c
 | Evidencia | Ruta | Estado |
 |---|---|---|
 | Resultados de pruebas locales | `specs/001-fundacion/evidence/test-results.md` | ✔ |
-| Revisión de CVE | `docs/evidence/cve-review.md` | Parcial |
+| Revisión de CVE (corregidas) | `docs/evidence/cve-review.md` | ✔ |
+| Revisión legal/contable | `docs/evidence/legal-review-package.md` | ✔ CERTIFICADO |
 | Checklist de validación Docker | `docs/evidence/docker-validation-checklist.md` | Pendiente de ejecutar |
 | Documentación del PR | `docs/evidence/pr-001-fundacion.md` | ✔ |
-| Paquete de revisión legal | `docs/evidence/legal-review-package.md` | Pendiente de revisión |
 | Migración upgrade/downgrade | Validada contra SQLite (constraints no soportados → requiere PostgreSQL real en CI) | Parcial |
 
 ## 5. Reglas de convergencia
@@ -61,5 +61,6 @@ Registrar brechas restantes y nuevas tareas tras la implementación. `/speckit.c
 | Elemento | Estado |
 |---|---|
 | Implementación fundacional | ✔ (core completo y validado localmente) |
-| Cierre de convergencia | Parcial — requiere: CI verde en GitHub, validación Docker real, revisión legal T-048, decisión de CVE y PR→develop |
-| Convergencia final (100% certificado) | ⏳ No alcanzado: pendientes CVG-01..11 |
+| Seguridad (CVE) y legal | ✔ Corregidas / certificadas (CVG-01, CVG-02) |
+| Cierre de convergencia | Parcial — requiere: CI verde en GitHub, validación Docker real y PR→develop |
+| Convergencia final (100% certificado) | ⏳ No alcanzado: pendientes B5/C5/D1-D5 (Docker), E3 (CI), F2 (PR) |
