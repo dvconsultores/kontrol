@@ -88,10 +88,12 @@ jobs:
         run: alembic upgrade head
         env:
           KONTROL_DB_URL: postgresql+psycopg2://kontrol:kontrol@localhost:5432/kontrol
+          KONTROL_SECRET_KEY: ${{ secrets.KONTROL_TEST_SECRET_KEY }}
       - name: Downgrade base
         run: alembic downgrade base
         env:
           KONTROL_DB_URL: postgresql+psycopg2://kontrol:kontrol@localhost:5432/kontrol
+          KONTROL_SECRET_KEY: ${{ secrets.KONTROL_TEST_SECRET_KEY }}
 
   security:
     name: Seguridad (secretos, dependencias, build Docker)
