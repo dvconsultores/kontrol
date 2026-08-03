@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   KONTROL Design System — tokens (DOC-08 §4)
+   Fuente normativa: Estándar Maestro de Frontend v1.0
+   ========================================================================== */
+
+@theme {
+  /* Color */
+  --color-brand-50: #eef6ff;
+  --color-brand-100: #d9eaff;
+  --color-brand-200: #bcdbff;
+  --color-brand-300: #8ec4ff;
+  --color-brand-400: #59a3ff;
+  --color-brand-500: #337cff;
+  --color-brand-600: #1f5cf5;
+  --color-brand-700: #1747e1;
+  --color-brand-800: #193cb6;
+  --color-brand-900: #1a378f;
+  --color-brand-950: #152357;
+
+  --color-surface-0: #ffffff;
+  --color-surface-50: #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+
+  --color-text-900: #0f172a;
+  --color-text-700: #334155;
+  --color-text-500: #64748b;
+  --color-text-400: #94a3b8;
+
+  --color-border-default: #cbd5e1;
+
+  --color-success-600: #15803d;
+  --color-success-100: #dcfce7;
+  --color-warning-600: #b45309;
+  --color-warning-100: #fef3c7;
+  --color-danger-600: #b91c1c;
+  --color-danger-100: #fee2e2;
+  --color-info-600: #0369a1;
+  --color-info-100: #e0f2fe;
+
+  --color-focus: #1f5cf5;
+
+  /* Tipografía Ubuntu */
+  --font-sans: "Ubuntu", ui-sans-serif, system-ui, sans-serif;
+
+  /* Breakpoints */
+  --breakpoint-mobile: 375px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-laptop: 1024px;
+  --breakpoint-desktop: 1280px;
+  --breakpoint-wide: 1440px;
+
+  /* Radios */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Z-index (escala controlada, DOC-08 §4) */
+  --z-base: 0;
+  --z-sticky: 20;
+  --z-dropdown: 30;
+  --z-popover: 40;
+  --z-tooltip: 50;
+  --z-drawer: 60;
+  --z-dialog: 70;
+  --z-notification: 80;
+}

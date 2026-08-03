@@ -1,0 +1,45 @@
+# syntax=docker/dockerfile:1
+
+# ==========================================================================
+# KONTROL - Backend (multi-stage, no root, versionado)
+# Objetivo: Python 3.13 (producción); target "dev" para desarrollo con reload.
+# ==========================================================================
+FROM python:3.13-slim AS base
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+# Dependencias del sistema mínimas (psycopg2-binary no requiere compilador).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY resources/backend/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+COPY resources/backend/app ./app
+COPY resources/backend/alembic ./alembic
+COPY resources/backend/alembic.ini ./alembic.ini
+
+# Usuario no root (seguridad de imagen, DOC-08 §19).
+RUN useradd --system --uid 10001 kontrol && mkdir -p /data/license-state /data/storage /data/backups \
+    && chown -R kontrol:kontrol /data /app
+USER kontrol
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live')" || exit 1
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# --- Target de desarrollo: hot reload con dependencias de prueba ----------
+FROM base AS dev
+USER root
+COPY resources/backend/tests ./tests
+COPY resources/backend/pyproject.toml ./pyproject.toml
+RUN pip install --no-cache-dir pytest httpx ruff mypy
+USER kontrol
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

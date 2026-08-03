@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1
+
+# ==========================================================================
+# KONTROL - Frontend (multi-stage: build Node -> serve Nginx, no root)
+# ==========================================================================
+
+# --- Stage de build --------------------------------------------------------
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY resources/frontend/package.json resources/frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY resources/frontend/ .
+ARG VITE_API_BASE=/api/v1
+ENV VITE_API_BASE=$VITE_API_BASE
+RUN npm run build
+
+# --- Stage de servir (Nginx) ------------------------------------------------
+FROM nginx:stable-alpine
+COPY resources/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+# Healthcheck de la SPA
+RUN echo '{"status":"ok","service":"frontend"}' > /usr/share/nginx/html/healthz.json
+# Usuario no root (Nginx master se ejecuta como nginx de todos modos).
+EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD wget -qO- http://127.0.0.1/healthz.json >/dev/null || exit 1
+CMD ["nginx", "-g", "daemon off;"]

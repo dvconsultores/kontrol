@@ -1,0 +1,54 @@
+@import "./design-system/theme.css";
+
+/* ==========================================================================
+   KONTROL - estilos globales (DOC-08 §4.1)
+   Tipografía Ubuntu, accesibilidad y utilidades base.
+   ========================================================================== */
+
+html {
+  font-family: var(--font-sans);
+  color: var(--color-text-900);
+  background-color: var(--color-surface-50);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Foco visible WCAG 2.2 AA (FR-027) */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Respetar prefers-reduced-motion (FR-027) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Números tabulares en tablas y reportes financieros (DOC-08 §4.1) */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Contenedor de notificaciones persistente */
+#notification-root {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: var(--z-notification);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(360px, calc(100vw - 32px));
+}

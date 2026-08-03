@@ -1,0 +1,106 @@
+# KONTROL - Compose de producción (ADR-002, DOC-08 §19)
+# Instalación independiente por cliente. Imágenes versionadas (nunca latest).
+# Volúmenes nominales: db, storage, license-state, backups.
+
+name: kontrol
+
+services:
+  reverse-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: kontrol-proxy
+    restart: unless-stopped
+    ports:
+      - "${KONTROL_HTTP_PORT:-8080}:80"
+      - "${KONTROL_HTTPS_PORT:-8443}:443"
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    networks:
+      - kontrol-net
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_BASE: "/api/v1"
+    container_name: kontrol-web
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - backend
+    networks:
+      - kontrol-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: kontrol-api
+    restart: unless-stopped
+    environment:
+      KONTROL_ENVIRONMENT: "${KONTROL_ENVIRONMENT:-prod}"
+      KONTROL_DB_URL: "postgresql+psycopg2://${KONTROL_DB_USER:-kontrol}:${KONTROL_DB_PASSWORD}@db:5432/${KONTROL_DB_NAME:-kontrol}"
+      KONTROL_SECRET_KEY: "${KONTROL_SECRET_KEY:?KONTROL_SECRET_KEY es obligatoria}"
+      KONTROL_COOKIE_SECURE: "true"
+      KONTROL_CORS_ORIGINS: "${KONTROL_CORS_ORIGINS:-https://localhost}"
+      KONTROL_LICENSE_PUBLIC_KEY_PEM: "${KONTROL_LICENSE_PUBLIC_KEY_PEM:-}"
+      KONTROL_INSTALLATION_VOLUME_PATH: "/data/license-state"
+      KONTROL_STORAGE_PATH: "/data/storage"
+      KONTROL_BACKUP_PATH: "/data/backups"
+      KONTROL_LOG_JSON: "true"
+    volumes:
+      - kontrol-license-state:/data/license-state
+      - kontrol-storage:/data/storage
+      - kontrol-backups:/data/backups
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - kontrol-net
+
+  db:
+    image: postgres:18-alpine
+    container_name: kontrol-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${KONTROL_DB_USER:-kontrol}"
+      POSTGRES_PASSWORD: "${KONTROL_DB_PASSWORD:?KONTROL_DB_PASSWORD es obligatoria}"
+      POSTGRES_DB: "${KONTROL_DB_NAME:-kontrol}"
+    volumes:
+      - kontrol-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KONTROL_DB_USER:-kontrol} -d ${KONTROL_DB_NAME:-kontrol}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kontrol-net
+
+volumes:
+  kontrol-db-data:
+  kontrol-storage:
+  kontrol-license-state:
+  kontrol-backups:
+
+networks:
+  kontrol-net:
+    driver: bridge
+    internal: true

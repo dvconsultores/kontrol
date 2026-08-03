@@ -1,0 +1,40 @@
+[project]
+name = "kontrol-backend"
+version = "1.0.0"
+description = "KONTROL - Plataforma Administrativa Empresarial para Venezuela (backend fundacional)"
+# Objetivo de producción: Python 3.13 (imagen Docker). Se permite >=3.11 para validación local en estaciones de desarrollo.
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.32.1",
+    "pydantic==2.10.4",
+    "pydantic-settings==2.7.0",
+    "sqlalchemy==2.0.36",
+    "alembic==1.14.0",
+    "psycopg2-binary==2.9.10",
+    "argon2-cffi==23.1.0",
+    "PyJWT==2.10.1",
+    "cryptography==44.0.0",
+    "email-validator==2.2.0",
+    "python-multipart==0.0.20",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 1001
+target-version = "py313"
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "B", "UP"]
+# B008: Depends() en defaults es el idioma oficial de FastAPI (se ignora por decisión del proyecto).
+ignore = ["E501", "B008"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_configs = true

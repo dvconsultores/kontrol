@@ -1,0 +1,74 @@
+# KONTROL - Git ignore raíz
+# Reglas: no incluir secretos, respaldos, temporales, datos productivos, volúmenes PostgreSQL, licencias privadas ni claves privadas.
+
+# Secretos y configuración sensible
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+license-private/
+
+# Respaldos
+backups/
+*.dump
+*.sql.gz
+*.backup
+
+# Datos y volúmenes locales
+databases/
+storage/
+volumes/
+data/
+!specs/**/wireframes/*.md
+!docs/**
+
+# Licencias y claves de instalación
+license-state/
+installation-identity/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Entornos y herramientas
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/tasks.json
+.DS_Store
+Thumbs.db
+
+# Logs y temporales
+*.log
+*.tmp
+*~
+*.swp
+.~lock.*
+
+# Archivos de bloqueo de office/libreoffice
+.~lock.*#
+
+# Evidencia binaria local (no versionar evidencia generada sin aprobación)
+evidence/generated/

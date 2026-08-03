@@ -1,0 +1,22 @@
+# KONTROL - Backend dependencies
+# Regla: versiones fijadas (ADR-014). No usar rangos abiertos en producción.
+# Se generará un lockfile (requirements.lock / uv.lock) durante el build.
+
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+pydantic==2.10.4
+pydantic-settings==2.7.0
+sqlalchemy==2.0.36
+alembic==1.14.0
+psycopg2-binary==2.9.10
+argon2-cffi==23.1.0
+PyJWT==2.10.1
+cryptography==44.0.0
+email-validator==2.2.0
+python-multipart==0.0.20
+
+# Tests / calidad
+pytest==8.3.4
+httpx==0.28.1
+ruff==0.8.4
+mypy==1.13.0
