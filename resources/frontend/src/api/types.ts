@@ -422,3 +422,172 @@ export interface SalesQuoteSummary {
   status: string;
 }
 
+// ---------------------------------------------------------------------------
+// Tesorería (006-tesoreria)
+// ---------------------------------------------------------------------------
+export interface FinancialBankSummary {
+  id: string;
+  code: string;
+  name: string;
+  swift: string | null;
+  country: string | null;
+  status: string;
+}
+
+export interface FinancialAccountSummary {
+  id: string;
+  code: string;
+  name: string;
+  bank_id: string;
+  currency: string;
+  status: string;
+}
+
+export interface CashboxSummary {
+  id: string;
+  code: string;
+  name: string;
+  currency: string;
+  warehouse_id: string | null;
+  status: string;
+}
+
+export interface PaymentMethodSummary {
+  id: string;
+  code: string;
+  name: string;
+  kind: string;
+  status: string;
+}
+
+export interface TreasuryInstrumentSummary {
+  id: string;
+  code: string;
+  name: string;
+  method_id: string;
+  cashbox_id: string | null;
+  account_id: string | null;
+  status: string;
+}
+
+export interface CurrencySummary {
+  id: string;
+  code: string;
+  name: string | null;
+  symbol: string | null;
+  decimal_places: number;
+  status: string;
+}
+
+export interface CashSessionMovement {
+  id: string;
+  movement_type: string;
+  payment_id: string | null;
+  amount: number;
+  instrument_id: string | null;
+  reference: string | null;
+}
+
+export interface CashSessionSummary {
+  id: string;
+  cashbox_id: string;
+  opened_by: string | null;
+  opened_at: string | null;
+  closed_at: string | null;
+  opened_amount: number;
+  counted_amount: number | null;
+  expected_amount: number;
+  difference: number | null;
+  status: string;
+  approval_note: string | null;
+  allowed_actions: AllowedActions;
+  movements: CashSessionMovement[];
+}
+
+export interface BankTransactionSummary {
+  id: string;
+  account_id: string;
+  txn_date: string | null;
+  value_date: string | null;
+  direction: string;
+  amount: number;
+  currency: string;
+  reference: string | null;
+  source: string;
+  payment_id: string | null;
+  commission: number | null;
+  status: string;
+}
+
+export interface TreasuryTransferSummary {
+  id: string;
+  from_cashbox_id: string | null;
+  from_account_id: string | null;
+  to_cashbox_id: string | null;
+  to_account_id: string | null;
+  amount: number;
+  currency: string;
+  value_date: string | null;
+  reference: string | null;
+  status: string;
+}
+
+export interface ReconciliationLineSummary {
+  id: string;
+  bank_transaction_id: string | null;
+  system_movement_id: string | null;
+  system_movement_type: string | null;
+  match_score: number | null;
+  matched_by: string;
+  status: string;
+  resolution: string | null;
+  notes: string | null;
+}
+
+export interface ReconciliationSummary {
+  id: string;
+  account_id: string;
+  statement_date: string | null;
+  statement_ref: string | null;
+  opening_balance: number | null;
+  closing_balance: number | null;
+  status: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  allowed_actions: AllowedActions;
+  lines: ReconciliationLineSummary[];
+}
+
+export interface FiscalRuleSummary {
+  id: string;
+  rule_code: string;
+  name: string | null;
+  rule_type: string;
+  version: string;
+  effective_from: string | null;
+  effective_to: string | null;
+  params: string | null;
+  status: string;
+}
+
+export interface IgftEventSummary {
+  id: string;
+  event_type: string;
+  source_document: string | null;
+  amount: number;
+  currency: string;
+  rate_snapshot: number | null;
+  igft_amount: number | null;
+  rule_id: string | null;
+  evaluated_at: string | null;
+  status: string;
+}
+
+export interface ExecutionResult {
+  execution_id: string;
+  kind: string;
+  idempotent: boolean;
+  amount: number;
+  currency: string;
+}
+

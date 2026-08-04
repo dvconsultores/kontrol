@@ -75,6 +75,7 @@ def init_models() -> None:
         purchasing,
         sales,
         system,
+        treasury,
     )
 
 

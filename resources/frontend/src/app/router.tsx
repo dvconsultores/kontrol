@@ -33,6 +33,12 @@ import { CotizacionesPage } from "@/modules/ventas/cotizaciones/CotizacionesPage
 import { CuentasPorCobrarPage } from "@/modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage";
 import { FacturasVentasPage } from "@/modules/ventas/facturas/FacturasVentasPage";
 import { OrdenesVentasPage } from "@/modules/ventas/ordenes/OrdenesVentasPage";
+import { CajasPage } from "@/modules/tesoreria/cajas/CajasPage";
+import { ConciliacionPage } from "@/modules/tesoreria/conciliacion/ConciliacionPage";
+import { IgftPage } from "@/modules/tesoreria/igft/IgftPage";
+import { IngresosEgresosPage } from "@/modules/tesoreria/ingresos-egresos/IngresosEgresosPage";
+import { MaestrosPage } from "@/modules/tesoreria/maestros/MaestrosPage";
+import { TransferenciasPage as TesoreriaTransferenciasPage } from "@/modules/tesoreria/transferencias/TransferenciasPage";
 
 export const router = createBrowserRouter([
   {
@@ -75,6 +81,12 @@ export const router = createBrowserRouter([
           { path: "ventas/ordenes", element: <OrdenesVentasPage /> },
           { path: "ventas/facturas", element: <FacturasVentasPage /> },
           { path: "ventas/cuentas-por-cobrar", element: <CuentasPorCobrarPage /> },
+          { path: "tesoreria/cajas", element: <CajasPage /> },
+          { path: "tesoreria/ingresos-egresos", element: <IngresosEgresosPage /> },
+          { path: "tesoreria/transferencias", element: <TesoreriaTransferenciasPage /> },
+          { path: "tesoreria/conciliacion", element: <ConciliacionPage /> },
+          { path: "tesoreria/igft", element: <IgftPage /> },
+          { path: "tesoreria/maestros", element: <MaestrosPage /> },
           { path: "auditoria", element: <AuditoriaPage /> },
           { path: "diagnostico", element: <DiagnosticoPage /> },
           { path: "forbidden", element: <ForbiddenState /> },

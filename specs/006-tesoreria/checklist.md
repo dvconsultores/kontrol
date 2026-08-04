@@ -31,36 +31,36 @@
 ## 2. Implementación (post-autorización)
 
 ### 2.1 Maestros financieros (F1)
-- [ ] Modelos `financial_banks`, `financial_accounts`, `cashboxes`, `payment_methods`, `payment_instruments`, `currencies`, `exchange_rates`.
-- [ ] API de maestros financieros + registro en `database.py`/`main.py`.
+- [x] Modelos `financial_banks`, `financial_accounts`, `cashboxes`, `payment_methods`, `treasury_instruments`, `currencies`, `exchange_rates`.
+- [x] API de maestros financieros + registro en `database.py`/`main.py`.
 
 ### 2.2 Cajas (F2)
-- [ ] Modelos `cash_sessions`, `cash_session_movements`.
-- [ ] Servicio: apertura → movimiento → arqueo → pre-cierre → cierre con diferencias aprobadas (FR-006-002/003).
+- [x] Modelos `cash_sessions`, `cash_session_movements`.
+- [x] Servicio: apertura → movimiento → arqueo → pre-cierre → cierre/rechazo con diferencias aprobadas (FR-006-002/003).
 
 ### 2.3 Bancos e ingresos/egresos (F3)
-- [ ] Modelo `bank_transactions`, `treasury_transfers`.
-- [ ] Ejecución de ingresos (005) y egresos (004) contra caja/banco con instrumentos e idempotencia (FR-006-020/021/022).
+- [x] Modelo `bank_transactions`, `treasury_transfers`.
+- [x] Ejecución de ingresos (005) y egresos (004) contra caja/banco con instrumentos e idempotencia (FR-006-020/021/022).
 
 ### 2.4 Conciliación (F4)
-- [ ] Modelos `reconciliations`, `reconciliation_lines`.
-- [ ] Conciliación asistida con reglas + resolución manual auditada (FR-006-030/031).
+- [x] Modelos `reconciliations`, `reconciliation_lines`.
+- [x] Conciliación asistida con reglas + resolución manual auditada (FR-006-030/031).
 
 ### 2.5 IGTF (F5)
-- [ ] Modelos `fiscal_rules`, `igft_events`.
-- [ ] Evaluación por regla y evento; no confundir con IVA (FR-006-040/041).
+- [x] Modelos `fiscal_rules`, `igft_events`.
+- [x] Evaluación por regla y evento; no confundir con IVA (FR-006-040/041).
 
 ### 2.6 Migración e integración (F6)
-- [ ] Migración Alembic `0006_tesoreria` (head).
-- [ ] Contract tests con 004/005 (pagos OUT / cobros IN).
+- [x] Migración Alembic `0006_tesoreria` (head).
+- [x] Contract tests con 004/005 (pagos OUT / cobros IN).
 
 ### 2.7 Frontend (F7)
-- [ ] Páginas tesorería: cajas/arqueo, ingreso/egreso, conciliación, transferencias, IGTF.
-- [ ] Tipos en `src/api/types.ts`, sidebar, router.
+- [x] Páginas tesorería: cajas/arqueo, ingreso/egreso, transferencias, conciliación, IGTF, maestros.
+- [x] Tipos en `src/api/types.ts`, sidebar, router.
 
 ### 2.8 Convergencia (F8)
-- [ ] Gates verdes (pytest, ruff, mypy, tsc, eslint, vitest, build).
-- [ ] `convergence.md` + evidencia + commit `feat(006)`.
+- [x] Gates verdes (pytest 109/109, ruff, mypy, tsc, eslint, vitest, build).
+- [x] `convergence.md` + evidencia + commit `feat(006)`.
 
 ## 3. Criterios de aceptación de entrada (fase documental)
 

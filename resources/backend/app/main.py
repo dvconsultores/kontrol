@@ -26,6 +26,7 @@ from app.modules.purchasing.api import router as purchasing_router
 from app.modules.sales.api import router as sales_router
 from app.modules.setup.api import router as setup_router
 from app.modules.system.api import router as system_router
+from app.modules.treasury.api import router as treasury_router
 
 configure_logging()
 settings = get_settings()
@@ -76,6 +77,7 @@ def create_app() -> FastAPI:
     app.include_router(inventory_router, prefix=prefix)
     app.include_router(purchasing_router, prefix=prefix)
     app.include_router(sales_router, prefix=prefix)
+    app.include_router(treasury_router, prefix=prefix)
     app.include_router(audit_router, prefix=prefix)
 
     @app.get("/")

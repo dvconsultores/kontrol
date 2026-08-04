@@ -1,6 +1,8 @@
 /** Sidebar — navegación colapsable (DOC-08 §5). */
 import {
+  ArrowLeftRight,
   Boxes,
+  ClipboardCheck,
   ClipboardList,
   CreditCard,
   FileText,
@@ -8,7 +10,9 @@ import {
   LayoutDashboard,
   Lock,
   Package,
+  Percent,
   Receipt,
+  Repeat,
   Scale,
   Settings,
   ShieldCheck,
@@ -76,6 +80,17 @@ const navSections = [
       { to: "/ventas/ordenes", label: "Órdenes", icon: ShoppingBag },
       { to: "/ventas/facturas", label: "Facturas", icon: Receipt },
       { to: "/ventas/cuentas-por-cobrar", label: "CxC", icon: Wallet },
+    ],
+  },
+  {
+    title: "Tesorería",
+    items: [
+      { to: "/tesoreria/cajas", label: "Cajas y arqueo", icon: Wallet },
+      { to: "/tesoreria/ingresos-egresos", label: "Ingresos y egresos", icon: ArrowLeftRight },
+      { to: "/tesoreria/transferencias", label: "Transferencias", icon: Repeat },
+      { to: "/tesoreria/conciliacion", label: "Conciliación", icon: ClipboardCheck },
+      { to: "/tesoreria/igft", label: "IGTF", icon: Percent },
+      { to: "/tesoreria/maestros", label: "Maestros", icon: Settings },
     ],
   },
   {
