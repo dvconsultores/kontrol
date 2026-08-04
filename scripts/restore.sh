@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # KONTROL - restauración (FR-001-083). Requiere procedimiento formal (DOC-07 §16).
 # Uso: ./scripts/restore.sh <archivo-backup>
+# Re-ejecutar con bash aunque se invoque con sh (sh/dash no soporta bashisms).
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
 set -euo pipefail
 
 if [[ $# -ne 1 ]]; then

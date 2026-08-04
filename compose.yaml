@@ -9,29 +9,8 @@
 name: kontrol
 
 services:
-  reverse-proxy:
-    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-nginx:${KONTROL_IMAGE_TAG:-latest}
-    container_name: kontrol-proxy
-    restart: unless-stopped
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-    ports:
-      - "${KONTROL_HTTP_PORT:-8080}:80"
-      - "${KONTROL_HTTPS_PORT:-8443}:443"
-    depends_on:
-      frontend:
-        condition: service_healthy
-      backend:
-        condition: service_healthy
-    networks:
-      - kontrol-net
-    read_only: true
-    tmpfs:
-      - /var/cache/nginx
-      - /var/run
-
   frontend:
-    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-frontend:${KONTROL_IMAGE_TAG:-latest}
+    image: ${KONTROL_IMAGE_REGISTRY:-dvconsultores}/kontrol-frontend:${KONTROL_IMAGE_TAG:-latest}
     container_name: kontrol-web
     restart: unless-stopped
     labels:
@@ -47,7 +26,7 @@ services:
       - kontrol-net
 
   backend:
-    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-backend:${KONTROL_IMAGE_TAG:-latest}
+    image: ${KONTROL_IMAGE_REGISTRY:-dvconsultores}/kontrol-backend:${KONTROL_IMAGE_TAG:-latest}
     container_name: kontrol-api
     restart: unless-stopped
     labels:
@@ -57,7 +36,7 @@ services:
       KONTROL_DB_URL: "${KONTROL_DB_URL:?KONTROL_DB_URL es obligatoria (base de datos externa)}"
       KONTROL_SECRET_KEY: "${KONTROL_SECRET_KEY:?KONTROL_SECRET_KEY es obligatoria}"
       KONTROL_COOKIE_SECURE: "true"
-      KONTROL_CORS_ORIGINS: "${KONTROL_CORS_ORIGINS:-https://localhost}"
+      KONTROL_CORS_ORIGINS: "${KONTROL_CORS_ORIGINS:-[\"https://localhost\"]}"
       KONTROL_LICENSE_PUBLIC_KEY_PEM: "${KONTROL_LICENSE_PUBLIC_KEY_PEM:-}"
       KONTROL_INSTALLATION_VOLUME_PATH: "/data/license-state"
       KONTROL_STORAGE_PATH: "/data/storage"
@@ -103,7 +82,10 @@ volumes:
   kontrol-backups:
 
 networks:
+  # Red con nombre fijo para que Nginx Proxy Manager (u otro proxy) pueda
+  # unirse y enrutar a kontrol-web:80 y kontrol-api:8000 sin exponer puertos.
   kontrol-net:
+    name: kontrol-net
     driver: bridge
     # La base de datos es externa: el backend necesita salida de red para
     # alcanzar el host PostgreSQL del cliente (red interna no aislada).

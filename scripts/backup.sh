@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # KONTROL - respaldo diario (FR-001-083, DOC-05 §11).
 # Respalda: PostgreSQL (base EXTERNA), storage, license-state y backups cifrados (opcional).
+# Re-ejecutar con bash aunque se invoque con sh (sh/dash no soporta bashisms).
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
 set -euo pipefail
 
 COMPOSE="${KONTROL_COMPOSE:-compose.yaml}"

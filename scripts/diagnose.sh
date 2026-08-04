@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # KONTROL - diagnóstico de instalación (FR-001-084). Salida sanitizada, sin secretos.
+# Re-ejecutar con bash aunque se invoque con sh (sh/dash no soporta bashisms).
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
 set -euo pipefail
 
 COMPOSE="${KONTROL_COMPOSE:-compose.yaml}"

@@ -2,6 +2,10 @@
 # KONTROL - actualización controlada (DOC-08 §19): preflight, backup, pull, health, rollback.
 # Las migraciones (iniciales y futuras) se aplican automáticamente al arrancar
 # el backend (entrypoint: alembic upgrade head), por lo que no se ejecutan aquí.
+# Re-ejecutar con bash aunque se invoque con sh (sh/dash no soporta bashisms).
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
 set -euo pipefail
 
 COMPOSE="${KONTROL_COMPOSE:-compose.yaml}"

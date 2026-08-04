@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # KONTROL - instalación inicial (DOC-07 §6.2).
+# Re-ejecutar con bash aunque se invoque con sh (sh/dash no soporta bashisms).
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
