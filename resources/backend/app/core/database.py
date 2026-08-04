@@ -72,6 +72,7 @@ def init_models() -> None:
         licensing,
         master_data,
         organization,
+        purchasing,
         system,
     )
 

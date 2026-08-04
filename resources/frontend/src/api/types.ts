@@ -288,3 +288,91 @@ export interface CostingProfile {
   status: string;
 }
 
+// ---------------------------------------------------------------------------
+// Compras y cuentas por pagar (004)
+// ---------------------------------------------------------------------------
+export interface PurchaseOrderLine {
+  id: string;
+  product_id: string;
+  quantity_ordered: number;
+  quantity_received: number;
+  unit_price: number;
+  needs_inventory: boolean;
+}
+
+export interface PurchaseOrderSummary {
+  id: string;
+  code: string;
+  supplier_id: string;
+  terms: string | null;
+  expected_date: string | null;
+  currency: string;
+  status: string;
+  approval_ref: string | null;
+  allowed_actions: AllowedActions;
+  lines: PurchaseOrderLine[];
+}
+
+export interface SupplierInvoiceSummary {
+  id: string;
+  supplier_id: string;
+  invoice_number: string;
+  control_number: string | null;
+  issue_date: string | null;
+  currency: string;
+  tax_total: number;
+  total: number;
+  status: string;
+  reversed_by_id: string | null;
+  allowed_actions: AllowedActions;
+}
+
+export interface GoodsReceiptSummary {
+  id: string;
+  code: string;
+  order_id: string;
+  warehouse_id: string;
+  status: string;
+  quality_status: string;
+}
+
+export interface RequisitionSummary {
+  id: string;
+  code: string;
+  requester_id: string | null;
+  cost_center_id: string | null;
+  need_date: string | null;
+  status: string;
+}
+
+export interface OpenItem {
+  id: string;
+  party_id: string;
+  source_document: string | null;
+  item_type: string;
+  currency: string;
+  original: number;
+  applied: number;
+  balance: number;
+  due_date: string | null;
+  status: string;
+}
+
+export interface PaymentSummary {
+  id: string;
+  party_id: string;
+  direction: string;
+  date: string | null;
+  currency: string;
+  amount: number;
+  applied: number;
+  status: string;
+  approver_id: string | null;
+  allowed_actions: AllowedActions;
+}
+
+export interface AgingResult {
+  total: number;
+  buckets: Record<string, number>;
+}
+

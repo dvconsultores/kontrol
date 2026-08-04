@@ -24,6 +24,11 @@ import { ConteosPage } from "@/modules/inventario/conteos/ConteosPage";
 import { ExistenciasPage } from "@/modules/inventario/existencias/ExistenciasPage";
 import { KardexPage } from "@/modules/inventario/kardex/KardexPage";
 import { TransferenciasPage } from "@/modules/inventario/transferencias/TransferenciasPage";
+import { CuentasPorPagarPage } from "@/modules/compras/cuentas-por-pagar/CuentasPorPagarPage";
+import { FacturasProveedorPage } from "@/modules/compras/facturas/FacturasProveedorPage";
+import { OrdenesComprasPage } from "@/modules/compras/ordenes/OrdenesComprasPage";
+import { RecepcionesPage } from "@/modules/compras/recepciones/RecepcionesPage";
+import { RequisicionesPage } from "@/modules/compras/requisiciones/RequisicionesPage";
 
 export const router = createBrowserRouter([
   {
@@ -57,6 +62,11 @@ export const router = createBrowserRouter([
           { path: "inventario/transferencias", element: <TransferenciasPage /> },
           { path: "inventario/conteos", element: <ConteosPage /> },
           { path: "inventario/ajustes", element: <AjustesPage /> },
+          { path: "compras/requisiciones", element: <RequisicionesPage /> },
+          { path: "compras/ordenes", element: <OrdenesComprasPage /> },
+          { path: "compras/recepciones", element: <RecepcionesPage /> },
+          { path: "compras/facturas", element: <FacturasProveedorPage /> },
+          { path: "compras/cuentas-por-pagar", element: <CuentasPorPagarPage /> },
           { path: "auditoria", element: <AuditoriaPage /> },
           { path: "diagnostico", element: <DiagnosticoPage /> },
           { path: "forbidden", element: <ForbiddenState /> },
