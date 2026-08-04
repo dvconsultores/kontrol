@@ -1,17 +1,20 @@
 # KONTROL - Compose de instalación por cliente (ADR-002, DOC-08 §19).
 # Un solo compose para todos los entornos: cambie la etiqueta de imagen
-# (KONTROL_IMAGE_TAG) entre "develop" y "main" y ajuste las variables.
+# (KONTROL_IMAGE_TAG). Desarrollo usa "latest" (por defecto); producción "main".
 # La base de datos es EXTERNA (cada cliente la suya) vía KONTROL_DB_URL.
 # Las migraciones (iniciales y futuras) se aplican automáticamente al
 # arrancar el backend (alembic upgrade head en el entrypoint).
+# Watchtower actualiza las imágenes automáticamente sin intervención.
 
 name: kontrol
 
 services:
   reverse-proxy:
-    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-nginx:${KONTROL_IMAGE_TAG:-develop}
+    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-nginx:${KONTROL_IMAGE_TAG:-latest}
     container_name: kontrol-proxy
     restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - "${KONTROL_HTTP_PORT:-8080}:80"
       - "${KONTROL_HTTPS_PORT:-8443}:443"
@@ -28,9 +31,11 @@ services:
       - /var/run
 
   frontend:
-    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-frontend:${KONTROL_IMAGE_TAG:-develop}
+    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-frontend:${KONTROL_IMAGE_TAG:-latest}
     container_name: kontrol-web
     restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/healthz"]
       interval: 30s
@@ -42,9 +47,11 @@ services:
       - kontrol-net
 
   backend:
-    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-backend:${KONTROL_IMAGE_TAG:-develop}
+    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-backend:${KONTROL_IMAGE_TAG:-latest}
     container_name: kontrol-api
     restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     environment:
       KONTROL_ENVIRONMENT: "${KONTROL_ENVIRONMENT:-prod}"
       KONTROL_DB_URL: "${KONTROL_DB_URL:?KONTROL_DB_URL es obligatoria (base de datos externa)}"
@@ -65,6 +72,28 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    networks:
+      - kontrol-net
+
+  # Actualización automática (sin intervención): watchtower detecta una nueva
+  # imagen (p. ej. "latest") y recrea los contenedores marcados con la etiqueta
+  # (rolling restart: uno a la vez). Requiere acceso al socket de Docker
+  # (privilegio de host). Elimine este servicio si el cliente prefiere
+  # actualizaciones manuales.
+  watchtower:
+    image: containrrr/watchtower
+    container_name: kontrol-watchtower
+    restart: unless-stopped
+    environment:
+      WATCHTOWER_POLL_INTERVAL: "${KONTROL_AUTO_UPDATE_INTERVAL:-300}"
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_ROLLING_RESTART: "true"
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_INCLUDE_STOPPED: "false"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
     networks:
       - kontrol-net
 

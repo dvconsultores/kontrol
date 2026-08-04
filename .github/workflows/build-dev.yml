@@ -28,7 +28,7 @@ jobs:
           context: .
           file: Dockerfile.backend
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kontrol-backend:develop
+          tags: ${{ secrets.DOCKER_USERNAME }}/kontrol-backend:latest
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v6
@@ -36,7 +36,7 @@ jobs:
           context: .
           file: Dockerfile.frontend
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kontrol-frontend:develop
+          tags: ${{ secrets.DOCKER_USERNAME }}/kontrol-frontend:latest
 
       - name: Build and push nginx image
         uses: docker/build-push-action@v6
@@ -44,4 +44,4 @@ jobs:
           context: .
           file: Dockerfile.nginx
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kontrol-nginx:develop
+          tags: ${{ secrets.DOCKER_USERNAME }}/kontrol-nginx:latest
