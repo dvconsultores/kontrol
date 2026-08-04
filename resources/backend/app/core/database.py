@@ -74,6 +74,7 @@ def init_models() -> None:
         master_data,
         organization,
         purchasing,
+        regulatory,
         sales,
         system,
         treasury,

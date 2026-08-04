@@ -31,34 +31,34 @@
 ## 2. Implementación (post-autorización)
 
 ### 2.1 Maestros regulatorios (F1)
-- [ ] Modelos `regulatory_authorities`, `permit_types`, `official_registrations`, `regulatory_profiles`, `transport_vehicles`, `transport_drivers`.
-- [ ] API de maestros + registro en `database.py`/`main.py`.
+- [x] Modelos `regulatory_authorities`, `permit_types`, `official_registrations`, `regulatory_profiles`, `transport_vehicles`, `transport_drivers`.
+- [x] API de maestros + registro en `database.py`/`main.py`.
 
 ### 2.2 Permisos (F2)
-- [ ] Modelo `permit_instances` con ciclo DRAFT→REGISTERED→VERIFIED→APPROVED_FOR_USE→USED→EXPIRED; REJECTED/CANCELLED.
-- [ ] Servicio de transiciones + trazabilidad (hash/auditoría).
+- [x] Modelo `permit_instances` con ciclo DRAFT→REGISTERED→VERIFIED→APPROVED_FOR_USE→USED→EXPIRED; REJECTED/CANCELLED.
+- [x] Servicio de transiciones + trazabilidad (hash/auditoría).
 
 ### 2.3 Guías (F3)
-- [ ] Modelo `official_documents` (SICA/SIGESAI/SACS) con registro y validación.
+- [x] Modelo `official_documents` (SICA/SIGESAI/SACS/guía fiscal) con registro y validación.
 
 ### 2.4 Evaluación y bloqueo (F4)
-- [ ] Modelo `regulatory_evaluations` por línea de despacho.
-- [ ] Evaluación consolida requisitos y bloquea ante faltante/vencido/no coincidencia.
+- [x] Modelo `regulatory_evaluations` por línea de despacho.
+- [x] Evaluación consolida requisitos y bloquea ante faltante/vencido; anulación auditada.
 
 ### 2.5 Contingencias (F5)
-- [ ] Modelo `regulatory_contingencies` con regla oficial versionada.
+- [x] Modelo `regulatory_contingencies` con regla oficial versionada.
 
 ### 2.6 Migración e integración (F6)
-- [ ] Migración Alembic `0008_regulacion` (head).
-- [ ] Contract tests con 005 (`Shipment`).
+- [x] Migración Alembic `0008_regulacion` (head).
+- [x] Contract tests con 005 (`Shipment`); `GET /sales/shipments` aditivo.
 
 ### 2.7 Frontend (F7)
-- [ ] Páginas regulatorio: organismos/perfiles, vehículos/conductores, guías/permisos, evaluación, contingencias.
-- [ ] Tipos en `src/api/types.ts`, sidebar, router.
+- [x] Páginas regulatorio: organismos, vehículos/conductores, permisos/guías, evaluación, contingencias.
+- [x] Tipos en `src/api/types.ts`, sidebar, router.
 
 ### 2.8 Convergencia (F8)
-- [ ] Gates verdes (pytest, ruff, mypy, tsc, eslint, vitest, build).
-- [ ] `convergence.md` + evidencia + commit `feat(008)`.
+- [x] Gates verdes (pytest 145/145, ruff, mypy, tsc, eslint, vitest, build).
+- [x] `convergence.md` + evidencia + commit `feat(008)`.
 
 ## 3. Criterios de aceptación de entrada (fase documental)
 

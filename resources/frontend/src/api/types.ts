@@ -422,6 +422,15 @@ export interface SalesQuoteSummary {
   status: string;
 }
 
+export interface ShipmentSummary {
+  id: string;
+  code: string;
+  order_id: string;
+  origin_warehouse_id: string;
+  status: string;
+  validation_status: string;
+}
+
 // ---------------------------------------------------------------------------
 // Tesorería (006-tesoreria)
 // ---------------------------------------------------------------------------
@@ -734,5 +743,116 @@ export interface BookResult {
   count: number;
   total: number;
   rows: BookRow[];
+}
+
+// ---------------------------------------------------------------------------
+// Regulación y traslados (008-regulacion-traslados)
+// ---------------------------------------------------------------------------
+export interface RegulatoryAuthoritySummary {
+  id: string;
+  code: string;
+  name: string;
+  validation_method: string | null;
+  status: string;
+}
+
+export interface PermitTypeSummary {
+  id: string;
+  authority_id: string;
+  code: string;
+  name: string;
+  scope: string | null;
+  status: string;
+}
+
+export interface OfficialRegistrationSummary {
+  id: string;
+  authority_id: string;
+  scope: string;
+  ref_number: string;
+  expires_at: string | null;
+  status: string;
+}
+
+export interface RegulatoryProfileSummary {
+  id: string;
+  operation: string;
+  product_id: string | null;
+  rubric_id: string | null;
+  required_documents: string | null;
+  version: string;
+  status: string;
+}
+
+export interface TransportVehicleSummary {
+  id: string;
+  plate: string;
+  vehicle_type: string | null;
+  capacity: number | null;
+  owner_party_id: string | null;
+  status: string;
+}
+
+export interface TransportDriverSummary {
+  id: string;
+  party_id: string;
+  license: string | null;
+  status: string;
+}
+
+export interface PermitInstanceSummary {
+  id: string;
+  permit_type_id: string;
+  number: string;
+  expires_at: string | null;
+  hash: string | null;
+  verification: string | null;
+  status: string;
+}
+
+export interface OfficialDocumentSummary {
+  id: string;
+  kind: string;
+  number: string;
+  organism: string | null;
+  expires_at: string | null;
+  hash: string | null;
+  verification: string | null;
+  status: string;
+}
+
+export interface RegulatoryEvaluationSummary {
+  id: string;
+  shipment_id: string;
+  shipment_line_ref: string | null;
+  required: string | null;
+  blockers: string | null;
+  override: string | null;
+  status: string;
+}
+
+export interface RegulatoryContingencySummary {
+  id: string;
+  rule_ref: string;
+  reason: string;
+  allowed_by: string | null;
+  status: string;
+}
+
+export interface ApprovalRequestSummary {
+  id: string;
+  object_ref: string;
+  rule_ref: string | null;
+  risk: string | null;
+  amount: number | null;
+  status: string;
+  decision: string | null;
+}
+
+export interface EvaluationResult {
+  shipment_id: string;
+  evaluated: number;
+  blocked: number;
+  status: string;
 }
 

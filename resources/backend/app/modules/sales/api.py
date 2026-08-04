@@ -298,6 +298,19 @@ def confirm_shipment(shipment_id: str, db: Session = Depends(get_db),
     return {"id": shipment.id, "status": shipment.status}
 
 
+@router.get("/shipments")
+def list_shipments(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Lista despachos (consumido por 008-regulacion-traslados)."""
+    query = select(Shipment).where(Shipment.company_id == user.tenant_id)
+    if status:
+        query = query.where(Shipment.status == status)
+    items = db.execute(query.order_by(Shipment.created_at.desc())).scalars().all()
+    return {"items": [{"id": s.id, "code": s.code, "order_id": s.order_id,
+                       "origin_warehouse_id": s.origin_warehouse_id, "status": s.status,
+                       "validation_status": s.validation_status} for s in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
 # --------------------------------------------------------------------------- #
 # Factura de venta y notas
 # --------------------------------------------------------------------------- #

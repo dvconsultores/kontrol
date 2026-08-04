@@ -45,6 +45,10 @@ import { LibrosPage } from "@/modules/fiscal/libros/LibrosPage";
 import { NotasPage } from "@/modules/fiscal/notas/NotasPage";
 import { NumeracionPage } from "@/modules/fiscal/numeracion/NumeracionPage";
 import { RetencionesPage } from "@/modules/fiscal/retenciones/RetencionesPage";
+import { EvaluacionPage } from "@/modules/regulatorio/evaluacion/EvaluacionPage";
+import { OrganismosPage } from "@/modules/regulatorio/organismos/OrganismosPage";
+import { PermisosPage } from "@/modules/regulatorio/permisos/PermisosPage";
+import { VehiculosPage } from "@/modules/regulatorio/vehiculos/VehiculosPage";
 
 export const router = createBrowserRouter([
   {
@@ -99,6 +103,10 @@ export const router = createBrowserRouter([
           { path: "fiscal/notas", element: <NotasPage /> },
           { path: "fiscal/retenciones", element: <RetencionesPage /> },
           { path: "fiscal/libros", element: <LibrosPage /> },
+          { path: "regulatorio/organismos", element: <OrganismosPage /> },
+          { path: "regulatorio/vehiculos", element: <VehiculosPage /> },
+          { path: "regulatorio/permisos", element: <PermisosPage /> },
+          { path: "regulatorio/evaluacion", element: <EvaluacionPage /> },
           { path: "auditoria", element: <AuditoriaPage /> },
           { path: "diagnostico", element: <DiagnosticoPage /> },
           { path: "forbidden", element: <ForbiddenState /> },
