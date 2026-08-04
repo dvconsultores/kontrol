@@ -29,6 +29,10 @@ import { FacturasProveedorPage } from "@/modules/compras/facturas/FacturasProvee
 import { OrdenesComprasPage } from "@/modules/compras/ordenes/OrdenesComprasPage";
 import { RecepcionesPage } from "@/modules/compras/recepciones/RecepcionesPage";
 import { RequisicionesPage } from "@/modules/compras/requisiciones/RequisicionesPage";
+import { CotizacionesPage } from "@/modules/ventas/cotizaciones/CotizacionesPage";
+import { CuentasPorCobrarPage } from "@/modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage";
+import { FacturasVentasPage } from "@/modules/ventas/facturas/FacturasVentasPage";
+import { OrdenesVentasPage } from "@/modules/ventas/ordenes/OrdenesVentasPage";
 
 export const router = createBrowserRouter([
   {
@@ -67,6 +71,10 @@ export const router = createBrowserRouter([
           { path: "compras/recepciones", element: <RecepcionesPage /> },
           { path: "compras/facturas", element: <FacturasProveedorPage /> },
           { path: "compras/cuentas-por-pagar", element: <CuentasPorPagarPage /> },
+          { path: "ventas/cotizaciones", element: <CotizacionesPage /> },
+          { path: "ventas/ordenes", element: <OrdenesVentasPage /> },
+          { path: "ventas/facturas", element: <FacturasVentasPage /> },
+          { path: "ventas/cuentas-por-cobrar", element: <CuentasPorCobrarPage /> },
           { path: "auditoria", element: <AuditoriaPage /> },
           { path: "diagnostico", element: <DiagnosticoPage /> },
           { path: "forbidden", element: <ForbiddenState /> },

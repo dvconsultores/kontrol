@@ -541,7 +541,7 @@ def open_item_balance(item: OpenItem) -> float:
 
 def register_payment(db: Session, *, company_id: str, party_id: str, amount: float, currency: str = "VED",
                      instruments: list[dict] | None = None, actor: str | None = None,
-                     idempotency_key: str | None = None) -> Payment:
+                     idempotency_key: str | None = None, direction: str = "OUT") -> Payment:
     company_id = _company(company_id, obj="pago")
     _require_party(db, company_id, party_id)
     if amount <= 0:
@@ -550,7 +550,7 @@ def register_payment(db: Session, *, company_id: str, party_id: str, amount: flo
         existing = db.execute(select(Payment).where(Payment.idempotency_key == idempotency_key)).scalars().first()
         if existing:
             return existing
-    payment = Payment(company_id=company_id, party_id=party_id, direction="OUT", currency=currency,
+    payment = Payment(company_id=company_id, party_id=party_id, direction=direction, currency=currency,
                       amount=amount, applied=0.0, status="DRAFT", created_by=actor, idempotency_key=idempotency_key)
     db.add(payment)
     db.flush()
@@ -655,12 +655,12 @@ def _sync_invoice_paid(db: Session, *, target_open_item_id: str) -> None:
 
 
 def register_advance(db: Session, *, company_id: str, party_id: str, amount: float, currency: str = "VED",
-                     actor: str | None = None) -> Advance:
+                     actor: str | None = None, direction: str = "OUT") -> Advance:
     company_id = _company(company_id, obj="anticipo")
     _require_party(db, company_id, party_id)
     if amount <= 0:
         raise KontrolError(code="INVALID_AMOUNT", message="El monto del anticipo debe ser positivo", status_code=422)
-    adv = Advance(company_id=company_id, party_id=party_id, direction="OUT", currency=currency,
+    adv = Advance(company_id=company_id, party_id=party_id, direction=direction, currency=currency,
                   amount=amount, available=amount, status="ACTIVE", created_by=actor)
     db.add(adv)
     db.flush()
@@ -688,9 +688,9 @@ def transition_withholding(db: Session, *, withholding: Withholding, target: str
     return withholding
 
 
-def aging(db: Session, *, company_id: str, party_id: str | None = None) -> dict:
-    """Aging de CxP por buckets de vencimiento (FR-004-075)."""
-    query = select(OpenItem).where(OpenItem.company_id == company_id, OpenItem.item_type == "PAYABLE", OpenItem.status == "OPEN")
+def aging(db: Session, *, company_id: str, party_id: str | None = None, item_type: str = "PAYABLE") -> dict:
+    """Aging por buckets de vencimiento (FR-004-075). `item_type` permite PAYABLE (CxP) o RECEIVABLE (CxC)."""
+    query = select(OpenItem).where(OpenItem.company_id == company_id, OpenItem.item_type == item_type, OpenItem.status == "OPEN")
     if party_id:
         query = query.where(OpenItem.party_id == party_id)
     items = db.execute(query).scalars().all()

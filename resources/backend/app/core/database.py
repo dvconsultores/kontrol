@@ -73,6 +73,7 @@ def init_models() -> None:
         master_data,
         organization,
         purchasing,
+        sales,
         system,
     )
 

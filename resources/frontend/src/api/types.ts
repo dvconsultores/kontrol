@@ -376,3 +376,49 @@ export interface AgingResult {
   buckets: Record<string, number>;
 }
 
+// ---------------------------------------------------------------------------
+// Ventas y cuentas por cobrar (005)
+// ---------------------------------------------------------------------------
+export interface SalesOrderLine {
+  id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  needs_inventory: boolean;
+}
+
+export interface SalesOrderSummary {
+  id: string;
+  code: string;
+  customer_id: string;
+  warehouse_id: string | null;
+  credit_decision: string | null;
+  margin: number | null;
+  currency: string;
+  status: string;
+  approval_ref: string | null;
+  allowed_actions: AllowedActions;
+  lines: SalesOrderLine[];
+}
+
+export interface SalesInvoiceSummary {
+  id: string;
+  customer_id: string;
+  invoice_number: string | null;
+  base_fiscal_currency: string;
+  base_fiscal: number;
+  tax_total: number;
+  total: number;
+  status: string;
+  reversed_by_id: string | null;
+  allowed_actions: AllowedActions;
+}
+
+export interface SalesQuoteSummary {
+  id: string;
+  code: string;
+  customer_id: string;
+  currency: string;
+  status: string;
+}
+

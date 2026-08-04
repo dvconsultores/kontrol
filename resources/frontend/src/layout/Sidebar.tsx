@@ -13,8 +13,10 @@ import {
   Settings,
   ShieldCheck,
   ShoppingCart,
+  ShoppingBag,
   Tags,
   Users,
+  Wallet,
   Warehouse,
 } from "lucide-react";
 import { NavLink } from "react-router";
@@ -65,6 +67,15 @@ const navSections = [
       { to: "/compras/recepciones", label: "Recepciones", icon: Package },
       { to: "/compras/facturas", label: "Facturas", icon: Receipt },
       { to: "/compras/cuentas-por-pagar", label: "CxP", icon: CreditCard },
+    ],
+  },
+  {
+    title: "Ventas",
+    items: [
+      { to: "/ventas/cotizaciones", label: "Cotizaciones", icon: ClipboardList },
+      { to: "/ventas/ordenes", label: "Órdenes", icon: ShoppingBag },
+      { to: "/ventas/facturas", label: "Facturas", icon: Receipt },
+      { to: "/ventas/cuentas-por-cobrar", label: "CxC", icon: Wallet },
     ],
   },
   {
