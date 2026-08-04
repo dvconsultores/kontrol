@@ -7,10 +7,10 @@ La emisión real y la homologación corresponden a Specs posteriores.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, String
+from sqlalchemy import JSON, BigInteger, Date, DateTime, Float, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -77,3 +77,167 @@ class ControlNumberBatch(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     received_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="AVAILABLE")
     counts: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+
+
+# --------------------------------------------------------------------------- #
+# Números de control individuales (007)
+# --------------------------------------------------------------------------- #
+class ControlNumber(UUIDMixin, TimestampMixin, Base):
+    """Número de control individual de un lote (DOC-03 §7/§12)."""
+
+    __tablename__ = "control_numbers"
+
+    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    batch_id: Mapped[str] = mapped_column(ForeignKey("control_number_batches.id"), nullable=False, index=True)
+    value: Mapped[str] = mapped_column(String(32), nullable=False)
+    state: Mapped[str] = mapped_column(String(16), nullable=False, default="AVAILABLE")
+    # AVAILABLE / RESERVED / USED / VOID / LOST / DAMAGED
+    document_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+# --------------------------------------------------------------------------- #
+# Cálculo fiscal y perfiles (007, DOC-03 §10)
+# --------------------------------------------------------------------------- #
+class TaxCalculation(UUIDMixin, TimestampMixin, Base):
+    """Cálculo fiscal por documento/línea con snapshot (FR-007-004)."""
+
+    __tablename__ = "tax_calculations"
+
+    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    document_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    line_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    rule_version_id: Mapped[str | None] = mapped_column(ForeignKey("tax_rule_versions.id"), nullable=True)
+    base: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    rate: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    amount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    rounding: Mapped[float] = mapped_column(Float, nullable=False, default=2.0)
+    snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+
+
+class TaxProfile(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Perfil fiscal por empresa/tercero/rubro (FR-007-003)."""
+
+    __tablename__ = "tax_profiles"
+
+    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    scope: Mapped[str] = mapped_column(String(16), nullable=False)  # COMPANY / PARTY / ITEM
+    party_id: Mapped[str | None] = mapped_column(ForeignKey("parties.id"), nullable=True)
+    item_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    classifications: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+    validity_from: Mapped[date | None] = mapped_column(Date, nullable=True)
+    validity_to: Mapped[date | None] = mapped_column(Date, nullable=True)
+    source: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
+
+
+# --------------------------------------------------------------------------- #
+# Emisión, impresión y notas (007, DOC-03 §7)
+# --------------------------------------------------------------------------- #
+class FiscalDocument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Documento fiscal emitido: envuelve un documento de 004/005 (FR-007-021)."""
+
+    __tablename__ = "fiscal_documents"
+
+    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    business_document: Mapped[str] = mapped_column(String(200), nullable=False, index=True)  # INVOICE:{id}
+    document_type: Mapped[str] = mapped_column(String(32), nullable=False)  # INVOICE / CREDIT_NOTE / DEBIT_NOTE
+    fiscal_mode: Mapped[str] = mapped_column(String(24), nullable=False, default="DIGITAL")
+    series: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    invoice_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    control_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    fiscal_currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
+    exchange_rate_snapshot: Mapped[float | None] = mapped_column(Float, nullable=True)
+    emitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="EMITTED")
+
+
+class PrintEvent(UUIDMixin, TimestampMixin, Base):
+    """Impresión/reimpresión de un documento fiscal (FR-007-022)."""
+
+    __tablename__ = "print_events"
+
+    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    fiscal_document_id: Mapped[str] = mapped_column(ForeignKey("fiscal_documents.id"), nullable=False, index=True)
+    copy_type: Mapped[str] = mapped_column(String(16), nullable=False, default="ORIGINAL")
+    printer: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    user_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    printed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+class CreditDebitNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Nota de crédito/débito con referencia y límites al saldo ajustable (FR-007-030)."""
+
+    __tablename__ = "credit_debit_notes"
+
+    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    fiscal_document_id: Mapped[str | None] = mapped_column(ForeignKey("fiscal_documents.id"), nullable=True)
+    original_document: Mapped[str] = mapped_column(String(200), nullable=False)  # INVOICE:{id}
+    note_type: Mapped[str] = mapped_column(String(16), nullable=False)  # CREDIT / DEBIT
+    cause: Mapped[str] = mapped_column(String(255), nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    base_amount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    tax_amount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    limits: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+    inventory_effect: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    financial_effect: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="EMITTED")
+
+
+# --------------------------------------------------------------------------- #
+# Reglas de retención (007) — las instancias reutilizan 004 `ap_withholdings`
+# --------------------------------------------------------------------------- #
+class WithholdingRule(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Regla de retención IVA/ISLR versionada (FR-007-040)."""
+
+    __tablename__ = "withholding_rules"
+
+    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    tax_type: Mapped[str] = mapped_column(String(16), nullable=False)  # IVA / ISLR
+    concept: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    conditions: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+    base: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    rate: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    minimum: Mapped[float | None] = mapped_column(Float, nullable=True)
+    subtractor: Mapped[float | None] = mapped_column(Float, nullable=True)
+    validity: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
+
+
+# --------------------------------------------------------------------------- #
+# Períodos y declaraciones (007) — libros como vista reconstruible
+# --------------------------------------------------------------------------- #
+class FiscalPeriod(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Período fiscal con cierre/reapertura aprobados (FR-007-051)."""
+
+    __tablename__ = "fiscal_periods"
+
+    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    tax_type: Mapped[str] = mapped_column(String(24), nullable=False)  # IVA / ISLR / IGTF / RETENCION
+    period_key: Mapped[str] = mapped_column(String(12), nullable=False)  # 2026-01
+    start: Mapped[date | None] = mapped_column(Date, nullable=True)
+    end: Mapped[date | None] = mapped_column(Date, nullable=True)
+    deadlines: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="OPEN")
+    approvals: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+
+
+class TaxReturnBatch(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Lote de declaración fiscal (FR-007-052)."""
+
+    __tablename__ = "tax_return_batches"
+
+    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    tax_type: Mapped[str] = mapped_column(String(24), nullable=False)
+    period: Mapped[str] = mapped_column(String(12), nullable=False)
+    files: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+    totals: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+    submission: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+    payment: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+    reconciliation: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
+

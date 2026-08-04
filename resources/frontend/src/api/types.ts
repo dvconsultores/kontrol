@@ -591,3 +591,148 @@ export interface ExecutionResult {
   currency: string;
 }
 
+// ---------------------------------------------------------------------------
+// Núcleo fiscal (007-nucleo-fiscal)
+// ---------------------------------------------------------------------------
+export interface LegalSourceSummary {
+  id: string;
+  authority: string;
+  source_type: string;
+  number: string | null;
+  gazette: string | null;
+  status: string;
+}
+
+export interface TaxRuleSummary {
+  id: string;
+  tax_code: string;
+  version: number;
+  effective_from: string | null;
+  effective_to: string | null;
+  rate: unknown;
+  fiscal_release: string | null;
+  status: string;
+}
+
+export interface NumberSeriesSummary {
+  id: string;
+  establishment_id: string | null;
+  document_type: string;
+  prefix: string | null;
+  next_number: number;
+  validity: unknown;
+}
+
+export interface ControlBatchSummary {
+  id: string;
+  establishment_id: string | null;
+  printer: string | null;
+  range_from: string;
+  range_to: string;
+  status: string;
+  counts: unknown;
+}
+
+export interface ControlNumberSummary {
+  id: string;
+  batch_id: string;
+  value: string;
+  state: string;
+  document_ref: string | null;
+}
+
+export interface FiscalDocumentSummary {
+  id: string;
+  business_document: string;
+  document_type: string;
+  series: string | null;
+  invoice_number: string | null;
+  control_number: string | null;
+  fiscal_currency: string;
+  emitted_at: string | null;
+  hash: string | null;
+  status: string;
+}
+
+export interface FiscalDocumentDetail extends FiscalDocumentSummary {
+  exchange_rate_snapshot: number | null;
+  prints: Array<{
+    id: string;
+    copy_type: string;
+    printer: string | null;
+    user_id: string | null;
+    printed_at: string | null;
+    reason: string | null;
+  }>;
+}
+
+export interface CreditDebitNoteSummary {
+  id: string;
+  original_document: string;
+  note_type: string;
+  cause: string;
+  amount: number;
+  status: string;
+}
+
+export interface WithholdingRuleSummary {
+  id: string;
+  tax_type: string;
+  code: string;
+  concept: string | null;
+  rate: number;
+  minimum: number | null;
+  subtractor: number | null;
+  status: string;
+}
+
+export interface WithholdingSummary {
+  id: string;
+  party_id: string;
+  tax_type: string;
+  rule_ref: string | null;
+  base: number;
+  amount: number;
+  period: string | null;
+  certificate: string | null;
+  status: string;
+}
+
+export interface FiscalPeriodSummary {
+  id: string;
+  tax_type: string;
+  period_key: string;
+  start: string | null;
+  end: string | null;
+  status: string;
+  approvals: unknown;
+}
+
+export interface TaxReturnBatchSummary {
+  id: string;
+  tax_type: string;
+  period: string;
+  status: string;
+}
+
+export interface BookRow {
+  document?: string;
+  number?: string | null;
+  series?: string | null;
+  control?: string | null;
+  total?: number;
+  bolivares?: number;
+  amount?: number;
+  igft_amount?: number;
+  base?: number;
+  [key: string]: unknown;
+}
+
+export interface BookResult {
+  tax_type: string;
+  period: string;
+  count: number;
+  total: number;
+  rows: BookRow[];
+}
+

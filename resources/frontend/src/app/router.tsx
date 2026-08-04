@@ -39,6 +39,12 @@ import { IgftPage } from "@/modules/tesoreria/igft/IgftPage";
 import { IngresosEgresosPage } from "@/modules/tesoreria/ingresos-egresos/IngresosEgresosPage";
 import { MaestrosPage } from "@/modules/tesoreria/maestros/MaestrosPage";
 import { TransferenciasPage as TesoreriaTransferenciasPage } from "@/modules/tesoreria/transferencias/TransferenciasPage";
+import { ConfiguracionPage } from "@/modules/fiscal/configuracion/ConfiguracionPage";
+import { EmisionPage } from "@/modules/fiscal/emision/EmisionPage";
+import { LibrosPage } from "@/modules/fiscal/libros/LibrosPage";
+import { NotasPage } from "@/modules/fiscal/notas/NotasPage";
+import { NumeracionPage } from "@/modules/fiscal/numeracion/NumeracionPage";
+import { RetencionesPage } from "@/modules/fiscal/retenciones/RetencionesPage";
 
 export const router = createBrowserRouter([
   {
@@ -87,6 +93,12 @@ export const router = createBrowserRouter([
           { path: "tesoreria/conciliacion", element: <ConciliacionPage /> },
           { path: "tesoreria/igft", element: <IgftPage /> },
           { path: "tesoreria/maestros", element: <MaestrosPage /> },
+          { path: "fiscal/configuracion", element: <ConfiguracionPage /> },
+          { path: "fiscal/numeracion", element: <NumeracionPage /> },
+          { path: "fiscal/emision", element: <EmisionPage /> },
+          { path: "fiscal/notas", element: <NotasPage /> },
+          { path: "fiscal/retenciones", element: <RetencionesPage /> },
+          { path: "fiscal/libros", element: <LibrosPage /> },
           { path: "auditoria", element: <AuditoriaPage /> },
           { path: "diagnostico", element: <DiagnosticoPage /> },
           { path: "forbidden", element: <ForbiddenState /> },

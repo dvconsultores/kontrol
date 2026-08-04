@@ -15,6 +15,7 @@ from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import LicenseMiddleware, RequestIDMiddleware
 from app.modules.audit.api import router as audit_router
+from app.modules.fiscal.api import router as fiscal_router
 from app.modules.identity_access.api import router as auth_router
 from app.modules.identity_access.api import users_router
 from app.modules.inventory.api import router as inventory_router
@@ -78,6 +79,7 @@ def create_app() -> FastAPI:
     app.include_router(purchasing_router, prefix=prefix)
     app.include_router(sales_router, prefix=prefix)
     app.include_router(treasury_router, prefix=prefix)
+    app.include_router(fiscal_router, prefix=prefix)
     app.include_router(audit_router, prefix=prefix)
 
     @app.get("/")

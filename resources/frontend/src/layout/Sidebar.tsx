@@ -1,11 +1,13 @@
 /** Sidebar — navegación colapsable (DOC-08 §5). */
 import {
   ArrowLeftRight,
+  BookOpen,
   Boxes,
   ClipboardCheck,
   ClipboardList,
   CreditCard,
   FileText,
+  Hash,
   Home,
   LayoutDashboard,
   Lock,
@@ -18,6 +20,7 @@ import {
   ShieldCheck,
   ShoppingCart,
   ShoppingBag,
+  StickyNote,
   Tags,
   Users,
   Wallet,
@@ -91,6 +94,17 @@ const navSections = [
       { to: "/tesoreria/conciliacion", label: "Conciliación", icon: ClipboardCheck },
       { to: "/tesoreria/igft", label: "IGTF", icon: Percent },
       { to: "/tesoreria/maestros", label: "Maestros", icon: Settings },
+    ],
+  },
+  {
+    title: "Fiscal",
+    items: [
+      { to: "/fiscal/configuracion", label: "Configuración", icon: Settings },
+      { to: "/fiscal/numeracion", label: "Numeración", icon: Hash },
+      { to: "/fiscal/emision", label: "Emisión", icon: FileText },
+      { to: "/fiscal/notas", label: "Notas", icon: StickyNote },
+      { to: "/fiscal/retenciones", label: "Retenciones", icon: Percent },
+      { to: "/fiscal/libros", label: "Libros y períodos", icon: BookOpen },
     ],
   },
   {

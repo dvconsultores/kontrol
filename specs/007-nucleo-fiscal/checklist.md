@@ -31,38 +31,38 @@
 ## 2. Implementación (post-autorización)
 
 ### 2.1 Reglas fiscales (F1)
-- [ ] Modelos `legal_sources`, `tax_rule_versions`, `tax_profiles`, `tax_calculations`.
-- [ ] API de reglas + registro en `database.py`/`main.py`.
+- [x] Modelos `legal_sources`, `tax_rule_versions`, `tax_profiles`, `tax_calculations` (extiende 001).
+- [x] API de reglas + registro en `database.py`/`main.py`.
 
 ### 2.2 Numeración y control (F2)
-- [ ] Modelos `fiscal_number_series`, `control_number_batches`, `control_numbers`.
-- [ ] Asignación atómica de correlativo y control (lock/transacción).
+- [x] Modelos `fiscal_number_series`, `control_number_batches` (001) + `control_numbers` (007).
+- [x] Asignación atómica de correlativo y control (lock/transacción).
 
 ### 2.3 Emisión e impresión (F3)
-- [ ] Modelos `fiscal_documents`, `print_events`.
-- [ ] Emisión consume correlativo + control en transacción atómica con `hash`.
+- [x] Modelos `fiscal_documents`, `print_events`.
+- [x] Emisión consume correlativo + control en transacción atómica con `hash` (idempotente).
 
 ### 2.4 Notas fiscales (F4)
-- [ ] Modelo `credit_debit_notes` con límites al saldo ajustable.
+- [x] Modelo `credit_debit_notes` con límites al saldo ajustable.
 
 ### 2.5 Retenciones (F5)
-- [ ] Modelos `withholding_rules`, `withholdings` con ciclo completo.
+- [x] Modelo `withholding_rules`; instancias reutilizan 004 `ap_withholdings` con ciclo completo.
 
 ### 2.6 Períodos, declaraciones y libros (F6)
-- [ ] Modelos `fiscal_periods`, `tax_return_batches`.
-- [ ] Libros reconstruibles desde documentos/eventos (vista).
+- [x] Modelos `fiscal_periods`, `tax_return_batches`.
+- [x] Libros reconstruibles desde documentos/eventos (ventas, compras, retenciones, IGTF).
 
 ### 2.7 Migración e integración (F7)
-- [ ] Migración Alembic `0007_nucleo_fiscal` (head).
-- [ ] Contract tests con 004/005/006 (facturas, retenciones, eventos IGTF).
+- [x] Migración Alembic `0007_nucleo_fiscal` (head).
+- [x] Contract tests con 004/005/006 (facturas, retenciones, eventos IGTF).
 
 ### 2.8 Frontend (F8)
-- [ ] Páginas fiscal: configuración, numeración/control, emisión, impresión, retenciones, libros.
-- [ ] Tipos en `src/api/types.ts`, sidebar, router.
+- [x] Páginas fiscal: configuración, numeración/control, emisión, notas, retenciones, libros.
+- [x] Tipos en `src/api/types.ts`, sidebar, router.
 
 ### 2.9 Convergencia (F9)
-- [ ] Gates verdes (pytest, ruff, mypy, tsc, eslint, vitest, build).
-- [ ] `convergence.md` + evidencia + commit `feat(007)`.
+- [x] Gates verdes (pytest 130/130, ruff, mypy, tsc, eslint, vitest, build).
+- [x] `convergence.md` + evidencia + commit `feat(007)`.
 
 ## 3. Criterios de aceptación de entrada (fase documental)
 

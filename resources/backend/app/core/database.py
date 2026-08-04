@@ -67,6 +67,7 @@ def init_models() -> None:
     """Importa todos los modelos para registrar metadata (usado por Alembic autogenerate)."""
     from app.modules import (  # noqa: F401
         audit,
+        fiscal,
         identity_access,
         inventory,
         licensing,
