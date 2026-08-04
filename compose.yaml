@@ -1,14 +1,15 @@
-# KONTROL - Compose de producción (ADR-002, DOC-08 §19)
-# Instalación independiente por cliente. Imágenes versionadas (nunca latest).
-# Volúmenes nominales: db, storage, license-state, backups.
+# KONTROL - Compose de instalación por cliente (ADR-002, DOC-08 §19).
+# Un solo compose para todos los entornos: cambie la etiqueta de imagen
+# (KONTROL_IMAGE_TAG) entre "develop" y "main" y ajuste las variables.
+# La base de datos es EXTERNA (cada cliente la suya) vía KONTROL_DB_URL.
+# Las migraciones (iniciales y futuras) se aplican automáticamente al
+# arrancar el backend (alembic upgrade head en el entrypoint).
 
 name: kontrol
 
 services:
   reverse-proxy:
-    build:
-      context: .
-      dockerfile: Dockerfile.nginx
+    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-nginx:${KONTROL_IMAGE_TAG:-develop}
     container_name: kontrol-proxy
     restart: unless-stopped
     ports:
@@ -27,11 +28,7 @@ services:
       - /var/run
 
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-      args:
-        VITE_API_BASE: "/api/v1"
+    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-frontend:${KONTROL_IMAGE_TAG:-develop}
     container_name: kontrol-web
     restart: unless-stopped
     healthcheck:
@@ -45,14 +42,12 @@ services:
       - kontrol-net
 
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
+    image: ${KONTROL_IMAGE_REGISTRY:-kontrol}/kontrol-backend:${KONTROL_IMAGE_TAG:-develop}
     container_name: kontrol-api
     restart: unless-stopped
     environment:
       KONTROL_ENVIRONMENT: "${KONTROL_ENVIRONMENT:-prod}"
-      KONTROL_DB_URL: "postgresql+psycopg2://${KONTROL_DB_USER:-kontrol}:${KONTROL_DB_PASSWORD}@db:5432/${KONTROL_DB_NAME:-kontrol}"
+      KONTROL_DB_URL: "${KONTROL_DB_URL:?KONTROL_DB_URL es obligatoria (base de datos externa)}"
       KONTROL_SECRET_KEY: "${KONTROL_SECRET_KEY:?KONTROL_SECRET_KEY es obligatoria}"
       KONTROL_COOKIE_SECURE: "true"
       KONTROL_CORS_ORIGINS: "${KONTROL_CORS_ORIGINS:-https://localhost}"
@@ -70,32 +65,10 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - kontrol-net
-
-  db:
-    image: postgres:18-alpine
-    container_name: kontrol-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: "${KONTROL_DB_USER:-kontrol}"
-      POSTGRES_PASSWORD: "${KONTROL_DB_PASSWORD:?KONTROL_DB_PASSWORD es obligatoria}"
-      POSTGRES_DB: "${KONTROL_DB_NAME:-kontrol}"
-    volumes:
-      - kontrol-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${KONTROL_DB_USER:-kontrol} -d ${KONTROL_DB_NAME:-kontrol}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - kontrol-net
 
 volumes:
-  kontrol-db-data:
   kontrol-storage:
   kontrol-license-state:
   kontrol-backups:
@@ -103,4 +76,5 @@ volumes:
 networks:
   kontrol-net:
     driver: bridge
-    internal: true
+    # La base de datos es externa: el backend necesita salida de red para
+    # alcanzar el host PostgreSQL del cliente (red interna no aislada).

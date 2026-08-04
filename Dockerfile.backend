@@ -22,10 +22,12 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY resources/backend/app ./app
 COPY resources/backend/alembic ./alembic
 COPY resources/backend/alembic.ini ./alembic.ini
+COPY resources/backend/scripts/entrypoint.sh ./entrypoint.sh
 
 # Usuario no root (seguridad de imagen, DOC-08 §19).
 RUN useradd --system --uid 10001 kontrol && mkdir -p /data/license-state /data/storage /data/backups \
-    && chown -R kontrol:kontrol /data /app
+    && chown -R kontrol:kontrol /data /app \
+    && chmod +x /app/entrypoint.sh
 USER kontrol
 
 EXPOSE 8000
@@ -33,6 +35,8 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live')" || exit 1
 
+# Migraciones automáticas al arranque (base externa por cliente) + API.
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # --- Target de desarrollo: hot reload con dependencias de prueba ----------

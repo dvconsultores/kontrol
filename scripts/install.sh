@@ -13,8 +13,9 @@ fi
 echo "1/4 Preflight"
 python3 kontrol.py preflight
 
-echo "2/4 Levantar pila"
-docker compose -f compose.yaml up -d --build
+echo "2/4 Descargar imágenes y levantar pila (migraciones automáticas al arrancar)"
+docker compose -f compose.yaml pull
+docker compose -f compose.yaml up -d
 
 echo "3/4 Esperar health"
 sleep 10
