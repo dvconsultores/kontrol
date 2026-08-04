@@ -59,6 +59,84 @@ export interface SetupStatus {
   initialized: boolean;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Maestros (002-maestros)                                                     */
+/* -------------------------------------------------------------------------- */
+
+export interface AllowedActions {
+  view: boolean;
+  edit: boolean;
+  activate: boolean;
+  deactivate: boolean;
+  delete: boolean;
+  approve?: boolean;
+  audit?: boolean;
+  print?: boolean;
+  export?: boolean;
+}
+
+export interface Party {
+  id: string;
+  code: string;
+  name: string;
+  person_type: string;
+  legal_name: string | null;
+  trade_name: string | null;
+  tax_id: string | null;
+  roles: string[];
+  status: string;
+  allowed_actions: AllowedActions;
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface CatalogItemSummary {
+  id: string;
+  code: string;
+  name: string;
+  item_type: "PRODUCT" | "SERVICE";
+  status: string;
+  allowed_actions: AllowedActions;
+}
+
+export interface CatalogItemSearchResult {
+  id: string;
+  code: string;
+  name: string;
+  item_type: "PRODUCT" | "SERVICE";
+}
+
+export interface TaxonomyNode {
+  id: string;
+  code: string;
+  name: string;
+  level: string;
+  status: string;
+}
+
+export interface UnitOfMeasure {
+  id: string;
+  code: string;
+  name: string;
+  symbol: string;
+  dimension: string;
+}
+
+export interface ProfileSummary {
+  id: string;
+  code: string;
+  name: string;
+  profile_type: string;
+  version: number;
+  status: string;
+  approval_status: string;
+}
+
 export interface HealthResponse {
   status: "ok" | "degraded";
   services: Record<string, string>;

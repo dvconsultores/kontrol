@@ -1,5 +1,16 @@
 /** Sidebar — navegación colapsable (DOC-08 §5). */
-import { Boxes, FileText, Home, LayoutDashboard, Lock, Settings, ShieldCheck, Users } from "lucide-react";
+import {
+  Boxes,
+  FileText,
+  Home,
+  LayoutDashboard,
+  Lock,
+  Package,
+  Settings,
+  ShieldCheck,
+  Tags,
+  Users,
+} from "lucide-react";
 import { NavLink } from "react-router";
 import { useState } from "react";
 
@@ -19,6 +30,15 @@ const navSections = [
       { to: "/organizacion/empresas", label: "Empresas", icon: Home },
       { to: "/organizacion/sucursales", label: "Sucursales", icon: Boxes },
       { to: "/organizacion/almacenes", label: "Almacenes", icon: Boxes },
+    ],
+  },
+  {
+    title: "Maestros",
+    items: [
+      { to: "/maestros/terceros", label: "Terceros", icon: Users },
+      { to: "/maestros/productos", label: "Productos", icon: Package },
+      { to: "/maestros/servicios", label: "Servicios", icon: Tags },
+      { to: "/maestros/catalogos", label: "Catálogo", icon: Tags },
     ],
   },
   {

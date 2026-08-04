@@ -19,6 +19,7 @@ from app.modules.identity_access.api import router as auth_router
 from app.modules.identity_access.api import users_router
 from app.modules.licensing import service as licensing_service
 from app.modules.licensing.api import router as license_router
+from app.modules.master_data.api import router as master_data_router
 from app.modules.organization.api import router as organization_router
 from app.modules.setup.api import router as setup_router
 from app.modules.system.api import router as system_router
@@ -68,6 +69,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, prefix=prefix)
     app.include_router(users_router, prefix=prefix)
     app.include_router(organization_router, prefix=prefix)
+    app.include_router(master_data_router, prefix=prefix)
     app.include_router(audit_router, prefix=prefix)
 
     @app.get("/")

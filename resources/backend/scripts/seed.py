@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sqlalchemy import select  # noqa: E402
 
 from app.core.database import Base, get_engine, get_session_factory, init_models  # noqa: E402
+from app.modules.master_data.models import UnitOfMeasure  # noqa: E402
 from app.modules.system.models import FeatureFlag, SystemSetting  # noqa: E402
 
 FEATURE_FLAGS = [
@@ -22,6 +23,18 @@ FEATURE_FLAGS = [
     ("fiscal_emission", "Deshabilitado en fundación: emisión fiscal fuera de alcance"),
     ("document_storage", "Almacenamiento documental local activo"),
     ("notifications_email", "Notificaciones por correo (SMTP diferido)"),
+]
+
+# Unidades de medida base (002-maestros, FR-002-030). Globales (company_id=None).
+BASE_UNITS = [
+    {"code": "UND", "name": "Unidad", "dimension": "CANTIDAD", "symbol": "u", "decimals": 2},
+    {"code": "KG", "name": "Kilogramo", "dimension": "MASA", "symbol": "kg", "decimals": 3},
+    {"code": "G", "name": "Gramo", "dimension": "MASA", "symbol": "g", "decimals": 2},
+    {"code": "LT", "name": "Litro", "dimension": "VOLUMEN", "symbol": "L", "decimals": 3},
+    {"code": "ML", "name": "Mililitro", "dimension": "VOLUMEN", "symbol": "mL", "decimals": 2},
+    {"code": "HORA", "name": "Hora", "dimension": "TIEMPO", "symbol": "h", "decimals": 2},
+    {"code": "DIA", "name": "Día", "dimension": "TIEMPO", "symbol": "d", "decimals": 0},
+    {"code": "CJA", "name": "Caja", "dimension": "EMPAQUE", "symbol": "cja", "decimals": 0},
 ]
 
 
@@ -50,9 +63,17 @@ def seed() -> None:
             db.add(SystemSetting(key=key, value=value, updated_by="seed", created_by="seed"))
             created_settings += 1
 
+    # Unidades de medida base (idempotente).
+    created_units = 0
+    for u in BASE_UNITS:
+        exists = db.execute(select(UnitOfMeasure).where(UnitOfMeasure.code == u["code"], UnitOfMeasure.company_id.is_(None))).scalars().first()
+        if not exists:
+            db.add(UnitOfMeasure(company_id=None, status="ACTIVE", created_by="seed", **u))
+            created_units += 1
+
     db.commit()
     db.close()
-    print(f"Seed OK: {created_flags} feature flags, {created_settings} settings (0 = ya existían / idempotente)")
+    print(f"Seed OK: {created_flags} flags, {created_settings} settings, {created_units} unidades (0 = ya existían / idempotente)")
 
 
 if __name__ == "__main__":

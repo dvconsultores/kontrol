@@ -14,6 +14,11 @@ import { EmpresasPage } from "@/pages/EmpresasPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { MiLicenciaPage } from "@/pages/MiLicenciaPage";
 import { SetupPage } from "@/pages/SetupPage";
+import { CatalogosPage } from "@/modules/maestros/catalogos/CatalogosPage";
+import { ProductosPage } from "@/modules/maestros/productos/ProductosPage";
+import { ProductoNuevoPage } from "@/modules/maestros/productos/ProductoNuevoPage";
+import { ServiciosPage } from "@/modules/maestros/servicios/ServiciosPage";
+import { TercerosPage } from "@/modules/maestros/terceros/TercerosPage";
 
 export const router = createBrowserRouter([
   {
@@ -37,6 +42,11 @@ export const router = createBrowserRouter([
           { path: "mi-licencia", element: <MiLicenciaPage /> },
           { path: "cambiar-contrasena", element: <CambiarContrasenaPage /> },
           { path: "organizacion/empresas", element: <EmpresasPage /> },
+          { path: "maestros/terceros", element: <TercerosPage /> },
+          { path: "maestros/productos", element: <ProductosPage /> },
+          { path: "maestros/productos/nuevo", element: <ProductoNuevoPage /> },
+          { path: "maestros/servicios", element: <ServiciosPage /> },
+          { path: "maestros/catalogos", element: <CatalogosPage /> },
           { path: "auditoria", element: <AuditoriaPage /> },
           { path: "diagnostico", element: <DiagnosticoPage /> },
           { path: "forbidden", element: <ForbiddenState /> },
