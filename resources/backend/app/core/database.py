@@ -68,6 +68,7 @@ def init_models() -> None:
     from app.modules import (  # noqa: F401
         audit,
         identity_access,
+        inventory,
         licensing,
         master_data,
         organization,

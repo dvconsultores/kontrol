@@ -1,15 +1,18 @@
 /** Sidebar — navegación colapsable (DOC-08 §5). */
 import {
   Boxes,
+  ClipboardList,
   FileText,
   Home,
   LayoutDashboard,
   Lock,
   Package,
+  Scale,
   Settings,
   ShieldCheck,
   Tags,
   Users,
+  Warehouse,
 } from "lucide-react";
 import { NavLink } from "react-router";
 import { useState } from "react";
@@ -39,6 +42,16 @@ const navSections = [
       { to: "/maestros/productos", label: "Productos", icon: Package },
       { to: "/maestros/servicios", label: "Servicios", icon: Tags },
       { to: "/maestros/catalogos", label: "Catálogo", icon: Tags },
+    ],
+  },
+  {
+    title: "Inventario",
+    items: [
+      { to: "/inventario/existencias", label: "Existencias", icon: Warehouse },
+      { to: "/inventario/kardex", label: "Kardex", icon: ClipboardList },
+      { to: "/inventario/transferencias", label: "Transferencias", icon: Boxes },
+      { to: "/inventario/conteos", label: "Conteos", icon: Scale },
+      { to: "/inventario/ajustes", label: "Ajustes", icon: FileText },
     ],
   },
   {

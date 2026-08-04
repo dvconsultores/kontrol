@@ -19,6 +19,11 @@ import { ProductosPage } from "@/modules/maestros/productos/ProductosPage";
 import { ProductoNuevoPage } from "@/modules/maestros/productos/ProductoNuevoPage";
 import { ServiciosPage } from "@/modules/maestros/servicios/ServiciosPage";
 import { TercerosPage } from "@/modules/maestros/terceros/TercerosPage";
+import { AjustesPage } from "@/modules/inventario/ajustes/AjustesPage";
+import { ConteosPage } from "@/modules/inventario/conteos/ConteosPage";
+import { ExistenciasPage } from "@/modules/inventario/existencias/ExistenciasPage";
+import { KardexPage } from "@/modules/inventario/kardex/KardexPage";
+import { TransferenciasPage } from "@/modules/inventario/transferencias/TransferenciasPage";
 
 export const router = createBrowserRouter([
   {
@@ -47,6 +52,11 @@ export const router = createBrowserRouter([
           { path: "maestros/productos/nuevo", element: <ProductoNuevoPage /> },
           { path: "maestros/servicios", element: <ServiciosPage /> },
           { path: "maestros/catalogos", element: <CatalogosPage /> },
+          { path: "inventario/existencias", element: <ExistenciasPage /> },
+          { path: "inventario/kardex", element: <KardexPage /> },
+          { path: "inventario/transferencias", element: <TransferenciasPage /> },
+          { path: "inventario/conteos", element: <ConteosPage /> },
+          { path: "inventario/ajustes", element: <AjustesPage /> },
           { path: "auditoria", element: <AuditoriaPage /> },
           { path: "diagnostico", element: <DiagnosticoPage /> },
           { path: "forbidden", element: <ForbiddenState /> },
