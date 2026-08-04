@@ -64,21 +64,25 @@ def get_db() -> Generator[Session]:
 
 
 def init_models() -> None:
-    """Importa todos los modelos para registrar metadata (usado por Alembic autogenerate)."""
-    from app.modules import (  # noqa: F401
-        audit,
-        fiscal,
-        identity_access,
-        inventory,
-        licensing,
-        master_data,
-        organization,
-        purchasing,
-        regulatory,
-        sales,
-        system,
-        treasury,
-    )
+    """Importa todos los modelos para registrar metadata (usado por Alembic autogenerate y tests).
+
+    Importa explícitamente cada submódulo `models` para garantizar que las
+    tablas queden registradas en `Base.metadata` (los `__init__.py` de módulo
+    no importan modelos).
+    """
+    import app.modules.audit.models  # noqa: F401
+    import app.modules.fiscal.models  # noqa: F401
+    import app.modules.identity_access.models  # noqa: F401
+    import app.modules.inventory.models  # noqa: F401
+    import app.modules.licensing.models  # noqa: F401
+    import app.modules.master_data.models  # noqa: F401
+    import app.modules.organization.models  # noqa: F401
+    import app.modules.purchasing.models  # noqa: F401
+    import app.modules.regulatory.models  # noqa: F401
+    import app.modules.reporting.models  # noqa: F401
+    import app.modules.sales.models  # noqa: F401
+    import app.modules.system.models  # noqa: F401
+    import app.modules.treasury.models  # noqa: F401
 
 
 # Re-export para conveniencia de módulos

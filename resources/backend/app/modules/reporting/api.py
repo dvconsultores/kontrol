@@ -1,0 +1,120 @@
+"""API de reportes y auditoría (009).
+
+Endpoints REST `/reporting/*` (solo lectura salvo exportaciones/jobs) con las
+convenciones heredadas.
+"""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.core.dependencies import get_current_user, require_permission, require_write_allowed
+from app.modules.identity_access.models import User
+from app.modules.reporting import service as reporting_service
+from app.modules.reporting.models import ReportExport, ReportJob
+
+router = APIRouter(prefix="/reporting", tags=["reportes"])
+
+
+class ExportCreate(BaseModel):
+    report_key: str = Field(min_length=1, max_length=64)
+    format: str = "CSV"
+    filters: dict | None = None
+
+
+class JobCreate(BaseModel):
+    report_key: str = Field(min_length=1, max_length=64)
+    params: dict | None = None
+
+
+# --------------------------------------------------------------------------- #
+# Dashboard
+# --------------------------------------------------------------------------- #
+@router.get("/dashboard")
+def get_dashboard(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    return reporting_service.dashboard(db, company_id=user.tenant_id)
+
+
+# --------------------------------------------------------------------------- #
+# Reportes
+# --------------------------------------------------------------------------- #
+@router.get("/reports/{key}")
+def get_report(key: str, period: str = "0", db: Session = Depends(get_db),
+               user: User = Depends(get_current_user)):
+    return reporting_service.report(db, company_id=user.tenant_id, key=key, period=period)
+
+
+# --------------------------------------------------------------------------- #
+# Exportación auditada
+# --------------------------------------------------------------------------- #
+@router.post("/exports", dependencies=[Depends(require_write_allowed)])
+def create_export(body: ExportCreate, db: Session = Depends(get_db),
+                  actor: User = Depends(require_permission("reportes", "export"))):
+    export = reporting_service.create_export(db, company_id=actor.tenant_id, report_key=body.report_key,
+                                             fmt=body.format, filters=body.filters, actor=str(actor.id))
+    db.commit()
+    db.refresh(export)
+    return {"id": export.id, "report_key": export.report_key, "format": export.format,
+            "file_ref": export.file_ref, "exported_by": export.exported_by, "status": export.status}
+
+
+@router.get("/exports")
+def list_exports(report_key: str | None = None, db: Session = Depends(get_db),
+                 user: User = Depends(get_current_user)):
+    query = select(ReportExport).where(ReportExport.company_id == user.tenant_id)
+    if report_key:
+        query = query.where(ReportExport.report_key == report_key)
+    items = db.execute(query.order_by(ReportExport.exported_at.desc())).scalars().all()
+    return {"items": [{"id": e.id, "report_key": e.report_key, "format": e.format, "file_ref": e.file_ref,
+                       "exported_by": e.exported_by, "exported_at": e.exported_at.isoformat() if e.exported_at else None,
+                       "status": e.status} for e in items], "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+# --------------------------------------------------------------------------- #
+# Trabajos asíncronos
+# --------------------------------------------------------------------------- #
+@router.post("/jobs", dependencies=[Depends(require_write_allowed)])
+def create_job(body: JobCreate, db: Session = Depends(get_db),
+               actor: User = Depends(require_permission("reportes", "export"))):
+    job = reporting_service.create_job(db, company_id=actor.tenant_id, report_key=body.report_key,
+                                       params=body.params, actor=str(actor.id))
+    db.commit()
+    db.refresh(job)
+    return {"id": job.id, "report_key": job.report_key, "status": job.status}
+
+
+@router.post("/jobs/{job_id}/run", dependencies=[Depends(require_write_allowed)])
+def run_job(job_id: str, db: Session = Depends(get_db),
+            actor: User = Depends(require_permission("reportes", "export"))):
+    job = reporting_service.run_job(db, company_id=actor.tenant_id, job_id=job_id)
+    db.commit()
+    db.refresh(job)
+    return {"id": job.id, "report_key": job.report_key, "status": job.status, "error": job.error,
+            "result_ref": job.result_ref}
+
+
+@router.get("/jobs/{job_id}")
+def get_job(job_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    job = db.get(ReportJob, job_id)
+    if not job or job.company_id != user.tenant_id:
+        from app.core.errors import NotFoundError
+
+        raise NotFoundError(code="JOB_NOT_FOUND", message="Trabajo no encontrado")
+    return {"id": job.id, "report_key": job.report_key, "status": job.status, "error": job.error,
+            "result_ref": job.result_ref}
+
+
+# --------------------------------------------------------------------------- #
+# Auditoría
+# --------------------------------------------------------------------------- #
+@router.get("/audit/timeline")
+def get_audit_timeline(entity_type: str | None = None, action: str | None = None,
+                       user_id: str | None = None, db: Session = Depends(get_db),
+                       user: User = Depends(get_current_user)):
+    items = reporting_service.audit_timeline(db, company_id=user.tenant_id, entity_type=entity_type,
+                                             action=action, user_id=user_id)
+    return {"items": items, "total": len(items), "page": 1, "page_size": len(items) or 1}

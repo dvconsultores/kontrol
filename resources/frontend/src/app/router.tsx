@@ -49,6 +49,9 @@ import { EvaluacionPage } from "@/modules/regulatorio/evaluacion/EvaluacionPage"
 import { OrganismosPage } from "@/modules/regulatorio/organismos/OrganismosPage";
 import { PermisosPage } from "@/modules/regulatorio/permisos/PermisosPage";
 import { VehiculosPage } from "@/modules/regulatorio/vehiculos/VehiculosPage";
+import { ReportesAuditoriaPage } from "@/modules/reportes/auditoria/ReportesAuditoriaPage";
+import { CentroReportesPage } from "@/modules/reportes/centro/CentroReportesPage";
+import { ExportacionesPage } from "@/modules/reportes/exportaciones/ExportacionesPage";
 
 export const router = createBrowserRouter([
   {
@@ -107,6 +110,9 @@ export const router = createBrowserRouter([
           { path: "regulatorio/vehiculos", element: <VehiculosPage /> },
           { path: "regulatorio/permisos", element: <PermisosPage /> },
           { path: "regulatorio/evaluacion", element: <EvaluacionPage /> },
+          { path: "reportes/centro", element: <CentroReportesPage /> },
+          { path: "reportes/exportaciones", element: <ExportacionesPage /> },
+          { path: "reportes/auditoria", element: <ReportesAuditoriaPage /> },
           { path: "auditoria", element: <AuditoriaPage /> },
           { path: "diagnostico", element: <DiagnosticoPage /> },
           { path: "forbidden", element: <ForbiddenState /> },

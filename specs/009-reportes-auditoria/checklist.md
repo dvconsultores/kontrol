@@ -31,30 +31,31 @@
 ## 2. Implementación (post-autorización)
 
 ### 2.1 Dashboard (F1)
-- [ ] Endpoint agregado de indicadores y vencimientos (solo lectura).
+- [x] Endpoint agregado de indicadores y vencimientos (solo lectura).
 
 ### 2.2 Reportes ejecutivos/operativos/financieros (F2)
-- [ ] Endpoints agregados sobre 003/004/005/006.
+- [x] Endpoints agregados sobre 003/004/005/006.
 
 ### 2.3 Reportes fiscales y regulatorios (F3)
-- [ ] Reutiliza libros de 007 y evaluaciones/permisos de 008.
+- [x] Reutiliza libros de 007 y evaluaciones/permisos de 008.
 
 ### 2.4 Exportación auditada (F4)
-- [ ] Modelo `report_exports` + exportación CSV/PDF con registro de evento.
+- [x] Modelo `report_exports` + exportación CSV/PDF con registro de evento.
 
 ### 2.5 Trabajos asíncronos (F5)
-- [ ] Modelo `report_jobs` con estado/error.
+- [x] Modelo `report_jobs` con estado/error.
 
 ### 2.6 Migración (F6)
-- [ ] Migración Alembic `0009_reportes` (head).
+- [x] Migración Alembic `0009_reportes` (head).
 
 ### 2.7 Frontend (F7)
-- [ ] Páginas: dashboard y centro de reportes con filtros y exportación.
-- [ ] Tipos en `src/api/types.ts`, sidebar, router.
+- [x] Páginas: dashboard enriquecido y centro de reportes con filtros y exportación; exportaciones; auditoría.
+- [x] Tipos en `src/api/types.ts`, sidebar, router.
 
 ### 2.8 Convergencia (F8)
-- [ ] Gates verdes (pytest, ruff, mypy, tsc, eslint, vitest, build).
-- [ ] `convergence.md` + evidencia + commit `feat(009)`.
+- [x] Gates verdes (pytest 158/158, ruff, mypy, tsc, eslint, vitest, build).
+- [x] `convergence.md` + evidencia + commit `feat(009)`.
+- [x] Fix estructural: `init_models()` importa los `models.py` de todos los módulos.
 
 ## 3. Criterios de aceptación de entrada (fase documental)
 

@@ -856,3 +856,63 @@ export interface EvaluationResult {
   status: string;
 }
 
+// ---------------------------------------------------------------------------
+// Reportes y auditoría (009-reportes-auditoria)
+// ---------------------------------------------------------------------------
+export interface DashboardResult {
+  indicators: {
+    ventas: number;
+    compras: number;
+    tesoreria_banco: number;
+    cxc: number;
+    cxp: number;
+    documentos_fiscales: number;
+    despachos_bloqueados: number;
+  };
+  vencimientos: {
+    open_items_vencidos: number;
+    periodos_fiscales_abiertos: number;
+    permisos_activos: number;
+  };
+}
+
+export interface ReportResult {
+  report_key: string;
+  count: number;
+  total: number;
+  period?: string;
+  base?: number;
+  tax?: number;
+  rows: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface ReportExportSummary {
+  id: string;
+  report_key: string;
+  format: string;
+  file_ref: string | null;
+  exported_by: string | null;
+  exported_at: string | null;
+  status: string;
+}
+
+export interface ReportJobSummary {
+  id: string;
+  report_key: string;
+  status: string;
+  error: string | null;
+  result_ref: string | null;
+}
+
+export interface AuditTimelineItem {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  user_id: string | null;
+  source: string | null;
+  reason: string | null;
+  event_time: string | null;
+}
+

@@ -1,12 +1,14 @@
 /** Sidebar — navegación colapsable (DOC-08 §5). */
 import {
   ArrowLeftRight,
+  BarChart3,
   BookOpen,
   Boxes,
   ClipboardCheck,
   ClipboardList,
   CreditCard,
   FileCheck,
+  FileDown,
   FileText,
   Hash,
   Home,
@@ -18,6 +20,7 @@ import {
   Receipt,
   Repeat,
   Scale,
+  ScrollText,
   Settings,
   ShieldAlert,
   ShieldCheck,
@@ -118,6 +121,14 @@ const navSections = [
       { to: "/regulatorio/vehiculos", label: "Vehículos", icon: Truck },
       { to: "/regulatorio/permisos", label: "Permisos y guías", icon: FileCheck },
       { to: "/regulatorio/evaluacion", label: "Evaluación", icon: ShieldAlert },
+    ],
+  },
+  {
+    title: "Reportes",
+    items: [
+      { to: "/reportes/centro", label: "Centro de reportes", icon: BarChart3 },
+      { to: "/reportes/exportaciones", label: "Exportaciones", icon: FileDown },
+      { to: "/reportes/auditoria", label: "Auditoría", icon: ScrollText },
     ],
   },
   {

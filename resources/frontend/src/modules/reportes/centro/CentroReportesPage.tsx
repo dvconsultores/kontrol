@@ -1,0 +1,121 @@
+/** Centro de reportes — ejecutivos, operativos, financieros, fiscales, regulatorios (FR-009-010..015). */
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+
+import { apiFetch } from "@/api/client";
+import type { ReportResult } from "@/api/types";
+import { useNotifications } from "@/app/contexts/NotificationContext";
+import { AsyncButton } from "@/components/AsyncButton";
+import { PageContent } from "@/layout/PageContent";
+import { PageHeader } from "@/components/PageHeader";
+import { TextInput } from "@/components/TextInput";
+
+const REPORTS: Array<{ category: string; key: string; label: string }> = [
+  { category: "Ejecutivos", key: "executive_ventas", label: "Ventas (total/base/impuestos)" },
+  { category: "Operativos", key: "operational_inventario", label: "Inventario (existencias)" },
+  { category: "Financieros", key: "financial_aging", label: "CxC / CxP (aging)" },
+  { category: "Fiscales", key: "fiscal_libros_VENTAS", label: "Libro de ventas (007)" },
+  { category: "Regulatorios", key: "regulatory_evaluaciones", label: "Evaluaciones de despacho (008)" },
+];
+
+const CATEGORIES = ["Ejecutivos", "Operativos", "Financieros", "Fiscales", "Regulatorios"];
+
+export function CentroReportesPage(): React.JSX.Element {
+  const queryClient = useQueryClient();
+  const { notify } = useNotifications();
+  const [category, setCategory] = useState("Ejecutivos");
+  const [period, setPeriod] = useState("");
+
+  const current = REPORTS.find((r) => r.category === category);
+  const reportKey = current?.key ?? "executive_ventas";
+
+  const report = useQuery({
+    queryKey: ["reporting", "report", reportKey, period],
+    queryFn: () => apiFetch<ReportResult>(`/reporting/reports/${reportKey}?period=${period || "0"}`),
+    retry: false,
+  });
+
+  const exportCsv = async (): Promise<void> => {
+    const res = await apiFetch<{ id: string; file_ref: string | null; status: string }>("/reporting/exports", {
+      method: "POST",
+      body: { report_key: reportKey, format: "CSV", filters: { period } },
+    });
+    notify({ type: "success", title: "Exportación auditada", description: `Archivo ${res.file_ref} · ${res.status}` });
+    void queryClient.invalidateQueries({ queryKey: ["reporting", "exports"] });
+  };
+
+  const reportRows = report.data?.rows ?? [];
+  const firstRow = reportRows[0];
+
+  return (
+    <PageContent maxWidth="full">
+      <PageHeader
+        title="Centro de reportes"
+        description="Reportes reconstruibles desde eventos (solo lectura); exportación auditada (FR-009-020)."
+        crumbs={[{ label: "Reportes" }, { label: "Centro" }]}
+      />
+
+      <nav aria-label="Categorías de reportes" className="mb-4 flex flex-wrap gap-2">
+        {CATEGORIES.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => setCategory(c)}
+            aria-pressed={category === c}
+            className={`h-9 rounded-md border px-3 text-sm transition-colors ${
+              category === c ? "border-brand-600 bg-brand-600 text-white" : "border-border-default bg-surface-0 text-text-500 hover:bg-surface-100"
+            }`}
+          >
+            {c}
+          </button>
+        ))}
+      </nav>
+
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-surface-0 p-4">
+        <div>
+          <p className="text-sm text-text-700">{current?.label}</p>
+          <p className="text-2xl font-semibold text-text-900">{report.data?.total?.toFixed(2) ?? "—"}</p>
+        </div>
+        <FormFieldPeriod value={period} onChange={setPeriod} />
+        <AsyncButton variant="secondary" onClick={exportCsv}>
+          Exportar CSV (auditado)
+        </AsyncButton>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-border-default">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-surface-100 text-text-500">
+            <tr>
+              {firstRow
+                ? Object.keys(firstRow).map((col) => (
+                    <th key={col} className="px-4 py-2 font-medium">{col}</th>
+                  ))
+                : <th className="px-4 py-2 font-medium">Sin columnas</th>}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border-default">
+            {reportRows.map((row, idx) => (
+              <tr key={idx}>
+                {Object.values(row).map((val, j) => (
+                  <td key={j} className="px-4 py-1.5 text-text-700">{String(val ?? "")}</td>
+                ))}
+              </tr>
+            ))}
+            {reportRows.length === 0 ? (
+              <tr><td className="px-4 py-3 text-text-500">Sin datos para el reporte {reportKey}.</td></tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </PageContent>
+  );
+}
+
+function FormFieldPeriod({ value, onChange }: { value: string; onChange: (v: string) => void }): React.JSX.Element {
+  return (
+    <label className="flex flex-col gap-1 text-sm text-text-500">
+      Período
+      <TextInput value={value} onChange={(e) => onChange(e.target.value)} placeholder="2026-01" />
+    </label>
+  );
+}
