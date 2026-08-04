@@ -988,3 +988,63 @@ export interface LicenseEventItem {
   created_at: string;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Homologación y liberación (011)                                             */
+/* -------------------------------------------------------------------------- */
+
+export type HomologationStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
+
+export interface HomologationRecordSummary {
+  id: string;
+  fiscal_version: string;
+  modality: string;
+  formal_act_ref: string | null;
+  evidence_sha256: string | null;
+  status: HomologationStatus;
+  homologated: boolean;
+  evaluated_by: string | null;
+  evaluated_at: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface HomologationEventItem {
+  id: string;
+  event_type: string;
+  detail: Record<string, unknown> | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface HomologationRecordDetail extends HomologationRecordSummary {
+  events: HomologationEventItem[];
+}
+
+export type ReleaseStatus = "DRAFT" | "CANDIDATE" | "RELEASED" | "BLOCKED";
+
+export interface ReleaseVersionSummary {
+  id: string;
+  version: string;
+  changelog: Record<string, unknown>;
+  gates: Record<string, unknown>;
+  homologation_id: string | null;
+  status: ReleaseStatus;
+  blocked_reasons: { reasons?: string[] } | null;
+  released_by: string | null;
+  released_at: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface HomologationTimelineItem {
+  id: string;
+  source: "HOMOLOGATION" | "RELEASE";
+  event_type: string;
+  detail: Record<string, unknown> | null;
+  entity_id: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+

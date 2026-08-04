@@ -56,6 +56,9 @@ import { ConfiguracionCentralPage } from "@/modules/licenciamiento/configuracion
 import { EntitlementsPage } from "@/modules/licenciamiento/entitlements/EntitlementsPage";
 import { EventosPage } from "@/modules/licenciamiento/eventos/EventosPage";
 import { RenovacionPage } from "@/modules/licenciamiento/renovacion/RenovacionPage";
+import { ActosPage } from "@/modules/homologacion/actos/ActosPage";
+import { TimelinePage } from "@/modules/homologacion/timeline/TimelinePage";
+import { VersionesPage } from "@/modules/homologacion/versiones/VersionesPage";
 
 export const router = createBrowserRouter([
   {
@@ -121,6 +124,9 @@ export const router = createBrowserRouter([
           { path: "licenciamiento/entitlements", element: <EntitlementsPage /> },
           { path: "licenciamiento/renovacion", element: <RenovacionPage /> },
           { path: "licenciamiento/eventos", element: <EventosPage /> },
+          { path: "homologacion/actos", element: <ActosPage /> },
+          { path: "homologacion/versiones", element: <VersionesPage /> },
+          { path: "homologacion/timeline", element: <TimelinePage /> },
           { path: "auditoria", element: <AuditoriaPage /> },
           { path: "diagnostico", element: <DiagnosticoPage /> },
           { path: "forbidden", element: <ForbiddenState /> },

@@ -25,13 +25,13 @@
 
 | ID | Tarea | Dependencia | Resultado | Prueba | Estado |
 |---|---|---|---|---|---|
-| T-011-01 | Módulo homologation: models/service/api | Aut. 011 | API /homologation/* | pytest | ⬜ |
-| T-011-02 | Homologación: registro, sometimiento, evaluación + eventos | T-011-01 | Servicio + API | pytest | ⬜ |
-| T-011-03 | Regla de homologado (acto formal + versión aprobada) | T-011-02 | Servicio | pytest | ⬜ |
-| T-011-04 | Liberación: versiones, changelog, gates, liberación gateada | T-011-01, T-011-03 | Servicio + API | pytest | ⬜ |
-| T-011-05 | Migración `0011_homologacion` + head | T-011-01..04 | Migración | alembic upgrade head | ⬜ |
-| T-011-06 | Frontend homologación/liberación | T-011-03, T-011-04 | Páginas | tsc/vitest/build | ⬜ |
-| T-011-07 | Gates completos + convergencia + commit | T-011-05, T-011-06 | convergence.md, feat(011) | Todos verdes | ⬜ |
+| T-011-01 | Módulo homologation: models/service/api | Aut. 011 | API /homologation/* | pytest | ✔ |
+| T-011-02 | Homologación: registro, sometimiento, evaluación + eventos | T-011-01 | Servicio + API | pytest | ✔ |
+| T-011-03 | Regla de homologado (acto formal + versión aprobada) | T-011-02 | Servicio | pytest | ✔ |
+| T-011-04 | Liberación: versiones, changelog, gates, liberación gateada | T-011-01, T-011-03 | Servicio + API | pytest | ✔ |
+| T-011-05 | Migración `0011_homologacion` + head | T-011-01..04 | Migración | alembic upgrade head | ✔ |
+| T-011-06 | Frontend homologación/liberación | T-011-03, T-011-04 | Páginas | tsc/vitest/build | ✔ |
+| T-011-07 | Gates completos + convergencia + commit | T-011-05, T-011-06 | convergence.md, feat(011) | Todos verdes | 🔄 |
 
 ## Puertas (gates) de la implementación
 

@@ -90,6 +90,13 @@ def verify_license_signature(payload: dict[str, Any], signature_hex: str, public
         return False
 
 
+def _as_utc(dt: datetime) -> datetime:
+    """Normaliza datetimes a UTC (SQLite devuelve naive en DateTime(timezone))."""
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=UTC)
+    return dt
+
+
 def compute_mode(license_data: LicenseData, now: datetime, *, last_reliable_date: datetime | None = None) -> str:
     """Calcula el modo de acceso con fecha confiable (FR-001-052/056).
 
@@ -100,17 +107,25 @@ def compute_mode(license_data: LicenseData, now: datetime, *, last_reliable_date
     - critical_warning_start <= now < read_only_start → CRITICAL_RENEWAL_NOTICE.
     - now >= read_only_start → READ_ONLY.
     """
+    now = _as_utc(now)
+    period_start = _as_utc(license_data.period_start)
+    period_end = _as_utc(license_data.period_end)
+    critical_warning_start = _as_utc(license_data.critical_warning_start)
+    read_only_start = _as_utc(license_data.read_only_start)
+
     # Protección contra retroceso: si el reloj retrocede respecto de la
     # última fecha confiable, usar la mayor (mantener la fecha mayor).
-    if last_reliable_date is not None and now < last_reliable_date:
-        now = last_reliable_date
+    if last_reliable_date is not None:
+        last_reliable_date = _as_utc(last_reliable_date)
+        if now < last_reliable_date:
+            now = last_reliable_date
 
-    if now < license_data.period_start:
+    if now < period_start:
         return FULL_ACCESS
-    if now > license_data.period_end:
-        if now >= license_data.read_only_start:
+    if now > period_end:
+        if now >= read_only_start:
             return READ_ONLY
-        if now >= license_data.critical_warning_start:
+        if now >= critical_warning_start:
             return CRITICAL_RENEWAL_NOTICE
         return RENEWAL_NOTICE
     return FULL_ACCESS

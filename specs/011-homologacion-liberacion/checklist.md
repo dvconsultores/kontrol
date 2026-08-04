@@ -31,23 +31,23 @@
 ## 2. Implementación (post-autorización)
 
 ### 2.1 Homologación (F1/F2)
-- [ ] Módulo `app/modules/homologation/`: models, service, api.
-- [ ] Máquinas DRAFT→SUBMITTED→APPROVED/REJECTED; segregación; regla de homologado.
-- [ ] Eventos append-only.
+- [x] Módulo `app/modules/homologation/`: models, service, api.
+- [x] Máquinas DRAFT→SUBMITTED→APPROVED/REJECTED; segregación; regla de homologado.
+- [x] Eventos append-only.
 
 ### 2.2 Liberación (F3)
-- [ ] `release_versions` con changelog, gates y liberación gateada.
+- [x] `release_versions` con changelog, gates y liberación gateada.
 
 ### 2.3 Migración (F4)
-- [ ] Migración Alembic `0011_homologacion` (head).
+- [x] Migración Alembic `0011_homologacion` (head).
 
 ### 2.4 Frontend (F5)
-- [ ] Páginas: homologación, versiones/liberación, timeline.
-- [ ] Tipos en `src/api/types.ts`, sidebar, router.
+- [x] Páginas: homologación, versiones/liberación, timeline.
+- [x] Tipos en `src/api/types.ts`, sidebar, router.
 
 ### 2.5 Convergencia (F6)
-- [ ] Gates verdes (pytest, ruff, mypy, tsc, eslint, vitest, build).
-- [ ] `convergence.md` + evidencia + commit `feat(011)`.
+- [x] Gates verdes (pytest, ruff, mypy, tsc, eslint, vitest, build).
+- [x] `convergence.md` + evidencia + commit `feat(011)`.
 
 ## 3. Criterios de aceptación de entrada (fase documental)
 

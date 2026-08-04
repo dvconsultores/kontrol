@@ -141,6 +141,14 @@ const navSections = [
     ],
   },
   {
+    title: "Homologación",
+    items: [
+      { to: "/homologacion/actos", label: "Actos", icon: FileCheck },
+      { to: "/homologacion/versiones", label: "Versiones", icon: Hash },
+      { to: "/homologacion/timeline", label: "Timeline", icon: ScrollText },
+    ],
+  },
+  {
     title: "Seguridad",
     items: [
       { to: "/seguridad/usuarios", label: "Usuarios", icon: Users },
