@@ -25,14 +25,14 @@
 
 | ID | Tarea | Dependencia | Resultado | Prueba | Estado |
 |---|---|---|---|---|---|
-| T-010-01 | Configuración central + sincronización (contrato v1) | Aut. 010 | API /licensing/* | pytest | ⬜ |
-| T-010-02 | Activación/verificación con tolerancia offline | T-010-01 | Servicio + API | pytest | ⬜ |
-| T-010-03 | Entitlements por módulo + snapshots | T-010-01 | Modelos + servicio + API | pytest | ⬜ |
-| T-010-04 | Renovación central (workflow) | T-010-01 | Servicio + API | pytest | ⬜ |
-| T-010-05 | Refuerzo de modos y bloqueo de escrituras | T-010-02 | Servicio | pytest | ⬜ |
-| T-010-06 | Migración `0010_licenciamiento` + head | T-010-01..05 | Migración | alembic upgrade head | ⬜ |
-| T-010-07 | Frontend licenciamiento (config, entitlements, renovación) | T-010-03, T-010-04 | Páginas | tsc/vitest/build | ⬜ |
-| T-010-08 | Gates completos + convergencia + commit | T-010-06, T-010-07 | convergence.md, feat(010) | Todos verdes | ⬜ |
+| T-010-01 | Configuración central + sincronización (contrato v1) | Aut. 010 | API /licensing/* | pytest | ✔ |
+| T-010-02 | Activación/verificación con tolerancia offline | T-010-01 | Servicio + API | pytest | ✔ |
+| T-010-03 | Entitlements por módulo + snapshots | T-010-01 | Modelos + servicio + API | pytest | ✔ |
+| T-010-04 | Renovación central (workflow) | T-010-01 | Servicio + API | pytest | ✔ |
+| T-010-05 | Refuerzo de modos y bloqueo de escrituras | T-010-02 | Servicio | pytest | ✔ |
+| T-010-06 | Migración `0010_licenciamiento` + head | T-010-01..05 | Migración | alembic upgrade head | ✔ |
+| T-010-07 | Frontend licenciamiento (config, entitlements, renovación) | T-010-03, T-010-04 | Páginas | tsc/vitest/build | ✔ |
+| T-010-08 | Gates completos + convergencia + commit | T-010-06, T-010-07 | convergence.md, feat(010) | Todos verdes | 🔄 |
 
 ## Puertas (gates) de la implementación
 

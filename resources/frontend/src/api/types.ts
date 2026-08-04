@@ -916,3 +916,75 @@ export interface AuditTimelineItem {
   event_time: string | null;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Licenciamiento central (010)                                                */
+/* -------------------------------------------------------------------------- */
+
+export interface CentralConfig {
+  id: string;
+  server_url: string;
+  public_key: string | null;
+  sync_policy: Record<string, unknown>;
+  grace_days: number;
+  enabled: boolean;
+  status: string;
+  updated_at: string;
+}
+
+export interface SyncRunSummary {
+  id: string;
+  status: "SUCCESS" | "FAILED";
+  request: Record<string, unknown> | null;
+  response: Record<string, unknown> | null;
+  error: string | null;
+  ran_at: string;
+}
+
+export interface EntitlementSnapshotSummary {
+  id: string;
+  modules: Record<string, boolean>;
+  version: string;
+  taken_at: string;
+}
+
+export interface EntitlementsResult {
+  modules: Record<string, boolean>;
+  version: string;
+  taken_at: string | null;
+}
+
+export interface OfflineStatus {
+  offline_valid: boolean;
+  reason: string;
+  grace_days: number;
+  grace_days_left: number;
+  grace_end: string | null;
+  last_reliable_date: string | null;
+}
+
+export interface RenewalRequestSummary {
+  id: string;
+  payment_proof_ref: string | null;
+  status: "REPORTED" | "VERIFIED" | "ISSUED" | "REJECTED";
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface LicensingOverview {
+  status: LicenseStatus;
+  central_config: CentralConfig | null;
+  entitlements: EntitlementsResult;
+  offline: OfflineStatus;
+  last_sync: SyncRunSummary | null;
+  modules: string[];
+}
+
+export interface LicenseEventItem {
+  id: string;
+  event_type: string;
+  detail: Record<string, unknown> | null;
+  source: string;
+  created_at: string;
+}
+

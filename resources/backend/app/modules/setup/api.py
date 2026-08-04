@@ -64,7 +64,7 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
         "users": ["view", "create", "edit", "deactivate", "activate"],
         "roles": ["view", "create", "edit"],
         "audit": ["view"],
-        "license": ["view"],
+        "license": ["view", "create", "edit", "approve"],
     }
     for resource, actions in resources_actions.items():
         for action in actions:

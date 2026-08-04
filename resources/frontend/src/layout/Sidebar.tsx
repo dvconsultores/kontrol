@@ -132,6 +132,15 @@ const navSections = [
     ],
   },
   {
+    title: "Licenciamiento",
+    items: [
+      { to: "/licenciamiento/configuracion", label: "Configuración central", icon: Settings },
+      { to: "/licenciamiento/entitlements", label: "Entitlements", icon: ShieldCheck },
+      { to: "/licenciamiento/renovacion", label: "Renovación", icon: Repeat },
+      { to: "/licenciamiento/eventos", label: "Eventos", icon: ScrollText },
+    ],
+  },
+  {
     title: "Seguridad",
     items: [
       { to: "/seguridad/usuarios", label: "Usuarios", icon: Users },

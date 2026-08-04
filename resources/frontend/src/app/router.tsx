@@ -52,6 +52,10 @@ import { VehiculosPage } from "@/modules/regulatorio/vehiculos/VehiculosPage";
 import { ReportesAuditoriaPage } from "@/modules/reportes/auditoria/ReportesAuditoriaPage";
 import { CentroReportesPage } from "@/modules/reportes/centro/CentroReportesPage";
 import { ExportacionesPage } from "@/modules/reportes/exportaciones/ExportacionesPage";
+import { ConfiguracionCentralPage } from "@/modules/licenciamiento/configuracion/ConfiguracionCentralPage";
+import { EntitlementsPage } from "@/modules/licenciamiento/entitlements/EntitlementsPage";
+import { EventosPage } from "@/modules/licenciamiento/eventos/EventosPage";
+import { RenovacionPage } from "@/modules/licenciamiento/renovacion/RenovacionPage";
 
 export const router = createBrowserRouter([
   {
@@ -113,6 +117,10 @@ export const router = createBrowserRouter([
           { path: "reportes/centro", element: <CentroReportesPage /> },
           { path: "reportes/exportaciones", element: <ExportacionesPage /> },
           { path: "reportes/auditoria", element: <ReportesAuditoriaPage /> },
+          { path: "licenciamiento/configuracion", element: <ConfiguracionCentralPage /> },
+          { path: "licenciamiento/entitlements", element: <EntitlementsPage /> },
+          { path: "licenciamiento/renovacion", element: <RenovacionPage /> },
+          { path: "licenciamiento/eventos", element: <EventosPage /> },
           { path: "auditoria", element: <AuditoriaPage /> },
           { path: "diagnostico", element: <DiagnosticoPage /> },
           { path: "forbidden", element: <ForbiddenState /> },

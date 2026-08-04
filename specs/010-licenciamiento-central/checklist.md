@@ -31,28 +31,28 @@
 ## 2. Implementación (post-autorización)
 
 ### 2.1 Configuración y sincronización (F1/F2)
-- [ ] Modelos `license_central_config`, `license_sync_runs` + activación offline.
-- [ ] API de configuración/sincronización.
+- [x] Modelos `license_central_config`, `license_sync_runs` + activación offline.
+- [x] API de configuración/sincronización.
 
 ### 2.2 Entitlements (F3)
-- [ ] Modelo `license_entitlement_snapshots` + consulta por módulo.
+- [x] Modelo `license_entitlement_snapshots` + consulta por módulo.
 
 ### 2.3 Renovación central (F4)
-- [ ] Workflow REPORTED→VERIFIED→ISSUED/REJECTED (reutiliza `LicenseRenewalRequest`).
+- [x] Workflow REPORTED→VERIFIED→ISSUED/REJECTED (reutiliza `LicenseRenewalRequest`).
 
 ### 2.4 Modos (F5)
-- [ ] Refuerzo de transiciones y `ensure_write_allowed`.
+- [x] Refuerzo de transiciones y `ensure_write_allowed`.
 
 ### 2.5 Migración (F6)
-- [ ] Migración Alembic `0010_licenciamiento` (head).
+- [x] Migración Alembic `0010_licenciamiento` (head).
 
 ### 2.6 Frontend (F7)
-- [ ] Páginas: configuración central, sincronización, entitlements, renovación, eventos.
-- [ ] Tipos en `src/api/types.ts`, sidebar, router.
+- [x] Páginas: configuración central, sincronización, entitlements, renovación, eventos.
+- [x] Tipos en `src/api/types.ts`, sidebar, router.
 
 ### 2.7 Convergencia (F8)
-- [ ] Gates verdes (pytest, ruff, mypy, tsc, eslint, vitest, build).
-- [ ] `convergence.md` + evidencia + commit `feat(010)`.
+- [x] Gates verdes (pytest, ruff, mypy, tsc, eslint, vitest, build).
+- [x] `convergence.md` + evidencia + commit `feat(010)`.
 
 ## 3. Criterios de aceptación de entrada (fase documental)
 
