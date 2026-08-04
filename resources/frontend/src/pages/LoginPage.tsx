@@ -1,5 +1,5 @@
 /** Login — inicio de sesión seguro (US-006, FR-001-020/021/023). */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
 
 import { useAuth } from "@/app/contexts/AuthContext";
@@ -21,6 +21,23 @@ export function LoginPage(): React.JSX.Element {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
+
+  // En instalaciones nuevas, ofrecer el asistente de configuración desde el inicio.
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<SetupStatus>("/setup/status")
+      .then((status) => {
+        if (!cancelled && !status.initialized) {
+          setNeedsSetup(true);
+        }
+      })
+      .catch(() => {
+        // Sin red o backend no disponible: se reintentará tras un login fallido.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />;

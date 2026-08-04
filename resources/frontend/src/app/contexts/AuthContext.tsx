@@ -20,6 +20,7 @@ interface AuthContextValue {
   user: UserInfo | null;
   accessToken: string | null;
   isAuthenticated: boolean;
+  isReady: boolean;
   login: (tenantCode: string, username: string, password: string) => Promise<LoginResponse>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
@@ -30,6 +31,8 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [accessToken, setToken] = useState<string | null>(null);
+  // true una vez completado el intento inicial de restaurar sesión.
+  const [isReady, setReady] = useState(false);
 
   const login = useCallback(async (tenantCode: string, username: string, password: string) => {
     const data = await apiFetch<LoginResponse>("/auth/login", {
@@ -66,9 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     }
   }, []);
 
-  // Restaurar sesión al recargar (refresh una sola vez).
+  // Restaurar sesión al recargar (refresh una sola vez); isReady evita que el
+  // router quede esperando indefinidamente cuando no hay sesión.
   useEffect(() => {
-    void refreshSession();
+    void refreshSession().finally(() => setReady(true));
   }, [refreshSession]);
 
   const value = useMemo<AuthContextValue>(
@@ -76,11 +80,12 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       user,
       accessToken,
       isAuthenticated: Boolean(user && accessToken),
+      isReady,
       login,
       logout,
       refreshSession,
     }),
-    [user, accessToken, login, logout, refreshSession],
+    [user, accessToken, isReady, login, logout, refreshSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

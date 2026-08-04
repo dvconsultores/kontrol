@@ -9,15 +9,14 @@ import { useAuth } from "@/app/contexts/AuthContext";
 import { LoadingState } from "./LoadingState";
 
 export function RouteGuard(): React.JSX.Element {
-  const { isAuthenticated, accessToken, refreshSession } = useAuth();
+  const { isAuthenticated, isReady } = useAuth();
 
-  if (!isAuthenticated && accessToken === null) {
-    // Esperar el refresh inicial antes de redirigir.
+  if (!isReady) {
+    // Esperar el intento inicial de restaurar sesión antes de decidir.
     return <LoadingState rows={3} />;
   }
 
   if (!isAuthenticated) {
-    void refreshSession();
     return <Navigate to="/login" replace />;
   }
 
