@@ -100,5 +100,22 @@ smoke E2E inventario 22/22 OK.
 
 Validación acumulada: pytest 193 · tsc · eslint · vitest 193 · smoke E2E aprobaciones 3/3 OK.
 
+### GAPs pendientes resueltos (commit `3fbaf5e`)
+- **Seguridad (T-13) — fix crítico de aislamiento entre tenants**: el módulo de
+  organización (companies/branches/establishments/warehouses/locations) no filtraba
+  por tenant (RIFs y datos de otras empresas visibles) y las escrituras aceptaban IDs
+  de otros tenants. Corregido (filtrado por `Company.tenant_id` + validación de
+  pertenencia → 404) y cubierto por `tests/test_security_integration.py` (8 tests:
+  401, RBAC, IDOR, escritura cruzada, inyección). También `create_cashbox` de tesorería.
+- **Migraciones (T-06)**: `tests/test_migrations_offline.py` (cadena de esquema
+  0001→0012 offline en PostgreSQL: 145 tablas / 63 ALTER; migración de datos 0013
+  idempotente).
+- **Accesibilidad (T-12)**: `e2e/accessibility.spec.ts` (axe-core WCAG 2.2 AA).
+- **T-14** scripts validados; **T-15/T-16** checklists de rendimiento y fiscal.
+
+Validación acumulada: pytest 204 · ruff · mypy · tsc · eslint · vitest 193.
+Queda ejecutar (requiere infra): axe/Playwright con stack, backup/restore y `alembic check` en PostgreSQL real.
+
+
 
 
