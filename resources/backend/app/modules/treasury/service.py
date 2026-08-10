@@ -150,6 +150,13 @@ def create_account(db: Session, *, company_id: str, bank_id: str, code: str, nam
 def create_cashbox(db: Session, *, company_id: str, code: str, name: str, currency: str = "VED",
                    warehouse_id: str | None = None, policies: str | None = None, actor: str | None = None) -> Cashbox:
     company_id = _company(company_id, obj="caja")
+    if warehouse_id:
+        from app.modules.organization.models import Warehouse
+        from app.modules.organization.service import warehouse_in_tenant_scope
+
+        warehouse = db.get(Warehouse, warehouse_id)
+        if not warehouse or not warehouse_in_tenant_scope(db, company_id, warehouse):
+            raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
     c = Cashbox(company_id=company_id, code=code, name=name, currency=currency, warehouse_id=warehouse_id,
                 policies=policies, status="ACTIVE", created_by=actor)
     db.add(c)

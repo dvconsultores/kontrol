@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
+from app.core.errors import NotFoundError
 from app.modules.identity_access.models import User
 from app.modules.organization.models import (
     Branch,
@@ -17,6 +18,7 @@ from app.modules.organization.models import (
     Location,
     Warehouse,
 )
+from app.modules.organization.service import branch_in_tenant, company_in_tenant, warehouse_in_tenant
 
 router = APIRouter(prefix="/organization", tags=["organization"])
 
@@ -65,7 +67,8 @@ class LocationCreate(BaseModel):
 
 @router.get("/companies")
 def list_companies(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    companies = db.execute(select(Company).order_by(Company.created_at)).scalars().all()
+    companies = db.execute(select(Company).where(Company.tenant_id == user.tenant_id)
+                           .order_by(Company.created_at)).scalars().all()
     return [
         {
             "id": str(c.id),
@@ -106,15 +109,18 @@ def create_company(
 
 
 @router.get("/branches")
-def list_branches(company_id: str | None = None, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    query = select(Branch).order_by(Branch.created_at)
+def list_branches(company_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    query = select(Branch).join(Company, Branch.company_id == Company.id)\
+        .where(Company.tenant_id == user.tenant_id)
     if company_id:
         query = query.where(Branch.company_id == company_id)
-    return [{"id": str(b.id), "company_id": b.company_id, "code": b.code, "name": b.name, "status": b.status} for b in db.execute(query).scalars().all()]
+    return [{"id": str(b.id), "company_id": b.company_id, "code": b.code, "name": b.name, "status": b.status} for b in db.execute(query.order_by(Branch.created_at)).scalars().all()]
 
 
 @router.post("/branches", dependencies=[Depends(require_write_allowed)])
 def create_branch(body: BranchCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("organization", "create"))):
+    if not company_in_tenant(db, actor.tenant_id, body.company_id):
+        raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
     branch = Branch(
         company_id=body.company_id,
         code=body.code,
@@ -131,15 +137,18 @@ def create_branch(body: BranchCreate, db: Session = Depends(get_db), actor: User
 
 
 @router.get("/establishments")
-def list_establishments(branch_id: str | None = None, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    query = select(Establishment).order_by(Establishment.created_at)
+def list_establishments(branch_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    query = select(Establishment).join(Branch, Establishment.branch_id == Branch.id)\
+        .join(Company, Branch.company_id == Company.id).where(Company.tenant_id == user.tenant_id)
     if branch_id:
         query = query.where(Establishment.branch_id == branch_id)
-    return [{"id": str(e.id), "branch_id": e.branch_id, "code": e.code, "name": e.name, "issuance_enabled": e.issuance_enabled, "status": e.status} for e in db.execute(query).scalars().all()]
+    return [{"id": str(e.id), "branch_id": e.branch_id, "code": e.code, "name": e.name, "issuance_enabled": e.issuance_enabled, "status": e.status} for e in db.execute(query.order_by(Establishment.created_at)).scalars().all()]
 
 
 @router.post("/establishments", dependencies=[Depends(require_write_allowed)])
 def create_establishment(body: EstablishmentCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("organization", "create"))):
+    if not branch_in_tenant(db, actor.tenant_id, body.branch_id):
+        raise NotFoundError(code="BRANCH_NOT_FOUND", message="Sucursal no encontrada")
     est = Establishment(
         branch_id=body.branch_id,
         code=body.code,
@@ -156,15 +165,18 @@ def create_establishment(body: EstablishmentCreate, db: Session = Depends(get_db
 
 
 @router.get("/warehouses")
-def list_warehouses(company_id: str | None = None, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    query = select(Warehouse).order_by(Warehouse.created_at)
+def list_warehouses(company_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    query = select(Warehouse).join(Company, Warehouse.company_id == Company.id)\
+        .where(Company.tenant_id == user.tenant_id)
     if company_id:
         query = query.where(Warehouse.company_id == company_id)
-    return [{"id": str(w.id), "company_id": w.company_id, "code": w.code, "name": w.name, "warehouse_type": w.warehouse_type, "status": w.status} for w in db.execute(query).scalars().all()]
+    return [{"id": str(w.id), "company_id": w.company_id, "code": w.code, "name": w.name, "warehouse_type": w.warehouse_type, "status": w.status} for w in db.execute(query.order_by(Warehouse.created_at)).scalars().all()]
 
 
 @router.post("/warehouses", dependencies=[Depends(require_write_allowed)])
 def create_warehouse(body: WarehouseCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("organization", "create"))):
+    if not company_in_tenant(db, actor.tenant_id, body.company_id):
+        raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
     warehouse = Warehouse(
         company_id=body.company_id,
         branch_id=body.branch_id,
@@ -181,15 +193,18 @@ def create_warehouse(body: WarehouseCreate, db: Session = Depends(get_db), actor
 
 
 @router.get("/locations")
-def list_locations(warehouse_id: str | None = None, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    query = select(Location).order_by(Location.created_at)
+def list_locations(warehouse_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    query = select(Location).join(Warehouse, Location.warehouse_id == Warehouse.id)\
+        .join(Company, Warehouse.company_id == Company.id).where(Company.tenant_id == user.tenant_id)
     if warehouse_id:
         query = query.where(Location.warehouse_id == warehouse_id)
-    return [{"id": str(loc.id), "warehouse_id": loc.warehouse_id, "code": loc.code, "zone": loc.zone, "aisle": loc.aisle, "rack": loc.rack, "status": loc.status} for loc in db.execute(query).scalars().all()]
+    return [{"id": str(loc.id), "warehouse_id": loc.warehouse_id, "code": loc.code, "zone": loc.zone, "aisle": loc.aisle, "rack": loc.rack, "status": loc.status} for loc in db.execute(query.order_by(Location.created_at)).scalars().all()]
 
 
 @router.post("/locations", dependencies=[Depends(require_write_allowed)])
 def create_location(body: LocationCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("organization", "create"))):
+    if not warehouse_in_tenant(db, actor.tenant_id, body.warehouse_id):
+        raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
     location = Location(
         warehouse_id=body.warehouse_id,
         code=body.code,

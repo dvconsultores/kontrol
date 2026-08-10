@@ -8,7 +8,29 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.modules.organization.models import Company, Warehouse
+from app.modules.organization.models import Branch, Company, Warehouse
+
+
+def company_in_tenant(db: Session, tenant_id: str, company_id: str) -> bool:
+    """¿Pertenece la empresa al tenant? (Company.tenant_id == tenant_id)."""
+    company = db.get(Company, company_id)
+    return bool(company and company.tenant_id == tenant_id)
+
+
+def branch_in_tenant(db: Session, tenant_id: str, branch_id: str) -> bool:
+    """¿Pertenece la sucursal a una empresa del tenant? (Branch → Company)."""
+    branch = db.get(Branch, branch_id)
+    if not branch:
+        return False
+    return company_in_tenant(db, tenant_id, branch.company_id)
+
+
+def warehouse_in_tenant(db: Session, tenant_id: str, warehouse_id: str) -> bool:
+    """¿Pertenece el almacén a una empresa del tenant? (Warehouse → Company)."""
+    warehouse = db.get(Warehouse, warehouse_id)
+    if not warehouse:
+        return False
+    return company_in_tenant(db, tenant_id, warehouse.company_id)
 
 
 def warehouse_in_tenant_scope(db: Session, tenant_id: str, warehouse: Warehouse) -> bool:
