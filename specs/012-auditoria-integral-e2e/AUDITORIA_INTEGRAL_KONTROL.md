@@ -83,3 +83,14 @@ Perfiles fiscales y sesiones; fix crítico de permisos del rol ADMIN
 Validación acumulada: pytest 193 · ruff · mypy · tsc · eslint · vitest 172 ·
 smoke E2E por API 40/40 OK. Re-auditoría: menú/rutas/páginas/endpoints 100% coherentes.
 
+### Inventario de detalle operativo (commit `a1c3d23`)
+- Páginas nuevas: **Movimientos** (registrar/reversar), **Lotes** (crear/transicionar),
+  **Valorización** (valor total, capas de costo, perfiles de costeo).
+- Mejoradas: **Transferencias** (crear con línea), **Conteos** (crear plan + líneas),
+  **Ajustes** (crear con motivo/evidencia/costo).
+- Menú/rutas/contrato G3–G4 ampliados (8 páginas de inventario cubiertas).
+
+Validación acumulada: pytest 193 · ruff · tsc · eslint · vitest 186 ·
+smoke E2E inventario 22/22 OK.
+
+
