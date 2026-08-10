@@ -14,6 +14,8 @@ import { EmpresasPage } from "@/pages/EmpresasPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { MiLicenciaPage } from "@/pages/MiLicenciaPage";
 import { SetupPage } from "@/pages/SetupPage";
+import { AlmacenesPage } from "@/modules/organizacion/almacenes/AlmacenesPage";
+import { SucursalesPage } from "@/modules/organizacion/sucursales/SucursalesPage";
 import { CatalogosPage } from "@/modules/maestros/catalogos/CatalogosPage";
 import { ProductosPage } from "@/modules/maestros/productos/ProductosPage";
 import { ProductoNuevoPage } from "@/modules/maestros/productos/ProductoNuevoPage";
@@ -82,6 +84,8 @@ export const router = createBrowserRouter([
           { path: "mi-licencia", element: <MiLicenciaPage /> },
           { path: "cambiar-contrasena", element: <CambiarContrasenaPage /> },
           { path: "organizacion/empresas", element: <EmpresasPage /> },
+          { path: "organizacion/sucursales", element: <SucursalesPage /> },
+          { path: "organizacion/almacenes", element: <AlmacenesPage /> },
           { path: "maestros/terceros", element: <TercerosPage /> },
           { path: "maestros/productos", element: <ProductosPage /> },
           { path: "maestros/productos/nuevo", element: <ProductoNuevoPage /> },
