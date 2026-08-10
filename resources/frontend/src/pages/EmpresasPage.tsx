@@ -6,6 +6,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import type { CompanySummary } from "@/api/types";
 import { useCompany } from "@/app/contexts/CompanyContext";
+import { useNotifications } from "@/app/contexts/NotificationContext";
 import { Button } from "@/components/Button";
 import { DataTable } from "@/components/DataTable";
 import { PageContent } from "@/layout/PageContent";
@@ -15,7 +16,8 @@ import { SearchInput } from "@/components/SearchInput";
 const columnHelper = createColumnHelper<CompanySummary>();
 
 export function EmpresasPage(): React.JSX.Element {
-  const { setActiveCompany } = useCompany();
+  const { activeCompany, setActiveCompany } = useCompany();
+  const { notify } = useNotifications();
   const [search, setSearch] = useState("");
 
   const query = useQuery({
@@ -23,6 +25,24 @@ export function EmpresasPage(): React.JSX.Element {
     queryFn: () => apiFetch<CompanySummary[]>(`/organization/companies?q=${encodeURIComponent(search)}`),
     retry: false,
   });
+
+  const activate = (company: CompanySummary): void => {
+    setActiveCompany(company);
+    notify({
+      type: "success",
+      title: "Empresa activada",
+      description: `A partir de ahora opera sobre ${company.legal_name}.`,
+    });
+  };
+
+  const deactivate = (): void => {
+    setActiveCompany(null);
+    notify({
+      type: "info",
+      title: "Empresa desactivada",
+      description: "Ninguna empresa está activa; seleccione una para operar.",
+    });
+  };
 
   const columns = [
     columnHelper.accessor("code", { header: "Código" }),
@@ -32,13 +52,27 @@ export function EmpresasPage(): React.JSX.Element {
     columnHelper.display({
       id: "actions",
       header: "Acciones",
-      cell: ({ row }) => (
-        <div className="flex justify-end gap-1">
-          <Button variant="secondary" size="sm" onClick={() => setActiveCompany(row.original)}>
-            Activar
-          </Button>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const isActive = activeCompany?.id === row.original.id;
+        return (
+          <div className="flex justify-end gap-1">
+            {isActive ? (
+              <>
+                <Button variant="secondary" size="sm" disabled title="Empresa activa">
+                  Activa
+                </Button>
+                <Button variant="ghost" size="sm" onClick={deactivate}>
+                  Desactivar
+                </Button>
+              </>
+            ) : (
+              <Button variant="primary" size="sm" onClick={() => activate(row.original)}>
+                Activar
+              </Button>
+            )}
+          </div>
+        );
+      },
     }),
   ];
 
