@@ -51,3 +51,35 @@ Para alcanzar GO se requiere, en orden:
 4. Validaciones pendientes: navegadores reales, accesibilidad, seguridad, backup/restore, rendimiento, auditoría fiscal.
 
 Detalle: `findings.md` · `functional-completeness-matrix.md` · `remediation-plan.md` · `evidence/`.
+
+---
+
+## 9. Estado de remediación (avances)
+
+### Ola 1 — usuarios, roles, establecimientos, ubicaciones (commit `d7f0bca`)
+Páginas creadas y endpoints de roles/sesiones. Puertas permanentes G1–G4 instaladas
+(`src/tests/audit-completeness.test.ts`).
+
+### Olas 2–4 — precisión y procesos (commit `8615c24`)
+Dinero Float→Numeric (58 columnas, migración `0012_numeric_money`), cadena de
+migraciones validada offline en PostgreSQL, clasificación de 117 endpoints
+huérfanos, tests E2E de procesos (`test_process_flows.py`) y crawler Playwright.
+
+### GAP UI + permisos (commit `6ad6513`)
+Perfiles fiscales y sesiones; fix crítico de permisos del rol ADMIN
+(seed completo + migración `0013_seed_business_permissions`).
+
+### Operar ventas/compras desde la UI (commits `8e06e43`, `5e15b57`)
+- Órdenes/facturas de venta y compra: crear + agregar líneas.
+- Cotizaciones: crear + líneas. CxC/CxP: cobros/pagos, anticipos, aplicaciones y cronogramas.
+- Nuevas páginas: devoluciones (venta/compra), notas de venta (crédito/débito + post/aplicar),
+  notas de crédito de proveedor, y picking/despacho (pick lists + envíos).
+- Endpoints GET de listado añadidos para devoluciones, notas y pick lists.
+- **Fix crítico pre-existente (alcance de almacenes)**: la organización crea almacenes con
+  `company_id = Company.id`, pero los módulos de negocio validan contra `user.tenant_id`.
+  Helper `warehouse_in_tenant_scope` (tenant-scoped) en ventas/compras/inventario —
+  sin él, picking/despacho/inventario fallaban con almacenes creados desde la UI.
+
+Validación acumulada: pytest 193 · ruff · mypy · tsc · eslint · vitest 172 ·
+smoke E2E por API 40/40 OK. Re-auditoría: menú/rutas/páginas/endpoints 100% coherentes.
+
