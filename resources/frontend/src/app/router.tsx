@@ -31,7 +31,10 @@ import { AjustesPage } from "@/modules/inventario/ajustes/AjustesPage";
 import { ConteosPage } from "@/modules/inventario/conteos/ConteosPage";
 import { ExistenciasPage } from "@/modules/inventario/existencias/ExistenciasPage";
 import { KardexPage } from "@/modules/inventario/kardex/KardexPage";
+import { LotesPage } from "@/modules/inventario/lotes/LotesPage";
+import { MovimientosPage } from "@/modules/inventario/movimientos/MovimientosPage";
 import { TransferenciasPage } from "@/modules/inventario/transferencias/TransferenciasPage";
+import { ValorizacionPage } from "@/modules/inventario/valorizacion/ValorizacionPage";
 import { CuentasPorPagarPage } from "@/modules/compras/cuentas-por-pagar/CuentasPorPagarPage";
 import { DevolucionesComprasPage } from "@/modules/compras/devoluciones/DevolucionesComprasPage";
 import { FacturasProveedorPage } from "@/modules/compras/facturas/FacturasProveedorPage";
@@ -110,9 +113,12 @@ export const router = createBrowserRouter([
           { path: "maestros/catalogos", element: <CatalogosPage /> },
           { path: "inventario/existencias", element: <ExistenciasPage /> },
           { path: "inventario/kardex", element: <KardexPage /> },
+          { path: "inventario/movimientos", element: <MovimientosPage /> },
           { path: "inventario/transferencias", element: <TransferenciasPage /> },
           { path: "inventario/conteos", element: <ConteosPage /> },
           { path: "inventario/ajustes", element: <AjustesPage /> },
+          { path: "inventario/lotes", element: <LotesPage /> },
+          { path: "inventario/valorizacion", element: <ValorizacionPage /> },
           { path: "compras/requisiciones", element: <RequisicionesPage /> },
           { path: "compras/ordenes", element: <OrdenesComprasPage /> },
           { path: "compras/recepciones", element: <RecepcionesPage /> },

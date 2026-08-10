@@ -71,9 +71,12 @@ const navSections = [
     items: [
       { to: "/inventario/existencias", label: "Existencias", icon: Warehouse },
       { to: "/inventario/kardex", label: "Kardex", icon: ClipboardList },
+      { to: "/inventario/movimientos", label: "Movimientos", icon: ArrowLeftRight },
       { to: "/inventario/transferencias", label: "Transferencias", icon: Boxes },
       { to: "/inventario/conteos", label: "Conteos", icon: Scale },
       { to: "/inventario/ajustes", label: "Ajustes", icon: FileText },
+      { to: "/inventario/lotes", label: "Lotes", icon: Tags },
+      { to: "/inventario/valorizacion", label: "Valorización", icon: Percent },
     ],
   },
   {

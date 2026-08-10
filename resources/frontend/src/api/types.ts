@@ -288,6 +288,20 @@ export interface CostingProfile {
   status: string;
 }
 
+export interface MovementType {
+  id: string;
+  code: string;
+  name: string;
+  direction: "IN" | "OUT" | "INTERNAL";
+  version: number;
+  status: string;
+}
+
+export interface ValuationResult {
+  valuation: number;
+  currency: string;
+}
+
 // ---------------------------------------------------------------------------
 // Compras y cuentas por pagar (004)
 // ---------------------------------------------------------------------------
