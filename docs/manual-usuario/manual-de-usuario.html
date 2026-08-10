@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KONTROL — Manual de Usuario con Flujos de Procesos</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+
+<div class="cover">
+  <div>
+    <div class="brand">
+      <div style="font-size:10pt; font-weight:700; color:#0f766e; letter-spacing:3px;">KONTROL</div>
+      <h1>KONTROL</h1>
+      <div class="subtitle">Plataforma Administrativa Empresarial para Venezuela</div>
+    </div>
+    <div class="doc-title">Manual de Usuario<br><span style="font-size:12pt; color:#6b7280; font-weight:500;">Flujos de procesos de la operación diaria</span></div>
+    <div class="meta">
+      <table>
+        <tr><td class="k">Sistema</td><td>KONTROL — Plataforma Administrativa Empresarial</td></tr>
+        <tr><td class="k">Versión</td><td>1.0.0</td></tr>
+        <tr><td class="k">Alcance</td><td>Manual de usuario operativo con flujos de proceso</td></tr>
+        <tr><td class="k">Audiencia</td><td>Usuarios finales, administradores y soporte</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="footer-note">
+    Los flujos de este manual corresponden a los módulos y pantallas reales de KONTROL v1.0.0.
+  </div>
+</div>
+
+<div class="toc">
+  <h2>Índice de flujos</h2>
+  <ol>
+    <li><span class="n">1</span> Acceso y seguridad (inicio de sesión)</li>
+    <li><span class="n">2</span> Configuración inicial de la instalación</li>
+    <li><span class="n">3</span> Selección de la empresa activa</li>
+    <li><span class="n">4</span> Licencia: estado, sincronización y renovación</li>
+    <li><span class="n">5</span> Maestros: terceros, productos y servicios</li>
+    <li><span class="n">6</span> Ventas: cotización → orden → factura → CxC</li>
+    <li><span class="n">7</span> Compras: requisición → orden → recepción → factura → CxP</li>
+    <li><span class="n">8</span> Inventario: existencias, kardex, transferencias, conteos y ajustes</li>
+    <li><span class="n">9</span> Tesorería: cajas, ingresos/egresos, transferencias, conciliación e IGTF</li>
+    <li><span class="n">10</span> Fiscal: configuración, numeración, emisión, notas, retenciones y libros</li>
+    <li><span class="n">11</span> Regulatorio: organismos, vehículos, permisos/guías y evaluación</li>
+    <li><span class="n">12</span> Reportes, exportaciones y auditoría</li>
+    <li><span class="n">13</span> Homologación y liberación de versiones</li>
+    <li><span class="n">14</span> Anulaciones permitidas y reglas de oro fiscales</li>
+    <li><span class="n">15</span> Contingencia, respaldos y soporte</li>
+  </ol>
+</div>
+
+<h1 class="doctitle">Manual de Usuario — KONTROL</h1>
+<p class="docsub">Flujos de proceso de la operación diaria, por módulo.</p>
+
+<div class="callout">
+  <p>Este manual describe, paso a paso, los flujos de proceso más relevantes de KONTROL. Cada flujo indica su objetivo,
+  los pasos a seguir y los puntos de control o registro. La navegación se realiza desde el menú lateral (colapsable);
+  la <strong>empresa activa</strong> seleccionada aparece en la barra superior y define el alcance de las operaciones.</p>
+</div>
+
+<!-- ================================================================== -->
+<h2>1. Acceso y seguridad</h2>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 1.1 — Inicio de sesión</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Ingrese a la dirección (URL) del sistema en el navegador (HTTPS).</li>
+      <li>Introduzca el <b>código de instalación</b>, su <b>usuario</b> y su <b>contraseña</b>.</li>
+      <li>Pulse <b>Iniciar sesión</b>. Si es el primer acceso, el sistema le pedirá <b>cambiar la contraseña</b>.</li>
+      <li>Se abrirá el <b>Inicio</b> (Dashboard) con los indicadores del módulo y el estado de licencia.</li>
+    </ul>
+    <p class="small"><b>Controles:</b> la contraseña se guarda con hash seguro (Argon2); tras 5 intentos fallidos en 15 minutos la cuenta se bloquea temporalmente. Cada inicio/fallo de sesión queda en el registro de auditoría.</p>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 1.2 — Cerrar sesión y cambiar contraseña</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>En la barra superior pulse <b>Salir</b> para cerrar la sesión (se revoca la sesión).</li>
+      <li>Para cambiar la contraseña: <b>Cambiar contraseña</b> del menú; ingrese la actual y la nueva (mínimo 10 caracteres con mayúscula, minúscula y número).</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>2. Configuración inicial de la instalación</h2>
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 2.1 — Asistente de inicialización</div>
+  <div class="fp-body">
+    <p><b>Objetivo:</b> crear la instalación, la empresa inicial y el administrador en un primer arranque.</p>
+    <ul class="flow-steps">
+      <li>Abra la URL de la instalación. El sistema muestra el asistente <b>Configuración inicial</b>.</li>
+      <li>Complete los datos del <b>tenant (instalación)</b>: código y nombre.</li>
+      <li>Complete los datos de la <b>empresa inicial</b>: código, razón social y RIF.</li>
+      <li>Defina el <b>administrador</b>: usuario y contraseña (mínimo 10 caracteres).</li>
+      <li>Pulse <b>Inicializar instalación</b>. El sistema crea la empresa y el administrador.</li>
+      <li>Inicie sesión con el usuario creado (deberá cambiar la contraseña en el primer acceso).</li>
+    </ul>
+    <p class="small"><b>Punto de control:</b> no existen credenciales fijas; el asistente solo está disponible mientras la instalación no esté inicializada.</p>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>3. Selección de la empresa activa</h2>
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 3.1 — Activar la empresa con la que se opera</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Vaya a <b>Organización → Empresas</b>.</li>
+      <li>En la fila de la empresa deseada (por ejemplo, <i>Soluciones Integrales de TI Innova</i>) pulse <b>Activar</b>.</li>
+      <li>Aparecerá la notificación <b>«Empresa activada»</b> y el botón de esa fila cambiará a <b>Activa</b>.</li>
+      <li>La <b>barra superior</b> mostrará la empresa activa (razón social · RIF) y el <b>Inicio</b> el indicador «Empresa activa».</li>
+      <li>Para cambiar: pulse <b>Desactivar</b> en la empresa activa y luego <b>Activar</b> en otra.</li>
+    </ul>
+    <p class="small"><b>Punto de control:</b> la empresa activa se conserva entre sesiones (alcance persistente); toda operación pertenece a una empresa y respeta el alcance del usuario.</p>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>4. Licencia: estado, sincronización y renovación</h2>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 4.1 — Consultar el estado de la licencia</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Vaya a <b>Mi licencia</b> (menú Principal o enlace de la barra superior).</li>
+      <li>Consulte: instalación, <b>modo</b> de acceso, período pagado y fecha de solo consulta.</li>
+    </ul>
+    <p class="small"><b>Modos:</b> acceso completo (<i>FULL_ACCESS</i>), aviso de renovación (<i>RENEWAL_NOTICE</i>), aviso crítico (<i>CRITICAL_RENEWAL_NOTICE</i>), solo consulta (<i>READ_ONLY</i>) y suspensión (<i>SECURITY_SUSPENSION</i>). En solo consulta el sistema bloquea las escrituras.</p>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 4.2 — Configurar y sincronizar con el servidor central</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Vaya a <b>Licenciamiento → Configuración central</b>.</li>
+      <li>Indique la <b>URL del servidor central</b> y la <b>gracia offline</b> (días).</li>
+      <li>Pulse <b>Guardar configuración</b>.</li>
+      <li>Pulse <b>Sincronizar ahora</b> para verificar la licencia contra el servidor central.</li>
+      <li>Consulte el resultado en <b>Última sincronización</b> y el <b>Estado offline</b>.</li>
+    </ul>
+    <p class="small"><b>Registro:</b> cada sincronización queda en el historial (éxito/fallo) y en los eventos de licencia; la sincronización es idempotente por día.</p>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 4.3 — Registrar comprobante de renovación</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Vaya a <b>Mi licencia → Renovación anual</b>.</li>
+      <li>Ingrese la <b>referencia del comprobante</b> de pago (banco, fecha y referencia).</li>
+      <li>Pulse <b>Cargar comprobante</b>. El sistema registra la solicitud en estado <b>reportado</b>.</li>
+      <li>La confirmación la realiza el propietario de KONTROL (estados verificado/emitido).</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>5. Maestros: terceros, productos y servicios</h2>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 5.1 — Registrar un tercero (cliente o proveedor)</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Vaya a <b>Maestros → Terceros</b> y pulse <b>Nuevo</b>.</li>
+      <li>Complete los datos fiscales: tipo, RIF, razón social, teléfonos y correo.</li>
+      <li>Indique el <b>uso</b> (cliente, proveedor o ambos) y condiciones.</li>
+      <li>Pulse <b>Guardar</b>. El tercero queda disponible en ventas y compras.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 5.2 — Registrar un producto o servicio</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Vaya a <b>Maestros → Productos</b> (o <b>Servicios</b>) y pulse <b>Nuevo</b>.</li>
+      <li>Complete: código, descripción, unidad de medida e <b>impuestos</b> aplicables.</li>
+      <li>Para productos con inventario, defina el almacén inicial y la existencia.</li>
+      <li>Pulse <b>Guardar</b>. Quedará disponible para cotizaciones, órdenes, facturas e inventario.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>6. Ventas: cotización → orden → factura → CxC</h2>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="box">Cotización</div><div class="arrow">→</div>
+    <div class="box">Orden de venta</div><div class="arrow">→</div>
+    <div class="box accent">Factura</div><div class="arrow">→</div>
+    <div class="box">CxC / Cobranza</div>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 6.1 — Venta completa (crédito y contado)</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Cotización:</b> Ventas → Cotizaciones → Nueva. Seleccione el cliente, agregue líneas (producto/servicio, cantidad, precio) y guarde.</li>
+      <li><b>Orden de venta:</b> Ventas → Órdenes → Nueva (puede partir de la cotización o crearla directa). Confirme líneas y condiciones.</li>
+      <li><b>Factura:</b> Ventas → Facturas → Nueva. Indique <b>tipo</b> (contado o crédito), <b>moneda</b> (multimoneda) y <b>forma de pago</b>. El sistema asigna la <b>numeración correlativa</b> automática y calcula los impuestos.</li>
+      <li>Si es a <b>crédito</b>, se genera el documento en <b>CxC</b> para su cobranza.</li>
+      <li>Para corregir una factura emitida: use <b>Notas de crédito</b> o <b>Notas de débito</b> (Fiscal → Notas), nunca borre la factura.</li>
+    </ul>
+    <p class="small"><b>Controles:</b> numeración atómica y consecutiva; los documentos fiscales no se modifican ni eliminan; toda emisión queda en auditoría.</p>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>7. Compras: requisición → orden → recepción → factura → CxP</h2>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="box">Requisición</div><div class="arrow">→</div>
+    <div class="box">Orden de compra</div><div class="arrow">→</div>
+    <div class="box">Recepción</div><div class="arrow">→</div>
+    <div class="box accent">Factura proveedor</div><div class="arrow">→</div>
+    <div class="box">CxP</div>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 7.1 — Compra completa</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Requisición:</b> Compras → Requisiciones → Nueva. Indique lo que se necesita y quién lo solicita.</li>
+      <li><b>Orden de compra:</b> Compras → Órdenes → Nueva (desde la requisición o directa). Seleccione el proveedor y confirme líneas.</li>
+      <li><b>Recepción:</b> Compras → Recepciones. Registre la entrada de mercancía; el inventario se actualiza.</li>
+      <li><b>Factura de proveedor:</b> Compras → Facturas. Registre la factura del proveedor; se aplican las <b>retenciones</b> correspondientes.</li>
+      <li>Se genera la obligación en <b>CxP</b> para su pago.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>8. Inventario: existencias, kardex, transferencias, conteos y ajustes</h2>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 8.1 — Consultar existencias y movimientos</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Existencias:</b> Inventario → Existencias. Consulte el saldo por producto y almacén.</li>
+      <li><b>Kardex:</b> Inventario → Kardex. Consulte el detalle de movimientos (entradas, salidas, ajustes).</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 8.2 — Transferencia entre almacenes</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Inventario → Transferencias → Nueva.</li>
+      <li>Indique almacén de origen, almacén de destino y las líneas (producto y cantidad).</li>
+      <li>Confirme la transferencia; el kardex registra la salida y la entrada.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 8.3 — Conteo y ajuste de inventario</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Inventario → Conteos → Nuevo. Genere el conteo por almacén y registre las cantidades contadas.</li>
+      <li>Compare con el saldo del sistema y ejecute el <b>ajuste</b> de las diferencias.</li>
+      <li>Inventario → Ajustes: revise y confirme el ajuste. Queda <b>registrado en auditoría</b> con usuario y motivo.</li>
+    </ul>
+    <p class="small"><b>Punto de control:</b> los ajustes de inventario no se ejecutan sin registro; requieren usuario con permiso.</p>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>9. Tesorería: cajas, ingresos/egresos, transferencias, conciliación e IGTF</h2>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 9.1 — Caja y arqueo</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Tesorería → Cajas y arqueo. Consulte el saldo de cada caja.</li>
+      <li>Realice el <b>arqueo</b> al cierre: verifique el efectivo y registre el resultado.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 9.2 — Ingresos y egresos</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Tesorería → Ingresos y egresos → Nuevo.</li>
+      <li>Seleccione el <b>tipo</b> (ingreso o egreso), la caja/cuenta, el tercero y el monto; indique si aplica <b>IGTF</b>.</li>
+      <li>Confirme la operación; la tesorería y, si corresponde, la CxC/CxP se actualizan.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 9.3 — Conciliación bancaria</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Tesorería → Conciliación → Nueva.</li>
+      <li>Indique la cuenta y el período a conciliar.</li>
+      <li>Compare los movimientos del sistema con el estado de cuenta del banco y <b>marque</b> los conciliados.</li>
+      <li>Confirme la conciliación; queda registrada y bloqueada para cambios.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>10. Fiscal: configuración, numeración, emisión, notas, retenciones y libros</h2>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 10.1 — Configurar el núcleo fiscal</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Fiscal → Configuración:</b> registre las <b>fuentes legales</b> (leyes, providencias, resoluciones, Gacetas) y las <b>reglas tributarias</b> (impuestos y retenciones) con su vigencia.</li>
+      <li>Defina los <b>perfiles fiscales</b> por empresa, tercero o rubro.</li>
+      <li>Active las fuentes legales que aplican (estado <i>activo</i>).</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 10.2 — Configurar numeración y números de control</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Fiscal → Numeración:</b> cree las <b>series de numeración</b> por empresa/establecimiento y tipo de documento, con prefijo y número inicial.</li>
+      <li>Registre los <b>lotes de números de control</b> de imprenta autorizada (rango, imprenta y estado).</li>
+      <li>Verifique la disponibilidad de números de control para el documento a emitir.</li>
+    </ul>
+    <p class="small"><b>Controles:</b> asignación atómica (sin duplicados ni saltos no controlados); cada número de control tiene estado individual (disponible, reservado, usado, anulado, extraviado, dañado).</p>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 10.3 — Emitir documentos fiscales</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Fiscal → Emisión:</b> seleccione el tipo de documento (factura, nota, etc.).</li>
+      <li>El sistema aplica la <b>numeración correlativa</b> y el <b>cálculo fiscal</b> con la regla vigente (snapshot).</li>
+      <li>Confirme la emisión. El documento y su evento quedan registrados.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 10.4 — Notas de crédito y débito</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Fiscal → Notas:</b> cree una <b>nota de crédito</b> o <b>nota de débito</b> referenciando el documento original.</li>
+      <li>Indique el motivo; el sistema valida que el documento origen exista y no esté anulado.</li>
+      <li>Confirme la nota; corrige la CxC/CxP sin alterar el documento original.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 10.5 — Retenciones y libros</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Fiscal → Retenciones:</b> revise y confirme las retenciones generadas en compras y ventas.</li>
+      <li><b>Fiscal → Libros y períodos:</b> genere los <b>libros</b> fiscales y ejecute el <b>cierre</b> del período.</li>
+      <li>Los períodos cerrados no se reabren sin procedimiento administrativo documentado.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>11. Regulatorio: organismos, vehículos, permisos/guías y evaluación</h2>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 11.1 — Configurar organismos y vehículos</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Regulatorio → Organismos:</b> registre los organismos con los que se gestionan permisos y guías.</li>
+      <li><b>Regulatorio → Vehículos:</b> registre los vehículos (placa, licencia del conductor) utilizados en traslados.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 11.2 — Solicitar permiso de traslado y guía</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Regulatorio → Permisos y guías:</b> cree la solicitud de permiso/guía de traslado (SICA/SIGESAI/SACS).</li>
+      <li>Asocie el vehículo, el origen/destino y las líneas del traslado.</li>
+      <li><b>Regulatorio → Evaluación:</b> evalúe la solicitud; si no cumple las condiciones, el <b>despacho queda bloqueado</b>.</li>
+    </ul>
+    <p class="small"><b>Punto de control:</b> el bloqueo del despacho se activa automáticamente cuando no se cumplen las condiciones regulatorias.</p>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>12. Reportes, exportaciones y auditoría</h2>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 12.1 — Generar reportes y exportar</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Reportes → Centro de reportes:</b> seleccione el reporte deseado y sus filtros.</li>
+      <li><b>Reportes → Exportaciones:</b> ejecute la exportación; el sistema registra <b>quién</b> exportó, <b>qué</b> y <b>cuándo</b> (exportación auditada).</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 12.2 — Consultar la auditoría</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Reportes → Auditoría</b> (o <b>Sistema → Auditoría</b>): consulte los eventos filtrados por entidad, acción o usuario.</li>
+      <li>Cada evento muestra usuario, fecha/hora, operación, documento, valores anteriores/posteriores, sesión, origen y resultado.</li>
+    </ul>
+    <p class="small"><b>Importante:</b> la historia no se puede eliminar; los eventos de auditoría son de solo agregar.</p>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>13. Homologación y liberación de versiones</h2>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 13.1 — Acto de homologación</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Homologación → Actos:</b> cree el acto formal en estado <b>borrador</b>.</li>
+      <li>Envíe el acto para evaluación (estado <b>enviado</b>).</li>
+      <li>Un evaluador distinto lo aprueba o rechaza (<b>aprobado/rechazado</b>). Se aplica la segregación de funciones.</li>
+      <li>Consulte el historial en <b>Homologación → Timeline</b>.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 13.2 — Liberar una versión</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li><b>Homologación → Versiones:</b> cree la versión fiscal en borrador.</li>
+      <li>Para liberar se exigen <b>gates</b>: pruebas, seguridad, respaldo, homologación aprobada y licencia con acceso completo.</li>
+      <li>Confirme la liberación; la versión queda <b>liberada</b> (o bloqueada si no cumple). No se re-libera una versión anterior.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>14. Anulaciones permitidas y reglas de oro fiscales</h2>
+
+<div class="callout danger">
+  <p class="t">Reglas de oro</p>
+  <p>1. Los <strong>documentos fiscales no se modifican ni se eliminan</strong>: las correcciones se hacen con notas de
+  crédito/débito o anulaciones permitidas. 2. La <strong>numeración es consecutiva</strong> y se asigna de forma atómica.
+  3. Todo cambio queda <strong>registrado en auditoría</strong>. 4. Los <strong>números de control</strong> se gestionan por
+  lote con estado individual y trazable. 5. Las <strong>anulaciones</strong> solo proceden en los casos que autoriza la
+  normativa, con motivo y registro; nunca se elimina el documento original.</p>
+</div>
+
+<!-- ================================================================== -->
+<h2>15. Contingencia, respaldos y soporte</h2>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 15.1 — Operación ante contingencias</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Consulte el <b>estado offline</b> en Licenciamiento → Configuración central (gracia disponible).</li>
+      <li>Dentro de la <b>gracia offline</b> (por defecto 7 días) el sistema continúa operando con el reloj confiable del servidor.</li>
+      <li>Al restablecerse la conexión, <b>sincronice</b> para reconectar y actualizar el estado.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 15.2 — Respaldos</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>El respaldo se ejecuta con el script <code>backup.sh</code> (base de datos, storage y estado de licencia), con cifrado AES-256 opcional.</li>
+      <li>La restauración se ejecuta con <code>restore.sh</code>.</li>
+      <li>Conserve los respaldos fuera del servidor de aplicación, según la política del cliente.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-panel nobreak">
+  <div class="fp-head">Flujo 15.3 — Reportar un error</div>
+  <div class="fp-body">
+    <ul class="flow-steps">
+      <li>Los errores se muestran de forma uniforme con <b>código</b> e identificador de solicitud (<code>request_id</code>).</li>
+      <li>Anote el código y el <code>request_id</code>; ejecute <code>diagnose.sh</code> si el problema persiste.</li>
+      <li>Contacte al soporte técnico con esa información para el seguimiento.</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>

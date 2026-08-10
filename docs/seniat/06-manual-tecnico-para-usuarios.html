@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SEPARADOR 06 — Manual Técnico para los Usuarios — KONTROL</title>
+<link rel="stylesheet" href="assets/seniat.css">
+</head>
+<body>
+
+<h1 class="doctitle">SEPARADOR 06 — MANUAL TÉCNICO PARA LOS USUARIOS</h1>
+<p class="docsub">Manual técnico del sistema KONTROL para los usuarios, versión 1.0.0.</p>
+
+<div class="callout">
+  <p>Este manual documenta la operación del sistema desde la instalación hasta los procedimientos que afectan documentos
+  fiscales. Es un manual técnico de uso, complementario a la ficha técnica (Separador 03). Las pantallas y rutas
+  corresponden a la versión 1.0.0; los procedimientos que afectan documentos fiscales siguen las reglas del núcleo
+  fiscal y de la normativa vigente.</p>
+</div>
+
+<h2>1. Instalación y acceso</h2>
+<ul>
+  <li><strong>Requisitos</strong>: servidor Linux con motor Docker; base de datos PostgreSQL externa; navegador web moderno en el puesto de trabajo.</li>
+  <li><strong>Despliegue</strong>: la instalación se realiza con Docker Compose (archivo <code>compose.yaml</code>) y los scripts del repositorio
+  (<code>install.sh</code>, <code>update.sh</code>, <code>diagnose.sh</code>).</li>
+  <li><strong>Configuración</strong>: variables de entorno <code>KONTROL_DB_URL</code> (base de datos), <code>KONTROL_SECRET_KEY</code>,
+  y opcionales de licencia y almacenamiento.</li>
+  <li><strong>Acceso</strong>: el sistema se accede por navegador mediante la URL del despliegue (HTTPS). Al primer arranque se ejecuta el
+  asistente de configuración inicial (crea la empresa y el administrador).</li>
+</ul>
+
+<h2>2. Inicio de sesión y seguridad</h2>
+<ul>
+  <li>El usuario inicia sesión con el código de instalación, su nombre de usuario y su contraseña.</li>
+  <li>La contraseña se almacena con hash <strong>Argon2</strong>; el acceso usa tokens con renovación automática (cookie segura).</li>
+  <li>Tras <strong>5 intentos fallidos</strong> en 15 minutos la cuenta se bloquea temporalmente; el sistema registra cada intento.</li>
+  <li>La contraseña inicial debe cambiarse en el primer acceso; el cierre de sesión revoca la sesión.</li>
+</ul>
+
+<h2>3. Usuarios, perfiles y permisos</h2>
+<ul>
+  <li>Los <strong>usuarios</strong> se crean por el administrador con un perfil asignado.</li>
+  <li>Los <strong>perfiles</strong> agrupan <strong>permisos</strong> por recurso y acción (ver, crear, editar, aprobar).</li>
+  <li>Se aplica <strong>segregación de funciones</strong>: quien crea un documento no es quien lo aprueba en los procesos que lo requieren.</li>
+  <li>El acceso a la auditoría requiere permiso específico; los cambios administrativos quedan registrados.</li>
+</ul>
+
+<h2>4. Organización: empresas, sucursales, establecimientos y almacenes</h2>
+<ul>
+  <li><strong>Empresas</strong>: entidades legales de la instalación; se selecciona la <strong>empresa activa</strong> sobre la que se opera.</li>
+  <li><strong>Sucursales</strong>: dependencias de la empresa.</li>
+  <li><strong>Establecimientos</strong>: puntos de emisión; cada uno puede habilitar la emisión.</li>
+  <li><strong>Almacenes</strong> y <strong>ubicaciones</strong>: control de inventario físico.</li>
+  <li>Toda operación pertenece a una empresa y respeta el alcance organizacional del usuario.</li>
+</ul>
+
+<h2>5. Maestros: terceros, productos y servicios</h2>
+<ul>
+  <li><strong>Clientes y proveedores</strong> (terceros): datos fiscales (RIF, razón social), tipo y condiciones.</li>
+  <li><strong>Productos</strong> y <strong>servicios</strong>: código, descripción, unidad, impuestos y precios.</li>
+  <li><strong>Catálogos</strong>: valores parametrizables del sistema.</li>
+</ul>
+
+<h2>6. Parámetros fiscales e impuestos</h2>
+<ul>
+  <li><strong>Fuentes legales</strong>: leyes, decretos, providencias, resoluciones y Gacetas registradas como norma vigente.</li>
+  <li><strong>Reglas tributarias</strong>: impuestos y retenciones con <strong>vigencia</strong> y versión; cada cálculo guarda el snapshot de la regla aplicada.</li>
+  <li><strong>Series de numeración</strong>: numeración fiscal por empresa/establecimiento y tipo de documento, con asignación atómica.</li>
+  <li><strong>Números de control</strong>: lotes de imprenta autorizada con estado individual (disponible, reservado, usado, anulado, extraviado, dañado).</li>
+  <li><strong>Perfiles fiscales</strong>: configuración fiscal por empresa, tercero o rubro.</li>
+</ul>
+
+<h2>7. Ventas y facturación</h2>
+<ul>
+  <li><strong>Facturación</strong>: emisión de facturas (a crédito y de contado) con numeración correlativa y cálculo fiscal automático.</li>
+  <li><strong>Facturación multimoneda</strong>: documentos en moneda funcional y otras monedas con control de cambios.</li>
+  <li><strong>Formas de pago</strong>: registro de la forma de pago en cada documento.</li>
+  <li><strong>Notas de crédito</strong> y <strong>notas de débito</strong>: correcciones documentadas de facturas, con su propia numeración.</li>
+  <li><strong>Cuentas por cobrar</strong>: seguimiento de facturas a crédito y cobranzas.</li>
+</ul>
+
+<h2>8. Compras y cuentas por pagar</h2>
+<ul>
+  <li>Registro de compras, órdenes y requisiciones.</li>
+  <li><strong>Retenciones</strong> de impuestos aplicables a proveedores.</li>
+  <li><strong>Cuentas por pagar</strong>: seguimiento de obligaciones.</li>
+</ul>
+
+<h2>9. Inventarios</h2>
+<ul>
+  <li>Existencias por almacén, <strong>kardex</strong>, transferencias entre almacenes, conteos cíclicos y ajustes.</li>
+  <li>Los ajustes de inventario quedan registrados en auditoría.</li>
+</ul>
+
+<h2>10. Tesorería</h2>
+<ul>
+  <li>Cajas, bancos, ingresos y egresos, conciliación bancaria y manejo de IGTF.</li>
+</ul>
+
+<h2>11. Regulación y traslados</h2>
+<ul>
+  <li>Permisos de traslado y <strong>guías de traslado</strong> (SICA/SIGESAI/SACS) con evaluación de despacho.</li>
+  <li>El <strong>bloqueo del despacho</strong> se activa cuando no se cumplen las condiciones regulatorias.</li>
+</ul>
+
+<h2>12. Anulaciones permitidas</h2>
+<ul>
+  <li>Las <strong>anulaciones</strong> solo se permiten en los casos y condiciones que autoriza la normativa; nunca se elimina el documento original.</li>
+  <li>Toda anulación queda registrada en auditoría con usuario, fecha/hora y motivo.</li>
+</ul>
+
+<h2>13. Cierres</h2>
+<ul>
+  <li>Los cierres (períodos, libros, fiscales) se ejecutan por personal autorizado y quedan registrados.</li>
+  <li>No se reabren períodos cerrados sin procedimiento administrativo documentado.</li>
+</ul>
+
+<h2>14. Reportes, libros y consultas</h2>
+<ul>
+  <li><strong>Reportes</strong>: dashboard y centro de reportes con exportación <strong>auditada</strong> (cada exportación queda registrada).</li>
+  <li><strong>Libros</strong>: libros fiscales y de retenciones generados a partir de la información registrada.</li>
+  <li><strong>Consultas</strong>: listados y búsquedas con filtros y paginación.</li>
+</ul>
+
+<h2>15. Auditoría y trazabilidad</h2>
+<ul>
+  <li>El sistema registra automáticamente las operaciones (usuario, fecha, hora, operación, documento, valores anteriores/posteriores, sesión, origen y resultado).</li>
+  <li>La historia fiscal es de solo agregar: no existe borrado de documentos fiscales ni de eventos.</li>
+</ul>
+
+<h2>16. Respaldos y restauración</h2>
+<ul>
+  <li><strong>Respaldo</strong>: script <code>backup.sh</code> (base de datos con <code>pg_dump</code>, storage y estado de licencia), con cifrado AES-256 opcional.</li>
+  <li><strong>Restauración</strong>: script <code>restore.sh</code>.</li>
+  <li>Los respaldos se conservan fuera del contenedor de aplicación y deben resguardarse según la política del cliente.</li>
+</ul>
+
+<h2>17. Contingencia</h2>
+<ul>
+  <li>KONTROL dispone de un <strong>período de gracia offline</strong> configurable (por defecto 7 días) basado en el reloj confiable del servidor.</li>
+  <li>El estado de licencia y la gracia pueden consultarse en todo momento; ante interrupciones del servicio central, la operación continúa dentro de la gracia.</li>
+</ul>
+
+<h2>18. Errores y soporte</h2>
+<ul>
+  <li>Los errores se muestran de forma uniforme con código y <code>request_id</code> para su trazabilidad.</li>
+  <li>Las operaciones importantes requieren confirmación; los errores no se descartan automáticamente.</li>
+  <li>Ante fallos persistentes, ejecute <code>diagnose.sh</code> y contacte al soporte técnico con el <code>request_id</code> y el código de error.</li>
+</ul>
+
+<h2>19. Procedimientos que afectan documentos fiscales</h2>
+<div class="callout danger">
+  <p class="t">Reglas de oro</p>
+  <p>1. Los documentos fiscales <strong>no se modifican ni se eliminan</strong>: las correcciones se hacen con notas de
+  crédito/débito o anulaciones permitidas. 2. La <strong>numeración es consecutiva</strong> y se asigna de forma atómica.
+  3. Todo cambio queda <strong>registrado en auditoría</strong> con usuario, fecha y hora. 4. Los <strong>números de control</strong>
+  se gestionan por lote y su estado es individual y trazable.</p>
+</div>
+<p>Los procedimientos que afectan documentos fiscales (emisión, anulación, notas, cierres) solo pueden ejecutarlos
+usuarios con el perfil y los permisos correspondientes, y quedan sujetos al modo de licencia del sistema.</p>
+
+</body>
+</html>

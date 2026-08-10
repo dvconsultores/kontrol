@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SEPARADOR 07 — Manual Técnico del Fabricante de Hardware — KONTROL</title>
+<link rel="stylesheet" href="assets/seniat.css">
+</head>
+<body>
+
+<h1 class="doctitle">SEPARADOR 07 — MANUAL TÉCNICO DEL FABRICANTE DE HARDWARE</h1>
+<p class="docsub">Aplicabilidad del requisito de manual del fabricante (hardware) y matriz de equipos para KONTROL.</p>
+
+<div class="callout warn">
+  <p class="t">Aplicabilidad («según corresponda»)</p>
+  <p>La exigencia de entregar el Manual Técnico del Fabricante de hardware <strong>se aplica «según corresponda»</strong>, es
+  decir, cuando el sistema opera o se integra con hardware fiscal (impresora fiscal, máquina fiscal, POS fiscal,
+  dispositivo fiscal, controlador o equipos homologados relacionados).</p>
+  <p><strong>KONTROL, en su versión 1.0.0, es un sistema de software</strong> (SPA + API REST + base de datos) que <strong>no se
+  integra actualmente con hardware fiscal</strong>. Por lo tanto, este separador documenta la aplicabilidad, declara que no
+  existen equipos en la instalación de referencia y establece la <strong>matriz técnica que se completará</strong> por cada
+  equipo homologado cuando KONTROL se integre con hardware fiscal.</p>
+</div>
+
+<h2>1. Declaración de aplicabilidad</h2>
+<table class="data">
+  <tr><th>Ítem</th><th>Respuesta</th></tr>
+  <tr><td>¿KONTROL se integra con hardware fiscal en la versión 1.0.0?</td><td><strong>No</strong>. La generación de documentos es de software (emisión electrónica y control de numeración).</td></tr>
+  <tr><td>¿Existen impresoras, máquinas o dispositivos fiscales en la instalación de referencia?</td><td><strong>No</strong>.</td></tr>
+  <tr><td>¿Aplica la entrega de manual técnico de fabricante hoy?</td><td><strong>No aplica</strong> («según corresponda»). Este separador queda como declaración y matriz preparada.</td></tr>
+</table>
+
+<h2>2. Relación prevista de KONTROL con hardware fiscal</h2>
+<p>Si en una instalación futura KONTROL se integra con equipos homologados (impresión fiscal, máquina/POS fiscal o
+dispositivo de control fiscal), la integración se documentará en el expediente mediante la siguiente matriz, y se
+adjuntará el manual técnico oficial de cada fabricante. KONTROL contempla en su núcleo fiscal el registro de
+<strong>números de control de imprenta autorizada</strong> (lotes con impresora asociada y estado individual de cada número),
+que es la base de datos que alimentará la impresión fiscal homologada.</p>
+
+<h2>3. Matriz por equipo homologado</h2>
+<p>Por cada equipo se completarán los siguientes campos en el expediente (esta matriz se diligencia cuando exista
+integración):</p>
+<table class="data">
+  <tr><th>Campo</th><th>Descripción</th></tr>
+  <tr><td>Fabricante</td><td>Nombre del fabricante del equipo</td></tr>
+  <tr><td>Modelo</td><td>Modelo exacto del equipo</td></tr>
+  <tr><td>Versión</td><td>Versión de firmware/hardware</td></tr>
+  <tr><td>Manual técnico</td><td>Referencia del manual oficial del fabricante (adjunto al expediente)</td></tr>
+  <tr><td>Interfaz</td><td>Tipo de interfaz (USB, serie RS-232, Ethernet, Bluetooth, etc.)</td></tr>
+  <tr><td>Conexión</td><td>Forma de conexión física/lógica con el servidor o puesto</td></tr>
+  <tr><td>Protocolo</td><td>Protocolo de comunicación con el equipo</td></tr>
+  <tr><td>Driver</td><td>Controlador utilizado por KONTROL para el equipo</td></tr>
+  <tr><td>Forma de interacción con KONTROL</td><td>Cómo KONTROL envía datos (emisión) y recibe estados (impresión, anulación) del equipo</td></tr>
+</table>
+
+<div class="callout">
+  <p class="t">Actualización del expediente</p>
+  <p>Cuando KONTROL se integre con un equipo homologado en una instalación concreta, este separador se actualizará con la
+  matriz diligenciada y se adjuntará el manual técnico oficial del fabricante correspondiente, en cumplimiento de la
+  exigencia «según corresponda».</p>
+</div>
+
+</body>
+</html>

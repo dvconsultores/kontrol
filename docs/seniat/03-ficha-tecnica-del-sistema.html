@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SEPARADOR 03 — Ficha Técnica del Sistema — KONTROL</title>
+<link rel="stylesheet" href="assets/seniat.css">
+</head>
+<body>
+
+<h1 class="doctitle">SEPARADOR 03 — FICHA TÉCNICA DEL SISTEMA</h1>
+<p class="docsub">Documento Técnico de Homologación del sistema KONTROL. Contenido técnico real del producto, versión 1.0.0.</p>
+
+<div class="callout">
+  <p>La ficha técnica describe el aplicativo, el lenguaje, la base de datos, el monitoreo y auditoría, y el tipo de
+  conexión con las plataformas, conforme a la exigencia de la Providencia Administrativa. Los datos se toman de la
+  documentación técnica y de las evidencias de desarrollo de KONTROL.</p>
+</div>
+
+<h2>A. Identificación</h2>
+<table class="data">
+  <tr><td class="k">Aplicativo</td><td><strong>KONTROL</strong> — Plataforma Administrativa Empresarial para Venezuela</td></tr>
+  <tr><td class="k">Edición</td><td>Edición empresarial (multiempresa / monoempresa por licencia)</td></tr>
+  <tr><td class="k">Versión exacta</td><td>1.0.0 (backend y frontend)</td></tr>
+  <tr><td class="k">Build / liberación</td><td>Build automatizado por CI (GitHub Actions) para ramas <code>develop</code> y <code>main</code>; imagen Docker etiquetada por entorno</td></tr>
+  <tr><td class="k">Fecha de liberación</td><td>2026 (candidata a homologación)</td></tr>
+  <tr><td class="k">Propietario</td><td>KONTROL (producto)</td></tr>
+  <tr><td class="k">Desarrollador</td><td>Equipo de desarrollo KONTROL (dvconsultores)</td></tr>
+  <tr><td class="k">Proveedor</td><td>dvconsultores (publicador de las imágenes de contenedor de KONTROL)</td></tr>
+  <tr><td class="k">Arquitectura</td><td>Cliente-servidor web: SPA (navegador) + API REST + base de datos relacional, empaquetada en contenedores</td></tr>
+  <tr><td class="k">Tipo de implementación</td><td>Instalación por cliente en contenedores Docker (Compose); base de datos PostgreSQL externa por instalación</td></tr>
+</table>
+
+<h2>B. Arquitectura tecnológica</h2>
+
+<h3>B.1 Componentes</h3>
+<table class="data">
+  <tr><th>Componente</th><th>Tecnología</th><th>Descripción</th></tr>
+  <tr><td><strong>Frontend</strong></td><td>React 19 + TypeScript 5.7 + Vite 6</td><td>Interfaz de usuario de página única (SPA), servida estáticamente por Nginx</td></tr>
+  <tr><td><strong>Backend</strong></td><td>Python 3.13 + FastAPI + Uvicorn</td><td>API REST y lógica de negocio; empaquetado en imagen Docker</td></tr>
+  <tr><td><strong>API</strong></td><td>REST / JSON sobre HTTPS</td><td>Prefijo <code>/api/v1</code>; especificación OpenAPI; más de 200 rutas</td></tr>
+  <tr><td><strong>Base de datos</strong></td><td>PostgreSQL (psycopg2)</td><td>Motor relacional externo por instalación; migraciones Alembic</td></tr>
+  <tr><td><strong>Servidor web</strong></td><td>Nginx (reverse proxy + SPA)</td><td>Sirve el frontend, proxy de <code>/api/v1</code>, headers de seguridad y TLS</td></tr>
+  <tr><td><strong>Docker</strong></td><td>Imágenes multi-stage, usuario no root</td><td>Imágenes <code>kontrol-frontend</code>, <code>kontrol-backend</code> y proxy Nginx</td></tr>
+</table>
+
+<h3>B.2 Contenedores y orquestación</h3>
+<ul>
+  <li><strong>frontend</strong> (<code>kontrol-web</code>): sirve la SPA; healthcheck <code>/healthz</code>.</li>
+  <li><strong>backend</strong> (<code>kontrol-api</code>): API Uvicorn en el puerto 8000; aplica las migraciones automáticamente al arranque (<code>alembic upgrade head</code>); healthcheck <code>/api/v1/health/live</code>.</li>
+  <li><strong>watchtower</strong>: actualización automática de imágenes etiquetadas, con reinicio rodante opcional.</li>
+  <li><strong>Red</strong>: red bridge <code>kontrol-net</code> de nombre fijo para que el proxy de entrada pueda enrutar a <code>kontrol-web:80</code> y <code>kontrol-api:8000</code> sin exponer puertos.</li>
+  <li><strong>Base de datos</strong>: externa (cada cliente la suya), alcanzada por el backend mediante <code>KONTROL_DB_URL</code>.</li>
+</ul>
+
+<h3>B.3 Sistema operativo soportado y servidor</h3>
+<ul>
+  <li><strong>Servidor</strong>: Linux (imágenes base Debian slim y Alpine); cualquier host con motor Docker compatible.</li>
+  <li><strong>Cliente</strong>: navegadores web modernos de escritorio (Chrome/Edge, Firefox y Safari en sus versiones vigentes).</li>
+  <li><strong>Navegadores compatibles</strong>: la SPA se compila para navegadores modernos con soporte ES2020+.</li>
+</ul>
+
+<h3>B.4 Esquema de comunicaciones</h3>
+<ul>
+  <li>El navegador se comunica con el frontend servido por Nginx y con la API a través de <code>/api/v1</code> mediante HTTPS.</li>
+  <li>El backend se comunica con PostgreSQL mediante el driver <code>psycopg2</code> (conexión TLS habilitable por configuración del motor).</li>
+  <li>El backend mantiene comunicación saliente opcional con el servidor central de licencias (contrato REST v1) para la sincronización de la licencia y los entitlements por módulo.</li>
+  <li>Todo intercambio de datos con el exterior se realiza sobre HTTPS/TLS a través del reverse proxy.</li>
+</ul>
+
+<h3>B.5 Servicios internos</h3>
+<table class="data">
+  <tr><th>Servicio</th><th>Función</th></tr>
+  <tr><td>Licenciamiento local y central</td><td>Verificación de licencia firmada (Ed25519), modos de acceso, sincronización central, entitlements por módulo, renovación con comprobante</td></tr>
+  <tr><td>Identidad y acceso</td><td>Autenticación (Argon2 + JWT), sesiones, perfiles y permisos</td></tr>
+  <tr><td>Organización</td><td>Instalación/tenant, empresa, sucursal, establecimiento, almacén y ubicación</td></tr>
+  <tr><td>Maestros</td><td>Terceros, productos, servicios y catálogos</td></tr>
+  <tr><td>Núcleo fiscal</td><td>Fuentes legales, reglas tributarias versionadas, series de numeración, números de control, cálculos y perfiles fiscales</td></tr>
+  <tr><td>Ventas y cuentas por cobrar</td><td>Facturación, notas de crédito/débito, multimoneda, formas de pago, CxC</td></tr>
+  <tr><td>Compras y cuentas por pagar</td><td>Compras, retenciones, CxP</td></tr>
+  <tr><td>Inventario y logística</td><td>Existencias, kardex, transferencias, conteos y ajustes</td></tr>
+  <tr><td>Tesorería</td><td>Cajas, bancos, ingresos/egresos, conciliación, IGTF</td></tr>
+  <tr><td>Regulación y traslados</td><td>Permisos, guías de traslado (SICA/SIGESAI/SACS), evaluación y bloqueo de despacho</td></tr>
+  <tr><td>Reportes y auditoría</td><td>Dashboard, centro de reportes, exportación auditada y línea de tiempo</td></tr>
+  <tr><td>Homologación y liberación</td><td>Actos formales, versiones fiscales, gates y liberación de versión</td></tr>
+</table>
+
+<h2>C. Lenguajes y tecnologías</h2>
+
+<h3>C.1 Backend</h3>
+<table class="data">
+  <tr><th>Componente</th><th>Versión</th></tr>
+  <tr><td>Lenguaje</td><td>Python 3.13 (producción); ≥ 3.11 en estaciones de desarrollo</td></tr>
+  <tr><td>Framework web</td><td>FastAPI 0.141.1</td></tr>
+  <tr><td>Servidor ASGI</td><td>Uvicorn 0.32.1</td></tr>
+  <tr><td>Validación / configuración</td><td>Pydantic 2.10.4 · pydantic-settings 2.7.0</td></tr>
+  <tr><td>ORM</td><td>SQLAlchemy 2.0.36</td></tr>
+  <tr><td>Migraciones</td><td>Alembic 1.14.0 (11 migraciones, head <code>0011_homologacion</code>)</td></tr>
+  <tr><td>Driver de base de datos</td><td>psycopg2-binary 2.9.10</td></tr>
+  <tr><td>Hash de contraseñas</td><td>Argon2 (argon2-cffi 23.1.0)</td></tr>
+  <tr><td>Tokens / firma</td><td>PyJWT 2.13.0 · cryptography 46.0.6 (Ed25519 para licencias)</td></tr>
+  <tr><td>Validación de correo</td><td>email-validator 2.2.0 · python-multipart 0.0.31</td></tr>
+</table>
+
+<h3>C.2 Frontend</h3>
+<table class="data">
+  <tr><th>Componente</th><th>Versión</th></tr>
+  <tr><td>Lenguaje</td><td>TypeScript 5.7 (modo estricto)</td></tr>
+  <tr><td>UI</td><td>React 19</td></tr>
+  <tr><td>Build</td><td>Vite 6.4.3</td></tr>
+  <tr><td>Estilos</td><td>Tailwind CSS 4</td></tr>
+  <tr><td>Enrutado</td><td>React Router 8.3</td></tr>
+  <tr><td>Datos</td><td>TanStack Query 5.62 · TanStack Table 8.20</td></tr>
+  <tr><td>Formularios</td><td>React Hook Form 7.54 · Zod 3.24</td></tr>
+  <tr><td>Iconografía</td><td>Lucide React 0.469</td></tr>
+  <tr><td>Calidad</td><td>ESLint 9 · Prettier 3.4 · Vitest 3.2 · Playwright 1.62</td></tr>
+</table>
+
+<h3>C.3 Infraestructura</h3>
+<table class="data">
+  <tr><th>Componente</th><th>Tecnología / versión</th></tr>
+  <tr><td>Motor de base de datos</td><td>PostgreSQL (driver psycopg2 2.9.10); base externa por instalación; respaldo de referencia con imagen <code>postgres:18-alpine</code></td></tr>
+  <tr><td>Servidor web</td><td>Nginx (imagen <code>nginx:stable-alpine</code>) — SPA, reverse proxy y TLS</td></tr>
+  <tr><td>Contenedores</td><td>Docker (Dockerfile multi-stage por servicio) + Docker Compose</td></tr>
+  <tr><td>CI / build</td><td>GitHub Actions — builds de imagen para <code>develop</code> y <code>main</code></td></tr>
+  <tr><td>Actualización</td><td>Watchtower (etiquetado de imágenes, reinicio rodante opcional)</td></tr>
+  <tr><td>Componentes de generación fiscal</td><td>Núcleo fiscal (007): <code>LegalSource</code>, <code>TaxRuleVersion</code>, <code>FiscalNumberSeries</code>, <code>ControlNumberBatch</code>/<code>ControlNumber</code>, <code>TaxCalculation</code>, <code>TaxProfile</code></td></tr>
+</table>
+
+<h2>D. Base de datos</h2>
+
+<h3>D.1 Motor y versión</h3>
+<p>KONTROL utiliza <strong>PostgreSQL</strong> como motor relacional. La base de datos es <strong>externa por instalación</strong>
+(cada cliente dispone de la suya) y se conecta mediante <code>KONTROL_DB_URL</code> con un <strong>usuario restringido</strong>
+(no superusuario). El despliegue de referencia y el respaldo usan imágenes PostgreSQL modernas (referencia <code>postgres:18-alpine</code>);
+el driver es <code>psycopg2</code> 2.9.10 y el ORM SQLAlchemy 2.0.36.</p>
+
+<h3>D.2 Estructura general y modelo de almacenamiento</h3>
+<ul>
+  <li>Esquema relacional normalizado, gestionado por migraciones <strong>Alembic</strong> (versionadas y reproducibles; head <code>0011_homologacion</code>).</li>
+  <li>Identificadores UUID en las entidades; fechas con zona horaria (<code>DateTime(timezone=True)</code>).</li>
+  <li>Modelo de datos: <code>Installation → Tenant → Company → Branch → Establishment → Warehouse → Location</code>, con aislamiento por empresa (ADR-011).</li>
+  <li>Datos fiscales versionados: reglas tributarias con vigencia (<code>TaxRuleVersion</code>), fuentes legales con hash (<code>LegalSource</code>).</li>
+  <li>Los eventos de auditoría son de solo agregar (<em>append-only</em>) (<code>audit_events</code>).</li>
+</ul>
+
+<h3>D.3 Identificación, numeración y correlativos de documentos fiscales</h3>
+<ul>
+  <li><strong>Series de numeración fiscal</strong> (<code>FiscalNumberSeries</code>): por empresa y establecimiento, con tipo de documento, prefijo y número siguiente.</li>
+  <li><strong>Asignación atómica</strong>: se usa control de concurrencia optimista (<code>lock_version</code>) para evitar duplicados o saltos no controlados en la asignación de correlativos.</li>
+  <li><strong>Números de control</strong> (<code>ControlNumberBatch</code> / <code>ControlNumber</code>): lotes de imprenta autorizada, con rango y estado individual
+  (<code>AVAILABLE / RESERVED / USED / VOID / LOST / DAMAGED</code>) y referencia al documento que los consume.</li>
+  <li>La <strong>emisión real</strong> de documentos y su numeración definitiva corresponden al núcleo fiscal (spec 007) y quedan
+  sujetas al proceso de homologación de la versión fiscal correspondiente.</li>
+</ul>
+
+<h3>D.4 Conservación de datos, restricciones e integridad referencial</h3>
+<ul>
+  <li><strong>Integridad referencial</strong>: claves foráneas y restricciones de unicidad gestionadas por PostgreSQL.</li>
+  <li><strong>Conservación</strong>: los documentos fiscales y los eventos de auditoría se conservan de forma persistente; no se
+  eliminan registros fiscales por operación normal (ver Separador 04).</li>
+  <li><strong>Trazabilidad</strong>: cada operación se vincula a tenant, empresa, usuario, sesión, request y fecha/hora mediante el registro de auditoría.</li>
+  <li><strong>Protección frente a eliminación/modificación</strong>: la historia fiscal es de solo agregar a nivel de aplicación;
+  los permisos de base de datos se restringen (usuario de aplicación sin privilegios de borrado administrativo sobre tablas fiscales en producción).</li>
+</ul>
+
+<h3>D.5 Respaldos y restauración</h3>
+<table class="data">
+  <tr><th>Elemento</th><th>Descripción</th></tr>
+  <tr><td>Respaldo</td><td>Script <code>scripts/backup.sh</code>: <code>pg_dump</code> de la base externa (en contenedor PostgreSQL), respaldo de volúmenes de storage y estado de licencia</td></tr>
+  <tr><td>Cifrado</td><td>Cifrado opcional del respaldo con AES-256-CBC (PBKDF2) mediante clave de instalación</td></tr>
+  <tr><td>Restauración</td><td>Script <code>scripts/restore.sh</code> para recuperar el respaldo</td></tr>
+  <tr><td>Volúmenes</td><td><code>/data/storage</code> (archivos), <code>/data/license-state</code> (identidad de instalación y clave), <code>/data/backups</code> (respaldos)</td></tr>
+</table>
+
+<h2>E. Arquitectura diagramada</h2>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="box dark">Usuario<br><span class="label">navegador web</span></div>
+    <div class="arrow">→</div>
+    <div class="box accent">Frontend (SPA)<br><span class="label">React + Nginx</span></div>
+    <div class="arrow">→</div>
+    <div class="box">Backend / API REST<br><span class="label">FastAPI · /api/v1</span></div>
+    <div class="arrow">→</div>
+    <div class="box">PostgreSQL<br><span class="label">base externa</span></div>
+  </div>
+  <p class="small">Esquema principal: Usuario → Frontend → Backend/API → PostgreSQL</p>
+</div>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="box accent">Facturación<br><span class="label">núcleo fiscal</span></div>
+    <div class="arrow">→</div>
+    <div class="box accent">Auditoría<br><span class="label">append-only</span></div>
+    <div class="arrow">→</div>
+    <div class="box accent">Base fiscal<br><span class="label">reglas + series</span></div>
+    <div class="arrow">→</div>
+    <div class="box">Integración SENIAT / medio fiscal<br><span class="label">capacidad de remisión electrónica</span></div>
+  </div>
+  <p class="small">Servicios asociados: Facturación → Auditoría → Base fiscal → Integración SENIAT / medio fiscal</p>
+</div>
+
+<div class="callout info">
+  <p class="t">Tipos de conexión con las plataformas</p>
+  <p>La ficha técnica indica de forma expresa el tipo de conexión en el <strong>Separador 05</strong> de este expediente
+  (protocolo HTTPS/TLS, API REST, autenticación, serialización JSON, reintentos, registro de transmisiones, contingencia y cifrado),
+  sin afirmar protocolos concretos que SENIAT no haya especificado para la integración a evaluar.</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SEPARADOR 04 — Monitoreo y Auditoría — KONTROL</title>
+<link rel="stylesheet" href="assets/seniat.css">
+</head>
+<body>
+
+<h1 class="doctitle">SEPARADOR 04 — MONITOREO Y AUDITORÍA</h1>
+<p class="docsub">Registro de eventos, trazabilidad y protección de la historia fiscal del sistema KONTROL.</p>
+
+<div class="callout">
+  <p>El sistema lleva un registro de eventos que recopila automáticamente las interacciones, operaciones y sucesos
+  producidos durante su utilización. Todos los registros son rastreables de forma clara y fiable, debidamente fechados
+  y con hora. Este capítulo describe ese registro y demuestra la regla fundamental: <strong>ningún usuario normal,
+  administrador del cliente o usuario de base de datos puede eliminar silenciosamente la historia fiscal</strong>.</p>
+</div>
+
+<h2>1. Modelo de datos del registro de auditoría</h2>
+<p>KONTROL implementa un registro de eventos de <strong>solo agregar</strong> (<em>append-only</em>) en la tabla
+<code>audit_events</code> (módulo <code>audit</code>, ADR-012). Cada evento captura, de forma estructurada, todos los
+campos exigidos por la norma:</p>
+
+<table class="data">
+  <tr><th>Campo del registro</th><th>Columna técnica</th><th>Exigencia que cubre</th></tr>
+  <tr><td>Usuario</td><td><code>user_id</code></td><td>Usuario que realizó la operación</td></tr>
+  <tr><td>Fecha</td><td><code>event_time</code> (fecha y hora con zona horaria)</td><td>Fecha del suceso</td></tr>
+  <tr><td>Hora</td><td><code>event_time</code> (con hora y zona horaria UTC)</td><td>Hora del suceso</td></tr>
+  <tr><td>Operación</td><td><code>action</code></td><td>Tipo de operación realizada</td></tr>
+  <tr><td>Documento involucrado</td><td><code>entity_type</code> + <code>entity_id</code></td><td>Entidad y documento afectado</td></tr>
+  <tr><td>Número de documento</td><td><code>entity_id</code> / <code>evidence</code></td><td>Identificación del documento</td></tr>
+  <tr><td>Acción realizada</td><td><code>action</code> + <code>reason</code></td><td>Acción y motivo</td></tr>
+  <tr><td>Valor anterior</td><td><code>before</code> (JSON)</td><td>Estado previo del registro</td></tr>
+  <tr><td>Valor posterior</td><td><code>after</code> (JSON)</td><td>Estado posterior, cuando procede</td></tr>
+  <tr><td>Sesión</td><td><code>session_id</code></td><td>Sesión de usuario</td></tr>
+  <tr><td>Origen</td><td><code>source</code> + <code>ip</code></td><td>Origen del evento (API, etc.) y dirección IP</td></tr>
+  <tr><td>Evento / resultado</td><td><code>action</code> + <code>evidence</code></td><td>Resultado y evidencia asociada</td></tr>
+  <tr><td>Errores / intentos</td><td><code>action</code> + <code>reason</code></td><td>Errores y motivos de bloqueo</td></tr>
+  <tr><td>Contexto de negocio</td><td><code>tenant_id</code> / <code>company_id</code></td><td>Aislamiento y alcance de la empresa</td></tr>
+  <tr><td>Correlación</td><td><code>request_id</code></td><td>Identificador único de la solicitud (X-Request-ID)</td></tr>
+</table>
+
+<h2>2. Eventos registrados automáticamente</h2>
+
+<h3>2.1 Acceso e identidad</h3>
+<table class="data">
+  <tr><th>Evento</th><th>Descripción</th></tr>
+  <tr><td><code>LOGIN_SUCCESS</code></td><td>Inicio de sesión correcto</td></tr>
+  <tr><td><code>LOGIN_FAILED</code></td><td>Intento de inicio de sesión fallido (incluye motivo, p. ej. usuario inactivo)</td></tr>
+  <tr><td><code>LOGIN_BLOCKED</code></td><td>Bloqueo por umbral de intentos fallidos (5 fallos / 15 minutos)</td></tr>
+  <tr><td><code>SESSION_REFRESHED</code></td><td>Renovación de sesión</td></tr>
+  <tr><td><code>SESSION_REVOKED</code></td><td>Cierre de sesión / revocación</td></tr>
+  <tr><td><code>PASSWORD_CHANGED</code></td><td>Cambio de contraseña</td></tr>
+  <tr><td><code>PASSWORD_RESET_REQUESTED</code> / <code>PASSWORD_RESET_CONFIRMED</code></td><td>Solicitud y confirmación de restablecimiento de contraseña</td></tr>
+  <tr><td><code>USER_CREATED</code></td><td>Creación de usuario</td></tr>
+</table>
+
+<h3>2.2 Licenciamiento</h3>
+<p>El módulo de licenciamiento registra en su propio historial inmutable (<code>license_events</code>):
+<code>LICENSE_IMPORTED</code>, <code>LICENSE_SYNCED</code>, <code>LICENSE_SYNC_FAILED</code>,
+<code>LICENSE_MODE_CHANGED</code>, <code>LICENSE_RENEWAL_REQUESTED</code>, <code>LICENSE_RENEWAL_VERIFIED</code>,
+<code>LICENSE_RENEWAL_ISSUED</code>, <code>LICENSE_RENEWAL_REJECTED</code>, <code>LICENSE_CENTRAL_CONFIGURED</code>,
+<code>LICENSE_SIGNATURE_INVALID</code> y <code>LICENSE_INSTALLATION_MISMATCH</code>.</p>
+
+<h3>2.3 Documentos y exportaciones</h3>
+<ul>
+  <li>La <strong>emisión de documentos fiscales</strong> (facturas, notas de crédito, notas de débito, guías), los
+  <strong>cambios administrativos</strong> y las <strong>anulaciones permitidas</strong> quedan registrados como eventos
+  de auditoría con la entidad y el documento involucrado.</li>
+  <li>Toda <strong>exportación de reportes</strong> se registra con el usuario y la acción correspondiente (exportación auditada).</li>
+  <li>La línea de tiempo de auditoría está disponible vía <code>GET /api/v1/reporting/audit/timeline</code> y el listado
+  filtrable y paginado vía <code>GET /api/v1/audit/events</code> (requiere permiso <code>audit:view</code>).</li>
+</ul>
+
+<h3>2.4 Monitoreo del servicio</h3>
+<ul>
+  <li>Healthchecks de los contenedores (<code>/healthz</code> de la SPA y <code>/api/v1/health/live</code> del backend).</li>
+  <li>Logs estructurados en JSON (<code>KONTROL_LOG_JSON=true</code>) con <code>request_id</code> para correlación.</li>
+  <li>Identificador de solicitud <code>X-Request-ID</code> generado por middleware en cada petición.</li>
+</ul>
+
+<h2>3. Regla fundamental: la historia fiscal no se puede eliminar silenciosamente</h2>
+
+<div class="callout danger">
+  <p class="t">Alteración fiscal</p>
+  <p>La Providencia define como alteración fiscal, entre otros supuestos: la <strong>ocultación o eliminación de registros
+  originalmente generados</strong>, la <strong>modificación total o parcial de los datos</strong> y la
+  <strong>incorporación de registros simulados o falsos</strong>. KONTROL adopta controles de diseño, aplicación y base de
+  datos para impedir estas conductas, y para dejar evidencia si cualquier intento ocurriera.</p>
+</div>
+
+<h3>3.1 Controles a nivel de aplicación</h3>
+<ul>
+  <li><strong>Registro append-only</strong>: los eventos de auditoría no se modifican ni eliminan por operación normal
+  (<code>record_audit</code> solo agrega). No existe funcionalidad de borrado de historia fiscal en la interfaz.</li>
+  <li><strong>Documentos inmutables</strong>: los documentos fiscales emitidos no se reescriben; las correcciones se
+  instrumentan mediante <strong>anulaciones permitidas y notas de crédito/débito</strong>, quedando ambos registros en la historia.</li>
+  <li><strong>Permisos y segregación de funciones (SoD)</strong>: los permisos se asignan por perfil; la auditoría exige
+  permiso específico (<code>audit:view</code>) y los procesos sensibles (emisión, anulación, homologación) tienen
+  flujos de aprobación y separación entre quien ejecuta y quien aprueba.</li>
+  <li><strong>Bloqueo de escrituras por licencia</strong>: el middleware de licencia bloquea las operaciones de escritura
+  cuando el modo de acceso es <code>READ_ONLY</code> o <code>SECURITY_SUSPENSION</code>, impidiendo modificaciones no autorizadas.</li>
+</ul>
+
+<h3>3.2 Controles a nivel de base de datos</h3>
+<ul>
+  <li><strong>Usuario restringido</strong>: el backend se conecta a PostgreSQL con un usuario de aplicación (no superusuario),
+  configurado mediante <code>KONTROL_DB_URL</code>. No se usan credenciales con privilegios administrativos para la operación normal.</li>
+  <li><strong>Sin borrado silencioso</strong>: no existen operaciones de eliminación sobre la historia fiscal en los flujos de
+  negocio; la integridad referencial y las restricciones de la base protegen los registros vinculados.</li>
+  <li><strong>Respaldo y conservación</strong>: los respaldos (<code>pg_dump</code>, cifrado AES-256 opcional) preservan la
+  historia fiscal; la restauración es trazable mediante el script <code>restore.sh</code>.</li>
+  <li><strong>Trazabilidad</strong>: cualquier cambio en datos administrativos registra <code>before</code>/<code>after</code>,
+  usuario, sesión, request, fecha y hora, de modo que la modificación total o parcial de datos quedaría documentada.</li>
+</ul>
+
+<h3>3.3 Qué queda evidenciado ante un intento de alteración</h3>
+<table class="data">
+  <tr><th>Supuesto de alteración</th><th>Control en KONTROL</th></tr>
+  <tr><td>Ocultación o eliminación de registros generados</td><td>No existe borrado de historia fiscal; registros append-only; usuario de BD sin privilegios de borrado masivo</td></tr>
+  <tr><td>Modificación total o parcial de datos</td><td>Registro de <code>before</code>/<code>after</code> en auditoría; documentos inmutables; correcciones mediante anulaciones/notas</td></tr>
+  <tr><td>Incorporación de registros simulados o falsos</td><td>Numeración atómica con control de concurrencia; números de control con estado individual; permisos y SoD</td></tr>
+</table>
+
+<h2>4. Consulta y seguimiento</h2>
+<ul>
+  <li><strong>Panel de auditoría</strong>: el módulo de auditoría permite consultar los eventos filtrados por entidad,
+  acción y usuario, con fecha/hora y paginación.</li>
+  <li><strong>Línea de tiempo</strong>: el módulo de reportes ofrece una línea de tiempo de auditoría para el seguimiento
+  claro y fiable de las operaciones.</li>
+  <li><strong>Historial de licencia</strong>: eventos de licencia inmutables consultables (<code>/api/v1/license/history</code>).</li>
+  <li>Todos los registros incluyen <strong>fecha y hora</strong> (con zona horaria) y son rastreables por <code>request_id</code>.</li>
+</ul>
+
+</body>
+</html>

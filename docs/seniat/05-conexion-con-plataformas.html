@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SEPARADOR 05 — Conexión con Plataformas — KONTROL</title>
+<link rel="stylesheet" href="assets/seniat.css">
+</head>
+<body>
+
+<h1 class="doctitle">SEPARADOR 05 — CONEXIÓN CON PLATAFORMAS</h1>
+<p class="docsub">Tipo de conexión con las plataformas y capacidad de remisión electrónica de KONTROL.</p>
+
+<div class="callout warn">
+  <p class="t">Declaración de alcance</p>
+  <p>Este separador documenta la <strong>capacidad técnica real</strong> de KONTROL para la transmisión segura de
+  información y su capacidad de remisión electrónica. <strong>No se afirma</strong> que SENIAT exija actualmente JSON, XML,
+  webhook, un endpoint concreto ni una tecnología específica para la integración a evaluar; esos parámetros se
+  establecerán con la autoridad competente al momento de la homologación. KONTROL está en capacidad de ajustar el
+  mecanismo de transmisión (formato y transporte) a la especificación oficial vigente, sin reescribir su núcleo.</p>
+</div>
+
+<h2>1. Capacidad exigida y respuesta de KONTROL</h2>
+<p>La norma exige <strong>capacidad de remisión electrónica</strong> de los registros fiscales que SENIAT requiera, de manera
+<strong>continua, segura, correcta, íntegra, automática, consecutiva, inmediata y fehaciente</strong>. La siguiente tabla
+asocia cada atributo con el mecanismo de KONTROL que lo soporta:</p>
+
+<table class="data">
+  <tr><th>Atributo exigido</th><th>Mecanismo en KONTROL</th></tr>
+  <tr><td>Continua</td><td>Servicio de API siempre disponible (Uvicorn + Nginx con healthchecks y reinicio automático de contenedores)</td></tr>
+  <tr><td>Segura</td><td>Transmisión sobre HTTPS/TLS; autenticación JWT; cifrado de respaldos; firma de licencia</td></tr>
+  <tr><td>Correcta</td><td>Validación estricta de datos (Pydantic/Zod); numeración atómica y números de control</td></tr>
+  <tr><td>Íntegra</td><td>Datos registrados con integridad referencial; eventos append-only; <code>request_id</code> de correlación</td></tr>
+  <tr><td>Automática</td><td>Mecanismo de sincronización idempotente y ejecutable de forma automática (contrato v1); actualización de imágenes automatizada</td></tr>
+  <tr><td>Consecutiva</td><td>Numeración correlativa con control de concurrencia y registro de cada transmisión</td></tr>
+  <tr><td>Inmediata</td><td>Registro inmediato de cada operación y su evento de auditoría con fecha/hora</td></tr>
+  <tr><td>Fehaciente</td><td>Registro de transmisiones (<code>license_sync_runs</code>), eventos inmutables y confirmación con fecha del servidor</td></tr>
+</table>
+
+<h2>2. Protocolo, transporte y serialización</h2>
+<table class="data">
+  <tr><th>Elemento</th><th>Configuración de KONTROL</th></tr>
+  <tr><td>Protocolo</td><td>HTTPS sobre HTTP/1.1 (TLS en el reverse proxy Nginx; certificado montado en el proxy de entrada)</td></tr>
+  <tr><td>API</td><td>REST sobre HTTP, prefijo <code>/api/v1</code>; especificación OpenAPI disponible (no en producción)</td></tr>
+  <tr><td>Autenticación</td><td>Bearer JWT (access token 15 min, refresh 14 días en cookie HttpOnly), CSRF, Argon2 para credenciales</td></tr>
+  <tr><td>Serialización</td><td>JSON (validado con Pydantic en el backend y Zod en el frontend)</td></tr>
+  <tr><td>Encabezados de seguridad</td><td>HSTS/security headers vía Nginx; CORS restrictivo; <code>X-Request-ID</code> en cada respuesta</td></tr>
+</table>
+
+<h2>3. Mecanismo de sincronización y transmisión</h2>
+<p>KONTROL implementa un mecanismo de sincronización de licencias y datos con el exterior mediante un <strong>cliente REST
+de contrato v1</strong> (<code>POST /v1/license/sync</code> contra el servidor configurado). Este mecanismo sirve como patrón
+documentado de remisión electrónica: transporte HTTPS, serialización JSON, timeout de 15 segundos, registro de cada
+ejecución y confirmación del servidor.</p>
+
+<h3>3.1 Registro de transmisiones</h3>
+<p>Cada sincronización se registra en la tabla <code>license_sync_runs</code> con:</p>
+<ul>
+  <li><strong>Estado</strong>: <code>SUCCESS</code> o <code>FAILED</code>.</li>
+  <li><strong>Solicitud y respuesta</strong> completas (<code>request</code>/<code>response</code> en JSON).</li>
+  <li><strong>Error</strong> en caso de fallo (<code>error</code>).</li>
+  <li><strong>Fecha y hora</strong> de ejecución (<code>ran_at</code>).</li>
+  <li><strong>Clave de idempotencia</strong> estable por día (<code>idempotency_key</code>).</li>
+</ul>
+
+<h3>3.2 Reintentos, idempotencia y manejo de interrupciones</h3>
+<ul>
+  <li><strong>Reintento</strong>: ante un fallo de red o del servidor, la ejecución se marca <code>FAILED</code> y puede
+  reejecutarse; el cliente intenta de nuevo en la siguiente invocación.</li>
+  <li><strong>Idempotencia</strong>: la misma sincronización con el mismo payload y el mismo día no se repite (devuelve el
+  resultado previo), evitando duplicados en la remisión.</li>
+  <li><strong>Manejo de interrupciones</strong>: los fallos de conexión se capturan y registran sin corromper el estado;
+  el estado de la conexión pasa a <code>DISCONNECTED</code>.</li>
+  <li><strong>Colas</strong>: la versión actual no depende de un bus de mensajes interno; las transmisiones son síncronas,
+  con registro y reintento por invocación. (La adopción de colas asíncronas está evaluada en el roadmap y no es
+  requisito del mecanismo de remisión.)</li>
+</ul>
+
+<h3>3.3 Confirmación y errores</h3>
+<ul>
+  <li>La <strong>confirmación</strong> del servidor (estado y <code>expires_at</code>) se registra en la ejecución y en el
+  estado de licencia.</li>
+  <li>Los <strong>errores</strong> de transmisión se registran (código <code>CENTRAL_UNREACHABLE</code>) y quedan visibles en
+  el historial de sincronizaciones y en los eventos de licencia.</li>
+</ul>
+
+<h2>4. Contingencia y reconexión (tolerancia offline)</h2>
+<table class="data">
+  <tr><th>Elemento</th><th>Descripción</th></tr>
+  <tr><td>Sincronización</td><td>Manual o automática; idempotente por día; genera un snapshot de la matriz de entitlements</td></tr>
+  <tr><td>Contingencia</td><td>Gracia offline configurable (por defecto 7 días) basada en el <strong>reloj confiable</strong> (<code>last_reliable_date</code> del servidor), no en el reloj del navegador</td></tr>
+  <tr><td>Verificación offline</td><td>Endpoint <code>/api/v1/licensing/offline-status</code> que reporta si la gracia sigue vigente</td></tr>
+  <tr><td>Reconexión</td><td>Al restablecerse la conexión, la siguiente sincronización devuelve el estado a <code>CONNECTED</code> y actualiza el reloj confiable</td></tr>
+  <tr><td>Registro</td><td>Cada reconexión/failover queda en <code>license_sync_runs</code> y en los eventos de licencia</td></tr>
+</table>
+
+<h2>5. Cifrado e integridad</h2>
+<ul>
+  <li><strong>En tránsito</strong>: HTTPS/TLS en toda comunicación con el exterior.</li>
+  <li><strong>Licencias</strong>: firmadas con <strong>Ed25519</strong> (cryptography 46.0.6); la clave pública se valida al importar; se rechaza firma inválida o instalación distinta.</li>
+  <li><strong>Credenciales</strong>: hashing <strong>Argon2</strong>; tokens JWT HS256.</li>
+  <li><strong>En reposo (respaldos)</strong>: cifrado opcional AES-256-CBC con PBKDF2.</li>
+  <li><strong>Integridad de datos</strong>: claves foráneas, unicidad, numeración atómica y auditoría append-only.</li>
+</ul>
+
+<h2>6. Integración SENIAT / medio fiscal</h2>
+<div class="callout info">
+  <p class="t">Capacidad prevista</p>
+  <p>KONTROL está preparado para exponer la remisión electrónica de los registros fiscales a través de su capa de
+  servicio (mecanismo de transmisión documentado en este capítulo). Los parámetros concretos de la integración con
+  SENIAT (endpoint oficial, formato de datos y frecuencia) se alinearán con la especificación oficial vigente en el
+  momento de la homologación. KONTROL no presume la existencia de un endpoint SENIAT ni una tecnología concreta que la
+  norma no haya definido.</p>
+</div>
+
+</body>
+</html>
