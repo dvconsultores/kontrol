@@ -119,7 +119,10 @@ const pages = [
   "modules/seguridad/sesiones/SesionesPage.tsx",
   "modules/maestros/perfiles/PerfilesFiscalesPage.tsx",
   "modules/maestros/terceros/TercerosPage.tsx",
+  "modules/ventas/ordenes/OrdenesVentasPage.tsx",
   "modules/ventas/facturas/FacturasVentasPage.tsx",
+  "modules/compras/ordenes/OrdenesComprasPage.tsx",
+  "modules/compras/facturas/FacturasProveedorPage.tsx",
   "modules/fiscal/emision/EmisionPage.tsx",
   "modules/licenciamiento/configuracion/ConfiguracionCentralPage.tsx",
 ];

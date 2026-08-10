@@ -1,14 +1,17 @@
-/** Órdenes de venta — crédito, reserva y transiciones (FR-005-011/012, WF-04). */
+/** Órdenes de venta — creación, líneas, crédito, reserva y transiciones (FR-005-011/012, WF-04). */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
+import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
-import type { PagedResult, SalesOrderSummary } from "@/api/types";
+import type { CatalogItemSummary, PagedResult, Party, SalesOrderSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
+import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
+import { TextInput } from "@/components/TextInput";
 
 const columnHelper = createColumnHelper<SalesOrderSummary>();
 
@@ -16,15 +19,70 @@ export function OrdenesVentasPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
 
+  const [newCode, setNewCode] = useState("");
+  const [newCustomer, setNewCustomer] = useState("");
+  const [lineOrder, setLineOrder] = useState("");
+  const [lineProduct, setLineProduct] = useState("");
+  const [lineQty, setLineQty] = useState("");
+  const [linePrice, setLinePrice] = useState("");
+
   const query = useQuery({
     queryKey: ["ventas", "ordenes"],
     queryFn: () => apiFetch<PagedResult<SalesOrderSummary>>("/sales/orders"),
     retry: false,
   });
+  const customers = useQuery({
+    queryKey: ["maestros", "terceros"],
+    queryFn: () => apiFetch<PagedResult<Party>>("/maestros/terceros"),
+    retry: false,
+  });
+  const products = useQuery({
+    queryKey: ["maestros", "productos"],
+    queryFn: () => apiFetch<PagedResult<CatalogItemSummary>>(`/maestros/catalogos/items?status=ACTIVE`),
+    retry: false,
+  });
+
+  const refresh = (): void => {
+    void queryClient.invalidateQueries({ queryKey: ["ventas", "ordenes"] });
+  };
+
+  const createOrder = async (): Promise<void> => {
+    try {
+      await apiFetch("/sales/orders", {
+        method: "POST",
+        body: { code: newCode, customer_id: newCustomer, margin: null, currency: "VED" },
+      });
+      notify({ type: "success", title: "Orden creada", description: newCode });
+      setNewCode("");
+      setNewCustomer("");
+      refresh();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "No fue posible crear la orden";
+      notify({ type: "error", title: "No fue posible crear la orden", description: message });
+    }
+  };
+
+  const addLine = async (): Promise<void> => {
+    if (!lineOrder || !lineProduct) return;
+    try {
+      await apiFetch(`/sales/orders/${lineOrder}/lines`, {
+        method: "POST",
+        body: { product_id: lineProduct, quantity: Number(lineQty) || 0, unit_price: Number(linePrice) || 0, discount: 0, needs_inventory: true },
+      });
+      notify({ type: "success", title: "Línea agregada", description: `Orden ${lineOrder}` });
+      setLineProduct("");
+      setLineQty("");
+      setLinePrice("");
+      refresh();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "No fue posible agregar la línea";
+      notify({ type: "error", title: "No fue posible agregar la línea", description: message });
+    }
+  };
 
   const runTransition = async (id: string, target: string): Promise<void> => {
     await apiFetch(`/sales/orders/${id}/transition`, { method: "POST", body: { target } });
-    await queryClient.invalidateQueries({ queryKey: ["ventas", "ordenes"] });
+    refresh();
     notify({ type: "success", title: "Orden actualizada", description: `Estado → ${target}` });
   };
 
@@ -65,9 +123,57 @@ export function OrdenesVentasPage(): React.JSX.Element {
     <PageContent maxWidth="full">
       <PageHeader
         title="Órdenes de venta"
-        description="Crédito, margen y reserva separados. Al aprobar se reserva inventario."
+        description="Creación, líneas, crédito, margen y reserva. Al aprobar se reserva inventario."
         crumbs={[{ label: "Ventas" }, { label: "Órdenes" }]}
       />
+
+      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva orden</h2>
+        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+          <FormField label="Código" required>
+            <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="Ej. ORD-001" required />
+          </FormField>
+          <FormField label="Cliente" required>
+            <select value={newCustomer} onChange={(e) => setNewCustomer(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+              <option value="">Seleccionar…</option>
+              {(customers.data?.items ?? []).filter((c) => (c.roles ?? []).includes("CLIENTE")).map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </FormField>
+          <AsyncButton type="submit" variant="primary" onClick={createOrder}>Crear</AsyncButton>
+        </form>
+      </section>
+
+      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+        <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
+        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+          <FormField label="Orden" required>
+            <select value={lineOrder} onChange={(e) => setLineOrder(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+              <option value="">Seleccionar…</option>
+              {(query.data?.items ?? []).map((o) => (
+                <option key={o.id} value={o.id}>{o.code}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Producto" required>
+            <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+              <option value="">Seleccionar…</option>
+              {(products.data?.items ?? []).map((p) => (
+                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Cantidad" required>
+            <TextInput type="number" value={lineQty} onChange={(e) => setLineQty(e.target.value)} placeholder="0" required />
+          </FormField>
+          <FormField label="Precio" required>
+            <TextInput type="number" value={linePrice} onChange={(e) => setLinePrice(e.target.value)} placeholder="0,00" required />
+          </FormField>
+          <AsyncButton type="submit" variant="secondary" onClick={addLine}>Agregar</AsyncButton>
+        </form>
+      </section>
+
       <DataTable
         columns={columns}
         data={query.data?.items ?? []}
