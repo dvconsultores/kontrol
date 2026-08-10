@@ -36,6 +36,7 @@ from app.modules.inventory.models import (
     TransferLine,
 )
 from app.modules.organization.models import Warehouse
+from app.modules.organization.service import warehouse_in_tenant_scope
 
 # --------------------------------------------------------------------------- #
 # Transiciones permitidas (máquinas de estado, DOC-03 §13)
@@ -278,7 +279,7 @@ def get_available(
 # --------------------------------------------------------------------------- #
 def _require_warehouse(db: Session, company_id: str, warehouse_id: str) -> Warehouse:
     warehouse = db.get(Warehouse, warehouse_id)
-    if not warehouse or warehouse.company_id != company_id:
+    if not warehouse or not warehouse_in_tenant_scope(db, company_id, warehouse):
         raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
     return warehouse
 

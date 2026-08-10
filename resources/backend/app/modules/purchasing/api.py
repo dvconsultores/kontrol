@@ -25,6 +25,7 @@ from app.modules.purchasing.models import (
     Payment,
     PurchaseOrder,
     PurchaseRequisition,
+    PurchaseReturn,
     SupplierCreditNote,
     SupplierInvoice,
     SupplierQuote,
@@ -480,6 +481,16 @@ def list_triple_match(invoice_id: str | None = None, db: Session = Depends(get_d
 # --------------------------------------------------------------------------- #
 # Devoluciones y notas de crédito
 # --------------------------------------------------------------------------- #
+@router.get("/returns")
+def list_returns(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    items = db.execute(select(PurchaseReturn).where(PurchaseReturn.company_id == user.tenant_id)
+                       .order_by(PurchaseReturn.created_at.desc())).scalars().all()
+    return {"items": [{"id": r.id, "code": r.code, "source_document": r.source_document,
+                        "reason": r.reason, "condition": r.condition,
+                        "inventory_destination": r.inventory_destination, "status": r.status} for r in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
 @router.post("/returns", dependencies=[Depends(require_write_allowed)])
 def create_return(body: ReturnCreate, db: Session = Depends(get_db),
                   actor: User = Depends(require_permission("compras", "create"))):
@@ -499,6 +510,16 @@ def add_return_line(return_id: str, body: ReturnLineCreate, db: Session = Depend
     db.commit()
     db.refresh(line)
     return {"id": line.id, "product_id": line.product_id, "quantity": line.quantity}
+
+
+@router.get("/credit-notes")
+def list_credit_notes(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    items = db.execute(select(SupplierCreditNote).where(SupplierCreditNote.company_id == user.tenant_id)
+                       .order_by(SupplierCreditNote.created_at.desc())).scalars().all()
+    return {"items": [{"id": n.id, "number": n.number, "party_id": n.supplier_id,
+                        "invoice_ref": n.invoice_ref, "amount": float(n.amount), "applied": float(n.applied),
+                        "currency": n.currency, "status": n.status} for n in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
 
 
 @router.post("/credit-notes", dependencies=[Depends(require_write_allowed)])

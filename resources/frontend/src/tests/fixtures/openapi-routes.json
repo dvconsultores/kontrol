@@ -2,22 +2,6 @@
  "routes": [
   {
    "method": "GET",
-   "path": "/openapi.json"
-  },
-  {
-   "method": "GET",
-   "path": "/docs"
-  },
-  {
-   "method": "GET",
-   "path": "/docs/oauth2-redirect"
-  },
-  {
-   "method": "GET",
-   "path": "/redoc"
-  },
-  {
-   "method": "GET",
    "path": "/health/live"
   },
   {
@@ -98,7 +82,7 @@
   },
   {
    "method": "POST",
-   "path": "/licensing/renewal-requests/*/transition"
+   "path": "/licensing/renewal-requests/{request_id}/transition"
   },
   {
    "method": "POST",
@@ -138,7 +122,7 @@
   },
   {
    "method": "DELETE",
-   "path": "/auth/sessions/*"
+   "path": "/auth/sessions/{session_id}"
   },
   {
    "method": "GET",
@@ -150,11 +134,11 @@
   },
   {
    "method": "POST",
-   "path": "/users/*/roles"
+   "path": "/users/{user_id}/roles"
   },
   {
    "method": "DELETE",
-   "path": "/users/*/roles/*"
+   "path": "/users/{user_id}/roles/{role_id}"
   },
   {
    "method": "GET",
@@ -210,18 +194,22 @@
   },
   {
    "method": "GET",
-   "path": "/maestros/terceros/*"
+   "path": "/maestros/terceros/{party_id}"
   },
   {
    "method": "POST",
-   "path": "/maestros/terceros/*/deactivate"
+   "path": "/maestros/terceros/{party_id}/deactivate"
   },
   {
    "method": "POST",
-   "path": "/maestros/terceros/*/roles/*"
+   "path": "/maestros/terceros/{party_id}/roles/{role}"
   },
   {
    "method": "GET",
+   "path": "/maestros/catalogos/items"
+  },
+  {
+   "method": "POST",
    "path": "/maestros/catalogos/items"
   },
   {
@@ -229,12 +217,8 @@
    "path": "/maestros/catalogos/items/search"
   },
   {
-   "method": "POST",
-   "path": "/maestros/catalogos/items"
-  },
-  {
    "method": "GET",
-   "path": "/maestros/catalogos/items/*"
+   "path": "/maestros/catalogos/items/{item_id}"
   },
   {
    "method": "GET",
@@ -262,7 +246,7 @@
   },
   {
    "method": "POST",
-   "path": "/maestros/catalogos/unidades/*/conversiones"
+   "path": "/maestros/catalogos/unidades/{unit_id}/conversiones"
   },
   {
    "method": "GET",
@@ -286,7 +270,7 @@
   },
   {
    "method": "GET",
-   "path": "/inventory/balances/*"
+   "path": "/inventory/balances/{balance_id}"
   },
   {
    "method": "POST",
@@ -297,12 +281,12 @@
    "path": "/inventory/movements"
   },
   {
-   "method": "GET",
-   "path": "/inventory/movements/*"
-  },
-  {
    "method": "POST",
    "path": "/inventory/movements"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/movements/{movement_id}"
   },
   {
    "method": "POST",
@@ -318,7 +302,7 @@
   },
   {
    "method": "POST",
-   "path": "/inventory/lots/*/transition"
+   "path": "/inventory/lots/{lot_id}/transition"
   },
   {
    "method": "GET",
@@ -338,7 +322,7 @@
   },
   {
    "method": "POST",
-   "path": "/inventory/reservations/*/release"
+   "path": "/inventory/reservations/{reservation_id}/release"
   },
   {
    "method": "POST",
@@ -354,7 +338,7 @@
   },
   {
    "method": "POST",
-   "path": "/inventory/transfers/*/transition"
+   "path": "/inventory/transfers/{transfer_id}/transition"
   },
   {
    "method": "POST",
@@ -366,11 +350,11 @@
   },
   {
    "method": "POST",
-   "path": "/inventory/counts/*/lines"
+   "path": "/inventory/counts/{count_id}/lines"
   },
   {
    "method": "POST",
-   "path": "/inventory/counts/*/transition"
+   "path": "/inventory/counts/{count_id}/transition"
   },
   {
    "method": "POST",
@@ -382,7 +366,7 @@
   },
   {
    "method": "POST",
-   "path": "/inventory/adjustments/*/transition"
+   "path": "/inventory/adjustments/{adjustment_id}/transition"
   },
   {
    "method": "GET",
@@ -418,11 +402,11 @@
   },
   {
    "method": "POST",
-   "path": "/purchasing/requisitions/*/lines"
+   "path": "/purchasing/requisitions/{req_id}/lines"
   },
   {
    "method": "POST",
-   "path": "/purchasing/requisitions/*/transition"
+   "path": "/purchasing/requisitions/{req_id}/transition"
   },
   {
    "method": "GET",
@@ -434,7 +418,7 @@
   },
   {
    "method": "POST",
-   "path": "/purchasing/quotes/*/lines"
+   "path": "/purchasing/quotes/{quote_id}/lines"
   },
   {
    "method": "GET",
@@ -446,15 +430,15 @@
   },
   {
    "method": "GET",
-   "path": "/purchasing/orders/*"
+   "path": "/purchasing/orders/{order_id}"
   },
   {
    "method": "POST",
-   "path": "/purchasing/orders/*/lines"
+   "path": "/purchasing/orders/{order_id}/lines"
   },
   {
    "method": "POST",
-   "path": "/purchasing/orders/*/transition"
+   "path": "/purchasing/orders/{order_id}/transition"
   },
   {
    "method": "GET",
@@ -466,19 +450,19 @@
   },
   {
    "method": "POST",
-   "path": "/purchasing/receipts/*/lines"
+   "path": "/purchasing/receipts/{receipt_id}/lines"
   },
   {
    "method": "POST",
-   "path": "/purchasing/receipts/*/confirm"
+   "path": "/purchasing/receipts/{receipt_id}/confirm"
   },
   {
    "method": "POST",
-   "path": "/purchasing/receipts/*/quality"
+   "path": "/purchasing/receipts/{receipt_id}/quality"
   },
   {
    "method": "POST",
-   "path": "/purchasing/receipts/*/accept"
+   "path": "/purchasing/receipts/{receipt_id}/accept"
   },
   {
    "method": "GET",
@@ -490,19 +474,23 @@
   },
   {
    "method": "GET",
-   "path": "/purchasing/supplier-invoices/*"
+   "path": "/purchasing/supplier-invoices/{invoice_id}"
   },
   {
    "method": "POST",
-   "path": "/purchasing/supplier-invoices/*/lines"
+   "path": "/purchasing/supplier-invoices/{invoice_id}/lines"
   },
   {
    "method": "POST",
-   "path": "/purchasing/supplier-invoices/*/transition"
+   "path": "/purchasing/supplier-invoices/{invoice_id}/transition"
   },
   {
    "method": "GET",
    "path": "/purchasing/triple-match"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/returns"
   },
   {
    "method": "POST",
@@ -510,7 +498,11 @@
   },
   {
    "method": "POST",
-   "path": "/purchasing/returns/*/lines"
+   "path": "/purchasing/returns/{return_id}/lines"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/credit-notes"
   },
   {
    "method": "POST",
@@ -518,7 +510,7 @@
   },
   {
    "method": "POST",
-   "path": "/purchasing/credit-notes/*/post"
+   "path": "/purchasing/credit-notes/{note_id}/post"
   },
   {
    "method": "GET",
@@ -534,7 +526,7 @@
   },
   {
    "method": "POST",
-   "path": "/purchasing/payments/*/transition"
+   "path": "/purchasing/payments/{payment_id}/transition"
   },
   {
    "method": "POST",
@@ -550,7 +542,7 @@
   },
   {
    "method": "POST",
-   "path": "/purchasing/withholdings/*/transition"
+   "path": "/purchasing/withholdings/{withholding_id}/transition"
   },
   {
    "method": "GET",
@@ -570,7 +562,7 @@
   },
   {
    "method": "POST",
-   "path": "/sales/quotes/*/lines"
+   "path": "/sales/quotes/{quote_id}/lines"
   },
   {
    "method": "GET",
@@ -582,15 +574,19 @@
   },
   {
    "method": "GET",
-   "path": "/sales/orders/*"
+   "path": "/sales/orders/{order_id}"
   },
   {
    "method": "POST",
-   "path": "/sales/orders/*/lines"
+   "path": "/sales/orders/{order_id}/lines"
   },
   {
    "method": "POST",
-   "path": "/sales/orders/*/transition"
+   "path": "/sales/orders/{order_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/sales/pick-lists"
   },
   {
    "method": "POST",
@@ -601,18 +597,18 @@
    "path": "/sales/shipments"
   },
   {
-   "method": "POST",
-   "path": "/sales/shipments/*/validate"
-  },
-  {
-   "method": "POST",
-   "path": "/sales/shipments/*/confirm"
-  },
-  {
    "method": "GET",
    "path": "/sales/shipments"
   },
   {
+   "method": "POST",
+   "path": "/sales/shipments/{shipment_id}/validate"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/shipments/{shipment_id}/confirm"
+  },
+  {
    "method": "GET",
    "path": "/sales/invoices"
   },
@@ -622,11 +618,15 @@
   },
   {
    "method": "POST",
-   "path": "/sales/invoices/*/lines"
+   "path": "/sales/invoices/{invoice_id}/lines"
   },
   {
    "method": "POST",
-   "path": "/sales/invoices/*/transition"
+   "path": "/sales/invoices/{invoice_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/sales/credit-notes"
   },
   {
    "method": "POST",
@@ -634,15 +634,23 @@
   },
   {
    "method": "POST",
-   "path": "/sales/credit-notes/*/post"
+   "path": "/sales/credit-notes/{note_id}/post"
   },
   {
    "method": "POST",
-   "path": "/sales/credit-notes/*/apply"
+   "path": "/sales/credit-notes/{note_id}/apply"
+  },
+  {
+   "method": "GET",
+   "path": "/sales/debit-notes"
   },
   {
    "method": "POST",
    "path": "/sales/debit-notes"
+  },
+  {
+   "method": "GET",
+   "path": "/sales/returns"
   },
   {
    "method": "POST",
@@ -650,7 +658,7 @@
   },
   {
    "method": "POST",
-   "path": "/sales/returns/*/lines"
+   "path": "/sales/returns/{return_id}/lines"
   },
   {
    "method": "GET",
@@ -666,7 +674,7 @@
   },
   {
    "method": "POST",
-   "path": "/sales/collections/*/transition"
+   "path": "/sales/collections/{collection_id}/transition"
   },
   {
    "method": "POST",
@@ -682,7 +690,7 @@
   },
   {
    "method": "POST",
-   "path": "/sales/withholdings-suffered/*/transition"
+   "path": "/sales/withholdings-suffered/{withholding_id}/transition"
   },
   {
    "method": "GET",
@@ -750,27 +758,27 @@
   },
   {
    "method": "GET",
-   "path": "/treasury/cash-sessions/*"
+   "path": "/treasury/cash-sessions/{session_id}"
   },
   {
    "method": "POST",
-   "path": "/treasury/cash-sessions/*/movements"
+   "path": "/treasury/cash-sessions/{session_id}/movements"
   },
   {
    "method": "POST",
-   "path": "/treasury/cash-sessions/*/arqueo"
+   "path": "/treasury/cash-sessions/{session_id}/arqueo"
   },
   {
    "method": "POST",
-   "path": "/treasury/cash-sessions/*/pre-close"
+   "path": "/treasury/cash-sessions/{session_id}/pre-close"
   },
   {
    "method": "POST",
-   "path": "/treasury/cash-sessions/*/close"
+   "path": "/treasury/cash-sessions/{session_id}/close"
   },
   {
    "method": "POST",
-   "path": "/treasury/cash-sessions/*/reject"
+   "path": "/treasury/cash-sessions/{session_id}/reject"
   },
   {
    "method": "GET",
@@ -806,23 +814,23 @@
   },
   {
    "method": "GET",
-   "path": "/treasury/reconciliations/*"
+   "path": "/treasury/reconciliations/{reconciliation_id}"
   },
   {
    "method": "POST",
-   "path": "/treasury/reconciliations/*/lines"
+   "path": "/treasury/reconciliations/{reconciliation_id}/lines"
   },
   {
    "method": "POST",
-   "path": "/treasury/reconciliations/*/match"
+   "path": "/treasury/reconciliations/{reconciliation_id}/match"
   },
   {
    "method": "POST",
-   "path": "/treasury/reconciliation-lines/*/resolve"
+   "path": "/treasury/reconciliation-lines/{line_id}/resolve"
   },
   {
    "method": "POST",
-   "path": "/treasury/reconciliations/*/transition"
+   "path": "/treasury/reconciliations/{reconciliation_id}/transition"
   },
   {
    "method": "GET",
@@ -850,7 +858,7 @@
   },
   {
    "method": "POST",
-   "path": "/fiscal/legal-sources/*/activate"
+   "path": "/fiscal/legal-sources/{source_id}/activate"
   },
   {
    "method": "GET",
@@ -862,18 +870,18 @@
   },
   {
    "method": "POST",
-   "path": "/fiscal/tax-rule-versions/*/approve"
+   "path": "/fiscal/tax-rule-versions/{rule_id}/approve"
   },
   {
    "method": "POST",
    "path": "/fiscal/tax-profiles"
   },
   {
-   "method": "POST",
+   "method": "GET",
    "path": "/fiscal/tax-calculations"
   },
   {
-   "method": "GET",
+   "method": "POST",
    "path": "/fiscal/tax-calculations"
   },
   {
@@ -902,7 +910,7 @@
   },
   {
    "method": "GET",
-   "path": "/fiscal/documents/*"
+   "path": "/fiscal/documents/{document_id}"
   },
   {
    "method": "POST",
@@ -910,7 +918,7 @@
   },
   {
    "method": "POST",
-   "path": "/fiscal/documents/*/print"
+   "path": "/fiscal/documents/{document_id}/print"
   },
   {
    "method": "POST",
@@ -934,11 +942,11 @@
   },
   {
    "method": "POST",
-   "path": "/fiscal/withholdings/*/transition"
+   "path": "/fiscal/withholdings/{withholding_id}/transition"
   },
   {
    "method": "POST",
-   "path": "/fiscal/withholdings/*/certificate"
+   "path": "/fiscal/withholdings/{withholding_id}/certificate"
   },
   {
    "method": "GET",
@@ -954,7 +962,11 @@
   },
   {
    "method": "POST",
-   "path": "/fiscal/periods/*/transition"
+   "path": "/fiscal/periods/{period_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/tax-return-batches"
   },
   {
    "method": "POST",
@@ -962,11 +974,7 @@
   },
   {
    "method": "GET",
-   "path": "/fiscal/tax-return-batches"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/books/*"
+   "path": "/fiscal/books/{tax_type}"
   },
   {
    "method": "GET",
@@ -1026,7 +1034,7 @@
   },
   {
    "method": "POST",
-   "path": "/regulatory/permits/*/transition"
+   "path": "/regulatory/permits/{permit_id}/transition"
   },
   {
    "method": "GET",
@@ -1046,7 +1054,7 @@
   },
   {
    "method": "POST",
-   "path": "/regulatory/evaluations/*/override"
+   "path": "/regulatory/evaluations/{evaluation_id}/override"
   },
   {
    "method": "GET",
@@ -1058,19 +1066,19 @@
   },
   {
    "method": "POST",
-   "path": "/regulatory/contingencies/*/end"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/approval-requests"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/approval-requests/*/transition"
+   "path": "/regulatory/contingencies/{contingency_id}/end"
   },
   {
    "method": "GET",
    "path": "/regulatory/approval-requests"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/approval-requests"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/approval-requests/{request_id}/transition"
   },
   {
    "method": "GET",
@@ -1078,7 +1086,7 @@
   },
   {
    "method": "GET",
-   "path": "/reporting/reports/*"
+   "path": "/reporting/reports/{key}"
   },
   {
    "method": "POST",
@@ -1094,11 +1102,11 @@
   },
   {
    "method": "POST",
-   "path": "/reporting/jobs/*/run"
+   "path": "/reporting/jobs/{job_id}/run"
   },
   {
    "method": "GET",
-   "path": "/reporting/jobs/*"
+   "path": "/reporting/jobs/{job_id}"
   },
   {
    "method": "GET",
@@ -1114,15 +1122,15 @@
   },
   {
    "method": "GET",
-   "path": "/homologation/records/*"
+   "path": "/homologation/records/{record_id}"
   },
   {
    "method": "POST",
-   "path": "/homologation/records/*/submit"
+   "path": "/homologation/records/{record_id}/submit"
   },
   {
    "method": "POST",
-   "path": "/homologation/records/*/evaluate"
+   "path": "/homologation/records/{record_id}/evaluate"
   },
   {
    "method": "GET",
@@ -1134,11 +1142,11 @@
   },
   {
    "method": "POST",
-   "path": "/homologation/releases/*/promote"
+   "path": "/homologation/releases/{release_id}/promote"
   },
   {
    "method": "POST",
-   "path": "/homologation/releases/*/release"
+   "path": "/homologation/releases/{release_id}/release"
   },
   {
    "method": "GET",

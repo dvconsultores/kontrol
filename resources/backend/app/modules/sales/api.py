@@ -22,10 +22,13 @@ from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import OpenItem, Payment, Withholding
 from app.modules.sales import service as sales_service
 from app.modules.sales.models import (
+    PickList,
     SalesCreditNote,
+    SalesDebitNote,
     SalesInvoice,
     SalesOrder,
     SalesQuote,
+    SalesReturn,
     Shipment,
 )
 
@@ -257,6 +260,18 @@ def transition_order(order_id: str, body: TransitionBody, db: Session = Depends(
 # --------------------------------------------------------------------------- #
 # Picking y despacho
 # --------------------------------------------------------------------------- #
+@router.get("/pick-lists")
+def list_pick_lists(order_id: str | None = None, db: Session = Depends(get_db),
+                    user: User = Depends(get_current_user)):
+    query = select(PickList).where(PickList.company_id == user.tenant_id)
+    if order_id:
+        query = query.where(PickList.order_id == order_id)
+    items = db.execute(query.order_by(PickList.created_at.desc())).scalars().all()
+    return {"items": [{"id": p.id, "code": p.code, "order_id": p.order_id,
+                        "warehouse_id": p.warehouse_id, "status": p.status} for p in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
 @router.post("/pick-lists", dependencies=[Depends(require_write_allowed)])
 def create_picklist(body: PickListCreate, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("ventas", "create"))):
@@ -362,6 +377,16 @@ def transition_invoice(invoice_id: str, body: TransitionBody, db: Session = Depe
     return sales_service.invoice_dict(invoice)
 
 
+@router.get("/credit-notes")
+def list_credit_notes(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    items = db.execute(select(SalesCreditNote).where(SalesCreditNote.company_id == user.tenant_id)
+                       .order_by(SalesCreditNote.created_at.desc())).scalars().all()
+    return {"items": [{"id": n.id, "number": n.number, "party_id": n.customer_id,
+                        "invoice_ref": n.invoice_ref, "amount": float(n.amount), "applied": float(n.applied),
+                        "currency": n.currency, "status": n.status} for n in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
 @router.post("/credit-notes", dependencies=[Depends(require_write_allowed)])
 def create_credit_note(body: CreditNoteCreate, db: Session = Depends(get_db),
                        actor: User = Depends(require_permission("ventas", "create"))):
@@ -394,6 +419,16 @@ def apply_credit_note(note_id: str, body: ApplicationCreate, db: Session = Depen
     return {"target_open_item_id": str(target.id), "balance": ap_service.open_item_balance(target)}
 
 
+@router.get("/debit-notes")
+def list_debit_notes(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    items = db.execute(select(SalesDebitNote).where(SalesDebitNote.company_id == user.tenant_id)
+                       .order_by(SalesDebitNote.created_at.desc())).scalars().all()
+    return {"items": [{"id": n.id, "number": n.number, "customer_id": n.customer_id,
+                        "invoice_ref": n.invoice_ref, "amount": float(n.amount),
+                        "currency": n.currency, "status": n.status} for n in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
 @router.post("/debit-notes", dependencies=[Depends(require_write_allowed)])
 def create_debit_note(body: DebitNoteCreate, db: Session = Depends(get_db),
                       actor: User = Depends(require_permission("ventas", "create"))):
@@ -403,6 +438,16 @@ def create_debit_note(body: DebitNoteCreate, db: Session = Depends(get_db),
     db.commit()
     db.refresh(note)
     return {"id": note.id, "number": note.number, "amount": note.amount, "status": note.status}
+
+
+@router.get("/returns")
+def list_returns(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    items = db.execute(select(SalesReturn).where(SalesReturn.company_id == user.tenant_id)
+                       .order_by(SalesReturn.created_at.desc())).scalars().all()
+    return {"items": [{"id": r.id, "code": r.code, "source_document": r.source_document,
+                        "reason": r.reason, "condition": r.condition,
+                        "inventory_destination": r.inventory_destination, "status": r.status} for r in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
 
 
 @router.post("/returns", dependencies=[Depends(require_write_allowed)])

@@ -1,14 +1,17 @@
 /** Cuentas por cobrar — open items, cobros y aging (FR-005-040/041/046, WF-05). */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
+import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
-import type { AgingResult, OpenItem, PaymentSummary } from "@/api/types";
+import type { AgingResult, OpenItem, PagedResult, Party, PaymentSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
+import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
+import { TextInput } from "@/components/TextInput";
 
 const columnHelper = createColumnHelper<OpenItem>();
 
@@ -16,6 +19,19 @@ export function CuentasPorCobrarPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
 
+  const [newParty, setNewParty] = useState("");
+  const [newAmount, setNewAmount] = useState("");
+  const [advParty, setAdvParty] = useState("");
+  const [advAmount, setAdvAmount] = useState("");
+  const [appSource, setAppSource] = useState("");
+  const [appTarget, setAppTarget] = useState("");
+  const [appAmount, setAppAmount] = useState("");
+
+  const customers = useQuery({
+    queryKey: ["maestros", "terceros"],
+    queryFn: () => apiFetch<PagedResult<Party>>("/maestros/terceros"),
+    retry: false,
+  });
   const openItems = useQuery({
     queryKey: ["ventas", "open-items"],
     queryFn: () => apiFetch<{ items: OpenItem[] }>("/sales/open-items"),
@@ -31,6 +47,58 @@ export function CuentasPorCobrarPage(): React.JSX.Element {
     queryFn: () => apiFetch<AgingResult>("/sales/aging"),
     retry: false,
   });
+
+  const refresh = (): void => {
+    void queryClient.invalidateQueries({ queryKey: ["ventas", "collections"] });
+    void queryClient.invalidateQueries({ queryKey: ["ventas", "open-items"] });
+    void queryClient.invalidateQueries({ queryKey: ["ventas", "aging"] });
+  };
+
+  const createCollection = async (): Promise<void> => {
+    try {
+      await apiFetch("/sales/collections", {
+        method: "POST",
+        body: { party_id: newParty, amount: Number(newAmount) || 0, currency: "VED", instruments: null },
+      });
+      notify({ type: "success", title: "Cobro registrado", description: `${newAmount} VED` });
+      setNewParty(""); setNewAmount("");
+      refresh();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "No fue posible registrar el cobro";
+      notify({ type: "error", title: "No fue posible registrar el cobro", description: message });
+    }
+  };
+
+  const createAdvance = async (): Promise<void> => {
+    try {
+      await apiFetch("/sales/customer-advances", {
+        method: "POST",
+        body: { party_id: advParty, amount: Number(advAmount) || 0, currency: "VED" },
+      });
+      notify({ type: "success", title: "Anticipo registrado", description: `${advAmount} VED` });
+      setAdvParty(""); setAdvAmount("");
+      refresh();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "No fue posible registrar el anticipo";
+      notify({ type: "error", title: "No fue posible registrar el anticipo", description: message });
+    }
+  };
+
+  const applySource = async (): Promise<void> => {
+    if (!appSource || !appTarget) return;
+    try {
+      await apiFetch("/sales/applications", {
+        method: "POST",
+        body: { source_type: "PAYMENT", source_id: appSource, target_open_item_id: appTarget, amount: Number(appAmount) || 0, currency: "VED", rate: null },
+      });
+      notify({ type: "success", title: "Aplicación registrada", description: `a ${appTarget}` });
+      setAppSource(""); setAppTarget(""); setAppAmount("");
+      refresh();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "No fue posible aplicar el cobro";
+      notify({ type: "error", title: "No fue posible aplicar el cobro", description: message });
+    }
+  };
 
   const columns = [
     columnHelper.accessor("source_document", { header: "Documento" }),
@@ -67,6 +135,68 @@ export function CuentasPorCobrarPage(): React.JSX.Element {
           </div>
         ))}
       </div>
+
+      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+        <h2 className="mb-2 text-base font-semibold text-text-900">Registrar cobro</h2>
+        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+          <FormField label="Cliente" required>
+            <select value={newParty} onChange={(e) => setNewParty(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+              <option value="">Seleccionar…</option>
+              {(customers.data?.items ?? []).map((c) => (
+                <option key={c.id} value={c.id}>{c.code} · {c.name}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Monto (VED)" required>
+            <TextInput type="number" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} placeholder="0,00" required />
+          </FormField>
+          <AsyncButton type="submit" variant="primary" onClick={createCollection}>Registrar cobro</AsyncButton>
+        </form>
+      </section>
+
+      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+        <h2 className="mb-2 text-base font-semibold text-text-900">Anticipo de cliente</h2>
+        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+          <FormField label="Cliente" required>
+            <select value={advParty} onChange={(e) => setAdvParty(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+              <option value="">Seleccionar…</option>
+              {(customers.data?.items ?? []).map((c) => (
+                <option key={c.id} value={c.id}>{c.code} · {c.name}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Monto (VED)" required>
+            <TextInput type="number" value={advAmount} onChange={(e) => setAdvAmount(e.target.value)} placeholder="0,00" required />
+          </FormField>
+          <AsyncButton type="submit" variant="primary" onClick={createAdvance}>Registrar anticipo</AsyncButton>
+        </form>
+      </section>
+
+      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+        <h2 className="mb-2 text-base font-semibold text-text-900">Aplicar cobro a documento</h2>
+        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+          <FormField label="Cobro (fuente)" required>
+            <select value={appSource} onChange={(e) => setAppSource(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+              <option value="">Seleccionar…</option>
+              {(collections.data?.items ?? []).map((c) => (
+                <option key={c.id} value={c.id}>{c.currency} {c.amount.toFixed(2)} · saldo {c.amount - c.applied}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Documento a aplicar" required>
+            <select value={appTarget} onChange={(e) => setAppTarget(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+              <option value="">Seleccionar…</option>
+              {(openItems.data?.items ?? []).map((o) => (
+                <option key={o.id} value={o.id}>{o.source_document ?? o.id} · saldo {o.balance}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Monto" required>
+            <TextInput type="number" value={appAmount} onChange={(e) => setAppAmount(e.target.value)} placeholder="0,00" required />
+          </FormField>
+          <AsyncButton type="submit" variant="secondary" onClick={applySource}>Aplicar</AsyncButton>
+        </form>
+      </section>
 
       <h2 className="mb-2 text-base font-semibold text-text-900">Cobros</h2>
       <div className="mb-4 rounded-lg border border-border-default">

@@ -431,6 +431,63 @@ export interface ShipmentSummary {
   validation_status: string;
 }
 
+export interface PickListSummary {
+  id: string;
+  code: string;
+  order_id: string;
+  warehouse_id: string;
+  status: string;
+}
+
+export interface ReturnSummary {
+  id: string;
+  code: string;
+  source_document: string | null;
+  reason: string;
+  condition: string;
+  inventory_destination: string;
+  status: string;
+}
+
+export interface CreditNoteSummary {
+  id: string;
+  number: string;
+  party_id: string;
+  invoice_ref: string | null;
+  amount: number;
+  applied: number;
+  currency: string;
+  status: string;
+}
+
+export interface DebitNoteSummary {
+  id: string;
+  number: string;
+  customer_id: string;
+  invoice_ref: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+}
+
+export interface AdvanceSummary {
+  id: string;
+  party_id: string;
+  direction: string;
+  currency: string;
+  amount: number;
+  available: number;
+  status: string;
+}
+
+export interface ScheduleSummary {
+  id: string;
+  party_id: string;
+  due_date: string | null;
+  amount: number;
+  status: string;
+}
+
 // ---------------------------------------------------------------------------
 // Tesorería (006-tesoreria)
 // ---------------------------------------------------------------------------

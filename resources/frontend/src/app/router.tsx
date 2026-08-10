@@ -33,13 +33,18 @@ import { ExistenciasPage } from "@/modules/inventario/existencias/ExistenciasPag
 import { KardexPage } from "@/modules/inventario/kardex/KardexPage";
 import { TransferenciasPage } from "@/modules/inventario/transferencias/TransferenciasPage";
 import { CuentasPorPagarPage } from "@/modules/compras/cuentas-por-pagar/CuentasPorPagarPage";
+import { DevolucionesComprasPage } from "@/modules/compras/devoluciones/DevolucionesComprasPage";
 import { FacturasProveedorPage } from "@/modules/compras/facturas/FacturasProveedorPage";
+import { NotasComprasPage } from "@/modules/compras/notas/NotasComprasPage";
 import { OrdenesComprasPage } from "@/modules/compras/ordenes/OrdenesComprasPage";
 import { RecepcionesPage } from "@/modules/compras/recepciones/RecepcionesPage";
 import { RequisicionesPage } from "@/modules/compras/requisiciones/RequisicionesPage";
 import { CotizacionesPage } from "@/modules/ventas/cotizaciones/CotizacionesPage";
 import { CuentasPorCobrarPage } from "@/modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage";
+import { DevolucionesVentasPage } from "@/modules/ventas/devoluciones/DevolucionesVentasPage";
+import { DespachoPage } from "@/modules/ventas/despacho/DespachoPage";
 import { FacturasVentasPage } from "@/modules/ventas/facturas/FacturasVentasPage";
+import { NotasVentasPage } from "@/modules/ventas/notas/NotasVentasPage";
 import { OrdenesVentasPage } from "@/modules/ventas/ordenes/OrdenesVentasPage";
 import { CajasPage } from "@/modules/tesoreria/cajas/CajasPage";
 import { ConciliacionPage } from "@/modules/tesoreria/conciliacion/ConciliacionPage";
@@ -112,10 +117,15 @@ export const router = createBrowserRouter([
           { path: "compras/ordenes", element: <OrdenesComprasPage /> },
           { path: "compras/recepciones", element: <RecepcionesPage /> },
           { path: "compras/facturas", element: <FacturasProveedorPage /> },
+          { path: "compras/devoluciones", element: <DevolucionesComprasPage /> },
+          { path: "compras/notas", element: <NotasComprasPage /> },
           { path: "compras/cuentas-por-pagar", element: <CuentasPorPagarPage /> },
           { path: "ventas/cotizaciones", element: <CotizacionesPage /> },
           { path: "ventas/ordenes", element: <OrdenesVentasPage /> },
           { path: "ventas/facturas", element: <FacturasVentasPage /> },
+          { path: "ventas/notas", element: <NotasVentasPage /> },
+          { path: "ventas/devoluciones", element: <DevolucionesVentasPage /> },
+          { path: "ventas/despacho", element: <DespachoPage /> },
           { path: "ventas/cuentas-por-cobrar", element: <CuentasPorCobrarPage /> },
           { path: "tesoreria/cajas", element: <CajasPage /> },
           { path: "tesoreria/ingresos-egresos", element: <IngresosEgresosPage /> },

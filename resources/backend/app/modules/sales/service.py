@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.inventory import service as inv_service
 from app.modules.organization.models import Warehouse
+from app.modules.organization.service import warehouse_in_tenant_scope
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import OpenItem
 from app.modules.sales.models import (
@@ -91,7 +92,7 @@ def _require_party(db: Session, company_id: str, party_id: str) -> None:
 
 def _require_warehouse(db: Session, company_id: str, warehouse_id: str) -> Warehouse:
     warehouse = db.get(Warehouse, warehouse_id)
-    if not warehouse or warehouse.company_id != company_id:
+    if not warehouse or not warehouse_in_tenant_scope(db, company_id, warehouse):
         raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
     return warehouse
 
