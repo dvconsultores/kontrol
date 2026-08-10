@@ -467,7 +467,7 @@ def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id
         total_cost = 0.0
         for layer in layers:
             take = min(layer.quantity_remaining, remaining)
-            total_cost += take * layer.unit_cost
+            total_cost += float(take) * float(layer.unit_cost or 0)
             layer.quantity_remaining = round(layer.quantity_remaining - take, 6)
             remaining -= take
             if layer.quantity_remaining <= 0:
@@ -479,7 +479,7 @@ def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id
         return round(total_cost / quantity, 6)
     # Promedio ponderado
     total_qty = sum(layer.quantity_remaining for layer in layers)
-    total_value = sum(layer.quantity_remaining * layer.unit_cost for layer in layers)
+    total_value = sum(float(layer.quantity_remaining) * float(layer.unit_cost or 0) for layer in layers)
     if total_qty <= 0:
         return None
     avg = total_value / total_qty
@@ -499,7 +499,7 @@ def valuation(db: Session, *, company_id: str, product_id: str | None = None, wa
     if warehouse_id:
         query = query.where(CostLayer.warehouse_id == warehouse_id)
     layers = db.execute(query).scalars().all()
-    return round(sum(layer.quantity_remaining * layer.unit_cost for layer in layers), 6)
+    return round(sum(float(layer.quantity_remaining) * float(layer.unit_cost or 0) for layer in layers), 6)
 
 
 # --------------------------------------------------------------------------- #

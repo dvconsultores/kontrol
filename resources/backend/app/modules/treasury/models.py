@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import Date, Float, ForeignKey, String, Text
+from sqlalchemy import Date, Float, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -93,7 +93,7 @@ class ExchangeRate(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     currency_id: Mapped[str] = mapped_column(ForeignKey("currencies.id"), nullable=False, index=True)
     rate_date: Mapped[date] = mapped_column(Date, nullable=False)
-    rate: Mapped[float] = mapped_column(Float, nullable=False)
+    rate: Mapped[float] = mapped_column(Numeric(14, 6), nullable=False)
     source: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
 
@@ -108,9 +108,9 @@ class CashSession(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     opened_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
     opened_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     closed_at: Mapped[date | None] = mapped_column(Date, nullable=True)
-    opened_amount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    counted_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
-    expected_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
+    opened_amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
+    counted_amount: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
+    expected_amount: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
     difference: Mapped[float | None] = mapped_column(Float, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="OPEN")
     # OPEN -> ARCHED (arqueo) -> PRE_CLOSED -> CLOSED / REJECTED
@@ -125,7 +125,7 @@ class CashSessionMovement(UUIDMixin, TimestampMixin, Base):
     movement_type: Mapped[str] = mapped_column(String(16), nullable=False)  # IN / OUT / ADJUST
     payment_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     source: Mapped[str] = mapped_column(String(32), nullable=False, default="PAYMENT")
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     instrument_id: Mapped[str | None] = mapped_column(ForeignKey("treasury_instruments.id"), nullable=True)
     reference: Mapped[str | None] = mapped_column(String(120), nullable=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -142,13 +142,13 @@ class BankTransaction(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     txn_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     value_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     direction: Mapped[str] = mapped_column(String(8), nullable=False, default="OUT")  # IN / OUT
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     reference: Mapped[str | None] = mapped_column(String(120), nullable=True)
     source: Mapped[str] = mapped_column(String(32), nullable=False, default="PAYMENT")  # PAYMENT/COLLECTION/TRANSFER/DEPOSIT/ADJUSTMENT
     payment_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     commission: Mapped[float | None] = mapped_column(Float, nullable=True)
-    rate_snapshot: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rate_snapshot: Mapped[float | None] = mapped_column(Numeric(14, 6), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
 
 
@@ -160,7 +160,7 @@ class TreasuryTransfer(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     from_account_id: Mapped[str | None] = mapped_column(ForeignKey("financial_accounts.id"), nullable=True)
     to_cashbox_id: Mapped[str | None] = mapped_column(ForeignKey("cashboxes.id"), nullable=True)
     to_account_id: Mapped[str | None] = mapped_column(ForeignKey("financial_accounts.id"), nullable=True)
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     value_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     reference: Mapped[str | None] = mapped_column(String(120), nullable=True)
@@ -177,8 +177,8 @@ class Reconciliation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     account_id: Mapped[str] = mapped_column(ForeignKey("financial_accounts.id"), nullable=False, index=True)
     statement_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     statement_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    opening_balance: Mapped[float | None] = mapped_column(Float, nullable=True)
-    closing_balance: Mapped[float | None] = mapped_column(Float, nullable=True)
+    opening_balance: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
+    closing_balance: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
     # DRAFT -> IN_PROGRESS -> REVIEW -> APPROVED / REJECTED
     approved_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -223,10 +223,10 @@ class IgftEvent(UUIDMixin, TimestampMixin, Base):
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     event_type: Mapped[str] = mapped_column(String(24), nullable=False)  # PAYMENT / COLLECTION / TRANSFER
     source_document: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
-    rate_snapshot: Mapped[float | None] = mapped_column(Float, nullable=True)
-    igft_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rate_snapshot: Mapped[float | None] = mapped_column(Numeric(14, 6), nullable=True)
+    igft_amount: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
     rule_id: Mapped[str | None] = mapped_column(ForeignKey("fiscal_rules.id"), nullable=True)
     evaluated_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="EVALUATED")

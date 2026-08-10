@@ -29,7 +29,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -100,7 +100,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -112,7 +112,7 @@
         },
         {
           "name": "rate",
-          "type": "FLOAT",
+          "type": "NUMERIC(14, 6)",
           "nullable": true,
           "pk": false
         },
@@ -254,13 +254,13 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "rate",
-          "type": "FLOAT",
+          "type": "NUMERIC(14, 6)",
           "nullable": true,
           "pk": false
         },
@@ -319,7 +319,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -390,7 +390,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -479,7 +479,7 @@
         },
         {
           "name": "base",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -491,7 +491,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -580,7 +580,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": true,
           "pk": false
         },
@@ -983,7 +983,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -1019,7 +1019,7 @@
         },
         {
           "name": "rate_snapshot",
-          "type": "FLOAT",
+          "type": "NUMERIC(14, 6)",
           "nullable": true,
           "pk": false
         },
@@ -1255,7 +1255,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -1332,19 +1332,19 @@
         },
         {
           "name": "opened_amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "counted_amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": true,
           "pk": false
         },
         {
           "name": "expected_amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": true,
           "pk": false
         },
@@ -1824,7 +1824,7 @@
         },
         {
           "name": "unit_cost",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -1836,13 +1836,13 @@
         },
         {
           "name": "fiscal_rate",
-          "type": "FLOAT",
+          "type": "NUMERIC(14, 6)",
           "nullable": true,
           "pk": false
         },
         {
           "name": "landed_cost",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -1990,19 +1990,19 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "base_amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "tax_amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -2339,7 +2339,7 @@
         },
         {
           "name": "rate",
-          "type": "FLOAT",
+          "type": "NUMERIC(14, 6)",
           "nullable": false,
           "pk": false
         },
@@ -2700,7 +2700,7 @@
         },
         {
           "name": "exchange_rate_snapshot",
-          "type": "FLOAT",
+          "type": "NUMERIC(14, 6)",
           "nullable": true,
           "pk": false
         },
@@ -3381,7 +3381,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -3393,13 +3393,13 @@
         },
         {
           "name": "rate_snapshot",
-          "type": "FLOAT",
+          "type": "NUMERIC(14, 6)",
           "nullable": true,
           "pk": false
         },
         {
           "name": "igft_amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": true,
           "pk": false
         },
@@ -3529,7 +3529,7 @@
         },
         {
           "name": "unit_cost",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": true,
           "pk": false
         },
@@ -3790,7 +3790,7 @@
         },
         {
           "name": "unit_cost",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": true,
           "pk": false
         },
@@ -3802,7 +3802,7 @@
         },
         {
           "name": "fiscal_rate",
-          "type": "FLOAT",
+          "type": "NUMERIC(14, 6)",
           "nullable": true,
           "pk": false
         },
@@ -6284,7 +6284,7 @@
         },
         {
           "name": "unit_price",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -6763,13 +6763,13 @@
         },
         {
           "name": "opening_balance",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": true,
           "pk": false
         },
         {
           "name": "closing_balance",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": true,
           "pk": false
         },
@@ -7633,7 +7633,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -7710,7 +7710,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -7775,25 +7775,25 @@
         },
         {
           "name": "unit_price",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "tax_amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "base_fiscal",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "total",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -7852,19 +7852,19 @@
         },
         {
           "name": "base_fiscal",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "tax_total",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "total",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -7935,7 +7935,7 @@
         },
         {
           "name": "unit_price",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -8089,7 +8089,7 @@
         },
         {
           "name": "unit_price",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -8834,7 +8834,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -8917,19 +8917,19 @@
         },
         {
           "name": "unit_price",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "tax_amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "total",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -9000,13 +9000,13 @@
         },
         {
           "name": "tax_total",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "total",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -9077,7 +9077,7 @@
         },
         {
           "name": "unit_price",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -9337,19 +9337,19 @@
         },
         {
           "name": "base",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "rate",
-          "type": "FLOAT",
+          "type": "NUMERIC(14, 6)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -10154,7 +10154,7 @@
         },
         {
           "name": "amount",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -10249,7 +10249,7 @@
         },
         {
           "name": "variance_price",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
@@ -10728,13 +10728,13 @@
         },
         {
           "name": "base",
-          "type": "FLOAT",
+          "type": "NUMERIC(18, 2)",
           "nullable": false,
           "pk": false
         },
         {
           "name": "rate",
-          "type": "FLOAT",
+          "type": "NUMERIC(14, 6)",
           "nullable": false,
           "pk": false
         },
@@ -10791,11 +10791,6 @@
   ],
   "issues": [
     {
-      "type": "FLOAT",
-      "table": "ap_advances",
-      "column": "amount"
-    },
-    {
       "type": "DATETIME",
       "table": "ap_advances",
       "column": "created_at"
@@ -10804,16 +10799,6 @@
       "type": "DATETIME",
       "table": "ap_advances",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "ap_applications",
-      "column": "amount"
-    },
-    {
-      "type": "FLOAT",
-      "table": "ap_applications",
-      "column": "rate"
     },
     {
       "type": "DATETIME",
@@ -10836,16 +10821,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "ap_payment_instruments",
-      "column": "amount"
-    },
-    {
-      "type": "FLOAT",
-      "table": "ap_payment_instruments",
-      "column": "rate"
-    },
-    {
       "type": "DATETIME",
       "table": "ap_payment_instruments",
       "column": "created_at"
@@ -10854,11 +10829,6 @@
       "type": "DATETIME",
       "table": "ap_payment_instruments",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "ap_payment_schedules",
-      "column": "amount"
     },
     {
       "type": "DATETIME",
@@ -10871,11 +10841,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "ap_payments",
-      "column": "amount"
-    },
-    {
       "type": "DATETIME",
       "table": "ap_payments",
       "column": "created_at"
@@ -10886,16 +10851,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "ap_withholdings",
-      "column": "base"
-    },
-    {
-      "type": "FLOAT",
-      "table": "ap_withholdings",
-      "column": "amount"
-    },
-    {
       "type": "DATETIME",
       "table": "ap_withholdings",
       "column": "created_at"
@@ -10904,11 +10859,6 @@
       "type": "DATETIME",
       "table": "ap_withholdings",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "approval_requests",
-      "column": "amount"
     },
     {
       "type": "DATETIME",
@@ -10966,16 +10916,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "bank_transactions",
-      "column": "amount"
-    },
-    {
-      "type": "FLOAT",
-      "table": "bank_transactions",
-      "column": "rate_snapshot"
-    },
-    {
       "type": "DATETIME",
       "table": "bank_transactions",
       "column": "created_at"
@@ -11016,11 +10956,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "cash_session_movements",
-      "column": "amount"
-    },
-    {
       "type": "DATETIME",
       "table": "cash_session_movements",
       "column": "created_at"
@@ -11029,21 +10964,6 @@
       "type": "DATETIME",
       "table": "cash_session_movements",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "cash_sessions",
-      "column": "opened_amount"
-    },
-    {
-      "type": "FLOAT",
-      "table": "cash_sessions",
-      "column": "counted_amount"
-    },
-    {
-      "type": "FLOAT",
-      "table": "cash_sessions",
-      "column": "expected_amount"
     },
     {
       "type": "DATETIME",
@@ -11116,21 +11036,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "cost_layers",
-      "column": "unit_cost"
-    },
-    {
-      "type": "FLOAT",
-      "table": "cost_layers",
-      "column": "fiscal_rate"
-    },
-    {
-      "type": "FLOAT",
-      "table": "cost_layers",
-      "column": "landed_cost"
-    },
-    {
       "type": "DATETIME",
       "table": "cost_layers",
       "column": "created_at"
@@ -11149,21 +11054,6 @@
       "type": "DATETIME",
       "table": "costing_profiles",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "credit_debit_notes",
-      "column": "amount"
-    },
-    {
-      "type": "FLOAT",
-      "table": "credit_debit_notes",
-      "column": "base_amount"
-    },
-    {
-      "type": "FLOAT",
-      "table": "credit_debit_notes",
-      "column": "tax_amount"
     },
     {
       "type": "DATETIME",
@@ -11219,11 +11109,6 @@
       "type": "DATETIME",
       "table": "establishments",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "exchange_rates",
-      "column": "rate"
     },
     {
       "type": "DATETIME",
@@ -11284,11 +11169,6 @@
       "type": "DATETIME",
       "table": "financial_banks",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "fiscal_documents",
-      "column": "exchange_rate_snapshot"
     },
     {
       "type": "DATETIME",
@@ -11401,21 +11281,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "igft_events",
-      "column": "amount"
-    },
-    {
-      "type": "FLOAT",
-      "table": "igft_events",
-      "column": "rate_snapshot"
-    },
-    {
-      "type": "FLOAT",
-      "table": "igft_events",
-      "column": "igft_amount"
-    },
-    {
       "type": "DATETIME",
       "table": "igft_events",
       "column": "created_at"
@@ -11434,11 +11299,6 @@
       "type": "DATETIME",
       "table": "installations",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "inventory_adjustments",
-      "column": "unit_cost"
     },
     {
       "type": "DATETIME",
@@ -11474,16 +11334,6 @@
       "type": "DATETIME",
       "table": "inventory_lots",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "inventory_movements",
-      "column": "unit_cost"
-    },
-    {
-      "type": "FLOAT",
-      "table": "inventory_movements",
-      "column": "fiscal_rate"
     },
     {
       "type": "DATETIME",
@@ -11911,11 +11761,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "purchase_order_lines",
-      "column": "unit_price"
-    },
-    {
       "type": "DATETIME",
       "table": "purchase_order_lines",
       "column": "created_at"
@@ -11984,16 +11829,6 @@
       "type": "DATETIME",
       "table": "reconciliation_lines",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "reconciliations",
-      "column": "opening_balance"
-    },
-    {
-      "type": "FLOAT",
-      "table": "reconciliations",
-      "column": "closing_balance"
     },
     {
       "type": "DATETIME",
@@ -12151,11 +11986,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "sales_credit_notes",
-      "column": "amount"
-    },
-    {
       "type": "DATETIME",
       "table": "sales_credit_notes",
       "column": "created_at"
@@ -12164,11 +11994,6 @@
       "type": "DATETIME",
       "table": "sales_credit_notes",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "sales_debit_notes",
-      "column": "amount"
     },
     {
       "type": "DATETIME",
@@ -12181,26 +12006,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "sales_invoice_lines",
-      "column": "unit_price"
-    },
-    {
-      "type": "FLOAT",
-      "table": "sales_invoice_lines",
-      "column": "tax_amount"
-    },
-    {
-      "type": "FLOAT",
-      "table": "sales_invoice_lines",
-      "column": "base_fiscal"
-    },
-    {
-      "type": "FLOAT",
-      "table": "sales_invoice_lines",
-      "column": "total"
-    },
-    {
       "type": "DATETIME",
       "table": "sales_invoice_lines",
       "column": "created_at"
@@ -12211,21 +12016,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "sales_invoices",
-      "column": "base_fiscal"
-    },
-    {
-      "type": "FLOAT",
-      "table": "sales_invoices",
-      "column": "tax_total"
-    },
-    {
-      "type": "FLOAT",
-      "table": "sales_invoices",
-      "column": "total"
-    },
-    {
       "type": "DATETIME",
       "table": "sales_invoices",
       "column": "created_at"
@@ -12234,11 +12024,6 @@
       "type": "DATETIME",
       "table": "sales_invoices",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "sales_order_lines",
-      "column": "unit_price"
     },
     {
       "type": "DATETIME",
@@ -12259,11 +12044,6 @@
       "type": "DATETIME",
       "table": "sales_orders",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "sales_quote_lines",
-      "column": "unit_price"
     },
     {
       "type": "DATETIME",
@@ -12386,11 +12166,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "supplier_credit_notes",
-      "column": "amount"
-    },
-    {
       "type": "DATETIME",
       "table": "supplier_credit_notes",
       "column": "created_at"
@@ -12399,21 +12174,6 @@
       "type": "DATETIME",
       "table": "supplier_credit_notes",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "supplier_invoice_lines",
-      "column": "unit_price"
-    },
-    {
-      "type": "FLOAT",
-      "table": "supplier_invoice_lines",
-      "column": "tax_amount"
-    },
-    {
-      "type": "FLOAT",
-      "table": "supplier_invoice_lines",
-      "column": "total"
     },
     {
       "type": "DATETIME",
@@ -12426,16 +12186,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "supplier_invoices",
-      "column": "tax_total"
-    },
-    {
-      "type": "FLOAT",
-      "table": "supplier_invoices",
-      "column": "total"
-    },
-    {
       "type": "DATETIME",
       "table": "supplier_invoices",
       "column": "created_at"
@@ -12444,11 +12194,6 @@
       "type": "DATETIME",
       "table": "supplier_invoices",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "supplier_quote_lines",
-      "column": "unit_price"
     },
     {
       "type": "DATETIME",
@@ -12489,21 +12234,6 @@
       "type": "DATETIME",
       "table": "system_settings",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "tax_calculations",
-      "column": "base"
-    },
-    {
-      "type": "FLOAT",
-      "table": "tax_calculations",
-      "column": "rate"
-    },
-    {
-      "type": "FLOAT",
-      "table": "tax_calculations",
-      "column": "amount"
     },
     {
       "type": "DATETIME",
@@ -12626,11 +12356,6 @@
       "column": "updated_at"
     },
     {
-      "type": "FLOAT",
-      "table": "treasury_transfers",
-      "column": "amount"
-    },
-    {
       "type": "DATETIME",
       "table": "treasury_transfers",
       "column": "created_at"
@@ -12639,11 +12364,6 @@
       "type": "DATETIME",
       "table": "treasury_transfers",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "triple_matches",
-      "column": "variance_price"
     },
     {
       "type": "DATETIME",
@@ -12734,16 +12454,6 @@
       "type": "DATETIME",
       "table": "warehouses",
       "column": "updated_at"
-    },
-    {
-      "type": "FLOAT",
-      "table": "withholding_rules",
-      "column": "base"
-    },
-    {
-      "type": "FLOAT",
-      "table": "withholding_rules",
-      "column": "rate"
     },
     {
       "type": "DATETIME",

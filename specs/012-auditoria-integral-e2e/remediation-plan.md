@@ -3,7 +3,17 @@
 No implementado aún. Pendiente de **autorización expresa**.
 Cada corrección debe convertirse en tarea Spec (con su evidencia).
 
-## Ola 0 — Bloqueantes
+## Estado de ejecución
+
+- **Ola 1 (completitud estructural)** — IMPLEMENTADA: Usuarios (T-01), Roles (T-02), Establecimientos (T-03), Ubicaciones (T-04).
+- **Ola 2 (datos y precisión)** — IMPLEMENTADA: T-05 dinero Float→Numeric (58 cols + migración 0012) y T-06 migraciones PostgreSQL validadas offline. Complemento T-06 (drift en PG real) pendiente.
+- **Ola 3 (interfaces faltantes)** — T-07 clasificación entregada; construir UI de los GAP = nuevas tareas.
+- **Ola 4 (puertas permanentes)** — IMPLEMENTADA: T-08/T-09 tests de completitud; T-10 E2E de procesos; T-11 crawler de rutas.
+- **Ola 5 (validaciones)** — PENDIENTE (ambiente autorizado): T-12..T-16 (ver `pending-validations.md`).
+
+## Plan original (referencia)
+
+### Ola 0 — Bloqueantes
 - (No hay BLOCKER confirmado en esta pasada. Re-evaluar tras validaciones de seguridad/backup/fiscal.)
 
 ## Ola 1 — Completitud estructural (errores tipo "Sucursales")

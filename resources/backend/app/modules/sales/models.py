@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import Boolean, Date, Float, ForeignKey, String, Text
+from sqlalchemy import Boolean, Date, Float, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -42,7 +42,7 @@ class SalesQuoteLine(UUIDMixin, TimestampMixin, Base):
     quote_id: Mapped[str] = mapped_column(ForeignKey("sales_quotes.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
-    unit_price: Mapped[float] = mapped_column(Float, nullable=False)
+    unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     discount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     tax_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
@@ -66,7 +66,7 @@ class SalesOrderLine(UUIDMixin, TimestampMixin, Base):
     order_id: Mapped[str] = mapped_column(ForeignKey("sales_orders.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
-    unit_price: Mapped[float] = mapped_column(Float, nullable=False)
+    unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     discount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     tax_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
     needs_inventory: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -127,9 +127,9 @@ class SalesInvoice(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     customer_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
     invoice_number: Mapped[str | None] = mapped_column(String(120), nullable=True)  # correlativo asignado por 007
     base_fiscal_currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
-    base_fiscal: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    tax_total: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    total: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    base_fiscal: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
+    tax_total: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
+    total: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
     reversed_by_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     idempotency_key: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
@@ -141,10 +141,10 @@ class SalesInvoiceLine(UUIDMixin, TimestampMixin, Base):
     invoice_id: Mapped[str] = mapped_column(ForeignKey("sales_invoices.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
-    unit_price: Mapped[float] = mapped_column(Float, nullable=False)
-    tax_amount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    base_fiscal: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    total: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
+    tax_amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
+    base_fiscal: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
+    total: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
@@ -155,7 +155,7 @@ class SalesCreditNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     customer_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
     invoice_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
     number: Mapped[str] = mapped_column(String(120), nullable=False)
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     applied: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
@@ -168,7 +168,7 @@ class SalesDebitNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     customer_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
     invoice_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
     number: Mapped[str] = mapped_column(String(120), nullable=False)
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
 

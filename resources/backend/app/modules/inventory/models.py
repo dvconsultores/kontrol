@@ -17,7 +17,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -61,9 +61,9 @@ class InventoryMovement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     movement_type_id: Mapped[str] = mapped_column(ForeignKey("movement_types.id"), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)  # != 0; signo según dirección
     unit_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
-    unit_cost: Mapped[float | None] = mapped_column(Float, nullable=True)
+    unit_cost: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
-    fiscal_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fiscal_rate: Mapped[float | None] = mapped_column(Numeric(14, 6), nullable=True)
     document_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     reversed_by_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -212,7 +212,7 @@ class InventoryAdjustment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     quantity: Mapped[float] = mapped_column(Float, nullable=False)  # >0 suma, <0 resta
     reason: Mapped[str] = mapped_column(Text, nullable=False)
     evidence_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    unit_cost: Mapped[float | None] = mapped_column(Float, nullable=True)
+    unit_cost: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     approver_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")  # DRAFT/SUBMITTED/APPROVED/REJECTED/APPLIED
@@ -229,10 +229,10 @@ class CostLayer(UUIDMixin, TimestampMixin, Base):
     receipt_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
     quantity_in: Mapped[float] = mapped_column(Float, nullable=False)
     quantity_remaining: Mapped[float] = mapped_column(Float, nullable=False)
-    unit_cost: Mapped[float] = mapped_column(Float, nullable=False)
+    unit_cost: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
-    fiscal_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
-    landed_cost: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    fiscal_rate: Mapped[float | None] = mapped_column(Numeric(14, 6), nullable=True)
+    landed_cost: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="OPEN")
 
 

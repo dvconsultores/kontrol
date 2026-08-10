@@ -118,7 +118,7 @@ def _session_expected(db: Session, session: CashSession) -> float:
         CashSessionMovement.session_id == session.id, CashSessionMovement.movement_type == "IN")).scalars().all()
     outs = db.execute(select(CashSessionMovement).where(
         CashSessionMovement.session_id == session.id, CashSessionMovement.movement_type == "OUT")).scalars().all()
-    return round(session.opened_amount + sum(m.amount for m in ins) - sum(m.amount for m in outs), 6)
+    return round(float(session.opened_amount or 0) + sum(float(m.amount or 0) for m in ins) - sum(float(m.amount or 0) for m in outs), 6)
 
 
 # --------------------------------------------------------------------------- #
@@ -247,7 +247,7 @@ def arqueo_session(db: Session, *, session_id: str, counted_amount: float,
     expected = _session_expected(db, session)
     session.counted_amount = counted_amount
     session.expected_amount = expected
-    session.difference = round(counted_amount - expected, 6)
+    session.difference = round(float(counted_amount) - float(expected), 6)
     session.status = "ARCHED"
     if notes:
         session.audit = f'{{"arqueo_notes": {notes!r}}}'

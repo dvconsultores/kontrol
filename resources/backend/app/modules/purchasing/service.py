@@ -437,8 +437,8 @@ def match_invoice(db: Session, *, invoice: SupplierInvoice, actor: str | None = 
     for line in lines:
         order_line = db.get(PurchaseOrderLine, line.order_line_id) if line.order_line_id else None
         variance_qty = round(line.quantity - (order_line.quantity_received if order_line else line.quantity), 6)
-        variance_price = round((line.unit_price - order_line.unit_price) * line.quantity, 6) if order_line else 0.0
-        variance_tax = round(line.tax_amount - ((order_line.unit_price * line.quantity * 0.0) if order_line else 0.0), 6)
+        variance_price = round((float(line.unit_price) - float(order_line.unit_price)) * float(line.quantity), 6) if order_line else 0.0
+        variance_tax = round(float(line.tax_amount) - ((float(order_line.unit_price) * float(line.quantity) * 0.0) if order_line else 0.0), 6)
         match = TripleMatch(company_id=invoice.company_id, invoice_id=str(invoice.id),
                             order_line_id=line.order_line_id, receipt_line_id=line.receipt_line_id,
                             invoice_line_id=str(line.id), variance_qty=variance_qty,

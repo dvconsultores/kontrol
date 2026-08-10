@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, Date, DateTime, Float, ForeignKey, String
+from sqlalchemy import JSON, BigInteger, Date, DateTime, Float, ForeignKey, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -108,9 +108,9 @@ class TaxCalculation(UUIDMixin, TimestampMixin, Base):
     document_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
     line_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
     rule_version_id: Mapped[str | None] = mapped_column(ForeignKey("tax_rule_versions.id"), nullable=True)
-    base: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    rate: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    amount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    base: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
+    rate: Mapped[float] = mapped_column(Numeric(14, 6), nullable=False, default=0.0)
+    amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     rounding: Mapped[float] = mapped_column(Float, nullable=False, default=2.0)
     snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
 
@@ -147,7 +147,7 @@ class FiscalDocument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     invoice_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
     control_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
     fiscal_currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
-    exchange_rate_snapshot: Mapped[float | None] = mapped_column(Float, nullable=True)
+    exchange_rate_snapshot: Mapped[float | None] = mapped_column(Numeric(14, 6), nullable=True)
     emitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="EMITTED")
@@ -178,9 +178,9 @@ class CreditDebitNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     original_document: Mapped[str] = mapped_column(String(200), nullable=False)  # INVOICE:{id}
     note_type: Mapped[str] = mapped_column(String(16), nullable=False)  # CREDIT / DEBIT
     cause: Mapped[str] = mapped_column(String(255), nullable=False)
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
-    base_amount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    tax_amount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
+    base_amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
+    tax_amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     limits: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
     inventory_effect: Mapped[str | None] = mapped_column(String(64), nullable=True)
     financial_effect: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -200,8 +200,8 @@ class WithholdingRule(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     concept: Mapped[str | None] = mapped_column(String(120), nullable=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     conditions: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
-    base: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    rate: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    base: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
+    rate: Mapped[float] = mapped_column(Numeric(14, 6), nullable=False, default=0.0)
     minimum: Mapped[float | None] = mapped_column(Float, nullable=True)
     subtractor: Mapped[float | None] = mapped_column(Float, nullable=True)
     validity: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)

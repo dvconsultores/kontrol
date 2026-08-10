@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, String, Text
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -165,7 +165,7 @@ class ApprovalRequest(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     requester_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     approvers: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
     risk: Mapped[str | None] = mapped_column(String(32), nullable=True)
-    amount: Mapped[float | None] = mapped_column(Float, nullable=True)
+    amount: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
     deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
     decision: Mapped[str | None] = mapped_column(String(32), nullable=True)  # APPROVED / REJECTED
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")

@@ -347,7 +347,7 @@ def create_credit_debit_note(db: Session, *, company_id: str, original_document:
     for note in db.execute(select(CreditDebitNote).where(
             CreditDebitNote.company_id == company_id, CreditDebitNote.original_document == original_document,
             CreditDebitNote.note_type == "CREDIT")).scalars().all():
-        prior_used += note.amount
+        prior_used += float(note.amount or 0)
     adjustable = round(invoice_total - prior_used, 6)
     if note_type == "CREDIT" and amount > adjustable:
         raise ConflictError(code="NOTE_EXCEEDS_ADJUSTABLE",
@@ -395,11 +395,12 @@ def calculate_withholding(db: Session, *, company_id: str, party_id: str, tax_ty
     """Calcula una retención con la regla activa y la crea en 004 (CALCULADA)."""
     company_id = _company(company_id, obj="retención")
     rule = _active_withholding_rule(db, company_id, tax_type, code)
-    amount = round(base * rule.rate / 100.0, 2) if rule.rate > 1 else round(base * rule.rate, 2)
-    if rule.minimum is not None and amount < rule.minimum:
+    rate = float(rule.rate)
+    amount = round(float(base) * rate / 100.0, 2) if rate > 1 else round(float(base) * rate, 2)
+    if rule.minimum is not None and amount < float(rule.minimum):
         amount = 0.0
     if rule.subtractor is not None:
-        amount = round(max(amount - rule.subtractor, 0.0), 2)
+        amount = round(max(amount - float(rule.subtractor), 0.0), 2)
     return ap_service.create_withholding(db, company_id=company_id, party_id=party_id, tax_type=tax_type,
                                          rule_ref=code, base=base, rate_ref=str(rule.rate), amount=amount,
                                          period=period, source_event=source_event, actor=actor)
@@ -488,7 +489,7 @@ def books(db: Session, *, company_id: str, tax_type: str, period: str) -> dict:
             rows.append({"document": doc.business_document, "series": doc.series, "number": doc.invoice_number,
                          "control": doc.control_number, "currency": doc.fiscal_currency,
                          "rate": doc.exchange_rate_snapshot, "total": amount,
-                         "bolivares": round(amount * (doc.exchange_rate_snapshot or 1.0), 6),
+                         "bolivares": round(amount * float(doc.exchange_rate_snapshot or 1.0), 6),
                          "emitted_at": doc.emitted_at.isoformat() if doc.emitted_at else None})
     elif tax_type == "COMPRAS":
         invoices = db.execute(select(SupplierInvoice).where(SupplierInvoice.company_id == company_id)).scalars().all()
@@ -499,7 +500,7 @@ def books(db: Session, *, company_id: str, tax_type: str, period: str) -> dict:
     elif tax_type == "RETENCIONES":
         withholdings = db.execute(select(ApWithholding).where(ApWithholding.company_id == company_id)).scalars().all()
         for w in withholdings:
-            total_amount += w.amount
+            total_amount += float(w.amount or 0)
             rows.append({"id": str(w.id), "tax_type": w.tax_type, "base": w.base, "rate_ref": w.rate_ref,
                          "amount": w.amount, "period": w.period, "status": w.status})
     elif tax_type == "IGTF":
