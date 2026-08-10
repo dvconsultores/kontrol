@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 
 from app.core import security
 from app.core.database import get_db
-from app.core.dependencies import require_write_allowed
 from app.core.errors import ConflictError, KontrolError
 from app.modules.identity_access import service as identity_service
 from app.modules.identity_access.models import Permission, Role, RolePermission, UserRole
@@ -149,6 +148,9 @@ def status(db: Session = Depends(get_db)):
     return setup_status(db).model_dump()
 
 
-@router.post("/initialize", dependencies=[Depends(require_write_allowed)])
+@router.post("/initialize")
 def initialize_endpoint(body: SetupRequest, db: Session = Depends(get_db)):
+    # El bootstrap inicial no depende de la licencia (aún no existe Installation).
+    # initialize() es idempotente: si la instalación ya está inicializada,
+    # responde ConflictError (423/409) sin volver a crear datos.
     return initialize(db, body)

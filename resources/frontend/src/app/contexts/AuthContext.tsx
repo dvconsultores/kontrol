@@ -13,7 +13,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { apiFetch, setAccessToken } from "@/api/client";
+import { apiFetch, setAccessToken, setRefreshHandler } from "@/api/client";
 import type { LoginResponse, UserInfo } from "@/api/types";
 
 interface AuthContextValue {
@@ -73,6 +73,13 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   // router quede esperando indefinidamente cuando no hay sesión.
   useEffect(() => {
     void refreshSession().finally(() => setReady(true));
+  }, [refreshSession]);
+
+  // Renovación automática ante 401 (access token expirado): apiFetch renueva la
+  // sesión y reintenta la petición sin recargar la página (ADR-004).
+  useEffect(() => {
+    setRefreshHandler(refreshSession);
+    return () => setRefreshHandler(null);
   }, [refreshSession]);
 
   const value = useMemo<AuthContextValue>(

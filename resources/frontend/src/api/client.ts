@@ -41,6 +41,35 @@ export function getAccessToken(): string | null {
   return accessToken;
 }
 
+// Renovación automática de sesión (ADR-004): si el servidor responde 401
+// (access token expirado), se renueva la sesión una vez y se reintenta.
+type RefreshHandler = () => Promise<boolean>;
+let refreshHandler: RefreshHandler | null = null;
+let refreshInFlight: Promise<boolean> | null = null;
+
+export function setRefreshHandler(handler: RefreshHandler | null): void {
+  refreshHandler = handler;
+}
+
+function refreshOnce(): Promise<boolean> {
+  if (!refreshHandler) {
+    return Promise.resolve(false);
+  }
+  if (!refreshInFlight) {
+    refreshInFlight = refreshHandler().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+/** Rutas de autenticación que nunca deben disparar la renovación (evita bucles). */
+const isAuthRoute = (path: string): boolean =>
+  path === "/auth/login" ||
+  path === "/auth/logout" ||
+  path.startsWith("/auth/refresh") ||
+  path.startsWith("/auth/password-reset");
+
 export interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
@@ -49,7 +78,7 @@ export interface RequestOptions {
   signal?: AbortSignal;
 }
 
-export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
   const headers: Record<string, string> = {
     Accept: "application/json",
   };
@@ -92,4 +121,24 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   }
 
   return payload as T;
+}
+
+export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  try {
+    return await rawFetch<T>(path, options);
+  } catch (error) {
+    // Access token expirado (401): renovar la sesión una vez y reintentar la
+    // petición original con el nuevo token. Si la renovación falla, la sesión
+    // se limpia y el router redirige a /login.
+    if (
+      error instanceof ApiError &&
+      error.status === 401 &&
+      refreshHandler &&
+      !isAuthRoute(path) &&
+      (await refreshOnce())
+    ) {
+      return rawFetch<T>(path, options);
+    }
+    throw error;
+  }
 }
