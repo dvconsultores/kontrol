@@ -93,4 +93,12 @@ smoke E2E por API 40/40 OK. Re-auditoría: menú/rutas/páginas/endpoints 100% c
 Validación acumulada: pytest 193 · ruff · tsc · eslint · vitest 186 ·
 smoke E2E inventario 22/22 OK.
 
+### Aprobaciones regulatorias (commit `8078625`)
+- Página nueva: **Aprobaciones** (`/regulatorio/aprobaciones`) — solicitudes por regla oficial,
+  transiciones `PENDING → APPROVED/REJECTED` (auditado).
+- Menú/rutas/contrato G3–G4 ampliados (5 páginas de regulatorio cubiertas).
+
+Validación acumulada: pytest 193 · tsc · eslint · vitest 193 · smoke E2E aprobaciones 3/3 OK.
+
+
 
