@@ -139,6 +139,11 @@ const pages = [
   "modules/inventario/ajustes/AjustesPage.tsx",
   "modules/inventario/lotes/LotesPage.tsx",
   "modules/inventario/valorizacion/ValorizacionPage.tsx",
+  "modules/regulatorio/aprobaciones/AprobacionesPage.tsx",
+  "modules/regulatorio/evaluacion/EvaluacionPage.tsx",
+  "modules/regulatorio/organismos/OrganismosPage.tsx",
+  "modules/regulatorio/permisos/PermisosPage.tsx",
+  "modules/regulatorio/vehiculos/VehiculosPage.tsx",
   "modules/fiscal/emision/EmisionPage.tsx",
   "modules/licenciamiento/configuracion/ConfiguracionCentralPage.tsx",
 ];

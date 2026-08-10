@@ -61,6 +61,7 @@ import { LibrosPage } from "@/modules/fiscal/libros/LibrosPage";
 import { NotasPage } from "@/modules/fiscal/notas/NotasPage";
 import { NumeracionPage } from "@/modules/fiscal/numeracion/NumeracionPage";
 import { RetencionesPage } from "@/modules/fiscal/retenciones/RetencionesPage";
+import { AprobacionesPage } from "@/modules/regulatorio/aprobaciones/AprobacionesPage";
 import { EvaluacionPage } from "@/modules/regulatorio/evaluacion/EvaluacionPage";
 import { OrganismosPage } from "@/modules/regulatorio/organismos/OrganismosPage";
 import { PermisosPage } from "@/modules/regulatorio/permisos/PermisosPage";
@@ -149,6 +150,7 @@ export const router = createBrowserRouter([
           { path: "regulatorio/vehiculos", element: <VehiculosPage /> },
           { path: "regulatorio/permisos", element: <PermisosPage /> },
           { path: "regulatorio/evaluacion", element: <EvaluacionPage /> },
+          { path: "regulatorio/aprobaciones", element: <AprobacionesPage /> },
           { path: "reportes/centro", element: <CentroReportesPage /> },
           { path: "reportes/exportaciones", element: <ExportacionesPage /> },
           { path: "reportes/auditoria", element: <ReportesAuditoriaPage /> },

@@ -132,6 +132,7 @@ const navSections = [
       { to: "/regulatorio/vehiculos", label: "Vehículos", icon: Truck },
       { to: "/regulatorio/permisos", label: "Permisos y guías", icon: FileCheck },
       { to: "/regulatorio/evaluacion", label: "Evaluación", icon: ShieldAlert },
+      { to: "/regulatorio/aprobaciones", label: "Aprobaciones", icon: ShieldCheck },
     ],
   },
   {
