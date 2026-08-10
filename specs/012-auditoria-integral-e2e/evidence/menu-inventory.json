@@ -1,0 +1,277 @@
+[
+  {
+    "section": "Principal",
+    "to": "/",
+    "label": "Inicio"
+  },
+  {
+    "section": "Principal",
+    "to": "/mi-licencia",
+    "label": "Mi licencia"
+  },
+  {
+    "section": "Organización",
+    "to": "/organizacion/empresas",
+    "label": "Empresas"
+  },
+  {
+    "section": "Organización",
+    "to": "/organizacion/sucursales",
+    "label": "Sucursales"
+  },
+  {
+    "section": "Organización",
+    "to": "/organizacion/establecimientos",
+    "label": "Establecimientos"
+  },
+  {
+    "section": "Organización",
+    "to": "/organizacion/almacenes",
+    "label": "Almacenes"
+  },
+  {
+    "section": "Organización",
+    "to": "/organizacion/ubicaciones",
+    "label": "Ubicaciones"
+  },
+  {
+    "section": "Maestros",
+    "to": "/maestros/terceros",
+    "label": "Terceros"
+  },
+  {
+    "section": "Maestros",
+    "to": "/maestros/productos",
+    "label": "Productos"
+  },
+  {
+    "section": "Maestros",
+    "to": "/maestros/servicios",
+    "label": "Servicios"
+  },
+  {
+    "section": "Maestros",
+    "to": "/maestros/catalogos",
+    "label": "Catálogo"
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/existencias",
+    "label": "Existencias"
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/kardex",
+    "label": "Kardex"
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/transferencias",
+    "label": "Transferencias"
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/conteos",
+    "label": "Conteos"
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/ajustes",
+    "label": "Ajustes"
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/requisiciones",
+    "label": "Requisiciones"
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/ordenes",
+    "label": "Órdenes"
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/recepciones",
+    "label": "Recepciones"
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/facturas",
+    "label": "Facturas"
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/cuentas-por-pagar",
+    "label": "CxP"
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/cotizaciones",
+    "label": "Cotizaciones"
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/ordenes",
+    "label": "Órdenes"
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/facturas",
+    "label": "Facturas"
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/cuentas-por-cobrar",
+    "label": "CxC"
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/cajas",
+    "label": "Cajas y arqueo"
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/ingresos-egresos",
+    "label": "Ingresos y egresos"
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/transferencias",
+    "label": "Transferencias"
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/conciliacion",
+    "label": "Conciliación"
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/igft",
+    "label": "IGTF"
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/maestros",
+    "label": "Maestros"
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/configuracion",
+    "label": "Configuración"
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/numeracion",
+    "label": "Numeración"
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/emision",
+    "label": "Emisión"
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/notas",
+    "label": "Notas"
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/retenciones",
+    "label": "Retenciones"
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/libros",
+    "label": "Libros y períodos"
+  },
+  {
+    "section": "Regulatorio",
+    "to": "/regulatorio/organismos",
+    "label": "Organismos"
+  },
+  {
+    "section": "Regulatorio",
+    "to": "/regulatorio/vehiculos",
+    "label": "Vehículos"
+  },
+  {
+    "section": "Regulatorio",
+    "to": "/regulatorio/permisos",
+    "label": "Permisos y guías"
+  },
+  {
+    "section": "Regulatorio",
+    "to": "/regulatorio/evaluacion",
+    "label": "Evaluación"
+  },
+  {
+    "section": "Reportes",
+    "to": "/reportes/centro",
+    "label": "Centro de reportes"
+  },
+  {
+    "section": "Reportes",
+    "to": "/reportes/exportaciones",
+    "label": "Exportaciones"
+  },
+  {
+    "section": "Reportes",
+    "to": "/reportes/auditoria",
+    "label": "Auditoría"
+  },
+  {
+    "section": "Licenciamiento",
+    "to": "/licenciamiento/configuracion",
+    "label": "Configuración central"
+  },
+  {
+    "section": "Licenciamiento",
+    "to": "/licenciamiento/entitlements",
+    "label": "Entitlements"
+  },
+  {
+    "section": "Licenciamiento",
+    "to": "/licenciamiento/renovacion",
+    "label": "Renovación"
+  },
+  {
+    "section": "Licenciamiento",
+    "to": "/licenciamiento/eventos",
+    "label": "Eventos"
+  },
+  {
+    "section": "Homologación",
+    "to": "/homologacion/actos",
+    "label": "Actos"
+  },
+  {
+    "section": "Homologación",
+    "to": "/homologacion/versiones",
+    "label": "Versiones"
+  },
+  {
+    "section": "Homologación",
+    "to": "/homologacion/timeline",
+    "label": "Timeline"
+  },
+  {
+    "section": "Seguridad",
+    "to": "/seguridad/usuarios",
+    "label": "Usuarios"
+  },
+  {
+    "section": "Seguridad",
+    "to": "/seguridad/roles",
+    "label": "Roles"
+  },
+  {
+    "section": "Sistema",
+    "to": "/auditoria",
+    "label": "Auditoría"
+  },
+  {
+    "section": "Sistema",
+    "to": "/diagnostico",
+    "label": "Diagnóstico"
+  }
+]

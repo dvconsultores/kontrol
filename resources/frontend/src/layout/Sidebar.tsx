@@ -51,7 +51,9 @@ const navSections = [
     items: [
       { to: "/organizacion/empresas", label: "Empresas", icon: Home },
       { to: "/organizacion/sucursales", label: "Sucursales", icon: Boxes },
+      { to: "/organizacion/establecimientos", label: "Establecimientos", icon: Home },
       { to: "/organizacion/almacenes", label: "Almacenes", icon: Boxes },
+      { to: "/organizacion/ubicaciones", label: "Ubicaciones", icon: Warehouse },
     ],
   },
   {

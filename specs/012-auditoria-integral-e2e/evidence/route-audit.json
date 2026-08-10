@@ -1,0 +1,368 @@
+[
+  {
+    "path": "/login",
+    "component": "LoginPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/pages/LoginPage.tsx"
+  },
+  {
+    "path": "/setup",
+    "component": "SetupPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/pages/SetupPage.tsx"
+  },
+  {
+    "path": "mi-licencia",
+    "component": "MiLicenciaPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/pages/MiLicenciaPage.tsx"
+  },
+  {
+    "path": "cambiar-contrasena",
+    "component": "CambiarContrasenaPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/pages/CambiarContrasenaPage.tsx"
+  },
+  {
+    "path": "organizacion/empresas",
+    "component": "EmpresasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/pages/EmpresasPage.tsx"
+  },
+  {
+    "path": "organizacion/sucursales",
+    "component": "SucursalesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/organizacion/sucursales/SucursalesPage.tsx"
+  },
+  {
+    "path": "organizacion/establecimientos",
+    "component": "EstablecimientosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/organizacion/establecimientos/EstablecimientosPage.tsx"
+  },
+  {
+    "path": "organizacion/almacenes",
+    "component": "AlmacenesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/organizacion/almacenes/AlmacenesPage.tsx"
+  },
+  {
+    "path": "organizacion/ubicaciones",
+    "component": "UbicacionesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/organizacion/ubicaciones/UbicacionesPage.tsx"
+  },
+  {
+    "path": "seguridad/usuarios",
+    "component": "UsuariosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/seguridad/usuarios/UsuariosPage.tsx"
+  },
+  {
+    "path": "seguridad/roles",
+    "component": "RolesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/seguridad/roles/RolesPage.tsx"
+  },
+  {
+    "path": "maestros/terceros",
+    "component": "TercerosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/maestros/terceros/TercerosPage.tsx"
+  },
+  {
+    "path": "maestros/productos",
+    "component": "ProductosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/maestros/productos/ProductosPage.tsx"
+  },
+  {
+    "path": "maestros/productos/nuevo",
+    "component": "ProductoNuevoPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/maestros/productos/ProductoNuevoPage.tsx"
+  },
+  {
+    "path": "maestros/servicios",
+    "component": "ServiciosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/maestros/servicios/ServiciosPage.tsx"
+  },
+  {
+    "path": "maestros/catalogos",
+    "component": "CatalogosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/maestros/catalogos/CatalogosPage.tsx"
+  },
+  {
+    "path": "inventario/existencias",
+    "component": "ExistenciasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/inventario/existencias/ExistenciasPage.tsx"
+  },
+  {
+    "path": "inventario/kardex",
+    "component": "KardexPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/inventario/kardex/KardexPage.tsx"
+  },
+  {
+    "path": "inventario/transferencias",
+    "component": "TransferenciasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/inventario/transferencias/TransferenciasPage.tsx"
+  },
+  {
+    "path": "inventario/conteos",
+    "component": "ConteosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/inventario/conteos/ConteosPage.tsx"
+  },
+  {
+    "path": "inventario/ajustes",
+    "component": "AjustesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/inventario/ajustes/AjustesPage.tsx"
+  },
+  {
+    "path": "compras/requisiciones",
+    "component": "RequisicionesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/compras/requisiciones/RequisicionesPage.tsx"
+  },
+  {
+    "path": "compras/ordenes",
+    "component": "OrdenesComprasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/compras/ordenes/OrdenesComprasPage.tsx"
+  },
+  {
+    "path": "compras/recepciones",
+    "component": "RecepcionesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/compras/recepciones/RecepcionesPage.tsx"
+  },
+  {
+    "path": "compras/facturas",
+    "component": "FacturasProveedorPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/compras/facturas/FacturasProveedorPage.tsx"
+  },
+  {
+    "path": "compras/cuentas-por-pagar",
+    "component": "CuentasPorPagarPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/compras/cuentas-por-pagar/CuentasPorPagarPage.tsx"
+  },
+  {
+    "path": "ventas/cotizaciones",
+    "component": "CotizacionesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/ventas/cotizaciones/CotizacionesPage.tsx"
+  },
+  {
+    "path": "ventas/ordenes",
+    "component": "OrdenesVentasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/ventas/ordenes/OrdenesVentasPage.tsx"
+  },
+  {
+    "path": "ventas/facturas",
+    "component": "FacturasVentasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/ventas/facturas/FacturasVentasPage.tsx"
+  },
+  {
+    "path": "ventas/cuentas-por-cobrar",
+    "component": "CuentasPorCobrarPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage.tsx"
+  },
+  {
+    "path": "tesoreria/cajas",
+    "component": "CajasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/tesoreria/cajas/CajasPage.tsx"
+  },
+  {
+    "path": "tesoreria/ingresos-egresos",
+    "component": "IngresosEgresosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/tesoreria/ingresos-egresos/IngresosEgresosPage.tsx"
+  },
+  {
+    "path": "tesoreria/transferencias",
+    "component": "TesoreriaTransferenciasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/tesoreria/transferencias/TransferenciasPage.tsx"
+  },
+  {
+    "path": "tesoreria/conciliacion",
+    "component": "ConciliacionPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/tesoreria/conciliacion/ConciliacionPage.tsx"
+  },
+  {
+    "path": "tesoreria/igft",
+    "component": "IgftPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/tesoreria/igft/IgftPage.tsx"
+  },
+  {
+    "path": "tesoreria/maestros",
+    "component": "MaestrosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/tesoreria/maestros/MaestrosPage.tsx"
+  },
+  {
+    "path": "fiscal/configuracion",
+    "component": "ConfiguracionPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/fiscal/configuracion/ConfiguracionPage.tsx"
+  },
+  {
+    "path": "fiscal/numeracion",
+    "component": "NumeracionPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/fiscal/numeracion/NumeracionPage.tsx"
+  },
+  {
+    "path": "fiscal/emision",
+    "component": "EmisionPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/fiscal/emision/EmisionPage.tsx"
+  },
+  {
+    "path": "fiscal/notas",
+    "component": "NotasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/fiscal/notas/NotasPage.tsx"
+  },
+  {
+    "path": "fiscal/retenciones",
+    "component": "RetencionesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/fiscal/retenciones/RetencionesPage.tsx"
+  },
+  {
+    "path": "fiscal/libros",
+    "component": "LibrosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/fiscal/libros/LibrosPage.tsx"
+  },
+  {
+    "path": "regulatorio/organismos",
+    "component": "OrganismosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/regulatorio/organismos/OrganismosPage.tsx"
+  },
+  {
+    "path": "regulatorio/vehiculos",
+    "component": "VehiculosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/regulatorio/vehiculos/VehiculosPage.tsx"
+  },
+  {
+    "path": "regulatorio/permisos",
+    "component": "PermisosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/regulatorio/permisos/PermisosPage.tsx"
+  },
+  {
+    "path": "regulatorio/evaluacion",
+    "component": "EvaluacionPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/regulatorio/evaluacion/EvaluacionPage.tsx"
+  },
+  {
+    "path": "reportes/centro",
+    "component": "CentroReportesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/reportes/centro/CentroReportesPage.tsx"
+  },
+  {
+    "path": "reportes/exportaciones",
+    "component": "ExportacionesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/reportes/exportaciones/ExportacionesPage.tsx"
+  },
+  {
+    "path": "reportes/auditoria",
+    "component": "ReportesAuditoriaPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/reportes/auditoria/ReportesAuditoriaPage.tsx"
+  },
+  {
+    "path": "licenciamiento/configuracion",
+    "component": "ConfiguracionCentralPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/licenciamiento/configuracion/ConfiguracionCentralPage.tsx"
+  },
+  {
+    "path": "licenciamiento/entitlements",
+    "component": "EntitlementsPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/licenciamiento/entitlements/EntitlementsPage.tsx"
+  },
+  {
+    "path": "licenciamiento/renovacion",
+    "component": "RenovacionPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/licenciamiento/renovacion/RenovacionPage.tsx"
+  },
+  {
+    "path": "licenciamiento/eventos",
+    "component": "EventosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/licenciamiento/eventos/EventosPage.tsx"
+  },
+  {
+    "path": "homologacion/actos",
+    "component": "ActosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/homologacion/actos/ActosPage.tsx"
+  },
+  {
+    "path": "homologacion/versiones",
+    "component": "VersionesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/homologacion/versiones/VersionesPage.tsx"
+  },
+  {
+    "path": "homologacion/timeline",
+    "component": "TimelinePage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/homologacion/timeline/TimelinePage.tsx"
+  },
+  {
+    "path": "auditoria",
+    "component": "AuditoriaPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/pages/AuditoriaPage.tsx"
+  },
+  {
+    "path": "diagnostico",
+    "component": "DiagnosticoPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/pages/DiagnosticoPage.tsx"
+  },
+  {
+    "path": "forbidden",
+    "component": "ForbiddenState",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/components/ForbiddenState.tsx"
+  },
+  {
+    "path": "*",
+    "component": "NotFoundState",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/components/NotFoundState.tsx"
+  },
+  {
+    "path": "",
+    "component": "DashboardPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/pages/DashboardPage.tsx"
+  }
+]

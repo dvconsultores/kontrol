@@ -17,8 +17,8 @@ from app.core.middleware import LicenseMiddleware, RequestIDMiddleware
 from app.modules.audit.api import router as audit_router
 from app.modules.fiscal.api import router as fiscal_router
 from app.modules.homologation.api import router as homologation_router
+from app.modules.identity_access.api import roles_router, users_router
 from app.modules.identity_access.api import router as auth_router
-from app.modules.identity_access.api import users_router
 from app.modules.inventory.api import router as inventory_router
 from app.modules.licensing import service as licensing_service
 from app.modules.licensing.api import central_router
@@ -78,6 +78,7 @@ def create_app() -> FastAPI:
     app.include_router(central_router, prefix=prefix)
     app.include_router(auth_router, prefix=prefix)
     app.include_router(users_router, prefix=prefix)
+    app.include_router(roles_router, prefix=prefix)
     app.include_router(organization_router, prefix=prefix)
     app.include_router(master_data_router, prefix=prefix)
     app.include_router(inventory_router, prefix=prefix)

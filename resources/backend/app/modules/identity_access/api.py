@@ -194,6 +194,7 @@ def list_users(db: Session = Depends(get_db), _: User = Depends(require_permissi
             "status": u.status,
             "must_change_password": u.must_change_password,
             "last_login": u.last_login.isoformat() if u.last_login else None,
+            "roles": identity_service.get_user_roles(db, str(u.id)),
             "allowed_actions": {"view": True, "edit": True, "deactivate": True, "delete": False},
         }
         for u in users
@@ -218,4 +219,32 @@ def create_user(
         must_change_password=body.must_change_password,
         created_by=str(actor.id),
     )
+    db.commit()
+    db.refresh(user)
     return {"id": str(user.id), "username": user.username}
+
+
+class UserRoleAssign(BaseModel):
+    role_id: str = Field(min_length=1)
+    company_id: str | None = None
+
+
+@users_router.post("/{user_id}/roles", dependencies=[Depends(require_permission("roles", "edit"))])
+def assign_role(user_id: str, body: UserRoleAssign, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    identity_service.assign_role_to_user(db, user_id=user_id, role_id=body.role_id, company_id=body.company_id, actor=str(actor.id))
+    return {"ok": True}
+
+
+@users_router.delete("/{user_id}/roles/{role_id}", dependencies=[Depends(require_permission("roles", "edit"))])
+def remove_role(user_id: str, role_id: str, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
+    identity_service.remove_role_from_user(db, user_id=user_id, role_id=role_id, actor=str(actor.id))
+    return {"ok": True}
+
+
+# Roles / permisos (administración)
+roles_router = APIRouter(prefix="/roles", tags=["roles"])
+
+
+@roles_router.get("")
+def list_roles(db: Session = Depends(get_db), _: User = Depends(require_permission("roles", "view"))):
+    return {"items": identity_service.list_roles(db)}

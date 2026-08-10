@@ -15,7 +15,11 @@ import { LoginPage } from "@/pages/LoginPage";
 import { MiLicenciaPage } from "@/pages/MiLicenciaPage";
 import { SetupPage } from "@/pages/SetupPage";
 import { AlmacenesPage } from "@/modules/organizacion/almacenes/AlmacenesPage";
+import { EstablecimientosPage } from "@/modules/organizacion/establecimientos/EstablecimientosPage";
+import { UbicacionesPage } from "@/modules/organizacion/ubicaciones/UbicacionesPage";
 import { SucursalesPage } from "@/modules/organizacion/sucursales/SucursalesPage";
+import { RolesPage } from "@/modules/seguridad/roles/RolesPage";
+import { UsuariosPage } from "@/modules/seguridad/usuarios/UsuariosPage";
 import { CatalogosPage } from "@/modules/maestros/catalogos/CatalogosPage";
 import { ProductosPage } from "@/modules/maestros/productos/ProductosPage";
 import { ProductoNuevoPage } from "@/modules/maestros/productos/ProductoNuevoPage";
@@ -85,7 +89,11 @@ export const router = createBrowserRouter([
           { path: "cambiar-contrasena", element: <CambiarContrasenaPage /> },
           { path: "organizacion/empresas", element: <EmpresasPage /> },
           { path: "organizacion/sucursales", element: <SucursalesPage /> },
+          { path: "organizacion/establecimientos", element: <EstablecimientosPage /> },
           { path: "organizacion/almacenes", element: <AlmacenesPage /> },
+          { path: "organizacion/ubicaciones", element: <UbicacionesPage /> },
+          { path: "seguridad/usuarios", element: <UsuariosPage /> },
+          { path: "seguridad/roles", element: <RolesPage /> },
           { path: "maestros/terceros", element: <TercerosPage /> },
           { path: "maestros/productos", element: <ProductosPage /> },
           { path: "maestros/productos/nuevo", element: <ProductoNuevoPage /> },

@@ -20,7 +20,11 @@ from app.core.config import get_settings
 from app.core.errors import ConflictError, KontrolError, NotFoundError, PermissionDeniedError
 from app.modules.identity_access.models import (
     PasswordReset,
+    Permission,
+    Role,
+    RolePermission,
     User,
+    UserRole,
 )
 from app.modules.identity_access.models import (
     Session as AuthSession,
@@ -270,3 +274,97 @@ def get_user_permissions(db: Session, user: User) -> list[str]:
 def user_has_permission(user: User, permissions: list[str], resource: str, action: str) -> bool:
     """Verifica permiso en la lista efectiva (deny by default)."""
     return f"{resource}:{action}" in permissions
+
+
+def list_roles(db: Session, *, company_id: str | None = None) -> list[dict]:
+    """Roles activos con sus permisos (FR-001-040)."""
+    q = select(Role).where(Role.status == "ACTIVE")
+    if company_id:
+        q = q.where(Role.company_id == company_id)
+    roles = db.execute(q.order_by(Role.name)).scalars().all()
+    result: list[dict] = []
+    for r in roles:
+        perms = db.execute(
+            select(Permission.resource, Permission.action)
+            .join(RolePermission, RolePermission.permission_id == Permission.id)
+            .where(RolePermission.role_id == str(r.id))
+        ).all()
+        result.append(
+            {
+                "id": str(r.id),
+                "code": r.code,
+                "name": r.name,
+                "protected": r.protected,
+                "status": r.status,
+                "permissions": sorted(f"{res}:{act}" for res, act in perms),
+            }
+        )
+    return result
+
+
+def get_user_roles(db: Session, user_id: str) -> list[dict]:
+    """Roles asignados a un usuario (FR-001-040)."""
+    rows = db.execute(
+        select(Role.id, Role.code, Role.name, UserRole.company_id)
+        .join(UserRole, UserRole.role_id == Role.id)
+        .where(UserRole.user_id == user_id)
+    ).all()
+    return [{"id": str(rid), "code": rcode, "name": rname, "company_id": cid} for rid, rcode, rname, cid in rows]
+
+
+def assign_role_to_user(
+    db: Session,
+    *,
+    user_id: str,
+    role_id: str,
+    company_id: str | None = None,
+    actor: str | None = None,
+) -> None:
+    """Asigna un rol a un usuario (FR-001-040); idempotente por par."""
+    user = get_user(db, user_id)
+    role = db.get(Role, role_id)
+    if not role:
+        raise NotFoundError(code="ROLE_NOT_FOUND", message="Rol no encontrado")
+    existing = db.execute(
+        select(UserRole).where(UserRole.user_id == user_id, UserRole.role_id == role_id)
+    ).scalars().first()
+    if existing:
+        raise ConflictError(code="ROLE_ALREADY_ASSIGNED", message="El usuario ya tiene este rol")
+    db.add(UserRole(user_id=user_id, role_id=role_id, company_id=company_id))
+    _audit(
+        db,
+        action="ROLE_ASSIGNED",
+        entity_type="UserRole",
+        entity_id=f"{user_id}:{role_id}",
+        tenant_id=user.tenant_id,
+        user_id=actor,
+        after={"role_id": role_id, "user_id": user_id},
+    )
+    db.commit()
+
+
+def remove_role_from_user(
+    db: Session,
+    *,
+    user_id: str,
+    role_id: str,
+    actor: str | None = None,
+) -> None:
+    """Quita un rol de un usuario (FR-001-040)."""
+    user = get_user(db, user_id)
+    row = db.execute(
+        select(UserRole).where(UserRole.user_id == user_id, UserRole.role_id == role_id)
+    ).scalars().first()
+    if not row:
+        raise NotFoundError(code="ROLE_NOT_ASSIGNED", message="El usuario no tiene este rol")
+    db.delete(row)
+    _audit(
+        db,
+        action="ROLE_REMOVED",
+        entity_type="UserRole",
+        entity_id=f"{user_id}:{role_id}",
+        tenant_id=user.tenant_id,
+        user_id=actor,
+        after={"role_id": role_id, "user_id": user_id},
+    )
+    db.commit()

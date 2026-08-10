@@ -1,0 +1,5 @@
+{
+  "components/DataTable.tsx": [
+    "ts-ignore/eslint-disable"
+  ]
+}
