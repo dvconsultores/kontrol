@@ -19,8 +19,10 @@ import { EstablecimientosPage } from "@/modules/organizacion/establecimientos/Es
 import { UbicacionesPage } from "@/modules/organizacion/ubicaciones/UbicacionesPage";
 import { SucursalesPage } from "@/modules/organizacion/sucursales/SucursalesPage";
 import { RolesPage } from "@/modules/seguridad/roles/RolesPage";
+import { SesionesPage } from "@/modules/seguridad/sesiones/SesionesPage";
 import { UsuariosPage } from "@/modules/seguridad/usuarios/UsuariosPage";
 import { CatalogosPage } from "@/modules/maestros/catalogos/CatalogosPage";
+import { PerfilesFiscalesPage } from "@/modules/maestros/perfiles/PerfilesFiscalesPage";
 import { ProductosPage } from "@/modules/maestros/productos/ProductosPage";
 import { ProductoNuevoPage } from "@/modules/maestros/productos/ProductoNuevoPage";
 import { ServiciosPage } from "@/modules/maestros/servicios/ServiciosPage";
@@ -94,7 +96,9 @@ export const router = createBrowserRouter([
           { path: "organizacion/ubicaciones", element: <UbicacionesPage /> },
           { path: "seguridad/usuarios", element: <UsuariosPage /> },
           { path: "seguridad/roles", element: <RolesPage /> },
+          { path: "seguridad/sesiones", element: <SesionesPage /> },
           { path: "maestros/terceros", element: <TercerosPage /> },
+          { path: "maestros/perfiles", element: <PerfilesFiscalesPage /> },
           { path: "maestros/productos", element: <ProductosPage /> },
           { path: "maestros/productos/nuevo", element: <ProductoNuevoPage /> },
           { path: "maestros/servicios", element: <ServiciosPage /> },

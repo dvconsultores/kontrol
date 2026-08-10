@@ -77,6 +77,13 @@
     "declared_in_router": true
   },
   {
+    "section": "Maestros",
+    "to": "/maestros/perfiles",
+    "label": "Perfiles fiscales",
+    "normalized": "maestros/perfiles",
+    "declared_in_router": true
+  },
+  {
     "section": "Inventario",
     "to": "/inventario/existencias",
     "label": "Existencias",
@@ -368,6 +375,13 @@
     "to": "/seguridad/roles",
     "label": "Roles",
     "normalized": "seguridad/roles",
+    "declared_in_router": true
+  },
+  {
+    "section": "Seguridad",
+    "to": "/seguridad/sesiones",
+    "label": "Sesiones",
+    "normalized": "seguridad/sesiones",
     "declared_in_router": true
   },
   {

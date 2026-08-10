@@ -106,6 +106,9 @@
     "/maestros/catalogos/taxonomia",
     "/maestros/catalogos/unidades"
   ],
+  "modules/maestros/perfiles/PerfilesFiscalesPage.tsx": [
+    "/maestros/perfiles"
+  ],
   "modules/maestros/productos/ProductoNuevoPage.tsx": [
     "/maestros/catalogos/items"
   ],
@@ -169,6 +172,10 @@
     "/users",
     "/users/*/roles (template)",
     "/users/*/roles/* (template)"
+  ],
+  "modules/seguridad/sesiones/SesionesPage.tsx": [
+    "/auth/sessions",
+    "/auth/sessions/* (template)"
   ],
   "modules/seguridad/usuarios/UsuariosPage.tsx": [
     "/users"

@@ -66,10 +66,22 @@
     "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/seguridad/roles/RolesPage.tsx"
   },
   {
+    "path": "seguridad/sesiones",
+    "component": "SesionesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/seguridad/sesiones/SesionesPage.tsx"
+  },
+  {
     "path": "maestros/terceros",
     "component": "TercerosPage",
     "import_resolves": true,
     "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/maestros/terceros/TercerosPage.tsx"
+  },
+  {
+    "path": "maestros/perfiles",
+    "component": "PerfilesFiscalesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/maestros/perfiles/PerfilesFiscalesPage.tsx"
   },
   {
     "path": "maestros/productos",

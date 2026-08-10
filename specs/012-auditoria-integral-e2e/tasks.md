@@ -18,6 +18,8 @@
 - [x] T-08..T-09 Puertas permanentes: `src/tests/audit-completeness.test.ts` (G1-G4).
 - [x] T-10 **E2E de procesos**: `tests/test_process_flows.py` (org chain, seguridad, enforcement READ_ONLY 423).
 - [x] T-11 **Crawler de rutas**: `e2e/route-crawl.spec.ts` (recorre menú sin 404/errores/H1).
+- [x] **GAP UI (T-07)**: páginas **Perfiles fiscales** (`/maestros/perfiles`) y **Sesiones** (`/seguridad/sesiones`).
+- [x] **Permisos de negocio (hallazgo crítico)**: el seed solo otorgaba 7 recursos al rol ADMIN (faltaban maestros/compras/ventas/inventario/tesoreria/fiscal/regulatorio/reportes → 403 en operaciones). Corregido: catálogo completo en `_bootstrap_roles` (aditivo) + migración de datos `0013_seed_business_permissions` (instalaciones existentes).
 
 ## Remediación PENDIENTE (T-12..T-16 — requieren ambiente autorizado)
 - [ ] T-12 Navegadores reales + responsive + accesibilidad (axe).

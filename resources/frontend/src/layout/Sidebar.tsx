@@ -63,6 +63,7 @@ const navSections = [
       { to: "/maestros/productos", label: "Productos", icon: Package },
       { to: "/maestros/servicios", label: "Servicios", icon: Tags },
       { to: "/maestros/catalogos", label: "Catálogo", icon: Tags },
+      { to: "/maestros/perfiles", label: "Perfiles fiscales", icon: Percent },
     ],
   },
   {
@@ -155,6 +156,7 @@ const navSections = [
     items: [
       { to: "/seguridad/usuarios", label: "Usuarios", icon: Users },
       { to: "/seguridad/roles", label: "Roles", icon: ShieldCheck },
+      { to: "/seguridad/sesiones", label: "Sesiones", icon: Lock },
     ],
   },
   {

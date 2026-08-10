@@ -55,6 +55,11 @@
     "label": "Catálogo"
   },
   {
+    "section": "Maestros",
+    "to": "/maestros/perfiles",
+    "label": "Perfiles fiscales"
+  },
+  {
     "section": "Inventario",
     "to": "/inventario/existencias",
     "label": "Existencias"
@@ -263,6 +268,11 @@
     "section": "Seguridad",
     "to": "/seguridad/roles",
     "label": "Roles"
+  },
+  {
+    "section": "Seguridad",
+    "to": "/seguridad/sesiones",
+    "label": "Sesiones"
   },
   {
     "section": "Sistema",

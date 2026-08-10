@@ -49,14 +49,12 @@ def setup_status(db: Session) -> SetupStatus:
 
 
 def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
-    """Crea o recupera el rol administrador con permisos base (segregación básica)."""
-    existing = db.execute(select(Role).where(Role.code == "ADMIN", Role.company_id.is_(None))).scalars().first()
-    if existing:
-        return existing
-    admin_role = Role(code="ADMIN", name="Administrador", protected=True, status="ACTIVE", created_by=actor_user_id)
-    db.add(admin_role)
-    db.flush()
+    """Crea (o completa) el rol administrador con los permisos de negocio base.
 
+    Aditivo: si el rol ADMIN ya existe, agrega únicamente los permisos faltantes
+    (idempotente, sin duplicar RolePermission). El catálogo cubre TODOS los
+    recursos que los módulos usan en `require_permission`.
+    """
     resources_actions = {
         "dashboard": ["view"],
         "organization": ["view", "create", "edit", "deactivate", "activate"],
@@ -65,7 +63,23 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
         "audit": ["view"],
         "license": ["view", "create", "edit", "approve"],
         "homologacion": ["view", "create", "edit", "approve"],
+        "maestros": ["view", "create", "edit", "deactivate"],
+        "compras": ["view", "create", "approve", "quality", "apply"],
+        "ventas": ["view", "create", "approve", "quality", "apply"],
+        "inventario": ["view", "create", "approve", "transition", "reserve"],
+        "tesoreria": ["view", "create", "approve"],
+        "fiscal": ["view", "create", "approve"],
+        "regulatorio": ["view", "create", "approve"],
+        "reportes": ["view", "export"],
     }
+    existing = db.execute(select(Role).where(Role.code == "ADMIN", Role.company_id.is_(None))).scalars().first()
+    if existing:
+        admin_role = existing
+    else:
+        admin_role = Role(code="ADMIN", name="Administrador", protected=True, status="ACTIVE", created_by=actor_user_id)
+        db.add(admin_role)
+        db.flush()
+
     for resource, actions in resources_actions.items():
         for action in actions:
             perm = db.execute(select(Permission).where(Permission.resource == resource, Permission.action == action)).scalars().first()
@@ -73,7 +87,12 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
                 perm = Permission(resource=resource, action=action, scope_type="COMPANY")
                 db.add(perm)
                 db.flush()
-            db.add(RolePermission(role_id=str(admin_role.id), permission_id=str(perm.id)))
+            already = db.execute(select(RolePermission).where(
+                RolePermission.role_id == str(admin_role.id),
+                RolePermission.permission_id == str(perm.id),
+            )).scalars().first()
+            if not already:
+                db.add(RolePermission(role_id=str(admin_role.id), permission_id=str(perm.id)))
     db.flush()
     return admin_role
 
