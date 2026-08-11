@@ -318,9 +318,9 @@ def add_invoice_line(db: Session, *, invoice_id: str, product_id: str, quantity:
 
 def recompute_invoice_total(db: Session, *, invoice: SalesInvoice) -> SalesInvoice:
     lines = db.execute(select(SalesInvoiceLine).where(SalesInvoiceLine.invoice_id == invoice.id)).scalars().all()
-    invoice.base_fiscal = round(sum(line.base_fiscal for line in lines), 6)
-    invoice.tax_total = round(sum(line.tax_amount for line in lines), 6)
-    invoice.total = round(invoice.base_fiscal + invoice.tax_total, 6)
+    invoice.base_fiscal = round(sum(float(line.base_fiscal) for line in lines), 6)
+    invoice.tax_total = round(sum(float(line.tax_amount) for line in lines), 6)
+    invoice.total = round(float(invoice.base_fiscal) + float(invoice.tax_total), 6)
     db.flush()
     return invoice
 
@@ -398,15 +398,15 @@ def apply_credit_note(db: Session, *, note: SalesCreditNote, target_open_item_id
     if target.status != "OPEN":
         raise ConflictError(code="OPEN_ITEM_CLOSED", message="El documento de CxC está cerrado.")
     balance = ap_service.open_item_balance(target)
-    remaining = round(note.amount - note.applied, 6)
+    remaining = round(float(note.amount) - float(note.applied), 6)
     if amount > balance:
         raise ConflictError(code="APPLICATION_EXCEEDS_BALANCE", message=f"La aplicación excede el saldo ({balance}).")
     if amount > remaining:
         raise ConflictError(code="APPLICATION_EXCEEDS_SOURCE", message=f"La nota no tiene saldo disponible ({remaining}).")
-    target.applied = round(target.applied + amount, 6)
+    target.applied = round(float(target.applied) + amount, 6)
     if ap_service.open_item_balance(target) <= 1e-6:
         target.status = "CLOSED"
-    note.applied = round(note.applied + amount, 6)
+    note.applied = round(float(note.applied) + amount, 6)
     db.flush()
     _sync_invoice_status(db, target_open_item_id=str(target.id))
     return target

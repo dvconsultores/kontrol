@@ -415,8 +415,8 @@ def add_invoice_line(db: Session, *, invoice_id: str, product_id: str, quantity:
 
 def recompute_invoice_total(db: Session, *, invoice: SupplierInvoice) -> SupplierInvoice:
     lines = db.execute(select(SupplierInvoiceLine).where(SupplierInvoiceLine.invoice_id == invoice.id)).scalars().all()
-    invoice.total = round(sum(line.total for line in lines), 6)
-    invoice.tax_total = round(sum(line.tax_amount for line in lines), 6)
+    invoice.total = round(sum(float(line.total) for line in lines), 6)
+    invoice.tax_total = round(sum(float(line.tax_amount) for line in lines), 6)
     db.flush()
     return invoice
 
@@ -537,7 +537,7 @@ def post_credit_note(db: Session, *, note: SupplierCreditNote) -> SupplierCredit
 # CxP — open items, pagos, aplicaciones, anticipos, retenciones, aging
 # --------------------------------------------------------------------------- #
 def open_item_balance(item: OpenItem) -> float:
-    return round(item.original - item.applied, 6)
+    return round(float(item.original) - float(item.applied), 6)
 
 
 def register_payment(db: Session, *, company_id: str, party_id: str, amount: float, currency: str = "VED",
@@ -577,13 +577,13 @@ def transition_payment(db: Session, *, payment: Payment, target: str, actor: str
 def _source_available(db: Session, *, source_type: str, source_id: str) -> float:
     if source_type == "PAYMENT":
         p = db.get(Payment, source_id)
-        return round(p.amount - p.applied, 6) if p else 0.0
+        return round(float(p.amount) - float(p.applied), 6) if p else 0.0
     if source_type == "ADVANCE":
         a = db.get(Advance, source_id)
-        return round(a.available, 6) if a else 0.0
+        return round(float(a.available), 6) if a else 0.0
     if source_type == "CREDIT":
         c = db.get(SupplierCreditNote, source_id)
-        return round(c.amount - c.applied, 6) if c else 0.0
+        return round(float(c.amount) - float(c.applied), 6) if c else 0.0
     if source_type == "WITHHOLDING":
         w = db.get(Withholding, source_id)
         return w.amount if w and w.status not in ("REVERSADA",) else 0.0
@@ -594,15 +594,15 @@ def _reduce_source(db: Session, *, source_type: str, source_id: str, amount: flo
     if source_type == "PAYMENT":
         p = db.get(Payment, source_id)
         if p:
-            p.applied = round(p.applied + amount, 6)
+            p.applied = round(float(p.applied) + amount, 6)
     elif source_type == "ADVANCE":
         a = db.get(Advance, source_id)
         if a:
-            a.available = round(max(a.available - amount, 0.0), 6)
+            a.available = round(max(float(a.available) - amount, 0.0), 6)
     elif source_type == "CREDIT":
         c = db.get(SupplierCreditNote, source_id)
         if c:
-            c.applied = round(c.applied + amount, 6)
+            c.applied = round(float(c.applied) + amount, 6)
     elif source_type == "WITHHOLDING":
         w = db.get(Withholding, source_id)
         if w and w.status == "PRACTICADA":
@@ -630,7 +630,7 @@ def apply_source(db: Session, *, company_id: str, source_type: str, source_id: s
     if amount > available:
         raise ConflictError(code="APPLICATION_EXCEEDS_SOURCE", message=f"La fuente no tiene saldo disponible ({available}).")
 
-    target.applied = round(target.applied + amount, 6)
+    target.applied = round(float(target.applied) + amount, 6)
     if open_item_balance(target) <= 1e-6:
         target.status = "CLOSED"
     _reduce_source(db, source_type=source_type, source_id=source_id, amount=amount)

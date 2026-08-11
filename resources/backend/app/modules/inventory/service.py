@@ -38,6 +38,19 @@ from app.modules.inventory.models import (
 from app.modules.organization.models import Warehouse
 from app.modules.organization.service import warehouse_in_tenant_scope
 
+# Tipos de movimiento operativos base (se auto-configuran si faltan, FR-003-023).
+BASE_MOVEMENT_TYPES: dict[str, tuple[str, str]] = {
+    "ENTRADA_RECEPCION": ("Entrada por recepción", "IN"),
+    "SALIDA_DESPACHO": ("Salida por despacho", "OUT"),
+    "TRANSFERENCIA_SALIDA": ("Salida por transferencia", "OUT"),
+    "TRANSFERENCIA_ENTRADA": ("Entrada por transferencia", "IN"),
+    "CONTEO": ("Ajuste por conteo", "INTERNAL"),
+    "AJUSTE_POSITIVO": ("Ajuste positivo", "IN"),
+    "AJUSTE_NEGATIVO": ("Ajuste negativo", "OUT"),
+    "REVERSO": ("Reverso de movimiento", "INTERNAL"),
+}
+
+
 # --------------------------------------------------------------------------- #
 # Transiciones permitidas (máquinas de estado, DOC-03 §13)
 # --------------------------------------------------------------------------- #
@@ -797,6 +810,13 @@ def apply_adjustment(db: Session, *, adjustment: InventoryAdjustment, actor: str
 # --------------------------------------------------------------------------- #
 def _get_movement_type_by_code(db: Session, company_id: str, code: str) -> MovementType:
     mtype = _get_movement_type_by_code_optional(db, code)
+    if not mtype and code in BASE_MOVEMENT_TYPES:
+        # Auto-configuración idempotente (instalaciones frescas y existentes).
+        name, direction = BASE_MOVEMENT_TYPES[code]
+        mtype = MovementType(company_id=None, code=code, name=name, direction=direction,
+                             affects_balance=True, status="ACTIVE", created_by=None)
+        db.add(mtype)
+        db.flush()
     if not mtype:
         raise NotFoundError(code="MOVEMENT_TYPE_NOT_FOUND", message=f"Tipo de movimiento '{code}' no configurado.")
     return mtype
