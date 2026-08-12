@@ -1,0 +1,1184 @@
+[
+  {
+    "page": "app/contexts/AuthContext.tsx",
+    "call": "/auth/login",
+    "status": "OK",
+    "candidate": "/auth/login"
+  },
+  {
+    "page": "app/contexts/AuthContext.tsx",
+    "call": "/auth/logout",
+    "status": "OK",
+    "candidate": "/auth/logout"
+  },
+  {
+    "page": "app/contexts/AuthContext.tsx",
+    "call": "/auth/me",
+    "status": "OK",
+    "candidate": "/auth/me"
+  },
+  {
+    "page": "app/contexts/AuthContext.tsx",
+    "call": "/auth/refresh",
+    "status": "OK",
+    "candidate": "/auth/refresh"
+  },
+  {
+    "page": "app/contexts/LicenseContext.tsx",
+    "call": "/license/status",
+    "status": "OK",
+    "candidate": "/license/status"
+  },
+  {
+    "page": "modules/compras/cuentas-por-pagar/CuentasPorPagarPage.tsx",
+    "call": "/purchasing/advances",
+    "status": "OK",
+    "candidate": "/purchasing/advances"
+  },
+  {
+    "page": "modules/compras/cuentas-por-pagar/CuentasPorPagarPage.tsx",
+    "call": "/purchasing/aging",
+    "status": "OK",
+    "candidate": "/purchasing/aging"
+  },
+  {
+    "page": "modules/compras/cuentas-por-pagar/CuentasPorPagarPage.tsx",
+    "call": "/purchasing/applications",
+    "status": "OK",
+    "candidate": "/purchasing/applications"
+  },
+  {
+    "page": "modules/compras/cuentas-por-pagar/CuentasPorPagarPage.tsx",
+    "call": "/purchasing/open-items",
+    "status": "OK",
+    "candidate": "/purchasing/open-items"
+  },
+  {
+    "page": "modules/compras/cuentas-por-pagar/CuentasPorPagarPage.tsx",
+    "call": "/purchasing/payment-schedules",
+    "status": "OK",
+    "candidate": "/purchasing/payment-schedules"
+  },
+  {
+    "page": "modules/compras/cuentas-por-pagar/CuentasPorPagarPage.tsx",
+    "call": "/purchasing/payments",
+    "status": "OK",
+    "candidate": "/purchasing/payments"
+  },
+  {
+    "page": "modules/compras/cuentas-por-pagar/CuentasPorPagarPage.tsx",
+    "call": "/purchasing/payments/*/transition (template)",
+    "status": "OK",
+    "candidate": "/purchasing/payments/*/transition"
+  },
+  {
+    "page": "modules/compras/devoluciones/DevolucionesComprasPage.tsx",
+    "call": "/purchasing/returns",
+    "status": "OK",
+    "candidate": "/purchasing/returns"
+  },
+  {
+    "page": "modules/compras/devoluciones/DevolucionesComprasPage.tsx",
+    "call": "/purchasing/returns/*/lines (template)",
+    "status": "OK",
+    "candidate": "/purchasing/returns/*/lines"
+  },
+  {
+    "page": "modules/compras/facturas/FacturasProveedorPage.tsx",
+    "call": "/purchasing/supplier-invoices",
+    "status": "OK",
+    "candidate": "/purchasing/supplier-invoices"
+  },
+  {
+    "page": "modules/compras/facturas/FacturasProveedorPage.tsx",
+    "call": "/purchasing/supplier-invoices/*/lines (template)",
+    "status": "OK",
+    "candidate": "/purchasing/supplier-invoices/*/lines"
+  },
+  {
+    "page": "modules/compras/facturas/FacturasProveedorPage.tsx",
+    "call": "/purchasing/supplier-invoices/*/transition (template)",
+    "status": "OK",
+    "candidate": "/purchasing/supplier-invoices/*/transition"
+  },
+  {
+    "page": "modules/compras/notas/NotasComprasPage.tsx",
+    "call": "/purchasing/credit-notes",
+    "status": "OK",
+    "candidate": "/purchasing/credit-notes"
+  },
+  {
+    "page": "modules/compras/notas/NotasComprasPage.tsx",
+    "call": "/purchasing/credit-notes/*/post (template)",
+    "status": "OK",
+    "candidate": "/purchasing/credit-notes/*/post"
+  },
+  {
+    "page": "modules/compras/ordenes/OrdenesComprasPage.tsx",
+    "call": "/purchasing/orders",
+    "status": "OK",
+    "candidate": "/purchasing/orders"
+  },
+  {
+    "page": "modules/compras/ordenes/OrdenesComprasPage.tsx",
+    "call": "/purchasing/orders/*/lines (template)",
+    "status": "OK",
+    "candidate": "/purchasing/orders/*/lines"
+  },
+  {
+    "page": "modules/compras/ordenes/OrdenesComprasPage.tsx",
+    "call": "/purchasing/orders/*/transition (template)",
+    "status": "OK",
+    "candidate": "/purchasing/orders/*/transition"
+  },
+  {
+    "page": "modules/compras/recepciones/RecepcionesPage.tsx",
+    "call": "/purchasing/receipts",
+    "status": "OK",
+    "candidate": "/purchasing/receipts"
+  },
+  {
+    "page": "modules/compras/recepciones/RecepcionesPage.tsx",
+    "call": "/purchasing/receipts/*/* (template)",
+    "status": "TEMPLATE_OK",
+    "candidate": null
+  },
+  {
+    "page": "modules/compras/requisiciones/RequisicionesPage.tsx",
+    "call": "/purchasing/requisitions/*/transition (template)",
+    "status": "OK",
+    "candidate": "/purchasing/requisitions/*/transition"
+  },
+  {
+    "page": "modules/fiscal/configuracion/ConfiguracionPage.tsx",
+    "call": "/fiscal/legal-sources",
+    "status": "OK",
+    "candidate": "/fiscal/legal-sources"
+  },
+  {
+    "page": "modules/fiscal/configuracion/ConfiguracionPage.tsx",
+    "call": "/fiscal/legal-sources/*/activate (template)",
+    "status": "OK",
+    "candidate": "/fiscal/legal-sources/*/activate"
+  },
+  {
+    "page": "modules/fiscal/configuracion/ConfiguracionPage.tsx",
+    "call": "/fiscal/tax-calculations",
+    "status": "OK",
+    "candidate": "/fiscal/tax-calculations"
+  },
+  {
+    "page": "modules/fiscal/configuracion/ConfiguracionPage.tsx",
+    "call": "/fiscal/tax-rule-versions",
+    "status": "OK",
+    "candidate": "/fiscal/tax-rule-versions"
+  },
+  {
+    "page": "modules/fiscal/configuracion/ConfiguracionPage.tsx",
+    "call": "/fiscal/tax-rule-versions/*/approve (template)",
+    "status": "OK",
+    "candidate": "/fiscal/tax-rule-versions/*/approve"
+  },
+  {
+    "page": "modules/fiscal/emision/EmisionPage.tsx",
+    "call": "/fiscal/control-batches",
+    "status": "OK",
+    "candidate": "/fiscal/control-batches"
+  },
+  {
+    "page": "modules/fiscal/emision/EmisionPage.tsx",
+    "call": "/fiscal/documents",
+    "status": "OK",
+    "candidate": "/fiscal/documents"
+  },
+  {
+    "page": "modules/fiscal/emision/EmisionPage.tsx",
+    "call": "/fiscal/documents/*/print (template)",
+    "status": "OK",
+    "candidate": "/fiscal/documents/*/print"
+  },
+  {
+    "page": "modules/fiscal/emision/EmisionPage.tsx",
+    "call": "/fiscal/documents/emit",
+    "status": "OK",
+    "candidate": "/fiscal/documents/emit"
+  },
+  {
+    "page": "modules/fiscal/emision/EmisionPage.tsx",
+    "call": "/fiscal/number-series",
+    "status": "OK",
+    "candidate": "/fiscal/number-series"
+  },
+  {
+    "page": "modules/fiscal/emision/EmisionPage.tsx",
+    "call": "/sales/invoices",
+    "status": "OK",
+    "candidate": "/sales/invoices"
+  },
+  {
+    "page": "modules/fiscal/libros/LibrosPage.tsx",
+    "call": "/fiscal/books/* (template)",
+    "status": "OK",
+    "candidate": "/fiscal/books/*"
+  },
+  {
+    "page": "modules/fiscal/libros/LibrosPage.tsx",
+    "call": "/fiscal/periods",
+    "status": "OK",
+    "candidate": "/fiscal/periods"
+  },
+  {
+    "page": "modules/fiscal/libros/LibrosPage.tsx",
+    "call": "/fiscal/periods/*/transition (template)",
+    "status": "OK",
+    "candidate": "/fiscal/periods/*/transition"
+  },
+  {
+    "page": "modules/fiscal/notas/NotasPage.tsx",
+    "call": "/fiscal/credit-debit-notes",
+    "status": "OK",
+    "candidate": "/fiscal/credit-debit-notes"
+  },
+  {
+    "page": "modules/fiscal/notas/NotasPage.tsx",
+    "call": "/sales/invoices",
+    "status": "OK",
+    "candidate": "/sales/invoices"
+  },
+  {
+    "page": "modules/fiscal/numeracion/NumeracionPage.tsx",
+    "call": "/fiscal/control-batches",
+    "status": "OK",
+    "candidate": "/fiscal/control-batches"
+  },
+  {
+    "page": "modules/fiscal/numeracion/NumeracionPage.tsx",
+    "call": "/fiscal/control-numbers",
+    "status": "OK",
+    "candidate": "/fiscal/control-numbers"
+  },
+  {
+    "page": "modules/fiscal/numeracion/NumeracionPage.tsx",
+    "call": "/fiscal/number-series",
+    "status": "OK",
+    "candidate": "/fiscal/number-series"
+  },
+  {
+    "page": "modules/fiscal/retenciones/RetencionesPage.tsx",
+    "call": "/fiscal/withholding-rules",
+    "status": "OK",
+    "candidate": "/fiscal/withholding-rules"
+  },
+  {
+    "page": "modules/fiscal/retenciones/RetencionesPage.tsx",
+    "call": "/fiscal/withholdings",
+    "status": "OK",
+    "candidate": "/fiscal/withholdings"
+  },
+  {
+    "page": "modules/fiscal/retenciones/RetencionesPage.tsx",
+    "call": "/fiscal/withholdings/*/certificate (template)",
+    "status": "OK",
+    "candidate": "/fiscal/withholdings/*/certificate"
+  },
+  {
+    "page": "modules/fiscal/retenciones/RetencionesPage.tsx",
+    "call": "/fiscal/withholdings/*/transition (template)",
+    "status": "OK",
+    "candidate": "/fiscal/withholdings/*/transition"
+  },
+  {
+    "page": "modules/fiscal/retenciones/RetencionesPage.tsx",
+    "call": "/fiscal/withholdings/calculate",
+    "status": "OK",
+    "candidate": "/fiscal/withholdings/calculate"
+  },
+  {
+    "page": "modules/fiscal/retenciones/RetencionesPage.tsx",
+    "call": "/maestros/terceros",
+    "status": "OK",
+    "candidate": "/maestros/terceros"
+  },
+  {
+    "page": "modules/homologacion/actos/ActosPage.tsx",
+    "call": "/homologation/records",
+    "status": "OK",
+    "candidate": "/homologation/records"
+  },
+  {
+    "page": "modules/homologacion/actos/ActosPage.tsx",
+    "call": "/homologation/records/*/evaluate (template)",
+    "status": "OK",
+    "candidate": "/homologation/records/*/evaluate"
+  },
+  {
+    "page": "modules/homologacion/actos/ActosPage.tsx",
+    "call": "/homologation/records/*/submit (template)",
+    "status": "OK",
+    "candidate": "/homologation/records/*/submit"
+  },
+  {
+    "page": "modules/homologacion/timeline/TimelinePage.tsx",
+    "call": "/homologation/timeline",
+    "status": "OK",
+    "candidate": "/homologation/timeline"
+  },
+  {
+    "page": "modules/homologacion/versiones/VersionesPage.tsx",
+    "call": "/homologation/records",
+    "status": "OK",
+    "candidate": "/homologation/records"
+  },
+  {
+    "page": "modules/homologacion/versiones/VersionesPage.tsx",
+    "call": "/homologation/releases",
+    "status": "OK",
+    "candidate": "/homologation/releases"
+  },
+  {
+    "page": "modules/homologacion/versiones/VersionesPage.tsx",
+    "call": "/homologation/releases/*/promote (template)",
+    "status": "OK",
+    "candidate": "/homologation/releases/*/promote"
+  },
+  {
+    "page": "modules/homologacion/versiones/VersionesPage.tsx",
+    "call": "/homologation/releases/*/release (template)",
+    "status": "OK",
+    "candidate": "/homologation/releases/*/release"
+  },
+  {
+    "page": "modules/inventario/ajustes/AjustesPage.tsx",
+    "call": "/inventory/adjustments",
+    "status": "OK",
+    "candidate": "/inventory/adjustments"
+  },
+  {
+    "page": "modules/inventario/ajustes/AjustesPage.tsx",
+    "call": "/inventory/adjustments/*/transition (template)",
+    "status": "OK",
+    "candidate": "/inventory/adjustments/*/transition"
+  },
+  {
+    "page": "modules/inventario/ajustes/AjustesPage.tsx",
+    "call": "/organization/warehouses (template)",
+    "status": "OK",
+    "candidate": "/organization/warehouses"
+  },
+  {
+    "page": "modules/inventario/conteos/ConteosPage.tsx",
+    "call": "/inventory/counts",
+    "status": "OK",
+    "candidate": "/inventory/counts"
+  },
+  {
+    "page": "modules/inventario/conteos/ConteosPage.tsx",
+    "call": "/inventory/counts/*/lines (template)",
+    "status": "OK",
+    "candidate": "/inventory/counts/*/lines"
+  },
+  {
+    "page": "modules/inventario/conteos/ConteosPage.tsx",
+    "call": "/inventory/counts/*/transition (template)",
+    "status": "OK",
+    "candidate": "/inventory/counts/*/transition"
+  },
+  {
+    "page": "modules/inventario/conteos/ConteosPage.tsx",
+    "call": "/organization/warehouses (template)",
+    "status": "OK",
+    "candidate": "/organization/warehouses"
+  },
+  {
+    "page": "modules/inventario/lotes/LotesPage.tsx",
+    "call": "/inventory/lots",
+    "status": "OK",
+    "candidate": "/inventory/lots"
+  },
+  {
+    "page": "modules/inventario/lotes/LotesPage.tsx",
+    "call": "/inventory/lots/*/transition (template)",
+    "status": "OK",
+    "candidate": "/inventory/lots/*/transition"
+  },
+  {
+    "page": "modules/inventario/movimientos/MovimientosPage.tsx",
+    "call": "/inventory/movements",
+    "status": "OK",
+    "candidate": "/inventory/movements"
+  },
+  {
+    "page": "modules/inventario/movimientos/MovimientosPage.tsx",
+    "call": "/inventory/movements/reverse",
+    "status": "OK",
+    "candidate": "/inventory/movements/reverse"
+  },
+  {
+    "page": "modules/inventario/movimientos/MovimientosPage.tsx",
+    "call": "/organization/warehouses (template)",
+    "status": "OK",
+    "candidate": "/organization/warehouses"
+  },
+  {
+    "page": "modules/inventario/transferencias/TransferenciasPage.tsx",
+    "call": "/inventory/transfers",
+    "status": "OK",
+    "candidate": "/inventory/transfers"
+  },
+  {
+    "page": "modules/inventario/transferencias/TransferenciasPage.tsx",
+    "call": "/inventory/transfers/*/transition (template)",
+    "status": "OK",
+    "candidate": "/inventory/transfers/*/transition"
+  },
+  {
+    "page": "modules/inventario/transferencias/TransferenciasPage.tsx",
+    "call": "/organization/warehouses (template)",
+    "status": "OK",
+    "candidate": "/organization/warehouses"
+  },
+  {
+    "page": "modules/inventario/valorizacion/ValorizacionPage.tsx",
+    "call": "/inventory/cost-layers",
+    "status": "OK",
+    "candidate": "/inventory/cost-layers"
+  },
+  {
+    "page": "modules/inventario/valorizacion/ValorizacionPage.tsx",
+    "call": "/inventory/costing-profiles",
+    "status": "OK",
+    "candidate": "/inventory/costing-profiles"
+  },
+  {
+    "page": "modules/inventario/valorizacion/ValorizacionPage.tsx",
+    "call": "/inventory/valuation",
+    "status": "OK",
+    "candidate": "/inventory/valuation"
+  },
+  {
+    "page": "modules/licenciamiento/configuracion/ConfiguracionCentralPage.tsx",
+    "call": "/licensing/central-config",
+    "status": "OK",
+    "candidate": "/licensing/central-config"
+  },
+  {
+    "page": "modules/licenciamiento/configuracion/ConfiguracionCentralPage.tsx",
+    "call": "/licensing/overview",
+    "status": "OK",
+    "candidate": "/licensing/overview"
+  },
+  {
+    "page": "modules/licenciamiento/configuracion/ConfiguracionCentralPage.tsx",
+    "call": "/licensing/sync",
+    "status": "OK",
+    "candidate": "/licensing/sync"
+  },
+  {
+    "page": "modules/licenciamiento/entitlements/EntitlementsPage.tsx",
+    "call": "/licensing/entitlement-snapshots",
+    "status": "OK",
+    "candidate": "/licensing/entitlement-snapshots"
+  },
+  {
+    "page": "modules/licenciamiento/entitlements/EntitlementsPage.tsx",
+    "call": "/licensing/entitlements",
+    "status": "OK",
+    "candidate": "/licensing/entitlements"
+  },
+  {
+    "page": "modules/licenciamiento/eventos/EventosPage.tsx",
+    "call": "/license/history",
+    "status": "OK",
+    "candidate": "/license/history"
+  },
+  {
+    "page": "modules/licenciamiento/renovacion/RenovacionPage.tsx",
+    "call": "/licensing/renewal-requests",
+    "status": "OK",
+    "candidate": "/licensing/renewal-requests"
+  },
+  {
+    "page": "modules/licenciamiento/renovacion/RenovacionPage.tsx",
+    "call": "/licensing/renewal-requests/*/transition (template)",
+    "status": "OK",
+    "candidate": "/licensing/renewal-requests/*/transition"
+  },
+  {
+    "page": "modules/maestros/catalogos/CatalogosPage.tsx",
+    "call": "/maestros/catalogos/taxonomia",
+    "status": "OK",
+    "candidate": "/maestros/catalogos/taxonomia"
+  },
+  {
+    "page": "modules/maestros/catalogos/CatalogosPage.tsx",
+    "call": "/maestros/catalogos/unidades",
+    "status": "OK",
+    "candidate": "/maestros/catalogos/unidades"
+  },
+  {
+    "page": "modules/maestros/perfiles/PerfilesFiscalesPage.tsx",
+    "call": "/maestros/perfiles",
+    "status": "OK",
+    "candidate": "/maestros/perfiles"
+  },
+  {
+    "page": "modules/maestros/productos/ProductoNuevoPage.tsx",
+    "call": "/maestros/catalogos/items",
+    "status": "OK",
+    "candidate": "/maestros/catalogos/items"
+  },
+  {
+    "page": "modules/organizacion/almacenes/AlmacenesPage.tsx",
+    "call": "/organization/branches (template)",
+    "status": "OK",
+    "candidate": "/organization/branches"
+  },
+  {
+    "page": "modules/organizacion/almacenes/AlmacenesPage.tsx",
+    "call": "/organization/warehouses",
+    "status": "OK",
+    "candidate": "/organization/warehouses"
+  },
+  {
+    "page": "modules/organizacion/almacenes/AlmacenesPage.tsx",
+    "call": "/organization/warehouses (template)",
+    "status": "OK",
+    "candidate": "/organization/warehouses"
+  },
+  {
+    "page": "modules/organizacion/establecimientos/EstablecimientosPage.tsx",
+    "call": "/organization/branches (template)",
+    "status": "OK",
+    "candidate": "/organization/branches"
+  },
+  {
+    "page": "modules/organizacion/establecimientos/EstablecimientosPage.tsx",
+    "call": "/organization/establishments",
+    "status": "OK",
+    "candidate": "/organization/establishments"
+  },
+  {
+    "page": "modules/organizacion/establecimientos/EstablecimientosPage.tsx",
+    "call": "/organization/establishments (template)",
+    "status": "OK",
+    "candidate": "/organization/establishments"
+  },
+  {
+    "page": "modules/organizacion/sucursales/SucursalesPage.tsx",
+    "call": "/organization/branches",
+    "status": "OK",
+    "candidate": "/organization/branches"
+  },
+  {
+    "page": "modules/organizacion/sucursales/SucursalesPage.tsx",
+    "call": "/organization/branches (template)",
+    "status": "OK",
+    "candidate": "/organization/branches"
+  },
+  {
+    "page": "modules/organizacion/ubicaciones/UbicacionesPage.tsx",
+    "call": "/organization/locations",
+    "status": "OK",
+    "candidate": "/organization/locations"
+  },
+  {
+    "page": "modules/organizacion/ubicaciones/UbicacionesPage.tsx",
+    "call": "/organization/locations (template)",
+    "status": "OK",
+    "candidate": "/organization/locations"
+  },
+  {
+    "page": "modules/organizacion/ubicaciones/UbicacionesPage.tsx",
+    "call": "/organization/warehouses (template)",
+    "status": "OK",
+    "candidate": "/organization/warehouses"
+  },
+  {
+    "page": "modules/regulatorio/aprobaciones/AprobacionesPage.tsx",
+    "call": "/regulatory/approval-requests",
+    "status": "OK",
+    "candidate": "/regulatory/approval-requests"
+  },
+  {
+    "page": "modules/regulatorio/aprobaciones/AprobacionesPage.tsx",
+    "call": "/regulatory/approval-requests/*/transition (template)",
+    "status": "OK",
+    "candidate": "/regulatory/approval-requests/*/transition"
+  },
+  {
+    "page": "modules/regulatorio/evaluacion/EvaluacionPage.tsx",
+    "call": "/regulatory/contingencies",
+    "status": "OK",
+    "candidate": "/regulatory/contingencies"
+  },
+  {
+    "page": "modules/regulatorio/evaluacion/EvaluacionPage.tsx",
+    "call": "/regulatory/contingencies/*/end (template)",
+    "status": "OK",
+    "candidate": "/regulatory/contingencies/*/end"
+  },
+  {
+    "page": "modules/regulatorio/evaluacion/EvaluacionPage.tsx",
+    "call": "/regulatory/evaluations",
+    "status": "OK",
+    "candidate": "/regulatory/evaluations"
+  },
+  {
+    "page": "modules/regulatorio/evaluacion/EvaluacionPage.tsx",
+    "call": "/regulatory/evaluations/*/override (template)",
+    "status": "OK",
+    "candidate": "/regulatory/evaluations/*/override"
+  },
+  {
+    "page": "modules/regulatorio/evaluacion/EvaluacionPage.tsx",
+    "call": "/sales/shipments",
+    "status": "OK",
+    "candidate": "/sales/shipments"
+  },
+  {
+    "page": "modules/regulatorio/organismos/OrganismosPage.tsx",
+    "call": "/regulatory/authorities",
+    "status": "OK",
+    "candidate": "/regulatory/authorities"
+  },
+  {
+    "page": "modules/regulatorio/organismos/OrganismosPage.tsx",
+    "call": "/regulatory/official-registrations",
+    "status": "OK",
+    "candidate": "/regulatory/official-registrations"
+  },
+  {
+    "page": "modules/regulatorio/organismos/OrganismosPage.tsx",
+    "call": "/regulatory/permit-types",
+    "status": "OK",
+    "candidate": "/regulatory/permit-types"
+  },
+  {
+    "page": "modules/regulatorio/organismos/OrganismosPage.tsx",
+    "call": "/regulatory/profiles",
+    "status": "OK",
+    "candidate": "/regulatory/profiles"
+  },
+  {
+    "page": "modules/regulatorio/permisos/PermisosPage.tsx",
+    "call": "/regulatory/official-documents",
+    "status": "OK",
+    "candidate": "/regulatory/official-documents"
+  },
+  {
+    "page": "modules/regulatorio/permisos/PermisosPage.tsx",
+    "call": "/regulatory/permit-types",
+    "status": "OK",
+    "candidate": "/regulatory/permit-types"
+  },
+  {
+    "page": "modules/regulatorio/permisos/PermisosPage.tsx",
+    "call": "/regulatory/permits",
+    "status": "OK",
+    "candidate": "/regulatory/permits"
+  },
+  {
+    "page": "modules/regulatorio/permisos/PermisosPage.tsx",
+    "call": "/regulatory/permits/*/transition (template)",
+    "status": "OK",
+    "candidate": "/regulatory/permits/*/transition"
+  },
+  {
+    "page": "modules/regulatorio/vehiculos/VehiculosPage.tsx",
+    "call": "/maestros/terceros",
+    "status": "OK",
+    "candidate": "/maestros/terceros"
+  },
+  {
+    "page": "modules/regulatorio/vehiculos/VehiculosPage.tsx",
+    "call": "/regulatory/drivers",
+    "status": "OK",
+    "candidate": "/regulatory/drivers"
+  },
+  {
+    "page": "modules/regulatorio/vehiculos/VehiculosPage.tsx",
+    "call": "/regulatory/vehicles",
+    "status": "OK",
+    "candidate": "/regulatory/vehicles"
+  },
+  {
+    "page": "modules/reportes/auditoria/ReportesAuditoriaPage.tsx",
+    "call": "/reporting/audit/timeline${qs  (template)",
+    "status": "NO_ENDPOINT",
+    "candidate": null
+  },
+  {
+    "page": "modules/reportes/centro/CentroReportesPage.tsx",
+    "call": "/reporting/exports",
+    "status": "OK",
+    "candidate": "/reporting/exports"
+  },
+  {
+    "page": "modules/reportes/centro/CentroReportesPage.tsx",
+    "call": "/reporting/reports/* (template)",
+    "status": "OK",
+    "candidate": "/reporting/reports/*"
+  },
+  {
+    "page": "modules/reportes/exportaciones/ExportacionesPage.tsx",
+    "call": "/reporting/exports",
+    "status": "OK",
+    "candidate": "/reporting/exports"
+  },
+  {
+    "page": "modules/reportes/exportaciones/ExportacionesPage.tsx",
+    "call": "/reporting/jobs",
+    "status": "OK",
+    "candidate": "/reporting/jobs"
+  },
+  {
+    "page": "modules/reportes/exportaciones/ExportacionesPage.tsx",
+    "call": "/reporting/jobs/*/run (template)",
+    "status": "OK",
+    "candidate": "/reporting/jobs/*/run"
+  },
+  {
+    "page": "modules/seguridad/roles/RolesPage.tsx",
+    "call": "/roles",
+    "status": "OK",
+    "candidate": "/roles"
+  },
+  {
+    "page": "modules/seguridad/roles/RolesPage.tsx",
+    "call": "/users",
+    "status": "OK",
+    "candidate": "/users"
+  },
+  {
+    "page": "modules/seguridad/roles/RolesPage.tsx",
+    "call": "/users/*/roles (template)",
+    "status": "OK",
+    "candidate": "/users/*/roles"
+  },
+  {
+    "page": "modules/seguridad/roles/RolesPage.tsx",
+    "call": "/users/*/roles/* (template)",
+    "status": "OK",
+    "candidate": "/users/*/roles/*"
+  },
+  {
+    "page": "modules/seguridad/sesiones/SesionesPage.tsx",
+    "call": "/auth/sessions",
+    "status": "OK",
+    "candidate": "/auth/sessions"
+  },
+  {
+    "page": "modules/seguridad/sesiones/SesionesPage.tsx",
+    "call": "/auth/sessions/* (template)",
+    "status": "OK",
+    "candidate": "/auth/sessions/*"
+  },
+  {
+    "page": "modules/seguridad/usuarios/UsuariosPage.tsx",
+    "call": "/users",
+    "status": "OK",
+    "candidate": "/users"
+  },
+  {
+    "page": "modules/tesoreria/cajas/CajasPage.tsx",
+    "call": "/treasury/cash-sessions",
+    "status": "OK",
+    "candidate": "/treasury/cash-sessions"
+  },
+  {
+    "page": "modules/tesoreria/cajas/CajasPage.tsx",
+    "call": "/treasury/cash-sessions/*/* (template)",
+    "status": "TEMPLATE_OK",
+    "candidate": null
+  },
+  {
+    "page": "modules/tesoreria/cajas/CajasPage.tsx",
+    "call": "/treasury/cash-sessions/*/arqueo (template)",
+    "status": "OK",
+    "candidate": "/treasury/cash-sessions/*/arqueo"
+  },
+  {
+    "page": "modules/tesoreria/cajas/CajasPage.tsx",
+    "call": "/treasury/cash-sessions/*/close (template)",
+    "status": "OK",
+    "candidate": "/treasury/cash-sessions/*/close"
+  },
+  {
+    "page": "modules/tesoreria/cajas/CajasPage.tsx",
+    "call": "/treasury/cashboxes",
+    "status": "OK",
+    "candidate": "/treasury/cashboxes"
+  },
+  {
+    "page": "modules/tesoreria/conciliacion/ConciliacionPage.tsx",
+    "call": "/treasury/accounts",
+    "status": "OK",
+    "candidate": "/treasury/accounts"
+  },
+  {
+    "page": "modules/tesoreria/conciliacion/ConciliacionPage.tsx",
+    "call": "/treasury/bank-transactions",
+    "status": "OK",
+    "candidate": "/treasury/bank-transactions"
+  },
+  {
+    "page": "modules/tesoreria/conciliacion/ConciliacionPage.tsx",
+    "call": "/treasury/reconciliation-lines/*/resolve (template)",
+    "status": "OK",
+    "candidate": "/treasury/reconciliation-lines/*/resolve"
+  },
+  {
+    "page": "modules/tesoreria/conciliacion/ConciliacionPage.tsx",
+    "call": "/treasury/reconciliations",
+    "status": "OK",
+    "candidate": "/treasury/reconciliations"
+  },
+  {
+    "page": "modules/tesoreria/conciliacion/ConciliacionPage.tsx",
+    "call": "/treasury/reconciliations/*/lines (template)",
+    "status": "OK",
+    "candidate": "/treasury/reconciliations/*/lines"
+  },
+  {
+    "page": "modules/tesoreria/conciliacion/ConciliacionPage.tsx",
+    "call": "/treasury/reconciliations/*/match (template)",
+    "status": "OK",
+    "candidate": "/treasury/reconciliations/*/match"
+  },
+  {
+    "page": "modules/tesoreria/conciliacion/ConciliacionPage.tsx",
+    "call": "/treasury/reconciliations/*/transition (template)",
+    "status": "OK",
+    "candidate": "/treasury/reconciliations/*/transition"
+  },
+  {
+    "page": "modules/tesoreria/igft/IgftPage.tsx",
+    "call": "/treasury/fiscal-rules",
+    "status": "OK",
+    "candidate": "/treasury/fiscal-rules"
+  },
+  {
+    "page": "modules/tesoreria/igft/IgftPage.tsx",
+    "call": "/treasury/igft-events",
+    "status": "OK",
+    "candidate": "/treasury/igft-events"
+  },
+  {
+    "page": "modules/tesoreria/igft/IgftPage.tsx",
+    "call": "/treasury/igft-events/evaluate",
+    "status": "OK",
+    "candidate": "/treasury/igft-events/evaluate"
+  },
+  {
+    "page": "modules/tesoreria/ingresos-egresos/IngresosEgresosPage.tsx",
+    "call": "/purchasing/payments",
+    "status": "OK",
+    "candidate": "/purchasing/payments"
+  },
+  {
+    "page": "modules/tesoreria/ingresos-egresos/IngresosEgresosPage.tsx",
+    "call": "/sales/collections",
+    "status": "OK",
+    "candidate": "/sales/collections"
+  },
+  {
+    "page": "modules/tesoreria/ingresos-egresos/IngresosEgresosPage.tsx",
+    "call": "/treasury/accounts",
+    "status": "OK",
+    "candidate": "/treasury/accounts"
+  },
+  {
+    "page": "modules/tesoreria/ingresos-egresos/IngresosEgresosPage.tsx",
+    "call": "/treasury/bank-transactions",
+    "status": "OK",
+    "candidate": "/treasury/bank-transactions"
+  },
+  {
+    "page": "modules/tesoreria/ingresos-egresos/IngresosEgresosPage.tsx",
+    "call": "/treasury/cashboxes",
+    "status": "OK",
+    "candidate": "/treasury/cashboxes"
+  },
+  {
+    "page": "modules/tesoreria/ingresos-egresos/IngresosEgresosPage.tsx",
+    "call": "/treasury/executions/* (template)",
+    "status": "TEMPLATE_OK",
+    "candidate": null
+  },
+  {
+    "page": "modules/tesoreria/maestros/MaestrosPage.tsx",
+    "call": "/treasury/accounts",
+    "status": "OK",
+    "candidate": "/treasury/accounts"
+  },
+  {
+    "page": "modules/tesoreria/maestros/MaestrosPage.tsx",
+    "call": "/treasury/banks",
+    "status": "OK",
+    "candidate": "/treasury/banks"
+  },
+  {
+    "page": "modules/tesoreria/maestros/MaestrosPage.tsx",
+    "call": "/treasury/cashboxes",
+    "status": "OK",
+    "candidate": "/treasury/cashboxes"
+  },
+  {
+    "page": "modules/tesoreria/maestros/MaestrosPage.tsx",
+    "call": "/treasury/currencies",
+    "status": "OK",
+    "candidate": "/treasury/currencies"
+  },
+  {
+    "page": "modules/tesoreria/maestros/MaestrosPage.tsx",
+    "call": "/treasury/exchange-rates",
+    "status": "OK",
+    "candidate": "/treasury/exchange-rates"
+  },
+  {
+    "page": "modules/tesoreria/maestros/MaestrosPage.tsx",
+    "call": "/treasury/instruments",
+    "status": "OK",
+    "candidate": "/treasury/instruments"
+  },
+  {
+    "page": "modules/tesoreria/maestros/MaestrosPage.tsx",
+    "call": "/treasury/payment-methods",
+    "status": "OK",
+    "candidate": "/treasury/payment-methods"
+  },
+  {
+    "page": "modules/tesoreria/transferencias/TransferenciasPage.tsx",
+    "call": "/treasury/accounts",
+    "status": "OK",
+    "candidate": "/treasury/accounts"
+  },
+  {
+    "page": "modules/tesoreria/transferencias/TransferenciasPage.tsx",
+    "call": "/treasury/cashboxes",
+    "status": "OK",
+    "candidate": "/treasury/cashboxes"
+  },
+  {
+    "page": "modules/tesoreria/transferencias/TransferenciasPage.tsx",
+    "call": "/treasury/transfers",
+    "status": "OK",
+    "candidate": "/treasury/transfers"
+  },
+  {
+    "page": "modules/ventas/cotizaciones/CotizacionesPage.tsx",
+    "call": "/sales/quotes",
+    "status": "OK",
+    "candidate": "/sales/quotes"
+  },
+  {
+    "page": "modules/ventas/cotizaciones/CotizacionesPage.tsx",
+    "call": "/sales/quotes/*/lines (template)",
+    "status": "OK",
+    "candidate": "/sales/quotes/*/lines"
+  },
+  {
+    "page": "modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage.tsx",
+    "call": "/sales/aging",
+    "status": "OK",
+    "candidate": "/sales/aging"
+  },
+  {
+    "page": "modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage.tsx",
+    "call": "/sales/applications",
+    "status": "OK",
+    "candidate": "/sales/applications"
+  },
+  {
+    "page": "modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage.tsx",
+    "call": "/sales/collections",
+    "status": "OK",
+    "candidate": "/sales/collections"
+  },
+  {
+    "page": "modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage.tsx",
+    "call": "/sales/collections/*/transition (template)",
+    "status": "OK",
+    "candidate": "/sales/collections/*/transition"
+  },
+  {
+    "page": "modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage.tsx",
+    "call": "/sales/customer-advances",
+    "status": "OK",
+    "candidate": "/sales/customer-advances"
+  },
+  {
+    "page": "modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage.tsx",
+    "call": "/sales/open-items",
+    "status": "OK",
+    "candidate": "/sales/open-items"
+  },
+  {
+    "page": "modules/ventas/despacho/DespachoPage.tsx",
+    "call": "/organization/warehouses (template)",
+    "status": "OK",
+    "candidate": "/organization/warehouses"
+  },
+  {
+    "page": "modules/ventas/despacho/DespachoPage.tsx",
+    "call": "/sales/orders",
+    "status": "OK",
+    "candidate": "/sales/orders"
+  },
+  {
+    "page": "modules/ventas/despacho/DespachoPage.tsx",
+    "call": "/sales/pick-lists",
+    "status": "OK",
+    "candidate": "/sales/pick-lists"
+  },
+  {
+    "page": "modules/ventas/despacho/DespachoPage.tsx",
+    "call": "/sales/shipments",
+    "status": "OK",
+    "candidate": "/sales/shipments"
+  },
+  {
+    "page": "modules/ventas/despacho/DespachoPage.tsx",
+    "call": "/sales/shipments/*/* (template)",
+    "status": "TEMPLATE_OK",
+    "candidate": null
+  },
+  {
+    "page": "modules/ventas/devoluciones/DevolucionesVentasPage.tsx",
+    "call": "/sales/returns",
+    "status": "OK",
+    "candidate": "/sales/returns"
+  },
+  {
+    "page": "modules/ventas/devoluciones/DevolucionesVentasPage.tsx",
+    "call": "/sales/returns/*/lines (template)",
+    "status": "OK",
+    "candidate": "/sales/returns/*/lines"
+  },
+  {
+    "page": "modules/ventas/facturas/FacturasVentasPage.tsx",
+    "call": "/sales/invoices",
+    "status": "OK",
+    "candidate": "/sales/invoices"
+  },
+  {
+    "page": "modules/ventas/facturas/FacturasVentasPage.tsx",
+    "call": "/sales/invoices/*/lines (template)",
+    "status": "OK",
+    "candidate": "/sales/invoices/*/lines"
+  },
+  {
+    "page": "modules/ventas/facturas/FacturasVentasPage.tsx",
+    "call": "/sales/invoices/*/transition (template)",
+    "status": "OK",
+    "candidate": "/sales/invoices/*/transition"
+  },
+  {
+    "page": "modules/ventas/notas/NotasVentasPage.tsx",
+    "call": "/sales/credit-notes",
+    "status": "OK",
+    "candidate": "/sales/credit-notes"
+  },
+  {
+    "page": "modules/ventas/notas/NotasVentasPage.tsx",
+    "call": "/sales/credit-notes/*/apply (template)",
+    "status": "OK",
+    "candidate": "/sales/credit-notes/*/apply"
+  },
+  {
+    "page": "modules/ventas/notas/NotasVentasPage.tsx",
+    "call": "/sales/credit-notes/*/post (template)",
+    "status": "OK",
+    "candidate": "/sales/credit-notes/*/post"
+  },
+  {
+    "page": "modules/ventas/notas/NotasVentasPage.tsx",
+    "call": "/sales/debit-notes",
+    "status": "OK",
+    "candidate": "/sales/debit-notes"
+  },
+  {
+    "page": "modules/ventas/notas/NotasVentasPage.tsx",
+    "call": "/sales/open-items",
+    "status": "OK",
+    "candidate": "/sales/open-items"
+  },
+  {
+    "page": "modules/ventas/ordenes/OrdenesVentasPage.tsx",
+    "call": "/sales/orders",
+    "status": "OK",
+    "candidate": "/sales/orders"
+  },
+  {
+    "page": "modules/ventas/ordenes/OrdenesVentasPage.tsx",
+    "call": "/sales/orders/*/lines (template)",
+    "status": "OK",
+    "candidate": "/sales/orders/*/lines"
+  },
+  {
+    "page": "modules/ventas/ordenes/OrdenesVentasPage.tsx",
+    "call": "/sales/orders/*/transition (template)",
+    "status": "OK",
+    "candidate": "/sales/orders/*/transition"
+  },
+  {
+    "page": "pages/AuditoriaPage.tsx",
+    "call": "/audit/events (template)",
+    "status": "OK",
+    "candidate": "/audit/events"
+  },
+  {
+    "page": "pages/CambiarContrasenaPage.tsx",
+    "call": "/auth/change-password",
+    "status": "OK",
+    "candidate": "/auth/change-password"
+  },
+  {
+    "page": "pages/DashboardPage.tsx",
+    "call": "/health/ready",
+    "status": "OK",
+    "candidate": "/health/ready"
+  },
+  {
+    "page": "pages/DashboardPage.tsx",
+    "call": "/reporting/dashboard",
+    "status": "OK",
+    "candidate": "/reporting/dashboard"
+  },
+  {
+    "page": "pages/DiagnosticoPage.tsx",
+    "call": "/system/diagnostics",
+    "status": "OK",
+    "candidate": "/system/diagnostics"
+  },
+  {
+    "page": "pages/EmpresasPage.tsx",
+    "call": "/organization/companies (template)",
+    "status": "OK",
+    "candidate": "/organization/companies"
+  },
+  {
+    "page": "pages/LoginPage.tsx",
+    "call": "/setup/status",
+    "status": "OK",
+    "candidate": "/setup/status"
+  },
+  {
+    "page": "pages/MiLicenciaPage.tsx",
+    "call": "/license/renewal-request",
+    "status": "OK",
+    "candidate": "/license/renewal-request"
+  },
+  {
+    "page": "pages/MiLicenciaPage.tsx",
+    "call": "/license/status",
+    "status": "OK",
+    "candidate": "/license/status"
+  },
+  {
+    "page": "pages/SetupPage.tsx",
+    "call": "/setup/initialize",
+    "status": "OK",
+    "candidate": "/setup/initialize"
+  }
+]

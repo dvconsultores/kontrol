@@ -66,46 +66,6 @@
   },
   {
     "method": "GET",
-    "path": "/auth/sessions",
-    "norm": "/auth/sessions"
-  },
-  {
-    "method": "DELETE",
-    "path": "/auth/sessions/{session_id}",
-    "norm": "/auth/sessions/*"
-  },
-  {
-    "method": "GET",
-    "path": "/users",
-    "norm": "/users"
-  },
-  {
-    "method": "POST",
-    "path": "/users",
-    "norm": "/users"
-  },
-  {
-    "method": "GET",
-    "path": "/organization/establishments",
-    "norm": "/organization/establishments"
-  },
-  {
-    "method": "POST",
-    "path": "/organization/establishments",
-    "norm": "/organization/establishments"
-  },
-  {
-    "method": "GET",
-    "path": "/organization/locations",
-    "norm": "/organization/locations"
-  },
-  {
-    "method": "POST",
-    "path": "/organization/locations",
-    "norm": "/organization/locations"
-  },
-  {
-    "method": "GET",
     "path": "/maestros/terceros/{party_id}",
     "norm": "/maestros/terceros/*"
   },
@@ -146,31 +106,6 @@
   },
   {
     "method": "GET",
-    "path": "/maestros/perfiles",
-    "norm": "/maestros/perfiles"
-  },
-  {
-    "method": "POST",
-    "path": "/maestros/perfiles",
-    "norm": "/maestros/perfiles"
-  },
-  {
-    "method": "GET",
-    "path": "/inventory/movement-types",
-    "norm": "/inventory/movement-types"
-  },
-  {
-    "method": "POST",
-    "path": "/inventory/movement-types",
-    "norm": "/inventory/movement-types"
-  },
-  {
-    "method": "GET",
-    "path": "/inventory/balances",
-    "norm": "/inventory/balances"
-  },
-  {
-    "method": "GET",
     "path": "/inventory/balances/{balance_id}",
     "norm": "/inventory/balances/*"
   },
@@ -181,38 +116,8 @@
   },
   {
     "method": "GET",
-    "path": "/inventory/movements",
-    "norm": "/inventory/movements"
-  },
-  {
-    "method": "GET",
     "path": "/inventory/movements/{movement_id}",
     "norm": "/inventory/movements/*"
-  },
-  {
-    "method": "POST",
-    "path": "/inventory/movements",
-    "norm": "/inventory/movements"
-  },
-  {
-    "method": "POST",
-    "path": "/inventory/movements/reverse",
-    "norm": "/inventory/movements/reverse"
-  },
-  {
-    "method": "GET",
-    "path": "/inventory/lots",
-    "norm": "/inventory/lots"
-  },
-  {
-    "method": "POST",
-    "path": "/inventory/lots",
-    "norm": "/inventory/lots"
-  },
-  {
-    "method": "POST",
-    "path": "/inventory/lots/{lot_id}/transition",
-    "norm": "/inventory/lots/*/transition"
   },
   {
     "method": "GET",
@@ -246,61 +151,6 @@
   },
   {
     "method": "POST",
-    "path": "/inventory/transfers",
-    "norm": "/inventory/transfers"
-  },
-  {
-    "method": "GET",
-    "path": "/inventory/transfers",
-    "norm": "/inventory/transfers"
-  },
-  {
-    "method": "POST",
-    "path": "/inventory/counts",
-    "norm": "/inventory/counts"
-  },
-  {
-    "method": "GET",
-    "path": "/inventory/counts",
-    "norm": "/inventory/counts"
-  },
-  {
-    "method": "POST",
-    "path": "/inventory/counts/{count_id}/lines",
-    "norm": "/inventory/counts/*/lines"
-  },
-  {
-    "method": "POST",
-    "path": "/inventory/adjustments",
-    "norm": "/inventory/adjustments"
-  },
-  {
-    "method": "GET",
-    "path": "/inventory/adjustments",
-    "norm": "/inventory/adjustments"
-  },
-  {
-    "method": "GET",
-    "path": "/inventory/cost-layers",
-    "norm": "/inventory/cost-layers"
-  },
-  {
-    "method": "GET",
-    "path": "/inventory/valuation",
-    "norm": "/inventory/valuation"
-  },
-  {
-    "method": "GET",
-    "path": "/inventory/costing-profiles",
-    "norm": "/inventory/costing-profiles"
-  },
-  {
-    "method": "POST",
-    "path": "/inventory/costing-profiles",
-    "norm": "/inventory/costing-profiles"
-  },
-  {
-    "method": "POST",
     "path": "/inventory/operations/receive",
     "norm": "/inventory/operations/receive"
   },
@@ -308,16 +158,6 @@
     "method": "POST",
     "path": "/inventory/operations/ship",
     "norm": "/inventory/operations/ship"
-  },
-  {
-    "method": "GET",
-    "path": "/purchasing/requisitions",
-    "norm": "/purchasing/requisitions"
-  },
-  {
-    "method": "POST",
-    "path": "/purchasing/requisitions",
-    "norm": "/purchasing/requisitions"
   },
   {
     "method": "POST",
@@ -341,33 +181,8 @@
   },
   {
     "method": "GET",
-    "path": "/purchasing/orders",
-    "norm": "/purchasing/orders"
-  },
-  {
-    "method": "POST",
-    "path": "/purchasing/orders",
-    "norm": "/purchasing/orders"
-  },
-  {
-    "method": "GET",
     "path": "/purchasing/orders/{order_id}",
     "norm": "/purchasing/orders/*"
-  },
-  {
-    "method": "POST",
-    "path": "/purchasing/orders/{order_id}/lines",
-    "norm": "/purchasing/orders/*/lines"
-  },
-  {
-    "method": "GET",
-    "path": "/purchasing/supplier-invoices",
-    "norm": "/purchasing/supplier-invoices"
-  },
-  {
-    "method": "POST",
-    "path": "/purchasing/supplier-invoices",
-    "norm": "/purchasing/supplier-invoices"
   },
   {
     "method": "GET",
@@ -375,44 +190,9 @@
     "norm": "/purchasing/supplier-invoices/*"
   },
   {
-    "method": "POST",
-    "path": "/purchasing/supplier-invoices/{invoice_id}/lines",
-    "norm": "/purchasing/supplier-invoices/*/lines"
-  },
-  {
     "method": "GET",
     "path": "/purchasing/triple-match",
     "norm": "/purchasing/triple-match"
-  },
-  {
-    "method": "POST",
-    "path": "/purchasing/returns",
-    "norm": "/purchasing/returns"
-  },
-  {
-    "method": "POST",
-    "path": "/purchasing/returns/{return_id}/lines",
-    "norm": "/purchasing/returns/*/lines"
-  },
-  {
-    "method": "POST",
-    "path": "/purchasing/credit-notes",
-    "norm": "/purchasing/credit-notes"
-  },
-  {
-    "method": "POST",
-    "path": "/purchasing/credit-notes/{note_id}/post",
-    "norm": "/purchasing/credit-notes/*/post"
-  },
-  {
-    "method": "POST",
-    "path": "/purchasing/applications",
-    "norm": "/purchasing/applications"
-  },
-  {
-    "method": "POST",
-    "path": "/purchasing/advances",
-    "norm": "/purchasing/advances"
   },
   {
     "method": "POST",
@@ -425,94 +205,9 @@
     "norm": "/purchasing/withholdings/*/transition"
   },
   {
-    "method": "POST",
-    "path": "/purchasing/payment-schedules",
-    "norm": "/purchasing/payment-schedules"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/quotes/{quote_id}/lines",
-    "norm": "/sales/quotes/*/lines"
-  },
-  {
-    "method": "GET",
-    "path": "/sales/orders",
-    "norm": "/sales/orders"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/orders",
-    "norm": "/sales/orders"
-  },
-  {
     "method": "GET",
     "path": "/sales/orders/{order_id}",
     "norm": "/sales/orders/*"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/orders/{order_id}/lines",
-    "norm": "/sales/orders/*/lines"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/pick-lists",
-    "norm": "/sales/pick-lists"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/shipments/{shipment_id}/validate",
-    "norm": "/sales/shipments/*/validate"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/shipments/{shipment_id}/confirm",
-    "norm": "/sales/shipments/*/confirm"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/invoices/{invoice_id}/lines",
-    "norm": "/sales/invoices/*/lines"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/credit-notes",
-    "norm": "/sales/credit-notes"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/credit-notes/{note_id}/post",
-    "norm": "/sales/credit-notes/*/post"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/credit-notes/{note_id}/apply",
-    "norm": "/sales/credit-notes/*/apply"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/debit-notes",
-    "norm": "/sales/debit-notes"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/returns",
-    "norm": "/sales/returns"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/returns/{return_id}/lines",
-    "norm": "/sales/returns/*/lines"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/applications",
-    "norm": "/sales/applications"
-  },
-  {
-    "method": "POST",
-    "path": "/sales/customer-advances",
-    "norm": "/sales/customer-advances"
   },
   {
     "method": "POST",
@@ -555,24 +250,19 @@
     "norm": "/fiscal/tax-return-batches"
   },
   {
-    "method": "POST",
-    "path": "/regulatory/approval-requests",
-    "norm": "/regulatory/approval-requests"
-  },
-  {
-    "method": "POST",
-    "path": "/regulatory/approval-requests/{request_id}/transition",
-    "norm": "/regulatory/approval-requests/*/transition"
-  },
-  {
     "method": "GET",
-    "path": "/regulatory/approval-requests",
-    "norm": "/regulatory/approval-requests"
+    "path": "/reporting/exports/{export_id}/download",
+    "norm": "/reporting/exports/*/download"
   },
   {
     "method": "GET",
     "path": "/reporting/jobs/{job_id}",
     "norm": "/reporting/jobs/*"
+  },
+  {
+    "method": "GET",
+    "path": "/reporting/audit/timeline",
+    "norm": "/reporting/audit/timeline"
   },
   {
     "method": "GET",

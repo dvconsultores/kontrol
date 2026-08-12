@@ -1,0 +1,333 @@
+{
+  "app/contexts/AuthContext.tsx": [
+    "/auth/login",
+    "/auth/logout",
+    "/auth/me",
+    "/auth/refresh"
+  ],
+  "app/contexts/LicenseContext.tsx": [
+    "/license/status"
+  ],
+  "modules/compras/cuentas-por-pagar/CuentasPorPagarPage.tsx": [
+    "/purchasing/advances",
+    "/purchasing/aging",
+    "/purchasing/applications",
+    "/purchasing/open-items",
+    "/purchasing/payment-schedules",
+    "/purchasing/payments",
+    "/purchasing/payments/*/transition (template)"
+  ],
+  "modules/compras/devoluciones/DevolucionesComprasPage.tsx": [
+    "/purchasing/returns",
+    "/purchasing/returns/*/lines (template)"
+  ],
+  "modules/compras/facturas/FacturasProveedorPage.tsx": [
+    "/purchasing/supplier-invoices",
+    "/purchasing/supplier-invoices/*/lines (template)",
+    "/purchasing/supplier-invoices/*/transition (template)"
+  ],
+  "modules/compras/notas/NotasComprasPage.tsx": [
+    "/purchasing/credit-notes",
+    "/purchasing/credit-notes/*/post (template)"
+  ],
+  "modules/compras/ordenes/OrdenesComprasPage.tsx": [
+    "/purchasing/orders",
+    "/purchasing/orders/*/lines (template)",
+    "/purchasing/orders/*/transition (template)"
+  ],
+  "modules/compras/recepciones/RecepcionesPage.tsx": [
+    "/purchasing/receipts",
+    "/purchasing/receipts/*/* (template)"
+  ],
+  "modules/compras/requisiciones/RequisicionesPage.tsx": [
+    "/purchasing/requisitions/*/transition (template)"
+  ],
+  "modules/fiscal/configuracion/ConfiguracionPage.tsx": [
+    "/fiscal/legal-sources",
+    "/fiscal/legal-sources/*/activate (template)",
+    "/fiscal/tax-calculations",
+    "/fiscal/tax-rule-versions",
+    "/fiscal/tax-rule-versions/*/approve (template)"
+  ],
+  "modules/fiscal/emision/EmisionPage.tsx": [
+    "/fiscal/control-batches",
+    "/fiscal/documents",
+    "/fiscal/documents/*/print (template)",
+    "/fiscal/documents/emit",
+    "/fiscal/number-series",
+    "/sales/invoices"
+  ],
+  "modules/fiscal/libros/LibrosPage.tsx": [
+    "/fiscal/books/* (template)",
+    "/fiscal/periods",
+    "/fiscal/periods/*/transition (template)"
+  ],
+  "modules/fiscal/notas/NotasPage.tsx": [
+    "/fiscal/credit-debit-notes",
+    "/sales/invoices"
+  ],
+  "modules/fiscal/numeracion/NumeracionPage.tsx": [
+    "/fiscal/control-batches",
+    "/fiscal/control-numbers",
+    "/fiscal/number-series"
+  ],
+  "modules/fiscal/retenciones/RetencionesPage.tsx": [
+    "/fiscal/withholding-rules",
+    "/fiscal/withholdings",
+    "/fiscal/withholdings/*/certificate (template)",
+    "/fiscal/withholdings/*/transition (template)",
+    "/fiscal/withholdings/calculate",
+    "/maestros/terceros"
+  ],
+  "modules/homologacion/actos/ActosPage.tsx": [
+    "/homologation/records",
+    "/homologation/records/*/evaluate (template)",
+    "/homologation/records/*/submit (template)"
+  ],
+  "modules/homologacion/timeline/TimelinePage.tsx": [
+    "/homologation/timeline"
+  ],
+  "modules/homologacion/versiones/VersionesPage.tsx": [
+    "/homologation/records",
+    "/homologation/releases",
+    "/homologation/releases/*/promote (template)",
+    "/homologation/releases/*/release (template)"
+  ],
+  "modules/inventario/ajustes/AjustesPage.tsx": [
+    "/inventory/adjustments",
+    "/inventory/adjustments/*/transition (template)",
+    "/organization/warehouses (template)"
+  ],
+  "modules/inventario/conteos/ConteosPage.tsx": [
+    "/inventory/counts",
+    "/inventory/counts/*/lines (template)",
+    "/inventory/counts/*/transition (template)",
+    "/organization/warehouses (template)"
+  ],
+  "modules/inventario/lotes/LotesPage.tsx": [
+    "/inventory/lots",
+    "/inventory/lots/*/transition (template)"
+  ],
+  "modules/inventario/movimientos/MovimientosPage.tsx": [
+    "/inventory/movements",
+    "/inventory/movements/reverse",
+    "/organization/warehouses (template)"
+  ],
+  "modules/inventario/transferencias/TransferenciasPage.tsx": [
+    "/inventory/transfers",
+    "/inventory/transfers/*/transition (template)",
+    "/organization/warehouses (template)"
+  ],
+  "modules/inventario/valorizacion/ValorizacionPage.tsx": [
+    "/inventory/cost-layers",
+    "/inventory/costing-profiles",
+    "/inventory/valuation"
+  ],
+  "modules/licenciamiento/configuracion/ConfiguracionCentralPage.tsx": [
+    "/licensing/central-config",
+    "/licensing/overview",
+    "/licensing/sync"
+  ],
+  "modules/licenciamiento/entitlements/EntitlementsPage.tsx": [
+    "/licensing/entitlement-snapshots",
+    "/licensing/entitlements"
+  ],
+  "modules/licenciamiento/eventos/EventosPage.tsx": [
+    "/license/history"
+  ],
+  "modules/licenciamiento/renovacion/RenovacionPage.tsx": [
+    "/licensing/renewal-requests",
+    "/licensing/renewal-requests/*/transition (template)"
+  ],
+  "modules/maestros/catalogos/CatalogosPage.tsx": [
+    "/maestros/catalogos/taxonomia",
+    "/maestros/catalogos/unidades"
+  ],
+  "modules/maestros/perfiles/PerfilesFiscalesPage.tsx": [
+    "/maestros/perfiles"
+  ],
+  "modules/maestros/productos/ProductoNuevoPage.tsx": [
+    "/maestros/catalogos/items"
+  ],
+  "modules/organizacion/almacenes/AlmacenesPage.tsx": [
+    "/organization/branches (template)",
+    "/organization/warehouses",
+    "/organization/warehouses (template)"
+  ],
+  "modules/organizacion/establecimientos/EstablecimientosPage.tsx": [
+    "/organization/branches (template)",
+    "/organization/establishments",
+    "/organization/establishments (template)"
+  ],
+  "modules/organizacion/sucursales/SucursalesPage.tsx": [
+    "/organization/branches",
+    "/organization/branches (template)"
+  ],
+  "modules/organizacion/ubicaciones/UbicacionesPage.tsx": [
+    "/organization/locations",
+    "/organization/locations (template)",
+    "/organization/warehouses (template)"
+  ],
+  "modules/regulatorio/aprobaciones/AprobacionesPage.tsx": [
+    "/regulatory/approval-requests",
+    "/regulatory/approval-requests/*/transition (template)"
+  ],
+  "modules/regulatorio/evaluacion/EvaluacionPage.tsx": [
+    "/regulatory/contingencies",
+    "/regulatory/contingencies/*/end (template)",
+    "/regulatory/evaluations",
+    "/regulatory/evaluations/*/override (template)",
+    "/sales/shipments"
+  ],
+  "modules/regulatorio/organismos/OrganismosPage.tsx": [
+    "/regulatory/authorities",
+    "/regulatory/official-registrations",
+    "/regulatory/permit-types",
+    "/regulatory/profiles"
+  ],
+  "modules/regulatorio/permisos/PermisosPage.tsx": [
+    "/regulatory/official-documents",
+    "/regulatory/permit-types",
+    "/regulatory/permits",
+    "/regulatory/permits/*/transition (template)"
+  ],
+  "modules/regulatorio/vehiculos/VehiculosPage.tsx": [
+    "/maestros/terceros",
+    "/regulatory/drivers",
+    "/regulatory/vehicles"
+  ],
+  "modules/reportes/auditoria/ReportesAuditoriaPage.tsx": [
+    "/reporting/audit/timeline${qs  (template)"
+  ],
+  "modules/reportes/centro/CentroReportesPage.tsx": [
+    "/reporting/exports",
+    "/reporting/reports/* (template)"
+  ],
+  "modules/reportes/exportaciones/ExportacionesPage.tsx": [
+    "/reporting/exports",
+    "/reporting/jobs",
+    "/reporting/jobs/*/run (template)"
+  ],
+  "modules/seguridad/roles/RolesPage.tsx": [
+    "/roles",
+    "/users",
+    "/users/*/roles (template)",
+    "/users/*/roles/* (template)"
+  ],
+  "modules/seguridad/sesiones/SesionesPage.tsx": [
+    "/auth/sessions",
+    "/auth/sessions/* (template)"
+  ],
+  "modules/seguridad/usuarios/UsuariosPage.tsx": [
+    "/users"
+  ],
+  "modules/tesoreria/cajas/CajasPage.tsx": [
+    "/treasury/cash-sessions",
+    "/treasury/cash-sessions/*/* (template)",
+    "/treasury/cash-sessions/*/arqueo (template)",
+    "/treasury/cash-sessions/*/close (template)",
+    "/treasury/cashboxes"
+  ],
+  "modules/tesoreria/conciliacion/ConciliacionPage.tsx": [
+    "/treasury/accounts",
+    "/treasury/bank-transactions",
+    "/treasury/reconciliation-lines/*/resolve (template)",
+    "/treasury/reconciliations",
+    "/treasury/reconciliations/*/lines (template)",
+    "/treasury/reconciliations/*/match (template)",
+    "/treasury/reconciliations/*/transition (template)"
+  ],
+  "modules/tesoreria/igft/IgftPage.tsx": [
+    "/treasury/fiscal-rules",
+    "/treasury/igft-events",
+    "/treasury/igft-events/evaluate"
+  ],
+  "modules/tesoreria/ingresos-egresos/IngresosEgresosPage.tsx": [
+    "/purchasing/payments",
+    "/sales/collections",
+    "/treasury/accounts",
+    "/treasury/bank-transactions",
+    "/treasury/cashboxes",
+    "/treasury/executions/* (template)"
+  ],
+  "modules/tesoreria/maestros/MaestrosPage.tsx": [
+    "/treasury/accounts",
+    "/treasury/banks",
+    "/treasury/cashboxes",
+    "/treasury/currencies",
+    "/treasury/exchange-rates",
+    "/treasury/instruments",
+    "/treasury/payment-methods"
+  ],
+  "modules/tesoreria/transferencias/TransferenciasPage.tsx": [
+    "/treasury/accounts",
+    "/treasury/cashboxes",
+    "/treasury/transfers"
+  ],
+  "modules/ventas/cotizaciones/CotizacionesPage.tsx": [
+    "/sales/quotes",
+    "/sales/quotes/*/lines (template)"
+  ],
+  "modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage.tsx": [
+    "/sales/aging",
+    "/sales/applications",
+    "/sales/collections",
+    "/sales/collections/*/transition (template)",
+    "/sales/customer-advances",
+    "/sales/open-items"
+  ],
+  "modules/ventas/despacho/DespachoPage.tsx": [
+    "/organization/warehouses (template)",
+    "/sales/orders",
+    "/sales/pick-lists",
+    "/sales/shipments",
+    "/sales/shipments/*/* (template)"
+  ],
+  "modules/ventas/devoluciones/DevolucionesVentasPage.tsx": [
+    "/sales/returns",
+    "/sales/returns/*/lines (template)"
+  ],
+  "modules/ventas/facturas/FacturasVentasPage.tsx": [
+    "/sales/invoices",
+    "/sales/invoices/*/lines (template)",
+    "/sales/invoices/*/transition (template)"
+  ],
+  "modules/ventas/notas/NotasVentasPage.tsx": [
+    "/sales/credit-notes",
+    "/sales/credit-notes/*/apply (template)",
+    "/sales/credit-notes/*/post (template)",
+    "/sales/debit-notes",
+    "/sales/open-items"
+  ],
+  "modules/ventas/ordenes/OrdenesVentasPage.tsx": [
+    "/sales/orders",
+    "/sales/orders/*/lines (template)",
+    "/sales/orders/*/transition (template)"
+  ],
+  "pages/AuditoriaPage.tsx": [
+    "/audit/events (template)"
+  ],
+  "pages/CambiarContrasenaPage.tsx": [
+    "/auth/change-password"
+  ],
+  "pages/DashboardPage.tsx": [
+    "/health/ready",
+    "/reporting/dashboard"
+  ],
+  "pages/DiagnosticoPage.tsx": [
+    "/system/diagnostics"
+  ],
+  "pages/EmpresasPage.tsx": [
+    "/organization/companies (template)"
+  ],
+  "pages/LoginPage.tsx": [
+    "/setup/status"
+  ],
+  "pages/MiLicenciaPage.tsx": [
+    "/license/renewal-request",
+    "/license/status"
+  ],
+  "pages/SetupPage.tsx": [
+    "/setup/initialize"
+  ]
+}

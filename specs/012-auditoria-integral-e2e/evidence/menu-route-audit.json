@@ -99,6 +99,13 @@
   },
   {
     "section": "Inventario",
+    "to": "/inventario/movimientos",
+    "label": "Movimientos",
+    "normalized": "inventario/movimientos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Inventario",
     "to": "/inventario/transferencias",
     "label": "Transferencias",
     "normalized": "inventario/transferencias",
@@ -116,6 +123,20 @@
     "to": "/inventario/ajustes",
     "label": "Ajustes",
     "normalized": "inventario/ajustes",
+    "declared_in_router": true
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/lotes",
+    "label": "Lotes",
+    "normalized": "inventario/lotes",
+    "declared_in_router": true
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/valorizacion",
+    "label": "Valorización",
+    "normalized": "inventario/valorizacion",
     "declared_in_router": true
   },
   {
@@ -148,6 +169,20 @@
   },
   {
     "section": "Compras",
+    "to": "/compras/devoluciones",
+    "label": "Devoluciones",
+    "normalized": "compras/devoluciones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/notas",
+    "label": "Notas de crédito",
+    "normalized": "compras/notas",
+    "declared_in_router": true
+  },
+  {
+    "section": "Compras",
     "to": "/compras/cuentas-por-pagar",
     "label": "CxP",
     "normalized": "compras/cuentas-por-pagar",
@@ -169,9 +204,30 @@
   },
   {
     "section": "Ventas",
+    "to": "/ventas/despacho",
+    "label": "Picking y despacho",
+    "normalized": "ventas/despacho",
+    "declared_in_router": true
+  },
+  {
+    "section": "Ventas",
     "to": "/ventas/facturas",
     "label": "Facturas",
     "normalized": "ventas/facturas",
+    "declared_in_router": true
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/notas",
+    "label": "Notas",
+    "normalized": "ventas/notas",
+    "declared_in_router": true
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/devoluciones",
+    "label": "Devoluciones",
+    "normalized": "ventas/devoluciones",
     "declared_in_router": true
   },
   {
@@ -291,6 +347,13 @@
     "to": "/regulatorio/evaluacion",
     "label": "Evaluación",
     "normalized": "regulatorio/evaluacion",
+    "declared_in_router": true
+  },
+  {
+    "section": "Regulatorio",
+    "to": "/regulatorio/aprobaciones",
+    "label": "Aprobaciones",
+    "normalized": "regulatorio/aprobaciones",
     "declared_in_router": true
   },
   {

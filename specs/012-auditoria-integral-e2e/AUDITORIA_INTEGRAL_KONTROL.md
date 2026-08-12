@@ -1,5 +1,14 @@
 # AUDITORÍA INTEGRAL DE KONTROL — Reporte Ejecutivo
 
+> **PASADA 2 (2026-08-12):** se ejecutó una re-auditoría completa sobre `develop` @ 96c1f95
+> (AUDIT_RUN_ID `KONTROL-AUDIT-20260812`). Resultado actualizado: **NO INTEGRADO AL 100 %** con
+> **1 CRITICAL (KAUD-001 auditoría de negocio)** y **3 HIGH (KAUD-002 exportación sin archivo,
+> KAUD-011 precisión monetaria incompleta)**. Ver `qa/audits/KONTROL-AUDIT-20260812/`
+> (`AUDITORIA_INTEGRAL_KONTROL.md`, `findings.md`, `remediation-plan.md`) y las matrices regeneradas
+> en este directorio. Este documento conserva el detalle de la pasada 1 (histórico).
+
+---
+
 Fecha: 2026-08-10 · Rama: `develop` · Spec: `specs/012-auditoria-integral-e2e/`
 Estado: **AUDITORÍA COMPLETADA (pasada 1, no destructiva)** · No se implementó ninguna corrección.
 

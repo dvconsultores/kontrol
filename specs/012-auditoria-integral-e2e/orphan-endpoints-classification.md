@@ -1,22 +1,65 @@
-# Spec 012 — Clasificación de Endpoints Huérfanos (T-07)
+# Spec 012 — Clasificación de Endpoints Huérfanos (T-07 / T-211)
 
-Fuente: `evidence/backend-orphan-endpoints.json` (117 endpoints sin consumidor frontend detectado).
-Método: agrupación por módulo + revisión manual. La extracción es estática; algunos pueden ser
-falsos negativos (llamadas frontend con patrones complejos), por lo que la clasificación se marca
-como "candidato" y debe confirmarse al construir cada interfaz.
+> **Actualizado pasada 2 (2026-08-12):** con extracción robusta de `apiFetch`
+> (parseo de genéricos anidados `PagedResult<...>`) quedan **53 endpoints sin
+> consumidor frontend** (4 sistema · 8 auth/licencia · **41 de negocio sin UI**).
+> Fuente: `evidence/backend-orphan-endpoints.json` (recalculado).
 
 ## A. Sistema / soporte — sin UI requerida (`DOCUMENTED_FUTURE_SCOPE` / N/A)
-`/`, `/health/live`, `/docs`, `/docs/oauth2-redirect`, `/redoc`, `/openapi.json` — infraestructura/OpenAPI.
+`/`, `/health/live`, `/health/ready`, `/docs`, `/docs/oauth2-redirect`, `/redoc`, `/openapi.json`
+— infraestructura/OpenAPI.
 
-## B. Resueltas en Ola 1 (ya tienen UI)
-- `/organization/establishments` (GET/POST) → `EstablecimientosPage`.
-- `/organization/locations` (GET/POST) → `UbicacionesPage`.
-- `/users` (GET/POST) → `UsuariosPage`.
+## B. Auth / licencia — backend-only o sin UI por ahora
+- `/auth/password-reset/request|confirm` → **KAUD-012** (sin UI; admin-only o pendiente de página).
+- `/license/installation-request`, `/license/activate`, `/license/import` → flujo de licencia (setup/operaciones).
+- `/licensing/sync-runs`, `/licensing/offline-status`, `/licensing/mode-transition` → operaciones/soporte.
 
-## C. Backend-only / operativo — sin UI esperada
-- `/license/activation-request`, `/license/activate`, `/license/import` → flujo de licencia (setup/operaciones), no UI de negocio.
-- `/licensing/offline-status`, `/licensing/sync-runs`, `/licensing/mode-transition` → operaciones/soporte.
-- `/auth/password-reset/request|confirm` → recuperación (flujo demo; en producción vía correo).
+## C. Negocio sin UI — GAP candidatos a tarea (41)
+
+### C.1 Maestros (7)
+- `GET/POST /maestros/catalogos/atributos`, `GET /maestros/catalogos/items/search`,
+  `GET /maestros/catalogos/items/{id}`, `POST /maestros/catalogos/unidades/{id}/conversiones` → GAP (atributos/conversiones sin UI).
+- `GET /maestros/terceros/{id}`, `POST /maestros/terceros/{id}/deactivate`, `POST /maestros/terceros/{id}/roles/{role}` → GAP (detalle/desactivar/roles de tercero sin UI).
+
+### C.2 Inventario (13)
+- `GET/POST /inventory/movement-types` → configuración sin UI.
+- `GET /inventory/balances/{id}`, `POST /inventory/balances/recompute` → detalle/recalcular sin UI.
+- `GET /inventory/movements/{id}` → detalle de movimiento sin UI.
+- `GET/POST /inventory/serials`, `GET/POST /inventory/reservations`,
+  `POST /inventory/reservations/{id}/release`, `POST /inventory/reservations/expire` → **seriales y reservas sin UI** (GAP).
+- `POST /inventory/operations/receive`, `POST /inventory/operations/ship` → operaciones directas (resueltas vía UI de recepciones/despacho; candidatos a FUTURE_SCOPE).
+
+### C.3 Compras / CxP (11)
+- `GET /purchasing/requisitions`, `POST /purchasing/requisitions`, `POST /purchasing/requisitions/{id}/lines` → UI de requisiciones existe pero con llamadas que la extracción marcó huérfanas (revalidar tras el contrato G3/G4); revisar en la implementación.
+- `GET/POST /purchasing/quotes`, `POST /purchasing/quotes/{id}/lines` → **cotización de compra sin UI** (GAP).
+- `GET /purchasing/orders/{id}`, `GET /purchasing/supplier-invoices/{id}`, `GET /purchasing/triple-match` → detalle sin UI (GAP).
+- `POST /purchasing/withholdings`, `POST /purchasing/withholdings/{id}/transition` → retenciones de compra sin UI de creación (GAP).
+
+### C.4 Ventas / CxC (4)
+- `GET /sales/orders/{id}` → detalle de orden sin UI (GAP).
+- `POST /sales/withholdings-suffered`, `POST /sales/withholdings-suffered/{id}/transition` → retenciones sufridas sin UI (GAP).
+
+### C.5 Tesorería (2)
+- `GET /treasury/cash-sessions/{id}`, `GET /treasury/reconciliations/{id}` → detalle sin UI (GAP).
+
+### C.6 Fiscal (5)
+- `POST /fiscal/tax-profiles` → creación de perfil sin UI (listado sí).
+- `GET /fiscal/documents/{id}` → detalle de documento sin UI.
+- `POST /fiscal/tax-return-batches`, `GET /fiscal/tax-return-batches` → **lotes de declaración sin UI** (GAP).
+- `GET /fiscal/books/{tax_type}` → libros (consumido vía reporte; candidato).
+
+### C.7 Reportes (2)
+- `GET /reporting/jobs/{id}` → detalle de job (la lista ahora existe — T-206).
+- `GET /reporting/reports/{key}` → consumido por el centro de reportes (falso positivo de la extracción).
+
+### C.8 Homologación (1)
+- `GET /homologation/records/{id}` → detalle sin UI (GAP).
+
+## Recomendación
+Los GAP reales (atributos/conversiones, seriales/reservas, cotización de compras,
+retenciones, lotes de declaración, detalles por ID, withholding-suffered) se
+consolidan como tareas en `remediation-plan.md` (Ola 2) y requieren decisión de
+alcance (GAP → implementar, o `FUTURE_SCOPE` documentado).
 
 ## D. GAP — API sin interfaz (candidatos a UI en olas futuras)
 | Módulo | Endpoints | Nota |

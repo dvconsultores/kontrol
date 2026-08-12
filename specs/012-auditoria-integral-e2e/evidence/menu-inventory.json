@@ -71,6 +71,11 @@
   },
   {
     "section": "Inventario",
+    "to": "/inventario/movimientos",
+    "label": "Movimientos"
+  },
+  {
+    "section": "Inventario",
     "to": "/inventario/transferencias",
     "label": "Transferencias"
   },
@@ -83,6 +88,16 @@
     "section": "Inventario",
     "to": "/inventario/ajustes",
     "label": "Ajustes"
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/lotes",
+    "label": "Lotes"
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/valorizacion",
+    "label": "Valorización"
   },
   {
     "section": "Compras",
@@ -106,6 +121,16 @@
   },
   {
     "section": "Compras",
+    "to": "/compras/devoluciones",
+    "label": "Devoluciones"
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/notas",
+    "label": "Notas de crédito"
+  },
+  {
+    "section": "Compras",
     "to": "/compras/cuentas-por-pagar",
     "label": "CxP"
   },
@@ -121,8 +146,23 @@
   },
   {
     "section": "Ventas",
+    "to": "/ventas/despacho",
+    "label": "Picking y despacho"
+  },
+  {
+    "section": "Ventas",
     "to": "/ventas/facturas",
     "label": "Facturas"
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/notas",
+    "label": "Notas"
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/devoluciones",
+    "label": "Devoluciones"
   },
   {
     "section": "Ventas",
@@ -208,6 +248,11 @@
     "section": "Regulatorio",
     "to": "/regulatorio/evaluacion",
     "label": "Evaluación"
+  },
+  {
+    "section": "Regulatorio",
+    "to": "/regulatorio/aprobaciones",
+    "label": "Aprobaciones"
   },
   {
     "section": "Reportes",

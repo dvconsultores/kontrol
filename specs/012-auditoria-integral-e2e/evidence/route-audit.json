@@ -120,6 +120,12 @@
     "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/inventario/kardex/KardexPage.tsx"
   },
   {
+    "path": "inventario/movimientos",
+    "component": "MovimientosPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/inventario/movimientos/MovimientosPage.tsx"
+  },
+  {
     "path": "inventario/transferencias",
     "component": "TransferenciasPage",
     "import_resolves": true,
@@ -136,6 +142,18 @@
     "component": "AjustesPage",
     "import_resolves": true,
     "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/inventario/ajustes/AjustesPage.tsx"
+  },
+  {
+    "path": "inventario/lotes",
+    "component": "LotesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/inventario/lotes/LotesPage.tsx"
+  },
+  {
+    "path": "inventario/valorizacion",
+    "component": "ValorizacionPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/inventario/valorizacion/ValorizacionPage.tsx"
   },
   {
     "path": "compras/requisiciones",
@@ -162,6 +180,18 @@
     "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/compras/facturas/FacturasProveedorPage.tsx"
   },
   {
+    "path": "compras/devoluciones",
+    "component": "DevolucionesComprasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/compras/devoluciones/DevolucionesComprasPage.tsx"
+  },
+  {
+    "path": "compras/notas",
+    "component": "NotasComprasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/compras/notas/NotasComprasPage.tsx"
+  },
+  {
     "path": "compras/cuentas-por-pagar",
     "component": "CuentasPorPagarPage",
     "import_resolves": true,
@@ -184,6 +214,24 @@
     "component": "FacturasVentasPage",
     "import_resolves": true,
     "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/ventas/facturas/FacturasVentasPage.tsx"
+  },
+  {
+    "path": "ventas/notas",
+    "component": "NotasVentasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/ventas/notas/NotasVentasPage.tsx"
+  },
+  {
+    "path": "ventas/devoluciones",
+    "component": "DevolucionesVentasPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/ventas/devoluciones/DevolucionesVentasPage.tsx"
+  },
+  {
+    "path": "ventas/despacho",
+    "component": "DespachoPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/ventas/despacho/DespachoPage.tsx"
   },
   {
     "path": "ventas/cuentas-por-cobrar",
@@ -286,6 +334,12 @@
     "component": "EvaluacionPage",
     "import_resolves": true,
     "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/regulatorio/evaluacion/EvaluacionPage.tsx"
+  },
+  {
+    "path": "regulatorio/aprobaciones",
+    "component": "AprobacionesPage",
+    "import_resolves": true,
+    "file": "/home/maria/Proyectos/kontrol/resources/frontend/src/modules/regulatorio/aprobaciones/AprobacionesPage.tsx"
   },
   {
     "path": "reportes/centro",

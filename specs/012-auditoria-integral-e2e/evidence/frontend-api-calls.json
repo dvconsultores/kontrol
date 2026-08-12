@@ -2,21 +2,37 @@
   "app/contexts/AuthContext.tsx": [
     "/auth/login",
     "/auth/logout",
+    "/auth/me",
     "/auth/refresh"
   ],
   "app/contexts/LicenseContext.tsx": [
     "/license/status"
   ],
   "modules/compras/cuentas-por-pagar/CuentasPorPagarPage.tsx": [
+    "/purchasing/advances",
     "/purchasing/aging",
+    "/purchasing/applications",
     "/purchasing/open-items",
+    "/purchasing/payment-schedules",
     "/purchasing/payments",
     "/purchasing/payments/*/transition (template)"
   ],
+  "modules/compras/devoluciones/DevolucionesComprasPage.tsx": [
+    "/purchasing/returns",
+    "/purchasing/returns/*/lines (template)"
+  ],
   "modules/compras/facturas/FacturasProveedorPage.tsx": [
+    "/purchasing/supplier-invoices",
+    "/purchasing/supplier-invoices/*/lines (template)",
     "/purchasing/supplier-invoices/*/transition (template)"
   ],
+  "modules/compras/notas/NotasComprasPage.tsx": [
+    "/purchasing/credit-notes",
+    "/purchasing/credit-notes/*/post (template)"
+  ],
   "modules/compras/ordenes/OrdenesComprasPage.tsx": [
+    "/purchasing/orders",
+    "/purchasing/orders/*/lines (template)",
     "/purchasing/orders/*/transition (template)"
   ],
   "modules/compras/recepciones/RecepcionesPage.tsx": [
@@ -78,13 +94,34 @@
     "/homologation/releases/*/release (template)"
   ],
   "modules/inventario/ajustes/AjustesPage.tsx": [
-    "/inventory/adjustments/*/transition (template)"
+    "/inventory/adjustments",
+    "/inventory/adjustments/*/transition (template)",
+    "/organization/warehouses (template)"
   ],
   "modules/inventario/conteos/ConteosPage.tsx": [
-    "/inventory/counts/*/transition (template)"
+    "/inventory/counts",
+    "/inventory/counts/*/lines (template)",
+    "/inventory/counts/*/transition (template)",
+    "/organization/warehouses (template)"
+  ],
+  "modules/inventario/lotes/LotesPage.tsx": [
+    "/inventory/lots",
+    "/inventory/lots/*/transition (template)"
+  ],
+  "modules/inventario/movimientos/MovimientosPage.tsx": [
+    "/inventory/movements",
+    "/inventory/movements/reverse",
+    "/organization/warehouses (template)"
   ],
   "modules/inventario/transferencias/TransferenciasPage.tsx": [
-    "/inventory/transfers/*/transition (template)"
+    "/inventory/transfers",
+    "/inventory/transfers/*/transition (template)",
+    "/organization/warehouses (template)"
+  ],
+  "modules/inventario/valorizacion/ValorizacionPage.tsx": [
+    "/inventory/cost-layers",
+    "/inventory/costing-profiles",
+    "/inventory/valuation"
   ],
   "modules/licenciamiento/configuracion/ConfiguracionCentralPage.tsx": [
     "/licensing/central-config",
@@ -131,6 +168,10 @@
     "/organization/locations (template)",
     "/organization/warehouses (template)"
   ],
+  "modules/regulatorio/aprobaciones/AprobacionesPage.tsx": [
+    "/regulatory/approval-requests",
+    "/regulatory/approval-requests/*/transition (template)"
+  ],
   "modules/regulatorio/evaluacion/EvaluacionPage.tsx": [
     "/regulatory/contingencies",
     "/regulatory/contingencies/*/end (template)",
@@ -156,7 +197,7 @@
     "/regulatory/vehicles"
   ],
   "modules/reportes/auditoria/ReportesAuditoriaPage.tsx": [
-    "/reporting/audit/timeline"
+    "/reporting/audit/timeline${qs  (template)"
   ],
   "modules/reportes/centro/CentroReportesPage.tsx": [
     "/reporting/exports",
@@ -224,18 +265,43 @@
     "/treasury/transfers"
   ],
   "modules/ventas/cotizaciones/CotizacionesPage.tsx": [
-    "/sales/quotes"
+    "/sales/quotes",
+    "/sales/quotes/*/lines (template)"
   ],
   "modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage.tsx": [
     "/sales/aging",
+    "/sales/applications",
     "/sales/collections",
     "/sales/collections/*/transition (template)",
+    "/sales/customer-advances",
     "/sales/open-items"
   ],
+  "modules/ventas/despacho/DespachoPage.tsx": [
+    "/organization/warehouses (template)",
+    "/sales/orders",
+    "/sales/pick-lists",
+    "/sales/shipments",
+    "/sales/shipments/*/* (template)"
+  ],
+  "modules/ventas/devoluciones/DevolucionesVentasPage.tsx": [
+    "/sales/returns",
+    "/sales/returns/*/lines (template)"
+  ],
   "modules/ventas/facturas/FacturasVentasPage.tsx": [
+    "/sales/invoices",
+    "/sales/invoices/*/lines (template)",
     "/sales/invoices/*/transition (template)"
   ],
+  "modules/ventas/notas/NotasVentasPage.tsx": [
+    "/sales/credit-notes",
+    "/sales/credit-notes/*/apply (template)",
+    "/sales/credit-notes/*/post (template)",
+    "/sales/debit-notes",
+    "/sales/open-items"
+  ],
   "modules/ventas/ordenes/OrdenesVentasPage.tsx": [
+    "/sales/orders",
+    "/sales/orders/*/lines (template)",
     "/sales/orders/*/transition (template)"
   ],
   "pages/AuditoriaPage.tsx": [

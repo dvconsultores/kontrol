@@ -1,0 +1,1362 @@
+{
+  "summary": {
+    "audit_run_id": "KONTROL-AUDIT-20260812-REAUDIT",
+    "base_url": "http://localhost:5173",
+    "timestamp": "2026-08-12T18:55:02.778Z",
+    "total_routes": 65,
+    "duration_ms": 617162,
+    "cap_ms": 12000,
+    "counts": {
+      "PASS": 65
+    },
+    "console_errors_total": 28,
+    "page_errors_total": 0
+  },
+  "results": [
+    {
+      "href": "/mi-licencia",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9423,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_mi_licencia.png"
+    },
+    {
+      "href": "/organizacion/empresas",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9415,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_organizacion_empresas.png"
+    },
+    {
+      "href": "/organizacion/sucursales",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9463,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_organizacion_sucursales.png"
+    },
+    {
+      "href": "/organizacion/establecimientos",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9407,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_organizacion_establecimientos.png"
+    },
+    {
+      "href": "/organizacion/almacenes",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9395,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_organizacion_almacenes.png"
+    },
+    {
+      "href": "/organizacion/ubicaciones",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9405,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_organizacion_ubicaciones.png"
+    },
+    {
+      "href": "/maestros/terceros",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9640,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_maestros_terceros.png"
+    },
+    {
+      "href": "/maestros/productos",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9400,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_maestros_productos.png"
+    },
+    {
+      "href": "/maestros/servicios",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9402,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_maestros_servicios.png"
+    },
+    {
+      "href": "/maestros/catalogos",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9481,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_maestros_catalogos.png"
+    },
+    {
+      "href": "/maestros/perfiles",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9430,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_maestros_perfiles.png"
+    },
+    {
+      "href": "/inventario/existencias",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9445,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_inventario_existencias.png"
+    },
+    {
+      "href": "/inventario/kardex",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9392,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_inventario_kardex.png"
+    },
+    {
+      "href": "/inventario/movimientos",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9383,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_inventario_movimientos.png"
+    },
+    {
+      "href": "/inventario/transferencias",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9402,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_inventario_transferencias.png"
+    },
+    {
+      "href": "/inventario/conteos",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9430,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_inventario_conteos.png"
+    },
+    {
+      "href": "/inventario/ajustes",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9397,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_inventario_ajustes.png"
+    },
+    {
+      "href": "/inventario/lotes",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9402,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_inventario_lotes.png"
+    },
+    {
+      "href": "/inventario/valorizacion",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9386,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_inventario_valorizacion.png"
+    },
+    {
+      "href": "/compras/requisiciones",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9402,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_compras_requisiciones.png"
+    },
+    {
+      "href": "/compras/ordenes",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9387,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_compras_ordenes.png"
+    },
+    {
+      "href": "/compras/recepciones",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9429,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_compras_recepciones.png"
+    },
+    {
+      "href": "/compras/facturas",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9376,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_compras_facturas.png"
+    },
+    {
+      "href": "/compras/devoluciones",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9428,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_compras_devoluciones.png"
+    },
+    {
+      "href": "/compras/notas",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9428,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_compras_notas.png"
+    },
+    {
+      "href": "/compras/cuentas-por-pagar",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9409,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_compras_cuentas_por_pagar.png"
+    },
+    {
+      "href": "/ventas/cotizaciones",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9411,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_ventas_cotizaciones.png"
+    },
+    {
+      "href": "/ventas/ordenes",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9460,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_ventas_ordenes.png"
+    },
+    {
+      "href": "/ventas/despacho",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9392,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_ventas_despacho.png"
+    },
+    {
+      "href": "/ventas/facturas",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9398,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_ventas_facturas.png"
+    },
+    {
+      "href": "/ventas/notas",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9423,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_ventas_notas.png"
+    },
+    {
+      "href": "/ventas/devoluciones",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9404,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_ventas_devoluciones.png"
+    },
+    {
+      "href": "/ventas/cuentas-por-cobrar",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9459,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_ventas_cuentas_por_cobrar.png"
+    },
+    {
+      "href": "/tesoreria/cajas",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9367,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_tesoreria_cajas.png"
+    },
+    {
+      "href": "/tesoreria/ingresos-egresos",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9413,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_tesoreria_ingresos_egresos.png"
+    },
+    {
+      "href": "/tesoreria/transferencias",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9440,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_tesoreria_transferencias.png"
+    },
+    {
+      "href": "/tesoreria/conciliacion",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9483,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_tesoreria_conciliacion.png"
+    },
+    {
+      "href": "/tesoreria/igft",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9460,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_tesoreria_igft.png"
+    },
+    {
+      "href": "/tesoreria/maestros",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9492,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_tesoreria_maestros.png"
+    },
+    {
+      "href": "/fiscal/configuracion",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9417,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_fiscal_configuracion.png"
+    },
+    {
+      "href": "/fiscal/numeracion",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9432,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_fiscal_numeracion.png"
+    },
+    {
+      "href": "/fiscal/emision",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9439,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_fiscal_emision.png"
+    },
+    {
+      "href": "/fiscal/notas",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9426,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_fiscal_notas.png"
+    },
+    {
+      "href": "/fiscal/retenciones",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9456,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_fiscal_retenciones.png"
+    },
+    {
+      "href": "/fiscal/libros",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9466,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_fiscal_libros.png"
+    },
+    {
+      "href": "/regulatorio/organismos",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9424,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_regulatorio_organismos.png"
+    },
+    {
+      "href": "/regulatorio/vehiculos",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9471,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_regulatorio_vehiculos.png"
+    },
+    {
+      "href": "/regulatorio/permisos",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9545,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_regulatorio_permisos.png"
+    },
+    {
+      "href": "/regulatorio/evaluacion",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9476,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_regulatorio_evaluacion.png"
+    },
+    {
+      "href": "/regulatorio/aprobaciones",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9405,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_regulatorio_aprobaciones.png"
+    },
+    {
+      "href": "/reportes/centro",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9390,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_reportes_centro.png"
+    },
+    {
+      "href": "/reportes/exportaciones",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9450,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_reportes_exportaciones.png"
+    },
+    {
+      "href": "/reportes/auditoria",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9392,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_reportes_auditoria.png"
+    },
+    {
+      "href": "/licenciamiento/configuracion",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9425,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_licenciamiento_configuracion.png"
+    },
+    {
+      "href": "/licenciamiento/entitlements",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9372,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_licenciamiento_entitlements.png"
+    },
+    {
+      "href": "/licenciamiento/renovacion",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9394,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_licenciamiento_renovacion.png"
+    },
+    {
+      "href": "/licenciamiento/eventos",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9496,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_licenciamiento_eventos.png"
+    },
+    {
+      "href": "/homologacion/actos",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9416,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_homologacion_actos.png"
+    },
+    {
+      "href": "/homologacion/versiones",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9452,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_homologacion_versiones.png"
+    },
+    {
+      "href": "/homologacion/timeline",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9387,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_homologacion_timeline.png"
+    },
+    {
+      "href": "/seguridad/usuarios",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9391,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_seguridad_usuarios.png"
+    },
+    {
+      "href": "/seguridad/roles",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9432,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_seguridad_roles.png"
+    },
+    {
+      "href": "/seguridad/sesiones",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9446,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_seguridad_sesiones.png"
+    },
+    {
+      "href": "/auditoria",
+      "url": "http://localhost:5173/",
+      "title": "KONTROL",
+      "h1": "Inicio",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9427,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_auditoria.png"
+    },
+    {
+      "href": "/diagnostico",
+      "url": "http://localhost:5173/login",
+      "title": "KONTROL",
+      "h1": "KONTROL",
+      "breadcrumb": null,
+      "status": "PASS",
+      "failed_requests": [
+        "401 POST http://localhost:5173/api/v1/auth/refresh"
+      ],
+      "console_errors": [
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[http://localhost:5173/login] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "page_errors": [],
+      "horizontal_scroll": false,
+      "duration_ms": 9402,
+      "screenshot": "/home/maria/Proyectos/kontrol/resources/frontend/qa/audits/KONTROL-AUDIT-20260812-REAUDIT/screenshots/_diagnostico.png"
+    }
+  ]
+}

@@ -1,0 +1,464 @@
+[
+  {
+    "section": "Principal",
+    "to": "/",
+    "label": "Inicio",
+    "normalized": "",
+    "declared_in_router": true
+  },
+  {
+    "section": "Principal",
+    "to": "/mi-licencia",
+    "label": "Mi licencia",
+    "normalized": "mi-licencia",
+    "declared_in_router": true
+  },
+  {
+    "section": "Organización",
+    "to": "/organizacion/empresas",
+    "label": "Empresas",
+    "normalized": "organizacion/empresas",
+    "declared_in_router": true
+  },
+  {
+    "section": "Organización",
+    "to": "/organizacion/sucursales",
+    "label": "Sucursales",
+    "normalized": "organizacion/sucursales",
+    "declared_in_router": true
+  },
+  {
+    "section": "Organización",
+    "to": "/organizacion/establecimientos",
+    "label": "Establecimientos",
+    "normalized": "organizacion/establecimientos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Organización",
+    "to": "/organizacion/almacenes",
+    "label": "Almacenes",
+    "normalized": "organizacion/almacenes",
+    "declared_in_router": true
+  },
+  {
+    "section": "Organización",
+    "to": "/organizacion/ubicaciones",
+    "label": "Ubicaciones",
+    "normalized": "organizacion/ubicaciones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Maestros",
+    "to": "/maestros/terceros",
+    "label": "Terceros",
+    "normalized": "maestros/terceros",
+    "declared_in_router": true
+  },
+  {
+    "section": "Maestros",
+    "to": "/maestros/productos",
+    "label": "Productos",
+    "normalized": "maestros/productos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Maestros",
+    "to": "/maestros/servicios",
+    "label": "Servicios",
+    "normalized": "maestros/servicios",
+    "declared_in_router": true
+  },
+  {
+    "section": "Maestros",
+    "to": "/maestros/catalogos",
+    "label": "Catálogo",
+    "normalized": "maestros/catalogos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Maestros",
+    "to": "/maestros/perfiles",
+    "label": "Perfiles fiscales",
+    "normalized": "maestros/perfiles",
+    "declared_in_router": true
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/existencias",
+    "label": "Existencias",
+    "normalized": "inventario/existencias",
+    "declared_in_router": true
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/kardex",
+    "label": "Kardex",
+    "normalized": "inventario/kardex",
+    "declared_in_router": true
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/movimientos",
+    "label": "Movimientos",
+    "normalized": "inventario/movimientos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/transferencias",
+    "label": "Transferencias",
+    "normalized": "inventario/transferencias",
+    "declared_in_router": true
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/conteos",
+    "label": "Conteos",
+    "normalized": "inventario/conteos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/ajustes",
+    "label": "Ajustes",
+    "normalized": "inventario/ajustes",
+    "declared_in_router": true
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/lotes",
+    "label": "Lotes",
+    "normalized": "inventario/lotes",
+    "declared_in_router": true
+  },
+  {
+    "section": "Inventario",
+    "to": "/inventario/valorizacion",
+    "label": "Valorización",
+    "normalized": "inventario/valorizacion",
+    "declared_in_router": true
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/requisiciones",
+    "label": "Requisiciones",
+    "normalized": "compras/requisiciones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/ordenes",
+    "label": "Órdenes",
+    "normalized": "compras/ordenes",
+    "declared_in_router": true
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/recepciones",
+    "label": "Recepciones",
+    "normalized": "compras/recepciones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/facturas",
+    "label": "Facturas",
+    "normalized": "compras/facturas",
+    "declared_in_router": true
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/devoluciones",
+    "label": "Devoluciones",
+    "normalized": "compras/devoluciones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/notas",
+    "label": "Notas de crédito",
+    "normalized": "compras/notas",
+    "declared_in_router": true
+  },
+  {
+    "section": "Compras",
+    "to": "/compras/cuentas-por-pagar",
+    "label": "CxP",
+    "normalized": "compras/cuentas-por-pagar",
+    "declared_in_router": true
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/cotizaciones",
+    "label": "Cotizaciones",
+    "normalized": "ventas/cotizaciones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/ordenes",
+    "label": "Órdenes",
+    "normalized": "ventas/ordenes",
+    "declared_in_router": true
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/despacho",
+    "label": "Picking y despacho",
+    "normalized": "ventas/despacho",
+    "declared_in_router": true
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/facturas",
+    "label": "Facturas",
+    "normalized": "ventas/facturas",
+    "declared_in_router": true
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/notas",
+    "label": "Notas",
+    "normalized": "ventas/notas",
+    "declared_in_router": true
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/devoluciones",
+    "label": "Devoluciones",
+    "normalized": "ventas/devoluciones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Ventas",
+    "to": "/ventas/cuentas-por-cobrar",
+    "label": "CxC",
+    "normalized": "ventas/cuentas-por-cobrar",
+    "declared_in_router": true
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/cajas",
+    "label": "Cajas y arqueo",
+    "normalized": "tesoreria/cajas",
+    "declared_in_router": true
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/ingresos-egresos",
+    "label": "Ingresos y egresos",
+    "normalized": "tesoreria/ingresos-egresos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/transferencias",
+    "label": "Transferencias",
+    "normalized": "tesoreria/transferencias",
+    "declared_in_router": true
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/conciliacion",
+    "label": "Conciliación",
+    "normalized": "tesoreria/conciliacion",
+    "declared_in_router": true
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/igft",
+    "label": "IGTF",
+    "normalized": "tesoreria/igft",
+    "declared_in_router": true
+  },
+  {
+    "section": "Tesorería",
+    "to": "/tesoreria/maestros",
+    "label": "Maestros",
+    "normalized": "tesoreria/maestros",
+    "declared_in_router": true
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/configuracion",
+    "label": "Configuración",
+    "normalized": "fiscal/configuracion",
+    "declared_in_router": true
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/numeracion",
+    "label": "Numeración",
+    "normalized": "fiscal/numeracion",
+    "declared_in_router": true
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/emision",
+    "label": "Emisión",
+    "normalized": "fiscal/emision",
+    "declared_in_router": true
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/notas",
+    "label": "Notas",
+    "normalized": "fiscal/notas",
+    "declared_in_router": true
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/retenciones",
+    "label": "Retenciones",
+    "normalized": "fiscal/retenciones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Fiscal",
+    "to": "/fiscal/libros",
+    "label": "Libros y períodos",
+    "normalized": "fiscal/libros",
+    "declared_in_router": true
+  },
+  {
+    "section": "Regulatorio",
+    "to": "/regulatorio/organismos",
+    "label": "Organismos",
+    "normalized": "regulatorio/organismos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Regulatorio",
+    "to": "/regulatorio/vehiculos",
+    "label": "Vehículos",
+    "normalized": "regulatorio/vehiculos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Regulatorio",
+    "to": "/regulatorio/permisos",
+    "label": "Permisos y guías",
+    "normalized": "regulatorio/permisos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Regulatorio",
+    "to": "/regulatorio/evaluacion",
+    "label": "Evaluación",
+    "normalized": "regulatorio/evaluacion",
+    "declared_in_router": true
+  },
+  {
+    "section": "Regulatorio",
+    "to": "/regulatorio/aprobaciones",
+    "label": "Aprobaciones",
+    "normalized": "regulatorio/aprobaciones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Reportes",
+    "to": "/reportes/centro",
+    "label": "Centro de reportes",
+    "normalized": "reportes/centro",
+    "declared_in_router": true
+  },
+  {
+    "section": "Reportes",
+    "to": "/reportes/exportaciones",
+    "label": "Exportaciones",
+    "normalized": "reportes/exportaciones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Reportes",
+    "to": "/reportes/auditoria",
+    "label": "Auditoría",
+    "normalized": "reportes/auditoria",
+    "declared_in_router": true
+  },
+  {
+    "section": "Licenciamiento",
+    "to": "/licenciamiento/configuracion",
+    "label": "Configuración central",
+    "normalized": "licenciamiento/configuracion",
+    "declared_in_router": true
+  },
+  {
+    "section": "Licenciamiento",
+    "to": "/licenciamiento/entitlements",
+    "label": "Entitlements",
+    "normalized": "licenciamiento/entitlements",
+    "declared_in_router": true
+  },
+  {
+    "section": "Licenciamiento",
+    "to": "/licenciamiento/renovacion",
+    "label": "Renovación",
+    "normalized": "licenciamiento/renovacion",
+    "declared_in_router": true
+  },
+  {
+    "section": "Licenciamiento",
+    "to": "/licenciamiento/eventos",
+    "label": "Eventos",
+    "normalized": "licenciamiento/eventos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Homologación",
+    "to": "/homologacion/actos",
+    "label": "Actos",
+    "normalized": "homologacion/actos",
+    "declared_in_router": true
+  },
+  {
+    "section": "Homologación",
+    "to": "/homologacion/versiones",
+    "label": "Versiones",
+    "normalized": "homologacion/versiones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Homologación",
+    "to": "/homologacion/timeline",
+    "label": "Timeline",
+    "normalized": "homologacion/timeline",
+    "declared_in_router": true
+  },
+  {
+    "section": "Seguridad",
+    "to": "/seguridad/usuarios",
+    "label": "Usuarios",
+    "normalized": "seguridad/usuarios",
+    "declared_in_router": true
+  },
+  {
+    "section": "Seguridad",
+    "to": "/seguridad/roles",
+    "label": "Roles",
+    "normalized": "seguridad/roles",
+    "declared_in_router": true
+  },
+  {
+    "section": "Seguridad",
+    "to": "/seguridad/sesiones",
+    "label": "Sesiones",
+    "normalized": "seguridad/sesiones",
+    "declared_in_router": true
+  },
+  {
+    "section": "Sistema",
+    "to": "/auditoria",
+    "label": "Auditoría",
+    "normalized": "auditoria",
+    "declared_in_router": true
+  },
+  {
+    "section": "Sistema",
+    "to": "/diagnostico",
+    "label": "Diagnóstico",
+    "normalized": "diagnostico",
+    "declared_in_router": true
+  }
+]
