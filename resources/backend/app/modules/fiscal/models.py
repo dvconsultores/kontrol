@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, Date, DateTime, Float, ForeignKey, Numeric, String
+from sqlalchemy import JSON, BigInteger, Date, DateTime, ForeignKey, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -111,7 +111,7 @@ class TaxCalculation(UUIDMixin, TimestampMixin, Base):
     base: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     rate: Mapped[float] = mapped_column(Numeric(14, 6), nullable=False, default=0.0)
     amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
-    rounding: Mapped[float] = mapped_column(Float, nullable=False, default=2.0)
+    rounding: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=2.0)
     snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
 
 
@@ -202,8 +202,8 @@ class WithholdingRule(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     conditions: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
     base: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     rate: Mapped[float] = mapped_column(Numeric(14, 6), nullable=False, default=0.0)
-    minimum: Mapped[float | None] = mapped_column(Float, nullable=True)
-    subtractor: Mapped[float | None] = mapped_column(Float, nullable=True)
+    minimum: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
+    subtractor: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
     validity: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
 

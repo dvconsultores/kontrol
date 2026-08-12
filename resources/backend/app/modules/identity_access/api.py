@@ -109,6 +109,18 @@ def refresh(
     return {"access_token": access, "token_type": "bearer", "expires_in": get_settings().access_token_minutes * 60}
 
 
+@router.get("/me")
+def me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Usuario actual + permisos efectivos (resource:action) para el guard de UI
+    (FR-001-042; KAUD-004). El backend sigue siendo la autoridad."""
+    permissions = identity_service.get_user_permissions(db, user)
+    return {
+        "user": {"id": str(user.id), "username": user.username, "tenant_id": user.tenant_id,
+                 "must_change_password": user.must_change_password},
+        "permissions": permissions,
+    }
+
+
 @router.post("/logout")
 def logout(request: Request, response: Response, db: Session = Depends(get_db)):
     refresh = request.cookies.get(REFRESH_COOKIE)

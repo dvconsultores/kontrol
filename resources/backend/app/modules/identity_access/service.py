@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, overload
 
 import jwt as pyjwt
 from sqlalchemy import select
@@ -34,6 +34,26 @@ from app.shared import audit as audit_service
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+@overload
+def _as_utc(dt: datetime) -> datetime: ...
+
+
+@overload
+def _as_utc(dt: None) -> None: ...
+
+
+def _as_utc(dt: datetime | None) -> datetime | None:
+    """Normaliza a UTC (adjunta UTC si el driver devolvió naive — p. ej. SQLite).
+
+    Evita `TypeError: can't compare offset-naive and offset-aware datetimes`
+    (KAUD-013). Con PostgreSQL + DateTime(timezone=True) los valores ya vienen
+    aware y se devuelven sin cambio.
+    """
+    if dt is None or dt.tzinfo is not None:
+        return dt
+    return dt.replace(tzinfo=UTC)
 
 
 def _audit(db: Session, **kwargs: Any) -> None:
@@ -101,7 +121,7 @@ def authenticate(db: Session, *, tenant_id: str, username: str, password: str, r
         raise KontrolError(code="AUTH_INVALID_CREDENTIALS", message="Credenciales inválidas", status_code=401)
 
     # Bloqueo por fuerza bruta
-    if user.lockout_until and user.lockout_until > _now():
+    if user.lockout_until is not None and _as_utc(user.lockout_until) > _now():
         _audit(db, action="LOGIN_BLOCKED", entity_type="User", entity_id=str(user.id), tenant_id=tenant_id, request_id=request_id)
         db.commit()
         raise KontrolError(code="AUTH_ACCOUNT_LOCKED", message="Cuenta temporalmente bloqueada por intentos fallidos", status_code=423)
@@ -162,7 +182,7 @@ def rotate_session(db: Session, *, refresh_token: str, request_id: str | None = 
         raise KontrolError(code="SESSION_REVOKED", message="Sesión revocada", status_code=401)
     if session.refresh_token_hash != security.sha256_hex(refresh_token):
         raise KontrolError(code="SESSION_INVALID", message="Sesión inválida", status_code=401)
-    if session.expires_at < _now():
+    if _as_utc(session.expires_at) < _now():
         session.revoked_at = _now()
         db.commit()
         raise KontrolError(code="SESSION_EXPIRED", message="Sesión expirada", status_code=401)
@@ -243,7 +263,7 @@ def confirm_password_reset(db: Session, *, token: str, new_password: str, reques
     if errors:
         raise KontrolError(code="PASSWORD_POLICY", message="La contraseña no cumple la política", field_errors={"new_password": errors}, status_code=422)
     reset = db.execute(select(PasswordReset).where(PasswordReset.token_hash == security.sha256_hex(token))).scalars().first()
-    if not reset or reset.used_at is not None or reset.expires_at < _now():
+    if not reset or reset.used_at is not None or _as_utc(reset.expires_at) < _now():
         raise KontrolError(code="RESET_TOKEN_INVALID", message="El enlace de recuperación no es válido o expiró", status_code=401)
     user = db.get(User, reset.user_id)
     if not user:

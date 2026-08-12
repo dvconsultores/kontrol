@@ -36,6 +36,7 @@ import {
 import { NavLink } from "react-router";
 import { useState } from "react";
 
+import { useAuth } from "@/app/contexts/AuthContext";
 import { clsx } from "clsx";
 
 const navSections = [
@@ -48,6 +49,7 @@ const navSections = [
   },
   {
     title: "Organización",
+    permission: "organization:view",
     items: [
       { to: "/organizacion/empresas", label: "Empresas", icon: Home },
       { to: "/organizacion/sucursales", label: "Sucursales", icon: Boxes },
@@ -58,6 +60,7 @@ const navSections = [
   },
   {
     title: "Maestros",
+    permission: "maestros:view",
     items: [
       { to: "/maestros/terceros", label: "Terceros", icon: Users },
       { to: "/maestros/productos", label: "Productos", icon: Package },
@@ -68,6 +71,7 @@ const navSections = [
   },
   {
     title: "Inventario",
+    permission: "inventario:view",
     items: [
       { to: "/inventario/existencias", label: "Existencias", icon: Warehouse },
       { to: "/inventario/kardex", label: "Kardex", icon: ClipboardList },
@@ -81,6 +85,7 @@ const navSections = [
   },
   {
     title: "Compras",
+    permission: "compras:view",
     items: [
       { to: "/compras/requisiciones", label: "Requisiciones", icon: ClipboardList },
       { to: "/compras/ordenes", label: "Órdenes", icon: ShoppingCart },
@@ -93,6 +98,7 @@ const navSections = [
   },
   {
     title: "Ventas",
+    permission: "ventas:view",
     items: [
       { to: "/ventas/cotizaciones", label: "Cotizaciones", icon: ClipboardList },
       { to: "/ventas/ordenes", label: "Órdenes", icon: ShoppingBag },
@@ -105,6 +111,7 @@ const navSections = [
   },
   {
     title: "Tesorería",
+    permission: "tesoreria:view",
     items: [
       { to: "/tesoreria/cajas", label: "Cajas y arqueo", icon: Wallet },
       { to: "/tesoreria/ingresos-egresos", label: "Ingresos y egresos", icon: ArrowLeftRight },
@@ -116,6 +123,7 @@ const navSections = [
   },
   {
     title: "Fiscal",
+    permission: "fiscal:view",
     items: [
       { to: "/fiscal/configuracion", label: "Configuración", icon: Settings },
       { to: "/fiscal/numeracion", label: "Numeración", icon: Hash },
@@ -127,6 +135,7 @@ const navSections = [
   },
   {
     title: "Regulatorio",
+    permission: "regulatorio:view",
     items: [
       { to: "/regulatorio/organismos", label: "Organismos", icon: Landmark },
       { to: "/regulatorio/vehiculos", label: "Vehículos", icon: Truck },
@@ -137,6 +146,7 @@ const navSections = [
   },
   {
     title: "Reportes",
+    permission: "reportes:view",
     items: [
       { to: "/reportes/centro", label: "Centro de reportes", icon: BarChart3 },
       { to: "/reportes/exportaciones", label: "Exportaciones", icon: FileDown },
@@ -145,6 +155,7 @@ const navSections = [
   },
   {
     title: "Licenciamiento",
+    permission: "license:view",
     items: [
       { to: "/licenciamiento/configuracion", label: "Configuración central", icon: Settings },
       { to: "/licenciamiento/entitlements", label: "Entitlements", icon: ShieldCheck },
@@ -154,6 +165,7 @@ const navSections = [
   },
   {
     title: "Homologación",
+    permission: "homologacion:view",
     items: [
       { to: "/homologacion/actos", label: "Actos", icon: FileCheck },
       { to: "/homologacion/versiones", label: "Versiones", icon: Hash },
@@ -162,6 +174,7 @@ const navSections = [
   },
   {
     title: "Seguridad",
+    permission: "users:view",
     items: [
       { to: "/seguridad/usuarios", label: "Usuarios", icon: Users },
       { to: "/seguridad/roles", label: "Roles", icon: ShieldCheck },
@@ -179,6 +192,18 @@ const navSections = [
 
 export function Sidebar(): React.JSX.Element {
   const [collapsed, setCollapsed] = useState(false);
+  const { hasPermission } = useAuth();
+
+  const visibleSections = navSections
+    .map((section) => ({
+      ...section,
+      items: section.permission
+        ? hasPermission(section.permission)
+          ? section.items
+          : []
+        : section.items,
+    }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <aside
@@ -201,7 +226,7 @@ export function Sidebar(): React.JSX.Element {
         </button>
       </div>
       <nav aria-label="Menú principal" className="flex-1 overflow-y-auto px-2 py-3">
-        {navSections.map((section) => (
+        {visibleSections.map((section) => (
           <div key={section.title} className="mb-4">
             {!collapsed ? (
               <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-text-400">

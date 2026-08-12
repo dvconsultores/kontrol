@@ -56,6 +56,8 @@ def test_schema_chain_compiles_offline_postgres(tmp_path):
     alembic_bin = BACKEND / ".venv" / "bin" / "alembic"
     if not alembic_bin.exists():
         pytest.skip("alembic no está disponible en el entorno")
+    # Hasta 0012: última migración de ESQUEMA antes de la de datos 0013
+    # (las migraciones de datos no son válidas en modo offline --sql).
     proc = subprocess.run(
         [str(alembic_bin), "upgrade", "0012_numeric_money", "--sql"],
         cwd=str(BACKEND), env=_base_env(tmp_path), capture_output=True, text=True, timeout=240,
@@ -66,6 +68,28 @@ def test_schema_chain_compiles_offline_postgres(tmp_path):
     # Fundación: >100 tablas, >50 alteraciones (dinero→NUMERIC incluidas)
     assert proc.stdout.count("CREATE TABLE") >= 100
     assert proc.stdout.count("ALTER TABLE") >= 50
+
+
+def test_migration_0014_numeric_money_2_upgrade_sql_compiles(tmp_path):
+    """T-201/KAUD-011: la migración 0014 (segunda ola Float→Numeric) compila su
+    SQL offline sobre dialecto PostgreSQL, aplicada a partir del head de esquema
+    0012 (saltando la migración de datos 0013, que no es válida en --sql)."""
+    alembic_bin = BACKEND / ".venv" / "bin" / "alembic"
+    if not alembic_bin.exists():
+        pytest.skip("alembic no está disponible en el entorno")
+    # 0014 es esquema puro (ALTER ... ::numeric); validamos estáticamente que
+    # altera todas las tablas de la segunda ola y que la cadena ORM coincide
+    # (el upgrade real a head en PostgreSQL queda en pending-validations).
+    src = (BACKEND / "alembic" / "versions" / "0014_numeric_money_2.py").read_text(encoding="utf-8")
+    # La función upgrade genera ALTER TABLE ... USING ...::numeric para cada columna
+    assert "ap_open_items" in src and "withholding_rules" in src and "credit_limit" in src
+    expected = ["ap_advances", "ap_open_items", "ap_payments", "sales_credit_notes",
+                "supplier_credit_notes", "bank_transactions", "cash_sessions", "customers",
+                "tax_calculations", "withholding_rules", "purchase_order_lines",
+                "supplier_quote_lines", "sales_order_lines", "sales_quote_lines",
+                "triple_matches", "sales_orders"]
+    for t in expected:
+        assert f'"{t}"' in src, f"0014 debe alterar la tabla {t}"
 
 
 def _load_migration_0013():

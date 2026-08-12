@@ -267,3 +267,54 @@ def test_injection_payloads_treated_as_data():
     r = _CLIENT.get("/api/v1/maestros/terceros?q=%27%20OR%201%3D1--", headers=b)
     assert r.status_code == 200
     assert r.json()["items"] == []
+
+
+# --------------------------------------------------------------------------- #
+# Renovación de sesión (KAUD-013) — rotación de refresh token
+# --------------------------------------------------------------------------- #
+def test_session_refresh_rotates_token():
+    """Login → refresh 200 (nuevo access token y cookie rotada); el token
+    anterior queda invalidado (401 al reutilizarlo). Evita regresión de
+    `TypeError: can't compare offset-naive and offset-aware datetimes`."""
+    login = _CLIENT.post("/api/v1/auth/login", json={
+        "tenant_code": "DEMO", "username": "admin", "password": "Kontrol2026Segura!",
+    })
+    assert login.status_code == 200, login.text
+    refresh_cookie = login.cookies.get("kontrol_refresh")
+    assert refresh_cookie, "el login debe fijar la cookie de refresh"
+
+    # refresh → 200 y nueva cookie
+    r1 = _CLIENT.post("/api/v1/auth/refresh", cookies={"kontrol_refresh": refresh_cookie})
+    assert r1.status_code == 200, r1.text
+    body = r1.json()
+    assert body.get("access_token"), body
+    new_cookie = r1.cookies.get("kontrol_refresh")
+    assert new_cookie, "el refresh debe rotar la cookie"
+
+    # el token anterior ya no es válido (rotación): 401, no 500
+    r2 = _CLIENT.post("/api/v1/auth/refresh", cookies={"kontrol_refresh": refresh_cookie})
+    assert r2.status_code == 401, r2.text
+    assert r2.status_code != 500
+
+    # el nuevo token sí funciona
+    r3 = _CLIENT.post("/api/v1/auth/refresh", cookies={"kontrol_refresh": new_cookie})
+    assert r3.status_code == 200, r3.text
+
+
+def test_session_refresh_returns_200_never_500():
+    """El refresh nunca debe devolver 500 (KAUD-013): con cookie válida → 200,
+    sin cookie → 401."""
+    login = _CLIENT.post("/api/v1/auth/login", json={
+        "tenant_code": "DEMO", "username": "admin", "password": "Kontrol2026Segura!",
+    })
+    refresh_cookie = login.cookies.get("kontrol_refresh")
+    r = _CLIENT.post("/api/v1/auth/refresh", cookies={"kontrol_refresh": refresh_cookie})
+    assert r.status_code == 200, r.text
+
+    # limpiar la jarra de cookies para simular ausencia de cookie de refresh
+    _CLIENT.cookies.clear()
+    r_no_cookie = _CLIENT.post("/api/v1/auth/refresh")
+    assert r_no_cookie.status_code == 401, r_no_cookie.text
+    assert r_no_cookie.status_code != 500
+    # restaurar la jarra para no afectar otros tests
+    _CLIENT.cookies.clear()

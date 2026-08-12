@@ -33,6 +33,7 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
     environment:
       KONTROL_ENVIRONMENT: "${KONTROL_ENVIRONMENT:-prod}"
+      KONTROL_IMAGE_TAG: "${KONTROL_IMAGE_TAG:-latest}"
       KONTROL_DB_URL: "${KONTROL_DB_URL:?KONTROL_DB_URL es obligatoria (base de datos externa)}"
       KONTROL_SECRET_KEY: "${KONTROL_SECRET_KEY:?KONTROL_SECRET_KEY es obligatoria}"
       KONTROL_COOKIE_SECURE: "true"
@@ -54,14 +55,15 @@ services:
     networks:
       - kontrol-net
 
-  # Actualización automática (sin intervención): watchtower detecta una nueva
-  # imagen (p. ej. "latest") y recrea los contenedores marcados con la etiqueta
-  # (rolling restart: uno a la vez). Requiere acceso al socket de Docker
-  # (privilegio de host). Elimine este servicio si el cliente prefiere
-  # actualizaciones manuales.
+  # Actualización automática (OPT-IN, KAUD-006/P14): solo se inicia si se usa
+  # `docker compose --profile watchtower up`. Watchtower detecta una nueva
+  # imagen y recrea los contenedores marcados con la etiqueta (rolling restart).
+  # Requiere acceso al socket de Docker (privilegio de host). En producción la
+  # etiqueta debe fijarse (no "latest"); el entrypoint del backend lo valida.
   watchtower:
     image: containrrr/watchtower
     container_name: kontrol-watchtower
+    profiles: ["watchtower"]
     restart: unless-stopped
     environment:
       WATCHTOWER_POLL_INTERVAL: "${KONTROL_AUTO_UPDATE_INTERVAL:-300}"

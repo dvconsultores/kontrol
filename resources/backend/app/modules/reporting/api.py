@@ -74,6 +74,23 @@ def list_exports(report_key: str | None = None, db: Session = Depends(get_db),
                        "status": e.status} for e in items], "total": len(items), "page": 1, "page_size": len(items) or 1}
 
 
+@router.get("/exports/{export_id}/download")
+def download_export(export_id: str, db: Session = Depends(get_db),
+                    user: User = Depends(get_current_user)):
+    """Descarga el archivo real de una exportación del propio tenant (KAUD-002)."""
+    from app.modules.reporting import service as reporting_service
+
+    filename, content = reporting_service.get_export_file(db, export_id=export_id, company_id=user.tenant_id)
+    # Content-Disposition con nombre original; se sirve desde bytes (memoria).
+    import io
+
+    from starlette.responses import StreamingResponse
+
+    media = "application/pdf" if filename.lower().endswith(".pdf") else "text/csv; charset=utf-8"
+    return StreamingResponse(io.BytesIO(content), media_type=media,
+                             headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
 # --------------------------------------------------------------------------- #
 # Trabajos asíncronos
 # --------------------------------------------------------------------------- #
@@ -95,6 +112,19 @@ def run_job(job_id: str, db: Session = Depends(get_db),
     db.refresh(job)
     return {"id": job.id, "report_key": job.report_key, "status": job.status, "error": job.error,
             "result_ref": job.result_ref}
+
+
+@router.get("/jobs")
+def list_jobs(report_key: str | None = None, db: Session = Depends(get_db),
+              user: User = Depends(get_current_user)):
+    """Lista de trabajos asíncronos del propio tenant (KAUD-003)."""
+    query = select(ReportJob).where(ReportJob.company_id == user.tenant_id)
+    if report_key:
+        query = query.where(ReportJob.report_key == report_key)
+    items = db.execute(query.order_by(ReportJob.created_at.desc())).scalars().all()
+    return {"items": [{"id": j.id, "report_key": j.report_key, "status": j.status, "error": j.error,
+                       "result_ref": j.result_ref, "created_at": j.created_at.isoformat() if j.created_at else None}
+                      for j in items], "total": len(items), "page": 1, "page_size": len(items) or 1}
 
 
 @router.get("/jobs/{job_id}")

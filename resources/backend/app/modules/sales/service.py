@@ -13,6 +13,7 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -39,6 +40,16 @@ from app.modules.sales.models import (
     Shipment,
     ShipmentLine,
 )
+from app.shared import audit as audit_service
+
+
+def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+           company_id: str, actor: str | None = None, **kw: Any) -> None:
+    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+    audit_service.record_audit(
+        db, action=action, entity_type=entity_type, entity_id=entity_id,
+        company_id=company_id, user_id=actor, source="API", **kw,
+    )
 
 # --------------------------------------------------------------------------- #
 # Máquinas de estado (DOC-03 §13)
@@ -180,6 +191,8 @@ def transition_order(db: Session, *, order: SalesOrder, target: str, actor: str 
         _reserve_order(db, order, actor)
         order.status = "RESERVED"
     db.flush()
+    _audit(db, action="SALES_ORDER_TRANSITIONED", entity_type="SalesOrder", entity_id=str(order.id),
+           company_id=order.company_id, actor=actor, after={"target": order.status})
     return order
 
 
@@ -285,6 +298,8 @@ def confirm_shipment(db: Session, *, shipment: Shipment, actor: str | None = Non
     order.status = "SHIPPED"
     order.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="SHIPMENT_CONFIRMED", entity_type="Shipment", entity_id=str(shipment.id),
+           company_id=shipment.company_id, actor=actor, after={"order_id": str(order.id)})
     return shipment
 
 
@@ -338,6 +353,8 @@ def transition_invoice(db: Session, *, invoice: SalesInvoice, target: str, actor
         db.add(open_item)
         db.flush()
     db.flush()
+    _audit(db, action="SALES_INVOICE_TRANSITIONED", entity_type="SalesInvoice", entity_id=str(invoice.id),
+           company_id=invoice.company_id, actor=actor, after={"target": invoice.status, "total": float(invoice.total or 0.0)})
     return invoice
 
 
@@ -355,6 +372,8 @@ def void_invoice(db: Session, *, invoice: SalesInvoice, actor: str | None = None
     invoice.reversed_by_id = actor
     invoice.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="SALES_INVOICE_VOIDED", entity_type="SalesInvoice", entity_id=str(invoice.id),
+           company_id=invoice.company_id, actor=actor)
     return invoice
 
 
@@ -381,6 +400,8 @@ def post_credit_note(db: Session, *, note: SalesCreditNote) -> SalesCreditNote:
     note.status = "POSTED"
     note.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="SALES_CREDIT_NOTE_POSTED", entity_type="SalesCreditNote", entity_id=str(note.id),
+           company_id=note.company_id, actor=None, after={"amount": float(note.amount)})
     return note
 
 
@@ -409,6 +430,8 @@ def apply_credit_note(db: Session, *, note: SalesCreditNote, target_open_item_id
     note.applied = round(float(note.applied) + amount, 6)
     db.flush()
     _sync_invoice_status(db, target_open_item_id=str(target.id))
+    _audit(db, action="CREDIT_NOTE_APPLIED", entity_type="SalesCreditNote", entity_id=str(note.id),
+           company_id=note.company_id, actor=actor, after={"open_item_id": str(target.id), "amount": float(amount)})
     return target
 
 
@@ -434,6 +457,8 @@ def create_return(db: Session, *, company_id: str, code: str, source_document: s
                       condition=condition, inventory_destination=inventory_destination, status="DRAFT", created_by=actor)
     db.add(ret)
     db.flush()
+    _audit(db, action="SALES_RETURN_CREATED", entity_type="SalesReturn", entity_id=str(ret.id),
+           company_id=company_id, actor=actor, after={"source_document": source_document})
     return ret
 
 
@@ -466,6 +491,8 @@ def apply_to_cxc(db: Session, *, company_id: str, source_type: str, source_id: s
                                   target_open_item_id=target_open_item_id, amount=amount, currency=currency,
                                   rate=rate, actor=actor)
     _sync_invoice_status(db, target_open_item_id=target_open_item_id)
+    _audit(db, action="CXC_APPLICATION", entity_type="OpenItem", entity_id=str(target_open_item_id),
+           company_id=company_id, actor=actor, after={"source_type": source_type, "amount": float(amount)})
     return app
 
 

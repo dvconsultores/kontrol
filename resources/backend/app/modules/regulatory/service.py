@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import UTC, date, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -31,6 +32,16 @@ from app.modules.regulatory.models import (
     TransportDriver,
     TransportVehicle,
 )
+from app.shared import audit as audit_service
+
+
+def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+           company_id: str, actor: str | None = None, **kw: Any) -> None:
+    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+    audit_service.record_audit(
+        db, action=action, entity_type=entity_type, entity_id=entity_id,
+        company_id=company_id, user_id=actor, source="API", **kw,
+    )
 
 PERMIT_TRANSITIONS: dict[str, set[str]] = {
     "DRAFT": {"REGISTERED", "CANCELLED"},
@@ -177,6 +188,8 @@ def transition_permit(db: Session, *, company_id: str, permit_id: str, target: s
     permit.status = target
     permit.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="PERMIT_TRANSITIONED", entity_type="PermitInstance", entity_id=str(permit.id),
+           company_id=company_id, actor=actor, after={"target": permit.status})
     return permit
 
 
@@ -326,4 +339,6 @@ def transition_approval_request(db: Session, *, company_id: str, request_id: str
     req.decision = target
     req.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="APPROVAL_REQUEST_DECIDED", entity_type="ApprovalRequest", entity_id=str(req.id),
+           company_id=company_id, actor=actor, after={"target": req.status})
     return req

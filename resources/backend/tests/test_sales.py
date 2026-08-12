@@ -236,7 +236,8 @@ class TestCxC:
         sales_service.apply_credit_note(db_session, note=note, target_open_item_id=str(open_item.id), amount=100.0)
         db_session.flush()
         assert open_item.status == "OPEN"
-        assert round(open_item.original - open_item.applied, 6) == 300.0
+        # coerción a float: original/applied son Decimal (Numeric) tras T-201
+        assert round(float(open_item.original) - float(open_item.applied), 6) == 300.0
         assert note.applied == 100.0
 
     def test_aging_receivable(self, db_session) -> None:

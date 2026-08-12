@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 from datetime import UTC, date, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -40,6 +41,16 @@ from app.modules.fiscal.models import (
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import SupplierInvoice
 from app.modules.purchasing.models import Withholding as ApWithholding
+from app.shared import audit as audit_service
+
+
+def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+           company_id: str, actor: str | None = None, **kw: Any) -> None:
+    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+    audit_service.record_audit(
+        db, action=action, entity_type=entity_type, entity_id=entity_id,
+        company_id=company_id, user_id=actor, source="API", **kw,
+    )
 
 
 def _company(company_id: str | None, *, obj: str) -> str:
@@ -307,6 +318,9 @@ def emit_document(db: Session, *, company_id: str, business_document: str, serie
                                fiscal_currency, emitted_at.isoformat())
     db.add(doc)
     db.flush()
+    _audit(db, action="FISCAL_DOCUMENT_EMITTED", entity_type="FiscalDocument", entity_id=str(doc.id),
+           company_id=company_id, actor=actor,
+           after={"invoice_number": number, "control_number": control.value, "hash": doc.hash})
     return {"id": str(doc.id), "business_document": business_document, "idempotent": False,
             "invoice_number": number, "control_number": control.value, "hash": doc.hash, "status": doc.status}
 
@@ -324,6 +338,9 @@ def register_print(db: Session, *, company_id: str, fiscal_document_id: str, cop
     event.hash = _canonical_hash(company_id, fiscal_document_id, copy_type, printer, printed_at.isoformat(), reason)
     db.add(event)
     db.flush()
+    _audit(db, action="FISCAL_DOCUMENT_PRINTED", entity_type="PrintEvent", entity_id=str(event.id),
+           company_id=company_id, actor=actor,
+           after={"fiscal_document_id": fiscal_document_id, "copy_type": copy_type})
     return event
 
 
@@ -360,6 +377,9 @@ def create_credit_debit_note(db: Session, *, company_id: str, original_document:
                            status="EMITTED", created_by=actor)
     db.add(note)
     db.flush()
+    _audit(db, action="FISCAL_NOTE_EMITTED", entity_type="CreditDebitNote", entity_id=str(note.id),
+           company_id=company_id, actor=actor,
+           after={"note_type": note_type, "original_document": original_document, "amount": float(amount)})
     return note
 
 

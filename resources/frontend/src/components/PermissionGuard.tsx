@@ -1,9 +1,19 @@
 /**
- * PermissionGuard — punto de extensión para ocultar/bloquear según permiso
- * (FR-001-042, DOC-08 §15.2). En la fundación la autoridad es el backend
- * (allowed_actions); este guard mejora UX y no es control de seguridad.
+ * PermissionGuard — oculta/bloquea contenido según permiso del usuario
+ * (FR-001-042, DOC-08 §15.2, KAUD-004).
+ *
+ * Los permisos vienen del backend (`GET /auth/me`, resource:action) y se
+ * resuelven en el AuthContext. El backend sigue siendo la autoridad de
+ * seguridad (require_permission / allowed_actions); este guard mejora la UX
+ * evitando mostrar menús/acciones no permitidas.
+ *
+ * - `permission` (formato "resource:action"): si el usuario NO lo tiene, se
+ *   oculta el contenido (o se renderiza null).
+ * - `hide` (legacy): si es true, oculta el contenido.
  */
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
+
+import { useAuth } from "@/app/contexts/AuthContext";
 
 export interface PermissionGuardProps {
   /** Permiso requerido en formato "resource:action". */
@@ -13,9 +23,13 @@ export interface PermissionGuardProps {
   children: ReactNode;
 }
 
-export function PermissionGuard({ hide, children }: PermissionGuardProps): React.JSX.Element | null {
-  // La verificación fina se resuelve con allowed_actions del backend.
-  void hide;
+export function PermissionGuard({ permission, hide, children }: PermissionGuardProps): React.JSX.Element | null {
+  const { hasPermission } = useAuth();
+  if (hide) {
+    return null;
+  }
+  if (permission && !hasPermission(permission)) {
+    return null;
+  }
   return <>{children}</>;
 }
-

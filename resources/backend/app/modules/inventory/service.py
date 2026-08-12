@@ -15,6 +15,7 @@ Invariantes clave:
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -37,6 +38,16 @@ from app.modules.inventory.models import (
 )
 from app.modules.organization.models import Warehouse
 from app.modules.organization.service import warehouse_in_tenant_scope
+from app.shared import audit as audit_service
+
+
+def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+           company_id: str, actor: str | None = None, **kw: Any) -> None:
+    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+    audit_service.record_audit(
+        db, action=action, entity_type=entity_type, entity_id=entity_id,
+        company_id=company_id, user_id=actor, source="API", **kw,
+    )
 
 # Tipos de movimiento operativos base (se auto-configuran si faltan, FR-003-023).
 BASE_MOVEMENT_TYPES: dict[str, tuple[str, str]] = {
@@ -395,6 +406,9 @@ def record_movement(
     balance.qty_on_hand = round(balance.qty_on_hand + signed, 6)
     _refresh_available(balance)
     db.flush()
+    _audit(db, action="INVENTORY_MOVEMENT", entity_type="InventoryMovement", entity_id=str(movement.id),
+           company_id=company_id, actor=actor,
+           after={"product_id": product_id, "quantity": float(signed), "document_ref": document_ref})
     return movement
 
 
@@ -427,6 +441,8 @@ def reverse_movement(db: Session, *, movement: InventoryMovement, actor: str | N
     reverse.reversed_by_id = str(movement.id)
     movement.reversed_by_id = str(reverse.id)
     db.flush()
+    _audit(db, action="INVENTORY_MOVEMENT_REVERSED", entity_type="InventoryMovement", entity_id=str(movement.id),
+           company_id=movement.company_id, actor=actor, after={"reverse_id": str(reverse.id)})
     return reverse
 
 

@@ -313,11 +313,11 @@
    "path": "/inventory/serials"
   },
   {
-   "method": "POST",
+   "method": "GET",
    "path": "/inventory/reservations"
   },
   {
-   "method": "GET",
+   "method": "POST",
    "path": "/inventory/reservations"
   },
   {
@@ -329,11 +329,11 @@
    "path": "/inventory/reservations/expire"
   },
   {
-   "method": "POST",
+   "method": "GET",
    "path": "/inventory/transfers"
   },
   {
-   "method": "GET",
+   "method": "POST",
    "path": "/inventory/transfers"
   },
   {
@@ -341,11 +341,11 @@
    "path": "/inventory/transfers/{transfer_id}/transition"
   },
   {
-   "method": "POST",
+   "method": "GET",
    "path": "/inventory/counts"
   },
   {
-   "method": "GET",
+   "method": "POST",
    "path": "/inventory/counts"
   },
   {
@@ -357,11 +357,11 @@
    "path": "/inventory/counts/{count_id}/transition"
   },
   {
-   "method": "POST",
+   "method": "GET",
    "path": "/inventory/adjustments"
   },
   {
-   "method": "GET",
+   "method": "POST",
    "path": "/inventory/adjustments"
   },
   {
@@ -593,11 +593,11 @@
    "path": "/sales/pick-lists"
   },
   {
-   "method": "POST",
+   "method": "GET",
    "path": "/sales/shipments"
   },
   {
-   "method": "GET",
+   "method": "POST",
    "path": "/sales/shipments"
   },
   {
@@ -921,11 +921,11 @@
    "path": "/fiscal/documents/{document_id}/print"
   },
   {
-   "method": "POST",
+   "method": "GET",
    "path": "/fiscal/credit-debit-notes"
   },
   {
-   "method": "GET",
+   "method": "POST",
    "path": "/fiscal/credit-debit-notes"
   },
   {
@@ -1045,11 +1045,11 @@
    "path": "/regulatory/official-documents"
   },
   {
-   "method": "POST",
+   "method": "GET",
    "path": "/regulatory/evaluations"
   },
   {
-   "method": "GET",
+   "method": "POST",
    "path": "/regulatory/evaluations"
   },
   {
@@ -1089,12 +1089,20 @@
    "path": "/reporting/reports/{key}"
   },
   {
+   "method": "GET",
+   "path": "/reporting/exports"
+  },
+  {
    "method": "POST",
    "path": "/reporting/exports"
   },
   {
    "method": "GET",
-   "path": "/reporting/exports"
+   "path": "/reporting/exports/{export_id}/download"
+  },
+  {
+   "method": "GET",
+   "path": "/reporting/jobs"
   },
   {
    "method": "POST",

@@ -148,6 +148,27 @@ class TestExportacionYJobs:
                                                  fmt="CSV", filters={"period": "2026-01"}, actor="user-1")
         assert export.status == "DONE" and export.exported_by == "user-1"
         assert export.file_ref and export.file_ref.endswith(".csv")
+        # KAUD-002: el archivo debe existir físicamente con contenido real
+        filename, content = reporting_service.get_export_file(db_session, export_id=str(export.id), company_id=COMPANY)
+        assert filename == export.file_ref
+        assert content.startswith(b"id,") and len(content) > 20  # CSV con contenido real
+        # el evento de exportación queda auditado (KAUD-001)
+        assert db_session.query(AuditEvent).filter(AuditEvent.action == "REPORT_EXPORTED").count() >= 1
+
+    def test_export_pdf_genera_archivo(self, db_session) -> None:
+        _make_sales_invoice(db_session, total=1000.0)
+        export = reporting_service.create_export(db_session, company_id=COMPANY, report_key="executive_ventas",
+                                                 fmt="PDF", actor="user-1")
+        assert export.file_ref and export.file_ref.endswith(".pdf")
+        _, content = reporting_service.get_export_file(db_session, export_id=str(export.id), company_id=COMPANY)
+        assert content.startswith(b"%PDF"), "el PDF debe ser un archivo PDF real (ReportLab)"
+
+    def test_export_isolada_por_tenant(self, db_session) -> None:
+        _make_sales_invoice(db_session, total=1000.0)
+        export = reporting_service.create_export(db_session, company_id=COMPANY, report_key="executive_ventas",
+                                                 fmt="CSV", actor="user-1")
+        with pytest.raises(NotFoundError):
+            reporting_service.get_export_file(db_session, export_id=str(export.id), company_id=OTHER)
 
     def test_export_invalid_format(self, db_session) -> None:
         with pytest.raises(KontrolError):
@@ -159,6 +180,20 @@ class TestExportacionYJobs:
         assert job.status == "PENDING"
         reporting_service.run_job(db_session, company_id=COMPANY, job_id=str(job.id))
         assert job.status == "DONE" and job.result_ref is not None
+
+    def test_jobs_list(self, db_session) -> None:
+        """KAUD-003: lista de jobs por tenant (GET /reporting/jobs)."""
+        from app.modules.reporting.models import ReportJob
+
+        db_session.add(ReportJob(company_id=COMPANY, report_key="executive_ventas",
+                                 params="{}", status="DONE", result_ref="x.out"))
+        db_session.add(ReportJob(company_id=OTHER, report_key="executive_ventas",
+                                 params="{}", status="DONE", result_ref="y.out"))
+        db_session.flush()
+        from sqlalchemy import select
+
+        mine = db_session.execute(select(ReportJob).where(ReportJob.company_id == COMPANY)).scalars().all()
+        assert len(mine) == 1  # solo los del propio tenant
 
 
 class TestAuditoriaYMultiempresa:

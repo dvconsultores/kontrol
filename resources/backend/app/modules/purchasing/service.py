@@ -14,6 +14,7 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -45,6 +46,16 @@ from app.modules.purchasing.models import (
     TripleMatch,
     Withholding,
 )
+from app.shared import audit as audit_service
+
+
+def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+           company_id: str, actor: str | None = None, **kw: Any) -> None:
+    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+    audit_service.record_audit(
+        db, action=action, entity_type=entity_type, entity_id=entity_id,
+        company_id=company_id, user_id=actor, source="API", **kw,
+    )
 
 # --------------------------------------------------------------------------- #
 # Máquinas de estado (DOC-03 §13)
@@ -258,6 +269,8 @@ def transition_order(db: Session, *, order: PurchaseOrder, target: str, actor: s
     if target == "APPROVED":
         order.approval_ref = approval_ref or order.approval_ref
     db.flush()
+    _audit(db, action="PURCHASE_ORDER_TRANSITIONED", entity_type="PurchaseOrder", entity_id=str(order.id),
+           company_id=order.company_id, actor=actor, after={"target": order.status})
     return order
 
 
@@ -343,6 +356,8 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
     receipt.updated_at = datetime.now(UTC)
     db.flush()
     _sync_order_status(db, receipt.order_id)
+    _audit(db, action="RECEIPT_ACCEPTED", entity_type="GoodsReceipt", entity_id=str(receipt.id),
+           company_id=receipt.company_id, actor=actor, after={"order_id": str(receipt.order_id)})
     return receipt
 
 
@@ -426,6 +441,8 @@ def transition_invoice(db: Session, *, invoice: SupplierInvoice, target: str, ac
     invoice.status = target
     invoice.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="SUPPLIER_INVOICE_TRANSITIONED", entity_type="SupplierInvoice", entity_id=str(invoice.id),
+           company_id=invoice.company_id, actor=actor, after={"target": invoice.status, "total": float(invoice.total or 0.0)})
     return invoice
 
 
@@ -469,6 +486,8 @@ def post_invoice(db: Session, *, invoice: SupplierInvoice, actor: str | None = N
     invoice.status = "POSTED"
     invoice.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="SUPPLIER_INVOICE_POSTED", entity_type="SupplierInvoice", entity_id=str(invoice.id),
+           company_id=invoice.company_id, actor=actor, after={"total": float(invoice.total or 0.0)})
     return invoice
 
 
@@ -485,6 +504,8 @@ def reverse_invoice(db: Session, *, invoice: SupplierInvoice, actor: str | None 
     invoice.reversed_by_id = actor
     invoice.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="SUPPLIER_INVOICE_REVERSED", entity_type="SupplierInvoice", entity_id=str(invoice.id),
+           company_id=invoice.company_id, actor=actor)
     return invoice
 
 
@@ -530,6 +551,8 @@ def post_credit_note(db: Session, *, note: SupplierCreditNote) -> SupplierCredit
     note.status = "POSTED"
     note.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="SUPPLIER_CREDIT_NOTE_POSTED", entity_type="SupplierCreditNote", entity_id=str(note.id),
+           company_id=note.company_id, actor=None, after={"amount": float(note.amount)})
     return note
 
 
@@ -571,6 +594,8 @@ def transition_payment(db: Session, *, payment: Payment, target: str, actor: str
     if target in ("APPROVED", "REJECTED"):
         payment.approver_id = actor
     db.flush()
+    _audit(db, action="PAYMENT_TRANSITIONED", entity_type="Payment", entity_id=str(payment.id),
+           company_id=payment.company_id, actor=actor, after={"target": payment.status, "amount": float(payment.amount)})
     return payment
 
 
@@ -640,6 +665,8 @@ def apply_source(db: Session, *, company_id: str, source_type: str, source_id: s
     db.add(app)
     db.flush()
     _sync_invoice_paid(db, target_open_item_id=str(target.id))
+    _audit(db, action="CXP_APPLICATION", entity_type="OpenItem", entity_id=str(target_open_item_id),
+           company_id=company_id, actor=actor, after={"source_type": source_type, "amount": float(amount)})
     return app
 
 
@@ -686,6 +713,8 @@ def transition_withholding(db: Session, *, withholding: Withholding, target: str
     withholding.status = target
     withholding.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="WITHHOLDING_TRANSITIONED", entity_type="Withholding", entity_id=str(withholding.id),
+           company_id=withholding.company_id, actor=None, after={"target": withholding.status})
     return withholding
 
 

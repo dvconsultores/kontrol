@@ -43,7 +43,7 @@ class SalesQuoteLine(UUIDMixin, TimestampMixin, Base):
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
     unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
-    discount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    discount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     tax_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
 
@@ -54,7 +54,7 @@ class SalesOrder(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     customer_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
     warehouse_id: Mapped[str | None] = mapped_column(ForeignKey("warehouses.id"), nullable=True)
     credit_decision: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON: límite/bloqueo/margen
-    margin: Mapped[float | None] = mapped_column(Float, nullable=True)
+    margin: Mapped[float | None] = mapped_column(Numeric(14, 6), nullable=True)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
     approval_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -67,7 +67,7 @@ class SalesOrderLine(UUIDMixin, TimestampMixin, Base):
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
     unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
-    discount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    discount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     tax_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
     needs_inventory: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -156,7 +156,7 @@ class SalesCreditNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     invoice_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
     number: Mapped[str] = mapped_column(String(120), nullable=False)
     amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
-    applied: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    applied: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
 

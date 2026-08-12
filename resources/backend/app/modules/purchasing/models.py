@@ -68,7 +68,7 @@ class QuoteLine(UUIDMixin, TimestampMixin, Base):
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
     unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
-    discount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    discount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     delivery_days: Mapped[int | None] = mapped_column(nullable=True)
     tax_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
@@ -96,7 +96,7 @@ class PurchaseOrderLine(UUIDMixin, TimestampMixin, Base):
     quantity_ordered: Mapped[float] = mapped_column(Float, nullable=False)
     quantity_received: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
-    discount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    discount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     tax_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
     needs_inventory: Mapped[bool] = mapped_column(nullable=False, default=True)
     snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)  # copia histórica JSON (P4/P8)
@@ -178,7 +178,7 @@ class TripleMatch(UUIDMixin, TimestampMixin, Base):
     invoice_line_id: Mapped[str | None] = mapped_column(ForeignKey("supplier_invoice_lines.id"), nullable=True)
     variance_qty: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     variance_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
-    variance_tax: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    variance_tax: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     resolution: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
     approved_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
@@ -214,7 +214,7 @@ class SupplierCreditNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     invoice_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
     number: Mapped[str] = mapped_column(String(120), nullable=False)
     amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
-    applied: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    applied: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
 
@@ -230,8 +230,8 @@ class OpenItem(UUIDMixin, TimestampMixin, Base):
     source_document: Mapped[str | None] = mapped_column(String(200), nullable=True)
     item_type: Mapped[str] = mapped_column(String(16), nullable=False, default="PAYABLE")  # PAYABLE / CREDIT
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
-    original: Mapped[float] = mapped_column(Float, nullable=False)
-    applied: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    original: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
+    applied: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="OPEN")  # OPEN / CLOSED
 
@@ -245,7 +245,7 @@ class Payment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     date: Mapped[date | None] = mapped_column(Date, nullable=True)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
-    applied: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    applied: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
     approver_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     idempotency_key: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
@@ -286,7 +286,7 @@ class Advance(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     direction: Mapped[str] = mapped_column(String(8), nullable=False, default="OUT")
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
-    available: Mapped[float] = mapped_column(Float, nullable=False)
+    available: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
 
 

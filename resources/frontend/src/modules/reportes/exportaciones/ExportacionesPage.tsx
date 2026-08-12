@@ -7,11 +7,22 @@ import type { ReportExportSummary, ReportJobSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
+import { IconButton } from "@/components/IconButton";
+import { Download } from "lucide-react";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 
 const exportHelper = createColumnHelper<ReportExportSummary>();
 const jobHelper = createColumnHelper<ReportJobSummary>();
+
+function downloadExport(id: string): void {
+  // El backend sirve el archivo real (KAUD-002): GET /reporting/exports/{id}/download
+  const url = `/api/v1/reporting/exports/${id}/download`;
+  const a = document.createElement("a");
+  a.href = url;
+  a.rel = "noopener";
+  a.click();
+}
 
 export function ExportacionesPage(): React.JSX.Element {
   const queryClient = useQueryClient();
@@ -24,7 +35,7 @@ export function ExportacionesPage(): React.JSX.Element {
   });
   const jobs = useQuery({
     queryKey: ["reporting", "jobs"],
-    queryFn: async () => ({ items: [] as ReportJobSummary[] }),
+    queryFn: () => apiFetch<{ items: ReportJobSummary[] }>("/reporting/jobs"),
     retry: false,
   });
 
@@ -45,6 +56,16 @@ export function ExportacionesPage(): React.JSX.Element {
     exportHelper.accessor("exported_by", { header: "Exportado por" }),
     exportHelper.accessor("exported_at", { header: "Fecha" }),
     exportHelper.accessor("status", { header: "Estado" }),
+    exportHelper.display({
+      id: "download",
+      header: "Acción",
+      cell: ({ row }) => (
+        <IconButton label={`Descargar ${row.original.file_ref ?? "exportación"}`}
+                    title="Descargar archivo"
+                    icon={Download}
+                    onClick={() => downloadExport(row.original.id)} />
+      ),
+    }),
   ];
 
   const jobColumns = [
@@ -76,6 +97,7 @@ export function ExportacionesPage(): React.JSX.Element {
           columns={jobColumns}
           data={jobs.data?.items ?? []}
           loading={jobs.isLoading}
+          error={jobs.isError ? "No fue posible cargar los trabajos." : null}
           getRowId={(row) => row.id}
           emptyTitle="Sin trabajos"
           emptyDescription="Ejecute un job para ver su estado."
@@ -90,7 +112,7 @@ export function ExportacionesPage(): React.JSX.Element {
         error={exportsData.isError ? "No fue posible cargar las exportaciones." : null}
         getRowId={(row) => row.id}
         emptyTitle="Sin exportaciones"
-        emptyDescription="Exporte un reporte desde el centro de reportes."
+        emptyDescription="Exporte un reporte desde el centro de reportes y descárguelo aquí."
       />
     </PageContent>
   );

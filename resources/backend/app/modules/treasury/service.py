@@ -12,6 +12,7 @@ pago/cobro como POSTED y genera la transacción de caja o banco (idempotente).
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -36,6 +37,16 @@ from app.modules.treasury.models import (
     TreasuryInstrument,
     TreasuryTransfer,
 )
+from app.shared import audit as audit_service
+
+
+def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+           company_id: str, actor: str | None = None, **kw: Any) -> None:
+    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+    audit_service.record_audit(
+        db, action=action, entity_type=entity_type, entity_id=entity_id,
+        company_id=company_id, user_id=actor, source="API", **kw,
+    )
 
 # --------------------------------------------------------------------------- #
 # Máquinas de estado (DOC-02 §10 / DOC-03 §13)
@@ -260,6 +271,10 @@ def arqueo_session(db: Session, *, session_id: str, counted_amount: float,
         session.audit = f'{{"arqueo_notes": {notes!r}}}'
     session.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="CASH_SESSION_ARCHED", entity_type="CashSession", entity_id=str(session.id),
+           company_id=session.company_id, actor=None,
+           after={"expected": float(session.expected_amount or 0), "counted": float(session.counted_amount or 0),
+                  "difference": float(session.difference or 0)})
     return session
 
 
@@ -302,6 +317,9 @@ def close_session(db: Session, *, session_id: str, difference_approved: bool = F
     session.audit = f'{{"difference_approved": {str(difference_approved).lower()}, "closed_by": {actor!r}}}'
     session.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="CASH_SESSION_CLOSED", entity_type="CashSession", entity_id=str(session.id),
+           company_id=session.company_id, actor=actor,
+           after={"difference": float(session.difference or 0), "approved": difference_approved})
     return session
 
 
@@ -624,6 +642,8 @@ def transition_reconciliation(db: Session, *, reconciliation_id: str, target: st
         rec.approved_by = actor
         rec.approved_at = date.today()
     db.flush()
+    _audit(db, action="RECONCILIATION_TRANSITIONED", entity_type="Reconciliation", entity_id=str(rec.id),
+           company_id=rec.company_id, actor=actor, after={"target": rec.status})
     return rec
 
 

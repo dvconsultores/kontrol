@@ -15,19 +15,29 @@ import csv
 import io
 import json
 from datetime import UTC, date, datetime
+from pathlib import Path
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.errors import KontrolError, NotFoundError
 from app.modules.purchasing import service as ap_service
 from app.modules.reporting.models import ReportExport, ReportJob
+from app.shared import audit as audit_service
 
 
 def _company(company_id: str | None, *, obj: str) -> str:
     if not company_id:
         raise KontrolError(code="COMPANY_REQUIRED", message="Se requiere la empresa para esta operación", status_code=422)
     return company_id
+
+
+def _exports_dir() -> Path:
+    """Directorio de archivos de exportación bajo KONTROL_STORAGE_PATH."""
+    d = Path(get_settings().storage_path) / "exports"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
 
 
 # --------------------------------------------------------------------------- #
@@ -173,26 +183,83 @@ def _to_csv(rows: list[dict]) -> str:
     return buf.getvalue()
 
 
+def _render_pdf(report_key: str, period: str, rows: list[dict]) -> bytes:
+    """Genera un PDF real con ReportLab (platypus): encabezado + tabla (KAUD-002)."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import landscape, letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=landscape(letter), rightMargin=15 * mm,
+                            leftMargin=15 * mm, topMargin=15 * mm, bottomMargin=15 * mm)
+    styles = getSampleStyleSheet()
+    story = [Paragraph(f"KONTROL — Reporte: {report_key}", styles["Title"]),
+             Paragraph(f"Período: {period or '—'} · Generado: {datetime.now(UTC).isoformat()}", styles["Normal"]),
+             Spacer(1, 6 * mm)]
+    if rows:
+        headers = list(rows[0].keys())
+        data = [headers] + [[str(r.get(h, "")) for h in headers] for r in rows]
+        table = Table(data, repeatRows=1)
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f4e79")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, 0), 8),
+            ("FONTSIZE", (0, 1), (-1, -1), 7),
+            ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f2f2f2")]),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ]))
+        story.append(table)
+    else:
+        story.append(Paragraph("Sin datos para el reporte.", styles["Normal"]))
+    doc.build(story)
+    return buf.getvalue()
+
+
 def create_export(db: Session, *, company_id: str, report_key: str, fmt: str = "CSV",
                   filters: dict | None = None, actor: str | None = None) -> ReportExport:
-    """Exporta un reporte de forma **auditada** (FR-009-020)."""
+    """Exporta un reporte de forma **auditada** con archivo real (FR-009-020, KAUD-002).
+
+    Genera el contenido (CSV/PDF), lo persiste bajo `KONTROL_STORAGE_PATH/exports/`
+    y registra el evento de auditoría de la exportación.
+    """
     company_id = _company(company_id, obj="exportación")
     if fmt not in ("CSV", "PDF"):
         raise KontrolError(code="INVALID_FORMAT", message="Formato inválido (CSV/PDF)", status_code=422)
     data = report(db, company_id=company_id, key=report_key, period=(filters or {}).get("period", ""))
     rows = [dict(r) for r in (data.get("rows") or [])]
-    file_ref = None
-    if fmt == "CSV":
-        _to_csv(rows)  # contenido generado; se registra metadata auditada (P5)
-        file_ref = f"report-{report_key}-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}.csv"
-    else:
-        file_ref = f"report-{report_key}-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}.pdf"
+    stamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
+    file_ref = f"report-{report_key}-{stamp}.{fmt.lower()}"
+
+    content = _to_csv(rows).encode("utf-8") if fmt == "CSV" else _render_pdf(report_key, (filters or {}).get("period", ""), rows)
+    target = _exports_dir() / file_ref
+    target.write_bytes(content)
+
     export = ReportExport(company_id=company_id, report_key=report_key, format=fmt,
                           filters=json.dumps(filters or {}), file_ref=file_ref, exported_by=actor,
                           exported_at=datetime.now(UTC), status="DONE", created_by=actor)
     db.add(export)
     db.flush()
+    audit_service.record_audit(db, action="REPORT_EXPORTED", entity_type="ReportExport",
+                               entity_id=str(export.id), company_id=company_id, user_id=actor,
+                               source="API", after={"report_key": report_key, "format": fmt, "file_ref": file_ref})
     return export
+
+
+def get_export_file(db: Session, *, export_id: str, company_id: str) -> tuple[str, bytes]:
+    """Devuelve (filename, content) de una exportación del propio tenant (KAUD-002)."""
+    export = db.get(ReportExport, export_id)
+    if not export or export.company_id != company_id:
+        raise NotFoundError(code="EXPORT_NOT_FOUND", message="Exportación no encontrada")
+    if not export.file_ref:
+        raise NotFoundError(code="EXPORT_FILE_MISSING", message="La exportación no tiene archivo asociado")
+    path = _exports_dir() / export.file_ref
+    if not path.exists():
+        raise NotFoundError(code="EXPORT_FILE_MISSING", message="El archivo de la exportación no existe")
+    return path.name, path.read_bytes()
 
 
 # --------------------------------------------------------------------------- #

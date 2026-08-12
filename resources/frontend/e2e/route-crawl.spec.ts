@@ -34,6 +34,10 @@ test.describe("Crawler de rutas", () => {
 
     await login(page);
 
+    // esperar el render del Sidebar antes de recolectar enlaces (evita el race
+    // KAUD-010: el nav puede tardar tras el login)
+    await expect(page.locator("nav a[href^='/']").first()).toBeVisible({ timeout: 15_000 });
+
     // extraer rutas del menú lateral (nav) — únicas, internas
     const links = await page.locator('nav a[href^="/"]').evaluateAll((els) =>
       [...new Set(

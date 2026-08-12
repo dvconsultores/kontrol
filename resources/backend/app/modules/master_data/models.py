@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -93,7 +93,7 @@ class Customer(UUIDMixin, TimestampMixin, Base):
     price_list: Mapped[str | None] = mapped_column(String(120), nullable=True)
     payment_term: Mapped[str | None] = mapped_column(String(120), nullable=True)
     credit_days: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    credit_limit: Mapped[float | None] = mapped_column(Float, nullable=True)
+    credit_limit: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
     blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     block_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
 

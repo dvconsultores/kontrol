@@ -72,3 +72,6 @@ Thumbs.db
 
 # Evidencia binaria local (no versionar evidencia generada sin aprobación)
 evidence/generated/
+
+# Salida de trabajo del crawler de auditoría (duplicada en qa/audits/<RUN>)
+resources/frontend/qa/
