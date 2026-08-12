@@ -217,17 +217,20 @@ Formato según Spec 012 §80 · Severidad según §79.
 
 | Campo | Valor |
 |---|---|
-| Severidad | **MEDIUM** |
+| Severidad | **MEDIUM** (RESUELTO — Ola 3) |
 | Módulo | Seguridad / Identity |
 | Requisito | Recuperación de contraseña (autoservicio) |
 | API | `POST /auth/password-reset/request`, `POST /auth/password-reset/confirm` (existen) |
 | Frontend | `LoginPage` (sin enlace "olvidé contraseña") |
 
-**Evidencia:** `grep -rln "password-reset" src --include=*.tsx` → **0 resultados**. No hay página ni enlace de recuperación; `LoginPage` no lo referencia. `CambiarContrasenaPage` solo cubre cambio con sesión.
+**Evidencia del hallazgo:** `grep -rln "password-reset" src --include=*.tsx` → **0 resultados**. No había página ni enlace de recuperación; `LoginPage` no lo referenciaba. `CambiarContrasenaPage` solo cubre cambio con sesión.
 
-**Impacto:** un usuario que olvida su contraseña no puede recuperarla por autoservicio (solo el administrador vía UI de usuarios, o SQL manual). Depende del modelo de soporte.
+**Impacto:** un usuario que olvida su contraseña no podía recuperarla por autoservicio (solo el administrador vía UI de usuarios, o SQL manual).
 
-**Recomendación:** añadir página de solicitud/confirmación de reset o decidir explícitamente que el reset es admin-only (documentarlo).
+**Remediación (Ola 3):**
+- `src/pages/ResetPasswordPage.tsx` — flujo en dos pasos (solicitud → confirmación con token; en modo fundación el token se muestra en pantalla).
+- Ruta `/reset-password` en `src/app/router.tsx` y enlace "¿Olvidó su contraseña?" en `LoginPage`.
+- `tests/test_password_reset.py` — ciclo completo (solicitud → token → confirmación → login con nueva credencial) y no-revelación de existencia (401 uniforme).
 
 ## KAUD-013 — `POST /auth/refresh` devuelve 500 (comparación de datetimes naive/aware) — renovación de sesión rota
 
@@ -271,9 +274,9 @@ Formato según Spec 012 §80 · Severidad según §79.
 
 # REMEDIACIÓN APLICADA (autorizada) — Re-auditoría 2026-08-12
 
-Estado tras implementar el plan (`remediation-plan.md`): **pytest 214 · vitest 193 ·
-tsc/eslint/ruff/mypy OK · E2E in-process 20/20 · crawler 65/65 PASS con 28 errores de
-consola (antes 132, todos refresh 500 → ahora solo 401 de rotación/sin-sesión).**
+Estado tras implementar el plan (`remediation-plan.md`): **pytest 221 · vitest 194 ·
+tsc/eslint/ruff/mypy OK · E2E in-process 20/20 · crawler 65/65 PASS · axe 13/13 ·
+responsive 162/162 · cross-browser chromium/firefox 65/65 + webkit 2/2 · idempotencia 6/6 · perf 12/12.**
 
 | Hallazgo | Tarea | Estado post-remediación |
 |---|---|---|
@@ -286,11 +289,18 @@ consola (antes 132, todos refresh 500 → ahora solo 401 de rotación/sin-sesió
 | KAUD-007 (LOW) 41 orphans | T-211 reclasificados en `orphan-endpoints-classification.md` (GAPs → Ola 2) | **DOCUMENTADO** |
 | KAUD-010 (LOW) race route-crawl test | T-208 espera `nav a` visible | **RESUELTO** |
 | KAUD-011 (HIGH) precisión monetaria incompleta | T-201 migración `0014_numeric_money_2` (18 cols dinero → Numeric) | **RESUELTO** — 0 columnas de dinero en Float |
-| KAUD-012 (MEDIUM) reset sin UI | Documentado; decisión de alcance pendiente (admin-only vs página) | **PENDIENTE (decisión)** |
+| KAUD-012 (MEDIUM) reset sin UI | T-223 página `ResetPasswordPage` + ruta + enlace + `tests/test_password_reset.py` | **RESUELTO** — flujo completo 2/2 |
 | KAUD-013 (HIGH) refresh 500 | T-222 `_as_utc` (naive/aware) + tests de rotación | **RESUELTO** — repro `refresh: 200`; 0× 500 en crawler |
 | KAUD-205 (MEDIUM) dashboard auditoría | T-205 filtros entity_type/action en `ReportesAuditoriaPage` | **RESUELTO** |
 
-**Pendientes de ambiente autorizado (Ola 2-4):** PostgreSQL real (alembic check/
-backup-restore/drift), validación normativa fiscal/regulatoria, responsive/axe,
-browsers reales (Edge/Opera/Safari), rendimiento P50/P95, concurrencia/idempotencia
-a escala, KAUD-012 (decisión de alcance), y los GAPs de negocio sin UI (Ola 2).
+**Olas 2-4 ejecutadas (2026-08-12):**
+- **T-216 Accesibilidad (axe-core / WCAG 2.2 AA):** 13/13 PASS (login + 12 páginas autenticadas) — `e2e/accessibility.spec.ts`.
+- **T-217 Responsive:** 162/162 PASS · 0 scroll horizontal (27 rutas × 6 viewports 320×568…1920×1080) — `resources/frontend/qa/audits/KONTROL-AUDIT-20260812-RESPONSIVE/` (`audit-responsive-crawler.mjs`).
+- **T-218 Cross-browser:** chromium 65/65 · firefox 65/65 (route-crawl) · webkit 2/2 (smoke) — `playwright.config.ts` (proyecto webkit añadido).
+- **T-214 Idempotencia/concurrencia:** `tests/test_idempotency_concurrency.py` 6/6 (pagos, facturas, inventario, doble transición 409, doble aplicación, emisión fiscal).
+- **T-220 Rendimiento (smoke):** 12/12 rutas OK · P95 máx 8 ms (umbral 500 ms) — `qa/perf-smoke.py` + `perf-smoke-results.json`.
+- **KAUD-012 (T-223):** resuelto (ver arriba).
+
+**Pendientes de ambiente autorizado (fuera del sandbox):** PostgreSQL real (alembic check/
+backup-restore/drift), validación normativa fiscal/regulatoria (SENIAT), browsers Edge/Opera,
+rendimiento P50/P95/P99 sobre dataset representativo, y los GAPs de negocio sin UI (Ola 2, T-211).

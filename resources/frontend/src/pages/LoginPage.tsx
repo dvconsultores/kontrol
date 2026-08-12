@@ -125,6 +125,12 @@ export function LoginPage(): React.JSX.Element {
             </Button>
           </div>
         ) : null}
+
+        <div className="mt-4 text-center text-sm">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/reset-password")} className="font-medium text-brand-700">
+            ¿Olvidó su contraseña?
+          </Button>
+        </div>
       </div>
     </div>
   );

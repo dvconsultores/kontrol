@@ -13,6 +13,7 @@ import { DiagnosticoPage } from "@/pages/DiagnosticoPage";
 import { EmpresasPage } from "@/pages/EmpresasPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { MiLicenciaPage } from "@/pages/MiLicenciaPage";
+import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { SetupPage } from "@/pages/SetupPage";
 import { AlmacenesPage } from "@/modules/organizacion/almacenes/AlmacenesPage";
 import { EstablecimientosPage } from "@/modules/organizacion/establecimientos/EstablecimientosPage";
@@ -81,6 +82,11 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPasswordPage />,
     errorElement: <ErrorBoundary />,
   },
   {

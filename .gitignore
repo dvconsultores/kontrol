@@ -75,3 +75,7 @@ evidence/generated/
 
 # Salida de trabajo del crawler de auditoría (duplicada en qa/audits/<RUN>)
 resources/frontend/qa/
+
+# Artefactos de ejecución de Playwright (reportes y resultados locales)
+resources/frontend/test-results/
+resources/frontend/playwright-report/

@@ -26,6 +26,9 @@ async function login(page: Page): Promise<void> {
 
 test.describe("Crawler de rutas", () => {
   test("recorre el menú sin 404, sin errores de consola y con H1", async ({ page }) => {
+    // 66 rutas × carga + networkidle supera el timeout por defecto (30s),
+    // especialmente en Firefox/WebKit: timeout ampliado.
+    test.setTimeout(240_000);
     const consoleErrors: string[] = [];
     page.on("console", (msg) => {
       if (msg.type() === "error") consoleErrors.push(msg.text());

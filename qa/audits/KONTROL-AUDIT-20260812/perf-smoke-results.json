@@ -1,0 +1,104 @@
+{
+  "tool": "T-220 perf-smoke",
+  "generated_at": "2026-08-12T19:33:30.960735+00:00",
+  "overall_ok": true,
+  "results": {
+    "identidad": {
+      "route": "/api/v1/auth/me",
+      "samples": 40,
+      "p50_ms": 3.7,
+      "p95_ms": 5.4,
+      "threshold_ms": 500.0,
+      "ok": true
+    },
+    "dashboard": {
+      "route": "/api/v1/reporting/dashboard",
+      "samples": 40,
+      "p50_ms": 6.0,
+      "p95_ms": 8.0,
+      "threshold_ms": 500.0,
+      "ok": true
+    },
+    "organizacion": {
+      "route": "/api/v1/organization/companies",
+      "samples": 40,
+      "p50_ms": 3.3,
+      "p95_ms": 4.6,
+      "threshold_ms": 500.0,
+      "ok": true
+    },
+    "maestros": {
+      "route": "/api/v1/maestros/terceros",
+      "samples": 40,
+      "p50_ms": 3.6,
+      "p95_ms": 5.4,
+      "threshold_ms": 500.0,
+      "ok": true
+    },
+    "inventario": {
+      "route": "/api/v1/inventory/balances",
+      "samples": 40,
+      "p50_ms": 3.8,
+      "p95_ms": 5.1,
+      "threshold_ms": 500.0,
+      "ok": true
+    },
+    "compras": {
+      "route": "/api/v1/purchasing/supplier-invoices",
+      "samples": 40,
+      "p50_ms": 3.8,
+      "p95_ms": 5.8,
+      "threshold_ms": 500.0,
+      "ok": true
+    },
+    "ventas": {
+      "route": "/api/v1/sales/invoices",
+      "samples": 40,
+      "p50_ms": 3.8,
+      "p95_ms": 5.1,
+      "threshold_ms": 500.0,
+      "ok": true
+    },
+    "tesoreria": {
+      "route": "/api/v1/treasury/cash-sessions",
+      "samples": 40,
+      "p50_ms": 3.8,
+      "p95_ms": 5.0,
+      "threshold_ms": 500.0,
+      "ok": true
+    },
+    "fiscal": {
+      "route": "/api/v1/fiscal/control-batches",
+      "samples": 40,
+      "p50_ms": 3.7,
+      "p95_ms": 5.3,
+      "threshold_ms": 500.0,
+      "ok": true
+    },
+    "regulatorio": {
+      "route": "/api/v1/regulatory/authorities",
+      "samples": 40,
+      "p50_ms": 3.6,
+      "p95_ms": 5.5,
+      "threshold_ms": 500.0,
+      "ok": true
+    },
+    "reportes": {
+      "route": "/api/v1/reporting/jobs",
+      "samples": 40,
+      "p50_ms": 3.8,
+      "p95_ms": 5.2,
+      "threshold_ms": 500.0,
+      "ok": true
+    },
+    "licenciamiento": {
+      "route": "/api/v1/license/status",
+      "samples": 40,
+      "p50_ms": 2.9,
+      "p95_ms": 4.8,
+      "threshold_ms": 500.0,
+      "ok": true
+    }
+  },
+  "failures": []
+}
