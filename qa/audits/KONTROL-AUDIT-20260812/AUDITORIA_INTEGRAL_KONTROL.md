@@ -7,7 +7,7 @@
 | Rama | `develop` (remediación aplicada con autorización expresa) |
 | Spec | `specs/012-auditoria-integral-e2e/` |
 | Estado | **AUDITORÍA COMPLETADA + REMEDIACIÓN OLAS 1-5 APLICADA + RE-AUDITORÍA** · Pendientes solo de ambiente autorizado (PostgreSQL real, normativa fiscal, Edge/Opera) |
-| Método | Estática + dinámica (pytest 223, vitest 210, tsc, eslint, ruff, mypy, migraciones) + E2E funcional (20/20) + crawler Playwright chromium/firefox (65/65) + webkit smoke (2/2) + axe WCAG 2.2 AA (13/13) + responsive (162/162) + idempotencia (6/6) + perf smoke (12/12) + code-splitting (bundle 375 KB) + GAPs UI (T-211) |
+| Método | Estática + dinámica (pytest 223, vitest 210, tsc, eslint, ruff, mypy, migraciones) + E2E funcional (20/20) + crawler Playwright chromium/firefox (**71/71**) + webkit smoke (2/2) + axe WCAG 2.2 AA (**19/19**) + responsive (**198/198**) + idempotencia (6/6) + perf smoke (12/12) + code-splitting (bundle 375 KB) + GAPs UI (T-211) |
 
 ---
 
@@ -36,8 +36,10 @@
 | Columnas dinero Float restantes | **0** (18 migradas; 36 de cantidad/tasa según ADR-012/T-202) |
 | Bundle JS (code-splitting T-219) | **375 KB** gzip 115 KB (antes 724 KB) · 87 chunks por ruta |
 | E2E funcional de proceso | **20/20 PASS** (auditoría incluida) |
-| Crawler rutas (re-auditoría) | **65/65 PASS** · 0 404 · 0 page errors · **28 console errors (antes 132, todos refresh 500 → ahora solo 401 de rotación/sin-sesión)** |
-| pytest / vitest / tsc / eslint / ruff / mypy | **221 ✓ / 194 ✓ / ✓ / ✓ / ✓ / ✓** |
+| Crawler rutas (re-auditoría Ola 5) | **71/71 PASS** (65 + 6 nuevas) · 0 404 · 0 page errors · **29 console errors (solo 401 de rotación/sin-sesión, sin 500)** |
+| pytest / vitest / tsc / eslint / ruff / mypy | **223 ✓ / 210 ✓ / ✓ / ✓ / ✓ / ✓** |
+| Accesibilidad (axe-core WCAG 2.2 AA) | **19/19 PASS** (login + 18 páginas, incluidas las 6 nuevas) |
+| Responsive (33 rutas × 6 viewports) | **198/198 PASS** · 0 scroll horizontal |
 | Accesibilidad (axe-core WCAG 2.2 AA) | **13/13 PASS** (login + 12 páginas) |
 | Responsive (27 rutas × 6 viewports) | **162/162 PASS** · 0 scroll horizontal |
 | Cross-browser | chromium **65/65** · firefox **65/65** · webkit **2/2** |
@@ -102,9 +104,9 @@
 | Unit (pytest 223 / vitest 210) | ✓ |
 | Integration (API in-process E2E) | **20/20** |
 | Contract (G1-G4 completitud) | ✓ 210 casos vitest |
-| E2E Playwright | chromium **65/65** · firefox **65/65** (route-crawl) · webkit **2/2** (smoke) |
-| Accesibilidad (axe-core / WCAG 2.2 AA) | **13/13 PASS** (`e2e/accessibility.spec.ts`) |
-| Responsive (320×568…1920×1080) | **162/162 PASS** · 0 scroll horizontal (`audit-responsive-crawler.mjs`) |
+| E2E Playwright | chromium **71/71** · firefox **65/65** (route-crawl) · webkit **2/2** (smoke) |
+| Accesibilidad (axe-core / WCAG 2.2 AA) | **19/19 PASS** (login + 18 páginas, incluidas las 6 nuevas) (`e2e/accessibility.spec.ts`) |
+| Responsive (320×568…1920×1080) | **198/198 PASS** (33 rutas × 6 viewports) · 0 scroll horizontal (`audit-responsive-crawler.mjs`) |
 | Idempotencia/concurrencia | **6/6 PASS** (`test_idempotency_concurrency.py`) |
 | Rendimiento (smoke) | **12/12 OK** · P95 máx 8 ms (`qa/perf-smoke.py`) |
 | Code-splitting (T-219) | bundle **375 KB** (gzip 115 KB) · 87 chunks por ruta |
@@ -178,6 +180,6 @@ autorizado** (fuera del sandbox), sin código pendiente de las Olas 1-5:
 ## 17. CONVERGENCIA (`/speckit.converge`)
 
 - Olas 1-5 del plan de remediación: **implementadas y validadas** (Ola 1: T-201..T-211, T-222; Ola 3: T-214, T-216, T-217, T-218, T-220, T-223; Ola 5: T-211 GAPs UI, T-219, T-221, T-202).
-- Evidencia: `route-crawl-results-REAUDIT.json` (65/65), axe 13/13, responsive 162/162, cross-browser chromium/firefox/webkit, idempotencia 6/6, perf smoke 12/12 (`perf-smoke-results.json`), E2E 20/20, pytest 223, vitest 210, bundle 375 KB, `coverage-report.md`, `adr-012-numeric-precision.md`.
+- Evidencia re-auditoría Ola 5 (2026-08-12): crawler **71/71** (crawl-ola5/), axe **19/19**, responsive **198/198** (responsive-results.json), idempotencia 6/6, perf smoke 12/12 (`perf-smoke-results.json`), E2E 20/20, pytest 223, vitest 210, bundle 375 KB, `coverage-report.md`, `adr-012-numeric-precision.md`.
 - Pendiente para el siguiente ciclo (ambiente autorizado): PostgreSQL real, validación normativa SENIAT, Edge/Opera, y detalles por ID sin UI (T-211 residual).
 - Reporte: `AUDITORIA_INTEGRAL_KONTROL.md` · Hallazgos: `findings.md` · Plan: `remediation-plan.md`.

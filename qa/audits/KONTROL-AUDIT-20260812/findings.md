@@ -276,9 +276,10 @@ Bundle principal 375 KB (objetivo < 500 KB). Medir LCP/TTI con dataset real en a
 
 # REMEDIACIÓN APLICADA (autorizada) — Re-auditoría 2026-08-12
 
-Estado tras implementar el plan (`remediation-plan.md`): **pytest 221 · vitest 194 ·
-tsc/eslint/ruff/mypy OK · E2E in-process 20/20 · crawler 65/65 PASS · axe 13/13 ·
-responsive 162/162 · cross-browser chromium/firefox 65/65 + webkit 2/2 · idempotencia 6/6 · perf 12/12.**
+Estado tras implementar el plan (`remediation-plan.md`): **pytest 223 · vitest 210 ·
+tsc/eslint/ruff/mypy OK · E2E in-process 20/20 · crawler 71/71 PASS (re-auditoría Ola 5) ·
+axe 19/19 · responsive 198/198 · cross-browser chromium/firefox 65/65 + webkit 2/2 ·
+idempotencia 6/6 · perf 12/12 · bundle 375 KB (code-splitting).**
 
 | Hallazgo | Tarea | Estado post-remediación |
 |---|---|---|

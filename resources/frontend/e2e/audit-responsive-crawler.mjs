@@ -31,12 +31,16 @@ const VIEWPORTS = [
 // Rutas representativas de todos los módulos
 const ROUTES = [
   "/", "/mi-licencia", "/organizacion/empresas", "/organizacion/sucursales",
-  "/maestros/terceros", "/maestros/productos", "/inventario/existencias",
-  "/inventario/kardex", "/inventario/movimientos", "/inventario/transferencias",
-  "/compras/ordenes", "/compras/facturas", "/compras/cuentas-por-pagar",
+  "/maestros/terceros", "/maestros/productos", "/maestros/atributos",
+  "/inventario/existencias", "/inventario/kardex", "/inventario/movimientos",
+  "/inventario/transferencias", "/inventario/seriales", "/inventario/reservas",
+  "/inventario/tipos-movimiento",
+  "/compras/ordenes", "/compras/facturas", "/compras/cotizaciones",
+  "/compras/cuentas-por-pagar",
   "/ventas/ordenes", "/ventas/facturas", "/ventas/cuentas-por-cobrar",
   "/tesoreria/cajas", "/tesoreria/conciliacion", "/fiscal/configuracion",
-  "/fiscal/numeracion", "/regulatorio/aprobaciones", "/reportes/centro",
+  "/fiscal/numeracion", "/fiscal/lotes-declaracion",
+  "/regulatorio/aprobaciones", "/reportes/centro",
   "/reportes/exportaciones", "/reportes/auditoria", "/seguridad/usuarios",
   "/seguridad/roles", "/auditoria",
 ];
