@@ -34,7 +34,7 @@ const menuTo = [...sidebar.matchAll(/\{\s*to:\s*"([^"]+)",\s*label:\s*"([^"]+)"/
 const routerPaths = [...router.matchAll(/path:\s*"([^"]+)"/g)].map((m) => m[1]);
 const routeSet = new Set(routerPaths);
 
-// imports: import { A, B as C } from "@/path"
+// imports: import { A, B as C } from "@/path"  (solo componentes estáticos)
 const imports: Record<string, string> = {};
 for (const m of router.matchAll(/import\s*\{([^}]+)\}\s*from\s*"@\/([^"]+)"/g)) {
   for (const name of m[1].split(",")) {
@@ -48,9 +48,13 @@ for (const m of router.matchAll(/import\s*\{([^}]+)\}\s*from\s*"@\/([^"]+)"/g)) 
   }
 }
 
-const routeComponents = [...router.matchAll(/(?:path:\s*"([^"]+)"\s*,\s*element:\s*<([A-Za-z0-9_]+)\s*\/>|index:\s*true\s*,\s*element:\s*<([A-Za-z0-9_]+)\s*\/>)/g)].map((m) => ({
+// Rutas con code-splitting (T-219): extraer path + módulo de la página desde
+// el patrón `lazy: () => import("@/...").then((m) => ({ Component: m.X }))`.
+const routePages = [...router.matchAll(
+  /(?:\{\s*path:\s*"([^"]+)"\s*,\s*lazy:\s*\(\)\s*=>\s*import\("([^"]+)"\)|index:\s*true\s*,\s*lazy:\s*\(\)\s*=>\s*import\("([^"]+)"\))/g,
+)].map((m) => ({
   path: m[1] ?? "",
-  component: m[2] ?? m[3],
+  modulePath: m[2] ?? m[3],
 }));
 
 const normalizeMenuRoute = (to: string): string => to.replace(/^\//, "");
@@ -93,12 +97,12 @@ describe("G1: todo menú apunta a una ruta declarada", () => {
 });
 
 // --------------------------------------------------------------------------- //
-// Gate 2 — ruta → componente → archivo existente
+// Gate 2 — ruta → página existente (code-splitting lazy)
 // --------------------------------------------------------------------------- //
 describe("G2: toda ruta tiene página existente", () => {
-  it.each(routeComponents.map((r) => [r.path, r.component] as const))("ruta %s (%s)", (_path, comp) => {
-    const rel = imports[comp];
-    expect(rel, `sin import para ${comp}`).toBeTruthy();
+  it.each(routePages.map((r) => [r.path, r.modulePath] as const))("ruta %s (%s)", (_path, mod) => {
+    const rel = mod.replace(/^@\//, "");
+    expect(rel, `sin módulo para la ruta`).toBeTruthy();
     expect(exists(`${rel}.tsx`) || exists(`${rel}/index.tsx`), `${rel} no existe`).toBe(true);
   });
 });
@@ -118,6 +122,7 @@ const pages = [
   "modules/seguridad/roles/RolesPage.tsx",
   "modules/seguridad/sesiones/SesionesPage.tsx",
   "modules/maestros/perfiles/PerfilesFiscalesPage.tsx",
+  "modules/maestros/atributos/AtributosPage.tsx",
   "modules/maestros/terceros/TercerosPage.tsx",
   "modules/ventas/ordenes/OrdenesVentasPage.tsx",
   "modules/ventas/facturas/FacturasVentasPage.tsx",
@@ -127,6 +132,7 @@ const pages = [
   "modules/ventas/despacho/DespachoPage.tsx",
   "modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage.tsx",
   "modules/compras/ordenes/OrdenesComprasPage.tsx",
+  "modules/compras/cotizaciones/CotizacionesComprasPage.tsx",
   "modules/compras/facturas/FacturasProveedorPage.tsx",
   "modules/compras/devoluciones/DevolucionesComprasPage.tsx",
   "modules/compras/notas/NotasComprasPage.tsx",
@@ -134,10 +140,13 @@ const pages = [
   "modules/inventario/existencias/ExistenciasPage.tsx",
   "modules/inventario/kardex/KardexPage.tsx",
   "modules/inventario/movimientos/MovimientosPage.tsx",
+  "modules/inventario/tipos-movimiento/TiposMovimientoPage.tsx",
   "modules/inventario/transferencias/TransferenciasPage.tsx",
   "modules/inventario/conteos/ConteosPage.tsx",
   "modules/inventario/ajustes/AjustesPage.tsx",
   "modules/inventario/lotes/LotesPage.tsx",
+  "modules/inventario/seriales/SerialesPage.tsx",
+  "modules/inventario/reservas/ReservasPage.tsx",
   "modules/inventario/valorizacion/ValorizacionPage.tsx",
   "modules/regulatorio/aprobaciones/AprobacionesPage.tsx",
   "modules/regulatorio/evaluacion/EvaluacionPage.tsx",
@@ -145,6 +154,7 @@ const pages = [
   "modules/regulatorio/permisos/PermisosPage.tsx",
   "modules/regulatorio/vehiculos/VehiculosPage.tsx",
   "modules/fiscal/emision/EmisionPage.tsx",
+  "modules/fiscal/lotes-declaracion/LotesDeclaracionPage.tsx",
   "modules/licenciamiento/configuracion/ConfiguracionCentralPage.tsx",
 ];
 

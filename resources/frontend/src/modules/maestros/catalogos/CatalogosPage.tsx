@@ -1,12 +1,24 @@
-/** Catálogo — unidades de medida y taxonomía (FR-002-010/030). */
-import { useQuery } from "@tanstack/react-query";
+/** Catálogo — unidades de medida, conversiones y taxonomía (FR-002-010/030/035). */
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { TaxonomyNode, UnitOfMeasure } from "@/api/types";
+import { useNotifications } from "@/app/contexts/NotificationContext";
+import { AsyncButton } from "@/components/AsyncButton";
+import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
+import { TextInput } from "@/components/TextInput";
 
 export function CatalogosPage(): React.JSX.Element {
+  const queryClient = useQueryClient();
+  const { notify } = useNotifications();
+
+  const [convFrom, setConvFrom] = useState("");
+  const [convTo, setConvTo] = useState("");
+  const [convFactor, setConvFactor] = useState("");
+
   const units = useQuery({
     queryKey: ["maestros", "unidades"],
     queryFn: () => apiFetch<UnitOfMeasure[]>("/maestros/catalogos/unidades"),
@@ -17,6 +29,23 @@ export function CatalogosPage(): React.JSX.Element {
     queryFn: () => apiFetch<TaxonomyNode[]>("/maestros/catalogos/taxonomia"),
     retry: false,
   });
+
+  const createConversion = async (): Promise<void> => {
+    if (!convFrom || !convTo) return;
+    try {
+      await apiFetch(`/maestros/catalogos/unidades/${convFrom}/conversiones`, {
+        method: "POST",
+        body: { from_unit_id: convFrom, to_unit_id: convTo, factor: Number(convFactor) || 1, rounding: 4 },
+      });
+      notify({ type: "success", title: "Conversión creada", description: `${convFrom} → ${convTo}` });
+      setConvTo("");
+      setConvFactor("");
+      await queryClient.invalidateQueries({ queryKey: ["maestros", "unidades"] });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "No fue posible crear la conversión";
+      notify({ type: "error", title: "No fue posible crear la conversión", description: message });
+    }
+  };
 
   return (
     <PageContent maxWidth="full">
@@ -39,6 +68,29 @@ export function CatalogosPage(): React.JSX.Element {
               </li>
             ))}
           </ul>
+
+          <form className="mt-4 flex flex-wrap items-end gap-2 border-t border-border-default pt-4" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="De">
+              <select value={convFrom} onChange={(e) => setConvFrom(e.target.value)} className="h-10 w-36 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(units.data ?? []).map((u) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="A">
+              <select value={convTo} onChange={(e) => setConvTo(e.target.value)} className="h-10 w-36 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(units.data ?? []).map((u) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Factor">
+              <TextInput type="number" min="0" step="any" value={convFactor} onChange={(e) => setConvFactor(e.target.value)} placeholder="1" />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={createConversion}>Añadir conversión</AsyncButton>
+          </form>
         </section>
 
         <section className="rounded-lg border border-border-default bg-surface-0 p-5">

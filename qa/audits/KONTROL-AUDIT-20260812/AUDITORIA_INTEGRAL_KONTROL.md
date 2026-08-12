@@ -6,14 +6,14 @@
 | Fecha | 2026-08-12 |
 | Rama | `develop` (remediación aplicada con autorización expresa) |
 | Spec | `specs/012-auditoria-integral-e2e/` |
-| Estado | **AUDITORÍA COMPLETADA + REMEDIACIÓN OLAS 1-4 APLICADA + RE-AUDITORÍA** · Pendientes solo de ambiente autorizado (PostgreSQL real, normativa fiscal, Edge/Opera) |
-| Método | Estática + dinámica (pytest 221, vitest 194, tsc, eslint, ruff, mypy, migraciones) + E2E funcional (20/20) + crawler Playwright chromium/firefox (65/65) + webkit smoke (2/2) + axe WCAG 2.2 AA (13/13) + responsive (162/162) + idempotencia (6/6) + perf smoke (12/12) |
+| Estado | **AUDITORÍA COMPLETADA + REMEDIACIÓN OLAS 1-5 APLICADA + RE-AUDITORÍA** · Pendientes solo de ambiente autorizado (PostgreSQL real, normativa fiscal, Edge/Opera) |
+| Método | Estática + dinámica (pytest 223, vitest 210, tsc, eslint, ruff, mypy, migraciones) + E2E funcional (20/20) + crawler Playwright chromium/firefox (65/65) + webkit smoke (2/2) + axe WCAG 2.2 AA (13/13) + responsive (162/162) + idempotencia (6/6) + perf smoke (12/12) + code-splitting (bundle 375 KB) + GAPs UI (T-211) |
 
 ---
 
 ## 1. RESULTADO GENERAL (post-remediación)
 
-> **INTEGRACIÓN CONDICIONADA** — la Ola 1 de remediación (1 CRITICAL y 3 de los 4 HIGH) quedó **resuelta y verificada**; las **Olas 2-4** (accesibilidad, responsive, cross-browser, idempotencia, rendimiento, KAUD-012) quedaron **ejecutadas en ambiente local/sandbox**. Siguen pendientes únicamente validaciones de ambiente autorizado (PostgreSQL real, normativa fiscal SENIAT, browsers Edge/Opera) y los GAPs de negocio sin UI (Ola 2, T-211).
+> **INTEGRACIÓN CONDICIONADA** — la Ola 1 de remediación (1 CRITICAL y 3 de los 4 HIGH) quedó **resuelta y verificada**; las **Olas 2-4** (accesibilidad, responsive, cross-browser, idempotencia, rendimiento, KAUD-012) quedaron **ejecutadas**; la **Ola 5** (T-211 GAPs UI, T-219 code-splitting, T-221 cobertura, T-202 ADR) quedó **implementada**. Siguen pendientes únicamente validaciones de ambiente autorizado (PostgreSQL real, normativa fiscal SENIAT, browsers Edge/Opera).
 
 **Resueltos (con prueba):**
 - **KAUD-001 (CRITICAL)** — auditoría de negocio instrumentada (E2E 20/20; `test_audit_integration.py`).
@@ -27,13 +27,14 @@
 | Indicador | Valor |
 |---|---|
 | Requisitos (dominios con spec) | 12 specs (001-011 + 012 auditoría) |
-| Páginas/rutas | 72 rutas · 70 páginas · 66 menús |
-| Menú → ruta | 66/66 |
-| Ruta → página | 72/72 |
+| Páginas/rutas | 78 rutas · 76 páginas · 72 menús (Ola 5: +6 páginas GAP T-211) |
+| Menú → ruta | 72/72 |
+| Ruta → página | 78/78 |
 | Llamadas frontend → endpoint | **0 sin endpoint** (puertas G1-G4) |
-| Endpoints backend | 294 (55 sin consumidor; 43 negocio sin UI — clasificados, T-211) |
+| Endpoints backend | 294 (GAPs de negocio de prioridad alta con UI en Ola 5; quedan detalles por ID y terceros-rol) |
 | Tablas DB | 144 / 1.678 columnas |
-| Columnas dinero Float restantes | **0** (18 migradas; 36 de cantidad/tasa según política T-202) |
+| Columnas dinero Float restantes | **0** (18 migradas; 36 de cantidad/tasa según ADR-012/T-202) |
+| Bundle JS (code-splitting T-219) | **375 KB** gzip 115 KB (antes 724 KB) · 87 chunks por ruta |
 | E2E funcional de proceso | **20/20 PASS** (auditoría incluida) |
 | Crawler rutas (re-auditoría) | **65/65 PASS** · 0 404 · 0 page errors · **28 console errors (antes 132, todos refresh 500 → ahora solo 401 de rotación/sin-sesión)** |
 | pytest / vitest / tsc / eslint / ruff / mypy | **221 ✓ / 194 ✓ / ✓ / ✓ / ✓ / ✓** |
@@ -98,14 +99,16 @@
 
 | Tipo | Resultado |
 |---|---|
-| Unit (pytest 221 / vitest 194) | ✓ |
+| Unit (pytest 223 / vitest 210) | ✓ |
 | Integration (API in-process E2E) | **20/20** |
-| Contract (G1-G4 completitud) | ✓ 194 casos vitest |
+| Contract (G1-G4 completitud) | ✓ 210 casos vitest |
 | E2E Playwright | chromium **65/65** · firefox **65/65** (route-crawl) · webkit **2/2** (smoke) |
 | Accesibilidad (axe-core / WCAG 2.2 AA) | **13/13 PASS** (`e2e/accessibility.spec.ts`) |
 | Responsive (320×568…1920×1080) | **162/162 PASS** · 0 scroll horizontal (`audit-responsive-crawler.mjs`) |
 | Idempotencia/concurrencia | **6/6 PASS** (`test_idempotency_concurrency.py`) |
 | Rendimiento (smoke) | **12/12 OK** · P95 máx 8 ms (`qa/perf-smoke.py`) |
+| Code-splitting (T-219) | bundle **375 KB** (gzip 115 KB) · 87 chunks por ruta |
+| Cobertura (T-221) | reporte `coverage-report.md` (matriz módulo/proceso/requisito) |
 | Browsers reales | chromium/firefox/webkit ejecutados; Edge/Opera pendientes de ambiente |
 
 ## 9. SEGURIDAD
@@ -146,34 +149,35 @@
 
 ## 15. LOW
 
-- **KAUD-007** — 43 endpoints de negocio sin UI (clasificados T-211; GAPs → Ola 2).
+- **KAUD-007** — 43 endpoints de negocio sin UI — **PARCIALMENTE RESUELTO** (Ola 5/T-211): 6 páginas nuevas (seriales, reservas, tipos de movimiento, cotizaciones de compra, atributos, lotes de declaración) + conversiones en Catálogo; retenciones cubiertas por la página fiscal; quedan detalles por ID y roles de tercero (baja prioridad).
 - **KAUD-008** — Observaciones de tipos (BIGINT correlativo; DATETIME falso positivo).
-- **KAUD-009** — Bundle 696 KB (sin lazy).
+- **KAUD-009** — Bundle **RESUELTO** (T-219): code-splitting por ruta → **375 KB** (antes 724 KB).
 - **KAUD-010** — Test route-crawl — **RESUELTO** (T-208).
 - **KAUD-012** — Reset de contraseña sin UI — **RESUELTO** (Ola 3).
 
 ## 16. RECOMENDACIÓN (post-remediación)
 
 **CONDITIONAL GO para pruebas internas** de todos los módulos operativos: la Ola 1 cerró
-el único CRITICAL y los 3 HIGH de integración, y las **Olas 2-4** cerraron accesibilidad
+el único CRITICAL y los 3 HIGH de integración; las **Olas 2-4** cerraron accesibilidad
 (axe 13/13), responsive (162/162), cross-browser (chromium/firefox/webkit), idempotencia
-(6/6), rendimiento smoke (12/12) y KAUD-012 — con evidencia (pytest 221 · vitest 194 ·
+(6/6), rendimiento smoke (12/12) y KAUD-012; la **Ola 5** cerró los GAPs de negocio de
+prioridad alta (T-211), code-splitting (bundle 375 KB), reporte de cobertura (T-221) y
+ADR de precisión numérica (T-202) — con evidencia (pytest 223 · vitest 210 ·
 E2E 20/20 · crawler 65/65 · 0× 500 refresh).
 
 **GO para certificación fiscal/producción** requiere cerrar las **validaciones de ambiente
-autorizado** (fuera del sandbox), sin código pendiente de las Olas 1-4 salvo los GAPs de
-negocio sin UI:
+autorizado** (fuera del sandbox), sin código pendiente de las Olas 1-5:
 1. PostgreSQL real: `alembic upgrade head`/`alembic check`, backup/restore, drift final, y confirmación de timezone.
 2. Validación normativa fiscal/regulatoria (SENIAT, SICA/SIGESAI/SACS, retenciones, IGTF) en ambiente de homologación.
 3. Browsers Edge/Opera (chromium/firefox/webkit ya cubiertos).
 4. Rendimiento (P50/P95/P99, N+1, índices) sobre dataset representativo; concurrencia/idempotencia a escala.
-5. Decidir y priorizar los GAPs de negocio sin UI (Ola 2, T-211).
+5. Detalles por ID y roles de tercero sin UI (baja prioridad; T-211 residual).
 
 ---
 
 ## 17. CONVERGENCIA (`/speckit.converge`)
 
-- Olas 1-4 del plan de remediación: **implementadas y validadas** (Ola 1: T-201..T-211, T-222; Ola 3: T-214, T-216, T-217, T-218, T-220, T-223).
-- Evidencia: `route-crawl-results-REAUDIT.json` (65/65), axe 13/13, responsive 162/162 (en `resources/frontend/qa/audits/KONTROL-AUDIT-20260812-RESPONSIVE/`), cross-browser chromium/firefox/webkit, idempotencia 6/6, perf smoke 12/12 (`perf-smoke-results.json`), E2E 20/20, pytest 221.
-- Pendiente para el siguiente ciclo (ambiente autorizado): PostgreSQL real, validación normativa SENIAT, Edge/Opera, y GAPs de negocio sin UI (T-211).
+- Olas 1-5 del plan de remediación: **implementadas y validadas** (Ola 1: T-201..T-211, T-222; Ola 3: T-214, T-216, T-217, T-218, T-220, T-223; Ola 5: T-211 GAPs UI, T-219, T-221, T-202).
+- Evidencia: `route-crawl-results-REAUDIT.json` (65/65), axe 13/13, responsive 162/162, cross-browser chromium/firefox/webkit, idempotencia 6/6, perf smoke 12/12 (`perf-smoke-results.json`), E2E 20/20, pytest 223, vitest 210, bundle 375 KB, `coverage-report.md`, `adr-012-numeric-precision.md`.
+- Pendiente para el siguiente ciclo (ambiente autorizado): PostgreSQL real, validación normativa SENIAT, Edge/Opera, y detalles por ID sin UI (T-211 residual).
 - Reporte: `AUDITORIA_INTEGRAL_KONTROL.md` · Hallazgos: `findings.md` · Plan: `remediation-plan.md`.

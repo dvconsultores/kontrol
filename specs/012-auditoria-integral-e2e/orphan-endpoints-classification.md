@@ -4,6 +4,9 @@
 > (parseo de genéricos anidados `PagedResult<...>`) quedan **53 endpoints sin
 > consumidor frontend** (4 sistema · 8 auth/licencia · **41 de negocio sin UI**).
 > Fuente: `evidence/backend-orphan-endpoints.json` (recalculado).
+>
+> **Actualizado Ola T-211 (2026-08-12):** 6 páginas nuevas cierran los GAP de
+> prioridad alta. Estado por categoría más abajo.
 
 ## A. Sistema / soporte — sin UI requerida (`DOCUMENTED_FUTURE_SCOPE` / N/A)
 `/`, `/health/live`, `/health/ready`, `/docs`, `/docs/oauth2-redirect`, `/redoc`, `/openapi.json`
@@ -17,35 +20,36 @@
 ## C. Negocio sin UI — GAP candidatos a tarea (41)
 
 ### C.1 Maestros (7)
-- `GET/POST /maestros/catalogos/atributos`, `GET /maestros/catalogos/items/search`,
-  `GET /maestros/catalogos/items/{id}`, `POST /maestros/catalogos/unidades/{id}/conversiones` → GAP (atributos/conversiones sin UI).
-- `GET /maestros/terceros/{id}`, `POST /maestros/terceros/{id}/deactivate`, `POST /maestros/terceros/{id}/roles/{role}` → GAP (detalle/desactivar/roles de tercero sin UI).
+- `GET/POST /maestros/catalogos/atributos` → **RESUELTO** (Ola T-211): `AtributosPage` (`/maestros/atributos`).
+- `GET /maestros/catalogos/items/search`, `GET /maestros/catalogos/items/{id}` → búsqueda/detalle (los listados usan `?status=`; detalle por ID puede agregarse a Productos).
+- `POST /maestros/catalogos/unidades/{id}/conversiones` → **RESUELTO** (Ola T-211): formulario de conversiones en `CatalogosPage`.
+- `GET /maestros/terceros/{id}`, `POST /maestros/terceros/{id}/deactivate`, `POST /maestros/terceros/{id}/roles/{role}` → detalle/desactivar/roles de tercero sin UI (GAP pendiente, baja prioridad).
 
 ### C.2 Inventario (13)
-- `GET/POST /inventory/movement-types` → configuración sin UI.
-- `GET /inventory/balances/{id}`, `POST /inventory/balances/recompute` → detalle/recalcular sin UI.
-- `GET /inventory/movements/{id}` → detalle de movimiento sin UI.
+- `GET/POST /inventory/movement-types` → **RESUELTO** (Ola T-211): `TiposMovimientoPage` (`/inventario/tipos-movimiento`).
+- `GET /inventory/balances/{id}`, `POST /inventory/balances/recompute` → detalle/recalcular sin UI (GAP pendiente, baja prioridad).
+- `GET /inventory/movements/{id}` → detalle de movimiento sin UI (GAP pendiente).
 - `GET/POST /inventory/serials`, `GET/POST /inventory/reservations`,
-  `POST /inventory/reservations/{id}/release`, `POST /inventory/reservations/expire` → **seriales y reservas sin UI** (GAP).
+  `POST /inventory/reservations/{id}/release`, `POST /inventory/reservations/expire` → **RESUELTO** (Ola T-211): `SerialesPage` (`/inventario/seriales`) y `ReservasPage` (`/inventario/reservas`).
 - `POST /inventory/operations/receive`, `POST /inventory/operations/ship` → operaciones directas (resueltas vía UI de recepciones/despacho; candidatos a FUTURE_SCOPE).
 
 ### C.3 Compras / CxP (11)
 - `GET /purchasing/requisitions`, `POST /purchasing/requisitions`, `POST /purchasing/requisitions/{id}/lines` → UI de requisiciones existe pero con llamadas que la extracción marcó huérfanas (revalidar tras el contrato G3/G4); revisar en la implementación.
-- `GET/POST /purchasing/quotes`, `POST /purchasing/quotes/{id}/lines` → **cotización de compra sin UI** (GAP).
-- `GET /purchasing/orders/{id}`, `GET /purchasing/supplier-invoices/{id}`, `GET /purchasing/triple-match` → detalle sin UI (GAP).
-- `POST /purchasing/withholdings`, `POST /purchasing/withholdings/{id}/transition` → retenciones de compra sin UI de creación (GAP).
+- `GET/POST /purchasing/quotes`, `POST /purchasing/quotes/{id}/lines` → **RESUELTO** (Ola T-211): `CotizacionesComprasPage` (`/compras/cotizaciones`).
+- `GET /purchasing/orders/{id}`, `GET /purchasing/supplier-invoices/{id}`, `GET /purchasing/triple-match` → detalle sin UI (GAP pendiente, baja prioridad).
+- `POST /purchasing/withholdings`, `POST /purchasing/withholdings/{id}/transition` → **CUBIERTO** por la página fiscal `RetencionesPage` (gestión central de reglas/cálculo/listado); los POST se usan en procesos de negocio.
 
 ### C.4 Ventas / CxC (4)
-- `GET /sales/orders/{id}` → detalle de orden sin UI (GAP).
-- `POST /sales/withholdings-suffered`, `POST /sales/withholdings-suffered/{id}/transition` → retenciones sufridas sin UI (GAP).
+- `GET /sales/orders/{id}` → detalle de orden sin UI (GAP pendiente, baja prioridad).
+- `POST /sales/withholdings-suffered`, `POST /sales/withholdings-suffered/{id}/transition` → **CUBIERTO** por la página fiscal `RetencionesPage` (gestión central).
 
 ### C.5 Tesorería (2)
 - `GET /treasury/cash-sessions/{id}`, `GET /treasury/reconciliations/{id}` → detalle sin UI (GAP).
 
 ### C.6 Fiscal (5)
-- `POST /fiscal/tax-profiles` → creación de perfil sin UI (listado sí).
-- `GET /fiscal/documents/{id}` → detalle de documento sin UI.
-- `POST /fiscal/tax-return-batches`, `GET /fiscal/tax-return-batches` → **lotes de declaración sin UI** (GAP).
+- `POST /fiscal/tax-profiles` → creación de perfil sin UI (listado sí; `PerfilesFiscalesPage` usa `/maestros/perfiles`, concepto distinto — GAP pendiente, baja prioridad).
+- `GET /fiscal/documents/{id}` → detalle de documento sin UI (GAP pendiente).
+- `POST /fiscal/tax-return-batches`, `GET /fiscal/tax-return-batches` → **RESUELTO** (Ola T-211): `LotesDeclaracionPage` (`/fiscal/lotes-declaracion`).
 - `GET /fiscal/books/{tax_type}` → libros (consumido vía reporte; candidato).
 
 ### C.7 Reportes (2)

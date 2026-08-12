@@ -166,10 +166,12 @@ Formato según Spec 012 §80 · Severidad según §79.
 
 | Campo | Valor |
 |---|---|
-| Severidad | **LOW** |
-| Evidencia | `vite build` (esta pasada) |
+| Severidad | **LOW** (**RESUELTO** — Ola 5/T-219) |
+| Evidencia | `vite build` (esta pasada) → **375 KB** (gzip 115 KB) · 87 chunks |
 
-**Impacto:** carga inicial moderada; router con imports estáticos (sin `lazy`). Medir LCP/TTI con dataset real y considerar code-splitting.
+**Remediación (T-219):** code-splitting por ruta con `lazy` de React Router (cada página
+en su propio chunk); la puerta G2 del test de completitud se adaptó al patrón `lazy`.
+Bundle principal 375 KB (objetivo < 500 KB). Medir LCP/TTI con dataset real en ambiente autorizado.
 
 ---
 
@@ -286,7 +288,7 @@ responsive 162/162 · cross-browser chromium/firefox 65/65 + webkit 2/2 · idemp
 | KAUD-004 (MEDIUM) PermissionGuard stub | T-207 `GET /auth/me` + guard real + filtro de menú por permiso | **RESUELTO** — typecheck/lint/vitest OK |
 | KAUD-005 (MEDIUM) nginx sin CSP/HSTS | T-209 CSP + HSTS en `nginx.conf` | **RESUELTO** |
 | KAUD-006 (MEDIUM) compose latest + watchtower | T-210 entrypoint rechaza `latest` en prod; watchtower opt-in (profiles) | **RESUELTO** |
-| KAUD-007 (LOW) 41 orphans | T-211 reclasificados en `orphan-endpoints-classification.md` (GAPs → Ola 2) | **DOCUMENTADO** |
+| KAUD-007 (LOW) 41 orphans | T-211 reclasificados + **6 páginas GAP nuevas** (seriales, reservas, tipos de movimiento, cotizaciones compra, atributos, lotes declaración) + conversiones en Catálogo; retenciones cubiertas por fiscal | **PARCIALMENTE RESUELTO** — quedan detalles por ID y roles de tercero (baja prioridad) |
 | KAUD-010 (LOW) race route-crawl test | T-208 espera `nav a` visible | **RESUELTO** |
 | KAUD-011 (HIGH) precisión monetaria incompleta | T-201 migración `0014_numeric_money_2` (18 cols dinero → Numeric) | **RESUELTO** — 0 columnas de dinero en Float |
 | KAUD-012 (MEDIUM) reset sin UI | T-223 página `ResetPasswordPage` + ruta + enlace + `tests/test_password_reset.py` | **RESUELTO** — flujo completo 2/2 |

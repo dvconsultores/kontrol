@@ -128,6 +128,14 @@ export interface UnitOfMeasure {
   dimension: string;
 }
 
+export interface CatalogAttribute {
+  id: string;
+  code: string;
+  name: string;
+  data_type: string;
+  searchable: boolean;
+}
+
 export interface ProfileSummary {
   id: string;
   code: string;
@@ -433,6 +441,15 @@ export interface SalesQuoteSummary {
   code: string;
   customer_id: string;
   currency: string;
+  status: string;
+}
+
+export interface SupplierQuoteSummary {
+  id: string;
+  code: string;
+  supplier_id: string;
+  currency: string;
+  validity_until: string | null;
   status: string;
 }
 

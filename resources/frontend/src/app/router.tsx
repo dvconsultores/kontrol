@@ -1,4 +1,7 @@
-/** Definición de rutas con guards (FR-001-042/061, DOC-08 §5). */
+/** Definición de rutas con guards (FR-001-042/061, DOC-08 §5).
+ * Code-splitting por ruta (T-219): cada página se carga con `lazy` del router,
+ * reduciendo el bundle inicial y el tiempo de carga (LCP/TTI).
+ */
 import { createBrowserRouter } from "react-router";
 
 import { AppShell } from "./AppShell";
@@ -6,92 +9,21 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ForbiddenState } from "@/components/ForbiddenState";
 import { NotFoundState } from "@/components/NotFoundState";
 import { RouteGuard } from "@/components/RouteGuard";
-import { AuditoriaPage } from "@/pages/AuditoriaPage";
-import { CambiarContrasenaPage } from "@/pages/CambiarContrasenaPage";
-import { DashboardPage } from "@/pages/DashboardPage";
-import { DiagnosticoPage } from "@/pages/DiagnosticoPage";
-import { EmpresasPage } from "@/pages/EmpresasPage";
-import { LoginPage } from "@/pages/LoginPage";
-import { MiLicenciaPage } from "@/pages/MiLicenciaPage";
-import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
-import { SetupPage } from "@/pages/SetupPage";
-import { AlmacenesPage } from "@/modules/organizacion/almacenes/AlmacenesPage";
-import { EstablecimientosPage } from "@/modules/organizacion/establecimientos/EstablecimientosPage";
-import { UbicacionesPage } from "@/modules/organizacion/ubicaciones/UbicacionesPage";
-import { SucursalesPage } from "@/modules/organizacion/sucursales/SucursalesPage";
-import { RolesPage } from "@/modules/seguridad/roles/RolesPage";
-import { SesionesPage } from "@/modules/seguridad/sesiones/SesionesPage";
-import { UsuariosPage } from "@/modules/seguridad/usuarios/UsuariosPage";
-import { CatalogosPage } from "@/modules/maestros/catalogos/CatalogosPage";
-import { PerfilesFiscalesPage } from "@/modules/maestros/perfiles/PerfilesFiscalesPage";
-import { ProductosPage } from "@/modules/maestros/productos/ProductosPage";
-import { ProductoNuevoPage } from "@/modules/maestros/productos/ProductoNuevoPage";
-import { ServiciosPage } from "@/modules/maestros/servicios/ServiciosPage";
-import { TercerosPage } from "@/modules/maestros/terceros/TercerosPage";
-import { AjustesPage } from "@/modules/inventario/ajustes/AjustesPage";
-import { ConteosPage } from "@/modules/inventario/conteos/ConteosPage";
-import { ExistenciasPage } from "@/modules/inventario/existencias/ExistenciasPage";
-import { KardexPage } from "@/modules/inventario/kardex/KardexPage";
-import { LotesPage } from "@/modules/inventario/lotes/LotesPage";
-import { MovimientosPage } from "@/modules/inventario/movimientos/MovimientosPage";
-import { TransferenciasPage } from "@/modules/inventario/transferencias/TransferenciasPage";
-import { ValorizacionPage } from "@/modules/inventario/valorizacion/ValorizacionPage";
-import { CuentasPorPagarPage } from "@/modules/compras/cuentas-por-pagar/CuentasPorPagarPage";
-import { DevolucionesComprasPage } from "@/modules/compras/devoluciones/DevolucionesComprasPage";
-import { FacturasProveedorPage } from "@/modules/compras/facturas/FacturasProveedorPage";
-import { NotasComprasPage } from "@/modules/compras/notas/NotasComprasPage";
-import { OrdenesComprasPage } from "@/modules/compras/ordenes/OrdenesComprasPage";
-import { RecepcionesPage } from "@/modules/compras/recepciones/RecepcionesPage";
-import { RequisicionesPage } from "@/modules/compras/requisiciones/RequisicionesPage";
-import { CotizacionesPage } from "@/modules/ventas/cotizaciones/CotizacionesPage";
-import { CuentasPorCobrarPage } from "@/modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage";
-import { DevolucionesVentasPage } from "@/modules/ventas/devoluciones/DevolucionesVentasPage";
-import { DespachoPage } from "@/modules/ventas/despacho/DespachoPage";
-import { FacturasVentasPage } from "@/modules/ventas/facturas/FacturasVentasPage";
-import { NotasVentasPage } from "@/modules/ventas/notas/NotasVentasPage";
-import { OrdenesVentasPage } from "@/modules/ventas/ordenes/OrdenesVentasPage";
-import { CajasPage } from "@/modules/tesoreria/cajas/CajasPage";
-import { ConciliacionPage } from "@/modules/tesoreria/conciliacion/ConciliacionPage";
-import { IgftPage } from "@/modules/tesoreria/igft/IgftPage";
-import { IngresosEgresosPage } from "@/modules/tesoreria/ingresos-egresos/IngresosEgresosPage";
-import { MaestrosPage } from "@/modules/tesoreria/maestros/MaestrosPage";
-import { TransferenciasPage as TesoreriaTransferenciasPage } from "@/modules/tesoreria/transferencias/TransferenciasPage";
-import { ConfiguracionPage } from "@/modules/fiscal/configuracion/ConfiguracionPage";
-import { EmisionPage } from "@/modules/fiscal/emision/EmisionPage";
-import { LibrosPage } from "@/modules/fiscal/libros/LibrosPage";
-import { NotasPage } from "@/modules/fiscal/notas/NotasPage";
-import { NumeracionPage } from "@/modules/fiscal/numeracion/NumeracionPage";
-import { RetencionesPage } from "@/modules/fiscal/retenciones/RetencionesPage";
-import { AprobacionesPage } from "@/modules/regulatorio/aprobaciones/AprobacionesPage";
-import { EvaluacionPage } from "@/modules/regulatorio/evaluacion/EvaluacionPage";
-import { OrganismosPage } from "@/modules/regulatorio/organismos/OrganismosPage";
-import { PermisosPage } from "@/modules/regulatorio/permisos/PermisosPage";
-import { VehiculosPage } from "@/modules/regulatorio/vehiculos/VehiculosPage";
-import { ReportesAuditoriaPage } from "@/modules/reportes/auditoria/ReportesAuditoriaPage";
-import { CentroReportesPage } from "@/modules/reportes/centro/CentroReportesPage";
-import { ExportacionesPage } from "@/modules/reportes/exportaciones/ExportacionesPage";
-import { ConfiguracionCentralPage } from "@/modules/licenciamiento/configuracion/ConfiguracionCentralPage";
-import { EntitlementsPage } from "@/modules/licenciamiento/entitlements/EntitlementsPage";
-import { EventosPage } from "@/modules/licenciamiento/eventos/EventosPage";
-import { RenovacionPage } from "@/modules/licenciamiento/renovacion/RenovacionPage";
-import { ActosPage } from "@/modules/homologacion/actos/ActosPage";
-import { TimelinePage } from "@/modules/homologacion/timeline/TimelinePage";
-import { VersionesPage } from "@/modules/homologacion/versiones/VersionesPage";
 
 export const router = createBrowserRouter([
   {
     path: "/login",
-    element: <LoginPage />,
+    lazy: () => import("@/pages/LoginPage").then((m) => ({ Component: m.LoginPage })),
     errorElement: <ErrorBoundary />,
   },
   {
     path: "/reset-password",
-    element: <ResetPasswordPage />,
+    lazy: () => import("@/pages/ResetPasswordPage").then((m) => ({ Component: m.ResetPasswordPage })),
     errorElement: <ErrorBoundary />,
   },
   {
     path: "/setup",
-    element: <SetupPage />,
+    lazy: () => import("@/pages/SetupPage").then((m) => ({ Component: m.SetupPage })),
     errorElement: <ErrorBoundary />,
   },
   {
@@ -101,74 +33,80 @@ export const router = createBrowserRouter([
       {
         element: <AppShell />,
         children: [
-          { index: true, element: <DashboardPage /> },
-          { path: "mi-licencia", element: <MiLicenciaPage /> },
-          { path: "cambiar-contrasena", element: <CambiarContrasenaPage /> },
-          { path: "organizacion/empresas", element: <EmpresasPage /> },
-          { path: "organizacion/sucursales", element: <SucursalesPage /> },
-          { path: "organizacion/establecimientos", element: <EstablecimientosPage /> },
-          { path: "organizacion/almacenes", element: <AlmacenesPage /> },
-          { path: "organizacion/ubicaciones", element: <UbicacionesPage /> },
-          { path: "seguridad/usuarios", element: <UsuariosPage /> },
-          { path: "seguridad/roles", element: <RolesPage /> },
-          { path: "seguridad/sesiones", element: <SesionesPage /> },
-          { path: "maestros/terceros", element: <TercerosPage /> },
-          { path: "maestros/perfiles", element: <PerfilesFiscalesPage /> },
-          { path: "maestros/productos", element: <ProductosPage /> },
-          { path: "maestros/productos/nuevo", element: <ProductoNuevoPage /> },
-          { path: "maestros/servicios", element: <ServiciosPage /> },
-          { path: "maestros/catalogos", element: <CatalogosPage /> },
-          { path: "inventario/existencias", element: <ExistenciasPage /> },
-          { path: "inventario/kardex", element: <KardexPage /> },
-          { path: "inventario/movimientos", element: <MovimientosPage /> },
-          { path: "inventario/transferencias", element: <TransferenciasPage /> },
-          { path: "inventario/conteos", element: <ConteosPage /> },
-          { path: "inventario/ajustes", element: <AjustesPage /> },
-          { path: "inventario/lotes", element: <LotesPage /> },
-          { path: "inventario/valorizacion", element: <ValorizacionPage /> },
-          { path: "compras/requisiciones", element: <RequisicionesPage /> },
-          { path: "compras/ordenes", element: <OrdenesComprasPage /> },
-          { path: "compras/recepciones", element: <RecepcionesPage /> },
-          { path: "compras/facturas", element: <FacturasProveedorPage /> },
-          { path: "compras/devoluciones", element: <DevolucionesComprasPage /> },
-          { path: "compras/notas", element: <NotasComprasPage /> },
-          { path: "compras/cuentas-por-pagar", element: <CuentasPorPagarPage /> },
-          { path: "ventas/cotizaciones", element: <CotizacionesPage /> },
-          { path: "ventas/ordenes", element: <OrdenesVentasPage /> },
-          { path: "ventas/facturas", element: <FacturasVentasPage /> },
-          { path: "ventas/notas", element: <NotasVentasPage /> },
-          { path: "ventas/devoluciones", element: <DevolucionesVentasPage /> },
-          { path: "ventas/despacho", element: <DespachoPage /> },
-          { path: "ventas/cuentas-por-cobrar", element: <CuentasPorCobrarPage /> },
-          { path: "tesoreria/cajas", element: <CajasPage /> },
-          { path: "tesoreria/ingresos-egresos", element: <IngresosEgresosPage /> },
-          { path: "tesoreria/transferencias", element: <TesoreriaTransferenciasPage /> },
-          { path: "tesoreria/conciliacion", element: <ConciliacionPage /> },
-          { path: "tesoreria/igft", element: <IgftPage /> },
-          { path: "tesoreria/maestros", element: <MaestrosPage /> },
-          { path: "fiscal/configuracion", element: <ConfiguracionPage /> },
-          { path: "fiscal/numeracion", element: <NumeracionPage /> },
-          { path: "fiscal/emision", element: <EmisionPage /> },
-          { path: "fiscal/notas", element: <NotasPage /> },
-          { path: "fiscal/retenciones", element: <RetencionesPage /> },
-          { path: "fiscal/libros", element: <LibrosPage /> },
-          { path: "regulatorio/organismos", element: <OrganismosPage /> },
-          { path: "regulatorio/vehiculos", element: <VehiculosPage /> },
-          { path: "regulatorio/permisos", element: <PermisosPage /> },
-          { path: "regulatorio/evaluacion", element: <EvaluacionPage /> },
-          { path: "regulatorio/aprobaciones", element: <AprobacionesPage /> },
-          { path: "reportes/centro", element: <CentroReportesPage /> },
-          { path: "reportes/exportaciones", element: <ExportacionesPage /> },
-          { path: "reportes/auditoria", element: <ReportesAuditoriaPage /> },
-          { path: "licenciamiento/configuracion", element: <ConfiguracionCentralPage /> },
-          { path: "licenciamiento/entitlements", element: <EntitlementsPage /> },
-          { path: "licenciamiento/renovacion", element: <RenovacionPage /> },
-          { path: "licenciamiento/eventos", element: <EventosPage /> },
-          { path: "homologacion/actos", element: <ActosPage /> },
-          { path: "homologacion/versiones", element: <VersionesPage /> },
-          { path: "homologacion/timeline", element: <TimelinePage /> },
-          { path: "auditoria", element: <AuditoriaPage /> },
-          { path: "diagnostico", element: <DiagnosticoPage /> },
+          { index: true, lazy: () => import("@/pages/DashboardPage").then((m) => ({ Component: m.DashboardPage })) },
+          { path: "mi-licencia", lazy: () => import("@/pages/MiLicenciaPage").then((m) => ({ Component: m.MiLicenciaPage })) },
+          { path: "cambiar-contrasena", lazy: () => import("@/pages/CambiarContrasenaPage").then((m) => ({ Component: m.CambiarContrasenaPage })) },
+          { path: "organizacion/empresas", lazy: () => import("@/pages/EmpresasPage").then((m) => ({ Component: m.EmpresasPage })) },
+          { path: "organizacion/sucursales", lazy: () => import("@/modules/organizacion/sucursales/SucursalesPage").then((m) => ({ Component: m.SucursalesPage })) },
+          { path: "organizacion/establecimientos", lazy: () => import("@/modules/organizacion/establecimientos/EstablecimientosPage").then((m) => ({ Component: m.EstablecimientosPage })) },
+          { path: "organizacion/almacenes", lazy: () => import("@/modules/organizacion/almacenes/AlmacenesPage").then((m) => ({ Component: m.AlmacenesPage })) },
+          { path: "organizacion/ubicaciones", lazy: () => import("@/modules/organizacion/ubicaciones/UbicacionesPage").then((m) => ({ Component: m.UbicacionesPage })) },
+          { path: "seguridad/usuarios", lazy: () => import("@/modules/seguridad/usuarios/UsuariosPage").then((m) => ({ Component: m.UsuariosPage })) },
+          { path: "seguridad/roles", lazy: () => import("@/modules/seguridad/roles/RolesPage").then((m) => ({ Component: m.RolesPage })) },
+          { path: "seguridad/sesiones", lazy: () => import("@/modules/seguridad/sesiones/SesionesPage").then((m) => ({ Component: m.SesionesPage })) },
+          { path: "maestros/terceros", lazy: () => import("@/modules/maestros/terceros/TercerosPage").then((m) => ({ Component: m.TercerosPage })) },
+          { path: "maestros/perfiles", lazy: () => import("@/modules/maestros/perfiles/PerfilesFiscalesPage").then((m) => ({ Component: m.PerfilesFiscalesPage })) },
+          { path: "maestros/productos", lazy: () => import("@/modules/maestros/productos/ProductosPage").then((m) => ({ Component: m.ProductosPage })) },
+          { path: "maestros/productos/nuevo", lazy: () => import("@/modules/maestros/productos/ProductoNuevoPage").then((m) => ({ Component: m.ProductoNuevoPage })) },
+          { path: "maestros/servicios", lazy: () => import("@/modules/maestros/servicios/ServiciosPage").then((m) => ({ Component: m.ServiciosPage })) },
+          { path: "maestros/atributos", lazy: () => import("@/modules/maestros/atributos/AtributosPage").then((m) => ({ Component: m.AtributosPage })) },
+          { path: "maestros/catalogos", lazy: () => import("@/modules/maestros/catalogos/CatalogosPage").then((m) => ({ Component: m.CatalogosPage })) },
+          { path: "inventario/existencias", lazy: () => import("@/modules/inventario/existencias/ExistenciasPage").then((m) => ({ Component: m.ExistenciasPage })) },
+          { path: "inventario/kardex", lazy: () => import("@/modules/inventario/kardex/KardexPage").then((m) => ({ Component: m.KardexPage })) },
+          { path: "inventario/movimientos", lazy: () => import("@/modules/inventario/movimientos/MovimientosPage").then((m) => ({ Component: m.MovimientosPage })) },
+          { path: "inventario/tipos-movimiento", lazy: () => import("@/modules/inventario/tipos-movimiento/TiposMovimientoPage").then((m) => ({ Component: m.TiposMovimientoPage })) },
+          { path: "inventario/transferencias", lazy: () => import("@/modules/inventario/transferencias/TransferenciasPage").then((m) => ({ Component: m.TransferenciasPage })) },
+          { path: "inventario/conteos", lazy: () => import("@/modules/inventario/conteos/ConteosPage").then((m) => ({ Component: m.ConteosPage })) },
+          { path: "inventario/ajustes", lazy: () => import("@/modules/inventario/ajustes/AjustesPage").then((m) => ({ Component: m.AjustesPage })) },
+          { path: "inventario/lotes", lazy: () => import("@/modules/inventario/lotes/LotesPage").then((m) => ({ Component: m.LotesPage })) },
+          { path: "inventario/seriales", lazy: () => import("@/modules/inventario/seriales/SerialesPage").then((m) => ({ Component: m.SerialesPage })) },
+          { path: "inventario/reservas", lazy: () => import("@/modules/inventario/reservas/ReservasPage").then((m) => ({ Component: m.ReservasPage })) },
+          { path: "inventario/valorizacion", lazy: () => import("@/modules/inventario/valorizacion/ValorizacionPage").then((m) => ({ Component: m.ValorizacionPage })) },
+          { path: "compras/requisiciones", lazy: () => import("@/modules/compras/requisiciones/RequisicionesPage").then((m) => ({ Component: m.RequisicionesPage })) },
+          { path: "compras/cotizaciones", lazy: () => import("@/modules/compras/cotizaciones/CotizacionesComprasPage").then((m) => ({ Component: m.CotizacionesComprasPage })) },
+          { path: "compras/ordenes", lazy: () => import("@/modules/compras/ordenes/OrdenesComprasPage").then((m) => ({ Component: m.OrdenesComprasPage })) },
+          { path: "compras/recepciones", lazy: () => import("@/modules/compras/recepciones/RecepcionesPage").then((m) => ({ Component: m.RecepcionesPage })) },
+          { path: "compras/facturas", lazy: () => import("@/modules/compras/facturas/FacturasProveedorPage").then((m) => ({ Component: m.FacturasProveedorPage })) },
+          { path: "compras/devoluciones", lazy: () => import("@/modules/compras/devoluciones/DevolucionesComprasPage").then((m) => ({ Component: m.DevolucionesComprasPage })) },
+          { path: "compras/notas", lazy: () => import("@/modules/compras/notas/NotasComprasPage").then((m) => ({ Component: m.NotasComprasPage })) },
+          { path: "compras/cuentas-por-pagar", lazy: () => import("@/modules/compras/cuentas-por-pagar/CuentasPorPagarPage").then((m) => ({ Component: m.CuentasPorPagarPage })) },
+          { path: "ventas/cotizaciones", lazy: () => import("@/modules/ventas/cotizaciones/CotizacionesPage").then((m) => ({ Component: m.CotizacionesPage })) },
+          { path: "ventas/ordenes", lazy: () => import("@/modules/ventas/ordenes/OrdenesVentasPage").then((m) => ({ Component: m.OrdenesVentasPage })) },
+          { path: "ventas/facturas", lazy: () => import("@/modules/ventas/facturas/FacturasVentasPage").then((m) => ({ Component: m.FacturasVentasPage })) },
+          { path: "ventas/notas", lazy: () => import("@/modules/ventas/notas/NotasVentasPage").then((m) => ({ Component: m.NotasVentasPage })) },
+          { path: "ventas/devoluciones", lazy: () => import("@/modules/ventas/devoluciones/DevolucionesVentasPage").then((m) => ({ Component: m.DevolucionesVentasPage })) },
+          { path: "ventas/despacho", lazy: () => import("@/modules/ventas/despacho/DespachoPage").then((m) => ({ Component: m.DespachoPage })) },
+          { path: "ventas/cuentas-por-cobrar", lazy: () => import("@/modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage").then((m) => ({ Component: m.CuentasPorCobrarPage })) },
+          { path: "tesoreria/cajas", lazy: () => import("@/modules/tesoreria/cajas/CajasPage").then((m) => ({ Component: m.CajasPage })) },
+          { path: "tesoreria/ingresos-egresos", lazy: () => import("@/modules/tesoreria/ingresos-egresos/IngresosEgresosPage").then((m) => ({ Component: m.IngresosEgresosPage })) },
+          { path: "tesoreria/transferencias", lazy: () => import("@/modules/tesoreria/transferencias/TransferenciasPage").then((m) => ({ Component: m.TransferenciasPage })) },
+          { path: "tesoreria/conciliacion", lazy: () => import("@/modules/tesoreria/conciliacion/ConciliacionPage").then((m) => ({ Component: m.ConciliacionPage })) },
+          { path: "tesoreria/igft", lazy: () => import("@/modules/tesoreria/igft/IgftPage").then((m) => ({ Component: m.IgftPage })) },
+          { path: "tesoreria/maestros", lazy: () => import("@/modules/tesoreria/maestros/MaestrosPage").then((m) => ({ Component: m.MaestrosPage })) },
+          { path: "fiscal/configuracion", lazy: () => import("@/modules/fiscal/configuracion/ConfiguracionPage").then((m) => ({ Component: m.ConfiguracionPage })) },
+          { path: "fiscal/numeracion", lazy: () => import("@/modules/fiscal/numeracion/NumeracionPage").then((m) => ({ Component: m.NumeracionPage })) },
+          { path: "fiscal/emision", lazy: () => import("@/modules/fiscal/emision/EmisionPage").then((m) => ({ Component: m.EmisionPage })) },
+          { path: "fiscal/notas", lazy: () => import("@/modules/fiscal/notas/NotasPage").then((m) => ({ Component: m.NotasPage })) },
+          { path: "fiscal/retenciones", lazy: () => import("@/modules/fiscal/retenciones/RetencionesPage").then((m) => ({ Component: m.RetencionesPage })) },
+          { path: "fiscal/libros", lazy: () => import("@/modules/fiscal/libros/LibrosPage").then((m) => ({ Component: m.LibrosPage })) },
+          { path: "fiscal/lotes-declaracion", lazy: () => import("@/modules/fiscal/lotes-declaracion/LotesDeclaracionPage").then((m) => ({ Component: m.LotesDeclaracionPage })) },
+          { path: "regulatorio/organismos", lazy: () => import("@/modules/regulatorio/organismos/OrganismosPage").then((m) => ({ Component: m.OrganismosPage })) },
+          { path: "regulatorio/vehiculos", lazy: () => import("@/modules/regulatorio/vehiculos/VehiculosPage").then((m) => ({ Component: m.VehiculosPage })) },
+          { path: "regulatorio/permisos", lazy: () => import("@/modules/regulatorio/permisos/PermisosPage").then((m) => ({ Component: m.PermisosPage })) },
+          { path: "regulatorio/evaluacion", lazy: () => import("@/modules/regulatorio/evaluacion/EvaluacionPage").then((m) => ({ Component: m.EvaluacionPage })) },
+          { path: "regulatorio/aprobaciones", lazy: () => import("@/modules/regulatorio/aprobaciones/AprobacionesPage").then((m) => ({ Component: m.AprobacionesPage })) },
+          { path: "reportes/centro", lazy: () => import("@/modules/reportes/centro/CentroReportesPage").then((m) => ({ Component: m.CentroReportesPage })) },
+          { path: "reportes/exportaciones", lazy: () => import("@/modules/reportes/exportaciones/ExportacionesPage").then((m) => ({ Component: m.ExportacionesPage })) },
+          { path: "reportes/auditoria", lazy: () => import("@/modules/reportes/auditoria/ReportesAuditoriaPage").then((m) => ({ Component: m.ReportesAuditoriaPage })) },
+          { path: "licenciamiento/configuracion", lazy: () => import("@/modules/licenciamiento/configuracion/ConfiguracionCentralPage").then((m) => ({ Component: m.ConfiguracionCentralPage })) },
+          { path: "licenciamiento/entitlements", lazy: () => import("@/modules/licenciamiento/entitlements/EntitlementsPage").then((m) => ({ Component: m.EntitlementsPage })) },
+          { path: "licenciamiento/renovacion", lazy: () => import("@/modules/licenciamiento/renovacion/RenovacionPage").then((m) => ({ Component: m.RenovacionPage })) },
+          { path: "licenciamiento/eventos", lazy: () => import("@/modules/licenciamiento/eventos/EventosPage").then((m) => ({ Component: m.EventosPage })) },
+          { path: "homologacion/actos", lazy: () => import("@/modules/homologacion/actos/ActosPage").then((m) => ({ Component: m.ActosPage })) },
+          { path: "homologacion/versiones", lazy: () => import("@/modules/homologacion/versiones/VersionesPage").then((m) => ({ Component: m.VersionesPage })) },
+          { path: "homologacion/timeline", lazy: () => import("@/modules/homologacion/timeline/TimelinePage").then((m) => ({ Component: m.TimelinePage })) },
+          { path: "auditoria", lazy: () => import("@/pages/AuditoriaPage").then((m) => ({ Component: m.AuditoriaPage })) },
+          { path: "diagnostico", lazy: () => import("@/pages/DiagnosticoPage").then((m) => ({ Component: m.DiagnosticoPage })) },
           { path: "forbidden", element: <ForbiddenState /> },
           { path: "*", element: <NotFoundState /> },
         ],
