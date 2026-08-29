@@ -145,6 +145,8 @@ export function PoliticaDetallePage(): React.JSX.Element {
           company_id: policy.company_id,
           process_type: policy.process_type,
           context: { amount: Number(simAmount || 0), currency: policy.base_currency },
+          // Simula ESTA versión, aunque sea borrador (FR-045-008).
+          policy_id: policy.id,
         },
       });
       setSimulation(

@@ -74,6 +74,8 @@ class EvaluateIn(BaseModel):
     company_id: str
     process_type: str
     context: dict[str, Any]
+    #: Simula una política concreta, incluida una en borrador (FR-045-008).
+    policy_id: str | None = None
 
 
 class RequestIn(BaseModel):
@@ -250,7 +252,8 @@ def evaluate(body: EvaluateIn, db: Session = Depends(get_db),
              user: User = Depends(require_permission("aprobaciones", "view"))):
     """No crea nada: informa qué niveles aplicarían (FR-045-008)."""
     return approvals_service.evaluate(db, company_id=body.company_id,
-                                      process_type=body.process_type, context=body.context)
+                                      process_type=body.process_type, context=body.context,
+                                      policy_id=body.policy_id)
 
 
 @router.post("/requests", status_code=201)

@@ -20,6 +20,7 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError, PermissionDeniedError
@@ -262,9 +263,19 @@ def resolve_actors(db: Session, *, company_id: str, level: dict[str, Any],
 # Fachada: evaluate (FR-045-008/010)
 # --------------------------------------------------------------------------- #
 def evaluate(db: Session, *, company_id: str, process_type: str,
-             context: dict[str, Any]) -> dict[str, Any]:
-    """Determina si la operación requiere aprobación. Sin efectos secundarios."""
-    policy = get_active_policy(db, company_id=company_id, process_type=process_type)
+             context: dict[str, Any], policy_id: str | None = None) -> dict[str, Any]:
+    """Determina si la operación requiere aprobación. Sin efectos secundarios.
+
+    `policy_id` permite simular una política concreta —incluida una en borrador—
+    antes de activarla (FR-045-008). Sin él se usa la vigente, que es lo que
+    hacen los dominios en producción.
+    """
+    if policy_id:
+        policy = db.get(ApprovalPolicy, policy_id)
+        if policy is None or policy.company_id != company_id:
+            raise NotFoundError(code="APPROVAL_POLICY_NOT_FOUND", message="Política no encontrada.")
+    else:
+        policy = get_active_policy(db, company_id=company_id, process_type=process_type)
     if not policy:
         return {"requires_approval": False, "reason": "NO_ACTIVE_POLICY"}
 
@@ -421,8 +432,29 @@ def require(db: Session, *, company_id: str, process_type: str, document_type: s
         status="PENDING",
         idempotency_key=f"{document_type}:{document_id}:{fingerprint}",
     )
-    db.add(request)
-    db.flush()
+    # La comprobación de existencia previa y esta inserción no son atómicas: dos
+    # peticiones simultáneas pueden pasar ambas la comprobación. La integridad la
+    # garantiza el índice único parcial `uq_approval_requests_open_document`; aquí
+    # se traduce esa colisión en la respuesta idempotente que exige FR-045-053,
+    # en lugar de propagar un error. Detectado con concurrencia real sobre
+    # PostgreSQL (SQLite no crea el índice parcial y ocultaba el caso).
+    try:
+        with db.begin_nested():
+            db.add(request)
+            db.flush()
+    except IntegrityError:
+        winner = db.execute(
+            select(ApprovalRequest).where(
+                ApprovalRequest.company_id == company_id,
+                ApprovalRequest.document_type == document_type,
+                ApprovalRequest.document_id == document_id,
+                ApprovalRequest.fingerprint == fingerprint,
+                ApprovalRequest.status.in_(tuple(OPEN_REQUEST_STATES)),
+            )
+        ).scalars().first()
+        if winner is None:  # pragma: no cover - la colisión implica que existe
+            raise
+        return {"requires_approval": True, "request": winner, "idempotent_hit": True}
 
     _assert_request_transition(request.status, "IN_REVIEW")
     request.status = "IN_REVIEW"

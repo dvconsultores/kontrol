@@ -97,11 +97,18 @@ def _migrate_regulatory_history() -> None:
     if "regulatory_approval_requests" not in insp.get_table_names():
         return
 
+    # La tabla legada guarda `company_id` como texto SIN clave foránea; la nueva
+    # sí la tiene. Una fila legada con referencia colgante abortaría todo el
+    # upgrade, así que se omite y se deja constancia en el log de la migración.
+    # Detectado al validar el Caso B sobre PostgreSQL real (2026-08-29).
     rows = bind.execute(sa.text(
-        "SELECT id, company_id, object_ref, requester_id, amount, decision, status, created_at "
-        "FROM regulatory_approval_requests"
+        "SELECT r.id, r.company_id, r.object_ref, r.requester_id, r.amount, r.decision, "
+        "       r.status, r.created_at, (c.id IS NOT NULL) AS company_exists "
+        "FROM regulatory_approval_requests r "
+        "LEFT JOIN companies c ON c.id = r.company_id"
     )).fetchall()
     now = datetime.now(UTC)
+    skipped = 0
 
     for row in rows:
         legacy_id = str(row[0])
@@ -113,6 +120,12 @@ def _migrate_regulatory_history() -> None:
             {"d": legacy_id},
         ).fetchone()
         if already:
+            continue
+
+        if not row[8]:
+            skipped += 1
+            print(f"[0016] omitida solicitud legada {legacy_id}: la empresa "
+                  f"{row[1]!r} ya no existe (referencia colgante sin FK).")
             continue
 
         decision = (row[5] or "").upper()
@@ -153,6 +166,10 @@ def _migrate_regulatory_history() -> None:
                 "now": now,
             },
         )
+
+    if skipped:
+        print(f"[0016] {skipped} solicitud(es) legada(s) omitida(s) por empresa inexistente. "
+              f"Permanecen en `regulatory_approval_requests`, sin pérdida de datos.")
 
 
 def downgrade() -> None:

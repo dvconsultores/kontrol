@@ -17,11 +17,13 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -102,6 +104,17 @@ class ApprovalRequest(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "approval_requests"
+    __table_args__ = (
+        # Impide dos solicitudes vivas para el mismo documento y la misma huella
+        # (FR-045-053). Índice parcial: sólo cubre las no terminales.
+        Index(
+            "uq_approval_requests_open_document",
+            "company_id", "document_type", "document_id", "fingerprint",
+            unique=True,
+            postgresql_where=text("status IN ('PENDING','IN_REVIEW')"),
+            sqlite_where=text("status IN ('PENDING','IN_REVIEW')"),
+        ),
+    )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     process_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -146,6 +159,10 @@ class ApprovalDecision(UUIDMixin, TimestampMixin, Base):
     """Decisión sobre un paso. Append-only: no se edita ni se borra (P5)."""
 
     __tablename__ = "approval_decisions"
+    __table_args__ = (
+        # Un actor no decide dos veces sobre el mismo paso (INV-06).
+        UniqueConstraint("step_id", "actor_id", name="uq_approval_decisions_step_actor"),
+    )
 
     step_id: Mapped[str] = mapped_column(ForeignKey("approval_steps.id"), nullable=False, index=True)
     actor_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)

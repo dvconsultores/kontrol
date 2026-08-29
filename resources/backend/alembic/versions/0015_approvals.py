@@ -31,7 +31,17 @@ def upgrade() -> None:
     # El nombre `approval_requests` pasa al motor transversal: la tabla legada
     # del módulo regulatorio se renombra sin cambiar su comportamiento. Sus
     # datos se migran al motor en F6 (FR-045-073).
+    #
+    # PostgreSQL conserva los nombres de constraints e índices al renombrar una
+    # tabla, así que hay que renombrarlos también o colisionan con los de la
+    # tabla nueva (`pk_approval_requests`). SQLite recrea la tabla al renombrar
+    # y no expone el problema: se detectó al validar sobre PostgreSQL real.
     op.rename_table("approval_requests", "regulatory_approval_requests")
+    if op.get_bind().dialect.name == "postgresql":
+        op.execute("ALTER INDEX pk_approval_requests "
+                   "RENAME TO pk_regulatory_approval_requests")
+        op.execute("ALTER INDEX ix_approval_requests_company_id "
+                   "RENAME TO ix_regulatory_approval_requests_company_id")
 
     op.create_table(
         "approval_policies",
@@ -191,4 +201,9 @@ def downgrade() -> None:
     op.drop_table("approval_levels")
     op.drop_table("approval_rules")
     op.drop_table("approval_policies")
+    if op.get_bind().dialect.name == "postgresql":
+        op.execute("ALTER INDEX pk_regulatory_approval_requests "
+                   "RENAME TO pk_approval_requests")
+        op.execute("ALTER INDEX ix_regulatory_approval_requests_company_id "
+                   "RENAME TO ix_approval_requests_company_id")
     op.rename_table("regulatory_approval_requests", "approval_requests")
