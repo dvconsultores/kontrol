@@ -77,8 +77,20 @@ for (const vp of VIEWPORTS) {
     const row = { viewport: vp.name, route, horizontal_scroll: false, h1: null, status: "PASS", ms: 0 };
     const t0 = Date.now();
     try {
-      await withTimeout(page.goto(`${BASE}${route}`, { waitUntil: "domcontentloaded", timeout: 10000 }), CAP_MS, route);
+      // Navegación SPA por el menú, NO `page.goto`: una carga completa pierde
+      // el access token (vive en memoria, ADR-004) y el guard redirige a `/`
+      // mientras restaura la sesión. Con `goto` este crawler medía la página de
+      // inicio una y otra vez en lugar de la ruta (Spec 045, CVG-045-07).
+      const link = page.locator(`nav a[href="${route}"]`).first();
+      if (await link.count()) {
+        await withTimeout(link.click(), CAP_MS, route);
+        await page.waitForURL((u) => new URL(u).pathname === route, { timeout: 10000 });
+      } else if (route !== "/") {
+        row.status = "NO_MENU_LINK";
+      }
       await page.waitForTimeout(700);
+      row.url = new URL(page.url()).pathname;
+      if (row.url !== route && row.status === "PASS") row.status = "REDIRECTED";
       row.horizontal_scroll = await page.evaluate(() => {
         const el = document.scrollingElement ?? document.documentElement;
         return el.scrollWidth > el.clientWidth + 2;

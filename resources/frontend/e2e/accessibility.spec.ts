@@ -63,8 +63,19 @@ test.describe("páginas autenticadas (requiere credenciales E2E)", () => {
       await page.getByLabel(/Usuario/).fill(USER!);
       await page.getByLabel(/Contraseña/).fill(PASSWORD!);
       await page.getByRole("button", { name: "Iniciar sesión" }).click();
-      await page.goto(path);
+      await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
+
+      // Navegación SPA por el menú, NO `page.goto`. Una carga completa pierde
+      // el access token, que vive en memoria (ADR-004), y el guard redirige a
+      // `/` mientras restaura la sesión: con `goto` esta suite acababa
+      // analizando la página de inicio una y otra vez en lugar de la ruta.
+      if (path !== "/") {
+        await page.locator(`nav a[href="${path}"]`).first().click();
+      }
+      await page.waitForURL((u) => u.pathname === path, { timeout: 20000 });
       await page.waitForLoadState("networkidle");
+      // La ruta analizada es realmente la esperada.
+      expect(new URL(page.url()).pathname).toBe(path);
       await expectNoSeriousViolations(page);
     });
   }
