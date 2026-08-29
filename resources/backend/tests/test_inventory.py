@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
-from sqlalchemy import create_engine
+from conftest import make_engine, seed_org_chain
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.database import Base, init_models
@@ -31,11 +31,12 @@ from app.modules.organization.models import Warehouse
 
 @pytest.fixture()
 def db_session():
-    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    engine = make_engine()
     init_models()
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
     session = session_factory()
+    seed_org_chain(session, COMPANY, OTHER)
     try:
         yield session
     finally:
@@ -261,7 +262,11 @@ class TestTransferencia:
         assert inv_service.get_available(db_session, company_id=COMPANY, product_id=str(product.id), warehouse_id=str(wh_b.id)) == 30.0
 
     def test_transfer_invalid_transition(self, db_session) -> None:
-        transfer = Transfer(company_id=COMPANY, code="T-1", origin_warehouse_id="a", destination_warehouse_id="b", status="DRAFT")
+        # Almacenes reales: PostgreSQL exige la FK y SQLite no (P21).
+        origin = _make_warehouse(db_session, code="WH-ORIG")
+        destination = _make_warehouse(db_session, code="WH-DEST")
+        transfer = Transfer(company_id=COMPANY, code="T-1", origin_warehouse_id=str(origin.id),
+                            destination_warehouse_id=str(destination.id), status="DRAFT")
         db_session.add(transfer)
         db_session.flush()
         with pytest.raises(ConflictError):

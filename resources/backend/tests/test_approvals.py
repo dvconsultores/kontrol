@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from sqlalchemy import create_engine
+from conftest import make_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.database import Base, init_models
@@ -28,11 +28,32 @@ OTHER = "company-2"
 
 @pytest.fixture()
 def db_session():
-    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    """Sesión de prueba con la cadena organizacional mínima creada.
+
+    PostgreSQL SÍ exige las claves foráneas y SQLite no: sin empresa real, las
+    inserciones de política fallaban en PostgreSQL. Crear la cadena
+    installation → tenant → company es lo correcto en ambos motores
+    (Constitución P21).
+    """
+    from app.modules.organization.models import Company, Installation, Tenant
+
+    engine = make_engine()
     init_models()
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
     session = session_factory()
+    inst = Installation(id="inst-1", installation_uuid="uuid-1", state="ACTIVE")
+    session.add(inst)
+    session.flush()
+    for company_id, code in ((COMPANY, "C1"), (OTHER, "C2")):
+        tenant = Tenant(id=f"ten-{code}", installation_id="inst-1", code=code,
+                        name=f"Tenant {code}", plan="MULTI_COMPANY", status="ACTIVE")
+        session.add(tenant)
+        session.flush()
+        session.add(Company(id=company_id, tenant_id=f"ten-{code}", code=code,
+                            legal_name=f"Empresa {code}", rif=f"J-{code}", legal_type="CA",
+                            functional_currency="VED", status="ACTIVE"))
+    session.flush()
     try:
         yield session
     finally:

@@ -15,10 +15,10 @@ import os
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from conftest import make_engine
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, func, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from app.core.config import get_settings
 from app.core.database import Base, get_db, init_models
@@ -32,8 +32,7 @@ _ENGINE = _FACTORY = _CLIENT = None
 @pytest.fixture(scope="module", autouse=True)
 def _app_client():
     global _ENGINE, _FACTORY, _CLIENT
-    engine = create_engine("sqlite+pysqlite:///:memory:", future=True,
-                           connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    engine = make_engine()
     init_models()
     Base.metadata.create_all(engine)
     factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
@@ -106,6 +105,14 @@ def _make_party(h: dict, code: str) -> str:
     r = _CLIENT.post("/api/v1/maestros/terceros", headers=h,
                      json={"code": code, "name": f"Party {code}", "roles": ["PROVEEDOR", "CLIENTE"]})
     assert r.status_code == 200, r.text
+    return r.json()["id"]
+
+
+def _make_product(h: dict, code: str) -> str:
+    """Producto real: PostgreSQL exige la FK de `product_id` y SQLite no (P21)."""
+    r = _CLIENT.post("/api/v1/maestros/catalogos/items", headers=h,
+                     json={"code": code, "name": f"Producto {code}", "item_type": "PRODUCT"})
+    assert r.status_code in (200, 201), r.text
     return r.json()["id"]
 
 
@@ -206,7 +213,7 @@ def test_double_payment_application_not_duplicated():
                        json={"supplier_id": supplier, "invoice_number": "F-IDEM", "currency": "VED"}).json()
     iid = inv["id"]
     _CLIENT.post(f"/api/v1/purchasing/supplier-invoices/{iid}/lines", headers=h,
-                 json={"product_id": "00000000-0000-0000-0000-000000000000", "quantity": 1,
+                 json={"product_id": _make_product(h, f"PR-{iid[:8]}"), "quantity": 1,
                        "unit_price": 200.0, "discount": 0})
     for target in ("VALIDATED", "MATCHED", "APPROVED", "POSTED"):
         r = _CLIENT.post(f"/api/v1/purchasing/supplier-invoices/{iid}/transition", headers=h, json={"target": target})
@@ -240,7 +247,7 @@ def test_fiscal_emit_idempotent():
                        json={"customer_id": party, "base_fiscal_currency": "VED"}).json()
     iid = inv["id"]
     _CLIENT.post(f"/api/v1/sales/invoices/{iid}/lines", headers=h,
-                 json={"product_id": "00000000-0000-0000-0000-000000000000", "quantity": 1,
+                 json={"product_id": _make_product(h, f"PR-{iid[:8]}"), "quantity": 1,
                        "unit_price": 100.0, "tax_amount": 16.0})
     for target in ("VALIDATED", "APPROVED", "EMITTED"):
         r = _CLIENT.post(f"/api/v1/sales/invoices/{iid}/transition", headers=h, json={"target": target})

@@ -201,9 +201,21 @@ def test_approvals_data_migration_is_idempotent():
             "INSERT INTO roles (id, code, name, protected, status, created_at, updated_at) "
             "VALUES ('r1', 'ADMIN', 'Administrador', 1, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"))
         conn.execute(text(
+            "INSERT INTO companies (id, tenant_id, code, legal_name, rif, legal_type, "
+            " functional_currency, status, created_at, updated_at) "
+            "VALUES ('c1', 't1', 'C1', 'Demo CA', 'J-1', 'CA', 'VED', 'ACTIVE', "
+            " CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"))
+        conn.execute(text(
             "INSERT INTO regulatory_approval_requests "
             "(id, company_id, object_ref, requester_id, amount, decision, status, created_at, updated_at) "
             "VALUES ('leg-1', 'c1', 'DESP-1', 'u1', 100.0, 'APPROVED', 'APPROVED', "
+            " CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"))
+        # Fila con referencia colgante: la tabla legada no tiene FK a companies,
+        # la nueva sí. Debe omitirse sin abortar la migración y conservarse.
+        conn.execute(text(
+            "INSERT INTO regulatory_approval_requests "
+            "(id, company_id, object_ref, requester_id, amount, decision, status, created_at, updated_at) "
+            "VALUES ('leg-huerfana', 'c-BORRADA', 'DESP-2', 'u1', 50.0, 'APPROVED', 'APPROVED', "
             " CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"))
 
     def _run() -> None:
@@ -222,6 +234,12 @@ def test_approvals_data_migration_is_idempotent():
         perms = conn.execute(text(
             "SELECT COUNT(*) FROM permissions WHERE resource = 'aprobaciones'")).scalar()
         links = conn.execute(text("SELECT COUNT(*) FROM role_permissions")).scalar()
+        huerfana_migrada = conn.execute(text(
+            "SELECT COUNT(*) FROM approval_requests "
+            "WHERE document_id = 'leg-huerfana'")).scalar()
+        huerfana_conservada = conn.execute(text(
+            "SELECT COUNT(*) FROM regulatory_approval_requests "
+            "WHERE id = 'leg-huerfana'")).scalar()
 
     assert len(migrated) == 1, "el histórico se duplicó"
     # No se inventa política: se declara explícitamente que se desconoce (AC-22)
@@ -229,3 +247,7 @@ def test_approvals_data_migration_is_idempotent():
     assert migrated[0][1] == "APPROVED"
     assert perms == 6
     assert links == 6
+    # La fila con empresa inexistente NO se migra (violaría la FK) pero TAMPOCO
+    # se pierde: permanece en la tabla legada.
+    assert huerfana_migrada == 0, "una fila con referencia colgante no debe migrarse"
+    assert huerfana_conservada == 1, "una fila omitida no debe perderse"

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Aprovisiona una instancia PostgreSQL real de QA (Spec 045 · CVG-045-01/02).
+#
+# Usa los binarios de PostgreSQL empaquetados en `pgserver` (dependencia SOLO de
+# QA, no de producción: no está en requirements.txt). En un entorno con Docker,
+# el equivalente es `compose.dev` con el servicio de PostgreSQL.
+#
+# Uso:  bash qa/pg-provision.sh [start|stop|status|reset]
+set -euo pipefail
+
+BACKEND="$(cd "$(dirname "${BASH_SOURCE[0]}")/../resources/backend" && pwd)"
+PGBIN="$BACKEND/.venv/lib/python3.11/site-packages/pgserver/pginstall/bin"
+PGDATA="${KONTROL_PGDATA:-/tmp/kontrol-pgdata-045}"
+PGPORT="${KONTROL_PGPORT:-55432}"
+LOG="${KONTROL_PGLOG:-/tmp/kontrol-pg.log}"
+
+[ -x "$PGBIN/pg_ctl" ] || { echo "pgserver no instalado: pip install pgserver"; exit 1; }
+
+init() {
+  [ -f "$PGDATA/PG_VERSION" ] && return 0
+  mkdir -p "$PGDATA"
+  # Timezone UTC y encoding UTF8: parámetros fijados por ADR-D0-001.
+  "$PGBIN/initdb" -D "$PGDATA" -U postgres -E UTF8 --locale=C >/dev/null
+}
+
+start() {
+  init
+  "$PGBIN/pg_ctl" -D "$PGDATA" -o "-p $PGPORT -c listen_addresses=localhost -c timezone=UTC" -l "$LOG" start
+  sleep 2
+  "$PGBIN/psql" -h localhost -p "$PGPORT" -U postgres -d postgres -q \
+    -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='kontrol_migrator') THEN CREATE ROLE kontrol_migrator LOGIN PASSWORD 'qa'; END IF; END \$\$;" \
+    -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='kontrol_app') THEN CREATE ROLE kontrol_app LOGIN PASSWORD 'qa'; END IF; END \$\$;"
+  "$PGBIN/psql" -h localhost -p "$PGPORT" -U postgres -d postgres -tAc "SELECT version();"
+}
+
+mkdb() {
+  "$PGBIN/psql" -h localhost -p "$PGPORT" -U postgres -d postgres -q \
+    -c "DROP DATABASE IF EXISTS $1;" \
+    -c "CREATE DATABASE $1 OWNER kontrol_migrator ENCODING 'UTF8';" \
+    -c "ALTER DATABASE $1 SET timezone TO 'UTC';"
+}
+
+case "${1:-start}" in
+  start)  start ;;
+  stop)   "$PGBIN/pg_ctl" -D "$PGDATA" stop ;;
+  status) "$PGBIN/pg_ctl" -D "$PGDATA" status ;;
+  reset)  "$PGBIN/pg_ctl" -D "$PGDATA" stop || true; rm -rf "$PGDATA"; start ;;
+  mkdb)   mkdb "$2" ;;
+  *) echo "uso: $0 [start|stop|status|reset|mkdb <nombre>]"; exit 1 ;;
+esac

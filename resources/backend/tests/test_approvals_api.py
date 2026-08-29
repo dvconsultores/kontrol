@@ -11,10 +11,10 @@ import os
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from conftest import make_engine
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from app.core.config import get_settings
 from app.core.database import Base, get_db, init_models
@@ -63,8 +63,7 @@ def _import_license(db: Session) -> None:
 @pytest.fixture(scope="module", autouse=True)
 def _app_client():
     global _CLIENT, _FACTORY, COMPANY_ID
-    engine = create_engine("sqlite+pysqlite:///:memory:", future=True,
-                           connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    engine = make_engine()
     init_models()
     Base.metadata.create_all(engine)
     factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)

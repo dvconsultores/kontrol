@@ -7,7 +7,7 @@ requerir una base de datos externa.
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import create_engine
+from conftest import make_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.database import Base, init_models
@@ -20,7 +20,7 @@ from app.modules.setup.api import SetupRequest, initialize, setup_status
 
 @pytest.fixture()
 def db_session():
-    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    engine = make_engine()
     init_models()
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)

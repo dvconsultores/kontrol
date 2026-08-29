@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 import pytest
-from sqlalchemy import create_engine
+from conftest import make_engine, seed_org_chain
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.database import Base, init_models
@@ -26,11 +26,12 @@ from app.modules.sales.models import SalesInvoice
 
 @pytest.fixture()
 def db_session():
-    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    engine = make_engine()
     init_models()
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
     session = session_factory()
+    seed_org_chain(session, COMPANY, OTHER)
     try:
         yield session
     finally:

@@ -12,7 +12,8 @@ import os
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from sqlalchemy import create_engine, select
+from conftest import make_engine
+from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.database import Base, init_models
@@ -25,7 +26,7 @@ from app.modules.setup.api import SetupRequest, initialize
 
 @pytest.fixture()
 def db_session():
-    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    engine = make_engine()
     init_models()
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
