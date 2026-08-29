@@ -4,9 +4,9 @@
 |---|---|
 | Producto | KONTROL — Plataforma Administrativa Empresarial para Venezuela |
 | Documento | Constitución del proyecto |
-| Versión | 1.0 |
-| Estado | Aprobada (línea base inicial) |
-| Fecha | 2026-08-03 |
+| Versión | 1.1 |
+| Estado | Aprobada · enmendada en Gate G0 (E-01, E-02, E-03) |
+| Fecha | 2026-08-03 · última enmienda 2026-08-29 |
 | Autoridad | Nivel 2 — Constitución de KONTROL |
 | Fuentes | Documento Maestro de Requerimientos (Volumen 1); Estándar Maestro de Frontend y Arquitectura Técnica v1.0; Especificación de Licenciamiento Anual; Leyes Venezolanas (base jurídico-funcional) |
 | Ruta | `.specify/memory/constitution.md` |
@@ -103,6 +103,19 @@ El estado `LEGAL_VALIDATION_REQUIRED` se utiliza ante cualquier duda de vigencia
 KONTROL no fabrica permisos, guías ni certificados de organismos externos (SENIAT, SUNAGRO/SICA, INSAI/SIGESAI, SACS).
 Registra, valida, adjunta y bloquea según el documento oficial; la integración automática solo se habilita mediante convenio/API oficial aprobada.
 
+### Principio 21 — Paridad del motor de persistencia
+La evidencia de calidad solo es válida sobre el motor de persistencia de producción.
+Ninguna función se declara terminada con evidencia obtenida sobre un motor distinto del que operará el cliente.
+PostgreSQL es obligatorio en desarrollo integrado, pruebas de integración y contrato, E2E, QA, staging y producción; cualquier excepción es explícita, declarada y acotada a pruebas que no ejercitan el dialecto.
+
+### Principio 22 — Autoridad única por capacidad transversal
+Las capacidades transversales —aprobaciones, gestión documental, auditoría, notificaciones, permisos y reglas normativas— tienen una sola implementación en la plataforma.
+Ningún módulo implementa su propia versión de una capacidad transversal.
+
+### Principio 23 — Captura anticipada de datos no reconstruibles
+Cuando un dato no pueda derivarse a posteriori de ninguna otra fuente, su captura se implementa en cuanto la decisión que lo exige queda aprobada, aunque la funcionalidad que lo explota se planifique para una fase posterior.
+Proteger lo registrado (P5) no basta: hay que registrar lo que después será imposible reconstruir.
+
 ---
 
 ## Jerarquía de autoridad (resumen)
@@ -125,3 +138,4 @@ Registra, valida, adjunta y bloquea según el documento oficial; la integración
 | Versión | Fecha | Cambio | Autor | Aprobación |
 |---|---|---|---|---|
 | 1.0 | 2026-08-03 | Creación inicial derivada de los documentos maestros y la base jurídico-funcional | Equipo de gobierno de KONTROL | Producto, Arquitectura, Seguridad, Legal, QA |
+| 1.1 | 2026-08-29 | **Gate G0** — incorporación de los principios 21, 22 y 23 (enmiendas E-01, E-02, E-03 de `D0-constitution-diff.md`). Ninguna enmienda contradice un principio vigente; las tres refuerzan P5, P10 y P17. Fundamento documental: `ADR-D0-001`, `ADR-D0-002`, `ADR-D0-008`, `ADR-D0-009`, `ADR-D0-011` y `docs/governance/d0-foundational-decisions/D0-historical-data-risk.md` | Gate G0 de gobierno arquitectónico | Arquitectura, Seguridad, QA · **ratificación de Producto y Legal pendiente** (registrada en `docs/governance/G0-final-resolution.md`) |

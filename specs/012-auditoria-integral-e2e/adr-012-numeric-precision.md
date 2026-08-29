@@ -1,4 +1,10 @@
-# ADR-012 · Precisión numérica: columnas de cantidad/medida (Float vs Numeric)
+# ADR-016 · Precisión numérica: columnas de cantidad/medida (Float vs Numeric)
+
+> **Renumerado en Gate G0 (2026-08-29).** Este documento se emitió como «ADR-012» tomando el número
+> de la Spec que lo originó, lo que colisionaba con `specs/001-fundacion/adr/ADR-012.md` (Auditoría).
+> Su identificador único en el registro maestro es **ADR-016**. La ruta del archivo se conserva para
+> no romper enlaces existentes. Estado: **APPROVED**.
+> Registro: `docs/governance/architecture-decision-register.md`.
 
 > **T-202 (KAUD-011)** · Auditoría Integral E2E · 2026-08-12 · Rama `develop`
 > Estado: **ACEPTADO** (decisión de alcance documentada).
