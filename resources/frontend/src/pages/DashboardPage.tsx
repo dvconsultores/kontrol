@@ -28,7 +28,7 @@ export function DashboardPage(): React.JSX.Element {
 
   const indicatorCard = (label: string, value: string): React.JSX.Element => (
     <div className="rounded-lg border border-border-default bg-surface-0 p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-text-400">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-text-500">{label}</p>
       <p className="mt-1 truncate text-lg font-semibold text-text-900">{value}</p>
     </div>
   );

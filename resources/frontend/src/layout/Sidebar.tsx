@@ -242,11 +242,15 @@ export function Sidebar(): React.JSX.Element {
           </svg>
         </button>
       </div>
+      {/* Los títulos de sección usan text-500 (4,76:1 sobre blanco) y no
+          text-400 (2,56:1): incumplían WCAG 2.2 AA en TODAS las páginas
+          autenticadas. Detectado al hacer que la suite axe midiera la ruta
+          real en lugar de la de inicio (Spec 045, CVG-045-07). */}
       <nav aria-label="Menú principal" className="flex-1 overflow-y-auto px-2 py-3">
         {visibleSections.map((section) => (
           <div key={section.title} className="mb-4">
             {!collapsed ? (
-              <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-text-400">
+              <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-text-500">
                 {section.title}
               </p>
             ) : null}

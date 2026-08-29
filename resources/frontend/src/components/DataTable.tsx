@@ -80,7 +80,9 @@ export function DataTable<TData>({
                   <th
                     key={header.id}
                     scope="col"
-                    className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-text-500"
+                    // text-600 (6,92:1) y no text-500 (4,34:1 sobre surface-100):
+                    // la cabecera incumplía WCAG 2.2 AA en toda tabla con datos.
+                    className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-text-600"
                   >
                     {header.isPlaceholder
                       ? null
@@ -113,7 +115,7 @@ export function DataTable<TData>({
           onPageSizeChange={(size) => table.setPageSize(size)}
         />
       ) : null}
-      <p className="mt-1 text-xs text-text-400">
+      <p className="mt-1 text-xs text-text-500">
         Mostrando {pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} de {total}{" "}
         registros
       </p>

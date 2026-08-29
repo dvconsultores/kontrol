@@ -21,7 +21,7 @@ export function Topbar(): React.JSX.Element {
             <span className="text-text-500">{activeCompany.rif}</span>
           </>
         ) : (
-          <span className="text-text-400">Sin empresa activa</span>
+          <span className="text-text-500">Sin empresa activa</span>
         )}
       </div>
       <div className="flex items-center gap-3">
