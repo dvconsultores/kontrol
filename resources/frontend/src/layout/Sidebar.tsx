@@ -22,6 +22,7 @@ import {
   Repeat,
   Scale,
   ScrollText,
+  Send,
   Settings,
   ShieldAlert,
   ShieldCheck,
@@ -149,6 +150,15 @@ const navSections = [
       { to: "/regulatorio/permisos", label: "Permisos y guías", icon: FileCheck },
       { to: "/regulatorio/evaluacion", label: "Evaluación", icon: ShieldAlert },
       { to: "/regulatorio/aprobaciones", label: "Aprobaciones", icon: ShieldCheck },
+    ],
+  },
+  {
+    title: "Aprobaciones",
+    permission: "aprobaciones:view",
+    items: [
+      { to: "/aprobaciones/bandeja", label: "Mis aprobaciones", icon: ClipboardCheck },
+      { to: "/aprobaciones/politicas", label: "Políticas", icon: Scale },
+      { to: "/aprobaciones/delegaciones", label: "Delegaciones", icon: Send },
     ],
   },
   {

@@ -50,6 +50,10 @@ test.describe("páginas autenticadas (requiere credenciales E2E)", () => {
     "/fiscal/lotes-declaracion",
     "/seguridad/usuarios",
     "/regulatorio/aprobaciones",
+    // Spec 045 — motor transversal de aprobaciones
+    "/aprobaciones/bandeja",
+    "/aprobaciones/politicas",
+    "/aprobaciones/delegaciones",
   ];
 
   for (const path of pages) {

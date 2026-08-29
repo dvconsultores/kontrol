@@ -75,6 +75,8 @@ export interface RequestOptions {
   body?: unknown;
   /** Clave de idempotencia para POST críticos (ADR-013). */
   idempotencyKey?: string;
+  /** Versión esperada del recurso para control optimista; 409 en conflicto (ADR-013). */
+  ifMatch?: string;
   signal?: AbortSignal;
 }
 
@@ -90,6 +92,9 @@ async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
   }
   if (options.idempotencyKey) {
     headers["Idempotency-Key"] = options.idempotencyKey;
+  }
+  if (options.ifMatch) {
+    headers["If-Match"] = options.ifMatch;
   }
 
   const response = await fetch(`/api/v1${path}`, {

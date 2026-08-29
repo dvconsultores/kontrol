@@ -3,7 +3,7 @@
  * Solo para confirmar desactivar/eliminar/anular/reversar/descartar y alertas.
  * Loader dentro del botón Confirmar (FR-007); no abre un segundo modal.
  */
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { AsyncButton } from "./AsyncButton";
@@ -16,6 +16,12 @@ export interface ConfirmationDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
+  /**
+   * Contenido breve dentro de la confirmación (por ejemplo, el motivo
+   * obligatorio de un rechazo). No convierte el modal en un formulario
+   * complejo: eso sigue exigiendo pantalla completa (ADR-015 / P18).
+   */
+  children?: ReactNode;
   onConfirm: () => Promise<void>;
   onCancel: () => void;
 }
@@ -27,6 +33,7 @@ export function ConfirmationDialog({
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
   danger,
+  children,
   onConfirm,
   onCancel,
 }: ConfirmationDialogProps): React.JSX.Element | null {
@@ -67,6 +74,7 @@ export function ConfirmationDialog({
           {title}
         </h2>
         {description ? <p className="mt-2 text-sm text-text-500">{description}</p> : null}
+        {children ? <div className="mt-4">{children}</div> : null}
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="secondary" onClick={onCancel}>
             {cancelLabel}

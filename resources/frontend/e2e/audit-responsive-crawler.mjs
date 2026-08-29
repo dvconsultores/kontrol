@@ -41,6 +41,8 @@ const ROUTES = [
   "/tesoreria/cajas", "/tesoreria/conciliacion", "/fiscal/configuracion",
   "/fiscal/numeracion", "/fiscal/lotes-declaracion",
   "/regulatorio/aprobaciones", "/reportes/centro",
+  // Spec 045 — motor transversal de aprobaciones
+  "/aprobaciones/bandeja", "/aprobaciones/politicas", "/aprobaciones/delegaciones",
   "/reportes/exportaciones", "/reportes/auditoria", "/seguridad/usuarios",
   "/seguridad/roles", "/auditoria",
 ];

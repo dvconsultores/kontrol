@@ -1136,3 +1136,139 @@ export interface HomologationTimelineItem {
   created_at: string;
 }
 
+
+/* -------------------------------------------------------------------------- */
+/* Motor de aprobaciones (Spec 045)                                           */
+/* -------------------------------------------------------------------------- */
+export type ApprovalRequestStatus =
+  | "DRAFT" | "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED"
+  | "RETURNED" | "CANCELLED" | "OBSOLETE";
+
+export type ApprovalStepStatus =
+  | "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "RETURNED" | "EXPIRED" | "SKIPPED";
+
+export type ApprovalPolicyStatus = "DRAFT" | "ACTIVE" | "CLOSED";
+
+export interface ApprovalCondition {
+  field: string;
+  operator: string;
+  value?: unknown;
+}
+
+export interface ApprovalLevelSummary {
+  id?: string;
+  level_order: number;
+  resolver_type: "ROLE" | "USER" | "SCOPE_OWNER";
+  resolver_ref: string;
+  quorum_type: "ANY" | "ALL" | "N_OF_M";
+  quorum_n: number | null;
+  can_delegate?: boolean;
+  sla_hours: number | null;
+}
+
+export interface ApprovalRuleSummary {
+  id: string;
+  name: string;
+  sequence: number;
+  conditions: ApprovalCondition[];
+  condition_fields: string[];
+  is_exception: boolean;
+  risk_class: string | null;
+  levels: ApprovalLevelSummary[];
+}
+
+export interface ApprovalPolicySummary {
+  id: string;
+  company_id: string;
+  process_type: string;
+  code: string;
+  name: string;
+  version: number;
+  status: ApprovalPolicyStatus;
+  valid_from: string | null;
+  valid_to: string | null;
+  requires_segregation: boolean;
+  allow_self_approval: boolean;
+  distinct_actors_across_levels: boolean;
+  base_currency: string;
+  rules: ApprovalRuleSummary[];
+  allowed_actions: string[];
+}
+
+export interface ApprovalInboxItem {
+  step_id: string;
+  request_id: string;
+  process_type: string;
+  document_type: string;
+  document_id: string;
+  level_order: number;
+  quorum_type: string;
+  amount_base: number | null;
+  base_currency: string | null;
+  requested_by: string | null;
+  requested_at: string | null;
+  due_at: string | null;
+  overdue: boolean;
+  step_version: number;
+  allowed_actions: string[];
+}
+
+export interface ApprovalDecisionSummary {
+  actor_id: string;
+  decision: "APPROVE" | "REJECT" | "RETURN" | "CANCEL";
+  reason: string | null;
+  observations: string | null;
+  decided_at: string | null;
+  on_behalf_of_id: string | null;
+}
+
+export interface ApprovalStepSummary {
+  id: string;
+  level_order: number;
+  status: ApprovalStepStatus;
+  quorum_type: string;
+  quorum_n: number | null;
+  eligible_actors: string[];
+  due_at: string | null;
+  version: number;
+  decisions: ApprovalDecisionSummary[];
+}
+
+export interface ApprovalRequestDetail {
+  id: string;
+  status: ApprovalRequestStatus;
+  process_type: string;
+  policy_id: string | null;
+  policy_version: string;
+  amount_base: number | null;
+  base_currency: string | null;
+  requested_by: string | null;
+  requested_at: string | null;
+  resolved_at: string | null;
+  resolution_reason: string | null;
+  previous_request_id: string | null;
+  fingerprint_fields: string[];
+  steps: ApprovalStepSummary[];
+  allowed_actions: string[];
+}
+
+export interface ApprovalDocumentStatus {
+  document: string;
+  requests: ApprovalRequestDetail[];
+  current: ApprovalRequestDetail | null;
+  is_approved: boolean;
+  blocks_advance: boolean;
+}
+
+export interface ApprovalDelegationSummary {
+  id: string;
+  grantor_id: string;
+  grantee_id: string;
+  scope_process_type: string | null;
+  valid_from: string | null;
+  valid_to: string | null;
+  reason: string | null;
+  is_temporary_substitution: boolean;
+  revoked_at: string | null;
+  status: "ACTIVE" | "REVOKED";
+}
