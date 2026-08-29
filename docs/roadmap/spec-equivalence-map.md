@@ -81,8 +81,16 @@
 
 ## Recomendación de rebaseline
 
-**Propuesta (no ejecutada):** no renumerar. Conservar `001-012` y **abrir Specs nuevas desde `014`**
-para las maestras huérfanas, registrando en cada una su número maestro de referencia.
+**Propuesta revisada (adoptada 2026-08-29):** no renumerar lo existente. Conservar `001-013` y
+**nombrar cada Spec nueva con su número del catálogo maestro** (`specs/045-...`, `specs/008-...`).
+
+Revisión respecto a la propuesta original de «abrir desde 014»: dado que el catálogo de 56 es ya el
+universo de control de todo el gobierno (GAP Analysis, D0, G0), alinear la carpeta con el número
+maestro elimina el mapeo mental permanente entre dos numeraciones. El precio es un hueco aparente
+entre `013` y `045`, que no tiene coste real: la correspondencia queda en esta misma tabla.
+
+Las Specs `001-012` conservan su número histórico y su cobertura múltiple; sus equivalencias con el
+catálogo maestro son las de la tabla anterior.
 
 Motivo: renumerar 12 Specs con evidencia, convergencia y trazabilidad ya emitida destruiría la
 cadena del Principio 3 a cambio de estética. El mapa de equivalencias cumple la misma función
