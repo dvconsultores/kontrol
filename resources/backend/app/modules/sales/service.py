@@ -19,6 +19,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
+from app.modules.approvals import integration as approvals_integration
 from app.modules.inventory import service as inv_service
 from app.modules.organization.models import Warehouse
 from app.modules.organization.service import warehouse_in_tenant_scope
@@ -80,6 +81,18 @@ INVOICE_TRANSITIONS: dict[str, set[str]] = {
     "REJECTED": set(),
     "CANCELLED": set(),
 }
+
+
+def _order_credit_context(db: Session, order: SalesOrder) -> dict[str, Any]:
+    """Contexto plano de crédito para el motor de aprobaciones (Spec 045)."""
+    lines = db.execute(select(SalesOrderLine).where(
+        SalesOrderLine.order_id == str(order.id))).scalars().all()
+    total = sum(float(line.unit_price or 0) * float(line.quantity or 0)
+                - float(line.discount or 0) for line in lines)
+    return {"amount": total, "currency": getattr(order, "currency", "VED") or "VED",
+            "rate_snapshot": getattr(order, "rate_snapshot", None),
+            "customer_id": order.customer_id,
+            "price_list": getattr(order, "price_list", None)}
 
 
 def _assert_transition(current: str, target: str, transitions: dict[str, set[str]], what: str) -> None:
@@ -182,6 +195,16 @@ def transition_order(db: Session, *, order: SalesOrder, target: str, actor: str 
                      credit_decision: str | None = None, approval_ref: str | None = None) -> SalesOrder:
     """Transición de la OV. Al aprobar (APPROVED) se reserva inventario vía 003 (FR-005-020)."""
     _assert_transition(order.status, target, ORDER_TRANSITIONS, "la orden de venta")
+    if target == "CREDIT_PENDING":
+        approvals_integration.require_for_document(
+            db, company_id=order.company_id,
+            process_type=approvals_integration.PROCESS_SALES_CREDIT,
+            document_type="SalesOrder", document_id=str(order.id),
+            context=_order_credit_context(db, order), actor=actor)
+    if target == "APPROVED":
+        approvals_integration.ensure_approved(
+            db, company_id=order.company_id, document_type="SalesOrder",
+            document_id=str(order.id), what="la orden de venta")
     order.status = target
     order.updated_at = datetime.now(UTC)
     if target == "CREDIT_PENDING" and credit_decision:

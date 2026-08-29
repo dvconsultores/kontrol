@@ -156,8 +156,15 @@ class RegulatoryEvaluation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="CLEARED")  # CLEARED / BLOCKED / OVERRIDDEN
 
 
-class ApprovalRequest(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
-    __tablename__ = "approval_requests"
+class RegulatoryApprovalRequest(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Solicitud de aprobación regulatoria (legado de 008).
+
+    Renombrada en la Spec 045 (F1): el nombre `approval_requests` pasa al motor
+    transversal. Esta entidad se conserva sin cambio de comportamiento hasta que
+    la fase F6 migre sus datos al motor (FR-045-073). No añadir usos nuevos.
+    """
+
+    __tablename__ = "regulatory_approval_requests"
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     object_ref: Mapped[str] = mapped_column(String(200), nullable=False)

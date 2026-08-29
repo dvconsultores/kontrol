@@ -21,6 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
+from app.modules.approvals import integration as approvals_integration
 from app.modules.inventory.models import (
     CostingProfile,
     CostLayer,
@@ -737,7 +738,14 @@ def confirm_transfer_receipt(db: Session, *, transfer: Transfer, receipt_ref: st
 # Conteos (FR-003-070/071)
 # --------------------------------------------------------------------------- #
 def transition_count(db: Session, *, count: StockCount, target: str, actor: str | None = None) -> StockCount:
+    """Transición del conteo, gobernada por el motor de aprobaciones (Spec 045)."""
     _assert_transition(count.status, target, COUNT_TRANSITIONS, "el conteo")
+    if target in ("SUBMITTED", "REVIEWED"):
+        approvals_integration.require_for_document(
+            db, company_id=count.company_id,
+            process_type=approvals_integration.PROCESS_INVENTORY_COUNT,
+            document_type="StockCount", document_id=str(count.id),
+            context=_count_context(db, count), actor=actor)
     count.status = target
     count.updated_at = datetime.now(UTC)
     db.flush()
@@ -755,9 +763,21 @@ def record_count_line(db: Session, *, count_id: str, product_id: str, expected_q
     return line
 
 
+def _count_context(db: Session, count: StockCount) -> dict[str, Any]:
+    """Contexto plano del conteo para el motor de aprobaciones (Spec 045)."""
+    lines = db.execute(select(StockCountLine).where(
+        StockCountLine.count_id == count.id)).scalars().all()
+    variance = sum(abs(float(line.variance or 0.0)) for line in lines)
+    return {"variance_total": variance, "line_count": len(lines),
+            "warehouse_id": count.warehouse_id}
+
+
 def approve_count(db: Session, *, count: StockCount, actor: str | None = None) -> StockCount:
     """Aprueba el conteo y genera los ajustes/movimientos por diferencia (FR-003-071)."""
     _assert_transition(count.status, "APPROVED", COUNT_TRANSITIONS, "el conteo")
+    approvals_integration.ensure_approved(
+        db, company_id=count.company_id, document_type="StockCount",
+        document_id=str(count.id), what="el conteo")
     lines = db.execute(select(StockCountLine).where(StockCountLine.count_id == count.id)).scalars().all()
     adj_type = _get_movement_type_by_code(db, count.company_id, "CONTEO")
     for line in lines:
@@ -796,7 +816,27 @@ def create_adjustment(db: Session, *, company_id: str, warehouse_id: str, produc
 
 def transition_adjustment(db: Session, *, adjustment: InventoryAdjustment, target: str,
                           actor: str | None = None) -> InventoryAdjustment:
+    """Transición del ajuste, gobernada por el motor de aprobaciones (Spec 045).
+
+    La segregación deja de estar codificada aquí: la decide la política de la
+    empresa (`ADR-D0-002` R-D0-02-5). Sin política, el comportamiento no cambia.
+    """
     _assert_transition(adjustment.status, target, ADJUSTMENT_TRANSITIONS, "el ajuste")
+    if target in ("SUBMITTED", "PENDING_APPROVAL"):
+        approvals_integration.require_for_document(
+            db, company_id=adjustment.company_id,
+            process_type=approvals_integration.PROCESS_INVENTORY_ADJUSTMENT,
+            document_type="InventoryAdjustment", document_id=str(adjustment.id),
+            context={"quantity": float(adjustment.quantity or 0),
+                     "amount": float(adjustment.unit_cost or 0) * abs(float(adjustment.quantity or 0)),
+                     "currency": getattr(adjustment, "currency", "VED") or "VED",
+                     "warehouse_id": adjustment.warehouse_id,
+                     "reason": adjustment.reason},
+            actor=actor)
+    if target == "APPROVED":
+        approvals_integration.ensure_approved(
+            db, company_id=adjustment.company_id, document_type="InventoryAdjustment",
+            document_id=str(adjustment.id), what="el ajuste")
     adjustment.status = target
     adjustment.updated_at = datetime.now(UTC)
     if target in ("APPROVED", "REJECTED"):

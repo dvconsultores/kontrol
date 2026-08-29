@@ -19,11 +19,11 @@ from app.core.errors import NotFoundError
 from app.modules.identity_access.models import User
 from app.modules.regulatory import service as regulatory_service
 from app.modules.regulatory.models import (
-    ApprovalRequest,
     OfficialDocument,
     OfficialRegistration,
     PermitInstance,
     PermitType,
+    RegulatoryApprovalRequest,
     RegulatoryAuthority,
     RegulatoryContingency,
     RegulatoryEvaluation,
@@ -402,7 +402,7 @@ def create_approval_request(body: ApprovalCreate, db: Session = Depends(get_db),
 @router.post("/approval-requests/{request_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_approval_request(request_id: str, body: TransitionBody, db: Session = Depends(get_db),
                                 actor: User = Depends(require_permission("regulatorio", "approve"))):
-    req = _owned(db, ApprovalRequest, request_id, actor.tenant_id, "APPROVAL_REQUEST_NOT_FOUND", "Solicitud no encontrada")
+    req = _owned(db, RegulatoryApprovalRequest, request_id, actor.tenant_id, "APPROVAL_REQUEST_NOT_FOUND", "Solicitud no encontrada")
     regulatory_service.transition_approval_request(db, company_id=actor.tenant_id, request_id=str(req.id),
                                                    target=body.target, actor=str(actor.id))
     db.commit()
@@ -412,8 +412,8 @@ def transition_approval_request(request_id: str, body: TransitionBody, db: Sessi
 
 @router.get("/approval-requests")
 def list_approval_requests(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(ApprovalRequest).where(ApprovalRequest.company_id == user.tenant_id)
-                       .order_by(ApprovalRequest.created_at.desc())).scalars().all()
+    items = db.execute(select(RegulatoryApprovalRequest).where(RegulatoryApprovalRequest.company_id == user.tenant_id)
+                       .order_by(RegulatoryApprovalRequest.created_at.desc())).scalars().all()
     return {"items": [{"id": r.id, "object_ref": r.object_ref, "rule_ref": r.rule_ref, "risk": r.risk,
                        "amount": r.amount, "status": r.status, "decision": r.decision} for r in items],
             "total": len(items), "page": 1, "page_size": len(items) or 1}

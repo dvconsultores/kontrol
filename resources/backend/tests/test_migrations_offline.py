@@ -154,3 +154,78 @@ def test_migration_0013_skips_when_no_admin():
             mod.upgrade()  # sin rol ADMIN: no debe fallar ni crear nada
         roles = conn.execute(text("SELECT COUNT(*) FROM roles")).scalar()
     assert roles == 0
+
+
+def test_approvals_migrations_compile_offline_postgres(tmp_path):
+    """Spec 045: la migración 0015 compila en dialecto PostgreSQL (T-045-005).
+
+    No sustituye la ejecución sobre PostgreSQL real (BLK-D0-01, Constitución
+    P21): sólo verifica que el SQL generado es válido para el dialecto de
+    producción. La migración de datos 0016 no es válida en modo offline.
+    """
+    alembic_bin = BACKEND / ".venv" / "bin" / "alembic"
+    if not alembic_bin.exists():
+        pytest.skip("alembic no está disponible en el entorno")
+    result = subprocess.run(
+        [str(alembic_bin), "upgrade", "0014_numeric_money_2:0015_approvals", "--sql"],
+        cwd=str(BACKEND), env=_base_env(tmp_path), capture_output=True, text=True, timeout=180,
+    )
+    assert result.returncode == 0, result.stderr[-2000:]
+    sql = result.stdout
+    for table in ("approval_policies", "approval_rules", "approval_levels", "approval_requests",
+                  "approval_steps", "approval_decisions", "approval_delegations", "approval_events"):
+        assert f"CREATE TABLE {table}" in sql, f"falta {table}"
+    assert "ALTER TABLE approval_requests RENAME TO regulatory_approval_requests" in sql or \
+           "ALTER TABLE approval_requests RENAME TO" in sql
+
+
+def test_approvals_data_migration_is_idempotent():
+    """0016: permisos e histórico se migran sin duplicar (T-045-066, AC-22)."""
+    from sqlalchemy import create_engine as _ce
+
+    spec = importlib.util.spec_from_file_location(
+        "mig_0016", BACKEND / "alembic" / "versions" / "0016_approvals_backfill.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    engine = _ce("sqlite+pysqlite:///:memory:", future=True,
+                 connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    from app.core.database import Base as _Base
+    from app.core.database import init_models as _init
+
+    _init()
+    _Base.metadata.create_all(engine)
+    with engine.begin() as conn:
+        conn.execute(text(
+            "INSERT INTO roles (id, code, name, protected, status, created_at, updated_at) "
+            "VALUES ('r1', 'ADMIN', 'Administrador', 1, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"))
+        conn.execute(text(
+            "INSERT INTO regulatory_approval_requests "
+            "(id, company_id, object_ref, requester_id, amount, decision, status, created_at, updated_at) "
+            "VALUES ('leg-1', 'c1', 'DESP-1', 'u1', 100.0, 'APPROVED', 'APPROVED', "
+            " CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"))
+
+    def _run() -> None:
+        with engine.begin() as conn:
+            ctx = MigrationContext.configure(conn)
+            with Operations.context(ctx):
+                module.upgrade()
+
+    _run()
+    _run()  # segunda ejecución: no debe duplicar
+
+    with engine.begin() as conn:
+        migrated = conn.execute(text(
+            "SELECT policy_version, status FROM approval_requests "
+            "WHERE document_id = 'leg-1'")).fetchall()
+        perms = conn.execute(text(
+            "SELECT COUNT(*) FROM permissions WHERE resource = 'aprobaciones'")).scalar()
+        links = conn.execute(text("SELECT COUNT(*) FROM role_permissions")).scalar()
+
+    assert len(migrated) == 1, "el histórico se duplicó"
+    # No se inventa política: se declara explícitamente que se desconoce (AC-22)
+    assert migrated[0][0] == "LEGACY_UNVERSIONED"
+    assert migrated[0][1] == "APPROVED"
+    assert perms == 6
+    assert links == 6

@@ -19,12 +19,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
+from app.modules.approvals import integration as approvals_integration
 from app.modules.regulatory.models import (
-    ApprovalRequest,
     OfficialDocument,
     OfficialRegistration,
     PermitInstance,
     PermitType,
+    RegulatoryApprovalRequest,
     RegulatoryAuthority,
     RegulatoryContingency,
     RegulatoryEvaluation,
@@ -319,26 +320,40 @@ def end_contingency(db: Session, *, company_id: str, contingency_id: str) -> Reg
 
 def create_approval_request(db: Session, *, company_id: str, object_ref: str, rule_ref: str | None = None,
                             risk: str | None = None, amount: float | None = None, deadline: date | None = None,
-                            actor: str | None = None) -> ApprovalRequest:
+                            actor: str | None = None) -> RegulatoryApprovalRequest:
     company_id = _company(company_id, obj="solicitud de aprobación")
-    req = ApprovalRequest(company_id=company_id, object_ref=object_ref, rule_ref=rule_ref, requester_id=actor,
+    req = RegulatoryApprovalRequest(company_id=company_id, object_ref=object_ref, rule_ref=rule_ref, requester_id=actor,
                           approvers="[]", risk=risk, amount=amount, deadline=deadline, status="PENDING",
                           created_by=actor)
     db.add(req)
     db.flush()
+    # Delegación en el motor transversal (Spec 045, FR-045-073/075). Sin política
+    # activa no exige nada y el comportamiento es el anterior (AC-20).
+    approvals_integration.require_for_document(
+        db, company_id=company_id,
+        process_type=approvals_integration.PROCESS_REGULATORY_APPROVAL,
+        document_type="RegulatoryApprovalRequest", document_id=str(req.id),
+        context={"amount": float(amount) if amount is not None else None,
+                 "currency": "VED", "risk_class": risk, "rule_ref": rule_ref,
+                 "object_ref": object_ref},
+        actor=actor)
     return req
 
 
 def transition_approval_request(db: Session, *, company_id: str, request_id: str, target: str,
-                                actor: str | None = None) -> ApprovalRequest:
-    req = db.get(ApprovalRequest, request_id)
+                                actor: str | None = None) -> RegulatoryApprovalRequest:
+    req = db.get(RegulatoryApprovalRequest, request_id)
     if not req or req.company_id != company_id:
         raise NotFoundError(code="APPROVAL_REQUEST_NOT_FOUND", message="Solicitud de aprobación no encontrada")
     _assert_transition(req.status, target, APPROVAL_TRANSITIONS, "la solicitud")
+    if target == "APPROVED":
+        approvals_integration.ensure_approved(
+            db, company_id=company_id, document_type="RegulatoryApprovalRequest",
+            document_id=str(req.id), what="la solicitud de aprobación")
     req.status = target
     req.decision = target
     req.updated_at = datetime.now(UTC)
     db.flush()
-    _audit(db, action="APPROVAL_REQUEST_DECIDED", entity_type="ApprovalRequest", entity_id=str(req.id),
+    _audit(db, action="APPROVAL_REQUEST_DECIDED", entity_type="RegulatoryApprovalRequest", entity_id=str(req.id),
            company_id=company_id, actor=actor, after={"target": req.status})
     return req

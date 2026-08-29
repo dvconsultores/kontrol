@@ -70,6 +70,7 @@ def init_models() -> None:
     tablas queden registradas en `Base.metadata` (los `__init__.py` de módulo
     no importan modelos).
     """
+    import app.modules.approvals.models  # noqa: F401
     import app.modules.audit.models  # noqa: F401
     import app.modules.fiscal.models  # noqa: F401
     import app.modules.homologation.models  # noqa: F401

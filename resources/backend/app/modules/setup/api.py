@@ -71,6 +71,7 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
         "fiscal": ["view", "create", "approve"],
         "regulatorio": ["view", "create", "approve"],
         "reportes": ["view", "export"],
+        "aprobaciones": ["view", "create", "edit", "approve", "delegate", "configure"],
     }
     existing = db.execute(select(Role).where(Role.code == "ADMIN", Role.company_id.is_(None))).scalars().first()
     if existing:

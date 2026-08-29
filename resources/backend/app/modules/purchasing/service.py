@@ -20,6 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
+from app.modules.approvals import integration as approvals_integration
 from app.modules.inventory import service as inv_service
 from app.modules.organization.models import Warehouse
 from app.modules.organization.service import warehouse_in_tenant_scope
@@ -204,11 +205,39 @@ def add_requisition_line(db: Session, *, requisition_id: str, product_id: str, q
 
 def transition_requisition(db: Session, *, requisition: PurchaseRequisition, target: str,
                            actor: str | None = None) -> PurchaseRequisition:
+    """Transición de la requisición, gobernada por el motor de aprobaciones (Spec 045).
+
+    Sin política activa el comportamiento es idéntico al anterior (AC-20).
+    """
     _assert_transition(requisition.status, target, REQUISITION_TRANSITIONS, "la requisición")
+    if target == "SUBMITTED":
+        approvals_integration.require_for_document(
+            db, company_id=requisition.company_id,
+            process_type=approvals_integration.PROCESS_PURCHASE_REQUISITION,
+            document_type="PurchaseRequisition", document_id=str(requisition.id),
+            context=_requisition_context(db, requisition), actor=actor)
+    if target == "APPROVED":
+        approvals_integration.ensure_approved(
+            db, company_id=requisition.company_id, document_type="PurchaseRequisition",
+            document_id=str(requisition.id), what="la requisición")
     requisition.status = target
     requisition.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="PURCHASE_REQUISITION_TRANSITIONED", entity_type="PurchaseRequisition",
+           entity_id=str(requisition.id), company_id=requisition.company_id, actor=actor,
+           after={"target": requisition.status})
     return requisition
+
+
+def _requisition_context(db: Session, requisition: PurchaseRequisition) -> dict[str, Any]:
+    lines = db.execute(select(RequisitionLine).where(
+        RequisitionLine.requisition_id == str(requisition.id))).scalars().all()
+    # La requisición no lleva precio: la política de este proceso se configura
+    # sobre cantidad, centro de costo o solicitante, no sobre monto.
+    return {"quantity_total": sum(float(line.quantity or 0) for line in lines),
+            "line_count": len(lines),
+            "cost_center_id": requisition.cost_center_id,
+            "requester_id": requisition.requester_id}
 
 
 # --------------------------------------------------------------------------- #
@@ -264,6 +293,16 @@ def add_order_line(db: Session, *, order_id: str, product_id: str, quantity_orde
 def transition_order(db: Session, *, order: PurchaseOrder, target: str, actor: str | None = None,
                      approval_ref: str | None = None) -> PurchaseOrder:
     _assert_transition(order.status, target, ORDER_TRANSITIONS, "la orden")
+    if target == "SUBMITTED":
+        approvals_integration.require_for_document(
+            db, company_id=order.company_id,
+            process_type=approvals_integration.PROCESS_PURCHASE_ORDER,
+            document_type="PurchaseOrder", document_id=str(order.id),
+            context=_order_context(db, order), actor=actor)
+    if target == "APPROVED":
+        approvals_integration.ensure_approved(
+            db, company_id=order.company_id, document_type="PurchaseOrder",
+            document_id=str(order.id), what="la orden")
     order.status = target
     order.updated_at = datetime.now(UTC)
     if target == "APPROVED":
@@ -272,6 +311,17 @@ def transition_order(db: Session, *, order: PurchaseOrder, target: str, actor: s
     _audit(db, action="PURCHASE_ORDER_TRANSITIONED", entity_type="PurchaseOrder", entity_id=str(order.id),
            company_id=order.company_id, actor=actor, after={"target": order.status})
     return order
+
+
+def _order_context(db: Session, order: PurchaseOrder) -> dict[str, Any]:
+    """Contexto plano para el motor. El dominio lo construye; el motor no conoce el dominio."""
+    lines = db.execute(select(PurchaseOrderLine).where(
+        PurchaseOrderLine.order_id == str(order.id))).scalars().all()
+    total = sum(float(line.unit_price or 0) * float(line.quantity_ordered or 0) for line in lines)
+    return {"amount": total, "currency": getattr(order, "currency", "VED") or "VED",
+            "rate_snapshot": getattr(order, "rate_snapshot", None),
+            "supplier_id": order.supplier_id,
+            "branch_id": getattr(order, "branch_id", None)}
 
 
 # --------------------------------------------------------------------------- #
