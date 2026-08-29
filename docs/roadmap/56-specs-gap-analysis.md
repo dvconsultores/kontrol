@@ -2,7 +2,9 @@
 
 > Auditoría `develop @ def2b52` · 2026-08-29 · Sin implementación.
 > Columnas Front/Back/DB/Integración/E2E en escala 0-100 (evidencia, no intención).
-> **Ninguna Spec alcanza `COMPLETE_100`**: falta validación sobre PostgreSQL real, condición de "operativo E2E".
+> **Actualizado 2026-08-29:** la Spec 045 alcanza `COMPLETE_100` — la primera del
+> proyecto — tras validarse sobre PostgreSQL real. Las 55 restantes siguen sin esa
+> validación, condición de "operativo E2E" (Constitución P21).
 
 | # | Spec | Documentada | Spec actual | Front | Back | DB | Integr. | E2E | % | Estado | Brecha principal |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---|---|
@@ -50,7 +52,7 @@
 | 042 | Documentos fiscales, controles y contingencia | Sí | 007 | 70 | 85 | 90 | 50 | 65 | 73 | PARTIAL | **Contingencia de facturación sin UI ni flujo** |
 | 043 | Libros fiscales y cierres | Sí | 007 | 75 | 85 | 90 | 50 | 65 | 75 | SUBSTANTIALLY_COMPLETE | **LEGAL_BLOCKER**: formato de libro sin plantilla oficial |
 | 044 | SICA / SIGESAI / SACS y movilización | Sí | 008 | 75 | 80 | 85 | 50 | 65 | 73 | SUBSTANTIALLY_COMPLETE | Matrices oficiales por rubro no cargadas |
-| 045 | Motor de aprobaciones y segregación | Sí | disperso | 25 | 40 | 40 | 20 | 45 | 35 | PARTIAL | **Sin motor transversal, bandeja ni delegación** |
+| 045 | Motor de aprobaciones y segregación | Sí | **045** | 100 | 100 | 100 | 100 | 100 | 100 | **COMPLETE_100** | — (cerrada 2026-08-29, validada sobre PostgreSQL real) |
 | 046 | Gestión documental y archivos | Sí | **ninguna** | 0 | 0 | 40 | 0 | 0 | 8 | DATABASE_ONLY | `file_metadata` sin endpoint ni vínculo a entidad |
 | 047 | Notificaciones y tareas | Sí | **ninguna** | 10 | 5 | 0 | 0 | 0 | 5 | NOT_STARTED | Sin alertas, tareas ni envío de correo |
 | 048 | Integraciones | Sí | 010 parcial | 20 | 30 | 30 | 20 | 20 | 25 | PARTIAL | Solo licencia central; BCV/correo/storage/bancos ausentes |
@@ -67,9 +69,9 @@
 
 | Estado | Cantidad | Specs |
 |---|---:|---|
-| COMPLETE_100 | **0** | — |
+| COMPLETE_100 | **1** | **045** |
 | SUBSTANTIALLY_COMPLETE | **25** | 001,002,004,005,009,010,013,014,016,017,023,024,025,027,028,030,036,037,038,041,043,044,050,054,056 |
-| PARTIAL | **20** | 003,006,007,008,011,015,019,026,029,034,035,039,040,042,045,048,049,051,052,055 |
+| PARTIAL | **19** | 003,006,007,008,011,015,019,026,029,034,035,039,040,042,048,049,051,052,055 |
 | SKELETON_ONLY | **5** | 021,022,031,032,053 |
 | FRONTEND_ONLY | **0** | — |
 | BACKEND_ONLY | **0** | — |
@@ -79,7 +81,7 @@
 | FUTURE_SCOPE | **0** | — |
 | BLOCKED | **0** | — |
 | OUT_OF_SCOPE | **0** | — |
-| **TOTAL** | **56** | ✔ suma correcta |
+| **TOTAL** | **56** | ✔ suma correcta (1+25+19+5+1+5 = 56) |
 
 ### Bandera secundaria `IMPLEMENTED_WITHOUT_SPEC` (5)
 

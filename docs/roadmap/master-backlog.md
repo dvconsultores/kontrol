@@ -19,7 +19,7 @@ Este backlog es una **propuesta**; no se ha ejecutado ninguna de sus tareas.
 
 | ID | Spec | Brecha | Prio | Depende | Resultado esperado | Criterio de aceptación | Est. |
 |---|---|---|---|---|---|---|---|
-| B-010 | 045 | Sin motor transversal de aprobaciones | P0 | B-001 | Motor único con reglas, bandeja y delegación | Una regla por monto/ámbito aplica a compras, ajustes, crédito, pagos y notas; quien crea no aprueba; bandeja «Mis aprobaciones» operativa | XL |
+| ~~B-010~~ | 045 | ~~Sin motor transversal~~ | — | — | **COMPLETADA 2026-08-29** — Spec 045 COMPLETE_100 | Criterios cumplidos y verificados sobre PostgreSQL real | XL |
 | B-011 | 008 | Sin nivel ni posición; sin jerarquía de zonas | P0 | B-002 | Dirección física completa | `Location` con zona/pasillo/rack/nivel/posición; zonas A–E clasificables; capacidad y restricciones efectivas | L |
 | B-012 | 046 | Tabla de archivos sin endpoint ni vínculo | P0 | B-002 | Adjuntos operativos | Subida y descarga con hash SHA-256, vínculo `entity_type`/`entity_id`, versiones, permisos y auditoría | L |
 

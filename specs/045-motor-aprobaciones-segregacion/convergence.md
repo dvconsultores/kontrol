@@ -136,7 +136,28 @@ Además, `test_no_domain_keeps_its_own_approval_logic` **excluía `regulatory`**
 pasar, no para comprobar. Ampliado a los cuatro dominios más una verificación de que ningún módulo
 declara modelo de política propio.
 
-## 8. Veredicto de convergencia
+## 8bis. CIERRE DEFINITIVO (2026-08-29)
+
+Este documento recoge la **primera** pasada de convergencia, cuando no había
+PostgreSQL en el entorno. El cierre definitivo está en
+[`convergence/045-final-convergence.md`](convergence/045-final-convergence.md) y
+[`SPEC_045_FINAL_CLOSEOUT.md`](SPEC_045_FINAL_CLOSEOUT.md).
+
+Estado final de las brechas que este documento dejó abiertas:
+
+| Brecha | Estado final |
+|---|---|
+| CVG-045-01 concurrencia | **RESOLVED_IN_045** — PostgreSQL 16.2, suite 276/276, E2E de concurrencia |
+| CVG-045-02 `alembic upgrade`/`check` | **RESOLVED_IN_045** — Casos A y B, drift de 045 = 0 |
+| CVG-045-03 E2E Playwright | **RESOLVED_IN_045** — 11 escenarios, 3 navegadores |
+| CVG-045-04 adjuntos | **DEFERRED_EXTERNAL_DEPENDENCY — 046** |
+| CVG-045-05 notificaciones | **DEFERRED_EXTERNAL_DEPENDENCY — 047** |
+| CVG-045-06 cross-browser | **RESOLVED_IN_045** — Chromium, Firefox, WebKit |
+| CVG-045-07 herramientas de QA | **RESOLVED_IN_045** (instrumentación) + **DEFERRED — 054** (plataforma) |
+
+**Veredicto: `SPEC 045 COMPLETE_100`.**
+
+## 8. Veredicto de convergencia (primera pasada, superado)
 
 La Spec **converge en alcance y en trazabilidad**: 0 requisitos sin implementación, 0 tareas
 abiertas obligatorias, 0 contradicciones con la Constitución v1.1 ni con los 29 ADR.

@@ -105,7 +105,7 @@ Notación: `A → B` significa «A debe existir antes que B».
 | D-02 | 029/030 Ventas | 012 Maestros comerciales | Precio tecleado por línea, lista de precios como texto libre |
 | D-03 | 034 Facturación | 033 Confirmación de pedido | Se factura sin compuerta y sin vínculo al pedido |
 | D-04 | 031/032 Picking | 008 + 022 Put-away | Lista de productos sin ruta física; inutilizable en almacén |
-| D-05 | 015/017/025/030 | 045 Motor de aprobaciones | Cuatro implementaciones ad-hoc de aprobación, sin bandeja ni delegación |
+| D-05 | 015/017/025/030 | 045 Motor de aprobaciones | **RESUELTA 2026-08-29**: las cuatro implementaciones ad-hoc migradas al motor único (Spec 045 COMPLETE_100) |
 | D-06 | 019 Recepción | 020 + 021 | Recepción contable que salta cuarentena y liberación |
 | D-07 | 026 Costos | 018 Importaciones | Sin landed cost: el costo de importación no se distribuye |
 | D-08 | Todas las líneas | 011 en transacción | Sin UoM ni presentación por línea |
@@ -115,7 +115,7 @@ Notación: `A → B` significa «A debe existir antes que B».
 | Spec | Bloquea directamente | Peso |
 |---|---|---:|
 | **008 Almacenes físicos** | 022, 031, 032, 023(calidad), 019 | 5 |
-| **045 Motor de aprobaciones** | 015, 017, 025, 030, 033, 047 | 6 |
+| ~~045 Motor de aprobaciones~~ **(cerrada)** | 015, 017, 025, 030, 033, 047 — **desbloqueadas** | 6 |
 | **012 Maestros comerciales** | 029, 030, 034 | 3 |
 | **046 Gestión documental** | 018, 020, 035, 050 | 4 |
 | **033 Confirmación de pedido** | 034, 035 | 2 |

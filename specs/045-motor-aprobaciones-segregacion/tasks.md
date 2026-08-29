@@ -94,7 +94,7 @@ Leyenda: **✔** completada y verificada · **◐** completada con limitación d
 |---|---|---|---|
 | ✔ T-045-070 | Unidad: evaluador, actores, huella, cuórum | F2 | L |
 | ✔ T-045-071 | Integración: ciclo completo por API | F3-F4 | L |
-| ◐ T-045-072 | **Concurrencia sobre PostgreSQL**: dos decisiones simultáneas | FR-045-054 | M |
+| ✔ T-045-072 | **Concurrencia sobre PostgreSQL**: dos decisiones simultáneas | FR-045-054 | M |
 | ✔ T-045-073 | Obsolescencia bajo concurrencia | FR-045-051 | M |
 | ✔ T-045-074 | Idempotencia de creación | FR-045-053 | S |
 | ✔ T-045-075 | Segregación y delegación: pruebas negativas | FR-045-040..046 | M |
@@ -107,9 +107,10 @@ Leyenda: **✔** completada y verificada · **◐** completada con limitación d
 
 ## Limitaciones declaradas
 
-| Tarea | Estado | Motivo |
-|---|---|---|
-| T-045-072 concurrencia sobre PostgreSQL | **◐** | No hay servidor PostgreSQL en el entorno (BLK-D0-01). La lógica de conflicto de versión y la restricción `(step_id, actor_id)` están probadas; `SELECT … FOR UPDATE` sólo es efectivo en PostgreSQL y su verificación queda como criterio de salida pendiente |
+**Ninguna al cierre (2026-08-29).** T-045-072 (concurrencia sobre PostgreSQL),
+antes marcada `◐` por falta de motor, queda **`DONE`**: se aprovisionó PostgreSQL
+16.2 real (`qa/pg-provision.sh`) y la prueba de dos decisiones simultáneas pasa
+en los tres navegadores. Las **65 tareas** están `DONE` con evidencia.
 
 ## Resumen
 
