@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | ID | D0-01 |
-| Estado | **APPROVED** |
+| Estado | **APPROVED · CONFIRMED_BY_EXECUTION** (2026-08-30) |
 | Fecha | 2026-08-29 |
 | Responsable | Arquitecto de datos · DBA PostgreSQL · DevOps · QA Lead |
 | Extiende | `ADR-003 — PostgreSQL como Fuente de Verdad` (PROPUESTO) |
@@ -78,7 +78,7 @@ en vez de implícita.
 
 | Parámetro | Valor decidido | Fundamento |
 |---|---|---|
-| Versión | **PostgreSQL 18.x** | `specs/001-fundacion/dependency-matrix.md`; ya declarada en `compose.yaml` |
+| Versión | **PostgreSQL 18.x** | `specs/001-fundacion/dependency-matrix.md`; ya declarada en `compose.yaml`. **Validada por ejecución sobre 18.6 el 2026-08-30** |
 | Encoding | `UTF8` | Razones sociales, RIF, direcciones |
 | Timezone del servidor | **`UTC`** | P4/P5: los documentos fiscales se comparan en instante absoluto; la zona local es presentación |
 | Base de datos | `kontrol` | — |
@@ -135,3 +135,33 @@ Ninguna que impida aprobar. El dimensionamiento de recursos es configuración po
 ## Estado final
 
 **APPROVED** — decisión técnica con evidencia suficiente; no requiere validación empresarial ni legal.
+
+---
+
+## Confirmación por ejecución — 2026-08-30
+
+Este ADR fijaba PostgreSQL 18.x sin que ninguna ejecución lo hubiera respaldado: la
+Spec 045 se cerró sobre 16.2, la única versión que `pgserver` empaqueta. La
+divergencia se resolvió en el Gate pre-implementación de la Spec 008.
+
+| Comprobación | Resultado |
+|---|---|
+| Motor | **PostgreSQL 18.6** (paquetes oficiales PGDG `18.6-1.pgdg12+2`) |
+| `UTF8` · `UTC` · `pgcrypto` · roles separados | Conformes al ADR |
+| `alembic upgrade head` (0001→0016) | **Aplica completa, sin modificar ninguna migración** |
+| Suite de backend | **276/276 pasadas** |
+| Drift `alembic check` frente a 16.2 | **Idéntico** — 18 líneas en ambas, ninguna atribuible a la versión |
+
+**Decisión: el ADR continúa vigente sin modificación.** No procedía enmienda ni
+supersesión: la decisión era correcta y lo que faltaba era la evidencia. Estado
+`CONFIRMED_BY_EXECUTION`.
+
+**Consecuencia vinculante:** PostgreSQL 18.x es obligatorio para la aceptación final
+de toda Spec nueva desde esta fecha. La regla R-D0-01-2 sobre SQLite no cambia. La
+Spec 045 conserva su `COMPLETE_100`: esta validación demuestra que su
+comportamiento sobre 18.6 es idéntico al evidenciado sobre 16.2.
+
+Versión mínima soportada verificada: **16**. Versión objetivo y de aceptación:
+**18.x**. PostgreSQL 17 no está probado y no se declara soportado.
+
+Evidencia completa: `docs/governance/postgresql-version-validation.md`.

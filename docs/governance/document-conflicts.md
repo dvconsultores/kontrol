@@ -16,7 +16,7 @@ Registrar contradicciones entre fuentes, la autoridad aplicable, la decisión y 
 
 | ID | Tema | Fuente A | Fuente B | Diferencia | Autoridad | Decisión propuesta | Responsable | Estado |
 |---|---|---|---|---|---|---|---|---|
-| CON-01 | Versión de PostgreSQL | DOC-05/Modelo (s/n) | DOC-08 Estándar (PostgreSQL 18.x) | DOC-08 fija 18.x; otros documentos no fijan versión | Nivel 3 (DOC-08) | Adoptar PostgreSQL 18.x como propuesta validada en `research.md`; verificar soporte y CVE antes de fijar | Arquitecto de datos | Pendiente de research |
+| CON-01 | Versión de PostgreSQL | DOC-05/Modelo (s/n) | DOC-08 Estándar (PostgreSQL 18.x) | DOC-08 fija 18.x; otros documentos no fijan versión | Nivel 3 (DOC-08) | **RESUELTO 2026-08-30**: PostgreSQL 18.6 validado por ejecución (migraciones 0001→0016 + 276/276 pruebas + drift idéntico a 16.2). `ADR-D0-001` `CONFIRMED_BY_EXECUTION`. Mínima soportada 16, objetivo 18.x | Arquitecto de datos | **CERRADO** — `postgresql-version-validation.md` |
 | CON-02 | Versión de Vite | DOC-08 (Vite 8.x) | DOC-00/01 (no mencionan) | DOC-08 propone Vite 8.x | Nivel 3 (DOC-08) | Validar disponibilidad real de Vite 8 y compatibilidad con React 19 en `research.md`; si no existe, registrar ADR | Arquitecto frontend | Pendiente de research |
 | CON-03 | Versión de Python | DOC-08 (Python 3.13.x) | DOC-01 (no fija) | DOC-08 propone 3.13.x | Nivel 3 (DOC-08) | Validar soporte de FastAPI/Pydantic/SQLAlchemy para 3.13 en `research.md` | Arquitecto backend | Pendiente de research |
 | CON-04 | Mecanismo de sesión | DOC-08 (cookies HttpOnly para refresh; access token en memoria) | DOC-01 (JWT/session rotation genérico) | DOC-08 es más específico y prohibitivo de localStorage | Nivel 3 (DOC-08) | Cookies HttpOnly/Secure/SameSite + CSRF; access token corto; ADR-004 | Arquitecto de seguridad | Propuesta — requiere ADR |
@@ -35,7 +35,7 @@ Registrar contradicciones entre fuentes, la autoridad aplicable, la decisión y 
 
 | ID | Tema | Por qué no se resuelve | Impacto | ¿Bloquea? |
 |---|---|---|---|---|
-| CON-01 | PostgreSQL 16 vs 18 | Requiere investigación de soporte/CVE | Fundacional (DB) | No bloquea la fase documental; bloquea fijar versión de imagen antes de research |
+| CON-01 | PostgreSQL 16 vs 18 | **RESUELTO**: 18.6 validado por ejecución el 2026-08-30 | Fundacional (DB) | **Cerrado**; versión objetivo 18.x fijada con evidencia |
 | CON-02 | Vite 8 | Requiere verificar disponibilidad real | Fundacional (frontend) | No bloquea la fase documental; bloquea fijar lockfile |
 | CON-03 | Python 3.13 | Requiere verificar compatibilidad | Fundacional (backend) | No bloquea la fase documental |
 | CON-04 | Sesión JWT/cookies | Requiere ADR | Seguridad | Se resuelve con ADR-004 |

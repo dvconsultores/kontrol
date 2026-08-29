@@ -35,7 +35,7 @@
 
 | ADR | Título | Estado | Fecha | Extiende | Specs afectadas |
 |---|---|---|---|---|---|
-| ADR-D0-001 | PostgreSQL con paridad de producción | **APPROVED** | 2026-08-29 | ADR-003 | las 56 |
+| ADR-D0-001 | PostgreSQL con paridad de producción | **APPROVED · CONFIRMED_BY_EXECUTION** (18.6, 2026-08-30) | 2026-08-29 | ADR-003 | las 56 |
 | ADR-D0-002 | Motor transversal de aprobaciones | **APPROVED** | 2026-08-29 | — | 045, 015, 017, 025, 030, 033 + 7 |
 | ADR-D0-003 | Momento y semántica de la reserva | **APPROVED** | 2026-08-29 | ADR-013 | 030, 023, 029, 031, 032 + 4 |
 | ADR-D0-004 | Modelo físico genérico de almacén | **APPROVED** | 2026-08-29 | ADR-011 | 008, 019, 022, 031, 032 + 5 |
