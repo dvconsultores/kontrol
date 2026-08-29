@@ -32,7 +32,10 @@ def _alter(table: str, column: str, numeric: sa.Numeric) -> None:
 
 def upgrade() -> None:
     # Dinero -> numeric(18,2)
-    for t in ["ap_advances", "ap_payments", "sales_credit_notes", "supplier_credit_notes"]:
+    # Corregido (validación sobre PostgreSQL real, 2026-08-29): `ap_advances` no
+    # tiene columna `applied`; su columna de dinero es `available`, tratada en la
+    # línea siguiente. Estaba en el bucle por error y abortaba la cadena.
+    for t in ["ap_payments", "sales_credit_notes", "supplier_credit_notes"]:
         _alter(t, "applied", sa.Numeric(18, 2))
     _alter("ap_advances", "available", sa.Numeric(18, 2))
     _alter("ap_open_items", "original", sa.Numeric(18, 2))
@@ -53,7 +56,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    for t in ["ap_advances", "ap_payments", "sales_credit_notes", "supplier_credit_notes"]:
+    for t in ["ap_payments", "sales_credit_notes", "supplier_credit_notes"]:
         op.alter_column(t, "applied", existing_type=sa.Numeric(18, 2), type_=sa.Float())
     op.alter_column("ap_advances", "available", existing_type=sa.Numeric(18, 2), type_=sa.Float())
     op.alter_column("ap_open_items", "original", existing_type=sa.Numeric(18, 2), type_=sa.Float())

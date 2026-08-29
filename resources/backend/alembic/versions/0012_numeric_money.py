@@ -27,11 +27,18 @@ def _alter(table: str, column: str, numeric: sa.Numeric) -> None:
 
 def upgrade() -> None:
     # Dinero -> numeric(18,2)
+    # Corregido (validación sobre PostgreSQL real, 2026-08-29): la lista original
+    # incluía seis tablas SIN columna `amount` — purchase_order_lines,
+    # reconciliations, sales_invoices, supplier_invoices, supplier_quote_lines y
+    # triple_matches. El ALTER fallaba con UndefinedColumn y detenía toda la
+    # cadena en PostgreSQL. Sus columnas monetarias reales (unit_price, discount,
+    # opening/closing_balance, base_fiscal, tax_total, total, variance_price,
+    # variance_tax) ya se convierten en los `_alter` explícitos de más abajo.
     for t in ["ap_advances", "ap_applications", "ap_payment_instruments", "ap_payment_schedules",
               "ap_payments", "approval_requests", "bank_transactions", "cash_session_movements",
-              "credit_debit_notes", "igft_events", "purchase_order_lines", "reconciliations",
-              "sales_credit_notes", "sales_debit_notes", "sales_invoices", "supplier_credit_notes",
-              "supplier_invoices", "supplier_quote_lines", "treasury_transfers", "triple_matches"]:
+              "credit_debit_notes", "igft_events",
+              "sales_credit_notes", "sales_debit_notes", "supplier_credit_notes",
+              "treasury_transfers"]:
         _alter(t, "amount", sa.Numeric(18, 2))
     _alter("ap_withholdings", "amount", sa.Numeric(18, 2))
     _alter("ap_withholdings", "base", sa.Numeric(18, 2))
@@ -54,7 +61,11 @@ def upgrade() -> None:
     _alter("sales_invoices", "base_fiscal", sa.Numeric(18, 2))
     _alter("sales_invoices", "tax_total", sa.Numeric(18, 2))
     _alter("sales_invoices", "total", sa.Numeric(18, 2))
+    _alter("purchase_order_lines", "unit_price", sa.Numeric(18, 2))
     _alter("sales_order_lines", "unit_price", sa.Numeric(18, 2))
+    _alter("supplier_quote_lines", "unit_price", sa.Numeric(18, 2))
+    _alter("triple_matches", "variance_price", sa.Numeric(18, 2))
+    _alter("triple_matches", "variance_tax", sa.Numeric(18, 2))
     _alter("sales_quote_lines", "unit_price", sa.Numeric(18, 2))
     _alter("supplier_invoice_lines", "unit_price", sa.Numeric(18, 2))
     _alter("supplier_invoice_lines", "tax_amount", sa.Numeric(18, 2))
