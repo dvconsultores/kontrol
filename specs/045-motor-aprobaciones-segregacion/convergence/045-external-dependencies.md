@@ -2,7 +2,7 @@
 
 | ID | Dependencia | ¿Pertenece realmente a 045? | Contrato listo | ¿Bloquea 045? | Clasificación | Spec destino |
 |---|---|:--:|:--:|:--:|---|---|
-| **CVG-045-04** | Adjuntos de evidencia en la solicitud | **No** | **Sí** | **No** | `DEFERRED_EXTERNAL_DEPENDENCY` | **046** |
+| **CVG-045-04** | Adjuntos de evidencia en la solicitud | **No** | **Sí** | **No** | **`RESOLVED_BY_SPEC_046`** *(2026-08-30)* | **046** — cerrada |
 | **CVG-045-05** | Notificación activa al aprobador | **No** | **Sí** | **No** | `DEFERRED_EXTERNAL_DEPENDENCY` | **047** |
 | **CVG-045-07** | Plataforma general de QA | **Parcial** | n/a | **No** | `RESOLVED_IN_045` (instrumentación) + `DEFERRED_EXTERNAL_DEPENDENCY` (plataforma) | **054** |
 
@@ -23,6 +23,48 @@ es `reason` y `observations` en texto.
 | Ningún requisito obligatorio de 045 exige archivos hoy | ✔ ninguno de los 40 FR |
 
 **No se implementa 046 dentro de 045.**
+
+### Cierre — 2026-08-30 · `RESOLVED_BY_SPEC_046`
+
+`SPEC 046 COMPLETE_100` satisface el contrato. Verificado contra código y
+pruebas ejecutadas, no contra el roadmap.
+
+**Cadena de evidencia:**
+
+| Eslabón | Artefacto |
+|---|---|
+| Requisito 045 | `FR-045-067` · «Contrato de adjuntos de evidencia sobre `ApprovalRequest` conforme a `ADR-D0-008`» |
+| Contrato 046 | `resources.py:38` · `ResourceKind("ApprovalRequest", …, "aprobaciones:view", ("045",))` — registro **cerrado** |
+| Modelo 046 | `DocumentLink(resource_type, resource_id, role, frozen_version_id, is_frozen)` |
+| Código 046 | `service.attach` · `service.freeze_links` · `service.documents_for` |
+| API 046 | `POST /documentos/{id}/vinculos` · `GET /documentos/por-recurso/ApprovalRequest/{id}` |
+| Prueba | `test_documents.py::test_version_congelada_el_historico_no_se_reinterpreta` |
+| Evidencia | La V1 vinculada se congela; se carga una V2; el histórico sigue devolviendo **los bytes de la V1** con su hash |
+
+**Los cuatro criterios del §29, revisados tras el cierre:**
+
+| Criterio | Estado |
+|---|---|
+| El contrato existe | ✔ implementado, no solo declarado |
+| La integración está definida | ✔ y ejecutada |
+| 045 funciona sin acoplamiento | ✔ |
+| Ningún FR de 045 exige archivos | ✔ |
+
+**`CL-045-10` cumplido literalmente: 0 cambios en el modelo de 045.**
+
+| Comprobación | Resultado |
+|---|---|
+| `git diff 921aaa2..51cbb5a -- app/modules/approvals/` | **vacío** |
+| `approvals` importando `documents` | **0** |
+| `documents` importando `approvals` fuera del registro | **0** |
+| `document_link_id` / `attachment_id` en `ApprovalRequest` | **ausentes**, comprobado por la propia prueba |
+
+El nombre de la entidad pasó de `AttachmentLink` (nomenclatura del ADR-D0-008) a
+`DocumentLink` (nomenclatura de 046). La semántica, las columnas y el contrato
+son los mismos; se documenta la equivalencia para que no se lea como divergencia.
+
+**La Spec 045 no se reabre.** Este cierre es de gobierno: no toca su código, sus
+pruebas de negocio ni su arquitectura.
 
 ## CVG-045-05 · Notificaciones — Spec 047
 

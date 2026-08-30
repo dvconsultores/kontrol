@@ -1,3 +1,8 @@
+> **Superado por `docs/roadmap/046-dependency-closeout.md` (2026-08-30)**, que
+> corrige cinco etiquetas de Spec erróneas y clasifica cada dependencia con el
+> vocabulario formal. Este archivo se conserva como registro de lo que se
+> afirmó al cerrar la implementación; **la autoridad es el otro**.
+
 # SPECS DESBLOQUEADAS POR EL CIERRE DE LA SPEC 046
 
 Fecha: 2026-08-30 · Origen: `SPEC 046 COMPLETE_100`
@@ -16,13 +21,21 @@ dependencia documental no completa un dominio.
 | **035 · Despacho y transporte** | `DEPENDENCY_SATISFIED_BUT_OTHER_BLOCKERS_EXIST` | `Shipment`, `TransportVehicle` y `TransportDriver` registradas; `expiration_date` para licencias y seguros | Empaquetado y ruta |
 | **044 · Regulatorio** | **`PARTIALLY_UNLOCKED`** | `PermitInstance` y `OfficialDocument` registradas; metadata regulatoria declarable por tipo | Matrices oficiales por rubro |
 | **051 · Homologación** | **`PARTIALLY_UNLOCKED`** | `HomologationRecord` registrada: el acto puede tener por fin un archivo verificable | El acto formal y su ciclo |
-| **018 · Importaciones** | `BLOCKED_BY_OWN_MODEL` | La capacidad está completa | **Su propio** modelo de expediente de importación |
-| **020 · Incidencias de recepción** | `BLOCKED_BY_OWN_MODEL` | La capacidad está completa | **Su propio** modelo de incidencia |
-| **040 · Tesorería / pagos** | `BLOCKED_BY_OWN_MODEL` | La capacidad está completa | **Su propio** modelo de pago |
+| **018 · Importaciones** | `DOCUMENT_CAPABILITY_SATISFIED` | La capacidad está completa | **Su propio** expediente de importación: INCOTERM, proforma, packing y embarque no existen (B-030) |
+| **020 · Incidencias de recepción** | `DOCUMENT_CAPABILITY_SATISFIED` | La capacidad está completa | **Su propia** entidad de incidencia y escalamiento (B-041) |
+| **040 · Retenciones IVA e ISLR** | `DOCUMENT_CAPABILITY_SATISFIED` | El comprobante se adjunta a `SupplierInvoice` / `SalesInvoice`, registradas | **`LEGAL_BLOCKER`**: Decreto 1.808 sin conceptos cargados |
+| **038 · Tesorería** | **`STILL_BLOCKED_BY_046`** | **Ninguno** | `ap_payments` existe y sería vinculable, pero **no está en el registro cerrado**. Remediación `REM-046-001`, no ejecutada |
 
-Las tres marcadas `BLOCKED_BY_OWN_MODEL` **no están bloqueadas por 046**: lo que
-les falta es su entidad de dominio, que es suya. Registrarla después es una
-línea en `resources.py` y no toca ningún servicio.
+Las tres `DOCUMENT_CAPABILITY_SATISFIED` **no están bloqueadas por 046**: lo que
+les falta no es documental.
+
+**038 sí lo está.** El registro de tipos es cerrado por diseño (`FR-046-022`) y
+`Payment` no figura en él. Son dos líneas y una prueba; no se hicieron aquí
+porque este cierre no autoriza tocar 046.
+
+> Corrección de etiqueta (2026-08-30): la matriz de consumidoras llamaba «040» a
+> Tesorería. El roadmap maestro manda: **038 es Tesorería**, **040 es Retenciones
+> IVA e ISLR**. Autoridad: `docs/roadmap/046-dependency-closeout.md`.
 
 ## Lo que 046 deja explícitamente sin resolver
 

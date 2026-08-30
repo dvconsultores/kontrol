@@ -53,7 +53,7 @@
 | 043 | Libros fiscales y cierres | Sí | 007 | 75 | 85 | 90 | 50 | 65 | 75 | SUBSTANTIALLY_COMPLETE | **LEGAL_BLOCKER**: formato de libro sin plantilla oficial |
 | 044 | SICA / SIGESAI / SACS y movilización | Sí | 008 | 75 | 80 | 85 | 50 | 65 | 73 | SUBSTANTIALLY_COMPLETE | Matrices oficiales por rubro no cargadas |
 | 045 | Motor de aprobaciones y segregación | Sí | **045** | 100 | 100 | 100 | 100 | 100 | 100 | **COMPLETE_100** | — (cerrada 2026-08-29, validada sobre PostgreSQL real) |
-| 046 | Gestión documental y archivos | Sí | **ninguna** | 0 | 0 | 40 | 0 | 0 | 8 | DATABASE_ONLY | `file_metadata` sin endpoint ni vínculo a entidad |
+| 046 | Gestión documental y archivos | Sí | **046** | 100 | 100 | 100 | 100 | 100 | 100 | **COMPLETE_100** | — (cerrada 2026-08-30, validada sobre PostgreSQL 18.6 con ClamAV real) |
 | 047 | Notificaciones y tareas | Sí | **ninguna** | 10 | 5 | 0 | 0 | 0 | 5 | NOT_STARTED | Sin alertas, tareas ni envío de correo |
 | 048 | Integraciones | Sí | 010 parcial | 20 | 30 | 30 | 20 | 20 | 25 | PARTIAL | Solo licencia central; BCV/correo/storage/bancos ausentes |
 | 049 | Dashboard y analítica | Sí | 009 | 60 | 60 | 60 | 40 | 50 | 56 | PARTIAL | Sin rotación, tendencias ni analítica real |

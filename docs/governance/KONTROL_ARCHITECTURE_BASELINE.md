@@ -111,6 +111,19 @@ CSRF con doble cookie; contraseñas con **Argon2id**. Prohibido almacenar tokens
 `localStorage`. Tabla `Session` con hash de refresh, rotación y revocación; cierre en todas las
 pestañas. MFA preparado. `ADR-004`
 
+> **Precisión operativa — `REM-AUTH-ROUTE-CRAWL-001`, 2026-08-30.** Como el access
+> token vive en memoria, **toda recarga** dispara la restauración de sesión. El
+> refresh token es de un solo uso, así que el cliente debe tener **una única
+> puerta** de renovación que comparta la petición en vuelo: dos renovaciones
+> simultáneas con la misma cookie no pueden prosperar las dos. Del lado del
+> servidor, `rotate_session` bloquea la fila de sesión antes de leer su estado;
+> sin ese bloqueo la ventana entre comprobar y escribir permitía que ambas
+> prosperaran, anulando la detección de token robado.
+>
+> En una pila local servida por `http://`, `KONTROL_COOKIE_SECURE` debe ir en
+> `false`: WebKit rechaza cookies `Secure` desde un origen inseguro. En producción,
+> tras HTTPS, va en `true`.
+
 ---
 
 ## 7. Permisos y multiempresa
@@ -212,6 +225,15 @@ polimórfica). Servicio **único y transversal**: ningún módulo implementa adj
 `storage_key` opaca; prohibido derivar lógica de rutas del host. Los adjuntos se versionan, no se
 sustituyen. Descarga autorizada por permiso sobre la **entidad vinculada**.
 `ADR-D0-008` · `P22`
+
+> **Implementado — `SPEC 046 COMPLETE_100`, 2026-08-30.** La nomenclatura final es
+> `DocumentType` · `Document` · `DocumentVersion` · `StoredFile` · `DocumentLink`; la
+> semántica y el contrato son los que fija `ADR-D0-008`. La vinculación **no** es
+> polimórfica libre: hay un **registro cerrado** de tipos de recurso (19 hoy) y un
+> tipo ausente se rechaza. `MinIO/S3` deja de estar diferido en cuanto a código
+> —existe `S3CompatibleStorageProvider`— pero permanece
+> **`IMPLEMENTED_NOT_VERIFIED`**: el proveedor validado de producción es el
+> sistema de archivos. Detalle en `docs/roadmap/046-dependency-closeout.md`.
 
 ---
 

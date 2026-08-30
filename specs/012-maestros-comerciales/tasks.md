@@ -1,0 +1,153 @@
+# TAREAS — SPEC 012
+
+Tareas concretas y trazables. No existe una tarea «implementar maestros
+comerciales».
+
+## F1 · Maestros base
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-012-001 | `PaymentTerm` con los cuatro tipos y el desplazamiento de vencimiento | FR-012-030, FR-012-031 | L |
+| T-012-002 | El catálogo de condiciones **nace vacío** | FR-012-032, AC-012-01 | S |
+| T-012-003 | `CommercialZone` con jerarquía y vendedor | FR-012-040, FR-012-043 | M |
+| T-012-004 | Separación verificable de `WarehouseZone` | FR-012-041, AC-012-31 | S |
+| T-012-005 | `SalesChannel` | FR-012-042 | S |
+| T-012-006 | Migración `00XX_commercial_model` | FR-012-001..042 | L |
+
+## F2 · Listas de precios
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-012-010 | `PriceList` con moneda referenciada al maestro existente | FR-012-001, AC-012-32 | M |
+| T-012-011 | `PriceListVersion` con vigencia y estados | FR-012-002, FR-012-007 | L |
+| T-012-018 | Una versión `ACTIVE` no se edita: hay que crear otra | FR-012-002, AC-012-07 | M |
+| T-012-019 | Archivar conserva los ítems de la versión | FR-012-006, AC-012-09 | S |
+| T-012-012 | Restricción **en base** de no solapamiento | FR-012-005, AC-012-06 | L |
+| T-012-013 | `PriceListItem` por producto o categoría, con presentación y volumen | FR-012-003, FR-012-004, AC-012-10 | L |
+| T-012-014 | Correlativo de versión asignado por el servidor | AC-012-05 | M |
+| T-012-015 | Versión referenciada: ni se borra ni se altera | FR-012-006, AC-012-08 | M |
+| T-012-016 | Campo de fuente de la lista | FR-012-008 | S |
+| T-012-017 | Índices de resolución | NFR-012-01 | M |
+
+## F3 · Resolución — autoridad única, antes que la API
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-012-020 | `pricing.py` como **única** autoridad de precio | FR-012-014, AC-012-11 | XL |
+| T-012-021 | `PricePrecedence` como tabla por empresa | FR-012-010, AC-012-03 | L |
+| T-012-022 | Siembra del orden por defecto del ADR, **editable** | FR-012-011, AC-012-12 | M |
+| T-012-023 | Desempate por vigencia y por menor precio | FR-012-012, AC-012-14, AC-012-15 | M |
+| T-012-024 | Empate irresoluble → error de configuración | FR-012-013, AC-012-16 | M |
+| T-012-025 | La respuesta incluye la versión que produjo el precio | FR-012-015, AC-012-13 | M |
+| T-012-026 | Sin lista aplicable: se declara ausente, **no se inventa** | FR-012-016, AC-012-17 | M |
+| T-012-027 | Conversión de presentación con el motor de la Spec 011 | FR-012-004, AC-012-18 | L |
+| T-012-028 | Rango de volumen | AC-012-19 | M |
+| T-012-029 | Aislamiento multiempresa en la resolución | AC-012-20 | M |
+
+## F4 · Descuentos
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-012-030 | `DiscountPolicy` de línea y de documento | FR-012-020, FR-012-021 | L |
+| T-012-031 | **Ningún porcentaje de fábrica** | FR-012-022, AC-012-04 | S |
+| T-012-032 | Validación en backend; la UI no decide | FR-012-021, P6 | M |
+| T-012-033 | Superar el límite abre solicitud con el motor 045 | FR-012-023, AC-012-22, AC-012-23 | L |
+| T-012-034 | Acumulación e incompatibilidades | FR-012-024, AC-012-24, AC-012-25 | M |
+| T-012-035 | Registro de política, versión y nivel de autorización | FR-012-025 | M |
+
+## F5 · Cliente y crédito
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-012-040 | `CustomerCommercialTerms` que **extiende**, no duplica | FR-012-050, FR-012-051 | L |
+| T-012-041 | `CreditPolicy` distinta de la condición de pago | FR-012-052, FR-012-072 | M |
+| T-012-042 | Bloqueo con motivo, autor y fecha | FR-012-053 | S |
+| T-012-043 | Condición de pago del proveedor sin duplicar el maestro | FR-012-033, AC-012-33 | M |
+| T-012-044 | Migración `00XX_commercial_customer_fk`, conservando el texto | FR-012-080, AC-012-38 | L |
+
+## F6 · Snapshot — antes que la API
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-012-050 | Columnas de snapshot en las líneas de venta y compra | FR-012-060 | L |
+| T-012-051 | Escritura del snapshot en la **misma transacción** que aprueba | FR-012-060, P13 | L |
+| T-012-052 | Editar el maestro no altera lo aprobado | FR-012-061, AC-012-26, AC-012-27 | L |
+| T-012-053 | Reconstrucción **desde el snapshot**, nunca recalculando | FR-012-062, AC-012-28 | M |
+| T-012-054 | `pricing_source` con sus tres valores | FR-012-063, AC-012-29 | M |
+| T-012-055 | Precio manual con justificación obligatoria | AC-012-30 | M |
+| T-012-056 | Migración `00XX_commercial_snapshot_columns` | FR-012-060 | M |
+
+## F7 · API
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-012-060 | Endpoints de los maestros base | FR-012-030..042 | L |
+| T-012-061 | Endpoints de lista, versión e ítems | FR-012-001..008 | L |
+| T-012-062 | `POST /precio/resolver` | FR-012-070 | L |
+| T-012-063 | `POST /descuento/validar` | FR-012-071 | M |
+| T-012-064 | Los 7 códigos de error del contrato | contratos §5 | M |
+| T-012-065 | `allowed_actions` calculado en backend | P6 | M |
+| T-012-066 | Permisos `comercial:*` con la convención de la Spec 003 | AC-012-34 | S |
+| T-012-067 | **012 no emite eventos** | FR-012-073, AC-012-35 | XS |
+
+## F8 · Pruebas de backend
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-012-070 | Unidad: precedencia, desempate, empate irresoluble | AC-012-11..16 | XL |
+| T-012-071 | Unidad: sin lista, volumen, presentación | AC-012-17..19 | L |
+| T-012-072 | Integración: snapshot inmutable ante cambio del maestro | AC-012-26..28 | L |
+| T-012-073 | Multiempresa en la resolución | AC-012-20 | M |
+| T-012-074 | Concurrencia: dos versiones activándose a la vez | R-012-12 | L |
+| T-012-075 | Descuento: límite, aprobación, acumulación | AC-012-21..25 | L |
+| T-012-076 | `0 float` y `0 valores codificados`, por comando | AC-012-02, AC-012-42, NFR-012-05, NFR-012-06 | S |
+| T-012-077 | Regresión de `sales`, `purchasing`, `master_data` | plan §3 | L |
+| T-012-078 | Toda la aceptación sobre **PostgreSQL 18.x** | NFR-012-02, AC-012-41 | M |
+
+## F9 · Frontend
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-012-080 | Tipos TypeScript del modelo comercial | — | S |
+| T-012-081 | Pantalla de listas con filtros | wireframes §1 | L |
+| T-012-082 | Detalle con historial de versiones sin edición | wireframes §2 | L |
+| T-012-083 | Condiciones de pago con formulario que cambia con el tipo | wireframes §3 | L |
+| T-012-084 | Zonas y canales | wireframes §4 | M |
+| T-012-085 | Políticas de descuento y crédito | wireframes §5 | L |
+| T-012-086 | Estados vacíos honestos | AC-012-01 | S |
+| T-012-087 | Rutas y entrada de menú | NFR-012-03 | S |
+| T-012-088 | Pantallas completas, sin modales para formularios complejos | NFR-012-04 | M |
+
+## F10 · Legado, E2E y cierre
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-012-090 | Migración de anotación con sus invariantes y aborto | FR-012-083, AC-012-36, AC-012-40 | L |
+| T-012-091 | Clasificación de las 7 columnas | matriz legado §2 | M |
+| T-012-092 | Ambiguo → revisión manual, nunca conversión | FR-012-081, AC-012-37 | M |
+| T-012-093 | `LEGACY_FREETEXT` en documentos históricos | FR-012-082, AC-012-39 | M |
+| T-012-094 | Fixture legado con las seis clases | matriz legado §3 | L |
+| T-012-095 | E2E: crear lista, resolver precio, ver origen | AC-012-11, AC-012-13 | XL |
+| T-012-096 | E2E: cambiar el maestro no altera lo aprobado | AC-012-26 | L |
+| T-012-097 | E2E: descuento excesivo abre aprobación | AC-012-22 | L |
+| T-012-098 | Cross-browser | AC-012-45 | M |
+| T-012-099 | axe WCAG 2.2 AA y responsive en 6 viewports | AC-012-43, AC-012-44, NFR-012-03 | M |
+| T-012-100 | Verificación de las 8 Specs consumidoras | matriz de impacto | M |
+| T-012-101 | `/speckit.converge 012` y cierre | — | M |
+| T-012-102 | `SalesCommissionPolicy` **reservada** en el modelo, sin implementar y sin cálculo | FR-012-090, FR-012-091 | S |
+
+## Resumen
+
+| Fase | Tareas | Carga | Nota |
+|---|---:|---|---|
+| F1 Maestros base | 6 | L | Independientes |
+| F2 Listas | 10 | XL | La vigencia es el núcleo |
+| F3 Resolución | 10 | **XL** | Donde vive el valor; **antes que la API** |
+| F4 Descuentos | 6 | L | Consume el motor 045 |
+| F5 Cliente y crédito | 5 | L | Extiende, no duplica |
+| F6 Snapshot | 7 | **XL** | **Antes que la API** por `P23` |
+| F7 API | 8 | L | — |
+| F8 Pruebas | 9 | XL | La precedencia es una suite |
+| F9 Frontend | 9 | L | Cinco pantallas |
+| F10 Legado y cierre | 13 | XL | El legado se anota, no se inventa |
+| **Total** | **83** | — | — |

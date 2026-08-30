@@ -333,15 +333,28 @@ Ninguna de las cuatro afecta a una regla no negociable de la Spec.
 
 De las 8 que 046 bloqueaba:
 
-| Situación | Specs |
-|---|---|
-| **Desbloqueadas** — su entidad ya está registrada | 019, 027, 035, 044, 051 — **5** |
-| A la espera de **su propio** modelo de dominio | 018, 020, 040 — **3** |
+> **Revisado el 2026-08-30 al formalizar el cierre.** La versión inicial de esta
+> sección contenía errores que se corrigen en
+> `docs/roadmap/046-dependency-closeout.md`, **que es ahora la autoridad**:
+> cinco Specs estaban mal numeradas —la matriz heredada de `/speckit.specify`
+> llamaba «040» a Tesorería, «051» a Homologación, «042» a Auditoría, «028» a
+> Cotizaciones y «056» a Integraciones— y se afirmaba que a Tesorería le faltaba
+> su modelo de pago, cuando `ap_payments` existe desde antes con su `company_id`.
 
-Las tres pendientes no están bloqueadas *por 046*: lo que les falta es su
-entidad, que es suya. Registrarla después será una línea en `resources.py` y no
-tocará ningún servicio. El detalle está en §5 de
-`document-consumer-contract-matrix.md`.
+| Situación | Specs | Nº |
+|---|---|---:|
+| Tipo registrado y probado; el resto del dominio es suyo | 019, 027, 035 | 3 |
+| Parcialmente desbloqueadas | 044, 056 | 2 |
+| Capacidad documental satisfecha; el bloqueo restante **no es documental** | 018, 020 (sin entidad propia), 040 (`LEGAL_BLOCKER` Decreto 1.808) | 3 |
+| **Todavía bloqueadas por 046** | **028, 038** | **2** |
+| `FULLY_UNLOCKED` | — | **0** |
+
+**Hallazgo.** 028 · Cuentas por pagar y 038 · Tesorería no pueden adjuntar un
+comprobante: `ap_payments`, `bank_transactions`, `cash_sessions` y
+`reconciliations` existen y serían vinculables, pero **no están en el registro
+cerrado** de tipos. El registro es cerrado por diseño (`FR-046-022`) y eso no se
+negocia; lo que falta son sus cuatro entradas. Identificado como `REM-046-001`,
+y **no se hizo aquí**: que un pendiente sea pequeño no lo convierte en hecho.
 
 ## 18. Próxima Spec
 

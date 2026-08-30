@@ -93,7 +93,7 @@ Ninguna amplía el alcance. Todas quedan documentadas y los artefactos de la Spe
 | **CVG-045-01** | **Concurrencia real no verificada**: no hay servidor PostgreSQL en el entorno (BLK-D0-01). `SELECT … FOR UPDATE` se emite sólo en dialecto PostgreSQL y el índice parcial de solicitud viva es condicional | TECHNICAL | `COMPLETE_100` |
 | **CVG-045-02** | `alembic upgrade head` y `alembic check` no ejecutados contra PostgreSQL real | TECHNICAL | `COMPLETE_100` |
 | CVG-045-03 | E2E de flujo completo (configurar → disparar → aprobar → documento avanza) no automatizado en Playwright; cubierto por integración in-process | QA | No |
-| CVG-045-04 | Evidencia adjunta a la solicitud: contrato declarado, inactivo hasta la Spec 046 | DEPENDENCIA | No (CL-045-10) |
+| CVG-045-04 | Evidencia adjunta a la solicitud: contrato declarado, inactivo hasta la Spec 046. **Cerrado el 2026-08-30 por `SPEC 046 COMPLETE_100`** | DEPENDENCIA | No (CL-045-10) |
 | CVG-045-05 | Notificación activa al aprobador: el motor emite eventos; el envío es de la Spec 047 | DEPENDENCIA | No (CL-045-11) |
 | CVG-045-06 | Cross-browser (firefox/webkit) de las 3 pantallas nuevas no ejecutado en esta pasada | QA | No |
 | **CVG-045-07** | **Las herramientas de QA del proyecto miden menos de lo que declaran**: el crawler de rutas y el spec de axe navegan con `page.goto`, que redirige a `/` porque el token vive en memoria (ADR-004). Verificado sobre rutas preexistentes y sobre los JSON históricos. Las cifras «71/71» y «19/19» del expediente no prueban que cada ruta renderizara | **QA — Spec 054** | No bloquea 045 (las pantallas nuevas se verificaron por navegación SPA), pero **invalida evidencia histórica del proyecto** |
@@ -150,7 +150,7 @@ Estado final de las brechas que este documento dejó abiertas:
 | CVG-045-01 concurrencia | **RESOLVED_IN_045** — PostgreSQL 16.2, suite 276/276, E2E de concurrencia |
 | CVG-045-02 `alembic upgrade`/`check` | **RESOLVED_IN_045** — Casos A y B, drift de 045 = 0 |
 | CVG-045-03 E2E Playwright | **RESOLVED_IN_045** — 11 escenarios, 3 navegadores |
-| CVG-045-04 adjuntos | **DEFERRED_EXTERNAL_DEPENDENCY — 046** |
+| CVG-045-04 adjuntos | **`RESOLVED_BY_SPEC_046`** *(2026-08-30)* — ver `convergence/045-external-dependencies.md` |
 | CVG-045-05 notificaciones | **DEFERRED_EXTERNAL_DEPENDENCY — 047** |
 | CVG-045-06 cross-browser | **RESOLVED_IN_045** — Chromium, Firefox, WebKit |
 | CVG-045-07 herramientas de QA | **RESOLVED_IN_045** (instrumentación) + **DEFERRED — 054** (plataforma) |

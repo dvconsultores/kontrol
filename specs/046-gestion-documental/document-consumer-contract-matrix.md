@@ -36,7 +36,7 @@ capacidad para que la Spec 018 lo declare.
 | **028 · Cotizaciones de venta** | Cotización enviada al cliente | Adjunto generado o cargado | `link(entity_type="SalesQuote")` | No |
 | **035 · Despacho y transporte** | Guía de despacho, documentos del vehículo y del conductor, acuse de entrega | Documentos con vigencia (licencia, seguro) | `link` a `Shipment`, `TransportVehicle`, `TransportDriver`; `expiration_date` | **Sí** — hoy `transport_vehicles.documents` es texto libre |
 | **036 · Devoluciones** | Soporte de la devolución, evidencia del estado | Evidencia fotográfica | `link(entity_type="SalesReturn")` | No |
-| **040 · Tesorería / pagos** | Comprobante de pago, referencia de transferencia, soporte de conciliación | Imagen o PDF por pago | `link(entity_type="Payment")`; hoy `license_renewal_requests.payment_proof_ref` es texto | **Sí** para el soporte de pago |
+| **038 · Tesorería** *(la fila decía «040», etiqueta errónea corregida el 2026-08-30: 040 es Retenciones IVA e ISLR)* | Comprobante de pago, referencia de transferencia, soporte de conciliación | Imagen o PDF por pago | `link(entity_type="Payment")`; hoy `license_renewal_requests.payment_proof_ref` es texto | **Sí** para el soporte de pago |
 | **042 · Auditoría** | Evidencia adjunta a un evento de auditoría | Adjunto de solo lectura, inmutable | `link(entity_type="AuditEvent")`; sin desvinculación posible | No — la auditoría funciona sin adjuntos |
 | **044 · Regulatorio (SICA/SIGESAI/SACS)** | Permisos, certificados, autorizaciones, constancias | Documento con emisor, número, emisión y **vencimiento** | `link` a `PermitInstance` y `OfficialDocument`; metadata regulatoria por `DocumentType` | **Sí** — hoy `permit_instances.file_ref` y `official_documents.file_ref` son texto suelto |
 | **047 · Notificaciones** | Avisar de vencimiento de documento o de fallo de análisis | **Consumir eventos**, no producirlos | `document.expiring`, `document.scan_failed` como contratos de evento | No — 047 es consumidor |
@@ -48,8 +48,12 @@ capacidad para que la Spec 018 lo declare.
 
 | ¿046 bloquea? | Specs |
 |---|---|
-| **Sí** | **018, 019, 020, 027, 035, 040, 044, 051** — 8 |
+| **Sí** | **018, 019, 020, 027, 035, 038, 044, 051** — 8 |
 | No | 021, 028, 036, 042, 045, 047, 050, 056 — 8 |
+
+> La fila de tesorería figuraba como «040». El roadmap maestro es la autoridad:
+> **038 es Tesorería** y **040 es Retenciones IVA e ISLR**. Corregido el 2026-08-30;
+> ver `docs/roadmap/046-dependency-closeout.md` §0.
 
 Ocho Specs no pueden completarse sin esta capacidad. Ninguna de las ocho puede
 resolverla por su cuenta sin violar P22 y R-D0-08-1.
@@ -102,7 +106,7 @@ modelo existe hoy. Esta es la fotografía real al cerrar 046, no la aspiracional
 | 028 · Cotizaciones | `SalesQuote` | ⛔ | El modelo no existe |
 | 035 · Despacho | `Shipment`, `TransportVehicle`, `TransportDriver` | ✅ | Las tres registradas |
 | 036 · Devoluciones | `SalesReturn` | ✅ | — |
-| 040 · Tesorería | `Payment` | ⛔ | El modelo no existe: lo crea 040 |
+| 038 · Tesorería | `Payment` | ⛔ | El modelo **sí existe** (`ap_payments`, con `company_id`); lo que falta es su entrada en el registro cerrado — `REM-046-001` |
 | 042 · Auditoría | `AuditEvent` | ⛔ | Deliberado: adjuntar a un evento de auditoría lo convertiría en editable |
 | 044 · Regulatorio | `PermitInstance`, `OfficialDocument` | ✅ | Ambas registradas |
 | 047 · Notificaciones | — | n/a | 046 **no** emite eventos; 047 los consumirá |
@@ -123,7 +127,7 @@ ya existen y que sus Specs figuraban entre las bloqueadas.
 | 020 | **Parcial** | Le falta su modelo de incidencia |
 | 027 | **Sí** | `SupplierInvoice` registrada |
 | 035 | **Sí** | Las tres entidades registradas; `transport_*.documents` queda anotado como legado, no convertido |
-| 040 | **Parcial** | Le falta su modelo de pago; `license_renewal_requests.payment_proof_ref` queda anotado |
+| 038 | **No** | `ap_payments` existe pero no está registrado: `STILL_BLOCKED_BY_046` — `REM-046-001` |
 | 044 | **Sí** | `PermitInstance` y `OfficialDocument` registradas; `file_ref` anotado como legado sin verificar |
 | 051 | **Sí** | `HomologationRecord` registrada; `evidence_sha256` queda `LEGACY_HASH_WITHOUT_FILE` — un hash sin binario sigue sin ser evidencia |
 
