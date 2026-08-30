@@ -40,6 +40,7 @@ export const router = createBrowserRouter([
           { path: "organizacion/sucursales", lazy: () => import("@/modules/organizacion/sucursales/SucursalesPage").then((m) => ({ Component: m.SucursalesPage })) },
           { path: "organizacion/establecimientos", lazy: () => import("@/modules/organizacion/establecimientos/EstablecimientosPage").then((m) => ({ Component: m.EstablecimientosPage })) },
           { path: "organizacion/almacenes", lazy: () => import("@/modules/organizacion/almacenes/AlmacenesPage").then((m) => ({ Component: m.AlmacenesPage })) },
+          { path: "organizacion/almacenes/:warehouseId", lazy: () => import("@/modules/organizacion/almacenes/AlmacenDetallePage").then((m) => ({ Component: m.AlmacenDetallePage })) },
           { path: "organizacion/ubicaciones", lazy: () => import("@/modules/organizacion/ubicaciones/UbicacionesPage").then((m) => ({ Component: m.UbicacionesPage })) },
           { path: "seguridad/usuarios", lazy: () => import("@/modules/seguridad/usuarios/UsuariosPage").then((m) => ({ Component: m.UsuariosPage })) },
           { path: "seguridad/roles", lazy: () => import("@/modules/seguridad/roles/RolesPage").then((m) => ({ Component: m.RolesPage })) },

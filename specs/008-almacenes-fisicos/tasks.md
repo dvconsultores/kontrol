@@ -1,5 +1,9 @@
 # TAREAS — SPEC 008
 
+> **Estado tras `/speckit.implement 008` (2026-08-30):** las 96 tareas se
+> ejecutaron y se verificaron sobre PostgreSQL 18.6. `DONE` significa
+> comportamiento comprobado por prueba, no archivo creado.
+
 Estado inicial: **ninguna ejecutada.** La implementación requiere autorización
 expresa que mencione `008` (P2).
 
@@ -148,3 +152,25 @@ Estimación relativa XS · S · M · L · XL. Sin horas: no hay datos de velocid
 | F6 Frontend | 12 | **XL** | La jerarquía usable es el mayor riesgo de UX |
 | F7 E2E y cierre | 10 | L | — |
 | **Total** | **96** | — | +26 sobre el ciclo documental inicial: 25 de los dos controles y 1 de rendimiento que faltaba |
+
+---
+
+## Estado de ejecución — `/speckit.implement 008`
+
+| Fase | Tareas | Estado | Verificación |
+|---|---:|---|---|
+| F1 · Modelo e integridad | 11 | **DONE** | 8 tablas creadas; `0017` aplica sobre PG 18.6; `alembic check` sin drift de 008 |
+| F2 · Conversión de referencias | 12 | **DONE** | `inventory_balances` y `stock_count_lines` con FK real; 6 casos de `0018` verdes |
+| F3 · Reglas de dominio | 18 | **DONE** | `structure.py`: cadena, régimen, orden, borrado, `allowed_actions` |
+| F4 · API | 9 | **DONE** | 42 rutas; las 18 del contrato presentes en OpenAPI |
+| F5 · Pruebas de backend | 24 | **DONE** | 41 pruebas nuevas; 317/317 sobre PostgreSQL |
+| F6 · Frontend | 12 | **DONE** | 3 pantallas; `tsc` y `eslint` limpios; 218/218 unitarias |
+| F7 · E2E y cierre | 10 | **DONE** | 15/15 E2E en 3 navegadores; axe y responsive verdes |
+
+### Desviaciones respecto al plan, y su razón
+
+| Desviación | Razón |
+|---|---|
+| Orden ejecutado **F1→F2→F3→F4→F5→F6→F7** en lugar del literal F1→F2→F3→F4→F7→F5→F6 | El encargo (§4) manda respetar las dependencias reales sobre los nombres de fase. En esta Spec F7 es E2E y depende del frontend (F6), que depende de la API (F4) y de sus pruebas (F5). F2 sigue precediendo a F4 según P23, que es lo que el orden protegía |
+| `GET /warehouses` y `GET /locations` pasan a respuesta paginada | Es el contrato aprobado de 008. Los endpoints legados devolvían un array; seis pantallas de inventario ya esperaban `{items}`, de modo que el cambio corrige además una incoherencia previa |
+| Se añadió T-008-061a (rendimiento) | El plan declaraba NFR-008-01/03 sin tarea de verificación; el Gate lo detectó y se cerró |

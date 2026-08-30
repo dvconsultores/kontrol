@@ -57,7 +57,9 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
     """
     resources_actions = {
         "dashboard": ["view"],
-        "organization": ["view", "create", "edit", "deactivate", "activate"],
+        # `delete` y `manage_structure` los añade la Spec 008 al recurso
+        # existente: se extiende el modelo de la Spec 003, no se crea otro.
+        "organization": ["view", "create", "edit", "deactivate", "activate", "delete", "manage_structure"],
         "users": ["view", "create", "edit", "deactivate", "activate"],
         "roles": ["view", "create", "edit"],
         "audit": ["view"],

@@ -105,3 +105,16 @@ Este backlog es una **propuesta**; no se ha ejecutado ninguna de sus tareas.
 
 **Advertencia:** los quick wins de la izquierda son reales y baratos, pero cerrarlos no mueve la
 aguja del producto. No deben usarse como evidencia de avance frente a la columna derecha.
+
+
+## Cierre de la Spec 008 — 2026-08-30
+
+`SPEC 008 COMPLETE_100`. Segunda Spec del proyecto en alcanzarlo.
+
+- Desbloquea por contrato verificado: **022, 031, 032**, y parcialmente **023,
+  025 y 019** (ver `008-unblocked-specs.md`).
+- Deuda escalada, no asumida: drift de licenciamiento (Spec 010), 22 violaciones
+  responsive (Specs 005/054) y el aprovisionamiento de PostgreSQL 18 en CI
+  (Spec 054).
+- **Próxima Spec recomendada: 011 — Unidades y presentaciones.** Sin cambio de
+  prioridad: no hay evidencia nueva que lo justifique.

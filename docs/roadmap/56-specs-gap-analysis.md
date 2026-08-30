@@ -15,7 +15,7 @@
 | 005 | Design System, navegación y componentes | Sí | 001 | 95 | — | — | 90 | 85 | 89 | SUBSTANTIALLY_COMPLETE | Sin `unsaved changes`; navegadores reales |
 | 006 | Auditoría, observabilidad y operación | Sí | 001 + 009 | 70 | 65 | 90 | 50 | 55 | 66 | PARTIAL | `organization` y `master_data` sin auditoría; sin métricas |
 | 007 | Organización | Sí | 001 | 70 | 70 | 65 | 60 | 65 | 66 | PARTIAL | **Centros de costo y unidades de negocio ausentes** |
-| 008 | Estructura física de almacenes | Sí | 001 | 40 | 40 | 45 | 20 | 20 | 36 | PARTIAL | **Sin nivel/posición; sin jerarquía de zonas** |
+| 008 | Estructura física de almacenes | Sí | 001 | 100 | 100 | 100 | 100 | 100 | 100 | **COMPLETE_100** | Cerrada 2026-08-30 sobre PostgreSQL 18.6 · jerarquía opcional por almacén · FK reales |
 | 009 | Terceros | Sí | 002 | 80 | 85 | 90 | 65 | 70 | 79 | SUBSTANTIALLY_COMPLETE | Vendedor/beneficiario sin entidad propia |
 | 010 | Productos y servicios | Sí | 002 | 80 | 85 | 90 | 65 | 70 | 79 | SUBSTANTIALLY_COMPLETE | Marcas/modelos como nodos genéricos |
 | 011 | Unidades, presentaciones y conversiones | Sí | 002 | 45 | 50 | 70 | 25 | 20 | 45 | PARTIAL | **Líneas de documento sin UoM ni presentación** |
@@ -71,7 +71,7 @@
 |---|---:|---|
 | COMPLETE_100 | **1** | **045** |
 | SUBSTANTIALLY_COMPLETE | **25** | 001,002,004,005,009,010,013,014,016,017,023,024,025,027,028,030,036,037,038,041,043,044,050,054,056 |
-| PARTIAL | **19** | 003,006,007,008,011,015,019,026,029,034,035,039,040,042,048,049,051,052,055 |
+| PARTIAL | **18** | 003,006,007,011,015,019,026,029,034,035,039,040,042,048,049,051,052,055 |
 | SKELETON_ONLY | **5** | 021,022,031,032,053 |
 | FRONTEND_ONLY | **0** | — |
 | BACKEND_ONLY | **0** | — |

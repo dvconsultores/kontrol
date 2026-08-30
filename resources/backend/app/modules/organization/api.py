@@ -1,4 +1,8 @@
-"""API de organización: companies, branches, establishments, warehouses, locations."""
+"""API de organización: companies, branches y establishments.
+
+Los almacenes y su estructura física los sirve `warehouse_api.py` (Spec 008),
+que es la autoridad única sobre la jerarquía (P22).
+"""
 
 from __future__ import annotations
 
@@ -15,10 +19,8 @@ from app.modules.organization.models import (
     Branch,
     Company,
     Establishment,
-    Location,
-    Warehouse,
 )
-from app.modules.organization.service import branch_in_tenant, company_in_tenant, warehouse_in_tenant
+from app.modules.organization.service import branch_in_tenant, company_in_tenant
 
 router = APIRouter(prefix="/organization", tags=["organization"])
 
@@ -47,22 +49,6 @@ class EstablishmentCreate(BaseModel):
     code: str = Field(min_length=1, max_length=64)
     name: str = Field(min_length=1, max_length=200)
     fiscal_address: str | None = None
-
-
-class WarehouseCreate(BaseModel):
-    company_id: str
-    branch_id: str | None = None
-    code: str = Field(min_length=1, max_length=64)
-    name: str = Field(min_length=1, max_length=200)
-    warehouse_type: str = "PHYSICAL"
-
-
-class LocationCreate(BaseModel):
-    warehouse_id: str
-    code: str = Field(min_length=1, max_length=64)
-    zone: str | None = None
-    aisle: str | None = None
-    rack: str | None = None
 
 
 @router.get("/companies")
@@ -162,59 +148,3 @@ def create_establishment(body: EstablishmentCreate, db: Session = Depends(get_db
     db.commit()
     db.refresh(est)
     return {"id": str(est.id), "code": est.code, "name": est.name}
-
-
-@router.get("/warehouses")
-def list_warehouses(company_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(Warehouse).join(Company, Warehouse.company_id == Company.id)\
-        .where(Company.tenant_id == user.tenant_id)
-    if company_id:
-        query = query.where(Warehouse.company_id == company_id)
-    return [{"id": str(w.id), "company_id": w.company_id, "code": w.code, "name": w.name, "warehouse_type": w.warehouse_type, "status": w.status} for w in db.execute(query.order_by(Warehouse.created_at)).scalars().all()]
-
-
-@router.post("/warehouses", dependencies=[Depends(require_write_allowed)])
-def create_warehouse(body: WarehouseCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("organization", "create"))):
-    if not company_in_tenant(db, actor.tenant_id, body.company_id):
-        raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
-    warehouse = Warehouse(
-        company_id=body.company_id,
-        branch_id=body.branch_id,
-        code=body.code,
-        name=body.name,
-        warehouse_type=body.warehouse_type,
-        status="ACTIVE",
-        created_by=str(actor.id),
-    )
-    db.add(warehouse)
-    db.commit()
-    db.refresh(warehouse)
-    return {"id": str(warehouse.id), "code": warehouse.code, "name": warehouse.name}
-
-
-@router.get("/locations")
-def list_locations(warehouse_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(Location).join(Warehouse, Location.warehouse_id == Warehouse.id)\
-        .join(Company, Warehouse.company_id == Company.id).where(Company.tenant_id == user.tenant_id)
-    if warehouse_id:
-        query = query.where(Location.warehouse_id == warehouse_id)
-    return [{"id": str(loc.id), "warehouse_id": loc.warehouse_id, "code": loc.code, "zone": loc.zone, "aisle": loc.aisle, "rack": loc.rack, "status": loc.status} for loc in db.execute(query.order_by(Location.created_at)).scalars().all()]
-
-
-@router.post("/locations", dependencies=[Depends(require_write_allowed)])
-def create_location(body: LocationCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("organization", "create"))):
-    if not warehouse_in_tenant(db, actor.tenant_id, body.warehouse_id):
-        raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
-    location = Location(
-        warehouse_id=body.warehouse_id,
-        code=body.code,
-        zone=body.zone,
-        aisle=body.aisle,
-        rack=body.rack,
-        status="ACTIVE",
-        created_by=str(actor.id),
-    )
-    db.add(location)
-    db.commit()
-    db.refresh(location)
-    return {"id": str(location.id), "code": location.code}

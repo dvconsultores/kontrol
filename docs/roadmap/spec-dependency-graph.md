@@ -48,7 +48,7 @@ Notación: `A → B` significa «A debe existir antes que B».
          └→ 019 Recepción física       ← 008, 023
              ├→ 020 Incidencias de recepción ← 046
              └→ 021 Confirmación de inventario recibido ← 011, 020
-                 └→ 022 Put-away        ← 008  ⛔ (023 se construyó sin dimensión de ubicación)
+                 └→ 022 Put-away        ← 008 ✅ (008 cerrada; 023 aún sin dimensión de ubicación)
 027 Factura proveedor/match ← 017, 019
  └→ 028 CxP y pagos ← 040 (retenciones)
 ```
@@ -58,7 +58,7 @@ Notación: `A → B` significa «A debe existir antes que B».
 ```
 029 Cotización y pedido comercial ← 009, 010, 011, 012  ⛔ (se construyó sin 012)
  └→ 030 Crédito/aprobación/reserva ← 012, 023, 045
-     └→ 031 Cola y ruta de picking ← 008, 022, 032  ⛔ (008/022 inexistentes en la práctica)
+     └→ 031 Cola y ruta de picking ← 008 ✅, 022, 032  (008 entrega `/locations/ordered`)
          └→ 032 Picking y consolidación ← 008, 011, 023
              └→ 033 Confirmación independiente de pedido ← 032, 045
                  └→ 034 Liberación y facturación ← 033, 039, 042  ⛔ (034 existe sin 033)
@@ -101,10 +101,10 @@ Notación: `A → B` significa «A debe existir antes que B».
 
 | # | Se construyó | Sin su prerequisito | Consecuencia observable |
 |---|---|---|---|
-| D-01 | 023 Inventario | 008 Almacenes físicos completos | La dimensión de ubicación existe como columna nullable y nunca se usa |
+| D-01 | 023 Inventario | ~~008 Almacenes físicos completos~~ **RESUELTA 2026-08-30** | `location_id` es FK real en movimiento, saldo y línea de conteo |
 | D-02 | 029/030 Ventas | 012 Maestros comerciales | Precio tecleado por línea, lista de precios como texto libre |
 | D-03 | 034 Facturación | 033 Confirmación de pedido | Se factura sin compuerta y sin vínculo al pedido |
-| D-04 | 031/032 Picking | 008 + 022 Put-away | Lista de productos sin ruta física; inutilizable en almacén |
+| D-04 | 031/032 Picking | ~~008~~ **desbloqueada** + 022 Put-away | 008 entrega orden físico determinista; falta 022 |
 | D-05 | 015/017/025/030 | 045 Motor de aprobaciones | **RESUELTA 2026-08-29**: las cuatro implementaciones ad-hoc migradas al motor único (Spec 045 COMPLETE_100) |
 | D-06 | 019 Recepción | 020 + 021 | Recepción contable que salta cuarentena y liberación |
 | D-07 | 026 Costos | 018 Importaciones | Sin landed cost: el costo de importación no se distribuye |

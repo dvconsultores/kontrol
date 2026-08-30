@@ -234,7 +234,7 @@ def test_org_tenant_isolation():
 
     b = _auth_b()
     assert _CLIENT.get("/api/v1/organization/companies", headers=b).json() == []
-    assert _CLIENT.get(f"/api/v1/organization/warehouses?company_id={company_a}", headers=b).json() == []
+    assert _CLIENT.get(f"/api/v1/organization/warehouses?company_id={company_a}", headers=b).json()["items"] == []
 
     r = _CLIENT.post("/api/v1/organization/warehouses", headers=b,
                      json={"company_id": company_a, "branch_id": None, "code": "ALM-X", "name": "X"})

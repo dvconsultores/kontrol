@@ -56,7 +56,7 @@ class InventoryMovement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
-    location_id: Mapped[str | None] = mapped_column(ForeignKey("locations.id"), nullable=True)
+    location_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_locations.id"), nullable=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
     movement_type_id: Mapped[str] = mapped_column(ForeignKey("movement_types.id"), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)  # != 0; signo según dirección
@@ -119,7 +119,12 @@ class InventoryBalance(UUIDMixin, TimestampMixin, Base):
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
-    location_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    # FK real desde la Spec 008: la ubicación es una dimensión del saldo, no
+    # una referencia lógica sin integridad (FR-008-054, P23).
+    location_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_locations.id"), nullable=True)
+    # Valor original cuando `0018` reparó o anuló la referencia. Nunca se
+    # pierde el rastro (FR-008-101).
+    legacy_location_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
     lot_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     serial_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -191,7 +196,8 @@ class StockCountLine(UUIDMixin, TimestampMixin, Base):
 
     count_id: Mapped[str] = mapped_column(ForeignKey("stock_counts.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
-    location_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    location_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_locations.id"), nullable=True)
+    legacy_location_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     lot_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     expected_qty: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     counted_qty: Mapped[float | None] = mapped_column(Float, nullable=True)

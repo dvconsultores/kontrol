@@ -193,3 +193,27 @@ Las columnas se **derivan de `tasks.md` y `acceptance-criteria.md`**, no se escr
 
 Ningún requisito del Gate añade funcionalidad nueva. Los trece son **restricciones**
 sobre comportamiento que la Spec dejaba sin gobernar.
+
+## 7. Requisito → código → prueba → evidencia
+
+Cadena completa tras `/speckit.implement 008`.
+
+| Bloque | Código | Prueba | Evidencia |
+|---|---|---|---|
+| FR-008-001..007 almacén | `organization/models.py::Warehouse` | `test_warehouse_structure.py::test_almacen_simple_*`, `test_borrar_almacen_no_destruye_ubicaciones` | `pg18-regression-final.log` |
+| FR-008-010..017 tramos | `models.py::Warehouse{Zone,Aisle,Rack,Level}` | `test_almacen_complejo_cadena_completa`, `test_tramo_no_declarado_se_rechaza` | ídem |
+| FR-008-020..029 ubicación | `models.py::WarehouseLocation`, `structure.py::generate_location_code` | `test_codigo_unico_por_almacen`, `test_creacion_masiva_con_vista_previa_obligatoria`, `test_codigo_generado_desde_el_patron_del_almacen` | ídem |
+| FR-008-030..033 secuencia | `structure.py::physical_order_query` | `test_orden_fisico_determinista_y_estable` | ídem + E2E |
+| FR-008-040..043 estados | `warehouse_api.py::_set_location_status` | `test_estados_sin_full_y_mercancia_independiente` | ídem |
+| FR-008-050..056 integridad | `structure.py::validate_chain`, `assert_can_relocate` | `test_cadena_incoherente_y_entre_almacenes_rechazadas`, `test_caso_f_reubicacion_con_historial_bloqueada` | ídem |
+| FR-008-060..066 API | `warehouse_api.py` (42 rutas) | `test_if_match_concurrencia_optimista`, `test_estructura_no_carga_ubicaciones_por_defecto` | contrato OpenAPI 18/18 |
+| FR-008-070..078 frontend | `AlmacenesPage`, `AlmacenDetallePage`, `UbicacionesPage` | 218 unitarias + 15 E2E | `warehouse-structure.spec.ts` |
+| FR-008-080..085 contratos futuros | `GET /locations/ordered`, FK reales | `test_las_dos_referencias_son_fk_reales` | §33 del closeout |
+| **FR-008-090..097 mutabilidad** | `structure.py::validate_structure_levels_change`, `assert_can_deactivate_node` | `test_caso_b_y_c_*`, `test_desactivacion_en_cascada_silenciosa_no_existe`, `test_historico_heredado_*` | ídem + E2E |
+| **FR-008-100..104 migración** | `0018_location_fk_and_legacy.py::_classify` | `test_warehouse_migration_0018.py` (7 casos) | reporte de `0018` |
+| NFR-008-01..03 rendimiento | índices de `data-model.md` | conjunto de 50.000 ubicaciones | §28 del closeout |
+| NFR-008-04..05 a11y y responsive | pantallas de 008 | `warehouse-a11y.spec.ts` | 3/3 verdes |
+| NFR-008-07 PostgreSQL 18.x | toda la suite | 317/317 | `pg18-regression-final.log` |
+| NFR-008-08 sin negocio en código | — | búsqueda de literales | 0 coincidencias |
+
+**Requisitos sin implementación: 0. Tareas sin requisito: 0. Criterios sin evidencia: 0.**

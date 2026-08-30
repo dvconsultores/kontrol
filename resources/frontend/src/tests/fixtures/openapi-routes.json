@@ -2,6 +2,266 @@
  "routes": [
   {
    "method": "GET",
+   "path": "/"
+  },
+  {
+   "method": "GET",
+   "path": "/approvals/delegations"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/delegations"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/delegations/{delegation_id}/revoke"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/evaluate"
+  },
+  {
+   "method": "GET",
+   "path": "/approvals/inbox"
+  },
+  {
+   "method": "GET",
+   "path": "/approvals/policies"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/policies"
+  },
+  {
+   "method": "GET",
+   "path": "/approvals/policies/{policy_id}"
+  },
+  {
+   "method": "PATCH",
+   "path": "/approvals/policies/{policy_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/policies/{policy_id}/activate"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/policies/{policy_id}/close"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/policies/{policy_id}/rules"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/policies/{policy_id}/rules/{rule_id}/levels"
+  },
+  {
+   "method": "GET",
+   "path": "/approvals/process-types"
+  },
+  {
+   "method": "GET",
+   "path": "/approvals/requests"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/requests"
+  },
+  {
+   "method": "GET",
+   "path": "/approvals/requests/by-document"
+  },
+  {
+   "method": "GET",
+   "path": "/approvals/requests/{request_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/requests/{request_id}/cancel"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/steps/{step_id}/approve"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/steps/{step_id}/reject"
+  },
+  {
+   "method": "POST",
+   "path": "/approvals/steps/{step_id}/return"
+  },
+  {
+   "method": "GET",
+   "path": "/audit/events"
+  },
+  {
+   "method": "POST",
+   "path": "/auth/change-password"
+  },
+  {
+   "method": "POST",
+   "path": "/auth/login"
+  },
+  {
+   "method": "POST",
+   "path": "/auth/logout"
+  },
+  {
+   "method": "GET",
+   "path": "/auth/me"
+  },
+  {
+   "method": "POST",
+   "path": "/auth/password-reset/confirm"
+  },
+  {
+   "method": "POST",
+   "path": "/auth/password-reset/request"
+  },
+  {
+   "method": "POST",
+   "path": "/auth/refresh"
+  },
+  {
+   "method": "GET",
+   "path": "/auth/sessions"
+  },
+  {
+   "method": "DELETE",
+   "path": "/auth/sessions/{session_id}"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/books/{tax_type}"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/control-batches"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/control-batches"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/control-numbers"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/credit-debit-notes"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/credit-debit-notes"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/documents"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/documents/emit"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/documents/{document_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/documents/{document_id}/print"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/legal-sources"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/legal-sources"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/legal-sources/{source_id}/activate"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/number-series"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/number-series"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/periods"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/periods"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/periods/{period_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/tax-calculations"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/tax-calculations"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/tax-profiles"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/tax-return-batches"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/tax-return-batches"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/tax-rule-versions"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/tax-rule-versions"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/tax-rule-versions/{rule_id}/approve"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/withholding-rules"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/withholding-rules"
+  },
+  {
+   "method": "GET",
+   "path": "/fiscal/withholdings"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/withholdings/calculate"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/withholdings/{withholding_id}/certificate"
+  },
+  {
+   "method": "POST",
+   "path": "/fiscal/withholdings/{withholding_id}/transition"
+  },
+  {
+   "method": "GET",
    "path": "/health/live"
   },
   {
@@ -10,23 +270,187 @@
   },
   {
    "method": "GET",
-   "path": "/system/diagnostics"
-  },
-  {
-   "method": "GET",
-   "path": "/setup/status"
+   "path": "/homologation/records"
   },
   {
    "method": "POST",
-   "path": "/setup/initialize"
+   "path": "/homologation/records"
   },
   {
    "method": "GET",
-   "path": "/license/installation-request"
+   "path": "/homologation/records/{record_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/homologation/records/{record_id}/evaluate"
+  },
+  {
+   "method": "POST",
+   "path": "/homologation/records/{record_id}/submit"
+  },
+  {
+   "method": "GET",
+   "path": "/homologation/releases"
+  },
+  {
+   "method": "POST",
+   "path": "/homologation/releases"
+  },
+  {
+   "method": "POST",
+   "path": "/homologation/releases/{release_id}/promote"
+  },
+  {
+   "method": "POST",
+   "path": "/homologation/releases/{release_id}/release"
+  },
+  {
+   "method": "GET",
+   "path": "/homologation/timeline"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/adjustments"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/adjustments"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/adjustments/{adjustment_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/balances"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/balances/recompute"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/balances/{balance_id}"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/cost-layers"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/costing-profiles"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/costing-profiles"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/counts"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/counts"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/counts/{count_id}/lines"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/counts/{count_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/lots"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/lots"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/lots/{lot_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/movement-types"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/movement-types"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/movements"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/movements"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/movements/reverse"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/movements/{movement_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/operations/receive"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/operations/ship"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/reservations"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/reservations"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/reservations/expire"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/reservations/{reservation_id}/release"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/serials"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/serials"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/transfers"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/transfers"
+  },
+  {
+   "method": "POST",
+   "path": "/inventory/transfers/{transfer_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/inventory/valuation"
   },
   {
    "method": "POST",
    "path": "/license/activate"
+  },
+  {
+   "method": "GET",
+   "path": "/license/history"
   },
   {
    "method": "POST",
@@ -34,7 +458,7 @@
   },
   {
    "method": "GET",
-   "path": "/license/status"
+   "path": "/license/installation-request"
   },
   {
    "method": "POST",
@@ -42,7 +466,7 @@
   },
   {
    "method": "GET",
-   "path": "/license/history"
+   "path": "/license/status"
   },
   {
    "method": "GET",
@@ -53,24 +477,24 @@
    "path": "/licensing/central-config"
   },
   {
-   "method": "POST",
-   "path": "/licensing/sync"
-  },
-  {
    "method": "GET",
-   "path": "/licensing/sync-runs"
+   "path": "/licensing/entitlement-snapshots"
   },
   {
    "method": "GET",
    "path": "/licensing/entitlements"
   },
   {
-   "method": "GET",
-   "path": "/licensing/entitlement-snapshots"
+   "method": "POST",
+   "path": "/licensing/mode-transition"
   },
   {
    "method": "GET",
    "path": "/licensing/offline-status"
+  },
+  {
+   "method": "GET",
+   "path": "/licensing/overview"
   },
   {
    "method": "GET",
@@ -86,123 +510,19 @@
   },
   {
    "method": "POST",
-   "path": "/licensing/mode-transition"
+   "path": "/licensing/sync"
   },
   {
    "method": "GET",
-   "path": "/licensing/overview"
-  },
-  {
-   "method": "POST",
-   "path": "/auth/login"
-  },
-  {
-   "method": "POST",
-   "path": "/auth/refresh"
-  },
-  {
-   "method": "POST",
-   "path": "/auth/logout"
-  },
-  {
-   "method": "POST",
-   "path": "/auth/change-password"
-  },
-  {
-   "method": "POST",
-   "path": "/auth/password-reset/request"
-  },
-  {
-   "method": "POST",
-   "path": "/auth/password-reset/confirm"
+   "path": "/licensing/sync-runs"
   },
   {
    "method": "GET",
-   "path": "/auth/sessions"
-  },
-  {
-   "method": "DELETE",
-   "path": "/auth/sessions/{session_id}"
-  },
-  {
-   "method": "GET",
-   "path": "/users"
+   "path": "/maestros/catalogos/atributos"
   },
   {
    "method": "POST",
-   "path": "/users"
-  },
-  {
-   "method": "POST",
-   "path": "/users/{user_id}/roles"
-  },
-  {
-   "method": "DELETE",
-   "path": "/users/{user_id}/roles/{role_id}"
-  },
-  {
-   "method": "GET",
-   "path": "/roles"
-  },
-  {
-   "method": "GET",
-   "path": "/organization/companies"
-  },
-  {
-   "method": "POST",
-   "path": "/organization/companies"
-  },
-  {
-   "method": "GET",
-   "path": "/organization/branches"
-  },
-  {
-   "method": "POST",
-   "path": "/organization/branches"
-  },
-  {
-   "method": "GET",
-   "path": "/organization/establishments"
-  },
-  {
-   "method": "POST",
-   "path": "/organization/establishments"
-  },
-  {
-   "method": "GET",
-   "path": "/organization/warehouses"
-  },
-  {
-   "method": "POST",
-   "path": "/organization/warehouses"
-  },
-  {
-   "method": "GET",
-   "path": "/organization/locations"
-  },
-  {
-   "method": "POST",
-   "path": "/organization/locations"
-  },
-  {
-   "method": "GET",
-   "path": "/maestros/terceros"
-  },
-  {
-   "method": "POST",
-   "path": "/maestros/terceros"
-  },
-  {
-   "method": "GET",
-   "path": "/maestros/terceros/{party_id}"
-  },
-  {
-   "method": "POST",
-   "path": "/maestros/terceros/{party_id}/deactivate"
-  },
-  {
-   "method": "POST",
-   "path": "/maestros/terceros/{party_id}/roles/{role}"
+   "path": "/maestros/catalogos/atributos"
   },
   {
    "method": "GET",
@@ -230,14 +550,6 @@
   },
   {
    "method": "GET",
-   "path": "/maestros/catalogos/atributos"
-  },
-  {
-   "method": "POST",
-   "path": "/maestros/catalogos/atributos"
-  },
-  {
-   "method": "GET",
    "path": "/maestros/catalogos/unidades"
   },
   {
@@ -258,167 +570,287 @@
   },
   {
    "method": "GET",
-   "path": "/inventory/movement-types"
+   "path": "/maestros/terceros"
   },
   {
    "method": "POST",
-   "path": "/inventory/movement-types"
+   "path": "/maestros/terceros"
   },
   {
    "method": "GET",
-   "path": "/inventory/balances"
+   "path": "/maestros/terceros/{party_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/maestros/terceros/{party_id}/deactivate"
+  },
+  {
+   "method": "POST",
+   "path": "/maestros/terceros/{party_id}/roles/{role}"
+  },
+  {
+   "method": "DELETE",
+   "path": "/organization/aisles/{node_id}"
   },
   {
    "method": "GET",
-   "path": "/inventory/balances/{balance_id}"
+   "path": "/organization/aisles/{node_id}"
+  },
+  {
+   "method": "PATCH",
+   "path": "/organization/aisles/{node_id}"
   },
   {
    "method": "POST",
-   "path": "/inventory/balances/recompute"
+   "path": "/organization/aisles/{node_id}/activate"
+  },
+  {
+   "method": "POST",
+   "path": "/organization/aisles/{node_id}/deactivate"
   },
   {
    "method": "GET",
-   "path": "/inventory/movements"
+   "path": "/organization/branches"
   },
   {
    "method": "POST",
-   "path": "/inventory/movements"
+   "path": "/organization/branches"
   },
   {
    "method": "GET",
-   "path": "/inventory/movements/{movement_id}"
+   "path": "/organization/companies"
   },
   {
    "method": "POST",
-   "path": "/inventory/movements/reverse"
+   "path": "/organization/companies"
   },
   {
    "method": "GET",
-   "path": "/inventory/lots"
+   "path": "/organization/establishments"
   },
   {
    "method": "POST",
-   "path": "/inventory/lots"
+   "path": "/organization/establishments"
   },
   {
-   "method": "POST",
-   "path": "/inventory/lots/{lot_id}/transition"
+   "method": "DELETE",
+   "path": "/organization/levels/{node_id}"
   },
   {
    "method": "GET",
-   "path": "/inventory/serials"
+   "path": "/organization/levels/{node_id}"
+  },
+  {
+   "method": "PATCH",
+   "path": "/organization/levels/{node_id}"
   },
   {
    "method": "POST",
-   "path": "/inventory/serials"
+   "path": "/organization/levels/{node_id}/activate"
+  },
+  {
+   "method": "POST",
+   "path": "/organization/levels/{node_id}/deactivate"
   },
   {
    "method": "GET",
-   "path": "/inventory/reservations"
+   "path": "/organization/location-types"
   },
   {
    "method": "POST",
-   "path": "/inventory/reservations"
+   "path": "/organization/location-types"
   },
   {
-   "method": "POST",
-   "path": "/inventory/reservations/{reservation_id}/release"
-  },
-  {
-   "method": "POST",
-   "path": "/inventory/reservations/expire"
+   "method": "PATCH",
+   "path": "/organization/location-types/{item_id}"
   },
   {
    "method": "GET",
-   "path": "/inventory/transfers"
+   "path": "/organization/locations"
   },
   {
    "method": "POST",
-   "path": "/inventory/transfers"
+   "path": "/organization/locations"
   },
   {
    "method": "POST",
-   "path": "/inventory/transfers/{transfer_id}/transition"
+   "path": "/organization/locations/bulk"
   },
   {
    "method": "GET",
-   "path": "/inventory/counts"
+   "path": "/organization/locations/ordered"
   },
   {
-   "method": "POST",
-   "path": "/inventory/counts"
-  },
-  {
-   "method": "POST",
-   "path": "/inventory/counts/{count_id}/lines"
-  },
-  {
-   "method": "POST",
-   "path": "/inventory/counts/{count_id}/transition"
+   "method": "DELETE",
+   "path": "/organization/locations/{location_id}"
   },
   {
    "method": "GET",
-   "path": "/inventory/adjustments"
+   "path": "/organization/locations/{location_id}"
+  },
+  {
+   "method": "PATCH",
+   "path": "/organization/locations/{location_id}"
   },
   {
    "method": "POST",
-   "path": "/inventory/adjustments"
+   "path": "/organization/locations/{location_id}/activate"
   },
   {
    "method": "POST",
-   "path": "/inventory/adjustments/{adjustment_id}/transition"
+   "path": "/organization/locations/{location_id}/block"
+  },
+  {
+   "method": "POST",
+   "path": "/organization/locations/{location_id}/deactivate"
+  },
+  {
+   "method": "DELETE",
+   "path": "/organization/racks/{node_id}"
   },
   {
    "method": "GET",
-   "path": "/inventory/cost-layers"
+   "path": "/organization/racks/{node_id}"
+  },
+  {
+   "method": "PATCH",
+   "path": "/organization/racks/{node_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/organization/racks/{node_id}/activate"
+  },
+  {
+   "method": "POST",
+   "path": "/organization/racks/{node_id}/deactivate"
   },
   {
    "method": "GET",
-   "path": "/inventory/valuation"
+   "path": "/organization/warehouses"
+  },
+  {
+   "method": "POST",
+   "path": "/organization/warehouses"
+  },
+  {
+   "method": "DELETE",
+   "path": "/organization/warehouses/{warehouse_id}"
   },
   {
    "method": "GET",
-   "path": "/inventory/costing-profiles"
+   "path": "/organization/warehouses/{warehouse_id}"
+  },
+  {
+   "method": "PATCH",
+   "path": "/organization/warehouses/{warehouse_id}"
   },
   {
    "method": "POST",
-   "path": "/inventory/costing-profiles"
-  },
-  {
-   "method": "POST",
-   "path": "/inventory/operations/receive"
-  },
-  {
-   "method": "POST",
-   "path": "/inventory/operations/ship"
+   "path": "/organization/warehouses/{warehouse_id}/activate"
   },
   {
    "method": "GET",
-   "path": "/purchasing/requisitions"
+   "path": "/organization/warehouses/{warehouse_id}/aisles"
   },
   {
    "method": "POST",
-   "path": "/purchasing/requisitions"
+   "path": "/organization/warehouses/{warehouse_id}/aisles"
   },
   {
    "method": "POST",
-   "path": "/purchasing/requisitions/{req_id}/lines"
-  },
-  {
-   "method": "POST",
-   "path": "/purchasing/requisitions/{req_id}/transition"
+   "path": "/organization/warehouses/{warehouse_id}/deactivate"
   },
   {
    "method": "GET",
-   "path": "/purchasing/quotes"
+   "path": "/organization/warehouses/{warehouse_id}/levels"
   },
   {
    "method": "POST",
-   "path": "/purchasing/quotes"
+   "path": "/organization/warehouses/{warehouse_id}/levels"
+  },
+  {
+   "method": "GET",
+   "path": "/organization/warehouses/{warehouse_id}/racks"
   },
   {
    "method": "POST",
-   "path": "/purchasing/quotes/{quote_id}/lines"
+   "path": "/organization/warehouses/{warehouse_id}/racks"
+  },
+  {
+   "method": "GET",
+   "path": "/organization/warehouses/{warehouse_id}/structure"
+  },
+  {
+   "method": "PATCH",
+   "path": "/organization/warehouses/{warehouse_id}/structure-levels"
+  },
+  {
+   "method": "GET",
+   "path": "/organization/warehouses/{warehouse_id}/zones"
+  },
+  {
+   "method": "POST",
+   "path": "/organization/warehouses/{warehouse_id}/zones"
+  },
+  {
+   "method": "GET",
+   "path": "/organization/zone-types"
+  },
+  {
+   "method": "POST",
+   "path": "/organization/zone-types"
+  },
+  {
+   "method": "PATCH",
+   "path": "/organization/zone-types/{item_id}"
+  },
+  {
+   "method": "DELETE",
+   "path": "/organization/zones/{node_id}"
+  },
+  {
+   "method": "GET",
+   "path": "/organization/zones/{node_id}"
+  },
+  {
+   "method": "PATCH",
+   "path": "/organization/zones/{node_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/organization/zones/{node_id}/activate"
+  },
+  {
+   "method": "POST",
+   "path": "/organization/zones/{node_id}/deactivate"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/advances"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/aging"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/applications"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/credit-notes"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/credit-notes"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/credit-notes/{note_id}/post"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/open-items"
   },
   {
    "method": "GET",
@@ -441,6 +873,34 @@
    "path": "/purchasing/orders/{order_id}/transition"
   },
   {
+   "method": "POST",
+   "path": "/purchasing/payment-schedules"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/payments"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/payments"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/payments/{payment_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/quotes"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/quotes"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/quotes/{quote_id}/lines"
+  },
+  {
    "method": "GET",
    "path": "/purchasing/receipts"
   },
@@ -450,7 +910,7 @@
   },
   {
    "method": "POST",
-   "path": "/purchasing/receipts/{receipt_id}/lines"
+   "path": "/purchasing/receipts/{receipt_id}/accept"
   },
   {
    "method": "POST",
@@ -458,11 +918,39 @@
   },
   {
    "method": "POST",
-   "path": "/purchasing/receipts/{receipt_id}/quality"
+   "path": "/purchasing/receipts/{receipt_id}/lines"
   },
   {
    "method": "POST",
-   "path": "/purchasing/receipts/{receipt_id}/accept"
+   "path": "/purchasing/receipts/{receipt_id}/quality"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/requisitions"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/requisitions"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/requisitions/{req_id}/lines"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/requisitions/{req_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/returns"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/returns"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/returns/{return_id}/lines"
   },
   {
    "method": "GET",
@@ -489,54 +977,6 @@
    "path": "/purchasing/triple-match"
   },
   {
-   "method": "GET",
-   "path": "/purchasing/returns"
-  },
-  {
-   "method": "POST",
-   "path": "/purchasing/returns"
-  },
-  {
-   "method": "POST",
-   "path": "/purchasing/returns/{return_id}/lines"
-  },
-  {
-   "method": "GET",
-   "path": "/purchasing/credit-notes"
-  },
-  {
-   "method": "POST",
-   "path": "/purchasing/credit-notes"
-  },
-  {
-   "method": "POST",
-   "path": "/purchasing/credit-notes/{note_id}/post"
-  },
-  {
-   "method": "GET",
-   "path": "/purchasing/open-items"
-  },
-  {
-   "method": "GET",
-   "path": "/purchasing/payments"
-  },
-  {
-   "method": "POST",
-   "path": "/purchasing/payments"
-  },
-  {
-   "method": "POST",
-   "path": "/purchasing/payments/{payment_id}/transition"
-  },
-  {
-   "method": "POST",
-   "path": "/purchasing/applications"
-  },
-  {
-   "method": "POST",
-   "path": "/purchasing/advances"
-  },
-  {
    "method": "POST",
    "path": "/purchasing/withholdings"
   },
@@ -546,23 +986,219 @@
   },
   {
    "method": "GET",
-   "path": "/purchasing/aging"
+   "path": "/regulatory/approval-requests"
   },
   {
    "method": "POST",
-   "path": "/purchasing/payment-schedules"
+   "path": "/regulatory/approval-requests"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/approval-requests/{request_id}/transition"
   },
   {
    "method": "GET",
-   "path": "/sales/quotes"
+   "path": "/regulatory/authorities"
   },
   {
    "method": "POST",
-   "path": "/sales/quotes"
+   "path": "/regulatory/authorities"
+  },
+  {
+   "method": "GET",
+   "path": "/regulatory/contingencies"
   },
   {
    "method": "POST",
-   "path": "/sales/quotes/{quote_id}/lines"
+   "path": "/regulatory/contingencies"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/contingencies/{contingency_id}/end"
+  },
+  {
+   "method": "GET",
+   "path": "/regulatory/drivers"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/drivers"
+  },
+  {
+   "method": "GET",
+   "path": "/regulatory/evaluations"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/evaluations"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/evaluations/{evaluation_id}/override"
+  },
+  {
+   "method": "GET",
+   "path": "/regulatory/official-documents"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/official-documents"
+  },
+  {
+   "method": "GET",
+   "path": "/regulatory/official-registrations"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/official-registrations"
+  },
+  {
+   "method": "GET",
+   "path": "/regulatory/permit-types"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/permit-types"
+  },
+  {
+   "method": "GET",
+   "path": "/regulatory/permits"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/permits"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/permits/{permit_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/regulatory/profiles"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/profiles"
+  },
+  {
+   "method": "GET",
+   "path": "/regulatory/vehicles"
+  },
+  {
+   "method": "POST",
+   "path": "/regulatory/vehicles"
+  },
+  {
+   "method": "GET",
+   "path": "/reporting/audit/timeline"
+  },
+  {
+   "method": "GET",
+   "path": "/reporting/dashboard"
+  },
+  {
+   "method": "GET",
+   "path": "/reporting/exports"
+  },
+  {
+   "method": "POST",
+   "path": "/reporting/exports"
+  },
+  {
+   "method": "GET",
+   "path": "/reporting/exports/{export_id}/download"
+  },
+  {
+   "method": "GET",
+   "path": "/reporting/jobs"
+  },
+  {
+   "method": "POST",
+   "path": "/reporting/jobs"
+  },
+  {
+   "method": "GET",
+   "path": "/reporting/jobs/{job_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/reporting/jobs/{job_id}/run"
+  },
+  {
+   "method": "GET",
+   "path": "/reporting/reports/{key}"
+  },
+  {
+   "method": "GET",
+   "path": "/roles"
+  },
+  {
+   "method": "GET",
+   "path": "/sales/aging"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/applications"
+  },
+  {
+   "method": "GET",
+   "path": "/sales/collections"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/collections"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/collections/{collection_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/sales/credit-notes"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/credit-notes"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/credit-notes/{note_id}/apply"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/credit-notes/{note_id}/post"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/customer-advances"
+  },
+  {
+   "method": "GET",
+   "path": "/sales/debit-notes"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/debit-notes"
+  },
+  {
+   "method": "GET",
+   "path": "/sales/invoices"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/invoices"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/invoices/{invoice_id}/lines"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/invoices/{invoice_id}/transition"
+  },
+  {
+   "method": "GET",
+   "path": "/sales/open-items"
   },
   {
    "method": "GET",
@@ -594,59 +1230,15 @@
   },
   {
    "method": "GET",
-   "path": "/sales/shipments"
+   "path": "/sales/quotes"
   },
   {
    "method": "POST",
-   "path": "/sales/shipments"
+   "path": "/sales/quotes"
   },
   {
    "method": "POST",
-   "path": "/sales/shipments/{shipment_id}/validate"
-  },
-  {
-   "method": "POST",
-   "path": "/sales/shipments/{shipment_id}/confirm"
-  },
-  {
-   "method": "GET",
-   "path": "/sales/invoices"
-  },
-  {
-   "method": "POST",
-   "path": "/sales/invoices"
-  },
-  {
-   "method": "POST",
-   "path": "/sales/invoices/{invoice_id}/lines"
-  },
-  {
-   "method": "POST",
-   "path": "/sales/invoices/{invoice_id}/transition"
-  },
-  {
-   "method": "GET",
-   "path": "/sales/credit-notes"
-  },
-  {
-   "method": "POST",
-   "path": "/sales/credit-notes"
-  },
-  {
-   "method": "POST",
-   "path": "/sales/credit-notes/{note_id}/post"
-  },
-  {
-   "method": "POST",
-   "path": "/sales/credit-notes/{note_id}/apply"
-  },
-  {
-   "method": "GET",
-   "path": "/sales/debit-notes"
-  },
-  {
-   "method": "POST",
-   "path": "/sales/debit-notes"
+   "path": "/sales/quotes/{quote_id}/lines"
   },
   {
    "method": "GET",
@@ -662,27 +1254,19 @@
   },
   {
    "method": "GET",
-   "path": "/sales/open-items"
-  },
-  {
-   "method": "GET",
-   "path": "/sales/collections"
+   "path": "/sales/shipments"
   },
   {
    "method": "POST",
-   "path": "/sales/collections"
+   "path": "/sales/shipments"
   },
   {
    "method": "POST",
-   "path": "/sales/collections/{collection_id}/transition"
+   "path": "/sales/shipments/{shipment_id}/confirm"
   },
   {
    "method": "POST",
-   "path": "/sales/applications"
-  },
-  {
-   "method": "POST",
-   "path": "/sales/customer-advances"
+   "path": "/sales/shipments/{shipment_id}/validate"
   },
   {
    "method": "POST",
@@ -693,16 +1277,16 @@
    "path": "/sales/withholdings-suffered/{withholding_id}/transition"
   },
   {
-   "method": "GET",
-   "path": "/sales/aging"
-  },
-  {
-   "method": "GET",
-   "path": "/treasury/banks"
-  },
-  {
    "method": "POST",
-   "path": "/treasury/banks"
+   "path": "/setup/initialize"
+  },
+  {
+   "method": "GET",
+   "path": "/setup/status"
+  },
+  {
+   "method": "GET",
+   "path": "/system/diagnostics"
   },
   {
    "method": "GET",
@@ -714,39 +1298,19 @@
   },
   {
    "method": "GET",
-   "path": "/treasury/cashboxes"
+   "path": "/treasury/bank-transactions"
   },
   {
    "method": "POST",
-   "path": "/treasury/cashboxes"
+   "path": "/treasury/bank-transactions"
   },
   {
    "method": "GET",
-   "path": "/treasury/payment-methods"
+   "path": "/treasury/banks"
   },
   {
    "method": "POST",
-   "path": "/treasury/payment-methods"
-  },
-  {
-   "method": "GET",
-   "path": "/treasury/instruments"
-  },
-  {
-   "method": "POST",
-   "path": "/treasury/instruments"
-  },
-  {
-   "method": "GET",
-   "path": "/treasury/currencies"
-  },
-  {
-   "method": "POST",
-   "path": "/treasury/currencies"
-  },
-  {
-   "method": "POST",
-   "path": "/treasury/exchange-rates"
+   "path": "/treasury/banks"
   },
   {
    "method": "GET",
@@ -762,15 +1326,7 @@
   },
   {
    "method": "POST",
-   "path": "/treasury/cash-sessions/{session_id}/movements"
-  },
-  {
-   "method": "POST",
    "path": "/treasury/cash-sessions/{session_id}/arqueo"
-  },
-  {
-   "method": "POST",
-   "path": "/treasury/cash-sessions/{session_id}/pre-close"
   },
   {
    "method": "POST",
@@ -778,15 +1334,35 @@
   },
   {
    "method": "POST",
+   "path": "/treasury/cash-sessions/{session_id}/movements"
+  },
+  {
+   "method": "POST",
+   "path": "/treasury/cash-sessions/{session_id}/pre-close"
+  },
+  {
+   "method": "POST",
    "path": "/treasury/cash-sessions/{session_id}/reject"
   },
   {
    "method": "GET",
-   "path": "/treasury/bank-transactions"
+   "path": "/treasury/cashboxes"
   },
   {
    "method": "POST",
-   "path": "/treasury/bank-transactions"
+   "path": "/treasury/cashboxes"
+  },
+  {
+   "method": "GET",
+   "path": "/treasury/currencies"
+  },
+  {
+   "method": "POST",
+   "path": "/treasury/currencies"
+  },
+  {
+   "method": "POST",
+   "path": "/treasury/exchange-rates"
   },
   {
    "method": "POST",
@@ -798,11 +1374,39 @@
   },
   {
    "method": "GET",
-   "path": "/treasury/transfers"
+   "path": "/treasury/fiscal-rules"
   },
   {
    "method": "POST",
-   "path": "/treasury/transfers"
+   "path": "/treasury/fiscal-rules"
+  },
+  {
+   "method": "GET",
+   "path": "/treasury/igft-events"
+  },
+  {
+   "method": "POST",
+   "path": "/treasury/igft-events/evaluate"
+  },
+  {
+   "method": "GET",
+   "path": "/treasury/instruments"
+  },
+  {
+   "method": "POST",
+   "path": "/treasury/instruments"
+  },
+  {
+   "method": "GET",
+   "path": "/treasury/payment-methods"
+  },
+  {
+   "method": "POST",
+   "path": "/treasury/payment-methods"
+  },
+  {
+   "method": "POST",
+   "path": "/treasury/reconciliation-lines/{line_id}/resolve"
   },
   {
    "method": "GET",
@@ -826,347 +1430,31 @@
   },
   {
    "method": "POST",
-   "path": "/treasury/reconciliation-lines/{line_id}/resolve"
-  },
-  {
-   "method": "POST",
    "path": "/treasury/reconciliations/{reconciliation_id}/transition"
   },
   {
    "method": "GET",
-   "path": "/treasury/fiscal-rules"
+   "path": "/treasury/transfers"
   },
   {
    "method": "POST",
-   "path": "/treasury/fiscal-rules"
+   "path": "/treasury/transfers"
   },
   {
    "method": "GET",
-   "path": "/treasury/igft-events"
+   "path": "/users"
   },
   {
    "method": "POST",
-   "path": "/treasury/igft-events/evaluate"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/legal-sources"
+   "path": "/users"
   },
   {
    "method": "POST",
-   "path": "/fiscal/legal-sources"
+   "path": "/users/{user_id}/roles"
   },
   {
-   "method": "POST",
-   "path": "/fiscal/legal-sources/{source_id}/activate"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/tax-rule-versions"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/tax-rule-versions"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/tax-rule-versions/{rule_id}/approve"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/tax-profiles"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/tax-calculations"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/tax-calculations"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/number-series"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/number-series"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/control-batches"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/control-batches"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/control-numbers"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/documents"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/documents/{document_id}"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/documents/emit"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/documents/{document_id}/print"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/credit-debit-notes"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/credit-debit-notes"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/withholding-rules"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/withholding-rules"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/withholdings/calculate"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/withholdings/{withholding_id}/transition"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/withholdings/{withholding_id}/certificate"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/withholdings"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/periods"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/periods"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/periods/{period_id}/transition"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/tax-return-batches"
-  },
-  {
-   "method": "POST",
-   "path": "/fiscal/tax-return-batches"
-  },
-  {
-   "method": "GET",
-   "path": "/fiscal/books/{tax_type}"
-  },
-  {
-   "method": "GET",
-   "path": "/regulatory/authorities"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/authorities"
-  },
-  {
-   "method": "GET",
-   "path": "/regulatory/permit-types"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/permit-types"
-  },
-  {
-   "method": "GET",
-   "path": "/regulatory/official-registrations"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/official-registrations"
-  },
-  {
-   "method": "GET",
-   "path": "/regulatory/profiles"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/profiles"
-  },
-  {
-   "method": "GET",
-   "path": "/regulatory/vehicles"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/vehicles"
-  },
-  {
-   "method": "GET",
-   "path": "/regulatory/drivers"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/drivers"
-  },
-  {
-   "method": "GET",
-   "path": "/regulatory/permits"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/permits"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/permits/{permit_id}/transition"
-  },
-  {
-   "method": "GET",
-   "path": "/regulatory/official-documents"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/official-documents"
-  },
-  {
-   "method": "GET",
-   "path": "/regulatory/evaluations"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/evaluations"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/evaluations/{evaluation_id}/override"
-  },
-  {
-   "method": "GET",
-   "path": "/regulatory/contingencies"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/contingencies"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/contingencies/{contingency_id}/end"
-  },
-  {
-   "method": "GET",
-   "path": "/regulatory/approval-requests"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/approval-requests"
-  },
-  {
-   "method": "POST",
-   "path": "/regulatory/approval-requests/{request_id}/transition"
-  },
-  {
-   "method": "GET",
-   "path": "/reporting/dashboard"
-  },
-  {
-   "method": "GET",
-   "path": "/reporting/reports/{key}"
-  },
-  {
-   "method": "GET",
-   "path": "/reporting/exports"
-  },
-  {
-   "method": "POST",
-   "path": "/reporting/exports"
-  },
-  {
-   "method": "GET",
-   "path": "/reporting/exports/{export_id}/download"
-  },
-  {
-   "method": "GET",
-   "path": "/reporting/jobs"
-  },
-  {
-   "method": "POST",
-   "path": "/reporting/jobs"
-  },
-  {
-   "method": "POST",
-   "path": "/reporting/jobs/{job_id}/run"
-  },
-  {
-   "method": "GET",
-   "path": "/reporting/jobs/{job_id}"
-  },
-  {
-   "method": "GET",
-   "path": "/reporting/audit/timeline"
-  },
-  {
-   "method": "GET",
-   "path": "/homologation/records"
-  },
-  {
-   "method": "POST",
-   "path": "/homologation/records"
-  },
-  {
-   "method": "GET",
-   "path": "/homologation/records/{record_id}"
-  },
-  {
-   "method": "POST",
-   "path": "/homologation/records/{record_id}/submit"
-  },
-  {
-   "method": "POST",
-   "path": "/homologation/records/{record_id}/evaluate"
-  },
-  {
-   "method": "GET",
-   "path": "/homologation/releases"
-  },
-  {
-   "method": "POST",
-   "path": "/homologation/releases"
-  },
-  {
-   "method": "POST",
-   "path": "/homologation/releases/{release_id}/promote"
-  },
-  {
-   "method": "POST",
-   "path": "/homologation/releases/{release_id}/release"
-  },
-  {
-   "method": "GET",
-   "path": "/homologation/timeline"
-  },
-  {
-   "method": "GET",
-   "path": "/audit/events"
-  },
-  {
-   "method": "GET",
-   "path": "/"
+   "method": "DELETE",
+   "path": "/users/{user_id}/roles/{role_id}"
   }
  ]
 }
