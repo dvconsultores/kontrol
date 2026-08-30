@@ -1,0 +1,184 @@
+# TAREAS — ARCH-MC-001
+
+No existe una tarea «normalizar 82 tablas».
+
+## N0 · Gobierno
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-001 | ADR de alcance canónico tenant/empresa/sucursal | FR-MC-001, FR-MC-002 | L |
+| T-MC-002 | Enumeración `Scope` y declaración en el ORM | FR-MC-003 | M |
+| T-MC-003 | Clasificar las 166 tablas; **0 sin clasificar** | FR-MC-004 | L |
+| T-MC-004 | Criterio directa/derivada por entidad | FR-MC-005, FR-MC-006 | M |
+| T-MC-005 | Regla constitucional para entidades nuevas | FR-MC-080 | S |
+| T-MC-006 | Regla de QA: toda Spec con datos de empresa prueba con dos | FR-MC-081 | S |
+
+## N1 · Contexto de empresa
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-010 | `CompanyContext` y su dependencia de FastAPI | FR-MC-010 | XL |
+| T-MC-011 | Cabecera `X-Kontrol-Company` y su validación | FR-MC-011, AC-MC-10 | L |
+| T-MC-012 | Resolución automática con una sola empresa | FR-MC-013, AC-MC-11 | M |
+| T-MC-013 | Rechazo explícito con varias y sin cabecera | AC-MC-12, AC-MC-13, AC-MC-14 | M |
+| T-MC-014 | Acceso usuario–empresa sobre `UserScope` y `user_roles` | FR-MC-030, FR-MC-031, AC-MC-42 | XL |
+| T-MC-015 | Separar permiso de alcance | FR-MC-032, AC-MC-43 | L |
+| T-MC-016 | Convivencia con el alcance por sucursal | FR-MC-033, AC-MC-44 | M |
+| T-MC-017 | Revalidación por petición; contexto obsoleto | FR-MC-018, AC-MC-16 | M |
+| T-MC-018 | Empresa desactivada | AC-MC-15 | S |
+| T-MC-019 | Contexto explícito para trabajos sin petición | FR-MC-019, AC-MC-20 | L |
+| T-MC-020 | Compatibilidad con la renovación de sesión ya remediada | FR-MC-016, R-MC-11 | M |
+| T-MC-021 | Migración `00XX_mc_company_access` | FR-MC-031 | M |
+| T-MC-022 | Imposición del límite de empresas por licencia | FR-MC-034, AC-MC-40, AC-MC-41 | L |
+| T-MC-023 | El esquema es multiempresa aunque el plan sea de una | FR-MC-035 | S |
+
+## N2 · Cortar la hemorragia
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-030 | Prueba de arquitectura que falla ante `company_id = actor.tenant_id` | FR-MC-025, AC-MC-04 | L |
+| T-MC-031 | Prueba: modelo con `company_id` exige FK a `companies` | FR-MC-060, AC-MC-01 | M |
+| T-MC-032 | Prueba: modelo con `tenant_id` exige FK a `tenants` | FR-MC-060 | M |
+| T-MC-033 | Prueba: toda entidad declara alcance | FR-MC-003, AC-MC-02 | M |
+| T-MC-034 | Prueba: ninguna derivada depende de FK anulable | FR-MC-005, AC-MC-03 | M |
+| T-MC-035 | Prueba de rutas contra `endpoint-scope-matrix` | FR-MC-020 | L |
+
+## N3 · Expandir
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-040 | Renombrar lo heredado a `legacy_scope_id`, sin destruir | FR-MC-054, AC-MC-74 | L |
+| T-MC-041 | `company_id` nuevo, anulable, con FK | FR-MC-060 | L |
+| T-MC-042 | Columna de clase de relleno | FR-MC-051 | S |
+| T-MC-043 | Migraciones `00XX_mc_expand_<dominio>`, una por ola, con recuperación entre fases | FR-MC-050, NFR-MC-08 | XL |
+
+## N4 · Rellenar y verificar
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-050 | Cálculo del instante en que un tenant deja de ser monoempresa | FR-MC-052, AC-MC-71 | L |
+| T-MC-051 | Clasificador `MC-A`..`MC-E` | FR-MC-051 | XL |
+| T-MC-052 | Rutas de reconstrucción admitidas | FR-MC-051 | L |
+| T-MC-053 | Conflicto entre rutas ⇒ `MC-C`; nunca relleno automático | R-MC-3, AC-MC-72 | M |
+| T-MC-054 | Informe previo **sin escribir** | FR-MC-058, AC-MC-70 | L |
+| T-MC-055 | Aborto ante crítico no reconstruible | FR-MC-053, AC-MC-73 | L |
+| T-MC-056 | Resolución manual auditable | FR-MC-055, AC-MC-75 | XL |
+| T-MC-057 | Verificación de paridad de importes y números | FR-MC-056, AC-MC-76 | L |
+| T-MC-058 | Migraciones `00XX_mc_backfill_<dominio>` | FR-MC-050 | XL |
+
+## N5 · Dominios, por olas
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-060 | Ola 1 · organización y accesos (8 tablas) | FR-MC-020, FR-MC-021 | L |
+| T-MC-061 | Ola 2 · maestros (24) | FR-MC-020 | XL |
+| T-MC-062 | Ola 3 · **fiscal** (13) | FR-MC-063, AC-MC-50..55 | XL |
+| T-MC-063 | Series y números de control por empresa | AC-MC-50, AC-MC-51 | XL |
+| T-MC-064 | Libros por contribuyente | AC-MC-52, AC-MC-53 | L |
+| T-MC-065 | Retenciones con su empresa agente | AC-MC-54 | L |
+| T-MC-066 | Ola 4 · compras (21) | AC-MC-60, AC-MC-62 | XL |
+| T-MC-067 | Coherencia orden ↔ almacén en recepción | AC-MC-61 | L |
+| T-MC-068 | Ola 5 · inventario (13) | AC-MC-64, AC-MC-69 | XL |
+| T-MC-069 | Transferencia entre empresas bloqueada | AC-MC-65 | M |
+| T-MC-070 | Ola 6 · ventas (14) | AC-MC-66 | XL |
+| T-MC-071 | Empresa emisora inmutable en la factura | AC-MC-55 | L |
+| T-MC-072 | Ola 7 · tesorería (15) | AC-MC-67 | XL |
+| T-MC-073 | Aplicación entre empresas bloqueada | AC-MC-63 | L |
+| T-MC-074 | Ola 8 · regulatorio (11) | AC-MC-68 | L |
+| T-MC-075 | Ola 9 · auditoría, eventos, informes | FR-MC-040, FR-MC-041 | L |
+| T-MC-076 | Listados acotados en el backend | FR-MC-021, AC-MC-30 | XL |
+| T-MC-077 | Detalle de otra empresa ⇒ 404 | FR-MC-022, AC-MC-31 | L |
+| T-MC-078 | Escritura sin empresa del cliente | FR-MC-023, AC-MC-34 | L |
+| T-MC-079 | `company_id` no asignable en masa | FR-MC-024 | M |
+| T-MC-080 | Empresa en la clave de caché | NFR-MC-03, AC-MC-96 | M |
+| T-MC-081 | Idempotencia sin colisión entre empresas | NFR-MC-04, AC-MC-97 | M |
+
+## N6 · Frontend
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-090 | Interceptor que envía la cabecera | FR-MC-011 | M |
+| T-MC-091 | Selector con solo las empresas autorizadas | FR-MC-014 | L |
+| T-MC-092 | Una sola empresa: sin control de cambio | FR-MC-013 | S |
+| T-MC-093 | Invalidación total al cambiar | AC-MC-35, R-MC-12 | L |
+| T-MC-094 | Pestañas independientes | FR-MC-015, AC-MC-18 | L |
+| T-MC-095 | Limpieza al cerrar sesión | FR-MC-017, AC-MC-19 | M |
+| T-MC-096 | **No** añadir campo empresa a los formularios | FR-MC-023 | S |
+| T-MC-097 | Accesible y responsive | NFR-MC-05, NFR-MC-06, AC-MC-92, AC-MC-93 | M |
+
+## N7 · Restringir
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-100 | `NOT NULL` tras verificar | FR-MC-060 | L |
+| T-MC-101 | FK reales, comprobadas **en PostgreSQL** | FR-MC-061, AC-MC-01 | L |
+| T-MC-102 | Revisión de los 13 únicos con alcance | FR-MC-062 | L |
+| T-MC-103 | Unicidad de las secuencias fiscales | FR-MC-063 | XL |
+| T-MC-104 | Índices justificados con `EXPLAIN` | NFR-MC-02, AC-MC-95 | L |
+| T-MC-105 | Renombrar a `tenant_id` las 7 del tenant | CL-MC-12 | M |
+| T-MC-106 | `company_id` real en `user_roles`, `user_scopes`, `audit_events` | CL-MC-12 | M |
+| T-MC-107 | Migraciones `00XX_mc_constrain_<dominio>` | FR-MC-050 | L |
+
+## N8 · Contraer
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-110 | Retirar columnas heredadas y de clase | FR-MC-057, AC-MC-79 | L |
+| T-MC-111 | Retirar ramas de compatibilidad | FR-MC-057 | M |
+| T-MC-112 | Migraciones `00XX_mc_contract_<dominio>` | FR-MC-050 | M |
+
+## N9 · Spec 046 y cierre
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-120 | `ResourceKind` con alcance y resolutor explícitos | FR-MC-072, AC-MC-80 | L |
+| T-MC-121 | Registrar `Payment`, `BankTransaction`, `CashSession`, `Reconciliation` | AC-MC-82 | M |
+| T-MC-122 | Probar los **19** tipos: propia ⇒ vínculo, ajena ⇒ 404 | FR-MC-073, AC-MC-81 | XL |
+| T-MC-123 | `STILL_BLOCKED_BY_046` = 0; matriz actualizada | AC-MC-83 | M |
+| T-MC-124 | Cerrar `REM-046-001` y converger 046 | FR-MC-073 | L |
+| T-MC-125 | Regresión de 046 con **ClamAV real** | AC-MC-84 | L |
+| T-MC-126 | Integración 045 → 046 con versión congelada | FR-MC-071, AC-MC-84 | M |
+
+## N10 · Pruebas y regresión
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-130 | Fixture multiempresa: T1(A,B) · T2(C) · UA/UB/UAB/UC | AC-MC-* | L |
+| T-MC-131 | Suite de amenazas `AMC-01`..`AMC-17` | R-MC-* | XL |
+| T-MC-132 | Cruce entre empresas: leer, listar, modificar, borrar | AC-MC-30, AC-MC-31, AC-MC-32, AC-MC-33, AC-MC-34 | XL |
+| T-MC-133 | Aislamiento entre tenants intacto | AC-MC-36 | M |
+| T-MC-134 | Pruebas de migración: limpia, previa, monoempresa, multiempresa, ambigua, crítica | AC-MC-77, AC-MC-78 | XL |
+| T-MC-135 | Aborto sin escrituras destructivas parciales | AC-MC-73 | L |
+| T-MC-136 | E2E multiempresa de 20 pasos | AC-MC-* | XL |
+| T-MC-137 | E2E fiscal A/B | AC-MC-50..53 | XL |
+| T-MC-138 | E2E de empresa falsificada y almacenamiento manipulado | FR-MC-012, AC-MC-17 | L |
+| T-MC-139 | Cross-browser en Chromium, Firefox y WebKit | NFR-MC-07, AC-MC-94 | M |
+| T-MC-140 | Regresión de 008, 011, 045, 046 sin romper sus contratos | FR-MC-070, FR-MC-074, closed-spec-impact | XL |
+| T-MC-141 | Regresión global con **0 fallos** | AC-MC-91 | XL |
+| T-MC-142 | Reaprovisionar PostgreSQL 18.6 y ClamAV | NFR-MC-01, AC-MC-90 | M |
+
+## N11 · Gobierno posterior
+
+| ID | Tarea | Req. | Est. |
+|---|---|---|---|
+| T-MC-150 | Actualizar baseline, GAP, grafo y roadmap | — | M |
+| T-MC-151 | Revalidación corta de la Spec 012 | future-spec-contracts | M |
+| T-MC-152 | `/speckit.converge ARCH-MC-001` | — | M |
+
+## Resumen
+
+| Fase | Tareas | Carga |
+|---|---:|---|
+| N0 Gobierno | 6 | L |
+| N1 Contexto | 14 | **XL** |
+| N2 Cortar la hemorragia | 6 | L |
+| N3 Expandir | 4 | L |
+| N4 Rellenar | 9 | **XL** |
+| N5 Dominios | 22 | **XL** |
+| N6 Frontend | 8 | L |
+| N7 Restringir | 8 | L |
+| N8 Contraer | 3 | M |
+| N9 Spec 046 | 7 | L |
+| N10 Pruebas | 13 | **XL** |
+| N11 Gobierno | 3 | M |
+| **Total** | **103** | — |

@@ -19,7 +19,7 @@
 | 009 | Terceros | Sí | 002 | 80 | 85 | 90 | 65 | 70 | 79 | SUBSTANTIALLY_COMPLETE | Vendedor/beneficiario sin entidad propia |
 | 010 | Productos y servicios | Sí | 002 | 80 | 85 | 90 | 65 | 70 | 79 | SUBSTANTIALLY_COMPLETE | Marcas/modelos como nodos genéricos |
 | 011 | Unidades, presentaciones y conversiones | Sí | 002 | 100 | 100 | 100 | 100 | 100 | 100 | **COMPLETE_100** | Cerrada 2026-08-30 sobre PostgreSQL 18.6 · 17 líneas con snapshot · 30 columnas a NUMERIC |
-| 012 | Maestros comerciales | Sí | **ninguna** | 0 | 0 | 5 | 0 | 0 | 2 | NOT_STARTED | **Rama completa sin spec ni modelo** |
+| 012 | Maestros comerciales | Sí | **012** | 0 | 0 | 5 | 0 | 0 | 2 | **APTA_DOCUMENTALMENTE — BLOCKED_BY_ARCH_MC_001** | Ciclo documental completo; bloqueada por el defecto multiempresa |
 | 013 | Maestros financieros | Sí | 006 | 85 | 90 | 90 | 70 | 75 | 84 | SUBSTANTIALLY_COMPLETE | Tasas sin fuente automática (BCV) |
 | 014 | Maestros fiscales y regulatorios | Sí | 007 + 008 | 80 | 85 | 90 | 55 | 65 | 77 | SUBSTANTIALLY_COMPLETE | Valores oficiales no cargados |
 | 015 | Planificación de abastecimiento y requisiciones | Sí | 004 | 60 | 60 | 70 | 30 | 55 | 55 | PARTIAL | **Sin rotación, demanda ni punto de reorden** |

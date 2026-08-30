@@ -1,0 +1,189 @@
+# MATRIZ DE TRAZABILIDAD — ARCH-MC-001
+
+Derivada por script de `spec.md`, `tasks.md` y `acceptance-criteria.md`.
+
+## 1. Cobertura
+
+| Métrica | Valor |
+|---|---:|
+| Requisitos funcionales | 50 |
+| Requisitos no funcionales | 8 |
+| Criterios de aceptación | 66 |
+| Tareas | 103 |
+| **FR sin tarea ni criterio** | **0** |
+| **NFR sin tarea ni criterio** | **0** |
+| **Criterios sin tarea** | **0** |
+| **Tareas sin requisito** | **0** |
+
+## 2. Requisito funcional → tarea
+
+| Requisito | Enunciado | Tareas |
+|---|---|---|
+| FR-MC-001 | `tenant_id` significa siempre `Tenant.id`; `company_id`, `Company.id`; `bran | T-MC-001 |
+| FR-MC-002 | Ninguna columna puede nombrar una entidad y almacenar otra | T-MC-001 |
+| FR-MC-003 | Toda entidad persistente declara su alcance: `GLOBAL`, `INSTALLATION`, `TENA | T-MC-002, T-MC-033 |
+| FR-MC-004 | No existe `UNKNOWN_SCOPE`: las 166 tablas quedan clasificadas | T-MC-003 |
+| FR-MC-005 | Una entidad `DERIVED` alcanza su empresa por una ruta **obligatoria, determi | T-MC-004, T-MC-034 |
+| FR-MC-006 | El objetivo no es poner `company_id` en 82 tablas, sino que 133 entidades de | T-MC-004 |
+| FR-MC-010 | Existe un `CompanyContext` por petición con tenant, empresa, usuario y alcan | T-MC-010 |
+| FR-MC-011 | El frontend **propone** la empresa; el backend la **valida**: existe, es del | T-MC-011, T-MC-090 |
+| FR-MC-012 | Manipular el almacenamiento del navegador no da acceso a otra empresa | T-MC-138 |
+| FR-MC-013 | Con una sola empresa autorizada, se resuelve automáticamente y no se pide el | T-MC-012, T-MC-092 |
+| FR-MC-014 | Con varias, hay selector inequívoco y la empresa activa está siempre visible | T-MC-091 |
+| FR-MC-015 | Dos pestañas pueden operar en empresas distintas sin contaminarse | T-MC-094 |
+| FR-MC-016 | El contexto no reintroduce la carrera de `/auth/refresh` cerrada en `REM-AUT | T-MC-020 |
+| FR-MC-017 | El cierre de sesión limpia contexto, pista de empresa y cachés de empresa | T-MC-095 |
+| FR-MC-018 | Perder el acceso a una empresa con la sesión viva invalida el contexto en la | T-MC-017 |
+| FR-MC-019 | Los trabajos sin petición HTTP se ejecutan bajo un contexto explícito, nunca | T-MC-019 |
+| FR-MC-020 | Toda consulta sobre entidad de empresa se acota en el **backend**, no por fi | T-MC-035, T-MC-060, T-MC-061 |
+| FR-MC-021 | Un listado nunca devuelve filas de otra empresa esperando que el cliente fil | T-MC-060, T-MC-076 |
+| FR-MC-022 | Leer un recurso de otra empresa responde **404**, sin confirmar existencia | T-MC-077 |
+| FR-MC-023 | Escribir no acepta `company_id` del cliente distinto del contexto validado | T-MC-078, T-MC-096 |
+| FR-MC-024 | En entidades de empresa, `company_id` no es asignable en masa | T-MC-079 |
+| FR-MC-025 | Ningún servicio asigna `actor.tenant_id` a una propiedad llamada `company_id | T-MC-030 |
+| FR-MC-030 | Pertenecer al tenant **no** concede acceso a todas sus empresas | T-MC-014 |
+| FR-MC-031 | El acceso se expresa con la estructura existente de la Spec 003; no se crea  | T-MC-014, T-MC-021 |
+| FR-MC-032 | El permiso y el alcance son cosas distintas: `ventas:view` en la empresa A n | T-MC-015 |
+| FR-MC-033 | El alcance por sucursal sigue vigente y convive con el de empresa | T-MC-016 |
+| FR-MC-034 | El límite de empresas lo impone el **backend** según los derechos de la lice | T-MC-022 |
+| FR-MC-035 | El esquema es multiempresa aunque el plan sea de una sola: la licencia limit | T-MC-023 |
+| FR-MC-040 | Toda operación de empresa permite reconstruir tenant, empresa, usuario, acci | T-MC-075 |
+| FR-MC-041 | Un evento de empresa transporta la empresa real, no el tenant | T-MC-075 |
+| FR-MC-050 | Patrón `EXPAND → BACKFILL → VERIFY → SWITCH → CONSTRAIN → CONTRACT`; nunca u | T-MC-043, T-MC-058, T-MC-107, T-MC-112 |
+| FR-MC-051 | Cada fila heredada se clasifica `MC-A`..`MC-E`; **no se inventa empresa** | T-MC-042, T-MC-051, T-MC-052 |
+| FR-MC-052 | El determinismo se demuestra sobre el **intervalo** relevante, no sobre el n | T-MC-050 |
+| FR-MC-053 | Un crítico no reconstruible **detiene** la migración final; no hay valor por | T-MC-055 |
+| FR-MC-054 | El valor heredado se conserva hasta verificar | T-MC-040 |
+| FR-MC-055 | Existe un mecanismo auditable de resolución manual: quién, cuándo, con qué e | T-MC-056 |
+| FR-MC-056 | La migración no altera importes, cantidades, bases imponibles ni números de  | T-MC-057 |
+| FR-MC-057 | Ninguna columna doble sobrevive sin fase de retirada declarada | T-MC-110, T-MC-111 |
+| FR-MC-058 | Un informe previo, **sin escribir**, muestra el recuento por clase antes de  | T-MC-054 |
+| FR-MC-060 | Si la columna se llama `company_id`, hay FK real a `companies`; si `tenant_i | T-MC-031, T-MC-032, T-MC-041, T-MC-100 |
+| FR-MC-061 | La integridad la garantiza PostgreSQL cuando puede, no solo el servicio | T-MC-101 |
+| FR-MC-062 | Los índices únicos con alcance se revisan uno a uno: pasar de tenant a empre | T-MC-102 |
+| FR-MC-063 | Las secuencias fiscales se acotan según la normativa, no por comodidad | T-MC-062, T-MC-103 |
+| FR-MC-070 | La Spec 008 no se rompe: es la referencia positiva | T-MC-140 |
+| FR-MC-071 | La Spec 045 mantiene su empresa real; no se degrada a tenant | T-MC-126 |
+| FR-MC-072 | `ResourceKind` de la Spec 046 declara `scope_kind` y su resolutor **explícit | T-MC-120 |
+| FR-MC-073 | Tras normalizar, los 19 tipos registrados se prueban y `STILL_BLOCKED_BY_046 | T-MC-122, T-MC-124 |
+| FR-MC-074 | La Spec 011 conserva intacta su semántica de conversión | T-MC-140 |
+| FR-MC-080 | Ninguna entidad nueva introduce `tenant_id`, `company_id` o `branch_id` sin  | T-MC-005 |
+| FR-MC-081 | Toda Spec futura que cree datos de empresa incluye **dos empresas del mismo  | T-MC-006 |
+
+## 3. Requisito no funcional → tarea
+
+| Requisito | Enunciado | Tareas |
+|---|---|---|
+| NFR-MC-01 | Aceptación sobre **PostgreSQL 18.x** real; SQLite no es evidencia final | T-MC-142 |
+| NFR-MC-02 | Acotar por empresa no degrada el plan de consulta: índices revisados con `EX | T-MC-104 |
+| NFR-MC-03 | Toda caché de empresa lleva la empresa en su clave | T-MC-080 |
+| NFR-MC-04 | Las claves de idempotencia no colisionan entre empresas | T-MC-081 |
+| NFR-MC-05 | El selector cumple WCAG 2.2 AA y es operable con teclado | T-MC-097 |
+| NFR-MC-06 | Sin desbordamiento horizontal entre 320 y 1440 | T-MC-097 |
+| NFR-MC-07 | Cross-browser en Chromium, Firefox y WebKit | T-MC-139 |
+| NFR-MC-08 | La migración se ejecuta por fases con recuperación entre ellas | T-MC-043 |
+
+## 4. Criterio → tarea
+
+| Criterio | Enunciado | Tareas |
+|---|---|---|
+| AC-MC-01 | Toda columna `company_id` tiene FK a `companies`; toda `tenant_id`, a `tenan | T-MC-031, T-MC-101 |
+| AC-MC-02 | Los 166 modelos declaran alcance; `test_all_persistent_models_have_declared_ | T-MC-033 |
+| AC-MC-03 | Ninguna entidad derivada depende de una FK anulable | T-MC-034 |
+| AC-MC-04 | `grep` de `company_id=actor.tenant_id` en entidades de empresa devuelve **0* | T-MC-030 |
+| AC-MC-10 | Con cabecera válida, el contexto se resuelve y la operación ocurre en esa em | T-MC-011 |
+| AC-MC-11 | `UA` con una sola empresa y sin cabecera: se resuelve sola | T-MC-012 |
+| AC-MC-12 | `UAB` sin cabecera: **400 `COMPANY_CONTEXT_REQUIRED`**. No se adivina | T-MC-013 |
+| AC-MC-13 | `UA` pidiendo la empresa B: **404**, sin confirmar existencia | T-MC-013 |
+| AC-MC-14 | `UC` pidiendo A: **404** | T-MC-013 |
+| AC-MC-15 | Empresa desactivada: **409 `COMPANY_INACTIVE`** | T-MC-018 |
+| AC-MC-16 | `UAB` pierde acceso a B con la sesión viva: la siguiente operación en B da * | T-MC-017 |
+| AC-MC-17 | Manipular el valor guardado en el navegador **no** da acceso | T-MC-138 |
+| AC-MC-18 | Dos pestañas en A y B operan sin contaminarse | T-MC-094 |
+| AC-MC-19 | Cerrar sesión limpia contexto, pista y cachés | T-MC-095 |
+| AC-MC-20 | Un trabajo sin contexto explícito **falla**; no toma uno por defecto | T-MC-019 |
+| AC-MC-30 | Un listado con contexto A **no** contiene filas de B, y viceversa | T-MC-076, T-MC-132 |
+| AC-MC-31 | Leer por id un recurso de B con contexto A: **404** | T-MC-077, T-MC-132 |
+| AC-MC-32 | Modificar un recurso de B con contexto A: bloqueado | T-MC-132 |
+| AC-MC-33 | Borrar un recurso de B con contexto A: bloqueado | T-MC-132 |
+| AC-MC-34 | Enviar `company_id` de B en el cuerpo con contexto A: **409 `COMPANY_MISMATC | T-MC-078, T-MC-132 |
+| AC-MC-35 | `UAB` cambia de A a B: ve solo B, sin restos de A | T-MC-093 |
+| AC-MC-36 | Nunca se permite T1 → T2: el aislamiento previo se mantiene | T-MC-133 |
+| AC-MC-40 | Con la licencia limitada a una empresa, crear la segunda: **409 `COMPANY_LIM | T-MC-022 |
+| AC-MC-41 | Con derechos para varias, la segunda se crea y opera de forma independiente | T-MC-022 |
+| AC-MC-42 | Pertenecer al tenant **no** concede acceso a todas sus empresas | T-MC-014 |
+| AC-MC-43 | `ventas:view` en A no habilita ventas de B | T-MC-015 |
+| AC-MC-44 | El alcance por sucursal sigue vigente dentro de la empresa | T-MC-016 |
+| AC-MC-50 | A y B tienen series de numeración independientes; no colisionan | T-MC-062, T-MC-063, T-MC-137 |
+| AC-MC-51 | Un rango de números de control de A **no** puede consumirse desde B | T-MC-063 |
+| AC-MC-52 | El libro de ventas de A no contiene documentos de B | T-MC-064 |
+| AC-MC-53 | El libro de compras de A no contiene documentos de B | T-MC-064 |
+| AC-MC-54 | Una retención conserva la empresa agente; no se reconstruye por el contexto  | T-MC-065 |
+| AC-MC-55 | Una factura reimpresa muestra su empresa emisora, no la activa | T-MC-071 |
+| AC-MC-60 | Órdenes de compra de A y B separadas; ambas pueden llevar el número 100 | T-MC-066 |
+| AC-MC-61 | Recepción cuya orden es de A y cuyo almacén es de B: **bloqueada** | T-MC-067 |
+| AC-MC-62 | Facturas de proveedor y obligaciones separadas por empresa | T-MC-066 |
+| AC-MC-63 | Un pago de A no se aplica a una factura de B: **409 `CROSS_COMPANY_OPERATION | T-MC-073 |
+| AC-MC-64 | Mismo producto, almacenes de A y B: existencias **no** se mezclan | T-MC-068 |
+| AC-MC-65 | Transferencia entre almacenes de A y B: bloqueada como intercompany | T-MC-069 |
+| AC-MC-66 | Pedidos y facturas de venta separados | T-MC-070 |
+| AC-MC-67 | Cuentas bancarias y movimientos separados | T-MC-072 |
+| AC-MC-68 | Permisos y documentos regulatorios pertenecen a la empresa correcta | T-MC-074 |
+| AC-MC-69 | Los costos no se mezclan entre empresas | T-MC-068 |
+| AC-MC-70 | El informe previo se ejecuta **sin escribir** y detalla por tabla y clase | T-MC-054 |
+| AC-MC-71 | MC-A se decide por el intervalo, no por el número de empresas de hoy | T-MC-050 |
+| AC-MC-72 | Una fila MC-C no se rellena automáticamente | T-MC-053 |
+| AC-MC-73 | Un MC-E **detiene** la migración final, sin escrituras destructivas parciale | T-MC-055, T-MC-135 |
+| AC-MC-74 | El valor heredado se conserva hasta verificar | T-MC-040 |
+| AC-MC-75 | La resolución manual registra quién, cuándo, evidencia, valor anterior y nue | T-MC-056 |
+| AC-MC-76 | Tras migrar: importes, cantidades, bases imponibles y números **idénticos** | T-MC-057 |
+| AC-MC-77 | Base vacía → `alembic upgrade head` sin error | T-MC-134 |
+| AC-MC-78 | Fixture anterior a la normalización migra con su informe | T-MC-134 |
+| AC-MC-79 | Ninguna columna de transición sobrevive a N8 | T-MC-110 |
+| AC-MC-80 | `ResourceKind` declara alcance y resolutor **explícitos** | T-MC-120 |
+| AC-MC-81 | Los **19** tipos registrados se prueban: entidad de la empresa activa → vínc | T-MC-122 |
+| AC-MC-82 | Las 4 entradas de `REM-046-001` quedan registradas y probadas | T-MC-121 |
+| AC-MC-83 | `STILL_BLOCKED_BY_046` = **0** para toda entidad existente | T-MC-123 |
+| AC-MC-84 | La integración 045 → 046 con versión congelada sigue pasando | T-MC-125, T-MC-126 |
+| AC-MC-90 | Toda la aceptación sobre **PostgreSQL 18.x** | T-MC-142 |
+| AC-MC-91 | Regresión global con **0 fallos**; ningún escenario multiempresa omitido | T-MC-141 |
+| AC-MC-92 | Selector sin violaciones serias de WCAG 2.2 AA, operable con teclado | T-MC-097 |
+| AC-MC-93 | Sin desbordamiento horizontal entre 320 y 1440 | T-MC-097 |
+| AC-MC-94 | Cross-browser en Chromium, Firefox y WebKit | T-MC-139 |
+| AC-MC-95 | Acotar por empresa no degrada el plan: `EXPLAIN` en las tablas grandes | T-MC-104 |
+| AC-MC-96 | Toda caché de empresa lleva la empresa en su clave | T-MC-080 |
+| AC-MC-97 | Las claves de idempotencia no colisionan entre empresas | T-MC-081 |
+
+## 5. Autoridad → requisito
+
+| Autoridad | Requisitos |
+|---|---|
+| Gate multiempresa · defecto probado | FR-MC-001, FR-MC-002, FR-MC-020 |
+| Constitución P4 · núcleo fiscal separado | FR-MC-063, AC-MC-50, AC-MC-51 |
+| Constitución P5 · histórico protegido | FR-MC-054, FR-MC-056 |
+| Constitución P6 · el backend es autoridad | FR-MC-011, FR-MC-020, FR-MC-034 |
+| Constitución P8 · nada hardcodeado | FR-MC-035 |
+| Constitución P17/P22 · autoridad única | FR-MC-010, FR-MC-031 |
+| Constitución P21 · paridad del motor | NFR-MC-01 |
+| Constitución P23 · captura temprana | FR-MC-052, R-MC-14 |
+| `REM-AUTH-ROUTE-CRAWL-001` | FR-MC-016 |
+| `REM-046-001` | FR-MC-072, FR-MC-073 |
+| Spec 008 · referencia positiva | FR-MC-070 |
+| Spec 045 · empresa real | FR-MC-071 |
+| Spec 011 · conversión intacta | FR-MC-074 |
+| Spec 003 · sin RBAC paralelo | FR-MC-031, FR-MC-032 |
+| Spec 004 · derechos de licencia | FR-MC-034 |
+
+## 6. Cadena: requisito → diseño → tarea → prueba
+
+| Bloque | Diseño | Tareas | Prueba |
+|---|---|---|---|
+| Alcance canónico | `canonical-scope-matrix.md` | T-MC-001..006 | Pruebas de arquitectura |
+| Contexto de empresa | `data-model.md` §3 | T-MC-010..023 | Unidad + seguridad |
+| Cortar la hemorragia | `plan.md` N2 | T-MC-030..035 | Fallan en construcción |
+| Migración | `legacy-company-reconstruction-matrix.md` | T-MC-040..058 | Seis bases |
+| Dominios | `domain-company-normalization-matrix.md` | T-MC-060..081 | Integración A/B |
+| Frontend | `wireframes/` | T-MC-090..097 | E2E, axe, responsive |
+| Restricciones | `company-scope-constraint-impact.md` | T-MC-100..107 | FK en PostgreSQL |
+| Spec 046 | `closed-spec-impact-matrix.md` | T-MC-120..126 | 19 tipos + ClamAV |
+| API | `endpoint-scope-matrix.md` | T-MC-035, T-MC-076..079 | Contrato |

@@ -1,8 +1,25 @@
 # SPEC 012 — MAESTROS COMERCIALES
 
+> ## ⛔ BLOQUEADA PARA IMPLEMENTACIÓN — 2026-08-31
+>
+> `SPEC 012 APTA_DOCUMENTALMENTE — BLOCKED_BY_ARCH_MC_001`
+>
+> El ciclo documental está completo y su veredicto sigue siendo **APTA**. No se
+> implementa hasta que cierren, en este orden: `ARCH-MC-001 COMPLETE_100` →
+> `REM-046-001 COMPLETE_100` → `SPEC 046 COMPLETE_100 — CONFIRMED AFTER REMEDIATION`.
+>
+> **Motivo.** Sus nueve entidades son inequívocamente de empresa: dos empresas del
+> mismo grupo tienen precios, plazos y límites de crédito distintos. Sobre el
+> modelo actual —donde `parties.company_id` guarda el tenant—
+> `CustomerCommercialTerms` no podría distinguir la relación comercial de la
+> empresa A de la de la B. Nacería con el defecto en su entidad central.
+>
+> Autoridad: `docs/governance/gates/GATE-MULTICOMPANY-SCOPE.md` ·
+> `specs/arch-mc-001-canonical-multi-company-scope/`
+
 | Campo | Valor |
 |---|---|
-| Estado | `DRAFT` — ciclo documental |
+| Estado | **`APTA_DOCUMENTALMENTE — BLOCKED_BY_ARCH_MC_001`** |
 | Autoridad | `ADR-D0-005` (D0-05) · Constitución v1.1 · baseline arquitectónica |
 | Propietaria de | Precio, descuento, condición de pago, zona, canal, crédito comercial |
 | Depende de | 009 Terceros · 010 Catálogo · 011 Unidades · 045 Aprobaciones |

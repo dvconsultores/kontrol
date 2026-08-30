@@ -117,6 +117,7 @@ Notación: `A → B` significa «A debe existir antes que B».
 | **008 Almacenes físicos** | 022, 031, 032, 023(calidad), 019 | 5 |
 | ~~045 Motor de aprobaciones~~ **(cerrada)** | 015, 017, 025, 030, 033, 047 — **desbloqueadas** | 6 |
 | **012 Maestros comerciales** | 029, 030, 034 | 3 |
+| **ARCH-MC-001 (remediación)** | **bloquea 012, REM-046-001 y la convergencia de 046**; toda Spec futura con datos de empresa | — |
 | ~~046 Gestión documental~~ **(cerrada 2026-08-30)** | 019, 027, 035, 044, 056 — **desbloqueadas**; 018, 020, 040 quedan por causas no documentales; **028 y 038 siguen bloqueadas** (`REM-046-001`) | 4 |
 | **033 Confirmación de pedido** | 034, 035 | 2 |
 | **048 Integraciones** | 013(BCV), 046(storage), 047(correo) | 3 |
