@@ -177,7 +177,18 @@ def rotate_session(db: Session, *, refresh_token: str, request_id: str | None = 
     except pyjwt.PyJWTError:
         raise KontrolError(code="SESSION_INVALID", message="Sesión inválida o expirada", status_code=401) from None
 
-    session = db.get(AuthSession, payload.get("sid"))
+    # Bloqueo de fila antes de leer el estado: entre comprobar `revoked_at` y
+    # escribirlo hay una ventana, y sin cerrarla dos peticiones simultáneas con
+    # el **mismo** refresh token prosperan las dos. Eso anularía la garantía de
+    # un solo uso —que es justamente lo que permite detectar un token robado— y
+    # dejaría una sesión viva que nadie volvería a usar.
+    #
+    # `with_for_update` no hace nada en SQLite, que serializa las escrituras por
+    # su cuenta; sobre PostgreSQL, que es el motor de producción (P21), la
+    # segunda transacción espera y encuentra la sesión ya revocada.
+    session = db.execute(
+        select(AuthSession).where(AuthSession.id == payload.get("sid")).with_for_update()
+    ).scalars().first()
     if not session or session.revoked_at is not None:
         raise KontrolError(code="SESSION_REVOKED", message="Sesión revocada", status_code=401)
     if session.refresh_token_hash != security.sha256_hex(refresh_token):

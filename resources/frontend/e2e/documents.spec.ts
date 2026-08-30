@@ -110,6 +110,12 @@ async function typeNameOf(request: APIRequestContext, c: Ctx, id: string): Promi
 
 // ---------------------------------------------------------------- flujo principal
 test("carga, versión y descarga por la interfaz real", async ({ page, request }) => {
+  // Cada carga se analiza con un antivirus **real**: el archivo se escribe, se
+  // escanea, se calcula su huella, se guarda y se relee. En WebKit —el más
+  // lento de los tres— dos cargas seguidas superan los 30 s por defecto. No se
+  // amplía para tapar nada: se amplía porque la operación tarda de verdad.
+  test.setTimeout(120_000);
+
   const c = await ctx(request);
   const name = await typeNameOf(request, c, await createType(request, c));
   const title = `Contrato ${RUN}-OK`;
@@ -188,6 +194,12 @@ test("un archivo por encima del máximo se rechaza indicando el límite", async 
 
 // ---------------------------------------------------------------- malware
 test("un archivo malicioso se rechaza y no queda disponible", async ({ page, request }) => {
+  // Cada carga se analiza con un antivirus **real**: el archivo se escribe, se
+  // escanea, se calcula su huella, se guarda y se relee. En WebKit —el más
+  // lento de los tres— dos cargas seguidas superan los 30 s por defecto. No se
+  // amplía para tapar nada: se amplía porque la operación tarda de verdad.
+  test.setTimeout(120_000);
+
   const c = await ctx(request);
   const name = await typeNameOf(request, c,
     await createType(request, c, { allowed_mime_types: ["text/plain"] }));
@@ -225,6 +237,12 @@ test("un identificador ajeno no abre nada", async ({ page }) => {
 
 // ---------------------------------------------------------------- inmutabilidad
 test("una versión histórica no se reinterpreta al cargar otra", async ({ page, request }) => {
+  // Cada carga se analiza con un antivirus **real**: el archivo se escribe, se
+  // escanea, se calcula su huella, se guarda y se relee. En WebKit —el más
+  // lento de los tres— dos cargas seguidas superan los 30 s por defecto. No se
+  // amplía para tapar nada: se amplía porque la operación tarda de verdad.
+  test.setTimeout(120_000);
+
   const c = await ctx(request);
   const typeId = await createType(request, c);
   const name = await typeNameOf(request, c, typeId);
@@ -258,6 +276,12 @@ test("una versión histórica no se reinterpreta al cargar otra", async ({ page,
 
 // ---------------------------------------------------------------- reintento
 test("un reintento tras el fallo no deja el formulario sin salida", async ({ page, request }) => {
+  // Cada carga se analiza con un antivirus **real**: el archivo se escribe, se
+  // escanea, se calcula su huella, se guarda y se relee. En WebKit —el más
+  // lento de los tres— dos cargas seguidas superan los 30 s por defecto. No se
+  // amplía para tapar nada: se amplía porque la operación tarda de verdad.
+  test.setTimeout(120_000);
+
   const c = await ctx(request);
   const name = await typeNameOf(request, c, await createType(request, c));
 

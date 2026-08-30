@@ -68,6 +68,20 @@ function refreshOnce(): Promise<boolean> {
   return refreshInFlight;
 }
 
+/**
+ * Puerta **única** de renovación de sesión (ADR-004, REM-AUTH-ROUTE-CRAWL-001).
+ *
+ * El refresh token es de un solo uso: `rotate_session` revoca el anterior al
+ * emitir el nuevo. Dos renovaciones concurrentes con la misma cookie no pueden
+ * ganar las dos —la segunda encuentra la sesión revocada y recibe 401—, así que
+ * **todo** camino que renueve debe pasar por aquí y compartir la que ya está en
+ * vuelo. Incluida la restauración inicial al cargar la aplicación, que antes
+ * llamaba al endpoint por su cuenta.
+ */
+export function requestSessionRefresh(): Promise<boolean> {
+  return refreshOnce();
+}
+
 /** Rutas de autenticación que nunca deben disparar la renovación (evita bucles). */
 const isAuthRoute = (path: string): boolean =>
   path === "/auth/login" ||

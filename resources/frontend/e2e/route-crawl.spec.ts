@@ -29,13 +29,32 @@ test.describe("Crawler de rutas", () => {
     // 66 rutas × carga + networkidle supera el timeout por defecto (30s),
     // especialmente en Firefox/WebKit: timeout ampliado.
     test.setTimeout(240_000);
-    const consoleErrors: string[] = [];
-    page.on("console", (msg) => {
-      if (msg.type() === "error") consoleErrors.push(msg.text());
-    });
-    page.on("pageerror", (err) => consoleErrors.push(String(err)));
 
+    // El arranque en frío de un visitante sin sesión pide una restauración que
+    // el backend rechaza con 401 `AUTH_REQUIRED`, y hace bien: no hay cookie.
+    // La aplicación lo trata correctamente —limpia el estado y muestra el
+    // formulario—, pero el navegador lo registra igualmente como recurso
+    // fallido. Ese ruido pertenece al login, no al recorrido, así que la
+    // escucha empieza **después** de iniciar sesión: es lo que esta prueba dice
+    // medir.
     await login(page);
+
+    const consoleErrors: string[] = [];
+    const authFailures: string[] = [];
+    let currentRoute = "(inicio)";
+    page.on("console", (msg) => {
+      if (msg.type() === "error") consoleErrors.push(`${currentRoute}: ${msg.text()}`);
+    });
+    page.on("pageerror", (err) => consoleErrors.push(`${currentRoute}: ${String(err)}`));
+    // Comprobación explícita, más estricta que leer la consola: ninguna
+    // petición del recorrido puede quedarse sin autenticar ni sin permiso.
+    page.on("response", (res) => {
+      if (res.url().includes("/api/v1/") && (res.status() === 401 || res.status() === 403)) {
+        authFailures.push(
+          `${currentRoute}: ${res.status()} ${res.request().method()} ` +
+          `${res.url().split("/api/v1")[1]}`);
+      }
+    });
 
     // esperar el render del Sidebar antes de recolectar enlaces (evita el race
     // KAUD-010: el nav puede tardar tras el login)
@@ -52,6 +71,7 @@ test.describe("Crawler de rutas", () => {
     expect(links.length, "debería haber rutas de menú para recorrer").toBeGreaterThan(20);
 
     for (const href of links) {
+      currentRoute = href;
       await page.goto(href);
       await page.waitForLoadState("networkidle").catch(() => undefined);
       const body = await page.locator("body").innerText();
@@ -60,6 +80,8 @@ test.describe("Crawler de rutas", () => {
       await expect(page.locator("h1").first(), `ruta ${href}: sin H1`).toBeVisible();
     }
 
+    expect(authFailures, "peticiones sin autenticar o sin permiso durante el crawl")
+      .toEqual([]);
     expect(consoleErrors, "errores de consola durante el crawl").toEqual([]);
   });
 });

@@ -1,7 +1,16 @@
 """Bootstrap local de QA: prepara una BD SQLite de archivo y la inicializa.
 
 Uso (una vez):  PYTHONPATH=resources/backend .venv/bin/python qa/local-backend-bootstrap.py
-Luego arrancar:  KONTROL_DB_URL=<misma URL> PYTHONPATH=resources/backend .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+Luego arrancar:  KONTROL_DB_URL=<misma URL> KONTROL_COOKIE_SECURE=false \
+                 PYTHONPATH=resources/backend .venv/bin/python -m uvicorn app.main:app \
+                 --host 127.0.0.1 --port 8000
+
+`KONTROL_COOKIE_SECURE=false` **no es opcional** cuando la pila local sirve por
+`http://`: WebKit se niega a guardar una cookie `Secure` desde un origen
+inseguro —Chromium y Firefox hacen una excepción con localhost, Safari no—, así
+que sin esa variable la cookie de refresco no se guarda, la sesión no se
+restaura y **toda** navegación devuelve 401 en WebKit. En producción, servida
+por HTTPS tras Nginx, la variable va en `true` y así queda en `compose.yaml`.
 """
 from __future__ import annotations
 

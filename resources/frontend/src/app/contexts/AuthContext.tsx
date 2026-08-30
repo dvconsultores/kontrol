@@ -13,7 +13,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { apiFetch, setAccessToken, setRefreshHandler } from "@/api/client";
+import { apiFetch, requestSessionRefresh, setAccessToken, setRefreshHandler } from "@/api/client";
 import type { LoginResponse, UserInfo } from "@/api/types";
 
 interface AuthContextValue {
@@ -88,17 +88,24 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     }
   }, [loadMe]);
 
-  // Restaurar sesión al recargar (refresh una sola vez); isReady evita que el
-  // router quede esperando indefinidamente cuando no hay sesión.
-  useEffect(() => {
-    void refreshSession().finally(() => setReady(true));
-  }, [refreshSession]);
-
   // Renovación automática ante 401 (access token expirado): apiFetch renueva la
   // sesión y reintenta la petición sin recargar la página (ADR-004).
+  //
+  // Se registra **antes** de restaurar: el orden importa, porque la
+  // restauración inicial pasa por la misma puerta y necesita encontrar el
+  // manejador ya puesto.
   useEffect(() => {
     setRefreshHandler(refreshSession);
     return () => setRefreshHandler(null);
+  }, [refreshSession]);
+
+  // Restaurar sesión al recargar. Va por `requestSessionRefresh`, no por
+  // `refreshSession` directamente: el refresh token es de un solo uso y dos
+  // renovaciones simultáneas con la misma cookie dejan a la segunda con la
+  // sesión ya revocada (401). Compartiendo la petición en vuelo, la segunda
+  // espera a la primera en lugar de competir con ella.
+  useEffect(() => {
+    void requestSessionRefresh().finally(() => setReady(true));
   }, [refreshSession]);
 
   const hasPermission = useCallback(
