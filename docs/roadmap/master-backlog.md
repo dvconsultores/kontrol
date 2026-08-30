@@ -118,3 +118,19 @@ aguja del producto. No deben usarse como evidencia de avance frente a la columna
   (Spec 054).
 - **Próxima Spec recomendada: 011 — Unidades y presentaciones.** Sin cambio de
   prioridad: no hay evidencia nueva que lo justifique.
+
+
+## Cierre de la Spec 011 — 2026-08-30
+
+`SPEC 011 COMPLETE_100`. Tercera Spec del proyecto en alcanzarlo.
+
+- Las 17 líneas transaccionales capturan ya unidad, presentación, factor
+  congelado y cantidad base. 30 columnas pasaron de `Float` a `NUMERIC` sin una
+  sola diferencia fiscal.
+- Desbloqueo verificado por contrato en `011-unlocked-specs.md`: ninguna Spec
+  queda `FULLY_UNLOCKED`; 011 elimina una dependencia común, no todas.
+- Deuda escalada, no asumida: drift de licenciamiento (010), responsive
+  preexistente (005/054), aprovisionamiento de PG 18 en CI y detección de
+  imports por `tsc` (054).
+- **Próxima Spec recomendada: 046 — Gestión documental.** Sin cambio de
+  prioridad: ningún hallazgo lo justifica.

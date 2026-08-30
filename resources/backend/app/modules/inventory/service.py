@@ -15,6 +15,7 @@ Invariantes clave:
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
@@ -37,6 +38,7 @@ from app.modules.inventory.models import (
     Transfer,
     TransferLine,
 )
+from app.modules.master_data import uom as uom_engine
 from app.modules.organization.models import Warehouse
 from app.modules.organization.service import warehouse_in_tenant_scope
 from app.shared import audit as audit_service
@@ -160,6 +162,21 @@ def _balance_key(*, warehouse_id: str, location_id: str | None, product_id: str,
     return (warehouse_id, location_id, product_id, lot_id, serial_id, state)
 
 
+def _dec(value: Any, places: int = 6) -> Decimal:
+    """Coerción a `Decimal` en la frontera del servicio.
+
+    Desde la Spec 011 las cantidades son `NUMERIC` en la base y `Decimal` en el
+    ORM, pero la API sigue recibiendo números. La conversión ocurre **una vez,
+    aquí**: mezclar `float` y `Decimal` en aritmética es el defecto `KQA-100`
+    que rompió factura, pago, cobro y notas.
+    """
+    if value is None:
+        return Decimal(0)
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal(1).scaleb(-places))
+    return Decimal(str(value)).quantize(Decimal(1).scaleb(-places))
+
+
 def _get_balance(
     db: Session,
     *,
@@ -195,9 +212,9 @@ def _get_balance(
             lot_id=lot_id,
             serial_id=serial_id,
             state=state,
-            qty_on_hand=0.0,
-            qty_reserved=0.0,
-            qty_available=0.0,
+            qty_on_hand=Decimal(0),
+            qty_reserved=Decimal(0),
+            qty_available=Decimal(0),
         )
         db.add(balance)
         db.flush()
@@ -205,7 +222,7 @@ def _get_balance(
 
 
 def _refresh_available(balance: InventoryBalance) -> None:
-    balance.qty_available = round(balance.qty_on_hand - balance.qty_reserved, 6)
+    balance.qty_available = _dec(balance.qty_on_hand) - _dec(balance.qty_reserved)
 
 
 def recompute_balances(db: Session, *, company_id: str, warehouse_id: str | None = None) -> int:
@@ -237,10 +254,10 @@ def recompute_balances(db: Session, *, company_id: str, warehouse_id: str | None
             InventoryBalance(
                 company_id=company_id, warehouse_id=m.warehouse_id, location_id=m.location_id,
                 product_id=m.product_id, lot_id=None, serial_id=None, state="DISPONIBLE",
-                qty_on_hand=0.0, qty_reserved=0.0, qty_available=0.0,
+                qty_on_hand=Decimal(0), qty_reserved=Decimal(0), qty_available=Decimal(0),
             ),
         )
-        bal.qty_on_hand = round(bal.qty_on_hand + m.quantity, 6)
+        bal.qty_on_hand = _dec(bal.qty_on_hand) + _dec(m.quantity)
 
     # 2. Aplicar reservas activas
     reservations = db.execute(select(Reservation).where(Reservation.company_id == company_id, Reservation.status == "ACTIVE")).scalars().all()
@@ -254,10 +271,10 @@ def recompute_balances(db: Session, *, company_id: str, warehouse_id: str | None
             InventoryBalance(
                 company_id=company_id, warehouse_id=r.warehouse_id, location_id=None,
                 product_id=r.product_id, lot_id=r.lot_id, serial_id=r.serial_id, state="DISPONIBLE",
-                qty_on_hand=0.0, qty_reserved=0.0, qty_available=0.0,
+                qty_on_hand=Decimal(0), qty_reserved=Decimal(0), qty_available=Decimal(0),
             ),
         )
-        bal.qty_reserved = round(bal.qty_reserved + r.quantity, 6)
+        bal.qty_reserved = _dec(bal.qty_reserved) + _dec(r.quantity)
 
     now = datetime.now(UTC)
     for bal in rows.values():
@@ -335,11 +352,18 @@ def record_movement(
     fiscal_rate: float | None = None,
     document_ref: str | None = None,
     location_id: str | None = None,
+    presentation_id: str | None = None,
     actor: str | None = None,
     occurred_at: datetime | None = None,
     idempotency_key: str | None = None,
 ) -> InventoryMovement:
-    """Registra un movimiento balanceado e inmutable (FR-003-020/021/022)."""
+    """Registra un movimiento balanceado e inmutable (FR-003-020/021/022).
+
+    Desde la Spec 011 el movimiento **captura su semántica de unidad**: la
+    cantidad se registra tal como se expresó, y su equivalente en unidad base se
+    calcula con el motor único de conversión y se congela (R-D0-09-1/2). Un
+    movimiento nace congelado: no tiene borrador.
+    """
     company_id = _company(company_id, obj="movimiento")
     if quantity == 0:
         raise KontrolError(code="ZERO_QUANTITY", message="La cantidad del movimiento no puede ser cero", status_code=422)
@@ -372,6 +396,13 @@ def record_movement(
                 message=f"No hay existencias disponibles suficientes (disponible: {available}).",
             )
 
+    # Semántica de unidad (Spec 011): se resuelve **antes** de escribir. El
+    # signo se conserva: la conversión opera sobre la magnitud.
+    conversion = uom_engine.to_base(db, abs(signed), product_id, presentation_id, occurred_at)
+    base_signed = conversion.base_quantity if signed > 0 else -conversion.base_quantity
+    base_unit = uom_engine.base_unit_of(db, product_id)
+    base_unit_id = base_unit.id if base_unit is not None else None
+
     movement = InventoryMovement(
         company_id=company_id,
         warehouse_id=warehouse_id,
@@ -379,7 +410,12 @@ def record_movement(
         product_id=product_id,
         movement_type_id=movement_type_id,
         quantity=signed,
-        unit_id=None,
+        unit_id=base_unit_id,
+        uom_id=base_unit_id,
+        presentation_id=presentation_id,
+        conversion_factor_snapshot=conversion.factor,
+        base_quantity=base_signed,
+        uom_source=uom_engine.SOURCE_CAPTURED,
         unit_cost=unit_cost,
         currency=currency,
         fiscal_rate=fiscal_rate,
@@ -391,6 +427,10 @@ def record_movement(
     )
     db.add(movement)
     db.flush()
+
+    # El primer movimiento hace inmutable la unidad base del producto: a partir
+    # de aquí, cambiarla reinterpretaría este movimiento (R-011-3).
+    uom_engine.lock_base_unit(db, product_id)
 
     # Costing: entrada crea capa; salida consume capas y fija el costo unitario
     if signed > 0:
@@ -404,7 +444,7 @@ def record_movement(
     # Balance (cache)
     balance = _get_balance(db, company_id=company_id, warehouse_id=warehouse_id, location_id=location_id,
                            product_id=product_id, lot_id=None, serial_id=None, state="DISPONIBLE")
-    balance.qty_on_hand = round(balance.qty_on_hand + signed, 6)
+    balance.qty_on_hand = _dec(balance.qty_on_hand) + _dec(signed)
     _refresh_available(balance)
     db.flush()
     _audit(db, action="INVENTORY_MOVEMENT", entity_type="InventoryMovement", entity_id=str(movement.id),
@@ -480,8 +520,13 @@ def _apply_cost_in(db: Session, *, company_id: str, product_id: str, warehouse_i
     return layer
 
 
-def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id: str, quantity: float) -> float | None:
-    """Consume capas de costo (FIFO o promedio) y devuelve el costo unitario de salida."""
+def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id: str,
+                  quantity: float | Decimal) -> Decimal | None:
+    """Consume capas de costo (FIFO o promedio) y devuelve el costo unitario.
+
+    Íntegramente en `Decimal`: desde la Spec 011 las cantidades son `NUMERIC` y
+    el costo también. Mezclar aquí un `float` reintroduciría `KQA-100`.
+    """
     method = _costing_method(db, company_id, product_id)
     layers = (
         db.execute(
@@ -493,33 +538,40 @@ def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id
         .scalars()
         .all()
     )
-    remaining = quantity
+    demand = _dec(quantity)
+    remaining = demand
     if method == "FIFO":
-        total_cost = 0.0
+        total_cost = Decimal(0)
         for layer in layers:
-            take = min(layer.quantity_remaining, remaining)
-            total_cost += float(take) * float(layer.unit_cost or 0)
-            layer.quantity_remaining = round(layer.quantity_remaining - take, 6)
+            take = min(_dec(layer.quantity_remaining), remaining)
+            total_cost += take * _dec(layer.unit_cost or 0)
+            layer.quantity_remaining = _dec(layer.quantity_remaining) - take
             remaining -= take
             if layer.quantity_remaining <= 0:
                 layer.status = "CLOSED"
             if remaining <= 0:
                 break
         if remaining > 0:
-            raise ConflictError(code="NO_COST_LAYER", message="No hay capas de costo suficientes para valorar la salida.")
-        return round(total_cost / quantity, 6)
+            raise ConflictError(code="NO_COST_LAYER",
+                                message="No hay capas de costo suficientes para valorar la salida.")
+        if demand == 0:
+            return None
+        return _dec(total_cost / demand)
+
     # Promedio ponderado
-    total_qty = sum(layer.quantity_remaining for layer in layers)
-    total_value = sum(float(layer.quantity_remaining) * float(layer.unit_cost or 0) for layer in layers)
+    total_qty = sum((_dec(layer.quantity_remaining) for layer in layers), Decimal(0))
+    total_value = sum((_dec(layer.quantity_remaining) * _dec(layer.unit_cost or 0)
+                       for layer in layers), Decimal(0))
     if total_qty <= 0:
         return None
-    avg = total_value / total_qty
+    average = _dec(total_value / total_qty)
     for layer in layers:
-        share = remaining * (layer.quantity_remaining / total_qty)
-        layer.quantity_remaining = round(layer.quantity_remaining - share, 6)
+        share = remaining * (_dec(layer.quantity_remaining) / total_qty)
+        layer.quantity_remaining = _dec(layer.quantity_remaining) - _dec(share)
         if layer.quantity_remaining <= 0:
             layer.status = "CLOSED"
-    return round(avg, 6)
+    return average
+
 
 
 def valuation(db: Session, *, company_id: str, product_id: str | None = None, warehouse_id: str | None = None) -> float:
@@ -530,7 +582,8 @@ def valuation(db: Session, *, company_id: str, product_id: str | None = None, wa
     if warehouse_id:
         query = query.where(CostLayer.warehouse_id == warehouse_id)
     layers = db.execute(query).scalars().all()
-    return round(sum(float(layer.quantity_remaining) * float(layer.unit_cost or 0) for layer in layers), 6)
+    return float(sum((_dec(layer.quantity_remaining) * _dec(layer.unit_cost or 0)
+                      for layer in layers), Decimal(0)))
 
 
 # --------------------------------------------------------------------------- #
@@ -634,7 +687,7 @@ def reserve(db: Session, *, company_id: str, source_document: str | None, produc
     db.flush()
     balance = _get_balance(db, company_id=company_id, warehouse_id=warehouse_id, location_id=None,
                            product_id=product_id, lot_id=lot_id, serial_id=serial_id, state="DISPONIBLE")
-    balance.qty_reserved = round(balance.qty_reserved + quantity, 6)
+    balance.qty_reserved = _dec(balance.qty_reserved) + _dec(quantity)
     _refresh_available(balance)
     db.flush()
     return reservation
@@ -647,7 +700,7 @@ def release_reservation(db: Session, *, reservation: Reservation, actor: str | N
     balance = _get_balance(db, company_id=reservation.company_id, warehouse_id=reservation.warehouse_id,
                            location_id=None, product_id=reservation.product_id, lot_id=reservation.lot_id,
                            serial_id=reservation.serial_id, state="DISPONIBLE")
-    balance.qty_reserved = round(max(balance.qty_reserved - reservation.quantity, 0.0), 6)
+    balance.qty_reserved = max(_dec(balance.qty_reserved) - _dec(reservation.quantity), Decimal(0))
     _refresh_available(balance)
     db.flush()
     return reservation
@@ -663,7 +716,7 @@ def expire_reservations(db: Session, *, company_id: str) -> int:
         r.status = "EXPIRED"
         balance = _get_balance(db, company_id=r.company_id, warehouse_id=r.warehouse_id, location_id=None,
                                product_id=r.product_id, lot_id=r.lot_id, serial_id=r.serial_id, state="DISPONIBLE")
-        balance.qty_reserved = round(max(balance.qty_reserved - r.quantity, 0.0), 6)
+        balance.qty_reserved = max(_dec(balance.qty_reserved) - _dec(r.quantity), Decimal(0))
         _refresh_available(balance)
     db.flush()
     return len(active)

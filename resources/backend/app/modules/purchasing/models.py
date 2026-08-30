@@ -15,8 +15,9 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
-from sqlalchemy import Date, Float, ForeignKey, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Date, ForeignKey, Index, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -39,10 +40,11 @@ class PurchaseRequisition(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, 
 
 class RequisitionLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "purchase_requisition_lines"
+    __table_args__ = (Index("ix_purchase_requisition_lines_uom_id", "uom_id"),)
 
     requisition_id: Mapped[str] = mapped_column(ForeignKey("purchase_requisitions.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
-    quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     unit_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -50,6 +52,13 @@ class RequisitionLine(UUIDMixin, TimestampMixin, Base):
 # --------------------------------------------------------------------------- #
 # Cotización
 # --------------------------------------------------------------------------- #
+
+    # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class SupplierQuote(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "supplier_quotes"
 
@@ -63,10 +72,11 @@ class SupplierQuote(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class QuoteLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "supplier_quote_lines"
+    __table_args__ = (Index("ix_supplier_quote_lines_uom_id", "uom_id"),)
 
     quote_id: Mapped[str] = mapped_column(ForeignKey("supplier_quotes.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
-    quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     discount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     delivery_days: Mapped[int | None] = mapped_column(nullable=True)
@@ -76,6 +86,13 @@ class QuoteLine(UUIDMixin, TimestampMixin, Base):
 # --------------------------------------------------------------------------- #
 # Orden de compra
 # --------------------------------------------------------------------------- #
+
+    # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class PurchaseOrder(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "purchase_orders"
 
@@ -90,11 +107,12 @@ class PurchaseOrder(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class PurchaseOrderLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "purchase_order_lines"
+    __table_args__ = (Index("ix_purchase_order_lines_uom_id", "uom_id"),)
 
     order_id: Mapped[str] = mapped_column(ForeignKey("purchase_orders.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
-    quantity_ordered: Mapped[float] = mapped_column(Float, nullable=False)
-    quantity_received: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    quantity_ordered: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    quantity_received: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False, default=0.0)
     unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     discount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     tax_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
@@ -105,6 +123,14 @@ class PurchaseOrderLine(UUIDMixin, TimestampMixin, Base):
 # --------------------------------------------------------------------------- #
 # Recepción (invoca 003)
 # --------------------------------------------------------------------------- #
+
+    # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity_ordered: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity_received: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class GoodsReceipt(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "goods_receipts"
 
@@ -117,13 +143,14 @@ class GoodsReceipt(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class GoodsReceiptLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "goods_receipt_lines"
+    __table_args__ = (Index("ix_goods_receipt_lines_uom_id", "uom_id"),)
 
     receipt_id: Mapped[str] = mapped_column(ForeignKey("goods_receipts.id"), nullable=False, index=True)
     order_line_id: Mapped[str] = mapped_column(ForeignKey("purchase_order_lines.id"), nullable=False)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
-    quantity_received: Mapped[float] = mapped_column(Float, nullable=False)
-    quantity_accepted: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    quantity_rejected: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    quantity_received: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    quantity_accepted: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False, default=0.0)
+    quantity_rejected: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False, default=0.0)
     lot_id: Mapped[str | None] = mapped_column(ForeignKey("inventory_lots.id"), nullable=True)
     lot_number: Mapped[str | None] = mapped_column(String(120), nullable=True)
     expiry_date: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -134,6 +161,15 @@ class GoodsReceiptLine(UUIDMixin, TimestampMixin, Base):
 # --------------------------------------------------------------------------- #
 # Factura del proveedor y conciliación triple
 # --------------------------------------------------------------------------- #
+
+    # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity_received: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity_accepted: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity_rejected: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class SupplierInvoice(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "supplier_invoices"
     __table_args__ = (
@@ -156,18 +192,26 @@ class SupplierInvoice(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class SupplierInvoiceLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "supplier_invoice_lines"
+    __table_args__ = (Index("ix_supplier_invoice_lines_uom_id", "uom_id"),)
 
     invoice_id: Mapped[str] = mapped_column(ForeignKey("supplier_invoices.id"), nullable=False, index=True)
     order_line_id: Mapped[str | None] = mapped_column(ForeignKey("purchase_order_lines.id"), nullable=True)
     receipt_line_id: Mapped[str | None] = mapped_column(ForeignKey("goods_receipt_lines.id"), nullable=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
-    quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     tax_amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     total: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-
+    # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    uom_symbol_snapshot: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    presentation_label_snapshot: Mapped[str | None] = mapped_column(String(120), nullable=True)
 class TripleMatch(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "triple_matches"
 
@@ -176,7 +220,7 @@ class TripleMatch(UUIDMixin, TimestampMixin, Base):
     order_line_id: Mapped[str | None] = mapped_column(ForeignKey("purchase_order_lines.id"), nullable=True)
     receipt_line_id: Mapped[str | None] = mapped_column(ForeignKey("goods_receipt_lines.id"), nullable=True)
     invoice_line_id: Mapped[str | None] = mapped_column(ForeignKey("supplier_invoice_lines.id"), nullable=True)
-    variance_qty: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    variance_qty: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False, default=0.0)
     variance_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     variance_tax: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     resolution: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
@@ -199,13 +243,19 @@ class PurchaseReturn(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base)
 
 class PurchaseReturnLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "purchase_return_lines"
+    __table_args__ = (Index("ix_purchase_return_lines_uom_id", "uom_id"),)
 
     return_id: Mapped[str] = mapped_column(ForeignKey("purchase_returns.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
-    quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     condition: Mapped[str] = mapped_column(String(32), nullable=False, default="DEFECTUOSO")
 
-
+    # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class SupplierCreditNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "supplier_credit_notes"
 

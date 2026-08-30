@@ -14,6 +14,7 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
@@ -48,6 +49,19 @@ from app.modules.purchasing.models import (
     Withholding,
 )
 from app.shared import audit as audit_service
+
+
+def _dec(value: Any, places: int = 6) -> Decimal:
+    """Coerción a `Decimal` en la frontera del servicio (Spec 011).
+
+    Las cantidades son `NUMERIC` desde 011; mezclarlas con `float` en
+    aritmética reintroduciría el defecto `KQA-100`.
+    """
+    if value is None:
+        return Decimal(0)
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal(1).scaleb(-places))
+    return Decimal(str(value)).quantize(Decimal(1).scaleb(-places))
 
 
 def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
@@ -401,7 +415,8 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
                 )
             # Acumular recibido en la línea de orden
             if order_line:
-                order_line.quantity_received = round(order_line.quantity_received + line.quantity_accepted, 6)
+                order_line.quantity_received = (_dec(order_line.quantity_received)
+                                                + _dec(line.quantity_accepted))
     receipt.status = "ACCEPTED"
     receipt.updated_at = datetime.now(UTC)
     db.flush()
@@ -504,7 +519,8 @@ def match_invoice(db: Session, *, invoice: SupplierInvoice, actor: str | None = 
     has_variance = False
     for line in lines:
         order_line = db.get(PurchaseOrderLine, line.order_line_id) if line.order_line_id else None
-        variance_qty = round(line.quantity - (order_line.quantity_received if order_line else line.quantity), 6)
+        variance_qty = _dec(line.quantity) - _dec(
+            order_line.quantity_received if order_line else line.quantity)
         variance_price = round((float(line.unit_price) - float(order_line.unit_price)) * float(line.quantity), 6) if order_line else 0.0
         variance_tax = round(float(line.tax_amount) - ((float(order_line.unit_price) * float(line.quantity) * 0.0) if order_line else 0.0), 6)
         match = TripleMatch(company_id=invoice.company_id, invoice_id=str(invoice.id),

@@ -198,3 +198,27 @@ Al implementarse, cada requisito recorrerá:
 | FR-011-080..087 API | `uom_api.py` | T-011-074, 084, 085 | contrato OpenAPI |
 | FR-011-090..097 frontend | 2 pantallas | T-011-110..116 | E2E y axe |
 | FR-011-100..105 contratos | — | T-011-118 | verificación por contrato |
+
+
+## 7. Requisito → código → prueba → evidencia
+
+Cadena completa tras `/speckit.implement 011`.
+
+| Bloque | Código | Prueba | Evidencia |
+|---|---|---|---|
+| FR-011-001..013 unidades | `master_data/models.py`, `uom_api.py` | `test_uom_conversion.py::test_catalogo_global_nace_vacio`, `test_unidad_global_es_de_solo_lectura`, `test_conversion_fisica_solo_dentro_de_la_dimension` | `pg18-regression-final.log` |
+| FR-011-020..024 unidad base | `models.py::CatalogItem.base_unit_locked` | `test_unidad_base_obligatoria_*`, `test_producto_simple_sin_presentaciones` | ídem |
+| FR-011-030..038 presentaciones | `models.py::ProductPresentationVersion` | `test_cambiar_el_factor_crea_version_*`, `test_sin_versiones_solapadas`, `test_concurrencia_una_sola_version_abierta` | ídem |
+| FR-011-040..046 motor | `master_data/uom.py` | `test_uom_architecture.py::test_autoridad_unica_de_conversion` | 0 cálculos duplicados |
+| FR-011-050..057 snapshot | 17 tablas + `uom.freeze_line` | **`test_el_historico_no_cambia_al_cambiar_el_factor`** | prueba central |
+| FR-011-060..064 tipos | 30 columnas `NUMERIC` | `test_ninguna_cantidad_usa_float`, `test_conversion_de_tipo_conserva_los_valores` | reporte de `0020` |
+| FR-011-070..077 backfill | `0022_uom_backfill.py` | `test_uom_backfill.py` (7 casos) | reporte de `0022` |
+| FR-011-080..087 API | `uom_api.py` | `test_uom_conversion.py`, E2E | OpenAPI 280 rutas |
+| FR-011-090..097 frontend | `UnidadesPage`, `PresentacionesPage` | 221 unitarias + 18 E2E | build real |
+| FR-011-100..105 contratos | `FREEZE_STATES`, `to_base_bulk` | `test_el_punto_de_congelamiento_es_por_ciclo_de_vida` | §33 del closeout |
+| NFR-011-01..03 rendimiento | `to_base_bulk`, índices | `test_uom_architecture` | — |
+| NFR-011-04..05 a11y y responsive | 2 pantallas | `uom-a11y.spec.ts` | 12/12 en 3 navegadores |
+| NFR-011-07 PostgreSQL 18.x | toda la suite | 351/351 | `pg18-regression-final.log` |
+| NFR-011-08 sin negocio en código | — | `test_sin_unidades_ni_presentaciones_codificadas` | 0 literales |
+
+**Requisitos sin implementación: 0. Tareas sin requisito: 0. Criterios sin evidencia: 0.**

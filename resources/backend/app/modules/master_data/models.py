@@ -9,9 +9,24 @@ se almacenan en EAV/JSON libre (Constitución P8, DOC-01 §8).
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -178,21 +193,62 @@ class AttributeValue(UUIDMixin, TimestampMixin, Base):
 # --------------------------------------------------------------------------- #
 # Catálogo: unidades, plantillas, items, presentaciones
 # --------------------------------------------------------------------------- #
-class UnitOfMeasure(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, StatusMixin, Base):
+#: Vocabulario cerrado de dimensiones físicas. Las dimensiones no las inventa un
+#: cliente; las unidades sí (CL-011-20).
+#: `MASA` y `PESO` coexisten porque ambas ya existen en datos y pruebas
+#: anteriores a esta Spec. Rechazar una invalidaría filas existentes (P5).
+UOM_DIMENSIONS: tuple[str, ...] = (
+    "CANTIDAD", "MASA", "PESO", "VOLUMEN", "LONGITUD", "AREA", "TIEMPO",
+)
+
+#: Modos de redondeo admitidos. La unidad declara el suyo; no se deduce del código
+#: de la unidad (P8).
+UOM_ROUNDING_MODES: tuple[str, ...] = ("HALF_UP", "HALF_EVEN", "DOWN", "UP")
+
+
+class UnitOfMeasure(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin,
+                    StatusMixin, VersionMixin, Base):
+    """Unidad de medida.
+
+    `company_id` nulo = unidad **global de plataforma**, de solo lectura para las
+    empresas. El catálogo global nace vacío: KONTROL no entrega `UND`, `KG` ni
+    ninguna otra (FR-011-004, P8).
+    """
+
     __tablename__ = "units_of_measure"
+    __table_args__ = (
+        UniqueConstraint("company_id", "code", name="uq_units_of_measure_company_code"),
+        CheckConstraint("decimals >= 0 AND decimals <= 6", name="ck_units_of_measure_decimals"),
+        CheckConstraint(
+            "dimension IN ('CANTIDAD','MASA','PESO','VOLUMEN','LONGITUD','AREA','TIEMPO')",
+            name="ck_units_of_measure_dimension"),
+    )
 
     company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     dimension: Mapped[str] = mapped_column(String(32), nullable=False, default="CANTIDAD")
     symbol: Mapped[str] = mapped_column(String(16), nullable=False)
     decimals: Mapped[int] = mapped_column(Integer, nullable=False, default=2)
+    rounding_mode: Mapped[str] = mapped_column(String(16), nullable=False,
+                                               default="HALF_UP", server_default="HALF_UP")
 
 
 class UnitConversion(UUIDMixin, TimestampMixin, Base):
+    """Conversión **física** entre unidades de la misma dimensión.
+
+    Sin versionado: un kilo siempre serán mil gramos. La conversión **comercial**
+    de una presentación a la unidad base es otra cosa y vive en
+    `ProductPresentationVersion` (R-011-2).
+    """
+
     __tablename__ = "unit_conversions"
+    __table_args__ = (
+        UniqueConstraint("from_unit_id", "to_unit_id", name="uq_unit_conversions_pair"),
+        CheckConstraint("factor > 0", name="ck_unit_conversions_factor_positive"),
+    )
 
     from_unit_id: Mapped[str] = mapped_column(ForeignKey("units_of_measure.id"), nullable=False, index=True)
     to_unit_id: Mapped[str] = mapped_column(ForeignKey("units_of_measure.id"), nullable=False, index=True)
-    factor: Mapped[float] = mapped_column(Float, nullable=False)
+    factor: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     rounding: Mapped[int] = mapped_column(Integer, nullable=False, default=4)
     validity: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
 
@@ -225,6 +281,12 @@ class CatalogItem(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixi
     long_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     category_id: Mapped[str | None] = mapped_column(ForeignKey("taxonomy_nodes.id"), nullable=True)
     base_unit_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    #: Pasa a `true` con el primer movimiento y **no vuelve atrás**. Cambiar la
+    #: unidad base de un producto con historial reinterpretaría retroactivamente
+    #: todas sus cantidades (R-011-3). Es el análogo de `structure_regime` en la
+    #: Spec 008.
+    base_unit_locked: Mapped[bool] = mapped_column(Boolean, nullable=False,
+                                                   default=False, server_default="false")
     tax_profile_id: Mapped[str | None] = mapped_column(ForeignKey("profile_versions.id"), nullable=True)
 
 
@@ -253,16 +315,74 @@ class Service(UUIDMixin, TimestampMixin, Base):
     evidence_required: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
-class Presentation(UUIDMixin, TimestampMixin, NameMixin, Base):
+class Presentation(UUIDMixin, TimestampMixin, CreatedByMixin, NameMixin,
+                  StatusMixin, VersionMixin, Base):
+    """Presentación de **un producto concreto**.
+
+    No es un SKU (R-011-1): un producto con caja, bolsa y pallet sigue siendo un
+    producto. El **factor** no vive aquí sino en `ProductPresentationVersion`,
+    porque la caja de un producto son 100 unidades y la de otro 24 (§43).
+    """
+
     __tablename__ = "presentations"
+    __table_args__ = (
+        UniqueConstraint("product_id", "code", name="uq_presentations_product_code"),
+        Index("ix_presentations_product_status", "product_id", "status"),
+    )
 
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
+    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    code: Mapped[str] = mapped_column(String(32), nullable=False)
     unit_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    #: Dato legado anterior a la Spec 011. **No se usa para calcular**: si alguna
+    #: instalación tuviera filas, este número es la única evidencia de la
+    #: intención original y por eso se conserva (CL-011-11).
     content: Mapped[float | None] = mapped_column(Float, nullable=True)
     barcode: Mapped[str | None] = mapped_column(String(64), nullable=True)
     buyable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     sellable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     storable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    #: Distingue la presentación comercial de la unidad de despacho (§20).
+    dispatchable: Mapped[bool] = mapped_column(Boolean, nullable=False,
+                                               default=True, server_default="true")
+
+
+class ProductPresentationVersion(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base):
+    """El factor y su vigencia. Corazón del versionado.
+
+    Cambiar un factor **crea una versión**; jamás sobrescribe la anterior
+    (FR-011-036). Es lo único que permite que una caja pase de 100 a 120 sin que
+    la compra del año pasado cambie de significado.
+    """
+
+    __tablename__ = "product_presentation_versions"
+    __table_args__ = (
+        CheckConstraint("factor_to_base > 0", name="ck_ppv_factor_positive"),
+        CheckConstraint("valid_to IS NULL OR valid_to > valid_from", name="ck_ppv_range"),
+        UniqueConstraint("presentation_id", "valid_from", name="uq_ppv_presentation_from"),
+        # Una sola versión **abierta** por presentación: impide el solapamiento
+        # que haría la conversión no determinista (FR-011-035). El solapamiento
+        # entre rangos cerrados se valida en servicio, dentro de la transacción.
+        Index("uq_ppv_open_version", "presentation_id", unique=True,
+              postgresql_where=text("valid_to IS NULL"),
+              sqlite_where=text("valid_to IS NULL")),
+        Index("ix_ppv_resolution", "presentation_id", "valid_from", "valid_to"),
+        Index("ix_ppv_bulk", "product_id", "company_id"),
+    )
+
+    presentation_id: Mapped[str] = mapped_column(ForeignKey("presentations.id"), nullable=False)
+    #: Redundante y deliberado: permite la resolución masiva por documento sin
+    #: join adicional (NFR-011-01).
+    product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
+    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    factor_to_base: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    factor_uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    #: `false` cuando la conversión produce fracciones en la unidad base. Debe
+    #: declararse: el sistema no redondea en silencio (R-D0-09-5).
+    exact_in_base: Mapped[bool] = mapped_column(Boolean, nullable=False,
+                                                default=True, server_default="true")
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    valid_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Barcode(UUIDMixin, TimestampMixin, Base):

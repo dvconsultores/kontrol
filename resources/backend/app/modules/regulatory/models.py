@@ -19,8 +19,9 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5/§10, DOC-03 §12):
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Numeric, String, Text
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -103,6 +104,7 @@ class TransportDriver(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 # --------------------------------------------------------------------------- #
 class PermitInstance(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "permit_instances"
+    __table_args__ = (Index("ix_permit_instances_uom_id", "uom_id"),)
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     permit_type_id: Mapped[str] = mapped_column(ForeignKey("permit_types.id"), nullable=False, index=True)
@@ -113,7 +115,7 @@ class PermitInstance(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     destination: Mapped[str | None] = mapped_column(String(120), nullable=True)
     products: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
     lots: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
-    quantity: Mapped[float | None] = mapped_column(Float, nullable=True)
+    quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     vehicle_id: Mapped[str | None] = mapped_column(ForeignKey("transport_vehicles.id"), nullable=True)
     file_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
     hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -121,8 +123,9 @@ class PermitInstance(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
     # DRAFT -> REGISTERED -> VERIFIED -> APPROVED_FOR_USE -> USED -> EXPIRED
     #                                   REJECTED / CANCELLED
-
-
+    # Contrato de la Spec 011: cantidad autorizada con su unidad, sin
+    # presentación comercial (CONTRACT_ONLY).
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
 class OfficialDocument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "official_documents"
 

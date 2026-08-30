@@ -1,5 +1,9 @@
 # TAREAS — SPEC 011
 
+> **Estado tras `/speckit.implement 011` (2026-08-30):** las 99 tareas se
+> ejecutaron y se verificaron sobre PostgreSQL 18.6. `DONE` significa
+> comportamiento comprobado por prueba, no archivo creado.
+
 Tareas concretas y trazables (§103). No se agrupa en «implementar backend».
 
 ## F1 · Modelo de unidades
@@ -160,3 +164,29 @@ Tareas concretas y trazables (§103). No se agrupa en «implementar backend».
 | F8 Frontend | 11 | L | 2 pantallas |
 | F9 E2E y cierre | 11 | L | — |
 | **Total** | **99** | — | — |
+
+
+---
+
+## Estado de ejecución — `/speckit.implement 011`
+
+| Fase | Tareas | Estado | Verificación |
+|---|---:|---|---|
+| F1 · Unidades | 7 | **DONE** | Dimensión validada, `NUMERIC`, ámbito global de solo lectura |
+| F2 · Presentaciones versionadas | 9 | **DONE** | `0019` aplica; índice único de versión abierta verificado en PG |
+| F3 · Motor de conversión | 10 | **DONE** | `uom.py`; 0 cálculos duplicados fuera del motor |
+| F4 · Columnas transaccionales | 10 | **DONE** | 17 tablas × 4 columnas; 30 columnas a `NUMERIC`; drift 0 |
+| F5 · Backfill clasificado | 10 | **DONE** | 4 clases; aborto crítico con cero escrituras |
+| F6 · API | 11 | **DONE** | 15 rutas; OpenAPI global de 280 rutas genera |
+| F7 · Pruebas de backend | 20 | **DONE** | 24 pruebas nuevas; 351/351 sobre PostgreSQL |
+| F8 · Frontend | 11 | **DONE** | 2 pantallas; build real, `tsc` y `eslint` limpios |
+| F9 · E2E y cierre | 11 | **DONE** | 18 E2E en 3 navegadores; axe y responsive verdes |
+
+### Desviaciones y su razón
+
+| Desviación | Razón |
+|---|---|
+| Vocabulario de dimensiones ampliado con `MASA` | El código y las pruebas anteriores a 011 ya usaban `MASA`; rechazarla habría invalidado filas existentes (P5). Se admite junto a `PESO` |
+| Migraciones numeradas `0019`-`0022` | `alembic heads` confirmó `0018` como cabeza real, según §30 |
+| `presentations.content` **no** se convierte a `NUMERIC` | Es dato legado anterior a 011, única evidencia de la intención original. Se conserva y no se usa para calcular (CL-011-11) |
+| Entrada de menú añadida para unidades | La detectó el E2E: sin ella la ruta existía sin acceso — el patrón que el proyecto ya conocía |

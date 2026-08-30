@@ -15,9 +15,10 @@ Invariantes (Constitución P5/P8, DOC-01 §5, DOC-03 §12):
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Index, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -53,13 +54,14 @@ class InventoryMovement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Movimiento de inventario balanceado e inmutable (FR-003-020/021/022)."""
 
     __tablename__ = "inventory_movements"
+    __table_args__ = (Index("ix_inventory_movements_uom_id", "uom_id"),)
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
     location_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_locations.id"), nullable=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
     movement_type_id: Mapped[str] = mapped_column(ForeignKey("movement_types.id"), nullable=False)
-    quantity: Mapped[float] = mapped_column(Float, nullable=False)  # != 0; signo según dirección
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)  # != 0; signo según dirección
     unit_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
     unit_cost: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
@@ -70,7 +72,12 @@ class InventoryMovement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="POSTED")
     idempotency_key: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
 
-
+    # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class InventoryLot(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Lote con vencimiento (FR-003-030/032)."""
 
@@ -129,9 +136,9 @@ class InventoryBalance(UUIDMixin, TimestampMixin, Base):
     lot_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     serial_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     state: Mapped[str] = mapped_column(String(32), nullable=False, default="DISPONIBLE")
-    qty_on_hand: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    qty_reserved: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    qty_available: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    qty_on_hand: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False, default=0.0)
+    qty_reserved: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False, default=0.0)
+    qty_available: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False, default=0.0)
     last_rebuilt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -139,6 +146,7 @@ class Reservation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Reserva de inventario sin cambio físico (FR-003-040/041/042/043)."""
 
     __tablename__ = "reservations"
+    __table_args__ = (Index("ix_reservations_uom_id", "uom_id"),)
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     source_document: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -146,11 +154,16 @@ class Reservation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
     lot_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     serial_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")  # ACTIVE/RELEASED/EXPIRED/FULFILLED
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-
+    # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class Transfer(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     """Transferencia entre almacenes con máquina de estados (FR-003-060/061)."""
 
@@ -167,17 +180,24 @@ class Transfer(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class TransferLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "transfer_lines"
+    __table_args__ = (Index("ix_transfer_lines_uom_id", "uom_id"),)
 
     transfer_id: Mapped[str] = mapped_column(ForeignKey("transfers.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     lot_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     serial_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    quantity_sent: Mapped[float] = mapped_column(Float, nullable=False)
-    quantity_received: Mapped[float | None] = mapped_column(Float, nullable=True)
+    quantity_sent: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    quantity_received: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     difference: Mapped[float | None] = mapped_column(Float, nullable=True)
     destination_state: Mapped[str] = mapped_column(String(32), nullable=False, default="DISPONIBLE")
 
-
+    # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity_sent: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity_received: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class StockCount(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     """Plan de conteo (FR-003-070/071)."""
 
@@ -193,17 +213,24 @@ class StockCount(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class StockCountLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "stock_count_lines"
+    __table_args__ = (Index("ix_stock_count_lines_uom_id", "uom_id"),)
 
     count_id: Mapped[str] = mapped_column(ForeignKey("stock_counts.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     location_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_locations.id"), nullable=True)
     legacy_location_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     lot_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    expected_qty: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    counted_qty: Mapped[float | None] = mapped_column(Float, nullable=True)
-    variance: Mapped[float | None] = mapped_column(Float, nullable=True)
+    expected_qty: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False, default=0.0)
+    counted_qty: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    variance: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
 
-
+    # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_expected_qty: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_counted_qty: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class InventoryAdjustment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Ajuste con motivo, evidencia, costo y aprobación (FR-003-072/073).
 
@@ -211,11 +238,12 @@ class InventoryAdjustment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """
 
     __tablename__ = "inventory_adjustments"
+    __table_args__ = (Index("ix_inventory_adjustments_uom_id", "uom_id"),)
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
-    quantity: Mapped[float] = mapped_column(Float, nullable=False)  # >0 suma, <0 resta
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)  # >0 suma, <0 resta
     reason: Mapped[str] = mapped_column(Text, nullable=False)
     evidence_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
     unit_cost: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
@@ -223,7 +251,12 @@ class InventoryAdjustment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     approver_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")  # DRAFT/SUBMITTED/APPROVED/REJECTED/APPLIED
 
-
+    # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class CostLayer(UUIDMixin, TimestampMixin, Base):
     """Capa de costo (FR-003-080): recepción/producto/almacén, cantidades y costo."""
 
@@ -233,8 +266,8 @@ class CostLayer(UUIDMixin, TimestampMixin, Base):
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
     receipt_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    quantity_in: Mapped[float] = mapped_column(Float, nullable=False)
-    quantity_remaining: Mapped[float] = mapped_column(Float, nullable=False)
+    quantity_in: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    quantity_remaining: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     unit_cost: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     fiscal_rate: Mapped[float | None] = mapped_column(Numeric(14, 6), nullable=True)

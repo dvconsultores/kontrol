@@ -265,9 +265,12 @@ def evaluate_shipment(db: Session, *, company_id: str, shipment_id: str, actor: 
         status = "BLOCKED" if blockers else "CLEARED"
         evaluation = RegulatoryEvaluation(company_id=company_id, shipment_id=shipment_id,
                                           shipment_line_ref=str(line.id), profile_version_id=profiles[0].id if profiles else None,
-                                          required=json.dumps(required), results=json.dumps({"line": str(line.id),
-                                                                                              "product_id": line.product_id,
-                                                                                              "quantity": line.quantity}),
+                                          required=json.dumps(required),
+                                          # `quantity` es `Decimal` desde la Spec 011: se serializa como
+                                          # texto para no perder precisión al pasar por `float`.
+                                          results=json.dumps({"line": str(line.id),
+                                                              "product_id": line.product_id,
+                                                              "quantity": str(line.quantity)}),
                                           blockers=json.dumps(blockers), status=status, created_by=actor)
         db.add(evaluation)
         created.append(evaluation)

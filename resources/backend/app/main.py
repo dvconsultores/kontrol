@@ -25,6 +25,7 @@ from app.modules.licensing import service as licensing_service
 from app.modules.licensing.api import central_router
 from app.modules.licensing.api import router as license_router
 from app.modules.master_data.api import router as master_data_router
+from app.modules.master_data.uom_api import router as uom_router
 from app.modules.organization.api import router as organization_router
 from app.modules.organization.warehouse_api import router as warehouse_structure_router
 from app.modules.purchasing.api import router as purchasing_router
@@ -84,6 +85,7 @@ def create_app() -> FastAPI:
     app.include_router(organization_router, prefix=prefix)
     app.include_router(warehouse_structure_router, prefix=prefix)
     app.include_router(master_data_router, prefix=prefix)
+    app.include_router(uom_router, prefix=prefix)
     app.include_router(inventory_router, prefix=prefix)
     app.include_router(purchasing_router, prefix=prefix)
     app.include_router(sales_router, prefix=prefix)

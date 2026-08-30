@@ -18,7 +18,7 @@
 | 008 | Estructura física de almacenes | Sí | 001 | 100 | 100 | 100 | 100 | 100 | 100 | **COMPLETE_100** | Cerrada 2026-08-30 sobre PostgreSQL 18.6 · jerarquía opcional por almacén · FK reales |
 | 009 | Terceros | Sí | 002 | 80 | 85 | 90 | 65 | 70 | 79 | SUBSTANTIALLY_COMPLETE | Vendedor/beneficiario sin entidad propia |
 | 010 | Productos y servicios | Sí | 002 | 80 | 85 | 90 | 65 | 70 | 79 | SUBSTANTIALLY_COMPLETE | Marcas/modelos como nodos genéricos |
-| 011 | Unidades, presentaciones y conversiones | Sí | 002 | 45 | 50 | 70 | 25 | 20 | 45 | PARTIAL | **Líneas de documento sin UoM ni presentación** |
+| 011 | Unidades, presentaciones y conversiones | Sí | 002 | 100 | 100 | 100 | 100 | 100 | 100 | **COMPLETE_100** | Cerrada 2026-08-30 sobre PostgreSQL 18.6 · 17 líneas con snapshot · 30 columnas a NUMERIC |
 | 012 | Maestros comerciales | Sí | **ninguna** | 0 | 0 | 5 | 0 | 0 | 2 | NOT_STARTED | **Rama completa sin spec ni modelo** |
 | 013 | Maestros financieros | Sí | 006 | 85 | 90 | 90 | 70 | 75 | 84 | SUBSTANTIALLY_COMPLETE | Tasas sin fuente automática (BCV) |
 | 014 | Maestros fiscales y regulatorios | Sí | 007 + 008 | 80 | 85 | 90 | 55 | 65 | 77 | SUBSTANTIALLY_COMPLETE | Valores oficiales no cargados |
@@ -71,7 +71,7 @@
 |---|---:|---|
 | COMPLETE_100 | **1** | **045** |
 | SUBSTANTIALLY_COMPLETE | **25** | 001,002,004,005,009,010,013,014,016,017,023,024,025,027,028,030,036,037,038,041,043,044,050,054,056 |
-| PARTIAL | **18** | 003,006,007,011,015,019,026,029,034,035,039,040,042,048,049,051,052,055 |
+| PARTIAL | **17** | 003,006,007,015,019,026,029,034,035,039,040,042,048,049,051,052,055 |
 | SKELETON_ONLY | **5** | 021,022,031,032,053 |
 | FRONTEND_ONLY | **0** | — |
 | BACKEND_ONLY | **0** | — |

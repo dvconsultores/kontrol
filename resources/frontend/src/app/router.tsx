@@ -46,6 +46,8 @@ export const router = createBrowserRouter([
           { path: "seguridad/roles", lazy: () => import("@/modules/seguridad/roles/RolesPage").then((m) => ({ Component: m.RolesPage })) },
           { path: "seguridad/sesiones", lazy: () => import("@/modules/seguridad/sesiones/SesionesPage").then((m) => ({ Component: m.SesionesPage })) },
           { path: "maestros/terceros", lazy: () => import("@/modules/maestros/terceros/TercerosPage").then((m) => ({ Component: m.TercerosPage })) },
+          { path: "maestros/unidades", lazy: () => import("@/modules/maestros/unidades/UnidadesPage").then((m) => ({ Component: m.UnidadesPage })) },
+          { path: "maestros/productos/:productId/presentaciones", lazy: () => import("@/modules/maestros/presentaciones/PresentacionesPage").then((m) => ({ Component: m.PresentacionesPage })) },
           { path: "maestros/perfiles", lazy: () => import("@/modules/maestros/perfiles/PerfilesFiscalesPage").then((m) => ({ Component: m.PerfilesFiscalesPage })) },
           { path: "maestros/productos", lazy: () => import("@/modules/maestros/productos/ProductosPage").then((m) => ({ Component: m.ProductosPage })) },
           { path: "maestros/productos/nuevo", lazy: () => import("@/modules/maestros/productos/ProductoNuevoPage").then((m) => ({ Component: m.ProductoNuevoPage })) },
