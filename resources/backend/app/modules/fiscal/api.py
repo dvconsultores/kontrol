@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
 from app.core.errors import NotFoundError
@@ -230,8 +231,8 @@ def approve_tax_rule(rule_id: str, db: Session = Depends(get_db),
 
 @router.post("/tax-profiles", dependencies=[Depends(require_write_allowed)])
 def create_tax_profile(body: TaxProfileCreate, db: Session = Depends(get_db),
-                       actor: User = Depends(require_permission("fiscal", "create"))):
-    profile = fiscal_service.create_tax_profile(db, company_id=actor.tenant_id, scope=body.scope,
+                       actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    profile = fiscal_service.create_tax_profile(db, company_id=ctx.company_id, scope=body.scope,
                                                 party_id=body.party_id, item_id=body.item_id,
                                                 classifications=body.classifications,
                                                 validity_from=body.validity_from, validity_to=body.validity_to,
@@ -243,8 +244,8 @@ def create_tax_profile(body: TaxProfileCreate, db: Session = Depends(get_db),
 
 @router.post("/tax-calculations", dependencies=[Depends(require_write_allowed)])
 def calculate_tax(body: TaxCalculateBody, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("fiscal", "create"))):
-    calc = fiscal_service.calculate_tax(db, company_id=actor.tenant_id, tax_code=body.tax_code, base=body.base,
+                  actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    calc = fiscal_service.calculate_tax(db, company_id=ctx.company_id, tax_code=body.tax_code, base=body.base,
                                         on_date=body.on_date, document_ref=body.document_ref, line_ref=body.line_ref)
     db.commit()
     db.refresh(calc)
@@ -253,8 +254,8 @@ def calculate_tax(body: TaxCalculateBody, db: Session = Depends(get_db),
 
 
 @router.get("/tax-calculations")
-def list_tax_calculations(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(TaxCalculation).where(TaxCalculation.company_id == user.tenant_id)
+def list_tax_calculations(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(TaxCalculation).where(TaxCalculation.company_id == ctx.company_id)
                        .order_by(TaxCalculation.created_at.desc())).scalars().all()
     return {"items": [{"id": c.id, "document_ref": c.document_ref, "base": c.base, "rate": c.rate,
                        "amount": c.amount} for c in items], "total": len(items), "page": 1, "page_size": len(items) or 1}
@@ -264,8 +265,8 @@ def list_tax_calculations(db: Session = Depends(get_db), user: User = Depends(ge
 # Numeración y números de control
 # --------------------------------------------------------------------------- #
 @router.get("/number-series")
-def list_number_series(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(FiscalNumberSeries).where(FiscalNumberSeries.company_id == user.tenant_id)
+def list_number_series(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(FiscalNumberSeries).where(FiscalNumberSeries.company_id == ctx.company_id)
                        .order_by(FiscalNumberSeries.document_type)).scalars().all()
     return {"items": [{"id": s.id, "establishment_id": s.establishment_id, "document_type": s.document_type,
                        "prefix": s.prefix, "next_number": s.next_number, "validity": s.validity} for s in items],
@@ -274,8 +275,8 @@ def list_number_series(db: Session = Depends(get_db), user: User = Depends(get_c
 
 @router.post("/number-series", dependencies=[Depends(require_write_allowed)])
 def create_number_series(body: NumberSeriesCreate, db: Session = Depends(get_db),
-                         actor: User = Depends(require_permission("fiscal", "create"))):
-    series = fiscal_service.create_number_series(db, company_id=actor.tenant_id, document_type=body.document_type,
+                         actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    series = fiscal_service.create_number_series(db, company_id=ctx.company_id, document_type=body.document_type,
                                                  prefix=body.prefix, establishment_id=body.establishment_id,
                                                  actor=str(actor.id))
     db.commit()
@@ -284,8 +285,8 @@ def create_number_series(body: NumberSeriesCreate, db: Session = Depends(get_db)
 
 
 @router.get("/control-batches")
-def list_control_batches(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(ControlNumberBatch).where(ControlNumberBatch.company_id == user.tenant_id)
+def list_control_batches(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(ControlNumberBatch).where(ControlNumberBatch.company_id == ctx.company_id)
                        .order_by(ControlNumberBatch.created_at.desc())).scalars().all()
     return {"items": [{"id": b.id, "establishment_id": b.establishment_id, "printer": b.printer,
                        "range_from": b.range_from, "range_to": b.range_to, "status": b.status, "counts": b.counts}
@@ -294,8 +295,8 @@ def list_control_batches(db: Session = Depends(get_db), user: User = Depends(get
 
 @router.post("/control-batches", dependencies=[Depends(require_write_allowed)])
 def create_control_batch(body: ControlBatchCreate, db: Session = Depends(get_db),
-                         actor: User = Depends(require_permission("fiscal", "create"))):
-    batch = fiscal_service.create_control_batch(db, company_id=actor.tenant_id, range_from=body.range_from,
+                         actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    batch = fiscal_service.create_control_batch(db, company_id=ctx.company_id, range_from=body.range_from,
                                                 range_to=body.range_to, establishment_id=body.establishment_id,
                                                 printer=body.printer, received_at=body.received_at, actor=str(actor.id))
     db.commit()
@@ -305,8 +306,8 @@ def create_control_batch(body: ControlBatchCreate, db: Session = Depends(get_db)
 
 @router.get("/control-numbers")
 def list_control_numbers(batch_id: str | None = None, state: str | None = None, db: Session = Depends(get_db),
-                         user: User = Depends(get_current_user)):
-    query = select(ControlNumber).where(ControlNumber.company_id == user.tenant_id)
+                         user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(ControlNumber).where(ControlNumber.company_id == ctx.company_id)
     if batch_id:
         query = query.where(ControlNumber.batch_id == batch_id)
     if state:
@@ -321,8 +322,8 @@ def list_control_numbers(batch_id: str | None = None, state: str | None = None, 
 # Emisión, impresión y notas
 # --------------------------------------------------------------------------- #
 @router.get("/documents")
-def list_documents(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(FiscalDocument).where(FiscalDocument.company_id == user.tenant_id)
+def list_documents(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(FiscalDocument).where(FiscalDocument.company_id == ctx.company_id)
     if status:
         query = query.where(FiscalDocument.status == status)
     items = db.execute(query.order_by(FiscalDocument.emitted_at.desc())).scalars().all()
@@ -349,8 +350,8 @@ def get_document(document_id: str, db: Session = Depends(get_db), user: User = D
 
 @router.post("/documents/emit", dependencies=[Depends(require_write_allowed)])
 def emit_document(body: EmitBody, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("fiscal", "create"))):
-    result = fiscal_service.emit_document(db, company_id=actor.tenant_id, business_document=body.business_document,
+                  actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    result = fiscal_service.emit_document(db, company_id=ctx.company_id, business_document=body.business_document,
                                           series_id=body.series_id, batch_id=body.batch_id, actor=str(actor.id))
     db.commit()
     return result
@@ -358,9 +359,9 @@ def emit_document(body: EmitBody, db: Session = Depends(get_db),
 
 @router.post("/documents/{document_id}/print", dependencies=[Depends(require_write_allowed)])
 def register_print(document_id: str, body: PrintBody, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("fiscal", "create"))):
+                   actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
     doc = _owned(db, FiscalDocument, document_id, actor.tenant_id, "FISCAL_DOCUMENT_NOT_FOUND", "Documento fiscal no encontrado")
-    event = fiscal_service.register_print(db, company_id=actor.tenant_id, fiscal_document_id=str(doc.id),
+    event = fiscal_service.register_print(db, company_id=ctx.company_id, fiscal_document_id=str(doc.id),
                                           copy_type=body.copy_type, printer=body.printer, reason=body.reason,
                                           actor=str(actor.id))
     db.commit()
@@ -370,8 +371,8 @@ def register_print(document_id: str, body: PrintBody, db: Session = Depends(get_
 
 @router.post("/credit-debit-notes", dependencies=[Depends(require_write_allowed)])
 def create_note(body: NoteCreate, db: Session = Depends(get_db),
-                actor: User = Depends(require_permission("fiscal", "create"))):
-    note = fiscal_service.create_credit_debit_note(db, company_id=actor.tenant_id,
+                actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    note = fiscal_service.create_credit_debit_note(db, company_id=ctx.company_id,
                                                    original_document=body.original_document, note_type=body.note_type,
                                                    cause=body.cause, amount=body.amount, base_amount=body.base_amount,
                                                    tax_amount=body.tax_amount, inventory_effect=body.inventory_effect,
@@ -384,8 +385,8 @@ def create_note(body: NoteCreate, db: Session = Depends(get_db),
 
 @router.get("/credit-debit-notes")
 def list_notes(original_document: str | None = None, db: Session = Depends(get_db),
-               user: User = Depends(get_current_user)):
-    query = select(CreditDebitNote).where(CreditDebitNote.company_id == user.tenant_id)
+               user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(CreditDebitNote).where(CreditDebitNote.company_id == ctx.company_id)
     if original_document:
         query = query.where(CreditDebitNote.original_document == original_document)
     items = db.execute(query.order_by(CreditDebitNote.created_at.desc())).scalars().all()
@@ -399,8 +400,8 @@ def list_notes(original_document: str | None = None, db: Session = Depends(get_d
 # --------------------------------------------------------------------------- #
 @router.get("/withholding-rules")
 def list_withholding_rules(tax_type: str | None = None, db: Session = Depends(get_db),
-                           user: User = Depends(get_current_user)):
-    query = select(WithholdingRule).where(WithholdingRule.company_id == user.tenant_id)
+                           user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(WithholdingRule).where(WithholdingRule.company_id == ctx.company_id)
     if tax_type:
         query = query.where(WithholdingRule.tax_type == tax_type)
     items = db.execute(query.order_by(WithholdingRule.code)).scalars().all()
@@ -411,8 +412,8 @@ def list_withholding_rules(tax_type: str | None = None, db: Session = Depends(ge
 
 @router.post("/withholding-rules", dependencies=[Depends(require_write_allowed)])
 def create_withholding_rule(body: WithholdingRuleCreate, db: Session = Depends(get_db),
-                            actor: User = Depends(require_permission("fiscal", "create"))):
-    rule = fiscal_service.create_withholding_rule(db, company_id=actor.tenant_id, tax_type=body.tax_type,
+                            actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    rule = fiscal_service.create_withholding_rule(db, company_id=ctx.company_id, tax_type=body.tax_type,
                                                   code=body.code, rate=body.rate, concept=body.concept,
                                                   conditions=body.conditions, minimum=body.minimum,
                                                   subtractor=body.subtractor, actor=str(actor.id))
@@ -423,8 +424,8 @@ def create_withholding_rule(body: WithholdingRuleCreate, db: Session = Depends(g
 
 @router.post("/withholdings/calculate", dependencies=[Depends(require_write_allowed)])
 def calculate_withholding(body: WithholdingCalcBody, db: Session = Depends(get_db),
-                          actor: User = Depends(require_permission("fiscal", "create"))):
-    w = fiscal_service.calculate_withholding(db, company_id=actor.tenant_id, party_id=body.party_id,
+                          actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    w = fiscal_service.calculate_withholding(db, company_id=ctx.company_id, party_id=body.party_id,
                                              tax_type=body.tax_type, code=body.code, base=body.base,
                                              period=body.period, source_event=body.source_event, actor=str(actor.id))
     db.commit()
@@ -434,8 +435,8 @@ def calculate_withholding(body: WithholdingCalcBody, db: Session = Depends(get_d
 
 @router.post("/withholdings/{withholding_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_withholding(withholding_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                           actor: User = Depends(require_permission("fiscal", "approve"))):
-    w = fiscal_service.transition_withholding(db, company_id=actor.tenant_id, withholding_id=withholding_id,
+                           actor: User = Depends(require_permission("fiscal", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    w = fiscal_service.transition_withholding(db, company_id=ctx.company_id, withholding_id=withholding_id,
                                               target=body.target, actor=str(actor.id))
     db.commit()
     db.refresh(w)
@@ -444,8 +445,8 @@ def transition_withholding(withholding_id: str, body: TransitionBody, db: Sessio
 
 @router.post("/withholdings/{withholding_id}/certificate", dependencies=[Depends(require_write_allowed)])
 def issue_certificate(withholding_id: str, body: WithholdingCertificateBody, db: Session = Depends(get_db),
-                      actor: User = Depends(require_permission("fiscal", "create"))):
-    w = fiscal_service.issue_withholding_certificate(db, company_id=actor.tenant_id, withholding_id=withholding_id,
+                      actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    w = fiscal_service.issue_withholding_certificate(db, company_id=ctx.company_id, withholding_id=withholding_id,
                                                      certificate_ref=body.certificate_ref, actor=str(actor.id))
     db.commit()
     db.refresh(w)
@@ -454,10 +455,10 @@ def issue_certificate(withholding_id: str, body: WithholdingCertificateBody, db:
 
 @router.get("/withholdings")
 def list_withholdings(tax_type: str | None = None, db: Session = Depends(get_db),
-                      user: User = Depends(get_current_user)):
+                      user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     from app.modules.purchasing.models import Withholding as ApWithholding
 
-    query = select(ApWithholding).where(ApWithholding.company_id == user.tenant_id)
+    query = select(ApWithholding).where(ApWithholding.company_id == ctx.company_id)
     if tax_type:
         query = query.where(ApWithholding.tax_type == tax_type)
     items = db.execute(query.order_by(ApWithholding.created_at.desc())).scalars().all()
@@ -470,8 +471,8 @@ def list_withholdings(tax_type: str | None = None, db: Session = Depends(get_db)
 # Períodos, declaraciones y libros
 # --------------------------------------------------------------------------- #
 @router.get("/periods")
-def list_periods(tax_type: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(FiscalPeriod).where(FiscalPeriod.company_id == user.tenant_id)
+def list_periods(tax_type: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(FiscalPeriod).where(FiscalPeriod.company_id == ctx.company_id)
     if tax_type:
         query = query.where(FiscalPeriod.tax_type == tax_type)
     items = db.execute(query.order_by(FiscalPeriod.period_key.desc())).scalars().all()
@@ -483,8 +484,8 @@ def list_periods(tax_type: str | None = None, db: Session = Depends(get_db), use
 
 @router.post("/periods", dependencies=[Depends(require_write_allowed)])
 def create_period(body: PeriodCreate, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("fiscal", "create"))):
-    period = fiscal_service.create_fiscal_period(db, company_id=actor.tenant_id, tax_type=body.tax_type,
+                  actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    period = fiscal_service.create_fiscal_period(db, company_id=ctx.company_id, tax_type=body.tax_type,
                                                  period_key=body.period_key, start=body.start, end=body.end,
                                                  deadlines=body.deadlines, actor=str(actor.id))
     db.commit()
@@ -494,9 +495,9 @@ def create_period(body: PeriodCreate, db: Session = Depends(get_db),
 
 @router.post("/periods/{period_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_period(period_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                      actor: User = Depends(require_permission("fiscal", "approve"))):
+                      actor: User = Depends(require_permission("fiscal", "approve")), ctx: CompanyContext = Depends(get_company_context)):
     period = _owned(db, FiscalPeriod, period_id, actor.tenant_id, "FISCAL_PERIOD_NOT_FOUND", "Período fiscal no encontrado")
-    fiscal_service.transition_period(db, company_id=actor.tenant_id, period_id=str(period.id), target=body.target,
+    fiscal_service.transition_period(db, company_id=ctx.company_id, period_id=str(period.id), target=body.target,
                                      actor=str(actor.id))
     db.commit()
     db.refresh(period)
@@ -505,8 +506,8 @@ def transition_period(period_id: str, body: TransitionBody, db: Session = Depend
 
 @router.post("/tax-return-batches", dependencies=[Depends(require_write_allowed)])
 def create_return_batch(body: ReturnBatchCreate, db: Session = Depends(get_db),
-                        actor: User = Depends(require_permission("fiscal", "create"))):
-    batch = fiscal_service.create_tax_return_batch(db, company_id=actor.tenant_id, tax_type=body.tax_type,
+                        actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    batch = fiscal_service.create_tax_return_batch(db, company_id=ctx.company_id, tax_type=body.tax_type,
                                                    period=body.period, files=body.files, totals=body.totals,
                                                    actor=str(actor.id))
     db.commit()
@@ -515,8 +516,8 @@ def create_return_batch(body: ReturnBatchCreate, db: Session = Depends(get_db),
 
 
 @router.get("/tax-return-batches")
-def list_return_batches(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(TaxReturnBatch).where(TaxReturnBatch.company_id == user.tenant_id)
+def list_return_batches(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(TaxReturnBatch).where(TaxReturnBatch.company_id == ctx.company_id)
                        .order_by(TaxReturnBatch.period.desc())).scalars().all()
     return {"items": [{"id": b.id, "tax_type": b.tax_type, "period": b.period, "status": b.status} for b in items],
             "total": len(items), "page": 1, "page_size": len(items) or 1}
@@ -524,8 +525,8 @@ def list_return_batches(db: Session = Depends(get_db), user: User = Depends(get_
 
 @router.get("/books/{tax_type}")
 def get_books(tax_type: str, period: str = "0", db: Session = Depends(get_db),
-              user: User = Depends(get_current_user)):
-    return fiscal_service.books(db, company_id=user.tenant_id, tax_type=tax_type.upper(), period=period)
+              user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    return fiscal_service.books(db, company_id=ctx.company_id, tax_type=tax_type.upper(), period=period)
 
 
 # --------------------------------------------------------------------------- #

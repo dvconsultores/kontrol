@@ -10,11 +10,13 @@ from sqlalchemy import JSON, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import CreatedByMixin, TimestampMixin, UUIDMixin
 
 
 class User(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "users"
+    __scope__ = Scope.TENANT
 
     tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     username: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -34,6 +36,7 @@ class User(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class Role(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "roles"
+    __scope__ = Scope.TENANT
 
     company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -47,6 +50,7 @@ class Role(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class Permission(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "permissions"
+    __scope__ = Scope.GLOBAL
 
     resource: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     action: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -56,6 +60,7 @@ class Permission(UUIDMixin, TimestampMixin, Base):
 
 class RolePermission(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "role_permissions"
+    __scope__ = Scope.TENANT
 
     role_id: Mapped[str] = mapped_column(ForeignKey("roles.id"), nullable=False, index=True)
     permission_id: Mapped[str] = mapped_column(ForeignKey("permissions.id"), nullable=False, index=True)
@@ -66,6 +71,7 @@ class RolePermission(UUIDMixin, TimestampMixin, Base):
 
 class UserRole(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "user_roles"
+    __scope__ = Scope.TENANT
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     role_id: Mapped[str] = mapped_column(ForeignKey("roles.id"), nullable=False, index=True)
@@ -79,6 +85,7 @@ class UserRole(UUIDMixin, TimestampMixin, Base):
 
 class UserScope(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "user_scopes"
+    __scope__ = Scope.TENANT
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     company_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -93,6 +100,7 @@ class UserScope(UUIDMixin, TimestampMixin, Base):
 
 class Session(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "sessions"
+    __scope__ = Scope.TENANT
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     refresh_token_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -106,6 +114,7 @@ class Session(UUIDMixin, TimestampMixin, Base):
 
 class PasswordReset(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "password_resets"
+    __scope__ = Scope.TENANT
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     token_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)

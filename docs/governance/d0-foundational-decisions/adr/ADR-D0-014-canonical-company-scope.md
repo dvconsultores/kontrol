@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | ID | D0-14 |
-| Estado | **PROPUESTO** — pendiente del Gate documental |
+| Estado | **APPROVED** — 2026-08-31, con la implementación de ARCH-MC-001 |
 | Fecha | 2026-08-31 |
 | Origen | `GATE-MULTICOMPANY-SCOPE.md` · `REM-046-001.md` |
 | Specs afectadas | **ARCH-MC-001** (propietaria) · todas las de negocio |
@@ -104,4 +104,4 @@ el dato se pierda: nunca se captura.
 
 ## Estado
 
-**PROPUESTO.** Requiere aprobación en el Gate documental de ARCH-MC-001.
+**APPROVED.** Activado al autorizarse `/speckit.implement ARCH-MC-001`.

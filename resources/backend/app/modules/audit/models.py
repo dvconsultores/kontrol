@@ -9,11 +9,13 @@ from sqlalchemy import JSON, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import TimestampMixin, UUIDMixin
 
 
 class AuditEvent(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "audit_events"
+    __scope__ = Scope.TENANT
 
     tenant_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)

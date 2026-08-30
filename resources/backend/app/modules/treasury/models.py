@@ -22,6 +22,7 @@ from sqlalchemy import Date, Float, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import CodeMixin, CreatedByMixin, NameMixin, TimestampMixin, UUIDMixin
 
 
@@ -30,6 +31,7 @@ from app.shared.mixins import CodeMixin, CreatedByMixin, NameMixin, TimestampMix
 # --------------------------------------------------------------------------- #
 class FinancialBank(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, Base):
     __tablename__ = "financial_banks"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     swift: Mapped[str | None] = mapped_column(String(32), nullable=True)
@@ -40,6 +42,7 @@ class FinancialBank(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMi
 
 class FinancialAccount(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, Base):
     __tablename__ = "financial_accounts"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     bank_id: Mapped[str] = mapped_column(ForeignKey("financial_banks.id"), nullable=False, index=True)
@@ -51,6 +54,7 @@ class FinancialAccount(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Nam
 
 class Cashbox(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, Base):
     __tablename__ = "cashboxes"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
@@ -61,6 +65,7 @@ class Cashbox(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, B
 
 class PaymentMethod(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, Base):
     __tablename__ = "payment_methods"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     kind: Mapped[str] = mapped_column(String(16), nullable=False, default="OTHER")  # CASH / BANK / OTHER
@@ -69,6 +74,7 @@ class PaymentMethod(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMi
 
 class TreasuryInstrument(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, Base):
     __tablename__ = "treasury_instruments"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     method_id: Mapped[str] = mapped_column(ForeignKey("payment_methods.id"), nullable=False, index=True)
@@ -79,6 +85,7 @@ class TreasuryInstrument(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, N
 
 class Currency(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "currencies"
+    __scope__ = Scope.TENANT
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     name: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -89,6 +96,7 @@ class Currency(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class ExchangeRate(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "exchange_rates"
+    __scope__ = Scope.TENANT
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     currency_id: Mapped[str] = mapped_column(ForeignKey("currencies.id"), nullable=False, index=True)
@@ -102,6 +110,7 @@ class ExchangeRate(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 # --------------------------------------------------------------------------- #
 class CashSession(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "cash_sessions"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     cashbox_id: Mapped[str] = mapped_column(ForeignKey("cashboxes.id"), nullable=False, index=True)
@@ -120,6 +129,8 @@ class CashSession(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class CashSessionMovement(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "cash_session_movements"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "session_id → cash_sessions"
 
     session_id: Mapped[str] = mapped_column(ForeignKey("cash_sessions.id"), nullable=False, index=True)
     movement_type: Mapped[str] = mapped_column(String(16), nullable=False)  # IN / OUT / ADJUST
@@ -136,6 +147,7 @@ class CashSessionMovement(UUIDMixin, TimestampMixin, Base):
 # --------------------------------------------------------------------------- #
 class BankTransaction(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "bank_transactions"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     account_id: Mapped[str] = mapped_column(ForeignKey("financial_accounts.id"), nullable=False, index=True)
@@ -154,6 +166,7 @@ class BankTransaction(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class TreasuryTransfer(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "treasury_transfers"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     from_cashbox_id: Mapped[str | None] = mapped_column(ForeignKey("cashboxes.id"), nullable=True)
@@ -172,6 +185,7 @@ class TreasuryTransfer(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 # --------------------------------------------------------------------------- #
 class Reconciliation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "reconciliations"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     account_id: Mapped[str] = mapped_column(ForeignKey("financial_accounts.id"), nullable=False, index=True)
@@ -187,6 +201,8 @@ class Reconciliation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class ReconciliationLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "reconciliation_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "reconciliation_id → reconciliations"
 
     reconciliation_id: Mapped[str] = mapped_column(ForeignKey("reconciliations.id"), nullable=False, index=True)
     bank_transaction_id: Mapped[str | None] = mapped_column(ForeignKey("bank_transactions.id"), nullable=True)
@@ -205,6 +221,7 @@ class ReconciliationLine(UUIDMixin, TimestampMixin, Base):
 # --------------------------------------------------------------------------- #
 class FiscalRule(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "fiscal_rules"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     rule_code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -219,6 +236,7 @@ class FiscalRule(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class IgftEvent(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "igft_events"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     event_type: Mapped[str] = mapped_column(String(24), nullable=False)  # PAYMENT / COLLECTION / TRANSFER

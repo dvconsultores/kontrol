@@ -48,7 +48,7 @@
 | ADR-D0-011 | Vínculo pedido → factura | **APPROVED** | 2026-08-29 | — | 034 + 7 |
 | ADR-D0-012 | Confirmación independiente del pedido | **APPROVED** | 2026-08-29 | — | 033, 034, 031, 032, 035 |
 | ADR-D0-013 | Dimensiones organizacionales | **APPROVED** | 2026-08-29 | ADR-011 | 007 + transversal |
-| ADR-D0-014 | Alcance canónico tenant / empresa / sucursal | **PROPUESTO** | 2026-08-31 · ARCH-MC-001 | — | — | ARCH-MC-001, todas las de negocio |
+| ADR-D0-014 | Alcance canónico tenant / empresa / sucursal | **APPROVED** | 2026-08-31 · ARCH-MC-001 | — | — | ARCH-MC-001, todas las de negocio |
 
 ## Bloque de auditoría — `specs/012-auditoria-integral-e2e/`
 

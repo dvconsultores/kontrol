@@ -20,6 +20,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
 from app.core.errors import ConflictError, KontrolError, NotFoundError
@@ -41,14 +42,18 @@ router = APIRouter(prefix="/maestros", tags=["maestros-uom"])
 # Utilidades de alcance y control
 # --------------------------------------------------------------------------
 
-def _visible_units(user: User):
-    """Unidades de la empresa **más** el catálogo global de plataforma."""
-    return or_(UnitOfMeasure.company_id == user.tenant_id, UnitOfMeasure.company_id.is_(None))
+def _visible_units(ctx: CompanyContext):
+    """Unidades de la empresa **más** el catálogo global de plataforma.
+
+    `OQ-MC-01` quedó cerrada: la unidad de negocio —BULTO, SACO, ROLLO— es de la
+    empresa; la unidad de sistema, con `company_id` nulo, es de la plataforma.
+    """
+    return or_(UnitOfMeasure.company_id == ctx.company_id, UnitOfMeasure.company_id.is_(None))
 
 
-def _get_unit(db: Session, user: User, unit_id: str) -> UnitOfMeasure:
+def _get_unit(db: Session, ctx: CompanyContext, unit_id: str) -> UnitOfMeasure:
     unit = db.get(UnitOfMeasure, unit_id)
-    if unit is None or (unit.company_id is not None and unit.company_id != user.tenant_id):
+    if unit is None or (unit.company_id is not None and unit.company_id != ctx.company_id):
         raise NotFoundError(code="UOM_NOT_FOUND", message="Unidad no encontrada")
     return unit
 
@@ -63,18 +68,18 @@ def _assert_editable(unit: UnitOfMeasure) -> None:
             details={"reason": "Unidad de plataforma", "allowed_actions": ["view"]})
 
 
-def _get_product(db: Session, user: User, product_id: str) -> CatalogItem:
+def _get_product(db: Session, ctx: CompanyContext, product_id: str) -> CatalogItem:
     item = db.get(CatalogItem, product_id)
-    if item is None or item.company_id != user.tenant_id:
+    if item is None or item.company_id != ctx.company_id:
         raise NotFoundError(code="ITEM_NOT_FOUND", message="Producto no encontrado")
     return item
 
 
-def _get_presentation(db: Session, user: User, presentation_id: str) -> Presentation:
+def _get_presentation(db: Session, ctx: CompanyContext, presentation_id: str) -> Presentation:
     presentation = db.get(Presentation, presentation_id)
     if presentation is None:
         raise NotFoundError(code="PRESENTATION_NOT_FOUND", message="Presentación no encontrada")
-    _get_product(db, user, presentation.product_id)
+    _get_product(db, ctx, presentation.product_id)
     return presentation
 
 
@@ -183,8 +188,8 @@ def _unit_in_use(db: Session, unit_id: str) -> bool:
 def list_units(q: str | None = None, dimension: str | None = None, status: str | None = None,
                scope: str | None = None, limit: int = 100, offset: int = 0,
                db: Session = Depends(get_db),
-               user: User = Depends(require_permission("maestros", "view"))):
-    query = select(UnitOfMeasure).where(_visible_units(user))
+               user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(UnitOfMeasure).where(_visible_units(ctx))
     if dimension:
         query = query.where(UnitOfMeasure.dimension == dimension)
     if status:
@@ -192,7 +197,7 @@ def list_units(q: str | None = None, dimension: str | None = None, status: str |
     if scope == "GLOBAL":
         query = query.where(UnitOfMeasure.company_id.is_(None))
     elif scope == "COMPANY":
-        query = query.where(UnitOfMeasure.company_id == user.tenant_id)
+        query = query.where(UnitOfMeasure.company_id == ctx.company_id)
     if q:
         pattern = f"%{q}%"
         query = query.where(UnitOfMeasure.code.ilike(pattern) | UnitOfMeasure.name.ilike(pattern))
@@ -205,8 +210,8 @@ def list_units(q: str | None = None, dimension: str | None = None, status: str |
 
 @router.post("/unidades", dependencies=[Depends(require_write_allowed)])
 def create_unit(body: UnitIn, db: Session = Depends(get_db),
-                actor: User = Depends(require_permission("maestros", "create"))):
-    unit = UnitOfMeasure(company_id=actor.tenant_id, status="ACTIVE",
+                actor: User = Depends(require_permission("maestros", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    unit = UnitOfMeasure(company_id=ctx.company_id, status="ACTIVE",
                          created_by=str(actor.id), **body.model_dump())
     db.add(unit)
     try:
@@ -223,16 +228,16 @@ def create_unit(body: UnitIn, db: Session = Depends(get_db),
 
 @router.get("/unidades/{unit_id}")
 def get_unit(unit_id: str, db: Session = Depends(get_db),
-             user: User = Depends(require_permission("maestros", "view"))):
-    return _unit_dict(db, _get_unit(db, user, unit_id), _permissions(db, user))
+             user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
+    return _unit_dict(db, _get_unit(db, ctx, unit_id), _permissions(db, user))
 
 
 @router.patch("/unidades/{unit_id}", dependencies=[Depends(require_write_allowed)])
 def patch_unit(unit_id: str, body: UnitPatch,
                if_match: str | None = Header(default=None, alias="If-Match"),
                db: Session = Depends(get_db),
-               actor: User = Depends(require_permission("maestros", "edit"))):
-    unit = _get_unit(db, actor, unit_id)
+               actor: User = Depends(require_permission("maestros", "edit")), ctx: CompanyContext = Depends(get_company_context)):
+    unit = _get_unit(db, ctx, unit_id)
     _assert_editable(unit)
     _check_version(unit, if_match)
     before = {"name": unit.name, "decimals": unit.decimals}
@@ -246,8 +251,8 @@ def patch_unit(unit_id: str, body: UnitPatch,
     return _unit_dict(db, unit, _permissions(db, actor))
 
 
-def _set_unit_status(db: Session, actor: User, unit_id: str, status: str) -> dict[str, Any]:
-    unit = _get_unit(db, actor, unit_id)
+def _set_unit_status(db: Session, ctx: CompanyContext, actor: User, unit_id: str, status: str) -> dict[str, Any]:
+    unit = _get_unit(db, ctx, unit_id)
     _assert_editable(unit)
     unit.status = status
     unit.version = int(unit.version) + 1
@@ -258,20 +263,20 @@ def _set_unit_status(db: Session, actor: User, unit_id: str, status: str) -> dic
 
 @router.post("/unidades/{unit_id}/activate", dependencies=[Depends(require_write_allowed)])
 def activate_unit(unit_id: str, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("maestros", "edit"))):
-    return _set_unit_status(db, actor, unit_id, "ACTIVE")
+                  actor: User = Depends(require_permission("maestros", "edit")), ctx: CompanyContext = Depends(get_company_context)):
+    return _set_unit_status(db, ctx, actor, unit_id, "ACTIVE")
 
 
 @router.post("/unidades/{unit_id}/deactivate", dependencies=[Depends(require_write_allowed)])
 def deactivate_unit(unit_id: str, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("maestros", "deactivate"))):
-    return _set_unit_status(db, actor, unit_id, "INACTIVE")
+                    actor: User = Depends(require_permission("maestros", "deactivate")), ctx: CompanyContext = Depends(get_company_context)):
+    return _set_unit_status(db, ctx, actor, unit_id, "INACTIVE")
 
 
 @router.delete("/unidades/{unit_id}", dependencies=[Depends(require_write_allowed)])
 def delete_unit(unit_id: str, db: Session = Depends(get_db),
-                actor: User = Depends(require_permission("maestros", "delete"))):
-    unit = _get_unit(db, actor, unit_id)
+                actor: User = Depends(require_permission("maestros", "delete")), ctx: CompanyContext = Depends(get_company_context)):
+    unit = _get_unit(db, ctx, unit_id)
     _assert_editable(unit)
     if _unit_in_use(db, unit_id):
         _audit(db, actor, "DELETE_BLOCKED", "unit_of_measure", str(unit.id))
@@ -299,8 +304,8 @@ class PhysicalConversionIn(BaseModel):
 
 @router.get("/unidades/{unit_id}/conversiones")
 def list_conversions(unit_id: str, db: Session = Depends(get_db),
-                     user: User = Depends(require_permission("maestros", "view"))):
-    _get_unit(db, user, unit_id)
+                     user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
+    _get_unit(db, ctx, unit_id)
     rows = db.execute(select(UnitConversion).where(
         or_(UnitConversion.from_unit_id == unit_id, UnitConversion.to_unit_id == unit_id)
     )).scalars().all()
@@ -312,14 +317,14 @@ def list_conversions(unit_id: str, db: Session = Depends(get_db),
              dependencies=[Depends(require_write_allowed)])
 def create_physical_conversion(unit_id: str, body: PhysicalConversionIn,
                                db: Session = Depends(get_db),
-                               actor: User = Depends(require_permission("maestros", "create"))):
+                               actor: User = Depends(require_permission("maestros", "create")), ctx: CompanyContext = Depends(get_company_context)):
     """Conversión **física**: solo dentro de la misma dimensión.
 
     `KG ↔ L` se rechaza: no se inventan conversiones físicamente inválidas. Una
     relación por densidad sería otra capacidad, fuera de 011 (§42).
     """
-    _get_unit(db, actor, unit_id)
-    _get_unit(db, actor, body.to_unit_id)
+    _get_unit(db, ctx, unit_id)
+    _get_unit(db, ctx, body.to_unit_id)
     uom.assert_same_dimension(db, unit_id, body.to_unit_id)
     conversion = UnitConversion(from_unit_id=unit_id, to_unit_id=body.to_unit_id,
                                 factor=body.factor, rounding=body.rounding, validity="ACTIVE")
@@ -425,8 +430,8 @@ def _presentation_dict(db: Session, presentation: Presentation,
 @router.get("/productos/{product_id}/presentaciones")
 def list_presentations(product_id: str, status: str | None = None,
                        db: Session = Depends(get_db),
-                       user: User = Depends(require_permission("maestros", "view"))):
-    _get_product(db, user, product_id)
+                       user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
+    _get_product(db, ctx, product_id)
     query = select(Presentation).where(Presentation.product_id == product_id)
     if status:
         query = query.where(Presentation.status == status)
@@ -438,8 +443,8 @@ def list_presentations(product_id: str, status: str | None = None,
 @router.post("/productos/{product_id}/presentaciones",
              dependencies=[Depends(require_write_allowed)])
 def create_presentation(product_id: str, body: PresentationIn, db: Session = Depends(get_db),
-                        actor: User = Depends(require_permission("maestros", "create"))):
-    item = _get_product(db, actor, product_id)
+                        actor: User = Depends(require_permission("maestros", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    item = _get_product(db, ctx, product_id)
     if item.item_type == "PRODUCT" and item.base_unit_id is None:
         raise KontrolError(code="BASE_UNIT_REQUIRED",
                            message="El producto no declara unidad base", status_code=422)
@@ -473,8 +478,8 @@ def create_presentation(product_id: str, body: PresentationIn, db: Session = Dep
 
 @router.get("/presentaciones/{presentation_id}")
 def get_presentation(presentation_id: str, db: Session = Depends(get_db),
-                     user: User = Depends(require_permission("maestros", "view"))):
-    return _presentation_dict(db, _get_presentation(db, user, presentation_id),
+                     user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
+    return _presentation_dict(db, _get_presentation(db, ctx, presentation_id),
                               _permissions(db, user))
 
 
@@ -482,9 +487,9 @@ def get_presentation(presentation_id: str, db: Session = Depends(get_db),
 def patch_presentation(presentation_id: str, body: PresentationPatch,
                        if_match: str | None = Header(default=None, alias="If-Match"),
                        db: Session = Depends(get_db),
-                       actor: User = Depends(require_permission("maestros", "edit"))):
+                       actor: User = Depends(require_permission("maestros", "edit")), ctx: CompanyContext = Depends(get_company_context)):
     """Solo **metadata**. El factor no se edita aquí: se versiona."""
-    presentation = _get_presentation(db, actor, presentation_id)
+    presentation = _get_presentation(db, ctx, presentation_id)
     _check_version(presentation, if_match)
     before = {"name": presentation.name}
     for field, value in body.model_dump(exclude_unset=True).items():
@@ -497,9 +502,9 @@ def patch_presentation(presentation_id: str, body: PresentationPatch,
     return _presentation_dict(db, presentation, _permissions(db, actor))
 
 
-def _set_presentation_status(db: Session, actor: User, presentation_id: str,
-                             status: str) -> dict[str, Any]:
-    presentation = _get_presentation(db, actor, presentation_id)
+def _set_presentation_status(db: Session, ctx: CompanyContext, actor: User,
+                             presentation_id: str, status: str) -> dict[str, Any]:
+    presentation = _get_presentation(db, ctx, presentation_id)
     presentation.status = status
     presentation.version = int(presentation.version) + 1
     _audit(db, actor, status, "presentation", str(presentation.id), after={"status": status})
@@ -510,21 +515,21 @@ def _set_presentation_status(db: Session, actor: User, presentation_id: str,
 @router.post("/presentaciones/{presentation_id}/activate",
              dependencies=[Depends(require_write_allowed)])
 def activate_presentation(presentation_id: str, db: Session = Depends(get_db),
-                          actor: User = Depends(require_permission("maestros", "edit"))):
-    return _set_presentation_status(db, actor, presentation_id, "ACTIVE")
+                          actor: User = Depends(require_permission("maestros", "edit")), ctx: CompanyContext = Depends(get_company_context)):
+    return _set_presentation_status(db, ctx, actor, presentation_id, "ACTIVE")
 
 
 @router.post("/presentaciones/{presentation_id}/deactivate",
              dependencies=[Depends(require_write_allowed)])
 def deactivate_presentation(presentation_id: str, db: Session = Depends(get_db),
-                            actor: User = Depends(require_permission("maestros", "deactivate"))):
-    return _set_presentation_status(db, actor, presentation_id, "INACTIVE")
+                            actor: User = Depends(require_permission("maestros", "deactivate")), ctx: CompanyContext = Depends(get_company_context)):
+    return _set_presentation_status(db, ctx, actor, presentation_id, "INACTIVE")
 
 
 @router.delete("/presentaciones/{presentation_id}", dependencies=[Depends(require_write_allowed)])
 def delete_presentation(presentation_id: str, db: Session = Depends(get_db),
-                        actor: User = Depends(require_permission("maestros", "delete"))):
-    presentation = _get_presentation(db, actor, presentation_id)
+                        actor: User = Depends(require_permission("maestros", "delete")), ctx: CompanyContext = Depends(get_company_context)):
+    presentation = _get_presentation(db, ctx, presentation_id)
     if _presentation_in_use(db, presentation_id):
         _audit(db, actor, "DELETE_BLOCKED", "presentation", str(presentation.id))
         db.commit()
@@ -549,8 +554,8 @@ def delete_presentation(presentation_id: str, db: Session = Depends(get_db),
 
 @router.get("/presentaciones/{presentation_id}/versiones")
 def list_versions(presentation_id: str, db: Session = Depends(get_db),
-                  user: User = Depends(require_permission("maestros", "view"))):
-    _get_presentation(db, user, presentation_id)
+                  user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
+    _get_presentation(db, ctx, presentation_id)
     rows = db.execute(
         select(ProductPresentationVersion)
         .where(ProductPresentationVersion.presentation_id == presentation_id)
@@ -581,14 +586,14 @@ def list_versions(presentation_id: str, db: Session = Depends(get_db),
 @router.post("/presentaciones/{presentation_id}/versiones",
              dependencies=[Depends(require_write_allowed)])
 def create_version(presentation_id: str, body: VersionIn, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("maestros", "create"))):
+                   actor: User = Depends(require_permission("maestros", "create")), ctx: CompanyContext = Depends(get_company_context)):
     """Cambiar un factor **crea una versión** y cierra la anterior.
 
     No existe `PATCH` de versión: sobrescribir un factor reescribiría el
     significado de todo el histórico que lo usó (R-D0-09-4).
     """
-    presentation = _get_presentation(db, actor, presentation_id)
-    item = _get_product(db, actor, presentation.product_id)
+    presentation = _get_presentation(db, ctx, presentation_id)
+    item = _get_product(db, ctx, presentation.product_id)
     start = body.valid_from or datetime.now(UTC)
 
     current = _open_version(db, presentation_id)
@@ -640,12 +645,12 @@ class PreviewIn(BaseModel):
 
 @router.post("/conversion/preview")
 def preview_conversion(body: PreviewIn, db: Session = Depends(get_db),
-                       user: User = Depends(require_permission("maestros", "view"))):
+                       user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
     """Vista previa. El frontend la muestra; **no vincula**: al guardar, el
     backend recalcula (FR-011-044, AC-011-18)."""
-    _get_product(db, user, body.product_id)
+    _get_product(db, ctx, body.product_id)
     if body.presentation_id:
-        _get_presentation(db, user, body.presentation_id)
+        _get_presentation(db, ctx, body.presentation_id)
     conversion = uom.to_base(db, body.quantity, body.product_id,
                              body.presentation_id, body.date)
     base_unit = uom.base_unit_of(db, body.product_id)
@@ -678,11 +683,11 @@ class BaseUnitIn(BaseModel):
 @router.patch("/productos/{product_id}/unidad-base",
               dependencies=[Depends(require_write_allowed)])
 def set_base_unit(product_id: str, body: BaseUnitIn, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("maestros", "edit"))):
+                  actor: User = Depends(require_permission("maestros", "edit")), ctx: CompanyContext = Depends(get_company_context)):
     """Cambiar la unidad base. Bloqueado si el producto tiene historial
     (R-011-3): el bloqueo se produce **aquí**, no en la interfaz."""
-    item = _get_product(db, actor, product_id)
-    _get_unit(db, actor, body.base_unit_id)
+    item = _get_product(db, ctx, product_id)
+    _get_unit(db, ctx, body.base_unit_id)
     try:
         uom.assert_base_unit_changeable(db, product_id)
     except KontrolError:

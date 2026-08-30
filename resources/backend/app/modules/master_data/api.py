@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
 from app.core.errors import NotFoundError
@@ -184,8 +185,9 @@ def list_parties(
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    ctx: CompanyContext = Depends(get_company_context),
 ):
-    query = select(Party).where(Party.company_id == user.tenant_id)
+    query = select(Party).where(Party.company_id == ctx.company_id)
     if q:
         like = f"%{q}%"
         query = query.where((Party.name.ilike(like)) | (Party.tax_id.ilike(like)) | (Party.code.ilike(like)))
@@ -201,12 +203,13 @@ def create_party(
     body: PartyCreate,
     db: Session = Depends(get_db),
     actor: User = Depends(require_permission("maestros", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
 ):
     tax_id = master_service.validate_tax_id(body.tax_id, body.person_type) if body.tax_id else None
     role = (body.roles or ["CLIENTE"])[0]
-    master_service.ensure_no_duplicate(db, company_id=actor.tenant_id, tax_id=tax_id or "", role=role)
+    master_service.ensure_no_duplicate(db, company_id=ctx.company_id, tax_id=tax_id or "", role=role)
     party = Party(
-        company_id=actor.tenant_id,
+        company_id=ctx.company_id,
         code=body.code,
         name=body.name,
         person_type=body.person_type,
@@ -225,9 +228,9 @@ def create_party(
 
 
 @router.get("/terceros/{party_id}")
-def get_party(party_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def get_party(party_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     party = db.get(Party, party_id)
-    if not party or party.company_id != user.tenant_id:
+    if not party or party.company_id != ctx.company_id:
         raise NotFoundError(code="PARTY_NOT_FOUND", message="Tercero no encontrado")
     return _party_dict(db, party)
 
@@ -249,10 +252,11 @@ def add_party_role(
     body: PartyCreate | CustomerCreate | SupplierCreate = None,  # type: ignore[assignment]
     db: Session = Depends(get_db),
     actor: User = Depends(require_permission("maestros", "edit")),
+    ctx: CompanyContext = Depends(get_company_context),
 ):
     """Agrega un rol a un tercero (cliente/proveedor/transportista/conductor)."""
     party = db.get(Party, party_id)
-    if not party or party.company_id != actor.tenant_id:
+    if not party or party.company_id != ctx.company_id:
         raise NotFoundError(code="PARTY_NOT_FOUND", message="Tercero no encontrado")
     roles = set(party.roles or [])
     roles.add(role.upper())
@@ -273,8 +277,9 @@ def list_items(
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    ctx: CompanyContext = Depends(get_company_context),
 ):
-    query = select(CatalogItem).where(CatalogItem.company_id == user.tenant_id)
+    query = select(CatalogItem).where(CatalogItem.company_id == ctx.company_id)
     if q:
         like = f"%{q}%"
         query = query.where((CatalogItem.name.ilike(like)) | (CatalogItem.code.ilike(like)))
@@ -308,9 +313,10 @@ def search_items(
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    ctx: CompanyContext = Depends(get_company_context),
 ):
     """Búsqueda asíncrona backend para AsyncCombobox (FR-002-043)."""
-    query = select(CatalogItem).where(CatalogItem.company_id == user.tenant_id, CatalogItem.status == "ACTIVE")
+    query = select(CatalogItem).where(CatalogItem.company_id == ctx.company_id, CatalogItem.status == "ACTIVE")
     if item_type:
         query = query.where(CatalogItem.item_type == item_type)
     if q:
@@ -331,13 +337,14 @@ def create_item(
     body: ItemCreate,
     db: Session = Depends(get_db),
     actor: User = Depends(require_permission("maestros", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
 ):
     if body.item_type not in ("PRODUCT", "SERVICE"):
         from app.core.errors import KontrolError
 
         raise KontrolError(code="INVALID_ITEM_TYPE", message="El tipo de ítem debe ser PRODUCT o SERVICE", status_code=422)
     item = CatalogItem(
-        company_id=actor.tenant_id,
+        company_id=ctx.company_id,
         code=body.code,
         name=body.name,
         item_type=body.item_type,
@@ -369,9 +376,9 @@ def create_item(
 
 
 @router.get("/catalogos/items/{item_id}")
-def get_item(item_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def get_item(item_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     item = db.get(CatalogItem, item_id)
-    if not item or item.company_id != user.tenant_id:
+    if not item or item.company_id != ctx.company_id:
         raise NotFoundError(code="ITEM_NOT_FOUND", message="Ítem no encontrado")
     return {
         "id": str(item.id),
@@ -385,17 +392,17 @@ def get_item(item_id: str, db: Session = Depends(get_db), user: User = Depends(g
 
 
 @router.get("/catalogos/taxonomia")
-def list_taxonomy(parent_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(TaxonomyNode).where((TaxonomyNode.company_id == user.tenant_id) | (TaxonomyNode.company_id.is_(None)))
+def list_taxonomy(parent_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(TaxonomyNode).where((TaxonomyNode.company_id == ctx.company_id) | (TaxonomyNode.company_id.is_(None)))
     if parent_id:
         query = query.where(TaxonomyNode.parent_id == parent_id)
     return [{"id": str(n.id), "code": n.code, "name": n.name, "level": n.level, "status": n.status} for n in db.execute(query.order_by(TaxonomyNode.level, TaxonomyNode.name)).scalars().all()]
 
 
 @router.post("/catalogos/taxonomia", dependencies=[Depends(require_write_allowed)])
-def create_taxonomy(body: TaxonomyCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "create"))):
+def create_taxonomy(body: TaxonomyCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "create")), ctx: CompanyContext = Depends(get_company_context)):
     node = TaxonomyNode(
-        company_id=actor.tenant_id,
+        company_id=ctx.company_id,
         code=body.code,
         name=body.name,
         level=body.level,
@@ -411,15 +418,15 @@ def create_taxonomy(body: TaxonomyCreate, db: Session = Depends(get_db), actor: 
 
 
 @router.get("/catalogos/atributos")
-def list_attributes(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(AttributeDefinition).where((AttributeDefinition.company_id == user.tenant_id) | (AttributeDefinition.company_id.is_(None)))
+def list_attributes(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(AttributeDefinition).where((AttributeDefinition.company_id == ctx.company_id) | (AttributeDefinition.company_id.is_(None)))
     return [{"id": str(a.id), "code": a.code, "name": a.name, "data_type": a.data_type, "searchable": a.searchable} for a in db.execute(query.order_by(AttributeDefinition.name)).scalars().all()]
 
 
 @router.post("/catalogos/atributos", dependencies=[Depends(require_write_allowed)])
-def create_attribute(body: AttributeCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "create"))):
+def create_attribute(body: AttributeCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "create")), ctx: CompanyContext = Depends(get_company_context)):
     attr = AttributeDefinition(
-        company_id=actor.tenant_id,
+        company_id=ctx.company_id,
         code=body.code,
         name=body.name,
         data_type=body.data_type,
@@ -438,15 +445,15 @@ def create_attribute(body: AttributeCreate, db: Session = Depends(get_db), actor
 
 
 @router.get("/catalogos/unidades")
-def list_units(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(UnitOfMeasure).where((UnitOfMeasure.company_id == user.tenant_id) | (UnitOfMeasure.company_id.is_(None)))
+def list_units(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(UnitOfMeasure).where((UnitOfMeasure.company_id == ctx.company_id) | (UnitOfMeasure.company_id.is_(None)))
     return [{"id": str(u.id), "code": u.code, "name": u.name, "symbol": u.symbol, "dimension": u.dimension} for u in db.execute(query.order_by(UnitOfMeasure.name)).scalars().all()]
 
 
 @router.post("/catalogos/unidades", dependencies=[Depends(require_write_allowed)])
-def create_unit(body: UnitCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "create"))):
+def create_unit(body: UnitCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "create")), ctx: CompanyContext = Depends(get_company_context)):
     unit = UnitOfMeasure(
-        company_id=actor.tenant_id,
+        company_id=ctx.company_id,
         code=body.code,
         name=body.name,
         dimension=body.dimension,
@@ -474,8 +481,8 @@ def create_conversion(unit_id: str, body: ConversionCreate, db: Session = Depend
 # Perfiles
 # --------------------------------------------------------------------------- #
 @router.get("/perfiles")
-def list_profiles(profile_type: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(ProfileVersion).where((ProfileVersion.company_id == user.tenant_id) | (ProfileVersion.company_id.is_(None)))
+def list_profiles(profile_type: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(ProfileVersion).where((ProfileVersion.company_id == ctx.company_id) | (ProfileVersion.company_id.is_(None)))
     if profile_type:
         query = query.where(ProfileVersion.profile_type == profile_type)
     return [
@@ -493,7 +500,7 @@ def list_profiles(profile_type: str | None = None, db: Session = Depends(get_db)
 
 
 @router.post("/perfiles", dependencies=[Depends(require_write_allowed)])
-def create_profile(body: ProfileCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "create"))):
+def create_profile(body: ProfileCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "create")), ctx: CompanyContext = Depends(get_company_context)):
     master_service.assert_no_overlap(
         db,
         profile_type=body.profile_type,
@@ -502,7 +509,7 @@ def create_profile(body: ProfileCreate, db: Session = Depends(get_db), actor: Us
         effective_to=body.effective_to,
     )
     profile = ProfileVersion(
-        company_id=actor.tenant_id,
+        company_id=ctx.company_id,
         code=body.code,
         name=body.name,
         profile_type=body.profile_type,

@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
 from app.core.errors import NotFoundError
@@ -139,8 +140,8 @@ class TransitionBody(BaseModel):
 # Maestros regulatorios
 # --------------------------------------------------------------------------- #
 @router.get("/authorities")
-def list_authorities(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(RegulatoryAuthority).where(RegulatoryAuthority.company_id == user.tenant_id)
+def list_authorities(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(RegulatoryAuthority).where(RegulatoryAuthority.company_id == ctx.company_id)
                        .order_by(RegulatoryAuthority.name)).scalars().all()
     return {"items": [{"id": a.id, "code": a.code, "name": a.name, "validation_method": a.validation_method,
                        "status": a.status} for a in items], "total": len(items), "page": 1, "page_size": len(items) or 1}
@@ -148,8 +149,8 @@ def list_authorities(db: Session = Depends(get_db), user: User = Depends(get_cur
 
 @router.post("/authorities", dependencies=[Depends(require_write_allowed)])
 def create_authority(body: AuthorityCreate, db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("regulatorio", "create"))):
-    a = regulatory_service.create_authority(db, company_id=actor.tenant_id, code=body.code, name=body.name,
+                     actor: User = Depends(require_permission("regulatorio", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    a = regulatory_service.create_authority(db, company_id=ctx.company_id, code=body.code, name=body.name,
                                             validation_method=body.validation_method, actor=str(actor.id))
     db.commit()
     db.refresh(a)
@@ -157,8 +158,8 @@ def create_authority(body: AuthorityCreate, db: Session = Depends(get_db),
 
 
 @router.get("/permit-types")
-def list_permit_types(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(PermitType).where(PermitType.company_id == user.tenant_id)
+def list_permit_types(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(PermitType).where(PermitType.company_id == ctx.company_id)
                        .order_by(PermitType.name)).scalars().all()
     return {"items": [{"id": t.id, "authority_id": t.authority_id, "code": t.code, "name": t.name,
                        "scope": t.scope, "status": t.status} for t in items],
@@ -167,8 +168,8 @@ def list_permit_types(db: Session = Depends(get_db), user: User = Depends(get_cu
 
 @router.post("/permit-types", dependencies=[Depends(require_write_allowed)])
 def create_permit_type(body: PermitTypeCreate, db: Session = Depends(get_db),
-                       actor: User = Depends(require_permission("regulatorio", "create"))):
-    t = regulatory_service.create_permit_type(db, company_id=actor.tenant_id, authority_id=body.authority_id,
+                       actor: User = Depends(require_permission("regulatorio", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    t = regulatory_service.create_permit_type(db, company_id=ctx.company_id, authority_id=body.authority_id,
                                               code=body.code, name=body.name, scope=body.scope,
                                               validation_method=body.validation_method, actor=str(actor.id))
     db.commit()
@@ -177,8 +178,8 @@ def create_permit_type(body: PermitTypeCreate, db: Session = Depends(get_db),
 
 
 @router.get("/official-registrations")
-def list_registrations(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(OfficialRegistration).where(OfficialRegistration.company_id == user.tenant_id)
+def list_registrations(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(OfficialRegistration).where(OfficialRegistration.company_id == ctx.company_id)
                        .order_by(OfficialRegistration.created_at.desc())).scalars().all()
     return {"items": [{"id": r.id, "authority_id": r.authority_id, "scope": r.scope, "ref_number": r.ref_number,
                        "expires_at": r.expires_at.isoformat() if r.expires_at else None, "status": r.status} for r in items],
@@ -187,8 +188,8 @@ def list_registrations(db: Session = Depends(get_db), user: User = Depends(get_c
 
 @router.post("/official-registrations", dependencies=[Depends(require_write_allowed)])
 def create_registration(body: RegistrationCreate, db: Session = Depends(get_db),
-                        actor: User = Depends(require_permission("regulatorio", "create"))):
-    r = regulatory_service.create_official_registration(db, company_id=actor.tenant_id, authority_id=body.authority_id,
+                        actor: User = Depends(require_permission("regulatorio", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    r = regulatory_service.create_official_registration(db, company_id=ctx.company_id, authority_id=body.authority_id,
                                                         scope=body.scope, ref_number=body.ref_number,
                                                         issued_at=body.issued_at, expires_at=body.expires_at,
                                                         file_ref=body.file_ref, actor=str(actor.id))
@@ -198,8 +199,8 @@ def create_registration(body: RegistrationCreate, db: Session = Depends(get_db),
 
 
 @router.get("/profiles")
-def list_profiles(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(RegulatoryProfile).where(RegulatoryProfile.company_id == user.tenant_id)
+def list_profiles(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(RegulatoryProfile).where(RegulatoryProfile.company_id == ctx.company_id)
                        .order_by(RegulatoryProfile.operation)).scalars().all()
     return {"items": [{"id": p.id, "operation": p.operation, "product_id": p.product_id, "rubric_id": p.rubric_id,
                        "required_documents": p.required_documents, "version": p.version, "status": p.status} for p in items],
@@ -208,8 +209,8 @@ def list_profiles(db: Session = Depends(get_db), user: User = Depends(get_curren
 
 @router.post("/profiles", dependencies=[Depends(require_write_allowed)])
 def create_profile(body: ProfileCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("regulatorio", "create"))):
-    p = regulatory_service.create_profile(db, company_id=actor.tenant_id, operation=body.operation,
+                   actor: User = Depends(require_permission("regulatorio", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    p = regulatory_service.create_profile(db, company_id=ctx.company_id, operation=body.operation,
                                           rubric_id=body.rubric_id, product_id=body.product_id,
                                           origin=body.origin, destination=body.destination,
                                           required_documents=body.required_documents, version=body.version,
@@ -220,8 +221,8 @@ def create_profile(body: ProfileCreate, db: Session = Depends(get_db),
 
 
 @router.get("/vehicles")
-def list_vehicles(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(TransportVehicle).where(TransportVehicle.company_id == user.tenant_id)
+def list_vehicles(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(TransportVehicle).where(TransportVehicle.company_id == ctx.company_id)
                        .order_by(TransportVehicle.plate)).scalars().all()
     return {"items": [{"id": v.id, "plate": v.plate, "vehicle_type": v.vehicle_type, "capacity": v.capacity,
                        "owner_party_id": v.owner_party_id, "status": v.status} for v in items],
@@ -230,8 +231,8 @@ def list_vehicles(db: Session = Depends(get_db), user: User = Depends(get_curren
 
 @router.post("/vehicles", dependencies=[Depends(require_write_allowed)])
 def create_vehicle(body: VehicleCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("regulatorio", "create"))):
-    v = regulatory_service.create_vehicle(db, company_id=actor.tenant_id, plate=body.plate, vehicle_type=body.vehicle_type,
+                   actor: User = Depends(require_permission("regulatorio", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    v = regulatory_service.create_vehicle(db, company_id=ctx.company_id, plate=body.plate, vehicle_type=body.vehicle_type,
                                           capacity=body.capacity, owner_party_id=body.owner_party_id,
                                           documents=body.documents, actor=str(actor.id))
     db.commit()
@@ -240,8 +241,8 @@ def create_vehicle(body: VehicleCreate, db: Session = Depends(get_db),
 
 
 @router.get("/drivers")
-def list_drivers(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(TransportDriver).where(TransportDriver.company_id == user.tenant_id)
+def list_drivers(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(TransportDriver).where(TransportDriver.company_id == ctx.company_id)
                        .order_by(TransportDriver.created_at.desc())).scalars().all()
     return {"items": [{"id": d.id, "party_id": d.party_id, "license": d.license, "status": d.status} for d in items],
             "total": len(items), "page": 1, "page_size": len(items) or 1}
@@ -249,8 +250,8 @@ def list_drivers(db: Session = Depends(get_db), user: User = Depends(get_current
 
 @router.post("/drivers", dependencies=[Depends(require_write_allowed)])
 def create_driver(body: DriverCreate, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("regulatorio", "create"))):
-    d = regulatory_service.create_driver(db, company_id=actor.tenant_id, party_id=body.party_id, license=body.license,
+                  actor: User = Depends(require_permission("regulatorio", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    d = regulatory_service.create_driver(db, company_id=ctx.company_id, party_id=body.party_id, license=body.license,
                                          documents=body.documents, actor=str(actor.id))
     db.commit()
     db.refresh(d)
@@ -261,8 +262,8 @@ def create_driver(body: DriverCreate, db: Session = Depends(get_db),
 # Permisos y guías
 # --------------------------------------------------------------------------- #
 @router.get("/permits")
-def list_permits(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(PermitInstance).where(PermitInstance.company_id == user.tenant_id)
+def list_permits(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(PermitInstance).where(PermitInstance.company_id == ctx.company_id)
     if status:
         query = query.where(PermitInstance.status == status)
     items = db.execute(query.order_by(PermitInstance.created_at.desc())).scalars().all()
@@ -274,8 +275,8 @@ def list_permits(status: str | None = None, db: Session = Depends(get_db), user:
 
 @router.post("/permits", dependencies=[Depends(require_write_allowed)])
 def create_permit(body: PermitCreate, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("regulatorio", "create"))):
-    p = regulatory_service.create_permit(db, company_id=actor.tenant_id, permit_type_id=body.permit_type_id,
+                  actor: User = Depends(require_permission("regulatorio", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    p = regulatory_service.create_permit(db, company_id=ctx.company_id, permit_type_id=body.permit_type_id,
                                          number=body.number, issued_at=body.issued_at, expires_at=body.expires_at,
                                          origin=body.origin, destination=body.destination, products=body.products,
                                          lots=body.lots, quantity=body.quantity, vehicle_id=body.vehicle_id,
@@ -287,9 +288,9 @@ def create_permit(body: PermitCreate, db: Session = Depends(get_db),
 
 @router.post("/permits/{permit_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_permit(permit_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                      actor: User = Depends(require_permission("regulatorio", "approve"))):
+                      actor: User = Depends(require_permission("regulatorio", "approve")), ctx: CompanyContext = Depends(get_company_context)):
     p = _owned(db, PermitInstance, permit_id, actor.tenant_id, "PERMIT_NOT_FOUND", "Permiso no encontrado")
-    regulatory_service.transition_permit(db, company_id=actor.tenant_id, permit_id=str(p.id), target=body.target,
+    regulatory_service.transition_permit(db, company_id=ctx.company_id, permit_id=str(p.id), target=body.target,
                                          actor=str(actor.id))
     db.commit()
     db.refresh(p)
@@ -298,8 +299,8 @@ def transition_permit(permit_id: str, body: TransitionBody, db: Session = Depend
 
 @router.get("/official-documents")
 def list_official_documents(kind: str | None = None, db: Session = Depends(get_db),
-                            user: User = Depends(get_current_user)):
-    query = select(OfficialDocument).where(OfficialDocument.company_id == user.tenant_id)
+                            user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(OfficialDocument).where(OfficialDocument.company_id == ctx.company_id)
     if kind:
         query = query.where(OfficialDocument.kind == kind)
     items = db.execute(query.order_by(OfficialDocument.created_at.desc())).scalars().all()
@@ -311,8 +312,8 @@ def list_official_documents(kind: str | None = None, db: Session = Depends(get_d
 
 @router.post("/official-documents", dependencies=[Depends(require_write_allowed)])
 def register_official_document(body: OfficialDocumentCreate, db: Session = Depends(get_db),
-                               actor: User = Depends(require_permission("regulatorio", "create"))):
-    doc = regulatory_service.register_official_document(db, company_id=actor.tenant_id, kind=body.kind,
+                               actor: User = Depends(require_permission("regulatorio", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    doc = regulatory_service.register_official_document(db, company_id=ctx.company_id, kind=body.kind,
                                                         number=body.number, authority_id=body.authority_id,
                                                         organism=body.organism, issued_at=body.issued_at,
                                                         expires_at=body.expires_at, file_ref=body.file_ref,
@@ -327,8 +328,8 @@ def register_official_document(body: OfficialDocumentCreate, db: Session = Depen
 # --------------------------------------------------------------------------- #
 @router.post("/evaluations", dependencies=[Depends(require_write_allowed)])
 def evaluate_shipment(body: EvaluationCreate, db: Session = Depends(get_db),
-                      actor: User = Depends(require_permission("regulatorio", "approve"))):
-    result = regulatory_service.evaluate_shipment(db, company_id=actor.tenant_id, shipment_id=body.shipment_id,
+                      actor: User = Depends(require_permission("regulatorio", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    result = regulatory_service.evaluate_shipment(db, company_id=ctx.company_id, shipment_id=body.shipment_id,
                                                   actor=str(actor.id))
     db.commit()
     return result
@@ -336,8 +337,8 @@ def evaluate_shipment(body: EvaluationCreate, db: Session = Depends(get_db),
 
 @router.get("/evaluations")
 def list_evaluations(shipment_id: str | None = None, db: Session = Depends(get_db),
-                     user: User = Depends(get_current_user)):
-    query = select(RegulatoryEvaluation).where(RegulatoryEvaluation.company_id == user.tenant_id)
+                     user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(RegulatoryEvaluation).where(RegulatoryEvaluation.company_id == ctx.company_id)
     if shipment_id:
         query = query.where(RegulatoryEvaluation.shipment_id == shipment_id)
     items = db.execute(query.order_by(RegulatoryEvaluation.created_at.desc())).scalars().all()
@@ -348,9 +349,9 @@ def list_evaluations(shipment_id: str | None = None, db: Session = Depends(get_d
 
 @router.post("/evaluations/{evaluation_id}/override", dependencies=[Depends(require_write_allowed)])
 def override_evaluation(evaluation_id: str, body: OverrideBody, db: Session = Depends(get_db),
-                        actor: User = Depends(require_permission("regulatorio", "approve"))):
+                        actor: User = Depends(require_permission("regulatorio", "approve")), ctx: CompanyContext = Depends(get_company_context)):
     e = _owned(db, RegulatoryEvaluation, evaluation_id, actor.tenant_id, "EVALUATION_NOT_FOUND", "Evaluación no encontrada")
-    regulatory_service.override_evaluation(db, company_id=actor.tenant_id, evaluation_id=str(e.id),
+    regulatory_service.override_evaluation(db, company_id=ctx.company_id, evaluation_id=str(e.id),
                                            reason=body.reason, actor=str(actor.id))
     db.commit()
     db.refresh(e)
@@ -361,8 +362,8 @@ def override_evaluation(evaluation_id: str, body: OverrideBody, db: Session = De
 # Contingencias y aprobaciones
 # --------------------------------------------------------------------------- #
 @router.get("/contingencies")
-def list_contingencies(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(RegulatoryContingency).where(RegulatoryContingency.company_id == user.tenant_id)
+def list_contingencies(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(RegulatoryContingency).where(RegulatoryContingency.company_id == ctx.company_id)
                        .order_by(RegulatoryContingency.created_at.desc())).scalars().all()
     return {"items": [{"id": c.id, "rule_ref": c.rule_ref, "reason": c.reason, "allowed_by": c.allowed_by,
                        "status": c.status} for c in items], "total": len(items), "page": 1, "page_size": len(items) or 1}
@@ -370,8 +371,8 @@ def list_contingencies(db: Session = Depends(get_db), user: User = Depends(get_c
 
 @router.post("/contingencies", dependencies=[Depends(require_write_allowed)])
 def create_contingency(body: ContingencyCreate, db: Session = Depends(get_db),
-                       actor: User = Depends(require_permission("regulatorio", "create"))):
-    c = regulatory_service.create_contingency(db, company_id=actor.tenant_id, rule_ref=body.rule_ref,
+                       actor: User = Depends(require_permission("regulatorio", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    c = regulatory_service.create_contingency(db, company_id=ctx.company_id, rule_ref=body.rule_ref,
                                               reason=body.reason, actor=str(actor.id))
     db.commit()
     db.refresh(c)
@@ -380,9 +381,9 @@ def create_contingency(body: ContingencyCreate, db: Session = Depends(get_db),
 
 @router.post("/contingencies/{contingency_id}/end", dependencies=[Depends(require_write_allowed)])
 def end_contingency(contingency_id: str, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("regulatorio", "approve"))):
+                    actor: User = Depends(require_permission("regulatorio", "approve")), ctx: CompanyContext = Depends(get_company_context)):
     c = _owned(db, RegulatoryContingency, contingency_id, actor.tenant_id, "CONTINGENCY_NOT_FOUND", "Contingencia no encontrada")
-    regulatory_service.end_contingency(db, company_id=actor.tenant_id, contingency_id=str(c.id))
+    regulatory_service.end_contingency(db, company_id=ctx.company_id, contingency_id=str(c.id))
     db.commit()
     db.refresh(c)
     return {"id": c.id, "status": c.status}
@@ -390,8 +391,8 @@ def end_contingency(contingency_id: str, db: Session = Depends(get_db),
 
 @router.post("/approval-requests", dependencies=[Depends(require_write_allowed)])
 def create_approval_request(body: ApprovalCreate, db: Session = Depends(get_db),
-                            actor: User = Depends(require_permission("regulatorio", "create"))):
-    req = regulatory_service.create_approval_request(db, company_id=actor.tenant_id, object_ref=body.object_ref,
+                            actor: User = Depends(require_permission("regulatorio", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    req = regulatory_service.create_approval_request(db, company_id=ctx.company_id, object_ref=body.object_ref,
                                                      rule_ref=body.rule_ref, risk=body.risk, amount=body.amount,
                                                      deadline=body.deadline, actor=str(actor.id))
     db.commit()
@@ -401,9 +402,9 @@ def create_approval_request(body: ApprovalCreate, db: Session = Depends(get_db),
 
 @router.post("/approval-requests/{request_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_approval_request(request_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                                actor: User = Depends(require_permission("regulatorio", "approve"))):
+                                actor: User = Depends(require_permission("regulatorio", "approve")), ctx: CompanyContext = Depends(get_company_context)):
     req = _owned(db, RegulatoryApprovalRequest, request_id, actor.tenant_id, "APPROVAL_REQUEST_NOT_FOUND", "Solicitud no encontrada")
-    regulatory_service.transition_approval_request(db, company_id=actor.tenant_id, request_id=str(req.id),
+    regulatory_service.transition_approval_request(db, company_id=ctx.company_id, request_id=str(req.id),
                                                    target=body.target, actor=str(actor.id))
     db.commit()
     db.refresh(req)
@@ -411,8 +412,8 @@ def transition_approval_request(request_id: str, body: TransitionBody, db: Sessi
 
 
 @router.get("/approval-requests")
-def list_approval_requests(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(RegulatoryApprovalRequest).where(RegulatoryApprovalRequest.company_id == user.tenant_id)
+def list_approval_requests(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(RegulatoryApprovalRequest).where(RegulatoryApprovalRequest.company_id == ctx.company_id)
                        .order_by(RegulatoryApprovalRequest.created_at.desc())).scalars().all()
     return {"items": [{"id": r.id, "object_ref": r.object_ref, "rule_ref": r.rule_ref, "risk": r.risk,
                        "amount": r.amount, "status": r.status, "decision": r.decision} for r in items],

@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
 from app.modules.identity_access.models import User
@@ -35,8 +36,8 @@ class JobCreate(BaseModel):
 # Dashboard
 # --------------------------------------------------------------------------- #
 @router.get("/dashboard")
-def get_dashboard(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    return reporting_service.dashboard(db, company_id=user.tenant_id)
+def get_dashboard(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    return reporting_service.dashboard(db, company_id=ctx.company_id)
 
 
 # --------------------------------------------------------------------------- #
@@ -44,8 +45,8 @@ def get_dashboard(db: Session = Depends(get_db), user: User = Depends(get_curren
 # --------------------------------------------------------------------------- #
 @router.get("/reports/{key}")
 def get_report(key: str, period: str = "0", db: Session = Depends(get_db),
-               user: User = Depends(get_current_user)):
-    return reporting_service.report(db, company_id=user.tenant_id, key=key, period=period)
+               user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    return reporting_service.report(db, company_id=ctx.company_id, key=key, period=period)
 
 
 # --------------------------------------------------------------------------- #
@@ -53,8 +54,8 @@ def get_report(key: str, period: str = "0", db: Session = Depends(get_db),
 # --------------------------------------------------------------------------- #
 @router.post("/exports", dependencies=[Depends(require_write_allowed)])
 def create_export(body: ExportCreate, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("reportes", "export"))):
-    export = reporting_service.create_export(db, company_id=actor.tenant_id, report_key=body.report_key,
+                  actor: User = Depends(require_permission("reportes", "export")), ctx: CompanyContext = Depends(get_company_context)):
+    export = reporting_service.create_export(db, company_id=ctx.company_id, report_key=body.report_key,
                                              fmt=body.format, filters=body.filters, actor=str(actor.id))
     db.commit()
     db.refresh(export)
@@ -64,8 +65,8 @@ def create_export(body: ExportCreate, db: Session = Depends(get_db),
 
 @router.get("/exports")
 def list_exports(report_key: str | None = None, db: Session = Depends(get_db),
-                 user: User = Depends(get_current_user)):
-    query = select(ReportExport).where(ReportExport.company_id == user.tenant_id)
+                 user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(ReportExport).where(ReportExport.company_id == ctx.company_id)
     if report_key:
         query = query.where(ReportExport.report_key == report_key)
     items = db.execute(query.order_by(ReportExport.exported_at.desc())).scalars().all()
@@ -76,11 +77,11 @@ def list_exports(report_key: str | None = None, db: Session = Depends(get_db),
 
 @router.get("/exports/{export_id}/download")
 def download_export(export_id: str, db: Session = Depends(get_db),
-                    user: User = Depends(get_current_user)):
+                    user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     """Descarga el archivo real de una exportación del propio tenant (KAUD-002)."""
     from app.modules.reporting import service as reporting_service
 
-    filename, content = reporting_service.get_export_file(db, export_id=export_id, company_id=user.tenant_id)
+    filename, content = reporting_service.get_export_file(db, export_id=export_id, company_id=ctx.company_id)
     # Content-Disposition con nombre original; se sirve desde bytes (memoria).
     import io
 
@@ -96,8 +97,8 @@ def download_export(export_id: str, db: Session = Depends(get_db),
 # --------------------------------------------------------------------------- #
 @router.post("/jobs", dependencies=[Depends(require_write_allowed)])
 def create_job(body: JobCreate, db: Session = Depends(get_db),
-               actor: User = Depends(require_permission("reportes", "export"))):
-    job = reporting_service.create_job(db, company_id=actor.tenant_id, report_key=body.report_key,
+               actor: User = Depends(require_permission("reportes", "export")), ctx: CompanyContext = Depends(get_company_context)):
+    job = reporting_service.create_job(db, company_id=ctx.company_id, report_key=body.report_key,
                                        params=body.params, actor=str(actor.id))
     db.commit()
     db.refresh(job)
@@ -106,8 +107,8 @@ def create_job(body: JobCreate, db: Session = Depends(get_db),
 
 @router.post("/jobs/{job_id}/run", dependencies=[Depends(require_write_allowed)])
 def run_job(job_id: str, db: Session = Depends(get_db),
-            actor: User = Depends(require_permission("reportes", "export"))):
-    job = reporting_service.run_job(db, company_id=actor.tenant_id, job_id=job_id)
+            actor: User = Depends(require_permission("reportes", "export")), ctx: CompanyContext = Depends(get_company_context)):
+    job = reporting_service.run_job(db, company_id=ctx.company_id, job_id=job_id)
     db.commit()
     db.refresh(job)
     return {"id": job.id, "report_key": job.report_key, "status": job.status, "error": job.error,
@@ -116,9 +117,9 @@ def run_job(job_id: str, db: Session = Depends(get_db),
 
 @router.get("/jobs")
 def list_jobs(report_key: str | None = None, db: Session = Depends(get_db),
-              user: User = Depends(get_current_user)):
+              user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     """Lista de trabajos asíncronos del propio tenant (KAUD-003)."""
-    query = select(ReportJob).where(ReportJob.company_id == user.tenant_id)
+    query = select(ReportJob).where(ReportJob.company_id == ctx.company_id)
     if report_key:
         query = query.where(ReportJob.report_key == report_key)
     items = db.execute(query.order_by(ReportJob.created_at.desc())).scalars().all()
@@ -128,9 +129,9 @@ def list_jobs(report_key: str | None = None, db: Session = Depends(get_db),
 
 
 @router.get("/jobs/{job_id}")
-def get_job(job_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def get_job(job_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     job = db.get(ReportJob, job_id)
-    if not job or job.company_id != user.tenant_id:
+    if not job or job.company_id != ctx.company_id:
         from app.core.errors import NotFoundError
 
         raise NotFoundError(code="JOB_NOT_FOUND", message="Trabajo no encontrado")
@@ -144,7 +145,7 @@ def get_job(job_id: str, db: Session = Depends(get_db), user: User = Depends(get
 @router.get("/audit/timeline")
 def get_audit_timeline(entity_type: str | None = None, action: str | None = None,
                        user_id: str | None = None, db: Session = Depends(get_db),
-                       user: User = Depends(get_current_user)):
-    items = reporting_service.audit_timeline(db, company_id=user.tenant_id, entity_type=entity_type,
+                       user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = reporting_service.audit_timeline(db, company_id=ctx.company_id, entity_type=entity_type,
                                              action=action, user_id=user_id)
     return {"items": items, "total": len(items), "page": 1, "page_size": len(items) or 1}

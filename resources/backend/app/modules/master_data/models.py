@@ -30,6 +30,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import (
     CodeMixin,
     CreatedByMixin,
@@ -46,6 +47,7 @@ from app.shared.mixins import (
 # --------------------------------------------------------------------------- #
 class Party(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, StatusMixin, Base):
     __tablename__ = "parties"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     person_type: Mapped[str] = mapped_column(String(32), nullable=False, default="JURIDICA")
@@ -60,6 +62,8 @@ class Party(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, Sta
 
 class PartyAddress(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "party_addresses"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "party_id → parties"
 
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
     address_type: Mapped[str] = mapped_column(String(32), nullable=False, default="PRINCIPAL")
@@ -76,6 +80,8 @@ class PartyAddress(UUIDMixin, TimestampMixin, Base):
 
 class PartyContact(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "party_contacts"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "party_id → parties"
 
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
     name: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -88,6 +94,8 @@ class PartyContact(UUIDMixin, TimestampMixin, Base):
 
 class PartyBankAccount(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "party_bank_accounts"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "party_id → parties"
 
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
     bank: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -101,6 +109,8 @@ class PartyBankAccount(UUIDMixin, TimestampMixin, Base):
 
 class Customer(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "customers"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "party_id → parties"
 
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, unique=True, index=True)
     salesperson: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -115,6 +125,8 @@ class Customer(UUIDMixin, TimestampMixin, Base):
 
 class Supplier(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "suppliers"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "party_id → parties"
 
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, unique=True, index=True)
     category: Mapped[str | None] = mapped_column(String(120), nullable=True)
@@ -127,6 +139,8 @@ class Supplier(UUIDMixin, TimestampMixin, Base):
 
 class Carrier(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "carriers"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "party_id → parties"
 
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, unique=True, index=True)
     registration: Mapped[str | None] = mapped_column(String(120), nullable=True)
@@ -136,6 +150,8 @@ class Carrier(UUIDMixin, TimestampMixin, Base):
 
 class Driver(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "drivers"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "party_id → parties"
 
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, unique=True, index=True)
     license: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -149,6 +165,7 @@ class Driver(UUIDMixin, TimestampMixin, Base):
 # --------------------------------------------------------------------------- #
 class TaxonomyNode(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, StatusMixin, Base):
     __tablename__ = "taxonomy_nodes"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)  # None = global
     parent_id: Mapped[str | None] = mapped_column(ForeignKey("taxonomy_nodes.id"), nullable=True)
@@ -158,6 +175,7 @@ class TaxonomyNode(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMix
 
 class AttributeDefinition(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, StatusMixin, Base):
     __tablename__ = "attribute_definitions"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     data_type: Mapped[str] = mapped_column(String(32), nullable=False, default="TEXT")  # TEXT/NUMBER/DATE/OPTION/BOOLEAN
@@ -172,6 +190,8 @@ class AttributeDefinition(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, 
 
 class AttributeApplicability(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "attribute_applicabilities"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "attribute_id → attribute_definitions"
 
     attribute_id: Mapped[str] = mapped_column(ForeignKey("attribute_definitions.id"), nullable=False, index=True)
     taxonomy_id: Mapped[str | None] = mapped_column(ForeignKey("taxonomy_nodes.id"), nullable=True)
@@ -183,6 +203,8 @@ class AttributeApplicability(UUIDMixin, TimestampMixin, Base):
 
 class AttributeValue(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "attribute_values"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "item_id → catalog_items"
 
     item_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
     attribute_id: Mapped[str] = mapped_column(ForeignKey("attribute_definitions.id"), nullable=False, index=True)
@@ -216,6 +238,7 @@ class UnitOfMeasure(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMi
     """
 
     __tablename__ = "units_of_measure"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         UniqueConstraint("company_id", "code", name="uq_units_of_measure_company_code"),
         CheckConstraint("decimals >= 0 AND decimals <= 6", name="ck_units_of_measure_decimals"),
@@ -241,6 +264,7 @@ class UnitConversion(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "unit_conversions"
+    __scope__ = Scope.GLOBAL
     __table_args__ = (
         UniqueConstraint("from_unit_id", "to_unit_id", name="uq_unit_conversions_pair"),
         CheckConstraint("factor > 0", name="ck_unit_conversions_factor_positive"),
@@ -255,6 +279,7 @@ class UnitConversion(UUIDMixin, TimestampMixin, Base):
 
 class ProductTemplate(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, VersionMixin, StatusMixin, Base):
     __tablename__ = "product_templates"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     behaviors: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
@@ -262,6 +287,7 @@ class ProductTemplate(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Name
 
 class ServiceTemplate(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, VersionMixin, StatusMixin, Base):
     __tablename__ = "service_templates"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     billing_mode: Mapped[str] = mapped_column(String(32), nullable=False, default="HOUR")
@@ -274,6 +300,7 @@ class ServiceTemplate(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Name
 
 class CatalogItem(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, StatusMixin, Base):
     __tablename__ = "catalog_items"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     item_type: Mapped[str] = mapped_column(String(16), nullable=False, index=True)  # PRODUCT/SERVICE
@@ -292,6 +319,8 @@ class CatalogItem(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixi
 
 class Product(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "products"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "item_id → catalog_items"
 
     item_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, unique=True, index=True)
     template_id: Mapped[str | None] = mapped_column(ForeignKey("product_templates.id"), nullable=True)
@@ -304,6 +333,8 @@ class Product(UUIDMixin, TimestampMixin, Base):
 
 class Service(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "services"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "item_id → catalog_items"
 
     item_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, unique=True, index=True)
     template_id: Mapped[str | None] = mapped_column(ForeignKey("service_templates.id"), nullable=True)
@@ -325,6 +356,7 @@ class Presentation(UUIDMixin, TimestampMixin, CreatedByMixin, NameMixin,
     """
 
     __tablename__ = "presentations"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         UniqueConstraint("product_id", "code", name="uq_presentations_product_code"),
         Index("ix_presentations_product_status", "product_id", "status"),
@@ -356,6 +388,7 @@ class ProductPresentationVersion(UUIDMixin, TimestampMixin, CreatedByMixin, Stat
     """
 
     __tablename__ = "product_presentation_versions"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         CheckConstraint("factor_to_base > 0", name="ck_ppv_factor_positive"),
         CheckConstraint("valid_to IS NULL OR valid_to > valid_from", name="ck_ppv_range"),
@@ -387,6 +420,8 @@ class ProductPresentationVersion(UUIDMixin, TimestampMixin, CreatedByMixin, Stat
 
 class Barcode(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "barcodes"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "item_id → catalog_items"
 
     item_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
     presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
@@ -398,6 +433,8 @@ class Barcode(UUIDMixin, TimestampMixin, Base):
 
 class ProductVariant(UUIDMixin, TimestampMixin, CodeMixin, StatusMixin, Base):
     __tablename__ = "product_variants"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "parent_product_id → catalog_items"
 
     parent_product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
     combination: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False, default=dict)
@@ -409,6 +446,7 @@ class ProductVariant(UUIDMixin, TimestampMixin, CodeMixin, StatusMixin, Base):
 # --------------------------------------------------------------------------- #
 class ProfileVersion(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, VersionMixin, StatusMixin, Base):
     __tablename__ = "profile_versions"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     profile_type: Mapped[str] = mapped_column(String(32), nullable=False, index=True)  # INVENTORY/TRACEABILITY/FISCAL/REGULATORY

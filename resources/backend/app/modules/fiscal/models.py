@@ -14,6 +14,7 @@ from sqlalchemy import JSON, BigInteger, Date, DateTime, ForeignKey, Numeric, St
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import CreatedByMixin, TimestampMixin, UUIDMixin, VersionMixin
 
 
@@ -21,6 +22,7 @@ class LegalSource(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Norma con fuente: ley, decreto, providencia, resolución, Gaceta."""
 
     __tablename__ = "legal_sources"
+    __scope__ = Scope.INSTALLATION
 
     authority: Mapped[str] = mapped_column(String(64), nullable=False)
     source_type: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -38,6 +40,7 @@ class TaxRuleVersion(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Ba
     """Regla tributaria versionada con fuente y vigencia (FR-001-091)."""
 
     __tablename__ = "tax_rule_versions"
+    __scope__ = Scope.GLOBAL
 
     tax_code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     legal_source_id: Mapped[str | None] = mapped_column(ForeignKey("legal_sources.id"), nullable=True)
@@ -54,6 +57,7 @@ class FiscalNumberSeries(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Serie de numeración fiscal con asignación atómica (preparación)."""
 
     __tablename__ = "fiscal_number_series"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     establishment_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -68,6 +72,7 @@ class ControlNumberBatch(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Lote de números de control de imprenta autorizada (preparación)."""
 
     __tablename__ = "control_number_batches"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     establishment_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -86,6 +91,7 @@ class ControlNumber(UUIDMixin, TimestampMixin, Base):
     """Número de control individual de un lote (DOC-03 §7/§12)."""
 
     __tablename__ = "control_numbers"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     batch_id: Mapped[str] = mapped_column(ForeignKey("control_number_batches.id"), nullable=False, index=True)
@@ -103,6 +109,7 @@ class TaxCalculation(UUIDMixin, TimestampMixin, Base):
     """Cálculo fiscal por documento/línea con snapshot (FR-007-004)."""
 
     __tablename__ = "tax_calculations"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     document_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -119,6 +126,7 @@ class TaxProfile(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Perfil fiscal por empresa/tercero/rubro (FR-007-003)."""
 
     __tablename__ = "tax_profiles"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     scope: Mapped[str] = mapped_column(String(16), nullable=False)  # COMPANY / PARTY / ITEM
@@ -138,6 +146,7 @@ class FiscalDocument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Documento fiscal emitido: envuelve un documento de 004/005 (FR-007-021)."""
 
     __tablename__ = "fiscal_documents"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     business_document: Mapped[str] = mapped_column(String(200), nullable=False, index=True)  # INVOICE:{id}
@@ -157,6 +166,7 @@ class PrintEvent(UUIDMixin, TimestampMixin, Base):
     """Impresión/reimpresión de un documento fiscal (FR-007-022)."""
 
     __tablename__ = "print_events"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     fiscal_document_id: Mapped[str] = mapped_column(ForeignKey("fiscal_documents.id"), nullable=False, index=True)
@@ -172,6 +182,7 @@ class CreditDebitNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Nota de crédito/débito con referencia y límites al saldo ajustable (FR-007-030)."""
 
     __tablename__ = "credit_debit_notes"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     fiscal_document_id: Mapped[str | None] = mapped_column(ForeignKey("fiscal_documents.id"), nullable=True)
@@ -194,6 +205,7 @@ class WithholdingRule(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Regla de retención IVA/ISLR versionada (FR-007-040)."""
 
     __tablename__ = "withholding_rules"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     tax_type: Mapped[str] = mapped_column(String(16), nullable=False)  # IVA / ISLR
@@ -215,6 +227,7 @@ class FiscalPeriod(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Período fiscal con cierre/reapertura aprobados (FR-007-051)."""
 
     __tablename__ = "fiscal_periods"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     tax_type: Mapped[str] = mapped_column(String(24), nullable=False)  # IVA / ISLR / IGTF / RETENCION
@@ -230,6 +243,7 @@ class TaxReturnBatch(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Lote de declaración fiscal (FR-007-052)."""
 
     __tablename__ = "tax_return_batches"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     tax_type: Mapped[str] = mapped_column(String(24), nullable=False)

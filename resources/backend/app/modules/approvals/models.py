@@ -28,6 +28,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import CreatedByMixin, TimestampMixin, UUIDMixin
 
 # --------------------------------------------------------------------------- #
@@ -39,6 +40,7 @@ class ApprovalPolicy(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Política versionada por empresa y tipo de proceso (FR-045-001)."""
 
     __tablename__ = "approval_policies"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         UniqueConstraint("company_id", "process_type", "version", name="uq_approval_policies_company_process_version"),
     )
@@ -66,6 +68,8 @@ class ApprovalRule(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "approval_rules"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "policy_id → approval_policies"
 
     policy_id: Mapped[str] = mapped_column(ForeignKey("approval_policies.id"), nullable=False, index=True)
     sequence: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
@@ -80,6 +84,8 @@ class ApprovalLevel(UUIDMixin, TimestampMixin, Base):
     """Nivel requerido por una regla (FR-045-003)."""
 
     __tablename__ = "approval_levels"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "rule_id → approval_rules"
 
     rule_id: Mapped[str] = mapped_column(ForeignKey("approval_rules.id"), nullable=False, index=True)
     level_order: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
@@ -104,6 +110,7 @@ class ApprovalRequest(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "approval_requests"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         # Impide dos solicitudes vivas para el mismo documento y la misma huella
         # (FR-045-053). Índice parcial: sólo cubre las no terminales.
@@ -142,6 +149,8 @@ class ApprovalStep(UUIDMixin, TimestampMixin, Base):
     """Paso (nivel) de una solicitud. `version` da control optimista (FR-045-054)."""
 
     __tablename__ = "approval_steps"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "request_id → approval_requests"
 
     request_id: Mapped[str] = mapped_column(ForeignKey("approval_requests.id"), nullable=False, index=True)
     level_order: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -159,6 +168,8 @@ class ApprovalDecision(UUIDMixin, TimestampMixin, Base):
     """Decisión sobre un paso. Append-only: no se edita ni se borra (P5)."""
 
     __tablename__ = "approval_decisions"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "step_id → approval_steps"
     __table_args__ = (
         # Un actor no decide dos veces sobre el mismo paso (INV-06).
         UniqueConstraint("step_id", "actor_id", name="uq_approval_decisions_step_actor"),
@@ -178,6 +189,7 @@ class ApprovalDelegation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Delegación acotada en ámbito y vigencia (FR-045-042..046)."""
 
     __tablename__ = "approval_delegations"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     grantor_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
@@ -201,6 +213,7 @@ class ApprovalEvent(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "approval_events"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     request_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)

@@ -36,6 +36,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import CreatedByMixin, StatusMixin, TimestampMixin, UUIDMixin, VersionMixin
 
 #: Estados del **documento**. `EXPIRED` no está: se deriva de `expiration_date`
@@ -64,6 +65,7 @@ class DocumentCategory(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, B
     """Agrupación para navegar y para permisos gruesos. **Nace vacía.**"""
 
     __tablename__ = "document_categories"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         UniqueConstraint("company_id", "code", name="uq_document_categories_company_code"),
     )
@@ -83,6 +85,7 @@ class DocumentType(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Versi
     """
 
     __tablename__ = "document_types"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         UniqueConstraint("company_id", "code", name="uq_document_types_company_code"),
         CheckConstraint("versioning_policy IN ('VERSIONED','SINGLE')",
@@ -125,6 +128,7 @@ class StoredFile(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """
 
     __tablename__ = "stored_files"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         CheckConstraint(
             "security_status IN ('PENDING_SCAN','CLEAN','INFECTED','SCAN_FAILED','SKIPPED')",
@@ -161,6 +165,7 @@ class Document(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
     """El documento lógico."""
 
     __tablename__ = "documents"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         CheckConstraint(
             "status IN ('DRAFT','ACTIVE','SUPERSEDED','ARCHIVED','REVOKED')",
@@ -207,6 +212,7 @@ class DocumentVersion(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Una versión. Inmutable una vez superada o congelada."""
 
     __tablename__ = "document_versions"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         UniqueConstraint("document_id", "version_number", name="uq_document_versions_number"),
         # Una sola versión vigente por documento.
@@ -239,6 +245,7 @@ class DocumentLink(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """
 
     __tablename__ = "document_links"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         UniqueConstraint("document_id", "resource_type", "resource_id", "role",
                          name="uq_document_links_unique"),
@@ -266,6 +273,8 @@ class FileSecurityScan(UUIDMixin, TimestampMixin, Base):
     """Resultado del análisis. Existe solo si hay analizador."""
 
     __tablename__ = "file_security_scans"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "stored_file_id → stored_files"
 
     stored_file_id: Mapped[str] = mapped_column(
         ForeignKey("stored_files.id"), nullable=False, index=True)
@@ -285,6 +294,7 @@ class LegacyDocumentReference(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "legacy_document_references"
+    __scope__ = Scope.TENANT
     __table_args__ = (
         UniqueConstraint("source_table", "source_column", "source_row_id",
                          name="uq_legacy_document_references"),

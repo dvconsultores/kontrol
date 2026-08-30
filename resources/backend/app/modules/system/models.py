@@ -14,11 +14,13 @@ from sqlalchemy import JSON, BigInteger, DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import CreatedByMixin, TimestampMixin, UUIDMixin
 
 
 class SystemSetting(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "system_settings"
+    __scope__ = Scope.INSTALLATION
 
     tenant_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     key: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
@@ -28,6 +30,7 @@ class SystemSetting(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class FeatureFlag(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "feature_flags"
+    __scope__ = Scope.INSTALLATION
 
     key: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
     enabled: Mapped[bool] = mapped_column(default=False, nullable=False)
@@ -36,6 +39,7 @@ class FeatureFlag(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class IdempotencyRecord(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "idempotency_records"
+    __scope__ = Scope.TENANT
 
     key: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
     method: Mapped[str] = mapped_column(String(8), nullable=False)
@@ -50,6 +54,7 @@ class IdempotencyRecord(UUIDMixin, TimestampMixin, Base):
 
 class OutboxEvent(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "outbox_events"
+    __scope__ = Scope.TENANT
 
     aggregate_type: Mapped[str] = mapped_column(String(64), nullable=False)
     aggregate_id: Mapped[str] = mapped_column(String(36), nullable=False)

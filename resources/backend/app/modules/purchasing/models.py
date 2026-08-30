@@ -21,6 +21,7 @@ from sqlalchemy import Date, ForeignKey, Index, Numeric, String, Text, UniqueCon
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import CodeMixin, CreatedByMixin, TimestampMixin, UUIDMixin
 
 
@@ -29,6 +30,7 @@ from app.shared.mixins import CodeMixin, CreatedByMixin, TimestampMixin, UUIDMix
 # --------------------------------------------------------------------------- #
 class PurchaseRequisition(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "purchase_requisitions"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     requester_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -40,6 +42,8 @@ class PurchaseRequisition(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, 
 
 class RequisitionLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "purchase_requisition_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "requisition_id → purchase_requisitions"
     __table_args__ = (Index("ix_purchase_requisition_lines_uom_id", "uom_id"),)
 
     requisition_id: Mapped[str] = mapped_column(ForeignKey("purchase_requisitions.id"), nullable=False, index=True)
@@ -61,6 +65,7 @@ class RequisitionLine(UUIDMixin, TimestampMixin, Base):
     uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class SupplierQuote(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "supplier_quotes"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     supplier_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
@@ -72,6 +77,8 @@ class SupplierQuote(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class QuoteLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "supplier_quote_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "quote_id → supplier_quotes"
     __table_args__ = (Index("ix_supplier_quote_lines_uom_id", "uom_id"),)
 
     quote_id: Mapped[str] = mapped_column(ForeignKey("supplier_quotes.id"), nullable=False, index=True)
@@ -95,6 +102,7 @@ class QuoteLine(UUIDMixin, TimestampMixin, Base):
     uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class PurchaseOrder(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "purchase_orders"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     supplier_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
@@ -107,6 +115,8 @@ class PurchaseOrder(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class PurchaseOrderLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "purchase_order_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "order_id → purchase_orders"
     __table_args__ = (Index("ix_purchase_order_lines_uom_id", "uom_id"),)
 
     order_id: Mapped[str] = mapped_column(ForeignKey("purchase_orders.id"), nullable=False, index=True)
@@ -133,6 +143,7 @@ class PurchaseOrderLine(UUIDMixin, TimestampMixin, Base):
     uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class GoodsReceipt(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "goods_receipts"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     order_id: Mapped[str] = mapped_column(ForeignKey("purchase_orders.id"), nullable=False, index=True)
@@ -143,6 +154,8 @@ class GoodsReceipt(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class GoodsReceiptLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "goods_receipt_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "receipt_id → goods_receipts"
     __table_args__ = (Index("ix_goods_receipt_lines_uom_id", "uom_id"),)
 
     receipt_id: Mapped[str] = mapped_column(ForeignKey("goods_receipts.id"), nullable=False, index=True)
@@ -172,6 +185,7 @@ class GoodsReceiptLine(UUIDMixin, TimestampMixin, Base):
     uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class SupplierInvoice(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "supplier_invoices"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         UniqueConstraint("company_id", "supplier_id", "invoice_number", "control_number",
                          name="uq_supplier_invoices_company_supplier_invoice_control"),
@@ -192,6 +206,8 @@ class SupplierInvoice(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class SupplierInvoiceLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "supplier_invoice_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "invoice_id → supplier_invoices"
     __table_args__ = (Index("ix_supplier_invoice_lines_uom_id", "uom_id"),)
 
     invoice_id: Mapped[str] = mapped_column(ForeignKey("supplier_invoices.id"), nullable=False, index=True)
@@ -214,6 +230,7 @@ class SupplierInvoiceLine(UUIDMixin, TimestampMixin, Base):
     presentation_label_snapshot: Mapped[str | None] = mapped_column(String(120), nullable=True)
 class TripleMatch(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "triple_matches"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     invoice_id: Mapped[str] = mapped_column(ForeignKey("supplier_invoices.id"), nullable=False, index=True)
@@ -232,6 +249,7 @@ class TripleMatch(UUIDMixin, TimestampMixin, Base):
 # --------------------------------------------------------------------------- #
 class PurchaseReturn(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "purchase_returns"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     source_document: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -243,6 +261,8 @@ class PurchaseReturn(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base)
 
 class PurchaseReturnLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "purchase_return_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "return_id → purchase_returns"
     __table_args__ = (Index("ix_purchase_return_lines_uom_id", "uom_id"),)
 
     return_id: Mapped[str] = mapped_column(ForeignKey("purchase_returns.id"), nullable=False, index=True)
@@ -258,6 +278,7 @@ class PurchaseReturnLine(UUIDMixin, TimestampMixin, Base):
     uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
 class SupplierCreditNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "supplier_credit_notes"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     supplier_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
@@ -274,6 +295,7 @@ class SupplierCreditNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 # --------------------------------------------------------------------------- #
 class OpenItem(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "ap_open_items"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
@@ -288,6 +310,7 @@ class OpenItem(UUIDMixin, TimestampMixin, Base):
 
 class Payment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "ap_payments"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
@@ -303,6 +326,8 @@ class Payment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class PaymentInstrument(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "ap_payment_instruments"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "payment_id → ap_payments"
 
     payment_id: Mapped[str] = mapped_column(ForeignKey("ap_payments.id"), nullable=False, index=True)
     method: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -316,6 +341,7 @@ class PaymentInstrument(UUIDMixin, TimestampMixin, Base):
 
 class Application(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "ap_applications"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     source_type: Mapped[str] = mapped_column(String(32), nullable=False)  # PAYMENT/ADVANCE/CREDIT/WITHHOLDING
@@ -330,6 +356,7 @@ class Application(UUIDMixin, TimestampMixin, Base):
 
 class Advance(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "ap_advances"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
@@ -342,6 +369,7 @@ class Advance(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class PaymentSchedule(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "ap_payment_schedules"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
@@ -355,6 +383,7 @@ class PaymentSchedule(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 # --------------------------------------------------------------------------- #
 class Withholding(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "ap_withholdings"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)

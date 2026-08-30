@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
 from app.core.errors import NotFoundError
@@ -200,8 +201,8 @@ class ScheduleCreate(BaseModel):
 # --------------------------------------------------------------------------- #
 @router.get("/requisitions")
 def list_requisitions(status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-                      db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(PurchaseRequisition).where(PurchaseRequisition.company_id == user.tenant_id)
+                      db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(PurchaseRequisition).where(PurchaseRequisition.company_id == ctx.company_id)
     if status:
         query = query.where(PurchaseRequisition.status == status)
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
@@ -213,8 +214,8 @@ def list_requisitions(status: str | None = None, page: int = Query(1, ge=1), pag
 
 @router.post("/requisitions", dependencies=[Depends(require_write_allowed)])
 def create_requisition(body: RequisitionCreate, db: Session = Depends(get_db),
-                       actor: User = Depends(require_permission("compras", "create"))):
-    req = ap_service.create_requisition(db, company_id=actor.tenant_id, code=body.code, requester_id=body.requester_id,
+                       actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    req = ap_service.create_requisition(db, company_id=ctx.company_id, code=body.code, requester_id=body.requester_id,
                                         cost_center_id=body.cost_center_id, need_date=body.need_date, actor=str(actor.id))
     db.commit()
     db.refresh(req)
@@ -246,8 +247,8 @@ def transition_requisition(req_id: str, body: TransitionBody, db: Session = Depe
 # Cotizaciones
 # --------------------------------------------------------------------------- #
 @router.get("/quotes")
-def list_quotes(supplier_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(SupplierQuote).where(SupplierQuote.company_id == user.tenant_id)
+def list_quotes(supplier_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(SupplierQuote).where(SupplierQuote.company_id == ctx.company_id)
     if supplier_id:
         query = query.where(SupplierQuote.supplier_id == supplier_id)
     items = db.execute(query.order_by(SupplierQuote.created_at.desc())).scalars().all()
@@ -258,8 +259,8 @@ def list_quotes(supplier_id: str | None = None, db: Session = Depends(get_db), u
 
 @router.post("/quotes", dependencies=[Depends(require_write_allowed)])
 def create_quote(body: QuoteCreate, db: Session = Depends(get_db),
-                 actor: User = Depends(require_permission("compras", "create"))):
-    quote = ap_service.create_quote(db, company_id=actor.tenant_id, code=body.code, supplier_id=body.supplier_id,
+                 actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    quote = ap_service.create_quote(db, company_id=ctx.company_id, code=body.code, supplier_id=body.supplier_id,
                                     validity_until=body.validity_until, currency=body.currency, terms=body.terms,
                                     actor=str(actor.id))
     db.commit()
@@ -283,8 +284,8 @@ def add_quote_line(quote_id: str, body: QuoteLineCreate, db: Session = Depends(g
 # --------------------------------------------------------------------------- #
 @router.get("/orders")
 def list_orders(status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-                db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(PurchaseOrder).where(PurchaseOrder.company_id == user.tenant_id)
+                db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(PurchaseOrder).where(PurchaseOrder.company_id == ctx.company_id)
     if status:
         query = query.where(PurchaseOrder.status == status)
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
@@ -294,8 +295,8 @@ def list_orders(status: str | None = None, page: int = Query(1, ge=1), page_size
 
 @router.post("/orders", dependencies=[Depends(require_write_allowed)])
 def create_order(body: OrderCreate, db: Session = Depends(get_db),
-                 actor: User = Depends(require_permission("compras", "create"))):
-    order = ap_service.create_order(db, company_id=actor.tenant_id, code=body.code, supplier_id=body.supplier_id,
+                 actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    order = ap_service.create_order(db, company_id=ctx.company_id, code=body.code, supplier_id=body.supplier_id,
                                     terms=body.terms, expected_date=body.expected_date, currency=body.currency,
                                     actor=str(actor.id))
     db.commit()
@@ -336,8 +337,8 @@ def transition_order(order_id: str, body: TransitionBody, db: Session = Depends(
 # Recepciones
 # --------------------------------------------------------------------------- #
 @router.get("/receipts")
-def list_receipts(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(GoodsReceipt).where(GoodsReceipt.company_id == user.tenant_id)
+def list_receipts(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(GoodsReceipt).where(GoodsReceipt.company_id == ctx.company_id)
     if status:
         query = query.where(GoodsReceipt.status == status)
     items = db.execute(query.order_by(GoodsReceipt.created_at.desc())).scalars().all()
@@ -348,8 +349,8 @@ def list_receipts(status: str | None = None, db: Session = Depends(get_db), user
 
 @router.post("/receipts", dependencies=[Depends(require_write_allowed)])
 def create_receipt(body: ReceiptCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("compras", "create"))):
-    receipt = ap_service.create_receipt(db, company_id=actor.tenant_id, code=body.code, order_id=body.order_id,
+                   actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    receipt = ap_service.create_receipt(db, company_id=ctx.company_id, code=body.code, order_id=body.order_id,
                                         warehouse_id=body.warehouse_id, actor=str(actor.id))
     db.commit()
     db.refresh(receipt)
@@ -407,8 +408,8 @@ def accept_receipt(receipt_id: str, db: Session = Depends(get_db),
 # --------------------------------------------------------------------------- #
 @router.get("/supplier-invoices")
 def list_invoices(status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-                  db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(SupplierInvoice).where(SupplierInvoice.company_id == user.tenant_id)
+                  db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(SupplierInvoice).where(SupplierInvoice.company_id == ctx.company_id)
     if status:
         query = query.where(SupplierInvoice.status == status)
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
@@ -418,8 +419,8 @@ def list_invoices(status: str | None = None, page: int = Query(1, ge=1), page_si
 
 @router.post("/supplier-invoices", dependencies=[Depends(require_write_allowed)])
 def create_invoice(body: InvoiceCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("compras", "create"))):
-    invoice = ap_service.create_invoice(db, company_id=actor.tenant_id, supplier_id=body.supplier_id,
+                   actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    invoice = ap_service.create_invoice(db, company_id=ctx.company_id, supplier_id=body.supplier_id,
                                         invoice_number=body.invoice_number, control_number=body.control_number,
                                         issue_date=body.issue_date, currency=body.currency, actor=str(actor.id),
                                         idempotency_key=body.idempotency_key)
@@ -466,8 +467,8 @@ def transition_invoice(invoice_id: str, body: TransitionBody, db: Session = Depe
 
 
 @router.get("/triple-match")
-def list_triple_match(invoice_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(TripleMatch).where(TripleMatch.company_id == user.tenant_id)
+def list_triple_match(invoice_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(TripleMatch).where(TripleMatch.company_id == ctx.company_id)
     if invoice_id:
         query = query.where(TripleMatch.invoice_id == invoice_id)
     items = db.execute(query.order_by(TripleMatch.created_at)).scalars().all()
@@ -482,8 +483,8 @@ def list_triple_match(invoice_id: str | None = None, db: Session = Depends(get_d
 # Devoluciones y notas de crédito
 # --------------------------------------------------------------------------- #
 @router.get("/returns")
-def list_returns(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(PurchaseReturn).where(PurchaseReturn.company_id == user.tenant_id)
+def list_returns(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(PurchaseReturn).where(PurchaseReturn.company_id == ctx.company_id)
                        .order_by(PurchaseReturn.created_at.desc())).scalars().all()
     return {"items": [{"id": r.id, "code": r.code, "source_document": r.source_document,
                         "reason": r.reason, "condition": r.condition,
@@ -493,8 +494,8 @@ def list_returns(db: Session = Depends(get_db), user: User = Depends(get_current
 
 @router.post("/returns", dependencies=[Depends(require_write_allowed)])
 def create_return(body: ReturnCreate, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("compras", "create"))):
-    ret = ap_service.create_return(db, company_id=actor.tenant_id, code=body.code, source_document=body.source_document,
+                  actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    ret = ap_service.create_return(db, company_id=ctx.company_id, code=body.code, source_document=body.source_document,
                                    reason=body.reason, condition=body.condition,
                                    inventory_destination=body.inventory_destination, actor=str(actor.id))
     db.commit()
@@ -513,8 +514,8 @@ def add_return_line(return_id: str, body: ReturnLineCreate, db: Session = Depend
 
 
 @router.get("/credit-notes")
-def list_credit_notes(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(SupplierCreditNote).where(SupplierCreditNote.company_id == user.tenant_id)
+def list_credit_notes(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(SupplierCreditNote).where(SupplierCreditNote.company_id == ctx.company_id)
                        .order_by(SupplierCreditNote.created_at.desc())).scalars().all()
     return {"items": [{"id": n.id, "number": n.number, "party_id": n.supplier_id,
                         "invoice_ref": n.invoice_ref, "amount": float(n.amount), "applied": float(n.applied),
@@ -524,8 +525,8 @@ def list_credit_notes(db: Session = Depends(get_db), user: User = Depends(get_cu
 
 @router.post("/credit-notes", dependencies=[Depends(require_write_allowed)])
 def create_credit_note(body: CreditNoteCreate, db: Session = Depends(get_db),
-                       actor: User = Depends(require_permission("compras", "create"))):
-    note = ap_service.create_credit_note(db, company_id=actor.tenant_id, supplier_id=body.supplier_id,
+                       actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    note = ap_service.create_credit_note(db, company_id=ctx.company_id, supplier_id=body.supplier_id,
                                          number=body.number, amount=body.amount, invoice_ref=body.invoice_ref,
                                          currency=body.currency, actor=str(actor.id))
     db.commit()
@@ -548,8 +549,8 @@ def post_credit_note(note_id: str, db: Session = Depends(get_db),
 # --------------------------------------------------------------------------- #
 @router.get("/open-items")
 def list_open_items(party_id: str | None = None, status: str | None = None,
-                    db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(OpenItem).where(OpenItem.company_id == user.tenant_id)
+                    db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(OpenItem).where(OpenItem.company_id == ctx.company_id)
     if party_id:
         query = query.where(OpenItem.party_id == party_id)
     if status:
@@ -559,8 +560,8 @@ def list_open_items(party_id: str | None = None, status: str | None = None,
 
 
 @router.get("/payments")
-def list_payments(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(Payment).where(Payment.company_id == user.tenant_id)
+def list_payments(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(Payment).where(Payment.company_id == ctx.company_id)
     if status:
         query = query.where(Payment.status == status)
     items = db.execute(query.order_by(Payment.created_at.desc())).scalars().all()
@@ -569,8 +570,8 @@ def list_payments(status: str | None = None, db: Session = Depends(get_db), user
 
 @router.post("/payments", dependencies=[Depends(require_write_allowed)])
 def create_payment(body: PaymentCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("compras", "create"))):
-    payment = ap_service.register_payment(db, company_id=actor.tenant_id, party_id=body.party_id, amount=body.amount,
+                   actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    payment = ap_service.register_payment(db, company_id=ctx.company_id, party_id=body.party_id, amount=body.amount,
                                           currency=body.currency, instruments=body.instruments, actor=str(actor.id),
                                           idempotency_key=body.idempotency_key)
     db.commit()
@@ -590,8 +591,8 @@ def transition_payment(payment_id: str, body: TransitionBody, db: Session = Depe
 
 @router.post("/applications", dependencies=[Depends(require_write_allowed)])
 def create_application(body: ApplicationCreate, db: Session = Depends(get_db),
-                       actor: User = Depends(require_permission("compras", "apply"))):
-    app = ap_service.apply_source(db, company_id=actor.tenant_id, source_type=body.source_type, source_id=body.source_id,
+                       actor: User = Depends(require_permission("compras", "apply")), ctx: CompanyContext = Depends(get_company_context)):
+    app = ap_service.apply_source(db, company_id=ctx.company_id, source_type=body.source_type, source_id=body.source_id,
                                   target_open_item_id=body.target_open_item_id, amount=body.amount,
                                   currency=body.currency, rate=body.rate, actor=str(actor.id))
     db.commit()
@@ -602,8 +603,8 @@ def create_application(body: ApplicationCreate, db: Session = Depends(get_db),
 
 @router.post("/advances", dependencies=[Depends(require_write_allowed)])
 def create_advance(body: AdvanceCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("compras", "create"))):
-    adv = ap_service.register_advance(db, company_id=actor.tenant_id, party_id=body.party_id, amount=body.amount,
+                   actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    adv = ap_service.register_advance(db, company_id=ctx.company_id, party_id=body.party_id, amount=body.amount,
                                       currency=body.currency, actor=str(actor.id))
     db.commit()
     db.refresh(adv)
@@ -612,8 +613,8 @@ def create_advance(body: AdvanceCreate, db: Session = Depends(get_db),
 
 @router.post("/withholdings", dependencies=[Depends(require_write_allowed)])
 def create_withholding(body: WithholdingCreate, db: Session = Depends(get_db),
-                       actor: User = Depends(require_permission("compras", "create"))):
-    w = ap_service.create_withholding(db, company_id=actor.tenant_id, party_id=body.party_id, tax_type=body.tax_type,
+                       actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    w = ap_service.create_withholding(db, company_id=ctx.company_id, party_id=body.party_id, tax_type=body.tax_type,
                                       rule_ref=body.rule_ref, base=body.base, rate_ref=body.rate_ref,
                                       amount=body.amount, period=body.period, source_event=body.source_event,
                                       actor=str(actor.id))
@@ -633,14 +634,14 @@ def transition_withholding(withholding_id: str, body: TransitionBody, db: Sessio
 
 
 @router.get("/aging")
-def get_aging(party_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    return ap_service.aging(db, company_id=user.tenant_id, party_id=party_id)
+def get_aging(party_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    return ap_service.aging(db, company_id=ctx.company_id, party_id=party_id)
 
 
 @router.post("/payment-schedules", dependencies=[Depends(require_write_allowed)])
 def create_schedule(body: ScheduleCreate, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("compras", "create"))):
-    schedule = ap_service.create_schedule(db, company_id=actor.tenant_id, party_id=body.party_id,
+                    actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    schedule = ap_service.create_schedule(db, company_id=ctx.company_id, party_id=body.party_id,
                                           due_date=body.due_date, amount=body.amount, actor=str(actor.id))
     db.commit()
     db.refresh(schedule)

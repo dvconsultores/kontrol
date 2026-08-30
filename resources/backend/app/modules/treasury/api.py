@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
 from app.core.errors import NotFoundError
@@ -191,8 +192,8 @@ class IgftEvaluateBody(BaseModel):
 # Maestros financieros
 # --------------------------------------------------------------------------- #
 @router.get("/banks")
-def list_banks(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(FinancialBank).where(FinancialBank.company_id == user.tenant_id)
+def list_banks(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(FinancialBank).where(FinancialBank.company_id == ctx.company_id)
                        .order_by(FinancialBank.name)).scalars().all()
     return {"items": [{"id": b.id, "code": b.code, "name": b.name, "swift": b.swift,
                        "country": b.country, "status": b.status} for b in items],
@@ -201,8 +202,8 @@ def list_banks(db: Session = Depends(get_db), user: User = Depends(get_current_u
 
 @router.post("/banks", dependencies=[Depends(require_write_allowed)])
 def create_bank(body: BankCreate, db: Session = Depends(get_db),
-                actor: User = Depends(require_permission("tesoreria", "create"))):
-    bank = treasury_service.create_bank(db, company_id=actor.tenant_id, code=body.code, name=body.name,
+                actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    bank = treasury_service.create_bank(db, company_id=ctx.company_id, code=body.code, name=body.name,
                                         swift=body.swift, country=body.country, actor=str(actor.id))
     db.commit()
     db.refresh(bank)
@@ -210,8 +211,8 @@ def create_bank(body: BankCreate, db: Session = Depends(get_db),
 
 
 @router.get("/accounts")
-def list_accounts(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(FinancialAccount).where(FinancialAccount.company_id == user.tenant_id)
+def list_accounts(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(FinancialAccount).where(FinancialAccount.company_id == ctx.company_id)
                        .order_by(FinancialAccount.name)).scalars().all()
     return {"items": [{"id": a.id, "code": a.code, "name": a.name, "bank_id": a.bank_id,
                        "currency": a.currency, "status": a.status} for a in items],
@@ -220,8 +221,8 @@ def list_accounts(db: Session = Depends(get_db), user: User = Depends(get_curren
 
 @router.post("/accounts", dependencies=[Depends(require_write_allowed)])
 def create_account(body: AccountCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("tesoreria", "create"))):
-    acc = treasury_service.create_account(db, company_id=actor.tenant_id, bank_id=body.bank_id, code=body.code,
+                   actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    acc = treasury_service.create_account(db, company_id=ctx.company_id, bank_id=body.bank_id, code=body.code,
                                           name=body.name, currency=body.currency, iban=body.iban,
                                           reference=body.reference, actor=str(actor.id))
     db.commit()
@@ -230,8 +231,8 @@ def create_account(body: AccountCreate, db: Session = Depends(get_db),
 
 
 @router.get("/cashboxes")
-def list_cashboxes(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(Cashbox).where(Cashbox.company_id == user.tenant_id)
+def list_cashboxes(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(Cashbox).where(Cashbox.company_id == ctx.company_id)
                        .order_by(Cashbox.name)).scalars().all()
     return {"items": [{"id": c.id, "code": c.code, "name": c.name, "currency": c.currency,
                        "warehouse_id": c.warehouse_id, "status": c.status} for c in items],
@@ -240,8 +241,8 @@ def list_cashboxes(db: Session = Depends(get_db), user: User = Depends(get_curre
 
 @router.post("/cashboxes", dependencies=[Depends(require_write_allowed)])
 def create_cashbox(body: CashboxCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("tesoreria", "create"))):
-    cb = treasury_service.create_cashbox(db, company_id=actor.tenant_id, code=body.code, name=body.name,
+                   actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    cb = treasury_service.create_cashbox(db, company_id=ctx.company_id, code=body.code, name=body.name,
                                          currency=body.currency, warehouse_id=body.warehouse_id,
                                          policies=body.policies, actor=str(actor.id))
     db.commit()
@@ -250,8 +251,8 @@ def create_cashbox(body: CashboxCreate, db: Session = Depends(get_db),
 
 
 @router.get("/payment-methods")
-def list_payment_methods(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(PaymentMethod).where(PaymentMethod.company_id == user.tenant_id)
+def list_payment_methods(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(PaymentMethod).where(PaymentMethod.company_id == ctx.company_id)
                        .order_by(PaymentMethod.name)).scalars().all()
     return {"items": [{"id": m.id, "code": m.code, "name": m.name, "kind": m.kind, "status": m.status} for m in items],
             "total": len(items), "page": 1, "page_size": len(items) or 1}
@@ -259,8 +260,8 @@ def list_payment_methods(db: Session = Depends(get_db), user: User = Depends(get
 
 @router.post("/payment-methods", dependencies=[Depends(require_write_allowed)])
 def create_payment_method(body: PaymentMethodCreate, db: Session = Depends(get_db),
-                          actor: User = Depends(require_permission("tesoreria", "create"))):
-    m = treasury_service.create_payment_method(db, company_id=actor.tenant_id, code=body.code, name=body.name,
+                          actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    m = treasury_service.create_payment_method(db, company_id=ctx.company_id, code=body.code, name=body.name,
                                                kind=body.kind, actor=str(actor.id))
     db.commit()
     db.refresh(m)
@@ -268,8 +269,8 @@ def create_payment_method(body: PaymentMethodCreate, db: Session = Depends(get_d
 
 
 @router.get("/instruments")
-def list_instruments(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(TreasuryInstrument).where(TreasuryInstrument.company_id == user.tenant_id)
+def list_instruments(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(TreasuryInstrument).where(TreasuryInstrument.company_id == ctx.company_id)
                        .order_by(TreasuryInstrument.name)).scalars().all()
     return {"items": [{"id": i.id, "code": i.code, "name": i.name, "method_id": i.method_id,
                        "cashbox_id": i.cashbox_id, "account_id": i.account_id, "status": i.status} for i in items],
@@ -278,8 +279,8 @@ def list_instruments(db: Session = Depends(get_db), user: User = Depends(get_cur
 
 @router.post("/instruments", dependencies=[Depends(require_write_allowed)])
 def create_instrument(body: InstrumentCreate, db: Session = Depends(get_db),
-                      actor: User = Depends(require_permission("tesoreria", "create"))):
-    i = treasury_service.create_instrument(db, company_id=actor.tenant_id, method_id=body.method_id, code=body.code,
+                      actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    i = treasury_service.create_instrument(db, company_id=ctx.company_id, method_id=body.method_id, code=body.code,
                                            name=body.name, cashbox_id=body.cashbox_id, account_id=body.account_id,
                                            actor=str(actor.id))
     db.commit()
@@ -288,8 +289,8 @@ def create_instrument(body: InstrumentCreate, db: Session = Depends(get_db),
 
 
 @router.get("/currencies")
-def list_currencies(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(Currency).where(Currency.company_id == user.tenant_id).order_by(Currency.code)).scalars().all()
+def list_currencies(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(Currency).where(Currency.company_id == ctx.company_id).order_by(Currency.code)).scalars().all()
     return {"items": [{"id": c.id, "code": c.code, "name": c.name, "symbol": c.symbol,
                        "decimal_places": c.decimal_places, "status": c.status} for c in items],
             "total": len(items), "page": 1, "page_size": len(items) or 1}
@@ -297,8 +298,8 @@ def list_currencies(db: Session = Depends(get_db), user: User = Depends(get_curr
 
 @router.post("/currencies", dependencies=[Depends(require_write_allowed)])
 def create_currency(body: CurrencyCreate, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("tesoreria", "create"))):
-    c = treasury_service.create_currency(db, company_id=actor.tenant_id, code=body.code, name=body.name,
+                    actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    c = treasury_service.create_currency(db, company_id=ctx.company_id, code=body.code, name=body.name,
                                          symbol=body.symbol, decimal_places=body.decimal_places, actor=str(actor.id))
     db.commit()
     db.refresh(c)
@@ -307,8 +308,8 @@ def create_currency(body: CurrencyCreate, db: Session = Depends(get_db),
 
 @router.post("/exchange-rates", dependencies=[Depends(require_write_allowed)])
 def set_exchange_rate(body: ExchangeRateCreate, db: Session = Depends(get_db),
-                      actor: User = Depends(require_permission("tesoreria", "create"))):
-    r = treasury_service.set_exchange_rate(db, company_id=actor.tenant_id, currency_id=body.currency_id,
+                      actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    r = treasury_service.set_exchange_rate(db, company_id=ctx.company_id, currency_id=body.currency_id,
                                            rate_date=body.rate_date, rate=body.rate, source=body.source,
                                            actor=str(actor.id))
     db.commit()
@@ -320,8 +321,8 @@ def set_exchange_rate(body: ExchangeRateCreate, db: Session = Depends(get_db),
 # Cajas — sesiones
 # --------------------------------------------------------------------------- #
 @router.get("/cash-sessions")
-def list_sessions(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(CashSession).where(CashSession.company_id == user.tenant_id)
+def list_sessions(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(CashSession).where(CashSession.company_id == ctx.company_id)
     if status:
         query = query.where(CashSession.status == status)
     items = db.execute(query.order_by(CashSession.opened_at.desc())).scalars().all()
@@ -331,8 +332,8 @@ def list_sessions(status: str | None = None, db: Session = Depends(get_db), user
 
 @router.post("/cash-sessions", dependencies=[Depends(require_write_allowed)])
 def open_session(body: SessionOpen, db: Session = Depends(get_db),
-                 actor: User = Depends(require_permission("tesoreria", "create"))):
-    s = treasury_service.open_session(db, company_id=actor.tenant_id, cashbox_id=body.cashbox_id,
+                 actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    s = treasury_service.open_session(db, company_id=ctx.company_id, cashbox_id=body.cashbox_id,
                                       opened_amount=body.opened_amount, actor=str(actor.id))
     db.commit()
     db.refresh(s)
@@ -405,8 +406,8 @@ def reject_session(session_id: str, db: Session = Depends(get_db),
 # --------------------------------------------------------------------------- #
 @router.get("/bank-transactions")
 def list_bank_transactions(account_id: str | None = None, db: Session = Depends(get_db),
-                           user: User = Depends(get_current_user)):
-    query = select(BankTransaction).where(BankTransaction.company_id == user.tenant_id)
+                           user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(BankTransaction).where(BankTransaction.company_id == ctx.company_id)
     if account_id:
         query = query.where(BankTransaction.account_id == account_id)
     items = db.execute(query.order_by(BankTransaction.txn_date.desc())).scalars().all()
@@ -416,8 +417,8 @@ def list_bank_transactions(account_id: str | None = None, db: Session = Depends(
 
 @router.post("/bank-transactions", dependencies=[Depends(require_write_allowed)])
 def create_bank_transaction(body: BankTransactionCreate, db: Session = Depends(get_db),
-                            actor: User = Depends(require_permission("tesoreria", "create"))):
-    bt = treasury_service.create_bank_transaction(db, company_id=actor.tenant_id, account_id=body.account_id,
+                            actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    bt = treasury_service.create_bank_transaction(db, company_id=ctx.company_id, account_id=body.account_id,
                                                   direction=body.direction, amount=body.amount, currency=body.currency,
                                                   txn_date=body.txn_date, value_date=body.value_date,
                                                   reference=body.reference, source=body.source,
@@ -429,8 +430,8 @@ def create_bank_transaction(body: BankTransactionCreate, db: Session = Depends(g
 
 @router.post("/executions/egresos", dependencies=[Depends(require_write_allowed)])
 def execute_egreso(body: ExecutionBody, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("tesoreria", "create"))):
-    result = treasury_service.execute_payment(db, company_id=actor.tenant_id, payment_id=body.payment_id,
+                   actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    result = treasury_service.execute_payment(db, company_id=ctx.company_id, payment_id=body.payment_id,
                                               target_type=body.target_type, target_id=body.target_id,
                                               actor=str(actor.id), idempotency_key=body.idempotency_key)
     db.commit()
@@ -440,8 +441,8 @@ def execute_egreso(body: ExecutionBody, db: Session = Depends(get_db),
 
 @router.post("/executions/ingresos", dependencies=[Depends(require_write_allowed)])
 def execute_ingreso(body: ExecutionBody, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("tesoreria", "create"))):
-    result = treasury_service.execute_collection(db, company_id=actor.tenant_id, payment_id=body.payment_id,
+                    actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    result = treasury_service.execute_collection(db, company_id=ctx.company_id, payment_id=body.payment_id,
                                                  target_type=body.target_type, target_id=body.target_id,
                                                  actor=str(actor.id), idempotency_key=body.idempotency_key)
     db.commit()
@@ -450,8 +451,8 @@ def execute_ingreso(body: ExecutionBody, db: Session = Depends(get_db),
 
 
 @router.get("/transfers")
-def list_transfers(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(TreasuryTransfer).where(TreasuryTransfer.company_id == user.tenant_id)
+def list_transfers(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(TreasuryTransfer).where(TreasuryTransfer.company_id == ctx.company_id)
                        .order_by(TreasuryTransfer.created_at.desc())).scalars().all()
     return {"items": [treasury_service.transfer_dict(t) for t in items], "total": len(items),
             "page": 1, "page_size": len(items) or 1}
@@ -459,8 +460,8 @@ def list_transfers(db: Session = Depends(get_db), user: User = Depends(get_curre
 
 @router.post("/transfers", dependencies=[Depends(require_write_allowed)])
 def create_transfer(body: TransferCreate, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("tesoreria", "create"))):
-    t = treasury_service.create_transfer(db, company_id=actor.tenant_id, amount=body.amount, currency=body.currency,
+                    actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    t = treasury_service.create_transfer(db, company_id=ctx.company_id, amount=body.amount, currency=body.currency,
                                          from_cashbox_id=body.from_cashbox_id, from_account_id=body.from_account_id,
                                          to_cashbox_id=body.to_cashbox_id, to_account_id=body.to_account_id,
                                          value_date=body.value_date, reference=body.reference, actor=str(actor.id))
@@ -474,8 +475,8 @@ def create_transfer(body: TransferCreate, db: Session = Depends(get_db),
 # --------------------------------------------------------------------------- #
 @router.get("/reconciliations")
 def list_reconciliations(status: str | None = None, db: Session = Depends(get_db),
-                         user: User = Depends(get_current_user)):
-    query = select(Reconciliation).where(Reconciliation.company_id == user.tenant_id)
+                         user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(Reconciliation).where(Reconciliation.company_id == ctx.company_id)
     if status:
         query = query.where(Reconciliation.status == status)
     items = db.execute(query.order_by(Reconciliation.created_at.desc())).scalars().all()
@@ -485,8 +486,8 @@ def list_reconciliations(status: str | None = None, db: Session = Depends(get_db
 
 @router.post("/reconciliations", dependencies=[Depends(require_write_allowed)])
 def create_reconciliation(body: ReconciliationCreate, db: Session = Depends(get_db),
-                          actor: User = Depends(require_permission("tesoreria", "create"))):
-    r = treasury_service.create_reconciliation(db, company_id=actor.tenant_id, account_id=body.account_id,
+                          actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    r = treasury_service.create_reconciliation(db, company_id=ctx.company_id, account_id=body.account_id,
                                                statement_date=body.statement_date, statement_ref=body.statement_ref,
                                                opening_balance=body.opening_balance, closing_balance=body.closing_balance,
                                                actor=str(actor.id))
@@ -550,8 +551,8 @@ def transition_reconciliation(reconciliation_id: str, body: TransitionBody, db: 
 # IGTF por regla y evento
 # --------------------------------------------------------------------------- #
 @router.get("/fiscal-rules")
-def list_fiscal_rules(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    items = db.execute(select(FiscalRule).where(FiscalRule.company_id == user.tenant_id)
+def list_fiscal_rules(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(FiscalRule).where(FiscalRule.company_id == ctx.company_id)
                        .order_by(FiscalRule.rule_code)).scalars().all()
     return {"items": [{"id": r.id, "rule_code": r.rule_code, "name": r.name, "rule_type": r.rule_type,
                        "version": r.version, "effective_from": r.effective_from.isoformat() if r.effective_from else None,
@@ -562,8 +563,8 @@ def list_fiscal_rules(db: Session = Depends(get_db), user: User = Depends(get_cu
 
 @router.post("/fiscal-rules", dependencies=[Depends(require_write_allowed)])
 def create_fiscal_rule(body: FiscalRuleCreate, db: Session = Depends(get_db),
-                       actor: User = Depends(require_permission("tesoreria", "create"))):
-    r = treasury_service.create_fiscal_rule(db, company_id=actor.tenant_id, rule_code=body.rule_code, name=body.name,
+                       actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    r = treasury_service.create_fiscal_rule(db, company_id=ctx.company_id, rule_code=body.rule_code, name=body.name,
                                             rule_type=body.rule_type, version=body.version,
                                             effective_from=body.effective_from, effective_to=body.effective_to,
                                             params=body.params, actor=str(actor.id))
@@ -574,8 +575,8 @@ def create_fiscal_rule(body: FiscalRuleCreate, db: Session = Depends(get_db),
 
 @router.get("/igft-events")
 def list_igft_events(event_type: str | None = None, db: Session = Depends(get_db),
-                     user: User = Depends(get_current_user)):
-    query = select(IgftEvent).where(IgftEvent.company_id == user.tenant_id)
+                     user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    query = select(IgftEvent).where(IgftEvent.company_id == ctx.company_id)
     if event_type:
         query = query.where(IgftEvent.event_type == event_type)
     items = db.execute(query.order_by(IgftEvent.evaluated_at.desc())).scalars().all()
@@ -585,8 +586,8 @@ def list_igft_events(event_type: str | None = None, db: Session = Depends(get_db
 
 @router.post("/igft-events/evaluate", dependencies=[Depends(require_write_allowed)])
 def evaluate_igft(body: IgftEvaluateBody, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("tesoreria", "create"))):
-    event = treasury_service.evaluate_igft(db, company_id=actor.tenant_id, event_type=body.event_type,
+                  actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    event = treasury_service.evaluate_igft(db, company_id=ctx.company_id, event_type=body.event_type,
                                            source_document=body.source_document, amount=body.amount,
                                            currency=body.currency, on_date=body.on_date)
     db.commit()

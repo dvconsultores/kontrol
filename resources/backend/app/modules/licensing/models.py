@@ -10,11 +10,13 @@ from sqlalchemy import JSON, DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import TimestampMixin, UUIDMixin
 
 
 class LicenseState(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "license_states"
+    __scope__ = Scope.INSTALLATION
 
     installation_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
     license_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
@@ -32,6 +34,7 @@ class LicenseState(UUIDMixin, TimestampMixin, Base):
 
 class LicenseArtifact(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "license_artifacts"
+    __scope__ = Scope.INSTALLATION
 
     license_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
@@ -44,6 +47,7 @@ class LicenseArtifact(UUIDMixin, TimestampMixin, Base):
 
 class LicenseEvent(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "license_events"
+    __scope__ = Scope.INSTALLATION
 
     installation_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     event_type: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -54,6 +58,7 @@ class LicenseEvent(UUIDMixin, TimestampMixin, Base):
 
 class LicenseRenewalRequest(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "license_renewal_requests"
+    __scope__ = Scope.INSTALLATION
 
     installation_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     payment_proof_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -71,6 +76,7 @@ class LicenseCentralConfig(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "license_central_config"
+    __scope__ = Scope.INSTALLATION
 
     installation_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
     server_url: Mapped[str] = mapped_column(String(255), nullable=False, default="")
@@ -89,6 +95,7 @@ class LicenseSyncRun(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "license_sync_runs"
+    __scope__ = Scope.INSTALLATION
 
     installation_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="FAILED")
@@ -106,6 +113,7 @@ class LicenseEntitlementSnapshot(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "license_entitlement_snapshots"
+    __scope__ = Scope.INSTALLATION
 
     installation_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     modules: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)

@@ -14,6 +14,7 @@ from sqlalchemy import JSON, DateTime, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import CreatedByMixin, TimestampMixin, UUIDMixin
 
 
@@ -26,6 +27,7 @@ class HomologationRecord(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """
 
     __tablename__ = "homologation_records"
+    __scope__ = Scope.INSTALLATION
 
     installation_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     fiscal_version: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -46,6 +48,7 @@ class HomologationEvent(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "homologation_events"
+    __scope__ = Scope.INSTALLATION
 
     installation_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     source: Mapped[str] = mapped_column(String(32), nullable=False, default="HOMOLOGATION")
@@ -64,6 +67,7 @@ class ReleaseVersion(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """
 
     __tablename__ = "release_versions"
+    __scope__ = Scope.INSTALLATION
     __table_args__ = (
         UniqueConstraint("installation_id", "version", name="uq_release_versions_inst_version"),
     )

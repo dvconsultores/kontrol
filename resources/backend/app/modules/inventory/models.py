@@ -22,6 +22,7 @@ from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Index, 
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import (
     CodeMixin,
     CreatedByMixin,
@@ -43,6 +44,7 @@ class MovementType(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMix
     """Tipo de movimiento versionado y configurable (FR-003-023, P8)."""
 
     __tablename__ = "movement_types"
+    __scope__ = Scope.COMPANY
     __table_args__ = (UniqueConstraint("company_id", "code", name="uq_movement_types_company_code"),)
 
     company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)  # None = global
@@ -54,6 +56,7 @@ class InventoryMovement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Movimiento de inventario balanceado e inmutable (FR-003-020/021/022)."""
 
     __tablename__ = "inventory_movements"
+    __scope__ = Scope.COMPANY
     __table_args__ = (Index("ix_inventory_movements_uom_id", "uom_id"),)
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
@@ -82,6 +85,7 @@ class InventoryLot(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Lote con vencimiento (FR-003-030/032)."""
 
     __tablename__ = "inventory_lots"
+    __scope__ = Scope.COMPANY
     __table_args__ = (UniqueConstraint("company_id", "product_id", "lot_number", name="uq_inventory_lots_company_product_lot"),)
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
@@ -98,6 +102,7 @@ class ProductSerial(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Serial/IMEI único con historial (FR-003-031/033)."""
 
     __tablename__ = "product_serials"
+    __scope__ = Scope.COMPANY
     __table_args__ = (UniqueConstraint("company_id", "serial", name="uq_product_serials_company_serial"),)
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
@@ -123,6 +128,7 @@ class InventoryBalance(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "inventory_balances"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
@@ -146,6 +152,7 @@ class Reservation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Reserva de inventario sin cambio físico (FR-003-040/041/042/043)."""
 
     __tablename__ = "reservations"
+    __scope__ = Scope.COMPANY
     __table_args__ = (Index("ix_reservations_uom_id", "uom_id"),)
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
@@ -168,6 +175,7 @@ class Transfer(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     """Transferencia entre almacenes con máquina de estados (FR-003-060/061)."""
 
     __tablename__ = "transfers"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     origin_warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
@@ -180,6 +188,8 @@ class Transfer(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class TransferLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "transfer_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "transfer_id → transfers"
     __table_args__ = (Index("ix_transfer_lines_uom_id", "uom_id"),)
 
     transfer_id: Mapped[str] = mapped_column(ForeignKey("transfers.id"), nullable=False, index=True)
@@ -202,6 +212,7 @@ class StockCount(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     """Plan de conteo (FR-003-070/071)."""
 
     __tablename__ = "stock_counts"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
@@ -213,6 +224,8 @@ class StockCount(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class StockCountLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "stock_count_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "count_id → stock_counts"
     __table_args__ = (Index("ix_stock_count_lines_uom_id", "uom_id"),)
 
     count_id: Mapped[str] = mapped_column(ForeignKey("stock_counts.id"), nullable=False, index=True)
@@ -238,6 +251,7 @@ class InventoryAdjustment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """
 
     __tablename__ = "inventory_adjustments"
+    __scope__ = Scope.COMPANY
     __table_args__ = (Index("ix_inventory_adjustments_uom_id", "uom_id"),)
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
@@ -261,6 +275,7 @@ class CostLayer(UUIDMixin, TimestampMixin, Base):
     """Capa de costo (FR-003-080): recepción/producto/almacén, cantidades y costo."""
 
     __tablename__ = "cost_layers"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
@@ -279,6 +294,7 @@ class CostingProfile(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Versi
     """Método de valoración versionado (FR-003-081, P8). Default AVERAGE."""
 
     __tablename__ = "costing_profiles"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)  # None = global
     product_id: Mapped[str | None] = mapped_column(ForeignKey("catalog_items.id"), nullable=True)
