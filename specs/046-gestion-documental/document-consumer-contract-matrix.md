@@ -82,3 +82,51 @@ Ninguna firma expone `storage_key`, proveedor ni ruta (R-D0-08-2).
 > `AttachmentLink` (nomenclatura del ADR) a `DocumentLink` (nomenclatura de esta
 > Spec); la semántica, las columnas y el contrato son los mismos. Se documenta la
 > equivalencia para que no se lea como divergencia.
+
+
+---
+
+## 5. Verificación tras la implementación — 2026-08-30
+
+El registro de tipos vinculables es **cerrado**: solo admite entidades cuyo
+modelo existe hoy. Esta es la fotografía real al cerrar 046, no la aspiracional.
+
+| Spec | Entidad que necesita | ¿Registrada hoy? | Nota |
+|---|---|---|---|
+| 045 · Aprobaciones | `ApprovalRequest` | ✅ | Contrato verificado con congelación de versión |
+| 018 · Importaciones | expediente de importación | ⛔ | El modelo no existe: lo crea 018. Cuando exista, se registra sin tocar 046 |
+| 019 · Recepción física | `GoodsReceipt` | ✅ | — |
+| 020 · Incidencias | `ReceiptIncident` | ⛔ | El modelo no existe: lo crea 020 |
+| 021 · Confirmación | `InventoryConfirmation` | ⛔ | El modelo no existe |
+| 027 · Factura de proveedor | `SupplierInvoice` | ✅ | — |
+| 028 · Cotizaciones | `SalesQuote` | ⛔ | El modelo no existe |
+| 035 · Despacho | `Shipment`, `TransportVehicle`, `TransportDriver` | ✅ | Las tres registradas |
+| 036 · Devoluciones | `SalesReturn` | ✅ | — |
+| 040 · Tesorería | `Payment` | ⛔ | El modelo no existe: lo crea 040 |
+| 042 · Auditoría | `AuditEvent` | ⛔ | Deliberado: adjuntar a un evento de auditoría lo convertiría en editable |
+| 044 · Regulatorio | `PermitInstance`, `OfficialDocument` | ✅ | Ambas registradas |
+| 047 · Notificaciones | — | n/a | 046 **no** emite eventos; 047 los consumirá |
+| 050 · Reportes | — | n/a | 046 no absorbe el mecanismo de `reporting` |
+| 051 · Homologación | `HomologationRecord` | ✅ | Sin `company_id`: el acto es de la instalación; el control se apoya en el permiso |
+| 056 · Portal | — | n/a | Usará `link` + descarga autorizada |
+
+**19 tipos registrados**: los 16 previstos más `TransportVehicle`,
+`TransportDriver` y `HomologationRecord`, añadidos al comprobar que sus modelos
+ya existen y que sus Specs figuraban entre las bloqueadas.
+
+### Estado de las 8 Specs bloqueadas
+
+| Spec | ¿Desbloqueada por 046? | Qué le falta |
+|---|---|---|
+| 018 | **Parcial** | La capacidad está; le falta su propio modelo de expediente |
+| 019 | **Sí** | `GoodsReceipt` registrada; puede adjuntar hoy |
+| 020 | **Parcial** | Le falta su modelo de incidencia |
+| 027 | **Sí** | `SupplierInvoice` registrada |
+| 035 | **Sí** | Las tres entidades registradas; `transport_*.documents` queda anotado como legado, no convertido |
+| 040 | **Parcial** | Le falta su modelo de pago; `license_renewal_requests.payment_proof_ref` queda anotado |
+| 044 | **Sí** | `PermitInstance` y `OfficialDocument` registradas; `file_ref` anotado como legado sin verificar |
+| 051 | **Sí** | `HomologationRecord` registrada; `evidence_sha256` queda `LEGACY_HASH_WITHOUT_FILE` — un hash sin binario sigue sin ser evidencia |
+
+Ninguna de las cuatro «parciales» está bloqueada **por 046**: lo que les falta
+es su propio modelo de dominio, que es suyo, no de esta Spec. Registrar un tipo
+nuevo es una línea en `resources.py` y no toca ningún servicio.

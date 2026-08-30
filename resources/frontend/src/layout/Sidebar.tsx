@@ -164,6 +164,14 @@ const navSections = [
     ],
   },
   {
+    title: "Documentos",
+    permission: "documentos:view",
+    items: [
+      { to: "/documentos", label: "Biblioteca", icon: FileText },
+      { to: "/documentos/tipos", label: "Tipos documentales", icon: Settings },
+    ],
+  },
+  {
     title: "Reportes",
     permission: "reportes:view",
     items: [

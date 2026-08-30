@@ -74,6 +74,9 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
         "regulatorio": ["view", "create", "approve"],
         "reportes": ["view", "export"],
         "aprobaciones": ["view", "create", "edit", "approve", "delegate", "configure"],
+        # Recurso nuevo de la Spec 046. Extiende el modelo de la Spec 003.
+        "documentos": ["view", "create", "edit", "upload", "download", "link",
+                       "deactivate", "delete", "manage_types"],
     }
     existing = db.execute(select(Role).where(Role.code == "ADMIN", Role.company_id.is_(None))).scalars().first()
     if existing:

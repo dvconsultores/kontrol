@@ -17,6 +17,10 @@ export class ApiError extends Error {
   status: number;
   fieldErrors: Record<string, string[]>;
   requestId?: string;
+  /** Contexto del error (límite excedido, formatos admitidos…). Sin esto, la
+   *  interfaz solo podría decir «no se pudo»: el detalle es lo que la vuelve
+   *  accionable. */
+  details?: Record<string, unknown>;
 
   constructor(status: number, body: Partial<ApiErrorBody>) {
     super(body.message ?? "No fue posible completar la operación");
@@ -25,6 +29,7 @@ export class ApiError extends Error {
     this.status = status;
     this.fieldErrors = body.field_errors ?? {};
     this.requestId = body.request_id;
+    this.details = (body.details ?? undefined) as Record<string, unknown> | undefined;
   }
 }
 
@@ -78,13 +83,19 @@ export interface RequestOptions {
   /** Versión esperada del recurso para control optimista; 409 en conflicto (ADR-013). */
   ifMatch?: string;
   signal?: AbortSignal;
+  /** `blob` para descargas binarias (Spec 046): el cuerpo no se interpreta como JSON. */
+  responseType?: "json" | "blob";
 }
 
 async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
+  const wantsBlob = options.responseType === "blob";
+  // Multipart: el navegador debe poner el Content-Type con su propio boundary.
+  const isMultipart = typeof FormData !== "undefined" && options.body instanceof FormData;
+
   const headers: Record<string, string> = {
-    Accept: "application/json",
+    Accept: wantsBlob ? "*/*" : "application/json",
   };
-  if (options.body !== undefined) {
+  if (options.body !== undefined && !isMultipart) {
     headers["Content-Type"] = "application/json";
   }
   if (accessToken) {
@@ -100,7 +111,12 @@ async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
   const response = await fetch(`/api/v1${path}`, {
     method: options.method ?? (options.body !== undefined ? "POST" : "GET"),
     headers,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    body:
+      options.body === undefined
+        ? undefined
+        : isMultipart
+          ? (options.body as FormData)
+          : JSON.stringify(options.body),
     credentials: "include",
     signal: options.signal,
   });
@@ -108,6 +124,12 @@ async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
   // 204 / sin contenido
   if (response.status === 204) {
     return undefined as T;
+  }
+
+  // Una descarga correcta se devuelve como binario; un fallo sigue siendo JSON
+  // y debe pasar por el contrato de errores como cualquier otra respuesta.
+  if (wantsBlob && response.ok) {
+    return (await response.blob()) as T;
   }
 
   let payload: unknown = null;

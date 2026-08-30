@@ -164,3 +164,170 @@ Tareas concretas y trazables (§150). No existe una tarea «implementar document
 | F8 Frontend | 12 | **XL** | El componente reutilizable es lo más delicado |
 | F9 Legado y cierre | 16 | **XL** | El legado se marca, no se inventa |
 | **Total** | **103** | — | — |
+
+---
+
+# ESTADO DE IMPLEMENTACIÓN
+
+Actualizado el 2026-08-30, al cierre de `/speckit.implement 046`. Cada estado
+se afirma contra código y pruebas ejecutadas, no contra intención.
+
+| Estado | Significado |
+|---|---|
+| ✅ | Implementado y cubierto por prueba que se ejecutó y pasó |
+| ⚠️ | Implementado, pero **sin verificar** en este entorno; se dice por qué |
+| ⛔ | No implementado; se dice por qué y quién lo hereda |
+
+## F1 · Modelo y catálogo
+
+| Tarea | Estado | Evidencia |
+|---|---|---|
+| T-046-001 | ✅ | `models.py::DocumentCategory/DocumentType`; `test_catalogos_nacen_vacios` |
+| T-046-002 | ✅ | `DocumentType` con 11 columnas de política; `TiposDocumentalesPage` |
+| T-046-003 | ✅ | `metadata_schema` + `service.validate_metadata`; `test_metadata_se_valida_contra_el_esquema_del_tipo` |
+| T-046-004 | ✅ | `0023` renombra `file_metadata`→`stored_files`; `FileMetadata` eliminada |
+| T-046-005 | ✅ | `models.py::Document` |
+| T-046-006 | ✅ | `models.py::DocumentVersion`; `test_versionado_sin_sobrescritura` |
+| T-046-007 | ✅ | `models.py::DocumentLink` con `frozen_version_id` |
+| T-046-008 | ✅ | `uq_document_versions_active`, `uq_documents_company_type_number` |
+| T-046-009 | ✅ | Índices de `0023`; `test_listar_miles_de_documentos_sin_abrir_un_solo_binario` |
+| T-046-010 | ✅ | `service.is_expired` derivado; estados de documento y de archivo separados |
+| T-046-011 | ✅ | `0023_document_model`, aplicada sobre PostgreSQL 18.6 |
+
+## F2 · Almacenamiento
+
+| Tarea | Estado | Evidencia |
+|---|---|---|
+| T-046-020 | ✅ | `storage.py::DocumentStorageProvider` |
+| T-046-021 | ✅ | `FilesystemStorageProvider`; suite de conformidad |
+| T-046-022 | ✅ | `generate_storage_key`; `test_amz_12_clave_de_almacenamiento_opaca` |
+| T-046-023 | ✅ | Temporal → `os.replace` → verificación; `test_fallo_de_escritura_no_deja_version` |
+| T-046-024 | ✅ | `verify()`; `test_objeto_ausente_…`, `test_huella_distinta_no_se_entrega` |
+| T-046-025 | ⚠️ | `S3CompatibleStorageProvider` implementado y con `endpoint_url` obligatorio. **Sin endpoint real en este entorno**: su conformidad queda sin verificar y las pruebas se omiten diciéndolo |
+| T-046-026 | ✅ | Credenciales solo por entorno; `test_el_estado_no_expone_rutas_ni_credenciales` |
+| T-046-027 | ✅ | Raíz por instalación; sin depósito compartido |
+
+## F3 · Servicio
+
+| Tarea | Estado | Evidencia |
+|---|---|---|
+| T-046-030 | ✅ | `sanitize_filename`; `test_amz_01_recorrido_de_rutas` (6 vectores) |
+| T-046-031 | ✅ | `detect_mime` por contenido; `test_amz_02_suplantacion_de_mime` |
+| T-046-032 | ✅ | `test_lista_blanca_vacia_significa_ninguno` |
+| T-046-033 | ✅ | Corte en flujo; `test_amz_18_agotamiento_por_archivo_grande` |
+| T-046-034 | ✅ | `test_subida_valida_calcula_hash_en_servidor`, `test_amz_15_asignacion_masiva` |
+| T-046-035 | ✅ | `_create_version`; `test_amz_13_sin_sobrescritura_del_historico` |
+| T-046-036 | ✅ | Original byte a byte. **No hay derivados**: miniaturas y OCR están prohibidos por el encargo |
+| T-046-037 | ✅ | `versioning_policy` `SINGLE`/`VERSIONED` |
+| T-046-038 | ✅ | `IdempotencyRecord` existente; `test_subida_idempotente` |
+| T-046-039 | ✅ | `DOCUMENT_HASH_COINCIDENCE` auditado, no bloqueante; `test_el_mismo_archivo_dos_veces_no_se_deduplica_ni_se_bloquea` |
+| T-046-040 | ✅ | `validate_metadata` |
+| T-046-041 | ✅ | `external_url` ⇒ `is_managed=False`; `EXTERNAL_DOCUMENT_NO_FILE` |
+
+## F4 · Vinculación y autorización
+
+| Tarea | Estado | Evidencia |
+|---|---|---|
+| T-046-050 | ✅ | `resources.py`: **19** tipos registrados; `test_tipo_de_recurso_desconocido_se_rechaza` |
+| T-046-051 | ✅ | `_assert_resource_access`; `test_amz_16_vinculacion_no_autorizada` |
+| T-046-052 | ✅ | `test_amz_17_desvinculacion_no_autorizada` |
+| T-046-053 | ✅ | `documents_for`; `/documentos/por-recurso/{tipo}/{id}` |
+| T-046-054 | ✅ | `freeze_links`; `test_version_congelada_el_historico_no_se_reinterpreta` |
+| T-046-055 | ✅ | `_assert_can_read_file` |
+| T-046-056 | ✅ | `test_amz_06_referencia_insegura_directa` (404, nunca 403) |
+| T-046-057 | ✅ | `test_amz_07_fuga_entre_empresas` (5 operaciones) |
+| T-046-058 | ✅ | `allowed_actions`, `can_delete` |
+| T-046-059 | ✅ | `documentos:*` con la convención de la Spec 003; `test_los_permisos_documentales_quedan_concedidos` |
+| T-046-060 | ✅ | `record_audit` transversal; `test_amz_20_los_registros_no_filtran_contenido` |
+
+## F5 · Seguridad del archivo
+
+| Tarea | Estado | Evidencia |
+|---|---|---|
+| T-046-070 | ✅ | 5 estados de seguridad, separados del estado del archivo |
+| T-046-071 | ✅ | `assert_deliverable`; `test_pendiente_de_analisis_no_se_entrega` |
+| T-046-072 | ✅ | ClamAV 1.4.3 real; `DisabledScanner` declara `SKIPPED`, nunca `CLEAN` |
+| T-046-073 | ✅ | `FileSecurityScan` + `DOCUMENT_SCAN_REJECTED` |
+| T-046-074 | ✅ | `test_amz_03`, `test_amz_11_comprimidos_rechazados_por_defecto` |
+| T-046-075 | ✅ | `retention_days`; sin plazo por defecto — `test_sin_plazo_declarado_nada_vence` |
+| T-046-076 | ⚠️ | `purge_version` existe y es idempotente. **No hay planificador**: la plataforma aún no tiene trabajador común, y crear uno aquí sería ampliar el alcance. La operación queda lista para que ese trabajador la invoque |
+| T-046-077 | ✅ | `purge_blockers`; `test_una_version_referenciada_no_se_purga` |
+
+## F6 · API
+
+| Tarea | Estado | Evidencia |
+|---|---|---|
+| T-046-080 | ✅ | `/documentos/categorias`, `/documentos/tipos` |
+| T-046-081 | ✅ | 5 endpoints; `test_borrado_protegido_y_archivado_conserva_binario` |
+| T-046-082 | ✅ | `POST /documentos/{id}/versiones` multipart |
+| T-046-083 | ✅ | `GET .../versiones`; no existe endpoint de edición de versión |
+| T-046-084 | ✅ | Cabeceras `no-store`, `nosniff`, `sandbox`; `test_amz_19_inyeccion_de_cabeceras` |
+| T-046-085 | ✅ | `test_amz_04_contenido_activo_nunca_en_linea` |
+| T-046-086 | ✅ | `/vinculos`, `/por-recurso/...` |
+| T-046-087 | ✅ | Códigos con `details`; `allowed_actions` en cada documento |
+| T-046-088 | ✅ | `If-Match` con `_check_version` |
+| T-046-089 | ✅ | 046 **no** notifica: no se creó ningún emisor. Los contratos de evento quedan declarados para 047 |
+| T-046-090 | ✅ | `expiring_before` por índice; `test_listar_miles_…` (0 aperturas) |
+
+## F7 · Pruebas de backend
+
+| Tarea | Estado | Evidencia |
+|---|---|---|
+| T-046-100 a T-046-103 | ✅ | `tests/test_documents.py` |
+| T-046-104 | ✅ | PostgreSQL 18.6 + almacenamiento en disco real |
+| T-046-105 | ✅ | `test_documento_logico_sin_archivo`, `test_vinculacion_y_documento_compartido` |
+| T-046-106 | ✅ | `tests/test_documents_security.py`: `AMZ-01`..`AMZ-20`, una prueba por amenaza |
+| T-046-107 | ✅ | `test_dos_subidas_simultaneas_no_producen_dos_v2` |
+| T-046-108 | ✅ | 3 pruebas de fallo de almacenamiento |
+| T-046-109 | ⚠️ | `tests/test_documents_storage.py` parametrizada por proveedor: sistema de archivos ✅, compatible con S3 **omitido por falta de servicio real** |
+| T-046-110 | ✅ | `test_el_contrato_nunca_expone_almacenamiento` |
+| T-046-111 | ✅ | `test_listar_miles_de_documentos_sin_abrir_un_solo_binario` (5.000 filas) |
+| T-046-112 | ✅ | `test_amz_20_los_registros_no_filtran_contenido` |
+| T-046-113 | ✅ | Regresión completa sobre PostgreSQL 18.6 |
+
+## F8 · Frontend
+
+| Tarea | Estado | Evidencia |
+|---|---|---|
+| T-046-120 | ✅ | `src/modules/documentos/types.ts` |
+| T-046-121 | ✅ | `BibliotecaPage.tsx` con 4 filtros y paginación |
+| T-046-122 | ✅ | `DocumentoDetallePage.tsx` |
+| T-046-123 | ✅ | Tabla de versiones sin control de edición |
+| T-046-124 | ✅ | `<input type="file">` nativo, enfocable; `documents-a11y.spec.ts` |
+| T-046-125 | ✅ | «Subiendo…» / «Verificando…»; **sin porcentaje** |
+| T-046-126 | ✅ | `uploadErrorMessage`; `documentos.test.tsx` (7 casos) |
+| T-046-127 | ✅ | `AdjuntosPanel.tsx`, único componente de adjuntos |
+| T-046-128 | ✅ | `TiposDocumentalesPage.tsx` |
+| T-046-129 | ✅ | La previsualización se entrega como descarga; no hay visor propio que adaptar |
+| T-046-130 | ✅ | `truncateName` por el centro; `documentos.test.tsx` |
+| T-046-131 | ⛔ | `UnsavedChangesGuard` no se aplica: los formularios de 046 son de una línea y la carga es inmediata. Aplicarlo aquí añadiría fricción sin proteger nada |
+
+## F9 · Legado, E2E y cierre
+
+| Tarea | Estado | Evidencia |
+|---|---|---|
+| T-046-140 | ✅ | `0024`: 12 columnas anotadas, `documents_created: 0` |
+| T-046-141 | ✅ | `test_un_hash_sin_binario_no_es_un_documento` |
+| T-046-142 | ✅ | `MISSING_FILE`; `test_un_archivo_que_no_esta_se_reporta_no_se_inventa` |
+| T-046-143 | ✅ | `import_legacy_reference`; `tests/test_documents_legacy_import.py` |
+| T-046-144 | ✅ | `0024_document_legacy_marks`, con reversión probada |
+| T-046-145 | ✅ | `e2e/documents.spec.ts` |
+| T-046-146 | ✅ | Contrato 045↔046 verificado en backend (`test_version_congelada_…`) |
+| T-046-147 | ⚠️ | `PermitInstance` y `OfficialDocument` registrados y probados en backend; el E2E regulatorio por interfaz **no** se escribió: 044 no tiene pantallas de permiso con carga |
+| T-046-148 | ✅ | Fixture de 5 casos: `tests/test_documents_legacy_import.py` |
+| T-046-149 | ✅ | `playwright.config.ts` cubre Chromium, Firefox y WebKit |
+| T-046-150 | ✅ | `e2e/documents-a11y.spec.ts` |
+| T-046-151 | ✅ | 6 viewports, 320–1440 |
+| T-046-152 | ✅ | Rutas nuevas incluidas en el rastreo |
+| T-046-153 | ✅ | 19 tipos registrados; §2 de la matriz de consumidoras |
+| T-046-154 | ✅ | 0 tipos documentales codificados: los catálogos nacen vacíos |
+| T-046-155 | ✅ | `/speckit.converge 046` y `SPEC_046_FINAL_CLOSEOUT.md` |
+
+## Recuento
+
+| Estado | Tareas |
+|---|---:|
+| ✅ Implementado y verificado | 98 |
+| ⚠️ Implementado, sin verificar aquí | 4 (T-046-025, 076, 109, 147) |
+| ⛔ No implementado, con motivo | 1 (T-046-131) |
+| **Total** | **103** |
