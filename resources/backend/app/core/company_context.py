@@ -56,28 +56,32 @@ def accessible_company_ids(db: Session, user: User) -> list[str]:
 
     Pertenecer al tenant **no** concede acceso a todas sus empresas: sería
     reproducir en los permisos el mismo defecto que se está corrigiendo en los
-    datos. El alcance se lee de `user_scopes` y `user_roles`, que ya existen; no
-    se crea un sistema paralelo (Spec 003).
+    datos. El alcance se lee de `user_scopes`, que ya existe; no se crea un
+    sistema paralelo (Spec 003).
 
-    Un alcance con `company_id` nulo significa «todas las del tenant»: es la
-    convención que la columna anulable ya expresaba.
+    **`UserScope` es la autoridad de acceso; `UserRole` no.** Un rol con
+    `company_id` nulo significa «este rol vale en cualquier empresa donde el
+    usuario opere», que es el alcance del **permiso**. Confundirlo con la lista
+    de acceso haría que cualquiera con un rol global viese todas las empresas
+    del tenant, que es exactamente el defecto que esta remediación corrige,
+    trasladado a la capa de autorización.
+
+    Sin ningún alcance declarado se admiten todas las del tenant: es el caso del
+    administrador que crea la instalación, y mantiene funcionando a quien opera
+    con una sola empresa.
     """
-    from app.modules.identity_access.models import UserRole, UserScope
+    from app.modules.identity_access.models import UserScope
 
     del_tenant = list(db.execute(
         select(Company.id).where(Company.tenant_id == user.tenant_id)).scalars().all())
 
-    ámbitos = db.execute(
-        select(UserScope.company_id).where(UserScope.user_id == str(user.id))).scalars().all()
-    roles = db.execute(
-        select(UserRole.company_id).where(UserRole.user_id == str(user.id))).scalars().all()
+    ámbitos = [c for c in db.execute(
+        select(UserScope.company_id).where(UserScope.user_id == str(user.id))
+    ).scalars().all() if c]
 
-    declarados = list(ámbitos) + list(roles)
-    if not declarados or any(c is None for c in declarados):
-        # Sin alcance declarado, o con uno global: todas las del tenant.
+    if not ámbitos:
         return del_tenant
-    permitidas = {c for c in declarados if c}
-    return [c for c in del_tenant if c in permitidas]
+    return [c for c in del_tenant if c in set(ámbitos)]
 
 
 def resolve_company(db: Session, user: User, requested: str | None) -> CompanyContext:

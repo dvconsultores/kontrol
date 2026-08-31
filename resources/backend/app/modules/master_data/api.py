@@ -236,9 +236,11 @@ def get_party(party_id: str, db: Session = Depends(get_db), user: User = Depends
 
 
 @router.post("/terceros/{party_id}/deactivate", dependencies=[Depends(require_write_allowed)])
-def deactivate_party(party_id: str, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "deactivate"))):
+def deactivate_party(party_id: str, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "deactivate")), ctx: CompanyContext = Depends(get_company_context)):
     party = db.get(Party, party_id)
-    if not party:
+    # Esta ruta no comparaba la empresa: no es que usara el tenant, es que no
+    # acotaba en absoluto, y por eso el barrido de N2 no la vio.
+    if not party or party.company_id != ctx.company_id:
         raise NotFoundError(code="PARTY_NOT_FOUND", message="Tercero no encontrado")
     party.status = "INACTIVE"
     db.commit()

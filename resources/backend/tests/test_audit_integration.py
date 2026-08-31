@@ -115,10 +115,19 @@ def _event_actions() -> set[str]:
 def test_business_operations_generate_audit_events():
     h = _auth()
 
+    # La empresa en la que se opera. Antes bastaba con no decirlo, porque el
+    # tenant tenía una sola; al crear la segunda hay que declararlo, y eso es
+    # justamente lo que ARCH-MC-001 vino a hacer explícito.
+    empresa = _CLIENT.get("/api/v1/organization/companies", headers=h).json()[0]["id"]
+
     # organización
     comp = _CLIENT.post("/api/v1/organization/companies", headers=h,
                         json={"code": "D2", "legal_name": "Audit Co", "rif": "J-98765432-1"}).json()
     assert comp["id"]
+
+    # Desde aquí el tenant tiene dos empresas: toda operación de empresa dice
+    # en cuál ocurre.
+    h = {**h, "X-Kontrol-Company": empresa}
 
     # maestro tercero (cliente)
     cust = _CLIENT.post("/api/v1/maestros/terceros", headers=h,
