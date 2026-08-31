@@ -369,7 +369,9 @@ def record_movement(
         raise KontrolError(code="ZERO_QUANTITY", message="La cantidad del movimiento no puede ser cero", status_code=422)
 
     if idempotency_key:
-        existing = db.execute(select(InventoryMovement).where(InventoryMovement.idempotency_key == idempotency_key)).scalars().first()
+        existing = db.execute(
+            select(InventoryMovement).where(InventoryMovement.idempotency_key == idempotency_key,
+                                            InventoryMovement.company_id == company_id)).scalars().first()
         if existing:
             return existing
 

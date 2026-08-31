@@ -334,7 +334,12 @@ def create_invoice(db: Session, *, company_id: str, customer_id: str, base_fisca
     company_id = _company(company_id, obj="factura de venta")
     _require_party(db, company_id, customer_id)
     if idempotency_key:
-        existing = db.execute(select(SalesInvoice).where(SalesInvoice.idempotency_key == idempotency_key)).scalars().first()
+        # Acotada por empresa: sin esto, A pedía una factura con una clave que B
+        # ya había usado y recibía la factura fiscal de B, con su número y su
+        # total, como si fuera propia.
+        existing = db.execute(
+            select(SalesInvoice).where(SalesInvoice.idempotency_key == idempotency_key,
+                                       SalesInvoice.company_id == company_id)).scalars().first()
         if existing:
             return existing
     invoice = SalesInvoice(company_id=company_id, customer_id=customer_id, base_fiscal_currency=base_fiscal_currency,

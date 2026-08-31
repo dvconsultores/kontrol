@@ -457,7 +457,9 @@ def create_invoice(db: Session, *, company_id: str, supplier_id: str, invoice_nu
     company_id = _company(company_id, obj="factura")
     _require_party(db, company_id, supplier_id)
     if idempotency_key:
-        existing = db.execute(select(SupplierInvoice).where(SupplierInvoice.idempotency_key == idempotency_key)).scalars().first()
+        existing = db.execute(
+            select(SupplierInvoice).where(SupplierInvoice.idempotency_key == idempotency_key,
+                                          SupplierInvoice.company_id == company_id)).scalars().first()
         if existing:
             return existing
     dup = (
