@@ -637,7 +637,11 @@ def register_payment(db: Session, *, company_id: str, party_id: str, amount: flo
     if amount <= 0:
         raise KontrolError(code="INVALID_AMOUNT", message="El monto del pago debe ser positivo", status_code=422)
     if idempotency_key:
-        existing = db.execute(select(Payment).where(Payment.idempotency_key == idempotency_key)).scalars().first()
+        # Acotada por empresa: una clave repetida en otra empresa devolvía su
+        # pago, entregando el identificador de un tercero como si fuera propio.
+        existing = db.execute(
+            select(Payment).where(Payment.idempotency_key == idempotency_key,
+                                  Payment.company_id == company_id)).scalars().first()
         if existing:
             return existing
     payment = Payment(company_id=company_id, party_id=party_id, direction=direction, currency=currency,
@@ -663,6 +667,30 @@ def transition_payment(db: Session, *, payment: Payment, target: str, actor: str
     _audit(db, action="PAYMENT_TRANSITIONED", entity_type="Payment", entity_id=str(payment.id),
            company_id=payment.company_id, actor=actor, after={"target": payment.status, "amount": float(payment.amount)})
     return payment
+
+
+_MODELO_DE_FUENTE = {"PAYMENT": Payment, "ADVANCE": Advance,
+                     "CREDIT": SupplierCreditNote, "WITHHOLDING": Withholding}
+
+
+def _require_source(db: Session, company_id: str, source_type: str, source_id: str) -> Any:
+    """La fuente de una aplicación debe ser de la misma empresa que el destino.
+
+    Sin esta comprobación, un pago de otra empresa del mismo tenant podía
+    cancelar una deuda propia: los saldos cuadran a ambos lados y no queda
+    ningún síntoma visible, porque el dinero salió de una caja y la deuda se
+    extinguió en otra. Son dos personas jurídicas distintas; si una paga por la
+    otra, eso es un préstamo entre empresas y necesita su propio documento.
+    """
+    modelo = _MODELO_DE_FUENTE.get(source_type)
+    if modelo is None:
+        raise KontrolError(code="INVALID_SOURCE_TYPE",
+                           message="Tipo de fuente de aplicación no válido", status_code=422)
+    fuente = db.get(modelo, source_id)
+    if fuente is None or fuente.company_id != company_id:
+        raise NotFoundError(code="APPLICATION_SOURCE_NOT_FOUND",
+                            message="Fuente de aplicación no encontrada")
+    return fuente
 
 
 def _source_available(db: Session, *, source_type: str, source_id: str) -> float:
@@ -714,6 +742,7 @@ def apply_source(db: Session, *, company_id: str, source_type: str, source_id: s
         raise NotFoundError(code="OPEN_ITEM_NOT_FOUND", message="Documento de CxP no encontrado")
     if target.status != "OPEN":
         raise ConflictError(code="OPEN_ITEM_CLOSED", message="El documento de CxP está cerrado.")
+    _require_source(db, company_id, source_type, source_id)
     balance = open_item_balance(target)
     if amount > balance:
         raise ConflictError(code="APPLICATION_EXCEEDS_BALANCE", message=f"La aplicación excede el saldo disponible ({balance}).")

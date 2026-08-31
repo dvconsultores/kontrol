@@ -14,6 +14,7 @@ eso sería un filtro correcto sobre un dato equivocado.
 
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import text
 
 #: El fixture se registra como plugin; importarlo lo redefiniría en cada prueba.
