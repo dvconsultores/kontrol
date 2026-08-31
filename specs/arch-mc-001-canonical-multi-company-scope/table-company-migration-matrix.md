@@ -1,5 +1,13 @@
 # MATRIZ DE MIGRACIÓN POR TABLA — ARCH-MC-001
 
+> **Estado tras N3 (2026-08-31).** Las 80 tablas de empresa cuyo `company_id`
+> guarda el tenant están **`EXPANDED`** y **`PREFLIGHT_READY`**: tienen sus
+> columnas `legacy_scope_id` y `scope_backfill_class` creadas y vacías, y su
+> clasificación medida. Las 5 del tenant con nombre falso tienen ya su
+> `tenant_id` con clave foránea real, también vacía.
+>
+> **Ninguna tabla está `BACKFILLED`.** No se ha escrito un solo dato.
+
 Las 166 tablas del modelo. Ninguna queda sin clasificar.
 
 ## approvals (8)
