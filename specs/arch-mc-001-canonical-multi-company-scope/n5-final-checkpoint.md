@@ -1,118 +1,138 @@
-# N5 — CHECKPOINT DE NORMALIZACIÓN DE DOMINIOS
+# N5 — CHECKPOINT FINAL
 
-Fecha: 2026-08-31 · PostgreSQL **18.6** en UTC · ClamAV 1.4.3
+PostgreSQL **18.6** en UTC · ClamAV 1.4.3 · **121 pruebas** nuevas de aislamiento
 
-## 1. Qué se hizo aquí
+## 1. Qué demostró esta fase
 
-N2 ya había convertido 234 puntos de `actor.tenant_id` a `ctx.company_id`. Lo que
-faltaba —y es lo que N5 aporta— es **demostrarlo con dos empresas del mismo
-tenant**, que es el único escenario donde el defecto se manifiesta.
+N2 ya había convertido 234 puntos al contexto de empresa, y el checkpoint
+anterior dejó siete dominios como `NORMALIZED_PENDING_AB_PROOF`: escribían y
+leían bien, pero nadie los había interrogado con dos empresas del mismo tenant.
 
-Hasta ahora todas las suites probaban aislamiento **entre tenants**, que ya
-funcionaba. Con una sola empresa por tenant, un sistema que confunde tenant con
-empresa pasa todas las pruebas.
+Al interrogarlos aparecieron **once defectos reales**, entre ellos dos
+vulnerabilidades de seguridad en Specs cerradas y una fuga de lectura en el
+módulo que se citaba como referencia positiva.
 
-## 2. El fixture que faltaba
+Esa es la conclusión de la fase, más que cualquier tabla: *implementado* y
+*probado* no son lo mismo, y la diferencia no es teórica.
 
-```
-T1 ─ Company A ─ Branch A1 ─ Warehouse A1
-   └ Company B ─ Branch B1 ─ Warehouse B1
-T2 ─ Company C
-```
+## 2. Los once defectos
 
-`UA` (solo A) · `UB` (solo B) · `UAB` (A+B) · `UC` (T2).
-
-## 3. Dos defectos reales encontrados
-
-### 3.1 El rol global concedía acceso a todas las empresas
-
-`accessible_company_ids` mezclaba dos cosas distintas: `UserScope`, que dice **en
-qué empresas puede operar** un usuario, y `UserRole.company_id`, que dice **dónde
-vale un rol**. Un rol con `company_id` nulo significa «este rol sirve en
-cualquier empresa donde el usuario opere», no «el usuario opera en todas».
-
-Consecuencia: cualquiera con un rol global veía las dos empresas. Era el mismo
-defecto que esta remediación corrige en los datos, trasladado a la autorización.
-
-Corregido: `UserScope` es la autoridad de acceso. Sin ningún alcance declarado se
-admiten todas las del tenant, que es el caso del administrador que instala.
-
-### 3.2 Una ruta que no acotaba en absoluto
-
-`deactivate_party` desactivaba un tercero **de cualquier empresa**: 200 al operar
-desde A sobre una fila de B.
-
-N2 no pudo verlo. Buscaba el patrón `company_id = tenant_id` y esta ruta no lo
-tenía, porque no tenía ninguno. **Nunca comprobó nada.**
-
-De ahí sale una clase de defecto propia, que N5 buscó aparte: «rutas que cargan
-una entidad de empresa sin comprobar la empresa». El barrido encontró 13; una
-era real en dominio normalizado, y las otras 12 están en Specs cerradas.
-
-## 4. Dos hallazgos diferidos a N9 — comprobados, no corregidos
-
-Verificados **por comportamiento**, no leyendo código, y fijados con pruebas que
-fallarán el día que se corrijan.
-
-| Spec | Hallazgo | Evidencia |
+| # | Dónde | Qué pasaba |
 |---|---|---|
-| **046** | `_get_document` admite cualquier empresa del tenant | `UA` lee un documento de B y recibe **200** |
-| **045** | Toma la empresa del cuerpo sin contrastar el contexto | Operando en A, la política se guarda en B |
+| 1 | `company_context` | Un rol global concedía acceso a todas las empresas |
+| 2 | `master_data` | `deactivate_party` no acotaba en absoluto |
+| 3 | `purchasing` | El pago de una empresa cancelaba la deuda de otra |
+| 4 | `purchasing` | La idempotencia devolvía el pago de otra empresa |
+| 5 | `sales` | La idempotencia devolvía la **factura fiscal** de otra empresa |
+| 6 | `inventory` | La idempotencia devolvía el movimiento de otra empresa |
+| 7 | `organization` | 29 rutas de almacén resolvían el alcance por tenant |
+| 8 | `organization` | `create_branch` dejaba elegir la empresa por el cuerpo |
+| 9 | `organization` | La auditoría anotaba el tenant pero no la empresa |
+| 10 | `regulatory` | Un permiso de A amparaba un vehículo de B |
+| 11 | `treasury` | El arqueo de caja se auditaba sin autor |
 
-Era coherente cuando se escribieron: tenant y empresa eran lo mismo. Deja de
-serlo con dos empresas.
+Más las dos vulnerabilidades P0 de 045 y 046, cerradas en esta misma fase.
 
-Su corrección pertenece a **N9**. Tocarlas aquí reabriría dos Specs `COMPLETE_100`
-sin autorización.
+## 3. Los tres que no encontró ninguna prueba de dominio
 
-## 5. Lo que se comprueba, y por qué son dos cosas
+Vale la pena separarlos, porque dicen algo sobre el método.
+
+**`create_branch`** salió de una prueba estructural sobre el AST, no de una
+funcional. Nadie había pensado en crear una sucursal desde la empresa
+equivocada.
+
+**El listado de almacenes** salió de la prueba de control: la que existía solo
+para confirmar que el fixture funcionaba, en el módulo llamado «referencia
+positiva» porque su dato siempre fue correcto. Lo era. Su lectura no.
+
+**El rastro sin empresa** salió del barrido transversal, después de que seis
+dominios hubieran dado por buena su propia auditoría.
+
+## 4. Fuga y mezcla
 
 | Fallo | Pregunta | Resultado |
 |---|---|---|
-| **Fuga** | ¿Puede A leer lo de B? | **0** |
+| **Fuga** | ¿Puede A acceder al dato de B? | **0** |
 | **Mezcla** | ¿Sabe la base de quién es la fila? | **0** |
 
-La segunda no se puede sustituir por la primera. Que la API filtre bien no
-significa nada si el dato persistido guarda el tenant: sería un filtro correcto
-sobre un dato indistinguible. Por eso hay una prueba que consulta PostgreSQL y
-verifica que `parties.company_id` guarda la empresa y **no** el tenant.
+La segunda se mide recorriendo el catálogo de PostgreSQL y preguntando, tabla
+por tabla —123 declaradas de empresa—, si alguna fila apunta a un tenant o a un
+identificador inexistente. Ninguna prueba de dominio puede hacer eso.
 
-## 6. Un fixture que codificaba el supuesto viejo
+## 5. Operaciones entre empresas, bloqueadas
 
-`test_audit_integration` creaba una segunda empresa a mitad de flujo y seguía
-operando sin decir en cuál. El rechazo con `COMPANY_CONTEXT_REQUIRED` es
-**correcto**: en cuanto hay dos, «¿en cuál?» es una pregunta real.
+Dinero entre cuentas · existencias entre almacenes · pago contra deuda ajena ·
+cobro contra cuenta por cobrar ajena · recepción en almacén ajeno · despacho
+desde almacén ajeno · emisión fiscal con serie o rango ajenos · permiso con
+vehículo ajeno · lectura y descarga de documentos ajenos · escritura de
+políticas en empresa ajena.
 
-Corregido declarando la empresa. No es relajar la prueba: es que la prueba
-reconozca lo que ella misma acababa de crear.
+Cada bloqueo va acompañado de su prueba positiva. Sin ellas, un sistema
+completamente roto pasaría la mitad de esa lista.
 
-## 7. Estado por dominio
+Ninguna capacidad intercompany se implementó. Las operaciones se impiden y se
+registran como `FUTURE_INTERCOMPANY_CAPABILITY`.
 
-Ver `n5-domain-normalization-matrix.md`. Resumen:
+## 6. Pruebas que estaban mal y cómo
 
-| Estado | Dominios |
+Cuatro pruebas —tres mías, una preexistente— pasaban sin comprobar lo que decían.
+Se dejan documentadas porque el patrón se repite.
+
+**El libro fiscal, en vacío.** Pedía el libro por `IVA` cuando el de ventas es
+`VENTAS`. Dos libros sin filas no se contaminan: el aislamiento quedaba
+demostrado por no haber datos.
+
+**El picking, por el motivo equivocado.** La orden estaba en borrador y el
+rechazo llegaba por el estado, no por la empresa, sin tocar nunca la
+comprobación que pretendía interrogar.
+
+**Los payloads inválidos.** Varias pruebas de tesorería recibían 422 por cuerpo
+mal formado y lo contaban como bloqueo. Un 422 significa que la petición murió
+en la validación de forma.
+
+**El tenant sin empresa.** `test_documents_security` usaba un segundo tenant sin
+ninguna empresa como prueba de aislamiento. Ese usuario no ve documentos ajenos
+porque no tiene dónde mirar, no porque el sistema lo separe.
+
+Las cuatro son ahora más estrictas.
+
+## 7. Estado de las pruebas
+
+| | |
 |---|---|
-| `FUNCTIONALLY_NORMALIZED` | master_data, organization |
-| `NORMALIZED_PENDING_AB_PROOF` | purchasing, inventory, sales, treasury, fiscal, regulatory, reporting |
-| `DEFERRED_TO_N9` | approvals, documents |
+| Backend | Sin fallos inesperados |
+| Arquitectura | 7 PASS · 3 EXPECTED_RED (N7/N8) · **0 UNEXPECTED_RED** |
+| Frontend | tsc, eslint, 245/245 Vitest, build |
+| OpenAPI | 294 rutas, sin pérdida |
 
-**Sobre la honestidad de esta tabla:** los siete `PENDING_AB_PROOF` escriben y
-leen la empresa real —comparten el mismo `CompanyContext` y pasaron por los 234
-puntos de N2— pero no tienen todavía una prueba A/B **de su dominio**. Marcarlos
-como probados sería exactamente el error que este proyecto viene corrigiendo:
-afirmar por construcción lo que no se ha verificado.
+Las tres rojas de arquitectura son las mismas de siempre: constraints de N7 y
+retirada de columnas legacy de N8. No se tocan aquí.
 
-Es la misma lección de `REM-046-001`, donde 19 tipos estaban registrados y solo
-uno probado.
+## 8. Lo que N5 deja escrito para otras fases
 
-## 8. Qué falta para `N5 COMPLETE`
+**N8 — contrato.** `X-Kontrol-Company` no aparece en OpenAPI: la dependencia lee
+la cabecera del `Request` en lugar de declararla. Funciona y 121 pruebas la
+usan, pero un consumidor que lea solo el contrato no sabría que existe.
 
-| Pendiente | Alcance |
-|---|---|
-| Prueba A/B por dominio: compras, inventario, ventas, CxC, CxP, tesorería, fiscal, regulatorio | 7 dominios |
-| Fiscal A/B: configuración, series, rangos de control, documentos, libros, retenciones | P0 |
-| Bloqueo de operaciones entre empresas: aplicación de pagos, transferencias de stock | — |
-| Eventos y auditoría con la empresa real, verificado en base | — |
+**Spec 052 — instalador.** `MANDATORY_PER_INSTALLATION_PREFLIGHT`: toda
+instalación existente pasa el preflight antes de actualizar, y no depende de que
+el cliente crea tener una sola empresa. El preflight es lo que lo decide.
 
-No es trabajo de diseño: el camino está y el fixture también. Es escribir las
-pruebas por dominio y corregir lo que destapen, como destaparon las dos de §3.
+**Spec 053 — actualizador.** Respaldo verificado antes de cualquier migración
+que toque `company_id`. La expansión de N3 es reversible; una normalización de
+datos, no.
+
+**Capacidades ausentes, documentadas sin inventarlas.** `outbox_events` está
+migrada pero ningún módulo escribe en ella; los maestros no registran auditoría
+de negocio. En ambos casos queda la regla escrita para cuando existan, no una
+implementación improvisada.
+
+## 9. Veredicto
+
+**`ARCH-MC-001 — N5 COMPLETE`**
+
+`SPEC 012 APTA_DOCUMENTALMENTE — BLOCKED_BY_ARCH_MC_001`
+`REM-046-001 BLOCKED_BY_ARCH_MC_001`
+`N4 Real Backfill — NOT_APPLICABLE — NO DEPLOYED LEGACY INSTALLATIONS`
+
+N6 a N10 quedan pendientes y no se inician.

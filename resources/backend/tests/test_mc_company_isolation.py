@@ -14,7 +14,6 @@ eso sería un filtro correcto sobre un dato equivocado.
 
 from __future__ import annotations
 
-import pytest
 from sqlalchemy import text
 
 #: El fixture se registra como plugin; importarlo lo redefiniría en cada prueba.
@@ -152,63 +151,16 @@ def test_el_cuerpo_no_puede_contradecir_al_contexto(mundo):
 
 
 # ------------------------------------- fronteras con las Specs ya cerradas
-def test_documentos_acota_por_tenant_no_por_la_empresa_activa(mundo):
-    """Hallazgo comprobado por comportamiento, no corregido aquí.
-
-    La Spec 046 resuelve el alcance con un ayudante propio que admite
-    **cualquier empresa del tenant**, no la del contexto activo. Era coherente
-    cuando se escribió —tenant y empresa eran lo mismo— y deja de serlo con dos.
-
-    Su corrección pertenece a N9, junto con el resto de `REM-046-001`. Tocarla
-    aquí reabriría una Spec cerrada sin autorización, así que se fija el hecho
-    para que no se pierda entre las que sí quedaron normalizadas.
-    """
-    tipo_b = mundo.client.post("/api/v1/documentos/tipos",
-                               headers=mundo.como("ub", mundo.company_b),
-                               json={"company_id": mundo.company_b, "code": "TB",
-                                     "name": "Tipo de B",
-                                     "allowed_mime_types": ["application/pdf"],
-                                     "scan_required": False})
-    if tipo_b.status_code != 200:
-        pytest.skip(f"no se pudo sembrar el tipo documental: {tipo_b.status_code}")
-
-    doc_b = mundo.client.post("/api/v1/documentos",
-                              headers=mundo.como("ub", mundo.company_b),
-                              json={"company_id": mundo.company_b,
-                                    "document_type_id": tipo_b.json()["id"],
-                                    "title": "Documento de B"})
-    assert doc_b.status_code == 200, doc_b.text
-
-    visto_por_a = mundo.client.get(f"/api/v1/documentos/{doc_b.json()['id']}",
-                                   headers=mundo.como("ua", mundo.company_a))
-    assert visto_por_a.status_code == 200, (
-        "Si esto ya responde 404, el hallazgo se corrigió: "
-        "actualizar la prueba y cerrarlo en N9")
-
-
-def test_aprobaciones_recibe_la_empresa_del_cliente_sin_contrastarla(mundo):
-    """Mismo caso en la Spec 045, por otra vía.
-
-    045 toma la empresa del cuerpo de la petición. Con una sola empresa era
-    equivalente a tomarla del contexto; con dos, permite declarar una empresa
-    que no es en la que se está operando.
-
-    También es N9: 045 está `COMPLETE_100` y su modelo no se degrada aquí.
-    """
-    r = mundo.client.post("/api/v1/approvals/policies",
-                          headers=mundo.como("ua", mundo.company_a),
-                          json={"company_id": mundo.company_b,
-                                "process_type": "PURCHASE_ORDER",
-                                "code": "POL-CRUZADA", "name": "Cruzada",
-                                "requires_segregation": False})
-    if r.status_code not in (200, 201):
-        pytest.skip(f"la ruta de políticas respondió {r.status_code}")
-    db = mundo.factory()
-    try:
-        guardada = db.execute(text(
-            "SELECT company_id FROM approval_policies WHERE id = :i"),
-            {"i": r.json()["id"]}).scalar_one()
-    finally:
-        db.close()
-    assert guardada == mundo.company_b, (
-        "Si ya guarda la empresa del contexto, el hallazgo se corrigió")
+#
+# Aquí vivían dos pruebas que **fijaban** las vulnerabilidades cruzadas de las
+# Specs 045 y 046 mientras su corrección esperaba turno: una comprobaba que un
+# documento de otra empresa todavía se leía, y otra que el cuerpo de la petición
+# todavía imponía la empresa. Cada una decía en su docstring que fallaría el día
+# que el hallazgo se cerrara.
+#
+# Ese día llegó. Ambas están corregidas y cubiertas en
+# `test_mc_security_045_046.py`, con aserciones más estrictas que las que estas
+# dos hacían: allí se prueban también la descarga, la previsualización, las
+# versiones, el cruce entre tenants y la escritura legítima que debe seguir
+# funcionando. Mantener aquí una versión más débil de lo mismo solo añadiría
+# ruido.
