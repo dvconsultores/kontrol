@@ -32,7 +32,7 @@ from app.modules.documents.storage import (
 )
 from app.modules.identity_access import service as identity_service
 from app.modules.identity_access.models import UserRole
-from app.modules.organization.models import Installation, Tenant
+from app.modules.organization.models import Company, Installation, Tenant
 from app.modules.setup.api import SetupRequest, _bootstrap_roles, initialize
 from tests.conftest import make_engine
 
@@ -74,10 +74,19 @@ def _app_client(tmp_path_factory):
 
     # Segundo tenant con administrador propio: sirve para comprobar que ser
     # administrador **de otro sitio** no abre nada aquí.
+    #
+    # Tiene empresa propia a propósito. Un tenant sin ninguna empresa no
+    # demuestra aislamiento: no ve nada porque no tiene dónde mirar, no porque
+    # el sistema lo separe (ARCH-MC-001 N5).
     inst = db.execute(select(Installation).limit(1)).scalars().first()
     tenant_b = Tenant(installation_id=str(inst.id), code="DEMO2", name="Empresa B",
                       plan="MONO_COMPANY", status="ACTIVE")
     db.add(tenant_b)
+    db.flush()
+    company_b = Company(tenant_id=str(tenant_b.id), code="CB", legal_name="Empresa B CA",
+                        rif="J-87654321-0", legal_type="JURIDICA",
+                        functional_currency="VED", status="ACTIVE")
+    db.add(company_b)
     db.flush()
     user_b = identity_service.create_user(
         db, tenant_id=str(tenant_b.id), username="admin2", email="admin2@b.com",
@@ -290,8 +299,9 @@ def test_amz_07_fuga_entre_empresas():
     other = _headers_b()
 
     # 1. No aparece en el listado ajeno.
-    listed = _CLIENT.get("/api/v1/documentos", headers=other).json()
-    assert all(d["id"] != document["id"] for d in listed["items"])
+    listada = _CLIENT.get("/api/v1/documentos", headers=other)
+    assert listada.status_code == 200, listada.text
+    assert all(d["id"] != document["id"] for d in listada.json()["items"])
     # 2. No se puede crear un documento en la empresa ajena.
     r = _CLIENT.post("/api/v1/documentos", headers=other, json={
         "company_id": _company_id(), "document_type_id": doc_type["id"], "title": "Ajeno"})

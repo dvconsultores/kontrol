@@ -9,8 +9,10 @@ Fallan en construcción, no en ejecución.
 
 from __future__ import annotations
 
+import ast
 import pathlib
 import re
+from pathlib import Path
 
 from app.core.database import init_models
 from app.core.scope import Scope, declared_scope, scope_authority
@@ -164,3 +166,106 @@ def test_no_model_declares_scope_it_cannot_honour():
         and m.__tablename__ not in permitidos
     ]
     assert malos == [], f"declaran TENANT pero llevan `company_id`: {malos}"
+
+
+# ===================================================================== N5
+# Dos familias que buscan por estructura lo que ninguna prueba de dominio ve:
+# rutas que cargan una entidad de empresa sin comprobar la empresa, y rutas que
+# dejan al cliente decidir en qué empresa escribe.
+#
+# Se apoyan en el AST y en las dependencias declaradas, no en comentarios ni en
+# nombres: un comentario se puede escribir y seguir teniendo el defecto.
+
+_MODULOS_DE_NEGOCIO = (
+    "approvals", "documents", "fiscal", "inventory", "master_data",
+    "organization", "purchasing", "regulatory", "reporting", "sales", "treasury",
+)
+
+
+def _archivos_de_api() -> list[Path]:
+    raiz = Path(__file__).resolve().parents[1] / "app" / "modules"
+    return [f for m in _MODULOS_DE_NEGOCIO for f in sorted((raiz / m).glob("*api*.py"))]
+
+
+def _rutas(arbol: ast.Module) -> list[ast.FunctionDef]:
+    fuera = []
+    for nodo in ast.walk(arbol):
+        if not isinstance(nodo, ast.FunctionDef):
+            continue
+        for dec in nodo.decorator_list:
+            objetivo = dec.func if isinstance(dec, ast.Call) else dec
+            if (isinstance(objetivo, ast.Attribute) and isinstance(objetivo.value, ast.Name)
+                    and objetivo.value.id == "router"):
+                fuera.append(nodo)
+                break
+    return fuera
+
+
+def _recibe_contexto(fn: ast.FunctionDef) -> bool:
+    for arg in list(fn.args.args) + list(fn.args.kwonlyargs):
+        anotacion = getattr(arg, "annotation", None)
+        if isinstance(anotacion, ast.Name) and anotacion.id == "CompanyContext":
+            return True
+    return False
+
+
+def test_ninguna_ruta_de_empresa_carga_una_entidad_sin_acotarla():
+    """Familia 1 — la clase de defecto que `deactivate_party` estrenó.
+
+    Aquella ruta no confundía el tenant con la empresa: sencillamente **no
+    comparaba nada**, y por eso el barrido de N2 —que buscaba el patrón
+    `company_id = tenant_id`— no podía verla. Desactivaba un tercero de
+    cualquier empresa y respondía 200.
+
+    Esta prueba busca la forma estructural del defecto: una ruta que recibe un
+    identificador por la URL y carga la entidad con `db.get(...)`, sin que en
+    todo el cuerpo aparezca el contexto de empresa.
+    """
+    culpables: list[str] = []
+    for archivo in _archivos_de_api():
+        arbol = ast.parse(archivo.read_text())
+        for fn in _rutas(arbol):
+            nombres = {a.arg for a in fn.args.args}
+            if not any(n.endswith("_id") for n in nombres):
+                continue
+            carga = any(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                        and n.func.attr == "get" and isinstance(n.func.value, ast.Name)
+                        and n.func.value.id == "db" for n in ast.walk(fn))
+            if not carga:
+                continue
+            usa_ctx = any(isinstance(n, ast.Name) and n.id == "ctx" for n in ast.walk(fn))
+            if not (usa_ctx or _recibe_contexto(fn)):
+                culpables.append(f"{archivo.parent.name}/{archivo.name}::{fn.name}")
+    assert not culpables, (
+        "rutas que cargan una entidad por id sin contexto de empresa:\n  "
+        + "\n  ".join(culpables))
+
+
+def test_ninguna_ruta_deja_que_el_cuerpo_elija_la_empresa():
+    """Familia 2 — la vulnerabilidad que se demostró en la Spec 045.
+
+    Operando en la empresa A se declaraba la empresa B en el cuerpo y la
+    política quedaba guardada en B: el cliente elegía dónde escribir. Desde otro
+    tenant se podía escribir dentro de este.
+
+    Aquí se busca cualquier ruta que pase `body.company_id` a un servicio o a un
+    modelo sin haberlo contrastado antes con el contexto validado.
+    """
+    culpables: list[str] = []
+    for archivo in _archivos_de_api():
+        texto = archivo.read_text()
+        arbol = ast.parse(texto)
+        for fn in _rutas(arbol):
+            usos = [n for n in ast.walk(fn)
+                    if isinstance(n, ast.Attribute) and n.attr == "company_id"
+                    and isinstance(n.value, ast.Name) and n.value.id == "body"]
+            if not usos:
+                continue
+            cuerpo = ast.get_source_segment(texto, fn) or ""
+            contrastado = ("_empresa(ctx" in cuerpo
+                           or "!= ctx.company_id" in cuerpo
+                           or "== ctx.company_id" in cuerpo)
+            if not contrastado:
+                culpables.append(f"{archivo.parent.name}/{archivo.name}::{fn.name}")
+    assert not culpables, (
+        "rutas donde el cuerpo puede imponer la empresa:\n  " + "\n  ".join(culpables))

@@ -21,6 +21,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
 from app.core.errors import ConflictError, KontrolError, NotFoundError
@@ -36,7 +37,6 @@ from app.modules.documents.models import (
 )
 from app.modules.documents.storage import get_storage, sanitize_filename
 from app.modules.identity_access.models import User
-from app.modules.organization.models import Company
 from app.shared.audit import record_audit
 
 router = APIRouter(prefix="/documentos", tags=["documentos"])
@@ -46,9 +46,16 @@ router = APIRouter(prefix="/documentos", tags=["documentos"])
 # Alcance y control
 # --------------------------------------------------------------------------
 
-def _company_ids(db: Session, user: User) -> list[str]:
-    return list(db.execute(
-        select(Company.id).where(Company.tenant_id == user.tenant_id)).scalars().all())
+def _alcance(ctx: CompanyContext) -> list[str]:
+    """La empresa en la que se está operando, y solo esa.
+
+    Antes esto devolvía todas las empresas del tenant, así que un documento de
+    la empresa B se leía, se listaba y se descargaba desde la empresa A. Era
+    coherente cuando la Spec 046 se escribió —tenant y empresa eran lo mismo— y
+    dejó de serlo en cuanto hubo dos. El comentario de `_get_document` ya decía
+    la intención correcta; la implementación se había quedado atrás.
+    """
+    return [ctx.company_id]
 
 
 def _permissions(db: Session, user: User) -> set[str]:
@@ -57,26 +64,26 @@ def _permissions(db: Session, user: User) -> set[str]:
     return set(identity_service.get_user_permissions(db, user))
 
 
-def _get_document(db: Session, user: User, document_id: str) -> Document:
+def _get_document(db: Session, ctx: CompanyContext, document_id: str) -> Document:
     """Un documento de otra empresa se responde como inexistente (§44)."""
     document = db.get(Document, document_id)
-    if document is None or document.company_id not in _company_ids(db, user):
+    if document is None or document.company_id not in _alcance(ctx):
         raise NotFoundError(code="DOCUMENT_NOT_FOUND", message="Documento no encontrado")
     return document
 
 
-def _get_type(db: Session, user: User, type_id: str) -> DocumentType:
+def _get_type(db: Session, ctx: CompanyContext, type_id: str) -> DocumentType:
     doc_type = db.get(DocumentType, type_id)
-    if doc_type is None or doc_type.company_id not in _company_ids(db, user):
+    if doc_type is None or doc_type.company_id not in _alcance(ctx):
         raise NotFoundError(code="DOCUMENT_TYPE_NOT_FOUND", message="Tipo documental no encontrado")
     return doc_type
 
 
-def _assert_resource_access(db: Session, user: User, resource_type: str,
-                            resource_id: str) -> None:
+def _assert_resource_access(db: Session, user: User, ctx: CompanyContext,
+                            resource_type: str, resource_id: str) -> None:
     """Permiso sobre la **entidad**, no sobre el documento (R-D0-08-6)."""
     _entity, company = resource_registry.resolve_resource(db, resource_type, resource_id)
-    if company is not None and company not in _company_ids(db, user):
+    if company is not None and company not in _alcance(ctx):
         # No se confirma que exista.
         raise NotFoundError(code="RESOURCE_NOT_FOUND", message="Recurso no encontrado")
     needed = resource_registry.required_permission(resource_type)
@@ -87,7 +94,8 @@ def _assert_resource_access(db: Session, user: User, resource_type: str,
                            details={"required_permission": needed})
 
 
-def _assert_can_read_file(db: Session, user: User, document: Document) -> None:
+def _assert_can_read_file(db: Session, user: User, ctx: CompanyContext,
+                          document: Document) -> None:
     """Para leer un archivo hay que poder ver **alguna** entidad vinculada.
 
     Un documento sin vínculos solo lo lee quien tiene permiso documental: es el
@@ -97,7 +105,7 @@ def _assert_can_read_file(db: Session, user: User, document: Document) -> None:
         DocumentLink.document_id == document.id)).scalars().all()
     if not links:
         return
-    companies = _company_ids(db, user)
+    companies = _alcance(ctx)
     permissions = _permissions(db, user)
     for link in links:
         try:
@@ -132,14 +140,16 @@ def _audit(db: Session, user: User, action: str, entity_id: str,
 # --------------------------------------------------------------------------
 
 class CategoryIn(BaseModel):
-    company_id: str
+    #: Se conserva por compatibilidad; la empresa la decide el contexto.
+    company_id: str | None = None
     code: str = Field(min_length=1, max_length=32)
     name: str = Field(min_length=1, max_length=120)
     description: str | None = None
 
 
 class TypeIn(BaseModel):
-    company_id: str
+    #: Se conserva por compatibilidad; la empresa la decide el contexto.
+    company_id: str | None = None
     category_id: str | None = None
     code: str = Field(min_length=1, max_length=32)
     name: str = Field(min_length=1, max_length=120)
@@ -158,9 +168,10 @@ class TypeIn(BaseModel):
 
 @router.get("/categorias")
 def list_categories(db: Session = Depends(get_db),
-                    user: User = Depends(require_permission("documentos", "view"))):
+                    user: User = Depends(require_permission("documentos", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
     rows = db.execute(select(DocumentCategory).where(
-        DocumentCategory.company_id.in_(_company_ids(db, user)))
+        DocumentCategory.company_id.in_(_alcance(ctx)))
         .order_by(DocumentCategory.code)).scalars().all()
     return [{"id": str(c.id), "company_id": c.company_id, "code": c.code,
              "name": c.name, "description": c.description, "status": c.status} for c in rows]
@@ -168,10 +179,12 @@ def list_categories(db: Session = Depends(get_db),
 
 @router.post("/categorias", dependencies=[Depends(require_write_allowed)])
 def create_category(body: CategoryIn, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("documentos", "create"))):
-    if body.company_id not in _company_ids(db, actor):
+                    actor: User = Depends(require_permission("documentos", "create")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    if body.company_id is not None and body.company_id != ctx.company_id:
         raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
-    category = DocumentCategory(**body.model_dump(), status="ACTIVE", created_by=str(actor.id))
+    category = DocumentCategory(**{**body.model_dump(), "company_id": ctx.company_id},
+                                status="ACTIVE", created_by=str(actor.id))
     db.add(category)
     try:
         db.commit()
@@ -202,19 +215,22 @@ def _type_dict(doc_type: DocumentType) -> dict[str, Any]:
 
 @router.get("/tipos")
 def list_types(db: Session = Depends(get_db),
-               user: User = Depends(require_permission("documentos", "view"))):
+               user: User = Depends(require_permission("documentos", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
     rows = db.execute(select(DocumentType).where(
-        DocumentType.company_id.in_(_company_ids(db, user)))
+        DocumentType.company_id.in_(_alcance(ctx)))
         .order_by(DocumentType.code)).scalars().all()
     return [_type_dict(t) for t in rows]
 
 
 @router.post("/tipos", dependencies=[Depends(require_write_allowed)])
 def create_type(body: TypeIn, db: Session = Depends(get_db),
-                actor: User = Depends(require_permission("documentos", "manage_types"))):
-    if body.company_id not in _company_ids(db, actor):
+                actor: User = Depends(require_permission("documentos", "manage_types")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    if body.company_id is not None and body.company_id != ctx.company_id:
         raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
-    doc_type = DocumentType(**body.model_dump(), status="ACTIVE", created_by=str(actor.id))
+    doc_type = DocumentType(**{**body.model_dump(), "company_id": ctx.company_id},
+                            status="ACTIVE", created_by=str(actor.id))
     db.add(doc_type)
     try:
         db.commit()
@@ -230,8 +246,9 @@ def create_type(body: TypeIn, db: Session = Depends(get_db),
 
 @router.patch("/tipos/{type_id}", dependencies=[Depends(require_write_allowed)])
 def update_type(type_id: str, body: dict[str, Any], db: Session = Depends(get_db),
-                actor: User = Depends(require_permission("documentos", "manage_types"))):
-    doc_type = _get_type(db, actor, type_id)
+                actor: User = Depends(require_permission("documentos", "manage_types")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    doc_type = _get_type(db, ctx, type_id)
     for field in ("name", "allowed_mime_types", "allowed_extensions", "max_size_bytes",
                   "versioning_policy", "requires_expiration", "metadata_schema",
                   "retention_policy", "audit_downloads", "scan_required",
@@ -250,7 +267,8 @@ def update_type(type_id: str, body: dict[str, Any], db: Session = Depends(get_db
 # --------------------------------------------------------------------------
 
 class DocumentIn(BaseModel):
-    company_id: str
+    #: Se conserva por compatibilidad; la empresa la decide el contexto.
+    company_id: str | None = None
     document_type_id: str
     title: str = Field(min_length=1, max_length=200)
     description: str | None = None
@@ -327,9 +345,10 @@ def list_documents(q: str | None = None, document_type_id: str | None = None,
                    status: str | None = None, expiring_before: date | None = None,
                    resource_type: str | None = None, resource_id: str | None = None,
                    limit: int = 50, offset: int = 0, db: Session = Depends(get_db),
-                   user: User = Depends(require_permission("documentos", "view"))):
+                   user: User = Depends(require_permission("documentos", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """Biblioteca paginada. **No abre ningún binario** (NFR-046-01)."""
-    companies = _company_ids(db, user)
+    companies = _alcance(ctx)
     query = select(Document).where(Document.company_id.in_(companies))
     if document_type_id:
         query = query.where(Document.document_type_id == document_type_id)
@@ -357,10 +376,11 @@ def list_documents(q: str | None = None, document_type_id: str | None = None,
 
 @router.post("", dependencies=[Depends(require_write_allowed)])
 def create_document(body: DocumentIn, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("documentos", "create"))):
-    if body.company_id not in _company_ids(db, actor):
+                    actor: User = Depends(require_permission("documentos", "create")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    if body.company_id is not None and body.company_id != ctx.company_id:
         raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
-    doc_type = _get_type(db, actor, body.document_type_id)
+    doc_type = _get_type(db, ctx, body.document_type_id)
     if doc_type.requires_expiration and body.expiration_date is None:
         raise KontrolError(code="EXPIRATION_REQUIRED",
                            message="Este tipo documental exige fecha de vencimiento",
@@ -368,6 +388,7 @@ def create_document(body: DocumentIn, db: Session = Depends(get_db),
     # La metadata se valida contra el esquema **del tipo** (FR-046-014).
     service.validate_metadata(doc_type, body.doc_metadata)
     data = body.model_dump()
+    data["company_id"] = ctx.company_id
     external = data.pop("external_url")
     document = Document(**data, external_url=external, is_managed=external is None,
                         status="DRAFT", created_by=str(actor.id))
@@ -386,8 +407,9 @@ def create_document(body: DocumentIn, db: Session = Depends(get_db),
 
 @router.get("/{document_id}")
 def get_document(document_id: str, db: Session = Depends(get_db),
-                 user: User = Depends(require_permission("documentos", "view"))):
-    document = _get_document(db, user, document_id)
+                 user: User = Depends(require_permission("documentos", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    document = _get_document(db, ctx, document_id)
     return _document_dict(db, document, _permissions(db, user), full=True)
 
 
@@ -395,15 +417,16 @@ def get_document(document_id: str, db: Session = Depends(get_db),
 def update_document(document_id: str, body: DocumentPatch,
                     if_match: str | None = Header(default=None, alias="If-Match"),
                     db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("documentos", "edit"))):
-    document = _get_document(db, actor, document_id)
+                    actor: User = Depends(require_permission("documentos", "edit")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    document = _get_document(db, ctx, document_id)
     _check_version(document, if_match)
     if document.status in ("ARCHIVED", "REVOKED"):
         raise ConflictError(code="DOCUMENT_IMMUTABLE",
                             message="Un documento archivado no se edita")
     changes = body.model_dump(exclude_unset=True)
     if "doc_metadata" in changes:
-        service.validate_metadata(_get_type(db, actor, document.document_type_id),
+        service.validate_metadata(_get_type(db, ctx, document.document_type_id),
                                   changes["doc_metadata"])
     before = {"title": document.title}
     for field, value in changes.items():
@@ -418,9 +441,10 @@ def update_document(document_id: str, body: DocumentPatch,
 
 @router.post("/{document_id}/archive", dependencies=[Depends(require_write_allowed)])
 def archive_document(document_id: str, db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("documentos", "edit"))):
+                     actor: User = Depends(require_permission("documentos", "edit")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """Archivar es lógico: el binario **no** se destruye (FR-046-064)."""
-    document = _get_document(db, actor, document_id)
+    document = _get_document(db, ctx, document_id)
     document.status = "ARCHIVED"
     document.version = int(document.version) + 1
     _audit(db, actor, "DOCUMENT_ARCHIVED", str(document.id))
@@ -430,8 +454,9 @@ def archive_document(document_id: str, db: Session = Depends(get_db),
 
 @router.delete("/{document_id}", dependencies=[Depends(require_write_allowed)])
 def delete_document(document_id: str, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("documentos", "delete"))):
-    document = _get_document(db, actor, document_id)
+                    actor: User = Depends(require_permission("documentos", "delete")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    document = _get_document(db, ctx, document_id)
     deletable, blocking = service.can_delete(db, document)
     if not deletable:
         _audit(db, actor, "DOCUMENT_DELETE_BLOCKED", str(document.id), after=blocking)
@@ -453,8 +478,9 @@ def delete_document(document_id: str, db: Session = Depends(get_db),
 
 @router.get("/{document_id}/versiones")
 def list_versions(document_id: str, db: Session = Depends(get_db),
-                  user: User = Depends(require_permission("documentos", "view"))):
-    document = _get_document(db, user, document_id)
+                  user: User = Depends(require_permission("documentos", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    document = _get_document(db, ctx, document_id)
     rows = db.execute(
         select(DocumentVersion).where(DocumentVersion.document_id == document.id)
         .order_by(DocumentVersion.version_number.desc())).scalars().all()
@@ -479,7 +505,8 @@ def upload_version(document_id: str,
                    replacement_reason: str | None = Form(default=None),
                    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
                    db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("documentos", "upload"))):
+                   actor: User = Depends(require_permission("documentos", "upload")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """Sube un archivo y crea una versión.
 
     El cliente envía el archivo y, como mucho, el motivo. **No** envía hash,
@@ -487,8 +514,8 @@ def upload_version(document_id: str,
     (§113). Un archivo solo llega a estar disponible tras pasar todos los
     controles.
     """
-    document = _get_document(db, actor, document_id)
-    doc_type = _get_type(db, actor, document.document_type_id)
+    document = _get_document(db, ctx, document_id)
+    doc_type = _get_type(db, ctx, document.document_type_id)
 
     # Idempotencia: doble clic o reintento devuelven la misma versión (§101).
     if idempotency_key:
@@ -588,28 +615,31 @@ def _resolve_version(db: Session, document: Document, version_id: str | None) ->
 
 @router.get("/{document_id}/descargar")
 def download_document(document_id: str, db: Session = Depends(get_db),
-                      user: User = Depends(require_permission("documentos", "download"))):
-    document = _get_document(db, user, document_id)
-    _assert_can_read_file(db, user, document)
+                      user: User = Depends(require_permission("documentos", "download")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    document = _get_document(db, ctx, document_id)
+    _assert_can_read_file(db, user, ctx, document)
     return _deliver(db, user, document, _resolve_version(db, document, None), inline=False)
 
 
 @router.get("/{document_id}/versiones/{version_id}/descargar")
 def download_version(document_id: str, version_id: str, db: Session = Depends(get_db),
-                     user: User = Depends(require_permission("documentos", "download"))):
+                     user: User = Depends(require_permission("documentos", "download")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """Descarga una versión concreta. Es lo que permite que un histórico
     congelado devuelva **sus** bytes, no los de la versión vigente (§35)."""
-    document = _get_document(db, user, document_id)
-    _assert_can_read_file(db, user, document)
+    document = _get_document(db, ctx, document_id)
+    _assert_can_read_file(db, user, ctx, document)
     return _deliver(db, user, document, _resolve_version(db, document, version_id), inline=False)
 
 
 @router.get("/{document_id}/preview")
 def preview_document(document_id: str, db: Session = Depends(get_db),
-                     user: User = Depends(require_permission("documentos", "download"))):
+                     user: User = Depends(require_permission("documentos", "download")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """Previsualización. **Mismo permiso** que la descarga, no uno menor (§50)."""
-    document = _get_document(db, user, document_id)
-    _assert_can_read_file(db, user, document)
+    document = _get_document(db, ctx, document_id)
+    _assert_can_read_file(db, user, ctx, document)
     return _deliver(db, user, document, _resolve_version(db, document, None), inline=True)
 
 
@@ -625,10 +655,11 @@ class LinkIn(BaseModel):
 
 @router.post("/{document_id}/vinculos", dependencies=[Depends(require_write_allowed)])
 def create_link(document_id: str, body: LinkIn, db: Session = Depends(get_db),
-                actor: User = Depends(require_permission("documentos", "link"))):
+                actor: User = Depends(require_permission("documentos", "link")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """Vincula. Exige permiso sobre la **entidad de destino** (§39)."""
-    document = _get_document(db, actor, document_id)
-    _assert_resource_access(db, actor, body.resource_type, body.resource_id)
+    document = _get_document(db, ctx, document_id)
+    _assert_resource_access(db, actor, ctx, body.resource_type, body.resource_id)
     link = service.attach(db, document=document, resource_type=body.resource_type,
                           resource_id=body.resource_id, actor=actor, role=body.role)
     db.commit()
@@ -640,11 +671,12 @@ def create_link(document_id: str, body: LinkIn, db: Session = Depends(get_db),
 
 @router.delete("/vinculos/{link_id}", dependencies=[Depends(require_write_allowed)])
 def delete_link(link_id: str, db: Session = Depends(get_db),
-                actor: User = Depends(require_permission("documentos", "link"))):
+                actor: User = Depends(require_permission("documentos", "link")),
+    ctx: CompanyContext = Depends(get_company_context)):
     link = db.get(DocumentLink, link_id)
-    if link is None or link.company_id not in _company_ids(db, actor):
+    if link is None or link.company_id not in _alcance(ctx):
         raise NotFoundError(code="DOCUMENT_NOT_FOUND", message="Vínculo no encontrado")
-    _assert_resource_access(db, actor, link.resource_type, link.resource_id)
+    _assert_resource_access(db, actor, ctx, link.resource_type, link.resource_id)
     try:
         service.detach(db, link=link, actor=actor)
     except ConflictError:
@@ -656,12 +688,13 @@ def delete_link(link_id: str, db: Session = Depends(get_db),
 
 @router.get("/por-recurso/{resource_type}/{resource_id}")
 def documents_by_resource(resource_type: str, resource_id: str, db: Session = Depends(get_db),
-                          user: User = Depends(require_permission("documentos", "view"))):
+                          user: User = Depends(require_permission("documentos", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """La consulta que usan todos los consumidores."""
-    _assert_resource_access(db, user, resource_type, resource_id)
+    _assert_resource_access(db, user, ctx, resource_type, resource_id)
     permissions = _permissions(db, user)
     pairs = service.documents_for(db, resource_type=resource_type, resource_id=resource_id,
-                                  company_ids=_company_ids(db, user))
+                                  company_ids=_alcance(ctx))
     return [{**_document_dict(db, document, permissions),
              "link": {"id": str(link.id), "role": link.role, "is_frozen": link.is_frozen,
                       "frozen_version_id": link.frozen_version_id}}

@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
 from app.core.errors import NotFoundError
@@ -33,7 +34,8 @@ router = APIRouter(prefix="/approvals", tags=["aprobaciones"])
 # Schemas
 # --------------------------------------------------------------------------- #
 class PolicyCreate(BaseModel):
-    company_id: str
+    #: Se conserva por compatibilidad; la empresa la decide el contexto.
+    company_id: str | None = None
     process_type: str = Field(min_length=1, max_length=64)
     code: str = Field(min_length=1, max_length=64)
     name: str = Field(min_length=1, max_length=200)
@@ -71,7 +73,8 @@ class LevelCreate(BaseModel):
 
 
 class EvaluateIn(BaseModel):
-    company_id: str
+    #: Se conserva por compatibilidad; la empresa la decide el contexto.
+    company_id: str | None = None
     process_type: str
     context: dict[str, Any]
     #: Simula una política concreta, incluida una en borrador (FR-045-008).
@@ -79,7 +82,8 @@ class EvaluateIn(BaseModel):
 
 
 class RequestIn(BaseModel):
-    company_id: str
+    #: Se conserva por compatibilidad; la empresa la decide el contexto.
+    company_id: str | None = None
     process_type: str
     document_type: str
     document_id: str
@@ -92,7 +96,8 @@ class DecisionIn(BaseModel):
 
 
 class DelegationCreate(BaseModel):
-    company_id: str
+    #: Se conserva por compatibilidad; la empresa la decide el contexto.
+    company_id: str | None = None
     grantor_id: str
     grantee_id: str
     scope_process_type: str | None = None
@@ -130,9 +135,25 @@ def _policy_out(db: Session, policy: ApprovalPolicy) -> dict[str, Any]:
     }
 
 
-def _get_policy(db: Session, policy_id: str) -> ApprovalPolicy:
+def _empresa(ctx: CompanyContext, declarada: str | None) -> str:
+    """La empresa del contexto validado; el cuerpo, como mucho, la confirma.
+
+    Antes estas rutas tomaban `company_id` de la petición, así que el cliente
+    elegía en qué empresa escribir: operando en A se podía crear una política
+    que quedaba guardada en B, y desde otro tenant se podía escribir dentro de
+    este. Se conserva el campo por compatibilidad, pero contradecir el contexto
+    ahora es un error, no una preferencia.
+    """
+    if declarada is not None and declarada != ctx.company_id:
+        raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
+    return ctx.company_id
+
+
+def _get_policy(db: Session, ctx: CompanyContext, policy_id: str) -> ApprovalPolicy:
     policy = db.get(ApprovalPolicy, policy_id)
-    if policy is None:
+    if policy is None or policy.company_id != ctx.company_id:
+        # Una política de otra empresa se responde como inexistente: confirmar
+        # que existe ya sería enumerar la configuración ajena.
         raise NotFoundError(code="APPROVAL_POLICY_NOT_FOUND", message="Política no encontrada.")
     return policy
 
@@ -148,12 +169,13 @@ def process_types(db: Session = Depends(get_db), user: User = Depends(require_pe
 
 
 @router.get("/policies")
-def list_policies(company_id: str | None = None, process_type: str | None = None,
+def list_policies(process_type: str | None = None,
                   status: str | None = None, db: Session = Depends(get_db),
-                  user: User = Depends(require_permission("aprobaciones", "view"))):
-    q = select(ApprovalPolicy)
-    if company_id:
-        q = q.where(ApprovalPolicy.company_id == company_id)
+                  user: User = Depends(require_permission("aprobaciones", "view")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    # Antes, sin `company_id` en la petición, esto devolvía las políticas de
+    # todas las empresas de todos los tenants.
+    q = select(ApprovalPolicy).where(ApprovalPolicy.company_id == ctx.company_id)
     if process_type:
         q = q.where(ApprovalPolicy.process_type == process_type)
     if status:
@@ -165,9 +187,10 @@ def list_policies(company_id: str | None = None, process_type: str | None = None
 @router.post("/policies", status_code=201)
 def create_policy(body: PolicyCreate, db: Session = Depends(get_db),
                   user: User = Depends(require_permission("aprobaciones", "configure")),
-                  _: None = Depends(require_write_allowed)):
+                  _: None = Depends(require_write_allowed),
+                  ctx: CompanyContext = Depends(get_company_context)):
     policy = approvals_service.create_policy(
-        db, company_id=body.company_id, process_type=body.process_type, code=body.code,
+        db, company_id=_empresa(ctx, body.company_id), process_type=body.process_type, code=body.code,
         name=body.name, base_currency=body.base_currency,
         requires_segregation=body.requires_segregation,
         allow_self_approval=body.allow_self_approval,
@@ -179,15 +202,17 @@ def create_policy(body: PolicyCreate, db: Session = Depends(get_db),
 
 @router.get("/policies/{policy_id}")
 def get_policy(policy_id: str, db: Session = Depends(get_db),
-               user: User = Depends(require_permission("aprobaciones", "view"))):
-    return _policy_out(db, _get_policy(db, policy_id))
+               user: User = Depends(require_permission("aprobaciones", "view")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    return _policy_out(db, _get_policy(db, ctx, policy_id))
 
 
 @router.patch("/policies/{policy_id}")
 def update_policy(policy_id: str, body: PolicyUpdate, db: Session = Depends(get_db),
                   user: User = Depends(require_permission("aprobaciones", "configure")),
-                  _: None = Depends(require_write_allowed)):
-    policy = _get_policy(db, policy_id)
+                  _: None = Depends(require_write_allowed),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    policy = _get_policy(db, ctx, policy_id)
     approvals_service.update_policy(db, policy=policy, actor=str(user.id),
                                     **body.model_dump(exclude_unset=True))
     db.commit()
@@ -198,8 +223,9 @@ def update_policy(policy_id: str, body: PolicyUpdate, db: Session = Depends(get_
 @router.post("/policies/{policy_id}/activate")
 def activate_policy(policy_id: str, db: Session = Depends(get_db),
                     user: User = Depends(require_permission("aprobaciones", "configure")),
-                    _: None = Depends(require_write_allowed)):
-    policy = approvals_service.activate_policy(db, policy=_get_policy(db, policy_id), actor=str(user.id))
+                    _: None = Depends(require_write_allowed),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    policy = approvals_service.activate_policy(db, policy=_get_policy(db, ctx, policy_id), actor=str(user.id))
     db.commit()
     db.refresh(policy)
     return _policy_out(db, policy)
@@ -208,8 +234,9 @@ def activate_policy(policy_id: str, db: Session = Depends(get_db),
 @router.post("/policies/{policy_id}/close")
 def close_policy(policy_id: str, db: Session = Depends(get_db),
                  user: User = Depends(require_permission("aprobaciones", "configure")),
-                 _: None = Depends(require_write_allowed)):
-    policy = approvals_service.close_policy(db, policy=_get_policy(db, policy_id), actor=str(user.id))
+                 _: None = Depends(require_write_allowed),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    policy = approvals_service.close_policy(db, policy=_get_policy(db, ctx, policy_id), actor=str(user.id))
     db.commit()
     db.refresh(policy)
     return _policy_out(db, policy)
@@ -218,8 +245,9 @@ def close_policy(policy_id: str, db: Session = Depends(get_db),
 @router.post("/policies/{policy_id}/rules", status_code=201)
 def add_rule(policy_id: str, body: RuleCreate, db: Session = Depends(get_db),
              user: User = Depends(require_permission("aprobaciones", "configure")),
-             _: None = Depends(require_write_allowed)):
-    policy = _get_policy(db, policy_id)
+             _: None = Depends(require_write_allowed),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    policy = _get_policy(db, ctx, policy_id)
     rule = approvals_service.add_rule(
         db, policy=policy, name=body.name, conditions=body.conditions,
         condition_fields=body.condition_fields, sequence=body.sequence,
@@ -231,8 +259,9 @@ def add_rule(policy_id: str, body: RuleCreate, db: Session = Depends(get_db),
 @router.post("/policies/{policy_id}/rules/{rule_id}/levels", status_code=201)
 def add_level(policy_id: str, rule_id: str, body: LevelCreate, db: Session = Depends(get_db),
               user: User = Depends(require_permission("aprobaciones", "configure")),
-              _: None = Depends(require_write_allowed)):
-    _get_policy(db, policy_id)
+              _: None = Depends(require_write_allowed),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    _get_policy(db, ctx, policy_id)
     rule = db.get(ApprovalRule, rule_id)
     if rule is None:
         raise NotFoundError(code="APPROVAL_RULE_NOT_FOUND", message="Regla no encontrada.")
@@ -249,9 +278,10 @@ def add_level(policy_id: str, rule_id: str, body: LevelCreate, db: Session = Dep
 # --------------------------------------------------------------------------- #
 @router.post("/evaluate")
 def evaluate(body: EvaluateIn, db: Session = Depends(get_db),
-             user: User = Depends(require_permission("aprobaciones", "view"))):
+             user: User = Depends(require_permission("aprobaciones", "view")),
+                  ctx: CompanyContext = Depends(get_company_context)):
     """No crea nada: informa qué niveles aplicarían (FR-045-008)."""
-    return approvals_service.evaluate(db, company_id=body.company_id,
+    return approvals_service.evaluate(db, company_id=_empresa(ctx, body.company_id),
                                       process_type=body.process_type, context=body.context,
                                       policy_id=body.policy_id)
 
@@ -260,9 +290,10 @@ def evaluate(body: EvaluateIn, db: Session = Depends(get_db),
 def create_request(body: RequestIn, db: Session = Depends(get_db),
                    user: User = Depends(require_permission("aprobaciones", "create")),
                    _: None = Depends(require_write_allowed),
-                   idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")):
+                   idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+                  ctx: CompanyContext = Depends(get_company_context)):
     result = approvals_service.require(
-        db, company_id=body.company_id, process_type=body.process_type,
+        db, company_id=_empresa(ctx, body.company_id), process_type=body.process_type,
         document_type=body.document_type, document_id=body.document_id,
         context=body.context, actor=str(user.id))
     db.commit()
@@ -277,10 +308,11 @@ def create_request(body: RequestIn, db: Session = Depends(get_db),
 
 
 @router.get("/requests")
-def list_requests(company_id: str, status: str | None = None, process_type: str | None = None,
+def list_requests(status: str | None = None, process_type: str | None = None,
                   db: Session = Depends(get_db),
-                  user: User = Depends(require_permission("aprobaciones", "view"))):
-    q = select(ApprovalRequest).where(ApprovalRequest.company_id == company_id)
+                  user: User = Depends(require_permission("aprobaciones", "view")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    q = select(ApprovalRequest).where(ApprovalRequest.company_id == ctx.company_id)
     if status:
         q = q.where(ApprovalRequest.status == status)
     if process_type:
@@ -295,17 +327,22 @@ def list_requests(company_id: str, status: str | None = None, process_type: str 
 
 
 @router.get("/requests/by-document")
-def by_document(company_id: str, document_type: str, document_id: str,
+def by_document(document_type: str, document_id: str,
                 db: Session = Depends(get_db),
-                user: User = Depends(require_permission("aprobaciones", "view"))):
+                user: User = Depends(require_permission("aprobaciones", "view")),
+                ctx: CompanyContext = Depends(get_company_context)):
+    company_id = ctx.company_id
     return approvals_service.status(db, company_id=company_id, document_type=document_type,
                                     document_id=document_id, actor_id=str(user.id))
 
 
 @router.get("/requests/{request_id}")
 def get_request(request_id: str, db: Session = Depends(get_db),
-                user: User = Depends(require_permission("aprobaciones", "view"))):
+                user: User = Depends(require_permission("aprobaciones", "view")),
+                  ctx: CompanyContext = Depends(get_company_context)):
     req = db.get(ApprovalRequest, request_id)
+    if req is not None and req.company_id != ctx.company_id:
+        req = None
     if req is None:
         raise NotFoundError(code="APPROVAL_REQUEST_NOT_FOUND", message="Solicitud no encontrada.")
     data = approvals_service.status(db, company_id=req.company_id, document_type=req.document_type,
@@ -327,10 +364,11 @@ def cancel_request(request_id: str, body: DecisionIn, db: Session = Depends(get_
 # Bandeja y resolución
 # --------------------------------------------------------------------------- #
 @router.get("/inbox")
-def get_inbox(company_id: str, process_type: str | None = None, only_overdue: bool = False,
+def get_inbox(process_type: str | None = None, only_overdue: bool = False,
               limit: int = 50, offset: int = 0, db: Session = Depends(get_db),
-              user: User = Depends(require_permission("aprobaciones", "approve"))):
-    return approvals_service.inbox(db, company_id=company_id, actor_id=str(user.id),
+              user: User = Depends(require_permission("aprobaciones", "approve")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    return approvals_service.inbox(db, company_id=ctx.company_id, actor_id=str(user.id),
                                    process_type=process_type, only_overdue=only_overdue,
                                    limit=limit, offset=offset)
 
@@ -377,10 +415,11 @@ def return_step(step_id: str, body: DecisionIn, db: Session = Depends(get_db),
 # Delegaciones
 # --------------------------------------------------------------------------- #
 @router.get("/delegations")
-def list_delegations(company_id: str, db: Session = Depends(get_db),
-                     user: User = Depends(require_permission("aprobaciones", "view"))):
+def list_delegations(db: Session = Depends(get_db),
+                     user: User = Depends(require_permission("aprobaciones", "view")),
+                  ctx: CompanyContext = Depends(get_company_context)):
     rows = db.execute(
-        select(ApprovalDelegation).where(ApprovalDelegation.company_id == company_id)
+        select(ApprovalDelegation).where(ApprovalDelegation.company_id == ctx.company_id)
         .order_by(ApprovalDelegation.created_at.desc())
     ).scalars().all()
     return {"items": [
@@ -396,9 +435,10 @@ def list_delegations(company_id: str, db: Session = Depends(get_db),
 @router.post("/delegations", status_code=201)
 def create_delegation(body: DelegationCreate, db: Session = Depends(get_db),
                       user: User = Depends(require_permission("aprobaciones", "delegate")),
-                      _: None = Depends(require_write_allowed)):
+                      _: None = Depends(require_write_allowed),
+                  ctx: CompanyContext = Depends(get_company_context)):
     d = approvals_service.create_delegation(
-        db, company_id=body.company_id, grantor_id=body.grantor_id, grantee_id=body.grantee_id,
+        db, company_id=_empresa(ctx, body.company_id), grantor_id=body.grantor_id, grantee_id=body.grantee_id,
         scope_process_type=body.scope_process_type, scope_branch_id=body.scope_branch_id,
         valid_from=body.valid_from, valid_to=body.valid_to, reason=body.reason,
         is_temporary_substitution=body.is_temporary_substitution, actor=str(user.id))
@@ -409,8 +449,11 @@ def create_delegation(body: DelegationCreate, db: Session = Depends(get_db),
 @router.post("/delegations/{delegation_id}/revoke")
 def revoke_delegation(delegation_id: str, db: Session = Depends(get_db),
                       user: User = Depends(require_permission("aprobaciones", "delegate")),
-                      _: None = Depends(require_write_allowed)):
+                      _: None = Depends(require_write_allowed),
+                  ctx: CompanyContext = Depends(get_company_context)):
     d = db.get(ApprovalDelegation, delegation_id)
+    if d is not None and d.company_id != ctx.company_id:
+        d = None
     if d is None:
         raise NotFoundError(code="APPROVAL_DELEGATION_NOT_FOUND", message="Delegación no encontrada.")
     approvals_service.revoke_delegation(db, delegation=d, actor=str(user.id))

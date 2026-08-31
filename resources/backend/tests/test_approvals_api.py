@@ -274,6 +274,24 @@ def test_self_delegation_returns_422():
 
 
 def test_inbox_isolated_by_company():
+    """La bandeja es la de la empresa en la que se opera.
+
+    Antes esta prueba pedía la bandeja de «otra-empresa» por parámetro y
+    comprobaba que viniera vacía. Eso demostraba poco: el aislamiento dependía
+    de que el cliente pidiera bien. Ahora la empresa la fija el contexto
+    validado, así que se comprueba lo que de verdad importa —que declarar otra
+    empresa no cambie nada— y además que una empresa inexistente se rechace en
+    vez de devolver una bandeja vacía y tranquilizadora.
+    """
     h = _auth()
-    r = _CLIENT.get("/api/v1/approvals/inbox?company_id=otra-empresa", headers=h)
-    assert r.status_code == 200 and r.json()["total"] == 0
+    propia = _CLIENT.get("/api/v1/approvals/inbox", headers=h)
+    assert propia.status_code == 200
+
+    declarando_otra = _CLIENT.get("/api/v1/approvals/inbox?company_id=otra-empresa", headers=h)
+    assert declarando_otra.status_code == 200
+    assert declarando_otra.json() == propia.json(), (
+        "el parámetro del cliente cambió la bandeja que devuelve el servidor")
+
+    ajena = _CLIENT.get("/api/v1/approvals/inbox", headers={
+        **h, "X-Kontrol-Company": "otra-empresa"})
+    assert ajena.status_code == 404, "una empresa inventada devolvió una bandeja"

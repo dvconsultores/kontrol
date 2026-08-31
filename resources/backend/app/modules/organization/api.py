@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
 from app.core.errors import NotFoundError
@@ -20,7 +21,7 @@ from app.modules.organization.models import (
     Company,
     Establishment,
 )
-from app.modules.organization.service import branch_in_tenant, company_in_tenant
+from app.modules.organization.service import branch_in_tenant
 
 router = APIRouter(prefix="/organization", tags=["organization"])
 
@@ -37,7 +38,8 @@ class CompanyCreate(BaseModel):
 
 
 class BranchCreate(BaseModel):
-    company_id: str
+    #: Se conserva por compatibilidad; la empresa la decide el contexto.
+    company_id: str | None = None
     code: str = Field(min_length=1, max_length=64)
     name: str = Field(min_length=1, max_length=200)
     address: str | None = None
@@ -95,20 +97,24 @@ def create_company(
 
 
 @router.get("/branches")
-def list_branches(company_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    query = select(Branch).join(Company, Branch.company_id == Company.id)\
-        .where(Company.tenant_id == user.tenant_id)
-    if company_id:
-        query = query.where(Branch.company_id == company_id)
+def list_branches(db: Session = Depends(get_db), user: User = Depends(get_current_user),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    # Antes listaba las sucursales de todas las empresas del tenant, y el
+    # filtro por empresa era una preferencia del cliente en vez de un límite.
+    query = select(Branch).where(Branch.company_id == ctx.company_id)
     return [{"id": str(b.id), "company_id": b.company_id, "code": b.code, "name": b.name, "status": b.status} for b in db.execute(query.order_by(Branch.created_at)).scalars().all()]
 
 
 @router.post("/branches", dependencies=[Depends(require_write_allowed)])
-def create_branch(body: BranchCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("organization", "create"))):
-    if not company_in_tenant(db, actor.tenant_id, body.company_id):
+def create_branch(body: BranchCreate, db: Session = Depends(get_db),
+                  actor: User = Depends(require_permission("organization", "create")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    # La sucursal nace en la empresa en la que se está operando; el cuerpo puede
+    # confirmarlo pero no elegir otra.
+    if body.company_id is not None and body.company_id != ctx.company_id:
         raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
     branch = Branch(
-        company_id=body.company_id,
+        company_id=ctx.company_id,
         code=body.code,
         name=body.name,
         address=body.address,
