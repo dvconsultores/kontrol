@@ -257,7 +257,7 @@ def add_session_movement(db: Session, *, session_id: str, movement_type: str, am
 
 
 def arqueo_session(db: Session, *, session_id: str, counted_amount: float,
-                   notes: str | None = None) -> CashSession:
+                   notes: str | None = None, actor: str | None = None) -> CashSession:
     session = db.get(CashSession, session_id)
     if not session:
         raise NotFoundError(code="CASH_SESSION_NOT_FOUND", message="Sesión de caja no encontrada")
@@ -272,7 +272,7 @@ def arqueo_session(db: Session, *, session_id: str, counted_amount: float,
     session.updated_at = datetime.now(UTC)
     db.flush()
     _audit(db, action="CASH_SESSION_ARCHED", entity_type="CashSession", entity_id=str(session.id),
-           company_id=session.company_id, actor=None,
+           company_id=session.company_id, actor=actor,
            after={"expected": float(session.expected_amount or 0), "counted": float(session.counted_amount or 0),
                   "difference": float(session.difference or 0)})
     return session

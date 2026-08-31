@@ -44,8 +44,10 @@ class Mundo:
     company_c: str
     branch_a: str
     branch_b: str
+    branch_c: str
     warehouse_a: str
     warehouse_b: str
+    warehouse_c: str
 
     # -- sesiones -----------------------------------------------------------
     def token(self, usuario: str, tenant: str = "T1") -> str:
@@ -61,6 +63,49 @@ class Mundo:
         if empresa:
             h[COMPANY_HEADER] = empresa
         return h
+
+    # -- atajos de petición -------------------------------------------------
+    def post(self, ruta: str, usuario: str, empresa: str, cuerpo: dict,
+             tenant: str = "T1"):
+        return self.client.post(f"/api/v1{ruta}",
+                                headers=self.como(usuario, empresa, tenant),
+                                json=cuerpo)
+
+    def get(self, ruta: str, usuario: str, empresa: str, tenant: str = "T1"):
+        return self.client.get(f"/api/v1{ruta}",
+                               headers=self.como(usuario, empresa, tenant))
+
+    def crear(self, ruta: str, usuario: str, empresa: str, cuerpo: dict) -> str:
+        """Crea y devuelve el id, fallando con el cuerpo del error a la vista."""
+        r = self.post(ruta, usuario, empresa, cuerpo)
+        assert r.status_code in (200, 201), f"{ruta}: {r.status_code} {r.text}"
+        return r.json()["id"]
+
+    # -- la base, que es la que no puede mentir ------------------------------
+    def dueño(self, tabla: str, fila: str, columna: str = "company_id") -> str | None:
+        """Lee el propietario **desde PostgreSQL**, no desde la respuesta.
+
+        Que la API filtre bien no dice nada si el dato persistido guarda el
+        tenant: sería un filtro correcto sobre un dato indistinguible.
+        """
+        from sqlalchemy import text
+
+        db = self.factory()
+        try:
+            return db.execute(
+                text(f"SELECT {columna} FROM {tabla} WHERE id = :i"),
+                {"i": fila}).scalar_one_or_none()
+        finally:
+            db.close()
+
+    def filas(self, tabla: str, columna: str = "company_id") -> list[str]:
+        from sqlalchemy import text
+
+        db = self.factory()
+        try:
+            return [r[0] for r in db.execute(text(f"SELECT {columna} FROM {tabla}"))]
+        finally:
+            db.close()
 
 
 def _crear_usuario(db: Session, tenant_id: str, username: str,
@@ -126,7 +171,8 @@ def mundo():
 
     ba = Branch(company_id=str(ca.id), code="A1", name="Sucursal A", status="ACTIVE")
     bb = Branch(company_id=str(cb.id), code="B1", name="Sucursal B", status="ACTIVE")
-    db.add_all([ba, bb])
+    bc = Branch(company_id=str(cc.id), code="C1", name="Sucursal C", status="ACTIVE")
+    db.add_all([ba, bb, bc])
     db.flush()
 
     _crear_usuario(db, str(t1.id), "ua", [str(ca.id)])
@@ -135,8 +181,11 @@ def mundo():
     _crear_usuario(db, str(t2.id), "uc", [str(cc.id)])
     db.commit()
 
+    _crear_usuario(db, str(t2.id), "adminc", None)
+    db.commit()
+
     ids = dict(t1=str(t1.id), t2=str(t2.id), ca=str(ca.id), cb=str(cb.id),
-               cc=str(cc.id), ba=str(ba.id), bb=str(bb.id))
+               cc=str(cc.id), ba=str(ba.id), bb=str(bb.id), bc=str(bc.id))
     db.close()
 
     from app.main import create_app
@@ -154,8 +203,9 @@ def mundo():
     client = TestClient(app)
 
     # Los almacenes se crean por la API, que es como los crearía un usuario.
-    def _almacen(empresa: str, code: str) -> str:
-        h = {"Authorization": f"Bearer {client.post('/api/v1/auth/login', json={'tenant_code':'T1','username':'admin','password':PASSWORD}).json()['access_token']}",
+    def _almacen(empresa: str, code: str, tenant: str = "T1",
+                 usuario: str = "admin") -> str:
+        h = {"Authorization": f"Bearer {client.post('/api/v1/auth/login', json={'tenant_code':tenant,'username':usuario,'password':PASSWORD}).json()['access_token']}",
              COMPANY_HEADER: empresa}
         r = client.post("/api/v1/organization/warehouses", headers=h, json={
             "company_id": empresa, "branch_id": None, "code": code,
@@ -165,8 +215,9 @@ def mundo():
 
     wa = _almacen(ids["ca"], "ALM-A")
     wb = _almacen(ids["cb"], "ALM-B")
+    wc = _almacen(ids["cc"], "ALM-C", tenant="T2", usuario="adminc")
 
     yield Mundo(client=client, factory=factory, t1=ids["t1"], t2=ids["t2"],
                 company_a=ids["ca"], company_b=ids["cb"], company_c=ids["cc"],
-                branch_a=ids["ba"], branch_b=ids["bb"],
-                warehouse_a=wa, warehouse_b=wb)
+                branch_a=ids["ba"], branch_b=ids["bb"], branch_c=ids["bc"],
+                warehouse_a=wa, warehouse_b=wb, warehouse_c=wc)

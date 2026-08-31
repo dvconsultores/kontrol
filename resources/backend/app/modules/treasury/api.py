@@ -364,7 +364,7 @@ def arqueo_session(session_id: str, body: ArqueoBody, db: Session = Depends(get_
                    actor: User = Depends(require_permission("tesoreria", "approve")), ctx: CompanyContext = Depends(get_company_context)):
     session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
     treasury_service.arqueo_session(db, session_id=str(session.id), counted_amount=body.counted_amount,
-                                    notes=body.notes)
+                                    notes=body.notes, actor=str(actor.id))
     db.commit()
     db.refresh(session)
     return treasury_service.session_dict(db, session)
