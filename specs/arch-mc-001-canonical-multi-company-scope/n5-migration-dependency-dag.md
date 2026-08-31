@@ -150,5 +150,5 @@ expansión de N3 es reversible; una normalización de datos, no.
 
 `X-Kontrol-Company` no aparece en OpenAPI: la dependencia lee la cabecera del
 `Request` en lugar de declararla como parámetro, así que FastAPI no la documenta.
-Funciona, y 121 pruebas la usan, pero un consumidor que lea solo el contrato no
+Funciona, y 112 pruebas la usan, pero un consumidor que lea solo el contrato no
 sabría que existe.

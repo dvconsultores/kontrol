@@ -1,6 +1,6 @@
 # N5 — CHECKPOINT FINAL
 
-PostgreSQL **18.6** en UTC · ClamAV 1.4.3 · **121 pruebas** nuevas de aislamiento
+PostgreSQL **18.6** en UTC · ClamAV 1.4.3 · **112 pruebas** nuevas de aislamiento
 
 ## 1. Qué demostró esta fase
 
@@ -100,10 +100,12 @@ Las cuatro son ahora más estrictas.
 
 | | |
 |---|---|
-| Backend | Sin fallos inesperados |
+| Backend | 592 pruebas · 581 pasan · 8 saltadas · **0 fallos inesperados** |
 | Arquitectura | 7 PASS · 3 EXPECTED_RED (N7/N8) · **0 UNEXPECTED_RED** |
 | Frontend | tsc, eslint, 245/245 Vitest, build |
 | OpenAPI | 294 rutas, sin pérdida |
+| Route crawl | 79 rutas sin 404 ni errores de consola |
+| Refresco de sesión | 23/23, sin regresión de rotación ni de concurrencia |
 
 Las tres rojas de arquitectura son las mismas de siempre: constraints de N7 y
 retirada de columnas legacy de N8. No se tocan aquí.
@@ -111,7 +113,7 @@ retirada de columnas legacy de N8. No se tocan aquí.
 ## 8. Lo que N5 deja escrito para otras fases
 
 **N8 — contrato.** `X-Kontrol-Company` no aparece en OpenAPI: la dependencia lee
-la cabecera del `Request` en lugar de declararla. Funciona y 121 pruebas la
+la cabecera del `Request` en lugar de declararla. Funciona y 112 pruebas la
 usan, pero un consumidor que lea solo el contrato no sabría que existe.
 
 **Spec 052 — instalador.** `MANDATORY_PER_INSTALLATION_PREFLIGHT`: toda

@@ -1,6 +1,6 @@
 # VENTAS Y CxC — EVIDENCIA A/B
 
-PostgreSQL 18.6 · **18 pruebas** · Veredicto: **PASS**
+PostgreSQL 18.6 · **17 pruebas** · Veredicto: **PASS**
 
 ## Dos errores distintos
 

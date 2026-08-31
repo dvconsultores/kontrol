@@ -1,6 +1,6 @@
 # COMPRAS Y CxP — EVIDENCIA A/B
 
-PostgreSQL 18.6 · **17 pruebas** · Veredicto: **PASS**
+PostgreSQL 18.6 · **14 pruebas** · Veredicto: **PASS**
 
 ## El caso que da sentido al bloque
 

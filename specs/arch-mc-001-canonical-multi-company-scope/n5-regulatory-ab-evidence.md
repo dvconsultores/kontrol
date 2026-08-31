@@ -1,6 +1,6 @@
 # REGULATORIO — EVIDENCIA A/B
 
-PostgreSQL 18.6 · **11 pruebas** · Veredicto: **PASS**
+PostgreSQL 18.6 · **10 pruebas** · Veredicto: **PASS**
 
 No se toca ninguna capacidad SICA, SIGESAI ni SACS. Solo se comprueba de quién
 es cada cosa.

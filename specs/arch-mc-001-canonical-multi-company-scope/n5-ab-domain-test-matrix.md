@@ -53,13 +53,20 @@ completamente roto pasaría la mitad de esta tabla.
 
 | Suite | Pruebas |
 |---|---:|
-| Aislamiento base | 13 |
-| Tesorería | 15 |
-| Compras / CxP | 17 |
-| Ventas / CxC | 18 |
+| Aislamiento base | 11 |
+| Tesorería | 13 |
+| Compras / CxP | 14 |
+| Ventas / CxC | 17 |
 | Inventario | 13 |
-| Regulatorio | 11 |
+| Regulatorio | 10 |
 | Fiscal P0 | 13 |
 | Auditoría y eventos | 8 |
 | Seguridad 045 / 046 | 13 |
-| **Total** | **121** |
+| **Total** | **112** |
+
+Las once del aislamiento base eran trece: dos **fijaban** las vulnerabilidades de
+045 y 046 mientras esperaban corrección, y decían en su propio texto que
+fallarían el día que se cerraran. Ese día llegó en esta fase. Las sustituye la
+suite de seguridad, con aserciones más estrictas —descarga, previsualización,
+versiones, cruce entre tenants y la escritura legítima que debe seguir
+funcionando—, así que mantener aquí una versión más débil solo añadiría ruido.

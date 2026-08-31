@@ -1,6 +1,6 @@
 # TESORERÍA — EVIDENCIA A/B
 
-PostgreSQL 18.6 · **15 pruebas** · Veredicto: **PASS**
+PostgreSQL 18.6 · **13 pruebas** · Veredicto: **PASS**
 
 ## Por qué va primera
 

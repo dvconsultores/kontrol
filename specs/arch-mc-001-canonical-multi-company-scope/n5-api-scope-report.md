@@ -52,6 +52,6 @@ exige auditoría para esa acción. Se anota lo que hay, no lo que convendría.
 `Request` en vez de declararla como parámetro, así que FastAPI no puede
 documentarla.
 
-Funciona —121 pruebas la usan— pero un consumidor que lea solo el contrato no
+Funciona —112 pruebas la usan— pero un consumidor que lea solo el contrato no
 sabría que existe. **Declararla es trabajo de N8**, que es la fase de contrato;
 se registra aquí para que no se pierda.
