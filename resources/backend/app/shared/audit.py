@@ -36,6 +36,16 @@ def record_audit(
     evidence: dict[str, Any] | None = None,
     ip: str | None = None,
 ) -> AuditEvent:
+    if company_id and not tenant_id:
+        # El tenant se deduce de la empresa en vez de pedirlo dos veces: así el
+        # rastro no puede acabar diciendo una empresa de un tenant y un tenant
+        # distinto, que es una contradicción que nadie sabría resolver después.
+        from app.modules.organization.models import Company
+
+        empresa = db.get(Company, company_id)
+        if empresa is not None:
+            tenant_id = empresa.tenant_id
+
     event = AuditEvent(
         action=action,
         entity_type=entity_type,

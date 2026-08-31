@@ -85,10 +85,17 @@ def _bump(entity: Any) -> None:
     entity.version = int(entity.version) + 1
 
 
-def _audit(db: Session, user: User, action: str, entity_type: str, entity_id: str,
-           before: dict | None = None, after: dict | None = None) -> None:
+def _audit(db: Session, user: User, ctx: CompanyContext, action: str, entity_type: str,
+           entity_id: str, before: dict | None = None, after: dict | None = None) -> None:
+    """El rastro guarda también la empresa.
+
+    Antes solo anotaba el tenant, así que crear un almacén en la empresa A y
+    crearlo en la B dejaban registros indistinguibles: el rastro sabía en qué
+    instalación había pasado algo, pero no en cuál de las empresas.
+    """
     record_audit(db, action=action, entity_type=entity_type, entity_id=entity_id,
-                 tenant_id=user.tenant_id, user_id=str(user.id), before=before, after=after)
+                 tenant_id=user.tenant_id, company_id=ctx.company_id,
+                 user_id=str(user.id), before=before, after=after)
 
 
 def _integrity(exc: IntegrityError, code: str, message: str) -> KontrolError:
@@ -139,7 +146,7 @@ def _catalog_create(db: Session, actor: User, ctx: CompanyContext, model: Any,
         raise _integrity(exc, f"{entity.upper()}_CODE_DUPLICATE",
                          "Ya existe un tipo con ese código en la empresa") from exc
     db.refresh(row)
-    _audit(db, actor, "CREATE", entity, str(row.id), after={"code": row.code})
+    _audit(db, actor, ctx, "CREATE", entity, str(row.id), after={"code": row.code})
     db.commit()
     return {"id": str(row.id), "code": row.code, "name": row.name}
 
@@ -153,7 +160,7 @@ def _catalog_update(db: Session, actor: User, ctx: CompanyContext, model: Any,
     for field in ("name", "description", "is_storable", "status"):
         if field in body and hasattr(row, field):
             setattr(row, field, body[field])
-    _audit(db, actor, "UPDATE", entity, str(row.id), before=before,
+    _audit(db, actor, ctx, "UPDATE", entity, str(row.id), before=before,
            after={"name": row.name, "status": row.status})
     db.commit()
     return {"id": str(row.id), "code": row.code, "name": row.name, "status": row.status}
@@ -304,7 +311,7 @@ def create_warehouse_full(body: WarehouseIn, db: Session = Depends(get_db),
         raise _integrity(exc, "WAREHOUSE_CODE_DUPLICATE",
                          "Ya existe un almacén con ese código en la empresa") from exc
     db.refresh(warehouse)
-    _audit(db, actor, "CREATE", "warehouse", str(warehouse.id), after={"code": warehouse.code})
+    _audit(db, actor, ctx, "CREATE", "warehouse", str(warehouse.id), after={"code": warehouse.code})
     db.commit()
     return _warehouse_dict(db, warehouse, st.user_permission_set(db, actor))
 
@@ -329,7 +336,7 @@ def patch_warehouse(warehouse_id: str, body: WarehousePatch,
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(warehouse, field, value)
     _bump(warehouse)
-    _audit(db, actor, "UPDATE", "warehouse", str(warehouse.id), before=before,
+    _audit(db, actor, ctx, "UPDATE", "warehouse", str(warehouse.id), before=before,
            after={"name": warehouse.name, "location_managed": warehouse.location_managed})
     db.commit()
     db.refresh(warehouse)
@@ -354,12 +361,12 @@ def patch_structure_levels(warehouse_id: str, body: StructureLevelsPatch,
         warehouse.structure_levels = st.validate_structure_levels_change(
             db, warehouse, body.structure_levels)
     except KontrolError:
-        _audit(db, actor, "STRUCTURE_CHANGE_BLOCKED", "warehouse", str(warehouse.id),
+        _audit(db, actor, ctx, "STRUCTURE_CHANGE_BLOCKED", "warehouse", str(warehouse.id),
                before=before, after=st.normalize_structure_levels(body.structure_levels))
         db.commit()
         raise
     _bump(warehouse)
-    _audit(db, actor, "STRUCTURE_LEVELS_CHANGED", "warehouse", str(warehouse.id),
+    _audit(db, actor, ctx, "STRUCTURE_LEVELS_CHANGED", "warehouse", str(warehouse.id),
            before=before, after=warehouse.structure_levels)
     db.commit()
     db.refresh(warehouse)
@@ -373,7 +380,7 @@ def activate_warehouse(warehouse_id: str, db: Session = Depends(get_db),
     warehouse = _get_warehouse(db, ctx, warehouse_id)
     warehouse.status = "ACTIVE"
     _bump(warehouse)
-    _audit(db, actor, "ACTIVATE", "warehouse", str(warehouse.id), after={"status": "ACTIVE"})
+    _audit(db, actor, ctx, "ACTIVATE", "warehouse", str(warehouse.id), after={"status": "ACTIVE"})
     db.commit()
     return {"id": str(warehouse.id), "status": warehouse.status}
 
@@ -385,7 +392,7 @@ def deactivate_warehouse(warehouse_id: str, db: Session = Depends(get_db),
     warehouse = _get_warehouse(db, ctx, warehouse_id)
     warehouse.status = "INACTIVE"
     _bump(warehouse)
-    _audit(db, actor, "DEACTIVATE", "warehouse", str(warehouse.id), after={"status": "INACTIVE"})
+    _audit(db, actor, ctx, "DEACTIVATE", "warehouse", str(warehouse.id), after={"status": "INACTIVE"})
     db.commit()
     return {"id": str(warehouse.id), "status": warehouse.status}
 
@@ -399,7 +406,7 @@ def delete_warehouse(warehouse_id: str, db: Session = Depends(get_db),
     warehouse = _get_warehouse(db, ctx, warehouse_id)
     deletable, blocking = st.can_delete_warehouse(db, warehouse)
     if not deletable:
-        _audit(db, actor, "DELETE_BLOCKED", "warehouse", str(warehouse.id), after=blocking)
+        _audit(db, actor, ctx, "DELETE_BLOCKED", "warehouse", str(warehouse.id), after=blocking)
         db.commit()
         raise KontrolError(
             code="NODE_HAS_HISTORY", message="El almacén tiene dependencias y no puede borrarse",
@@ -408,7 +415,7 @@ def delete_warehouse(warehouse_id: str, db: Session = Depends(get_db),
                      "dependencies": blocking.get("dependencies", {}),
                      "allowed_actions": ["deactivate"]},
         )
-    _audit(db, actor, "DELETE", "warehouse", str(warehouse.id), before={"code": warehouse.code})
+    _audit(db, actor, ctx, "DELETE", "warehouse", str(warehouse.id), before={"code": warehouse.code})
     db.delete(warehouse)
     db.commit()
     return {"deleted": True}
@@ -510,7 +517,7 @@ def _node_routes(level: str) -> None:
         db.refresh(node)
         # Crear el primer nodo hace operativo el almacén: viaje de ida (R-008-6).
         st.promote_regime(db, warehouse)
-        _audit(db, actor, "CREATE", f"warehouse_{level}", str(node.id), after={"code": node.code})
+        _audit(db, actor, ctx, "CREATE", f"warehouse_{level}", str(node.id), after={"code": node.code})
         db.commit()
         return _node_dict(db, level, node, st.user_permission_set(db, actor))
 
@@ -546,7 +553,7 @@ def _node_routes(level: str) -> None:
             if hasattr(node, field):
                 setattr(node, field, value)
         _bump(node)
-        _audit(db, actor, "UPDATE", f"warehouse_{level}", str(node.id), before=before,
+        _audit(db, actor, ctx, "UPDATE", f"warehouse_{level}", str(node.id), before=before,
                after={"name": node.name, "sequence": node.sequence, "status": node.status})
         db.commit()
         db.refresh(node)
@@ -560,7 +567,7 @@ def _node_routes(level: str) -> None:
         node = _get_node(db, ctx, level, node_id)
         node.status = "ACTIVE"
         _bump(node)
-        _audit(db, actor, "ACTIVATE", f"warehouse_{level}", str(node.id), after={"status": "ACTIVE"})
+        _audit(db, actor, ctx, "ACTIVATE", f"warehouse_{level}", str(node.id), after={"status": "ACTIVE"})
         db.commit()
         return {"id": str(node.id), "status": node.status}
 
@@ -573,12 +580,12 @@ def _node_routes(level: str) -> None:
         try:
             st.assert_can_deactivate_node(db, level, node.id)
         except KontrolError:
-            _audit(db, actor, "DEACTIVATE_BLOCKED", f"warehouse_{level}", str(node.id))
+            _audit(db, actor, ctx, "DEACTIVATE_BLOCKED", f"warehouse_{level}", str(node.id))
             db.commit()
             raise
         node.status = "INACTIVE"
         _bump(node)
-        _audit(db, actor, "DEACTIVATE", f"warehouse_{level}", str(node.id),
+        _audit(db, actor, ctx, "DEACTIVATE", f"warehouse_{level}", str(node.id),
                after={"status": "INACTIVE"})
         db.commit()
         return {"id": str(node.id), "status": node.status}
@@ -591,7 +598,7 @@ def _node_routes(level: str) -> None:
         node = _get_node(db, ctx, level, node_id)
         deletable, blocking = st.can_delete_node(db, level, node.id)
         if not deletable:
-            _audit(db, actor, "DELETE_BLOCKED", f"warehouse_{level}", str(node.id), after=blocking)
+            _audit(db, actor, ctx, "DELETE_BLOCKED", f"warehouse_{level}", str(node.id), after=blocking)
             db.commit()
             raise KontrolError(
                 code="NODE_HAS_HISTORY", message="El nodo tiene dependencias y no puede borrarse",
@@ -599,7 +606,7 @@ def _node_routes(level: str) -> None:
                 details={"reason": "Existen descendientes o histórico asociados",
                          "dependencies": blocking, "allowed_actions": ["deactivate"]},
             )
-        _audit(db, actor, "DELETE", f"warehouse_{level}", str(node.id), before={"code": node.code})
+        _audit(db, actor, ctx, "DELETE", f"warehouse_{level}", str(node.id), before={"code": node.code})
         db.delete(node)
         db.commit()
         return {"deleted": True}
@@ -784,7 +791,7 @@ def create_location_full(body: LocationIn, db: Session = Depends(get_db),
                          "Ya existe una ubicación con ese código en el almacén") from exc
     db.refresh(location)
     st.promote_regime(db, warehouse)
-    _audit(db, actor, "CREATE", "warehouse_location", str(location.id), after={"code": location.code})
+    _audit(db, actor, ctx, "CREATE", "warehouse_location", str(location.id), after={"code": location.code})
     db.commit()
     return _location_dict(db, location, st.user_permission_set(db, actor), full=True)
 
@@ -831,7 +838,7 @@ def bulk_locations(body: BulkLocationIn, db: Session = Depends(get_db),
         raise _integrity(exc, "LOCATION_CODE_DUPLICATE",
                          "Otra operación creó uno de los códigos") from exc
     st.promote_regime(db, warehouse)
-    _audit(db, actor, "BULK_CREATE", "warehouse_location", str(warehouse.id),
+    _audit(db, actor, ctx, "BULK_CREATE", "warehouse_location", str(warehouse.id),
            after={"count": len(created)})
     db.commit()
     return {"preview": False, "created": created, "skipped": conflicts, "total": len(created)}
@@ -869,19 +876,19 @@ def patch_location(location_id: str, body: LocationPatch,
             try:
                 st.assert_can_relocate(db, location)
             except KontrolError:
-                _audit(db, actor, "RELOCATE_BLOCKED", "warehouse_location", str(location.id))
+                _audit(db, actor, ctx, "RELOCATE_BLOCKED", "warehouse_location", str(location.id))
                 db.commit()
                 raise
             chain = st.validate_chain(db, warehouse, target)
             for level in st.LEVEL_ORDER:
                 setattr(location, st.LEVEL_FK[level], chain[level])
-            _audit(db, actor, "HIERARCHY_CHANGED", "warehouse_location", str(location.id),
+            _audit(db, actor, ctx, "HIERARCHY_CHANGED", "warehouse_location", str(location.id),
                    before=current, after=chain)
 
     for field, value in data.items():
         setattr(location, field, value)
     _bump(location)
-    _audit(db, actor, "UPDATE", "warehouse_location", str(location.id), before=before,
+    _audit(db, actor, ctx, "UPDATE", "warehouse_location", str(location.id), before=before,
            after={"name": location.name, "sequence": location.sequence})
     db.commit()
     db.refresh(location)
@@ -895,7 +902,7 @@ def _set_location_status(db: Session, actor: User, ctx: CompanyContext, location
     # una ubicación no cambia ningún saldo (ADR-D0-010, FR-008-042).
     location.status = status
     _bump(location)
-    _audit(db, actor, action, "warehouse_location", str(location.id), after={"status": status})
+    _audit(db, actor, ctx, action, "warehouse_location", str(location.id), after={"status": status})
     db.commit()
     return {"id": str(location.id), "status": location.status}
 
@@ -928,7 +935,7 @@ def delete_location(location_id: str, db: Session = Depends(get_db),
     location = _get_location(db, ctx, location_id)
     deletable, history = st.can_delete_location(db, location)
     if not deletable:
-        _audit(db, actor, "DELETE_BLOCKED", "warehouse_location", str(location.id), after=history)
+        _audit(db, actor, ctx, "DELETE_BLOCKED", "warehouse_location", str(location.id), after=history)
         db.commit()
         raise KontrolError(
             code="LOCATION_HAS_HISTORY",
@@ -936,7 +943,7 @@ def delete_location(location_id: str, db: Session = Depends(get_db),
             details={"reason": "Existen movimientos, saldos o conteos asociados",
                      "dependencies": history, "allowed_actions": ["deactivate"]},
         )
-    _audit(db, actor, "DELETE", "warehouse_location", str(location.id),
+    _audit(db, actor, ctx, "DELETE", "warehouse_location", str(location.id),
            before={"code": location.code})
     db.delete(location)
     db.commit()
