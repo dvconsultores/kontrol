@@ -84,6 +84,16 @@ def _tenant_id() -> str:
         db.close()
 
 
+def _company_id() -> str:
+    """La empresa, que **no** es el tenant (ARCH-MC-001).
+
+    Este fixture creaba los productos con el `tenant_id` en `company_id`, que era
+    la semántica equivocada que la remediación corrige. Ahora la API resuelve la
+    empresa de verdad, y un producto sembrado con el tenant no lo encontraría.
+    """
+    return _CLIENT.get("/api/v1/organization/companies", headers=_headers()).json()[0]["id"]
+
+
 _SEQ = {"n": 0}
 
 
@@ -100,7 +110,7 @@ def _product(code: str, base_unit_id: str | None, item_type: str = "PRODUCT") ->
     """Crea el item directamente: 011 no implementa el alta de producto."""
     db = _FACTORY()
     try:
-        item = CatalogItem(company_id=_tenant_id(), code=code, name=f"Producto {code}",
+        item = CatalogItem(company_id=_company_id(), code=code, name=f"Producto {code}",
                            item_type=item_type, status="ACTIVE", base_unit_id=base_unit_id)
         db.add(item)
         db.commit()
@@ -350,11 +360,11 @@ def test_el_historico_no_cambia_al_cambiar_el_factor():
         from app.modules.master_data.models import Party
 
         # `purchase_orders.supplier_id` referencia `parties`, no `suppliers`.
-        party = Party(company_id=_tenant_id(), code="PROV-HIST", name="Proveedor",
+        party = Party(company_id=_company_id(), code="PROV-HIST", name="Proveedor",
                       legal_name="Proveedor C.A.", tax_id="J-9", status="ACTIVE")
         db.add(party)
         db.flush()
-        order = PurchaseOrder(company_id=_tenant_id(), code="OC-HIST", status="APPROVED",
+        order = PurchaseOrder(company_id=_company_id(), code="OC-HIST", status="APPROVED",
                               currency="VED", supplier_id=str(party.id))
         db.add(order)
         db.flush()

@@ -341,15 +341,15 @@ def open_session(body: SessionOpen, db: Session = Depends(get_db),
 
 
 @router.get("/cash-sessions/{session_id}")
-def get_session(session_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    session = _owned(db, CashSession, session_id, user.tenant_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
+def get_session(session_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
     return treasury_service.session_dict(db, session)
 
 
 @router.post("/cash-sessions/{session_id}/movements", dependencies=[Depends(require_write_allowed)])
 def add_movement(session_id: str, body: SessionMovementCreate, db: Session = Depends(get_db),
-                 actor: User = Depends(require_permission("tesoreria", "create"))):
-    session = _owned(db, CashSession, session_id, actor.tenant_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
+                 actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
     mv = treasury_service.add_session_movement(db, session_id=str(session.id), movement_type=body.movement_type,
                                                amount=body.amount, instrument_id=body.instrument_id,
                                                payment_id=body.payment_id, source=body.source,
@@ -361,8 +361,8 @@ def add_movement(session_id: str, body: SessionMovementCreate, db: Session = Dep
 
 @router.post("/cash-sessions/{session_id}/arqueo", dependencies=[Depends(require_write_allowed)])
 def arqueo_session(session_id: str, body: ArqueoBody, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("tesoreria", "approve"))):
-    session = _owned(db, CashSession, session_id, actor.tenant_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
+                   actor: User = Depends(require_permission("tesoreria", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
     treasury_service.arqueo_session(db, session_id=str(session.id), counted_amount=body.counted_amount,
                                     notes=body.notes)
     db.commit()
@@ -372,8 +372,8 @@ def arqueo_session(session_id: str, body: ArqueoBody, db: Session = Depends(get_
 
 @router.post("/cash-sessions/{session_id}/pre-close", dependencies=[Depends(require_write_allowed)])
 def pre_close_session(session_id: str, db: Session = Depends(get_db),
-                      actor: User = Depends(require_permission("tesoreria", "approve"))):
-    session = _owned(db, CashSession, session_id, actor.tenant_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
+                      actor: User = Depends(require_permission("tesoreria", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
     treasury_service.pre_close_session(db, session_id=str(session.id), actor=str(actor.id))
     db.commit()
     db.refresh(session)
@@ -382,8 +382,8 @@ def pre_close_session(session_id: str, db: Session = Depends(get_db),
 
 @router.post("/cash-sessions/{session_id}/close", dependencies=[Depends(require_write_allowed)])
 def close_session(session_id: str, body: CloseSessionBody, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("tesoreria", "approve"))):
-    session = _owned(db, CashSession, session_id, actor.tenant_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
+                  actor: User = Depends(require_permission("tesoreria", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
     treasury_service.close_session(db, session_id=str(session.id), difference_approved=body.difference_approved,
                                    approval_note=body.approval_note, actor=str(actor.id))
     db.commit()
@@ -393,8 +393,8 @@ def close_session(session_id: str, body: CloseSessionBody, db: Session = Depends
 
 @router.post("/cash-sessions/{session_id}/reject", dependencies=[Depends(require_write_allowed)])
 def reject_session(session_id: str, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("tesoreria", "approve"))):
-    session = _owned(db, CashSession, session_id, actor.tenant_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
+                   actor: User = Depends(require_permission("tesoreria", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
     treasury_service.reject_session(db, session_id=str(session.id), actor=str(actor.id))
     db.commit()
     db.refresh(session)
@@ -498,15 +498,15 @@ def create_reconciliation(body: ReconciliationCreate, db: Session = Depends(get_
 
 @router.get("/reconciliations/{reconciliation_id}")
 def get_reconciliation(reconciliation_id: str, db: Session = Depends(get_db),
-                       user: User = Depends(get_current_user)):
-    r = _owned(db, Reconciliation, reconciliation_id, user.tenant_id, "RECONCILIATION_NOT_FOUND", "Conciliación no encontrada")
+                       user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    r = _owned(db, Reconciliation, reconciliation_id, ctx.company_id, "RECONCILIATION_NOT_FOUND", "Conciliación no encontrada")
     return treasury_service.reconciliation_dict(db, r)
 
 
 @router.post("/reconciliations/{reconciliation_id}/lines", dependencies=[Depends(require_write_allowed)])
 def add_reconciliation_line(reconciliation_id: str, body: ReconciliationLineCreate, db: Session = Depends(get_db),
-                            actor: User = Depends(require_permission("tesoreria", "create"))):
-    rec = _owned(db, Reconciliation, reconciliation_id, actor.tenant_id, "RECONCILIATION_NOT_FOUND", "Conciliación no encontrada")
+                            actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    rec = _owned(db, Reconciliation, reconciliation_id, ctx.company_id, "RECONCILIATION_NOT_FOUND", "Conciliación no encontrada")
     line = treasury_service.add_reconciliation_line(db, reconciliation_id=str(rec.id),
                                                     bank_transaction_id=body.bank_transaction_id)
     db.commit()
@@ -516,8 +516,8 @@ def add_reconciliation_line(reconciliation_id: str, body: ReconciliationLineCrea
 
 @router.post("/reconciliations/{reconciliation_id}/match", dependencies=[Depends(require_write_allowed)])
 def propose_match(reconciliation_id: str, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("tesoreria", "approve"))):
-    rec = _owned(db, Reconciliation, reconciliation_id, actor.tenant_id, "RECONCILIATION_NOT_FOUND", "Conciliación no encontrada")
+                  actor: User = Depends(require_permission("tesoreria", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    rec = _owned(db, Reconciliation, reconciliation_id, ctx.company_id, "RECONCILIATION_NOT_FOUND", "Conciliación no encontrada")
     matched = treasury_service.propose_matches(db, reconciliation_id=str(rec.id))
     db.commit()
     return {"matched": len(matched),
@@ -539,8 +539,8 @@ def resolve_line(line_id: str, body: ResolveLineBody, db: Session = Depends(get_
 
 @router.post("/reconciliations/{reconciliation_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_reconciliation(reconciliation_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                              actor: User = Depends(require_permission("tesoreria", "approve"))):
-    rec = _owned(db, Reconciliation, reconciliation_id, actor.tenant_id, "RECONCILIATION_NOT_FOUND", "Conciliación no encontrada")
+                              actor: User = Depends(require_permission("tesoreria", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    rec = _owned(db, Reconciliation, reconciliation_id, ctx.company_id, "RECONCILIATION_NOT_FOUND", "Conciliación no encontrada")
     treasury_service.transition_reconciliation(db, reconciliation_id=str(rec.id), target=body.target, actor=str(actor.id))
     db.commit()
     db.refresh(rec)

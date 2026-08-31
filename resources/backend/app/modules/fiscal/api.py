@@ -335,8 +335,8 @@ def list_documents(status: str | None = None, db: Session = Depends(get_db), use
 
 
 @router.get("/documents/{document_id}")
-def get_document(document_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    doc = _owned(db, FiscalDocument, document_id, user.tenant_id, "FISCAL_DOCUMENT_NOT_FOUND", "Documento fiscal no encontrado")
+def get_document(document_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    doc = _owned(db, FiscalDocument, document_id, ctx.company_id, "FISCAL_DOCUMENT_NOT_FOUND", "Documento fiscal no encontrado")
     prints = db.execute(select(PrintEvent).where(PrintEvent.fiscal_document_id == document_id)
                         .order_by(PrintEvent.printed_at.desc())).scalars().all()
     return {"id": doc.id, "business_document": doc.business_document, "document_type": doc.document_type,
@@ -360,7 +360,7 @@ def emit_document(body: EmitBody, db: Session = Depends(get_db),
 @router.post("/documents/{document_id}/print", dependencies=[Depends(require_write_allowed)])
 def register_print(document_id: str, body: PrintBody, db: Session = Depends(get_db),
                    actor: User = Depends(require_permission("fiscal", "create")), ctx: CompanyContext = Depends(get_company_context)):
-    doc = _owned(db, FiscalDocument, document_id, actor.tenant_id, "FISCAL_DOCUMENT_NOT_FOUND", "Documento fiscal no encontrado")
+    doc = _owned(db, FiscalDocument, document_id, ctx.company_id, "FISCAL_DOCUMENT_NOT_FOUND", "Documento fiscal no encontrado")
     event = fiscal_service.register_print(db, company_id=ctx.company_id, fiscal_document_id=str(doc.id),
                                           copy_type=body.copy_type, printer=body.printer, reason=body.reason,
                                           actor=str(actor.id))
@@ -496,7 +496,7 @@ def create_period(body: PeriodCreate, db: Session = Depends(get_db),
 @router.post("/periods/{period_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_period(period_id: str, body: TransitionBody, db: Session = Depends(get_db),
                       actor: User = Depends(require_permission("fiscal", "approve")), ctx: CompanyContext = Depends(get_company_context)):
-    period = _owned(db, FiscalPeriod, period_id, actor.tenant_id, "FISCAL_PERIOD_NOT_FOUND", "Período fiscal no encontrado")
+    period = _owned(db, FiscalPeriod, period_id, ctx.company_id, "FISCAL_PERIOD_NOT_FOUND", "Período fiscal no encontrado")
     fiscal_service.transition_period(db, company_id=ctx.company_id, period_id=str(period.id), target=body.target,
                                      actor=str(actor.id))
     db.commit()

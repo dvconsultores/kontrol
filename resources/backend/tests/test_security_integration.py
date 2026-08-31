@@ -94,6 +94,17 @@ def _app_client():
                       plan="MONO_COMPANY", status="ACTIVE")
     db.add(tenant_b)
     db.flush()
+    # El tenant B necesita su propia empresa: sin ella no puede resolverse el
+    # contexto y el aislamiento se probaría por accidente —porque B no puede
+    # consultar nada— en lugar de por diseño (ARCH-MC-001).
+    from app.modules.organization.models import Company
+
+    company_b = Company(tenant_id=str(tenant_b.id), code="B1", legal_name="Empresa B CA",
+                        rif="J-87654321-0", legal_type="JURIDICA",
+                        functional_currency="VED", status="ACTIVE")
+    db.add(company_b)
+    db.flush()
+
     user_b = identity_service.create_user(db, tenant_id=str(tenant_b.id), username="admin2",
                                           email="admin2@b.com", password="Kontrol2026Segura!",
                                           created_by=None)
@@ -233,7 +244,11 @@ def test_org_tenant_isolation():
     assert wh.status_code == 200, wh.text
 
     b = _auth_b()
-    assert _CLIENT.get("/api/v1/organization/companies", headers=b).json() == []
+    # B tiene su propia empresa; lo que no puede es ver la de A. Afirmar que su
+    # lista está vacía probaría que el fixture no le dio ninguna, no que el
+    # aislamiento funciona.
+    empresas_b = _CLIENT.get("/api/v1/organization/companies", headers=b).json()
+    assert company_a not in [c["id"] for c in empresas_b]
     assert _CLIENT.get(f"/api/v1/organization/warehouses?company_id={company_a}", headers=b).json()["items"] == []
 
     r = _CLIENT.post("/api/v1/organization/warehouses", headers=b,

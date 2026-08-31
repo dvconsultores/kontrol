@@ -289,7 +289,7 @@ def create_permit(body: PermitCreate, db: Session = Depends(get_db),
 @router.post("/permits/{permit_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_permit(permit_id: str, body: TransitionBody, db: Session = Depends(get_db),
                       actor: User = Depends(require_permission("regulatorio", "approve")), ctx: CompanyContext = Depends(get_company_context)):
-    p = _owned(db, PermitInstance, permit_id, actor.tenant_id, "PERMIT_NOT_FOUND", "Permiso no encontrado")
+    p = _owned(db, PermitInstance, permit_id, ctx.company_id, "PERMIT_NOT_FOUND", "Permiso no encontrado")
     regulatory_service.transition_permit(db, company_id=ctx.company_id, permit_id=str(p.id), target=body.target,
                                          actor=str(actor.id))
     db.commit()
@@ -350,7 +350,7 @@ def list_evaluations(shipment_id: str | None = None, db: Session = Depends(get_d
 @router.post("/evaluations/{evaluation_id}/override", dependencies=[Depends(require_write_allowed)])
 def override_evaluation(evaluation_id: str, body: OverrideBody, db: Session = Depends(get_db),
                         actor: User = Depends(require_permission("regulatorio", "approve")), ctx: CompanyContext = Depends(get_company_context)):
-    e = _owned(db, RegulatoryEvaluation, evaluation_id, actor.tenant_id, "EVALUATION_NOT_FOUND", "Evaluación no encontrada")
+    e = _owned(db, RegulatoryEvaluation, evaluation_id, ctx.company_id, "EVALUATION_NOT_FOUND", "Evaluación no encontrada")
     regulatory_service.override_evaluation(db, company_id=ctx.company_id, evaluation_id=str(e.id),
                                            reason=body.reason, actor=str(actor.id))
     db.commit()
@@ -382,7 +382,7 @@ def create_contingency(body: ContingencyCreate, db: Session = Depends(get_db),
 @router.post("/contingencies/{contingency_id}/end", dependencies=[Depends(require_write_allowed)])
 def end_contingency(contingency_id: str, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("regulatorio", "approve")), ctx: CompanyContext = Depends(get_company_context)):
-    c = _owned(db, RegulatoryContingency, contingency_id, actor.tenant_id, "CONTINGENCY_NOT_FOUND", "Contingencia no encontrada")
+    c = _owned(db, RegulatoryContingency, contingency_id, ctx.company_id, "CONTINGENCY_NOT_FOUND", "Contingencia no encontrada")
     regulatory_service.end_contingency(db, company_id=ctx.company_id, contingency_id=str(c.id))
     db.commit()
     db.refresh(c)
@@ -403,7 +403,7 @@ def create_approval_request(body: ApprovalCreate, db: Session = Depends(get_db),
 @router.post("/approval-requests/{request_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_approval_request(request_id: str, body: TransitionBody, db: Session = Depends(get_db),
                                 actor: User = Depends(require_permission("regulatorio", "approve")), ctx: CompanyContext = Depends(get_company_context)):
-    req = _owned(db, RegulatoryApprovalRequest, request_id, actor.tenant_id, "APPROVAL_REQUEST_NOT_FOUND", "Solicitud no encontrada")
+    req = _owned(db, RegulatoryApprovalRequest, request_id, ctx.company_id, "APPROVAL_REQUEST_NOT_FOUND", "Solicitud no encontrada")
     regulatory_service.transition_approval_request(db, company_id=ctx.company_id, request_id=str(req.id),
                                                    target=body.target, actor=str(actor.id))
     db.commit()

@@ -230,15 +230,15 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db),
 
 
 @router.get("/orders/{order_id}")
-def get_order(order_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    order = _owned(db, SalesOrder, order_id, user.tenant_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
+def get_order(order_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    order = _owned(db, SalesOrder, order_id, ctx.company_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
     return sales_service.order_dict(db, order)
 
 
 @router.post("/orders/{order_id}/lines", dependencies=[Depends(require_write_allowed)])
 def add_order_line(order_id: str, body: OrderLineCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("ventas", "create"))):
-    order = _owned(db, SalesOrder, order_id, actor.tenant_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
+                   actor: User = Depends(require_permission("ventas", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    order = _owned(db, SalesOrder, order_id, ctx.company_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
     line = sales_service.add_order_line(db, order_id=str(order.id), product_id=body.product_id, quantity=body.quantity,
                                         unit_price=body.unit_price, discount=body.discount, tax_ref=body.tax_ref,
                                         needs_inventory=body.needs_inventory, snapshot=body.snapshot)
@@ -249,8 +249,8 @@ def add_order_line(order_id: str, body: OrderLineCreate, db: Session = Depends(g
 
 @router.post("/orders/{order_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_order(order_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("ventas", "approve"))):
-    order = _owned(db, SalesOrder, order_id, actor.tenant_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
+                     actor: User = Depends(require_permission("ventas", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    order = _owned(db, SalesOrder, order_id, ctx.company_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
     sales_service.transition_order(db, order=order, target=body.target, actor=str(actor.id),
                                    credit_decision=body.credit_decision, approval_ref=body.approval_ref)
     db.commit()
@@ -296,8 +296,8 @@ def create_shipment(body: ShipmentCreate, db: Session = Depends(get_db),
 
 @router.post("/shipments/{shipment_id}/validate", dependencies=[Depends(require_write_allowed)])
 def validate_shipment(shipment_id: str, db: Session = Depends(get_db),
-                      actor: User = Depends(require_permission("ventas", "quality"))):
-    shipment = _owned(db, Shipment, shipment_id, actor.tenant_id, "SHIPMENT_NOT_FOUND", "Despacho no encontrado")
+                      actor: User = Depends(require_permission("ventas", "quality")), ctx: CompanyContext = Depends(get_company_context)):
+    shipment = _owned(db, Shipment, shipment_id, ctx.company_id, "SHIPMENT_NOT_FOUND", "Despacho no encontrado")
     sales_service.validate_shipment(db, shipment=shipment, actor=str(actor.id))
     db.commit()
     db.refresh(shipment)
@@ -306,8 +306,8 @@ def validate_shipment(shipment_id: str, db: Session = Depends(get_db),
 
 @router.post("/shipments/{shipment_id}/confirm", dependencies=[Depends(require_write_allowed)])
 def confirm_shipment(shipment_id: str, db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("ventas", "quality"))):
-    shipment = _owned(db, Shipment, shipment_id, actor.tenant_id, "SHIPMENT_NOT_FOUND", "Despacho no encontrado")
+                     actor: User = Depends(require_permission("ventas", "quality")), ctx: CompanyContext = Depends(get_company_context)):
+    shipment = _owned(db, Shipment, shipment_id, ctx.company_id, "SHIPMENT_NOT_FOUND", "Despacho no encontrado")
     sales_service.confirm_shipment(db, shipment=shipment, actor=str(actor.id))
     db.commit()
     db.refresh(shipment)
@@ -354,8 +354,8 @@ def create_invoice(body: InvoiceCreate, db: Session = Depends(get_db),
 
 @router.post("/invoices/{invoice_id}/lines", dependencies=[Depends(require_write_allowed)])
 def add_invoice_line(invoice_id: str, body: InvoiceLineCreate, db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("ventas", "create"))):
-    invoice = _owned(db, SalesInvoice, invoice_id, actor.tenant_id, "INVOICE_NOT_FOUND", "Factura no encontrada")
+                     actor: User = Depends(require_permission("ventas", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    invoice = _owned(db, SalesInvoice, invoice_id, ctx.company_id, "INVOICE_NOT_FOUND", "Factura no encontrada")
     line = sales_service.add_invoice_line(db, invoice_id=str(invoice.id), product_id=body.product_id,
                                           quantity=body.quantity, unit_price=body.unit_price,
                                           tax_amount=body.tax_amount, snapshot=body.snapshot)
@@ -367,8 +367,8 @@ def add_invoice_line(invoice_id: str, body: InvoiceLineCreate, db: Session = Dep
 
 @router.post("/invoices/{invoice_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_invoice(invoice_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                       actor: User = Depends(require_permission("ventas", "approve"))):
-    invoice = _owned(db, SalesInvoice, invoice_id, actor.tenant_id, "INVOICE_NOT_FOUND", "Factura no encontrada")
+                       actor: User = Depends(require_permission("ventas", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    invoice = _owned(db, SalesInvoice, invoice_id, ctx.company_id, "INVOICE_NOT_FOUND", "Factura no encontrada")
     if body.target == "VOIDED":
         sales_service.void_invoice(db, invoice=invoice, actor=str(actor.id))
     else:
@@ -401,8 +401,8 @@ def create_credit_note(body: CreditNoteCreate, db: Session = Depends(get_db),
 
 @router.post("/credit-notes/{note_id}/post", dependencies=[Depends(require_write_allowed)])
 def post_credit_note(note_id: str, db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("ventas", "approve"))):
-    note = _owned(db, SalesCreditNote, note_id, actor.tenant_id, "CREDIT_NOTE_NOT_FOUND", "Nota no encontrada")
+                     actor: User = Depends(require_permission("ventas", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    note = _owned(db, SalesCreditNote, note_id, ctx.company_id, "CREDIT_NOTE_NOT_FOUND", "Nota no encontrada")
     sales_service.post_credit_note(db, note=note)
     db.commit()
     db.refresh(note)
@@ -411,8 +411,8 @@ def post_credit_note(note_id: str, db: Session = Depends(get_db),
 
 @router.post("/credit-notes/{note_id}/apply", dependencies=[Depends(require_write_allowed)])
 def apply_credit_note(note_id: str, body: ApplicationCreate, db: Session = Depends(get_db),
-                      actor: User = Depends(require_permission("ventas", "apply"))):
-    note = _owned(db, SalesCreditNote, note_id, actor.tenant_id, "CREDIT_NOTE_NOT_FOUND", "Nota no encontrada")
+                      actor: User = Depends(require_permission("ventas", "apply")), ctx: CompanyContext = Depends(get_company_context)):
+    note = _owned(db, SalesCreditNote, note_id, ctx.company_id, "CREDIT_NOTE_NOT_FOUND", "Nota no encontrada")
     target = sales_service.apply_credit_note(db, note=note, target_open_item_id=body.target_open_item_id,
                                              amount=body.amount, actor=str(actor.id))
     db.commit()
@@ -509,8 +509,8 @@ def create_collection(body: CollectionCreate, db: Session = Depends(get_db),
 
 @router.post("/collections/{collection_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_collection(collection_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                          actor: User = Depends(require_permission("ventas", "approve"))):
-    payment = _owned(db, Payment, collection_id, actor.tenant_id, "COLLECTION_NOT_FOUND", "Cobro no encontrado")
+                          actor: User = Depends(require_permission("ventas", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    payment = _owned(db, Payment, collection_id, ctx.company_id, "COLLECTION_NOT_FOUND", "Cobro no encontrado")
     ap_service.transition_payment(db, payment=payment, target=body.target, actor=str(actor.id))
     db.commit()
     db.refresh(payment)
@@ -553,8 +553,8 @@ def create_withholding_suffered(body: WithholdingCreate, db: Session = Depends(g
 
 @router.post("/withholdings-suffered/{withholding_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_withholding(withholding_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                           actor: User = Depends(require_permission("ventas", "approve"))):
-    w = _owned(db, Withholding, withholding_id, actor.tenant_id, "WITHHOLDING_NOT_FOUND", "Retención no encontrada")
+                           actor: User = Depends(require_permission("ventas", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    w = _owned(db, Withholding, withholding_id, ctx.company_id, "WITHHOLDING_NOT_FOUND", "Retención no encontrada")
     ap_service.transition_withholding(db, withholding=w, target=body.target)
     db.commit()
     db.refresh(w)

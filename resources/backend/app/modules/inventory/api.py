@@ -177,8 +177,8 @@ def list_movement_types(db: Session = Depends(get_db), user: User = Depends(get_
 
 @router.post("/movement-types", dependencies=[Depends(require_write_allowed)])
 def create_movement_type(body: MovementTypeCreate, db: Session = Depends(get_db),
-                         actor: User = Depends(require_permission("inventario", "create"))):
-    company_id = None if body.global_scope else actor.tenant_id
+                         actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    company_id = None if body.global_scope else ctx.company_id
     dup = db.execute(select(MovementType).where(MovementType.company_id == company_id, MovementType.code == body.code)).scalars().first()
     if dup:
         from app.core.errors import ConflictError
@@ -219,8 +219,8 @@ def list_balances(product_id: str | None = None, warehouse_id: str | None = None
 
 
 @router.get("/balances/{balance_id}")
-def get_balance(balance_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    b = _get_owned(db, InventoryBalance, balance_id, user.tenant_id, "BALANCE_NOT_FOUND", "Balance no encontrado")
+def get_balance(balance_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    b = _get_owned(db, InventoryBalance, balance_id, ctx.company_id, "BALANCE_NOT_FOUND", "Balance no encontrado")
     return inv_service.balance_dict(b)
 
 
@@ -229,7 +229,7 @@ def recompute_balances_endpoint(warehouse_id: str | None = None, db: Session = D
                                 user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     count = inv_service.recompute_balances(db, company_id=ctx.company_id, warehouse_id=warehouse_id)
     db.commit()
-    return {"rebuilt": count, "company_id": user.tenant_id}
+    return {"rebuilt": count, "company_id": ctx.company_id}
 
 
 @router.get("/movements")
@@ -251,8 +251,8 @@ def list_movements(product_id: str | None = None, warehouse_id: str | None = Non
 
 
 @router.get("/movements/{movement_id}")
-def get_movement(movement_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    m = _get_owned(db, InventoryMovement, movement_id, user.tenant_id, "MOVEMENT_NOT_FOUND", "Movimiento no encontrado")
+def get_movement(movement_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    m = _get_owned(db, InventoryMovement, movement_id, ctx.company_id, "MOVEMENT_NOT_FOUND", "Movimiento no encontrado")
     return inv_service.movement_dict(m)
 
 
@@ -272,8 +272,8 @@ def create_movement(body: MovementCreate, db: Session = Depends(get_db),
 
 @router.post("/movements/reverse", dependencies=[Depends(require_write_allowed)])
 def reverse_movement_endpoint(body: ReverseBody, db: Session = Depends(get_db),
-                              actor: User = Depends(require_permission("inventario", "create"))):
-    movement = _get_owned(db, InventoryMovement, body.movement_id, actor.tenant_id, "MOVEMENT_NOT_FOUND", "Movimiento no encontrado")
+                              actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    movement = _get_owned(db, InventoryMovement, body.movement_id, ctx.company_id, "MOVEMENT_NOT_FOUND", "Movimiento no encontrado")
     reverse = inv_service.reverse_movement(db, movement=movement, actor=str(actor.id))
     db.commit()
     db.refresh(reverse)
@@ -312,8 +312,8 @@ def create_lot(body: LotCreate, db: Session = Depends(get_db),
 
 @router.post("/lots/{lot_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_lot(lot_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("inventario", "transition"))):
-    lot = _get_owned(db, InventoryLot, lot_id, actor.tenant_id, "LOT_NOT_FOUND", "Lote no encontrado")
+                   actor: User = Depends(require_permission("inventario", "transition")), ctx: CompanyContext = Depends(get_company_context)):
+    lot = _get_owned(db, InventoryLot, lot_id, ctx.company_id, "LOT_NOT_FOUND", "Lote no encontrado")
     inv_service.transition_lot(db, lot=lot, target=body.target, actor=str(actor.id))
     db.commit()
     db.refresh(lot)
@@ -375,8 +375,8 @@ def list_reservations(status: str | None = None, product_id: str | None = None,
 
 @router.post("/reservations/{reservation_id}/release", dependencies=[Depends(require_write_allowed)])
 def release_reservation(reservation_id: str, db: Session = Depends(get_db),
-                        actor: User = Depends(require_permission("inventario", "reserve"))):
-    reservation = _get_owned(db, Reservation, reservation_id, actor.tenant_id, "RESERVATION_NOT_FOUND", "Reserva no encontrada")
+                        actor: User = Depends(require_permission("inventario", "reserve")), ctx: CompanyContext = Depends(get_company_context)):
+    reservation = _get_owned(db, Reservation, reservation_id, ctx.company_id, "RESERVATION_NOT_FOUND", "Reserva no encontrada")
     inv_service.release_reservation(db, reservation=reservation, actor=str(actor.id))
     db.commit()
     db.refresh(reservation)
@@ -396,8 +396,8 @@ def expire_reservations(db: Session = Depends(get_db), actor: User = Depends(req
 @router.post("/transfers", dependencies=[Depends(require_write_allowed)])
 def create_transfer(body: TransferCreate, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
-    inv_service._require_warehouse(db, actor.tenant_id, body.origin_warehouse_id)
-    inv_service._require_warehouse(db, actor.tenant_id, body.destination_warehouse_id)
+    inv_service._require_warehouse(db, ctx.company_id, body.origin_warehouse_id)
+    inv_service._require_warehouse(db, ctx.company_id, body.destination_warehouse_id)
     transfer = Transfer(company_id=ctx.company_id, code=body.code, origin_warehouse_id=body.origin_warehouse_id,
                         destination_warehouse_id=body.destination_warehouse_id, request_ref=body.request_ref,
                         status="DRAFT", created_by=str(actor.id))
@@ -424,8 +424,8 @@ def list_transfers(status: str | None = None, page: int = Query(1, ge=1), page_s
 
 @router.post("/transfers/{transfer_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_transfer(transfer_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                        actor: User = Depends(require_permission("inventario", "transition"))):
-    transfer = _get_owned(db, Transfer, transfer_id, actor.tenant_id, "TRANSFER_NOT_FOUND", "Transferencia no encontrada")
+                        actor: User = Depends(require_permission("inventario", "transition")), ctx: CompanyContext = Depends(get_company_context)):
+    transfer = _get_owned(db, Transfer, transfer_id, ctx.company_id, "TRANSFER_NOT_FOUND", "Transferencia no encontrada")
     if body.target == "IN_TRANSIT":
         inv_service.confirm_transfer_ship(db, transfer=transfer, actor=str(actor.id))
     elif body.target in ("RECEIVED", "PARTIALLY_RECEIVED"):
@@ -443,7 +443,7 @@ def transition_transfer(transfer_id: str, body: TransitionBody, db: Session = De
 @router.post("/counts", dependencies=[Depends(require_write_allowed)])
 def create_count(body: CountCreate, db: Session = Depends(get_db),
                  actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
-    inv_service._require_warehouse(db, actor.tenant_id, body.warehouse_id)
+    inv_service._require_warehouse(db, ctx.company_id, body.warehouse_id)
     count = StockCount(company_id=ctx.company_id, code=body.code, warehouse_id=body.warehouse_id,
                        plan_ref=body.plan_ref, scope=body.scope, freeze_policy=body.freeze_policy,
                        status="DRAFT", created_by=str(actor.id))
@@ -464,8 +464,8 @@ def list_counts(status: str | None = None, db: Session = Depends(get_db), user: 
 
 @router.post("/counts/{count_id}/lines", dependencies=[Depends(require_write_allowed)])
 def add_count_line(count_id: str, body: CountLineCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("inventario", "create"))):
-    count = _get_owned(db, StockCount, count_id, actor.tenant_id, "COUNT_NOT_FOUND", "Conteo no encontrado")
+                   actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    count = _get_owned(db, StockCount, count_id, ctx.company_id, "COUNT_NOT_FOUND", "Conteo no encontrado")
     line = inv_service.record_count_line(db, count_id=str(count.id), product_id=body.product_id,
                                          expected_qty=body.expected_qty, counted_qty=body.counted_qty,
                                          location_id=body.location_id, lot_id=body.lot_id)
@@ -476,8 +476,8 @@ def add_count_line(count_id: str, body: CountLineCreate, db: Session = Depends(g
 
 @router.post("/counts/{count_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_count(count_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("inventario", "transition"))):
-    count = _get_owned(db, StockCount, count_id, actor.tenant_id, "COUNT_NOT_FOUND", "Conteo no encontrado")
+                     actor: User = Depends(require_permission("inventario", "transition")), ctx: CompanyContext = Depends(get_company_context)):
+    count = _get_owned(db, StockCount, count_id, ctx.company_id, "COUNT_NOT_FOUND", "Conteo no encontrado")
     if body.target == "APPROVED":
         inv_service.approve_count(db, count=count, actor=str(actor.id))
     else:
@@ -513,8 +513,8 @@ def list_adjustments(status: str | None = None, db: Session = Depends(get_db), u
 
 @router.post("/adjustments/{adjustment_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_adjustment(adjustment_id: str, body: TransitionBody, db: Session = Depends(get_db),
-                          actor: User = Depends(require_permission("inventario", "approve"))):
-    adjustment = _get_owned(db, InventoryAdjustment, adjustment_id, actor.tenant_id, "ADJUSTMENT_NOT_FOUND", "Ajuste no encontrado")
+                          actor: User = Depends(require_permission("inventario", "approve")), ctx: CompanyContext = Depends(get_company_context)):
+    adjustment = _get_owned(db, InventoryAdjustment, adjustment_id, ctx.company_id, "ADJUSTMENT_NOT_FOUND", "Ajuste no encontrado")
     if body.target == "APPLIED":
         inv_service.apply_adjustment(db, adjustment=adjustment, actor=str(actor.id))
     else:
@@ -556,8 +556,8 @@ def list_costing_profiles(db: Session = Depends(get_db), user: User = Depends(ge
 
 @router.post("/costing-profiles", dependencies=[Depends(require_write_allowed)])
 def create_costing_profile(body: CostingProfileCreate, db: Session = Depends(get_db),
-                           actor: User = Depends(require_permission("inventario", "create"))):
-    profile = CostingProfile(company_id=None if body.global_scope else actor.tenant_id, code=body.code, method=body.method,
+                           actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    profile = CostingProfile(company_id=None if body.global_scope else ctx.company_id, code=body.code, method=body.method,
                              currency=body.currency, product_id=body.product_id, effective_from=body.effective_from,
                              effective_to=body.effective_to, status="ACTIVE", created_by=str(actor.id))
     db.add(profile)
@@ -595,7 +595,7 @@ def operation_receive(body: OperationReceive, db: Session = Depends(get_db),
     for serial in body.serials:
         inv_service.create_serial(db, company_id=ctx.company_id, product_id=body.product_id, serial=serial,
                                   lot_id=lot_id, warehouse_id=body.warehouse_id, actor=str(actor.id))
-    mtype = inv_service._get_movement_type_by_code(db, actor.tenant_id, "ENTRADA_RECEPCION")
+    mtype = inv_service._get_movement_type_by_code(db, ctx.company_id, "ENTRADA_RECEPCION")
     movement = inv_service.record_movement(db, company_id=ctx.company_id, warehouse_id=body.warehouse_id,
                                            product_id=body.product_id, movement_type_id=str(mtype.id), quantity=body.quantity,
                                            unit_cost=body.unit_cost, currency=body.currency, fiscal_rate=body.fiscal_rate,
@@ -618,7 +618,7 @@ class OperationShip(BaseModel):
 def operation_ship(body: OperationShip, db: Session = Depends(get_db),
                    actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
     """Salida (origen: Shipment 005): valida FEFO/bloqueos y calcula costo de salida."""
-    mtype = inv_service._get_movement_type_by_code(db, actor.tenant_id, "SALIDA_DESPACHO")
+    mtype = inv_service._get_movement_type_by_code(db, ctx.company_id, "SALIDA_DESPACHO")
     movement = inv_service.record_movement(db, company_id=ctx.company_id, warehouse_id=body.warehouse_id,
                                            product_id=body.product_id, movement_type_id=str(mtype.id), quantity=-body.quantity,
                                            document_ref=body.document_ref, actor=str(actor.id), idempotency_key=body.idempotency_key)
