@@ -67,11 +67,23 @@ def _conteos(cx, tablas):
     return {t: cx.execute(text(f"SELECT count(*) FROM {t}")).scalar_one() for t in tablas}
 
 
-def ejecutar(url: str) -> dict:
-    """Ejecuta el preflight y devuelve el informe. Cero escrituras."""
+def ejecutar(url: str, *, forzar_solo_lectura: bool = True) -> dict:
+    """Ejecuta el preflight y devuelve el informe. **Cero escrituras.**
+
+    La garantía es de dos capas y a propósito:
+
+    1. Este ejecutor solo emite `SELECT`.
+    2. La transacción se declara `READ ONLY` en PostgreSQL, de modo que un
+       `UPDATE` accidental sería rechazado por el motor.
+
+    Confiar solo en la primera sería confiar en la disciplina del código. Sobre
+    una copia de datos reales eso no basta.
+    """
     ps = planes()
     e = create_engine(url, future=True)
     with e.connect() as cx:
+        if forzar_solo_lectura:
+            cx.execute(text("SET TRANSACTION READ ONLY"))
         tablas = [p.tabla for p in ps]
         antes = _conteos(cx, tablas)
         alembic_antes = cx.execute(text("SELECT version_num FROM alembic_version")).scalar_one()

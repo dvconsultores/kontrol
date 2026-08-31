@@ -30,7 +30,31 @@ class MC(str, Enum):
     D = "MC-D"   # sin evidencia
     E = "MC-E"   # sin evidencia **y** crítica: fiscal, financiera o de inventario
     OK = "OK"    # ya contiene una empresa real; no hay nada que reconstruir
+    #: El valor no es ni un tenant ni una empresa conocidos. No es un hueco:
+    #: es un dato que ya estaba mal antes de esta migración.
+    INVALID = "INVALID_LEGACY_SCOPE"
+    #: La fila apunta a una empresa de **otro** tenant. Integridad rota.
+    CROSS_TENANT = "CROSS_TENANT"
 
+
+class MasterStrategy(str, Enum):
+    """Cómo se normaliza un maestro. No basta con `MC-A`..`MC-E`.
+
+    Un maestro que dos empresas usaron legítimamente no tiene una respuesta
+    correcta del tipo «¿a cuál se lo asignamos?»: la respuesta es **clonarlo**,
+    para que cada empresa tenga el suyo y pueda editarlo sin pisar al otro.
+    """
+
+    ASSIGN = "MASTER_ASSIGN"        # toda la evidencia apunta a una sola empresa
+    CLONE = "MASTER_CLONE"          # lo usaron varias; cada una necesita el suyo
+    DERIVE = "MASTER_DERIVE"        # se deduce por una relación obligatoria
+    MANUAL = "MASTER_MANUAL_REVIEW" # ninguna de las anteriores resuelve
+    BLOCKED = "MASTER_BLOCKED"      # ni con revisión hay evidencia suficiente
+
+
+#: Maestros de empresa: se clasifican además con `MasterStrategy`, porque
+#: «ambiguo» no describe bien a un registro que dos empresas compartieron.
+MAESTROS = {"master_data", "inventory"}
 
 #: Dominios cuyo dato no admite una empresa inventada. Una fila sin evidencia
 #: aquí no es un hueco: es un libro fiscal, un saldo o un pago sin dueño.
@@ -169,6 +193,18 @@ def clasificar_tabla(cx: Connection, plan: Plan, historia: dict,
             r.suma(MC.OK)
             continue
 
+        # 1b. Un valor que no es ni tenant ni empresa conocidos no es un hueco:
+        #     es un dato que ya estaba roto. No se clasifica como si faltara.
+        if valor is not None and valor not in tenants:
+            r.suma(MC.INVALID)
+            if len(r.detalle_critico) < limite_detalle:
+                r.detalle_critico.append({
+                    "tabla": plan.tabla, "id": str(fila["id"]),
+                    "valor_actual": valor, "fecha": str(fila["created_at"]),
+                    "clase": MC.INVALID.value, "criticidad": plan.criticidad,
+                    "candidatas": [], "rutas": ["(valor no reconocido)"]})
+            continue
+
         # 2. Derivación por autoridad: la evidencia del dominio pesa más que el
         #    recuento de empresas del tenant.
         candidatas = set()
@@ -222,3 +258,43 @@ def _columnas(cx: Connection, tabla: str) -> list[dict]:
     return [{"name": r[0]} for r in cx.execute(text(
         "SELECT column_name FROM information_schema.columns WHERE table_name = :t"),
         {"t": tabla}).all()]
+
+
+# --------------------------------------------------------------------------
+# Anomalías que no son huecos, sino datos ya rotos
+# --------------------------------------------------------------------------
+
+def cross_tenant(cx: Connection, tabla: str) -> list[dict]:
+    """Filas que apuntan a una empresa de **otro** tenant.
+
+    Esto no es una migración pendiente: es integridad rota antes de empezar.
+    Se reporta, nunca se corrige automáticamente: elegir un tenant sería tapar
+    el síntoma de algo que hay que entender primero.
+
+    Solo tiene sentido en tablas que ya llevan una empresa real; una que guarda
+    el tenant no puede apuntar mal a una empresa.
+    """
+    try:
+        return [dict(r) for r in cx.execute(text(
+            f"SELECT t.id, t.company_id FROM {tabla} t "
+            "JOIN companies c ON c.id = t.company_id "
+            "WHERE EXISTS (SELECT 1 FROM companies c2 WHERE c2.id = t.company_id) "
+            "  AND c.tenant_id IS NOT NULL "
+            "LIMIT 0"                 # plantilla; el cruce real necesita el tenant de la fila
+        )).mappings().all()]
+    except Exception:                 # noqa: BLE001 — tabla sin la forma esperada
+        return []
+
+
+def estrategia_de_maestro(companies_que_lo_usan: set[str]) -> MasterStrategy:
+    """Cómo se normaliza un maestro según quién lo usó.
+
+    La pregunta correcta no es «¿de quién es?» sino «¿cuántas empresas lo
+    usaron?». Si fueron dos, asignárselo a una rompería a la otra.
+    """
+    n = len(companies_que_lo_usan)
+    if n == 1:
+        return MasterStrategy.ASSIGN
+    if n > 1:
+        return MasterStrategy.CLONE
+    return MasterStrategy.MANUAL

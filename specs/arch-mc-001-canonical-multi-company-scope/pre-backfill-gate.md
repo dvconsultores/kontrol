@@ -10,7 +10,8 @@ Fecha: 2026-08-31 · Este documento decide si puede escribirse una sola fila.
 | N1 · `CompanyContext` | **COMPLETE** |
 | N2 · Cortar la hemorragia | **COMPLETE** |
 | **N3 · Expansión de esquema** | **COMPLETE** |
-| **N4 · Preflight** | **COMPLETE** |
+| **N4 · Preflight (marco)** | **COMPLETE** |
+| **N4 · Preflight sobre datos reales** | **BLOCKED** — no existe copia real; ver `pre-backfill-authorization-report.md` |
 | N4 · Backfill | **NOT_STARTED** |
 | N5 · Dominios | PENDING |
 | N6 · Frontend | PENDING |

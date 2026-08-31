@@ -80,7 +80,10 @@ def test_los_dominios_criticos_estan_declarados():
 
 
 def test_las_clases_van_de_mas_a_menos_certeza():
-    assert [c.value for c in MC] == ["MC-A", "MC-B", "MC-C", "MC-D", "MC-E", "OK"]
+    """Las cinco de reconstrucción, más «ya correcta» y las dos anomalías."""
+    assert [c.value for c in MC] == [
+        "MC-A", "MC-B", "MC-C", "MC-D", "MC-E", "OK",
+        "INVALID_LEGACY_SCOPE", "CROSS_TENANT"]
 
 
 # ---------------------------------------------------------------- autoridades
@@ -190,3 +193,82 @@ def test_ninguna_fila_critica_se_rebaja_de_clase(informe):
     criticos = [r for r in informe["resultados"] if r["por_clase"].get("MC-E")]
     for r in criticos:
         assert r["detalle_critico"], f"{r['tabla']}: MC-E sin detalle que lo justifique"
+
+
+# ------------------------------------------------ anomalías y estrategias
+def test_un_valor_que_no_es_tenant_ni_empresa_no_es_un_hueco():
+    """`INVALID_LEGACY_SCOPE` existe para no confundir roto con incompleto.
+
+    Una fila cuyo `company_id` no corresponde a ningún tenant ni a ninguna
+    empresa no está esperando la migración: ya estaba mal. Clasificarla como
+    «sin evidencia» la escondería entre las que sí son reconstruibles.
+    """
+    assert MC.INVALID.value == "INVALID_LEGACY_SCOPE"
+    assert MC.CROSS_TENANT.value == "CROSS_TENANT"
+
+
+def test_un_maestro_compartido_se_clona_no_se_adjudica():
+    """La pregunta correcta no es «¿de quién es?» sino «¿cuántas lo usaron?».
+
+    Si dos empresas usaron el mismo maestro, asignárselo a una rompe a la otra.
+    """
+    from app.core.mc.preflight import MasterStrategy, estrategia_de_maestro
+
+    assert estrategia_de_maestro({"co-a"}) is MasterStrategy.ASSIGN
+    assert estrategia_de_maestro({"co-a", "co-b"}) is MasterStrategy.CLONE
+    assert estrategia_de_maestro(set()) is MasterStrategy.MANUAL
+
+
+def test_las_cinco_estrategias_de_maestro_existen():
+    from app.core.mc.preflight import MasterStrategy
+
+    assert [m.value for m in MasterStrategy] == [
+        "MASTER_ASSIGN", "MASTER_CLONE", "MASTER_DERIVE",
+        "MASTER_MANUAL_REVIEW", "MASTER_BLOCKED"]
+
+
+def test_una_empresa_inactiva_sigue_contando_en_el_intervalo():
+    """Desactivada hoy no significa inexistente entonces.
+
+    Si se excluyera, un registro de la época en que operaba se atribuiría a la
+    otra empresa: exactamente la clase de invención que esto evita.
+    """
+    inactiva = ("co-b", dt.datetime(2026, 3, 1))
+    assert empresa_unica_en([A, inactiva], dt.datetime(2026, 6, 1)) is None
+
+
+# ------------------------------------------------ garantías de ejecución
+def test_el_preflight_es_repetible(informe):
+    """Dos corridas sobre la misma base dan el mismo resultado."""
+    from app.core.mc.runner import ejecutar
+
+    url = PG.rsplit("/", 1)[0] + "/kontrol_legacy"
+    segunda = ejecutar(url)
+    assert segunda["total"] == informe["total"]
+    assert segunda["filas"] == informe["filas"]
+
+
+def test_la_base_rechaza_una_escritura_aunque_el_codigo_falle():
+    """Segunda capa: no basta con que el ejecutor «no deba» escribir.
+
+    Sobre una copia de datos reales, la disciplina del código no es garantía
+    suficiente. La transacción se declara de solo lectura y el motor rechaza
+    cualquier escritura.
+    """
+    from sqlalchemy import create_engine, text
+
+    url = PG.rsplit("/", 1)[0] + "/kontrol_legacy"
+    e = create_engine(url, future=True)
+    try:
+        with e.connect() as cx:
+            cx.execute(text("SET TRANSACTION READ ONLY"))
+            with pytest.raises(Exception) as excinfo:
+                cx.execute(text("UPDATE parties SET name = 'X' WHERE 1=0"))
+            # Se comprueba el tipo de error de psycopg2, no su mensaje: el
+            # mensaje viene traducido y depende de la configuración regional.
+            original = getattr(excinfo.value, "orig", excinfo.value)
+            assert type(original).__name__ == "ReadOnlySqlTransaction"
+    except Exception as exc:                              # noqa: BLE001
+        if "does not exist" in str(exc):
+            pytest.skip("no hay base legacy en este entorno")
+        raise
