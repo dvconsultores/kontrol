@@ -15,13 +15,13 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.identity_access.models import User
 from app.modules.organization import structure as st
 from app.modules.organization.models import (
-    Company,
     LocationType,
     Warehouse,
     WarehouseLocation,
@@ -36,31 +36,38 @@ router = APIRouter(prefix="/organization", tags=["organization-structure"])
 # Alcance
 # --------------------------------------------------------------------------
 
-def _company_ids(db: Session, user: User) -> list[str]:
-    return list(db.execute(
-        select(Company.id).where(Company.tenant_id == user.tenant_id)
-    ).scalars().all())
+def _alcance(ctx: CompanyContext) -> list[str]:
+    """La empresa en la que se está operando, y solo esa.
+
+    Antes esto devolvía todas las empresas del tenant. Con una sola empresa por
+    tenant daba igual; con dos, un almacén de la empresa B aparecía en el
+    listado de la empresa A y se dejaba leer y modificar desde ella. El
+    comentario de `_get_warehouse` ya describía la intención correcta —«un
+    almacén de otra empresa se responde como inexistente»— y la implementación
+    se había quedado en el mundo anterior.
+    """
+    return [ctx.company_id]
 
 
-def _get_warehouse(db: Session, user: User, warehouse_id: str) -> Warehouse:
+def _get_warehouse(db: Session, ctx: CompanyContext, warehouse_id: str) -> Warehouse:
     warehouse = db.get(Warehouse, warehouse_id)
-    if warehouse is None or warehouse.company_id not in _company_ids(db, user):
+    if warehouse is None or warehouse.company_id not in _alcance(ctx):
         # Un almacén de otra empresa se responde como inexistente: revelar que
         # existe ya sería una filtración (enumeración).
         raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
     return warehouse
 
 
-def _get_node(db: Session, user: User, level: str, node_id: str) -> Any:
+def _get_node(db: Session, ctx: CompanyContext, level: str, node_id: str) -> Any:
     node = db.get(st.LEVEL_MODEL[level], node_id)
-    if node is None or node.company_id not in _company_ids(db, user):
+    if node is None or node.company_id not in _alcance(ctx):
         raise NotFoundError(code=f"{level.upper()}_NOT_FOUND", message="Nodo no encontrado")
     return node
 
 
-def _get_location(db: Session, user: User, location_id: str) -> WarehouseLocation:
+def _get_location(db: Session, ctx: CompanyContext, location_id: str) -> WarehouseLocation:
     location = db.get(WarehouseLocation, location_id)
-    if location is None or location.company_id not in _company_ids(db, user):
+    if location is None or location.company_id not in _alcance(ctx):
         raise NotFoundError(code="LOCATION_NOT_FOUND", message="Ubicación no encontrada")
     return location
 
@@ -107,8 +114,8 @@ class LocationTypeIn(BaseModel):
     is_storable: bool = True
 
 
-def _catalog_list(db: Session, user: User, model: Any, company_id: str | None) -> list[dict[str, Any]]:
-    query = select(model).where(model.company_id.in_(_company_ids(db, user)))
+def _catalog_list(db: Session, ctx: CompanyContext, model: Any, company_id: str | None) -> list[dict[str, Any]]:
+    query = select(model).where(model.company_id.in_(_alcance(ctx)))
     if company_id:
         query = query.where(model.company_id == company_id)
     rows = db.execute(query.order_by(model.code)).scalars().all()
@@ -119,10 +126,10 @@ def _catalog_list(db: Session, user: User, model: Any, company_id: str | None) -
             for r in rows]
 
 
-def _catalog_create(db: Session, actor: User, model: Any, values: dict[str, Any],
-                    entity: str) -> dict[str, Any]:
-    if values["company_id"] not in _company_ids(db, actor):
-        raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
+def _catalog_create(db: Session, actor: User, ctx: CompanyContext, model: Any,
+                    values: dict[str, Any], entity: str) -> dict[str, Any]:
+    # La empresa la decide el contexto validado, no el cuerpo de la petición.
+    values = {**values, "company_id": ctx.company_id}
     row = model(**values, status="ACTIVE", created_by=str(actor.id))
     db.add(row)
     try:
@@ -137,10 +144,10 @@ def _catalog_create(db: Session, actor: User, model: Any, values: dict[str, Any]
     return {"id": str(row.id), "code": row.code, "name": row.name}
 
 
-def _catalog_update(db: Session, actor: User, model: Any, item_id: str,
-                    body: dict[str, Any], entity: str) -> dict[str, Any]:
+def _catalog_update(db: Session, actor: User, ctx: CompanyContext, model: Any,
+                    item_id: str, body: dict[str, Any], entity: str) -> dict[str, Any]:
     row = db.get(model, item_id)
-    if row is None or row.company_id not in _company_ids(db, actor):
+    if row is None or row.company_id not in _alcance(ctx):
         raise NotFoundError(code="NOT_FOUND", message="Tipo no encontrado")
     before = {"name": row.name, "status": row.status}
     for field in ("name", "description", "is_storable", "status"):
@@ -154,38 +161,44 @@ def _catalog_update(db: Session, actor: User, model: Any, item_id: str,
 
 @router.get("/zone-types")
 def list_zone_types(company_id: str | None = None, db: Session = Depends(get_db),
-                    user: User = Depends(require_permission("organization", "view"))):
-    return _catalog_list(db, user, ZoneType, company_id)
+                    user: User = Depends(require_permission("organization", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    return _catalog_list(db, ctx, ZoneType, company_id)
 
 
 @router.post("/zone-types", dependencies=[Depends(require_write_allowed)])
 def create_zone_type(body: ZoneTypeIn, db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("organization", "create"))):
-    return _catalog_create(db, actor, ZoneType, body.model_dump(), "zone_type")
+                     actor: User = Depends(require_permission("organization", "create")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    return _catalog_create(db, actor, ctx, ZoneType, body.model_dump(), "zone_type")
 
 
 @router.patch("/zone-types/{item_id}", dependencies=[Depends(require_write_allowed)])
 def update_zone_type(item_id: str, body: dict[str, Any], db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("organization", "edit"))):
-    return _catalog_update(db, actor, ZoneType, item_id, body, "zone_type")
+                     actor: User = Depends(require_permission("organization", "edit")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    return _catalog_update(db, actor, ctx, ZoneType, item_id, body, "zone_type")
 
 
 @router.get("/location-types")
 def list_location_types(company_id: str | None = None, db: Session = Depends(get_db),
-                        user: User = Depends(require_permission("organization", "view"))):
-    return _catalog_list(db, user, LocationType, company_id)
+                        user: User = Depends(require_permission("organization", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    return _catalog_list(db, ctx, LocationType, company_id)
 
 
 @router.post("/location-types", dependencies=[Depends(require_write_allowed)])
 def create_location_type(body: LocationTypeIn, db: Session = Depends(get_db),
-                         actor: User = Depends(require_permission("organization", "create"))):
-    return _catalog_create(db, actor, LocationType, body.model_dump(), "location_type")
+                         actor: User = Depends(require_permission("organization", "create")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    return _catalog_create(db, actor, ctx, LocationType, body.model_dump(), "location_type")
 
 
 @router.patch("/location-types/{item_id}", dependencies=[Depends(require_write_allowed)])
 def update_location_type(item_id: str, body: dict[str, Any], db: Session = Depends(get_db),
-                         actor: User = Depends(require_permission("organization", "edit"))):
-    return _catalog_update(db, actor, LocationType, item_id, body, "location_type")
+                         actor: User = Depends(require_permission("organization", "edit")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    return _catalog_update(db, actor, ctx, LocationType, item_id, body, "location_type")
 
 
 # --------------------------------------------------------------------------
@@ -245,8 +258,9 @@ def search_warehouses(q: str | None = None, branch_id: str | None = None,
                       status: str | None = None, company_id: str | None = None,
                       limit: int = 50, offset: int = 0,
                       db: Session = Depends(get_db),
-                      user: User = Depends(require_permission("organization", "view"))):
-    query = select(Warehouse).where(Warehouse.company_id.in_(_company_ids(db, user)))
+                      user: User = Depends(require_permission("organization", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    query = select(Warehouse).where(Warehouse.company_id.in_(_alcance(ctx)))
     if company_id:
         query = query.where(Warehouse.company_id == company_id)
     if branch_id:
@@ -265,14 +279,16 @@ def search_warehouses(q: str | None = None, branch_id: str | None = None,
 
 @router.post("/warehouses", dependencies=[Depends(require_write_allowed)])
 def create_warehouse_full(body: WarehouseIn, db: Session = Depends(get_db),
-                          actor: User = Depends(require_permission("organization", "create"))):
-    if body.company_id not in _company_ids(db, actor):
+                          actor: User = Depends(require_permission("organization", "create")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    if body.company_id and body.company_id != ctx.company_id:
+        # El cuerpo no puede designar otra empresa que la del contexto validado.
         raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
     if not body.code:
         raise KontrolError(code="WAREHOUSE_CODE_REQUIRED",
                            message="El código del almacén es obligatorio", status_code=422)
     warehouse = Warehouse(
-        company_id=body.company_id, branch_id=body.branch_id, code=body.code, name=body.name,
+        company_id=ctx.company_id, branch_id=body.branch_id, code=body.code, name=body.name,
         warehouse_type=body.warehouse_type, address=body.address, manager_id=body.manager_id,
         description=body.description, location_managed=body.location_managed,
         structure_levels=st.normalize_structure_levels(body.structure_levels),
@@ -295,8 +311,9 @@ def create_warehouse_full(body: WarehouseIn, db: Session = Depends(get_db),
 
 @router.get("/warehouses/{warehouse_id}")
 def get_warehouse(warehouse_id: str, db: Session = Depends(get_db),
-                  user: User = Depends(require_permission("organization", "view"))):
-    warehouse = _get_warehouse(db, user, warehouse_id)
+                  user: User = Depends(require_permission("organization", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    warehouse = _get_warehouse(db, ctx, warehouse_id)
     return _warehouse_dict(db, warehouse, st.user_permission_set(db, user))
 
 
@@ -304,8 +321,9 @@ def get_warehouse(warehouse_id: str, db: Session = Depends(get_db),
 def patch_warehouse(warehouse_id: str, body: WarehousePatch,
                     if_match: str | None = Header(default=None, alias="If-Match"),
                     db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("organization", "edit"))):
-    warehouse = _get_warehouse(db, actor, warehouse_id)
+                    actor: User = Depends(require_permission("organization", "edit")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    warehouse = _get_warehouse(db, ctx, warehouse_id)
     _check_version(warehouse, if_match)
     before = {"name": warehouse.name, "location_managed": warehouse.location_managed}
     for field, value in body.model_dump(exclude_unset=True).items():
@@ -322,14 +340,15 @@ def patch_warehouse(warehouse_id: str, body: WarehousePatch,
               dependencies=[Depends(require_write_allowed)])
 def patch_structure_levels(warehouse_id: str, body: StructureLevelsPatch,
                            db: Session = Depends(get_db),
-                           actor: User = Depends(require_permission("organization", "manage_structure"))):
+                           actor: User = Depends(require_permission("organization", "manage_structure")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """Único camino para cambiar `structure_levels`.
 
     En régimen operativo rechaza eliminar, reordenar o colapsar un tramo
     utilizado. El bloqueo se produce **aquí**: invocar este endpoint saltándose
     el frontend obtiene el mismo rechazo (Control 2).
     """
-    warehouse = _get_warehouse(db, actor, warehouse_id)
+    warehouse = _get_warehouse(db, ctx, warehouse_id)
     before = st.normalize_structure_levels(warehouse.structure_levels)
     try:
         warehouse.structure_levels = st.validate_structure_levels_change(
@@ -349,8 +368,9 @@ def patch_structure_levels(warehouse_id: str, body: StructureLevelsPatch,
 
 @router.post("/warehouses/{warehouse_id}/activate", dependencies=[Depends(require_write_allowed)])
 def activate_warehouse(warehouse_id: str, db: Session = Depends(get_db),
-                       actor: User = Depends(require_permission("organization", "activate"))):
-    warehouse = _get_warehouse(db, actor, warehouse_id)
+                       actor: User = Depends(require_permission("organization", "activate")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    warehouse = _get_warehouse(db, ctx, warehouse_id)
     warehouse.status = "ACTIVE"
     _bump(warehouse)
     _audit(db, actor, "ACTIVATE", "warehouse", str(warehouse.id), after={"status": "ACTIVE"})
@@ -360,8 +380,9 @@ def activate_warehouse(warehouse_id: str, db: Session = Depends(get_db),
 
 @router.post("/warehouses/{warehouse_id}/deactivate", dependencies=[Depends(require_write_allowed)])
 def deactivate_warehouse(warehouse_id: str, db: Session = Depends(get_db),
-                         actor: User = Depends(require_permission("organization", "deactivate"))):
-    warehouse = _get_warehouse(db, actor, warehouse_id)
+                         actor: User = Depends(require_permission("organization", "deactivate")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    warehouse = _get_warehouse(db, ctx, warehouse_id)
     warehouse.status = "INACTIVE"
     _bump(warehouse)
     _audit(db, actor, "DEACTIVATE", "warehouse", str(warehouse.id), after={"status": "INACTIVE"})
@@ -371,10 +392,11 @@ def deactivate_warehouse(warehouse_id: str, db: Session = Depends(get_db),
 
 @router.delete("/warehouses/{warehouse_id}", dependencies=[Depends(require_write_allowed)])
 def delete_warehouse(warehouse_id: str, db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("organization", "delete"))):
+                     actor: User = Depends(require_permission("organization", "delete")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """Borrar un almacén **nunca** destruye ubicaciones (R-008-8): si tiene
     estructura, ubicaciones o movimientos, se rechaza y no se toca nada."""
-    warehouse = _get_warehouse(db, actor, warehouse_id)
+    warehouse = _get_warehouse(db, ctx, warehouse_id)
     deletable, blocking = st.can_delete_warehouse(db, warehouse)
     if not deletable:
         _audit(db, actor, "DELETE_BLOCKED", "warehouse", str(warehouse.id), after=blocking)
@@ -439,8 +461,9 @@ def _node_routes(level: str) -> None:
     @router.get(f"/warehouses/{{warehouse_id}}/{plural}", name=f"list_{plural}")
     def _list(warehouse_id: str, status: str | None = None, parent_id: str | None = None,
               db: Session = Depends(get_db),
-              user: User = Depends(require_permission("organization", "view"))):
-        warehouse = _get_warehouse(db, user, warehouse_id)
+              user: User = Depends(require_permission("organization", "view")),
+        ctx: CompanyContext = Depends(get_company_context)):
+        warehouse = _get_warehouse(db, ctx, warehouse_id)
         query = select(model).where(model.warehouse_id == warehouse.id)
         if status:
             query = query.where(model.status == status)
@@ -454,8 +477,9 @@ def _node_routes(level: str) -> None:
     @router.post(f"/warehouses/{{warehouse_id}}/{plural}",
                  dependencies=[Depends(require_write_allowed)], name=f"create_{level}")
     def _create(warehouse_id: str, body: NodeIn, db: Session = Depends(get_db),
-                actor: User = Depends(require_permission("organization", "create"))):
-        warehouse = _get_warehouse(db, actor, warehouse_id)
+                actor: User = Depends(require_permission("organization", "create")),
+        ctx: CompanyContext = Depends(get_company_context)):
+        warehouse = _get_warehouse(db, ctx, warehouse_id)
         if level not in st.declared_levels(warehouse):
             raise KontrolError(code="STRUCTURE_LEVEL_DISABLED",
                                message=f"El almacén no declara el tramo {level.upper()}",
@@ -492,8 +516,9 @@ def _node_routes(level: str) -> None:
 
     @router.get(f"/{plural}/{{node_id}}", name=f"get_{level}")
     def _get(node_id: str, db: Session = Depends(get_db),
-             user: User = Depends(require_permission("organization", "view"))):
-        node = _get_node(db, user, level, node_id)
+             user: User = Depends(require_permission("organization", "view")),
+        ctx: CompanyContext = Depends(get_company_context)):
+        node = _get_node(db, ctx, level, node_id)
         return _node_dict(db, level, node, st.user_permission_set(db, user))
 
     @router.patch(f"/{plural}/{{node_id}}", dependencies=[Depends(require_write_allowed)],
@@ -501,10 +526,11 @@ def _node_routes(level: str) -> None:
     def _patch(node_id: str, body: NodePatch,
                if_match: str | None = Header(default=None, alias="If-Match"),
                db: Session = Depends(get_db),
-               actor: User = Depends(require_permission("organization", "edit"))):
-        node = _get_node(db, actor, level, node_id)
+               actor: User = Depends(require_permission("organization", "edit")),
+        ctx: CompanyContext = Depends(get_company_context)):
+        node = _get_node(db, ctx, level, node_id)
         _check_version(node, if_match)
-        warehouse = _get_warehouse(db, actor, node.warehouse_id)
+        warehouse = _get_warehouse(db, ctx, node.warehouse_id)
         data = body.model_dump(exclude_unset=True)
         before = {"name": node.name, "sequence": node.sequence, "status": node.status}
         # `parent_id` es cambio **estructural**; nombre, descripción y
@@ -529,8 +555,9 @@ def _node_routes(level: str) -> None:
     @router.post(f"/{plural}/{{node_id}}/activate", dependencies=[Depends(require_write_allowed)],
                  name=f"activate_{level}")
     def _activate(node_id: str, db: Session = Depends(get_db),
-                  actor: User = Depends(require_permission("organization", "activate"))):
-        node = _get_node(db, actor, level, node_id)
+                  actor: User = Depends(require_permission("organization", "activate")),
+        ctx: CompanyContext = Depends(get_company_context)):
+        node = _get_node(db, ctx, level, node_id)
         node.status = "ACTIVE"
         _bump(node)
         _audit(db, actor, "ACTIVATE", f"warehouse_{level}", str(node.id), after={"status": "ACTIVE"})
@@ -540,8 +567,9 @@ def _node_routes(level: str) -> None:
     @router.post(f"/{plural}/{{node_id}}/deactivate", dependencies=[Depends(require_write_allowed)],
                  name=f"deactivate_{level}")
     def _deactivate(node_id: str, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("organization", "deactivate"))):
-        node = _get_node(db, actor, level, node_id)
+                    actor: User = Depends(require_permission("organization", "deactivate")),
+        ctx: CompanyContext = Depends(get_company_context)):
+        node = _get_node(db, ctx, level, node_id)
         try:
             st.assert_can_deactivate_node(db, level, node.id)
         except KontrolError:
@@ -558,8 +586,9 @@ def _node_routes(level: str) -> None:
     @router.delete(f"/{plural}/{{node_id}}", dependencies=[Depends(require_write_allowed)],
                    name=f"delete_{level}")
     def _delete(node_id: str, db: Session = Depends(get_db),
-                actor: User = Depends(require_permission("organization", "delete"))):
-        node = _get_node(db, actor, level, node_id)
+                actor: User = Depends(require_permission("organization", "delete")),
+        ctx: CompanyContext = Depends(get_company_context)):
+        node = _get_node(db, ctx, level, node_id)
         deletable, blocking = st.can_delete_node(db, level, node.id)
         if not deletable:
             _audit(db, actor, "DELETE_BLOCKED", f"warehouse_{level}", str(node.id), after=blocking)
@@ -670,9 +699,10 @@ def search_locations(warehouse_id: str | None = None, q: str | None = None,
                      rack_id: str | None = None, level_id: str | None = None,
                      location_type_id: str | None = None, status: str | None = None,
                      limit: int = 50, offset: int = 0, db: Session = Depends(get_db),
-                     user: User = Depends(require_permission("organization", "view"))):
+                     user: User = Depends(require_permission("organization", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
     query = select(WarehouseLocation).where(
-        WarehouseLocation.company_id.in_(_company_ids(db, user)))
+        WarehouseLocation.company_id.in_(_alcance(ctx)))
     for column, value in (("warehouse_id", warehouse_id), ("zone_id", zone_id),
                           ("aisle_id", aisle_id), ("rack_id", rack_id), ("level_id", level_id),
                           ("location_type_id", location_type_id), ("status", status)):
@@ -694,13 +724,14 @@ def search_locations(warehouse_id: str | None = None, q: str | None = None,
 def ordered_locations(warehouse_id: str, status: str | None = None,
                       location_type_id: str | None = None,
                       limit: int = 100, offset: int = 0, db: Session = Depends(get_db),
-                      user: User = Depends(require_permission("organization", "view"))):
+                      user: User = Depends(require_permission("organization", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """Orden físico determinista. Contrato para la Spec 031.
 
     008 entrega **datos ordenables y un orden estable**; el algoritmo de
     picking pertenece a 031 y no se implementa aquí.
     """
-    warehouse = _get_warehouse(db, user, warehouse_id)
+    warehouse = _get_warehouse(db, ctx, warehouse_id)
     query = st.physical_order_query(warehouse.id)
     if status:
         query = query.where(WarehouseLocation.status == status)
@@ -724,8 +755,9 @@ def ordered_locations(warehouse_id: str, status: str | None = None,
 
 @router.post("/locations", dependencies=[Depends(require_write_allowed)])
 def create_location_full(body: LocationIn, db: Session = Depends(get_db),
-                         actor: User = Depends(require_permission("organization", "create"))):
-    warehouse = _get_warehouse(db, actor, body.warehouse_id)
+                         actor: User = Depends(require_permission("organization", "create")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    warehouse = _get_warehouse(db, ctx, body.warehouse_id)
     chain = st.validate_chain(db, warehouse, {
         level: getattr(body, st.LEVEL_FK[level]) for level in st.LEVEL_ORDER})
     code = body.code
@@ -759,13 +791,14 @@ def create_location_full(body: LocationIn, db: Session = Depends(get_db),
 
 @router.post("/locations/bulk", dependencies=[Depends(require_write_allowed)])
 def bulk_locations(body: BulkLocationIn, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("organization", "create"))):
+                   actor: User = Depends(require_permission("organization", "create")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """Creación por patrón **con vista previa obligatoria**.
 
     Con `preview=true` no se escribe nada: se devuelve lo que se crearía y lo
     que ya existe, para que el usuario lo vea antes de decidir (AC-008-23).
     """
-    warehouse = _get_warehouse(db, actor, body.warehouse_id)
+    warehouse = _get_warehouse(db, ctx, body.warehouse_id)
     chain = st.validate_chain(db, warehouse, {
         level: getattr(body, st.LEVEL_FK[level]) for level in st.LEVEL_ORDER})
     existing = {code for (code,) in db.execute(
@@ -806,8 +839,9 @@ def bulk_locations(body: BulkLocationIn, db: Session = Depends(get_db),
 
 @router.get("/locations/{location_id}")
 def get_location(location_id: str, db: Session = Depends(get_db),
-                 user: User = Depends(require_permission("organization", "view"))):
-    location = _get_location(db, user, location_id)
+                 user: User = Depends(require_permission("organization", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    location = _get_location(db, ctx, location_id)
     return _location_dict(db, location, st.user_permission_set(db, user), full=True)
 
 
@@ -815,10 +849,11 @@ def get_location(location_id: str, db: Session = Depends(get_db),
 def patch_location(location_id: str, body: LocationPatch,
                    if_match: str | None = Header(default=None, alias="If-Match"),
                    db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("organization", "edit"))):
-    location = _get_location(db, actor, location_id)
+                   actor: User = Depends(require_permission("organization", "edit")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    location = _get_location(db, ctx, location_id)
     _check_version(location, if_match)
-    warehouse = _get_warehouse(db, actor, location.warehouse_id)
+    warehouse = _get_warehouse(db, ctx, location.warehouse_id)
     data = body.model_dump(exclude_unset=True)
     structural = {field: data.pop(field) for field in
                   ("zone_id", "aisle_id", "rack_id", "level_id") if field in data}
@@ -853,9 +888,9 @@ def patch_location(location_id: str, body: LocationPatch,
     return _location_dict(db, location, st.user_permission_set(db, actor), full=True)
 
 
-def _set_location_status(db: Session, actor: User, location_id: str, status: str,
-                         action: str) -> dict[str, Any]:
-    location = _get_location(db, actor, location_id)
+def _set_location_status(db: Session, actor: User, ctx: CompanyContext, location_id: str,
+                         status: str, action: str) -> dict[str, Any]:
+    location = _get_location(db, ctx, location_id)
     # El estado de la ubicación **no** determina el de la mercancía: bloquear
     # una ubicación no cambia ningún saldo (ADR-D0-010, FR-008-042).
     location.status = status
@@ -867,26 +902,30 @@ def _set_location_status(db: Session, actor: User, location_id: str, status: str
 
 @router.post("/locations/{location_id}/activate", dependencies=[Depends(require_write_allowed)])
 def activate_location(location_id: str, db: Session = Depends(get_db),
-                      actor: User = Depends(require_permission("organization", "activate"))):
-    return _set_location_status(db, actor, location_id, "ACTIVE", "ACTIVATE")
+                      actor: User = Depends(require_permission("organization", "activate")),
+                      ctx: CompanyContext = Depends(get_company_context)):
+    return _set_location_status(db, actor, ctx, location_id, "ACTIVE", "ACTIVATE")
 
 
 @router.post("/locations/{location_id}/deactivate", dependencies=[Depends(require_write_allowed)])
 def deactivate_location(location_id: str, db: Session = Depends(get_db),
-                        actor: User = Depends(require_permission("organization", "deactivate"))):
-    return _set_location_status(db, actor, location_id, "INACTIVE", "DEACTIVATE")
+                        actor: User = Depends(require_permission("organization", "deactivate")),
+                      ctx: CompanyContext = Depends(get_company_context)):
+    return _set_location_status(db, actor, ctx, location_id, "INACTIVE", "DEACTIVATE")
 
 
 @router.post("/locations/{location_id}/block", dependencies=[Depends(require_write_allowed)])
 def block_location(location_id: str, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("organization", "edit"))):
-    return _set_location_status(db, actor, location_id, "BLOCKED", "BLOCK")
+                   actor: User = Depends(require_permission("organization", "edit")),
+                      ctx: CompanyContext = Depends(get_company_context)):
+    return _set_location_status(db, actor, ctx, location_id, "BLOCKED", "BLOCK")
 
 
 @router.delete("/locations/{location_id}", dependencies=[Depends(require_write_allowed)])
 def delete_location(location_id: str, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("organization", "delete"))):
-    location = _get_location(db, actor, location_id)
+                    actor: User = Depends(require_permission("organization", "delete")),
+    ctx: CompanyContext = Depends(get_company_context)):
+    location = _get_location(db, ctx, location_id)
     deletable, history = st.can_delete_location(db, location)
     if not deletable:
         _audit(db, actor, "DELETE_BLOCKED", "warehouse_location", str(location.id), after=history)
@@ -911,7 +950,8 @@ def delete_location(location_id: str, db: Session = Depends(get_db),
 @router.get("/warehouses/{warehouse_id}/structure")
 def warehouse_structure(warehouse_id: str, depth: str = "level", status: str | None = None,
                         limit: int = 50, offset: int = 0, db: Session = Depends(get_db),
-                        user: User = Depends(require_permission("organization", "view"))):
+                        user: User = Depends(require_permission("organization", "view")),
+    ctx: CompanyContext = Depends(get_company_context)):
     """Árbol con profundidad controlada.
 
     Las ubicaciones **solo** se incluyen con `depth=locations`, y siempre
@@ -922,7 +962,7 @@ def warehouse_structure(warehouse_id: str, depth: str = "level", status: str | N
         raise KontrolError(code="STRUCTURE_DEPTH_INVALID",
                            message="Profundidad no reconocida", status_code=422,
                            details={"allowed": [*st.LEVEL_ORDER, "locations"]})
-    warehouse = _get_warehouse(db, user, warehouse_id)
+    warehouse = _get_warehouse(db, ctx, warehouse_id)
     declared = st.declared_levels(warehouse)
     permissions = st.user_permission_set(db, user)
     wanted = st.LEVEL_ORDER[:st.LEVEL_ORDER.index(depth) + 1] if depth != "locations" else st.LEVEL_ORDER

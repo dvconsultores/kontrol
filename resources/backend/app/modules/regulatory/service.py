@@ -170,6 +170,13 @@ def create_permit(db: Session, *, company_id: str, permit_type_id: str, number: 
     pt = db.get(PermitType, permit_type_id)
     if not pt or pt.company_id != company_id:
         raise NotFoundError(code="PERMIT_TYPE_NOT_FOUND", message="Tipo de permiso no encontrado")
+    if vehicle_id is not None:
+        # El vehículo amparado tiene que ser de la misma empresa que el permiso:
+        # un permiso es nominal ante el organismo, y prestar la unidad de otra
+        # empresa del grupo produce un despacho que en el registro no existe.
+        vehiculo = db.get(TransportVehicle, vehicle_id)
+        if not vehiculo or vehiculo.company_id != company_id:
+            raise NotFoundError(code="VEHICLE_NOT_FOUND", message="Vehículo no encontrado")
     p = PermitInstance(company_id=company_id, permit_type_id=permit_type_id, number=number, issued_at=issued_at,
                        expires_at=expires_at, origin=origin, destination=destination,
                        products=json.dumps(products or []), lots=json.dumps(lots or []), quantity=quantity,
