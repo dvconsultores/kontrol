@@ -112,7 +112,7 @@ describe("la resolución de la empresa activa", () => {
     // Si mandara la preferencia, abrir una segunda pestaña y cambiar de empresa
     // ahí arrastraría a la primera.
     window.localStorage.setItem("kontrol.company-preference.v2:u-1", "aaa");
-    window.sessionStorage.setItem("kontrol.company-tab.v1", "bbb");
+    window.sessionStorage.setItem("kontrol.company-tab.v1", "u-1|bbb");
     servir([A, B]);
     montar();
     await waitFor(() => expect(screen.getByTestId("estado").textContent).toBe("READY"));
@@ -122,7 +122,7 @@ describe("la resolución de la empresa activa", () => {
   it("no opera con una empresa inventada en el almacenamiento", async () => {
     // Manipular el almacenamiento no concede acceso: el id no está en la lista
     // autorizada, así que no se adopta.
-    window.sessionStorage.setItem("kontrol.company-tab.v1", "empresa-inventada");
+    window.sessionStorage.setItem("kontrol.company-tab.v1", "u-1|empresa-inventada");
     window.localStorage.setItem("kontrol.company-preference.v2:u-1", "otra-inventada");
     servir([A, B]);
     montar();
@@ -135,6 +135,16 @@ describe("la resolución de la empresa activa", () => {
     servir([]);
     montar();
     await waitFor(() => expect(screen.getByTestId("estado").textContent).toBe("NO_COMPANIES"));
+  });
+
+  it("no hereda el contexto que otro usuario dejó en esta pestaña", async () => {
+    // La pestaña puede reutilizarse tras un cierre de sesión. Lo guardado lleva
+    // el identificador de quien lo eligió, así que no se adopta.
+    window.sessionStorage.setItem("kontrol.company-tab.v1", "u-otro|bbb");
+    servir([A, B]);
+    montar();
+    await waitFor(() =>
+      expect(screen.getByTestId("estado").textContent).toBe("COMPANY_SELECTION_REQUIRED"));
   });
 
   it("no hereda la preferencia de otro usuario", async () => {

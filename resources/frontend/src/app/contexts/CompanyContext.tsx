@@ -36,7 +36,7 @@ import { useAuth } from "@/app/contexts/AuthContext";
 
 /** Preferencia entre sesiones. Compartida entre pestañas **a propósito**. */
 const CLAVE_PREFERENCIA = "kontrol.company-preference.v2";
-/** Contexto operativo de esta pestaña. Nunca compartido. */
+/** Contexto operativo de esta pestaña. Nunca compartido entre pestañas. */
 const CLAVE_PESTANA = "kontrol.company-tab.v1";
 
 export type EstadoEmpresa =
@@ -101,6 +101,27 @@ function clavePreferencia(userId: string | null): string {
   return `${CLAVE_PREFERENCIA}:${userId ?? "anon"}`;
 }
 
+/**
+ * El contexto de la pestaña se guarda junto a quien lo eligió.
+ *
+ * No es una cuestión de permisos —la empresa se revalida siempre contra la
+ * lista autorizada, así que un valor guardado no concede nada— sino de no
+ * arrancar a alguien en la empresa que dejó abierta el usuario anterior en esa
+ * misma pestaña.
+ */
+function lecturaDePestana(userId: string | null): string | null {
+  const crudo = leer(window.sessionStorage, CLAVE_PESTANA);
+  if (!crudo) {
+    return null;
+  }
+  const [dueno, id] = crudo.includes("|") ? crudo.split("|") : ["", crudo];
+  return dueno === (userId ?? "anon") ? id : null;
+}
+
+function escrituraDePestana(userId: string | null, id: string | null): void {
+  escribir(window.sessionStorage, CLAVE_PESTANA, id === null ? null : `${userId ?? "anon"}|${id}`);
+}
+
 export function CompanyProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { isAuthenticated, isReady: authReady, user } = useAuth();
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
@@ -125,7 +146,7 @@ export function CompanyProvider({ children }: { children: ReactNode }): React.JS
     (id: string | null) => {
       idRef.current = id;
       setActiveId(id);
-      escribir(window.sessionStorage, CLAVE_PESTANA, id);
+      escrituraDePestana(userId, id);
       if (id) {
         escribir(window.localStorage, clavePreferencia(userId), id);
       }
@@ -146,7 +167,7 @@ export function CompanyProvider({ children }: { children: ReactNode }): React.JS
       const operables = autorizadas.filter((c) => c.status === "ACTIVE");
       const validas = new Set(operables.map((c) => c.id));
 
-      const dePestana = leer(window.sessionStorage, CLAVE_PESTANA);
+      const dePestana = lecturaDePestana(userId);
       if (dePestana && validas.has(dePestana)) {
         aplicarActiva(dePestana);
         return;
@@ -169,7 +190,7 @@ export function CompanyProvider({ children }: { children: ReactNode }): React.JS
       }
       idRef.current = null;
       setActiveId(null);
-      escribir(window.sessionStorage, CLAVE_PESTANA, null);
+      escrituraDePestana(userId, null);
     },
     [aplicarActiva, userId],
   );
@@ -197,14 +218,20 @@ export function CompanyProvider({ children }: { children: ReactNode }): React.JS
       return;
     }
     if (!isAuthenticated) {
-      // Cerrar sesión limpia el contexto de esta pestaña. La preferencia
-      // sobrevive: es del usuario, y está guardada bajo su identificador.
+      // Se suelta el estado en memoria, no lo guardado. Una sesión puede
+      // quedarse sin autenticar un instante mientras se renueva el token, y
+      // borrar aquí el contexto de la pestaña haría que al volver se resolviera
+      // desde la preferencia global: bastaría con que otra pestaña hubiera
+      // cambiado de empresa para arrastrar a esta.
+      //
+      // Lo guardado no concede nada: se revalida contra la lista autorizada, y
+      // lleva el identificador de quien lo eligió, así que otro usuario en la
+      // misma pestaña no lo hereda.
       setCompanies([]);
       idRef.current = null;
       setActiveId(null);
       setResuelto(false);
       setError(null);
-      escribir(window.sessionStorage, CLAVE_PESTANA, null);
       return;
     }
     void cargar();
@@ -229,7 +256,7 @@ export function CompanyProvider({ children }: { children: ReactNode }): React.JS
     // operable, en vez de reintentar contra una empresa que ya dijo que no.
     idRef.current = null;
     setActiveId(null);
-    escribir(window.sessionStorage, CLAVE_PESTANA, null);
+    escrituraDePestana(userId, null);
     escribir(window.localStorage, clavePreferencia(userId), null);
     void cargar();
   }, [cargar, userId]);
@@ -239,12 +266,12 @@ export function CompanyProvider({ children }: { children: ReactNode }): React.JS
       if (company === null) {
         idRef.current = null;
         setActiveId(null);
-        escribir(window.sessionStorage, CLAVE_PESTANA, null);
+        escrituraDePestana(userId, null);
         return;
       }
       selectCompany(company.id);
     },
-    [selectCompany],
+    [selectCompany, userId],
   );
 
   const activeCompany = useMemo(
