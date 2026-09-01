@@ -130,11 +130,15 @@ export function CompanySelector(): React.JSX.Element | null {
       </button>
 
       {abierto ? (
-        <ul
+        /* `listbox` debe contener `option` **directamente**: intercalar
+           elementos de lista rompe la relación que el lector de pantalla usa
+           para anunciar «opción 2 de 3». */
+        <div
           id={idLista}
           role="listbox"
           tabIndex={-1}
           aria-label="Empresas disponibles"
+          aria-activedescendant={`${idLista}-${enfocado}`}
           onKeyDown={enTeclado}
           ref={(el) => el?.focus()}
           className="absolute left-0 z-50 mt-1 max-h-80 w-[min(22rem,calc(100vw-2rem))] overflow-auto rounded-md border border-border-default bg-surface-0 py-1 shadow-lg"
@@ -142,38 +146,37 @@ export function CompanySelector(): React.JSX.Element | null {
           {operables.map((c, i) => {
             const activa = c.id === activeCompany?.id;
             return (
-              <li key={c.id}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={activa}
-                  data-testid={`opcion-empresa-${c.code}`}
-                  onMouseEnter={() => setEnfocado(i)}
-                  onClick={() => elegir(c.id)}
-                  className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm ${
-                    i === enfocado ? "bg-surface-100" : ""
-                  } ${activa ? "font-medium text-text-900" : "text-text-700"}`}
-                >
-                  {/* La empresa activa se marca con un icono además del peso de
-                      la tipografía: distinguirla solo por color dejaría fuera a
-                      quien no lo percibe. */}
-                  <Check
-                    className={`mt-0.5 size-4 shrink-0 ${activa ? "text-primary-600" : "invisible"}`}
-                    aria-hidden="true"
-                  />
-                  <span className="min-w-0">
-                    <span className="block truncate" title={c.legal_name}>
-                      {c.legal_name}
-                    </span>
-                    <span className="block truncate text-xs text-text-500">
-                      {c.code} · {c.rif}
-                    </span>
+              <div
+                key={c.id}
+                id={`${idLista}-${i}`}
+                role="option"
+                aria-selected={activa}
+                data-testid={`opcion-empresa-${c.code}`}
+                onMouseEnter={() => setEnfocado(i)}
+                onClick={() => elegir(c.id)}
+                className={`flex cursor-pointer items-start gap-2 px-3 py-2 text-left text-sm ${
+                  i === enfocado ? "bg-surface-100" : ""
+                } ${activa ? "font-medium text-text-900" : "text-text-700"}`}
+              >
+                {/* La empresa activa se marca con un icono además del peso de
+                    la tipografía: distinguirla solo por color dejaría fuera a
+                    quien no lo percibe. */}
+                <Check
+                  className={`mt-0.5 size-4 shrink-0 ${activa ? "text-primary-600" : "invisible"}`}
+                  aria-hidden="true"
+                />
+                <span className="min-w-0">
+                  <span className="block truncate" title={c.legal_name}>
+                    {c.legal_name}
                   </span>
-                </button>
-              </li>
+                  <span className="block truncate text-xs text-text-600">
+                    {c.code} · {c.rif}
+                  </span>
+                </span>
+              </div>
             );
           })}
-        </ul>
+        </div>
       ) : null}
     </div>
   );
