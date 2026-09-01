@@ -290,3 +290,59 @@ operaciones de empresa y no en las demás, y las regresiones de N5, N6 y N7.
 | Sin implementar antes de analizar | Ciclo completo antes de la primera línea | PASS |
 
 **`CONSTITUTION GATE: PASS`**
+
+---
+
+# N9 — PLAN DE CIERRE DE REM-046-001
+
+## 1. Olas
+
+1. **Autoridad** — cardinalidad, registro, contratos. *(hecho: 19 + 4 = 23)*
+2. **Alcance y permisos** — los 23 son de empresa directa.
+3. **REM-046-001** — registrar las cuatro entidades verificadas.
+4. **Fixture real** — una entidad persistida por tipo, con aserción de
+   existencia.
+5. **Seguridad por tipo** — propio, entre empresas, entre tenants.
+6. **Vincular y desvincular.**
+7. **Descarga, previsualización, versiones.**
+8. **Congelado e invariancia histórica.**
+9. **Ficheros, hash e integridad.**
+10. **ClamAV real.**
+11. **Clasificación de S3 y retención.**
+12. **Integración con 045.**
+13. **Matriz de consumidores.**
+14. **Regresiones N5–N8.**
+15. **Reconciliación de artefactos de 046.**
+16. **`/speckit.converge 046`.**
+17. **Cierre de `REM-046-001`.**
+18. **Convergencia delta de N9.** Parar.
+
+## 2. Lo que el plan **no** hace
+
+No añade a `ResourceKind` el campo de ámbito que proponía el camino B: su causa
+—que `company_id` pudiera contener un tenant— la cerró ARCH-MC-001. Añadirlo
+sería documentar una ambigüedad inexistente.
+
+## 3. La prueba de los 23
+
+Parametrizada, con una entidad real por tipo y un fallo que nombra el tipo. La
+parametrización solo vale si cada caso tiene fixture propio: si un tipo no puede
+sembrarse, la prueba **falla**, no se salta.
+
+## 4. CONSTITUTION GATE
+
+| Principio | Verificación | Resultado |
+|---|---|---|
+| Autoridad del backend | El registro sigue cerrado; nada se resuelve por reflexión | PASS |
+| Multiempresa | Los 23 prueban aislamiento propio, entre empresas y entre tenants | PASS |
+| PostgreSQL como fuente | Entidades persistidas, no simuladas | PASS |
+| Sin polimorfismo arbitrario | Un tipo desconocido se rechaza | PASS |
+| **P5** — histórico protegido | El congelado no se reinterpreta | PASS |
+| **P4** — núcleo fiscal | Sin cambios de cálculo | PASS |
+| Auditabilidad | Tenant, empresa y actor correctos | PASS |
+| Sin repliegue tenant→empresa | Verificado en el registro | PASS |
+| ADR-D0-014 | N9 aplica su resultado a 046 | PASS |
+| Sin implementar antes de analizar | Ciclo completo | PASS |
+| Sin N10 ni Spec 012 | Verificado en el análisis | PASS |
+
+**`CONSTITUTION GATE: PASS`**

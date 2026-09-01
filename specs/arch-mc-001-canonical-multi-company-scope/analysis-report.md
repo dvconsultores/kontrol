@@ -321,3 +321,61 @@ UNRESOLVED MATERIAL OQ   : 0
 ```
 
 **`/speckit.analyze DELTA: PASS`** — implementación puntual autorizada.
+
+---
+
+# N9 — ANÁLISIS
+
+## 1. Cobertura
+
+46 requisitos funcionales, 9 criterios de aceptación, 29 tareas.
+**Huérfanos: 0** en ambos sentidos.
+
+## 2. Contradicciones buscadas
+
+| Qué | Resultado |
+|---|---|
+| Tipo sin entidad, tabla, clave, alcance o permiso | 0 |
+| Tipo registrado sin prueba | **19 hoy** → objeto de la fase |
+| Resolución dinámica arbitraria | 0 — el registro es un diccionario cerrado |
+| Repliegue tenant→empresa en el registro | 0 |
+| Requisito obligatorio oculto por un salto | 0 — S3 es P1 |
+| Requisito de retención sin dueño | 0 — es P1 |
+| Trabajo de N10 o de la Spec 012 | 0 |
+| Cardinalidad | **aclarada**: 19 registrados, 23 esperados |
+
+## 3. La contradicción aparente de la cardinalidad
+
+El encargo dice «19/19» y la autoridad exige cuatro entradas más. No son
+afirmaciones incompatibles: la primera nombra los tipos que hay hoy —de los que
+solo uno se probó— y la segunda, los que debe haber al terminar.
+
+Se registra explícitamente en vez de elegir en silencio. N9 satisface ambas:
+añade los cuatro y prueba los veintitrés.
+
+## 4. Una decisión anterior que dejó de aplicar
+
+`REM-046-001` recomendaba el camino B —declarar en el registro si la columna de
+cada consumidor contiene una empresa o un tenant— porque el A era demasiado
+grande.
+
+Se hizo el A, como ARCH-MC-001. El camino B no se implementa, y no por
+descartarlo: por haberse quedado sin causa.
+
+**No es una decisión material nueva.** Es una decisión previa cuya premisa
+desapareció, y el análisis lo registra para que nadie la reabra creyendo que
+sigue pendiente.
+
+## 5. Resultado
+
+```
+BLOCKER                  : 0
+CRITICAL                 : 0
+CONTRADICTIONS           : 0
+ORPHAN REQUIREMENTS      : 0
+ORPHAN TASKS             : 0
+UNRESOLVED MATERIAL OQ   : 0
+```
+
+**`/speckit.analyze: PASS`** — implementación autorizada.
+`REM-046-001 IN_PROGRESS_UNDER_ARCH_MC_001_N9`.

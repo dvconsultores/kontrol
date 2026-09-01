@@ -249,3 +249,33 @@ Cada una con su requisito, su código y su prueba.
 | N8-EVIDENCE-ZERO-WRITE | NFR-N8-003 | — | por caso |
 | N8-EVIDENCE-REPEATABLE | NFR-N8-003 | — | por caso |
 | N8-EVIDENCE-SEED-ASSERT | NFR-N8-002 | aserciones en el fixture | ídem |
+
+---
+
+# N9 — TAREAS
+
+| Tarea | Requisito | Código | Prueba |
+|---|---|---|---|
+| T-N9-001 Confirmar cardinalidad | FR-001 | — | `test_n9_registry` |
+| T-N9-002 Enumerar el registro | FR-002 | — | ídem |
+| T-N9-003 Matriz de alcance y autoridad | FR-005, 011–014 | — | `n9-resourcekind-authority-matrix.md` |
+| T-N9-004 Matriz de permisos | FR-006 | — | ídem |
+| T-N9-005…008 Auditar las cuatro entidades | FR-007–010 | — | ídem |
+| T-N9-009…012 Registrarlas | FR-007–010 | `documents/resources.py` | `test_n9_registry` |
+| T-N9-013 Registro cerrado | FR-017, 018 | — | `test_n9_registry::desconocido` |
+| T-N9-014 Sembrar los 23 | AC-002 | fixture | `test_n9_resourcekinds` |
+| T-N9-015 Alcance propio 23/23 | FR-011, AC-003 | — | ídem |
+| T-N9-016 Entre empresas 23/23 | FR-015 | — | ídem |
+| T-N9-017 Entre tenants 23/23 | FR-016 | — | ídem |
+| T-N9-018 Vincular y desvincular | FR-020–023 | — | `test_n9_documentlink` |
+| T-N9-019 Descarga y previsualización | FR-024–026 | — | ídem |
+| T-N9-020 Congelado e invariancia | FR-027, 028 | — | `test_n9_frozen` |
+| T-N9-021 Hash y objeto alterado | FR-029, 030 | — | `test_n9_integrity` |
+| T-N9-022 ClamAV real | FR-031–033 | — | suite documental |
+| T-N9-023 S3 y retención | FR-035, 036 | — | `n9-s3-status-report.md` |
+| T-N9-024 Integración 045 | FR-037, 038 | — | `n9-spec045-integration-report.md` |
+| T-N9-025 Matriz de consumidores | FR-041, 042 | — | `n9-consumer-dependency-matrix.md` |
+| T-N9-026 Regresiones N5–N8 | FR-039 | — | suites completas |
+| T-N9-027 Reconvergencia de 046 | FR-043 | — | `n9-spec046-reconvergence-report.md` |
+| T-N9-028 Cerrar REM-046-001 | FR-044 | `docs/remediation/` | `n9-rem-046-001-closeout.md` |
+| T-N9-029 Convergencia delta | — | `convergence.md` | `n9-final-checkpoint.md` |

@@ -497,3 +497,131 @@ y **no** en las que no lo son.
 No se toca `REM-046-001`, ni los tipos de recurso pendientes, ni la
 reconvergencia de 046. No se implementa la Spec 012, ni la 052, ni la 053
 completas. No se elimina el framework de migración ni el fixture hostil.
+
+---
+
+# 9. FASE N9 — CIERRE DE REM-046-001 Y RECONVERGENCIA DE LA SPEC 046
+
+## 9.1 Qué encontró la auditoría antes de escribir una línea
+
+**La premisa de `REM-046-001` está resuelta en su origen.** El documento
+concluía que 16 de los 19 tipos registrados no eran vinculables porque
+`purchasing`, `sales`, `master_data`, `inventory` y `regulatory` guardaban el
+`tenant_id` en una columna llamada `company_id`, y proponía dos caminos: (A)
+normalizar los cinco módulos —«enorme, no cabe en una remediación puntual»— o
+(B) que el registro declarara el ámbito de cada consumidor.
+
+**Se hizo el camino A**, no como remediación de 046 sino como ARCH-MC-001
+entera: N5 corrigió los escritores, N7 puso las claves foráneas. Medido hoy en
+el catálogo, las seis tablas comprobadas —y las demás— tienen `company_id` con
+referencia real a `companies`.
+
+El supuesto del registro cerrado —que `company_id` significa empresa— **ahora es
+cierto**. El camino B queda sin objeto: añadir un campo que distinga empresa de
+tenant describiría una ambigüedad que ya no existe.
+
+## 9.2 La cardinalidad, medida
+
+| Origen | Cuenta |
+|---|---:|
+| Registrados hoy en el código | **19** |
+| Que `REM-046-001` exige añadir | **4** |
+| **Esperado al cerrar** | **23** |
+
+El «19/19» del encargo nombra un hecho distinto y también cierto: hay **19 tipos
+registrados y solo uno probado**. El propio documento lo dice sin rodeos —
+«registré dieciséis tipos y probé uno».
+
+No hay contradicción entre autoridades: hay dos cuentas que responden a dos
+preguntas. Cuántos hay registrados hoy (19) y cuántos debe haber al terminar
+(23). N9 satisface las dos: añade los cuatro y prueba los veintitrés.
+
+## 9.3 Las cuatro entidades, verificadas de nuevo
+
+No se confía en el informe histórico: se comprueba contra el modelo vigente.
+
+| Modelo | Tabla | PK | Empresa | Clave foránea |
+|---|---|---|---|---|
+| `Payment` | `ap_payments` | `id` | `company_id` | sí |
+| `BankTransaction` | `bank_transactions` | `id` | `company_id` | sí |
+| `CashSession` | `cash_sessions` | `id` | `company_id` | sí |
+| `Reconciliation` | `reconciliations` | `id` | `company_id` | sí |
+
+Las cuatro son de **empresa directa**. Registrarlas son cuatro entradas; lo que
+cuesta es probarlas.
+
+## 9.4 El problema real, dicho como es
+
+`REM-046-001` lo formuló mejor que cualquier resumen: *el registro existía; la
+capacidad, no*. Diecinueve tipos declarados y una sola vinculación ejercitada
+por las pruebas.
+
+N9 no consiste en añadir cuatro entradas. Consiste en demostrar que las
+veintitrés funcionan, cada una con su entidad real, su empresa resuelta y su
+aislamiento probado.
+
+## 9.5 Requisitos funcionales
+
+**FR-N9-001** — La cardinalidad esperada se obtiene de la autoridad documental y
+se valida contra el código.
+**FR-N9-002** — Todos los tipos esperados están registrados.
+**FR-N9-003** — Cada tipo registrado tiene entidad real.
+**FR-N9-004** — Cada tipo tiene clave primaria declarada.
+**FR-N9-005** — Cada tipo tiene alcance declarado.
+**FR-N9-006** — Cada tipo tiene permiso declarado.
+**FR-N9-007…010** — `Payment`, `BankTransaction`, `CashSession` y
+`Reconciliation` forman parte del registro.
+**FR-N9-011** — Los recursos de empresa directa resuelven la empresa real.
+**FR-N9-012** — Los derivados la resuelven por su autoridad canónica.
+**FR-N9-013** — Los de tenant no reciben empresa artificial.
+**FR-N9-014** — Los globales tampoco.
+**FR-N9-015** — La lectura entre empresas está bloqueada.
+**FR-N9-016** — La lectura entre tenants está bloqueada.
+**FR-N9-017** — Un tipo desconocido se rechaza.
+**FR-N9-018** — El registro no admite resolución arbitraria de modelos.
+**FR-N9-019** — Un recurso inexistente responde sin revelar si existe.
+**FR-N9-020…023** — El vínculo valida acceso al documento y al recurso; el
+cruce se bloquea; desvincular exige autorización.
+**FR-N9-024…026** — Descarga, previsualización y versiones validan el contexto.
+**FR-N9-027** — `frozen_version_id` es inmutable.
+**FR-N9-028** — Un vínculo congelado no se reinterpreta contra la versión actual.
+**FR-N9-029** — El archivo conserva un hash verificable.
+**FR-N9-030** — Un objeto alterado se detecta.
+**FR-N9-031** — Un archivo infectado no se entrega.
+**FR-N9-032** — `SCAN_FAILED` no equivale a limpio.
+**FR-N9-033** — Un escáner ausente no produce un falso limpio.
+**FR-N9-034** — El proveedor de sistema de ficheros se valida de verdad.
+**FR-N9-035** — S3 no se declara verificado sin servicio real.
+**FR-N9-036** — Los saltos de S3 no ocultan ningún requisito obligatorio.
+**FR-N9-037** — La integración con la Spec 045 conserva el congelado.
+**FR-N9-038** — `CVG-045-04` permanece resuelto.
+**FR-N9-039** — Las remediaciones de N5 siguen verdes.
+**FR-N9-040** — El registro no usa repliegue de tenant a empresa.
+**FR-N9-041** — La matriz de consumidores usa números y nombres reales.
+**FR-N9-042** — Ningún consumidor se declara desbloqueado si tiene otros
+impedimentos.
+**FR-N9-043** — La Spec 046 se reconverge contra el sistema actual.
+**FR-N9-044** — `REM-046-001` solo se cierra con la evidencia completa.
+**FR-N9-045** — N9 no inicia N10.
+**FR-N9-046** — N9 no toca el estado de la Spec 012.
+
+## 9.6 Criterios de aceptación
+
+**AC-N9-001** — El registro tiene 23 entradas; ni faltantes, ni sobrantes, ni
+duplicadas, comprobado por prueba y no por recuento manual.
+**AC-N9-002** — Cada uno de los 23 tipos tiene una entidad **persistida en
+PostgreSQL** y una prueba que falla si esa entidad no existe.
+**AC-N9-003** — Cada tipo demuestra acceso propio, bloqueo entre empresas y
+bloqueo entre tenants.
+**AC-N9-004** — Un tipo inventado se rechaza sin importar modelos.
+**AC-N9-005** — El congelado sobrevive a una versión nueva.
+**AC-N9-006** — Un fichero alterado se detecta por hash.
+**AC-N9-007** — EICAR se marca infectado y no se entrega.
+**AC-N9-008** — Ningún tipo obligatorio queda saltado.
+**AC-N9-009** — Fallos inesperados: cero.
+
+## 9.7 Fuera de alcance
+
+N10, la revalidación de la Spec 012, el planificador de retención si su dueño
+resulta ser otra Spec, y la verificación de S3 con servicio real si el contrato
+lo declara opcional.

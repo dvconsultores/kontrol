@@ -75,6 +75,17 @@ RESOURCE_KINDS: dict[str, ResourceKind] = {
                      "HomologationRecord", "company_id", "homologacion:view", ("051",)),
         ResourceKind("Warehouse", "app.modules.organization.models",
                      "Warehouse", "company_id", "organization:view", ("008",)),
+        # Las cuatro que `REM-046-001` identificó como existentes y ausentes.
+        # Verificadas contra el modelo vigente, no contra el informe: las cuatro
+        # tienen clave primaria `id` y `company_id` con referencia real.
+        ResourceKind("Payment", "app.modules.purchasing.models",
+                     "Payment", "company_id", "compras:view", ("028",)),
+        ResourceKind("BankTransaction", "app.modules.treasury.models",
+                     "BankTransaction", "company_id", "tesoreria:view", ("038",)),
+        ResourceKind("CashSession", "app.modules.treasury.models",
+                     "CashSession", "company_id", "tesoreria:view", ("038",)),
+        ResourceKind("Reconciliation", "app.modules.treasury.models",
+                     "Reconciliation", "company_id", "tesoreria:view", ("038",)),
     )
 }
 

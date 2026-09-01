@@ -416,3 +416,108 @@ aislamiento.
 **Ninguna material.** El desacoplamiento de `planes()` no introduce ninguna
 decisión de negocio: aplica al conjunto de trabajo la misma pregunta que
 `preflight` ya le hace al destino.
+
+---
+
+# N9 — ACLARACIONES DE LA RECONVERGENCIA DE 046
+
+## 1–6. Cardinalidad
+
+Registrados hoy: **19**. Que `REM-046-001` exige añadir: **4**. Esperado al
+cerrar: **23**. Sin extras, sin duplicados —comprobado por diccionario, cuyas
+claves no pueden repetirse.
+
+El «19/19» del encargo nombra otra cosa, también cierta: hay 19 registrados y
+**uno** probado. No hay contradicción entre autoridades, hay dos preguntas
+distintas, y N9 responde a las dos.
+
+## 7–16. Entidad, tabla, clave y alcance de cada tipo
+
+Los 23 son de **empresa directa**: llevan `company_id` propio con clave foránea
+real a `companies`. Ninguno es derivado, de tenant ni global.
+
+`HomologationRecord` merece una nota: el registro declara `company_id` como su
+columna de empresa y el modelo **no la tiene**, así que `resolve_resource`
+devuelve `None` y el control se apoya solo en el permiso. Es deliberado —el acto
+de homologación es de la instalación— y está escrito en el propio registro.
+
+## 17–19. Permisos
+
+Cada tipo declara el suyo, del módulo dueño de la entidad: `compras:view`,
+`ventas:view`, `inventario:view`, `maestros:view`, `regulatorio:view`,
+`aprobaciones:view`, `organization:view`, `homologacion:view`. Los cuatro nuevos
+usan `tesoreria:view` y `compras:view` según su módulo.
+
+## 20–24. Autorización del documento y del recurso
+
+Son dos comprobaciones distintas y ambas ocurren: el documento se resuelve
+contra la empresa activa —corregido en N5— y el recurso vinculado se comprueba
+aparte con `_assert_resource_access`, que valida empresa **y** permiso.
+
+Un documento sin vínculos se autoriza por su propia empresa. Descarga y
+previsualización dependen del documento, y el vínculo añade la comprobación del
+recurso cuando existe.
+
+## 25. Los cuatro nuevos
+
+**Empresa directa**, los cuatro. Verificado contra el modelo vigente, no contra
+el informe histórico: `ap_payments`, `bank_transactions`, `cash_sessions` y
+`reconciliations`, todas con `company_id` y clave foránea.
+
+## 26–29. Congelado y Spec 045
+
+`frozen_version_id` vive en `DocumentLink`. La cadena
+`ApprovalRequest → DocumentLink → frozen_version_id` está implementada y
+`CVG-045-04` figura **`RESOLVED_BY_SPEC_046`** en la convergencia de 045.
+
+## 30–33. Almacenamiento y análisis
+
+Sistema de ficheros: proveedor operativo, verificable en este entorno.
+
+**S3 es `FR-046-032`, prioridad P1.** No es obligatorio para cerrar 046, así que
+los 8 saltos son legítimos y no ocultan ningún requisito. Se clasifican como
+`IMPLEMENTED_NOT_VERIFIED`.
+
+ClamAV **1.4.3 real**, con sus tres bases de firmas. Sin simulación.
+
+## 34–38. Máquina de estados del análisis
+
+`PENDING_SCAN`, `CLEAN`, `INFECTED`, `SCAN_FAILED`. Solo `CLEAN` permite la
+entrega; el propio módulo lo dice en su cabecera: *«un archivo que no está
+`CLEAN`»* no se entrega, y no poder analizar **significa** `SCAN_FAILED`.
+
+## 39–40. Retención
+
+`FR-046-065` —política de retención configurable— es **P1**. La operación de
+purga está implementada; el planificador que la ejecute periódicamente no es
+requisito P0 de 046 y su dueño natural es la Spec de instalación y
+actualización. Se documenta, no se esconde.
+
+## 41–44. Consumidores y artefactos
+
+La matriz histórica declaraba desbloqueadas cinco Specs por «tipo registrado y
+probado», y el propio `REM-046-001` corrigió esa afirmación: *«registré dieciséis
+tipos y probé uno»*. N9 la rehace contra el maestro de Specs, y ningún consumidor
+se declara desbloqueado sin revisar sus otros impedimentos.
+
+## El hallazgo que cambia el diseño de la remediación
+
+`REM-046-001` proponía dos caminos y recomendaba el B —que el registro declarara
+si la columna de cada consumidor contiene una empresa o un tenant— porque el A
+—normalizar los cinco módulos— era «enorme y no cabe en una remediación
+puntual».
+
+**Se hizo el A.** No como remediación de 046, sino como ARCH-MC-001 entera. N5
+corrigió los escritores y N7 puso las claves foráneas; medido hoy, las tablas de
+los cinco módulos tienen `company_id` con referencia real.
+
+El camino B queda **sin objeto**: añadir un campo que distinga empresa de tenant
+describiría una ambigüedad que ya no existe, y sería deuda nueva el día que
+alguien lo leyera y creyera que aún hace falta.
+
+No es una decisión material nueva. Es una decisión anterior que dejó de ser
+necesaria porque su causa se resolvió en otro sitio.
+
+## Preguntas abiertas
+
+**Ninguna material.**

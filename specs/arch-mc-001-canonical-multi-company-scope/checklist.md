@@ -152,3 +152,34 @@ empresas, y «se deduce por una relación obligatoria» no cabe en ese dato.
 | 7 | Repetibilidad por caso | ⬜ |
 | 8 | Aserción de existencia de cada semilla | ⬜ |
 | 9 | `INVALID` y `CROSS_TENANT` no degradan a `MC-D` | ⬜ |
+
+---
+
+# N9 — LISTA DE COMPROBACIÓN
+
+| # | Comprobación | Estado |
+|---|---|---|
+| 1 | Cardinalidad esperada confirmada | ✅ 19 + 4 = **23** |
+| 2 | Nombres exactos confirmados | ✅ |
+| 3 | Entidad real por tipo | ✅ verificado en el modelo |
+| 4 | Clave primaria por tipo | ✅ `id` en los 23 |
+| 5 | Alcance por tipo | ✅ empresa directa |
+| 6 | Autoridad de empresa | ✅ `company_id` con clave foránea |
+| 7 | Permiso por tipo | ✅ |
+| 8–11 | `Payment`, `BankTransaction`, `CashSession`, `Reconciliation` mapeados | ✅ |
+| 12 | 23 fixtures reales planificados | ⬜ |
+| 13 | 23 pruebas de alcance propio | ⬜ |
+| 14 | Bloqueo entre empresas | ⬜ |
+| 15 | Bloqueo entre tenants | ⬜ |
+| 16 | Vincular y desvincular | ⬜ |
+| 17 | Metadatos, descarga, previsualización, versiones | ⬜ |
+| 18 | Congelado e invariancia | ⬜ |
+| 19 | Ficheros, hash, objeto alterado | ⬜ |
+| 20 | ClamAV limpio, EICAR, escáner ausente | ⬜ |
+| 21 | Clasificación de S3 | ✅ `FR-046-032` es **P1** |
+| 22 | Dueño de la retención | ✅ `FR-046-065` es **P1** |
+| 23 | Integración con 045 | ✅ `CVG-045-04 RESOLVED_BY_SPEC_046` |
+| 24 | Matriz de consumidores rehecha | ⬜ |
+| 25 | Reconciliación de artefactos de 046 | ⬜ |
+| 26 | Regresiones N5–N8 | ⬜ |
+| 27 | N10 y Spec 012 excluidos | ✅ |
