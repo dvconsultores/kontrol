@@ -2,27 +2,21 @@
 import { LogOut, Lock, User as UserIcon } from "lucide-react";
 
 import { useAuth } from "@/app/contexts/AuthContext";
-import { useCompany } from "@/app/contexts/CompanyContext";
 import { useLicense } from "@/app/contexts/LicenseContext";
+import { CompanySelector } from "@/components/company/CompanySelector";
 import { Link } from "react-router";
 
 export function Topbar(): React.JSX.Element {
   const { user, logout } = useAuth();
-  const { activeCompany } = useCompany();
   const { mode } = useLicense();
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-border-default bg-surface-0 px-4">
-      <div className="flex items-center gap-2 text-sm">
-        {activeCompany ? (
-          <>
-            <span className="font-medium text-text-900">{activeCompany.legal_name}</span>
-            <span className="text-text-400">·</span>
-            <span className="text-text-500">{activeCompany.rif}</span>
-          </>
-        ) : (
-          <span className="text-text-500">Sin empresa activa</span>
-        )}
+      {/* La empresa activa vive en el shell: cualquier pantalla de negocio es
+          de una empresa concreta, y el usuario tiene que poder saber de cuál
+          sin buscarla. */}
+      <div className="flex min-w-0 items-center gap-2 text-sm">
+        <CompanySelector />
       </div>
       <div className="flex items-center gap-3">
         {mode ? (

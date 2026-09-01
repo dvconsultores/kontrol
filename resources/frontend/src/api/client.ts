@@ -36,6 +36,54 @@ export class ApiError extends Error {
 const isApiErrorBody = (value: unknown): value is ApiErrorBody =>
   typeof value === "object" && value !== null && "code" in value;
 
+// --------------------------------------------------------------------------
+// Contexto de empresa (ARCH-MC-001, N6)
+// --------------------------------------------------------------------------
+
+/** Nombre exacto de la cabecera definida por N1. No se construye en otro sitio. */
+export const COMPANY_HEADER = "X-Kontrol-Company";
+
+type CompanyResolver = () => string | null;
+let companyResolver: CompanyResolver | null = null;
+
+/**
+ * Conecta el cliente con la empresa activa de **esta pestaña**.
+ *
+ * Es el único punto donde se decide qué empresa lleva una petición. Añadir la
+ * cabecera a mano en cada servicio garantizaría que alguna se olvidara, y esa
+ * sería exactamente la que operase en la empresa equivocada.
+ */
+export function setCompanyResolver(resolver: CompanyResolver | null): void {
+  companyResolver = resolver;
+}
+
+export function getActiveCompanyId(): string | null {
+  return companyResolver?.() ?? null;
+}
+
+/**
+ * Rutas que **no** son de empresa: el contexto no aplica y no debe exigirse.
+ *
+ * La lista es corta a propósito. En KONTROL casi todo es de empresa —123 de 153
+ * modelos—, así que la excepción es lo que se enumera, no la regla. Un endpoint
+ * nuevo que no aparezca aquí llevará la cabecera, que es el lado seguro del
+ * error.
+ */
+const RUTAS_SIN_EMPRESA = [
+  "/auth/",
+  "/organization/companies",
+  "/organization/tenants",
+  "/setup",
+  "/system/",
+  "/licensing/",
+  "/health",
+  "/diagnostics",
+];
+
+export function esRutaDeEmpresa(path: string): boolean {
+  return !RUTAS_SIN_EMPRESA.some((prefijo) => path === prefijo || path.startsWith(prefijo));
+}
+
 let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null): void {
@@ -99,6 +147,14 @@ export interface RequestOptions {
   signal?: AbortSignal;
   /** `blob` para descargas binarias (Spec 046): el cuerpo no se interpreta como JSON. */
   responseType?: "json" | "blob";
+  /**
+   * Empresa de esta petición, fijada por quien la crea.
+   *
+   * Sirve para que una operación larga —un formulario que se envía, una
+   * descarga— termine en la empresa donde empezó aunque el usuario cambie de
+   * empresa mientras tanto. Nunca concede acceso: el servidor la valida igual.
+   */
+  companyId?: string | null;
 }
 
 async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
@@ -120,6 +176,14 @@ async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
   }
   if (options.ifMatch) {
     headers["If-Match"] = options.ifMatch;
+  }
+  // La empresa se resuelve **al construir la petición**, no dentro del `fetch`
+  // ni en un reintento posterior. Leer un valor mutable más tarde permitiría
+  // que una petición nacida en la empresa A saliera con la cabecera de B si el
+  // usuario cambia mientras la promesa espera.
+  const empresa = options.companyId !== undefined ? options.companyId : getActiveCompanyId();
+  if (empresa && esRutaDeEmpresa(path)) {
+    headers[COMPANY_HEADER] = empresa;
   }
 
   const response = await fetch(`/api/v1${path}`, {
@@ -165,8 +229,15 @@ async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
 }
 
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  // La empresa queda fijada aquí, antes de cualquier espera. Si la petición se
+  // reintenta tras renovar la sesión, se reintenta en la misma empresa en la
+  // que se pidió, no en la que esté activa al terminar la renovación.
+  const fijada: RequestOptions =
+    options.companyId !== undefined || !esRutaDeEmpresa(path)
+      ? options
+      : { ...options, companyId: getActiveCompanyId() };
   try {
-    return await rawFetch<T>(path, options);
+    return await rawFetch<T>(path, fijada);
   } catch (error) {
     // Access token expirado (401): renovar la sesión una vez y reintentar la
     // petición original con el nuevo token. Si la renovación falla, la sesión
@@ -178,7 +249,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
       !isAuthRoute(path) &&
       (await refreshOnce())
     ) {
-      return rawFetch<T>(path, options);
+      return rawFetch<T>(path, fijada);
     }
     throw error;
   }

@@ -164,3 +164,25 @@ def test_el_cuerpo_no_puede_contradecir_al_contexto(mundo):
 # versiones, el cruce entre tenants y la escritura legítima que debe seguir
 # funcionando. Mantener aquí una versión más débil de lo mismo solo añadiría
 # ruido.
+
+
+# ------------------------------------- la lista que el frontend usa como autoridad
+def test_el_listado_de_empresas_solo_trae_las_que_el_usuario_opera(mundo):
+    """`GET /organization/companies` es la autoridad del selector de empresa.
+
+    Si devolviera todas las del tenant, el frontend ofrecería a `ua` una empresa
+    en la que no puede operar: no concedería acceso —el backend seguiría
+    rechazando cada petición— pero convertiría el selector en una lista de
+    empresas ajenas y en una fuente de errores inexplicables.
+
+    Es el mismo defecto que N5 corrigió en `accessible_company_ids`, en el único
+    sitio donde todavía quedaba.
+    """
+    de_ua = {c["id"] for c in mundo.get("/organization/companies", "ua", mundo.company_a).json()}
+    de_ub = {c["id"] for c in mundo.get("/organization/companies", "ub", mundo.company_b).json()}
+    de_uab = {c["id"] for c in mundo.get("/organization/companies", "uab", mundo.company_a).json()}
+
+    assert de_ua == {mundo.company_a}, f"ua ve empresas que no opera: {de_ua}"
+    assert de_ub == {mundo.company_b}, f"ub ve empresas que no opera: {de_ub}"
+    assert de_uab == {mundo.company_a, mundo.company_b}
+    assert mundo.company_c not in de_uab, "el listado cruzó el tenant"

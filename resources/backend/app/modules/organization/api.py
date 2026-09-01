@@ -55,8 +55,25 @@ class EstablishmentCreate(BaseModel):
 
 @router.get("/companies")
 def list_companies(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    companies = db.execute(select(Company).where(Company.tenant_id == user.tenant_id)
-                           .order_by(Company.created_at)).scalars().all()
+    """Las empresas en las que este usuario puede operar.
+
+    Es la autoridad del selector de empresa: lo que salga de aquí es lo que la
+    interfaz ofrecerá. Devolver todas las del tenant no concedía acceso —cada
+    petición se seguía rechazando— pero ofrecía empresas ajenas y convertía el
+    selector en una fuente de errores inexplicables.
+
+    Se resuelve con `accessible_company_ids`, la misma autoridad que valida cada
+    petición, para que la lista y el permiso no puedan divergir.
+    """
+    from app.core.company_context import accessible_company_ids
+
+    alcanzables = set(accessible_company_ids(db, user))
+    companies = [
+        c for c in db.execute(
+            select(Company).where(Company.tenant_id == user.tenant_id)
+            .order_by(Company.created_at)).scalars().all()
+        if str(c.id) in alcanzables
+    ]
     return [
         {
             "id": str(c.id),
