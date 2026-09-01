@@ -234,3 +234,18 @@ Cada una con su requisito, su código y su prueba.
 | T-N8-015 Documentación obsoleta | FR-023 | matrices | — |
 | T-N8-016 Regresiones N5/N6/N7 | FR-026 | — | suites completas |
 | T-N8-017 Cierre y convergencia | — | `convergence.md` | `n8-final-checkpoint.md` |
+
+---
+
+# N8 — SELLO FINAL DE EVIDENCIA
+
+| Tarea | Requisito | Código | Prueba |
+|---|---|---|---|
+| N8-EVIDENCE-MC-D | FR-N8-016 | semilla en el fixture | `test_mc_preflight` |
+| N8-EVIDENCE-INVALID | FR-N8-017 | semilla en el fixture | ídem |
+| N8-EVIDENCE-CROSS-TENANT | FR-N8-018 | **`preflight.py`: emitir la clase** | ídem |
+| N8-EVIDENCE-MASTER-RUN | FR-N8-016 | **`preflight.py` / `runner.py`: calcularlas** | ídem |
+| N8-EVIDENCE-MASTER-DERIVE | FR-N8-016 | **`estrategia_de_maestro`: condición de disparo** | ídem |
+| N8-EVIDENCE-ZERO-WRITE | NFR-N8-003 | — | por caso |
+| N8-EVIDENCE-REPEATABLE | NFR-N8-003 | — | por caso |
+| N8-EVIDENCE-SEED-ASSERT | NFR-N8-002 | aserciones en el fixture | ídem |

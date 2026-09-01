@@ -167,3 +167,57 @@ depende del modelo de la versión que lo ejecuta.
 **`N8 CONVERGED`**
 
 No es `ARCH-MC-001 COMPLETE_100`.
+
+
+---
+
+# N8 — CONVERGENCIA DEL SELLO FINAL DE EVIDENCIA
+
+## 1. Continuidad, no reapertura
+
+`specify`, `clarify`, `plan` y el Constitution Gate siguen `PASS` y no se
+rehicieron: el sello no cambia ninguna decisión de diseño. Se actualizaron
+`checklist.md`, `tasks.md` y `traceability-matrix.md`, y se ejecutó un
+`/speckit.analyze` **delta** antes de tocar código.
+
+## 2. Qué faltaba
+
+De las once evidencias exigidas, cuatro estaban completas —`MC-A`, `MC-B`,
+`MC-C`, `MC-E`— y siete no:
+
+- `MC-D` no tenía semilla.
+- `INVALID_LEGACY_SCOPE` y `CROSS_TENANT` solo tenían comparaciones del valor
+  del enum.
+- Las cuatro estrategias de maestro se comprobaban llamando a la función con
+  conjuntos sintéticos, sin pasar por la ruta del preflight.
+
+## 3. Dos defectos, no dos lagunas
+
+La distinción importa. `CROSS_TENANT` y `MASTER_DERIVE` estaban **definidos en el
+contrato y no implementados**: el primero nunca se emitía y el segundo no podía
+devolverse.
+
+Corregirlos no introdujo semántica nueva — aplicó la que ya estaba escrita. Es
+exactamente lo que separa «la rama existe» de «hay ejecución», y en estos dos
+casos ni siquiera había rama.
+
+## 4. Verificación
+
+| Qué | Resultado |
+|---|---|
+| Clasificación explícita por caso | 8 clases, todas con filas reales |
+| Estrategias de maestro | 4, todas alcanzadas en la corrida |
+| Cero escrituras | conteos y `alembic_version` idénticos |
+| Repetibilidad | comparada **por clase**, no por total |
+| Severidad | `INVALID` y `CROSS_TENANT` no degradan a `MC-D` |
+| Fixture versionado | sí, con aserciones de siembra |
+| Independencia del ORM final | el fixture vive en `0032` y el código en `0038` |
+| Trazabilidad | una fila por caso; 0 huérfanos |
+
+## 5. Deuda de evidencia
+
+**Ninguna.** No queda clase declarada sin ejecutar ni estrategia sin fixture.
+
+## 6. Veredicto
+
+**`N8 FINAL EVIDENCE CONVERGENCE: PASS`**

@@ -276,3 +276,48 @@ UNRESOLVED MATERIAL OQ   : 0
 ```
 
 **`/speckit.analyze: PASS`** — implementación autorizada.
+
+---
+
+# N8 — ANÁLISIS DELTA DEL SELLO
+
+## 1. Alcance
+
+Ocho tareas de evidencia. No se reabre `specify`, `clarify`, `plan` ni el
+Constitution Gate: siguen `PASS` y esta acción no cambia ninguna decisión de
+diseño.
+
+## 2. Contradicciones buscadas en el delta
+
+| Qué | Resultado |
+|---|---|
+| Definición nueva de `MC-D` | **0** — se usa `NON_RECONSTRUCTIBLE`, de `legacy-company-reconstruction-matrix.md` |
+| Definición nueva de `MASTER_DERIVE` | **0** — «se deduce por una relación obligatoria», del propio enum |
+| Contrato adaptado al código | **0** — se corrige el código para que cumpla el contrato, no al revés |
+| Solape con N9 o con la Spec 012 | 0 |
+| Trabajo fuera del sello | 0 |
+
+## 3. Los dos defectos son de implementación, no de contrato
+
+`CROSS_TENANT` y `MASTER_DERIVE` están **definidos** en el contrato vigente y
+**no implementados**. Corregirlos no introduce semántica: la aplica.
+
+Es la diferencia que el encargo señala entre «la rama existe» y «hay ejecución».
+Aquí ni siquiera había rama: había un nombre.
+
+## 4. Decisiones materiales nuevas
+
+**Ninguna.** Las definiciones existen y son anteriores a esta fase.
+
+## 5. Resultado
+
+```
+BLOCKER                  : 0
+CRITICAL                 : 0
+CONTRADICTIONS           : 0
+ORPHAN REQUIREMENTS      : 0
+ORPHAN TASKS             : 0
+UNRESOLVED MATERIAL OQ   : 0
+```
+
+**`/speckit.analyze DELTA: PASS`** — implementación puntual autorizada.

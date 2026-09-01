@@ -22,6 +22,18 @@ Casos que siembra, y por qué cada uno es difícil:
 - **MC-E** — serie fiscal ambigua. En fiscal no basta con decir «ambiguo»:
   atribuir una serie a la empresa equivocada emite facturas a nombre de otro
   contribuyente, así que sube a crítica y bloquea.
+- **MC-D** — sin evidencia y en dominio **no crítico**. Un tenant sin ninguna
+  empresa: no hay nada de donde deducir, y anotarlo es todo lo que se puede
+  hacer. `NON_RECONSTRUCTIBLE`.
+- **INVALID_LEGACY_SCOPE** — el valor no es ni un tenant ni una empresa. No es
+  un hueco esperando la migración: ya estaba roto antes de empezar, y
+  clasificarlo como «sin evidencia» lo escondería entre los reconstruibles.
+- **CROSS_TENANT** — la fila lleva una empresa **real**, pero de otro cliente
+  que el que dice su autoridad. Integridad rota entre instalaciones, no una
+  migración pendiente.
+- **Estrategias de maestro** — un artículo usado por una sola empresa
+  (`ASSIGN`), otro usado por dos (`CLONE`), otro sin uso pero con relación
+  obligatoria (`DERIVE`) y otro sin nada (`MANUAL_REVIEW`).
 - **OK** — fila que ya tenía su empresa. No se reclasifica.
 
 Uso:
@@ -152,6 +164,63 @@ def sembrar() -> dict[str, str]:
                 " created_at) VALUES (%s,%s,%s,%s,%s)",
                 (ids["balance_mc_b"], t_dos, alm, prod, HOY))
 
+    # --- MC-D: sin evidencia, en dominio no crítico.
+    #     Un tenant sin ninguna empresa. No hay intervalo del que deducir ni
+    #     autoridad de la que derivar: lo único honesto es anotarlo.
+    t_vacio = str(uuid.uuid4())
+    cur.execute("INSERT INTO tenants (id, installation_id, code, name, plan, status, created_at) "
+                "VALUES (%s,%s,'LEG-CERO','Legado sin empresas','MONO_COMPANY','ACTIVE',%s)",
+                (t_vacio, inst, AYER))
+    ids["party_mc_d"] = _party(t_vacio, "LEG-D", HOY)
+
+    # --- INVALID_LEGACY_SCOPE: ni tenant ni empresa. Ya estaba roto.
+    ids["party_invalid"] = _party(str(uuid.uuid4()), "LEG-INV", HOY)
+
+    # --- CROSS_TENANT: empresa real, pero de otro cliente que su almacén.
+    #     El saldo dice pertenecer a la empresa única del primer tenant y cuelga
+    #     de un almacén del segundo. Ninguna de las dos referencias está mal por
+    #     separado; lo que está mal es la combinación.
+    ids["balance_cross_tenant"] = str(uuid.uuid4())
+    cur.execute("INSERT INTO inventory_balances (id, company_id, warehouse_id, product_id, "
+                " created_at) VALUES (%s,%s,%s,%s,%s)",
+                (ids["balance_cross_tenant"], c_uno, alm, prod, HOY))
+
+    # --- Maestros: un artículo por empresa y uno compartido por dos.
+    #     `catalog_items` es de `master_data`, que no es dominio crítico.
+    for marca, empresa in (("MSTR-ASSIGN", c_vieja), ("MSTR-SOLO", c_uno)):
+        cur.execute("INSERT INTO catalog_items (id, company_id, code, name, item_type, "
+                    " status, created_at) VALUES (%s,%s,%s,%s,'PRODUCT','ACTIVE',%s)",
+                    (str(uuid.uuid4()), empresa, marca, f"Articulo {marca}", AYER))
+    # Uno sin empresa reconocible y sin relación: manual.
+    ids["item_manual"] = str(uuid.uuid4())
+    cur.execute("INSERT INTO catalog_items (id, company_id, code, name, item_type, "
+                " status, created_at) VALUES (%s,%s,'MSTR-MANUAL','Articulo sin dueño',"
+                "'PRODUCT','ACTIVE',%s)", (ids["item_manual"], t_dos, AYER))
+
+    # --- MASTER_CLONE: un maestro que dos empresas del **mismo** tenant usaron.
+    #     El saldo referencia un almacén de una empresa y un artículo de la
+    #     otra: dos evidencias legítimas que apuntan a empresas distintas.
+    #     Adjudicárselo a una rompería a la otra, así que la respuesta es
+    #     clonarlo. Dentro del mismo tenant a propósito: si cruzara clientes
+    #     sería CROSS_TENANT, que es otra cosa.
+    prod_nueva = str(uuid.uuid4())
+    cur.execute("INSERT INTO catalog_items (id, company_id, code, name, item_type, "
+                " status, created_at) VALUES (%s,%s,'MSTR-CLONE','Articulo compartido',"
+                "'PRODUCT','ACTIVE',%s)", (prod_nueva, c_nueva, HOY))
+    tipo_vieja = str(uuid.uuid4())
+    cur.execute("INSERT INTO movement_types (id, company_id, code, name, direction, "
+                " affects_balance, status, created_at) "
+                "VALUES (%s,%s,'MT-CLONE','Entrada compartida','IN',true,'ACTIVE',%s)",
+                (tipo_vieja, c_vieja, HOY))
+    ids["movimiento_clone"] = str(uuid.uuid4())
+    # La empresa lleva el identificador del **tenant**, que es la forma del
+    # defecto heredado: sin evidencia propia, se resuelve por las relaciones.
+    # Y las dos relaciones apuntan a empresas distintas del mismo tenant.
+    cur.execute("INSERT INTO inventory_movements (id, company_id, warehouse_id, product_id, "
+                " movement_type_id, quantity, occurred_at, currency, status, created_at) "
+                "VALUES (%s,%s,%s,%s,%s,1,%s,'VED','POSTED',%s)",
+                (ids["movimiento_clone"], t_dos, alm, prod_nueva, tipo_vieja, HOY, HOY))
+
     # --- fiscal_number_series: ambigua y crítica. Una serie mal atribuida
     #     emite facturas a nombre de otro contribuyente.
     ids["serie_mc_e"] = str(uuid.uuid4())
@@ -164,6 +233,22 @@ def sembrar() -> dict[str, str]:
                 (ids["serie_mc_a"], t_uno, AYER + timedelta(days=2)))
 
     c.commit()
+
+    # Comprobación de la propia siembra: una prueba que corre sobre un fixture
+    # vacío pasa sin comprobar nada, y eso ya ocurrió una vez en este proyecto.
+    for etiqueta, consulta, parametros in (
+            ("MC-D", "SELECT count(*) FROM parties WHERE company_id = %s", (t_vacio,)),
+            ("INVALID", "SELECT count(*) FROM parties WHERE code = 'LEG-INV'", ()),
+            ("CROSS_TENANT", "SELECT count(*) FROM inventory_balances WHERE id = %s",
+             (ids["balance_cross_tenant"],)),
+            ("maestros", "SELECT count(*) FROM catalog_items", ()),
+            ("MASTER_CLONE", "SELECT count(*) FROM inventory_movements WHERE id = %s",
+             (ids["movimiento_clone"],))):
+        cur.execute(consulta, parametros)
+        n = cur.fetchone()[0]
+        if n == 0:
+            raise AssertionError(f"la semilla de {etiqueta} no se creó: el fixture no es hostil")
+
     cur.execute("SELECT count(*) FROM parties")
     print(f"  terceros sembrados      : {cur.fetchone()[0]}")
     cur.execute("SELECT count(*) FROM companies")

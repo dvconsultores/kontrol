@@ -105,3 +105,50 @@ Medido contra el catálogo de PostgreSQL 18.6, no contra el ORM.
 | 21 | Requisito de N8 oculto por skip | ✅ **2 encontrados y resueltos** |
 | 22 | Alineación ORM/esquema/API | ⬜ tras implementar |
 | 23 | Regresiones N5/N6/N7 planificadas | ✅ |
+
+---
+
+# N8 — SELLO FINAL DE EVIDENCIA
+
+Auditoría de las 23 pruebas de N4 frente a lo que el sello exige.
+
+| Caso | Prueba existente | ¿Ejecución real? | Brecha |
+|---|---|---|---|
+| `MC-A` | `test_clasifica_los_cinco_casos_del_legado` | Sí, sobre el fixture | — |
+| `MC-B` | `test_el_saldo_se_deriva_por_su_almacen` | Sí | — |
+| `MC-C` | `test_clasifica_los_cinco_casos_del_legado` | Sí | — |
+| `MC-D` | **ninguna** | — | **Falta semilla y prueba** |
+| `MC-E` | `test_la_serie_fiscal_ambigua_se_marca_critica_no_ambigua` | Sí | — |
+| `INVALID_LEGACY_SCOPE` | `test_un_valor_que_no_es_tenant_ni_empresa_no_es_un_hueco` | **No**: solo compara el valor del enum | **Falta ejecución** |
+| `CROSS_TENANT` | Misma prueba, misma limitación | **No** | **Falta ejecución** |
+| `MASTER_ASSIGN` | `test_un_maestro_compartido_se_clona_no_se_adjudica` | **No**: llamada directa con conjuntos sintéticos | **Falta fixture y ejecución** |
+| `MASTER_CLONE` | Ídem | **No** | Ídem |
+| `MASTER_DERIVE` | `test_las_cinco_estrategias_de_maestro_existen` | **No**: solo comprueba que el enum existe | Ídem |
+| `MASTER_MANUAL_REVIEW` | Ídem | **No** | Ídem |
+
+## Dos defectos reales que la auditoría destapó
+
+**`CROSS_TENANT` no se emite nunca.** Una fila cuya empresa existe pero pertenece
+a **otro** tenant entra por la primera rama del clasificador —«¿ya contiene una
+empresa real? entonces no hay nada que reconstruir»— y se marca `OK`. Una
+integridad rota se informa como correcta.
+
+La función `cross_tenant()` existe, pero tiene `LIMIT 0` y un comentario que la
+declara plantilla. Nadie la llama.
+
+**Las estrategias de maestro no se calculan durante una corrida.** `MAESTROS`
+está definido y no se usa; `estrategia_de_maestro` no la invoca el ejecutor. Y
+`MASTER_DERIVE` no puede devolverse: la función recibe solo el conjunto de
+empresas, y «se deduce por una relación obligatoria» no cabe en ese dato.
+
+| # | Comprobación del sello | Estado |
+|---|---|---|
+| 1 | Semilla de `MC-D` | ⬜ |
+| 2 | Ejecución de `INVALID_LEGACY_SCOPE` | ⬜ |
+| 3 | Ejecución de `CROSS_TENANT` | ⬜ (requiere corregir el clasificador) |
+| 4 | Estrategias calculadas en la corrida | ⬜ |
+| 5 | `MASTER_DERIVE` con condición de disparo | ⬜ |
+| 6 | Cero escrituras por caso | ⬜ |
+| 7 | Repetibilidad por caso | ⬜ |
+| 8 | Aserción de existencia de cada semilla | ⬜ |
+| 9 | `INVALID` y `CROSS_TENANT` no degradan a `MC-D` | ⬜ |

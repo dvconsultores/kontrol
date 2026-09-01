@@ -283,3 +283,144 @@ def test_la_base_rechaza_una_escritura_aunque_el_codigo_falle():
         if "does not exist" in str(exc):
             pytest.skip("no hay base legacy en este entorno")
         raise
+
+
+# ===================================================================== N8 sello
+# Evidencia explícita: cada clase con su fila real, su ejecución, cero
+# escrituras y resultado repetible. No basta con que el enum exista.
+
+
+def _clases(informe) -> dict[str, int]:
+    return {k: v for k, v in informe["total"].items() if v}
+
+
+def test_la_semilla_hostil_contiene_los_casos_que_se_van_a_probar(informe):
+    """Antes de comprobar clasificaciones, comprobar que hay qué clasificar.
+
+    Este proyecto ya vivió una vez que el fixture estuviera vacío y las pruebas
+    pasaran igual. Si el informe no trae filas, todo lo que sigue es aritmética
+    sobre la nada.
+    """
+    assert informe["filas"] > 0, "el preflight no encontró ninguna fila que clasificar"
+    assert informe["tenants"] >= 3, "faltan tenants en la semilla"
+    assert informe["empresas"] >= 3, "faltan empresas en la semilla"
+
+
+def test_mc_d_existe_y_no_es_un_cajon_de_sastre(informe):
+    """`MC-D` = `NON_RECONSTRUCTIBLE`: sin evidencia, en dominio no crítico.
+
+    La semilla es un tenant **sin ninguna empresa**: no hay intervalo del que
+    deducir ni autoridad de la que derivar, y anotarlo es todo lo que se puede
+    hacer honestamente.
+    """
+    t = _clases(informe)
+    assert t.get("MC-D", 0) >= 1, f"ninguna fila se clasificó MC-D: {t}"
+
+
+def test_invalid_no_se_degrada_a_sin_evidencia(informe):
+    """Un valor que no es ni tenant ni empresa **ya estaba roto**.
+
+    Clasificarlo como «sin evidencia» lo escondería entre las filas que sí son
+    reconstruibles, y su reparación es de otra naturaleza.
+    """
+    t = _clases(informe)
+    assert t.get("INVALID_LEGACY_SCOPE", 0) >= 1, f"no se emitió INVALID: {t}"
+    r = _clase_de(informe, "parties", None)
+    assert r["por_clase"].get("INVALID_LEGACY_SCOPE", 0) >= 1
+    # Y conserva su detalle crítico: no se cuenta y se olvida.
+    invalidos = [d for d in r["detalle_critico"]
+                 if d["clase"] == "INVALID_LEGACY_SCOPE"]
+    assert invalidos, "INVALID se contó pero no dejó detalle"
+
+
+def test_cross_tenant_no_se_informa_como_correcto(informe):
+    """El defecto que este sello destapó.
+
+    Una fila con empresa **real** pero de otro cliente entraba por la primera
+    rama —«¿ya tiene empresa? entonces nada que hacer»— y se marcaba `OK`. Una
+    integridad rota entre instalaciones se informaba como correcta.
+    """
+    t = _clases(informe)
+    assert t.get("CROSS_TENANT", 0) >= 1, (
+        f"no se emitió CROSS_TENANT: una fila que cruza clientes pasó como buena. {t}")
+    r = _clase_de(informe, "inventory_balances", None)
+    assert r["por_clase"].get("CROSS_TENANT", 0) >= 1
+    cruces = [d for d in r["detalle_critico"] if d["clase"] == "CROSS_TENANT"]
+    assert cruces and cruces[0]["rutas"], "CROSS_TENANT no explica dónde está el cruce"
+
+
+def test_las_clases_criticas_no_se_confunden_entre_si(informe):
+    """§7 del encargo: `MC-D` no puede absorber lo que tiene severidad propia."""
+    t = _clases(informe)
+    assert t.get("INVALID_LEGACY_SCOPE", 0) >= 1
+    assert t.get("CROSS_TENANT", 0) >= 1
+    assert t.get("MC-E", 0) >= 1
+    # Cada una cuenta por su lado: si MC-D las hubiera absorbido, las tres
+    # estarían en cero y MC-D inflado.
+    assert t.get("MC-D", 0) >= 1
+
+
+def test_las_estrategias_de_maestro_se_calculan_en_la_corrida(informe):
+    """Antes existía la función y nadie la llamaba.
+
+    `MAESTROS` estaba definido y sin usar, así que las cuatro estrategias eran
+    nombres en un enum. Ahora el informe las trae por tabla.
+    """
+    maestros = informe.get("maestros") or {}
+    assert maestros, "el informe no trae estrategias de maestro"
+    vistas = {e for conteo in maestros.values() for e in conteo}
+    for esperada in ("MASTER_ASSIGN", "MASTER_CLONE", "MASTER_DERIVE",
+                     "MASTER_MANUAL_REVIEW"):
+        assert esperada in vistas, (
+            f"{esperada} no apareció en ninguna fila de la corrida: {maestros}")
+
+
+def test_el_maestro_compartido_se_clona_y_el_propio_se_adjudica(informe):
+    """La regla de fondo: si dos empresas lo usaron, asignárselo a una rompe a la otra."""
+    maestros = informe.get("maestros") or {}
+    total: dict[str, int] = {}
+    for conteo in maestros.values():
+        for e, n in conteo.items():
+            total[e] = total.get(e, 0) + n
+    assert total.get("MASTER_ASSIGN", 0) >= 1, f"ninguna fila resultó ASSIGN: {total}"
+    assert total.get("MASTER_CLONE", 0) >= 1, (
+        f"ningún maestro compartido se propuso clonar: {total}")
+    assert total.get("MASTER_DERIVE", 0) >= 1, f"DERIVE no se alcanzó: {total}"
+    assert total.get("MASTER_MANUAL_REVIEW", 0) >= 1, f"MANUAL_REVIEW no se alcanzó: {total}"
+
+
+def test_derive_solo_aparece_cuando_hay_relacion_obligatoria():
+    """`DERIVE` no podía devolverse nunca: la función no recibía ese dato.
+
+    El enum lo definía —«se deduce por una relación obligatoria»— y
+    `estrategia_de_maestro` solo veía el conjunto de empresas, donde esa
+    relación no cabe.
+    """
+    from app.core.mc.preflight import MasterStrategy, estrategia_de_maestro
+
+    # Sin ninguna evidencia no hay nada que deducir: revisión manual.
+    assert estrategia_de_maestro(set(), derivable=True) is MasterStrategy.MANUAL
+    assert estrategia_de_maestro(set(), derivable=False) is MasterStrategy.MANUAL
+    # Con una empresa: se adjudica si la evidencia es propia, se deduce si llegó
+    # por la relación. El dato resultante es el mismo y la confianza no.
+    assert estrategia_de_maestro({"co-a"}, derivable=False) is MasterStrategy.ASSIGN
+    assert estrategia_de_maestro({"co-a"}, derivable=True) is MasterStrategy.DERIVE
+    # Con dos, ninguna de las anteriores sirve: adjudicar rompería a la otra.
+    assert estrategia_de_maestro({"co-a", "co-b"}, derivable=True) is MasterStrategy.CLONE
+
+
+def test_cada_clase_se_repite_identica_en_dos_corridas(informe):
+    """Repetibilidad **por clase**, no solo del total.
+
+    Dos corridas que sumaran lo mismo con clases distintas darían el mismo
+    número y significarían cosas diferentes.
+    """
+    from app.core.mc.runner import ejecutar
+
+    url = PG.rsplit("/", 1)[0] + "/kontrol_legacy"
+    segunda = ejecutar(url)
+    assert _clases(segunda) == _clases(informe), "la clasificación cambió entre corridas"
+    assert segunda.get("maestros") == informe.get("maestros"), (
+        "las estrategias de maestro cambiaron entre corridas")
+    assert segunda["cero_escrituras"]["conteos_iguales"] is True
+    assert segunda["cero_escrituras"]["alembic_igual"] is True

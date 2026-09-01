@@ -58,8 +58,47 @@ base heredada desde cero, con esquema en `0032` —una instalación heredada no
 tiene las claves de N7— y las filas que el clasificador debe distinguir sin
 adivinar.
 
-**23 pruebas del preflight**, ejecutándose de verdad, después de retirar las
+**32 pruebas del preflight**, ejecutándose de verdad, después de retirar las
 columnas.
+
+## 4.1 Sello final de evidencia
+
+El primer cierre de N8 escribió «MC-A/B/C/E y OK preservadas», que era cierto y
+no era suficiente: `MC-D` no tenía semilla, e `INVALID_LEGACY_SCOPE` y
+`CROSS_TENANT` solo tenían aserciones sobre el valor del enum. Un nombre no es
+una capacidad.
+
+Al exigir ejecución real aparecieron **dos defectos**:
+
+**`CROSS_TENANT` no se emitía nunca.** Una fila con empresa real pero de otro
+cliente entraba por la primera rama —«¿ya tiene empresa? entonces nada que
+hacer»— y se marcaba `OK`. `cross_tenant()` existía con `LIMIT 0` y un comentario
+que la declaraba plantilla; nadie la llamaba.
+
+**Las estrategias de maestro no se calculaban.** `MAESTROS` estaba definido y sin
+usar, y `MASTER_DERIVE` no podía devolverse porque la función solo recibía el
+conjunto de empresas, donde «se deduce por una relación obligatoria» no cabe.
+
+Resultado tras corregir ambos, sobre el fixture hostil versionado:
+
+```
+MC-A                    PASS   (3 filas)
+MC-B                    PASS   (1)
+MC-C                    PASS   (2)
+MC-D                    PASS   (1)
+MC-E                    PASS   (1)
+INVALID_LEGACY_SCOPE    PASS   (1)
+CROSS_TENANT            PASS   (1)
+OK                      PASS   (6)
+
+MASTER_ASSIGN           PASS   (7)
+MASTER_CLONE            PASS   (1)
+MASTER_DERIVE           PASS   (1)
+MASTER_MANUAL_REVIEW    PASS   (5)
+```
+
+Cada uno con clasificación correcta, cero escrituras y resultado repetible.
+`INVALID` y `CROSS_TENANT` conservan severidad propia y no se degradan a `MC-D`.
 
 ## 5. El último repliegue
 
@@ -112,7 +151,7 @@ como «le falta algo».
 | OpenAPI | 294 rutas, 332 con cabecera declarada |
 | Instalación limpia | 38 migraciones |
 | SQL sin conexión | 160 sentencias revisables |
-| Clasificador y fixture hostil | 23 pruebas en verde |
+| Clasificador y fixture hostil | **32 pruebas** en verde |
 | N5, N6, N7 | sin regresión |
 
 ## 9. Deuda de N8

@@ -163,7 +163,8 @@ def autoridades_de(tabla_meta, tablas_con_empresa: set[str]) -> list[Autoridad]:
 
 def clasificar_tabla(cx: Connection, plan: Plan, historia: dict,
                      empresas: set[str], tenants: set[str],
-                     limite_detalle: int = 25) -> Resultado:
+                     limite_detalle: int = 25,
+                     empresa_a_tenant: dict[str, str] | None = None) -> Resultado:
     """Clasifica cada fila de una tabla. **Sin escribir.**"""
     r = Resultado(tabla=plan.tabla, modulo=plan.modulo)
 
@@ -188,9 +189,23 @@ def clasificar_tabla(cx: Connection, plan: Plan, historia: dict,
     for fila in filas:
         valor = str(fila["company_id"]) if fila["company_id"] is not None else None
 
-        # 1. ¿Ya contiene una empresa real? Entonces no hay nada que reconstruir.
+        # 1. ¿Ya contiene una empresa real? Entonces no hay nada que
+        #    reconstruir… salvo que esa empresa sea de **otro** tenant.
         if valor in empresas:
-            r.suma(MC.OK)
+            cruce = _cruza_tenant(fila, plan, mapas, valor, empresa_a_tenant or {})
+            if cruce is None:
+                r.suma(MC.OK)
+                continue
+            # Integridad rota antes de empezar, no una migración pendiente.
+            # Marcarla `OK` —como se hacía— informaba de correcto un dato que
+            # cruza la frontera entre clientes.
+            r.suma(MC.CROSS_TENANT)
+            if len(r.detalle_critico) < limite_detalle:
+                r.detalle_critico.append({
+                    "tabla": plan.tabla, "id": str(fila["id"]),
+                    "valor_actual": valor, "fecha": str(fila["created_at"]),
+                    "clase": MC.CROSS_TENANT.value, "criticidad": plan.criticidad,
+                    "candidatas": [], "rutas": [cruce]})
             continue
 
         # 1b. Un valor que no es ni tenant ni empresa conocidos no es un hueco:
@@ -286,15 +301,51 @@ def cross_tenant(cx: Connection, tabla: str) -> list[dict]:
         return []
 
 
-def estrategia_de_maestro(companies_que_lo_usan: set[str]) -> MasterStrategy:
+def _cruza_tenant(fila, plan, mapas, valor: str,
+                  empresa_a_tenant: dict[str, str]) -> str | None:
+    """¿La empresa de la fila es de otro tenant que la de su autoridad?
+
+    Sin autoridades no se puede saber: una tabla suelta con una empresa válida
+    no tiene con qué contrastarse, y suponer sería inventar. Con autoridad, la
+    comparación es exacta — el almacén, la orden o el documento del que cuelga
+    la fila dice a qué tenant pertenece de verdad.
+
+    Devuelve la explicación del cruce, o `None` si no lo hay.
+    """
+    tenant_fila = empresa_a_tenant.get(valor)
+    if tenant_fila is None:
+        return None
+    for a in plan.autoridades:
+        ref = fila.get(a.columna)
+        if ref is None:
+            continue
+        empresa_autoridad = mapas[a.columna].get(str(ref))
+        if empresa_autoridad is None:
+            continue
+        tenant_autoridad = empresa_a_tenant.get(empresa_autoridad)
+        if tenant_autoridad is not None and tenant_autoridad != tenant_fila:
+            return (f"{a.columna} apunta a {empresa_autoridad} (tenant "
+                    f"{tenant_autoridad}) y la fila dice {valor} (tenant {tenant_fila})")
+    return None
+
+
+def estrategia_de_maestro(companies_que_lo_usan: set[str],
+                          derivable: bool = False) -> MasterStrategy:
     """Cómo se normaliza un maestro según quién lo usó.
 
     La pregunta correcta no es «¿de quién es?» sino «¿cuántas empresas lo
     usaron?». Si fueron dos, asignárselo a una rompería a la otra.
+
+    `derivable` dice si existe una relación obligatoria que determine la
+    empresa. Sin ese dato, `DERIVE` no podía devolverse nunca: el enum lo
+    definía —«se deduce por una relación obligatoria»— y la función solo recibía
+    el conjunto de empresas, donde esa relación no cabe.
     """
     n = len(companies_que_lo_usan)
-    if n == 1:
-        return MasterStrategy.ASSIGN
     if n > 1:
         return MasterStrategy.CLONE
+    if n == 1:
+        # Una sola empresa: se adjudica si la evidencia es propia, se deduce si
+        # llegó por la relación. El resultado es el mismo dato y la confianza no.
+        return MasterStrategy.DERIVE if derivable else MasterStrategy.ASSIGN
     return MasterStrategy.MANUAL

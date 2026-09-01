@@ -288,3 +288,29 @@ Cada requisito con su código, su prueba y su evidencia. Sin huérfanos.
 | NFR-N8-004 sin deriva | — | §7 | T-011 | — | `test_n7_structure` | `n8-openapi-contract-report.md` | ✅ |
 
 **Requisitos huérfanos: 0. Tareas huérfanas: 0. Cobertura: 100%.**
+
+---
+
+# N8 — SELLO FINAL DE EVIDENCIA
+
+Una fila por caso. No se admite una entrada genérica del tipo «fixture hostil PASS».
+
+| Caso | Regla del clasificador | Semilla | Prueba | Ejecución | Evidencia |
+|---|---|---|---|---|---|
+| `MC-A` | `empresa_unica_en` sobre el intervalo | Tercero y serie de tenant monoempresa | `test_clasifica_los_cinco_casos_del_legado` | 3 filas | `n8-hostile-fixture-report.md` §Classification |
+| `MC-B` | Derivación por autoridad única | Saldo con artículo | `test_el_saldo_se_deriva_por_su_almacen` | 1 fila | ídem |
+| `MC-C` | Dos candidatas, o autoridades discrepantes | Tercero posterior a la 2ª empresa | `test_clasifica_los_cinco_casos_del_legado` | 2 filas | ídem |
+| `MC-D` | Tenant sin empresas, dominio no crítico | Tercero de tenant vacío | `test_mc_d_existe_y_no_es_un_cajon_de_sastre` | 1 fila | ídem |
+| `MC-E` | Sin evidencia **y** dominio crítico | Serie fiscal ambigua | `test_la_serie_fiscal_ambigua_se_marca_critica_no_ambigua` | 1 fila | ídem |
+| `INVALID_LEGACY_SCOPE` | Valor que no es tenant ni empresa | Tercero con id inventado | `test_invalid_no_se_degrada_a_sin_evidencia` | 1 fila | ídem |
+| `CROSS_TENANT` | Empresa real de otro tenant que su autoridad | Saldo cruzado | `test_cross_tenant_no_se_informa_como_correcto` | 1 fila | ídem |
+| `MASTER_ASSIGN` | Una empresa, evidencia propia | Artículo por empresa | `test_el_maestro_compartido_se_clona_y_el_propio_se_adjudica` | 7 filas | ídem §Master |
+| `MASTER_CLONE` | Dos empresas | Movimiento con artículo y tipo de empresas distintas | ídem | 1 fila | ídem |
+| `MASTER_DERIVE` | Una empresa, por relación obligatoria | Fila sin empresa propia | ídem + `test_derive_solo_aparece_cuando_hay_relacion_obligatoria` | 1 fila | ídem |
+| `MASTER_MANUAL_REVIEW` | Ninguna evidencia | Artículo sin empresa ni relación | ídem | 5 filas | ídem |
+| Cero escrituras | `SET TRANSACTION READ ONLY` + solo `SELECT` | — | `test_el_preflight_no_escribe_nada`, `test_la_base_rechaza_una_escritura_aunque_el_codigo_falle` | conteos y `alembic_version` iguales | ídem §Zero-write |
+| Repetibilidad | — | — | `test_cada_clase_se_repite_identica_en_dos_corridas` | 2 corridas | ídem §Repeatability |
+| Semillas presentes | — | — | `test_la_semilla_hostil_contiene_los_casos_que_se_van_a_probar` + aserciones del sembrador | — | ídem §Fixture |
+| Severidad no degradada | — | — | `test_las_clases_criticas_no_se_confunden_entre_si` | 4 clases con recuento propio | ídem §Severidad |
+
+**Casos: 11 · Requisitos: FR-N8-015→018 · Pruebas: 32 · Huérfanos: 0.**
