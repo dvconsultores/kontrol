@@ -98,3 +98,72 @@ destino heredado que leer y adivinar su forma sería inventar el requisito.
 **`N7 CONVERGED`**
 
 No es `ARCH-MC-001 COMPLETE_100`.
+
+---
+
+# N8 — CONTRATO Y RETIRADA DE LO TRANSITORIO
+
+## 1. Requisitos frente a implementación
+
+26 funcionales, 4 no funcionales, 10 criterios de aceptación. **40/40**
+implementados y probados. Sin tarea: 0. Sin prueba: 0.
+
+## 2. Tareas
+
+Diecisiete, todas cerradas. Dos cerraron **sin producir código**, y el documento
+lo dice en vez de inventarles trabajo:
+
+- **T-N8-002 (lectura y escritura doble)**: no existían. Las columnas de
+  respaldo se crearon y el backfill que las habría usado resultó innecesario, así
+  que nunca hubo transición que desmontar. La ausencia no es un logro de N8: es
+  la consecuencia de haber cerrado la ventana a tiempo.
+- **T-N8-004 (cargas útiles heredadas)**: N5 cerró el último caso.
+
+## 3. El hallazgo material
+
+El clasificador de N4 había quedado ciego tras N7 y **dos skips lo ocultaban**.
+Se corrigió antes de retirar nada, que es el orden que el plan imponía por una
+razón concreta: borrar primero habría convertido un fallo detectable en uno
+silencioso.
+
+## 4. Migraciones frente a modelos
+
+`0038` retira 160 columnas que ningún modelo declaraba. La prueba de paridad de
+N7 sigue verde.
+
+## 5. Contrato frente a runtime
+
+332 operaciones declaran la cabecera, 72 no, y las dos direcciones se comprueban.
+Se declara opcional porque el servidor la resuelve solo con una empresa
+accesible: decirla obligatoria describiría un sistema distinto.
+
+Además del contrato se prueba el comportamiento, que es lo que evita que las dos
+descripciones se separen con el tiempo.
+
+## 6. Skips
+
+De 16 a 14. Los dos que desaparecieron ocultaban trabajo de N8.
+`N8_REQUIREMENT_HIDDEN_BY_SKIP = 0`.
+
+## 7. Deuda oculta
+
+**Ninguna.** No queda repliegue activo, lectura ni escritura doble, columna
+transitoria en el esquema operativo, ni contrato que mienta sobre el contexto.
+
+La capacidad de migración se conserva y **mejora**: el clasificador ya no
+depende del modelo de la versión que lo ejecuta.
+
+## 8. Trabajo de otras fases colado
+
+| Fase | Comprobación | Resultado |
+|---|---|---|
+| N9 | `REM-046-001`, tipos de recurso, reconvergencia de 046 | sin tocar |
+| N10 | Convergencia global | sin ejecutar |
+| Spec 012 | — | sin implementar |
+| Specs 052 / 053 | Solo contrato documental | sin implementar |
+
+## 9. Veredicto
+
+**`N8 CONVERGED`**
+
+No es `ARCH-MC-001 COMPLETE_100`.

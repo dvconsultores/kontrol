@@ -253,3 +253,38 @@ Cada requisito con su código, su prueba y su evidencia. Sin huérfanos.
 | NFR-N7-006 sin romper lo válido | §20 | §9 | T-017, T-018 | correcciones | regresión completa | `n7-regression-report.md` | ✅ |
 
 **Requisitos huérfanos: 0. Tareas huérfanas: 0. Cobertura: 100%.**
+
+---
+
+# N8 — CONTRATO Y RETIRADA DE LO TRANSITORIO
+
+| Requisito | Aclaración | Plan | Tarea | Código / migración | Prueba | Evidencia | Estado |
+|---|---|---|---|---|---|---|---|
+| FR-N8-001 sin `legacy_scope_id` | §1–4 | §6 | T-010 | `0038` | `test_n8_contract::columnas` | `n8-legacy-removal-inventory.md` | ✅ |
+| FR-N8-002 sin `scope_backfill_class` | ídem | §6 | T-010 | `0038` | ídem | ídem | ✅ |
+| FR-N8-003 sin lectura doble | §11 | §1 | T-002 | — (no existía) | `test_n8_contract` | `n8-dual-read-write-report.md` | ✅ |
+| FR-N8-004 sin escritura doble | ídem | §1 | T-002 | — | ídem | ídem | ✅ |
+| FR-N8-005 sin repliegue | §11 | §4 | T-008 | `organization/service.py` +4 | `test_n8_contract::repliegue` | `n8-fallback-removal-report.md` | ✅ |
+| FR-N8-006 sin ayudante ambiguo | ídem | §4 | T-008 | ídem | ídem | ídem | ✅ |
+| FR-N8-007 alcance canónico | §11 | §4 | T-008 | ídem | `test_architecture_scope` | ídem | ✅ |
+| FR-N8-008 cabecera declarada | §13–17 | §5 | T-009 | `company_context.py` | `test_n8_contract::declaran` | `n8-company-header-contract.md` | ✅ |
+| FR-N8-009 refleja la auto-resolución | ídem | §5 | T-009 | ídem | `test_n8_contract::opcional` | ídem | ✅ |
+| FR-N8-010 omisión con una empresa | ídem | §5 | T-009 | — | `test_n8_contract::omitirse` | ídem | ✅ |
+| FR-N8-011 error con varias | ídem | §5 | T-009 | — | `test_n8_contract::ausencia` | ídem | ✅ |
+| FR-N8-012 no concede acceso | ídem | §5 | T-009 | — | suite de N6 | ídem | ✅ |
+| FR-N8-013 preflight ejecutable | §8–10 | §3 | T-007 | `mc/runner.py` | `test_mc_preflight` (23) | `n8-n4-compatibility-report.md` | ✅ |
+| FR-N8-014 clasifica contra el destino | ídem | §3 | T-007 | ídem | ídem | ídem | ✅ |
+| FR-N8-015 fixture hostil | §20–21 | §2 | T-006 | `qa/n4-legacy-hostile-seed.py` | ídem | `n8-hostile-fixture-report.md` | ✅ |
+| FR-N8-016→018 clases preservadas | ídem | §2 | T-012 | — | ídem | ídem | ✅ |
+| FR-N8-019→021 nulos globales | §18–19 | §7 | T-013 | — | `test_n8_contract::global` | `n8-legacy-removal-inventory.md` | ✅ |
+| FR-N8-022 alineación | — | §7 | T-011 | — | `test_n7_structure::orm_y_base` | `n8-orm-schema-cleanup-report.md` | ✅ |
+| FR-N8-023 documentación | §23 | §7 | T-015 | `canonical-scope-matrix.md` | — | `n8-runtime-contract-inventory.md` | ✅ |
+| FR-N8-024 cargas útiles | §12 | §7 | T-004 | — | familia de N5 | ídem | ✅ |
+| FR-N8-025 skips auditados | §20–21 | §7 | T-014 | — | — | `n8-skipped-tests-audit.md` | ✅ |
+| FR-N8-026 N5/N6/N7 verdes | — | §7 | T-016 | — | suites completas | `n8-regression-report.md` | ✅ |
+| NFR-N8-001 migraciones pequeñas | — | §6 | T-010 | `0038` | — | `n8-orm-schema-cleanup-report.md` | ✅ |
+| NFR-N8-002 fixture reproducible | §20 | §2 | T-006 | `qa/…-seed.py` | `test_mc_preflight` | `n8-hostile-fixture-report.md` | ✅ |
+| NFR-N8-003 solo lectura y repetible | — | §7 | T-012 | — | `test_el_preflight_no_escribe_nada` | `n8-n4-compatibility-report.md` | ✅ |
+| NFR-N8-004 sin deriva | — | §7 | T-011 | — | `test_n7_structure` | `n8-openapi-contract-report.md` | ✅ |
+
+**Requisitos huérfanos: 0. Tareas huérfanas: 0. Cobertura: 100%.**

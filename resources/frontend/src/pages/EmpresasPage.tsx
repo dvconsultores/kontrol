@@ -16,7 +16,7 @@ import { SearchInput } from "@/components/SearchInput";
 const columnHelper = createColumnHelper<CompanySummary>();
 
 export function EmpresasPage(): React.JSX.Element {
-  const { activeCompany, setActiveCompany } = useCompany();
+  const { activeCompany, selectCompany, clearCompany } = useCompany();
   const { notify } = useNotifications();
   const [search, setSearch] = useState("");
 
@@ -27,7 +27,7 @@ export function EmpresasPage(): React.JSX.Element {
   });
 
   const activate = (company: CompanySummary): void => {
-    setActiveCompany(company);
+    selectCompany(company.id);
     notify({
       type: "success",
       title: "Empresa activada",
@@ -36,7 +36,7 @@ export function EmpresasPage(): React.JSX.Element {
   };
 
   const deactivate = (): void => {
-    setActiveCompany(null);
+    clearCompany();
     notify({
       type: "info",
       title: "Empresa desactivada",

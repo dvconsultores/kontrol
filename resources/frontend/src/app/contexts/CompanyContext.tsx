@@ -61,8 +61,8 @@ interface CompanyContextValue {
   refreshCompanies: () => Promise<void>;
   /** El backend rechazó la empresa activa: se descarta y se recalcula. */
   onCompanyRejected: () => void;
-  /** Compatibilidad con el código anterior. */
-  setActiveCompany: (company: CompanySummary | null) => void;
+  /** Suelta el contexto de esta pestaña y vuelve a la pantalla de selección. */
+  clearCompany: () => void;
 }
 
 const Ctx = createContext<CompanyContextValue | null>(null);
@@ -261,18 +261,14 @@ export function CompanyProvider({ children }: { children: ReactNode }): React.JS
     void cargar();
   }, [cargar, userId]);
 
-  const setActiveCompany = useCallback(
-    (company: CompanySummary | null) => {
-      if (company === null) {
-        idRef.current = null;
-        setActiveId(null);
-        escrituraDePestana(userId, null);
-        return;
-      }
-      selectCompany(company.id);
-    },
-    [selectCompany, userId],
-  );
+  const clearCompany = useCallback(() => {
+    // Sustituye a `setActiveCompany(null | empresa)`, que aceptaba las dos
+    // cosas y dejaba dos formas de hacer lo mismo. Elegir empresa y soltarla
+    // son operaciones distintas y ahora se llaman distinto.
+    idRef.current = null;
+    setActiveId(null);
+    escrituraDePestana(userId, null);
+  }, [userId]);
 
   const activeCompany = useMemo(
     () => companies.find((c) => c.id === activeCompanyId) ?? null,
@@ -300,9 +296,9 @@ export function CompanyProvider({ children }: { children: ReactNode }): React.JS
       selectCompany,
       refreshCompanies: cargar,
       onCompanyRejected,
-      setActiveCompany,
+      clearCompany,
     }),
-    [companies, activeCompany, activeCompanyId, estado, error, selectCompany, cargar, onCompanyRejected, setActiveCompany],
+    [companies, activeCompany, activeCompanyId, estado, error, selectCompany, cargar, onCompanyRejected, clearCompany],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
