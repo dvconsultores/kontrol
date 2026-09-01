@@ -182,3 +182,31 @@ No existe una tarea «normalizar 82 tablas».
 | N10 Pruebas | 13 | **XL** |
 | N11 Gobierno | 3 | M |
 | **Total** | **103** | — |
+
+---
+
+# N7 — TAREAS
+
+Cada una con su requisito, su código y su prueba.
+
+| Tarea | Requisito | Código / migración | Prueba |
+|---|---|---|---|
+| T-N7-001 Inventario del catálogo | NFR-N7-004 | script de inventario | `n7-postgresql-catalog-evidence.md` |
+| T-N7-002 Reconciliar ORM / migraciones / catálogo | NFR-N7-004 | — | `test_n7_structure.py::paridad` |
+| T-N7-003 Declarar alcance en las 13 sin declarar | FR-N7-004 | `organization/models.py` | `test_architecture_scope.py` |
+| T-N7-004 Claves foráneas de empresa | FR-N7-001, 006, 026 | `0033_n7_company_fk` | `test_n7_structure.py::fk_company` |
+| T-N7-005 Claves foráneas de tenant | FR-N7-002 | `0034_n7_tenant_fk` | `test_n7_structure.py::fk_tenant` |
+| T-N7-006 Obligatoriedad de empresa | FR-N7-029 | `0035_n7_not_null` | `test_n7_structure.py::not_null` |
+| T-N7-007 Coherencia empresa/almacén | FR-N7-014 | `0036_n7_consistency` | `test_n7_corruption.py::almacen_ajeno` |
+| T-N7-008 Índices justificados | NFR-N7-005 | `0037_n7_indexes` | `n7-performance-evidence.md` |
+| T-N7-009 Unicidad: verificar, no cambiar | FR-N7-007→010 | — | `test_n7_corruption.py::unicidad` |
+| T-N7-010 Corrupción por SQL directo | FR-N7-030, AC-001→006 | — | `test_n7_corruption.py` |
+| T-N7-011 Rutas derivadas | FR-N7-004, 005, 027 | — | `test_n7_structure.py::derivadas` |
+| T-N7-012 Fiscal P0 | FR-N7-016→022 | — | `test_n7_corruption.py::fiscal` |
+| T-N7-013 Paridad de cálculo fiscal | FR-N7-023, AC-008 | — | suite fiscal existente |
+| T-N7-014 Instalación limpia | NFR-N7-003 | — | `n7-migration-report.md` |
+| T-N7-015 SQL sin conexión | NFR-N7-002 | — | `n7-migration-report.md` |
+| T-N7-016 Fixture hostil y aborto | AC-N7-007 | — | `n7-migration-report.md` |
+| T-N7-017 Regresión N5 | AC-N7-009 | — | suites `test_mc_*` |
+| T-N7-018 Regresión N6 | AC-N7-009 | — | Vitest + Playwright |
+| T-N7-019 Cierre y convergencia | — | `convergence.md` | `n7-final-checkpoint.md` |

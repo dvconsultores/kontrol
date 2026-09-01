@@ -11,15 +11,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.core.scope import Scope
 from app.shared.mixins import CreatedByMixin, StatusMixin, TimestampMixin, UUIDMixin, VersionMixin
 
 
 class Installation(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "installations"
+    __scope__ = Scope.GLOBAL
 
     installation_uuid: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
     public_key: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -31,6 +33,7 @@ class Installation(UUIDMixin, TimestampMixin, Base):
 
 class Tenant(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "tenants"
+    __scope__ = Scope.INSTALLATION
 
     installation_id: Mapped[str] = mapped_column(ForeignKey("installations.id"), nullable=False, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -44,6 +47,7 @@ class Tenant(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 class Company(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base):
     __tablename__ = "companies"
+    __scope__ = Scope.TENANT
 
     tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -61,6 +65,7 @@ class Company(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base):
 
 class Branch(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base):
     __tablename__ = "branches"
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -74,6 +79,10 @@ class Branch(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base):
 
 class Establishment(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base):
     __tablename__ = "establishments"
+    __scope__ = Scope.COMPANY
+    #: Deriva su empresa de la sucursal que lo contiene. La clave es obligatoria,
+    #: así que la ruta nunca se corta.
+    __scope_authority__ = "branch_id → branches"
 
     branch_id: Mapped[str] = mapped_column(ForeignKey("branches.id"), nullable=False, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -92,6 +101,7 @@ class ZoneType(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base):
     """
 
     __tablename__ = "zone_types"
+    __scope__ = Scope.COMPANY
     __table_args__ = (UniqueConstraint("company_id", "code", name="uq_zone_types_company_code"),)
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
@@ -105,6 +115,7 @@ class LocationType(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base)
     disponible de las de tránsito, cuarentena o daño (CL-008-04)."""
 
     __tablename__ = "location_types"
+    __scope__ = Scope.COMPANY
     __table_args__ = (UniqueConstraint("company_id", "code", name="uq_location_types_company_code"),)
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
@@ -115,8 +126,13 @@ class LocationType(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base)
 
 class Warehouse(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, VersionMixin, Base):
     __tablename__ = "warehouses"
+    __scope__ = Scope.COMPANY
     __table_args__ = (
         UniqueConstraint("company_id", "code", name="uq_warehouses_company_code"),
+        # Destino de la clave compuesta que ata la estructura interna a su
+        # empresa. Es redundante con la clave primaria en cuanto a unicidad, y
+        # necesaria para poder referenciar el par completo (ARCH-MC-001 N7).
+        UniqueConstraint("company_id", "id", name="uq_warehouses_company_id"),
         Index("ix_warehouses_company_status", "company_id", "status"),
     )
 
@@ -144,13 +160,20 @@ class Warehouse(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, VersionM
 
 class WarehouseZone(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, VersionMixin, Base):
     __tablename__ = "warehouse_zones"
+    __scope__ = Scope.COMPANY
+    #: La empresa y el almacén no pueden contradecirse: el par tiene que
+    #: existir tal cual en `warehouses` (ARCH-MC-001 N7).
     __table_args__ = (
+        ForeignKeyConstraint(
+            ["company_id", "warehouse_id"], ["warehouses.company_id", "warehouses.id"],
+            name="fk_warehouse_zones_company_warehouse",
+        ),
         UniqueConstraint("warehouse_id", "code", name="uq_warehouse_zones_wh_code"),
         Index("ix_warehouse_zones_wh_sequence", "warehouse_id", "sequence"),
     )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
-    warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
+    warehouse_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     zone_type_id: Mapped[str | None] = mapped_column(ForeignKey("zone_types.id"), nullable=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -160,13 +183,20 @@ class WarehouseZone(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Vers
 
 class WarehouseAisle(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, VersionMixin, Base):
     __tablename__ = "warehouse_aisles"
+    __scope__ = Scope.COMPANY
+    #: La empresa y el almacén no pueden contradecirse: el par tiene que
+    #: existir tal cual en `warehouses` (ARCH-MC-001 N7).
     __table_args__ = (
+        ForeignKeyConstraint(
+            ["company_id", "warehouse_id"], ["warehouses.company_id", "warehouses.id"],
+            name="fk_warehouse_aisles_company_warehouse",
+        ),
         UniqueConstraint("warehouse_id", "code", name="uq_warehouse_aisles_wh_code"),
         Index("ix_warehouse_aisles_wh_sequence", "warehouse_id", "sequence"),
     )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
-    warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
+    warehouse_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     # Opcional: un almacén con pasillos y sin zonas es válido (R-008-1).
     zone_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_zones.id"), nullable=True, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -177,13 +207,20 @@ class WarehouseAisle(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Ver
 
 class WarehouseRack(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, VersionMixin, Base):
     __tablename__ = "warehouse_racks"
+    __scope__ = Scope.COMPANY
+    #: La empresa y el almacén no pueden contradecirse: el par tiene que
+    #: existir tal cual en `warehouses` (ARCH-MC-001 N7).
     __table_args__ = (
+        ForeignKeyConstraint(
+            ["company_id", "warehouse_id"], ["warehouses.company_id", "warehouses.id"],
+            name="fk_warehouse_racks_company_warehouse",
+        ),
         UniqueConstraint("warehouse_id", "code", name="uq_warehouse_racks_wh_code"),
         Index("ix_warehouse_racks_wh_sequence", "warehouse_id", "sequence"),
     )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
-    warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
+    warehouse_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     aisle_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_aisles.id"), nullable=True, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -193,13 +230,20 @@ class WarehouseRack(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Vers
 
 class WarehouseLevel(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, VersionMixin, Base):
     __tablename__ = "warehouse_levels"
+    __scope__ = Scope.COMPANY
+    #: La empresa y el almacén no pueden contradecirse: el par tiene que
+    #: existir tal cual en `warehouses` (ARCH-MC-001 N7).
     __table_args__ = (
+        ForeignKeyConstraint(
+            ["company_id", "warehouse_id"], ["warehouses.company_id", "warehouses.id"],
+            name="fk_warehouse_levels_company_warehouse",
+        ),
         UniqueConstraint("warehouse_id", "code", name="uq_warehouse_levels_wh_code"),
         Index("ix_warehouse_levels_wh_sequence", "warehouse_id", "sequence"),
     )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
-    warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
+    warehouse_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     rack_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_racks.id"), nullable=True, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -219,7 +263,14 @@ class WarehouseLocation(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, 
     """
 
     __tablename__ = "warehouse_locations"
+    __scope__ = Scope.COMPANY
+    #: La empresa y el almacén no pueden contradecirse: el par tiene que
+    #: existir tal cual en `warehouses` (ARCH-MC-001 N7).
     __table_args__ = (
+        ForeignKeyConstraint(
+            ["company_id", "warehouse_id"], ["warehouses.company_id", "warehouses.id"],
+            name="fk_warehouse_locations_company_warehouse",
+        ),
         UniqueConstraint("warehouse_id", "code", name="uq_warehouse_locations_wh_code"),
         Index("ix_warehouse_locations_wh_status", "warehouse_id", "status"),
         Index("ix_warehouse_locations_physical_order",
@@ -229,7 +280,7 @@ class WarehouseLocation(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, 
     )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
-    warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
+    warehouse_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     zone_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_zones.id"), nullable=True)
     aisle_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_aisles.id"), nullable=True)
     rack_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_racks.id"), nullable=True)

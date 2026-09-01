@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, DateTime, String, Text
+from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -22,7 +22,10 @@ class SystemSetting(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "system_settings"
     __scope__ = Scope.INSTALLATION
 
-    tenant_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    #: Un ajuste puede ser de la instalación entera (tenant nulo) o de un tenant
+    #: concreto. Que pueda faltar no lo exime de referenciar a alguien real.
+    tenant_id: Mapped[str | None] = mapped_column(
+        ForeignKey("tenants.id"), nullable=True, index=True)
     key: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
     value: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
     updated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -45,7 +48,7 @@ class IdempotencyRecord(UUIDMixin, TimestampMixin, Base):
     method: Mapped[str] = mapped_column(String(8), nullable=False)
     path: Mapped[str] = mapped_column(String(255), nullable=False)
     user_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True)
     response_status: Mapped[int] = mapped_column(nullable=False)
     response_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     response_payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
@@ -60,8 +63,8 @@ class OutboxEvent(UUIDMixin, TimestampMixin, Base):
     aggregate_id: Mapped[str] = mapped_column(String(36), nullable=False)
     event_type: Mapped[str] = mapped_column(String(120), nullable=False)
     payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
-    tenant_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    tenant_id: Mapped[str | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
+    company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True)
     request_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

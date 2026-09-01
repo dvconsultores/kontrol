@@ -190,3 +190,189 @@ ARCH-MC-001 corrige la propiedad de lo que **ya existe**. No implementa:
 > El modelo normalizado debe **poder distinguir** A de B para que lo intercompany
 > se construya después. Simular intercompany mezclando datos es justamente el
 > defecto que esta remediación cierra.
+
+---
+
+# 7. FASE N7 — INTEGRIDAD ESTRUCTURAL EN POSTGRESQL
+
+## 7.1 Qué añade N7, y qué no
+
+N5 hizo que el sistema **se comporte** bien con dos empresas. N6 hizo que el
+frontend **opere** bien sobre ese comportamiento. Las dos protecciones viven en
+código: si alguien escribe una consulta nueva, un trabajo de fondo, un script de
+importación o un `INSERT` a mano, las esquiva enteras.
+
+N7 convierte esas invariantes en **estructura**: lo que hoy garantiza el
+servicio pasa a garantizarlo también PostgreSQL, que no se puede olvidar de
+comprobarlo.
+
+N7 **no sustituye** a N5 ni a N6. Es la cuarta capa de una defensa que ya tiene
+tres, y ninguna de las anteriores se retira.
+
+## 7.2 El estado medido, no supuesto
+
+Contra el catálogo real de PostgreSQL 18.6 en el head `0032_mc_expand_tenant_scoped`:
+
+| Hecho | Medida |
+|---|---:|
+| Tablas de alcance COMPANY con `company_id` propio | 88 |
+| De ellas, **sin clave foránea real a `companies`** | **80** |
+| De ellas, con `company_id` **anulable** | **11** |
+| Tablas de alcance COMPANY que derivan su empresa | 35 |
+| De ellas, con ruta válida (FK real y NOT NULL) | **35** |
+| Tablas de alcance TENANT | 14 |
+| De ellas, **sin clave foránea real a `tenants`** | **3** |
+| Claves foráneas existentes en total | 242 |
+| Restricciones UNIQUE (sin contar claves primarias) | 31 |
+
+Dos correcciones documentales que salen de medir en vez de asumir:
+
+**Las rutas derivadas son 35, no 36.** La matriz canónica registraba 36. Al
+comprobarlo contra los modelos vigentes son 35, y las 35 tienen clave foránea
+real y no anulable. La afirmación «ninguna deriva por una FK anulable» se
+confirma; el recuento se corrige.
+
+**`company_id` es texto sin clave foránea en 80 tablas.** N3 las expandió y N5
+las llenó con la empresa correcta, pero la columna sigue siendo una cadena que
+la base no contrasta con nada. Hoy nada impide escribir ahí el identificador de
+un tenant, de una empresa de otro tenant, o de algo que no existe.
+
+## 7.3 Requisitos funcionales
+
+**FR-N7-001** — Toda tabla de alcance COMPANY con `company_id` propio tiene
+clave foránea real a `companies.id`.
+
+**FR-N7-002** — Toda tabla de alcance TENANT con `tenant_id` propio tiene clave
+foránea real a `tenants.id`.
+
+**FR-N7-003** — Toda columna que referencie una sucursal tiene clave foránea
+real a `branches.id`.
+
+**FR-N7-004** — Toda tabla de alcance COMPANY que derive su empresa declara su
+autoridad y esa autoridad existe como columna.
+
+**FR-N7-005** — La columna que determina la empresa por derivación es NOT NULL y
+tiene clave foránea real. Una ruta que puede ser nula no es una ruta.
+
+**FR-N7-006** — Ninguna columna `company_id` puede contener el identificador de
+un tenant. La clave foránea lo impide estructuralmente.
+
+**FR-N7-007** — Cada restricción UNIQUE expresa el alcance funcional de su
+regla, no el que tuviera por conveniencia histórica.
+
+**FR-N7-008** — Una clave de negocio de alcance empresa puede repetirse entre
+dos empresas cuando la regla funcional lo permita.
+
+**FR-N7-009** — Esa misma clave no puede duplicarse dentro de una empresa.
+
+**FR-N7-010** — Las entidades de alcance tenant conservan unicidad por tenant.
+
+**FR-N7-011** — Los catálogos globales y de instalación conservan su alcance. No
+se les añade tenant ni empresa.
+
+**FR-N7-012** — Cuando una tabla guarda a la vez `tenant_id` y `company_id`, no
+puede persistirse una combinación en la que la empresa pertenezca a otro tenant.
+
+**FR-N7-013** — Cuando una tabla guarda a la vez `company_id` y `branch_id`, la
+sucursal debe pertenecer a esa empresa.
+
+**FR-N7-014** — Cuando una tabla guarda a la vez `company_id` y `warehouse_id`
+representando la misma propiedad, el almacén debe pertenecer a esa empresa.
+
+**FR-N7-015** — Cuando una tabla guarda a la vez `company_id` y una cuenta
+bancaria representando la misma propiedad, la cuenta debe pertenecer a esa
+empresa.
+
+**FR-N7-016** — La configuración fiscal pertenece inequívocamente a una empresa.
+
+**FR-N7-017** — Las series de numeración fiscal pertenecen inequívocamente a una
+empresa.
+
+**FR-N7-018** — Los lotes de números de control pertenecen a la empresa
+autorizada, y los números que cuelgan de ellos heredan esa empresa.
+
+**FR-N7-019** — El documento fiscal pertenece a la empresa emisora.
+
+**FR-N7-020** — Libros y cierres pertenecen a la empresa correcta.
+
+**FR-N7-021** — Las retenciones conservan la empresa del agente que las practica.
+
+**FR-N7-022** — La numeración fiscal no se mezcla entre empresas.
+
+**FR-N7-023** — N7 no modifica ninguna fórmula ni ningún importe fiscal.
+
+**FR-N7-024** — Las relaciones financieras mantienen propiedad consistente.
+
+**FR-N7-025** — Las rutas derivadas de inventario mantienen empresa consistente.
+
+**FR-N7-026** — No quedan claves foráneas huérfanas.
+
+**FR-N7-027** — No quedan rutas derivadas rotas.
+
+**FR-N7-028** — No quedan colisiones de unicidad.
+
+**FR-N7-029** — Ninguna autoridad obligatoria queda anulable sin justificación
+registrada.
+
+**FR-N7-030** — PostgreSQL rechaza por sí solo las inserciones estructuralmente
+inválidas, sin depender del código de aplicación.
+
+## 7.4 Requisitos no funcionales
+
+**NFR-N7-001** — Las migraciones son auditables y pequeñas, separadas por
+naturaleza del cambio, no una sola migración masiva.
+
+**NFR-N7-002** — `alembic upgrade --sql` produce SQL válido para las migraciones
+de esquema.
+
+**NFR-N7-003** — Una instalación limpia sobre PostgreSQL 18.6 vacío llega a head
+y opera con dos empresas.
+
+**NFR-N7-004** — El catálogo de PostgreSQL, el ORM y las migraciones coinciden.
+Deriva nueva: cero.
+
+**NFR-N7-005** — Las consultas representativas por empresa no se degradan. Los
+índices que se añadan están justificados por un patrón de consulta real.
+
+**NFR-N7-006** — Las restricciones no rompen ninguna operación funcionalmente
+válida. Si algo se rompe, se busca la causa raíz antes de tocar la restricción.
+
+## 7.5 Criterios de aceptación
+
+**AC-N7-001** — Un `INSERT` directo con el identificador de un tenant en
+`company_id` es rechazado por PostgreSQL con `foreign_key_violation`.
+
+**AC-N7-002** — Un `INSERT` directo con una empresa inexistente es rechazado
+igual.
+
+**AC-N7-003** — Un `INSERT` directo con la autoridad derivada en NULL es
+rechazado con `not_null_violation`.
+
+**AC-N7-004** — La misma clave de negocio en dos empresas distintas se acepta.
+
+**AC-N7-005** — La misma clave repetida dentro de una empresa es rechazada con
+`unique_violation`.
+
+**AC-N7-006** — Una sucursal de otra empresa en una fila que guarda ambas es
+rechazada.
+
+**AC-N7-007** — El fixture hostil de N4, que contiene filas inválidas a
+propósito, **no** pasa las restricciones. Que falle es el resultado correcto.
+
+**AC-N7-008** — Los cálculos fiscales antes y después son idénticos: mismas
+bases, mismos importes, mismos totales.
+
+**AC-N7-009** — Las once regresiones de N5 y las de N6 siguen verdes.
+
+**AC-N7-010** — Fallos inesperados: cero.
+
+## 7.6 Fuera del alcance de N7
+
+No se retira `legacy_scope_id` ni `scope_backfill_class`; no se retira ningún
+mecanismo transicional; no se declara `X-Kontrol-Company` en OpenAPI. Todo eso
+es N8.
+
+No se toca `REM-046-001`, ni los tipos de recurso pendientes, ni la
+reconvergencia de 046. Eso es N9.
+
+No se implementa la Spec 012. No se implementa ninguna capacidad intercompany.

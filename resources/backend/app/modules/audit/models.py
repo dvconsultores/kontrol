@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, String
+from sqlalchemy import JSON, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -17,8 +17,8 @@ class AuditEvent(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "audit_events"
     __scope__ = Scope.TENANT
 
-    tenant_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    tenant_id: Mapped[str | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
+    company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True, index=True)
     user_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     session_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     request_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)

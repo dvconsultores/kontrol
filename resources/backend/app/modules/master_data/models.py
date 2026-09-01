@@ -49,7 +49,7 @@ class Party(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, Sta
     __tablename__ = "parties"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     person_type: Mapped[str] = mapped_column(String(32), nullable=False, default="JURIDICA")
     nationality: Mapped[str | None] = mapped_column(String(64), nullable=True)
     residence: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -167,7 +167,7 @@ class TaxonomyNode(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMix
     __tablename__ = "taxonomy_nodes"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)  # None = global
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)  # None = global
     parent_id: Mapped[str | None] = mapped_column(ForeignKey("taxonomy_nodes.id"), nullable=True)
     level: Mapped[str] = mapped_column(String(32), nullable=False, index=True)  # SECTOR/RUBRO/CATEGORIA/...
     applies_to: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)  # PRODUCT/SERVICE
@@ -177,7 +177,7 @@ class AttributeDefinition(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, 
     __tablename__ = "attribute_definitions"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     data_type: Mapped[str] = mapped_column(String(32), nullable=False, default="TEXT")  # TEXT/NUMBER/DATE/OPTION/BOOLEAN
     unit: Mapped[str | None] = mapped_column(String(64), nullable=True)
     required: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -247,7 +247,7 @@ class UnitOfMeasure(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMi
             name="ck_units_of_measure_dimension"),
     )
 
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True, index=True)
     dimension: Mapped[str] = mapped_column(String(32), nullable=False, default="CANTIDAD")
     symbol: Mapped[str] = mapped_column(String(16), nullable=False)
     decimals: Mapped[int] = mapped_column(Integer, nullable=False, default=2)
@@ -281,7 +281,7 @@ class ProductTemplate(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Name
     __tablename__ = "product_templates"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     behaviors: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
 
 
@@ -289,7 +289,7 @@ class ServiceTemplate(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Name
     __tablename__ = "service_templates"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     billing_mode: Mapped[str] = mapped_column(String(32), nullable=False, default="HOUR")
     recurrence: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     scheduling: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -302,7 +302,7 @@ class CatalogItem(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixi
     __tablename__ = "catalog_items"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     item_type: Mapped[str] = mapped_column(String(16), nullable=False, index=True)  # PRODUCT/SERVICE
     short_description: Mapped[str | None] = mapped_column(String(255), nullable=True)
     long_description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -363,7 +363,7 @@ class Presentation(UUIDMixin, TimestampMixin, CreatedByMixin, NameMixin,
     )
 
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     code: Mapped[str] = mapped_column(String(32), nullable=False)
     unit_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
     #: Dato legado anterior a la Spec 011. **No se usa para calcular**: si alguna
@@ -407,7 +407,7 @@ class ProductPresentationVersion(UUIDMixin, TimestampMixin, CreatedByMixin, Stat
     #: Redundante y deliberado: permite la resolución masiva por documento sin
     #: join adicional (NFR-011-01).
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False)
     factor_to_base: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     factor_uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
     #: `false` cuando la conversión produce fracciones en la unidad base. Debe
@@ -448,7 +448,7 @@ class ProfileVersion(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameM
     __tablename__ = "profile_versions"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     profile_type: Mapped[str] = mapped_column(String(32), nullable=False, index=True)  # INVENTORY/TRACEABILITY/FISCAL/REGULATORY
     effective_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     effective_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

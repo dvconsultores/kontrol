@@ -215,7 +215,7 @@ class ApprovalEvent(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "approval_events"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     request_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     step_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     event_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)

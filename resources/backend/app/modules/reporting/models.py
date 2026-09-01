@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, Text
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -26,7 +26,7 @@ class ReportDefinition(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "report_definitions"
     __scope__ = Scope.TENANT
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     report_key: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     category: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -38,7 +38,7 @@ class ReportExport(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "report_exports"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     report_key: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     format: Mapped[str] = mapped_column(String(8), nullable=False, default="CSV")  # CSV / PDF
     filters: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
@@ -52,7 +52,7 @@ class ReportJob(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "report_jobs"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     report_key: Mapped[str] = mapped_column(String(64), nullable=False)
     params: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="PENDING")

@@ -59,7 +59,7 @@ class FiscalNumberSeries(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "fiscal_number_series"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     establishment_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     document_type: Mapped[str] = mapped_column(String(32), nullable=False)
     prefix: Mapped[str | None] = mapped_column(String(16), nullable=True)
@@ -74,7 +74,7 @@ class ControlNumberBatch(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "control_number_batches"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     establishment_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     printer: Mapped[str | None] = mapped_column(String(120), nullable=True)
     range_from: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -93,7 +93,7 @@ class ControlNumber(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "control_numbers"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     batch_id: Mapped[str] = mapped_column(ForeignKey("control_number_batches.id"), nullable=False, index=True)
     value: Mapped[str] = mapped_column(String(32), nullable=False)
     state: Mapped[str] = mapped_column(String(16), nullable=False, default="AVAILABLE")
@@ -111,7 +111,7 @@ class TaxCalculation(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "tax_calculations"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     document_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
     line_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
     rule_version_id: Mapped[str | None] = mapped_column(ForeignKey("tax_rule_versions.id"), nullable=True)
@@ -128,7 +128,7 @@ class TaxProfile(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "tax_profiles"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     scope: Mapped[str] = mapped_column(String(16), nullable=False)  # COMPANY / PARTY / ITEM
     party_id: Mapped[str | None] = mapped_column(ForeignKey("parties.id"), nullable=True)
     item_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -148,7 +148,7 @@ class FiscalDocument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "fiscal_documents"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     business_document: Mapped[str] = mapped_column(String(200), nullable=False, index=True)  # INVOICE:{id}
     document_type: Mapped[str] = mapped_column(String(32), nullable=False)  # INVOICE / CREDIT_NOTE / DEBIT_NOTE
     fiscal_mode: Mapped[str] = mapped_column(String(24), nullable=False, default="DIGITAL")
@@ -168,7 +168,7 @@ class PrintEvent(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "print_events"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     fiscal_document_id: Mapped[str] = mapped_column(ForeignKey("fiscal_documents.id"), nullable=False, index=True)
     copy_type: Mapped[str] = mapped_column(String(16), nullable=False, default="ORIGINAL")
     printer: Mapped[str | None] = mapped_column(String(120), nullable=True)
@@ -184,7 +184,7 @@ class CreditDebitNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "credit_debit_notes"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     fiscal_document_id: Mapped[str | None] = mapped_column(ForeignKey("fiscal_documents.id"), nullable=True)
     original_document: Mapped[str] = mapped_column(String(200), nullable=False)  # INVOICE:{id}
     note_type: Mapped[str] = mapped_column(String(16), nullable=False)  # CREDIT / DEBIT
@@ -207,7 +207,7 @@ class WithholdingRule(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "withholding_rules"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     tax_type: Mapped[str] = mapped_column(String(16), nullable=False)  # IVA / ISLR
     concept: Mapped[str | None] = mapped_column(String(120), nullable=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -229,7 +229,7 @@ class FiscalPeriod(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "fiscal_periods"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     tax_type: Mapped[str] = mapped_column(String(24), nullable=False)  # IVA / ISLR / IGTF / RETENCION
     period_key: Mapped[str] = mapped_column(String(12), nullable=False)  # 2026-01
     start: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -245,7 +245,7 @@ class TaxReturnBatch(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "tax_return_batches"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     tax_type: Mapped[str] = mapped_column(String(24), nullable=False)
     period: Mapped[str] = mapped_column(String(12), nullable=False)
     files: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)

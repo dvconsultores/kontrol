@@ -25,6 +25,7 @@ from app.modules.master_data.models import (
     UnitConversion,
     UnitOfMeasure,
 )
+from tests.company_seed import EMPRESA_UNO, sembrar_empresas
 
 
 @pytest.fixture()
@@ -34,13 +35,18 @@ def db_session():
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
     session = session_factory()
+    # Las empresas se crean de verdad: con las claves foráneas de N7, guardar
+    # bajo una cadena inventada ya no es posible, y tampoco debería haberlo sido.
+    sembrar_empresas(session)
+    session.commit()
     try:
         yield session
     finally:
         session.close()
 
 
-COMPANY = "tenant-1"
+#: Empresa **real**, sembrada por `db_session`.
+COMPANY = EMPRESA_UNO
 
 
 class TestPartyAndDuplicidad:

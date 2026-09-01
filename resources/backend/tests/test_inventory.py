@@ -27,6 +27,7 @@ from app.modules.inventory.models import (
 )
 from app.modules.master_data.models import CatalogItem
 from app.modules.organization.models import Warehouse
+from tests.company_seed import EMPRESA_DOS, EMPRESA_UNO
 
 
 @pytest.fixture()
@@ -43,8 +44,11 @@ def db_session():
         session.close()
 
 
-COMPANY = "tenant-1"
-OTHER = "tenant-2"
+#: Empresas **reales**, sembradas por `db_session`. Antes eran la cadena
+#: «tenant-1», que no era ni empresa ni tenant y solo se aceptaba porque la
+#: base no comprobaba nada.
+COMPANY = EMPRESA_UNO
+OTHER = EMPRESA_DOS
 
 
 def _make_warehouse(db: Session, company: str = COMPANY, code: str = "W-01", name: str = "Principal") -> Warehouse:
@@ -62,7 +66,10 @@ def _make_product(db: Session, company: str = COMPANY, code: str = "P-001", name
 
 
 def _make_mtype(db: Session, code: str, direction: str) -> MovementType:
-    mt = MovementType(company_id=None, code=code, name=code, direction=direction, affects_balance=True, status="ACTIVE")
+    # Con empresa real: un tipo de movimiento es configuración de una empresa,
+    # no un catálogo compartido entre todas.
+    mt = MovementType(company_id=COMPANY, code=code, name=code, direction=direction,
+                      affects_balance=True, status="ACTIVE")
     db.add(mt)
     db.flush()
     return mt

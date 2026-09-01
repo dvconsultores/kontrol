@@ -47,7 +47,7 @@ class MovementType(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMix
     __scope__ = Scope.COMPANY
     __table_args__ = (UniqueConstraint("company_id", "code", name="uq_movement_types_company_code"),)
 
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)  # None = global
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)  # None = global
     direction: Mapped[str] = mapped_column(String(16), nullable=False)  # IN / OUT / INTERNAL
     affects_balance: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
@@ -59,7 +59,7 @@ class InventoryMovement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __scope__ = Scope.COMPANY
     __table_args__ = (Index("ix_inventory_movements_uom_id", "uom_id"),)
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
     location_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_locations.id"), nullable=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
@@ -88,7 +88,7 @@ class InventoryLot(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __scope__ = Scope.COMPANY
     __table_args__ = (UniqueConstraint("company_id", "product_id", "lot_number", name="uq_inventory_lots_company_product_lot"),)
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
     lot_number: Mapped[str] = mapped_column(String(120), nullable=False)
     manufacture_date: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -105,7 +105,7 @@ class ProductSerial(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __scope__ = Scope.COMPANY
     __table_args__ = (UniqueConstraint("company_id", "serial", name="uq_product_serials_company_serial"),)
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
     serial: Mapped[str] = mapped_column(String(120), nullable=False)  # texto
     imei1: Mapped[str | None] = mapped_column(String(40), nullable=True)
@@ -130,7 +130,7 @@ class InventoryBalance(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "inventory_balances"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
     # FK real desde la Spec 008: la ubicación es una dimensión del saldo, no
     # una referencia lógica sin integridad (FR-008-054, P23).
@@ -155,7 +155,7 @@ class Reservation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __scope__ = Scope.COMPANY
     __table_args__ = (Index("ix_reservations_uom_id", "uom_id"),)
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     source_document: Mapped[str | None] = mapped_column(String(200), nullable=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
@@ -177,7 +177,7 @@ class Transfer(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "transfers"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     origin_warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
     destination_warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
     request_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -214,7 +214,7 @@ class StockCount(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "stock_counts"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
     plan_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
     scope: Mapped[list] = mapped_column(JSON, nullable=False, default=list)  # filtros del alcance
@@ -254,7 +254,7 @@ class InventoryAdjustment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __scope__ = Scope.COMPANY
     __table_args__ = (Index("ix_inventory_adjustments_uom_id", "uom_id"),)
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)  # >0 suma, <0 resta
@@ -277,7 +277,7 @@ class CostLayer(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "cost_layers"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
     receipt_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -296,7 +296,7 @@ class CostingProfile(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Versi
     __tablename__ = "costing_profiles"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)  # None = global
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)  # None = global
     product_id: Mapped[str | None] = mapped_column(ForeignKey("catalog_items.id"), nullable=True)
     method: Mapped[str] = mapped_column(String(16), nullable=False, default="AVERAGE")  # AVERAGE / FIFO
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")

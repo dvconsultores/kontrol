@@ -36,7 +36,7 @@ class RegulatoryAuthority(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, 
     __tablename__ = "regulatory_authorities"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     validation_method: Mapped[str | None] = mapped_column(String(64), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
 
@@ -45,7 +45,7 @@ class PermitType(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin
     __tablename__ = "permit_types"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     authority_id: Mapped[str] = mapped_column(ForeignKey("regulatory_authorities.id"), nullable=False, index=True)
     scope: Mapped[str | None] = mapped_column(String(120), nullable=True)
     validation_method: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -56,7 +56,7 @@ class OfficialRegistration(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "official_registrations"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     authority_id: Mapped[str] = mapped_column(ForeignKey("regulatory_authorities.id"), nullable=False, index=True)
     scope: Mapped[str] = mapped_column(String(16), nullable=False)  # COMPANY / PARTY / SITE / VEHICLE / PERSON
     ref_number: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -70,7 +70,7 @@ class RegulatoryProfile(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "regulatory_profiles"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     rubric_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     product_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     operation: Mapped[str] = mapped_column(String(64), nullable=False, default="DESPACHO")
@@ -86,7 +86,7 @@ class TransportVehicle(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "transport_vehicles"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     plate: Mapped[str] = mapped_column(String(32), nullable=False)
     vehicle_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
     capacity: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -99,7 +99,7 @@ class TransportDriver(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "transport_drivers"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     party_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
     license: Mapped[str | None] = mapped_column(String(64), nullable=True)
     documents: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
@@ -114,7 +114,7 @@ class PermitInstance(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __scope__ = Scope.COMPANY
     __table_args__ = (Index("ix_permit_instances_uom_id", "uom_id"),)
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     permit_type_id: Mapped[str] = mapped_column(ForeignKey("permit_types.id"), nullable=False, index=True)
     number: Mapped[str] = mapped_column(String(120), nullable=False)
     issued_at: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -138,7 +138,7 @@ class OfficialDocument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "official_documents"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     kind: Mapped[str] = mapped_column(String(32), nullable=False)  # SICA / SIGESAI / SACS / GUIA_FISCAL / OTRO
     authority_id: Mapped[str | None] = mapped_column(ForeignKey("regulatory_authorities.id"), nullable=True)
     number: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -158,7 +158,7 @@ class RegulatoryEvaluation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "regulatory_evaluations"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     shipment_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)  # Shipment 005
     shipment_line_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
     profile_version_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -180,7 +180,7 @@ class RegulatoryApprovalRequest(UUIDMixin, TimestampMixin, CreatedByMixin, Base)
     __tablename__ = "regulatory_approval_requests"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     object_ref: Mapped[str] = mapped_column(String(200), nullable=False)
     rule_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
     requester_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -199,7 +199,7 @@ class RegulatoryContingency(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "regulatory_contingencies"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     rule_ref: Mapped[str] = mapped_column(String(120), nullable=False)  # regla oficial versionada
     reason: Mapped[str] = mapped_column(String(255), nullable=False)
     allowed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)

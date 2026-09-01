@@ -130,3 +130,86 @@ operaciones con alcance · decisión de producto incorporada · `ADR-D0-014`
 propuesto · dos preguntas abiertas, ninguna bloqueante del diseño.
 
 **No se implementa.** Requiere autorización expresa y reaprovisionar el entorno.
+
+---
+
+# N7 — ANÁLISIS
+
+## 1. Cobertura de requisitos
+
+30 requisitos funcionales, 6 no funcionales, 10 criterios de aceptación. Cada uno
+con al menos una tarea; cada tarea con al menos un requisito.
+
+**Requisitos huérfanos: 0. Tareas huérfanas: 0.**
+
+## 2. Contradicciones
+
+Se buscaron específicamente:
+
+| Qué se buscó | Resultado |
+|---|---|
+| Alcance directo y derivado a la vez en una tabla | 0 |
+| Autoridad duplicada | 0 |
+| Unicidad que contradiga el alcance declarado | 0 |
+| Ruta derivada anulable | 0 |
+| Claves foráneas circulares entre migraciones | 0 |
+| Trabajo de N8 colado en N7 | 0 |
+| Trabajo de N9 o de la Spec 012 colado | 0 |
+| Conflicto con Specs cerradas | 0 |
+| Conflicto con ADR-D0-014 | 0 |
+
+## 3. Tres discrepancias documentales encontradas
+
+Ninguna es un bloqueo; las tres son casos de documento que no coincide con la
+realidad medida, y las tres se corrigen en esta fase.
+
+**Las rutas derivadas son 35, no 36.** La matriz canónica arrastraba el número
+de una medición anterior. Comprobado contra los modelos vigentes.
+
+**Las restricciones de unicidad son 31, no 13.** El «13» era una estimación
+previa a N3, que creó las tablas de empresa ya con su unicidad correcta. Once de
+las 31 son de empresa y **ninguna necesita cambiarse**.
+
+**Trece tablas no declaran alcance.** N0 reportó cero sin declarar sobre 153
+modelos; las de organización quedaron fuera de ese recuento. Son de empresa por
+construcción y sus claves foráneas ya son correctas, así que es una laguna de
+declaración, no de estructura.
+
+## 4. Lo que ya estaba bien
+
+Conviene decirlo, porque cambia el tamaño de la fase: **las 35 rutas derivadas
+están completas** —clave foránea real y NOT NULL en todas— y **las once
+unicidades de empresa ya son correctas**. N3 hizo bien ese trabajo.
+
+Lo que falta es concreto y masivo: **80 tablas con `company_id` que la base no
+contrasta con nada**, y 3 con `tenant_id` en la misma situación.
+
+## 5. Ordenación de migraciones
+
+Claves foráneas antes que obligatoriedad; coherencia compuesta después de las
+simples. Sin ciclos: cada migración solo depende de que la anterior haya
+terminado.
+
+## 6. Decisiones materiales nuevas
+
+**Ninguna.** Las dos preguntas abiertas se resolvieron con evidencia dentro de la
+arquitectura aprobada:
+
+- `OQ-N7-01` midiendo cada punto de creación: todos fijan la empresa.
+- `OQ-N7-02` es declarativa, no de negocio.
+
+Las reglas de borrado se derivan de P5, que ya estaba decidido. El alcance de
+las unidades de medida viene de Spec 011 y `OQ-MC-01`, ya cerradas.
+
+## 7. Resultado
+
+```
+BLOCKER                  : 0
+CRITICAL                 : 0
+CONTRADICTIONS           : 0
+ORPHAN REQUIREMENTS      : 0
+ORPHAN TASKS             : 0
+UNRESOLVED MATERIAL OQ   : 0
+```
+
+**`/speckit.analyze: PASS`** — implementación autorizada por el prompt maestro.

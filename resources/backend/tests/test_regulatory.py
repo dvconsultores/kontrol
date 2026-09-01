@@ -22,6 +22,7 @@ from app.modules.organization.models import Warehouse
 from app.modules.regulatory import service as regulatory_service
 from app.modules.regulatory.models import PermitInstance, RegulatoryAuthority, RegulatoryEvaluation
 from app.modules.sales.models import SalesOrder, Shipment, ShipmentLine
+from tests.company_seed import EMPRESA_DOS, EMPRESA_UNO
 
 
 @pytest.fixture()
@@ -38,8 +39,11 @@ def db_session():
         session.close()
 
 
-COMPANY = "tenant-1"
-OTHER = "tenant-2"
+#: Empresas **reales**, sembradas por `db_session`. Antes eran la cadena
+#: «tenant-1», que no era ni empresa ni tenant y solo se aceptaba porque la
+#: base no comprobaba nada.
+COMPANY = EMPRESA_UNO
+OTHER = EMPRESA_DOS
 
 
 def _make_party(db: Session, company: str = COMPANY, code: str = "CLI-1") -> Party:

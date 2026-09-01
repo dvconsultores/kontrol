@@ -28,6 +28,7 @@ from app.modules.treasury.models import (
     FinancialAccount,
     FinancialBank,
 )
+from tests.company_seed import EMPRESA_DOS, EMPRESA_UNO, sembrar_empresas
 
 
 @pytest.fixture()
@@ -37,14 +38,21 @@ def db_session():
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
     session = session_factory()
+    # Las empresas se crean de verdad: con las claves foráneas de N7, guardar
+    # bajo una cadena inventada ya no es posible, y tampoco debería haberlo sido.
+    sembrar_empresas(session)
+    session.commit()
     try:
         yield session
     finally:
         session.close()
 
 
-COMPANY = "tenant-1"
-OTHER = "tenant-2"
+#: Empresas **reales**, sembradas por `db_session`. Antes eran la cadena
+#: «tenant-1», que no era ni empresa ni tenant y solo se aceptaba porque la
+#: base no comprobaba nada.
+COMPANY = EMPRESA_UNO
+OTHER = EMPRESA_DOS
 
 
 def _make_party(db: Session, company: str = COMPANY, code: str = "PROV-1") -> Party:

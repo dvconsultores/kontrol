@@ -18,7 +18,7 @@ class User(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "users"
     __scope__ = Scope.TENANT
 
-    tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
     username: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -38,7 +38,7 @@ class Role(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "roles"
     __scope__ = Scope.TENANT
 
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     protected: Mapped[bool] = mapped_column(default=False, nullable=False)
@@ -75,7 +75,7 @@ class UserRole(UUIDMixin, TimestampMixin, Base):
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     role_id: Mapped[str] = mapped_column(ForeignKey("roles.id"), nullable=False, index=True)
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True)
     valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     valid_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
@@ -88,7 +88,7 @@ class UserScope(UUIDMixin, TimestampMixin, Base):
     __scope__ = Scope.TENANT
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True)
     branch_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     establishment_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     warehouse_id: Mapped[str | None] = mapped_column(String(36), nullable=True)

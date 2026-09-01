@@ -138,7 +138,7 @@ class StoredFile(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
         Index("ix_stored_files_sha256", "sha256"),
     )
 
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True, index=True)
     original_name: Mapped[str] = mapped_column(String(255), nullable=False)
     #: MIME **efectivo**: el detectado cuando se acepta.
     mime_type: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -303,7 +303,7 @@ class LegacyDocumentReference(UUIDMixin, TimestampMixin, Base):
     source_table: Mapped[str] = mapped_column(String(64), nullable=False)
     source_column: Mapped[str] = mapped_column(String(64), nullable=False)
     source_row_id: Mapped[str] = mapped_column(String(36), nullable=False)
-    company_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True, index=True)
     #: El texto original, **intacto**.
     raw_value: Mapped[str | None] = mapped_column(String(500), nullable=True)
     classification: Mapped[str] = mapped_column(String(32), nullable=False)

@@ -38,3 +38,40 @@
 - [ ] Regresión global con **0 fallos**; ningún escenario multiempresa omitido.
 - [ ] Ninguna columna de transición sobrevive.
 - [ ] **Sin deuda interna diferida** (§227).
+
+---
+
+# N7 — LISTA DE COMPROBACIÓN
+
+Medido contra el catálogo de PostgreSQL 18.6, no contra el ORM.
+
+| # | Comprobación | Estado |
+|---|---|---|
+| 1 | Inventario de claves foráneas de empresa completo | ✅ 101 tablas |
+| 2 | Inventario de claves foráneas de tenant completo | ✅ 14 tablas |
+| 3 | Inventario de claves foráneas de sucursal completo | ✅ |
+| 4 | Inventario de claves de padre completo | ✅ 242 claves |
+| 5 | Restricciones de unicidad revisadas | ✅ 31, no 13 |
+| 6 | Rutas derivadas revisadas | ✅ 35, no 36 |
+| 7 | Rutas derivadas anulables = 0 | ✅ ya cumplido |
+| 8 | Claves foráneas huérfanas = 0 | ⬜ tras migrar |
+| 9 | Claves con destino equivocado = 0 | ⬜ tras migrar |
+| 10 | Colisiones de unicidad = 0 | ⬜ tras probar |
+| 11 | Incoherencia empresa/tenant = 0 | ⬜ |
+| 12 | Incoherencia empresa/sucursal = 0 | ⬜ |
+| 13 | Incoherencia empresa/almacén = 0 | ⬜ |
+| 14 | Incoherencia empresa/cuenta bancaria = 0 | ⬜ |
+| 15 | Restricciones fiscales definidas | ✅ en el plan |
+| 16 | Restricciones financieras definidas | ✅ |
+| 17 | Restricciones de inventario definidas | ✅ |
+| 18 | Alcance de numeraciones definido | ✅ §17 de aclaraciones |
+| 19 | Alcance de idempotencia definido | ✅ empresa |
+| 20 | Orden de migraciones definido | ✅ 0033→0037 |
+| 21 | Estrategia de instalación limpia definida | ✅ |
+| 22 | Estrategia de SQL sin conexión definida | ✅ |
+| 23 | Fixture hostil definido | ✅ debe fallar |
+| 24 | Pruebas de corrupción por SQL directo definidas | ✅ 11 casos |
+| 25 | Regresión de N5 definida | ✅ las once |
+| 26 | Regresión de N6 definida | ✅ |
+| 27 | Rojos esperados de N8 separados | ✅ |
+| 28 | Requisitos N7 sin criterio de aceptación = 0 | ✅ 30 FR, 6 NFR, 10 AC |

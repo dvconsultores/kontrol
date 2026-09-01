@@ -460,9 +460,10 @@ def reverse_movement(db: Session, *, movement: InventoryMovement, actor: str | N
     """Crea un movimiento reverso vinculado (FR-003-022, P5). Nunca borra el original."""
     if movement.reversed_by_id is not None:
         raise ConflictError(code="ALREADY_REVERSED", message="El movimiento ya fue revertido.")
-    mtype = _get_movement_type_by_code_optional(db, "REVERSO")
+    mtype = _get_movement_type_by_code_optional(db, movement.company_id, "REVERSO")
     if mtype is None:
-        mtype = MovementType(company_id=None, code="REVERSO", name="Reverso de movimiento",
+        mtype = MovementType(company_id=movement.company_id, code="REVERSO",
+                             name="Reverso de movimiento",
                              direction="INTERNAL", affects_balance=True, status="ACTIVE", created_by=actor)
         db.add(mtype)
         db.flush()
@@ -920,11 +921,12 @@ def apply_adjustment(db: Session, *, adjustment: InventoryAdjustment, actor: str
 # Utilidades
 # --------------------------------------------------------------------------- #
 def _get_movement_type_by_code(db: Session, company_id: str, code: str) -> MovementType:
-    mtype = _get_movement_type_by_code_optional(db, code)
+    mtype = _get_movement_type_by_code_optional(db, company_id, code)
     if not mtype and code in BASE_MOVEMENT_TYPES:
-        # Auto-configuración idempotente (instalaciones frescas y existentes).
+        # Auto-configuración idempotente, **por empresa**: cada una necesita su
+        # propio catálogo de tipos, igual que su propio almacén.
         name, direction = BASE_MOVEMENT_TYPES[code]
-        mtype = MovementType(company_id=None, code=code, name=name, direction=direction,
+        mtype = MovementType(company_id=company_id, code=code, name=name, direction=direction,
                              affects_balance=True, status="ACTIVE", created_by=None)
         db.add(mtype)
         db.flush()
@@ -933,9 +935,17 @@ def _get_movement_type_by_code(db: Session, company_id: str, code: str) -> Movem
     return mtype
 
 
-def _get_movement_type_by_code_optional(db: Session, code: str) -> MovementType | None:
+def _get_movement_type_by_code_optional(db: Session, company_id: str,
+                                        code: str) -> MovementType | None:
+    """El tipo de movimiento de **esta** empresa.
+
+    Antes buscaba solo por código, así que el tipo «ENTRADA» que creara una
+    empresa lo consumía la siguiente que moviera existencias. El parámetro
+    `company_id` ya llegaba hasta aquí desde el llamante y no se usaba.
+    """
     return (
-        db.execute(select(MovementType).where(MovementType.code == code))
+        db.execute(select(MovementType).where(
+            MovementType.code == code, MovementType.company_id == company_id))
         .scalars()
         .first()
     )
