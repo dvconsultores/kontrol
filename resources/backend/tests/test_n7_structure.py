@@ -169,13 +169,23 @@ def test_toda_ruta_derivada_llega_a_su_autoridad(mundo):
 def test_la_empresa_solo_es_opcional_donde_esta_justificado(mundo):
     """Dos excepciones, ambas con razón escrita.
 
-    `units_of_measure` porque Spec 011 distinguió unidades del sistema de las de
-    negocio, y el nulo **es** esa distinción. `stored_files` porque un archivo
-    existe antes de saber a qué documento pertenecerá.
+    Cada excepción tiene su razón escrita: Spec 011 distinguió unidades del
+    sistema de las de negocio; un archivo existe antes de saber a qué documento
+    pertenecerá; y los tipos de movimiento y perfiles de costo exponen
+    `global_scope` en su API, un interruptor cuyo valor **es** el nulo.
+
+    La lista es corta y explícita a propósito: si crece sin justificación, esta
+    prueba deja de significar nada.
     """
     _pg(mundo)
     cat = _catalogo(mundo)
-    permitidas = {"units_of_measure", "stored_files", "audit_events", "outbox_events"}
+    permitidas = {
+        "units_of_measure",   # Spec 011: las del sistema son globales
+        "stored_files",       # el archivo existe antes que su documento
+        "movement_types",     # su API expone `global_scope`
+        "costing_profiles",   # ídem
+        "audit_events", "outbox_events",
+    }
     anulables = []
     for cls in _modelos():
         t = getattr(cls, "__tablename__", None)

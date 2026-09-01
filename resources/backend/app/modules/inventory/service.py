@@ -937,18 +937,22 @@ def _get_movement_type_by_code(db: Session, company_id: str, code: str) -> Movem
 
 def _get_movement_type_by_code_optional(db: Session, company_id: str,
                                         code: str) -> MovementType | None:
-    """El tipo de movimiento de **esta** empresa.
+    """El tipo de movimiento de esta empresa, o el global si lo hay.
 
-    Antes buscaba solo por código, así que el tipo «ENTRADA» que creara una
-    empresa lo consumía la siguiente que moviera existencias. El parámetro
-    `company_id` ya llegaba hasta aquí desde el llamante y no se usaba.
+    Antes buscaba **solo por código**, así que el tipo «ENTRADA» que creara una
+    empresa lo consumía la siguiente que moviera existencias: el parámetro
+    `company_id` llegaba hasta aquí y no se usaba.
+
+    El alcance global sí existe y es deliberado —la API lo expone como
+    `global_scope`, para instalaciones que quieren un catálogo común—, así que
+    se admite, pero el propio de la empresa tiene preferencia.
     """
-    return (
-        db.execute(select(MovementType).where(
-            MovementType.code == code, MovementType.company_id == company_id))
-        .scalars()
-        .first()
-    )
+    candidatos = db.execute(select(MovementType).where(
+        MovementType.code == code,
+        MovementType.company_id.in_([company_id, None]),
+    )).scalars().all()
+    propios = [m for m in candidatos if m.company_id == company_id]
+    return propios[0] if propios else (candidatos[0] if candidatos else None)
 
 
 def balance_dict(balance: InventoryBalance) -> dict:

@@ -24,7 +24,11 @@ from app.shared.mixins import CreatedByMixin, TimestampMixin, UUIDMixin
 
 class ReportDefinition(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "report_definitions"
-    __scope__ = Scope.TENANT
+    #: De empresa, no de tenant. La matriz canónica las clasificó como de
+    #: tenant por su naturaleza —moneda, tasa, informe— pero el código exige
+    #: empresa al crearlas, lista por empresa y N5 probó su aislamiento A/B.
+    #: La declaración era lo que no coincidía con el comportamiento.
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     report_key: Mapped[str] = mapped_column(String(64), nullable=False)

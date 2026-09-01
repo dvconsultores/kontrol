@@ -70,7 +70,8 @@ def _make_warehouse(db: Session, company: str = COMPANY) -> Warehouse:
 
 def _make_types(db: Session) -> None:
     for code, direction in (("ENTRADA_RECEPCION", "IN"), ("SALIDA_DESPACHO", "OUT")):
-        db.add(MovementType(company_id=None, code=code, name=code, direction=direction, affects_balance=True, status="ACTIVE"))
+        db.add(MovementType(company_id=COMPANY, code=code, name=code, direction=direction,
+                            affects_balance=True, status="ACTIVE"))
     db.flush()
 
 

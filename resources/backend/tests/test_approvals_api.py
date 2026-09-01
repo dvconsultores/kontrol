@@ -21,7 +21,7 @@ from app.core.database import Base, get_db, init_models
 from app.modules.identity_access import service as identity_service
 from app.modules.identity_access.models import Role, UserRole
 from app.modules.licensing import service as licensing_service
-from app.modules.organization.models import Company, Installation
+from app.modules.organization.models import Company, Installation, Tenant
 from app.modules.setup.api import SetupRequest, initialize
 
 _CLIENT: TestClient | None = None
@@ -82,8 +82,13 @@ def _app_client():
 
     # Aprobador sin permisos de configuración: sólo `aprobaciones:approve|view`
     admin_role = db.execute(select(Role).where(Role.code == "ADMIN")).scalars().first()
+    # El tenant real. Antes se pasaba `admin_role.created_by`, que es el
+    # identificador de un **usuario**, con recurso a la letra "t" si faltaba:
+    # ninguno de los dos era un tenant, y solo se aceptaba porque la columna no
+    # referenciaba nada.
+    tenant_id = str(db.execute(select(Tenant).limit(1)).scalars().first().id)
     approver = identity_service.create_user(
-        db, tenant_id=admin_role.created_by or "t", username="aprobador",
+        db, tenant_id=tenant_id, username="aprobador",
         email="apr@demo.com", password="Kontrol2026Segura!", created_by=None)
     db.add(UserRole(user_id=str(approver.id), role_id=str(admin_role.id), company_id=None))
     db.commit()

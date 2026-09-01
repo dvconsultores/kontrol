@@ -47,7 +47,9 @@ class MovementType(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMix
     __scope__ = Scope.COMPANY
     __table_args__ = (UniqueConstraint("company_id", "code", name="uq_movement_types_company_code"),)
 
-    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)  # None = global
+    #: Nulo cuando el tipo es de toda la instalación: la API lo expone como
+    #: `global_scope`. El nulo **es** ese interruptor.
+    company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True, index=True)  # None = global
     direction: Mapped[str] = mapped_column(String(16), nullable=False)  # IN / OUT / INTERNAL
     affects_balance: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
@@ -296,7 +298,9 @@ class CostingProfile(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Versi
     __tablename__ = "costing_profiles"
     __scope__ = Scope.COMPANY
 
-    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)  # None = global
+    #: Nulo cuando el tipo es de toda la instalación: la API lo expone como
+    #: `global_scope`. El nulo **es** ese interruptor.
+    company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True, index=True)  # None = global
     product_id: Mapped[str | None] = mapped_column(ForeignKey("catalog_items.id"), nullable=True)
     method: Mapped[str] = mapped_column(String(16), nullable=False, default="AVERAGE")  # AVERAGE / FIFO
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")

@@ -109,21 +109,32 @@ def test_una_ruta_anulable_no_es_una_ruta():
     assert [r.columna for r in rutas] == ["obligatoria_id"]
 
 
-def test_el_planificador_excluye_lo_que_no_hay_que_reconstruir():
-    """No entran ni las derivadas ni las que ya tienen la empresa correcta."""
+def test_el_planificador_ya_no_encuentra_nada_que_reconstruir():
+    """Tras N7 el conjunto de trabajo queda vacío, y eso es lo correcto.
+
+    El planificador excluye las tablas cuya `company_id` tiene clave foránea,
+    porque su propiedad ya está garantizada por la estructura. Antes de N7 eso
+    valía para 17 tablas; después vale para todas, así que no queda nada que
+    reconstruir.
+
+    Es el resultado esperado de haber cerrado la ventana a tiempo: `N4 Real
+    Backfill` sigue `NOT_APPLICABLE` porque no hay ninguna instalación
+    desplegada, y ahora tampoco hay nada que una instalación nueva pudiera
+    necesitar reconstruir.
+
+    **Limitación registrada para la Spec 052.** El planificador infiere del
+    modelo vigente, no del catálogo de la base destino. Contra una instalación
+    heredada anterior a N7 —cuyo esquema sí tiene columnas sin referencia—
+    seguiría viendo el modelo actual y devolvería vacío. Cuando exista una
+    actualización real desde una versión previa, el planificador tendrá que
+    leer el catálogo del destino. No se cambia aquí porque no hay ningún destino
+    heredado que leer, y adivinar su forma sería inventar el requisito.
+    """
     from app.core.mc.runner import planes
 
-    ps = planes()
-    nombres = {p.tabla for p in ps}
-    # Ya correctas por FK real (Spec 008 / 045 / 046).
-    assert "warehouses" not in nombres
-    assert "approval_requests" not in nombres
-    assert "documents" not in nombres
-    # Derivadas: no tienen columna que reconstruir.
-    assert "sales_order_lines" not in nombres
-    # Y sí entran las que guardan el tenant.
-    assert "parties" in nombres
-    assert "fiscal_number_series" in nombres
+    nombres = {p.tabla for p in planes()}
+    assert nombres == set(), (
+        f"quedan tablas sin propiedad estructural garantizada: {sorted(nombres)}")
 
 
 # ---------------------------------------------------- escenarios reales (E2E)

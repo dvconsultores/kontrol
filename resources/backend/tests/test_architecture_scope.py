@@ -155,17 +155,37 @@ def test_tenant_id_always_references_tenant():
         + "\n  ".join(malos[:25]))
 
 
-def test_no_model_declares_scope_it_cannot_honour():
-    """Coherencia: quien dice ser del tenant no puede llevar `company_id` propio
-    salvo que esa columna designe de verdad una empresa (alcance del usuario)."""
-    permitidos = {"user_roles", "user_scopes", "audit_events", "roles"}
-    malos = [
-        m.__tablename__ for m in MODELOS
-        if declared_scope(m) is Scope.TENANT
-        and "company_id" in m.__table__.c
-        and m.__tablename__ not in permitidos
-    ]
-    assert malos == [], f"declaran TENANT pero llevan `company_id`: {malos}"
+def test_la_empresa_en_una_tabla_de_tenant_es_un_estrechamiento():
+    """Una tabla de tenant **sí** puede llevar `company_id`, con dos condiciones.
+
+    La versión anterior de esta prueba lo prohibía salvo para cuatro tablas
+    permitidas a mano, y la lista se quedó corta: seis más lo llevan con pleno
+    sentido. Un rol puede valer en todo el tenant o solo en una empresa; una
+    moneda puede ser nacional o propia; un registro de idempotencia puede
+    acotarse. En todos esos casos la empresa **estrecha** el alcance, no lo
+    define.
+
+    Lo que sí debe cumplirse, y es lo que se comprueba:
+
+    - la columna admite nulo, porque el nulo significa «todas» y sin él no
+      habría estrechamiento posible;
+    - y referencia a `companies`, porque una empresa nula significa todas pero
+      una empresa inventada no significa nada.
+
+    El segundo punto lo destapó N7: nueve de estas columnas no referenciaban
+    nada, y quedaron fuera de la primera tanda de claves foráneas precisamente
+    porque se clasificó por alcance del modelo.
+    """
+    problemas = []
+    for m in MODELOS:
+        if declared_scope(m) is not Scope.TENANT or "company_id" not in m.__table__.c:
+            continue
+        col = m.__table__.c["company_id"]
+        if not col.nullable:
+            problemas.append(f"{m.__tablename__}: obligatoria, no es un estrechamiento")
+        if {f.column.table.name for f in col.foreign_keys} != {"companies"}:
+            problemas.append(f"{m.__tablename__}: sin referencia a companies")
+    assert problemas == [], "\n  ".join(["empresa mal declarada en tablas de tenant:", *problemas])
 
 
 # ===================================================================== N5

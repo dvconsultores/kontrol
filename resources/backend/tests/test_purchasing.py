@@ -68,7 +68,8 @@ def _make_warehouse(db: Session, company: str = COMPANY, code: str = "W-1") -> W
 
 
 def _make_in_type(db: Session) -> MovementType:
-    mt = MovementType(company_id=None, code="ENTRADA_RECEPCION", name="Entrada recepción", direction="IN",
+    # Tipo de la empresa, no global: es configuración suya.
+    mt = MovementType(company_id=COMPANY, code="ENTRADA_RECEPCION", name="Entrada recepción", direction="IN",
                       affects_balance=True, status="ACTIVE")
     db.add(mt)
     db.flush()

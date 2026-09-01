@@ -61,8 +61,11 @@ def db_session():
 
 
 def _user(db, email: str) -> User:
+    # El usuario pertenece al **tenant**, no a la empresa. Ponía `COMPANY` aquí,
+    # que es exactamente la confusión que ARCH-MC-001 corrige, y solo pasaba
+    # porque la columna no referenciaba nada.
     u = User(username=email.split("@")[0], email=email, password_hash="x",
-             status="ACTIVE", tenant_id=COMPANY)
+             status="ACTIVE", tenant_id="ten-C1")
     db.add(u)
     db.flush()
     return u

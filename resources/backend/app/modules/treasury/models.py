@@ -85,7 +85,11 @@ class TreasuryInstrument(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, N
 
 class Currency(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "currencies"
-    __scope__ = Scope.TENANT
+    #: De empresa, no de tenant. La matriz canónica las clasificó como de
+    #: tenant por su naturaleza —moneda, tasa, informe— pero el código exige
+    #: empresa al crearlas, lista por empresa y N5 probó su aislamiento A/B.
+    #: La declaración era lo que no coincidía con el comportamiento.
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     name: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -96,7 +100,11 @@ class Currency(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
 class ExchangeRate(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "exchange_rates"
-    __scope__ = Scope.TENANT
+    #: De empresa, no de tenant. La matriz canónica las clasificó como de
+    #: tenant por su naturaleza —moneda, tasa, informe— pero el código exige
+    #: empresa al crearlas, lista por empresa y N5 probó su aislamiento A/B.
+    #: La declaración era lo que no coincidía con el comportamiento.
+    __scope__ = Scope.COMPANY
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     currency_id: Mapped[str] = mapped_column(ForeignKey("currencies.id"), nullable=False, index=True)
