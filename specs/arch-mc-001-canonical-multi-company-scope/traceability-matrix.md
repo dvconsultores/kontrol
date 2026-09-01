@@ -217,3 +217,39 @@ Cada requisito con su código, su prueba y su evidencia. Sin huérfanos.
 | Accesibilidad WCAG 2.2 AA | `CompanySelector.tsx` | `n6-a11y-responsive.spec.ts` | `n6-accessibility-report.md` |
 | Adaptación 320–1440 | `CompanySelector.tsx` | `n6-a11y-responsive.spec.ts` | `n6-responsive-report.md` |
 | Cross-browser | — | las tres suites × 3 motores | `n6-cross-browser-report.md` |
+
+---
+
+# N7 — INTEGRIDAD ESTRUCTURAL
+
+| Requisito | Aclaración | Plan | Tarea | Código / migración | Prueba | Evidencia | Estado |
+|---|---|---|---|---|---|---|---|
+| FR-N7-001 FK de empresa | §1 | §4 | T-004 | `0033`, 80 modelos | `test_n7_structure::empresa_directa` | `n7-foreign-key-report.md` | ✅ |
+| FR-N7-002 FK de tenant | §2 | §4 | T-005 | `0034` | `test_n7_structure::tenant` | ídem | ✅ |
+| FR-N7-003 FK de sucursal | §1 | §4 | T-005 | ya existentes | `test_n7_structure` | ídem | ✅ |
+| FR-N7-004 autoridad derivada | §5–7 | §3 | T-011 | `establishments` | `test_n7_structure::derivada` | `n7-derived-scope-report.md` | ✅ |
+| FR-N7-005 autoridad obligatoria | §8 | §5 | T-011 | — (ya cumplido) | ídem | ídem | ✅ |
+| FR-N7-006 empresa ≠ tenant | §1 | §4 | T-004, T-010 | `0033`, `0037` | `test_n7_corruption::tenant_como_empresa` | `n7-postgresql-catalog-evidence.md` | ✅ |
+| FR-N7-007→010 unicidad | §9–11 | §6 | T-009 | — (sin cambios) | `test_n7_corruption::unicidad` | `n7-unique-scope-report.md` | ✅ |
+| FR-N7-011 global e instalación | §3–4 | §11 | T-003 | 13 declaraciones | `test_architecture_scope` | `n7-derived-scope-report.md` | ✅ |
+| FR-N7-012 tenant/empresa | §14 | §7 | T-010 | `record_audit` (N5) | `test_mc_events_audit_ab` | `n7-postgresql-catalog-evidence.md` | ✅ |
+| FR-N7-013 empresa/sucursal | §19 | §7 | T-011 | ya coherente | `test_n7_structure` | ídem | ✅ |
+| FR-N7-014 empresa/almacén | §19 | §7 | T-012 | `0036` | `test_n7_corruption::zona_ajena` | `n7-inventory-integrity-report.md` | ✅ |
+| FR-N7-015 empresa/cuenta | §19 | §7 | T-013 | guarda de servicio (N5) | `test_mc_treasury_ab` | `n7-financial-integrity-report.md` | ✅ |
+| FR-N7-016→022 fiscal | §17 | §9 | T-019, T-021 | `0033` | `test_n7_corruption::fiscal` | `n7-fiscal-integrity-report.md` | ✅ |
+| FR-N7-023 paridad fiscal | — | §9 | T-013 | — | `test_fiscal.py` | ídem | ✅ |
+| FR-N7-024 financiero | §19 | §9 | T-014, T-017 | `0033` | `test_n7_corruption::pago` | `n7-financial-integrity-report.md` | ✅ |
+| FR-N7-025 inventario | §19 | §9 | T-016 | `0033`, `0036` | `test_n7_corruption::movimiento` | `n7-inventory-integrity-report.md` | ✅ |
+| FR-N7-026 sin huérfanas | §12 | §4 | T-004 | `0033`, `0034`, `0037` | `test_n7_structure` | `n7-foreign-key-report.md` | ✅ |
+| FR-N7-027 sin rutas rotas | §7 | §3 | T-011 | — | `test_n7_structure::derivada` | `n7-derived-scope-report.md` | ✅ |
+| FR-N7-028 sin colisiones | §9–11 | §6 | T-009 | — | `test_n7_corruption::unicidad` | `n7-unique-scope-report.md` | ✅ |
+| FR-N7-029 obligatoriedad | §8, §16 | §5 | T-006 | `0035` | `test_n7_structure::opcional` | `n7-not-null-report.md` | ✅ |
+| FR-N7-030 rechazo de la base | — | §9 | T-010 | migraciones | `test_n7_corruption` (12) | `n7-postgresql-catalog-evidence.md` | ✅ |
+| NFR-N7-001 migraciones pequeñas | — | §1 | T-004→008 | 5 migraciones | — | `n7-migration-report.md` | ✅ |
+| NFR-N7-002 SQL sin conexión | — | §9 | T-015 | — | 105 sentencias | ídem | ✅ |
+| NFR-N7-003 instalación limpia | — | §9 | T-014 | — | 37 migraciones, 336 FK | ídem | ✅ |
+| NFR-N7-004 paridad | §19 | §9 | T-002 | 90 modelos | `test_n7_structure::orm_y_base` | `n7-postgresql-catalog-evidence.md` | ✅ |
+| NFR-N7-005 rendimiento | §19 | §8 | T-008 | — (0 índices) | `EXPLAIN` × 5 | `n7-index-report.md` | ✅ |
+| NFR-N7-006 sin romper lo válido | §20 | §9 | T-017, T-018 | correcciones | regresión completa | `n7-regression-report.md` | ✅ |
+
+**Requisitos huérfanos: 0. Tareas huérfanas: 0. Cobertura: 100%.**
