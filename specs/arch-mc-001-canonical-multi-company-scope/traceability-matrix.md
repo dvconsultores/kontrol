@@ -187,3 +187,33 @@ Derivada por script de `spec.md`, `tasks.md` y `acceptance-criteria.md`.
 | Restricciones | `company-scope-constraint-impact.md` | T-MC-100..107 | FK en PostgreSQL |
 | Spec 046 | `closed-spec-impact-matrix.md` | T-MC-120..126 | 19 tipos + ClamAV |
 | API | `endpoint-scope-matrix.md` | T-MC-035, T-MC-076..079 | Contrato |
+
+---
+
+# N6 — FRONTEND MULTIEMPRESA
+
+Cada requisito con su código, su prueba y su evidencia. Sin huérfanos.
+
+| Requisito | Código | Prueba | Evidencia |
+|---|---|---|---|
+| Selector de empresa | `components/company/CompanySelector.tsx` | `n6-a11y-responsive.spec.ts` | `n6-accessibility-report.md` |
+| Solo empresas autorizadas | `organization/api.py::list_companies` | `test_mc_company_isolation.py` | `n6-client-tampering-evidence.md` |
+| Una sola empresa se resuelve sola | `CompanyContext.tsx::resolver` | `companyProvider.test.tsx` | `n6-company-context-ui-matrix.md` |
+| Varias empresas piden selección | `CompanyContext.tsx::estado` | `companyProvider.test.tsx`, `n6-multicompany.spec.ts` | `n6-company-context-ui-matrix.md` |
+| Cabecera centralizada | `api/client.ts::setCompanyResolver` | `companyContext.test.ts`, `architecture-company.test.ts` | `n6-request-context-evidence.md` |
+| Empresa fijada al crear la petición | `api/client.ts::apiFetch` | `companyContext.test.ts` | `n6-request-context-evidence.md` |
+| Sin repliegue al tenant | — (ausencia) | `architecture-company.test.ts` | `n6-request-context-evidence.md` |
+| Contexto por pestaña | `CompanyContext.tsx::escrituraDePestana` | `n6-multicompany.spec.ts` | `n6-multitab-evidence.md` |
+| Preferencia recordada y revalidada | `CompanyContext.tsx::clavePreferencia` | `companyProvider.test.tsx` | `n6-company-context-ui-matrix.md` |
+| Preferencia caducada descartada | `CompanyContext.tsx::resolver` | `companyProvider.test.tsx` | `n6-company-context-ui-matrix.md` |
+| Caché separada por empresa | `app/company/queryScope.ts`, `main.tsx` | `companyContext.test.ts` | `n6-cache-isolation-matrix.md` |
+| Cambio de empresa descarta lo anterior | `app/AppShell.tsx` | `n6-multicompany.spec.ts` | `n6-cache-isolation-matrix.md` |
+| Formularios protegidos | `app/company/useCompanyScope.ts` | `architecture-company.test.ts` | `n6-form-company-safety-matrix.md` |
+| Relaciones dependientes reiniciadas | `app/AppShell.tsx` (remontado) | `n6-multicompany.spec.ts` | `n6-form-company-safety-matrix.md` |
+| Errores de contexto sin bucle | `app/company/errores.ts` | `companyContext.test.ts` | `n6-final-checkpoint.md` |
+| Acceso revocado sin cierre de sesión | `CompanyContext.tsx::onCompanyRejected` | `companyContext.test.ts` | `n6-company-context-ui-matrix.md` |
+| Descargas con contexto | `api/client.ts` (`responseType: blob`) | `architecture-company.test.ts` | `n6-request-context-evidence.md` |
+| Manipulación sin escalada | — (autoridad del servidor) | `n6-multicompany.spec.ts` | `n6-client-tampering-evidence.md` |
+| Accesibilidad WCAG 2.2 AA | `CompanySelector.tsx` | `n6-a11y-responsive.spec.ts` | `n6-accessibility-report.md` |
+| Adaptación 320–1440 | `CompanySelector.tsx` | `n6-a11y-responsive.spec.ts` | `n6-responsive-report.md` |
+| Cross-browser | — | las tres suites × 3 motores | `n6-cross-browser-report.md` |
