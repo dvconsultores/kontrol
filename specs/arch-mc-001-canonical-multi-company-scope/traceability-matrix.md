@@ -314,3 +314,40 @@ Una fila por caso. No se admite una entrada genérica del tipo «fixture hostil 
 | Severidad no degradada | — | — | `test_las_clases_criticas_no_se_confunden_entre_si` | 4 clases con recuento propio | ídem §Severidad |
 
 **Casos: 11 · Requisitos: FR-N8-015→018 · Pruebas: 32 · Huérfanos: 0.**
+
+---
+
+# N9 — CIERRE DE REM-046-001 Y RECONVERGENCIA DE 046
+
+Una fila por tipo. No se admite una entrada genérica del tipo «registro cubierto».
+
+| Requisito | Tipo / código | Prueba | Evidencia | Estado |
+|---|---|---|---|---|
+| FR-N9-001 cardinalidad | 19 + 4 = 23 | `test_el_registro_tiene_la_cardinalidad_esperada` | `n9-rem-046-001-closeout.md` §4 | ✅ |
+| FR-N9-002…006 declaración | 23 tipos | `test_cada_tipo_declara_entidad_clave_y_permiso` | `n9-resourcekind-authority-matrix.md` | ✅ |
+| FR-N9-007 `Payment` | `ap_payments` | `test_cada_tipo_se_vincula…[Payment]` | `n9-resourcekind-19x19-evidence.md` #6 | ✅ |
+| FR-N9-008 `BankTransaction` | `bank_transactions` | ídem `[BankTransaction]` | ídem #20 | ✅ |
+| FR-N9-009 `CashSession` | `cash_sessions` | ídem `[CashSession]` | ídem #21 | ✅ |
+| FR-N9-010 `Reconciliation` | `reconciliations` | ídem `[Reconciliation]` | ídem #22 | ✅ |
+| FR-N9-011 empresa real | los 22 con empresa | ídem, 22 casos | ídem | ✅ |
+| FR-N9-013/014 sin empresa artificial | `HomologationRecord` | ídem `[HomologationRecord]` | ídem #23 | ✅ |
+| FR-N9-015 entre empresas | los 22 | ídem, rama de cruce | ídem | ✅ |
+| FR-N9-016 entre tenants | los 22 | `test_ningun_tipo_cruza_la_frontera_entre_tenants` | ídem | ✅ |
+| FR-N9-017/018 registro cerrado | 4 nombres inventados | `test_un_tipo_inventado_se_rechaza` | ídem §3 | ✅ |
+| FR-N9-019 sin revelar existencia | 404 | ídem + `amz_06` | `n9-document-security-report.md` | ✅ |
+| FR-N9-020…023 vincular y desvincular | — | `amz_16`, `amz_17`, suite N9 | `n9-documentlink-report.md` | ✅ |
+| FR-N9-024…026 descarga, vista, versiones | — | suite N5 de seguridad 046 | ídem | ✅ |
+| FR-N9-027/028 congelado | `frozen_version_id` | `test_el_vinculo_congelado_sigue_apuntando…` | `n9-frozen-version-report.md` | ✅ |
+| FR-N9-029/030 hash y alteración | `STORAGE_HASH_MISMATCH` | `test_un_objeto_alterado_no_se_entrega…` | `n9-storage-integrity-report.md` | ✅ |
+| FR-N9-031…033 antivirus | ClamAV 1.4.3 | suite documental | `n9-clamav-report.md` | ✅ |
+| FR-N9-034 ficheros | proveedor operativo | ídem | `n9-s3-status-report.md` §2 | ✅ |
+| FR-N9-035/036 S3 | P1, 8 saltos | — | ídem §1 | ✅ |
+| FR-N9-037/038 Spec 045 | `CVG-045-04` | suite 045 + congelado | `n9-spec045-integration-report.md` | ✅ |
+| FR-N9-039 regresiones N5 | — | suites `test_mc_*` | `n9-regression-report.md` | ✅ |
+| FR-N9-040 sin repliegue | registro | `test_n8_contract` | — | ✅ |
+| FR-N9-041/042 consumidores | 10 Specs | — | `n9-consumer-dependency-matrix.md` | ✅ |
+| FR-N9-043 reconvergencia | Spec 046 | — | `n9-spec046-reconvergence-report.md` | ✅ |
+| FR-N9-044 cierre de REM | — | — | `n9-rem-046-001-closeout.md` | ✅ |
+| FR-N9-045/046 sin N10 ni 012 | — | — | análisis | ✅ |
+
+**Tipos: 23 · Requisitos: 46 · Huérfanos: 0 · Cobertura: 100%.**

@@ -221,3 +221,53 @@ casos ni siquiera había rama.
 ## 6. Veredicto
 
 **`N8 FINAL EVIDENCE CONVERGENCE: PASS`**
+
+---
+
+# N9 — CIERRE DE REM-046-001 Y RECONVERGENCIA DE LA SPEC 046
+
+## 1. Requisitos frente a implementación
+
+46 funcionales, 9 criterios de aceptación, 29 tareas. **Huérfanos: 0.**
+
+## 2. Lo que la auditoría cambió antes de implementar
+
+Dos hallazgos, ambos registrados en el análisis en lugar de resolverse en
+silencio:
+
+**La premisa de `REM-046-001` estaba resuelta.** Recomendaba el camino B —añadir
+al registro un campo que distinguiera empresa de tenant— porque el A era
+demasiado grande. Se hizo el A, como ARCH-MC-001 entera. El B no se implementó y
+no por descartarlo: se quedó sin causa.
+
+**La cardinalidad.** 19 registrados, 4 exigidos, 23 esperados. El «19/19» del
+encargo nombra otra cosa igual de cierta —19 registrados y uno probado— y N9
+satisface ambas cuentas.
+
+## 3. La evidencia
+
+De **1 tipo probado a 23**. Cada uno con entidad persistida en PostgreSQL,
+vínculo en su empresa, y bloqueo comprobado contra otra empresa y contra otro
+tenant. 48 pruebas, ninguna saltada, con el fallo nombrando el tipo.
+
+Más la integridad probada rompiéndola: objeto alterado y objeto ausente
+detectados en la entrega, en vez de servidos en silencio.
+
+## 4. Deuda declarada
+
+| Qué | Prioridad | Dueño |
+|---|---|---|
+| S3 con servicio real | P1 | Entorno |
+| Planificador de retención | P1 | Spec de instalación |
+
+Ninguna P0, ninguna disfrazada.
+
+## 5. Trabajo de otras fases
+
+N10 no se inicia. La Spec 012 no se toca y conserva su estado.
+
+## 6. Veredicto
+
+**`N9 CONVERGED`** · **`SPEC 046 RECONVERGED`** · **`REM-046-001 CLOSED`**
+
+No es `ARCH-MC-001 COMPLETE_100`.

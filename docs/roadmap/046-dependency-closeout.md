@@ -55,17 +55,17 @@ Todas las filas de este documento usan la numeración canónica.
 | **018 · Importaciones** | Proforma, packing list, embarque, certificados | La capacidad está completa; **no hay entidad que vincular** | Sí, en capacidad | **Su expediente no existe**: INCOTERM, proforma, packing y embarque inexistentes (B-030, `NOT_STARTED`) | `DOCUMENT_CAPABILITY_SATISFIED` |
 | **020 · Incidencias de recepción** | Foto del daño, soporte del reclamo | La capacidad está completa; **no hay entidad que vincular** | Sí, en capacidad | **No existe entidad de incidencia ni escalamiento** (B-041, `NOT_STARTED`) | `DOCUMENT_CAPABILITY_SATISFIED` |
 | **040 · Retenciones IVA e ISLR** | Comprobante de retención | Se adjunta a `SupplierInvoice` / `SalesInvoice`, ambas registradas | **Sí** | **`LEGAL_BLOCKER`**: Decreto 1.808 sin conceptos cargados | `DOCUMENT_CAPABILITY_SATISFIED` |
-| **028 · Cuentas por pagar y pagos** | Comprobante de pago | **Ninguno.** `Payment` → `ap_payments` **existe** con `company_id`, pero **no está registrado** | **No** | — | **`STILL_BLOCKED_BY_046`** |
-| **038 · Tesorería** | Soporte de conciliación y de movimiento de caja | **Ninguno.** `bank_transactions`, `cash_sessions`, `reconciliations` existen; **ninguna registrada** | **No** | — | **`STILL_BLOCKED_BY_046`** |
+| **028 · Cuentas por pagar y pagos** | Comprobante de pago | `Payment` → `ap_payments`, **registrado y probado** (N9) | **Sí** | Su propia auditoría, pendiente | `DEPENDENCY_SATISFIED_BUT_OTHER_BLOCKERS_EXIST` |
+| **038 · Tesorería** | Soporte de conciliación y de movimiento de caja | `BankTransaction`, `CashSession`, `Reconciliation`, **registradas y probadas** (N9) | **Sí** | Su propia auditoría, pendiente | `DEPENDENCY_SATISFIED_BUT_OTHER_BLOCKERS_EXIST` |
 
 ### Recuento
 
 | Estado | Specs | Nº |
 |---|---|---:|
-| `DEPENDENCY_SATISFIED_BUT_OTHER_BLOCKERS_EXIST` | 019, 027, 035 | 3 |
+| `DEPENDENCY_SATISFIED_BUT_OTHER_BLOCKERS_EXIST` | 019, 027, 035, 028, 038 | 5 |
 | `PARTIALLY_UNLOCKED` | 044, 056 | 2 |
 | `DOCUMENT_CAPABILITY_SATISFIED` | 018, 020, 040 | 3 |
-| **`STILL_BLOCKED_BY_046`** | **028, 038** | **2** |
+| **`STILL_BLOCKED_BY_046`** | — | **0** |
 | `FULLY_UNLOCKED` | — | **0** |
 
 **Ninguna Spec queda `FULLY_UNLOCKED`.** Satisfacer la dependencia documental no
@@ -145,3 +145,21 @@ aquí habría violado el propio requisito.
 
 Las 22 violaciones responsive conocidas **permanecen en sus Specs propietarias**
 (005 / 054). No se cargan a 046 ni se corrigen desde este cierre.
+
+
+---
+
+## Actualización — ARCH-MC-001 N9 (2026-09-01)
+
+`STILL_BLOCKED_BY_046` pasa de **2 a 0**. `Payment`, `BankTransaction`,
+`CashSession` y `Reconciliation` se registraron y, sobre todo, se **probaron**:
+cada una con entidad real persistida, vínculo en su empresa, y bloqueo
+comprobado contra otra empresa y contra otro tenant.
+
+Los 23 tipos del registro tienen ahora esa misma evidencia. Antes de N9 la
+tenía uno.
+
+`FULLY_UNLOCKED` sigue en **0**, y es correcto: que la dependencia documental
+esté resuelta no significa que la Spec consumidora esté terminada. Declararlo
+sería el error que `REM-046-001` corrigió — dar por hecha una capacidad porque
+su prerrequisito existe.
