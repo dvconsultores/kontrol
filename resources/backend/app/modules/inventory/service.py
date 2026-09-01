@@ -40,7 +40,7 @@ from app.modules.inventory.models import (
 )
 from app.modules.master_data import uom as uom_engine
 from app.modules.organization.models import Warehouse
-from app.modules.organization.service import warehouse_in_tenant_scope
+from app.modules.organization.service import warehouse_belongs_to
 from app.shared import audit as audit_service
 
 
@@ -321,7 +321,7 @@ def get_available(
 # --------------------------------------------------------------------------- #
 def _require_warehouse(db: Session, company_id: str, warehouse_id: str) -> Warehouse:
     warehouse = db.get(Warehouse, warehouse_id)
-    if not warehouse or not warehouse_in_tenant_scope(db, company_id, warehouse):
+    if not warehouse or not warehouse_belongs_to(company_id, warehouse):
         raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
     return warehouse
 

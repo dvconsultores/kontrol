@@ -210,3 +210,27 @@ Cada una con su requisito, su código y su prueba.
 | T-N7-017 Regresión N5 | AC-N7-009 | — | suites `test_mc_*` |
 | T-N7-018 Regresión N6 | AC-N7-009 | — | Vitest + Playwright |
 | T-N7-019 Cierre y convergencia | — | `convergence.md` | `n7-final-checkpoint.md` |
+
+---
+
+# N8 — TAREAS
+
+| Tarea | Requisito | Código | Prueba |
+|---|---|---|---|
+| T-N8-001 Inventario de columnas transitorias | FR-001, 002 | — | `n8-legacy-removal-inventory.md` |
+| T-N8-002 Inventario de lecturas y escrituras | FR-003, 004 | — | ídem |
+| T-N8-003 Inventario de repliegues y ayudantes | FR-005, 006 | — | `n8-fallback-removal-report.md` |
+| T-N8-004 Auditoría de cargas útiles | FR-024 | — | `n8-runtime-contract-inventory.md` |
+| T-N8-005 Hueco de la cabecera en OpenAPI | FR-008 | — | `n8-openapi-contract-report.md` |
+| T-N8-006 Fixture hostil reproducible | NFR-002, FR-015 | `qa/n4-legacy-hostile-seed.py` | `test_mc_preflight.py` |
+| T-N8-007 Desacoplar `planes()` del ORM | FR-013, 014 | `app/core/mc/runner.py` | `test_mc_preflight.py` |
+| T-N8-008 Retirar el repliegue | FR-005, 006 | `organization/service.py` + 4 llamantes | `test_n8_contract.py` |
+| T-N8-009 Declarar la cabecera | FR-008, 009 | `app/core/company_context.py` | `test_n8_contract.py` |
+| T-N8-010 Retirar columnas transitorias | FR-001, 002 | `0038_n8_drop_legacy` | catálogo |
+| T-N8-011 Instalación limpia | AC-001 | — | `n8-regression-report.md` |
+| T-N8-012 Preflight tras la retirada | FR-013, AC-003, 004 | — | `test_mc_preflight.py` |
+| T-N8-013 Nulos globales | FR-019→021, AC-008 | — | `test_n8_contract.py` |
+| T-N8-014 Auditoría de skips | FR-025, AC-009 | — | `n8-skipped-tests-audit.md` |
+| T-N8-015 Documentación obsoleta | FR-023 | matrices | — |
+| T-N8-016 Regresiones N5/N6/N7 | FR-026 | — | suites completas |
+| T-N8-017 Cierre y convergencia | — | `convergence.md` | `n8-final-checkpoint.md` |

@@ -213,3 +213,66 @@ UNRESOLVED MATERIAL OQ   : 0
 ```
 
 **`/speckit.analyze: PASS`** — implementación autorizada por el prompt maestro.
+
+---
+
+# N8 — ANÁLISIS
+
+## 1. Cobertura
+
+26 requisitos funcionales, 4 no funcionales, 10 criterios de aceptación, 17
+tareas. **Requisitos huérfanos: 0. Tareas huérfanas: 0.**
+
+## 2. Contradicciones buscadas
+
+| Qué | Resultado |
+|---|---|
+| Columna transitoria sin tarea de retirada | 0 |
+| Repliegue sin prueba | 0 |
+| Contrato sin prueba | 0 |
+| Desajuste OpenAPI / runtime | **1 encontrado**: la cabecera no se declara |
+| Dependencia oculta de N4 | **1 encontrada**: `planes()` lee el ORM |
+| Dependencia del fixture hostil | **1 encontrada**: la base no era reproducible |
+| Nulo con semántica contradictoria | 0 |
+| Solape con N9 o con la Spec 012 | 0 |
+| Skip ocultando requisito | **2 encontrados** |
+| Documentación obsoleta | **1**: tres alcances cambiados en N7 |
+
+Los seis hallazgos son trabajo de N8, no bloqueos: ninguno exige una decisión de
+negocio nueva.
+
+## 3. Lo que el análisis descartó
+
+**No hay lectura ni escritura doble.** Se buscaron los patrones —`coalesce`,
+`new or legacy`, escritura simultánea— y no existen. Las columnas transitorias
+nunca se conectaron al modelo, así que no hubo transición que mantener.
+
+**No hay cargas útiles heredadas.** N5 cerró el último caso.
+
+**El módulo de migración ya está aislado**: cero importaciones desde el runtime.
+
+## 4. El orden importa
+
+El análisis obliga a un orden: desacoplar el clasificador **antes** de retirar
+las columnas. No porque el clasificador dependa de ellas —no depende— sino
+porque ya está roto por otra causa, y borrar primero convertiría un fallo
+detectable en uno silencioso.
+
+## 5. Decisiones materiales nuevas
+
+**Ninguna.** El desacoplamiento aplica al conjunto de trabajo la misma pregunta
+que `preflight` ya le hace al destino. El contrato de la cabecera documenta un
+runtime que N1 decidió y N6 probó.
+
+## 6. Resultado
+
+```
+BLOCKER                  : 0
+CRITICAL                 : 0
+CONTRADICTIONS           : 0
+ORPHAN REQUIREMENTS      : 0
+ORPHAN TASKS             : 0
+UNRESOLVED MATERIAL OQ   : 0
+```
+
+**`/speckit.analyze: PASS`** — implementación autorizada.

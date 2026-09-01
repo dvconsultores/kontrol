@@ -15,8 +15,9 @@ from __future__ import annotations
 
 import uuid
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "0013_seed_business_permissions"
 down_revision = "0012_numeric_money"

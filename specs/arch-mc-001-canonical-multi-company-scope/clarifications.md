@@ -296,3 +296,123 @@ claves foráneas ya son correctas. Se declara en N7 para que las pruebas de
 arquitectura las cubran.
 
 Ninguna de las dos exige una decisión de negocio o fiscal nueva.
+
+---
+
+# N8 — ACLARACIONES DE CONTRATO Y RETIRADA
+
+Cada respuesta sale de medir el código, el catálogo y las migraciones.
+
+## 1–3. ¿Qué columnas transitorias existen y en cuántas tablas?
+
+`legacy_scope_id` y `scope_backfill_class`, añadidas por las migraciones
+`0025`–`0031` a **80 tablas** de empresa.
+
+## 4–7. ¿Alguien las lee, las escribe o depende de ellas?
+
+**Nadie.** Cero referencias en `app/`, cero en `tests/`, cero en el ORM. Nunca
+llegaron al modelo operativo: se añadieron como red de seguridad para un
+backfill que resultó no ser necesario, porque no existe ninguna instalación
+desplegada.
+
+Retirarlas es un `DROP` limpio, no una desconexión.
+
+## 8–10. ¿De qué depende el clasificador de N4?
+
+De dos cosas distintas, y la diferencia es el trabajo de esta fase.
+
+`preflight.py` consulta `information_schema` del **destino**: ya está
+desacoplado y sigue funcionando contra cualquier esquema.
+
+`planes()`, en `runner.py`, decide el conjunto de trabajo leyendo el **ORM
+vigente** y excluyendo las tablas cuya `company_id` ya tiene clave foránea. Tras
+N7 eso vale para todas, así que devuelve cero planes: el clasificador quedó
+ciego.
+
+**Debe desacoplarse `planes()`**, no `preflight`. El alcance declarado
+—`__scope__`, `__scope_authority__`— sí puede seguir viniendo de los modelos:
+describe la *semántica* del dominio, que no cambia entre versiones. Lo que tiene
+que preguntarse al destino es «¿esta columna ya tiene dueño garantizado ahí?».
+
+## 11. ¿Qué repliegues de empresa siguen vivos?
+
+**Uno**: `warehouse_in_tenant_scope`, en organización. Su docstring lo describe
+como diseño vigente:
+
+> «Los módulos de negocio usan el `tenant_id` del usuario como alcance
+> (`company_id`) […] En el modelo MONO_COMPANY el tenant tiene una sola empresa,
+> por lo que este helper reconcilia ambos identificadores».
+
+Sus cuatro llamantes pasan hoy `company_id`, así que la primera rama hace la
+comprobación correcta y la segunda —la búsqueda por tenant— es código muerto.
+Funciona por accidente y su nombre invita a reintroducir el defecto.
+
+## 12. ¿Hay cargas útiles con propiedad ambigua?
+
+No. N5 cerró el último caso —el cuerpo que imponía la empresa en la Spec 045— y
+la familia de pruebas de arquitectura de N5 lo vigila.
+
+## 13–17. El contrato de la cabecera
+
+| Situación | Comportamiento del runtime |
+|---|---|
+| Una sola empresa accesible, sin cabecera | Se resuelve sola |
+| Varias, sin cabecera | `400 COMPANY_CONTEXT_REQUIRED` |
+| Empresa no accesible | `404 COMPANY_NOT_FOUND` |
+| Empresa de otro tenant | `404`, sin revelar que existe |
+| Empresa inactiva | `409 COMPANY_INACTIVE` |
+| Rutas de tenant, global o instalación | No aplica |
+
+El contrato debe declarar la cabecera como **opcional**, con la descripción de
+cuándo hace falta. Declararla obligatoria sería mentir: el runtime la resuelve
+solo cuando puede, y esa auto-resolución es una decisión de diseño de N1, no un
+descuido.
+
+## 18–19. Nulos legítimos frente a nulos de transición
+
+| Tabla | Campo | Qué significa el nulo | ¿Transitorio? |
+|---|---|---|---|
+| `units_of_measure` | `company_id` | Unidad del sistema (Spec 011, `OQ-MC-01`) | No |
+| `stored_files` | `company_id` | Archivo anterior a su documento | No |
+| `movement_types` | `company_id` | `global_scope`: tipo de toda la instalación | No |
+| `costing_profiles` | `company_id` | Ídem | No |
+| `roles`, `user_roles`, `user_scopes` | `company_id` | Vale en todas las empresas del tenant | No |
+| `idempotency_records`, `legacy_document_references` | `company_id` | Sin acotar | No |
+| `audit_events`, `outbox_events` | `company_id`, `tenant_id` | Acción anterior a conocerlos | No |
+
+**Ninguno es transitorio.** Los once tienen semántica documentada, y N7 ya
+corrigió el error de endurecer dos de ellos por inercia.
+
+## 20–21. Los skips
+
+| Categoría | Cuántos | Ejemplos |
+|---|---:|---|
+| Motor ausente en el entorno (PostgreSQL, alembic) | 6 | aislamiento multiempresa, estructura de N7 |
+| Servicio externo (ClamAV, S3, libmagic) | 5 | análisis antivirus, almacenamiento real |
+| Cadena documental no aplicable | 1 | `homologation_records.evidence_sha256` |
+| **Fixture legado ausente** | **2** | preflight de N4 sobre base heredada |
+
+Los dos últimos son **categoría F**: ocultaban un requisito de N8. Las pruebas
+del fixture hostil se saltaban porque la base `kontrol_legacy` se sembró en una
+sesión anterior y se perdió al borrarse el directorio temporal.
+
+Un fixture hostil que no se puede reconstruir no es un fixture: es un recuerdo.
+Se resuelve creando el sembrador como artefacto versionado.
+
+## 22. ¿Hay alias heredados en el frontend?
+
+No. N6 centralizó la cabecera en un único punto y una prueba de arquitectura
+comprueba que no exista una segunda asignación.
+
+## 23. ¿Quedó documentación vieja tras los cambios de alcance de N7?
+
+Sí. `canonical-scope-matrix.md` clasifica `currencies`, `exchange_rates` y
+`report_definitions` como de tenant, y N7 demostró que son de empresa: el código
+las crea con la empresa activa, las lista por empresa y N5 ya había probado su
+aislamiento.
+
+## Preguntas abiertas
+
+**Ninguna material.** El desacoplamiento de `planes()` no introduce ninguna
+decisión de negocio: aplica al conjunto de trabajo la misma pregunta que
+`preflight` ya le hace al destino.

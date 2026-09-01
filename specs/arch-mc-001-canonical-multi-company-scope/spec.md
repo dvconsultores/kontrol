@@ -376,3 +376,124 @@ No se toca `REM-046-001`, ni los tipos de recurso pendientes, ni la
 reconvergencia de 046. Eso es N9.
 
 No se implementa la Spec 012. No se implementa ninguna capacidad intercompany.
+
+---
+
+# 8. FASE N8 — CONTRATO, RETIRADA DE LO TRANSITORIO Y LIMPIEZA FINAL
+
+## 8.1 Qué cierra N8
+
+N7 dejó la estructura correcta. Lo que queda son restos: una capa de transición
+que ya no debe estar en el producto activo, un contrato de API que no describe lo
+que el sistema hace, y un ayudante cuyo docstring todavía explica cómo usar el
+tenant como empresa.
+
+N8 retira lo transitorio **sin destruir la capacidad de entender y migrar una
+instalación heredada futura**. Son dos cosas distintas y la fase se juega en no
+confundirlas.
+
+## 8.2 El estado medido
+
+| Hecho | Medida |
+|---|---:|
+| `legacy_scope_id` en el ORM | **0** |
+| `scope_backfill_class` en el ORM | **0** |
+| Referencias a ambas en `app/` y `tests/` | **0** |
+| Referencias en migraciones (0025–0031) | 7 ficheros |
+| Importaciones del módulo de migración desde el runtime | **0** |
+| Repliegues `company ?? tenant` en runtime | **1** |
+| Cabecera `X-Kontrol-Company` en OpenAPI | **ausente** |
+| Pruebas saltadas | 16, en 15 puntos |
+
+Tres cosas que el inventario aclara y conviene decir antes de la lista de
+requisitos:
+
+**Las columnas transitorias nunca llegaron al modelo operativo.** N3 las añadió
+por migración como red de seguridad para un backfill que resultó no ser
+necesario, y ningún modelo las declaró nunca. Retirarlas es un `DROP`, no una
+desconexión.
+
+**El módulo de migración ya está aislado.** Ningún servicio productivo lo
+importa. Lo que falta no es separarlo: es que siga funcionando.
+
+**Queda un repliegue vivo.** `warehouse_in_tenant_scope` reconcilia tenant y
+empresa, y su docstring lo explica como diseño vigente. Es el último resto
+activo de la semántica anterior.
+
+## 8.3 El hallazgo material
+
+**El clasificador de N4 quedó ciego después de N7.**
+
+`planes()` decide qué tablas hay que reconstruir excluyendo aquellas cuya
+`company_id` ya tiene clave foránea. Antes de N7 eso valía para 17 tablas;
+después vale para todas, así que devuelve **cero planes** y no puede clasificar
+nada.
+
+Contra una instalación heredada —cuyo esquema **no** tiene esas claves— seguiría
+mirando el modelo vigente y devolviendo cero. La herramienta que la Spec 052
+necesita para decidir si una actualización es segura respondería «no hay nada
+que revisar» a cualquier base.
+
+Se registró como limitación al cerrar N7. En N8 deja de ser una limitación
+aceptable, porque N8 es la fase que promete conservar la capacidad de migración.
+
+## 8.4 Requisitos funcionales
+
+**FR-N8-001** — `legacy_scope_id` no forma parte del esquema operativo final.
+**FR-N8-002** — `scope_backfill_class` tampoco.
+**FR-N8-003** — No existe lectura doble de propiedad en runtime.
+**FR-N8-004** — No existe escritura doble de propiedad en runtime.
+**FR-N8-005** — No existe repliegue de empresa a tenant.
+**FR-N8-006** — No existe ayudante que interprete el tenant como empresa.
+**FR-N8-007** — Todo el código funcional usa el alcance canónico.
+**FR-N8-008** — `X-Kontrol-Company` está declarada en el contrato de API.
+**FR-N8-009** — El contrato refleja la resolución automática real, no una
+obligatoriedad que el runtime no impone.
+**FR-N8-010** — Con una sola empresa accesible, la cabecera puede omitirse.
+**FR-N8-011** — Con varias y sin contexto, el error es el definido.
+**FR-N8-012** — La cabecera no concede acceso: el servidor revalida.
+**FR-N8-013** — El preflight de N4 sigue siendo ejecutable.
+**FR-N8-014** — Y clasifica contra el **catálogo del destino**, no contra el
+modelo vigente.
+**FR-N8-015** — El fixture hostil sigue clasificando correctamente.
+**FR-N8-016** — `MC-A` a `MC-E` se preservan.
+**FR-N8-017** — `INVALID_LEGACY_SCOPE` se preserva.
+**FR-N8-018** — `CROSS_TENANT` se preserva.
+**FR-N8-019** — Los nulos legítimos de alcance global no se eliminan.
+**FR-N8-020** — `movement_types` conserva su semántica global/empresa.
+**FR-N8-021** — `costing_profiles` también.
+**FR-N8-022** — ORM, Alembic, PostgreSQL y OpenAPI quedan alineados.
+**FR-N8-023** — No queda documentación activa que describa semántica obsoleta.
+**FR-N8-024** — Ningún esquema de petición permite propiedad heredada.
+**FR-N8-025** — Los 16 skips están inventariados y ninguno oculta trabajo de N8.
+**FR-N8-026** — N5, N6 y N7 siguen verdes.
+
+## 8.5 Requisitos no funcionales
+
+**NFR-N8-001** — Las migraciones de retirada son pequeñas y auditables.
+**NFR-N8-002** — El fixture hostil es **reproducible**: existe como artefacto
+versionado, no como una base de datos que alguien sembró una vez.
+**NFR-N8-003** — El preflight sigue siendo de solo lectura y repetible.
+**NFR-N8-004** — Deriva entre catálogo, ORM y contrato: cero.
+
+## 8.6 Criterios de aceptación
+
+**AC-N8-001** — El catálogo de una instalación limpia no contiene ninguna
+columna transitoria.
+**AC-N8-002** — Ningún módulo productivo importa el paquete de migración.
+**AC-N8-003** — El clasificador, sobre el fixture hostil, distingue `MC-A`,
+`MC-B`, `MC-C`, `MC-E` y `OK`.
+**AC-N8-004** — El preflight no escribe nada y es repetible.
+**AC-N8-005** — Sin cabecera y con una empresa: la petición funciona.
+**AC-N8-006** — Sin cabecera y con dos: `COMPANY_CONTEXT_REQUIRED`.
+**AC-N8-007** — La cabecera aparece en las operaciones de empresa del contrato
+y **no** en las que no lo son.
+**AC-N8-008** — Un tipo de movimiento global sigue admitiendo empresa nula.
+**AC-N8-009** — Ningún skip corresponde a trabajo de N8.
+**AC-N8-010** — Fallos inesperados: cero.
+
+## 8.7 Fuera del alcance
+
+No se toca `REM-046-001`, ni los tipos de recurso pendientes, ni la
+reconvergencia de 046. No se implementa la Spec 012, ni la 052, ni la 053
+completas. No se elimina el framework de migración ni el fixture hostil.

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from fastapi import Depends, Request
+from fastapi import Depends, Header, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -141,13 +141,41 @@ def _branch_scope(db: Session, user: User, company_id: str) -> tuple[str, ...]:
 # Dependencia de FastAPI
 # --------------------------------------------------------------------------
 
-def get_company_context(request: Request,
-                        db: Session = Depends(get_db)) -> CompanyContext:
-    """Contexto de empresa de esta petición. Úsese en toda ruta de empresa."""
+#: Descripción publicada en el contrato. Se escribe una vez y la usan todas las
+#: operaciones de empresa: repetirla en cada ruta garantizaría que alguna
+#: acabara diciendo algo distinto de lo que el servidor hace.
+DESCRIPCION_CABECERA = (
+    "Empresa en la que se opera. **Opcional**: cuando el usuario puede operar "
+    "en una sola, el servidor la resuelve por su cuenta. Con varias, esta "
+    "cabecera es obligatoria y su ausencia responde `400 "
+    "COMPANY_CONTEXT_REQUIRED`. Una empresa a la que el usuario no tiene "
+    "acceso, de otro tenant o inexistente responde `404 COMPANY_NOT_FOUND` sin "
+    "revelar si existe; una inactiva, `409 COMPANY_INACTIVE`. La cabecera "
+    "**selecciona**, no concede: el servidor valida el acceso en cada petición."
+)
+
+
+def get_company_context(
+    request: Request,
+    db: Session = Depends(get_db),
+    x_kontrol_company: str | None = Header(
+        default=None, alias=COMPANY_HEADER, description=DESCRIPCION_CABECERA),
+) -> CompanyContext:
+    """Contexto de empresa de esta petición. Úsese en toda ruta de empresa.
+
+    La cabecera se declara como parámetro para que aparezca en el contrato. Se
+    declara **opcional** porque el runtime la resuelve solo cuando el usuario
+    tiene una única empresa: decir que es obligatoria describiría un sistema
+    distinto del que existe, y quien leyera el contrato enviaría siempre una
+    cabecera que a veces sobra.
+
+    El valor viene del parámetro declarado, no de `request.headers`. Tener dos
+    lecturas del mismo dato dejaría dos autoridades sobre la misma decisión.
+    """
     from app.core.dependencies import get_current_user
 
     user = get_current_user(request, db)
-    return resolve_company(db, user, request.headers.get(COMPANY_HEADER))
+    return resolve_company(db, user, x_kontrol_company)
 
 
 def company_context_for(db: Session, user: User, company_id: str) -> CompanyContext:

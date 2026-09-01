@@ -75,3 +75,33 @@ Medido contra el catálogo de PostgreSQL 18.6, no contra el ORM.
 | 26 | Regresión de N6 definida | ✅ |
 | 27 | Rojos esperados de N8 separados | ✅ |
 | 28 | Requisitos N7 sin criterio de aceptación = 0 | ✅ 30 FR, 6 NFR, 10 AC |
+
+---
+
+# N8 — LISTA DE COMPROBACIÓN
+
+| # | Comprobación | Estado |
+|---|---|---|
+| 1 | Inventario de `legacy_scope_id` | ✅ 80 tablas, solo en migraciones |
+| 2 | Inventario de `scope_backfill_class` | ✅ ídem |
+| 3 | Lecturas en runtime antes de borrar | ✅ **0** |
+| 4 | Escrituras en runtime antes de borrar | ✅ **0** |
+| 5 | Inventario de lectura doble | ✅ 0 |
+| 6 | Inventario de escritura doble | ✅ 0 |
+| 7 | Inventario de repliegue tenant→empresa | ✅ **1 encontrado** |
+| 8 | Inventario de ayudantes de compatibilidad | ✅ el mismo |
+| 9 | Inventario de cargas útiles heredadas | ✅ 0 |
+| 10 | Contrato de la cabecera definido | ✅ opcional, con semántica |
+| 11 | Omisión con una empresa | ✅ definida |
+| 12 | Obligatoriedad con varias | ✅ definida |
+| 13 | Empresa inválida o inactiva | ✅ definida |
+| 14 | Compatibilidad del clasificador diseñada | ✅ desacoplar `planes()` |
+| 15 | Fixture hostil preservado | ✅ como artefacto reproducible |
+| 16 | `MC-A`…`MC-E` preservadas | ⬜ tras verificar |
+| 17 | `INVALID_LEGACY_SCOPE` preservada | ⬜ |
+| 18 | `CROSS_TENANT` preservada | ⬜ |
+| 19 | Semántica de nulos globales | ✅ matriz de 11 filas |
+| 20 | 16 skips auditados | ✅ 4 categorías |
+| 21 | Requisito de N8 oculto por skip | ✅ **2 encontrados y resueltos** |
+| 22 | Alineación ORM/esquema/API | ⬜ tras implementar |
+| 23 | Regresiones N5/N6/N7 planificadas | ✅ |

@@ -202,3 +202,91 @@ que ya tiene tres; no sustituye ninguna.
 | Coherente con ADR-D0-014 | N7 aplica la decisión del ADR a la capa estructural | PASS |
 
 **`CONSTITUTION GATE: PASS`**
+
+---
+
+# N8 — PLAN DE CONTRATO Y RETIRADA
+
+## 1. Orden, y por qué este
+
+**Primero desacoplar, después borrar.** Si se retiraran las columnas antes de
+comprobar que el clasificador sigue funcionando, se descubriría el problema con
+la capacidad ya perdida.
+
+1. Sembrar el fixture hostil como artefacto reproducible.
+2. Desacoplar `planes()` del modelo vigente.
+3. Verificar el clasificador contra el fixture.
+4. Retirar el repliegue de tenant a empresa.
+5. Declarar la cabecera en el contrato.
+6. Retirar las columnas transitorias.
+7. Instalación limpia y regresión.
+
+Los pasos 1–3 van antes que el 6 a propósito. El encargo lo dice y la razón es
+concreta: el clasificador ya está roto, y borrar primero convertiría un fallo
+detectable en uno silencioso.
+
+## 2. El fixture hostil, como artefacto
+
+`qa/n4-legacy-hostile-seed.py` reconstruye la base heredada desde cero: esquema
+en `0032` —anterior a las claves de N7, porque una instalación heredada no las
+tiene— y las filas difíciles que el clasificador debe distinguir.
+
+Se detiene en `0032` a propósito: sembrar sobre el esquema final haría que la
+base rechazara justamente las filas inválidas que hacen falta.
+
+## 3. El desacoplamiento
+
+`planes()` acepta una conexión al destino. Con ella, pregunta a su catálogo qué
+columnas de empresa carecen de clave foránea **allí**. Sin ella, mantiene el
+comportamiento actual sobre los modelos.
+
+El alcance declarado sigue viniendo de los modelos: describe la semántica del
+dominio —qué es de empresa, qué deriva y de dónde— y eso no cambia entre
+versiones. Lo que cambia entre versiones es qué garantiza el esquema, y eso se
+le pregunta al esquema.
+
+## 4. El repliegue
+
+`warehouse_in_tenant_scope` se sustituye por una comprobación de empresa. Sus
+cuatro llamantes ya pasan `company_id`, así que el cambio es de nombre y de
+semántica declarada, no de comportamiento.
+
+## 5. La cabecera en el contrato
+
+La dependencia pasa a declarar `X-Kontrol-Company` como parámetro de cabecera
+**opcional**, de forma que FastAPI la publique en OpenAPI. Un único valor
+validado: no se admite una segunda lectura manual del `Request` que compita con
+la declarada.
+
+Opcional, no obligatoria. El runtime la resuelve solo cuando el usuario tiene
+una sola empresa, y declararla obligatoria describiría un sistema distinto del
+que existe.
+
+## 6. Las columnas
+
+Una migración de retirada, después de demostrar cero dependencia. Con
+`downgrade` que las restituye, porque una instalación que revirtiera necesitaría
+el esquema anterior completo.
+
+## 7. Comprobación
+
+Instalación limpia, catálogo sin columnas transitorias, clasificador sobre el
+fixture hostil, preflight sin escrituras, contrato con la cabecera en las
+operaciones de empresa y no en las demás, y las regresiones de N5, N6 y N7.
+
+## 8. CONSTITUTION GATE
+
+| Principio | Verificación | Resultado |
+|---|---|---|
+| Capacidad de migración | El clasificador se desacopla **antes** de borrar; el fixture pasa a ser artefacto | PASS |
+| Sin reinterpretación histórica | No se migra ni reescribe ningún dato | PASS |
+| **P6** — autoridad del backend | La cabecera se declara; sigue sin conceder nada | PASS |
+| **P4** — núcleo fiscal | Sin cambios de cálculo ni de alcance fiscal | PASS |
+| Alcance de terceros y artículos | Sin cambios | PASS |
+| ADR-D0-014 | N8 completa su contrato; no lo contradice | PASS |
+| Sin doble autoridad | Un único valor de cabecera validado | PASS |
+| Sin borrar evidencia | Migraciones e informes históricos intactos | PASS |
+| Sin mezclar N9 ni 012 | Verificado en el análisis | PASS |
+| Sin implementar antes de analizar | Ciclo completo antes de la primera línea | PASS |
+
+**`CONSTITUTION GATE: PASS`**

@@ -24,7 +24,7 @@ from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.approvals import integration as approvals_integration
 from app.modules.inventory import service as inv_service
 from app.modules.organization.models import Warehouse
-from app.modules.organization.service import warehouse_in_tenant_scope
+from app.modules.organization.service import warehouse_belongs_to
 from app.modules.purchasing.models import (
     Advance,
     Application,
@@ -348,7 +348,7 @@ def create_receipt(db: Session, *, company_id: str, code: str, order_id: str, wa
     if order.status not in ("APPROVED", "PARTIALLY_RECEIVED", "RECEIVED"):
         raise ConflictError(code="ORDER_NOT_RECEIVABLE", message="La orden no está en estado para recibirse.")
     warehouse = db.get(Warehouse, warehouse_id)
-    if not warehouse or not warehouse_in_tenant_scope(db, company_id, warehouse):
+    if not warehouse or not warehouse_belongs_to(company_id, warehouse):
         raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
     receipt = GoodsReceipt(company_id=company_id, code=code, order_id=order_id, warehouse_id=warehouse_id,
                            status="DRAFT", quality_status="PENDING", created_by=actor)

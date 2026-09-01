@@ -163,10 +163,10 @@ def create_cashbox(db: Session, *, company_id: str, code: str, name: str, curren
     company_id = _company(company_id, obj="caja")
     if warehouse_id:
         from app.modules.organization.models import Warehouse
-        from app.modules.organization.service import warehouse_in_tenant_scope
+        from app.modules.organization.service import warehouse_belongs_to
 
         warehouse = db.get(Warehouse, warehouse_id)
-        if not warehouse or not warehouse_in_tenant_scope(db, company_id, warehouse):
+        if not warehouse or not warehouse_belongs_to(company_id, warehouse):
             raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
     c = Cashbox(company_id=company_id, code=code, name=name, currency=currency, warehouse_id=warehouse_id,
                 policies=policies, status="ACTIVE", created_by=actor)

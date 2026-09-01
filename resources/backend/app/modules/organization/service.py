@@ -5,7 +5,6 @@ Incluye helpers de alcance compartidos por los módulos de negocio.
 
 from __future__ import annotations
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modules.organization.models import Branch, Company, Warehouse
@@ -33,20 +32,20 @@ def warehouse_in_tenant(db: Session, tenant_id: str, warehouse_id: str) -> bool:
     return company_in_tenant(db, tenant_id, warehouse.company_id)
 
 
-def warehouse_in_tenant_scope(db: Session, tenant_id: str, warehouse: Warehouse) -> bool:
-    """¿Pertenece el almacén a una empresa del tenant?
+def warehouse_belongs_to(company_id: str, warehouse: Warehouse) -> bool:
+    """¿Es este almacén de esta empresa?
 
-    Los módulos de negocio (ventas, compras, inventario) usan el `tenant_id`
-    del usuario como alcance (`company_id`), mientras que la organización
-    referencia los almacenes por `Company.id` (FK a companies).
+    Sustituye a `warehouse_in_tenant_scope`, que reconciliaba el identificador
+    del tenant con el de la empresa porque los módulos de negocio usaban el
+    primero como alcance. Su docstring lo describía como diseño vigente y su
+    segunda rama buscaba las empresas del tenant.
 
-    En el modelo MONO_COMPANY el tenant tiene una sola empresa, por lo que
-    este helper reconcilia ambos identificadores sin debilitar el aislamiento
-    entre tenants (solo acepta empresas del propio tenant).
+    Desde N2 los cuatro llamantes pasan la empresa real, así que aquella
+    reconciliación era código muerto que funcionaba por accidente: si algún día
+    un identificador de empresa hubiera coincidido con uno de tenant, habría
+    aceptado el almacén equivocado. El nombre, además, invitaba a reintroducir
+    la confusión que ARCH-MC-001 vino a corregir.
+
+    Lo que hace falta comprobar es una sola cosa, y es esta.
     """
-    if warehouse.company_id == tenant_id:
-        return True
-    companies = db.execute(
-        select(Company.id).where(Company.tenant_id == tenant_id)
-    ).scalars().all()
-    return warehouse.company_id in companies
+    return warehouse.company_id == company_id
