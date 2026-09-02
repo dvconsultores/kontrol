@@ -2,6 +2,28 @@
 
 Prefijo: `/api/v1/comercial`.
 
+## 0. Contrato de empresa — antes que cualquier ruta
+
+Toda operación de este prefijo es de empresa. Sin excepciones: no hay maestro
+comercial de tenant, de instalación ni global.
+
+Por tanto **todas** declaran `X-Kontrol-Company` en OpenAPI, con el contrato
+vigente de ARCH-MC-001:
+
+| Situación | Comportamiento |
+|---|---|
+| El usuario alcanza una sola empresa | Se resuelve automáticamente |
+| Alcanza varias y no envía la cabecera | Error contractual vigente |
+| Envía una empresa que no alcanza | `404`, sin distinguir de inexistente |
+| Envía una empresa de otro tenant | `404` |
+
+La cabecera la declara la dependencia `get_company_context`, de modo que la ruta
+que la exige es exactamente la que la publica. No hay una segunda lista que
+mantener sincronizada.
+
+**Ninguna ruta acepta la empresa en el cuerpo.** Si el cuerpo la trae, o se
+ignora o se contrasta con el contexto y se rechaza si difiere; nunca se obedece.
+
 ## 1. Maestros
 
 | Método | Ruta | Permiso |
@@ -24,16 +46,46 @@ Prefijo: `/api/v1/comercial`.
 | `GET` `POST` | `/listas-precio/{id}/versiones/{vid}/items` | items de una versión `DRAFT` |
 | `DELETE` | `/listas-precio/{id}/versiones/{vid}` | **409** si está referenciada |
 
+### Las cinco rutas hijas, y lo que cada una debe comprobar
+
+Estas cinco tienen la forma exacta del defecto que N10 encontró nueve veces:
+identificador del padre en la URL, y un servicio que lo usa tal cual.
+
+Cada una resuelve **primero** el padre acotado por `CompanyContext`, y con tres
+niveles hay que comprobar los tres eslabones, no solo el primero:
+
+| Ruta | Qué resolver, en orden |
+|---|---|
+| `POST /listas-precio/{id}/versiones` | lista `{id}` bajo el contexto |
+| `POST /listas-precio/{id}/versiones/{vid}/activar` | lista `{id}`; versión `{vid}` **de esa lista** |
+| `GET` `POST` `/listas-precio/{id}/versiones/{vid}/items` | lista `{id}`; versión `{vid}` de esa lista |
+| `DELETE /listas-precio/{id}/versiones/{vid}` | lista `{id}`; versión `{vid}` de esa lista |
+
+Una versión legítima que cuelga de una lista de otra empresa **no** es
+alcanzable comprobando solo `{vid}`. El detalle está en
+`nested-resource-security-contract.md`, casos N-01 a N-09.
+
 ## 3. Resolución — la razón de ser de la Spec
 
 ```
 POST /comercial/precio/resolver
+X-Kontrol-Company: <empresa activa>
+
 {
-  "company_id": "...", "customer_id": "...", "item_id": "...",
+  "customer_id": "...", "item_id": "...",
   "presentation_id": "...", "quantity": "10", "currency": "VED",
   "as_of": "2026-08-30"
 }
 ```
+
+> **`company_id` se retira del cuerpo.** Lo declaraba, y era exactamente la
+> vulnerabilidad que la Spec 045 estrenó y que N5 cerró: operando en A se
+> declaraba B en el cuerpo y el resultado salía de B. El cliente elegía en qué
+> empresa opera.
+>
+> La empresa la pone el contexto. Y `customer_id`, `item_id` y
+> `presentation_id` se resuelven **dentro** de esa empresa: un cliente de otra
+> empresa no es un cliente para esta petición.
 
 Respuesta:
 
@@ -70,7 +122,9 @@ Empate irresoluble (`FR-012-013`) → **422**:
 
 ```
 POST /comercial/descuento/validar
-{ "company_id":"...", "scope":"LINE", "item_id":"...", "percent":"25.00", "role":"VENDEDOR" }
+X-Kontrol-Company: <empresa activa>
+
+{ "scope":"LINE", "item_id":"...", "percent":"25.00", "role":"VENDEDOR" }
 ```
 
 ```json
@@ -103,3 +157,35 @@ motor de la Spec 045. 012 **no** crea aprobaciones (`CL-012-09`).
 - No calculan comisiones.
 - No exponen precedencia como código: la devuelven como **dato**, para que la
   interfaz pueda explicar de dónde salió el precio.
+
+---
+
+## 6. Errores
+
+| Código | Cuándo |
+|---|---|
+| `404` | El recurso no existe **o** es de otra empresa. No se distingue |
+| `404` | El padre de una ruta hija no es alcanzable desde el contexto |
+| `409` | Se intenta borrar una versión referenciada por un documento aprobado |
+| `409` | Dos versiones `ACTIVE` de la misma lista solaparían vigencia |
+| `422` | Empate de precedencia irresoluble: **error de configuración**, no azar |
+
+El `404` de la primera y la segunda fila es deliberado. Un `403` sobre un
+recurso ajeno confirma que existe, y con identificadores adivinables eso es un
+inventario ajeno servido de a un bit por petición.
+
+## 7. Permisos
+
+| Permiso | Operaciones |
+|---|---|
+| `comercial:view` | Leer cualquier maestro comercial |
+| `comercial:create` | Crear maestros y versiones en borrador |
+| `comercial:edit` | Modificar maestros y borradores |
+| `comercial:manage_policies` | Políticas de descuento y de crédito |
+| `comercial:publish` | Activar una versión: es irreversible |
+| `comercial:archive` | Archivar; **nunca** borrar lo referenciado |
+
+Tener el permiso **no** es tener acceso a la empresa (`FR-012-MC-036`).
+`comercial:create` dice que el usuario puede crear maestros comerciales; no dice
+en cuál empresa. Quien lo decide es `accessible_company_ids`, y `UserRole` no
+amplía ese alcance (`FR-012-MC-037`).

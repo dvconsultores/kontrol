@@ -165,3 +165,36 @@ No se escribe a mano.
 | Frontend | `wireframes/` | T-012-080..088 | E2E, axe, responsive |
 | Legado | `legacy-commercial-data-migration-matrix.md` | T-012-090..094 | Fixture de seis clases |
 | Consumidoras | `commercial-master-impact-matrix.md` | T-012-100 | Verificación por contrato |
+
+---
+
+# TRAZABILIDAD — REQUISITOS MULTIEMPRESA
+
+| Requisito | Aclaración | Plan | Tarea | Modelo | Contrato | Prueba futura | Estado |
+|---|---|---|---|---|---|---|---|
+| FR-012-MC-001..003 | Alcance de las once | Ola 1 | RV-005, RV-007 | §14 | — | A-01 | Cubierto |
+| FR-012-MC-004 | Empresa real con FK | Ola 1 | RV-005 | §14 | — | A-02, B-01 | Cubierto |
+| FR-012-MC-005 | Autoridad de petición | Ola 2 | RV-022 | — | §0 | C-01..04 | Cubierto |
+| FR-012-MC-006 | Empresa fuera del cuerpo | Ola 2 | RV-022 | — | §3, §4 | A-07, E-07 | Cubierto |
+| FR-012-MC-007..009 | El padre no es autoridad | Ola 14 | RV-020 | — | §2 | N-01..09 | Cubierto |
+| FR-012-MC-010 | Bloqueo sin revelar | Ola 14 | RV-020 | — | §6 | N-02, N-03 | Cubierto |
+| FR-012-MC-011 | Entre tenants | Ola 18 | RV-030 | — | §0 | C-03, N-03 | Cubierto |
+| FR-012-MC-012 | Sin respaldo Tenant→Company | Ola 2 | RV-022 | — | §0 | A-06 | Cubierto |
+| FR-012-MC-013, 014 | Unicidad por empresa | Ola 1 | RV-008 | matriz | — | B-03, B-04 | Cubierto |
+| FR-012-MC-015..019 | Listas, versiones e ítems | Olas 3–5 | RV-009..011 | §4–6, §14 | §2 | A-03, A-04 | Cubierto |
+| FR-012-MC-020, 021 | Producto y Tercero | Ola 1 | RV-002, RV-003 | revalidación | — | — | Cubierto |
+| FR-012-MC-022..025 | Unidades y presentación | Ola 9 | RV-016, RV-017 | §6 | — | — | Cubierto |
+| FR-012-MC-026..028 | Histórico | Ola 10 | RV-019 | §11 | versionado | F-01..06 | Cubierto |
+| FR-012-MC-029, 030 | Moneda y tasa | Ola 10 | RV-004 | §4 | versionado | F-03 | Cubierto |
+| FR-012-MC-031, 032 | Sin lectura ni escritura dual | Ola 1 | RV-005 | §14 | — | A-04 | Cubierto |
+| FR-012-MC-033..035 | Contrato OpenAPI | Ola 12 | RV-026 | — | §0 | — | Cubierto |
+| FR-012-MC-036, 037 | Permiso ≠ acceso | Ola 2 | RV-023 | — | §7 | C-04 | Cubierto |
+| FR-012-MC-038 | Auditoría | Ola 15 | RV-025 | — | — | G-03 | Cubierto |
+| FR-012-MC-039..043 | Sin duplicar motores | Olas 9–11 | RV-024 | — | dependencias | G-02 | Cubierto |
+| FR-012-MC-044 | Sin exponer datos ajenos | Ola 14 | RV-020 | — | §6 | C-02, E-06 | Cubierto |
+| FR-012-MC-045..047 | Frontend | Ola 13 | RV-027 | — | — | H-01..03 | Cubierto |
+| FR-012-MC-048, 049 | Autoridad del padre | Ola 14 | RV-021 | — | §2 | N-01..09 | Cubierto |
+| FR-012-MC-050 | Sin semántica superada | Ola 1 | RV-031 | revalidación | — | A-06 | Cubierto |
+
+Cobertura: **100%**. Requisitos sin tarea: **0**. Tareas sin requisito: **0**.
+Huérfanos: **0**.

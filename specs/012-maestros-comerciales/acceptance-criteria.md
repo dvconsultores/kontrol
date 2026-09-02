@@ -87,3 +87,36 @@ criterio.
 | AC-012-43 | Sin violaciones serias de WCAG 2.2 AA en las cinco pantallas |
 | AC-012-44 | Sin desbordamiento horizontal entre 320 y 1440 |
 | AC-012-45 | Cross-browser en Chromium, Firefox y WebKit |
+
+---
+
+## Criterios multiempresa — posteriores a ARCH-MC-001
+
+| Id | Criterio | Prueba |
+|---|---|---|
+| AC-012-MC-01 | Las once entidades declaran alcance; ninguna indeterminada | A-01 |
+| AC-012-MC-02 | Las ocho directas tienen `company_id` obligatoria con FK a `companies` | A-02, B-01 |
+| AC-012-MC-03 | Las tres derivadas declaran su ruta, obligatoria y con FK | A-03 |
+| AC-012-MC-04 | Ninguna derivada lleva `company_id` redundante | A-04 |
+| AC-012-MC-05 | El mismo código de lista existe en A y en B sin colisionar | B-03 |
+| AC-012-MC-06 | El mismo código repetido dentro de A falla | B-04 |
+| AC-012-MC-07 | Dos versiones `ACTIVE` de una lista no pueden solapar | B-05 |
+| AC-012-MC-08 | Dos borradores **sí** pueden solapar | B-06 |
+| AC-012-MC-09 | Contexto A con lista de B: `404` | N-02 |
+| AC-012-MC-10 | Contexto A con lista de otro tenant: `404` | N-03 |
+| AC-012-MC-11 | Usuario A+B en contexto A con lista de B: `404` | N-06 |
+| AC-012-MC-12 | Versión de una lista ajena, con lista propia válida: `404` | N-08 |
+| AC-012-MC-13 | Ninguna ruta acepta la empresa desde el cuerpo | A-07, E-07 |
+| AC-012-MC-14 | La resolución es determinista y devuelve su versión | E-01, E-02 |
+| AC-012-MC-15 | Sin lista aplicable declara ausencia; no devuelve cero | E-03 |
+| AC-012-MC-16 | A y B resuelven distinto con la misma precedencia configurada distinta | E-04 |
+| AC-012-MC-17 | Un documento aprobado no cambia al superar la versión | F-01 |
+| AC-012-MC-18 | Ni al cambiar la tasa de cambio | F-03 |
+| AC-012-MC-19 | Un aprobador de B no es elegible en una solicitud de A | G-04 |
+| AC-012-MC-20 | Los once catálogos nacen vacíos | I-01 |
+| AC-012-MC-21 | Ningún valor comercial aparece como literal en el código | I-02 |
+| AC-012-MC-22 | Toda consulta de 012 queda separada por empresa en la caché | H-01 |
+| AC-012-MC-23 | Formulario abierto en A, cambio a B, envío: no se convierte en B | H-03 |
+
+Cada criterio de bloqueo debe fallar **por la frontera de empresa**. Si falla
+por carga útil, por estado o por autenticación, no comprueba lo que dice.

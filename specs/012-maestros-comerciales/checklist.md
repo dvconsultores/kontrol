@@ -35,3 +35,45 @@
 - [ ] Cross-browser en los tres navegadores.
 - [ ] `/speckit.converge 012` PASS.
 - [ ] Matriz de impacto verificada contra código, no contra nombres.
+
+---
+
+# CHECKLIST — ACTUALIZACIÓN DOCUMENTAL POSTERIOR A ARCH-MC-001
+
+- [x] Alcance actual de Tercero medido — **COMPANY**, obligatoria
+- [x] Alcance actual de Producto medido — **COMPANY**, obligatoria
+- [x] Alcance de Moneda medido — **COMPANY**, obligatoria
+- [x] Alcance de Tasa de cambio medido — **COMPANY**, obligatoria
+- [x] Todas las entidades de 012 clasificadas — 11
+- [x] Alcance indeterminado = **0**
+- [x] `__scope__` documentado en las once
+- [x] `__scope_authority__` documentado en las tres derivadas
+- [x] `CompanyContext` documentado como autoridad de petición
+- [x] Entidades directas de empresa definidas — 8
+- [x] Entidades derivadas definidas — 3
+- [x] Rutas de derivación definidas y no anulables
+- [x] Contrato de escritura hija definido
+- [x] Contrato de lectura hija definido
+- [x] Ataque por identificador de padre definido — N-01 a N-09
+- [x] Caso del usuario con acceso a A+B definido — N-05, N-06
+- [x] Caso entre tenants definido — N-03
+- [x] Unicidad por empresa definida en las once
+- [x] Versionado de listas de precios definido
+- [x] Alcance de `PriceListItem` definido — derivado, sin `company_id`
+- [x] Reglas de descuento definidas
+- [x] Condiciones comerciales definidas
+- [x] Propietario de `PaymentTerm` confirmado — la 012
+- [x] Propietario de comisiones confirmado — la 012, reservado
+- [x] Dependencia de unidades reconciliada, con la unidad de plataforma
+- [x] Dependencia de presentación reconciliada
+- [x] Dependencia de moneda reconciliada
+- [x] Dependencia de aprobación reconciliada — Spec 045
+- [x] Permisos definidos — seis
+- [x] Auditoría definida — actor, tenant, empresa
+- [x] Contrato OpenAPI definido — `X-Kontrol-Company` en el 100%
+- [x] Contexto de empresa en el frontend definido
+- [x] Aislamiento de caché definido
+- [x] Seguridad del formulario sucio definida
+- [x] Pruebas futuras definidas — A, B, C, D, E, F, G, H, I, J
+- [x] Migraciones futuras planificadas — a partir de `0039`
+- [x] **Ninguna implementación productiva incluida**

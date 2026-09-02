@@ -112,3 +112,88 @@ caja no es un precio.
 impide especificar ni implementar, **precisamente porque `P8` obliga a que sean
 configurables**. Si la respuesta fuera «que vengan fijos en el código», habría
 que reabrir el ADR, no la Spec.
+
+---
+
+# ACLARACIONES POSTERIORES A ARCH-MC-001
+
+Cincuenta preguntas del ciclo de actualización, resueltas midiendo el código
+vigente en `f24b4c0`. Las que cambiaron algo:
+
+**¿Cuál es el alcance final de Tercero?** **Empresa**, con `company_id`
+obligatoria y clave foránea a `companies`. Era la premisa del bloqueo de esta
+Spec y ya no se sostiene: `CustomerCommercialTerms` sí puede distinguir la
+relación de A de la de B.
+
+**¿Y el de Producto?** Empresa, obligatoria. No se asume por costumbre: se midió.
+
+**¿Y el de Moneda y Tasa de cambio?** Empresa, las dos. La clasificación de
+tenant que arrastraba la migración `0032` la corrigió N7 y la retiró del esquema
+la `0039`. Una lista de precios de A solo referencia una moneda de A.
+
+**¿Cuántas entidades tiene realmente la Spec 012?** **Once.** `spec.md` decía
+nueve e incluía una `PriceRule` inexistente; `data-model.md` describía once.
+Reconciliado.
+
+**¿Cuáles llevan `company_id` y cuáles la derivan?** Ocho directas, tres
+derivadas. Las derivadas **no** la llevan: una segunda respuesta a una pregunta
+que ya tiene una puede discrepar de la primera.
+
+**¿Dónde sería `company_id` redundante?** En `price_list_versions`,
+`price_list_items` y `customer_commercial_terms`. Su padre ya la determina y la
+cadena entera es obligatoria en cada eslabón.
+
+**¿Cuál es la unicidad de cada maestro?** Por empresa, `(company_id, code)`, en
+los ocho directos. Y no por mecánica: dos empresas del mismo grupo pueden y
+deben usar el mismo código de lista de precios sin colisionar.
+
+**¿Y la de `price_list_items`?** `(version_id, item_id, category_id,
+presentation_id, min_quantity)`, con `item_id` y `category_id` excluyentes. Con
+columnas anulables dentro de la clave hace falta índice único **parcial**: en
+SQL `NULL` no es igual a `NULL`, y una restricción ingenua permitiría duplicados
+exactos.
+
+**¿Qué tabla es la «categoría»?** `taxonomy_nodes`, de empresa. No existe
+ninguna `item_categories`; el modelo decía «o categoría» sin nombrarla.
+
+**¿Qué comprobación exige la unidad de medida?** «Propia **o** de plataforma».
+`units_of_measure.company_id` es **anulable** y el nulo significa unidad de la
+plataforma, visible para todas y de solo lectura. Comprobar igualdad estricta
+rechazaría una unidad legítima.
+
+**¿A quién pertenece `PaymentTerm`?** A la 012. Ninguna otra Spec lo declara;
+`013` es un análisis de brechas, no un maestro financiero.
+
+**¿Y las comisiones?** A la 012, **reservadas** y sin implementar. La 012 no
+calcula comisión ni toca nómina.
+
+**¿Qué endpoints anidados existirán y cómo validan al padre?** Cinco, todas bajo
+`/listas-precio/{id}/...`. Resuelven el padre acotado por `CompanyContext` y, con
+tres niveles, comprueban los tres eslabones. El contrato está en
+`nested-resource-security-contract.md`.
+
+**¿Qué error se usa para el cruce entre empresas?** `404`, indistinguible de
+inexistente. Un `403` confirma que el recurso existe.
+
+**¿Necesita la 012 la Spec 046?** **No.** Se dice porque la costumbre es
+añadirla. Tampoco la 047: `FR-012-073` es explícito en que la 012 no emite
+eventos.
+
+## `OQ-06`, revalidada
+
+Sigue abierta como `BUSINESS_VALIDATION_REQUIRED` en `ADR-D0-005`, y **no es una
+pregunta abierta material**. Se reclasifica con la terminología vigente:
+
+`OQ-06 — CONFIGURABLE_AT_RUNTIME`
+
+El orden de precedencia, los límites de descuento por rol, el alcance de las
+comisiones y la política de crédito son **datos que carga el cliente**. `P8`
+obliga a que lo sean, la Spec especifica la capacidad de configurarlos y los
+catálogos nacen vacíos.
+
+La política por defecto es: precedencia sembrada como dato reordenable —el orden
+de `ADR-D0-005`—, límites sin valor por defecto, y comisiones fuera de alcance.
+
+Con una excepción que conviene repetir en voz alta: si la respuesta de negocio
+fuera «la precedencia debe venir fija en el software», eso sería una violación de
+`P8` y obligaría a reabrir `ADR-D0-005`. Esta Spec no la aceptaría en silencio.

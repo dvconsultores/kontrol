@@ -128,3 +128,50 @@ respetada sin re-decidir · fronteras con 008, 011, 045 y 046 verificadas ·
 `OQ-06` abierta y **no bloqueante** por diseño.
 
 **No se implementa.** Requiere autorización expresa.
+
+---
+
+# ANALYZE — ACTUALIZACIÓN DOCUMENTAL POSTERIOR A ARCH-MC-001
+
+| Categoría | Resultado |
+|---|---:|
+| BLOCKER | 0 |
+| CRITICAL | 0 |
+| CONTRADICCIONES | 0 |
+| REQUISITOS HUÉRFANOS | 0 |
+| TAREAS HUÉRFANAS | 0 |
+| PREGUNTAS ABIERTAS MATERIALES | 0 |
+| CAMBIOS EN CÓDIGO PRODUCTIVO | 0 |
+
+## Lo que el análisis encontró antes de aplicar el delta
+
+No fueron cero. Se resolvieron dentro de este ciclo y por eso el cuadro está a
+cero.
+
+| Hallazgo | Tipo | Resolución |
+|---|---|---|
+| `spec.md` decía nueve entidades y `data-model.md` describía once | CONTRADICCIÓN | Reconciliado en once; `PriceRule` retirada |
+| `POST /precio/resolver` recibía la empresa en el cuerpo | CRITICAL | Retirada; la pone `CompanyContext` |
+| `POST /descuento/validar` igual | CRITICAL | Ídem |
+| `category_id` referenciaba una tabla inexistente | CONTRADICCIÓN | Es `taxonomy_nodes`, de empresa |
+| El alcance de la unidad se trataba como empresa sin excepción | CONTRADICCIÓN | La unidad de plataforma lleva empresa nula |
+| Ninguna entidad declaraba `__scope__` ni `__scope_authority__` | BLOCKER | Las once lo declaran |
+| Las rutas hijas no tenían contrato de validación del padre | BLOCKER | `nested-resource-security-contract.md` |
+| La unicidad no declaraba su alcance | CRITICAL | Por empresa en las once |
+| `OQ-06` figuraba como pregunta abierta sin clasificar | CIFRA OBSOLETA | `CONFIGURABLE_AT_RUNTIME` |
+
+## Lo que el análisis buscó y no encontró
+
+Entidad sin alcance, entidad sin autoridad, maestro de empresa sin
+`CompanyContext`, ruta anidada sin validación del padre, unicidad sin alcance,
+contradicción sobre el alcance de Producto, de Tercero, de Moneda o de Tasa,
+duplicación de la autoridad de unidades o de presentación, un segundo motor de
+aprobación, valores comerciales codificados, mutación del histórico, ambigüedad
+en el versionado, desajuste con OpenAPI, requisitos diseñados sobre arquitectura
+superada, tarea de producción accidental, migración productiva accidental e
+implementación de código accidental.
+
+## `OQ-06`
+
+Reclasificada como `CONFIGURABLE_AT_RUNTIME`, no como pregunta abierta material.
+El detalle y su política por defecto están en `clarifications.md`.

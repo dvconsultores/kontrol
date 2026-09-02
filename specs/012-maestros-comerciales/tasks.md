@@ -151,3 +151,56 @@ comerciales».
 | F9 Frontend | 9 | L | Cinco pantallas |
 | F10 Legado y cierre | 13 | XL | El legado se anota, no se inventa |
 | **Total** | **83** | — | — |
+
+---
+
+# TAREAS — ACTUALIZACIÓN DOCUMENTAL POSTERIOR A ARCH-MC-001
+
+Todas documentales. Ninguna toca `resources/`.
+
+| Id | Tarea | Estado |
+|---|---|---|
+| T-012-RV-001 | Inventariar los modelos comerciales vigentes | Hecha — ninguno existe |
+| T-012-RV-002 | Verificar el alcance de Tercero | Hecha — COMPANY |
+| T-012-RV-003 | Verificar el alcance de Producto | Hecha — COMPANY |
+| T-012-RV-004 | Verificar Moneda y Tasa de cambio | Hecha — COMPANY las dos |
+| T-012-RV-005 | Clasificar las entidades de 012 | Hecha — 11, 0 indeterminadas |
+| T-012-RV-006 | Definir las rutas de autoridad | Hecha — 3 derivadas |
+| T-012-RV-007 | Actualizar el alcance en `data-model.md` | Hecha — §14 |
+| T-012-RV-008 | Definir la unicidad por empresa | Hecha |
+| T-012-RV-009 | Definir `PriceList` | Hecha |
+| T-012-RV-010 | Definir `PriceListVersion` | Hecha |
+| T-012-RV-011 | Definir el alcance derivado de `PriceListItem` | Hecha |
+| T-012-RV-012 | Definir `DiscountPolicy` | Hecha |
+| T-012-RV-013 | Definir las condiciones comerciales | Hecha |
+| T-012-RV-014 | Resolver el propietario de `PaymentTerm` | Hecha — la 012 |
+| T-012-RV-015 | Resolver el propietario de comisiones | Hecha — la 012, reservado |
+| T-012-RV-016 | Reconciliar unidades | Hecha — con unidad de plataforma |
+| T-012-RV-017 | Reconciliar presentación | Hecha |
+| T-012-RV-018 | Definir el versionado | Hecha — `price-list-versioning-contract.md` |
+| T-012-RV-019 | Definir el congelado histórico | Hecha |
+| T-012-RV-020 | Definir la seguridad de rutas hijas | Hecha — `nested-resource-security-contract.md` |
+| T-012-RV-021 | Definir el ataque por identificador de padre | Hecha — N-01 a N-09 |
+| T-012-RV-022 | Definir los contratos de `CompanyContext` | Hecha — §0 de los contratos |
+| T-012-RV-023 | Definir permisos | Hecha — seis |
+| T-012-RV-024 | Definir la integración de aprobación | Hecha — Spec 045 |
+| T-012-RV-025 | Definir auditoría | Hecha |
+| T-012-RV-026 | Definir contratos OpenAPI | Hecha |
+| T-012-RV-027 | Definir el contrato de empresa del frontend | Hecha |
+| T-012-RV-028 | Definir el plan de migraciones futuro | Hecha — ola 16 |
+| T-012-RV-029 | Definir pruebas de integridad en PostgreSQL | Hecha — B-01 a B-10 |
+| T-012-RV-030 | Definir la matriz A/B/C | Hecha — C-01 a C-04 |
+| T-012-RV-031 | Reconciliar requisitos | Hecha — 50 nuevos |
+| T-012-RV-032 | Reconciliar criterios de aceptación | Hecha |
+| T-012-RV-033 | Reconciliar checklist | Hecha |
+| T-012-RV-034 | Reconciliar trazabilidad | Hecha |
+| T-012-RV-035 | Aplicar el delta documental | Hecha |
+| T-012-RV-036 | Convergencia documental | Hecha |
+| T-012-RV-037 | Veredicto de disponibilidad | Hecha |
+
+## Tareas retiradas
+
+Ninguna de las tareas anteriores estaba diseñada sobre arquitectura superada:
+la Spec 012 nunca llegó a implementarse, así que sus tareas describen trabajo
+futuro y siguen siendo válidas. Lo que cambió es el **contrato** que ese trabajo
+debe cumplir, y eso vive en los requisitos, no en las tareas.

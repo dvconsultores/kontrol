@@ -81,3 +81,15 @@ comparten la palabra «zona». La Spec 008 dejó `warehouse_zones` con
 
 Reutilizarla para territorio de ventas produciría un modelo donde un vendedor
 tiene pasillo. Se declara explícitamente prohibido (`FR-012-041`).
+
+---
+
+## Nota posterior a ARCH-MC-001
+
+Esta investigación es anterior al cierre de la arquitectura multiempresa. Sus
+conclusiones sobre alternativas de diseño siguen vigentes; sus supuestos sobre
+el alcance de los maestros existentes **no**, y quedan superados por
+`post-arch-mc-001-revalidation.md`, que los midió contra el código.
+
+En concreto: Tercero, Producto, Moneda y Tasa de cambio son **de empresa**, no
+de tenant.

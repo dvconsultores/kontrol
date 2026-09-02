@@ -80,3 +80,43 @@ cambiar el maestro no altere lo aprobado.
 Si al terminar sigue siendo posible emitir una línea con precio libre sin
 `pricing_source` justificado, la Spec habrá fallado aunque todas las tablas
 existan.
+
+---
+
+# PLAN DE IMPLEMENTACIÓN — POSTERIOR A ARCH-MC-001
+
+**Este plan no se ejecuta en este ciclo.** Describe el trabajo que la
+autorización futura habilitaría.
+
+| Ola | Qué | Nota |
+|---|---|---|
+| 1 | Esquema y alcances | Los once modelos con `__scope__` y `__scope_authority__` desde el primer commit, no añadidos después |
+| 2 | `CompanyContext` y permisos | Se **consume** la autoridad canónica; no se crea una nueva |
+| 3 | Listas de precios | Maestro directo de empresa |
+| 4 | Versiones | Exclusión de solape en la base, no en el servicio |
+| 5 | Ítems | La derivada de más riesgo: tres niveles |
+| 6 | Políticas de descuento | Nacen vacías |
+| 7 | Condiciones comerciales del cliente | Extiende `customers` por FK |
+| 8 | Condiciones de pago y crédito | Comisiones quedan reservadas |
+| 9 | Unidades y presentación | Se respeta la Spec 011; no se redefine el factor |
+| 10 | Moneda y tasa | La tasa se congela en la transacción |
+| 11 | Aprobación | Spec 045; no se crea un segundo motor |
+| 12 | API y OpenAPI | `X-Kontrol-Company` en las 100% de las operaciones |
+| 13 | Frontend | Estándar de maestros vigente |
+| 14 | Seguridad de rutas hijas | Casos N-01 a N-09 |
+| 15 | Auditoría | Actor, tenant y empresa |
+| 16 | Migraciones | A partir de `0039` |
+| 17 | Integridad en PostgreSQL | Casos B-01 a B-10 |
+| 18 | A/B multiempresa | Casos C-01 a C-04 por maestro |
+| 19 | Regresión | Fallos inesperados 0; saltos con responsable |
+| 20 | Convergencia de la 012 | — |
+
+## El orden no es negociable en un punto
+
+La ola 1 pone el alcance **antes** que cualquier ruta. Al revés —tablas primero,
+alcance después— es como llegó KONTROL a tener 90 columnas llamadas `company_id`
+que guardaban el tenant.
+
+Y la ola 14 no es la última defensa sino una comprobación: si las olas 3 a 8 se
+escriben con el contrato de `nested-resource-security-contract.md`, la 14 no debe
+encontrar nada. Si encuentra algo, el fallo está en las anteriores.

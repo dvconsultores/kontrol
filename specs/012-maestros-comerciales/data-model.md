@@ -1,6 +1,16 @@
 # MODELO DE DATOS — SPEC 012
 
-Nueve entidades. Ninguna nace con filas.
+**Once entidades.** Ninguna nace con filas.
+
+> Decía «nueve» y describía once. La lista corta venía de `spec.md` e incluía una
+> `PriceRule` que ningún artefacto define, mientras omitía `price_precedence`,
+> `customer_commercial_terms` y `sales_commission_policies`, que sí están aquí.
+> Se reconcilia en once y `PriceRule` se retira: lo que hace es
+> `price_precedence`, y tener dos nombres para una cosa es tener una de más.
+>
+> El alcance, la autoridad y la unicidad de cada entidad están en
+> `commercial-scope-matrix.md`, que es su documento autoritativo. Aquí se
+> repiten solo los campos.
 
 ```
 PaymentTerm ──┐
@@ -57,7 +67,7 @@ SalesCommissionPolicy   ← RESERVADA, sin implementar
 | Campo | Tipo | Nota |
 |---|---|---|
 | `company_id`, `code`, `name` | — | — |
-| `currency` | FK → `currencies` | **el maestro existente**, no uno nuevo |
+| `currency_id` | FK → `currencies` | **el maestro existente**, no uno nuevo. Es de **empresa**: una lista de A solo referencia una moneda de A |
 | `segment` | texto? | opcional |
 | `channel_id` | FK? | — |
 | `source` | texto? | quién la cargó y de dónde (`FR-012-008`) |
@@ -82,9 +92,9 @@ SalesCommissionPolicy   ← RESERVADA, sin implementar
 |---|---|---|
 | `version_id` | FK | — |
 | `item_id` | FK? | producto concreto |
-| `category_id` | FK? | o categoría — **uno de los dos, no ambos** |
+| `category_id` | FK? → `taxonomy_nodes` | o categoría — **uno de los dos, no ambos**. La categoría de un artículo es `taxonomy_nodes`, de empresa; no existe ninguna `item_categories` |
 | `presentation_id` | FK? | Spec 011 |
-| `uom_id` | FK? | Spec 011 |
+| `uom_id` | FK? → `units_of_measure` | Spec 011. Alcance de empresa con **empresa anulable**: la comprobación es «propia o de plataforma», no igualdad estricta |
 | `min_quantity` | Numeric? | rango de volumen |
 | `unit_price` | **`Numeric(18,4)`** | jamás `float` |
 
@@ -163,3 +173,48 @@ Todas **anulables**: las líneas existentes no se inventan.
 | `DiscountPolicy` | nunca, si algún descuento la registró | versión nueva |
 
 Mismo criterio que 008, 011 y 046: **la historia no se borra**.
+
+---
+
+## 14. Alcance declarado — el contrato de ARCH-MC-001
+
+Cada entidad nace declarando su alcance. No es documentación: es una propiedad
+del modelo que una prueba de arquitectura comprueba en construcción.
+
+| Entidad | `__scope__` | `__scope_authority__` | `company_id` |
+|---|---|---|---|
+| `payment_terms` | `Scope.COMPANY` | — | obligatoria |
+| `commercial_zones` | `Scope.COMPANY` | — | obligatoria |
+| `sales_channels` | `Scope.COMPANY` | — | obligatoria |
+| `price_lists` | `Scope.COMPANY` | — | obligatoria |
+| `price_list_versions` | `Scope.COMPANY` | `price_list_id → price_lists` | **ninguna** |
+| `price_list_items` | `Scope.COMPANY` | `version_id → price_list_versions` | **ninguna** |
+| `price_precedence` | `Scope.COMPANY` | — | obligatoria |
+| `discount_policies` | `Scope.COMPANY` | — | obligatoria |
+| `credit_policies` | `Scope.COMPANY` | — | obligatoria |
+| `customer_commercial_terms` | `Scope.COMPANY` | `customer_id → customers` | **ninguna** |
+| `sales_commission_policies` | `Scope.COMPANY` | — | obligatoria |
+
+Las tres derivadas **no** llevan `company_id`. No es una omisión: una segunda
+respuesta a una pregunta que ya tiene una puede discrepar de la primera, y ese
+es el defecto que N7 encontró en la estructura de almacén.
+
+## 15. Precisión numérica
+
+Todo importe monetario en `Numeric`, jamás `float` (`NFR-012-06`). Es la lección
+que la Spec 011 dejó cara: un `float` en un factor de conversión no se nota
+hasta que no cuadra un cierre.
+
+`unit_price` en `Numeric(18,4)`; los porcentajes de descuento y anticipo, en
+`Numeric` con la escala que fije el contrato financiero vigente. El redondeo lo
+aplica la autoridad común, no un redondeo comercial paralelo.
+
+## 16. Las columnas del snapshot son anulables, y por qué
+
+Las columnas que la sección 11 añade a las líneas transaccionales son **todas**
+anulables. Las líneas que ya existen no reciben un origen inventado: se quedan
+sin él, y `pricing_source = LEGACY_FREETEXT` lo dice.
+
+Es la misma decisión que tomó N4 con el legado: anotar lo que no se puede
+reconstruir vale más que rellenarlo con una conjetura que después nadie
+distinguirá de un dato.
