@@ -204,3 +204,103 @@ Añadidos en el ciclo de implementación de la Spec 029, posterior a la Spec 012
 | FR-029-008..010 | Las líneas derivan su empresa y no la duplican | P0 |
 | FR-029-011..016 | Las rutas hijas validan el padre; entre empresas y tenants, bloqueado | P0 |
 | FR-029-053 | Tener permiso no es tener acceso a una empresa | P0 |
+
+---
+
+# SPEC 030 — CRÉDITO / APROBACIÓN / RESERVA · CONTRATO DOCUMENTAL
+
+| Campo | Valor |
+|---|---|
+| Estado | `READY_FOR_IMPLEMENTATION` (2026-09-02) — **no implementada**; requiere autorización expresa |
+| Origen del contrato | `D0-03 — CLOSED` · `ADR-D0-003` v2 (ACTIVE) · `POL-D0-002` v2 · `docs/governance/d0-foundational-decisions/d0-03-checkpoint/` |
+| Depende de | 011 ✔ · 012 ✔ · 023/003 ✔ (motor de reservas) · 029 ✔ · 045 ✔ |
+| Enmienda | FR-005-011 y FR-005-020 de esta Spec; FR-003-041 y FR-003-043 de la Spec 003 |
+
+## Disparador y máquina de estados
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-030-001 | `RESERVATION TRIGGER = ORDER_CONFIRMATION`: la reserva nace en `DRAFT → SUBMITTED`, síncrona, en la misma transacción. Fija; no configurable | P0 |
+| FR-030-002 | Máquina de estados (sustituye a FR-005-011): `DRAFT → SUBMITTED → CREDIT_PENDING → APPROVED → RELEASED → PREPARING → SHIPPED → CLOSED`; terminales `CANCELLED`, `REJECTED`, `EXPIRED`; `REVERT_TO_DRAFT` desde `SUBMITTED/CREDIT_PENDING/APPROVED/RELEASED`; `CANCELLED` desde cualquier estado vivo. `RELEASED` renombra al actual `RESERVED` | P0 |
+| FR-030-003 | `APPROVED` no reserva (sustituye a FR-005-020). Aprobar libera a preparación: `APPROVED → RELEASED` en la misma transacción; sin política de crédito, `SUBMITTED → APPROVED → RELEASED` en la transacción de confirmación | P0 |
+| FR-030-004 | Pedido sin solicitud de crédito (045 no abre) reserva y queda `RELEASED` al confirmar | P0 |
+| FR-030-005 | Crédito vía motor 045 (`SALES_CREDIT`); ningún estado ni motor de aprobación propio | P0 |
+| FR-030-006 | La aprobación no toca la reserva salvo `expires_at := NULL` | P0 |
+| FR-030-007 | Rechazo de crédito → `REJECTED` y liberación de toda la reserva en la misma transacción | P0 |
+
+## Cantidad, insuficiencia, sobreventa
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-030-010 | Insuficiencia en cualquier línea → `409 INSUFFICIENT_AVAILABLE` con detalle `{line_id, requested_base, available_base}`; nada persiste; el pedido sigue `DRAFT`. Excepción: almacén con `policies.allow_negative = true` → reserva íntegra marcada `oversell = true` | P0 |
+| FR-030-011 | Sin reserva parcial: todo-o-nada por pedido | P0 |
+| FR-030-012 | Backorder, sustitución y prioridad entre pedidos: **OUT_OF_SCOPE**; prohibido introducir estados o colas que los insinúen | P0 |
+| FR-030-013 | `warehouse_id` obligatorio para confirmar con líneas de inventario → `422 WAREHOUSE_REQUIRED`; almacén de la empresa del pedido → `404` si no | P0 |
+| FR-030-014 | Un almacén por pedido; sin abastecimiento automático desde otro almacén | P0 |
+| FR-030-015 | Reserva y comparación en **cantidad base** de la línea (Spec 011); la reserva copia `quantity`, `uom_id`, `presentation_id`, `conversion_factor_snapshot`, `base_quantity`, `uom_source`; sin base → `422 UOM_NOT_RESOLVED` | P0 |
+| FR-030-016 | La reserva nunca recalcula con el factor vigente del catálogo | P0 |
+| FR-030-017 | Solo consume saldo `DISPONIBLE`; no cambia el estado de custodia | P0 |
+| FR-030-018 | Lote/serial en la reserva solo si la línea los exige; ubicación nunca | P0 |
+
+## Modificación, cancelación, expiración, liberación
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-030-020 | Pedido editable solo en `DRAFT`; `add_order_line` sobre otro estado → `409 ORDER_NOT_EDITABLE` | P0 |
+| FR-030-021 | `REVERT_TO_DRAFT` con motivo: libera toda la reserva y declara obsoleta la solicitud de crédito (045 `document_changed`); reemitir vuelve a reservar con la disponibilidad actual | P0 |
+| FR-030-022 | Sin ajuste por diferencias (aumento, disminución, línea, producto, almacén: todo por reversión) | P0 |
+| FR-030-023 | Cancelar libera todo lo `ACTIVE` en la misma transacción, con motivo; idempotente; en `PREPARING`, 032 deshace lo apartado | P0 |
+| FR-030-024 | `reservation_ttl_days` por empresa, defecto `NULL`; con valor, `expires_at` solo en `SUBMITTED/CREDIT_PENDING` | P1 |
+| FR-030-025 | Expirar → reserva `EXPIRED` y pedido `EXPIRED` en la misma transacción; el endpoint de expiración existente se hace consciente del pedido; sin worker propio (planificador = Spec 047) | P1 |
+| FR-030-026 | Invariante: nunca un pedido vivo sin reserva | P0 |
+| FR-030-027 | Liberación manual solo de reservas `MANUAL`, con `inventario:reserve`, motivo obligatorio y auditoría; reservas de pedido no se liberan a mano | P0 |
+
+## Multiempresa y permisos
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-030-030 | La empresa de la reserva es la del pedido bajo `CompanyContext` y coincide con la del almacén | P0 |
+| FR-030-031 | Pedido de otra empresa → `404` | P0 |
+| FR-030-032 | Usuario AB, contexto A, pedido de B → `404` | P0 |
+| FR-030-033 | Cross-tenant → `404` | P0 |
+| FR-030-034 | Almacén de B bajo pedido A → `404 WAREHOUSE_NOT_FOUND` | P0 |
+| FR-030-035 | Permiso `ventas:submit` (nuevo) para confirmar/revertir/cancelar; `ventas:approve` para crédito; la reserva es efecto del sistema; ningún permiso sustituye al contexto | P0 |
+
+## Concurrencia e idempotencia
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-030-040 | `SELECT … FOR UPDATE` sobre la fila de saldo antes de leer el disponible, dentro de la transacción de confirmación; bloqueos en orden determinista por producto | P0 |
+| FR-030-041 | Unicidad sobre la clave de `inventory_balances` (con `COALESCE` en dimensiones nulas), en ORM (`ddl_if postgresql`) y migración; `CHECK (qty_reserved >= 0)` | P0 |
+| FR-030-042 | Índice único parcial `(source_line_id) WHERE status = 'ACTIVE'` en `reservations` | P0 |
+| FR-030-043 | Liberar/expirar/consumir dos veces es no-op; `qty_reserved` nunca negativo | P0 |
+| FR-030-044 | Prueba de carrera sobre PostgreSQL: dos sesiones, última unidad, exactamente una gana; segunda variante con `allow_negative` | P0 |
+
+## Handoff y fronteras
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-030-050 | `RELEASED` habilita la cola de 031; se entregan pedido, almacén, líneas con base/presentación/lote-serial exigidos y reservas `ACTIVE` por `source_line_id` | P0 |
+| FR-030-051 | 030 no crea `PickList`, no asigna ubicación, no elige lote/serial | P0 |
+| FR-030-052 | 030 no escribe estados de custodia (`RESERVADO`, `PICKING`) | P0 |
+| FR-030-053 | La facturación no toca la reserva | P0 |
+| FR-030-054 | El despacho (035) consume → `FULFILLED`, no `RELEASED` | P0 |
+
+## Auditoría y modelo
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-030-060 | Eventos `RESERVATION_CREATED / RELEASED / EXPIRED / FULFILLED` en el módulo de inventario con el contrato de `d0-03-reservation-decision.md` §7 | P0 |
+| FR-030-061 | `SALES_ORDER_TRANSITIONED` y `SALES_ORDER_REVERTED` llevan motivo cuando lo hay | P0 |
+| FR-030-062 | `reservations` gana `source_type`, `source_id`, `source_line_id`, `trigger` (`ORDER_CONFIRMATION`/`MANUAL`/`LEGACY_CREDIT_APPROVAL`), `oversell`, `released_at`, `released_by`, `release_reason`; `source_document` texto se conserva | P0 |
+| FR-030-063 | Migración `SAFE_MIGRATION` (columnas, backfill, rename de estado) + `MANUAL_REVIEW_REQUIRED` (pedidos en `SUBMITTED/CREDIT_PENDING` sin reserva); las reservas legadas conservan su semántica | P0 |
+
+## Frontera con 029 (preservada)
+
+FR-029-035..040 siguen vigentes: la conversión de cotización no reserva; 030 reserva **después**, al confirmar.
+
+## Criterios de aceptación y pruebas exigidas
+
+Los trece criterios de `ADR-D0-003` v2 §«Implicaciones de prueba», sobre PostgreSQL, más: la
+regresión completa sin retroceso; `test_convertir_no_reserva_inventario` sigue verde; el guardia de
+rutas anidadas y el contrato `__scope__` sin cambios.

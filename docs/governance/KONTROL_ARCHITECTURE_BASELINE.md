@@ -187,10 +187,12 @@ Saldos **reconstruibles desde movimientos**; nunca se editan directamente. `P5`
 
 `disponible = físico − reservado − bloqueado`. Ningún proceso presenta el físico como disponible.
 
-Disparador de reserva configurable por empresa, **defecto `ORDER_RELEASED`**. Dos operaciones no
-pueden reservar la misma unidad: la garantía es de base de datos dentro de la transacción. Toda
-reserva tiene vigencia y expira con evento auditado. El consumo ocurre en la **salida física**, no en
-la facturación. `ADR-D0-003` · `ADR-013`
+**`RESERVATION TRIGGER = ORDER_CONFIRMATION`**: la reserva nace al confirmar el pedido
+(`DRAFT → SUBMITTED`), fija para todo tipo de pedido, en cantidad base, todo-o-nada por pedido, sin
+parcial ni backorder. Dos operaciones no pueden reservar la misma unidad: la garantía es de base de
+datos dentro de la transacción (`FOR UPDATE` + unicidad). Cancelar, rechazar crédito y revertir a
+borrador liberan atómicamente; la vigencia por reloj es opcional por empresa (defecto desactivada).
+El consumo ocurre en la **salida física**, no en la facturación. `ADR-D0-003` v2 · `ADR-013`
 
 **Estados de mercancía** independientes del estado del documento: `ESPERADO`, `RECIBIDO`,
 `PENDIENTE_CONFIRMACION`, `CUARENTENA`, `BLOQUEADO`, `DISPONIBLE`, `RESERVADO`, `PICKING`,

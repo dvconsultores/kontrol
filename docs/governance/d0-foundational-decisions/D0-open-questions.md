@@ -7,8 +7,8 @@ Clasificación estricta: **CONFIG** = configuración de cliente (no bloquea) ·
 |---|---|---|---|---|---|
 | OQ-01 | D0-01 | Dimensionamiento de recursos y del pool por instalación | CONFIG | DevOps en implantación | No |
 | OQ-02 | D0-02 | ¿Cuántos niveles, con qué umbrales y qué rol resuelve cada proceso? | BUSINESS | Producto · Compras · Finanzas | Implantación |
-| OQ-03 | D0-03 | ¿Qué disparador de reserva usa el cliente? ¿Cuánto dura una reserva? ¿Cómo se prioriza entre pedidos? | BUSINESS | Producto · Ventas | Implantación |
-| OQ-04 | D0-03 | ¿Backorder y sustitución entran en el alcance de la Spec 030? | BUSINESS | Producto | No (declarado FUTURE) |
+| OQ-03 | D0-03 | ~~¿Qué disparador de reserva usa el cliente? ¿Cuánto dura una reserva? ¿Cómo se prioriza entre pedidos?~~ **RESUELTA 2026-09-02** (`d0-03-checkpoint/`): disparador fijo `ORDER_CONFIRMATION`; prioridad = orden de compromiso; residuo CONFIG `reservation_ttl_days` (defecto desactivado) | ~~BUSINESS~~ CONFIG | Implantación (solo TTL) | No |
+| OQ-04 | D0-03 | ¿Backorder y sustitución entran en el alcance de la Spec 030? — **No: OUT_OF_SCOPE explícito (FR-030-012), FUTURE** | BUSINESS | Producto | No |
 | OQ-05 | D0-04 | Mapa físico real: zonas, pasillos, racks, niveles, posiciones y criterio de asignación | CONFIG | Almacén · Logística | Puesta en marcha |
 | OQ-06 | D0-05 | ¿Se confirma el orden de precedencia propuesto? ¿Cuál es el límite de descuento por rol? ¿Entran comisiones en el alcance? ¿Qué parámetros de crédito? | BUSINESS | Producto · Ventas · Crédito | Implantación |
 | OQ-07 | D0-06 | ¿Dónde se hospeda la autoridad de licencias y quién custodia la clave privada? | **BUSINESS** | Producto · Infraestructura | **Cierre de la Spec 004** |

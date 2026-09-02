@@ -85,7 +85,7 @@ cada línea de documento con su unidad y presentación.
 | Spec | Estado actual |
 |---|---|
 | **029 Pedido comercial** (completar) | PARTIAL 57 % — pedido como entidad, precio desde maestro, disponibilidad al cotizar |
-| **030 Reserva** (resolver decisión) | SUBSTANTIALLY_COMPLETE 76 % — decidir momento de reserva (CL-013-06) |
+| **030 Reserva** | READY_FOR_IMPLEMENTATION — momento de reserva decidido (`D0-03 — CLOSED`, CL-013-06 resuelta): `ORDER_CONFIRMATION` |
 | **031 Cola y ruta de picking** | SKELETON_ONLY — cola, prioridad, secuencia por ubicación |
 | **032 Picking y consolidación** | SKELETON_ONLY — almacenista, escaneo, diferencia, daño, consolidación |
 | **033 Confirmación independiente de pedido** | NOT_STARTED — segundo control con separación funcional |
@@ -159,7 +159,7 @@ sin las Olas 1, 2 y 4 obliga a reescribir picking, facturación y recepción por
 | Después | 031, 032, 033 | Preparación y compuerta de pedido |
 | Después | 018 → 026 | Importaciones y *landed cost* |
 | Después | 048 → 013, 047 | Canal de integración: tasa BCV y notificaciones |
-| Cuando `D0-03` | 030 Crédito y reserva | Espera una decisión de negocio, no código |
+| Ahora (D0-03 cerrada 2026-09-02) | 030 Crédito y reserva | Contrato completo en `specs/005-…/spec.md` §SPEC 030; requiere autorización expresa |
 | Cuando `D0-07` | 039–043, 056 | Construibles antes; liberables solo después |
 | Cuando haya API | 044 | v1 registra y bloquea; no emite |
 | Cuando haya servicio | S3 de 046 | P1 externa, no bloquea nada más |

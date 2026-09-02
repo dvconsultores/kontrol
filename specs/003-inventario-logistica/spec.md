@@ -197,3 +197,17 @@ Convención: `FR-003-XXX`. Cada requisito tiene fuente (DOC), prioridad (P0/P1/P
 - Las capas de costo valoran el inventario y calculan el costo de salida según el método del perfil.
 - 004/005 integran mediante la API de 003 sin duplicar lógica de saldos.
 - Frontend respeta el estándar (ADR-015, sin scroll horizontal, búsqueda asíncrona).
+
+---
+
+## Enmienda D0-03 (2026-09-02) — `ADR-D0-003` v2
+
+| FR | Redacción anterior | Redacción vigente |
+|---|---|---|
+| FR-003-041 | Reserva: orden aprobada → cantidad reservada → disponible reducido, existencia física sin cambio | Reserva: pedido **confirmado** (`SUBMITTED`) → cantidad **base** reservada → disponible reducido, existencia física sin cambio. Aprobar el crédito no reserva; libera a preparación |
+| FR-003-043 | Liberación y expiración de reservas (cancelación de orden, vencimiento, política) — P1 | Liberación atómica por cancelación, rechazo de crédito, reversión a borrador y expiración por TTL opcional; consumo (`FULFILLED`) en despacho — **P0 para la Spec 030** |
+| FR-003-042 | Las reservas no superan el disponible salvo política aprobada | Se mantiene; la garantía pasa a ser de base de datos (`FOR UPDATE` + unicidad), no de una comprobación sin bloqueo |
+| CVG-003-04 | Expiración por job pendiente | TTL opcional por empresa con defecto desactivado; ejecución por el endpoint existente; planificador de plataforma = Spec 047 |
+
+El motor (`reserve`, `release_reservation`, `expire_reservations`, `get_available`) sigue siendo
+único y de esta Spec; la Spec 030 lo consume y lo endurece.

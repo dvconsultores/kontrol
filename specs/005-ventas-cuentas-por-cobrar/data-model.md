@@ -76,3 +76,22 @@ Reglas: `balance = original − applied`; saldo CxC = documentos + débitos − 
 | Saldo CxC | Calculado desde documentos y aplicaciones; nunca se edita |
 | Multiempresa | FK críticas confirman misma empresa/tenant |
 | Snapshot | Cada línea conserva producto/precio/impuesto/tasa |
+
+---
+
+# DATA MODEL — SPEC 030 · DELTA CONCEPTUAL (D0-03 CLOSED, 2026-09-02)
+
+Sin migración en este ciclo. Describe lo que la Spec 030 deberá materializar.
+
+| Entidad | Cambio | Regla |
+|---|---|---|
+| `Reservation` (003) | + `source_type` (`SALES_ORDER`/`MANUAL`), `source_id`, `source_line_id` (FK `sales_order_lines`, nullable), `trigger` (`ORDER_CONFIRMATION`/`MANUAL`/`LEGACY_CREDIT_APPROVAL`), `oversell` bool, `released_at`, `released_by`, `release_reason`; se conserva `source_document` texto | índice único parcial `(source_line_id) WHERE status='ACTIVE'`; `CHECK (quantity > 0)`; campos Spec 011 obligatorios cuando `source_type = SALES_ORDER` |
+| `InventoryBalance` (003) | sin columnas nuevas | índice único sobre `(company_id, warehouse_id, COALESCE(location_id,''), product_id, COALESCE(lot_id,''), COALESCE(serial_id,''), state)`; `CHECK (qty_reserved >= 0)` |
+| `SalesOrder` (005) | `status`: valores `RELEASED` (rename de `RESERVED`), `EXPIRED`; + `reverted_reason`/`cancel_reason` (o en auditoría) | `warehouse_id` obligatorio al confirmar con inventario (regla de servicio, no `NOT NULL`: los borradores pueden no tenerlo) |
+| Configuración de empresa | `reservation_ttl_days` entero nullable | defecto `NULL`; dónde vive (tabla de configuración por empresa o `settings` JSON gobernado) lo decide el plan de 030 respetando P8 |
+| Permisos | `ventas:submit` | separado de `ventas:approve` |
+| Auditoría | acciones `RESERVATION_CREATED/RELEASED/EXPIRED/FULFILLED`, `SALES_ORDER_REVERTED` | carga según `d0-03-reservation-decision.md` §7 |
+
+Alcance de empresa: `Reservation` sigue siendo entidad directa (`__scope__ = COMPANY` con
+`company_id`), igual al `company_id` del pedido y del almacén; no se añade `company_id` a ninguna
+entidad derivada.

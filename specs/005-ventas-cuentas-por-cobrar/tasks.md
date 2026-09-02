@@ -62,3 +62,28 @@ Formato: | ID | Requisito | Tarea | Dependencia | Archivos | Prueba | Responsabl
 | T-029-I-042..045 | Seguridad de rutas hijas y pruebas hostiles | Hecha |
 | T-029-I-046..051 | Instalación limpia y regresiones | Hecha |
 | T-029-I-052..053 | Artefactos y convergencia | Hecha |
+
+---
+
+# TAREAS — SPEC 030 · ESQUELETO DOCUMENTAL (D0-03 CLOSED, 2026-09-02)
+
+Esqueleto derivado del contrato. Se valida y completa en el ciclo `/speckit.tasks` de la Spec 030,
+que **no** ha sido autorizado. Ninguna tarea está iniciada.
+
+| Tarea | Descripción | FR |
+|---|---|---|
+| T-030-001 | Renombrar `RESERVED → RELEASED`; `REVERT_TO_DRAFT`; `CANCELLED` desde estados de crédito; `EXPIRED` | FR-030-002 |
+| T-030-002 | Mover el disparo a `DRAFT → SUBMITTED`; retirar de `APPROVED`; `APPROVED → RELEASED` automático | FR-030-001, -003, -004 |
+| T-030-003 | Precondiciones: almacén obligatorio, base resuelta, líneas > 0 | FR-030-013, -015 |
+| T-030-004 | Reserva por línea en base con campos Spec 011, `source_*`, `trigger`, `oversell` | FR-030-015, -062 |
+| T-030-005 | Bloqueo `FOR UPDATE`, orden determinista, unicidad de saldo, índice parcial, `CHECK` | FR-030-040..042 |
+| T-030-006 | Liberación atómica en cancelar, rechazar, revertir; obsolescencia 045 | FR-030-007, -021, -023 |
+| T-030-007 | `FULFILLED` en despacho | FR-030-054 |
+| T-030-008 | `reservation_ttl_days`; `expire` consciente del pedido | FR-030-024..026 |
+| T-030-009 | Liberación manual con motivo, solo `MANUAL` | FR-030-027 |
+| T-030-010 | Permiso `ventas:submit` y separación de `ventas:approve` | FR-030-035 |
+| T-030-011 | Auditoría de reservas en inventario | FR-030-060, -061 |
+| T-030-012 | Migración + informe `MANUAL_REVIEW` | FR-030-063 |
+| T-030-013 | Pruebas: carrera PostgreSQL, sobreventa, liberaciones, base, multiempresa, idempotencia, conversión, despacho, expiración | FR-030-044 y ADR v2 |
+| T-030-014 | Frontend: insuficiencia por línea, reversión con motivo, disponible vs. reservado | plan |
+| T-030-015 | Documentación: contracts, data-model, traceability, convergence de 030 | — |

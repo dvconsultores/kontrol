@@ -50,8 +50,8 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 026 | Costos / valoración | `PARTIALLY_IMPLEMENTED` | `cost_layers`, `costing_profiles` | 018 para *landed cost* |
 | 027 | Factura de proveedor / 3-way | `PARTIALLY_IMPLEMENTED` | conciliación a tres bandas en `purchasing` | — |
 | 028 | CxP y pagos | `PARTIALLY_IMPLEMENTED` | `ap_payments`, `ap_open_items`; tipo documental cerrado en N9 | 040 retenciones |
-| 029 | Cotización y pedido comercial | **`READY_FOR_IMPLEMENTATION`** | `sales_quotes`, `sales_orders`; **`unit_price` tecleado, sin origen** | **ninguno** |
-| 030 | Crédito / aprobación / reserva | `BLOCKED_BY_BUSINESS_DECISION` | `credit_decision` en la orden | D0-03 momento de la reserva |
+| 029 | Cotización y pedido comercial | **`COMPLETE / CONVERGED`** (2026-09-01) | `sales_quotes`, `sales_orders` con origen comercial, ciclo de cotización, conversión 1:1 | **ninguno** |
+| 030 | Crédito / aprobación / reserva | **`READY_FOR_IMPLEMENTATION`** (2026-09-02) | `credit_decision` en la orden; reserva legada en `APPROVED` | **ninguno** — `D0-03 — CLOSED` (`ORDER_CONFIRMATION`) |
 | 031 | Cola y ruta de picking | `BLOCKED_BY_DEPENDENCY` | `pick_lists`; **`pick_list_lines` sin ubicación ni secuencia** | 022 |
 | 032 | Picking y consolidación | `BLOCKED_BY_DEPENDENCY` | esqueleto en `sales` | 022 |
 | 033 | Confirmación independiente de pedido | **`NOT_STARTED`** | 0 tablas | 032 |
@@ -83,13 +83,13 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 
 | Estado | Specs |
 |---|---:|
-| `COMPLETE / CONVERGED` | 4 — 008, 011, 012, 045 |
+| `COMPLETE / CONVERGED` | 5 — 008, 011, 012, 029, 045 |
 | `RECONVERGED` | 1 — 046 |
-| `READY_FOR_IMPLEMENTATION` | **1 — 029** |
+| `READY_FOR_IMPLEMENTATION` | **1 — 030** (D0-03 cerrada 2026-09-02) |
 | `PARTIALLY_IMPLEMENTED` | 34 |
 | `NOT_STARTED` | 5 — 018, 020, 022, 033, 047 |
 | `BLOCKED_BY_DEPENDENCY` | 2 — 031, 032 |
-| `BLOCKED_BY_BUSINESS_DECISION` | 2 — 004, 030 |
+| `BLOCKED_BY_BUSINESS_DECISION` | 1 — 004 |
 | `BLOCKED_BY_LEGAL_VALIDATION` | 6 — 039, 040, 041, 042, 043, 056 |
 | `BLOCKED_BY_EXTERNAL_SERVICE` | 1 — 044 |
 | **Sin estado** | **0** |

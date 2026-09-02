@@ -97,3 +97,9 @@ la inversión de la Spec 008 empiece a rendir: hoy el almacén tiene estantería
 y toda la mercancía está «en el almacén», en ningún sitio concreto.
 
 **No queda autorizada.**
+
+## Actualización 2026-09-02
+
+029 quedó `COMPLETE / CONVERGED` y `D0-03` cerró con `RESERVATION TRIGGER = ORDER_CONFIRMATION`.
+030 pasa a `READY_FOR_IMPLEMENTATION` con contrato completo; su implementación requiere autorización
+expresa y no forma parte del checkpoint que la desbloqueó.

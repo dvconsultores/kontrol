@@ -4,7 +4,7 @@
 |---|---|---|---|---|---|---|
 | **D0-01** | PostgreSQL con paridad de producción | APPROVED | **CLOSED** | Arq. datos · DBA · DevOps · QA | Transversal (56) | Ninguna para empezar; **todas para cerrar** |
 | **D0-02** | Motor transversal de aprobaciones | APPROVED | **CLOSED_WITH_CONFIGURATION_PENDING** | Arq. empresarial · Auditor · PO | 045 + 12 Specs | 045, 015, 017, 025, 030, 033 |
-| **D0-03** | Momento de reserva de inventario | APPROVED | **CLOSED_WITH_CONFIGURATION_PENDING** | Arq. procesos · Ventas · Inventario | 030 + 7 Specs | 030, 029, 031, 032 |
+| **D0-03** | Momento de reserva de inventario | APPROVED · ACTIVE (v2 2026-09-02) | **CLOSED** — `RESERVATION TRIGGER = ORDER_CONFIRMATION` | Arq. procesos · Ventas · Inventario | 030 + 9 Specs | 030, 029, 031, 032 |
 | **D0-04** | Modelo físico genérico de almacén | APPROVED | **CLOSED** | Arq. datos · Almacén · PO | 008 + 9 Specs | 008, 022, 031, 032 |
 | **D0-05** | Reglas comerciales | APPROVED | **CLOSED_WITH_CONFIGURATION_PENDING** | Arq. datos · Ventas · Crédito | 012 + 6 Specs | 012, 029, 034 |
 | **D0-06** | Autoridad central de licenciamiento | APPROVED (arquitectura) | **BUSINESS_DECISION_PENDING** | Arq. seguridad · Infra · PO | 004, 048, 052, 053 | Ninguna de código; sí el cierre de 004 |
@@ -20,8 +20,8 @@
 
 | Clasificación | Cantidad | Decisiones |
 |---|---:|---|
-| **CLOSED** | **7** | D0-01, D0-04, D0-08, D0-09, D0-10, D0-11, D0-13 |
-| **CLOSED_WITH_CONFIGURATION_PENDING** | **4** | D0-02, D0-03, D0-05, D0-12 |
+| **CLOSED** | **8** | D0-01, D0-03 (2026-09-02), D0-04, D0-08, D0-09, D0-10, D0-11, D0-13 |
+| **CLOSED_WITH_CONFIGURATION_PENDING** | **3** | D0-02, D0-05, D0-12 |
 | **BUSINESS_DECISION_PENDING** | **1** | D0-06 |
 | **LEGAL_VALIDATION_PENDING** | **1** | D0-07 |
 | **TECHNICAL_VALIDATION_PENDING** | 0 | — |

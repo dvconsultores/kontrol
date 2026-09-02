@@ -97,3 +97,32 @@ Este plan forma parte de la fase documental de `005-ventas-cuentas-por-cobrar`; 
 | Datos | ✔ (data-model.md) |
 | Pruebas | ✔ (test-plan.md) |
 | Aprobación | Pendiente |
+
+---
+
+# PLAN — SPEC 030 · SUPUESTOS ACTUALIZADOS (D0-03 CLOSED, 2026-09-02)
+
+Este bloque fija los supuestos que la fase `/speckit.plan` de la Spec 030 debe respetar. No es su
+plan de implementación (ese se escribe en su propio ciclo, con autorización expresa).
+
+| Supuesto anterior | Supuesto vigente |
+|---|---|
+| La reserva ocurre al aprobar (`APPROVED`) | La reserva ocurre al confirmar (`SUBMITTED`); aprobar libera a preparación |
+| Disparador configurable por empresa (ADR v1) | Disparador fijo; configurable: TTL, sobreventa, política de crédito |
+| Estado `RESERVED` | Renombrado `RELEASED`; `APPROVED` transitorio |
+| Modificación de líneas «la maneja el servicio» | Solo en `DRAFT`; `REVERT_TO_DRAFT` libera todo |
+| Cancelación sin efecto en inventario | Cancelación libera atómicamente |
+| Reserva en cantidad tecleada | Reserva en base con snapshot |
+| Comprobación de disponible sin bloqueo | `FOR UPDATE` + unicidad + prueba de carrera |
+| Despacho libera | Despacho consume (`FULFILLED`) |
+| Expiración por job pendiente (CVG-003-04) | TTL opcional, defecto desactivado; endpoint existente; planificador de 047 |
+| Auditoría solo del pedido | Eventos de reserva en inventario |
+
+Arquitectura que **no** cambia: un motor de inventario (003/023), un motor de aprobaciones (045),
+`CompanyContext` como autoridad, rutas anidadas validando el padre, contrato `__scope__`.
+
+Migración prevista: una revisión Alembic `SAFE_MIGRATION` + informe de `MANUAL_REVIEW` para pedidos
+en vuelo. Id ≤ 32 caracteres. Restricciones en ORM y migración (lección N7).
+
+Frontend previsto: confirmación con detalle de insuficiencia por línea; reversión con motivo;
+disponible vs. reservado en el detalle de pedido; reservas con trigger, motivo y sobreventa.

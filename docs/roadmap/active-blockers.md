@@ -4,7 +4,6 @@
 |---|---|---|---|---|
 | **D0-07** validación legal fiscal | Legal | 039, 040, 041, 042, 043, 056 | Negocio / asesoría fiscal | Confirmación normativa venezolana antes de emitir |
 | **D0-06** hosting y licencia central | Negocio | 004, y parcialmente 052, 055 | Negocio | Decidir modelo de licenciamiento |
-| **D0-03** momento de la reserva | Negocio | 030 | Negocio / operaciones | ¿Se reserva al pedido o al crédito aprobado? |
 | **022 Put-away** ausente | Dependencia | 031, 032 | Ingeniería | Escribir la ubicación al recibir |
 | **020 Incidencias** ausente | Dependencia | 021 → 022 | Ingeniería | Entidad de incidencia de recepción |
 | **033 Confirmación** ausente | Dependencia | 034, 035 | Ingeniería | Compuerta independiente antes de facturar |

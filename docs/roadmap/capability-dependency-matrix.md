@@ -24,8 +24,8 @@
 | 029 | Unidad y presentación | 011 | COMPLETE | **satisfecha** | — | — |
 | 029 | **Resolución de precio con versión** | **012** | **COMPLETE** | **satisfecha** (`resolve_price`) | **ninguno** | **lista** |
 | 029 | Disponibilidad de inventario | 023 | PARCIAL | **satisfecha** (`qty_available`) | — | — |
-| 030 Crédito/reserva | Política de crédito | 012 | COMPLETE | **satisfecha** | **D0-03** | decisión de negocio |
-| 030 | Motor de aprobaciones | 045 | COMPLETE | **satisfecha** | D0-03 | ídem |
+| 030 Crédito/reserva | Política de crédito | 012 | COMPLETE | **satisfecha** | — | `D0-03 — CLOSED` 2026-09-02 |
+| 030 | Motor de aprobaciones | 045 | COMPLETE | **satisfecha** | — | ídem |
 | 031 Cola de picking | Orden físico determinista | 008 | COMPLETE | **satisfecha** | **022** | la línea no tiene ubicación |
 | 032 Picking | Ubicación en la línea | 022 | NOT_STARTED | **no satisfecha** | — | bloqueada |
 | 033 Confirmación de pedido | Picking consolidado | 032 | BLOQUEADA | **no satisfecha** | — | bloqueada |

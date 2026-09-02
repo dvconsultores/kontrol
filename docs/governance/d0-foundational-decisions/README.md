@@ -62,3 +62,9 @@ aprobación») no se ha cumplido nunca en el proyecto. Registrado en `D0-open-qu
 Ninguna Spec funcional posterior puede contradecir un ADR-D0 aprobado. Si una Spec necesita
 apartarse, requiere enmienda del ADR con el procedimiento de la Constitución — no una excepción
 local.
+
+## Checkpoint D0-03 (2026-09-02)
+
+`d0-03-checkpoint/` contiene la auditoría forense del comportamiento actual, la comparación de
+opciones A–F, la matriz de flujos A–J, el análisis de concurrencia, la decisión completa, el ciclo
+SpecKit, la trazabilidad y la convergencia que cerraron D0-03 (`ADR-D0-003` v2 · `POL-D0-002` v2).

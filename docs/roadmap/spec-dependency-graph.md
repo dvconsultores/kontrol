@@ -57,7 +57,7 @@ Notación: `A → B` significa «A debe existir antes que B».
 
 ```
 029 Cotización y pedido comercial ← 009, 010, 011, 012  ⛔ (se construyó sin 012)
- └→ 030 Crédito/aprobación/reserva ← 012, 023, 045
+ └→ 030 Crédito/aprobación/reserva ← 012 ✅, 023 ✅(motor), 045 ✅ · D0-03 ✅ (2026-09-02) → READY
      └→ 031 Cola y ruta de picking ← 008 ✅, 022, 032  (008 entrega `/locations/ordered`)
          └→ 032 Picking y consolidación ← 008, 011, 023
              └→ 033 Confirmación independiente de pedido ← 032, 045

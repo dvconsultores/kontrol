@@ -8,6 +8,7 @@ declaró resuelta.
 | D-01 | 023 Inventario se construyó sin 008 completo | **Spec 008** | `inventory_movements.location_id` y `inventory_balances.location_id` son FK reales a `warehouse_locations` |
 | D-02 | 029/030 Ventas se construyeron sin 012 | **Spec 012** | `resolve_price` devuelve precio **y** versión; 11 tablas comerciales; `price_precedence` configurable |
 | D-05 | 015/017/025/030 con aprobaciones ad-hoc | **Spec 045** | 8 tablas de aprobación, 18 rutas, motor único; N10 corrigió además su elegibilidad |
+| D-06 | 030 bloqueada por `D0-03` (¿se reserva al pedido o al crédito aprobado?) | **Checkpoint D0-03** (2026-09-02) | `ADR-D0-003` v2 ACTIVE con `RESERVATION TRIGGER = ORDER_CONFIRMATION`; política completa en `docs/governance/d0-foundational-decisions/d0-03-checkpoint/`; contrato FR-030-001..063 en `specs/005-…/spec.md`; 0 cambios de código |
 | — | 019, 027, 035, 044, 056 sin capacidad documental | **Spec 046** | 23 `ResourceKind` en registro cerrado, con prueba por tipo |
 | — | 028 y 038 bloqueadas por `REM-046-001` | **N9** | Los cuatro tipos que faltaban —`Payment`, `BankTransaction`, `CashSession`, `Reconciliation`— registrados y probados |
 | — | Toda Spec con datos de empresa, bloqueada por ARCH-MC-001 | **ARCH-MC-001 N0–N10** | 0 alcances indeterminados, 0 fugas, 0 respaldos Tenant→Company, paridad ORM/base 0 |

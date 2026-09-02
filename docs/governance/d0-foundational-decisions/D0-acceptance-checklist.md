@@ -4,7 +4,7 @@
 
 - [x] **D0-01** tiene decisión — `ADR-D0-001`, APPROVED
 - [x] **D0-02** tiene arquitectura — `ADR-D0-002` + `POL-D0-001`, modelo de 7 entidades
-- [x] **D0-03** tiene política — `ADR-D0-003` + `POL-D0-002`, disparador configurable con defecto
+- [x] **D0-03** tiene política — `ADR-D0-003` v2 + `POL-D0-002` v2, disparador **fijo** `ORDER_CONFIRMATION`, política completa (checkpoint 2026-09-02)
 - [x] **D0-04** tiene modelo — `ADR-D0-004` + `POL-D0-003`, jerarquía genérica sin zonas fijas
 - [x] **D0-05** tiene arquitectura comercial — `ADR-D0-005` + `POL-D0-004`, 9 maestros y precedencia
 - [x] **D0-06** tiene arquitectura de licenciamiento — `ADR-D0-006` + `POL-D0-005`

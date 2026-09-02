@@ -100,3 +100,28 @@ Formato: | ID | Punto | Responsable | Evidencia | Estado | Bloqueante |
 - [x] API y OpenAPI — 3 operaciones, las 3 con empresa
 - [x] Frontend: precio automático, motivo del manual, detalle con origen
 - [x] Regresión completa
+
+---
+
+# CHECKLIST — SPEC 030 · PREVIA A IMPLEMENTACIÓN (D0-03 CLOSED, 2026-09-02)
+
+## Contrato
+- [x] Disparador fijado: `ORDER_CONFIRMATION` (ADR-D0-003 v2)
+- [x] Máquina de estados objetivo definida (FR-030-002)
+- [x] Contado / crédito / sin crédito definidos (FR-030-003..007)
+- [x] Insuficiencia, parcial, backorder, sobreventa decididos (FR-030-010..012)
+- [x] Almacén, ubicación, lote/serial delimitados (FR-030-013..018)
+- [x] Modificación, cancelación, expiración, liberación definidas (FR-030-020..027)
+- [x] Multiempresa y permisos definidos (FR-030-030..035)
+- [x] Concurrencia e idempotencia con prueba exigida (FR-030-040..044)
+- [x] Handoff a 031 y fronteras 032/033/034/035 (FR-030-050..054)
+- [x] Auditoría y modelo (FR-030-060..063)
+- [x] Dependencias 011/012/023/029/045 satisfechas
+- [x] OQ material: 0
+
+## Pendiente para el ciclo de implementación (no iniciado)
+- [ ] `/speckit.plan` propio con diseño del bloqueo (fila vs. advisory para fila inexistente)
+- [ ] Migración `0043+` con rename, columnas, índices y `CHECK`; informe `MANUAL_REVIEW`
+- [ ] Permiso `ventas:submit` en el catálogo de permisos y en el frontend
+- [ ] Pruebas de la lista de ADR v2 §«Implicaciones de prueba»
+- [ ] Regresión completa sobre PostgreSQL 18.6 (0 fallos, 8 saltos S3)

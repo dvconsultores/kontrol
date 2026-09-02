@@ -61,7 +61,7 @@ migración.
 | ID | Arquitectura cerrada | Falta del cliente |
 |---|---|---|
 | **D0-02** | Motor único de aprobaciones con política versionada, cuórum, segregación y delegación | Niveles, umbrales y resolutores |
-| **D0-03** | Disparador configurable, defecto `ORDER_RELEASED`, concurrencia garantizada en base de datos | Disparador elegido, vigencia, prioridad |
+| ~~**D0-03**~~ | ~~Disparador configurable, defecto `ORDER_RELEASED`~~ → **CLOSED 2026-09-02**: disparador fijo `ORDER_CONFIRMATION`, concurrencia garantizada en base de datos, prioridad por orden de compromiso | Solo `reservation_ttl_days` (CONFIG opcional) |
 | **D0-05** | Nueve maestros comerciales, precedencia declarativa, snapshot obligatorio | Precedencia confirmada, límites de descuento, alcance de comisiones |
 | **D0-12** | Confirmación como entidad y evento propios, segregación configurable con defecto restrictivo | Qué procesos exigen segregación |
 

@@ -46,3 +46,33 @@
 | Supuestos declarados | ✔ |
 | Pendientes registrados | ✔ |
 | Aprobación | Pendiente |
+
+---
+
+# CLARIFICACIONES — SPEC 030 (tras `D0-03 — CLOSED`, 2026-09-02)
+
+| ID | Pregunta | Respuesta | Fuente |
+|---|---|---|---|
+| CL-030-01 | ¿Cuándo se reserva? | Al confirmar el pedido (`DRAFT → SUBMITTED`). Fijo | ADR-D0-003 v2 R-1 |
+| CL-030-02 | ¿Contado y crédito difieren? | En el trigger, no. Difieren después: sin solicitud de 045 el pedido queda `RELEASED` en la misma transacción; con solicitud, `CREDIT_PENDING` | R-2 |
+| CL-030-03 | ¿Qué pasa si no hay stock? | `409` por línea; nada persiste; el vendedor edita el borrador. Sin parcial, sin backorder | R-4 |
+| CL-030-04 | ¿Sobreventa? | Solo `policies.allow_negative` del almacén; marcada y auditada | R-4 |
+| CL-030-05 | ¿Qué cantidad? | Base con snapshot de la línea (Spec 011); se persiste también la tecleada | R-4 |
+| CL-030-06 | ¿Qué almacén? | El del pedido, obligatorio; sin abastecimiento cruzado | R-5 |
+| CL-030-07 | ¿Ubicación, lote, serial? | Ubicación nunca; lote/serial solo si la línea los exige; lo demás es de 031/032 | R-5, R-9 |
+| CL-030-08 | ¿Cómo se modifica un pedido emitido? | `REVERT_TO_DRAFT` con motivo: libera todo, obsoleta el crédito, reemitir re-reserva | R-7 |
+| CL-030-09 | ¿Cancelar libera? | Sí, atómico, desde cualquier estado vivo, con motivo | R-6 |
+| CL-030-10 | ¿Rechazo de crédito? | `REJECTED` + liberación atómica | R-2, R-6 |
+| CL-030-11 | ¿Expira? | Solo con `reservation_ttl_days` (defecto `NULL`) y solo mientras espera crédito; expira el pedido también. Planificador: Spec 047; 030 no hace worker | R-8 |
+| CL-030-12 | ¿Liberación manual? | Solo reservas `MANUAL`, con motivo | R-6 |
+| CL-030-13 | ¿Concurrencia? | `FOR UPDATE` + unicidad de saldo + índice parcial por línea + prueba de carrera | R-3 |
+| CL-030-14 | ¿Idempotencia? | Máquina de estados + índice parcial; liberar dos veces no resta | R-3 |
+| CL-030-15 | ¿Qué habilita 031? | `RELEASED` (renombra a `RESERVED`) | R-11 |
+| CL-030-16 | ¿Despacho? | Consume → `FULFILLED` | R-6, R-9 |
+| CL-030-17 | ¿Permisos? | `ventas:submit` nuevo para emitir/revertir/cancelar; `ventas:approve` para crédito | R-10 |
+| CL-030-18 | ¿Histórico? | Reservas legadas `LEGACY_CREDIT_APPROVAL`, sin reinterpretar; pedidos en vuelo → revisión manual | ADR §Migración |
+| CL-030-19 | ¿Configurable? | Solo TTL (empresa), sobreventa (almacén), política de crédito (045) | ADR §Configuración |
+| CL-030-20 | ¿Pendiente de negocio? | Ninguno. CL-005-09 (política de crédito) es configuración de 045 y no bloquea | — |
+
+Pendientes de esta Spec que **no** bloquean su implementación: CL-005-09, CL-005-10 (configuración
+de implantación).
