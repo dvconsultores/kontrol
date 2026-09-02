@@ -72,6 +72,7 @@ def init_models() -> None:
     """
     import app.modules.approvals.models  # noqa: F401
     import app.modules.audit.models  # noqa: F401
+    import app.modules.commercial.models  # noqa: F401
     import app.modules.documents.models  # noqa: F401
     import app.modules.fiscal.models  # noqa: F401
     import app.modules.homologation.models  # noqa: F401

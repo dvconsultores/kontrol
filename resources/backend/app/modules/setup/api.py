@@ -77,6 +77,10 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
         # Recurso nuevo de la Spec 046. Extiende el modelo de la Spec 003.
         "documentos": ["view", "create", "edit", "upload", "download", "link",
                        "deactivate", "delete", "manage_types"],
+        # Recurso nuevo de la Spec 012. Tener el permiso **no** es tener acceso
+        # a una empresa: `comercial:create` dice que el usuario puede crear
+        # maestros comerciales, no en cuál. Eso lo decide `CompanyContext`.
+        "comercial": ["view", "create", "edit", "manage_policies", "publish", "archive"],
     }
     existing = db.execute(select(Role).where(Role.code == "ADMIN", Role.company_id.is_(None))).scalars().first()
     if existing:

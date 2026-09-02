@@ -77,3 +77,35 @@
 - [x] Pruebas futuras definidas — A, B, C, D, E, F, G, H, I, J
 - [x] Migraciones futuras planificadas — a partir de `0039`
 - [x] **Ninguna implementación productiva incluida**
+
+---
+
+# CHECKLIST — IMPLEMENTACIÓN
+
+- [x] 11 entidades reconciliadas — documental = modelo = catálogo
+- [x] 8 directas de empresa confirmadas
+- [x] 3 derivadas confirmadas, sin `company_id` redundante
+- [x] Alcance de Tercero confirmado — COMPANY
+- [x] Alcance de Producto confirmado — COMPANY
+- [x] Alcance de Moneda confirmado — COMPANY
+- [x] Alcance de Tasa de cambio confirmado — COMPANY
+- [x] `taxonomy_nodes` confirmado como la categoría
+- [x] Semántica de la unidad de plataforma confirmada — empresa nula
+- [x] Semántica de presentación confirmada — Spec 011
+- [x] Matriz de unicidad confirmada, y probada en los dos sentidos
+- [x] Versionado implementado — publicar es irreversible
+- [x] Reglas configurables en tiempo de ejecución — `price_precedence`
+- [x] Matriz de rutas hijas completa — 5 rutas
+- [x] Validación del padre en cada ruta hija
+- [x] Ataque por identificador de padre definido y ejecutado — N-01..N-08
+- [x] Pruebas entre tenants ejecutadas
+- [x] Prueba de la empresa en el cuerpo ejecutada — `422`
+- [x] Pruebas de SQL directo ejecutadas — por SQLSTATE
+- [x] Permisos definidos — seis, y registrados en el arranque
+- [x] Auditoría — actor y empresa resueltos por contexto
+- [x] Aprobaciones reconciliadas — Spec 045, sin motor nuevo
+- [x] Contratos de API implementados — 22 operaciones, 22 con cabecera
+- [x] Aislamiento de estado en el frontend — clave de consulta y empresa fijada
+- [x] Migraciones ordenadas — `0040`, `0041`
+- [x] Instalación limpia verificada
+- [x] Regresión completa ejecutada

@@ -62,6 +62,24 @@ def _garantizadas_en(cx) -> set[str]:
     return {f.split(".")[-1].strip('"') for f in filas}
 
 
+def _existentes_en(cx) -> set[str]:
+    """Tablas que **existen** en el destino.
+
+    `_garantizadas_en` pregunta por las restricciones del destino; esta pregunta
+    por su existencia, que es una condición anterior. Sin ella, el clasificador
+    planifica revisar tablas que la instalación heredada no tiene —porque son
+    posteriores a ella— y falla al contarlas.
+
+    No lo destapó una instalación heredada sino la Spec 012, que fue la primera
+    en añadir tablas de empresa después de que existiera el clasificador. El
+    hueco llevaba ahí desde N4: lo que faltaba era una tabla nueva.
+    """
+    filas = cx.execute(text("""
+        SELECT tablename FROM pg_tables WHERE schemaname = current_schema()
+    """)).scalars().all()
+    return set(filas)
+
+
 def planes(cx=None) -> list[Plan]:
     """Tablas que necesitan reconstruir su empresa, con sus rutas.
 
@@ -84,12 +102,15 @@ def planes(cx=None) -> list[Plan]:
     con_empresa = {t for t, (_, o) in modelos.items()
                    if "company_id" in o.__table__.c}
     garantizadas = _garantizadas_en(cx) if cx is not None else None
+    existentes = _existentes_en(cx) if cx is not None else None
     salida = []
     for tabla, (modulo, modelo) in sorted(modelos.items()):
         if declared_scope(modelo) is not Scope.COMPANY:
             continue
         if "company_id" not in modelo.__table__.c:
             continue          # derivada: no tiene columna que reconstruir
+        if existentes is not None and tabla not in existentes:
+            continue          # la instalación heredada es anterior a esta tabla
         if garantizadas is None:
             if modelo.__table__.c["company_id"].foreign_keys:
                 continue      # ya correcta en el modelo vigente

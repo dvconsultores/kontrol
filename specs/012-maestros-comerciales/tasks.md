@@ -204,3 +204,30 @@ Ninguna de las tareas anteriores estaba diseñada sobre arquitectura superada:
 la Spec 012 nunca llegó a implementarse, así que sus tareas describen trabajo
 futuro y siguen siendo válidas. Lo que cambió es el **contrato** que ese trabajo
 debe cumplir, y eso vive en los requisitos, no en las tareas.
+
+---
+
+# TAREAS — IMPLEMENTACIÓN
+
+| Id | Tarea | Estado |
+|---|---|---|
+| T-012-I-001 | Precheck y baseline | Hecha — 166 modelos, 39 migraciones, árbol limpio |
+| T-012-I-002 | Enumerar las 11 entidades | Hecha — documental = modelo |
+| T-012-I-003..008 | Esquema, FK, unicidad, índices | Hecha — `0040`, `0041` |
+| T-012-I-009 | Declaración de alcance en el ORM | Hecha — 8 + 3 |
+| T-012-I-010..012 | Listas, versiones e ítems | Hecha |
+| T-012-I-013..015 | Descuentos, crédito, condiciones, precedencia | Hecha |
+| T-012-I-016..018 | Producto, Tercero, taxonomía | Hecha |
+| T-012-I-019..020 | Unidad y presentación | Hecha — con unidad de plataforma |
+| T-012-I-021..022 | Moneda y tasa | Hecha — se referencian, no se duplican |
+| T-012-I-023..024 | Resolutores de precio y descuento | Hecha |
+| T-012-I-025 | Precedencia configurable | Hecha |
+| T-012-I-026 | Integración de aprobación | Hecha — señal a la 045, sin motor propio |
+| T-012-I-027..028 | Permisos y auditoría | Hecha |
+| T-012-I-029..030 | API y OpenAPI | Hecha — 22/22 con cabecera |
+| T-012-I-031..035 | Frontend, aislamiento y formulario | Hecha |
+| T-012-I-036..039 | Seguridad de rutas hijas y SQL hostil | Hecha |
+| T-012-I-040..041 | Catálogo e instalación limpia | Hecha |
+| T-012-I-042..048 | Regresiones | Hecha |
+| T-012-I-049 | Actualizar artefactos | Hecha |
+| T-012-I-050 | `/speckit.converge SPEC012` | Hecha |

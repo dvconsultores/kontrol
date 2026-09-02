@@ -1,30 +1,24 @@
 # SPEC 012 — MAESTROS COMERCIALES
 
-> ## ACTUALIZADA Y CONVERGIDA DOCUMENTALMENTE — 2026-09-02
+> ## IMPLEMENTADA Y CONVERGIDA — 2026-09-02
 >
-> `SPEC 012 — DOCUMENTALLY UPDATED / CONVERGED / READY FOR IMPLEMENTATION AUTHORIZATION`
+> `SPEC 012 — COMPLETE / CONVERGED`
 >
-> ARCH-MC-001 cerró como **`COMPLETE / GLOBALLY CONVERGED`**. El motivo del
-> bloqueo desapareció en origen: `parties.company_id` es hoy una empresa real,
-> obligatoria y con clave foránea a `companies`.
+> Once entidades, catorce rutas y dos pantallas. Los catálogos nacen vacíos y
+> `resolve_price` devuelve el precio **y la versión que lo produjo**, que es la
+> deuda que esta Spec existía para cerrar.
 >
-> Los artefactos quedan reconciliados contra esa arquitectura: alcance declarado
-> en las once entidades, autoridad de derivación en las tres derivadas, unicidad
-> por empresa, contrato de seguridad para las rutas hijas y la empresa retirada
-> del cuerpo en los dos contratos que la declaraban.
->
-> **No se implementó nada.** Ni tablas, ni endpoints, ni migraciones, ni interfaz.
-> La implementación requiere autorización expresa en un ciclo nuevo.
->
-> Evidencia: `post-arch-mc-001-revalidation.md` · `commercial-scope-matrix.md` ·
-> `nested-resource-security-contract.md` · `convergence.md`
+> Evidencia: `spec012-final-checkpoint.md` · `implementation-report.md` ·
+> `nested-resource-security-report.md` · `multi-company-evidence.md` ·
+> `postgresql-integrity-report.md` · `pricing-resolution-report.md` ·
+> `convergence.md`
 >
 > Autoridad: `docs/governance/gates/GATE-MULTICOMPANY-SCOPE.md` ·
 > `specs/arch-mc-001-canonical-multi-company-scope/`
 
 | Campo | Valor |
 |---|---|
-| Estado | **`DOCUMENTALLY UPDATED / CONVERGED / READY FOR IMPLEMENTATION AUTHORIZATION`** |
+| Estado | **`COMPLETE / CONVERGED`** |
 | Autoridad | `ADR-D0-005` (D0-05) · Constitución v1.1 · baseline arquitectónica |
 | Propietaria de | Precio, descuento, condición de pago, zona, canal, crédito comercial |
 | Depende de | 009 Terceros · 010 Catálogo · 011 Unidades · 045 Aprobaciones |

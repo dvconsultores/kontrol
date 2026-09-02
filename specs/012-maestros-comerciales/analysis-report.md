@@ -175,3 +175,48 @@ implementación de código accidental.
 
 Reclasificada como `CONFIGURABLE_AT_RUNTIME`, no como pregunta abierta material.
 El detalle y su política por defecto están en `clarifications.md`.
+
+---
+
+# ANALYZE — CICLO DE IMPLEMENTACIÓN
+
+| Categoría | Resultado |
+|---|---:|
+| BLOCKER | 0 |
+| CRITICAL | 0 |
+| CONTRADICCIONES | 0 |
+| REQUISITOS HUÉRFANOS | 0 |
+| TAREAS HUÉRFANAS | 0 |
+| PREGUNTAS ABIERTAS MATERIALES | 0 |
+
+## Antes de implementar
+
+Las once entidades coincidían en `spec.md`, `data-model.md` y
+`commercial-scope-matrix.md`. Ninguna decisión material nueva apareció: el ciclo
+documental anterior las había cerrado todas, y `OQ-06` seguía clasificada como
+configuración.
+
+## Lo que la implementación encontró
+
+Ninguno contradice ARCH-MC-001, y ninguno era una decisión comercial nueva.
+
+| Hallazgo | Tipo | Resolución |
+|---|---|---|
+| La exclusión vivía solo en la migración; la prueba pasaba sin comprobar nada | CRITICAL propio | Declarada también en el ORM, con `btree_gist` en `before_create` |
+| Un código duplicado terminaba en `500` | CRITICAL propio | El choque llega al `commit` y se traduce en `409` |
+| Un solape de vigencias terminaba en `500` | CRITICAL propio | Ídem, con su motivo propio |
+| La prueba de clave foránea fallaba por la restricción de «uno de los dos» | PRUEBA INVÁLIDA | Se usa un artículo real: falla por el motivo correcto |
+| Una prueba se saltaba por falta de nodo de taxonomía | SALTO QUE ESCONDE | Se siembra el nodo; ningún salto nuevo |
+
+Los tres primeros son la misma lección de N7 vista desde dentro: una restricción
+que la base impone y la aplicación no traduce protege el dato y miente al
+usuario.
+
+## Lo que se buscó y no se encontró
+
+Entidad sin alcance, empresa directa sin FK, derivada con `company_id`
+redundante, ruta hija sin validación del padre, empresa desde el cuerpo,
+respaldo Tenant→Company, alcance contradicho de Producto, Tercero o Moneda,
+unidad de plataforma rota, unicidad sin alcance, precedencia codificada, un
+segundo motor de aprobación, coma flotante monetaria, consulta de frontend sin
+empresa y prueba negativa que falla por el motivo equivocado.

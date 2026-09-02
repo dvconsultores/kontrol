@@ -1,61 +1,73 @@
-# CONVERGENCIA DOCUMENTAL — SPEC 012
+# CONVERGENCIA — SPEC 012
 
-## Qué se comparó
-
-`spec.md`, `clarifications.md`, `plan.md`, `research.md`, `data-model.md`,
-`contracts/`, `checklist.md`, `tasks.md`, `traceability-matrix.md`, la matriz de
-dependencias y la baseline final de ARCH-MC-001.
-
-## Puerta de convergencia
+## Puerta
 
 | Invariante | Resultado |
 |---|---:|
-| Alcance completo | 11 / 11 |
-| Alcance indeterminado | 0 |
-| Autoridad completa | 11 / 11 |
-| Seguridad de rutas hijas | 5 / 5 rutas con contrato |
-| Unicidad definida | 11 / 11 |
-| Contradicción sobre Tercero | 0 |
-| Contradicción sobre Producto | 0 |
-| Contradicción sobre Moneda | 0 |
-| Contradicción sobre unidades | 0 |
-| Contradicción sobre presentación | 0 |
-| Duplicación del motor de aprobación | 0 |
-| Contradicción con OpenAPI | 0 |
-| Contradicción de contexto en el frontend | 0 |
-| Requisitos huérfanos | 0 |
-| Tareas huérfanas | 0 |
-| Preguntas abiertas materiales | 0 |
+| Entidades implementadas | 11 / 11 |
+| Alcance correcto | 11 / 11 |
+| Indeterminadas | 0 |
+| Directas de empresa esperadas / implementadas | 8 / 8 |
+| Derivadas esperadas / implementadas | 3 / 3 |
+| Claves foráneas con destino equivocado | 0 |
+| Rutas derivadas rotas | 0 |
+| Empresa redundante en derivadas | 0 |
+| Rutas hijas aseguradas | 5 / 5 |
+| Ataque del usuario con acceso a A+B | **bloqueado** |
+| Fuga entre empresas | 0 |
+| Fuga entre tenants | 0 |
+| Mezcla de datos | 0 |
+| Respaldo Tenant→Company | 0 |
+| Empresa desde el cuerpo | 0 |
+| Identificador del padre como autoridad | 0 |
+| Regresión de la unidad de plataforma | 0 |
+| Importes en coma flotante | 0 |
+| Versionado | PASS |
+| Configuración en tiempo de ejecución | PASS |
+| Integración de aprobación | PASS |
+| Desviación con OpenAPI | 0 |
+| Desviación de empresa en el frontend | 0 |
 | Trazabilidad | 100% |
-| **Cambios en código productivo** | **0** |
+| Deuda interna de la Spec 012 | 0 |
 
-## Las cuatro contradicciones que se cerraron
+## Lo que se comparó
 
-**Nueve entidades contra once.** `spec.md` listaba nueve e incluía una
-`PriceRule` que ningún artefacto define; `data-model.md` describía once. Se
-reconcilia en once y se retira el nombre sobrante: lo que `PriceRule` iba a
-hacer lo hace `PricePrecedence`.
+Requisitos, aclaraciones, plan, modelo de datos, contratos, checklist, tareas,
+código, migraciones, catálogo de PostgreSQL, API, OpenAPI, frontend, pruebas,
+evidencia y trazabilidad.
 
-**La empresa en el cuerpo.** Dos contratos —resolver precio y validar
-descuento— la declaraban en su carga útil. Es la vulnerabilidad que la Spec 045
-estrenó y que N5 cerró. Se retira de los dos.
+## Cuatro correcciones dentro del ciclo
 
-**Una categoría sin tabla.** El modelo decía «o categoría» y no existe ninguna
-`item_categories`. La categoría de un artículo es `taxonomy_nodes`, de empresa.
-Se nombra.
+Ninguna era una decisión comercial nueva; las cuatro eran fallos propios.
 
-**La unidad de plataforma.** `units_of_measure.company_id` es anulable y el nulo
-significa unidad de la plataforma. Un `PriceListItem` que comprobara igualdad
-estricta rechazaría una unidad legítima. La comprobación es «propia o de
-plataforma».
+**La exclusión vivía solo en la migración.** Su prueba pasaba en verde sin
+comprobar nada, porque las suites levantan el esquema desde el ORM. Es la
+lección de N7 vista desde dentro: un esquema de pruebas más débil que el de
+producción no prueba producción. Ahora la declara también el ORM.
 
-## Deriva documental
+**Dos restricciones protegían el dato y mentían al usuario.** El código
+duplicado y el solape de vigencias terminaban en `500`: la base hacía su trabajo
+y la respuesta no lo contaba. Ahora son `409` con su motivo.
 
-**0.** Los diez artefactos dicen lo mismo sobre el alcance de cada entidad, sobre
-la autoridad de cada petición y sobre quién posee cada maestro.
+**Una prueba negativa fallaba por el motivo equivocado.** La de la clave foránea
+del ítem saltaba antes por la restricción de «artículo o categoría». Con un
+artículo real, falla por lo que dice comprobar.
+
+**Un salto ambiental escondía una comprobación.** Se sembró el nodo de taxonomía
+en vez de saltar la prueba.
+
+## Un hallazgo ajeno, reportado y no silenciado
+
+El clasificador de N4 preguntaba al catálogo del destino por sus restricciones
+pero no por la existencia de la tabla, y planificaba revisar tablas que una
+instalación heredada no tiene. El hueco estaba desde N4; la Spec 012 fue la
+primera en añadir tablas de empresa nuevas y lo destapó.
+
+No es una regresión de ARCH-MC-001 —nada que funcionara dejó de funcionar— sino
+un límite que nadie había alcanzado. Se corrigió completando lo que el propio
+docstring de `planes()` prometía, y queda escrito en `migration-report.md` y en
+el checkpoint.
 
 ## Veredicto
 
-`SPEC 012 — DOCUMENTALLY UPDATED / CONVERGED / READY FOR IMPLEMENTATION AUTHORIZATION`
-
-No se implementó nada. El próximo ciclo requiere autorización expresa.
+`SPEC 012 — COMPLETE / CONVERGED`

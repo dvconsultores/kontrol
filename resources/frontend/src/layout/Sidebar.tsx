@@ -31,6 +31,7 @@ import {
   ShoppingBag,
   StickyNote,
   Tags,
+  CalendarClock,
   Truck,
   Users,
   Wallet,
@@ -169,6 +170,14 @@ const navSections = [
     items: [
       { to: "/documentos", label: "Biblioteca", icon: FileText },
       { to: "/documentos/tipos", label: "Tipos documentales", icon: Settings },
+    ],
+  },
+  {
+    title: "Comercial",
+    permission: "comercial:view",
+    items: [
+      { to: "/comercial/listas-precio", label: "Listas de precios", icon: Tags },
+      { to: "/comercial/condiciones-pago", label: "Condiciones de pago", icon: CalendarClock },
     ],
   },
   {

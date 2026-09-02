@@ -115,6 +115,8 @@ export const router = createBrowserRouter([
           { path: "documentos", lazy: () => import("@/modules/documentos/BibliotecaPage").then((m) => ({ Component: m.BibliotecaPage })) },
           { path: "documentos/tipos", lazy: () => import("@/modules/documentos/TiposDocumentalesPage").then((m) => ({ Component: m.TiposDocumentalesPage })) },
           { path: "documentos/:documentId", lazy: () => import("@/modules/documentos/DocumentoDetallePage").then((m) => ({ Component: m.DocumentoDetallePage })) },
+          { path: "comercial/condiciones-pago", lazy: () => import("@/modules/comercial/CondicionesPagoPage").then((m) => ({ Component: m.CondicionesPagoPage })) },
+          { path: "comercial/listas-precio", lazy: () => import("@/modules/comercial/ListasPrecioPage").then((m) => ({ Component: m.ListasPrecioPage })) },
           { path: "auditoria", lazy: () => import("@/pages/AuditoriaPage").then((m) => ({ Component: m.AuditoriaPage })) },
           { path: "diagnostico", lazy: () => import("@/pages/DiagnosticoPage").then((m) => ({ Component: m.DiagnosticoPage })) },
           { path: "forbidden", element: <ForbiddenState /> },

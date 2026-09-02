@@ -16,6 +16,7 @@ from app.core.logging import configure_logging
 from app.core.middleware import LicenseMiddleware, RequestIDMiddleware
 from app.modules.approvals.api import router as approvals_router
 from app.modules.audit.api import router as audit_router
+from app.modules.commercial.api import router as commercial_router
 from app.modules.documents.api import router as documents_router
 from app.modules.fiscal.api import router as fiscal_router
 from app.modules.homologation.api import router as homologation_router
@@ -98,6 +99,7 @@ def create_app() -> FastAPI:
     app.include_router(audit_router, prefix=prefix)
     app.include_router(approvals_router, prefix=prefix)
     app.include_router(documents_router, prefix=prefix)
+    app.include_router(commercial_router, prefix=prefix)
 
     @app.get("/")
     def root():

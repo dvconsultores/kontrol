@@ -198,3 +198,36 @@ No se escribe a mano.
 
 Cobertura: **100%**. Requisitos sin tarea: **0**. Tareas sin requisito: **0**.
 Huérfanos: **0**.
+
+---
+
+# TRAZABILIDAD DE LA IMPLEMENTACIÓN
+
+| Requisito | Código | Prueba | Estado |
+|---|---|---|---|
+| IMP-012-001..002 · alcance declarado | `commercial/models.py` | `test_las_once_son_de_empresa` | Cubierto |
+| IMP-012-003..005 · empresa directa real | `models.py` + `0040` | `test_las_ocho_directas_llevan_su_empresa_con_referencia_real`, `test_una_empresa_inexistente_no_entra` | Cubierto |
+| IMP-012-006..008 · derivadas sin duplicar | `models.py` | `test_las_tres_derivadas_declaran_su_ruta_y_no_duplican_la_empresa`, `test_las_derivadas_no_llevan_empresa` | Cubierto |
+| IMP-012-009..012 · rutas hijas validadas | `service.version_de_la_lista` | N-01..N-08 | Cubierto |
+| IMP-012-013 · la empresa no viene del cuerpo | `api.Estricto` | `test_el_cuerpo_no_puede_declarar_la_empresa`, `test_ningun_esquema_de_entrada_acepta_la_empresa` | Cubierto |
+| IMP-012-014 · el id del padre no es autoridad | `service._de_la_empresa` | N-02, N-08 | Cubierto |
+| IMP-012-015 · sin respaldo Tenant→Company | `service` | `test_no_company_scope_reader_compares_tenant_id` | Cubierto |
+| IMP-012-016..017 · unicidad por empresa | `0040` | `test_el_mismo_codigo_*` (los dos lados) | Cubierto |
+| IMP-012-018..021 · alcances vigentes | `service._exige_*` | `test_una_lista_no_usa_la_moneda_de_otra_empresa` | Cubierto |
+| IMP-012-022..023 · unidad de plataforma | `service._exige_unidad` | `test_una_unidad_de_plataforma_si_se_puede_usar` | Cubierto |
+| IMP-012-026..027 · versión publicada inmutable | `service.transicionar_version` | `test_una_version_publicada_no_admite_items`, `test_publicar_es_irreversible` | Cubierto |
+| IMP-012-028..029 · determinismo | `service.resolver_precio` | `test_la_resolucion_es_determinista` | Cubierto |
+| IMP-012-030..031 · configuración como dato | `price_precedence` | `test_la_precedencia_es_dato_y_cada_empresa_tiene_la_suya` | Cubierto |
+| IMP-012-032 · permiso ≠ acceso | `require_permission` + `CompanyContext` | N-06 | Cubierto |
+| IMP-012-033..034 · aprobación de la 045 | `validar_descuento` | `test_superar_el_limite_pide_aprobacion_y_no_bloquea` | Cubierto |
+| IMP-012-036 · contrato OpenAPI | `get_company_context` | 22/22 operaciones lo declaran | Cubierto |
+| IMP-012-037..038 · frontend | `queryKeyHashFn`, `companyId` fijado | `architecture-company` | Cubierto |
+| IMP-012-039..041 · fugas y mezcla | — | `multi-company-evidence.md` | Cubierto |
+| IMP-012-043..044 · sin coma flotante | `DINERO`/`PORCENTAJE` | `test_ningun_importe_es_de_coma_flotante` (ORM y catálogo) | Cubierto |
+| IMP-012-045 · sin eventos | — | Ningún productor de outbox añadido | Cubierto |
+| FR-012-005 · sin solape | `0041` + `ExcludeConstraint` | `test_dos_versiones_activas_no_solapan`, `test_dos_borradores_si_pueden_solapar` | Cubierto |
+| FR-012-016 · ausencia ≠ cero | `resolver_precio` | `test_sin_lista_aplicable_declara_ausencia_y_no_devuelve_cero` | Cubierto |
+| FR-012-022/032 · catálogos vacíos | — | `test_los_catalogos_nacen_vacios` | Cubierto |
+| FR-012-090 · comisiones reservadas | `SalesCommissionPolicy` | Tabla sin servicio ni ruta | Cubierto |
+
+Cobertura: **100%** · Requisitos sin tarea: **0** · Tareas sin requisito: **0**.
