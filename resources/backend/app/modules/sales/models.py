@@ -16,8 +16,9 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, ForeignKey, Index, Numeric, String, Text
+from sqlalchemy import JSON, Boolean, Date, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql.expression import column as sql_column
 
 from app.core.database import Base
 from app.core.scope import Scope
@@ -33,10 +34,14 @@ class SalesQuote(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     customer_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
+    #: La cadena original. **No se borra** (`FR-012-080`): una cotización antigua
+    #: la escribió alguien y ese texto es el único rastro que dejó.
     price_list: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    #: La lista de precios **como referencia**, no como texto (Spec 012).
+    price_list_id: Mapped[str | None] = mapped_column(ForeignKey("price_lists.id"), nullable=True)
     validity_until: Mapped[date | None] = mapped_column(Date, nullable=True)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
-    status: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
 
 
 class SalesQuoteLine(UUIDMixin, TimestampMixin, Base):
@@ -48,7 +53,7 @@ class SalesQuoteLine(UUIDMixin, TimestampMixin, Base):
     quote_id: Mapped[str] = mapped_column(ForeignKey("sales_quotes.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
-    unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
+    unit_price: Mapped[float] = mapped_column(Numeric(18, 4), nullable=False)
     discount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     tax_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
@@ -58,9 +63,50 @@ class SalesQuoteLine(UUIDMixin, TimestampMixin, Base):
     conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    # -- Origen comercial (`P23`, Spec 012 §11) -------------------------------
+    # Un precio sin origen no se puede reconstruir, y no porque el dato se
+    # pierda: es que nunca se captura. Ninguna migración posterior lo repara,
+    # así que se captura ahora, cuando todavía se sabe.
+    #
+    # Anulables a propósito: las líneas que ya existían no reciben un origen
+    # inventado. Su `pricing_source` dice `LEGACY_FREETEXT` y eso es toda la
+    # verdad que hay sobre ellas.
+    #: La versión que produjo el precio. No la lista: la versión.
+    price_source_version_id: Mapped[str | None] = mapped_column(
+        ForeignKey("price_list_versions.id"), nullable=True)
+    #: El ítem concreto de esa versión.
+    price_source_item_id: Mapped[str | None] = mapped_column(
+        ForeignKey("price_list_items.id"), nullable=True)
+    #: `RESOLVED` · `MANUAL_JUSTIFIED` · `LEGACY_FREETEXT`.
+    pricing_source: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    #: Lo que dijo el resolutor **antes** de que alguien lo cambiara a mano.
+    #: Sin esto, un precio manual y uno resuelto son indistinguibles después.
+    resolved_unit_price: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    #: Motivo del cambio manual. Obligatorio cuando `pricing_source` lo es.
+    manual_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Qué política autorizó el descuento, y en qué versión.
+    discount_policy_id: Mapped[str | None] = mapped_column(
+        ForeignKey("discount_policies.id"), nullable=True)
+    discount_policy_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: Si hizo falta aprobación, la solicitud de la Spec 045.
+    discount_approval_request_id: Mapped[str | None] = mapped_column(
+        ForeignKey("approval_requests.id"), nullable=True)
+    #: La condición de pago **entera**, congelada. No su identificador: si el
+    #: maestro cambia mañana, el documento tiene que seguir diciendo lo que dijo.
+    payment_term_snapshot: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
 class SalesOrder(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "sales_orders"
     __scope__ = Scope.COMPANY
+    __table_args__ = (
+        # Una cotización produce **un** pedido. Va en el ORM y no solo en la
+        # migración porque las suites levantan el esquema con `create_all`:
+        # dejarla únicamente en la migración haría que las pruebas
+        # interrogaran un esquema más débil que el de producción.
+        Index("uq_sales_orders_quote", "quote_id", unique=True,
+              postgresql_where=sql_column("quote_id").isnot(None)
+              ).ddl_if(dialect="postgresql"),
+    )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     customer_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
@@ -70,7 +116,9 @@ class SalesOrder(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
     approval_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
-
+    #: La cotización de la que nació, si nació de una. Único: una cotización
+    #: produce **un** pedido. Convertir dos veces devuelve el mismo, no crea otro.
+    quote_id: Mapped[str | None] = mapped_column(ForeignKey("sales_quotes.id"), nullable=True)
 
 class SalesOrderLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "sales_order_lines"
@@ -81,11 +129,44 @@ class SalesOrderLine(UUIDMixin, TimestampMixin, Base):
     order_id: Mapped[str] = mapped_column(ForeignKey("sales_orders.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
-    unit_price: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
+    unit_price: Mapped[float] = mapped_column(Numeric(18, 4), nullable=False)
     discount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     tax_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
     needs_inventory: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # -- Origen comercial (`P23`, Spec 012 §11) -------------------------------
+    # Un precio sin origen no se puede reconstruir, y no porque el dato se
+    # pierda: es que nunca se captura. Ninguna migración posterior lo repara,
+    # así que se captura ahora, cuando todavía se sabe.
+    #
+    # Anulables a propósito: las líneas que ya existían no reciben un origen
+    # inventado. Su `pricing_source` dice `LEGACY_FREETEXT` y eso es toda la
+    # verdad que hay sobre ellas.
+    #: La versión que produjo el precio. No la lista: la versión.
+    price_source_version_id: Mapped[str | None] = mapped_column(
+        ForeignKey("price_list_versions.id"), nullable=True)
+    #: El ítem concreto de esa versión.
+    price_source_item_id: Mapped[str | None] = mapped_column(
+        ForeignKey("price_list_items.id"), nullable=True)
+    #: `RESOLVED` · `MANUAL_JUSTIFIED` · `LEGACY_FREETEXT`.
+    pricing_source: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    #: Lo que dijo el resolutor **antes** de que alguien lo cambiara a mano.
+    #: Sin esto, un precio manual y uno resuelto son indistinguibles después.
+    resolved_unit_price: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    #: Motivo del cambio manual. Obligatorio cuando `pricing_source` lo es.
+    manual_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Qué política autorizó el descuento, y en qué versión.
+    discount_policy_id: Mapped[str | None] = mapped_column(
+        ForeignKey("discount_policies.id"), nullable=True)
+    discount_policy_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: Si hizo falta aprobación, la solicitud de la Spec 045.
+    discount_approval_request_id: Mapped[str | None] = mapped_column(
+        ForeignKey("approval_requests.id"), nullable=True)
+    #: La condición de pago **entera**, congelada. No su identificador: si el
+    #: maestro cambia mañana, el documento tiene que seguir diciendo lo que dijo.
+    payment_term_snapshot: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
 
 
 # --------------------------------------------------------------------------- #

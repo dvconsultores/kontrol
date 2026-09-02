@@ -54,3 +54,43 @@ Registrar brechas y nuevas tareas tras la implementación. `/speckit.converge` s
 | Fase documental | ✔ |
 | Implementación | ✔ (sujeta a 001 certificada + 002/003/004 implementados + autorización expresa) |
 | Certificación (Docker/CI/legal, integración 006/007/008) | Pendiente — depende de 001 certificada y de Specs 006/007/008 |
+
+---
+
+# CONVERGENCIA — SPEC 029
+
+## Puerta
+
+| Invariante | Resultado |
+|---|---:|
+| Origen del precio persistido | 9 columnas × 2 líneas |
+| Origen del descuento persistido | sí |
+| Evidencia perdida en la conversión | 0 |
+| Reprecio silencioso | 0 |
+| Recálculo histórico | 0 |
+| Segundo resolutor de precio | 0 |
+| Reserva dentro de 029 | 0 |
+| Decisión sobre `D0-03` | **ninguna** |
+| Picking, factura o CxC como efecto | 0 |
+| Conversiones duplicadas | 0 |
+| Coma flotante monetaria | 0 |
+| `company_id` redundante en líneas | 0 |
+| Fuga entre empresas / tenants | 0 / 0 |
+| Desviación ORM ↔ Alembic ↔ PostgreSQL | 0 |
+| Desviación con OpenAPI | 0 |
+| Trazabilidad | 100% |
+| Deuda interna de la Spec 029 | 0 |
+
+## Lo que cambió de verdad
+
+Antes: `unit_price` era un número que alguien tecleó, y `resolve_price` existía
+sin que nadie la llamara.
+
+Ahora: el precio se resuelve, la línea guarda de qué versión salió, ese origen
+sobrevive a que la versión se supere o se archive, y viaja intacto al pedido.
+Escribir un precio a mano sigue siendo posible y ahora exige un motivo y
+conserva al lado lo que decía la lista.
+
+## Veredicto
+
+`SPEC 029 — COMPLETE / CONVERGED`

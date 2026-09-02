@@ -40,3 +40,25 @@ Formato: | ID | Requisito | Tarea | Dependencia | Archivos | Prueba | Responsabl
 - No existen tareas genéricas; todas son atómicas, con dependencias y pruebas.
 - T-005-003 requiere los servicios de 003 (`reserve`/`pick`/`ship`).
 - La CxC (T-005-006..011) reutiliza el motor de aplicaciones de 004; no se duplica.
+
+---
+
+# TAREAS — SPEC 029 · IMPLEMENTACIÓN
+
+| Id | Tarea | Estado |
+|---|---|---|
+| T-029-I-001..004 | Precheck y auditoría forense de cotización y pedido | Hecha — 0 columnas de origen |
+| T-029-I-005..008 | Modelo, migración `0042`, paridad ORM | Hecha — desviación 0 |
+| T-029-I-009..012 | Alcance de empresa y derivación de líneas | Hecha |
+| T-029-I-013..016 | Integración del resolutor y persistencia del origen | Hecha |
+| T-029-I-017..020 | Cotización, líneas, ciclo y vigencia | Hecha |
+| T-029-I-021..022 | Conversión e idempotencia | Hecha |
+| T-029-I-023..024 | Pedido directo y sus líneas, con la misma autoridad | Hecha |
+| T-029-I-025 | Invariancia histórica | Hecha — tres pruebas |
+| T-029-I-026..030 | Tercero, artículo, unidad, presentación, moneda | Hecha |
+| T-029-I-031..032 | Permisos y auditoría | Hecha |
+| T-029-I-033..034 | API y OpenAPI | Hecha — 311 rutas, 429 operaciones |
+| T-029-I-035..041 | Frontend y aislamiento de empresa | Hecha |
+| T-029-I-042..045 | Seguridad de rutas hijas y pruebas hostiles | Hecha |
+| T-029-I-046..051 | Instalación limpia y regresiones | Hecha |
+| T-029-I-052..053 | Artefactos y convergencia | Hecha |

@@ -48,3 +48,45 @@ La Spec **005-ventas-cuentas-por-cobrar** está completa, consistente y sin bloq
 | `/speckit.analyze` ejecutado | ✔ |
 | Contradicciones bloqueantes | Ninguna |
 | Lista para implementación | ✔ (sujeta a 001 certificada + 002/003/004 implementados + autorización) |
+
+---
+
+# ANALYZE — SPEC 029 · IMPLEMENTACIÓN
+
+| Categoría | Resultado |
+|---|---:|
+| BLOCKER | 0 |
+| CRITICAL | 0 |
+| CONTRADICCIONES | 0 |
+| REQUISITOS HUÉRFANOS | 0 |
+| TAREAS HUÉRFANAS | 0 |
+| PREGUNTAS ABIERTAS MATERIALES | 0 |
+
+## Antes de implementar
+
+Una decisión no estaba documentada: la **cardinalidad** de la conversión. Se
+resolvió **1:1** por el contrato del propio ciclo —«una cotización no puede
+producir múltiples pedidos si el contrato es 1:1; si permite 1:N, debe estar
+expresamente modelado»— y porque es la lectura que se puede ampliar después. Un
+1:N por defecto no se estrecha sin romper datos.
+
+No se registró como pregunta abierta material porque la regla existía; lo que
+faltaba era aplicarla.
+
+## Lo que la implementación encontró
+
+| Hallazgo | Tipo | Resolución |
+|---|---|---|
+| La línea truncaba el precio del maestro: 4 decimales → 2 | CRITICAL propio | Escala igualada en `0042` |
+| La cotización nacía en `ACTIVE`, estado sin transiciones | CONTRADICCIÓN | Ciclo declarado; nace en `DRAFT` |
+| El detalle del pedido no mostraba el origen | CRITICAL propio | `order_dict` lo expone |
+| La reserva existente vive en 029 y es de la 030 | FRONTERA | Auditada, **no tocada**, documentada |
+| `sales_invoice_lines` sigue en `Numeric(18,2)` | ANOTADO | Es de la Spec 034 |
+
+## Lo que se buscó y no se encontró
+
+Segundo resolutor de precio, origen no persistido, evidencia perdida en la
+conversión, reprecio silencioso, precio manual sin procedencia, código de
+reserva nuevo, suposición sobre `D0-03`, picking o factura dentro de 029, coma
+flotante monetaria, `company_id` redundante en las líneas, ruta hija sin
+validación del padre y prueba negativa que falla por el motivo equivocado.

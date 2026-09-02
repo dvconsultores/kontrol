@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -29,6 +30,7 @@ from app.modules.sales.models import (
     SalesInvoice,
     SalesOrder,
     SalesQuote,
+    SalesQuoteLine,
     SalesReturn,
     Shipment,
 )
@@ -42,7 +44,9 @@ router = APIRouter(prefix="/sales", tags=["ventas"])
 class QuoteCreate(BaseModel):
     code: str = Field(min_length=1, max_length=64)
     customer_id: str
+    #: Texto libre heredado. Se conserva; la referencia real es `price_list_id`.
     price_list: str | None = None
+    price_list_id: str | None = None
     validity_until: date | None = None
     currency: str = "VED"
 
@@ -50,9 +54,13 @@ class QuoteCreate(BaseModel):
 class QuoteLineCreate(BaseModel):
     product_id: str
     quantity: float = Field(gt=0)
-    unit_price: float = Field(ge=0)
+    #: Opcional: si no viene, lo resuelve la autoridad comercial (Spec 012).
+    unit_price: float | None = Field(default=None, ge=0)
     discount: float = 0.0
     tax_ref: str | None = None
+    presentation_id: str | None = None
+    #: Obligatorio cuando el precio difiere del resuelto.
+    manual_reason: str | None = None
 
 
 class OrderCreate(BaseModel):
@@ -190,7 +198,7 @@ def list_quotes(customer_id: str | None = None, db: Session = Depends(get_db), u
 def create_quote(body: QuoteCreate, db: Session = Depends(get_db),
                  actor: User = Depends(require_permission("ventas", "create")), ctx: CompanyContext = Depends(get_company_context)):
     quote = sales_service.create_quote(db, company_id=ctx.company_id, code=body.code, customer_id=body.customer_id,
-                                       price_list=body.price_list, validity_until=body.validity_until,
+                                       price_list=body.price_list, price_list_id=body.price_list_id, validity_until=body.validity_until,
                                        currency=body.currency, actor=str(actor.id))
     db.commit()
     db.refresh(quote)
@@ -201,11 +209,91 @@ def create_quote(body: QuoteCreate, db: Session = Depends(get_db),
 def add_quote_line(quote_id: str, body: QuoteLineCreate, db: Session = Depends(get_db),
                    actor: User = Depends(require_permission("ventas", "create")),
                    ctx: CompanyContext = Depends(get_company_context)):
-    line = sales_service.add_quote_line(db, company_id=ctx.company_id, quote_id=quote_id, product_id=body.product_id, quantity=body.quantity,
-                                        unit_price=body.unit_price, discount=body.discount, tax_ref=body.tax_ref)
+    line = sales_service.add_quote_line(
+        db, company_id=ctx.company_id, quote_id=quote_id, product_id=body.product_id,
+        quantity=body.quantity, unit_price=body.unit_price, discount=body.discount,
+        tax_ref=body.tax_ref, presentation_id=body.presentation_id,
+        manual_reason=body.manual_reason)
     db.commit()
     db.refresh(line)
-    return {"id": line.id, "product_id": line.product_id, "unit_price": line.unit_price}
+    return _linea(line)
+
+
+def _linea(f) -> dict:
+    """La línea **con su origen**. Sin esto, la evidencia se guarda y no se ve."""
+    return {
+        "id": str(f.id), "product_id": str(f.product_id), "quantity": str(f.quantity),
+        "unit_price": str(f.unit_price), "discount": str(f.discount or 0),
+        "presentation_id": str(f.presentation_id) if f.presentation_id else None,
+        "pricing_source": f.pricing_source,
+        "price_source_version_id": str(f.price_source_version_id) if f.price_source_version_id else None,
+        "price_source_item_id": str(f.price_source_item_id) if f.price_source_item_id else None,
+        "resolved_unit_price": str(f.resolved_unit_price) if f.resolved_unit_price is not None else None,
+        "manual_reason": f.manual_reason,
+        "discount_policy_id": str(f.discount_policy_id) if f.discount_policy_id else None,
+        "discount_policy_version": f.discount_policy_version,
+        "payment_term_snapshot": f.payment_term_snapshot,
+    }
+
+
+class QuoteTransitionIn(BaseModel):
+    target: str = Field(pattern="^(SENT|ACCEPTED|REJECTED|EXPIRED|CANCELLED)$")
+
+
+class QuoteConvertIn(BaseModel):
+    warehouse_id: str | None = None
+
+
+@router.get("/quotes/{quote_id}")
+def get_quote(quote_id: str, db: Session = Depends(get_db),
+              user: User = Depends(get_current_user),
+              ctx: CompanyContext = Depends(get_company_context)):
+    """La cotización con sus líneas y el origen de cada precio."""
+    quote = _owned(db, SalesQuote, quote_id, ctx.company_id,
+                   "SALES_QUOTE_NOT_FOUND", "Cotización no encontrada")
+    lineas = db.execute(select(SalesQuoteLine)
+                        .where(SalesQuoteLine.quote_id == str(quote.id))).scalars().all()
+    pedido = db.execute(select(SalesOrder)
+                        .where(SalesOrder.quote_id == str(quote.id))).scalars().first()
+    return {"id": str(quote.id), "code": quote.code, "status": quote.status,
+            "customer_id": str(quote.customer_id), "currency": quote.currency,
+            "validity_until": str(quote.validity_until) if quote.validity_until else None,
+            "price_list_id": str(quote.price_list_id) if quote.price_list_id else None,
+            "price_list_legacy": quote.price_list,
+            "order_id": str(pedido.id) if pedido else None,
+            "lines": [_linea(f) for f in lineas]}
+
+
+@router.post("/quotes/{quote_id}/transition", dependencies=[Depends(require_write_allowed)])
+def transition_quote(quote_id: str, body: QuoteTransitionIn, db: Session = Depends(get_db),
+                     actor: User = Depends(require_permission("ventas", "create")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    quote = sales_service.transicionar_cotizacion(
+        db, company_id=ctx.company_id, quote_id=quote_id, destino=body.target,
+        actor=str(actor.id))
+    db.commit()
+    db.refresh(quote)
+    return {"id": str(quote.id), "status": quote.status}
+
+
+@router.post("/quotes/{quote_id}/convertir", dependencies=[Depends(require_write_allowed)])
+def convert_quote(quote_id: str, body: QuoteConvertIn, db: Session = Depends(get_db),
+                  actor: User = Depends(require_permission("ventas", "create")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    """Convierte la cotización en pedido, **una sola vez**.
+
+    Convertir dos veces devuelve el pedido que ya existe con `201` la primera y
+    `200` después: un doble clic no produce dos pedidos.
+    """
+    pedido, creado = sales_service.convertir_en_pedido(
+        db, company_id=ctx.company_id, quote_id=quote_id,
+        warehouse_id=body.warehouse_id, actor=str(actor.id))
+    db.commit()
+    db.refresh(pedido)
+    return JSONResponse(
+        status_code=201 if creado else 200,
+        content={"id": str(pedido.id), "code": pedido.code, "status": pedido.status,
+                 "quote_id": str(pedido.quote_id), "created": creado})
 
 
 @router.get("/orders")

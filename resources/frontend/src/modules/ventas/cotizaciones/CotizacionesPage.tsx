@@ -1,7 +1,13 @@
-/** Cotizaciones — sin reserva de inventario (FR-005-001, WF-02). Creación y líneas operables desde UI. */
+/** Cotizaciones — sin reserva de inventario (FR-005-001, WF-02).
+ *
+ * El precio **no se teclea**: lo resuelve la autoridad comercial de la Spec 012
+ * y la línea guarda de qué versión salió. Dejarlo en blanco es lo normal;
+ * escribirlo es la excepción y exige un motivo.
+ */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
+import { NavLink } from "react-router";
 
 import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, PagedResult, Party, SalesQuoteSummary } from "@/api/types";
@@ -25,6 +31,7 @@ export function CotizacionesPage(): React.JSX.Element {
   const [lineProduct, setLineProduct] = useState("");
   const [lineQty, setLineQty] = useState("");
   const [linePrice, setLinePrice] = useState("");
+  const [lineReason, setLineReason] = useState("");
 
   const query = useQuery({
     queryKey: ["ventas", "cotizaciones"],
@@ -67,12 +74,22 @@ export function CotizacionesPage(): React.JSX.Element {
     try {
       await apiFetch(`/sales/quotes/${lineQuote}/lines`, {
         method: "POST",
-        body: { product_id: lineProduct, quantity: Number(lineQty) || 0, unit_price: Number(linePrice) || 0, discount: 0, tax_ref: null },
+        body: {
+          product_id: lineProduct,
+          quantity: Number(lineQty) || 0,
+          // Vacío significa «resuélvelo tú». Enviar 0 sería decir que el
+          // producto es gratis, que es otra cosa.
+          unit_price: linePrice === "" ? null : Number(linePrice),
+          manual_reason: linePrice === "" ? null : lineReason || null,
+          discount: 0,
+          tax_ref: null,
+        },
       });
       notify({ type: "success", title: "Línea agregada", description: `Cotización ${lineQuote}` });
       setLineProduct("");
       setLineQty("");
       setLinePrice("");
+      setLineReason("");
       refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : "No fue posible agregar la línea";
@@ -85,6 +102,18 @@ export function CotizacionesPage(): React.JSX.Element {
     columnHelper.accessor("customer_id", { header: "Cliente" }),
     columnHelper.accessor("currency", { header: "Moneda" }),
     columnHelper.accessor("status", { header: "Estado" }),
+    columnHelper.display({
+      id: "acciones",
+      header: "",
+      cell: ({ row }) => (
+        <NavLink
+          to={`/ventas/cotizaciones/${row.original.id}`}
+          className="text-sm font-medium text-primary-600 hover:underline"
+        >
+          Ver detalle
+        </NavLink>
+      ),
+    }),
   ];
 
   return (
@@ -134,10 +163,27 @@ export function CotizacionesPage(): React.JSX.Element {
           <FormField label="Cantidad" required>
             <TextInput type="number" value={lineQty} onChange={(e) => setLineQty(e.target.value)} placeholder="0" required />
           </FormField>
-          <FormField label="Precio" required>
-            <TextInput type="number" value={linePrice} onChange={(e) => setLinePrice(e.target.value)} placeholder="0,00" required />
+          <FormField label="Precio" help="Vacío: lo resuelve la lista de precios vigente">
+            <TextInput type="number" value={linePrice} onChange={(e) => setLinePrice(e.target.value)} placeholder="Automático" />
           </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={addLine}>Agregar</AsyncButton>
+          {linePrice !== "" ? (
+            <FormField label="Motivo del precio manual" required>
+              <TextInput
+                value={lineReason}
+                onChange={(e) => setLineReason(e.target.value)}
+                placeholder="Por qué difiere del precio de lista"
+                required
+              />
+            </FormField>
+          ) : null}
+          <AsyncButton
+            type="submit"
+            variant="secondary"
+            disabled={!lineQuote || !lineProduct || !lineQty || (linePrice !== "" && !lineReason)}
+            onClick={addLine}
+          >
+            Agregar
+          </AsyncButton>
         </form>
       </section>
 

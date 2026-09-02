@@ -13,6 +13,7 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
@@ -55,6 +56,23 @@ def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
 # --------------------------------------------------------------------------- #
 # Máquinas de estado (DOC-03 §13)
 # --------------------------------------------------------------------------- #
+#: Ciclo de la cotización. `CONVERTED` es terminal: una cotización que ya
+#: produjo su pedido no vuelve a editarse, porque editarla cambiaría un
+#: documento que ya existe aguas abajo.
+QUOTE_TRANSITIONS: dict[str, set[str]] = {
+    "DRAFT": {"SENT", "CANCELLED"},
+    "SENT": {"ACCEPTED", "REJECTED", "EXPIRED", "CANCELLED"},
+    "ACCEPTED": {"CONVERTED", "EXPIRED", "CANCELLED"},
+    "REJECTED": set(),
+    "EXPIRED": set(),
+    "CONVERTED": set(),
+    "CANCELLED": set(),
+}
+
+#: Solo un borrador admite líneas nuevas. Enviada una cotización, su contenido
+#: es lo que el cliente vio.
+QUOTE_EDITABLE = {"DRAFT"}
+
 ORDER_TRANSITIONS: dict[str, set[str]] = {
     "DRAFT": {"SUBMITTED", "CANCELLED"},
     "SUBMITTED": {"CREDIT_PENDING", "REJECTED"},
@@ -147,14 +165,146 @@ def invoice_allowed_actions(invoice: SalesInvoice) -> dict[str, bool]:
 # Cotización (sin reserva) y pedido
 # --------------------------------------------------------------------------- #
 def create_quote(db: Session, *, company_id: str, code: str, customer_id: str, price_list: str | None = None,
-                 validity_until=None, currency: str = "VED", actor: str | None = None) -> SalesQuote:
+                 price_list_id: str | None = None, validity_until=None, currency: str = "VED",
+                 actor: str | None = None) -> SalesQuote:
+    """Nace en `DRAFT`.
+
+    Nacía en `ACTIVE`, un estado que no aparecía en ninguna transición porque la
+    cotización no tenía ciclo de vida: el campo existía y nada lo movía. Con el
+    ciclo declarado, el estado inicial es el borrador.
+    """
     company_id = _company(company_id, obj="cotización")
     _require_party(db, company_id, customer_id)
+    if price_list_id:
+        from app.modules.commercial.models import PriceList
+
+        lista = db.get(PriceList, price_list_id)
+        if lista is None or str(lista.company_id) != str(company_id):
+            raise NotFoundError(code="PRICE_LIST_NOT_FOUND",
+                                message="Lista de precios no encontrada")
     quote = SalesQuote(company_id=company_id, code=code, customer_id=customer_id, price_list=price_list,
-                       validity_until=validity_until, currency=currency, status="ACTIVE", created_by=actor)
+                       price_list_id=price_list_id, validity_until=validity_until,
+                       currency=currency, status="DRAFT", created_by=actor)
     db.add(quote)
     db.flush()
     return quote
+
+
+def _origen_comercial(db: Session, *, company_id: str, product_id: str,
+                      customer_id: str | None, presentation_id: str | None,
+                      quantity: float | None, unit_price: float | None,
+                      discount: float | None, manual_reason: str | None) -> dict[str, Any]:
+    """Pide el precio a la autoridad comercial y **guarda de dónde vino**.
+
+    No hay un segundo resolutor de precio: hay uno, en la Spec 012, y esta
+    función lo consume (`FR-029-018`). Lo que aporta 029 es lo que faltaba —
+    escribir en la línea qué versión produjo ese número.
+
+    Si el usuario teclea un precio, no se descarta lo que dijo el resolutor: se
+    guarda al lado. Un precio manual y uno resuelto tienen que poder
+    distinguirse después, y sin el resuelto no se distinguen.
+    """
+    from app.modules.commercial import service as comercial
+
+    resolucion = comercial.resolver_precio(
+        db, company_id=company_id, item_id=product_id, customer_id=customer_id,
+        presentation_id=presentation_id,
+        quantity=Decimal(str(quantity)) if quantity is not None else None)
+
+    resuelto = Decimal(resolucion["unit_price"]) if resolucion.get("resolved") else None
+    origen: dict[str, Any] = {
+        "price_source_version_id": resolucion.get("price_list_version_id"),
+        "price_source_item_id": resolucion.get("price_list_item_id"),
+        "resolved_unit_price": resuelto,
+        "manual_reason": None,
+        "discount_policy_id": None,
+        "discount_policy_version": None,
+        "payment_term_snapshot": None,
+    }
+
+    if unit_price is None:
+        if resuelto is None:
+            # Sin lista aplicable no se inventa un precio: se dice que falta
+            # (`FR-012-016`). Un cero es un precio; la ausencia no lo es.
+            raise KontrolError(
+                code="PRICE_NOT_RESOLVED",
+                message="No hay lista de precios aplicable. Indique el precio y su motivo.",
+                status_code=422,
+                details={"reason": resolucion.get("reason")})
+        origen["pricing_source"] = "RESOLVED"
+        origen["unit_price"] = resuelto
+    else:
+        tecleado = Decimal(str(unit_price))
+        if resuelto is None:
+            # No hay lista aplicable, así que no hay nada de lo que desviarse.
+            # Exigir un motivo aquí sería pedir que se justifique una diferencia
+            # contra un precio que no existe — y dejaría el sistema inservible el
+            # primer día, porque los catálogos comerciales **nacen vacíos** por
+            # `P8`. Se registra lo que es: un precio sin origen.
+            origen["pricing_source"] = "LEGACY_FREETEXT"
+        elif tecleado == resuelto:
+            origen["pricing_source"] = "RESOLVED"
+        else:
+            # Aquí sí hay de qué desviarse, y la desviación necesita explicación.
+            if not (manual_reason or "").strip():
+                raise KontrolError(
+                    code="MANUAL_PRICE_REASON_REQUIRED",
+                    message="Un precio distinto del de la lista necesita motivo.",
+                    status_code=422)
+            origen["pricing_source"] = "MANUAL_JUSTIFIED"
+            origen["manual_reason"] = manual_reason
+        origen["unit_price"] = tecleado
+
+    if discount:
+        veredicto = comercial.validar_descuento(
+            db, company_id=company_id, scope="LINE", percent=Decimal(str(discount)),
+            item_id=product_id)
+        origen["discount_policy_id"] = veredicto.get("policy_id")
+        origen["discount_policy_version"] = veredicto.get("policy_version")
+        if not veredicto.get("allowed"):
+            raise KontrolError(
+                code="DISCOUNT_ABOVE_LIMIT",
+                message="El descuento supera el máximo de la política vigente.",
+                status_code=422,
+                details={"max_percent": veredicto.get("max_percent")})
+        # Superar el umbral **no bloquea**: abre solicitud (`FR-012-023`), y la
+        # abre el consumidor. La 029 lo señala; no aprueba nada.
+        origen["requires_approval"] = bool(veredicto.get("requires_approval"))
+
+    condicion = _condicion_de_pago(db, company_id, customer_id)
+    if condicion is not None:
+        origen["payment_term_snapshot"] = condicion
+    return origen
+
+
+def _condicion_de_pago(db: Session, company_id: str, customer_id: str | None) -> dict | None:
+    """La condición **entera**, congelada. No su identificador.
+
+    Si el maestro cambia mañana, el documento tiene que seguir diciendo lo que
+    dijo. Un identificador apunta al maestro de hoy; un snapshot, al de
+    entonces.
+    """
+    if not customer_id:
+        return None
+    from sqlalchemy import select as _select
+
+    from app.modules.commercial.models import CustomerCommercialTerms, PaymentTerm
+    from app.modules.master_data.models import Customer
+
+    cliente = db.execute(_select(Customer).where(Customer.party_id == customer_id)).scalars().first()
+    if cliente is None:
+        return None
+    cond = db.execute(_select(CustomerCommercialTerms)
+                      .where(CustomerCommercialTerms.customer_id == str(cliente.id))).scalars().first()
+    if cond is None or not cond.payment_term_id:
+        return None
+    plazo = db.get(PaymentTerm, cond.payment_term_id)
+    if plazo is None:
+        return None
+    return {"id": str(plazo.id), "code": plazo.code, "name": plazo.name,
+            "kind": plazo.kind, "days": plazo.days,
+            "due_offset_from": plazo.due_offset_from,
+            "frozen_at": datetime.now(UTC).isoformat()}
 
 
 def _require_quote(db: Session, company_id: str, quote_id: str) -> SalesQuote:
@@ -172,13 +322,128 @@ def _require_return(db: Session, company_id: str, return_id: str) -> SalesReturn
 
 
 def add_quote_line(db: Session, *, company_id: str, quote_id: str, product_id: str, quantity: float,
-                   unit_price: float, discount: float = 0.0, tax_ref: str | None = None) -> SalesQuoteLine:
-    _require_quote(db, company_id, quote_id)
-    line = SalesQuoteLine(quote_id=quote_id, product_id=product_id, quantity=quantity, unit_price=unit_price,
-                          discount=discount, tax_ref=tax_ref)
+                   unit_price: float | None = None, discount: float = 0.0,
+                   tax_ref: str | None = None, presentation_id: str | None = None,
+                   manual_reason: str | None = None) -> SalesQuoteLine:
+    """Añade una línea **con su origen**.
+
+    `unit_price` pasa a ser opcional: si no se indica, lo resuelve la autoridad
+    comercial. Si se indica y difiere del resuelto, hace falta un motivo.
+    """
+    cotizacion = _require_quote(db, company_id, quote_id)
+    if cotizacion.status not in QUOTE_EDITABLE:
+        raise ConflictError(code="SALES_QUOTE_NOT_EDITABLE",
+                            message="Solo un borrador admite líneas nuevas.")
+    origen = _origen_comercial(
+        db, company_id=company_id, product_id=product_id,
+        customer_id=str(cotizacion.customer_id), presentation_id=presentation_id,
+        quantity=quantity, unit_price=unit_price, discount=discount,
+        manual_reason=manual_reason)
+    origen.pop("requires_approval", None)
+    precio = origen.pop("unit_price")
+    line = SalesQuoteLine(quote_id=quote_id, product_id=product_id, quantity=quantity,
+                          unit_price=precio, discount=discount, tax_ref=tax_ref,
+                          presentation_id=presentation_id, **origen)
     db.add(line)
     db.flush()
     return line
+
+
+def transicionar_cotizacion(db: Session, *, company_id: str, quote_id: str, destino: str,
+                            actor: str | None = None) -> SalesQuote:
+    """Mueve la cotización, y comprueba su vigencia al enviarla o aceptarla."""
+    cotizacion = _require_quote(db, company_id, quote_id)
+    if destino not in QUOTE_TRANSITIONS.get(cotizacion.status, set()):
+        raise ConflictError(
+            code="SALES_QUOTE_TRANSITION",
+            message=f"Una cotización {cotizacion.status} no pasa a {destino}.")
+    if destino in ("SENT", "ACCEPTED") and _vencida(cotizacion):
+        raise ConflictError(code="SALES_QUOTE_EXPIRED",
+                            message="La cotización venció. Cree una nueva o amplíe su vigencia.")
+    cotizacion.status = destino
+    cotizacion.updated_at = datetime.now(UTC)
+    _audit(db, action=f"SALES_QUOTE_{destino}", entity_type="SalesQuote",
+           entity_id=str(cotizacion.id), company_id=company_id, actor=actor,
+           after={"status": destino})
+    db.flush()
+    return cotizacion
+
+
+def _vencida(cotizacion: SalesQuote, hoy: date | None = None) -> bool:
+    """Nula significa **sin vencimiento**, no «vencida»."""
+    if cotizacion.validity_until is None:
+        return False
+    return cotizacion.validity_until < (hoy or date.today())
+
+
+def convertir_en_pedido(db: Session, *, company_id: str, quote_id: str,
+                        warehouse_id: str | None = None,
+                        actor: str | None = None) -> tuple[SalesOrder, bool]:
+    """Convierte la cotización en pedido **preservando su evidencia comercial**.
+
+    No se vuelve a resolver el precio. Sería lo cómodo y sería un error: entre
+    la cotización y el pedido puede haber una versión nueva, y el cliente
+    aceptó la anterior. Reconvertir en silencio cambiaría lo que se pactó
+    (`FR-029-028`).
+
+    Devuelve `(pedido, creado)`. Si la cotización ya fue convertida devuelve el
+    pedido que existe y `creado=False`: convertir dos veces no crea dos pedidos.
+    """
+    cotizacion = _require_quote(db, company_id, quote_id)
+
+    existente = db.execute(select(SalesOrder)
+                           .where(SalesOrder.quote_id == str(cotizacion.id))).scalars().first()
+    if existente is not None:
+        return existente, False
+
+    if cotizacion.status != "ACCEPTED":
+        raise ConflictError(
+            code="SALES_QUOTE_NOT_CONVERTIBLE",
+            message="Solo se convierte una cotización aceptada por el cliente.")
+    if _vencida(cotizacion):
+        raise ConflictError(code="SALES_QUOTE_EXPIRED",
+                            message="La cotización venció y no puede convertirse.")
+    lineas = db.execute(select(SalesQuoteLine)
+                        .where(SalesQuoteLine.quote_id == str(cotizacion.id))).scalars().all()
+    if not lineas:
+        raise ConflictError(code="SALES_QUOTE_EMPTY",
+                            message="Una cotización sin líneas no produce un pedido.")
+    if warehouse_id:
+        _require_warehouse(db, company_id, warehouse_id)
+
+    pedido = SalesOrder(company_id=company_id, code=f"{cotizacion.code}-P",
+                        customer_id=cotizacion.customer_id, warehouse_id=warehouse_id,
+                        currency=cotizacion.currency, status="DRAFT",
+                        quote_id=str(cotizacion.id), created_by=actor)
+    db.add(pedido)
+    db.flush()
+
+    for linea in lineas:
+        db.add(SalesOrderLine(
+            order_id=str(pedido.id), product_id=linea.product_id, quantity=linea.quantity,
+            unit_price=linea.unit_price, discount=linea.discount, tax_ref=linea.tax_ref,
+            uom_id=linea.uom_id, presentation_id=linea.presentation_id,
+            conversion_factor_snapshot=linea.conversion_factor_snapshot,
+            base_quantity=linea.base_quantity, uom_source=linea.uom_source,
+            # La evidencia viaja entera. Es el punto de esta conversión.
+            price_source_version_id=linea.price_source_version_id,
+            price_source_item_id=linea.price_source_item_id,
+            pricing_source=linea.pricing_source,
+            resolved_unit_price=linea.resolved_unit_price,
+            manual_reason=linea.manual_reason,
+            discount_policy_id=linea.discount_policy_id,
+            discount_policy_version=linea.discount_policy_version,
+            discount_approval_request_id=linea.discount_approval_request_id,
+            payment_term_snapshot=linea.payment_term_snapshot,
+        ))
+
+    cotizacion.status = "CONVERTED"
+    cotizacion.updated_at = datetime.now(UTC)
+    _audit(db, action="SALES_QUOTE_CONVERTED", entity_type="SalesQuote",
+           entity_id=str(cotizacion.id), company_id=company_id, actor=actor,
+           after={"order_id": str(pedido.id)})
+    db.flush()
+    return pedido, True
 
 
 def create_order(db: Session, *, company_id: str, code: str, customer_id: str, warehouse_id: str | None = None,
@@ -194,13 +459,34 @@ def create_order(db: Session, *, company_id: str, code: str, customer_id: str, w
     return order
 
 
-def add_order_line(db: Session, *, order_id: str, product_id: str, quantity: float, unit_price: float,
-                   discount: float = 0.0, tax_ref: str | None = None, needs_inventory: bool = True,
-                   snapshot: str | None = None) -> SalesOrderLine:
+def add_order_line(db: Session, *, order_id: str, product_id: str, quantity: float,
+                   unit_price: float | None = None, discount: float = 0.0,
+                   tax_ref: str | None = None, needs_inventory: bool = True,
+                   snapshot: str | None = None, company_id: str | None = None,
+                   presentation_id: str | None = None,
+                   manual_reason: str | None = None) -> SalesOrderLine:
+    """Una línea de pedido directo captura su origen igual que una de cotización.
+
+    Si no lo hiciera, quedarían dos caminos comerciales: uno con origen —el que
+    viene de cotización— y otro sin él. Un pedido directo no es un pedido peor
+    documentado (`FR-029-041`).
+    """
     if quantity <= 0:
         raise KontrolError(code="INVALID_QUANTITY", message="La cantidad debe ser positiva", status_code=422)
-    line = SalesOrderLine(order_id=order_id, product_id=product_id, quantity=quantity, unit_price=unit_price,
-                          discount=discount, tax_ref=tax_ref, needs_inventory=needs_inventory, snapshot=snapshot)
+    order = db.get(SalesOrder, order_id)
+    if order is None:
+        raise NotFoundError(code="SALES_ORDER_NOT_FOUND", message="Orden de venta no encontrada")
+    empresa = company_id or str(order.company_id)
+    origen = _origen_comercial(
+        db, company_id=empresa, product_id=product_id, customer_id=str(order.customer_id),
+        presentation_id=presentation_id, quantity=quantity, unit_price=unit_price,
+        discount=discount, manual_reason=manual_reason)
+    origen.pop("requires_approval", None)
+    precio = origen.pop("unit_price")
+    line = SalesOrderLine(order_id=order_id, product_id=product_id, quantity=quantity,
+                          unit_price=precio, discount=discount, tax_ref=tax_ref,
+                          needs_inventory=needs_inventory, snapshot=snapshot,
+                          presentation_id=presentation_id, **origen)
     db.add(line)
     db.flush()
     return line
@@ -553,8 +839,27 @@ def order_dict(db: Session, order: SalesOrder) -> dict:
             "credit_decision": order.credit_decision, "margin": order.margin, "currency": order.currency,
             "status": order.status, "approval_ref": order.approval_ref,
             "allowed_actions": order_allowed_actions(order),
-            "lines": [{"id": line.id, "product_id": line.product_id, "quantity": line.quantity,
-                       "unit_price": line.unit_price, "needs_inventory": line.needs_inventory} for line in lines]}
+            "quote_id": str(order.quote_id) if order.quote_id else None,
+            "lines": [{
+                "id": line.id, "product_id": line.product_id,
+                "quantity": str(line.quantity), "unit_price": str(line.unit_price),
+                "discount": str(line.discount or 0),
+                "needs_inventory": line.needs_inventory,
+                # El origen viaja hasta aquí o no sirve de nada: guardarlo y no
+                # mostrarlo es tener la evidencia y no poder enseñarla.
+                "pricing_source": line.pricing_source,
+                "price_source_version_id": (str(line.price_source_version_id)
+                                            if line.price_source_version_id else None),
+                "price_source_item_id": (str(line.price_source_item_id)
+                                         if line.price_source_item_id else None),
+                "resolved_unit_price": (str(line.resolved_unit_price)
+                                        if line.resolved_unit_price is not None else None),
+                "manual_reason": line.manual_reason,
+                "discount_policy_id": (str(line.discount_policy_id)
+                                       if line.discount_policy_id else None),
+                "discount_policy_version": line.discount_policy_version,
+                "payment_term_snapshot": line.payment_term_snapshot,
+            } for line in lines]}
 
 
 def invoice_dict(invoice: SalesInvoice) -> dict:

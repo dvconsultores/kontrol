@@ -71,3 +71,32 @@ Formato: | ID | Punto | Responsable | Evidencia | Estado | Bloqueante |
 | Cumplidos (fase documental) | 26 (especificados) |
 | Bloqueantes sin evidencia en fase documental | Ninguno |
 | Implementación | Pendiente — requiere 001 certificada, 002/003/004 implementados y autorización |
+
+---
+
+# CHECKLIST — SPEC 029 · IMPLEMENTACIÓN
+
+- [x] Esquema de cotización auditado — `price_list` era texto libre
+- [x] Esquema de pedido auditado — sin vínculo con la cotización
+- [x] Campos `P23` identificados — 0 columnas de origen en ambas líneas
+- [x] Contrato del resolutor identificado — `resolve_price` de la Spec 012
+- [x] Origen del precio definido y persistido
+- [x] Origen del descuento definido y persistido
+- [x] Unidad y presentación conservadas — Spec 011, sin redefinir
+- [x] Ciclo de la cotización definido — no existía
+- [x] Vigencia comprobada al enviar, aceptar y convertir
+- [x] Cardinalidad definida — 1:1, con índice único parcial
+- [x] Política de reprecio definida — **no** hay reprecio silencioso
+- [x] Cambio manual con motivo obligatorio y valor resuelto conservado
+- [x] Frontera 029/030 explícita, y comprobada por medición
+- [x] `D0-03` excluida: la reserva existente no se tocó
+- [x] Seguridad de rutas hijas
+- [x] Prueba del usuario con acceso a las dos, en los dos sentidos
+- [x] Prueba entre tenants
+- [x] Pruebas de invariancia histórica — tres
+- [x] Precisión igualada con el maestro
+- [x] Permisos existentes reutilizados — sin nombres nuevos
+- [x] Auditoría de transición y conversión
+- [x] API y OpenAPI — 3 operaciones, las 3 con empresa
+- [x] Frontend: precio automático, motivo del manual, detalle con origen
+- [x] Regresión completa

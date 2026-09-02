@@ -148,3 +148,59 @@ Convención: `FR-005-XXX`. Cada requisito tiene fuente (DOC), prioridad (P0/P1/P
 - Los cobros multimoneda son idempotentes y no sobrededucen el saldo.
 - El aging de CxC permite gestionar la cartera.
 - 006 (tesorería) podrá consumir los cobros de 005 para conciliación.
+
+---
+
+# SPEC 029 — REQUISITOS DE ORIGEN COMERCIAL
+
+Añadidos en el ciclo de implementación de la Spec 029, posterior a la Spec 012.
+
+## Captura temprana (`P23`)
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-029-017 | El precio se obtiene de la autoridad comercial de la Spec 012 | P0 |
+| FR-029-018 | 029 **no** crea un segundo resolutor de precio | P0 |
+| FR-029-019..022 | La línea guarda versión, ítem, origen y política del descuento | P0 |
+| FR-029-023 | La unidad y la presentación se conservan como en la Spec 011 | P0 |
+| FR-029-024 | 029 **no** redefine la conversión física | P0 |
+| FR-029-031/032 | Todo importe en `Numeric`; jamás `float` | P0 |
+| FR-029-060 | El histórico no consulta maestros actuales para reconstruirse | P0 |
+
+## Invariancia histórica
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-029-025/026 | Cotización y pedido no se recalculan con maestros nuevos | P0 |
+| FR-029-027 | La conversión preserva la evidencia comercial | P0 |
+| FR-029-028 | La conversión **no** vuelve a resolver el precio | P0 |
+| FR-029-029 | Un cambio manual es acción auditable, con motivo | P0 |
+
+## Ciclo y conversión
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-029-041 | La vigencia se comprueba al enviar, aceptar y convertir | P0 |
+| FR-029-042 | Una cotización vencida no se convierte | P0 |
+| FR-029-043 | La conversión está protegida contra doble conversión | P0 |
+| FR-029-044 | Una cotización produce **un** pedido | P0 |
+| FR-029-046 | El pedido conserva el vínculo con su cotización | P0 |
+| FR-029-047 | Un pedido directo resuelve con la misma autoridad y captura origen | P0 |
+
+## Frontera con la Spec 030
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-029-035 | 029 **no** implementa reserva | P0 |
+| FR-029-036 | 029 **no** decide `D0-03` | P0 |
+| FR-029-037 | 029 **no** implementa crédito | P0 |
+| FR-029-038..040 | 029 **no** hace picking, ni factura, ni despacha | P0 |
+
+## Multiempresa
+
+| Id | Requisito | Prioridad |
+|---|---|---|
+| FR-029-001..005 | Empresa real; el contexto es la autoridad; ni el cuerpo ni la URL lo son | P0 |
+| FR-029-008..010 | Las líneas derivan su empresa y no la duplican | P0 |
+| FR-029-011..016 | Las rutas hijas validan el padre; entre empresas y tenants, bloqueado | P0 |
+| FR-029-053 | Tener permiso no es tener acceso a una empresa | P0 |

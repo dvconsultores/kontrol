@@ -74,6 +74,7 @@ export const router = createBrowserRouter([
           { path: "compras/notas", lazy: () => import("@/modules/compras/notas/NotasComprasPage").then((m) => ({ Component: m.NotasComprasPage })) },
           { path: "compras/cuentas-por-pagar", lazy: () => import("@/modules/compras/cuentas-por-pagar/CuentasPorPagarPage").then((m) => ({ Component: m.CuentasPorPagarPage })) },
           { path: "ventas/cotizaciones", lazy: () => import("@/modules/ventas/cotizaciones/CotizacionesPage").then((m) => ({ Component: m.CotizacionesPage })) },
+          { path: "ventas/cotizaciones/:quoteId", lazy: () => import("@/modules/ventas/cotizaciones/CotizacionDetallePage").then((m) => ({ Component: m.CotizacionDetallePage })) },
           { path: "ventas/ordenes", lazy: () => import("@/modules/ventas/ordenes/OrdenesVentasPage").then((m) => ({ Component: m.OrdenesVentasPage })) },
           { path: "ventas/facturas", lazy: () => import("@/modules/ventas/facturas/FacturasVentasPage").then((m) => ({ Component: m.FacturasVentasPage })) },
           { path: "ventas/notas", lazy: () => import("@/modules/ventas/notas/NotasVentasPage").then((m) => ({ Component: m.NotasVentasPage })) },
