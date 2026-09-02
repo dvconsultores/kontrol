@@ -64,6 +64,17 @@ después de convertir, y cuentan listas de preparación y facturas.
 
 Convertir crea un pedido en `DRAFT` y nada más.
 
+## Regresión
+
+Backend **0 fallos, 0 errores, 8 saltos** —todos S3, P1 externa— sobre
+PostgreSQL 18.6 con ClamAV real. Frontend **283/283**, `tsc`, ESLint y build
+limpios.
+
+Un fallo apareció a mitad de camino y no era de las pruebas: exigir motivo a
+todo precio tecleado rompía las suites de dominio porque los catálogos
+comerciales nacen vacíos. Sin lista no hay de qué desviarse. Corregido y
+reejecutado.
+
 ## Deuda propia
 
 **Ninguna.** No queda origen sin persistir, ni evidencia que se pierda al
