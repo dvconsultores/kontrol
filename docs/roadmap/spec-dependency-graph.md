@@ -121,3 +121,44 @@ Notación: `A → B` significa «A debe existir antes que B».
 | ~~046 Gestión documental~~ **(cerrada 2026-08-30)** | 019, 027, 035, 044, 056 — **desbloqueadas**; 018, 020, 040 quedan por causas no documentales; **028 y 038 siguen bloqueadas** (`REM-046-001`) | 4 |
 | **033 Confirmación de pedido** | 034, 035 | 2 |
 | **048 Integraciones** | 013(BCV), 046(storage), 047(correo) | 3 |
+
+---
+
+# ACTUALIZACIÓN — 2026-09-02
+
+Posterior a `ARCH-MC-001 — COMPLETE / GLOBALLY CONVERGED` y a
+`SPEC 012 — COMPLETE / CONVERGED`. Medido contra el repositorio en `3027da6`.
+
+## Dependencias incumplidas — estado actual
+
+| # | Estado | Comprobación |
+|---|---|---|
+| D-01 | **RESUELTA** | `location_id` es FK real en movimiento y saldo |
+| D-02 | **RESUELTA** | Spec 012 cerrada: `resolve_price` devuelve precio y versión |
+| D-03 | Vigente | 034 sigue facturando sin la compuerta de 033 |
+| D-04 | Parcial | 008 entrega el orden físico; **falta 022** |
+| D-05 | **RESUELTA** | Motor único de aprobaciones |
+| D-06 | Vigente | 019 recibe sin pasar por 020 ni 021 |
+| D-07 | Vigente | Sin 018 no hay *landed cost* |
+| D-08 | **RESUELTA** | Unidad y presentación congeladas en línea |
+
+## Nodos de mayor grado de salida, hoy
+
+| Spec | Bloquea directamente | Peso | ¿Lista? |
+|---|---|---:|---|
+| **022 Put-away** | 031, 032, calidad de 023 | 3 | **No** — espera 021 ← 020 |
+| **029 Cotización/pedido** | 030; da consumidor a 012 | 2 | **Sí** |
+| 020 Incidencias | 021 → 022 | 3 en cadena | Sí |
+| 048 Integraciones | 013 (BCV), 047 | 2 | Sí |
+| 033 Confirmación | 034, 035 | 2 | No — espera 032 |
+| ~~008~~, ~~045~~, ~~046~~, ~~012~~, ~~ARCH-MC-001~~ | cerradas | — | — |
+
+## La deuda que 012 dejó abierta a propósito
+
+`resolve_price` existe y **ninguna línea de venta la llama**:
+`sales_quote_lines`, `sales_order_lines` y `sales_invoice_lines` siguen con
+`unit_price` tecleado y **cero** columnas de origen.
+
+No es un defecto de 012 —`FR-012-070` dice que prepara el contrato y no
+implementa el proceso de sus consumidoras— sino la razón por la que 029 es la
+siguiente.

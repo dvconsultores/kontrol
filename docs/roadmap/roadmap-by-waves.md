@@ -147,3 +147,22 @@ migración aditiva si se acepta backfill nulo para las facturas históricas.
 Ninguna ola posterior debe iniciarse antes de cerrar las dependencias que la anterior resuelve.
 La tentación evidente será saltar a la Ola 5 o 6 porque son las visibles para el usuario; hacerlo
 sin las Olas 1, 2 y 4 obliga a reescribir picking, facturación y recepción por segunda vez.
+
+---
+
+# HOJA DE RUTA VIGENTE — 2026-09-02
+
+| Ola | Specs | Por qué en ese orden |
+|---|---|---|
+| **Ahora** | **029** Cotización y pedido | Única con todas las dependencias satisfechas; da consumidor a 012 y detiene un daño irreversible |
+| Siguiente | 020 → 021 → 022 | Cadena que desbloquea 031 y 032, y hace rendir la inversión de 008 |
+| Después | 031, 032, 033 | Preparación y compuerta de pedido |
+| Después | 018 → 026 | Importaciones y *landed cost* |
+| Después | 048 → 013, 047 | Canal de integración: tasa BCV y notificaciones |
+| Cuando `D0-03` | 030 Crédito y reserva | Espera una decisión de negocio, no código |
+| Cuando `D0-07` | 039–043, 056 | Construibles antes; liberables solo después |
+| Cuando haya API | 044 | v1 registra y bloquea; no emite |
+| Cuando haya servicio | S3 de 046 | P1 externa, no bloquea nada más |
+
+La ola «Ahora» contiene **una sola Spec** a propósito. Este checkpoint
+selecciona una, no una tanda.
