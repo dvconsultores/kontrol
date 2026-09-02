@@ -8,6 +8,17 @@
 | ClamAV | 1.4.3 real |
 | Base legada | `kontrol_legacy` sembrada con el fixture hostil en el esquema `0032` |
 
+## Resultado
+
+Suite completa sobre PostgreSQL 18.6 con la base legada sembrada y ClamAV real:
+
+| | |
+|---|---:|
+| Fallos | **0** |
+| Fallos inesperados | **0** |
+| Saltos | **8** |
+| Saltos desconocidos | **0** |
+
 ## Auditoría de saltos
 
 Cada salto, con motivo, responsable y prioridad. Ninguno desconocido.
@@ -20,7 +31,7 @@ Cada salto, con motivo, responsable y prioridad. Ninguno desconocido.
 
 ### Un salto que N10 convirtió en ejecución
 
-Una primera pasada completa mostró **24** saltos: los 8 de S3 y otros 16 de
+Una pasada anterior mostró **24** saltos: los 8 de S3 y otros 16 de
 `test_mc_preflight.py` con el motivo «no hay base legacy sembrada en este
 entorno».
 
@@ -29,7 +40,8 @@ saltando por diseño sino porque el entorno efímero había perdido la base
 `kontrol_legacy`. Es decir: las pruebas que verifican N4 no se estaban
 ejecutando, y su ausencia se leía como un salto legítimo.
 
-Se sembró la base y se ejecutaron. **16 de 16 pasan**, sin saltos.
+Se sembró la base y se ejecutaron. **16 de 16 pasan**, y en la pasada final ya
+no aparecen como saltos: quedan 8, todos de S3.
 
 Que un salto ambiental pueda esconder la verificación de una fase entera es
 exactamente el tipo de cosa que §72 obliga a mirar de frente.

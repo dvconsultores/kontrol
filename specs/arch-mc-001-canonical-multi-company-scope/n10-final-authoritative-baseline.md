@@ -54,3 +54,12 @@ N9: la reconciliación de N10 retiró cinco columnas `tenant_id` abandonadas,
 añadió cinco rutas de derivación que faltaban por declarar y dio contexto de
 empresa a diez operaciones que no lo pedían. El apartado de reconciliación
 histórica lo detalla.
+
+## Regresión
+
+| | |
+|---|---:|
+| Backend: fallos | **0** |
+| Backend: saltos | **8** (todos S3, P1 externa) |
+| Frontend: Vitest | **278 / 278** |
+| Frontend: `tsc -b`, ESLint, build | limpios |

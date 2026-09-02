@@ -60,6 +60,15 @@ Spec 012 `DOCUMENT UPDATE REQUIRED BEFORE IMPLEMENTATION`, sin autorizar.
 que discrepe está marcada como superada, con su motivo, en
 `n10-historical-baseline-reconciliation.md`.
 
+## Regresión
+
+Backend **0 fallos, 8 saltos** —todos S3— sobre PostgreSQL 18.6, con la base
+legada sembrada y ClamAV real. Frontend 278/278, `tsc`, ESLint y build limpios.
+
+Los 16 saltos de `test_mc_preflight` que apareció en una pasada intermedia no
+eran de diseño: el entorno efímero había perdido la base legada, y las pruebas
+que verifican N4 no se estaban ejecutando. Se sembró y pasan las 16.
+
 ## Deuda
 
 Cero P0. S3 (`IMPLEMENTED_NOT_VERIFIED`, P1 externa), planificador de retención
