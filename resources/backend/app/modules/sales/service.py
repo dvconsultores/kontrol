@@ -157,8 +157,23 @@ def create_quote(db: Session, *, company_id: str, code: str, customer_id: str, p
     return quote
 
 
-def add_quote_line(db: Session, *, quote_id: str, product_id: str, quantity: float, unit_price: float,
-                   discount: float = 0.0, tax_ref: str | None = None) -> SalesQuoteLine:
+def _require_quote(db: Session, company_id: str, quote_id: str) -> SalesQuote:
+    quote = db.get(SalesQuote, quote_id)
+    if not quote or quote.company_id != company_id:
+        raise NotFoundError(code="SALES_QUOTE_NOT_FOUND", message="Cotización de venta no encontrada")
+    return quote
+
+
+def _require_return(db: Session, company_id: str, return_id: str) -> SalesReturn:
+    ret = db.get(SalesReturn, return_id)
+    if not ret or ret.company_id != company_id:
+        raise NotFoundError(code="SALES_RETURN_NOT_FOUND", message="Devolución de venta no encontrada")
+    return ret
+
+
+def add_quote_line(db: Session, *, company_id: str, quote_id: str, product_id: str, quantity: float,
+                   unit_price: float, discount: float = 0.0, tax_ref: str | None = None) -> SalesQuoteLine:
+    _require_quote(db, company_id, quote_id)
     line = SalesQuoteLine(quote_id=quote_id, product_id=product_id, quantity=quantity, unit_price=unit_price,
                           discount=discount, tax_ref=tax_ref)
     db.add(line)
@@ -490,8 +505,9 @@ def create_return(db: Session, *, company_id: str, code: str, source_document: s
     return ret
 
 
-def add_return_line(db: Session, *, return_id: str, product_id: str, quantity: float,
+def add_return_line(db: Session, *, company_id: str, return_id: str, product_id: str, quantity: float,
                     condition: str = "DEFECTUOSO") -> SalesReturnLine:
+    _require_return(db, company_id, return_id)
     line = SalesReturnLine(return_id=return_id, product_id=product_id, quantity=quantity, condition=condition)
     db.add(line)
     db.flush()

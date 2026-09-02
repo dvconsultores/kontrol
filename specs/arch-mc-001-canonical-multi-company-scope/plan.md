@@ -346,3 +346,19 @@ sembrarse, la prueba **falla**, no se salta.
 | Sin N10 ni Spec 012 | Verificado en el análisis | PASS |
 
 **`CONSTITUTION GATE: PASS`**
+
+---
+
+# PLAN — N10
+
+Dieciocho olas, de inventario autoritativo a convergencia global y revalidación
+documental de la Spec 012.
+
+El plan cambió en la ola 1. Estaba pensado como una verificación —medir, cotejar
+y firmar— y la medición encontró doce defectos reales de aislamiento, cinco
+columnas fantasma y ocho alcances no verificables. A partir de ahí las olas 3 a
+7 dejaron de ser reconciliación documental y pasaron a ser corrección con prueba
+en rojo, dentro del límite del §97: se corrige lo que contradice un requisito
+existente; lo que es capacidad ausente se registra y no se implementa.
+
+Detenido antes de `/speckit.implement 012`, como estaba previsto.

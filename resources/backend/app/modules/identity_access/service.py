@@ -111,6 +111,20 @@ def get_user(db: Session, user_id: str) -> User:
     return user
 
 
+def get_user_in_tenant(db: Session, user_id: str, tenant_id: str) -> User:
+    """El usuario, **dentro del tenant de quien pregunta**.
+
+    `get_user` busca por id y devuelve a cualquiera de la instalación. Sirve
+    para el propio portador del token; no sirve para administrar a terceros,
+    que es donde se usaba: un administrador de T1 asignaba y retiraba roles a
+    usuarios de T2 sin que nada lo impidiera.
+    """
+    user = db.get(User, user_id)
+    if not user or str(user.tenant_id) != str(tenant_id):
+        raise NotFoundError(code="USER_NOT_FOUND", message="Usuario no encontrado")
+    return user
+
+
 # --------------------------------------------------------------------------- #
 # Autenticación
 # --------------------------------------------------------------------------- #
@@ -346,13 +360,23 @@ def get_user_roles(db: Session, user_id: str) -> list[dict]:
 def assign_role_to_user(
     db: Session,
     *,
+    tenant_id: str,
     user_id: str,
     role_id: str,
     company_id: str | None = None,
     actor: str | None = None,
 ) -> None:
     """Asigna un rol a un usuario (FR-001-040); idempotente por par."""
-    user = get_user(db, user_id)
+    from app.modules.organization.models import Company
+
+    user = get_user_in_tenant(db, user_id, tenant_id)
+    if company_id is not None:
+        # La empresa llegaba del cuerpo sin comprobarse. Acotar un rol a una
+        # empresa de otro tenant no es un alcance: es una fila sin sentido en la
+        # tabla que decide quién administra qué.
+        empresa = db.get(Company, company_id)
+        if empresa is None or str(empresa.tenant_id) != str(tenant_id):
+            raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
     role = db.get(Role, role_id)
     if not role:
         raise NotFoundError(code="ROLE_NOT_FOUND", message="Rol no encontrado")
@@ -361,12 +385,17 @@ def assign_role_to_user(
     ).scalars().first()
     if existing:
         raise ConflictError(code="ROLE_ALREADY_ASSIGNED", message="El usuario ya tiene este rol")
-    db.add(UserRole(user_id=user_id, role_id=role_id, company_id=company_id))
+    asignacion = UserRole(user_id=user_id, role_id=role_id, company_id=company_id)
+    db.add(asignacion)
+    db.flush()
     _audit(
         db,
         action="ROLE_ASSIGNED",
         entity_type="UserRole",
-        entity_id=f"{user_id}:{role_id}",
+        # `f"{user_id}:{role_id}"` son 73 caracteres en una columna de 36: la
+        # ruta terminaba en 500 en cuanto la asignación no era duplicada. La
+        # entidad auditada es la asignación, que tiene id propio.
+        entity_id=str(asignacion.id),
         tenant_id=user.tenant_id,
         user_id=actor,
         after={"role_id": role_id, "user_id": user_id},
@@ -377,12 +406,13 @@ def assign_role_to_user(
 def remove_role_from_user(
     db: Session,
     *,
+    tenant_id: str,
     user_id: str,
     role_id: str,
     actor: str | None = None,
 ) -> None:
     """Quita un rol de un usuario (FR-001-040)."""
-    user = get_user(db, user_id)
+    user = get_user_in_tenant(db, user_id, tenant_id)
     row = db.execute(
         select(UserRole).where(UserRole.user_id == user_id, UserRole.role_id == role_id)
     ).scalars().first()
@@ -393,7 +423,7 @@ def remove_role_from_user(
         db,
         action="ROLE_REMOVED",
         entity_type="UserRole",
-        entity_id=f"{user_id}:{role_id}",
+        entity_id=str(row.id),
         tenant_id=user.tenant_id,
         user_id=actor,
         after={"role_id": role_id, "user_id": user_id},

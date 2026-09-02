@@ -289,3 +289,66 @@ def test_ninguna_ruta_deja_que_el_cuerpo_elija_la_empresa():
                 culpables.append(f"{archivo.parent.name}/{archivo.name}::{fn.name}")
     assert not culpables, (
         "rutas donde el cuerpo puede imponer la empresa:\n  " + "\n  ".join(culpables))
+
+
+# ===================================================================== N10
+# Tercera familia. Las dos de N5 miran lo que la petición **declara**: un id en
+# la URL con `db.get`, o una empresa en el cuerpo. Esta mira lo contrario: la
+# ruta que no declara nada.
+#
+# Seis rutas de escritura recibían el identificador del padre por la URL, no
+# pedían `CompanyContext` y llamaban al servicio con ese id tal cual. El permiso
+# no las salvaba: `compras:create` dice que el usuario puede crear líneas de
+# compra, no en qué empresa. Sin contexto no hay nada que comparar.
+
+#: Rutas de módulo de empresa que legítimamente no necesitan contexto. Cada una
+#: con el motivo por el que se admite; una excepción sin motivo es una excepción
+#: que nadie revisará.
+_SIN_CONTEXTO_JUSTIFICADO = {
+    # El núcleo fiscal está separado y versionado por instalación (P4). Sus
+    # fuentes legales son `INSTALLATION` y sus versiones de regla, `GLOBAL`:
+    # una empresa no activa una gaceta ni aprueba una alícuota.
+    "fiscal/api.py::activate_legal_source",
+    "fiscal/api.py::approve_tax_rule",
+    # La decisión de un paso no la acota la empresa sino la elegibilidad: quien
+    # decide tiene que figurar entre los aprobadores del nivel, y esos se
+    # congelan desde la política de la empresa que abrió la solicitud.
+    # `test_un_paso_de_aprobacion_ajeno_no_se_decide_desde_otra_empresa` lo
+    # comprueba ejecutándolo, que es la única forma de saberlo.
+    "approvals/api.py::approve_step",
+    "approvals/api.py::reject_step",
+    "approvals/api.py::return_step",
+}
+
+
+def _rutas_con_identificador_y_sin_contexto() -> list[str]:
+    fuera: list[str] = []
+    for archivo in _archivos_de_api():
+        arbol = ast.parse(archivo.read_text())
+        for fn in _rutas(arbol):
+            argumentos = list(fn.args.args) + list(fn.args.kwonlyargs)
+            if not any(a.arg.endswith("_id") for a in argumentos):
+                continue
+            if _recibe_contexto(fn):
+                continue
+            if any(isinstance(n, ast.Name) and n.id == "ctx" for n in ast.walk(fn)):
+                continue
+            fuera.append(f"{archivo.parent.name}/{archivo.name}::{fn.name}")
+    return fuera
+
+
+def test_ninguna_ruta_recibe_un_id_de_empresa_sin_ver_el_contexto():
+    """Toda ruta de empresa que reciba un id, o ve el contexto, o está justificada."""
+    nuevas = sorted(set(_rutas_con_identificador_y_sin_contexto()) - _SIN_CONTEXTO_JUSTIFICADO)
+    assert nuevas == [], (
+        "rutas que reciben un identificador y no ven la empresa:\n  "
+        + "\n  ".join(nuevas)
+        + "\n\nSi alguna es legítima, añádela a `_SIN_CONTEXTO_JUSTIFICADO` con el"
+          " motivo y con una prueba que demuestre qué la protege en su lugar.")
+
+
+def test_la_lista_de_excepciones_no_guarda_rutas_que_ya_no_existen():
+    """Una excepción que sobrevive a su ruta deja pasar la siguiente."""
+    vigentes = set(_rutas_con_identificador_y_sin_contexto())
+    muertas = sorted(_SIN_CONTEXTO_JUSTIFICADO - vigentes)
+    assert muertas == [], f"excepciones que ya no corresponden a ninguna ruta: {muertas}"

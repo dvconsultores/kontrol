@@ -5,31 +5,19 @@ Incluye helpers de alcance compartidos por los módulos de negocio.
 
 from __future__ import annotations
 
-from sqlalchemy.orm import Session
+from app.modules.organization.models import Warehouse
 
-from app.modules.organization.models import Branch, Company, Warehouse
-
-
-def company_in_tenant(db: Session, tenant_id: str, company_id: str) -> bool:
-    """¿Pertenece la empresa al tenant? (Company.tenant_id == tenant_id)."""
-    company = db.get(Company, company_id)
-    return bool(company and company.tenant_id == tenant_id)
-
-
-def branch_in_tenant(db: Session, tenant_id: str, branch_id: str) -> bool:
-    """¿Pertenece la sucursal a una empresa del tenant? (Branch → Company)."""
-    branch = db.get(Branch, branch_id)
-    if not branch:
-        return False
-    return company_in_tenant(db, tenant_id, branch.company_id)
-
-
-def warehouse_in_tenant(db: Session, tenant_id: str, warehouse_id: str) -> bool:
-    """¿Pertenece el almacén a una empresa del tenant? (Warehouse → Company)."""
-    warehouse = db.get(Warehouse, warehouse_id)
-    if not warehouse:
-        return False
-    return company_in_tenant(db, tenant_id, warehouse.company_id)
+# Aquí vivían `company_in_tenant`, `branch_in_tenant` y `warehouse_in_tenant`.
+#
+# Los tres respondían a la misma pregunta —«¿es de una empresa de este
+# tenant?»— y se usaban donde la pregunta correcta era «¿es de **esta**
+# empresa?». N8 retiró `warehouse_in_tenant_scope` del producto por ese motivo;
+# N10 encontró el último llamante, en la creación de establecimientos, y con él
+# los tres se quedaron sin uso.
+#
+# No se conservan «por si acaso». Un ayudante que solo sirve para el patrón que
+# esta remediación retiró es una invitación a reutilizarlo: la comprobación por
+# empresa se hace contra `ctx.company_id`, que es la autoridad de la petición.
 
 
 def warehouse_belongs_to(company_id: str, warehouse: Warehouse) -> bool:

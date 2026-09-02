@@ -261,7 +261,7 @@ class TestConciliacion:
         line = treasury_service.add_reconciliation_line(db_session, reconciliation_id=str(rec.id),
                                                         bank_transaction_id=str(bt.id))
         treasury_service.transition_reconciliation(db_session, reconciliation_id=str(rec.id), target="IN_PROGRESS")
-        resolved = treasury_service.resolve_line(db_session, line_id=str(line.id), resolution_type="DIFFERENCE",
+        resolved = treasury_service.resolve_line(db_session, company_id=rec.company_id, line_id=str(line.id), resolution_type="DIFFERENCE",
                                                  notes="Comisión bancaria", actor="user-1")
         assert resolved.status == "RESOLVED" and resolved.matched_by == "MANUAL"
         assert "DIFFERENCE" in (resolved.resolution or "") and "user-1" in (resolved.resolution or "")

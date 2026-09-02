@@ -194,10 +194,18 @@ users_router = APIRouter(prefix="/users", tags=["users"])
 
 
 @users_router.get("")
-def list_users(db: Session = Depends(get_db), _: User = Depends(require_permission("users", "view"))):
+def list_users(db: Session = Depends(get_db), actor: User = Depends(require_permission("users", "view"))):
+    """Los usuarios **del tenant de quien pregunta**.
+
+    Era un `select(User)` sin `where`. Devolvía nombre, correo, último acceso y
+    roles de todos los usuarios de la instalación: el censo completo entregado a
+    quien solo administra su tenant.
+    """
     from sqlalchemy import select
 
-    users = db.execute(select(User).order_by(User.created_at.desc())).scalars().all()
+    users = db.execute(
+        select(User).where(User.tenant_id == actor.tenant_id)
+        .order_by(User.created_at.desc())).scalars().all()
     return [
         {
             "id": str(u.id),
@@ -243,13 +251,16 @@ class UserRoleAssign(BaseModel):
 
 @users_router.post("/{user_id}/roles", dependencies=[Depends(require_permission("roles", "edit"))])
 def assign_role(user_id: str, body: UserRoleAssign, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
-    identity_service.assign_role_to_user(db, user_id=user_id, role_id=body.role_id, company_id=body.company_id, actor=str(actor.id))
+    identity_service.assign_role_to_user(db, tenant_id=actor.tenant_id, user_id=user_id,
+                                         role_id=body.role_id, company_id=body.company_id,
+                                         actor=str(actor.id))
     return {"ok": True}
 
 
 @users_router.delete("/{user_id}/roles/{role_id}", dependencies=[Depends(require_permission("roles", "edit"))])
 def remove_role(user_id: str, role_id: str, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
-    identity_service.remove_role_from_user(db, user_id=user_id, role_id=role_id, actor=str(actor.id))
+    identity_service.remove_role_from_user(db, tenant_id=actor.tenant_id, user_id=user_id,
+                                           role_id=role_id, actor=str(actor.id))
     return {"ok": True}
 
 

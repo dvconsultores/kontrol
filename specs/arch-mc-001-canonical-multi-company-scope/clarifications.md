@@ -521,3 +521,53 @@ necesaria porque su causa se resolvió en otro sitio.
 ## Preguntas abiertas
 
 **Ninguna material.**
+
+---
+
+# ACLARACIONES — N10
+
+Treinta y seis preguntas del prompt de N10, resueltas con medición. Las que
+cambiaron algo:
+
+**¿Cuántos modelos ORM existen hoy?** 166. La cifra «153» que arrastraba
+`pre-backfill-gate.md` era el recuento de N0, y aparecía en la misma línea que
+el 166 sin que nadie notara la contradicción.
+
+**¿Cuál es el total real de rutas derivadas?** 41, no 35 ni 36. Aquellas cifras
+contaban solo las de empresa; faltaban cinco que ni siquiera estaban declaradas:
+cuatro de tenant por `user_id → users` y una por `role_id → roles`.
+
+**¿Existe alguna tabla sin alcance?** No, y tampoco antes. Pero **ocho tenían un
+alcance imposible de verificar**: declaraban `TENANT` sin `tenant_id` y sin ruta.
+Estar clasificado y ser verificable no es lo mismo, y el contrato de `scope.py`
+exigía lo segundo solo para el alcance de empresa.
+
+**¿Queda algún `company_id` que sea semánticamente un tenant?** No.
+
+**¿Queda algún `tenant_id` que sea semánticamente una empresa?** Tampoco, pero
+quedaban cinco `tenant_id` que **no eran nada**: columnas vacías con clave
+foránea real, resto de una expansión cuyo plan N7 revocó y cuya contracción
+nadie ejecutó.
+
+**¿Sigue el clasificador N4 siendo independiente del ORM vigente?** Sí, y N10 lo
+comprobó sin querer de la mejor manera: `0039` retiró cinco columnas del esquema
+actual y el clasificador siguió clasificando el fixture hostil, que vive en
+`0032` y todavía las tiene.
+
+**¿Cuántas operaciones publican la cabecera de empresa?** 342 de 404. Eran 332;
+las diez nuevas son rutas a las que N10 tuvo que dar contexto.
+
+**¿Existe deuda P0?** No. Doce defectos P0 se encontraron y se cerraron dentro
+de N10.
+
+**¿Cuál será la baseline final única?** `n10-final-authoritative-baseline.md`.
+
+## Una aclaración sobre el propio instrumento
+
+La primera medición de claves foráneas contó por columna y reportó cinco
+desviaciones en las tablas de estructura de almacén que no existían: el ORM
+declara la clave compuesta correctamente y SQLAlchemy la refleja también en cada
+columna.
+
+Queda escrito porque un instrumento que informa de una diferencia inexistente es
+tan inútil como uno que calla una real, y porque N10 trata de eso.

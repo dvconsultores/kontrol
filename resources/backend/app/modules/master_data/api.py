@@ -134,6 +134,14 @@ class UnitCreate(BaseModel):
     decimals: int = 2
 
 
+def _unidad_visible(db: Session, ctx: CompanyContext, unit_id: str) -> UnitOfMeasure:
+    """Una unidad es visible si es de la plataforma o de la empresa activa."""
+    unit = db.get(UnitOfMeasure, unit_id)
+    if unit is None or (unit.company_id is not None and unit.company_id != ctx.company_id):
+        raise NotFoundError(code="UOM_NOT_FOUND", message="Unidad no encontrada")
+    return unit
+
+
 class ConversionCreate(BaseModel):
     from_unit_id: str
     to_unit_id: str
@@ -471,7 +479,22 @@ def create_unit(body: UnitCreate, db: Session = Depends(get_db), actor: User = D
 
 
 @router.post("/catalogos/unidades/{unit_id}/conversiones", dependencies=[Depends(require_write_allowed)])
-def create_conversion(unit_id: str, body: ConversionCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "create"))):
+def create_conversion(unit_id: str, body: ConversionCreate, db: Session = Depends(get_db),
+                      actor: User = Depends(require_permission("maestros", "create")),
+                      ctx: CompanyContext = Depends(get_company_context)):
+    """Conversión entre dos unidades **visibles para la empresa activa**.
+
+    La ruta creaba la conversión sin mirar nada: ni que las unidades existieran,
+    ni de quién eran. Una unidad con `company_id` nulo es de la plataforma y la
+    ven todas las empresas; una con empresa solo la ve la suya. Sin esa
+    comprobación, la empresa B podía relacionar dos unidades privadas de A.
+
+    La ruta equivalente de la Spec 011, `/unidades/{id}/conversiones-fisicas`,
+    ya lo hacía y además exige la misma dimensión. Esta conserva su contrato y
+    adopta la comprobación de pertenencia.
+    """
+    _unidad_visible(db, ctx, unit_id)
+    _unidad_visible(db, ctx, body.to_unit_id)
     conversion = UnitConversion(from_unit_id=unit_id, to_unit_id=body.to_unit_id, factor=body.factor, rounding=body.rounding)
     db.add(conversion)
     db.commit()

@@ -279,3 +279,42 @@ Cada una con su requisito, su código y su prueba.
 | T-N9-027 Reconvergencia de 046 | FR-043 | — | `n9-spec046-reconvergence-report.md` |
 | T-N9-028 Cerrar REM-046-001 | FR-044 | `docs/remediation/` | `n9-rem-046-001-closeout.md` |
 | T-N9-029 Convergencia delta | — | `convergence.md` | `n9-final-checkpoint.md` |
+
+---
+
+# TAREAS — N10
+
+| Id | Tarea | Estado |
+|---|---|---|
+| T-N10-001 | Inventario actual de modelos ORM | Hecha — 166 |
+| T-N10-002 | Inventario actual de tablas | Hecha — 166 |
+| T-N10-003 | Inventario actual de alcances | Hecha — 0 indeterminados |
+| T-N10-004 | Inventario de rutas derivadas | Hecha — 41, cinco nuevas |
+| T-N10-005 | Inventario de unicidad | Hecha — 80 restricciones, 214 índices |
+| T-N10-006 | Inventario de claves foráneas | Hecha — 331 |
+| T-N10-007 | Inventario de alcance de la API | Hecha — 404 operaciones |
+| T-N10-008 | Inventario de OpenAPI | Hecha — 294 rutas, 342 con empresa |
+| T-N10-009 | Inventario de `ResourceKind` | Hecha — 23 |
+| T-N10-010 | Inventario de migraciones | Hecha — 39 |
+| T-N10-011 | Inventario de pruebas y saltos | Hecha |
+| T-N10-012..022 | Reconciliar Constitución, ADR y N0–N9 | Hecha — `n10-n0-n9-decision-reconciliation.md` |
+| T-N10-023 | Humo A/B global de dominio | Hecha — 9 defectos |
+| T-N10-024 | Humo fiscal global | Hecha |
+| T-N10-025 | Barrido de seguridad empresa/tenant | Hecha — 12 defectos |
+| T-N10-026 | Regresión hostil de N4 | Hecha — 8 clases, 4 estrategias |
+| T-N10-027 | Regresión de `ResourceKind` | Hecha |
+| T-N10-028 | Regresión de Spec 045 y 046 | Hecha |
+| T-N10-029 | Auditoría de cifras obsoletas | Hecha |
+| T-N10-030 | Reconciliar el grafo de dependencias | Hecha |
+| T-N10-031 | Clasificación de deuda | Hecha — 0 P0 |
+| T-N10-032 | Regresión completa del backend | Hecha |
+| T-N10-033 | Regresión completa del frontend | Hecha — 278/278, tsc, eslint |
+| T-N10-034 | Playwright multiempresa | Hecha — sin cambios de frontend en N10 |
+| T-N10-035 | Rutas, autenticación y OpenAPI | Hecha |
+| T-N10-036 | Instalación limpia sobre PostgreSQL 18.6 | Hecha — `head` = `0039` |
+| T-N10-037 | Trazabilidad global | Hecha — 100% |
+| T-N10-038 | Reconciliación de artefactos | Hecha |
+| T-N10-039 | `/speckit.converge ARCH-MC-001` | Hecha |
+| T-N10-040 | Veredicto final de la arquitectura | Hecha |
+| T-N10-041 | Revalidación documental de la Spec 012 | Hecha |
+| T-N10-042 | Detenerse antes de implementar la 012 | Cumplida |

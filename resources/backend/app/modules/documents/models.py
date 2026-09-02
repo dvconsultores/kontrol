@@ -294,7 +294,10 @@ class LegacyDocumentReference(UUIDMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "legacy_document_references"
-    __scope__ = Scope.TENANT
+    #: De la instalación heredada que se está clasificando, no de un tenant: la
+    #: anotación se escribe **antes** de saber a quién pertenece la fila
+    #: original, y por eso `company_id` admite nulo (es el caso MC-D).
+    __scope__ = Scope.INSTALLATION
     __table_args__ = (
         UniqueConstraint("source_table", "source_column", "source_row_id",
                          name="uq_legacy_document_references"),

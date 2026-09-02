@@ -35,8 +35,27 @@ class User(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 
 class Role(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Catálogo de roles de la **instalación**, no del tenant.
+
+    Se declaraba `TENANT` y no hay por dónde llegar a un tenant: la tabla no
+    tiene `tenant_id` ni ninguna relación que lleve a uno. Y el comportamiento
+    coincide con la estructura, no con la etiqueta: los roles los crea el
+    arranque —`ADMIN`, con `company_id` nulo—, no existe ruta para crear otros,
+    y `setup` reutiliza el existente cuando se da de alta un segundo tenant. Hay
+    un catálogo, no uno por tenant.
+
+    `company_id` anulable **estrecha** el alcance: un rol puede valer en toda la
+    instalación o solo en una empresa.
+
+    Que hoy sea así no significa que deba serlo siempre. Roles propios por
+    tenant es una capacidad futura, registrada con responsable en el registro de
+    deuda de N10; el día que se implemente, `list_roles` y `assign_role_to_user`
+    tendrán que filtrar, y esa es exactamente la razón de escribir aquí lo que
+    hoy es cierto en vez de dejar puesta una etiqueta que no lo era.
+    """
+
     __tablename__ = "roles"
-    __scope__ = Scope.TENANT
+    __scope__ = Scope.INSTALLATION
 
     company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -60,7 +79,9 @@ class Permission(UUIDMixin, TimestampMixin, Base):
 
 class RolePermission(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "role_permissions"
-    __scope__ = Scope.TENANT
+    #: Sigue a `Role`: une un rol de la instalación con un permiso global.
+    __scope__ = Scope.INSTALLATION
+    __scope_authority__ = "role_id → roles"
 
     role_id: Mapped[str] = mapped_column(ForeignKey("roles.id"), nullable=False, index=True)
     permission_id: Mapped[str] = mapped_column(ForeignKey("permissions.id"), nullable=False, index=True)
@@ -72,6 +93,9 @@ class RolePermission(UUIDMixin, TimestampMixin, Base):
 class UserRole(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "user_roles"
     __scope__ = Scope.TENANT
+    #: Sin columna de ámbito propia: su tenant es el de su usuario, y esa ruta
+    #: es obligatoria. Una ruta que puede ser nula no es una ruta.
+    __scope_authority__ = "user_id → users"
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     role_id: Mapped[str] = mapped_column(ForeignKey("roles.id"), nullable=False, index=True)
@@ -86,6 +110,9 @@ class UserRole(UUIDMixin, TimestampMixin, Base):
 class UserScope(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "user_scopes"
     __scope__ = Scope.TENANT
+    #: Sin columna de ámbito propia: su tenant es el de su usuario, y esa ruta
+    #: es obligatoria. Una ruta que puede ser nula no es una ruta.
+    __scope_authority__ = "user_id → users"
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True)
@@ -101,6 +128,9 @@ class UserScope(UUIDMixin, TimestampMixin, Base):
 class Session(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "sessions"
     __scope__ = Scope.TENANT
+    #: Sin columna de ámbito propia: su tenant es el de su usuario, y esa ruta
+    #: es obligatoria. Una ruta que puede ser nula no es una ruta.
+    __scope_authority__ = "user_id → users"
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     refresh_token_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -115,6 +145,9 @@ class Session(UUIDMixin, TimestampMixin, Base):
 class PasswordReset(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "password_resets"
     __scope__ = Scope.TENANT
+    #: Sin columna de ámbito propia: su tenant es el de su usuario, y esa ruta
+    #: es obligatoria. Una ruta que puede ser nula no es una ruta.
+    __scope_authority__ = "user_id → users"
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     token_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)

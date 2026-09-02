@@ -273,3 +273,40 @@ producto y **no la tomo yo**.
 | **046** | `REM-046-001` sigue **BLOCKED**: su registro no puede repararse sin resolver esto antes |
 | **011** | Sin efecto directo: las unidades no son de empresa |
 | **012** | **No debe implementarse** antes que la normalización |
+
+---
+
+# CIERRE DEL GATE — 2026-09-02
+
+`ARCH-MC-001 — COMPLETE / GLOBALLY CONVERGED`
+
+Este documento se conserva **como historia**: describe lo que se encontró y por
+qué se abrió el gate. Las tablas de arriba reflejan el estado de entonces y no
+el vigente. Lo que sigue es el estado actual.
+
+## La decisión de producto
+
+La sección 8 dejaba abierta una elección —«varias empresas por tenant» o «una
+empresa por tenant»— y decía que no correspondía tomarla aquí. Se tomó:
+**varias empresas por tenant**, y ARCH-MC-001 la implementó de N0 a N10.
+
+## El hallazgo, resuelto
+
+Noventa columnas llamadas `company_id` guardaban un `tenant_id`. Hoy hay 104
+columnas `company_id`, 96 obligatorias, todas con clave foránea a `companies`, y
+una prueba de arquitectura que falla en construcción si alguna vuelve a
+referenciar otra cosa.
+
+## Estado de las Specs afectadas, hoy
+
+| Spec | Estado |
+|---|---|
+| **008** | Sin efecto, como se preveía |
+| **045** | Desbloqueada. N10 corrigió además su elegibilidad de aprobadores, que ignoraba la empresa |
+| **046** | **RECONVERGED**. `REM-046-001` **CLOSED** |
+| **011** | Las unidades **sí** son de empresa, con el nulo como unidad de plataforma. La previsión de este documento era incorrecta y se corrige aquí |
+| **012** | Desbloqueada. `DOCUMENT UPDATE REQUIRED BEFORE IMPLEMENTATION`; la implementación sigue sin autorizar |
+
+## Autoridad vigente
+
+`specs/arch-mc-001-canonical-multi-company-scope/n10-final-authoritative-baseline.md`

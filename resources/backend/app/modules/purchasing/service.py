@@ -268,8 +268,31 @@ def create_quote(db: Session, *, company_id: str, code: str, supplier_id: str, v
     return quote
 
 
-def add_quote_line(db: Session, *, quote_id: str, product_id: str, quantity: float, unit_price: float,
-                   discount: float = 0.0, delivery_days: int | None = None, tax_ref: str | None = None) -> QuoteLine:
+def _require_quote(db: Session, company_id: str, quote_id: str) -> SupplierQuote:
+    quote = db.get(SupplierQuote, quote_id)
+    if not quote or quote.company_id != company_id:
+        raise NotFoundError(code="QUOTE_NOT_FOUND", message="Cotización de compra no encontrada")
+    return quote
+
+
+def _require_receipt(db: Session, company_id: str, receipt_id: str) -> GoodsReceipt:
+    receipt = db.get(GoodsReceipt, receipt_id)
+    if not receipt or receipt.company_id != company_id:
+        raise NotFoundError(code="RECEIPT_NOT_FOUND", message="Recepción no encontrada")
+    return receipt
+
+
+def _require_return(db: Session, company_id: str, return_id: str) -> PurchaseReturn:
+    ret = db.get(PurchaseReturn, return_id)
+    if not ret or ret.company_id != company_id:
+        raise NotFoundError(code="PURCHASE_RETURN_NOT_FOUND", message="Devolución de compra no encontrada")
+    return ret
+
+
+def add_quote_line(db: Session, *, company_id: str, quote_id: str, product_id: str, quantity: float,
+                   unit_price: float, discount: float = 0.0, delivery_days: int | None = None,
+                   tax_ref: str | None = None) -> QuoteLine:
+    _require_quote(db, company_id, quote_id)
     line = QuoteLine(quote_id=quote_id, product_id=product_id, quantity=quantity, unit_price=unit_price,
                      discount=discount, delivery_days=delivery_days, tax_ref=tax_ref)
     db.add(line)
@@ -357,9 +380,10 @@ def create_receipt(db: Session, *, company_id: str, code: str, order_id: str, wa
     return receipt
 
 
-def add_receipt_line(db: Session, *, receipt_id: str, order_line_id: str, product_id: str, quantity_received: float,
+def add_receipt_line(db: Session, *, company_id: str, receipt_id: str, order_line_id: str, product_id: str, quantity_received: float,
                      quantity_accepted: float, quantity_rejected: float, lot_number: str | None = None,
                      expiry_date=None, serials: list[str] | None = None) -> GoodsReceiptLine:
+    _require_receipt(db, company_id, receipt_id)
     if quantity_received <= 0:
         raise KontrolError(code="INVALID_QUANTITY", message="La cantidad recibida debe ser positiva", status_code=422)
     line = GoodsReceiptLine(receipt_id=receipt_id, order_line_id=order_line_id, product_id=product_id,
@@ -591,8 +615,9 @@ def create_return(db: Session, *, company_id: str, code: str, source_document: s
     return ret
 
 
-def add_return_line(db: Session, *, return_id: str, product_id: str, quantity: float,
+def add_return_line(db: Session, *, company_id: str, return_id: str, product_id: str, quantity: float,
                     condition: str = "DEFECTUOSO") -> PurchaseReturnLine:
+    _require_return(db, company_id, return_id)
     line = PurchaseReturnLine(return_id=return_id, product_id=product_id, quantity=quantity, condition=condition)
     db.add(line)
     db.flush()

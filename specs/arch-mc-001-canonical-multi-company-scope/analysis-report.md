@@ -379,3 +379,43 @@ UNRESOLVED MATERIAL OQ   : 0
 
 **`/speckit.analyze: PASS`** — implementación autorizada.
 `REM-046-001 IN_PROGRESS_UNDER_ARCH_MC_001_N9`.
+
+---
+
+# ANALYZE — N10
+
+| Categoría | Resultado |
+|---|---:|
+| BLOCKER | 0 |
+| CRITICAL | 0 |
+| CONTRADICCIONES | 0 |
+| REQUISITOS HUÉRFANOS | 0 |
+| TAREAS HUÉRFANAS | 0 |
+| PREGUNTAS ABIERTAS MATERIALES | 0 |
+
+## Lo que el análisis encontró antes de implementar
+
+No fueron cero. Las siguientes se resolvieron dentro de N10 y por eso el cuadro
+de arriba puede estar a cero.
+
+| Hallazgo | Tipo | Resolución |
+|---|---|---|
+| Nueve rutas de escritura de módulos de empresa sin contexto | CRITICAL | Corregidas con prueba en rojo antes |
+| `resolve_actors` recibía la empresa y no la usaba | CRITICAL | Filtra por `accessible_company_ids` |
+| `GET /users` sin filtro de tenant | CRITICAL | Filtra por el tenant del actor |
+| Asignar y retirar roles a usuarios de otro tenant | CRITICAL | `get_user_in_tenant` |
+| `GET /organization/establishments` filtraba por tenant | CRITICAL | Filtra por la empresa activa |
+| Cinco columnas `tenant_id` en la base y no en el ORM | CONTRADICCIÓN | Migración `0039` |
+| Dos columnas obligatorias en el ORM y anulables en la base | CONTRADICCIÓN | Migración `0039` |
+| Ocho modelos de tenant sin ruta verificable a su tenant | CONTRADICCIÓN | Cuatro la declaran, cuatro reclasificados |
+| Migración `0032` afirma un alcance que N7 revocó | CONTRADICCIÓN | La revocación llega al esquema en `0039` |
+| Dos rutas crean la misma conversión de unidades | DUPLICIDAD | Igualada la comprobación; unificarlas queda registrado |
+| `entity_id` de 73 caracteres en columna de 36 | CRITICAL | Se audita la asignación, que tiene id propio |
+| Cifra «153 modelos» presentada junto a «166 tablas» | CIFRA OBSOLETA | Reconciliada |
+
+## Lo que el análisis buscó y no encontró
+
+Modelos sin alcance, tablas sin alcance, endpoints sin alcance, `ResourceKind`
+sin evidencia, respaldos heredados, lectura o escritura dual, contaminación
+fiscal, contaminación documental, deuda P0 escondida, saltos desconocidos, deuda
+sin responsable, e implementación accidental de la Spec 012.

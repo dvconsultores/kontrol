@@ -21,7 +21,6 @@ from app.modules.organization.models import (
     Company,
     Establishment,
 )
-from app.modules.organization.service import branch_in_tenant
 
 router = APIRouter(prefix="/organization", tags=["organization"])
 
@@ -146,17 +145,35 @@ def create_branch(body: BranchCreate, db: Session = Depends(get_db),
 
 
 @router.get("/establishments")
-def list_establishments(branch_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def list_establishments(branch_id: str | None = None, db: Session = Depends(get_db),
+                        user: User = Depends(get_current_user),
+                        ctx: CompanyContext = Depends(get_company_context)):
+    """Establecimientos de la empresa activa.
+
+    Filtraba por `Company.tenant_id == user.tenant_id`: un usuario de A veía los
+    establecimientos de B por el hecho de compartir tenant. El establecimiento
+    es de empresa —`Establishment.__scope_authority__` dice `branch_id →
+    branches`—, así que el tenant nunca fue el filtro correcto.
+    """
     query = select(Establishment).join(Branch, Establishment.branch_id == Branch.id)\
-        .join(Company, Branch.company_id == Company.id).where(Company.tenant_id == user.tenant_id)
+        .where(Branch.company_id == ctx.company_id)
     if branch_id:
         query = query.where(Establishment.branch_id == branch_id)
     return [{"id": str(e.id), "branch_id": e.branch_id, "code": e.code, "name": e.name, "issuance_enabled": e.issuance_enabled, "status": e.status} for e in db.execute(query.order_by(Establishment.created_at)).scalars().all()]
 
 
 @router.post("/establishments", dependencies=[Depends(require_write_allowed)])
-def create_establishment(body: EstablishmentCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("organization", "create"))):
-    if not branch_in_tenant(db, actor.tenant_id, body.branch_id):
+def create_establishment(body: EstablishmentCreate, db: Session = Depends(get_db),
+                         actor: User = Depends(require_permission("organization", "create")),
+                         ctx: CompanyContext = Depends(get_company_context)):
+    """El establecimiento nace en una sucursal **de la empresa activa**.
+
+    Comprobaba `branch_in_tenant`: bastaba con que la sucursal fuera de alguna
+    empresa del tenant. Un usuario de A podía abrir un establecimiento en una
+    sucursal de B, y el establecimiento es donde se emiten documentos fiscales.
+    """
+    sucursal = db.get(Branch, body.branch_id)
+    if sucursal is None or sucursal.company_id != ctx.company_id:
         raise NotFoundError(code="BRANCH_NOT_FOUND", message="Sucursal no encontrada")
     est = Establishment(
         branch_id=body.branch_id,

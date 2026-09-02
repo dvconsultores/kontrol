@@ -351,3 +351,10 @@ Una fila por tipo. No se admite una entrada genérica del tipo «registro cubier
 | FR-N9-045/046 sin N10 ni 012 | — | — | análisis | ✅ |
 
 **Tipos: 23 · Requisitos: 46 · Huérfanos: 0 · Cobertura: 100%.**
+
+---
+
+# TRAZABILIDAD — N10
+
+Detalle en `n10-global-traceability-report.md`. Cobertura global N0–N10: **100%**.
+Requisitos sin tarea: 0 · Tareas sin requisito: 0 · Huérfanos: 0.

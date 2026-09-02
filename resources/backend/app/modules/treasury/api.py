@@ -528,8 +528,10 @@ def propose_match(reconciliation_id: str, db: Session = Depends(get_db),
 
 @router.post("/reconciliation-lines/{line_id}/resolve", dependencies=[Depends(require_write_allowed)])
 def resolve_line(line_id: str, body: ResolveLineBody, db: Session = Depends(get_db),
-                 actor: User = Depends(require_permission("tesoreria", "approve"))):
-    line = treasury_service.resolve_line(db, line_id=line_id, resolution_type=body.resolution_type,
+                 actor: User = Depends(require_permission("tesoreria", "approve")),
+                 ctx: CompanyContext = Depends(get_company_context)):
+    line = treasury_service.resolve_line(db, company_id=ctx.company_id, line_id=line_id,
+                                         resolution_type=body.resolution_type,
                                          system_movement_id=body.system_movement_id, notes=body.notes,
                                          actor=str(actor.id))
     db.commit()

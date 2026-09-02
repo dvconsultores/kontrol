@@ -271,3 +271,72 @@ N10 no se inicia. La Spec 012 no se toca y conserva su estado.
 **`N9 CONVERGED`** · **`SPEC 046 RECONVERGED`** · **`REM-046-001 CLOSED`**
 
 No es `ARCH-MC-001 COMPLETE_100`.
+
+---
+
+# CONVERGENCIA GLOBAL — N10
+
+## 1. Qué se comparó
+
+Especificación, aclaraciones, plan, ADR, tareas, migraciones, código, base de
+datos, API, frontend, pruebas, evidencia, dependencias y registro de deuda.
+
+No se aceptó ningún «ya se corrigió en N5». N10 comprobó que **sigue**
+corregido, y en doce sitios no lo estaba.
+
+## 2. Lo que la convergencia encontró
+
+Nueve escrituras entre empresas, una lectura entre empresas, cuatro cruces de
+tenant y una autorización que ignoraba la empresa que se le pasaba. Más cinco
+columnas en la base que ningún modelo declaraba, dos con obligatoriedad
+contradictoria, y ocho modelos cuyo alcance no se podía verificar.
+
+Todas se corrigieron dentro de N10, con la prueba en rojo antes y en verde
+después. `n10-global-security-report.md` las lista una a una con la respuesta que
+devolvían.
+
+Ninguna era una capacidad ausente: las dos que sí lo eran —roles propios por
+tenant, unificar las dos rutas de conversión— quedaron registradas con
+responsable y sin implementar.
+
+## 3. Puerta de convergencia global
+
+| Invariante | Resultado |
+|---|---:|
+| Autoridad de empresa: un solo modelo canónico | Sí |
+| Respaldo Tenant→Company | 0 |
+| Lectura dual / escritura dual de pertenencia | 0 / 0 |
+| Alcance indeterminado | 0 |
+| Escritores incorrectos / lectores incorrectos | 0 / 0 |
+| Fuga entre empresas / entre tenants | 0 / 0 |
+| Mezcla de datos | 0 |
+| Rutas derivadas rotas / anulables | 0 / 0 |
+| FK huérfanas | 0 |
+| Desviación ORM / Alembic / PostgreSQL | 0 |
+| Desviación ejecución / OpenAPI | 0 |
+| Desviación de contrato frontend / backend | 0 |
+| Semántica heredada en ejecución | 0 |
+| N4 | PASS |
+| `ResourceKind` esperado = actual = verificado | 23 = 23 = 23 |
+| `REM-046-001` / Spec 046 | CLOSED / RECONVERGED |
+| Fiscal · N5 · N6 · N7 · N8 · N9 | PASS |
+| Trazabilidad | 100% |
+| Deuda P0 interna | 0 |
+
+## 4. Deuda declarada
+
+| Qué | Prioridad | Dueño |
+|---|---|---|
+| S3 con servicio real | P1 externa | Entorno |
+| Planificador de retención | P1 | Spec 052 |
+| Productores de eventos del outbox | P1 | Spec futura de eventos |
+| Roles propios por tenant | Capacidad futura | Spec de identidad futura |
+| Unificar las dos rutas de conversión de unidades | Capacidad futura | Spec 011 |
+
+Ninguna P0, ninguna disfrazada.
+
+## 5. Veredicto
+
+**`ARCH-MC-001 — COMPLETE / GLOBALLY CONVERGED`**
+
+La única baseline vigente es `n10-final-authoritative-baseline.md`.

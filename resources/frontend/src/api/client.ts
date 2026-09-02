@@ -64,8 +64,9 @@ export function getActiveCompanyId(): string | null {
 /**
  * Rutas que **no** son de empresa: el contexto no aplica y no debe exigirse.
  *
- * La lista es corta a propósito. En KONTROL casi todo es de empresa —123 de 153
- * modelos—, así que la excepción es lo que se enumera, no la regla. Un endpoint
+ * La lista es corta a propósito. En KONTROL casi todo es de empresa —136 de 166
+ * modelos, medidos en N10—, así que la excepción es lo que se enumera, no la
+ * regla. Un endpoint
  * nuevo que no aparezca aquí llevará la cabecera, que es el lado seguro del
  * error.
  */

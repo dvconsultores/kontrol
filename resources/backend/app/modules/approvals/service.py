@@ -224,6 +224,27 @@ def _as_utc(value: datetime) -> datetime:
     return value if value.tzinfo else value.replace(tzinfo=UTC)
 
 
+def _solo_quien_alcanza_la_empresa(db: Session, company_id: str,
+                                   ids: list[str]) -> list[str]:
+    """Filtra por la autoridad de acceso vigente. Un usuario inactivo no decide."""
+    from app.core.company_context import accessible_company_ids
+    from app.modules.identity_access.models import User
+
+    salida: list[str] = []
+    cache: dict[str, list[str]] = {}
+    for uid in ids:
+        usuario = db.get(User, str(uid))
+        if usuario is None or usuario.status != "ACTIVE":
+            continue
+        alcanzables = cache.get(str(usuario.id))
+        if alcanzables is None:
+            alcanzables = accessible_company_ids(db, usuario)
+            cache[str(usuario.id)] = alcanzables
+        if str(company_id) in alcanzables:
+            salida.append(str(uid))
+    return salida
+
+
 def resolve_actors(db: Session, *, company_id: str, level: dict[str, Any],
                    policy: ApprovalPolicy, requested_by: str | None,
                    used_actors: set[str]) -> list[str]:
@@ -249,6 +270,17 @@ def resolve_actors(db: Session, *, company_id: str, level: dict[str, Any],
     elif resolver_type == "SCOPE_OWNER":
         scope_rows = db.execute(select(User.id).where(User.status == "ACTIVE")).all()
         actors = [str(r[0]) for r in scope_rows]
+
+    # `company_id` llegaba a esta función y no se usaba. El catálogo de roles es
+    # de la instalación y `SCOPE_OWNER` recorre todos los usuarios activos:
+    # ninguno de los dos sabe de empresas. Sin este filtro, la política de A
+    # resolvía sus aprobadores entre los usuarios de B —y de otro tenant— y
+    # quien no debía aprobar podía hacerlo.
+    #
+    # La autoridad no se reinventa aquí: es `accessible_company_ids`, la misma
+    # que decide a qué empresa entra una petición (ADR-D0-014). `UserRole` dice
+    # qué puede hacer alguien; nunca dónde.
+    actors = _solo_quien_alcanza_la_empresa(db, company_id, actors)
 
     if policy.requires_segregation and requested_by:
         actors = [a for a in actors if str(a) != str(requested_by)]
@@ -745,10 +777,11 @@ def decide(db: Session, *, step_id: str, actor_id: str, decision: str,
     return {"request": request, "step": step, "status": request.status, "next_level": next_level["level_order"]}
 
 
-def cancel(db: Session, *, request_id: str, actor_id: str, reason: str | None = None) -> ApprovalRequest:
+def cancel(db: Session, *, company_id: str, request_id: str, actor_id: str,
+           reason: str | None = None) -> ApprovalRequest:
     """Cancela una solicitud viva (FR-045-025)."""
     request = db.get(ApprovalRequest, request_id)
-    if request is None:
+    if request is None or request.company_id != company_id:
         raise NotFoundError(code="APPROVAL_REQUEST_NOT_FOUND", message="Solicitud no encontrada.")
     _assert_request_transition(request.status, "CANCELLED")
     now = datetime.now(UTC)

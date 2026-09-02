@@ -199,8 +199,9 @@ def create_quote(body: QuoteCreate, db: Session = Depends(get_db),
 
 @router.post("/quotes/{quote_id}/lines", dependencies=[Depends(require_write_allowed)])
 def add_quote_line(quote_id: str, body: QuoteLineCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("ventas", "create"))):
-    line = sales_service.add_quote_line(db, quote_id=quote_id, product_id=body.product_id, quantity=body.quantity,
+                   actor: User = Depends(require_permission("ventas", "create")),
+                   ctx: CompanyContext = Depends(get_company_context)):
+    line = sales_service.add_quote_line(db, company_id=ctx.company_id, quote_id=quote_id, product_id=body.product_id, quantity=body.quantity,
                                         unit_price=body.unit_price, discount=body.discount, tax_ref=body.tax_ref)
     db.commit()
     db.refresh(line)
@@ -464,8 +465,9 @@ def create_return(body: ReturnCreate, db: Session = Depends(get_db),
 
 @router.post("/returns/{return_id}/lines", dependencies=[Depends(require_write_allowed)])
 def add_return_line(return_id: str, body: ReturnLineCreate, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("ventas", "create"))):
-    line = sales_service.add_return_line(db, return_id=return_id, product_id=body.product_id,
+                    actor: User = Depends(require_permission("ventas", "create")),
+                    ctx: CompanyContext = Depends(get_company_context)):
+    line = sales_service.add_return_line(db, company_id=ctx.company_id, return_id=return_id, product_id=body.product_id,
                                          quantity=body.quantity, condition=body.condition)
     db.commit()
     db.refresh(line)

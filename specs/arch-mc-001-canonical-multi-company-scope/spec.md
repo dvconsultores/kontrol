@@ -625,3 +625,31 @@ bloqueo entre tenants.
 N10, la revalidación de la Spec 012, el planificador de retención si su dueño
 resulta ser otra Spec, y la verificación de S3 con servicio real si el contrato
 lo declara opcional.
+
+---
+
+# N10 — CONVERGENCIA GLOBAL
+
+## Qué es
+
+N10 no añade capacidades. Comprueba que N0–N9 describen **un solo sistema** y
+elimina la diferencia entre lo que KONTROL declara y lo que hace.
+
+## Requisitos
+
+62 requisitos globales, en `n10-global-convergence-report.md`. Los que exigieron
+corrección: FR-N10-015 (rutas derivadas válidas), FR-N10-020 (paridad
+ORM/Alembic/PostgreSQL), FR-N10-023 (aislamiento consistente de la API),
+FR-N10-024 (fuga entre empresas), FR-N10-027 (escritores incorrectos).
+
+## Resultado
+
+`ARCH-MC-001 — COMPLETE / GLOBALLY CONVERGED`
+
+Doce defectos reales corregidos, cada uno con su prueba en rojo antes y en verde
+después. Dos capacidades ausentes registradas con responsable y **no**
+implementadas.
+
+## Baseline vigente
+
+`n10-final-authoritative-baseline.md`. Sustituye a toda cifra anterior.

@@ -270,8 +270,9 @@ def create_quote(body: QuoteCreate, db: Session = Depends(get_db),
 
 @router.post("/quotes/{quote_id}/lines", dependencies=[Depends(require_write_allowed)])
 def add_quote_line(quote_id: str, body: QuoteLineCreate, db: Session = Depends(get_db),
-                   actor: User = Depends(require_permission("compras", "create"))):
-    line = ap_service.add_quote_line(db, quote_id=quote_id, product_id=body.product_id, quantity=body.quantity,
+                   actor: User = Depends(require_permission("compras", "create")),
+                   ctx: CompanyContext = Depends(get_company_context)):
+    line = ap_service.add_quote_line(db, company_id=ctx.company_id, quote_id=quote_id, product_id=body.product_id, quantity=body.quantity,
                                      unit_price=body.unit_price, discount=body.discount,
                                      delivery_days=body.delivery_days, tax_ref=body.tax_ref)
     db.commit()
@@ -359,8 +360,9 @@ def create_receipt(body: ReceiptCreate, db: Session = Depends(get_db),
 
 @router.post("/receipts/{receipt_id}/lines", dependencies=[Depends(require_write_allowed)])
 def add_receipt_line(receipt_id: str, body: ReceiptLineCreate, db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("compras", "create"))):
-    line = ap_service.add_receipt_line(db, receipt_id=receipt_id, order_line_id=body.order_line_id,
+                     actor: User = Depends(require_permission("compras", "create")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    line = ap_service.add_receipt_line(db, company_id=ctx.company_id, receipt_id=receipt_id, order_line_id=body.order_line_id,
                                        product_id=body.product_id, quantity_received=body.quantity_received,
                                        quantity_accepted=body.quantity_accepted, quantity_rejected=body.quantity_rejected,
                                        lot_number=body.lot_number, expiry_date=body.expiry_date, serials=body.serials)
@@ -505,8 +507,9 @@ def create_return(body: ReturnCreate, db: Session = Depends(get_db),
 
 @router.post("/returns/{return_id}/lines", dependencies=[Depends(require_write_allowed)])
 def add_return_line(return_id: str, body: ReturnLineCreate, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("compras", "create"))):
-    line = ap_service.add_return_line(db, return_id=return_id, product_id=body.product_id,
+                    actor: User = Depends(require_permission("compras", "create")),
+                    ctx: CompanyContext = Depends(get_company_context)):
+    line = ap_service.add_return_line(db, company_id=ctx.company_id, return_id=return_id, product_id=body.product_id,
                                       quantity=body.quantity, condition=body.condition)
     db.commit()
     db.refresh(line)

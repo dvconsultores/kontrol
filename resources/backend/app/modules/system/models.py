@@ -41,8 +41,16 @@ class FeatureFlag(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 
 class IdempotencyRecord(UUIDMixin, TimestampMixin, Base):
+    """Registro de idempotencia de la **instalación**.
+
+    Se declaraba `TENANT` y nunca hubo por dónde llegar a uno: la clave es única
+    en toda la instalación y quien escribe la fila guarda usuario y empresa, no
+    tenant. `company_id` anulable acota la respuesta cacheada cuando la petición
+    se hizo dentro de una empresa.
+    """
+
     __tablename__ = "idempotency_records"
-    __scope__ = Scope.TENANT
+    __scope__ = Scope.INSTALLATION
 
     key: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
     method: Mapped[str] = mapped_column(String(8), nullable=False)

@@ -354,8 +354,10 @@ def get_request(request_id: str, db: Session = Depends(get_db),
 @router.post("/requests/{request_id}/cancel")
 def cancel_request(request_id: str, body: DecisionIn, db: Session = Depends(get_db),
                    user: User = Depends(require_permission("aprobaciones", "create")),
-                   _: None = Depends(require_write_allowed)):
-    req = approvals_service.cancel(db, request_id=request_id, actor_id=str(user.id), reason=body.reason)
+                   _: None = Depends(require_write_allowed),
+                   ctx: CompanyContext = Depends(get_company_context)):
+    req = approvals_service.cancel(db, company_id=ctx.company_id, request_id=request_id,
+                                   actor_id=str(user.id), reason=body.reason)
     db.commit()
     return {"id": str(req.id), "status": req.status}
 

@@ -603,7 +603,8 @@ def propose_matches(db: Session, *, reconciliation_id: str) -> list[Reconciliati
     return matched
 
 
-def resolve_line(db: Session, *, line_id: str, resolution_type: str, system_movement_id: str | None = None,
+def resolve_line(db: Session, *, company_id: str, line_id: str, resolution_type: str,
+                 system_movement_id: str | None = None,
                  notes: str | None = None, actor: str | None = None) -> ReconciliationLine:
     """Resolución manual auditada de una línea de conciliación — FR-006-030.
 
@@ -614,7 +615,11 @@ def resolve_line(db: Session, *, line_id: str, resolution_type: str, system_move
     if not line:
         raise NotFoundError(code="RECONCILIATION_LINE_NOT_FOUND", message="Línea de conciliación no encontrada")
     rec = db.get(Reconciliation, line.reconciliation_id)
-    if rec and rec.status not in ("IN_PROGRESS", "REVIEW"):
+    # La línea no lleva empresa propia: la alcanza por su conciliación, que es
+    # exactamente la ruta que declara `ReconciliationLine.__scope_authority__`.
+    if rec is None or rec.company_id != company_id:
+        raise NotFoundError(code="RECONCILIATION_LINE_NOT_FOUND", message="Línea de conciliación no encontrada")
+    if rec.status not in ("IN_PROGRESS", "REVIEW"):
         raise ConflictError(code="RECONCILIATION_LOCKED", message="La conciliación no admite resoluciones.")
     if resolution_type not in ("MATCHED", "DIFFERENCE", "COMMISSION", "FX"):
         raise KontrolError(code="INVALID_RESOLUTION", message="Tipo de resolución inválido", status_code=422)

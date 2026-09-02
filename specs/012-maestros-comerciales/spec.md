@@ -1,25 +1,31 @@
 # SPEC 012 — MAESTROS COMERCIALES
 
-> ## ⛔ BLOQUEADA PARA IMPLEMENTACIÓN — 2026-08-31
+> ## DESBLOQUEADA — ACTUALIZACIÓN DOCUMENTAL PENDIENTE — 2026-09-02
 >
-> `SPEC 012 APTA_DOCUMENTALMENTE — BLOCKED_BY_ARCH_MC_001`
+> `SPEC 012 — DOCUMENT UPDATE REQUIRED BEFORE IMPLEMENTATION`
 >
-> El ciclo documental está completo y su veredicto sigue siendo **APTA**. No se
-> implementa hasta que cierren, en este orden: `ARCH-MC-001 COMPLETE_100` →
-> `REM-046-001 COMPLETE_100` → `SPEC 046 COMPLETE_100 — CONFIRMED AFTER REMEDIATION`.
+> ARCH-MC-001 cerró como **`COMPLETE / GLOBALLY CONVERGED`**, `REM-046-001`
+> quedó `CLOSED` y la Spec 046, `RECONVERGED`. El motivo por el que esta Spec se
+> bloqueó ha desaparecido en origen: `parties.company_id` es hoy una empresa
+> real, obligatoria y con clave foránea a `companies`, y `customers` y
+> `suppliers` la alcanzan por `party_id → parties`. `CustomerCommercialTerms`
+> **sí** puede distinguir la relación comercial de A de la de B.
 >
-> **Motivo.** Sus nueve entidades son inequívocamente de empresa: dos empresas del
-> mismo grupo tienen precios, plazos y límites de crédito distintos. Sobre el
-> modelo actual —donde `parties.company_id` guarda el tenant—
-> `CustomerCommercialTerms` no podría distinguir la relación comercial de la
-> empresa A de la de la B. Nacería con el defecto en su entidad central.
+> El ciclo documental sigue siendo **APTA** en alcance funcional. Lo que falta es
+> ponerlo al día con el contrato que ARCH-MC-001 dejó: `data-model.md` es
+> anterior a él y no menciona `__scope__`, `__scope_authority__`,
+> `CompanyContext` ni unicidad por empresa. El detalle, en
+> `specs/arch-mc-001-canonical-multi-company-scope/n10-spec012-documentary-revalidation.md`.
+>
+> **No se autoriza la implementación.** Esa decisión corresponde al siguiente
+> ciclo y es del usuario.
 >
 > Autoridad: `docs/governance/gates/GATE-MULTICOMPANY-SCOPE.md` ·
 > `specs/arch-mc-001-canonical-multi-company-scope/`
 
 | Campo | Valor |
 |---|---|
-| Estado | **`APTA_DOCUMENTALMENTE — BLOCKED_BY_ARCH_MC_001`** |
+| Estado | **`DOCUMENT UPDATE REQUIRED BEFORE IMPLEMENTATION`** |
 | Autoridad | `ADR-D0-005` (D0-05) · Constitución v1.1 · baseline arquitectónica |
 | Propietaria de | Precio, descuento, condición de pago, zona, canal, crédito comercial |
 | Depende de | 009 Terceros · 010 Catálogo · 011 Unidades · 045 Aprobaciones |

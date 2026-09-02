@@ -183,3 +183,53 @@ empresas, y «se deduce por una relación obligatoria» no cabe en ese dato.
 | 25 | Reconciliación de artefactos de 046 | ⬜ |
 | 26 | Regresiones N5–N8 | ⬜ |
 | 27 | N10 y Spec 012 excluidos | ✅ |
+
+---
+
+# CHECKLIST — N10 · CONVERGENCIA GLOBAL
+
+- [x] Recuento actual de modelos medido — 166
+- [x] Recuento actual de tablas medido — 166
+- [x] Todos los alcances clasificados
+- [x] Alcance indeterminado = 0
+- [x] Empresa directa verificada — 100 con columna, 96 obligatorias
+- [x] Tenant directo verificado — 4 con columna
+- [x] Rutas derivadas verificadas — 41
+- [x] Rutas derivadas anulables = 0
+- [x] Rutas derivadas ambiguas = 0
+- [x] Desviación de FK = 0
+- [x] Desviación del ORM = 0
+- [x] Desviación de Alembic = 0
+- [x] Inventario de alcance de la API completo — 404 operaciones
+- [x] Desviación con OpenAPI = 0
+- [x] Desviación frontend/backend = 0
+- [x] Respaldo Tenant→Company = 0
+- [x] Lectura dual = 0
+- [x] Escritura dual = 0
+- [x] Fuga entre empresas = 0
+- [x] Mezcla de datos = 0
+- [x] Lectores incorrectos = 0
+- [x] Escritores incorrectos = 0
+- [x] Clasificador N4 PASS
+- [x] Fixture hostil PASS
+- [x] Todas las clases hostiles PASS — MC-A 3 · MC-B 1 · MC-C 2 · MC-D 1 · MC-E 1 · OK 6 · INVALID 1 · CROSS_TENANT 1
+- [x] Estrategias de maestro PASS — ASSIGN · CLONE · DERIVE · MANUAL_REVIEW
+- [x] Cardinalidad de `ResourceKind` remedida — 23
+- [x] `ResourceKind` verificado conductualmente
+- [x] Spec 046 RECONVERGED
+- [x] `REM-046-001` CLOSED
+- [x] Paridad de cálculo fiscal PASS
+- [x] Compras / CxP PASS
+- [x] Ventas / CxC PASS
+- [x] Inventario PASS
+- [x] Tesorería PASS
+- [x] Regulatory PASS
+- [x] Auditoría PASS
+- [x] S3 clasificado — `IMPLEMENTED_NOT_VERIFIED`, P1 externa
+- [x] Responsable de retención clasificado — Spec 052
+- [x] Cifras históricas reconciliadas
+- [x] Deuda P0 = 0
+- [x] Toda deuda restante con responsable
+- [x] Trazabilidad = 100%
+- [x] Pruebas completas ejecutadas
+- [x] Implementación de la Spec 012 excluida

@@ -308,7 +308,8 @@ def test_return_keeps_history_and_chains(db_session):
 def test_cancel(db_session):
     _policy(db_session)
     req = _request(db_session)["request"]
-    svc.cancel(db_session, request_id=str(req.id), actor_id="creator", reason="ya no aplica")
+    svc.cancel(db_session, company_id=COMPANY, request_id=str(req.id),
+               actor_id="creator", reason="ya no aplica")
     assert req.status == "CANCELLED"
 
 

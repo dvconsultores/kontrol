@@ -109,7 +109,7 @@ class TestRecepcionIntegra003:
 
         receipt = ap_service.create_receipt(db_session, company_id=COMPANY, code="RC-1", order_id=str(order.id),
                                             warehouse_id=str(wh.id))
-        ap_service.add_receipt_line(db_session, receipt_id=str(receipt.id), order_line_id=str(order_line.id),
+        ap_service.add_receipt_line(db_session, company_id=receipt.company_id, receipt_id=str(receipt.id), order_line_id=str(order_line.id),
                                     product_id=str(product.id), quantity_received=30.0, quantity_accepted=30.0,
                                     quantity_rejected=0.0, lot_number="L-1")
         ap_service.confirm_receipt(db_session, receipt=receipt)
@@ -178,7 +178,7 @@ class TestFacturaProveedor:
         ap_service.transition_order(db_session, order=order, target="SUBMITTED")
         ap_service.transition_order(db_session, order=order, target="APPROVED")
         receipt = ap_service.create_receipt(db_session, company_id=COMPANY, code="RC-3", order_id=str(order.id), warehouse_id=str(wh.id))
-        receipt_line = ap_service.add_receipt_line(db_session, receipt_id=str(receipt.id), order_line_id=str(order_line.id),
+        receipt_line = ap_service.add_receipt_line(db_session, company_id=receipt.company_id, receipt_id=str(receipt.id), order_line_id=str(order_line.id),
                                                    product_id=str(product.id), quantity_received=10.0, quantity_accepted=10.0,
                                                    quantity_rejected=0.0)
         ap_service.confirm_receipt(db_session, receipt=receipt)
