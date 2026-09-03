@@ -67,8 +67,11 @@ class ScopeDeniedError(KontrolError):
 class ConflictError(KontrolError):
     status_code = 409
 
-    def __init__(self, code: str = "CONFLICT", message: str = "Conflicto al procesar la operación"):
-        super().__init__(code=code, message=message, status_code=409)
+    def __init__(self, code: str = "CONFLICT", message: str = "Conflicto al procesar la operación",
+                 *, details: Any = None):
+        # `details` transporta el contexto que vuelve accionable un conflicto:
+        # qué líneas no alcanzan y cuánto hay (Spec 030, `INSUFFICIENT_AVAILABLE`).
+        super().__init__(code=code, message=message, status_code=409, details=details)
 
 
 class LicenseBlockedError(KontrolError):

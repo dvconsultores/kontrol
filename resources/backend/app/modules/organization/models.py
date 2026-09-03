@@ -58,6 +58,10 @@ class Company(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base):
     activity: Mapped[str | None] = mapped_column(String(255), nullable=True)
     fiscal_address: Mapped[str | None] = mapped_column(Text, nullable=True)
     functional_currency: Mapped[str] = mapped_column(String(3), nullable=False, default="VED")
+    #: Vigencia de la reserva de un pedido **mientras espera crédito** (Spec
+    #: 030, R-D0-03-8). `NULL` = sin expiración, que es el defecto: una
+    #: instalación recién creada no tiene reservas que caduquen por reloj.
+    reservation_ttl_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     tenant: Mapped[Tenant] = relationship(back_populates="companies")
     branches: Mapped[list[Branch]] = relationship(back_populates="company", cascade="all, delete-orphan")

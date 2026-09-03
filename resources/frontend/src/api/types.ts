@@ -222,6 +222,17 @@ export interface Reservation {
   quantity: number;
   status: string;
   expires_at: string | null;
+  /** Identidad y ciclo (Spec 030). */
+  source_type?: "SALES_ORDER" | "MANUAL" | null;
+  source_order_id?: string | null;
+  source_line_id?: string | null;
+  trigger?: string | null;
+  oversell?: boolean;
+  base_quantity?: string | null;
+  presentation_id?: string | null;
+  uom_id?: string | null;
+  released_at?: string | null;
+  release_reason?: string | null;
 }
 
 export interface TransferLineSummary {
@@ -401,13 +412,47 @@ export interface AgingResult {
 // ---------------------------------------------------------------------------
 // Ventas y cuentas por cobrar (005)
 // ---------------------------------------------------------------------------
+/** Reserva vista desde el pedido (Spec 030): lo que la Spec 031 recibe. */
+export interface OrderLineReservation {
+  id: string;
+  status: string;
+  quantity: string;
+  base_quantity: string | null;
+  warehouse_id: string;
+  trigger: string | null;
+  oversell: boolean;
+  expires_at: string | null;
+  release_reason: string | null;
+}
+
 export interface SalesOrderLine {
   id: string;
   product_id: string;
-  quantity: number;
-  unit_price: number;
+  quantity: number | string;
+  unit_price: number | string;
   needs_inventory: boolean;
+  presentation_id?: string | null;
+  uom_id?: string | null;
+  conversion_factor_snapshot?: string | null;
+  base_quantity?: string | null;
+  pricing_source?: string | null;
+  reservations?: OrderLineReservation[];
 }
+
+/**
+ * Estados del pedido (FR-030-002). `RELEASED` es la entrega a preparación;
+ * `SUBMITTED` espera la decisión de crédito con la reserva ya hecha.
+ */
+export type SalesOrderStatus =
+  | "DRAFT"
+  | "SUBMITTED"
+  | "RELEASED"
+  | "PREPARING"
+  | "SHIPPED"
+  | "CLOSED"
+  | "CANCELLED"
+  | "REJECTED"
+  | "EXPIRED";
 
 export interface SalesOrderSummary {
   id: string;
@@ -417,10 +462,31 @@ export interface SalesOrderSummary {
   credit_decision: string | null;
   margin: number | null;
   currency: string;
-  status: string;
+  status: SalesOrderStatus | string;
   approval_ref: string | null;
+  status_reason?: string | null;
+  submitted_at?: string | null;
+  released_at?: string | null;
+  reservation_trigger?: string;
+  eligible_for_picking?: boolean;
+  quote_id?: string | null;
   allowed_actions: AllowedActions;
   lines: SalesOrderLine[];
+}
+
+/** Política de reserva de la empresa (Spec 030): el disparador es fijo. */
+export interface ReservationPolicy {
+  reservation_trigger: string;
+  trigger_configurable: boolean;
+  reservation_ttl_days: number | null;
+}
+
+/** Detalle de `409 INSUFFICIENT_AVAILABLE` al confirmar. */
+export interface InsufficientLine {
+  line_id: string;
+  product_id: string;
+  requested_base: string;
+  available_base: string;
 }
 
 export interface SalesInvoiceSummary {

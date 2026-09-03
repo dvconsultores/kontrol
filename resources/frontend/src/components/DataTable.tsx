@@ -70,7 +70,10 @@ export function DataTable<TData>({
 
   return (
     <div>
-      <div className="overflow-x-auto">
+      {/* Región desplazable accesible por teclado (WCAG 2.1.1, axe
+          `scrollable-region-focusable`): una tabla ancha sin controles dentro
+          no podría desplazarse sin ratón. */}
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={`Resultados: ${total} registros`}>
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Resultados: {total} registros</caption>
           <thead>

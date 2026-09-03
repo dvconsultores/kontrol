@@ -134,6 +134,174 @@
   },
   {
    "method": "GET",
+   "path": "/comercial/canales"
+  },
+  {
+   "method": "POST",
+   "path": "/comercial/canales"
+  },
+  {
+   "method": "PUT",
+   "path": "/comercial/clientes/{customer_id}/condiciones"
+  },
+  {
+   "method": "GET",
+   "path": "/comercial/condiciones-pago"
+  },
+  {
+   "method": "POST",
+   "path": "/comercial/condiciones-pago"
+  },
+  {
+   "method": "POST",
+   "path": "/comercial/descuento/validar"
+  },
+  {
+   "method": "GET",
+   "path": "/comercial/listas-precio"
+  },
+  {
+   "method": "POST",
+   "path": "/comercial/listas-precio"
+  },
+  {
+   "method": "GET",
+   "path": "/comercial/listas-precio/{price_list_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/comercial/listas-precio/{price_list_id}/versiones"
+  },
+  {
+   "method": "GET",
+   "path": "/comercial/listas-precio/{price_list_id}/versiones/{version_id}/items"
+  },
+  {
+   "method": "POST",
+   "path": "/comercial/listas-precio/{price_list_id}/versiones/{version_id}/items"
+  },
+  {
+   "method": "POST",
+   "path": "/comercial/listas-precio/{price_list_id}/versiones/{version_id}/transicion"
+  },
+  {
+   "method": "GET",
+   "path": "/comercial/politicas-credito"
+  },
+  {
+   "method": "POST",
+   "path": "/comercial/politicas-credito"
+  },
+  {
+   "method": "GET",
+   "path": "/comercial/politicas-descuento"
+  },
+  {
+   "method": "POST",
+   "path": "/comercial/politicas-descuento"
+  },
+  {
+   "method": "GET",
+   "path": "/comercial/precedencia"
+  },
+  {
+   "method": "PUT",
+   "path": "/comercial/precedencia"
+  },
+  {
+   "method": "POST",
+   "path": "/comercial/precio/resolver"
+  },
+  {
+   "method": "GET",
+   "path": "/comercial/zonas"
+  },
+  {
+   "method": "POST",
+   "path": "/comercial/zonas"
+  },
+  {
+   "method": "GET",
+   "path": "/documentos"
+  },
+  {
+   "method": "POST",
+   "path": "/documentos"
+  },
+  {
+   "method": "GET",
+   "path": "/documentos/categorias"
+  },
+  {
+   "method": "POST",
+   "path": "/documentos/categorias"
+  },
+  {
+   "method": "GET",
+   "path": "/documentos/por-recurso/{resource_type}/{resource_id}"
+  },
+  {
+   "method": "GET",
+   "path": "/documentos/salud/almacenamiento"
+  },
+  {
+   "method": "GET",
+   "path": "/documentos/tipos"
+  },
+  {
+   "method": "POST",
+   "path": "/documentos/tipos"
+  },
+  {
+   "method": "PATCH",
+   "path": "/documentos/tipos/{type_id}"
+  },
+  {
+   "method": "DELETE",
+   "path": "/documentos/vinculos/{link_id}"
+  },
+  {
+   "method": "DELETE",
+   "path": "/documentos/{document_id}"
+  },
+  {
+   "method": "GET",
+   "path": "/documentos/{document_id}"
+  },
+  {
+   "method": "PATCH",
+   "path": "/documentos/{document_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/documentos/{document_id}/archive"
+  },
+  {
+   "method": "GET",
+   "path": "/documentos/{document_id}/descargar"
+  },
+  {
+   "method": "GET",
+   "path": "/documentos/{document_id}/preview"
+  },
+  {
+   "method": "GET",
+   "path": "/documentos/{document_id}/versiones"
+  },
+  {
+   "method": "POST",
+   "path": "/documentos/{document_id}/versiones"
+  },
+  {
+   "method": "GET",
+   "path": "/documentos/{document_id}/versiones/{version_id}/descargar"
+  },
+  {
+   "method": "POST",
+   "path": "/documentos/{document_id}/vinculos"
+  },
+  {
+   "method": "GET",
    "path": "/fiscal/books/{tax_type}"
   },
   {
@@ -561,12 +729,56 @@
    "path": "/maestros/catalogos/unidades/{unit_id}/conversiones"
   },
   {
+   "method": "POST",
+   "path": "/maestros/conversion/preview"
+  },
+  {
    "method": "GET",
    "path": "/maestros/perfiles"
   },
   {
    "method": "POST",
    "path": "/maestros/perfiles"
+  },
+  {
+   "method": "DELETE",
+   "path": "/maestros/presentaciones/{presentation_id}"
+  },
+  {
+   "method": "GET",
+   "path": "/maestros/presentaciones/{presentation_id}"
+  },
+  {
+   "method": "PATCH",
+   "path": "/maestros/presentaciones/{presentation_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/maestros/presentaciones/{presentation_id}/activate"
+  },
+  {
+   "method": "POST",
+   "path": "/maestros/presentaciones/{presentation_id}/deactivate"
+  },
+  {
+   "method": "GET",
+   "path": "/maestros/presentaciones/{presentation_id}/versiones"
+  },
+  {
+   "method": "POST",
+   "path": "/maestros/presentaciones/{presentation_id}/versiones"
+  },
+  {
+   "method": "GET",
+   "path": "/maestros/productos/{product_id}/presentaciones"
+  },
+  {
+   "method": "POST",
+   "path": "/maestros/productos/{product_id}/presentaciones"
+  },
+  {
+   "method": "PATCH",
+   "path": "/maestros/productos/{product_id}/unidad-base"
   },
   {
    "method": "GET",
@@ -587,6 +799,42 @@
   {
    "method": "POST",
    "path": "/maestros/terceros/{party_id}/roles/{role}"
+  },
+  {
+   "method": "GET",
+   "path": "/maestros/unidades"
+  },
+  {
+   "method": "POST",
+   "path": "/maestros/unidades"
+  },
+  {
+   "method": "DELETE",
+   "path": "/maestros/unidades/{unit_id}"
+  },
+  {
+   "method": "GET",
+   "path": "/maestros/unidades/{unit_id}"
+  },
+  {
+   "method": "PATCH",
+   "path": "/maestros/unidades/{unit_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/maestros/unidades/{unit_id}/activate"
+  },
+  {
+   "method": "GET",
+   "path": "/maestros/unidades/{unit_id}/conversiones"
+  },
+  {
+   "method": "POST",
+   "path": "/maestros/unidades/{unit_id}/conversiones-fisicas"
+  },
+  {
+   "method": "POST",
+   "path": "/maestros/unidades/{unit_id}/deactivate"
   },
   {
    "method": "DELETE",
@@ -1209,12 +1457,36 @@
    "path": "/sales/orders"
   },
   {
+   "method": "POST",
+   "path": "/sales/orders/expire-reservations"
+  },
+  {
    "method": "GET",
    "path": "/sales/orders/{order_id}"
   },
   {
    "method": "POST",
+   "path": "/sales/orders/{order_id}/cancel"
+  },
+  {
+   "method": "POST",
    "path": "/sales/orders/{order_id}/lines"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/orders/{order_id}/reject"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/orders/{order_id}/release"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/orders/{order_id}/revert"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/orders/{order_id}/submit"
   },
   {
    "method": "POST",
@@ -1237,8 +1509,20 @@
    "path": "/sales/quotes"
   },
   {
+   "method": "GET",
+   "path": "/sales/quotes/{quote_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/quotes/{quote_id}/convertir"
+  },
+  {
    "method": "POST",
    "path": "/sales/quotes/{quote_id}/lines"
+  },
+  {
+   "method": "POST",
+   "path": "/sales/quotes/{quote_id}/transition"
   },
   {
    "method": "GET",
@@ -1251,6 +1535,14 @@
   {
    "method": "POST",
    "path": "/sales/returns/{return_id}/lines"
+  },
+  {
+   "method": "GET",
+   "path": "/sales/settings/reservation"
+  },
+  {
+   "method": "PUT",
+   "path": "/sales/settings/reservation"
   },
   {
    "method": "GET",

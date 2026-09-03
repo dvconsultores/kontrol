@@ -8,6 +8,7 @@ import type { CatalogItemSummary, PagedResult, Reservation } from "@/api/types";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -33,6 +34,8 @@ export function ReservasPage(): React.JSX.Element {
   const [newDoc, setNewDoc] = useState("");
   const [newExpiry, setNewExpiry] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [aLiberar, setALiberar] = useState<string | null>(null);
+  const [motivo, setMotivo] = useState("");
 
   const companyId = activeCompany?.id ?? null;
 
@@ -78,10 +81,10 @@ export function ReservasPage(): React.JSX.Element {
     }
   };
 
-  const release = async (id: string): Promise<void> => {
+  const release = async (id: string, reason: string): Promise<void> => {
     try {
-      await apiFetch(`/inventory/reservations/${id}/release`, { method: "POST" });
-      notify({ type: "success", title: "Reserva liberada", description: "Las existencias vuelven a estar disponibles." });
+      await apiFetch(`/inventory/reservations/${id}/release`, { method: "POST", body: { reason } });
+      notify({ type: "success", title: "Reserva liberada", description: reason });
       refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : "No fue posible liberar la reserva";
@@ -101,19 +104,31 @@ export function ReservasPage(): React.JSX.Element {
   };
 
   const columns = [
-    columnHelper.accessor("source_document", { header: "Documento origen" }),
+    columnHelper.accessor("source_document", { header: "Documento origen", cell: ({ getValue }) => getValue() ?? "—" }),
+    columnHelper.accessor("trigger", {
+      header: "Origen",
+      cell: ({ getValue, row }) =>
+        row.original.source_type === "SALES_ORDER" ? `Pedido · ${getValue() ?? ""}` : getValue() ?? "MANUAL",
+    }),
     columnHelper.accessor("product_id", { header: "Producto" }),
     columnHelper.accessor("warehouse_id", { header: "Almacén" }),
     columnHelper.accessor("quantity", { header: "Cantidad" }),
-    columnHelper.accessor("status", { header: "Estado" }),
-    columnHelper.accessor("expires_at", { header: "Vence" }),
+    columnHelper.accessor("base_quantity", { header: "Base", cell: ({ getValue }) => getValue() ?? "—" }),
+    columnHelper.accessor("status", {
+      header: "Estado",
+      cell: ({ getValue, row }) => `${getValue()}${row.original.oversell ? " · sobreventa" : ""}`,
+    }),
+    columnHelper.accessor("expires_at", { header: "Vence", cell: ({ getValue }) => getValue()?.slice(0, 10) ?? "—" }),
+    columnHelper.accessor("release_reason", { header: "Motivo", cell: ({ getValue }) => getValue() ?? "" }),
     columnHelper.display({
       id: "actions",
       header: "Acciones",
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">
-          {row.original.status === "ACTIVE" || row.original.status === "RESERVED" ? (
-            <AsyncButton size="sm" variant="secondary" onClick={() => release(row.original.id)}>Liberar</AsyncButton>
+          {/* Las reservas de pedido viven lo que vive el pedido: se cancela o se
+              revierte el pedido, nunca se sueltan por debajo (R-D0-03-6). */}
+          {row.original.status === "ACTIVE" && row.original.source_type !== "SALES_ORDER" ? (
+            <AsyncButton size="sm" variant="secondary" onClick={async () => setALiberar(row.original.id)}>Liberar</AsyncButton>
           ) : null}
         </div>
       ),
@@ -124,7 +139,7 @@ export function ReservasPage(): React.JSX.Element {
     <PageContent maxWidth="full">
       <PageHeader
         title="Reservas"
-        description="Reserve existencias para órdenes y documentos, libérelas o expire vencidas."
+        description="Reservas manuales y de pedidos. Las de pedido nacen al confirmarlo (ORDER_CONFIRMATION) y se liberan desde el pedido; las manuales se liberan aquí con motivo."
         crumbs={[{ label: "Inventario" }, { label: "Reservas" }]}
       />
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
@@ -163,11 +178,11 @@ export function ReservasPage(): React.JSX.Element {
         <select aria-label="Filtrar por estado" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
           <option value="">Todos los estados</option>
           <option value="ACTIVE">Activa</option>
-          <option value="RESERVED">Reservada</option>
           <option value="RELEASED">Liberada</option>
           <option value="EXPIRED">Vencida</option>
+          <option value="FULFILLED">Consumida</option>
         </select>
-        <AsyncButton variant="secondary" onClick={expireAll}>Expirar vencidas</AsyncButton>
+        <AsyncButton variant="secondary" onClick={expireAll}>Expirar manuales vencidas</AsyncButton>
       </div>
 
       <DataTable
@@ -179,6 +194,23 @@ export function ReservasPage(): React.JSX.Element {
         emptyTitle="Sin reservas"
         emptyDescription="Aún no hay reservas registradas."
       />
+      <ConfirmationDialog
+        open={aLiberar !== null}
+        title="Liberar reserva manual"
+        description="Indique el motivo. Quedará en la reserva y en la auditoría."
+        confirmLabel="Liberar"
+        onConfirm={async () => {
+          if (!aLiberar) return;
+          await release(aLiberar, motivo.trim());
+          setALiberar(null);
+          setMotivo("");
+        }}
+        onCancel={() => { setALiberar(null); setMotivo(""); }}
+      >
+        <FormField label="Motivo" required>
+          <TextInput value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ej. Se vendió por otro canal" required />
+        </FormField>
+      </ConfirmationDialog>
     </PageContent>
   );
 }

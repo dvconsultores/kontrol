@@ -59,3 +59,23 @@ Flujo de 13 pasos: cliente → cotización (sin reserva) → pedido (validar dat
 - SQLAlchemy 2.0 + Alembic (head `0004_compras` → `0005_ventas`).
 - FastAPI + React 19 / react-router 8 / TanStack Query (estándar DOC-08).
 - La concurrencia de cobros/aplicaciones se valida con pruebas simultáneas (T-005-020).
+
+## Spec 030 — investigación de implementación (2026-09-02)
+
+**Bloqueo de disponibilidad.** Se evaluaron `SELECT … FOR UPDATE` sobre la fila de saldo, `UPDATE`
+condicional atómico, ledger sin contador, `SERIALIZABLE`, concurrencia optimista y advisory locks
+(análisis en `d0-03-reservation-concurrency-analysis.md`). Se implementó el bloqueo de fila con
+creación segura bajo savepoint + índice único para la fila inexistente: es local, no requiere
+reintentos y deja el disponible legible en el error. Verificado con dos conexiones reales.
+
+**Quién mueve el pedido tras la decisión de 045.** Compras (015/017) avanza el documento con
+`ensure_approved` cuando el motor resolvió; el motor no llama al dominio. Se replicó el patrón con
+`POST /orders/{id}/release`. Alternativa descartada: un registro de *callbacks* del motor hacia los
+dominios, que acoplaría 045 a ventas.
+
+**Convención de nombres y `CHECK`.** `op.create_check_constraint` aplica la convención del metadata
+y duplica el prefijo; se usa SQL directo en la migración para que ORM y PostgreSQL coincidan.
+
+**Semántica de `quantity` en la reserva.** Se alineó con los movimientos (tecleada + base) en lugar
+de redefinir `quantity` como base: las reservas manuales siguen funcionando sin presentación y las
+legadas reciben `base_quantity = quantity`.

@@ -67,8 +67,8 @@ Formato: | ID | Requisito | Tarea | Dependencia | Archivos | Prueba | Responsabl
 
 # TAREAS — SPEC 030 · ESQUELETO DOCUMENTAL (D0-03 CLOSED, 2026-09-02)
 
-Esqueleto derivado del contrato. Se valida y completa en el ciclo `/speckit.tasks` de la Spec 030,
-que **no** ha sido autorizado. Ninguna tarea está iniciada.
+Esqueleto derivado del contrato (D0-03). Ejecutado en el ciclo de implementación del 2026-09-02:
+las 15 tareas siguientes están **hechas** y se detallan en las T-030-I-001..063 de abajo.
 
 | Tarea | Descripción | FR |
 |---|---|---|
@@ -87,3 +87,37 @@ que **no** ha sido autorizado. Ninguna tarea está iniciada.
 | T-030-013 | Pruebas: carrera PostgreSQL, sobreventa, liberaciones, base, multiempresa, idempotencia, conversión, despacho, expiración | FR-030-044 y ADR v2 |
 | T-030-014 | Frontend: insuficiencia por línea, reversión con motivo, disponible vs. reservado | plan |
 | T-030-015 | Documentación: contracts, data-model, traceability, convergence de 030 | — |
+
+
+# TAREAS — SPEC 030 · CICLO DE IMPLEMENTACIÓN (T-030-I, 2026-09-02)
+
+| Rango | Tarea | Entregable | Estado |
+|---|---|---|---|
+| 001 | baseline | `spec030-implementation-cycle.md` §baseline | ✔ |
+| 002..004 | auditar modelo, servicios y estados | ídem §clarify 1-13 | ✔ |
+| 005 | reconciliar máquina de estados | `ORDER_TRANSITIONS` v2 · `reservation-state-machine-report.md` | ✔ |
+| 006..008 | FK, unicidad activa, checks | `inventory/models.py` | ✔ |
+| 009..011 | migración esquema/datos, paridad ORM | `0043_spec030_reservation.py` · `test_spec030_migration_0043.py` | ✔ |
+| 012..016 | lectura bajo bloqueo, orden determinista, reserva/liberación atómicas, base | `inventory/service.py` (`lock_balance`, `reserve`, `_close_reservation`…) · `sales/service.py` (`_unidad`) | ✔ |
+| 017..018 | confirmación y flujo de contado | `confirmar_pedido`, `_a_released` | ✔ |
+| 019..021 | `SALES_CREDIT`, aprobación, rechazo | `liberar_pedido`, `rechazar_pedido` | ✔ |
+| 022..023 | revertir, cancelar | `revertir_pedido`, `cancelar_pedido` | ✔ |
+| 024..025 | expiración, TTL | `expirar_reservas_de_pedidos`, `configurar_reserva` | ✔ |
+| 026..027 | `ventas:submit`, permisos de rutas | `setup/api.py`, `0043`, `sales/api.py` | ✔ |
+| 028 | auditoría | `_audit_reservation` | ✔ |
+| 029 | eventos/outbox | no existe outbox transversal; la auditoría es la fuente (documentado) | ✔ |
+| 030..031 | API, OpenAPI | 7 rutas nuevas; fixture regenerado | ✔ |
+| 032..035 | frontend confirmar, espera de crédito, estados terminales, revertir/cancelar | `OrdenesVentasPage.tsx`, `ReservasPage.tsx`, `DespachoPage.tsx`, `types.ts` | ✔ |
+| 036..038 | aislamiento, AB, cross-tenant | `test_spec030_reservation.py` | ✔ |
+| 039..041 | insuficiencia, todo-o-nada, `allow_negative` | ídem | ✔ |
+| 042 | carrera PostgreSQL | `test_spec030_concurrency.py` | ✔ |
+| 043..047 | idempotencia, cancelar, rechazar, revertir, TTL | `test_spec030_reservation.py` | ✔ |
+| 048 | sin planificador | `test_spec030_architecture.py` | ✔ |
+| 049..052 | sin picking/factura/CxC; handoff 031 | `test_spec030_reservation.py` | ✔ |
+| 053 | hostiles SQL | `test_spec030_postgres_hostile.py` | ✔ |
+| 054 | instalación limpia | `upgrade head → downgrade 0042 → upgrade head` sobre PostgreSQL 18.6 vacío | ✔ |
+| 055..056 | regresión backend y frontend | `implementation-report.md`, `frontend-regression-report.md` | ✔ |
+| 057..060 | Playwright ×3 navegadores, a11y, responsive, route crawl | `e2e/sales-orders.spec.ts`, `accessibility.spec.ts`, `audit-responsive-crawler.mjs`, `route-crawl.spec.ts` | ✔ |
+| 061 | auth/OpenAPI | `audit-completeness.test.ts` (fixture) | ✔ |
+| 062 | artefactos | esta carpeta + `docs/roadmap` + `docs/governance` | ✔ |
+| 063 | `/speckit.converge SPEC 030` | `convergence.md` §SPEC 030 | ✔ |

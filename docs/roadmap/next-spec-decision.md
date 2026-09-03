@@ -103,3 +103,10 @@ y toda la mercancía está «en el almacén», en ningún sitio concreto.
 029 quedó `COMPLETE / CONVERGED` y `D0-03` cerró con `RESERVATION TRIGGER = ORDER_CONFIRMATION`.
 030 pasa a `READY_FOR_IMPLEMENTATION` con contrato completo; su implementación requiere autorización
 expresa y no forma parte del checkpoint que la desbloqueó.
+
+## Actualización 2026-09-02 (tarde)
+
+030 quedó `COMPLETE / CONVERGED` en su propio ciclo autorizado. Ya no hay Spec en
+`READY_FOR_IMPLEMENTATION`: la siguiente se selecciona en el próximo checkpoint maestro; la cadena
+020 → 021 → 022 es la que desbloquea 031 y 032, que ahora reciben pedidos `RELEASED` con reservas por
+línea.

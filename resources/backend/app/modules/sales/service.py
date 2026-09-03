@@ -12,7 +12,7 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -21,8 +21,10 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.approvals import integration as approvals_integration
+from app.modules.approvals import service as approvals_service
 from app.modules.inventory import service as inv_service
-from app.modules.organization.models import Warehouse
+from app.modules.master_data import uom as uom_engine
+from app.modules.organization.models import Company, Warehouse
 from app.modules.organization.service import warehouse_belongs_to
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import OpenItem
@@ -73,18 +75,31 @@ QUOTE_TRANSITIONS: dict[str, set[str]] = {
 #: es lo que el cliente vio.
 QUOTE_EDITABLE = {"DRAFT"}
 
+#: Máquina del pedido (FR-030-002, ADR-D0-003 v2 R-D0-03-11).
+#:
+#: La reserva nace en `DRAFT → SUBMITTED`. Sin solicitud de crédito el pedido
+#: sigue a `RELEASED` en la misma transacción; con solicitud espera en
+#: `SUBMITTED` hasta que la Spec 045 resuelve. `RELEASED` es la entrega a la
+#: cola de preparación (031). `CREDIT_PENDING`, `APPROVED` y `RESERVED` dejaron
+#: de existir: la migración 0043 los reclasificó.
 ORDER_TRANSITIONS: dict[str, set[str]] = {
     "DRAFT": {"SUBMITTED", "CANCELLED"},
-    "SUBMITTED": {"CREDIT_PENDING", "REJECTED"},
-    "CREDIT_PENDING": {"APPROVED", "REJECTED"},
-    "APPROVED": {"RESERVED", "CANCELLED"},
-    "RESERVED": {"PREPARING", "SHIPPED", "CANCELLED"},
+    "SUBMITTED": {"RELEASED", "REJECTED", "CANCELLED", "EXPIRED", "DRAFT"},
+    "RELEASED": {"PREPARING", "SHIPPED", "CANCELLED", "DRAFT"},
     "PREPARING": {"SHIPPED", "CANCELLED"},
     "SHIPPED": {"CLOSED"},
     "CLOSED": set(),
     "CANCELLED": set(),
     "REJECTED": set(),
+    "EXPIRED": set(),
 }
+
+#: Estados en los que el pedido tiene (y debe tener) su reserva viva.
+ORDER_RESERVED_STATES = frozenset({"SUBMITTED", "RELEASED", "PREPARING"})
+#: Estado que habilita la cola de la Spec 031 (IMP-030-053).
+ORDER_HANDOFF_STATE = "RELEASED"
+#: `RESERVATION TRIGGER = ORDER_CONFIRMATION` — fijo, no configurable (D0-03).
+RESERVATION_TRIGGER = "ORDER_CONFIRMATION"
 
 INVOICE_TRANSITIONS: dict[str, set[str]] = {
     "DRAFT": {"VALIDATED", "CANCELLED"},
@@ -148,9 +163,13 @@ def _require_order(db: Session, company_id: str, order_id: str) -> SalesOrder:
 
 def order_allowed_actions(order: SalesOrder) -> dict[str, bool]:
     s = order.status
-    return {"view": True, "submit": s == "DRAFT", "credit": s == "SUBMITTED", "approve": s == "CREDIT_PENDING",
-            "reject": s in ("SUBMITTED", "CREDIT_PENDING"), "reserve": s == "APPROVED",
-            "prepare": s == "RESERVED", "ship": s in ("RESERVED", "PREPARING"), "cancel": s in ("DRAFT", "APPROVED", "RESERVED", "PREPARING"),
+    return {"view": True,
+            # `submit` se conserva como alias de `confirm` para clientes antiguos.
+            "confirm": s == "DRAFT", "submit": s == "DRAFT",
+            "release": s == "SUBMITTED", "reject": s == "SUBMITTED",
+            "revert": s in ("SUBMITTED", "RELEASED"),
+            "cancel": s in ("DRAFT", "SUBMITTED", "RELEASED", "PREPARING"),
+            "prepare": s == "RELEASED", "ship": s in ("RELEASED", "PREPARING"),
             "close": s == "SHIPPED"}
 
 
@@ -341,9 +360,10 @@ def add_quote_line(db: Session, *, company_id: str, quote_id: str, product_id: s
         manual_reason=manual_reason)
     origen.pop("requires_approval", None)
     precio = origen.pop("unit_price")
+    unidad = _unidad(db, product_id=product_id, presentation_id=presentation_id, quantity=quantity)
     line = SalesQuoteLine(quote_id=quote_id, product_id=product_id, quantity=quantity,
                           unit_price=precio, discount=discount, tax_ref=tax_ref,
-                          presentation_id=presentation_id, **origen)
+                          presentation_id=presentation_id, **unidad, **origen)
     db.add(line)
     db.flush()
     return line
@@ -476,6 +496,12 @@ def add_order_line(db: Session, *, order_id: str, product_id: str, quantity: flo
     order = db.get(SalesOrder, order_id)
     if order is None:
         raise NotFoundError(code="SALES_ORDER_NOT_FOUND", message="Orden de venta no encontrada")
+    if order.status != "DRAFT":
+        # Un pedido emitido ya comprometió inventario: una línea añadida por
+        # debajo quedaría sin reserva (CD-10). Se revierte a borrador y se
+        # reemite (FR-030-020/021).
+        raise ConflictError(code="ORDER_NOT_EDITABLE",
+                            message="Solo un borrador admite líneas nuevas; revierta el pedido a borrador.")
     empresa = company_id or str(order.company_id)
     origen = _origen_comercial(
         db, company_id=empresa, product_id=product_id, customer_id=str(order.customer_id),
@@ -483,53 +509,355 @@ def add_order_line(db: Session, *, order_id: str, product_id: str, quantity: flo
         discount=discount, manual_reason=manual_reason)
     origen.pop("requires_approval", None)
     precio = origen.pop("unit_price")
+    unidad = _unidad(db, product_id=product_id, presentation_id=presentation_id, quantity=quantity)
     line = SalesOrderLine(order_id=order_id, product_id=product_id, quantity=quantity,
                           unit_price=precio, discount=discount, tax_ref=tax_ref,
                           needs_inventory=needs_inventory, snapshot=snapshot,
-                          presentation_id=presentation_id, **origen)
+                          presentation_id=presentation_id, **unidad, **origen)
     db.add(line)
     db.flush()
     return line
 
 
+def _unidad(db: Session, *, product_id: str, presentation_id: str | None, quantity: float) -> dict[str, Any]:
+    """Semántica de unidad de una línea (Spec 011, R-D0-09-1), capturada al nacer.
+
+    La reserva compara y compromete **cantidad base** (IMP-030-007). Sin
+    presentación la cantidad ya está en base y el factor es 1; con presentación
+    resuelve la versión vigente y la congela: mañana el maestro puede cambiar y
+    la línea seguirá diciendo con qué factor se vendió (IMP-030-008).
+    """
+    conversion = uom_engine.to_base(db, Decimal(str(quantity)), product_id, presentation_id)
+    return {"uom_id": str(conversion.base_uom_id) if conversion.base_uom_id else None, "conversion_factor_snapshot": conversion.factor,
+            "base_quantity": conversion.base_quantity, "uom_source": uom_engine.SOURCE_CAPTURED}
+
+
+def _asegurar_unidad(db: Session, line: SalesOrderLine) -> None:
+    """Una línea anterior a la Spec 030 no tiene base: se captura al confirmar.
+
+    Es la primera captura, no un recálculo: no había nada que recalcular.
+    """
+    if line.base_quantity is not None:
+        return
+    for k, v in _unidad(db, product_id=str(line.product_id), presentation_id=line.presentation_id,
+                        quantity=float(line.quantity)).items():
+        setattr(line, k, v)
+
+
+def _lock_order(db: Session, company_id: str, order_id: str) -> SalesOrder:
+    """El pedido bloqueado para la transición: dos confirmaciones simultáneas
+    del mismo pedido se serializan aquí, antes de tocar el inventario."""
+    order = db.execute(select(SalesOrder).where(SalesOrder.id == order_id).with_for_update()).scalars().first()
+    if order is None or str(order.company_id) != str(company_id):
+        raise NotFoundError(code="SALES_ORDER_NOT_FOUND", message="Orden de venta no encontrada")
+    return order
+
+
+def _motivo(reason: str | None) -> str:
+    motivo = (reason or "").strip()
+    if not motivo:
+        raise KontrolError(code="REASON_REQUIRED", message="Debe indicar el motivo.", status_code=422)
+    return motivo
+
+
+def _lineas_de_pedido(db: Session, order_id: str) -> list[SalesOrderLine]:
+    return list(db.execute(select(SalesOrderLine).where(SalesOrderLine.order_id == order_id)
+                           .order_by(SalesOrderLine.created_at, SalesOrderLine.id)).scalars().all())
+
+
+def _ttl_de_reserva(db: Session, company_id: str) -> int | None:
+    empresa = db.get(Company, company_id)
+    return empresa.reservation_ttl_days if empresa is not None else None
+
+
+def _cancelar_solicitud_de_credito(db: Session, order: SalesOrder, actor: str | None, reason: str) -> bool:
+    """Si 045 tiene una solicitud viva para el pedido, la cancela con el motivo.
+
+    Una aprobación no sobrevive al documento que la pidió (IMP-030-047): al
+    cancelar, rechazar, revertir o expirar el pedido, la solicitud se cierra en
+    el motor, no se deja huérfana.
+    """
+    estado = approvals_service.status(db, company_id=str(order.company_id), document_type="SalesOrder",
+                                      document_id=str(order.id))
+    actual = estado.get("current")
+    if actual and estado.get("blocks_advance"):
+        approvals_service.cancel(db, company_id=str(order.company_id), request_id=actual["id"],
+                                 actor_id=actor or "system", reason=reason)
+        return True
+    return False
+
+
+def _liberar_reservas(db: Session, order: SalesOrder, *, actor: str | None, reason: str) -> int:
+    """Libera todo lo ACTIVE del pedido. Idempotente: lo ya cerrado no resta."""
+    liberadas = 0
+    for reserva in inv_service.order_reservations(db, company_id=str(order.company_id), order_id=str(order.id)):
+        if inv_service.release_if_active(db, reservation=reserva, actor=actor, reason=reason):
+            liberadas += 1
+    return liberadas
+
+
+def _a_released(db: Session, order: SalesOrder, actor: str | None) -> None:
+    """`→ RELEASED`: la reserva se hace firme y el pedido entra en la cola de 031."""
+    _assert_transition(order.status, "RELEASED", ORDER_TRANSITIONS, "el pedido")
+    ahora = datetime.now(UTC)
+    for reserva in inv_service.order_reservations(db, company_id=str(order.company_id), order_id=str(order.id)):
+        reserva.expires_at = None
+    order.status = "RELEASED"
+    order.released_at = ahora
+    order.updated_at = ahora
+    db.flush()
+    _audit(db, action="SALES_ORDER_TRANSITIONED", entity_type="SalesOrder", entity_id=str(order.id),
+           company_id=order.company_id, actor=actor, after={"target": "RELEASED"})
+
+
+def confirmar_pedido(db: Session, *, company_id: str, order_id: str, actor: str | None = None) -> SalesOrder:
+    """`DRAFT → SUBMITTED` con reserva: **el** disparador (ADR-D0-003 v2).
+
+    Todo o nada: se bloquean los saldos de todas las líneas en orden
+    determinista, se comprueba la disponibilidad bajo bloqueo y solo entonces
+    se reserva. Si una línea no alcanza, ninguna se reserva y el pedido sigue en
+    borrador con el detalle de lo que falta (FR-030-010/011). Después pregunta a
+    la Spec 045 si hace falta crédito: sin solicitud, el pedido queda
+    `RELEASED` en la misma transacción; con solicitud, espera en `SUBMITTED`.
+    """
+    order = _lock_order(db, company_id, order_id)
+    _assert_transition(order.status, "SUBMITTED", ORDER_TRANSITIONS, "el pedido")
+    lineas = _lineas_de_pedido(db, str(order.id))
+    if not lineas:
+        raise KontrolError(code="ORDER_EMPTY", message="Un pedido sin líneas no se confirma.", status_code=422)
+    inventariables = [linea for linea in lineas if linea.needs_inventory]
+    ahora = datetime.now(UTC)
+
+    if inventariables:
+        if not order.warehouse_id:
+            raise KontrolError(code="WAREHOUSE_REQUIRED",
+                               message="Indique el almacén antes de confirmar un pedido con inventario.",
+                               status_code=422)
+        warehouse = _require_warehouse(db, company_id, order.warehouse_id)
+        for linea in inventariables:
+            _asegurar_unidad(db, linea)
+        # Orden determinista de bloqueo (IMP-030-023): producto y luego línea.
+        ordenadas = sorted(inventariables, key=lambda linea: (str(linea.product_id), str(linea.id)))
+        permite_negativo = inv_service._allow_negative(warehouse)
+        faltantes: list[dict[str, Any]] = []
+        for linea in ordenadas:
+            saldo = inv_service.lock_balance(db, company_id=company_id, warehouse_id=order.warehouse_id,
+                                             product_id=str(linea.product_id))
+            disponible = inv_service.available_under_lock(saldo)
+            if Decimal(str(linea.base_quantity)) > disponible and not permite_negativo:
+                faltantes.append({"line_id": str(linea.id), "product_id": str(linea.product_id),
+                                  "requested_base": str(linea.base_quantity), "available_base": str(disponible)})
+        if faltantes:
+            raise ConflictError(code="INSUFFICIENT_AVAILABLE",
+                                message="No hay disponible suficiente para confirmar el pedido.",
+                                details={"lines": faltantes})
+        for linea in ordenadas:
+            inv_service.reserve(
+                db, company_id=company_id, source_document=f"SALES_ORDER:{order.id}",
+                product_id=str(linea.product_id), warehouse_id=order.warehouse_id,
+                quantity=float(linea.quantity), actor=actor,
+                source_type=inv_service.RESERVATION_SOURCE_ORDER, source_order_id=str(order.id),
+                source_line_id=str(linea.id), trigger=RESERVATION_TRIGGER,
+                uom_id=linea.uom_id, presentation_id=linea.presentation_id,
+                conversion_factor_snapshot=linea.conversion_factor_snapshot,
+                base_quantity=linea.base_quantity, uom_source=linea.uom_source)
+
+    order.status = "SUBMITTED"
+    order.submitted_at = ahora
+    order.status_reason = None
+    order.updated_at = ahora
+    db.flush()
+    _audit(db, action="SALES_ORDER_TRANSITIONED", entity_type="SalesOrder", entity_id=str(order.id),
+           company_id=order.company_id, actor=actor,
+           after={"target": "SUBMITTED", "trigger": RESERVATION_TRIGGER, "reserved_lines": len(inventariables)})
+
+    resultado = approvals_integration.require_for_document(
+        db, company_id=company_id, process_type=approvals_integration.PROCESS_SALES_CREDIT,
+        document_type="SalesOrder", document_id=str(order.id),
+        context=_order_credit_context(db, order), actor=actor)
+    if resultado.get("requires_approval"):
+        order.approval_ref = str(resultado["request"].id)
+        ttl = _ttl_de_reserva(db, company_id)
+        if ttl:
+            vence = ahora + timedelta(days=int(ttl))
+            for reserva in inv_service.order_reservations(db, company_id=company_id, order_id=str(order.id)):
+                reserva.expires_at = vence
+        db.flush()
+        return order
+    _a_released(db, order, actor)
+    return order
+
+
+def liberar_pedido(db: Session, *, company_id: str, order_id: str, actor: str | None = None) -> SalesOrder:
+    """`SUBMITTED → RELEASED` cuando la Spec 045 resolvió a favor.
+
+    No vuelve a reservar ni recalcula stock (IMP-030-028): la reserva ya existe
+    desde la confirmación; aquí solo se hace firme.
+    """
+    order = _lock_order(db, company_id, order_id)
+    _assert_transition(order.status, "RELEASED", ORDER_TRANSITIONS, "el pedido")
+    approvals_integration.ensure_approved(db, company_id=company_id, document_type="SalesOrder",
+                                          document_id=str(order.id), what="el pedido")
+    _a_released(db, order, actor)
+    return order
+
+
+def rechazar_pedido(db: Session, *, company_id: str, order_id: str, actor: str | None = None,
+                    reason: str | None = None) -> SalesOrder:
+    """`SUBMITTED → REJECTED`: se cierra la solicitud de crédito viva, se libera
+    toda la reserva y se registra el motivo. Una sola transacción (IMP-030-033)."""
+    order = _lock_order(db, company_id, order_id)
+    motivo = _motivo(reason)
+    _assert_transition(order.status, "REJECTED", ORDER_TRANSITIONS, "el pedido")
+    _cancelar_solicitud_de_credito(db, order, actor, motivo)
+    liberadas = _liberar_reservas(db, order, actor=actor, reason="CREDIT_REJECTED")
+    ahora = datetime.now(UTC)
+    order.status = "REJECTED"
+    order.status_reason = motivo
+    order.updated_at = ahora
+    db.flush()
+    _audit(db, action="SALES_ORDER_TRANSITIONED", entity_type="SalesOrder", entity_id=str(order.id),
+           company_id=order.company_id, actor=actor, reason=motivo,
+           after={"target": "REJECTED", "released_reservations": liberadas})
+    return order
+
+
+def revertir_pedido(db: Session, *, company_id: str, order_id: str, actor: str | None = None,
+                    reason: str | None = None) -> SalesOrder:
+    """`→ DRAFT`: la única forma de modificar un pedido comprometido (R-D0-03-7).
+
+    Libera **toda** la reserva —sin ajustar diferencias— y cierra la solicitud
+    de crédito: al reemitir se reserva desde cero y se vuelve a pedir crédito.
+    """
+    order = _lock_order(db, company_id, order_id)
+    motivo = _motivo(reason)
+    _assert_transition(order.status, "DRAFT", ORDER_TRANSITIONS, "el pedido")
+    estado_previo = order.status
+    _cancelar_solicitud_de_credito(db, order, actor, f"ORDER_REVERTED: {motivo}")
+    liberadas = _liberar_reservas(db, order, actor=actor, reason="ORDER_REVERTED")
+    ahora = datetime.now(UTC)
+    order.status = "DRAFT"
+    order.status_reason = motivo
+    order.submitted_at = None
+    order.released_at = None
+    order.approval_ref = None
+    order.updated_at = ahora
+    db.flush()
+    _audit(db, action="SALES_ORDER_REVERTED", entity_type="SalesOrder", entity_id=str(order.id),
+           company_id=order.company_id, actor=actor, reason=motivo,
+           before={"status": estado_previo}, after={"target": "DRAFT", "released_reservations": liberadas})
+    return order
+
+
+def cancelar_pedido(db: Session, *, company_id: str, order_id: str, actor: str | None = None,
+                    reason: str | None = None) -> SalesOrder:
+    """`→ CANCELLED` desde cualquier estado vivo. Libera lo ACTIVE, cierra la
+    solicitud de crédito y guarda el motivo. Un segundo intento choca con la
+    máquina de estados; la liberación es idempotente por sí misma."""
+    order = _lock_order(db, company_id, order_id)
+    motivo = _motivo(reason)
+    _assert_transition(order.status, "CANCELLED", ORDER_TRANSITIONS, "el pedido")
+    estado_previo = order.status
+    _cancelar_solicitud_de_credito(db, order, actor, f"ORDER_CANCELLED: {motivo}")
+    liberadas = _liberar_reservas(db, order, actor=actor, reason="ORDER_CANCELLED")
+    ahora = datetime.now(UTC)
+    order.status = "CANCELLED"
+    order.status_reason = motivo
+    order.updated_at = ahora
+    db.flush()
+    _audit(db, action="SALES_ORDER_TRANSITIONED", entity_type="SalesOrder", entity_id=str(order.id),
+           company_id=order.company_id, actor=actor, reason=motivo,
+           before={"status": estado_previo}, after={"target": "CANCELLED", "released_reservations": liberadas})
+    return order
+
+
+def expirar_reservas_de_pedidos(db: Session, *, company_id: str, actor: str | None = None,
+                                now: datetime | None = None) -> dict[str, int]:
+    """Vence las reservas de pedidos con TTL cumplido **y** los pedidos que las
+    sostenían (R-D0-03-8): nunca queda un pedido vivo sin reserva.
+
+    Lo ejecuta un operador o, cuando exista, el planificador de la plataforma
+    (Spec 047). Idempotente: la segunda pasada no encuentra nada.
+    """
+    vencidas = inv_service.expire_due_reservations(db, company_id=company_id,
+                                                   source_type=inv_service.RESERVATION_SOURCE_ORDER,
+                                                   now=now, actor=actor)
+    pedidos: dict[str, int] = {}
+    for reserva in vencidas:
+        if reserva.source_order_id:
+            pedidos[reserva.source_order_id] = pedidos.get(reserva.source_order_id, 0) + 1
+    expirados = 0
+    for order_id in pedidos:
+        order = _lock_order(db, company_id, order_id)
+        if order.status != "SUBMITTED":
+            continue
+        _cancelar_solicitud_de_credito(db, order, actor, "EXPIRED")
+        for reserva in inv_service.order_reservations(db, company_id=company_id, order_id=str(order.id)):
+            inv_service.expire_if_active(db, reservation=reserva, actor=actor)
+        order.status = "EXPIRED"
+        order.status_reason = "EXPIRED"
+        order.updated_at = datetime.now(UTC)
+        db.flush()
+        _audit(db, action="SALES_ORDER_TRANSITIONED", entity_type="SalesOrder", entity_id=str(order.id),
+               company_id=order.company_id, actor=actor, reason="EXPIRED",
+               after={"target": "EXPIRED", "expired_reservations": pedidos[order_id]})
+        expirados += 1
+    return {"expired_reservations": len(vencidas), "expired_orders": expirados}
+
+
+def politica_de_reserva(db: Session, *, company_id: str) -> dict[str, Any]:
+    return {"reservation_trigger": RESERVATION_TRIGGER, "trigger_configurable": False,
+            "reservation_ttl_days": _ttl_de_reserva(db, company_id)}
+
+
+def configurar_reserva(db: Session, *, company_id: str, reservation_ttl_days: int | None,
+                       actor: str | None = None) -> dict[str, Any]:
+    """Lo único configurable de la política es la vigencia mientras se evalúa el
+    crédito (IMP-030-040/041). El disparador no se toca."""
+    if reservation_ttl_days is not None and reservation_ttl_days < 1:
+        raise KontrolError(code="INVALID_TTL", message="La vigencia debe ser al menos un día o nula.",
+                           status_code=422)
+    empresa = db.get(Company, company_id)
+    if empresa is None:
+        raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
+    anterior = empresa.reservation_ttl_days
+    empresa.reservation_ttl_days = reservation_ttl_days
+    db.flush()
+    _audit(db, action="COMPANY_RESERVATION_POLICY_CHANGED", entity_type="Company", entity_id=str(empresa.id),
+           company_id=company_id, actor=actor,
+           before={"reservation_ttl_days": anterior}, after={"reservation_ttl_days": reservation_ttl_days})
+    return politica_de_reserva(db, company_id=company_id)
+
+
 def transition_order(db: Session, *, order: SalesOrder, target: str, actor: str | None = None,
-                     credit_decision: str | None = None, approval_ref: str | None = None) -> SalesOrder:
-    """Transición de la OV. Al aprobar (APPROVED) se reserva inventario vía 003 (FR-005-020)."""
-    _assert_transition(order.status, target, ORDER_TRANSITIONS, "la orden de venta")
-    if target == "CREDIT_PENDING":
-        approvals_integration.require_for_document(
-            db, company_id=order.company_id,
-            process_type=approvals_integration.PROCESS_SALES_CREDIT,
-            document_type="SalesOrder", document_id=str(order.id),
-            context=_order_credit_context(db, order), actor=actor)
-    if target == "APPROVED":
-        approvals_integration.ensure_approved(
-            db, company_id=order.company_id, document_type="SalesOrder",
-            document_id=str(order.id), what="la orden de venta")
+                     credit_decision: str | None = None, approval_ref: str | None = None,
+                     reason: str | None = None) -> SalesOrder:
+    """Transición genérica (compatibilidad). Los destinos de la Spec 030 delegan
+    en sus servicios; `PREPARING`, `SHIPPED` y `CLOSED` se mueven aquí."""
+    company_id = str(order.company_id)
+    delegadas = {
+        "SUBMITTED": lambda: confirmar_pedido(db, company_id=company_id, order_id=str(order.id), actor=actor),
+        "RELEASED": lambda: liberar_pedido(db, company_id=company_id, order_id=str(order.id), actor=actor),
+        "REJECTED": lambda: rechazar_pedido(db, company_id=company_id, order_id=str(order.id), actor=actor,
+                                            reason=reason),
+        "DRAFT": lambda: revertir_pedido(db, company_id=company_id, order_id=str(order.id), actor=actor,
+                                         reason=reason),
+        "CANCELLED": lambda: cancelar_pedido(db, company_id=company_id, order_id=str(order.id), actor=actor,
+                                             reason=reason),
+    }
+    if target in delegadas:
+        return delegadas[target]()
+    _assert_transition(order.status, target, ORDER_TRANSITIONS, "el pedido")
     order.status = target
     order.updated_at = datetime.now(UTC)
-    if target == "CREDIT_PENDING" and credit_decision:
+    if credit_decision:
         order.credit_decision = credit_decision
-    if target == "APPROVED":
-        order.approval_ref = approval_ref or order.approval_ref
-        _reserve_order(db, order, actor)
-        order.status = "RESERVED"
+    if approval_ref:
+        order.approval_ref = approval_ref
     db.flush()
     _audit(db, action="SALES_ORDER_TRANSITIONED", entity_type="SalesOrder", entity_id=str(order.id),
            company_id=order.company_id, actor=actor, after={"target": order.status})
     return order
-
-
-def _reserve_order(db: Session, order: SalesOrder, actor: str | None = None) -> None:
-    """Reserva inventario vía 003 para las líneas con inventario (FR-005-020)."""
-    if not order.warehouse_id:
-        return
-    lines = db.execute(select(SalesOrderLine).where(SalesOrderLine.order_id == order.id)).scalars().all()
-    for line in lines:
-        if line.needs_inventory:
-            inv_service.reserve(db, company_id=order.company_id, source_document=f"SALES_ORDER:{order.id}",
-                                product_id=line.product_id, warehouse_id=order.warehouse_id, quantity=line.quantity,
-                                actor=actor)
 
 
 # --------------------------------------------------------------------------- #
@@ -539,7 +867,7 @@ def create_picklist(db: Session, *, company_id: str, code: str, order_id: str, w
                     lines: list[dict] | None = None, actor: str | None = None) -> PickList:
     company_id = _company(company_id, obj="picking")
     order = _require_order(db, company_id, order_id)
-    if order.status not in ("RESERVED", "PREPARING"):
+    if order.status not in ("RELEASED", "PREPARING"):
         raise ConflictError(code="ORDER_NOT_PREPARABLE", message="La orden no está en estado para prepararse.")
     _require_warehouse(db, company_id, warehouse_id)
     pl = PickList(company_id=company_id, code=code, order_id=order_id, warehouse_id=warehouse_id,
@@ -561,7 +889,7 @@ def create_shipment(db: Session, *, company_id: str, code: str, order_id: str, o
                     lines: list[dict] | None = None, actor: str | None = None) -> Shipment:
     company_id = _company(company_id, obj="despacho")
     order = _require_order(db, company_id, order_id)
-    if order.status not in ("RESERVED", "PREPARING", "SHIPPED"):
+    if order.status not in ("RELEASED", "PREPARING", "SHIPPED"):
         raise ConflictError(code="ORDER_NOT_SHIPPABLE", message="La orden no está en estado para despacharse.")
     _require_warehouse(db, company_id, origin_warehouse_id)
     shipment = Shipment(company_id=company_id, code=code, order_id=order_id, origin_warehouse_id=origin_warehouse_id,
@@ -607,16 +935,10 @@ def confirm_shipment(db: Session, *, shipment: Shipment, actor: str | None = Non
             movement_type_id=str(inv_service._get_movement_type_by_code(db, shipment.company_id, "SALIDA_DESPACHO").id),
             quantity=-line.quantity, document_ref=f"SHIPMENT:{shipment.id}", actor=actor,
         )
-    # Liberar reservas cumplidas de la orden (via 003)
-    reservations = db.execute(
-        __import__("sqlalchemy").select(inv_service.Reservation).where(
-            inv_service.Reservation.company_id == shipment.company_id,
-            inv_service.Reservation.source_document == f"SALES_ORDER:{order.id}",
-            inv_service.Reservation.status == "ACTIVE",
-        )
-    ).scalars().all()
-    for reservation in reservations:
-        inv_service.release_reservation(db, reservation=reservation, actor=actor)
+    # La salida física **consume** la reserva (R-D0-03-7): `FULFILLED`, no
+    # `RELEASED`. Lo que salió no vuelve al disponible.
+    for reservation in inv_service.order_reservations(db, company_id=shipment.company_id, order_id=str(order.id)):
+        inv_service.fulfill_reservation(db, reservation=reservation, actor=actor)
     shipment.status = "SHIPPED"
     shipment.updated_at = datetime.now(UTC)
     order.status = "SHIPPED"
@@ -833,11 +1155,57 @@ def open_item_dict(item: OpenItem) -> dict:
             "due_date": item.due_date.isoformat() if item.due_date else None, "status": item.status}
 
 
-def order_dict(db: Session, order: SalesOrder) -> dict:
-    lines = db.execute(select(SalesOrderLine).where(SalesOrderLine.order_id == order.id)).scalars().all()
+def _reserva_dict(r: Any) -> dict:
+    return {"id": str(r.id), "status": r.status, "quantity": str(r.quantity),
+            "base_quantity": str(r.base_quantity) if r.base_quantity is not None else None,
+            "warehouse_id": r.warehouse_id, "trigger": r.trigger, "oversell": bool(r.oversell),
+            "expires_at": r.expires_at.isoformat() if r.expires_at else None,
+            "release_reason": r.release_reason}
+
+
+def orders_dict(db: Session, orders: list[SalesOrder]) -> list[dict]:
+    """Serializa varios pedidos con dos consultas, no con dos por pedido.
+
+    `order_dict` necesita líneas y reservas; llamarlo en un bucle sobre una
+    página de cien pedidos son doscientas consultas. Aquí se traen de una vez.
+    """
+    if not orders:
+        return []
+    ids = [str(o.id) for o in orders]
+    empresa = str(orders[0].company_id)
+    lineas: dict[str, list[SalesOrderLine]] = {}
+    for linea in db.execute(
+            select(SalesOrderLine).where(SalesOrderLine.order_id.in_(ids))
+            .order_by(SalesOrderLine.created_at, SalesOrderLine.id)).scalars():
+        lineas.setdefault(str(linea.order_id), []).append(linea)
+    reservas: dict[str, list[Any]] = {}
+    for r in inv_service.reservations_for_orders(db, company_id=empresa, order_ids=ids):
+        reservas.setdefault(str(r.source_order_id), []).append(r)
+    return [order_dict(db, o, lines=lineas.get(str(o.id), []), reservations=reservas.get(str(o.id), []))
+            for o in orders]
+
+
+def order_dict(db: Session, order: SalesOrder, *, lines: list[SalesOrderLine] | None = None,
+               reservations: list[Any] | None = None) -> dict:
+    if lines is None:
+        lines = list(db.execute(
+            select(SalesOrderLine).where(SalesOrderLine.order_id == order.id)
+            .order_by(SalesOrderLine.created_at, SalesOrderLine.id)).scalars().all())
+    if reservations is None:
+        reservations = inv_service.order_reservations(
+            db, company_id=str(order.company_id), order_id=str(order.id), only_active=False)
+    # Las reservas viajan con el pedido: es lo que la Spec 031 recibe (IMP-030-053).
+    reservas: dict[str, list[dict]] = {}
+    for r in reservations:
+        reservas.setdefault(str(r.source_line_id), []).append(_reserva_dict(r))
     return {"id": order.id, "code": order.code, "customer_id": order.customer_id, "warehouse_id": order.warehouse_id,
             "credit_decision": order.credit_decision, "margin": order.margin, "currency": order.currency,
             "status": order.status, "approval_ref": order.approval_ref,
+            "status_reason": order.status_reason,
+            "submitted_at": order.submitted_at.isoformat() if order.submitted_at else None,
+            "released_at": order.released_at.isoformat() if order.released_at else None,
+            "reservation_trigger": RESERVATION_TRIGGER,
+            "eligible_for_picking": order.status == ORDER_HANDOFF_STATE,
             "allowed_actions": order_allowed_actions(order),
             "quote_id": str(order.quote_id) if order.quote_id else None,
             "lines": [{
@@ -845,6 +1213,11 @@ def order_dict(db: Session, order: SalesOrder) -> dict:
                 "quantity": str(line.quantity), "unit_price": str(line.unit_price),
                 "discount": str(line.discount or 0),
                 "needs_inventory": line.needs_inventory,
+                "presentation_id": line.presentation_id, "uom_id": line.uom_id,
+                "conversion_factor_snapshot": (str(line.conversion_factor_snapshot)
+                                               if line.conversion_factor_snapshot is not None else None),
+                "base_quantity": str(line.base_quantity) if line.base_quantity is not None else None,
+                "reservations": reservas.get(str(line.id), []),
                 # El origen viaja hasta aquí o no sirve de nada: guardarlo y no
                 # mostrarlo es tener la evidencia y no poder enseñarla.
                 "pricing_source": line.pricing_source,

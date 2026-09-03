@@ -196,6 +196,12 @@ def test_double_transition_rejected():
     order = _CLIENT.post("/api/v1/sales/orders", headers=h,
                          json={"code": "OV-IDEM", "customer_id": party, "margin": None, "currency": "VED"}).json()
     oid = order["id"]
+    # Spec 030: confirmar exige al menos una línea (un pedido vacío no se emite).
+    prod = _CLIENT.post("/api/v1/maestros/catalogos/items", headers=h,
+                        json={"code": "P-IDEM-3", "name": "Servicio", "item_type": "PRODUCT"}).json()
+    r0 = _CLIENT.post(f"/api/v1/sales/orders/{oid}/lines", headers=h,
+                      json={"product_id": prod["id"], "quantity": 1, "unit_price": 10, "needs_inventory": False})
+    assert r0.status_code == 200, r0.text
     r1 = _CLIENT.post(f"/api/v1/sales/orders/{oid}/transition", headers=h, json={"target": "SUBMITTED"})
     assert r1.status_code == 200, r1.text
     r2 = _CLIENT.post(f"/api/v1/sales/orders/{oid}/transition", headers=h, json={"target": "SUBMITTED"})

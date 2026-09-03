@@ -105,7 +105,7 @@ def test_no_se_vende_desde_el_almacen_de_otra_empresa(mundo):
 def test_no_se_prepara_ni_despacha_desde_el_almacen_ajeno(mundo):
     """§44 y §45: picking y despacho, no solo la cabecera de la orden.
 
-    La orden se lleva hasta RESERVED a propósito. Con la orden en borrador el
+    La orden se lleva hasta RELEASED a propósito. Con la orden en borrador el
     rechazo llegaría por el estado y no por la empresa, y la prueba estaría
     dándose por buena sin haber tocado nunca la comprobación que interroga.
     """
@@ -117,14 +117,10 @@ def test_no_se_prepara_ni_despacha_desde_el_almacen_ajeno(mundo):
     r = mundo.post(f"/sales/orders/{oa}/lines", "ua", mundo.company_a,
                    {"product_id": prod, "quantity": 1, "unit_price": 10, "needs_inventory": False})
     assert r.status_code == 200, r.text
-    for destino in ("SUBMITTED", "CREDIT_PENDING", "APPROVED", "RESERVED"):
-        estado = mundo.get(f"/sales/orders/{oa}", "ua", mundo.company_a).json()["status"]
-        if estado == destino:
-            continue  # aprobar reserva sola; el paso ya está dado
-        r = mundo.post(f"/sales/orders/{oa}/transition", "ua", mundo.company_a,
-                       {"target": destino, "credit_decision": "APPROVED"})
-        assert r.status_code == 200, f"{destino}: {r.text}"
-    assert mundo.get(f"/sales/orders/{oa}", "ua", mundo.company_a).json()["status"] == "RESERVED"
+    # Spec 030: confirmar reserva y, sin política de crédito, libera a preparación.
+    r = mundo.post(f"/sales/orders/{oa}/submit", "ua", mundo.company_a, {})
+    assert r.status_code == 200, r.text
+    assert mundo.get(f"/sales/orders/{oa}", "ua", mundo.company_a).json()["status"] == "RELEASED"
 
     r = mundo.post("/sales/pick-lists", "ua", mundo.company_a,
                    {"code": "PL-CRUZADA", "order_id": oa, "warehouse_id": mundo.warehouse_b})

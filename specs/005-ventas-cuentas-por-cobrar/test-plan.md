@@ -48,3 +48,41 @@
 
 - Resultados de pytest, vitest, Playwright, axe y concurrencia en `evidence/`.
 - Contract tests en `contracts/`.
+
+---
+
+# PLAN DE PRUEBAS — SPEC 030 · CRÉDITO / APROBACIÓN / RESERVA
+
+| Nivel | Suite | Casos | Motor |
+|---|---|---:|---|
+| Estructural | `test_spec030_architecture.py` | 11 | lectura de código y del ORM (falla en construcción) |
+| Funcional multiempresa | `test_spec030_reservation.py` | 26 | PostgreSQL 18.6, dos tenants y tres empresas |
+| Concurrencia | `test_spec030_concurrency.py` | 2 | PostgreSQL 18.6, dos conexiones reales con barrera |
+| Integridad hostil | `test_spec030_postgres_hostile.py` | 10 | PostgreSQL 18.6, verificando SQLSTATE |
+| Migración de datos | `test_spec030_migration_0043.py` | 7 | PostgreSQL 18.6, base sembrada en `0042` |
+| Extremo a extremo | `e2e/sales-orders.spec.ts` | 4 × 3 navegadores | frontend + API + backend + PostgreSQL reales |
+
+## Qué prueba cada bloque
+
+- **Estructural**: que el disparador siga siendo la confirmación y no sea configurable; que solo
+  `confirmar_pedido` reserve; que la máquina no recupere `CREDIT_PENDING`, `APPROVED` ni `RESERVED`;
+  que el índice parcial, la unicidad del saldo y los `CHECK` estén en el ORM; que la migración
+  declare lo mismo; que la disponibilidad se lea bajo bloqueo y en orden determinista; que no
+  aparezca un planificador local; que el despacho consuma y no libere; que `ventas:submit` exista y
+  sea distinto de `ventas:approve`.
+- **Funcional**: contado, crédito, rechazo, reversión, cancelación, expiración, insuficiencia,
+  multilínea, sobreventa autorizada, cantidad base con presentación, listado por lotes, aislamiento
+  entre empresas y tenants, auditoría y compatibilidad de la ruta genérica.
+- **Concurrencia**: el caso obligatorio (disponible 10, dos pedidos de 8) y su variante con
+  `allow_negative`.
+- **Hostil**: las cuatro claves foráneas, la segunda reserva activa de la misma línea, el reservado
+  negativo por actualización directa, la resta por debajo de cero, la cantidad no positiva, la
+  coherencia línea↔pedido y la clave única del saldo.
+- **Migración**: reconstrucción con línea, caso ambiguo sin línea inventada, manual, huérfana,
+  renombrado de estados con evidencia, nombres de índices y checks, e idempotencia de columnas.
+
+## Criterio de aceptación
+
+Cero fallos. Los saltos admitidos son los ocho de `test_documents_storage.py` (S3 sin servicio real,
+dependencia externa P1 declarada en `active-blockers.md`), más los que declara la propia suite
+multiempresa cuando no hay PostgreSQL.

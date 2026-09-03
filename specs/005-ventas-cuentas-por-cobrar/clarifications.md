@@ -76,3 +76,16 @@
 
 Pendientes de esta Spec que **no** bloquean su implementación: CL-005-09, CL-005-10 (configuración
 de implantación).
+
+## Estado tras la implementación (2026-09-02)
+
+| ID | Precisión al implementar |
+|---|---|
+| CL-030-21 | `CREDIT_PENDING` desaparece de la máquina: el pedido a crédito espera en `SUBMITTED` (IMP-030-025). Las filas históricas pasan a `SUBMITTED` con revisión manual (sin reserva) |
+| CL-030-22 | `APPROVED` tampoco es estado: la aprobación de 045 se materializa con `POST /orders/{id}/release` (`ensure_approved`), siguiendo el patrón de compras |
+| CL-030-23 | `reservation_ttl_days` vive en `companies`; `GET/PUT /sales/settings/reservation` bajo contexto |
+| CL-030-24 | Las líneas capturan la unidad base al nacer (`to_base`); una línea anterior sin base la recibe al confirmar (primera captura) |
+| CL-030-25 | `Reservation.quantity` = cantidad tecleada; `base_quantity` = la que compromete el saldo (misma semántica que los movimientos) |
+| CL-030-26 | El endpoint de inventario `POST /reservations/expire` solo vence manuales; el de ventas `POST /orders/expire-reservations` vence las de pedido y cierra el pedido |
+| CL-030-27 | No existe outbox transversal: la auditoría (`audit_events`) es la fuente de los eventos de reserva (T-030-I-029) |
+| CL-030-28 | `SalesOrderLine` aún no modela lote/serial exigidos; la reserva es genérica por producto (FR-030-018 queda satisfecho por ausencia; cuando 024 añada el dato, la reserva lo transportará) |

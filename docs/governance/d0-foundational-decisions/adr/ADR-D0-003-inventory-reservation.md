@@ -207,6 +207,7 @@ A, C, D, E, F — ver tabla de alternativas y `d0-03-checkpoint/d0-03-reservatio
 |---|---|---|---|
 | v1 | 2026-08-29 | APPROVED · CLOSED_WITH_CONFIGURATION_PENDING | Arquitectura F (configurable) con defecto D («liberar el pedido»); OQ-03 abierta |
 | **v2** | **2026-09-02** | **APPROVED · ACTIVE · CLOSED** | Disparador fijo `ORDER_CONFIRMATION`; política completa; OQ-03 resuelta; OQ-04 FUTURE |
+| v2 · implementación | 2026-09-02 | — | Spec 030 implementa R-D0-03-1..11 (`0043_spec030_reservation`, `sales/service.py`, `inventory/service.py`); prueba de carrera sobre PostgreSQL 18.6 verde; `CREDIT_PENDING` y `APPROVED` dejan de ser estados (el pedido a crédito espera en `SUBMITTED`) |
 
 ## Estado final
 

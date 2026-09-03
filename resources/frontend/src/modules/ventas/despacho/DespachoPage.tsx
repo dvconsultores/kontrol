@@ -151,7 +151,7 @@ export function DespachoPage(): React.JSX.Element {
             <select value={plOrder} onChange={(e) => setPlOrder(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Seleccionar…</option>
               {(orders.data?.items ?? [])
-                .filter((o) => o.status === "RESERVED" || o.status === "PREPARING")
+                .filter((o) => o.status === "RELEASED" || o.status === "PREPARING")
                 .map((o) => (
                   <option key={o.id} value={o.id}>{o.code} · {o.status}</option>
                 ))}
@@ -179,7 +179,7 @@ export function DespachoPage(): React.JSX.Element {
             <select value={shOrder} onChange={(e) => setShOrder(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Seleccionar…</option>
               {(orders.data?.items ?? [])
-                .filter((o) => o.status === "RESERVED" || o.status === "PREPARING" || o.status === "SHIPPED")
+                .filter((o) => o.status === "RELEASED" || o.status === "PREPARING" || o.status === "SHIPPED")
                 .map((o) => (
                   <option key={o.id} value={o.id}>{o.code} · {o.status}</option>
                 ))}

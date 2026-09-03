@@ -11,7 +11,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -74,17 +74,40 @@ class OrderCreate(BaseModel):
 class OrderLineCreate(BaseModel):
     product_id: str
     quantity: float = Field(gt=0)
-    unit_price: float = Field(ge=0)
+    #: Opcional: si no viene, lo resuelve la autoridad comercial (Spec 012),
+    #: igual que en la cotización (FR-029-041).
+    unit_price: float | None = Field(default=None, ge=0)
     discount: float = 0.0
     tax_ref: str | None = None
     needs_inventory: bool = True
     snapshot: str | None = None
+    #: Presentación comercial: la reserva se hará en cantidad base (Spec 011).
+    presentation_id: str | None = None
+    manual_reason: str | None = None
 
 
 class TransitionBody(BaseModel):
     target: str
     credit_decision: str | None = None
     approval_ref: str | None = None
+    #: Obligatorio para `REJECTED`, `CANCELLED` y `DRAFT` (Spec 030).
+    reason: str | None = None
+
+
+class ReasonBody(BaseModel):
+    """Rechazar, revertir y cancelar exigen motivo (IMP-030-035). El cuerpo es
+    estricto: `company_id` u otro campo ajeno responde 422, nunca se lee."""
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class ReservationPolicyBody(BaseModel):
+    """Lo único configurable de la reserva: la vigencia mientras se evalúa el
+    crédito. El disparador es fijo (D0-03)."""
+    model_config = ConfigDict(extra="forbid")
+
+    reservation_ttl_days: int | None = Field(default=None, ge=1, le=3650)
 
 
 class PickListCreate(BaseModel):
@@ -304,7 +327,7 @@ def list_orders(status: str | None = None, page: int = Query(1, ge=1), page_size
         query = query.where(SalesOrder.status == status)
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
     items = db.execute(query.order_by(SalesOrder.created_at.desc()).offset((page - 1) * page_size).limit(page_size)).scalars().all()
-    return {"items": [sales_service.order_dict(db, o) for o in items], "total": total, "page": page, "page_size": page_size}
+    return {"items": sales_service.orders_dict(db, list(items)), "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("/orders", dependencies=[Depends(require_write_allowed)])
@@ -330,18 +353,118 @@ def add_order_line(order_id: str, body: OrderLineCreate, db: Session = Depends(g
     order = _owned(db, SalesOrder, order_id, ctx.company_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
     line = sales_service.add_order_line(db, order_id=str(order.id), product_id=body.product_id, quantity=body.quantity,
                                         unit_price=body.unit_price, discount=body.discount, tax_ref=body.tax_ref,
-                                        needs_inventory=body.needs_inventory, snapshot=body.snapshot)
+                                        needs_inventory=body.needs_inventory, snapshot=body.snapshot,
+                                        company_id=ctx.company_id, presentation_id=body.presentation_id,
+                                        manual_reason=body.manual_reason)
     db.commit()
     db.refresh(line)
-    return {"id": line.id, "product_id": line.product_id, "quantity": line.quantity}
+    return {"id": line.id, "product_id": line.product_id, "quantity": line.quantity,
+            "unit_price": str(line.unit_price), "pricing_source": line.pricing_source,
+            "presentation_id": line.presentation_id,
+            "base_quantity": str(line.base_quantity) if line.base_quantity is not None else None,
+            "conversion_factor_snapshot": (str(line.conversion_factor_snapshot)
+                                           if line.conversion_factor_snapshot is not None else None)}
+
+
+# --------------------------------------------------------------------------- #
+# Spec 030 — confirmación, crédito, reserva y ciclo del pedido
+# --------------------------------------------------------------------------- #
+@router.post("/orders/expire-reservations", dependencies=[Depends(require_write_allowed)])
+def expire_order_reservations(db: Session = Depends(get_db),
+                              actor: User = Depends(require_permission("ventas", "approve")),
+                              ctx: CompanyContext = Depends(get_company_context)):
+    """Vence las reservas de pedidos con TTL cumplido y los pedidos que las
+    sostenían. Idempotente. Lo lanza un operador o el planificador de la
+    plataforma cuando exista (Spec 047); aquí no hay worker."""
+    resultado = sales_service.expirar_reservas_de_pedidos(db, company_id=ctx.company_id, actor=str(actor.id))
+    db.commit()
+    return resultado
+
+
+@router.get("/settings/reservation")
+def get_reservation_policy(db: Session = Depends(get_db), user: User = Depends(get_current_user),
+                           ctx: CompanyContext = Depends(get_company_context)):
+    return sales_service.politica_de_reserva(db, company_id=ctx.company_id)
+
+
+@router.put("/settings/reservation", dependencies=[Depends(require_write_allowed)])
+def put_reservation_policy(body: ReservationPolicyBody, db: Session = Depends(get_db),
+                           actor: User = Depends(require_permission("ventas", "approve")),
+                           ctx: CompanyContext = Depends(get_company_context)):
+    resultado = sales_service.configurar_reserva(db, company_id=ctx.company_id,
+                                                 reservation_ttl_days=body.reservation_ttl_days,
+                                                 actor=str(actor.id))
+    db.commit()
+    return resultado
+
+
+@router.post("/orders/{order_id}/submit", dependencies=[Depends(require_write_allowed)])
+def submit_order(order_id: str, db: Session = Depends(get_db),
+                 actor: User = Depends(require_permission("ventas", "submit")),
+                 ctx: CompanyContext = Depends(get_company_context)):
+    """Confirmación comercial: `DRAFT → SUBMITTED` con reserva (ADR-D0-003 v2)."""
+    order = _owned(db, SalesOrder, order_id, ctx.company_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
+    order = sales_service.confirmar_pedido(db, company_id=ctx.company_id, order_id=str(order.id), actor=str(actor.id))
+    db.commit()
+    db.refresh(order)
+    return sales_service.order_dict(db, order)
+
+
+@router.post("/orders/{order_id}/release", dependencies=[Depends(require_write_allowed)])
+def release_order(order_id: str, db: Session = Depends(get_db),
+                  actor: User = Depends(require_permission("ventas", "approve")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    """`SUBMITTED → RELEASED` tras la decisión favorable de la Spec 045."""
+    order = _owned(db, SalesOrder, order_id, ctx.company_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
+    order = sales_service.liberar_pedido(db, company_id=ctx.company_id, order_id=str(order.id), actor=str(actor.id))
+    db.commit()
+    db.refresh(order)
+    return sales_service.order_dict(db, order)
+
+
+@router.post("/orders/{order_id}/reject", dependencies=[Depends(require_write_allowed)])
+def reject_order(order_id: str, body: ReasonBody, db: Session = Depends(get_db),
+                 actor: User = Depends(require_permission("ventas", "approve")),
+                 ctx: CompanyContext = Depends(get_company_context)):
+    order = _owned(db, SalesOrder, order_id, ctx.company_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
+    order = sales_service.rechazar_pedido(db, company_id=ctx.company_id, order_id=str(order.id),
+                                          actor=str(actor.id), reason=body.reason)
+    db.commit()
+    db.refresh(order)
+    return sales_service.order_dict(db, order)
+
+
+@router.post("/orders/{order_id}/revert", dependencies=[Depends(require_write_allowed)])
+def revert_order(order_id: str, body: ReasonBody, db: Session = Depends(get_db),
+                 actor: User = Depends(require_permission("ventas", "submit")),
+                 ctx: CompanyContext = Depends(get_company_context)):
+    order = _owned(db, SalesOrder, order_id, ctx.company_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
+    order = sales_service.revertir_pedido(db, company_id=ctx.company_id, order_id=str(order.id),
+                                          actor=str(actor.id), reason=body.reason)
+    db.commit()
+    db.refresh(order)
+    return sales_service.order_dict(db, order)
+
+
+@router.post("/orders/{order_id}/cancel", dependencies=[Depends(require_write_allowed)])
+def cancel_order(order_id: str, body: ReasonBody, db: Session = Depends(get_db),
+                 actor: User = Depends(require_permission("ventas", "submit")),
+                 ctx: CompanyContext = Depends(get_company_context)):
+    order = _owned(db, SalesOrder, order_id, ctx.company_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
+    order = sales_service.cancelar_pedido(db, company_id=ctx.company_id, order_id=str(order.id),
+                                          actor=str(actor.id), reason=body.reason)
+    db.commit()
+    db.refresh(order)
+    return sales_service.order_dict(db, order)
 
 
 @router.post("/orders/{order_id}/transition", dependencies=[Depends(require_write_allowed)])
 def transition_order(order_id: str, body: TransitionBody, db: Session = Depends(get_db),
                      actor: User = Depends(require_permission("ventas", "approve")), ctx: CompanyContext = Depends(get_company_context)):
     order = _owned(db, SalesOrder, order_id, ctx.company_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
-    sales_service.transition_order(db, order=order, target=body.target, actor=str(actor.id),
-                                   credit_decision=body.credit_decision, approval_ref=body.approval_ref)
+    order = sales_service.transition_order(db, order=order, target=body.target, actor=str(actor.id),
+                                           credit_decision=body.credit_decision, approval_ref=body.approval_ref,
+                                           reason=body.reason)
     db.commit()
     db.refresh(order)
     return sales_service.order_dict(db, order)

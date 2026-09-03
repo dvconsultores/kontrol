@@ -13,10 +13,10 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import JSON, Boolean, Date, ForeignKey, Index, Integer, Numeric, String, Text
+from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.expression import column as sql_column
 
@@ -119,6 +119,15 @@ class SalesOrder(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     #: La cotización de la que nació, si nació de una. Único: una cotización
     #: produce **un** pedido. Convertir dos veces devuelve el mismo, no crea otro.
     quote_id: Mapped[str | None] = mapped_column(ForeignKey("sales_quotes.id"), nullable=True)
+    #: Motivo de la última transición que lo exige (cancelar, revertir,
+    #: rechazar). La auditoría lo guarda también; aquí queda a la vista.
+    status_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    #: Momento de la confirmación comercial (`DRAFT → SUBMITTED`): el instante
+    #: en que nació la reserva (ADR-D0-003 v2, R-D0-03-1).
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    #: Momento de la liberación a preparación (`→ RELEASED`): desde aquí el
+    #: pedido es elegible para la cola de la Spec 031.
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 class SalesOrderLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "sales_order_lines"

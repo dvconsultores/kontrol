@@ -51,7 +51,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 027 | Factura de proveedor / 3-way | `PARTIALLY_IMPLEMENTED` | conciliación a tres bandas en `purchasing` | — |
 | 028 | CxP y pagos | `PARTIALLY_IMPLEMENTED` | `ap_payments`, `ap_open_items`; tipo documental cerrado en N9 | 040 retenciones |
 | 029 | Cotización y pedido comercial | **`COMPLETE / CONVERGED`** (2026-09-01) | `sales_quotes`, `sales_orders` con origen comercial, ciclo de cotización, conversión 1:1 | **ninguno** |
-| 030 | Crédito / aprobación / reserva | **`READY_FOR_IMPLEMENTATION`** (2026-09-02) | `credit_decision` en la orden; reserva legada en `APPROVED` | **ninguno** — `D0-03 — CLOSED` (`ORDER_CONFIRMATION`) |
+| 030 | Crédito / aprobación / reserva | **`COMPLETE / CONVERGED`** (2026-09-02) | reserva al confirmar (`ORDER_CONFIRMATION`), bloqueo en PostgreSQL, crédito vía 045, `RELEASED` para 031; migración `0043` | **ninguno** |
 | 031 | Cola y ruta de picking | `BLOCKED_BY_DEPENDENCY` | `pick_lists`; **`pick_list_lines` sin ubicación ni secuencia** | 022 |
 | 032 | Picking y consolidación | `BLOCKED_BY_DEPENDENCY` | esqueleto en `sales` | 022 |
 | 033 | Confirmación independiente de pedido | **`NOT_STARTED`** | 0 tablas | 032 |
@@ -83,9 +83,9 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 
 | Estado | Specs |
 |---|---:|
-| `COMPLETE / CONVERGED` | 5 — 008, 011, 012, 029, 045 |
+| `COMPLETE / CONVERGED` | 6 — 008, 011, 012, 029, 030, 045 |
 | `RECONVERGED` | 1 — 046 |
-| `READY_FOR_IMPLEMENTATION` | **1 — 030** (D0-03 cerrada 2026-09-02) |
+| `READY_FOR_IMPLEMENTATION` | 0 — la siguiente se decide en el próximo checkpoint (candidatas 020 → 021 → 022, que desbloquean 031/032) |
 | `PARTIALLY_IMPLEMENTED` | 34 |
 | `NOT_STARTED` | 5 — 018, 020, 022, 033, 047 |
 | `BLOCKED_BY_DEPENDENCY` | 2 — 031, 032 |

@@ -75,6 +75,12 @@ class Mundo:
         return self.client.get(f"/api/v1{ruta}",
                                headers=self.como(usuario, empresa, tenant))
 
+    def put_json(self, ruta: str, usuario: str, empresa: str, cuerpo: dict,
+                 tenant: str = "T1"):
+        return self.client.put(f"/api/v1{ruta}",
+                               headers=self.como(usuario, empresa, tenant),
+                               json=cuerpo)
+
     def crear(self, ruta: str, usuario: str, empresa: str, cuerpo: dict) -> str:
         """Crea y devuelve el id, fallando con el cuerpo del error a la vista."""
         r = self.post(ruta, usuario, empresa, cuerpo)

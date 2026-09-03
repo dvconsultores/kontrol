@@ -67,7 +67,8 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
         "homologacion": ["view", "create", "edit", "approve"],
         "maestros": ["view", "create", "edit", "deactivate"],
         "compras": ["view", "create", "approve", "quality", "apply"],
-        "ventas": ["view", "create", "approve", "quality", "apply"],
+        # `submit` lo añade la Spec 030: emitir un pedido no es aprobarlo.
+        "ventas": ["view", "create", "submit", "approve", "quality", "apply"],
         "inventario": ["view", "create", "approve", "transition", "reserve"],
         "tesoreria": ["view", "create", "approve"],
         "fiscal": ["view", "create", "approve"],

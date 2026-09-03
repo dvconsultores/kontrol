@@ -95,3 +95,14 @@ Sin migración en este ciclo. Describe lo que la Spec 030 deberá materializar.
 Alcance de empresa: `Reservation` sigue siendo entidad directa (`__scope__ = COMPANY` con
 `company_id`), igual al `company_id` del pedido y del almacén; no se añade `company_id` a ninguna
 entidad derivada.
+
+## Materializado por la Spec 030 (migración `0043_spec030_reservation`, 2026-09-02)
+
+| Entidad | Planificado (D0-03) | Materializado |
+|---|---|---|
+| `Reservation` | `source_type`, `source_id`, `source_line_id`, `trigger`, `oversell`, `released_at/by`, `release_reason` | `source_type`, **`source_order_id`** (FK), `source_line_id` (FK), `trigger`, `oversell`, `released_at`, `released_by`, `release_reason`; `uq_reservations_active_line`; `ck_reservations_quantity_positive` |
+| `InventoryBalance` | unicidad de clave; `CHECK ≥ 0` | `uq_inventory_balances_key` (COALESCE); `ck_inventory_balances_reserved_nonneg` |
+| `SalesOrder` | `RELEASED`, `EXPIRED`; `reverted_reason/cancel_reason` | `RELEASED`, `EXPIRED`, sin `CREDIT_PENDING`; **`status_reason`** (un solo motivo visible), `submitted_at`, `released_at` |
+| Configuración de empresa | `reservation_ttl_days` (ubicación por decidir) | `companies.reservation_ttl_days` |
+| Permisos | `ventas:submit` | ídem, concedido a ADMIN |
+| Auditoría | eventos de reserva | `RESERVATION_CREATED/RELEASED/EXPIRED/FULFILLED`, `SALES_ORDER_REVERTED`, `COMPANY_RESERVATION_POLICY_CHANGED` |

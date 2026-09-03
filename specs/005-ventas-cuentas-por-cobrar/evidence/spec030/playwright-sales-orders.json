@@ -1,0 +1,532 @@
+{
+  "config": {
+    "argv": [
+      "/home/maria/.nvm/versions/node/v24.13.0/bin/node",
+      "/home/maria/Proyectos/kontrol/resources/frontend/node_modules/.bin/playwright",
+      "test",
+      "e2e/sales-orders.spec.ts",
+      "--project=chromium",
+      "--project=firefox",
+      "--project=webkit",
+      "--reporter=json"
+    ],
+    "configFile": "/home/maria/Proyectos/kontrol/resources/frontend/playwright.config.ts",
+    "rootDir": "/home/maria/Proyectos/kontrol/resources/frontend/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/maria/Proyectos/kontrol/resources/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/maria/Proyectos/kontrol/resources/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/maria/Proyectos/kontrol/resources/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/home/maria/Proyectos/kontrol/resources/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/maria/Proyectos/kontrol/resources/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/home/maria/Proyectos/kontrol/resources/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 2,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "sales-orders.spec.ts",
+      "file": "sales-orders.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Spec 030 — confirmar reserva y liberar",
+          "file": "sales-orders.spec.ts",
+          "line": 104,
+          "column": 6,
+          "specs": [
+            {
+              "title": "confirmar un pedido de contado lo deja liberado a preparación con la reserva hecha",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3548,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:05.444Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-dab2e61ad5fc82ffc9da",
+              "file": "sales-orders.spec.ts",
+              "line": 105,
+              "column": 3
+            },
+            {
+              "title": "sin disponible el pedido sigue en borrador y la pantalla dice cuánto falta",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3357,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:05.562Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-33f26b52c2d989f5564e",
+              "file": "sales-orders.spec.ts",
+              "line": 129,
+              "column": 3
+            },
+            {
+              "title": "cancelar exige motivo y libera la reserva",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3147,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:09.164Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-3496d6405f48cfe55f07",
+              "file": "sales-orders.spec.ts",
+              "line": 143,
+              "column": 3
+            },
+            {
+              "title": "la política de reserva muestra el disparador fijo y admite vigencia",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2570,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:09.279Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-f118ca7ed2126a57da39",
+              "file": "sales-orders.spec.ts",
+              "line": 167,
+              "column": 3
+            },
+            {
+              "title": "confirmar un pedido de contado lo deja liberado a preparación con la reserva hecha",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12618,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:12.916Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-ca6df1dcb189ea43b6d2",
+              "file": "sales-orders.spec.ts",
+              "line": 105,
+              "column": 3
+            },
+            {
+              "title": "sin disponible el pedido sigue en borrador y la pantalla dice cuánto falta",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 13040,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:13.413Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-d6a78bd4f17e272cbcb0",
+              "file": "sales-orders.spec.ts",
+              "line": 129,
+              "column": 3
+            },
+            {
+              "title": "cancelar exige motivo y libera la reserva",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5114,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:26.769Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-4b7c00cc9041e17cefa1",
+              "file": "sales-orders.spec.ts",
+              "line": 143,
+              "column": 3
+            },
+            {
+              "title": "la política de reserva muestra el disparador fijo y admite vigencia",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 5454,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:27.940Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-1577490a169910274851",
+              "file": "sales-orders.spec.ts",
+              "line": 167,
+              "column": 3
+            },
+            {
+              "title": "confirmar un pedido de contado lo deja liberado a preparación con la reserva hecha",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6802,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:33.826Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-1c6fca6393413e78ccac",
+              "file": "sales-orders.spec.ts",
+              "line": 105,
+              "column": 3
+            },
+            {
+              "title": "sin disponible el pedido sigue en borrador y la pantalla dice cuánto falta",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 7190,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:35.301Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-128747ac880c65877470",
+              "file": "sales-orders.spec.ts",
+              "line": 129,
+              "column": 3
+            },
+            {
+              "title": "cancelar exige motivo y libera la reserva",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7588,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:41.134Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-3681aebbc749d785ff67",
+              "file": "sales-orders.spec.ts",
+              "line": 143,
+              "column": 3
+            },
+            {
+              "title": "la política de reserva muestra el disparador fijo y admite vigencia",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 7381,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-02T19:16:42.772Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1d1051127fa5f5ede33d-7f19bd4d112a9a9f8d15",
+              "file": "sales-orders.spec.ts",
+              "line": 167,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-02T19:16:04.690Z",
+    "duration": 45676.814,
+    "expected": 12,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

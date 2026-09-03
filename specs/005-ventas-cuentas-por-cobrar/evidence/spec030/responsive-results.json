@@ -1,0 +1,1997 @@
+{
+  "summary": {
+    "audit_run_id": "KONTROL-AUDIT-20260902-SPEC030",
+    "timestamp": "2026-09-02T19:10:04.637Z",
+    "viewports": [
+      "320x568",
+      "375x667",
+      "412x915",
+      "768x1024",
+      "1366x768",
+      "1920x1080"
+    ],
+    "routes": 36,
+    "checks": 216,
+    "pass": 194,
+    "non_pass": 22,
+    "horizontal_scroll_cases": 22,
+    "by_viewport": [
+      {
+        "name": "320x568",
+        "checks": 36,
+        "hscroll": 15
+      },
+      {
+        "name": "375x667",
+        "checks": 36,
+        "hscroll": 4
+      },
+      {
+        "name": "412x915",
+        "checks": 36,
+        "hscroll": 3
+      },
+      {
+        "name": "768x1024",
+        "checks": 36,
+        "hscroll": 0
+      },
+      {
+        "name": "1366x768",
+        "checks": 36,
+        "hscroll": 0
+      },
+      {
+        "name": "1920x1080",
+        "checks": 36,
+        "hscroll": 0
+      }
+    ]
+  },
+  "results": [
+    {
+      "viewport": "320x568",
+      "route": "/",
+      "horizontal_scroll": false,
+      "h1": "Inicio",
+      "status": "PASS",
+      "ms": 741,
+      "url": "/"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/mi-licencia",
+      "horizontal_scroll": false,
+      "h1": "Mi licencia",
+      "status": "PASS",
+      "ms": 764,
+      "url": "/mi-licencia"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/organizacion/empresas",
+      "horizontal_scroll": false,
+      "h1": "Empresas",
+      "status": "PASS",
+      "ms": 785,
+      "url": "/organizacion/empresas"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/organizacion/sucursales",
+      "horizontal_scroll": false,
+      "h1": "Sucursales",
+      "status": "PASS",
+      "ms": 756,
+      "url": "/organizacion/sucursales"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/maestros/terceros",
+      "horizontal_scroll": false,
+      "h1": "Terceros",
+      "status": "PASS",
+      "ms": 761,
+      "url": "/maestros/terceros"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/maestros/productos",
+      "horizontal_scroll": false,
+      "h1": "Productos",
+      "status": "PASS",
+      "ms": 760,
+      "url": "/maestros/productos"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/maestros/atributos",
+      "horizontal_scroll": true,
+      "h1": "Atributos de catálogo",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 756,
+      "url": "/maestros/atributos"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/inventario/existencias",
+      "horizontal_scroll": false,
+      "h1": "Existencias",
+      "status": "PASS",
+      "ms": 758,
+      "url": "/inventario/existencias"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/inventario/kardex",
+      "horizontal_scroll": false,
+      "h1": "Kardex",
+      "status": "PASS",
+      "ms": 766,
+      "url": "/inventario/kardex"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/inventario/movimientos",
+      "horizontal_scroll": true,
+      "h1": "Movimientos",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 760,
+      "url": "/inventario/movimientos"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/inventario/transferencias",
+      "horizontal_scroll": true,
+      "h1": "Transferencias",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 778,
+      "url": "/inventario/transferencias"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/inventario/seriales",
+      "horizontal_scroll": true,
+      "h1": "Seriales",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 751,
+      "url": "/inventario/seriales"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/inventario/reservas",
+      "horizontal_scroll": true,
+      "h1": "Reservas",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 768,
+      "url": "/inventario/reservas"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/inventario/tipos-movimiento",
+      "horizontal_scroll": true,
+      "h1": "Tipos de movimiento",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 767,
+      "url": "/inventario/tipos-movimiento"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/compras/ordenes",
+      "horizontal_scroll": true,
+      "h1": "Órdenes de compra",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 785,
+      "url": "/compras/ordenes"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/compras/facturas",
+      "horizontal_scroll": true,
+      "h1": "Facturas del proveedor",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 746,
+      "url": "/compras/facturas"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/compras/cotizaciones",
+      "horizontal_scroll": true,
+      "h1": "Cotizaciones de compra",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 763,
+      "url": "/compras/cotizaciones"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/compras/cuentas-por-pagar",
+      "horizontal_scroll": true,
+      "h1": "Cuentas por pagar",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 771,
+      "url": "/compras/cuentas-por-pagar"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/ventas/ordenes",
+      "horizontal_scroll": true,
+      "h1": "Órdenes de venta",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 752,
+      "url": "/ventas/ordenes"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/ventas/facturas",
+      "horizontal_scroll": true,
+      "h1": "Facturas de venta",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 754,
+      "url": "/ventas/facturas"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/ventas/cuentas-por-cobrar",
+      "horizontal_scroll": true,
+      "h1": "Cuentas por cobrar",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 767,
+      "url": "/ventas/cuentas-por-cobrar"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/tesoreria/cajas",
+      "horizontal_scroll": false,
+      "h1": "Cajas y arqueo",
+      "status": "PASS",
+      "ms": 788,
+      "url": "/tesoreria/cajas"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/tesoreria/conciliacion",
+      "horizontal_scroll": false,
+      "h1": "Conciliación bancaria",
+      "status": "PASS",
+      "ms": 757,
+      "url": "/tesoreria/conciliacion"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/fiscal/configuracion",
+      "horizontal_scroll": false,
+      "h1": "Configuración fiscal",
+      "status": "PASS",
+      "ms": 750,
+      "url": "/fiscal/configuracion"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/fiscal/numeracion",
+      "horizontal_scroll": false,
+      "h1": "Numeración y números de control",
+      "status": "PASS",
+      "ms": 747,
+      "url": "/fiscal/numeracion"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/fiscal/lotes-declaracion",
+      "horizontal_scroll": true,
+      "h1": "Lotes de declaración",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 759,
+      "url": "/fiscal/lotes-declaracion"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/regulatorio/aprobaciones",
+      "horizontal_scroll": false,
+      "h1": "Aprobaciones regulatorias",
+      "status": "PASS",
+      "ms": 769,
+      "url": "/regulatorio/aprobaciones"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/reportes/centro",
+      "horizontal_scroll": false,
+      "h1": "Centro de reportes",
+      "status": "PASS",
+      "ms": 761,
+      "url": "/reportes/centro"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/aprobaciones/bandeja",
+      "horizontal_scroll": false,
+      "h1": "Mis aprobaciones",
+      "status": "PASS",
+      "ms": 742,
+      "url": "/aprobaciones/bandeja"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/aprobaciones/politicas",
+      "horizontal_scroll": false,
+      "h1": "Políticas de aprobación",
+      "status": "PASS",
+      "ms": 755,
+      "url": "/aprobaciones/politicas"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/aprobaciones/delegaciones",
+      "horizontal_scroll": false,
+      "h1": "Delegaciones",
+      "status": "PASS",
+      "ms": 765,
+      "url": "/aprobaciones/delegaciones"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/reportes/exportaciones",
+      "horizontal_scroll": false,
+      "h1": "Exportaciones y trabajos",
+      "status": "PASS",
+      "ms": 748,
+      "url": "/reportes/exportaciones"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/reportes/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 750,
+      "url": "/reportes/auditoria"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/seguridad/usuarios",
+      "horizontal_scroll": false,
+      "h1": "Usuarios",
+      "status": "PASS",
+      "ms": 749,
+      "url": "/seguridad/usuarios"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/seguridad/roles",
+      "horizontal_scroll": true,
+      "h1": "Roles y permisos",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 756,
+      "url": "/seguridad/roles"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 749,
+      "url": "/auditoria"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/",
+      "horizontal_scroll": false,
+      "h1": "Inicio",
+      "status": "PASS",
+      "ms": 748,
+      "url": "/"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/mi-licencia",
+      "horizontal_scroll": false,
+      "h1": "Mi licencia",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/mi-licencia"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/organizacion/empresas",
+      "horizontal_scroll": false,
+      "h1": "Empresas",
+      "status": "PASS",
+      "ms": 736,
+      "url": "/organizacion/empresas"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/organizacion/sucursales",
+      "horizontal_scroll": false,
+      "h1": "Sucursales",
+      "status": "PASS",
+      "ms": 731,
+      "url": "/organizacion/sucursales"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/maestros/terceros",
+      "horizontal_scroll": false,
+      "h1": "Terceros",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/maestros/terceros"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/maestros/productos",
+      "horizontal_scroll": false,
+      "h1": "Productos",
+      "status": "PASS",
+      "ms": 737,
+      "url": "/maestros/productos"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/maestros/atributos",
+      "horizontal_scroll": false,
+      "h1": "Atributos de catálogo",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/maestros/atributos"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/inventario/existencias",
+      "horizontal_scroll": false,
+      "h1": "Existencias",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/inventario/existencias"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/inventario/kardex",
+      "horizontal_scroll": false,
+      "h1": "Kardex",
+      "status": "PASS",
+      "ms": 728,
+      "url": "/inventario/kardex"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/inventario/movimientos",
+      "horizontal_scroll": true,
+      "h1": "Movimientos",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 732,
+      "url": "/inventario/movimientos"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/inventario/transferencias",
+      "horizontal_scroll": true,
+      "h1": "Transferencias",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 741,
+      "url": "/inventario/transferencias"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/inventario/seriales",
+      "horizontal_scroll": false,
+      "h1": "Seriales",
+      "status": "PASS",
+      "ms": 761,
+      "url": "/inventario/seriales"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/inventario/reservas",
+      "horizontal_scroll": false,
+      "h1": "Reservas",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/inventario/reservas"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/inventario/tipos-movimiento",
+      "horizontal_scroll": false,
+      "h1": "Tipos de movimiento",
+      "status": "PASS",
+      "ms": 736,
+      "url": "/inventario/tipos-movimiento"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/compras/ordenes",
+      "horizontal_scroll": false,
+      "h1": "Órdenes de compra",
+      "status": "PASS",
+      "ms": 732,
+      "url": "/compras/ordenes"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/compras/facturas",
+      "horizontal_scroll": false,
+      "h1": "Facturas del proveedor",
+      "status": "PASS",
+      "ms": 739,
+      "url": "/compras/facturas"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/compras/cotizaciones",
+      "horizontal_scroll": false,
+      "h1": "Cotizaciones de compra",
+      "status": "PASS",
+      "ms": 731,
+      "url": "/compras/cotizaciones"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/compras/cuentas-por-pagar",
+      "horizontal_scroll": true,
+      "h1": "Cuentas por pagar",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 764,
+      "url": "/compras/cuentas-por-pagar"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/ventas/ordenes",
+      "horizontal_scroll": false,
+      "h1": "Órdenes de venta",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/ventas/ordenes"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/ventas/facturas",
+      "horizontal_scroll": false,
+      "h1": "Facturas de venta",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/ventas/facturas"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/ventas/cuentas-por-cobrar",
+      "horizontal_scroll": true,
+      "h1": "Cuentas por cobrar",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 734,
+      "url": "/ventas/cuentas-por-cobrar"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/tesoreria/cajas",
+      "horizontal_scroll": false,
+      "h1": "Cajas y arqueo",
+      "status": "PASS",
+      "ms": 737,
+      "url": "/tesoreria/cajas"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/tesoreria/conciliacion",
+      "horizontal_scroll": false,
+      "h1": "Conciliación bancaria",
+      "status": "PASS",
+      "ms": 724,
+      "url": "/tesoreria/conciliacion"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/fiscal/configuracion",
+      "horizontal_scroll": false,
+      "h1": "Configuración fiscal",
+      "status": "PASS",
+      "ms": 726,
+      "url": "/fiscal/configuracion"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/fiscal/numeracion",
+      "horizontal_scroll": false,
+      "h1": "Numeración y números de control",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/fiscal/numeracion"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/fiscal/lotes-declaracion",
+      "horizontal_scroll": false,
+      "h1": "Lotes de declaración",
+      "status": "PASS",
+      "ms": 732,
+      "url": "/fiscal/lotes-declaracion"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/regulatorio/aprobaciones",
+      "horizontal_scroll": false,
+      "h1": "Aprobaciones regulatorias",
+      "status": "PASS",
+      "ms": 729,
+      "url": "/regulatorio/aprobaciones"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/reportes/centro",
+      "horizontal_scroll": false,
+      "h1": "Centro de reportes",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/reportes/centro"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/aprobaciones/bandeja",
+      "horizontal_scroll": false,
+      "h1": "Mis aprobaciones",
+      "status": "PASS",
+      "ms": 731,
+      "url": "/aprobaciones/bandeja"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/aprobaciones/politicas",
+      "horizontal_scroll": false,
+      "h1": "Políticas de aprobación",
+      "status": "PASS",
+      "ms": 737,
+      "url": "/aprobaciones/politicas"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/aprobaciones/delegaciones",
+      "horizontal_scroll": false,
+      "h1": "Delegaciones",
+      "status": "PASS",
+      "ms": 728,
+      "url": "/aprobaciones/delegaciones"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/reportes/exportaciones",
+      "horizontal_scroll": false,
+      "h1": "Exportaciones y trabajos",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/reportes/exportaciones"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/reportes/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 738,
+      "url": "/reportes/auditoria"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/seguridad/usuarios",
+      "horizontal_scroll": false,
+      "h1": "Usuarios",
+      "status": "PASS",
+      "ms": 737,
+      "url": "/seguridad/usuarios"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/seguridad/roles",
+      "horizontal_scroll": false,
+      "h1": "Roles y permisos",
+      "status": "PASS",
+      "ms": 729,
+      "url": "/seguridad/roles"
+    },
+    {
+      "viewport": "375x667",
+      "route": "/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 739,
+      "url": "/auditoria"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/",
+      "horizontal_scroll": false,
+      "h1": "Inicio",
+      "status": "PASS",
+      "ms": 747,
+      "url": "/"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/mi-licencia",
+      "horizontal_scroll": false,
+      "h1": "Mi licencia",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/mi-licencia"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/organizacion/empresas",
+      "horizontal_scroll": false,
+      "h1": "Empresas",
+      "status": "PASS",
+      "ms": 720,
+      "url": "/organizacion/empresas"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/organizacion/sucursales",
+      "horizontal_scroll": false,
+      "h1": "Sucursales",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/organizacion/sucursales"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/maestros/terceros",
+      "horizontal_scroll": false,
+      "h1": "Terceros",
+      "status": "PASS",
+      "ms": 739,
+      "url": "/maestros/terceros"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/maestros/productos",
+      "horizontal_scroll": false,
+      "h1": "Productos",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/maestros/productos"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/maestros/atributos",
+      "horizontal_scroll": false,
+      "h1": "Atributos de catálogo",
+      "status": "PASS",
+      "ms": 765,
+      "url": "/maestros/atributos"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/inventario/existencias",
+      "horizontal_scroll": false,
+      "h1": "Existencias",
+      "status": "PASS",
+      "ms": 770,
+      "url": "/inventario/existencias"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/inventario/kardex",
+      "horizontal_scroll": false,
+      "h1": "Kardex",
+      "status": "PASS",
+      "ms": 743,
+      "url": "/inventario/kardex"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/inventario/movimientos",
+      "horizontal_scroll": false,
+      "h1": "Movimientos",
+      "status": "PASS",
+      "ms": 732,
+      "url": "/inventario/movimientos"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/inventario/transferencias",
+      "horizontal_scroll": true,
+      "h1": "Transferencias",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 733,
+      "url": "/inventario/transferencias"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/inventario/seriales",
+      "horizontal_scroll": false,
+      "h1": "Seriales",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/inventario/seriales"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/inventario/reservas",
+      "horizontal_scroll": false,
+      "h1": "Reservas",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/inventario/reservas"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/inventario/tipos-movimiento",
+      "horizontal_scroll": false,
+      "h1": "Tipos de movimiento",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/inventario/tipos-movimiento"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/compras/ordenes",
+      "horizontal_scroll": false,
+      "h1": "Órdenes de compra",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/compras/ordenes"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/compras/facturas",
+      "horizontal_scroll": false,
+      "h1": "Facturas del proveedor",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/compras/facturas"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/compras/cotizaciones",
+      "horizontal_scroll": false,
+      "h1": "Cotizaciones de compra",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/compras/cotizaciones"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/compras/cuentas-por-pagar",
+      "horizontal_scroll": true,
+      "h1": "Cuentas por pagar",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 736,
+      "url": "/compras/cuentas-por-pagar"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/ventas/ordenes",
+      "horizontal_scroll": false,
+      "h1": "Órdenes de venta",
+      "status": "PASS",
+      "ms": 730,
+      "url": "/ventas/ordenes"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/ventas/facturas",
+      "horizontal_scroll": false,
+      "h1": "Facturas de venta",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/ventas/facturas"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/ventas/cuentas-por-cobrar",
+      "horizontal_scroll": true,
+      "h1": "Cuentas por cobrar",
+      "status": "HORIZONTAL_SCROLL",
+      "ms": 738,
+      "url": "/ventas/cuentas-por-cobrar"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/tesoreria/cajas",
+      "horizontal_scroll": false,
+      "h1": "Cajas y arqueo",
+      "status": "PASS",
+      "ms": 747,
+      "url": "/tesoreria/cajas"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/tesoreria/conciliacion",
+      "horizontal_scroll": false,
+      "h1": "Conciliación bancaria",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/tesoreria/conciliacion"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/fiscal/configuracion",
+      "horizontal_scroll": false,
+      "h1": "Configuración fiscal",
+      "status": "PASS",
+      "ms": 732,
+      "url": "/fiscal/configuracion"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/fiscal/numeracion",
+      "horizontal_scroll": false,
+      "h1": "Numeración y números de control",
+      "status": "PASS",
+      "ms": 732,
+      "url": "/fiscal/numeracion"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/fiscal/lotes-declaracion",
+      "horizontal_scroll": false,
+      "h1": "Lotes de declaración",
+      "status": "PASS",
+      "ms": 727,
+      "url": "/fiscal/lotes-declaracion"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/regulatorio/aprobaciones",
+      "horizontal_scroll": false,
+      "h1": "Aprobaciones regulatorias",
+      "status": "PASS",
+      "ms": 738,
+      "url": "/regulatorio/aprobaciones"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/reportes/centro",
+      "horizontal_scroll": false,
+      "h1": "Centro de reportes",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/reportes/centro"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/aprobaciones/bandeja",
+      "horizontal_scroll": false,
+      "h1": "Mis aprobaciones",
+      "status": "PASS",
+      "ms": 755,
+      "url": "/aprobaciones/bandeja"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/aprobaciones/politicas",
+      "horizontal_scroll": false,
+      "h1": "Políticas de aprobación",
+      "status": "PASS",
+      "ms": 723,
+      "url": "/aprobaciones/politicas"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/aprobaciones/delegaciones",
+      "horizontal_scroll": false,
+      "h1": "Delegaciones",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/aprobaciones/delegaciones"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/reportes/exportaciones",
+      "horizontal_scroll": false,
+      "h1": "Exportaciones y trabajos",
+      "status": "PASS",
+      "ms": 738,
+      "url": "/reportes/exportaciones"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/reportes/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 727,
+      "url": "/reportes/auditoria"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/seguridad/usuarios",
+      "horizontal_scroll": false,
+      "h1": "Usuarios",
+      "status": "PASS",
+      "ms": 719,
+      "url": "/seguridad/usuarios"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/seguridad/roles",
+      "horizontal_scroll": false,
+      "h1": "Roles y permisos",
+      "status": "PASS",
+      "ms": 716,
+      "url": "/seguridad/roles"
+    },
+    {
+      "viewport": "412x915",
+      "route": "/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 716,
+      "url": "/auditoria"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/",
+      "horizontal_scroll": false,
+      "h1": "Inicio",
+      "status": "PASS",
+      "ms": 753,
+      "url": "/"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/mi-licencia",
+      "horizontal_scroll": false,
+      "h1": "Mi licencia",
+      "status": "PASS",
+      "ms": 726,
+      "url": "/mi-licencia"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/organizacion/empresas",
+      "horizontal_scroll": false,
+      "h1": "Empresas",
+      "status": "PASS",
+      "ms": 718,
+      "url": "/organizacion/empresas"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/organizacion/sucursales",
+      "horizontal_scroll": false,
+      "h1": "Sucursales",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/organizacion/sucursales"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/maestros/terceros",
+      "horizontal_scroll": false,
+      "h1": "Terceros",
+      "status": "PASS",
+      "ms": 761,
+      "url": "/maestros/terceros"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/maestros/productos",
+      "horizontal_scroll": false,
+      "h1": "Productos",
+      "status": "PASS",
+      "ms": 723,
+      "url": "/maestros/productos"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/maestros/atributos",
+      "horizontal_scroll": false,
+      "h1": "Atributos de catálogo",
+      "status": "PASS",
+      "ms": 740,
+      "url": "/maestros/atributos"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/inventario/existencias",
+      "horizontal_scroll": false,
+      "h1": "Existencias",
+      "status": "PASS",
+      "ms": 725,
+      "url": "/inventario/existencias"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/inventario/kardex",
+      "horizontal_scroll": false,
+      "h1": "Kardex",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/inventario/kardex"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/inventario/movimientos",
+      "horizontal_scroll": false,
+      "h1": "Movimientos",
+      "status": "PASS",
+      "ms": 729,
+      "url": "/inventario/movimientos"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/inventario/transferencias",
+      "horizontal_scroll": false,
+      "h1": "Transferencias",
+      "status": "PASS",
+      "ms": 718,
+      "url": "/inventario/transferencias"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/inventario/seriales",
+      "horizontal_scroll": false,
+      "h1": "Seriales",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/inventario/seriales"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/inventario/reservas",
+      "horizontal_scroll": false,
+      "h1": "Reservas",
+      "status": "PASS",
+      "ms": 736,
+      "url": "/inventario/reservas"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/inventario/tipos-movimiento",
+      "horizontal_scroll": false,
+      "h1": "Tipos de movimiento",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/inventario/tipos-movimiento"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/compras/ordenes",
+      "horizontal_scroll": false,
+      "h1": "Órdenes de compra",
+      "status": "PASS",
+      "ms": 729,
+      "url": "/compras/ordenes"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/compras/facturas",
+      "horizontal_scroll": false,
+      "h1": "Facturas del proveedor",
+      "status": "PASS",
+      "ms": 718,
+      "url": "/compras/facturas"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/compras/cotizaciones",
+      "horizontal_scroll": false,
+      "h1": "Cotizaciones de compra",
+      "status": "PASS",
+      "ms": 739,
+      "url": "/compras/cotizaciones"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/compras/cuentas-por-pagar",
+      "horizontal_scroll": false,
+      "h1": "Cuentas por pagar",
+      "status": "PASS",
+      "ms": 730,
+      "url": "/compras/cuentas-por-pagar"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/ventas/ordenes",
+      "horizontal_scroll": false,
+      "h1": "Órdenes de venta",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/ventas/ordenes"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/ventas/facturas",
+      "horizontal_scroll": false,
+      "h1": "Facturas de venta",
+      "status": "PASS",
+      "ms": 732,
+      "url": "/ventas/facturas"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/ventas/cuentas-por-cobrar",
+      "horizontal_scroll": false,
+      "h1": "Cuentas por cobrar",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/ventas/cuentas-por-cobrar"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/tesoreria/cajas",
+      "horizontal_scroll": false,
+      "h1": "Cajas y arqueo",
+      "status": "PASS",
+      "ms": 736,
+      "url": "/tesoreria/cajas"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/tesoreria/conciliacion",
+      "horizontal_scroll": false,
+      "h1": "Conciliación bancaria",
+      "status": "PASS",
+      "ms": 727,
+      "url": "/tesoreria/conciliacion"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/fiscal/configuracion",
+      "horizontal_scroll": false,
+      "h1": "Configuración fiscal",
+      "status": "PASS",
+      "ms": 716,
+      "url": "/fiscal/configuracion"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/fiscal/numeracion",
+      "horizontal_scroll": false,
+      "h1": "Numeración y números de control",
+      "status": "PASS",
+      "ms": 737,
+      "url": "/fiscal/numeracion"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/fiscal/lotes-declaracion",
+      "horizontal_scroll": false,
+      "h1": "Lotes de declaración",
+      "status": "PASS",
+      "ms": 732,
+      "url": "/fiscal/lotes-declaracion"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/regulatorio/aprobaciones",
+      "horizontal_scroll": false,
+      "h1": "Aprobaciones regulatorias",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/regulatorio/aprobaciones"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/reportes/centro",
+      "horizontal_scroll": false,
+      "h1": "Centro de reportes",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/reportes/centro"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/aprobaciones/bandeja",
+      "horizontal_scroll": false,
+      "h1": "Mis aprobaciones",
+      "status": "PASS",
+      "ms": 732,
+      "url": "/aprobaciones/bandeja"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/aprobaciones/politicas",
+      "horizontal_scroll": false,
+      "h1": "Políticas de aprobación",
+      "status": "PASS",
+      "ms": 715,
+      "url": "/aprobaciones/politicas"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/aprobaciones/delegaciones",
+      "horizontal_scroll": false,
+      "h1": "Delegaciones",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/aprobaciones/delegaciones"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/reportes/exportaciones",
+      "horizontal_scroll": false,
+      "h1": "Exportaciones y trabajos",
+      "status": "PASS",
+      "ms": 719,
+      "url": "/reportes/exportaciones"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/reportes/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 730,
+      "url": "/reportes/auditoria"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/seguridad/usuarios",
+      "horizontal_scroll": false,
+      "h1": "Usuarios",
+      "status": "PASS",
+      "ms": 719,
+      "url": "/seguridad/usuarios"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/seguridad/roles",
+      "horizontal_scroll": false,
+      "h1": "Roles y permisos",
+      "status": "PASS",
+      "ms": 719,
+      "url": "/seguridad/roles"
+    },
+    {
+      "viewport": "768x1024",
+      "route": "/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/auditoria"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/",
+      "horizontal_scroll": false,
+      "h1": "Inicio",
+      "status": "PASS",
+      "ms": 739,
+      "url": "/"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/mi-licencia",
+      "horizontal_scroll": false,
+      "h1": "Mi licencia",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/mi-licencia"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/organizacion/empresas",
+      "horizontal_scroll": false,
+      "h1": "Empresas",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/organizacion/empresas"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/organizacion/sucursales",
+      "horizontal_scroll": false,
+      "h1": "Sucursales",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/organizacion/sucursales"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/maestros/terceros",
+      "horizontal_scroll": false,
+      "h1": "Terceros",
+      "status": "PASS",
+      "ms": 728,
+      "url": "/maestros/terceros"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/maestros/productos",
+      "horizontal_scroll": false,
+      "h1": "Productos",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/maestros/productos"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/maestros/atributos",
+      "horizontal_scroll": false,
+      "h1": "Atributos de catálogo",
+      "status": "PASS",
+      "ms": 732,
+      "url": "/maestros/atributos"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/inventario/existencias",
+      "horizontal_scroll": false,
+      "h1": "Existencias",
+      "status": "PASS",
+      "ms": 739,
+      "url": "/inventario/existencias"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/inventario/kardex",
+      "horizontal_scroll": false,
+      "h1": "Kardex",
+      "status": "PASS",
+      "ms": 754,
+      "url": "/inventario/kardex"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/inventario/movimientos",
+      "horizontal_scroll": false,
+      "h1": "Movimientos",
+      "status": "PASS",
+      "ms": 721,
+      "url": "/inventario/movimientos"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/inventario/transferencias",
+      "horizontal_scroll": false,
+      "h1": "Transferencias",
+      "status": "PASS",
+      "ms": 716,
+      "url": "/inventario/transferencias"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/inventario/seriales",
+      "horizontal_scroll": false,
+      "h1": "Seriales",
+      "status": "PASS",
+      "ms": 719,
+      "url": "/inventario/seriales"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/inventario/reservas",
+      "horizontal_scroll": false,
+      "h1": "Reservas",
+      "status": "PASS",
+      "ms": 715,
+      "url": "/inventario/reservas"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/inventario/tipos-movimiento",
+      "horizontal_scroll": false,
+      "h1": "Tipos de movimiento",
+      "status": "PASS",
+      "ms": 718,
+      "url": "/inventario/tipos-movimiento"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/compras/ordenes",
+      "horizontal_scroll": false,
+      "h1": "Órdenes de compra",
+      "status": "PASS",
+      "ms": 715,
+      "url": "/compras/ordenes"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/compras/facturas",
+      "horizontal_scroll": false,
+      "h1": "Facturas del proveedor",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/compras/facturas"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/compras/cotizaciones",
+      "horizontal_scroll": false,
+      "h1": "Cotizaciones de compra",
+      "status": "PASS",
+      "ms": 718,
+      "url": "/compras/cotizaciones"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/compras/cuentas-por-pagar",
+      "horizontal_scroll": false,
+      "h1": "Cuentas por pagar",
+      "status": "PASS",
+      "ms": 740,
+      "url": "/compras/cuentas-por-pagar"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/ventas/ordenes",
+      "horizontal_scroll": false,
+      "h1": "Órdenes de venta",
+      "status": "PASS",
+      "ms": 729,
+      "url": "/ventas/ordenes"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/ventas/facturas",
+      "horizontal_scroll": false,
+      "h1": "Facturas de venta",
+      "status": "PASS",
+      "ms": 731,
+      "url": "/ventas/facturas"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/ventas/cuentas-por-cobrar",
+      "horizontal_scroll": false,
+      "h1": "Cuentas por cobrar",
+      "status": "PASS",
+      "ms": 750,
+      "url": "/ventas/cuentas-por-cobrar"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/tesoreria/cajas",
+      "horizontal_scroll": false,
+      "h1": "Cajas y arqueo",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/tesoreria/cajas"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/tesoreria/conciliacion",
+      "horizontal_scroll": false,
+      "h1": "Conciliación bancaria",
+      "status": "PASS",
+      "ms": 732,
+      "url": "/tesoreria/conciliacion"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/fiscal/configuracion",
+      "horizontal_scroll": false,
+      "h1": "Configuración fiscal",
+      "status": "PASS",
+      "ms": 740,
+      "url": "/fiscal/configuracion"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/fiscal/numeracion",
+      "horizontal_scroll": false,
+      "h1": "Numeración y números de control",
+      "status": "PASS",
+      "ms": 726,
+      "url": "/fiscal/numeracion"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/fiscal/lotes-declaracion",
+      "horizontal_scroll": false,
+      "h1": "Lotes de declaración",
+      "status": "PASS",
+      "ms": 737,
+      "url": "/fiscal/lotes-declaracion"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/regulatorio/aprobaciones",
+      "horizontal_scroll": false,
+      "h1": "Aprobaciones regulatorias",
+      "status": "PASS",
+      "ms": 737,
+      "url": "/regulatorio/aprobaciones"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/reportes/centro",
+      "horizontal_scroll": false,
+      "h1": "Centro de reportes",
+      "status": "PASS",
+      "ms": 731,
+      "url": "/reportes/centro"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/aprobaciones/bandeja",
+      "horizontal_scroll": false,
+      "h1": "Mis aprobaciones",
+      "status": "PASS",
+      "ms": 787,
+      "url": "/aprobaciones/bandeja"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/aprobaciones/politicas",
+      "horizontal_scroll": false,
+      "h1": "Políticas de aprobación",
+      "status": "PASS",
+      "ms": 725,
+      "url": "/aprobaciones/politicas"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/aprobaciones/delegaciones",
+      "horizontal_scroll": false,
+      "h1": "Delegaciones",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/aprobaciones/delegaciones"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/reportes/exportaciones",
+      "horizontal_scroll": false,
+      "h1": "Exportaciones y trabajos",
+      "status": "PASS",
+      "ms": 719,
+      "url": "/reportes/exportaciones"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/reportes/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 736,
+      "url": "/reportes/auditoria"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/seguridad/usuarios",
+      "horizontal_scroll": false,
+      "h1": "Usuarios",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/seguridad/usuarios"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/seguridad/roles",
+      "horizontal_scroll": false,
+      "h1": "Roles y permisos",
+      "status": "PASS",
+      "ms": 731,
+      "url": "/seguridad/roles"
+    },
+    {
+      "viewport": "1366x768",
+      "route": "/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 736,
+      "url": "/auditoria"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/",
+      "horizontal_scroll": false,
+      "h1": "Inicio",
+      "status": "PASS",
+      "ms": 739,
+      "url": "/"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/mi-licencia",
+      "horizontal_scroll": false,
+      "h1": "Mi licencia",
+      "status": "PASS",
+      "ms": 721,
+      "url": "/mi-licencia"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/organizacion/empresas",
+      "horizontal_scroll": false,
+      "h1": "Empresas",
+      "status": "PASS",
+      "ms": 748,
+      "url": "/organizacion/empresas"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/organizacion/sucursales",
+      "horizontal_scroll": false,
+      "h1": "Sucursales",
+      "status": "PASS",
+      "ms": 736,
+      "url": "/organizacion/sucursales"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/maestros/terceros",
+      "horizontal_scroll": false,
+      "h1": "Terceros",
+      "status": "PASS",
+      "ms": 730,
+      "url": "/maestros/terceros"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/maestros/productos",
+      "horizontal_scroll": false,
+      "h1": "Productos",
+      "status": "PASS",
+      "ms": 742,
+      "url": "/maestros/productos"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/maestros/atributos",
+      "horizontal_scroll": false,
+      "h1": "Atributos de catálogo",
+      "status": "PASS",
+      "ms": 725,
+      "url": "/maestros/atributos"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/inventario/existencias",
+      "horizontal_scroll": false,
+      "h1": "Existencias",
+      "status": "PASS",
+      "ms": 729,
+      "url": "/inventario/existencias"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/inventario/kardex",
+      "horizontal_scroll": false,
+      "h1": "Kardex",
+      "status": "PASS",
+      "ms": 718,
+      "url": "/inventario/kardex"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/inventario/movimientos",
+      "horizontal_scroll": false,
+      "h1": "Movimientos",
+      "status": "PASS",
+      "ms": 716,
+      "url": "/inventario/movimientos"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/inventario/transferencias",
+      "horizontal_scroll": false,
+      "h1": "Transferencias",
+      "status": "PASS",
+      "ms": 719,
+      "url": "/inventario/transferencias"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/inventario/seriales",
+      "horizontal_scroll": false,
+      "h1": "Seriales",
+      "status": "PASS",
+      "ms": 718,
+      "url": "/inventario/seriales"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/inventario/reservas",
+      "horizontal_scroll": false,
+      "h1": "Reservas",
+      "status": "PASS",
+      "ms": 730,
+      "url": "/inventario/reservas"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/inventario/tipos-movimiento",
+      "horizontal_scroll": false,
+      "h1": "Tipos de movimiento",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/inventario/tipos-movimiento"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/compras/ordenes",
+      "horizontal_scroll": false,
+      "h1": "Órdenes de compra",
+      "status": "PASS",
+      "ms": 716,
+      "url": "/compras/ordenes"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/compras/facturas",
+      "horizontal_scroll": false,
+      "h1": "Facturas del proveedor",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/compras/facturas"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/compras/cotizaciones",
+      "horizontal_scroll": false,
+      "h1": "Cotizaciones de compra",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/compras/cotizaciones"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/compras/cuentas-por-pagar",
+      "horizontal_scroll": false,
+      "h1": "Cuentas por pagar",
+      "status": "PASS",
+      "ms": 716,
+      "url": "/compras/cuentas-por-pagar"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/ventas/ordenes",
+      "horizontal_scroll": false,
+      "h1": "Órdenes de venta",
+      "status": "PASS",
+      "ms": 719,
+      "url": "/ventas/ordenes"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/ventas/facturas",
+      "horizontal_scroll": false,
+      "h1": "Facturas de venta",
+      "status": "PASS",
+      "ms": 716,
+      "url": "/ventas/facturas"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/ventas/cuentas-por-cobrar",
+      "horizontal_scroll": false,
+      "h1": "Cuentas por cobrar",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/ventas/cuentas-por-cobrar"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/tesoreria/cajas",
+      "horizontal_scroll": false,
+      "h1": "Cajas y arqueo",
+      "status": "PASS",
+      "ms": 733,
+      "url": "/tesoreria/cajas"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/tesoreria/conciliacion",
+      "horizontal_scroll": false,
+      "h1": "Conciliación bancaria",
+      "status": "PASS",
+      "ms": 716,
+      "url": "/tesoreria/conciliacion"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/fiscal/configuracion",
+      "horizontal_scroll": false,
+      "h1": "Configuración fiscal",
+      "status": "PASS",
+      "ms": 718,
+      "url": "/fiscal/configuracion"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/fiscal/numeracion",
+      "horizontal_scroll": false,
+      "h1": "Numeración y números de control",
+      "status": "PASS",
+      "ms": 734,
+      "url": "/fiscal/numeracion"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/fiscal/lotes-declaracion",
+      "horizontal_scroll": false,
+      "h1": "Lotes de declaración",
+      "status": "PASS",
+      "ms": 737,
+      "url": "/fiscal/lotes-declaracion"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/regulatorio/aprobaciones",
+      "horizontal_scroll": false,
+      "h1": "Aprobaciones regulatorias",
+      "status": "PASS",
+      "ms": 729,
+      "url": "/regulatorio/aprobaciones"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/reportes/centro",
+      "horizontal_scroll": false,
+      "h1": "Centro de reportes",
+      "status": "PASS",
+      "ms": 737,
+      "url": "/reportes/centro"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/aprobaciones/bandeja",
+      "horizontal_scroll": false,
+      "h1": "Mis aprobaciones",
+      "status": "PASS",
+      "ms": 729,
+      "url": "/aprobaciones/bandeja"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/aprobaciones/politicas",
+      "horizontal_scroll": false,
+      "h1": "Políticas de aprobación",
+      "status": "PASS",
+      "ms": 718,
+      "url": "/aprobaciones/politicas"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/aprobaciones/delegaciones",
+      "horizontal_scroll": false,
+      "h1": "Delegaciones",
+      "status": "PASS",
+      "ms": 730,
+      "url": "/aprobaciones/delegaciones"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/reportes/exportaciones",
+      "horizontal_scroll": false,
+      "h1": "Exportaciones y trabajos",
+      "status": "PASS",
+      "ms": 721,
+      "url": "/reportes/exportaciones"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/reportes/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 735,
+      "url": "/reportes/auditoria"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/seguridad/usuarios",
+      "horizontal_scroll": false,
+      "h1": "Usuarios",
+      "status": "PASS",
+      "ms": 732,
+      "url": "/seguridad/usuarios"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/seguridad/roles",
+      "horizontal_scroll": false,
+      "h1": "Roles y permisos",
+      "status": "PASS",
+      "ms": 728,
+      "url": "/seguridad/roles"
+    },
+    {
+      "viewport": "1920x1080",
+      "route": "/auditoria",
+      "horizontal_scroll": false,
+      "h1": "Auditoría",
+      "status": "PASS",
+      "ms": 717,
+      "url": "/auditoria"
+    }
+  ]
+}

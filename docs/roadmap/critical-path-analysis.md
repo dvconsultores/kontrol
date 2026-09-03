@@ -27,7 +27,7 @@ habría nada que poner en ellas.
 ```
 012 ✅ COMPLETE
  └→ 029 Cotización/pedido  ← todas sus dependencias satisfechas
-     └→ 030 Crédito/reserva      ✅ D0-03 cerrada 2026-09-02 (ORDER_CONFIRMATION) — READY
+     └→ 030 Crédito/reserva      ✅ COMPLETE 2026-09-02 (ORDER_CONFIRMATION, migración 0043)
          └→ 031 Cola de picking  ⛔ 022
              └→ 032 Picking      ⛔ 022
                  └→ 033 Confirmación ✗

@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -91,6 +91,8 @@ class TransitionBody(BaseModel):
 
 
 class ReserveBody(BaseModel):
+    """Reserva **manual** (`trigger = MANUAL`). Las de pedido nacen al confirmar
+    el pedido (Spec 030) y no se crean por aquí."""
     source_document: str | None = None
     product_id: str
     warehouse_id: str
@@ -98,6 +100,13 @@ class ReserveBody(BaseModel):
     lot_id: str | None = None
     serial_id: str | None = None
     expires_in_days: int | None = None
+
+
+class ReleaseBody(BaseModel):
+    """Liberar a mano exige decir por qué (FR-030-027)."""
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=1, max_length=100)
 
 
 class TransferLineCreate(BaseModel):
@@ -374,10 +383,18 @@ def list_reservations(status: str | None = None, product_id: str | None = None,
 
 
 @router.post("/reservations/{reservation_id}/release", dependencies=[Depends(require_write_allowed)])
-def release_reservation(reservation_id: str, db: Session = Depends(get_db),
+def release_reservation(reservation_id: str, body: ReleaseBody, db: Session = Depends(get_db),
                         actor: User = Depends(require_permission("inventario", "reserve")), ctx: CompanyContext = Depends(get_company_context)):
     reservation = _get_owned(db, Reservation, reservation_id, ctx.company_id, "RESERVATION_NOT_FOUND", "Reserva no encontrada")
-    inv_service.release_reservation(db, reservation=reservation, actor=str(actor.id))
+    if reservation.source_type == inv_service.RESERVATION_SOURCE_ORDER:
+        # La reserva de un pedido vive lo que vive el pedido: se cancela o se
+        # revierte el pedido, nunca se suelta la reserva por debajo (R-D0-03-6).
+        from app.core.errors import ConflictError
+
+        raise ConflictError(code="RESERVATION_ORDER_BOUND",
+                            message="La reserva pertenece a un pedido: cancele o revierta el pedido.")
+    inv_service.release_reservation(db, reservation=reservation, actor=str(actor.id),
+                                    reason=f"MANUAL:{body.reason}")
     db.commit()
     db.refresh(reservation)
     return _reservation_dict(reservation)
@@ -385,7 +402,9 @@ def release_reservation(reservation_id: str, db: Session = Depends(get_db),
 
 @router.post("/reservations/expire", dependencies=[Depends(require_write_allowed)])
 def expire_reservations(db: Session = Depends(get_db), actor: User = Depends(require_permission("inventario", "reserve")), ctx: CompanyContext = Depends(get_company_context)):
-    count = inv_service.expire_reservations(db, company_id=ctx.company_id)
+    """Vence las reservas **manuales** con `expires_at` pasado. Las de pedido las
+    vence `POST /sales/orders/expire-reservations`, que además cierra el pedido."""
+    count = inv_service.expire_reservations(db, company_id=ctx.company_id, actor=str(actor.id))
     db.commit()
     return {"expired": count}
 
@@ -658,7 +677,15 @@ def _serial_dict(s: ProductSerial) -> dict:
 def _reservation_dict(r: Reservation) -> dict:
     return {"id": r.id, "source_document": r.source_document, "product_id": r.product_id, "warehouse_id": r.warehouse_id,
             "lot_id": r.lot_id, "serial_id": r.serial_id, "quantity": r.quantity, "status": r.status,
-            "expires_at": r.expires_at.isoformat() if r.expires_at else None}
+            "expires_at": r.expires_at.isoformat() if r.expires_at else None,
+            # Identidad y ciclo (Spec 030): de qué pedido y línea, con qué
+            # disparador nació y por qué se cerró.
+            "source_type": r.source_type, "source_order_id": r.source_order_id,
+            "source_line_id": r.source_line_id, "trigger": r.trigger, "oversell": bool(r.oversell),
+            "base_quantity": str(r.base_quantity) if r.base_quantity is not None else None,
+            "presentation_id": r.presentation_id, "uom_id": r.uom_id,
+            "released_at": r.released_at.isoformat() if r.released_at else None,
+            "release_reason": r.release_reason}
 
 
 def _transfer_dict(db: Session, t: Transfer) -> dict:

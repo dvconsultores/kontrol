@@ -119,9 +119,20 @@ Formato: | ID | Punto | Responsable | Evidencia | Estado | Bloqueante |
 - [x] Dependencias 011/012/023/029/045 satisfechas
 - [x] OQ material: 0
 
-## Pendiente para el ciclo de implementación (no iniciado)
-- [ ] `/speckit.plan` propio con diseño del bloqueo (fila vs. advisory para fila inexistente)
-- [ ] Migración `0043+` con rename, columnas, índices y `CHECK`; informe `MANUAL_REVIEW`
-- [ ] Permiso `ventas:submit` en el catálogo de permisos y en el frontend
-- [ ] Pruebas de la lista de ADR v2 §«Implicaciones de prueba»
-- [ ] Regresión completa sobre PostgreSQL 18.6 (0 fallos, 8 saltos S3)
+## Ciclo de implementación (2026-09-02)
+- [x] `/speckit.plan` propio — `spec030-implementation-cycle.md` (bloqueo de fila + savepoint para la fila inexistente)
+- [x] Migración `0043_spec030_reservation`: columnas, índices, `CHECK`, estados, TTL, permiso; informe `reservation-migration-report.md`
+- [x] Permiso `ventas:submit` en `setup/api.py`, en la migración y en las rutas
+- [x] Pruebas de ADR v2 §«Implicaciones de prueba»: 24 funcionales + 2 de carrera + 10 hostiles + 7 de migración + 11 estructurales
+- [x] Regresión completa sobre PostgreSQL 18.6 — ver `implementation-report.md`
+
+## Checklist de la autorización (35 ítems)
+- [x] Current reservation code audited — `current-reservation-behavior.md` (D0-03) · `spec030-implementation-cycle.md`
+- [x] Current Reservation model audited · SalesOrder state machine audited · Legacy `RESERVED` usage audited (backend, frontend, pruebas, fixture OpenAPI)
+- [x] `ORDER_CONFIRMATION` trigger fixed · No-credit flow · Credit flow · Credit rejection · Credit approval
+- [x] Warehouse validation · Base quantity use · Reservation identity · One-active-reservation-per-line · All-or-nothing · `allow_negative`
+- [x] Concurrency locking · Deterministic lock ordering · Idempotency
+- [x] Cancellation release · Revert release · TTL · Scheduler excluded
+- [x] Company isolation · User AB test · Cross-tenant test · Permissions · Audit contract
+- [x] Spec045 integration · Spec031 handoff · No picking / invoice / AR side effect
+- [x] Migration plan · PostgreSQL hostile tests · Full regression

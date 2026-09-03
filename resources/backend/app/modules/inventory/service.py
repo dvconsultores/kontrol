@@ -19,6 +19,7 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
@@ -665,64 +666,298 @@ def transition_serial(db: Session, *, serial: ProductSerial, target: str) -> Pro
 
 
 # --------------------------------------------------------------------------- #
-# Reservas (FR-003-040..043)
+# Reservas (FR-003-040..043 · Spec 030 · ADR-D0-003 v2)
 # --------------------------------------------------------------------------- #
+#: Estados terminales de una reserva y el motivo con el que se cierran.
+RESERVATION_TRIGGER_ORDER = "ORDER_CONFIRMATION"
+RESERVATION_TRIGGER_MANUAL = "MANUAL"
+RESERVATION_SOURCE_ORDER = "SALES_ORDER"
+RESERVATION_SOURCE_MANUAL = "MANUAL"
+
+
+def _base_qty(reservation: Reservation) -> Decimal:
+    """Lo que la reserva compromete en unidad base.
+
+    Las filas anteriores a la Spec 030 no tenían `base_quantity`: el motor
+    siempre trató `quantity` como base, y la migración 0043 lo dejó escrito.
+    """
+    return _dec(reservation.base_quantity if reservation.base_quantity is not None else reservation.quantity)
+
+
+def _audit_reservation(db: Session, *, action: str, reservation: Reservation, actor: str | None,
+                       before_status: str | None, extra: dict[str, Any] | None = None) -> None:
+    """Contrato de auditoría de D0-03 §7: quién, qué pedido y línea, cuánto en
+    tecleado y en base, con qué disparador y por qué motivo."""
+    after = {
+        "status": reservation.status,
+        "source_type": reservation.source_type,
+        "source_order_id": reservation.source_order_id,
+        "source_line_id": reservation.source_line_id,
+        "warehouse_id": reservation.warehouse_id,
+        "product_id": reservation.product_id,
+        "lot_id": reservation.lot_id,
+        "serial_id": reservation.serial_id,
+        "quantity": str(reservation.quantity),
+        "base_quantity": str(_base_qty(reservation)),
+        "uom_id": reservation.uom_id,
+        "presentation_id": reservation.presentation_id,
+        "conversion_factor_snapshot": (str(reservation.conversion_factor_snapshot)
+                                       if reservation.conversion_factor_snapshot is not None else None),
+        "trigger": reservation.trigger,
+        "oversell": bool(reservation.oversell),
+        "release_reason": reservation.release_reason,
+        "expires_at": reservation.expires_at.isoformat() if reservation.expires_at else None,
+    }
+    if extra:
+        after.update(extra)
+    audit_service.record_audit(
+        db, action=action, entity_type="Reservation", entity_id=str(reservation.id),
+        company_id=reservation.company_id, user_id=actor, source="API",
+        before={"status": before_status} if before_status else None, after=after,
+        reason=reservation.release_reason)
+
+
+def lock_balance(db: Session, *, company_id: str, warehouse_id: str, product_id: str,
+                 lot_id: str | None = None, serial_id: str | None = None,
+                 state: str = "DISPONIBLE") -> InventoryBalance:
+    """La fila de saldo **bloqueada** (`SELECT … FOR UPDATE`) dentro de la
+    transacción actual (R-D0-03-3, IMP-030-021).
+
+    Si no existe, se crea bajo un savepoint: dos transacciones que llegan a la
+    vez al mismo producto sin saldo previo compiten en el índice único
+    `uq_inventory_balances_key`; la que pierde relee y se bloquea sobre la fila
+    de la que ganó. En SQLite `FOR UPDATE` no existe y se omite: por eso la
+    prueba de carrera solo vale sobre PostgreSQL (P21).
+
+    `populate_existing`: sin él, si el saldo ya estaba en el mapa de identidad de
+    esta sesión, SQLAlchemy devolvería el objeto con los valores que leyó
+    **antes** del bloqueo. La espera habría servido de nada: se decidiría sobre
+    un disponible viejo. Con él, la fila bloqueada sobrescribe los atributos.
+    """
+    def _stmt():
+        return (
+            select(InventoryBalance).where(
+                InventoryBalance.company_id == company_id,
+                InventoryBalance.warehouse_id == warehouse_id,
+                InventoryBalance.location_id.is_(None),
+                InventoryBalance.product_id == product_id,
+                InventoryBalance.lot_id.is_(None) if lot_id is None else InventoryBalance.lot_id == lot_id,
+                InventoryBalance.serial_id.is_(None) if serial_id is None else InventoryBalance.serial_id == serial_id,
+                InventoryBalance.state == state,
+            ).with_for_update().execution_options(populate_existing=True)
+        )
+
+    balance = db.execute(_stmt()).scalars().first()
+    if balance is not None:
+        return balance
+    try:
+        with db.begin_nested():
+            balance = InventoryBalance(
+                company_id=company_id, warehouse_id=warehouse_id, location_id=None,
+                product_id=product_id, lot_id=lot_id, serial_id=serial_id, state=state,
+                qty_on_hand=Decimal(0), qty_reserved=Decimal(0), qty_available=Decimal(0))
+            db.add(balance)
+            db.flush()
+    except IntegrityError:
+        balance = None
+    locked = db.execute(_stmt()).scalars().first()
+    if locked is None:  # pragma: no cover - imposible tras insertar o perder la carrera
+        raise ConflictError(code="BALANCE_LOCK_FAILED", message="No fue posible bloquear el saldo.")
+    return locked
+
+
+def available_under_lock(balance: InventoryBalance) -> Decimal:
+    """Disponible leído **después** del bloqueo, que es el único que vale."""
+    return _dec(balance.qty_on_hand) - _dec(balance.qty_reserved)
+
+
 def reserve(db: Session, *, company_id: str, source_document: str | None, product_id: str,
             warehouse_id: str, quantity: float, lot_id: str | None = None, serial_id: str | None = None,
-            expires_in_days: int | None = None, actor: str | None = None) -> Reservation:
+            expires_in_days: int | None = None, actor: str | None = None,
+            source_type: str | None = None, source_order_id: str | None = None,
+            source_line_id: str | None = None, trigger: str | None = None,
+            uom_id: str | None = None, presentation_id: str | None = None,
+            conversion_factor_snapshot: Decimal | None = None, base_quantity: Decimal | float | None = None,
+            uom_source: str | None = None, expires_at: datetime | None = None) -> Reservation:
+    """Compromete inventario sin moverlo (FR-003-041).
+
+    La disponibilidad se lee con la fila de saldo bloqueada: leerla antes y
+    bloquear después deja exactamente la ventana que dos vendedores necesitan
+    para comprometer la misma unidad (D0-03, análisis de concurrencia §1).
+    `quantity` es la cantidad tecleada y `base_quantity` la que compromete el
+    saldo; sin presentación son la misma.
+    """
     company_id = _company(company_id, obj="reserva")
-    if quantity <= 0:
+    qty = _dec(quantity)
+    if qty <= 0:
         raise KontrolError(code="INVALID_QUANTITY", message="La cantidad reservada debe ser positiva", status_code=422)
+    base = _dec(base_quantity) if base_quantity is not None else qty
+    if base <= 0:
+        raise KontrolError(code="INVALID_QUANTITY", message="La cantidad base reservada debe ser positiva", status_code=422)
     warehouse = _require_warehouse(db, company_id, warehouse_id)
     _require_product(db, company_id, product_id)
-    available = get_available(db, company_id=company_id, product_id=product_id, warehouse_id=warehouse_id,
-                              location_id=None, lot_id=lot_id, serial_id=serial_id)
-    if quantity > available and not _allow_negative(warehouse):
-        raise ConflictError(code="INSUFFICIENT_AVAILABLE", message=f"No hay disponible suficiente (disponible: {available}).")
+
+    balance = lock_balance(db, company_id=company_id, warehouse_id=warehouse_id, product_id=product_id,
+                           lot_id=lot_id, serial_id=serial_id)
+    available = available_under_lock(balance)
+    oversell = False
+    if base > available:
+        if not _allow_negative(warehouse):
+            raise ConflictError(
+                code="INSUFFICIENT_AVAILABLE",
+                message=f"No hay disponible suficiente (disponible: {available}).",
+                details={"product_id": product_id, "warehouse_id": warehouse_id,
+                         "requested_base": str(base), "available_base": str(available)})
+        oversell = True
+
+    if source_type is None:
+        source_type = RESERVATION_SOURCE_ORDER if source_order_id else RESERVATION_SOURCE_MANUAL
+    if trigger is None:
+        trigger = RESERVATION_TRIGGER_ORDER if source_type == RESERVATION_SOURCE_ORDER else RESERVATION_TRIGGER_MANUAL
+    if expires_at is None and expires_in_days:
+        expires_at = datetime.now(UTC) + timedelta(days=expires_in_days)
+    if uom_id is None and presentation_id is None:
+        base_unit = uom_engine.base_unit_of(db, product_id)
+        uom_id = str(base_unit.id) if base_unit is not None else None
+        uom_source = uom_source or uom_engine.SOURCE_CAPTURED
+        conversion_factor_snapshot = conversion_factor_snapshot if conversion_factor_snapshot is not None else Decimal(1)
 
     reservation = Reservation(
         company_id=company_id, source_document=source_document, product_id=product_id,
-        warehouse_id=warehouse_id, lot_id=lot_id, serial_id=serial_id, quantity=quantity,
-        status="ACTIVE", created_by=actor,
-        expires_at=datetime.now(UTC) + timedelta(days=expires_in_days) if expires_in_days else None,
+        warehouse_id=warehouse_id, lot_id=lot_id, serial_id=serial_id, quantity=qty,
+        status="ACTIVE", created_by=actor, expires_at=expires_at,
+        source_type=source_type, source_order_id=source_order_id, source_line_id=source_line_id,
+        trigger=trigger, oversell=oversell,
+        uom_id=uom_id, presentation_id=presentation_id,
+        conversion_factor_snapshot=conversion_factor_snapshot, base_quantity=base, uom_source=uom_source,
     )
     db.add(reservation)
     db.flush()
-    balance = _get_balance(db, company_id=company_id, warehouse_id=warehouse_id, location_id=None,
-                           product_id=product_id, lot_id=lot_id, serial_id=serial_id, state="DISPONIBLE")
-    balance.qty_reserved = _dec(balance.qty_reserved) + _dec(quantity)
+    balance.qty_reserved = _dec(balance.qty_reserved) + base
     _refresh_available(balance)
     db.flush()
+    _audit_reservation(db, action="RESERVATION_CREATED", reservation=reservation, actor=actor,
+                       before_status=None,
+                       extra={"available_before": str(available), "available_after": str(available - base)})
     return reservation
 
 
-def release_reservation(db: Session, *, reservation: Reservation, actor: str | None = None) -> Reservation:
+def _close_reservation(db: Session, *, reservation: Reservation, status: str, reason: str | None,
+                       actor: str | None, action: str) -> Reservation:
+    """Cierra una reserva ACTIVE devolviendo (o consumiendo) lo comprometido.
+
+    El saldo se bloquea antes de restar: liberar y reservar el mismo producto a
+    la vez no puede dejar el contador con un valor que ninguna de las dos
+    transacciones escribió.
+    """
+    before = reservation.status
+    balance = lock_balance(db, company_id=reservation.company_id, warehouse_id=reservation.warehouse_id,
+                           product_id=reservation.product_id, lot_id=reservation.lot_id,
+                           serial_id=reservation.serial_id)
+    reservation.status = status
+    reservation.released_at = datetime.now(UTC)
+    reservation.released_by = actor
+    reservation.release_reason = reason
+    reservation.updated_at = datetime.now(UTC)
+    balance.qty_reserved = max(_dec(balance.qty_reserved) - _base_qty(reservation), Decimal(0))
+    _refresh_available(balance)
+    db.flush()
+    _audit_reservation(db, action=action, reservation=reservation, actor=actor, before_status=before)
+    return reservation
+
+
+def release_reservation(db: Session, *, reservation: Reservation, actor: str | None = None,
+                        reason: str | None = None) -> Reservation:
+    """Libera: lo comprometido vuelve al disponible. Exige que esté ACTIVE."""
     if reservation.status != "ACTIVE":
         raise ConflictError(code="RESERVATION_NOT_ACTIVE", message="La reserva no está activa.")
-    reservation.status = "RELEASED"
-    balance = _get_balance(db, company_id=reservation.company_id, warehouse_id=reservation.warehouse_id,
-                           location_id=None, product_id=reservation.product_id, lot_id=reservation.lot_id,
-                           serial_id=reservation.serial_id, state="DISPONIBLE")
-    balance.qty_reserved = max(_dec(balance.qty_reserved) - _dec(reservation.quantity), Decimal(0))
-    _refresh_available(balance)
-    db.flush()
-    return reservation
+    return _close_reservation(db, reservation=reservation, status="RELEASED", reason=reason,
+                              actor=actor, action="RESERVATION_RELEASED")
 
 
-def expire_reservations(db: Session, *, company_id: str) -> int:
-    now = datetime.now(UTC)
-    active = db.execute(
-        select(Reservation).where(Reservation.company_id == company_id, Reservation.status == "ACTIVE",
-                                  Reservation.expires_at.isnot(None), Reservation.expires_at < now)
-    ).scalars().all()
-    for r in active:
-        r.status = "EXPIRED"
-        balance = _get_balance(db, company_id=r.company_id, warehouse_id=r.warehouse_id, location_id=None,
-                               product_id=r.product_id, lot_id=r.lot_id, serial_id=r.serial_id, state="DISPONIBLE")
-        balance.qty_reserved = max(_dec(balance.qty_reserved) - _dec(r.quantity), Decimal(0))
-        _refresh_available(balance)
-    db.flush()
-    return len(active)
+def release_if_active(db: Session, *, reservation: Reservation, actor: str | None = None,
+                      reason: str | None = None) -> bool:
+    """Liberación idempotente para los flujos del pedido (IMP-030-020): una
+    reserva que ya no está ACTIVE no vuelve a restar nada."""
+    if reservation.status != "ACTIVE":
+        return False
+    _close_reservation(db, reservation=reservation, status="RELEASED", reason=reason,
+                       actor=actor, action="RESERVATION_RELEASED")
+    return True
+
+
+def expire_if_active(db: Session, *, reservation: Reservation, actor: str | None = None) -> bool:
+    """Vence una reserva concreta si sigue ACTIVE (flujo de expiración del pedido)."""
+    if reservation.status != "ACTIVE":
+        return False
+    _close_reservation(db, reservation=reservation, status="EXPIRED", reason="EXPIRED",
+                       actor=actor, action="RESERVATION_EXPIRED")
+    return True
+
+
+def fulfill_reservation(db: Session, *, reservation: Reservation, actor: str | None = None) -> bool:
+    """Consume: la mercancía salió físicamente (R-D0-03-7). No es una liberación."""
+    if reservation.status != "ACTIVE":
+        return False
+    _close_reservation(db, reservation=reservation, status="FULFILLED", reason="DISPATCHED",
+                       actor=actor, action="RESERVATION_FULFILLED")
+    return True
+
+
+def reservations_for_orders(db: Session, *, company_id: str,
+                            order_ids: list[str]) -> list[Reservation]:
+    """Las reservas de varios pedidos en **una** consulta.
+
+    El listado de pedidos serializa N pedidos: pedirlas de una en una convertiría
+    una pantalla en N consultas.
+    """
+    if not order_ids:
+        return []
+    return list(db.execute(
+        select(Reservation).where(Reservation.company_id == company_id,
+                                  Reservation.source_order_id.in_(order_ids))
+        .order_by(Reservation.created_at)).scalars().all())
+
+
+def order_reservations(db: Session, *, company_id: str, order_id: str,
+                       only_active: bool = True) -> list[Reservation]:
+    stmt = select(Reservation).where(Reservation.company_id == company_id,
+                                     Reservation.source_order_id == order_id)
+    if only_active:
+        stmt = stmt.where(Reservation.status == "ACTIVE")
+    return list(db.execute(stmt.order_by(Reservation.created_at)).scalars().all())
+
+
+def expire_due_reservations(db: Session, *, company_id: str, source_type: str | None,
+                            now: datetime | None = None, actor: str | None = None) -> list[Reservation]:
+    """Vence las reservas ACTIVE cuyo `expires_at` ya pasó, para un tipo de origen.
+
+    Las de pedido (`SALES_ORDER`) las vence el flujo del pedido, que además
+    cierra el pedido: nunca queda un pedido vivo sin reserva (R-D0-03-8).
+    Idempotente: una segunda pasada no encuentra nada.
+    """
+    momento = now or datetime.now(UTC)
+    stmt = select(Reservation).where(
+        Reservation.company_id == company_id, Reservation.status == "ACTIVE",
+        Reservation.expires_at.isnot(None), Reservation.expires_at < momento)
+    if source_type == RESERVATION_SOURCE_ORDER:
+        stmt = stmt.where(Reservation.source_type == RESERVATION_SOURCE_ORDER)
+    else:
+        stmt = stmt.where((Reservation.source_type.is_(None)) | (Reservation.source_type != RESERVATION_SOURCE_ORDER))
+    vencidas = list(db.execute(stmt).scalars().all())
+    for r in vencidas:
+        _close_reservation(db, reservation=r, status="EXPIRED", reason="EXPIRED", actor=actor,
+                           action="RESERVATION_EXPIRED")
+    return vencidas
+
+
+def expire_reservations(db: Session, *, company_id: str, actor: str | None = None) -> int:
+    """Expiración de las reservas **manuales** (endpoint de inventario).
+
+    Las reservas de pedido no se tocan desde aquí: su expiración es una
+    transición del pedido (`sales.expirar_reservas_de_pedidos`).
+    """
+    return len(expire_due_reservations(db, company_id=company_id, source_type=None, actor=actor))
 
 
 # --------------------------------------------------------------------------- #

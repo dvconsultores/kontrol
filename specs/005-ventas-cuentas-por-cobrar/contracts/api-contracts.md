@@ -15,9 +15,13 @@
 |---|---|---|
 | GET/POST | `/api/v1/sales/quotes` | Listar/crear cotizaciones (sin reserva) |
 | GET/POST | `/api/v1/sales/orders` | Listar/crear pedidos/órdenes |
-| POST | `/api/v1/sales/orders/{id}/submit` | Enviar a crédito/aprobación |
-| POST | `/api/v1/sales/orders/{id}/approve` | Aprobar (invoca 003 `reserve`) |
-| POST | `/api/v1/sales/orders/{id}/reject` / `/cancel` / `/close` | Transiciones |
+| POST | `/api/v1/sales/orders/{id}/submit` | **Confirmar** (`DRAFT → SUBMITTED`): reserva todo-o-nada en cantidad base; sin solicitud de crédito → `RELEASED` en la misma transacción (Spec 030). `409 INSUFFICIENT_AVAILABLE` con `details.lines`; `422 WAREHOUSE_REQUIRED` / `ORDER_EMPTY` |
+| POST | `/api/v1/sales/orders/{id}/release` | `SUBMITTED → RELEASED` tras la decisión de 045 (`ensure_approved`). Sustituye a `/approve`: aprobar **no** reserva |
+| POST | `/api/v1/sales/orders/{id}/reject` · `/revert` · `/cancel` | Con `{reason}` obligatorio (cuerpo estricto: `company_id` → 422). Liberan la reserva atómicamente; `revert` deja el pedido en `DRAFT` y cancela la solicitud de crédito viva |
+| POST | `/api/v1/sales/orders/expire-reservations` | Vence reservas de pedidos con TTL cumplido y los pedidos que las sostenían. Idempotente. Sin worker (planificador: Spec 047) |
+| GET/PUT | `/api/v1/sales/settings/reservation` | Política de reserva de la empresa: `reservation_trigger` (fijo, `ORDER_CONFIRMATION`), `reservation_ttl_days` (opcional) |
+| POST | `/api/v1/sales/orders/{id}/transition` | Compatibilidad: `SUBMITTED/RELEASED/REJECTED/CANCELLED/DRAFT` delegan en los anteriores (`reason` en el cuerpo); `PREPARING`, `SHIPPED`, `CLOSED` como antes. `CREDIT_PENDING`, `APPROVED`, `RESERVED` → 409 |
+| POST | `/api/v1/inventory/reservations/{id}/release` | Solo reservas **manuales**, con `{reason}`; las de pedido responden `409 RESERVATION_ORDER_BOUND` |
 
 ## 2. Despacho (integración con 003)
 

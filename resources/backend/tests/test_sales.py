@@ -92,19 +92,19 @@ class TestOrdenDeVenta:
                                            warehouse_id=str(wh.id), margin=0.3)
         sales_service.add_order_line(db_session, order_id=str(order.id), product_id=str(product.id),
                                      quantity=30.0, unit_price=10.0)
-        sales_service.transition_order(db_session, order=order, target="SUBMITTED")
-        sales_service.transition_order(db_session, order=order, target="CREDIT_PENDING", credit_decision='{"limit": 1000}')
-        sales_service.transition_order(db_session, order=order, target="APPROVED", approval_ref="APR-1")
+        # Spec 030: la reserva nace al confirmar (`DRAFT → SUBMITTED`); sin
+        # política de crédito el pedido queda RELEASED en la misma llamada.
+        sales_service.confirmar_pedido(db_session, company_id=COMPANY, order_id=str(order.id))
         # La reserva vía 003 redujo el disponible, sin cambio físico
         assert inv_service.get_available(db_session, company_id=COMPANY, product_id=str(product.id), warehouse_id=str(wh.id)) == 70.0
-        assert order.status == "RESERVED"
-        assert order.approval_ref == "APR-1"
+        assert order.status == "RELEASED"
+        assert order.submitted_at is not None and order.released_at is not None
 
     def test_order_invalid_transition(self, db_session) -> None:
         customer = _make_customer(db_session)
         order = sales_service.create_order(db_session, company_id=COMPANY, code="OV-2", customer_id=str(customer.id))
         with pytest.raises(ConflictError):
-            sales_service.transition_order(db_session, order=order, target="APPROVED")  # salta SUBMITTED/CREDIT_PENDING
+            sales_service.transition_order(db_session, order=order, target="RELEASED")  # salta la confirmación
 
 
 class TestDespacho:
@@ -118,10 +118,8 @@ class TestDespacho:
                                            warehouse_id=str(wh.id))
         sales_service.add_order_line(db_session, order_id=str(order.id), product_id=str(product.id),
                                      quantity=20.0, unit_price=10.0)
-        sales_service.transition_order(db_session, order=order, target="SUBMITTED")
-        sales_service.transition_order(db_session, order=order, target="CREDIT_PENDING")
-        sales_service.transition_order(db_session, order=order, target="APPROVED")
-        assert order.status == "RESERVED"
+        sales_service.confirmar_pedido(db_session, company_id=COMPANY, order_id=str(order.id))
+        assert order.status == "RELEASED"
         shipment = sales_service.create_shipment(db_session, company_id=COMPANY, code="SH-1", order_id=str(order.id),
                                                  origin_warehouse_id=str(wh.id), lines=[{"product_id": str(product.id), "quantity": 20.0}])
         sales_service.validate_shipment(db_session, shipment=shipment)
@@ -141,9 +139,7 @@ class TestDespacho:
         order = sales_service.create_order(db_session, company_id=COMPANY, code="OV-4", customer_id=str(customer.id),
                                            warehouse_id=str(wh.id))
         sales_service.add_order_line(db_session, order_id=str(order.id), product_id=str(product.id), quantity=10.0, unit_price=5.0)
-        sales_service.transition_order(db_session, order=order, target="SUBMITTED")
-        sales_service.transition_order(db_session, order=order, target="CREDIT_PENDING")
-        sales_service.transition_order(db_session, order=order, target="APPROVED")
+        sales_service.confirmar_pedido(db_session, company_id=COMPANY, order_id=str(order.id))
         shipment = sales_service.create_shipment(db_session, company_id=COMPANY, code="SH-2", order_id=str(order.id),
                                                  origin_warehouse_id=str(wh.id), lines=[{"product_id": str(product.id), "quantity": 10.0}])
         with pytest.raises(ConflictError):

@@ -134,13 +134,17 @@ def test_business_operations_generate_audit_events():
                         json={"code": "C-AUD", "name": "Cliente Audit", "roles": ["CLIENTE"]}).json()
     customer_id = cust["id"]
 
-    # orden de venta + transición a RESERVED (crea reserva de inventario)
+    # orden de venta + confirmación (Spec 030: DRAFT → SUBMITTED → RELEASED)
     order = _CLIENT.post("/api/v1/sales/orders", headers=h,
                          json={"code": "OV-AUD", "customer_id": customer_id, "margin": None, "currency": "VED"}).json()
     order_id = order["id"]
-    for target in ("SUBMITTED", "CREDIT_PENDING", "APPROVED"):
-        r = _CLIENT.post(f"/api/v1/sales/orders/{order_id}/transition", headers=h, json={"target": target})
-        assert r.status_code == 200, r.text
+    prod = _CLIENT.post("/api/v1/maestros/catalogos/items", headers=h,
+                        json={"code": "P-AUD", "name": "Servicio Audit", "item_type": "PRODUCT"}).json()
+    r = _CLIENT.post(f"/api/v1/sales/orders/{order_id}/lines", headers=h,
+                     json={"product_id": prod["id"], "quantity": 1, "unit_price": 10, "needs_inventory": False})
+    assert r.status_code == 200, r.text
+    r = _CLIENT.post(f"/api/v1/sales/orders/{order_id}/transition", headers=h, json={"target": "SUBMITTED"})
+    assert r.status_code == 200, r.text
 
     after = _event_actions()
     expected = {

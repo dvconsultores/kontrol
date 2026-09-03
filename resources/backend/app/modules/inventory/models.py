@@ -18,7 +18,21 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Index, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -131,6 +145,25 @@ class InventoryBalance(UUIDMixin, TimestampMixin, Base):
 
     __tablename__ = "inventory_balances"
     __scope__ = Scope.COMPANY
+    __table_args__ = (
+        # Una fila por clave de saldo. Sin esto dos transacciones que reservan
+        # el mismo producto en un almacén sin saldo previo crean dos filas y el
+        # bloqueo de fila (R-D0-03-3) no tiene sobre qué actuar. Las dimensiones
+        # anulables se normalizan a '' para que la unicidad las vea (Spec 030).
+        Index(
+            "uq_inventory_balances_key",
+            "company_id", "warehouse_id",
+            text("COALESCE(location_id, '')"),
+            "product_id",
+            text("COALESCE(lot_id, '')"),
+            text("COALESCE(serial_id, '')"),
+            "state",
+            unique=True,
+        ).ddl_if(dialect="postgresql"),
+        # El reservado nunca es negativo: liberar dos veces no puede dejar deuda
+        # (IMP-030-059). El físico sí puede serlo, por `allow_negative`.
+        CheckConstraint("qty_reserved >= 0", name="reserved_nonneg"),
+    )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
@@ -155,7 +188,19 @@ class Reservation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
     __tablename__ = "reservations"
     __scope__ = Scope.COMPANY
-    __table_args__ = (Index("ix_reservations_uom_id", "uom_id"),)
+    __table_args__ = (
+        Index("ix_reservations_uom_id", "uom_id"),
+        Index("ix_reservations_source_order", "source_order_id"),
+        # Una reserva ACTIVE por línea de pedido (R-D0-03-3, IMP-030-018). Es
+        # la base de datos, no `if not exists`, la que impide que un reintento
+        # duplique la cantidad comprometida. Va en el ORM y en la migración
+        # porque las suites levantan el esquema con `create_all`.
+        Index(
+            "uq_reservations_active_line", "source_line_id", unique=True,
+            postgresql_where=text("status = 'ACTIVE' AND source_line_id IS NOT NULL"),
+        ).ddl_if(dialect="postgresql"),
+        CheckConstraint("quantity > 0", name="quantity_positive"),
+    )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     source_document: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -166,6 +211,23 @@ class Reservation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")  # ACTIVE/RELEASED/EXPIRED/FULFILLED
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # --- Identidad de la reserva (Spec 030, IMP-030-016/017) ---
+    #: `SALES_ORDER` o `MANUAL`. `source_document` (texto) se conserva por
+    #: compatibilidad y como único rastro de las filas anteriores a la Spec 030.
+    source_type: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    source_order_id: Mapped[str | None] = mapped_column(ForeignKey("sales_orders.id"), nullable=True)
+    source_line_id: Mapped[str | None] = mapped_column(ForeignKey("sales_order_lines.id"), nullable=True)
+    #: `ORDER_CONFIRMATION` · `MANUAL` · `LEGACY_CREDIT_APPROVAL`. Es la versión
+    #: de la política con la que nació: un cambio futuro no la reinterpreta (P5).
+    trigger: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    #: Reservó por encima del disponible bajo `allow_negative` del almacén.
+    oversell: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    released_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    #: `ORDER_CANCELLED` · `CREDIT_REJECTED` · `ORDER_REVERTED` · `EXPIRED` ·
+    #: `DISPATCHED` · `MANUAL:{texto}` · `PICKING_SHORTAGE` (032).
+    release_reason: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
     # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
     uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
