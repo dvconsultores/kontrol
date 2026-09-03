@@ -40,11 +40,11 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 016 | Cotización a proveedores | `PARTIALLY_IMPLEMENTED` | `supplier_quotes`, `quote_lines` | — |
 | 017 | Órdenes de compra | `PARTIALLY_IMPLEMENTED` | `purchase_orders` + líneas, transiciones | — |
 | 018 | Importaciones | **`NOT_STARTED`** | **0 tablas**: ninguna `import`/`customs`/`aduana` | — (dependencias satisfechas) |
-| 019 | Recepción física | `PARTIALLY_IMPLEMENTED` | `goods_receipts` + líneas con UoM y lote | **Recepción contable: no coloca en ubicación** |
-| 020 | Incidencias de recepción | **`NOT_STARTED`** | 0 tablas; solo `quantity_rejected` en la línea | — (dependencias satisfechas) |
-| 021 | Confirmación de inventario | `PARTIALLY_IMPLEMENTED` | `quality_status` con compuerta en `accept_receipt` | 020 |
-| 022 | Put-away | **`NOT_STARTED`** | 0 proceso. La estructura de 008 existe y **nadie la usa** | 021 |
-| 023 | Inventario / Kardex | `PARTIALLY_IMPLEMENTED` | `inventory` 13 tablas, movimientos con ubicación admitida | Ubicación siempre nula en la práctica |
+| 019 | Recepción física | **`READY_FOR_IMPLEMENTATION`** (2026-09-03) | `goods_receipts` + líneas con lote, vencimiento y serial; 3 de 10 etapas | **ninguno** — primera de la ruta crítica |
+| 020 | Incidencias de recepción | **`READY_FOR_IMPLEMENTATION`** (2026-09-03) | 0 tablas; solo `quantity_rejected` y `quality` en la línea | **ninguno** — la capacidad de 019 que consume está medida y existe |
+| 021 | Confirmación de inventario | `PARTIALLY_IMPLEMENTED` | `quality_status` con compuerta en `accept_receipt` | **capacidad de excepción (020)** + **el motor de saldos solo escribe `DISPONIBLE` (023)** |
+| 022 | Put-away | **`NOT_STARTED`** | 0 proceso. La estructura de 008 existe y **nadie la usa** | **estado de origen inequívoco (021)**. Ya **no** por falta de ubicaciones: 008 las entrega |
+| 023 | Inventario / Kardex | `PARTIALLY_IMPLEMENTED` | `inventory` 13 tablas, movimientos con ubicación admitida, reservas con bloqueo (030) | Ubicación siempre nula en la práctica; **saldo solo escribible en `DISPONIBLE`** (lo consume 021) |
 | 024 | Lotes / seriales / vencimiento | `PARTIALLY_IMPLEMENTED` | `inventory_lots`, `product_serials` | — |
 | 025 | Transferencias / conteos / ajustes | `PARTIALLY_IMPLEMENTED` | `transfers`, `stock_counts`, `inventory_adjustments` | — |
 | 026 | Costos / valoración | `PARTIALLY_IMPLEMENTED` | `cost_layers`, `costing_profiles` | 018 para *landed cost* |
@@ -52,8 +52,8 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 028 | CxP y pagos | `PARTIALLY_IMPLEMENTED` | `ap_payments`, `ap_open_items`; tipo documental cerrado en N9 | 040 retenciones |
 | 029 | Cotización y pedido comercial | **`COMPLETE / CONVERGED`** (2026-09-01) | `sales_quotes`, `sales_orders` con origen comercial, ciclo de cotización, conversión 1:1 | **ninguno** |
 | 030 | Crédito / aprobación / reserva | **`COMPLETE / CONVERGED`** (2026-09-02) | reserva al confirmar (`ORDER_CONFIRMATION`), bloqueo en PostgreSQL, crédito vía 045, `RELEASED` para 031; migración `0043` | **ninguno** |
-| 031 | Cola y ruta de picking | `BLOCKED_BY_DEPENDENCY` | `pick_lists`; **`pick_list_lines` sin ubicación ni secuencia** | 022 |
-| 032 | Picking y consolidación | `BLOCKED_BY_DEPENDENCY` | esqueleto en `sales` | 022 |
+| 031 | Cola y ruta de picking | `BLOCKED_BY_DEPENDENCY` | `pick_lists`; **`pick_list_lines` sin ubicación ni secuencia**; handoff de 030 satisfecho | **existencia ubicada y cantidad por ubicación (022)**. Ya no por 030 |
+| 032 | Picking y consolidación | `BLOCKED_BY_DEPENDENCY` | esqueleto en `sales`; reservas de 030 y lotes/seriales de 024 satisfechos | **cola y ruta (031)** + **ubicación de origen (022)** |
 | 033 | Confirmación independiente de pedido | **`NOT_STARTED`** | 0 tablas | 032 |
 | 034 | Liberación y facturación | `PARTIALLY_IMPLEMENTED` | `sales_invoices` con transiciones | 033; snapshot comercial ausente |
 | 035 | Despacho / transporte / regulación | `PARTIALLY_IMPLEMENTED` | `shipments`, `regulatory` 11 tablas | 034 |
@@ -85,9 +85,9 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 |---|---:|
 | `COMPLETE / CONVERGED` | 6 — 008, 011, 012, 029, 030, 045 |
 | `RECONVERGED` | 1 — 046 |
-| `READY_FOR_IMPLEMENTATION` | 0 — la siguiente se decide en el próximo checkpoint (candidatas 020 → 021 → 022, que desbloquean 031/032) |
-| `PARTIALLY_IMPLEMENTED` | 34 |
-| `NOT_STARTED` | 5 — 018, 020, 022, 033, 047 |
+| `READY_FOR_IMPLEMENTATION` | **2 — 019 (seleccionada), 020 (suplente)** |
+| `PARTIALLY_IMPLEMENTED` | 33 |
+| `NOT_STARTED` | 4 — 018, 022, 033, 047 |
 | `BLOCKED_BY_DEPENDENCY` | 2 — 031, 032 |
 | `BLOCKED_BY_BUSINESS_DECISION` | 1 — 004 |
 | `BLOCKED_BY_LEGAL_VALIDATION` | 6 — 039, 040, 041, 042, 043, 056 |

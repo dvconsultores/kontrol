@@ -28,6 +28,12 @@ habría nada que poner en ellas.
 012 ✅ COMPLETE
  └→ 029 Cotización/pedido  ← todas sus dependencias satisfechas
      └→ 030 Crédito/reserva      ✅ COMPLETE 2026-09-02 (ORDER_CONFIRMATION, migración 0043)
+          └→ 031 Cola/ruta         ⛔ existencia ubicada (022), no 030
+               └→ 032 Picking      ⛔ 031 + 022
+
+  Reauditado 2026-09-03: la ruta crítica del producto pasa por la cadena de ENTRADA.
+  019 ✅ sin bloqueos → 020 ✅ sin bloqueos → 021 ⛔ (020 + estados de saldo) → 022 ⛔ (021) → 031 → 032
+  Lo comercial está cerrado y espera a que el almacén sepa dónde está lo que vende.
          └→ 031 Cola de picking  ⛔ 022
              └→ 032 Picking      ⛔ 022
                  └→ 033 Confirmación ✗

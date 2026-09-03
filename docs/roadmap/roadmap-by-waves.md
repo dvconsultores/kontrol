@@ -166,3 +166,18 @@ sin las Olas 1, 2 y 4 obliga a reescribir picking, facturación y recepción por
 
 La ola «Ahora» contiene **una sola Spec** a propósito. Este checkpoint
 selecciona una, no una tanda.
+
+---
+
+## Reordenación tras el checkpoint de la cadena operativa (2026-09-03)
+
+| Cuándo | Spec | Por qué |
+|---|---|---|
+| **Ahora** | **019 Recepción física** | Primera de la ruta crítica, cero bloqueos, dato irreversible sin capturar |
+| Después | 020 Incidencias de recepción | Cero bloqueos; gana precisión si 019 va antes |
+| Después | 021 Confirmación de inventario | Necesita la capacidad de excepción de 020 y que 023 sepa escribir estados no vendibles |
+| Después | 022 Put-away | Necesita el estado de origen que confirma 021. **Ya no espera ubicaciones: 008 las entrega** |
+| Después | 031 y 032 | Esperan existencia ubicada. **Ya no esperan a 030**, que cerró |
+
+La cadena comercial (012, 029, 030) está cerrada y espera a que el almacén sepa dónde está lo que
+vende.

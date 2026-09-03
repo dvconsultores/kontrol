@@ -46,3 +46,36 @@ recomendación de la ola siguiente, no de esta.
 Desbloquea seis Specs, pero las seis están detenidas por `D0-07`, que no es
 técnico. Construir 014 ahora adelanta trabajo cuyo cuello de botella seguirá
 cerrado, y no reduce ningún riesgo que se esté acumulando.
+
+---
+
+## Ranking de la cadena operativa — 2026-09-03
+
+Criterios de 0 a 5. El número ordena; no decide.
+
+| Rank | Spec | Dependencia | Arquitectura | Modelo | Contrato | Existente | Criticidad | Desbloqueo | Riesgo | Total |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | **019 Recepción física** | 5 | 5 | 4 | 4 | 3 | 5 | 5 | **5** | **36/40** |
+| 2 | 020 Incidencias de recepción | 5 | 5 | 3 | 4 | 0 | 4 | 4 | 4 | 29/40 |
+| 3 | 021 Confirmación de inventario | 2 | 4 | 3 | 3 | 1 | 5 | 5 | 4 | 27/40 |
+| 4 | 022 Put-away | 1 | 5 | 4 | 3 | 0 | 5 | 5 | 3 | 26/40 |
+| 5 | 031 Cola y ruta de picking | 1 | 4 | 2 | 3 | 1 | 4 | 3 | 2 | 20/40 |
+| 6 | 032 Picking y consolidación | 0 | 4 | 2 | 2 | 1 | 4 | 2 | 2 | 17/40 |
+
+### Por qué 019 gana sin forzar ningún número
+
+Empata con 020 en dependencias (ambas con cero bloqueos) y pierde en «hueco existente» —020 no
+existe en absoluto—. Gana donde el proyecto ya aprendió que se pierde el producto: **riesgo de dato
+irreversible**. Lo que la recepción no capture mientras el camión está en el muelle no se reconstruye
+después, y hoy no captura ni la presentación ni el detalle del daño.
+
+### Por qué 021 no gana pese a su criticidad
+
+Es la que más desbloquea de las cuatro de entrada, pero arrastra dos bloqueos reales: la capacidad de
+excepción que debe 020 y la imposibilidad de escribir saldo en un estado no vendible, que debe 023.
+Una Spec con alto valor de desbloqueo y dependencias insatisfechas no puede seleccionarse.
+
+### Por qué 022 no gana pese a desbloquear la salida entera
+
+Su bloqueo dejó de ser «no hay ubicaciones» —la Spec 008 las entrega— y pasó a ser el estado de
+origen de la mercancía, que debe la 021. Sigue bloqueada, con mejor nombre.

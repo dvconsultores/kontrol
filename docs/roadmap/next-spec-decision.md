@@ -110,3 +110,32 @@ expresa y no forma parte del checkpoint que la desbloqueó.
 `READY_FOR_IMPLEMENTATION`: la siguiente se selecciona en el próximo checkpoint maestro; la cadena
 020 → 021 → 022 es la que desbloquea 031 y 032, que ahora reciben pedidos `RELEASED` con reservas por
 línea.
+
+---
+
+## Checkpoint de la cadena operativa — 2026-09-03
+
+`NEXT SPEC = 019 — RECEPCIÓN FÍSICA` · `RUNNER-UP = 020 — INCIDENCIAS DE RECEPCIÓN`
+
+Con 030 cerrada, la ruta crítica del producto deja de estar en lo comercial y pasa a la cadena de
+entrada: todo lo que vende está listo y espera a que el almacén sepa dónde está la mercancía.
+
+019 se elige porque es la **primera de esa ruta**, tiene **cero bloqueos activos** —sus siete
+proveedores están satisfechos— y está **incompleta de forma medible**: tres de las diez etapas
+documentadas. Lo decisivo no es el hueco sino su naturaleza: presentación y unidad de lo recibido,
+bultos y detalle del daño solo se conocen mientras el camión está en el muelle. Es `P23` en su forma
+literal, y es el mismo patrón que la Spec 029 cerró para el precio y la 030 para la reserva: las
+columnas de unidad llevan desde la Spec 011 esperando en `GoodsReceiptLine` a que alguien las
+escriba.
+
+Hay además un riesgo de corrección latente: `accept_receipt` llama a `record_movement` sin
+presentación, así que la cantidad base del asiento es la tecleada. Hoy no hace daño porque la API no
+admite presentaciones; el día que se reciba en cajas, el ledger anotará cajas como si fueran
+unidades.
+
+020 también tiene cero bloqueos y un hueco mayor —no existe—, pero está aguas abajo. Construirla
+antes sería levantar el registro de incidencias sobre una recepción que todavía no sabe describir lo
+que llegó.
+
+Detalle completo en `operational-chain-checkpoint.md`. Implementación **no iniciada**: requiere su
+propio ciclo con autorización expresa.

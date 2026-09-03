@@ -49,3 +49,20 @@
 | Resolución de precio con versión | 012 | **satisfecha** | 029, 030, 034, 036 |
 | Ubicación escrita en el movimiento | 022 | **no satisfecha** | 031, 032 y la calidad de 023 |
 | Canal de integración saliente | 048 | no satisfecha | 013 (BCV), 047 |
+
+---
+
+## Cadena operativa (019 → 032) — 2026-09-03
+
+Matriz completa en `operational-chain-capability-matrix.md`. Resumen de lo que cambió de estado:
+
+| Consumidor | Capacidad | Proveedor | ¿Satisfecha? | Nota |
+|---|---|---|---|---|
+| 020 | Recepción identificable con líneas y cantidades | 019 | **sí** | la capacidad se midió; no hace falta que 019 esté completa |
+| 021 | Registro y resolución de excepciones | 020 | no | **solo en el camino de excepción**: una recepción sin discrepancia no crea incidencia |
+| 021 | Escribir saldo en estado no vendible | 023 | **no** | bloqueo nuevo: el motor fija `DISPONIBLE` |
+| 022 | Estructura física de ubicaciones | 008 | **sí** | deja de ser bloqueo |
+| 022 | Mercancía confirmada con estado de origen | 021 | no | bloqueo real de 022 |
+| 031 | Pedido `RELEASED` con reservas por línea | 030 | **sí** | deja de ser bloqueo |
+| 031 | Existencia ubicada y cantidad por ubicación | 022 | no | bloqueo real de 031 |
+| 032 | Lote, serial y vencimiento consultables | 024 | **sí** | la selección FEFO/FIFO es alcance propio de 032 |

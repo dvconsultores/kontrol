@@ -58,6 +58,19 @@ Notación: `A → B` significa «A debe existir antes que B».
 ```
 029 Cotización y pedido comercial ← 009, 010, 011, 012  ⛔ (se construyó sin 012)
  └→ 030 Crédito/aprobación/reserva ✅ COMPLETE (2026-09-02) ← 012 ✅, 023 ✅(motor), 045 ✅ · D0-03 ✅
+
+Cadena operativa reauditada el 2026-09-03 (`operational-chain-capability-matrix.md`). Las aristas
+dejan de nombrar Specs y nombran capacidades:
+
+```
+019 Recepción física ✅ sin bloqueos, incompleta
+ ├→ 021 (camino feliz: sin incidencia)
+ └→ 020 Incidencias ✅ sin bloqueos
+      └→ 021 Confirmación ⛔ capacidad de excepción (020) + saldo no vendible (023)
+           └→ 022 Put-away ⛔ estado de origen (021)   [008 ya entrega las ubicaciones]
+                └→ 031 Cola y ruta ⛔ existencia ubicada (022)   [030 ya satisfecho]
+                     └→ 032 Picking ⛔ 031 + 022   [024 y 030 satisfechos]
+```
      └→ 031 Cola y ruta de picking ← 008 ✅, 022, 032  (008 entrega `/locations/ordered`)
          └→ 032 Picking y consolidación ← 008, 011, 023
              └→ 033 Confirmación independiente de pedido ← 032, 045
