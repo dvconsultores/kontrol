@@ -27,6 +27,10 @@ from app.modules.master_data import uom as uom_engine
 from app.modules.organization.models import Warehouse
 from app.modules.organization.service import warehouse_belongs_to
 from app.modules.purchasing.models import (
+    INCIDENT_RESOLUTION_APPROVED,
+    INCIDENT_RESOLUTIONS,
+    INCIDENT_TYPE_DOCUMENTAL,
+    INCIDENT_TYPES,
     Advance,
     Application,
     GoodsReceipt,
@@ -41,6 +45,7 @@ from app.modules.purchasing.models import (
     PurchaseReturn,
     PurchaseReturnLine,
     QuoteLine,
+    ReceiptIncident,
     RequisitionLine,
     SupplierCreditNote,
     SupplierInvoice,
@@ -683,6 +688,281 @@ def reject_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
     receipt.updated_at = datetime.now(UTC)
     db.flush()
     return receipt
+
+
+# --------------------------------------------------------------------------- #
+# Incidencias de recepción (Spec 020, etapas 8, 9 y 10 del proceso)
+# --------------------------------------------------------------------------- #
+#: Transiciones de la incidencia. `RESUELTA` y `ANULADA` son terminales: una
+#: decisión tomada no cambia porque después cambie la recepción o un maestro.
+INCIDENT_TRANSITIONS: dict[str, set[str]] = {
+    "REGISTRADA": {"ESCALADA", "PENDIENTE_AUTORIZACION", "RESUELTA", "ANULADA"},
+    "ESCALADA": {"PENDIENTE_AUTORIZACION", "RESUELTA", "ANULADA"},
+    "PENDIENTE_AUTORIZACION": {"RESUELTA", "ANULADA"},
+    "RESUELTA": set(),
+    "ANULADA": set(),
+}
+
+#: Estados en los que la incidencia sigue comprometiendo cantidad de la línea.
+INCIDENT_LIVE_STATES = ("REGISTRADA", "ESCALADA", "PENDIENTE_AUTORIZACION", "RESUELTA")
+
+
+def _require_incident(db: Session, company_id: str, incident_id: str) -> ReceiptIncident:
+    incident = db.get(ReceiptIncident, incident_id)
+    if not incident or str(incident.company_id) != str(company_id):
+        raise NotFoundError(code="RECEIPT_INCIDENT_NOT_FOUND", message="Incidencia no encontrada")
+    return incident
+
+
+def _tope_de_cantidad(db: Session, line: GoodsReceiptLine, incident_type: str) -> Decimal:
+    """Cuánto puede afectar como máximo una incidencia de este tipo sobre esta línea.
+
+    No es el mismo tope para todos, y tratarlo como si lo fuera sería falso: un
+    faltante habla de mercancía que **no** llegó, así que su techo es lo que se
+    pidió; los otros tres hablan de mercancía que sí llegó, y su techo es lo
+    recibido.
+    """
+    if incident_type == "FALTANTE":
+        order_line = db.get(PurchaseOrderLine, line.order_line_id)
+        if order_line is None:  # pragma: no cover - la línea existe por clave foránea
+            return Decimal(0)
+        ordenado = (order_line.base_quantity_ordered
+                    if order_line.base_quantity_ordered is not None else order_line.quantity_ordered)
+        return _dec(ordenado)
+    recibido = (line.base_quantity_received
+                if line.base_quantity_received is not None else line.quantity_received)
+    return _dec(recibido)
+
+
+def _afectado_vivo(db: Session, line_id: str, incident_type: str, excluir: str | None = None) -> Decimal:
+    """Suma de lo ya comprometido por otras incidencias del mismo tipo sobre la línea."""
+    stmt = select(ReceiptIncident).where(
+        ReceiptIncident.receipt_line_id == line_id,
+        ReceiptIncident.incident_type == incident_type,
+        ReceiptIncident.status.in_(INCIDENT_LIVE_STATES))
+    total = Decimal(0)
+    for otra in db.execute(stmt).scalars().all():
+        if excluir and str(otra.id) == str(excluir):
+            continue
+        total += _dec(otra.affected_base_quantity)
+    return total
+
+
+def registrar_incidencia(db: Session, *, company_id: str, receipt_id: str, code: str,
+                         incident_type: str, receipt_line_id: str | None = None,
+                         affected_base_quantity: float | None = None,
+                         description: str | None = None, actor: str | None = None) -> ReceiptIncident:
+    """Etapa 8: registrar una diferencia observada en la recepción.
+
+    La incidencia **no repite** el hecho físico: apunta a la línea, donde la
+    Spec 019 dejó producto, cantidades, unidad, presentación, factor congelado,
+    estado físico y daño observado. Aquí se clasifica y se le da ciclo de vida.
+    """
+    company_id = _company(company_id, obj="incidencia de recepción")
+    receipt = _require_receipt(db, company_id, receipt_id)
+    if receipt.status == "CANCELLED":
+        raise ConflictError(code="RECEIPT_CANCELLED",
+                            message="Una recepción anulada no admite incidencias.")
+    if incident_type not in INCIDENT_TYPES:
+        raise KontrolError(code="INVALID_INCIDENT_TYPE",
+                           message=f"Tipo de incidencia no reconocido: {incident_type}.",
+                           status_code=422, details={"allowed": list(INCIDENT_TYPES)})
+
+    documental = incident_type == INCIDENT_TYPE_DOCUMENTAL
+    if documental:
+        if receipt_line_id is not None or affected_base_quantity is not None:
+            raise KontrolError(code="INCIDENT_DOCUMENTAL_HAS_NO_LINE",
+                               message="Una diferencia documental es del documento: no lleva línea ni cantidad.",
+                               status_code=422)
+        line = None
+    else:
+        if receipt_line_id is None or affected_base_quantity is None:
+            raise KontrolError(code="INCIDENT_REQUIRES_LINE_AND_QUANTITY",
+                               message="Una diferencia de mercancía exige línea y cantidad afectada.",
+                               status_code=422)
+        if affected_base_quantity <= 0:
+            raise KontrolError(code="INVALID_QUANTITY",
+                               message="La cantidad afectada debe ser positiva.", status_code=422)
+        # Se bloquea la línea: dos incidencias simultáneas del mismo tipo sobre
+        # la misma línea podrían comprometer entre las dos más de lo que llegó.
+        line = db.execute(
+            select(GoodsReceiptLine).where(GoodsReceiptLine.id == receipt_line_id)
+            .with_for_update().execution_options(populate_existing=True)).scalars().first()
+        if line is None or str(line.receipt_id) != str(receipt.id):
+            raise NotFoundError(code="RECEIPT_LINE_NOT_FOUND",
+                                message="Línea de recepción no encontrada en esta recepción")
+        tope = _tope_de_cantidad(db, line, incident_type)
+        ya = _afectado_vivo(db, str(line.id), incident_type)
+        if ya + _dec(affected_base_quantity) > tope:
+            raise ConflictError(
+                code="INCIDENT_QUANTITY_EXCEEDED",
+                message="La cantidad afectada supera lo que ese tipo de incidencia admite en la línea.",
+                details={"incident_type": incident_type, "cap_base": str(tope),
+                         "already_affected_base": str(ya), "requested_base": str(affected_base_quantity)})
+
+    incident = ReceiptIncident(
+        company_id=company_id, receipt_id=str(receipt.id), receipt_line_id=receipt_line_id,
+        code=code, incident_type=incident_type,
+        affected_base_quantity=None if documental else _dec(affected_base_quantity),
+        description=description, status="REGISTRADA", created_by=actor)
+    db.add(incident)
+    db.flush()
+    _audit(db, action="RECEIPT_INCIDENT_REGISTERED", entity_type="ReceiptIncident",
+           entity_id=str(incident.id), company_id=company_id, actor=actor,
+           after={"receipt_id": str(receipt.id), "receipt_line_id": receipt_line_id,
+                  "product_id": str(line.product_id) if line is not None else None,
+                  "incident_type": incident_type,
+                  "affected_base_quantity": str(incident.affected_base_quantity)
+                  if incident.affected_base_quantity is not None else None,
+                  "status": "REGISTRADA", "code": code})
+    return incident
+
+
+def escalar_incidencia(db: Session, *, company_id: str, incident_id: str,
+                       notes: str | None = None, actor: str | None = None) -> ReceiptIncident:
+    """Etapa 10: escalar la novedad a Compras."""
+    incident = _require_incident(db, company_id, incident_id)
+    _assert_transition(incident.status, "ESCALADA", INCIDENT_TRANSITIONS, "la incidencia")
+    incident.status = "ESCALADA"
+    incident.escalated_at = datetime.now(UTC)
+    incident.escalated_by = actor
+    incident.escalation_notes = notes
+    incident.updated_at = datetime.now(UTC)
+    db.flush()
+    _audit(db, action="RECEIPT_INCIDENT_ESCALATED", entity_type="ReceiptIncident",
+           entity_id=str(incident.id), company_id=company_id, actor=actor,
+           after={"status": "ESCALADA", "notes": notes})
+    return incident
+
+
+def _contexto_de_incidencia(incident: ReceiptIncident) -> dict[str, Any]:
+    return {"incident_type": incident.incident_type,
+            "amount": float(incident.affected_base_quantity or 0),
+            "currency": "VED",
+            "receipt_id": str(incident.receipt_id),
+            "resolution": INCIDENT_RESOLUTION_APPROVED}
+
+
+def resolver_incidencia(db: Session, *, company_id: str, incident_id: str, resolution: str,
+                        reason: str | None = None, actor: str | None = None) -> ReceiptIncident:
+    """Registra el tratamiento decidido para la incidencia.
+
+    Registrar no es ejecutar: confirmar el inventario y escribir el estado de la
+    mercancía es de la Spec 021. Aquí queda la decisión, estructurada, para que
+    aquella la consuma sin interpretar texto libre.
+
+    El ajuste autorizado es el único tratamiento que pasa por el motor de
+    aprobaciones, porque el proceso lo declara control crítico.
+    """
+    motivo = (reason or "").strip()
+    if not motivo:
+        raise KontrolError(code="REASON_REQUIRED", message="Debe indicar el motivo del tratamiento.",
+                           status_code=422)
+    if resolution not in INCIDENT_RESOLUTIONS:
+        raise KontrolError(code="INVALID_INCIDENT_RESOLUTION",
+                           message=f"Tratamiento no reconocido: {resolution}.", status_code=422,
+                           details={"allowed": list(INCIDENT_RESOLUTIONS)})
+    # Se bloquea la incidencia: dos resoluciones simultáneas no pueden tomar dos
+    # decisiones distintas sobre la misma diferencia.
+    incident = db.execute(
+        select(ReceiptIncident).where(ReceiptIncident.id == incident_id)
+        .with_for_update().execution_options(populate_existing=True)).scalars().first()
+    if incident is None or str(incident.company_id) != str(company_id):
+        raise NotFoundError(code="RECEIPT_INCIDENT_NOT_FOUND", message="Incidencia no encontrada")
+
+    if resolution == INCIDENT_RESOLUTION_APPROVED and incident.status != "PENDIENTE_AUTORIZACION":
+        resultado = approvals_integration.require_for_document(
+            db, company_id=company_id, process_type=approvals_integration.PROCESS_RECEIPT_INCIDENT,
+            document_type="ReceiptIncident", document_id=str(incident.id),
+            context=_contexto_de_incidencia(incident), actor=actor)
+        if resultado.get("requires_approval"):
+            _assert_transition(incident.status, "PENDIENTE_AUTORIZACION", INCIDENT_TRANSITIONS,
+                               "la incidencia")
+            incident.status = "PENDIENTE_AUTORIZACION"
+            incident.approval_request_id = str(resultado["request"].id)
+            incident.resolution_reason = motivo
+            incident.updated_at = datetime.now(UTC)
+            db.flush()
+            _audit(db, action="RECEIPT_INCIDENT_APPROVAL_REQUESTED", entity_type="ReceiptIncident",
+                   entity_id=str(incident.id), company_id=company_id, actor=actor, reason=motivo,
+                   after={"status": "PENDIENTE_AUTORIZACION", "resolution": resolution,
+                          "approval_request_id": incident.approval_request_id})
+            return incident
+    if resolution == INCIDENT_RESOLUTION_APPROVED:
+        approvals_integration.ensure_approved(
+            db, company_id=company_id, document_type="ReceiptIncident",
+            document_id=str(incident.id), what="la incidencia")
+
+    _assert_transition(incident.status, "RESUELTA", INCIDENT_TRANSITIONS, "la incidencia")
+    incident.status = "RESUELTA"
+    incident.resolution = resolution
+    incident.resolution_reason = motivo
+    incident.resolved_at = datetime.now(UTC)
+    incident.resolved_by = actor
+    incident.updated_at = datetime.now(UTC)
+    db.flush()
+    _audit(db, action="RECEIPT_INCIDENT_RESOLVED", entity_type="ReceiptIncident",
+           entity_id=str(incident.id), company_id=company_id, actor=actor, reason=motivo,
+           after={"status": "RESUELTA", "resolution": resolution,
+                  "incident_type": incident.incident_type,
+                  "receipt_line_id": incident.receipt_line_id,
+                  "affected_base_quantity": str(incident.affected_base_quantity)
+                  if incident.affected_base_quantity is not None else None,
+                  "approval_request_id": incident.approval_request_id})
+    return incident
+
+
+def anular_incidencia(db: Session, *, company_id: str, incident_id: str, reason: str | None = None,
+                      actor: str | None = None) -> ReceiptIncident:
+    """Se registró por error. Libera la cantidad que comprometía."""
+    motivo = (reason or "").strip()
+    if not motivo:
+        raise KontrolError(code="REASON_REQUIRED", message="Debe indicar el motivo.", status_code=422)
+    incident = _require_incident(db, company_id, incident_id)
+    _assert_transition(incident.status, "ANULADA", INCIDENT_TRANSITIONS, "la incidencia")
+    previo = incident.status
+    incident.status = "ANULADA"
+    incident.cancelled_reason = motivo
+    incident.updated_at = datetime.now(UTC)
+    db.flush()
+    _audit(db, action="RECEIPT_INCIDENT_CANCELLED", entity_type="ReceiptIncident",
+           entity_id=str(incident.id), company_id=company_id, actor=actor, reason=motivo,
+           before={"status": previo}, after={"status": "ANULADA"})
+    return incident
+
+
+def incidencias_de_recepcion(db: Session, *, company_id: str, receipt_id: str) -> list[ReceiptIncident]:
+    return list(db.execute(
+        select(ReceiptIncident).where(ReceiptIncident.company_id == company_id,
+                                      ReceiptIncident.receipt_id == receipt_id)
+        .order_by(ReceiptIncident.created_at)).scalars().all())
+
+
+def resultado_de_incidencias(db: Session, *, company_id: str, receipt_id: str) -> dict[str, Any]:
+    """Contrato de salida para la Spec 021.
+
+    Estructurado a propósito: la confirmación de inventario no debería tener que
+    leer texto libre para saber qué se decidió. Devuelve, por línea y tipo, la
+    cantidad base afectada y el tratamiento, más si queda algo sin resolver.
+    """
+    incidencias = incidencias_de_recepcion(db, company_id=company_id, receipt_id=receipt_id)
+    vivas = [x for x in incidencias if x.status != "ANULADA"]
+    pendientes = [x for x in vivas if x.status != "RESUELTA"]
+    return {
+        "receipt_id": str(receipt_id),
+        "total": len(vivas),
+        "unresolved": len(pendientes),
+        "ready_for_confirmation": not pendientes,
+        "items": [
+            {"incident_id": str(x.id), "code": x.code, "incident_type": x.incident_type,
+             "receipt_line_id": x.receipt_line_id,
+             "affected_base_quantity": str(x.affected_base_quantity)
+             if x.affected_base_quantity is not None else None,
+             "status": x.status, "resolution": x.resolution,
+             "approval_request_id": x.approval_request_id}
+            for x in vivas
+        ],
+    }
 
 
 def _sync_order_status(db: Session, order_id: str) -> None:

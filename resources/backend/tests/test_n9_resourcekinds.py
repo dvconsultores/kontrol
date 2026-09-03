@@ -54,9 +54,13 @@ def _vincular(mundo, usuario, empresa, documento, kind, recurso):
 
 # ------------------------------------------------- el registro
 def test_el_registro_tiene_la_cardinalidad_esperada():
-    """19 registrados antes de N9 más las 4 que `REM-046-001` exigía."""
-    assert len(RESOURCE_KINDS) == 23, (
-        f"se esperaban 23 tipos y hay {len(RESOURCE_KINDS)}: {sorted(RESOURCE_KINDS)}")
+    """19 antes de N9, más las 4 de `REM-046-001`, más `ReceiptIncident` (020).
+
+    El número es fijo a propósito: el registro está **cerrado**, y añadir un tipo
+    sin semilla ni permiso declarado debe romper aquí y no en producción.
+    """
+    assert len(RESOURCE_KINDS) == 24, (
+        f"se esperaban 24 tipos y hay {len(RESOURCE_KINDS)}: {sorted(RESOURCE_KINDS)}")
     for exigido in ("Payment", "BankTransaction", "CashSession", "Reconciliation"):
         assert exigido in RESOURCE_KINDS, f"{exigido} sigue sin registrarse"
 

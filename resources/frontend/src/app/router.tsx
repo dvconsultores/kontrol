@@ -69,6 +69,7 @@ export const router = createBrowserRouter([
           { path: "compras/cotizaciones", lazy: () => import("@/modules/compras/cotizaciones/CotizacionesComprasPage").then((m) => ({ Component: m.CotizacionesComprasPage })) },
           { path: "compras/ordenes", lazy: () => import("@/modules/compras/ordenes/OrdenesComprasPage").then((m) => ({ Component: m.OrdenesComprasPage })) },
           { path: "compras/recepciones", lazy: () => import("@/modules/compras/recepciones/RecepcionesPage").then((m) => ({ Component: m.RecepcionesPage })) },
+          { path: "compras/incidencias", lazy: () => import("@/modules/compras/incidencias/IncidenciasPage").then((m) => ({ Component: m.IncidenciasPage })) },
           { path: "compras/facturas", lazy: () => import("@/modules/compras/facturas/FacturasProveedorPage").then((m) => ({ Component: m.FacturasProveedorPage })) },
           { path: "compras/devoluciones", lazy: () => import("@/modules/compras/devoluciones/DevolucionesComprasPage").then((m) => ({ Component: m.DevolucionesComprasPage })) },
           { path: "compras/notas", lazy: () => import("@/modules/compras/notas/NotasComprasPage").then((m) => ({ Component: m.NotasComprasPage })) },

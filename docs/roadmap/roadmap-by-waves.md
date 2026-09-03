@@ -70,8 +70,8 @@ cada línea de documento con su unidad y presentación.
 
 | Spec | Estado actual |
 |---|---|
-| **019 Recepción física** (completar) | PARTIAL 50 % — arribo, programación, bultos, pallets, evidencia |
-| **020 Incidencias de recepción** | NOT_STARTED — faltante/sobrante/daño/referencia, escalamiento, reclamo |
+| **019 Recepción física** (completar) | ✅ **COMPLETE / CONVERGED (2026-09-03)** — arribo, bultos, comparación documental, inspección, unidad y cantidad base, acta |
+| **020 Incidencias de recepción** | ✅ **COMPLETE / CONVERGED (2026-09-03)** — los cinco tipos, escalamiento, resolución de conjunto cerrado, evidencia |
 | **021 Confirmación y conciliación** | SKELETON_ONLY — conteo, tres vías, cuarentena, liberación formal |
 | **022 Put-away y ubicación por zonas** | SKELETON_ONLY — asignación, traslado, confirmación física, reubicación |
 
@@ -181,3 +181,21 @@ selecciona una, no una tanda.
 
 La cadena comercial (012, 029, 030) está cerrada y espera a que el almacén sepa dónde está lo que
 vende.
+
+---
+
+## Reordenación tras la Spec 020 (2026-09-03)
+
+Las dos primeras de la cadena de entrada cayeron el mismo día. La ola queda así:
+
+| Cuándo | Spec | Por qué |
+|---|---|---|
+| Hecho | 019 Recepción física · 020 Incidencias | Las once primeras etapas de las doce del proceso |
+| **Ahora** | **021 Confirmación de inventario** | Le queda **un** bloqueo, no dos: la capacidad de excepción ya existe. Falta que el motor de saldos de 023 sepa escribir estados distintos de `DISPONIBLE` |
+| Después | 022 Put-away | Cierra la etapa 12, la única del proceso de recepción todavía sin dueño implementado |
+| Después | 031 y 032 | Esperan existencia ubicada |
+
+**El bloqueo de 021 no es una Spec: es una capacidad.** El `ADR-D0-010` declara quince estados de
+mercancía y el motor escribe uno solo. Quien tome la 021 decide primero si esa capacidad se abre
+dentro de la 023 —su dueña— o si la 021 se conforma con confirmar sin cuarentena. Ese es el punto
+de decisión, y conviene resolverlo antes de abrir el ciclo, no dentro de él.

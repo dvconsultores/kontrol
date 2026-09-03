@@ -275,7 +275,7 @@ export function RecepcionesPage(): React.JSX.Element {
             <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="REC-0001" required />
           </FormField>
           <FormField label="Orden de compra" required>
-            <select aria-label="Orden de compra" value={newOrder} onChange={(e) => setNewOrder(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+            <select value={newOrder} onChange={(e) => setNewOrder(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Seleccionar…</option>
               {(orders.data?.items ?? []).filter((o) => ["APPROVED", "PARTIALLY_RECEIVED", "RECEIVED"].includes(o.status)).map((o) => (
                 <option key={o.id} value={o.id}>{o.code}</option>
@@ -366,7 +366,7 @@ export function RecepcionesPage(): React.JSX.Element {
                 <TextInput value={lineOrderLine} onChange={(e) => setLineOrderLine(e.target.value)} placeholder="Identificador de la línea" required />
               </FormField>
               <FormField label="Producto" required>
-                <select aria-label="Producto recibido" value={lineProduct} onChange={(e) => { setLineProduct(e.target.value); setLinePresentation(""); }} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <select value={lineProduct} onChange={(e) => { setLineProduct(e.target.value); setLinePresentation(""); }} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
                   <option value="">Seleccionar…</option>
                   {(products.data?.items ?? []).map((p) => (
                     <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
@@ -374,7 +374,7 @@ export function RecepcionesPage(): React.JSX.Element {
                 </select>
               </FormField>
               <FormField label="Presentación" help="Con la que llegó; el inventario entra en unidad base">
-                <select aria-label="Presentación recibida" value={linePresentation} onChange={(e) => setLinePresentation(e.target.value)} className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900" disabled={!lineProduct}>
+                <select value={linePresentation} onChange={(e) => setLinePresentation(e.target.value)} className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900" disabled={!lineProduct}>
                   <option value="">Unidad base</option>
                   {(presentations.data ?? []).map((p) => (
                     <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
@@ -388,7 +388,7 @@ export function RecepcionesPage(): React.JSX.Element {
                 <TextInput type="number" min="0" value={lineAccepted} onChange={(e) => setLineAccepted(e.target.value)} />
               </FormField>
               <FormField label="Estado físico">
-                <select aria-label="Estado físico" value={lineCondition} onChange={(e) => setLineCondition(e.target.value)} className="h-10 w-40 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <select value={lineCondition} onChange={(e) => setLineCondition(e.target.value)} className="h-10 w-40 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
                   <option value="BUENO">Bueno</option>
                   <option value="DAÑADO">Dañado</option>
                   <option value="PARCIAL">Parcialmente dañado</option>

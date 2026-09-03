@@ -78,3 +78,31 @@ Formato: | ID | Requisito | Tarea | Dependencia | Archivos | Prueba | Responsabl
 | 052-056 | Playwright, navegadores, responsive, rutas, OpenAPI | ídem | ✔ |
 | 057-059 | Grafo, Master 56 y trazabilidad | `docs/roadmap/*`, este documento | ✔ |
 | 060 | `/speckit.converge SPEC019` | `convergence.md` §SPEC 019 | ✔ |
+
+---
+
+# TAREAS — SPEC 020 · CICLO DE IMPLEMENTACIÓN (T-020-I, 2026-09-03)
+
+| Rango | Tarea | Entregable | Estado |
+|---|---|---|---|
+| 001-002 | Baseline y extracción de las tres etapas | `spec020-implementation-cycle.md` | ✔ |
+| 003-004 | Auditar modelo, rutas y servicios | no existía nada | ✔ |
+| 005-006 | Extraer tipos y tratamientos | cinco y cuatro, literales | ✔ |
+| 007-008 | Ciclo de vida y propiedad cabecera/línea | `INCIDENT_TRANSITIONS` + restricción por tipo | ✔ |
+| 009-012 | Cantidad, base, enlace P23 y `quality_status` | `ReceiptIncident` sin duplicados | ✔ |
+| 013-016 | Modelo, migración y paridad ORM | `0045_spec020_incidents` | ✔ |
+| 015 | Backfill | **no aplica**: no hay datos que migrar | — |
+| 017-022 | Alta, ciclo, resolución, idempotencia e invariantes | `purchasing/service.py` | ✔ |
+| 023-024 | Integración con la Spec 045 y segregación | `RECEIPT_INCIDENT`; la política decide | ✔ |
+| 025 | Integración con la Spec 046 | registro cerrado de recursos | ✔ |
+| 026 | Contrato de salida para la 021 | `resultado_de_incidencias` | ✔ |
+| 027 | Auditoría | tres eventos | ✔ |
+| 028 | Eventos/outbox | **no aplica**: no existe outbox transversal | — |
+| 029-031 | Permisos, API y OpenAPI | `compras:quality`/`approve`; 8 operaciones | ✔ |
+| 032-036 | Frontend: lista, detalle, alta, tratamiento y aprobación | `IncidenciasPage.tsx` | ✔ |
+| 037-042 | Aislamiento, AB, cadenas, tenant, documentos y aprobaciones | `test_spec020_incidents.py` | ✔ |
+| 043-045 | Idempotencia, concurrencia y pruebas hostiles | bloqueos + `test_spec020_migration_0045.py` | ✔ |
+| 046-049 | Instalación limpia y pruebas de no-efecto | subir, bajar, subir; sin inventario | ✔ |
+| 050-056 | Regresiones, Playwright, navegadores, responsive, rutas, OpenAPI | `spec020-final-checkpoint.md` | ✔ |
+| 057-058 | Master 56 y revalidación de los bloqueos de la 021 | `docs/roadmap/*` | ✔ |
+| 059-060 | Trazabilidad y convergencia | este documento y `convergence.md` | ✔ |

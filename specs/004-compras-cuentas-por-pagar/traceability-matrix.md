@@ -118,3 +118,77 @@ Abreviaturas: **M** `0044_spec019_receipt` · **SVC** `purchasing/service.py` ·
 | 046 documentos | evidencia | sí, disponible; ninguna etapa de 019 la exige como obligatoria |
 
 **Cobertura: 100 %. Huérfanos: 0.**
+
+---
+
+# TRAZABILIDAD — SPEC 020 · INCIDENCIAS DE RECEPCIÓN
+
+Formato: `| Requirement | Process Stage | Type/Resolution | Plan | Task | Code | Test | Evidence | Status |`.
+Abreviaturas: **M** `0045_spec020_incidents` · **SVC** `purchasing/service.py` · **API**
+`purchasing/api.py` · **FE** `IncidenciasPage.tsx` · **T-F** `test_spec020_incidents.py` · **T-A**
+`test_spec020_architecture.py` · **T-M** `test_spec020_migration_0045.py`.
+
+## Elemento por elemento
+
+| Elemento | Etapa | Tipo / Tratamiento | Código | Prueba | Status |
+|---|---|---|---|---|---|
+| Identidad de la incidencia | 8 | — | `ReceiptIncident`, código único por empresa | T-M código único | ✔ |
+| Recepción padre | 8 | — | FK + `_owned` | T-F cadena · T-A api | ✔ |
+| Línea de recepción | 8 | los cuatro de mercancía | FK, validada contra la recepción | T-F línea ajena · T-M FK | ✔ |
+| Producto | 8 | — | **no se duplica**: sale de la línea | T-A sin duplicados | ✔ |
+| Tipo de incidencia | 8 | los cinco literales | enumerado + `CHECK` | T-F cinco tipos · T-M tipo inventado | ✔ |
+| Cantidad afectada | 8 | mercancía | `Numeric(18,6)`, en base | T-F topes · T-M no positiva | ✔ |
+| Unidad y cantidad base | 8 | — | del snapshot de la línea; no se recalcula | T-F P23 | ✔ |
+| Tope por tipo | 8 | faltante ≠ resto | `_tope_de_cantidad` | T-F faltante · T-F tope | ✔ |
+| Acumulado por línea y tipo | 8 | — | `_afectado_vivo` bajo bloqueo | T-F acumulación · T-A bloqueo | ✔ |
+| Evidencia | 9 | — | Spec 046, recurso `ReceiptIncident` | T-F evidencia · T-A registro | ✔ |
+| Escalamiento | 10 | — | `escalar_incidencia` | T-F escalar | ✔ |
+| Ciclo de vida | — | — | `INCIDENT_TRANSITIONS` | T-A ciclo · T-F doble resolución | ✔ |
+| Tratamiento | §3 | los cuatro literales | enumerado + `CHECK` | T-F tratamiento · T-M inventado | ✔ |
+| Motivo | §3 | — | obligatorio en resolver y anular | T-F sin motivo | ✔ |
+| Aprobación | control 115 | solo `AJUSTE_AUTORIZADO` | Spec 045, `RECEIPT_INCIDENT` | T-F ajuste · T-A un solo punto | ✔ |
+| Sin política de aprobación | — | — | el motor no exige nada | T-F sin política | ✔ |
+| Resolución idempotente | — | — | máquina de estados + bloqueo | T-F doble resolución | ✔ |
+| Anulación | — | — | libera la cantidad | T-F anular | ✔ |
+| Resultado para la 021 | §3 | — | `resultado_de_incidencias` | T-F resultado · T-A estructurado | ✔ |
+| Camino feliz sin incidencia | 16 del encargo | — | ninguna creación automática | T-F camino feliz | ✔ |
+| Sin efecto en inventario | — | — | ninguna llamada al motor | T-F sin inventario · T-A fronteras | ✔ |
+| Empresa | — | — | `company_id` directo, no anulable | T-A alcance · T-F AB | ✔ |
+| Usuario AB · cross-tenant · cadena cruzada | — | — | `_owned_incident` | T-F tres pruebas | ✔ |
+| Cuerpo estricto | — | — | `extra="forbid"` | T-F cuerpo | ✔ |
+| Auditoría | — | — | tres eventos con empresa, tenant, línea, producto y cantidad | T-F auditoría | ✔ |
+| Paridad ORM = Alembic = PostgreSQL | — | — | seis `CHECK` en ambos | T-A restricciones · T-M catálogo | ✔ |
+| OpenAPI | — | — | 8 operaciones nuevas | fixture regenerado | ✔ |
+| Frontend | — | — | FE con ruta y menú | `tsc`, ESLint, build, 285/285 | ✔ |
+
+## Los IMP del encargo
+
+| Rango | Garantía | Dónde |
+|---|---|---|
+| 001-006 | empresa, contexto, cuerpo, recepción y línea padres | `_owned_incident`, `registrar_incidencia` |
+| 007-008 | tres etapas cubiertas; sin incidencia de camino feliz | ciclo · T-F camino feliz |
+| 009-010 | tipos del catálogo, sin inventar | enumerado + `CHECK` |
+| 011 | evidencia P23 referenciada, no reescrita | sin columnas duplicadas |
+| 012-015 | precisión, base consistente, sin recálculo, tope | `Numeric`, snapshot, `_tope_de_cantidad` |
+| 016-020 | tratamientos por estado, terminal única, idempotencia, motivo y actor | `INCIDENT_TRANSITIONS`, bloqueo |
+| 021-024 | 045 y 046 sin motores paralelos | integración + registro cerrado |
+| 025-030 | resultado para 021; sin confirmación, sin estados, sin put-away, sin ubicación, sin picking | `resultado_de_incidencias` · guardias |
+| 031-034 | cross-company, cross-tenant, AB, permiso ≠ empresa | T-F multiempresa |
+| 035-037 | auditoría completa | `_audit` en los tres eventos |
+| 038-039 | ciclo explícito, terminales inmutables | `INCIDENT_TRANSITIONS` |
+| 040-044 | OpenAPI, contexto, doble envío, formulario sucio, sin 500 | API + FE + contratos de error |
+| 045-048 | paridad, cero fallos inesperados, trazabilidad, sin deuda P0 | convergencia |
+
+**Cobertura: 100 %. Huérfanos: 0.**
+
+## Adenda tras la corrida de extremo a extremo
+
+Dos elementos se añadieron después de la primera regresión, porque la prueba contra el producto real
+encontró lo que las suites aisladas no podían ver.
+
+| Elemento | Qué cubre | Código | Prueba | Status |
+|---|---|---|---|---|
+| Insertabilidad de la tabla migrada | `created_at`/`updated_at` nacen con `server_default`, como en el resto del repositorio | M | T-M insert del ORM contra la tabla de Alembic | ✔ |
+| Nombre accesible de los selectores | El nombre que anuncia el lector de pantalla es la etiqueta visible (WCAG 2.5.3) | FE y otras cuatro páginas del bloque | E2E incidencias · axe | ✔ |
+
+**Cobertura: 100 %. Huérfanos: 0.**

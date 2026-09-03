@@ -4,7 +4,7 @@
 capacidad, no*. Diecinueve tipos declarados y una sola vinculación ejercitada.
 
 Esto siembra una fila de verdad, persistida en PostgreSQL, para cada uno de los
-veintitrés. No hay identificadores inventados ni modelos simulados: si un tipo
+veinticuatro. No hay identificadores inventados ni modelos simulados: si un tipo
 no puede sembrarse, su prueba **falla**, porque un tipo que no se puede crear
 tampoco se puede vincular.
 """
@@ -29,6 +29,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     from app.modules.purchasing.models import (
         GoodsReceipt,
         Payment,
+        ReceiptIncident,
         PurchaseOrder,
         PurchaseRequisition,
         SupplierInvoice,
@@ -112,6 +113,13 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         db.flush()
         return str(o.id)
 
+    def _recepcion() -> str:
+        r = GoodsReceipt(company_id=empresa, code=f"{marca}-RC2", order_id=_orden_compra(),
+                         warehouse_id=_almacen(), status="DRAFT", quality_status="PENDING")
+        db.add(r)
+        db.flush()
+        return str(r.id)
+
     def _orden_venta() -> str:
         o = SalesOrder(company_id=empresa, code=f"{marca}-OV",
                        customer_id=_party("CLIENTE"), status="DRAFT")
@@ -130,6 +138,14 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         "GoodsReceipt": lambda: GoodsReceipt(
             company_id=empresa, code=f"{marca}-RC", order_id=_orden_compra(),
             warehouse_id=_almacen(), status="DRAFT", quality_status="PENDING"),
+        # Sin línea y sin cantidad **a propósito**: `DIFERENCIA_DOCUMENTAL` es el
+        # único tipo que `ck_receipt_incidents_line_and_quantity_by_type` exige
+        # así. Es una incidencia real de la 020, no una fila mínima inventada
+        # para que la prueba pase.
+        "ReceiptIncident": lambda: ReceiptIncident(
+            company_id=empresa, code=f"{marca}-IN", receipt_id=_recepcion(),
+            incident_type="DIFERENCIA_DOCUMENTAL", status="REGISTRADA",
+            description=f"Diferencia documental {marca}"),
         "SupplierInvoice": lambda: SupplierInvoice(
             company_id=empresa, supplier_id=_party("PROV3"),
             invoice_number=f"{marca}-FP", status="DRAFT"),

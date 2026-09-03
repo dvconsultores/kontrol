@@ -408,6 +408,61 @@ export interface GoodsReceiptLine {
   quality: string;
 }
 
+/** Incidencia de recepción (Spec 020). Los cinco tipos y los cuatro
+ *  tratamientos salen del proceso documentado; no hay más. */
+export type IncidentType =
+  | "FALTANTE"
+  | "SOBRANTE"
+  | "DANO"
+  | "REFERENCIA_INCORRECTA"
+  | "DIFERENCIA_DOCUMENTAL";
+
+export type IncidentResolution =
+  | "AJUSTE_AUTORIZADO"
+  | "RECLAMO_PROVEEDOR"
+  | "INVESTIGACION_INTERNA"
+  | "CUARENTENA";
+
+export type IncidentStatus =
+  | "REGISTRADA"
+  | "ESCALADA"
+  | "PENDIENTE_AUTORIZACION"
+  | "RESUELTA"
+  | "ANULADA";
+
+export interface ReceiptIncident {
+  id: string;
+  code: string;
+  receipt_id: string;
+  receipt_line_id: string | null;
+  incident_type: IncidentType | string;
+  affected_base_quantity: string | null;
+  description: string | null;
+  status: IncidentStatus | string;
+  escalated_at: string | null;
+  escalated_by: string | null;
+  escalation_notes: string | null;
+  resolution: IncidentResolution | string | null;
+  resolution_reason: string | null;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  approval_request_id: string | null;
+  cancelled_reason: string | null;
+}
+
+/** Lo que la Spec 021 consumirá para confirmar el inventario. */
+export interface IncidentOutcome {
+  receipt_id: string;
+  total: number;
+  unresolved: number;
+  ready_for_confirmation: boolean;
+  items: Array<
+    Pick<ReceiptIncident, "code" | "incident_type" | "receipt_line_id" | "affected_base_quantity" | "status" | "resolution" | "approval_request_id"> & {
+      incident_id: string;
+    }
+  >;
+}
+
 export interface GoodsReceiptDetail extends GoodsReceiptSummary {
   arrival_confirmed_by: string | null;
   packing_list_ref: string | null;

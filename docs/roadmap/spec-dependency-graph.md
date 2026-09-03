@@ -46,8 +46,8 @@ Notación: `A → B` significa «A debe existir antes que B».
      └→ 017 Orden de compra
          ├→ 018 Importaciones          ← 046 (expediente documental)
          └→ 019 Recepción física       ← 008, 023
-             ├→ 020 Incidencias de recepción ← 046
-             └→ 021 Confirmación de inventario recibido ← 011, 020
+             ├→ 020 Incidencias de recepción ← 046 ✅ (2026-09-03)
+             └→ 021 Confirmación de inventario recibido ← 011 ✅, 020 ✅
                  └→ 022 Put-away        ← 008 ✅ (008 cerrada; 023 aún sin dimensión de ubicación)
 027 Factura proveedor/match ← 017, 019
  └→ 028 CxP y pagos ← 040 (retenciones)
@@ -65,8 +65,8 @@ dejan de nombrar Specs y nombran capacidades:
 ```
 019 Recepción física ✅ COMPLETE / CONVERGED (2026-09-03)
  ├→ 021 (camino feliz: sin incidencia)
- └→ 020 Incidencias ✅ sin bloqueos
-      └→ 021 Confirmación ⛔ capacidad de excepción (020) + saldo no vendible (023)
+ └→ 020 Incidencias ✅ COMPLETE / CONVERGED (2026-09-03)
+      └→ 021 Confirmación ⛔ **solo** saldo no vendible (023)   [la excepción ya existe]
            └→ 022 Put-away ⛔ estado de origen (021)   [008 ya entrega las ubicaciones]
                 └→ 031 Cola y ruta ⛔ existencia ubicada (022)   [030 ya satisfecho]
                      └→ 032 Picking ⛔ 031 + 022   [024 y 030 satisfechos]
@@ -119,7 +119,7 @@ dejan de nombrar Specs y nombran capacidades:
 | D-03 | 034 Facturación | 033 Confirmación de pedido | Se factura sin compuerta y sin vínculo al pedido |
 | D-04 | 031/032 Picking | ~~008~~ **desbloqueada** + 022 Put-away | 008 entrega orden físico determinista; falta 022 |
 | D-05 | 015/017/025/030 | 045 Motor de aprobaciones | **RESUELTA 2026-08-29**: las cuatro implementaciones ad-hoc migradas al motor único (Spec 045 COMPLETE_100) |
-| D-06 | 019 Recepción | 020 + 021 | Recepción contable que salta cuarentena y liberación |
+| D-06 | 019 Recepción | ~~020~~ **cerrada** + 021 | Recepción contable que salta la liberación; la cuarentena ya tiene dónde declararse |
 | D-07 | 026 Costos | 018 Importaciones | Sin landed cost: el costo de importación no se distribuye |
 | D-08 | Todas las líneas | 011 en transacción | Sin UoM ni presentación por línea |
 
@@ -131,7 +131,7 @@ dejan de nombrar Specs y nombran capacidades:
 | ~~045 Motor de aprobaciones~~ **(cerrada)** | 015, 017, 025, 030, 033, 047 — **desbloqueadas** | 6 |
 | **012 Maestros comerciales** | 029, 030, 034 | 3 |
 | **ARCH-MC-001 (remediación)** — N0/N1/N2/N3 COMPLETE · N4 preflight COMPLETE · backfill NOT_STARTED | **bloquea 012, REM-046-001 y la convergencia de 046**; toda Spec futura con datos de empresa | — |
-| ~~046 Gestión documental~~ **(cerrada 2026-08-30)** | 019, 027, 035, 044, 056 — **desbloqueadas**; 018, 020, 040 quedan por causas no documentales; **028 y 038 siguen bloqueadas** (`REM-046-001`) | 4 |
+| ~~046 Gestión documental~~ **(cerrada 2026-08-30)** | 019, 027, 035, 044, 056 — **desbloqueadas**; 018 y 040 quedan por causas no documentales (020 cerró el 2026-09-03 usando el enlace documental); **028 y 038 siguen bloqueadas** (`REM-046-001`) | 4 |
 | **033 Confirmación de pedido** | 034, 035 | 2 |
 | **048 Integraciones** | 013(BCV), 046(storage), 047(correo) | 3 |
 
@@ -151,7 +151,7 @@ Posterior a `ARCH-MC-001 — COMPLETE / GLOBALLY CONVERGED` y a
 | D-03 | Vigente | 034 sigue facturando sin la compuerta de 033 |
 | D-04 | Parcial | 008 entrega el orden físico; **falta 022** |
 | D-05 | **RESUELTA** | Motor único de aprobaciones |
-| D-06 | Vigente | 019 recibe sin pasar por 020 ni 021 |
+| D-06 | **Parcial** | 020 cierra la mitad: la excepción se registra, se escala y se resuelve. Sigue vigente por 021: nadie confirma antes de que el asiento exista |
 | D-07 | Vigente | Sin 018 no hay *landed cost* |
 | D-08 | **RESUELTA** | Unidad y presentación congeladas en línea |
 
@@ -159,9 +159,9 @@ Posterior a `ARCH-MC-001 — COMPLETE / GLOBALLY CONVERGED` y a
 
 | Spec | Bloquea directamente | Peso | ¿Lista? |
 |---|---|---:|---|
-| **022 Put-away** | 031, 032, calidad de 023 | 3 | **No** — espera 021 ← 020 |
+| **022 Put-away** | 031, 032, calidad de 023 | 3 | **No** — espera 021, y 021 espera solo a 023 |
 | **029 Cotización/pedido** | 030; da consumidor a 012 | 2 | **Sí** |
-| 020 Incidencias | 021 → 022 | 3 en cadena | Sí |
+| **021 Confirmación** | 022 → 031, 032 | 3 en cadena | **Casi** — un solo bloqueo: los estados de saldo de 023 |
 | 048 Integraciones | 013 (BCV), 047 | 2 | Sí |
 | 033 Confirmación | 034, 035 | 2 | No — espera 032 |
 | ~~008~~, ~~045~~, ~~046~~, ~~012~~, ~~ARCH-MC-001~~ | cerradas | — | — |

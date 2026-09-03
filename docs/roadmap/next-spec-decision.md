@@ -152,3 +152,35 @@ Detrás siguen la 021 —esperando la capacidad de excepción de la 020 y que el
 escribir estados no vendibles (Spec 023)— y la 022, y tras ellas la 031 y la 032.
 
 Implementación de la 020 **no iniciada**: requiere su propio ciclo con autorización expresa.
+
+---
+
+## Tras la Spec 020 — 2026-09-03
+
+`SPEC 020 — COMPLETE / CONVERGED`. Con ella, **once de las doce etapas** del proceso de recepción
+física tienen implementación: ocho de la 019, tres de la 020. La duodécima —clasificación y
+ubicación— es de la 022.
+
+`READY_FOR_IMPLEMENTATION` queda en **cero**. Ninguna Spec está lista para abrir ciclo sin resolver
+antes una pregunta, y por eso este checkpoint **no selecciona una siguiente**: la señala y nombra lo
+que falta para poder elegirla.
+
+**La candidata es la 021, Confirmación de inventario**, y su situación cambió: tenía dos bloqueos y
+ahora tiene uno.
+
+| Bloqueo | Estado |
+|---|---|
+| Capacidad de excepción (020) | **Satisfecho** el 2026-09-03: la incidencia se registra, se escala y se resuelve |
+| El motor de saldos escribe únicamente `DISPONIBLE` (023) | **Vigente** |
+
+El bloqueo que queda no es una Spec por construir sino una capacidad declarada y no ejercida: el
+`ADR-D0-010` enumera quince estados de mercancía y `record_movement` escribe uno solo. Confirmar
+inventario sin poder decir «esto entró en cuarentena» sería confirmar de mentira.
+
+**La decisión previa, que no me corresponde tomar aquí:** si esa capacidad se abre dentro de la 023,
+que es su dueña, o si la 021 se define explícitamente sin cuarentena. Son dos alcances distintos y
+producen dos Specs distintas. Resolverlo antes de abrir el ciclo evita que la 021 termine
+corrigiendo un motor ajeno, que es exactamente lo que la 019 tuvo que hacer y solo porque el defecto
+era suyo por la línea que lo causaba.
+
+Implementación **no iniciada**. Requiere su propio ciclo con autorización expresa.

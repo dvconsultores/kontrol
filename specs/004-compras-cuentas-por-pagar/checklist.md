@@ -101,3 +101,44 @@ Formato: | ID | Punto | Responsable | Evidencia | Estado | Bloqueante |
 - [x] Pruebas sobre PostgreSQL definidas
 - [x] Estados del frontend definidos
 - [x] Regresiones definidas
+
+---
+
+# CHECKLIST — SPEC 020 · INCIDENCIAS DE RECEPCIÓN (2026-09-03)
+
+- [x] Las tres etapas extraídas del proceso y cubiertas
+- [x] Propiedad de las tres confirmada
+- [x] Modelo auditado: no existía nada
+- [x] Cinco tipos extraídos del contrato; ocho candidatos descartados con motivo
+- [x] Cuatro tratamientos extraídos del contrato
+- [x] Ciclo de vida definido, con terminales inmutables
+- [x] Cabecera y línea resueltas por tipo, con restricción en base de datos
+- [x] Semántica de cantidad y reglas de cantidad base definidas
+- [x] Enlace con el hecho P23 de la Spec 019, sin duplicarlo
+- [x] `quality_status` consumido, no duplicado
+- [x] Integración documental por la Spec 046
+- [x] Integración de aprobaciones por la Spec 045, solo para el ajuste
+- [x] Segregación: la decide la política de 045, no se codifica aquí
+- [x] Contrato de salida para la Spec 021 definido y probado
+- [x] Sin incidencia de camino feliz
+- [x] Sin efecto en la confirmación de inventario ni en el put-away
+- [x] Frontera de empresa, matriz de usuario AB y cadenas cruzadas
+- [x] Idempotencia y concurrencia definidas
+- [x] Datos heredados clasificados: ninguno; no se fabrica historia
+- [x] Plan de migración y restricciones en PostgreSQL
+- [x] API, frontend y auditoría
+- [x] Regresión completa
+- [x] Instalación limpia: subir a cabeza, bajar la `0045`, volver a subir
+- [x] Extremo a extremo contra el producto real, en tres navegadores
+- [x] Los dos defectos que solo la e2e podía ver, corregidos y con guardia propia
+- [x] Fallos ajenos verificados contra el árbol anterior y **no** corregidos aquí
+
+## Cifras de cierre — 2026-09-03
+
+| Compuerta | Resultado |
+|---|---|
+| Backend | 920 pruebas · 912 pasadas · 8 saltadas declaradas · **0 fallos** |
+| — nuevas de esta Spec | 47 (24 funcionales · 14 estructurales · 9 de migración e integridad) |
+| Frontend | 285/285 · `tsc` · ESLint · build |
+| E2E | 86 pasadas · 16 fallos ajenos, idénticos en el árbol anterior |
+| Instalación limpia | ✔ |

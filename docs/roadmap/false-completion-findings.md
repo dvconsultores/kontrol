@@ -162,3 +162,24 @@ Ocho de los diez hallazgos comparten la misma forma: **el maestro existe, la tra
 Ubicaciones, unidades, presentaciones, estados de inventario, centros de costo y archivos están
 modelados pero ningún proceso los escribe. El sistema parece completo desde la pantalla de
 configuración y se vacía en la operación.
+
+---
+
+## FC-11 · La prueba de aislamiento entre empresas de la Spec 045 no prueba nada — 2026-09-03
+
+**Aparenta:** la bandeja de aprobaciones tiene cobertura de multiempresa. `approvals.spec.ts` pide
+la bandeja con `company_id=empresa-inexistente` y comprueba que el total es cero.
+
+**Realidad:** el endpoint no declara ese parámetro. FastAPI ignora los parámetros desconocidos, y la
+empresa sale del contexto de la petición, que es lo que el contrato de alcance manda. La aserción
+solo pasa cuando la bandeja está vacía por cualquier otra razón. Con datos dentro, falla; y falla
+señalando un problema que no existe.
+
+**Por qué encaja en esta lista:** no es una prueba que se rompió, es una prueba que nunca comprobó
+lo que dice comprobar. Una verificación falsa de la frontera entre empresas es peor que su ausencia,
+porque cierra la pregunta. La frontera real sí está sostenida —el contexto es la única autoridad—,
+pero no por esta prueba.
+
+**Encontrado desde:** la corrida de extremo a extremo de la Spec 020, contra PostgreSQL con datos.
+**No corregido:** es prueba de la Spec 045. Corregirla desde la 020 habría sido salirse del alcance.
+**Dueño:** Spec 045.

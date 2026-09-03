@@ -64,7 +64,7 @@ Fuente: Vol. 1 §4/§5/§7/§9, Vol. 2 §1/§3/§4/§5, DOCX de proceso (2026-08
 | Etapa documentada | Spec | Cobertura |
 |---|---|---|
 | Importación completa (12 etapas) | 018 | ✖ 0/12 |
-| Recepción física (**12 etapas**, no 10) | 019 (8) · 020 (3) · 022 (1) | ✔ 8/8 de 019 (2026-09-03); 4 pendientes en 020 y 022 |
+| Recepción física (**12 etapas**, no 10) | 019 (8) · 020 (3) · 022 (1) | ✔ 11/12 (2026-09-03): 8 de 019 y 3 de 020; falta la 12 (022) |
 | Confirmación de inventario recibido (11 etapas) | 021 | ◐ 2/11 |
 | Clasificación y ubicación en almacén (10 etapas) | 022 | ✖ 0/10 |
 | Zonas A–E | 008 | ✖ |
@@ -84,7 +84,6 @@ Fuente: Vol. 1 §4/§5/§7/§9, Vol. 2 §1/§3/§4/§5, DOCX de proceso (2026-08
 |---|---|---|
 | Maestros comerciales completos | Vol. 1 §7, Vol. 2 §1 | 012 |
 | Importaciones | DOCX Importación §1 | 018 |
-| Incidencias de recepción | DOCX Importación §2 | 020 |
 | Confirmación independiente de pedido | DOCX Pedido §6-7 | 033 |
 | Notificaciones, tareas y alertas | Vol. 2 §1 (Inicio) | 047 |
 | Gestión documental y adjuntos | Vol. 1 §3 (evidencia), DOCX | 046 |
@@ -93,4 +92,6 @@ Fuente: Vol. 1 §4/§5/§7/§9, Vol. 2 §1/§3/§4/§5, DOCX de proceso (2026-08
 | Centros de costo y unidades de negocio | Vol. 2 §3 | 007 |
 | Zonas A–E, nivel y posición | DOCX Importación §4 | 008 |
 
-**Total: 10 bloques de requisito documentado sin Spec que los gobierne.**
+**Total: 9 bloques de requisito documentado sin Spec que los gobierne.**
+
+Incidencias de recepción salió de esta tabla el 2026-09-03: la Spec 020 la gobierna e implementa.

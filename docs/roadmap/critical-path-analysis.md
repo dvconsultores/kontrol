@@ -5,8 +5,8 @@
 ```
 017 OC ✅parcial
  ├→ 018 Importaciones        ✗ 0 tablas        → habilita 026 landed cost
- └→ 019 Recepción ✅parcial
-     ├→ 020 Incidencias      ✗ 0 tablas
+ └→ 019 Recepción ✅ COMPLETE 2026-09-03
+     ├→ 020 Incidencias      ✅ COMPLETE 2026-09-03 (receipt_incidents, migración 0045)
      └→ 021 Confirmación ✅parcial (compuerta de calidad)
          └→ 022 Put-away     ✗ 0 proceso        → habilita 031, 032
 ```
@@ -32,7 +32,10 @@ habría nada que poner en ellas.
                └→ 032 Picking      ⛔ 031 + 022
 
   Reauditado 2026-09-03: la ruta crítica del producto pasa por la cadena de ENTRADA.
-  019 ✅ COMPLETE (2026-09-03) → 020 ✅ sin bloqueos → 021 ⛔ (020 + estados de saldo) → 022 ⛔ (021) → 031 → 032
+  019 ✅ COMPLETE → 020 ✅ COMPLETE → 021 ⛔ (solo estados de saldo, 023) → 022 ⛔ (021) → 031 → 032
+  Las dos primeras cayeron el mismo día. 021 conserva **un** bloqueo, no dos:
+  la capacidad de excepción ya existe; lo que falta es que el motor de saldos
+  sepa escribir algo distinto de `DISPONIBLE`.
   Lo comercial está cerrado y espera a que el almacén sepa dónde está lo que vende.
          └→ 031 Cola de picking  ⛔ 022
              └→ 032 Picking      ⛔ 022
@@ -83,11 +86,13 @@ todas sus dependencias satisfechas**: el que empieza en 029.
 |---|---|---:|
 | 022 Put-away | 031, 032, y la calidad de 023 | 3 |
 | 029 Cotización/pedido | 030, y da consumidor a 012 | 2 |
-| 020 Incidencias | 021 → 022 | 1 (en cadena, 3) |
 | 018 Importaciones | 026 | 1 |
 | 048 Integraciones | 013, 047 | 2 |
 | 033 Confirmación | 034, 035 | 2 |
 
-022 desbloquea más, pero **no está lista**: su prerequisito declarado es 021, y
-el de 021 es 020. 029 desbloquea menos y **es la única sin prerequisitos
-pendientes**.
+**Reauditado 2026-09-03.** 020 sale de esta tabla: está implementada. 022 sigue
+siendo el nodo de mayor peso y sigue sin estar lista, pero su cadena se acortó de
+tres eslabones a dos: `021 → 022`. Y el prerequisito de 021 ya no es una Spec
+entera, es una capacidad concreta del motor de saldos de 023 —escribir estados de
+mercancía distintos de `DISPONIBLE`—, que el `ADR-D0-010` declara y ningún código
+ejerce.

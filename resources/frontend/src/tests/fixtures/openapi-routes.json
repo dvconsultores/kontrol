@@ -1098,6 +1098,10 @@
   },
   {
    "method": "GET",
+   "path": "/purchasing/incidencias"
+  },
+  {
+   "method": "GET",
    "path": "/purchasing/open-items"
   },
   {
@@ -1171,6 +1175,34 @@
   {
    "method": "POST",
    "path": "/purchasing/receipts/{receipt_id}/confirm"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/receipts/{receipt_id}/incidencias"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/receipts/{receipt_id}/incidencias"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/receipts/{receipt_id}/incidencias/resultado"
+  },
+  {
+   "method": "GET",
+   "path": "/purchasing/receipts/{receipt_id}/incidencias/{incident_id}"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/receipts/{receipt_id}/incidencias/{incident_id}/cancel"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/receipts/{receipt_id}/incidencias/{incident_id}/escalate"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/receipts/{receipt_id}/incidencias/{incident_id}/resolve"
   },
   {
    "method": "POST",

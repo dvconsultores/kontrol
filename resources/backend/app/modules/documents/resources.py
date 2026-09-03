@@ -41,6 +41,8 @@ RESOURCE_KINDS: dict[str, ResourceKind] = {
                      "PurchaseOrder", "company_id", "compras:view", ("017", "018")),
         ResourceKind("GoodsReceipt", "app.modules.purchasing.models",
                      "GoodsReceipt", "company_id", "compras:view", ("019", "020")),
+        ResourceKind("ReceiptIncident", "app.modules.purchasing.models",
+                     "ReceiptIncident", "company_id", "compras:view", ("020",)),
         ResourceKind("SupplierInvoice", "app.modules.purchasing.models",
                      "SupplierInvoice", "company_id", "compras:view", ("027",)),
         ResourceKind("PurchaseRequisition", "app.modules.purchasing.models",

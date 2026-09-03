@@ -32,3 +32,19 @@ su ambigüedad.
 
 Se anota porque es el patrón que este checkpoint persigue: un bloqueo puede
 desaparecer sin que nadie ejecute la tarea que se había escrito para él.
+
+---
+
+## «020 Incidencias ausente» — resuelto el 2026-09-03
+
+**Afectaba a:** la Spec 021, solo en su camino de excepción.
+
+`receipt_incidents` existe, con los cinco tipos del proceso, el ciclo de cinco estados, el tope de
+cantidad por tipo y las cuatro resoluciones del contrato. La 021 recibe un resultado estructurado
+por línea y por tipo, no texto libre que interpretar.
+
+**Lo que este bloqueo NO resolvió, y conviene no confundir:** la 021 sigue bloqueada por otra cosa.
+El motor de saldos escribe únicamente `DISPONIBLE`, y confirmar inventario exige poder escribir
+estados no vendibles. Ese bloqueo es de capacidad, es de la Spec 023 y sigue activo.
+
+Tenía dos bloqueos y ahora tiene uno. No está desbloqueada.

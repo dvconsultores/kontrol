@@ -47,3 +47,22 @@ Formato: | ID | Riesgo | Prob. | Impacto | Control | Responsable | Estado |
 | R-019-08 | Los seriales no se materializan | Trazabilidad rota | Normalización a texto separado por comas en un solo punto | **Cerrado** |
 | R-019-09 | La recepción invade el put-away o la confirmación | Fronteras rotas entre Specs | Ubicación nula; sin estados de mercancía nuevos; guardias estructurales | **Cerrado** |
 | R-019-10 | La corrección del saldo cambia el comportamiento de otros llamantes | Regresión silenciosa en compras, ventas o ajustes | Sin presentación el factor es 1 y las cantidades coinciden; regresión completa | **Cerrado** |
+
+---
+
+# RIESGOS — SPEC 020 (2026-09-03)
+
+| ID | Riesgo | Impacto | Mitigación | Estado |
+|---|---|---|---|---|
+| R-020-01 | Tratar como tipo de incidencia lo que era dato de 019, estado de calidad o tratamiento | Vocabulario inventado; ocho categorías falsas en un registro cerrado | Cinco tipos extraídos del contrato; los ocho descartados quedan nombrados y la base los rechaza | **Cerrado** |
+| R-020-02 | Volver a pedir el daño y el faltante que 019 ya capturó | Doble captura, dos verdades para el mismo hecho | La incidencia se apoya en la observación de la línea; prueba de que no se re-pregunta | **Cerrado** |
+| R-020-03 | Registrar una cantidad afectada mayor que la recibida o la ordenada | Incidencia imposible; ajuste que descuadra el inventario | Tope por tipo —faltante contra lo ordenado, el resto contra lo recibido— probado en ambos bordes | **Cerrado** |
+| R-020-04 | Texto libre como única autoridad de la resolución | Decisión no auditable ni verificable | Resolución de un conjunto cerrado; el motivo acompaña, no sustituye | **Cerrado** |
+| R-020-05 | Dos resoluciones simultáneas sobre la misma incidencia | Dos desenlaces contradictorios para un mismo hecho | Bloqueo de fila y máquina de estados terminal; carrera probada con dos conexiones | **Cerrado** |
+| R-020-06 | El ajuste autorizado se aplica sin aprobación | Ajuste de inventario sin quien lo respalde | `AJUSTE_AUTORIZADO` exige solicitud de aprobación aprobada; prueba de que sin ella no resuelve | **Cerrado** |
+| R-020-07 | La incidencia sustituye el bloqueo de confirmación de 021 | Frontera rota: 020 decidiendo lo que 021 gobierna | 020 no toca el bloqueo; guardia estructural sobre el módulo de 021 | **Cerrado** |
+| R-020-08 | La resolución mueve inventario o ubica mercancía | Invasión de 021, 022 y 023 | Ninguna resolución escribe asientos; guardias sobre `record_movement` y `location_id` | **Cerrado** |
+| R-020-09 | La incidencia de línea y la documental comparten forma | Filas ambiguas: documental con línea, o de línea sin cantidad | Restricción condicional por tipo en ORM y migración; probada por los dos lados | **Cerrado** |
+| R-020-10 | Una incidencia anulada sigue consumiendo cantidad afectada | Tope agotado por incidencias muertas; faltantes legítimos rechazados | Solo los estados vivos suman; prueba de que anular libera la cantidad | **Cerrado** |
+| R-020-11 | La tabla creada por la migración no admite el insert de la aplicación | Instalación real inutilizable: toda incidencia falla con `NotNullViolation` | `server_default` en la migración, como el resto del repositorio; prueba nueva que inserta con el ORM contra la tabla que produce Alembic | **Cerrado** — encontrado por la e2e |
+| R-020-12 | El nombre accesible de un campo contradice su etiqueta visible | Quien navega por voz nombra algo que no existe (WCAG 2.5.3) | Se quitó el `aria-label` que pisaba la asociación de `FormField` en los quince selectores de cinco páginas | **Cerrado** — encontrado por la e2e |

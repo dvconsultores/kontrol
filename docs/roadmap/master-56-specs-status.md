@@ -41,8 +41,8 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 017 | Órdenes de compra | `PARTIALLY_IMPLEMENTED` | `purchase_orders` + líneas, transiciones | — |
 | 018 | Importaciones | **`NOT_STARTED`** | **0 tablas**: ninguna `import`/`customs`/`aduana` | — (dependencias satisfechas) |
 | 019 | Recepción física | **`COMPLETE / CONVERGED`** (2026-09-03) | arribo, bultos, comparación documental, inspección, observación física, unidad y cantidad base, acta; migración `0044` | **ninguno** |
-| 020 | Incidencias de recepción | **`READY_FOR_IMPLEMENTATION`** (2026-09-03) | 0 tablas; solo `quantity_rejected` y `quality` en la línea | **ninguno** — la capacidad de 019 que consume está medida y existe |
-| 021 | Confirmación de inventario | `PARTIALLY_IMPLEMENTED` | `quality_status` con compuerta en `accept_receipt` | **capacidad de excepción (020)** + **el motor de saldos solo escribe `DISPONIBLE` (023)** |
+| 020 | Incidencias de recepción | **`COMPLETE / CONVERGED`** (2026-09-03) | `receipt_incidents`: cinco tipos, ciclo de cinco estados, tope de cantidad por tipo, resolución de conjunto cerrado, ajuste autorizado vía 045, evidencia vía 046; migración `0045` | **ninguno** |
+| 021 | Confirmación de inventario | `PARTIALLY_IMPLEMENTED` | `quality_status` con compuerta en `accept_receipt`; ahora también la incidencia resuelta de 020 como insumo | **uno solo: el motor de saldos escribe únicamente `DISPONIBLE` (023)**. La capacidad de excepción quedó satisfecha por 020 el 2026-09-03 |
 | 022 | Put-away | **`NOT_STARTED`** | 0 proceso. La estructura de 008 existe y **nadie la usa** | **estado de origen inequívoco (021)**. Ya **no** por falta de ubicaciones: 008 las entrega |
 | 023 | Inventario / Kardex | `PARTIALLY_IMPLEMENTED` | `inventory` 13 tablas, movimientos con ubicación admitida, reservas con bloqueo (030) | Ubicación siempre nula en la práctica; **saldo solo escribible en `DISPONIBLE`** (lo consume 021) |
 | 024 | Lotes / seriales / vencimiento | `PARTIALLY_IMPLEMENTED` | `inventory_lots`, `product_serials` | — |
@@ -83,9 +83,9 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 
 | Estado | Specs |
 |---|---:|
-| `COMPLETE / CONVERGED` | 7 — 008, 011, 012, **019**, 029, 030, 045 |
+| `COMPLETE / CONVERGED` | 8 — 008, 011, 012, 019, **020**, 029, 030, 045 |
 | `RECONVERGED` | 1 — 046 |
-| `READY_FOR_IMPLEMENTATION` | **1 — 020** |
+| `READY_FOR_IMPLEMENTATION` | **0** — la 020 pasó a implementada |
 | `PARTIALLY_IMPLEMENTED` | 33 |
 | `NOT_STARTED` | 4 — 018, 022, 033, 047 |
 | `BLOCKED_BY_DEPENDENCY` | 2 — 031, 032 |

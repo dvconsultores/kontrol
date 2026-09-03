@@ -27,6 +27,9 @@ PROCESS_SALES_CREDIT = "SALES_CREDIT"
 PROCESS_INVENTORY_ADJUSTMENT = "INVENTORY_ADJUSTMENT"
 PROCESS_INVENTORY_COUNT = "INVENTORY_COUNT"
 PROCESS_REGULATORY_APPROVAL = "REGULATORY_APPROVAL"
+#: Spec 020. El control crítico 115 del proceso de recepción es «Autorización
+#: de ajustes»: el único tratamiento de una incidencia que pasa por el motor.
+PROCESS_RECEIPT_INCIDENT = "RECEIPT_INCIDENT"
 
 
 def require_for_document(db: Session, *, company_id: str, process_type: str, document_type: str,

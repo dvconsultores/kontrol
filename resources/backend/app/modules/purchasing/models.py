@@ -252,6 +252,104 @@ class GoodsReceiptLine(UUIDMixin, TimestampMixin, Base):
     base_quantity_accepted: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     base_quantity_rejected: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
+#: Tipos de incidencia. Son los cinco subelementos literales de la etapa 8 del
+#: proceso: «Si existen diferencias, registrar: faltantes; sobrantes; daños;
+#: referencias incorrectas; diferencias documentales». Ni uno más.
+INCIDENT_TYPES = ("FALTANTE", "SOBRANTE", "DANO", "REFERENCIA_INCORRECTA", "DIFERENCIA_DOCUMENTAL")
+
+#: El único que no es de mercancía: afecta al documento, no a una línea.
+INCIDENT_TYPE_DOCUMENTAL = "DIFERENCIA_DOCUMENTAL"
+
+#: Tratamientos del §3 del proceso: «Determinar tratamiento: ajuste autorizado;
+#: reclamo al proveedor; investigación interna; mercancía en cuarentena».
+INCIDENT_RESOLUTIONS = ("AJUSTE_AUTORIZADO", "RECLAMO_PROVEEDOR", "INVESTIGACION_INTERNA", "CUARENTENA")
+
+#: El control crítico 115 del proceso es «Autorización de ajustes»: el único
+#: tratamiento que exige pasar por el motor de aprobaciones.
+INCIDENT_RESOLUTION_APPROVED = "AJUSTE_AUTORIZADO"
+
+#: Estados. El proceso describe acciones, no estados: cada nombre corresponde a
+#: una palabra del documento (registrar, escalar, autorización, tratamiento).
+INCIDENT_STATUSES = ("REGISTRADA", "ESCALADA", "PENDIENTE_AUTORIZACION", "RESUELTA", "ANULADA")
+
+
+class ReceiptIncident(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
+    """Incidencia de recepción (Spec 020, etapas 8, 9 y 10 del proceso).
+
+    Formaliza como excepción operativa un hecho que la Spec 019 ya observó en el
+    muelle. **No repite el hecho**: apunta a la línea de recepción, que es donde
+    viven el producto, las cantidades, la unidad, la presentación, el factor
+    congelado, el estado físico y el daño observado.
+
+    Tampoco ejecuta el tratamiento: lo registra. Confirmar el inventario y
+    escribir el estado de la mercancía es de la Spec 021, que además espera una
+    capacidad de la 023 que este ciclo no toca.
+    """
+
+    __tablename__ = "receipt_incidents"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        Index("ix_receipt_incidents_receipt", "receipt_id"),
+        Index("ix_receipt_incidents_line_type", "receipt_line_id", "incident_type"),
+        UniqueConstraint("company_id", "code", name="uq_receipt_incidents_company_code"),
+        CheckConstraint(
+            "incident_type IN ('FALTANTE', 'SOBRANTE', 'DANO', 'REFERENCIA_INCORRECTA', "
+            "'DIFERENCIA_DOCUMENTAL')", name="type"),
+        CheckConstraint(
+            "status IN ('REGISTRADA', 'ESCALADA', 'PENDIENTE_AUTORIZACION', 'RESUELTA', 'ANULADA')",
+            name="status"),
+        CheckConstraint(
+            "resolution IS NULL OR resolution IN ('AJUSTE_AUTORIZADO', 'RECLAMO_PROVEEDOR', "
+            "'INVESTIGACION_INTERNA', 'CUARENTENA')", name="resolution"),
+        # Una diferencia documental es del documento: no tiene línea ni cantidad.
+        # Las otras cuatro son de mercancía: exigen ambas. La base lo impone
+        # porque es la única forma de que no existan filas a medio camino.
+        CheckConstraint(
+            "(incident_type = 'DIFERENCIA_DOCUMENTAL' "
+            " AND receipt_line_id IS NULL AND affected_base_quantity IS NULL) "
+            "OR (incident_type <> 'DIFERENCIA_DOCUMENTAL' "
+            " AND receipt_line_id IS NOT NULL AND affected_base_quantity IS NOT NULL)",
+            name="line_and_quantity_by_type"),
+        CheckConstraint("affected_base_quantity IS NULL OR affected_base_quantity > 0",
+                        name="quantity_positive"),
+        # Resuelta sin tratamiento sería una resolución que no dice qué se
+        # decidió, que es justo lo que el contrato prohíbe.
+        CheckConstraint("status <> 'RESUELTA' OR resolution IS NOT NULL", name="resolved_has_resolution"),
+    )
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    receipt_id: Mapped[str] = mapped_column(ForeignKey("goods_receipts.id"), nullable=False)
+    #: Nula solo para la diferencia documental (ver restricción de arriba).
+    receipt_line_id: Mapped[str | None] = mapped_column(
+        ForeignKey("goods_receipt_lines.id"), nullable=True)
+    incident_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    #: En unidad base, tomada del snapshot de la línea. No se recalcula con el
+    #: maestro de presentaciones vigente: eso reinterpretaría una recepción
+    #: histórica.
+    affected_base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    #: Información **complementaria** de la incidencia. El hecho físico vive en
+    #: la línea de recepción; esto no lo sustituye ni lo copia.
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="REGISTRADA",
+                                        server_default="REGISTRADA")
+
+    # --- Etapa 10: escalar la novedad a Compras ---
+    escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    escalated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    escalation_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # --- Tratamiento (§3): se registra aquí y lo ejecuta la Spec 021 ---
+    resolution: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    resolution_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolved_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    #: Solicitud del motor único de aprobaciones cuando el tratamiento es un
+    #: ajuste (control crítico 115). No hay motor local.
+    approval_request_id: Mapped[str | None] = mapped_column(
+        ForeignKey("approval_requests.id"), nullable=True)
+    cancelled_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
 class SupplierInvoice(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "supplier_invoices"
     __scope__ = Scope.COMPANY

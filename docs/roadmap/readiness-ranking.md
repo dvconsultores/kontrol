@@ -79,3 +79,19 @@ Una Spec con alto valor de desbloqueo y dependencias insatisfechas no puede sele
 
 Su bloqueo dejó de ser «no hay ubicaciones» —la Spec 008 las entrega— y pasó a ser el estado de
 origen de la mercancía, que debe la 021. Sigue bloqueada, con mejor nombre.
+
+---
+
+## Actualización tras las Specs 019 y 020 — 2026-09-03
+
+Tres filas de la tabla ya no compiten: **029**, **019** y **020** están implementadas y convergidas.
+De las que quedan, la que se movió es la 021.
+
+| Spec | Eje que cambia | Antes | Ahora | Por qué |
+|---|---|---:|---:|---|
+| 021 Confirmación de inventario | Dependencias | 2 | **4** | Tenía dos bloqueos y le queda uno: la capacidad de excepción existe desde la 020; falta que el saldo admita estados no vendibles (023) |
+| 022 Put-away | Dependencias | 1 | **2** | Su cadena se acortó de tres eslabones a dos: ahora solo espera a la 021 |
+
+Ninguna llega a 5 en el eje de dependencias, y por eso este checkpoint **no proclama una ganadora**.
+El número acompaña al razonamiento; el razonamiento dice que antes de abrir la 021 hay que decidir
+dónde se abre la capacidad de estados de mercancía. Esa decisión no es un ranking.

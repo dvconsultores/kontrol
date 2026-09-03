@@ -124,3 +124,84 @@ la 023, y la zona temporal de recepción es de la 022.
 ## Veredicto
 
 `SPEC 019 — COMPLETE / CONVERGED`
+
+---
+
+# CONVERGENCIA — SPEC 020 · INCIDENCIAS DE RECEPCIÓN
+
+## Puerta
+
+| Criterio | Exigido | Resultado |
+|---|---|---|
+| Constitution Gate | PASS | PASS (12 validaciones) |
+| BLOCKER · CRITICAL · CONTRADICTIONS | 0 · 0 · 0 | 0 · 0 · 0 |
+| Requisitos huérfanos · Tareas huérfanas | 0 · 0 | 0 · 0 |
+| OQ material | 0 | 0 |
+| Trazabilidad | 100 % | 100 % |
+| Etapas de 020 cubiertas | 3 de 3 | 3 de 3 |
+| Backend | 0 fallos | **920 · 912 pasadas · 8 saltadas declaradas · 0 fallos · 0 errores** |
+| — nuevas de esta Spec | — | **47** (24 funcionales, 14 estructurales, 9 de migración e integridad) |
+| Frontend | verde | 285/285 · `tsc` · ESLint · build |
+| E2E | verde | **86 pasadas · 16 fallos ajenos** en 13 suites × 3 navegadores. Los 16 son previos: los mismos 7 casos fallan idénticos en el árbol anterior a esta Spec, verificado en copia limpia de `409b945`. Dos suites del arnés N6 no corren en esta pila |
+| Instalación limpia | verde | subir a cabeza, bajar la `0045`, volver a subir |
+| Deuda interna P0 | 0 | 0 |
+
+## Lo que cambió de verdad
+
+Antes, una recepción con diez unidades dañadas solo sabía decir `quantity_rejected = 10`. Sin tipo,
+sin evidencia, sin responsable y sin tratamiento. La diferencia existía como número y desaparecía
+como hecho.
+
+Ahora la diferencia se registra con su tipo —uno de los cinco del proceso—, apunta a la línea que la
+Spec 019 ya describió, lleva su cantidad en unidad base, se le adjunta evidencia por el gestor
+documental, se escala a Compras dejando constancia de cuándo y de quién, y se cierra con uno de los
+cuatro tratamientos del contrato, con motivo. El ajuste autorizado pasa antes por el motor de
+aprobaciones, porque el proceso lo declara control crítico.
+
+## Lo que se descartó, que fue lo más útil
+
+El checkpoint sugería revisar trece candidatos a tipo de incidencia. Ocho no lo eran: empaque,
+presentación, lote, serial y vencimiento son datos que la Spec 019 captura; calidad es el veredicto
+`quality_status`; y rechazo y cuarentena son tratamientos. Implementarlos habría creado un segundo
+lugar donde vive lo que ya vive en la recepción, que es justo el patrón que las Specs 029, 030 y 019
+vinieron cerrando.
+
+## La frontera con la Spec 021, medida
+
+Registrar el tratamiento no es ejecutarlo. Una prueba lo comprueba: resolver una incidencia no crea
+movimientos, no cambia saldos y no escribe estados de mercancía. Lo que la 020 entrega es un
+resultado estructurado —tipo, línea, cantidad base y tratamiento— que la 021 podrá consumir sin
+interpretar texto libre. Su otro bloqueo, la capacidad de la Spec 023 para escribir estados no
+vendibles, sigue exactamente donde estaba.
+
+## Deuda
+
+**Interna: ninguna P0.** La Spec 021 sigue esperando dos cosas: esta capacidad, que ya tiene, y que
+el motor de saldos aprenda a escribir estados de mercancía no vendibles, que es de la Spec 023.
+
+## Veredicto
+
+`SPEC 020 — COMPLETE / CONVERGED`
+
+## Los tres fallos y los dos defectos que aparecieron después de la primera regresión
+
+Ninguno se ocultó y ninguno se dio por bueno sin causa.
+
+| Qué apareció | Por qué | Desenlace |
+|---|---|---|
+| 3 fallos en el guardia del registro documental | Registrar `ReceiptIncident` como tipo vinculable cambia una cardinalidad fija y exige una semilla real por tipo | Cardinalidad actualizada y semilla añadida: una incidencia documental de verdad, no una fila mínima |
+| La tabla migrada rechazaba todo insert | `created_at` sin `server_default`; el ORM no lo pone desde Python | Migración corregida y prueba nueva que inserta con el ORM contra la tabla de Alembic |
+| 15 selectores con nombre accesible distinto del visible | El `aria-label` pisaba la asociación de `FormField` | Retirados los quince en cinco páginas; el nombre accesible es la etiqueta |
+| 1 fallo del recorrido de rutas en WebKit | La pila e2e se levantó sin `KONTROL_COOKIE_SECURE=false`; WebKit rechaza la cookie sobre HTTP | Configuración de la pila, no del producto: corregida, 27/27 en los tres navegadores |
+| 16 fallos en aprobaciones, unidades y almacenes | Ajenos a esta Spec | Verificados idénticos en copia limpia del árbol anterior. **No se tocaron**: son de las Specs 045, 011 y 008 |
+
+## Un hallazgo que no es de esta Spec y conviene no perder
+
+`approvals.spec.ts` comprueba que la bandeja filtrada con `company_id=empresa-inexistente` devuelve
+cero. El endpoint **no declara** ese parámetro: FastAPI lo ignora y la empresa sale del contexto,
+que es justo lo que el contrato de alcance exige. La aserción solo pasaba cuando la bandeja estaba
+vacía por otras razones, así que nunca comprobó lo que dice comprobar.
+
+Se deja anotado y **no se corrige aquí**: es prueba de la Spec 045, y arreglarla desde la 020 sería
+tocar lo que esta Spec declaró fuera de alcance. Importa porque una prueba falsa de aislamiento
+entre empresas es peor que ninguna: da por cubierta una frontera que nadie está vigilando.

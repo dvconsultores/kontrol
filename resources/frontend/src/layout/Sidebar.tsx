@@ -100,6 +100,7 @@ const navSections = [
       { to: "/compras/cotizaciones", label: "Cotizaciones", icon: FileText },
       { to: "/compras/ordenes", label: "Órdenes", icon: ShoppingCart },
       { to: "/compras/recepciones", label: "Recepciones", icon: Package },
+      { to: "/compras/incidencias", label: "Incidencias", icon: Package },
       { to: "/compras/facturas", label: "Facturas", icon: Receipt },
       { to: "/compras/devoluciones", label: "Devoluciones", icon: Repeat },
       { to: "/compras/notas", label: "Notas de crédito", icon: StickyNote },

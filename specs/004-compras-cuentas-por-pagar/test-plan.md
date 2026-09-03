@@ -66,3 +66,31 @@ contados; la comparación documental con sus cuatro resultados; la observación 
 a la aceptación; el sobrante registrado y no impedido; lote, serial y vencimiento materializados;
 el acta emitida; la doble aceptación rechazada sin duplicar el asiento; y las tres fronteras —sin
 ubicación, sin preparación, sin estados de mercancía nuevos—.
+
+---
+
+# PLAN DE PRUEBAS — SPEC 020 · INCIDENCIAS DE RECEPCIÓN
+
+| Nivel | Suite | Casos | Motor |
+|---|---|---:|---|
+| Estructural | `test_spec020_architecture.py` | 14 | lectura de código y del ORM |
+| Funcional multiempresa | `test_spec020_incidents.py` | 24 | PostgreSQL 18.6, dos tenants y tres empresas |
+| Migración, integridad y concurrencia | `test_spec020_migration_0045.py` | 9 | PostgreSQL 18.6, base sembrada en `0044`, SQLSTATE verificado |
+
+**Casos que dan sentido a la Spec:** los cinco tipos de incidencia registrados y los ocho
+candidatos descartados que la base rechaza por nombre; la observación de 019 que no se vuelve a
+pedir; el tope de cantidad —faltante contra lo ordenado, el resto contra lo recibido— probado por
+arriba y por abajo; la diferencia documental sin línea y sin cantidad, y la incidencia de línea sin
+ninguna de las dos, ambas rechazadas por la base; la resolución que exige motivo y no admite texto
+libre como única autoridad; el ajuste autorizado que pasa por aprobaciones y no se resuelve sin
+ella; la escalada que no salta pasos; la anulación que libera la cantidad afectada; y la carrera de
+dos resoluciones simultáneas donde **una sola gana**, verificada con dos conexiones reales.
+
+**Lo que estas pruebas no cubren, por frontera:** el conteo detallado por SKU (021), el bloqueo de
+confirmación que 021 conserva, la ubicación (022) y la devolución al proveedor (036). Cada una
+tiene su guardia estructural que falla si el código las invade.
+
+**El caso que se añadió después de la primera regresión:** un insert del ORM contra la tabla que
+crea Alembic. Las otras ocho de esa suite escriben SQL crudo con las fechas puestas a mano, y por eso
+ninguna vio que la tabla nacía sin `server_default` en `created_at`. Lo encontró la prueba de extremo
+a extremo, contra la base real, y ahora tiene guardia propia.

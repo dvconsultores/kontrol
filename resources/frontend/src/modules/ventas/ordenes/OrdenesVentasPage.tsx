@@ -299,7 +299,7 @@ export function OrdenesVentasPage(): React.JSX.Element {
             <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="Ej. ORD-001" required />
           </FormField>
           <FormField label="Cliente" required>
-            <select aria-label="Cliente del pedido" value={newCustomer} onChange={(e) => setNewCustomer(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+            <select value={newCustomer} onChange={(e) => setNewCustomer(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Seleccionar…</option>
               {(customers.data?.items ?? []).filter((c) => (c.roles ?? []).includes("CLIENTE")).map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -307,7 +307,7 @@ export function OrdenesVentasPage(): React.JSX.Element {
             </select>
           </FormField>
           <FormField label="Almacén" help="Obligatorio para confirmar pedidos con inventario">
-            <select aria-label="Almacén del pedido" value={newWarehouse} onChange={(e) => setNewWarehouse(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+            <select value={newWarehouse} onChange={(e) => setNewWarehouse(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Sin almacén</option>
               {(warehouses.data?.items ?? []).map((w) => (
                 <option key={w.id} value={w.id}>{w.code} · {w.name}</option>
@@ -322,7 +322,7 @@ export function OrdenesVentasPage(): React.JSX.Element {
         <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
           <FormField label="Pedido" required>
-            <select aria-label="Pedido de la línea" value={lineOrder} onChange={(e) => setLineOrder(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+            <select value={lineOrder} onChange={(e) => setLineOrder(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Seleccionar…</option>
               {(query.data?.items ?? []).map((o) => (
                 <option key={o.id} value={o.id}>{o.code} · {ESTADOS[o.status] ?? o.status}</option>
@@ -330,7 +330,7 @@ export function OrdenesVentasPage(): React.JSX.Element {
             </select>
           </FormField>
           <FormField label="Producto" required>
-            <select aria-label="Producto de la línea" value={lineProduct} onChange={(e) => { setLineProduct(e.target.value); setLinePresentation(""); }} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+            <select value={lineProduct} onChange={(e) => { setLineProduct(e.target.value); setLinePresentation(""); }} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Seleccionar…</option>
               {(products.data?.items ?? []).map((p) => (
                 <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
@@ -338,7 +338,7 @@ export function OrdenesVentasPage(): React.JSX.Element {
             </select>
           </FormField>
           <FormField label="Presentación" help="La reserva se hace en unidad base">
-            <select aria-label="Presentación de la línea" value={linePresentation} onChange={(e) => setLinePresentation(e.target.value)} className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900" disabled={!lineProduct}>
+            <select value={linePresentation} onChange={(e) => setLinePresentation(e.target.value)} className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900" disabled={!lineProduct}>
               <option value="">Unidad base</option>
               {(presentations.data ?? []).map((p) => (
                 <option key={p.id} value={p.id}>{p.code} · {p.name}</option>

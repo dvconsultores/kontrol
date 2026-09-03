@@ -28,6 +28,7 @@ from app.modules.purchasing.models import (
     PurchaseOrder,
     PurchaseRequisition,
     PurchaseReturn,
+    ReceiptIncident,
     SupplierCreditNote,
     SupplierInvoice,
     SupplierQuote,
@@ -142,6 +143,42 @@ class ReceiptLineCreate(BaseModel):
     damage_notes: str | None = Field(default=None, max_length=2000)
     identification_ok: bool | None = None
     reference_ok: bool | None = None
+
+
+class IncidentCreate(BaseModel):
+    """Etapa 8: registrar una diferencia.
+
+    No se piden producto, unidad, presentación ni factor: ya viven en la línea
+    de recepción y pedirlos otra vez crearía dos verdades para el mismo hecho.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(min_length=1, max_length=64)
+    incident_type: str = Field(min_length=1, max_length=32)
+    receipt_line_id: str | None = None
+    affected_base_quantity: float | None = Field(default=None, gt=0)
+    description: str | None = Field(default=None, max_length=2000)
+
+
+class IncidentEscalateBody(BaseModel):
+    """Etapa 10: escalar la novedad a Compras."""
+    model_config = ConfigDict(extra="forbid")
+
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+class IncidentResolveBody(BaseModel):
+    """Tratamiento decidido. Registrarlo no es ejecutarlo: eso es de la Spec 021."""
+    model_config = ConfigDict(extra="forbid")
+
+    resolution: str = Field(min_length=1, max_length=32)
+    reason: str = Field(min_length=1, max_length=2000)
+
+
+class IncidentCancelBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=1, max_length=2000)
 
 
 class QualityBody(BaseModel):
@@ -470,6 +507,132 @@ def get_receipt(receipt_id: str, db: Session = Depends(get_db), user: User = Dep
                 ctx: CompanyContext = Depends(get_company_context)):
     receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
     return _receipt_dict(db, receipt)
+
+
+def _incident_dict(x) -> dict:
+    return {"id": x.id, "code": x.code, "receipt_id": x.receipt_id,
+            "receipt_line_id": x.receipt_line_id, "incident_type": x.incident_type,
+            "affected_base_quantity": str(x.affected_base_quantity)
+            if x.affected_base_quantity is not None else None,
+            "description": x.description, "status": x.status,
+            "escalated_at": x.escalated_at.isoformat() if x.escalated_at else None,
+            "escalated_by": x.escalated_by, "escalation_notes": x.escalation_notes,
+            "resolution": x.resolution, "resolution_reason": x.resolution_reason,
+            "resolved_at": x.resolved_at.isoformat() if x.resolved_at else None,
+            "resolved_by": x.resolved_by, "approval_request_id": x.approval_request_id,
+            "cancelled_reason": x.cancelled_reason}
+
+
+@router.get("/incidencias")
+def list_incidents(status: str | None = None, incident_type: str | None = None,
+                   db: Session = Depends(get_db), user: User = Depends(get_current_user),
+                   ctx: CompanyContext = Depends(get_company_context)):
+    """Bandeja de incidencias de la empresa, para verlas sin ir recepción a recepción."""
+    query = select(ReceiptIncident).where(ReceiptIncident.company_id == ctx.company_id)
+    if status:
+        query = query.where(ReceiptIncident.status == status)
+    if incident_type:
+        query = query.where(ReceiptIncident.incident_type == incident_type)
+    items = db.execute(query.order_by(ReceiptIncident.created_at.desc())).scalars().all()
+    return {"items": [_incident_dict(x) for x in items], "total": len(items),
+            "page": 1, "page_size": len(items) or 1}
+
+
+@router.get("/receipts/{receipt_id}/incidencias")
+def list_receipt_incidents(receipt_id: str, db: Session = Depends(get_db),
+                           user: User = Depends(get_current_user),
+                           ctx: CompanyContext = Depends(get_company_context)):
+    _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    items = ap_service.incidencias_de_recepcion(db, company_id=ctx.company_id, receipt_id=receipt_id)
+    return {"items": [_incident_dict(x) for x in items], "total": len(items),
+            "page": 1, "page_size": len(items) or 1}
+
+
+@router.get("/receipts/{receipt_id}/incidencias/resultado")
+def receipt_incident_outcome(receipt_id: str, db: Session = Depends(get_db),
+                             user: User = Depends(get_current_user),
+                             ctx: CompanyContext = Depends(get_company_context)):
+    """Contrato de salida para la Spec 021: qué se decidió, por línea y tipo."""
+    _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    return ap_service.resultado_de_incidencias(db, company_id=ctx.company_id, receipt_id=receipt_id)
+
+
+@router.post("/receipts/{receipt_id}/incidencias", dependencies=[Depends(require_write_allowed)])
+def create_receipt_incident(receipt_id: str, body: IncidentCreate, db: Session = Depends(get_db),
+                            actor: User = Depends(require_permission("compras", "quality")),
+                            ctx: CompanyContext = Depends(get_company_context)):
+    _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    incident = ap_service.registrar_incidencia(
+        db, company_id=ctx.company_id, receipt_id=receipt_id, code=body.code,
+        incident_type=body.incident_type, receipt_line_id=body.receipt_line_id,
+        affected_base_quantity=body.affected_base_quantity, description=body.description,
+        actor=str(actor.id))
+    db.commit()
+    db.refresh(incident)
+    return _incident_dict(incident)
+
+
+def _owned_incident(db: Session, receipt_id: str, incident_id: str, company_id: str):
+    """La cadena entera: empresa → recepción → incidencia.
+
+    Que la incidencia exista y sea alcanzable no la hace de esta recepción.
+    """
+    _owned(db, GoodsReceipt, receipt_id, company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    incident = _owned(db, ReceiptIncident, incident_id, company_id,
+                      "RECEIPT_INCIDENT_NOT_FOUND", "Incidencia no encontrada")
+    if str(incident.receipt_id) != str(receipt_id):
+        raise NotFoundError(code="RECEIPT_INCIDENT_NOT_FOUND", message="Incidencia no encontrada")
+    return incident
+
+
+@router.get("/receipts/{receipt_id}/incidencias/{incident_id}")
+def get_receipt_incident(receipt_id: str, incident_id: str, db: Session = Depends(get_db),
+                         user: User = Depends(get_current_user),
+                         ctx: CompanyContext = Depends(get_company_context)):
+    return _incident_dict(_owned_incident(db, receipt_id, incident_id, ctx.company_id))
+
+
+@router.post("/receipts/{receipt_id}/incidencias/{incident_id}/escalate",
+             dependencies=[Depends(require_write_allowed)])
+def escalate_receipt_incident(receipt_id: str, incident_id: str, body: IncidentEscalateBody,
+                              db: Session = Depends(get_db),
+                              actor: User = Depends(require_permission("compras", "quality")),
+                              ctx: CompanyContext = Depends(get_company_context)):
+    _owned_incident(db, receipt_id, incident_id, ctx.company_id)
+    incident = ap_service.escalar_incidencia(db, company_id=ctx.company_id, incident_id=incident_id,
+                                             notes=body.notes, actor=str(actor.id))
+    db.commit()
+    db.refresh(incident)
+    return _incident_dict(incident)
+
+
+@router.post("/receipts/{receipt_id}/incidencias/{incident_id}/resolve",
+             dependencies=[Depends(require_write_allowed)])
+def resolve_receipt_incident(receipt_id: str, incident_id: str, body: IncidentResolveBody,
+                             db: Session = Depends(get_db),
+                             actor: User = Depends(require_permission("compras", "approve")),
+                             ctx: CompanyContext = Depends(get_company_context)):
+    _owned_incident(db, receipt_id, incident_id, ctx.company_id)
+    incident = ap_service.resolver_incidencia(db, company_id=ctx.company_id, incident_id=incident_id,
+                                              resolution=body.resolution, reason=body.reason,
+                                              actor=str(actor.id))
+    db.commit()
+    db.refresh(incident)
+    return _incident_dict(incident)
+
+
+@router.post("/receipts/{receipt_id}/incidencias/{incident_id}/cancel",
+             dependencies=[Depends(require_write_allowed)])
+def cancel_receipt_incident(receipt_id: str, incident_id: str, body: IncidentCancelBody,
+                            db: Session = Depends(get_db),
+                            actor: User = Depends(require_permission("compras", "quality")),
+                            ctx: CompanyContext = Depends(get_company_context)):
+    _owned_incident(db, receipt_id, incident_id, ctx.company_id)
+    incident = ap_service.anular_incidencia(db, company_id=ctx.company_id, incident_id=incident_id,
+                                            reason=body.reason, actor=str(actor.id))
+    db.commit()
+    db.refresh(incident)
+    return _incident_dict(incident)
 
 
 @router.post("/receipts/{receipt_id}/arrival", dependencies=[Depends(require_write_allowed)])
