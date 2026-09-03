@@ -63,7 +63,7 @@ Cadena operativa reauditada el 2026-09-03 (`operational-chain-capability-matrix.
 dejan de nombrar Specs y nombran capacidades:
 
 ```
-019 Recepción física ✅ sin bloqueos, incompleta
+019 Recepción física ✅ COMPLETE / CONVERGED (2026-09-03)
  ├→ 021 (camino feliz: sin incidencia)
  └→ 020 Incidencias ✅ sin bloqueos
       └→ 021 Confirmación ⛔ capacidad de excepción (020) + saldo no vendible (023)

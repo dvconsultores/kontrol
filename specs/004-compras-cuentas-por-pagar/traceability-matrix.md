@@ -57,3 +57,64 @@ Formato: Requisito → Fuente → Tarea → Prueba. Cadena **Requisito → Spec 
 | Tareas sin requisito | Ninguna |
 | Historias sin FR | Ninguna |
 | Criterios de aceptación mapeados | ✔ (`acceptance-criteria.md`) |
+
+---
+
+# TRAZABILIDAD — SPEC 019 · RECEPCIÓN FÍSICA
+
+Formato: `| Requirement | Stage | P23/Normal | Plan | Task | Schema/Code | Test | Evidence | Status |`.
+Abreviaturas: **M** `0044_spec019_receipt` · **SVC** `purchasing/service.py` · **INV**
+`inventory/service.py` · **API** `purchasing/api.py` · **FE** `RecepcionesPage.tsx` · **T-R**
+`test_spec019_receipt.py` · **T-A** `test_spec019_architecture.py` · **T-M**
+`test_spec019_migration_0044.py`.
+
+## Dato por dato
+
+| Requirement | Stage | P23 | Plan | Task | Schema/Code | Test | Status |
+|---|---|---|---|---|---|---|---|
+| Cantidad tecleada | 3 | normal | ola 5 | I-009 | `quantity_received/accepted/rejected` | T-R cajas | ✔ |
+| Unidad | 3 | **P23** | ola 5 | I-009 | `uom_id`, SVC `_unidad_recibida` | T-R cajas · T-A unidad | ✔ |
+| Presentación | 3 | **P23** | ola 5 | I-010 | `presentation_id`, API, FE | T-R cajas | ✔ |
+| Factor congelado | 3 | **P23** | ola 6 | I-011 | `conversion_factor_snapshot` | T-R invariancia | ✔ |
+| Cantidad base | 3 | **P23** | ola 6 | I-012 | tres `base_quantity_*`; INV saldo en base | T-R cajas · T-A saldo | ✔ |
+| Bultos | 6 | **P23** | ola 7 | I-013 | `packages_declared/received` | T-R arribo · T-R negativos | ✔ |
+| Observación de daño | 6 | **P23** | ola 7 | I-015 | `physical_condition`, `damaged_quantity`, `damage_notes` | T-R muelle · T-R daño máximo | ✔ |
+| Identificación y referencia | 6 | **P23** | ola 7 | I-014 | `identification_ok`, `reference_ok` | T-R muelle | ✔ |
+| Sobrante observado | 6, 8 | **P23** | ola 7 | I-028 | `overage_base_quantity`, SVC `_sobrante_observado` | T-R sobrante | ✔ |
+| Lote | 3 | **P23** | ola 8 | I-016 | `lot_number` → `InventoryLot` | T-R lote | ✔ |
+| Serial | 3 | **P23** | ola 8 | I-017 | `serials` normalizado → `ProductSerial` | T-R lote · T-A seriales | ✔ |
+| Vencimiento | 3 | **P23** | ola 8 | I-018 | `expiry_date` → lote | T-R lote | ✔ |
+| Arribo | 1 | **P23** | ola 3 | I-023 | `arrival_at`, `arrival_confirmed_by`, API `/arrival` | T-R arribo | ✔ |
+| Descarga programada | 2 | normal | ola 3 | I-023 | `unloading_scheduled_at` | T-R arribo | ✔ |
+| Comparación documental | 4 | normal | ola 3 | I-023 | 2 referencias + 4 resultados, API `/inspection` | T-R inspección | ✔ |
+| Inspección | 5 | **P23** | ola 3 | I-023 | `inspected_at/by`, `inspection_notes` | T-R inspección | ✔ |
+| Conformidad | 7 | normal | ola 3 | I-006 | `quality_status` (sin duplicar) | T-A sin duplicado | ✔ |
+| Acta | 11 | normal | ola 12 | I-025 | `record_issued_at/by` | T-R acta | ✔ |
+| Aceptación | — | normal | ola 12 | I-025/026 | SVC `accept_receipt` | T-R acta · T-R doble | ✔ |
+| Movimiento en base | — | normal | ola 12 | I-026 | INV `record_movement` | T-R cajas · T-A saldo | ✔ |
+| Empresa | — | normal | ola 18 | I-039 | cadena `_owned` | T-R AB · T-R tenant | ✔ |
+| Almacén | — | normal | ola 18 | I-039 | `warehouse_belongs_to` | T-R almacén ajeno | ✔ |
+| Ubicación nula | — | normal | ola 21 | I-044 | `location_id=None` en el asiento | T-R cajas · T-A frontera | ✔ |
+| Frontera 020 | — | — | ola 21 | I-046 | sin flujo de incidencias | T-A frontera | ✔ |
+| Frontera 021 | — | — | ola 21 | I-047 | sin estados de mercancía nuevos | T-R acta · T-A frontera | ✔ |
+| Frontera 022 | — | — | ola 21 | I-045 | sin ubicación ni preparación | T-R acta | ✔ |
+| Idempotencia de aceptar | — | normal | ola 13 | I-027 | máquina de estados | T-R doble | ✔ |
+| Concurrencia de acumulación | — | normal | ola 13 | I-027 | `with_for_update()` | T-A bloqueo | ✔ |
+| Migración sin inventar | — | **P23** | ola 9 | I-021 | M | T-M (6 casos) | ✔ |
+| Paridad ORM = Alembic = PostgreSQL | — | normal | ola 10 | I-022 | `CheckConstraint` en ambos | T-A restricciones · T-M nombres | ✔ |
+| OpenAPI | — | normal | ola 16 | I-034 | 3 rutas nuevas | fixture regenerado | ✔ |
+| Frontend | — | normal | ola 17 | I-035..038 | FE | `tsc`, ESLint, build, 283/283 | ✔ |
+
+## Los siete proveedores, al cerrar
+
+| Proveedor | Capacidad | ¿Sigue satisfecha? |
+|---|---|---|
+| 017 órdenes de compra | orden aprobada con líneas | sí |
+| 010 productos | catálogo | sí |
+| 008 almacenes | almacén de la empresa | sí |
+| 023 inventario | motor de entrada | sí, **con una corrección mínima**: el saldo acumula la cantidad base |
+| 024 lotes y seriales | materialización | sí |
+| 011 unidades | `to_base` | sí, **y ahora consumida** |
+| 046 documentos | evidencia | sí, disponible; ninguna etapa de 019 la exige como obligatoria |
+
+**Cobertura: 100 %. Huérfanos: 0.**

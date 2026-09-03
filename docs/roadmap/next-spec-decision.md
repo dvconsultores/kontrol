@@ -139,3 +139,16 @@ que llegó.
 
 Detalle completo en `operational-chain-checkpoint.md`. Implementación **no iniciada**: requiere su
 propio ciclo con autorización expresa.
+
+---
+
+## Tras la Spec 019 — 2026-09-03
+
+`SPEC 019 — COMPLETE / CONVERGED`. La única Spec en `READY_FOR_IMPLEMENTATION` pasa a ser la **020,
+Incidencias de recepción**, que ya lo estaba y ahora cuelga de una recepción capaz de describir lo
+que llegó: presentación, bultos, estado físico, daño observado y sobrante.
+
+Detrás siguen la 021 —esperando la capacidad de excepción de la 020 y que el motor de saldos sepa
+escribir estados no vendibles (Spec 023)— y la 022, y tras ellas la 031 y la 032.
+
+Implementación de la 020 **no iniciada**: requiere su propio ciclo con autorización expresa.

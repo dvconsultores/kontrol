@@ -30,3 +30,20 @@ Formato: | ID | Riesgo | Prob. | Impacto | Control | Responsable | Estado |
 | Registro de riesgos | ✔ |
 | Controles asignados | ✔ |
 | Aprobación | Pendiente |
+
+---
+
+# RIESGOS — SPEC 019 (2026-09-03)
+
+| ID | Riesgo | Impacto | Mitigación | Estado |
+|---|---|---|---|---|
+| R-019-01 | El asiento de inventario registra la cantidad tecleada en vez de la base | Inventario falso desde la primera recepción en cajas | El saldo acumula la cantidad base; prueba de la caja ×12 de extremo a extremo | **Cerrado** |
+| R-019-02 | La presentación con la que llegó la mercancía no se captura | Dato irrecuperable: el camión se fue | Captura obligatoria en la línea, con factor congelado | **Cerrado** |
+| R-019-03 | Un cambio del maestro reinterpreta una recepción histórica | Historia falsificada (P5) | Factor congelado en la línea; prueba de invariancia | **Cerrado** |
+| R-019-04 | Bultos y daño observados se pierden | Sin base para la incidencia de 020 | Bultos declarados y contados; observación por línea que sobrevive a la aceptación | **Cerrado** |
+| R-019-05 | Dos recepciones simultáneas contra la misma línea de orden | Una acumulación perdida; orden dada por recibida sin estarlo | Bloqueo de la línea antes de acumular | **Cerrado** |
+| R-019-06 | Aceptar dos veces duplica el asiento | Inventario inflado | Máquina de estados; prueba de doble aceptación | **Cerrado** |
+| R-019-07 | Recibir contra la línea de otra orden | Recepción cruzada | La línea debe pertenecer a la orden de la recepción | **Cerrado** |
+| R-019-08 | Los seriales no se materializan | Trazabilidad rota | Normalización a texto separado por comas en un solo punto | **Cerrado** |
+| R-019-09 | La recepción invade el put-away o la confirmación | Fronteras rotas entre Specs | Ubicación nula; sin estados de mercancía nuevos; guardias estructurales | **Cerrado** |
+| R-019-10 | La corrección del saldo cambia el comportamiento de otros llamantes | Regresión silenciosa en compras, ventas o ajustes | Sin presentación el factor es 1 y las cantidades coinciden; regresión completa | **Cerrado** |

@@ -14,10 +14,22 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Date, ForeignKey, Index, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -144,19 +156,63 @@ class PurchaseOrderLine(UUIDMixin, TimestampMixin, Base):
 class GoodsReceipt(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "goods_receipts"
     __scope__ = Scope.COMPANY
+    __table_args__ = (
+        CheckConstraint(
+            "(packages_declared IS NULL OR packages_declared >= 0) "
+            "AND (packages_received IS NULL OR packages_received >= 0)",
+            name="packages_nonneg"),
+    )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     order_id: Mapped[str] = mapped_column(ForeignKey("purchase_orders.id"), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
+    #: Veredicto de conformidad de la etapa 7 del DOCX. No se añade un segundo
+    #: campo para la misma pregunta: `PENDING → APPROVED | REJECTED` **es** «¿la
+    #: recepción es conforme?», y lo que faltaba no era el veredicto sino la
+    #: inspección que lo sostiene (etapas 4, 5 y 6).
     quality_status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
+
+    # --- Etapa 1: confirmar arribo. El instante en que la mercancía llegó no se
+    # reconstruye después de que el camión se va (`P23`).
+    arrival_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    arrival_confirmed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    # --- Etapa 2: programar descarga y recepción ---
+    unloading_scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # --- Etapa 4: comparar lo recibido contra las cuatro fuentes del DOCX. Se
+    # guarda la referencia **y** el resultado: saber que se comparó y no contra
+    # qué deja la comparación sin valor probatorio.
+    packing_list_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    supplier_invoice_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    packing_list_match: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    supplier_invoice_match: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    order_match: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    documentation_match: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+
+    # --- Etapa 5: inspección visual inicial ---
+    inspected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    inspected_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    inspection_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # --- Etapa 6: cantidad de bultos, declarados y contados ---
+    packages_declared: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    packages_received: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # --- Etapa 11: acta o registro de recepción cuando es conforme ---
+    record_issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    record_issued_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
 
 class GoodsReceiptLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "goods_receipt_lines"
     __scope__ = Scope.COMPANY
     __scope_authority__ = "receipt_id → goods_receipts"
-    __table_args__ = (Index("ix_goods_receipt_lines_uom_id", "uom_id"),)
+    __table_args__ = (
+        Index("ix_goods_receipt_lines_uom_id", "uom_id"),
+        CheckConstraint("damaged_quantity IS NULL OR damaged_quantity >= 0", name="damage_nonneg"),
+    )
 
     receipt_id: Mapped[str] = mapped_column(ForeignKey("goods_receipts.id"), nullable=False, index=True)
     order_line_id: Mapped[str] = mapped_column(ForeignKey("purchase_order_lines.id"), nullable=False)
@@ -167,8 +223,21 @@ class GoodsReceiptLine(UUIDMixin, TimestampMixin, Base):
     lot_id: Mapped[str | None] = mapped_column(ForeignKey("inventory_lots.id"), nullable=True)
     lot_number: Mapped[str | None] = mapped_column(String(120), nullable=True)
     expiry_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    serials: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON de seriales recibidos
+    serials: Mapped[str | None] = mapped_column(Text, nullable=True)  # seriales separados por coma
     quality: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
+
+    # --- Etapa 6: la observación física, que es de 019; la incidencia que se
+    # derive de ella es de 020. Se separan a propósito: lo observado en el muelle
+    # no puede depender de que alguien abra después un expediente.
+    physical_condition: Mapped[str | None] = mapped_column(String(24), nullable=True)  # BUENO/DAÑADO/PARCIAL
+    damaged_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    damage_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    identification_ok: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    reference_ok: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    #: Exceso sobre lo que faltaba por recibir de la línea de orden, en unidad
+    #: base y congelado en el momento de recibir. El DOCX manda **registrar** el
+    #: sobrante (etapa 8); tratarlo es de la Spec 020.
+    overage_base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
 
 
 # --------------------------------------------------------------------------- #

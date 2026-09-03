@@ -5,9 +5,8 @@
 | **D0-07** validación legal fiscal | Legal | 039, 040, 041, 042, 043, 056 | Negocio / asesoría fiscal | Confirmación normativa venezolana antes de emitir |
 | **D0-06** hosting y licencia central | Negocio | 004, y parcialmente 052, 055 | Negocio | Decidir modelo de licenciamiento |
 | **022 Put-away** ausente | Dependencia | 031, 032 | Ingeniería | Existencia ubicada: escribir `location_id` en el saldo y ofrecer cantidad por ubicación |
-| **020 Incidencias** ausente | Dependencia | 021 (solo camino de excepción) | Ingeniería | Entidad de incidencia con tipo, cantidad, evidencia y resolución |
-| **Saldo solo escribible en `DISPONIBLE`** | Capacidad | 021, 022, 032 | Ingeniería (Spec 023) | Admitir el estado de mercancía como parámetro del movimiento y del saldo, con el catálogo de `ADR-D0-010` |
-| **Recepción sin presentación ni unidad** | Dato (P23) | 019, 021, 022 | Ingeniería (Spec 019) | Capturar presentación y unidad en la línea de recepción y pasarlas a `record_movement` |
+| **020 Incidencias** ausente | Dependencia | 021 (solo camino de excepción) | Ingeniería | Entidad de incidencia con tipo, cantidad, evidencia y resolución. La Spec 019 ya captura el hecho observado sobre el que colgarla (2026-09-03) |
+| **Saldo solo escribible en `DISPONIBLE`** | Capacidad | 021, 022, 032 | Ingeniería (Spec 023) | Admitir el estado de mercancía como parámetro del movimiento y del saldo, con el catálogo de `ADR-D0-010`. *(La Spec 019 corrigió aparte que el saldo acumulaba la cantidad tecleada en vez de la base.)* |
 | **033 Confirmación** ausente | Dependencia | 034, 035 | Ingeniería | Compuerta independiente antes de facturar |
 | **018 Importaciones** ausente | Dependencia | 026 (*landed cost*) | Ingeniería | Expediente de importación |
 | **048 Integraciones** parcial | Dependencia | 013 (tasa BCV), 047 | Ingeniería | Canal saliente |

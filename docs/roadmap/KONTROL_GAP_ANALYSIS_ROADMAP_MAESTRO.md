@@ -228,7 +228,7 @@ Son los únicos que justifican interrumpir cualquier otro plan.
 | Incidencias de recepción | 0/9 | Primera etapa |
 | Confirmación de inventario recibido | 2/11 | Conteo por SKU |
 | Preparación física | 2/12 | Llegada a la ubicación |
-| Recepción física | 3/10 | Arribo |
+| Recepción física | **8/8 de 019** (12 etapas totales) | — cerrado 2026-09-03 |
 | Toma del pedido | 4/7 | Condiciones desde maestro |
 | Liberación y facturación | 4/9 | Autorización |
 | Despacho | 4/6 | Verificación triple |

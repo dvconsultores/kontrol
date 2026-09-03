@@ -73,3 +73,31 @@ Formato: | ID | Punto | Responsable | Evidencia | Estado | Bloqueante |
 | Cumplidos (fase documental) | 27 (especificados) |
 | Bloqueantes sin evidencia en fase documental | Ninguno |
 | Implementación | Pendiente — requiere 001 certificada, 002/003 implementados y autorización |
+
+---
+
+# CHECKLIST — SPEC 019 · RECEPCIÓN FÍSICA (2026-09-03)
+
+- [x] Las etapas documentadas identificadas **desde el DOCX**: son 12, no 10
+- [x] Las 3 parciales identificadas · las de 019 completadas (8 de 8)
+- [x] Propiedad de las 12 reconciliada: 8 de 019, 3 de 020, 1 de 022
+- [x] Los siete proveedores enumerados desde el grafo y verificados
+- [x] `GoodsReceipt` y `GoodsReceiptLine` auditados
+- [x] Relación con el documento origen auditada y **reforzada** (la línea debe ser de la orden de la recepción)
+- [x] Autoridad del almacén confirmada
+- [x] Contrato de cantidad tecleada, unidad, presentación, factor congelado y cantidad base definido
+- [x] Integración con `record_movement` definida y **corregida en su raíz**
+- [x] Prueba de la caja ×12 definida y verde
+- [x] Datos P23 identificados y capturados
+- [x] Bultos, daño, identificación y referencia resueltos
+- [x] Lote, serial y vencimiento: ya eran de 019, se preservan y el serial se normaliza
+- [x] Integración documental disponible por 046; ninguna etapa la exige
+- [x] Ciclo de vida y aceptación definidos
+- [x] Invariante de ubicación nula definido y probado
+- [x] Fronteras con 020, 021 y 022 definidas y probadas
+- [x] Idempotencia y concurrencia definidas
+- [x] Matriz de empresa, prueba de usuario AB y cross-tenant
+- [x] Invariancia histórica probada
+- [x] Pruebas sobre PostgreSQL definidas
+- [x] Estados del frontend definidos
+- [x] Regresiones definidas

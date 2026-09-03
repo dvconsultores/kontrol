@@ -64,7 +64,7 @@ Fuente: Vol. 1 §4/§5/§7/§9, Vol. 2 §1/§3/§4/§5, DOCX de proceso (2026-08
 | Etapa documentada | Spec | Cobertura |
 |---|---|---|
 | Importación completa (12 etapas) | 018 | ✖ 0/12 |
-| Recepción física (10 etapas) | 019, 020 | ◐ 3/10 |
+| Recepción física (**12 etapas**, no 10) | 019 (8) · 020 (3) · 022 (1) | ✔ 8/8 de 019 (2026-09-03); 4 pendientes en 020 y 022 |
 | Confirmación de inventario recibido (11 etapas) | 021 | ◐ 2/11 |
 | Clasificación y ubicación en almacén (10 etapas) | 022 | ✖ 0/10 |
 | Zonas A–E | 008 | ✖ |

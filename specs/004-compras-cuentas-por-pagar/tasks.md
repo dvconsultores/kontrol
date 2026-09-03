@@ -44,3 +44,37 @@ Formato: | ID | Requisito | Tarea | Dependencia | Archivos | Prueba | Responsabl
 - No existen tareas genéricas; todas son atómicas, con dependencias y pruebas.
 - T-004-004 requiere el servicio `receive` de 003 (ya implementado).
 - La retención (T-004-012) es estructural: el cálculo fiscal completo es de 007.
+
+---
+
+# TAREAS — SPEC 019 · CICLO DE IMPLEMENTACIÓN (T-019-I, 2026-09-03)
+
+| Rango | Tarea | Entregable | Estado |
+|---|---|---|---|
+| 001 | Baseline y precheck | `spec019-implementation-cycle.md` §baseline | ✔ |
+| 002 | Inventario de las etapas documentadas | ídem §reconciliación: son 12, no 10 | ✔ |
+| 003-005 | Auditar `GoodsReceipt`, línea y cadena documental | ídem §clarify 5-12 | ✔ |
+| 006-007 | Auditar aceptación y llamada al motor | `spec019-implementation-report.md` §2 | ✔ |
+| 008 | Reconciliar los campos P23 | traceability §dato por dato | ✔ |
+| 009-012 | Unidad, presentación, factor y cantidad base | `_unidad_recibida`, `record_movement` | ✔ |
+| 013-015 | Bultos y observación física | modelo + `registrar_inspeccion` | ✔ |
+| 016-018 | Lote, serial y vencimiento | preservados; serial normalizado | ✔ |
+| 019-022 | Modelo, migración y paridad ORM | `0044_spec019_receipt` | ✔ |
+| 023-024 | Servicios de recepción y de línea | `confirmar_arribo`, `registrar_inspeccion`, `add_receipt_line` | ✔ |
+| 025-026 | Aceptación y asiento en base | `accept_receipt` | ✔ |
+| 027 | Idempotencia y concurrencia | máquina de estados + `with_for_update()` | ✔ |
+| 028 | Regla de sobrante | `_sobrante_observado` (registrar, no impedir) | ✔ |
+| 029 | Documentos | disponible por 046; ninguna etapa lo exige | **no aplica** |
+| 030 | Aprobaciones | ninguna etapa de 019 la exige | **no aplica** |
+| 031-032 | Permisos y auditoría | `compras:create`/`quality`; 4 eventos | ✔ |
+| 033-034 | API y OpenAPI | 3 rutas nuevas; fixture regenerado | ✔ |
+| 035-038 | Frontend: lista, creación, detalle y captura física | `RecepcionesPage.tsx` | ✔ |
+| 039-041 | Aislamiento, usuario AB y cross-tenant | `test_spec019_receipt.py` | ✔ |
+| 042-044 | Caja ×12, invariancia histórica y ubicación nula | ídem | ✔ |
+| 045-047 | Sin put-away, sin resolución de incidencia, sin confirmación | ídem + guardias | ✔ |
+| 048 | Pruebas hostiles PostgreSQL | `test_spec019_migration_0044.py` (SQLSTATE 23514) | ✔ |
+| 049 | Instalación limpia | subir, bajar la 0044, volver a subir | ✔ |
+| 050-051 | Regresión backend y frontend | `spec019-final-checkpoint.md` | ✔ |
+| 052-056 | Playwright, navegadores, responsive, rutas, OpenAPI | ídem | ✔ |
+| 057-059 | Grafo, Master 56 y trazabilidad | `docs/roadmap/*`, este documento | ✔ |
+| 060 | `/speckit.converge SPEC019` | `convergence.md` §SPEC 019 | ✔ |

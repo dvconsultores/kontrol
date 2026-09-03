@@ -7,10 +7,10 @@ idempotencia en POST críticos.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -22,6 +22,7 @@ from app.modules.identity_access.models import User
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import (
     GoodsReceipt,
+    GoodsReceiptLine,
     OpenItem,
     Payment,
     PurchaseOrder,
@@ -93,17 +94,54 @@ class ReceiptCreate(BaseModel):
     code: str = Field(min_length=1, max_length=64)
     order_id: str
     warehouse_id: str
+    #: Etapa 2 del proceso: programar descarga y recepción.
+    unloading_scheduled_at: datetime | None = None
+    #: Etapa 4: referencias contra las que se comparará lo recibido.
+    packing_list_ref: str | None = Field(default=None, max_length=120)
+    supplier_invoice_ref: str | None = Field(default=None, max_length=120)
+    #: Etapa 6: bultos que el documento declara.
+    packages_declared: int | None = Field(default=None, ge=0)
+
+
+class ArrivalBody(BaseModel):
+    """Etapa 1: confirmar arribo. Sin momento, se usa el de la confirmación."""
+    model_config = ConfigDict(extra="forbid")
+
+    arrival_at: datetime | None = None
+    packages_received: int | None = Field(default=None, ge=0)
+
+
+class InspectionBody(BaseModel):
+    """Etapas 4, 5 y 6: comparación, inspección visual y bultos contados."""
+    model_config = ConfigDict(extra="forbid")
+
+    packing_list_match: bool | None = None
+    supplier_invoice_match: bool | None = None
+    order_match: bool | None = None
+    documentation_match: bool | None = None
+    packages_received: int | None = Field(default=None, ge=0)
+    notes: str | None = Field(default=None, max_length=2000)
 
 
 class ReceiptLineCreate(BaseModel):
     order_line_id: str
     product_id: str
     quantity_received: float = Field(gt=0)
-    quantity_accepted: float
-    quantity_rejected: float
+    quantity_accepted: float = Field(ge=0)
+    quantity_rejected: float = Field(ge=0)
     lot_number: str | None = None
     expiry_date: date | None = None
     serials: list[str] | None = None
+    #: Presentación con la que se recibió. La reserva de inventario se hará en
+    #: cantidad base, no en la tecleada (Spec 011).
+    presentation_id: str | None = None
+    #: Etapa 6: lo que se observó en el muelle. La incidencia que derive de esto
+    #: es de la Spec 020; el hecho observado es de esta.
+    physical_condition: str | None = Field(default=None, max_length=24)
+    damaged_quantity: float | None = Field(default=None, ge=0)
+    damage_notes: str | None = Field(default=None, max_length=2000)
+    identification_ok: bool | None = None
+    reference_ok: bool | None = None
 
 
 class QualityBody(BaseModel):
@@ -337,6 +375,64 @@ def transition_order(order_id: str, body: TransitionBody, db: Session = Depends(
 # --------------------------------------------------------------------------- #
 # Recepciones
 # --------------------------------------------------------------------------- #
+def _receipt_line_dict(line) -> dict:
+    return {"id": line.id, "order_line_id": line.order_line_id, "product_id": line.product_id,
+            "quantity_received": str(line.quantity_received),
+            "quantity_accepted": str(line.quantity_accepted),
+            "quantity_rejected": str(line.quantity_rejected),
+            # Semántica de unidad (Spec 011): sin esto, dos cajas de doce
+            # entrarían al inventario como dos unidades.
+            "presentation_id": line.presentation_id, "uom_id": line.uom_id,
+            "conversion_factor_snapshot": str(line.conversion_factor_snapshot)
+            if line.conversion_factor_snapshot is not None else None,
+            "base_quantity_received": str(line.base_quantity_received)
+            if line.base_quantity_received is not None else None,
+            "base_quantity_accepted": str(line.base_quantity_accepted)
+            if line.base_quantity_accepted is not None else None,
+            "base_quantity_rejected": str(line.base_quantity_rejected)
+            if line.base_quantity_rejected is not None else None,
+            "uom_source": line.uom_source,
+            # Observación física de la etapa 6.
+            "physical_condition": line.physical_condition,
+            "damaged_quantity": str(line.damaged_quantity) if line.damaged_quantity is not None else None,
+            "damage_notes": line.damage_notes,
+            "identification_ok": line.identification_ok, "reference_ok": line.reference_ok,
+            "overage_base_quantity": str(line.overage_base_quantity)
+            if line.overage_base_quantity is not None else None,
+            "lot_number": line.lot_number, "lot_id": line.lot_id,
+            "expiry_date": line.expiry_date.isoformat() if line.expiry_date else None,
+            "serials": line.serials, "quality": line.quality}
+
+
+def _receipt_dict(db: Session, receipt) -> dict:
+    lines = db.execute(select(GoodsReceiptLine).where(GoodsReceiptLine.receipt_id == receipt.id)
+                       .order_by(GoodsReceiptLine.created_at, GoodsReceiptLine.id)).scalars().all()
+    return {"id": receipt.id, "code": receipt.code, "order_id": receipt.order_id,
+            "warehouse_id": receipt.warehouse_id, "status": receipt.status,
+            "quality_status": receipt.quality_status,
+            # Etapas 1 y 2: arribo confirmado y descarga programada.
+            "arrival_at": receipt.arrival_at.isoformat() if receipt.arrival_at else None,
+            "arrival_confirmed_by": receipt.arrival_confirmed_by,
+            "unloading_scheduled_at": receipt.unloading_scheduled_at.isoformat()
+            if receipt.unloading_scheduled_at else None,
+            # Etapa 4: contra qué se comparó y con qué resultado.
+            "packing_list_ref": receipt.packing_list_ref,
+            "supplier_invoice_ref": receipt.supplier_invoice_ref,
+            "packing_list_match": receipt.packing_list_match,
+            "supplier_invoice_match": receipt.supplier_invoice_match,
+            "order_match": receipt.order_match,
+            "documentation_match": receipt.documentation_match,
+            # Etapas 5 y 6: inspección y bultos.
+            "inspected_at": receipt.inspected_at.isoformat() if receipt.inspected_at else None,
+            "inspected_by": receipt.inspected_by, "inspection_notes": receipt.inspection_notes,
+            "packages_declared": receipt.packages_declared,
+            "packages_received": receipt.packages_received,
+            # Etapa 11: acta emitida.
+            "record_issued_at": receipt.record_issued_at.isoformat() if receipt.record_issued_at else None,
+            "record_issued_by": receipt.record_issued_by,
+            "lines": [_receipt_line_dict(x) for x in lines]}
+
+
 @router.get("/receipts")
 def list_receipts(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     query = select(GoodsReceipt).where(GoodsReceipt.company_id == ctx.company_id)
@@ -344,7 +440,14 @@ def list_receipts(status: str | None = None, db: Session = Depends(get_db), user
         query = query.where(GoodsReceipt.status == status)
     items = db.execute(query.order_by(GoodsReceipt.created_at.desc())).scalars().all()
     return {"items": [{"id": r.id, "code": r.code, "order_id": r.order_id, "warehouse_id": r.warehouse_id,
-                       "status": r.status, "quality_status": r.quality_status} for r in items],
+                       "status": r.status, "quality_status": r.quality_status,
+                       "arrival_at": r.arrival_at.isoformat() if r.arrival_at else None,
+                       "unloading_scheduled_at": r.unloading_scheduled_at.isoformat()
+                       if r.unloading_scheduled_at else None,
+                       "packages_declared": r.packages_declared, "packages_received": r.packages_received,
+                       "inspected_at": r.inspected_at.isoformat() if r.inspected_at else None,
+                       "record_issued_at": r.record_issued_at.isoformat() if r.record_issued_at else None}
+                      for r in items],
             "total": len(items), "page": 1, "page_size": len(items) or 1}
 
 
@@ -352,23 +455,69 @@ def list_receipts(status: str | None = None, db: Session = Depends(get_db), user
 def create_receipt(body: ReceiptCreate, db: Session = Depends(get_db),
                    actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
     receipt = ap_service.create_receipt(db, company_id=ctx.company_id, code=body.code, order_id=body.order_id,
-                                        warehouse_id=body.warehouse_id, actor=str(actor.id))
+                                        warehouse_id=body.warehouse_id, actor=str(actor.id),
+                                        unloading_scheduled_at=body.unloading_scheduled_at,
+                                        packing_list_ref=body.packing_list_ref,
+                                        supplier_invoice_ref=body.supplier_invoice_ref,
+                                        packages_declared=body.packages_declared)
     db.commit()
     db.refresh(receipt)
-    return {"id": receipt.id, "code": receipt.code, "status": receipt.status}
+    return _receipt_dict(db, receipt)
+
+
+@router.get("/receipts/{receipt_id}")
+def get_receipt(receipt_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user),
+                ctx: CompanyContext = Depends(get_company_context)):
+    receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    return _receipt_dict(db, receipt)
+
+
+@router.post("/receipts/{receipt_id}/arrival", dependencies=[Depends(require_write_allowed)])
+def confirm_arrival(receipt_id: str, body: ArrivalBody, db: Session = Depends(get_db),
+                    actor: User = Depends(require_permission("compras", "create")),
+                    ctx: CompanyContext = Depends(get_company_context)):
+    """Etapa 1: confirmar el arribo de la mercancía."""
+    _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    receipt = ap_service.confirmar_arribo(db, company_id=ctx.company_id, receipt_id=receipt_id,
+                                          arrival_at=body.arrival_at, packages_received=body.packages_received,
+                                          actor=str(actor.id))
+    db.commit()
+    db.refresh(receipt)
+    return _receipt_dict(db, receipt)
+
+
+@router.post("/receipts/{receipt_id}/inspection", dependencies=[Depends(require_write_allowed)])
+def register_inspection(receipt_id: str, body: InspectionBody, db: Session = Depends(get_db),
+                        actor: User = Depends(require_permission("compras", "quality")),
+                        ctx: CompanyContext = Depends(get_company_context)):
+    """Etapas 4, 5 y 6: comparar contra los documentos, inspeccionar y contar bultos."""
+    _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    receipt = ap_service.registrar_inspeccion(
+        db, company_id=ctx.company_id, receipt_id=receipt_id,
+        packing_list_match=body.packing_list_match, supplier_invoice_match=body.supplier_invoice_match,
+        order_match=body.order_match, documentation_match=body.documentation_match,
+        packages_received=body.packages_received, notes=body.notes, actor=str(actor.id))
+    db.commit()
+    db.refresh(receipt)
+    return _receipt_dict(db, receipt)
 
 
 @router.post("/receipts/{receipt_id}/lines", dependencies=[Depends(require_write_allowed)])
 def add_receipt_line(receipt_id: str, body: ReceiptLineCreate, db: Session = Depends(get_db),
                      actor: User = Depends(require_permission("compras", "create")),
                      ctx: CompanyContext = Depends(get_company_context)):
+    _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
     line = ap_service.add_receipt_line(db, company_id=ctx.company_id, receipt_id=receipt_id, order_line_id=body.order_line_id,
                                        product_id=body.product_id, quantity_received=body.quantity_received,
                                        quantity_accepted=body.quantity_accepted, quantity_rejected=body.quantity_rejected,
-                                       lot_number=body.lot_number, expiry_date=body.expiry_date, serials=body.serials)
+                                       lot_number=body.lot_number, expiry_date=body.expiry_date, serials=body.serials,
+                                       presentation_id=body.presentation_id,
+                                       physical_condition=body.physical_condition,
+                                       damaged_quantity=body.damaged_quantity, damage_notes=body.damage_notes,
+                                       identification_ok=body.identification_ok, reference_ok=body.reference_ok)
     db.commit()
     db.refresh(line)
-    return {"id": line.id, "product_id": line.product_id, "quantity_accepted": line.quantity_accepted}
+    return _receipt_line_dict(line)
 
 
 @router.post("/receipts/{receipt_id}/confirm", dependencies=[Depends(require_write_allowed)])

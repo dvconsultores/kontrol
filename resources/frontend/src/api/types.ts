@@ -366,7 +366,60 @@ export interface GoodsReceiptSummary {
   order_id: string;
   warehouse_id: string;
   status: string;
+  /** Veredicto de conformidad de la etapa 7 del proceso. */
   quality_status: string;
+  /** Etapas 1 y 2: arribo confirmado y descarga programada. */
+  arrival_at?: string | null;
+  unloading_scheduled_at?: string | null;
+  /** Etapa 6: bultos declarados por el documento y contados en el muelle. */
+  packages_declared?: number | null;
+  packages_received?: number | null;
+  /** Etapa 5. */
+  inspected_at?: string | null;
+  /** Etapa 11: acta emitida. */
+  record_issued_at?: string | null;
+}
+
+/** Línea de recepción con su unidad y lo que se observó (Spec 019). */
+export interface GoodsReceiptLine {
+  id: string;
+  order_line_id: string;
+  product_id: string;
+  quantity_received: string;
+  quantity_accepted: string;
+  quantity_rejected: string;
+  presentation_id: string | null;
+  uom_id: string | null;
+  conversion_factor_snapshot: string | null;
+  base_quantity_received: string | null;
+  base_quantity_accepted: string | null;
+  base_quantity_rejected: string | null;
+  uom_source: string | null;
+  physical_condition: string | null;
+  damaged_quantity: string | null;
+  damage_notes: string | null;
+  identification_ok: boolean | null;
+  reference_ok: boolean | null;
+  overage_base_quantity: string | null;
+  lot_number: string | null;
+  lot_id: string | null;
+  expiry_date: string | null;
+  serials: string | null;
+  quality: string;
+}
+
+export interface GoodsReceiptDetail extends GoodsReceiptSummary {
+  arrival_confirmed_by: string | null;
+  packing_list_ref: string | null;
+  supplier_invoice_ref: string | null;
+  packing_list_match: boolean | null;
+  supplier_invoice_match: boolean | null;
+  order_match: boolean | null;
+  documentation_match: boolean | null;
+  inspected_by: string | null;
+  inspection_notes: string | null;
+  record_issued_by: string | null;
+  lines: GoodsReceiptLine[];
 }
 
 export interface RequisitionSummary {

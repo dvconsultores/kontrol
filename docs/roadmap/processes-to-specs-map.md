@@ -43,17 +43,22 @@ Leyenda: ✔ implementado y probado · ◐ parcial · ✖ ausente
 
 | Etapa | Estado | Spec |
 |---|---|---|
-| Confirmar arribo · programar descarga | ✖ | 019 |
-| Recibir físicamente · bultos · pallets | ✖ | 019 |
-| Comparar contra packing list / factura / orden | ◐ (solo contra orden) | 019, 027 |
-| Inspección visual · daños · identificación | ◐ (`quality_status` binario) | 019 |
-| Registrar faltante/sobrante/daño/referencia | ✖ | 020 |
+| Confirmar arribo · programar descarga | ✔ | 019 |
+| Recibir físicamente · bultos · pallets | ✔ (bultos declarados y contados; unidad y presentación) | 019 |
+| Comparar contra packing list / factura / orden / documentación | ✔ (cuatro referencias, cuatro resultados) | 019, 027 |
+| Inspección visual · daños · identificación | ✔ (momento, responsable, notas y observación por línea) | 019 |
+| Determinar si la recepción es conforme | ✔ (`quality_status`, sostenido por la inspección) | 019 |
+| Registrar faltante/sobrante/daño/referencia | ◐ (el **hecho** se captura en 019; el expediente es de 020) | 020 |
 | Evidencia de la incidencia | ✖ | 020, 046 |
 | Escalar a Compras | ✖ | 020, 047 |
-| Acta o registro de recepción | ◐ | 019 |
-| Zona temporal de recepción | ✖ | 022 |
+| Acta o registro de recepción | ✔ | 019 |
+| Zona temporal de recepción | ✖ (sostenida por el invariante «almacén conocido, ubicación nula») | 022 |
 
-**Veredicto:** PARTIAL bajo. **Rompe en la primera etapa (arribo) y en toda la gestión de incidencias.**
+> El DOCX §2 tiene **doce** etapas de primer nivel, no las nueve que esta tabla resumía ni las diez
+> que otros artefactos citaban. Ocho son de 019, tres de 020 y una de 022 (reconciliado 2026-09-03).
+
+**Veredicto:** las ocho etapas de 019 están cubiertas. Lo que falta es la gestión de incidencias (020)
+y la zona temporal (022).
 
 ## P-05 Confirmación de inventario recibido
 

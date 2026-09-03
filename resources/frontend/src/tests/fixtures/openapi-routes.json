@@ -1157,12 +1157,24 @@
    "path": "/purchasing/receipts"
   },
   {
+   "method": "GET",
+   "path": "/purchasing/receipts/{receipt_id}"
+  },
+  {
    "method": "POST",
    "path": "/purchasing/receipts/{receipt_id}/accept"
   },
   {
    "method": "POST",
+   "path": "/purchasing/receipts/{receipt_id}/arrival"
+  },
+  {
+   "method": "POST",
    "path": "/purchasing/receipts/{receipt_id}/confirm"
+  },
+  {
+   "method": "POST",
+   "path": "/purchasing/receipts/{receipt_id}/inspection"
   },
   {
    "method": "POST",

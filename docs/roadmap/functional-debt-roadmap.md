@@ -3,7 +3,7 @@
 | ID | Proceso | Etapas exigidas | Etapas cubiertas | Rompe en | Spec |
 |---|---|---:|---:|---|---|
 | DF-01 | Importación | 12 | 0 | Primera etapa (detección de necesidad con rotación) | 018 |
-| DF-02 | Recepción física | 10 | 3 | Arribo y programación de descarga | 019 |
+| DF-02 | Recepción física | 12 (8 de 019) | 8 de 8 | — **cerrado 2026-09-03** | 019 |
 | DF-03 | Incidencias de recepción | 9 | 0 | Registro de faltante/sobrante/daño | 020 |
 | DF-04 | Confirmación de inventario recibido | 11 | 2 | Conteo detallado por SKU | 021 |
 | DF-05 | Put-away | 10 | 0 | Determinación de zona | 022 |

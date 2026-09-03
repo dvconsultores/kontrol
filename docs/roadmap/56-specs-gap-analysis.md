@@ -26,7 +26,7 @@
 | 016 | Cotización y selección de proveedores | Sí | 004 | 70 | 85 | 90 | 55 | 65 | 74 | SUBSTANTIALLY_COMPLETE | Selección sin criterios ponderados |
 | 017 | Orden de compra | Sí | 004 | 85 | 90 | 90 | 70 | 80 | 85 | SUBSTANTIALLY_COMPLETE | Entregas parciales sin calendario |
 | 018 | Importaciones | Sí (DOCX) | **ninguna** | 0 | 0 | 0 | 0 | 0 | 0 | NOT_STARTED | **INCOTERM/proforma/packing/embarque inexistentes** |
-| 019 | Recepción física | Sí (DOCX) | 004 | 50 | 55 | 60 | 25 | 60 | 50 | PARTIAL | Sin arribo, bultos, pallets ni evidencia |
+| 019 | Recepción física | Sí (DOCX) | 004 | 100 | 100 | 100 | 90 | 100 | 98 | **COMPLETE** | Arribo, bultos, comparación documental, inspección y acta (2026-09-03) |
 | 020 | Incidencias de recepción | Sí (DOCX) | **ninguna** | 0 | 10 | 10 | 0 | 0 | 5 | NOT_STARTED | **Sin entidad de incidencia ni escalamiento** |
 | 021 | Confirmación y conciliación de inventario recibido | Sí (DOCX) | parcial 003 | 20 | 35 | 55 | 20 | 20 | 32 | SKELETON_ONLY | Recepción entra directo a DISPONIBLE |
 | 022 | Put-away y ubicación por zonas | Sí (DOCX) | parcial 003 | 15 | 20 | 45 | 10 | 10 | 22 | SKELETON_ONLY | `GoodsReceiptLine` sin `location_id` |

@@ -49,3 +49,20 @@
 
 - Resultados de pytest, vitest, Playwright, axe y concurrencia en `evidence/`.
 - Contract tests en `contracts/`.
+
+---
+
+# PLAN DE PRUEBAS — SPEC 019 · RECEPCIÓN FÍSICA
+
+| Nivel | Suite | Casos | Motor |
+|---|---|---:|---|
+| Estructural | `test_spec019_architecture.py` | 13 | lectura de código y del ORM |
+| Funcional multiempresa | `test_spec019_receipt.py` | 18 | PostgreSQL 18.6, dos tenants y tres empresas |
+| Migración e integridad | `test_spec019_migration_0044.py` | 6 | PostgreSQL 18.6, base sembrada en `0043`, SQLSTATE verificado |
+
+**Casos que dan sentido a la Spec:** la caja ×12 de extremo a extremo (tecleado 2, base 24,
+inventario 24); la invariancia cuando el maestro cambia a ×10; el arribo con bultos declarados y
+contados; la comparación documental con sus cuatro resultados; la observación física que sobrevive
+a la aceptación; el sobrante registrado y no impedido; lote, serial y vencimiento materializados;
+el acta emitida; la doble aceptación rechazada sin duplicar el asiento; y las tres fronteras —sin
+ubicación, sin preparación, sin estados de mercancía nuevos—.

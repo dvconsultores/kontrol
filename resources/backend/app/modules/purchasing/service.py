@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.approvals import integration as approvals_integration
 from app.modules.inventory import service as inv_service
+from app.modules.master_data import uom as uom_engine
 from app.modules.organization.models import Warehouse
 from app.modules.organization.service import warehouse_belongs_to
 from app.modules.purchasing.models import (
@@ -365,7 +366,9 @@ def _order_context(db: Session, order: PurchaseOrder) -> dict[str, Any]:
 # Recepción (invoca el motor de inventario de 003)
 # --------------------------------------------------------------------------- #
 def create_receipt(db: Session, *, company_id: str, code: str, order_id: str, warehouse_id: str,
-                   actor: str | None = None) -> GoodsReceipt:
+                   actor: str | None = None, unloading_scheduled_at: datetime | None = None,
+                   packing_list_ref: str | None = None, supplier_invoice_ref: str | None = None,
+                   packages_declared: int | None = None) -> GoodsReceipt:
     company_id = _company(company_id, obj="recepción")
     order = _require_order(db, company_id, order_id)
     if order.status not in ("APPROVED", "PARTIALLY_RECEIVED", "RECEIVED"):
@@ -373,25 +376,217 @@ def create_receipt(db: Session, *, company_id: str, code: str, order_id: str, wa
     warehouse = db.get(Warehouse, warehouse_id)
     if not warehouse or not warehouse_belongs_to(company_id, warehouse):
         raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
+    if packages_declared is not None and packages_declared < 0:
+        raise KontrolError(code="INVALID_PACKAGES", message="Los bultos declarados no pueden ser negativos.",
+                           status_code=422)
     receipt = GoodsReceipt(company_id=company_id, code=code, order_id=order_id, warehouse_id=warehouse_id,
-                           status="DRAFT", quality_status="PENDING", created_by=actor)
+                           status="DRAFT", quality_status="PENDING", created_by=actor,
+                           unloading_scheduled_at=unloading_scheduled_at,
+                           packing_list_ref=packing_list_ref, supplier_invoice_ref=supplier_invoice_ref,
+                           packages_declared=packages_declared)
     db.add(receipt)
     db.flush()
+    _audit(db, action="RECEIPT_CREATED", entity_type="GoodsReceipt", entity_id=str(receipt.id),
+           company_id=company_id, actor=actor,
+           after={"order_id": str(order_id), "warehouse_id": warehouse_id,
+                  "packing_list_ref": packing_list_ref, "supplier_invoice_ref": supplier_invoice_ref,
+                  "packages_declared": packages_declared,
+                  "unloading_scheduled_at": unloading_scheduled_at.isoformat() if unloading_scheduled_at else None})
     return receipt
+
+
+def confirmar_arribo(db: Session, *, company_id: str, receipt_id: str, arrival_at: datetime | None = None,
+                     packages_received: int | None = None, actor: str | None = None) -> GoodsReceipt:
+    """Etapa 1 del DOCX §2: confirmar el arribo de la mercancía.
+
+    El instante en que llegó y cuántos bultos bajaron del camión no se
+    reconstruyen después (`P23`). Si no se indica el momento se usa el de la
+    confirmación, que es lo más cerca de la verdad que el sistema puede estar.
+    """
+    receipt = _require_receipt(db, company_id, receipt_id)
+    if receipt.status not in ("DRAFT", "CONFIRMED"):
+        raise ConflictError(code="RECEIPT_NOT_OPEN",
+                            message="Solo una recepción abierta admite confirmar el arribo.")
+    if packages_received is not None and packages_received < 0:
+        raise KontrolError(code="INVALID_PACKAGES", message="Los bultos recibidos no pueden ser negativos.",
+                           status_code=422)
+    receipt.arrival_at = arrival_at or datetime.now(UTC)
+    receipt.arrival_confirmed_by = actor
+    if packages_received is not None:
+        receipt.packages_received = packages_received
+    receipt.updated_at = datetime.now(UTC)
+    db.flush()
+    _audit(db, action="RECEIPT_ARRIVAL_CONFIRMED", entity_type="GoodsReceipt", entity_id=str(receipt.id),
+           company_id=company_id, actor=actor,
+           after={"arrival_at": receipt.arrival_at.isoformat(),
+                  "packages_declared": receipt.packages_declared,
+                  "packages_received": receipt.packages_received})
+    return receipt
+
+
+def registrar_inspeccion(db: Session, *, company_id: str, receipt_id: str,
+                         packing_list_match: bool | None = None, supplier_invoice_match: bool | None = None,
+                         order_match: bool | None = None, documentation_match: bool | None = None,
+                         packages_received: int | None = None, notes: str | None = None,
+                         actor: str | None = None) -> GoodsReceipt:
+    """Etapas 4, 5 y 6: comparar, inspeccionar y validar bultos.
+
+    Guarda el resultado de cada comparación, no solo que se hizo: saber que
+    alguien comparó sin saber contra qué ni con qué resultado deja la etapa sin
+    valor probatorio. El veredicto de conformidad es la etapa 7 y vive en
+    `quality_status`: aquí se registra la inspección que lo sostiene.
+    """
+    receipt = _require_receipt(db, company_id, receipt_id)
+    if receipt.status not in ("DRAFT", "CONFIRMED", "QUALITY_PENDING"):
+        raise ConflictError(code="RECEIPT_NOT_OPEN",
+                            message="Solo una recepción abierta admite registrar la inspección.")
+    if packages_received is not None:
+        if packages_received < 0:
+            raise KontrolError(code="INVALID_PACKAGES", message="Los bultos recibidos no pueden ser negativos.",
+                               status_code=422)
+        receipt.packages_received = packages_received
+    for campo, valor in (("packing_list_match", packing_list_match),
+                         ("supplier_invoice_match", supplier_invoice_match),
+                         ("order_match", order_match),
+                         ("documentation_match", documentation_match)):
+        if valor is not None:
+            setattr(receipt, campo, valor)
+    receipt.inspected_at = datetime.now(UTC)
+    receipt.inspected_by = actor
+    if notes is not None:
+        receipt.inspection_notes = notes
+    receipt.updated_at = datetime.now(UTC)
+    db.flush()
+    _audit(db, action="RECEIPT_INSPECTED", entity_type="GoodsReceipt", entity_id=str(receipt.id),
+           company_id=company_id, actor=actor,
+           after={"packing_list_ref": receipt.packing_list_ref,
+                  "packing_list_match": receipt.packing_list_match,
+                  "supplier_invoice_ref": receipt.supplier_invoice_ref,
+                  "supplier_invoice_match": receipt.supplier_invoice_match,
+                  "order_match": receipt.order_match,
+                  "documentation_match": receipt.documentation_match,
+                  "packages_declared": receipt.packages_declared,
+                  "packages_received": receipt.packages_received,
+                  "notes": receipt.inspection_notes})
+    return receipt
+
+
+def _unidad_recibida(db: Session, *, product_id: str, presentation_id: str | None,
+                     cantidades: dict[str, float]) -> dict[str, Any]:
+    """Semántica de unidad de la línea de recepción (Spec 011, `R-D0-09-1`).
+
+    Congela el factor de la presentación con la que **se recibió**. Es la pieza
+    que faltaba: las columnas existen desde la Spec 011 y ningún código las
+    escribía, de modo que el asiento de inventario tomaba la cantidad tecleada
+    como si fuera la base. Dos cajas de doce entraban al ledger como dos
+    unidades.
+    """
+    salida: dict[str, Any] = {}
+    factor = None
+    for nombre, cantidad in cantidades.items():
+        conversion = uom_engine.to_base(db, Decimal(str(cantidad)), product_id, presentation_id)
+        salida[f"base_quantity_{nombre}"] = conversion.base_quantity
+        factor = conversion.factor
+        salida["uom_id"] = str(conversion.base_uom_id) if conversion.base_uom_id else None
+    salida["conversion_factor_snapshot"] = factor
+    salida["uom_source"] = uom_engine.SOURCE_CAPTURED
+    return salida
+
+
+def _sobrante_observado(db: Session, order_line_id: str, base_recibida: Decimal | None) -> Decimal | None:
+    """Exceso sobre lo que faltaba por recibir, medido en el muelle.
+
+    El DOCX manda **registrar** el sobrante (etapa 8); tratarlo es de la Spec
+    020. Aquí solo se congela la observación: si la orden se edita después, lo
+    que se vio al recibir no cambia.
+    """
+    if base_recibida is None:
+        return None
+    order_line = db.get(PurchaseOrderLine, order_line_id)
+    if order_line is None:
+        return None
+    # La línea de orden no captura presentación, así que lo pedido ya está en
+    # unidad base. Cuando la columna base exista se usa; si no, la cantidad
+    # ordenada **es** la base (misma convención que `LEGACY_ASSUMED_BASE`).
+    ordenado = (order_line.base_quantity_ordered
+                if order_line.base_quantity_ordered is not None else order_line.quantity_ordered)
+    pendiente = _dec(ordenado) - _dec(order_line.quantity_received)
+    exceso = _dec(base_recibida) - pendiente
+    return exceso if exceso > 0 else None
 
 
 def add_receipt_line(db: Session, *, company_id: str, receipt_id: str, order_line_id: str, product_id: str, quantity_received: float,
                      quantity_accepted: float, quantity_rejected: float, lot_number: str | None = None,
-                     expiry_date=None, serials: list[str] | None = None) -> GoodsReceiptLine:
-    _require_receipt(db, company_id, receipt_id)
+                     expiry_date=None, serials: list[str] | str | None = None,
+                     presentation_id: str | None = None, physical_condition: str | None = None,
+                     damaged_quantity: float | None = None, damage_notes: str | None = None,
+                     identification_ok: bool | None = None, reference_ok: bool | None = None) -> GoodsReceiptLine:
+    """Registra lo recibido de una línea, con su unidad y lo que se observó.
+
+    `serials` acepta lista o texto y se normaliza a texto separado por comas:
+    la API enviaba una lista a una columna de texto y `accept_receipt` esperaba
+    la cadena, de modo que los dos extremos no hablaban el mismo idioma.
+    """
+    receipt = _require_receipt(db, company_id, receipt_id)
+    if receipt.status not in ("DRAFT", "CONFIRMED"):
+        raise ConflictError(code="RECEIPT_NOT_OPEN",
+                            message="Solo una recepción abierta admite líneas nuevas.")
     if quantity_received <= 0:
         raise KontrolError(code="INVALID_QUANTITY", message="La cantidad recibida debe ser positiva", status_code=422)
+    if quantity_accepted < 0 or quantity_rejected < 0:
+        raise KontrolError(code="INVALID_QUANTITY", message="Las cantidades no pueden ser negativas", status_code=422)
+    if _dec(quantity_accepted) + _dec(quantity_rejected) > _dec(quantity_received):
+        raise KontrolError(code="RECEIPT_QUANTITY_MISMATCH",
+                           message="Aceptado más rechazado no puede superar lo recibido.", status_code=422)
+    if damaged_quantity is not None:
+        if damaged_quantity < 0:
+            raise KontrolError(code="INVALID_QUANTITY", message="La cantidad dañada no puede ser negativa",
+                               status_code=422)
+        if _dec(damaged_quantity) > _dec(quantity_received):
+            raise KontrolError(code="RECEIPT_DAMAGE_EXCEEDS_RECEIVED",
+                               message="No se puede observar más daño que lo recibido.", status_code=422)
+    order_line = db.get(PurchaseOrderLine, order_line_id)
+    if order_line is None:
+        raise NotFoundError(code="PURCHASE_ORDER_LINE_NOT_FOUND", message="Línea de orden no encontrada")
+    if str(order_line.order_id) != str(receipt.order_id):
+        # La línea de la que se recibe tiene que ser de la orden de esta
+        # recepción: sin esta comprobación se podría recibir contra la orden de
+        # otra empresa pasando su identificador por el cuerpo.
+        raise NotFoundError(code="PURCHASE_ORDER_LINE_NOT_FOUND", message="Línea de orden no encontrada")
+    inv_service._require_product(db, company_id, product_id)
+
+    unidad = _unidad_recibida(db, product_id=product_id, presentation_id=presentation_id,
+                              cantidades={"received": quantity_received, "accepted": quantity_accepted,
+                                          "rejected": quantity_rejected})
+    if isinstance(serials, list):
+        serials = ",".join(str(x).strip() for x in serials if str(x).strip()) or None
     line = GoodsReceiptLine(receipt_id=receipt_id, order_line_id=order_line_id, product_id=product_id,
                             quantity_received=quantity_received, quantity_accepted=quantity_accepted,
                             quantity_rejected=quantity_rejected, lot_number=lot_number, expiry_date=expiry_date,
-                            serials=serials, quality="PENDING")
+                            serials=serials, quality="PENDING", presentation_id=presentation_id,
+                            physical_condition=physical_condition, damaged_quantity=damaged_quantity,
+                            damage_notes=damage_notes, identification_ok=identification_ok,
+                            reference_ok=reference_ok, **unidad)
+    line.overage_base_quantity = _sobrante_observado(db, order_line_id, unidad.get("base_quantity_received"))
     db.add(line)
     db.flush()
+    _audit(db, action="RECEIPT_LINE_ADDED", entity_type="GoodsReceiptLine", entity_id=str(line.id),
+           company_id=company_id, actor=None,
+           after={"receipt_id": str(receipt_id), "order_line_id": str(order_line_id),
+                  "product_id": str(product_id),
+                  "quantity_received": str(line.quantity_received),
+                  "base_quantity_received": str(line.base_quantity_received),
+                  "presentation_id": presentation_id,
+                  "conversion_factor_snapshot": str(line.conversion_factor_snapshot)
+                  if line.conversion_factor_snapshot is not None else None,
+                  "physical_condition": physical_condition,
+                  "damaged_quantity": str(damaged_quantity) if damaged_quantity is not None else None,
+                  "identification_ok": identification_ok, "reference_ok": reference_ok,
+                  "overage_base_quantity": str(line.overage_base_quantity)
+                  if line.overage_base_quantity is not None else None,
+                  "lot_number": lot_number,
+                  "expiry_date": expiry_date.isoformat() if expiry_date else None,
+                  "serials": serials})
     return line
 
 
@@ -414,9 +609,16 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
     if receipt.quality_status != "APPROVED":
         raise ConflictError(code="QUALITY_NOT_APPROVED", message="La recepción requiere control de calidad aprobado.")
     lines = db.execute(select(GoodsReceiptLine).where(GoodsReceiptLine.receipt_id == receipt.id)).scalars().all()
+    if not lines:
+        raise ConflictError(code="RECEIPT_EMPTY", message="Una recepción sin líneas no se acepta.")
     for line in lines:
         if line.quantity_accepted > 0:
-            order_line = db.get(PurchaseOrderLine, line.order_line_id)
+            # La línea de orden se bloquea antes de acumular: dos recepciones
+            # simultáneas contra la misma línea harían lectura-modificación-
+            # escritura y una de las dos acumulaciones se perdería.
+            order_line = db.execute(
+                select(PurchaseOrderLine).where(PurchaseOrderLine.id == line.order_line_id)
+                .with_for_update().execution_options(populate_existing=True)).scalars().first()
             if order_line and order_line.needs_inventory:
                 inv_service._require_product(db, receipt.company_id, line.product_id)
                 lot_id = None
@@ -431,22 +633,47 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
                         inv_service.create_serial(db, company_id=receipt.company_id, product_id=line.product_id,
                                                   serial=serial, lot_id=lot_id, warehouse_id=receipt.warehouse_id, actor=actor)
                 mtype = inv_service._get_movement_type_by_code(db, receipt.company_id, "ENTRADA_RECEPCION")
+                # La presentación viaja al motor: sin ella, `to_base` aplicaría
+                # factor 1 y dos cajas de doce entrarían al ledger como dos
+                # unidades. La ubicación va nula a propósito: recibir no es
+                # ubicar, y colocar es de la Spec 022.
                 inv_service.record_movement(
                     db, company_id=receipt.company_id, warehouse_id=receipt.warehouse_id, product_id=line.product_id,
-                    movement_type_id=str(mtype.id), quantity=line.quantity_accepted,
+                    movement_type_id=str(mtype.id), quantity=float(line.quantity_accepted),
                     unit_cost=order_line.unit_price if order_line else None, currency="VED",
                     document_ref=f"RECEIPT:{receipt.id}", actor=actor,
+                    presentation_id=line.presentation_id, location_id=None,
                 )
-            # Acumular recibido en la línea de orden
+            # Acumular recibido en la línea de orden, en la misma unidad en que
+            # se guarda lo pedido: comparar cajas contra unidades daría por
+            # recibida una orden que no lo está.
             if order_line:
-                order_line.quantity_received = (_dec(order_line.quantity_received)
-                                                + _dec(line.quantity_accepted))
+                aceptado = (line.base_quantity_accepted
+                            if line.base_quantity_accepted is not None else line.quantity_accepted)
+                order_line.quantity_received = _dec(order_line.quantity_received) + _dec(aceptado)
     receipt.status = "ACCEPTED"
+    # Etapa 11: recepción conforme, acta emitida. El acta no es un documento
+    # nuevo: es el registro de recepción, fechado y con responsable.
+    receipt.record_issued_at = datetime.now(UTC)
+    receipt.record_issued_by = actor
     receipt.updated_at = datetime.now(UTC)
     db.flush()
     _sync_order_status(db, receipt.order_id)
     _audit(db, action="RECEIPT_ACCEPTED", entity_type="GoodsReceipt", entity_id=str(receipt.id),
-           company_id=receipt.company_id, actor=actor, after={"order_id": str(receipt.order_id)})
+           company_id=receipt.company_id, actor=actor,
+           after={"order_id": str(receipt.order_id), "warehouse_id": receipt.warehouse_id,
+                  "record_issued_at": receipt.record_issued_at.isoformat(),
+                  "arrival_at": receipt.arrival_at.isoformat() if receipt.arrival_at else None,
+                  "packages_declared": receipt.packages_declared,
+                  "packages_received": receipt.packages_received,
+                  "lines": [{"line_id": str(x.id), "product_id": str(x.product_id),
+                             "quantity_accepted": str(x.quantity_accepted),
+                             "base_quantity_accepted": str(x.base_quantity_accepted)
+                             if x.base_quantity_accepted is not None else None,
+                             "presentation_id": x.presentation_id,
+                             "conversion_factor_snapshot": str(x.conversion_factor_snapshot)
+                             if x.conversion_factor_snapshot is not None else None}
+                            for x in lines]})
     return receipt
 
 

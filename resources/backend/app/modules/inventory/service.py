@@ -444,15 +444,20 @@ def record_movement(
         cost = _consume_cost(db, company_id=company_id, product_id=product_id, warehouse_id=warehouse_id, quantity=-signed)
         movement.unit_cost = cost
 
-    # Balance (cache)
+    # Balance (cache). Se acumula la **cantidad base**, no la tecleada: el saldo
+    # está en unidad base por definición y el movimiento ya guarda ambas. Con
+    # presentación, sumar lo tecleado metía dos cajas de doce como dos unidades;
+    # sin presentación el factor es 1 y las dos cantidades coinciden.
     balance = _get_balance(db, company_id=company_id, warehouse_id=warehouse_id, location_id=location_id,
                            product_id=product_id, lot_id=None, serial_id=None, state="DISPONIBLE")
-    balance.qty_on_hand = _dec(balance.qty_on_hand) + _dec(signed)
+    balance.qty_on_hand = _dec(balance.qty_on_hand) + _dec(base_signed)
     _refresh_available(balance)
     db.flush()
     _audit(db, action="INVENTORY_MOVEMENT", entity_type="InventoryMovement", entity_id=str(movement.id),
            company_id=company_id, actor=actor,
-           after={"product_id": product_id, "quantity": float(signed), "document_ref": document_ref})
+           after={"product_id": product_id, "quantity": float(signed),
+                  "base_quantity": float(base_signed), "presentation_id": presentation_id,
+                  "document_ref": document_ref})
     return movement
 
 
