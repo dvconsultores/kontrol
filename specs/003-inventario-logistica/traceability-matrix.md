@@ -61,3 +61,41 @@ Formato: Requisito → Fuente → Tarea → Prueba. Cadena **Requisito → Spec 
 | Tareas sin requisito | Ninguna |
 | Historias sin FR | Ninguna |
 | Criterios de aceptación mapeados | ✔ (`acceptance-criteria.md`) |
+
+---
+
+# TRAZABILIDAD — CICLO DIRIGIDO DE SALDO MULTIESTADO (2026-09-03)
+
+Ciclo de auditoría. **Cero código de producto.** La trazabilidad cubre lo auditado y lo decidido,
+no lo implementado, porque el ciclo se detuvo antes de `/speckit.implement` por dos OQ materiales.
+
+| Requisito | Regla ADR | Estado del catálogo | Evidencia | Resultado |
+|---|---|---|---|---|
+| IMP-023-MS-001 · el estado es autoridad de inventario | R-D0-10-1 | los 15 | `uq_inventory_balances_key` incluye `state` | **Ya cumplido** |
+| IMP-023-MS-002 · los estados vienen del ADR | R-D0-10-2 | los 15 | catálogo extraído, §4 del ciclo | **Verificado** |
+| IMP-023-MS-003 · no hay estados inventados | — | los 15 | `VENCIDO` es de lote/serial (`FR-003-035`), no de mercancía | **Verificado** |
+| IMP-023-MS-004 · vendibilidad definida | R-D0-10-3 | los 15 | exclusivamente `DISPONIBLE` | **Cerrado por el ADR** |
+| IMP-023-MS-005 · reservabilidad definida | R-D0-03-5 · POL-D0-002 §7 | los 15 | solo `DISPONIBLE`; la reserva no cambia custodia | **Cerrado por autoridad** |
+| IMP-023-MS-006 · disponible excluye lo no vendible | POL-D0-002 §1 | `DISPONIBLE` | la consulta ya filtra por estado | **Ya cumplido** |
+| IMP-023-MS-007 · la 030 no reserva lo no reservable | R-D0-03-5 | `DISPONIBLE` | `lock_balance` por defecto `DISPONIBLE`; así lo llama ventas | **Ya cumplido** |
+| IMP-023-MS-008 · el movimiento conserva el estado | R-D0-10-5 | — | `InventoryMovement` **no tiene columna de estado** | **HUECO ESTRUCTURAL** |
+| IMP-023-MS-009 · el saldo diferencia por estado | R-D0-10-5 | los 15 | la clave ya lo permite; solo hay filas `DISPONIBLE` | **Parcial: capacidad sin ejercicio** |
+| IMP-023-MS-010 · la clave incluye las dimensiones | — | los 15 | empresa, almacén, ubicación, producto, lote, serial, estado | **Ya cumplido** |
+| IMP-023-MS-011 · la reclasificación conserva físico | R-D0-10-5 | — | derivable, no requiere decisión | **Definido, no implementado** |
+| IMP-023-MS-012 · la reclasificación deja rastro | R-D0-10-5 | — | imposible sin IMP-023-MS-008 | **Bloqueado por el hueco** |
+| IMP-023-MS-013 · no altera unidad ni cantidad base | Spec 011 | — | el saldo ya acumula base desde la Spec 019 | **Ya cumplido** |
+| IMP-023-MS-014/015/016/017 · preserva almacén, ubicación, `NULL`, lote y serial | Spec 008 · 024 | — | la clave los lleva; `COALESCE` los hace únicos | **Ya cumplido** |
+| IMP-023-MS-018 · sin negativo ilegal | — | — | derivable de la conservación | **Definido, no implementado** |
+| IMP-023-MS-019/020 · idempotencia y concurrencia | POL-D0-002 §5 | — | patrón de la Spec 030 disponible y probado | **Definido, no implementado** |
+| IMP-023-MS-021..024 · empresa, tenant, usuario AB, contexto | ARCH-MC-001 | — | el saldo es `Scope.COMPANY`; sin cambios | **Ya cumplido** |
+| IMP-023-MS-025/026 · un solo motor y un solo disponible | — | — | Constitution Gate PASS | **Verificado** |
+| IMP-023-MS-027 · los llamantes siguen funcionando | — | — | diez puntos localizados y atribuidos | **Verificado** |
+| IMP-023-MS-028 · la caja ×12 de la Spec 019 | Spec 011 · 019 | `DISPONIBLE` | sin cambios de código; regresión intacta | **Ya cumplido** |
+| IMP-023-MS-029 · la reserva solo sobre elegible | R-D0-03-5 | `DISPONIBLE` | la suma nunca cruza estados | **Ya cumplido** |
+| IMP-023-MS-030 · el total se reconstruye del ledger | R-D0-10-5 | — | `recompute_balances` colapsaría todo en `DISPONIBLE` | **HUECO ESTRUCTURAL** |
+| IMP-023-MS-031/032 · paridad ORM/Alembic/OpenAPI | — | — | sin delta: no se tocó nada | **N/A en este ciclo** |
+| IMP-023-MS-033 · trazabilidad | — | — | esta tabla | **100 % de lo auditado** |
+| IMP-023-MS-034 · deuda P0 propia | — | — | el ciclo no introduce código | **0** |
+| IMP-023-MS-035 · la 021 puede consumir estados no vendibles | R-D0-10-4 | — | **exige OQ-023-MS-01 y OQ-023-MS-02** | **BLOQUEADO** |
+
+**Cobertura del alcance auditado: 100 %. Huérfanos: 0. OQ materiales: 2.**

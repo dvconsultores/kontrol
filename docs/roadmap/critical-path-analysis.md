@@ -32,10 +32,12 @@ habría nada que poner en ellas.
                └→ 032 Picking      ⛔ 031 + 022
 
   Reauditado 2026-09-03: la ruta crítica del producto pasa por la cadena de ENTRADA.
-  019 ✅ COMPLETE → 020 ✅ COMPLETE → 021 ⛔ (solo estados de saldo, 023) → 022 ⛔ (021) → 031 → 032
-  Las dos primeras cayeron el mismo día. 021 conserva **un** bloqueo, no dos:
-  la capacidad de excepción ya existe; lo que falta es que el motor de saldos
-  sepa escribir algo distinto de `DISPONIBLE`.
+  019 ✅ COMPLETE → 020 ✅ COMPLETE → 021 ⛔ (DECISIÓN, no código) → 022 ⛔ (021) → 031 → 032
+  Las dos primeras cayeron el mismo día. Y el bloqueo que le queda a 021 cambió
+  de naturaleza el 2026-09-03: el ciclo dirigido de 023 demostró que no es una
+  carencia del motor —el estado ya es dimensión de la clave y el disponible ya
+  lo filtra— sino dos decisiones de producto sin tomar: el grafo de transiciones
+  que `R-D0-10-7` da por existente, y qué pasa con lo reservado al reclasificar.
   Lo comercial está cerrado y espera a que el almacén sepa dónde está lo que vende.
          └→ 031 Cola de picking  ⛔ 022
              └→ 032 Picking      ⛔ 022

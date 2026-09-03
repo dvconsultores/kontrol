@@ -66,7 +66,7 @@ dejan de nombrar Specs y nombran capacidades:
 019 Recepción física ✅ COMPLETE / CONVERGED (2026-09-03)
  ├→ 021 (camino feliz: sin incidencia)
  └→ 020 Incidencias ✅ COMPLETE / CONVERGED (2026-09-03)
-      └→ 021 Confirmación ⛔ **solo** saldo no vendible (023)   [la excepción ya existe]
+      └→ 021 Confirmación ⛔ **decisión de producto** ×2 (auditado en 023, 2026-09-03)
            └→ 022 Put-away ⛔ estado de origen (021)   [008 ya entrega las ubicaciones]
                 └→ 031 Cola y ruta ⛔ existencia ubicada (022)   [030 ya satisfecho]
                      └→ 032 Picking ⛔ 031 + 022   [024 y 030 satisfechos]
@@ -159,9 +159,9 @@ Posterior a `ARCH-MC-001 — COMPLETE / GLOBALLY CONVERGED` y a
 
 | Spec | Bloquea directamente | Peso | ¿Lista? |
 |---|---|---:|---|
-| **022 Put-away** | 031, 032, calidad de 023 | 3 | **No** — espera 021, y 021 espera solo a 023 |
+| **022 Put-away** | 031, 032, calidad de 023 | 3 | **No** — espera 021, y 021 espera una decisión |
 | **029 Cotización/pedido** | 030; da consumidor a 012 | 2 | **Sí** |
-| **021 Confirmación** | 022 → 031, 032 | 3 en cadena | **Casi** — un solo bloqueo: los estados de saldo de 023 |
+| **021 Confirmación** | 022 → 031, 032 | 3 en cadena | **No** — espera dos decisiones de producto, no código |
 | 048 Integraciones | 013 (BCV), 047 | 2 | Sí |
 | 033 Confirmación | 034, 035 | 2 | No — espera 032 |
 | ~~008~~, ~~045~~, ~~046~~, ~~012~~, ~~ARCH-MC-001~~ | cerradas | — | — |

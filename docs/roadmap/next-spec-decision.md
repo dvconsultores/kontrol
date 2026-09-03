@@ -184,3 +184,39 @@ corrigiendo un motor ajeno, que es exactamente lo que la 019 tuvo que hacer y so
 era suyo por la línea que lo causaba.
 
 Implementación **no iniciada**. Requiere su propio ciclo con autorización expresa.
+
+---
+
+## Tras el ciclo dirigido de la Spec 023 — 2026-09-03
+
+`SPEC 023 MULTI-STATE BALANCE CAPABILITY — BLOCKED BY MATERIAL DECISION` · `SPEC 021 — BLOCKED`.
+
+El checkpoint anterior dejó a la 021 con un bloqueo que parecía de ingeniería: «el motor solo escribe
+`DISPONIBLE`». La auditoría lo desmiente en las dos direcciones.
+
+**Está mejor de lo que se creía.** El estado ya es dimensión de la clave única del saldo, el
+disponible ya filtra por él, y la reserva de la Spec 030 ya opera solo sobre `DISPONIBLE`. La prueba
+que temíamos tener que construir —que cien unidades en cuarentena no se ofrezcan a un cliente— ya
+pasa hoy, porque la suma nunca cruza estados. La vendibilidad y la reservabilidad están cerradas por
+`R-D0-10-3`, `R-D0-03-5` y `POL-D0-002` §7 sin preguntar nada a nadie.
+
+**Y está peor de lo que se creía.** Lo que falta no es una columna: `R-D0-10-7` obliga al motor a
+rechazar toda transición no declarada, y el ADR **no declara ninguna**. Sin tabla no hay
+reclasificación legal; sin reclasificación, la 021 no puede liberar formalmente lo recibido. Y nadie
+ha decidido qué pasa con la mercancía ya comprometida a un cliente cuando cambia de estado: hacerlo
+sin regla produce disponible negativo por una vía que `POL-D0-002` §6 prohíbe.
+
+Ninguna de las dos se deriva del código. Son decisiones de producto, y este ciclo no las toma.
+
+**Ninguna Spec queda seleccionada.** No por falta de candidatas, sino porque la ruta crítica pasa por
+una decisión, no por una implementación. Las opciones están planteadas en
+`specs/003-inventario-logistica/spec023-multistate-material-decision.md`, con lo que cada una implica
+y hacia dónde apunta la autoridad ya escrita.
+
+Si se prefiere avanzar en paralelo mientras se decide, hay trabajo desbloqueado fuera de esta cadena:
+**018 Importaciones** —cero bloqueos, cero tablas, y libera la 026— y **048 Integraciones**, que
+desbloquea la tasa BCV de la 013 y las notificaciones de la 047. Ninguna toca el motor de inventario,
+así que ninguna prejuzga las dos decisiones pendientes.
+
+Implementación de la capacidad multiestado **no iniciada**: `/speckit.implement` no se ejecutó,
+conforme a la autorización condicional del ciclo.
