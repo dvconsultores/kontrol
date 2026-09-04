@@ -224,8 +224,8 @@ def test_un_movimiento_de_inventario_no_pertenece_al_tenant(mundo):
     _pg(mundo)
     _falla_con(mundo,
                ("INSERT INTO inventory_movements (id, company_id, warehouse_id, product_id, "
-                " movement_type_id, quantity, occurred_at, currency, status) "
-                "VALUES (:id, :c, :w, :p, :m, 1, now(), 'VED', 'POSTED')"),
+                " movement_type_id, quantity, occurred_at, currency, status, target_state) "
+                "VALUES (:id, :c, :w, :p, :m, 1, now(), 'VED', 'POSTED', 'DISPONIBLE')"),
                {"id": str(uuid.uuid4()), "c": mundo.t1, "w": mundo.warehouse_a,
                 "p": str(uuid.uuid4()), "m": str(uuid.uuid4())},
                FK_VIOLADA, "un movimiento quedó bajo el tenant")

@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.approvals import integration as approvals_integration
+from app.modules.inventory import states as state_authority
 from app.modules.inventory.models import (
     CostingProfile,
     CostLayer,
@@ -63,6 +64,7 @@ BASE_MOVEMENT_TYPES: dict[str, tuple[str, str]] = {
     "AJUSTE_POSITIVO": ("Ajuste positivo", "IN"),
     "AJUSTE_NEGATIVO": ("Ajuste negativo", "OUT"),
     "REVERSO": ("Reverso de movimiento", "INTERNAL"),
+    "RECLASIFICACION": ("Reclasificación de estado de mercancía", "INTERNAL"),
 }
 
 
@@ -245,24 +247,44 @@ def recompute_balances(db: Session, *, company_id: str, warehouse_id: str | None
     db.flush()
 
     rows: dict[tuple[str | None, ...], InventoryBalance] = {}
-    for m in movements:
+
+    def _fila(m: InventoryMovement, estado: str) -> InventoryBalance:
         key = _balance_key(
             warehouse_id=m.warehouse_id, location_id=m.location_id, product_id=m.product_id,
-            lot_id=None, serial_id=None, state="DISPONIBLE",
+            lot_id=None, serial_id=None, state=estado,
         )
-        bal = rows.setdefault(
+        return rows.setdefault(
             key,
             InventoryBalance(
                 company_id=company_id, warehouse_id=m.warehouse_id, location_id=m.location_id,
-                product_id=m.product_id, lot_id=None, serial_id=None, state="DISPONIBLE",
+                product_id=m.product_id, lot_id=None, serial_id=None, state=estado,
                 qty_on_hand=Decimal(0), qty_reserved=Decimal(0), qty_available=Decimal(0),
             ),
         )
-        bal.qty_on_hand = _dec(bal.qty_on_hand) + _dec(m.quantity)
+
+    for m in movements:
+        # Dos correcciones que la paridad con el camino incremental exige:
+        #
+        # 1. Se acumula la **cantidad base**, no la tecleada. El incremental lo
+        #    corrigió en la Spec 019 —dos cajas de doce son veinticuatro— y esta
+        #    reconstrucción se quedó atrás: recomponer un saldo devolvía dos.
+        # 2. El estado sale del ledger. Antes se fijaba `DISPONIBLE` para todo,
+        #    lo que colapsaba en una sola fila lo que el motor había escrito en
+        #    varias, contra `R-D0-10-5`.
+        base = _dec(m.base_quantity) if m.base_quantity is not None else _dec(m.quantity)
+        magnitud = abs(base)
+        if m.target_state:
+            bal = _fila(m, m.target_state)
+            bal.qty_on_hand = _dec(bal.qty_on_hand) + magnitud
+        if m.source_state:
+            bal = _fila(m, m.source_state)
+            bal.qty_on_hand = _dec(bal.qty_on_hand) - magnitud
 
     # 2. Aplicar reservas activas
     reservations = db.execute(select(Reservation).where(Reservation.company_id == company_id, Reservation.status == "ACTIVE")).scalars().all()
     for r in reservations:
+        # El reservado es un contador sobre la fila `DISPONIBLE` y no un estado
+        # de custodia (`POL-D0-002` §1). No cambia con el multiestado.
         key = _balance_key(
             warehouse_id=r.warehouse_id, location_id=None, product_id=r.product_id,
             lot_id=r.lot_id, serial_id=r.serial_id, state="DISPONIBLE",
@@ -357,6 +379,7 @@ def record_movement(
     actor: str | None = None,
     occurred_at: datetime | None = None,
     idempotency_key: str | None = None,
+    state: str | None = None,
 ) -> InventoryMovement:
     """Registra un movimiento balanceado e inmutable (FR-003-020/021/022).
 
@@ -401,6 +424,18 @@ def record_movement(
 
     # Semántica de unidad (Spec 011): se resuelve **antes** de escribir. El
     # signo se conserva: la conversión opera sobre la magnitud.
+    # El estado de la mercancía se valida **antes** de convertir o escribir:
+    # `R-D0-10-7` exige que una transición no declarada falle sin efectos.
+    estado = state_authority.assert_valid_state(state or state_authority.DEFAULT_STATE)
+    if signed > 0:
+        entrada = state_authority.assert_transition(None, estado)
+        if entrada.approval_required:
+            # Se reutiliza el motor de la Spec 045; no se crea uno de inventario.
+            approvals_integration.ensure_approved(
+                db, company_id=company_id, document_type="InventoryStateEntry",
+                document_id=document_ref or f"{warehouse_id}:{product_id}:{estado}",
+                what="la entrada de mercancía en ese estado")
+
     conversion = uom_engine.to_base(db, abs(signed), product_id, presentation_id, occurred_at)
     base_signed = conversion.base_quantity if signed > 0 else -conversion.base_quantity
     base_unit = uom_engine.base_unit_of(db, product_id)
@@ -419,6 +454,8 @@ def record_movement(
         conversion_factor_snapshot=conversion.factor,
         base_quantity=base_signed,
         uom_source=uom_engine.SOURCE_CAPTURED,
+        source_state=None if signed > 0 else estado,
+        target_state=estado if signed > 0 else None,
         unit_cost=unit_cost,
         currency=currency,
         fiscal_rate=fiscal_rate,
@@ -449,7 +486,7 @@ def record_movement(
     # presentación, sumar lo tecleado metía dos cajas de doce como dos unidades;
     # sin presentación el factor es 1 y las dos cantidades coinciden.
     balance = _get_balance(db, company_id=company_id, warehouse_id=warehouse_id, location_id=location_id,
-                           product_id=product_id, lot_id=None, serial_id=None, state="DISPONIBLE")
+                           product_id=product_id, lot_id=None, serial_id=None, state=estado)
     balance.qty_on_hand = _dec(balance.qty_on_hand) + _dec(base_signed)
     _refresh_available(balance)
     db.flush()
@@ -457,7 +494,7 @@ def record_movement(
            company_id=company_id, actor=actor,
            after={"product_id": product_id, "quantity": float(signed),
                   "base_quantity": float(base_signed), "presentation_id": presentation_id,
-                  "document_ref": document_ref})
+                  "document_ref": document_ref, "merchandise_state": estado})
     return movement
 
 
@@ -720,6 +757,111 @@ def _audit_reservation(db: Session, *, action: str, reservation: Reservation, ac
         company_id=reservation.company_id, user_id=actor, source="API",
         before={"status": before_status} if before_status else None, after=after,
         reason=reservation.release_reason)
+
+
+def reclassify(
+    db: Session,
+    *,
+    company_id: str,
+    warehouse_id: str,
+    product_id: str,
+    source_state: str,
+    target_state: str,
+    quantity: Decimal | float | str,
+    location_id: str | None = None,
+    document_ref: str | None = None,
+    reason: str | None = None,
+    actor: str | None = None,
+    occurred_at: datetime | None = None,
+) -> InventoryMovement:
+    """Mueve existencia de un estado de mercancía a otro (`ADR-D0-010` v2).
+
+    Único camino legal: valida la arista contra la matriz declarada, exige el
+    motivo y la aprobación que esa arista declare, bloquea el origen, escribe un
+    movimiento con procedencia y materializa los dos saldos. Nadie más puede
+    tocar `InventoryBalance.state`.
+
+    La cantidad se conserva: lo que sale del origen entra íntegro en el destino.
+    Una reclasificación pura no crea ni destruye existencia física.
+    """
+    transition = state_authority.assert_transition(source_state, target_state)
+    if transition.reason_required and not (reason or "").strip():
+        raise KontrolError(
+            code="TRANSITION_REASON_REQUIRED",
+            message=f"La transición {source_state} → {target_state} exige un motivo.",
+            status_code=422)
+    if transition.approval_required:
+        approvals_integration.ensure_approved(
+            db, company_id=company_id, document_type="InventoryReclassification",
+            document_id=document_ref or f"{warehouse_id}:{product_id}:{source_state}:{target_state}",
+            what="la reclasificación de mercancía")
+
+    cantidad = _dec(quantity)
+    if cantidad <= 0:
+        raise KontrolError(code="INVALID_QUANTITY",
+                           message="La cantidad a reclasificar debe ser mayor que cero.",
+                           status_code=422)
+
+    # Orden determinista de bloqueo: primero el origen y después el destino,
+    # ordenados por estado. Coincide con el criterio de la Spec 030 —bloquear la
+    # fila de saldo antes de leer— y evita que dos reclasificaciones cruzadas se
+    # abracen.
+    primero, segundo = sorted((source_state, target_state))
+    saldos = {
+        estado: lock_balance(db, company_id=company_id, warehouse_id=warehouse_id,
+                             product_id=product_id, state=estado)
+        for estado in (primero, segundo)
+    }
+    origen, destino = saldos[source_state], saldos[target_state]
+
+    disponible_en_origen = _dec(origen.qty_on_hand)
+    if cantidad > disponible_en_origen:
+        raise ConflictError(
+            code="INSUFFICIENT_STATE_QUANTITY",
+            message=f"No hay {cantidad} en {source_state}: solo {disponible_en_origen}.",
+            details={"source_state": source_state, "target_state": target_state,
+                     "requested": str(cantidad), "available": str(disponible_en_origen)})
+
+    # `R-D0-10-9`: la reclasificación no puede dejar reservado por encima de
+    # físico. Ninguna arista activa sale de `DISPONIBLE`, así que hoy esto no se
+    # dispara; se comprueba igual, porque la invariante es del motor y no de la
+    # tabla que hoy tenga.
+    if _dec(origen.qty_reserved) > disponible_en_origen - cantidad:
+        raise ConflictError(
+            code="RESERVED_QUANTITY_CONFLICT",
+            message=("La reclasificación dejaría comprometido más de lo que queda: "
+                     f"{origen.qty_reserved} reservado sobre {disponible_en_origen - cantidad}."),
+            details={"source_state": source_state, "target_state": target_state,
+                     "requested": str(cantidad), "reserved": str(origen.qty_reserved),
+                     "unreserved": str(disponible_en_origen - _dec(origen.qty_reserved))})
+
+    tipo = _get_movement_type_by_code(db, company_id, "RECLASIFICACION")
+    movement = InventoryMovement(
+        company_id=company_id, warehouse_id=warehouse_id, location_id=location_id,
+        product_id=product_id, movement_type_id=str(tipo.id), quantity=cantidad,
+        base_quantity=cantidad, currency="VED",
+        document_ref=document_ref, occurred_at=occurred_at or datetime.now(UTC),
+        status="POSTED", created_by=actor,
+        source_state=source_state, target_state=target_state,
+        uom_source=uom_engine.SOURCE_CAPTURED,
+    )
+    db.add(movement)
+
+    origen.qty_on_hand = disponible_en_origen - cantidad
+    destino.qty_on_hand = _dec(destino.qty_on_hand) + cantidad
+    _refresh_available(origen)
+    _refresh_available(destino)
+    db.flush()
+
+    _audit(db, action="INVENTORY_RECLASSIFICATION", entity_type="InventoryMovement",
+           entity_id=str(movement.id), company_id=company_id, actor=actor,
+           before={"state": source_state, "qty": str(disponible_en_origen)},
+           after={"state": target_state, "qty": str(cantidad), "event": transition.event,
+                  "owner_spec": transition.owner_spec, "product_id": product_id,
+                  "warehouse_id": warehouse_id, "location_id": location_id,
+                  "document_ref": document_ref},
+           reason=reason)
+    return movement
 
 
 def lock_balance(db: Session, *, company_id: str, warehouse_id: str, product_id: str,
@@ -1016,10 +1158,15 @@ def confirm_transfer_receipt(db: Session, *, transfer: Transfer, receipt_ref: st
         if line.difference and line.difference > 0:
             line.destination_state = "CUARENTENA"
         if qty > 0:
+            # `FR-003-062`: la diferencia define el destino, y hasta la Spec 023
+            # el motor **ignoraba** este campo y materializaba `DISPONIBLE`. La
+            # decisión existía en el consumidor y la autoridad de inventario no
+            # la aplicaba: mercancía con faltante quedaba a la venta.
             record_movement(
                 db, company_id=transfer.company_id, warehouse_id=transfer.destination_warehouse_id,
                 product_id=line.product_id, movement_type_id=str(in_type.id), quantity=qty,
                 document_ref=f"TRANSFER:{transfer.id}", actor=actor,
+                state=line.destination_state or state_authority.DEFAULT_STATE,
             )
         if line.difference and line.difference > 0:
             any_partial = True

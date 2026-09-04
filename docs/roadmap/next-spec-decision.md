@@ -248,3 +248,21 @@ la matriz, estado en el ledger, reconstrucción sin colapso, los diez call sites
 La 021 **no** queda lista y no debe marcarse como tal: cerrar una decisión no implementa una
 capacidad. Su estado pasa de `BLOCKED_BY_BUSINESS_DECISION` a `BLOCKED_BY_DEPENDENCY`, que es un
 bloqueo de código y ya no de negocio.
+
+---
+
+## Tras la capacidad multiestado de la Spec 023 — 2026-09-04
+
+`SPEC023 MULTI-STATE CAPABILITY — COMPLETE / CONVERGED`. La cadena de entrada queda **sin un solo
+bloqueo**: 019 y 020 cerradas y selladas, `D0-10` decidido, y el motor capaz de escribir, validar y
+reconstruir estados de mercancía.
+
+`NEXT SPEC = 021 — CONFIRMACIÓN DE INVENTARIO`
+
+Es la única en `READY_FOR_IMPLEMENTATION` y tiene todo lo que pedía: recepción física que describe lo
+que llegó (019), resultado estructurado de incidencias (020), y ahora la autoridad de inventario con
+estados escribibles (023). Sus cuatro transiciones están declaradas con evidencia y probadas contra
+el motor.
+
+Detrás, la 022 —que cierra la duodécima y última etapa del proceso de recepción— y luego 031 y 032.
+Implementación de la 021 **no iniciada**: requiere su propio ciclo con autorización expresa.

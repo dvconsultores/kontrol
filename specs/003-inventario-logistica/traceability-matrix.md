@@ -123,3 +123,39 @@ Y se añade lo que el próximo ciclo de implementación hereda ya decidido:
 | `InventoryMovement` con estado de origen y destino | R-D0-10-5 | `ADR-D0-010` v2 §Consecuencias |
 | `recompute_balances` sin asumir `DISPONIBLE` | R-D0-10-5 | ídem |
 | `confirm_transfer_receipt` respeta `destination_state` | `FR-003-062` · transición #9 | ídem |
+
+---
+
+# TRAZABILIDAD — CAPACIDAD MULTIESTADO IMPLEMENTADA (2026-09-04)
+
+| Requisito | Regla D0-10 | Transición | Código / migración | Prueba | Estado |
+|---|---|---|---|---|---|
+| IMP-023-MS-001 · el estado es autoridad de inventario | R-D0-10-1 | — | `states.py` · clave del saldo | `test_el_catalogo_tiene_los_quince_estados_del_adr` | ✔ |
+| IMP-023-MS-002 · catálogo = `ADR-D0-010` v2 | R-D0-10-2 | — | `MERCHANDISE_STATES` | ídem | ✔ |
+| IMP-023-MS-003 · lote/serial separado | — | — | `LOT_SERIAL_TRANSITIONS` intacto | `test_los_vocabularios_no_se_mezclan` | ✔ |
+| IMP-023-MS-004 · lo no declarado se rechaza | **R-D0-10-7** | todas | `assert_transition` | `test_una_transicion_no_declarada_se_rechaza_por_nombre` | ✔ |
+| IMP-023-MS-005 · la activa se acepta con su contrato | R-D0-10-7 | 10 | `ACTIVE_TRANSITIONS` | `test_cada_arista_declara_su_evidencia` | ✔ |
+| IMP-023-MS-006/007/008 · dueño, permiso y aprobación | v2 §Gobierno | 10 | `Transition` · `ensure_approved` | guardia estructural + `test_una_transicion_que_exige_motivo…` | ✔ |
+| IMP-023-MS-009 · procedencia en el ledger | **R-D0-10-5** | todas | `source_state` · `target_state` · `0046` | `test_el_movimiento_guarda_de_donde_sale_y_a_donde_entra` | ✔ |
+| IMP-023-MS-010 · el saldo materializa el estado | R-D0-10-5 | todas | `record_movement(state=…)` | `test_el_motor_escribe_el_estado_que_le_piden` | ✔ |
+| IMP-023-MS-011/012 · reconstrucción fiel y paridad | **R-D0-10-5** | todas | `recompute_balances` | `test_reconstruir_da_exactamente_lo_mismo_que_el_camino_incremental` | ✔ |
+| IMP-023-MS-013 · conservación física | R-D0-10-5 | reclasificación | `reclassify` | `test_la_reclasificacion_conserva_el_fisico` | ✔ |
+| IMP-023-MS-014 · sin mutación directa del estado | — | — | — | `test_nadie_asigna_el_estado_del_saldo_a_mano` | ✔ |
+| IMP-023-MS-015 · la transferencia aplica `CUARENTENA` | `FR-003-062` | #9 | `confirm_transfer_receipt` | `test_la_recepcion_de_transferencia_usa_el_destino_que_decide` | ✔ |
+| IMP-023-MS-016 · disponible excluye lo no vendible | R-D0-10-3 | — | `get_available` (sin cambios) | `test_lo_no_vendible_no_se_ofrece_ni_se_reserva` | ✔ |
+| IMP-023-MS-017 · la 030 no reserva lo no reservable | R-D0-03-5 | — | `lock_balance` por defecto | ídem | ✔ |
+| IMP-023-MS-018/019 · un solo motor y un solo disponible | Gate B03-B05 | — | — | `test_no_hay_segundo_motor_de_saldos_ni_de_disponible` | ✔ |
+| IMP-023-MS-020..023 · empresa, tenant y usuario AB | ARCH-MC-001 | — | `Scope.COMPANY` | `test_una_empresa_no_reclasifica_el_saldo_de_otra` | ✔ |
+| IMP-023-MS-024..027 · almacén, ubicación nula, lote y serial | Spec 008 · 024 | — | clave del saldo | regresión de 008 y 011 | ✔ |
+| IMP-023-MS-028 · estado inválido no es 500 | — | — | `assert_valid_state` → 422 | `test_un_estado_inventado_no_pasa_de_la_puerta` | ✔ |
+| IMP-023-MS-029 · transición inválida determinista | R-D0-10-7 | — | `MERCHANDISE_TRANSITION_DENIED` | `test_una_entrada_en_estado_no_declarado_no_deja_rastro` | ✔ |
+| IMP-023-MS-030..032 · atómica, sin crear ni destruir | R-D0-10-5 | reclasificación | `reclassify` | conservación + `no_deja_rastro` | ✔ |
+| IMP-023-MS-033/034 · concurrencia y orden de bloqueo | POL-D0-002 §5 | reclasificación | orden determinista por estado | `test_dos_reclasificaciones_simultaneas…` | ✔ |
+| IMP-023-MS-035 · la caja ×12 de la 019 | Spec 011 · 019 | — | `recompute_balances` | `test_reconstruir_no_reintroduce_la_caja_por_doce` | ✔ |
+| IMP-023-MS-036/037 · 020 y 030 siguen convergidas | — | — | — | regresión completa | ✔ |
+| IMP-023-MS-038 · paridad ORM / Alembic / PostgreSQL | P21 · N7 | — | `0046` + ORM | `test_la_aplicacion_puede_insertar_en_la_tabla_que_crea_la_migracion` | ✔ |
+| IMP-023-MS-039 · sin deriva de OpenAPI | — | — | API sin cambios | — | ✔ |
+| IMP-023-MS-040 · deuda P0 propia | — | — | — | — | **0** |
+| IMP-023-MS-041 · desbloquea la 021 tras revalidar | R-D0-10-4 | #2, #3, #7, #8 | `reclassify` | `test_las_cuatro_transiciones_que_necesita_la_021_estan_declaradas` | ✔ |
+
+**Cobertura: 100 %. Huérfanos: 0. OQ materiales: 0.**

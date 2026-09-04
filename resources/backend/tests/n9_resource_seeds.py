@@ -29,9 +29,9 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     from app.modules.purchasing.models import (
         GoodsReceipt,
         Payment,
-        ReceiptIncident,
         PurchaseOrder,
         PurchaseRequisition,
+        ReceiptIncident,
         SupplierInvoice,
     )
     from app.modules.regulatory.models import (

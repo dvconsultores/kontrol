@@ -73,7 +73,13 @@ class InventoryMovement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
     __tablename__ = "inventory_movements"
     __scope__ = Scope.COMPANY
-    __table_args__ = (Index("ix_inventory_movements_uom_id", "uom_id"),)
+    __table_args__ = (
+        Index("ix_inventory_movements_uom_id", "uom_id"),
+        # Un movimiento sin ninguno de los dos estados no dice de dónde salió ni
+        # a dónde entró: es exactamente el vacío que esta Spec viene a cerrar.
+        CheckConstraint("source_state IS NOT NULL OR target_state IS NOT NULL",
+                        name="state_provenance"),
+    )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
@@ -97,6 +103,16 @@ class InventoryMovement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
+
+    # Procedencia de estado de mercancía (Spec 023 · `ADR-D0-010` v2, R-D0-10-5).
+    # Sin esto el saldo multiestado no es reconstruible: `recompute_balances`
+    # tendría que suponer un estado, y suponer `DISPONIBLE` colapsaría en uno
+    # solo lo que el motor escribió en varios.
+    #   entrada          → `source_state` NULL, `target_state` = destino
+    #   salida           → `source_state` = origen, `target_state` NULL
+    #   reclasificación  → los dos, y la cantidad viaja de uno a otro
+    source_state: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    target_state: Mapped[str | None] = mapped_column(String(32), nullable=True)
 class InventoryLot(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Lote con vencimiento (FR-003-030/032)."""
 

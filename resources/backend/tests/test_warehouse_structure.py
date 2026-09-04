@@ -693,7 +693,9 @@ def _seed_movement(warehouse_id: str, location_id: str, company_id: str) -> None
         db.add(InventoryMovement(
             company_id=company_id, warehouse_id=warehouse_id, location_id=location_id,
             product_id=str(item.id), movement_type_id=str(mtype.id), quantity=10.0,
-            currency="VED", occurred_at=datetime.now(UTC)))
+            currency="VED", occurred_at=datetime.now(UTC),
+            # Entrada: procedencia de estado exigida desde la Spec 023.
+            target_state="DISPONIBLE"))
         db.commit()
     finally:
         db.close()

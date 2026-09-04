@@ -59,3 +59,52 @@ Registrar brechas y nuevas tareas tras la implementación. `/speckit.converge` s
 | Fase documental | ✔ |
 | Implementación | ✔ (sujeta a 001 certificada + 002 implementado + autorización expresa) |
 | Certificación (Docker/CI/legal, integración 004/005) | Pendiente — depende de 001 certificada y de Specs 004/005 |
+
+---
+
+# CONVERGENCIA — CAPACIDAD DE SALDO MULTIESTADO (2026-09-04)
+
+`SPEC023 MULTI-STATE INVENTORY BALANCE WRITE CAPABILITY — COMPLETE / CONVERGED`
+
+La Spec 023 **sigue** `PARTIALLY_IMPLEMENTED`: converge la capacidad, no la Spec. Le quedan
+requisitos que nunca fueron de este ciclo —ubicación efectiva en la práctica, FEFO, valoración—.
+
+## Compuerta
+
+| Criterio | Resultado |
+|---|---|
+| Backend | **961 · 953 pasadas · 8 saltadas declaradas · 0 fallos** |
+| — nuevas de esta capacidad | **41** (20 funcionales · 14 estructurales · 7 de migración y concurrencia) |
+| Frontend | 285/285 · `tsc` · ESLint · build. Sin cambios: la capacidad es de servicio |
+| Instalación limpia | subir a `head`, bajar la `0046`, volver a subir |
+| Paridad ORM / Alembic / PostgreSQL | verificada con el insert real del ORM contra la tabla de Alembic |
+| OpenAPI | sin deriva: no se añadió endpoint |
+| Deuda P0 propia | **0** |
+
+## Lo que cambió de verdad
+
+1. **Existe una autoridad de estados.** Antes el catálogo vivía en un ADR y el motor escribía
+   `DISPONIBLE` fijo. `R-D0-10-7` pasa de regla inaplicable a comportamiento: lo no declarado se
+   rechaza antes de tocar existencias.
+2. **El ledger conserva la procedencia.** Sin ella el saldo multiestado no era reconstruible y
+   `R-D0-10-5` era papel mojado.
+3. **Dos defectos vivos cerrados.** La recepción de transferencia ya materializa la cuarentena que
+   decidía y el motor ignoraba. Y la reconstrucción dejó de acumular la cantidad tecleada: era la
+   caja ×12 de la Spec 019, viva en `recompute_balances` y sin ninguna prueba que la mirase.
+
+## Un tercer defecto, encontrado por la propia migración
+
+La primera versión de la `0046` clasificaba `quantity > 0` como entrada y `< 0` como salida, y
+**abortaba** ante un movimiento en cero antes que rellenarlo a ciegas. Hizo bien en abortar: eso es
+lo que la reveló. El histórico tiene ceros —conversiones de tipo, correcciones— y todos tocaron la
+fila `DISPONIBLE` como destino. Se clasifican como entrada, con su prueba.
+
+## Handoff a la Spec 021
+
+Las cuatro transiciones que necesita están declaradas y son ejecutables por el motor:
+`RECIBIDO → DISPONIBLE`, `RECIBIDO → RECHAZADO`, `CUARENTENA → DISPONIBLE`, `CUARENTENA → RECHAZADO`.
+Ninguna sale de `DISPONIBLE`, así que ninguna puede toparse con una reserva viva y `R-D0-10-10` no
+la afecta.
+
+**`SPEC 021 — READY_FOR_IMPLEMENTATION`.** No se implementó nada suyo: ni confirmación, ni
+conciliación, ni liberación de lote, ni endpoint. Un guardia estructural lo comprueba por nombre.

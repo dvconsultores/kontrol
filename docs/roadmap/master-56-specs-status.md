@@ -42,9 +42,9 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 018 | Importaciones | **`NOT_STARTED`** | **0 tablas**: ninguna `import`/`customs`/`aduana` | — (dependencias satisfechas) |
 | 019 | Recepción física | **`COMPLETE / CONVERGED`** (2026-09-03) | arribo, bultos, comparación documental, inspección, observación física, unidad y cantidad base, acta; migración `0044` | **ninguno** |
 | 020 | Incidencias de recepción | **`COMPLETE / CONVERGED`** (2026-09-03) | `receipt_incidents`: cinco tipos, ciclo de cinco estados, tope de cantidad por tipo, resolución de conjunto cerrado, ajuste autorizado vía 045, evidencia vía 046; migración `0045` | **ninguno** |
-| 021 | Confirmación de inventario | **`BLOCKED_BY_DEPENDENCY`** (2026-09-03) | `quality_status` con compuerta en `accept_receipt`; la incidencia resuelta de 020 como insumo; **sus cuatro transiciones declaradas** en `ADR-D0-010` v2 | **la capacidad multiestado de 023, aún sin implementar ni converger**. Las dos decisiones de producto se cerraron el 2026-09-03 en el checkpoint `D0-10` |
+| 021 | Confirmación de inventario | **`READY_FOR_IMPLEMENTATION`** (2026-09-04) | `quality_status` con compuerta en `accept_receipt`; la incidencia resuelta de 020; sus cuatro transiciones declaradas **y ejecutables** por el motor de 023 | **ninguno** |
 | 022 | Put-away | **`NOT_STARTED`** | 0 proceso. La estructura de 008 existe y **nadie la usa** | **estado de origen inequívoco (021)**. Ya **no** por falta de ubicaciones: 008 las entrega |
-| 023 | Inventario / Kardex | `PARTIALLY_IMPLEMENTED` · capacidad multiestado **`READY TO RESUME IMPLEMENTATION`** (2026-09-03) | `inventory` 13 tablas; el estado ya es dimensión de la clave del saldo y el disponible ya lo filtra; reservas con bloqueo (030); **matriz de transiciones declarada** (`D0-10` v2) | Ninguno de decisión. Queda el delta estructural: el ledger no lleva estado, así que reconstruir colapsaría el multiestado |
+| 023 | Inventario / Kardex | `PARTIALLY_IMPLEMENTED` · capacidad multiestado **`COMPLETE / CONVERGED`** (2026-09-04) | `inventory` 13 tablas; autoridad única de estados (`states.py`), procedencia en el ledger, reclasificación canónica, reconstrucción fiel; migración `0046` | **ninguno** para la capacidad. La Spec sigue parcial por requisitos ajenos a ella (ubicación en la práctica, FEFO, valoración) |
 | 024 | Lotes / seriales / vencimiento | `PARTIALLY_IMPLEMENTED` | `inventory_lots`, `product_serials` | — |
 | 025 | Transferencias / conteos / ajustes | `PARTIALLY_IMPLEMENTED` | `transfers`, `stock_counts`, `inventory_adjustments` | — |
 | 026 | Costos / valoración | `PARTIALLY_IMPLEMENTED` | `cost_layers`, `costing_profiles` | 018 para *landed cost* |
@@ -85,10 +85,10 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 |---|---:|
 | `COMPLETE / CONVERGED` | 8 — 008, 011, 012, 019, **020**, 029, 030, 045 |
 | `RECONVERGED` | 1 — 046 |
-| `READY_FOR_IMPLEMENTATION` | **0** — la 020 pasó a implementada |
+| `READY_FOR_IMPLEMENTATION` | **1 — 021** |
 | `PARTIALLY_IMPLEMENTED` | 32 |
 | `NOT_STARTED` | 4 — 018, 022, 033, 047 |
-| `BLOCKED_BY_DEPENDENCY` | 3 — **021**, 031, 032 |
+| `BLOCKED_BY_DEPENDENCY` | 2 — 031, 032 |
 | `BLOCKED_BY_BUSINESS_DECISION` | 1 — 004 |
 | `BLOCKED_BY_LEGAL_VALIDATION` | 6 — 039, 040, 041, 042, 043, 056 |
 | `BLOCKED_BY_EXTERNAL_SERVICE` | 1 — 044 |

@@ -240,3 +240,92 @@ condición no se cumple.
 `SPEC 021 — BLOCKED`
 
 Cero líneas de código de producto modificadas. Cero migraciones. Cero cambios de contrato.
+
+---
+
+# CICLO RETOMADO — IMPLEMENTACIÓN (2026-09-04)
+
+> El mismo ciclo dirigido, reanudado tras `D0-10 — CLOSED` y `ADR-D0-010` v2. No se abrió Spec nueva
+> ni ciclo paralelo. `/speckit.implement` se ejecutó con la autorización condicional cumplida:
+> Constitution Gate PASS, OQ material 0.
+
+## 14. Lo que se construyó
+
+### 14.1 Una autoridad de estados donde no había ninguna
+
+`app/modules/inventory/states.py`. Antes, el catálogo vivía en un ADR y el motor escribía
+`DISPONIBLE` fijo; `R-D0-10-7` obligaba a rechazar lo no declarado y no había contra qué decidir.
+
+Contiene los quince estados, `SELLABLE_STATES` y `RESERVABLE_STATES` —ambos `{DISPONIBLE}` por
+`R-D0-10-3` y `R-D0-03-5`—, y las transiciones activas con evidencia, permiso, aprobación y motivo.
+`can_transition` y `assert_transition` son la única puerta: lo no declarado es `DENIED`, sin
+inferencia por parecido.
+
+**Diez entradas en la tabla, no nueve.** Las nueve del ADR v2 más la que la propia v2 conserva en su
+§Migración: la entrada a `DISPONIBLE` que todos los llamantes usan hoy y que solo la Spec 021 puede
+cambiar. Contarlas como nueve habría roto el sistema entero al primer movimiento.
+
+### 14.2 Procedencia de estado en el ledger
+
+`InventoryMovement` gana `source_state` y `target_state`, con `CHECK` que exige al menos uno.
+
+| Caso | `source_state` | `target_state` |
+|---|---|---|
+| Entrada | `NULL` | destino |
+| Salida | origen | `NULL` |
+| Reclasificación | origen | destino |
+
+Migración `0046`. El backfill **no supone**: hasta esta migración `record_movement` escribía el saldo
+con `state="DISPONIBLE"` fijo, sin parámetro ni excepción, y eso es comprobable en el código de todas
+las versiones anteriores. Las entradas tuvieron `DISPONIBLE` por destino y las salidas por origen.
+Si alguna fila quedara sin clasificar, la migración **aborta** en vez de rellenarla a ciegas.
+
+### 14.3 `record_movement` deja de fijar el estado
+
+Admite `state`. Valida contra la matriz **antes** de convertir unidades o escribir nada, y exige la
+aprobación de la Spec 045 cuando la arista la declara. Sin `state`, el default declarado sigue siendo
+`DISPONIBLE`: es compatibilidad contractual, no inercia.
+
+### 14.4 `reclassify`, el único camino legal de transición
+
+Matriz → motivo → aprobación → bloqueo de las dos filas en orden determinista → validación de
+cantidad → invariante `R-D0-10-9` → ledger → saldos → auditoría. Nadie más toca
+`InventoryBalance.state`, y un guardia estructural falla si alguien lo intenta.
+
+### 14.5 Dos defectos vivos cerrados
+
+**El de la transferencia**, que el checkpoint anterior había medido: `confirm_transfer_receipt`
+decidía `destination_state = "CUARENTENA"` ante una diferencia y el motor lo ignoraba, dejando a la
+venta mercancía con faltante. Ahora el destino que decide el consumidor es el que se materializa.
+
+**El de la reconstrucción, que nadie había visto.** `recompute_balances` acumulaba
+`m.quantity` —la cantidad **tecleada**— en lugar de la base. Es exactamente la caja ×12 que la Spec
+019 corrigió en el camino incremental y que aquí seguía viva: reconstruir un saldo de dos cajas de
+doce devolvía 2 en vez de 24. Nadie lo detectó porque ninguna prueba comparaba los dos caminos.
+Ahora la reconstrucción usa la cantidad base y lee el estado del ledger en vez de fijar `DISPONIBLE`.
+
+## 15. Lo que deliberadamente no se hizo
+
+- **No se implementó política de conflicto con reservas.** `R-D0-10-10` la reserva para la Spec que
+  active la primera arista con origen `DISPONIBLE`. Ninguna activa lo tiene, así que no es alcanzable.
+  La invariante `R-D0-10-9` sí se comprueba, porque es del motor y no de la tabla que hoy tenga.
+- **No se tocó `get_available`.** Ya filtraba por estado y ya era correcto.
+- **No se expuso `state` en la API pública.** El consumidor de esta capacidad es la Spec 021, que
+  opera a nivel de servicio, y la corrección de la transferencia es interna. Cambiar el contrato
+  público sin requisito habría ampliado el alcance y el radio de impacto sin necesidad.
+- **No se implementó nada de la 021**: ni confirmación, ni conciliación, ni liberación de lote, ni
+  endpoint alguno. Un guardia estructural lo comprueba por nombre.
+- **No se activó ninguna arista futura**, ni siquiera las que «se ven venir» como
+  `RECIBIDO → PENDIENTE_CONFIRMACION`. Su dueña las declarará con su evidencia.
+
+## 16. Pruebas
+
+| Nivel | Suite | Casos |
+|---|---|---:|
+| Funcional multiempresa | `test_spec023_multistate.py` | 20 |
+| Estructural | `test_spec023_architecture.py` | 14 |
+| Migración, integridad y concurrencia | `test_spec023_migration_0046.py` | 6 |
+
+La que sostiene la Spec es la paridad: escribir por el camino incremental y reconstruir desde el
+ledger deben dar **exactamente** los mismos saldos, estado por estado. Y la carrera: dos
+reclasificaciones simultáneas pidiendo 8 de un origen de 10 —gana una, el físico sigue siendo 10—.
