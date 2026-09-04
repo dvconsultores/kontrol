@@ -28,6 +28,20 @@ from app.core.errors import ConflictError, KontrolError
 #: salta a `DISPONIBLE`) llega con la Spec 021, no con esta decisión».
 DEFAULT_STATE = "DISPONIBLE"
 
+#: Estado con el que la recepción física materializa lo recibido (Spec 019 lo
+#: escribe, Spec 021 lo libera). Nombrarlo aquí evita que el literal se
+#: distribuya por los módulos de compras.
+RECEIVED_STATE = "RECIBIDO"
+
+#: Estado al que la confirmación libera formalmente (`R-D0-10-4`).
+RELEASED_STATE = "DISPONIBLE"
+
+#: Estado de lo que la confirmación declara no apto.
+REJECTED_STATE = "RECHAZADO"
+
+#: Estado de retención por calidad, del que la confirmación también puede salir.
+QUARANTINE_STATE = "CUARENTENA"
+
 #: Los quince del `ADR-D0-010` §Conjunto de estados de mercancía. El orden es el
 #: del ADR: de lo que aún no llegó a lo que ya no está.
 MERCHANDISE_STATES: tuple[str, ...] = (
@@ -66,6 +80,8 @@ class Transition:
     target: str
     event: str
     owner_spec: str
+    #: `resource:action` del catálogo real de `setup/api.py`. No es decorativo:
+    #: es el permiso que el endpoint dueño del evento debe exigir.
     permission: str
     approval_required: bool
     reason_required: bool
@@ -78,25 +94,25 @@ class Transition:
 #: con esta tabla, y por eso no se implementa política de conflicto alguna
 #: (`R-D0-10-10` la reserva para la Spec que active la primera arista de salida).
 ACTIVE_TRANSITIONS: tuple[Transition, ...] = (
-    Transition(None, "DISPONIBLE", "STOCK_ENTRY", "023", "inventario:write", False, False,
+    Transition(None, "DISPONIBLE", "STOCK_ENTRY", "023", "inventario:create", False, False,
                "ADR-D0-010 v2 §Migración: el salto a DISPONIBLE se conserva hasta que 021 lo cambie"),
-    Transition(None, "RECIBIDO", "RECEIPT_ACCEPTANCE", "019", "compras:receive", False, False,
+    Transition(None, "RECIBIDO", "RECEIPT_ACCEPTANCE", "019", "compras:quality", False, False,
                "R-D0-10-4 · ADR §Migración · flujo objetivo del checkpoint operativo"),
-    Transition(None, "CUARENTENA", "TRANSFER_DISCREPANCY", "025", "inventario:transfer", True, True,
+    Transition(None, "CUARENTENA", "TRANSFER_DISCREPANCY", "025", "inventario:transition", True, True,
                "FR-003-062: destino definido (cuarentena/ajuste) y aprobación"),
-    Transition("RECIBIDO", "DISPONIBLE", "FORMAL_RELEASE", "021", "inventario:release", False, False,
+    Transition("RECIBIDO", "DISPONIBLE", "FORMAL_RELEASE", "021", "inventario:confirm", False, False,
                "R-D0-10-4 · flujo «liberación formal de los 90 a DISPONIBLE»"),
-    Transition("RECIBIDO", "RECHAZADO", "CONFIRMATION_REJECT", "021", "inventario:release", False, True,
+    Transition("RECIBIDO", "RECHAZADO", "CONFIRMATION_REJECT", "021", "inventario:confirm", False, True,
                "flujo «Confirmación: aceptado 90, rechazado 10» · ADR: «no apto; no se incorpora»"),
-    Transition("RECIBIDO", "CUARENTENA", "INCIDENT_QUARANTINE", "020", "compras:incident", False, True,
+    Transition("RECIBIDO", "CUARENTENA", "INCIDENT_QUARANTINE", "020", "compras:quality", False, True,
                "flujo «resolución [aceptar / reclamar / devolver / cuarentena]» · INCIDENT_RESOLUTIONS"),
-    Transition("RECIBIDO", "BLOQUEADO", "INCIDENT_OPEN", "020", "compras:incident", False, True,
+    Transition("RECIBIDO", "BLOQUEADO", "INCIDENT_OPEN", "020", "compras:quality", False, True,
                "ADR §Problema «bloqueado por incidencia» · R-D0-10-6"),
-    Transition("BLOQUEADO", "RECIBIDO", "INCIDENT_CLOSE", "020", "compras:incident", False, True,
+    Transition("BLOQUEADO", "RECIBIDO", "INCIDENT_CLOSE", "020", "compras:quality", False, True,
                "R-D0-10-6: «solo se libera cerrando la incidencia que lo originó»"),
-    Transition("CUARENTENA", "DISPONIBLE", "FORMAL_RELEASE", "021", "inventario:release", False, True,
+    Transition("CUARENTENA", "DISPONIBLE", "FORMAL_RELEASE", "021", "inventario:confirm", False, True,
                "R-D0-10-4 — la cuarentena está en la cadena de recepción"),
-    Transition("CUARENTENA", "RECHAZADO", "QUALITY_REJECT", "021", "inventario:release", False, True,
+    Transition("CUARENTENA", "RECHAZADO", "QUALITY_REJECT", "021", "inventario:confirm", False, True,
                "ADR: significados de ambos estados · flujo de confirmación"),
 )
 

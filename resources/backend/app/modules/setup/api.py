@@ -69,7 +69,9 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
         "compras": ["view", "create", "approve", "quality", "apply"],
         # `submit` lo añade la Spec 030: emitir un pedido no es aprobarlo.
         "ventas": ["view", "create", "submit", "approve", "quality", "apply"],
-        "inventario": ["view", "create", "approve", "transition", "reserve"],
+        # `confirm` lo añade la Spec 021: confirmar el inventario recibido no es
+        # aprobarlo ni moverlo; es la liberación formal que `R-D0-10-4` exige.
+        "inventario": ["view", "create", "approve", "transition", "reserve", "confirm"],
         "tesoreria": ["view", "create", "approve"],
         "fiscal": ["view", "create", "approve"],
         "regulatorio": ["view", "create", "approve"],

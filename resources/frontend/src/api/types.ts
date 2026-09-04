@@ -477,6 +477,56 @@ export interface GoodsReceiptDetail extends GoodsReceiptSummary {
   lines: GoodsReceiptLine[];
 }
 
+/** Spec 021: dimensión distinta del `status`. Aceptada no es confirmada. */
+export interface GoodsReceiptConfirmationFields {
+  confirmation_status?: string;
+  confirmed_at?: string | null;
+  confirmed_by?: string | null;
+}
+
+/** Spec 021 — la conciliación por línea y qué falta para poder confirmar. */
+export interface ReconciliationItem {
+  receipt_line_id: string;
+  product_id: string;
+  base_quantity_received: string;
+  base_quantity_ordered: string | null;
+  counted_base_quantity: string | null;
+  counted: boolean;
+  matches_order: boolean | null;
+  matches_physical: boolean | null;
+  difference_kinds: string[];
+  already_confirmed_base: string;
+  pending_base: string;
+}
+
+export interface ReceiptReconciliation {
+  receipt_id: string;
+  confirmation_status: string;
+  packing_list_match: boolean | null;
+  supplier_invoice_match: boolean | null;
+  order_match: boolean | null;
+  documentation_match: boolean | null;
+  quality_status: string;
+  incidents: { total: number; unresolved: number; ready_for_confirmation: boolean };
+  lines_pending_count: string[];
+  ready_for_confirmation: boolean;
+  items: ReconciliationItem[];
+}
+
+export interface ReceiptConfirmationRow {
+  id: string;
+  receipt_id: string;
+  receipt_line_id: string;
+  source_state: string;
+  target_state: string;
+  base_quantity: string;
+  movement_id: string | null;
+  incident_id: string | null;
+  reason: string | null;
+  created_by: string | null;
+  created_at: string | null;
+}
+
 export interface RequisitionSummary {
   id: string;
   code: string;

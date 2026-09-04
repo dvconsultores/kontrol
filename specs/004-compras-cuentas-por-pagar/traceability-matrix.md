@@ -192,3 +192,43 @@ encontró lo que las suites aisladas no podían ver.
 | Nombre accesible de los selectores | El nombre que anuncia el lector de pantalla es la etiqueta visible (WCAG 2.5.3) | FE y otras cuatro páginas del bloque | E2E incidencias · axe | ✔ |
 
 **Cobertura: 100 %. Huérfanos: 0.**
+
+---
+
+# TRAZABILIDAD — SPEC 021 · CONFIRMACIÓN DE INVENTARIO (2026-09-04)
+
+| Requisito | Entrada / salida | Transición D0-10 | Código / esquema | Prueba | Estado |
+|---|---|---|---|---|---|
+| IMP-021-001 · empieza tras el ciclo de 019 | `GoodsReceipt.status` | — | `confirmar_inventario` exige `ACCEPTED` | `test_una_recepcion_sin_aceptar_no_se_confirma` | ✔ |
+| IMP-021-002/003/004 · recepción, línea e incidencia de la misma empresa | `CompanyContext` | — | `_owned`, `_requiere_linea` | `test_el_conteo_de_una_linea_ajena_no_se_acepta` · multiempresa | ✔ |
+| IMP-021-005 · el camino feliz no crea incidencia | — | — | ninguna llamada a 020 salvo lectura | `test_el_camino_feliz_no_necesita_ninguna_incidencia` | ✔ |
+| IMP-021-006 · solo consume incidencias resueltas | `resultado_de_incidencias` | — | compuerta `ready_for_confirmation` | `test_una_incidencia_abierta_impide_confirmar` | ✔ |
+| IMP-021-007 · no resuelve incidencias | — | — | guardia estructural | `test_la_confirmacion_consume_incidencias_pero_no_las_resuelve` | ✔ |
+| IMP-021-008 · no duplica `quality_status` | 019 | — | se transporta, no se recrea | guardia | ✔ |
+| IMP-021-009/010/011 · todo en cantidad base, sin recalcular el factor | Spec 011 · 019 | — | `_base_recibida`, `counted_base_quantity` | `test_la_caja_por_doce_se_confirma_en_base` · guardias P23 | ✔ |
+| IMP-021-012 · no se confirma más de lo recibido | — | — | invariante acumulada por línea | `test_no_se_puede_confirmar_mas_de_lo_recibido` | ✔ |
+| IMP-021-013 · resultado mixto autorizado | DOCX etapa 9 | ambas | varias filas por línea | `test_el_resultado_mixto_reparte_y_conserva_el_fisico` | ✔ |
+| IMP-021-014/015 · las cuatro transiciones y ninguna más | `ADR-D0-010` v2 | 4 | `CONFIRMATION_TARGET_STATES` | `test_un_destino_fuera_de_las_cuatro_transiciones_se_rechaza` | ✔ |
+| IMP-021-016/017/018 · toda transición por la Spec 023 | — | 4 | `inv_service.reclassify` | `test_la_confirmacion_no_escribe_saldos_ni_movimientos` | ✔ |
+| IMP-021-019 · lo no declarado se rechaza | `R-D0-10-7` | — | doble filtro: 021 y 023 | ídem | ✔ |
+| IMP-021-020 · `RECIBIDO → DISPONIBLE` | ✔ | #2 | `confirmar_inventario` | `test_recibido_a_disponible_libera_la_mercancia` | ✔ |
+| IMP-021-021 · `RECIBIDO → RECHAZADO` | ✔ | #3 | ídem | `test_recibido_a_rechazado_no_deja_nada_disponible` | ✔ |
+| IMP-021-022/023 · desde `CUARENTENA` | ✔ | #7, #8 | ídem, con `source_state` | `test_la_confirmacion_no_duplica_la_matriz_de_transiciones` | ✔ |
+| IMP-021-024 · sin `DISPONIBLE → no vendible` | `R-D0-10-10` | — | ninguna arista activa lo permite | `test_la_confirmacion_no_puede_pedir_una_arista_desde_disponible` | ✔ |
+| IMP-021-025/026 · no toca reservas ni pedidos | `D0-03` · 030 | — | guardia estructural | `test_la_confirmacion_no_toca_pedidos_ni_reservas` | ✔ |
+| IMP-021-027/028/030 · sin put-away, sin ubicación, `location_id` nula | Spec 022 | — | `location_id=None` | `test_confirmar_no_ubica_nada` · e2e | ✔ |
+| IMP-021-029/031/032/033 · almacén, lote y serial preservados | 008 · 024 | — | clave del saldo intacta | regresión de 019 y 023 | ✔ |
+| IMP-021-034 · conservación física | `R-D0-10-5` | — | la 023 la garantiza | `test_el_resultado_mixto…` (suma 100) | ✔ |
+| IMP-021-035/036/037 · atómica e idempotente | — | — | una transacción; `ALREADY_CONFIRMED` | `test_confirmar_dos_veces_no_duplica_nada` | ✔ |
+| IMP-021-039 · no se confirma lo ya terminal | — | — | compuerta de `confirmation_status` | ídem | ✔ |
+| IMP-021-040/041 · aprobación y evidencia por 045 y 046 | — | — | ninguna transición de la 021 exige aprobación hoy | guardias de la 023 | ✔ |
+| IMP-021-042..045 · empresa, usuario AB, tenant, cadena mezclada | ARCH-MC-001 | — | `CompanyContext` | cuatro pruebas multiempresa | ✔ |
+| IMP-021-046..049 · auditoría completa | — | 4 | `RECEIPT_LINE_COUNTED`, `RECEIPT_INVENTORY_CONFIRMED` | inspección del servicio | ✔ |
+| IMP-021-050 · OpenAPI refleja el contrato | — | — | 452 rutas; fixture regenerada | `audit-completeness.test.ts` | ✔ |
+| IMP-021-051/052/053 · frontend con contexto y sin put-away | — | — | `ConfirmacionPage` | e2e ×3 navegadores | ✔ |
+| IMP-021-054 · la paridad de la 023 no se rompe | `R-D0-10-5` | — | sin tocar `recompute_balances` | suite de la 023 | ✔ |
+| IMP-021-055..058 · sin regresión de 019, 020, 023 y 030 | — | — | — | regresión completa | ✔ |
+| IMP-021-059 · deuda P0 propia | — | — | — | — | **0** |
+| IMP-021-061 · la 022 se revalida | — | — | salida: producto, almacén, base, estado, ubicación nula | ver convergencia | ✔ |
+
+**Cobertura: 100 %. Huérfanos: 0. OQ materiales: 0.**

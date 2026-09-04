@@ -340,7 +340,8 @@ def test_aceptar_emite_el_acta_y_no_invade_las_specs_vecinas(mundo):
     # Frontera con 021: el estado del saldo sigue siendo el que el motor sabe escribir
     estados = _sql(mundo, "SELECT DISTINCT state FROM inventory_balances WHERE company_id = :c",
                    c=mundo.company_a)
-    assert {e[0] for e in estados} <= {"DISPONIBLE"}, "019 inventó estados de mercancía, que son de 021/023"
+    assert {e[0] for e in estados} <= {"RECIBIDO"}, \
+        "la aceptación debe dejar la mercancía en RECIBIDO: liberar es de la Spec 021 (R-D0-10-4)"
 
 
 def test_aceptar_dos_veces_no_duplica_el_movimiento(mundo):

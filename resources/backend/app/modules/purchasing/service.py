@@ -23,10 +23,13 @@ from sqlalchemy.orm import Session
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.approvals import integration as approvals_integration
 from app.modules.inventory import service as inv_service
+from app.modules.inventory import states as inv_states
 from app.modules.master_data import uom as uom_engine
 from app.modules.organization.models import Warehouse
 from app.modules.organization.service import warehouse_belongs_to
 from app.modules.purchasing.models import (
+    CONFIRMATION_TARGET_STATES,
+    COUNT_DIFFERENCE_KINDS,
     INCIDENT_RESOLUTION_APPROVED,
     INCIDENT_RESOLUTIONS,
     INCIDENT_TYPE_DOCUMENTAL,
@@ -45,6 +48,7 @@ from app.modules.purchasing.models import (
     PurchaseReturn,
     PurchaseReturnLine,
     QuoteLine,
+    ReceiptConfirmation,
     ReceiptIncident,
     RequisitionLine,
     SupplierCreditNote,
@@ -648,6 +652,11 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
                     unit_cost=order_line.unit_price if order_line else None, currency="VED",
                     document_ref=f"RECEIPT:{receipt.id}", actor=actor,
                     presentation_id=line.presentation_id, location_id=None,
+                    # `R-D0-10-4`: recibir no es liberar. La mercancía entra en
+                    # `RECIBIDO` —«físicamente recibido, aún no conciliado»— y
+                    # solo la confirmación de la Spec 021 la pasa a `DISPONIBLE`.
+                    # El ADR reservó este cambio de comportamiento para aquí.
+                    state=inv_states.RECEIVED_STATE,
                 )
             # Acumular recibido en la línea de orden, en la misma unidad en que
             # se guarda lo pedido: comparar cajas contra unidades daría por
@@ -982,6 +991,238 @@ def _sync_order_status(db: Session, order_id: str) -> None:
 # --------------------------------------------------------------------------- #
 # Factura del proveedor (duplicidad + estados)
 # --------------------------------------------------------------------------- #
+
+# ---------------------------------------------------------------------------
+# Spec 021 — confirmación y conciliación del inventario recibido
+# ---------------------------------------------------------------------------
+#
+# El proceso documentado (DOCX §3) pide, en este orden: contar por SKU, comparar
+# contra la orden, contra el packing list y contra la recepción física,
+# identificar las diferencias, diferenciar el inventario por estado, y —una vez
+# conciliado— confirmar y liberar el lote.
+#
+# Lo que esta Spec **no** hace: no resuelve incidencias (es de la 020), no mueve
+# saldos por su cuenta (es de la 023) y no ubica nada (es de la 022).
+
+CONFIRMATION_PENDING = "PENDIENTE"
+CONFIRMATION_DONE = "CONFIRMADA"
+
+
+def _requiere_linea(db: Session, receipt: GoodsReceipt, line_id: str) -> GoodsReceiptLine:
+    """La línea debe ser de esta recepción. Un id ajeno no abre nada."""
+    line = db.execute(select(GoodsReceiptLine).where(
+        GoodsReceiptLine.id == line_id,
+        GoodsReceiptLine.receipt_id == str(receipt.id))).scalars().first()
+    if line is None:
+        raise NotFoundError(message="La línea de recepción no existe en esta recepción")
+    return line
+
+
+def _base_recibida(line: GoodsReceiptLine) -> Decimal:
+    """Lo recibido en unidad base. Con presentación, lo tecleado no sirve."""
+    if line.base_quantity_received is not None:
+        return _dec(line.base_quantity_received)
+    return _dec(line.quantity_received)
+
+
+def registrar_conteo(db: Session, *, receipt: GoodsReceipt, line_id: str,
+                     counted_base_quantity: Decimal | float | str,
+                     difference_kinds: list[str] | None = None,
+                     actor: str | None = None) -> GoodsReceiptLine:
+    """Etapas 1 y 6: conteo detallado por SKU y diferencias identificadas.
+
+    El conteo es en **unidad base**. Contar cajas y compararlas contra unidades
+    no concilia nada: era el defecto que la Spec 019 cerró en el asiento y que
+    aquí volvería por otra puerta.
+    """
+    if receipt.confirmation_status == CONFIRMATION_DONE:
+        raise ConflictError(code="ALREADY_CONFIRMED",
+                            message="La recepción ya está confirmada; el conteo no se rehace.")
+    line = _requiere_linea(db, receipt, line_id)
+    contado = _dec(counted_base_quantity)
+    if contado < 0:
+        raise KontrolError(code="INVALID_QUANTITY", status_code=422,
+                           message="La cantidad contada no puede ser negativa.")
+
+    tipos = [k.strip().upper() for k in (difference_kinds or []) if k and k.strip()]
+    invalidos = [k for k in tipos if k not in COUNT_DIFFERENCE_KINDS]
+    if invalidos:
+        raise KontrolError(
+            code="COUNT_DIFFERENCE_KIND_UNKNOWN", status_code=422,
+            message=f"Diferencia no reconocida: {', '.join(invalidos)}",
+            details={"allowed": list(COUNT_DIFFERENCE_KINDS)})
+
+    line.counted_base_quantity = contado
+    line.counted_at = datetime.now(UTC)
+    line.counted_by = actor
+    line.count_difference_kinds = ",".join(dict.fromkeys(tipos)) or None
+    line.updated_at = datetime.now(UTC)
+    db.flush()
+    _audit(db, action="RECEIPT_LINE_COUNTED", entity_type="GoodsReceiptLine", entity_id=str(line.id),
+           company_id=receipt.company_id, actor=actor,
+           after={"counted_base_quantity": str(contado), "difference_kinds": line.count_difference_kinds,
+                  "base_received": str(_base_recibida(line))})
+    return line
+
+
+def resultado_de_conciliacion(db: Session, *, company_id: str, receipt: GoodsReceipt) -> dict[str, Any]:
+    """Etapas 2 a 4 y 9: la comparación a cuatro bandas, por línea.
+
+    Compara lo contado contra lo pedido, contra lo recibido físicamente y contra
+    lo que la documentación decía. Las tres primeras son cantidades; la cuarta
+    —el packing list— es el veredicto que la Spec 019 capturó en el muelle, y no
+    se recalcula aquí: se lee.
+    """
+    lines = db.execute(select(GoodsReceiptLine).where(
+        GoodsReceiptLine.receipt_id == str(receipt.id))).scalars().all()
+    incidencias = resultado_de_incidencias(db, company_id=company_id, receipt_id=str(receipt.id))
+    confirmadas = _confirmado_por_linea(db, receipt)
+
+    items: list[dict[str, Any]] = []
+    for line in lines:
+        order_line = db.get(PurchaseOrderLine, line.order_line_id) if line.order_line_id else None
+        pedido = _dec(order_line.quantity_ordered) if order_line else None
+        recibido = _base_recibida(line)
+        contado = _dec(line.counted_base_quantity) if line.counted_base_quantity is not None else None
+        ya = confirmadas.get(str(line.id), Decimal(0))
+        items.append({
+            "receipt_line_id": str(line.id),
+            "product_id": line.product_id,
+            "base_quantity_received": str(recibido),
+            "base_quantity_ordered": str(pedido) if pedido is not None else None,
+            "counted_base_quantity": str(contado) if contado is not None else None,
+            "counted": contado is not None,
+            "matches_order": None if (contado is None or pedido is None) else contado == pedido,
+            "matches_physical": None if contado is None else contado == recibido,
+            "difference_kinds": (line.count_difference_kinds or "").split(",")
+            if line.count_difference_kinds else [],
+            "already_confirmed_base": str(ya),
+            "pending_base": str(recibido - ya),
+        })
+
+    sin_contar = [x for x in items if not x["counted"]]
+    return {
+        "receipt_id": str(receipt.id),
+        "confirmation_status": receipt.confirmation_status,
+        # El veredicto documental es de la Spec 019 y aquí solo se transporta.
+        "packing_list_match": receipt.packing_list_match,
+        "supplier_invoice_match": receipt.supplier_invoice_match,
+        "order_match": receipt.order_match,
+        "documentation_match": receipt.documentation_match,
+        "quality_status": receipt.quality_status,
+        "incidents": {"total": incidencias["total"], "unresolved": incidencias["unresolved"],
+                      "ready_for_confirmation": incidencias["ready_for_confirmation"]},
+        "lines_pending_count": [x["receipt_line_id"] for x in sin_contar],
+        "ready_for_confirmation": bool(items) and not sin_contar
+        and incidencias["ready_for_confirmation"]
+        and receipt.confirmation_status != CONFIRMATION_DONE,
+        "items": items,
+    }
+
+
+def _confirmado_por_linea(db: Session, receipt: GoodsReceipt) -> dict[str, Decimal]:
+    filas = db.execute(select(ReceiptConfirmation).where(
+        ReceiptConfirmation.receipt_id == str(receipt.id))).scalars().all()
+    acumulado: dict[str, Decimal] = {}
+    for f in filas:
+        acumulado[f.receipt_line_id] = acumulado.get(f.receipt_line_id, Decimal(0)) + _dec(f.base_quantity)
+    return acumulado
+
+
+def confirmar_inventario(db: Session, *, receipt: GoodsReceipt, decisiones: list[dict[str, Any]],
+                         actor: str | None = None) -> dict[str, Any]:
+    """Etapas 13 y 14: «una vez conciliado, confirmar inventario» y liberar el lote.
+
+    Cada decisión dice qué cantidad base de qué línea pasa de qué estado a cuál.
+    Una línea puede producir varias —noventa liberadas y diez rechazadas—: la
+    etapa 9 lo exige y un solo campo por línea no podría representarlo.
+
+    La transición **no se ejecuta aquí**: se solicita al motor canónico de la
+    Spec 023, que la valida contra la matriz de `ADR-D0-010` v2. Esta Spec decide
+    qué debe ocurrir; aquella decide si puede ocurrir y lo materializa.
+    """
+    if receipt.status not in ("ACCEPTED", "PARTIALLY_ACCEPTED"):
+        raise ConflictError(
+            code="RECEIPT_NOT_ACCEPTED",
+            message="Solo se confirma el inventario de una recepción aceptada.")
+    if receipt.confirmation_status == CONFIRMATION_DONE:
+        raise ConflictError(code="ALREADY_CONFIRMED",
+                            message="Esta recepción ya fue confirmada.")
+    if not decisiones:
+        raise KontrolError(code="NO_DECISIONS", status_code=422,
+                           message="Confirmar exige al menos una decisión sobre una línea.")
+
+    incidencias = resultado_de_incidencias(db, company_id=receipt.company_id, receipt_id=str(receipt.id))
+    if not incidencias["ready_for_confirmation"]:
+        raise ConflictError(
+            code="INCIDENTS_UNRESOLVED",
+            message=("No se confirma con incidencias abiertas: "
+                     f"{incidencias['unresolved']} sin resolver."),
+            details={"unresolved": incidencias["unresolved"]})
+
+    ya_confirmado = _confirmado_por_linea(db, receipt)
+    por_linea: dict[str, Decimal] = {}
+    resultados: list[dict[str, Any]] = []
+
+    for decision in decisiones:
+        line = _requiere_linea(db, receipt, str(decision.get("receipt_line_id") or ""))
+        origen = str(decision.get("source_state") or inv_states.RECEIVED_STATE)
+        destino = str(decision.get("target_state") or "")
+        cantidad = _dec(decision.get("base_quantity") or 0)
+        motivo = decision.get("reason")
+
+        if destino not in CONFIRMATION_TARGET_STATES:
+            raise KontrolError(
+                code="CONFIRMATION_TARGET_UNKNOWN", status_code=422,
+                message=f"La confirmación no decide el destino «{destino}».",
+                details={"allowed": list(CONFIRMATION_TARGET_STATES)})
+        if cantidad <= 0:
+            raise KontrolError(code="INVALID_QUANTITY", status_code=422,
+                               message="Cada decisión mueve una cantidad mayor que cero.")
+
+        # La invariante de cantidad: entre todo lo ya confirmado y lo que se
+        # pide ahora no se puede superar lo que bajó del camión.
+        recibido = _base_recibida(line)
+        acumulado = ya_confirmado.get(str(line.id), Decimal(0)) + por_linea.get(str(line.id), Decimal(0))
+        if acumulado + cantidad > recibido:
+            raise ConflictError(
+                code="CONFIRMED_EXCEEDS_RECEIVED",
+                message=(f"La línea recibió {recibido} y se pretende confirmar "
+                         f"{acumulado + cantidad}."),
+                details={"receipt_line_id": str(line.id), "base_received": str(recibido),
+                         "already_confirmed": str(acumulado), "requested": str(cantidad)})
+        por_linea[str(line.id)] = por_linea.get(str(line.id), Decimal(0)) + cantidad
+
+        movimiento = inv_service.reclassify(
+            db, company_id=receipt.company_id, warehouse_id=receipt.warehouse_id,
+            product_id=line.product_id, source_state=origen, target_state=destino,
+            quantity=cantidad, location_id=None,
+            document_ref=f"RECEIPT_CONFIRMATION:{receipt.id}", reason=motivo, actor=actor)
+
+        registro = ReceiptConfirmation(
+            company_id=receipt.company_id, receipt_id=str(receipt.id),
+            receipt_line_id=str(line.id), source_state=origen, target_state=destino,
+            base_quantity=cantidad, movement_id=str(movimiento.id),
+            incident_id=decision.get("incident_id"), reason=motivo, created_by=actor)
+        db.add(registro)
+        db.flush()
+        resultados.append({"receipt_line_id": str(line.id), "source_state": origen,
+                           "target_state": destino, "base_quantity": str(cantidad),
+                           "movement_id": str(movimiento.id), "confirmation_id": str(registro.id)})
+
+    receipt.confirmation_status = CONFIRMATION_DONE
+    receipt.confirmed_at = datetime.now(UTC)
+    receipt.confirmed_by = actor
+    receipt.updated_at = datetime.now(UTC)
+    db.flush()
+
+    _audit(db, action="RECEIPT_INVENTORY_CONFIRMED", entity_type="GoodsReceipt",
+           entity_id=str(receipt.id), company_id=receipt.company_id, actor=actor,
+           before={"confirmation_status": CONFIRMATION_PENDING},
+           after={"confirmation_status": CONFIRMATION_DONE, "decisions": resultados})
+    return {"receipt_id": str(receipt.id), "confirmation_status": receipt.confirmation_status,
+            "decisions": resultados}
+
 def create_invoice(db: Session, *, company_id: str, supplier_id: str, invoice_number: str,
                    control_number: str | None = None, issue_date=None, currency: str = "VED",
                    actor: str | None = None, idempotency_key: str | None = None) -> SupplierInvoice:

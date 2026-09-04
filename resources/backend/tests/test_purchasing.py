@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.core.database import Base, init_models
 from app.core.errors import ConflictError, NotFoundError
 from app.modules.inventory import service as inv_service
-from app.modules.inventory.models import InventoryMovement, MovementType
+from app.modules.inventory.models import InventoryBalance, InventoryMovement, MovementType
 from app.modules.master_data.models import CatalogItem, Party
 from app.modules.organization.models import Warehouse
 from app.modules.purchasing import service as ap_service
@@ -117,10 +117,19 @@ class TestRecepcionIntegra003:
         db_session.flush()
         ap_service.accept_receipt(db_session, receipt=receipt)
         assert receipt.status == "ACCEPTED"
-        # El motor de 003 registró el movimiento y el saldo
-        assert inv_service.get_available(db_session, company_id=COMPANY, product_id=str(product.id), warehouse_id=str(wh.id)) == 30.0
+        # El motor de 003 registró el movimiento y el saldo, pero **no** como
+        # disponible: desde la Spec 021, aceptar deja la mercancía en `RECIBIDO`
+        # y solo la confirmación la libera (`R-D0-10-4`). Antes esta prueba
+        # esperaba 30 disponibles; que hoy sean 0 no es una aserción debilitada,
+        # es la regla que faltaba.
+        assert inv_service.get_available(db_session, company_id=COMPANY, product_id=str(product.id), warehouse_id=str(wh.id)) == 0.0
+        recibido = db_session.query(InventoryBalance).filter(
+            InventoryBalance.product_id == str(product.id),
+            InventoryBalance.state == "RECIBIDO").one()
+        assert float(recibido.qty_on_hand) == 30.0
         movements = db_session.query(InventoryMovement).all()
         assert len(movements) == 1
+        assert movements[0].target_state == "RECIBIDO"
         assert order_line.quantity_received == 30.0
         # La orden pasa a PARTIALLY_RECEIVED (50 ordenados, 30 recibidos)
         assert order.status == "PARTIALLY_RECEIVED"

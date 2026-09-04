@@ -222,3 +222,59 @@ fallaban antes ahora pasan, casi todos de accesibilidad, por el arreglo de los q
 que esta Spec destapó.
 
 `SPEC 020 — COMPLETE / CONVERGED / EVIDENCE SEALED`. Detalle en `spec020-evidence-seal.md`.
+
+---
+
+# CONVERGENCIA — SPEC 021 · CONFIRMACIÓN DE INVENTARIO (2026-09-04)
+
+`SPEC 021 — COMPLETE / CONVERGED`
+
+## Compuerta
+
+| Criterio | Resultado |
+|---|---|
+| Backend | **1002 · 994 pasadas · 8 saltadas declaradas · 0 fallos** |
+| — nuevas de esta Spec | **41** (20 funcionales multiempresa · 15 estructurales · 6 de migración) |
+| Frontend | 287/287 · `tsc` · ESLint · build |
+| E2E | **9/9** en Chromium, Firefox y WebKit |
+| Instalación limpia | subir a `head`, bajar la `0047`, volver a subir |
+| Rutas | 448 → **452** (tres caminos nuevos, cuatro operaciones) |
+| Deuda P0 propia | **0** |
+
+## Lo que cambió de verdad
+
+**Aceptar una recepción ya no pone la mercancía a la venta.** Es el cambio que `R-D0-10-4` exigía
+desde agosto y que el `ADR-D0-010` reservó explícitamente para esta Spec. La aceptación escribe
+`RECIBIDO`; solo la confirmación libera a `DISPONIBLE`.
+
+Entre una cosa y otra hay ahora lo que el proceso pedía y no existía: un conteo detallado por SKU en
+unidad base, una comparación contra la orden y contra lo recibido físicamente, un conjunto cerrado de
+diferencias, y una decisión por línea que puede repartir —noventa liberadas, diez rechazadas— sin
+inventar ni destruir existencia.
+
+## Tres defectos encontrados por el camino
+
+1. **Cuatro permisos inventados en la matriz de transiciones.** El ciclo anterior declaró
+   `compras:receive`, `compras:incident`, `inventario:release` e `inventario:transfer`, y ninguno
+   existe en el catálogo de `setup/api.py`. No rompía nada porque el motor no comprueba permisos —lo
+   hace la API—, pero eran cuatro contratos incumplibles. Corregidos a los reales, con un guardia
+   nuevo que comprueba que cada permiso de la matriz exista en el catálogo.
+2. **El cuerpo de las peticiones iba serializado dos veces** en la pantalla nueva: `apiFetch` recibe
+   un objeto y yo pasaba una cadena. Lo destapó la e2e, no las pruebas unitarias.
+3. **La fixture de rutas del frontend estaba desactualizada** y no lo estaba solo por esta Spec.
+   Regenerada: 452 rutas reales.
+
+## Handoff a la Spec 022
+
+La confirmación deja, por cada cantidad liberada: empresa, almacén, producto, cantidad **base**,
+estado de mercancía, lote y serial si los hay, **`location_id` nula**, y la línea de recepción que la
+originó. Eso es exactamente el estado de origen inequívoco que el put-away pedía.
+
+`SPEC 022 — READY_FOR_IMPLEMENTATION`. Solo lo confirmado a `DISPONIBLE` es elegible; lo `RECHAZADO`
+no se ubica, se devuelve o se desecha, y eso es de otras Specs.
+
+## Lo que sigue sin hacerse, a propósito
+
+Ni put-away, ni ubicación, ni resolución de incidencias, ni un segundo veredicto de calidad, ni
+ninguna arista nueva en la matriz de `ADR-D0-010`. Quince guardias estructurales lo comprueban por
+nombre.

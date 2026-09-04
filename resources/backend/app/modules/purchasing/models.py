@@ -201,6 +201,12 @@ class GoodsReceipt(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     packages_received: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # --- Etapa 11: acta o registro de recepción cuando es conforme ---
+    # Confirmación de inventario (Spec 021). Es una dimensión distinta del
+    # `status` de la recepción: una recepción `ACCEPTED` describe un hecho
+    # físico; confirmada describe una decisión sobre el destino del inventario.
+    confirmation_status: Mapped[str] = mapped_column(String(24), nullable=False, default="PENDIENTE")
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    confirmed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
     record_issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     record_issued_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
@@ -237,6 +243,14 @@ class GoodsReceiptLine(UUIDMixin, TimestampMixin, Base):
     #: Exceso sobre lo que faltaba por recibir de la línea de orden, en unidad
     #: base y congelado en el momento de recibir. El DOCX manda **registrar** el
     #: sobrante (etapa 8); tratarlo es de la Spec 020.
+    # Etapa 1 del proceso: «realizar conteo detallado por SKU o código». Es
+    # cantidad **base**: contar cajas y compararlas con unidades no concilia nada.
+    counted_base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    counted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    counted_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    # Etapa 6: «identificar diferencias por cantidad, SKU, presentación,
+    # referencia, unidad de medida». Conjunto cerrado, separado por comas.
+    count_difference_kinds: Mapped[str | None] = mapped_column(String(200), nullable=True)
     overage_base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
 
 
@@ -348,6 +362,60 @@ class ReceiptIncident(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base
     approval_request_id: Mapped[str | None] = mapped_column(
         ForeignKey("approval_requests.id"), nullable=True)
     cancelled_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+#: Diferencias que el conteo puede identificar. Literales de la etapa 6 del
+#: proceso: «cantidad; SKU; presentación; referencia; unidad de medida».
+COUNT_DIFFERENCE_KINDS = ("CANTIDAD", "SKU", "PRESENTACION", "REFERENCIA", "UNIDAD_MEDIDA")
+
+#: Ciclo de la confirmación de inventario. Dos estados y no más: o la recepción
+#: está conciliada y confirmada, o no lo está.
+CONFIRMATION_STATUSES = ("PENDIENTE", "CONFIRMADA")
+
+#: Destinos que la confirmación puede pedir. Son exactamente los de las cuatro
+#: transiciones que `ADR-D0-010` v2 autoriza a la Spec 021, y el motor de la
+#: Spec 023 vuelve a validarlos: aquí no se decide, se declara qué se pide.
+CONFIRMATION_TARGET_STATES = ("DISPONIBLE", "RECHAZADO")
+
+
+class ReceiptConfirmation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Una decisión de confirmación sobre una cantidad de una línea recibida.
+
+    Una línea puede producir **varias**: noventa liberadas y diez rechazadas son
+    dos filas, no una con un campo ambiguo. La etapa 9 del proceso lo pide
+    literalmente —«diferenciar inventario: recibido; disponible; pendiente de
+    validación; bloqueado por incidencia»—, y sin filas separadas no hay forma de
+    reconstruir qué cantidad acabó dónde ni con qué respaldo.
+
+    No duplica el movimiento de inventario: lo referencia. El asiento y el saldo
+    son de la Spec 023 y aquí no se copian.
+    """
+
+    __tablename__ = "receipt_confirmations"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        Index("ix_receipt_confirmations_receipt", "receipt_id"),
+        Index("ix_receipt_confirmations_line", "receipt_line_id"),
+        CheckConstraint("base_quantity > 0", name="quantity_positive"),
+        CheckConstraint("target_state IN ('DISPONIBLE', 'RECHAZADO')", name="target_state"),
+        CheckConstraint("source_state IN ('RECIBIDO', 'CUARENTENA')", name="source_state"),
+    )
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    receipt_id: Mapped[str] = mapped_column(ForeignKey("goods_receipts.id"), nullable=False)
+    receipt_line_id: Mapped[str] = mapped_column(ForeignKey("goods_receipt_lines.id"), nullable=False)
+    #: Estado del que sale la mercancía y al que entra. Los dos se validan contra
+    #: la matriz de `ADR-D0-010` v2 antes de mover nada.
+    source_state: Mapped[str] = mapped_column(String(32), nullable=False)
+    target_state: Mapped[str] = mapped_column(String(32), nullable=False)
+    base_quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    #: El asiento que materializó la decisión. Sin él la confirmación sería una
+    #: afirmación sin respaldo en el ledger.
+    movement_id: Mapped[str | None] = mapped_column(ForeignKey("inventory_movements.id"), nullable=True)
+    #: La incidencia de la Spec 020 cuyo tratamiento sostiene esta decisión,
+    #: cuando la hay. La 021 no la resuelve: la consume.
+    incident_id: Mapped[str | None] = mapped_column(ForeignKey("receipt_incidents.id"), nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class SupplierInvoice(UUIDMixin, TimestampMixin, CreatedByMixin, Base):

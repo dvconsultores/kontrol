@@ -8,6 +8,7 @@ idempotencia en POST críticos.
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict, Field
@@ -28,6 +29,7 @@ from app.modules.purchasing.models import (
     PurchaseOrder,
     PurchaseRequisition,
     PurchaseReturn,
+    ReceiptConfirmation,
     ReceiptIncident,
     SupplierCreditNote,
     SupplierInvoice,
@@ -536,6 +538,94 @@ def list_incidents(status: str | None = None, incident_type: str | None = None,
     items = db.execute(query.order_by(ReceiptIncident.created_at.desc())).scalars().all()
     return {"items": [_incident_dict(x) for x in items], "total": len(items),
             "page": 1, "page_size": len(items) or 1}
+
+
+# --------------------------------------------------------------------------
+# Spec 021 — confirmación y conciliación del inventario recibido
+# --------------------------------------------------------------------------
+
+
+class CountBody(BaseModel):
+    counted_base_quantity: Decimal = Field(..., description="Contado en unidad base")
+    difference_kinds: list[str] = Field(default_factory=list)
+
+
+class ConfirmationDecision(BaseModel):
+    receipt_line_id: str
+    target_state: str
+    base_quantity: Decimal
+    source_state: str = "RECIBIDO"
+    incident_id: str | None = None
+    reason: str | None = None
+
+
+class ConfirmationBody(BaseModel):
+    decisions: list[ConfirmationDecision]
+
+
+def _confirmation_dict(x) -> dict:
+    return {"id": str(x.id), "receipt_id": x.receipt_id, "receipt_line_id": x.receipt_line_id,
+            "source_state": x.source_state, "target_state": x.target_state,
+            "base_quantity": str(x.base_quantity), "movement_id": x.movement_id,
+            "incident_id": x.incident_id, "reason": x.reason,
+            "created_by": x.created_by,
+            "created_at": x.created_at.isoformat() if x.created_at else None}
+
+
+@router.post("/receipts/{receipt_id}/lines/{line_id}/conteo",
+             dependencies=[Depends(require_write_allowed)])
+def count_receipt_line(receipt_id: str, line_id: str, body: CountBody,
+                       db: Session = Depends(get_db),
+                       actor: User = Depends(require_permission("inventario", "confirm")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    """Etapa 1 del proceso: conteo detallado por SKU, en unidad base."""
+    receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id,
+                     "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    line = ap_service.registrar_conteo(
+        db, receipt=receipt, line_id=line_id,
+        counted_base_quantity=body.counted_base_quantity,
+        difference_kinds=body.difference_kinds, actor=str(actor.id))
+    db.commit()
+    return _receipt_line_dict(line)
+
+
+@router.get("/receipts/{receipt_id}/conciliacion")
+def receipt_reconciliation(receipt_id: str, db: Session = Depends(get_db),
+                           user: User = Depends(get_current_user),
+                           ctx: CompanyContext = Depends(get_company_context)):
+    """Etapas 2 a 4 y 9: la comparación por línea y qué falta para confirmar."""
+    receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id,
+                     "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    return ap_service.resultado_de_conciliacion(db, company_id=ctx.company_id, receipt=receipt)
+
+
+@router.post("/receipts/{receipt_id}/confirmacion-inventario",
+             dependencies=[Depends(require_write_allowed)])
+def confirm_receipt_inventory(receipt_id: str, body: ConfirmationBody,
+                              db: Session = Depends(get_db),
+                              actor: User = Depends(require_permission("inventario", "confirm")),
+                              ctx: CompanyContext = Depends(get_company_context)):
+    """Etapas 13 y 14: confirmar el inventario conciliado y liberar el lote."""
+    receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id,
+                     "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    resultado = ap_service.confirmar_inventario(
+        db, receipt=receipt, decisiones=[d.model_dump() for d in body.decisions],
+        actor=str(actor.id))
+    db.commit()
+    return resultado
+
+
+@router.get("/receipts/{receipt_id}/confirmacion-inventario")
+def list_receipt_confirmations(receipt_id: str, db: Session = Depends(get_db),
+                               user: User = Depends(get_current_user),
+                               ctx: CompanyContext = Depends(get_company_context)):
+    _owned(db, GoodsReceipt, receipt_id, ctx.company_id,
+           "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    filas = db.execute(select(ReceiptConfirmation).where(
+        ReceiptConfirmation.receipt_id == receipt_id,
+        ReceiptConfirmation.company_id == ctx.company_id)).scalars().all()
+    return {"items": [_confirmation_dict(x) for x in filas], "total": len(filas),
+            "page": 1, "page_size": len(filas) or 1}
 
 
 @router.get("/receipts/{receipt_id}/incidencias")

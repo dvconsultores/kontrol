@@ -42,8 +42,8 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 018 | Importaciones | **`NOT_STARTED`** | **0 tablas**: ninguna `import`/`customs`/`aduana` | — (dependencias satisfechas) |
 | 019 | Recepción física | **`COMPLETE / CONVERGED`** (2026-09-03) | arribo, bultos, comparación documental, inspección, observación física, unidad y cantidad base, acta; migración `0044` | **ninguno** |
 | 020 | Incidencias de recepción | **`COMPLETE / CONVERGED`** (2026-09-03) | `receipt_incidents`: cinco tipos, ciclo de cinco estados, tope de cantidad por tipo, resolución de conjunto cerrado, ajuste autorizado vía 045, evidencia vía 046; migración `0045` | **ninguno** |
-| 021 | Confirmación de inventario | **`READY_FOR_IMPLEMENTATION`** (2026-09-04) | `quality_status` con compuerta en `accept_receipt`; la incidencia resuelta de 020; sus cuatro transiciones declaradas **y ejecutables** por el motor de 023 | **ninguno** |
-| 022 | Put-away | **`NOT_STARTED`** | 0 proceso. La estructura de 008 existe y **nadie la usa** | **estado de origen inequívoco (021)**. Ya **no** por falta de ubicaciones: 008 las entrega |
+| 021 | Confirmación de inventario | **`COMPLETE / CONVERGED`** (2026-09-04) | conteo por SKU en base, conciliación contra orden y recepción física, cinco tipos de diferencia, decisión por línea con resultado mixto, `receipt_confirmations`; migración `0047`. **Aceptar ya no libera** | **ninguno** |
+| 022 | Put-away | **`READY_FOR_IMPLEMENTATION`** (2026-09-04) | 0 proceso. La estructura de 008 existe y nadie la usa | **ninguno**: la 021 entrega el estado de origen inequívoco —`DISPONIBLE`, cantidad base, `location_id` nula— y 008 las ubicaciones |
 | 023 | Inventario / Kardex | `PARTIALLY_IMPLEMENTED` · capacidad multiestado **`COMPLETE / CONVERGED`** (2026-09-04) | `inventory` 13 tablas; autoridad única de estados (`states.py`), procedencia en el ledger, reclasificación canónica, reconstrucción fiel; migración `0046` | **ninguno** para la capacidad. La Spec sigue parcial por requisitos ajenos a ella (ubicación en la práctica, FEFO, valoración) |
 | 024 | Lotes / seriales / vencimiento | `PARTIALLY_IMPLEMENTED` | `inventory_lots`, `product_serials` | — |
 | 025 | Transferencias / conteos / ajustes | `PARTIALLY_IMPLEMENTED` | `transfers`, `stock_counts`, `inventory_adjustments` | — |
@@ -83,11 +83,11 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 
 | Estado | Specs |
 |---|---:|
-| `COMPLETE / CONVERGED` | 8 — 008, 011, 012, 019, **020**, 029, 030, 045 |
+| `COMPLETE / CONVERGED` | 9 — 008, 011, 012, 019, 020, **021**, 029, 030, 045 |
 | `RECONVERGED` | 1 — 046 |
-| `READY_FOR_IMPLEMENTATION` | **1 — 021** |
+| `READY_FOR_IMPLEMENTATION` | **1 — 022** |
 | `PARTIALLY_IMPLEMENTED` | 32 |
-| `NOT_STARTED` | 4 — 018, 022, 033, 047 |
+| `NOT_STARTED` | 3 — 018, 033, 047 |
 | `BLOCKED_BY_DEPENDENCY` | 2 — 031, 032 |
 | `BLOCKED_BY_BUSINESS_DECISION` | 1 — 004 |
 | `BLOCKED_BY_LEGAL_VALIDATION` | 6 — 039, 040, 041, 042, 043, 056 |

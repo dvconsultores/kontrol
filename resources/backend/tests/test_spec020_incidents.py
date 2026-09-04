@@ -351,7 +351,7 @@ def test_resolver_no_toca_el_inventario(mundo):
     assert len(mundo.filas("inventory_movements", "id")) == movimientos_antes
     estados = {e[0] for e in _sql(mundo, "SELECT DISTINCT state FROM inventory_balances WHERE company_id = :c",
                                   c=mundo.company_a)}
-    assert estados <= {"DISPONIBLE"}, "020 escribió estados de mercancía, que son de 021/023"
+    assert estados <= {"RECIBIDO"}, "020 escribió estados de mercancía, que son de 021/023"
 
 
 # --------------------------------------------------------------------------- #

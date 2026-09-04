@@ -266,3 +266,28 @@ el motor.
 
 Detrás, la 022 —que cierra la duodécima y última etapa del proceso de recepción— y luego 031 y 032.
 Implementación de la 021 **no iniciada**: requiere su propio ciclo con autorización expresa.
+
+
+---
+
+## Tras la Spec 021 — 2026-09-04
+
+`SPEC 021 — COMPLETE / CONVERGED`. **Aceptar una recepción ya no pone la mercancía a la venta**, que
+era lo que `R-D0-10-4` exigía desde agosto y que el `ADR-D0-010` había reservado explícitamente para
+esta Spec.
+
+Con ella, la deuda del proceso de entrada pasa de rota casi entera a rota en un solo punto: la
+recepción física, las incidencias, el motor multiestado y la confirmación están cerrados; falta
+decir **dónde** quedó la mercancía.
+
+`NEXT SPEC = 022 — PUT-AWAY Y UBICACIÓN`
+
+No le falta nada. La Spec 008 entrega zonas, pasillos, racks, niveles y ubicaciones con secuencia y
+capacidad declarada, y hasta hoy no las usaba nadie. La 021 entrega el estado de origen inequívoco
+que pedía: producto, almacén, cantidad base, estado `DISPONIBLE`, lote y serial si los hay, y
+`location_id` nula. Es la duodécima y última etapa del proceso de recepción, y cierra la cadena de
+entrada entera.
+
+Detrás quedan 031 y 032, que esperan existencia ubicada y que la 022 desbloquea.
+
+Implementación de la 022 **no iniciada**: requiere su propio ciclo con autorización expresa.
