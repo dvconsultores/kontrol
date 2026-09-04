@@ -11,7 +11,7 @@
 | **D0-07** | Gobierno fiscal | APPROVED (gobierno) | **LEGAL_VALIDATION_PENDING** | Abogado tributario · Contador | 039-043, 014, 056 | Cierre de 039, 040, 041, 042, 043, 056 |
 | **D0-08** | Gestión documental transversal | APPROVED | **CLOSED** | Arq. backend · Seguridad | 046 + 9 Specs | 046, 018, 020, 035 |
 | **D0-09** | Unidad, presentación y conversión | APPROVED | **CLOSED** | Arq. datos · Compras · Ventas | 011 + 15 Specs | 011, 019, 021, 029, 032 |
-| **D0-10** | Estados de mercancía | APPROVED | **CLOSED** | Arq. procesos · Almacén | 021, 023 + 9 Specs | 021, 022, 032 |
+| **D0-10** | Estados de mercancía | APPROVED · ACTIVE (v2 2026-09-03) | **CLOSED** — matriz de transiciones declarada; `R-D0-10-7` ejecutable | Arq. procesos · Almacén | 021, 023 + 9 Specs | 021, 022, 032 |
 | **D0-11** | Vínculo pedido → factura | APPROVED | **CLOSED** | Arq. datos · Auditor · Contador | 034 + 6 Specs | 034 |
 | **D0-12** | Confirmación independiente del pedido | APPROVED | **CLOSED_WITH_CONFIGURATION_PENDING** | Arq. procesos · Auditor | 033 + 4 Specs | 033, 034 |
 | **D0-13** | Dimensiones organizacionales | APPROVED | **CLOSED** | Arq. datos · Contador | 007 + transversal | 007 |
@@ -55,7 +55,7 @@ arquitectura está decidida; los umbrales son datos de implantación.
 | D0-07 | `adr/ADR-D0-007-fiscal-governance.md` | `policies/POL-D0-006-fiscal-governance.md` |
 | D0-08 | `adr/ADR-D0-008-document-management.md` | — |
 | D0-09 | `adr/ADR-D0-009-uom-presentation-snapshot.md` | — |
-| D0-10 | `adr/ADR-D0-010-goods-states.md` | — |
+| D0-10 | `adr/ADR-D0-010-goods-states.md` (v2) | `d0-10-checkpoint/` — matriz de transiciones, matriz de dueños, análisis del conflicto con reservas, convergencia |
 | D0-11 | `adr/ADR-D0-011-order-invoice-link.md` | — |
 | D0-12 | `adr/ADR-D0-012-order-confirmation.md` | — |
 | D0-13 | `adr/ADR-D0-013-organizational-dimensions.md` | — |

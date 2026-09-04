@@ -99,3 +99,27 @@ no lo implementado, porque el ciclo se detuvo antes de `/speckit.implement` por 
 | IMP-023-MS-035 · la 021 puede consumir estados no vendibles | R-D0-10-4 | — | **exige OQ-023-MS-01 y OQ-023-MS-02** | **BLOQUEADO** |
 
 **Cobertura del alcance auditado: 100 %. Huérfanos: 0. OQ materiales: 2.**
+
+---
+
+## Cierre de las dos OQ materiales — 2026-09-03
+
+El checkpoint `D0-10` (`docs/governance/d0-foundational-decisions/d0-10-checkpoint/`) cerró las dos
+preguntas que dejaron `IMP-023-MS-035` bloqueado. La fila se actualiza:
+
+| Requisito | Estado anterior | Estado |
+|---|---|---|
+| IMP-023-MS-035 · la 021 puede consumir estados no vendibles | **BLOQUEADO** por `OQ-023-MS-01` y `-02` | **DESBLOQUEADO** — `ADR-D0-010` v2 declara las cuatro transiciones que la 021 necesita |
+
+Y se añade lo que el próximo ciclo de implementación hereda ya decidido:
+
+| Requisito | Regla | Artefacto |
+|---|---|---|
+| Validación de transición contra matriz declarada | R-D0-10-7 + §Gobierno v2 | `d0-10-merchandise-state-transition-matrix.md` |
+| Nueve transiciones activas con permiso, aprobación y motivo | v2 | ídem |
+| Aprobación de la transición #9 vía Spec 045 | `FR-003-062` | ídem |
+| Invariante `qty_reserved > qty_on_hand` prohibida | **R-D0-10-9** | `ADR-D0-010` v2 |
+| Quién decide la política de conflicto y cuándo | **R-D0-10-10** | `d0-10-reserved-stock-conflict-analysis.md` |
+| `InventoryMovement` con estado de origen y destino | R-D0-10-5 | `ADR-D0-010` v2 §Consecuencias |
+| `recompute_balances` sin asumir `DISPONIBLE` | R-D0-10-5 | ídem |
+| `confirm_transfer_receipt` respeta `destination_state` | `FR-003-062` · transición #9 | ídem |

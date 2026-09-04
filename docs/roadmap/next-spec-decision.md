@@ -220,3 +220,31 @@ así que ninguna prejuzga las dos decisiones pendientes.
 
 Implementación de la capacidad multiestado **no iniciada**: `/speckit.implement` no se ejecutó,
 conforme a la autorización condicional del ciclo.
+
+---
+
+## Tras el checkpoint D0-10 — 2026-09-03
+
+`D0-10 — CLOSED` · `ADR-D0-010` **v2**. Las dos decisiones que el ciclo dirigido de la Spec 023 dejó
+abiertas se cerraron el mismo día, y la que parecía más difícil se cerró de la forma más limpia.
+
+**El grafo de transiciones** se declaró con nueve aristas, cada una con su evidencia: `R-D0-10-4`
+para la liberación formal, `R-D0-10-6` para la salida de `BLOQUEADO`, `FR-003-062` para la diferencia
+en transferencia, y el flujo objetivo del checkpoint operativo para la confirmación con rechazo y la
+resolución en cuarentena. Todo lo demás queda `DENIED` hasta que su Spec lo active, que es el régimen
+que `R-D0-10-7` ya imponía sin declarar contra qué.
+
+**El conflicto con reservas** se cerró por una vía que no se esperaba. Al construir la matriz apareció
+que **ninguna de las nueve transiciones activas sale de `DISPONIBLE`**, y las reservas viven solo en
+filas `DISPONIBLE`. El conflicto no es alcanzable: la cadena que la 021 necesita va hacia lo vendible,
+nunca al revés. Queda la invariante escrita (`R-D0-10-9`), dos de las cuatro salidas rechazadas por
+autoridad, y `R-D0-10-10` fijando que quien active la primera arista con origen `DISPONIBLE` —la
+Spec 025, previsiblemente— elija entre las dos restantes en su propio ciclo.
+
+**La siguiente es la Spec 023**, retomando su ciclo dirigido: estado como parámetro, validación contra
+la matriz, estado en el ledger, reconstrucción sin colapso, los diez call sites y la corrección de
+`confirm_transfer_receipt`. Nada de eso requiere una decisión más.
+
+La 021 **no** queda lista y no debe marcarse como tal: cerrar una decisión no implementa una
+capacidad. Su estado pasa de `BLOCKED_BY_BUSINESS_DECISION` a `BLOCKED_BY_DEPENDENCY`, que es un
+bloqueo de código y ya no de negocio.

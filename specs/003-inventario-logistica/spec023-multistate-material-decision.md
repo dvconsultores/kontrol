@@ -1,7 +1,16 @@
 # MATERIAL DECISION REQUIRED — SPEC 023 · SALDO MULTIESTADO
 
-> Producido por el ciclo dirigido del 2026-09-03. Bloquea `SPEC 023 MULTI-STATE BALANCE CAPABILITY`
-> y, con ella, `SPEC 021`. Dos decisiones. Ninguna es técnica.
+> Producido por el ciclo dirigido del 2026-09-03. **RESUELTO el mismo día** por el checkpoint
+> `D0-10`, en `docs/governance/d0-foundational-decisions/d0-10-checkpoint/`. Se conserva por lo que
+> documenta: la pregunta tal como se planteó y las opciones tal como se evaluaron.
+>
+> | Decisión | Resultado |
+> |---|---|
+> | 1 · grafo de transiciones | **cerrada** — nueve transiciones activas con evidencia, deny-by-default para el resto (`ADR-D0-010` v2 §Gobierno) |
+> | 2 · reservado frente a reclasificación | **cerrada** — invariante `R-D0-10-9`; liberación automática y reasignación rechazadas por autoridad; la elección restante se traslada, por `R-D0-10-10`, al ciclo de la Spec que active la primera arista con origen `DISPONIBLE`. Ninguna arista activa puede producirla |
+>
+> La opción 3 que este documento señalaba como coherente —declarar solo el tramo de recepción y que
+> cada Spec añada el suyo— es la que se adoptó.
 
 ## Por qué hay que decidir
 
