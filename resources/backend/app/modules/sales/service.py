@@ -643,7 +643,7 @@ def confirmar_pedido(db: Session, *, company_id: str, order_id: str, actor: str 
         for linea in ordenadas:
             saldo = inv_service.lock_balance(db, company_id=company_id, warehouse_id=order.warehouse_id,
                                              product_id=str(linea.product_id))
-            disponible = inv_service.available_under_lock(saldo)
+            disponible = inv_service.available_under_lock(db, saldo)
             if Decimal(str(linea.base_quantity)) > disponible and not permite_negativo:
                 faltantes.append({"line_id": str(linea.id), "product_id": str(linea.product_id),
                                   "requested_base": str(linea.base_quantity), "available_base": str(disponible)})

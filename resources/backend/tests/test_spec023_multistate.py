@@ -337,7 +337,7 @@ def test_lo_no_vendible_no_se_ofrece_ni_se_reserva(mundo):
         saldo = inv.lock_balance(db, company_id=mundo.company_a,
                                  warehouse_id=mundo.warehouse_a, product_id=producto)
         assert saldo.state == "DISPONIBLE"
-        assert inv.available_under_lock(saldo) == Decimal("10")
+        assert inv.available_under_lock(db, saldo) == Decimal("10")
     finally:
         db.close()
 

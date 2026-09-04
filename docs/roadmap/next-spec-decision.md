@@ -352,3 +352,28 @@ en la `0046`— y el put-away manual con filtro de candidatas.
 
 `SPEC 031` sigue bloqueada hasta que la 022 implemente y converja. Cerrar una decisión no implementa
 una capacidad.
+
+
+---
+
+## Tras la Spec 022 — 2026-09-04
+
+`SPEC 022 — COMPLETE / CONVERGED`. **La cadena de entrada queda cerrada.** La mercancía se recibe, su
+excepción se trata, se cuenta, se confirma y ahora se coloca. De las 135 etapas de proceso
+documentadas, 68 están cubiertas (50 %); en el tramo de entrada, 40 de 50 (80 %), y las diez que
+faltan son de importación, que es otro proceso.
+
+Lo que este ciclo tuvo que resolver no era construir el put-away: era que ubicar la mercancía la
+habría vuelto invendible. La reserva vivía atada a la fila de ubicación nula por un artefacto de
+implementación, no por una regla. `D0-14` cerró la semántica y este ciclo la ejecutó: el disponible
+del almacén se suma sobre todas las ubicaciones y el compromiso se queda donde estaba.
+
+`NEXT SPEC = 031 — COLA Y RUTA DE PICKING`
+
+Recibe lo que pedía: existencia con ubicación física real, cantidad base, estado de mercancía y
+lote/serial. Y recibe también, explícitamente, lo que **no** está hecho: ninguna reserva está
+asignada a ninguna ubicación. El compromiso es del almacén, y decidir de qué ubicación se extrae para
+satisfacerlo es exactamente el trabajo de la 031.
+
+Detrás quedan la 032 —preparación y consolidación— y la 033. Implementación de la 031 **no iniciada**:
+requiere su propio ciclo con autorización expresa.

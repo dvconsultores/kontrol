@@ -8,6 +8,7 @@ uniformes, `allowed_actions` en backend, transiciones explícitas.
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict, Field
@@ -263,6 +264,93 @@ def list_movements(product_id: str | None = None, warehouse_id: str | None = Non
 def get_movement(movement_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     m = _get_owned(db, InventoryMovement, movement_id, ctx.company_id, "MOVEMENT_NOT_FOUND", "Movimiento no encontrado")
     return inv_service.movement_dict(m)
+
+
+# --------------------------------------------------------------------------
+# Spec 022 — put-away: colocar físicamente lo confirmado
+# --------------------------------------------------------------------------
+
+
+class PutAwayBody(BaseModel):
+    product_id: str
+    warehouse_id: str
+    target_location_id: str
+    quantity: Decimal
+    source_location_id: str | None = None
+    state: str = "DISPONIBLE"
+    lot_id: str | None = None
+    serial_id: str | None = None
+    document_ref: str | None = None
+    reason: str | None = None
+
+
+def _location_dict(loc) -> dict:
+    """La capacidad viaja como dato, no como límite (`R-D0-14-6`)."""
+    return {"id": str(loc.id), "code": loc.code, "name": getattr(loc, "name", None),
+            "warehouse_id": loc.warehouse_id, "zone_id": loc.zone_id,
+            "aisle_id": loc.aisle_id, "rack_id": loc.rack_id, "level_id": loc.level_id,
+            "sequence": loc.sequence, "status": loc.status,
+            "capacity": {"units": float(loc.capacity_units) if loc.capacity_units is not None else None,
+                         "weight": float(loc.capacity_weight) if loc.capacity_weight is not None else None,
+                         "uom": loc.capacity_uom,
+                         "enforced": False}}
+
+
+@router.get("/putaway/pendientes")
+def list_pending_putaway(warehouse_id: str | None = None, db: Session = Depends(get_db),
+                         user: User = Depends(get_current_user),
+                         ctx: CompanyContext = Depends(get_company_context)):
+    """Lo confirmado que todavía no está en una ubicación física.
+
+    Es una consulta sobre el saldo, no una tabla nueva: la existencia sin ubicar
+    ya se representa con `location_id` nula, y duplicarla en otra tabla crearía
+    una segunda verdad física (`R-D0-14-5`, regla 2).
+    """
+    query = select(InventoryBalance).where(
+        InventoryBalance.company_id == ctx.company_id,
+        InventoryBalance.location_id.is_(None),
+        InventoryBalance.qty_on_hand > 0,
+    )
+    if warehouse_id:
+        query = query.where(InventoryBalance.warehouse_id == warehouse_id)
+    filas = db.execute(query.order_by(InventoryBalance.product_id)).scalars().all()
+    return {"items": [inv_service.balance_dict(b) for b in filas], "total": len(filas),
+            "page": 1, "page_size": len(filas) or 1}
+
+
+@router.get("/putaway/ubicaciones")
+def list_putaway_candidates(warehouse_id: str, db: Session = Depends(get_db),
+                            user: User = Depends(get_current_user),
+                            ctx: CompanyContext = Depends(get_company_context)):
+    """Las ubicaciones donde se puede colocar, filtradas por el backend.
+
+    No hay recomendación ni orden de preferencia: `R-D0-14-10` difiere el
+    automatismo hasta que existan los atributos que exigiría.
+    """
+    candidatas = inv_service.putaway_candidates(db, company_id=ctx.company_id,
+                                                warehouse_id=warehouse_id)
+    return {"items": [_location_dict(x) for x in candidatas], "total": len(candidatas),
+            "page": 1, "page_size": len(candidatas) or 1}
+
+
+@router.post("/putaway", dependencies=[Depends(require_write_allowed)])
+def execute_putaway(body: PutAwayBody, db: Session = Depends(get_db),
+                    actor: User = Depends(require_permission("inventario", "create")),
+                    ctx: CompanyContext = Depends(get_company_context)):
+    """Coloca la mercancía. Cambia la ubicación y **nada más**."""
+    movement = inv_service.putaway(
+        db, company_id=ctx.company_id, warehouse_id=body.warehouse_id,
+        product_id=body.product_id, target_location_id=body.target_location_id,
+        quantity=body.quantity, source_location_id=body.source_location_id,
+        state=body.state, lot_id=body.lot_id, serial_id=body.serial_id,
+        document_ref=body.document_ref, reason=body.reason, actor=str(actor.id))
+    db.commit()
+    return {"movement_id": str(movement.id), "product_id": movement.product_id,
+            "warehouse_id": movement.warehouse_id,
+            "source_location_id": movement.source_location_id,
+            "target_location_id": movement.target_location_id,
+            "base_quantity": str(movement.base_quantity),
+            "merchandise_state": movement.target_state}
 
 
 @router.post("/movements", dependencies=[Depends(require_write_allowed)])

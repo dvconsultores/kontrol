@@ -18,7 +18,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -65,6 +65,7 @@ BASE_MOVEMENT_TYPES: dict[str, tuple[str, str]] = {
     "AJUSTE_NEGATIVO": ("Ajuste negativo", "OUT"),
     "REVERSO": ("Reverso de movimiento", "INTERNAL"),
     "RECLASIFICACION": ("Reclasificación de estado de mercancía", "INTERNAL"),
+    "UBICACION": ("Colocación en ubicación (put-away)", "INTERNAL"),
 }
 
 
@@ -248,15 +249,15 @@ def recompute_balances(db: Session, *, company_id: str, warehouse_id: str | None
 
     rows: dict[tuple[str | None, ...], InventoryBalance] = {}
 
-    def _fila(m: InventoryMovement, estado: str) -> InventoryBalance:
+    def _fila(m: InventoryMovement, estado: str, ubicacion: str | None) -> InventoryBalance:
         key = _balance_key(
-            warehouse_id=m.warehouse_id, location_id=m.location_id, product_id=m.product_id,
+            warehouse_id=m.warehouse_id, location_id=ubicacion, product_id=m.product_id,
             lot_id=None, serial_id=None, state=estado,
         )
         return rows.setdefault(
             key,
             InventoryBalance(
-                company_id=company_id, warehouse_id=m.warehouse_id, location_id=m.location_id,
+                company_id=company_id, warehouse_id=m.warehouse_id, location_id=ubicacion,
                 product_id=m.product_id, lot_id=None, serial_id=None, state=estado,
                 qty_on_hand=Decimal(0), qty_reserved=Decimal(0), qty_available=Decimal(0),
             ),
@@ -273,11 +274,14 @@ def recompute_balances(db: Session, *, company_id: str, warehouse_id: str | None
         #    varias, contra `R-D0-10-5`.
         base = _dec(m.base_quantity) if m.base_quantity is not None else _dec(m.quantity)
         magnitud = abs(base)
+        # La ubicación se lee del ledger igual que el estado. Un traslado tiene
+        # los dos estados iguales y las dos ubicaciones distintas; una
+        # reclasificación, al revés. La misma aritmética cubre ambos.
         if m.target_state:
-            bal = _fila(m, m.target_state)
+            bal = _fila(m, m.target_state, m.target_location_id)
             bal.qty_on_hand = _dec(bal.qty_on_hand) + magnitud
         if m.source_state:
-            bal = _fila(m, m.source_state)
+            bal = _fila(m, m.source_state, m.source_location_id)
             bal.qty_on_hand = _dec(bal.qty_on_hand) - magnitud
 
     # 2. Aplicar reservas activas
@@ -456,6 +460,8 @@ def record_movement(
         uom_source=uom_engine.SOURCE_CAPTURED,
         source_state=None if signed > 0 else estado,
         target_state=estado if signed > 0 else None,
+        source_location_id=None if signed > 0 else location_id,
+        target_location_id=location_id if signed > 0 else None,
         unit_cost=unit_cost,
         currency=currency,
         fiscal_rate=fiscal_rate,
@@ -864,9 +870,157 @@ def reclassify(
     return movement
 
 
+def _lock_balance_at(db: Session, *, company_id: str, warehouse_id: str, product_id: str,
+                     location_id: str | None, lot_id: str | None, serial_id: str | None,
+                     state: str) -> InventoryBalance:
+    """La fila de saldo de una ubicación concreta, bloqueada."""
+    return lock_balance(db, company_id=company_id, warehouse_id=warehouse_id,
+                        product_id=product_id, lot_id=lot_id, serial_id=serial_id,
+                        state=state, location_id=location_id)
+
+
+def putaway_candidates(db: Session, *, company_id: str, warehouse_id: str) -> list[Any]:
+    """Ubicaciones donde el operario puede colocar mercancía de ese almacén.
+
+    `R-D0-14-8/9`: la elige una persona, pero de entre las que el backend declara
+    elegibles. No hay recomendación ni asignación automática: los atributos que
+    la clasificación del proceso pide —familia, tamaño, peso, rotación, volumen—
+    no existen en el maestro, y las zonas del documento están sin validar.
+
+    La capacidad **no** filtra (`R-D0-14-6`): es informativa mientras su unidad
+    sea texto libre sin vínculo al catálogo.
+    """
+    from app.modules.organization.models import WarehouseLocation
+
+    return list(db.execute(
+        select(WarehouseLocation).where(
+            WarehouseLocation.company_id == company_id,
+            WarehouseLocation.warehouse_id == warehouse_id,
+            WarehouseLocation.status == "ACTIVE",
+        ).order_by(WarehouseLocation.sequence, WarehouseLocation.code)).scalars().all())
+
+
+def _require_candidate_location(db: Session, *, company_id: str, warehouse_id: str,
+                                location_id: str) -> Any:
+    """Revalida la ubicación **en el envío**, no solo al listar candidatas.
+
+    Entre que la pantalla carga las candidatas y el operario confirma, una
+    ubicación puede desactivarse. Y un identificador válido en otra empresa o en
+    otro almacén no autoriza nada: se resuelve siempre bajo el contexto.
+    """
+    from app.modules.organization.models import WarehouseLocation
+
+    location = db.execute(select(WarehouseLocation).where(
+        WarehouseLocation.id == location_id,
+        WarehouseLocation.company_id == company_id)).scalars().first()
+    if location is None:
+        raise NotFoundError(message="La ubicación no existe en esta empresa")
+    if location.warehouse_id != warehouse_id:
+        raise ConflictError(
+            code="LOCATION_OTHER_WAREHOUSE",
+            message="La ubicación pertenece a otro almacén; el put-away no traslada entre almacenes.",
+            details={"warehouse_id": warehouse_id, "location_warehouse_id": location.warehouse_id})
+    if location.status != "ACTIVE":
+        raise ConflictError(
+            code="LOCATION_NOT_ELIGIBLE",
+            message=f"La ubicación no está activa (estado {location.status}).")
+    return location
+
+
+def putaway(
+    db: Session,
+    *,
+    company_id: str,
+    warehouse_id: str,
+    product_id: str,
+    target_location_id: str,
+    quantity: Decimal | float | str,
+    source_location_id: str | None = None,
+    state: str | None = None,
+    lot_id: str | None = None,
+    serial_id: str | None = None,
+    document_ref: str | None = None,
+    reason: str | None = None,
+    actor: str | None = None,
+    occurred_at: datetime | None = None,
+) -> InventoryMovement:
+    """Coloca físicamente mercancía en una ubicación del **mismo** almacén.
+
+    Es un traslado de ubicación y **nada más**: el estado de mercancía se
+    conserva, el compromiso comercial no se toca y no se asigna ninguna reserva a
+    ninguna ubicación —eso es de la Spec 031— (`R-D0-14-2/4/13`).
+
+    El compromiso reservado vive en la fila ancla de ubicación nula porque la
+    reserva es de almacén y no de ubicación (`R-D0-14-1`). Por eso este traslado
+    mueve `qty_on_hand` y **nunca** `qty_reserved`: el disponible del almacén
+    sale igual que entró.
+    """
+    estado = state_authority.assert_valid_state(state or state_authority.DEFAULT_STATE)
+    cantidad = _dec(quantity)
+    if cantidad <= 0:
+        raise KontrolError(code="INVALID_QUANTITY", status_code=422,
+                           message="La cantidad a ubicar debe ser mayor que cero.")
+    if source_location_id == target_location_id:
+        raise KontrolError(code="SAME_LOCATION", status_code=422,
+                           message="El origen y el destino son la misma ubicación.")
+
+    _require_warehouse(db, company_id, warehouse_id)
+    _require_product(db, company_id, product_id)
+    _require_candidate_location(db, company_id=company_id, warehouse_id=warehouse_id,
+                                location_id=target_location_id)
+
+    # Orden determinista de bloqueo: por ubicación, con la nula primero. Dos
+    # put-away cruzados no pueden abrazarse.
+    claves = sorted({source_location_id, target_location_id}, key=lambda x: (x is not None, x or ""))
+    saldos = {
+        clave: _lock_balance_at(db, company_id=company_id, warehouse_id=warehouse_id,
+                                product_id=product_id, location_id=clave,
+                                lot_id=lot_id, serial_id=serial_id, state=estado)
+        for clave in claves
+    }
+    origen, destino = saldos[source_location_id], saldos[target_location_id]
+
+    disponible = _dec(origen.qty_on_hand)
+    if cantidad > disponible:
+        raise ConflictError(
+            code="INSUFFICIENT_LOCATION_QUANTITY",
+            message=f"No hay {cantidad} sin ubicar: solo {disponible}.",
+            details={"requested": str(cantidad), "available": str(disponible),
+                     "source_location_id": source_location_id})
+
+    tipo = _get_movement_type_by_code(db, company_id, "UBICACION")
+    movement = InventoryMovement(
+        company_id=company_id, warehouse_id=warehouse_id, location_id=target_location_id,
+        product_id=product_id, movement_type_id=str(tipo.id), quantity=cantidad,
+        base_quantity=cantidad, currency="VED", document_ref=document_ref,
+        occurred_at=occurred_at or datetime.now(UTC), status="POSTED", created_by=actor,
+        # El estado no cambia: cambia la ubicación. `R-D0-14-13`.
+        source_state=estado, target_state=estado,
+        source_location_id=source_location_id, target_location_id=target_location_id,
+        uom_source=uom_engine.SOURCE_CAPTURED,
+    )
+    db.add(movement)
+
+    origen.qty_on_hand = disponible - cantidad
+    destino.qty_on_hand = _dec(destino.qty_on_hand) + cantidad
+    _refresh_available(origen)
+    _refresh_available(destino)
+    db.flush()
+
+    _audit(db, action="INVENTORY_PUTAWAY", entity_type="InventoryMovement",
+           entity_id=str(movement.id), company_id=company_id, actor=actor,
+           before={"location_id": source_location_id, "qty": str(disponible)},
+           after={"location_id": target_location_id, "qty": str(cantidad),
+                  "state": estado, "product_id": product_id, "warehouse_id": warehouse_id,
+                  "lot_id": lot_id, "serial_id": serial_id, "document_ref": document_ref},
+           reason=reason)
+    return movement
+
+
 def lock_balance(db: Session, *, company_id: str, warehouse_id: str, product_id: str,
                  lot_id: str | None = None, serial_id: str | None = None,
-                 state: str = "DISPONIBLE") -> InventoryBalance:
+                 state: str = "DISPONIBLE",
+                 location_id: str | None = None) -> InventoryBalance:
     """La fila de saldo **bloqueada** (`SELECT … FOR UPDATE`) dentro de la
     transacción actual (R-D0-03-3, IMP-030-021).
 
@@ -880,13 +1034,20 @@ def lock_balance(db: Session, *, company_id: str, warehouse_id: str, product_id:
     esta sesión, SQLAlchemy devolvería el objeto con los valores que leyó
     **antes** del bloqueo. La espera habría servido de nada: se decidiría sobre
     un disponible viejo. Con él, la fila bloqueada sobrescribe los atributos.
+
+    `location_id` por defecto nulo: esa fila es el **ancla de reserva** del
+    almacén, donde vive `qty_reserved` porque la reserva es de almacén y no de
+    ubicación (`R-D0-14-1`). La Spec 030 la sigue bloqueando ahí, que es un único
+    punto de serialización por empresa, almacén y producto. El put-away la usa
+    con una ubicación concreta para mover existencia física.
     """
     def _stmt():
         return (
             select(InventoryBalance).where(
                 InventoryBalance.company_id == company_id,
                 InventoryBalance.warehouse_id == warehouse_id,
-                InventoryBalance.location_id.is_(None),
+                InventoryBalance.location_id.is_(None) if location_id is None
+                else InventoryBalance.location_id == location_id,
                 InventoryBalance.product_id == product_id,
                 InventoryBalance.lot_id.is_(None) if lot_id is None else InventoryBalance.lot_id == lot_id,
                 InventoryBalance.serial_id.is_(None) if serial_id is None else InventoryBalance.serial_id == serial_id,
@@ -900,7 +1061,7 @@ def lock_balance(db: Session, *, company_id: str, warehouse_id: str, product_id:
     try:
         with db.begin_nested():
             balance = InventoryBalance(
-                company_id=company_id, warehouse_id=warehouse_id, location_id=None,
+                company_id=company_id, warehouse_id=warehouse_id, location_id=location_id,
                 product_id=product_id, lot_id=lot_id, serial_id=serial_id, state=state,
                 qty_on_hand=Decimal(0), qty_reserved=Decimal(0), qty_available=Decimal(0))
             db.add(balance)
@@ -913,9 +1074,45 @@ def lock_balance(db: Session, *, company_id: str, warehouse_id: str, product_id:
     return locked
 
 
-def available_under_lock(balance: InventoryBalance) -> Decimal:
-    """Disponible leído **después** del bloqueo, que es el único que vale."""
-    return _dec(balance.qty_on_hand) - _dec(balance.qty_reserved)
+def warehouse_sellable_on_hand(db: Session, *, company_id: str, warehouse_id: str,
+                               product_id: str, lot_id: str | None = None,
+                               serial_id: str | None = None) -> Decimal:
+    """Existencia **vendible** del almacén, sumada sobre todas las ubicaciones.
+
+    Hasta la Spec 022 esto era una sola fila porque la ubicación siempre era
+    nula. Con el put-away la mercancía se reparte entre ubicaciones reales, y
+    leer una sola fila diría que no hay nada: la mercancía ubicada resultaría
+    invendible. `POL-D0-002` §7 ya excluía la ubicación de la dimensión de la
+    reserva; esto es su consecuencia aritmética.
+
+    No suma indiscriminadamente: solo los estados vendibles de `ADR-D0-010`
+    (`R-D0-10-3`). Cien unidades en cuarentena no son cien disponibles.
+    """
+    q = select(func.coalesce(func.sum(InventoryBalance.qty_on_hand), 0)).where(
+        InventoryBalance.company_id == company_id,
+        InventoryBalance.warehouse_id == warehouse_id,
+        InventoryBalance.product_id == product_id,
+        InventoryBalance.state.in_(tuple(state_authority.SELLABLE_STATES)),
+    )
+    # Lote y serial acotan solo cuando la línea los exige (`POL-D0-002` §7).
+    if lot_id is not None:
+        q = q.where(InventoryBalance.lot_id == lot_id)
+    if serial_id is not None:
+        q = q.where(InventoryBalance.serial_id == serial_id)
+    return _dec(db.execute(q).scalar() or 0)
+
+
+def available_under_lock(db: Session, balance: InventoryBalance) -> Decimal:
+    """Disponible del **almacén** leído después del bloqueo del ancla.
+
+    `balance` es la fila ancla —ubicación nula— que `lock_balance` bloqueó y en
+    la que vive `qty_reserved`: el compromiso es de almacén y no de ubicación
+    (`R-D0-14-1`). Lo físico se suma aparte porque puede estar ubicado.
+    """
+    fisico = warehouse_sellable_on_hand(
+        db, company_id=balance.company_id, warehouse_id=balance.warehouse_id,
+        product_id=balance.product_id, lot_id=balance.lot_id, serial_id=balance.serial_id)
+    return fisico - _dec(balance.qty_reserved)
 
 
 def reserve(db: Session, *, company_id: str, source_document: str | None, product_id: str,
@@ -946,7 +1143,7 @@ def reserve(db: Session, *, company_id: str, source_document: str | None, produc
 
     balance = lock_balance(db, company_id=company_id, warehouse_id=warehouse_id, product_id=product_id,
                            lot_id=lot_id, serial_id=serial_id)
-    available = available_under_lock(balance)
+    available = available_under_lock(db, balance)
     oversell = False
     if base > available:
         if not _allow_negative(warehouse):

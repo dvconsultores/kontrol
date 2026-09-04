@@ -159,3 +159,38 @@ Y se añade lo que el próximo ciclo de implementación hereda ya decidido:
 | IMP-023-MS-041 · desbloquea la 021 tras revalidar | R-D0-10-4 | #2, #3, #7, #8 | `reclassify` | `test_las_cuatro_transiciones_que_necesita_la_021_estan_declaradas` | ✔ |
 
 **Cobertura: 100 %. Huérfanos: 0. OQ materiales: 0.**
+
+---
+
+# TRAZABILIDAD — SPEC 022 · PUT-AWAY (2026-09-04)
+
+| Requisito | Regla `D0-14` | Código / migración | Prueba | Estado |
+|---|---|---|---|---|
+| IMP-022-R-001..003 · la reserva sigue siendo de almacén y la ubicación no la dimensiona | R-D0-14-1 | `warehouse_sellable_on_hand` · el ancla conserva `qty_reserved` | `test_el_reservado_sigue_en_el_ancla…` | ✔ |
+| IMP-022-R-004..007 · el put-away no crea, libera, borra ni asigna reservas | R-D0-14-2/4 | `putaway` no menciona `qty_reserved` | `test_el_putaway_no_toca_el_reservado` · `…no_asigna_una_reserva…` | ✔ |
+| IMP-022-R-008/009 · reservado y disponible del almacén invariantes | R-D0-14-2 | — | `test_ubicar_no_toca_el_reservado_ni_el_disponible_del_almacen` | ✔ |
+| IMP-022-R-010 · `lock_balance` deja de ser la autoridad del físico | R-D0-14-3 | ancla parametrizada por ubicación | guardia estructural | ✔ |
+| IMP-022-R-011 · `get_available` refleja el almacén | R-D0-14-3 | `warehouse_sellable_on_hand` | `test_el_disponible_suma_todas_las_ubicaciones` | ✔ |
+| IMP-022-R-012 · lo no vendible sigue excluido | `D0-10` R-D0-10-3 | `SELLABLE_STATES` en la suma | `test_lo_no_vendible_no_entra_en_el_disponible…` | ✔ |
+| IMP-022-R-013 · la representación cumple las cinco invariantes | R-D0-14-5 | opción A: ancla + `recompute` ya coincidente | suite de reconstrucción | ✔ |
+| IMP-022-R-014/015 · un solo motor de reservas y de inventario | — | — | `test_no_hay_segunda_verdad_fisica` | ✔ |
+| IMP-022-R-016..018 · capacidad informativa, sin bloqueo ni aviso calculado | R-D0-14-6/7 | `"enforced": false` | `test_la_capacidad_no_bloquea` · guardia | ✔ |
+| IMP-022-R-019/020 · selección manual con candidatas del backend | R-D0-14-8/9 | `putaway_candidates` | `test_las_candidatas_son_las_activas…` | ✔ |
+| IMP-022-R-021/022 · misma empresa y mismo almacén | R-D0-14-9 | `_require_candidate_location` | `test_no_se_ubica_en_el_almacen_de_al_lado` · `…otra_empresa…` | ✔ |
+| IMP-022-R-023 · ubicación inactiva bloqueada | R-D0-14-9 | ídem | `test_una_ubicacion_inactiva_no_admite_mercancia` | ✔ |
+| IMP-022-R-024/025 · sin slotting ni recomendación | R-D0-14-10 | — | `test_no_hay_slotting_automatico` | ✔ |
+| IMP-022-R-026/027 · origen nulo legítimo, destino real | — | `putaway` | `test_el_movimiento_guarda_de_que_ubicacion_sale…` | ✔ |
+| IMP-022-R-028..033 · almacén, producto, estado, lote, serial y base intactos | R-D0-14-13 | `source_state=estado, target_state=estado` | `test_el_putaway_no_cambia_el_estado_de_mercancia` | ✔ |
+| IMP-022-R-034 · conservación física | — | — | suma 100 antes y después | ✔ |
+| IMP-022-R-035 · procedencia de ubicación en el ledger | **R-D0-14-11** | migración `0048` | `test_la_direccion_historica_la_da_el_signo…` | ✔ |
+| IMP-022-R-036/037 · reconstrucción fiel, deriva cero | **R-D0-14-12** | `recompute_balances` | `test_reconstruir_da_lo_mismo_que_el_camino_incremental` | ✔ |
+| IMP-022-R-038..042 · atomicidad, concurrencia y orden de bloqueo | POL-D0-002 §5 | orden determinista por ubicación | dos carreras reales sobre PostgreSQL | ✔ |
+| IMP-022-R-043..046 · empresa, tenant, usuario AB y cadenas mezcladas | ARCH-MC-001 | `CompanyContext` | multiempresa | ✔ |
+| IMP-022-R-047 · el permiso existe en el catálogo | — | `inventario:create` | `test_el_permiso_del_putaway_existe_en_el_catalogo` | ✔ |
+| IMP-022-R-048..051 · sin reabrir la 021, sin 025, sin 031, sin 032 | — | — | guardias estructurales | ✔ |
+| IMP-022-R-052 · la caja ×12 llega ubicada como 24 | Spec 011 · 019 | — | `test_la_caja_por_doce_llega_ubicada_como_veinticuatro` | ✔ |
+| IMP-022-R-053..060 · sin regresión de 008, 011, 019, 020, 021, 023, 030 y ARCH-MC | — | — | regresión completa | ✔ |
+| IMP-022-R-061/062 · paridad ORM/Alembic/PostgreSQL y OpenAPI | P21 | `0048` · fixture regenerada | `test_la_aplicacion_puede_insertar…` | ✔ |
+| IMP-022-R-064 · deuda P0 propia | — | — | — | **0** |
+
+**Cobertura: 100 %. Huérfanos: 0. OQ materiales: 0.**

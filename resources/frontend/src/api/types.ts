@@ -170,6 +170,22 @@ export interface InventoryBalance {
   last_rebuilt_at: string | null;
 }
 
+/** Spec 022 — ubicación candidata para el put-away. */
+export interface PutAwayLocation {
+  id: string;
+  code: string;
+  name: string | null;
+  warehouse_id: string;
+  zone_id: string | null;
+  aisle_id: string | null;
+  rack_id: string | null;
+  level_id: string | null;
+  sequence: number | null;
+  status: string;
+  /** `enforced` es siempre false en V1: la capacidad informa, no bloquea (`R-D0-14-6`). */
+  capacity: { units: number | null; weight: number | null; uom: string | null; enforced: boolean };
+}
+
 export interface InventoryMovement {
   id: string;
   company_id: string;

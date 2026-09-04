@@ -182,3 +182,93 @@ Detalle, matrices y alternativas rechazadas en
 convergencia de `D0-14`: reconciliar `lock_balance` y `get_available` para que el disponible sea del
 almacén, elegir la representación del contador reservado entre las tres compatibles, añadir la
 procedencia de ubicación al movimiento, y el put-away manual. Ninguna de esas es una decisión.
+
+---
+
+# CICLO REANUDADO — IMPLEMENTACIÓN (2026-09-04)
+
+> El mismo ciclo, retomado tras `D0-14 — CLOSED`. No se abrió Spec nueva.
+
+## Los cuatro trabajos, y ninguno era una decisión
+
+### A · El disponible deja de ser el de una fila
+
+Era el defecto que bloqueó la Spec. `lock_balance` filtraba `location_id IS NULL` en duro y
+`get_available` leía esa única fila, de modo que ubicar la mercancía la habría vuelto invendible.
+
+Ahora existe `warehouse_sellable_on_hand`, que **suma** la existencia vendible del almacén sobre
+todas las ubicaciones, y `available_under_lock` resta de ahí el compromiso. No suma
+indiscriminadamente: solo los estados vendibles de `ADR-D0-010`, así que cien unidades en cuarentena
+siguen sin ser cien disponibles.
+
+`lock_balance` sigue bloqueando la fila de ubicación nula —ahora parametrizable—, y hace bien: es un
+único punto de serialización por empresa, almacén y producto, que es lo que la garantía de
+concurrencia de la Spec 030 necesita.
+
+### B · Dónde vive el contador reservado
+
+`D0-14` dejó tres representaciones compatibles y la elección como decisión de ingeniería. **Se eligió
+la A**: el contador sigue en la fila ancla de ubicación nula.
+
+| Criterio | Por qué decide |
+|---|---|
+| Corrección | Cumple las cinco invariantes de `R-D0-14-5` |
+| Compatibilidad | `recompute_balances` **ya** proyectaba las reservas sobre esa fila. No hay divergencia entre el camino incremental y el reconstruido |
+| Auditabilidad | Un solo lugar donde mirar el compromiso de un producto en un almacén |
+| Concurrencia | Un único punto de bloqueo; no hay que ordenar bloqueos entre ubicaciones para reservar |
+| Migración | **Ninguna**. No se movió un solo dato |
+
+No se eligió por ser la de menos código: se eligió porque es la única que no introduce divergencia
+entre lo que el motor escribe y lo que la reconstrucción produce. Su contrapartida —que esa fila
+pueda mostrar `qty_available` negativo leída en aislamiento— está declarada en `D0-14` y se
+neutraliza con un guardia: **ningún módulo lee una sola fila para decidir disponibilidad de almacén**.
+
+### C · El ledger deja de suponer la ubicación
+
+`InventoryMovement` gana `source_location_id` y `target_location_id`, con la misma forma y por la
+misma razón que el estado en la `0046`. La reconstrucción los lee: un traslado tiene los dos estados
+iguales y las dos ubicaciones distintas; una reclasificación, al revés. La misma aritmética cubre
+ambos.
+
+El backfill de la `0048` no inventa dirección: la `location_id` histórica era la ubicación sobre la
+que el motor escribió el saldo, y el signo de la cantidad dice si la mercancía entró o salió de ella.
+Las filas sin ubicación no se tocan, porque nunca tuvieron una.
+
+### D · El put-away manual
+
+`putaway_candidates` devuelve las ubicaciones activas del almacén, ordenadas solo para que la lista
+sea estable. Sin puntuación, sin recomendación, sin «la más vacía»: los atributos que la clasificación
+del proceso pide no existen en el maestro y las zonas están sin validar (`R-D0-14-10`).
+
+`putaway` valida la ubicación **en el envío**, no solo al listar: entre que la pantalla carga y el
+operario confirma, una ubicación puede desactivarse, y un identificador de otra empresa o de otro
+almacén no autoriza nada. Bloquea las dos filas en orden determinista, mueve `qty_on_hand` y **nunca**
+`qty_reserved`.
+
+La capacidad se muestra con su unidad declarada y no filtra ni bloquea. La API lo dice en el propio
+contrato: `"enforced": false`.
+
+## Pruebas
+
+| Nivel | Suite | Casos |
+|---|---|---:|
+| Funcional multiempresa | `test_spec022_putaway.py` | 13 |
+| Estructural | `test_spec022_architecture.py` | 14 |
+| Migración y concurrencia | `test_spec022_migration_0048.py` | 7 |
+
+Las que sostienen la Spec son dos carreras reales sobre PostgreSQL: dos colocaciones simultáneas de
+sesenta sobre un origen de cien —gana una, el físico sigue siendo cien— y una reserva concurrente con
+una colocación, donde ambas prosperan, el compromiso no se pierde y el físico no se duplica.
+
+## Lo que deliberadamente no se hizo
+
+- **Ninguna tabla nueva.** La existencia sin ubicar ya se representa con `location_id` nula;
+  duplicarla en otra tabla habría creado la segunda verdad física que `R-D0-14-5` prohíbe.
+- **Ninguna arista nueva** en `ADR-D0-010`. El put-away conserva el estado, y un guardia comprueba
+  que `DISPONIBLE → DISPONIBLE` sigue sin existir.
+- **Ningún permiso nuevo.** Se usa `inventario:create`, que ya existe y es exactamente «escribir
+  movimientos de inventario». Un guardia comprueba que todo permiso citado por la API exista en el
+  catálogo — la lección de la Spec 021.
+- **Nada de la Spec 031**: ni cola, ni ruta, ni asignación de una reserva a una ubicación.
+- **Nada de la Spec 025**: el destino debe ser del mismo almacén, y un guardia lo comprueba.
+- **Ninguna aritmética de capacidad**: ni ocupación, ni volumen, ni peso, ni porcentajes.

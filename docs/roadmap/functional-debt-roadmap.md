@@ -6,7 +6,7 @@
 | DF-02 | Recepción física | 12 | 11 | Clasificación y ubicación (etapa 12) | 019 (8) · 020 (3) · 022 (1) |
 | DF-03 | Incidencias de recepción | *(3, dentro de DF-02)* | 3 de 3 | — **cerrado 2026-09-03** | 020 |
 | DF-04 | Confirmación de inventario recibido | 14 | 14 | — **cerrado 2026-09-04** | 021 (9) · 019 (2) · 020 (3) |
-| DF-05 | Put-away y ubicación | 12 | 1 | Determinación de zona · **decisión de producto pendiente** | 022 |
+| DF-05 | Put-away y ubicación | 12 | 12 | — **cerrado 2026-09-04** | 022 |
 | DF-06 | Toma del pedido | 7 | 4 | Condiciones comerciales desde maestro | 029 |
 | DF-07 | Cola y ruta de picking | 10 | 0 | Recepción del pedido en almacén | 031 |
 | DF-08 | Preparación física y consolidación | 12 | 2 | Llegada a la ubicación indicada | 032 |
@@ -38,11 +38,11 @@ Las cifras anteriores no cuadraban con su propia tabla y se corrigen aquí:
 
 ## Concentración de la deuda
 
-De las **135 etapas** de proceso documentadas, **57 están cubiertas (42 %)**.
+De las **135 etapas** de proceso documentadas, **68 están cubiertas (50 %)**.
 
 La deuda se concentra en dos tramos contiguos:
 
-- **Entrada de mercancía** (DF-01, DF-02, DF-04, DF-05): 50 etapas exigidas, **29 cubiertas (58 %)**.
+- **Entrada de mercancía** (DF-01, DF-02, DF-04, DF-05): 50 etapas exigidas, **40 cubiertas (80 %)**.
 - **Salida de mercancía** (DF-07 a DF-11): 45 etapas exigidas, **10 cubiertas (22 %)**.
 
 Lo que hoy funciona bien —maestros, órdenes, inventario contable, CxC/CxP, tesorería, fiscal— es
@@ -58,6 +58,6 @@ No es un conjunto de huecos dispersos: es un bloque coherente. Con 011 (unidades
 
 **La entrada de mercancía ya no rompe hasta la ubicación.** Se recibe, se inspecciona, se registra
 la excepción, se escala, se cuenta por SKU, se concilia y se confirma; lo único que el sistema
-todavía no sabe hacer es decir **dónde** quedó. Eso es la Spec 022, y su auditoría del 2026-09-04
-encontró que no le falta código sino **tres decisiones de producto**: qué pasa con lo reservado al
-ubicar, qué significa la capacidad de una ubicación, y cómo se determina el destino.
+todavía no sabía hacer era decir **dónde** quedó, y desde el 2026-09-04 lo sabe. La entrada de
+mercancía queda cerrada salvo la importación (DF-01), que es otro proceso. Lo que rompe ahora es la
+**salida**: cola y ruta de picking (031), preparación (032) y confirmación de pedido (033).

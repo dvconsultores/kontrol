@@ -81,6 +81,7 @@ const navSections = [
     items: [
       { to: "/inventario/existencias", label: "Existencias", icon: Warehouse },
       { to: "/inventario/confirmacion", label: "Confirmación", icon: ClipboardList },
+      { to: "/inventario/putaway", label: "Put-away", icon: Warehouse },
       { to: "/inventario/kardex", label: "Kardex", icon: ClipboardList },
       { to: "/inventario/movimientos", label: "Movimientos", icon: ArrowLeftRight },
       { to: "/inventario/tipos-movimiento", label: "Tipos de movimiento", icon: Settings },

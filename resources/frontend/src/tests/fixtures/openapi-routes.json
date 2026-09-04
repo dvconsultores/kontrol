@@ -573,6 +573,18 @@
       "path": "/inventory/operations/ship"
     },
     {
+      "method": "POST",
+      "path": "/inventory/putaway"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/putaway/pendientes"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/putaway/ubicaciones"
+    },
+    {
       "method": "GET",
       "path": "/inventory/reservations"
     },

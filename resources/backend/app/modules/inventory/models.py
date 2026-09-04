@@ -113,6 +113,15 @@ class InventoryMovement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     #   reclasificación  → los dos, y la cantidad viaja de uno a otro
     source_state: Mapped[str | None] = mapped_column(String(32), nullable=True)
     target_state: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
+    # Procedencia de **ubicación** (Spec 022). Misma forma que la de estado y por
+    # la misma razón: con una sola `location_id` un traslado no dice de dónde
+    # salió ni a dónde entró, y reconstruir el saldo desde el ledger volvería a
+    # suponer. Para un put-away: origen nulo, destino real, mismo almacén.
+    source_location_id: Mapped[str | None] = mapped_column(
+        ForeignKey("warehouse_locations.id"), nullable=True)
+    target_location_id: Mapped[str | None] = mapped_column(
+        ForeignKey("warehouse_locations.id"), nullable=True)
 class InventoryLot(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """Lote con vencimiento (FR-003-030/032)."""
 

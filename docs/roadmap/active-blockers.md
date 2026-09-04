@@ -40,3 +40,4 @@ es correcto sin API oficial.
 | ~~OQ-022-01~~ | **RESUELTO 2026-09-04** | — | — | `D0-14`: reserva de almacén, no de ubicación (`R-D0-14-1..5`) |
 | ~~OQ-022-02~~ | **RESUELTO 2026-09-04** | — | — | `D0-14`: capacidad informativa en V1 (`R-D0-14-6/7`) |
 | ~~OQ-022-03~~ | **RESUELTO 2026-09-04** | — | — | `D0-14`: ubicación manual con filtro de backend (`R-D0-14-8/9/10`) |
+| ~~**El disponible se leía de la fila de ubicación nula**~~ | **RESUELTO 2026-09-04** | — | — | La Spec 022 lo sustituyó por `warehouse_sellable_on_hand`, que suma lo vendible del almacén sobre todas las ubicaciones. Era el defecto que habría vuelto invendible la mercancía ubicada |

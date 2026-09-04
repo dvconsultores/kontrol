@@ -161,7 +161,7 @@ Posterior a `ARCH-MC-001 — COMPLETE / GLOBALLY CONVERGED` y a
 |---|---|---:|---|
 
 | **029 Cotización/pedido** | 030; da consumidor a 012 | 2 | **Sí** |
-| **022 Put-away** | 031, 032 | 2 en cadena | **Sí** — 008 entrega ubicaciones y 021 el estado de origen |
+| **031 Cola y ruta de picking** | 032, 033 | 2 en cadena | **Sí** — la 022 entrega existencia ubicada |
 | 048 Integraciones | 013 (BCV), 047 | 2 | Sí |
 | 033 Confirmación | 034, 035 | 2 | No — espera 032 |
 | ~~008~~, ~~045~~, ~~046~~, ~~012~~, ~~ARCH-MC-001~~ | cerradas | — | — |

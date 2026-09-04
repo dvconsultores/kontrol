@@ -56,6 +56,7 @@ export const router = createBrowserRouter([
           { path: "maestros/catalogos", lazy: () => import("@/modules/maestros/catalogos/CatalogosPage").then((m) => ({ Component: m.CatalogosPage })) },
           { path: "inventario/existencias", lazy: () => import("@/modules/inventario/existencias/ExistenciasPage").then((m) => ({ Component: m.ExistenciasPage })) },
           { path: "inventario/confirmacion", lazy: () => import("@/modules/inventario/confirmacion/ConfirmacionPage").then((m) => ({ Component: m.ConfirmacionPage })) },
+          { path: "inventario/putaway", lazy: () => import("@/modules/inventario/putaway/PutAwayPage").then((m) => ({ Component: m.PutAwayPage })) },
           { path: "inventario/kardex", lazy: () => import("@/modules/inventario/kardex/KardexPage").then((m) => ({ Component: m.KardexPage })) },
           { path: "inventario/movimientos", lazy: () => import("@/modules/inventario/movimientos/MovimientosPage").then((m) => ({ Component: m.MovimientosPage })) },
           { path: "inventario/tipos-movimiento", lazy: () => import("@/modules/inventario/tipos-movimiento/TiposMovimientoPage").then((m) => ({ Component: m.TiposMovimientoPage })) },

@@ -108,3 +108,56 @@ la afecta.
 
 **`SPEC 021 — READY_FOR_IMPLEMENTATION`.** No se implementó nada suyo: ni confirmación, ni
 conciliación, ni liberación de lote, ni endpoint. Un guardia estructural lo comprueba por nombre.
+
+---
+
+# CONVERGENCIA — SPEC 022 · PUT-AWAY Y UBICACIÓN (2026-09-04)
+
+## Lo que cierra
+
+La cadena de entrada, entera. La mercancía se recibe (019), su excepción se registra y se trata
+(020), se cuenta y se confirma (021), y ahora **se coloca**. La duodécima etapa del proceso de
+recepción y las once de clasificación y ubicación quedan cubiertas.
+
+## Lo que había que resolver sin romper nada
+
+El bloqueo de esta Spec no era construir el put-away: era que ubicar la mercancía la habría vuelto
+invendible. `lock_balance` filtraba `location_id IS NULL` en duro y `get_available` leía esa única
+fila, de modo que en cuanto el stock se moviera a una ubicación real la Spec 030 dejaría de verlo.
+
+`D0-14` cerró la semántica —la reserva es de almacén, no de ubicación— y dejó la representación
+como elección de ingeniería. Se eligió mantener el contador en la fila ancla porque
+`recompute_balances` **ya** proyectaba ahí las reservas: cualquier otra opción habría introducido
+divergencia entre lo que el motor escribe y lo que la reconstrucción produce, y ninguna migración de
+datos era necesaria.
+
+## Las tres decisiones de `D0-14`, ejecutadas exactamente
+
+| Decisión | Cómo se ejecutó |
+|---|---|
+| Reserva de almacén (`R-D0-14-1..5`) | `warehouse_sellable_on_hand` suma lo vendible de todas las ubicaciones; el ancla conserva el compromiso; el put-away nunca escribe `qty_reserved` |
+| Capacidad informativa (`R-D0-14-6/7`) | Se expone con `"enforced": false`; no filtra candidatas ni rechaza colocaciones; ningún cálculo de ocupación |
+| Ubicación manual (`R-D0-14-8/9/10`) | Candidatas filtradas por el backend y revalidadas en el envío; sin puntuación, sin recomendación, sin heurística |
+
+## Compuerta
+
+| Criterio | Resultado |
+|---|---|
+| Backend | **1036 · 1028 pasadas · 8 saltadas declaradas · 0 fallos** |
+| — nuevas de esta Spec | **34** (13 funcionales · 14 estructurales · 7 de migración y concurrencia) |
+| Frontend | **289/289** · `tsc` · ESLint · build |
+| Rutas | 452 → **455** |
+| Instalación limpia | subir a `head`, bajar la `0048`, volver a subir |
+| Migración de datos | **ninguna**: la representación elegida no movió un solo dato |
+| Deuda P0 propia | **0** |
+
+## Handoff a la Spec 031
+
+La existencia queda con empresa, almacén, producto, cantidad base, estado de mercancía, lote, serial
+y **ubicación física real**. Es lo que la cola y la ruta de picking pedían.
+
+Y queda igual de importante lo que **no** queda hecho: ninguna reserva está asignada a ninguna
+ubicación. El compromiso sigue siendo del almacén, y decidir de qué ubicación se extrae para
+satisfacerlo es de la 031. Un guardia estructural lo comprueba.
+
+`SPEC 031 — READY_FOR_IMPLEMENTATION` tras esta convergencia.
