@@ -324,3 +324,31 @@ Si se prefiere avanzar en paralelo mientras se decide, sigue habiendo trabajo de
 esta cadena: **018 Importaciones** —cero bloqueos, y libera la 026— y **048 Integraciones**, que
 desbloquea la tasa BCV de la 013 y las notificaciones de la 047. Ninguna toca inventario, así que
 ninguna prejuzga las tres decisiones pendientes.
+
+---
+
+## Tras el checkpoint D0-14 — 2026-09-04
+
+`D0-14 — CLOSED`. Las tres decisiones que bloqueaban la Spec 022 se cerraron el mismo día, y ninguna
+requería decidir nada nuevo.
+
+**La de las reservas ya estaba decidida.** `POL-D0-002` §7 dice desde septiembre que la reserva no se
+dimensiona por ubicación; de ahí se sigue, sin añadir nada, que mover mercancía entre ubicaciones no
+puede tocar el compromiso comercial. Lo que había no era una laguna de negocio sino una
+implementación que leía el disponible de una sola fila porque la ubicación siempre había sido nula.
+La política gana ahora esa consecuencia escrita.
+
+**Las otras dos se cierran por lo contrario:** porque el dato para decidir otra cosa no existe. La
+capacidad tiene columnas y ninguna regla, y su unidad es texto libre sin vínculo al catálogo; la
+clasificación pide cinco atributos que el maestro no tiene, sobre zonas que el propio documento marca
+como preliminares. Capacidad informativa y ubicación manual son las únicas opciones que no inventan.
+
+`NEXT SPEC = 022 — PUT-AWAY Y UBICACIÓN` (reanudación del mismo ciclo)
+
+Hereda cuatro trabajos de ingeniería y ninguna decisión: reconciliar `lock_balance` y `get_available`
+para que el disponible sea del almacén, elegir la representación del contador reservado entre las
+tres compatibles, añadir la procedencia de ubicación al movimiento —forma ya resuelta por precedente
+en la `0046`— y el put-away manual con filtro de candidatas.
+
+`SPEC 031` sigue bloqueada hasta que la 022 implemente y converja. Cerrar una decisión no implementa
+una capacidad.

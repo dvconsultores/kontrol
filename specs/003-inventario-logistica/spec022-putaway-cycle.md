@@ -159,3 +159,26 @@ decisión de producto.
 
 BLOCKER 0 · CRITICAL 0 · CONTRADICTIONS 0 · huérfanos 0 · **MATERIAL OQ 3**.
 Código de producto modificado: **backend 0 · frontend 0 · Alembic 0**.
+
+
+---
+
+# LAS TRES PREGUNTAS, RESUELTAS — `D0-14` (2026-09-04)
+
+El checkpoint `D0-14` cerró las tres el mismo día. Ninguna necesitaba una decisión nueva: la primera
+ya estaba decidida y faltaba leer su consecuencia; las otras dos se cierran porque el dato que haría
+falta para decidir otra cosa **no existe**, y no imponer una regla es lo único que no inventa una.
+
+| OQ | Resultado | Regla |
+|---|---|---|
+| **01** reservas | La reserva es un compromiso de **almacén**, no de ubicación. Un put-away puro conserva el reservado y el disponible del almacén | `R-D0-14-1..5` |
+| **02** capacidad | **Informativa** en V1. No bloquea. Sin avisos calculados mientras `capacity_uom` sea texto libre | `R-D0-14-6/7` |
+| **03** selección | **Manual**, con las candidatas filtradas por el backend. Automatismo diferido | `R-D0-14-8/9/10` |
+
+Detalle, matrices y alternativas rechazadas en
+`docs/governance/d0-foundational-decisions/d0-14-checkpoint/`.
+
+**`SPEC 022 — READY TO RESUME IMPLEMENTATION`.** Lo que hereda el ciclo productivo está en la
+convergencia de `D0-14`: reconciliar `lock_balance` y `get_available` para que el disponible sea del
+almacén, elegir la representación del contador reservado entre las tres compatibles, añadir la
+procedencia de ubicación al movimiento, y el put-away manual. Ninguna de esas es una decisión.

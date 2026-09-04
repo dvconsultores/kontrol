@@ -61,6 +61,13 @@ Prohibida. Única excepción: almacén con `policies.allow_negative = true`; la 
 Un almacén por pedido; sin abastecimiento cruzado. Solo saldo `DISPONIBLE`. La reserva no cambia el
 estado de custodia.
 
+> **Consecuencia para el put-away (`D0-14`, 2026-09-04).** Si la ubicación no es dimensión de la
+> reserva, entonces **mover mercancía entre ubicaciones no altera el compromiso comercial**. Un
+> put-away puro conserva el reservado y el disponible **del almacén**, y no crea, libera, cancela ni
+> reasigna reserva alguna. Que hoy el disponible se lea de la fila de ubicación nula es un artefacto
+> de que la ubicación siempre fue nula, no una regla de esta política. Asignar una reserva concreta a
+> una ubicación sigue siendo de la Spec 031 (§11).
+
 ## 8. Consumo, liberación y modificación
 
 | Evento | Efecto |
