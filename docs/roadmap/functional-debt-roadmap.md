@@ -6,7 +6,7 @@
 | DF-02 | Recepción física | 12 | 11 | Clasificación y ubicación (etapa 12) | 019 (8) · 020 (3) · 022 (1) |
 | DF-03 | Incidencias de recepción | *(3, dentro de DF-02)* | 3 de 3 | — **cerrado 2026-09-03** | 020 |
 | DF-04 | Confirmación de inventario recibido | 14 | 14 | — **cerrado 2026-09-04** | 021 (9) · 019 (2) · 020 (3) |
-| DF-05 | Put-away | 10 | 0 | Determinación de zona | 022 |
+| DF-05 | Put-away y ubicación | 12 | 1 | Determinación de zona · **decisión de producto pendiente** | 022 |
 | DF-06 | Toma del pedido | 7 | 4 | Condiciones comerciales desde maestro | 029 |
 | DF-07 | Cola y ruta de picking | 10 | 0 | Recepción del pedido en almacén | 031 |
 | DF-08 | Preparación física y consolidación | 12 | 2 | Llegada a la ubicación indicada | 032 |
@@ -23,6 +23,9 @@
 
 Las cifras anteriores no cuadraban con su propia tabla y se corrigen aquí:
 
+-1. **DF-05 tiene doce etapas, no diez.** Once del DOCX §4 «Clasificación y ubicación en almacén»
+   más la colocación temporal en zona de recepción, que es la etapa 12 de §2. Solo esa última está
+   cubierta (la Spec 019 registra la recepción en el almacén). Recontado el 2026-09-04.
 0. **DF-04 tenía catorce etapas, no once.** Extraídas del DOCX §3, párrafos 51 a 77. Nueve son de
    la Spec 021, tres de la 020 —las cuatro resoluciones son literalmente los párrafos 72 a 75— y dos
    de la 019. Las catorce están cubiertas desde el 2026-09-04.
@@ -35,11 +38,11 @@ Las cifras anteriores no cuadraban con su propia tabla y se corrigen aquí:
 
 ## Concentración de la deuda
 
-De las **133 etapas** de proceso documentadas, **56 están cubiertas (42 %)**.
+De las **135 etapas** de proceso documentadas, **57 están cubiertas (42 %)**.
 
 La deuda se concentra en dos tramos contiguos:
 
-- **Entrada de mercancía** (DF-01, DF-02, DF-04, DF-05): 48 etapas exigidas, **28 cubiertas (58 %)**.
+- **Entrada de mercancía** (DF-01, DF-02, DF-04, DF-05): 50 etapas exigidas, **29 cubiertas (58 %)**.
 - **Salida de mercancía** (DF-07 a DF-11): 45 etapas exigidas, **10 cubiertas (22 %)**.
 
 Lo que hoy funciona bien —maestros, órdenes, inventario contable, CxC/CxP, tesorería, fiscal— es
@@ -55,5 +58,6 @@ No es un conjunto de huecos dispersos: es un bloque coherente. Con 011 (unidades
 
 **La entrada de mercancía ya no rompe hasta la ubicación.** Se recibe, se inspecciona, se registra
 la excepción, se escala, se cuenta por SKU, se concilia y se confirma; lo único que el sistema
-todavía no sabe hacer es decir **dónde** quedó. Eso es la Spec 022, y desde el 2026-09-04 no le
-falta nada para empezar.
+todavía no sabe hacer es decir **dónde** quedó. Eso es la Spec 022, y su auditoría del 2026-09-04
+encontró que no le falta código sino **tres decisiones de producto**: qué pasa con lo reservado al
+ubicar, qué significa la capacidad de una ubicación, y cómo se determina el destino.

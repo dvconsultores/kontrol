@@ -43,7 +43,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 019 | Recepción física | **`COMPLETE / CONVERGED`** (2026-09-03) | arribo, bultos, comparación documental, inspección, observación física, unidad y cantidad base, acta; migración `0044` | **ninguno** |
 | 020 | Incidencias de recepción | **`COMPLETE / CONVERGED`** (2026-09-03) | `receipt_incidents`: cinco tipos, ciclo de cinco estados, tope de cantidad por tipo, resolución de conjunto cerrado, ajuste autorizado vía 045, evidencia vía 046; migración `0045` | **ninguno** |
 | 021 | Confirmación de inventario | **`COMPLETE / CONVERGED`** (2026-09-04) | conteo por SKU en base, conciliación contra orden y recepción física, cinco tipos de diferencia, decisión por línea con resultado mixto, `receipt_confirmations`; migración `0047`. **Aceptar ya no libera** | **ninguno** |
-| 022 | Put-away | **`READY_FOR_IMPLEMENTATION`** (2026-09-04) | 0 proceso. La estructura de 008 existe y nadie la usa | **ninguno**: la 021 entrega el estado de origen inequívoco —`DISPONIBLE`, cantidad base, `location_id` nula— y 008 las ubicaciones |
+| 022 | Put-away y ubicación | **`BLOCKED_BY_BUSINESS_DECISION`** (2026-09-04) | 0 proceso. La estructura de 008 y el origen de la 021 están completos | **tres decisiones de producto**: qué pasa con lo reservado al ubicar, qué significa la capacidad de una ubicación, y cómo se determina el destino. Auditado en `spec022-putaway-cycle.md` |
 | 023 | Inventario / Kardex | `PARTIALLY_IMPLEMENTED` · capacidad multiestado **`COMPLETE / CONVERGED`** (2026-09-04) | `inventory` 13 tablas; autoridad única de estados (`states.py`), procedencia en el ledger, reclasificación canónica, reconstrucción fiel; migración `0046` | **ninguno** para la capacidad. La Spec sigue parcial por requisitos ajenos a ella (ubicación en la práctica, FEFO, valoración) |
 | 024 | Lotes / seriales / vencimiento | `PARTIALLY_IMPLEMENTED` | `inventory_lots`, `product_serials` | — |
 | 025 | Transferencias / conteos / ajustes | `PARTIALLY_IMPLEMENTED` | `transfers`, `stock_counts`, `inventory_adjustments` | — |
@@ -85,11 +85,11 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 |---|---:|
 | `COMPLETE / CONVERGED` | 9 — 008, 011, 012, 019, 020, **021**, 029, 030, 045 |
 | `RECONVERGED` | 1 — 046 |
-| `READY_FOR_IMPLEMENTATION` | **1 — 022** |
+| `READY_FOR_IMPLEMENTATION` | **0** |
 | `PARTIALLY_IMPLEMENTED` | 32 |
 | `NOT_STARTED` | 3 — 018, 033, 047 |
 | `BLOCKED_BY_DEPENDENCY` | 2 — 031, 032 |
-| `BLOCKED_BY_BUSINESS_DECISION` | 1 — 004 |
+| `BLOCKED_BY_BUSINESS_DECISION` | 2 — 004, **022** |
 | `BLOCKED_BY_LEGAL_VALIDATION` | 6 — 039, 040, 041, 042, 043, 056 |
 | `BLOCKED_BY_EXTERNAL_SERVICE` | 1 — 044 |
 | **Sin estado** | **0** |

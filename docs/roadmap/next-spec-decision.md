@@ -291,3 +291,36 @@ entrada entera.
 Detrás quedan 031 y 032, que esperan existencia ubicada y que la 022 desbloquea.
 
 Implementación de la 022 **no iniciada**: requiere su propio ciclo con autorización expresa.
+
+
+---
+
+## Tras la auditoría de la Spec 022 — 2026-09-04
+
+`SPEC 022 — BLOCKED BY MATERIAL DECISION`. Por segunda vez en esta cadena, el bloqueo real no era
+código.
+
+La estructura estaba lista de verdad: la Spec 008 entrega zonas, pasillos, racks, niveles y
+ubicaciones con su cadena completa, y la Spec 021 entrega el origen inequívoco. Lo que falta son tres
+decisiones, y una de ellas no es evitable ni marginal.
+
+**La bloqueante es la interacción con las reservas.** `lock_balance` filtra `location_id IS NULL` en
+duro y `get_available` lee esa única fila. La Spec 021 deja la mercancía confirmada exactamente ahí.
+En cuanto el put-away la mueva a una ubicación real, la Spec 030 dejará de verla: bloqueará la fila
+nula, calculará disponible negativo si había reservas, y la mercancía ubicada será invendible.
+`POL-D0-002` §7 dice que la reserva no se dimensiona por ubicación, lo que apunta a agregar el
+disponible por almacén; pero dónde vive entonces el contador `qty_reserved` no lo dice ningún
+artefacto, y cambiar cómo la 030 calcula el disponible es tocar el contrato de `D0-03`.
+
+Las otras dos: la capacidad de una ubicación tiene columnas —unidades, peso y su unidad— pero
+ninguna regla que diga si bloquea o solo avisa; y la clasificación que el proceso pide exige
+familia, tamaño, peso, rotación y volumen, **cinco atributos que el maestro de productos no tiene**,
+sobre zonas que el propio documento marca como «preliminares que conviene validar».
+
+**Ninguna Spec queda seleccionada.** La ruta crítica vuelve a pasar por una decisión. Las opciones
+están en `specs/003-inventario-logistica/spec022-putaway-cycle.md`.
+
+Si se prefiere avanzar en paralelo mientras se decide, sigue habiendo trabajo desbloqueado fuera de
+esta cadena: **018 Importaciones** —cero bloqueos, y libera la 026— y **048 Integraciones**, que
+desbloquea la tasa BCV de la 013 y las notificaciones de la 047. Ninguna toca inventario, así que
+ninguna prejuzga las tres decisiones pendientes.
