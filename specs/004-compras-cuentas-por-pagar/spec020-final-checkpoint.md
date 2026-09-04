@@ -42,7 +42,7 @@ sumar más de lo que bajó del camión.
 | Backend (PostgreSQL 18.6 · ClamAV 1.4.3) | **920 · 912 pasadas · 8 saltadas declaradas · 0 fallos · 0 errores** |
 | — nuevas de esta Spec | **47** |
 | Frontend | 285/285 · `tsc` · ESLint · build |
-| E2E | **86 pasadas · 16 fallos ajenos** en 13 suites × 3 navegadores. Los 16 son previos: los mismos 7 casos fallan idénticos en el árbol anterior a esta Spec, verificado en copia limpia de `409b945`. Dos suites del arnés N6 no corren en esta pila |
+| E2E | **86 pasadas · 16 fallos ajenos** en 13 suites × 3 navegadores. Dos suites del arnés N6 no corren en esta pila. **Remedido y sellado el 2026-09-04** (`spec020-evidence-seal.md`): 297 ejecuciones, 232 pasadas, 65 fallos, **los 65 reproducidos** en `409b945` —que falla 77 en esas mismas suites—, 0 regresiones nuevas y las dos suites N6 en verde sobre su propia base |
 | Instalación limpia | subir, bajar la `0045`, volver a subir |
 
 ## Deuda propia

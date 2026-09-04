@@ -205,3 +205,20 @@ vacía por otras razones, así que nunca comprobó lo que dice comprobar.
 Se deja anotado y **no se corrige aquí**: es prueba de la Spec 045, y arreglarla desde la 020 sería
 tocar lo que esta Spec declaró fuera de alcance. Importa porque una prueba falsa de aislamiento
 entre empresas es peor que ninguna: da por cubierta una frontera que nadie está vigilando.
+
+
+---
+
+## Sello de evidencia posterior al cierre — 2026-09-04
+
+La evidencia que se perdió con el reinicio del entorno se rehízo entera: PostgreSQL 18.6 y ClamAV
+1.4.3 reprovisionados, backend **920 · 912 · 8 saltadas · 0 fallos**, frontend 285/285 con `tsc`,
+ESLint y build, y una e2e **completa** de 297 ejecuciones en tres navegadores —incluidas las dos
+suites del arnés N6 sobre su propia base, que nunca se habían corrido y pasan las 75—.
+
+Los 65 fallos se reprodujeron uno a uno contra `409b945`, el árbol anterior a esta Spec, que falla
+**77** en esas mismas siete suites. Regresiones nuevas de la 020: **cero**. Y trece casos que
+fallaban antes ahora pasan, casi todos de accesibilidad, por el arreglo de los quince `aria-label`
+que esta Spec destapó.
+
+`SPEC 020 — COMPLETE / CONVERGED / EVIDENCE SEALED`. Detalle en `spec020-evidence-seal.md`.
