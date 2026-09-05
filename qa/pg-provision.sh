@@ -16,6 +16,25 @@ LOG="${KONTROL_PGLOG:-/tmp/kontrol-pg.log}"
 
 [ -x "$PGBIN/pg_ctl" ] || { echo "pgserver no instalado: pip install pgserver"; exit 1; }
 
+# `btree_gist` no viene en el paquete `pgserver`: su instalación trae `plpgsql` y
+# `vector` y nada más. El esquema lo necesita —hay un `CREATE EXTENSION IF NOT
+# EXISTS btree_gist` en las migraciones— así que sin él **toda** la suite falla
+# en el fixture, no en una prueba concreta. Se compila una vez con PGXS contra
+# esa misma instalación; requiere gcc y make.
+ext_btree_gist() {
+  local dir="$($PGBIN/pg_config --sharedir)/extension"
+  [ -f "$dir/btree_gist.control" ] && return 0
+  local ver="$($PGBIN/pg_config --version | awk '{print $2}')"
+  local tmp="${KONTROL_PGSRC:-/tmp/kontrol-pgsrc}"
+  echo "compilando btree_gist para PostgreSQL $ver…"
+  mkdir -p "$tmp"
+  [ -d "$tmp/postgresql-$ver" ] || {
+    curl -sSL "https://ftp.postgresql.org/pub/source/v$ver/postgresql-$ver.tar.bz2" \
+      | tar xjf - -C "$tmp" "postgresql-$ver/contrib/btree_gist"
+  }
+  make -C "$tmp/postgresql-$ver/contrib/btree_gist" USE_PGXS=1 PG_CONFIG="$PGBIN/pg_config" install >/dev/null
+}
+
 init() {
   [ -f "$PGDATA/PG_VERSION" ] && return 0
   mkdir -p "$PGDATA"
@@ -24,6 +43,7 @@ init() {
 }
 
 start() {
+  ext_btree_gist
   init
   "$PGBIN/pg_ctl" -D "$PGDATA" -o "-p $PGPORT -c listen_addresses=localhost -c timezone=UTC" -l "$LOG" start
   sleep 2

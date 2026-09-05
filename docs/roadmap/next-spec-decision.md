@@ -467,3 +467,32 @@ reconstruir PostgreSQL, reconstruir ClamAV, validar migraciones y **validar el n
 esperado** antes de medir nada.
 
 Detrás sigue la 032, bloqueada hasta que la 031 converja.
+
+---
+
+## Tras la implementación de la Spec 031 — 2026-09-05
+
+`SPEC 031 — COMPLETE / CONVERGED`. Backend 1063/1063 con 8 saltos —los esperados, todos de S3—,
+frontend 291/291, e2e propia 24/24 en los tres navegadores y la cadena operativa entera 84/84.
+Migración `0049` con ida y vuelta sobre base limpia.
+
+La cola se ordena por `released_at` con desempate por `id`; la asignación es por ubicación y descuenta
+lo que otros planes vivos ya tomaron; el recorrido lo da la Spec 008 y aquí solo se numera; y el plan
+tiene cinco estados con `CHECK` en la base. Planificar no mueve una sola unidad, y hay prueba de ello
+midiendo existencia, reservado y número de movimientos antes y después de cada transición.
+
+Los dos deltas dirigidos que `D0-15` había declarado están hechos: crear un borrador ya no saca el
+pedido de la cola, y existe `PREPARING → RELEASED` para que cancelar un plan confirmado no lo vare.
+La guardia de la Spec 030 se actualizó con el motivo, no se relajó.
+
+De paso, tres hallazgos que no eran de esta Spec: `pgserver` no trae `btree_gist` y sin él toda la
+suite falla en el fixture —ahora lo compila `qa/pg-provision.sh`—, y dos e2e de las Specs 019 y 020
+leían el listado de saldos sin filtro cuando ese listado pagina.
+
+`NEXT SPEC = 032 — PICKING Y CONSOLIDACIÓN`
+
+Pasa de `BLOCKED_BY_DEPENDENCY` a `NOT_STARTED`: ya no la bloquea nada. Recibe un plan `CONFIRMED`
+válido y su contrato de entrada está escrito en `spec032-handoff-after-spec031.md`, incluido lo que
+deberá definir ella misma —el primer efecto físico irreversible— y lo que no hereda.
+
+Implementación de la 032 **no iniciada**: requiere su propio ciclo con autorización expresa.

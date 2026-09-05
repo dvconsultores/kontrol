@@ -16,7 +16,8 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text
+from sqlalchemy import JSON, Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text
+from sqlalchemy import column as sql_column_pl
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.expression import column as sql_column
 
@@ -188,27 +189,82 @@ class SalesOrderLine(UUIDMixin, TimestampMixin, Base):
     conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
+#: Ciclo de vida del plan de picking (`D0-15`, `R-D0-15-10`).
+#:
+#: `DRAFT` planifica y puede ser parcial · `CONFIRMED` está completo y listo para
+#: la Spec 032 · `CLOSED` lo escribe la ejecución física de la 032, nunca la 031 ·
+#: `CANCELLED` es un acto deliberado · `INVALIDATED`, la consecuencia de perder
+#: una precondición aguas arriba. Los tres últimos son terminales.
+PLAN_STATUSES = ("DRAFT", "CONFIRMED", "CLOSED", "CANCELLED", "INVALIDATED")
+
+#: Estados en los que el plan retiene existencia: sus líneas son asignaciones
+#: vivas y descuentan lo asignable de la ubicación (`R-D0-15-12`, `R-D0-15-22`).
+PLAN_ACTIVE_STATUSES = ("DRAFT", "CONFIRMED")
+
+
 class PickList(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "pick_lists"
     __scope__ = Scope.COMPANY
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('DRAFT', 'CONFIRMED', 'CLOSED', 'CANCELLED', 'INVALIDATED')",
+            name="pick_list_status"),
+        # Un pedido no puede tener dos planes vivos a la vez: dos almacenistas
+        # asignando la misma demanda por separado la comprometerían dos veces.
+        # Va en el ORM además de en la migración porque las suites levantan el
+        # esquema con `create_all`.
+        Index("uq_pick_lists_active_order", "order_id", unique=True,
+              postgresql_where=sql_column_pl("status").in_(("DRAFT", "CONFIRMED"))
+              ).ddl_if(dialect="postgresql"),
+    )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     order_id: Mapped[str] = mapped_column(ForeignKey("sales_orders.id"), nullable=False, index=True)
     warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
 
+    # --- Ciclo de vida (Spec 031, `D0-15`) ---
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    confirmed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    invalidated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
 
 class PickListLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "pick_list_lines"
     __scope__ = Scope.COMPANY
     __scope_authority__ = "picklist_id → pick_lists"
-    __table_args__ = (Index("ix_pick_list_lines_uom_id", "uom_id"),)
+    __table_args__ = (
+        Index("ix_pick_list_lines_uom_id", "uom_id"),
+        # Una asignación es «de aquí, tanto, en este puesto del recorrido»: o
+        # están los cuatro campos o no está ninguno. Nacen anulables porque el
+        # esqueleto anterior pudo crear líneas sin ubicación y una migración no
+        # inventa historia; lo que la restricción impide es la forma a medias.
+        CheckConstraint(
+            "(location_id IS NULL AND sequence IS NULL AND state IS NULL) OR "
+            "(location_id IS NOT NULL AND sequence IS NOT NULL AND state IS NOT NULL "
+            " AND base_quantity IS NOT NULL)",
+            name="pick_list_line_allocation_shape"),
+    )
 
     picklist_id: Mapped[str] = mapped_column(ForeignKey("pick_lists.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     lot_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     serial_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+
+    # --- Asignación por ubicación (Spec 031, `R-D0-15-7`, `R-D0-15-22`) ---
+    #: La demanda que satisface. Sin ella no se puede comprobar que lo asignado
+    #: no exceda lo reservado de esa línea.
+    order_line_id: Mapped[str | None] = mapped_column(ForeignKey("sales_order_lines.id"), nullable=True)
+    #: De dónde se recoge. Nunca nula en una asignación real: la mercancía sin
+    #: ubicar no es candidata.
+    location_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_locations.id"), nullable=True)
+    #: Estado de mercancía, para parear con la identidad exacta del saldo.
+    state: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    #: Puesto en el recorrido, derivado del orden físico de la Spec 008.
+    sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
     uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)

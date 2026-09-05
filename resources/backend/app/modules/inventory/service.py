@@ -900,6 +900,32 @@ def putaway_candidates(db: Session, *, company_id: str, warehouse_id: str) -> li
         ).order_by(WarehouseLocation.sequence, WarehouseLocation.code)).scalars().all())
 
 
+def location_in_warehouse(db: Session, *, company_id: str, warehouse_id: str,
+                          location_id: str) -> Any:
+    """Resuelve una ubicación **bajo el contexto**: empresa, almacén y actividad.
+
+    Un identificador válido en otra empresa o en otro almacén no autoriza nada.
+    Se comprueba en cada envío y no solo al listar, porque entre que la pantalla
+    carga y el operario confirma la ubicación puede desactivarse.
+    """
+    from app.modules.organization.models import WarehouseLocation
+
+    location = db.execute(select(WarehouseLocation).where(
+        WarehouseLocation.id == location_id,
+        WarehouseLocation.company_id == company_id)).scalars().first()
+    if location is None:
+        raise NotFoundError(message="La ubicación no existe en esta empresa")
+    if location.warehouse_id != warehouse_id:
+        raise ConflictError(
+            code="LOCATION_OTHER_WAREHOUSE",
+            message="La ubicación pertenece a otro almacén.",
+            details={"warehouse_id": warehouse_id, "location_warehouse_id": location.warehouse_id})
+    if location.status != "ACTIVE":
+        raise ConflictError(code="LOCATION_NOT_ELIGIBLE",
+                            message=f"La ubicación no está activa (estado {location.status}).")
+    return location
+
+
 def _require_candidate_location(db: Session, *, company_id: str, warehouse_id: str,
                                 location_id: str) -> Any:
     """Revalida la ubicación **en el envío**, no solo al listar candidatas.
@@ -1100,6 +1126,36 @@ def warehouse_sellable_on_hand(db: Session, *, company_id: str, warehouse_id: st
     if serial_id is not None:
         q = q.where(InventoryBalance.serial_id == serial_id)
     return _dec(db.execute(q).scalar() or 0)
+
+
+def located_sellable_balances(db: Session, *, company_id: str, warehouse_id: str,
+                              product_id: str, lot_id: str | None = None,
+                              serial_id: str | None = None) -> list[InventoryBalance]:
+    """Filas de saldo **ubicadas y vendibles** del almacén, con existencia > 0.
+
+    Es la materia prima del picking: de dónde se puede recoger. Excluye por
+    construcción dos cosas que la Spec 031 no puede tocar. La mercancía **sin
+    ubicar** (`location_id` nula) no es candidata: existe y está comprometida,
+    pero nadie puede ir a por ella hasta que el put-away la coloque. Y los
+    estados **no vendibles** de `ADR-D0-010` quedan fuera: cien unidades en
+    cuarentena no son cien recogibles.
+
+    Devuelve las filas, no una suma: el picking necesita la identidad completa
+    —ubicación, lote, serial, estado— porque asigna sobre ella.
+    """
+    q = select(InventoryBalance).where(
+        InventoryBalance.company_id == company_id,
+        InventoryBalance.warehouse_id == warehouse_id,
+        InventoryBalance.product_id == product_id,
+        InventoryBalance.location_id.isnot(None),
+        InventoryBalance.state.in_(tuple(state_authority.SELLABLE_STATES)),
+        InventoryBalance.qty_on_hand > 0,
+    )
+    if lot_id is not None:
+        q = q.where(InventoryBalance.lot_id == lot_id)
+    if serial_id is not None:
+        q = q.where(InventoryBalance.serial_id == serial_id)
+    return list(db.execute(q).scalars().all())
 
 
 def available_under_lock(db: Session, balance: InventoryBalance) -> Decimal:

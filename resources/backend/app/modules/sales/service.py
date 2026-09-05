@@ -16,19 +16,22 @@ from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.approvals import integration as approvals_integration
 from app.modules.approvals import service as approvals_service
 from app.modules.inventory import service as inv_service
+from app.modules.inventory.models import InventoryBalance, Reservation
 from app.modules.master_data import uom as uom_engine
 from app.modules.organization.models import Company, Warehouse
 from app.modules.organization.service import warehouse_belongs_to
+from app.modules.organization.structure import physical_order_query
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import OpenItem
 from app.modules.sales.models import (
+    PLAN_ACTIVE_STATUSES,
     PickList,
     PickListLine,
     SalesCreditNote,
@@ -86,7 +89,11 @@ ORDER_TRANSITIONS: dict[str, set[str]] = {
     "DRAFT": {"SUBMITTED", "CANCELLED"},
     "SUBMITTED": {"RELEASED", "REJECTED", "CANCELLED", "EXPIRED", "DRAFT"},
     "RELEASED": {"PREPARING", "SHIPPED", "CANCELLED", "DRAFT"},
-    "PREPARING": {"SHIPPED", "CANCELLED"},
+    # `RELEASED` de vuelta: `R-D0-15-19`. Cancelar un plan de picking confirmado
+    # antes de cualquier efecto físico devuelve el pedido a la cola. Sin esta
+    # arista quedaría varado en `PREPARING` con la reserva viva, sin plan y sin
+    # camino de vuelta.
+    "PREPARING": {"SHIPPED", "CANCELLED", "RELEASED"},
     "SHIPPED": {"CLOSED"},
     "CLOSED": set(),
     "CANCELLED": set(),
@@ -131,6 +138,17 @@ def _order_credit_context(db: Session, order: SalesOrder) -> dict[str, Any]:
 def _assert_transition(current: str, target: str, transitions: dict[str, set[str]], what: str) -> None:
     if target not in transitions.get(current, set()):
         raise ConflictError(code="INVALID_STATE_TRANSITION", message=f"No se permite pasar {what} de {current} a {target}.")
+
+
+def _dec(value: Any) -> Decimal:
+    """Coerción a `Decimal` en la frontera del servicio.
+
+    La misma razón que en inventario: la API recibe números y mezclar `float`
+    con `Decimal` en aritmética es el defecto que rompió factura, pago y notas.
+    """
+    if value is None:
+        return Decimal(0)
+    return value if isinstance(value, Decimal) else Decimal(str(value))
 
 
 def _company(company_id: str | None, *, obj: str) -> str:
@@ -878,10 +896,480 @@ def create_picklist(db: Session, *, company_id: str, code: str, order_id: str, w
         db.add(PickListLine(picklist_id=str(pl.id), product_id=item["product_id"],
                             lot_id=item.get("lot_id"), serial_id=item.get("serial_id"),
                             quantity=item.get("quantity", 0.0)))
-    order.status = "PREPARING"
+    # El pedido **no** sale de la cola al crear el borrador (`R-D0-15-18`). Un
+    # `DRAFT` puede ser parcial y no lo puede ejecutar nadie, así que el pedido
+    # sigue esperando a ser planificado. Antes se movía aquí, y un borrador
+    # parcial lo habría sacado de la fila sin que ningún plan pudiera ejecutarse.
+    # Lo mueve `confirm_plan`, que es cuando la planificación está completa.
     order.updated_at = datetime.now(UTC)
     db.flush()
     return pl
+
+
+# =========================================================================== #
+# Spec 031 · cola, asignación por ubicación y ruta de picking
+#
+# Planificar no es recoger. Todo lo que hay aquí decide **de dónde** se sacará
+# la mercancía y **en qué orden se recorrerá el almacén**; nada de esto mueve
+# una sola unidad. El movimiento físico es de la Spec 032.
+#
+# Las reglas las cerró `D0-15`. Las tres que gobiernan el diseño:
+#   · la cola se ordena por `released_at`, que es el sello del acto que mete el
+#     pedido en ella, con desempate por `id` (`R-D0-15-2/3`);
+#   · un plan parcial puede existir, pero solo en `DRAFT` (`R-D0-15-6`);
+#   · confirmar exige el 100 % de lo reservado (`R-D0-15-8`).
+# =========================================================================== #
+
+
+def _base_de(reserva: Reservation) -> Decimal:
+    """La cantidad reservada **en unidad base**.
+
+    `base_quantity` es lo que la Spec 011 congela; `quantity` está en la unidad
+    de la línea. Dos cajas de doce son veinticuatro, y el picking asigna
+    veinticuatro. Si el snapshot falta, la reserva no se hizo con unidad y la
+    cantidad ya es base.
+    """
+    return _dec(reserva.base_quantity if reserva.base_quantity is not None else reserva.quantity)
+
+
+def _reserva_de_linea(db: Session, *, company_id: str, order_line_id: str) -> Reservation:
+    """La reserva activa que respalda una línea de pedido."""
+    reserva = db.execute(
+        select(Reservation).where(Reservation.company_id == company_id,
+                                  Reservation.source_line_id == order_line_id,
+                                  Reservation.status == "ACTIVE")
+    ).scalars().first()
+    if reserva is None:
+        raise ConflictError(code="PICKING_LINE_NOT_RESERVED",
+                            message="La línea no tiene reserva activa que planificar.")
+    return reserva
+
+
+def picking_queue(db: Session, *, company_id: str, warehouse_id: str | None = None) -> list[SalesOrder]:
+    """La cola de preparación: pedidos liberados, en orden de entrada.
+
+    `RELEASED` es el estado que mete el pedido en esta cola —lo dice
+    `FR-030-050` y lo escribe `_a_released`— y `released_at` es el sello de ese
+    acto. Ordenar por él no elige un criterio entre varios: ordena por el
+    momento de entrada, que es lo único que el proceso pide sin añadir una
+    dimensión de prioridad que `D0-03` §8 mantiene diferida.
+
+    El desempate es `id`, clave primaria: dos liberaciones en el mismo instante
+    son posibles y sin él el residuo lo decidiría el orden natural de
+    PostgreSQL, que no es un orden. Nunca se ordena por `code`: no tiene
+    restricción de unicidad y no haría total la secuencia.
+    """
+    company_id = _company(company_id, obj="picking")
+    reservada = (
+        select(Reservation.source_order_id)
+        .where(Reservation.company_id == company_id, Reservation.status == "ACTIVE",
+               Reservation.source_order_id.isnot(None))
+    )
+    q = (select(SalesOrder)
+         .where(SalesOrder.company_id == company_id,
+                SalesOrder.status == ORDER_HANDOFF_STATE,
+                SalesOrder.id.in_(reservada))
+         .order_by(SalesOrder.released_at.asc(), SalesOrder.id.asc()))
+    if warehouse_id:
+        q = q.where(SalesOrder.warehouse_id == warehouse_id)
+    return list(db.execute(q).scalars().all())
+
+
+def _require_plan(db: Session, company_id: str, plan_id: str, *, lock: bool = False) -> PickList:
+    q = select(PickList).where(PickList.id == plan_id)
+    if lock:
+        q = q.with_for_update()
+    plan = db.execute(q).scalars().first()
+    if plan is None or str(plan.company_id) != str(company_id):
+        raise NotFoundError(code="PICKING_PLAN_NOT_FOUND", message="Plan de picking no encontrado")
+    return plan
+
+
+def get_plan(db: Session, *, company_id: str, plan_id: str) -> PickList:
+    """El plan resuelto bajo el contexto de empresa."""
+    return _require_plan(db, _company(company_id, obj="picking"), plan_id)
+
+
+def _lineas_del_plan(db: Session, plan: PickList) -> list[PickListLine]:
+    return list(db.execute(
+        select(PickListLine).where(PickListLine.picklist_id == str(plan.id))
+    ).scalars().all())
+
+
+def _asignado_en_identidad(db: Session, *, company_id: str, location_id: str, product_id: str,
+                           state: str, lot_id: str | None, serial_id: str | None,
+                           excepto_linea: str | None = None) -> Decimal:
+    """Lo que los planes **vivos** ya tienen tomado de esa identidad física.
+
+    Una asignación está viva si y solo si su plan lo está (`DRAFT` o
+    `CONFIRMED`). No hay estado por línea a propósito: sería una segunda verdad
+    capaz de contradecir al plan que la contiene.
+    """
+    q = (select(func.coalesce(func.sum(PickListLine.base_quantity), 0))
+         .join(PickList, PickList.id == PickListLine.picklist_id)
+         .where(PickList.company_id == company_id,
+                PickList.status.in_(PLAN_ACTIVE_STATUSES),
+                PickListLine.location_id == location_id,
+                PickListLine.product_id == product_id,
+                PickListLine.state == state))
+    q = q.where(PickListLine.lot_id == lot_id) if lot_id is not None else q.where(PickListLine.lot_id.is_(None))
+    q = q.where(PickListLine.serial_id == serial_id) if serial_id is not None else q.where(PickListLine.serial_id.is_(None))
+    if excepto_linea:
+        q = q.where(PickListLine.id != excepto_linea)
+    return _dec(db.execute(q).scalar() or 0)
+
+
+def _asignado_a_linea(db: Session, *, plan_id: str, order_line_id: str,
+                      excepto_linea: str | None = None) -> Decimal:
+    q = (select(func.coalesce(func.sum(PickListLine.base_quantity), 0))
+         .where(PickListLine.picklist_id == plan_id,
+                PickListLine.order_line_id == order_line_id,
+                PickListLine.location_id.isnot(None)))
+    if excepto_linea:
+        q = q.where(PickListLine.id != excepto_linea)
+    return _dec(db.execute(q).scalar() or 0)
+
+
+def picking_candidates(db: Session, *, company_id: str, plan_id: str, order_line_id: str) -> list[dict]:
+    """De qué ubicaciones se puede recoger esa línea, en orden de recorrido.
+
+    Candidata es la existencia **ubicada y vendible** cuyo asignable sea
+    positivo. No se descuenta `qty_reserved`: el compromiso comercial es de
+    almacén y ya está representado en la propia reserva que estamos
+    satisfaciendo; restarlo aquí lo contaría dos veces.
+    """
+    company_id = _company(company_id, obj="picking")
+    plan = _require_plan(db, company_id, plan_id)
+    reserva = _reserva_de_linea(db, company_id=company_id, order_line_id=order_line_id)
+    saldos = inv_service.located_sellable_balances(
+        db, company_id=company_id, warehouse_id=str(plan.warehouse_id),
+        product_id=str(reserva.product_id), lot_id=reserva.lot_id, serial_id=reserva.serial_id)
+    orden = _orden_fisico(db, str(plan.warehouse_id))
+    salida = []
+    for saldo in saldos:
+        tomado = _asignado_en_identidad(
+            db, company_id=company_id, location_id=str(saldo.location_id),
+            product_id=str(saldo.product_id), state=saldo.state,
+            lot_id=saldo.lot_id, serial_id=saldo.serial_id)
+        asignable = _dec(saldo.qty_on_hand) - tomado
+        if asignable <= 0:
+            continue
+        salida.append({"location_id": str(saldo.location_id), "product_id": str(saldo.product_id),
+                       "state": saldo.state, "lot_id": saldo.lot_id, "serial_id": saldo.serial_id,
+                       "on_hand": str(_dec(saldo.qty_on_hand)), "allocatable": str(asignable),
+                       "sequence": orden.get(str(saldo.location_id), len(orden))})
+    salida.sort(key=lambda c: (c["sequence"], c["location_id"]))
+    return salida
+
+
+def _orden_fisico(db: Session, warehouse_id: str) -> dict[str, int]:
+    """Ubicación → puesto en el recorrido, según la autoridad de la Spec 008.
+
+    No se calcula ninguna ruta aquí. `physical_order_query` ya devuelve el orden
+    físico total y determinista —zona, pasillo, rack, nivel, ubicación, con
+    desempate por código (`FR-008-033`)— y esto solo lo numera.
+    """
+    filas = db.execute(physical_order_query(warehouse_id)).all()
+    return {str(fila[0].id): i for i, fila in enumerate(filas)}
+
+
+def _resecuenciar(db: Session, plan: PickList) -> None:
+    """Numera el recorrido según el orden físico de la Spec 008.
+
+    Se rehace cada vez que cambian las asignaciones para que un `DRAFT` ya
+    enseñe su ruta. El desempate final por `id` de línea la hace total: dos
+    asignaciones en la misma ubicación deben salir siempre en el mismo orden.
+    """
+    orden = _orden_fisico(db, str(plan.warehouse_id))
+    lineas = [ln for ln in _lineas_del_plan(db, plan) if ln.location_id is not None]
+    lineas.sort(key=lambda ln: (orden.get(str(ln.location_id), len(orden)),
+                                str(ln.location_id), str(ln.id)))
+    for puesto, linea in enumerate(lineas, start=1):
+        linea.sequence = puesto
+
+
+def _saldo_candidato(db: Session, *, company_id: str, warehouse_id: str, location_id: str,
+                     product_id: str, lot_id: str | None, serial_id: str | None,
+                     state: str | None) -> InventoryBalance:
+    """La fila física de la que se va a tomar, **bloqueada**.
+
+    El bloqueo es lo que impide que dos planes se lleven las mismas unidades:
+    sin él, ambos leerían el mismo disponible y ambos cabrían.
+    """
+    q = (select(InventoryBalance)
+         .where(InventoryBalance.company_id == company_id,
+                InventoryBalance.warehouse_id == warehouse_id,
+                InventoryBalance.location_id == location_id,
+                InventoryBalance.product_id == product_id,
+                InventoryBalance.state.in_(tuple(inv_service.state_authority.SELLABLE_STATES)))
+         .with_for_update())
+    q = q.where(InventoryBalance.lot_id == lot_id) if lot_id is not None else q.where(InventoryBalance.lot_id.is_(None))
+    q = q.where(InventoryBalance.serial_id == serial_id) if serial_id is not None else q.where(InventoryBalance.serial_id.is_(None))
+    if state is not None:
+        q = q.where(InventoryBalance.state == state)
+    filas = list(db.execute(q).scalars().all())
+    if not filas:
+        raise ConflictError(code="PICKING_LOCATION_NOT_ELIGIBLE",
+                            message="La ubicación no tiene existencia vendible de ese producto.")
+    if len(filas) > 1:
+        raise ConflictError(code="PICKING_STATE_AMBIGUOUS",
+                            message="Hay varios estados vendibles en esa ubicación: indique cuál.")
+    return filas[0]
+
+
+def allocate(db: Session, *, company_id: str, plan_id: str, order_line_id: str, location_id: str,
+             quantity: Decimal | float | str, state: str | None = None,
+             actor: str | None = None) -> PickList:
+    """Fija cuánto se recoge de una ubicación para una línea del pedido.
+
+    **Fija, no suma.** Repetir la misma petición deja el mismo resultado, que es
+    lo que hace la operación idempotente sin necesidad de una clave de cliente:
+    un doble envío no asigna el doble. Cantidad cero retira la asignación.
+
+    Dos invariantes se comprueban con la fila bloqueada, nunca antes:
+    lo asignado a la línea no puede exceder lo reservado para ella, y lo tomado
+    de una ubicación no puede exceder lo que físicamente hay allí.
+    """
+    company_id = _company(company_id, obj="picking")
+    plan = _require_plan(db, company_id, plan_id, lock=True)
+    if plan.status != "DRAFT":
+        raise ConflictError(code="PICKING_PLAN_NOT_DRAFT",
+                            message="Solo un plan en borrador admite cambios de asignación.")
+    order = _lock_order(db, company_id, str(plan.order_id))
+    if order.status != ORDER_HANDOFF_STATE:
+        raise ConflictError(code="PICKING_ORDER_NOT_ELIGIBLE",
+                            message="El pedido ya no está liberado para preparación.")
+    reserva = _reserva_de_linea(db, company_id=company_id, order_line_id=order_line_id)
+    if str(reserva.source_order_id) != str(plan.order_id):
+        raise ConflictError(code="PICKING_LINE_FOREIGN",
+                            message="La línea no pertenece al pedido del plan.")
+
+    cantidad = _dec(quantity)
+    if cantidad < 0:
+        raise KontrolError(code="PICKING_QUANTITY_INVALID",
+                           message="La cantidad no puede ser negativa.", status_code=422)
+
+    ubicacion = inv_service.location_in_warehouse(
+        db, company_id=company_id, warehouse_id=str(plan.warehouse_id), location_id=location_id)
+    saldo = _saldo_candidato(
+        db, company_id=company_id, warehouse_id=str(plan.warehouse_id), location_id=str(ubicacion.id),
+        product_id=str(reserva.product_id), lot_id=reserva.lot_id, serial_id=reserva.serial_id,
+        state=state)
+
+    existente = db.execute(
+        select(PickListLine).where(PickListLine.picklist_id == str(plan.id),
+                                   PickListLine.order_line_id == order_line_id,
+                                   PickListLine.location_id == str(ubicacion.id),
+                                   PickListLine.state == saldo.state)
+    ).scalars().first()
+    excepto = str(existente.id) if existente is not None else None
+
+    requerido = _base_de(reserva)
+    ya_en_linea = _asignado_a_linea(db, plan_id=str(plan.id), order_line_id=order_line_id,
+                                    excepto_linea=excepto)
+    if ya_en_linea + cantidad > requerido:
+        raise ConflictError(
+            code="PICKING_OVER_RESERVATION",
+            message=f"Excede lo reservado para la línea: {ya_en_linea + cantidad} sobre {requerido}.")
+
+    tomado = _asignado_en_identidad(
+        db, company_id=company_id, location_id=str(ubicacion.id), product_id=str(saldo.product_id),
+        state=saldo.state, lot_id=saldo.lot_id, serial_id=saldo.serial_id, excepto_linea=excepto)
+    if tomado + cantidad > _dec(saldo.qty_on_hand):
+        raise ConflictError(
+            code="PICKING_OVER_LOCATION",
+            message=f"La ubicación solo tiene {_dec(saldo.qty_on_hand) - tomado} asignable.")
+
+    if cantidad == 0:
+        if existente is not None:
+            db.delete(existente)
+    elif existente is not None:
+        existente.base_quantity = cantidad
+        existente.quantity = cantidad
+    else:
+        db.add(PickListLine(
+            picklist_id=str(plan.id), order_line_id=order_line_id, product_id=str(saldo.product_id),
+            location_id=str(ubicacion.id), state=saldo.state, lot_id=saldo.lot_id,
+            serial_id=saldo.serial_id, quantity=cantidad, base_quantity=cantidad, sequence=0))
+    db.flush()
+    _resecuenciar(db, plan)
+    db.flush()
+    _audit(db, action="PICKING_ALLOCATED", entity_type="PickList", entity_id=str(plan.id),
+           company_id=plan.company_id, actor=actor,
+           after={"order_line_id": order_line_id, "location_id": str(ubicacion.id),
+                  "base_quantity": str(cantidad)})
+    return plan
+
+
+def confirm_plan(db: Session, *, company_id: str, plan_id: str, actor: str | None = None) -> PickList:
+    """Cierra la planificación. Exige el 100 % y mueve el pedido a preparación.
+
+    `R-D0-15-8`: mientras quede cantidad reservada sin asignar, el plan no es
+    ejecutable y no se confirma. Y `R-D0-15-18`: **este** es el momento en que
+    el pedido sale de la cola, no cuando se creó el borrador.
+    """
+    company_id = _company(company_id, obj="picking")
+    plan = _require_plan(db, company_id, plan_id, lock=True)
+    if plan.status != "DRAFT":
+        raise ConflictError(code="PICKING_PLAN_NOT_DRAFT",
+                            message="Solo un plan en borrador puede confirmarse.")
+    order = _lock_order(db, company_id, str(plan.order_id))
+    if order.status != ORDER_HANDOFF_STATE:
+        raise ConflictError(code="PICKING_ORDER_NOT_ELIGIBLE",
+                            message="El pedido ya no está liberado para preparación.")
+
+    reservas = inv_service.order_reservations(db, company_id=company_id, order_id=str(order.id))
+    if not reservas:
+        raise ConflictError(code="PICKING_NO_RESERVATION",
+                            message="El pedido no tiene reservas activas que planificar.")
+    for reserva in reservas:
+        if reserva.source_line_id is None:
+            continue
+        requerido = _base_de(reserva)
+        asignado = _asignado_a_linea(db, plan_id=str(plan.id), order_line_id=str(reserva.source_line_id))
+        if asignado != requerido:
+            raise ConflictError(
+                code="PICKING_PLAN_INCOMPLETE",
+                message=f"Falta asignar {requerido - asignado} de una línea; el plan no está completo.")
+
+    # Revalidar contra la existencia real: entre el borrador y ahora la
+    # mercancía pudo moverse. Confirmar un plan sobre existencia que ya no está
+    # mandaría al almacenista a una ubicación vacía.
+    for linea in _lineas_del_plan(db, plan):
+        if linea.location_id is None:
+            continue
+        saldo = _saldo_candidato(
+            db, company_id=company_id, warehouse_id=str(plan.warehouse_id),
+            location_id=str(linea.location_id), product_id=str(linea.product_id),
+            lot_id=linea.lot_id, serial_id=linea.serial_id, state=linea.state)
+        tomado = _asignado_en_identidad(
+            db, company_id=company_id, location_id=str(linea.location_id),
+            product_id=str(linea.product_id), state=str(linea.state),
+            lot_id=linea.lot_id, serial_id=linea.serial_id)
+        if tomado > _dec(saldo.qty_on_hand):
+            raise ConflictError(code="PICKING_LOCATION_DRIFTED",
+                                message="La existencia de una ubicación cambió: replanifique.")
+
+    _resecuenciar(db, plan)
+    ahora = datetime.now(UTC)
+    plan.status = "CONFIRMED"
+    plan.confirmed_at = ahora
+    plan.confirmed_by = actor
+    plan.updated_at = ahora
+    _assert_transition(order.status, "PREPARING", ORDER_TRANSITIONS, "el pedido")
+    order.status = "PREPARING"
+    order.updated_at = ahora
+    db.flush()
+    _audit(db, action="PICKING_PLAN_CONFIRMED", entity_type="PickList", entity_id=str(plan.id),
+           company_id=plan.company_id, actor=actor,
+           after={"status": "CONFIRMED", "order_status": "PREPARING"})
+    return plan
+
+
+def _cerrar_plan(db: Session, *, company_id: str, plan_id: str, destino: str, reason: str | None,
+                 actor: str | None) -> PickList:
+    """Tronco común de cancelar e invalidar.
+
+    Lo que ambos hacen es idéntico y es poco: el plan pasa a terminal y con eso
+    sus asignaciones dejan de estar vivas, porque «viva» se deriva del estado
+    del plan. **No se toca la reserva comercial** —`R-D0-15-13`, solo la Spec
+    030 la libera— ni la existencia física. Si el plan estaba confirmado, el
+    pedido vuelve a la cola: un pedido con reserva viva y sin plan tiene que
+    poder volver a planificarse (`R-D0-15-19`).
+    """
+    plan = _require_plan(db, company_id, plan_id, lock=True)
+    if plan.status not in PLAN_ACTIVE_STATUSES:
+        raise ConflictError(code="PICKING_PLAN_NOT_ACTIVE",
+                            message="El plan ya no está vivo.")
+    motivo = _motivo(reason)
+    order = _lock_order(db, company_id, str(plan.order_id))
+    ahora = datetime.now(UTC)
+    estado_previo = plan.status
+    plan.status = destino
+    plan.status_reason = motivo
+    plan.updated_at = ahora
+    if destino == "CANCELLED":
+        plan.cancelled_at = ahora
+    else:
+        plan.invalidated_at = ahora
+    devuelto = False
+    if order.status == "PREPARING":
+        _assert_transition(order.status, ORDER_HANDOFF_STATE, ORDER_TRANSITIONS, "el pedido")
+        order.status = ORDER_HANDOFF_STATE
+        order.updated_at = ahora
+        devuelto = True
+    db.flush()
+    _audit(db, action=f"PICKING_PLAN_{destino}", entity_type="PickList", entity_id=str(plan.id),
+           company_id=plan.company_id, actor=actor, reason=motivo,
+           before={"status": estado_previo},
+           after={"status": destino, "order_returned_to_queue": devuelto})
+    return plan
+
+
+def cancel_plan(db: Session, *, company_id: str, plan_id: str, reason: str | None = None,
+                actor: str | None = None) -> PickList:
+    """Cancelación deliberada del plan, antes de cualquier efecto físico."""
+    return _cerrar_plan(db, company_id=_company(company_id, obj="picking"), plan_id=plan_id,
+                        destino="CANCELLED", reason=reason, actor=actor)
+
+
+def invalidate_plan(db: Session, *, company_id: str, plan_id: str, reason: str | None = None,
+                    actor: str | None = None) -> PickList:
+    """El plan pierde validez porque una precondición aguas arriba se cayó.
+
+    No es un sinónimo de cancelar: exige que la precondición **esté**
+    efectivamente perdida. Invalidar un plan sano borraría de la auditoría la
+    diferencia entre lo que alguien decidió y lo que le ocurrió.
+    """
+    company_id = _company(company_id, obj="picking")
+    plan = _require_plan(db, company_id, plan_id)
+    order = _require_order(db, company_id, str(plan.order_id))
+    reservas = inv_service.order_reservations(db, company_id=company_id, order_id=str(order.id))
+    if order.status in (ORDER_HANDOFF_STATE, "PREPARING") and reservas:
+        raise ConflictError(code="PICKING_PLAN_STILL_VALID",
+                            message="El plan sigue siendo válido: para retirarlo, cancélelo.")
+    return _cerrar_plan(db, company_id=company_id, plan_id=plan_id, destino="INVALIDATED",
+                        reason=reason, actor=actor)
+
+
+def plan_dict(db: Session, plan: PickList) -> dict:
+    """El plan con su recorrido y, sobre todo, con lo que falta.
+
+    El remanente se deriva de la reserva activa y de lo asignado. No se guarda:
+    persistirlo crearía una tercera cifra capaz de discrepar de las otras dos.
+    """
+    lineas = sorted((ln for ln in _lineas_del_plan(db, plan) if ln.location_id is not None),
+                    key=lambda ln: (ln.sequence or 0, str(ln.id)))
+    demanda = []
+    pendiente = Decimal(0)
+    for reserva in inv_service.order_reservations(db, company_id=str(plan.company_id),
+                                                  order_id=str(plan.order_id)):
+        if reserva.source_line_id is None:
+            continue
+        requerido = _base_de(reserva)
+        asignado = _asignado_a_linea(db, plan_id=str(plan.id), order_line_id=str(reserva.source_line_id))
+        pendiente += requerido - asignado
+        demanda.append({"order_line_id": str(reserva.source_line_id),
+                        "product_id": str(reserva.product_id),
+                        "required_base_quantity": str(requerido),
+                        "allocated_base_quantity": str(asignado),
+                        "remaining_base_quantity": str(requerido - asignado)})
+    return {
+        "id": str(plan.id), "code": plan.code, "order_id": str(plan.order_id),
+        "warehouse_id": str(plan.warehouse_id), "status": plan.status,
+        "status_reason": plan.status_reason,
+        "confirmed_at": plan.confirmed_at.isoformat() if plan.confirmed_at else None,
+        "cancelled_at": plan.cancelled_at.isoformat() if plan.cancelled_at else None,
+        "invalidated_at": plan.invalidated_at.isoformat() if plan.invalidated_at else None,
+        "remaining_base_quantity": str(pendiente),
+        "confirmable": plan.status == "DRAFT" and pendiente == 0 and bool(lineas),
+        "demand": demanda,
+        "route": [{"id": str(ln.id), "sequence": ln.sequence, "location_id": str(ln.location_id),
+                   "order_line_id": str(ln.order_line_id) if ln.order_line_id else None,
+                   "product_id": str(ln.product_id), "state": ln.state, "lot_id": ln.lot_id,
+                   "serial_id": ln.serial_id, "base_quantity": str(_dec(ln.base_quantity))}
+                  for ln in lineas],
+    }
 
 
 def create_shipment(db: Session, *, company_id: str, code: str, order_id: str, origin_warehouse_id: str,

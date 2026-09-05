@@ -97,7 +97,9 @@ test.describe("Spec 020 — incidencias de recepción", () => {
   test("registrar el daño, escalarlo y tratarlo, sin tocar el inventario", async ({ page, request }) => {
     const c = await ctx(request);
     const m = await recepcionConDano(request, c, `${RUN}A`);
-    const saldosAntes = await get(request, c, "/inventory/balances");
+    // Acotado al producto: el listado pagina y compararlo entero haría que
+    // cualquier escritura ajena en paralelo pareciera obra de la incidencia.
+    const saldosAntes = await get(request, c, `/inventory/balances?product_id=${m.prod}`);
 
     await uiLogin(page);
     await irAIncidencias(page);
@@ -136,7 +138,7 @@ test.describe("Spec 020 — incidencias de recepción", () => {
     expect(items[0].resolution).toBe("RECLAMO_PROVEEDOR");
     expect(Number(items[0].affected_base_quantity)).toBe(3);
 
-    const saldosDespues = await get(request, c, "/inventory/balances");
+    const saldosDespues = await get(request, c, `/inventory/balances?product_id=${m.prod}`);
     expect(saldosDespues, "la incidencia movió inventario").toEqual(saldosAntes);
   });
 

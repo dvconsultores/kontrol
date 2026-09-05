@@ -82,6 +82,7 @@ export const router = createBrowserRouter([
           { path: "ventas/facturas", lazy: () => import("@/modules/ventas/facturas/FacturasVentasPage").then((m) => ({ Component: m.FacturasVentasPage })) },
           { path: "ventas/notas", lazy: () => import("@/modules/ventas/notas/NotasVentasPage").then((m) => ({ Component: m.NotasVentasPage })) },
           { path: "ventas/devoluciones", lazy: () => import("@/modules/ventas/devoluciones/DevolucionesVentasPage").then((m) => ({ Component: m.DevolucionesVentasPage })) },
+          { path: "ventas/preparacion", lazy: () => import("@/modules/ventas/preparacion/PreparacionPage").then((m) => ({ Component: m.PreparacionPage })) },
           { path: "ventas/despacho", lazy: () => import("@/modules/ventas/despacho/DespachoPage").then((m) => ({ Component: m.DespachoPage })) },
           { path: "ventas/cuentas-por-cobrar", lazy: () => import("@/modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage").then((m) => ({ Component: m.CuentasPorCobrarPage })) },
           { path: "tesoreria/cajas", lazy: () => import("@/modules/tesoreria/cajas/CajasPage").then((m) => ({ Component: m.CajasPage })) },

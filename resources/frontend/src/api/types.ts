@@ -710,6 +710,66 @@ export interface PickListSummary {
   status: string;
 }
 
+/** Un pedido esperando preparación. `position` es su puesto en la cola. */
+export interface PickingQueueItem {
+  position: number;
+  order_id: string;
+  code: string;
+  customer_id: string | null;
+  warehouse_id: string;
+  released_at: string | null;
+}
+
+/** Ubicación de la que se puede recoger, con lo que queda asignable en ella. */
+export interface PickingCandidate {
+  location_id: string;
+  product_id: string;
+  state: string;
+  lot_id: string | null;
+  serial_id: string | null;
+  on_hand: string;
+  allocatable: string;
+  sequence: number;
+}
+
+/** Lo que una línea del pedido exige, tiene asignado y le falta. */
+export interface PickingDemand {
+  order_line_id: string;
+  product_id: string;
+  required_base_quantity: string;
+  allocated_base_quantity: string;
+  remaining_base_quantity: string;
+}
+
+/** Un paso del recorrido: de esta ubicación, esta cantidad. */
+export interface PickingRouteStep {
+  id: string;
+  sequence: number | null;
+  location_id: string;
+  order_line_id: string | null;
+  product_id: string;
+  state: string | null;
+  lot_id: string | null;
+  serial_id: string | null;
+  base_quantity: string;
+}
+
+export interface PickingPlan {
+  id: string;
+  code: string;
+  order_id: string;
+  warehouse_id: string;
+  status: string;
+  status_reason: string | null;
+  confirmed_at: string | null;
+  cancelled_at: string | null;
+  invalidated_at: string | null;
+  remaining_base_quantity: string;
+  confirmable: boolean;
+  demand: PickingDemand[];
+  route: PickingRouteStep[];
+}
+
 export interface ReturnSummary {
   id: string;
   code: string;

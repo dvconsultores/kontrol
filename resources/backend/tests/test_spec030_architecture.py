@@ -59,7 +59,12 @@ def test_la_maquina_de_estados_es_la_de_d0_03():
     assert t["DRAFT"] == {"SUBMITTED", "CANCELLED"}
     assert t["SUBMITTED"] == {"RELEASED", "REJECTED", "CANCELLED", "EXPIRED", "DRAFT"}
     assert t["RELEASED"] == {"PREPARING", "SHIPPED", "CANCELLED", "DRAFT"}
-    assert t["PREPARING"] == {"SHIPPED", "CANCELLED"}
+    # `RELEASED` se añadió como salida de `PREPARING` por `R-D0-15-19`, delta
+    # dirigido de la Spec 031 sobre esta máquina. Cancelar un plan de picking
+    # confirmado antes de cualquier efecto físico devuelve el pedido a la cola;
+    # sin esta arista quedaba varado con la reserva viva, sin plan y sin camino
+    # de vuelta. No cambia nada de `D0-03`: la reserva no se toca.
+    assert t["PREPARING"] == {"SHIPPED", "CANCELLED", "RELEASED"}
     assert sales_service.ORDER_HANDOFF_STATE == "RELEASED"
     assert all(t[x] == set() for x in ("CLOSED", "CANCELLED", "REJECTED", "EXPIRED"))
 

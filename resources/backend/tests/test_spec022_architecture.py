@@ -28,7 +28,7 @@ def _bloque(texto: str, inicio: str) -> str:
     siguiente = trozo.find("\ndef ", 1)
     cuerpo = trozo if siguiente < 0 else trozo[:siguiente]
     cuerpo = re.sub(r'"""..*?"""', "", cuerpo, flags=re.S)
-    return "\n".join(l for l in cuerpo.splitlines() if not l.strip().startswith("#"))
+    return "\n".join(x for x in cuerpo.splitlines() if not x.strip().startswith("#"))
 
 
 # ------------------------------------------------------ la reserva no se toca

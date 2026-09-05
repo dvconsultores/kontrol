@@ -8,7 +8,7 @@
 | DF-04 | Confirmación de inventario recibido | 14 | 14 | — **cerrado 2026-09-04** | 021 (9) · 019 (2) · 020 (3) |
 | DF-05 | Put-away y ubicación | 12 | 12 | — **cerrado 2026-09-04** | 022 |
 | DF-06 | Toma del pedido | 7 | 4 | Condiciones comerciales desde maestro | 029 |
-| DF-07 | Cola y ruta de picking | 10 | 0 | Recepción del pedido en almacén | 031 |
+| DF-07 | Cola y ruta de picking | 10 | 7 | Recorrido físico del almacenista (etapas 26-28, de la 032) | 031 |
 | DF-08 | Preparación física y consolidación | 12 | 2 | Llegada a la ubicación indicada | 032 |
 | DF-09 | Confirmación de pedido | 8 | 0 | Recepción en área de confirmación | 033 |
 | DF-10 | Liberación y facturación | 9 | 4 | Autorización de facturación | 034 |
@@ -43,7 +43,7 @@ De las **135 etapas** de proceso documentadas, **68 están cubiertas (50 %)**.
 La deuda se concentra en dos tramos contiguos:
 
 - **Entrada de mercancía** (DF-01, DF-02, DF-04, DF-05): 50 etapas exigidas, **40 cubiertas (80 %)**.
-- **Salida de mercancía** (DF-07 a DF-11): 45 etapas exigidas, **10 cubiertas (22 %)**.
+- **Salida de mercancía** (DF-07 a DF-11): 45 etapas exigidas, **17 cubiertas (38 %)**.
 
 Lo que hoy funciona bien —maestros, órdenes, inventario contable, CxC/CxP, tesorería, fiscal— es
 la capa **administrativa**. Lo que falta es la capa **operativa de almacén**: exactamente lo que

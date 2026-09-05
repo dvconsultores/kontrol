@@ -127,7 +127,7 @@ test.describe("Spec 019 — recepción física", () => {
     expect(Number(lineas[0].base_quantity_received)).toBe(24);
     expect(Number(lineas[0].conversion_factor_snapshot)).toBe(12);
 
-    const saldos = await get(request, c, "/inventory/balances");
+    const saldos = await get(request, c, `/inventory/balances?product_id=${m.prod}`);
     const saldo = (saldos.items as Array<{ product_id: string; qty_on_hand: string; location_id: string | null }>)
       .find((s) => s.product_id === m.prod);
     expect(Number(saldo?.qty_on_hand), "el inventario no recibió 24 unidades base").toBe(24);

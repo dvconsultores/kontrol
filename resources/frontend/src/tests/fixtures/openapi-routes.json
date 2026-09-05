@@ -1574,6 +1574,34 @@
     },
     {
       "method": "GET",
+      "path": "/sales/picking/cola"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/picking/{plan_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/picking/{plan_id}/asignaciones"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/picking/{plan_id}/cancelar"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/picking/{plan_id}/candidatas"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/picking/{plan_id}/confirmar"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/picking/{plan_id}/invalidar"
+    },
+    {
+      "method": "GET",
       "path": "/sales/quotes"
     },
     {

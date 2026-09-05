@@ -8,6 +8,7 @@ idempotencia en POST críticos.
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
@@ -493,6 +494,101 @@ def create_picklist(body: PickListCreate, db: Session = Depends(get_db),
     db.commit()
     db.refresh(pl)
     return {"id": pl.id, "code": pl.code, "status": pl.status}
+
+
+# --------------------------------------------------------------------------- #
+# Spec 031 · cola, asignación y ruta de picking
+#
+# Todo lo de aquí planifica. Nada mueve mercancía: el efecto físico es de la
+# Spec 032. Los permisos son los que ya existen —`ventas:view` para leer y
+# `ventas:create` para planificar—; no se inventa ninguno.
+# --------------------------------------------------------------------------- #
+class AllocationBody(BaseModel):
+    """**Fija** cuánto se recoge de una ubicación para una línea. No suma: un
+    doble envío deja el mismo resultado. Cantidad cero retira la asignación."""
+    model_config = ConfigDict(extra="forbid")
+
+    order_line_id: str
+    location_id: str
+    quantity: Decimal = Field(ge=0)
+    state: str | None = None
+
+
+@router.get("/picking/cola")
+def picking_queue(warehouse_id: str | None = None, db: Session = Depends(get_db),
+                  user: User = Depends(require_permission("ventas", "view")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    """Los pedidos que esperan preparación, en orden de entrada a la cola."""
+    ordenes = sales_service.picking_queue(db, company_id=ctx.company_id, warehouse_id=warehouse_id)
+    items = [{"position": i, "order_id": str(o.id), "code": o.code, "customer_id": o.customer_id,
+              "warehouse_id": str(o.warehouse_id),
+              "released_at": o.released_at.isoformat() if o.released_at else None}
+             for i, o in enumerate(ordenes, start=1)]
+    return {"items": items, "total": len(items), "page": 1, "page_size": len(items) or 1,
+            "order_by": "released_at ASC, id ASC"}
+
+
+@router.get("/picking/{plan_id}")
+def get_picking_plan(plan_id: str, db: Session = Depends(get_db),
+                     user: User = Depends(require_permission("ventas", "view")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    plan = sales_service.get_plan(db, company_id=ctx.company_id, plan_id=plan_id)
+    return sales_service.plan_dict(db, plan)
+
+
+@router.get("/picking/{plan_id}/candidatas")
+def picking_candidates(plan_id: str, order_line_id: str, db: Session = Depends(get_db),
+                       user: User = Depends(require_permission("ventas", "view")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    """Ubicaciones de las que se puede recoger esa línea, en orden de recorrido."""
+    items = sales_service.picking_candidates(db, company_id=ctx.company_id, plan_id=plan_id,
+                                             order_line_id=order_line_id)
+    return {"items": items, "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.post("/picking/{plan_id}/asignaciones", dependencies=[Depends(require_write_allowed)])
+def allocate_picking(plan_id: str, body: AllocationBody, db: Session = Depends(get_db),
+                     actor: User = Depends(require_permission("ventas", "create")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    plan = sales_service.allocate(db, company_id=ctx.company_id, plan_id=plan_id,
+                                  order_line_id=body.order_line_id, location_id=body.location_id,
+                                  quantity=body.quantity, state=body.state, actor=str(actor.id))
+    db.commit()
+    db.refresh(plan)
+    return sales_service.plan_dict(db, plan)
+
+
+@router.post("/picking/{plan_id}/confirmar", dependencies=[Depends(require_write_allowed)])
+def confirm_picking(plan_id: str, db: Session = Depends(get_db),
+                    actor: User = Depends(require_permission("ventas", "create")),
+                    ctx: CompanyContext = Depends(get_company_context)):
+    plan = sales_service.confirm_plan(db, company_id=ctx.company_id, plan_id=plan_id,
+                                      actor=str(actor.id))
+    db.commit()
+    db.refresh(plan)
+    return sales_service.plan_dict(db, plan)
+
+
+@router.post("/picking/{plan_id}/cancelar", dependencies=[Depends(require_write_allowed)])
+def cancel_picking(plan_id: str, body: ReasonBody, db: Session = Depends(get_db),
+                   actor: User = Depends(require_permission("ventas", "create")),
+                   ctx: CompanyContext = Depends(get_company_context)):
+    plan = sales_service.cancel_plan(db, company_id=ctx.company_id, plan_id=plan_id,
+                                     reason=body.reason, actor=str(actor.id))
+    db.commit()
+    db.refresh(plan)
+    return sales_service.plan_dict(db, plan)
+
+
+@router.post("/picking/{plan_id}/invalidar", dependencies=[Depends(require_write_allowed)])
+def invalidate_picking(plan_id: str, body: ReasonBody, db: Session = Depends(get_db),
+                       actor: User = Depends(require_permission("ventas", "create")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    plan = sales_service.invalidate_plan(db, company_id=ctx.company_id, plan_id=plan_id,
+                                         reason=body.reason, actor=str(actor.id))
+    db.commit()
+    db.refresh(plan)
+    return sales_service.plan_dict(db, plan)
 
 
 @router.post("/shipments", dependencies=[Depends(require_write_allowed)])
