@@ -64,7 +64,12 @@ def test_la_maquina_de_estados_es_la_de_d0_03():
     # confirmado antes de cualquier efecto físico devuelve el pedido a la cola;
     # sin esta arista quedaba varado con la reserva viva, sin plan y sin camino
     # de vuelta. No cambia nada de `D0-03`: la reserva no se toca.
-    assert t["PREPARING"] == {"SHIPPED", "CANCELLED", "RELEASED"}
+    # `PREPARED` lo añadió la Spec 032 y lo declara `ADR-D0-012`: «`RESERVED →
+    # PREPARING → PREPARED → CONFIRMED → …`». Es el estado de entrada que la
+    # confirmación independiente de la 033 necesita para ser distinguible.
+    assert t["PREPARING"] == {"SHIPPED", "CANCELLED", "RELEASED", "PREPARED"}
+    assert t["PREPARED"] == {"SHIPPED", "CANCELLED"}
+    assert "CONFIRMED" not in t, "la 032 adelantó un estado de la 033"
     assert sales_service.ORDER_HANDOFF_STATE == "RELEASED"
     assert all(t[x] == set() for x in ("CLOSED", "CANCELLED", "REJECTED", "EXPIRED"))
 

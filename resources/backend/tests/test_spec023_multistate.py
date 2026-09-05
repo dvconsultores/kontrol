@@ -84,10 +84,17 @@ def test_las_cuatro_transiciones_que_necesita_la_021_estan_declaradas():
         assert states.can_transition(origen, destino), f"{origen}→{destino}"
 
 
-def test_ninguna_transicion_activa_sale_de_disponible():
-    """El hallazgo que cerró `OQ-D010-02`: la cadena va hacia lo vendible."""
-    salidas = [t for t in states.ACTIVE_TRANSITIONS if t.source == "DISPONIBLE"]
-    assert salidas == [], salidas
+def test_la_unica_salida_de_disponible_es_la_del_picking():
+    """La afirmación cambió con la Spec 032, y `R-D0-10-10` lo tenía previsto.
+
+    Hasta aquí ninguna arista salía de `DISPONIBLE`, y eso hacía inalcanzable el
+    conflicto con lo reservado. `R-D0-10-10` reservó la elección «para el ciclo
+    de la Spec que active la primera»: es la 032, que extrae para preparar un
+    pedido. Lo que se sigue defendiendo es que no aparezca **ninguna otra**.
+    """
+    salidas = {(t.target, t.owner_spec) for t in states.ACTIVE_TRANSITIONS
+               if t.source == "DISPONIBLE"}
+    assert salidas == {("PICKING", "032")}, salidas
 
 
 def test_una_transicion_no_declarada_se_rechaza_por_nombre(mundo):

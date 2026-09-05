@@ -114,6 +114,21 @@ ACTIVE_TRANSITIONS: tuple[Transition, ...] = (
                "R-D0-10-4 — la cuarentena está en la cadena de recepción"),
     Transition("CUARENTENA", "RECHAZADO", "QUALITY_REJECT", "021", "inventario:confirm", False, True,
                "ADR: significados de ambos estados · flujo de confirmación"),
+    # Las dos primeras aristas que salen de `DISPONIBLE`. La matriz de `D0-10`
+    # las declaró —«`DISPONIBLE` | `PICKING` → `PREPARADO` | 031, 032 | Specs no
+    # construidas»— y las dejó denegadas por no existir su dueña. Este es el
+    # ciclo que la construye.
+    #
+    # `R-D0-10-10` exigía elegir aquí entre bloquear la salida o reclasificar
+    # solo lo no reservado. Ninguna de las dos aplica: sus dos opciones
+    # gobiernan la reclasificación **por un tercero** —calidad, que no tiene
+    # relación con el cliente—, y el propio análisis del conflicto distingue el
+    # caso: «allí el que libera es el proceso de preparación, dueño del pedido
+    # en ese momento». Aquí quien extrae es el dueño de la reserva.
+    Transition("DISPONIBLE", "PICKING", "PICK_EXECUTION", "032", "ventas:create", False, False,
+               "DOCX ¶37 «Extrae la mercancía» · matriz D0-10 fila DISPONIBLE → PICKING (dueñas 031/032)"),
+    Transition("PICKING", "PREPARADO", "CONSOLIDATION", "032", "ventas:create", False, False,
+               "DOCX ¶55-58 «se concentran como un único pedido… se traslada al Área de Confirmación»"),
 )
 
 _BY_PAIR: dict[tuple[str | None, str], Transition] = {

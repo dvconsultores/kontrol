@@ -253,6 +253,12 @@ class Reservation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     #: `ORDER_CANCELLED` · `CREDIT_REJECTED` · `ORDER_REVERTED` · `EXPIRED` ·
     #: `DISPATCHED` · `MANUAL:{texto}` · `PICKING_SHORTAGE` (032).
     release_reason: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    #: Lo ya extraído de esta reserva (Spec 032, delta dirigido sobre la 030).
+    #: `qty_reserved` cuenta «comprometidas y **aún no extraídas**» (`D0-03` §0),
+    #: así que el picking lo baja. El despacho no puede volver a restar lo mismo:
+    #: con dos pedidos sobre el mismo producto borraría el compromiso del otro.
+    picked_base_quantity: Mapped[Decimal] = mapped_column(
+        Numeric(18, 6), nullable=False, default=0, server_default=text("0"))
 
     # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
     uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)

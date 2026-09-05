@@ -31,6 +31,7 @@ from app.modules.organization.structure import physical_order_query
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import OpenItem
 from app.modules.sales.models import (
+    PICK_DISCREPANCY_KINDS,
     PLAN_ACTIVE_STATUSES,
     PickList,
     PickListLine,
@@ -93,7 +94,12 @@ ORDER_TRANSITIONS: dict[str, set[str]] = {
     # antes de cualquier efecto físico devuelve el pedido a la cola. Sin esta
     # arista quedaría varado en `PREPARING` con la reserva viva, sin plan y sin
     # camino de vuelta.
-    "PREPARING": {"SHIPPED", "CANCELLED", "RELEASED"},
+    # `PREPARED` lo declara `ADR-D0-012`: «`RESERVED → PREPARING → PREPARED →
+    # CONFIRMED → …`», y su §65 lo llama «el correlato comercial de `PREPARADO`»
+    # como estado de mercancía. Existe para que la confirmación independiente de
+    # la Spec 033 tenga un estado de entrada distinguible.
+    "PREPARING": {"SHIPPED", "CANCELLED", "RELEASED", "PREPARED"},
+    "PREPARED": {"SHIPPED", "CANCELLED"},
     "SHIPPED": {"CLOSED"},
     "CLOSED": set(),
     "CANCELLED": set(),
@@ -102,7 +108,7 @@ ORDER_TRANSITIONS: dict[str, set[str]] = {
 }
 
 #: Estados en los que el pedido tiene (y debe tener) su reserva viva.
-ORDER_RESERVED_STATES = frozenset({"SUBMITTED", "RELEASED", "PREPARING"})
+ORDER_RESERVED_STATES = frozenset({"SUBMITTED", "RELEASED", "PREPARING", "PREPARED"})
 #: Estado que habilita la cola de la Spec 031 (IMP-030-053).
 ORDER_HANDOFF_STATE = "RELEASED"
 #: `RESERVATION TRIGGER = ORDER_CONFIRMATION` — fijo, no configurable (D0-03).
@@ -1281,6 +1287,17 @@ def _cerrar_plan(db: Session, *, company_id: str, plan_id: str, destino: str, re
     if plan.status not in PLAN_ACTIVE_STATUSES:
         raise ConflictError(code="PICKING_PLAN_NOT_ACTIVE",
                             message="El plan ya no está vivo.")
+    # `R-D0-15-16` dejó a la Spec 032 definir cuál es el primer efecto físico
+    # irreversible. Es **la primera recogida registrada**: a partir de ahí hay
+    # mercancía en `PICKING` y el contador de reservado ya bajó, y retirar el
+    # plan la dejaría en un estado de custodia sin dueño, porque devolverla a
+    # `DISPONIBLE` exigiría una arista que nadie ha declarado.
+    recogidas = [ln for ln in _lineas_del_plan(db, plan) if ln.picked_at is not None]
+    if recogidas:
+        raise ConflictError(
+            code="PICKING_ALREADY_STARTED",
+            message=("La preparación ya empezó: hay "
+                     f"{len(recogidas)} parada(s) recogida(s). El plan no se retira."))
     motivo = _motivo(reason)
     order = _lock_order(db, company_id, str(plan.order_id))
     ahora = datetime.now(UTC)
@@ -1370,6 +1387,214 @@ def plan_dict(db: Session, plan: PickList) -> dict:
                    "serial_id": ln.serial_id, "base_quantity": str(_dec(ln.base_quantity))}
                   for ln in lineas],
     }
+
+
+# =========================================================================== #
+# Spec 032 · ejecución física del picking y consolidación
+#
+# La 031 planificó: dijo de qué ubicación sale cuánto y en qué orden. Aquí se
+# ejecuta. Lo que se recoge **de verdad** se guarda aparte de lo planificado,
+# porque sin las dos cifras no hay diferencia que registrar, y el proceso es
+# explícito: «debe registrarse la diferencia» (¶47) y el pedido «no debería
+# simplemente modificarse sin dejar evidencia» (¶53).
+#
+# La mercancía **no sale del almacén** aquí. Cambia de estado de custodia
+# —`DISPONIBLE → PICKING → PREPARADO`, las dos aristas que la matriz de `D0-10`
+# declaró para 031/032— y acaba en el Área de Confirmación. La salida física es
+# del despacho, y es allí donde la reserva se consume.
+# =========================================================================== #
+
+
+def _plan_ejecutable(db: Session, company_id: str, plan_id: str) -> tuple[PickList, SalesOrder]:
+    """El plan y su pedido, bloqueados, en estado de ejecutarse."""
+    plan = _require_plan(db, company_id, plan_id, lock=True)
+    if plan.status != "CONFIRMED":
+        raise ConflictError(code="PICKING_PLAN_NOT_EXECUTABLE",
+                            message="Solo un plan confirmado se puede preparar.")
+    order = _lock_order(db, company_id, str(plan.order_id))
+    if order.status != "PREPARING":
+        raise ConflictError(code="PICKING_ORDER_NOT_PREPARING",
+                            message="El pedido no está en preparación.")
+    return plan, order
+
+
+def execute_pick(db: Session, *, company_id: str, plan_id: str, line_id: str,
+                 quantity: Decimal | float | str, discrepancy_kind: str | None = None,
+                 discrepancy_note: str | None = None, actor: str | None = None) -> PickList:
+    """Registra lo recogido en una parada del recorrido (¶33-39).
+
+    Idempotente por línea: una asignación se recoge una vez. Reintentar la misma
+    petición no vuelve a extraer mercancía ni duplica el movimiento.
+
+    Recoger de menos exige motivo —uno de los cinco del ¶48-52— y libera la
+    diferencia de la reserva (`POL-D0-002` §8). Recoger de más está bloqueado:
+    ninguna autoridad lo permite y `R-D0-10-7` deniega por defecto.
+    """
+    company_id = _company(company_id, obj="picking")
+    plan, order = _plan_ejecutable(db, company_id, plan_id)
+    linea = db.execute(
+        select(PickListLine).where(PickListLine.id == line_id,
+                                   PickListLine.picklist_id == str(plan.id)).with_for_update()
+    ).scalars().first()
+    if linea is None or linea.location_id is None:
+        raise NotFoundError(code="PICKING_ALLOCATION_NOT_FOUND",
+                            message="La asignación no existe en este plan.")
+    if linea.picked_at is not None:
+        raise ConflictError(code="PICKING_ALREADY_PICKED",
+                            message="Esa asignación ya se recogió.")
+
+    planificado = _dec(linea.base_quantity)
+    recogido = _dec(quantity)
+    if recogido < 0:
+        raise KontrolError(code="PICKING_QUANTITY_INVALID",
+                           message="La cantidad recogida no puede ser negativa.", status_code=422)
+    if recogido > planificado:
+        raise ConflictError(
+            code="PICKING_OVER_PICK",
+            message=f"No se puede recoger más de lo planificado: {recogido} sobre {planificado}.")
+    faltante = planificado - recogido
+    if faltante > 0:
+        if discrepancy_kind not in PICK_DISCREPANCY_KINDS:
+            raise KontrolError(
+                code="PICKING_DISCREPANCY_REASON_REQUIRED",
+                message=("Recoger menos de lo planificado exige indicar el motivo: "
+                         + ", ".join(PICK_DISCREPANCY_KINDS) + "."),
+                status_code=422)
+    elif discrepancy_kind is not None:
+        raise KontrolError(code="PICKING_DISCREPANCY_WITHOUT_DIFFERENCE",
+                           message="No hay diferencia que justificar.", status_code=422)
+
+    if recogido > 0:
+        # La extracción es un cambio de estado de custodia sobre la identidad
+        # exacta: misma ubicación, mismo lote, mismo serial. No se elige otra.
+        inv_service.reclassify(
+            db, company_id=company_id, warehouse_id=str(plan.warehouse_id),
+            product_id=str(linea.product_id), source_state=str(linea.state),
+            target_state="PICKING", quantity=recogido, location_id=str(linea.location_id),
+            lot_id=linea.lot_id, serial_id=linea.serial_id,
+            document_ref=f"PICKLIST:{plan.id}", actor=actor)
+
+    reserva = _reserva_de_linea(db, company_id=company_id, order_line_id=str(linea.order_line_id))
+    if recogido > 0:
+        inv_service.consume_on_pick(db, reservation=reserva, quantity=recogido, actor=actor)
+    if faltante > 0:
+        inv_service.release_picking_shortage(db, reservation=reserva, quantity=faltante, actor=actor)
+
+    ahora = datetime.now(UTC)
+    linea.picked_base_quantity = recogido
+    linea.picked_at = ahora
+    linea.picked_by = actor
+    linea.discrepancy_kind = discrepancy_kind
+    linea.discrepancy_note = discrepancy_note
+    plan.updated_at = ahora
+    db.flush()
+    _audit(db, action="PICK_RECORDED", entity_type="PickList", entity_id=str(plan.id),
+           company_id=plan.company_id, actor=actor, reason=discrepancy_note,
+           before={"planned_base_quantity": str(planificado)},
+           after={"line_id": str(linea.id), "location_id": str(linea.location_id),
+                  "picked_base_quantity": str(recogido), "difference": str(-faltante),
+                  "discrepancy_kind": discrepancy_kind})
+    return plan
+
+
+def consolidate(db: Session, *, company_id: str, plan_id: str, location_id: str,
+                actor: str | None = None) -> PickList:
+    """Concentra lo recogido como un único pedido y lo traslada (¶55-58).
+
+    Exige haber recorrido **todas** las paradas (¶41): consolidar a medio
+    recorrido daría por preparado un pedido que nadie terminó de recoger. No
+    exige que no haya diferencias —el ¶45 manda el pedido al área de
+    confirmación igual—, pero las diferencias viajan registradas.
+
+    Al terminar, el pedido queda `PREPARED`: «pedido preparado pendiente de
+    control» (¶59). Quien decide si está correcto es la Spec 033, que es un
+    control **independiente** (¶61). Aquí no se certifica nada.
+    """
+    company_id = _company(company_id, obj="picking")
+    plan, order = _plan_ejecutable(db, company_id, plan_id)
+    lineas = [ln for ln in _lineas_del_plan(db, plan) if ln.location_id is not None]
+    if not lineas:
+        raise ConflictError(code="PICKING_NOTHING_TO_CONSOLIDATE",
+                            message="El plan no tiene asignaciones.")
+    pendientes = [ln for ln in lineas if ln.picked_at is None]
+    if pendientes:
+        raise ConflictError(
+            code="PICKING_ROUTE_INCOMPLETE",
+            message=f"Faltan {len(pendientes)} paradas del recorrido por registrar.")
+
+    destino = inv_service.location_in_warehouse(
+        db, company_id=company_id, warehouse_id=str(plan.warehouse_id), location_id=location_id)
+
+    for linea in sorted(lineas, key=lambda ln: (ln.sequence or 0, str(ln.id))):
+        recogido = _dec(linea.picked_base_quantity)
+        if recogido <= 0:
+            continue
+        # Dos pasos, dos movimientos, y por eso la procedencia queda entera: de
+        # qué ubicación salió cada unidad y en qué estado, y a cuál llegó.
+        inv_service.reclassify(
+            db, company_id=company_id, warehouse_id=str(plan.warehouse_id),
+            product_id=str(linea.product_id), source_state="PICKING", target_state="PREPARADO",
+            quantity=recogido, location_id=str(linea.location_id),
+            lot_id=linea.lot_id, serial_id=linea.serial_id,
+            document_ref=f"PICKLIST:{plan.id}", actor=actor)
+        inv_service.putaway(
+            db, company_id=company_id, warehouse_id=str(plan.warehouse_id),
+            product_id=str(linea.product_id), target_location_id=str(destino.id),
+            quantity=recogido, source_location_id=str(linea.location_id), state="PREPARADO",
+            lot_id=linea.lot_id, serial_id=linea.serial_id,
+            document_ref=f"PICKLIST:{plan.id}", actor=actor)
+
+    ahora = datetime.now(UTC)
+    plan.status = "CLOSED"
+    plan.consolidation_location_id = str(destino.id)
+    plan.consolidated_at = ahora
+    plan.consolidated_by = actor
+    plan.updated_at = ahora
+    _assert_transition(order.status, "PREPARED", ORDER_TRANSITIONS, "el pedido")
+    order.status = "PREPARED"
+    order.updated_at = ahora
+    db.flush()
+    _audit(db, action="PICKING_CONSOLIDATED", entity_type="PickList", entity_id=str(plan.id),
+           company_id=plan.company_id, actor=actor,
+           after={"status": "CLOSED", "order_status": "PREPARED",
+                  "consolidation_location_id": str(destino.id)})
+    return plan
+
+
+def preparation_dict(db: Session, plan: PickList) -> dict:
+    """Lo preparado, línea a línea, para el control independiente de la 033.
+
+    Entrega hechos, no un veredicto: lo planificado, lo recogido de verdad, la
+    diferencia y su motivo. Comparar y confirmar es de la 033 (¶61).
+    """
+    base = plan_dict(db, plan)
+    lineas = sorted((ln for ln in _lineas_del_plan(db, plan) if ln.location_id is not None),
+                    key=lambda ln: (ln.sequence or 0, str(ln.id)))
+    preparado: dict[str, Decimal] = {}
+    for ln in lineas:
+        clave = str(ln.order_line_id)
+        preparado[clave] = preparado.get(clave, Decimal(0)) + _dec(ln.picked_base_quantity)
+    base["consolidation_location_id"] = (str(plan.consolidation_location_id)
+                                         if plan.consolidation_location_id else None)
+    base["consolidated_at"] = plan.consolidated_at.isoformat() if plan.consolidated_at else None
+    base["picking"] = [
+        {"id": str(ln.id), "sequence": ln.sequence, "order_line_id": str(ln.order_line_id),
+         "location_id": str(ln.location_id), "product_id": str(ln.product_id),
+         "lot_id": ln.lot_id, "serial_id": ln.serial_id,
+         "planned_base_quantity": str(_dec(ln.base_quantity)),
+         "picked_base_quantity": (str(_dec(ln.picked_base_quantity))
+                                  if ln.picked_base_quantity is not None else None),
+         "difference": (str(_dec(ln.picked_base_quantity) - _dec(ln.base_quantity))
+                        if ln.picked_base_quantity is not None else None),
+         "discrepancy_kind": ln.discrepancy_kind, "discrepancy_note": ln.discrepancy_note,
+         "picked_at": ln.picked_at.isoformat() if ln.picked_at else None,
+         "picked_by": ln.picked_by}
+        for ln in lineas]
+    for demanda in base["demand"]:
+        demanda["prepared_base_quantity"] = str(preparado.get(demanda["order_line_id"], Decimal(0)))
+    base["has_discrepancy"] = any(ln.discrepancy_kind for ln in lineas)
+    base["route_complete"] = all(ln.picked_at is not None for ln in lineas) and bool(lineas)
+    return base
 
 
 def create_shipment(db: Session, *, company_id: str, code: str, order_id: str, origin_warehouse_id: str,

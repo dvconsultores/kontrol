@@ -108,9 +108,12 @@ def test_solo_disponible_es_vendible_en_el_codigo():
     assert states.RESERVABLE_STATES == frozenset({"DISPONIBLE"})
 
 
-def test_ninguna_arista_activa_sale_de_disponible():
-    """Mientras se cumpla, `R-D0-10-9` no puede violarse y `R-D0-10-10` no aplica."""
-    assert [t for t in states.ACTIVE_TRANSITIONS if t.source == "DISPONIBLE"] == []
+def test_la_salida_de_disponible_es_solo_la_que_la_032_activo():
+    """`R-D0-10-10` reservaba esta elección para la Spec que abriera la primera
+    salida de `DISPONIBLE`. La abrió la 032 para extraer lo que se prepara; la
+    guardia pasa de «no hay ninguna» a «no hay ninguna más»."""
+    assert {(t.target, t.owner_spec) for t in states.ACTIVE_TRANSITIONS
+            if t.source == "DISPONIBLE"} == {("PICKING", "032")}
 
 
 def test_cada_arista_declara_su_evidencia():

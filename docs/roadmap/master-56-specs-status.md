@@ -53,7 +53,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 029 | Cotización y pedido comercial | **`COMPLETE / CONVERGED`** (2026-09-01) | `sales_quotes`, `sales_orders` con origen comercial, ciclo de cotización, conversión 1:1 | **ninguno** |
 | 030 | Crédito / aprobación / reserva | **`COMPLETE / CONVERGED`** (2026-09-02) | reserva al confirmar (`ORDER_CONFIRMATION`), bloqueo en PostgreSQL, crédito vía 045, `RELEASED` para 031; migración `0043` | **ninguno** |
 | 031 | Cola y ruta de picking | **`COMPLETE / CONVERGED`** (2026-09-05) | 7 de 10 etapas | **ninguno**: cola por `released_at`, asignación por ubicación, ruta de la 008, cinco estados; migración `0049`. Las 3 etapas restantes son el recorrido físico, de la 032 |
-| 032 | Picking y consolidación | `NOT_STARTED` | esqueleto en `sales`; reservas de 030, lotes/seriales de 024, ubicación de origen (022) y **cola, asignación y ruta (031)** satisfechos; su contrato de entrada está escrito en `spec032-handoff-after-spec031.md` | **ninguno** |
+| 032 | Picking y consolidación | **`COMPLETE / CONVERGED`** (2026-09-05) | 12 de 12 etapas | **ninguno**: extracción con estado de custodia, cinco motivos de diferencia del proceso, consolidación al Área de Confirmación; migración `0050` |
 | 033 | Confirmación independiente de pedido | **`NOT_STARTED`** | 0 tablas | 032 |
 | 034 | Liberación y facturación | `PARTIALLY_IMPLEMENTED` | `sales_invoices` con transiciones | 033; snapshot comercial ausente |
 | 035 | Despacho / transporte / regulación | `PARTIALLY_IMPLEMENTED` | `shipments`, `regulatory` 11 tablas | 034 |
@@ -83,11 +83,11 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 
 | Estado | Specs |
 |---|---:|
-| `COMPLETE / CONVERGED` | 11 — 008, 011, 012, 019, 020, 021, 022, 029, 030, **031**, 045 |
+| `COMPLETE / CONVERGED` | 12 — 008, 011, 012, 019, 020, 021, 022, 029, 030, 031, **032**, 045 |
 | `RECONVERGED` | 1 — 046 |
 | `READY_FOR_IMPLEMENTATION` | **0** |
 | `PARTIALLY_IMPLEMENTED` | 32 |
-| `NOT_STARTED` | 4 — 018, **032**, 033, 047 |
+| `NOT_STARTED` | 3 — 018, 033, 047 |
 | `BLOCKED_BY_DEPENDENCY` | **0** |
 | `BLOCKED_BY_BUSINESS_DECISION` | 1 — 004 |
 | `BLOCKED_BY_LEGAL_VALIDATION` | 6 — 039, 040, 041, 042, 043, 056 |

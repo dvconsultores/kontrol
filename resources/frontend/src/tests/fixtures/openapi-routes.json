@@ -1598,7 +1598,19 @@
     },
     {
       "method": "POST",
+      "path": "/sales/picking/{plan_id}/consolidar"
+    },
+    {
+      "method": "POST",
       "path": "/sales/picking/{plan_id}/invalidar"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/picking/{plan_id}/preparacion"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/picking/{plan_id}/recoger"
     },
     {
       "method": "GET",

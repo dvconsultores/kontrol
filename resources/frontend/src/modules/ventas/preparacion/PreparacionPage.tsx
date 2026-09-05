@@ -22,6 +22,7 @@ import type {
   PickingQueueItem,
   PickListSummary,
 } from "@/api/types";
+import { PICK_DISCREPANCY_KINDS } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
@@ -53,6 +54,11 @@ export function PreparacionPage(): React.JSX.Element {
   const [ubicacion, setUbicacion] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [motivo, setMotivo] = useState("");
+  const [parada, setParada] = useState<string | null>(null);
+  const [recogido, setRecogido] = useState("");
+  const [diferencia, setDiferencia] = useState("");
+  const [nota, setNota] = useState("");
+  const [area, setArea] = useState("");
 
   // El almacenista trabaja en un almacén. Sin este filtro la cola mezcla los de
   // todos y deja de ser una cola de trabajo.
@@ -71,8 +77,19 @@ export function PreparacionPage(): React.JSX.Element {
 
   const plan = useQuery({
     queryKey: ["picking", "plan", planId],
-    queryFn: () => apiFetch<PickingPlan>(`/sales/picking/${planId}`),
+    // `preparacion` devuelve lo mismo que el detalle más lo recogido: sirve para
+    // las dos fases y evita que la pantalla tenga dos verdades del mismo plan.
+    queryFn: () => apiFetch<PickingPlan>(`/sales/picking/${planId}/preparacion`),
     enabled: Boolean(planId),
+  });
+
+  const ubicaciones = useQuery({
+    queryKey: ["picking", "ubicaciones", plan.data?.warehouse_id],
+    queryFn: () =>
+      apiFetch<{ items: { id: string; code: string; name: string | null }[] }>(
+        `/inventory/putaway/ubicaciones?warehouse_id=${plan.data?.warehouse_id}`,
+      ),
+    enabled: Boolean(plan.data?.warehouse_id),
   });
 
   const candidatas = useQuery({
@@ -139,6 +156,43 @@ export function PreparacionPage(): React.JSX.Element {
       await refrescar();
     } catch (e) {
       fallo("No se pudo asignar")(e);
+    }
+  }
+
+  async function recogerParada(): Promise<void> {
+    if (!planId || !parada) return;
+    try {
+      await apiFetch(`/sales/picking/${planId}/recoger`, {
+        method: "POST",
+        body: {
+          line_id: parada,
+          quantity: recogido || "0",
+          discrepancy_kind: diferencia || null,
+          discrepancy_note: nota || null,
+        },
+      });
+      notify({ type: "success", title: "Recogida registrada" });
+      setParada(null);
+      await refrescar();
+    } catch (e) {
+      fallo("No se pudo registrar la recogida")(e);
+    }
+  }
+
+  async function consolidar(): Promise<void> {
+    if (!planId || !area) {
+      notify({ type: "error", title: "Elija el Área de Confirmación" });
+      return;
+    }
+    try {
+      await apiFetch(`/sales/picking/${planId}/consolidar`, {
+        method: "POST",
+        body: { location_id: area },
+      });
+      notify({ type: "success", title: "Pedido consolidado y trasladado" });
+      await refrescar();
+    } catch (e) {
+      fallo("No se pudo consolidar")(e);
     }
   }
 
@@ -327,6 +381,118 @@ export function PreparacionPage(): React.JSX.Element {
               </>
             ) : null}
           </div>
+          {p.status === "CONFIRMED" && p.picking ? (
+            <section className="mt-4 border-t border-border-default pt-4">
+              <h3 className="mb-2 text-sm font-semibold text-text-900">Recorrido de preparación</h3>
+              <p className="mb-3 text-sm text-text-700">
+                Registre lo que encuentra en cada parada. Recoger menos de lo planificado exige
+                indicar el motivo; la diferencia queda registrada y libera la parte no encontrada.
+              </p>
+              <table className="mb-3 w-full text-sm">
+                <caption className="sr-only">Paradas del recorrido</caption>
+                <thead>
+                  <tr className="border-b border-border-default text-left text-text-700">
+                    <th scope="col" className="py-1">#</th>
+                    <th scope="col">Ubicación</th>
+                    <th scope="col">Planificado</th>
+                    <th scope="col">Recogido</th>
+                    <th scope="col">Motivo</th>
+                    <th scope="col">Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {p.picking.map((s) => (
+                    <tr key={s.id} className="border-b border-border-subtle">
+                      <td className="py-1">{s.sequence}</td>
+                      <td className="font-mono text-xs">{corto(s.location_id)}</td>
+                      <td>{s.planned_base_quantity}</td>
+                      <td>{s.picked_base_quantity ?? <span className="text-text-500">—</span>}</td>
+                      <td className="text-xs">{s.discrepancy_kind ?? ""}</td>
+                      <td>
+                        {s.picked_at ? (
+                          <span className="text-text-500">Registrada</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setParada(s.id);
+                              setRecogido(s.planned_base_quantity);
+                              setDiferencia("");
+                              setNota("");
+                            }}
+                            className="text-sm font-medium text-primary-700 underline"
+                          >
+                            Registrar recogida
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {parada ? (
+                <div className="mb-3 flex flex-wrap items-end gap-3">
+                  <FormField label="Cantidad recogida" help="En unidad base">
+                    <TextInput value={recogido} onChange={(e) => setRecogido(e.target.value)} />
+                  </FormField>
+                  <FormField label="Motivo de la diferencia" help="Solo si recoge de menos">
+                    <select
+                      value={diferencia}
+                      onChange={(e) => setDiferencia(e.target.value)}
+                      className="h-10 w-72 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                    >
+                      <option value="">Sin diferencia</option>
+                      {PICK_DISCREPANCY_KINDS.map((k) => (
+                        <option key={k} value={k}>
+                          {k.replaceAll("_", " ").toLowerCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+                  <FormField label="Observación">
+                    <TextInput value={nota} onChange={(e) => setNota(e.target.value)} />
+                  </FormField>
+                  <AsyncButton onClick={recogerParada}>Confirmar recogida</AsyncButton>
+                </div>
+              ) : null}
+
+              <div className="flex flex-wrap items-end gap-3">
+                <FormField label="Área de Confirmación" required help="Ubicación del mismo almacén">
+                  <select
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
+                    className="h-10 w-72 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                  >
+                    <option value="">Seleccionar…</option>
+                    {(ubicaciones.data?.items ?? []).map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.code}
+                        {l.name ? ` · ${l.name}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+                <AsyncButton onClick={consolidar} disabled={!p.route_complete}>
+                  Consolidar y trasladar
+                </AsyncButton>
+              </div>
+              {!p.route_complete ? (
+                <p className="mt-3 text-sm text-text-500" role="status">
+                  Falta registrar alguna parada. El pedido se consolida cuando se ha recorrido el
+                  almacén entero, no antes.
+                </p>
+              ) : null}
+            </section>
+          ) : null}
+
+          {p.status === "CLOSED" ? (
+            <p className="mt-4 text-sm text-text-700" role="status">
+              Pedido preparado y trasladado al Área de Confirmación. Queda pendiente del control
+              independiente, que no se hace desde aquí.
+            </p>
+          ) : null}
+
           {editable && !p.confirmable ? (
             <p className="mt-3 text-sm text-text-500" role="status">
               No se puede confirmar mientras falte cantidad por asignar. Si la mercancía todavía no

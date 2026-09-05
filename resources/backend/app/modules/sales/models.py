@@ -201,6 +201,17 @@ PLAN_STATUSES = ("DRAFT", "CONFIRMED", "CLOSED", "CANCELLED", "INVALIDATED")
 #: vivas y descuentan lo asignable de la ubicación (`R-D0-15-12`, `R-D0-15-22`).
 PLAN_ACTIVE_STATUSES = ("DRAFT", "CONFIRMED")
 
+#: Motivos de diferencia al recoger. No se inventan: son los cinco que enumera
+#: el proceso fuente en sus ¶48-52, en el punto de decisión «¿se encontró toda
+#: la mercancía solicitada?».
+PICK_DISCREPANCY_KINDS = (
+    "PRODUCTO_NO_LOCALIZADO",
+    "CANTIDAD_INSUFICIENTE",
+    "UBICACION_INCORRECTA",
+    "DIFERENCIA_SISTEMA_FISICO",
+    "MERCANCIA_DANADA",
+)
+
 
 class PickList(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "pick_lists"
@@ -230,6 +241,14 @@ class PickList(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     invalidated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # --- Consolidación (Spec 032, DOCX ¶55-58) ---
+    #: Dónde quedó concentrado el pedido. El «Área de Confirmación» del proceso
+    #: es una ubicación del almacén, no una entidad nueva.
+    consolidation_location_id: Mapped[str | None] = mapped_column(
+        ForeignKey("warehouse_locations.id"), nullable=True)
+    consolidated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    consolidated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
 
 class PickListLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "pick_list_lines"
@@ -246,6 +265,18 @@ class PickListLine(UUIDMixin, TimestampMixin, Base):
             "(location_id IS NOT NULL AND sequence IS NOT NULL AND state IS NOT NULL "
             " AND base_quantity IS NOT NULL)",
             name="pick_list_line_allocation_shape"),
+        CheckConstraint(
+            "discrepancy_kind IS NULL OR discrepancy_kind IN "
+            "('PRODUCTO_NO_LOCALIZADO', 'CANTIDAD_INSUFICIENTE', 'UBICACION_INCORRECTA', "
+            "'DIFERENCIA_SISTEMA_FISICO', 'MERCANCIA_DANADA')",
+            name="pick_list_line_discrepancy_kind"),
+        # Recoger de menos exige motivo: es la evidencia que pide el ¶53.
+        CheckConstraint(
+            "picked_base_quantity IS NULL OR base_quantity IS NULL "
+            "OR picked_base_quantity >= base_quantity OR discrepancy_kind IS NOT NULL",
+            name="pick_list_line_shortfall_reason"),
+        CheckConstraint("picked_base_quantity IS NULL OR picked_base_quantity >= 0",
+                        name="pick_list_line_picked_not_negative"),
     )
 
     picklist_id: Mapped[str] = mapped_column(ForeignKey("pick_lists.id"), nullable=False, index=True)
@@ -265,6 +296,17 @@ class PickListLine(UUIDMixin, TimestampMixin, Base):
     state: Mapped[str | None] = mapped_column(String(32), nullable=True)
     #: Puesto en el recorrido, derivado del orden físico de la Spec 008.
     sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # --- Ejecución física (Spec 032) ---
+    #: Lo que se recogió **de verdad**. Va aparte de `base_quantity`, que es lo
+    #: planificado: sin las dos cifras no hay diferencia que registrar, y el
+    #: proceso exige registrarla (¶47) y no modificar el pedido sin evidencia
+    #: (¶53).
+    picked_base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    picked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    picked_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    discrepancy_kind: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    discrepancy_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
     uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)

@@ -99,7 +99,11 @@ def test_la_031_no_libera_la_reserva_comercial():
 
 def test_la_031_no_ejecuta_el_picking_fisico():
     """La Spec 032 es la dueña del efecto físico; aquí no se simula."""
-    bloque_031 = SALES[SALES.index("# Spec 031 · cola, asignación"):SALES.index("def create_shipment(")]
+    # El corte es la cabecera de la Spec 032: sin él este bloque se comería la
+    # ejecución física, que sí escribe `CLOSED` y sí es picking, y la guardia
+    # afirmaría lo contrario de lo que quiere decir.
+    bloque_031 = SALES[SALES.index("# Spec 031 · cola, asignación"):
+                       SALES.index("# Spec 032 · ejecución física")]
     bloque_031 = re.sub(r'"""..*?"""', "", bloque_031, flags=re.S)
     assert '"CLOSED"' not in bloque_031, "la 031 cierra un plan que nadie ejecutó"
     for prohibido in ("consolidar", "empacar", "shipment", "invoice"):

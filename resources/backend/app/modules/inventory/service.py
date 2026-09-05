@@ -775,6 +775,8 @@ def reclassify(
     target_state: str,
     quantity: Decimal | float | str,
     location_id: str | None = None,
+    lot_id: str | None = None,
+    serial_id: str | None = None,
     document_ref: str | None = None,
     reason: str | None = None,
     actor: str | None = None,
@@ -812,10 +814,17 @@ def reclassify(
     # ordenados por estado. Coincide con el criterio de la Spec 030 —bloquear la
     # fila de saldo antes de leer— y evita que dos reclasificaciones cruzadas se
     # abracen.
+    #
+    # La identidad se respeta entera. Hasta la Spec 022 esto bloqueaba siempre la
+    # fila ancla —ubicación nula— porque nada estaba ubicado y la mercancía a
+    # reclasificar era la recién recibida. Con el picking deja de valer: lo que
+    # se extrae está **en una ubicación concreta**, y reclasificar la fila ancla
+    # movería un saldo que no es el que el almacenista tiene delante.
     primero, segundo = sorted((source_state, target_state))
     saldos = {
-        estado: lock_balance(db, company_id=company_id, warehouse_id=warehouse_id,
-                             product_id=product_id, state=estado)
+        estado: _lock_balance_at(db, company_id=company_id, warehouse_id=warehouse_id,
+                                 product_id=product_id, location_id=location_id,
+                                 lot_id=lot_id, serial_id=serial_id, state=estado)
         for estado in (primero, segundo)
     }
     origen, destino = saldos[source_state], saldos[target_state]
@@ -849,6 +858,7 @@ def reclassify(
         document_ref=document_ref, occurred_at=occurred_at or datetime.now(UTC),
         status="POSTED", created_by=actor,
         source_state=source_state, target_state=target_state,
+        source_location_id=location_id, target_location_id=location_id,
         uom_source=uom_engine.SOURCE_CAPTURED,
     )
     db.add(movement)
@@ -1259,7 +1269,12 @@ def _close_reservation(db: Session, *, reservation: Reservation, status: str, re
     reservation.released_by = actor
     reservation.release_reason = reason
     reservation.updated_at = datetime.now(UTC)
-    balance.qty_reserved = max(_dec(balance.qty_reserved) - _base_qty(reservation), Decimal(0))
+    # Solo lo **aún no extraído**. El contador cuenta «comprometidas y aún no
+    # extraídas» (`D0-03` §0) y el picking ya restó lo que sacó: volver a restar
+    # el total borraría del contador el compromiso de otro pedido sobre el mismo
+    # producto.
+    pendiente = max(_base_qty(reservation) - _dec(reservation.picked_base_quantity), Decimal(0))
+    balance.qty_reserved = max(_dec(balance.qty_reserved) - pendiente, Decimal(0))
     _refresh_available(balance)
     db.flush()
     _audit_reservation(db, action=action, reservation=reservation, actor=actor, before_status=before)
@@ -1293,6 +1308,61 @@ def expire_if_active(db: Session, *, reservation: Reservation, actor: str | None
     _close_reservation(db, reservation=reservation, status="EXPIRED", reason="EXPIRED",
                        actor=actor, action="RESERVATION_EXPIRED")
     return True
+
+
+def consume_on_pick(db: Session, *, reservation: Reservation, quantity: Decimal,
+                    actor: str | None = None) -> None:
+    """Registra que parte de la reserva **se extrajo físicamente**.
+
+    No cierra la reserva ni la modifica: sigue `ACTIVE` hasta el despacho, que es
+    quien la consume (`POL-D0-002` §8). Lo que baja es el **contador** del saldo,
+    que cuenta «unidades comprometidas y **aún no extraídas**» (`D0-03` §0). Sin
+    esto, la mercancía saldría de `DISPONIBLE` y el contador seguiría restándola:
+    el mismo compromiso descontado dos veces, y ventas dejaría de poder vender lo
+    que sí tiene.
+    """
+    cantidad = _dec(quantity)
+    if cantidad <= 0:
+        return
+    balance = lock_balance(db, company_id=reservation.company_id, warehouse_id=reservation.warehouse_id,
+                           product_id=reservation.product_id, lot_id=reservation.lot_id,
+                           serial_id=reservation.serial_id)
+    balance.qty_reserved = max(_dec(balance.qty_reserved) - cantidad, Decimal(0))
+    reservation.picked_base_quantity = _dec(reservation.picked_base_quantity) + cantidad
+    reservation.updated_at = datetime.now(UTC)
+    _refresh_available(balance)
+    db.flush()
+    _audit(db, action="RESERVATION_PICKED", entity_type="Reservation", entity_id=str(reservation.id),
+           company_id=reservation.company_id, actor=actor,
+           after={"picked_base_quantity": str(reservation.picked_base_quantity),
+                  "qty_reserved": str(balance.qty_reserved)})
+
+
+def release_picking_shortage(db: Session, *, reservation: Reservation, quantity: Decimal,
+                             actor: str | None = None) -> None:
+    """Libera la diferencia de un picking corto (`POL-D0-002` §8).
+
+    «Picking parcial (032) → libera la diferencia y genera incidencia; nunca
+    ajusta el pedido en silencio.» El compromiso encoge por lo que no se
+    encontró; el pedido no se toca, y la diferencia queda registrada como
+    evidencia en la línea del plan.
+    """
+    faltante = _dec(quantity)
+    if faltante <= 0:
+        return
+    balance = lock_balance(db, company_id=reservation.company_id, warehouse_id=reservation.warehouse_id,
+                           product_id=reservation.product_id, lot_id=reservation.lot_id,
+                           serial_id=reservation.serial_id)
+    balance.qty_reserved = max(_dec(balance.qty_reserved) - faltante, Decimal(0))
+    reservation.base_quantity = max(_base_qty(reservation) - faltante, Decimal(0))
+    reservation.release_reason = "PICKING_SHORTAGE"
+    reservation.updated_at = datetime.now(UTC)
+    _refresh_available(balance)
+    db.flush()
+    _audit(db, action="RESERVATION_SHORTAGE_RELEASED", entity_type="Reservation",
+           entity_id=str(reservation.id), company_id=reservation.company_id, actor=actor,
+           reason="PICKING_SHORTAGE",
+           after={"released": str(faltante), "base_quantity": str(reservation.base_quantity)})
 
 
 def fulfill_reservation(db: Session, *, reservation: Reservation, actor: str | None = None) -> bool:

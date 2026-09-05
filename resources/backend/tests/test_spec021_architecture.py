@@ -47,8 +47,15 @@ def test_la_confirmacion_no_duplica_la_matriz_de_transiciones():
 
 
 def test_la_confirmacion_no_puede_pedir_una_arista_desde_disponible():
-    """`R-D0-10-10`: ninguna arista activa sale de lo vendible, y la 021 no la abre."""
-    assert "DISPONIBLE" not in {t.source for t in states.ACTIVE_TRANSITIONS}
+    """La 021 no abre ninguna salida de lo vendible.
+
+    Hasta la Spec 032 no había ninguna en absoluto. La 032 abrió la del picking,
+    que `R-D0-10-10` le reservaba; lo que esta guardia sigue defendiendo es que
+    la confirmación de recepción no añada la suya.
+    """
+    assert {t.target for t in states.ACTIVE_TRANSITIONS if t.source == "DISPONIBLE"} == {"PICKING"}
+    assert not [t for t in states.ACTIVE_TRANSITIONS
+                if t.source == "DISPONIBLE" and t.owner_spec == "021"]
     cuerpo = _bloque(SERVICE, "def confirmar_inventario(")
     assert 'source_state") or inv_states.RECEIVED_STATE' in cuerpo
     origenes = set(re.findall(r"source_state IN \(([^)]+)\)", SERVICE))

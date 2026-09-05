@@ -739,6 +739,8 @@ export interface PickingDemand {
   required_base_quantity: string;
   allocated_base_quantity: string;
   remaining_base_quantity: string;
+  /** Lo efectivamente preparado, presente tras la ejecución (Spec 032). */
+  prepared_base_quantity?: string;
 }
 
 /** Un paso del recorrido: de esta ubicación, esta cantidad. */
@@ -754,6 +756,33 @@ export interface PickingRouteStep {
   base_quantity: string;
 }
 
+/** Una parada del recorrido con lo planificado y lo recogido de verdad. */
+export interface PickingStep {
+  id: string;
+  sequence: number | null;
+  order_line_id: string;
+  location_id: string;
+  product_id: string;
+  lot_id: string | null;
+  serial_id: string | null;
+  planned_base_quantity: string;
+  picked_base_quantity: string | null;
+  difference: string | null;
+  discrepancy_kind: string | null;
+  discrepancy_note: string | null;
+  picked_at: string | null;
+  picked_by: string | null;
+}
+
+/** Los cinco motivos de diferencia del proceso fuente (¶48-52). */
+export const PICK_DISCREPANCY_KINDS = [
+  "PRODUCTO_NO_LOCALIZADO",
+  "CANTIDAD_INSUFICIENTE",
+  "UBICACION_INCORRECTA",
+  "DIFERENCIA_SISTEMA_FISICO",
+  "MERCANCIA_DANADA",
+] as const;
+
 export interface PickingPlan {
   id: string;
   code: string;
@@ -768,6 +797,12 @@ export interface PickingPlan {
   confirmable: boolean;
   demand: PickingDemand[];
   route: PickingRouteStep[];
+  /** Presentes cuando el plan ya se está preparando (Spec 032). */
+  picking?: PickingStep[];
+  has_discrepancy?: boolean;
+  route_complete?: boolean;
+  consolidation_location_id?: string | null;
+  consolidated_at?: string | null;
 }
 
 export interface ReturnSummary {

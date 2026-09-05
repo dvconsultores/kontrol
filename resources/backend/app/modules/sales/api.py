@@ -591,6 +591,57 @@ def invalidate_picking(plan_id: str, body: ReasonBody, db: Session = Depends(get
     return sales_service.plan_dict(db, plan)
 
 
+class PickBody(BaseModel):
+    """Lo recogido en una parada. Menos de lo planificado exige motivo, y el
+    motivo es uno de los cinco que enumera el proceso fuente."""
+    model_config = ConfigDict(extra="forbid")
+
+    line_id: str
+    quantity: Decimal = Field(ge=0)
+    discrepancy_kind: str | None = None
+    discrepancy_note: str | None = Field(default=None, max_length=500)
+
+
+class ConsolidationBody(BaseModel):
+    """El Área de Confirmación es una ubicación del almacén."""
+    model_config = ConfigDict(extra="forbid")
+
+    location_id: str
+
+
+@router.get("/picking/{plan_id}/preparacion")
+def picking_preparation(plan_id: str, db: Session = Depends(get_db),
+                        user: User = Depends(require_permission("ventas", "view")),
+                        ctx: CompanyContext = Depends(get_company_context)):
+    """Lo planificado, lo recogido y la diferencia. Es lo que consume la 033."""
+    plan = sales_service.get_plan(db, company_id=ctx.company_id, plan_id=plan_id)
+    return sales_service.preparation_dict(db, plan)
+
+
+@router.post("/picking/{plan_id}/recoger", dependencies=[Depends(require_write_allowed)])
+def execute_pick(plan_id: str, body: PickBody, db: Session = Depends(get_db),
+                 actor: User = Depends(require_permission("ventas", "create")),
+                 ctx: CompanyContext = Depends(get_company_context)):
+    plan = sales_service.execute_pick(
+        db, company_id=ctx.company_id, plan_id=plan_id, line_id=body.line_id,
+        quantity=body.quantity, discrepancy_kind=body.discrepancy_kind,
+        discrepancy_note=body.discrepancy_note, actor=str(actor.id))
+    db.commit()
+    db.refresh(plan)
+    return sales_service.preparation_dict(db, plan)
+
+
+@router.post("/picking/{plan_id}/consolidar", dependencies=[Depends(require_write_allowed)])
+def consolidate_picking(plan_id: str, body: ConsolidationBody, db: Session = Depends(get_db),
+                        actor: User = Depends(require_permission("ventas", "create")),
+                        ctx: CompanyContext = Depends(get_company_context)):
+    plan = sales_service.consolidate(db, company_id=ctx.company_id, plan_id=plan_id,
+                                     location_id=body.location_id, actor=str(actor.id))
+    db.commit()
+    db.refresh(plan)
+    return sales_service.preparation_dict(db, plan)
+
+
 @router.post("/shipments", dependencies=[Depends(require_write_allowed)])
 def create_shipment(body: ShipmentCreate, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("ventas", "create")), ctx: CompanyContext = Depends(get_company_context)):

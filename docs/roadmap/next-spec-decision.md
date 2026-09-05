@@ -496,3 +496,42 @@ válido y su contrato de entrada está escrito en `spec032-handoff-after-spec031
 deberá definir ella misma —el primer efecto físico irreversible— y lo que no hereda.
 
 Implementación de la 032 **no iniciada**: requiere su propio ciclo con autorización expresa.
+
+---
+
+## Tras la implementación de la Spec 032 — 2026-09-05
+
+`SPEC 032 — COMPLETE / CONVERGED`. Backend 1098/1098 con los 8 saltos esperados, frontend 291/291,
+e2e propia 21/21 en los tres navegadores y la cadena operativa entera 105/105. Migración `0050` con
+ida y vuelta sobre base limpia.
+
+La pregunta que parecía material —qué queda del disponible cuando la mercancía reservada sale de
+`DISPONIBLE` al recogerse— tenía respuesta, y no estaba en la política de reservas sino en el
+vocabulario que fijó `D0-03` §0: **reservado son las unidades «comprometidas y aún no extraídas»**.
+Extraer es dejar de estarlo. Sin eso el disponible habría caído de 70 a 40 y ventas habría dejado de
+poder vender 30 unidades que sí tiene; y con dos pedidos, despachar el primero habría borrado del
+contador el compromiso del segundo.
+
+Los cinco motivos de diferencia tampoco se inventaron: están en los ¶48-52 del proceso fuente, y el
+¶53 exige que el pedido no se modifique sin dejar evidencia. Lo recogido se guarda aparte de lo
+planificado precisamente para que la diferencia exista.
+
+Cinco deltas dirigidos, sobre las Specs 023, 030 y 031, todos con autoridad previa: las dos aristas
+de custodia que la matriz de `D0-10` había declarado «Specs no construidas», el contador de
+reservado, `reclassify` respetando la ubicación, `PREPARING → PREPARED` de `ADR-D0-012`, y el
+bloqueo de la cancelación una vez empezada la preparación. Las cinco guardias que invalidaron se
+actualizaron con su razón escrita; tres cambiaron exactamente como `R-D0-10-10` había previsto.
+
+Con esto la cadena de salida pasa del 38 % al 71 % de cobertura.
+
+`NEXT SPEC = 033 — CONFIRMACIÓN INDEPENDIENTE DEL PEDIDO`
+
+Recibe un pedido `PREPARED` con la mercancía concentrada en el Área de Confirmación y un contrato
+que entrega **hechos, no un veredicto**: lo requerido, lo preparado, la diferencia y su motivo. La
+032 no compara ni aprueba a propósito: el ¶61 dice que ese control es **independiente**, y si lo
+hiciera el preparador dejaría de serlo.
+
+Queda una pregunta abierta que no la bloquea: qué hacer con un pedido cuya preparación empezó y hay
+que deshacer. Necesita una arista de devolución `PICKING → DISPONIBLE` con dueña y evidencia.
+
+Implementación de la 033 **no iniciada**: requiere su propio ciclo con autorización expresa.
