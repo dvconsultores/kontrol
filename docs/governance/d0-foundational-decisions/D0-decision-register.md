@@ -16,21 +16,21 @@
 | **D0-12** | Confirmación independiente del pedido | APPROVED | **CLOSED_WITH_CONFIGURATION_PENDING** | Arq. procesos · Auditor | 033 + 4 Specs | 033, 034 |
 | **D0-13** | Dimensiones organizacionales | APPROVED | **CLOSED** | Arq. datos · Contador | 007 + transversal | 007 |
 | **D0-14** | Put-away: alcance de la reserva, capacidad y selección de ubicación | APPROVED · ACTIVE (2026-09-04) | **CLOSED** — la reserva es de almacén y no de ubicación; capacidad informativa en V1; ubicación manual con filtro de backend | Arq. procesos · Almacén · Ventas | 022, 031, 032 | 022 |
-| **D0-15** | Cola de picking: criterio de orden, planificación parcial y ciclo de vida del plan | **OPEN** (2026-09-05) | — | Arq. procesos · Almacén · Ventas | 031, 032 | **031** |
+| **D0-15** | Cola de picking: criterio de orden, planificación parcial y ciclo de vida del plan | APPROVED · ACTIVE (2026-09-05) | **CLOSED** — cola por `released_at ASC` con desempate `id`; parcial solo en `DRAFT` y confirmación al 100 %; ciclo de cinco estados con liberación de asignaciones | Arq. procesos · Almacén · Ventas | 031, 032 | ninguna |
 
 ## Recuento de cierre
 
 | Clasificación | Cantidad | Decisiones |
 |---|---:|---|
-| **CLOSED** | **9** | D0-01, D0-03 (2026-09-02), D0-04, D0-08, D0-09, D0-10, D0-11, D0-13, D0-14 |
+| **CLOSED** | **10** | D0-01, D0-03 (2026-09-02), D0-04, D0-08, D0-09, D0-10, D0-11, D0-13, D0-14, **D0-15** |
 | **CLOSED_WITH_CONFIGURATION_PENDING** | **3** | D0-02, D0-05, D0-12 |
-| **BUSINESS_DECISION_PENDING** | **2** | D0-06, **D0-15** |
+| **BUSINESS_DECISION_PENDING** | **1** | D0-06 |
 | **LEGAL_VALIDATION_PENDING** | **1** | D0-07 |
 | **TECHNICAL_VALIDATION_PENDING** | 0 | — |
 | **BLOCKED** | 0 | — |
 | **TOTAL** | **15** | ✔ |
 
-**12 de 15 decisiones quedan cerradas para efectos de construcción.** El recuento decía «11 de 13»
+**13 de 15 decisiones quedan cerradas para efectos de construcción.** El recuento decía «11 de 13»
 con un total de 13 desde que se registró `D0-14`: las clasificaciones ya sumaban 14 y el total no se
 actualizó. Corregido aquí. Las dos restantes no impiden
 escribir Specs: D0-06 tiene la arquitectura cerrada y solo falta contratar hospedaje; D0-07 tiene el
@@ -60,7 +60,7 @@ arquitectura está decidida; los umbrales son datos de implantación.
 | D0-08 | `adr/ADR-D0-008-document-management.md` | — |
 | D0-09 | `adr/ADR-D0-009-uom-presentation-snapshot.md` | — |
 | D0-14 | `d0-14-checkpoint/d0-14-putaway-decisions.md` | `POL-D0-002` §7 ampliada con su consecuencia para el put-away |
-| D0-15 | **pendiente** — solicitud de decisión en `specs/005-ventas-cuentas-por-cobrar/spec031-picking-cycle.md` §5 | — |
+| D0-15 | `d0-15-checkpoint/d0-15-picking-planning-decisions.md` | `d0-15-checkpoint/` — trazabilidad y convergencia; 22 reglas `R-D0-15-*` |
 | D0-10 | `adr/ADR-D0-010-goods-states.md` (v2) | `d0-10-checkpoint/` — matriz de transiciones, matriz de dueños, análisis del conflicto con reservas, convergencia |
 | D0-11 | `adr/ADR-D0-011-order-invoice-link.md` | — |
 | D0-12 | `adr/ADR-D0-012-order-confirmation.md` | — |

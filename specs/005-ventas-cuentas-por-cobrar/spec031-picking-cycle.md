@@ -70,9 +70,11 @@ expresar «recoge esto de aquí, y de aquí antes que de allí», que es el obje
 Sí fija ya dos cosas que este ciclo debe respetar y no redefinir:
 
 - `create_picklist` mueve el pedido a `PREPARING`, de modo que la arista `RELEASED → PREPARING` existe.
-- `app/modules/master_data/uom.py:357` congela el snapshot de unidad de `pick_lists` en `CONFIRMED` y
-  `CLOSED`. **Hay, por tanto, un ciclo de vida vigente en código —`DRAFT → CONFIRMED → CLOSED`— que
-  ninguna Spec ha documentado.** No se inventarán nombres nuevos junto a estos.
+- `app/modules/master_data/uom.py:357` menciona `CONFIRMED` y `CLOSED` para `pick_lists`.
+  **Corregido por `D0-15`:** de aquí deduje «un ciclo de vida vigente en código
+  `DRAFT → CONFIRMED → CLOSED`», y no lo es. `uom.py` es un mapa de *estados en los que se congela el
+  snapshot de unidad* (Spec 011), no una máquina de estados; nadie escribe nunca `CONFIRMED` ni
+  `CLOSED` en un `PickList`. Lo que había era menos de lo que dije: solo `DRAFT`.
 
 ## 3. Lo que la Spec 030 entrega, y lo que deliberadamente no entrega
 
@@ -203,3 +205,30 @@ que la existencia quedaría asignada para siempre a un plan muerto.
 
 Con las tres respondidas, la 031 es implementable en un solo ciclo: el recorrido, la aritmética
 localizada y la división ya están derivados o construidos.
+
+
+---
+
+# 8. CIERRE — `D0-15`, 2026-09-05
+
+Las tres preguntas quedaron cerradas por el checkpoint `D0-15`, documental y sin código de producto.
+Las decisiones completas, con su evidencia y sus matrices, están en
+`docs/governance/d0-foundational-decisions/d0-15-checkpoint/`.
+
+| | Pregunta | Cierre |
+|---|---|---|
+| **OQ-031-1** | Orden de la cola | `released_at ASC`, desempate `id ASC`. Una retención de crédito **no** conserva el puesto (`R-D0-15-1..4`) |
+| **OQ-031-2** | Planificación parcial | Permitida solo en `DRAFT`, con remanente explícito; `CONFIRMED` exige el 100 % (`R-D0-15-5..9`) |
+| **OQ-031-3** | Ciclo de vida | Cinco estados: `DRAFT`, `CONFIRMED`, `CLOSED`, `CANCELLED`, `INVALIDATED` (`R-D0-15-10..19`) |
+
+La primera se cerró con evidencia que este ciclo tenía delante y no leyó como autoridad: el docstring
+de `_a_released` dice «el pedido entra en la cola de 031» **en la misma función que escribe
+`released_at`**. No era una fecha disponible entre varias; era el sello del acto de entrada.
+
+`D0-15` deja además dos exigencias sobre el modelo de la Spec 030 que el ciclo de implementación debe
+satisfacer: que crear un plan `DRAFT` no saque al pedido de `RELEASED` (`R-D0-15-18`), y que exista
+`PREPARING → RELEASED` para que cancelar un plan confirmado no vare el pedido (`R-D0-15-19`).
+
+**Estado: `READY TO RESUME IMPLEMENTATION`.** No implementada. El próximo ciclo empieza de nuevo en
+`/speckit.specify`, y su primer precheck es reconstruir PostgreSQL y ClamAV y validar el número de
+saltos esperado.

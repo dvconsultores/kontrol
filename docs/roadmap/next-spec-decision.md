@@ -437,3 +437,33 @@ implementable en un solo ciclo: recorrido, aritmética localizada y división en
 están construidos o derivados.
 
 Detrás sigue la 032, que espera a la 031.
+
+---
+
+## Tras el checkpoint D0-15 — 2026-09-05
+
+`D0-15 — CLOSED`. Ciclo documental completo, **cero código de producto**. Las tres preguntas que
+bloqueaban la Spec 031 quedan cerradas con 22 reglas `R-D0-15-*` en
+`docs/governance/d0-foundational-decisions/d0-15-checkpoint/`.
+
+La primera se cerró con evidencia que el ciclo anterior tenía delante y no leyó como autoridad: el
+docstring de `_a_released` dice «el pedido entra en la cola de 031» en la misma función que escribe
+`released_at`. La cola se ordena por el sello del acto que mete el pedido en ella, con desempate por
+`id` —clave primaria— porque `code` no tiene restricción de unicidad y no haría total el orden.
+
+La segunda permite guardar el trabajo de planificación sin permitir jamás ejecutarlo a medias:
+parcial en `DRAFT` con el remanente publicado, confirmación solo al 100 %.
+
+La tercera formaliza cinco estados y, al hacerlo, destapó dos contratos que el modelo de la Spec 030
+no cumple: crear un plan mueve hoy el pedido a `PREPARING` demasiado pronto, y no existe camino de
+vuelta de `PREPARING` a `RELEASED`, de modo que cancelar un plan confirmado vararía el pedido.
+Ambas quedan declaradas y asignadas al ciclo de implementación.
+
+`NEXT SPEC = 031 — COLA Y RUTA DE PICKING`
+
+`READY TO RESUME IMPLEMENTATION`. Implementación **no iniciada**: requiere su propio ciclo con
+autorización expresa, empezando de nuevo en `/speckit.specify`. Primer precheck de ese ciclo:
+reconstruir PostgreSQL, reconstruir ClamAV, validar migraciones y **validar el número de saltos
+esperado** antes de medir nada.
+
+Detrás sigue la 032, bloqueada hasta que la 031 converja.
