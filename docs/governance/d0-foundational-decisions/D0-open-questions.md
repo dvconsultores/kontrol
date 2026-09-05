@@ -20,6 +20,9 @@ Clasificación estricta: **CONFIG** = configuración de cliente (no bloquea) ·
 | OQ-13 | D0-13 | ¿Qué dimensiones marcadas `C` activa cada empresa? | CONFIG | Contabilidad del cliente | Implantación |
 | **OQ-14** | **Gobierno** | **Los 15 ADR de `001-fundacion` siguen en estado `PROPUESTO`. Ninguno fue aprobado nunca.** ¿Se aprueban, se revisan o se sustituyen? | **GOV** | Arquitectura · Producto · Seguridad | Cumplimiento del Principio 12 |
 | OQ-15 | Gobierno | ¿Se adoptan las tres enmiendas constitucionales propuestas en `D0-constitution-diff.md`? | GOV | Producto · Arquitectura · Legal · QA | No |
+| OQ-16 (`OQ-031-1`) | D0-15 | ¿Con qué marca temporal se ordena la cola de preparación, `submitted_at` (compromiso) o `released_at` (entrada en cola)? Es decir: ¿una retención de crédito le cuesta al pedido su puesto en la fila? | BUSINESS | Ventas · Almacén | **031, 032** |
+| OQ-17 (`OQ-031-2`) | D0-15 | ¿Se planifica el picking con lo ubicado cuando es menor que lo reservado, o se espera a que el put-away lo complete? | BUSINESS | Operaciones de almacén | **031, 032** |
+| OQ-18 (`OQ-031-3`) | D0-15 | ¿Puede cancelarse un plan de picking? ¿Se invalida cuando la existencia que tenía asignada se mueve o se reclasifica? ¿Qué libera la asignación por ubicación? | BUSINESS | Almacén · Ingeniería | **031, 032** |
 
 ## Recuento
 

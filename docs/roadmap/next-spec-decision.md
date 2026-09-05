@@ -404,3 +404,36 @@ put-away nunca ató una reserva a una ubicación, y hay prueba de ello.
 Detrás, la 032, que espera a la 031.
 
 Implementación de la 031 **no iniciada**: requiere su propio ciclo con autorización expresa.
+
+
+---
+
+## Tras el ciclo de auditoría de la Spec 031 — 2026-09-05
+
+`SPEC 031 — BLOCKED BY MATERIAL DECISION`. El ciclo se detiene antes de `implement` con **cero código
+de producto**. El estado `READY_FOR_IMPLEMENTATION` que tenía no autorizaba empezar por ahí, y hacer
+la auditoría primero fue lo que evitó construir sobre tres huecos.
+
+Lo que la 031 pedía y **ya estaba hecho**: el recorrido. El ¶30 del DOCX —«Pedido → Zona → Pasillo →
+Rack → Ubicación → Producto»— es exactamente `physical_order_query()` de la Spec 008, con orden total
+y desempate por código. No había algoritmo que inventar; el pendiente «Algoritmo de ruta» del
+roadmap ya tenía respuesta escrita en otra Spec.
+
+Lo que falta no es código:
+
+| | Pregunta | Estado |
+|---|---|---|
+| **OQ-031-1** | Con qué criterio se ordena la cola | Acotada por `D0-03` §8 a una marca temporal; queda elegir `submitted_at` o `released_at` |
+| **OQ-031-2** | Si se planifica lo ubicado cuando es menor que lo reservado | `D0-03` §7 prohíbe la salida silenciosa; queda si el plan avanza o espera |
+| **OQ-031-3** | Cancelación, invalidación y replanificación del plan | Sin autoridad; hay un ciclo `DRAFT → CONFIRMED → CLOSED` vivo en código y sin documentar |
+
+Registradas como **`D0-15`** en el registro de decisiones. La solicitud completa, con la evidencia de
+cada una, está en `specs/005-ventas-cuentas-por-cobrar/spec031-picking-cycle.md` §5.
+
+`NEXT = D0-15 — CHECKPOINT DE DECISIÓN DE LA COLA DE PICKING`
+
+Documental, sin código, como fueron `D0-10` y `D0-14`. Con las tres respondidas, la 031 es
+implementable en un solo ciclo: recorrido, aritmética localizada y división entre ubicaciones ya
+están construidos o derivados.
+
+Detrás sigue la 032, que espera a la 031.

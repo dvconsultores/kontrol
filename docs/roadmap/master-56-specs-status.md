@@ -52,8 +52,8 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 028 | CxP y pagos | `PARTIALLY_IMPLEMENTED` | `ap_payments`, `ap_open_items`; tipo documental cerrado en N9 | 040 retenciones |
 | 029 | Cotización y pedido comercial | **`COMPLETE / CONVERGED`** (2026-09-01) | `sales_quotes`, `sales_orders` con origen comercial, ciclo de cotización, conversión 1:1 | **ninguno** |
 | 030 | Crédito / aprobación / reserva | **`COMPLETE / CONVERGED`** (2026-09-02) | reserva al confirmar (`ORDER_CONFIRMATION`), bloqueo en PostgreSQL, crédito vía 045, `RELEASED` para 031; migración `0043` | **ninguno** |
-| 031 | Cola y ruta de picking | **`READY_FOR_IMPLEMENTATION`** (2026-09-04) | 0 proceso | **ninguno**: existe inventario físicamente ubicado |
-| 032 | Picking y consolidación | `BLOCKED_BY_DEPENDENCY` | esqueleto en `sales`; reservas de 030 y lotes/seriales de 024 satisfechos | **cola y ruta (031)** + **ubicación de origen (022)** |
+| 031 | Cola y ruta de picking | **`BLOCKED_BY_BUSINESS_DECISION`** (2026-09-05) | 0 proceso | **OQ-031-1/2/3**: criterio de orden de la cola, planificación parcial y ciclo de vida del plan. Recorrido y aritmética ya resueltos (`spec031-picking-cycle.md`) |
+| 032 | Picking y consolidación | `BLOCKED_BY_DEPENDENCY` | esqueleto en `sales`; reservas de 030, lotes/seriales de 024 y **ubicación de origen (022)** satisfechos | **cola y ruta (031)**, hoy bloqueada por decisión |
 | 033 | Confirmación independiente de pedido | **`NOT_STARTED`** | 0 tablas | 032 |
 | 034 | Liberación y facturación | `PARTIALLY_IMPLEMENTED` | `sales_invoices` con transiciones | 033; snapshot comercial ausente |
 | 035 | Despacho / transporte / regulación | `PARTIALLY_IMPLEMENTED` | `shipments`, `regulatory` 11 tablas | 034 |
@@ -85,11 +85,11 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 |---|---:|
 | `COMPLETE / CONVERGED` | 10 — 008, 011, 012, 019, 020, 021, **022**, 029, 030, 045 |
 | `RECONVERGED` | 1 — 046 |
-| `READY_FOR_IMPLEMENTATION` | **1 — 031** |
+| `READY_FOR_IMPLEMENTATION` | **0** |
 | `PARTIALLY_IMPLEMENTED` | 32 |
 | `NOT_STARTED` | 3 — 018, 033, 047 |
 | `BLOCKED_BY_DEPENDENCY` | 1 — 032 |
-| `BLOCKED_BY_BUSINESS_DECISION` | 1 — 004 |
+| `BLOCKED_BY_BUSINESS_DECISION` | 2 — 004, **031** |
 | `BLOCKED_BY_LEGAL_VALIDATION` | 6 — 039, 040, 041, 042, 043, 056 |
 | `BLOCKED_BY_EXTERNAL_SERVICE` | 1 — 044 |
 | **Sin estado** | **0** |
