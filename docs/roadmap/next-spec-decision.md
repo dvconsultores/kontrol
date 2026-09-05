@@ -377,3 +377,30 @@ satisfacerlo es exactamente el trabajo de la 031.
 
 Detrás quedan la 032 —preparación y consolidación— y la 033. Implementación de la 031 **no iniciada**:
 requiere su propio ciclo con autorización expresa.
+
+
+---
+
+## Tras el sello de evidencia de la Spec 022 — 2026-09-04
+
+`SPEC 022 — COMPLETE / CONVERGED / EVIDENCE SEALED`. La e2e propia del put-away, que era la deuda
+que quedaba, se ejecutó: **27 de 27 en Chromium, Firefox y WebKit**, sin saltos, y con cada acción de
+interfaz comprobada después contra el dominio.
+
+La frase que bloqueó esta Spec un ciclo entero —«ubicar la mercancía la volvería invendible»— es hoy
+una prueba que pasa en los tres navegadores.
+
+Con ella, **la cadena de entrada está completa**: de la llegada del camión a la ubicación física. La
+deuda funcional de ese tramo pasa del 58 % al 80 % de cobertura, y lo único que queda es la
+importación, que es otra cadena.
+
+`NEXT SPEC = 031 — COLA Y RUTA DE PICKING`
+
+Es la única en `READY_FOR_IMPLEMENTATION` y ya tiene lo que pedía: inventario **físicamente
+ubicado**, con empresa, almacén, ubicación real, producto, estado, lote, serial y cantidad base, y el
+traslado reconstruible desde el ledger. Sigue siendo suya la asignación de demanda a ubicación: el
+put-away nunca ató una reserva a una ubicación, y hay prueba de ello.
+
+Detrás, la 032, que espera a la 031.
+
+Implementación de la 031 **no iniciada**: requiere su propio ciclo con autorización expresa.

@@ -45,7 +45,10 @@ export function PutAwayPage(): React.JSX.Element {
 
   const almacenes = useQuery({
     queryKey: ["putaway", "almacenes"],
-    queryFn: () => apiFetch<{ items: WarehouseSummary[] }>("/organization/warehouses"),
+    // Límite explícito: el endpoint devuelve 50 por defecto y el selector
+    // truncaba en silencio. Con más de 500 almacenes haría falta un selector
+    // con búsqueda, que es de la Spec 008.
+    queryFn: () => apiFetch<{ items: WarehouseSummary[] }>("/organization/warehouses?limit=500"),
   });
 
   const pendientes = useQuery({
@@ -120,7 +123,7 @@ export function PutAwayPage(): React.JSX.Element {
           }}
           className="text-sm font-medium text-primary-700 underline"
         >
-          Ubicar
+          Elegir ubicación
         </button>
       ),
     }),
@@ -196,7 +199,7 @@ export function PutAwayPage(): React.JSX.Element {
             <FormField label="Cantidad" help="En unidad base">
               <TextInput value={cantidad} onChange={(e) => setCantidad(e.target.value)} />
             </FormField>
-            <AsyncButton onClick={ubicar}>Ubicar</AsyncButton>
+            <AsyncButton onClick={ubicar}>Confirmar ubicación</AsyncButton>
           </div>
           {!warehouseId ? (
             <p className="mt-3 text-sm text-text-500" role="status">

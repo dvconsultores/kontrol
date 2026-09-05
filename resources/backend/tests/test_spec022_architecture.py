@@ -142,3 +142,17 @@ def test_no_hay_segunda_verdad_fisica():
     for prohibido in ("PutAwayLocation", "StorageLocationInventory", "current_location",
                       "LocationBalance", "PutAwayBalance"):
         assert not any(prohibido in py.read_text() for py in RAIZ.rglob("*.py")), prohibido
+
+
+def test_la_api_expone_la_procedencia_del_movimiento():
+    """Lo que no se expone no se puede auditar.
+
+    El ledger guardaba estado y ubicación de origen y destino desde las Specs
+    023 y 022, pero `movement_dict` no los devolvía: ni una prueba de extremo a
+    extremo ni un auditor podían comprobar de dónde salió la mercancía. Lo
+    encontró la e2e del put-away al no poder verificar su propio traslado.
+    """
+    cuerpo = _bloque(INV, "def movement_dict(")
+    for campo in ("source_state", "target_state", "source_location_id",
+                  "target_location_id", "base_quantity"):
+        assert f'"{campo}"' in cuerpo, f"la API oculta {campo}"

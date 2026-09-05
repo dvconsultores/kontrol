@@ -43,7 +43,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 019 | Recepción física | **`COMPLETE / CONVERGED`** (2026-09-03) | arribo, bultos, comparación documental, inspección, observación física, unidad y cantidad base, acta; migración `0044` | **ninguno** |
 | 020 | Incidencias de recepción | **`COMPLETE / CONVERGED`** (2026-09-03) | `receipt_incidents`: cinco tipos, ciclo de cinco estados, tope de cantidad por tipo, resolución de conjunto cerrado, ajuste autorizado vía 045, evidencia vía 046; migración `0045` | **ninguno** |
 | 021 | Confirmación de inventario | **`COMPLETE / CONVERGED`** (2026-09-04) | conteo por SKU en base, conciliación contra orden y recepción física, cinco tipos de diferencia, decisión por línea con resultado mixto, `receipt_confirmations`; migración `0047`. **Aceptar ya no libera** | **ninguno** |
-| 022 | Put-away y ubicación | **`COMPLETE / CONVERGED`** (2026-09-04) | put-away manual con candidatas filtradas; disponible del almacén sumado sobre todas las ubicaciones; procedencia de ubicación en el ledger; migración `0048` | **ninguno** |
+| 022 | Put-away y ubicación | **`COMPLETE / CONVERGED / EVIDENCE SEALED`** (2026-09-04) | put-away manual con candidatas filtradas por el backend, procedencia de ubicación en el ledger, disponible del almacén agregado; migración `0048`. E2E 27/27 en tres navegadores | **ninguno** |
 | 023 | Inventario / Kardex | `PARTIALLY_IMPLEMENTED` · capacidad multiestado **`COMPLETE / CONVERGED`** (2026-09-04) | `inventory` 13 tablas; autoridad única de estados (`states.py`), procedencia en el ledger, reclasificación canónica, reconstrucción fiel; migración `0046` | **ninguno** para la capacidad. La Spec sigue parcial por requisitos ajenos a ella (ubicación en la práctica, FEFO, valoración) |
 | 024 | Lotes / seriales / vencimiento | `PARTIALLY_IMPLEMENTED` | `inventory_lots`, `product_serials` | — |
 | 025 | Transferencias / conteos / ajustes | `PARTIALLY_IMPLEMENTED` | `transfers`, `stock_counts`, `inventory_adjustments` | — |
@@ -52,7 +52,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 028 | CxP y pagos | `PARTIALLY_IMPLEMENTED` | `ap_payments`, `ap_open_items`; tipo documental cerrado en N9 | 040 retenciones |
 | 029 | Cotización y pedido comercial | **`COMPLETE / CONVERGED`** (2026-09-01) | `sales_quotes`, `sales_orders` con origen comercial, ciclo de cotización, conversión 1:1 | **ninguno** |
 | 030 | Crédito / aprobación / reserva | **`COMPLETE / CONVERGED`** (2026-09-02) | reserva al confirmar (`ORDER_CONFIRMATION`), bloqueo en PostgreSQL, crédito vía 045, `RELEASED` para 031; migración `0043` | **ninguno** |
-| 031 | Cola y ruta de picking | `BLOCKED_BY_DEPENDENCY` | `pick_lists`; **`pick_list_lines` sin ubicación ni secuencia**; handoff de 030 satisfecho | **existencia ubicada y cantidad por ubicación (022)**. Ya no por 030 |
+| 031 | Cola y ruta de picking | **`READY_FOR_IMPLEMENTATION`** (2026-09-04) | 0 proceso | **ninguno**: existe inventario físicamente ubicado |
 | 032 | Picking y consolidación | `BLOCKED_BY_DEPENDENCY` | esqueleto en `sales`; reservas de 030 y lotes/seriales de 024 satisfechos | **cola y ruta (031)** + **ubicación de origen (022)** |
 | 033 | Confirmación independiente de pedido | **`NOT_STARTED`** | 0 tablas | 032 |
 | 034 | Liberación y facturación | `PARTIALLY_IMPLEMENTED` | `sales_invoices` con transiciones | 033; snapshot comercial ausente |

@@ -1571,5 +1571,13 @@ def movement_dict(movement: InventoryMovement) -> dict:
         "occurred_at": movement.occurred_at.isoformat() if movement.occurred_at else None,
         "reversed_by_id": movement.reversed_by_id,
         "status": movement.status,
+        # Procedencia. Sin exponerla, ni un auditor ni una prueba pueden
+        # comprobar de qué estado y de qué ubicación salió la mercancía, que es
+        # justo lo que las Specs 023 y 022 añadieron al ledger.
+        "source_state": movement.source_state,
+        "target_state": movement.target_state,
+        "source_location_id": movement.source_location_id,
+        "target_location_id": movement.target_location_id,
+        "base_quantity": str(movement.base_quantity) if movement.base_quantity is not None else None,
         "allowed_actions": movement_allowed_actions(movement),
     }

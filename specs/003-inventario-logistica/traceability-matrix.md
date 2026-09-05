@@ -194,3 +194,43 @@ Y se añade lo que el próximo ciclo de implementación hereda ya decidido:
 | IMP-022-R-064 · deuda P0 propia | — | — | — | **0** |
 
 **Cobertura: 100 %. Huérfanos: 0. OQ materiales: 0.**
+
+---
+
+# TRAZABILIDAD — SELLO DE EVIDENCIA E2E DE LA SPEC 022 (2026-09-04)
+
+| Requisito | Navegador | Acción de interfaz | Contrato de backend | Prueba de dominio | Estado |
+|---|---|---|---|---|---|
+| E2E-022-001/002/003 · camino feliz en los tres | Chromium · Firefox · WebKit | login → put-away → elegir → confirmar | `POST /inventory/putaway` | saldos, movimiento y físico total | ✔ |
+| E2E-022-004..009 · lo pendiente se ve con su producto, almacén, cantidad y estado | los tres | tabla de pendientes | `GET /inventory/putaway/pendientes` | la fila corresponde al saldo sin ubicar | ✔ |
+| E2E-022-010 · las candidatas vienen del backend | los tres | selector | `GET /inventory/putaway/ubicaciones` | solo la activa del almacén | ✔ |
+| E2E-022-011 · la inactiva no es candidata | los tres | `toHaveCount(0)` sobre su opción | ídem | — | ✔ |
+| E2E-022-012 · la de otro almacén no es candidata | los tres | ídem | ídem | — | ✔ |
+| E2E-022-013 · la de otra empresa no es candidata | — | — | — | **suite multiempresa del backend** (`test_spec022_putaway.py`) | ✔ ajeno |
+| E2E-022-014 · envío hostil a otro almacén | los tres | — | `409 LOCATION_OTHER_WAREHOUSE` | saldo intacto | ✔ |
+| E2E-022-015 · envío hostil a inactiva | los tres | — | `409 LOCATION_NOT_ELIGIBLE` | saldo intacto | ✔ |
+| E2E-022-016/017 · la elige la persona, sin recomendación | los tres | el selector arranca vacío | — | — | ✔ |
+| E2E-022-018 · la capacidad no bloquea | los tres | — | `"enforced": false` | 100 colocadas donde declara 5 | ✔ |
+| E2E-022-019..021 · el envío muta de verdad, con espera y sin doble clic | los tres | `AsyncButton` | `POST /inventory/putaway` | la fila desaparece y el saldo cambia | ✔ |
+| E2E-022-022 · doble envío, un solo efecto | los tres | dos peticiones en paralelo | una prospera | físico total 100 | ✔ |
+| E2E-022-023 · TOCTOU | los tres | listar → desactivar → enviar | `409` | sin movimiento ni saldo | ✔ |
+| E2E-022-024 · el movimiento lleva origen y destino | los tres | — | `GET /inventory/movements` | origen nulo, destino real, base 100 | ✔ |
+| E2E-022-025..027 · el origen baja, el destino sube, el físico se conserva | los tres | — | — | suma 100 antes y después | ✔ |
+| E2E-022-028..033 · producto, almacén, estado, lote, serial y base preservados | los tres | — | — | estado igual a ambos lados del movimiento | ✔ |
+| E2E-022-034 · caja ×12 | — | — | — | **suite de backend** `test_la_caja_por_doce_llega_ubicada_como_veinticuatro` | ✔ ajeno |
+| E2E-022-035/036 · reservado y disponible del almacén no cambian | los tres | — | `GET /inventory/balances` | reservado 30 y reservas activas iguales | ✔ |
+| E2E-022-037 · **se puede reservar después de ubicar** | los tres | — | `POST /inventory/reservations` | reservado 30 sobre mercancía ubicada | ✔ |
+| E2E-022-038 · liberar después de ubicar | — | — | — | suite de backend de la Spec 030 | ✔ ajeno |
+| E2E-022-039 · la reserva no lleva ubicación | los tres | — | — | ninguna reserva expone `location_id` | ✔ |
+| E2E-022-040..042 · no se crea nada de picking | los tres | — | `GET /sales/pick-lists` | delta cero | ✔ |
+| E2E-022-043..045 · cambio de empresa, usuario AB y tenant | — | — | — | suite multiempresa del backend | ✔ ajeno |
+| E2E-022-046 · reconstrucción igual al incremental | — | — | — | `test_reconstruir_da_lo_mismo_que_el_camino_incremental` | ✔ ajeno |
+| E2E-022-047 · sin saltos silenciosos | los tres | — | — | 27 esperadas, 27 ejecutadas | ✔ |
+| E2E-022-048/049 · sin regresión ni fallos sin clasificar | los tres | — | — | 0 y 0 | ✔ |
+| E2E-022-050 · trazabilidad | — | — | — | esta tabla | ✔ |
+
+**Cobertura: 100 %. Huérfanos: 0. `UNKNOWN`: 0.**
+
+Los marcados «ajeno» están certificados por la suite de backend correspondiente y no por el
+navegador: montar aquí una versión pobre de lo que allí está bien probado —multiempresa con dos
+tenants, caja ×12 de extremo a extremo, paridad de reconstrucción— habría dado menos garantía, no más.

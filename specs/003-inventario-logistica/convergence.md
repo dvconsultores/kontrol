@@ -143,7 +143,7 @@ datos era necesaria.
 
 | Criterio | Resultado |
 |---|---|
-| Backend | **1036 · 1028 pasadas · 8 saltadas declaradas · 0 fallos** |
+| Backend | **1037 · 1029 pasadas · 8 saltadas declaradas · 0 fallos** |
 | — nuevas de esta Spec | **34** (13 funcionales · 14 estructurales · 7 de migración y concurrencia) |
 | Frontend | **289/289** · `tsc` · ESLint · build |
 | Rutas | 452 → **455** |
@@ -161,3 +161,55 @@ ubicación. El compromiso sigue siendo del almacén, y decidir de qué ubicació
 satisfacerlo es de la 031. Un guardia estructural lo comprueba.
 
 `SPEC 031 — READY_FOR_IMPLEMENTATION` tras esta convergencia.
+
+---
+
+# CONVERGENCIA — SPEC 022 · PUT-AWAY Y UBICACIÓN (2026-09-04)
+
+`SPEC 022 — COMPLETE / CONVERGED / EVIDENCE SEALED`
+
+## Compuerta
+
+| Criterio | Resultado |
+|---|---|
+| Backend | **1037 · 1029 pasadas · 8 saltadas declaradas · 0 fallos** |
+| — nuevas de esta Spec | **41** (18 funcionales · 16 estructurales · 7 de migración y concurrencia) |
+| Frontend | 289/289 · `tsc` · ESLint · build |
+| **E2E propia del put-away** | **27/27** — 9 casos × Chromium, Firefox y WebKit; 0 fallos, 0 saltos |
+| Instalación limpia | subir a `head`, bajar la `0048`, volver a subir |
+| Rutas | 452 → 455 |
+| Deuda P0 propia | **0** |
+
+## Lo que la Spec cierra
+
+La cadena de entrada queda completa: recibir (019), registrar la excepción (020), confirmar (021) y
+**ubicar** (022). Con la e2e ejecutada, lo que estaba demostrado en pruebas de servicio queda
+demostrado también en navegador y contra el dominio.
+
+La frase que bloqueó esta Spec un ciclo entero —«ubicar la mercancía la volvería invendible»— es hoy
+una prueba que pasa en los tres navegadores: tras colocar cien unidades en una ubicación real,
+reservar treinta funciona.
+
+## Tres defectos que solo la e2e podía encontrar
+
+1. **La API ocultaba la procedencia del movimiento.** El ledger guardaba estado y ubicación de origen
+   y destino desde las Specs 023 y 022, pero `movement_dict` no los devolvía. Nadie podía auditarlos.
+2. **Dos acciones distintas se llamaban «Ubicar»** en la misma pantalla. Quien navega por voz no
+   podía distinguirlas; la prueba tampoco pudo.
+3. **El selector de almacenes truncaba en silencio** a los 50 que devuelve el endpoint por defecto.
+
+Los tres corregidos, y el primero con guardia estructural para que no vuelva.
+
+## Deuda declarada, no oculta
+
+El selector de almacenes tiene ahora un techo de 500. Por encima haría falta un selector con
+búsqueda, y eso es de la Spec 008. Queda dicho en el código y aquí.
+
+## Handoff a la Spec 031
+
+Existe inventario **físicamente ubicado**: empresa, almacén, ubicación real, producto, estado de
+mercancía, lote, serial y cantidad base, con el traslado reconstruible desde el ledger. Es lo que la
+cola y la ruta de picking pedían.
+
+`SPEC 031 — READY_FOR_IMPLEMENTATION`. Y sigue siendo su dueña la asignación de demanda a ubicación:
+el put-away mueve existencia física y nunca ató una reserva a una ubicación —hay prueba de ello—.
