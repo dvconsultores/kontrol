@@ -853,6 +853,54 @@ export interface ConfirmationResult {
   lines: ConfirmationResultLine[];
 }
 
+/** Un pedido confirmado esperando su factura, o ya liberado. */
+export interface BillableOrder {
+  order_id: string;
+  code: string;
+  customer_id: string | null;
+  status: string;
+  currency: string | null;
+  billing_requested_at: string | null;
+}
+
+export interface BillingInvoiceLine {
+  product_id: string;
+  quantity: string;
+  unit_price: string;
+  base_quantity: string | null;
+  presentation_id: string | null;
+  conversion_factor_snapshot: string | null;
+  tax_amount: string;
+  base_fiscal: string;
+  total: string;
+}
+
+export interface BillingInvoice {
+  id: string;
+  status: string;
+  order_id: string | null;
+  confirmation_id: string | null;
+  customer_id: string;
+  currency: string;
+  base_fiscal: string;
+  tax_total: string;
+  total: string;
+  invoice_number: string | null;
+  control_number: string | null;
+  fiscal_document_id: string | null;
+  issued_at: string | null;
+  lines_without_tax: number;
+  lines: BillingInvoiceLine[];
+}
+
+/** Lo que el despacho necesita saber antes de dejar salir la mercancía. */
+export interface OrderBillingStatus {
+  order_id: string;
+  order_status: string;
+  invoiced: boolean;
+  invoice: BillingInvoice | null;
+}
+
 export interface PickingPlan {
   id: string;
   code: string;

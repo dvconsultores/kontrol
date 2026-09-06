@@ -19,7 +19,11 @@ SALES_API = (RAIZ / "modules" / "sales" / "api.py").read_text()
 MODELOS = (RAIZ / "modules" / "sales" / "models.py").read_text()
 MIGRACION = (Path(__file__).resolve().parents[1] / "alembic" / "versions"
              / "0051_spec033_order_confirmation.py").read_text()
-BLOQUE = SALES[SALES.index("# Spec 033 · confirmación independiente"):SALES.index("def create_shipment(")]
+# El corte es la cabecera de la Spec 034: sin él este bloque se comería la
+# facturación, que sí factura, y la guardia afirmaría lo contrario de lo que
+# quiere decir. Mismo cuidado que necesitaron la 031 y la 032.
+BLOQUE = SALES[SALES.index("# Spec 033 · confirmación independiente"):
+               SALES.index("# Spec 034 · liberación y facturación")]
 
 
 def _bloque(texto: str, inicio: str) -> str:
@@ -163,7 +167,10 @@ def test_el_pedido_llega_a_confirmado_y_no_mas_alla():
     t = sales_service.ORDER_TRANSITIONS
     assert "CONFIRMED" in t["PREPARED"] and "PREPARING" in t["PREPARED"]
     assert "CONFIRMED" in t
-    assert "READY_FOR_BILLING" not in t, "la 033 adelantó un estado de la 034"
+    # `READY_FOR_BILLING` ya existe: lo añadió la Spec 034, que es su dueña. Lo
+    # que esta guardia sigue defendiendo es que **la 033** no lo escriba.
+    assert "READY_FOR_BILLING" not in _bloque(BLOQUE, "def confirm_order("), \
+        "el control independiente libera para facturación por su cuenta"
     assert "CONFIRMED" in sales_service.ORDER_RESERVED_STATES, \
         "un pedido confirmado perdió su reserva antes de despacharse"
 

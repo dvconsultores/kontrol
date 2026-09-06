@@ -572,3 +572,43 @@ Sigue abierta, sin bloquear a la 034, la deuda de la Spec 032: un pedido rechaza
 `PREPARING` y su plan no tiene camino de reapertura ni existe la arista `PICKING → DISPONIBLE`.
 
 Implementación de la 034 **no iniciada**: requiere su propio ciclo con autorización expresa.
+
+---
+
+## Tras la implementación de la Spec 034 — 2026-09-06
+
+`SPEC 034 — COMPLETE / CONVERGED`. Backend 1169/1169 con los 8 saltos esperados, frontend 295/295,
+e2e propia 24/24 en los tres navegadores y la cadena operativa completa 153/153. Migración `0052`
+con ida y vuelta sobre base limpia.
+
+El ciclo enumeraba catorce preguntas materiales y ninguna hubo que decidirla, pero por primera vez
+la autoridad venía de **tres sitios que se complementan**: el proceso fuente dice qué pasa —el ¶95
+genera la factura y el ¶97 emite el documento fiscal, que son dos actos distintos—, `ADR-D0-012` dice
+en qué estados, y el backlog maestro fija los criterios de aceptación con una literalidad que no
+dejaba margen: `B-007` y `B-060`.
+
+Lo que no había que construir era casi todo lo difícil. El motor fiscal ya tenía reglas versionadas,
+series con reserva atómica del correlativo, lotes de números de control y una emisión idempotente; y
+la cuenta por cobrar ya nace al emitir. **Lo que faltaba era el gobierno**: antes de este ciclo
+cualquiera podía crear una factura para un cliente sin pedido, sin confirmación y dos veces.
+
+Dos mutaciones lo comprobaron. Quitar la comprobación de la confirmación hace fallar la prueba del
+pedido puesto en `CONFIRMED` a mano —prueba que hubo que escribir porque la primera guardia miraba el
+estado y no el registro, y la mutación lo destapó—. Quitar la comprobación de doble facturación del
+servicio hace que **la base** rechace la segunda factura.
+
+Con esto la cadena de salida pasa del 89 % al 96 %: solo queda el despacho final.
+
+`NEXT SPEC = 035 — DESPACHO, TRANSPORTE Y REGULACIÓN`
+
+Recibe las tres compuertas que el ¶103 exige verificar —«Pedido preparado + Pedido confirmado +
+Factura emitida»— cada una con su autoridad consultable. `DISPATCHED` no se ha añadido: lo declara
+`ADR-D0-012` y lo escribirá su dueña, como cada Spec de este tramo dejó el suyo para la siguiente.
+Y la arista `CONFIRMED → SHIPPED`, que viene de antes de este tramo, sigue abierta: cerrarla es su
+compuerta, no la de esta Spec.
+
+Queda dicho en voz alta que **la emisión no está legalmente homologada**: `D0-07` mantiene las Specs
+039-043 bloqueadas por validación normativa, y este ciclo construyó contra el motor existente sin
+afirmar lo contrario.
+
+Implementación de la 035 **no iniciada**: requiere su propio ciclo con autorización expresa.

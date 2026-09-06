@@ -72,8 +72,11 @@ def test_la_maquina_de_estados_es_la_de_d0_03():
     # `ADR-D0-012`: conforme → `CONFIRMED` (`R-D0-12-4`); no conforme → «el
     # pedido regresa a preparación» (`R-D0-12-3`).
     assert t["PREPARED"] == {"SHIPPED", "CANCELLED", "CONFIRMED", "PREPARING"}
-    assert t["CONFIRMED"] == {"SHIPPED", "CANCELLED"}
-    assert "READY_FOR_BILLING" not in t, "la 033 adelantó un estado de la 034"
+    # `READY_FOR_BILLING` e `INVOICED` los añadió la Spec 034 y los declara
+    # `ADR-D0-012`: «CONFIRMED → READY_FOR_BILLING → INVOICED → DISPATCHED».
+    assert t["CONFIRMED"] == {"SHIPPED", "CANCELLED", "READY_FOR_BILLING"}
+    assert t["READY_FOR_BILLING"] == {"INVOICED", "CANCELLED"}
+    assert "DISPATCHED" not in t, "la 034 adelantó un estado de la 035"
     assert sales_service.ORDER_HANDOFF_STATE == "RELEASED"
     assert all(t[x] == set() for x in ("CLOSED", "CANCELLED", "REJECTED", "EXPIRED"))
 

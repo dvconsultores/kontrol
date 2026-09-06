@@ -1518,6 +1518,26 @@
     },
     {
       "method": "GET",
+      "path": "/sales/facturacion/pendientes"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/facturacion/{invoice_id}/emitir"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/facturacion/{order_id}/factura"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/facturacion/{order_id}/generar"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/facturacion/{order_id}/solicitar"
+    },
+    {
+      "method": "GET",
       "path": "/sales/invoices"
     },
     {

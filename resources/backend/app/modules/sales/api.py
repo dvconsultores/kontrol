@@ -710,6 +710,82 @@ def billing_eligibility(order_id: str, db: Session = Depends(get_db),
     return sales_service.billing_eligibility(db, company_id=ctx.company_id, order_id=order_id)
 
 
+# --------------------------------------------------------------------------- #
+# Spec 034 · liberación y facturación
+#
+# «Facturación factura sobre un pedido previamente confirmado» (¶89). La
+# compuerta no es una convención: sin confirmación independiente vigente no hay
+# solicitud, sin solicitud no hay factura, y sin pedido no hay emisión.
+# --------------------------------------------------------------------------- #
+class IssueInvoiceBody(BaseModel):
+    """La numeración la asigna la Spec 042; aquí solo se dice de qué serie y de
+    qué lote de control sale."""
+    model_config = ConfigDict(extra="forbid")
+
+    series_id: str
+    batch_id: str
+
+
+@router.get("/facturacion/pendientes")
+def billable_orders(db: Session = Depends(get_db),
+                    user: User = Depends(require_permission("ventas", "view")),
+                    ctx: CompanyContext = Depends(get_company_context)):
+    """Pedidos confirmados y pedidos ya liberados a la espera de su factura."""
+    ordenes = sales_service.billable_orders(db, company_id=ctx.company_id)
+    items = [{"order_id": str(o.id), "code": o.code, "customer_id": o.customer_id,
+              "status": o.status, "currency": o.currency,
+              "billing_requested_at": (o.billing_requested_at.isoformat()
+                                       if o.billing_requested_at else None)}
+             for o in ordenes]
+    return {"items": items, "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.post("/facturacion/{order_id}/solicitar", dependencies=[Depends(require_write_allowed)])
+def request_billing(order_id: str, db: Session = Depends(get_db),
+                    actor: User = Depends(require_permission("ventas", "quality")),
+                    ctx: CompanyContext = Depends(get_company_context)):
+    """La solicitud del ¶84. La firma el Área de Confirmación, que es quien
+    autoriza (¶83), y por eso exige su mismo permiso."""
+    order = sales_service.request_billing(db, company_id=ctx.company_id, order_id=order_id,
+                                          actor=str(actor.id))
+    db.commit()
+    db.refresh(order)
+    return sales_service.order_dict(db, order)
+
+
+@router.post("/facturacion/{order_id}/generar", dependencies=[Depends(require_write_allowed)])
+def generate_invoice(order_id: str, db: Session = Depends(get_db),
+                     actor: User = Depends(require_permission("ventas", "create")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    """Genera la factura desde las líneas del pedido (¶95-96)."""
+    invoice = sales_service.generate_invoice(db, company_id=ctx.company_id, order_id=order_id,
+                                             actor=str(actor.id))
+    db.commit()
+    db.refresh(invoice)
+    return sales_service.billing_invoice_dict(db, invoice)
+
+
+@router.post("/facturacion/{invoice_id}/emitir", dependencies=[Depends(require_write_allowed)])
+def issue_invoice(invoice_id: str, body: IssueInvoiceBody, db: Session = Depends(get_db),
+                  actor: User = Depends(require_permission("ventas", "approve")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    """Emite el documento fiscal (¶97) y deja el pedido facturado (¶99)."""
+    invoice = sales_service.issue_invoice(db, company_id=ctx.company_id, invoice_id=invoice_id,
+                                          series_id=body.series_id, batch_id=body.batch_id,
+                                          actor=str(actor.id))
+    db.commit()
+    db.refresh(invoice)
+    return sales_service.billing_invoice_dict(db, invoice)
+
+
+@router.get("/facturacion/{order_id}/factura")
+def order_invoice(order_id: str, db: Session = Depends(get_db),
+                  user: User = Depends(require_permission("ventas", "view")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    """La factura de un pedido. Lo que la Spec 035 necesita antes de despachar."""
+    return sales_service.order_invoice_dict(db, company_id=ctx.company_id, order_id=order_id)
+
+
 @router.post("/shipments", dependencies=[Depends(require_write_allowed)])
 def create_shipment(body: ShipmentCreate, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("ventas", "create")), ctx: CompanyContext = Depends(get_company_context)):

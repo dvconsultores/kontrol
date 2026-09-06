@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.approvals import integration as approvals_integration
 from app.modules.approvals import service as approvals_service
+from app.modules.fiscal import service as fiscal_service
 from app.modules.inventory import service as inv_service
 from app.modules.inventory.models import InventoryBalance, Reservation
 from app.modules.master_data import uom as uom_engine
@@ -106,7 +107,9 @@ ORDER_TRANSITIONS: dict[str, set[str]] = {
     # preparación/corrección» (`R-D0-12-3`, ¶77). `READY_FOR_BILLING` no se añade
     # aquí: lo escribirá la Spec 034, igual que la 032 dejó `CONFIRMED` para esta.
     "PREPARED": {"SHIPPED", "CANCELLED", "CONFIRMED", "PREPARING"},
-    "CONFIRMED": {"SHIPPED", "CANCELLED"},
+    "CONFIRMED": {"SHIPPED", "CANCELLED", "READY_FOR_BILLING"},
+    "READY_FOR_BILLING": {"INVOICED", "CANCELLED"},
+    "INVOICED": {"SHIPPED", "CANCELLED"},
     "SHIPPED": {"CLOSED"},
     "CLOSED": set(),
     "CANCELLED": set(),
@@ -116,7 +119,7 @@ ORDER_TRANSITIONS: dict[str, set[str]] = {
 
 #: Estados en los que el pedido tiene (y debe tener) su reserva viva.
 ORDER_RESERVED_STATES = frozenset({"SUBMITTED", "RELEASED", "PREPARING", "PREPARED",
-                                  "CONFIRMED"})
+                                  "CONFIRMED", "READY_FOR_BILLING", "INVOICED"})
 #: Estado que habilita la cola de la Spec 031 (IMP-030-053).
 ORDER_HANDOFF_STATE = "RELEASED"
 #: `RESERVATION TRIGGER = ORDER_CONFIRMATION` — fijo, no configurable (D0-03).
@@ -1901,6 +1904,275 @@ def billing_eligibility(db: Session, *, company_id: str, order_id: str) -> dict:
         "confirmed_at": (confirmacion.checked_at.isoformat()
                          if confirmacion and confirmacion.checked_at else None),
         "checked_by": confirmacion.checked_by if confirmacion else None,
+    }
+
+
+# =========================================================================== #
+# Spec 034 · liberación y facturación
+#
+# El ¶90 explica la separación que gobierna todo esto: «Almacén prepara.
+# Confirmación verifica. **Facturación factura sobre un pedido previamente
+# confirmado**». Aquí no se recoge, no se verifica de nuevo y no se despacha.
+#
+# El proceso separa dos actos que es fácil confundir: **generar la factura**
+# (¶95) es comercial, y **emitir el documento fiscal** (¶97) es lo que consume
+# correlativo y número de control. La 034 hace los dos, pero la numeración no es
+# suya: la pide a la Spec 042, que la asigna atómicamente.
+# =========================================================================== #
+
+
+def _confirmacion_vigente(db: Session, company_id: str, order_id: str) -> OrderConfirmation:
+    """La confirmación independiente sobre la que se factura (`B-060`)."""
+    confirmacion = db.execute(
+        select(OrderConfirmation).where(OrderConfirmation.company_id == company_id,
+                                        OrderConfirmation.order_id == order_id,
+                                        OrderConfirmation.status == "CONFIRMED")
+    ).scalars().first()
+    if confirmacion is None:
+        raise ConflictError(
+            code="BILLING_NOT_CONFIRMED",
+            message="El pedido no tiene confirmación independiente: no se factura sin ella.")
+    return confirmacion
+
+
+def billable_orders(db: Session, *, company_id: str) -> list[SalesOrder]:
+    """Pedidos confirmados a la espera de que se solicite su facturación (¶85)."""
+    company_id = _company(company_id, obj="facturación")
+    return list(db.execute(
+        select(SalesOrder).where(SalesOrder.company_id == company_id,
+                                 SalesOrder.status.in_(("CONFIRMED", "READY_FOR_BILLING")))
+        .order_by(SalesOrder.updated_at.asc(), SalesOrder.id.asc())
+    ).scalars().all())
+
+
+def request_billing(db: Session, *, company_id: str, order_id: str,
+                    actor: str | None = None) -> SalesOrder:
+    """La solicitud de facturación del ¶84.
+
+    El ¶83 dice que **el Área de Confirmación autoriza**; esto es esa
+    autorización, con su autor y su momento. Sin los sellos, «solicitud
+    explícita» sería solo un cambio de estado que nadie firmó.
+    """
+    company_id = _company(company_id, obj="facturación")
+    order = _lock_order(db, company_id, order_id)
+    if order.status != "CONFIRMED":
+        raise ConflictError(code="BILLING_ORDER_NOT_CONFIRMED",
+                            message="Solo se solicita la facturación de un pedido confirmado.")
+    _confirmacion_vigente(db, company_id, str(order.id))
+    ahora = datetime.now(UTC)
+    _assert_transition(order.status, "READY_FOR_BILLING", ORDER_TRANSITIONS, "el pedido")
+    order.status = "READY_FOR_BILLING"
+    order.billing_requested_at = ahora
+    order.billing_requested_by = actor
+    order.updated_at = ahora
+    db.flush()
+    _audit(db, action="BILLING_REQUESTED", entity_type="SalesOrder", entity_id=str(order.id),
+           company_id=company_id, actor=actor,
+           before={"status": "CONFIRMED"}, after={"status": "READY_FOR_BILLING"})
+    return order
+
+
+def _precio_de(linea: SalesOrderLine) -> Decimal:
+    """El precio **congelado** de la línea, no el del maestro de hoy.
+
+    `resolved_unit_price` es lo que la Spec 029 dejó resuelto con su versión de
+    lista; `unit_price` es lo que se tecleó. Ninguno se recalcula: cambiar una
+    tarifa no puede reescribir una venta ya cerrada.
+    """
+    return _dec(linea.resolved_unit_price if linea.resolved_unit_price is not None
+                else linea.unit_price)
+
+
+def generate_invoice(db: Session, *, company_id: str, order_id: str,
+                     actor: str | None = None) -> SalesInvoice:
+    """Genera la factura del pedido y la asocia a él (¶95-96).
+
+    Todo el contenido comercial sale de las líneas del pedido: cantidad tecleada,
+    presentación, factor congelado, cantidad base, precio y descuento. El maestro
+    actual no participa. El impuesto lo resuelve la Spec 039 con su regla
+    versionada y fechada; aquí no hay ninguna tasa escrita.
+    """
+    company_id = _company(company_id, obj="facturación")
+    order = _lock_order(db, company_id, order_id)
+    if order.status != "READY_FOR_BILLING":
+        raise ConflictError(
+            code="BILLING_NOT_REQUESTED",
+            message="La facturación no se ha solicitado para este pedido.")
+    confirmacion = _confirmacion_vigente(db, company_id, str(order.id))
+
+    viva = db.execute(
+        select(SalesInvoice).where(SalesInvoice.order_id == str(order.id),
+                                   SalesInvoice.status != "CANCELLED")
+    ).scalars().first()
+    if viva is not None:
+        raise ConflictError(code="ORDER_ALREADY_INVOICED",
+                            message="El pedido ya tiene una factura viva.",
+                            details={"invoice_id": str(viva.id), "status": viva.status})
+
+    lineas = list(db.execute(
+        select(SalesOrderLine).where(SalesOrderLine.order_id == str(order.id))
+        .order_by(SalesOrderLine.id)).scalars().all())
+    if not lineas:
+        raise ConflictError(code="BILLING_ORDER_EMPTY", message="El pedido no tiene líneas.")
+
+    invoice = SalesInvoice(company_id=company_id,
+                           customer_id=str(order.customer_id), order_id=str(order.id),
+                           confirmation_id=str(confirmacion.id),
+                           base_fiscal_currency=order.currency or "VED",
+                           status="DRAFT", created_by=actor)
+    db.add(invoice)
+    db.flush()
+
+    base_total = Decimal(0)
+    impuesto_total = Decimal(0)
+    for linea in lineas:
+        cantidad = _dec(linea.quantity)
+        precio = _precio_de(linea)
+        descuento = _dec(linea.discount)
+        base = cantidad * precio - descuento
+        impuesto = Decimal(0)
+        if linea.tax_ref:
+            # La regla la elige el motor fiscal por código y fecha. Si la regla
+            # no existe o no está vigente, esto falla: facturar con una regla
+            # desconocida sería peor que no facturar.
+            calculo = fiscal_service.calculate_tax(
+                db, company_id=company_id, tax_code=linea.tax_ref, base=float(base),
+                document_ref=f"INVOICE:{invoice.id}", line_ref=str(linea.id))
+            impuesto = _dec(calculo.amount)
+        db.add(SalesInvoiceLine(
+            invoice_id=str(invoice.id), product_id=str(linea.product_id), quantity=cantidad,
+            unit_price=precio, tax_amount=impuesto, base_fiscal=base, total=base + impuesto,
+            uom_id=linea.uom_id, presentation_id=linea.presentation_id,
+            conversion_factor_snapshot=linea.conversion_factor_snapshot,
+            base_quantity=linea.base_quantity, uom_source=linea.uom_source,
+            snapshot=linea.snapshot))
+        base_total += base
+        impuesto_total += impuesto
+
+    invoice.base_fiscal = base_total
+    invoice.tax_total = impuesto_total
+    invoice.total = base_total + impuesto_total
+    db.flush()
+    _audit(db, action="INVOICE_GENERATED", entity_type="SalesInvoice", entity_id=str(invoice.id),
+           company_id=company_id, actor=actor,
+           after={"order_id": str(order.id), "confirmation_id": str(confirmacion.id),
+                  "total": str(invoice.total), "lines": len(lineas)})
+    return invoice
+
+
+def issue_invoice(db: Session, *, company_id: str, invoice_id: str, series_id: str,
+                  batch_id: str, actor: str | None = None) -> SalesInvoice:
+    """Emite el documento fiscal (¶97) y deja el pedido facturado (¶99).
+
+    La numeración **no es de esta Spec**: `emit_document` de la 042 consume el
+    correlativo y el número de control en una sola transacción, y es idempotente
+    por `INVOICE:{id}`. Reintentar no gasta dos números.
+
+    Se recorre la máquina de la factura hasta `EMITTED` en vez de saltarla: los
+    estados intermedios son de la Spec 005 y siguen disponibles para quien quiera
+    separarlos en pasos humanos con el endpoint de transición.
+    """
+    company_id = _company(company_id, obj="facturación")
+    invoice = db.execute(
+        select(SalesInvoice).where(SalesInvoice.id == invoice_id).with_for_update()
+    ).scalars().first()
+    if invoice is None or str(invoice.company_id) != str(company_id):
+        raise NotFoundError(code="SALES_INVOICE_NOT_FOUND", message="Factura de venta no encontrada")
+    if invoice.status == "EMITTED":
+        return invoice
+    if invoice.order_id is None:
+        raise ConflictError(code="INVOICE_WITHOUT_ORDER",
+                            message="No se emite una factura que no está asociada a un pedido.")
+    order = _lock_order(db, company_id, str(invoice.order_id))
+    if order.status != "READY_FOR_BILLING":
+        raise ConflictError(code="BILLING_ORDER_NOT_READY",
+                            message="El pedido no está liberado para facturación.")
+    _confirmacion_vigente(db, company_id, str(order.id))
+
+    emitido = fiscal_service.emit_document(
+        db, company_id=company_id, business_document=f"INVOICE:{invoice.id}",
+        series_id=series_id, batch_id=batch_id, actor=actor)
+
+    for destino in ("VALIDATED", "APPROVED", "EMITTED"):
+        if invoice.status == destino:
+            continue
+        _assert_transition(invoice.status, destino, INVOICE_TRANSITIONS, "la factura de venta")
+        invoice.status = destino
+    ahora = datetime.now(UTC)
+    invoice.invoice_number = emitido.get("invoice_number")
+    invoice.control_number = emitido.get("control_number")
+    invoice.fiscal_document_id = emitido.get("id")
+    invoice.issued_at = ahora
+    invoice.updated_at = ahora
+    _assert_transition(order.status, "INVOICED", ORDER_TRANSITIONS, "el pedido")
+    order.status = "INVOICED"
+    order.invoiced_at = ahora
+    order.updated_at = ahora
+    db.flush()
+    _audit(db, action="INVOICE_ISSUED", entity_type="SalesInvoice", entity_id=str(invoice.id),
+           company_id=company_id, actor=actor,
+           after={"invoice_number": invoice.invoice_number, "control_number": invoice.control_number,
+                  "fiscal_document_id": invoice.fiscal_document_id, "order_status": "INVOICED"})
+    return invoice
+
+
+def order_invoice_dict(db: Session, *, company_id: str, order_id: str) -> dict:
+    """El estado de facturación de un pedido, para la Spec 035.
+
+    El ¶103 dice que el despacho verifica «Pedido preparado + Pedido confirmado +
+    **Factura emitida**». Esto responde la tercera parte sin que la 035 tenga que
+    reconstruirla.
+    """
+    company_id = _company(company_id, obj="facturación")
+    order = _require_order(db, company_id, order_id)
+    invoice = db.execute(
+        select(SalesInvoice).where(SalesInvoice.company_id == company_id,
+                                   SalesInvoice.order_id == str(order.id),
+                                   SalesInvoice.status != "CANCELLED")
+    ).scalars().first()
+    return {
+        "order_id": str(order.id), "order_status": order.status,
+        "invoiced": invoice is not None and invoice.status == "EMITTED",
+        "invoice": billing_invoice_dict(db, invoice) if invoice is not None else None,
+    }
+
+
+def billing_invoice_dict(db: Session, invoice: SalesInvoice) -> dict:
+    """La factura con su origen y sus líneas, para la Spec 034.
+
+    Se llama distinto del `invoice_dict` que ya existía a propósito: aquel
+    serializa el listado de facturas de la Spec 005 y no lleva líneas ni
+    procedencia. Dos nombres iguales en el mismo módulo habrían dejado uno
+    muerto.
+    """
+    lineas = db.execute(
+        select(SalesInvoiceLine).where(SalesInvoiceLine.invoice_id == str(invoice.id))
+        .order_by(SalesInvoiceLine.id)).scalars().all()
+    return {
+        "id": str(invoice.id), "status": invoice.status,
+        "order_id": str(invoice.order_id) if invoice.order_id else None,
+        "confirmation_id": str(invoice.confirmation_id) if invoice.confirmation_id else None,
+        "customer_id": str(invoice.customer_id),
+        "currency": invoice.base_fiscal_currency,
+        "base_fiscal": str(_dec(invoice.base_fiscal)),
+        "tax_total": str(_dec(invoice.tax_total)),
+        "total": str(_dec(invoice.total)),
+        "invoice_number": invoice.invoice_number, "control_number": invoice.control_number,
+        "fiscal_document_id": invoice.fiscal_document_id,
+        "issued_at": invoice.issued_at.isoformat() if invoice.issued_at else None,
+        # Visible a propósito: una línea sin clasificación fiscal factura sin
+        # impuesto, y eso tiene que verse antes de emitir (¶93), no descubrirse
+        # después en el libro.
+        "lines_without_tax": sum(1 for ln in lineas if _dec(ln.tax_amount) == 0),
+        "lines": [{"product_id": str(ln.product_id), "quantity": str(_dec(ln.quantity)),
+                   "unit_price": str(_dec(ln.unit_price)),
+                   "base_quantity": (str(_dec(ln.base_quantity))
+                                     if ln.base_quantity is not None else None),
+                   "presentation_id": str(ln.presentation_id) if ln.presentation_id else None,
+                   "conversion_factor_snapshot": (str(_dec(ln.conversion_factor_snapshot))
+                                                  if ln.conversion_factor_snapshot else None),
+                   "tax_amount": str(_dec(ln.tax_amount)), "base_fiscal": str(_dec(ln.base_fiscal)),
+                   "total": str(_dec(ln.total))} for ln in lineas],
     }
 
 

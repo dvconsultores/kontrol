@@ -126,6 +126,12 @@ class SalesOrder(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     #: Momento de la confirmación comercial (`DRAFT → SUBMITTED`): el instante
     #: en que nació la reserva (ADR-D0-003 v2, R-D0-03-1).
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    #: Sellos de la solicitud de facturación (¶84, `B-060`). Quién autorizó que
+    #: el pedido se facture, y cuándo: sin esto la «solicitud explícita» sería
+    #: solo un cambio de estado sin autor.
+    billing_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    billing_requested_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    invoiced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     #: Momento de la liberación a preparación (`→ RELEASED`): desde aquí el
     #: pedido es elegible para la cola de la Spec 031.
     released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -446,6 +452,18 @@ class ShipmentLine(UUIDMixin, TimestampMixin, Base):
 class SalesInvoice(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "sales_invoices"
     __scope__ = Scope.COMPANY
+    __table_args__ = (
+        # `B-007`: «no se puede facturar dos veces la misma orden». Va en la base
+        # y no solo en el servicio, porque dos peticiones simultáneas leerían las
+        # dos que no hay factura y las dos la crearían.
+        #
+        # Cancelar un borrador libera el pedido; anular una factura ya emitida
+        # **no**, porque eso es corrección fiscal y su dueña es la Spec 036.
+        Index("uq_sales_invoices_order", "order_id", unique=True,
+              postgresql_where=sql_column_pl("order_id").isnot(None)
+              & (sql_column_pl("status") != "CANCELLED")
+              ).ddl_if(dialect="postgresql"),
+    )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     customer_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
@@ -457,6 +475,18 @@ class SalesInvoice(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
     reversed_by_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     idempotency_key: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+
+    # --- Origen y emisión (Spec 034, `B-007`) ---
+    #: El pedido que se factura. Anulable porque las facturas anteriores a esta
+    #: Spec no lo tienen y una migración no inventa historia; el servicio, en
+    #: cambio, no crea ninguna sin él.
+    order_id: Mapped[str | None] = mapped_column(ForeignKey("sales_orders.id"), nullable=True, index=True)
+    #: La confirmación independiente sobre la que se factura (¶94, `B-060`).
+    confirmation_id: Mapped[str | None] = mapped_column(ForeignKey("order_confirmations.id"), nullable=True)
+    issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    #: Lo que devuelve la Spec 042 al emitir. La 034 no numera nada por su cuenta.
+    fiscal_document_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    control_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
 class SalesInvoiceLine(UUIDMixin, TimestampMixin, Base):
