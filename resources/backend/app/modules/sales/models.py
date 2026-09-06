@@ -314,6 +314,97 @@ class PickListLine(UUIDMixin, TimestampMixin, Base):
     conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
+#: Estados de una confirmación independiente. No hay `PENDING`: el control es
+#: un acto —el verificador cuenta y firma— y su resultado lo calcula el backend
+#: en esa misma transacción (`R-D0-12-1`).
+CONFIRMATION_STATUSES = ("CONFIRMED", "REJECTED")
+
+#: Dimensiones en las que una línea puede no conformar. Son exactamente las que
+#: el proceso manda verificar —¶65 producto, ¶66 SKU, ¶67 cantidad, ¶68
+#: presentación, ¶69 condición— más las dos que solo aparecen al comparar
+#: conjuntos: una línea del pedido sin preparar y una preparada sin pedir.
+CONFIRMATION_DIFFERENCE_KINDS = (
+    "SKU",
+    "CANTIDAD",
+    "PRESENTACION",
+    "CONDICION",
+    "LINEA_FALTANTE",
+    "LINEA_SOBRANTE",
+)
+
+
+class OrderConfirmation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """El control independiente sobre un pedido preparado (`ADR-D0-012`).
+
+    `R-D0-12-1`: es un **evento y una entidad distintos del picking**, con su
+    propio actor, momento, resultado y evidencia. No es un campo booleano en el
+    pedido: un booleano no dice quién verificó, cuándo, contra qué preparación
+    ni qué encontró.
+
+    Cada intento se conserva. `R-D0-12-3` exige que tras una corrección haya una
+    **nueva confirmación completa**, y el rechazo anterior es la evidencia de por
+    qué la hubo.
+    """
+
+    __tablename__ = "order_confirmations"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        CheckConstraint("status IN ('CONFIRMED', 'REJECTED')", name="order_confirmation_status"),
+        # Un pedido no puede quedar confirmado dos veces. Los rechazos, en
+        # cambio, se acumulan: son el historial de intentos.
+        Index("uq_order_confirmations_confirmed", "order_id", unique=True,
+              postgresql_where=sql_column_pl("status") == "CONFIRMED"
+              ).ddl_if(dialect="postgresql"),
+    )
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    order_id: Mapped[str] = mapped_column(ForeignKey("sales_orders.id"), nullable=False, index=True)
+    #: La preparación concreta que se verificó. Sin esto, una confirmación no
+    #: dice **sobre qué** se pronunció.
+    picklist_id: Mapped[str] = mapped_column(ForeignKey("pick_lists.id"), nullable=False, index=True)
+    attempt: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    checked_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class OrderConfirmationLine(UUIDMixin, TimestampMixin, Base):
+    """Una línea del control, con las tres cifras que no se pueden colapsar.
+
+    Lo requerido sale del pedido, lo preparado de la Spec 032 y lo verificado
+    del conteo que el ¶64 manda repetir. Guardar solo una perdería justo la
+    información que hace del control un control.
+    """
+
+    __tablename__ = "order_confirmation_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "confirmation_id → order_confirmations"
+    __table_args__ = (
+        CheckConstraint(
+            "difference_kind IS NULL OR difference_kind IN "
+            "('SKU', 'CANTIDAD', 'PRESENTACION', 'CONDICION', 'LINEA_FALTANTE', 'LINEA_SOBRANTE')",
+            name="order_confirmation_line_difference_kind"),
+        CheckConstraint("conforms = true OR difference_kind IS NOT NULL",
+                        name="order_confirmation_line_reason"),
+    )
+
+    confirmation_id: Mapped[str] = mapped_column(ForeignKey("order_confirmations.id"),
+                                                 nullable=False, index=True)
+    order_line_id: Mapped[str | None] = mapped_column(ForeignKey("sales_order_lines.id"), nullable=True)
+    product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
+    required_base_quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    prepared_base_quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    checked_base_quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    #: La presentación congelada de la línea (`ADR-D0-009`), no la del maestro.
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    presentation_ok: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    condition_ok: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    conforms: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    difference_kind: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
 class Shipment(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "shipments"
     __scope__ = Scope.COMPANY

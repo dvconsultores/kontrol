@@ -10,7 +10,7 @@
 | DF-06 | Toma del pedido | 7 | 4 | Condiciones comerciales desde maestro | 029 |
 | DF-07 | Cola y ruta de picking | 10 | 10 | — **cerrado 2026-09-05** (031 planifica; 032 recorre) | 031 · 032 |
 | DF-08 | Preparación física y consolidación | 12 | 12 | — **cerrado 2026-09-05** | 032 |
-| DF-09 | Confirmación de pedido | 8 | 0 | Recepción en área de confirmación | 033 |
+| DF-09 | Confirmación de pedido | 8 | 8 | — **cerrado 2026-09-06** | 033 |
 | DF-10 | Liberación y facturación | 9 | 4 | Autorización de facturación | 034 |
 | DF-11 | Despacho | 6 | 4 | Verificación preparado+confirmado+facturado | 035 |
 | DF-12 | Devolución de venta | 6 | 4 | Inspección previa al reingreso | 036 |
@@ -43,7 +43,7 @@ De las **135 etapas** de proceso documentadas, **68 están cubiertas (50 %)**.
 La deuda se concentra en dos tramos contiguos:
 
 - **Entrada de mercancía** (DF-01, DF-02, DF-04, DF-05): 50 etapas exigidas, **40 cubiertas (80 %)**.
-- **Salida de mercancía** (DF-07 a DF-11): 45 etapas exigidas, **32 cubiertas (71 %)**.
+- **Salida de mercancía** (DF-07 a DF-11): 45 etapas exigidas, **40 cubiertas (89 %)**.
 
 Lo que hoy funciona bien —maestros, órdenes, inventario contable, CxC/CxP, tesorería, fiscal— es
 la capa **administrativa**. Lo que falta es la capa **operativa de almacén**: exactamente lo que

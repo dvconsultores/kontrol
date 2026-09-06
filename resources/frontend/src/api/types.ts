@@ -783,6 +783,76 @@ export const PICK_DISCREPANCY_KINDS = [
   "MERCANCIA_DANADA",
 ] as const;
 
+/** Un pedido preparado esperando el control independiente. */
+export interface PendingConfirmation {
+  order_id: string;
+  code: string;
+  customer_id: string | null;
+  warehouse_id: string;
+  status: string;
+  updated_at: string | null;
+}
+
+/** Una línea del pedido con lo requerido y lo que la preparación dejó. */
+export interface ConfirmationWorksheetLine {
+  order_line_id: string;
+  product_id: string;
+  presentation_id: string | null;
+  conversion_factor_snapshot: string | null;
+  quantity: string;
+  required_base_quantity: string;
+  prepared_base_quantity: string;
+}
+
+export interface ConfirmationAttempt {
+  id: string;
+  attempt: number;
+  status: string;
+  checked_by: string | null;
+  checked_at: string | null;
+  notes: string | null;
+}
+
+export interface ConfirmationWorksheet {
+  order_id: string;
+  code: string;
+  status: string;
+  picklist_id: string;
+  warehouse_id: string;
+  consolidation_location_id: string | null;
+  prepared_by: string[];
+  same_user_allowed: boolean;
+  attempts: ConfirmationAttempt[];
+  lines: ConfirmationWorksheetLine[];
+}
+
+/** El resultado del control: las tres cifras y en qué dimensión falló. */
+export interface ConfirmationResultLine {
+  order_line_id: string | null;
+  product_id: string;
+  required_base_quantity: string;
+  prepared_base_quantity: string;
+  checked_base_quantity: string;
+  presentation_id: string | null;
+  presentation_ok: boolean;
+  condition_ok: boolean;
+  conforms: boolean;
+  difference_kind: string | null;
+  note: string | null;
+}
+
+export interface ConfirmationResult {
+  id: string;
+  order_id: string;
+  picklist_id: string;
+  attempt: number;
+  status: string;
+  checked_by: string | null;
+  checked_at: string | null;
+  notes: string | null;
+  lines: ConfirmationResultLine[];
+}
+
 export interface PickingPlan {
   id: string;
   code: string;

@@ -535,3 +535,40 @@ Queda una pregunta abierta que no la bloquea: qué hacer con un pedido cuya prep
 que deshacer. Necesita una arista de devolución `PICKING → DISPONIBLE` con dueña y evidencia.
 
 Implementación de la 033 **no iniciada**: requiere su propio ciclo con autorización expresa.
+
+---
+
+## Tras la implementación de la Spec 033 — 2026-09-06
+
+`SPEC 033 — COMPLETE / CONVERGED`. Backend 1136/1136 con los 8 saltos esperados, frontend 293/293,
+e2e propia 21/21 en los tres navegadores y la cadena operativa completa 129/129, incluido el
+recorrido del menú. Migración `0051` con ida y vuelta sobre base limpia.
+
+Este es el primer ciclo del tramo en que **no hubo que buscar la autoridad**: `ADR-D0-012` decide las
+seis preguntas que el prompt marcaba como materiales, y el proceso fuente enumera literalmente las
+cinco dimensiones que el control verifica —producto, SKU, cantidad, presentación y condición—. Lo
+único que había que hacer era leerlo antes de escribir.
+
+La frase que gobierna el diseño es de `R-D0-12-2`: la comparación es contra el pedido, **no contra la
+lista de picking**, porque comparar la preparación consigo misma no es un control. De ahí sale que lo
+requerido se lea de la línea del pedido y no de la reserva —que un picking corto ya encogió— y que un
+pedido incompleto no pase el control aunque el verificador cuente exactamente lo que hay preparado.
+
+La e2e descubrió lo que ninguna prueba unitaria podía: el usuario que monta el escenario es quien
+recoge y consolida, y el backend le negó la confirmación. Hubo que crear un segundo usuario. Que la
+primera versión de la e2e no funcionara es la evidencia de que el control funciona.
+
+Con esto la cadena de salida pasa del 71 % al 89 % de cobertura.
+
+`NEXT SPEC = 034 — LIBERACIÓN Y FACTURACIÓN`
+
+Recibe una compuerta única: `GET /sales/confirmacion/{order_id}/facturable` responde si el pedido
+tiene confirmación independiente válida, y comprueba las dos cosas —el registro y el estado—, porque
+un control que se satisface moviendo un estado a mano no es un control. `READY_FOR_BILLING` no se ha
+añadido: lo declara `ADR-D0-012` y lo escribirá su dueña, igual que la 032 dejó `CONFIRMED` para la
+033 y la 031 dejó `PREPARED` para la 032.
+
+Sigue abierta, sin bloquear a la 034, la deuda de la Spec 032: un pedido rechazado queda en
+`PREPARING` y su plan no tiene camino de reapertura ni existe la arista `PICKING → DISPONIBLE`.
+
+Implementación de la 034 **no iniciada**: requiere su propio ciclo con autorización expresa.

@@ -1474,6 +1474,22 @@
     },
     {
       "method": "GET",
+      "path": "/sales/confirmacion/pendientes"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/confirmacion/{order_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/confirmacion/{order_id}"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/confirmacion/{order_id}/facturable"
+    },
+    {
+      "method": "GET",
       "path": "/sales/credit-notes"
     },
     {

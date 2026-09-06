@@ -20,7 +20,11 @@ SALES_API = (RAIZ / "modules" / "sales" / "api.py").read_text()
 INV = (RAIZ / "modules" / "inventory" / "service.py").read_text()
 MIGRACION = (Path(__file__).resolve().parents[1] / "alembic" / "versions"
              / "0050_spec032_pick_execution.py").read_text()
-BLOQUE_032 = SALES[SALES.index("# Spec 032 · ejecución física"):SALES.index("def create_shipment(")]
+# El corte es la cabecera de la Spec 033: sin él este bloque se comería el
+# control independiente, que sí certifica y sí aprueba, y la guardia afirmaría lo
+# contrario de lo que quiere decir. Es el mismo cuidado que necesitó la 031.
+BLOQUE_032 = SALES[SALES.index("# Spec 032 · ejecución física"):
+                   SALES.index("# Spec 033 · confirmación independiente")]
 
 
 def _bloque(texto: str, inicio: str) -> str:
@@ -166,7 +170,9 @@ def test_el_pedido_llega_a_preparado_y_no_mas_alla():
 
     assert "PREPARED" in sales_service.ORDER_TRANSITIONS["PREPARING"]
     assert "PREPARED" in sales_service.ORDER_TRANSITIONS
-    assert "CONFIRMED" not in sales_service.ORDER_TRANSITIONS, "la 032 adelantó la 033"
+    # `CONFIRMED` ya existe: lo añadió la Spec 033, que es su dueña. Lo que esta
+    # guardia sigue defendiendo es que **la 032** no lo escriba.
+    assert '"CONFIRMED"' not in _bloque(BLOQUE_032, "def consolidate("), "la 032 confirma el pedido"
     assert "PREPARED" in sales_service.ORDER_RESERVED_STATES, \
         "un pedido preparado perdió su reserva antes de despacharse"
 

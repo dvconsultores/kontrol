@@ -642,6 +642,74 @@ def consolidate_picking(plan_id: str, body: ConsolidationBody, db: Session = Dep
     return sales_service.preparation_dict(db, plan)
 
 
+# --------------------------------------------------------------------------- #
+# Spec 033 · confirmación independiente del pedido
+#
+# El resultado **no lo envía el cliente**: el verificador manda lo que contó y el
+# backend dictamina. Un control cuyo veredicto llega desde el navegador no es un
+# control.
+# --------------------------------------------------------------------------- #
+class ConfirmationLineBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    order_line_id: str
+    checked_base_quantity: Decimal = Field(ge=0)
+    presentation_ok: bool = True
+    condition_ok: bool = True
+    product_id: str | None = None
+    note: str | None = Field(default=None, max_length=500)
+
+
+class ConfirmationBody(BaseModel):
+    """El control es completo o no es control (`R-D0-12-3`): se envían todas las
+    líneas de inventario del pedido, no las que se quiera."""
+    model_config = ConfigDict(extra="forbid")
+
+    lines: list[ConfirmationLineBody]
+    notes: str | None = Field(default=None, max_length=1000)
+
+
+@router.get("/confirmacion/pendientes")
+def pending_confirmations(db: Session = Depends(get_db),
+                          user: User = Depends(require_permission("ventas", "quality")),
+                          ctx: CompanyContext = Depends(get_company_context)):
+    """Pedidos preparados que esperan el control independiente."""
+    ordenes = sales_service.pending_confirmations(db, company_id=ctx.company_id)
+    items = [{"order_id": str(o.id), "code": o.code, "customer_id": o.customer_id,
+              "warehouse_id": str(o.warehouse_id), "status": o.status,
+              "updated_at": o.updated_at.isoformat() if o.updated_at else None}
+             for o in ordenes]
+    return {"items": items, "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.get("/confirmacion/{order_id}")
+def confirmation_worksheet(order_id: str, db: Session = Depends(get_db),
+                           user: User = Depends(require_permission("ventas", "quality")),
+                           ctx: CompanyContext = Depends(get_company_context)):
+    """El pedido original y lo preparado, para verificar producto por producto."""
+    return sales_service.confirmation_worksheet(db, company_id=ctx.company_id, order_id=order_id)
+
+
+@router.post("/confirmacion/{order_id}", dependencies=[Depends(require_write_allowed)])
+def confirm_order(order_id: str, body: ConfirmationBody, db: Session = Depends(get_db),
+                  actor: User = Depends(require_permission("ventas", "quality")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    confirmacion = sales_service.confirm_order(
+        db, company_id=ctx.company_id, order_id=order_id,
+        lines=[ln.model_dump() for ln in body.lines], notes=body.notes, actor=str(actor.id))
+    db.commit()
+    db.refresh(confirmacion)
+    return sales_service.confirmation_dict(db, confirmacion)
+
+
+@router.get("/confirmacion/{order_id}/facturable")
+def billing_eligibility(order_id: str, db: Session = Depends(get_db),
+                        user: User = Depends(require_permission("ventas", "view")),
+                        ctx: CompanyContext = Depends(get_company_context)):
+    """La autoridad única sobre si un pedido puede facturarse (¶83, ¶89)."""
+    return sales_service.billing_eligibility(db, company_id=ctx.company_id, order_id=order_id)
+
+
 @router.post("/shipments", dependencies=[Depends(require_write_allowed)])
 def create_shipment(body: ShipmentCreate, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("ventas", "create")), ctx: CompanyContext = Depends(get_company_context)):

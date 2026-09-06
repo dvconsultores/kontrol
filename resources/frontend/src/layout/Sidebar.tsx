@@ -116,6 +116,7 @@ const navSections = [
       { to: "/ventas/cotizaciones", label: "Cotizaciones", icon: ClipboardList },
       { to: "/ventas/ordenes", label: "Órdenes", icon: ShoppingBag },
       { to: "/ventas/preparacion", label: "Preparación de pedidos", icon: Truck },
+      { to: "/ventas/confirmacion-pedido", label: "Confirmación de pedido", icon: ClipboardList },
       { to: "/ventas/despacho", label: "Despacho", icon: Truck },
       { to: "/ventas/facturas", label: "Facturas", icon: Receipt },
       { to: "/ventas/notas", label: "Notas", icon: StickyNote },

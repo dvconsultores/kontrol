@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -62,6 +62,12 @@ class Company(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base):
     #: 030, R-D0-03-8). `NULL` = sin expiración, que es el defecto: una
     #: instalación recién creada no tiene reservas que caduquen por reloj.
     reservation_ttl_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: ¿Puede la misma persona preparar y confirmar? (`R-D0-12-5`, Spec 033).
+    #: El defecto es `false` **a propósito**: «un control cuyo valor por defecto
+    #: lo anula no es un control». Una empresa pequeña puede habilitarlo a
+    #: conciencia, y la decisión queda auditada.
+    confirmation_same_user_allowed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false"))
 
     tenant: Mapped[Tenant] = relationship(back_populates="companies")
     branches: Mapped[list[Branch]] = relationship(back_populates="company", cascade="all, delete-orphan")

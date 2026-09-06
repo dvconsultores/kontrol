@@ -33,6 +33,8 @@ from app.modules.purchasing.models import OpenItem
 from app.modules.sales.models import (
     PICK_DISCREPANCY_KINDS,
     PLAN_ACTIVE_STATUSES,
+    OrderConfirmation,
+    OrderConfirmationLine,
     PickList,
     PickListLine,
     SalesCreditNote,
@@ -99,7 +101,12 @@ ORDER_TRANSITIONS: dict[str, set[str]] = {
     # como estado de mercancía. Existe para que la confirmación independiente de
     # la Spec 033 tenga un estado de entrada distinguible.
     "PREPARING": {"SHIPPED", "CANCELLED", "RELEASED", "PREPARED"},
-    "PREPARED": {"SHIPPED", "CANCELLED"},
+    # `CONFIRMED` y la vuelta a `PREPARING` las declara `ADR-D0-012`: conforme →
+    # `CONFIRMED` (`R-D0-12-4`, ¶81); no conforme → «el pedido regresa a
+    # preparación/corrección» (`R-D0-12-3`, ¶77). `READY_FOR_BILLING` no se añade
+    # aquí: lo escribirá la Spec 034, igual que la 032 dejó `CONFIRMED` para esta.
+    "PREPARED": {"SHIPPED", "CANCELLED", "CONFIRMED", "PREPARING"},
+    "CONFIRMED": {"SHIPPED", "CANCELLED"},
     "SHIPPED": {"CLOSED"},
     "CLOSED": set(),
     "CANCELLED": set(),
@@ -108,7 +115,8 @@ ORDER_TRANSITIONS: dict[str, set[str]] = {
 }
 
 #: Estados en los que el pedido tiene (y debe tener) su reserva viva.
-ORDER_RESERVED_STATES = frozenset({"SUBMITTED", "RELEASED", "PREPARING", "PREPARED"})
+ORDER_RESERVED_STATES = frozenset({"SUBMITTED", "RELEASED", "PREPARING", "PREPARED",
+                                  "CONFIRMED"})
 #: Estado que habilita la cola de la Spec 031 (IMP-030-053).
 ORDER_HANDOFF_STATE = "RELEASED"
 #: `RESERVATION TRIGGER = ORDER_CONFIRMATION` — fijo, no configurable (D0-03).
@@ -1595,6 +1603,305 @@ def preparation_dict(db: Session, plan: PickList) -> dict:
     base["has_discrepancy"] = any(ln.discrepancy_kind for ln in lineas)
     base["route_complete"] = all(ln.picked_at is not None for ln in lineas) and bool(lineas)
     return base
+
+
+# =========================================================================== #
+# Spec 033 · confirmación independiente del pedido
+#
+# El ¶61 llama a esto «un control independiente después del picking», y el ¶90
+# explica para qué: «Almacén prepara. Confirmación verifica. Facturación factura
+# sobre un pedido previamente confirmado». Es separación funcional, no un paso
+# administrativo.
+#
+# Por eso aquí no se recoge, no se mueve, no se reclasifica y no se toca la
+# reserva. Se cuenta otra vez y se deja constancia.
+#
+# `R-D0-12-2` fija contra qué se compara, y la frase importa: «contra el pedido,
+# **no contra la lista de picking**: comparar la preparación consigo misma no es
+# un control».
+# =========================================================================== #
+
+
+def _pedido_preparado(db: Session, company_id: str, order_id: str,
+                      *, lock: bool = False) -> tuple[SalesOrder, PickList]:
+    """El pedido preparado y **la** preparación sobre la que se pronuncia.
+
+    Sin fijar el plan, una confirmación no dice sobre qué se pronunció: el ¶63
+    manda obtener el pedido original y el ¶62 recibir *el pedido preparado*, en
+    singular.
+    """
+    order = (_lock_order(db, company_id, order_id) if lock
+             else _require_order(db, company_id, order_id))
+    if order.status != "PREPARED":
+        raise ConflictError(code="CONFIRMATION_ORDER_NOT_PREPARED",
+                            message="El pedido no está preparado pendiente de control.")
+    plan = db.execute(
+        select(PickList).where(PickList.company_id == company_id,
+                               PickList.order_id == str(order.id),
+                               PickList.status == "CLOSED")
+        .order_by(PickList.consolidated_at.desc())
+    ).scalars().first()
+    if plan is None:
+        raise ConflictError(code="CONFIRMATION_NO_PREPARATION",
+                            message="El pedido no tiene una preparación consolidada que verificar.")
+    return order, plan
+
+
+def _lineas_del_pedido(db: Session, order: SalesOrder) -> list[SalesOrderLine]:
+    return list(db.execute(
+        select(SalesOrderLine).where(SalesOrderLine.order_id == str(order.id))
+        .order_by(SalesOrderLine.id)
+    ).scalars().all())
+
+
+def _requerido_de(linea: SalesOrderLine) -> Decimal:
+    """Lo que el **pedido** pide, en unidad base.
+
+    No lo que quedó reservado: un picking corto encogió la reserva, y comparar
+    contra ella daría por conforme un pedido incompleto. `R-D0-12-2` compara
+    contra el pedido original justamente para que eso no pase.
+    """
+    return _dec(linea.base_quantity if linea.base_quantity is not None else linea.quantity)
+
+
+def _preparado_por_linea(db: Session, plan: PickList) -> dict[str, Decimal]:
+    filas = db.execute(
+        select(PickListLine.order_line_id,
+               func.coalesce(func.sum(PickListLine.picked_base_quantity), 0))
+        .where(PickListLine.picklist_id == str(plan.id),
+               PickListLine.location_id.isnot(None))
+        .group_by(PickListLine.order_line_id)
+    ).all()
+    return {str(order_line_id): _dec(total) for order_line_id, total in filas if order_line_id}
+
+
+def _preparadores(db: Session, plan: PickList) -> set[str]:
+    """Quién preparó: todos los que recogieron y quien consolidó."""
+    quienes = {str(ln.picked_by) for ln in _lineas_del_plan(db, plan) if ln.picked_by}
+    if plan.consolidated_by:
+        quienes.add(str(plan.consolidated_by))
+    return quienes
+
+
+def _segregacion_permitida(db: Session, company_id: str) -> bool:
+    empresa = db.get(Company, company_id)
+    return bool(empresa is not None and empresa.confirmation_same_user_allowed)
+
+
+def pending_confirmations(db: Session, *, company_id: str) -> list[SalesOrder]:
+    """Los pedidos que esperan control: preparados y sin confirmar."""
+    company_id = _company(company_id, obj="confirmación")
+    confirmados = select(OrderConfirmation.order_id).where(
+        OrderConfirmation.company_id == company_id,
+        OrderConfirmation.status == "CONFIRMED")
+    return list(db.execute(
+        select(SalesOrder).where(SalesOrder.company_id == company_id,
+                                 SalesOrder.status == "PREPARED",
+                                 SalesOrder.id.not_in(confirmados))
+        .order_by(SalesOrder.updated_at.asc(), SalesOrder.id.asc())
+    ).scalars().all())
+
+
+def confirmation_worksheet(db: Session, *, company_id: str, order_id: str) -> dict:
+    """Lo que el verificador tiene delante: el pedido original y lo preparado.
+
+    El ¶63 manda obtener el pedido original; el ¶64, hacer un nuevo chequeo
+    físico. Se muestran las dos cifras porque ni el proceso ni el `ADR` piden
+    conteo ciego, y `R-D0-12-6` prohíbe codificar la política de un cliente
+    concreto: quien la quiera, la configurará.
+    """
+    company_id = _company(company_id, obj="confirmación")
+    order, plan = _pedido_preparado(db, company_id, order_id)
+    preparado = _preparado_por_linea(db, plan)
+    intentos = db.execute(
+        select(OrderConfirmation).where(OrderConfirmation.order_id == str(order.id))
+        .order_by(OrderConfirmation.attempt)
+    ).scalars().all()
+    return {
+        "order_id": str(order.id), "code": order.code, "status": order.status,
+        "picklist_id": str(plan.id), "warehouse_id": str(plan.warehouse_id),
+        "consolidation_location_id": (str(plan.consolidation_location_id)
+                                      if plan.consolidation_location_id else None),
+        "prepared_by": sorted(_preparadores(db, plan)),
+        "same_user_allowed": _segregacion_permitida(db, company_id),
+        "attempts": [{"id": str(c.id), "attempt": c.attempt, "status": c.status,
+                      "checked_by": c.checked_by,
+                      "checked_at": c.checked_at.isoformat() if c.checked_at else None,
+                      "notes": c.notes} for c in intentos],
+        "lines": [{"order_line_id": str(ln.id), "product_id": str(ln.product_id),
+                   "presentation_id": str(ln.presentation_id) if ln.presentation_id else None,
+                   "conversion_factor_snapshot": (str(_dec(ln.conversion_factor_snapshot))
+                                                  if ln.conversion_factor_snapshot else None),
+                   "quantity": str(_dec(ln.quantity)),
+                   "required_base_quantity": str(_requerido_de(ln)),
+                   "prepared_base_quantity": str(preparado.get(str(ln.id), Decimal(0)))}
+                  for ln in _lineas_del_pedido(db, order) if ln.needs_inventory],
+    }
+
+
+def _dictamen_de_linea(*, requerido: Decimal, verificado: Decimal, presentation_ok: bool,
+                       condition_ok: bool, preparado: Decimal) -> str | None:
+    """En qué dimensión falla, o `None` si conforma.
+
+    El orden importa: se informa la falla más gruesa. Que falte la línea entera
+    es más que una diferencia de cantidad, y una diferencia de cantidad es más
+    que una observación sobre el empaque.
+    """
+    if requerido > 0 and preparado == 0 and verificado == 0:
+        return "LINEA_FALTANTE"
+    if verificado != requerido:
+        return "CANTIDAD"
+    if not presentation_ok:
+        return "PRESENTACION"
+    if not condition_ok:
+        return "CONDICION"
+    return None
+
+
+def confirm_order(db: Session, *, company_id: str, order_id: str, lines: list[dict],
+                  notes: str | None = None, actor: str | None = None) -> OrderConfirmation:
+    """El control independiente, entero, en un acto.
+
+    El verificador cuenta producto por producto (¶65-69) y el backend dictamina:
+    el resultado **no lo envía el cliente**, se calcula aquí comparando contra el
+    pedido. Conforme → `CONFIRMED` y el pedido queda formalmente confirmado
+    (¶81). No conforme → se registra la incidencia y el pedido **regresa a
+    preparación** (¶77), que es lo que el proceso manda hacer.
+
+    `R-D0-12-3`: tras una corrección hace falta una confirmación **completa**,
+    no parcial. Por eso cada intento verifica todas las líneas y se guarda
+    entero; el rechazo anterior no se borra, es la evidencia de por qué hubo otro.
+    """
+    company_id = _company(company_id, obj="confirmación")
+    order, plan = _pedido_preparado(db, company_id, order_id, lock=True)
+
+    if actor and not _segregacion_permitida(db, company_id):
+        preparadores = _preparadores(db, plan)
+        if str(actor) in preparadores:
+            raise ConflictError(
+                code="CONFIRMATION_SEGREGATION_REQUIRED",
+                message=("Quien preparó el pedido no puede confirmarlo: el control dejaría de ser "
+                         "independiente. La empresa puede permitirlo explícitamente."))
+
+    del_pedido = {str(ln.id): ln for ln in _lineas_del_pedido(db, order) if ln.needs_inventory}
+    if not del_pedido:
+        raise ConflictError(code="CONFIRMATION_NOTHING_TO_CHECK",
+                            message="El pedido no tiene líneas de inventario que verificar.")
+    enviadas = {str(item.get("order_line_id")): item for item in lines or []}
+    sobrantes = set(enviadas) - set(del_pedido)
+    faltan = set(del_pedido) - set(enviadas)
+    if faltan:
+        raise KontrolError(
+            code="CONFIRMATION_INCOMPLETE",
+            message=(f"El control es completo o no es control: faltan {len(faltan)} línea(s) por "
+                     "verificar."), status_code=422)
+
+    preparado = _preparado_por_linea(db, plan)
+    previos = db.execute(
+        select(func.count(OrderConfirmation.id)).where(OrderConfirmation.order_id == str(order.id))
+    ).scalar() or 0
+    ahora = datetime.now(UTC)
+    confirmacion = OrderConfirmation(
+        company_id=company_id, order_id=str(order.id), picklist_id=str(plan.id),
+        attempt=previos + 1, status="CONFIRMED", checked_by=actor, checked_at=ahora,
+        notes=notes, created_by=actor)
+    db.add(confirmacion)
+    db.flush()
+
+    conforme = True
+    for clave, linea in sorted(del_pedido.items()):
+        item = enviadas[clave]
+        verificado = _dec(item.get("checked_base_quantity"))
+        if verificado < 0:
+            raise KontrolError(code="CONFIRMATION_QUANTITY_INVALID",
+                               message="La cantidad verificada no puede ser negativa.",
+                               status_code=422)
+        presentation_ok = bool(item.get("presentation_ok", True))
+        condition_ok = bool(item.get("condition_ok", True))
+        requerido = _requerido_de(linea)
+        motivo = _dictamen_de_linea(
+            requerido=requerido, verificado=verificado, presentation_ok=presentation_ok,
+            condition_ok=condition_ok, preparado=preparado.get(clave, Decimal(0)))
+        conforme = conforme and motivo is None
+        db.add(OrderConfirmationLine(
+            confirmation_id=str(confirmacion.id), order_line_id=clave,
+            product_id=str(linea.product_id), required_base_quantity=requerido,
+            prepared_base_quantity=preparado.get(clave, Decimal(0)),
+            checked_base_quantity=verificado, presentation_id=linea.presentation_id,
+            presentation_ok=presentation_ok, condition_ok=condition_ok,
+            conforms=motivo is None, difference_kind=motivo,
+            note=(item.get("note") or None)))
+    for clave in sorted(sobrantes):
+        item = enviadas[clave]
+        conforme = False
+        db.add(OrderConfirmationLine(
+            confirmation_id=str(confirmacion.id), order_line_id=None,
+            product_id=str(item.get("product_id") or ""), required_base_quantity=Decimal(0),
+            prepared_base_quantity=Decimal(0),
+            checked_base_quantity=_dec(item.get("checked_base_quantity")),
+            presentation_ok=True, condition_ok=True, conforms=False,
+            difference_kind="LINEA_SOBRANTE", note=(item.get("note") or None)))
+
+    confirmacion.status = "CONFIRMED" if conforme else "REJECTED"
+    destino = "CONFIRMED" if conforme else "PREPARING"
+    _assert_transition(order.status, destino, ORDER_TRANSITIONS, "el pedido")
+    order.status = destino
+    order.updated_at = ahora
+    db.flush()
+    _audit(db, action=f"ORDER_CONFIRMATION_{confirmacion.status}", entity_type="OrderConfirmation",
+           entity_id=str(confirmacion.id), company_id=company_id, actor=actor, reason=notes,
+           before={"order_status": "PREPARED"},
+           after={"status": confirmacion.status, "attempt": confirmacion.attempt,
+                  "order_status": destino, "picklist_id": str(plan.id)})
+    return confirmacion
+
+
+def confirmation_dict(db: Session, confirmation: OrderConfirmation) -> dict:
+    lineas = db.execute(
+        select(OrderConfirmationLine)
+        .where(OrderConfirmationLine.confirmation_id == str(confirmation.id))
+        .order_by(OrderConfirmationLine.id)
+    ).scalars().all()
+    return {
+        "id": str(confirmation.id), "order_id": str(confirmation.order_id),
+        "picklist_id": str(confirmation.picklist_id), "attempt": confirmation.attempt,
+        "status": confirmation.status, "checked_by": confirmation.checked_by,
+        "checked_at": confirmation.checked_at.isoformat() if confirmation.checked_at else None,
+        "notes": confirmation.notes,
+        "lines": [{"order_line_id": str(ln.order_line_id) if ln.order_line_id else None,
+                   "product_id": str(ln.product_id),
+                   "required_base_quantity": str(_dec(ln.required_base_quantity)),
+                   "prepared_base_quantity": str(_dec(ln.prepared_base_quantity)),
+                   "checked_base_quantity": str(_dec(ln.checked_base_quantity)),
+                   "presentation_id": str(ln.presentation_id) if ln.presentation_id else None,
+                   "presentation_ok": ln.presentation_ok, "condition_ok": ln.condition_ok,
+                   "conforms": ln.conforms, "difference_kind": ln.difference_kind,
+                   "note": ln.note} for ln in lineas],
+    }
+
+
+def billing_eligibility(db: Session, *, company_id: str, order_id: str) -> dict:
+    """La única autoridad que la Spec 034 debe consultar.
+
+    El ¶83 dice que el Área de Confirmación **autoriza** que el pedido pueda
+    facturarse, y el ¶89 que Facturación factura «sobre un pedido previamente
+    confirmado». Esto responde esa pregunta en un sitio, no en varios indicios
+    dispersos que alguien tenga que recomponer.
+    """
+    company_id = _company(company_id, obj="confirmación")
+    order = _require_order(db, company_id, order_id)
+    confirmacion = db.execute(
+        select(OrderConfirmation).where(OrderConfirmation.order_id == str(order.id),
+                                        OrderConfirmation.status == "CONFIRMED")
+    ).scalars().first()
+    return {
+        "order_id": str(order.id), "order_status": order.status,
+        "eligible_for_billing": confirmacion is not None and order.status == "CONFIRMED",
+        "confirmation_id": str(confirmacion.id) if confirmacion else None,
+        "confirmed_at": (confirmacion.checked_at.isoformat()
+                         if confirmacion and confirmacion.checked_at else None),
+        "checked_by": confirmacion.checked_by if confirmacion else None,
+    }
 
 
 def create_shipment(db: Session, *, company_id: str, code: str, order_id: str, origin_warehouse_id: str,
