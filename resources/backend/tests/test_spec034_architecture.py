@@ -11,21 +11,24 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from tests.spec_blocks import bloque_de_spec, cuerpo_de_ruta, cuerpo_de_simbolo
+
 RAIZ = Path(__file__).resolve().parents[1] / "app"
 SALES = (RAIZ / "modules" / "sales" / "service.py").read_text()
 SALES_API = (RAIZ / "modules" / "sales" / "api.py").read_text()
 MODELOS = (RAIZ / "modules" / "sales" / "models.py").read_text()
 MIGRACION = (Path(__file__).resolve().parents[1] / "alembic" / "versions"
              / "0052_spec034_billing_release.py").read_text()
-BLOQUE = SALES[SALES.index("# Spec 034 · liberación y facturación"):SALES.index("def create_shipment(")]
+# El corte es por el marcador de la Spec siguiente, no por su primera función:
+# cuando la 035 añadió auxiliares delante de `create_shipment`, este bloque se
+# los tragó y el guardia acusó a la 034 de absorber el despacho. La regla vive
+# en `tests/spec_blocks.py`.
+BLOQUE = bloque_de_spec(SALES, "034")
+BLOQUE_API = bloque_de_spec(SALES_API, "034")
 
 
-def _bloque(texto: str, inicio: str) -> str:
-    trozo = texto[texto.index(inicio):]
-    siguiente = trozo.find("\ndef ", 1)
-    cuerpo = trozo if siguiente < 0 else trozo[:siguiente]
-    cuerpo = re.sub(r'"""..*?"""', "", cuerpo, flags=re.S)
-    return "\n".join(x for x in cuerpo.splitlines() if not x.strip().startswith("#"))
+_bloque = cuerpo_de_simbolo
+
 
 
 def _limpio(texto: str) -> str:
@@ -150,8 +153,7 @@ def test_el_pedido_llega_a_facturado_y_no_mas_alla():
 
 def test_los_permisos_de_facturacion_existen_en_el_catalogo():
     catalogo = (RAIZ / "modules" / "setup" / "api.py").read_text()
-    bloque = SALES_API[SALES_API.index("class IssueInvoiceBody"):
-                       SALES_API.index('@router.post("/shipments"')]
+    bloque = BLOQUE_API
     usados = set(re.findall(r'require_permission\("(\w+)", "(\w+)"\)', bloque))
     assert usados, "el bloque de facturación no declara ningún permiso"
     for recurso, accion in sorted(usados):
@@ -161,8 +163,7 @@ def test_los_permisos_de_facturacion_existen_en_el_catalogo():
 
 def test_la_solicitud_la_firma_quien_verifica():
     """¶83: «El Área de Confirmación autoriza». Por eso exige su mismo permiso."""
-    bloque = SALES_API[SALES_API.index('@router.post("/facturacion/{order_id}/solicitar"'):
-                       SALES_API.index('@router.post("/facturacion/{order_id}/generar"')]
+    bloque = cuerpo_de_ruta(SALES_API, '@router.post("/facturacion/{order_id}/solicitar"')
     assert 'require_permission("ventas", "quality")' in bloque
 
 
@@ -171,5 +172,5 @@ def test_la_migracion_es_aditiva_y_no_inventa_historia():
     tienen pedido y no se les inventa uno."""
     assert "UPDATE sales_invoices" not in MIGRACION
     assert 'sa.Column("order_id", sa.String(36), nullable=True)' in MIGRACION
-    assert "nullable=False" not in MIGRACION.split("def downgrade")[0].replace(
+    assert "nullable=False" not in cuerpo_de_simbolo(MIGRACION, "def upgrade(").replace(
         'nullable=True', ''), "una columna nueva nació obligatoria"

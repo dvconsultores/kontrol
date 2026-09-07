@@ -129,6 +129,16 @@ ACTIVE_TRANSITIONS: tuple[Transition, ...] = (
                "DOCX ¶37 «Extrae la mercancía» · matriz D0-10 fila DISPONIBLE → PICKING (dueñas 031/032)"),
     Transition("PICKING", "PREPARADO", "CONSOLIDATION", "032", "ventas:create", False, False,
                "DOCX ¶55-58 «se concentran como un único pedido… se traslada al Área de Confirmación»"),
+    # La salida física. La matriz de `D0-10` la declaró —«`PREPARADO` →
+    # `DESPACHADO` → `VENDIDO` | 035 | Spec no construida»— y este es el ciclo
+    # que la construye.
+    #
+    # `DESPACHADO → VENDIDO` **no** se activa: el Proceso 9 termina en «la
+    # mercancía sale del almacén» y «se registra la salida», y ninguna de sus
+    # seis etapas es «vendido». Una arista que ningún evento escribe sería
+    # código muerto.
+    Transition("PREPARADO", "DESPACHADO", "PHYSICAL_DEPARTURE", "035", "ventas:approve", False, False,
+               "DOCX ¶104-107 «se autoriza la salida física… la mercancía sale del almacén… se registra la salida»"),
 )
 
 _BY_PAIR: dict[tuple[str | None, str], Transition] = {

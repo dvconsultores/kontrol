@@ -612,3 +612,96 @@ Queda dicho en voz alta que **la emisión no está legalmente homologada**: `D0-
 afirmar lo contrario.
 
 Implementación de la 035 **no iniciada**: requiere su propio ciclo con autorización expresa.
+
+---
+
+## Tras la implementación de la Spec 035 — 2026-09-07
+
+`SPEC 035 — COMPLETE / CONVERGED`. Con esto la cadena de salida queda cerrada de
+punta a punta —cola, picking, consolidación, confirmación, facturación y
+despacho— y DF-11 pasa a 6/6: la deuda de salida de mercancía llega al 100 %.
+
+El ciclo enumeró nueve preguntas materiales y ninguna hubo que decidirla,
+pero esta vez la autoridad no estaba escondida en una decisión previa: estaba
+**escrita en el propio código y sin invocar**. `regulatory.evaluate_shipment`
+resolvía los perfiles aplicables por producto y operación, comprobaba los
+documentos requeridos y devolvía `BLOCKED` con sus motivos. Funcionaba. Nadie la
+llamaba desde el despacho, y `validate_shipment` —cuyo docstring prometía
+bloquear— aprobaba siempre.
+
+Tres defectos salieron de conectar la compuerta, y los tres solo eran visibles
+con la cadena entera montada:
+
+1. **La compuerta no comprobaba nada.** Ahora exige las tres del ¶103 —preparado,
+   confirmado, factura **emitida**— y la cuarta regulatoria, y las comprueba por
+   registro, no por estado: la Spec 033 ya había demostrado que un estado se pone
+   a mano.
+2. **La salida descontaba la cantidad comercial de un estado equivocado.** Dos
+   cajas de doce sacaban dos unidades, y las sacaban de `DISPONIBLE` cuando la
+   Spec 032 había dejado la mercancía en `PREPARADO`.
+3. **La pantalla pedía la cantidad a mano**, que es justamente el campo que
+   produce el defecto anterior. Ya no existe: sale lo que la 032 consolidó.
+
+La mutación volvió a ganarse el sitio. Cambiar `base_quantity` por `quantity`
+**pasaba**, porque mi propia prueba llevaba la base en los dos campos. Corregida
+la prueba, la mutación falla como debía.
+
+`CONFIRMED → SHIPPED` queda cerrada, y no comprobándola: las aristas
+`RELEASED → SHIPPED`, `PREPARING → SHIPPED`, `PREPARED → SHIPPED` y
+`CONFIRMED → SHIPPED` se quitaron de la máquina. Hoy solo `INVOICED` despacha.
+
+Un hallazgo ajeno, medido y arreglado en su dueña: el selector de almacén de la
+Spec 031 pedía 500 de 564 almacenes y descartaba los 64 últimos en silencio. Se
+sustituyó el tope por tandas hasta agotar `total`. El mismo patrón sigue abierto
+en otras ocho pantallas, siete de ellas en el límite por defecto de 50, y eso es
+del módulo de organización.
+
+Y una sexta lección, esta del arnés y no del producto. La primera regresión
+completa dejó un solo fallo: `test_spec034_architecture.py::test_facturar_no_despacha`,
+acusando a la 034 de absorber el despacho. No lo hacía. El guardia delimitaba su
+bloque como «desde mi cabecera hasta `def create_shipment(`» y la 035 había
+puesto delante de esa función cuatro auxiliares suyos. `TEST_DEFECT`, no
+regresión. Al auditar el tramo aparecieron **cuatro fronteras posicionales más,
+vivas y sin fallar todavía**: la 032, la 033 y la 034 delimitaban su bloque de
+`api.py` hasta `@router.post("/shipments"`, y mis dos rutas nuevas de despacho
+ya estaban dentro de los tres. No saltaba nada porque esos guardias solo miran
+que los permisos existan en el catálogo, y `ventas:view` existe.
+
+Se corrigió la clase entera, no el caso: cabeceras canónicas de Spec en
+`service.py` y en `api.py`, un helper compartido con las tres únicas formas
+legítimas de recortar, y una invariante transversal que prohíbe por
+parametrización que cualquiera de los cinco guardias vuelva a recortar el texto
+de un módulo a mano. La invariante queda escrita:
+
+> Las Specs son fronteras semánticas, no posiciones accidentales dentro de un
+> archivo. Los architecture guards deben reconocer explícitamente al owner
+> siguiente mediante un marcador estable de Spec, módulo o namespace, y nunca
+> inferir la frontera por la siguiente función o clase.
+
+`NEXT SPEC = 036 — DEVOLUCIONES, NOTAS DE CRÉDITO Y DÉBITO`
+
+Recibe un pedido en `SHIPPED`, un `Shipment` con su sello de salida y su factura,
+y la mercancía en `DESPACHADO` con su procedencia entera en el ledger. El
+contrato está en `spec035-spec036-handoff-contract.md`. `DESPACHADO → DEVUELTO`
+**no** se ha activado: la matriz de `D0-10` se la asigna a la 036 y la escribirá
+su dueña, como cada Spec de este tramo dejó la suya para la siguiente.
+
+Sigue abierta, sin bloquear a la 036, la deuda de la Spec 032: un pedido
+rechazado queda en `PREPARING` y no existe la arista `PICKING → DISPONIBLE`.
+
+Y queda dicho en voz alta, otra vez, que **la emisión no está legalmente
+homologada** (`D0-07`, Specs 039-043 en `BLOCKED_BY_LEGAL_VALIDATION`) y que la
+validación regulatoria es **contra lo registrado**: sin API oficial, KONTROL
+registra, valida, adjunta y bloquea, pero **no emite ni verifica en línea**
+(Spec 044, `BLOCKED_BY_EXTERNAL_SERVICE`).
+
+La 036 queda **desbloqueada por dependencia**, y ahí se queda: **no** es
+`READY_FOR_IMPLEMENTATION`. El proceso fuente termina en el ¶107 —«se registra la
+salida»— y no dice una palabra del reingreso. Las cuatro preguntas que el
+contrato de entrega le pasa siguen siendo **materiales** y ninguna tiene todavía
+autoridad consultable: cuándo y cómo vuelve la mercancía, qué inspección precede
+al reingreso, cómo se relaciona la nota de crédito con la factura, y qué pasa con
+una reserva ya `FULFILLED`. Decirlas resueltas sería inventarlas.
+
+Implementación de la 036 **no iniciada**: requiere su propio ciclo, con su
+`/speckit.clarify` sobre esas cuatro y autorización expresa.

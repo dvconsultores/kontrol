@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 
 from app.modules.sales.models import CONFIRMATION_DIFFERENCE_KINDS, CONFIRMATION_STATUSES
+from tests.spec_blocks import bloque_de_spec, cuerpo_de_simbolo
 
 RAIZ = Path(__file__).resolve().parents[1] / "app"
 SALES = (RAIZ / "modules" / "sales" / "service.py").read_text()
@@ -19,20 +20,14 @@ SALES_API = (RAIZ / "modules" / "sales" / "api.py").read_text()
 MODELOS = (RAIZ / "modules" / "sales" / "models.py").read_text()
 MIGRACION = (Path(__file__).resolve().parents[1] / "alembic" / "versions"
              / "0051_spec033_order_confirmation.py").read_text()
-# El corte es la cabecera de la Spec 034: sin él este bloque se comería la
-# facturación, que sí factura, y la guardia afirmaría lo contrario de lo que
-# quiere decir. Mismo cuidado que necesitaron la 031 y la 032.
-BLOQUE = SALES[SALES.index("# Spec 033 · confirmación independiente"):
-               SALES.index("# Spec 034 · liberación y facturación")]
+# El bloque se pide por su marcador de Spec, no se recorta por la función
+# siguiente: ver `tests/spec_blocks.py` y la invariante que documenta.
+BLOQUE = bloque_de_spec(SALES, "033")
+BLOQUE_API = bloque_de_spec(SALES_API, "033")
 
 
-def _bloque(texto: str, inicio: str) -> str:
-    """El cuerpo de una función, sin docstring ni comentarios."""
-    trozo = texto[texto.index(inicio):]
-    siguiente = trozo.find("\ndef ", 1)
-    cuerpo = trozo if siguiente < 0 else trozo[:siguiente]
-    cuerpo = re.sub(r'"""..*?"""', "", cuerpo, flags=re.S)
-    return "\n".join(x for x in cuerpo.splitlines() if not x.strip().startswith("#"))
+_bloque = cuerpo_de_simbolo
+
 
 
 def _limpio(texto: str) -> str:
@@ -58,8 +53,7 @@ def test_las_tres_cifras_no_se_colapsan():
 
 def test_el_veredicto_lo_calcula_el_backend():
     """Un control cuyo resultado llega del navegador no es un control."""
-    cuerpo = SALES_API[SALES_API.index("class ConfirmationLineBody"):
-                       SALES_API.index('@router.post("/shipments"')]
+    cuerpo = BLOQUE_API
     for prohibido in ("status:", "result:", "conforms:", "difference_kind:"):
         assert prohibido not in cuerpo, f"el cliente envía el veredicto: {prohibido}"
     assert "_dictamen_de_linea" in SALES
@@ -129,7 +123,7 @@ def test_la_confirmacion_es_una_entidad_y_no_un_booleano():
     assert "class OrderConfirmation(" in MODELOS and "class OrderConfirmationLine(" in MODELOS
     for campo in ("checked_by", "checked_at", "attempt", "picklist_id", "status"):
         assert campo in MODELOS, f"la confirmación no registra {campo}"
-    ventas = MODELOS[MODELOS.index("class SalesOrder("):MODELOS.index("class SalesOrderLine(")]
+    ventas = cuerpo_de_simbolo(MODELOS, "class SalesOrder(")
     for prohibido in ("is_confirmed", "confirmed: Mapped[bool]"):
         assert prohibido not in ventas, f"volvió el booleano: {prohibido}"
 
@@ -177,8 +171,7 @@ def test_el_pedido_llega_a_confirmado_y_no_mas_alla():
 
 def test_los_permisos_del_control_existen_en_el_catalogo():
     catalogo = (RAIZ / "modules" / "setup" / "api.py").read_text()
-    bloque = SALES_API[SALES_API.index("class ConfirmationLineBody"):
-                       SALES_API.index('@router.post("/shipments"')]
+    bloque = BLOQUE_API
     usados = set(re.findall(r'require_permission\("(\w+)", "(\w+)"\)', bloque))
     assert usados, "el bloque de confirmación no declara ningún permiso"
     for recurso, accion in sorted(usados):

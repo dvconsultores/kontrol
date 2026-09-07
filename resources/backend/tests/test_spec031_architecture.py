@@ -11,6 +11,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from tests.spec_blocks import bloque_de_spec, cuerpo_de_simbolo
+
 RAIZ = Path(__file__).resolve().parents[1] / "app"
 SALES = (RAIZ / "modules" / "sales" / "service.py").read_text()
 SALES_API = (RAIZ / "modules" / "sales" / "api.py").read_text()
@@ -19,17 +21,8 @@ MIGRACION = (Path(__file__).resolve().parents[1] / "alembic" / "versions"
              / "0049_spec031_picking_plan.py").read_text()
 
 
-def _bloque(texto: str, inicio: str) -> str:
-    """El cuerpo de una función, **sin comentarios ni docstring**.
+_bloque = cuerpo_de_simbolo
 
-    Un guardia que mirase el texto entero fallaría por la explicación de lo que
-    prohíbe, que es justo donde esos nombres tienen que aparecer.
-    """
-    trozo = texto[texto.index(inicio):]
-    siguiente = trozo.find("\ndef ", 1)
-    cuerpo = trozo if siguiente < 0 else trozo[:siguiente]
-    cuerpo = re.sub(r'"""..*?"""', "", cuerpo, flags=re.S)
-    return "\n".join(x for x in cuerpo.splitlines() if not x.strip().startswith("#"))
 
 
 # ------------------------------------------------------------------ la cola
@@ -47,8 +40,13 @@ def test_no_hay_prioridad_inventada():
     """`R-D0-15-4`: cliente, manual, SLA y ruta siguen siendo `FUTURE` (`D0-03` §8)."""
     for prohibido in ("priority", "prioridad", "rush", "sla", "ranking", "urgent"):
         assert prohibido not in _bloque(SALES, "def picking_queue(").lower(), prohibido
+    # El cuerpo de las dos clases, no «los 2000 caracteres siguientes a
+    # `class PickList`»: esa ventana tapaba o destapaba campos según creciera el
+    # fichero, que es la misma clase de frontera accidental que corregimos aquí.
+    plan = cuerpo_de_simbolo(MODELS, "class PickList(").lower()
+    linea = cuerpo_de_simbolo(MODELS, "class PickListLine(").lower()
     for prohibido in ("priority", "rush", "sla_"):
-        assert prohibido not in MODELS.lower().split("class picklist")[1][:2000], \
+        assert prohibido not in plan and prohibido not in linea, \
             f"apareció un campo de prioridad: {prohibido}"
 
 
@@ -72,10 +70,14 @@ def test_el_recorrido_es_estable():
 # --------------------------------------------------- no se inventa selección
 def test_no_hay_politica_de_lote_ni_de_serial():
     """`R-D0-15-21`: el ¶30 llega a producto; elegir entre lotes no se inventa."""
-    bloque_031 = SALES[SALES.index("# Spec 031 · cola, asignación"):]
-    bloque_031 = re.sub(r'"""..*?"""', "", bloque_031, flags=re.S)
+    # El alcance es el tramo entero de salida, no solo la 031: ninguna de las
+    # cinco puede inventar una política de lote que el ¶30 no declara. Antes se
+    # conseguía recortando «desde mi cabecera hasta el final del fichero», que
+    # cubría también lo que no era de ventas.
+    tramo = "\n".join(bloque_de_spec(SALES, n) for n in ("031", "032", "033", "034", "035"))
+    tramo = re.sub(r'"""..*?"""', "", tramo, flags=re.S)
     for prohibido in ("fefo", "fifo", "expiry_date", "vencimiento", "lot_priority"):
-        assert prohibido not in bloque_031.lower(), f"política inventada: {prohibido}"
+        assert prohibido not in tramo.lower(), f"política inventada: {prohibido}"
 
 
 # ------------------------------------------- planificar no toca el inventario
@@ -99,11 +101,10 @@ def test_la_031_no_libera_la_reserva_comercial():
 
 def test_la_031_no_ejecuta_el_picking_fisico():
     """La Spec 032 es la dueña del efecto físico; aquí no se simula."""
-    # El corte es la cabecera de la Spec 032: sin él este bloque se comería la
+    # El bloque se pide por su marcador: sin frontera propia se comería la
     # ejecución física, que sí escribe `CLOSED` y sí es picking, y la guardia
     # afirmaría lo contrario de lo que quiere decir.
-    bloque_031 = SALES[SALES.index("# Spec 031 · cola, asignación"):
-                       SALES.index("# Spec 032 · ejecución física")]
+    bloque_031 = bloque_de_spec(SALES, "031")
     bloque_031 = re.sub(r'"""..*?"""', "", bloque_031, flags=re.S)
     assert '"CLOSED"' not in bloque_031, "la 031 cierra un plan que nadie ejecutó"
     for prohibido in ("consolidar", "empacar", "shipment", "invoice"):
@@ -145,8 +146,10 @@ def test_los_permisos_del_picking_existen_en_el_catalogo():
     """La lección de la Spec 021: un permiso declarado y ausente es un contrato
     roto que solo se descubre cuando alguien intenta usar la pantalla."""
     catalogo = (RAIZ / "modules" / "setup" / "api.py").read_text()
-    picking = SALES_API[SALES_API.index("# Spec 031 · cola, asignación"):
-                        SALES_API.index('@router.post("/shipments"')]
+    # Solo el bloque de la 031. Antes llegaba hasta `/shipments` y auditaba de
+    # paso los permisos de la 032, la 033, la 034 y la 035; cada una tiene hoy
+    # su propia guardia igual a esta, así que no se pierde cobertura.
+    picking = bloque_de_spec(SALES_API, "031")
     usados = set(re.findall(r'require_permission\("(\w+)", "(\w+)"\)', picking))
     assert usados, "el bloque de picking no declara ningún permiso"
     for recurso, accion in sorted(usados):

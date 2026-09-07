@@ -414,6 +414,14 @@ class OrderConfirmationLine(UUIDMixin, TimestampMixin, Base):
 class Shipment(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "shipments"
     __scope__ = Scope.COMPANY
+    __table_args__ = (
+        CheckConstraint("regulatory_status IS NULL OR regulatory_status IN ('CLEARED', 'BLOCKED')",
+                        name="shipment_regulatory_status"),
+        # Un pedido no sale dos veces.
+        Index("uq_shipments_live_order", "order_id", unique=True,
+              postgresql_where=sql_column_pl("status") != "CANCELLED"
+              ).ddl_if(dialect="postgresql"),
+    )
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     order_id: Mapped[str] = mapped_column(ForeignKey("sales_orders.id"), nullable=False, index=True)
@@ -422,6 +430,23 @@ class Shipment(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     transport: Mapped[str | None] = mapped_column(String(255), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
     validation_status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
+
+    # --- Compuerta y salida (Spec 035) ---
+    #: «La mercancía sale del almacén **con su factura**» (¶106): cuál.
+    invoice_id: Mapped[str | None] = mapped_column(ForeignKey("sales_invoices.id"), nullable=True,
+                                                   index=True)
+    #: Transporte, de los maestros que ya existen en el módulo regulatorio. El
+    #: ¶105 admite transportista, cliente o responsable «según el mecanismo
+    #: utilizado», así que ninguno es obligatorio: lo obligatorio es decir a
+    #: quién se entrega y a dónde va.
+    vehicle_id: Mapped[str | None] = mapped_column(ForeignKey("transport_vehicles.id"), nullable=True)
+    driver_id: Mapped[str | None] = mapped_column(ForeignKey("transport_drivers.id"), nullable=True)
+    #: El resultado de `regulatory.evaluate_shipment`, guardado con el despacho.
+    regulatory_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    validated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    validated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    dispatched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    dispatched_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
 
 class ShipmentLine(UUIDMixin, TimestampMixin, Base):

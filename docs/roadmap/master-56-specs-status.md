@@ -52,12 +52,12 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 028 | CxP y pagos | `PARTIALLY_IMPLEMENTED` | `ap_payments`, `ap_open_items`; tipo documental cerrado en N9 | 040 retenciones |
 | 029 | Cotización y pedido comercial | **`COMPLETE / CONVERGED`** (2026-09-01) | `sales_quotes`, `sales_orders` con origen comercial, ciclo de cotización, conversión 1:1 | **ninguno** |
 | 030 | Crédito / aprobación / reserva | **`COMPLETE / CONVERGED`** (2026-09-02) | reserva al confirmar (`ORDER_CONFIRMATION`), bloqueo en PostgreSQL, crédito vía 045, `RELEASED` para 031; migración `0043` | **ninguno** |
-| 031 | Cola y ruta de picking | **`COMPLETE / CONVERGED`** (2026-09-05) | 7 de 10 etapas | **ninguno**: cola por `released_at`, asignación por ubicación, ruta de la 008, cinco estados; migración `0049`. Las 3 etapas restantes son el recorrido físico, de la 032 |
+| 031 | Cola y ruta de picking | **`COMPLETE / CONVERGED`** (2026-09-05) | 7 de 10 etapas | **ninguno**: cola por `released_at`, asignación por ubicación, ruta de la 008, cinco estados; migración `0049`. Las 3 etapas restantes son el recorrido físico, de la 032. Delta dirigido recibido de la 035 (2026-09-07): el selector de almacén ya no descarta opciones en silencio |
 | 032 | Picking y consolidación | **`COMPLETE / CONVERGED`** (2026-09-05) | 12 de 12 etapas | **ninguno**: extracción con estado de custodia, cinco motivos de diferencia del proceso, consolidación al Área de Confirmación; migración `0050` |
 | 033 | Confirmación independiente de pedido | **`COMPLETE / CONVERGED`** (2026-09-06) | 8 de 8 etapas · 2 tablas | **ninguno**: compara contra el pedido, segregación por defecto, compuerta única de facturación; migración `0051` |
 | 034 | Liberación y facturación | **`COMPLETE / CONVERGED`** (2026-09-06) | 8 de 8 etapas · factura atada al pedido | **ninguno**: compuerta de confirmación, snapshot comercial congelado, numeración de la 042; migración `0052`. La **homologación legal** de la emisión sigue en `D0-07` |
-| 035 | Despacho / transporte / regulación | `PARTIALLY_IMPLEMENTED` | `shipments`, `regulatory` 11 tablas | 034 |
-| 036 | Devoluciones / NC / ND | `PARTIALLY_IMPLEMENTED` | devoluciones en compras y ventas, notas de crédito | — |
+| 035 | Despacho / transporte / regulación | **`COMPLETE / CONVERGED`** (2026-09-07) | 6 de 6 etapas (¶101-107) · compuerta del ¶103 · 1226/1218/8/0 | **ninguno**: salida solo desde pedido facturado, validación real de las cuatro condiciones, salida en cantidad base desde `PREPARADO`, reserva consumida; migración `0053`. La validación regulatoria es contra lo registrado —**no se emite ni se verifica en línea**—, límite de la 044 en `BLOCKED_BY_EXTERNAL_SERVICE` |
+| 036 | Devoluciones / NC / ND | `PARTIALLY_IMPLEMENTED` · **desbloqueada por dependencia** (2026-09-07) | devoluciones en compras y ventas, notas de crédito | **ninguna**. No `READY_FOR_IMPLEMENTATION`: el proceso fuente termina en el ¶107 y no dice nada del reingreso, así que las cuatro preguntas del contrato de entrega siguen siendo materiales y las decide su propio ciclo |
 | 037 | Cuentas por cobrar | `PARTIALLY_IMPLEMENTED` | `ar_open_items`, aplicaciones | — |
 | 038 | Tesorería | `PARTIALLY_IMPLEMENTED` | `treasury` 15 tablas, conciliación bancaria | — |
 | 039 | Motor fiscal venezolano | `BLOCKED_BY_LEGAL_VALIDATION` | `fiscal` 13 tablas, versionado de reglas | D0-07 |
@@ -83,10 +83,10 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 
 | Estado | Specs |
 |---|---:|
-| `COMPLETE / CONVERGED` | 14 — 008, 011, 012, 019, 020, 021, 022, 029, 030, 031, 032, 033, **034**, 045 |
+| `COMPLETE / CONVERGED` | 15 — 008, 011, 012, 019, 020, 021, 022, 029, 030, 031, 032, 033, 034, **035**, 045 |
 | `RECONVERGED` | 1 — 046 |
 | `READY_FOR_IMPLEMENTATION` | **0** |
-| `PARTIALLY_IMPLEMENTED` | 31 |
+| `PARTIALLY_IMPLEMENTED` | 30 |
 | `NOT_STARTED` | 2 — 018, 047 |
 | `BLOCKED_BY_DEPENDENCY` | **0** |
 | `BLOCKED_BY_BUSINESS_DECISION` | 1 — 004 |
@@ -94,11 +94,11 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | `BLOCKED_BY_EXTERNAL_SERVICE` | 1 — 044 |
 | **Sin estado** | **0** |
 
-Suma: 4 + 1 + 1 + 34 + 5 + 2 + 2 + 6 + 1 = **56**. Sin estado: **0**.
+Suma: 15 + 1 + 0 + 30 + 2 + 0 + 1 + 6 + 1 = **56**. Sin estado: **0**.
 
-El grupo dominante —34 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
+El grupo dominante —30 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el
 catálogo de 56, así que casi todo tiene algo hecho y casi nada está cerrado con
 su propia convergencia. Lo que este checkpoint aporta no es descubrirlo sino
-distinguir, dentro de ese 34, qué está a la espera de una decisión, qué de una
+distinguir, dentro de ese 30, qué está a la espera de una decisión, qué de una
 dependencia y qué solo de que alguien lo termine.

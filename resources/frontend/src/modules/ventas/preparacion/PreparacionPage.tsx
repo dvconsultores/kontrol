@@ -64,7 +64,23 @@ export function PreparacionPage(): React.JSX.Element {
   // todos y deja de ser una cola de trabajo.
   const almacenes = useQuery({
     queryKey: ["picking", "almacenes"],
-    queryFn: () => apiFetch<{ items: WarehouseSummary[] }>("/organization/warehouses?limit=500"),
+    // Se pide hasta agotar `total` en vez de confiar en un tope. El tope
+    // anterior era 500 y el listado llegó a 564: los 64 últimos desaparecían
+    // del desplegable sin que nada lo dijera, y con ellos el almacén recién
+    // creado. Un selector que descarta opciones en silencio es peor que uno
+    // vacío, porque parece completo.
+    queryFn: async () => {
+      const tanda = 200;
+      const items: WarehouseSummary[] = [];
+      for (let offset = 0; ; offset += tanda) {
+        const p = await apiFetch<{ items: WarehouseSummary[]; total: number }>(
+          `/organization/warehouses?limit=${tanda}&offset=${offset}`,
+        );
+        items.push(...p.items);
+        if (items.length >= p.total || p.items.length === 0) break;
+      }
+      return { items };
+    },
   });
 
   const cola = useQuery({

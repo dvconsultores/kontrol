@@ -13,6 +13,7 @@ from pathlib import Path
 
 from app.modules.inventory import states
 from app.modules.sales.models import PICK_DISCREPANCY_KINDS
+from tests.spec_blocks import bloque_de_spec, cuerpo_de_simbolo
 
 RAIZ = Path(__file__).resolve().parents[1] / "app"
 SALES = (RAIZ / "modules" / "sales" / "service.py").read_text()
@@ -20,20 +21,14 @@ SALES_API = (RAIZ / "modules" / "sales" / "api.py").read_text()
 INV = (RAIZ / "modules" / "inventory" / "service.py").read_text()
 MIGRACION = (Path(__file__).resolve().parents[1] / "alembic" / "versions"
              / "0050_spec032_pick_execution.py").read_text()
-# El corte es la cabecera de la Spec 033: sin él este bloque se comería el
-# control independiente, que sí certifica y sí aprueba, y la guardia afirmaría lo
-# contrario de lo que quiere decir. Es el mismo cuidado que necesitó la 031.
-BLOQUE_032 = SALES[SALES.index("# Spec 032 · ejecución física"):
-                   SALES.index("# Spec 033 · confirmación independiente")]
+# El bloque se pide por su marcador de Spec, no se recorta por la función
+# siguiente: ver `tests/spec_blocks.py` y la invariante que documenta.
+BLOQUE_032 = bloque_de_spec(SALES, "032")
+BLOQUE_API_032 = bloque_de_spec(SALES_API, "032")
 
 
-def _bloque(texto: str, inicio: str) -> str:
-    """El cuerpo de una función, **sin comentarios ni docstring**."""
-    trozo = texto[texto.index(inicio):]
-    siguiente = trozo.find("\ndef ", 1)
-    cuerpo = trozo if siguiente < 0 else trozo[:siguiente]
-    cuerpo = re.sub(r'"""..*?"""', "", cuerpo, flags=re.S)
-    return "\n".join(x for x in cuerpo.splitlines() if not x.strip().startswith("#"))
+_bloque = cuerpo_de_simbolo
+
 
 
 def _limpio(texto: str) -> str:
@@ -179,7 +174,7 @@ def test_el_pedido_llega_a_preparado_y_no_mas_alla():
 
 def test_los_permisos_de_la_preparacion_existen_en_el_catalogo():
     catalogo = (RAIZ / "modules" / "setup" / "api.py").read_text()
-    bloque = SALES_API[SALES_API.index("class PickBody"):SALES_API.index('@router.post("/shipments"')]
+    bloque = BLOQUE_API_032
     usados = set(re.findall(r'require_permission\("(\w+)", "(\w+)"\)', bloque))
     assert usados, "el bloque de preparación no declara ningún permiso"
     for recurso, accion in sorted(usados):

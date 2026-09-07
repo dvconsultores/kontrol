@@ -1518,6 +1518,14 @@
     },
     {
       "method": "GET",
+      "path": "/sales/despacho/pendientes"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/despacho/{order_id}/despacho"
+    },
+    {
+      "method": "GET",
       "path": "/sales/facturacion/pendientes"
     },
     {

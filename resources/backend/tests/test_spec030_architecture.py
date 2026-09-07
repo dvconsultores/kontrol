@@ -58,7 +58,12 @@ def test_la_maquina_de_estados_es_la_de_d0_03():
         assert all(viejo not in destinos for destinos in t.values())
     assert t["DRAFT"] == {"SUBMITTED", "CANCELLED"}
     assert t["SUBMITTED"] == {"RELEASED", "REJECTED", "CANCELLED", "EXPIRED", "DRAFT"}
-    assert t["RELEASED"] == {"PREPARING", "SHIPPED", "CANCELLED", "DRAFT"}
+    # La Spec 035 cerró la deuda que este tramo dejó anotada: `SHIPPED` dejó de
+    # salir de `RELEASED`, `PREPARING`, `PREPARED` y `CONFIRMED`. El ¶103 exige
+    # factura emitida antes de la salida física, y ahora **solo** `INVOICED`
+    # puede despachar.
+    assert t["RELEASED"] == {"PREPARING", "CANCELLED", "DRAFT"}
+    assert {k for k, v in t.items() if "SHIPPED" in v} == {"INVOICED"}
     # `RELEASED` se añadió como salida de `PREPARING` por `R-D0-15-19`, delta
     # dirigido de la Spec 031 sobre esta máquina. Cancelar un plan de picking
     # confirmado antes de cualquier efecto físico devuelve el pedido a la cola;
@@ -67,14 +72,14 @@ def test_la_maquina_de_estados_es_la_de_d0_03():
     # `PREPARED` lo añadió la Spec 032 y lo declara `ADR-D0-012`: «`RESERVED →
     # PREPARING → PREPARED → CONFIRMED → …`». Es el estado de entrada que la
     # confirmación independiente de la 033 necesita para ser distinguible.
-    assert t["PREPARING"] == {"SHIPPED", "CANCELLED", "RELEASED", "PREPARED"}
+    assert t["PREPARING"] == {"CANCELLED", "RELEASED", "PREPARED"}
     # `CONFIRMED` y la vuelta a `PREPARING` las añadió la Spec 033 y las declara
     # `ADR-D0-012`: conforme → `CONFIRMED` (`R-D0-12-4`); no conforme → «el
     # pedido regresa a preparación» (`R-D0-12-3`).
-    assert t["PREPARED"] == {"SHIPPED", "CANCELLED", "CONFIRMED", "PREPARING"}
+    assert t["PREPARED"] == {"CANCELLED", "CONFIRMED", "PREPARING"}
     # `READY_FOR_BILLING` e `INVOICED` los añadió la Spec 034 y los declara
     # `ADR-D0-012`: «CONFIRMED → READY_FOR_BILLING → INVOICED → DISPATCHED».
-    assert t["CONFIRMED"] == {"SHIPPED", "CANCELLED", "READY_FOR_BILLING"}
+    assert t["CONFIRMED"] == {"CANCELLED", "READY_FOR_BILLING"}
     assert t["READY_FOR_BILLING"] == {"INVOICED", "CANCELLED"}
     assert "DISPATCHED" not in t, "la 034 adelantó un estado de la 035"
     assert sales_service.ORDER_HANDOFF_STATE == "RELEASED"

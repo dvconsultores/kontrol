@@ -64,10 +64,25 @@ existencia de 100, entra exactamente una.
 | `uom.py` declara para `sales_orders` cuatro estados de los que solo existe `CLOSED` | 011 | anotado, no corregido |
 | `uom-a11y`, `documents`, `warehouse-a11y` y `approvals` fallan por datos que esta siembra no crea | QA | **verificado con los cambios apartados: fallan igual sin ellos** |
 
+## Delta dirigido recibido — 2026-09-07 (desde el ciclo de la Spec 035)
+
+El selector de almacén de `PreparacionPage` pedía
+`/organization/warehouses?limit=500`. Cuando la base de e2e llegó a **564**
+almacenes, la respuesta se cortó y los 64 últimos —incluido el que cada prueba
+acababa de crear— dejaron de existir para el desplegable. Seis pruebas e2e de
+esta Spec se pusieron en rojo, y no por lo que probaban.
+
+El tope se sustituyó por tandas hasta agotar `total`. Subirlo a 2000 habría
+movido el acantilado escribiendo un número que ya se sabe equivocado. Las seis
+vuelven a pasar: 24/24 en los tres navegadores.
+
+El patrón sigue abierto en otras ocho pantallas —siete se quedan en el límite
+por defecto de 50— y eso es del módulo de organización, no de esta Spec.
+
 ## Estado resultante
 
 | | |
 |---|---|
-| Spec 031 | **COMPLETE / CONVERGED** |
+| Spec 031 | **COMPLETE / CONVERGED** · con un delta dirigido recibido de la 035 (2026-09-07) |
 | Spec 030 | `COMPLETE / CONVERGED` con dos deltas dirigidos convergidos |
 | Spec 032 | **BLOCKED UNTIL SPEC031 CONVERGES** → desbloqueada por dependencia; su contrato de entrada está en `spec032-handoff-after-spec031.md`. **No implementada.** |

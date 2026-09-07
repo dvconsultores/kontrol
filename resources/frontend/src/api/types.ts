@@ -901,6 +901,61 @@ export interface OrderBillingStatus {
   invoice: BillingInvoice | null;
 }
 
+/**
+ * Spec 035 · un pedido facturado esperando su salida física.
+ *
+ * La cola no la forma el estado del pedido por sí solo: se muestra la factura
+ * que lo respalda, porque el ¶103 exige que exista y esté **emitida**.
+ */
+export interface DispatchableOrder {
+  order_id: string;
+  code: string;
+  status: string;
+  invoice_id: string | null;
+  invoice_number: string | null;
+  invoice_status: string | null;
+  shipment_id: string | null;
+  shipment_code: string | null;
+  shipment_status: string | null;
+}
+
+export interface DispatchLine {
+  product_id: string;
+  quantity: string;
+  base_quantity: string | null;
+  presentation_id: string | null;
+  conversion_factor_snapshot: string | null;
+  lot_id: string | null;
+  serial_id: string | null;
+}
+
+export interface Dispatch {
+  id: string;
+  code: string;
+  order_id: string;
+  origin_warehouse_id: string;
+  status: string;
+  validation_status: string;
+  /** `CLEARED` o `BLOCKED`; nulo mientras nadie haya validado. */
+  regulatory_status: string | null;
+  invoice_id: string | null;
+  destination: string | null;
+  transport: string | null;
+  vehicle_id: string | null;
+  driver_id: string | null;
+  validated_at: string | null;
+  validated_by: string | null;
+  dispatched_at: string | null;
+  dispatched_by: string | null;
+  lines: DispatchLine[];
+}
+
+export interface OrderDispatchStatus {
+  order_id: string;
+  order_status: string;
+  shipment: Dispatch | null;
+}
+
 export interface PickingPlan {
   id: string;
   code: string;

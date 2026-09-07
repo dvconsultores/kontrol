@@ -565,19 +565,20 @@ def test_liberar_a_preparacion_no_crea_picking_factura_ni_cxc_y_despachar_consum
     despues = {t: _contar(mundo, t) for t in ("pick_lists", "sales_invoices", "ap_open_items")}
     assert antes == despues, f"RELEASED produjo efectos ajenos: {antes} → {despues}"
 
-    # Tipo de salida y despacho (035): la reserva se consume, no se libera
-    _sql(mundo, "INSERT INTO movement_types (id, company_id, code, name, direction, affects_balance, status, version, created_at, updated_at) "
-                "VALUES (:i, :c, 'SALIDA_DESPACHO', 'Salida por despacho', 'OUT', true, 'ACTIVE', 1, now(), now()) "
-                "ON CONFLICT DO NOTHING", i=f"mt-030-{m['pedido'][:8]}", c=mundo.company_a)
-    sh = mundo.crear("/sales/shipments", "ua", mundo.company_a, {
-        "code": f"SH-{m['pedido'][:6]}", "order_id": m["pedido"], "origin_warehouse_id": mundo.warehouse_a,
+    # Despachar desde `RELEASED` ya no es posible: el ¶103 exige «Pedido
+    # preparado + Pedido confirmado + Factura emitida» antes de la salida
+    # física, y la Spec 035 lo hace cumplir. Esta prueba afirmaba lo contrario
+    # porque se escribió cuando la cadena no existía.
+    r = mundo.post("/sales/shipments", "ua", mundo.company_a, {
+        "code": f"SH-{m['pedido'][:6]}", "order_id": m["pedido"],
+        "origin_warehouse_id": mundo.warehouse_a,
         "lines": [{"product_id": m["producto"], "quantity": 4}]})
-    assert mundo.post(f"/sales/shipments/{sh}/validate", "ua", mundo.company_a, {}).status_code == 200
-    r = mundo.post(f"/sales/shipments/{sh}/confirm", "ua", mundo.company_a, {})
-    assert r.status_code == 200, r.text
+    assert r.status_code == 409, r.text
+    assert r.json()["code"] == "ORDER_NOT_SHIPPABLE"
     reserva = _reservas(mundo, "ua", mundo.company_a, m["pedido"])[0]
-    assert reserva["status"] == "FULFILLED" and reserva["release_reason"] == "DISPATCHED"
-    assert _disponible(mundo, "ua", mundo.company_a, mundo.warehouse_a, m["producto"]) == (6.0, 0.0, 6.0)
+    assert reserva["status"] == "ACTIVE", "la reserva se consumió sin despachar"
+    # Que el despacho **consume** la reserva (`R-D0-03-7`) lo prueba la cadena
+    # completa en `test_spec035_dispatch.py`, que es su dueña.
 
 
 # --------------------------------------------------------------------------- #

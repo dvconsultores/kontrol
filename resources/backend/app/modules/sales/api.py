@@ -121,9 +121,13 @@ class PickListCreate(BaseModel):
 class ShipmentCreate(BaseModel):
     code: str = Field(min_length=1, max_length=64)
     order_id: str
-    origin_warehouse_id: str
+    #: Opcional desde la Spec 035: por defecto, el almacén del pedido, que es
+    #: donde la preparación dejó la mercancía consolidada.
+    origin_warehouse_id: str | None = None
     destination: str | None = None
     transport: str | None = None
+    vehicle_id: str | None = None
+    driver_id: str | None = None
     lines: list[dict] | None = None
 
 
@@ -591,6 +595,13 @@ def invalidate_picking(plan_id: str, body: ReasonBody, db: Session = Depends(get
     return sales_service.plan_dict(db, plan)
 
 
+# --------------------------------------------------------------------------- #
+# Spec 032 · ejecución física del picking y consolidación
+#
+# Aquí sí se mueve mercancía: se extrae de su ubicación y se lleva al Área de
+# Confirmación. Lo que no se hace es verificar de nuevo ni aprobar: eso es de la
+# Spec 033, y la frontera entre las dos la marca esta cabecera.
+# --------------------------------------------------------------------------- #
 class PickBody(BaseModel):
     """Lo recogido en una parada. Menos de lo planificado exige motivo, y el
     motivo es uno de los cinco que enumera el proceso fuente."""
@@ -786,15 +797,40 @@ def order_invoice(order_id: str, db: Session = Depends(get_db),
     return sales_service.order_invoice_dict(db, company_id=ctx.company_id, order_id=order_id)
 
 
+# --------------------------------------------------------------------------- #
+# Spec 035 · despacho, transporte y regulación
+#
+# La salida física y su compuerta. Empieza aquí y no en la primera ruta de
+# despacho: los guardias de la 034 cortan por esta cabecera, y sin ella
+# cualquier ruta que se añada delante de `/shipments` se cuenta como facturación.
+# --------------------------------------------------------------------------- #
+@router.get("/despacho/pendientes")
+def dispatch_queue(db: Session = Depends(get_db),
+                   user: User = Depends(require_permission("ventas", "view")),
+                   ctx: CompanyContext = Depends(get_company_context)):
+    """Los pedidos facturados que esperan salida física (¶101)."""
+    items = sales_service.dispatch_queue(db, company_id=ctx.company_id)
+    return {"items": items, "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.get("/despacho/{order_id}/despacho")
+def order_dispatch(order_id: str, db: Session = Depends(get_db),
+                   user: User = Depends(require_permission("ventas", "view")),
+                   ctx: CompanyContext = Depends(get_company_context)):
+    """El despacho vivo de un pedido, si lo tiene."""
+    return sales_service.order_dispatch_dict(db, company_id=ctx.company_id, order_id=order_id)
+
+
 @router.post("/shipments", dependencies=[Depends(require_write_allowed)])
 def create_shipment(body: ShipmentCreate, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("ventas", "create")), ctx: CompanyContext = Depends(get_company_context)):
     shipment = sales_service.create_shipment(db, company_id=ctx.company_id, code=body.code, order_id=body.order_id,
                                              origin_warehouse_id=body.origin_warehouse_id, destination=body.destination,
-                                             transport=body.transport, lines=body.lines, actor=str(actor.id))
+                                             transport=body.transport, vehicle_id=body.vehicle_id,
+                                             driver_id=body.driver_id, lines=body.lines, actor=str(actor.id))
     db.commit()
     db.refresh(shipment)
-    return {"id": shipment.id, "code": shipment.code, "status": shipment.status, "validation_status": shipment.validation_status}
+    return sales_service.shipment_dict(db, shipment)
 
 
 @router.post("/shipments/{shipment_id}/validate", dependencies=[Depends(require_write_allowed)])
@@ -804,7 +840,7 @@ def validate_shipment(shipment_id: str, db: Session = Depends(get_db),
     sales_service.validate_shipment(db, shipment=shipment, actor=str(actor.id))
     db.commit()
     db.refresh(shipment)
-    return {"id": shipment.id, "status": shipment.status, "validation_status": shipment.validation_status}
+    return sales_service.shipment_dict(db, shipment)
 
 
 @router.post("/shipments/{shipment_id}/confirm", dependencies=[Depends(require_write_allowed)])
@@ -814,7 +850,7 @@ def confirm_shipment(shipment_id: str, db: Session = Depends(get_db),
     sales_service.confirm_shipment(db, shipment=shipment, actor=str(actor.id))
     db.commit()
     db.refresh(shipment)
-    return {"id": shipment.id, "status": shipment.status}
+    return sales_service.shipment_dict(db, shipment)
 
 
 @router.get("/shipments")

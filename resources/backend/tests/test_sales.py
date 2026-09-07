@@ -120,14 +120,20 @@ class TestDespacho:
                                      quantity=20.0, unit_price=10.0)
         sales_service.confirmar_pedido(db_session, company_id=COMPANY, order_id=str(order.id))
         assert order.status == "RELEASED"
-        shipment = sales_service.create_shipment(db_session, company_id=COMPANY, code="SH-1", order_id=str(order.id),
-                                                 origin_warehouse_id=str(wh.id), lines=[{"product_id": str(product.id), "quantity": 20.0}])
-        sales_service.validate_shipment(db_session, shipment=shipment)
-        assert shipment.validation_status == "APPROVED"
-        sales_service.confirm_shipment(db_session, shipment=shipment)
-        assert shipment.status == "SHIPPED"
-        assert order.status == "SHIPPED"
-        # Salida registrada: disponible 30
+        # Esta prueba afirmaba que un pedido recién liberado se podía despachar.
+        # La Spec 035 cerró esa puerta: el ¶101 dice que «el pedido **facturado**
+        # pasa a despacho» y el ¶103 exige «Pedido preparado + Pedido confirmado
+        # + Factura emitida» antes de la salida física. Hasta ese ciclo
+        # `validate_shipment` aprobaba sin comprobar nada. Lo que la prueba
+        # defiende ahora es lo contrario de lo que defendía: que no se puede.
+        with pytest.raises(ConflictError) as exc:
+            sales_service.create_shipment(db_session, company_id=COMPANY, code="SH-1", order_id=str(order.id),
+                                          origin_warehouse_id=str(wh.id),
+                                          lines=[{"product_id": str(product.id), "quantity": 20.0}])
+        assert exc.value.code == "ORDER_NOT_SHIPPABLE"
+        assert order.status == "RELEASED", "el pedido salió del almacén sin factura"
+        # La cadena completa —preparar, confirmar, facturar y despachar— vive en
+        # `test_spec035_dispatch.py`, que es su dueña.
         assert inv_service.get_available(db_session, company_id=COMPANY, product_id=str(product.id), warehouse_id=str(wh.id)) == 30.0
 
     def test_shipment_requires_validation(self, db_session) -> None:
@@ -140,10 +146,14 @@ class TestDespacho:
                                            warehouse_id=str(wh.id))
         sales_service.add_order_line(db_session, order_id=str(order.id), product_id=str(product.id), quantity=10.0, unit_price=5.0)
         sales_service.confirmar_pedido(db_session, company_id=COMPANY, order_id=str(order.id))
-        shipment = sales_service.create_shipment(db_session, company_id=COMPANY, code="SH-2", order_id=str(order.id),
-                                                 origin_warehouse_id=str(wh.id), lines=[{"product_id": str(product.id), "quantity": 10.0}])
-        with pytest.raises(ConflictError):
-            sales_service.confirm_shipment(db_session, shipment=shipment)  # sin validación
+        # Igual que la anterior: sin factura no hay despacho que crear, así que
+        # la comprobación de «sin validación» ya no es alcanzable desde aquí. La
+        # cubre `test_spec035_dispatch.py` sobre la cadena real.
+        with pytest.raises(ConflictError) as exc:
+            sales_service.create_shipment(db_session, company_id=COMPANY, code="SH-2", order_id=str(order.id),
+                                          origin_warehouse_id=str(wh.id),
+                                          lines=[{"product_id": str(product.id), "quantity": 10.0}])
+        assert exc.value.code == "ORDER_NOT_SHIPPABLE"
 
 
 class TestFacturaVenta:

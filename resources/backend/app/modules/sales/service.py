@@ -31,6 +31,8 @@ from app.modules.organization.service import warehouse_belongs_to
 from app.modules.organization.structure import physical_order_query
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import OpenItem
+from app.modules.regulatory import service as regulatory_service
+from app.modules.regulatory.models import TransportDriver, TransportVehicle
 from app.modules.sales.models import (
     PICK_DISCREPANCY_KINDS,
     PLAN_ACTIVE_STATUSES,
@@ -92,7 +94,7 @@ QUOTE_EDITABLE = {"DRAFT"}
 ORDER_TRANSITIONS: dict[str, set[str]] = {
     "DRAFT": {"SUBMITTED", "CANCELLED"},
     "SUBMITTED": {"RELEASED", "REJECTED", "CANCELLED", "EXPIRED", "DRAFT"},
-    "RELEASED": {"PREPARING", "SHIPPED", "CANCELLED", "DRAFT"},
+    "RELEASED": {"PREPARING", "CANCELLED", "DRAFT"},
     # `RELEASED` de vuelta: `R-D0-15-19`. Cancelar un plan de picking confirmado
     # antes de cualquier efecto físico devuelve el pedido a la cola. Sin esta
     # arista quedaría varado en `PREPARING` con la reserva viva, sin plan y sin
@@ -101,13 +103,18 @@ ORDER_TRANSITIONS: dict[str, set[str]] = {
     # CONFIRMED → …`», y su §65 lo llama «el correlato comercial de `PREPARADO`»
     # como estado de mercancía. Existe para que la confirmación independiente de
     # la Spec 033 tenga un estado de entrada distinguible.
-    "PREPARING": {"SHIPPED", "CANCELLED", "RELEASED", "PREPARED"},
+    # `SHIPPED` deja de salir de aquí. El ¶103 exige «Pedido preparado + Pedido
+    # confirmado + **Factura emitida**» antes de la salida física, y la Spec 035
+    # lo hace cumplir: despachar sin factura era la deuda que este tramo dejó
+    # anotada al cerrar la 034, y se cierra quitando la arista, no solo
+    # comprobándola.
+    "PREPARING": {"CANCELLED", "RELEASED", "PREPARED"},
     # `CONFIRMED` y la vuelta a `PREPARING` las declara `ADR-D0-012`: conforme →
     # `CONFIRMED` (`R-D0-12-4`, ¶81); no conforme → «el pedido regresa a
     # preparación/corrección» (`R-D0-12-3`, ¶77). `READY_FOR_BILLING` no se añade
     # aquí: lo escribirá la Spec 034, igual que la 032 dejó `CONFIRMED` para esta.
-    "PREPARED": {"SHIPPED", "CANCELLED", "CONFIRMED", "PREPARING"},
-    "CONFIRMED": {"SHIPPED", "CANCELLED", "READY_FOR_BILLING"},
+    "PREPARED": {"CANCELLED", "CONFIRMED", "PREPARING"},
+    "CONFIRMED": {"CANCELLED", "READY_FOR_BILLING"},
     "READY_FOR_BILLING": {"INVOICED", "CANCELLED"},
     "INVOICED": {"SHIPPED", "CANCELLED"},
     "SHIPPED": {"CLOSED"},
@@ -2176,38 +2183,200 @@ def billing_invoice_dict(db: Session, invoice: SalesInvoice) -> dict:
     }
 
 
-def create_shipment(db: Session, *, company_id: str, code: str, order_id: str, origin_warehouse_id: str,
+# =========================================================================== #
+# Spec 035 · despacho, transporte y regulación
+#
+# El último acto del proceso, y el único en el que la mercancía cruza la puerta.
+# El ¶103 dice qué se verifica antes de dejarla salir: «Pedido preparado +
+# Pedido confirmado + Factura emitida». Ninguna de las tres se vuelve a hacer
+# aquí —cada una tiene su Spec— pero las tres se comprueban, y la cuarta, la
+# regulatoria, se le pide al módulo que ya sabía calcularla.
+#
+# El bloque empieza aquí y no donde empiece la primera función de despacho: los
+# guardias de la 034 cortan por esta cabecera, y sin ella cualquier auxiliar que
+# se añada delante de `create_shipment` acaba contándose como código de la 034.
+# =========================================================================== #
+def _live_shipment(db: Session, company_id: str, order_id: str) -> Shipment | None:
+    """El despacho no cancelado de un pedido. Un pedido sale una vez."""
+    return db.execute(
+        select(Shipment).where(Shipment.company_id == company_id,
+                               Shipment.order_id == str(order_id),
+                               Shipment.status != "CANCELLED")).scalars().first()
+
+
+def _require_vehicle(db: Session, company_id: str, vehicle_id: str) -> TransportVehicle:
+    vehiculo = db.get(TransportVehicle, vehicle_id)
+    if vehiculo is None or str(vehiculo.company_id) != str(company_id):
+        raise NotFoundError(code="VEHICLE_NOT_FOUND", message="Vehículo no encontrado")
+    return vehiculo
+
+
+def _require_driver(db: Session, company_id: str, driver_id: str) -> TransportDriver:
+    conductor = db.get(TransportDriver, driver_id)
+    if conductor is None or str(conductor.company_id) != str(company_id):
+        raise NotFoundError(code="DRIVER_NOT_FOUND", message="Conductor no encontrado")
+    return conductor
+
+
+def _lineas_consolidadas(db: Session, company_id: str, order: SalesOrder) -> list[dict]:
+    """Lo que hay físicamente en el Área de Confirmación, para despacharlo.
+
+    No se escribe a mano lo que sale: sale lo que la Spec 032 recogió y
+    consolidó, con su lote y su serie. Escribir una cantidad aquí sería inventar
+    un despacho parcial, y el proceso no lo contempla —la 033 no confirma un
+    pedido incompleto y la 034 no lo factura a medias— (§21 del ciclo).
+
+    El plan trabaja en unidad **base** y estas líneas heredan eso tal cual: sin
+    presentación ni factor, porque la cifra no es de cajas. La vista comercial
+    —dos cajas de doce— la tiene la factura, que es el documento que acompaña a
+    la mercancía (¶106). Colgarle aquí una presentación que no corresponde a la
+    cifra es exactamente el error que este ciclo encontró en la salida.
+    """
+    plan = db.execute(
+        select(PickList).where(PickList.company_id == company_id,
+                               PickList.order_id == str(order.id),
+                               PickList.status == "CLOSED")
+        .order_by(PickList.consolidated_at.desc())).scalars().first()
+    if plan is None:
+        return []
+    paradas = db.execute(
+        select(PickListLine).where(PickListLine.picklist_id == str(plan.id))
+        .order_by(PickListLine.sequence, PickListLine.id)).scalars().all()
+    return [{"product_id": str(p.product_id), "quantity": _dec(p.quantity),
+             "base_quantity": (p.picked_base_quantity if p.picked_base_quantity is not None
+                               else p.base_quantity),
+             "uom_id": p.uom_id, "presentation_id": p.presentation_id,
+             "conversion_factor_snapshot": p.conversion_factor_snapshot,
+             "lot_id": p.lot_id, "serial_id": p.serial_id}
+            for p in paradas if p.picked_at is not None]
+
+
+def create_shipment(db: Session, *, company_id: str, code: str, order_id: str,
+                    origin_warehouse_id: str | None = None,
                     destination: str | None = None, transport: str | None = None,
+                    vehicle_id: str | None = None, driver_id: str | None = None,
                     lines: list[dict] | None = None, actor: str | None = None) -> Shipment:
+    """Registra la salida de un pedido **facturado** (¶101).
+
+    El almacén de origen no se pregunta: la mercancía está consolidada en el del
+    pedido y elegir otro sería describir un traslado que no ocurrió. Se admite
+    explícito porque las pruebas lo usan para probar el ajeno.
+    """
     company_id = _company(company_id, obj="despacho")
     order = _require_order(db, company_id, order_id)
-    if order.status not in ("RELEASED", "PREPARING", "SHIPPED"):
-        raise ConflictError(code="ORDER_NOT_SHIPPABLE", message="La orden no está en estado para despacharse.")
+    origin_warehouse_id = origin_warehouse_id or str(order.warehouse_id)
     _require_warehouse(db, company_id, origin_warehouse_id)
+    # `SHIPPED` se admitía aquí para que el segundo despacho llegara al índice
+    # de la base. Con la comprobación de abajo esa rama era inalcanzable, y una
+    # rama inalcanzable en una compuerta dice que se puede algo que no se puede.
+    if order.status != "INVOICED":
+        raise ConflictError(code="ORDER_NOT_SHIPPABLE",
+                            message="Solo un pedido facturado pasa a despacho.")
+    # Quien de verdad impide el segundo despacho es `uq_shipments_live_order`,
+    # que es lo único que resiste a dos despachadores simultáneos. Esta
+    # comprobación existe para que el caso corriente —alguien pulsa dos veces—
+    # reciba un conflicto legible en vez del error de integridad en crudo.
+    if _live_shipment(db, company_id, str(order.id)) is not None:
+        raise ConflictError(code="ORDER_ALREADY_SHIPPED",
+                            message="El pedido ya tiene un despacho vivo.")
+    # El ¶105 admite «transportista, cliente o responsable»; ninguno es
+    # obligatorio, pero el que se indique tiene que ser de esta empresa.
+    if vehicle_id:
+        _require_vehicle(db, company_id, vehicle_id)
+    if driver_id:
+        _require_driver(db, company_id, driver_id)
     shipment = Shipment(company_id=company_id, code=code, order_id=order_id, origin_warehouse_id=origin_warehouse_id,
                         destination=destination, transport=transport, status="DRAFT", validation_status="PENDING",
-                        created_by=actor)
+                        vehicle_id=vehicle_id, driver_id=driver_id, created_by=actor)
     db.add(shipment)
     db.flush()
-    for item in lines or []:
+    for item in lines if lines is not None else _lineas_consolidadas(db, company_id, order):
         db.add(ShipmentLine(shipment_id=str(shipment.id), product_id=item["product_id"],
                             lot_id=item.get("lot_id"), serial_id=item.get("serial_id"),
-                            quantity=item.get("quantity", 0.0)))
+                            quantity=item.get("quantity", 0.0),
+                            base_quantity=item.get("base_quantity"),
+                            uom_id=item.get("uom_id"),
+                            presentation_id=item.get("presentation_id"),
+                            conversion_factor_snapshot=item.get("conversion_factor_snapshot")))
     return shipment
 
 
 def validate_shipment(db: Session, *, shipment: Shipment, actor: str | None = None) -> Shipment:
-    """Validación documental del despacho (FR-005-023/024).
+    """La compuerta del ¶103, que hasta este ciclo aprobaba siempre.
 
-    Si falta/venció/no coincide un requisito, el despacho queda BLOQUEADO
-    (regulación funcional completa en Spec 008).
+    «Se verifica que corresponda: **Pedido preparado + Pedido confirmado +
+    Factura emitida**». Las tres tienen autoridad consultable —la 032, la 033 y
+    la 034— y aquí se consultan las tres. La cuarta, la regulatoria, la resuelve
+    `regulatory.evaluate_shipment`, que existía y a la que el despacho no
+    llamaba.
+
+    Aprobar sin comprobar no era una simplificación: era una compuerta que
+    dejaba salir cualquier cosa mientras su docstring decía lo contrario.
     """
     if shipment.status != "DRAFT":
         raise ConflictError(code="SHIPMENT_STATE", message="El despacho ya fue procesado.")
+    company_id = str(shipment.company_id)
+    order = _lock_order(db, company_id, str(shipment.order_id))
+
+    # 1 y 2 · preparado y confirmado. El estado del pedido no basta: la Spec 033
+    # ya demostró que un estado se puede poner a mano.
+    confirmacion = db.execute(
+        select(OrderConfirmation).where(OrderConfirmation.company_id == company_id,
+                                        OrderConfirmation.order_id == str(order.id),
+                                        OrderConfirmation.status == "CONFIRMED")
+    ).scalars().first()
+    if confirmacion is None:
+        raise ConflictError(
+            code="DISPATCH_NOT_CONFIRMED",
+            message="El pedido no tiene confirmación independiente: no sale del almacén sin ella.")
+
+    # 3 · factura **emitida**, no generada. El ¶95 y el ¶97 son dos actos y el
+    # ¶103 exige el segundo.
+    factura = db.execute(
+        select(SalesInvoice).where(SalesInvoice.company_id == company_id,
+                                   SalesInvoice.order_id == str(order.id),
+                                   SalesInvoice.status != "CANCELLED")
+    ).scalars().first()
+    if factura is None or factura.status != "EMITTED":
+        raise ConflictError(
+            code="DISPATCH_NOT_INVOICED",
+            message="El pedido no tiene factura emitida: la mercancía sale con su factura.")
+    if order.status != "INVOICED":
+        raise ConflictError(code="DISPATCH_ORDER_NOT_INVOICED",
+                            message="El pedido no está facturado.")
+
+    # 4 · el mecanismo de entrega y su destino (¶105). No se exige transportista:
+    # el proceso admite «transportista, cliente o responsable del traslado».
+    if not (shipment.destination or "").strip() or not (shipment.transport or "").strip():
+        raise KontrolError(
+            code="DISPATCH_TRANSPORT_REQUIRED",
+            message="Indique el destino y a quién se entrega la mercancía.", status_code=422)
+
+    # 5 · los requisitos regulatorios que apliquen, uno por uno. Sin API oficial
+    # la validación es contra lo registrado: se registra, se valida, se adjunta y
+    # se bloquea; **no se emite ni se verifica en línea** (Spec 044, v1).
+    evaluacion = regulatory_service.evaluate_shipment(
+        db, company_id=company_id, shipment_id=str(shipment.id), actor=actor)
+    shipment.regulatory_status = evaluacion["status"]
+    if evaluacion["status"] == "BLOCKED":
+        db.flush()
+        raise ConflictError(
+            code="DISPATCH_REGULATORY_BLOCKED",
+            message=f"Faltan requisitos regulatorios en {evaluacion['blocked']} línea(s).",
+            details={"evaluated": evaluacion["evaluated"], "blocked": evaluacion["blocked"]})
+
+    ahora = datetime.now(UTC)
+    shipment.invoice_id = str(factura.id)
     shipment.validation_status = "APPROVED"
     shipment.status = "READY"
-    shipment.updated_at = datetime.now(UTC)
+    shipment.validated_at = ahora
+    shipment.validated_by = actor
+    shipment.updated_at = ahora
     db.flush()
+    _audit(db, action="SHIPMENT_VALIDATED", entity_type="Shipment", entity_id=str(shipment.id),
+           company_id=company_id, actor=actor,
+           after={"invoice_id": str(factura.id), "confirmation_id": str(confirmacion.id),
+                  "regulatory_status": evaluacion["status"]})
     return shipment
 
 
@@ -2216,29 +2385,119 @@ def confirm_shipment(db: Session, *, shipment: Shipment, actor: str | None = Non
 
     Registra las salidas y libera las reservas cumplidas de la orden.
     """
+    if shipment.dispatched_at is not None:
+        return shipment
     if shipment.status != "READY" or shipment.validation_status != "APPROVED":
         raise ConflictError(code="SHIPMENT_NOT_VALIDATED", message="El despacho requiere validación documental.")
-    order = _require_order(db, shipment.company_id, shipment.order_id)
+    company_id = str(shipment.company_id)
+    order = _lock_order(db, company_id, str(shipment.order_id))
     lines = db.execute(select(ShipmentLine).where(ShipmentLine.shipment_id == shipment.id)).scalars().all()
+    if not lines:
+        raise ConflictError(code="SHIPMENT_EMPTY", message="El despacho no tiene líneas.")
+    plan = db.execute(
+        select(PickList).where(PickList.company_id == company_id,
+                               PickList.order_id == str(order.id),
+                               PickList.status == "CLOSED")
+        .order_by(PickList.consolidated_at.desc())).scalars().first()
+    if plan is None or plan.consolidation_location_id is None:
+        raise ConflictError(code="DISPATCH_WITHOUT_PREPARATION",
+                            message="El pedido no tiene una preparación consolidada de la que salir.")
     for line in lines:
-        inv_service.record_movement(
-            db, company_id=shipment.company_id, warehouse_id=shipment.origin_warehouse_id,
-            product_id=line.product_id,
-            movement_type_id=str(inv_service._get_movement_type_by_code(db, shipment.company_id, "SALIDA_DESPACHO").id),
-            quantity=-line.quantity, document_ref=f"SHIPMENT:{shipment.id}", actor=actor,
-        )
+        # En cantidad **base**: despachar dos cajas de doce saca veinticuatro
+        # unidades, no dos. Y desde `PREPARADO` en el Área de Confirmación, que
+        # es donde la Spec 032 dejó la mercancía: descontar de `DISPONIBLE`
+        # tocaría una fila que ya no tiene esas unidades.
+        salida = _dec(line.base_quantity if line.base_quantity is not None else line.quantity)
+        inv_service.reclassify(
+            db, company_id=company_id, warehouse_id=str(shipment.origin_warehouse_id),
+            product_id=str(line.product_id), source_state="PREPARADO", target_state="DESPACHADO",
+            quantity=salida, location_id=str(plan.consolidation_location_id),
+            lot_id=line.lot_id, serial_id=line.serial_id,
+            document_ref=f"SHIPMENT:{shipment.id}", actor=actor)
     # La salida física **consume** la reserva (R-D0-03-7): `FULFILLED`, no
     # `RELEASED`. Lo que salió no vuelve al disponible.
     for reservation in inv_service.order_reservations(db, company_id=shipment.company_id, order_id=str(order.id)):
         inv_service.fulfill_reservation(db, reservation=reservation, actor=actor)
+    ahora = datetime.now(UTC)
     shipment.status = "SHIPPED"
-    shipment.updated_at = datetime.now(UTC)
+    shipment.dispatched_at = ahora
+    shipment.dispatched_by = actor
+    shipment.updated_at = ahora
+    _assert_transition(order.status, "SHIPPED", ORDER_TRANSITIONS, "el pedido")
     order.status = "SHIPPED"
-    order.updated_at = datetime.now(UTC)
+    order.updated_at = ahora
     db.flush()
     _audit(db, action="SHIPMENT_CONFIRMED", entity_type="Shipment", entity_id=str(shipment.id),
            company_id=shipment.company_id, actor=actor, after={"order_id": str(order.id)})
     return shipment
+
+
+def shipment_dict(db: Session, shipment: Shipment) -> dict:
+    """El despacho entero, incluida la razón por la que puede o no salir."""
+    lineas = db.execute(
+        select(ShipmentLine).where(ShipmentLine.shipment_id == str(shipment.id))
+        .order_by(ShipmentLine.id)).scalars().all()
+    return {
+        "id": str(shipment.id), "code": shipment.code, "order_id": str(shipment.order_id),
+        "origin_warehouse_id": str(shipment.origin_warehouse_id),
+        "status": shipment.status, "validation_status": shipment.validation_status,
+        "regulatory_status": shipment.regulatory_status,
+        "invoice_id": str(shipment.invoice_id) if shipment.invoice_id else None,
+        "destination": shipment.destination, "transport": shipment.transport,
+        "vehicle_id": str(shipment.vehicle_id) if shipment.vehicle_id else None,
+        "driver_id": str(shipment.driver_id) if shipment.driver_id else None,
+        "validated_at": shipment.validated_at.isoformat() if shipment.validated_at else None,
+        "validated_by": shipment.validated_by,
+        "dispatched_at": shipment.dispatched_at.isoformat() if shipment.dispatched_at else None,
+        "dispatched_by": shipment.dispatched_by,
+        "lines": [{"product_id": str(ln.product_id), "quantity": str(_dec(ln.quantity)),
+                   "base_quantity": (str(_dec(ln.base_quantity))
+                                     if ln.base_quantity is not None else None),
+                   "presentation_id": str(ln.presentation_id) if ln.presentation_id else None,
+                   "conversion_factor_snapshot": (str(_dec(ln.conversion_factor_snapshot))
+                                                  if ln.conversion_factor_snapshot else None),
+                   "lot_id": ln.lot_id, "serial_id": ln.serial_id} for ln in lineas],
+    }
+
+
+def dispatch_queue(db: Session, *, company_id: str) -> list[dict]:
+    """Los pedidos facturados que esperan salida.
+
+    El orden es por `invoiced_at` y es **presentacional**: a diferencia de la
+    cola de picking, aquí no se reparte nada escaso —la mercancía de cada pedido
+    ya está consolidada y apartada—, así que este orden no decide quién cobra
+    primero ni necesita una decisión material que lo respalde.
+    """
+    company_id = _company(company_id, obj="cola de despacho")
+    pedidos = db.execute(
+        select(SalesOrder).where(SalesOrder.company_id == company_id,
+                                 SalesOrder.status == "INVOICED")
+        .order_by(SalesOrder.invoiced_at, SalesOrder.id)).scalars().all()
+    salida = []
+    for pedido in pedidos:
+        factura = db.execute(
+            select(SalesInvoice).where(SalesInvoice.company_id == company_id,
+                                       SalesInvoice.order_id == str(pedido.id),
+                                       SalesInvoice.status != "CANCELLED")).scalars().first()
+        despacho = _live_shipment(db, company_id, str(pedido.id))
+        salida.append({
+            "order_id": str(pedido.id), "code": pedido.code, "status": pedido.status,
+            "invoice_id": str(factura.id) if factura else None,
+            "invoice_number": factura.invoice_number if factura else None,
+            "invoice_status": factura.status if factura else None,
+            "shipment_id": str(despacho.id) if despacho else None,
+            "shipment_code": despacho.code if despacho else None,
+            "shipment_status": despacho.status if despacho else None,
+        })
+    return salida
+
+
+def order_dispatch_dict(db: Session, *, company_id: str, order_id: str) -> dict:
+    company_id = _company(company_id, obj="despacho")
+    order = _require_order(db, company_id, order_id)
+    despacho = _live_shipment(db, company_id, str(order.id))
+    return {"order_id": str(order.id), "order_status": order.status,
+            "shipment": shipment_dict(db, despacho) if despacho else None}
 
 
 # --------------------------------------------------------------------------- #
