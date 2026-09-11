@@ -1340,6 +1340,96 @@ def transition_withholding(withholding_id: str, body: TransitionBody, db: Sessio
     return {"id": w.id, "status": w.status}
 
 
+# --------------------------------------------------------------------------- #
+# Spec 037 · cuentas por cobrar: saldo, aplicaciones y reversos
+#
+# «Saldo = documentos + débitos − cobros − retenciones − créditos»
+# (arquitectura funcional §9). El saldo lo calcula el backend con el motor
+# compartido de la Spec 028: la pantalla no hace aritmética monetaria.
+#
+# La empresa la manda el contexto y el cliente se comprueba en cada aplicación:
+# la misma empresa **no** basta, porque un crédito es de quien lo tiene.
+# --------------------------------------------------------------------------- #
+class CreditApplicationBody(BaseModel):
+    target_open_item_id: str
+    amount: Decimal = Field(gt=0)
+
+
+class ApplicationReversalBody(BaseModel):
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+@router.get("/cxc/clientes/{customer_id}/saldo")
+def customer_balance(customer_id: str, db: Session = Depends(get_db),
+                     user: User = Depends(require_permission("ventas", "view")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    """El saldo del cliente, con sus sumandos a la vista."""
+    return sales_service.customer_balance(db, company_id=ctx.company_id, customer_id=customer_id)
+
+
+@router.get("/cxc/clientes/{customer_id}/estado-de-cuenta")
+def customer_statement(customer_id: str, db: Session = Depends(get_db),
+                       user: User = Depends(require_permission("ventas", "view")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    """La cronología que explica el saldo. Cada línea es un hecho con documento."""
+    return sales_service.customer_statement(db, company_id=ctx.company_id, customer_id=customer_id)
+
+
+@router.get("/cxc/clientes/{customer_id}/creditos")
+def customer_credits(customer_id: str, db: Session = Depends(get_db),
+                     user: User = Depends(require_permission("ventas", "view")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    """Los créditos del cliente que todavía tienen importe sin aplicar."""
+    return {"items": sales_service.customer_credits(db, company_id=ctx.company_id,
+                                                    customer_id=customer_id)}
+
+
+@router.get("/cxc/documentos/{open_item_id}/aplicaciones")
+def open_item_applications(open_item_id: str, db: Session = Depends(get_db),
+                           user: User = Depends(require_permission("ventas", "view")),
+                           ctx: CompanyContext = Depends(get_company_context)):
+    """Lo que se ha aplicado a un documento, con sus reversos."""
+    return {"items": sales_service.open_item_applications(db, company_id=ctx.company_id,
+                                                          open_item_id=open_item_id)}
+
+
+@router.post("/cxc/creditos/{note_id}/aplicar", dependencies=[Depends(require_write_allowed)])
+def apply_customer_credit(note_id: str, body: CreditApplicationBody, db: Session = Depends(get_db),
+                          actor: User = Depends(require_permission("ventas", "apply")),
+                          ctx: CompanyContext = Depends(get_company_context)):
+    """Aplica el crédito de una nota a un documento **del mismo cliente**."""
+    note = _owned(db, SalesCreditNote, note_id, ctx.company_id,
+                  "CREDIT_NOTE_NOT_FOUND", "Nota de crédito no encontrada")
+    target = sales_service.apply_credit_note(db, note=note,
+                                             target_open_item_id=body.target_open_item_id,
+                                             amount=body.amount, actor=str(actor.id))
+    db.commit()
+    db.refresh(target)
+    db.refresh(note)
+    return {"target_open_item_id": str(target.id),
+            "target_outstanding": str(ap_service.open_item_balance(target)),
+            "target_status": target.status,
+            "credit_remaining": str(sales_service._dec(note.amount) - sales_service._dec(note.applied)),
+            "currency": note.currency}
+
+
+@router.post("/cxc/aplicaciones/{application_id}/revertir",
+             dependencies=[Depends(require_write_allowed)])
+def reverse_application(application_id: str, body: ApplicationReversalBody,
+                        db: Session = Depends(get_db),
+                        actor: User = Depends(require_permission("ventas", "approve")),
+                        ctx: CompanyContext = Depends(get_company_context)):
+    """Revierte una aplicación **sin borrarla**: crea su evento inverso."""
+    inverso = sales_service.reverse_credit_application(
+        db, company_id=ctx.company_id, application_id=application_id,
+        reason=body.reason, actor=str(actor.id))
+    db.commit()
+    db.refresh(inverso)
+    return {"reversal_id": str(inverso.id), "original_id": application_id,
+            "amount": str(inverso.amount), "currency": inverso.currency,
+            "status": inverso.status}
+
+
 @router.get("/aging")
 def get_aging(party_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     return ap_service.aging(db, company_id=ctx.company_id, party_id=party_id, item_type="RECEIVABLE")

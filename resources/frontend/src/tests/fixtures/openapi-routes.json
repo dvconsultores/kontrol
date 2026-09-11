@@ -1509,6 +1509,30 @@
       "path": "/sales/customer-advances"
     },
     {
+      "method": "POST",
+      "path": "/sales/cxc/aplicaciones/{application_id}/revertir"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/cxc/clientes/{customer_id}/creditos"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/cxc/clientes/{customer_id}/estado-de-cuenta"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/cxc/clientes/{customer_id}/saldo"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/cxc/creditos/{note_id}/aplicar"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/cxc/documentos/{open_item_id}/aplicaciones"
+    },
+    {
       "method": "GET",
       "path": "/sales/debit-notes"
     },

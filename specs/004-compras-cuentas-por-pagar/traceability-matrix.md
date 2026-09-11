@@ -38,6 +38,7 @@ Formato: Requisito → Fuente → Tarea → Prueba. Cadena **Requisito → Spec 
 | FR-004-050/051/052 | T-004-006 | Test de diferencias |
 | FR-004-060/061 | T-004-007 | Test de nota/CxP |
 | FR-004-070/071/104 | T-004-008 | Test de saldo |
+| FR-004-070-D1 · el saldo es `Decimal` exacto (**delta 2026-09-11**) | T-028-M | `test_spec028_monetary_balance.py` · `test_spec028_architecture.py`; ver `spec028-monetary-balance-delta.md` |
 | FR-004-072/101 | T-004-009 | Test de pago/idempotencia |
 | FR-004-073 | T-004-010 | Test de aplicación/saldo |
 | FR-004-074/075 | T-004-011 | Test de aging/anticipo |

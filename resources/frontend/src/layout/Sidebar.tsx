@@ -123,6 +123,7 @@ const navSections = [
       { to: "/ventas/notas", label: "Notas", icon: StickyNote },
       { to: "/ventas/devoluciones", label: "Devoluciones", icon: Repeat },
       { to: "/ventas/cuentas-por-cobrar", label: "CxC", icon: Wallet },
+      { to: "/ventas/estado-de-cuenta", label: "Estado de cuenta", icon: Wallet },
     ],
   },
   {

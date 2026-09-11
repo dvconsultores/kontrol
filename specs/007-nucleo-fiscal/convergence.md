@@ -62,3 +62,74 @@ Registrar brechas y nuevas tareas tras la implementación. `/speckit.converge` s
 | Fase documental | ✔ |
 | Implementación | ✔ (sujeta a 001 certificada + 002/004/005/006 implementados + autorización expresa) |
 | Certificación (Docker/CI/legal, integración 008/009/010) | Pendiente — depende de 001 certificada y de Specs 008/009/010 |
+
+## Delta dirigido recibido — 2026-09-11 (desde el ciclo de la Spec 036)
+
+### El defecto
+
+`US-007-006` dice, desde la especificación: «Como contador, quiero **emitir notas
+de crédito/débito** con límites al saldo ajustable de la factura». Y
+`FiscalDocument.document_type` declaraba en su propio comentario los tres tipos:
+`INVOICE / CREDIT_NOTE / DEBIT_NOTE`.
+
+La implementación de `emit_document` cubría **uno**:
+
+```python
+if not business_document.startswith("INVOICE:"):
+    raise KontrolError(code="INVALID_BUSINESS_DOCUMENT", ...)
+...
+doc = FiscalDocument(..., document_type="INVOICE", ...)
+```
+
+El tipo estaba **escrito a mano** y el resto se rechazaba. No era una decisión:
+era un requisito implementado a medias, y no se notó porque hasta la Spec 036
+nadie había emitido una nota.
+
+### Por qué es de esta Spec y no de la 036
+
+Porque la numeración es suya. La norma exige a la nota de crédito «**consecutivo
+propio**» y «**número de control**», que es exactamente lo que este núcleo
+existe para asignar de forma atómica (`FR-007-020`). Si la 036 lo hubiera
+resuelto por su cuenta habría creado un segundo numerador, que es lo que
+`FR-007-021` prohíbe: «la numeración y el control no se editan desde pantallas
+ordinarias».
+
+### El arreglo
+
+`EMITTABLE_DOCUMENT_TYPES = {INVOICE, CREDIT_NOTE, DEBIT_NOTE}` —los mismos tres
+que el modelo declaraba—, el tipo se deriva del documento de negocio y **la serie
+se comprueba contra él**: emitir una nota con la serie de facturas gastaría el
+correlativo equivocado y rompería los dos libros. `SERIES_DOCUMENT_TYPE_MISMATCH`.
+
+Nada más cambia: la reserva del correlativo, la asignación del número de control,
+la atomicidad, el `hash` y la idempotencia por documento de negocio son los
+mismos.
+
+### Evidencia
+
+| | |
+|---|---|
+| Prueba estructural | `test_spec036_architecture.py::test_el_motor_fiscal_sabe_de_los_tres_documentos` |
+| Prueba funcional | `test_spec036_returns.py::test_la_nota_lleva_consecutivo_y_control_propios` |
+| Serie equivocada | `test_spec036_returns.py::test_la_nota_no_se_emite_con_la_serie_de_las_facturas` |
+| Idempotencia | `test_spec036_returns.py::test_emitir_dos_veces_no_gasta_dos_numeros` |
+| E2E | `returns.spec.ts`, tres navegadores |
+| Regresión | 1279 · 1271 pasan · 8 saltos · 0 fallos |
+
+Una prueba del repositorio creaba la serie como `"FACTURA"` y emitía un
+`INVOICE:`; la comprobación nueva la destapó. `"FACTURA"` aparecía en **un solo
+sitio** y todo lo demás usa `"INVOICE"`: era una prueba desalineada, no un
+vocabulario en pugna.
+
+### Deuda que este delta deja anotada
+
+`FiscalNumberSeries.document_type` es `String(32)` **sin restricción ni catálogo
+canónico**. La comprobación nueva compara dos cadenas libres. Declarar el
+vocabulario es de esta Spec y **no se hace aquí**: sería una decisión de modelo
+fiscal que merece su propio ciclo.
+
+### Alcance
+
+Delta dirigido. La Spec 007/042 **no se reabre**: sigue
+`BLOCKED_BY_LEGAL_VALIDATION` por `D0-07`, y este delta **no** cambia eso. Lo que
+cierra es la parte de `US-007-006` que estaba implementada a medias.

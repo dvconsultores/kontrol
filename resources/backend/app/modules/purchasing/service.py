@@ -74,6 +74,30 @@ def _dec(value: Any, places: int = 6) -> Decimal:
     return Decimal(str(value)).quantize(Decimal(1).scaleb(-places))
 
 
+#: La escala de las columnas monetarias del módulo, que es `NUMERIC(18, 2)`.
+#: Su autoridad es el maestro de monedas —`Currency.decimal_places`, por defecto
+#: 2—: si alguna vez hiciera falta otra escala, lo que cambiaría es la columna.
+_MONEY_PLACES = 2
+
+
+def _money(value: Any) -> Decimal:
+    """Dinero como `Decimal` exacto, **sin pasar por `float`**.
+
+    `ADR-D0-001` registra `KQA-100` como defecto CRÍTICO: «`Decimal + float`…
+    que SQLite no reveló y que rompió factura, pago, cobro». La Spec 011 lo
+    corrigió en las cantidades y dejó el patrón con nombre; el motor de saldos
+    nunca lo recibió y seguía calculando el dinero en coma flotante.
+
+    No se decide aquí ninguna política de redondeo, y no hace falta: los dos
+    operandos vienen de columnas de escala 2, su resta es exacta y la
+    cuantización solo existe para que Python y PostgreSQL digan el mismo número.
+    """
+    if value is None:
+        return Decimal(0)
+    entrada = value if isinstance(value, Decimal) else Decimal(str(value))
+    return entrada.quantize(Decimal(1).scaleb(-_MONEY_PLACES))
+
+
 def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
            company_id: str, actor: str | None = None, **kw: Any) -> None:
     """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
@@ -1295,8 +1319,14 @@ def match_invoice(db: Session, *, invoice: SupplierInvoice, actor: str | None = 
         order_line = db.get(PurchaseOrderLine, line.order_line_id) if line.order_line_id else None
         variance_qty = _dec(line.quantity) - _dec(
             order_line.quantity_received if order_line else line.quantity)
-        variance_price = round((float(line.unit_price) - float(order_line.unit_price)) * float(line.quantity), 6) if order_line else 0.0
-        variance_tax = round(float(line.tax_amount) - ((float(order_line.unit_price) * float(line.quantity) * 0.0) if order_line else 0.0), 6)
+        variance_price = ((_money(line.unit_price) - _money(order_line.unit_price))
+                          * _dec(line.quantity)) if order_line else Decimal(0)
+        # El impuesto esperado de la orden es **cero** en este motor: la orden de
+        # compra no lo lleva. El código anterior lo escribía como
+        # `precio * cantidad * 0.0`, que es la misma cifra con más pasos. Se
+        # conserva la semántica —no es de este delta decidir qué impuesto espera
+        # la conciliación triple, que es de su dueña— y se deja anotado.
+        variance_tax = _money(line.tax_amount)
         match = TripleMatch(company_id=invoice.company_id, invoice_id=str(invoice.id),
                             order_line_id=line.order_line_id, receipt_line_id=line.receipt_line_id,
                             invoice_line_id=str(line.id), variance_qty=variance_qty,
@@ -1304,7 +1334,7 @@ def match_invoice(db: Session, *, invoice: SupplierInvoice, actor: str | None = 
                             resolution="PENDING", approved_by=actor)
         db.add(match)
         matches.append(match)
-        if abs(variance_qty) > 1e-6 or abs(variance_price) > 1e-6 or abs(variance_tax) > 1e-6:
+        if variance_qty != 0 or variance_price != 0 or variance_tax != 0:
             has_variance = True
     invoice.status = "EXCEPTION" if has_variance else "MATCHED"
     invoice.updated_at = datetime.now(UTC)
@@ -1393,15 +1423,26 @@ def post_credit_note(db: Session, *, note: SupplierCreditNote) -> SupplierCredit
     note.updated_at = datetime.now(UTC)
     db.flush()
     _audit(db, action="SUPPLIER_CREDIT_NOTE_POSTED", entity_type="SupplierCreditNote", entity_id=str(note.id),
-           company_id=note.company_id, actor=None, after={"amount": float(note.amount)})
+           company_id=note.company_id, actor=None, after={"amount": str(_money(note.amount))})
     return note
 
 
 # --------------------------------------------------------------------------- #
 # CxP — open items, pagos, aplicaciones, anticipos, retenciones, aging
 # --------------------------------------------------------------------------- #
-def open_item_balance(item: OpenItem) -> float:
-    return round(float(item.original) - float(item.applied), 6)
+def open_item_balance(item: OpenItem) -> Decimal:
+    """El saldo pendiente de un documento. **Autoridad única del saldo.**
+
+    «Saldo = documentos + débitos − cobros − retenciones − créditos»
+    (arquitectura funcional §9), y «los saldos **no se editan**; se calculan
+    desde movimientos y aplicaciones» (documento maestro). Aquí se calcula el
+    de un documento: lo que vale menos lo que se le ha aplicado.
+
+    Devolvía `round(float(a) - float(b), 6)`. Ese `6` no era una política: era
+    el margen que hacía falta para que el error binario no se viera. Con
+    `Decimal` la resta es exacta y no hace falta margen ninguno.
+    """
+    return _money(item.original) - _money(item.applied)
 
 
 def register_payment(db: Session, *, company_id: str, party_id: str, amount: float, currency: str = "VED",
@@ -1440,7 +1481,7 @@ def transition_payment(db: Session, *, payment: Payment, target: str, actor: str
         payment.approver_id = actor
     db.flush()
     _audit(db, action="PAYMENT_TRANSITIONED", entity_type="Payment", entity_id=str(payment.id),
-           company_id=payment.company_id, actor=actor, after={"target": payment.status, "amount": float(payment.amount)})
+           company_id=payment.company_id, actor=actor, after={"target": payment.status, "amount": str(_money(payment.amount))})
     return payment
 
 
@@ -1468,35 +1509,38 @@ def _require_source(db: Session, company_id: str, source_type: str, source_id: s
     return fuente
 
 
-def _source_available(db: Session, *, source_type: str, source_id: str) -> float:
+def _source_available(db: Session, *, source_type: str, source_id: str) -> Decimal:
+    """Lo que queda por aplicar de una fuente, en `Decimal` exacto."""
     if source_type == "PAYMENT":
         p = db.get(Payment, source_id)
-        return round(float(p.amount) - float(p.applied), 6) if p else 0.0
+        return _money(p.amount) - _money(p.applied) if p else Decimal(0)
     if source_type == "ADVANCE":
         a = db.get(Advance, source_id)
-        return round(float(a.available), 6) if a else 0.0
+        return _money(a.available) if a else Decimal(0)
     if source_type == "CREDIT":
         c = db.get(SupplierCreditNote, source_id)
-        return round(float(c.amount) - float(c.applied), 6) if c else 0.0
+        return _money(c.amount) - _money(c.applied) if c else Decimal(0)
     if source_type == "WITHHOLDING":
         w = db.get(Withholding, source_id)
-        return w.amount if w and w.status not in ("REVERSADA",) else 0.0
+        return _money(w.amount) if w and w.status not in ("REVERSADA",) else Decimal(0)
     raise KontrolError(code="INVALID_SOURCE_TYPE", message="Tipo de fuente de aplicación no válido", status_code=422)
 
 
-def _reduce_source(db: Session, *, source_type: str, source_id: str, amount: float) -> None:
+def _reduce_source(db: Session, *, source_type: str, source_id: str,
+                   amount: Decimal | float) -> None:
+    aplicado = _money(amount)
     if source_type == "PAYMENT":
         p = db.get(Payment, source_id)
         if p:
-            p.applied = round(float(p.applied) + amount, 6)
+            p.applied = _money(p.applied) + aplicado
     elif source_type == "ADVANCE":
         a = db.get(Advance, source_id)
         if a:
-            a.available = round(max(float(a.available) - amount, 0.0), 6)
+            a.available = max(_money(a.available) - aplicado, Decimal(0))
     elif source_type == "CREDIT":
         c = db.get(SupplierCreditNote, source_id)
         if c:
-            c.applied = round(float(c.applied) + amount, 6)
+            c.applied = _money(c.applied) + aplicado
     elif source_type == "WITHHOLDING":
         w = db.get(Withholding, source_id)
         if w and w.status == "PRACTICADA":
@@ -1525,8 +1569,10 @@ def apply_source(db: Session, *, company_id: str, source_type: str, source_id: s
     if amount > available:
         raise ConflictError(code="APPLICATION_EXCEEDS_SOURCE", message=f"La fuente no tiene saldo disponible ({available}).")
 
-    target.applied = round(float(target.applied) + amount, 6)
-    if open_item_balance(target) <= 1e-6:
+    target.applied = _money(target.applied) + _money(amount)
+    # Con `Decimal` el cero es cero. El `1e-6` era el margen que necesitaba la
+    # coma flotante para no dejar documentos abiertos por un residuo binario.
+    if open_item_balance(target) <= 0:
         target.status = "CLOSED"
     _reduce_source(db, source_type=source_type, source_id=source_id, amount=amount)
     app = Application(company_id=company_id, source_type=source_type, source_id=source_id,
@@ -1536,7 +1582,7 @@ def apply_source(db: Session, *, company_id: str, source_type: str, source_id: s
     db.flush()
     _sync_invoice_paid(db, target_open_item_id=str(target.id))
     _audit(db, action="CXP_APPLICATION", entity_type="OpenItem", entity_id=str(target_open_item_id),
-           company_id=company_id, actor=actor, after={"source_type": source_type, "amount": float(amount)})
+           company_id=company_id, actor=actor, after={"source_type": source_type, "amount": str(_money(amount))})
     return app
 
 
@@ -1548,7 +1594,7 @@ def _sync_invoice_paid(db: Session, *, target_open_item_id: str) -> None:
         invoice_id = item.source_document.split(":", 1)[1]
         invoice = db.get(SupplierInvoice, invoice_id)
         if invoice and invoice.status in ("POSTED", "PARTIALLY_PAID"):
-            invoice.status = "PAID" if open_item_balance(item) <= 1e-6 else "PARTIALLY_PAID"
+            invoice.status = "PAID" if open_item_balance(item) <= 0 else "PARTIALLY_PAID"
             invoice.updated_at = datetime.now(UTC)
 
 
@@ -1595,8 +1641,8 @@ def aging(db: Session, *, company_id: str, party_id: str | None = None, item_typ
         query = query.where(OpenItem.party_id == party_id)
     items = db.execute(query).scalars().all()
     today = date.today()
-    buckets = {"0-30": 0.0, "31-60": 0.0, "61-90": 0.0, "90+": 0.0}
-    total = 0.0
+    buckets = {"0-30": Decimal(0), "31-60": Decimal(0), "61-90": Decimal(0), "90+": Decimal(0)}
+    total = Decimal(0)
     for item in items:
         balance = open_item_balance(item)
         total += balance

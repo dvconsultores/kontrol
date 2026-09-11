@@ -42,12 +42,13 @@
 | IMP-034-038 · la solicitud la firma quien verifica | ¶83 | `ventas:quality` | `test_la_solicitud_la_firma_quien_verifica` | ✔ |
 | IMP-034-039 · la migración es aditiva y no inventa historia | `B-007` | FK anulable, sin backfill | `test_la_migracion_es_aditiva_y_no_inventa_historia` | ✔ |
 | IMP-034-040 · el veredicto no lo envía el cliente | §74 del ciclo | totales calculados en backend | `test_el_veredicto_lo_calcula_el_backend` (033) · API sin campos de total | ✔ |
+| IMP-034-041 · emitir la factura abre su cuenta por cobrar | proceso de ventas «9. Emitir factura → **10. Crear CxC**» | `_abrir_cuenta_por_cobrar`, idempotente, en los dos caminos | `test_la_nota_reduce_la_cuenta_por_cobrar` (036) · `test_la_nota_de_debito_aumenta_la_cuenta_por_cobrar` (036) | ✔ **delta 2026-09-11** |
 
 ## Cobertura
 
 | | |
 |---|---:|
-| Requisitos | 40 |
-| Con implementación y prueba | **40** |
+| Requisitos | 41 |
+| Con implementación y prueba | **41** |
 | Huérfanos | **0** |
 | Cobertura | **100 %** |

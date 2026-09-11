@@ -86,6 +86,7 @@ export const router = createBrowserRouter([
           { path: "ventas/confirmacion-pedido", lazy: () => import("@/modules/ventas/confirmacion/ConfirmacionPedidoPage").then((m) => ({ Component: m.ConfirmacionPedidoPage })) },
           { path: "ventas/facturacion", lazy: () => import("@/modules/ventas/facturacion/FacturacionPage").then((m) => ({ Component: m.FacturacionPage })) },
           { path: "ventas/despacho", lazy: () => import("@/modules/ventas/despacho/DespachoPage").then((m) => ({ Component: m.DespachoPage })) },
+          { path: "ventas/estado-de-cuenta", lazy: () => import("@/modules/ventas/estado-de-cuenta/EstadoDeCuentaPage").then((m) => ({ Component: m.EstadoDeCuentaPage })) },
           { path: "ventas/cuentas-por-cobrar", lazy: () => import("@/modules/ventas/cuentas-por-cobrar/CuentasPorCobrarPage").then((m) => ({ Component: m.CuentasPorCobrarPage })) },
           { path: "tesoreria/cajas", lazy: () => import("@/modules/tesoreria/cajas/CajasPage").then((m) => ({ Component: m.CajasPage })) },
           { path: "tesoreria/ingresos-egresos", lazy: () => import("@/modules/tesoreria/ingresos-egresos/IngresosEgresosPage").then((m) => ({ Component: m.IngresosEgresosPage })) },

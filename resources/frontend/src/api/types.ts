@@ -1057,6 +1057,75 @@ export interface SalesNoteLine {
   total: string;
 }
 
+/**
+ * Spec 037 · el saldo del cliente, con sus sumandos a la vista.
+ *
+ * «Saldo = documentos + débitos − cobros − retenciones − créditos». Lo calcula
+ * el backend con el motor compartido: la pantalla no hace aritmética monetaria.
+ */
+export interface CustomerBalance {
+  customer_id: string;
+  documents: string;
+  applied: string;
+  outstanding: string;
+  credits: string;
+  credit_applied: string;
+  credit_available: string;
+  balance: string;
+}
+
+export interface StatementEntry {
+  type: string;
+  id: string;
+  reference: string | null;
+  date: string | null;
+  currency: string;
+  debit: string;
+  credit: string;
+  outstanding?: string;
+  available?: string;
+  status: string;
+}
+
+export interface CustomerStatement extends CustomerBalance {
+  entries: StatementEntry[];
+}
+
+/** Un crédito del cliente con importe todavía sin aplicar. */
+export interface CustomerCredit {
+  id: string;
+  number: string;
+  control_number: string | null;
+  cause: string | null;
+  invoice_id: string | null;
+  currency: string;
+  amount: string;
+  applied: string;
+  available: string;
+  issued_at: string | null;
+}
+
+export interface CreditApplicationRow {
+  id: string;
+  source_type: string;
+  source_id: string;
+  target_open_item_id: string;
+  amount: string;
+  currency: string;
+  rate: string | null;
+  date: string | null;
+  status: string;
+  created_at: string | null;
+}
+
+export interface CreditApplicationResult {
+  target_open_item_id: string;
+  target_outstanding: string;
+  target_status: string;
+  credit_remaining: string;
+  currency: string;
+}
+
 export interface SalesNote {
   id: string;
   status: string;

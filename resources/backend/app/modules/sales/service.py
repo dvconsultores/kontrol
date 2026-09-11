@@ -30,7 +30,7 @@ from app.modules.organization.models import Company, Warehouse
 from app.modules.organization.service import warehouse_belongs_to
 from app.modules.organization.structure import physical_order_query
 from app.modules.purchasing import service as ap_service
-from app.modules.purchasing.models import OpenItem
+from app.modules.purchasing.models import Application, OpenItem
 from app.modules.regulatory import service as regulatory_service
 from app.modules.regulatory.models import TransportDriver, TransportVehicle
 from app.modules.sales.models import (
@@ -2547,7 +2547,7 @@ def recompute_invoice_total(db: Session, *, invoice: SalesInvoice) -> SalesInvoi
     lines = db.execute(select(SalesInvoiceLine).where(SalesInvoiceLine.invoice_id == invoice.id)).scalars().all()
     invoice.base_fiscal = round(sum(float(line.base_fiscal) for line in lines), 6)
     invoice.tax_total = round(sum(float(line.tax_amount) for line in lines), 6)
-    invoice.total = round(float(invoice.base_fiscal) + float(invoice.tax_total), 6)
+    invoice.total = _dec(invoice.base_fiscal) + _dec(invoice.tax_total)
     db.flush()
     return invoice
 
@@ -2634,38 +2634,279 @@ def post_credit_note(db: Session, *, note: SalesCreditNote) -> SalesCreditNote:
     note.updated_at = datetime.now(UTC)
     db.flush()
     _audit(db, action="SALES_CREDIT_NOTE_POSTED", entity_type="SalesCreditNote", entity_id=str(note.id),
-           company_id=note.company_id, actor=None, after={"amount": float(note.amount)})
+           company_id=note.company_id, actor=None, after={"amount": str(_dec(note.amount))})
     return note
 
 
-def apply_credit_note(db: Session, *, note: SalesCreditNote, target_open_item_id: str, amount: float,
-                      actor: str | None = None):
-    """Aplica una nota de crédito de venta a un open item RECEIVABLE (FR-005-042).
+def apply_credit_note(db: Session, *, note: SalesCreditNote, target_open_item_id: str,
+                      amount: Decimal | float, actor: str | None = None):
+    """Aplica el crédito de una nota a un documento por cobrar (Spec 037).
 
-    Atómica: no excede el saldo del documento ni el remanente de la nota.
+    Tres cosas que antes no hacía y que no son opcionales:
+
+    **Comprueba el cliente.** Comprobaba la empresa y nada más, así que el
+    crédito de un cliente podía aplicarse al documento de otro dentro de la
+    misma empresa. Un crédito es de quien lo tiene.
+
+    **Deja rastro.** Mutaba los dos saldos y no escribía nada. La arquitectura
+    funcional §9 dice que «cada aplicación relaciona origen, destino, moneda,
+    tasa, monto nominal, monto fiscal y fecha»: una aplicación sin fila no se
+    puede reconstruir, ni auditar, ni revertir.
+
+    **Exige la misma moneda.** Las diferencias cambiarias «se calculan al
+    aplicar o valorar **según política**», y esa política no existe todavía.
+    Aplicar entre monedas sin ella sería inventar un tipo de cambio.
     """
-    if amount <= 0:
+    aplicar = _dec(amount)
+    if aplicar <= 0:
         raise KontrolError(code="INVALID_AMOUNT", message="El monto a aplicar debe ser positivo", status_code=422)
-    target = db.get(OpenItem, target_open_item_id)
-    if not target or target.company_id != note.company_id:
+    target = db.execute(
+        select(OpenItem).where(OpenItem.id == target_open_item_id).with_for_update()
+    ).scalars().first()
+    if not target or str(target.company_id) != str(note.company_id):
         raise NotFoundError(code="OPEN_ITEM_NOT_FOUND", message="Documento de CxC no encontrado")
+    # La empresa no basta: el crédito es del cliente que lo tiene.
+    if str(target.party_id) != str(note.customer_id):
+        raise ConflictError(
+            code="CREDIT_CUSTOMER_MISMATCH",
+            message="El crédito de un cliente no se aplica al documento de otro.",
+            details={"credit_customer_id": str(note.customer_id),
+                     "document_customer_id": str(target.party_id)})
+    if (target.currency or "") != (note.currency or ""):
+        raise ConflictError(
+            code="CREDIT_CURRENCY_MISMATCH",
+            message="No se aplica un crédito en otra moneda: falta la política de diferencia cambiaria.",
+            details={"credit_currency": note.currency, "document_currency": target.currency})
     if target.status != "OPEN":
         raise ConflictError(code="OPEN_ITEM_CLOSED", message="El documento de CxC está cerrado.")
     balance = ap_service.open_item_balance(target)
-    remaining = round(float(note.amount) - float(note.applied), 6)
-    if amount > balance:
+    remaining = _dec(note.amount) - _dec(note.applied)
+    if aplicar > balance:
         raise ConflictError(code="APPLICATION_EXCEEDS_BALANCE", message=f"La aplicación excede el saldo ({balance}).")
-    if amount > remaining:
+    if aplicar > remaining:
         raise ConflictError(code="APPLICATION_EXCEEDS_SOURCE", message=f"La nota no tiene saldo disponible ({remaining}).")
-    target.applied = round(float(target.applied) + amount, 6)
-    if ap_service.open_item_balance(target) <= 1e-6:
+    target.applied = _dec(target.applied) + aplicar
+    if ap_service.open_item_balance(target) <= 0:
         target.status = "CLOSED"
-    note.applied = round(float(note.applied) + amount, 6)
+    note.applied = _dec(note.applied) + aplicar
+    # El hecho económico, con su fila. `rate` es 1 porque origen y destino están
+    # en la misma moneda: no hay conversión que registrar.
+    db.add(Application(company_id=str(note.company_id), source_type="CREDIT",
+                       source_id=str(note.id), target_open_item_id=str(target.id),
+                       amount=aplicar, currency=note.currency or "VED",
+                       rate=Decimal(1), date=date.today(), status="APPLIED"))
     db.flush()
     _sync_invoice_status(db, target_open_item_id=str(target.id))
     _audit(db, action="CREDIT_NOTE_APPLIED", entity_type="SalesCreditNote", entity_id=str(note.id),
-           company_id=note.company_id, actor=actor, after={"open_item_id": str(target.id), "amount": float(amount)})
+           company_id=note.company_id, actor=actor,
+           after={"open_item_id": str(target.id), "customer_id": str(note.customer_id),
+                  "amount": str(aplicar), "currency": note.currency})
     return target
+
+
+def customer_balance(db: Session, *, company_id: str, customer_id: str) -> dict:
+    """El saldo del cliente, tal como lo escribe la arquitectura funcional §9.
+
+    > CxC — Saldo = documentos + débitos − cobros − retenciones − créditos.
+
+    Cada sumando es una consulta, no un campo guardado: «los saldos **no se
+    editan**; se calculan desde movimientos y aplicaciones».
+
+    Los débitos no se suman aparte porque la nota de débito **crea su propio
+    documento por cobrar** (Spec 036): ya está dentro de «documentos». Y los
+    cobros y las retenciones entran como lo aplicado a esos documentos, que es
+    donde el motor de la 028 los registra.
+
+    El crédito se resta **una sola vez**. Un crédito sin imputar ya baja el
+    saldo del cliente —eso es tener saldo a favor—; al imputarlo, baja el
+    documento y baja el crédito disponible en la misma cantidad, y el neto no se
+    mueve. Imputar no crea ni destruye dinero.
+    """
+    company_id = _company(company_id, obj="saldo del cliente")
+    documentos = db.execute(
+        select(OpenItem).where(OpenItem.company_id == company_id,
+                               OpenItem.party_id == str(customer_id),
+                               OpenItem.item_type == "RECEIVABLE")).scalars().all()
+    original = sum((_dec(x.original) for x in documentos), Decimal(0))
+    aplicado = sum((_dec(x.applied) for x in documentos), Decimal(0))
+
+    notas = db.execute(
+        select(SalesCreditNote).where(SalesCreditNote.company_id == company_id,
+                                      SalesCreditNote.customer_id == str(customer_id),
+                                      SalesCreditNote.status != "CANCELLED")).scalars().all()
+    creditos = sum((_dec(n.amount) for n in notas), Decimal(0))
+    credito_aplicado = sum((_dec(n.applied) for n in notas), Decimal(0))
+
+    # `documentos − aplicado` es lo que queda por cobrar de los documentos. Lo
+    # aplicado incluye los cobros, las retenciones y los créditos ya imputados,
+    # así que al restar los créditos hay que restar **solo los no imputados**:
+    # los imputados ya están dentro de `aplicado`.
+    pendiente_documentos = original - aplicado
+    credito_disponible = creditos - credito_aplicado
+    return {
+        "customer_id": str(customer_id),
+        "documents": str(original),
+        "applied": str(aplicado),
+        "outstanding": str(pendiente_documentos),
+        "credits": str(creditos),
+        "credit_applied": str(credito_aplicado),
+        "credit_available": str(credito_disponible),
+        "balance": str(pendiente_documentos - credito_disponible),
+    }
+
+
+def customer_credits(db: Session, *, company_id: str, customer_id: str) -> list[dict]:
+    """Los créditos del cliente con importe todavía sin aplicar.
+
+    Es lo que la pantalla necesita para ofrecer un origen, y lo calcula el
+    backend: el remanente no se acepta del navegador.
+    """
+    company_id = _company(company_id, obj="créditos del cliente")
+    notas = db.execute(
+        select(SalesCreditNote).where(SalesCreditNote.company_id == company_id,
+                                      SalesCreditNote.customer_id == str(customer_id),
+                                      SalesCreditNote.status != "CANCELLED")
+        .order_by(SalesCreditNote.issued_at)).scalars().all()
+    salida = []
+    for n in notas:
+        disponible = _dec(n.amount) - _dec(n.applied)
+        if disponible <= 0:
+            continue
+        salida.append({
+            "id": str(n.id), "number": n.invoice_number or n.number,
+            "control_number": n.control_number, "cause": n.cause,
+            "invoice_id": str(n.invoice_id) if n.invoice_id else None,
+            "currency": n.currency, "amount": str(_dec(n.amount)),
+            "applied": str(_dec(n.applied)), "available": str(disponible),
+            "issued_at": n.issued_at.isoformat() if n.issued_at else None,
+        })
+    return salida
+
+
+def open_item_applications(db: Session, *, company_id: str, open_item_id: str) -> list[dict]:
+    """Lo aplicado a un documento, incluidos los reversos.
+
+    Los reversos están porque «no eliminan»: la historia de un documento
+    incluye lo que se le aplicó y lo que se le deshizo.
+    """
+    company_id = _company(company_id, obj="aplicaciones")
+    item = db.get(OpenItem, open_item_id)
+    if item is None or str(item.company_id) != str(company_id):
+        raise NotFoundError(code="OPEN_ITEM_NOT_FOUND", message="Documento de CxC no encontrado")
+    filas = db.execute(
+        select(Application).where(Application.company_id == company_id,
+                                  Application.target_open_item_id == str(item.id))
+        .order_by(Application.created_at)).scalars().all()
+    return [{"id": str(a.id), "source_type": a.source_type, "source_id": str(a.source_id),
+             "target_open_item_id": str(a.target_open_item_id),
+             "amount": str(_dec(a.amount)), "currency": a.currency,
+             "rate": str(_dec(a.rate)) if a.rate is not None else None,
+             "date": a.date.isoformat() if a.date else None, "status": a.status,
+             "created_at": a.created_at.isoformat() if a.created_at else None}
+            for a in filas]
+
+
+def customer_statement(db: Session, *, company_id: str, customer_id: str) -> dict:
+    """El estado de cuenta: la cronología que lo explica.
+
+    No es aritmética de pantalla. Cada línea es un hecho económico con su
+    documento detrás, y el saldo final es el mismo que devuelve
+    `customer_balance`.
+    """
+    company_id = _company(company_id, obj="estado de cuenta")
+    entradas: list[dict] = []
+    for item in db.execute(
+            select(OpenItem).where(OpenItem.company_id == company_id,
+                                   OpenItem.party_id == str(customer_id),
+                                   OpenItem.item_type == "RECEIVABLE")
+            .order_by(OpenItem.created_at)).scalars().all():
+        entradas.append({
+            "type": "DOCUMENT", "id": str(item.id), "reference": item.source_document,
+            "date": item.created_at.isoformat() if item.created_at else None,
+            "currency": item.currency, "debit": str(_dec(item.original)),
+            "credit": "0", "outstanding": str(ap_service.open_item_balance(item)),
+            "status": item.status,
+        })
+    for nota in db.execute(
+            select(SalesCreditNote).where(SalesCreditNote.company_id == company_id,
+                                          SalesCreditNote.customer_id == str(customer_id),
+                                          SalesCreditNote.status != "CANCELLED")
+            .order_by(SalesCreditNote.created_at)).scalars().all():
+        entradas.append({
+            "type": "CREDIT_NOTE", "id": str(nota.id),
+            "reference": nota.invoice_number or nota.number,
+            "date": nota.issued_at.isoformat() if nota.issued_at else None,
+            "currency": nota.currency, "debit": "0", "credit": str(_dec(nota.amount)),
+            "available": str(_dec(nota.amount) - _dec(nota.applied)), "status": nota.status,
+        })
+        for app in db.execute(
+                select(Application).where(Application.company_id == company_id,
+                                          Application.source_type == "CREDIT",
+                                          Application.source_id == str(nota.id))
+                .order_by(Application.created_at)).scalars().all():
+            entradas.append({
+                "type": "APPLICATION" if app.status == "APPLIED" else "APPLICATION_REVERSAL",
+                "id": str(app.id), "reference": str(app.target_open_item_id),
+                "date": app.date.isoformat() if app.date else None,
+                "currency": app.currency, "debit": "0", "credit": str(_dec(app.amount)),
+                "status": app.status,
+            })
+    entradas.sort(key=lambda x: (x["date"] or ""))
+    saldo = customer_balance(db, company_id=company_id, customer_id=customer_id)
+    return {"customer_id": str(customer_id), "entries": entradas, **saldo}
+
+
+def reverse_credit_application(db: Session, *, company_id: str, application_id: str,
+                               reason: str, actor: str | None = None) -> Application:
+    """Revierte una aplicación de crédito **sin borrarla**.
+
+    «Los reversos **no eliminan**; crean evento inverso y reapertura
+    controlada» (arquitectura funcional §9). La fila original se queda donde
+    está: lo que hubo, hubo. Lo que se añade es su inverso, y el documento y el
+    crédito vuelven a quedar disponibles por ese importe.
+    """
+    company_id = _company(company_id, obj="reverso de aplicación")
+    original = db.execute(
+        select(Application).where(Application.id == application_id).with_for_update()
+    ).scalars().first()
+    if original is None or str(original.company_id) != str(company_id):
+        raise NotFoundError(code="APPLICATION_NOT_FOUND", message="Aplicación no encontrada")
+    if original.source_type != "CREDIT":
+        raise ConflictError(code="APPLICATION_NOT_CREDIT",
+                            message="Este reverso es el de una aplicación de crédito.")
+    if original.status != "APPLIED":
+        raise ConflictError(code="APPLICATION_ALREADY_REVERSED",
+                            message="La aplicación ya fue revertida.")
+    if not (reason or "").strip():
+        raise KontrolError(code="REVERSAL_REASON_REQUIRED",
+                           message="Revertir una aplicación exige motivo.", status_code=422)
+
+    nota = db.get(SalesCreditNote, str(original.source_id))
+    target = db.execute(
+        select(OpenItem).where(OpenItem.id == str(original.target_open_item_id)).with_for_update()
+    ).scalars().first()
+    if nota is None or target is None:
+        raise NotFoundError(code="APPLICATION_NOT_FOUND", message="Aplicación no encontrada")
+
+    importe = _dec(original.amount)
+    target.applied = _dec(target.applied) - importe
+    # Reapertura controlada: el documento vuelve a estar abierto porque vuelve a
+    # tener saldo, no porque alguien le cambie el estado a mano.
+    if ap_service.open_item_balance(target) > 0:
+        target.status = "OPEN"
+    nota.applied = _dec(nota.applied) - importe
+    original.status = "REVERSED"
+    inverso = Application(company_id=company_id, source_type="CREDIT",
+                          source_id=str(nota.id), target_open_item_id=str(target.id),
+                          amount=-importe, currency=original.currency,
+                          rate=original.rate, date=date.today(), status="REVERSAL")
+    db.add(inverso)
+    db.flush()
+    _sync_invoice_status(db, target_open_item_id=str(target.id))
+    _audit(db, action="CREDIT_APPLICATION_REVERSED", entity_type="Application",
+           entity_id=str(original.id), company_id=company_id, actor=actor,
+           after={"reversal_id": str(inverso.id), "amount": str(importe), "reason": reason})
+    return inverso
 
 
 def create_debit_note(db: Session, *, company_id: str, customer_id: str, number: str, amount: float,
@@ -2714,7 +2955,7 @@ def _sync_invoice_status(db: Session, *, target_open_item_id: str) -> None:
     invoice_id = item.source_document.split(":", 1)[1]
     invoice = db.get(SalesInvoice, invoice_id)
     if invoice and invoice.status in ("EMITTED", "DELIVERED", "PARTIALLY_PAID", "PAID"):
-        invoice.status = "PAID" if ap_service.open_item_balance(item) <= 1e-6 else "PARTIALLY_PAID"
+        invoice.status = "PAID" if ap_service.open_item_balance(item) <= 0 else "PARTIALLY_PAID"
         invoice.updated_at = datetime.now(UTC)
 
 
@@ -2726,7 +2967,7 @@ def apply_to_cxc(db: Session, *, company_id: str, source_type: str, source_id: s
                                   rate=rate, actor=actor)
     _sync_invoice_status(db, target_open_item_id=target_open_item_id)
     _audit(db, action="CXC_APPLICATION", entity_type="OpenItem", entity_id=str(target_open_item_id),
-           company_id=company_id, actor=actor, after={"source_type": source_type, "amount": float(amount)})
+           company_id=company_id, actor=actor, after={"source_type": source_type, "amount": str(_dec(amount))})
     return app
 
 
@@ -3547,7 +3788,7 @@ def _aplicar_nota_a_cxc(db: Session, *, company_id: str, nota: SalesCreditNote,
     if aplicar <= 0:
         return
     apply_credit_note(db, note=nota, target_open_item_id=str(item.id),
-                      amount=float(aplicar), actor=actor)
+                      amount=aplicar, actor=actor)
 
 
 def credit_note_dict(db: Session, nota: SalesCreditNote) -> dict:

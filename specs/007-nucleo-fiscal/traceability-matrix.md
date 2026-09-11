@@ -18,6 +18,7 @@
 | FR-007-012 | US-007-003 | AC-007-012 | T-007-02 | TP-007-07 | CHK-007-07 | ControlNumber |
 | FR-007-020 | US-007-004 | AC-007-020 | T-007-03 | TP-007-08 | CHK-007-08 | Emisión atómica |
 | FR-007-021 | US-007-004 | AC-007-021 | T-007-03 | TP-007-09 | CHK-007-09 | FiscalDocument + hash |
+| FR-007-020-D1 | US-007-006 | AC-007-020 | T-007-03 | TP-007-08 | CHK-007-08 | **Delta 2026-09-11**: la emisión acepta los tres tipos de documento, no solo `INVOICE` |
 | FR-007-022 | US-007-005 | AC-007-022 | T-007-03 | TP-007-10 | CHK-007-10 | PrintEvent |
 | FR-007-023 | US-007-005 | AC-007-023 | T-007-03 | TP-007-11 | CHK-007-11 | Contingencia |
 | FR-007-030 | US-007-006 | AC-007-030 | T-007-04 | TP-007-12 | CHK-007-12 | Notas |

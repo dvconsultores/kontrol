@@ -772,3 +772,56 @@ igual para la nota de crédito y la de débito que para la factura.
 
 Implementación de la 037 **no iniciada**: requiere su propio ciclo con
 autorización expresa.
+
+---
+
+## Tras la implementación de la Spec 037 — 2026-09-11
+
+`SPEC 037 — COMPLETE / CONVERGED`. Guardias de arquitectura verdes, frontend
+297/297, e2e propia 27/27 en los tres navegadores y la cadena operativa completa
+189/189.
+
+**La pregunta que bloqueaba no necesitaba decidirse: estaba escrita.** Una nota
+de crédito sobre una factura ya cobrada deja un **crédito sin aplicar sobre su
+propia nota**, porque la fórmula de la arquitectura funcional §9 ya resta los
+créditos del saldo y porque el modelo declara que una aplicación puede tener por
+origen un `credit`. Sin entidad nueva, sin factura negativa, sin pago falso y sin
+reabrir la factura cobrada.
+
+**El hallazgo grave del ciclo no era la pregunta, era el código.**
+`apply_credit_note` comprobaba la empresa y nada más: dentro de una misma
+empresa, el crédito del cliente X podía pagar la factura del cliente Y. No era un
+caso raro sino el camino normal, y ninguna prueba lo veía porque ninguna lo
+intentaba. La lección se parece a la de la 035: **el defecto no estaba en lo que
+faltaba por construir sino en lo que ya estaba y nadie había intentado romper.**
+
+Otros dos del mismo camino: ninguna aplicación dejaba fila —contra el §9, «cada
+aplicación relaciona origen, destino, moneda, tasa, monto nominal, monto fiscal y
+fecha»— y no existía el reverso, que la misma fuente define como «evento inverso
+y reapertura controlada», nunca borrado.
+
+Y un cuarto que no era de esta Spec. `open_item_balance` calculaba el dinero en
+coma flotante, y es el motor que comparten CxP, CxC, tesorería y conciliación.
+Antes de tocarlo hubo que **desambiguar a su dueño**: en el Máster 56, `004` es
+Licenciamiento; la carpeta `004-compras` corresponde a la **Spec 028**. La
+autoridad tampoco estaba lejos: `ADR-D0-001` ya registraba `KQA-100` —«`Decimal
++ float`… que rompió factura, pago, cobro»— como defecto CRÍTICO, y el propio
+módulo tenía su helper con la advertencia escrita. El motor nunca lo recibió. Y
+no hubo que decidir política de redondeo ninguna, porque el cálculo no depende de
+una: el `round(..., 6)` no era política sino el margen que la coma flotante
+necesitaba, y su huella estaba a la vista en el `<= 1e-6` con que se cerraba un
+documento «suficientemente cerca de cero».
+
+`NEXT SPEC = 038 — TESORERÍA`
+
+Recibe el motor de saldos ya exacto y la frontera clara: la 037 gobierna el
+derecho de cobro y la 038 el movimiento de dinero, y por eso aplicar un crédito
+no crea ningún cobro ni toca tesorería.
+
+Y recibe **dos preguntas que la 037 no decidió porque no son suyas**: si un
+crédito a favor puede devolverse en dinero —ninguna fuente lo dice, así que no se
+implementó nada— y cuál es la política de diferencia cambiaria que haría posible
+aplicar un crédito entre monedas distintas, hoy bloqueada con error de dominio.
+
+Implementación de la 038 **no iniciada**: requiere su propio ciclo con
+autorización expresa.
