@@ -1830,6 +1830,10 @@
     },
     {
       "method": "GET",
+      "path": "/treasury/accounts/{account_id}/balance"
+    },
+    {
+      "method": "GET",
       "path": "/treasury/bank-transactions"
     },
     {
@@ -1843,6 +1847,10 @@
     {
       "method": "POST",
       "path": "/treasury/banks"
+    },
+    {
+      "method": "GET",
+      "path": "/treasury/cash-position"
     },
     {
       "method": "GET",
@@ -1914,6 +1922,26 @@
     },
     {
       "method": "GET",
+      "path": "/treasury/fx-conversions"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/fx-conversions"
+    },
+    {
+      "method": "GET",
+      "path": "/treasury/fx-policies"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/fx-policies"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/fx-policies/{policy_id}/activate"
+    },
+    {
+      "method": "GET",
       "path": "/treasury/igft-events"
     },
     {
@@ -1963,6 +1991,26 @@
     {
       "method": "POST",
       "path": "/treasury/reconciliations/{reconciliation_id}/transition"
+    },
+    {
+      "method": "GET",
+      "path": "/treasury/refunds"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/refunds"
+    },
+    {
+      "method": "GET",
+      "path": "/treasury/refunds/{refund_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/refunds/{refund_id}/decide"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/refunds/{refund_id}/settle"
     },
     {
       "method": "GET",

@@ -12,6 +12,7 @@ pago/cobro como POSTED y genera la transacción de caja o banco (idempotente).
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
@@ -20,6 +21,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import Payment
+from app.modules.sales.models import SalesCreditNote
 from app.modules.treasury.models import (
     BankTransaction,
     Cashbox,
@@ -34,7 +36,11 @@ from app.modules.treasury.models import (
     PaymentMethod,
     Reconciliation,
     ReconciliationLine,
+    TreasuryFxConversion,
+    TreasuryFxPolicy,
     TreasuryInstrument,
+    TreasuryRateSnapshot,
+    TreasuryRefund,
     TreasuryTransfer,
 )
 from app.shared import audit as audit_service
@@ -79,6 +85,27 @@ def _company(company_id: str | None, *, obj: str) -> str:
     return company_id
 
 
+#: La escala de las columnas monetarias de tesorería, `NUMERIC(18, 2)`. Su
+#: autoridad es `Currency.decimal_places`: si hiciera falta otra, cambiaría la
+#: columna. Aquí no se decide ninguna política de redondeo.
+_MONEY_PLACES = 2
+
+
+def _money(value: Any) -> Decimal:
+    """Dinero como `Decimal` exacto, **sin pasar por `float`**.
+
+    Misma regla que la autoridad compartida de saldos (delta de la Spec 028):
+    `ADR-D0-001` registra `KQA-100` —«`Decimal + float`… que rompió factura,
+    pago, cobro»— como defecto CRÍTICO. El arqueo de caja nunca lo recibió, y es
+    dinero contado contra dinero esperado: el sitio exacto donde un céntimo
+    falso se convierte en una discusión con el cajero.
+    """
+    if value is None:
+        return Decimal(0)
+    entrada = value if isinstance(value, Decimal) else Decimal(str(value))
+    return entrada.quantize(Decimal(1).scaleb(-_MONEY_PLACES))
+
+
 def _require_cashbox(db: Session, company_id: str, cashbox_id: str) -> Cashbox:
     c = db.get(Cashbox, cashbox_id)
     if not c or c.company_id != company_id:
@@ -107,21 +134,141 @@ def _require_currency(db: Session, company_id: str, currency_id: str) -> Currenc
     return c
 
 
-def _rate_snapshot(db: Session, company_id: str, currency: str) -> float:
-    """Tasa histórica más reciente de la moneda (snapshot por transacción)."""
+def active_fx_policy(db: Session, company_id: str, on_date: date | None = None) -> TreasuryFxPolicy | None:
+    """La política cambiaria vigente de la empresa en una fecha.
+
+    Vigente es una sola: el índice único parcial impide dos activas con el mismo
+    código, porque dos políticas a la vez darían dos respuestas a la misma
+    pregunta.
+    """
+    dia = on_date or date.today()
+    return db.execute(
+        select(TreasuryFxPolicy).where(
+            TreasuryFxPolicy.company_id == company_id,
+            TreasuryFxPolicy.status == "ACTIVE",
+            TreasuryFxPolicy.effective_from <= dia,
+            (TreasuryFxPolicy.effective_to.is_(None)) | (TreasuryFxPolicy.effective_to >= dia),
+        ).order_by(TreasuryFxPolicy.version.desc())).scalars().first()
+
+
+def _rate_snapshot(db: Session, company_id: str, currency: str) -> float | None:
+    """Compatibilidad: la tasa registrada, o `None` si no hay ninguna.
+
+    **Devolvía `1.0`** cuando no encontraba la moneda o no había tasa cargada.
+    Un pago en divisa se registraba al cambio uno y nadie se enteraba. Ahora
+    devuelve `None`: no saber la tasa es un hecho, no el número uno.
+    """
     if currency in ("VED", "VES"):
         return 1.0
     cur = db.execute(select(Currency).where(
         Currency.company_id == company_id, Currency.code == currency)).scalars().first()
     if not cur:
-        return 1.0
+        return None
     row = db.execute(
         select(ExchangeRate)
         .where(ExchangeRate.company_id == company_id, ExchangeRate.currency_id == str(cur.id))
         .order_by(ExchangeRate.rate_date.desc())
         .limit(1)
     ).scalars().first()
-    return row.rate if row else 1.0
+    return row.rate if row else None
+
+
+def capture_rate_snapshot(db: Session, *, company_id: str, source_currency: str,
+                          target_currency: str, on_date: date | None = None,
+                          manual_rate: Decimal | float | None = None,
+                          manual_reason: str | None = None,
+                          actor: str | None = None) -> TreasuryRateSnapshot:
+    """Congela la tasa que gobierna una operación, con su procedencia entera.
+
+    Si no hay tasa registrada y la política no admite tasa manual, **falla**. No
+    hay tasa por defecto: inventar un uno es peor que negarse, porque el uno
+    parece un número correcto.
+    """
+    company_id = _company(company_id, obj="tasa")
+    dia = on_date or date.today()
+    politica = active_fx_policy(db, company_id, dia)
+
+    if manual_rate is not None:
+        if politica is None or not politica.allow_manual_rate:
+            raise ConflictError(
+                code="MANUAL_RATE_NOT_ALLOWED",
+                message="La política vigente no admite tasa manual.")
+        if not (manual_reason or "").strip():
+            raise KontrolError(code="MANUAL_RATE_REASON_REQUIRED",
+                               message="Una tasa manual exige motivo.", status_code=422)
+        tasa = Decimal(str(manual_rate))
+        if tasa <= 0:
+            raise KontrolError(code="INVALID_RATE", message="La tasa debe ser positiva.",
+                               status_code=422)
+        snap = TreasuryRateSnapshot(
+            company_id=company_id, source_currency=source_currency,
+            target_currency=target_currency, rate=tasa,
+            rate_source=politica.rate_source, rate_type=politica.rate_type, rate_date=dia,
+            policy_id=str(politica.id), policy_version=politica.version,
+            origin="MANUAL", manual_reason=manual_reason, created_by=actor)
+        db.add(snap)
+        db.flush()
+        return snap
+
+    registrada = _buscar_tasa(db, company_id, source_currency, target_currency, dia)
+    if registrada is None:
+        raise ConflictError(
+            code="RATE_NOT_AVAILABLE",
+            message="No hay tasa registrada para esa conversión en esa fecha.",
+            details={"source_currency": source_currency, "target_currency": target_currency,
+                     "rate_date": dia.isoformat()})
+    tasa, fila = registrada
+    snap = TreasuryRateSnapshot(
+        company_id=company_id, source_currency=source_currency,
+        target_currency=target_currency, rate=tasa,
+        rate_source=(fila.source if fila else None) or (politica.rate_source if politica else None),
+        rate_type=politica.rate_type if politica else None, rate_date=dia,
+        exchange_rate_id=str(fila.id) if fila else None,
+        policy_id=str(politica.id) if politica else None,
+        policy_version=politica.version if politica else None,
+        origin="REGISTERED", created_by=actor)
+    db.add(snap)
+    db.flush()
+    return snap
+
+
+def _buscar_tasa(db: Session, company_id: str, origen: str, destino: str,
+                 dia: date) -> tuple[Decimal, ExchangeRate | None] | None:
+    """La tasa registrada que convierte `origen` en `destino` en esa fecha.
+
+    Se busca **con fecha**, no la más reciente: una operación de ayer no se
+    valora con la tasa de hoy.
+    """
+    if origen == destino:
+        return Decimal(1), None
+    funcional = ("VED", "VES")
+
+    def registrada(codigo: str) -> tuple[Decimal, ExchangeRate] | None:
+        cur = db.execute(select(Currency).where(
+            Currency.company_id == company_id, Currency.code == codigo)).scalars().first()
+        if cur is None:
+            return None
+        fila = db.execute(
+            select(ExchangeRate).where(
+                ExchangeRate.company_id == company_id,
+                ExchangeRate.currency_id == str(cur.id),
+                ExchangeRate.rate_date <= dia)
+            .order_by(ExchangeRate.rate_date.desc()).limit(1)).scalars().first()
+        return (Decimal(str(fila.rate)), fila) if fila else None
+
+    # Las tasas se guardan contra la moneda funcional: divisa → bolívar.
+    if destino in funcional:
+        return registrada(origen)
+    if origen in funcional:
+        inversa = registrada(destino)
+        if inversa is None or inversa[0] == 0:
+            return None
+        return (Decimal(1) / inversa[0], inversa[1])
+    # Divisa a divisa: hacen falta las dos patas.
+    a, b = registrada(origen), registrada(destino)
+    if a is None or b is None or b[0] == 0:
+        return None
+    return (a[0] / b[0], a[1])
 
 
 def _session_expected(db: Session, session: CashSession) -> float:
@@ -129,7 +276,8 @@ def _session_expected(db: Session, session: CashSession) -> float:
         CashSessionMovement.session_id == session.id, CashSessionMovement.movement_type == "IN")).scalars().all()
     outs = db.execute(select(CashSessionMovement).where(
         CashSessionMovement.session_id == session.id, CashSessionMovement.movement_type == "OUT")).scalars().all()
-    return round(float(session.opened_amount or 0) + sum(float(m.amount or 0) for m in ins) - sum(float(m.amount or 0) for m in outs), 6)
+    return (_money(session.opened_amount) + sum((_money(m.amount) for m in ins), Decimal(0))
+            - sum((_money(m.amount) for m in outs), Decimal(0)))
 
 
 # --------------------------------------------------------------------------- #
@@ -265,7 +413,7 @@ def arqueo_session(db: Session, *, session_id: str, counted_amount: float,
     expected = _session_expected(db, session)
     session.counted_amount = counted_amount
     session.expected_amount = expected
-    session.difference = round(float(counted_amount) - float(expected), 6)
+    session.difference = _money(counted_amount) - _money(expected)
     session.status = "ARCHED"
     if notes:
         session.audit = f'{{"arqueo_notes": {notes!r}}}'
@@ -726,3 +874,421 @@ def igft_event_dict(e: IgftEvent) -> dict:
             "currency": e.currency, "rate_snapshot": e.rate_snapshot, "igft_amount": e.igft_amount,
             "rule_id": e.rule_id, "evaluated_at": e.evaluated_at.isoformat() if e.evaluated_at else None,
             "status": e.status}
+
+
+# --------------------------------------------------------------------------- #
+# Spec 038 · conversión de moneda explícita
+#
+# «Moneda A → Moneda B no puede ocultarse dentro de una Application como simple
+# cambio numérico» (`OWNER-DECISION-038-02`, regla 12). Por eso cambiar de
+# moneda es un hecho con su propia fila, su instantánea de tasa y su diferencia
+# cambiaria, y no un número que aparece en el importe de otra cosa.
+# --------------------------------------------------------------------------- #
+
+def convert_currency(db: Session, *, company_id: str, source_account_id: str,
+                     target_account_id: str, source_amount: Decimal | float,
+                     on_date: date | None = None, manual_rate: Decimal | float | None = None,
+                     manual_reason: str | None = None, idempotency_key: str | None = None,
+                     actor: str | None = None) -> TreasuryFxConversion:
+    """Convierte dinero de una cuenta propia a otra, en moneda distinta.
+
+    Produce dos movimientos —salida en origen, entrada en destino— unidos por la
+    conversión, y congela la tasa con su procedencia. La diferencia cambiaria,
+    si la hay, es su propio hecho y **no toca ningún documento fiscal**.
+    """
+    company_id = _company(company_id, obj="conversión")
+    if idempotency_key:
+        previa = db.execute(select(TreasuryFxConversion).where(
+            TreasuryFxConversion.company_id == company_id,
+            TreasuryFxConversion.idempotency_key == idempotency_key)).scalars().first()
+        if previa is not None:
+            return previa
+
+    origen = _require_account(db, company_id, source_account_id)
+    destino = _require_account(db, company_id, target_account_id)
+    if str(origen.id) == str(destino.id):
+        raise KontrolError(code="SAME_ACCOUNT",
+                           message="La conversión necesita dos cuentas distintas.",
+                           status_code=422)
+    if origen.currency == destino.currency:
+        raise ConflictError(
+            code="SAME_CURRENCY_CONVERSION",
+            message="Las dos cuentas están en la misma moneda: eso es una transferencia.")
+
+    dia = on_date or date.today()
+    politica = active_fx_policy(db, company_id, dia)
+    if politica is None or not politica.allow_cross_currency:
+        raise ConflictError(
+            code="CROSS_CURRENCY_NOT_ALLOWED",
+            message="La política vigente no admite conversión entre monedas.")
+
+    importe = _money(source_amount)
+    if importe <= 0:
+        raise KontrolError(code="INVALID_AMOUNT", message="El monto debe ser positivo.",
+                           status_code=422)
+    disponible = account_balance(db, company_id=company_id, account_id=str(origen.id))
+    if importe > disponible:
+        raise ConflictError(
+            code="INSUFFICIENT_FUNDS",
+            message=f"La cuenta no tiene fondos suficientes ({disponible}).",
+            details={"available": str(disponible), "requested": str(importe)})
+
+    snap = capture_rate_snapshot(db, company_id=company_id, source_currency=origen.currency,
+                                 target_currency=destino.currency, on_date=dia,
+                                 manual_rate=manual_rate, manual_reason=manual_reason,
+                                 actor=actor)
+    convertido = _money(importe * Decimal(str(snap.rate)))
+
+    salida = create_bank_transaction(
+        db, company_id=company_id, account_id=str(origen.id), direction="OUT",
+        amount=importe, currency=origen.currency, source="FX",
+        reference=f"FX-OUT-{idempotency_key or ''}"[:120], actor=actor)
+    entrada = create_bank_transaction(
+        db, company_id=company_id, account_id=str(destino.id), direction="IN",
+        amount=convertido, currency=destino.currency, source="FX",
+        reference=f"FX-IN-{idempotency_key or ''}"[:120], actor=actor)
+    salida.rate_snapshot_id = str(snap.id)
+    entrada.rate_snapshot_id = str(snap.id)
+
+    conv = TreasuryFxConversion(
+        company_id=company_id, source_account_id=str(origen.id),
+        target_account_id=str(destino.id), source_currency=origen.currency,
+        target_currency=destino.currency, source_amount=importe, target_amount=convertido,
+        rate_snapshot_id=str(snap.id), source_movement_id=str(salida.id),
+        target_movement_id=str(entrada.id), status="SETTLED",
+        idempotency_key=idempotency_key, created_by=actor)
+    db.add(conv)
+    db.flush()
+    _audit(db, action="TREASURY_FX_CONVERTED", entity_type="TreasuryFxConversion",
+           entity_id=str(conv.id), company_id=company_id, actor=actor,
+           after={"source_amount": str(importe), "target_amount": str(convertido),
+                  "rate": str(snap.rate), "rate_source": snap.rate_source,
+                  "rate_date": snap.rate_date.isoformat(), "origin": snap.origin,
+                  "policy_version": snap.policy_version})
+    return conv
+
+
+def account_balance(db: Session, *, company_id: str, account_id: str) -> Decimal:
+    """El saldo de una cuenta, calculado desde sus movimientos.
+
+    «Los saldos no se editan; se calculan desde movimientos y aplicaciones». No
+    hay campo de saldo que mantener al día ni que pueda mentir.
+    """
+    company_id = _company(company_id, obj="saldo de cuenta")
+    filas = db.execute(select(BankTransaction).where(
+        BankTransaction.company_id == company_id,
+        BankTransaction.account_id == str(account_id),
+        BankTransaction.status != "CANCELLED")).scalars().all()
+    saldo = Decimal(0)
+    for m in filas:
+        saldo += _money(m.amount) if m.direction == "IN" else -_money(m.amount)
+    return saldo
+
+
+def cash_position(db: Session, *, company_id: str) -> dict:
+    """La posición de caja por cuenta y por moneda.
+
+    Es una **lectura**. Mostrar un equivalente no convierte dinero: por eso no
+    agrega monedas distintas en un solo número, que exigiría una conversión que
+    nadie ha hecho.
+    """
+    company_id = _company(company_id, obj="posición de caja")
+    cuentas = db.execute(select(FinancialAccount).where(
+        FinancialAccount.company_id == company_id)).scalars().all()
+    detalle, por_moneda = [], {}
+    for c in cuentas:
+        saldo = account_balance(db, company_id=company_id, account_id=str(c.id))
+        detalle.append({"account_id": str(c.id), "code": c.code, "name": c.name,
+                        "currency": c.currency, "balance": str(saldo), "status": c.status})
+        por_moneda[c.currency] = por_moneda.get(c.currency, Decimal(0)) + saldo
+    return {"accounts": detalle,
+            "by_currency": [{"currency": k, "balance": str(v)} for k, v in sorted(por_moneda.items())]}
+
+
+# --------------------------------------------------------------------------- #
+# Spec 038 · reembolso de un crédito a favor
+#
+# `OWNER-DECISION-038-01`. El crédito lo habilita la Spec 037 y el dinero lo
+# mueve ésta. El saldo económico sigue viviendo en la nota: duplicarlo aquí
+# sería tener dos verdades sobre el mismo dinero.
+#
+# La regla que lo sostiene todo: el mismo importe no puede estar a la vez
+# reservado para devolución y disponible para aplicarse a una cuenta por cobrar.
+# --------------------------------------------------------------------------- #
+
+def refundable_credit(db: Session, nota: SalesCreditNote) -> Decimal:
+    """Lo que de una nota puede devolverse en dinero.
+
+    Lo emitido menos lo ya aplicado a documentos, lo ya reservado para otra
+    devolución y lo ya devuelto. Las tres restas son la misma idea: un crédito
+    se gasta una vez.
+    """
+    return (_money(nota.amount) - _money(nota.applied)
+            - _money(nota.refund_reserved) - _money(nota.refunded))
+
+
+def request_refund(db: Session, *, company_id: str, credit_note_id: str,
+                   amount: Decimal | float, reason: str, account_id: str | None = None,
+                   payment_method_id: str | None = None, beneficiary_reference: str | None = None,
+                   idempotency_key: str | None = None, actor: str | None = None) -> TreasuryRefund:
+    """Solicita la devolución y **reserva** el crédito.
+
+    La reserva es lo que impide gastarlo dos veces: desde aquí, ese importe ya
+    no está disponible para aplicarse a una cuenta por cobrar.
+    """
+    company_id = _company(company_id, obj="reembolso")
+    if idempotency_key:
+        previa = db.execute(select(TreasuryRefund).where(
+            TreasuryRefund.company_id == company_id,
+            TreasuryRefund.idempotency_key == idempotency_key)).scalars().first()
+        if previa is not None:
+            return previa
+    if not (reason or "").strip():
+        raise KontrolError(code="REFUND_REASON_REQUIRED",
+                           message="Una devolución exige motivo.", status_code=422)
+
+    # El dueño se comprueba **antes** que la política: al revés, pedir el
+    # reembolso de un crédito ajeno respondía «la política no lo admite» y
+    # confirmaba de paso que el crédito existe. Es la misma lección que la Spec
+    # 035 aprendió cuando el estado del pedido tapaba la comprobación de empresa.
+    nota = db.execute(select(SalesCreditNote).where(
+        SalesCreditNote.id == str(credit_note_id)).with_for_update()).scalars().first()
+    if nota is None or str(nota.company_id) != str(company_id):
+        raise NotFoundError(code="CREDIT_NOTE_NOT_FOUND", message="Nota de crédito no encontrada")
+
+    politica = active_fx_policy(db, company_id)
+    if politica is None or not politica.allow_refund:
+        raise ConflictError(code="REFUND_NOT_ALLOWED",
+                            message="La política vigente no admite devolución en dinero.")
+    if nota.issued_at is None:
+        raise ConflictError(code="CREDIT_NOTE_NOT_ISSUED",
+                            message="Solo se devuelve un crédito de una nota emitida.")
+
+    importe = _money(amount)
+    disponible = refundable_credit(db, nota)
+    if importe <= 0:
+        raise KontrolError(code="INVALID_AMOUNT", message="El monto debe ser positivo.",
+                           status_code=422)
+    if importe > disponible:
+        raise ConflictError(
+            code="REFUND_EXCEEDS_CREDIT",
+            message="No se devuelve más crédito del que queda.",
+            details={"refundable": str(disponible), "requested": str(importe)})
+
+    if account_id:
+        cuenta = _require_account(db, company_id, account_id)
+        if cuenta.currency != nota.currency:
+            raise ConflictError(
+                code="REFUND_CURRENCY_MISMATCH",
+                message="La cuenta está en otra moneda que el crédito.",
+                details={"credit_currency": nota.currency, "account_currency": cuenta.currency})
+
+    nota.refund_reserved = _money(nota.refund_reserved) + importe
+    ahora = datetime.now(UTC)
+    refund = TreasuryRefund(
+        company_id=company_id, customer_id=str(nota.customer_id),
+        credit_note_id=str(nota.id), currency=nota.currency, amount=importe,
+        account_id=account_id, payment_method_id=payment_method_id,
+        beneficiary_reference=beneficiary_reference, reason=reason, status="REQUESTED",
+        idempotency_key=idempotency_key, requested_at=ahora, requested_by=actor,
+        created_by=actor)
+    db.add(refund)
+    db.flush()
+    _audit(db, action="TREASURY_REFUND_REQUESTED", entity_type="TreasuryRefund",
+           entity_id=str(refund.id), company_id=company_id, actor=actor,
+           after={"credit_note_id": str(nota.id), "amount": str(importe),
+                  "currency": nota.currency, "reserved": str(nota.refund_reserved)})
+    return refund
+
+
+def decide_refund(db: Session, *, company_id: str, refund_id: str, approved: bool,
+                  reason: str | None = None, actor: str | None = None) -> TreasuryRefund:
+    """Aprueba o deniega. Denegar **libera** la reserva: el crédito vuelve."""
+    company_id = _company(company_id, obj="reembolso")
+    refund = _require_refund(db, company_id, refund_id, lock=True)
+    if refund.status != "REQUESTED":
+        raise ConflictError(code="REFUND_STATE", message="La devolución ya fue decidida.")
+    if not approved and not (reason or "").strip():
+        raise KontrolError(code="REFUND_REJECTION_REASON_REQUIRED",
+                           message="Denegar una devolución exige motivo.", status_code=422)
+    nota = db.execute(select(SalesCreditNote).where(
+        SalesCreditNote.id == str(refund.credit_note_id)).with_for_update()).scalars().first()
+    ahora = datetime.now(UTC)
+    if approved:
+        refund.status = "APPROVED"
+    else:
+        refund.status = "REJECTED"
+        nota.refund_reserved = _money(nota.refund_reserved) - _money(refund.amount)
+    refund.status_reason = reason
+    refund.approved_at = ahora
+    refund.approved_by = actor
+    refund.updated_at = ahora
+    db.flush()
+    _audit(db, action=f"TREASURY_REFUND_{refund.status}", entity_type="TreasuryRefund",
+           entity_id=str(refund.id), company_id=company_id, actor=actor,
+           after={"reason": reason, "reserved": str(nota.refund_reserved)})
+    return refund
+
+
+def settle_refund(db: Session, *, company_id: str, refund_id: str, account_id: str | None = None,
+                  actor: str | None = None) -> TreasuryRefund:
+    """Ejecuta el pago y **consume** el crédito reservado.
+
+    Aquí sale el dinero de verdad: un movimiento de salida en la cuenta, y la
+    reserva se convierte en devuelto. Lo devuelto ya no vuelve a aplicarse.
+    """
+    company_id = _company(company_id, obj="reembolso")
+    refund = _require_refund(db, company_id, refund_id, lock=True)
+    if refund.settled_at is not None:
+        return refund
+    if refund.status != "APPROVED":
+        raise ConflictError(code="REFUND_NOT_APPROVED",
+                            message="Solo se ejecuta una devolución aprobada.")
+    cuenta_id = account_id or refund.account_id
+    if cuenta_id is None:
+        raise ConflictError(code="REFUND_WITHOUT_ACCOUNT",
+                            message="La devolución no dice desde qué cuenta se paga.")
+    cuenta = _require_account(db, company_id, cuenta_id)
+    if cuenta.currency != refund.currency:
+        raise ConflictError(
+            code="REFUND_CURRENCY_MISMATCH",
+            message="La cuenta está en otra moneda que el crédito.",
+            details={"credit_currency": refund.currency, "account_currency": cuenta.currency})
+    importe = _money(refund.amount)
+    disponible = account_balance(db, company_id=company_id, account_id=str(cuenta.id))
+    if importe > disponible:
+        raise ConflictError(
+            code="INSUFFICIENT_FUNDS",
+            message=f"La cuenta no tiene fondos suficientes ({disponible}).",
+            details={"available": str(disponible), "requested": str(importe)})
+
+    movimiento = create_bank_transaction(
+        db, company_id=company_id, account_id=str(cuenta.id), direction="OUT",
+        amount=importe, currency=refund.currency, source="REFUND",
+        reference=f"REEMBOLSO-{str(refund.id)[:8]}", actor=actor)
+
+    nota = db.execute(select(SalesCreditNote).where(
+        SalesCreditNote.id == str(refund.credit_note_id)).with_for_update()).scalars().first()
+    # La reserva se convierte en devuelto: el crédito se consume aquí, no antes.
+    nota.refund_reserved = _money(nota.refund_reserved) - importe
+    nota.refunded = _money(nota.refunded) + importe
+
+    ahora = datetime.now(UTC)
+    refund.status = "SETTLED"
+    refund.account_id = str(cuenta.id)
+    refund.movement_id = str(movimiento.id)
+    refund.settled_at = ahora
+    refund.settled_by = actor
+    refund.updated_at = ahora
+    db.flush()
+    _audit(db, action="TREASURY_REFUND_SETTLED", entity_type="TreasuryRefund",
+           entity_id=str(refund.id), company_id=company_id, actor=actor,
+           after={"movement_id": str(movimiento.id), "amount": str(importe),
+                  "account_id": str(cuenta.id), "refunded": str(nota.refunded)})
+    return refund
+
+
+def _require_refund(db: Session, company_id: str, refund_id: str,
+                    *, lock: bool = False) -> TreasuryRefund:
+    consulta = select(TreasuryRefund).where(TreasuryRefund.id == str(refund_id))
+    if lock:
+        consulta = consulta.with_for_update()
+    refund = db.execute(consulta).scalars().first()
+    if refund is None or str(refund.company_id) != str(company_id):
+        raise NotFoundError(code="REFUND_NOT_FOUND", message="Devolución no encontrada")
+    return refund
+
+
+def refund_dict(refund: TreasuryRefund) -> dict:
+    return {
+        "id": str(refund.id), "status": refund.status, "status_reason": refund.status_reason,
+        "customer_id": str(refund.customer_id), "credit_note_id": str(refund.credit_note_id),
+        "currency": refund.currency, "amount": str(_money(refund.amount)),
+        "account_id": str(refund.account_id) if refund.account_id else None,
+        "movement_id": refund.movement_id, "reason": refund.reason,
+        "requested_at": refund.requested_at.isoformat() if refund.requested_at else None,
+        "approved_at": refund.approved_at.isoformat() if refund.approved_at else None,
+        "settled_at": refund.settled_at.isoformat() if refund.settled_at else None,
+    }
+
+
+def fx_conversion_dict(db: Session, conv: TreasuryFxConversion) -> dict:
+    snap = db.get(TreasuryRateSnapshot, str(conv.rate_snapshot_id))
+    return {
+        "id": str(conv.id), "status": conv.status,
+        "source_account_id": str(conv.source_account_id),
+        "target_account_id": str(conv.target_account_id),
+        "source_currency": conv.source_currency, "target_currency": conv.target_currency,
+        "source_amount": str(_money(conv.source_amount)),
+        "target_amount": str(_money(conv.target_amount)),
+        "exchange_difference": (str(_money(conv.exchange_difference))
+                                if conv.exchange_difference is not None else None),
+        "rate": str(snap.rate) if snap else None,
+        "rate_source": snap.rate_source if snap else None,
+        "rate_date": snap.rate_date.isoformat() if snap else None,
+        "rate_origin": snap.origin if snap else None,
+        "policy_version": snap.policy_version if snap else None,
+    }
+
+
+def create_fx_policy(db: Session, *, company_id: str, policy_code: str,
+                     functional_currency: str, effective_from: date,
+                     effective_date_basis: str = "SETTLEMENT", rate_source: str | None = None,
+                     rate_type: str | None = None, allow_cross_currency: bool = False,
+                     allow_manual_rate: bool = False, allow_refund: bool = False,
+                     authority_reference: str | None = None,
+                     actor: str | None = None) -> TreasuryFxPolicy:
+    """Crea una versión de política. Nace en borrador: se activa aparte."""
+    company_id = _company(company_id, obj="política cambiaria")
+    if effective_date_basis not in ("TRANSACTION", "SETTLEMENT"):
+        raise KontrolError(code="INVALID_DATE_BASIS",
+                           message="La base de fecha efectiva no es válida.", status_code=422)
+    previa = db.execute(select(TreasuryFxPolicy).where(
+        TreasuryFxPolicy.company_id == company_id,
+        TreasuryFxPolicy.policy_code == policy_code)
+        .order_by(TreasuryFxPolicy.version.desc())).scalars().first()
+    politica = TreasuryFxPolicy(
+        company_id=company_id, policy_code=policy_code,
+        version=(previa.version + 1) if previa else 1,
+        functional_currency=functional_currency, effective_date_basis=effective_date_basis,
+        rate_source=rate_source, rate_type=rate_type,
+        allow_cross_currency=allow_cross_currency, allow_manual_rate=allow_manual_rate,
+        allow_refund=allow_refund, authority_reference=authority_reference,
+        effective_from=effective_from, status="DRAFT", created_by=actor)
+    db.add(politica)
+    db.flush()
+    return politica
+
+
+def activate_fx_policy(db: Session, *, company_id: str, policy_id: str,
+                       actor: str | None = None) -> TreasuryFxPolicy:
+    """Activa una versión y **sustituye** la anterior, sin reescribirla.
+
+    La política anterior queda `SUPERSEDED`, no borrada: las operaciones que
+    gobernó siguen apuntando a ella.
+    """
+    company_id = _company(company_id, obj="política cambiaria")
+    politica = db.execute(select(TreasuryFxPolicy).where(
+        TreasuryFxPolicy.id == str(policy_id)).with_for_update()).scalars().first()
+    if politica is None or str(politica.company_id) != str(company_id):
+        raise NotFoundError(code="FX_POLICY_NOT_FOUND", message="Política no encontrada")
+    if politica.status != "DRAFT":
+        raise ConflictError(code="FX_POLICY_STATE", message="La política ya fue activada.")
+    # La sustitución se descarga **antes** de activar la nueva: el índice único
+    # parcial no admite dos activas ni por un instante, y el orden en que
+    # SQLAlchemy escribe no es el orden en que se asignan los atributos.
+    for otra in db.execute(select(TreasuryFxPolicy).where(
+            TreasuryFxPolicy.company_id == company_id,
+            TreasuryFxPolicy.policy_code == politica.policy_code,
+            TreasuryFxPolicy.status == "ACTIVE")).scalars().all():
+        otra.status = "SUPERSEDED"
+        otra.effective_to = politica.effective_from
+    db.flush()
+    politica.status = "ACTIVE"
+    politica.approved_by = actor
+    politica.approved_at = datetime.now(UTC)
+    db.flush()
+    _audit(db, action="TREASURY_FX_POLICY_ACTIVATED", entity_type="TreasuryFxPolicy",
+           entity_id=str(politica.id), company_id=company_id, actor=actor,
+           after={"policy_code": politica.policy_code, "version": politica.version})
+    return politica

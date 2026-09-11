@@ -825,3 +825,62 @@ aplicar un crédito entre monedas distintas, hoy bloqueada con error de dominio.
 
 Implementación de la 038 **no iniciada**: requiere su propio ciclo con
 autorización expresa.
+
+---
+
+## Tras la implementación de la Spec 038 — 2026-09-11
+
+`SPEC 038 — COMPLETE / CONVERGED`. Con ella se cierra la cadena entera de
+pedido a cobro: cotizar, pedir, reservar, preparar, consolidar, confirmar,
+facturar, despachar, devolver, cobrar y mover el dinero.
+
+**Las dos preguntas que la 037 dejó abiertas no se resolvieron leyendo: las
+decidió el owner.** Es la diferencia con los tres ciclos anteriores, donde la
+autoridad estaba escrita y solo faltaba leerla como autoridad. Aquí no había
+nada que leer —la arquitectura funcional §9 decía «según política» y no existía
+política ninguna— y por eso el ciclo empezó con `OWNER-DECISION-038-01` y
+`-02`. Ninguna fuente existente las contradice.
+
+**El hallazgo grave del ciclo vuelve a ser lo que ya estaba.** `_rate_snapshot`
+devolvía **`1,0`** cuando no había tasa registrada: un pago en divisa quedaba
+valorado al cambio uno a uno y nada lo decía. No era un caso raro, era lo que
+pasaba cada vez que faltaba la tasa —que es justo cuando más importa—. Tercera
+vez seguida que el defecto no está en lo que falta por construir sino en lo que
+ya existe y nadie había intentado romper: `validate_shipment` aprobaba siempre,
+`apply_credit_note` ignoraba al cliente, `_rate_snapshot` inventaba la tasa.
+
+**Y el doble gasto.** Un crédito a favor puede ahora irse por dos caminos
+—imputarse a una factura o devolverse en dinero— y el riesgo evidente es irse
+por los dos. La reserva es lo que lo impide, y obligó a separar en la 037 dos
+cifras que hasta ahora eran una sola: lo **imputable** y lo **debido**.
+
+## El hecho que decide lo siguiente
+
+Al dejar de inventar la tasa, el sistema se volvió honesto y con ello apareció
+un hueco que antes tapaba el `1,0`: **nadie registra tasas**. Hoy tesorería se
+niega a convertir y a valorar si no hay tasa del día, y la única forma de que la
+haya es que una persona la teclee, todos los días, en `/treasury/exchange-rates`.
+
+El Máster 56 ya lo anotaba —«013 · Maestros financieros · **Tasa BCV depende de
+048**»— pero era una deuda teórica mientras el código rellenaba el hueco solo.
+Ahora es una parada operativa.
+
+`NEXT SPEC = 013 — MAESTROS FINANCIEROS` (con 048 como proveedora del origen)
+
+`RUNNER-UP = 049 — DASHBOARD`, cuyas cuatro dependencias —023, 034, 037 y 038—
+están por primera vez todas en `COMPLETE / CONVERGED`, y que mostraría cifras
+cuyas fuentes ya son de fiar.
+
+La búsqueda de la tasa **no se implementa dentro de tesorería**: la 038 consume
+la que el maestro tenga registrada y no llama a ninguna web, y así debe seguir.
+
+## Lo que esta decisión NO autoriza
+
+`D0-07` sigue **abierto**. La 038 certifica la tesorería técnica y
+funcionalmente; **no** afirma homologación fiscal ni liberación legal, y ninguna
+regla legal venezolana está escrita en el código: se configura, se versiona y se
+guarda con su referencia de autoridad. El **IGTF** no se tocó: su dueña es la
+041, en `BLOCKED_BY_LEGAL_VALIDATION`.
+
+Implementación de la 013 **no iniciada**: requiere su propio ciclo con
+autorización expresa.

@@ -68,17 +68,18 @@ export function ConfirmacionPedidoPage(): React.JSX.Element {
     setResultado(null);
   }
 
+  /** Los valores de partida de una línea que todavía nadie ha tocado. */
+  const EN_BLANCO: Verificacion = { cantidad: "", presentacion: true, condicion: true, nota: "" };
+
   function cambiar(linea: string, campo: keyof Verificacion, valor: string | boolean): void {
+    // Se parte de lo ya verificado —o de los valores en blanco si es la primera
+    // vez— y encima va el campo que cambia. Antes los valores por defecto se
+    // escribían **antes** del `...prev[linea]` que los pisaba: mismo resultado,
+    // pero con claves repetidas que `tsc -b` rechaza (TS2783), y con ello la
+    // build entera.
     setVerificado((prev) => ({
       ...prev,
-      [linea]: {
-        cantidad: "",
-        presentacion: true,
-        condicion: true,
-        nota: "",
-        ...prev[linea],
-        [campo]: valor,
-      },
+      [linea]: { ...(prev[linea] ?? EN_BLANCO), [campo]: valor },
     }));
   }
 

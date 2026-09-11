@@ -216,15 +216,19 @@ export function EstadoDeCuentaPage(): React.JSX.Element {
               <dd className="font-mono">{e.outstanding}</dd>
               <dt className="text-text-700">Créditos emitidos</dt>
               <dd className="font-mono">{e.credits}</dd>
-              <dt className="text-text-700">Crédito sin aplicar</dt>
+              <dt className="text-text-700">Crédito imputable</dt>
               <dd className="font-mono">{e.credit_available}</dd>
+              <dt className="text-text-700">Reservado para devolver</dt>
+              <dd className="font-mono">{e.credit_refund_reserved}</dd>
+              <dt className="text-text-700">Ya devuelto en efectivo</dt>
+              <dd className="font-mono">{e.credit_refunded}</dd>
               <dt className="font-semibold text-text-900">Saldo</dt>
               <dd className="font-mono font-semibold">{e.balance}</dd>
             </dl>
             {Number(e.balance) < 0 ? (
               <p className="mt-3 text-sm text-text-700" role="status">
-                El cliente tiene saldo a favor. Puede imputarse a otros documentos suyos; no se
-                devuelve en dinero desde aquí.
+                El cliente tiene saldo a favor. Puede imputarse a otros documentos suyos; para
+                devolverlo en dinero, el reembolso se solicita y se aprueba en tesorería.
               </p>
             ) : null}
           </section>
@@ -247,6 +251,9 @@ export function EstadoDeCuentaPage(): React.JSX.Element {
                       {(creditos.data?.items ?? []).map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.number} · quedan {c.available} {c.currency}
+                          {Number(c.refund_reserved) > 0
+                            ? ` · ${c.refund_reserved} reservado para devolver`
+                            : ""}
                         </option>
                       ))}
                     </select>

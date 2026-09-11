@@ -8,6 +8,7 @@ idempotencia en POST críticos (ejecución de ingresos/egresos).
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
@@ -31,7 +32,10 @@ from app.modules.treasury.models import (
     IgftEvent,
     PaymentMethod,
     Reconciliation,
+    TreasuryFxConversion,
+    TreasuryFxPolicy,
     TreasuryInstrument,
+    TreasuryRefund,
     TreasuryTransfer,
 )
 
@@ -605,3 +609,212 @@ def _owned(db: Session, model, obj_id: str, tenant: str, code: str, message: str
     if not obj or getattr(obj, "company_id", tenant) != tenant:
         raise NotFoundError(code=code, message=message)
     return obj
+
+
+# --------------------------------------------------------------------------- #
+# Spec 038 · política cambiaria, conversión explícita y reembolso
+#
+# Dos decisiones expresas del owner: el reembolso de un crédito a favor se
+# soporta —explícito, aprobado, ejecutado desde tesorería— y la política
+# cambiaria es parametrizable con conversión explícita.
+#
+# Ninguna regla legal venezolana se escribe aquí: la política se configura, se
+# versiona y guarda de qué autoridad viene. `D0-07` sigue abierto.
+# --------------------------------------------------------------------------- #
+class FxPolicyBody(BaseModel):
+    policy_code: str = Field(min_length=1, max_length=64)
+    functional_currency: str = Field(min_length=1, max_length=8)
+    effective_from: date
+    effective_date_basis: str = "SETTLEMENT"
+    rate_source: str | None = None
+    rate_type: str | None = None
+    allow_cross_currency: bool = False
+    allow_manual_rate: bool = False
+    allow_refund: bool = False
+    authority_reference: str | None = None
+
+
+class FxConversionBody(BaseModel):
+    source_account_id: str
+    target_account_id: str
+    source_amount: Decimal = Field(gt=0)
+    on_date: date | None = None
+    manual_rate: Decimal | None = Field(default=None, gt=0)
+    manual_reason: str | None = None
+    idempotency_key: str | None = None
+
+
+class RefundRequestBody(BaseModel):
+    credit_note_id: str
+    amount: Decimal = Field(gt=0)
+    reason: str = Field(min_length=3, max_length=2000)
+    account_id: str | None = None
+    payment_method_id: str | None = None
+    beneficiary_reference: str | None = None
+    idempotency_key: str | None = None
+
+
+class RefundDecisionBody(BaseModel):
+    approved: bool
+    reason: str | None = None
+
+
+class RefundSettleBody(BaseModel):
+    account_id: str | None = None
+
+
+@router.get("/fx-policies")
+def list_fx_policies(db: Session = Depends(get_db),
+                     user: User = Depends(require_permission("tesoreria", "view")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(TreasuryFxPolicy).where(
+        TreasuryFxPolicy.company_id == ctx.company_id)
+        .order_by(TreasuryFxPolicy.policy_code, TreasuryFxPolicy.version.desc())).scalars().all()
+    return {"items": [{"id": str(p.id), "policy_code": p.policy_code, "version": p.version,
+                       "functional_currency": p.functional_currency,
+                       "effective_date_basis": p.effective_date_basis,
+                       "rate_source": p.rate_source, "rate_type": p.rate_type,
+                       "allow_cross_currency": p.allow_cross_currency,
+                       "allow_manual_rate": p.allow_manual_rate,
+                       "allow_refund": p.allow_refund,
+                       "authority_reference": p.authority_reference,
+                       "effective_from": p.effective_from.isoformat(),
+                       "effective_to": p.effective_to.isoformat() if p.effective_to else None,
+                       "status": p.status} for p in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.post("/fx-policies", dependencies=[Depends(require_write_allowed)])
+def create_fx_policy(body: FxPolicyBody, db: Session = Depends(get_db),
+                     actor: User = Depends(require_permission("tesoreria", "create")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    """Crea una versión de política. Nace en borrador: activarla es otro acto."""
+    p = treasury_service.create_fx_policy(
+        db, company_id=ctx.company_id, policy_code=body.policy_code,
+        functional_currency=body.functional_currency, effective_from=body.effective_from,
+        effective_date_basis=body.effective_date_basis, rate_source=body.rate_source,
+        rate_type=body.rate_type, allow_cross_currency=body.allow_cross_currency,
+        allow_manual_rate=body.allow_manual_rate, allow_refund=body.allow_refund,
+        authority_reference=body.authority_reference, actor=str(actor.id))
+    db.commit()
+    db.refresh(p)
+    return {"id": str(p.id), "policy_code": p.policy_code, "version": p.version,
+            "status": p.status}
+
+
+@router.post("/fx-policies/{policy_id}/activate", dependencies=[Depends(require_write_allowed)])
+def activate_fx_policy(policy_id: str, db: Session = Depends(get_db),
+                       actor: User = Depends(require_permission("tesoreria", "approve")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    """Activa la versión y **sustituye** la anterior, sin borrarla."""
+    p = treasury_service.activate_fx_policy(db, company_id=ctx.company_id, policy_id=policy_id,
+                                            actor=str(actor.id))
+    db.commit()
+    db.refresh(p)
+    return {"id": str(p.id), "policy_code": p.policy_code, "version": p.version,
+            "status": p.status,
+            "effective_from": p.effective_from.isoformat()}
+
+
+@router.post("/fx-conversions", dependencies=[Depends(require_write_allowed)])
+def create_fx_conversion(body: FxConversionBody, db: Session = Depends(get_db),
+                         actor: User = Depends(require_permission("tesoreria", "create")),
+                         ctx: CompanyContext = Depends(get_company_context)):
+    """Cambia dinero de moneda: dos movimientos y una instantánea de tasa."""
+    conv = treasury_service.convert_currency(
+        db, company_id=ctx.company_id, source_account_id=body.source_account_id,
+        target_account_id=body.target_account_id, source_amount=body.source_amount,
+        on_date=body.on_date, manual_rate=body.manual_rate, manual_reason=body.manual_reason,
+        idempotency_key=body.idempotency_key, actor=str(actor.id))
+    db.commit()
+    db.refresh(conv)
+    return treasury_service.fx_conversion_dict(db, conv)
+
+
+@router.get("/fx-conversions")
+def list_fx_conversions(db: Session = Depends(get_db),
+                        user: User = Depends(require_permission("tesoreria", "view")),
+                        ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(TreasuryFxConversion).where(
+        TreasuryFxConversion.company_id == ctx.company_id)
+        .order_by(TreasuryFxConversion.created_at.desc())).scalars().all()
+    return {"items": [treasury_service.fx_conversion_dict(db, c) for c in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.get("/refunds")
+def list_refunds(status: str | None = None, db: Session = Depends(get_db),
+                 user: User = Depends(require_permission("tesoreria", "view")),
+                 ctx: CompanyContext = Depends(get_company_context)):
+    consulta = select(TreasuryRefund).where(TreasuryRefund.company_id == ctx.company_id)
+    if status:
+        consulta = consulta.where(TreasuryRefund.status == status)
+    items = db.execute(consulta.order_by(TreasuryRefund.created_at.desc())).scalars().all()
+    return {"items": [treasury_service.refund_dict(r) for r in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.get("/refunds/{refund_id}")
+def get_refund(refund_id: str, db: Session = Depends(get_db),
+               user: User = Depends(require_permission("tesoreria", "view")),
+               ctx: CompanyContext = Depends(get_company_context)):
+    refund = treasury_service._require_refund(db, ctx.company_id, refund_id)
+    return treasury_service.refund_dict(refund)
+
+
+@router.post("/refunds", dependencies=[Depends(require_write_allowed)])
+def request_refund(body: RefundRequestBody, db: Session = Depends(get_db),
+                   actor: User = Depends(require_permission("tesoreria", "create")),
+                   ctx: CompanyContext = Depends(get_company_context)):
+    """Solicita la devolución y **reserva** el crédito: desde aquí no se aplica."""
+    refund = treasury_service.request_refund(
+        db, company_id=ctx.company_id, credit_note_id=body.credit_note_id,
+        amount=body.amount, reason=body.reason, account_id=body.account_id,
+        payment_method_id=body.payment_method_id,
+        beneficiary_reference=body.beneficiary_reference,
+        idempotency_key=body.idempotency_key, actor=str(actor.id))
+    db.commit()
+    db.refresh(refund)
+    return treasury_service.refund_dict(refund)
+
+
+@router.post("/refunds/{refund_id}/decide", dependencies=[Depends(require_write_allowed)])
+def decide_refund(refund_id: str, body: RefundDecisionBody, db: Session = Depends(get_db),
+                  actor: User = Depends(require_permission("tesoreria", "approve")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    """Aprueba o deniega. Denegar libera la reserva: el crédito vuelve."""
+    refund = treasury_service.decide_refund(db, company_id=ctx.company_id, refund_id=refund_id,
+                                            approved=body.approved, reason=body.reason,
+                                            actor=str(actor.id))
+    db.commit()
+    db.refresh(refund)
+    return treasury_service.refund_dict(refund)
+
+
+@router.post("/refunds/{refund_id}/settle", dependencies=[Depends(require_write_allowed)])
+def settle_refund(refund_id: str, body: RefundSettleBody, db: Session = Depends(get_db),
+                  actor: User = Depends(require_permission("tesoreria", "approve")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    """Ejecuta el pago: sale el dinero y la reserva se convierte en devuelto."""
+    refund = treasury_service.settle_refund(db, company_id=ctx.company_id, refund_id=refund_id,
+                                            account_id=body.account_id, actor=str(actor.id))
+    db.commit()
+    db.refresh(refund)
+    return treasury_service.refund_dict(refund)
+
+
+@router.get("/cash-position")
+def cash_position(db: Session = Depends(get_db),
+                  user: User = Depends(require_permission("tesoreria", "view")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    """La posición real por cuenta y por moneda. **No convierte nada.**"""
+    return treasury_service.cash_position(db, company_id=ctx.company_id)
+
+
+@router.get("/accounts/{account_id}/balance")
+def account_balance(account_id: str, db: Session = Depends(get_db),
+                    user: User = Depends(require_permission("tesoreria", "view")),
+                    ctx: CompanyContext = Depends(get_company_context)):
+    """El saldo calculado desde los movimientos, no un campo guardado."""
+    saldo = treasury_service.account_balance(db, company_id=ctx.company_id, account_id=account_id)
+    return {"account_id": account_id, "balance": str(saldo)}

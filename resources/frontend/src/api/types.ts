@@ -1070,6 +1070,11 @@ export interface CustomerBalance {
   outstanding: string;
   credits: string;
   credit_applied: string;
+  /** Reservado para devolver en efectivo (Spec 038): ya no es imputable. */
+  credit_refund_reserved: string;
+  /** Ya devuelto en efectivo: ni imputable ni debido. */
+  credit_refunded: string;
+  /** Lo **imputable** a documentos, no lo que se debe. Son cifras distintas. */
   credit_available: string;
   balance: string;
 }
@@ -1101,6 +1106,8 @@ export interface CustomerCredit {
   currency: string;
   amount: string;
   applied: string;
+  refund_reserved: string;
+  refunded: string;
   available: string;
   issued_at: string | null;
 }
@@ -1968,4 +1975,81 @@ export interface ApprovalDelegationSummary {
   is_temporary_substitution: boolean;
   revoked_at: string | null;
   status: "ACTIVE" | "REVOKED";
+}
+
+// --------------------------------------------------------------------------- //
+// Tesorería — Spec 038: política cambiaria, conversión y reembolso
+// --------------------------------------------------------------------------- //
+
+/** Una versión de política cambiaria. Se sustituye, no se edita. */
+export interface FxPolicy {
+  id: string;
+  policy_code: string;
+  version: number;
+  functional_currency: string;
+  effective_date_basis: string;
+  rate_source: string | null;
+  rate_type: string | null;
+  allow_cross_currency: boolean;
+  allow_manual_rate: boolean;
+  allow_refund: boolean;
+  authority_reference: string | null;
+  effective_from: string;
+  effective_to: string | null;
+  status: "DRAFT" | "ACTIVE" | "SUPERSEDED";
+}
+
+/**
+ * Una conversión ejecutada, con la procedencia de su tasa.
+ *
+ * `rate_origin` distingue la tasa registrada de la que tecleó una persona: sin
+ * ese dato no se puede auditar a qué cambio se movió el dinero.
+ */
+export interface FxConversion {
+  id: string;
+  status: string;
+  source_account_id: string;
+  target_account_id: string;
+  source_currency: string;
+  target_currency: string;
+  source_amount: string;
+  target_amount: string;
+  exchange_difference: string | null;
+  rate: string | null;
+  rate_source: string | null;
+  rate_date: string | null;
+  rate_origin: string | null;
+  policy_version: number | null;
+}
+
+/** Un reembolso: solicitado, decidido y ejecutado son tres actos distintos. */
+export interface TreasuryRefund {
+  id: string;
+  status: "REQUESTED" | "APPROVED" | "REJECTED" | "SETTLED" | "CANCELLED";
+  status_reason: string | null;
+  customer_id: string;
+  credit_note_id: string;
+  currency: string;
+  amount: string;
+  account_id: string | null;
+  movement_id: string | null;
+  reason: string | null;
+  requested_at: string | null;
+  approved_at: string | null;
+  settled_at: string | null;
+}
+
+export interface CashPositionAccount {
+  account_id: string;
+  code: string;
+  name: string;
+  currency: string;
+  balance: string;
+  status: string;
+}
+
+/** Por cuenta y por moneda. **Sin total**: sumar monedas exige convertirlas. */
+export interface CashPosition {
+  accounts: CashPositionAccount[];
+  by_currency: { currency: string; balance: string }[];
 }

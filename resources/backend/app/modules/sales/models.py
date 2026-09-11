@@ -18,6 +18,7 @@ from decimal import Decimal
 
 from sqlalchemy import JSON, Boolean, CheckConstraint, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy import column as sql_column_pl
+from sqlalchemy import text as sql_text
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.expression import column as sql_column
 
@@ -567,6 +568,16 @@ class SalesCreditNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     tax_total: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
     issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     issued_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    # --- Reembolso (Spec 038) ---------------------------------------------
+    #: Importe apartado para una devolución en dinero. No puede aplicarse a una
+    #: CxC mientras esté reservado: el mismo crédito no se gasta dos veces.
+    refund_reserved: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False,
+                                                      default=Decimal(0),
+                                                      server_default=sql_text("0"))
+    #: Importe ya devuelto en dinero. Lo devuelto no vuelve a aplicarse.
+    refunded: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False,
+                                               default=Decimal(0), server_default=sql_text("0"))
+
     #: La devolución que la origina, cuando la hay. Anulable a propósito: la
     #: norma lista causas que no traen mercancía de vuelta —descuento posterior,
     #: corrección de precio, bonificación— y el documento maestro dice que «la

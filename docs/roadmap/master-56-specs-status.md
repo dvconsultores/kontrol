@@ -54,12 +54,12 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 030 | Crédito / aprobación / reserva | **`COMPLETE / CONVERGED`** (2026-09-02) | reserva al confirmar (`ORDER_CONFIRMATION`), bloqueo en PostgreSQL, crédito vía 045, `RELEASED` para 031; migración `0043` | **ninguno** |
 | 031 | Cola y ruta de picking | **`COMPLETE / CONVERGED`** (2026-09-05) | 7 de 10 etapas | **ninguno**: cola por `released_at`, asignación por ubicación, ruta de la 008, cinco estados; migración `0049`. Las 3 etapas restantes son el recorrido físico, de la 032. Delta dirigido recibido de la 035 (2026-09-07): el selector de almacén ya no descarta opciones en silencio |
 | 032 | Picking y consolidación | **`COMPLETE / CONVERGED`** (2026-09-05) | 12 de 12 etapas | **ninguno**: extracción con estado de custodia, cinco motivos de diferencia del proceso, consolidación al Área de Confirmación; migración `0050` |
-| 033 | Confirmación independiente de pedido | **`COMPLETE / CONVERGED`** (2026-09-06) | 8 de 8 etapas · 2 tablas | **ninguno**: compara contra el pedido, segregación por defecto, compuerta única de facturación; migración `0051` |
+| 033 | Confirmación independiente de pedido | **`COMPLETE / CONVERGED`** (2026-09-06) | 8 de 8 etapas · 2 tablas | **ninguno**: compara contra el pedido, segregación por defecto, compuerta única de facturación; migración `0051`. Delta dirigido recibido de la 038 (2026-09-11): `npm run build` llevaba roto desde `fe92cf3` por claves repetidas (`TS2783`) en su pantalla; corregido sin cambiar el comportamiento |
 | 034 | Liberación y facturación | **`COMPLETE / CONVERGED`** (2026-09-06) | 8 de 8 etapas · factura atada al pedido | **ninguno**: compuerta de confirmación, snapshot comercial congelado, numeración de la 042; migración `0052`. La **homologación legal** de la emisión sigue en `D0-07`. Delta dirigido recibido de la 036 (2026-09-11): `issue_invoice` ya abre la cuenta por cobrar |
 | 035 | Despacho / transporte / regulación | **`COMPLETE / CONVERGED`** (2026-09-07) | 6 de 6 etapas (¶101-107) · compuerta del ¶103 · 1226/1218/8/0 | **ninguno**: salida solo desde pedido facturado, validación real de las cuatro condiciones, salida en cantidad base desde `PREPARADO`, reserva consumida; migración `0053`. La validación regulatoria es contra lo registrado —**no se emite ni se verifica en línea**—, límite de la 044 en `BLOCKED_BY_EXTERNAL_SERVICE` |
 | 036 | Devoluciones / NC / ND | **`COMPLETE / CONVERGED`** (2026-09-11) | 8 de 8 etapas del flujo normativo · 1279/1271/8/0 | **ninguno**: cuatro actos antes de tocar el inventario, los dos destinos que `D0-10` concede, nota proporcional con consecutivo propio, tope acumulativo, reserva intacta; migración `0054`. La **homologación legal** de las notas sigue en `D0-07` |
-| 037 | Cuentas por cobrar | **`COMPLETE / CONVERGED`** (2026-09-11) | saldo canónico, aplicaciones con rastro, reversos; 1311/1303/8/0 | **ninguno**: el crédito es del cliente que lo tiene, cada aplicación deja su fila, el reverso no borra y el crédito se resta una sola vez. Sin reembolso —**sin autoridad**— y sin aplicación entre monedas —falta la política cambiaria— |
-| 038 | Tesorería | `PARTIALLY_IMPLEMENTED` · **desbloqueada por dependencia** (2026-09-11) | `treasury` 15 tablas, conciliación bancaria; el motor de saldos que consume ya calcula en `Decimal` | **dos**: si un crédito a favor puede devolverse en dinero —ninguna fuente lo dice— y la política de diferencia cambiaria que la aplicación entre monedas necesita |
+| 037 | Cuentas por cobrar | **`COMPLETE / CONVERGED`** (2026-09-11) | saldo canónico, aplicaciones con rastro, reversos; 1311/1303/8/0 | **ninguno**: el crédito es del cliente que lo tiene, cada aplicación deja su fila, el reverso no borra y el crédito se resta una sola vez. Delta dirigido recibido de la 038 (2026-09-11): «imputable» y «debido» son dos cifras distintas —lo reservado para devolver ya no se ofrece— y el reembolso, que entonces no tenía autoridad, ya la tiene |
+| 038 | Tesorería | **`COMPLETE / CONVERGED`** (2026-09-11) | política cambiaria versionada, instantánea de tasa, conversión explícita y reembolso en tres actos; migración `0055` · 1344/1336/8/0 | **ninguno**: las dos preguntas materiales las respondió el owner (`OWNER-DECISION-038-01` y `-02`) y ninguna fuente las contradice. La tasa ya no se inventa, lo reservado no se imputa y la posición de caja no suma monedas distintas. El **IGTF** sigue siendo de la 041 y la **homologación legal** sigue en `D0-07` |
 | 039 | Motor fiscal venezolano | `BLOCKED_BY_LEGAL_VALIDATION` | `fiscal` 13 tablas, versionado de reglas | D0-07 |
 | 040 | Retenciones IVA / ISLR | `BLOCKED_BY_LEGAL_VALIDATION` | comprobantes en `fiscal`/`purchasing` | D0-07 |
 | 041 | IGTF | `BLOCKED_BY_LEGAL_VALIDATION` | cálculo en tesorería/fiscal | D0-07 |
@@ -83,10 +83,10 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 
 | Estado | Specs |
 |---|---:|
-| `COMPLETE / CONVERGED` | 17 — 008, 011, 012, 019, 020, 021, 022, 029, 030, 031, 032, 033, 034, 035, 036, **037**, 045 |
+| `COMPLETE / CONVERGED` | 18 — 008, 011, 012, 019, 020, 021, 022, 029, 030, 031, 032, 033, 034, 035, 036, 037, **038**, 045 |
 | `RECONVERGED` | 1 — 046 |
 | `READY_FOR_IMPLEMENTATION` | **0** |
-| `PARTIALLY_IMPLEMENTED` | 28 |
+| `PARTIALLY_IMPLEMENTED` | 27 |
 | `NOT_STARTED` | 2 — 018, 047 |
 | `BLOCKED_BY_DEPENDENCY` | **0** |
 | `BLOCKED_BY_BUSINESS_DECISION` | 1 — 004 |

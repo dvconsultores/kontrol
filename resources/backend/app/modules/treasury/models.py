@@ -16,9 +16,23 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-02 §10, DOC-03 §12):
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
+from decimal import Decimal
 
-from sqlalchemy import Date, Float, ForeignKey, Numeric, String, Text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
+from sqlalchemy import text as sql_text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -169,6 +183,10 @@ class BankTransaction(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     payment_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     commission: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
     rate_snapshot: Mapped[float | None] = mapped_column(Numeric(14, 6), nullable=True)
+    #: La instantánea completa que gobernó la conversión, con su procedencia. La
+    #: columna anterior guardaba un número suelto: no decía de dónde salía.
+    rate_snapshot_id: Mapped[str | None] = mapped_column(
+        ForeignKey("treasury_rate_snapshots.id"), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
 
 
@@ -256,3 +274,178 @@ class IgftEvent(UUIDMixin, TimestampMixin, Base):
     rule_id: Mapped[str | None] = mapped_column(ForeignKey("fiscal_rules.id"), nullable=True)
     evaluated_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="EVALUATED")
+
+
+# --------------------------------------------------------------------------- #
+# Spec 038 · política cambiaria, conversión explícita y reembolso
+#
+# La arquitectura funcional §9 dejaba el hueco a propósito: «las diferencias
+# cambiarias se calculan al aplicar o valorar **según política**». No había
+# política. Lo que había era `_rate_snapshot` devolviendo **1,0** cuando no
+# encontraba la moneda o no había tasa cargada, así que un pago en divisa se
+# registraba al cambio uno y nadie se enteraba.
+#
+# Nada de esto escribe una regla legal venezolana en el código: la política se
+# configura, se versiona y guarda de qué autoridad viene. `D0-07` sigue abierto.
+# --------------------------------------------------------------------------- #
+class TreasuryFxPolicy(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """La política cambiaria de una empresa, con vigencia y versión.
+
+    Se guarda **qué versión** gobernó cada operación, para que cambiarla mañana
+    no reescriba lo de ayer.
+    """
+
+    __tablename__ = "treasury_fx_policies"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        CheckConstraint("effective_date_basis IN ('TRANSACTION', 'SETTLEMENT')",
+                        name="ck_treasury_fx_policies_basis"),
+        CheckConstraint("status IN ('DRAFT', 'ACTIVE', 'SUPERSEDED')",
+                        name="ck_treasury_fx_policies_status"),
+        Index("uq_treasury_fx_policies_active", "company_id", "policy_code", unique=True,
+              postgresql_where=sql_text("status = 'ACTIVE'")).ddl_if(dialect="postgresql"),
+    )
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    policy_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default=sql_text("1"))
+    functional_currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    #: `TRANSACTION` o `SETTLEMENT`. Cuál rige no se escribe: se configura.
+    effective_date_basis: Mapped[str] = mapped_column(String(32), nullable=False,
+                                                      default="SETTLEMENT",
+                                                      server_default="SETTLEMENT")
+    rate_source: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    rate_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    allow_cross_currency: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False,
+                                                       server_default=sql_text("false"))
+    allow_manual_rate: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False,
+                                                    server_default=sql_text("false"))
+    manual_rate_requires_approval: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=sql_text("true"))
+    allow_refund: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False,
+                                               server_default=sql_text("false"))
+    refund_requires_approval: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True,
+                                                           server_default=sql_text("true"))
+    #: Qué norma la respalda. Vacía mientras no exista: el mecanismo es
+    #: parametrizable y la validación legal sigue en `D0-07`.
+    authority_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    effective_from: Mapped[date] = mapped_column(Date, nullable=False)
+    effective_to: Mapped[date | None] = mapped_column(Date, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT",
+                                        server_default="DRAFT")
+    approved_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class TreasuryRateSnapshot(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """La procedencia entera de una tasa, congelada en la operación.
+
+    Una tasa futura no cambia una operación pasada porque la operación no vuelve
+    a preguntar: guarda la que usó, de dónde salió y con qué política.
+    """
+
+    __tablename__ = "treasury_rate_snapshots"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        CheckConstraint("rate > 0", name="ck_treasury_rate_snapshots_positive"),
+        CheckConstraint("origin IN ('REGISTERED', 'MANUAL')",
+                        name="ck_treasury_rate_snapshots_origin"),
+    )
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    source_currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    target_currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    rate: Mapped[Decimal] = mapped_column(Numeric(18, 8), nullable=False)
+    rate_source: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    rate_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    rate_date: Mapped[date] = mapped_column(Date, nullable=False)
+    exchange_rate_id: Mapped[str | None] = mapped_column(ForeignKey("exchange_rates.id"),
+                                                         nullable=True)
+    policy_id: Mapped[str | None] = mapped_column(ForeignKey("treasury_fx_policies.id"),
+                                                   nullable=True)
+    policy_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: `REGISTERED` si viene del maestro, `MANUAL` si la escribió una persona.
+    #: No hay una tercera: no existe tasa por defecto.
+    origin: Mapped[str] = mapped_column(String(16), nullable=False, default="REGISTERED",
+                                        server_default="REGISTERED")
+    manual_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class TreasuryFxConversion(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Cambiar de moneda es un hecho, no un número escondido en otro."""
+
+    __tablename__ = "treasury_fx_conversions"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        CheckConstraint("source_amount > 0 AND target_amount > 0",
+                        name="ck_treasury_fx_conversions_positive"),
+        Index("uq_treasury_fx_conversions_idem", "company_id", "idempotency_key", unique=True,
+              postgresql_where=sql_text("idempotency_key IS NOT NULL")).ddl_if(dialect="postgresql"),
+    )
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    source_account_id: Mapped[str] = mapped_column(ForeignKey("financial_accounts.id"), nullable=False)
+    target_account_id: Mapped[str] = mapped_column(ForeignKey("financial_accounts.id"), nullable=False)
+    source_currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    target_currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    source_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    target_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    rate_snapshot_id: Mapped[str] = mapped_column(ForeignKey("treasury_rate_snapshots.id"),
+                                                   nullable=False)
+    source_movement_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    target_movement_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    #: Su propio hecho. No reescribe ningún documento fiscal: «no alteran el IVA
+    #: original por sí solas».
+    exchange_difference: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    difference_currency: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="SETTLED",
+                                        server_default="SETTLED")
+    reversal_of: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
+
+class TreasuryRefund(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """La devolución en dinero de un crédito a favor del cliente.
+
+    `OWNER-DECISION-038-01`: se soporta, no es automática, exige solicitud,
+    validación del crédito, aprobación y ejecución desde tesorería.
+
+    El **saldo económico** del crédito sigue viviendo en su nota, que es de la
+    Spec 037. Aquí vive la solicitud y su ejecución: duplicar el saldo dentro de
+    tesorería sería tener dos verdades sobre el mismo dinero.
+    """
+
+    __tablename__ = "treasury_refunds"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_treasury_refunds_positive"),
+        CheckConstraint(
+            "status IN ('REQUESTED', 'APPROVED', 'REJECTED', 'SETTLED', 'CANCELLED', 'REVERSED')",
+            name="ck_treasury_refunds_status"),
+        Index("uq_treasury_refunds_idem", "company_id", "idempotency_key", unique=True,
+              postgresql_where=sql_text("idempotency_key IS NOT NULL")).ddl_if(dialect="postgresql"),
+    )
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    customer_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False)
+    credit_note_id: Mapped[str] = mapped_column(ForeignKey("sales_credit_notes.id"),
+                                                 nullable=False, index=True)
+    currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    account_id: Mapped[str | None] = mapped_column(ForeignKey("financial_accounts.id"), nullable=True)
+    payment_method_id: Mapped[str | None] = mapped_column(ForeignKey("payment_methods.id"),
+                                                           nullable=True)
+    beneficiary_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="REQUESTED",
+                                        server_default="REQUESTED")
+    status_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    movement_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    reversal_of: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    requested_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    approved_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    settled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    settled_by: Mapped[str | None] = mapped_column(String(36), nullable=True)

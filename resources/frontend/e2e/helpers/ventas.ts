@@ -1,0 +1,228 @@
+/**
+ * El camino real hasta una nota de crédito emitida.
+ *
+ * No es un atajo: una nota de crédito **solo nace de una factura** (Spec 036),
+ * y la factura solo se emite sobre un pedido confirmado y despachado. Cualquier
+ * prueba que necesite un crédito a favor del cliente tiene que recorrer esa
+ * cadena entera, porque inventar la nota por la puerta de atrás probaría un
+ * flujo que en producción no existe.
+ *
+ * Este módulo no contiene pruebas; Playwright solo recoge `*.spec.ts`.
+ */
+import { expect, type APIRequestContext } from "@playwright/test";
+
+const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
+const USER = process.env.KONTROL_E2E_USER ?? "admin";
+const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
+const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
+
+export type Ctx = { token: string; company: string; headers: Record<string, string> };
+
+export async function ctx(request: APIRequestContext): Promise<Ctx> {
+  const login = await request.post(`${API}/auth/login`, {
+    data: { tenant_code: TENANT, username: USER, password: PASSWORD },
+  });
+  expect(login.ok(), `login: ${login.status()}`).toBeTruthy();
+  const token = (await login.json()).access_token as string;
+  const r = await request.get(`${API}/organization/companies`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await r.json();
+  const company = (Array.isArray(body) ? body : body.items)[0].id as string;
+  return {
+    token,
+    company,
+    headers: { Authorization: `Bearer ${token}`, "X-Kontrol-Company": company },
+  };
+}
+
+export async function post(request: APIRequestContext, c: Ctx, ruta: string, data: unknown) {
+  const r = await request.post(`${API}${ruta}`, { headers: c.headers, data });
+  expect([200, 201], `${ruta}: ${r.status()} ${await r.text()}`).toContain(r.status());
+  return r.json();
+}
+
+export async function postCrudo(request: APIRequestContext, c: Ctx, ruta: string, data: unknown) {
+  return request.post(`${API}${ruta}`, { headers: c.headers, data });
+}
+
+export async function get(request: APIRequestContext, c: Ctx, ruta: string) {
+  const r = await request.get(`${API}${ruta}`, { headers: c.headers });
+  expect(r.ok(), `${ruta}: ${r.status()}`).toBeTruthy();
+  return r.json();
+}
+
+export const marca = (): string =>
+  `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
+
+export const hoy = (): string => new Date().toISOString().slice(0, 10);
+
+/** Un verificador distinto del preparador: `R-D0-12-5` lo exige por defecto. */
+async function verificador(request: APIRequestContext, c: Ctx, m: string): Promise<Ctx> {
+  const roles = await get(request, c, "/roles");
+  const rol = (roles.items as Array<{ id: string; code?: string; name?: string }>).find(
+    (r) => (r.code ?? r.name ?? "").toUpperCase().includes("ADMIN"),
+  ) ?? (roles.items as Array<{ id: string }>)[0];
+  const usuario = await post(request, c, "/users", {
+    username: `tz-${m.toLowerCase()}`,
+    email: `tz-${m.toLowerCase()}@kontrol-qa.com`,
+    password: PASSWORD,
+    must_change_password: false,
+  });
+  await post(request, c, `/users/${usuario.id}/roles`, { role_id: rol.id, company_id: c.company });
+  const login = await request.post(`${API}/auth/login`, {
+    data: { tenant_code: TENANT, username: `tz-${m.toLowerCase()}`, password: PASSWORD },
+  });
+  expect(login.ok(), `login del verificador: ${login.status()}`).toBeTruthy();
+  const token = (await login.json()).access_token as string;
+  return {
+    token,
+    company: c.company,
+    headers: { Authorization: `Bearer ${token}`, "X-Kontrol-Company": c.company },
+  };
+}
+
+async function fiscalListo(request: APIRequestContext, c: Ctx, m: string) {
+  const fuente = await post(request, c, "/fiscal/legal-sources", {
+    authority: "SENIAT", source_type: "LEY", number: `LT-${m}`, effective_from: "2020-01-01",
+  });
+  await post(request, c, `/fiscal/legal-sources/${fuente.id}/activate`, {});
+  const series: Record<string, string> = {};
+  for (const [tipo, prefijo] of [["INVOICE", "F"], ["CREDIT_NOTE", "NC"]]) {
+    const s = await post(request, c, "/fiscal/number-series", {
+      document_type: tipo, prefix: prefijo,
+    });
+    series[tipo] = s.id as string;
+  }
+  const desde = 100000 + Math.floor(Math.random() * 800000);
+  const lote = await post(request, c, "/fiscal/control-batches", {
+    range_from: String(desde), range_to: String(desde + 99),
+  });
+  return { series, batch: lote.id as string };
+}
+
+export type CreditoListo = {
+  cliente: string;
+  nota: { id: string; amount: string; currency: string; customer_id: string };
+};
+
+/**
+ * Un cliente con una nota de crédito emitida a su favor.
+ *
+ * La cantidad que se devuelve se factura y se despacha primero; la nota se
+ * emite sobre esa factura. Al emitirse, la 036 la imputa sola al documento por
+ * cobrar, así que para dejar **crédito libre** se factura de más y se acredita
+ * solo una parte… pero eso lo consume la factura. Para tener saldo a favor de
+ * verdad se emite la nota por el total y se cobra la factura antes: ahí el
+ * crédito queda sin documento contra el que imputarse.
+ */
+export async function creditoAFavor(
+  request: APIRequestContext,
+  c: Ctx,
+  m: string,
+  { cantidad = 4, precio = 25 } = {},
+): Promise<CreditoListo> {
+  const f = await fiscalListo(request, c, m);
+
+  const almacen = (await post(request, c, "/organization/warehouses", {
+    company_id: c.company, code: `WT-${m}`, name: `Almacén tesorería ${m}`,
+    warehouse_type: "PHYSICAL", status: "ACTIVE",
+  })).id as string;
+  const producto = await post(request, c, "/maestros/catalogos/items", {
+    code: `PT-${m}`, name: `Artículo ${m}`, item_type: "PRODUCT", status: "ACTIVE",
+  });
+  const l1 = await post(request, c, "/organization/locations", {
+    warehouse_id: almacen, code: `T1-${m}`, name: "Origen", sequence: 1,
+  });
+  const area = await post(request, c, "/organization/locations", {
+    warehouse_id: almacen, code: `TC-${m}`, name: "Área de Confirmación", sequence: 99,
+  });
+
+  const tipos = await get(request, c, "/inventory/movement-types");
+  let entrada = (tipos.items ?? tipos).find(
+    (x: { code: string }) => x.code === "ENTRADA_RECEPCION",
+  ) as { id: string } | undefined;
+  if (!entrada) {
+    entrada = (await post(request, c, "/inventory/movement-types", {
+      code: "ENTRADA_RECEPCION", name: "Entrada por recepción", direction: "IN",
+    })) as { id: string };
+  }
+  await post(request, c, "/inventory/movements", {
+    warehouse_id: almacen, product_id: producto.id, movement_type_id: entrada.id,
+    quantity: cantidad + 20,
+  });
+  await post(request, c, "/inventory/putaway", {
+    warehouse_id: almacen, product_id: producto.id, target_location_id: l1.id,
+    quantity: cantidad + 20,
+  });
+
+  const cliente = await post(request, c, "/maestros/terceros", {
+    code: `CT-${m}`, name: `Cliente tesorería ${m}`, roles: ["CLIENTE"],
+  });
+  const pedido = await post(request, c, "/sales/orders", {
+    code: `OVT-${m}`, customer_id: cliente.id, currency: "VED", warehouse_id: almacen,
+  });
+  const linea = await post(request, c, `/sales/orders/${pedido.id}/lines`, {
+    product_id: producto.id, quantity: cantidad, unit_price: precio,
+  });
+  const emitido = await post(request, c, `/sales/orders/${pedido.id}/submit`, {});
+  if (emitido.status !== "RELEASED") {
+    await post(request, c, `/sales/orders/${pedido.id}/release`, {});
+  }
+
+  const plan = await post(request, c, "/sales/pick-lists", {
+    code: `PLT-${m}`, order_id: pedido.id, warehouse_id: almacen,
+  });
+  await post(request, c, `/sales/picking/${plan.id}/asignaciones`, {
+    order_line_id: linea.id, location_id: l1.id, quantity: cantidad,
+  });
+  await post(request, c, `/sales/picking/${plan.id}/confirmar`, {});
+  const prep = await get(request, c, `/sales/picking/${plan.id}/preparacion`);
+  await post(request, c, `/sales/picking/${plan.id}/recoger`, {
+    line_id: (prep.picking as Array<{ id: string }>)[0].id, quantity: cantidad,
+  });
+  await post(request, c, `/sales/picking/${plan.id}/consolidar`, { location_id: area.id });
+
+  const v = await verificador(request, c, m);
+  await post(request, v, `/sales/confirmacion/${pedido.id}`, {
+    lines: [{ order_line_id: linea.id, checked_base_quantity: cantidad }],
+  });
+
+  await post(request, v, `/sales/facturacion/${pedido.id}/solicitar`, {});
+  const factura = await post(request, c, `/sales/facturacion/${pedido.id}/generar`, {});
+  const emitida = await post(request, c, `/sales/facturacion/${factura.id}/emitir`, {
+    series_id: f.series.INVOICE, batch_id: f.batch,
+  });
+  expect(emitida.status).toBe("EMITTED");
+
+  const sh = await post(request, c, "/sales/shipments", {
+    code: `DT-${m}`, order_id: pedido.id, destination: "Caracas", transport: "Transportista",
+  });
+  await post(request, c, `/sales/shipments/${sh.id}/validate`, {});
+  await post(request, c, `/sales/shipments/${sh.id}/confirm`, {});
+
+  // Se cobra la factura entera: así el documento queda cerrado y la nota que
+  // viene después no tiene contra qué imputarse. Eso es tener saldo a favor.
+  const docs = await get(request, c, "/sales/open-items");
+  const doc = (docs.items as Array<{ id: string; source_document: string; balance: string }>)
+    .find((x) => x.source_document === `SALES_INVOICE:${factura.id}`);
+  expect(doc, "la factura emitida no abrió su cuenta por cobrar").toBeTruthy();
+  const cobro = await post(request, c, "/sales/collections", {
+    party_id: cliente.id, amount: Number(doc!.balance), currency: "VED",
+  });
+  await post(request, c, "/sales/applications", {
+    source_type: "PAYMENT", source_id: cobro.id, target_open_item_id: doc!.id,
+    amount: Number(doc!.balance), currency: "VED",
+  });
+
+  const elegible = await get(request, c, `/sales/devoluciones/elegibles/${factura.id}`);
+  const nota = await post(request, c, `/sales/notas/credito/${factura.id}/generar`, {
+    cause: "Devolución de mercancía",
+    lines: [{ invoice_line_id: elegible.lines[0].invoice_line_id, quantity: cantidad }],
+  });
+  const emitidaNota = await post(request, c, `/sales/notas/credito/${nota.id}/emitir`, {
+    series_id: f.series.CREDIT_NOTE, batch_id: f.batch,
+  });
+
+  return { cliente: cliente.id as string, nota: emitidaNota };
+}

@@ -2680,7 +2680,13 @@ def apply_credit_note(db: Session, *, note: SalesCreditNote, target_open_item_id
     if target.status != "OPEN":
         raise ConflictError(code="OPEN_ITEM_CLOSED", message="El documento de CxC está cerrado.")
     balance = ap_service.open_item_balance(target)
-    remaining = _dec(note.amount) - _dec(note.applied)
+    # Lo aplicable es lo emitido menos **las tres formas de gastarlo**: lo ya
+    # aplicado a documentos, lo reservado para una devolución en dinero y lo ya
+    # devuelto. Delta dirigido de la Spec 038: hasta que existió el reembolso
+    # solo había una forma, y esta resta solo contemplaba esa. Con dos, el mismo
+    # crédito podía reservarse para devolver y aplicarse a una factura.
+    remaining = (_dec(note.amount) - _dec(note.applied)
+                 - _dec(note.refund_reserved) - _dec(note.refunded))
     if aplicar > balance:
         raise ConflictError(code="APPLICATION_EXCEEDS_BALANCE", message=f"La aplicación excede el saldo ({balance}).")
     if aplicar > remaining:
@@ -2721,6 +2727,19 @@ def customer_balance(db: Session, *, company_id: str, customer_id: str) -> dict:
     saldo del cliente —eso es tener saldo a favor—; al imputarlo, baja el
     documento y baja el crédito disponible en la misma cantidad, y el neto no se
     mueve. Imputar no crea ni destruye dinero.
+
+    Con el reembolso de la Spec 038 hay **dos cifras distintas** donde antes
+    bastaba una, y confundirlas es contar el mismo dinero dos veces:
+
+    - `credit_available` es lo **imputable** a documentos. Lo reservado para
+      devolver en efectivo ya no lo es: está comprometido.
+    - el crédito que baja el saldo es lo que todavía **se debe** al cliente.
+      Una reserva sin ejecutar se sigue debiendo —solo cambió la forma en que
+      se pagará—, así que el saldo no se mueve al reservar. Se mueve al
+      ejecutar: ahí salió el dinero del banco y la deuda quedó pagada.
+
+    Antes de la 038 ambas restas coincidían porque reservado y devuelto eran
+    siempre cero; ninguna cifra ya certificada cambia de valor.
     """
     company_id = _company(company_id, obj="saldo del cliente")
     documentos = db.execute(
@@ -2736,13 +2755,16 @@ def customer_balance(db: Session, *, company_id: str, customer_id: str) -> dict:
                                       SalesCreditNote.status != "CANCELLED")).scalars().all()
     creditos = sum((_dec(n.amount) for n in notas), Decimal(0))
     credito_aplicado = sum((_dec(n.applied) for n in notas), Decimal(0))
+    credito_reservado = sum((_dec(n.refund_reserved) for n in notas), Decimal(0))
+    credito_devuelto = sum((_dec(n.refunded) for n in notas), Decimal(0))
 
     # `documentos − aplicado` es lo que queda por cobrar de los documentos. Lo
     # aplicado incluye los cobros, las retenciones y los créditos ya imputados,
     # así que al restar los créditos hay que restar **solo los no imputados**:
     # los imputados ya están dentro de `aplicado`.
     pendiente_documentos = original - aplicado
-    credito_disponible = creditos - credito_aplicado
+    credito_imputable = creditos - credito_aplicado - credito_reservado - credito_devuelto
+    credito_por_pagar = creditos - credito_aplicado - credito_devuelto
     return {
         "customer_id": str(customer_id),
         "documents": str(original),
@@ -2750,8 +2772,10 @@ def customer_balance(db: Session, *, company_id: str, customer_id: str) -> dict:
         "outstanding": str(pendiente_documentos),
         "credits": str(creditos),
         "credit_applied": str(credito_aplicado),
-        "credit_available": str(credito_disponible),
-        "balance": str(pendiente_documentos - credito_disponible),
+        "credit_refund_reserved": str(credito_reservado),
+        "credit_refunded": str(credito_devuelto),
+        "credit_available": str(credito_imputable),
+        "balance": str(pendiente_documentos - credito_por_pagar),
     }
 
 
@@ -2769,7 +2793,12 @@ def customer_credits(db: Session, *, company_id: str, customer_id: str) -> list[
         .order_by(SalesCreditNote.issued_at)).scalars().all()
     salida = []
     for n in notas:
-        disponible = _dec(n.amount) - _dec(n.applied)
+        # Lo reservado por un reembolso (Spec 038) y lo ya devuelto **no** están
+        # disponibles: son el mismo dinero. Ofrecerlos aquí sería enseñar dos
+        # veces el saldo y dejar que la pantalla intente aplicar algo que el
+        # servicio rechaza. Es la misma resta que usa el estado de cuenta.
+        disponible = (_dec(n.amount) - _dec(n.applied)
+                      - _dec(n.refund_reserved) - _dec(n.refunded))
         if disponible <= 0:
             continue
         salida.append({
@@ -2777,7 +2806,10 @@ def customer_credits(db: Session, *, company_id: str, customer_id: str) -> list[
             "control_number": n.control_number, "cause": n.cause,
             "invoice_id": str(n.invoice_id) if n.invoice_id else None,
             "currency": n.currency, "amount": str(_dec(n.amount)),
-            "applied": str(_dec(n.applied)), "available": str(disponible),
+            "applied": str(_dec(n.applied)),
+            "refund_reserved": str(_dec(n.refund_reserved)),
+            "refunded": str(_dec(n.refunded)),
+            "available": str(disponible),
             "issued_at": n.issued_at.isoformat() if n.issued_at else None,
         })
     return salida
