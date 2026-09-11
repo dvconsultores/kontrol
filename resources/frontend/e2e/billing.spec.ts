@@ -332,10 +332,17 @@ test.describe("Spec 034 — liberación y facturación", () => {
     await page.waitForURL((u) => u.pathname === "/ventas/facturacion", { timeout: 15_000 });
     await expect(page.getByRole("heading", { name: "Facturación" })).toBeVisible();
 
+    // Hay que esperar a que la cola cargue antes de mirar el paginador, y
+    // comprobar que existe: con la tabla vacía no hay paginador, y con la base
+    // recién sembrada la cola cabe en una página. `isDisabled()` sobre un botón
+    // que no existe espera hasta agotar el tiempo de la prueba.
+    await expect(page.getByRole("region", { name: /Resultados:/ })).toBeVisible({
+      timeout: 15_000,
+    });
     const fila = page.getByRole("row", { name: new RegExp(e.pedidoCode) });
+    const siguiente = page.getByRole("button", { name: "Página siguiente" });
     for (let i = 0; i < 20 && (await fila.count()) === 0; i += 1) {
-      const siguiente = page.getByRole("button", { name: "Página siguiente" });
-      if (await siguiente.isDisabled()) break;
+      if ((await siguiente.count()) === 0 || (await siguiente.isDisabled())) break;
       await siguiente.click();
       await page.waitForLoadState("networkidle");
     }

@@ -42,6 +42,20 @@ REJECTED_STATE = "RECHAZADO"
 #: Estado de retención por calidad, del que la confirmación también puede salir.
 QUARANTINE_STATE = "CUARENTENA"
 
+#: Estado de la mercancía que ya salió del almacén (Spec 035). Es el único
+#: estado terminal del que `D0-10` declara salida, y se la da a la 036.
+DISPATCHED_STATE = "DESPACHADO"
+
+#: Estado de la mercancía que volvió del cliente y todavía no se ha verificado
+#: (Spec 036). No es vendible: `R-D0-10-3` reserva eso a `DISPONIBLE`.
+RETURNED_STATE = "DEVUELTO"
+
+#: Los dos destinos que `D0-10` concede a la Spec 036 para `DEVUELTO`:
+#: «`DEVUELTO` → `DISPONIBLE` · `RECHAZADO` | 036». `CUARENTENA` entra por la
+#: resolución de incidencia de la 020 y `DESECHO` es una baja de la 025; ninguna
+#: sale de una devolución de venta.
+RETURN_DISPOSITIONS: frozenset[str] = frozenset({RELEASED_STATE, REJECTED_STATE})
+
 #: Los quince del `ADR-D0-010` §Conjunto de estados de mercancía. El orden es el
 #: del ADR: de lo que aún no llegó a lo que ya no está.
 MERCHANDISE_STATES: tuple[str, ...] = (
@@ -139,6 +153,27 @@ ACTIVE_TRANSITIONS: tuple[Transition, ...] = (
     # código muerto.
     Transition("PREPARADO", "DESPACHADO", "PHYSICAL_DEPARTURE", "035", "ventas:approve", False, False,
                "DOCX ¶104-107 «se autoriza la salida física… la mercancía sale del almacén… se registra la salida»"),
+
+    # --- Spec 036 · la devolución ------------------------------------------
+    #
+    # `DESPACHADO` es el único estado terminal del que `D0-10` declara salida, y
+    # se la asigna a esta Spec. La custodia vuelve a la empresa cuando la
+    # mercancía llega al almacén, no cuando el cliente la pide: una solicitud no
+    # mueve nada.
+    Transition("DESPACHADO", "DEVUELTO", "CUSTOMER_RETURN_RECEIPT", "036", "ventas:create", False, False,
+               "Norma §15 «Devolución de venta: Solicitud → Verificación física…»; "
+               "arquitectura funcional «Devolución: recepción, inspección y destino»"),
+
+    # Y `DEVUELTO` no es vendible: `R-D0-10-3` dice que «disponible para venta es
+    # **exclusivamente** `DISPONIBLE`». Lo que decide a dónde va cada línea es la
+    # verificación física que la norma exige antes de la entrada de inventario.
+    # Son exactamente los dos destinos que `D0-10` concede a la 036: ni
+    # cuarentena, que entra por la incidencia de la 020, ni desecho, que es una
+    # baja de la 025.
+    Transition("DEVUELTO", "DISPONIBLE", "RETURN_ACCEPTED", "036", "ventas:quality", False, False,
+               "`D0-10` «`DEVUELTO` → `DISPONIBLE` · `RECHAZADO` | 036»; norma §15 «Entrada de inventario»"),
+    Transition("DEVUELTO", "RECHAZADO", "RETURN_NOT_ACCEPTED", "036", "ventas:quality", False, False,
+               "`D0-10` «`DEVUELTO` → `DISPONIBLE` · `RECHAZADO` | 036 · requiere la inspección previa al reingreso»"),
 )
 
 _BY_PAIR: dict[tuple[str | None, str], Transition] = {

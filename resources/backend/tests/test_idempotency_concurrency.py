@@ -260,7 +260,7 @@ def test_fiscal_emit_idempotent():
         assert r.status_code == 200, r.text
     # serie + lote de control (configurar en BD fresca)
     series = _CLIENT.post("/api/v1/fiscal/number-series", headers=h,
-                          json={"document_type": "FACTURA", "prefix": "IDEM"}).json()
+                          json={"document_type": "INVOICE", "prefix": "IDEM"}).json()
     batch = _CLIENT.post("/api/v1/fiscal/control-batches", headers=h,
                          json={"range_from": "00000001", "range_to": "00001000"}).json()
     body = {"business_document": f"INVOICE:{iid}", "series_id": series["id"], "batch_id": batch["id"]}

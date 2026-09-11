@@ -1013,6 +1013,245 @@ def add_return_line(return_id: str, body: ReturnLineCreate, db: Session = Depend
 
 
 # --------------------------------------------------------------------------- #
+# Spec 036 · devoluciones, notas de crédito y notas de débito
+#
+# El orden de la norma, un endpoint por acto: «Solicitud → Verificación física →
+# Aprobación → Entrada de inventario → Nota de crédito vinculada». No se fusionan
+# porque no son lo mismo: una solicitud no mueve inventario y recibir la
+# mercancía no la hace vendible.
+# --------------------------------------------------------------------------- #
+class ReturnRequestLine(BaseModel):
+    invoice_line_id: str
+    base_quantity: float = Field(gt=0)
+    quantity: float | None = None
+    condition: str = "DEFECTUOSO"
+    lot_id: str | None = None
+    serial_id: str | None = None
+
+
+class ReturnRequestBody(BaseModel):
+    code: str = Field(min_length=1, max_length=64)
+    invoice_id: str
+    reason: str = Field(min_length=3, max_length=2000)
+    warehouse_id: str | None = None
+    lines: list[ReturnRequestLine] = Field(min_length=1)
+
+
+class ReturnReceiveBody(BaseModel):
+    location_id: str
+
+
+class ReturnInspectLine(BaseModel):
+    return_line_id: str
+    #: `DISPONIBLE` o `RECHAZADO`. El backend lo comprueba contra `D0-10`: el
+    #: cliente no elige el estado de mercancía.
+    disposition: str
+    accepted_base_quantity: float | None = None
+    note: str | None = None
+
+
+class ReturnInspectBody(BaseModel):
+    lines: list[ReturnInspectLine] = Field(min_length=1)
+
+
+class ReturnDecisionBody(BaseModel):
+    approved: bool
+    reason: str | None = None
+
+
+class NoteLineBody(BaseModel):
+    invoice_line_id: str
+    quantity: float = Field(gt=0)
+
+
+class CreditNoteBody(BaseModel):
+    cause: str = Field(min_length=3, max_length=2000)
+    return_id: str | None = None
+    lines: list[NoteLineBody] = Field(min_length=1)
+
+
+class DebitNoteLineBody(BaseModel):
+    concept: str = Field(min_length=1, max_length=2000)
+    base_fiscal: float = Field(gt=0)
+    invoice_line_id: str | None = None
+
+
+class DebitNoteBody(BaseModel):
+    cause: str = Field(min_length=3, max_length=2000)
+    lines: list[DebitNoteLineBody] = Field(min_length=1)
+
+
+class NoteIssueBody(BaseModel):
+    series_id: str
+    batch_id: str
+
+
+@router.get("/devoluciones/elegibles/{invoice_id}")
+def return_eligibility(invoice_id: str, db: Session = Depends(get_db),
+                       user: User = Depends(require_permission("ventas", "view")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    """Qué se puede devolver de una factura y cuánto queda. Lo calcula el backend."""
+    return sales_service.return_eligibility(db, company_id=ctx.company_id, invoice_id=invoice_id)
+
+
+@router.get("/devoluciones")
+def list_sales_returns(status: str | None = None, db: Session = Depends(get_db),
+                       user: User = Depends(require_permission("ventas", "view")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    consulta = select(SalesReturn).where(SalesReturn.company_id == ctx.company_id)
+    if status:
+        consulta = consulta.where(SalesReturn.status == status)
+    items = db.execute(consulta.order_by(SalesReturn.created_at.desc())).scalars().all()
+    return {"items": [sales_service.return_dict(db, r) for r in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.get("/devoluciones/{return_id}")
+def get_sales_return(return_id: str, db: Session = Depends(get_db),
+                     user: User = Depends(require_permission("ventas", "view")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    devolucion = _owned(db, SalesReturn, return_id, ctx.company_id,
+                        "SALES_RETURN_NOT_FOUND", "Devolución no encontrada")
+    return sales_service.return_dict(db, devolucion)
+
+
+@router.post("/devoluciones", dependencies=[Depends(require_write_allowed)])
+def request_sales_return(body: ReturnRequestBody, db: Session = Depends(get_db),
+                         actor: User = Depends(require_permission("ventas", "create")),
+                         ctx: CompanyContext = Depends(get_company_context)):
+    devolucion = sales_service.request_return(
+        db, company_id=ctx.company_id, code=body.code, invoice_id=body.invoice_id,
+        reason=body.reason, warehouse_id=body.warehouse_id,
+        lines=[x.model_dump() for x in body.lines], actor=str(actor.id))
+    db.commit()
+    db.refresh(devolucion)
+    return sales_service.return_dict(db, devolucion)
+
+
+@router.post("/devoluciones/{return_id}/recibir", dependencies=[Depends(require_write_allowed)])
+def receive_sales_return(return_id: str, body: ReturnReceiveBody, db: Session = Depends(get_db),
+                         actor: User = Depends(require_permission("ventas", "create")),
+                         ctx: CompanyContext = Depends(get_company_context)):
+    """La custodia vuelve a la empresa. **No** la hace vendible."""
+    devolucion = sales_service.receive_return(db, company_id=ctx.company_id, return_id=return_id,
+                                              location_id=body.location_id, actor=str(actor.id))
+    db.commit()
+    db.refresh(devolucion)
+    return sales_service.return_dict(db, devolucion)
+
+
+@router.post("/devoluciones/{return_id}/verificar", dependencies=[Depends(require_write_allowed)])
+def inspect_sales_return(return_id: str, body: ReturnInspectBody, db: Session = Depends(get_db),
+                         actor: User = Depends(require_permission("ventas", "quality")),
+                         ctx: CompanyContext = Depends(get_company_context)):
+    devolucion = sales_service.inspect_return(db, company_id=ctx.company_id, return_id=return_id,
+                                              lines=[x.model_dump() for x in body.lines],
+                                              actor=str(actor.id))
+    db.commit()
+    db.refresh(devolucion)
+    return sales_service.return_dict(db, devolucion)
+
+
+@router.post("/devoluciones/{return_id}/decidir", dependencies=[Depends(require_write_allowed)])
+def decide_sales_return(return_id: str, body: ReturnDecisionBody, db: Session = Depends(get_db),
+                        actor: User = Depends(require_permission("ventas", "approve")),
+                        ctx: CompanyContext = Depends(get_company_context)):
+    devolucion = sales_service.decide_return(db, company_id=ctx.company_id, return_id=return_id,
+                                             approved=body.approved, reason=body.reason,
+                                             actor=str(actor.id))
+    db.commit()
+    db.refresh(devolucion)
+    return sales_service.return_dict(db, devolucion)
+
+
+@router.post("/devoluciones/{return_id}/reingresar", dependencies=[Depends(require_write_allowed)])
+def reenter_sales_return(return_id: str, db: Session = Depends(get_db),
+                         actor: User = Depends(require_permission("ventas", "quality")),
+                         ctx: CompanyContext = Depends(get_company_context)):
+    """«Entrada de inventario»: el cuarto acto, y el único que crea existencia."""
+    devolucion = sales_service.reenter_return(db, company_id=ctx.company_id, return_id=return_id,
+                                              actor=str(actor.id))
+    db.commit()
+    db.refresh(devolucion)
+    return sales_service.return_dict(db, devolucion)
+
+
+@router.get("/notas/acreditable/{invoice_id}")
+def credit_eligibility(invoice_id: str, db: Session = Depends(get_db),
+                       user: User = Depends(require_permission("ventas", "view")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    """Cuánto queda por acreditar: «no ajustar por encima de lo pendiente»."""
+    return sales_service.credit_eligibility(db, company_id=ctx.company_id, invoice_id=invoice_id)
+
+
+@router.post("/notas/credito/{invoice_id}/generar", dependencies=[Depends(require_write_allowed)])
+def generate_sales_credit_note(invoice_id: str, body: CreditNoteBody, db: Session = Depends(get_db),
+                               actor: User = Depends(require_permission("ventas", "create")),
+                               ctx: CompanyContext = Depends(get_company_context)):
+    nota = sales_service.generate_credit_note(
+        db, company_id=ctx.company_id, invoice_id=invoice_id, cause=body.cause,
+        return_id=body.return_id, lines=[x.model_dump() for x in body.lines], actor=str(actor.id))
+    db.commit()
+    db.refresh(nota)
+    return sales_service.credit_note_dict(db, nota)
+
+
+@router.post("/notas/credito/{note_id}/emitir", dependencies=[Depends(require_write_allowed)])
+def issue_sales_credit_note(note_id: str, body: NoteIssueBody, db: Session = Depends(get_db),
+                            actor: User = Depends(require_permission("ventas", "approve")),
+                            ctx: CompanyContext = Depends(get_company_context)):
+    """El consecutivo y el número de control los da la 042, no esta pantalla."""
+    nota = sales_service.issue_credit_note(db, company_id=ctx.company_id, note_id=note_id,
+                                           series_id=body.series_id, batch_id=body.batch_id,
+                                           actor=str(actor.id))
+    db.commit()
+    db.refresh(nota)
+    return sales_service.credit_note_dict(db, nota)
+
+
+@router.get("/notas/credito/{note_id}")
+def get_sales_credit_note(note_id: str, db: Session = Depends(get_db),
+                          user: User = Depends(require_permission("ventas", "view")),
+                          ctx: CompanyContext = Depends(get_company_context)):
+    nota = _owned(db, SalesCreditNote, note_id, ctx.company_id,
+                  "CREDIT_NOTE_NOT_FOUND", "Nota de crédito no encontrada")
+    return sales_service.credit_note_dict(db, nota)
+
+
+@router.post("/notas/debito/{invoice_id}/generar", dependencies=[Depends(require_write_allowed)])
+def generate_sales_debit_note(invoice_id: str, body: DebitNoteBody, db: Session = Depends(get_db),
+                              actor: User = Depends(require_permission("ventas", "create")),
+                              ctx: CompanyContext = Depends(get_company_context)):
+    nota = sales_service.generate_debit_note(
+        db, company_id=ctx.company_id, invoice_id=invoice_id, cause=body.cause,
+        lines=[x.model_dump() for x in body.lines], actor=str(actor.id))
+    db.commit()
+    db.refresh(nota)
+    return sales_service.debit_note_dict(db, nota)
+
+
+@router.post("/notas/debito/{note_id}/emitir", dependencies=[Depends(require_write_allowed)])
+def issue_sales_debit_note(note_id: str, body: NoteIssueBody, db: Session = Depends(get_db),
+                           actor: User = Depends(require_permission("ventas", "approve")),
+                           ctx: CompanyContext = Depends(get_company_context)):
+    nota = sales_service.issue_debit_note(db, company_id=ctx.company_id, note_id=note_id,
+                                          series_id=body.series_id, batch_id=body.batch_id,
+                                          actor=str(actor.id))
+    db.commit()
+    db.refresh(nota)
+    return sales_service.debit_note_dict(db, nota)
+
+
+@router.get("/notas/debito/{note_id}")
+def get_sales_debit_note(note_id: str, db: Session = Depends(get_db),
+                         user: User = Depends(require_permission("ventas", "view")),
+                         ctx: CompanyContext = Depends(get_company_context)):
+    nota = _owned(db, SalesDebitNote, note_id, ctx.company_id,
+                  "DEBIT_NOTE_NOT_FOUND", "Nota de débito no encontrada")
+    return sales_service.debit_note_dict(db, nota)
+
+
+# --------------------------------------------------------------------------- #
 # CxC (reutiliza el motor de 004)
 # --------------------------------------------------------------------------- #
 @router.get("/open-items")

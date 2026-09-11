@@ -13,7 +13,7 @@
 | DF-09 | Confirmación de pedido | 8 | 8 | — **cerrado 2026-09-06** | 033 |
 | DF-10 | Liberación y facturación | 9 | 9 | — **cerrado 2026-09-06** | 034 |
 | DF-11 | Despacho | 6 | 6 | — **cerrado 2026-09-07** | 035 |
-| DF-12 | Devolución de venta | 6 | 4 | Inspección previa al reingreso | 036 |
+| DF-12 | Devolución de venta | 6 | 6 | — **cerrado 2026-09-11** | 036 |
 | DF-13 | Retenciones | 7 | 4 | Conceptos ISLR cargados; enteramiento | 040 |
 | DF-14 | Aprobaciones transversales | 8 | 3 | Bandeja única y delegación | 045 |
 | DF-15 | Notificaciones y tareas | 6 | 0 | Toda la cadena | 047 |
@@ -43,6 +43,9 @@ De las **135 etapas** de proceso documentadas, **68 están cubiertas (50 %)**.
 La deuda se concentra en dos tramos contiguos:
 
 - **Entrada de mercancía** (DF-01, DF-02, DF-04, DF-05): 50 etapas exigidas, **40 cubiertas (80 %)**.
+- **Post-venta** (DF-12): 6 etapas exigidas, **6 cubiertas (100 %)**, cerradas por la Spec 036
+  el 2026-09-11: solicitud, verificación física, aprobación, entrada de inventario, nota vinculada
+  y ajuste de la cuenta por cobrar. La autoridad estaba en las normas, no en el proceso del pedido.
 - **Salida de mercancía** (DF-07 a DF-11): 45 etapas exigidas, **45 cubiertas (100 %)**. Las
   dos que faltaban eran de DF-11 y las cerró la Spec 035 el 2026-09-07: la verificación real de
   «preparado + confirmado + facturado» —que hasta ese día aprobaba siempre— y el registro de la

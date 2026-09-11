@@ -956,6 +956,126 @@ export interface OrderDispatchStatus {
   shipment: Dispatch | null;
 }
 
+/**
+ * Spec 036 · lo que se puede devolver de una factura.
+ *
+ * El tope no lo calcula la pantalla: «no ajustar por encima de cantidades/base/
+ * IVA pendientes del original» es una resta que solo el backend, que ve todas
+ * las devoluciones, puede hacer.
+ */
+export interface ReturnEligibilityLine {
+  invoice_line_id: string;
+  product_id: string;
+  quantity: string;
+  dispatched_base_quantity: string;
+  returned_base_quantity: string;
+  returnable_base_quantity: string;
+  presentation_id: string | null;
+  conversion_factor_snapshot: string | null;
+}
+
+export interface ReturnEligibility {
+  invoice_id: string;
+  invoice_status: string;
+  invoice_number: string | null;
+  control_number: string | null;
+  order_id: string | null;
+  customer_id: string;
+  shipment_id: string | null;
+  dispatched: boolean;
+  lines: ReturnEligibilityLine[];
+}
+
+export interface SalesReturnLine {
+  id: string;
+  product_id: string;
+  invoice_line_id: string | null;
+  quantity: string;
+  base_quantity: string;
+  accepted_base_quantity: string | null;
+  /** `DISPONIBLE` o `RECHAZADO`; nulo mientras nadie haya verificado. */
+  disposition: string | null;
+  condition: string;
+  lot_id: string | null;
+  serial_id: string | null;
+  presentation_id: string | null;
+  conversion_factor_snapshot: string | null;
+}
+
+export interface SalesReturnDetail {
+  id: string;
+  code: string;
+  status: string;
+  status_reason: string | null;
+  reason: string;
+  invoice_id: string | null;
+  order_id: string | null;
+  shipment_id: string | null;
+  customer_id: string | null;
+  warehouse_id: string | null;
+  location_id: string | null;
+  requested_at: string | null;
+  received_at: string | null;
+  inspected_at: string | null;
+  approved_at: string | null;
+  reentered_at: string | null;
+  lines: SalesReturnLine[];
+}
+
+export interface CreditEligibilityLine {
+  invoice_line_id: string;
+  product_id: string;
+  quantity: string;
+  credited_quantity: string;
+  creditable_quantity: string;
+  unit_price: string;
+  base_fiscal: string;
+  tax_amount: string;
+}
+
+export interface CreditEligibility {
+  invoice_id: string;
+  invoice_status: string;
+  invoice_number: string | null;
+  control_number: string | null;
+  issued_at: string | null;
+  customer_id: string;
+  currency: string;
+  creditable: boolean;
+  lines: CreditEligibilityLine[];
+}
+
+export interface SalesNoteLine {
+  invoice_line_id: string | null;
+  product_id: string | null;
+  quantity?: string;
+  unit_price?: string;
+  base_quantity?: string | null;
+  concept?: string;
+  base_fiscal: string;
+  tax_amount: string;
+  total: string;
+}
+
+export interface SalesNote {
+  id: string;
+  status: string;
+  cause: string | null;
+  invoice_id: string | null;
+  return_id?: string | null;
+  customer_id: string;
+  currency: string;
+  base_fiscal: string;
+  tax_total: string;
+  total: string;
+  applied?: string;
+  invoice_number: string | null;
+  control_number: string | null;
+  fiscal_document_id: string | null;
+  issued_at: string | null;
+  lines: SalesNoteLine[];
+}
+
 export interface PickingPlan {
   id: string;
   code: string;

@@ -705,3 +705,70 @@ una reserva ya `FULFILLED`. Decirlas resueltas sería inventarlas.
 
 Implementación de la 036 **no iniciada**: requiere su propio ciclo, con su
 `/speckit.clarify` sobre esas cuatro y autorización expresa.
+
+---
+
+## Tras la implementación de la Spec 036 — 2026-09-11
+
+`SPEC 036 — COMPLETE / CONVERGED`. Backend 1279/1271 con los 8 saltos S3
+esperados, guardias de arquitectura 128/128, frontend 295/295, e2e propia 36/36
+en los tres navegadores y la cadena operativa completa 162/162. Migración `0054`
+con ida y vuelta sobre base limpia. DF-12 cierra 6/6.
+
+**La 036 entró con cuatro preguntas materiales abiertas y una razón declarada
+para no poder cerrarlas. La razón era falsa.** Al converger la 035 quedó escrito
+que el proceso fuente «termina en el ¶107 y no dice nada del reingreso». Lo
+primero es cierto; lo segundo no. Ese documento describe *un* proceso, no todos,
+y la devolución tiene autoridad de nivel más alto: las normas la escriben entera.
+
+> Devolución de venta: Solicitud → Verificación física → Aprobación → **Entrada
+> de inventario** → Nota de crédito vinculada → Ajuste de IVA → Ajuste de cuenta
+> por cobrar → Registro en libro de ventas.
+
+De ahí salen las cuatro respuestas sin decidir nada: el inventario es el **cuarto**
+acto y no el primero; la verificación va antes y tiene dos destinos, los que
+`D0-10` concede; la nota va **después** y **vinculada**, porque «la devolución
+física no sustituye una nota de crédito»; y la reserva no se toca, porque `D0-03`
+dice «re-reservar tras liberar = nueva fila, nunca reactivación» y `FULFILLED` no
+es siquiera una liberación sino un consumo.
+
+La lección de este ciclo no es sobre devoluciones: **«no hay autoridad» hay que
+demostrarlo buscándola, no deduciéndolo de que un documento no la tenga.** El
+manual de Saint, con treinta y nueve menciones al asunto, no se usó: la matriz de
+autoridad lo deja en el nivel 8, no vinculante. La autoridad estaba en el nivel 1.
+
+Tres hallazgos que **solo la regresión completa** vio, y ninguno se silenció: una
+prueba que creaba la serie fiscal como `"FACTURA"` y emitía un `INVOICE:` —el
+guardia nuevo la destapó, y `"FACTURA"` estaba en un solo sitio del repositorio—;
+`updated_at` anulable en mi migración y obligatoria en el ORM; y el catálogo de
+estados de mercancía empezando a replicarse en ventas al añadir `DEVUELTO`.
+
+Y dos defectos ajenos, medidos y arreglados en su dueña. El motor fiscal de la
+**042** tenía el tipo de documento escrito a mano y solo sabía emitir facturas,
+aunque su modelo declaraba los tres desde el principio. Y `issue_invoice` de la
+**034** **nunca creaba la cuenta por cobrar**: «9. Emitir factura → 10. Crear
+CxC» solo ocurría por el camino heredado, así que toda factura emitida por el
+proceso real nacía sin documento que cobrar. Llevaba así desde su convergencia y
+ninguna prueba lo veía porque ninguna llegaba a cobrar una factura emitida por
+ese camino. Se descubrió al aplicarle una nota y no encontrar nada que ajustar.
+
+`NEXT SPEC = 037 — CUENTAS POR COBRAR`
+
+Recibe el efecto financiero ya conectado: la factura abre su documento por
+cobrar al emitirse, la nota de crédito lo reduce y la de débito crea el suyo
+propio. Y recibe una pregunta que la 036 **no** decidió y le corresponde: qué
+pasa con un crédito a favor cuando la nota se emite sobre una factura ya cobrada.
+La norma no condiciona la nota a que la factura esté pendiente, así que la nota
+se emite y queda sin aplicar; imputarla a otra factura o devolverla es de CxC y
+de tesorería.
+
+Sigue abierta, sin bloquear a nadie, la deuda de la Spec 032 —un pedido rechazado
+queda en `PREPARING` sin camino de vuelta— y la del selector de almacén en ocho
+pantallas del módulo de organización.
+
+Y queda dicho otra vez que **la emisión no está legalmente homologada**: `D0-07`
+sigue abierto y las Specs 039-043 en `BLOCKED_BY_LEGAL_VALIDATION`. Esto vale
+igual para la nota de crédito y la de débito que para la factura.
+
+Implementación de la 037 **no iniciada**: requiere su propio ciclo con
+autorización expresa.

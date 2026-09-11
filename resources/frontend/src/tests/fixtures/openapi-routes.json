@@ -1526,6 +1526,38 @@
     },
     {
       "method": "GET",
+      "path": "/sales/devoluciones"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/devoluciones"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/devoluciones/elegibles/{invoice_id}"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/devoluciones/{return_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/devoluciones/{return_id}/decidir"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/devoluciones/{return_id}/recibir"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/devoluciones/{return_id}/reingresar"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/devoluciones/{return_id}/verificar"
+    },
+    {
+      "method": "GET",
       "path": "/sales/facturacion/pendientes"
     },
     {
@@ -1559,6 +1591,34 @@
     {
       "method": "POST",
       "path": "/sales/invoices/{invoice_id}/transition"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/notas/acreditable/{invoice_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/notas/credito/{invoice_id}/generar"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/notas/credito/{note_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/notas/credito/{note_id}/emitir"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/notas/debito/{invoice_id}/generar"
+    },
+    {
+      "method": "GET",
+      "path": "/sales/notas/debito/{note_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/sales/notas/debito/{note_id}/emitir"
     },
     {
       "method": "GET",

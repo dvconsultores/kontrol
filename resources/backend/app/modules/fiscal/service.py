@@ -281,6 +281,22 @@ def _canonical_hash(*parts: object) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+#: Lo que este motor sabe emitir. Es el mismo trío que `FiscalDocument`
+#: declaraba en su comentario desde el principio.
+EMITTABLE_DOCUMENT_TYPES: frozenset[str] = frozenset({"INVOICE", "CREDIT_NOTE", "DEBIT_NOTE"})
+
+
+def _resolve_note_currency(db: Session, company_id: str, tipo: str, note_id: str) -> str:
+    """La moneda de la nota, leída de la nota y acotada por empresa."""
+    from app.modules.sales.models import SalesCreditNote, SalesDebitNote
+
+    modelo = SalesCreditNote if tipo == "CREDIT_NOTE" else SalesDebitNote
+    nota = db.get(modelo, note_id)
+    if nota is None or str(nota.company_id) != str(company_id):
+        raise NotFoundError(code="NOTE_NOT_FOUND", message="Nota no encontrada")
+    return nota.currency or "VED"
+
+
 def emit_document(db: Session, *, company_id: str, business_document: str, series_id: str,
                   batch_id: str, actor: str | None = None) -> dict:
     """Emite un documento fiscal: consume correlativo y control en transacción atómica (FR-007-020).
@@ -296,21 +312,43 @@ def emit_document(db: Session, *, company_id: str, business_document: str, serie
                 "invoice_number": existing.invoice_number, "control_number": existing.control_number,
                 "hash": existing.hash, "status": existing.status}
 
-    if not business_document.startswith("INVOICE:"):
-        raise KontrolError(code="INVALID_BUSINESS_DOCUMENT", message="El documento debe ser INVOICE:{id}", status_code=422)
-    invoice_id = business_document.split(":", 1)[1]
-    invoice = _resolve_invoice(db, company_id, invoice_id)
+    # Delta dirigido de la Spec 036. El modelo declaraba desde el principio
+    # «INVOICE / CREDIT_NOTE / DEBIT_NOTE» y este motor solo sabía emitir el
+    # primero: el tipo estaba escrito a mano más abajo. La norma exige que la
+    # nota de crédito y la de débito tengan «consecutivo propio» y «número de
+    # control», y sin esto la 036 habría tenido que numerar por su cuenta, que
+    # es exactamente lo que la Spec 042 existe para impedir.
+    tipo = business_document.split(":", 1)[0]
+    if tipo not in EMITTABLE_DOCUMENT_TYPES or ":" not in business_document:
+        raise KontrolError(
+            code="INVALID_BUSINESS_DOCUMENT",
+            message="El documento debe ser {tipo}:{id} con tipo emitible.",
+            details={"allowed": sorted(EMITTABLE_DOCUMENT_TYPES)}, status_code=422)
+    referencia_id = business_document.split(":", 1)[1]
+    fiscal_currency_default = "VED"
+    if tipo == "INVOICE":
+        invoice = _resolve_invoice(db, company_id, referencia_id)
+        fiscal_currency_default = getattr(invoice, "base_fiscal_currency", "VED") or "VED"
+    else:
+        fiscal_currency_default = _resolve_note_currency(db, company_id, tipo, referencia_id)
 
+    serie_previa = db.get(FiscalNumberSeries, series_id)
+    if serie_previa is not None and serie_previa.document_type != tipo:
+        raise KontrolError(
+            code="SERIES_DOCUMENT_TYPE_MISMATCH",
+            message="La serie no corresponde al tipo de documento que se emite.",
+            details={"series_document_type": serie_previa.document_type, "document_type": tipo},
+            status_code=422)
     number = reserve_number(db, company_id=company_id, series_id=series_id)
     control = assign_control(db, company_id=company_id, batch_id=batch_id)
     use_control(db, control_id=str(control.id), document_ref=business_document)
     series = db.get(FiscalNumberSeries, series_id)
     series_prefix = series.prefix if series else None
 
-    fiscal_currency = getattr(invoice, "base_fiscal_currency", "VED") or "VED"
+    fiscal_currency = fiscal_currency_default
     emitted_at = datetime.now(UTC)
     doc = FiscalDocument(company_id=company_id, business_document=business_document,
-                         document_type="INVOICE", fiscal_mode="DIGITAL", series=series_prefix,
+                         document_type=tipo, fiscal_mode="DIGITAL", series=series_prefix,
                          invoice_number=number, control_number=control.value, fiscal_currency=fiscal_currency,
                          exchange_rate_snapshot=1.0, emitted_at=emitted_at, status="EMITTED",
                          created_by=actor)

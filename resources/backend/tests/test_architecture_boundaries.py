@@ -26,7 +26,7 @@ from tests.spec_blocks import bloque_de_spec, cuerpo_de_ruta, cuerpo_de_simbolo
 
 TESTS = Path(__file__).resolve().parent
 RAIZ = TESTS.parent / "app"
-TRAMO = ("031", "032", "033", "034", "035")
+TRAMO = ("031", "032", "033", "034", "035", "036")
 GUARDIAS = [TESTS / f"test_spec{n}_architecture.py" for n in TRAMO]
 
 #: Una fuente de mentira con la forma exacta del defecto: dos Specs seguidas y,

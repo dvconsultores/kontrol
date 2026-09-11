@@ -550,6 +550,51 @@ class SalesCreditNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
 
+    # --- Documento fiscal (Spec 036) ---------------------------------------
+    #: La norma exige «consecutivo propio», «número de control» y «referenciar la
+    #: factura original». `number` seguía siendo un parámetro de quien llamaba:
+    #: cualquiera podía escribir el que quisiera.
+    invoice_id: Mapped[str | None] = mapped_column(ForeignKey("sales_invoices.id"), nullable=True,
+                                                   index=True)
+    fiscal_document_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    invoice_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    control_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    #: «Indicar el motivo». La norma enumera casos «entre otros», así que el
+    #: motivo se exige y no se encierra en un conjunto cerrado que la propia
+    #: norma declara abierto.
+    cause: Mapped[str | None] = mapped_column(Text, nullable=True)
+    base_fiscal: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    tax_total: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    issued_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    #: La devolución que la origina, cuando la hay. Anulable a propósito: la
+    #: norma lista causas que no traen mercancía de vuelta —descuento posterior,
+    #: corrección de precio, bonificación— y el documento maestro dice que «la
+    #: devolución física no sustituye una nota de crédito».
+    return_id: Mapped[str | None] = mapped_column(ForeignKey("sales_returns.id"), nullable=True)
+
+
+class SalesCreditNoteLine(UUIDMixin, TimestampMixin, Base):
+    """Lo que la nota ajusta, línea a línea contra la factura original."""
+
+    __tablename__ = "sales_credit_note_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "note_id → sales_credit_notes"
+
+    note_id: Mapped[str] = mapped_column(ForeignKey("sales_credit_notes.id"), nullable=False, index=True)
+    invoice_line_id: Mapped[str | None] = mapped_column(ForeignKey("sales_invoice_lines.id"), nullable=True)
+    product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    unit_price: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
+    base_fiscal: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    tax_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    total: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+
+    uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
+    presentation_id: Mapped[str | None] = mapped_column(ForeignKey("presentations.id"), nullable=True)
+    conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+
 
 class SalesDebitNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "sales_debit_notes"
@@ -563,6 +608,46 @@ class SalesDebitNote(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
 
+    # --- Documento fiscal (Spec 036) ---------------------------------------
+    #: La norma exige «consecutivo propio», «número de control» y «referenciar la
+    #: factura original». `number` seguía siendo un parámetro de quien llamaba:
+    #: cualquiera podía escribir el que quisiera.
+    invoice_id: Mapped[str | None] = mapped_column(ForeignKey("sales_invoices.id"), nullable=True,
+                                                   index=True)
+    fiscal_document_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    invoice_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    control_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    #: «Indicar el motivo». La norma enumera casos «entre otros», así que el
+    #: motivo se exige y no se encierra en un conjunto cerrado que la propia
+    #: norma declara abierto.
+    cause: Mapped[str | None] = mapped_column(Text, nullable=True)
+    base_fiscal: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    tax_total: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    issued_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class SalesDebitNoteLine(UUIDMixin, TimestampMixin, Base):
+    """Los conceptos que la nota agrega.
+
+    No lleva cantidad de inventario: el flujo del cargo posterior —
+    «Identificación del concepto → Aprobación → Nota de débito vinculada →
+    Ajuste de base e IVA → Cuenta por cobrar → Registro fiscal»— no tiene una
+    sola etapa física.
+    """
+
+    __tablename__ = "sales_debit_note_lines"
+    __scope__ = Scope.COMPANY
+    __scope_authority__ = "note_id → sales_debit_notes"
+
+    note_id: Mapped[str] = mapped_column(ForeignKey("sales_debit_notes.id"), nullable=False, index=True)
+    invoice_line_id: Mapped[str | None] = mapped_column(ForeignKey("sales_invoice_lines.id"), nullable=True)
+    product_id: Mapped[str | None] = mapped_column(ForeignKey("catalog_items.id"), nullable=True)
+    concept: Mapped[str] = mapped_column(Text, nullable=False)
+    base_fiscal: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    tax_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    total: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+
 
 class SalesReturn(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "sales_returns"
@@ -574,18 +659,63 @@ class SalesReturn(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     condition: Mapped[str] = mapped_column(String(32), nullable=False, default="DEFECTUOSO")
     inventory_destination: Mapped[str] = mapped_column(String(32), nullable=False, default="CUARENTENA")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
+    status_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # --- Procedencia (Spec 036) -------------------------------------------
+    #: De qué venta viene. `source_document` era texto libre: no permitía saber
+    #: cuánto se despachó ni cuánto queda por devolver, que es justo lo que la
+    #: regla de integridad exige comparar.
+    customer_id: Mapped[str | None] = mapped_column(ForeignKey("parties.id"), nullable=True)
+    invoice_id: Mapped[str | None] = mapped_column(ForeignKey("sales_invoices.id"), nullable=True,
+                                                   index=True)
+    shipment_id: Mapped[str | None] = mapped_column(ForeignKey("shipments.id"), nullable=True)
+    order_id: Mapped[str | None] = mapped_column(ForeignKey("sales_orders.id"), nullable=True)
+    #: A dónde vuelve físicamente. La mercancía devuelta no se queda en ninguna
+    #: parte: entra a un almacén y a una ubicación reales.
+    warehouse_id: Mapped[str | None] = mapped_column(ForeignKey("warehouses.id"), nullable=True)
+    location_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_locations.id"), nullable=True)
+
+    # --- Los actos del flujo (norma §15) -----------------------------------
+    #: «Solicitud → Verificación física → Aprobación → Entrada de inventario».
+    #: Cada uno con quién y cuándo, porque un proceso sin huella no es control.
+    requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    requested_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    received_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    received_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    inspected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    inspected_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    approved_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    reentered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reentered_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
 
 class SalesReturnLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "sales_return_lines"
     __scope__ = Scope.COMPANY
     __scope_authority__ = "return_id → sales_returns"
-    __table_args__ = (Index("ix_sales_return_lines_uom_id", "uom_id"),)
+    __table_args__ = (
+        Index("ix_sales_return_lines_uom_id", "uom_id"),
+        CheckConstraint("disposition IS NULL OR disposition IN ('DISPONIBLE', 'RECHAZADO')",
+                        name="ck_sales_return_lines_disposition"),
+    )
 
     return_id: Mapped[str] = mapped_column(ForeignKey("sales_returns.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     condition: Mapped[str] = mapped_column(String(32), nullable=False, default="DEFECTUOSO")
+
+    # --- Procedencia e inspección (Spec 036) -------------------------------
+    #: Contra qué línea de la factura. Sin ella no hay «cuánto queda».
+    invoice_line_id: Mapped[str | None] = mapped_column(ForeignKey("sales_invoice_lines.id"),
+                                                        nullable=True)
+    lot_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    serial_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    #: Lo que la inspección acepta, que puede ser menos que lo recibido.
+    accepted_base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    #: `D0-10` concede a la 036 exactamente dos destinos para `DEVUELTO`.
+    disposition: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    inspection_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # --- Semántica de unidad (Spec 011, R-D0-09-1) ---
     uom_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)

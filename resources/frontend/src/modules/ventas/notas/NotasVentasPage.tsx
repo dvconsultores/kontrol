@@ -1,221 +1,319 @@
-/** Notas de venta — crédito y débito, posteo y aplicación a CxC (FR-005-050/051, WF-05). */
+/**
+ * Notas de crédito y de débito — Spec 036.
+ *
+ * «La devolución física **no sustituye** una nota de crédito». Por eso esta
+ * pantalla existe aparte de la de devoluciones: aceptar una devolución no emite
+ * ninguna nota, y una nota puede no tener devolución detrás. La norma enumera
+ * sus causas y solo dos traen mercancía de vuelta; las otras —descuento
+ * posterior, bonificación, corrección de un precio facturado en exceso— no
+ * mueven una sola unidad.
+ *
+ * Lo que no se decide aquí: el impuesto, que se reparte del que la factura ya
+ * lleva; el tope, que es lo pendiente del original; y la numeración, que es del
+ * motor fiscal. La pantalla no calcula ninguno de los tres.
+ */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
-import { apiFetch } from "@/api/client";
-import type { CreditNoteSummary, DebitNoteSummary, OpenItem, PagedResult, Party } from "@/api/types";
+import { ApiError, apiFetch } from "@/api/client";
+import type { CreditEligibility, SalesNote } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
-import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
-import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { PageContent } from "@/layout/PageContent";
 
-const creditHelper = createColumnHelper<CreditNoteSummary>();
-const debitHelper = createColumnHelper<DebitNoteSummary>();
+/** Las que la norma enumera. Dice «entre otros casos», así que no es una lista
+ *  cerrada: se ofrecen y se admite escribir otra. */
+const CAUSAS_CREDITO = [
+  "Devolución de mercancía",
+  "Anulación de una operación",
+  "Descuento posterior",
+  "Bonificación posterior",
+  "Corrección de un precio facturado en exceso",
+  "Disminución de cantidad",
+  "Devolución de envases o depósitos",
+  "Reversión total o parcial de una prestación",
+];
+
+const CAUSAS_DEBITO = [
+  "Diferencia de precio",
+  "Incremento de cantidad",
+  "Flete posterior gravado",
+  "Intereses o recargos",
+  "Corrección de una base imponible inferior",
+];
+
+const SELECT =
+  "h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900";
+
+function corto(id: string): string {
+  return `${id.slice(0, 8)}…`;
+}
 
 export function NotasVentasPage(): React.JSX.Element {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   const { notify } = useNotifications();
+  const [facturaId, setFacturaId] = useState("");
+  const [tipo, setTipo] = useState<"CREDITO" | "DEBITO">("CREDITO");
+  const [causa, setCausa] = useState(CAUSAS_CREDITO[0]);
+  const [cantidades, setCantidades] = useState<Record<string, string>>({});
+  const [concepto, setConcepto] = useState("");
+  const [monto, setMonto] = useState("");
+  const [nota, setNota] = useState<SalesNote | null>(null);
+  const [serie, setSerie] = useState("");
+  const [lote, setLote] = useState("");
 
-  const [noteType, setNoteType] = useState<"CREDIT" | "DEBIT">("CREDIT");
-  const [newCustomer, setNewCustomer] = useState("");
-  const [newNumber, setNewNumber] = useState("");
-  const [newAmount, setNewAmount] = useState("");
-  const [newInvoiceRef, setNewInvoiceRef] = useState("");
-  const [applyNoteId, setApplyNoteId] = useState("");
-  const [applyOpenItem, setApplyOpenItem] = useState("");
-  const [applyAmount, setApplyAmount] = useState("");
-
-  const creditNotes = useQuery({
-    queryKey: ["ventas", "credit-notes"],
-    queryFn: () => apiFetch<{ items: CreditNoteSummary[] }>("/sales/credit-notes"),
-    retry: false,
-  });
-  const debitNotes = useQuery({
-    queryKey: ["ventas", "debit-notes"],
-    queryFn: () => apiFetch<{ items: DebitNoteSummary[] }>("/sales/debit-notes"),
-    retry: false,
-  });
-  const customers = useQuery({
-    queryKey: ["maestros", "terceros"],
-    queryFn: () => apiFetch<PagedResult<Party>>("/maestros/terceros"),
-    retry: false,
-  });
-  const openItems = useQuery({
-    queryKey: ["ventas", "open-items"],
-    queryFn: () => apiFetch<{ items: OpenItem[] }>("/sales/open-items"),
+  const elegible = useQuery({
+    queryKey: ["notas", "acreditable", facturaId],
+    queryFn: () => apiFetch<CreditEligibility>(`/sales/notas/acreditable/${facturaId}`),
+    enabled: facturaId.length > 20,
     retry: false,
   });
 
-  const refresh = (): void => {
-    void queryClient.invalidateQueries({ queryKey: ["ventas", "credit-notes"] });
-    void queryClient.invalidateQueries({ queryKey: ["ventas", "debit-notes"] });
-  };
-
-  const createNote = async (): Promise<void> => {
-    try {
-      if (noteType === "CREDIT") {
-        await apiFetch("/sales/credit-notes", {
-          method: "POST",
-          body: { customer_id: newCustomer, number: newNumber, amount: Number(newAmount) || 0, invoice_ref: newInvoiceRef || null, currency: "VED" },
-        });
-      } else {
-        await apiFetch("/sales/debit-notes", {
-          method: "POST",
-          body: { customer_id: newCustomer, number: newNumber, amount: Number(newAmount) || 0, invoice_ref: newInvoiceRef || null, currency: "VED" },
-        });
-      }
-      notify({ type: "success", title: "Nota emitida", description: `${newNumber} (${noteType})` });
-      setNewNumber(""); setNewAmount(""); setNewInvoiceRef("");
-      refresh();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "No fue posible emitir la nota";
-      notify({ type: "error", title: "No fue posible emitir la nota", description: message });
-    }
-  };
-
-  const postNote = async (id: string): Promise<void> => {
-    await apiFetch(`/sales/credit-notes/${id}/post`, { method: "POST", body: {} });
-    notify({ type: "success", title: "Nota posteada", description: id });
-    refresh();
-  };
-
-  const applyNote = async (): Promise<void> => {
-    if (!applyNoteId || !applyOpenItem) return;
-    try {
-      await apiFetch(`/sales/credit-notes/${applyNoteId}/apply`, {
-        method: "POST",
-        body: { target_open_item_id: applyOpenItem, amount: Number(applyAmount) || 0, currency: "VED" },
+  function fallo(titulo: string) {
+    return (e: unknown) =>
+      notify({
+        type: "error",
+        title: titulo,
+        description: e instanceof ApiError ? e.message : undefined,
       });
-      notify({ type: "success", title: "Nota aplicada", description: `a ${applyOpenItem}` });
-      setApplyNoteId(""); setApplyOpenItem(""); setApplyAmount("");
-      refresh();
-      void queryClient.invalidateQueries({ queryKey: ["ventas", "open-items"] });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "No fue posible aplicar la nota";
-      notify({ type: "error", title: "No fue posible aplicar la nota", description: message });
+  }
+
+  async function generarCredito(): Promise<void> {
+    const lineas = (elegible.data?.lines ?? [])
+      .map((l) => ({ invoice_line_id: l.invoice_line_id, quantity: Number(cantidades[l.invoice_line_id] ?? 0) }))
+      .filter((l) => l.quantity > 0);
+    if (lineas.length === 0) {
+      notify({ type: "error", title: "Indique qué cantidad se acredita" });
+      return;
     }
-  };
+    try {
+      const n = await apiFetch<SalesNote>(`/sales/notas/credito/${facturaId}/generar`, {
+        method: "POST",
+        body: { cause: causa, lines: lineas },
+      });
+      setNota(n);
+      setCantidades({});
+      notify({
+        type: "success",
+        title: "Nota de crédito generada",
+        description: `Base ${n.base_fiscal} · impuesto ${n.tax_total} · total ${n.total}`,
+      });
+      await qc.invalidateQueries({ queryKey: ["notas"] });
+    } catch (e) {
+      fallo("No se pudo generar la nota de crédito")(e);
+    }
+  }
 
-  const creditColumns = [
-    creditHelper.accessor("number", { header: "Número" }),
-    creditHelper.accessor("party_id", { header: "Cliente" }),
-    creditHelper.accessor("invoice_ref", { header: "Factura ref." }),
-    creditHelper.accessor("amount", { header: "Monto" }),
-    creditHelper.accessor("applied", { header: "Aplicado" }),
-    creditHelper.accessor("status", { header: "Estado" }),
-    creditHelper.display({
-      id: "actions",
-      header: "Acciones",
-      cell: ({ row }) => (
-        <div className="flex justify-end gap-1">
-          {row.original.status === "DRAFT" ? (
-            <AsyncButton size="sm" variant="secondary" onClick={() => postNote(row.original.id)}>postear</AsyncButton>
-          ) : null}
-        </div>
-      ),
-    }),
-  ];
+  async function generarDebito(): Promise<void> {
+    if (!concepto || Number(monto) <= 0) {
+      notify({ type: "error", title: "Indique el concepto y su monto" });
+      return;
+    }
+    try {
+      const n = await apiFetch<SalesNote>(`/sales/notas/debito/${facturaId}/generar`, {
+        method: "POST",
+        body: { cause: causa, lines: [{ concept: concepto, base_fiscal: Number(monto) }] },
+      });
+      setNota(n);
+      setConcepto("");
+      setMonto("");
+      notify({ type: "success", title: "Nota de débito generada", description: `Total ${n.total}` });
+    } catch (e) {
+      fallo("No se pudo generar la nota de débito")(e);
+    }
+  }
 
-  const debitColumns = [
-    debitHelper.accessor("number", { header: "Número" }),
-    debitHelper.accessor("customer_id", { header: "Cliente" }),
-    debitHelper.accessor("invoice_ref", { header: "Factura ref." }),
-    debitHelper.accessor("amount", { header: "Monto" }),
-    debitHelper.accessor("status", { header: "Estado" }),
-  ];
+  async function emitir(): Promise<void> {
+    if (!nota) return;
+    if (!serie || !lote) {
+      notify({ type: "error", title: "Indique la serie y el lote de control" });
+      return;
+    }
+    const ruta = tipo === "CREDITO" ? "credito" : "debito";
+    try {
+      const n = await apiFetch<SalesNote>(`/sales/notas/${ruta}/${nota.id}/emitir`, {
+        method: "POST",
+        body: { series_id: serie, batch_id: lote },
+      });
+      setNota(n);
+      notify({
+        type: "success",
+        title: "Documento fiscal emitido",
+        description: `Nota ${n.invoice_number} · control ${n.control_number}`,
+      });
+      await qc.invalidateQueries({ queryKey: ["notas"] });
+    } catch (e) {
+      fallo("No se pudo emitir el documento fiscal")(e);
+    }
+  }
+
+  const e = elegible.data;
 
   return (
-    <PageContent maxWidth="full">
+    <PageContent>
       <PageHeader
-        title="Notas de venta"
-        description="Notas de crédito y débito: emisión, posteo y aplicación a cuentas por cobrar."
+        title="Notas"
+        description={
+          "La nota de crédito disminuye o deja sin efecto una factura emitida; la de débito " +
+          "aumenta su valor. Ninguna de las dos sustituye a la devolución física."
+        }
         crumbs={[{ label: "Ventas" }, { label: "Notas" }]}
       />
+
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Emitir nota</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Tipo">
-            <select value={noteType} onChange={(e) => setNoteType(e.target.value as "CREDIT" | "DEBIT")} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="CREDIT">Crédito</option>
-              <option value="DEBIT">Débito</option>
+        <div className="mb-3 flex flex-wrap items-end gap-3">
+          <FormField label="Factura" required>
+            <TextInput
+              value={facturaId}
+              onChange={(ev) => setFacturaId(ev.target.value)}
+              placeholder="Identificador de la factura"
+            />
+          </FormField>
+          <FormField label="Tipo de nota">
+            <select
+              value={tipo}
+              onChange={(ev) => {
+                const t = ev.target.value as "CREDITO" | "DEBITO";
+                setTipo(t);
+                setCausa(t === "CREDITO" ? CAUSAS_CREDITO[0] : CAUSAS_DEBITO[0]);
+                setNota(null);
+              }}
+              className={SELECT}
+              aria-label="Tipo de nota"
+            >
+              <option value="CREDITO">Nota de crédito</option>
+              <option value="DEBITO">Nota de débito</option>
             </select>
           </FormField>
-          <FormField label="Cliente" required>
-            <select value={newCustomer} onChange={(e) => setNewCustomer(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(customers.data?.items ?? []).map((c) => (
-                <option key={c.id} value={c.id}>{c.code} · {c.name}</option>
+          <FormField label="Motivo" required>
+            <select
+              value={causa}
+              onChange={(ev) => setCausa(ev.target.value)}
+              className={SELECT}
+              aria-label="Motivo"
+            >
+              {(tipo === "CREDITO" ? CAUSAS_CREDITO : CAUSAS_DEBITO).map((x) => (
+                <option key={x} value={x}>
+                  {x}
+                </option>
               ))}
             </select>
           </FormField>
-          <FormField label="Número" required>
-            <TextInput value={newNumber} onChange={(e) => setNewNumber(e.target.value)} placeholder="NC-0001" required />
-          </FormField>
-          <FormField label="Monto" required>
-            <TextInput type="number" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} placeholder="0,00" required />
-          </FormField>
-          <FormField label="Factura ref.">
-            <TextInput value={newInvoiceRef} onChange={(e) => setNewInvoiceRef(e.target.value)} placeholder="FAC-0001" />
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createNote}>Emitir</AsyncButton>
-        </form>
-      </section>
+        </div>
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Aplicar nota de crédito a CxC</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Nota" required>
-            <select value={applyNoteId} onChange={(e) => setApplyNoteId(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(creditNotes.data?.items ?? [])
-                .filter((n) => n.status === "POSTED")
-                .map((n) => (
-                  <option key={n.id} value={n.id}>{n.number} · saldo {n.amount - n.applied}</option>
+        {elegible.isError ? (
+          <p className="text-sm text-text-700" role="status">
+            No se encontró esa factura en esta empresa.
+          </p>
+        ) : null}
+
+        {e && !e.creditable ? (
+          <p className="text-sm text-text-700" role="status">
+            Esa factura no está emitida. Solo se ajusta una factura emitida.
+          </p>
+        ) : null}
+
+        {e?.creditable && tipo === "CREDITO" ? (
+          <>
+            <p className="mb-2 text-sm text-text-700">
+              Factura {e.invoice_number} · control {e.control_number}. El impuesto de la nota sale
+              del que esta factura ya lleva, repartido en proporción: no se vuelve a clasificar la
+              operación.
+            </p>
+            <table className="mb-3 w-full text-sm">
+              <caption className="sr-only">Líneas acreditables</caption>
+              <thead>
+                <tr className="border-b border-border-default text-left text-text-700">
+                  <th scope="col" className="py-1">Producto</th>
+                  <th scope="col">Facturado</th>
+                  <th scope="col">Ya acreditado</th>
+                  <th scope="col">Pendiente</th>
+                  <th scope="col">Acreditar ahora</th>
+                </tr>
+              </thead>
+              <tbody>
+                {e.lines.map((l) => (
+                  <tr key={l.invoice_line_id} className="border-b border-border-subtle">
+                    <td className="py-1 font-mono text-xs">{corto(l.product_id)}</td>
+                    <td>{l.quantity}</td>
+                    <td>{l.credited_quantity}</td>
+                    <td>{l.creditable_quantity}</td>
+                    <td>
+                      <TextInput
+                        aria-label={`Acreditar de ${corto(l.product_id)}`}
+                        value={cantidades[l.invoice_line_id] ?? ""}
+                        onChange={(ev) =>
+                          setCantidades((c) => ({ ...c, [l.invoice_line_id]: ev.target.value }))
+                        }
+                        placeholder="0"
+                      />
+                    </td>
+                  </tr>
                 ))}
-            </select>
-          </FormField>
-          <FormField label="Documento a aplicar" required>
-            <select value={applyOpenItem} onChange={(e) => setApplyOpenItem(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(openItems.data?.items ?? []).map((o) => (
-                <option key={o.id} value={o.id}>{o.source_document ?? o.id} · saldo {o.balance}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Monto" required>
-            <TextInput type="number" value={applyAmount} onChange={(e) => setApplyAmount(e.target.value)} placeholder="0,00" required />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={applyNote}>Aplicar</AsyncButton>
-        </form>
+              </tbody>
+            </table>
+            <AsyncButton onClick={generarCredito}>Generar nota de crédito</AsyncButton>
+          </>
+        ) : null}
+
+        {e?.creditable && tipo === "DEBITO" ? (
+          <>
+            <p className="mb-2 text-sm text-text-700">
+              Un cargo posterior no mueve inventario: su flujo no tiene ninguna etapa física.
+            </p>
+            <div className="flex flex-wrap items-end gap-3">
+              <FormField label="Concepto" required>
+                <TextInput
+                  value={concepto}
+                  onChange={(ev) => setConcepto(ev.target.value)}
+                  placeholder="Qué se cobra"
+                />
+              </FormField>
+              <FormField label="Base imponible" required>
+                <TextInput value={monto} onChange={(ev) => setMonto(ev.target.value)} placeholder="0.00" />
+              </FormField>
+              <AsyncButton onClick={generarDebito}>Generar nota de débito</AsyncButton>
+            </div>
+          </>
+        ) : null}
       </section>
 
-      <h2 className="mb-2 text-base font-semibold text-text-900">Notas de crédito</h2>
-      <div className="mb-6">
-        <DataTable
-          columns={creditColumns}
-          data={creditNotes.data?.items ?? []}
-          loading={creditNotes.isLoading}
-          error={creditNotes.isError ? "No fue posible cargar las notas de crédito." : null}
-          getRowId={(row) => row.id}
-          emptyTitle="Sin notas de crédito"
-          emptyDescription="Aún no hay notas de crédito."
-        />
-      </div>
+      {nota ? (
+        <section className="rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-1 text-base font-semibold text-text-900">
+            {tipo === "CREDITO" ? "Nota de crédito" : "Nota de débito"} {corto(nota.id)} ·{" "}
+            {nota.status}
+          </h2>
+          <p className="mb-3 text-sm text-text-700">
+            {nota.cause} · base {nota.base_fiscal} · impuesto {nota.tax_total} ·{" "}
+            <strong>
+              total {nota.total} {nota.currency}
+            </strong>
+          </p>
 
-      <h2 className="mb-2 text-base font-semibold text-text-900">Notas de débito</h2>
-      <DataTable
-        columns={debitColumns}
-        data={debitNotes.data?.items ?? []}
-        loading={debitNotes.isLoading}
-        error={debitNotes.isError ? "No fue posible cargar las notas de débito." : null}
-        getRowId={(row) => row.id}
-        emptyTitle="Sin notas de débito"
-        emptyDescription="Aún no hay notas de débito."
-      />
+          {nota.issued_at ? (
+            <p className="text-sm text-text-700" role="status">
+              Documento fiscal emitido: nota {nota.invoice_number} · control {nota.control_number}.
+              {tipo === "CREDITO"
+                ? " La cuenta por cobrar quedó ajustada."
+                : " El cargo tiene su propio documento por cobrar."}
+            </p>
+          ) : (
+            <div className="flex flex-wrap items-end gap-3">
+              <FormField label="Serie de numeración" required>
+                <TextInput value={serie} onChange={(ev) => setSerie(ev.target.value)} />
+              </FormField>
+              <FormField label="Lote de control" required>
+                <TextInput value={lote} onChange={(ev) => setLote(ev.target.value)} />
+              </FormField>
+              <AsyncButton onClick={emitir}>Emitir documento fiscal</AsyncButton>
+            </div>
+          )}
+        </section>
+      ) : null}
     </PageContent>
   );
 }

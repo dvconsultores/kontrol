@@ -101,6 +101,26 @@ exclusiva de 18.x.
 | `CONFIRMED → SHIPPED` sigue abierta: el ¶103 exige factura antes de despachar | Spec 035 |
 | `uom.py` declara para `sales_orders` estados que no existen | Spec 011 |
 
+## Delta dirigido recibido — 2026-09-11 (desde el ciclo de la Spec 036)
+
+`issue_invoice` **no creaba la cuenta por cobrar**. El proceso de ventas dice
+«9. Emitir factura → **10. Crear CxC**», y eso solo ocurría por el camino
+heredado `transition_invoice`. `issue_invoice` —el camino que esta Spec
+construyó y el único que emite el documento fiscal— ponía el estado a mano y se
+saltaba la creación, así que **toda factura emitida por el proceso real nacía
+sin documento por cobrar**.
+
+No lo vio ninguna prueba porque ninguna llegaba a cobrar una factura emitida por
+ese camino: la del motor de CxC usaba `transition_invoice`, que sí lo creaba. Se
+descubrió al aplicarle una nota de crédito y no encontrar nada que ajustar.
+
+La creación se extrajo a `_abrir_cuenta_por_cobrar`, es idempotente, y la llaman
+los dos caminos. El comportamiento anterior de `transition_invoice` no cambia.
+
+Esta Spec **no se reabre funcionalmente**: sigue `COMPLETE / CONVERGED`. La
+factura, su numeración, su snapshot comercial y su compuerta de confirmación son
+las mismas.
+
 ## Estado resultante
 
 | | |

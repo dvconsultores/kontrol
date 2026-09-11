@@ -41,7 +41,9 @@ from app.modules.sales.models import (
     PickList,
     PickListLine,
     SalesCreditNote,
+    SalesCreditNoteLine,
     SalesDebitNote,
+    SalesDebitNoteLine,
     SalesInvoice,
     SalesInvoiceLine,
     SalesOrder,
@@ -162,6 +164,11 @@ def _order_credit_context(db: Session, order: SalesOrder) -> dict[str, Any]:
 def _assert_transition(current: str, target: str, transitions: dict[str, set[str]], what: str) -> None:
     if target not in transitions.get(current, set()):
         raise ConflictError(code="INVALID_STATE_TRANSITION", message=f"No se permite pasar {what} de {current} a {target}.")
+
+
+#: Base e IVA se expresan al céntimo: la norma pide discriminarlos, no
+#: arrastrar decimales de una proporción.
+_CENTIMO = Decimal("0.01")
 
 
 def _dec(value: Any) -> Decimal:
@@ -2111,6 +2118,9 @@ def issue_invoice(db: Session, *, company_id: str, invoice_id: str, series_id: s
     invoice.fiscal_document_id = emitido.get("id")
     invoice.issued_at = ahora
     invoice.updated_at = ahora
+    # «9. Emitir factura → 10. Crear CxC». Sin esto la factura salía al mundo sin
+    # documento por cobrar y no había nada que la nota de crédito pudiera ajustar.
+    _abrir_cuenta_por_cobrar(db, invoice)
     _assert_transition(order.status, "INVOICED", ORDER_TRANSITIONS, "el pedido")
     order.status = "INVOICED"
     order.invoiced_at = ahora
@@ -2542,18 +2552,39 @@ def recompute_invoice_total(db: Session, *, invoice: SalesInvoice) -> SalesInvoi
     return invoice
 
 
+def _abrir_cuenta_por_cobrar(db: Session, invoice: SalesInvoice) -> OpenItem | None:
+    """Crea el documento por cobrar de una factura emitida. Idempotente.
+
+    Delta dirigido de la Spec 036 sobre la 034. El proceso de ventas dice
+    «9. Emitir factura → **10. Crear CxC**», y esto solo ocurría por el camino
+    heredado `transition_invoice`. `issue_invoice` —el camino que la 034
+    construyó y el único que emite el documento fiscal— ponía el estado a mano y
+    se saltaba la creación: las facturas emitidas por el proceso real nacían sin
+    cuenta por cobrar. Se descubrió al ir a aplicarles una nota de crédito y no
+    encontrar nada que ajustar.
+    """
+    existente = db.execute(
+        select(OpenItem).where(OpenItem.company_id == invoice.company_id,
+                               OpenItem.source_document == f"SALES_INVOICE:{invoice.id}")
+    ).scalars().first()
+    if existente is not None:
+        return existente
+    item = OpenItem(company_id=invoice.company_id, party_id=invoice.customer_id,
+                    source_document=f"SALES_INVOICE:{invoice.id}", item_type="RECEIVABLE",
+                    currency=invoice.base_fiscal_currency, original=invoice.total, applied=0.0,
+                    due_date=date.today(), status="OPEN")
+    db.add(item)
+    db.flush()
+    return item
+
+
 def transition_invoice(db: Session, *, invoice: SalesInvoice, target: str, actor: str | None = None) -> SalesInvoice:
     """Transición de la factura. Al emitir (EMITTED) se crea el OpenItem RECEIVABLE (FR-005-040)."""
     _assert_transition(invoice.status, target, INVOICE_TRANSITIONS, "la factura de venta")
     invoice.status = target
     invoice.updated_at = datetime.now(UTC)
     if target == "EMITTED":
-        open_item = OpenItem(company_id=invoice.company_id, party_id=invoice.customer_id,
-                             source_document=f"SALES_INVOICE:{invoice.id}", item_type="RECEIVABLE",
-                             currency=invoice.base_fiscal_currency, original=invoice.total, applied=0.0,
-                             due_date=date.today(), status="OPEN")
-        db.add(open_item)
-        db.flush()
+        _abrir_cuenta_por_cobrar(db, invoice)
     db.flush()
     _audit(db, action="SALES_INVOICE_TRANSITIONED", entity_type="SalesInvoice", entity_id=str(invoice.id),
            company_id=invoice.company_id, actor=actor, after={"target": invoice.status, "total": float(invoice.total or 0.0)})
@@ -2798,3 +2829,890 @@ def collection_dict(payment) -> dict:
             "currency": payment.currency, "amount": payment.amount, "applied": payment.applied,
             "status": payment.status, "approver_id": payment.approver_id,
             "allowed_actions": ap_service.payment_allowed_actions(payment)}
+
+
+# =========================================================================== #
+# Spec 036 · devoluciones, notas de crédito y notas de débito
+#
+# La norma escribe el proceso entero y en este orden: «Solicitud → Verificación
+# física → Aprobación → **Entrada de inventario** → Nota de crédito vinculada →
+# Ajuste de IVA → Ajuste de cuenta por cobrar → Registro en libro de ventas».
+#
+# Cuatro actos antes de tocar el inventario. Una solicitud no aumenta
+# existencia; recibir la mercancía tampoco la hace vendible. Y la nota va
+# **después** y **vinculada**, porque «la devolución física no sustituye una
+# nota de crédito» (documento maestro) y porque emitirla es un acto fiscal con
+# su consecutivo y su número de control, igual que la 034 separó generar la
+# factura de emitir el documento.
+#
+# Lo que no se decide aquí: los estados de mercancía son de `D0-10`, que concede
+# a esta Spec exactamente `DESPACHADO → DEVUELTO` y `DEVUELTO → DISPONIBLE ·
+# RECHAZADO`; las reservas son de `D0-03`, que dice «re-reservar tras liberar =
+# nueva fila, nunca reactivación» y por eso una devolución no resucita ninguna;
+# la numeración es de la 042; el efecto en CxC es del motor de la 004/037.
+# =========================================================================== #
+
+#: Los actos del flujo, cada uno un estado. No son nombres inventados: son las
+#: cuatro etapas que la norma nombra, más el cierre y las dos salidas.
+RETURN_TRANSITIONS: dict[str, set[str]] = {
+    "REQUESTED": {"RECEIVED", "CANCELLED"},
+    "RECEIVED": {"INSPECTED", "CANCELLED"},
+    "INSPECTED": {"APPROVED", "REJECTED"},
+    "APPROVED": {"CLOSED"},
+    "CLOSED": set(),
+    "REJECTED": set(),
+    "CANCELLED": set(),
+    # Estado de las devoluciones anteriores a esta Spec. No se migra ni se
+    # reinterpreta: sin factura ni despacho detrás no hay forma de saber qué era.
+    "DRAFT": set(),
+}
+
+#: `D0-10`: «`DEVUELTO` → `DISPONIBLE` · `RECHAZADO` | 036». Dos, no cinco. Los
+#: otros destinos que la arquitectura funcional nombra tienen otro dueño:
+#: `CUARENTENA` entra por la incidencia de la 020 y `DESECHO` es una baja de la
+#: 025. «Reparación» no es un estado de mercancía: en la norma es un motivo de
+#: traslado de una guía de despacho.
+#:
+#: No se escribe aquí: se le pide al módulo que es la autoridad única del
+#: catálogo. Copiar tres etiquetas en otro módulo es empezar a tener dos motores.
+RETURN_DISPOSITIONS: frozenset[str] = inv_service.state_authority.RETURN_DISPOSITIONS
+
+
+def _consolidacion_del_pedido(db: Session, company_id: str, order_id: str | None) -> str:
+    """Dónde dejó la preparación la mercancía de ese pedido.
+
+    Es el mismo plan cerrado que `confirm_shipment` consultó para sacarla, y por
+    eso es donde el saldo `DESPACHADO` está.
+    """
+    if order_id is None:
+        raise ConflictError(code="RETURN_WITHOUT_ORDER",
+                            message="La devolución no dice de qué pedido viene.")
+    plan = db.execute(
+        select(PickList).where(PickList.company_id == company_id,
+                               PickList.order_id == str(order_id),
+                               PickList.status == "CLOSED")
+        .order_by(PickList.consolidated_at.desc())).scalars().first()
+    if plan is None or plan.consolidation_location_id is None:
+        raise ConflictError(code="RETURN_WITHOUT_PREPARATION",
+                            message="El pedido no tiene una preparación consolidada de la que saliera.")
+    return str(plan.consolidation_location_id)
+
+
+def _require_return_036(db: Session, company_id: str, return_id: str, *, lock: bool = False) -> SalesReturn:
+    consulta = select(SalesReturn).where(SalesReturn.id == return_id)
+    if lock:
+        consulta = consulta.with_for_update()
+    devolucion = db.execute(consulta).scalars().first()
+    if devolucion is None or str(devolucion.company_id) != str(company_id):
+        raise NotFoundError(code="SALES_RETURN_NOT_FOUND", message="Devolución no encontrada")
+    return devolucion
+
+
+def _lineas_de_devolucion(db: Session, return_id: str) -> list[SalesReturnLine]:
+    return list(db.execute(
+        select(SalesReturnLine).where(SalesReturnLine.return_id == str(return_id))
+        .order_by(SalesReturnLine.id)).scalars().all())
+
+
+def _base_de_linea(linea: SalesReturnLine) -> Decimal:
+    """Lo que sale o entra es siempre la cantidad **base**.
+
+    Devolver una caja de doce reingresa doce unidades. Es el mismo defecto que
+    la 035 encontró en la salida, y aquí se evita desde el principio.
+    """
+    return _dec(linea.base_quantity if linea.base_quantity is not None else linea.quantity)
+
+
+def _devuelto_acumulado(db: Session, company_id: str, invoice_line_id: str,
+                        *, excluir_devolucion: str | None = None) -> Decimal:
+    """Lo ya devuelto contra una línea de factura, en cantidad base.
+
+    Cuenta todas las devoluciones vivas, no solo las cerradas: una devolución
+    solicitada ya compromete esa cantidad, y si no contara, dos solicitudes
+    simultáneas podrían sumar más de lo despachado.
+    """
+    filas = db.execute(
+        select(SalesReturnLine, SalesReturn)
+        .join(SalesReturn, SalesReturn.id == SalesReturnLine.return_id)
+        .where(SalesReturn.company_id == company_id,
+               SalesReturnLine.invoice_line_id == str(invoice_line_id),
+               SalesReturn.status.notin_(("CANCELLED", "REJECTED")))).all()
+    total = Decimal(0)
+    for linea, devolucion in filas:
+        if excluir_devolucion and str(devolucion.id) == str(excluir_devolucion):
+            continue
+        total += _base_de_linea(linea)
+    return total
+
+
+def _despachado_de_linea(db: Session, company_id: str, invoice_line: SalesInvoiceLine) -> Decimal:
+    """Lo que salió del almacén por esa línea, en cantidad base.
+
+    El tope de la devolución no es lo facturado sino lo **despachado**: no se
+    devuelve lo que nunca salió. Si la línea no tiene cantidad base —facturas
+    anteriores a la Spec 011— se usa la comercial, que es toda la verdad que hay
+    sobre ellas.
+    """
+    return _dec(invoice_line.base_quantity if invoice_line.base_quantity is not None
+                else invoice_line.quantity)
+
+
+def return_eligibility(db: Session, *, company_id: str, invoice_id: str) -> dict:
+    """Qué se puede devolver de una factura y cuánto queda.
+
+    Lo calcula el backend y no la pantalla: la regla de integridad del modelo de
+    datos dice «no ajustar por encima de cantidades/base/IVA **pendientes** del
+    original», y «pendiente» es una resta que solo el que ve todas las
+    devoluciones puede hacer.
+    """
+    company_id = _company(company_id, obj="devolución")
+    invoice = db.get(SalesInvoice, invoice_id)
+    if invoice is None or str(invoice.company_id) != str(company_id):
+        raise NotFoundError(code="SALES_INVOICE_NOT_FOUND", message="Factura de venta no encontrada")
+    lineas = db.execute(
+        select(SalesInvoiceLine).where(SalesInvoiceLine.invoice_id == str(invoice.id))
+        .order_by(SalesInvoiceLine.id)).scalars().all()
+    despacho = _live_shipment(db, company_id, str(invoice.order_id)) if invoice.order_id else None
+    salidas = []
+    for linea in lineas:
+        despachado = _despachado_de_linea(db, company_id, linea)
+        devuelto = _devuelto_acumulado(db, company_id, str(linea.id))
+        salidas.append({
+            "invoice_line_id": str(linea.id), "product_id": str(linea.product_id),
+            "quantity": str(_dec(linea.quantity)),
+            "dispatched_base_quantity": str(despachado),
+            "returned_base_quantity": str(devuelto),
+            "returnable_base_quantity": str(max(Decimal(0), despachado - devuelto)),
+            "presentation_id": str(linea.presentation_id) if linea.presentation_id else None,
+            "conversion_factor_snapshot": (str(_dec(linea.conversion_factor_snapshot))
+                                           if linea.conversion_factor_snapshot else None),
+        })
+    return {
+        "invoice_id": str(invoice.id), "invoice_status": invoice.status,
+        "invoice_number": invoice.invoice_number, "control_number": invoice.control_number,
+        "order_id": str(invoice.order_id) if invoice.order_id else None,
+        "customer_id": str(invoice.customer_id),
+        "shipment_id": str(despacho.id) if despacho else None,
+        # Solo se devuelve lo que salió: el ¶106 hace salir la mercancía con su
+        # factura, y sin esa salida no hay nada que devolver.
+        "dispatched": despacho is not None and despacho.status == "SHIPPED",
+        "lines": salidas,
+    }
+
+
+def request_return(db: Session, *, company_id: str, code: str, invoice_id: str, reason: str,
+                   lines: list[dict], warehouse_id: str | None = None,
+                   actor: str | None = None) -> SalesReturn:
+    """«Solicitud»: el primer acto. No mueve una sola unidad.
+
+    Lo único que hace es declarar qué se pretende devolver y contra qué. La
+    mercancía sigue con el cliente y el inventario no se entera.
+    """
+    company_id = _company(company_id, obj="devolución")
+    elegibilidad = return_eligibility(db, company_id=company_id, invoice_id=invoice_id)
+    if not elegibilidad["dispatched"]:
+        raise ConflictError(code="RETURN_NOT_DISPATCHED",
+                            message="No se devuelve lo que no salió del almacén.")
+    if not (reason or "").strip():
+        raise KontrolError(code="RETURN_REASON_REQUIRED",
+                           message="Indique el motivo de la devolución.", status_code=422)
+    if not lines:
+        raise KontrolError(code="RETURN_EMPTY", message="La devolución no tiene líneas.",
+                           status_code=422)
+    invoice = db.get(SalesInvoice, invoice_id)
+    almacen = warehouse_id or (str(invoice.order.warehouse_id)
+                               if getattr(invoice, "order", None) else None)
+    if almacen is None and invoice.order_id:
+        pedido = db.get(SalesOrder, str(invoice.order_id))
+        almacen = str(pedido.warehouse_id) if pedido else None
+    if almacen:
+        _require_warehouse(db, company_id, almacen)
+
+    devolucion = SalesReturn(
+        company_id=company_id, code=code, reason=reason,
+        source_document=f"SALES_INVOICE:{invoice.id}",
+        customer_id=str(invoice.customer_id), invoice_id=str(invoice.id),
+        order_id=str(invoice.order_id) if invoice.order_id else None,
+        shipment_id=elegibilidad["shipment_id"], warehouse_id=almacen,
+        status="REQUESTED", requested_at=datetime.now(UTC), requested_by=actor,
+        created_by=actor)
+    db.add(devolucion)
+    db.flush()
+
+    disponible = {x["invoice_line_id"]: _dec(x["returnable_base_quantity"])
+                  for x in elegibilidad["lines"]}
+    for item in lines:
+        invoice_line_id = str(item["invoice_line_id"])
+        if invoice_line_id not in disponible:
+            raise NotFoundError(code="INVOICE_LINE_NOT_FOUND",
+                                message="La línea no pertenece a esta factura")
+        linea_factura = db.get(SalesInvoiceLine, invoice_line_id)
+        pedida = _dec(item.get("base_quantity", item.get("quantity", 0)))
+        if pedida <= 0:
+            raise KontrolError(code="RETURN_QUANTITY_INVALID",
+                               message="La cantidad a devolver debe ser positiva.", status_code=422)
+        if pedida > disponible[invoice_line_id]:
+            raise ConflictError(
+                code="RETURN_EXCEEDS_DISPATCHED",
+                message="No se devuelve más de lo que se despachó.",
+                details={"invoice_line_id": invoice_line_id,
+                         "returnable_base_quantity": str(disponible[invoice_line_id]),
+                         "requested_base_quantity": str(pedida)})
+        disponible[invoice_line_id] -= pedida
+        # La presentación y el factor se copian de la factura, no del maestro de
+        # hoy: devolver una caja de doce devuelve las doce que se facturaron,
+        # aunque la caja pase a ser de veinte mañana.
+        db.add(SalesReturnLine(
+            return_id=str(devolucion.id), invoice_line_id=invoice_line_id,
+            product_id=str(linea_factura.product_id),
+            quantity=_dec(item.get("quantity", pedida)), base_quantity=pedida,
+            condition=item.get("condition", "DEFECTUOSO"),
+            lot_id=item.get("lot_id"), serial_id=item.get("serial_id"),
+            uom_id=linea_factura.uom_id, presentation_id=linea_factura.presentation_id,
+            conversion_factor_snapshot=linea_factura.conversion_factor_snapshot,
+            uom_source=linea_factura.uom_source))
+    db.flush()
+    _audit(db, action="SALES_RETURN_REQUESTED", entity_type="SalesReturn",
+           entity_id=str(devolucion.id), company_id=company_id, actor=actor,
+           after={"invoice_id": str(invoice.id), "lines": len(lines), "reason": reason})
+    return devolucion
+
+
+def receive_return(db: Session, *, company_id: str, return_id: str, location_id: str,
+                   actor: str | None = None) -> SalesReturn:
+    """«Recepción»: la custodia vuelve a la empresa, pero no la disponibilidad.
+
+    Aquí ocurre `DESPACHADO → DEVUELTO`, la arista que `D0-10` reservó para esta
+    Spec. La mercancía está en el almacén y **no es vendible**: `D0-10` es
+    tajante en que «disponible para venta es exclusivamente `DISPONIBLE`», y
+    todavía falta la verificación física que la norma exige.
+    """
+    company_id = _company(company_id, obj="devolución")
+    devolucion = _require_return_036(db, company_id, return_id, lock=True)
+    if devolucion.received_at is not None:
+        return devolucion
+    _assert_transition(devolucion.status, "RECEIVED", RETURN_TRANSITIONS, "la devolución")
+    if devolucion.warehouse_id is None:
+        raise ConflictError(code="RETURN_WITHOUT_WAREHOUSE",
+                            message="La devolución no dice a qué almacén entra.")
+    destino = inv_service.location_in_warehouse(
+        db, company_id=company_id, warehouse_id=str(devolucion.warehouse_id),
+        location_id=location_id)
+    # De dónde sale el saldo `DESPACHADO`: de donde la Spec 035 lo dejó, que es
+    # el Área de Confirmación del plan que se consolidó. No es un detalle de
+    # implementación sino el lugar que el ledger dice: la mercancía salió de
+    # allí y la reclasificación tiene que ocurrir donde está la fila.
+    salida = _consolidacion_del_pedido(db, company_id, str(devolucion.order_id))
+    lineas = _lineas_de_devolucion(db, str(devolucion.id))
+    if not lineas:
+        raise ConflictError(code="RETURN_EMPTY", message="La devolución no tiene líneas.")
+    for linea in lineas:
+        cantidad = _base_de_linea(linea)
+        inv_service.reclassify(
+            db, company_id=company_id, warehouse_id=str(devolucion.warehouse_id),
+            product_id=str(linea.product_id), source_state=inv_service.state_authority.DISPATCHED_STATE,
+            target_state=inv_service.state_authority.RETURNED_STATE,
+            quantity=cantidad, location_id=salida,
+            lot_id=linea.lot_id, serial_id=linea.serial_id,
+            document_ref=f"SALES_RETURN:{devolucion.id}", actor=actor)
+        # Y de allí al área de devoluciones. Es un traslado de ubicación dentro
+        # del mismo almacén, que es exactamente lo que `putaway` hace y lo que
+        # la Spec 022 dejó como camino canónico. La mercancía devuelta no se
+        # queda en la ubicación desde la que salió a la calle.
+        if salida != str(destino.id):
+            inv_service.putaway(
+                db, company_id=company_id, warehouse_id=str(devolucion.warehouse_id),
+                product_id=str(linea.product_id), target_location_id=str(destino.id),
+                quantity=cantidad, source_location_id=salida,
+                state=inv_service.state_authority.RETURNED_STATE,
+                lot_id=linea.lot_id, serial_id=linea.serial_id,
+                document_ref=f"SALES_RETURN:{devolucion.id}", actor=actor)
+    ahora = datetime.now(UTC)
+    devolucion.location_id = str(destino.id)
+    devolucion.status = "RECEIVED"
+    devolucion.received_at = ahora
+    devolucion.received_by = actor
+    devolucion.updated_at = ahora
+    db.flush()
+    _audit(db, action="SALES_RETURN_RECEIVED", entity_type="SalesReturn",
+           entity_id=str(devolucion.id), company_id=company_id, actor=actor,
+           after={"location_id": str(destino.id), "lines": len(lineas)})
+    return devolucion
+
+
+def inspect_return(db: Session, *, company_id: str, return_id: str, lines: list[dict],
+                   actor: str | None = None) -> SalesReturn:
+    """«Verificación física»: qué vuelve a existencia y qué no.
+
+    El destino es por línea y solo puede ser uno de los dos que `D0-10` concede.
+    La cantidad aceptada puede ser menor que la recibida: media caja puede estar
+    intacta y la otra media no, y eso hay que poder decirlo.
+    """
+    company_id = _company(company_id, obj="devolución")
+    devolucion = _require_return_036(db, company_id, return_id, lock=True)
+    _assert_transition(devolucion.status, "INSPECTED", RETURN_TRANSITIONS, "la devolución")
+    por_id = {str(x.id): x for x in _lineas_de_devolucion(db, str(devolucion.id))}
+    if not lines:
+        raise KontrolError(code="RETURN_INSPECTION_EMPTY",
+                           message="La verificación no dictaminó ninguna línea.", status_code=422)
+    vistas: set[str] = set()
+    for item in lines:
+        line_id = str(item["return_line_id"])
+        linea = por_id.get(line_id)
+        if linea is None:
+            raise NotFoundError(code="RETURN_LINE_NOT_FOUND",
+                                message="La línea no pertenece a esta devolución")
+        destino = str(item.get("disposition", "")).upper()
+        if destino not in RETURN_DISPOSITIONS:
+            raise KontrolError(
+                code="RETURN_DISPOSITION_INVALID",
+                message="El destino de la mercancía devuelta no está declarado.",
+                details={"allowed": sorted(RETURN_DISPOSITIONS)}, status_code=422)
+        recibida = _base_de_linea(linea)
+        aceptada = _dec(item.get("accepted_base_quantity", recibida))
+        if aceptada < 0 or aceptada > recibida:
+            raise ConflictError(
+                code="RETURN_ACCEPTED_EXCEEDS_RECEIVED",
+                message="No se acepta más de lo que se recibió.",
+                details={"received_base_quantity": str(recibida),
+                         "accepted_base_quantity": str(aceptada)})
+        linea.disposition = destino
+        linea.accepted_base_quantity = aceptada
+        linea.inspection_note = item.get("note")
+        vistas.add(line_id)
+    faltan = set(por_id) - vistas
+    if faltan:
+        raise ConflictError(code="RETURN_INSPECTION_INCOMPLETE",
+                            message="Todas las líneas recibidas necesitan dictamen.",
+                            details={"pending": sorted(faltan)})
+    ahora = datetime.now(UTC)
+    devolucion.status = "INSPECTED"
+    devolucion.inspected_at = ahora
+    devolucion.inspected_by = actor
+    devolucion.updated_at = ahora
+    db.flush()
+    _audit(db, action="SALES_RETURN_INSPECTED", entity_type="SalesReturn",
+           entity_id=str(devolucion.id), company_id=company_id, actor=actor,
+           after={"lines": len(lines)})
+    return devolucion
+
+
+def decide_return(db: Session, *, company_id: str, return_id: str, approved: bool,
+                  reason: str | None = None, actor: str | None = None) -> SalesReturn:
+    """«Aprobación»: el tercer acto, antes de tocar el inventario.
+
+    Si se deniega, la devolución termina y la mercancía se queda en `DEVUELTO`.
+    Qué hacer después con esa mercancía —devolvérsela al cliente, desecharla—
+    **no lo decide esta Spec**: sería una salida nueva y ninguna fuente la
+    declara. Queda en custodia, que es la verdad.
+    """
+    company_id = _company(company_id, obj="devolución")
+    devolucion = _require_return_036(db, company_id, return_id, lock=True)
+    destino = "APPROVED" if approved else "REJECTED"
+    _assert_transition(devolucion.status, destino, RETURN_TRANSITIONS, "la devolución")
+    if not approved and not (reason or "").strip():
+        raise KontrolError(code="RETURN_REJECTION_REASON_REQUIRED",
+                           message="Denegar una devolución exige motivo.", status_code=422)
+    ahora = datetime.now(UTC)
+    devolucion.status = destino
+    devolucion.status_reason = reason
+    devolucion.approved_at = ahora
+    devolucion.approved_by = actor
+    devolucion.updated_at = ahora
+    db.flush()
+    _audit(db, action=f"SALES_RETURN_{destino}", entity_type="SalesReturn",
+           entity_id=str(devolucion.id), company_id=company_id, actor=actor,
+           after={"reason": reason})
+    return devolucion
+
+
+def reenter_return(db: Session, *, company_id: str, return_id: str,
+                   actor: str | None = None) -> SalesReturn:
+    """«Entrada de inventario»: el cuarto acto, y el único que crea existencia.
+
+    Cada línea va al destino que la verificación le dictaminó: `DISPONIBLE` si
+    vuelve a ser vendible, `RECHAZADO` si no. Lo aceptado y lo no aceptado se
+    separan aquí: si la inspección aceptó ocho de doce, ocho van al destino y
+    cuatro se quedan en `DEVUELTO`, que sigue siendo custodia de la empresa.
+    """
+    company_id = _company(company_id, obj="devolución")
+    devolucion = _require_return_036(db, company_id, return_id, lock=True)
+    if devolucion.reentered_at is not None:
+        return devolucion
+    _assert_transition(devolucion.status, "CLOSED", RETURN_TRANSITIONS, "la devolución")
+    lineas = _lineas_de_devolucion(db, str(devolucion.id))
+    for linea in lineas:
+        if linea.disposition is None:
+            raise ConflictError(code="RETURN_INSPECTION_INCOMPLETE",
+                                message="Hay líneas sin dictamen.")
+        aceptada = _dec(linea.accepted_base_quantity
+                        if linea.accepted_base_quantity is not None else _base_de_linea(linea))
+        if aceptada <= 0:
+            continue
+        inv_service.reclassify(
+            db, company_id=company_id, warehouse_id=str(devolucion.warehouse_id),
+            product_id=str(linea.product_id),
+            source_state=inv_service.state_authority.RETURNED_STATE,
+            target_state=linea.disposition, quantity=aceptada,
+            location_id=str(devolucion.location_id), lot_id=linea.lot_id,
+            serial_id=linea.serial_id,
+            document_ref=f"SALES_RETURN:{devolucion.id}", actor=actor)
+    ahora = datetime.now(UTC)
+    devolucion.status = "CLOSED"
+    devolucion.reentered_at = ahora
+    devolucion.reentered_by = actor
+    devolucion.updated_at = ahora
+    db.flush()
+    _audit(db, action="SALES_RETURN_REENTERED", entity_type="SalesReturn",
+           entity_id=str(devolucion.id), company_id=company_id, actor=actor,
+           after={"lines": len(lineas)})
+    return devolucion
+
+
+def return_dict(db: Session, devolucion: SalesReturn) -> dict:
+    lineas = _lineas_de_devolucion(db, str(devolucion.id))
+    return {
+        "id": str(devolucion.id), "code": devolucion.code, "status": devolucion.status,
+        "status_reason": devolucion.status_reason, "reason": devolucion.reason,
+        "invoice_id": str(devolucion.invoice_id) if devolucion.invoice_id else None,
+        "order_id": str(devolucion.order_id) if devolucion.order_id else None,
+        "shipment_id": str(devolucion.shipment_id) if devolucion.shipment_id else None,
+        "customer_id": str(devolucion.customer_id) if devolucion.customer_id else None,
+        "warehouse_id": str(devolucion.warehouse_id) if devolucion.warehouse_id else None,
+        "location_id": str(devolucion.location_id) if devolucion.location_id else None,
+        "requested_at": devolucion.requested_at.isoformat() if devolucion.requested_at else None,
+        "received_at": devolucion.received_at.isoformat() if devolucion.received_at else None,
+        "inspected_at": devolucion.inspected_at.isoformat() if devolucion.inspected_at else None,
+        "approved_at": devolucion.approved_at.isoformat() if devolucion.approved_at else None,
+        "reentered_at": devolucion.reentered_at.isoformat() if devolucion.reentered_at else None,
+        "lines": [{"id": str(ln.id), "product_id": str(ln.product_id),
+                   "invoice_line_id": str(ln.invoice_line_id) if ln.invoice_line_id else None,
+                   "quantity": str(_dec(ln.quantity)),
+                   "base_quantity": str(_base_de_linea(ln)),
+                   "accepted_base_quantity": (str(_dec(ln.accepted_base_quantity))
+                                              if ln.accepted_base_quantity is not None else None),
+                   "disposition": ln.disposition, "condition": ln.condition,
+                   "lot_id": ln.lot_id, "serial_id": ln.serial_id,
+                   "presentation_id": str(ln.presentation_id) if ln.presentation_id else None,
+                   "conversion_factor_snapshot": (str(_dec(ln.conversion_factor_snapshot))
+                                                  if ln.conversion_factor_snapshot else None)}
+                  for ln in lineas],
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Nota de crédito
+#
+# «La nota de crédito se utiliza para disminuir o dejar sin efecto, total o
+# parcialmente, una factura emitida». La norma enumera sus causas —devolución de
+# mercancía, anulación, descuento posterior, bonificación, corrección de precio,
+# disminución de cantidad, devolución de envases, reversión— y solo dos traen
+# mercancía de vuelta. Por eso la nota **no** se emite sola al aceptar una
+# devolución, y por eso puede existir sin ninguna.
+#
+# Y exige, literalmente: consecutivo propio, número de control, referencia a la
+# factura original con su fecha, número y control, motivo, líneas, cantidades y
+# montos, «recalcular **proporcionalmente** base imponible e IVA» y «mantener la
+# misma clasificación tributaria de la operación original».
+# --------------------------------------------------------------------------- #
+
+def _notas_vivas(db: Session, company_id: str, invoice_id: str) -> list[SalesCreditNote]:
+    return list(db.execute(
+        select(SalesCreditNote).where(SalesCreditNote.company_id == company_id,
+                                      SalesCreditNote.invoice_id == str(invoice_id),
+                                      SalesCreditNote.status != "CANCELLED")).scalars().all())
+
+
+def _acreditado_de_linea(db: Session, company_id: str, invoice_line_id: str,
+                         *, excluir_nota: str | None = None) -> Decimal:
+    """Lo ya acreditado contra una línea, en cantidad comercial.
+
+    La regla de integridad dice «no ajustar por encima de cantidades/base/IVA
+    **pendientes** del original». Pendiente, no total: el tope es acumulativo y
+    hay que sumar todas las notas vivas, no solo las emitidas.
+    """
+    filas = db.execute(
+        select(SalesCreditNoteLine, SalesCreditNote)
+        .join(SalesCreditNote, SalesCreditNote.id == SalesCreditNoteLine.note_id)
+        .where(SalesCreditNote.company_id == company_id,
+               SalesCreditNoteLine.invoice_line_id == str(invoice_line_id),
+               SalesCreditNote.status != "CANCELLED")).all()
+    total = Decimal(0)
+    for linea, nota in filas:
+        if excluir_nota and str(nota.id) == str(excluir_nota):
+            continue
+        total += _dec(linea.quantity)
+    return total
+
+
+def credit_eligibility(db: Session, *, company_id: str, invoice_id: str) -> dict:
+    """Cuánto queda por acreditar de cada línea, y en cuánto dinero."""
+    company_id = _company(company_id, obj="nota de crédito")
+    invoice = db.get(SalesInvoice, invoice_id)
+    if invoice is None or str(invoice.company_id) != str(company_id):
+        raise NotFoundError(code="SALES_INVOICE_NOT_FOUND", message="Factura de venta no encontrada")
+    lineas = db.execute(
+        select(SalesInvoiceLine).where(SalesInvoiceLine.invoice_id == str(invoice.id))
+        .order_by(SalesInvoiceLine.id)).scalars().all()
+    salidas = []
+    for linea in lineas:
+        facturada = _dec(linea.quantity)
+        acreditada = _acreditado_de_linea(db, company_id, str(linea.id))
+        salidas.append({
+            "invoice_line_id": str(linea.id), "product_id": str(linea.product_id),
+            "quantity": str(facturada), "credited_quantity": str(acreditada),
+            "creditable_quantity": str(max(Decimal(0), facturada - acreditada)),
+            "unit_price": str(_dec(linea.unit_price)),
+            "base_fiscal": str(_dec(linea.base_fiscal)),
+            "tax_amount": str(_dec(linea.tax_amount)),
+        })
+    return {
+        "invoice_id": str(invoice.id), "invoice_status": invoice.status,
+        "invoice_number": invoice.invoice_number, "control_number": invoice.control_number,
+        "issued_at": invoice.issued_at.isoformat() if invoice.issued_at else None,
+        "customer_id": str(invoice.customer_id), "currency": invoice.base_fiscal_currency,
+        # Solo se acredita una factura que exista fiscalmente: la norma habla de
+        # «disminuir o dejar sin efecto **una factura emitida**».
+        "creditable": invoice.status in ("EMITTED", "DELIVERED", "PARTIALLY_PAID", "PAID"),
+        "lines": salidas,
+    }
+
+
+def generate_credit_note(db: Session, *, company_id: str, invoice_id: str, cause: str,
+                         lines: list[dict], return_id: str | None = None,
+                         actor: str | None = None) -> SalesCreditNote:
+    """Construye la nota contra la factura original. **No la emite.**
+
+    El impuesto no se vuelve a calcular con las reglas de hoy: se reparte el que
+    la factura ya lleva, en proporción a la cantidad que se acredita. Eso es lo
+    que dice la norma —«recalcular proporcionalmente base imponible e IVA»— y a
+    la vez lo único que «mantiene la misma clasificación tributaria de la
+    operación original», porque no vuelve a clasificar nada.
+    """
+    company_id = _company(company_id, obj="nota de crédito")
+    if not (cause or "").strip():
+        raise KontrolError(code="CREDIT_NOTE_CAUSE_REQUIRED",
+                           message="Indique el motivo de la nota de crédito.", status_code=422)
+    elegibilidad = credit_eligibility(db, company_id=company_id, invoice_id=invoice_id)
+    if not elegibilidad["creditable"]:
+        raise ConflictError(code="INVOICE_NOT_CREDITABLE",
+                            message="Solo se acredita una factura emitida.")
+    if not lines:
+        raise KontrolError(code="CREDIT_NOTE_EMPTY", message="La nota no tiene líneas.",
+                           status_code=422)
+    invoice = db.get(SalesInvoice, invoice_id)
+    devolucion = None
+    if return_id:
+        devolucion = _require_return_036(db, company_id, return_id)
+        if str(devolucion.invoice_id) != str(invoice.id):
+            raise ConflictError(code="RETURN_INVOICE_MISMATCH",
+                                message="La devolución no es de esta factura.")
+
+    nota = SalesCreditNote(
+        company_id=company_id, customer_id=str(invoice.customer_id),
+        invoice_id=str(invoice.id), invoice_ref=str(invoice.id),
+        return_id=str(devolucion.id) if devolucion else None,
+        number="", amount=Decimal(0), applied=Decimal(0),
+        currency=invoice.base_fiscal_currency or "VED", cause=cause,
+        status="DRAFT", created_by=actor)
+    db.add(nota)
+    db.flush()
+
+    disponible = {x["invoice_line_id"]: _dec(x["creditable_quantity"])
+                  for x in elegibilidad["lines"]}
+    base_total = Decimal(0)
+    impuesto_total = Decimal(0)
+    for item in lines:
+        invoice_line_id = str(item["invoice_line_id"])
+        if invoice_line_id not in disponible:
+            raise NotFoundError(code="INVOICE_LINE_NOT_FOUND",
+                                message="La línea no pertenece a esta factura")
+        linea = db.get(SalesInvoiceLine, invoice_line_id)
+        cantidad = _dec(item["quantity"])
+        if cantidad <= 0:
+            raise KontrolError(code="CREDIT_QUANTITY_INVALID",
+                               message="La cantidad a acreditar debe ser positiva.", status_code=422)
+        if cantidad > disponible[invoice_line_id]:
+            raise ConflictError(
+                code="CREDIT_EXCEEDS_INVOICE",
+                message="No se acredita por encima de lo pendiente del original.",
+                details={"invoice_line_id": invoice_line_id,
+                         "creditable_quantity": str(disponible[invoice_line_id]),
+                         "requested_quantity": str(cantidad)})
+        disponible[invoice_line_id] -= cantidad
+        facturada = _dec(linea.quantity)
+        proporcion = (cantidad / facturada) if facturada else Decimal(0)
+        base = (_dec(linea.base_fiscal) * proporcion).quantize(_CENTIMO)
+        impuesto = (_dec(linea.tax_amount) * proporcion).quantize(_CENTIMO)
+        factor = linea.conversion_factor_snapshot
+        db.add(SalesCreditNoteLine(
+            note_id=str(nota.id), invoice_line_id=invoice_line_id,
+            product_id=str(linea.product_id), quantity=cantidad,
+            unit_price=_dec(linea.unit_price), base_fiscal=base, tax_amount=impuesto,
+            total=base + impuesto, uom_id=linea.uom_id, presentation_id=linea.presentation_id,
+            conversion_factor_snapshot=factor,
+            base_quantity=(cantidad * _dec(factor)) if factor else None))
+        base_total += base
+        impuesto_total += impuesto
+
+    nota.base_fiscal = base_total
+    nota.tax_total = impuesto_total
+    nota.amount = base_total + impuesto_total
+    db.flush()
+    _audit(db, action="SALES_CREDIT_NOTE_GENERATED", entity_type="SalesCreditNote",
+           entity_id=str(nota.id), company_id=company_id, actor=actor,
+           after={"invoice_id": str(invoice.id), "return_id": str(devolucion.id) if devolucion else None,
+                  "total": str(nota.amount), "cause": cause})
+    return nota
+
+
+def issue_credit_note(db: Session, *, company_id: str, note_id: str, series_id: str,
+                      batch_id: str, actor: str | None = None) -> SalesCreditNote:
+    """Emite el documento fiscal de la nota y ajusta la cuenta por cobrar.
+
+    El consecutivo y el número de control los da la 042, igual que a la factura,
+    y por la misma razón: aquí no se numera. La tasa de cambio tampoco se
+    revisa: la Providencia considera alteración fiscal el «cambio retroactivo
+    del tipo de cambio», y una nota que ajusta proporcionalmente una factura ya
+    emitida no puede traer una tasa distinta de la suya.
+    """
+    company_id = _company(company_id, obj="nota de crédito")
+    nota = db.execute(
+        select(SalesCreditNote).where(SalesCreditNote.id == note_id).with_for_update()
+    ).scalars().first()
+    if nota is None or str(nota.company_id) != str(company_id):
+        raise NotFoundError(code="CREDIT_NOTE_NOT_FOUND", message="Nota de crédito no encontrada")
+    if nota.issued_at is not None:
+        return nota
+    if nota.invoice_id is None:
+        raise ConflictError(code="CREDIT_NOTE_WITHOUT_INVOICE",
+                            message="No se emite una nota que no referencia una factura.")
+    invoice = db.execute(
+        select(SalesInvoice).where(SalesInvoice.id == str(nota.invoice_id)).with_for_update()
+    ).scalars().first()
+
+    emitido = fiscal_service.emit_document(
+        db, company_id=company_id, business_document=f"CREDIT_NOTE:{nota.id}",
+        series_id=series_id, batch_id=batch_id, actor=actor)
+
+    ahora = datetime.now(UTC)
+    nota.number = emitido.get("invoice_number") or nota.number
+    nota.invoice_number = emitido.get("invoice_number")
+    nota.control_number = emitido.get("control_number")
+    nota.fiscal_document_id = emitido.get("id")
+    nota.status = "POSTED"
+    nota.issued_at = ahora
+    nota.issued_by = actor
+    nota.updated_at = ahora
+    db.flush()
+
+    _aplicar_nota_a_cxc(db, company_id=company_id, nota=nota, invoice=invoice, actor=actor)
+
+    # `CREDITED` solo cuando la factura queda acreditada por entero. Una nota
+    # parcial no la cierra: el estado existía en la máquina desde la Spec 005 y
+    # es terminal, así que ponerlo antes de tiempo mataría la factura.
+    pendiente = [x for x in credit_eligibility(db, company_id=company_id,
+                                               invoice_id=str(invoice.id))["lines"]
+                 if _dec(x["creditable_quantity"]) > 0]
+    if not pendiente and invoice.status in INVOICE_TRANSITIONS and \
+            "CREDITED" in INVOICE_TRANSITIONS[invoice.status]:
+        invoice.status = "CREDITED"
+        invoice.updated_at = ahora
+    db.flush()
+    _audit(db, action="SALES_CREDIT_NOTE_ISSUED", entity_type="SalesCreditNote",
+           entity_id=str(nota.id), company_id=company_id, actor=actor,
+           after={"invoice_number": nota.invoice_number, "control_number": nota.control_number,
+                  "invoice_id": str(invoice.id), "invoice_status": invoice.status})
+    return nota
+
+
+def _aplicar_nota_a_cxc(db: Session, *, company_id: str, nota: SalesCreditNote,
+                        invoice: SalesInvoice, actor: str | None) -> None:
+    """«Ajuste de cuenta por cobrar», con el motor que ya existe.
+
+    Si la factura ya está cobrada no hay saldo que reducir y la nota queda sin
+    aplicar. Eso **no** es un error: la norma no condiciona la nota a que la
+    factura esté pendiente, y qué hacer con un crédito a favor del cliente
+    —imputarlo a otra factura, devolverlo— es de CxC y de tesorería, no de aquí.
+    """
+    item = db.execute(
+        select(OpenItem).where(OpenItem.company_id == company_id,
+                               OpenItem.source_document == f"SALES_INVOICE:{invoice.id}",
+                               OpenItem.status == "OPEN").with_for_update()).scalars().first()
+    if item is None:
+        return
+    saldo = _dec(ap_service.open_item_balance(item))
+    pendiente = _dec(nota.amount) - _dec(nota.applied)
+    aplicar = min(saldo, pendiente)
+    if aplicar <= 0:
+        return
+    apply_credit_note(db, note=nota, target_open_item_id=str(item.id),
+                      amount=float(aplicar), actor=actor)
+
+
+def credit_note_dict(db: Session, nota: SalesCreditNote) -> dict:
+    lineas = db.execute(
+        select(SalesCreditNoteLine).where(SalesCreditNoteLine.note_id == str(nota.id))
+        .order_by(SalesCreditNoteLine.id)).scalars().all()
+    return {
+        "id": str(nota.id), "status": nota.status, "cause": nota.cause,
+        "invoice_id": str(nota.invoice_id) if nota.invoice_id else None,
+        "return_id": str(nota.return_id) if nota.return_id else None,
+        "customer_id": str(nota.customer_id), "currency": nota.currency,
+        "base_fiscal": str(_dec(nota.base_fiscal)), "tax_total": str(_dec(nota.tax_total)),
+        "total": str(_dec(nota.amount)), "applied": str(_dec(nota.applied)),
+        "invoice_number": nota.invoice_number, "control_number": nota.control_number,
+        "fiscal_document_id": nota.fiscal_document_id,
+        "issued_at": nota.issued_at.isoformat() if nota.issued_at else None,
+        "lines": [{"invoice_line_id": str(ln.invoice_line_id) if ln.invoice_line_id else None,
+                   "product_id": str(ln.product_id), "quantity": str(_dec(ln.quantity)),
+                   "unit_price": str(_dec(ln.unit_price)),
+                   "base_quantity": (str(_dec(ln.base_quantity))
+                                     if ln.base_quantity is not None else None),
+                   "base_fiscal": str(_dec(ln.base_fiscal)),
+                   "tax_amount": str(_dec(ln.tax_amount)), "total": str(_dec(ln.total))}
+                  for ln in lineas],
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Nota de débito
+#
+# «La nota de débito aumenta el valor de una operación ya facturada». Su flujo
+# no tiene una sola etapa física: «Identificación del concepto → Aprobación →
+# Nota de débito vinculada → Ajuste de base e IVA → Cuenta por cobrar →
+# Registro fiscal». Por eso aquí no se toca inventario, y por eso no hay tope
+# contra el original: una nota de débito **suma**.
+#
+# Lo que sí es obligatorio es el vínculo: «no puede utilizarse como una factura
+# independiente ni para encubrir una nueva venta».
+# --------------------------------------------------------------------------- #
+
+def generate_debit_note(db: Session, *, company_id: str, invoice_id: str, cause: str,
+                        lines: list[dict], actor: str | None = None) -> SalesDebitNote:
+    company_id = _company(company_id, obj="nota de débito")
+    if not (cause or "").strip():
+        raise KontrolError(code="DEBIT_NOTE_CAUSE_REQUIRED",
+                           message="Indique el motivo de la nota de débito.", status_code=422)
+    invoice = db.get(SalesInvoice, invoice_id)
+    if invoice is None or str(invoice.company_id) != str(company_id):
+        raise NotFoundError(code="SALES_INVOICE_NOT_FOUND", message="Factura de venta no encontrada")
+    if invoice.status not in ("EMITTED", "DELIVERED", "PARTIALLY_PAID", "PAID"):
+        raise ConflictError(code="INVOICE_NOT_DEBITABLE",
+                            message="Solo se carga sobre una factura emitida.")
+    if not lines:
+        raise KontrolError(code="DEBIT_NOTE_EMPTY", message="La nota no tiene conceptos.",
+                           status_code=422)
+
+    nota = SalesDebitNote(
+        company_id=company_id, customer_id=str(invoice.customer_id),
+        invoice_id=str(invoice.id), invoice_ref=str(invoice.id), number="",
+        amount=Decimal(0), currency=invoice.base_fiscal_currency or "VED",
+        cause=cause, status="DRAFT", created_by=actor)
+    db.add(nota)
+    db.flush()
+
+    base_total = Decimal(0)
+    impuesto_total = Decimal(0)
+    for item in lines:
+        concepto = str(item.get("concept", "")).strip()
+        if not concepto:
+            raise KontrolError(code="DEBIT_CONCEPT_REQUIRED",
+                               message="Cada concepto debe decir qué se cobra.", status_code=422)
+        base = _dec(item.get("base_fiscal", 0)).quantize(_CENTIMO)
+        if base <= 0:
+            raise KontrolError(code="DEBIT_AMOUNT_INVALID",
+                               message="El monto del concepto debe ser positivo.", status_code=422)
+        impuesto = Decimal(0)
+        linea_factura = None
+        if item.get("invoice_line_id"):
+            linea_factura = db.get(SalesInvoiceLine, str(item["invoice_line_id"]))
+            if linea_factura is None or str(linea_factura.invoice_id) != str(invoice.id):
+                raise NotFoundError(code="INVOICE_LINE_NOT_FOUND",
+                                    message="La línea no pertenece a esta factura")
+            # «Discriminar nuevamente base e impuesto», con la misma proporción
+            # de impuesto que la línea original ya lleva: es lo que mantiene la
+            # clasificación tributaria de la operación.
+            base_original = _dec(linea_factura.base_fiscal)
+            if base_original:
+                impuesto = (base * _dec(linea_factura.tax_amount) / base_original).quantize(_CENTIMO)
+        db.add(SalesDebitNoteLine(
+            note_id=str(nota.id),
+            invoice_line_id=str(linea_factura.id) if linea_factura else None,
+            product_id=str(linea_factura.product_id) if linea_factura else None,
+            concept=concepto, base_fiscal=base, tax_amount=impuesto, total=base + impuesto))
+        base_total += base
+        impuesto_total += impuesto
+
+    nota.base_fiscal = base_total
+    nota.tax_total = impuesto_total
+    nota.amount = base_total + impuesto_total
+    db.flush()
+    _audit(db, action="SALES_DEBIT_NOTE_GENERATED", entity_type="SalesDebitNote",
+           entity_id=str(nota.id), company_id=company_id, actor=actor,
+           after={"invoice_id": str(invoice.id), "total": str(nota.amount), "cause": cause})
+    return nota
+
+
+def issue_debit_note(db: Session, *, company_id: str, note_id: str, series_id: str,
+                     batch_id: str, actor: str | None = None) -> SalesDebitNote:
+    """Emite el documento fiscal y **aumenta** la cuenta por cobrar."""
+    company_id = _company(company_id, obj="nota de débito")
+    nota = db.execute(
+        select(SalesDebitNote).where(SalesDebitNote.id == note_id).with_for_update()
+    ).scalars().first()
+    if nota is None or str(nota.company_id) != str(company_id):
+        raise NotFoundError(code="DEBIT_NOTE_NOT_FOUND", message="Nota de débito no encontrada")
+    if nota.issued_at is not None:
+        return nota
+    if nota.invoice_id is None:
+        raise ConflictError(code="DEBIT_NOTE_WITHOUT_INVOICE",
+                            message="No se emite una nota que no referencia una factura.")
+
+    emitido = fiscal_service.emit_document(
+        db, company_id=company_id, business_document=f"DEBIT_NOTE:{nota.id}",
+        series_id=series_id, batch_id=batch_id, actor=actor)
+
+    ahora = datetime.now(UTC)
+    nota.number = emitido.get("invoice_number") or nota.number
+    nota.invoice_number = emitido.get("invoice_number")
+    nota.control_number = emitido.get("control_number")
+    nota.fiscal_document_id = emitido.get("id")
+    nota.status = "POSTED"
+    nota.issued_at = ahora
+    nota.issued_by = actor
+    nota.updated_at = ahora
+    # La nota de débito no reduce nada: crea su propio documento por cobrar, con
+    # su propio saldo. Meterla en el de la factura mezclaría dos documentos
+    # fiscales distintos en una sola cuenta.
+    db.add(OpenItem(company_id=company_id, party_id=str(nota.customer_id),
+                    source_document=f"SALES_DEBIT_NOTE:{nota.id}", item_type="RECEIVABLE",
+                    currency=nota.currency, original=nota.amount, applied=0.0,
+                    due_date=date.today(), status="OPEN"))
+    db.flush()
+    _audit(db, action="SALES_DEBIT_NOTE_ISSUED", entity_type="SalesDebitNote",
+           entity_id=str(nota.id), company_id=company_id, actor=actor,
+           after={"invoice_number": nota.invoice_number, "control_number": nota.control_number,
+                  "invoice_id": str(nota.invoice_id), "total": str(nota.amount)})
+    return nota
+
+
+def debit_note_dict(db: Session, nota: SalesDebitNote) -> dict:
+    lineas = db.execute(
+        select(SalesDebitNoteLine).where(SalesDebitNoteLine.note_id == str(nota.id))
+        .order_by(SalesDebitNoteLine.id)).scalars().all()
+    return {
+        "id": str(nota.id), "status": nota.status, "cause": nota.cause,
+        "invoice_id": str(nota.invoice_id) if nota.invoice_id else None,
+        "customer_id": str(nota.customer_id), "currency": nota.currency,
+        "base_fiscal": str(_dec(nota.base_fiscal)), "tax_total": str(_dec(nota.tax_total)),
+        "total": str(_dec(nota.amount)),
+        "invoice_number": nota.invoice_number, "control_number": nota.control_number,
+        "fiscal_document_id": nota.fiscal_document_id,
+        "issued_at": nota.issued_at.isoformat() if nota.issued_at else None,
+        "lines": [{"invoice_line_id": str(ln.invoice_line_id) if ln.invoice_line_id else None,
+                   "product_id": str(ln.product_id) if ln.product_id else None,
+                   "concept": ln.concept, "base_fiscal": str(_dec(ln.base_fiscal)),
+                   "tax_amount": str(_dec(ln.tax_amount)), "total": str(_dec(ln.total))}
+                  for ln in lineas],
+    }
