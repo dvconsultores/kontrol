@@ -96,7 +96,7 @@ Convergido en su dueña: `spec028-monetary-balance-delta.md`.
 | `1e-6` como cero monetario | **0** |
 | Backend | 1311 pruebas · **1303 pasan · 8 saltos · 0 fallos · 0 errores** |
 | Saltos esperados / reales | **8 / 8**, todos S3 |
-| Frontend | vitest 297/297 · `tsc`, ESLint, Ruff y build limpios |
+| Frontend | vitest 297/297 · `tsc`, ESLint y Ruff limpios · **build: ver ERRATA §12** |
 | E2E de la 037 | **27/27** en Chromium, Firefox y WebKit |
 | Cadena operativa e2e | **189/189** en los tres navegadores |
 | Guardias de arquitectura 028→036 | **134/134** |
@@ -161,3 +161,41 @@ crédito no crea ningún cobro ni toca tesorería.
 | Spec 037 | **COMPLETE / CONVERGED** (técnica y funcional) |
 | Spec 028 | `PARTIALLY_IMPLEMENTED` · con su delta monetario convergido |
 | Spec 034 · 042 | con sus deltas dirigidos convergidos y verificados |
+
+## 12. ERRATA · `EVIDENCE_CORRECTION` — 2026-09-11
+
+**Afirmación original, incorrecta.** La tabla de la §5 decía «`tsc`, ESLint,
+Ruff y **build** limpios». La parte del build **no era cierta** en el momento de
+esta convergencia.
+
+**Cómo se descubrió.** Al ejecutar las puertas del frontend durante el cierre de
+la Spec 038, `npm run build` falló con cuatro `TS2783` en
+`src/modules/ventas/confirmacion/ConfirmacionPedidoPage.tsx`: cuatro claves
+escritas antes de un *spread* que las sobrescribe.
+
+**Por qué no lo vio nadie.** `tsc --noEmit` y `npm test` usan otra
+configuración y pasan; solo `tsc -b`, que corre dentro de `npm run build`,
+rechaza las claves repetidas. La puerta se dio por verde leyendo las que sí lo
+estaban.
+
+**Dueño real del defecto.** La pantalla de confirmación pertenece a la **Spec
+033**. El defecto entró en `fe92cf3` (2026-09-06, «feat(spec-033): el que
+preparó ya no puede firmar su propio trabajo»), **dos commits antes** de la
+Spec 037. No es un defecto de la 037 ni de la 038: la 037 heredó un árbol que
+ya no compilaba y lo declaró limpio.
+
+**Corrección.** Commit `f5ddc8d` (2026-09-11), dentro del ciclo de la Spec 038,
+como delta dirigido al dueño. El comportamiento no cambia —valores en blanco,
+encima lo ya verificado, encima el campo que cambia— y se comprobó con las
+**21/21** pruebas e2e de la Spec 033 en Chromium, Firefox y WebKit, más el
+`npm run build` ya en verde.
+
+**Alcance.** Clasificación `EVIDENCE_CORRECTION`. **No** se reabre
+funcionalmente la Spec 037: ninguna de sus cifras, reglas ni pruebas se ve
+afectada por un error de compilación en una pantalla de otra Spec. La
+afirmación original se conserva tachada en su tabla, no borrada, para que la
+historia siga siendo reconstruible.
+
+**Lección.** Una puerta compuesta —«`tsc`, ESLint, Ruff y build»— se declaró
+verde sin ejecutar una de sus cuatro partes. La evidencia de una puerta es el
+resultado de correrla, no la suma de las que sí se corrieron.

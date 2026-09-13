@@ -88,3 +88,23 @@ que el control funciona**.
 | Spec 033 | **COMPLETE / CONVERGED** |
 | Specs 001, 030 | `COMPLETE / CONVERGED` con sus deltas dirigidos convergidos |
 | Spec 034 | **desbloqueada por dependencia**; compuerta en `spec033-spec034-handoff-contract.md`. **No implementada.** |
+
+## Delta dirigido recibido — 2026-09-11 · `EVIDENCE_CORRECTION`
+
+`ConfirmacionPedidoPage` escribía cuatro claves —`cantidad`, `presentacion`,
+`condicion`, `nota`— **antes** del *spread* que las sobrescribe. El resultado en
+ejecución era el correcto —valores en blanco, encima lo ya verificado, encima el
+campo que cambia—, pero `tsc -b` rechaza las claves repetidas con `TS2783`, y
+`tsc -b` es lo que corre dentro de `npm run build`.
+
+La build llevaba rota desde `fe92cf3`, el propio commit de esta Spec. No lo vio
+nadie porque `tsc --noEmit` y `npm test` usan otra configuración y pasan.
+
+Corregido en `f5ddc8d`, durante el ciclo de la Spec 038, sin cambiar el
+comportamiento: se parte de lo ya verificado —o de los valores en blanco si es
+la primera vez— y encima va el campo que cambia. Comprobado con las **21/21**
+pruebas e2e de esta Spec en los tres navegadores y con `npm run build` en verde.
+
+Consecuencia en otra Spec: la convergencia de la 037 daba por buena la puerta
+«build limpia» y no lo estaba. Queda anotada allí como `EVIDENCE_CORRECTION`,
+§12 de `spec037-convergence.md`.

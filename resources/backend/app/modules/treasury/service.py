@@ -22,6 +22,7 @@ from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import Payment
 from app.modules.sales.models import SalesCreditNote
+from app.modules.treasury import rates
 from app.modules.treasury.models import (
     BankTransaction,
     Cashbox,
@@ -210,23 +211,29 @@ def capture_rate_snapshot(db: Session, *, company_id: str, source_currency: str,
         db.flush()
         return snap
 
-    registrada = _buscar_tasa(db, company_id, source_currency, target_currency, dia)
-    if registrada is None:
+    resuelta = resolucion_de_tasa(db, company_id, source_currency, target_currency, dia)
+    if resuelta is None:
         raise ConflictError(
             code="RATE_NOT_AVAILABLE",
             message="No hay tasa registrada para esa conversión en esa fecha.",
             details={"source_currency": source_currency, "target_currency": target_currency,
                      "rate_date": dia.isoformat()})
-    tasa, fila = registrada
+    fila = (db.get(ExchangeRate, resuelta.observation_id)
+            if resuelta.observation_id and not resuelta.derived else None)
     snap = TreasuryRateSnapshot(
         company_id=company_id, source_currency=source_currency,
-        target_currency=target_currency, rate=tasa,
-        rate_source=(fila.source if fila else None) or (politica.rate_source if politica else None),
-        rate_type=politica.rate_type if politica else None, rate_date=dia,
+        target_currency=target_currency, rate=resuelta.rate,
+        rate_source=resuelta.source_code or (politica.rate_source if politica else None),
+        rate_type=resuelta.rate_type or (politica.rate_type if politica else None),
+        rate_date=dia,
         exchange_rate_id=str(fila.id) if fila else None,
         policy_id=str(politica.id) if politica else None,
         policy_version=politica.version if politica else None,
-        origin="REGISTERED", created_by=actor)
+        origin="REGISTERED",
+        # Si la tasa se derivó, la instantánea lo dice y de qué filas salió.
+        derivation=resuelta.derived,
+        derived_from=",".join(resuelta.derived_from) or None,
+        created_by=actor)
     db.add(snap)
     db.flush()
     return snap
@@ -234,41 +241,35 @@ def capture_rate_snapshot(db: Session, *, company_id: str, source_currency: str,
 
 def _buscar_tasa(db: Session, company_id: str, origen: str, destino: str,
                  dia: date) -> tuple[Decimal, ExchangeRate | None] | None:
-    """La tasa registrada que convierte `origen` en `destino` en esa fecha.
+    """La tasa que convierte `origen` en `destino` ese día.
 
-    Se busca **con fecha**, no la más reciente: una operación de ayer no se
-    valora con la tasa de hoy.
+    Delega en la Spec 013, que es la dueña de la resolución. Este envoltorio
+    existe porque la 038 necesita la fila para su instantánea y porque, aquí, no
+    haber tasa es una condición esperada —la política decide si se admite tasa
+    manual—, no un fallo.
+
+    Lo que antes hacía esta función y ya no: escribir `("VED", "VES")` dentro
+    del dominio, invertir una cotización sin decirlo y cruzar dos sin permiso.
+    Las tres eran decisiones económicas tomadas por el código.
     """
-    if origen == destino:
-        return Decimal(1), None
-    funcional = ("VED", "VES")
-
-    def registrada(codigo: str) -> tuple[Decimal, ExchangeRate] | None:
-        cur = db.execute(select(Currency).where(
-            Currency.company_id == company_id, Currency.code == codigo)).scalars().first()
-        if cur is None:
-            return None
-        fila = db.execute(
-            select(ExchangeRate).where(
-                ExchangeRate.company_id == company_id,
-                ExchangeRate.currency_id == str(cur.id),
-                ExchangeRate.rate_date <= dia)
-            .order_by(ExchangeRate.rate_date.desc()).limit(1)).scalars().first()
-        return (Decimal(str(fila.rate)), fila) if fila else None
-
-    # Las tasas se guardan contra la moneda funcional: divisa → bolívar.
-    if destino in funcional:
-        return registrada(origen)
-    if origen in funcional:
-        inversa = registrada(destino)
-        if inversa is None or inversa[0] == 0:
-            return None
-        return (Decimal(1) / inversa[0], inversa[1])
-    # Divisa a divisa: hacen falta las dos patas.
-    a, b = registrada(origen), registrada(destino)
-    if a is None or b is None or b[0] == 0:
+    try:
+        resuelta = rates.resolve_rate(db, company_id=company_id, base_code=origen,
+                                      quote_code=destino, effective_at=dia)
+    except KontrolError:
         return None
-    return (a[0] / b[0], a[1])
+    fila = (db.get(ExchangeRate, resuelta.observation_id)
+            if resuelta.observation_id and not resuelta.derived else None)
+    return (resuelta.rate, fila)
+
+
+def resolucion_de_tasa(db: Session, company_id: str, origen: str, destino: str,
+                       dia: date) -> rates.RateResolution | None:
+    """La resolución entera, para que la instantánea guarde su procedencia."""
+    try:
+        return rates.resolve_rate(db, company_id=company_id, base_code=origen,
+                                  quote_code=destino, effective_at=dia)
+    except KontrolError:
+        return None
 
 
 def _session_expected(db: Session, session: CashSession) -> float:
@@ -356,17 +357,32 @@ def create_currency(db: Session, *, company_id: str, code: str, name: str | None
     return c
 
 
-def set_exchange_rate(db: Session, *, company_id: str, currency_id: str, rate_date: date, rate: float,
-                      source: str | None = None, actor: str | None = None) -> ExchangeRate:
+def set_exchange_rate(db: Session, *, company_id: str, currency_id: str, rate_date: date,
+                      rate: Decimal | float, source: str | None = None,
+                      actor: str | None = None) -> ExchangeRate:
+    """Registra una tasa por el camino antiguo, con el par ya explícito.
+
+    El camino corto —«la tasa del dólar»— sigue existiendo, pero ya no deja el
+    par a la imaginación: la moneda de la fila es la base y la cotizada es la
+    funcional **que la empresa declara**. Lo escribe la Spec 013, que es su
+    dueña; esto es solo la puerta de compatibilidad.
+    """
     company_id = _company(company_id, obj="tasa")
-    _require_currency(db, company_id, currency_id)
-    if rate <= 0:
-        raise KontrolError(code="INVALID_RATE", message="La tasa debe ser positiva", status_code=422)
-    r = ExchangeRate(company_id=company_id, currency_id=currency_id, rate_date=rate_date, rate=rate, source=source,
-                     created_by=actor)
-    db.add(r)
-    db.flush()
-    return r
+    moneda = _require_currency(db, company_id, currency_id)
+    funcional = rates.asegurar_moneda_funcional(db, company_id, actor).code
+    if moneda.code == funcional:
+        raise KontrolError(
+            code="INVALID_PAIR",
+            message="La moneda funcional no cotiza contra sí misma.", status_code=422)
+    # El texto libre que traía esta llamada —«BCV», «banco»— siempre quiso
+    # nombrar una fuente. Se convierte en una del maestro la primera vez que se
+    # usa, en vez de acabar en el cajón de lo heredado: así el histórico gana
+    # procedencia de verdad sin que nadie tenga que migrar nada a mano.
+    fuente = rates.fuente_por_texto(db, company_id, source, actor)
+    return rates.register_rate(
+        db, company_id=company_id, base_code=moneda.code, quote_code=funcional,
+        rate=rate, effective_at=rate_date, source_id=str(fuente.id),
+        source_reference=source, actor=actor)
 
 
 # --------------------------------------------------------------------------- #

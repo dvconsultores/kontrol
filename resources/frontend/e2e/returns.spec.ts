@@ -139,15 +139,32 @@ async function escenario(
     warehouse_id: almacen, code: `VC-${m}`, name: "Área de Confirmación", sequence: 99,
   });
 
-  const tipos = await get(request, c, "/inventory/movement-types");
-  let entrada = (tipos.items ?? tipos).find(
-    (x: { code: string }) => x.code === "ENTRADA_RECEPCION",
-  ) as { id: string } | undefined;
+  // Buscar y, si falta, crear. En una base recién instalada varias pruebas
+  // llegan a la vez, todas ven que el tipo no existe y solo la primera consigue
+  // crearlo: las demás reciben un 409 legítimo del índice único. Ese 409 no es
+  // un fallo del escenario sino la señal de que otra prueba ya lo creó, así que
+  // se vuelve a leer. Cualquier otro error sí rompe la prueba.
+  const buscarEntrada = async () => {
+    const tipos = await get(request, c, "/inventory/movement-types");
+    return (tipos.items ?? tipos).find(
+      (x: { code: string }) => x.code === "ENTRADA_RECEPCION",
+    ) as { id: string } | undefined;
+  };
+  let entrada = await buscarEntrada();
   if (!entrada) {
-    entrada = (await post(request, c, "/inventory/movement-types", {
-      code: "ENTRADA_RECEPCION", name: "Entrada por recepción", direction: "IN",
-    })) as { id: string };
+    const creado = await request.post(`${API}/inventory/movement-types`, {
+      headers: c.headers,
+      data: { code: "ENTRADA_RECEPCION", name: "Entrada por recepción", direction: "IN" },
+    });
+    if (creado.ok()) {
+      entrada = (await creado.json()) as { id: string };
+    } else {
+      expect((await creado.json()).code, `movement-types: ${creado.status()}`)
+        .toBe("MOVEMENT_TYPE_DUPLICATE");
+      entrada = await buscarEntrada();
+    }
   }
+  if (!entrada) throw new Error("No existe el tipo de movimiento ENTRADA_RECEPCION");
   await post(request, c, "/inventory/movements", {
     warehouse_id: almacen, product_id: producto.id, movement_type_id: entrada.id,
     quantity: cantidad + 20,

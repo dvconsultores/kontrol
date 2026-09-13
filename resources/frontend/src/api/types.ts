@@ -2053,3 +2053,114 @@ export interface CashPosition {
   accounts: CashPositionAccount[];
   by_currency: { currency: string; balance: string }[];
 }
+
+// --------------------------------------------------------------------------- //
+// Maestros financieros — Spec 013: la autoridad de la tasa
+// --------------------------------------------------------------------------- //
+
+/** De dónde viene una tasa. `source_type` es del maestro, no del código. */
+export interface RateSource {
+  id: string;
+  code: string;
+  name: string;
+  source_type: string;
+  authority_reference: string | null;
+  provider_code: string | null;
+  allows_manual: boolean;
+  priority: number;
+  status: "ACTIVE" | "DISABLED";
+  effective_from: string | null;
+  effective_to: string | null;
+  /** Salud del canal, no una cotización: confundirlos haría pasar un error de red por una tasa. */
+  last_sync_at: string | null;
+  last_success_at: string | null;
+  last_error: string | null;
+}
+
+/**
+ * Cómo se **resuelve** una tasa.
+ *
+ * Distinta de la política cambiaria de la Spec 038, que decide si se puede
+ * convertir: ésta decide de dónde sale el número.
+ */
+export interface RatePolicy {
+  id: string;
+  policy_code: string;
+  version: number;
+  allow_inversion: boolean;
+  allow_triangulation: boolean;
+  triangulation_currency: string | null;
+  max_age_days: number | null;
+  carry_forward: boolean;
+  require_rate_approval: boolean;
+  rate_scale: number;
+  authority_reference: string | null;
+  status: "DRAFT" | "ACTIVE" | "SUPERSEDED";
+  effective_from: string;
+  effective_to: string | null;
+}
+
+/** Una cotización con su par explícito: **1 base = `rate` quote**. */
+export interface RateObservation {
+  id: string;
+  base_currency: string | null;
+  quote_currency: string | null;
+  rate: string;
+  rate_type: string;
+  status: string;
+  version: number;
+  source_id: string | null;
+  source_code: string | null;
+  effective_at: string | null;
+  published_at: string | null;
+  observed_at: string | null;
+  supersedes_id: string | null;
+  import_batch_id: string | null;
+  provider_observation_id: string | null;
+  source_reference: string | null;
+  reason: string | null;
+  entered_by: string | null;
+  approved_by: string | null;
+}
+
+/** El resultado de resolver, nunca un número pelado. */
+export interface RateResolution {
+  base_currency: string;
+  quote_currency: string;
+  rate: string;
+  /** «1 USD = 100 VES», escrito, porque `USD/VES` a secas no dice nada. */
+  meaning: string;
+  observation_id: string | null;
+  source_code: string | null;
+  rate_type: string | null;
+  effective_at: string | null;
+  published_at: string | null;
+  observed_at: string | null;
+  version: number | null;
+  status: string | null;
+  identity: boolean;
+  /** `INVERSE` o `TRIANGULATION` cuando el número no salió de una fila tal cual. */
+  derived: string | null;
+  derived_from: string[];
+}
+
+export interface RateImportResult {
+  batch_id: string;
+  rows: number;
+  imported: number;
+  rejected: number;
+  status: string;
+  errors: { row: number; code: string; message: string; value: Record<string, string> }[];
+}
+
+export interface RateImportBatch {
+  id: string;
+  filename: string | null;
+  status: string;
+  rows: number;
+  imported: number;
+  rejected: number;
+  source_id: string;
+  rate_type: string | null;
+  created_at: string | null;
+}

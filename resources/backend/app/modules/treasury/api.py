@@ -7,12 +7,12 @@ idempotencia en POST críticos (ejecución de ingresos/egresos).
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
@@ -20,12 +20,17 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
 from app.core.errors import NotFoundError
 from app.modules.identity_access.models import User
+from app.modules.treasury import rates
 from app.modules.treasury import service as treasury_service
 from app.modules.treasury.models import (
     BankTransaction,
     Cashbox,
     CashSession,
     Currency,
+    ExchangeRate,
+    ExchangeRateImportBatch,
+    ExchangeRatePolicy,
+    ExchangeRateSource,
     FinancialAccount,
     FinancialBank,
     FiscalRule,
@@ -93,7 +98,9 @@ class CurrencyCreate(BaseModel):
 class ExchangeRateCreate(BaseModel):
     currency_id: str
     rate_date: date
-    rate: float = Field(gt=0)
+    #: `Decimal`, no `float`. La columna siempre fue exacta y la anotación del
+    #: borde era la que mentía: familia `KQA-100`.
+    rate: Decimal = Field(gt=0)
     source: str | None = None
 
 
@@ -818,3 +825,323 @@ def account_balance(account_id: str, db: Session = Depends(get_db),
     """El saldo calculado desde los movimientos, no un campo guardado."""
     saldo = treasury_service.account_balance(db, company_id=ctx.company_id, account_id=account_id)
     return {"account_id": account_id, "balance": str(saldo)}
+
+
+# --------------------------------------------------------------------------- #
+# Spec 013 · maestros financieros
+#
+# La autoridad de la tasa: monedas, fuentes, política de resolución,
+# observaciones con par explícito, importación y consulta.
+#
+# Ninguna regla legal venezolana se escribe aquí y no se llama a ninguna web: la
+# ingesta externa es de la Spec 048, que entrega observaciones ya normalizadas.
+# --------------------------------------------------------------------------- #
+class RateSourceBody(BaseModel):
+    code: str = Field(min_length=1, max_length=64)
+    name: str = Field(min_length=1, max_length=200)
+    source_type: str = "MANUAL"
+    authority_reference: str | None = None
+    provider_code: str | None = None
+    allows_manual: bool = True
+    priority: int = 100
+    effective_from: date | None = None
+
+
+class RateSourceStatusBody(BaseModel):
+    status: str = Field(pattern="^(ACTIVE|DISABLED)$")
+
+
+class RatePolicyBody(BaseModel):
+    policy_code: str = Field(min_length=1, max_length=64)
+    effective_from: date
+    allow_inversion: bool = False
+    allow_triangulation: bool = False
+    triangulation_currency: str | None = None
+    max_age_days: int | None = Field(default=None, ge=0)
+    carry_forward: bool = True
+    require_rate_approval: bool = False
+    rate_scale: int = Field(default=6, ge=0, le=12)
+    authority_reference: str | None = None
+
+
+class RateObservationBody(BaseModel):
+    base_currency: str = Field(min_length=1, max_length=8)
+    quote_currency: str = Field(min_length=1, max_length=8)
+    #: `Decimal`, no `float`. La tasa es dinero y el borde también cuenta.
+    rate: Decimal = Field(gt=0)
+    effective_at: datetime
+    source_id: str | None = None
+    rate_type: str = "REFERENCE"
+    published_at: datetime | None = None
+    reason: str | None = None
+    source_reference: str | None = None
+    authority_reference: str | None = None
+
+
+class RateCorrectionBody(BaseModel):
+    rate: Decimal = Field(gt=0)
+    reason: str = Field(min_length=3, max_length=1000)
+
+
+class RateImportBody(BaseModel):
+    source_id: str
+    rate_type: str = "REFERENCE"
+    filename: str | None = None
+    #: El contenido del CSV. La subida de fichero la hace el navegador; aquí
+    #: llega su texto, que es lo que se valida y de lo que sale el hash.
+    content: str = Field(min_length=1)
+
+
+def _fuente_dict(f) -> dict:
+    return {"id": str(f.id), "code": f.code, "name": f.name, "source_type": f.source_type,
+            "authority_reference": f.authority_reference, "provider_code": f.provider_code,
+            "allows_manual": f.allows_manual, "priority": f.priority, "status": f.status,
+            "effective_from": f.effective_from.isoformat() if f.effective_from else None,
+            "effective_to": f.effective_to.isoformat() if f.effective_to else None,
+            "last_sync_at": f.last_sync_at.isoformat() if f.last_sync_at else None,
+            "last_success_at": f.last_success_at.isoformat() if f.last_success_at else None,
+            "last_error": f.last_error}
+
+
+def _observacion_dict(db: Session, o) -> dict:
+    base = db.get(Currency, str(o.base_currency_id)) if o.base_currency_id else None
+    quote = db.get(Currency, str(o.quote_currency_id)) if o.quote_currency_id else None
+    fuente = db.get(ExchangeRateSource, str(o.source_id)) if o.source_id else None
+    return {"id": str(o.id), "base_currency": base.code if base else None,
+            "quote_currency": quote.code if quote else None, "rate": str(o.rate),
+            "rate_type": o.rate_type, "status": o.status, "version": o.version,
+            "source_id": str(o.source_id) if o.source_id else None,
+            "source_code": fuente.code if fuente else o.source,
+            "effective_at": o.effective_at.isoformat() if o.effective_at else None,
+            "published_at": o.published_at.isoformat() if o.published_at else None,
+            "observed_at": o.observed_at.isoformat() if o.observed_at else None,
+            "supersedes_id": str(o.supersedes_id) if o.supersedes_id else None,
+            "import_batch_id": str(o.import_batch_id) if o.import_batch_id else None,
+            "provider_observation_id": o.provider_observation_id,
+            "source_reference": o.source_reference, "reason": o.reason,
+            "entered_by": o.entered_by, "approved_by": o.approved_by}
+
+
+@router.get("/rate-sources")
+def list_rate_sources(db: Session = Depends(get_db),
+                      user: User = Depends(require_permission("tesoreria", "view")),
+                      ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(ExchangeRateSource).where(
+        ExchangeRateSource.company_id == ctx.company_id)
+        .order_by(ExchangeRateSource.priority, ExchangeRateSource.code)).scalars().all()
+    return {"items": [_fuente_dict(f) for f in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.post("/rate-sources", dependencies=[Depends(require_write_allowed)])
+def create_rate_source(body: RateSourceBody, db: Session = Depends(get_db),
+                       actor: User = Depends(require_permission("tesoreria", "create")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    f = rates.create_source(db, company_id=ctx.company_id, code=body.code, name=body.name,
+                            source_type=body.source_type,
+                            authority_reference=body.authority_reference,
+                            provider_code=body.provider_code, allows_manual=body.allows_manual,
+                            priority=body.priority, effective_from=body.effective_from,
+                            actor=str(actor.id))
+    db.commit()
+    db.refresh(f)
+    return _fuente_dict(f)
+
+
+@router.post("/rate-sources/{source_id}/status", dependencies=[Depends(require_write_allowed)])
+def set_rate_source_status(source_id: str, body: RateSourceStatusBody,
+                           db: Session = Depends(get_db),
+                           actor: User = Depends(require_permission("tesoreria", "approve")),
+                           ctx: CompanyContext = Depends(get_company_context)):
+    """Desactivar una fuente no borra su historia: deja de producir tasas nuevas."""
+    f = rates.set_source_status(db, company_id=ctx.company_id, source_id=source_id,
+                                status=body.status, actor=str(actor.id))
+    db.commit()
+    db.refresh(f)
+    return _fuente_dict(f)
+
+
+@router.get("/rate-policies")
+def list_rate_policies(db: Session = Depends(get_db),
+                       user: User = Depends(require_permission("tesoreria", "view")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(ExchangeRatePolicy).where(
+        ExchangeRatePolicy.company_id == ctx.company_id)
+        .order_by(ExchangeRatePolicy.policy_code,
+                  ExchangeRatePolicy.version.desc())).scalars().all()
+    return {"items": [{"id": str(p.id), "policy_code": p.policy_code, "version": p.version,
+                       "allow_inversion": p.allow_inversion,
+                       "allow_triangulation": p.allow_triangulation,
+                       "triangulation_currency": p.triangulation_currency,
+                       "max_age_days": p.max_age_days, "carry_forward": p.carry_forward,
+                       "require_rate_approval": p.require_rate_approval,
+                       "rate_scale": p.rate_scale,
+                       "authority_reference": p.authority_reference,
+                       "status": p.status,
+                       "effective_from": p.effective_from.isoformat(),
+                       "effective_to": p.effective_to.isoformat() if p.effective_to else None}
+                      for p in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.post("/rate-policies", dependencies=[Depends(require_write_allowed)])
+def create_rate_policy(body: RatePolicyBody, db: Session = Depends(get_db),
+                       actor: User = Depends(require_permission("tesoreria", "create")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    """Crea una versión de política de resolución. Nace en borrador."""
+    p = rates.create_policy(db, company_id=ctx.company_id, policy_code=body.policy_code,
+                            effective_from=body.effective_from,
+                            allow_inversion=body.allow_inversion,
+                            allow_triangulation=body.allow_triangulation,
+                            triangulation_currency=body.triangulation_currency,
+                            max_age_days=body.max_age_days, carry_forward=body.carry_forward,
+                            require_rate_approval=body.require_rate_approval,
+                            rate_scale=body.rate_scale,
+                            authority_reference=body.authority_reference, actor=str(actor.id))
+    db.commit()
+    db.refresh(p)
+    return {"id": str(p.id), "policy_code": p.policy_code, "version": p.version,
+            "status": p.status}
+
+
+@router.post("/rate-policies/{policy_id}/activate", dependencies=[Depends(require_write_allowed)])
+def activate_rate_policy(policy_id: str, db: Session = Depends(get_db),
+                         actor: User = Depends(require_permission("tesoreria", "approve")),
+                         ctx: CompanyContext = Depends(get_company_context)):
+    p = rates.activate_policy(db, company_id=ctx.company_id, policy_id=policy_id,
+                              actor=str(actor.id))
+    db.commit()
+    db.refresh(p)
+    return {"id": str(p.id), "policy_code": p.policy_code, "version": p.version,
+            "status": p.status}
+
+
+@router.get("/exchange-rates/observations")
+def list_rate_observations(base_currency: str | None = None, quote_currency: str | None = None,
+                           source_id: str | None = None, status: str | None = None,
+                           date_from: date | None = None, date_to: date | None = None,
+                           page: int = 1, page_size: int = 50,
+                           db: Session = Depends(get_db),
+                           user: User = Depends(require_permission("tesoreria", "view")),
+                           ctx: CompanyContext = Depends(get_company_context)):
+    """El histórico, paginado con `page`/`page_size`, que es el contrato real."""
+    tam = max(1, min(page_size, 100))
+    consulta = select(ExchangeRate).where(ExchangeRate.company_id == ctx.company_id)
+    if base_currency:
+        cur = rates.moneda_por_codigo(db, ctx.company_id, base_currency.upper())
+        consulta = consulta.where(ExchangeRate.base_currency_id == (str(cur.id) if cur else None))
+    if quote_currency:
+        cur = rates.moneda_por_codigo(db, ctx.company_id, quote_currency.upper())
+        consulta = consulta.where(ExchangeRate.quote_currency_id == (str(cur.id) if cur else None))
+    if source_id:
+        consulta = consulta.where(ExchangeRate.source_id == source_id)
+    if status:
+        consulta = consulta.where(ExchangeRate.status == status)
+    if date_from:
+        consulta = consulta.where(ExchangeRate.rate_date >= date_from)
+    if date_to:
+        consulta = consulta.where(ExchangeRate.rate_date <= date_to)
+    total = db.execute(select(func.count()).select_from(consulta.subquery())).scalar() or 0
+    filas = db.execute(
+        consulta.order_by(ExchangeRate.effective_at.desc().nullslast(), ExchangeRate.id)
+        .limit(tam).offset((max(page, 1) - 1) * tam)).scalars().all()
+    return {"items": [_observacion_dict(db, o) for o in filas],
+            "total": total, "page": max(page, 1), "page_size": tam}
+
+
+@router.post("/exchange-rates/observations", dependencies=[Depends(require_write_allowed)])
+def create_rate_observation(body: RateObservationBody, db: Session = Depends(get_db),
+                            actor: User = Depends(require_permission("tesoreria", "create")),
+                            ctx: CompanyContext = Depends(get_company_context)):
+    """Registra una cotización. **1 base = `rate` quote.**"""
+    o = rates.register_rate(db, company_id=ctx.company_id,
+                            base_code=body.base_currency.upper(),
+                            quote_code=body.quote_currency.upper(), rate=body.rate,
+                            effective_at=body.effective_at, source_id=body.source_id,
+                            rate_type=body.rate_type, published_at=body.published_at,
+                            reason=body.reason, source_reference=body.source_reference,
+                            authority_reference=body.authority_reference, actor=str(actor.id))
+    db.commit()
+    db.refresh(o)
+    return _observacion_dict(db, o)
+
+
+@router.post("/exchange-rates/observations/{observation_id}/correct",
+             dependencies=[Depends(require_write_allowed)])
+def correct_rate_observation(observation_id: str, body: RateCorrectionBody,
+                             db: Session = Depends(get_db),
+                             actor: User = Depends(require_permission("tesoreria", "create")),
+                             ctx: CompanyContext = Depends(get_company_context)):
+    """Una corrección **sucede** a la anterior; la original se conserva."""
+    o = rates.correct_rate(db, company_id=ctx.company_id, observation_id=observation_id,
+                           rate=body.rate, reason=body.reason, actor=str(actor.id))
+    db.commit()
+    db.refresh(o)
+    return _observacion_dict(db, o)
+
+
+@router.post("/exchange-rates/observations/{observation_id}/approve",
+             dependencies=[Depends(require_write_allowed)])
+def approve_rate_observation(observation_id: str, db: Session = Depends(get_db),
+                             actor: User = Depends(require_permission("tesoreria", "approve")),
+                             ctx: CompanyContext = Depends(get_company_context)):
+    o = rates.approve_rate(db, company_id=ctx.company_id, observation_id=observation_id,
+                           actor=str(actor.id))
+    db.commit()
+    db.refresh(o)
+    return _observacion_dict(db, o)
+
+
+@router.get("/exchange-rates/resolve")
+def resolve_exchange_rate(base_currency: str, quote_currency: str,
+                          effective_at: datetime | None = None, rate_type: str | None = None,
+                          source_code: str | None = None, db: Session = Depends(get_db),
+                          user: User = Depends(require_permission("tesoreria", "view")),
+                          ctx: CompanyContext = Depends(get_company_context)):
+    """La tasa que gobierna una operación, con su procedencia.
+
+    Nunca devuelve un número pelado: si no hay tasa, devuelve el error de
+    dominio, porque entre monedas distintas «no la hay» y «vale uno» no son lo
+    mismo.
+    """
+    r = rates.resolve_rate(db, company_id=ctx.company_id,
+                           base_code=base_currency.upper(), quote_code=quote_currency.upper(),
+                           effective_at=effective_at, rate_type=rate_type,
+                           source_code=source_code)
+    return {"base_currency": r.base_code, "quote_currency": r.quote_code, "rate": str(r.rate),
+            "meaning": f"1 {r.base_code} = {r.rate} {r.quote_code}",
+            "observation_id": r.observation_id, "source_code": r.source_code,
+            "rate_type": r.rate_type,
+            "effective_at": r.effective_at.isoformat() if r.effective_at else None,
+            "published_at": r.published_at.isoformat() if r.published_at else None,
+            "observed_at": r.observed_at.isoformat() if r.observed_at else None,
+            "version": r.version, "status": r.status, "identity": r.identity,
+            "derived": r.derived, "derived_from": list(r.derived_from)}
+
+
+@router.get("/exchange-rates/import-batches")
+def list_import_batches(db: Session = Depends(get_db),
+                        user: User = Depends(require_permission("tesoreria", "view")),
+                        ctx: CompanyContext = Depends(get_company_context)):
+    items = db.execute(select(ExchangeRateImportBatch).where(
+        ExchangeRateImportBatch.company_id == ctx.company_id)
+        .order_by(ExchangeRateImportBatch.created_at.desc())).scalars().all()
+    return {"items": [{"id": str(b.id), "filename": b.filename, "status": b.status,
+                       "rows": b.row_count, "imported": b.imported_count,
+                       "rejected": b.rejected_count,
+                       "source_id": str(b.source_id), "rate_type": b.rate_type,
+                       "created_at": b.created_at.isoformat() if b.created_at else None}
+                      for b in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.post("/exchange-rates/import", dependencies=[Depends(require_write_allowed)])
+def import_exchange_rates(body: RateImportBody, db: Session = Depends(get_db),
+                          actor: User = Depends(require_permission("tesoreria", "create")),
+                          ctx: CompanyContext = Depends(get_company_context)):
+    """Carga masiva. Ninguna fila inválida se descarta en silencio."""
+    resultado = rates.import_rates(db, company_id=ctx.company_id, contenido=body.content,
+                                   source_id=body.source_id, rate_type=body.rate_type,
+                                   filename=body.filename, actor=str(actor.id))
+    db.commit()
+    return resultado

@@ -81,6 +81,10 @@ def list_companies(db: Session = Depends(get_db), user: User = Depends(get_curre
             "trade_name": c.trade_name,
             "rif": c.rif,
             "status": c.status,
+            # La moneda funcional deja de ser un dato interno con la Spec 013:
+            # es el ancla contra la que cotiza casi todo par, y la interfaz no
+            # tenía forma de saberla.
+            "functional_currency": c.functional_currency,
             "allowed_actions": {"view": True, "edit": True, "activate": True, "deactivate": True, "delete": False},
         }
         for c in companies

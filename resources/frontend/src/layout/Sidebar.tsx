@@ -138,6 +138,8 @@ const navSections = [
       { to: "/tesoreria/cambio", label: "Cambio de moneda", icon: Repeat },
       { to: "/tesoreria/reembolsos", label: "Reembolsos", icon: ArrowLeftRight },
       { to: "/tesoreria/posicion", label: "Posición de caja", icon: Wallet },
+      { to: "/tesoreria/tasas", label: "Tasas de cambio", icon: Repeat },
+      { to: "/tesoreria/fuentes", label: "Fuentes de tasa", icon: Settings },
       { to: "/tesoreria/maestros", label: "Maestros", icon: Settings },
     ],
   },

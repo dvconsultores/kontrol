@@ -96,6 +96,8 @@ export const router = createBrowserRouter([
           { path: "tesoreria/cambio", lazy: () => import("@/modules/tesoreria/cambio/CambioPage").then((m) => ({ Component: m.CambioPage })) },
           { path: "tesoreria/reembolsos", lazy: () => import("@/modules/tesoreria/reembolsos/ReembolsosPage").then((m) => ({ Component: m.ReembolsosPage })) },
           { path: "tesoreria/posicion", lazy: () => import("@/modules/tesoreria/posicion/PosicionPage").then((m) => ({ Component: m.PosicionPage })) },
+          { path: "tesoreria/tasas", lazy: () => import("@/modules/tesoreria/tasas/TasasPage").then((m) => ({ Component: m.TasasPage })) },
+          { path: "tesoreria/fuentes", lazy: () => import("@/modules/tesoreria/fuentes/FuentesPage").then((m) => ({ Component: m.FuentesPage })) },
           { path: "tesoreria/maestros", lazy: () => import("@/modules/tesoreria/maestros/MaestrosPage").then((m) => ({ Component: m.MaestrosPage })) },
           { path: "fiscal/configuracion", lazy: () => import("@/modules/fiscal/configuracion/ConfiguracionPage").then((m) => ({ Component: m.ConfiguracionPage })) },
           { path: "fiscal/numeracion", lazy: () => import("@/modules/fiscal/numeracion/NumeracionPage").then((m) => ({ Component: m.NumeracionPage })) },

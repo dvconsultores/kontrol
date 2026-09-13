@@ -884,3 +884,73 @@ guarda con su referencia de autoridad. El **IGTF** no se tocó: su dueña es la
 
 Implementación de la 013 **no iniciada**: requiere su propio ciclo con
 autorización expresa.
+
+---
+
+## Tras la implementación de la Spec 013 — 2026-09-11
+
+`SPEC 013 — COMPLETE / CONVERGED`. La tasa dejó de ser un número suelto: tiene
+par explícito, fuente con autoridad declarada, momento de vigencia, versión y
+procedencia. Y la resolución dejó de tomar decisiones económicas por su cuenta.
+
+**Lo que se buscaba era el hueco; lo que apareció fueron siete defectos en lo ya
+escrito.** Que el par no estuviera en ninguna parte —`("VED", "VES")` cableado
+en el dominio de un producto que se vende como parametrizable—, que dos monedas
+con el mismo código pudieran convivir y la resolución eligiera al azar, que dos
+tasas del mismo día dejaran el desempate a PostgreSQL, y que la tasa viajara
+declarada como `float` por un borde que siempre fue exacto.
+
+**Dos de los siete los había metido yo en la 038.** Corregir que la tasa se
+inventara trajo dos formas nuevas de derivarla sin decirlo: invertir un par y
+cruzar dos cotizaciones. Ninguna tenía política que la autorizara y ninguna
+dejaba constancia, de modo que la instantánea decía «usó la tasa 40» cuando
+había usado 0,025. Cuarta vez seguida que el defecto grave está en lo que ya
+existe; la novedad es que esta vez lo que ya existía lo había escrito el ciclo
+anterior.
+
+**Y un octavo que solo apareció de punta a punta.** Preguntar «qué tasa rige
+hoy» resolvía a las cero horas de hoy, así que una tasa registrada esta mañana
+no servía para una operación fechada hoy. Las pruebas unitarias no lo veían
+porque registraban y consultaban con el mismo instante. Lo vio la que atraviesa
+el sistema entero.
+
+**Y la instalación limpia encontró el resto.** La sesión se cortó con la regresión
+final sin terminar y el entorno de QA desapareció. Reinstalar la base de e2e de
+cero —el primer día de un cliente real— sacó una familia de 500 que ninguna
+corrida sobre meses de datos podía ver: «busco y, si no está, creo» sobre un
+índice único, sin nadie que capture la colisión. Uno en inventario (023), en
+plena recogida; cinco en código que yo había escrito en este mismo ciclo. Y una
+prueba de concurrencia que los debía cubrir aceptaba `IntegrityError` como
+rechazo válido.
+
+Detrás había algo peor: **la unicidad de la 013 vivía solo en la migración**. La
+base de pruebas sale de los modelos, así que ninguna prueba la ejerció nunca.
+`alembic check` bajó de 27 operaciones de deriva a 21, y las 21 que quedan son de
+otras doce Specs: están medidas y con dueño, no escondidas.
+
+## Lo que este ciclo deliberadamente no construyó
+
+**El proveedor automático del BCV.** No hay en el repositorio ni canal oficial
+estable verificable, y montar un *scraping* frágil y llamarlo integración habría
+sido peor que el hueco: daría una cifra con aspecto de autoridad que nadie
+respalda. La operación vive de alta manual y de importación de fichero, el
+contrato de proveedor queda definido, y el día que exista un canal usable lo
+implementa su dueña.
+
+`NEXT SPEC = 048 — INTEGRACIONES` (adaptador de tasas, si aparece canal usable)
+
+`RUNNER-UP = 049 — DASHBOARD`, cuyas dependencias —023, 034, 037 y 038— siguen
+todas en `COMPLETE / CONVERGED`, y que ahora además mostraría cifras en moneda
+con una tasa que tiene procedencia.
+
+Si la 048 no tiene de dónde tirar, la 049 es la que aporta sin esperar a nadie.
+
+## Lo que esta decisión NO autoriza
+
+`D0-07` sigue **abierto**. Que el BCV pueda configurarse como fuente oficial no
+es una afirmación legal: es una fila del maestro con su referencia de autoridad
+declarada, y la referencia dice exactamente lo que es. El **IGTF** sigue siendo
+de la 041, en `BLOCKED_BY_LEGAL_VALIDATION`.
+
+Implementación de la 048 **no iniciada**: requiere su propio ciclo con
+autorización expresa.

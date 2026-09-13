@@ -81,6 +81,17 @@ def _politica(db, mundo, *, cross=True, manual=False, refund=True, desde=None):
     return p
 
 
+def _divisa() -> str:
+    """Una divisa distinta por prueba.
+
+    La base del arnés es compartida, y desde la Spec 013 dos observaciones con
+    las mismas coordenadas ya no conviven: antes se duplicaban en silencio y el
+    desempate lo decidía PostgreSQL. Compartir «USD» entre pruebas dejó de ser
+    inocuo el día que el sistema empezó a exigir unicidad.
+    """
+    return f"D{uuid4().hex[:2].upper()}"
+
+
 def _tasa(db, mundo, *, codigo="USD", valor="40.00", dia=None):
     cur = tz.create_currency(db, company_id=mundo.company_a, code=codigo, name=codigo,
                              actor="qa")
@@ -112,7 +123,7 @@ def test_sin_tasa_registrada_la_conversion_se_niega(mundo):
         _politica(db, mundo)
         with pytest.raises(ConflictError) as exc:
             tz.capture_rate_snapshot(db, company_id=mundo.company_a,
-                                     source_currency="USD", target_currency="VED",
+                                     source_currency=_divisa(), target_currency="VED",
                                      actor="tesorero")
         assert exc.value.code == "RATE_NOT_AVAILABLE"
     finally:
@@ -177,8 +188,9 @@ def test_la_conversion_deja_dos_movimientos_y_su_instantanea(mundo):
     db = mundo.factory()
     try:
         _politica(db, mundo)
-        _tasa(db, mundo, valor="40.00")
-        usd = _cuenta(db, mundo, moneda="USD", saldo="100.00")
+        divisa = _divisa()
+        _tasa(db, mundo, codigo=divisa, valor="40.00")
+        usd = _cuenta(db, mundo, moneda=divisa, saldo="100.00")
         ved = _cuenta(db, mundo, moneda="VED", saldo="0.00")
         conv = tz.convert_currency(db, company_id=mundo.company_a,
                                    source_account_id=str(usd.id),
@@ -203,8 +215,9 @@ def test_sin_politica_no_hay_conversion(mundo):
     db = mundo.factory()
     try:
         _sin_politica(db, mundo)
-        _tasa(db, mundo, valor="40.00")
-        usd = _cuenta(db, mundo, moneda="USD", saldo="100.00")
+        divisa = _divisa()
+        _tasa(db, mundo, codigo=divisa, valor="40.00")
+        usd = _cuenta(db, mundo, moneda=divisa, saldo="100.00")
         ved = _cuenta(db, mundo, moneda="VED")
         with pytest.raises(ConflictError) as exc:
             tz.convert_currency(db, company_id=mundo.company_a, source_account_id=str(usd.id),
@@ -220,8 +233,9 @@ def test_no_se_convierte_sin_fondos(mundo):
     db = mundo.factory()
     try:
         _politica(db, mundo)
-        _tasa(db, mundo, valor="40.00")
-        usd = _cuenta(db, mundo, moneda="USD", saldo="5.00")
+        divisa = _divisa()
+        _tasa(db, mundo, codigo=divisa, valor="40.00")
+        usd = _cuenta(db, mundo, moneda=divisa, saldo="5.00")
         ved = _cuenta(db, mundo, moneda="VED")
         with pytest.raises(ConflictError) as exc:
             tz.convert_currency(db, company_id=mundo.company_a, source_account_id=str(usd.id),
@@ -236,8 +250,9 @@ def test_convertir_dos_veces_con_la_misma_clave_no_mueve_dos_veces(mundo):
     db = mundo.factory()
     try:
         _politica(db, mundo)
-        _tasa(db, mundo, valor="40.00")
-        usd = _cuenta(db, mundo, moneda="USD", saldo="100.00")
+        divisa = _divisa()
+        _tasa(db, mundo, codigo=divisa, valor="40.00")
+        usd = _cuenta(db, mundo, moneda=divisa, saldo="100.00")
         ved = _cuenta(db, mundo, moneda="VED")
         clave = f"conv-{uuid4().hex[:8]}"
         uno = tz.convert_currency(db, company_id=mundo.company_a, source_account_id=str(usd.id),
@@ -567,8 +582,9 @@ def test_la_instantanea_sobrevive_al_cambio_de_tasa(mundo):
     db = mundo.factory()
     try:
         _politica(db, mundo)
-        cur = _tasa(db, mundo, valor="40.00")
-        usd = _cuenta(db, mundo, moneda="USD", saldo="100.00")
+        divisa = _divisa()
+        cur = _tasa(db, mundo, codigo=divisa, valor="40.00")
+        usd = _cuenta(db, mundo, moneda=divisa, saldo="100.00")
         ved = _cuenta(db, mundo, moneda="VED")
         conv = tz.convert_currency(db, company_id=mundo.company_a, source_account_id=str(usd.id),
                                    target_account_id=str(ved.id), source_amount=Decimal("10"),

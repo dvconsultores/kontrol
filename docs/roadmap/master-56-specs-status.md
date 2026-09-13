@@ -28,13 +28,13 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 004 | Licenciamiento | `BLOCKED_BY_BUSINESS_DECISION` | `licensing` 7 tablas, `/licensing` 10 rutas | D0-06 hosting/licencia central |
 | 005 | Design System / navegación | `PARTIALLY_IMPLEMENTED` | 282 pruebas de frontend, axe y responsive verificados | Deuda responsive residual (ver 054) |
 | 006 | Auditoría / observabilidad | `PARTIALLY_IMPLEMENTED` | `audit_events`, `/audit` | Instrumentación incompleta |
-| 007 | Organización | `PARTIALLY_IMPLEMENTED` | `organization` 13 tablas, 36 rutas | Centros de costo y unidades de negocio |
+| 007 | Organización | `PARTIALLY_IMPLEMENTED` | `organization` 13 tablas, 36 rutas. Delta dirigido recibido de la 013 (2026-09-11): la empresa publica su moneda funcional, que es el ancla de todo par de cotización | Centros de costo y unidades de negocio |
 | 008 | Almacenes físicos | **`COMPLETE / CONVERGED`** | zonas, pasillos, racks, niveles, ubicaciones; `/locations/ordered` | — |
 | 009 | Terceros | `PARTIALLY_IMPLEMENTED` | `parties`, `customers`, `suppliers`, empresa real tras ARCH-MC | — |
 | 010 | Productos / servicios | `PARTIALLY_IMPLEMENTED` | `catalog_items`, `taxonomy_nodes` | — |
 | 011 | UoM / presentación / conversión | **`COMPLETE / CONVERGED`** | `units_of_measure`, `presentations`, factor congelado en línea | — |
 | 012 | Maestros comerciales | **`COMPLETE / CONVERGED`** | 11 tablas, 14 rutas, `resolve_price` con versión | — |
-| 013 | Maestros financieros | `PARTIALLY_IMPLEMENTED` | `treasury` 15 tablas, monedas y tasas de empresa | Tasa BCV depende de 048 |
+| 013 | Maestros financieros | **`COMPLETE / CONVERGED`** (2026-09-11) | par explícito, maestro de fuentes, política de resolución, corrección por sucesión, importación idempotente; migración `0056` | **ninguno**: la tasa tiene par, fuente y procedencia; falta de tasa no es tasa uno; invertir y triangular exigen política y quedan marcadas. El **proveedor automático** (BCV u otro) es de la **048** y no bloquea: la operación vive de alta manual e importación, con el contrato de proveedor ya definido. Endurecida el 2026-09-13 al instalar de cero: perder una carrera de alta es error de dominio y no 500, y la unicidad vive en modelos y migración por igual (deriva de la 013: 0; heredada del esquema: 21, con dueño) · 1401/1393/8/0 |
 | 014 | Maestros fiscales / regulatorios | `PARTIALLY_IMPLEMENTED` | `fiscal` 13 tablas, `regulatory` 11 | — |
 | 015 | Planificación / requisiciones | `PARTIALLY_IMPLEMENTED` | requisiciones en `purchasing` | Sin planificación de demanda |
 | 016 | Cotización a proveedores | `PARTIALLY_IMPLEMENTED` | `supplier_quotes`, `quote_lines` | — |
@@ -44,7 +44,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 020 | Incidencias de recepción | **`COMPLETE / CONVERGED`** (2026-09-03) | `receipt_incidents`: cinco tipos, ciclo de cinco estados, tope de cantidad por tipo, resolución de conjunto cerrado, ajuste autorizado vía 045, evidencia vía 046; migración `0045` | **ninguno** |
 | 021 | Confirmación de inventario | **`COMPLETE / CONVERGED`** (2026-09-04) | conteo por SKU en base, conciliación contra orden y recepción física, cinco tipos de diferencia, decisión por línea con resultado mixto, `receipt_confirmations`; migración `0047`. **Aceptar ya no libera** | **ninguno** |
 | 022 | Put-away y ubicación | **`COMPLETE / CONVERGED / EVIDENCE SEALED`** (2026-09-04) | put-away manual con candidatas filtradas por el backend, procedencia de ubicación en el ledger, disponible del almacén agregado; migración `0048`. E2E 27/27 en tres navegadores | **ninguno** |
-| 023 | Inventario / Kardex | `PARTIALLY_IMPLEMENTED` · capacidad multiestado **`COMPLETE / CONVERGED`** (2026-09-04) | `inventory` 13 tablas; autoridad única de estados (`states.py`), procedencia en el ledger, reclasificación canónica, reconstrucción fiel; migración `0046` | **ninguno** para la capacidad. La Spec sigue parcial por requisitos ajenos a ella (ubicación en la práctica, FEFO, valoración) |
+| 023 | Inventario / Kardex | `PARTIALLY_IMPLEMENTED` · capacidad multiestado **`COMPLETE / CONVERGED`** (2026-09-04) | `inventory` 13 tablas; autoridad única de estados (`states.py`), procedencia en el ledger, reclasificación canónica, reconstrucción fiel; migración `0046` | **ninguno** para la capacidad. La Spec sigue parcial por requisitos ajenos a ella (ubicación en la práctica, FEFO, valoración). Delta dirigido recibido de la 013 (2026-09-13): el alta automática del tipo de movimiento base ya no devuelve 500 cuando dos operaciones de una empresa nueva llegan a la vez |
 | 024 | Lotes / seriales / vencimiento | `PARTIALLY_IMPLEMENTED` | `inventory_lots`, `product_serials` | — |
 | 025 | Transferencias / conteos / ajustes | `PARTIALLY_IMPLEMENTED` | `transfers`, `stock_counts`, `inventory_adjustments` | — |
 | 026 | Costos / valoración | `PARTIALLY_IMPLEMENTED` | `cost_layers`, `costing_profiles` | 018 para *landed cost* |
@@ -59,7 +59,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 035 | Despacho / transporte / regulación | **`COMPLETE / CONVERGED`** (2026-09-07) | 6 de 6 etapas (¶101-107) · compuerta del ¶103 · 1226/1218/8/0 | **ninguno**: salida solo desde pedido facturado, validación real de las cuatro condiciones, salida en cantidad base desde `PREPARADO`, reserva consumida; migración `0053`. La validación regulatoria es contra lo registrado —**no se emite ni se verifica en línea**—, límite de la 044 en `BLOCKED_BY_EXTERNAL_SERVICE` |
 | 036 | Devoluciones / NC / ND | **`COMPLETE / CONVERGED`** (2026-09-11) | 8 de 8 etapas del flujo normativo · 1279/1271/8/0 | **ninguno**: cuatro actos antes de tocar el inventario, los dos destinos que `D0-10` concede, nota proporcional con consecutivo propio, tope acumulativo, reserva intacta; migración `0054`. La **homologación legal** de las notas sigue en `D0-07` |
 | 037 | Cuentas por cobrar | **`COMPLETE / CONVERGED`** (2026-09-11) | saldo canónico, aplicaciones con rastro, reversos; 1311/1303/8/0 | **ninguno**: el crédito es del cliente que lo tiene, cada aplicación deja su fila, el reverso no borra y el crédito se resta una sola vez. Delta dirigido recibido de la 038 (2026-09-11): «imputable» y «debido» son dos cifras distintas —lo reservado para devolver ya no se ofrece— y el reembolso, que entonces no tenía autoridad, ya la tiene |
-| 038 | Tesorería | **`COMPLETE / CONVERGED`** (2026-09-11) | política cambiaria versionada, instantánea de tasa, conversión explícita y reembolso en tres actos; migración `0055` · 1344/1336/8/0 | **ninguno**: las dos preguntas materiales las respondió el owner (`OWNER-DECISION-038-01` y `-02`) y ninguna fuente las contradice. La tasa ya no se inventa, lo reservado no se imputa y la posición de caja no suma monedas distintas. El **IGTF** sigue siendo de la 041 y la **homologación legal** sigue en `D0-07` |
+| 038 | Tesorería | **`COMPLETE / CONVERGED`** (2026-09-11) | política cambiaria versionada, instantánea de tasa, conversión explícita y reembolso en tres actos; migración `0055` · 1344/1336/8/0. Deltas dirigidos recibidos de la 013 (2026-09-11): la instantánea dice si la tasa fue derivada, y el camino corto de registro ya escribe el par | **ninguno**: las dos preguntas materiales las respondió el owner (`OWNER-DECISION-038-01` y `-02`) y ninguna fuente las contradice. La tasa ya no se inventa, lo reservado no se imputa y la posición de caja no suma monedas distintas. El **IGTF** sigue siendo de la 041 y la **homologación legal** sigue en `D0-07` |
 | 039 | Motor fiscal venezolano | `BLOCKED_BY_LEGAL_VALIDATION` | `fiscal` 13 tablas, versionado de reglas | D0-07 |
 | 040 | Retenciones IVA / ISLR | `BLOCKED_BY_LEGAL_VALIDATION` | comprobantes en `fiscal`/`purchasing` | D0-07 |
 | 041 | IGTF | `BLOCKED_BY_LEGAL_VALIDATION` | cálculo en tesorería/fiscal | D0-07 |
@@ -83,10 +83,10 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 
 | Estado | Specs |
 |---|---:|
-| `COMPLETE / CONVERGED` | 18 — 008, 011, 012, 019, 020, 021, 022, 029, 030, 031, 032, 033, 034, 035, 036, 037, **038**, 045 |
+| `COMPLETE / CONVERGED` | 19 — 008, 011, 012, **013**, 019, 020, 021, 022, 029, 030, 031, 032, 033, 034, 035, 036, 037, 038, 045 |
 | `RECONVERGED` | 1 — 046 |
 | `READY_FOR_IMPLEMENTATION` | **0** |
-| `PARTIALLY_IMPLEMENTED` | 27 |
+| `PARTIALLY_IMPLEMENTED` | 26 |
 | `NOT_STARTED` | 2 — 018, 047 |
 | `BLOCKED_BY_DEPENDENCY` | **0** |
 | `BLOCKED_BY_BUSINESS_DECISION` | 1 — 004 |

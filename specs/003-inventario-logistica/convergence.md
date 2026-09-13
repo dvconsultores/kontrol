@@ -213,3 +213,32 @@ cola y la ruta de picking pedían.
 
 `SPEC 031 — READY_FOR_IMPLEMENTATION`. Y sigue siendo su dueña la asignación de demanda a ubicación:
 el put-away mueve existencia física y nunca ató una reserva a una ubicación —hay prueba de ello—.
+
+## Delta dirigido recibido — 2026-09-13 · Spec 013 · carrera en el tipo de movimiento base
+
+`_get_movement_type_by_code` busca el tipo y, si falta y es uno de los base, lo
+crea. Buscar y crear no era atómico: en una instalación nueva, dos operaciones
+simultáneas de la misma empresa pasaban ambas la búsqueda y la segunda chocaba
+con `uq_movement_types_company_code`. Nadie capturaba la colisión, así que salía
+como **un 500 en plena recogida** (`execute_pick → reclassify →
+_get_movement_type_by_code`).
+
+No se había visto nunca porque la base de e2e llevaba meses con los tipos ya
+creados. Apareció al reinstalar esa base de cero durante el ciclo de la Spec 013,
+que es exactamente el primer día de un cliente real.
+
+**Corrección**, con el idioma que el propio módulo ya usa para el saldo de
+inventario: la inserción va en `begin_nested()`; si pierde la carrera contra el
+índice, se relee el tipo que creó la otra transacción. Un código que no es base
+sigue sin inventarse (`MOVEMENT_TYPE_NOT_FOUND`).
+
+**Evidencia.** `tests/test_spec023_movement_type_race.py`, con la carrera
+**forzada** —la segunda transacción queda bloqueada en el índice antes de que la
+primera confirme; si no llega a bloquearse, la prueba falla en vez de dar por
+buena una carrera que no ocurrió—. La mutación **M023-D1**, que vuelve a dejar
+escapar la colisión, hace caer la prueba. Sobre la base de e2e reinstalada, la
+cadena de diez suites terminó con **12 tipos creados, 0 repetidos y 0 errores
+500** en el registro del backend.
+
+No se reabre la capacidad multiestado: el cambio es la atomicidad de un alta de
+catálogo, no una regla de estados.

@@ -1635,11 +1635,24 @@ def _get_movement_type_by_code(db: Session, company_id: str, code: str) -> Movem
     if not mtype and code in BASE_MOVEMENT_TYPES:
         # Auto-configuración idempotente, **por empresa**: cada una necesita su
         # propio catálogo de tipos, igual que su propio almacén.
+        #
+        # La búsqueda de arriba y esta inserción no son atómicas. En una
+        # instalación nueva dos operaciones simultáneas de la misma empresa
+        # pasan ambas la búsqueda, y la segunda choca con
+        # `uq_movement_types_company_code`: sin capturarlo, esa colisión salía
+        # como un 500 en plena recogida (encontrado al instalar de cero la base
+        # de e2e durante la Spec 013). Se resuelve igual que el saldo de
+        # inventario: decide el índice, y quien pierde relee el tipo del otro.
         name, direction = BASE_MOVEMENT_TYPES[code]
-        mtype = MovementType(company_id=company_id, code=code, name=name, direction=direction,
-                             affects_balance=True, status="ACTIVE", created_by=None)
-        db.add(mtype)
-        db.flush()
+        try:
+            with db.begin_nested():
+                db.add(MovementType(company_id=company_id, code=code, name=name,
+                                    direction=direction, affects_balance=True,
+                                    status="ACTIVE", created_by=None))
+                db.flush()
+        except IntegrityError:
+            pass
+        mtype = _get_movement_type_by_code_optional(db, company_id, code)
     if not mtype:
         raise NotFoundError(code="MOVEMENT_TYPE_NOT_FOUND", message=f"Tipo de movimiento '{code}' no configurado.")
     return mtype

@@ -256,13 +256,24 @@ test.describe("Spec 038 — tesorería", () => {
 
     const pos = await get(request, c, "/treasury/cash-position");
     expect(pos.total, "sumó monedas distintas en un solo número").toBeUndefined();
+
+    // Cada cuenta con su propio saldo, en su propia moneda.
+    const cuentaDe = (id: string) =>
+      (pos.accounts as Array<{ account_id: string; currency: string; balance: string }>)
+        .find((x) => x.account_id === id);
+    expect(cuentaDe(uno.id)?.currency).toBe("VED");
+    expect(Number(cuentaDe(uno.id)?.balance)).toBe(100);
+    expect(cuentaDe(dos.id)?.currency).toBe(codigo);
+    expect(Number(cuentaDe(dos.id)?.balance)).toBe(50);
+
+    // Y el agregado por moneda se mide solo en la divisa **propia** de esta
+    // prueba. Medir la diferencia de los bolívares de toda la empresa era una
+    // carrera: el resto de pruebas fondea y reembolsa bolívares a la vez, y un
+    // 540 donde se esperaba 100 era 100 de ésta más los 440 de otra.
     const saldoDe = (p: { by_currency: Array<{ currency: string; balance: string }> },
                      cod: string): number =>
       Number(p.by_currency.find((x) => x.currency === cod)?.balance ?? 0);
-    // Se mide la diferencia, no el absoluto: la base es compartida y otras
-    // pruebas también mueven bolívares.
     expect(saldoDe(pos, codigo) - saldoDe(antes, codigo)).toBe(50);
-    expect(saldoDe(pos, "VED") - saldoDe(antes, "VED")).toBe(100);
   });
 
   test("la interfaz recorre el reembolso y el dominio lo confirma", async ({ page, request }) => {

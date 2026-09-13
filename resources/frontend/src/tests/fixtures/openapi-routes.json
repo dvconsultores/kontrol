@@ -1906,6 +1906,34 @@
     },
     {
       "method": "POST",
+      "path": "/treasury/exchange-rates/import"
+    },
+    {
+      "method": "GET",
+      "path": "/treasury/exchange-rates/import-batches"
+    },
+    {
+      "method": "GET",
+      "path": "/treasury/exchange-rates/observations"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/exchange-rates/observations"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/exchange-rates/observations/{observation_id}/approve"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/exchange-rates/observations/{observation_id}/correct"
+    },
+    {
+      "method": "GET",
+      "path": "/treasury/exchange-rates/resolve"
+    },
+    {
+      "method": "POST",
       "path": "/treasury/executions/egresos"
     },
     {
@@ -1963,6 +1991,30 @@
     {
       "method": "POST",
       "path": "/treasury/payment-methods"
+    },
+    {
+      "method": "GET",
+      "path": "/treasury/rate-policies"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/rate-policies"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/rate-policies/{policy_id}/activate"
+    },
+    {
+      "method": "GET",
+      "path": "/treasury/rate-sources"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/rate-sources"
+    },
+    {
+      "method": "POST",
+      "path": "/treasury/rate-sources/{source_id}/status"
     },
     {
       "method": "POST",
