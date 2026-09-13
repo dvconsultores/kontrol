@@ -264,3 +264,8 @@ Tres, y los tres se corrigieron antes de dar nada por bueno:
   **anotado para su dueña**, no corregido aquí por estar fuera del alcance.
 - El **arqueo de caja** (§4.4) sigue restando en coma flotante. Mismo caso:
   defecto real, dueña distinta, delta que corresponde a su ciclo.
+
+> **ERRATA 2026-09-13.** Las dos últimas viñetas de §11 son incorrectas: no hay
+> «Spec 019» dueña —la dueña es esta Spec 038— y el arqueo **ya** calcula en
+> `Decimal` desde §4.4. Detalle y residuos reales en `spec038-convergence.md` §14.
+

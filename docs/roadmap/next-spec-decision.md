@@ -954,3 +954,116 @@ de la 041, en `BLOCKED_BY_LEGAL_VALIDATION`.
 
 Implementación de la 048 **no iniciada**: requiere su propio ciclo con
 autorización expresa.
+
+---
+
+## Programación de deudas monetarias `float` — 2026-09-13
+
+Resueltas por dueño antes de tocar código, siguiendo el procedimiento completo:
+símbolo, fichero, módulo, llamadas, modelos, mapa de equivalencias, máster y
+trazabilidad existente. **Ninguna se implementa aquí.**
+
+### Conflictos de identidad de dueño
+
+**`OWNER_IDENTITY_CONFLICT_DEBT = 0`.** El «019» que acompañaba a estas deudas no
+era una numeración histórica ni local: fue un error de redacción en
+`spec038-convergence.md` §12 y `spec038-implementation-cycle.md` §11, corregido
+como errata en `spec038-convergence.md` §14. La Spec 019 global —Recepción
+física— no tiene relación y no se toca.
+
+### FLOAT-038-A · El borde de la API de tesorería lee dinero como `float`
+
+| Campo | Valor |
+|---|---|
+| Dueña | **Spec 038 — Tesorería** |
+| Evidencia de dueño | `treasury/api.py` y `treasury/service.py` en `006-tesoreria` (↔ 013, 038, 041); los movimientos bancarios son operación de tesorería, no maestro (013) ni IGTF (041) |
+| Símbolos | `BankTransactionCreate.amount` y `.commission` (`api.py:135`, `:141`) → `create_bank_transaction(amount: float, commission: float)` (`service.py:515`) |
+| Mismo defecto, misma dueña | `SessionOpen.opened_amount` (`:109`), importe de movimiento de caja (`:114`), importe de ejecución (`:152`), `opening_balance` y `closing_balance` de conciliación (`:166`, `:167`), importe de transferencia (`:197`) |
+| Tipo actual | `float` en Pydantic y en la firma del servicio; `Mapped[float]` sobre columnas `Numeric(18,2)` |
+| Autoridad monetaria esperada | `Decimal` de extremo a extremo (`MONETARY-BALANCE-INVARIANT`, `KQA-100`) |
+| Riesgo | El JSON se lee como `float`, que conserva unos 15-16 dígitos significativos; la columna admite 18. **Un importe grande pierde céntimos** antes de llegar al servicio |
+| Consumidores directos | `POST /treasury/bank-transactions`, sesiones de caja, ejecuciones, conciliación, transferencias. La conversión y el reembolso de la 038 ya llaman con `Decimal` desde dentro |
+| Severidad | **Alta** — es la entrada de dinero en tesorería |
+| Prioridad | **1** |
+
+**Aceptación a programar:** entrada `Decimal` en Pydantic sin conversión a
+`float`; ORM `Numeric` con anotación `Decimal`; paridad Alembic; PostgreSQL
+`Numeric`; la serialización no degrada; casos `0.10` + `0.20`; un importe de 18
+dígitos que hoy pierde precisión; límite de escala; mutación `Decimal → float`
+que debe caer; regresión de todos los consumidores listados.
+
+### FLOAT-038-B · Arqueo y cierre de caja
+
+| Campo | Valor |
+|---|---|
+| Dueña | **Spec 038 — Tesorería** |
+| Evidencia de dueño | `CashSession` en `treasury/models.py`; flujo de caja de la 038 (`spec038-implementation-cycle.md` §4.4) |
+| Corrección previa | La **resta** ya es exacta: `arqueo_session` usa `_money(counted) - _money(expected)` desde la 038, con `test_el_arqueo_no_arrastra_error_binario`. La deuda anotada como «resta en coma flotante» era falsa (errata §14) |
+| Residuo real | `close_session` decide con **épsilon sobre dinero**: `abs(diff) > 1e-6`; `ArqueoBody.counted_amount: float` y la firma de `arqueo_session`; `float(...)` al serializar la auditoría de arqueo y de cierre |
+| Autoridad monetaria esperada | cero exacto en `Decimal`, sin épsilon; precisión desde el maestro de moneda (013) |
+| Riesgo | Una diferencia menor que el épsilon pero distinta de cero —imposible en `Decimal(18,2)`, posible si llega un `float`— cerraría sin aprobación; la auditoría guarda cifras que ya no son las exactas |
+| Consumidores directos | `POST /treasury/cash-sessions/{id}/arqueo`, `…/close`, auditoría de caja |
+| Severidad | **Media** |
+| Prioridad | **2** |
+
+**Aceptación a programar:** contado, esperado y diferencia en `Decimal`; sin
+resta en `float`; semántica de cero exacto; ningún épsilon; precisión desde el
+maestro de moneda; sobrante y faltante exactos; mutación de vuelta a `float` o
+de reintroducir el épsilon que debe caer; regresión de la conciliación de caja.
+
+### FLOAT-041 · `evaluate_igft` lee la alícuota como `float`
+
+`rate = float(params.get("rate", 0.0))` en `treasury/service.py`, dentro de
+`evaluate_igft`. Dueña **Spec 041 — IGTF**, en `BLOCKED_BY_LEGAL_VALIDATION`
+(`D0-07`). **Registrada, no programada**: no se puede certificar una alícuota sin
+la validación legal que la sostiene.
+
+### CONC-046 · Una subida documental concurrente escapa como excepción
+
+Hallada durante la regresión del delta de la Spec 004, no absorbida.
+
+| Campo | Valor |
+|---|---|
+| Dueña | **Spec 046 — Gestión documental** |
+| Síntoma | en dos subidas simultáneas de la misma versión, la que pierde recibe una `UniqueViolation` de `uq_document_versions_number` **sin capturar** (P25) |
+| Prueba afectada | `test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2` **pasa igualmente**: acepta la excepción del hilo como rechazo válido, lo que P25 prohíbe |
+| Evidencia | advertencia `PytestUnhandledThreadExceptionWarning` en 1 de 4 regresiones del 2026-09-13; intermitente porque depende de que los hilos coincidan; ni el módulo ni la prueba se tocaron desde `00d7cd2` |
+| Clasificación | `PREEXISTING` |
+| Severidad | Media — un 500 ante una carrera legítima; la unicidad de la versión sí se sostiene |
+| Aceptación a programar | captura estrecha con `es_violacion_unica` y conflicto de dominio; carrera **forzada** que demuestre que ocurrió; la prueba deja de aceptar la excepción; mutación que la reintroduzca y caiga |
+| Prioridad | **3**, después de FLOAT-038-A y FLOAT-038-B |
+
+### Ciclo obligatorio para cada delta programado
+
+`SOLICITUD/CAMBIO → /speckit.specify → /speckit.clarify → /speckit.plan →
+CONSTITUTION GATE → /speckit.checklist → /speckit.tasks → /speckit.analyze →
+traceability → EXPRESS AUTHORIZATION → /speckit.implement → tests/evidence →
+/speckit.converge`, dentro de la Spec 038 existente. Con instalación limpia
+(P24), paridad modelo ↔ migración si se toca el esquema (P26) y mutaciones con
+semántica observable (P27).
+
+**Secuencia recomendada:** FLOAT-038-A → FLOAT-038-B, ambas **antes** de
+implementar la Spec 049, que consume movimientos bancarios.
+
+### Deriva de esquema heredada — programada, no absorbida
+
+`GLOBAL_SCHEMA_INHERITED_DRIFT = 21`, con dueño por operación:
+
+| Spec | Tablas | Operaciones |
+|---|---|---|
+| 009 Terceros | `parties`, `customers`, `suppliers`, `carriers`, `drivers` | 5 |
+| 010 Productos y servicios | `products`, `services`, `attribute_applicabilities` | 3 |
+| 006 Auditoría | `audit_events` | 2 |
+| 023 Inventario | `inventory_balances`, `inventory_movements` | 2 |
+| 029 Cotización y pedido | `sales_order_lines`, `sales_quote_lines` | 2 |
+| 031 Picking | `pick_list_lines` | 2 |
+| 056 Homologación y release | `release_versions` | 2 |
+| 004 Licenciamiento | `license_states` | 1 |
+| 021 Confirmación de inventario | `receipt_confirmations` | 1 |
+| 041 IGTF | `fiscal_rules` | 1 |
+
+**Diez Specs**, no doce: el «12» se escribió sin mapear y queda corregido.
+Evidencia: migración que creó cada tabla (`0001_fundacion`, `0002_maestros`,
+`0003_inventario`, `0005_ventas`, `0006_tesoreria`, `0011_homologacion`,
+`0047_spec021`, `0049_spec031`) y `spec-equivalence-map.md`. La Spec 013 sigue
+con deriva **0**.

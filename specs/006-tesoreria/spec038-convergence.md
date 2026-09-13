@@ -197,3 +197,40 @@ porque su dueña es otra Spec y el delta corresponde a su ciclo.
 | Spec 038 | **COMPLETE / CONVERGED** (técnica y funcional) |
 | Spec 037 | con su delta de crédito imputable convergido y verificado |
 | Spec 033 | con su delta de build convergido y verificado |
+
+## 14. ERRATA · `EVIDENCE_CORRECTION` — 2026-09-13
+
+Dos filas de la deuda anotada en §12 eran incorrectas. Se conservan tal cual
+arriba y se corrigen aquí.
+
+**1 · El dueño «019» no existe.** Las dos filas atribuían la deuda a una «Spec
+019». Nunca hubo numeración local ni histórica que lo justificara: fue un error de
+redacción de este mismo ciclo. La Spec 019 global es *Recepción física* y no
+tiene nada que ver. La dueña canónica es **la Spec 038**: los movimientos
+bancarios y las sesiones de caja son operación de tesorería, y
+`spec-equivalence-map.md` asigna `006-tesoreria` a 013, 038 y 041. Los documentos
+de la Spec 013 llamaron a ese «019» «identificador histórico del máster»: también
+era incorrecto; venía de aquí.
+
+**2 · El arqueo no seguía restando en coma flotante.** Este mismo ciclo lo
+corrigió (§4.4 de `spec038-implementation-cycle.md`), y la prueba
+`test_el_arqueo_no_arrastra_error_binario` lo defiende:
+`arqueo_session` calcula `_money(counted_amount) - _money(expected)` en `Decimal`.
+La fila de deuda afirmaba lo contrario. Lo que **sí** queda, verificado en código
+el 2026-09-13:
+
+| Residuo real | Dónde |
+|---|---|
+| comparación con épsilon sobre dinero: `abs(diff) > 1e-6` al cerrar | `close_session` |
+| `counted_amount: float` en el borde y en la firma | `ArqueoBody` · `arqueo_session` |
+| `float(...)` al serializar la auditoría de arqueo y de cierre | `arqueo_session` · `close_session` |
+
+Y el `float` del borde no es un campo, son **nueve** en `treasury/api.py`:
+`opened_amount`, dos `amount` de movimientos y ejecuciones, `counted_amount`, el
+`amount` y la `commission` de la transacción bancaria, `opening_balance`,
+`closing_balance` y el `amount` de la transferencia. En base todos son
+`Numeric(18,2)`; el riesgo está en la lectura del JSON como `float`, que no
+conserva los 18 dígitos que la columna admite.
+
+La programación de estas deudas vive en `docs/roadmap/next-spec-decision.md`.
+
