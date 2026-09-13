@@ -30,7 +30,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 001 | Fundación | `PARTIALLY_IMPLEMENTED` | `specs/001-fundacion`, arranque real, 41 migraciones | Validación Docker/PG de despliegue |
 | 002 | Seguridad / sesiones | `PARTIALLY_IMPLEMENTED` | `/auth` 9 rutas, rotación de sesión probada | MFA declarado y no construido |
 | 003 | Usuarios / roles / alcance | `PARTIALLY_IMPLEMENTED` | `identity_access` 8 tablas; N10 corrigió tres cruces de tenant | Sin UI de alcances |
-| 004 | Licenciamiento | `BLOCKED_BY_BUSINESS_DECISION` | `licensing` 7 tablas, `/licensing` 10 rutas | D0-06 hosting/licencia central |
+| 004 | Licenciamiento | `BLOCKED_BY_BUSINESS_DECISION` | `licensing` 7 tablas, `/licensing` 10 rutas | D0-06 hosting/licencia central · Delta dirigido «carrera en la creación de la instalación» (2026-09-13): **COMPLETE / CONVERGED** — bloqueo consultivo y relectura; una instalación, una clave; M004-RACE-01..03 caen; regresión 1410/1402/8/0. El estado global no cambia |
 | 005 | Design System / navegación | `PARTIALLY_IMPLEMENTED` | 282 pruebas de frontend, axe y responsive verificados | Deuda responsive residual (ver 054) |
 | 006 | Auditoría / observabilidad | `PARTIALLY_IMPLEMENTED` | `audit_events`, `/audit` | Instrumentación incompleta |
 | 007 | Organización | `PARTIALLY_IMPLEMENTED` | `organization` 13 tablas, 36 rutas. Delta dirigido recibido de la 013 (2026-09-11): la empresa publica su moneda funcional, que es el ancla de todo par de cotización | Centros de costo y unidades de negocio |
@@ -74,8 +74,8 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 045 | Motor de aprobaciones / SoD | **`COMPLETE / CONVERGED`** | 8 tablas, 18 rutas; N10 corrigió su elegibilidad | — |
 | 046 | Gestión documental | **`RECONVERGED`** | 8 tablas, 23 `ResourceKind`, ClamAV real | S3 real (P1 externa) |
 | 047 | Notificaciones y tareas | **`NOT_STARTED`** | 0 tablas | 048 |
-| 048 | Integraciones | `PARTIALLY_IMPLEMENTED` | licenciamiento central | — |
-| 049 | Dashboard | `PARTIALLY_IMPLEMENTED` | `reporting` 3 tablas | 023, 034, 037, 038 |
+| 048 | Integraciones | `PARTIALLY_IMPLEMENTED` | licenciamiento central | Delta dirigido «proveedor automático de tasas» (2026-09-13): **BLOCKED BY MATERIAL DECISION** en `/speckit.analyze` — OQ-048-01 fuente autorizada, OQ-048-02 TLS del BCV, OQ-048-03 compra/venta y Fecha Operación/Valor. Sin implementación; la 013 opera por carga manual e importación |
+| 049 | Dashboard | `PARTIALLY_IMPLEMENTED` | `reporting` 3 tablas | **Revalidación 2026-09-13 · BLOCKED BY OWNER DEPENDENCY**: compras (015-017, 027, 028), fiscal (039-043, `D0-07`), regulatorio (044) y tareas/alertas (047); decisiones MD-049-01 y MD-049-02; el dashboard existente suma entradas y salidas de todas las monedas en un solo número (`PREEXISTING`) |
 | 050 | Reportes | `PARTIALLY_IMPLEMENTED` | `/reporting` 8 rutas | — |
 | 051 | Auditoría empresarial avanzada | `PARTIALLY_IMPLEMENTED` | bitácora con actor, tenant y empresa | 006 |
 | 052 | Instalador / actualización | `PARTIALLY_IMPLEMENTED` | `scripts/`, `alembic` a cabeza | Planificador de retención (P1) |
