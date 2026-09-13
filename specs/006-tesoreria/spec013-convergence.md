@@ -475,3 +475,30 @@ ciclo. El identificador histórico «019» del máster **no** es la Spec 019 glo
 | Spec 007 | con su delta: la empresa publica su moneda funcional |
 | Spec 023 | con su delta: el alta automática del tipo de movimiento base ya no da 500 en carrera |
 | Spec 037 · 033 | con la errata de evidencia registrada (`EVIDENCE_CORRECTION`); la 033, además, con su prueba de interfaz corregida |
+
+## 13. Anexo posterior al cierre · un rojo intermitente de las propias pruebas — 2026-09-13
+
+La regresión completa corrida para el delta de la Spec 004 terminó con **un
+fallo**: `test_sin_politica_no_se_triangula`, con `DUPLICATE_OBSERVATION` al
+registrar la segunda tasa. No es de la 004 ni del producto.
+
+**Causa.** `_codigo()` generaba `Z` + **dos** caracteres hexadecimales: 256 códigos
+posibles. La prueba pide dos monedas; si los dos sorteos coinciden —1 de cada 256
+por prueba, y varias pruebas del fichero sortean dos—, `_moneda` reutiliza la misma
+moneda y la segunda tasa repite par, fuente y fecha. Por eso pasó en las ejecuciones
+anteriores y no en ésta.
+
+**Demostración.** Forzando que `_codigo()` devuelva el mismo valor dos veces, la
+prueba falla **siempre** con ese mismo error. El mecanismo no es una suposición.
+
+**Misma familia.** `_divisa()` en `test_spec038_treasury.py` y un código `Q…`
+suelto del mismo fichero usaban también dos caracteres.
+
+**Corrección.** Los tres pasan a **cinco** caracteres hexadecimales (1 048 576
+valores; 6 caracteres con el prefijo, dentro del límite de 8 de las columnas de
+moneda y del borde de la API). Los auxiliares e2e usan tres caracteres en base 36
+(46 656 valores), no han fallado y no se tocan; quedan anotados como la misma
+familia.
+
+Clasificación: **`TEST_DEFECT`**. La regresión se repite completa con el arreglo.
+

@@ -89,7 +89,7 @@ def _divisa() -> str:
     desempate lo decidía PostgreSQL. Compartir «USD» entre pruebas dejó de ser
     inocuo el día que el sistema empezó a exigir unicidad.
     """
-    return f"D{uuid4().hex[:2].upper()}"
+    return f"D{uuid4().hex[:5].upper()}"
 
 
 def _tasa(db, mundo, *, codigo="USD", valor="40.00", dia=None):
@@ -661,7 +661,7 @@ def test_la_api_niega_la_conversion_sin_tasa(mundo):
     db = mundo.factory()
     try:
         _politica(db, mundo)
-        codigo = f"Q{uuid4().hex[:2].upper()}"
+        codigo = f"Q{uuid4().hex[:5].upper()}"
         tz.create_currency(db, company_id=mundo.company_a, code=codigo, name=codigo, actor="qa")
         muda = _cuenta(db, mundo, moneda=codigo, saldo="100.00")
         ved = _cuenta(db, mundo, moneda="VED")

@@ -38,7 +38,7 @@ def _moneda(db, company_id, codigo):
 
 def _codigo() -> str:
     """Un código de moneda que no choca con el de otra prueba."""
-    return f"Z{uuid4().hex[:2].upper()}"
+    return f"Z{uuid4().hex[:5].upper()}"
 
 
 def _fuente(db, mundo, *, code=None, prioridad=100, manual=True, company_id=None):
