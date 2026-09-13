@@ -14,6 +14,11 @@ PostgreSQL 18.6 · 177 modelos · 177 tablas · 41 migraciones · 356 FK ·
 308 rutas · 426 operaciones · 364 con contrato de empresa ·
 backend 0 fallos / 8 saltos S3 · frontend 282/282.
 
+> **Nota de entorno, 2026-09-13.** La línea anterior es la medición del
+> 2026-09-02 y se conserva tal cual. El QA de los ciclos 013 y posteriores corre
+> sobre **PostgreSQL 16.2** (`pgserver`), no sobre 18.6:
+> `ENVIRONMENT_BASELINE_DEVIATION`, declarada y no corregida.
+
 ## Regla de clasificación
 
 Tener modelo, endpoint o pantalla **no** es `COMPLETE`. Solo lo es lo que tiene
@@ -34,7 +39,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 010 | Productos / servicios | `PARTIALLY_IMPLEMENTED` | `catalog_items`, `taxonomy_nodes` | — |
 | 011 | UoM / presentación / conversión | **`COMPLETE / CONVERGED`** | `units_of_measure`, `presentations`, factor congelado en línea | — |
 | 012 | Maestros comerciales | **`COMPLETE / CONVERGED`** | 11 tablas, 14 rutas, `resolve_price` con versión | — |
-| 013 | Maestros financieros | **`COMPLETE / CONVERGED`** (2026-09-11) | par explícito, maestro de fuentes, política de resolución, corrección por sucesión, importación idempotente; migración `0056` | **ninguno**: la tasa tiene par, fuente y procedencia; falta de tasa no es tasa uno; invertir y triangular exigen política y quedan marcadas. El **proveedor automático** (BCV u otro) es de la **048** y no bloquea: la operación vive de alta manual e importación, con el contrato de proveedor ya definido. Endurecida el 2026-09-13 al instalar de cero: perder una carrera de alta es error de dominio y no 500, y la unicidad vive en modelos y migración por igual (deriva de la 013: 0; heredada del esquema: 21, con dueño) · 1401/1393/8/0 |
+| 013 | Maestros financieros | **`COMPLETE / CONVERGED`** (2026-09-11) | par explícito, maestro de fuentes, política de resolución, corrección por sucesión, importación idempotente; migración `0056` | **ninguno**: la tasa tiene par, fuente y procedencia; falta de tasa no es tasa uno; invertir y triangular exigen política y quedan marcadas. El **proveedor automático** (BCV u otro) es de la **048** y no bloquea: la operación vive de alta manual e importación, con el contrato de proveedor ya definido. Endurecida el 2026-09-13 al instalar de cero: perder una carrera de alta es error de dominio y no 500, y la unicidad vive en modelos y migración por igual (deriva de la 013: 0; heredada del esquema: 21, en 10 Specs, con dueño) · 1403/1395/8/0 · cierre formal 2026-09-13 |
 | 014 | Maestros fiscales / regulatorios | `PARTIALLY_IMPLEMENTED` | `fiscal` 13 tablas, `regulatory` 11 | — |
 | 015 | Planificación / requisiciones | `PARTIALLY_IMPLEMENTED` | requisiciones en `purchasing` | Sin planificación de demanda |
 | 016 | Cotización a proveedores | `PARTIALLY_IMPLEMENTED` | `supplier_quotes`, `quote_lines` | — |
@@ -94,9 +99,9 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | `BLOCKED_BY_EXTERNAL_SERVICE` | 1 — 044 |
 | **Sin estado** | **0** |
 
-Suma: 17 + 1 + 0 + 28 + 2 + 0 + 1 + 6 + 1 = **56**. Sin estado: **0**.
+Suma: 19 + 1 + 0 + 26 + 2 + 0 + 1 + 6 + 1 = **56**. Sin estado: **0**. Recontado desde las filas el 2026-09-13.
 
-El grupo dominante —28 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
+El grupo dominante —26 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el
 catálogo de 56, así que casi todo tiene algo hecho y casi nada está cerrado con
 su propia convergencia. Lo que este checkpoint aporta no es descubrirlo sino

@@ -4,8 +4,8 @@
 |---|---|
 | Producto | KONTROL — Plataforma Administrativa Empresarial para Venezuela |
 | Documento | Constitución del proyecto |
-| Versión | 1.1 |
-| Estado | Aprobada · enmendada en Gate G0 (E-01, E-02, E-03) |
+| Versión | 1.2 |
+| Estado | Aprobada · enmendada en Gate G0 (E-01, E-02, E-03) · enmiendas E-04 a E-07 pendientes de ratificación |
 | Fecha | 2026-08-03 · última enmienda 2026-08-29 |
 | Autoridad | Nivel 2 — Constitución de KONTROL |
 | Fuentes | Documento Maestro de Requerimientos (Volumen 1); Estándar Maestro de Frontend y Arquitectura Técnica v1.0; Especificación de Licenciamiento Anual; Leyes Venezolanas (base jurídico-funcional) |
@@ -116,6 +116,23 @@ Ningún módulo implementa su propia versión de una capacidad transversal.
 Cuando un dato no pueda derivarse a posteriori de ninguna otra fuente, su captura se implementa en cuanto la decisión que lo exige queda aprobada, aunque la funcionalidad que lo explota se planifique para una fase posterior.
 Proteger lo registrado (P5) no basta: hay que registrar lo que después será imposible reconstruir.
 
+### Principio 24 — La instalación limpia es evidencia obligatoria
+Toda Spec que toque modelos, migraciones, restricciones, valores por defecto, semillas o catálogos demuestra su comportamiento sobre un PostgreSQL **recién creado**: de cero a la cabeza de migraciones, semilla mínima, flujos dirigidos y E2E.
+Una base con meses de datos acumulados no basta: oculta exactamente los defectos del primer día de un cliente.
+
+### Principio 25 — Las altas concurrentes las gobierna la base
+«Buscar la fila y, si no está, crearla» sobre una restricción única no es protección suficiente bajo concurrencia: la autoridad es la base.
+La colisión esperada se maneja en la transacción, se traduce al conflicto de dominio o al resultado canónico que corresponda, no escapa como error 500 y no duplica el registro. Se captura **solo** la violación única de esa restricción; cualquier otro error de integridad se vuelve a lanzar.
+Una prueba de concurrencia **fuerza** la carrera y demuestra que ocurrió; nunca acepta un error 500, un `IntegrityError` ni una excepción arbitraria como rechazo válido.
+
+### Principio 26 — Paridad entre modelos y migraciones
+Toda restricción que el negocio necesita existe, con el mismo nombre, en los modelos y en las migraciones. La base construida desde los modelos y la base migrada imponen restricciones equivalentes.
+Una restricción que solo vive en la migración no se ejerce en las pruebas que construyen el esquema desde los modelos.
+
+### Principio 27 — Una mutación solo cuenta si cambia lo observable
+Una mutación es evidencia solo si introduce un defecto real, cambia la semántica observable, hace fallar la prueba por ese defecto y no por un accidente distinto.
+Si el código mutado produce el mismo resultado para el caso probado, la mutación no es válida y se sustituye. Una ejecución sin resultado legible —código de salida de herramienta, argumentos mal pasados— no cuenta ni como detectada ni como superviviente.
+
 ---
 
 ## Jerarquía de autoridad (resumen)
@@ -139,3 +156,5 @@ Proteger lo registrado (P5) no basta: hay que registrar lo que después será im
 |---|---|---|---|---|
 | 1.0 | 2026-08-03 | Creación inicial derivada de los documentos maestros y la base jurídico-funcional | Equipo de gobierno de KONTROL | Producto, Arquitectura, Seguridad, Legal, QA |
 | 1.1 | 2026-08-29 | **Gate G0** — incorporación de los principios 21, 22 y 23 (enmiendas E-01, E-02, E-03 de `D0-constitution-diff.md`). Ninguna enmienda contradice un principio vigente; las tres refuerzan P5, P10 y P17. Fundamento documental: `ADR-D0-001`, `ADR-D0-002`, `ADR-D0-008`, `ADR-D0-009`, `ADR-D0-011` y `docs/governance/d0-foundational-decisions/D0-historical-data-risk.md` | Gate G0 de gobierno arquitectónico | Arquitectura, Seguridad, QA · **ratificación de Producto y Legal pendiente** (registrada en `docs/governance/G0-final-resolution.md`) |
+| 1.2 | 2026-09-13 | **Enmiendas E-04 a E-07** — principios 24 (instalación limpia como evidencia), 25 (altas concurrentes gobernadas por la base), 26 (paridad modelos ↔ migraciones) y 27 (calidad de mutaciones). Refuerzan P13, P14 y P21 sin contradecir ninguno. Fundamento: ciclo de la Spec 013 (`specs/006-tesoreria/spec013-clarifications.md` §7 y `spec013-convergence.md`), donde la reinstalación de cero destapó una familia de errores 500 por carreras de alta, la unicidad vivía solo en la migración y dos mutaciones dejaron de ser válidas contra el código final | Instrucción expresa de Producto (secuencia controlada post-Spec 013) | **Ratificación de Arquitectura, Seguridad, QA y Legal pendiente** |
+

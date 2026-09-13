@@ -23,6 +23,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
+from app.core.integrity import es_violacion_unica
 from app.modules.approvals import integration as approvals_integration
 from app.modules.inventory import states as state_authority
 from app.modules.inventory.models import (
@@ -1650,8 +1651,9 @@ def _get_movement_type_by_code(db: Session, company_id: str, code: str) -> Movem
                                     direction=direction, affects_balance=True,
                                     status="ACTIVE", created_by=None))
                 db.flush()
-        except IntegrityError:
-            pass
+        except IntegrityError as e:
+            if not es_violacion_unica(e, "uq_movement_types_company_code"):
+                raise
         mtype = _get_movement_type_by_code_optional(db, company_id, code)
     if not mtype:
         raise NotFoundError(code="MOVEMENT_TYPE_NOT_FOUND", message=f"Tipo de movimiento '{code}' no configurado.")

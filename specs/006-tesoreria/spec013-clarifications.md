@@ -268,3 +268,82 @@ Se dejan escritas porque cambiaban conclusiones:
 **Ninguna.** Todo lo anterior tiene autoridad en el propio repositorio: el
 índice único existía, el idioma de captura existía, y el contrato de errores de
 dominio también.
+
+## 8. Anexo del cierre formal — 2026-09-13
+
+Revalidación de toda la evidencia antes de declarar el cierre, a partir de los
+registros que sobrevivieron y volviendo a ejecutar lo que no tenía código de
+salida registrado.
+
+### 8.1 · Entorno
+
+| | |
+|---|---|
+| PostgreSQL ejecutado | **16.2** (`pgserver`) — objetivo histórico 18.6 → **`ENVIRONMENT_BASELINE_DEVIATION`** |
+| Reconstrucción | PostgreSQL, ClamAV 1.4.3 (firma EICAR de prueba), bases `kmc`, `ke2e` y `kontrol_legacy`, semilla hostil del legado, backend y Vite, todo desde `qa/pg-provision.sh`, `qa/n4-legacy-hostile-seed.py` y `qa/pg-e2e-seed.py` |
+| Base de e2e | reinstalada **de cero a la cabeza** (56 migraciones) antes de cada cadena de evidencia |
+
+### 8.2 · Los sitios de carrera, contados desde el código
+
+El «ocho» de la §7.1 contaba **filas de tabla**, y una fila agrupaba dos
+funciones. Contado sobre el código final:
+
+| Dueña | Función | Restricción | Protección |
+|---|---|---|---|
+| 013 | `asegurar_moneda_funcional` | `uq_currencies_company_code_active` | captura + relectura |
+| 013 | `create_source` | `uq_rate_sources_company_code` | captura → `SOURCE_CODE_TAKEN` |
+| 013 | `fuente_por_texto` | ídem | relectura de la ganadora |
+| 013 | `fuente_por_omision` | ídem | relectura de la ganadora |
+| 013 | `create_policy` | `uq_rate_policies_company_code_version` | captura → `RATE_POLICY_VERSION_CONFLICT` |
+| 013 | `register_rate` | `uq_exchange_rates_observation` | captura → `DUPLICATE_OBSERVATION` |
+| 013 | `correct_rate` | ídem | guarda de estado **y** captura → `RATE_ALREADY_SUPERSEDED` |
+| 013 | `import_rates` | `uq_rate_import_company_hash` | captura → `IMPORT_DUPLICATE` |
+| 023 | `_get_movement_type_by_code` | `uq_movement_types_company_code` | captura + relectura |
+
+**9 funciones, 10 protecciones, 6 restricciones.** Antes: 500 en las ocho
+funciones de alta directa bajo carrera, y en `correct_rate` también sin carrera.
+Después: 0.
+
+### 8.3 · Un defecto nuevo en las propias capturas · `NEW_REGRESSION_CURRENT_DELTA`
+
+Las siete capturas añadidas en la §7.1 traducían **cualquier** `IntegrityError`
+al conflicto de dominio. Un `CHECK` incumplido o una clave foránea rota se
+contestaban como «ya existe». Lo destapó la revalidación de mutaciones: con la
+validación de tasa positiva retirada, la base rechazaba la tasa cero y el
+servicio respondía `DUPLICATE_OBSERVATION`.
+
+Corregido con un clasificador compartido, `app/core/integrity.py ·
+es_violacion_unica(error, restriccion)`, que solo reconoce la violación única
+(`SQLSTATE 23505`) **de esa restricción**; todo lo demás se vuelve a lanzar. Lo
+defienden dos pruebas con errores reales de PostgreSQL —única, `CHECK` y foránea—
+y dos mutaciones (§8.5). Hoy no se alcanzaba por el camino normal; la defensa en
+profundidad, sin embargo, mentía.
+
+### 8.4 · Correcciones de evidencia adicionales
+
+**CORRECTION-013-04 · «doce Specs».** La deriva heredada se atribuyó a doce Specs
+sin mapearla. Mapeada por la migración que creó cada tabla y por el mapa de
+equivalencias, son **diez**: 004, 006, 009, 010, 021, 023, 029, 031, 041 y 056.
+Las 21 operaciones cuadran.
+
+**CORRECTION-013-05 · el «019».** La §6 llamó a ese número «identificador
+histórico del máster». No venía del máster: lo escribió la Spec 038 en sus
+propios documentos como dueño de dos deudas, y era un error. La dueña es la 038
+(errata en `spec038-convergence.md` §14).
+
+**CORRECTION-013-06 · las mutaciones de la primera pasada.** Las doce primeras
+se ejecutaron **antes** de la paridad y del endurecimiento, y nunca se repitieron
+contra el código final. Repetidas:
+
+- Un primer intento no dio resultado alguno: la expresión `-k` se partió en
+  palabras, pytest salió con **código 4 (error de uso)** y el guion lo etiquetó
+  como «sobrevive». No contó ni como detectada ni como superviviente (P27).
+- Repetidas bien, **M013-08 sobrevive**: con el índice único y su captura en la
+  base de pruebas, quitar la comprobación previa de reimportación ya no cambia
+  nada observable. Deja de contar y se sustituye por **M013-08b**, que rompe la
+  identidad del lote.
+
+### 8.5 · Preguntas materiales
+
+**Ninguna nueva.** El clasificador, las restricciones y los códigos de dominio
+tienen autoridad en el propio repositorio.

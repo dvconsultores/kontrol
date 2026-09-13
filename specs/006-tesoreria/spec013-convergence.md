@@ -304,6 +304,122 @@ resultado no se contó.
 | Regresión completa del backend | **1401** · **1393 pasan · 8 saltos · 0 fallos · 0 errores** · `EXIT=0` |
 | Saltos esperados / reales | **8 / 8**, todos S3 en `test_documents_storage.py` |
 
+## 9-ter. Cierre formal · 2026-09-13
+
+Revalidación completa antes de sostener el veredicto. Detalle en
+`spec013-clarifications.md` §8.
+
+### Lo que la revalidación encontró
+
+- **Las capturas de carrera traducían cualquier `IntegrityError`** —también un
+  `CHECK` o una clave foránea— a conflicto de dominio.
+  `NEW_REGRESSION_CURRENT_DELTA`, corregido con `app/core/integrity.py` y
+  defendido por dos pruebas con errores reales de PostgreSQL.
+- **Los sitios de carrera son 9 funciones, 10 protecciones y 6 restricciones**,
+  no «ocho sitios».
+- **Las doce mutaciones de la primera pasada nunca se habían repetido contra el
+  código final.** Un primer intento terminó con código 4 (argumentos mal pasados)
+  y no se contó. Repetidas bien, M013-08 sobrevive y se sustituye.
+- CORRECTION-013-04 (diez Specs con deriva heredada, no doce) y CORRECTION-013-05
+  (el «019» salió de los documentos de la 038, no del máster).
+
+### Mutaciones sobre el código final
+
+Ejecutadas en serie, leyendo el código de salida de pytest, con las fuentes
+restauradas byte a byte después de cada una.
+
+| | Mutación | Resultado | Motivo observado |
+|---|---|---|---|
+| M013-01 | falta de tasa devuelve uno | cae · 4 | no se lanza `ConflictError` |
+| M013-02b | el contrato devuelve `float` | cae · 3 | `0.3 ≠ Decimal` |
+| M013-03 | se ignora la fecha de vigencia | cae · 3 | usó una tasa futura |
+| M013-04 | corregir reescribe | cae · 1 | la original sigue `ACTIVE` |
+| M013-05 | sin guardia de empresa del maestro | cae · 1 | `MISSING_RATE` en vez de `CURRENCY_INACTIVE` |
+| M013-06 | se admite tasa cero | cae · 2 | `CheckViolation` de la base |
+| M013-07 | se admite tasa negativa | cae · 3 | `CheckViolation` de la base |
+| M013-08b | la huella no identifica el fichero | cae · 2 | no se detecta la reimportación |
+| M013-09 | el arrastre coge la más antigua | cae · 1 | tasa más vieja que la vigente |
+| M013-10 | invertir en silencio | cae · 1 | no se lanza `INVERSION_NOT_ALLOWED` |
+| M013-11 | triangular en silencio | cae · 1 | no se lanza `MISSING_RATE` |
+| M013-12 | fuente desactivada resuelve | cae · 1 | no se lanza `MISSING_RATE` |
+| M013-13 | registrar sin capturar | cae · 1 | `IntegrityError` a quien pierde |
+| M013-14 | alta de fuente sin capturar | cae · 1 | ídem |
+| M013-15 | el camino corto no relee | cae · 1 | `SOURCE_CODE_TAKEN` en vez de la fuente |
+| M013-16 | moneda funcional sin capturar | cae · 1 | `IntegrityError` |
+| M013-17 | importación sin capturar | cae · 1 | ídem |
+| M013-18 | versión de política sin capturar | cae · 1 | ídem |
+| M013-19 | corregir sin mirar el estado | cae · 1 | `UniqueViolation` sin concurrencia |
+| M013-20 | corrección concurrente sin capturar | cae · 1 | `IntegrityError` |
+| M013-21 | unicidad solo en la migración | cae · 1 | la guardia de paridad |
+| M013-21b | la misma deriva, desde la carrera | cae · 1 | «la segunda transacción nunca chocó» |
+| M013-22 | el clasificador todo lo toma por colisión | cae · 2 | `assert not True` |
+| M013-23 | el clasificador ignora la restricción | cae · 1 | ídem |
+| M023-D1 | tipo de movimiento sin capturar | cae · 1 | `IntegrityError` a quien pierde |
+| M013-24 | el alta de fuente pierde la prioridad | cae · 1 | «la respuesta del alta perdió `priority`» |
+
+**26 mutaciones válidas, las 26 caen.** Dos no válidas en todo el ciclo, ambas
+sustituidas: **M013-02** (sin diferencia observable a esta escala) y **M013-08**
+(compensada por el índice). M013-21 y M013-21b son un mismo defecto visto por dos
+detectores. M023-D1 pertenece al delta de la 023, no a la 013.
+
+La cifra «23» que se dio antes era anterior al estrechamiento y contaba a M013-08,
+que ya no es válida.
+M013-24 se añadió con la prueba de FR-013-004, que la verificación de
+trazabilidad encontró sin cubrir.
+
+### Evidencia del cierre formal
+
+| Puerta | Comando | Resultado |
+|---|---|---|
+| Regresión completa del backend | `pytest -p no:cacheprovider -rs` | `EXIT=0` · **1403** · **1395 pasan · 8 saltos · 0 fallos · 0 errores** |
+| Saltos esperados / reales | — | **8 / 8**, todos S3 en `test_documents_storage.py` · fuera de S3: **0** |
+| Frontend | `tsc --noEmit` · `eslint src e2e` · `vitest run` · `npm run build` | exit 0 · exit 0 · **307/307** exit 0 · exit 0 |
+| Ruff | `ruff check app tests alembic` | exit 0 |
+| Migraciones sobre base nueva | `alembic upgrade head` | exit 0 · 56 migraciones |
+| Tipos de movimiento tras la cadena | consulta directa | 12 · **0 repetidos** |
+| Trazas y 5xx del backend en la cadena | registro de uvicorn | **0** · **0** |
+
+La regresión cubre las dos pruebas nuevas del clasificador (1401 → 1403). **No**
+incluye la prueba de FR-013-004, añadida después; su evidencia es dirigida y la
+regresión completa de la Spec 004 la cubre.
+
+### E2E sobre base instalada de cero
+
+| Cadena | Condición | Resultado |
+|---|---|---|
+| Primera | `ke2e` recién migrada, **con la regresión completa corriendo en paralelo** | **242/243** · Chromium 81 · Firefox 80 · WebKit 81 · 0 trazas · 0 5xx · 12 tipos de movimiento, 0 repetidos |
+| Segunda | misma base, **sin la regresión en paralelo** | **243/243** · 81 por navegador · 0 trazas · 0 5xx |
+
+El único rojo —`picking.spec.ts · el pedido liberado aparece en la cola con su
+puesto`, en Firefox— no llegó a ejercer ninguna regla: el primer
+`POST /auth/login` recibió `read ECONNRESET`. El servidor arrancó una sola vez,
+no se reinició, no registró advertencias, errores ni respuestas 5xx. Aislada,
+la prueba pasó **3 de 3**; la suite 031 completa en Firefox, **8/8**; la cadena
+entera sin la regresión en paralelo, **243/243**.
+
+Clasificación: **`EXTERNAL_ENVIRONMENT`** — reinicio de conexión en transporte con
+un uvicorn de un solo proceso atendiendo tres navegadores mientras corría la
+regresión completa. No se dio por buena por haber pasado antes: se aisló, se
+repitió y se comparó con la cadena sin carga.
+
+### Pruebas dirigidas tras añadir FR-013-004
+
+`test_spec013_financial_masters.py` + `test_spec023_movement_type_race.py`:
+**60/60**, Ruff limpio.
+
+### `/speckit.analyze` final
+
+| | |
+|---|---|
+| BLOCKER | 0 |
+| CRITICAL | 0 |
+| CONTRADICTIONS | 0 — las cifras intermedias contradictorias quedan corregidas por errata, no borradas |
+| ORPHAN REQUIREMENTS | 0 |
+| ORPHAN TASKS | 0 |
+| MATERIAL OQ | 0 |
+| UNKNOWN | 0 |
+| TRACEABILITY | 100 % |
+
 ## 10. Las separaciones que hay que conservar
 
 **Maestro ≠ operación.** La 013 dice cuánto vale una moneda; la 038 mueve el

@@ -34,6 +34,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
+from app.core.integrity import es_violacion_unica
 from app.modules.organization.models import Company
 from app.modules.treasury.models import (
     Currency,
@@ -158,8 +159,9 @@ def asegurar_moneda_funcional(db: Session, company_id: str,
                             decimal_places=2, status="ACTIVE",
                             created_by=actor or "spec013:functional"))
             db.flush()
-    except IntegrityError:
-        pass
+    except IntegrityError as e:
+        if not es_violacion_unica(e, "uq_currencies_company_code_active"):
+            raise
     cur = moneda_por_codigo(db, company_id, codigo)
     if cur is None:  # pragma: no cover - imposible tras insertar o perder la carrera
         raise ConflictError(code="FUNCTIONAL_CURRENCY_UNAVAILABLE",
@@ -194,7 +196,9 @@ def create_source(db: Session, *, company_id: str, code: str, name: str,
         with db.begin_nested():
             db.add(fuente)
             db.flush()
-    except IntegrityError:
+    except IntegrityError as e:
+        if not es_violacion_unica(e, "uq_rate_sources_company_code"):
+            raise
         raise ConflictError(code="SOURCE_CODE_TAKEN",
                             message=f"Ya existe una fuente con el código {code}.") from None
     return fuente
@@ -307,7 +311,9 @@ def create_policy(db: Session, *, company_id: str, policy_code: str,
         with db.begin_nested():
             db.add(politica)
             db.flush()
-    except IntegrityError:
+    except IntegrityError as e:
+        if not es_violacion_unica(e, "uq_rate_policies_company_code_version"):
+            raise
         raise ConflictError(
             code="RATE_POLICY_VERSION_CONFLICT",
             message="Otra versión de esa política se creó a la vez; vuelva a intentarlo.") from None
@@ -414,7 +420,9 @@ def register_rate(db: Session, *, company_id: str, base_code: str, quote_code: s
         with db.begin_nested():
             db.add(obs)
             db.flush()
-    except IntegrityError:
+    except IntegrityError as e:
+        if not es_violacion_unica(e, "uq_exchange_rates_observation"):
+            raise
         raise ConflictError(
             code="DUPLICATE_OBSERVATION",
             message="Ya hay una observación para ese par, fuente, tipo y momento.") from None
@@ -480,7 +488,9 @@ def correct_rate(db: Session, *, company_id: str, observation_id: str,
         with db.begin_nested():
             db.add(nueva)
             db.flush()
-    except IntegrityError:
+    except IntegrityError as e:
+        if not es_violacion_unica(e, "uq_exchange_rates_observation"):
+            raise
         raise ConflictError(code="RATE_ALREADY_SUPERSEDED",
                             message="Esa tasa ya fue corregida: corrija la versión vigente.",
                             details={"observation_id": str(vieja.id)}) from None
@@ -719,7 +729,9 @@ def import_rates(db: Session, *, company_id: str, contenido: bytes | str,
         with db.begin_nested():
             db.add(lote)
             db.flush()
-    except IntegrityError:
+    except IntegrityError as e:
+        if not es_violacion_unica(e, "uq_rate_import_company_hash"):
+            raise
         raise ConflictError(code="IMPORT_DUPLICATE",
                             message="Ese mismo fichero ya se importó.") from None
 

@@ -1398,3 +1398,98 @@ def test_la_base_de_pruebas_tiene_de_verdad_la_unicidad_de_la_013(mundo):
     nombres |= {n.replace("ck_exchange_rates_ck_", "ck_", 1) for n in nombres}
     faltan = {n for grupo in _RESTRICCIONES_013.values() for n in grupo} - nombres
     assert not faltan, f"la base de pruebas no tiene: {sorted(faltan)}"
+
+
+# =========================================================================== #
+# Una colisión única no es cualquier error de integridad
+# =========================================================================== #
+def test_el_clasificador_distingue_la_violacion_unica_de_un_check_y_de_una_foranea(mundo):
+    """Con errores reales de PostgreSQL, no con dobles."""
+    from sqlalchemy.exc import IntegrityError
+
+    from app.core.integrity import es_violacion_unica
+
+    db = mundo.factory()
+    try:
+        base = _moneda(db, mundo.company_a, _codigo())
+        quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
+        fuente = _fuente(db, mundo)
+        db.flush()
+
+        errores = {}
+        for nombre, fila in {
+            "unica": lambda: rz.ExchangeRateSource(company_id=mundo.company_a, code=fuente.code,
+                                                   name="repetida", status="ACTIVE"),
+            "check": lambda: ExchangeRate(company_id=mundo.company_a, currency_id=str(base.id),
+                                          rate_date=date.today(), rate=Decimal("0"),
+                                          base_currency_id=str(base.id),
+                                          quote_currency_id=str(quote.id),
+                                          source_id=str(fuente.id), effective_at=datetime.now(UTC)),
+            "foranea": lambda: ExchangeRate(company_id=mundo.company_a, currency_id=str(base.id),
+                                            rate_date=date.today(), rate=Decimal("1"),
+                                            base_currency_id=str(base.id),
+                                            quote_currency_id=str(quote.id),
+                                            source_id=str(uuid4()), effective_at=datetime.now(UTC)),
+        }.items():
+            try:
+                with db.begin_nested():
+                    db.add(fila())
+                    db.flush()
+            except IntegrityError as e:
+                errores[nombre] = e
+        assert set(errores) == {"unica", "check", "foranea"}, f"no se provocó: {errores}"
+        assert es_violacion_unica(errores["unica"], "uq_rate_sources_company_code")
+        assert not es_violacion_unica(errores["unica"], "uq_exchange_rates_observation")
+        assert not es_violacion_unica(errores["check"], "uq_exchange_rates_observation")
+        assert not es_violacion_unica(errores["foranea"], "uq_exchange_rates_observation")
+    finally:
+        db.rollback()
+        db.close()
+
+
+def test_registrar_no_disfraza_de_duplicado_un_error_que_no_lo_es(mundo, monkeypatch):
+    """Una clave foránea rota no es «ya existe»: el error real no se esconde."""
+    import types
+
+    from sqlalchemy.exc import IntegrityError
+
+    db = mundo.factory()
+    try:
+        base = _moneda(db, mundo.company_a, _codigo())
+        quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
+        db.flush()
+        fantasma = types.SimpleNamespace(id=str(uuid4()), code="FANTASMA", status="ACTIVE",
+                                         allows_manual=True)
+        monkeypatch.setattr(rz, "_exigir_fuente", lambda *_a, **_k: fantasma)
+        with pytest.raises(IntegrityError):
+            rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
+                             quote_code=quote.code, rate="10.00", effective_at=date.today(),
+                             source_id=fantasma.id, actor="qa")
+    finally:
+        db.rollback()
+        db.close()
+
+
+def test_la_fuente_conserva_y_devuelve_su_identidad_entera(mundo):
+    """FR-013-004: una fuente es algo más que su código.
+
+    La verificación de trazabilidad del cierre encontró que ninguna prueba
+    comprobaba que la autoridad, el proveedor, la admisión de carga manual, la
+    prioridad y la vigencia se guardan y se devuelven. La prioridad decide qué
+    fuente gana; si se perdiera por el camino, el desempate volvería a ser el
+    orden de la tabla sin que nada lo dijera.
+    """
+    codigo = f"IDF-{uuid4().hex[:6]}"
+    esperado = {"name": "Banco Central (prueba)", "source_type": "OFFICIAL",
+                "authority_reference": "Pendiente de validación legal (D0-07)",
+                "provider_code": "PROV-X", "allows_manual": False, "priority": 7,
+                "effective_from": "2026-01-01", "status": "ACTIVE"}
+    cuerpo = {k: v for k, v in esperado.items() if k != "status"}
+    r = mundo.post("/treasury/rate-sources", "admin", mundo.company_a, {"code": codigo, **cuerpo})
+    assert r.status_code == 200, r.text
+    listado = mundo.get("/treasury/rate-sources", "admin", mundo.company_a)
+    assert listado.status_code == 200, listado.text
+    guardada = next(f for f in listado.json()["items"] if f["code"] == codigo)
+    for campo, valor in esperado.items():
+        assert r.json()[campo] == valor, f"la respuesta del alta perdió {campo}"
+        assert guardada[campo] == valor, f"lo guardado perdió {campo}"

@@ -242,3 +242,12 @@ cadena de diez suites terminó con **12 tipos creados, 0 repetidos y 0 errores
 
 No se reabre la capacidad multiestado: el cambio es la atomicidad de un alta de
 catálogo, no una regla de estados.
+
+### Ajuste del 2026-09-13 · la captura se estrecha a su propia restricción
+
+La captura añadida en `_get_movement_type_by_code` aceptaba **cualquier**
+`IntegrityError`. Ahora solo traga la violación única de
+`uq_movement_types_company_code` (`app/core/integrity.py · es_violacion_unica`);
+cualquier otro error de integridad se vuelve a lanzar en lugar de esconderse
+detrás de una relectura. La mutación **M023-D1** se reescribió contra el bloque
+nuevo y se volvió a ejecutar.

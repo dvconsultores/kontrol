@@ -8,12 +8,12 @@
 | FR-013-001 · maestro de monedas | doc. maestro | `Currency` con `code`, `name`, `symbol`, `decimal_places` | `test_la_observacion_guarda_su_par_explicito` | ✔ |
 | FR-013-002 · desactivar no borra historia | doctrina | `status`, único **parcial** sobre las activas | `test_una_fuente_desactivada_no_produce_tasas_pero_conserva_historia` | ✔ |
 | FR-013-003 · maestro de fuentes | §14 del prompt | `ExchangeRateSource` | `test_la_resolucion_devuelve_la_procedencia_entera` | ✔ |
-| FR-013-004 · identidad de la fuente | ídem | `code`, `name`, `source_type`, `authority_reference`, `provider_code`, `priority`, vigencia | ídem | ✔ |
+| FR-013-004 · identidad de la fuente | ídem | `code`, `name`, `source_type`, `authority_reference`, `provider_code`, `priority`, vigencia | `test_la_fuente_conserva_y_devuelve_su_identidad_entera` · **M013-24** (añadida al verificar la trazabilidad, 2026-09-13) | ✔ |
 | FR-013-005 · tipo de tasa | ídem | `rate_type`, texto del maestro | `test_la_api_resuelve_y_dice_lo_que_significa` | ✔ |
 | FR-013-006 · observación con par explícito | §11 · §18 | `base_currency_id` / `quote_currency_id` | `test_la_observacion_guarda_su_par_explicito` · **M013-01** | ✔ |
 | FR-013-007 · tiempos distinguidos | §19 | `effective_at`, `published_at`, `observed_at` | `test_una_tasa_de_manana_no_valora_una_operacion_de_ayer` | ✔ |
 | FR-013-008 · el histórico no se reescribe | §20 | `correct_rate` crea versión | `test_corregir_una_tasa_sucede_a_la_anterior` · **M013-04** | ✔ |
-| FR-013-009 · corrección por sucesión | ídem | `supersedes_id`, `version` | ídem | ✔ |
+| FR-013-009 · corrección por sucesión | ídem | `supersedes_id`, `version` | `test_corregir_una_tasa_sucede_a_la_anterior` · **M013-04** | ✔ |
 | FR-013-010 · alta manual | §29 | `register_rate` | `test_la_api_resuelve_y_dice_lo_que_significa` | ✔ |
 | FR-013-011 · la manual deja rastro | §29 | `entered_by`, `reason`, `source_reference` | `test_corregir_exige_motivo` | ✔ |
 | FR-013-012 · importación CSV | §31 | `import_rates` | `test_importar_crea_las_tasas_y_reimportar_no_duplica` | ✔ |
@@ -24,7 +24,7 @@
 | FR-013-017 · identidad de la misma moneda | §10 · §22 | `SAME_CURRENCY_IDENTITY`, sin fila | `test_la_misma_moneda_es_identidad_sin_fila_de_mercado` · e2e | ✔ |
 | FR-013-018 · selección de fuente configurable | §38 | filtro por fuente activa y código | `test_una_fuente_desactivada_no_produce_tasas_pero_conserva_historia` · **M013-12** | ✔ |
 | FR-013-019 · prioridad de fuente | §38 · §86 | `priority` del maestro | `test_entre_dos_fuentes_manda_la_prioridad_no_el_orden_de_la_tabla` | ✔ |
-| FR-013-020 · fuente desactivada fuera de la resolución | §41 | filtro por `status` | ídem · **M013-12** | ✔ |
+| FR-013-020 · fuente desactivada fuera de la resolución | §41 | filtro por `status` | `test_una_fuente_desactivada_no_produce_tasas_pero_conserva_historia` · **M013-12** | ✔ |
 | FR-013-021 · caducidad por política | §26 | `max_age_days`, nulo = sin tope | `test_la_tasa_caduca_cuando_la_politica_lo_dice` | ✔ |
 | FR-013-022 · falta de tasa como error de dominio | §23 | `ConflictError` con detalle del par | `test_la_api_no_inventa_una_tasa_que_falta` | ✔ |
 | FR-013-023 · una tasa futura no valora el pasado | §73 | `effective_at <= momento` | `test_una_tasa_de_manana_no_valora_una_operacion_de_ayer` · **M013-03** | ✔ |
@@ -42,7 +42,7 @@
 | FR-013-034 · no se invierte sin política | §24 | `INVERSION_NOT_ALLOWED`, y `derived` cuando se permite | `test_sin_politica_no_se_invierte_una_tasa` · **M013-10** · e2e P0 | ✔ |
 | FR-013-035 · no se triangula sin política | §25 | `allow_triangulation` + marca `TRIANGULATION` | `test_sin_politica_no_se_triangula` · **M013-11** | ✔ |
 | FR-013-036 · institución financiera | §36 | `Bank` ya existe y es de la 038: **no se duplica** | revisión del diff | ✔ |
-| FR-013-037 · frontera con métodos de pago | §37 | `PaymentMethod` sigue en la 038 | ídem | ✔ |
+| FR-013-037 · frontera con métodos de pago | §37 | `PaymentMethod` sigue en la 038 | revisión verificable: `git diff f5ddc8d -- app/modules/treasury/models.py` no toca `PaymentMethod` ni `FinancialBank` | ✔ |
 | FR-013-038 · contrato = OpenAPI | §51 | fixture regenerada, 522 rutas | `audit-completeness.test.ts` | ✔ |
 | FR-013-039 · administración completa | §52-58 | pantallas de tasas y de fuentes | e2e de interfaz | ✔ |
 | FR-013-040 · perfil venezolano configurable | §7 · §40 | moneda funcional de la empresa; BCV es una fuente del maestro | `test_la_moneda_funcional_sale_de_la_empresa_no_del_codigo` | ✔ |
@@ -75,6 +75,14 @@ Las pruebas de carrera usan `tests/concurrency.py`: la segunda transacción qued
 **bloqueada en el índice** antes de que confirme la primera, y si nunca llega a
 bloquearse la prueba falla. No hay carrera dejada al azar.
 
+## Cierre formal 2026-09-13 · una colisión única no es cualquier error
+
+| Requisito | Autoridad | Implementación | Prueba | Estado |
+|---|---|---|---|---|
+| INV-013-T · solo la violación única de **su** restricción se traduce a dominio | P25 · contrato de errores | `app/core/integrity.py · es_violacion_unica` en las siete capturas | `test_el_clasificador_distingue_la_violacion_unica_de_un_check_y_de_una_foranea` · **M013-22** · **M013-23** | ✔ |
+| INV-013-U · un error de integridad que no es colisión no se disfraza de duplicado | ídem | la captura vuelve a lanzar | `test_registrar_no_disfraza_de_duplicado_un_error_que_no_lo_es` · **M013-22** | ✔ |
+| INV-013-V · reimportar el mismo fichero lo detecta la huella de su contenido | FR-013-030 | `content_hash` sha256 | `test_importar_crea_las_tasas_y_reimportar_no_duplica` · `test_la_api_importa_y_detalla_cada_fila_rechazada` · **M013-08b** | ✔ |
+
 ## Delta dirigido a la Spec 023
 
 | Requisito | Autoridad | Implementación | Prueba | Estado |
@@ -95,5 +103,5 @@ bloquearse la prueba falla. No hay carrera dejada al azar.
 |---|---|---|---|---|
 | IMP-007-0xx · la empresa publica su moneda funcional | FR-013-040 | `functional_currency` en el listado | e2e de la 013 (la usa para armar cada par) | ✔ |
 
-Sin huérfanos: 59 requisitos de la 013 y 5 de delta, todos con autoridad,
+Sin huérfanos: 62 requisitos de la 013 y 5 de delta, todos con autoridad,
 implementación y prueba existente y verificada.
