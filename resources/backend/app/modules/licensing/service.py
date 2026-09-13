@@ -20,7 +20,7 @@ from typing import Any
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.core import license as license_engine
@@ -50,9 +50,48 @@ def _private_key_path() -> str:
 # --------------------------------------------------------------------------- #
 # Identidad de instalación
 # --------------------------------------------------------------------------- #
+#: Clave del bloqueo consultivo que pone en fila el alta de la instalación
+#: («KONTROL» + 01). Constante a propósito: todas las réplicas del backend contra
+#: la misma base compiten por el mismo bloqueo.
+_BLOQUEO_ALTA_INSTALACION = 0x4B4F4E54524F4C01
+
+
+def _instalacion_canonica(db: Session) -> Installation | None:
+    """La instalación, con orden determinista.
+
+    FR-001-002 dice que hay **una**. Si una base heredada tuviera dos —las que
+    dejaba la carrera que este delta corrige—, `limit(1)` sin orden devolvía una u
+    otra según el plan de PostgreSQL, y con ella cambiaba contra qué identidad se
+    validaba una licencia. Manda la más antigua.
+    """
+    return db.execute(
+        select(Installation).order_by(Installation.created_at, Installation.id).limit(1)
+    ).scalars().first()
+
+
+def _bloquear_alta_de_instalacion(db: Session) -> None:
+    """Bloqueo consultivo de transacción: se libera al confirmar.
+
+    Solo existe en PostgreSQL, que es el motor de producción y de toda prueba de
+    integración (P21).
+    """
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(text("SELECT pg_advisory_xact_lock(:clave)"), {"clave": _BLOQUEO_ALTA_INSTALACION})
+
+
 def get_or_create_installation(db: Session) -> Installation:
     """Recupera o crea la identidad persistente de la instalación (FR-001-002/003)."""
-    existing = db.execute(select(Installation).limit(1)).scalars().first()
+    existing = _instalacion_canonica(db)
+    if existing:
+        return existing
+
+    # Dos peticiones simultáneas contra una instalación recién desplegada pasaban
+    # las dos por aquí. Como el UUID es aleatorio, no chocaban en ningún índice:
+    # se creaban **dos** instalaciones y la segunda sobrescribía el fichero de
+    # clave privada de la primera. El bloqueo las pone en fila, y quien llega
+    # segunda relee: si la otra ya la creó, devuelve esa y no escribe nada.
+    _bloquear_alta_de_instalacion(db)
+    existing = _instalacion_canonica(db)  # relectura bajo el bloqueo
     if existing:
         return existing
 
@@ -90,7 +129,7 @@ def get_or_create_installation(db: Session) -> Installation:
 
 
 def get_installation(db: Session) -> Installation:
-    installation = db.execute(select(Installation).limit(1)).scalars().first()
+    installation = _instalacion_canonica(db)
     if not installation:
         raise NotFoundError(code="INSTALLATION_NOT_FOUND", message="No existe identidad de instalación")
     return installation
@@ -271,7 +310,7 @@ def get_status(db: Session) -> dict[str, Any]:
 
 def current_mode(db: Session) -> str:
     """Modo actual para el middleware de licencia (FR-001-053)."""
-    installation = db.execute(select(Installation).limit(1)).scalars().first()
+    installation = _instalacion_canonica(db)
     if not installation:
         return license_engine.SECURITY_SUSPENSION
     state = db.execute(select(LicenseState).where(LicenseState.installation_id == installation.installation_uuid)).scalars().first()

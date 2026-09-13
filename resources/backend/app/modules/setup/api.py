@@ -37,7 +37,9 @@ class SetupStatus(BaseModel):
 
 
 def setup_status(db: Session) -> SetupStatus:
-    installation = db.execute(select(Installation).limit(1)).scalars().first()
+    installation = db.execute(
+        select(Installation).order_by(Installation.created_at, Installation.id).limit(1)
+    ).scalars().first()
     tenant = db.execute(select(Tenant).limit(1)).scalars().first()
     company = db.execute(select(Company).limit(1)).scalars().first()
     return SetupStatus(
