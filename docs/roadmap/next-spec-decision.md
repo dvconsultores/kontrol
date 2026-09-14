@@ -1067,3 +1067,45 @@ Evidencia: migración que creó cada tabla (`0001_fundacion`, `0002_maestros`,
 `0003_inventario`, `0005_ventas`, `0006_tesoreria`, `0011_homologacion`,
 `0047_spec021`, `0049_spec031`) y `spec-equivalence-map.md`. La Spec 013 sigue
 con deriva **0**.
+
+---
+
+## Tras el ciclo de la Spec 047 — 2026-09-14
+
+`SPEC047 — BLOCKED BY MATERIAL DECISION` · `SPEC049 — BLOCKED BY OWNER DEPENDENCY` (sin cambio).
+
+La 047 no tenía nada: ni tablas, ni carpeta, ni planificador, ni sistema de
+idiomas. El ciclo llegó hasta `/speckit.analyze` y se detuvo en dos preguntas que
+ninguna autoridad del repositorio responde (`specs/047-notificaciones-tareas/clarifications.md` §4).
+
+### El hecho que decide
+
+**KONTROL no tiene nada que se ejecute sin una petición.** La 047 es dueña del
+planificador de plataforma por `ADR-D0-003`, y `ADR-009` prohíbe construirlo sin
+un ADR. Esa misma ausencia deja hoy sin ejecutor la caducidad de reservas de la
+030, `mark_expired` de la 045, el correo de la 048 y el planificador de retención
+de la 052.
+
+### Decisiones pendientes que bloquean trabajo
+
+| Decisión | Decide | Desbloquea |
+|---|---|---|
+| **OQ-047-01** — planificador de plataforma (recomendada: temporizador del sistema con orden idempotente, sin cola) o proyección en lectura | Arquitectura · Producto | 047; y, con la opción A, la caducidad de la 030, el vencimiento de la 045, el correo de la 048 y la retención de la 052 |
+| **OQ-047-02** — idioma (recomendada: contrato neutro con clave y parámetros, catálogo ES en v1) | Producto | Pantallas de la 047 |
+| OQ-048-01..03 — fuente, TLS y tasa oficial del BCV | Producto · Legal | Proveedor automático de tasas |
+| MD-049-01, MD-049-02 — monedas y KPIs fiscales | Producto | 049, junto con sus dueñas |
+| D0-06 — hospedaje de la licencia central | Producto · Infraestructura | 004 |
+| D0-07 — validación legal fiscal | Legal | 039-043, 056 |
+
+### Siguiente paso
+
+**OQ-047-01 es la decisión de mayor desbloqueo.** Sin ella, lo único ejecutable
+sin decidir nada son los deltas programados el 2026-09-13, en su orden:
+**FLOAT-038-A → FLOAT-038-B → CONC-046**. Ninguno se ha iniciado.
+
+`READY_FOR_IMPLEMENTATION = 0`.
+
+### Lo que esta decisión NO autoriza
+
+Ni implementar la 047 ni la 049, ni ejecutar los deltas. Cada uno requiere su
+ciclo completo y autorización expresa.

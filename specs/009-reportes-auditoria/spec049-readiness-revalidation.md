@@ -97,3 +97,40 @@ se muestran marcados como no homologados?
 No se ejecutó `/speckit.implement`. No se escribieron rutas, componentes ni
 cálculos. El máster se actualiza **solo** en la columna de bloqueo de la 049, con
 el alcance verificado.
+
+## 9. Revalidación 2026-09-14 — tras el ciclo de la Spec 047
+
+**Veredicto: `SPEC049 — BLOCKED BY OWNER DEPENDENCY`, sin cambio.**
+
+### Qué cambió
+
+Solo la 047. Recorrió `specify` → `analyze` en `specs/047-notificaciones-tareas`,
+**no se implementó** y quedó `BLOCKED BY MATERIAL DECISION` (OQ-047-01 planificador
+frente a ADR-009; OQ-047-02 idioma). Definió el contrato que la 049 consumirá
+(FR-047-036: no leídas, tareas abiertas, tareas vencidas, alertas activas), pero
+ese contrato **no tiene implementación** que leer.
+
+### Qué no cambió
+
+Ningún commit desde `88634a1` toca compras, fiscal, regulatorio, tesorería ni el
+dashboard.
+
+### Bloqueos recalculados
+
+| Dominio | Dueñas | Estado | ¿Bloquea? |
+|---|---|---|---|
+| Compras y CxP | 015-017, 027, 028 | `PARTIALLY_IMPLEMENTED` | Sí |
+| Fiscal | 039-043 | `BLOCKED_BY_LEGAL_VALIDATION` (`D0-07`) | Sí |
+| Regulatorio | 044 | `BLOCKED_BY_EXTERNAL_SERVICE` | Sí |
+| Tareas y alertas | 047 | `BLOCKED_BY_BUSINESS_DECISION` — antes «no iniciada»; ahora espera dos decisiones, no construcción | Sí |
+
+| | |
+|---|---|
+| DEPENDENCY BLOCKERS | **4** |
+| MATERIAL OQ | **2** — MD-049-01 y MD-049-02 (OQ-049-01/02 en el prompt de la 047), sin resolver |
+| UNKNOWN | 0 |
+| DATA SOURCE GAPS | **3** |
+| OWNER GAPS | 0 |
+| Defectos del código existente | 5, `PREEXISTING`, sin tocar |
+
+No se implementó nada de la 049 ni se tocó `reportes:view`.
