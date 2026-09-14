@@ -51,7 +51,7 @@
 | 044 SICA/SIGESAI/SACS | `008-regulacion-traslados` | 73 % | — |
 | **045 Motor de aprobaciones** | disperso en 004/005/003/008 | 35 % | **Sin Spec propietaria** |
 | **046 Gestión documental** | **ninguna** | **8 %** | **Requisito huérfano** |
-| **047 Notificaciones y tareas** | **ninguna** | **5 %** | **Requisito huérfano** |
+| **047 Notificaciones y tareas** | `047-notificaciones-tareas` (desde 2026-09-14, solo documental) | **5 %** | Bloqueada por OQ-047-01 y OQ-047-02 |
 | 048 Integraciones | `010-licenciamiento-central` (parcial) | 25 % | Sin Spec transversal |
 | 049 Dashboard y analítica | `009-reportes-auditoria` | 55 % | — |
 | 050 Reportes | `009-reportes-auditoria` | 74 % | — |
