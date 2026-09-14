@@ -134,3 +134,43 @@ dashboard.
 | Defectos del código existente | 5, `PREEXISTING`, sin tocar |
 
 No se implementó nada de la 049 ni se tocó `reportes:view`.
+
+## 10. Revalidación 2026-09-14 — tras converger la Spec 047
+
+**Veredicto: `SPEC049 — BLOCKED BY OWNER DEPENDENCY`, sin cambio de estado.**
+
+### Qué cambió
+
+La 047 quedó `COMPLETE / CONVERGED`. Lo que la 049 declara necesitar de ella
+—tareas y alertas— existe y es consumible sin recalcular:
+`GET /notifications/counts` devuelve, para la empresa del contexto y los permisos del
+usuario, `unread_notifications`, `open_tasks`, `overdue_tasks` y `active_alerts`
+(`test_flujo_k_la_049_puede_leer_los_cuatro_contadores`). La 049 **no** se implementa
+aquí ni lee todavía ese contrato.
+
+### Dependencias recalculadas desde las filas del máster, no restando una
+
+| Dominio | Dueñas | Estado en el máster | ¿Bloquea? |
+|---|---|---|---|
+| Ventas y CxC | 029-037 | `COMPLETE / CONVERGED` | No |
+| Tesorería | 038 · 013 | `COMPLETE / CONVERGED` | No |
+| Compras y CxP | 015, 016, 017, 027, 028 | `PARTIALLY_IMPLEMENTED` las cinco | **Sí** |
+| Inventario | 023 (capacidad convergida), 024-026 | parcial | parcial, sin cambio |
+| Fiscal | 039-043 | `BLOCKED_BY_LEGAL_VALIDATION` (`D0-07` abierto) | **Sí** |
+| Regulatorio | 044 | `BLOCKED_BY_EXTERNAL_SERVICE` | **Sí** |
+| Tareas y alertas | 047 | `COMPLETE / CONVERGED` | **No** |
+| Tasas para equivalentes | 013 · 048 | 013 lista; proveedor automático detenido (OQ-048-01..03) | ligado a MD-049-01 |
+
+### Recuento
+
+| | |
+|---|---|
+| DEPENDENCY BLOCKERS | **3** — compras, fiscal, regulatorio |
+| MATERIAL OQ | **2** — MD-049-01 (KPIs en varias monedas) y MD-049-02 (KPIs fiscales con `D0-07` abierto), sin resolver |
+| UNKNOWN | 0 |
+| DATA SOURCE GAPS | **2** — libros y cierres fiscales; permisos regulatorios en línea. El de tareas y alertas se cierra |
+| OWNER GAPS | 0 |
+| Defectos del dashboard existente | 5, `PREEXISTING`, dueña 049, sin tocar: suma de entradas y salidas bancarias, monedas mezcladas en tesorería, ventas y compras, `float` y ausencia de `reportes:view` |
+
+No se implementó nada de la 049, no se tocó `reportes:view` y no se resolvieron
+MD-049-01 ni MD-049-02.

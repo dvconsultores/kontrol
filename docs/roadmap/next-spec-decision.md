@@ -1109,3 +1109,57 @@ sin decidir nada son los deltas programados el 2026-09-13, en su orden:
 
 Ni implementar la 047 ni la 049, ni ejecutar los deltas. Cada uno requiere su
 ciclo completo y autorización expresa.
+
+---
+
+## Tras converger la Spec 047 — 2026-09-14
+
+`SPEC047 — COMPLETE / CONVERGED` · `SPEC049 — BLOCKED BY OWNER DEPENDENCY` (sin cambio; bloqueos 4 → 3).
+
+El owner cerró OQ-047-01 (planificador: temporizador del sistema → orden idempotente)
+y OQ-047-02 (clave de mensaje y parámetros, catálogo `es`, `en` diferido). Se aprobó
+`ADR-D0-015` y la 047 se implementó y convergió (`specs/047-notificaciones-tareas/convergence.md`).
+
+### El hecho que decide
+
+**KONTROL ya puede hacer algo cuando pasa el tiempo.** Ese mecanismo existe, pero
+casi nadie lo usa todavía: de las cuatro dueñas que lo esperaban, solo la 045 tiene
+manejador, y está deshabilitado a propósito.
+
+| Consumidor | Estado | Qué falta | Dueña |
+|---|---|---|---|
+| Vencimiento de pasos de la 045 | manejador registrado y **deshabilitado** | definir qué pasa con un paso `EXPIRED`, que hoy sale de la bandeja y no se reabre | 045 |
+| Caducidad de reservas con TTL | sin manejador | registrar el suyo sobre su contrato canónico | 030 |
+| Correo, push y SMS | frontera lista, sin proveedor | adaptador | 048 |
+| Retención | sin manejador | su regla | 052 |
+
+### Deuda nueva registrada con su dueña
+
+| Deuda | Dueña | Prioridad sugerida |
+|---|---|---|
+| `e2e/approvals.spec.ts`: el helper pulsa «Desactivar» por coincidencia de subcadena desde N6, y el escenario multiempresa confía en un `company_id` que la ruta ignora; falla igual con el frontend de `370e10a` | 045 | alta: el motor de aprobaciones no tiene hoy su E2E en verde |
+| `GET /approvals/inbox` con `limit`/`offset` y filtrado en Python de todas las empresas | 045 | media |
+
+### Decisiones pendientes que bloquean trabajo
+
+| Decisión | Decide | Desbloquea |
+|---|---|---|
+| Camino tras `EXPIRED` en la 045 | Producto · 045 | habilitar su manejador programado |
+| OQ-048-01..03 — fuente, TLS y tasa oficial del BCV | Producto · Legal | proveedor automático de tasas |
+| MD-049-01, MD-049-02 — monedas y KPIs fiscales | Producto | 049, junto con sus dueñas |
+| D0-06 — hospedaje de la licencia central | Producto · Infraestructura | 004 |
+| D0-07 — validación legal fiscal | Legal | 039-043, 056 |
+
+### Siguiente paso
+
+Lo ejecutable sin decidir nada sigue siendo, en orden, **FLOAT-038-A → FLOAT-038-B →
+CONC-046**, las tres programadas el 2026-09-13 y sin iniciar. La precisión del dinero
+de tesorería sigue siendo lo que más daño acumula. Detrás, el **delta del E2E de la
+045**, que no espera decisiones y devuelve a verde la evidencia del motor de aprobaciones.
+
+`READY_FOR_IMPLEMENTATION = 0`.
+
+### Lo que esta decisión NO autoriza
+
+Ni implementar la 049, ni habilitar el manejador de la 045, ni ejecutar ninguno de los
+deltas. Cada uno requiere su ciclo completo y autorización expresa.
