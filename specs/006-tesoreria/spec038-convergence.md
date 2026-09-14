@@ -234,3 +234,11 @@ conserva los 18 dígitos que la columna admite.
 
 La programación de estas deudas vive en `docs/roadmap/next-spec-decision.md`.
 
+## 15. Delta dirigido FLOAT-038-A — 2026-09-14
+
+Detenido en `/speckit.clarify`: `BLOCKED BY MATERIAL DECISION`. El importe exacto
+cabe en la entrada sin romper nada, pero no en la respuesta sin cambiar el
+contrato público (OQ-FLOAT-038-A-01), y nadie ha decidido qué pasa con más de dos
+decimales (OQ-FLOAT-038-A-02). Detalle y evidencia en
+`spec038-bank-amount-decimal-delta.md`. La 038 sigue `COMPLETE / CONVERGED`.
+

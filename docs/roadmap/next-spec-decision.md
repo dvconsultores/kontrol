@@ -1163,3 +1163,52 @@ de tesorería sigue siendo lo que más daño acumula. Detrás, el **delta del E2
 
 Ni implementar la 049, ni habilitar el manejador de la 045, ni ejecutar ninguno de los
 deltas. Cada uno requiere su ciclo completo y autorización expresa.
+
+---
+
+## Tras el delta FLOAT-038-A — 2026-09-14
+
+`FLOAT-038-A — BLOCKED BY MATERIAL DECISION` · detalle en
+`specs/006-tesoreria/spec038-bank-amount-decimal-delta.md`.
+
+La dueña se resolvió con evidencia: es la 038, no la 019 global. La base ya es
+`numeric(18,2)` y no hace falta migración. La **entrada** puede pasar a `Decimal`
+de forma aditiva, con el precedente del mismo módulo. La **salida** no puede ser
+exacta sin cambiar el contrato: FastAPI convierte el `Decimal` a `float` al
+serializar, y `1234567890123456.78` sale como `1234567890123456.8`. Además, hoy un
+importe de `0.001` crea un movimiento de `0.00`. Sin código tocado.
+
+### Decisiones nuevas que bloquean trabajo
+
+| Decisión | Decide | Recomendada | Desbloquea |
+|---|---|---|---|
+| **OQ-FLOAT-038-A-01** — importe de tesorería en la respuesta: cadena decimal (cambio público), número con degradación documentada o número literal exacto | Producto · Arquitectura · 038 | cadena decimal para todo el recurso, con el frontend adaptado en el mismo delta | FLOAT-038-A y la frontera de FLOAT-038-B |
+| **OQ-FLOAT-038-A-02** — importe con más decimales que la escala: rechazar, redondeo de PostgreSQL o cuantización de `_money` | Producto · 038 | rechazar con 422 | FLOAT-038-A y el `counted_amount` de FLOAT-038-B |
+
+### FLOAT-038-B, revalidada
+
+Sigue siendo la siguiente de la secuencia, y **no está lista entera**:
+
+| Parte | ¿Depende de las OQ nuevas? |
+|---|---|
+| épsilon `1e-6` en `close_session` | no |
+| `float(...)` en la auditoría de arqueo y cierre | no |
+| `counted_amount: float` en el borde | sí — escala (OQ-02) |
+| importes de la sesión en la respuesta (`opened_amount`, `counted_amount`, `difference` salen como `Decimal` crudo → número) | sí — representación (OQ-01) |
+
+Abrir su ciclo sin esas respuestas lo detendría en la misma pregunta.
+
+### Siguiente paso
+
+**Responder OQ-FLOAT-038-A-01 y -02 una sola vez para tesorería.** Con ellas se
+ejecutan FLOAT-038-A y FLOAT-038-B completas, en ese orden. Sin ellas, lo
+ejecutable sin decidir nada es **CONC-046** (dueña 046, independiente) y el
+**delta del E2E de la 045**.
+
+`READY_FOR_IMPLEMENTATION = 0`. FLOAT-038-B **no se ha iniciado**.
+
+### Lo que esta decisión NO autoriza
+
+Ni ejecutar FLOAT-038-A ni FLOAT-038-B, ni cambiar la representación del dinero
+en ninguna ruta, ni CONC-046, ni la 049. Cada uno requiere su ciclo completo y
+autorización expresa.
