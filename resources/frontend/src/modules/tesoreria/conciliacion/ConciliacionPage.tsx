@@ -13,6 +13,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatMoney } from "@/lib/format";
 
 const columnHelper = createColumnHelper<ReconciliationSummary>();
 
@@ -207,7 +208,7 @@ export function ConciliacionPage(): React.JSX.Element {
                 <option value="">Seleccionar transacción…</option>
                 {(txs.data?.items ?? []).map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.txn_date ?? ""} · {t.amount.toFixed(2)} · {t.reference ?? t.source}
+                    {t.txn_date ?? ""} · {formatMoney(t.amount)} · {t.reference ?? t.source}
                   </option>
                 ))}
               </select>

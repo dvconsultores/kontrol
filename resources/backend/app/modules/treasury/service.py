@@ -512,10 +512,10 @@ def session_allowed_actions(session: CashSession) -> dict[str, bool]:
 # --------------------------------------------------------------------------- #
 # Bancos — transacciones, ingresos/egresos, transferencias
 # --------------------------------------------------------------------------- #
-def create_bank_transaction(db: Session, *, company_id: str, account_id: str, direction: str, amount: float,
+def create_bank_transaction(db: Session, *, company_id: str, account_id: str, direction: str, amount: Decimal,
                             currency: str = "VED", txn_date: date | None = None, value_date: date | None = None,
                             reference: str | None = None, source: str = "ADJUSTMENT", payment_id: str | None = None,
-                            commission: float | None = None, actor: str | None = None) -> BankTransaction:
+                            commission: Decimal | None = None, actor: str | None = None) -> BankTransaction:
     company_id = _company(company_id, obj="transacción bancaria")
     _require_account(db, company_id, account_id)
     if amount <= 0:
@@ -681,10 +681,14 @@ def create_transfer(db: Session, *, company_id: str, amount: float, currency: st
 
 
 def bank_transaction_dict(bt: BankTransaction) -> dict:
+    # Spec 038 · FLOAT-038-A: el importe sale como texto exacto, igual que la
+    # conversión y el reembolso. Devolver el `Decimal` crudo lo dejaba en manos de
+    # `jsonable_encoder`, que lo pasa por `float`.
     return {"id": bt.id, "account_id": bt.account_id, "txn_date": bt.txn_date.isoformat() if bt.txn_date else None,
             "value_date": bt.value_date.isoformat() if bt.value_date else None, "direction": bt.direction,
-            "amount": bt.amount, "currency": bt.currency, "reference": bt.reference, "source": bt.source,
-            "payment_id": bt.payment_id, "commission": bt.commission, "status": bt.status}
+            "amount": str(_money(bt.amount)), "currency": bt.currency, "reference": bt.reference, "source": bt.source,
+            "payment_id": bt.payment_id,
+            "commission": None if bt.commission is None else str(_money(bt.commission)), "status": bt.status}
 
 
 def transfer_dict(t: TreasuryTransfer) -> dict:

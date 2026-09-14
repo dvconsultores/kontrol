@@ -1,0 +1,4 @@
+dist/assets/DataTable-DFCzlLfj.js                  52.49 kB │ gzip:  14.24 kB
+dist/assets/index-D1knHmMS.js                     415.93 kB │ gzip: 126.72 kB
+✓ built in 3.18s
+build-exit=0

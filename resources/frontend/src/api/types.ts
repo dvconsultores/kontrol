@@ -1311,12 +1311,14 @@ export interface BankTransactionSummary {
   txn_date: string | null;
   value_date: string | null;
   direction: string;
-  amount: number;
+  /** Texto decimal exacto con dos decimales (Spec 038 · FLOAT-038-A). Nunca `Number`. */
+  amount: string;
   currency: string;
   reference: string | null;
   source: string;
   payment_id: string | null;
-  commission: number | null;
+  /** Texto decimal exacto con dos decimales, o `null`. */
+  commission: string | null;
   status: string;
 }
 

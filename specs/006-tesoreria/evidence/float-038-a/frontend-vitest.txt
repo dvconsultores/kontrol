@@ -1,0 +1,8 @@
+# Vitest completo, cinco ejecuciones seguidas
+# antecedente: HEAD 239259b 0 errores no capturados en 5; árbol del delta 2 en 5; con la espera en importe-bancario.test.tsx, 2 en 5.
+# causa: AsyncButton.test.tsx «previene doble envío» terminaba sin esperar su setTimeout de 20 ms (defecto latente, dueña 005). Corregido esperando a que el botón vuelva a habilitarse.
+run1 exit=0  Tests 359 passed (359) | errores_no_capturados=0
+run2 exit=0  Tests 359 passed (359) | errores_no_capturados=0
+run3 exit=0  Tests 359 passed (359) | errores_no_capturados=0
+run4 exit=0  Tests 359 passed (359) | errores_no_capturados=0
+run5 exit=0  Tests 359 passed (359) | errores_no_capturados=0

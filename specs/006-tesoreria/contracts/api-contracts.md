@@ -43,7 +43,44 @@
 
 ## 3. Bancos — transacciones e ingresos/egresos
 
-- `GET/POST /treasury/bank-transactions` — body: `{account_id, txn_date, value_date, direction: IN|OUT, amount, currency, reference, source, payment_id?}`.
+- `GET/POST /treasury/bank-transactions` — body: `{account_id, txn_date, value_date, direction: IN|OUT, amount, currency, reference, source, commission?}`. Importes como **texto decimal** (§3.1).
+
+### 3.1 Contrato monetario del movimiento bancario — delta FLOAT-038-A (Spec 038 · 2026-09-14)
+
+> **Cambio incompatible, autorizado por el owner** (`OQ-FLOAT-038-A-01`, `-02`).
+> Antes, `amount` y `commission` eran números JSON al entrar y al salir. Ahora son
+> texto decimal en ambos sentidos. El frontend del repositorio se adaptó en el
+> mismo cambio; fuera del repositorio no hay inventario de consumidores.
+
+| Campo | Petición | Respuesta |
+|---|---|---|
+| `amount` | `string`, `^[0-9]+(\.[0-9]{1,2})?$`, mayor que cero, hasta 16 dígitos enteros | `string` con dos decimales |
+| `commission` | `string \| null`, `^-?[0-9]+(\.[0-9]{1,2})?$`, hasta 16 dígitos enteros | `string \| null` con dos decimales |
+
+La escala y la precisión son las de la columna `bank_transactions.amount`,
+`numeric(18,2)`. Nada se redondea.
+
+Petición válida:
+
+```json
+{ "account_id": "…", "direction": "IN", "amount": "1234567890123456.78", "commission": "12.35" }
+```
+
+Respuesta (`POST` y cada elemento de `GET … items`):
+
+```json
+{ "amount": "1234567890123456.78", "commission": "12.35" }
+```
+
+Rechazadas con `422 VALIDATION_ERROR`, sin crear nada:
+
+| Cuerpo | Motivo |
+|---|---|
+| `{"amount": 1234567890123456.78}` | número JSON |
+| `{"amount": "0.001"}` · `{"amount": "0.005"}` | más de dos decimales |
+| `{"amount": "0.00"}` · `{"amount": "-1.00"}` | no es mayor que cero |
+| `{"amount": "1e3"}` · `"NaN"` · `"Infinity"` · `"-Infinity"` · `" 10"` · `"10."` | no es texto decimal |
+| `{"amount": "12345678901234567.00"}` | más dígitos enteros que la columna |
 - `POST /treasury/transfers` — `{from_cashbox_id?/from_account_id?, to_cashbox_id?/to_account_id?, amount, currency, value_date, reference?}` (FR-006-023).
 - Ejecución de ingresos/egresos (consume 004/005):
   - `POST /treasury/executions/egresos` — ejecuta un pago OUT de 004 contra caja/banco (idempotente).

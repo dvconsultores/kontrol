@@ -47,3 +47,24 @@
 
 Sin huérfanos: 35 requisitos de la 038 y 2 del delta, todos con autoridad,
 implementación y prueba.
+
+## Delta dirigido FLOAT-038-A — importe exacto del movimiento bancario (2026-09-14)
+
+Detalle: `spec038-bank-amount-decimal-delta.md`. Pruebas de backend en
+`tests/test_spec038_float_a.py`; de frontend en `src/lib/decimal.test.ts` y
+`src/modules/tesoreria/importe-bancario.test.tsx`; E2E en `e2e/treasury.spec.ts`.
+Evidencia de mutaciones en `evidence/float-038-a/`.
+
+| Requisito | Autoridad | Implementación | Prueba | Mutación | Estado |
+|---|---|---|---|---|---|
+| FR-038-FLOAT-A-001 · solo texto; un número JSON → 422 | `OQ-FLOAT-038-A-01` | `texto_decimal` (`app/shared/money.py`) en `BankTransactionCreate.amount` y `.commission` | `test_un_numero_json_se_rechaza` · `test_la_comision_sigue_la_misma_politica` · e2e «exige texto decimal» | M-01 | ✔ |
+| FR-038-FLOAT-A-002 · forma léxica estricta | `OQ-FLOAT-038-A-01` | patrón léxico de `texto_decimal` | `test_lo_que_no_es_texto_decimal_se_rechaza` · e2e (`"1e3"`) | — | ✔ |
+| FR-038-FLOAT-A-003 · escala y dígitos enteros de la columna, sin redondeo | `OQ-FLOAT-038-A-02` | escala y precisión leídas de `Numeric(18, 2)` | `test_mas_decimales_que_la_columna_se_rechazan_sin_dejar_hecho_economico` · `test_mas_digitos_enteros_que_la_columna_es_un_422_y_no_un_500` · e2e (`"0.001"`, `"0.005"`) | M-02 | ✔ |
+| FR-038-FLOAT-A-004 · `amount > 0` | contrato previo | `positivo=True` · `INVALID_AMOUNT` en el servicio | `test_cero_y_negativo_siguen_rechazados` · `test_el_servicio_conserva_su_propia_regla_de_positivo` | — | ✔ |
+| FR-038-FLOAT-A-005 · `Decimal` de la frontera a PostgreSQL | `KQA-100` | servicio `Decimal`; ORM `Mapped[Decimal]`; columna sin cambio | `test_el_esquema_entrega_decimal_y_no_float` · `test_un_importe_de_dieciocho_digitos_llega_exacto_a_la_base_y_vuelve_exacto` · `test_la_conciliacion_empareja_el_importe_exacto_y_no_el_degradado` · guardas AST | M-01 | ✔ |
+| FR-038-FLOAT-A-006 · respuesta en texto con modelo publicado | `OQ-FLOAT-038-A-01` | `BankTransactionOut` · `BankTransactionPage` · `str(_money(...))` | `test_la_respuesta_dice_el_importe_con_sus_dos_decimales` · `test_openapi_declara_texto_y_la_respuesta_ya_no_es_un_objeto_vacio` · `test_guarda_las_rutas_del_movimiento_bancario_declaran_su_modelo` | M-03 | ✔ |
+| FR-038-FLOAT-A-007 · un rechazo no deja hecho económico | `OQ-FLOAT-038-A-02` | validación antes del servicio | filas y saldo en `test_mas_decimales_…` · e2e «un rechazo dejó un movimiento» | M-02 | ✔ |
+| FR-038-FLOAT-A-008 · el frontend no pasa por `Number` | `OQ-FLOAT-038-A-01` | `toDecimalString` · `formatMoney` · tipos `string` | `decimal.test.ts` · `importe-bancario.test.tsx` · e2e «la interfaz envía y muestra el importe exacto» | M-04 | ✔ |
+| FR-038-FLOAT-A-009 · cambio incompatible declarado | `OQ-FLOAT-038-A-01` | `contracts/api-contracts.md` §3.1 · OpenAPI · `spec038-convergence.md` §15 | `test_openapi_declara_…` · e2e de contrato | — | ✔ |
+
+Sin huérfanos: 9 requisitos del delta, 19 tareas y 4 mutaciones, todos enlazados.

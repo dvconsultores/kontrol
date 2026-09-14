@@ -45,3 +45,22 @@
 | Duplicación de lógica de pagos | 006 podría reimplementar Payment | Consumir 004/005 vía contrato (CL-006-01) |
 | IGTF incompleto | Cálculo fiscal completo es de 007 | Reglas versionadas + eventos; sin reescritura |
 | Maestros financieros faltantes | No estaban en 002 | Prerequisito de 006 (CL-006-05) |
+
+## 5. Evidencia del delta FLOAT-038-A — el número JSON no es exacto (Spec 038 · 2026-09-14)
+
+Medido contra PostgreSQL 16.2 antes de tocar código:
+
+| Camino | Entrada | Resultado |
+|---|---|---|
+| número JSON → `json.loads` → `float` → `numeric(18,2)` | `1234567890123456.78` | **`1234567890123456.80`** |
+| `Decimal` → `jsonable_encoder` → respuesta | `Decimal('1234567890123456.78')` | **`1234567890123456.8`** |
+| texto → `Decimal` | `"1234567890123456.78"` | exacto |
+| `float` con `gt=0` → `numeric(18,2)` | `0.001` | **`0.00`**: un movimiento bancario de cero |
+| redondeo de PostgreSQL | `0.005` | `0.01` (mitad hacia arriba) |
+| `_money` (cuantización `Decimal`) | `0.005` | `0.00` (mitad al par) |
+
+Conclusiones:
+
+- la pérdida ocurre **antes** de Pydantic y otra vez **después** del servicio: convertir a `Decimal` en medio no la repara;
+- el mismo módulo redondeaba de dos formas distintas según el camino, así que rechazar el exceso de escala en la frontera es la única regla que no elige entre dos números;
+- la columna ya es exacta: no hace falta migración.

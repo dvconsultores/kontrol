@@ -1,0 +1,118 @@
+# M-FLOAT-038-A-01
+# selección: -k "dieciocho_digitos or numero_json or conciliacion_empareja"
++from app.shared.money import texto_de_salida, texto_decimal
++# Spec 038 · FLOAT-038-A — el importe del movimiento bancario es texto decimal
++# exacto al entrar y al salir (OQ-FLOAT-038-A-01), y lo que no cabe en su columna
++# se rechaza sin redondear (OQ-FLOAT-038-A-02). La escala y la precisión se leen
++# de la columna: no hay un `2` ni un `18` escritos aquí.
++ImporteBancario = texto_decimal(BankTransaction.__table__.c.amount.type, positivo=True)
++#: La comisión no tenía regla de signo y este delta no inventa una.
++ComisionBancaria = texto_decimal(BankTransaction.__table__.c.commission.type, positivo=False)
++ImporteBancarioSalida = texto_de_salida(BankTransaction.__table__.c.amount.type)
+-    commission: float | None = None
++    commission: ComisionBancaria | None = None
++class BankTransactionOut(BaseModel):
++    id: str
++    account_id: str
++    txn_date: str | None
++    value_date: str | None
++    direction: str
++    amount: ImporteBancarioSalida
++    currency: str
++    reference: str | None
+# ---- ejecución ----
+FFFFF.F                                                                  [100%]
+=================================== FAILURES ===================================
+E   AssertionError: la respuesta de creación degradó el importe
+    assert '1234567890123456.80' == '1234567890123456.78'
+      
+      - 1234567890123456.78
+      ?                  -
+      + 1234567890123456.80
+      ?                   +
+------------------------------ Captured log setup ------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/organization/warehouses "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/organization/warehouses "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/organization/warehouses "HTTP/1.1 200 OK"
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:92: AssertionError: la respuesta de creación degradó el importe
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"20402d2e-20f4-48f3-b184-d0e118316c97","account_id":"1be15209-26a3-4d10-b99d-42af5263974c","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"123.45","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:73: AssertionError: se esperaba 422 y llegó 200: {"id":"20402d2e-20f4-48f3-b184-d0e118316c97","account_id":"1be15209-26a3-4d10-b99d-42af5263974c","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"123.45","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"111185bc-e226-48f8-acc0-431bdcffce72","account_id":"c5081afc-101f-4d51-8e44-c2da27cea4ce","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"100.00","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:73: AssertionError: se esperaba 422 y llegó 200: {"id":"111185bc-e226-48f8-acc0-431bdcffce72","account_id":"c5081afc-101f-4d51-8e44-c2da27cea4ce","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"100.00","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"98801167-9a0d-4f92-9dab-a4f49e016035","account_id":"3404fd3b-2a48-4845-bfd2-4c475bc2842d","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"1234567890123456.80","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:73: AssertionError: se esperaba 422 y llegó 200: {"id":"98801167-9a0d-4f92-9dab-a4f49e016035","account_id":"3404fd3b-2a48-4845-bfd2-4c475bc2842d","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"1234567890123456.80","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"cfa26a8f-0210-4af1-a5dd-db5484f950cd","account_id":"2c62d960-67a8-4f5c-899c-c842e3bf683f","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"1.00","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:73: AssertionError: se esperaba 422 y llegó 200: {"id":"cfa26a8f-0210-4af1-a5dd-db5484f950cd","account_id":"2c62d960-67a8-4f5c-899c-c842e3bf683f","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"1.00","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+E   AssertionError: la conciliación no emparejó el pago del mismo importe exacto sino el degradado por float
+    assert 'c675489a-d8a...-a953f5300345' == 'd4b08d30-7b0...-ace3fa88155a'
+      
+      - d4b08d30-7b0e-420e-9b6c-ace3fa88155a
+      + c675489a-d8a2-4975-a1f4-a953f5300345
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/reconciliations "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/reconciliations/19410e6a-39de-4590-87a1-d8f5a940c17c/lines "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/reconciliations/19410e6a-39de-4590-87a1-d8f5a940c17c/match "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:279: AssertionError: la conciliación no emparejó el pago del mismo importe exacto sino el degradado por float
+=========================== short test summary info ============================
+FAILED tests/test_spec038_float_a.py::test_un_importe_de_dieciocho_digitos_llega_exacto_a_la_base_y_vuelve_exacto
+FAILED tests/test_spec038_float_a.py::test_un_numero_json_se_rechaza[123.45]
+FAILED tests/test_spec038_float_a.py::test_un_numero_json_se_rechaza[100] - A...
+FAILED tests/test_spec038_float_a.py::test_un_numero_json_se_rechaza[1234567890123456.8]
+FAILED tests/test_spec038_float_a.py::test_un_numero_json_se_rechaza[True] - ...
+FAILED tests/test_spec038_float_a.py::test_la_conciliacion_empareja_el_importe_exacto_y_no_el_degradado
+# exit=1

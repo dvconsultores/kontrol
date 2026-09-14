@@ -119,7 +119,7 @@ def test_una_linea_de_conciliacion_no_se_resuelve_desde_otra_empresa(mundo):
     ca = _cuenta(mundo, "ua", mundo.company_a,
                  _banco(mundo, "ua", mundo.company_a, "N10-BA"), "N10-CA")
     tx = mundo.crear("/treasury/bank-transactions", "ua", mundo.company_a,
-                     {"account_id": ca, "direction": "IN", "amount": 5, "currency": "VED"})
+                     {"account_id": ca, "direction": "IN", "amount": "5.00", "currency": "VED"})
     rec = mundo.crear("/treasury/reconciliations", "ua", mundo.company_a,
                       {"account_id": ca, "statement_ref": "N10-EXT-A"})
     r = mundo.post(f"/treasury/reconciliations/{rec}/lines", "ua", mundo.company_a,

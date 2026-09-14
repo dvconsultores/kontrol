@@ -1,0 +1,6 @@
+# restaurado: diff de app tras las mutaciones
+ resources/backend/app/modules/treasury/api.py     | 41 ++++++++++++++++++++---
+ resources/backend/app/modules/treasury/models.py  |  6 ++--
+ resources/backend/app/modules/treasury/service.py | 12 ++++---
+ 3 files changed, 49 insertions(+), 10 deletions(-)
+.................................................                        [100%]

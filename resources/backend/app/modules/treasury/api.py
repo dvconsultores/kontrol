@@ -43,6 +43,7 @@ from app.modules.treasury.models import (
     TreasuryRefund,
     TreasuryTransfer,
 )
+from app.shared.money import texto_de_salida, texto_decimal
 
 router = APIRouter(prefix="/treasury", tags=["tesoreria"])
 
@@ -129,16 +130,48 @@ class CloseSessionBody(BaseModel):
     approval_note: str | None = None
 
 
+# Spec 038 · FLOAT-038-A — el importe del movimiento bancario es texto decimal
+# exacto al entrar y al salir (OQ-FLOAT-038-A-01), y lo que no cabe en su columna
+# se rechaza sin redondear (OQ-FLOAT-038-A-02). La escala y la precisión se leen
+# de la columna: no hay un `2` ni un `18` escritos aquí.
+ImporteBancario = texto_decimal(BankTransaction.__table__.c.amount.type, positivo=True)
+#: La comisión no tenía regla de signo y este delta no inventa una.
+ComisionBancaria = texto_decimal(BankTransaction.__table__.c.commission.type, positivo=False)
+ImporteBancarioSalida = texto_de_salida(BankTransaction.__table__.c.amount.type)
+
+
 class BankTransactionCreate(BaseModel):
     account_id: str
     direction: str = Field(pattern="^(IN|OUT)$")
-    amount: float = Field(gt=0)
+    amount: ImporteBancario
     currency: str = "VED"
     txn_date: date | None = None
     value_date: date | None = None
     reference: str | None = None
     source: str = "ADJUSTMENT"
-    commission: float | None = None
+    commission: ComisionBancaria | None = None
+
+
+class BankTransactionOut(BaseModel):
+    id: str
+    account_id: str
+    txn_date: str | None
+    value_date: str | None
+    direction: str
+    amount: ImporteBancarioSalida
+    currency: str
+    reference: str | None
+    source: str
+    payment_id: str | None
+    commission: ImporteBancarioSalida | None
+    status: str
+
+
+class BankTransactionPage(BaseModel):
+    items: list[BankTransactionOut]
+    total: int
+    page: int
+    page_size: int
 
 
 class ExecutionBody(BaseModel):
@@ -415,7 +448,7 @@ def reject_session(session_id: str, db: Session = Depends(get_db),
 # --------------------------------------------------------------------------- #
 # Bancos — transacciones, ingresos/egresos, transferencias
 # --------------------------------------------------------------------------- #
-@router.get("/bank-transactions")
+@router.get("/bank-transactions", response_model=BankTransactionPage)
 def list_bank_transactions(account_id: str | None = None, db: Session = Depends(get_db),
                            user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     query = select(BankTransaction).where(BankTransaction.company_id == ctx.company_id)
@@ -426,7 +459,7 @@ def list_bank_transactions(account_id: str | None = None, db: Session = Depends(
             "page": 1, "page_size": len(items) or 1}
 
 
-@router.post("/bank-transactions", dependencies=[Depends(require_write_allowed)])
+@router.post("/bank-transactions", response_model=BankTransactionOut, dependencies=[Depends(require_write_allowed)])
 def create_bank_transaction(body: BankTransactionCreate, db: Session = Depends(get_db),
                             actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
     bt = treasury_service.create_bank_transaction(db, company_id=ctx.company_id, account_id=body.account_id,

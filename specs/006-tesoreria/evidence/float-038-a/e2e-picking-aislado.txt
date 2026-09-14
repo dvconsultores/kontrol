@@ -1,0 +1,5 @@
+# picking.spec.ts:288 aislado en Firefox, tres repeticiones, tras la regresión
+  ✓  1 [firefox] › e2e/picking.spec.ts:288:3 › Spec 031 — cola y ruta de picking › cancelar un plan confirmado devuelve el pedido a la cola sin tocar la reserva (3.4s)
+  ✓  2 [firefox] › e2e/picking.spec.ts:288:3 › Spec 031 — cola y ruta de picking › cancelar un plan confirmado devuelve el pedido a la cola sin tocar la reserva (3.4s)
+  ✓  3 [firefox] › e2e/picking.spec.ts:288:3 › Spec 031 — cola y ruta de picking › cancelar un plan confirmado devuelve el pedido a la cola sin tocar la reserva (3.4s)
+  3 passed (8.6s)

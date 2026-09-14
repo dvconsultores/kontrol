@@ -1,0 +1,98 @@
+# M-FLOAT-038-A-02
+# selección: -k "mas_decimales_que_la_columna"
++from app.shared.money import texto_de_salida, texto_decimal
++# Spec 038 · FLOAT-038-A — el importe del movimiento bancario es texto decimal
++# exacto al entrar y al salir (OQ-FLOAT-038-A-01), y lo que no cabe en su columna
++# se rechaza sin redondear (OQ-FLOAT-038-A-02). La escala y la precisión se leen
++# de la columna: no hay un `2` ni un `18` escritos aquí.
++ImporteBancario = texto_decimal(BankTransaction.__table__.c.amount.type, positivo=True)
++#: La comisión no tenía regla de signo y este delta no inventa una.
++ComisionBancaria = texto_decimal(BankTransaction.__table__.c.commission.type, positivo=False)
++ImporteBancarioSalida = texto_de_salida(BankTransaction.__table__.c.amount.type)
+-    amount: float = Field(gt=0)
++    amount: ImporteBancario
+-    commission: float | None = None
++    commission: ComisionBancaria | None = None
++class BankTransactionOut(BaseModel):
++    id: str
++    account_id: str
++    txn_date: str | None
++    value_date: str | None
++    direction: str
++    amount: ImporteBancarioSalida
+# ---- ejecución ----
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"648cba00-5fb0-47df-b5a5-c5ea9ac7c6e8","account_id":"46b3a737-6b22-478e-99cb-bd751c18d04c","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"0.00","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+------------------------------ Captured log setup ------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/organization/warehouses "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/organization/warehouses "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/organization/warehouses "HTTP/1.1 200 OK"
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/treasury/accounts/46b3a737-6b22-478e-99cb-bd751c18d04c/balance "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:73: AssertionError: se esperaba 422 y llegó 200: {"id":"648cba00-5fb0-47df-b5a5-c5ea9ac7c6e8","account_id":"46b3a737-6b22-478e-99cb-bd751c18d04c","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"0.00","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"7dd529d5-5b58-4760-bc86-cafca2b02fe1","account_id":"9d261979-2eba-4bbd-9b3c-a403831b4e10","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"0.01","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/treasury/accounts/9d261979-2eba-4bbd-9b3c-a403831b4e10/balance "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:73: AssertionError: se esperaba 422 y llegó 200: {"id":"7dd529d5-5b58-4760-bc86-cafca2b02fe1","account_id":"9d261979-2eba-4bbd-9b3c-a403831b4e10","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"0.01","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"19213f78-be9f-4132-879d-dee3dc2d864f","account_id":"d4393f9f-b27e-4a09-b1f2-95f4a4480107","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"10.00","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/treasury/accounts/d4393f9f-b27e-4a09-b1f2-95f4a4480107/balance "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:73: AssertionError: se esperaba 422 y llegó 200: {"id":"19213f78-be9f-4132-879d-dee3dc2d864f","account_id":"d4393f9f-b27e-4a09-b1f2-95f4a4480107","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"10.00","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"b5060b5b-c07d-4f17-b896-9449a4acaa2e","account_id":"2c742b75-9e02-43e3-bb01-fb7fcb39cd24","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"1234567890123456.79","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/treasury/accounts/2c742b75-9e02-43e3-bb01-fb7fcb39cd24/balance "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:73: AssertionError: se esperaba 422 y llegó 200: {"id":"b5060b5b-c07d-4f17-b896-9449a4acaa2e","account_id":"2c742b75-9e02-43e3-bb01-fb7fcb39cd24","txn_date":"2026-09-14","value_date":"2026-09-14","direction":"IN","amount":"1234567890123456.79","currency":"VED","reference":null,"source":"ADJUSTMENT","payment_id":null,"commission":null,"status":"PENDING"}
+=========================== short test summary info ============================
+FAILED tests/test_spec038_float_a.py::test_mas_decimales_que_la_columna_se_rechazan_sin_dejar_hecho_economico[0.001]
+FAILED tests/test_spec038_float_a.py::test_mas_decimales_que_la_columna_se_rechazan_sin_dejar_hecho_economico[0.005]
+FAILED tests/test_spec038_float_a.py::test_mas_decimales_que_la_columna_se_rechazan_sin_dejar_hecho_economico[10.000]
+FAILED tests/test_spec038_float_a.py::test_mas_decimales_que_la_columna_se_rechazan_sin_dejar_hecho_economico[1234567890123456.785]
+# exit=1

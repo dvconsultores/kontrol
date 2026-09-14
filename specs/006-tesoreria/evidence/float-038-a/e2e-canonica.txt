@@ -1,0 +1,23 @@
+regresión terminada (EXIT=1); empieza el E2E
+alembic cero → cabeza · exit=0 · 57 migraciones
+semilla canónica · exit=0
+backend: 200
+frontend 5173: 200
+cadena canónica ·  1 failed  248 passed (3.6m) 
+  chromium: pasan 83 · fallan 0
+  firefox: pasan 82 · fallan 1
+  webkit: pasan 83 · fallan 0
+  1) [firefox] › e2e/picking.spec.ts:288:3 › Spec 031 — cola y ruta de picking › cancelar un plan confirmado devuelve el pedido a la cola sin tocar la reserva 
+FLOAT-038-A en la cadena:
+  ✓   82 [chromium] › e2e/treasury.spec.ts:372:3 › Spec 038 — tesorería › FLOAT-038-A · el movimiento bancario exige texto decimal y no redondea (327ms)
+  ✓   83 [chromium] › e2e/treasury.spec.ts:398:3 › Spec 038 — tesorería › FLOAT-038-A · la interfaz envía y muestra el importe exacto (1.9s)
+  ✓  165 [firefox] › e2e/treasury.spec.ts:372:3 › Spec 038 — tesorería › FLOAT-038-A · el movimiento bancario exige texto decimal y no redondea (278ms)
+  ✓  166 [firefox] › e2e/treasury.spec.ts:398:3 › Spec 038 — tesorería › FLOAT-038-A · la interfaz envía y muestra el importe exacto (3.0s)
+  ✓  248 [webkit] › e2e/treasury.spec.ts:372:3 › Spec 038 — tesorería › FLOAT-038-A · el movimiento bancario exige texto decimal y no redondea (429ms)
+  ✓  249 [webkit] › e2e/treasury.spec.ts:398:3 › Spec 038 — tesorería › FLOAT-038-A · la interfaz envía y muestra el importe exacto (2.6s)
+trazas en el backend: 0 · respuestas 500: 0
+FIN
+
+    [firefox] › e2e/picking.spec.ts:288:3 › Spec 031 — cola y ruta de picking › cancelar un plan confirmado devuelve el pedido a la cola sin tocar la reserva 
+  248 passed (3.6m)
+exit=1

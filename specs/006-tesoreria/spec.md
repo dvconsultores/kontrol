@@ -122,6 +122,23 @@ Convención: `FR-006-XXX`. Cada requisito tiene fuente (DOC), prioridad (P0/P1/P
 | FR-006-100 | Aislamiento multiempresa; idempotencia en POST críticos; decimal exacto. | DOC-03 §12 | P0 | Sistema |
 | FR-006-101 | Frontend: pantallas completas (arqueo WF-05, conciliación WF-05, ingreso/egreso WF-02), sin scroll horizontal. | DOC-08 | P0 | Sistema |
 
+### 6.7 Delta dirigido FLOAT-038-A — importe exacto del movimiento bancario (Spec 038 · 2026-09-14)
+
+Autoridad: `OQ-FLOAT-038-A-01` y `-02`, cerradas por el owner (`clarifications.md` §5).
+Detalle del ciclo: `spec038-bank-amount-decimal-delta.md`.
+
+| ID | Descripción | Fuente | Prioridad | Actor |
+|---|---|---|---|---|
+| FR-038-FLOAT-A-001 | `amount` y `commission` de `POST /treasury/bank-transactions` se reciben **solo como texto decimal**; un número JSON se rechaza con 422. | OQ-01 | P0 | Sistema |
+| FR-038-FLOAT-A-002 | Forma léxica estricta: dígitos ASCII y parte fraccionaria opcional; sin notación científica, `NaN`, `Infinity`, espacios ni separadores. `amount` sin signo; `commission` admite `-`. | OQ-01 | P0 | Sistema |
+| FR-038-FLOAT-A-003 | Escala ≤ la de la columna (2) y dígitos enteros ≤ precisión − escala (16); si no, 422. Sin redondeo de PostgreSQL ni cuantización. | OQ-02 | P0 | Sistema |
+| FR-038-FLOAT-A-004 | Se conserva `amount > 0`. | contrato previo | P0 | Sistema |
+| FR-038-FLOAT-A-005 | `Decimal` de la frontera a PostgreSQL: servicio y ORM sin `float`. | `KQA-100` | P0 | Sistema |
+| FR-038-FLOAT-A-006 | `POST` y `GET /treasury/bank-transactions` devuelven `amount` y `commission` como texto con escala 2, con modelo de respuesta declarado en OpenAPI. | OQ-01 | P0 | Sistema |
+| FR-038-FLOAT-A-007 | Una petición rechazada no deja fila ni cambia saldos. | OQ-02 | P0 | Sistema |
+| FR-038-FLOAT-A-008 | El frontend envía y muestra el importe como texto, sin `Number`, `parseFloat` ni `+`. | OQ-01 | P0 | Sistema |
+| FR-038-FLOAT-A-009 | El cambio incompatible se declara en contratos, OpenAPI, pruebas y convergencia. | OQ-01 | P0 | Sistema |
+
 ## 7. Reglas no negociables aplicables (Constitución / DOC-01 §5)
 
 - No existe eliminación física de pagos aprobados, cobros aplicados ni cierres; corrección por reverso vinculado (P5).

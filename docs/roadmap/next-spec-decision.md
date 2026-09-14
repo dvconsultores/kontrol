@@ -1212,3 +1212,65 @@ ejecutable sin decidir nada es **CONC-046** (dueña 046, independiente) y el
 Ni ejecutar FLOAT-038-A ni FLOAT-038-B, ni cambiar la representación del dinero
 en ninguna ruta, ni CONC-046, ni la 049. Cada uno requiere su ciclo completo y
 autorización expresa.
+
+---
+
+## Tras converger FLOAT-038-A — 2026-09-15
+
+**`FLOAT-038-A — CLOSED`** · `TARGETED DELTA COMPLETE / CONVERGED` · detalle en
+`specs/006-tesoreria/spec038-bank-amount-decimal-delta.md`.
+
+El owner cerró las dos preguntas y el delta se completó dentro de la 038: el importe
+del movimiento bancario entra y sale como texto decimal, viaja como `Decimal`, se
+guarda en `numeric(18,2)` sin migración, y lo que no cabe se rechaza con 422. El
+cambio de contrato es incompatible y está autorizado.
+
+### Decisiones cerradas que ya tienen autoridad
+
+| Decisión | Regla | Dónde aplica ya |
+|---|---|---|
+| OQ-FLOAT-038-A-01 | el dinero del contrato público de tesorería viaja como **texto decimal**; un número JSON no es autoridad monetaria | movimiento bancario (`amount`, `commission`) |
+| OQ-FLOAT-038-A-02 | más decimales que la escala de la columna → **422**, sin redondeo de PostgreSQL ni de `_money` | ídem |
+
+La herramienta es reutilizable: `app/shared/money.py` lee escala y precisión de la
+columna, y `lib/decimal.ts` normaliza sin `Number`.
+
+### FLOAT-038-B, revalidada
+
+Sigue siendo la siguiente, y ahora **no espera ninguna decisión**:
+
+| Parte | Autoridad |
+|---|---|
+| épsilon `1e-6` en `close_session` | decisión cerrada de antes: cero exacto |
+| `float(...)` en la auditoría de arqueo y cierre | `KQA-100` |
+| `counted_amount: float` en el borde | OQ-FLOAT-038-A-01 y -02, ya cerradas |
+| importes de la sesión en la respuesta | OQ-FLOAT-038-A-01, ya cerrada |
+
+Lo que su propio ciclo tendrá que fijar —sin que sea una pregunta abierta hoy— es
+el perímetro: si el contrato de la sesión de caja se corrige entero (`opened_amount`,
+`expected_amount`, `difference` y los importes de sus movimientos) o solo el arqueo,
+para no dejar el mismo objeto con dos políticas, que es el criterio que siguió
+FLOAT-038-A con la comisión.
+
+`READY_FOR_IMPLEMENTATION = 0`: FLOAT-038-B necesita su ciclo completo y autorización
+expresa. **No se ha iniciado.**
+
+### Deuda nueva registrada con su dueña
+
+| Deuda | Dueña | Hallazgo | Prioridad sugerida |
+|---|---|---|---|
+| CLOCK-013 | 013 | cinco pruebas de `test_spec013_financial_masters.py` registran con `datetime.now(UTC)` y consultan con `date.today()` local: fallan entre las 00:00 y las 02:00 en una máquina con UTC+2. Reproducido en `239259b` | media: la evidencia depende de la hora |
+| E2E-031-RESERVAS | 031 (prueba) · 023 (filtro) | `GET /inventory/reservations` ignora `source_order_id`; `picking.spec.ts:288` cuenta las reservas de toda la empresa y falla si otro navegador reserva a la vez | media |
+
+La corrección de `AsyncButton.test.tsx` (dueña 005) se hizo dentro del delta
+porque bloqueaba la puerta de frontend, y consta como delta recibido en el máster.
+
+### Siguiente paso
+
+En orden, lo ejecutable sin decidir nada: **FLOAT-038-B → CONC-046**, y detrás el
+delta del E2E de la 045, CLOCK-013 y E2E-031-RESERVAS.
+
+### Lo que esta decisión NO autoriza
+
+Ni iniciar FLOAT-038-B, ni tocar los otros siete `float` del borde de tesorería, ni
+CONC-046, ni la 049. Cada uno requiere su ciclo completo y autorización expresa.

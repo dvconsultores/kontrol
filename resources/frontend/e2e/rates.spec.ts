@@ -333,7 +333,7 @@ test.describe("Spec 013 — maestros financieros", () => {
       bank_id: banco.id, code: `CV-${m}`, name: `Cuenta ${ved}`, currency: ved,
     });
     await post(request, c, "/treasury/bank-transactions", {
-      account_id: origen.id, direction: "IN", amount: 100, currency: div.code,
+      account_id: origen.id, direction: "IN", amount: "100.00", currency: div.code,
       txn_date: hoy(), reference: "Fondeo",
     });
 

@@ -1,0 +1,135 @@
+# M-FLOAT-038-A-03
+# selección: -k "dieciocho_digitos or dice_el_importe"
++from app.shared.money import texto_de_salida, texto_decimal
++# Spec 038 · FLOAT-038-A — el importe del movimiento bancario es texto decimal
++# exacto al entrar y al salir (OQ-FLOAT-038-A-01), y lo que no cabe en su columna
++# se rechaza sin redondear (OQ-FLOAT-038-A-02). La escala y la precisión se leen
++# de la columna: no hay un `2` ni un `18` escritos aquí.
++ImporteBancario = texto_decimal(BankTransaction.__table__.c.amount.type, positivo=True)
++#: La comisión no tenía regla de signo y este delta no inventa una.
++ComisionBancaria = texto_decimal(BankTransaction.__table__.c.commission.type, positivo=False)
++ImporteBancarioSalida = texto_de_salida(BankTransaction.__table__.c.amount.type)
+-    amount: float = Field(gt=0)
++    amount: ImporteBancario
+-    commission: float | None = None
++    commission: ComisionBancaria | None = None
++class BankTransactionOut(BaseModel):
++    id: str
++    account_id: str
++    txn_date: str | None
++    value_date: str | None
++    direction: str
++    amount: ImporteBancarioSalida
+# ---- ejecución ----
+FFFFFFFFFF.                                                              [100%]
+=================================== FAILURES ===================================
+E   AssertionError: la respuesta de creación degradó el importe
+    assert 1234567890123456.8 == '1234567890123456.78'
+------------------------------ Captured log setup ------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/organization/warehouses "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/organization/warehouses "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/organization/warehouses "HTTP/1.1 200 OK"
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:92: AssertionError: la respuesta de creación degradó el importe
+E   AssertionError: assert 10.5 == '10.50'
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:121: AssertionError: assert 10.5 == '10.50'
+E   AssertionError: assert 10.5 == '10.50'
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:121: AssertionError: assert 10.5 == '10.50'
+E   AssertionError: assert 10.0 == '10.00'
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:121: AssertionError: assert 10.0 == '10.00'
+E   AssertionError: assert 10.0 == '10.00'
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:121: AssertionError: assert 10.0 == '10.00'
+E   AssertionError: assert 0.01 == '0.01'
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:121: AssertionError: assert 0.01 == '0.01'
+E   AssertionError: assert 1.1 == '1.10'
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:121: AssertionError: assert 1.1 == '1.10'
+E   AssertionError: assert 1.0 == '1.00'
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:121: AssertionError: assert 1.0 == '1.00'
+E   AssertionError: assert 1.2 == '1.20'
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:121: AssertionError: assert 1.2 == '1.20'
+E   AssertionError: assert 1e+16 == '9999999999999999.99'
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/banks "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/accounts "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/treasury/bank-transactions "HTTP/1.1 200 OK"
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_a.py:121: AssertionError: assert 1e+16 == '9999999999999999.99'
+=========================== short test summary info ============================
+FAILED tests/test_spec038_float_a.py::test_un_importe_de_dieciocho_digitos_llega_exacto_a_la_base_y_vuelve_exacto
+FAILED tests/test_spec038_float_a.py::test_la_respuesta_dice_el_importe_con_sus_dos_decimales[10.50-10.50]
+FAILED tests/test_spec038_float_a.py::test_la_respuesta_dice_el_importe_con_sus_dos_decimales[10.5-10.50]
+FAILED tests/test_spec038_float_a.py::test_la_respuesta_dice_el_importe_con_sus_dos_decimales[10-10.00]
+FAILED tests/test_spec038_float_a.py::test_la_respuesta_dice_el_importe_con_sus_dos_decimales[10.0-10.00]
+FAILED tests/test_spec038_float_a.py::test_la_respuesta_dice_el_importe_con_sus_dos_decimales[0.01-0.01]
+FAILED tests/test_spec038_float_a.py::test_la_respuesta_dice_el_importe_con_sus_dos_decimales[1.10-1.10]
+FAILED tests/test_spec038_float_a.py::test_la_respuesta_dice_el_importe_con_sus_dos_decimales[1.00-1.00]
+FAILED tests/test_spec038_float_a.py::test_la_respuesta_dice_el_importe_con_sus_dos_decimales[001.20-1.20]
+FAILED tests/test_spec038_float_a.py::test_la_respuesta_dice_el_importe_con_sus_dos_decimales[9999999999999999.99-9999999999999999.99]
+# exit=1

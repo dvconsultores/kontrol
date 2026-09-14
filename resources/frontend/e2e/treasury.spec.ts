@@ -56,9 +56,13 @@ async function cuenta(request: APIRequestContext, c: Ctx, m: string, moneda: str
   });
 }
 
-/** Mete fondos por la vía normal: un movimiento bancario de entrada. */
+/**
+ * Mete fondos por la vía normal: un movimiento bancario de entrada.
+ *
+ * El importe es texto: desde FLOAT-038-A un número JSON se rechaza con 422.
+ */
 async function fondear(request: APIRequestContext, c: Ctx, cuentaId: string,
-                       importe: number, moneda = "VED") {
+                       importe: string, moneda = "VED") {
   return post(request, c, "/treasury/bank-transactions", {
     account_id: cuentaId, direction: "IN", amount: importe, currency: moneda,
     txn_date: hoy(), reference: "Fondeo de prueba",
@@ -95,7 +99,7 @@ test.describe("Spec 038 — tesorería", () => {
     await post(request, c, "/treasury/currencies", { code: codigo, name: `Moneda ${m}` });
     const origen = await cuenta(request, c, m, codigo);
     const destino = await cuenta(request, c, m, "VED");
-    await fondear(request, c, origen.id, 100);
+    await fondear(request, c, origen.id, "100.00");
 
     const r = await postCrudo(request, c, "/treasury/fx-conversions", {
       source_account_id: origen.id, target_account_id: destino.id, source_amount: "10.00",
@@ -119,7 +123,7 @@ test.describe("Spec 038 — tesorería", () => {
     });
     const origen = await cuenta(request, c, m, codigo);
     const destino = await cuenta(request, c, m, "VED");
-    await fondear(request, c, origen.id, 100);
+    await fondear(request, c, origen.id, "100.00");
 
     const conv = await post(request, c, "/treasury/fx-conversions", {
       source_account_id: origen.id, target_account_id: destino.id, source_amount: "10.00",
@@ -139,7 +143,7 @@ test.describe("Spec 038 — tesorería", () => {
     await politica(request, c, m);
     const { cliente, nota } = await creditoAFavor(request, c, m);
     const banco = await cuenta(request, c, m, "VED");
-    await fondear(request, c, banco.id, 500);
+    await fondear(request, c, banco.id, "500.00");
 
     await post(request, c, "/treasury/refunds", {
       credit_note_id: nota.id, amount: "60.00", reason: "El cliente pidió su dinero",
@@ -185,7 +189,7 @@ test.describe("Spec 038 — tesorería", () => {
     await politica(request, c, m);
     const { cliente, nota } = await creditoAFavor(request, c, m);
     const banco = await cuenta(request, c, m, "VED");
-    await fondear(request, c, banco.id, 500);
+    await fondear(request, c, banco.id, "500.00");
 
     const r = await post(request, c, "/treasury/refunds", {
       credit_note_id: nota.id, amount: "60.00", reason: "Solicitud del cliente",
@@ -215,7 +219,7 @@ test.describe("Spec 038 — tesorería", () => {
     await politica(request, c, m);
     const { cliente, nota } = await creditoAFavor(request, c, m);
     const banco = await cuenta(request, c, m, "VED");
-    await fondear(request, c, banco.id, 500);
+    await fondear(request, c, banco.id, "500.00");
     const r = await post(request, c, "/treasury/refunds", {
       credit_note_id: nota.id, amount: "60.00", reason: "Solicitud del cliente",
       account_id: banco.id,
@@ -251,8 +255,8 @@ test.describe("Spec 038 — tesorería", () => {
     const antes = await get(request, c, "/treasury/cash-position");
     const uno = await cuenta(request, c, m, "VED");
     const dos = await cuenta(request, c, m, codigo);
-    await fondear(request, c, uno.id, 100);
-    await fondear(request, c, dos.id, 50);
+    await fondear(request, c, uno.id, "100.00");
+    await fondear(request, c, dos.id, "50.00");
 
     const pos = await get(request, c, "/treasury/cash-position");
     expect(pos.total, "sumó monedas distintas en un solo número").toBeUndefined();
@@ -282,7 +286,7 @@ test.describe("Spec 038 — tesorería", () => {
     await politica(request, c, m);
     const { cliente, nota } = await creditoAFavor(request, c, m);
     const banco = await cuenta(request, c, m, "VED");
-    await fondear(request, c, banco.id, 500);
+    await fondear(request, c, banco.id, "500.00");
 
     await uiLogin(page);
     await irA(page, "/tesoreria/reembolsos");
@@ -335,7 +339,7 @@ test.describe("Spec 038 — tesorería", () => {
     });
     const origen = await cuenta(request, c, m, codigo);
     const destino = await cuenta(request, c, m, "VED");
-    await fondear(request, c, origen.id, 100);
+    await fondear(request, c, origen.id, "100.00");
     await post(request, c, "/treasury/fx-conversions", {
       source_account_id: origen.id, target_account_id: destino.id, source_amount: "10.00",
     });
@@ -353,7 +357,7 @@ test.describe("Spec 038 — tesorería", () => {
     const c = await ctx(request);
     const m = marca();
     const uno = await cuenta(request, c, m, "VED");
-    await fondear(request, c, uno.id, 100);
+    await fondear(request, c, uno.id, "100.00");
 
     await uiLogin(page);
     await irA(page, "/tesoreria/posicion");
@@ -363,5 +367,75 @@ test.describe("Spec 038 — tesorería", () => {
     await expect(page.getByRole("heading", { name: "Por moneda" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Por cuenta" })).toBeVisible();
     expect(await page.getByText(/^Total general/i).count()).toBe(0);
+  });
+
+  test("FLOAT-038-A · el movimiento bancario exige texto decimal y no redondea", async ({ request }) => {
+    const c = await ctx(request);
+    const m = marca();
+    const banco = await cuenta(request, c, m, "VED");
+    const movimientos = async (): Promise<Array<{ amount: string }>> =>
+      (await get(request, c, `/treasury/bank-transactions?account_id=${banco.id}`)).items;
+
+    // Cualquier número JSON se rechaza, aunque sea representable: el contrato es texto.
+    for (const cuerpo of [{ amount: 123.45 }, { amount: "0.001" }, { amount: "0.005" }, { amount: "1e3" }]) {
+      const r = await postCrudo(request, c, "/treasury/bank-transactions", {
+        account_id: banco.id, direction: "IN", currency: "VED", ...cuerpo,
+      });
+      expect(r.status(), `aceptó ${JSON.stringify(cuerpo)}`).toBe(422);
+      expect((await r.json()).code).toBe("VALIDATION_ERROR");
+    }
+    expect(await movimientos(), "un rechazo dejó un movimiento").toHaveLength(0);
+
+    const creado = await post(request, c, "/treasury/bank-transactions", {
+      account_id: banco.id, direction: "IN", currency: "VED", amount: "1234567890123456.78", commission: "12.35",
+    });
+    expect(creado.amount).toBe("1234567890123456.78");
+    expect(creado.commission).toBe("12.35");
+    expect((await movimientos()).map((t) => t.amount)).toEqual(["1234567890123456.78"]);
+    expect((await get(request, c, `/treasury/accounts/${banco.id}/balance`)).balance).toBe("1234567890123456.78");
+  });
+
+  test("FLOAT-038-A · la interfaz envía y muestra el importe exacto", async ({ page, request }) => {
+    const c = await ctx(request);
+    const m = marca();
+    const banco = await cuenta(request, c, m, "VED");
+    const referencia = `EXACTO-${m}`;
+
+    await uiLogin(page);
+    await irA(page, "/tesoreria/ingresos-egresos");
+    await expect(page.getByRole("heading", { name: "Ingresos y egresos", level: 1 })).toBeVisible({
+      timeout: 20_000,
+    });
+
+    const ajuste = page.locator("form").filter({ has: page.getByRole("button", { name: "Registrar ajuste" }) });
+    await expect(ajuste.getByLabel("Cuenta").locator(`option[value="${banco.id}"]`))
+      .toHaveCount(1, { timeout: 20_000 });
+    await ajuste.getByLabel("Cuenta").selectOption(banco.id as string);
+    await ajuste.getByLabel("Tipo").selectOption("IN");
+    await ajuste.getByLabel("Monto").fill("1234567890123456.78");
+    await ajuste.getByLabel("Referencia").fill(referencia);
+
+    const esCreacion = (url: string, metodo: string): boolean =>
+      metodo === "POST" && new URL(url).pathname.endsWith("/treasury/bank-transactions");
+    const peticion = page.waitForRequest((r) => esCreacion(r.url(), r.method()));
+    const respuesta = page.waitForResponse((r) => esCreacion(r.url(), r.request().method()));
+    await ajuste.getByRole("button", { name: "Registrar ajuste" }).click();
+
+    expect((await peticion).postDataJSON().amount, "el navegador redondeó el importe antes de enviarlo")
+      .toBe("1234567890123456.78");
+    const r = await respuesta;
+    expect(r.status()).toBe(200);
+    expect((await r.json()).amount).toBe("1234567890123456.78");
+
+    // Y se ve exacto donde la tesorería lo consume. La tabla de ajustes pagina sobre
+    // todos los movimientos de la empresa, sin orden estable dentro del mismo día; la
+    // conciliación, en cambio, ofrece todos los movimientos en su selector.
+    await post(request, c, "/treasury/reconciliations", { account_id: banco.id, statement_ref: `EXT-${m}` });
+    await irA(page, "/tesoreria/conciliacion");
+    const fila = page.getByRole("row").filter({ hasText: `EXT-${m}` });
+    await expect(fila).toBeVisible({ timeout: 20_000 });
+    await fila.getByRole("button", { name: "detalle" }).click();
+    await expect(page.locator("option").filter({ hasText: referencia }))
+      .toHaveText(/ · 1\.234\.567\.890\.123\.456,78 · /, { timeout: 20_000 });
   });
 });

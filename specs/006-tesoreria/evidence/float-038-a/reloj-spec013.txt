@@ -1,0 +1,15 @@
+# Reproducción del fallo horario de la Spec 013 (test_spec013_financial_masters.py)
+E2E terminado; empieza la reproducción · reloj local 2026-09-15 00:21:08 CEST · UTC 2026-09-14 22:21:08
+base (HEAD 239259b) · zona local · fecha local 2026-09-15 · UTC 2026-09-14 · FAILED tests/test_spec013_financial_masters.py::test_la_tasa_de_hoy_sirve_para_una_operacion_de_hoy
+base (HEAD 239259b) · zona UTC · fecha local 2026-09-14 · UTC 2026-09-14 · ..........................................................               [100%]
+actual (árbol del delta) · zona local · fecha local 2026-09-15 · UTC 2026-09-14 · FAILED tests/test_spec013_financial_masters.py::test_la_tasa_de_hoy_sirve_para_una_operacion_de_hoy
+actual (árbol del delta) · zona UTC · fecha local 2026-09-14 · UTC 2026-09-14 · ..........................................................               [100%]
+base-local · FAILED=5
+base-UTC · FAILED=0
+actual-local · FAILED=5
+actual-UTC · FAILED=0
+FAILED tests/test_spec013_financial_masters.py::test_la_tasa_no_pasa_por_coma_flotante
+FAILED tests/test_spec013_financial_masters.py::test_la_tasa_conserva_todos_sus_decimales
+FAILED tests/test_spec013_financial_masters.py::test_con_politica_de_aprobacion_la_tasa_nace_pendiente_y_no_resuelve
+FAILED tests/test_spec013_financial_masters.py::test_el_camino_antiguo_sigue_funcionando_y_ya_escribe_el_par
+FAILED tests/test_spec013_financial_masters.py::test_la_tasa_de_hoy_sirve_para_una_operacion_de_hoy

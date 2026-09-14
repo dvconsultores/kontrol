@@ -46,3 +46,14 @@
 | Supuestos declarados | ✔ |
 | Pendientes registrados | ✔ |
 | Aprobación | Pendiente |
+
+## 5. Delta FLOAT-038-A — decisiones del owner (Spec 038 · 2026-09-14)
+
+| ID | Pregunta | Decisión | Descartadas | Razón | Estado |
+|---|---|---|---|---|---|
+| OQ-FLOAT-038-A-01 | ¿Cómo viaja el importe del movimiento bancario en el contrato público? | **Texto decimal**, al entrar y al salir, para `amount` y `commission`. Un número JSON se rechaza con 422 | B: número con degradación documentada · C: número literal con serializador propio | la exactitud tiene que sobrevivir a JavaScript, HTTP y Python; un número JSON no sobrevive a la primera | `CLOSED_BY_OWNER_DECISION` |
+| OQ-FLOAT-038-A-02 | ¿Qué pasa con más decimales que la escala? | **Rechazo con 422**. Escala efectiva de este contrato: 2, la de `numeric(18,2)` | redondeo de PostgreSQL · cuantización de `_money` | ninguna transformación económica silenciosa | `CLOSED_BY_OWNER_DECISION` |
+
+El cambio de número a texto es **incompatible y está autorizado**. Una escala por
+moneda (`Currency.decimal_places`) exigiría otro delta con contrato, modelo y
+migración.

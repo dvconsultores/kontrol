@@ -58,7 +58,7 @@ def test_una_cuenta_de_b_no_sirve_para_operar_en_a(mundo):
     cb = _cuenta(mundo, "ub", mundo.company_b, _banco(mundo, "ub", mundo.company_b, "BX"), "X-B")
 
     r = mundo.post("/treasury/bank-transactions", "ua", mundo.company_a, {
-        "account_id": cb, "direction": "IN", "amount": 100, "currency": "VED"})
+        "account_id": cb, "direction": "IN", "amount": "100.00", "currency": "VED"})
     assert r.status_code == 404, f"A movió dinero en una cuenta de B: {r.text}"
     assert r.json()["code"] == "ACCOUNT_NOT_FOUND"
 
@@ -66,7 +66,7 @@ def test_una_cuenta_de_b_no_sirve_para_operar_en_a(mundo):
 def test_movimiento_bancario_hereda_la_empresa_de_su_cuenta(mundo):
     ca = _cuenta(mundo, "ua", mundo.company_a, _banco(mundo, "ua", mundo.company_a, "BM"), "M-A")
     tx = mundo.crear("/treasury/bank-transactions", "ua", mundo.company_a, {
-        "account_id": ca, "direction": "IN", "amount": 250, "currency": "VED"})
+        "account_id": ca, "direction": "IN", "amount": "250.00", "currency": "VED"})
 
     assert mundo.dueño("bank_transactions", tx) == mundo.company_a
     db = mundo.factory()
@@ -82,9 +82,9 @@ def test_los_movimientos_no_se_mezclan_entre_empresas(mundo):
     ca = _cuenta(mundo, "ua", mundo.company_a, _banco(mundo, "ua", mundo.company_a, "BM2"), "M2-A")
     cb = _cuenta(mundo, "ub", mundo.company_b, _banco(mundo, "ub", mundo.company_b, "BM2"), "M2-B")
     mundo.crear("/treasury/bank-transactions", "ua", mundo.company_a,
-                {"account_id": ca, "direction": "IN", "amount": 10, "currency": "VED"})
+                {"account_id": ca, "direction": "IN", "amount": "10.00", "currency": "VED"})
     mundo.crear("/treasury/bank-transactions", "ub", mundo.company_b,
-                {"account_id": cb, "direction": "IN", "amount": 20, "currency": "VED"})
+                {"account_id": cb, "direction": "IN", "amount": "20.00", "currency": "VED"})
 
     de_a = {t["id"] for t in mundo.get("/treasury/bank-transactions", "ua", mundo.company_a).json()["items"]}
     de_b = {t["id"] for t in mundo.get("/treasury/bank-transactions", "ub", mundo.company_b).json()["items"]}
@@ -110,7 +110,7 @@ def test_la_conciliacion_ajena_no_se_lee_ni_se_toca(mundo):
     # la petición no habría llegado siquiera a la comprobación de empresa.
     ca = _cuenta(mundo, "ua", mundo.company_a, _banco(mundo, "ua", mundo.company_a, "BC3"), "C3-A")
     tx_a = mundo.crear("/treasury/bank-transactions", "ua", mundo.company_a,
-                       {"account_id": ca, "direction": "IN", "amount": 5, "currency": "VED"})
+                       {"account_id": ca, "direction": "IN", "amount": "5.00", "currency": "VED"})
 
     r = mundo.post(f"/treasury/reconciliations/{rec_b}/lines", "ua", mundo.company_a,
                    {"bank_transaction_id": tx_a})
@@ -176,7 +176,7 @@ def test_no_hay_transferencia_entre_empresas(mundo):
 def test_el_otro_tenant_no_alcanza_nada(mundo):
     ca = _cuenta(mundo, "ua", mundo.company_a, _banco(mundo, "ua", mundo.company_a, "BZ"), "Z-A")
     r = mundo.post("/treasury/bank-transactions", "uc", mundo.company_c,
-                   {"account_id": ca, "direction": "IN", "amount": 1, "currency": "VED"},
+                   {"account_id": ca, "direction": "IN", "amount": "1.00", "currency": "VED"},
                    tenant="T2")
     assert r.status_code == 404
     # Y tampoco puede simplemente declarar la empresa de A.

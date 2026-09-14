@@ -1,0 +1,12 @@
+# Primera regresión (zona local, cruzó la medianoche CEST, sin kontrol_legacy tras el reinicio)
+PostgreSQL: 16.2
+EXIT=1
+____________________ test_la_tasa_no_pasa_por_coma_flotante ____________________
+__________________ test_la_tasa_conserva_todos_sus_decimales ___________________
+_____ test_con_politica_de_aprobacion_la_tasa_nace_pendiente_y_no_resuelve _____
+_________ test_el_camino_antiguo_sigue_funcionando_y_ya_escribe_el_par _________
+_____________ test_la_tasa_de_hoy_sirve_para_una_operacion_de_hoy ______________
+      8 SKIPPED [1] tests/test_documents_storage.py: Sin servicio compatible con S3 real: KONTROL_S3_ENDPOINT no está configurado. La conformidad de este adaptador queda SIN VERIFICAR en este entorno.
+      1 SKIPPED [1] tests/test_mc_preflight.py: no hay base legacy en este entorno
+     15 SKIPPED [1] tests/test_mc_preflight.py: no hay base legacy sembrada en este entorno
+5 failed, 1515 passed, 24 skipped in 1360.58s (0:22:40)

@@ -328,12 +328,14 @@ class BankTransaction(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     txn_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     value_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     direction: Mapped[str] = mapped_column(String(8), nullable=False, default="OUT")  # IN / OUT
-    amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
+    #: Spec 038 · FLOAT-038-A: la columna siempre fue exacta; la anotación decía `float`.
+    #: Su precisión y escala son también las que valida la API (`app/shared/money.py`).
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     reference: Mapped[str | None] = mapped_column(String(120), nullable=True)
     source: Mapped[str] = mapped_column(String(32), nullable=False, default="PAYMENT")  # PAYMENT/COLLECTION/TRANSFER/DEPOSIT/ADJUSTMENT
     payment_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    commission: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
+    commission: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
     rate_snapshot: Mapped[float | None] = mapped_column(Numeric(14, 6), nullable=True)
     #: La instantánea completa que gobernó la conversión, con su procedencia. La
     #: columna anterior guardaba un número suelto: no decía de dónde salía.

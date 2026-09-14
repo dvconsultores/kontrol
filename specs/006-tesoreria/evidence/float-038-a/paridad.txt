@@ -1,0 +1,4 @@
+# Paridad ORM ↔ PostgreSQL del ámbito tocado (ke2e migrada, alembic compare_metadata)
+alembic head: 0057_spec047_notifications
+bank_transactions.amount numeric(18,2) · bank_transactions.commission numeric(18,2)
+diferencias en bank_transactions: 0 · diferencias heredadas globales: 21 (sin cambio)

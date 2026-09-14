@@ -44,5 +44,8 @@ describe("AsyncButton", () => {
     await user.click(button);
     await user.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);
+    // La acción sigue en curso: sin esperar, su `setLoading(false)` llega con el
+    // entorno ya desmontado y Vitest lo informa como rechazo no capturado.
+    await waitFor(() => expect(button).toBeEnabled());
   });
 });

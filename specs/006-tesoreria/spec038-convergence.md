@@ -234,11 +234,29 @@ conserva los 18 dígitos que la columna admite.
 
 La programación de estas deudas vive en `docs/roadmap/next-spec-decision.md`.
 
-## 15. Delta dirigido FLOAT-038-A — 2026-09-14
+## 15. Delta dirigido FLOAT-038-A — reconvergencia dirigida
 
-Detenido en `/speckit.clarify`: `BLOCKED BY MATERIAL DECISION`. El importe exacto
-cabe en la entrada sin romper nada, pero no en la respuesta sin cambiar el
-contrato público (OQ-FLOAT-038-A-01), y nadie ha decidido qué pasa con más de dos
-decimales (OQ-FLOAT-038-A-02). Detalle y evidencia en
-`spec038-bank-amount-decimal-delta.md`. La 038 sigue `COMPLETE / CONVERGED`.
+| Fecha | Estado |
+|---|---|
+| 2026-09-14 | detenido en `/speckit.clarify`: `BLOCKED BY MATERIAL DECISION` |
+| 2026-09-14 | el owner cierra OQ-FLOAT-038-A-01 (texto decimal) y -02 (más decimales → 422) |
+| 2026-09-15 | **`TARGETED DELTA COMPLETE / CONVERGED`** |
+
+El importe de un movimiento bancario ya no pasa por `float` en ningún punto: entra
+como texto, se valida contra la escala y la precisión de su columna, viaja como
+`Decimal`, se guarda en `numeric(18,2)` y sale como texto. `1234567890123456.78`
+llega a la base y vuelve exacto; `0.001` y `0.005` se rechazan sin crear nada.
+Regresión de backend sola 1536/0/8, frontend 359/359, E2E 248/249 con un fallo
+preexistente que aislado pasa, 4 mutaciones con semántica. Detalle y evidencia en
+`spec038-bank-amount-decimal-delta.md` §12-§16.
+
+**Cambio incompatible, intencional y autorizado.** El contrato público de
+`POST` y `GET /treasury/bank-transactions` pasó de número JSON a texto decimal en
+`amount` y `commission`. El frontend del repositorio se adaptó en el mismo cambio.
+El repositorio no tiene inventario de consumidores externos, así que no puede
+probarse que no existan: el cambio es un cambio de contrato autorizado por el owner,
+declarado en `contracts/api-contracts.md` §3.1 y en OpenAPI.
+
+La 038 **sigue** `COMPLETE / CONVERGED`: esto es una reconvergencia dirigida, no un
+ciclo global nuevo. Siguen abiertos FLOAT-038-B y los otros siete `float` del borde.
 

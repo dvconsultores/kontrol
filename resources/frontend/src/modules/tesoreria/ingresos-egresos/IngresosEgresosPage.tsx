@@ -18,6 +18,8 @@ import { MoneyInput } from "@/components/MoneyInput";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { toDecimalString } from "@/lib/decimal";
+import { formatMoney } from "@/lib/format";
 
 const columnHelper = createColumnHelper<BankTransactionSummary>();
 
@@ -98,12 +100,19 @@ export function IngresosEgresosPage(): React.JSX.Element {
       notify({ type: "error", title: "Falta la cuenta", description: "Seleccione la cuenta bancaria." });
       return;
     }
+    // Spec 038 · FLOAT-038-A: el importe viaja como texto exacto. `Number` lo
+    // habría redondeado antes de salir del navegador.
+    const importe = toDecimalString(amount);
+    if (!importe) {
+      notify({ type: "error", title: "Monto inválido", description: "Use números con hasta dos decimales, por ejemplo 1234,56." });
+      return;
+    }
     await apiFetch("/treasury/bank-transactions", {
       method: "POST",
       body: {
         account_id: accountId,
         direction,
-        amount: Number(amount) || 0,
+        amount: importe,
         reference: reference || null,
         source: "ADJUSTMENT",
       },
@@ -118,7 +127,7 @@ export function IngresosEgresosPage(): React.JSX.Element {
     columnHelper.accessor("account_id", { header: "Cuenta", cell: (info) => targetLabel(info.getValue()) }),
     columnHelper.accessor("txn_date", { header: "Fecha" }),
     columnHelper.accessor("direction", { header: "Dir" }),
-    columnHelper.accessor("amount", { header: "Monto" }),
+    columnHelper.accessor("amount", { header: "Monto", cell: (info) => formatMoney(info.getValue()) }),
     columnHelper.accessor("reference", { header: "Referencia" }),
     columnHelper.accessor("source", { header: "Fuente" }),
     columnHelper.accessor("status", { header: "Estado" }),

@@ -1,0 +1,16 @@
+# M-FLOAT-038-A-04 · el frontend vuelve a enviar Number(importe)
+# mutación: '        amount: importe,' → '        amount: Number(importe),'
+# aplicada: 1 línea
+# ---- ejecución ----
+   × Ingresos y egresos · importe bancario > envía el importe como texto exacto, sin pasar por Number 289ms
+     → expected 'number' to be 'string' // Object.is equality
+   ✓ Ingresos y egresos · importe bancario > no envía un importe con más de dos decimales: no lo redondea 100ms
+   ✓ Ingresos y egresos · importe bancario > muestra en la tabla el importe exacto que devolvió el servidor 29ms
+   ✓ Conciliación · importe bancario > la lista de movimientos muestra el importe exacto 37ms
+   × guarda del camino del importe bancario > la pantalla de ajustes no convierte el importe a número 1ms
+     → expected '/** Ingresos y egresos — ejecución de…' not to match /(Number|parseFloat)\(\s*(amount|impor…/
+   ✓ guarda del camino del importe bancario > la conciliación no formatea el importe bancario con toFixed 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 4 passed (6)
+# exit=1
+# restaurado: sí
