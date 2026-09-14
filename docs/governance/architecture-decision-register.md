@@ -2,8 +2,8 @@
 
 | Campo | Valor |
 |---|---|
-| Última actualización | Gate G0 · 2026-08-29 |
-| ADR vigentes (`APPROVED`) | **29** |
+| Última actualización | ADR-D0-015 · 2026-09-14 (antes: Gate G0 · 2026-08-29) |
+| ADR vigentes (`APPROVED`) | **30** |
 | ADR en `PROPUESTO` | **0** |
 | ADR `SUPERSEDED` totales | **0** (1 supersesión parcial de sección) |
 | ADR `REJECTED` | **0** |
@@ -23,7 +23,7 @@
 | ADR-006 | Sistema de diseño compartido | **APPROVED** | 2026-08-03 · G0 | — | — | 005, todas las de UI |
 | ADR-007 | ReportLab para documentos desde backend | **APPROVED** | 2026-08-03 · G0 | — | — | 042, 050 |
 | ADR-008 | Estrategia de archivos | **APPROVED** (actualizado G0) | 2026-08-03 · G0 | — | **§Consecuencias superseded por ADR-D0-008** | 046 |
-| ADR-009 | Cola y workers (diferimiento) | **APPROVED** (diferimiento vigente) | 2026-08-03 · G0 | — | — | 048, 050 |
+| ADR-009 | Cola y workers (diferimiento) | **APPROVED** (diferimiento vigente) | 2026-08-03 · G0 | — | **acotado por ADR-D0-015** (una excepción: temporizador del sistema → orden idempotente; sin cola ni worker) | 048, 050, 047 |
 | ADR-010 | Observabilidad | **APPROVED** | 2026-08-03 · G0 | — | — | 006, 051 |
 | ADR-011 | Multiempresa | **APPROVED** (actualizado G0) | 2026-08-03 · G0 | — | **extendido por ADR-D0-004 y ADR-D0-013** | 007, 008, 013 |
 | ADR-012 | Auditoría | **APPROVED** | 2026-08-03 · G0 | — | — | 006, 051 |
@@ -49,6 +49,7 @@
 | ADR-D0-012 | Confirmación independiente del pedido | **APPROVED** | 2026-08-29 | — | 033, 034, 031, 032, 035 |
 | ADR-D0-013 | Dimensiones organizacionales | **APPROVED** | 2026-08-29 | ADR-011 | 007 + transversal |
 | ADR-D0-014 | Alcance canónico tenant / empresa / sucursal | **APPROVED** | 2026-08-31 · ARCH-MC-001 | — | — | ARCH-MC-001, todas las de negocio |
+| ADR-D0-015 | Planificador de plataforma: temporizador del sistema → orden idempotente | **APPROVED · ACTIVE** (decisión del owner, OQ-047-01) | 2026-09-14 | acota ADR-009; materializa ADR-D0-003 §G | 047, 045, 030, 048, 052 |
 
 ## Bloque de auditoría — `specs/012-auditoria-integral-e2e/`
 

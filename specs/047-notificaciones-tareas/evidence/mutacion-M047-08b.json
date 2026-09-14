@@ -1,0 +1,14 @@
+[
+  {
+    "id": "M047-08b",
+    "titulo": "el reintento duplica la tarea",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 10.65s",
+    "fallidas": [
+      "tests/test_spec047_tasks.py::test_repetir_el_hecho_no_duplica_la_tarea"
+    ],
+    "errores": []
+  }
+]

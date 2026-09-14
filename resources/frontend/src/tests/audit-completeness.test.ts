@@ -26,9 +26,11 @@ const openapi = JSON.parse(read("tests/fixtures/openapi-routes.json")) as {
 // --------------------------------------------------------------------------- //
 // Extracción
 // --------------------------------------------------------------------------- //
-const menuTo = [...sidebar.matchAll(/\{\s*to:\s*"([^"]+)",\s*label:\s*"([^"]+)"/g)].map((m) => ({
+// La etiqueta puede ser literal o una clave del catálogo (`t("…")`, Spec 047):
+// la puerta tiene que ver también esas entradas, o dejaría de mirarlas en silencio.
+const menuTo = [...sidebar.matchAll(/\{\s*to:\s*"([^"]+)",\s*label:\s*(?:"([^"]+)"|t\("([^"]+)"\))/g)].map((m) => ({
   to: m[1],
-  label: m[2],
+  label: m[2] ?? m[3],
 }));
 
 const routerPaths = [...router.matchAll(/path:\s*"([^"]+)"/g)].map((m) => m[1]);
@@ -156,6 +158,12 @@ const pages = [
   "modules/fiscal/emision/EmisionPage.tsx",
   "modules/fiscal/lotes-declaracion/LotesDeclaracionPage.tsx",
   "modules/licenciamiento/configuracion/ConfiguracionCentralPage.tsx",
+  "modules/notificaciones/centro/CentroNotificacionesPage.tsx",
+  "modules/notificaciones/tareas/TareasPage.tsx",
+  "modules/notificaciones/tareas/TareaDetallePage.tsx",
+  "modules/notificaciones/alertas/AlertasPage.tsx",
+  "modules/notificaciones/reglas/ReglasPage.tsx",
+  "modules/notificaciones/preferencias/PreferenciasPage.tsx",
 ];
 
 describe("G3/G4: las páginas llaman endpoints existentes", () => {

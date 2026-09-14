@@ -6,6 +6,10 @@
     },
     {
       "method": "GET",
+      "path": "/alerts"
+    },
+    {
+      "method": "GET",
       "path": "/approvals/delegations"
     },
     {
@@ -847,6 +851,50 @@
     {
       "method": "POST",
       "path": "/maestros/unidades/{unit_id}/deactivate"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications/counts"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications/preferences"
+    },
+    {
+      "method": "PUT",
+      "path": "/notifications/preferences"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications/rules"
+    },
+    {
+      "method": "POST",
+      "path": "/notifications/rules"
+    },
+    {
+      "method": "POST",
+      "path": "/notifications/rules/{rule_id}/deactivate"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications/sources"
+    },
+    {
+      "method": "GET",
+      "path": "/notifications/{notification_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/notifications/{notification_id}/archive"
+    },
+    {
+      "method": "POST",
+      "path": "/notifications/{notification_id}/read"
     },
     {
       "method": "DELETE",
@@ -1819,6 +1867,38 @@
     {
       "method": "GET",
       "path": "/system/diagnostics"
+    },
+    {
+      "method": "GET",
+      "path": "/tasks"
+    },
+    {
+      "method": "GET",
+      "path": "/tasks/priorities"
+    },
+    {
+      "method": "POST",
+      "path": "/tasks/priorities"
+    },
+    {
+      "method": "GET",
+      "path": "/tasks/{task_id}"
+    },
+    {
+      "method": "POST",
+      "path": "/tasks/{task_id}/cancel"
+    },
+    {
+      "method": "POST",
+      "path": "/tasks/{task_id}/complete"
+    },
+    {
+      "method": "POST",
+      "path": "/tasks/{task_id}/reassign"
+    },
+    {
+      "method": "POST",
+      "path": "/tasks/{task_id}/start"
     },
     {
       "method": "GET",

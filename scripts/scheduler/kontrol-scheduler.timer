@@ -1,0 +1,12 @@
+# KONTROL - temporizador del planificador de plataforma (Spec 047 · ADR-D0-015).
+# El intervalo es operacional y lo fija el despliegue (R-D0-15-10).
+[Unit]
+Description=KONTROL scheduler timer (@INSTANCE@)
+
+[Timer]
+OnBootSec=@INTERVAL@
+OnUnitActiveSec=@INTERVAL@
+Unit=kontrol-scheduler-@INSTANCE@.service
+
+[Install]
+WantedBy=timers.target

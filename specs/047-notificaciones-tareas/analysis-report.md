@@ -1,83 +1,103 @@
 # `/speckit.analyze` — SPEC 047 · NOTIFICACIONES, TAREAS Y ALERTAS
 
-> Análisis previo a implementación, 2026-09-14, sobre `88634a1`.
+## A. Primer análisis — 2026-09-14 sobre `88634a1`
 
-## 1. Cadena comparada
+Veredicto: `BLOCKED BY MATERIAL DECISION` (OQ-047-01 planificador, OQ-047-02
+idioma). BLOCKER 2 · CONTRADICTIONS 2 · MATERIAL OQ 2. Commit `1c04241`.
 
-`spec.md` ↔ `clarifications.md` ↔ `plan.md` ↔ `checklist.md` ↔ `tasks.md` ↔
-`traceability-matrix.md`, contra el código, las migraciones y las autoridades
-citadas.
+## B. Re-análisis previo a implementación — 2026-09-14 sobre `370e10a`
 
-## 2. Detección exigida por el §92
+### 1. Qué cambió
+
+Las dos preguntas se cerraron por decisión expresa del owner. Se creó
+`ADR-D0-015` y se actualizaron `spec.md` (36 → **54** requisitos),
+`clarifications.md`, `plan.md`, `checklist.md`, `tasks.md` (49 → **58**
+tareas) y `traceability-matrix.md`; se añadieron `research.md`,
+`data-model.md` y `contracts/api-contracts.md`.
+
+### 2. Detección exigida por el §32
 
 | Detección | Resultado |
 |---|---|
-| Motor de notificaciones duplicado | No existe ninguno. Los avisos de interfaz no lo son (CL-047-12) |
-| Motor de tareas duplicado | **Riesgo real** con la bandeja de la 045; cerrado por CL-047-02 y R-047-11 |
-| Aprobación duplicada | No |
-| Planificador duplicado | No existe ninguno; crearlo es OQ-047-01 |
-| Proveedor duplicado | No; la 048 |
-| Lógica de negocio dentro de la 047 | Excluida: FR-047-026 |
-| Completar tarea altera el origen | Excluido: R-047-01, M047-05 |
-| Idempotencia ausente | **Sin clave definida** hasta OQ-047-01 |
-| Estado de lectura compartido | Excluido: R-047-02, M047-04 |
-| Fuga de destinatario | Visibilidad revalidada en lectura (CL-047-03) |
-| Empresa equivocada | `CompanyContext`; M047-03 |
-| Tenant equivocado | M047-02 |
-| IDOR | R-047-06/07, M047-07 |
-| `datetime` ingenuo | CL-047-04, M047-10 |
-| Historial por borrado | R-047-03/04, M047-09 |
-| Fallo externo que borra la interna | R-047-05, M047-06 |
-| Paginación de primera página | Página 3 con > 100 (T047-114) |
-| Parámetros no soportados | Sin `limit`; prueba de parámetro no soportado |
-| Deriva OpenAPI | T047-083 |
-| Deriva ORM ↔ Alembic | T047-090 |
-| Carrera de consultar y luego crear | T047-041, T047-111 |
-| 500 aceptado como conflicto | M047-12 |
-| Guardas de arquitectura posicionales | Solo `bloque_de_spec` |
-| Material OQ | **2** |
-| UNKNOWN | 0 |
+| Nueva Material OQ | **0** |
+| Conflicto de ADR | ADR-D0-015 acota ADR-009 con una sola excepción y materializa ADR-D0-003 §G. ADR-009 no se edita |
+| Colisión de dueñas | Marco del planificador: 047. Reglas de expiración, retención y correo: sus dueñas (FR-047-049) |
+| Planificador duplicado | No existe otro |
+| Outbox duplicado | No se crea; `outbox_events` no se usa en V1 (FR-047-054) |
+| Cola introducida | No (FR-047-039) |
+| Worker introducido | No (FR-047-039) |
+| Reglas de negocio duplicadas | No: la 047 no calcula elegibles, delegaciones ni vencimientos de la 045 |
+| Conflicto de dueña del i18n | Cerrado: la base es de la 047; los textos de otros módulos no se absorben |
+| Ambigüedad del esquema de localización | Cerrada: `message_key` String(128) + `message_params` JSON; sin columna de texto ni de idioma |
+| Semántica de destinatarios | CL-047-03 |
+| Zona horaria | CL-047-04 |
+| Permisos | CL-047-05 |
+| Despliegue del planificador | CL-047-13 · ADR-D0-015 §Implementación |
+| Tareas y huérfanos | 58 tareas, 0 sin requisito, 0 requisitos sin tarea — verificado por script |
+| Huecos de prueba | 0: 54/54 requisitos con prueba prevista |
+| Huecos de mutación | 0: M047-01..19 asignadas |
+| Integraciones inventadas | Ninguna: 037 y 038 no publican hechos (CL-047-10) |
+| Habilitar un comportamiento dañino de otra dueña | Evitado: vencimiento de la 045 deshabilitado (CL-047-14) |
 
-## 3. Contradicciones
+### 3. Contradicciones
 
-| ID | Contradicción | Estado |
-|---|---|---|
-| C-047-01 | `ADR-D0-003` da el planificador a la 047; `ADR-009` y el §29 impiden construirlo sin ADR | **Abierta** → OQ-047-01 |
-| C-047-02 | FR-047-034 exige i18n; no existe, no tiene dueña y `R-D0-10-2` lo reserva a un cambio propio | **Abierta** → OQ-047-02 |
+| ID | Estado |
+|---|---|
+| C-047-01 | **RESUELTA** — ADR-D0-015 |
+| C-047-02 | **RESUELTA** — decisión del owner, OQ-047-02 |
 
-## 4. Hallazgos ajenos — registrados, no corregidos
+### 4. Hallazgos ajenos — registrados, no corregidos
 
 | Hallazgo | Dueña | Clasificación |
 |---|---|---|
-| `GET /approvals/inbox` pagina con `limit` y `offset`, contra la invariante de selector paginado | 045 | `PREEXISTING` |
-| `approvals_service.inbox` carga los pasos `IN_REVIEW` de **todas** las empresas, lee la solicitud de cada uno por separado y filtra por empresa en Python. El aislamiento se sostiene; el coste crece con el número de empresas | 045 | `PREEXISTING` |
-| La fila 052 del máster espera un «planificador de retención»: el mismo mecanismo que OQ-047-01 | 052 | Dependencia a considerar en la decisión |
+| `GET /approvals/inbox` pagina con `limit` y `offset` | 045 | `PREEXISTING` |
+| La bandeja carga los pasos `IN_REVIEW` de todas las empresas y filtra en Python | 045 | `PREEXISTING` |
+| Un paso `EXPIRED` no vuelve a `IN_REVIEW` por ninguna función | 045 | `OWNER_DEPENDENCY` para habilitar su manejador |
 
-## 5. Recuento
+### 5. Recuento
 
 | Puerta | Valor | Exigido |
 |---|---:|---:|
-| BLOCKER | **2** — OQ-047-01, OQ-047-02 | 0 |
-| CRITICAL | 0 | 0 |
-| CONTRADICTIONS | **2** — C-047-01, C-047-02 | 0 |
-| ORPHAN REQUIREMENTS | 0 | 0 |
-| ORPHAN TASKS | 0 | 0 |
-| MATERIAL OQ | **2** | 0 |
-| UNKNOWN | 0 | 0 |
-| TRACEABILITY | 100 % documental (36/36) · 0 % implementada | 100 % |
-| OWNER DEPENDENCIES | 3 — 048, 046, 003 (condicional) | — |
-| OWNER GAPS | 1 — internacionalización | — |
-| CONSTITUTION GATE | 16 PASS · 2 CONDICIONADAS · 2 PREVISTAS | — |
+| BLOCKER | **0** | 0 |
+| CRITICAL | **0** | 0 |
+| CONTRADICTIONS | **0** | 0 |
+| ORPHAN REQUIREMENTS | **0** | 0 |
+| ORPHAN TASKS | **0** | 0 |
+| MATERIAL OQ | **0** | 0 |
+| UNKNOWN | **0** | 0 |
+| TRACEABILITY | **100 %** en diseño (54/54) | 100 % |
+| CONSTITUTION GATE | 26 PASS en diseño · 0 condicionadas | — |
 
-## 6. Veredicto
+### 6. Veredicto
 
-**`SPEC047 — BLOCKED BY MATERIAL DECISION`**
+**`SPEC047 — READY FOR IMPLEMENTATION`.** Se consume la autorización expresa del
+§33 del prompt y se ejecuta `/speckit.implement`.
 
-La autorización expresa del §4 del prompt exige las ocho puertas a cero. Tres no
-lo están. **No se ejecuta `/speckit.implement`.**
+## C. Análisis final — tras implementación y pruebas
 
-## 7. Lo que no se hizo
+| Puerta | Valor |
+|---|---:|
+| BLOCKER | **0** |
+| CRITICAL | **0** |
+| CONTRADICTIONS | **0** |
+| ORPHAN REQUIREMENTS | **0** — 54/54 con código y prueba |
+| ORPHAN TASKS | **0** — 58 tareas |
+| MATERIAL OQ | **0** |
+| UNKNOWN | **0** |
+| TRACEABILITY | **100 %** — `traceability-matrix.md` |
 
-Ni código, ni migraciones, ni permisos en el catálogo, ni pantallas, ni pruebas.
-No se tocó la 045, ni la 046, ni la 048, ni la 049, ni `reportes:view`. No se
-resolvieron MD-049-01 ni MD-049-02.
+Detecciones del §92 revisadas contra el código implementado: sin motor duplicado de
+notificaciones, tareas, aprobación, planificador ni proveedor; completar una tarea no
+toca el origen (M047-05); idempotencia con restricción única y captura estrecha
+(M047-01, 08b, 12); lectura por destinatario (M047-04); ninguna fuga de empresa,
+tenant ni origen (M047-02, 03, 07, 11, 17); relojes con zona (M047-10); historial
+sin borrado (M047-09); fallo externo sin pérdida (M047-06); paginación real con página
+3 comprobada; OpenAPI y contrato de empresa verdes (`test_n8_contract.py`); paridad
+ORM ↔ Alembic a 0; guardas por marcador semántico, no por posición.
+
+Durante la validación aparecieron dos regresiones propias —la campana tras la purga
+del shell y la siembra de D2 en la cadena compartida— y se corrigieron con prueba que
+las reproduce (`convergence.md` §5). La deuda ajena queda con su dueña
+(`convergence.md` §6).
+
+**Veredicto: `SPEC047 — COMPLETE / CONVERGED`.**

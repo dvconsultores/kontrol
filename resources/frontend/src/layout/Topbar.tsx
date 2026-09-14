@@ -4,6 +4,7 @@ import { LogOut, Lock, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useLicense } from "@/app/contexts/LicenseContext";
 import { CompanySelector } from "@/components/company/CompanySelector";
+import { NotificationBell } from "@/modules/notificaciones/NotificationBell";
 import { Link } from "react-router";
 
 export function Topbar(): React.JSX.Element {
@@ -19,6 +20,7 @@ export function Topbar(): React.JSX.Element {
         <CompanySelector />
       </div>
       <div className="flex items-center gap-3">
+        <NotificationBell />
         {mode ? (
           <Link
             to="/mi-licencia"

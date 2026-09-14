@@ -1,0 +1,18 @@
+## Cadena canónica (tramo 1, tras corregir la campana)
+  243 passed (3.1m)
+## approvals.spec aislado (tramo 2)
+  6 failed
+  27 passed (39.1s)
+## notifications.spec final
+  21 passed (52.8s)
+## línea base approvals con frontend 370e10a
+worktree: 370e10a docs(spec-049): revalidada tras la 047 — sigue bloqueada, ahora por una decisión y no por una obra · notificaciones en src: 0
+vite base 5174: 200
+approvals flujo principal con frontend 370e10a · exit=1 ·  3 failed 
+    Locator: getByRole('button', { name: 'Desactivar' }).first()
+    Expected: visible
+    Locator: getByRole('button', { name: 'Desactivar' }).first()
+    Expected: visible
+    Locator: getByRole('button', { name: 'Desactivar' }).first()
+    Expected: visible
+FIN

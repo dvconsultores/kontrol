@@ -2,6 +2,7 @@
 import {
   ArrowLeftRight,
   BarChart3,
+  Bell,
   BookOpen,
   Boxes,
   ClipboardCheck,
@@ -15,6 +16,7 @@ import {
   Home,
   Landmark,
   LayoutDashboard,
+  ListChecks,
   Lock,
   Package,
   Percent,
@@ -29,6 +31,7 @@ import {
   ShieldCheck,
   ShoppingCart,
   ShoppingBag,
+  SlidersHorizontal,
   StickyNote,
   Tags,
   CalendarClock,
@@ -41,6 +44,7 @@ import { NavLink } from "react-router";
 import { useState } from "react";
 
 import { useAuth } from "@/app/contexts/AuthContext";
+import { t } from "@/i18n";
 import { clsx } from "clsx";
 
 const navSections = [
@@ -49,6 +53,17 @@ const navSections = [
     items: [
       { to: "/", label: "Inicio", icon: LayoutDashboard },
       { to: "/mi-licencia", label: "Mi licencia", icon: Lock },
+    ],
+  },
+  {
+    // Spec 047: textos desde el catálogo; cada entrada con su propio permiso.
+    title: t("nav.seccion"),
+    items: [
+      { to: "/notificaciones", label: t("nav.notificaciones"), icon: Bell },
+      { to: "/tareas", label: t("nav.tareas"), icon: ListChecks },
+      { to: "/alertas", label: t("nav.alertas"), icon: ShieldAlert, permission: "alertas:view" },
+      { to: "/notificaciones/reglas", label: t("nav.reglas"), icon: SlidersHorizontal, permission: "notificaciones:configure" },
+      { to: "/notificaciones/preferencias", label: t("nav.preferencias"), icon: Settings },
     ],
   },
   {
@@ -242,14 +257,14 @@ export function Sidebar(): React.JSX.Element {
   const [collapsed, setCollapsed] = useState(false);
   const { hasPermission } = useAuth();
 
+  // El permiso puede exigirse por sección o por entrada (Spec 047): una sección
+  // de uso general puede tener una entrada que no todos deben ver.
   const visibleSections = navSections
     .map((section) => ({
       ...section,
-      items: section.permission
-        ? hasPermission(section.permission)
-          ? section.items
-          : []
-        : section.items,
+      items: (section.permission && !hasPermission(section.permission) ? [] : section.items).filter(
+        (item) => !("permission" in item) || hasPermission(String(item.permission)),
+      ),
     }))
     .filter((section) => section.items.length > 0);
 

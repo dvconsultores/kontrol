@@ -1,0 +1,228 @@
+[
+  {
+    "id": "M047-01",
+    "titulo": "sin idempotencia del hecho de origen",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 16.34s",
+    "fallidas": [
+      "tests/test_spec047_notifications.py::test_el_mismo_hecho_no_duplica_ni_repetido_ni_tras_perder_el_recibo"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-02",
+    "titulo": "sin guarda de tenant al resolver destinatarios",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 12.08s",
+    "fallidas": [
+      "tests/test_spec047_notifications.py::test_un_usuario_de_otro_tenant_nunca_llega_a_destinatario"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-03",
+    "titulo": "sin guarda de empresa en la lista",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 9.31s",
+    "fallidas": [
+      "tests/test_spec047_notifications.py::test_flujo_l_la_notificacion_de_a_no_existe_en_el_contexto_de_b"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-04",
+    "titulo": "estado de lectura global",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 10.37s",
+    "fallidas": [
+      "tests/test_spec047_notifications.py::test_flujo_g_cada_destinatario_tiene_su_propio_estado_de_lectura"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-05",
+    "titulo": "completar la tarea aprueba el paso de origen",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 10.80s",
+    "fallidas": [
+      "tests/test_spec047_tasks.py::test_flujo_i_completar_la_tarea_no_aprueba_nada"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-06",
+    "titulo": "el fallo externo borra la notificación interna",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 10.15s",
+    "fallidas": [
+      "tests/test_spec047_notifications.py::test_flujo_k_el_fallo_del_canal_externo_no_toca_la_notificacion_interna"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-07",
+    "titulo": "se ignora el permiso del origen",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 8.82s",
+    "fallidas": [
+      "tests/test_spec047_notifications.py::test_flujo_j_sin_permiso_del_origen_el_item_no_existe_para_el_usuario"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-08",
+    "titulo": "el reintento duplica la tarea",
+    "valida": false,
+    "cae": false,
+    "exit": 0,
+    "resumen": "1 passed in 9.58s",
+    "fallidas": [],
+    "errores": []
+  },
+  {
+    "id": "M047-09",
+    "titulo": "reasignar borra el historial",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 9.15s",
+    "fallidas": [
+      "tests/test_spec047_tasks.py::test_flujo_h_asignar_reasignar_y_completar_conserva_todo_el_historial"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-10",
+    "titulo": "se aceptan relojes sin zona",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 11.27s",
+    "fallidas": [
+      "tests/test_spec047_scheduler.py::test_un_reloj_sin_zona_se_rechaza"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-11",
+    "titulo": "el contador incluye otra empresa",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 10.25s",
+    "fallidas": [
+      "tests/test_spec047_notifications.py::test_flujo_l_la_notificacion_de_a_no_existe_en_el_contexto_de_b"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-12",
+    "titulo": "la colisión única escapa como error",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 12.79s",
+    "fallidas": [
+      "tests/test_spec047_notifications.py::test_dos_publicaciones_forzadas_del_mismo_hecho_no_duplican_ni_revientan"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-13",
+    "titulo": "sin bloqueo de solapamiento",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 11.90s",
+    "fallidas": [
+      "tests/test_spec047_scheduler.py::test_flujo_b_un_tick_solapado_se_registra_y_no_ejecuta_nada"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-14",
+    "titulo": "clave aleatoria por tick",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 8.79s",
+    "fallidas": [
+      "tests/test_spec047_scheduler.py::test_flujo_a_un_recordatorio_se_emite_una_sola_vez_aunque_el_tick_se_repita"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-15",
+    "titulo": "la recuperación repite cada ventana perdida",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 9.01s",
+    "fallidas": [
+      "tests/test_spec047_scheduler.py::test_flujo_c_tras_48_horas_sin_ticks_solo_se_emite_la_ventana_vigente"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-16",
+    "titulo": "el temporizador lleva una regla de negocio",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 0.23s",
+    "fallidas": [
+      "tests/test_spec047_architecture.py::test_el_temporizador_solo_invoca_la_orden_canonica"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-17",
+    "titulo": "el efecto se crea en otra empresa",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 9.76s",
+    "fallidas": [
+      "tests/test_spec047_scheduler.py::test_cada_efecto_se_crea_en_la_empresa_de_su_tarea"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-18",
+    "titulo": "una clave desconocida se muestra cruda",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 0.04s",
+    "fallidas": [
+      "tests/test_spec047_messages.py::test_una_clave_desconocida_es_un_error_controlado_y_nunca_la_clave_cruda"
+    ],
+    "errores": []
+  },
+  {
+    "id": "M047-19",
+    "titulo": "el texto compuesto al crear pasa a ser la autoridad",
+    "valida": true,
+    "cae": true,
+    "exit": 1,
+    "resumen": "1 failed in 10.06s",
+    "fallidas": [
+      "tests/test_spec047_notifications.py::test_flujo_f_cambiar_la_redaccion_no_toca_la_fila"
+    ],
+    "errores": []
+  }
+]

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """CLI de KONTROL (FR-001-083/084, DOC-08 §19).
 
-Comandos: install, preflight, backup, restore, update, diagnose.
+Comandos: install, preflight, backup, restore, update, diagnose, scheduler-tick.
 Uso: python kontrol.py <comando> [--help]
 """
 
@@ -85,6 +85,20 @@ def cmd_diagnose(_args: argparse.Namespace) -> int:
     )
 
 
+#: Orden canónica del planificador de plataforma (Spec 047 · ADR-D0-015).
+SCHEDULER_TICK = ["python", "-m", "app.modules.scheduler", "tick"]
+
+
+def cmd_scheduler_tick(_args: argparse.Namespace) -> int:
+    """Un tick del planificador de plataforma (Spec 047 · ADR-D0-015).
+
+    Lo invoca el temporizador del sistema. Aquí solo se decide cuándo: qué hacer
+    lo decide la orden dentro del backend de esta instalación. Devuelve su código
+    de salida (0 completado u omitido, 2 con errores, 1 fallo operacional).
+    """
+    return _run(["docker", "compose", "-f", str(COMPOSE), "exec", "-T", "backend", *SCHEDULER_TICK])
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="kontrol", description="CLI de KONTROL")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -94,6 +108,7 @@ def main() -> int:
     sub.add_parser("restore", help="Restauración (procedimiento formal)")
     sub.add_parser("update", help="Actualización controlada")
     sub.add_parser("diagnose", help="Diagnóstico de servicios")
+    sub.add_parser("scheduler-tick", help="Un tick del planificador de plataforma")
     args = parser.parse_args()
     handlers = {
         "install": cmd_install,
@@ -102,6 +117,7 @@ def main() -> int:
         "restore": cmd_restore,
         "update": cmd_update,
         "diagnose": cmd_diagnose,
+        "scheduler-tick": cmd_scheduler_tick,
     }
     return handlers[args.command](args)
 

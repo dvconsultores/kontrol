@@ -73,9 +73,9 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 044 | SICA / SIGESAI / SACS | `BLOCKED_BY_EXTERNAL_SERVICE` | `regulatory` registra, valida, adjunta y bloquea | Sin API oficial: v1 no emite permiso |
 | 045 | Motor de aprobaciones / SoD | **`COMPLETE / CONVERGED`** | 8 tablas, 18 rutas; N10 corrigió su elegibilidad | — |
 | 046 | Gestión documental | **`RECONVERGED`** | 8 tablas, 23 `ResourceKind`, ClamAV real | S3 real (P1 externa) |
-| 047 | Notificaciones y tareas | `BLOCKED_BY_BUSINESS_DECISION` | 0 tablas · ciclo documental en `specs/047-notificaciones-tareas` hasta `/speckit.analyze` (2026-09-14) | **OQ-047-01** cuándo nacen notificaciones, tareas y escaladas: planificador de plataforma (`ADR-D0-003`) frente a `ADR-009` · **OQ-047-02** idioma: FR-047-034 exige i18n, que no existe ni tiene dueña (`R-D0-10-2`). Canales externos: 048. Sin implementación |
+| 047 | Notificaciones y tareas | **`COMPLETE / CONVERGED`** (2026-09-14) | 13 tablas, 17 rutas, planificador de plataforma (`ADR-D0-015`: temporizador del sistema → orden idempotente, sin cola) · 54 FR · regresión 1495/1487/8/0 · E2E 243 + 21 en tres navegadores · 19 mutaciones · OQ-047-01 y OQ-047-02 cerradas por el owner | Correo, push y SMS: 048 (sin proveedor) · vencimiento de la 045 registrado y deshabilitado hasta que su dueña defina el camino tras `EXPIRED` · `en` DEFERRED |
 | 048 | Integraciones | `PARTIALLY_IMPLEMENTED` | licenciamiento central | Delta dirigido «proveedor automático de tasas» (2026-09-13): **BLOCKED BY MATERIAL DECISION** en `/speckit.analyze` — OQ-048-01 fuente autorizada, OQ-048-02 TLS del BCV, OQ-048-03 compra/venta y Fecha Operación/Valor. Sin implementación; la 013 opera por carga manual e importación |
-| 049 | Dashboard | `PARTIALLY_IMPLEMENTED` | `reporting` 3 tablas | **Revalidación 2026-09-13 · BLOCKED BY OWNER DEPENDENCY**: compras (015-017, 027, 028), fiscal (039-043, `D0-07`), regulatorio (044) y tareas/alertas (047); decisiones MD-049-01 y MD-049-02; el dashboard existente suma entradas y salidas de todas las monedas en un solo número (`PREEXISTING`) · **Revalidación 2026-09-14**: sin cambio de estado; el bloqueo de la 047 pasa de «no iniciada» a «bloqueada por decisión» |
+| 049 | Dashboard | `PARTIALLY_IMPLEMENTED` | `reporting` 3 tablas | **Revalidación 2026-09-13 · BLOCKED BY OWNER DEPENDENCY**: compras (015-017, 027, 028), fiscal (039-043, `D0-07`), regulatorio (044) y tareas/alertas (047); decisiones MD-049-01 y MD-049-02; el dashboard existente suma entradas y salidas de todas las monedas en un solo número (`PREEXISTING`) · **Revalidación 2026-09-14 (tras converger la 047)**: sin cambio de estado; bloqueos de dependencia 3 —compras, fiscal, regulatorio—; la 047 deja de bloquear y ofrece `GET /notifications/counts` |
 | 050 | Reportes | `PARTIALLY_IMPLEMENTED` | `/reporting` 8 rutas | — |
 | 051 | Auditoría empresarial avanzada | `PARTIALLY_IMPLEMENTED` | bitácora con actor, tenant y empresa | 006 |
 | 052 | Instalador / actualización | `PARTIALLY_IMPLEMENTED` | `scripts/`, `alembic` a cabeza | Planificador de retención (P1) |
@@ -88,18 +88,18 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 
 | Estado | Specs |
 |---|---:|
-| `COMPLETE / CONVERGED` | 19 — 008, 011, 012, **013**, 019, 020, 021, 022, 029, 030, 031, 032, 033, 034, 035, 036, 037, 038, 045 |
+| `COMPLETE / CONVERGED` | 20 — 008, 011, 012, 013, 019, 020, 021, 022, 029, 030, 031, 032, 033, 034, 035, 036, 037, 038, 045, **047** |
 | `RECONVERGED` | 1 — 046 |
 | `READY_FOR_IMPLEMENTATION` | **0** |
 | `PARTIALLY_IMPLEMENTED` | 26 |
 | `NOT_STARTED` | 1 — 018 |
 | `BLOCKED_BY_DEPENDENCY` | **0** |
-| `BLOCKED_BY_BUSINESS_DECISION` | 2 — 004, **047** |
+| `BLOCKED_BY_BUSINESS_DECISION` | 1 — 004 |
 | `BLOCKED_BY_LEGAL_VALIDATION` | 6 — 039, 040, 041, 042, 043, 056 |
 | `BLOCKED_BY_EXTERNAL_SERVICE` | 1 — 044 |
 | **Sin estado** | **0** |
 
-Suma: 19 + 1 + 0 + 26 + 1 + 0 + 2 + 6 + 1 = **56**. Sin estado: **0**. Recontado desde las filas el 2026-09-14.
+Suma: 20 + 1 + 0 + 26 + 1 + 0 + 1 + 6 + 1 = **56**. Sin estado: **0**. Recontado desde las filas el 2026-09-14, tras converger la 047.
 
 El grupo dominante —26 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el

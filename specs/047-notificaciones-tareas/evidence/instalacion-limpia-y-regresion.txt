@@ -1,0 +1,34 @@
+pytest de otros proyectos en la máquina: 2
+procesos pytest activos al empezar: 0
+ruff · exit=0 · All checks passed!
+alembic cero → cabeza · exit=0 · 57 migraciones · cabeza 0057_spec047_notifications
+semilla canónica · exit=0
+semilla 047 · exit=0 · {'tenant': '8d315a18-22db-4bcd-b166-7dcf439b448b', 'd1': '5696aeb2-153e-434d-8e23-43afd809f1e7', 'd2': 'd1e9487e-68f5-4af0-81ae-6914ac15e9aa', 'admin_scoped_to': 'D1'}
+tablas 047 en ke2e: 13
+permisos 047 del ADMIN: notificaciones:configure tareas:view tareas:assign tareas:complete tareas:configure alertas:view
+tick en instalación limpia: {"status": "COMPLETED", "correlation_id": "ee8ff12a-080b-47dc-bc70-4049e543bfbe", "exit_code": 0, "handlers": [{"handler · exit=0
+backend: 200
+frontend: 200
+cadena e2e · exit=1 ·  11 failed  268 passed (6.1m) 
+  chromium: pasan 89 · fallan 4
+  firefox: pasan 89 · fallan 4
+  webkit: pasan 90 · fallan 3
+  notifications.spec: pasan 0 · fallan 3
+  1) [chromium] › e2e/approvals.spec.ts:151:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › flujo principal: configurar → solicitar → bandeja → aprobar 2 niveles → historial 
+  2) [chromium] › e2e/approvals.spec.ts:395:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › multiempresa: no se ven solicitudes de otra empresa 
+  3) [chromium] › e2e/notifications.spec.ts:138:1 › la campana cuenta en el servidor y leer una notificación la actualiza sin recargar 
+  4) [chromium] › e2e/order-confirmation.spec.ts:323:3 › Spec 033 — confirmación independiente del pedido › la interfaz registra el control y el dominio lo confirma 
+  5) [firefox] › e2e/approvals.spec.ts:151:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › flujo principal: configurar → solicitar → bandeja → aprobar 2 niveles → historial 
+  6) [firefox] › e2e/approvals.spec.ts:395:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › multiempresa: no se ven solicitudes de otra empresa 
+  7) [firefox] › e2e/notifications.spec.ts:138:1 › la campana cuenta en el servidor y leer una notificación la actualiza sin recargar 
+  8) [firefox] › e2e/order-confirmation.spec.ts:323:3 › Spec 033 — confirmación independiente del pedido › la interfaz registra el control y el dominio lo confirma 
+  9) [webkit] › e2e/approvals.spec.ts:395:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › multiempresa: no se ven solicitudes de otra empresa 
+  10) [webkit] › e2e/notifications.spec.ts:138:1 › la campana cuenta en el servidor y leer una notificación la actualiza sin recargar 
+  11) [webkit] › e2e/order-confirmation.spec.ts:323:3 › Spec 033 — confirmación independiente del pedido › la interfaz registra el control y el dominio lo confirma 
+trazas en el backend durante la cadena: 0 · 5xx: 0
+ticks en ke2e: COMPLETED=4
+E2E FIN
+regresión · EXIT=0 · 1487 passed, 8 skipped in 1855.17s (0:30:55)
+  saltos: 8 · fuera de S3: 0 · FAILED|ERROR: 0
+  advertencias: 0
+FIN

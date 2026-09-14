@@ -80,11 +80,13 @@ def init_models() -> None:
     import app.modules.inventory.models  # noqa: F401
     import app.modules.licensing.models  # noqa: F401
     import app.modules.master_data.models  # noqa: F401
+    import app.modules.notifications.models  # noqa: F401
     import app.modules.organization.models  # noqa: F401
     import app.modules.purchasing.models  # noqa: F401
     import app.modules.regulatory.models  # noqa: F401
     import app.modules.reporting.models  # noqa: F401
     import app.modules.sales.models  # noqa: F401
+    import app.modules.scheduler.models  # noqa: F401
     import app.modules.system.models  # noqa: F401
     import app.modules.treasury.models  # noqa: F401
 

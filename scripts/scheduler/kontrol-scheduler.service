@@ -1,0 +1,13 @@
+# KONTROL - planificador de plataforma (Spec 047 · ADR-D0-015).
+# Plantilla: la renderiza scripts/install-scheduler.sh, una por instalación de cliente.
+# El temporizador decide CUÁNDO; la orden decide QUÉ. Aquí no hay reglas de negocio,
+# ni SQL, ni llamadas HTTP: solo la orden canónica.
+[Unit]
+Description=KONTROL scheduler tick (@INSTANCE@)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=@KONTROL_DIR@
+ExecStart=/usr/bin/env python3 @KONTROL_DIR@/kontrol.py scheduler-tick

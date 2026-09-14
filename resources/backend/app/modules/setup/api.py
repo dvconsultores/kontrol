@@ -86,6 +86,12 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
         # a una empresa: `comercial:create` dice que el usuario puede crear
         # maestros comerciales, no en cuál. Eso lo decide `CompanyContext`.
         "comercial": ["view", "create", "edit", "manage_policies", "publish", "archive"],
+        # Recursos nuevos de la Spec 047. Ver lo propio —notificaciones recibidas,
+        # tareas donde se es candidato— no pide permiso de recurso: lo autoriza la
+        # fila de destinatario y el contexto de empresa (CL-047-05).
+        "notificaciones": ["configure"],
+        "tareas": ["view", "assign", "complete", "configure"],
+        "alertas": ["view"],
     }
     existing = db.execute(select(Role).where(Role.code == "ADMIN", Role.company_id.is_(None))).scalars().first()
     if existing:
