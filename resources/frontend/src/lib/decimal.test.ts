@@ -1,7 +1,7 @@
 /** Spec 038 · FLOAT-038-A — el importe se normaliza como texto, nunca como `Number`. */
 import { describe, expect, it } from "vitest";
 
-import { toDecimalString } from "./decimal";
+import { isZeroDecimal, toDecimalString } from "./decimal";
 
 describe("toDecimalString", () => {
   it("conserva un importe que un double de JavaScript no puede representar", () => {
@@ -28,6 +28,20 @@ describe("toDecimalString", () => {
   it("rechaza lo que no es un decimal sin signo", () => {
     for (const entrada of ["", "abc", "1e3", "NaN", "Infinity", "-1.00", "+1", "1.000,00", "1 000", ".5"]) {
       expect(toDecimalString(entrada), entrada).toBeNull();
+    }
+  });
+});
+
+describe("isZeroDecimal", () => {
+  it("reconoce el cero exacto en cualquier escala y con signo", () => {
+    for (const cero of ["0", "0.00", "-0.00", "000.0", null]) {
+      expect(isZeroDecimal(cero), String(cero)).toBe(true);
+    }
+  });
+
+  it("un céntimo no es cero: no hay tolerancia", () => {
+    for (const noCero of ["0.01", "-0.01", "100.00", "1234567890123456.78", "0.001"]) {
+      expect(isZeroDecimal(noCero), noCero).toBe(false);
     }
   });
 });

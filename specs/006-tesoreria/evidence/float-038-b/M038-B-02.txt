@@ -1,0 +1,21 @@
+# M038-B-02 · el cierre tolera un céntimo
+# fichero: app/modules/treasury/service.py
+# antes:       if diferencia != 0 and not difference_approved:
+# después:     if abs(diferencia) > Decimal("0.01") and not difference_approved:
+# selección: -k "centimo"
+# ---- ejecución ----
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+E   AssertionError: cerró con un céntimo de diferencia sin aprobación: {"id":"91150c93-2d49-4e48-bfe6-cbd15852496d","cashbox_id":"98fc4bb0-3793-4fa2-98f8-fe890205c3a7","opened_by":"4e6c1c38-4fdd-4902-bf08-774a5d3bf429","opened_at":"2026-09-15","closed_at":"2026-09-15","opened_amount":"100.00","counted_amount":"99.99","expected_amount":"100.00","difference":"-0.01","status":"CLOSED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":false,"close":false,"reject":false,"movement":false},"movements":[]}
+    assert 200 == 409
+     +  where 200 = <Response [200 OK]>.status_code
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:194: AssertionError: cerró con un céntimo de diferencia sin aprobación: {"id":"91150c93-2d49-4e48-bfe6-cbd15852496d","cashbox_id":"98fc4bb0-3793-4fa2-98f8-fe890205c3a7","opened_by":"4e6c1c38-4fdd-4902-bf08-774a5d3bf429","opened_at":"2026-09-15","closed_at":"2026-09-15","opened_amount":"100.00","counted_amount":"99.99","expected_amount":"100.00","difference":"-0.01","status":"CLOSED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":false,"close":false,"reject":false,"movement":false},"movements":[]}
+E   AssertionError: {"id":"c9787220-3950-426d-abd3-87478ada225c","cashbox_id":"fac2fe20-4eb6-489a-a60c-31285bcc449e","opened_by":"4e6c1c38-4fdd-4902-bf08-774a5d3bf429","opened_at":"2026-09-15","closed_at":"2026-09-15","opened_amount":"100.00","counted_amount":"100.01","expected_amount":"100.00","difference":"0.01","status":"CLOSED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":false,"close":false,"reject":false,"movement":false},"movements":[]}
+    assert (200 == 409)
+     +  where 200 = <Response [200 OK]>.status_code
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:208: AssertionError: {"id":"c9787220-3950-426d-abd3-87478ada225c","cashbox_id":"fac2fe20-4eb6-489a-a60c-31285bcc449e","opened_by":"4e6c1c38-4fdd-4902-bf08-774a5d3bf429","opened_at":"2026-09-15","closed_at":"2026-09-15","opened_amount":"100.00","counted_amount":"100.01","expected_amount":"100.00","difference":"0.01","status":"CLOSED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":false,"close":false,"reject":false,"movement":false},"movements":[]}
+=========================== short test summary info ============================
+FAILED tests/test_spec038_float_b.py::test_un_centimo_de_menos_es_diferencia_y_exige_aprobacion
+FAILED tests/test_spec038_float_b.py::test_un_centimo_de_mas_es_diferencia_con_su_signo
+# exit=1
+# restaurado: sí

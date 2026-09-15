@@ -438,4 +438,101 @@ test.describe("Spec 038 — tesorería", () => {
     await expect(page.locator("option").filter({ hasText: referencia }))
       .toHaveText(/ · 1\.234\.567\.890\.123\.456,78 · /, { timeout: 20_000 });
   });
+
+  /** Abre una sesión de caja nueva. El fondo viaja como número: la apertura es otro contrato, fuera de FLOAT-038-B. */
+  async function sesionDeCaja(request: APIRequestContext, c: Ctx, m: string, sufijo: string, fondo: number) {
+    const caja = await post(request, c, "/treasury/cashboxes", {
+      code: `CJ-${m}-${sufijo}`, name: `Caja ${m} ${sufijo}`, currency: "VED",
+    });
+    const sesion = await post(request, c, "/treasury/cash-sessions", { cashbox_id: caja.id, opened_amount: fondo });
+    return { caja: caja.id as string, sesion: sesion.id as string };
+  }
+  const deSesion = (id: string, accion: string): string => `/treasury/cash-sessions/${id}/${accion}`;
+
+  test("FLOAT-038-B · el arqueo exige texto decimal y el cierre no tolera un céntimo", async ({ request }) => {
+    const c = await ctx(request);
+    const m = marca();
+
+    const corta = await sesionDeCaja(request, c, m, "F", 100);
+    for (const cuerpo of [{ counted_amount: 100 }, { counted_amount: "100.001" }, { counted_amount: "100.005" }]) {
+      const r = await postCrudo(request, c, deSesion(corta.sesion, "arqueo"), cuerpo);
+      expect(r.status(), `aceptó ${JSON.stringify(cuerpo)}`).toBe(422);
+      expect((await r.json()).code).toBe("VALIDATION_ERROR");
+    }
+    const intacta = await get(request, c, `/treasury/cash-sessions/${corta.sesion}`);
+    expect([intacta.status, intacta.counted_amount], "un conteo rechazado tocó la sesión").toEqual(["OPEN", null]);
+
+    const arqueada = await post(request, c, deSesion(corta.sesion, "arqueo"), { counted_amount: "99.99" });
+    expect([arqueada.expected_amount, arqueada.counted_amount, arqueada.difference]).toEqual(["100.00", "99.99", "-0.01"]);
+    await post(request, c, deSesion(corta.sesion, "pre-close"), {});
+    const sinAprobar = await postCrudo(request, c, deSesion(corta.sesion, "close"), { difference_approved: false });
+    expect(sinAprobar.status(), "cerró con un céntimo de diferencia sin aprobación").toBe(409);
+    expect((await sinAprobar.json()).code).toBe("DIFFERENCE_NOT_APPROVED");
+    const aprobada = await post(request, c, deSesion(corta.sesion, "close"), {
+      difference_approved: true, approval_note: "Faltante de un céntimo",
+    });
+    expect(aprobada.status).toBe("CLOSED");
+
+    const exacta = await sesionDeCaja(request, c, m, "E", 100);
+    await post(request, c, deSesion(exacta.sesion, "arqueo"), { counted_amount: "100.00" });
+    await post(request, c, deSesion(exacta.sesion, "pre-close"), {});
+    const cerrada = await post(request, c, deSesion(exacta.sesion, "close"), { difference_approved: false });
+    expect([cerrada.status, cerrada.difference]).toEqual(["CLOSED", "0.00"]);
+  });
+
+  test("FLOAT-038-B · la interfaz de cajas envía el conteo exacto y no cierra un céntimo sin aprobar", async ({ page, request }) => {
+    const c = await ctx(request);
+    const m = marca();
+    const grande = await sesionDeCaja(request, c, m, "G", 0);
+    const corta = await sesionDeCaja(request, c, m, "C", 100);
+
+    await uiLogin(page);
+    await irA(page, "/tesoreria/cajas");
+    await expect(page.getByRole("heading", { name: "Cajas y arqueo", level: 1 })).toBeVisible({ timeout: 20_000 });
+
+    // La tabla pagina de diez en diez sobre todas las sesiones de la empresa: se amplía
+    // la página antes de buscar la fila de la caja de esta prueba.
+    const filaDe = async (caja: string) => {
+      await expect(page.getByRole("row").nth(1)).toBeVisible({ timeout: 20_000 });
+      const tamano = page.locator("#page-size");
+      if (await tamano.count()) await tamano.selectOption("100");
+      const fila = page.getByRole("row").filter({ hasText: caja });
+      await expect(fila).toBeVisible({ timeout: 20_000 });
+      return fila;
+    };
+
+    await (await filaDe(grande.caja)).getByRole("button", { name: "arqueo" }).click();
+    await page.getByLabel("Conteo").fill("1234567890123456.78");
+    const esArqueo = (url: string, metodo: string): boolean =>
+      metodo === "POST" && new URL(url).pathname.endsWith(deSesion(grande.sesion, "arqueo"));
+    const peticion = page.waitForRequest((r) => esArqueo(r.url(), r.method()));
+    const respuesta = page.waitForResponse((r) => esArqueo(r.url(), r.request().method()));
+    await page.getByRole("button", { name: "Registrar arqueo" }).click();
+
+    expect((await peticion).postDataJSON().counted_amount, "el navegador redondeó el conteo antes de enviarlo")
+      .toBe("1234567890123456.78");
+    const r = await respuesta;
+    expect(r.status()).toBe(200);
+    expect((await r.json()).difference).toBe("1234567890123456.78");
+    await expect(await filaDe(grande.caja)).toContainText("1.234.567.890.123.456,78", { timeout: 20_000 });
+
+    await (await filaDe(corta.caja)).getByRole("button", { name: "arqueo" }).click();
+    await page.getByLabel("Conteo").fill("99.99");
+    await page.getByRole("button", { name: "Registrar arqueo" }).click();
+    await expect(await filaDe(corta.caja)).toContainText("-0,01", { timeout: 20_000 });
+    await (await filaDe(corta.caja)).getByRole("button", { name: "pre-cierre" }).click();
+    await expect(await filaDe(corta.caja)).toContainText("PRE_CLOSED", { timeout: 20_000 });
+    await (await filaDe(corta.caja)).getByRole("button", { name: "cerrar" }).click();
+
+    const aprobar = page.getByRole("checkbox", { name: /Aprobar diferencia de -0,01/ });
+    await expect(aprobar).toBeChecked();
+    await aprobar.uncheck();
+    await expect(page.getByRole("button", { name: "Cerrar caja" }), "cerraría un céntimo sin aprobar").toBeDisabled();
+    await aprobar.check();
+    await page.getByRole("button", { name: "Cerrar caja" }).click();
+    await expect(await filaDe(corta.caja)).toContainText("CLOSED", { timeout: 20_000 });
+
+    const final = await get(request, c, `/treasury/cash-sessions/${corta.sesion}`);
+    expect([final.status, final.difference]).toEqual(["CLOSED", "-0.01"]);
+  });
 });

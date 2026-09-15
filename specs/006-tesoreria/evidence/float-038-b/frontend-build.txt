@@ -1,0 +1,4 @@
+dist/assets/DataTable-BzyboKqG.js                  52.49 kB │ gzip:  14.24 kB
+dist/assets/index-B6Isi_0i.js                     415.97 kB │ gzip: 126.73 kB
+✓ built in 3.96s
+build-exit=0

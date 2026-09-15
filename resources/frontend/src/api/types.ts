@@ -1284,21 +1284,24 @@ export interface CashSessionMovement {
   id: string;
   movement_type: string;
   payment_id: string | null;
-  amount: number;
+  /** Texto decimal exacto con dos decimales (Spec 038 · FLOAT-038-B). */
+  amount: string;
   instrument_id: string | null;
   reference: string | null;
 }
 
+/** Sesión de caja: todos sus importes son texto decimal exacto (Spec 038 · FLOAT-038-B). Nunca `Number`. */
 export interface CashSessionSummary {
   id: string;
   cashbox_id: string;
   opened_by: string | null;
   opened_at: string | null;
   closed_at: string | null;
-  opened_amount: number;
-  counted_amount: number | null;
-  expected_amount: number;
-  difference: number | null;
+  opened_amount: string;
+  counted_amount: string | null;
+  expected_amount: string;
+  /** Contado − esperado: positiva si sobra, negativa si falta. */
+  difference: string | null;
   status: string;
   approval_note: string | null;
   allowed_actions: AllowedActions;

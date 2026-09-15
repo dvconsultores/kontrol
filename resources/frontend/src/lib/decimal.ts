@@ -22,3 +22,13 @@ export function toDecimalString(input: string, scale = 2): string | null {
   const whole = integer.replace(/^0+(?=[0-9])/, "");
   return scale === 0 ? whole : `${whole}.${fraction.padEnd(scale, "0")}`;
 }
+
+/**
+ * `true` si el texto decimal vale exactamente cero (`"0"`, `"0.00"`, `"-0.00"`).
+ *
+ * Decide sin `Number` y sin tolerancia: `"0.01"` no es cero (Spec 038 ·
+ * FLOAT-038-B). `null` —todavía sin diferencia— cuenta como cero.
+ */
+export function isZeroDecimal(value: string | null): boolean {
+  return value === null || /^[+-]?0+(\.0+)?$/.test(value.trim());
+}

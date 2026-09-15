@@ -64,3 +64,25 @@ Conclusiones:
 - la pérdida ocurre **antes** de Pydantic y otra vez **después** del servicio: convertir a `Decimal` en medio no la repara;
 - el mismo módulo redondeaba de dos formas distintas según el camino, así que rechazar el exceso de escala en la frontera es la única regla que no elige entre dos números;
 - la columna ya es exacta: no hace falta migración.
+
+## 6. Evidencia del delta FLOAT-038-B — arqueo y cierre (Spec 038 · 2026-09-15)
+
+Leído en código y en PostgreSQL 16.2 antes de tocar nada:
+
+| Punto | Estado |
+|---|---|
+| Resta del arqueo | ya exacta: `_money(counted_amount) - _money(expected)`, `Decimal` (errata §14 de `spec038-convergence.md`) |
+| `cash_sessions.opened_amount`, `counted_amount`, `expected_amount`, `difference` | `numeric(18,2)` en PostgreSQL; `Mapped[float]` en el ORM |
+| Entrada del conteo | `ArqueoBody.counted_amount: float = Field(ge=0)` |
+| Cierre | `abs(session.difference or 0.0) > 1e-6` |
+| Auditoría | `float(...)` en `CASH_SESSION_ARCHED` y `CASH_SESSION_CLOSED` |
+| Respuesta | `Decimal` crudo en `session_dict` → número JSON; OpenAPI `{}` |
+| Pantalla | `Number(countedAmount) \|\| 0`, `toFixed(2)` y comparación numérica de la diferencia |
+| Consumidores de la auditoría | ninguno lee `after`; la API de auditoría no lo interpreta |
+
+Sobre el épsilon: con importes de escala 2 ninguna diferencia no nula es menor que
+`1e-6`, de modo que el épsilon no cambiaba resultados con dinero bien formado. Su
+defecto es que admite un criterio de «suficientemente cerca de cero» que no tiene
+autoridad, y que el `float` de la entrada sí podía llevar a la base un valor que
+no era el contado. Por eso la prueba permanente fija la regla —un céntimo es
+diferencia— y no el literal.

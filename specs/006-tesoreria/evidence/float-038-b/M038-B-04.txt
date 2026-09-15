@@ -1,0 +1,31 @@
+# M038-B-04 · se quita el rechazo por escala
+# fichero: app/shared/money.py
+# antes:   if isinstance(exponente, int) and -exponente > escala:
+# después: if False:
+# selección: -k "mas_decimales_que_la_columna_se_rechazan"
+# ---- ejecución ----
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"c80487c4-77f1-4f37-b6c0-66869414d96c","cashbox_id":"1c4e1389-37d2-4a82-9d50-7ab2895a339c","opened_by":"65b5936d-d0fa-4dd0-8ff4-1c5ec95a9d5d","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"100.00","expected_amount":"100.00","difference":"0.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:83: AssertionError: se esperaba 422 y llegó 200: {"id":"c80487c4-77f1-4f37-b6c0-66869414d96c","cashbox_id":"1c4e1389-37d2-4a82-9d50-7ab2895a339c","opened_by":"65b5936d-d0fa-4dd0-8ff4-1c5ec95a9d5d","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"100.00","expected_amount":"100.00","difference":"0.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"9f995972-eae8-4be8-a472-6bed12d25667","cashbox_id":"567d764a-92f7-4fed-9d08-d1cb74da9bd9","opened_by":"65b5936d-d0fa-4dd0-8ff4-1c5ec95a9d5d","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"100.01","expected_amount":"100.00","difference":"0.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:83: AssertionError: se esperaba 422 y llegó 200: {"id":"9f995972-eae8-4be8-a472-6bed12d25667","cashbox_id":"567d764a-92f7-4fed-9d08-d1cb74da9bd9","opened_by":"65b5936d-d0fa-4dd0-8ff4-1c5ec95a9d5d","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"100.01","expected_amount":"100.00","difference":"0.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"b78efd4b-4def-4790-90d2-df18fde19987","cashbox_id":"2e3118b0-4632-420e-bb3a-1928337c4464","opened_by":"65b5936d-d0fa-4dd0-8ff4-1c5ec95a9d5d","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"0.01","expected_amount":"100.00","difference":"-100.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:83: AssertionError: se esperaba 422 y llegó 200: {"id":"b78efd4b-4def-4790-90d2-df18fde19987","cashbox_id":"2e3118b0-4632-420e-bb3a-1928337c4464","opened_by":"65b5936d-d0fa-4dd0-8ff4-1c5ec95a9d5d","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"0.01","expected_amount":"100.00","difference":"-100.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"753416bc-c8cb-4b56-8e4b-51cb174bc701","cashbox_id":"d8b692b7-624d-4a1a-8e9a-5748d8e8be53","opened_by":"65b5936d-d0fa-4dd0-8ff4-1c5ec95a9d5d","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"100.00","expected_amount":"100.00","difference":"0.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:83: AssertionError: se esperaba 422 y llegó 200: {"id":"753416bc-c8cb-4b56-8e4b-51cb174bc701","cashbox_id":"d8b692b7-624d-4a1a-8e9a-5748d8e8be53","opened_by":"65b5936d-d0fa-4dd0-8ff4-1c5ec95a9d5d","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"100.00","expected_amount":"100.00","difference":"0.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+=========================== short test summary info ============================
+FAILED tests/test_spec038_float_b.py::test_mas_decimales_que_la_columna_se_rechazan_sin_tocar_la_sesion[100.001]
+FAILED tests/test_spec038_float_b.py::test_mas_decimales_que_la_columna_se_rechazan_sin_tocar_la_sesion[100.005]
+FAILED tests/test_spec038_float_b.py::test_mas_decimales_que_la_columna_se_rechazan_sin_tocar_la_sesion[0.005]
+FAILED tests/test_spec038_float_b.py::test_mas_decimales_que_la_columna_se_rechazan_sin_tocar_la_sesion[100.000]
+# exit=1
+# restaurado: sí

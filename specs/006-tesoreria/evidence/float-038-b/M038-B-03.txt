@@ -1,0 +1,26 @@
+# M038-B-03 · la auditoría vuelve a guardar float
+# fichero: app/modules/treasury/service.py
+# antes:   "counted": str(_money(session.counted_amount))
+# después: "counted": float(session.counted_amount or 0)
+# selección: -k "dieciocho_digitos or auditoria_guarda"
+# ---- ejecución ----
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+E   AssertionError: la auditoría degradó el conteo
+    assert [{'counted': ...ted': '0.00'}] == [{'counted': ...ted': '0.00'}]
+      
+      At index 0 diff: {'expected': '0.00', 'counted': 1234567890123456.8, 'difference': '1234567890123456.78'} != {'expected': '0.00', 'counted': '1234567890123456.78', 'difference': '1234567890123456.78'}
+      Use -v to get more diff
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:122: AssertionError: la auditoría degradó el conteo
+E   AssertionError: assert {'counted': 9...ed': '100.00'} == {'counted': '...ed': '100.00'}
+      
+      Omitting 2 identical items, use -vv to show
+      Differing items:
+      {'counted': 99.99} != {'counted': '99.99'}
+      Use -v to get more diff
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:228: AssertionError: assert {'counted': 9...ed': '100.00'} == {'counted': '...ed': '100.00'}
+=========================== short test summary info ============================
+FAILED tests/test_spec038_float_b.py::test_un_importe_de_dieciocho_digitos_llega_exacto_a_base_respuesta_y_auditoria
+FAILED tests/test_spec038_float_b.py::test_la_auditoria_guarda_texto_exacto_con_signo
+# exit=1
+# restaurado: sí

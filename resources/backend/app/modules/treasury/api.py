@@ -26,6 +26,7 @@ from app.modules.treasury.models import (
     BankTransaction,
     Cashbox,
     CashSession,
+    CashSessionMovement,
     Currency,
     ExchangeRate,
     ExchangeRateImportBatch,
@@ -120,14 +121,55 @@ class SessionMovementCreate(BaseModel):
     note: str | None = None
 
 
+# Spec 038 · FLOAT-038-B — el conteo del arqueo es texto decimal exacto con la escala
+# de su columna y la regla de siempre: cero sí, signo no. Mismo helper que FLOAT-038-A.
+ConteoDeCaja = texto_decimal(CashSession.__table__.c.counted_amount.type, positivo=True, admite_cero=True)
+ImporteDeCaja = texto_de_salida(CashSession.__table__.c.opened_amount.type)
+ImporteDeMovimientoDeCaja = texto_de_salida(CashSessionMovement.__table__.c.amount.type)
+
+
 class ArqueoBody(BaseModel):
-    counted_amount: float = Field(ge=0)
+    counted_amount: ConteoDeCaja
     notes: str | None = None
 
 
 class CloseSessionBody(BaseModel):
     difference_approved: bool = False
     approval_note: str | None = None
+
+
+class CashSessionMovementOut(BaseModel):
+    id: str
+    movement_type: str
+    payment_id: str | None
+    amount: ImporteDeMovimientoDeCaja
+    instrument_id: str | None
+    reference: str | None
+
+
+class CashSessionOut(BaseModel):
+    """La sesión de caja con **todos** sus importes en texto: sale de un solo serializador."""
+
+    id: str
+    cashbox_id: str
+    opened_by: str | None
+    opened_at: str | None
+    closed_at: str | None
+    opened_amount: ImporteDeCaja
+    counted_amount: ImporteDeCaja | None
+    expected_amount: ImporteDeCaja
+    difference: ImporteDeCaja | None
+    status: str
+    approval_note: str | None
+    allowed_actions: dict[str, bool]
+    movements: list[CashSessionMovementOut]
+
+
+class CashSessionPage(BaseModel):
+    items: list[CashSessionOut]
+    total: int
+    page: int
+    page_size: int
 
 
 # Spec 038 · FLOAT-038-A — el importe del movimiento bancario es texto decimal
@@ -364,7 +406,7 @@ def set_exchange_rate(body: ExchangeRateCreate, db: Session = Depends(get_db),
 # --------------------------------------------------------------------------- #
 # Cajas — sesiones
 # --------------------------------------------------------------------------- #
-@router.get("/cash-sessions")
+@router.get("/cash-sessions", response_model=CashSessionPage)
 def list_sessions(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     query = select(CashSession).where(CashSession.company_id == ctx.company_id)
     if status:
@@ -374,7 +416,7 @@ def list_sessions(status: str | None = None, db: Session = Depends(get_db), user
             "page": 1, "page_size": len(items) or 1}
 
 
-@router.post("/cash-sessions", dependencies=[Depends(require_write_allowed)])
+@router.post("/cash-sessions", response_model=CashSessionOut, dependencies=[Depends(require_write_allowed)])
 def open_session(body: SessionOpen, db: Session = Depends(get_db),
                  actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
     s = treasury_service.open_session(db, company_id=ctx.company_id, cashbox_id=body.cashbox_id,
@@ -384,7 +426,7 @@ def open_session(body: SessionOpen, db: Session = Depends(get_db),
     return treasury_service.session_dict(db, s)
 
 
-@router.get("/cash-sessions/{session_id}")
+@router.get("/cash-sessions/{session_id}", response_model=CashSessionOut)
 def get_session(session_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
     return treasury_service.session_dict(db, session)
@@ -403,7 +445,8 @@ def add_movement(session_id: str, body: SessionMovementCreate, db: Session = Dep
     return {"id": mv.id, "movement_type": mv.movement_type, "amount": mv.amount, "reference": mv.reference}
 
 
-@router.post("/cash-sessions/{session_id}/arqueo", dependencies=[Depends(require_write_allowed)])
+@router.post("/cash-sessions/{session_id}/arqueo", response_model=CashSessionOut,
+             dependencies=[Depends(require_write_allowed)])
 def arqueo_session(session_id: str, body: ArqueoBody, db: Session = Depends(get_db),
                    actor: User = Depends(require_permission("tesoreria", "approve")), ctx: CompanyContext = Depends(get_company_context)):
     session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
@@ -414,7 +457,8 @@ def arqueo_session(session_id: str, body: ArqueoBody, db: Session = Depends(get_
     return treasury_service.session_dict(db, session)
 
 
-@router.post("/cash-sessions/{session_id}/pre-close", dependencies=[Depends(require_write_allowed)])
+@router.post("/cash-sessions/{session_id}/pre-close", response_model=CashSessionOut,
+             dependencies=[Depends(require_write_allowed)])
 def pre_close_session(session_id: str, db: Session = Depends(get_db),
                       actor: User = Depends(require_permission("tesoreria", "approve")), ctx: CompanyContext = Depends(get_company_context)):
     session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
@@ -424,7 +468,8 @@ def pre_close_session(session_id: str, db: Session = Depends(get_db),
     return treasury_service.session_dict(db, session)
 
 
-@router.post("/cash-sessions/{session_id}/close", dependencies=[Depends(require_write_allowed)])
+@router.post("/cash-sessions/{session_id}/close", response_model=CashSessionOut,
+             dependencies=[Depends(require_write_allowed)])
 def close_session(session_id: str, body: CloseSessionBody, db: Session = Depends(get_db),
                   actor: User = Depends(require_permission("tesoreria", "approve")), ctx: CompanyContext = Depends(get_company_context)):
     session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")
@@ -435,7 +480,8 @@ def close_session(session_id: str, body: CloseSessionBody, db: Session = Depends
     return treasury_service.session_dict(db, session)
 
 
-@router.post("/cash-sessions/{session_id}/reject", dependencies=[Depends(require_write_allowed)])
+@router.post("/cash-sessions/{session_id}/reject", response_model=CashSessionOut,
+             dependencies=[Depends(require_write_allowed)])
 def reject_session(session_id: str, db: Session = Depends(get_db),
                    actor: User = Depends(require_permission("tesoreria", "approve")), ctx: CompanyContext = Depends(get_company_context)):
     session = _owned(db, CashSession, session_id, ctx.company_id, "CASH_SESSION_NOT_FOUND", "Sesión de caja no encontrada")

@@ -1,0 +1,6 @@
+# Regresión completa de backend, sola
+PostgreSQL: 16.2 · TZ=UTC · inicio 2026-09-15 15:41:56 UTC
+EXIT=0
+      8 SKIPPED [1] tests/test_documents_storage.py: Sin servicio compatible con S3 real: KONTROL_S3_ENDPOINT no está configurado. La conformidad de este adaptador queda SIN VERIFICAR en este entorno.
+fallos: 0 · avisos: 0
+1569 passed, 8 skipped in 1364.02s (0:22:44)

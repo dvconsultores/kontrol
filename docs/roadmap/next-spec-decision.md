@@ -1274,3 +1274,37 @@ delta del E2E de la 045, CLOCK-013 y E2E-031-RESERVAS.
 
 Ni iniciar FLOAT-038-B, ni tocar los otros siete `float` del borde de tesorería, ni
 CONC-046, ni la 049. Cada uno requiere su ciclo completo y autorización expresa.
+
+---
+
+## Tras converger FLOAT-038-B — 2026-09-15
+
+**`FLOAT-038-B — CLOSED`** · `TARGETED DELTA COMPLETE / CONVERGED` · detalle en
+`specs/006-tesoreria/spec038-cash-close-decimal-delta.md`.
+
+El conteo del arqueo entra como texto exacto con la escala de su columna, el cierre
+decide con cero exacto —un céntimo exige aprobación—, la auditoría guarda texto y la
+sesión de caja sale con todos sus importes en texto. La resta ya era exacta y no
+cambió. Se corrigió además un defecto que hacía inalcanzable el arqueo desde la
+pantalla. Sin preguntas nuevas: bastaron las decisiones de FLOAT-038-A.
+
+### Cola revalidada
+
+| Orden | Trabajo | Dueña | ¿Espera decisión? | Motivo del orden |
+|---|---|---|---|---|
+| 1 | **CONC-046** · una subida documental concurrente escapa como excepción | 046 | no | es un 500 ante una carrera legítima (P25) y la prueba que debería impedirlo lo acepta |
+| 2 | **E2E-045** · `approvals.spec.ts` «Desactivar» y el `company_id` ignorado | 045 | no | el motor de aprobaciones sigue sin su E2E en verde |
+| 3 | **CLOCK-013** · cinco pruebas de la 013 dependen del reloj | 013 | no | la evidencia de la 013 falla entre las 00:00 y las 02:00 en UTC+2 |
+| 4 | **E2E-031-RESERVAS** · el filtro `source_order_id` que la API ignora | 031 · 023 | no | intermitente, solo con navegadores en paralelo |
+| 5 | Los **seis `float`** restantes del borde de tesorería: `opened_amount` de apertura, importe de movimiento de caja, importe de ejecución, `opening_balance` y `closing_balance` de conciliación, importe de transferencia | 038 | **no**: la política ya está decidida (texto decimal, 422, cero exacto) | mismo patrón y mismas herramientas (`app/shared/money.py`, `lib/decimal.ts`) |
+
+Siguen bloqueados por decisión: el camino tras `EXPIRED` en la 045, OQ-048-01..03,
+MD-049-01/02, D0-06 y D0-07. La 049 sigue `BLOCKED BY OWNER DEPENDENCY`.
+
+`READY_FOR_IMPLEMENTATION = 0`: cada punto de la cola necesita su ciclo completo y
+autorización expresa. **Ninguno se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni CONC-046, ni el E2E de la 045, ni CLOCK-013, ni E2E-031-RESERVAS, ni los seis
+`float` restantes, ni la 049. Cada uno requiere su ciclo completo y autorización expresa.

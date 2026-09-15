@@ -1,0 +1,4 @@
+# Vitest completo, tres ejecuciones seguidas
+run1 exit=0  Tests 368 passed (368) | errores_no_capturados=0
+run2 exit=0  Tests 368 passed (368) | errores_no_capturados=0
+run3 exit=0  Tests 368 passed (368) | errores_no_capturados=0

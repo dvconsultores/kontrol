@@ -41,6 +41,47 @@
 - `POST /treasury/cash-sessions/{id}/close` — `{difference_approved: bool, approval_note?}`; **rechaza si diferencia ≠ 0 sin aprobación** (FR-006-003).
 - `GET /treasury/cash-sessions/{id}` — detalle con movimientos y saldo.
 
+### 2.1 Arqueo y sesión de caja — delta FLOAT-038-B (Spec 038 · 2026-09-15)
+
+> **Cambio incompatible, autorizado** por las decisiones heredadas de FLOAT-038-A
+> (`OQ-FLOAT-038-A-01`, `-02`). El frontend del repositorio se adapta en el mismo
+> cambio; fuera del repositorio no hay inventario de consumidores.
+
+Petición de `POST /treasury/cash-sessions/{id}/arqueo`:
+
+| Campo | Contrato |
+|---|---|
+| `counted_amount` | `string`, `^[0-9]+(\.[0-9]{1,2})?$`, mayor o igual que cero, hasta 16 dígitos enteros |
+
+```json
+{ "counted_amount": "1500.25" }
+```
+
+Rechazadas con `422 VALIDATION_ERROR`, sin cambiar la sesión ni auditar el arqueo:
+`{"counted_amount": 100.00}` (número), `"100.001"` y `"100.005"` (escala), `"-1.00"`
+(signo), `"1e2"`, `"NaN"`, `""`, `"12345678901234567.00"`.
+
+Respuesta de `GET /cash-sessions`, `POST /cash-sessions`, `GET /cash-sessions/{id}`,
+`…/arqueo`, `…/pre-close`, `…/close` y `…/reject` (`CashSessionOut`; el listado,
+`CashSessionPage`):
+
+| Campo | Contrato |
+|---|---|
+| `opened_amount`, `expected_amount` | `string` con dos decimales |
+| `counted_amount`, `difference` | `string` con dos decimales o `null` |
+| `movements[].amount` | `string` con dos decimales |
+
+`difference` es `contado − esperado`: positiva si sobra, negativa si falta. El
+cierre sin `difference_approved` exige una diferencia exactamente cero; un céntimo
+es diferencia y responde `409 DIFFERENCE_NOT_APPROVED`.
+
+Los eventos `CASH_SESSION_ARCHED` (`expected`, `counted`, `difference`) y
+`CASH_SESSION_CLOSED` (`difference`, `approved`) guardan sus importes como texto
+decimal a partir de este cambio; los eventos anteriores no se reescriben.
+
+Siguen como estaban, y abiertos: `opened_amount` en la apertura, `amount` en
+`POST …/movements` y la respuesta de esa ruta.
+
 ## 3. Bancos — transacciones e ingresos/egresos
 
 - `GET/POST /treasury/bank-transactions` — body: `{account_id, txn_date, value_date, direction: IN|OUT, amount, currency, reference, source, commission?}`. Importes como **texto decimal** (§3.1).

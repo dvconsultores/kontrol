@@ -291,10 +291,11 @@ class CashSession(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     opened_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
     opened_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     closed_at: Mapped[date | None] = mapped_column(Date, nullable=True)
-    opened_amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
-    counted_amount: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
-    expected_amount: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
-    difference: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
+    #: Spec 038 · FLOAT-038-B: columnas siempre exactas; la anotación decía `float`.
+    opened_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
+    counted_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    expected_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    difference: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="OPEN")
     # OPEN -> ARCHED (arqueo) -> PRE_CLOSED -> CLOSED / REJECTED
     approval_note: Mapped[str | None] = mapped_column(Text, nullable=True)

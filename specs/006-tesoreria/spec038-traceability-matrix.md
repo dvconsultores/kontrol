@@ -68,3 +68,24 @@ Evidencia de mutaciones en `evidence/float-038-a/`.
 | FR-038-FLOAT-A-009 · cambio incompatible declarado | `OQ-FLOAT-038-A-01` | `contracts/api-contracts.md` §3.1 · OpenAPI · `spec038-convergence.md` §15 | `test_openapi_declara_…` · e2e de contrato | — | ✔ |
 
 Sin huérfanos: 9 requisitos del delta, 19 tareas y 4 mutaciones, todos enlazados.
+
+## Delta dirigido FLOAT-038-B — arqueo y cierre de caja exactos (2026-09-15)
+
+Detalle: `spec038-cash-close-decimal-delta.md`. Pruebas de backend en
+`tests/test_spec038_float_b.py` (33); de frontend en `src/modules/tesoreria/arqueo-caja.test.tsx`
+y `src/lib/decimal.test.ts`; E2E en `e2e/treasury.spec.ts`. Mutaciones en `evidence/float-038-b/`.
+
+| Requisito | Autoridad | Implementación | Prueba | Mutación | Estado |
+|---|---|---|---|---|---|
+| FR-038-FLOAT-B-001 · `counted_amount` solo texto | OQ-FLOAT-038-A-01 | `ConteoDeCaja` = `texto_decimal(counted_amount, positivo, admite_cero)` en `ArqueoBody` | `test_el_esquema_entrega_decimal_y_no_float` · `test_un_numero_json_se_rechaza_sin_tocar_la_sesion` · e2e «el arqueo exige texto decimal» | M038-B-01 | ✔ |
+| FR-038-FLOAT-B-002 · escala de la columna; `≥ 0` | OQ-FLOAT-038-A-02 | escala y precisión de `cash_sessions.counted_amount`; `admite_cero` | `test_mas_decimales_que_la_columna_…` · `test_lo_que_no_es_un_conteo_valido_se_rechaza` · `test_cero_sigue_siendo_un_conteo_valido` | M038-B-04 | ✔ |
+| FR-038-FLOAT-B-003 · un rechazo no toca la sesión ni audita | OQ-FLOAT-038-A-02 | validación antes del servicio | `_intacta` en las pruebas de rechazo · `test_otra_empresa_no_arquea_ni_con_un_conteo_valido` · e2e | M038-B-04 | ✔ |
+| FR-038-FLOAT-B-004 · fórmula y signo intactos | Spec 038 | `_money(counted) - _money(expected)` sin cambio | `test_la_diferencia_es_decimal_y_conserva_formula_y_signo` · `test_un_centimo_de_menos_…` (`-0.01`) · `test_un_centimo_de_mas_…` (`0.01`) · `test_el_arqueo_no_arrastra_error_binario` | — | ✔ |
+| FR-038-FLOAT-B-005 · cero exacto en el cierre | FR-006-003 · `KQA-100` | `_money(session.difference) != 0` | `test_si_cuadra_exacto_cierra_sin_aprobacion` · `test_un_centimo_de_menos_es_diferencia_y_exige_aprobacion` · `test_cerrar_dos_veces_no_cierra_dos_veces` · guarda sin épsilon · e2e | M038-B-02 | ✔ |
+| FR-038-FLOAT-B-006 · auditoría en texto | `KQA-100` | `str(_money(...))` en `CASH_SESSION_ARCHED` y `CASH_SESSION_CLOSED` | `test_la_auditoria_guarda_texto_exacto_con_signo` · `test_un_importe_de_dieciocho_digitos_…` | M038-B-03 | ✔ |
+| FR-038-FLOAT-B-007 · respuesta de la sesión en texto con modelo | OQ-FLOAT-038-A-01 | `CashSessionOut` · `CashSessionPage` · `CashSessionMovementOut` · `session_dict` | `test_la_sesion_dice_todos_sus_importes_en_texto` · `test_openapi_declara_texto_en_el_arqueo_y_en_la_sesion` · `test_guarda_las_rutas_de_la_sesion_declaran_su_modelo` | M038-B-01 | ✔ |
+| FR-038-FLOAT-B-008 · servicio y ORM en `Decimal` | `KQA-100` | firma de `arqueo_session`; `_session_expected -> Decimal`; `Mapped[Decimal]` | `test_guarda_ninguna_anotacion_float_en_el_arqueo` · `test_guarda_sin_float_redondeo_ni_epsilon_…` | — | ✔ |
+| FR-038-FLOAT-B-009 · pantalla sin `Number` y con cero exacto | OQ-FLOAT-038-A-01 | `toDecimalString` · `formatMoney` · `isZeroDecimal` en `CajasPage.tsx` | `arqueo-caja.test.tsx` (7) · `decimal.test.ts` · e2e «la interfaz de cajas…» | M038-B-05 | ✔ |
+| FR-038-FLOAT-B-010 · cambio incompatible declarado | OQ-FLOAT-038-A-01 | `contracts/api-contracts.md` §2.1 · OpenAPI · `spec038-convergence.md` §16 | `test_openapi_declara_…` · e2e | — | ✔ |
+
+Sin huérfanos: 10 requisitos, 21 tareas y 5 mutaciones, todos enlazados.

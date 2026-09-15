@@ -1,0 +1,9 @@
+# Paridad ORM ↔ PostgreSQL del ámbito tocado (ke2e migrada, alembic compare_metadata)
+alembic head: 0057_spec047_notifications
+  cash_session_movements amount numeric 18 2
+  cash_sessions counted_amount numeric 18 2
+  cash_sessions difference numeric 18 2
+  cash_sessions expected_amount numeric 18 2
+  cash_sessions opened_amount numeric 18 2
+diferencias en cash_sessions, cash_session_movements y bank_transactions: 0
+diferencias heredadas globales: 21

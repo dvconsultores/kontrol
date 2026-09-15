@@ -132,7 +132,7 @@ def test_la_sesion_de_caja_de_b_no_se_opera_desde_a(mundo):
     # Payloads válidos a propósito: un 422 significaría que la petición murió
     # en la validación de forma, sin llegar a preguntarse de quién es la caja.
     for ruta, cuerpo in (("movements", {"movement_type": "IN", "amount": 5}),
-                         ("arqueo", {"counted_amount": 5}),
+                         ("arqueo", {"counted_amount": "5.00"}),
                          ("pre-close", {}),
                          ("close", {"difference_approved": False}),
                          ("reject", {})):
@@ -197,7 +197,7 @@ def test_la_auditoria_registra_la_empresa_real(mundo):
     ses = mundo.crear("/treasury/cash-sessions", "ua", mundo.company_a,
                       {"cashbox_id": caja, "opened_amount": 0})
     r = mundo.post(f"/treasury/cash-sessions/{ses}/arqueo", "ua", mundo.company_a,
-                   {"counted_amount": 0})
+                   {"counted_amount": "0.00"})
     assert r.status_code == 200, r.text
 
     db = mundo.factory()

@@ -272,7 +272,7 @@ def resolucion_de_tasa(db: Session, company_id: str, origen: str, destino: str,
         return None
 
 
-def _session_expected(db: Session, session: CashSession) -> float:
+def _session_expected(db: Session, session: CashSession) -> Decimal:
     ins = db.execute(select(CashSessionMovement).where(
         CashSessionMovement.session_id == session.id, CashSessionMovement.movement_type == "IN")).scalars().all()
     outs = db.execute(select(CashSessionMovement).where(
@@ -420,7 +420,7 @@ def add_session_movement(db: Session, *, session_id: str, movement_type: str, am
     return m
 
 
-def arqueo_session(db: Session, *, session_id: str, counted_amount: float,
+def arqueo_session(db: Session, *, session_id: str, counted_amount: Decimal,
                    notes: str | None = None, actor: str | None = None) -> CashSession:
     session = db.get(CashSession, session_id)
     if not session:
@@ -435,10 +435,12 @@ def arqueo_session(db: Session, *, session_id: str, counted_amount: float,
         session.audit = f'{{"arqueo_notes": {notes!r}}}'
     session.updated_at = datetime.now(UTC)
     db.flush()
+    # Spec 038 · FLOAT-038-B: la auditoría guarda el dinero como texto exacto. Con
+    # `float(...)` un conteo de dieciocho dígitos quedaba registrado como otro número.
     _audit(db, action="CASH_SESSION_ARCHED", entity_type="CashSession", entity_id=str(session.id),
            company_id=session.company_id, actor=actor,
-           after={"expected": float(session.expected_amount or 0), "counted": float(session.counted_amount or 0),
-                  "difference": float(session.difference or 0)})
+           after={"expected": str(_money(session.expected_amount)), "counted": str(_money(session.counted_amount)),
+                  "difference": str(_money(session.difference))})
     return session
 
 
@@ -471,8 +473,10 @@ def close_session(db: Session, *, session_id: str, difference_approved: bool = F
     if not session:
         raise NotFoundError(code="CASH_SESSION_NOT_FOUND", message="Sesión de caja no encontrada")
     _assert_transition(session.status, "CLOSED", CASH_SESSION_TRANSITIONS, "la sesión de caja")
-    diff = session.difference or 0.0
-    if abs(diff) > 1e-6 and not difference_approved:
+    # Spec 038 · FLOAT-038-B: cero exacto. Entre cero y un céntimo no hay nada que
+    # tolerar, y ningún margen tiene autoridad; `_money(None)` sigue valiendo cero.
+    diferencia = _money(session.difference)
+    if diferencia != 0 and not difference_approved:
         raise ConflictError(code="DIFFERENCE_NOT_APPROVED",
                             message="La caja tiene diferencia y debe aprobarse/justificarse para cerrarla.")
     session.status = "CLOSED"
@@ -483,7 +487,7 @@ def close_session(db: Session, *, session_id: str, difference_approved: bool = F
     db.flush()
     _audit(db, action="CASH_SESSION_CLOSED", entity_type="CashSession", entity_id=str(session.id),
            company_id=session.company_id, actor=actor,
-           after={"difference": float(session.difference or 0), "approved": difference_approved})
+           after={"difference": str(diferencia), "approved": difference_approved})
     return session
 
 
@@ -491,15 +495,20 @@ def session_dict(db: Session, session: CashSession) -> dict:
     movements = db.execute(select(CashSessionMovement).where(
         CashSessionMovement.session_id == session.id).order_by(CashSessionMovement.created_at)).scalars().all()
     expected = _session_expected(db, session)
+
+    # Spec 038 · FLOAT-038-B: todos los importes de la sesión salen como texto exacto.
+    def texto(valor: Any) -> str | None:
+        return None if valor is None else str(_money(valor))
+
     return {"id": session.id, "cashbox_id": session.cashbox_id, "opened_by": session.opened_by,
             "opened_at": session.opened_at.isoformat() if session.opened_at else None,
             "closed_at": session.closed_at.isoformat() if session.closed_at else None,
-            "opened_amount": session.opened_amount, "counted_amount": session.counted_amount,
-            "expected_amount": expected, "difference": session.difference, "status": session.status,
+            "opened_amount": texto(session.opened_amount), "counted_amount": texto(session.counted_amount),
+            "expected_amount": texto(expected), "difference": texto(session.difference), "status": session.status,
             "approval_note": session.approval_note,
             "allowed_actions": session_allowed_actions(session),
             "movements": [{"id": m.id, "movement_type": m.movement_type, "payment_id": m.payment_id,
-                           "amount": m.amount, "instrument_id": m.instrument_id, "reference": m.reference}
+                           "amount": texto(m.amount), "instrument_id": m.instrument_id, "reference": m.reference}
                           for m in movements]}
 
 

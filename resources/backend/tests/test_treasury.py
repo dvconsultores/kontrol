@@ -10,6 +10,7 @@ snapshot de tasa y aislamiento multiempresa.
 from __future__ import annotations
 
 from datetime import date, timedelta
+from decimal import Decimal
 
 import pytest
 from conftest import make_engine
@@ -134,7 +135,7 @@ class TestCajas:
         s = _open_cash_session(db_session, cb, opened=1000.0)
         treasury_service.add_session_movement(db_session, session_id=str(s.id), movement_type="IN", amount=200.0)
         treasury_service.add_session_movement(db_session, session_id=str(s.id), movement_type="OUT", amount=50.0)
-        treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=1150.0)
+        treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=Decimal("1150.00"))
         assert s.status == "ARCHED" and s.difference == 0.0
         treasury_service.pre_close_session(db_session, session_id=str(s.id))
         assert s.status == "PRE_CLOSED"
@@ -145,13 +146,13 @@ class TestCajas:
         cb = _make_cashbox(db_session)
         s = _open_cash_session(db_session, cb, opened=1000.0)
         treasury_service.add_session_movement(db_session, session_id=str(s.id), movement_type="IN", amount=200.0)
-        treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=1150.0)
+        treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=Decimal("1150.00"))
         assert s.counted_amount == 1150.0 and s.expected_amount == 1200.0 and s.difference == -50.0
 
     def test_close_with_unapproved_difference_rejected(self, db_session) -> None:
         cb = _make_cashbox(db_session)
         s = _open_cash_session(db_session, cb, opened=1000.0)
-        treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=950.0)
+        treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=Decimal("950.00"))
         treasury_service.pre_close_session(db_session, session_id=str(s.id))
         with pytest.raises(ConflictError):
             treasury_service.close_session(db_session, session_id=str(s.id), difference_approved=False)
@@ -160,7 +161,7 @@ class TestCajas:
     def test_close_with_approved_difference(self, db_session) -> None:
         cb = _make_cashbox(db_session)
         s = _open_cash_session(db_session, cb, opened=1000.0)
-        treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=950.0)
+        treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=Decimal("950.00"))
         treasury_service.pre_close_session(db_session, session_id=str(s.id))
         treasury_service.close_session(db_session, session_id=str(s.id), difference_approved=True,
                                        approval_note="Faltante autorizado")
@@ -169,7 +170,7 @@ class TestCajas:
     def test_movement_rejected_on_closed_session(self, db_session) -> None:
         cb = _make_cashbox(db_session)
         s = _open_cash_session(db_session, cb)
-        treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=0.0)
+        treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=Decimal("0.00"))
         treasury_service.pre_close_session(db_session, session_id=str(s.id))
         treasury_service.close_session(db_session, session_id=str(s.id))
         with pytest.raises(ConflictError):
@@ -208,7 +209,7 @@ class TestBancosYEgresos:
                                                   target_type="CASHBOX", target_id=str(cb.id))
         assert result["kind"] == "cash"
         data = treasury_service.session_dict(db_session, s)
-        assert data["expected_amount"] == 420.0 and payment.status == "POSTED"
+        assert data["expected_amount"] == "420.00" and payment.status == "POSTED"
 
     def test_execute_collection_requires_approved(self, db_session) -> None:
         account = _make_account(db_session)
@@ -225,8 +226,8 @@ class TestBancosYEgresos:
         t = treasury_service.create_transfer(db_session, company_id=COMPANY, amount=300.0,
                                              from_cashbox_id=str(c1.id), to_cashbox_id=str(c2.id))
         assert t.status == "POSTED"
-        assert treasury_service.session_dict(db_session, s1)["expected_amount"] == 700.0
-        assert treasury_service.session_dict(db_session, s2)["expected_amount"] == 300.0
+        assert treasury_service.session_dict(db_session, s1)["expected_amount"] == "700.00"
+        assert treasury_service.session_dict(db_session, s2)["expected_amount"] == "300.00"
 
     def test_transfer_between_accounts(self, db_session) -> None:
         a1 = _make_account(db_session)

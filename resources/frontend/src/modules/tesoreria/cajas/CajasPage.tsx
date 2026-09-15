@@ -14,8 +14,13 @@ import { MoneyInput } from "@/components/MoneyInput";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { isZeroDecimal, toDecimalString } from "@/lib/decimal";
+import { formatMoney } from "@/lib/format";
 
 const columnHelper = createColumnHelper<CashSessionSummary>();
+
+/** Importe de la sesión para mostrar: texto exacto del servidor, sin `Number` (Spec 038 · FLOAT-038-B). */
+const importe = (valor: string | null): string => (valor === null ? "—" : formatMoney(valor));
 
 export function CajasPage(): React.JSX.Element {
   const queryClient = useQueryClient();
@@ -73,9 +78,16 @@ export function CajasPage(): React.JSX.Element {
 
   const doArqueo = async (): Promise<void> => {
     if (!selected) return;
+    // Spec 038 · FLOAT-038-B: el conteo viaja como texto exacto; `Number` lo habría
+    // redondeado antes de salir del navegador.
+    const conteo = toDecimalString(countedAmount);
+    if (!conteo) {
+      notify({ type: "error", title: "Conteo inválido", description: "Use números con hasta dos decimales, por ejemplo 1234,56." });
+      return;
+    }
     await apiFetch(`/treasury/cash-sessions/${selected.id}/arqueo`, {
       method: "POST",
-      body: { counted_amount: Number(countedAmount) || 0 },
+      body: { counted_amount: conteo },
     });
     notify({ type: "success", title: "Arqueo registrado", description: "Conteo y diferencia calculados." });
     setSelected(null);
@@ -98,10 +110,10 @@ export function CajasPage(): React.JSX.Element {
   const columns = [
     columnHelper.accessor("cashbox_id", { header: "Caja" }),
     columnHelper.accessor("opened_at", { header: "Apertura" }),
-    columnHelper.accessor("opened_amount", { header: "Fondo" }),
-    columnHelper.accessor("expected_amount", { header: "Esperado" }),
-    columnHelper.accessor("counted_amount", { header: "Conteo" }),
-    columnHelper.accessor("difference", { header: "Diferencia" }),
+    columnHelper.accessor("opened_amount", { header: "Fondo", cell: (info) => importe(info.getValue()) }),
+    columnHelper.accessor("expected_amount", { header: "Esperado", cell: (info) => importe(info.getValue()) }),
+    columnHelper.accessor("counted_amount", { header: "Conteo", cell: (info) => importe(info.getValue()) }),
+    columnHelper.accessor("difference", { header: "Diferencia", cell: (info) => importe(info.getValue()) }),
     columnHelper.accessor("status", { header: "Estado" }),
     columnHelper.display({
       id: "actions",
@@ -116,7 +128,7 @@ export function CajasPage(): React.JSX.Element {
                 variant="secondary"
                 onClick={() => {
                   setSelected(row.original);
-                  setCountedAmount(String(row.original.expected_amount ?? 0));
+                  setCountedAmount(row.original.expected_amount);
                 }}
               >
                 arqueo
@@ -133,7 +145,7 @@ export function CajasPage(): React.JSX.Element {
                 variant="secondary"
                 onClick={() => {
                   setSelected(row.original);
-                  setApproveDiff((row.original.difference ?? 0) !== 0);
+                  setApproveDiff(!isZeroDecimal(row.original.difference));
                 }}
               >
                 cerrar
@@ -150,7 +162,8 @@ export function CajasPage(): React.JSX.Element {
     }),
   ];
 
-  const diff = selected ? (selected.difference ?? 0) : 0;
+  // Cero exacto, sobre el texto del servidor: un céntimo es diferencia.
+  const hayDiferencia = selected ? !isZeroDecimal(selected.difference) : false;
 
   return (
     <PageContent maxWidth="full">
@@ -199,13 +212,14 @@ export function CajasPage(): React.JSX.Element {
       {selected ? (
         <div className="mt-4 rounded-lg border border-border-default bg-surface-0 p-4">
           <h2 className="mb-2 text-base font-semibold text-text-900">
-            {selected.status === "ARCHED" ? "Arqueo" : "Cierre"} de sesión
+            {selected.status === "PRE_CLOSED" ? "Cierre" : "Arqueo"} de sesión
           </h2>
           <p className="mb-3 text-sm text-text-500">
-            Esperado: {selected.expected_amount.toFixed(2)} · Conteo actual: {selected.counted_amount ?? "—"} ·
-            Diferencia: {diff.toFixed(2)}
+            Esperado: {importe(selected.expected_amount)} · Conteo actual: {importe(selected.counted_amount)} ·
+            Diferencia: {importe(selected.difference)}
           </p>
-          {selected.status === "ARCHED" ? (
+          {/* El arqueo se hace sobre una sesión abierta: es la única que lo permite. */}
+          {selected.status === "OPEN" ? (
             <form
               className="flex flex-wrap items-end gap-3"
               onSubmit={(e) => e.preventDefault()}
@@ -226,11 +240,11 @@ export function CajasPage(): React.JSX.Element {
               className="flex flex-wrap items-end gap-3"
               onSubmit={(e) => e.preventDefault()}
             >
-              {diff !== 0 ? (
+              {hayDiferencia ? (
                 <FormField label="Aprobar diferencia">
                   <label className="flex h-10 items-center gap-2 text-sm text-text-700">
                     <input type="checkbox" checked={approveDiff} onChange={(e) => setApproveDiff(e.target.checked)} />
-                    Aprobar diferencia de {diff.toFixed(2)}
+                    Aprobar diferencia de {importe(selected.difference)}
                   </label>
                 </FormField>
               ) : null}
@@ -240,7 +254,7 @@ export function CajasPage(): React.JSX.Element {
               <Button variant="secondary" onClick={() => setSelected(null)}>
                 Cancelar
               </Button>
-              <AsyncButton type="submit" variant="primary" onClick={doClose} disabled={diff !== 0 && !approveDiff}>
+              <AsyncButton type="submit" variant="primary" onClick={doClose} disabled={hayDiferencia && !approveDiff}>
                 Cerrar caja
               </AsyncButton>
             </form>

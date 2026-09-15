@@ -34,12 +34,13 @@ def _patron(escala: int, *, con_signo: bool, exacto: bool) -> str:
     return rf"^{'-?' if con_signo else ''}[0-9]+{fraccion}$"
 
 
-def texto_decimal(tipo: Numeric, *, positivo: bool) -> Any:
+def texto_decimal(tipo: Numeric, *, positivo: bool, admite_cero: bool = False) -> Any:
     """Tipo de **entrada**: texto decimal que cabe en `tipo`, convertido a `Decimal`.
 
     Solo acepta `str`. Un número, aunque parezca inofensivo, ya perdió
     exactitud antes de llegar. `positivo` exige un importe mayor que cero y
-    prohíbe el signo; sin él, se admite `-`.
+    prohíbe el signo; sin él, se admite `-`. `admite_cero`, junto a `positivo`,
+    deja pasar también el cero: es la regla `≥ 0` del conteo de caja (FLOAT-038-B).
     """
     escala, enteros = _escala_y_enteros(tipo)
     lexico = re.compile(r"-?[0-9]+(?:\.[0-9]+)?" if not positivo else r"[0-9]+(?:\.[0-9]+)?")
@@ -55,16 +56,17 @@ def texto_decimal(tipo: Numeric, *, positivo: bool) -> Any:
             raise ValueError(f"el importe admite como máximo {escala} decimales")
         if importe.adjusted() >= enteros:
             raise ValueError(f"el importe admite como máximo {enteros} dígitos enteros")
-        if positivo and importe <= 0:
+        if positivo and importe <= 0 and not (admite_cero and importe == 0):
             raise ValueError("el importe debe ser mayor que cero")
         return importe
 
+    limite = (", mayor o igual que cero" if admite_cero else ", mayor que cero") if positivo else ""
     esquema = {
         "type": "string",
         "pattern": _patron(escala, con_signo=not positivo, exacto=False),
         "description": (
             f"Importe decimal exacto en texto: hasta {enteros} dígitos enteros y {escala} decimales"
-            f"{', mayor que cero' if positivo else ''}. Un número JSON se rechaza."
+            f"{limite}. Un número JSON se rechaza."
         ),
         "examples": ["1234.56"],
     }

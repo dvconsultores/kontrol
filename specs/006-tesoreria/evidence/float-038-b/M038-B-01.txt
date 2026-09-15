@@ -1,0 +1,40 @@
+# M038-B-01 · el conteo vuelve a entrar como float
+# fichero: app/modules/treasury/api.py
+# antes:       counted_amount: ConteoDeCaja
+# después:     counted_amount: float = Field(ge=0)
+# selección: -k "dieciocho_digitos or numero_json"
+# ---- ejecución ----
+FFFFF                                                                    [100%]
+=================================== FAILURES ===================================
+E   AssertionError: la respuesta degradó el conteo
+    assert '1234567890123456.80' == '1234567890123456.78'
+      
+      - 1234567890123456.78
+      ?                  -
+      + 1234567890123456.80
+      ?                   +
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:117: AssertionError: la respuesta degradó el conteo
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"7cfce01f-2e82-40c8-bb8f-be45bbee6833","cashbox_id":"5fa7ae36-9f4d-4bb8-b7f1-1d1e99b35850","opened_by":"caf1ebce-388e-4761-94f0-eb059dc964f1","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"100.00","expected_amount":"100.00","difference":"0.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:83: AssertionError: se esperaba 422 y llegó 200: {"id":"7cfce01f-2e82-40c8-bb8f-be45bbee6833","cashbox_id":"5fa7ae36-9f4d-4bb8-b7f1-1d1e99b35850","opened_by":"caf1ebce-388e-4761-94f0-eb059dc964f1","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"100.00","expected_amount":"100.00","difference":"0.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"d6a754e7-6a3d-40ce-852e-f77bd5b66702","cashbox_id":"8339d3ee-2c66-417f-81db-10f1f70e4c24","opened_by":"caf1ebce-388e-4761-94f0-eb059dc964f1","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"100.00","expected_amount":"100.00","difference":"0.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:83: AssertionError: se esperaba 422 y llegó 200: {"id":"d6a754e7-6a3d-40ce-852e-f77bd5b66702","cashbox_id":"8339d3ee-2c66-417f-81db-10f1f70e4c24","opened_by":"caf1ebce-388e-4761-94f0-eb059dc964f1","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"100.00","expected_amount":"100.00","difference":"0.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"51624e54-5ab8-4422-9947-c880647c5e75","cashbox_id":"c4e8e48a-f7bb-47e1-9949-495a776e5831","opened_by":"caf1ebce-388e-4761-94f0-eb059dc964f1","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"0.00","expected_amount":"100.00","difference":"-100.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:83: AssertionError: se esperaba 422 y llegó 200: {"id":"51624e54-5ab8-4422-9947-c880647c5e75","cashbox_id":"c4e8e48a-f7bb-47e1-9949-495a776e5831","opened_by":"caf1ebce-388e-4761-94f0-eb059dc964f1","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"0.00","expected_amount":"100.00","difference":"-100.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+E   AssertionError: se esperaba 422 y llegó 200: {"id":"9ae0f7d9-0562-46e2-b91b-f1111fcb53ff","cashbox_id":"b048a272-c717-46f9-81e6-8accd22b0796","opened_by":"caf1ebce-388e-4761-94f0-eb059dc964f1","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"1.00","expected_amount":"100.00","difference":"-99.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+    assert 200 == 422
+     +  where 200 = <Response [200 OK]>.status_code
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_spec038_float_b.py:83: AssertionError: se esperaba 422 y llegó 200: {"id":"9ae0f7d9-0562-46e2-b91b-f1111fcb53ff","cashbox_id":"b048a272-c717-46f9-81e6-8accd22b0796","opened_by":"caf1ebce-388e-4761-94f0-eb059dc964f1","opened_at":"2026-09-15","closed_at":null,"opened_amount":"100.00","counted_amount":"1.00","expected_amount":"100.00","difference":"-99.00","status":"ARCHED","approval_note":null,"allowed_actions":{"view":true,"arqueo":false,"pre_close":true,"close":false,"reject":false,"movement":true},"movements":[]}
+=========================== short test summary info ============================
+FAILED tests/test_spec038_float_b.py::test_un_importe_de_dieciocho_digitos_llega_exacto_a_base_respuesta_y_auditoria
+FAILED tests/test_spec038_float_b.py::test_un_numero_json_se_rechaza_sin_tocar_la_sesion[100.0]
+FAILED tests/test_spec038_float_b.py::test_un_numero_json_se_rechaza_sin_tocar_la_sesion[100]
+FAILED tests/test_spec038_float_b.py::test_un_numero_json_se_rechaza_sin_tocar_la_sesion[0]
+FAILED tests/test_spec038_float_b.py::test_un_numero_json_se_rechaza_sin_tocar_la_sesion[True]
+# exit=1
+# restaurado: sí

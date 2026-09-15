@@ -1,0 +1,27 @@
+regresión terminada (EXIT=0); empieza el E2E
+alembic cero → cabeza · exit=0 · 57 migraciones
+semilla canónica · exit=0
+backend: 200 · frontend 5173: 200
+cadena canónica ·  255 passed (3.6m) 
+  chromium: pasan 85 · fallan 0
+  firefox: pasan 85 · fallan 0
+  webkit: pasan 85 · fallan 0
+FLOAT-038-A y B en la cadena:
+  ✓   82 [chromium] › e2e/treasury.spec.ts:372:3 › Spec 038 — tesorería › FLOAT-038-A · el movimiento bancario exige texto decimal y no redondea (394ms)
+  ✓   84 [chromium] › e2e/treasury.spec.ts:452:3 › Spec 038 — tesorería › FLOAT-038-B · el arqueo exige texto decimal y el cierre no tolera un céntimo (547ms)
+  ✓   83 [chromium] › e2e/treasury.spec.ts:398:3 › Spec 038 — tesorería › FLOAT-038-A · la interfaz envía y muestra el importe exacto (2.2s)
+  ✓   85 [chromium] › e2e/treasury.spec.ts:483:3 › Spec 038 — tesorería › FLOAT-038-B · la interfaz de cajas envía el conteo exacto y no cierra un céntimo sin aprobar (2.5s)
+  ✓  167 [firefox] › e2e/treasury.spec.ts:372:3 › Spec 038 — tesorería › FLOAT-038-A · el movimiento bancario exige texto decimal y no redondea (282ms)
+  ✓  169 [firefox] › e2e/treasury.spec.ts:452:3 › Spec 038 — tesorería › FLOAT-038-B · el arqueo exige texto decimal y el cierre no tolera un céntimo (544ms)
+  ✓  168 [firefox] › e2e/treasury.spec.ts:398:3 › Spec 038 — tesorería › FLOAT-038-A · la interfaz envía y muestra el importe exacto (3.5s)
+  ✓  170 [firefox] › e2e/treasury.spec.ts:483:3 › Spec 038 — tesorería › FLOAT-038-B · la interfaz de cajas envía el conteo exacto y no cierra un céntimo sin aprobar (3.9s)
+  ✓  252 [webkit] › e2e/treasury.spec.ts:372:3 › Spec 038 — tesorería › FLOAT-038-A · el movimiento bancario exige texto decimal y no redondea (355ms)
+  ✓  254 [webkit] › e2e/treasury.spec.ts:452:3 › Spec 038 — tesorería › FLOAT-038-B · el arqueo exige texto decimal y el cierre no tolera un céntimo (284ms)
+  ✓  253 [webkit] › e2e/treasury.spec.ts:398:3 › Spec 038 — tesorería › FLOAT-038-A · la interfaz envía y muestra el importe exacto (3.8s)
+  ✓  255 [webkit] › e2e/treasury.spec.ts:483:3 › Spec 038 — tesorería › FLOAT-038-B · la interfaz de cajas envía el conteo exacto y no cierra un céntimo sin aprobar (4.6s)
+trazas en el backend: 0 · respuestas 500: 0
+FIN
+
+
+  255 passed (3.6m)
+exit=0

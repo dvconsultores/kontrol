@@ -139,6 +139,25 @@ Detalle del ciclo: `spec038-bank-amount-decimal-delta.md`.
 | FR-038-FLOAT-A-008 | El frontend envía y muestra el importe como texto, sin `Number`, `parseFloat` ni `+`. | OQ-01 | P0 | Sistema |
 | FR-038-FLOAT-A-009 | El cambio incompatible se declara en contratos, OpenAPI, pruebas y convergencia. | OQ-01 | P0 | Sistema |
 
+### 6.8 Delta dirigido FLOAT-038-B — arqueo y cierre de caja exactos (Spec 038 · 2026-09-15)
+
+Autoridad: decisiones cerradas en FLOAT-038-A (`clarifications.md` §5 y §6).
+Detalle del ciclo: `spec038-cash-close-decimal-delta.md`. La resta del arqueo ya
+era `Decimal` (errata §14 de `spec038-convergence.md`) y no cambia.
+
+| ID | Descripción | Fuente | Prioridad | Actor |
+|---|---|---|---|---|
+| FR-038-FLOAT-B-001 | `counted_amount` se recibe **solo como texto decimal**; un número JSON → 422. | OQ-FLOAT-038-A-01 | P0 | Sistema |
+| FR-038-FLOAT-B-002 | Escala y dígitos enteros de `cash_sessions.counted_amount`; se conserva `≥ 0`; exceso de escala → 422 sin redondeo. | OQ-FLOAT-038-A-02 | P0 | Sistema |
+| FR-038-FLOAT-B-003 | Un conteo rechazado no cambia la sesión ni emite `CASH_SESSION_ARCHED`. | OQ-FLOAT-038-A-02 | P0 | Sistema |
+| FR-038-FLOAT-B-004 | La diferencia sigue siendo `contado − esperado` en `Decimal`: misma fórmula y mismo signo. | Spec 038 | P0 | Sistema |
+| FR-038-FLOAT-B-005 | El cierre decide con cero exacto: diferencia ≠ 0 sin aprobación → 409; sin épsilon ni tolerancia. | FR-006-003 · `KQA-100` | P0 | Tesorería |
+| FR-038-FLOAT-B-006 | `CASH_SESSION_ARCHED` y `CASH_SESSION_CLOSED` guardan sus importes como texto decimal, hacia adelante. | `KQA-100` | P0 | Sistema |
+| FR-038-FLOAT-B-007 | Las rutas que devuelven la sesión de caja la devuelven con todos sus importes en texto y con modelo publicado en OpenAPI. | OQ-FLOAT-038-A-01 | P0 | Sistema |
+| FR-038-FLOAT-B-008 | Servicio y ORM del arqueo anotados en `Decimal`. | `KQA-100` | P0 | Sistema |
+| FR-038-FLOAT-B-009 | La pantalla envía el conteo como texto, lo muestra sin `Number` y decide la diferencia con cero exacto. | OQ-FLOAT-038-A-01 | P0 | Tesorería |
+| FR-038-FLOAT-B-010 | El cambio incompatible se declara en contratos, OpenAPI, pruebas y convergencia. | OQ-FLOAT-038-A-01 | P0 | Sistema |
+
 ## 7. Reglas no negociables aplicables (Constitución / DOC-01 §5)
 
 - No existe eliminación física de pagos aprobados, cobros aplicados ni cierres; corrección por reverso vinculado (P5).

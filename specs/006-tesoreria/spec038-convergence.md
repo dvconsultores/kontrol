@@ -260,3 +260,24 @@ declarado en `contracts/api-contracts.md` §3.1 y en OpenAPI.
 La 038 **sigue** `COMPLETE / CONVERGED`: esto es una reconvergencia dirigida, no un
 ciclo global nuevo. Siguen abiertos FLOAT-038-B y los otros siete `float` del borde.
 
+## 16. Delta dirigido FLOAT-038-B — reconvergencia dirigida (2026-09-15)
+
+**`TARGETED DELTA COMPLETE / CONVERGED`.** La resta del arqueo ya era exacta (§14)
+y no se tocó. Lo que cambió: el conteo entra como texto y se valida contra su columna
+(cero sí, signo no, más de dos decimales → 422 sin tocar la sesión); el cierre decide
+con cero exacto —un céntimo exige aprobación—; la auditoría guarda texto; y la sesión
+de caja sale con todos sus importes en texto y modelo publicado. De paso se corrigió
+un defecto que hacía inalcanzable el arqueo desde la pantalla. Regresión de backend
+sola 1569/0/8, frontend 368/368, E2E 255/255, 5 mutaciones con semántica. Detalle en
+`spec038-cash-close-decimal-delta.md` §12-§16.
+
+**Cambio incompatible, intencional y autorizado** por las decisiones heredadas de
+FLOAT-038-A: `counted_amount` y los importes de la sesión de caja pasaron de número
+JSON a texto decimal. El frontend del repositorio se adaptó en el mismo cambio; fuera
+del repositorio no hay inventario de consumidores.
+
+La 038 **sigue** `COMPLETE / CONVERGED`. Siguen abiertos seis `float` del borde de
+tesorería: `opened_amount` de apertura, importe de movimiento de caja, importe de
+ejecución, `opening_balance` y `closing_balance` de conciliación e importe de
+transferencia.
+

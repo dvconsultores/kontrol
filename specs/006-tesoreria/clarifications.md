@@ -57,3 +57,21 @@
 El cambio de número a texto es **incompatible y está autorizado**. Una escala por
 moneda (`Currency.decimal_places`) exigiría otro delta con contrato, modelo y
 migración.
+
+## 6. Delta FLOAT-038-B — decisiones heredadas y perímetro (Spec 038 · 2026-09-15)
+
+No hay preguntas nuevas. El arqueo y el cierre heredan las decisiones de §5:
+
+| Tema | Decisión | Autoridad |
+|---|---|---|
+| `counted_amount` en la API | texto decimal; un número JSON → 422 | OQ-FLOAT-038-A-01 |
+| Exceso de escala del conteo | 422, sin redondeo | OQ-FLOAT-038-A-02 |
+| Cero del cierre | exacto, sin épsilon ni tolerancia; ninguna fuente autoriza un margen | decisión cerrada · FR-006-003 |
+| Importes en la auditoría | texto decimal; sin consumidores que lean esos valores | `KQA-100` · inventario del delta |
+| Signo del conteo | se conserva `≥ 0` | contrato previo |
+| Fórmula y signo de la diferencia | `contado − esperado`, sin cambio | Spec 038 |
+
+**Perímetro.** La respuesta de la sesión de caja se corrige entera —fondo, esperado,
+conteo, diferencia e importes de movimientos— porque sale de un único serializador
+en siete rutas. Las entradas `opened_amount` y el importe de movimiento, y la
+respuesta de `POST …/movements`, son otros contratos y siguen abiertos.

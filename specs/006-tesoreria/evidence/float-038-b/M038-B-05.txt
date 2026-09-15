@@ -1,0 +1,20 @@
+# M038-B-05 · la pantalla vuelve a enviar Number(conteo)
+# fichero: src/modules/tesoreria/cajas/CajasPage.tsx
+# antes:   body: { counted_amount: conteo },
+# después: body: { counted_amount: Number(conteo) },
+# ---- ejecución ----
+   × Cajas · arqueo > envía el conteo como texto exacto, sin pasar por Number 431ms
+     → expected 'number' to be 'string' // Object.is equality
+   ✓ Cajas · arqueo > no envía un conteo con más de dos decimales: no lo redondea 162ms
+   ✓ Cajas · arqueo > muestra los importes exactos que devolvió el servidor 23ms
+   ✓ Cajas · cierre > un céntimo de diferencia exige aprobación: no hay tolerancia 80ms
+   ✓ Cajas · cierre > si cuadra exacto no pide aprobación 61ms
+   × guarda del camino del conteo > el conteo no se convierte a número 4ms
+     → expected '/** Cajas — sesiones, arqueo, pre-cie…' not to match /(Number|parseFloat)\(\s*(countedAmoun…/
+   ✓ guarda del camino del conteo > los importes de la sesión no se formatean con toFixed ni se comparan como números 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+    notify({ type: \"success\", title: \"Sesión actualizada\", description: `Estado → ${target}` });
+        description=\"Sesiones de caja: apertura → movimientos → arqueo → pre-cierre → cierre con diferencias aprobadas (FR-006-002/003).\"
+      Tests  2 failed | 5 passed (7)
+# exit=1
+# restaurado: sí
