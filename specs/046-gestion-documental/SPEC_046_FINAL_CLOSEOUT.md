@@ -392,3 +392,28 @@ desbordamiento · convergencia PASS · ESC-046-01 **RESUELTO**.
 Con 4 deudas declaradas (§16), ninguna sobre una regla no negociable.
 
 **No se inicia la Spec 012.** Requiere autorización expresa.
+
+## 21. Delta dirigido CONC-046 — reconvergencia dirigida (2026-09-15)
+
+**`CONC-046 — TARGETED DELTA COMPLETE / CONVERGED`.** Detalle en
+`conc-046-concurrent-version-delta.md`.
+
+Dos subidas simultáneas de versión ya estaban protegidas por PostgreSQL —nunca
+hubo dos V2 ni dos vigentes—, pero la que perdía escapaba como violación única sin
+capturar, un 500, y dejaba su binario huérfano. Ahora recibe `409 VERSION_CONFLICT`
+y no deja rastro; con la misma `Idempotency-Key` recibe la versión ganadora, y un
+reintento devuelve la versión de su clave y no la vigente. La prueba que lo
+certificaba fingía la carrera y aceptaba cualquier fallo: ahora se fuerza, se
+comprueba en `pg_stat_activity` y se cuentan los efectos.
+
+| | |
+|---|---|
+| Pruebas nuevas | 11, sobre carrera forzada |
+| Mutaciones | 5/5 caen |
+| Regresión de backend sola | 1579 · 0 · 0 · 8 omitidas S3 |
+| E2E documental | 35/36 en tres navegadores; el fallo es preexistente y aislado pasa |
+| Migración | ninguna; paridad 0 |
+
+De paso se corrigió el `uiLogin` del E2E documental, que desactivaba la empresa
+por casar «Activar» con «Desactivar». Se registran sin absorber E2E-046-TIPOS,
+ORPHAN-046-SINGLE e IDEM-046-TRUNC. La 046 sigue `RECONVERGED`.

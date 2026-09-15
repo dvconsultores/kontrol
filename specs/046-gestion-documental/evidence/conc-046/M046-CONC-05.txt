@@ -1,0 +1,24 @@
+# M046-CONC-05 · el binario de la perdedora ya no se borra
+# selección: dos_subidas or http_que_pierde
+# ---- ejecución ----
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+E   AssertionError: binarios: 1 → 3; la subida que perdió dejó rastro
+    assert 3 == (1 + 1)
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_documents_security.py:710: AssertionError: binarios: 1 → 3; la subida que perdió dejó rastro
+E   AssertionError: binarios: 4 → 6; la subida que perdió dejó rastro
+    assert 6 == (4 + 1)
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_documents_security.py:710: AssertionError: binarios: 4 → 6; la subida que perdió dejó rastro
+E   AssertionError: binarios: 7 → 9; la subida que perdió dejó rastro
+    assert 9 == (7 + 1)
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_documents_security.py:710: AssertionError: binarios: 7 → 9; la subida que perdió dejó rastro
+E   AssertionError: binarios: 10 → 12; la subida que perdió dejó rastro
+    assert 12 == (10 + 1)
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_documents_security.py:710: AssertionError: binarios: 10 → 12; la subida que perdió dejó rastro
+=========================== short test summary info ============================
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[0]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[1]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[2]
+FAILED tests/test_documents_security.py::test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500
+# exit=1
+# restaurado app/modules/documents/service.py: sí

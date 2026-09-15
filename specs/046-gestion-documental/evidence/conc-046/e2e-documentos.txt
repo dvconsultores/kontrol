@@ -1,0 +1,14 @@
+# E2E de documentos, tres navegadores, con el backend del delta
+# almacenamiento: KONTROL_STORAGE_PATH=/tmp/k-st · analizador: ClamAV 1.4.3
+alembic cero → cabeza · exit=0 · 57 migraciones
+semilla canónica · exit=0
+backend: 200 · directorio del proceso: /home/maria/Proyectos/kontrol/resources/backend · vite: 200
+  1 failed
+  35 passed (2.1m)
+  chromium: pasan 11 · fallan 1
+  firefox: pasan 12 · fallan 0
+  webkit: pasan 12 · fallan 0
+  1) [chromium] › e2e/documents.spec.ts:309:1 › los tipos documentales declaran la política sin código 
+exit=1
+trazas en el backend: 0 · respuestas 500: 0
+FIN

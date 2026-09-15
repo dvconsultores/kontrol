@@ -16,12 +16,15 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.database import Base, get_db, init_models
+from app.core.errors import ConflictError
+from app.modules.audit.models import AuditEvent
+from app.modules.documents import api as documents_api
 from app.modules.documents import scanning, service
-from app.modules.documents.models import Document, DocumentVersion, StoredFile
+from app.modules.documents.models import Document, DocumentType, DocumentVersion, FileSecurityScan, StoredFile
 from app.modules.documents.storage import (
     FilesystemStorageProvider,
     StorageError,
@@ -31,9 +34,11 @@ from app.modules.documents.storage import (
     set_storage,
 )
 from app.modules.identity_access import service as identity_service
-from app.modules.identity_access.models import UserRole
+from app.modules.identity_access.models import User, UserRole
 from app.modules.organization.models import Company, Installation, Tenant
 from app.modules.setup.api import SetupRequest, _bootstrap_roles, initialize
+from app.modules.system.models import IdempotencyRecord
+from tests.concurrency import carrera, esperar_bloqueados
 from tests.conftest import make_engine
 
 _CLIENT: TestClient
@@ -654,38 +659,297 @@ def test_pendiente_de_analisis_no_se_entrega():
     assert r.json()["code"] == "FILE_NOT_SCANNED"
 
 
-# =============================================== Concurrencia
-def test_dos_subidas_simultaneas_no_producen_dos_v2():
-    """El correlativo es del servidor y la restricción única lo protege."""
-    document = _document(_doc_type()["id"])
-    _upload(document["id"], PDF, name="base.pdf")
+# =============================================== Concurrencia (CONC-046)
+#
+# Antes aquí había dos hilos sin forzar nada que aceptaban cualquier respuesta
+# distinta de 200: casi nunca coincidían, y cuando lo hacían la perdedora
+# escapaba como excepción del hilo sin que la prueba lo viera. Ahora la carrera
+# se **fuerza** y se comprueba que ocurrió (`tests/concurrency.py`): la primera
+# transacción crea su versión sin confirmar, la segunda llega a la ventana
+# crítica y queda esperando en PostgreSQL, y solo entonces se confirma la primera.
 
-    results: list[int] = []
-    errors: list[int] = []
 
-    def _worker(payload: bytes) -> None:
-        r = _CLIENT.post(
-            f"/api/v1/documentos/{document['id']}/versiones", headers=_headers(),
-            files={"file": ("nueva.pdf", io.BytesIO(payload), "application/pdf")})
-        (results if r.status_code == 200 else errors).append(r.status_code)
+def _admin(sesion: Session, usuario: str = "admin") -> User:
+    return sesion.execute(select(User).where(User.username == usuario)).scalars().one()
 
-    threads = [threading.Thread(target=_worker, args=(PDF + bytes([i]),)) for i in range(2)]
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join()
 
+def _subida(document_id: str, contenido: bytes, nombre: str, usuario: str = "admin"):
+    """Una subida por el servicio, en la sesión que le dé la carrera."""
+    def subir(sesion: Session) -> DocumentVersion:
+        document = sesion.get(Document, document_id)
+        doc_type = sesion.get(DocumentType, document.document_type_id)
+        return service.upload_version(
+            sesion, document=document, doc_type=doc_type, stream=io.BytesIO(contenido),
+            original_name=nombre, declared_mime="application/pdf", actor=_admin(sesion, usuario))
+    return subir
+
+
+def _huella(document_id: str) -> dict:
+    """Todo lo que una subida deja: versiones, archivos, análisis, auditoría y binarios."""
     db = _FACTORY()
     try:
-        versions = db.execute(select(DocumentVersion).where(
-            DocumentVersion.document_id == document["id"])
-            .order_by(DocumentVersion.version_number)).scalars().all()
-        numbers = [v.version_number for v in versions]
-        assert len(numbers) == len(set(numbers)), f"correlativos duplicados: {numbers}"
-        active = [v for v in versions if v.status == "ACTIVE"]
-        assert len(active) == 1, f"más de una versión vigente: {len(active)}"
+        versiones = [(v.version_number, v.status) for v in db.execute(
+            select(DocumentVersion).where(DocumentVersion.document_id == document_id)
+            .order_by(DocumentVersion.version_number)).scalars()]
+        return {
+            "versiones": versiones,
+            "vigente": db.get(Document, document_id).current_version_id,
+            "archivos": db.execute(select(func.count()).select_from(StoredFile)).scalar_one(),
+            "analisis": db.execute(select(func.count()).select_from(FileSecurityScan)).scalar_one(),
+            "auditorias": db.execute(select(func.count()).select_from(AuditEvent).where(
+                AuditEvent.entity_id == document_id,
+                AuditEvent.action == "DOCUMENT_FILE_UPLOADED")).scalar_one(),
+            "binarios": sum(1 for p in _ROOT.rglob("*") if p.is_file()),
+        }
     finally:
         db.close()
+
+
+def _un_efecto_mas(antes: dict, despues: dict) -> None:
+    for campo in ("archivos", "analisis", "auditorias", "binarios"):
+        assert despues[campo] == antes[campo] + 1, (
+            f"{campo}: {antes[campo]} → {despues[campo]}; la subida que perdió dejó rastro")
+
+
+def _en_hilo(funcion):
+    salida: dict = {}
+
+    def correr() -> None:
+        try:
+            salida["r"] = funcion()
+        except Exception as e:  # noqa: BLE001 - el resultado es la excepción
+            salida["r"] = e
+
+    hilo = threading.Thread(target=correr)
+    hilo.start()
+    return hilo, salida
+
+
+def _post_version(document_id: str, contenido: bytes, headers: dict):
+    return _CLIENT.post(f"/api/v1/documentos/{document_id}/versiones", headers=headers,
+                        files={"file": ("carrera.pdf", io.BytesIO(contenido), "application/pdf")})
+
+
+def _pid(sesion: Session) -> int:
+    return sesion.execute(text("SELECT pg_backend_pid()")).scalar()
+
+
+@pytest.mark.parametrize("vuelta", range(3))
+def test_dos_subidas_simultaneas_no_producen_dos_v2(vuelta):
+    """La carrera ocurre de verdad, tres veces: una V2, una vigente y un conflicto de dominio."""
+    document = _document(_doc_type()["id"])["id"]
+    assert _upload(document, PDF, name="base.pdf").status_code == 200
+    antes = _huella(document)
+
+    primero, segundo = carrera(_FACTORY, _subida(document, PDF + b"%A", "a.pdf"),
+                               _subida(document, PDF + b"%B", "b.pdf"))
+
+    assert isinstance(segundo, ConflictError), f"quien perdió recibió {segundo!r}"
+    assert (segundo.code, segundo.status_code) == ("VERSION_CONFLICT", 409)
+    despues = _huella(document)
+    assert despues["versiones"] == [(1, "SUPERSEDED"), (2, "ACTIVE")], despues["versiones"]
+    assert despues["vigente"] == str(primero.id)
+    _un_efecto_mas(antes, despues)
+
+
+def test_la_primera_version_simultanea_tampoco_da_un_500():
+    """Sin versión previa la segunda espera en el índice único, no en una fila: mismo resultado."""
+    document = _document(_doc_type()["id"])["id"]
+    primero, segundo = carrera(_FACTORY, _subida(document, PDF + b"%1", "uno.pdf"),
+                               _subida(document, PDF + b"%2", "dos.pdf"))
+    assert isinstance(segundo, ConflictError) and segundo.code == "VERSION_CONFLICT", repr(segundo)
+    assert _huella(document)["versiones"] == [(1, "ACTIVE")]
+    assert _huella(document)["vigente"] == str(primero.id)
+
+
+def test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500():
+    document = _document(_doc_type()["id"])["id"]
+    assert _upload(document, PDF, name="base.pdf").status_code == 200
+    antes = _huella(document)
+    cabeceras = _headers()
+
+    s1 = _FACTORY()
+    try:
+        ganadora = _subida(document, PDF + b"%S", "s.pdf")(s1)
+        s1.flush()
+        hilo, salida = _en_hilo(lambda: _post_version(document, PDF + b"%H", cabeceras))
+        assert esperar_bloqueados(_FACTORY, 1, excluir=_pid(s1)), "la petición HTTP nunca chocó"
+        s1.commit()
+    finally:
+        s1.close()
+    hilo.join(timeout=60)
+
+    r = salida.get("r")
+    assert not isinstance(r, Exception), f"la petición que perdió escapó como excepción: {r!r}"
+    assert r.status_code == 409, r.text
+    assert r.json()["code"] == "VERSION_CONFLICT"
+    despues = _huella(document)
+    assert despues["versiones"] == [(1, "SUPERSEDED"), (2, "ACTIVE")]
+    assert despues["vigente"] == str(ganadora.id)
+    _un_efecto_mas(antes, despues)
+
+
+def test_tres_subidas_simultaneas_crean_una_sola_version():
+    document = _document(_doc_type()["id"])["id"]
+    assert _upload(document, PDF, name="base.pdf").status_code == 200
+    antes = _huella(document)
+    cabeceras = _headers()
+
+    s1 = _FACTORY()
+    try:
+        _subida(document, PDF + b"%T", "t.pdf")(s1)
+        s1.flush()
+        hilos = [_en_hilo(lambda i=i: _post_version(document, PDF + bytes([i]), cabeceras)) for i in (7, 8)]
+        assert esperar_bloqueados(_FACTORY, 2, excluir=_pid(s1)), "las dos peticiones no llegaron a chocar"
+        s1.commit()
+    finally:
+        s1.close()
+
+    for hilo, salida in hilos:
+        hilo.join(timeout=60)
+        r = salida.get("r")
+        assert not isinstance(r, Exception), f"una perdedora escapó como excepción: {r!r}"
+        assert (r.status_code, r.json()["code"]) == (409, "VERSION_CONFLICT"), r.text
+    despues = _huella(document)
+    assert despues["versiones"] == [(1, "SUPERSEDED"), (2, "ACTIVE")]
+    _un_efecto_mas(antes, despues)
+
+
+def test_la_misma_clave_en_carrera_devuelve_la_version_ganadora():
+    document = _document(_doc_type()["id"])["id"]
+    assert _upload(document, PDF, name="base.pdf").status_code == 200
+    antes = _huella(document)
+    clave = "carrera-misma-clave"
+    cabeceras = {**_headers(), "Idempotency-Key": clave}
+
+    s1 = _FACTORY()
+    try:
+        # La ganadora hace lo mismo que la ruta: la versión y su registro idempotente.
+        ganadora = _subida(document, PDF + b"%K", "k.pdf")(s1)
+        s1.add(IdempotencyRecord(
+            key=documents_api._clave_idempotente(document, clave), method="POST",
+            path=f"/documentos/{document}/versiones", user_id=str(_admin(s1).id),
+            company_id=ganadora.company_id, response_status=200, response_hash=ganadora.sha256,
+            response_payload={"version_id": str(ganadora.id), "version_number": ganadora.version_number}))
+        s1.flush()
+        hilo, salida = _en_hilo(lambda: _post_version(document, PDF + b"%R", cabeceras))
+        assert esperar_bloqueados(_FACTORY, 1, excluir=_pid(s1)), "el reintento nunca chocó"
+        s1.commit()
+    finally:
+        s1.close()
+    hilo.join(timeout=60)
+
+    r = salida.get("r")
+    assert not isinstance(r, Exception), f"el reintento escapó como excepción: {r!r}"
+    assert r.status_code == 200, f"la misma clave recibió {r.status_code}: {r.text}"
+    assert r.json()["idempotent_hit"] is True and r.json()["id"] == str(ganadora.id)
+    despues = _huella(document)
+    assert despues["versiones"] == [(1, "SUPERSEDED"), (2, "ACTIVE")]
+    _un_efecto_mas(antes, despues)
+
+
+def test_un_reintento_devuelve_la_version_de_su_clave_aunque_haya_otra_despues():
+    """Antes devolvía la vigente: tras otra subida, el reintento recibía una versión que no pidió."""
+    document = _document(_doc_type()["id"])["id"]
+    clave = {**_headers(), "Idempotency-Key": "reintento-tardio"}
+    primera = _post_version(document, PDF + b"%P", clave)
+    assert primera.status_code == 200, primera.text
+    assert _upload(document, PDF + b"%Q", name="otra.pdf").status_code == 200
+
+    repetida = _post_version(document, PDF + b"%P", clave)
+    assert repetida.status_code == 200, repetida.text
+    assert repetida.json()["idempotent_hit"] is True
+    assert repetida.json()["id"] == primera.json()["id"], "el reintento devolvió otra versión"
+    assert _huella(document)["versiones"] == [(1, "SUPERSEDED"), (2, "ACTIVE")]
+
+
+def test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena():
+    tipo = _doc_type()["id"]
+    uno, dos = _document(tipo)["id"], _document(tipo)["id"]
+    clave = {**_headers(), "Idempotency-Key": "clave-compartida"}
+
+    assert _post_version(uno, PDF + b"%U", clave).status_code == 200
+    r = _post_version(dos, PDF + b"%D", clave)
+    assert r.status_code == 200, r.text
+    assert r.json().get("idempotent_hit") is not True, "otro documento recibió una versión ajena"
+    assert r.json()["document_id"] == dos and r.json()["version_number"] == 1
+
+
+def _documento_del_otro_tenant() -> str:
+    """Tipo y documento en la empresa del segundo tenant, directamente en la base."""
+    db = _FACTORY()
+    try:
+        empresa = db.execute(select(Company).where(Company.code == "CB")).scalars().one()
+        _N["i"] += 1
+        tipo = DocumentType(company_id=str(empresa.id), code=f"CB{_N['i']}", name="Tipo B",
+                            allowed_mime_types=["application/pdf"], scan_required=True)
+        db.add(tipo)
+        db.flush()
+        documento = Document(company_id=str(empresa.id), document_type_id=str(tipo.id),
+                             title=f"Documento B {_N['i']}")
+        db.add(documento)
+        db.commit()
+        return str(documento.id)
+    finally:
+        db.close()
+
+
+def test_subidas_a_documentos_distintos_no_se_esperan():
+    """Ni otro documento de la misma empresa ni el de otro tenant esperan a una carrera ajena."""
+    tipo = _doc_type()["id"]
+    bloqueado = _document(tipo)["id"]
+    assert _upload(bloqueado, PDF, name="base.pdf").status_code == 200
+    vecino = _document(tipo)["id"]
+    ajeno = _documento_del_otro_tenant()
+
+    s1 = _FACTORY()
+    try:
+        _subida(bloqueado, PDF + b"%X", "x.pdf")(s1)
+        s1.flush()
+        otras = [_en_hilo(lambda: carrera_libre(vecino, "admin")),
+                 _en_hilo(lambda: carrera_libre(ajeno, "admin2"))]
+        for hilo, salida in otras:
+            hilo.join(timeout=60)
+            assert not hilo.is_alive(), "una subida a otro documento esperó a una carrera ajena"
+            assert isinstance(salida.get("r"), DocumentVersion), f"recibió {salida.get('r')!r}"
+        s1.commit()
+    finally:
+        s1.close()
+    assert _huella(vecino)["versiones"] == [(1, "ACTIVE")]
+    assert _huella(ajeno)["versiones"] == [(1, "ACTIVE")]
+    assert _huella(bloqueado)["versiones"] == [(1, "SUPERSEDED"), (2, "ACTIVE")]
+
+
+def carrera_libre(document_id: str, usuario: str) -> DocumentVersion:
+    sesion = _FACTORY()
+    try:
+        version = _subida(document_id, PDF + b"%L", "libre.pdf", usuario)(sesion)
+        sesion.commit()
+        return version
+    finally:
+        sesion.close()
+
+
+def test_otro_tenant_no_alcanza_un_documento_ajeno_durante_la_carrera():
+    document = _document(_doc_type()["id"])["id"]
+    assert _upload(document, PDF, name="base.pdf").status_code == 200
+    ajenas = _headers_b()
+
+    s1 = _FACTORY()
+    try:
+        _subida(document, PDF + b"%Z", "z.pdf")(s1)
+        s1.flush()
+        hilo, salida = _en_hilo(lambda: _post_version(document, PDF + b"%E", ajenas))
+        hilo.join(timeout=60)
+        assert not hilo.is_alive(), "la petición ajena esperó a la carrera"
+        s1.commit()
+    finally:
+        s1.close()
+
+    r = salida.get("r")
+    assert not isinstance(r, Exception), repr(r)
+    assert r.status_code == 404, f"otro tenant recibió {r.status_code}: {r.text}"
+    assert _huella(document)["versiones"] == [(1, "SUPERSEDED"), (2, "ACTIVE")]
 
 
 # =============================================== Contrato de respuesta

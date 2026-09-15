@@ -1,0 +1,5 @@
+# documents.spec.ts:309 aislada en Chromium, tres repeticiones, con el backend del delta
+  ✓  1 [chromium] › e2e/documents.spec.ts:309:1 › los tipos documentales declaran la política sin código (4.3s)
+  ✓  2 [chromium] › e2e/documents.spec.ts:309:1 › los tipos documentales declaran la política sin código (4.4s)
+  ✓  3 [chromium] › e2e/documents.spec.ts:309:1 › los tipos documentales declaran la política sin código (3.0s)
+  3 passed (9.4s)

@@ -1,0 +1,23 @@
+# M046-CONC-02 · el modelo pierde uq_document_versions_number y uq_document_versions_active (el servicio conserva su captura)
+# selección: dos_subidas
+# ---- ejecución ----
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+E   AssertionError: quien perdió recibió <app.modules.documents.models.DocumentVersion object at 0x7f4703803950>
+    assert False
+     +  where False = isinstance(<app.modules.documents.models.DocumentVersion object at 0x7f4703803950>, ConflictError)
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_documents_security.py:747: AssertionError: quien perdió recibió <app.modules.documents.models.DocumentVersion object at 0x7f4703803950>
+E   AssertionError: quien perdió recibió <app.modules.documents.models.DocumentVersion object at 0x7f47038fe9d0>
+    assert False
+     +  where False = isinstance(<app.modules.documents.models.DocumentVersion object at 0x7f47038fe9d0>, ConflictError)
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_documents_security.py:747: AssertionError: quien perdió recibió <app.modules.documents.models.DocumentVersion object at 0x7f47038fe9d0>
+E   AssertionError: quien perdió recibió <app.modules.documents.models.DocumentVersion object at 0x7f470384df10>
+    assert False
+     +  where False = isinstance(<app.modules.documents.models.DocumentVersion object at 0x7f470384df10>, ConflictError)
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_documents_security.py:747: AssertionError: quien perdió recibió <app.modules.documents.models.DocumentVersion object at 0x7f470384df10>
+=========================== short test summary info ============================
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[0]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[1]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[2]
+# exit=1
+# restaurado app/modules/documents/models.py: sí

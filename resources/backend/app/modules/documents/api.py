@@ -499,6 +499,30 @@ def list_versions(document_id: str, db: Session = Depends(get_db),
     return result
 
 
+def _clave_idempotente(document_id: str, idempotency_key: str) -> str:
+    return f"documents:upload:{document_id}:{idempotency_key}"[:64]
+
+
+def _acierto_idempotente(db: Session, document: Document, idempotency_key: str) -> dict | None:
+    """La versión que creó **esta** clave en **este** documento, si existe.
+
+    Se lee del registro, no de la versión vigente: después pudo subirse otra, y un
+    reintento no debe recibir una versión que no pidió (AC-046-13, AC-046-54).
+    """
+    from app.modules.system.models import IdempotencyRecord
+
+    registro = db.execute(select(IdempotencyRecord).where(
+        IdempotencyRecord.key == _clave_idempotente(str(document.id), idempotency_key))).scalars().first()
+    if registro is None:
+        return None
+    version_id = (registro.response_payload or {}).get("version_id")
+    version = db.get(DocumentVersion, version_id) if version_id else None
+    if version is None or str(version.document_id) != str(document.id):
+        return None
+    return {"id": str(version.id), "version_number": version.version_number,
+            "sha256": version.sha256, "idempotent_hit": True}
+
+
 @router.post("/{document_id}/versiones", dependencies=[Depends(require_write_allowed)])
 def upload_version(document_id: str,
                    file: UploadFile = File(...),
@@ -519,27 +543,32 @@ def upload_version(document_id: str,
 
     # Idempotencia: doble clic o reintento devuelven la misma versión (§101).
     if idempotency_key:
-        from app.modules.system.models import IdempotencyRecord
+        acierto = _acierto_idempotente(db, document, idempotency_key)
+        if acierto is not None:
+            return acierto
 
-        scope = f"documents:upload:{document_id}:{idempotency_key}"[:64]
-        existing = db.execute(select(IdempotencyRecord).where(
-            IdempotencyRecord.key == scope)).scalars().first()
-        if existing is not None and document.current_version_id:
-            version = db.get(DocumentVersion, document.current_version_id)
-            if version is not None:
-                return {"id": str(version.id), "version_number": version.version_number,
-                        "sha256": version.sha256, "idempotent_hit": True}
-
-    version = service.upload_version(
-        db, document=document, doc_type=doc_type, stream=file.file,
-        original_name=file.filename or "archivo", declared_mime=file.content_type,
-        actor=actor, replacement_reason=replacement_reason)
+    try:
+        version = service.upload_version(
+            db, document=document, doc_type=doc_type, stream=file.file,
+            original_name=file.filename or "archivo", declared_mime=file.content_type,
+            actor=actor, replacement_reason=replacement_reason)
+    except ConflictError as conflicto:
+        # CONC-046: con la misma clave, quien pierde la carrera no recibe un
+        # conflicto sino la versión que ganó (AC-046-53). La ganadora ya confirmó
+        # —por eso esta transacción chocó—, así que su registro es legible.
+        if not (idempotency_key and conflicto.code == "VERSION_CONFLICT"):
+            raise
+        db.rollback()
+        acierto = _acierto_idempotente(db, document, idempotency_key)
+        if acierto is None:
+            raise
+        return acierto
 
     if idempotency_key:
         from app.modules.system.models import IdempotencyRecord
 
         db.add(IdempotencyRecord(
-            key=f"documents:upload:{document_id}:{idempotency_key}"[:64],
+            key=_clave_idempotente(str(document.id), idempotency_key),
             method="POST", path=f"/documentos/{document_id}/versiones",
             user_id=str(actor.id), company_id=document.company_id,
             response_status=200, response_hash=version.sha256,

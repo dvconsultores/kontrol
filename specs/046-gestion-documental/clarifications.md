@@ -60,3 +60,15 @@ No se pregunta al usuario por: motor de persistencia (`ADR-D0-001`), aprobacione
 
 Tampoco se escala si los binarios van en PostgreSQL: `ADR-D0-008` R-D0-08-3 ya lo
 prohíbe.
+
+## 5. Delta CONC-046 — semántica de la carrera (2026-09-15)
+
+No se escala nada: todo tiene autoridad.
+
+| ID | Cuestión | Decisión | Autoridad |
+|---|---|---|---|
+| CL-046-28 | Dos subidas simultáneas de versión: ¿la perdedora crea la V3 o recibe un conflicto? | **Conflicto** `409 VERSION_CONFLICT`; nunca dos versiones donde se pidió una | AC-046-11 · `test-plan.md` §5 · `data-model.md` («impide dos V2») · aceptación registrada de CONC-046 · código ya documentado en los contratos |
+| CL-046-29 | La misma `Idempotency-Key` en carrera | la perdedora recibe la versión ganadora como acierto | AC-046-13 · FR-046-047 |
+| CL-046-30 | ¿Qué versión devuelve un acierto idempotente? | la que creó esa clave en ese documento, leída del registro | AC-046-13 («la misma versión») |
+| CL-046-31 | El binario que escribió la perdedora | se borra como compensación; si el borrado falla queda como basura recuperable, como el diseño ya declaraba | ADR-D0-008 · `upload_version` §7 |
+| CL-046-32 | ¿Bloqueo o recuperación? | recuperación sobre la restricción única, sin bloqueo nuevo | `ADR-013` · patrón canónico del repositorio |

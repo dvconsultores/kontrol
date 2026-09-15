@@ -1,0 +1,4 @@
+# Regresión dirigida de la 046 y sus consumidores
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_fundacion, Fundación de KONTROL: esquema inicial completo (001-fundacion).
+=========================== short test summary info ============================
+ERROR tests/test_n10_convergence.py::test_el_orm_y_la_base_no_difieren_en_nada

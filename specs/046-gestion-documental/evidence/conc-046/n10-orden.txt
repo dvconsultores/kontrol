@@ -1,0 +1,4 @@
+# test_n10_convergence.py ejecutada sola: su ERROR en la regresión dirigida es de orden de invocación
+# (mismo patrón que en la Spec 047); en la regresión completa pasa
+.....                                                                    [100%]
+# en la regresión completa: 0 fallos o errores

@@ -77,6 +77,28 @@ def carrera(factory: sessionmaker,
         s2.close()
 
 
+def esperar_bloqueados(factory: sessionmaker, cuantos: int, *, excluir: int, plazo: float = 20) -> bool:
+    """`True` cuando al menos `cuantos` conexiones de esta base, sin contar `excluir`, esperan un bloqueo.
+
+    Sirve cuando quien choca es una petición HTTP —o varias—, cuyo `pid` no se
+    conoce de antemano. La prueba mantiene abierta la transacción que bloquea,
+    espera aquí y solo entonces confirma: la carrera ocurrió, no se supuso.
+    """
+    fin = time.monotonic() + plazo
+    while time.monotonic() < fin:
+        vigia = factory()
+        try:
+            esperando = vigia.execute(text(
+                "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() "
+                "AND wait_event_type = 'Lock' AND pid <> :pid"), {"pid": excluir}).scalar()
+        finally:
+            vigia.close()
+        if esperando >= cuantos:
+            return True
+        time.sleep(0.05)
+    return False
+
+
 def empresa_nueva(factory: sessionmaker, tenant_id: str, marca: str) -> str:
     """Una empresa sin catálogo: la única en la que «todavía no existe» es cierto."""
     from app.modules.organization.models import Company

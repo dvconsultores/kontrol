@@ -1,0 +1,14 @@
+# M046-CONC-04 · la misma clave en carrera ya no relee el registro
+# app/modules/documents/api.py: 'if not (idempotency_key and ...)' → 'if True'
+# selección: misma_clave_en_carrera
+# ---- ejecución ----
+F                                                                        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: la misma clave recibió 409: {"code":"VERSION_CONFLICT","message":"Otra operación creó una versión de este documento al mismo tiempo. Recargue y vuelva a intentarlo.","field_errors":{},"request_id":"0d3e0ba495164ec0ac8d37caf1801083","details":{"reason":"Otra subida simultánea creó la versión","dependencies":{"document_id":"da2168ef-9ad2-47f6-8fed-80fe2902548e"},"allowed_a
+    assert 409 == 200
+     +  where 409 = <Response [409 Conflict]>.status_code
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_documents_security.py:844: AssertionError: la misma clave recibió 409: {"code":"VERSION_CONFLICT","message":"Otra operación creó una versión de este documento al mismo tiempo. Recargue y vuelva a intentarlo.","field_errors":{},"request_id":"0d3e0ba495164ec0ac8d37caf1801083","details":{"reason":"Otra subida simultánea creó la versión
+=========================== short test summary info ============================
+FAILED tests/test_documents_security.py::test_la_misma_clave_en_carrera_devuelve_la_version_ganadora
+# exit=1
+# restaurado app/modules/documents/api.py: sí

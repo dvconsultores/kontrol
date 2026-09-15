@@ -48,6 +48,12 @@ determina el servidor (§101, §127).
 Cabecera `Idempotency-Key` con el mecanismo existente. Repetir la misma clave
 devuelve la **misma versión**, no una nueva (§57).
 
+> Delta CONC-046 (2026-09-15). «La misma versión» es la que creó esa clave en ese
+> documento, aunque después se hayan subido otras. Si dos peticiones con la misma
+> clave compiten, las dos reciben esa versión. Si compiten con claves distintas, o
+> sin clave, una crea la versión y la otra recibe `409 VERSION_CONFLICT`: sin 500 y
+> sin dejar archivo, análisis, auditoría ni binario.
+
 ### Respuesta
 
 ```json
@@ -133,7 +139,7 @@ Ninguna firma expone almacenamiento.
 | `RESOURCE_ACCESS_DENIED` | 403 | Sin permiso sobre la entidad de destino |
 | `VERSION_IMMUTABLE` | 409 | Editar una versión superada o congelada |
 | `RETENTION_PROTECTED` | 409 | Borrar bajo política de retención |
-| `VERSION_CONFLICT` | 409 | `If-Match` obsoleto |
+| `VERSION_CONFLICT` | 409 | `If-Match` obsoleto; o, desde CONC-046, otra subida creó la versión a la vez |
 | `EXTERNAL_DOCUMENT_NO_FILE` | 422 | Subir a un documento de referencia externa |
 
 Todo bloqueo incluye `reason`, `dependencies` y `allowed_actions`, como fijaron

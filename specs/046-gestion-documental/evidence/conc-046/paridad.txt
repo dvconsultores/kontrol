@@ -1,0 +1,6 @@
+# Paridad ORM ↔ PostgreSQL de la gestión documental (ke2e migrada de cero)
+alembic head: 0057_spec047_notifications
+  uq_document_versions_active · CREATE UNIQUE INDEX uq_document_versions_active ON public.document_versions USING btree (document_id) WHERE ((status)::text = 'ACTIVE'::text)
+  uq_document_versions_number · CREATE UNIQUE INDEX uq_document_versions_number ON public.document_versions USING btree (document_id, version_number)
+diferencias en tablas documentales: 0
+diferencias heredadas globales: 21

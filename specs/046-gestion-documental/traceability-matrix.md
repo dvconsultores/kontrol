@@ -220,3 +220,18 @@ Derivada por script de `spec.md`, `tasks.md` y `acceptance-criteria.md`. No se e
 | Frontend | `wireframes/` | T-046-120..131 | E2E, axe, responsive |
 | Legado | `legacy-document-migration-matrix.md` | T-046-140..144 | Fixture de cinco casos |
 | Contratos | `document-consumer-contract-matrix.md` | T-046-146, 147, 153 | E2E 045 ↔ 046 |
+
+## 7. Delta dirigido CONC-046 — dos subidas simultáneas de versión (2026-09-15)
+
+Detalle: `conc-046-concurrent-version-delta.md`. Pruebas en `tests/test_documents_security.py`
+(sección «Concurrencia (CONC-046)»); mutaciones en `evidence/conc-046/`.
+
+| Requisito | Criterio | Autoridad | Tareas | Código | Prueba | Mutación |
+|---|---|---|---|---|---|---|
+| FR-046-115 · una versión nueva, una vigente, la perdedora 409 | AC-046-51 | AC-046-11 · aceptación registrada de CONC-046 | T-C46-02, 05, 06 | `_create_version`: `SAVEPOINT` + `es_violacion_unica` → `VERSION_CONFLICT` | `test_dos_subidas_simultaneas_no_producen_dos_v2` (×3) · `test_la_primera_version_simultanea_tampoco_da_un_500` · `test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500` · `test_tres_subidas_simultaneas_crean_una_sola_version` | M046-CONC-01 · M046-CONC-02 |
+| FR-046-116 · la perdedora no deja rastro | AC-046-52 | ADR-D0-008 · ADR-012 | T-C46-03, 06 | `upload_version`: borra el binario de la perdedora; auditoría transaccional | `_huella` en las pruebas de carrera: archivos, análisis, auditoría y binarios +1 | M046-CONC-05 |
+| FR-046-117 · la misma clave en carrera recibe la ganadora | AC-046-53 | AC-046-13 · FR-046-047 | T-C46-04, 07 | ruta: relee el registro idempotente tras `VERSION_CONFLICT` | `test_la_misma_clave_en_carrera_devuelve_la_version_ganadora` | M046-CONC-04 |
+| FR-046-118 · el acierto es de la clave y del documento | AC-046-54 | AC-046-13 | T-C46-04, 07 | `_acierto_idempotente` por `response_payload.version_id` y documento | `test_un_reintento_devuelve_la_version_de_su_clave_aunque_haya_otra_despues` · `test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena` · `test_subida_idempotente` | M046-CONC-03 |
+| FR-046-119 · documentos distintos no se esperan; aislamiento intacto | AC-046-55 | ARCH-MC-001 · `ADR-013` | T-C46-06 | sin bloqueo nuevo; `_get_document` por contexto | `test_subidas_a_documentos_distintos_no_se_esperan` · `test_otro_tenant_no_alcanza_un_documento_ajeno_durante_la_carrera` · suites AMZ | — |
+
+Sin huérfanos: 5 requisitos, 5 criterios, 13 tareas y 5 mutaciones, todos enlazados.

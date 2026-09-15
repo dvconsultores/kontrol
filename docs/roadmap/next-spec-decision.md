@@ -1308,3 +1308,49 @@ autorización expresa. **Ninguno se ha iniciado.**
 
 Ni CONC-046, ni el E2E de la 045, ni CLOCK-013, ni E2E-031-RESERVAS, ni los seis
 `float` restantes, ni la 049. Cada uno requiere su ciclo completo y autorización expresa.
+
+---
+
+## Tras converger CONC-046 — 2026-09-15
+
+**`CONC-046 — CLOSED`** · `TARGETED DELTA COMPLETE / CONVERGED` · detalle en
+`specs/046-gestion-documental/conc-046-concurrent-version-delta.md`.
+
+La perdedora de dos subidas simultáneas de versión recibe `409 VERSION_CONFLICT` en
+vez de un 500 y no deja binario; con la misma `Idempotency-Key` recibe la versión
+ganadora; y un reintento devuelve la versión de su clave, no la vigente. Sin
+migración ni bloqueo nuevo: PostgreSQL ya decidía y ahora la aplicación lo dice.
+
+### Lección que sirve al siguiente
+
+El `uiLogin` del E2E documental casaba «Activar» con «Desactivar» y desactivaba la
+empresa. Se corrigió con `exact: true`. **Es el mismo defecto que E2E-045** en
+`approvals.spec.ts`, que no se tocó: su corrección ya tiene forma conocida.
+
+### Cola revalidada
+
+| Orden | Trabajo | Dueña | ¿Espera decisión? | Motivo |
+|---|---|---|---|---|
+| 1 | **E2E-045** · `approvals.spec.ts`: «Desactivar» por subcadena y el `company_id` que la ruta ignora | 045 | no | el motor de aprobaciones sigue sin su E2E en verde; la mitad del arreglo ya se probó en la 046 |
+| 2 | **CLOCK-013** · cinco pruebas de la 013 dependen del reloj | 013 | no | la evidencia de la 013 falla entre las 00:00 y las 02:00 en UTC+2 |
+| 3 | **E2E-031-RESERVAS** · `GET /inventory/reservations` ignora `source_order_id` | 031 · 023 | no | intermitente con navegadores en paralelo |
+| 4 | Los **seis `float`** restantes del borde de tesorería | 038 | no | política ya decidida |
+
+### Deuda nueva registrada
+
+| Deuda | Dueña | Hallazgo | Prioridad sugerida |
+|---|---|---|---|
+| E2E-046-TIPOS | 046 | `documents.spec.ts:309` espera «Página siguiente», que solo existe con más de 10 filas; falla si los otros navegadores aún no llenaron la tabla | baja: aislada pasa |
+| ORPHAN-046-SINGLE | 046 | con un tipo `SINGLE`, `VERSION_NOT_ALLOWED` se lanza después de escribir el binario, que queda huérfano | baja: basura recuperable |
+| IDEM-046-TRUNC | 046 | la clave idempotente de subida se trunca a 64 caracteres y solo 10 de la clave del cliente distinguen | media: dos claves largas con el mismo prefijo en el mismo documento se confunden |
+
+Siguen bloqueados por decisión: el camino tras `EXPIRED` en la 045, OQ-048-01..03,
+MD-049-01/02, D0-06 y D0-07. La 049 sigue `BLOCKED BY OWNER DEPENDENCY`.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguno se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni E2E-045, ni CLOCK-013, ni E2E-031-RESERVAS, ni los seis `float`, ni las tres
+deudas nuevas de la 046, ni la 049. Cada uno requiere su ciclo completo y
+autorización expresa.

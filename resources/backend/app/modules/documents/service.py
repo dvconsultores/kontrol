@@ -10,6 +10,7 @@ confirma. Nunca se declara disponible algo que no puede recuperarse.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import os
 import tempfile
@@ -18,9 +19,11 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
+from app.core.integrity import es_violacion_unica
 from app.modules.documents import resources as resource_registry
 from app.modules.documents import scanning
 from app.modules.documents.models import (
@@ -33,6 +36,7 @@ from app.modules.documents.models import (
 )
 from app.modules.documents.storage import (
     CHUNK,
+    StorageError,
     generate_storage_key,
     get_storage,
     safe_extension,
@@ -258,11 +262,25 @@ def upload_version(
         _audit(db, actor, "DOCUMENT_HASH_COINCIDENCE", str(document.id),
                after={"sha256": checksum, "existing_files": int(twins)})
 
-    version = _create_version(db, document, doc_type, stored, replacement_reason, actor)
+    try:
+        version = _create_version(db, document, doc_type, stored, replacement_reason, actor)
+    except ConflictError as conflicto:
+        # CONC-046: quien pierde la carrera ya escribió su binario. Se borra; si el
+        # borrado falla, queda la basura recuperable que este flujo ya admitía.
+        if conflicto.code == "VERSION_CONFLICT":
+            with contextlib.suppress(StorageError):
+                storage.delete(key)
+        raise
     _audit(db, actor, "DOCUMENT_FILE_UPLOADED", str(document.id),
            after={"version": version.version_number, "sha256": checksum,
                   "scan": scan.result})
     return version
+
+
+#: Las dos restricciones que deciden una carrera de versiones: el correlativo y la
+#: vigente. Cuál salta primero depende del orden en que PostgreSQL comprueba los
+#: índices, y las dos significan lo mismo (CONC-046).
+_RESTRICCIONES_DE_VERSION = ("uq_document_versions_number", "uq_document_versions_active")
 
 
 def _create_version(db: Session, document: Document, doc_type: DocumentType,
@@ -270,7 +288,10 @@ def _create_version(db: Session, document: Document, doc_type: DocumentType,
     """Crea la versión y supera la anterior.
 
     El correlativo lo asigna el **servidor** y la restricción única impide que
-    dos peticiones simultáneas produzcan dos V2 (§32, §33).
+    dos peticiones simultáneas produzcan dos V2 (§32, §33). Quien pierde esa
+    carrera recibe `VERSION_CONFLICT`, no la violación única en crudo (CONC-046):
+    las dos leyeron el mismo máximo, y la segunda solo llega a insertar cuando la
+    primera ya confirmó.
     """
     current = db.execute(
         select(DocumentVersion).where(DocumentVersion.document_id == document.id,
@@ -286,18 +307,30 @@ def _create_version(db: Session, document: Document, doc_type: DocumentType,
         .where(DocumentVersion.document_id == document.id)
     ).scalar_one_or_none() or 0
 
-    if current is not None:
-        current.status = "SUPERSEDED"
-        db.flush()
+    try:
+        with db.begin_nested():
+            if current is not None:
+                current.status = "SUPERSEDED"
+                db.flush()
 
-    version = DocumentVersion(
-        document_id=str(document.id), company_id=document.company_id,
-        version_number=int(highest) + 1, stored_file_id=str(stored.id),
-        replacement_reason=reason, sha256=stored.sha256,
-        metadata_snapshot=document.doc_metadata, status="ACTIVE",
-        created_by=str(getattr(actor, "id", "")) or None)
-    db.add(version)
-    db.flush()
+            version = DocumentVersion(
+                document_id=str(document.id), company_id=document.company_id,
+                version_number=int(highest) + 1, stored_file_id=str(stored.id),
+                replacement_reason=reason, sha256=stored.sha256,
+                metadata_snapshot=document.doc_metadata, status="ACTIVE",
+                created_by=str(getattr(actor, "id", "")) or None)
+            db.add(version)
+            db.flush()
+    except IntegrityError as error:
+        if not any(es_violacion_unica(error, r) for r in _RESTRICCIONES_DE_VERSION):
+            raise
+        raise ConflictError(
+            code="VERSION_CONFLICT",
+            message="Otra operación creó una versión de este documento al mismo tiempo. "
+                    "Recargue y vuelva a intentarlo.",
+            details={"reason": "Otra subida simultánea creó la versión",
+                     "dependencies": {"document_id": str(document.id)},
+                     "allowed_actions": ["retry"]}) from None
     document.current_version_id = str(version.id)
     if document.status == "DRAFT":
         document.status = "ACTIVE"

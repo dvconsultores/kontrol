@@ -1,0 +1,6 @@
+# Primera ejecución del E2E de documentos (antes de corregir el entorno y el helper)
+# causas: almacenamiento por defecto en /data (PermissionError) y uiLogin que casaba «Activar» con «Desactivar»
+  29 failed
+  7 passed (6.0m)
+trazas: 18 · errores distintos:
+      6 PermissionError: [Errno 13] Permission denied: '/data'

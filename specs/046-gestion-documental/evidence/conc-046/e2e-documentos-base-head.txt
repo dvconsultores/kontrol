@@ -1,0 +1,16 @@
+# E2E de documentos contra el backend de HEAD 88c6903 (sin el delta), frontend sin cambios, Chromium
+# líneas de diff del frontend respecto de HEAD: 0
+alembic: exit=0 · 57 migraciones
+semilla: exit=0
+backend HEAD: 200 · directorio del proceso: /tmp/claude-1000/-home-maria-Proyectos-kontrol/acab53ba-6605-41b6-b7e5-ebb5ee2ab94e/scratchpad/base-c46/resources/backend · vite: 200
+  ✘  1 [chromium] › e2e/documents-a11y.spec.ts:51:1 › biblioteca y tipos: sin violaciones serias de WCAG 2.2 AA (17.1s)
+  ✘  2 [chromium] › e2e/documents.spec.ts:112:1 › carga, versión y descarga por la interfaz real (17.4s)
+    Error: expect(locator).toBeVisible() failed
+    Locator: getByRole('button', { name: 'Desactivar' }).first()
+    Error: element(s) not found
+    Error: expect(locator).toBeVisible() failed
+    Locator: getByRole('button', { name: 'Desactivar' }).first()
+    Error: element(s) not found
+  2 failed
+trazas en el backend de HEAD: 0
+FIN

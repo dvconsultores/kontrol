@@ -66,6 +66,34 @@ real**, no simulado (NFR-046-07).
 **Cuando** repito la misma petición con la misma `Idempotency-Key`
 **Entonces** obtengo **la misma versión**, no una nueva.
 
+> Delta CONC-046 (2026-09-15) · AC-046-51..55 precisan AC-046-11 y AC-046-13 bajo
+> carrera real. Detalle en `conc-046-concurrent-version-delta.md`.
+
+## AC-046-51 · La perdedora de la carrera recibe un conflicto
+**Dado** un documento con versión 1
+**Cuando** dos peticiones crean versión a la vez y las dos llegan a la ventana crítica
+**Entonces** existe una sola versión 2 y una sola vigente
+**Y** la que pierde recibe `409 VERSION_CONFLICT`, no un 500.
+
+## AC-046-52 · La perdedora no deja rastro
+**Cuando** una subida pierde la carrera
+**Entonces** no quedan de ella versión, archivo registrado, análisis, auditoría ni binario.
+
+## AC-046-53 · La misma clave en carrera
+**Cuando** dos peticiones con la misma `Idempotency-Key` compiten
+**Entonces** las dos obtienen **la misma versión**: la que pierde, como acierto idempotente.
+
+## AC-046-54 · El acierto es de la clave y del documento
+**Dado** que la clave K creó la versión 2 y otra subida creó después la 3
+**Cuando** repito con K
+**Entonces** obtengo la 2
+**Y** la misma K en otro documento crea su propia versión.
+
+## AC-046-55 · Documentos distintos no se esperan
+**Cuando** se sube a la vez a dos documentos distintos, de la misma empresa o de otro tenant
+**Entonces** ninguna subida espera a la otra
+**Y** un usuario de otro tenant sigue recibiendo 404 sobre el documento ajeno.
+
 ## AC-046-14 · Vinculación
 **Cuando** vinculo un documento a una entidad admitida
 **Entonces** se crea el vínculo

@@ -1,0 +1,31 @@
+# M046-CONC-01 · sin captura: la violación única escapa de _create_version
+# app/modules/documents/service.py: 'if not any(es_violacion_unica(...))' → 'if True'
+# selección: dos_subidas or http_que_pierde
+# ---- ejecución ----
+  File "/home/maria/Proyectos/kontrol/resources/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/maria/Proyectos/kontrol/resources/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/maria/Proyectos/kontrol/resources/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/maria/Proyectos/kontrol/resources/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/maria/Proyectos/kontrol/resources/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/maria/Proyectos/kontrol/resources/backend/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_document_versions_number"
+DETAIL:  Key (document_id, version_number)=(3063fbc2-c217-4e0a-8878-1be46b0bab68, 2) already exists.
+[SQL: INSERT INTO document_versions (document_id, company_id, version_number, stored_file_id, replacement_reason, sha256, metadata_snapshot, status, id, created_by) VALUES (%(document_id)s, %(company_id)s, %(version_number)s, %(stored_file_id)s, %(replacement_reason)s, %(sha256)s, %(metadata_snapshot)s::JSON, %(status)s, %(id)s, %(created_by)s) RETURNING document_versions.created_at, document_vers
+[parameters: {'document_id': '3063fbc2-c217-4e0a-8878-1be46b0bab68', 'company_id': '7f58cdd0-4173-4c60-bf50-4301b382ce38', 'version_number': 2, 'stored_file_id': '21e78415-ebf7-4b33-becb-c05a0bf126b0', 'replacement_reason': None, 'sha256': 'd941dc8ba3068aad33b4650a22c6c9296d2ed72de956b538e8d39d3ddf568b66', 'metadata_snapshot': 'null', 'status': 'ACTIVE', 'id': '3dee1ca7-a28a-4148-9ff4-aa3bab1a91b6
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_documents_security.py:783: AssertionError: la petición que perdió escapó como excepción: IntegrityError('(psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_document_versions_number"\nDETAIL:  Key (document_id, version_number)=(3063fbc2-c217-4e0a-8878-1be46b0bab68, 2) already exists.\n')
+=========================== short test summary info ============================
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[0]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[1]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[2]
+FAILED tests/test_documents_security.py::test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500
+# exit=1
+# restaurado app/modules/documents/service.py: sí

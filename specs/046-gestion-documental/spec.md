@@ -266,6 +266,18 @@ Document ── DocumentVersion ── StoredFile ── FileSecurityScan?
 | FR-046-113 | Si la base afirma archivo y no está, se registra `MISSING_LEGACY_FILE`; **no se inventa** (§114) | P0 |
 | FR-046-114 | Un hash histórico **sin binario** no se convierte en documento (R-046-5) | P0 |
 
+### Delta dirigido CONC-046 — dos subidas simultáneas de versión (2026-09-15)
+
+Detalle: `conc-046-concurrent-version-delta.md`.
+
+| ID | Requisito | Prioridad |
+|---|---|---|
+| FR-046-115 | Dos creaciones simultáneas de versión del mismo documento producen **exactamente una** versión nueva y una sola vigente; la que pierde recibe `409 VERSION_CONFLICT`, nunca un 500. Decide la restricción de PostgreSQL | P0 |
+| FR-046-116 | La operación que pierde no deja versión, archivo registrado, análisis, auditoría ni binario en el almacenamiento | P0 |
+| FR-046-117 | Con la misma `Idempotency-Key`, la que pierde la carrera recibe la versión ganadora como acierto idempotente | P0 |
+| FR-046-118 | El acierto idempotente devuelve la versión que creó esa clave en ese documento, no la vigente de después ni la de otro documento | P0 |
+| FR-046-119 | Subidas a documentos distintos, de la misma empresa, de otra o de otro tenant, no se bloquean entre sí; aislamiento y permisos intactos | P0 |
+
 ## 8. Requisitos no funcionales
 
 | ID | Requisito |

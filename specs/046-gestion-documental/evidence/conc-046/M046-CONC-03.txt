@@ -1,0 +1,16 @@
+# M046-CONC-03 · clave idempotente sin document_id y sin comprobar el documento de la versión
+# selección: otro_documento
+# ---- ejecución ----
+F                                                                        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: otro documento recibió una versión ajena
+    assert True is not True
+     +  where True = <built-in method get of dict object at 0x7f7cc8057a80>('idempotent_hit')
+     +    where <built-in method get of dict object at 0x7f7cc8057a80> = {'id': 'fa8fa599-9462-4f1f-a7e2-6d94a26432d6', 'idempotent_hit': True, 'sha256': '772fa63d40276d76cc59fd5e511c46716380882ce9cb18f037c2317428e713ab', 'version_number': 1}.get
+     +      where {'id': 'fa8fa599-9462-4f1f-a7e2-6d94a26432d6', 'idempotent_hit': True, 'sha256': '772fa63d40276d76cc59fd5e511c46716380882ce9cb18f037c2317428e713ab', 'version_number': 1} = json()
+     +        where json = <Response [200 OK]>.json
+/home/maria/Proyectos/kontrol/resources/backend/tests/test_documents_security.py:874: AssertionError: otro documento recibió una versión ajena
+=========================== short test summary info ============================
+FAILED tests/test_documents_security.py::test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena
+# exit=1
+# restaurado app/modules/documents/api.py: sí
