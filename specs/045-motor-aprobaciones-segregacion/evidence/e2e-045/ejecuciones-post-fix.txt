@@ -1,0 +1,20 @@
+EJECUCIONES POSTERIORES A LA CORRECCIÓN — E2E-045
+Base: 4d88fbd · PostgreSQL 16.2 · backend :8000 · vite :5173
+
+== Chromium aislado, tres ejecuciones consecutivas (suite completa de la Spec 045)
+-- ejecución 1
+  13 passed (6.0s)
+-- ejecución 2
+  13 passed (6.1s)
+-- ejecución 3
+  13 passed (6.4s)
+
+== Tres navegadores (chromium, firefox, webkit)
+  39 passed (23.8s)
+
+== Suite unitaria de frontend (vitest), sin relación con el cambio pero verificada
+  Test Files  18 passed (18) · Tests  368 passed (368)
+
+== Alcance del árbol
+  1 fichero modificado: resources/frontend/e2e/approvals.spec.ts (+152/-16)
+  0 ficheros de producto

@@ -1354,3 +1354,50 @@ MD-049-01/02, D0-06 y D0-07. La 049 sigue `BLOCKED BY OWNER DEPENDENCY`.
 Ni E2E-045, ni CLOCK-013, ni E2E-031-RESERVAS, ni los seis `float`, ni las tres
 deudas nuevas de la 046, ni la 049. Cada uno requiere su ciclo completo y
 autorización expresa.
+
+---
+
+## Tras converger E2E-045 — 2026-09-16
+
+E2E-045 queda **CERRADA**. Era una deuda de verificación, y así se resolvió: el único
+fichero tocado es `resources/frontend/e2e/approvals.spec.ts`. **0 ficheros de producto.**
+
+| Hecho | Detalle |
+|---|---|
+| Defecto | El ayudante casaba «Activar» por subcadena y pulsaba «Desactivar»; después esperaba ver el botón que él mismo había hecho desaparecer |
+| Segundo defecto | La prueba «multiempresa» atribuía a `?company_id=` una autoridad que la ruta no declara |
+| Reproducción previa | 2 failed / 9 passed sobre `4d88fbd`, empresa intacta en base; diagnóstico `ambiguo=1 exacto=0 desactivar=1 nombres=["Desactivar"]` |
+| Después | 13/13 en Chromium tres veces · 39/39 en tres navegadores · vitest 368/368 |
+| Mutaciones | E2E-045-01..03, 0 supervivientes, restauración verificada con `cmp` |
+
+Se descubrió además que, sin empresa activa, el producto no muestra una fila con
+«Activar» sino la compuerta «Seleccione una empresa». El ayudante anterior no lo sabía
+porque nunca llegó a ese estado; el nuevo resuelve los dos y falla explícitamente en
+cualquier tercero.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **CLOCK-013** · cinco pruebas de la 013 dependen del reloj local | 013 | no |
+| 2 | **E2E-031-RESERVAS** · `GET /inventory/reservations` ignora `source_order_id` | 031 · 023 | no |
+| 3 | Los **seis `float`** restantes del borde de tesorería | 038 | no |
+
+### Deuda nueva registrada
+
+| Deuda | Dueña | Hallazgo | Prioridad sugerida |
+|---|---|---|---|
+| **E2E-HELPER-EMPRESA-AMBIGUO** | almacén · unidades de medida | Cuatro ficheros conservan copia del ayudante defectuoso: `warehouse-a11y.spec.ts:11`, `warehouse-structure.spec.ts:51`, `uom-conversion.spec.ts:44`, `uom-a11y.spec.ts:28`. Hoy no fallan porque la empresa suele llegar ya activa; fallarán en cuanto no lo esté | media |
+| **INBOX-045-AISLAMIENTO** | 045 | El aislamiento de la bandeja **entre empresas distintas** no está probado en ningún sitio: `test_mc_security_045_046.py` cubre políticas y documentos, no la bandeja, y el entorno E2E tiene una sola empresa. La aserción anterior fingía esta cobertura | media |
+
+Siguen abiertas las tres deudas de la 046 (E2E-046-TIPOS, ORPHAN-046-SINGLE,
+IDEM-046-TRUNC) y la paginación de la bandeja de la 045. Siguen bloqueados por decisión:
+el camino tras `EXPIRED` en la 045, OQ-048-01..03, MD-049-01/02, D0-06 y D0-07.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguno se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni CLOCK-013, ni E2E-031-RESERVAS, ni los seis `float`, ni las dos deudas nuevas de este
+delta, ni las tres de la 046, ni la 049. Cada uno requiere su ciclo completo y
+autorización expresa.

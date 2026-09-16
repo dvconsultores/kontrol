@@ -243,6 +243,18 @@ cualquier nivel es terminal para la solicitud.
 | FR-045-074 | Las aprobaciones históricas se migran como cerradas con `policy_version = LEGACY_UNVERSIONED` y marca explícita; **no se inventa qué política se aplicó** | P0 | ADR-D0-002 §Migración |
 | FR-045-075 | Tras la migración, ningún módulo conserva lógica propia de aprobación | P0 | P22 |
 
+### Delta dirigido E2E-045 · verificación de extremo a extremo *(2026-09-16)*
+
+Requisitos sobre la **prueba**, no sobre el producto. Origen: `e2e-045-company-activation-selector-delta.md`.
+
+| ID | Requisito | Prioridad | Origen |
+|---|---|---|---|
+| FR-045-076 | El E2E identifica los controles de empresa por **nombre accesible exacto**; ninguna coincidencia por subcadena puede resolver a un control distinto del pretendido | P0 | E2E-045 |
+| FR-045-077 | El ayudante de sesión es **idempotente**: ya activa → no pulsa; inactiva → activa una vez; dos ejecuciones → mismo estado | P0 | E2E-045 |
+| FR-045-078 | Estado no determinable → **fallo explícito** con diagnóstico; nunca continúa a ciegas | P0 | E2E-045 |
+| FR-045-079 | Aserción de **regresión permanente**: falla si el control equivocado vuelve a ser alcanzable | P0 | E2E-045 |
+| FR-045-080 | Ninguna prueba afirma lo que el contrato no sostiene; la bandeja se comprueba por **contexto**, declarando que `company_id` no es autoridad | P0 | E2E-045 |
+
 ## 7. Requisitos no funcionales
 
 | ID | Requisito |

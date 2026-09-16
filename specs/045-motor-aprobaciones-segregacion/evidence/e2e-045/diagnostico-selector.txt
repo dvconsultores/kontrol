@@ -1,0 +1,4 @@
+# Diagnóstico del selector, con la empresa ya activa (pantalla /organizacion/empresas)
+# ambiguo = getByRole('button', {name: 'Activar'}) · exacto = el mismo con exact: true
+DIAGNOSTICO ambiguo=1 exacto=0 desactivar=1 nombres=["Desactivar"]
+  1 passed (1.8s)

@@ -30,3 +30,17 @@ construir** el motor:
 - Vencimientos y delegaciones vigentes.
 
 Todo ello es dato de implantación (`OQ-02`, `OQ-12`).
+
+---
+
+## Delta dirigido E2E-045 *(2026-09-16)*
+
+Dieciocho puntos aclarados, **ninguna OQ Material**; el detalle está en
+`e2e-045-company-activation-selector-delta.md` §6. Los tres que conviene no olvidar:
+
+- El defecto era de la **prueba**, no del producto: `EmpresasPage` pinta controles
+  mutuamente excluyentes con nombres accesibles exactos y distintos.
+- Sin empresa activa el producto **no** muestra una fila con «Activar»: muestra la
+  compuerta «Seleccione una empresa». Son dos estados legítimos y distintos.
+- `GET /approvals/inbox` **no declara** `company_id`: la empresa la fija el contexto.
+  Ninguna prueba debe atribuir a ese parámetro una autoridad que el contrato no le da.

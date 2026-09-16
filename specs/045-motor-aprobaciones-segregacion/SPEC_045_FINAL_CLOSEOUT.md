@@ -172,3 +172,27 @@ cerrarse. Escalado a la Spec 012.
 Cumple los 30 criterios del §46. Las dependencias diferidas a 046, 047 y 054 no
 pertenecen al alcance implementable de 045, tienen contrato listo, están trazadas
 y no dejan roto ningún requisito actual.
+
+---
+
+## 25. Erratum dirigido E2E-045 *(2026-09-16)*
+
+Este apartado **no reescribe** nada de lo anterior: corrige una deuda de verificación que
+el cierre dejó abierta y deja constancia de lo que se descubrió al hacerlo.
+
+| Hecho | Detalle |
+|---|---|
+| Deuda | **E2E-045** — el ayudante de sesión casaba «Activar» por subcadena y pulsaba «Desactivar» |
+| Naturaleza | `TEST_DEFECT`. **0 ficheros de producto modificados** |
+| Reproducida antes de corregir | 2 failed / 9 passed sobre `4d88fbd`, con la empresa intacta en base |
+| Segundo defecto hallado | La prueba «multiempresa» afirmaba que `?company_id=` delimita la bandeja; el contrato no declara ese parámetro |
+| Estado tras el delta | Suite 045: **13/13** en Chromium tres veces, **39/39** en tres navegadores |
+| Mutaciones | E2E-045-01..03, **0 supervivientes**, restauración verificada con `cmp` |
+| Documento | `e2e-045-company-activation-selector-delta.md` |
+
+Dos deudas quedan **declaradas y no absorbidas**: `E2E-HELPER-EMPRESA-AMBIGUO` (cuatro
+ficheros de otras Specs conservan copia del mismo ayudante) e `INBOX-045-AISLAMIENTO` (el
+aislamiento de la bandeja entre empresas distintas no está probado en ningún sitio; la
+aserción anterior fingía esa cobertura y ahora el hueco está declarado).
+
+El veredicto del §24 **se mantiene**: `SPEC 045 COMPLETE_100`.

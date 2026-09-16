@@ -80,3 +80,27 @@ Código y evidencia quedan pendientes: no hay autorización de implementación.
 | **Requisitos sin criterio** | **1** — FR-045-067, contrato diferido a la Spec 046 y declarado |
 | **Tareas sin requisito** | **0** |
 | **Historias sin criterio** | **0** |
+
+---
+
+## Delta dirigido E2E-045 *(2026-09-16)*
+
+Cobertura del delta, que no altera las cifras anteriores porque no toca producto:
+añade cinco requisitos de verificación y cinco criterios.
+
+| Requisito | Tarea | Criterio | Prueba | Mutación que lo mata |
+|---|---|---|---|---|
+| FR-045-076 | T-01, T-04 | AC-28 | `approvals.spec.ts` · regresión en `activarEmpresa` + «el localizador nunca alcanza Desactivar» | E2E-045-01 |
+| FR-045-077 | T-01, T-03 | AC-25, AC-26, AC-27 | «el ayudante de empresa es idempotente» | E2E-045-02 |
+| FR-045-078 | T-01 | AC-26 | fallo explícito con diagnóstico en `activarEmpresa` | E2E-045-02 |
+| FR-045-079 | T-02 | AC-28 | aserción permanente dentro del ayudante | E2E-045-01 |
+| FR-045-080 | T-05 | AC-29 | «la bandeja la delimita el contexto, no el parámetro» | E2E-045-03 |
+
+| Métrica tras el delta | Valor |
+|---|---:|
+| Requisitos funcionales | 40 **+ 5** (FR-045-076..080, de verificación) |
+| Criterios de aceptación | 24 **+ 5** (AC-25..29) |
+| Requisitos del delta sin prueba | **0** |
+| Criterios del delta sin prueba | **0** |
+| Mutaciones supervivientes | **0** |
+| Ficheros de producto modificados | **0** |

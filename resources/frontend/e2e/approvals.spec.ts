@@ -26,14 +26,86 @@ async function apiLogin(request: APIRequestContext): Promise<string> {
   return (await r.json()).access_token as string;
 }
 
-async function companyId(request: APIRequestContext, token: string): Promise<string> {
+type Empresa = { id: string; code: string };
+
+/** La empresa sobre la que opera la suite: la misma que resuelve el contexto del backend. */
+async function empresa(request: APIRequestContext, token: string): Promise<Empresa> {
   const r = await request.get(`${API}/organization/companies`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   expect(r.ok(), `companies: ${r.status()}`).toBeTruthy();
   const body = await r.json();
   const items = Array.isArray(body) ? body : body.items;
-  return items[0].id as string;
+  return { id: items[0].id as string, code: items[0].code as string };
+}
+
+async function companyId(request: APIRequestContext, token: string): Promise<string> {
+  return (await empresa(request, token)).id;
+}
+
+/**
+ * Controles de la pantalla de empresas, por **nombre accesible exacto**.
+ *
+ * `EmpresasPage` pinta por fila controles mutuamente excluyentes: la empresa
+ * activa muestra «Activa» (deshabilitado) y «Desactivar»; cualquier otra muestra
+ * «Activar». Sin `exact`, «Activar» casa por subcadena con «Des**activar**», de modo
+ * que el ayudante pulsaba el control contrario y a continuación esperaba ver el
+ * botón que él mismo acababa de hacer desaparecer (deuda E2E-045).
+ */
+function controlesDeEmpresa(page: Page) {
+  return {
+    activar: page.getByRole("button", { name: "Activar", exact: true }),
+    desactivar: page.getByRole("button", { name: "Desactivar", exact: true }),
+    activa: page.getByRole("button", { name: "Activa", exact: true }),
+  };
+}
+
+/**
+ * Deja una empresa activa, **idempotente**: si ya lo está no pulsa nada, si no lo
+ * está la activa una sola vez, y si el estado no es determinable falla en el acto
+ * enumerando lo que encontró. Nunca continúa a ciegas: una sesión sin empresa
+ * activa produce fallos aguas abajo que no se parecen a su causa.
+ *
+ * Sin empresa activa el producto no pinta la tabla: sustituye el contenido por la
+ * compuerta «Seleccione una empresa». Los dos estados son legítimos y los dos se
+ * resuelven aquí, cada uno por su control exacto.
+ */
+async function activarEmpresa(page: Page): Promise<void> {
+  await page.locator('nav a[href="/organizacion/empresas"]').first().click();
+  await page.waitForURL((u) => u.pathname === "/organizacion/empresas", { timeout: 15000 });
+  await page.waitForLoadState("networkidle");
+
+  const { activar, desactivar, activa } = controlesDeEmpresa(page);
+
+  // Regresión permanente (FR-045-079): todo elemento que alcance el localizador de
+  // decisión se llama literalmente «Activar». Si alguien retira `exact`, «Desactivar»
+  // entra en el conjunto y esto falla aquí, en la causa, no tres pantallas después.
+  const alcanzados = (await activar.allInnerTexts()).map((t) => t.trim());
+  expect(alcanzados.filter((t) => t !== "Activar"), `el localizador de «Activar» alcanzó ${JSON.stringify(alcanzados)}`)
+    .toEqual([]);
+
+  if ((await desactivar.count()) > 0 && (await activa.count()) > 0) return; // ya se cumple
+
+  // Compuerta de selección: identificador canónico del propio producto, con el código
+  // de la empresa que resuelve el backend. No hay prefijos ni posiciones de por medio.
+  const { code } = await empresa(page.request, await apiLogin(page.request));
+  const eleccion = page.getByTestId(`elegir-empresa-${code}`);
+
+  const candidatas = await activar.count();
+  const puerta = await eleccion.count();
+  const diagnostico =
+    `estado de empresa no determinable: activar=${candidatas} compuerta=${puerta} ` +
+    `activa=${await activa.count()} desactivar=${await desactivar.count()} ` +
+    `botones=${JSON.stringify((await page.getByRole("button").allInnerTexts()).map((t) => t.trim()))}`;
+  expect(candidatas + puerta, diagnostico).toBe(1);
+
+  await (puerta === 1 ? eleccion : activar).click();
+
+  // El estado se verifica por los controles exactos, no por la ausencia de error:
+  // exactamente una empresa activa, y ninguna candidata donde antes había una.
+  await expect(desactivar).toHaveCount(1, { timeout: 15000 });
+  await expect(activa).toHaveCount(1);
+  await expect(activar).toHaveCount(candidatas === 0 ? 0 : candidatas - 1);
 }
 
 async function uiLogin(page: Page): Promise<void> {
@@ -45,16 +117,7 @@ async function uiLogin(page: Page): Promise<void> {
   await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
 
   // La operación exige empresa activa: se selecciona como lo haría un usuario.
-  await page.locator('nav a[href="/organizacion/empresas"]').click();
-  await page.waitForURL((u) => u.pathname === "/organizacion/empresas", { timeout: 15000 });
-  await page.waitForLoadState("networkidle");
-  const activar = page.getByRole("button", { name: "Activar" }).first();
-  if (await activar.count()) {
-    await activar.click();
-    // La Topbar refleja la empresa activa: confirma que el contexto se aplicó.
-    await expect(page.getByRole("button", { name: "Desactivar" }).first())
-      .toBeVisible({ timeout: 15000 });
-  }
+  await activarEmpresa(page);
 }
 
 /** Cierra las notificaciones: son persistentes por diseño y, apiladas, tapan
@@ -392,11 +455,84 @@ test.describe("Spec 045 · motor de aprobaciones sobre PostgreSQL real", () => {
     expect(decisions).toHaveLength(1);
   });
 
-  test("multiempresa: no se ven solicitudes de otra empresa", async ({ request }) => {
+  test("multiempresa: la bandeja la delimita el contexto, no el parámetro de consulta", async ({ request }) => {
     const c = await ctx(request);
-    const inbox = await (await request.get(
-      `${API}/approvals/inbox?company_id=empresa-inexistente`, { headers: c.headers })).json();
-    expect(inbox.total).toBe(0);
+
+    // Subconjunto propio y determinista: la bandeja es transversal y las demás pruebas
+    // —y los demás navegadores— crean solicitudes mientras esta corre. Comparar la bandeja
+    // entera entre dos lecturas sucesivas mediría la concurrencia, no la delimitación.
+    const process = `E2E_MC_${RUNU}`;
+    await createPolicy(request, c, process);
+    const requestId = await createRequest(request, c, process, `mc-${RUN}`);
+
+    // `GET /approvals/inbox` NO declara `company_id`: FastAPI descarta el parámetro y el
+    // servicio delimita por `ctx.company_id`. La versión anterior de esta prueba pedía la
+    // bandeja de «empresa-inexistente» y exigía `total === 0`: atribuía al parámetro una
+    // autoridad que el contrato no le da, y pasaba —cuando pasaba— por casualidad.
+    const url = `${API}/approvals/inbox?process_type=${process}`;
+    const propia = await (await request.get(url, { headers: c.headers })).json();
+    const conParametroAjeno = await (await request.get(
+      `${url}&company_id=empresa-inexistente`, { headers: c.headers })).json();
+
+    // La solicitud recién creada está ahí, y el parámetro ajeno no la hace desaparecer:
+    // misma respuesta, ítem por ítem, en las dos direcciones.
+    expect(propia.total).toBe(1);
+    expect(propia.items[0].request_id).toBe(requestId);
+    expect(conParametroAjeno.total).toBe(propia.total);
+    expect(conParametroAjeno.items.map((i: { step_id: string }) => i.step_id))
+      .toEqual(propia.items.map((i: { step_id: string }) => i.step_id));
+
+    // Y lo que la bandeja devuelve pertenece a la empresa del contexto. Ni la bandeja ni el
+    // detalle publican `company_id`, así que se comprueba contra la única ruta que sí
+    // delimita de forma observable: `GET /requests/{id}` responde 404 cuando la solicitud
+    // es de otra empresa (`api.py:344`). Que se recupere prueba que la bandeja no devolvió
+    // nada ajeno al contexto.
+    const detalleRes = await request.get(`${API}/approvals/requests/${requestId}`, { headers: c.headers });
+    expect(detalleRes.status(), `la bandeja devolvió una solicitud ajena al contexto: ${requestId}`).toBe(200);
+    const detalle = await detalleRes.json();
+    expect(detalle.steps.map((st: { id: string }) => st.id)).toContain(propia.items[0].step_id);
+  });
+
+  test("E2E-045 · el localizador de «Activar» nunca alcanza «Desactivar»", async ({ page }) => {
+    await uiLogin(page); // deja la empresa activa; el ayudante es idempotente
+    const { activar, desactivar, activa } = controlesDeEmpresa(page);
+
+    // Estado activo: los controles exactos son los del estado activo y ninguno más.
+    await expect(desactivar).toHaveCount(1);
+    await expect(activa).toHaveCount(1);
+    await expect(activar).toHaveCount(0);
+
+    // El defecto histórico, fijado como regresión: por subcadena «Activar» sí alcanza un
+    // control, y ese control se llama «Desactivar». Por eso `exact` no es cosmético.
+    const ambiguo = page.getByRole("button", { name: "Activar" });
+    expect(await ambiguo.count()).toBeGreaterThan(await activar.count());
+    expect((await ambiguo.allInnerTexts()).map((t) => t.trim())).toEqual(["Desactivar"]);
+  });
+
+  test("E2E-045 · el ayudante de empresa es idempotente", async ({ page }) => {
+    const { activar, desactivar, activa } = controlesDeEmpresa(page);
+
+    await uiLogin(page);
+    await expect(desactivar).toHaveCount(1);
+    await expect(activa).toHaveCount(1);
+
+    // Segunda ejecución sobre el estado ya alcanzado: no debe pulsar nada ni romperse.
+    await activarEmpresa(page);
+    await expect(desactivar).toHaveCount(1);
+    await expect(activa).toHaveCount(1);
+    await expect(activar).toHaveCount(0);
+
+    // Desde el estado contrario también converge. Al desactivar, el producto retira la
+    // tabla y muestra la compuerta de selección: ese es el estado real «sin empresa».
+    await desactivar.click();
+    // Encabezado, no el botón homónimo del Topbar: el texto existe en los dos sitios.
+    await expect(page.getByRole("heading", { name: "Seleccione una empresa", level: 1 }))
+      .toBeVisible({ timeout: 15000 });
+    await expect(activar).toHaveCount(0);
+    await activarEmpresa(page);
+    await expect(desactivar).toHaveCount(1);
+    await expect(activa).toHaveCount(1);
+    await expect(activar).toHaveCount(0);
   });
 
   test("eventos de dominio emitidos para la Spec 047", async ({ request }) => {

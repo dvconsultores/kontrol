@@ -1,0 +1,18 @@
+########## E2E-045-01 · se retira `exact` del localizador de decisión
+  3 failed
+    [chromium] › e2e/approvals.spec.ts:214:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › flujo principal: configurar → solicitar → bandeja → aprobar 2 niveles → historial 
+    [chromium] › e2e/approvals.spec.ts:496:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › E2E-045 · el localizador de «Activar» nunca alcanza «Desactivar» 
+    [chromium] › e2e/approvals.spec.ts:512:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › E2E-045 · el ayudante de empresa es idempotente 
+RESTAURADO 01: idéntico al original
+########## E2E-045-02 · se elimina la salida temprana idempotente
+    Error Context: test-results/approvals-Spec-045-·-motor-7db7b-e-de-empresa-es-idempotente-chromium/error-context.md
+
+  1 failed
+    [chromium] › e2e/approvals.spec.ts:512:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › E2E-045 · el ayudante de empresa es idempotente 
+RESTAURADO 02: idéntico al original
+########## E2E-045-03 · vuelve la afirmación falsa sobre el parámetro
+    Error Context: test-results/approvals-Spec-045-·-motor-36de4-no-el-parámetro-de-consulta-chromium/error-context.md
+
+  1 failed
+    [chromium] › e2e/approvals.spec.ts:458:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › multiempresa: la bandeja la delimita el contexto, no el parámetro de consulta 
+RESTAURADO 03: idéntico al original

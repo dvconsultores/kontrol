@@ -130,3 +130,27 @@ con la tasa snapshot de cada documento, no con el importe nominal.
 ## AC-24 · Accesibilidad y responsive
 **Entonces** las pantallas de políticas, bandeja e historial pasan axe WCAG 2.2 AA,
 son operables solo con teclado y no producen scroll horizontal entre 320 y 1920 px.
+
+## AC-25 · Empresa ya activa: el ayudante no toca nada
+**Dado** una empresa ya activa
+**Cuando** se ejecuta el ayudante de sesión del E2E
+**Entonces** no pulsa ningún control y la empresa sigue activa.
+
+## AC-26 · Sin empresa activa: la activa una sola vez
+**Dado** ninguna empresa activa —el producto muestra la compuerta «Seleccione una empresa»—
+**Cuando** se ejecuta el ayudante
+**Entonces** elige exactamente una empresa y lo verifica por los controles exactos del estado activo.
+
+## AC-27 · Idempotencia
+**Dado** el ayudante ejecutado dos veces seguidas
+**Entonces** el estado final es «activa» en ambos casos, sin efectos intermedios observables.
+
+## AC-28 · El localizador exacto no cruza
+**Dado** el localizador exacto de «Activar»
+**Entonces** nunca alcanza «Desactivar», y a la inversa;
+**Y** si alguien retira la exactitud, la prueba falla en la causa, no aguas abajo.
+
+## AC-29 · La bandeja la delimita el contexto
+**Dado** un `company_id` arbitrario en la consulta de la bandeja
+**Entonces** la respuesta es la de la empresa del **contexto**, ítem por ítem,
+**Y** toda solicitud devuelta es recuperable en ese mismo contexto.

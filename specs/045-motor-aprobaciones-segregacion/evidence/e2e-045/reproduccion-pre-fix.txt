@@ -1,0 +1,17 @@
+# Reproducción ANTES del arreglo · código de HEAD 4d88fbd sin tocar · Chromium
+# empresas en la base antes: D1=ACTIVE 
+  2 failed
+  9 passed (17.5s)
+  1) [chromium] › e2e/approvals.spec.ts:151:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › flujo principal: configurar → solicitar → bandeja → aprobar 2 niveles → historial 
+  2) [chromium] › e2e/approvals.spec.ts:395:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › multiempresa: no se ven solicitudes de otra empresa 
+--- primeros errores
+    Error: expect(locator).toBeVisible() failed
+    Locator: getByRole('button', { name: 'Desactivar' }).first()
+    Expected: visible
+    Error: element(s) not found
+      55 |     await expect(page.getByRole("button", { name: "Desactivar" }).first())
+    Error: expect(received).toBe(expected) // Object.is equality
+    Expected: 0
+    Received: 2
+    > 399 |     expect(inbox.total).toBe(0);
+# empresas en la base después: D1=ACTIVE 
