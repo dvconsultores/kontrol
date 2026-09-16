@@ -1,0 +1,62 @@
+########## CASO A · base limpia
+[0048 spec022] la dirección no se supone: la da el signo de la cantidad, que es la convención del motor desde la Spec 003. Las filas sin ubicación no se tocan
+-- current --
+0057_spec047_notifications (head)
+-- heads   --
+0057_spec047_notifications (head)
+-- tablas  --
+204
+-- drift (alembic check) --
+Detected added index ''ix_fiscal_rules_rule_code'' on '('rule_code',)'
+Detected added index ''ix_receipt_confirmations_company_id'' on '('company_id',)'
+Detected added unique constraint 'uq_license_states_license_id' on '('license_id',)'
+Detected added unique constraint 'uq_release_versions_inst_version' on '('installation_id', 'version')'
+Detected removed index 'ix_attribute_applicabilities_taxonomy_id' on 'attribute_applicabilities'
+Detected removed index 'ix_audit_events_action' on 'audit_events'
+Detected removed index 'ix_audit_events_entity_type' on 'audit_events'
+Detected removed index 'ix_inventory_balances_company_product_wh' on 'inventory_balances'
+Detected removed index 'ix_inventory_movements_company_product' on 'inventory_movements'
+Detected removed index 'ix_parties_tax_id' on 'parties'
+Detected removed index 'ix_pick_list_lines_location_id' on 'pick_list_lines'
+Detected removed index 'ix_pick_list_lines_order_line_id' on 'pick_list_lines'
+Detected removed index 'ix_sales_order_lines_price_source_version' on 'sales_order_lines'
+Detected removed index 'ix_sales_quote_lines_price_source_version' on 'sales_quote_lines'
+Detected removed index 'uq_release_versions_inst_version' on 'release_versions'
+Detected removed unique constraint 'uq_carriers_party_id' on 'carriers'
+Detected removed unique constraint 'uq_customers_party_id' on 'customers'
+Detected removed unique constraint 'uq_drivers_party_id' on 'drivers'
+Detected removed unique constraint 'uq_products_item_id' on 'products'
+Detected removed unique constraint 'uq_services_item_id' on 'services'
+Detected removed unique constraint 'uq_suppliers_party_id' on 'suppliers'
+sin drift
+
+########## CASO B · base anterior a 045, con datos
+-- ANTES --
+approval_requests(legado)=4
+[0016] omitida solicitud legada leg-4: la empresa 'co-BORRADA' ya no existe (referencia colgante sin FK).
+[0016] 1 solicitud(es) legada(s) omitida(s) por empresa inexistente. Permanecen en `regulatory_approval_requests`, sin pérdida de datos.
+-- DESPUÉS --
+legada renombrada = 4
+motor (migradas)  = 3
+permisos aprobaciones = 6
+role_permissions ADMIN = 24
+-- datos legados preservados --
+leg-1 | DESP-0001 | 1500.00 | APPROVED | APPROVED
+leg-2 | DESP-0002 | 2500.00 | REJECTED | REJECTED
+leg-3 | DESP-0003 | 900.00 | — | PENDING
+leg-4 | DESP-0004 | 100.00 | APPROVED | APPROVED
+-- migrado al motor --
+leg-1 | APPROVED | LEGACY_UNVERSIONED | 1500.00
+leg-2 | REJECTED | LEGACY_UNVERSIONED | 2500.00
+leg-3 | CANCELLED | LEGACY_UNVERSIONED | 900.00
+-- índices sin colisión --
+ix_approval_requests_company_id
+ix_approval_requests_document_id
+ix_approval_requests_document_type
+ix_approval_requests_fingerprint
+ix_approval_requests_idempotency_key
+ix_approval_requests_process_type
+ix_regulatory_approval_requests_company_id
+pk_approval_requests
+pk_regulatory_approval_requests
+uq_approval_requests_open_document

@@ -1,0 +1,30 @@
+########## M0033-01 · se retira la remediación (comportamiento anterior)
+tests/test_spec052_migration_0033_legacy.py:167: AssertionError
+=========================== short test summary info ============================
+ERROR tests/test_spec052_migration_0033_legacy.py::test_una_instalacion_con_historico_huerfano_llega_a_la_cabeza
+ERROR tests/test_spec052_migration_0033_legacy.py::test_el_historico_sobrevive_entero_y_sin_un_solo_cambio
+RESTAURADA: idéntica al original
+########## M0033-02 · se resuelve borrando el histórico huérfano
+
+tests/test_spec052_migration_0033_legacy.py:195: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_spec052_migration_0033_legacy.py::test_el_historico_sobrevive_entero_y_sin_un_solo_cambio
+RESTAURADA: idéntica al original
+########## M0033-03 · se fabrica la empresa que falta
+
+tests/test_spec052_migration_0033_legacy.py:203: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_spec052_migration_0033_legacy.py::test_no_se_fabrica_ninguna_empresa
+RESTAURADA: idéntica al original
+########## M0033-04 · se debilita la integridad futura
+
+tests/test_spec052_migration_0033_legacy.py:236: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_spec052_migration_0033_legacy.py::test_una_escritura_nueva_con_empresa_inexistente_es_rechazada
+RESTAURADA: idéntica al original
+########## M0033-05 · la instalación limpia se queda sin validar
+
+tests/test_spec052_migration_0033_legacy.py:286: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_spec052_migration_0033_legacy.py::test_una_instalacion_limpia_termina_con_todo_validado
+RESTAURADA: idéntica al original

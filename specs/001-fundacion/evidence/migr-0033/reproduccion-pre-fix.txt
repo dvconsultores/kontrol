@@ -1,0 +1,30 @@
+== revisión de partida
+revision_inicial=0014_numeric_money_2
+tablas_inicial=145
+== siembra del estado histórico canónico
+filas_legadas=4
+empresa_co-BORRADA_existe=0
+== alembic upgrade head
+
+Traceback (most recent call last):
+    sys.exit(main())
+    CommandLine(prog=prog).main(argv=argv)
+    fn(
+    script.run_env()
+    util.load_python_file(self.dir, "env.py")
+    spec.loader.exec_module(module)  # type: ignore
+    run_migrations_online()
+    context.run_migrations()
+    step.migration_fn(**kw)
+    op.create_foreign_key(
+    operations.impl.add_constraint(
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.ForeignKeyViolation) insert or update on table "regulatory_approval_requests" violates foreign key constraint "fk_regulatory_approval_requests_company"
+DETAIL:  Key (company_id)=(co-BORRADA) is not present in table "companies".
+
+[SQL: ALTER TABLE regulatory_approval_requests ADD CONSTRAINT fk_regulatory_approval_requests_company FOREIGN KEY(company_id) REFERENCES companies (id)]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+SALIDA_ALEMBIC=1
+== estado tras el intento
+revision_final=0014_numeric_money_2
+tablas_final=145
+tabla_legada_existe=NO

@@ -34,3 +34,15 @@
 Estas tres son las únicas deudas del listado cuyo coste **crece con el tiempo de operación**.
 Una FK añadida hoy admite backfill; añadida tras un año de facturación deja un hueco histórico
 permanente. Deben tratarse con prioridad superior a su severidad nominal.
+
+---
+
+## Deltas dirigidos posteriores al registro
+
+| ID | Deuda | Estado | Evidencia |
+|---|---|---|---|
+| **MIGR-0033-FK-HUERFANA** | Actualizar una instalación con histórico abortaba en la migración `0033`: exigía una clave foránea de empresa que la fila preservada a propósito por `0016` violaba | **CLOSED / CONVERGED** (2026-09-16) | `specs/001-fundacion/spec052-migr-0033-legacy-fk-delta.md` · `evidence/migr-0033/` |
+| **AUTH-MC-INTERMITENTE** | El arnés `conftest_multicompany` pide un token nuevo en cada llamada; en tandas completas largas alguna petición recibe `401` y tumba una prueba de la Spec 030 que pasa aislada | **OPEN** — dueña sugerida 054 | Tandas 2 y 3 de `evidence/migr-0033/` |
+
+**DT-08** (`alembic check` nunca ejecutado) quedó cerrada al ejecutarse en la auditoría
+maestra; las demás del registro conservan el estado que allí se midió.

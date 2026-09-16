@@ -1,0 +1,27 @@
+INVARIANTES SOBRE LA BASE HISTÓRICA YA ACTUALIZADA — MIGR-0033-FK-HUERFANA
+Base: kontrol_legacy_b · PostgreSQL 16.2 · cabeza 0057_spec047_notifications
+
+== preservación del histórico (4 filas, íntegras, sin reasignar)
+leg-1 | co-1        | DESP-0001 | 1500.00 | APPROVED | APPROVED
+leg-2 | co-1        | DESP-0002 | 2500.00 | REJECTED | REJECTED
+leg-3 | co-1        | DESP-0003 |  900.00 | —        | PENDING
+leg-4 | co-BORRADA  | DESP-0004 |  100.00 | APPROVED | APPROVED   <- la huérfana, intacta
+
+== empresas fabricadas
+companies=1   co-BORRADA=0   (no se creó ninguna empresa)
+
+== migradas al motor por la 0016 (solo las de empresa viva)
+motor=3
+
+== estado de validación de las restricciones de empresa
+NOT VALID: regulatory_approval_requests   (la única con histórico colgante)
+validadas=90
+
+== integridad futura, comprobada contra la base
+INSERT con empresa inexistente  -> ERROR fk_regulatory_approval_requests_company (23503)
+UPDATE hacia empresa inexistente -> ERROR fk_regulatory_approval_requests_company (23503)
+INSERT con empresa real          -> INSERT 0 1
+
+== arranque de la aplicación
+kontrol_clean            live=200 ready=200 {"status":"ok","database":"ok"}
+kontrol_legacy_fk_0033   live=200 ready=200 {"status":"ok","database":"ok"}

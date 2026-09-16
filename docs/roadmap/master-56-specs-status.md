@@ -27,7 +27,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 
 | # | Spec | Estado | Evidencia | Bloqueo activo |
 |---|---|---|---|---|
-| 001 | Fundación | `PARTIALLY_IMPLEMENTED` | `specs/001-fundacion`, arranque real, 41 migraciones | Validación Docker/PG de despliegue |
+| 001 | Fundación | `PARTIALLY_IMPLEMENTED` | `specs/001-fundacion`, arranque real, 57 migraciones | Validación Docker/PG de despliegue. Delta dirigido **MIGR-0033-FK-HUERFANA** (2026-09-16), dueña 052: actualizar una instalación con histórico abortaba en `0033` porque exigía una clave foránea que la fila preservada a propósito por `0016` violaba; ahora la restricción nace `NOT VALID` y se valida sola donde no cuelga nada. El estado global no cambia |
 | 002 | Seguridad / sesiones | `PARTIALLY_IMPLEMENTED` | `/auth` 9 rutas, rotación de sesión probada | MFA declarado y no construido |
 | 003 | Usuarios / roles / alcance | `PARTIALLY_IMPLEMENTED` | `identity_access` 8 tablas; N10 corrigió tres cruces de tenant | Sin UI de alcances |
 | 004 | Licenciamiento | `BLOCKED_BY_BUSINESS_DECISION` | `licensing` 7 tablas, `/licensing` 10 rutas | D0-06 hosting/licencia central · Delta dirigido «carrera en la creación de la instalación» (2026-09-13): **COMPLETE / CONVERGED** — bloqueo consultivo y relectura; una instalación, una clave; M004-RACE-01..03 caen; regresión 1410/1402/8/0. El estado global no cambia |
@@ -78,7 +78,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 049 | Dashboard | `PARTIALLY_IMPLEMENTED` | `reporting` 3 tablas | **Revalidación 2026-09-13 · BLOCKED BY OWNER DEPENDENCY**: compras (015-017, 027, 028), fiscal (039-043, `D0-07`), regulatorio (044) y tareas/alertas (047); decisiones MD-049-01 y MD-049-02; el dashboard existente suma entradas y salidas de todas las monedas en un solo número (`PREEXISTING`) · **Revalidación 2026-09-14 (tras converger la 047)**: sin cambio de estado; bloqueos de dependencia 3 —compras, fiscal, regulatorio—; la 047 deja de bloquear y ofrece `GET /notifications/counts` |
 | 050 | Reportes | `PARTIALLY_IMPLEMENTED` | `/reporting` 8 rutas | — |
 | 051 | Auditoría empresarial avanzada | `PARTIALLY_IMPLEMENTED` | bitácora con actor, tenant y empresa | 006 |
-| 052 | Instalador / actualización | `PARTIALLY_IMPLEMENTED` | `scripts/`, `alembic` a cabeza | Planificador de retención (P1) |
+| 052 | Instalador / actualización | `PARTIALLY_IMPLEMENTED` | `scripts/`, `alembic` a cabeza | Planificador de retención (P1). Delta **MIGR-0033-FK-HUERFANA** (2026-09-16): **COMPLETE / CONVERGED** — histórico preservado sin fabricar ni reasignar empresa, integridad exigida a toda escritura nueva, cero→cabeza y legado→cabeza en verde, 5 mutaciones, regresión 1573/0/24, deriva nueva 0. Siguen abiertos instalador y actualizador sin ejecutar, y la etiqueta `latest`. El estado global no cambia |
 | 053 | Copia de seguridad / continuidad | `PARTIALLY_IMPLEMENTED` | `scripts/backup.sh`, `restore.sh` | Sin verificación de restauración |
 | 054 | QA integral | `PARTIALLY_IMPLEMENTED` | `specs/012-auditoria-integral-e2e`, suites vigentes | Deuda responsive |
 | 055 | Seguridad y *hardening* | `PARTIALLY_IMPLEMENTED` | barridos de N5/N10, sin fugas | Sin Spec propietaria |
@@ -99,7 +99,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | `BLOCKED_BY_EXTERNAL_SERVICE` | 1 — 044 |
 | **Sin estado** | **0** |
 
-Suma: 20 + 1 + 0 + 26 + 1 + 0 + 1 + 6 + 1 = **56**. Sin estado: **0**. Recontado desde las filas el 2026-09-14, tras converger la 047, otra vez tras detenerse el delta FLOAT-038-A, y de nuevo el 2026-09-16 tras el delta E2E-045 —56 filas, 20·1·0·26·1·0·1·6·1—: sin cambio (la 022, `COMPLETE / CONVERGED / EVIDENCE SEALED`, cuenta entre las 20). Recontado de nuevo el 2026-09-15, tras converger FLOAT-038-A: sin cambio. Y tras converger FLOAT-038-B, el mismo día: sin cambio. Y tras converger CONC-046: sin cambio.
+Suma: 20 + 1 + 0 + 26 + 1 + 0 + 1 + 6 + 1 = **56**. Sin estado: **0**. Recontado desde las filas el 2026-09-14, tras converger la 047, otra vez tras detenerse el delta FLOAT-038-A, y de nuevo el 2026-09-16 tras los deltas E2E-045 y MIGR-0033-FK-HUERFANA —56 filas, 20·1·0·26·1·0·1·6·1 en ambos recuentos—: sin cambio (la 022, `COMPLETE / CONVERGED / EVIDENCE SEALED`, cuenta entre las 20). Recontado de nuevo el 2026-09-15, tras converger FLOAT-038-A: sin cambio. Y tras converger FLOAT-038-B, el mismo día: sin cambio. Y tras converger CONC-046: sin cambio.
 
 El grupo dominante —26 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el

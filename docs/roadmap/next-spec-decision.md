@@ -1401,3 +1401,46 @@ el camino tras `EXPIRED` en la 045, OQ-048-01..03, MD-049-01/02, D0-06 y D0-07.
 Ni CLOCK-013, ni E2E-031-RESERVAS, ni los seis `float`, ni las dos deudas nuevas de este
 delta, ni las tres de la 046, ni la 049. Cada uno requiere su ciclo completo y
 autorización expresa.
+
+---
+
+## Tras converger MIGR-0033-FK-HUERFANA — 2026-09-16
+
+El bloqueante que la auditoría maestra encontró queda **cerrado**. Era de la 052 —el
+contrato de actualización— y su corrección vive entera en la cadena de migraciones.
+
+| Hecho | Detalle |
+|---|---|
+| Defecto | `0016` preservó a propósito una solicitud legada cuya empresa ya no existe, apoyándose en que la tabla legada no tenía clave foránea; `0033` se la puso a 80 tablas y la actualización de cualquier instalación con histórico abortaba entera |
+| Corrección | La clave foránea nace `NOT VALID` y se valida sola donde no cuelga nada. El pasado se tolera y se anota; toda escritura nueva sigue exigiendo una empresa real |
+| Autoridad | «No se inventa empresa» y la clase **MC-D `NON_RECONSTRUCTIBLE`** de la matriz de ARCH-MC-001: anotar, no rellenar |
+| Por qué se tocó una migración escrita | No hay política de inmutabilidad, no hay instalaciones desplegadas, y una migración nueva sería inalcanzable: la actualización muere *en* `0033` |
+| Evidencia | cero→cabeza y legado→cabeza en verde · histórico 6/6 íntegro · 0 empresas fabricadas · 0 reasignaciones · escritura inválida rechazada · 5 mutaciones sin supervivientes · regresión 1.573/0 · deriva nueva 0 · esquema idéntico al anterior |
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | Los **seis `float`** del borde de tesorería | 038 | no |
+| 2 | **CLOCK-013** | 013 | no |
+| 3 | **E2E-031-RESERVAS** | 031 · 023 | no |
+| 4 | Certificar compras (015, 016, 017, 027) | 004-compras | no |
+| 5 | Verificar restauración (DT-11) | 053 | no |
+
+La recomendación de la auditoría se cumple: cerrado el nº 1 de su secuencia, el
+siguiente candidato son los seis `float` de tesorería, cuya política ya decidió la dueña
+y cuyo patrón se ha aplicado dos veces. **Revalidado: sigue siendo el mejor siguiente.**
+
+### Deuda nueva registrada
+
+| Deuda | Dueña | Hallazgo | Prioridad |
+|---|---|---|---|
+| **AUTH-MC-INTERMITENTE** | 054 | El arnés `conftest_multicompany` pide un token nuevo en cada llamada; en tandas largas alguna petición recibe `401` y tumba `test_ttl_opcional…` de la Spec 030, que pasa aislada y pasó en dos de las tres tandas completas | media |
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguno se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni los seis `float`, ni CLOCK-013, ni E2E-031-RESERVAS, ni la certificación de compras,
+ni la validación de respaldo, ni AUTH-MC-INTERMITENTE, ni ninguna de las decisiones
+abiertas (D0-06, D0-07, OQ-048, MD-049, camino tras `EXPIRED`).
