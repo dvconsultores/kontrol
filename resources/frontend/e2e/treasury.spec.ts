@@ -73,6 +73,9 @@ async function saldo(request: APIRequestContext, c: Ctx, cuentaId: string): Prom
   return Number((await get(request, c, `/treasury/accounts/${cuentaId}/balance`)).balance);
 }
 
+/** Un importe que un `double` no representa: si alguien reintroduce `float`, vuelve …56.80. */
+const EXACTO = "1234567890123456.78";
+
 async function irA(page: Page, ruta: string): Promise<void> {
   // `page.goto` justo después del login compite con la redirección del shell y
   // acaba en el inicio. Se navega como navega una persona: por el menú.
@@ -439,8 +442,8 @@ test.describe("Spec 038 — tesorería", () => {
       .toHaveText(/ · 1\.234\.567\.890\.123\.456,78 · /, { timeout: 20_000 });
   });
 
-  /** Abre una sesión de caja nueva. El fondo viaja como número: la apertura es otro contrato, fuera de FLOAT-038-B. */
-  async function sesionDeCaja(request: APIRequestContext, c: Ctx, m: string, sufijo: string, fondo: number) {
+  /** Abre una sesión de caja nueva. Desde FLOAT-038-C el fondo también viaja como texto exacto. */
+  async function sesionDeCaja(request: APIRequestContext, c: Ctx, m: string, sufijo: string, fondo: string) {
     const caja = await post(request, c, "/treasury/cashboxes", {
       code: `CJ-${m}-${sufijo}`, name: `Caja ${m} ${sufijo}`, currency: "VED",
     });
@@ -453,7 +456,7 @@ test.describe("Spec 038 — tesorería", () => {
     const c = await ctx(request);
     const m = marca();
 
-    const corta = await sesionDeCaja(request, c, m, "F", 100);
+    const corta = await sesionDeCaja(request, c, m, "F", "100.00");
     for (const cuerpo of [{ counted_amount: 100 }, { counted_amount: "100.001" }, { counted_amount: "100.005" }]) {
       const r = await postCrudo(request, c, deSesion(corta.sesion, "arqueo"), cuerpo);
       expect(r.status(), `aceptó ${JSON.stringify(cuerpo)}`).toBe(422);
@@ -473,7 +476,7 @@ test.describe("Spec 038 — tesorería", () => {
     });
     expect(aprobada.status).toBe("CLOSED");
 
-    const exacta = await sesionDeCaja(request, c, m, "E", 100);
+    const exacta = await sesionDeCaja(request, c, m, "E", "100.00");
     await post(request, c, deSesion(exacta.sesion, "arqueo"), { counted_amount: "100.00" });
     await post(request, c, deSesion(exacta.sesion, "pre-close"), {});
     const cerrada = await post(request, c, deSesion(exacta.sesion, "close"), { difference_approved: false });
@@ -483,8 +486,8 @@ test.describe("Spec 038 — tesorería", () => {
   test("FLOAT-038-B · la interfaz de cajas envía el conteo exacto y no cierra un céntimo sin aprobar", async ({ page, request }) => {
     const c = await ctx(request);
     const m = marca();
-    const grande = await sesionDeCaja(request, c, m, "G", 0);
-    const corta = await sesionDeCaja(request, c, m, "C", 100);
+    const grande = await sesionDeCaja(request, c, m, "G", "0.00");
+    const corta = await sesionDeCaja(request, c, m, "C", "100.00");
 
     await uiLogin(page);
     await irA(page, "/tesoreria/cajas");
@@ -534,5 +537,65 @@ test.describe("Spec 038 — tesorería", () => {
 
     const final = await get(request, c, `/treasury/cash-sessions/${corta.sesion}`);
     expect([final.status, final.difference]).toEqual(["CLOSED", "-0.01"]);
+  });
+  // ------------------------------------------------------------------------- //
+  // Spec 038 · FLOAT-038-C — las seis fronteras restantes
+  // ------------------------------------------------------------------------- //
+  test("FLOAT-038-C · las seis fronteras exigen texto decimal y ninguna redondea", async ({ request }) => {
+    const c = await ctx(request);
+    const m = marca();
+    const caja = await post(request, c, "/treasury/cashboxes", {
+      code: `CJ-C-${m}`, name: `Caja C ${m}`, currency: "VED",
+    });
+    const sesion = await post(request, c, "/treasury/cash-sessions", {
+      cashbox_id: caja.id, opened_amount: EXACTO,
+    });
+    expect(sesion.opened_amount, "el fondo de apertura no volvió exacto").toBe(EXACTO);
+
+    const origen = await cuenta(request, c, `C1-${m}`, "VED");
+    const destino = await cuenta(request, c, `C2-${m}`, "VED");
+
+    // Cada frontera, con su número JSON y con su decimal de más.
+    const casos: Array<[string, Record<string, unknown>, string]> = [
+      [`/treasury/cash-sessions`, { cashbox_id: caja.id }, "opened_amount"],
+      [`/treasury/cash-sessions/${sesion.id}/movements`, { movement_type: "IN", source: "ADJUSTMENT" }, "amount"],
+      ["/treasury/transfers", { currency: "VED", from_account_id: origen.id, to_account_id: destino.id }, "amount"],
+      ["/treasury/reconciliations", { account_id: origen.id }, "opening_balance"],
+      ["/treasury/igft-events/evaluate", { event_type: "PAYMENT", currency: "VED" }, "amount"],
+    ];
+    for (const [ruta, base, campo] of casos) {
+      const numero = await postCrudo(request, c, ruta, { ...base, [campo]: 100.5 });
+      expect(numero.status(), `${ruta}:${campo} aceptó un número JSON`).toBe(422);
+      const escala = await postCrudo(request, c, ruta, { ...base, [campo]: "100.005" });
+      expect(escala.status(), `${ruta}:${campo} aceptó un decimal de más`).toBe(422);
+    }
+
+    // Y el camino válido conserva la exactitud hasta la respuesta.
+    const t = await post(request, c, "/treasury/transfers", {
+      amount: EXACTO, currency: "VED", from_account_id: origen.id, to_account_id: destino.id,
+    });
+    expect(t.amount).toBe(EXACTO);
+  });
+
+  test("FLOAT-038-C · la interfaz de transferencias envía el importe exacto", async ({ page, request }) => {
+    const c = await ctx(request);
+    const m = marca();
+    const origen = await cuenta(request, c, `U1-${m}`, "VED");
+    await cuenta(request, c, `U2-${m}`, "VED");
+    await fondear(request, c, origen.id, "5000000000000000.00");
+
+    await uiLogin(page);
+    await irA(page, "/tesoreria/transferencias");
+
+    const cuerpo = page.waitForRequest((r) =>
+      r.url().includes("/treasury/transfers") && r.method() === "POST");
+    const selectores = page.getByRole("combobox");
+    await selectores.nth(1).selectOption({ index: 1 });
+    await selectores.nth(3).selectOption({ index: 2 });
+    await page.getByLabel("Monto").fill(EXACTO);
+    await page.getByRole("button", { name: "Transferir" }).click();
+
+    const enviado = JSON.parse(((await cuerpo).postData() ?? "{}") as string);
+    expect(enviado.amount, "la pantalla mandó un número en vez de texto exacto").toBe(EXACTO);
   });
 });

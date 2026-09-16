@@ -1,0 +1,10 @@
+FLOAT-038-C · OPENAPI DE LAS SEIS FRONTERAS (tras el cambio)
+
+SessionOpen.opened_amount                : string
+SessionMovementCreate.amount             : string
+TransferCreate.amount                    : string
+ReconciliationCreate.opening_balance     : string | null, patrón ^-?[0-9]+(\.[0-9]{1,2})?$
+ReconciliationCreate.closing_balance     : string | null, mismo patrón
+IgftEvaluateBody.amount                  : string
+TreasuryTransferOut.amount               : string (salida declarada)
+CashSessionMovementOut.amount            : string (ya lo era desde FLOAT-038-B)

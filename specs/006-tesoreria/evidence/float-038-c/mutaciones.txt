@@ -1,0 +1,54 @@
+##### M038-C-01 · float vuelve a opened_amount
+FAILED tests/test_spec038_float_c.py::test_un_entero_json_tampoco[opened_amount]
+FAILED tests/test_spec038_float_c.py::test_mas_decimales_de_los_que_caben_se_rechazan_sin_redondear[opened_amount]
+FAILED tests/test_spec038_float_c.py::test_el_fondo_de_apertura_vuelve_exacto
+RESTAURADO: idéntico al original
+##### M038-C-02 · float vuelve al movimiento de caja
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+AssertionError: patrón no único (2) en /home/maria/Proyectos/kontrol/resources/backend/app/modules/treasury/api.py
+.......                                                                  [100%]
+RESTAURADO: idéntico al original
+##### M038-C-03 · float vuelve a la transferencia
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+AssertionError: patrón no único (2) en /home/maria/Proyectos/kontrol/resources/backend/app/modules/treasury/api.py
+.......                                                                  [100%]
+RESTAURADO: idéntico al original
+##### M038-C-04 · float vuelve a los saldos de conciliación
+FAILED tests/test_spec038_float_c.py::test_un_entero_json_tampoco[reconciliation.opening_balance]
+FAILED tests/test_spec038_float_c.py::test_mas_decimales_de_los_que_caben_se_rechazan_sin_redondear[reconciliation.opening_balance]
+FAILED tests/test_spec038_float_c.py::test_los_saldos_de_conciliacion_vuelven_exactos
+RESTAURADO: idéntico al original
+##### M038-C-05 · float vuelve a la base del IGTF
+FAILED tests/test_spec038_float_c.py::test_mas_decimales_de_los_que_caben_se_rechazan_sin_redondear[igtf.amount]
+FAILED tests/test_spec038_float_c.py::test_la_base_del_igtf_vuelve_exacta - T...
+FAILED tests/test_spec038_float_c.py::test_el_igtf_calculado_sale_como_texto_y_no_como_numero
+RESTAURADO: idéntico al original
+##### M038-C-06 · el helper deja de rechazar el exceso de escala
+FAILED tests/test_spec038_float_c.py::test_mas_decimales_de_los_que_caben_se_rechazan_sin_redondear[transfer.amount]
+FAILED tests/test_spec038_float_c.py::test_mas_decimales_de_los_que_caben_se_rechazan_sin_redondear[reconciliation.opening_balance]
+FAILED tests/test_spec038_float_c.py::test_mas_decimales_de_los_que_caben_se_rechazan_sin_redondear[igtf.amount]
+RESTAURADO: idéntico al original
+##### M038-C-07 · Number() vuelve al cuerpo de la transferencia
+   × FLOAT-038-C · el importe sale como texto exacto > la transferencia envía el importe como texto exacto 1245ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+RESTAURADO: idéntico al original
+##### M038-C-08 · float vuelve a la respuesta monetaria
+  {'type': 'string_type', 'loc': ('response', 'amount'), 'msg': 'Input should be a valid string', 'input': 1234567890123456.8}
+=========================== short test summary info ============================
+FAILED tests/test_spec038_float_c.py::test_la_transferencia_vuelve_exacta - f...
+RESTAURADO: idéntico al original
+##### M038-C-02 · float vuelve al movimiento de caja
+FAILED tests/test_spec038_float_c.py::test_un_numero_json_no_es_dinero[movement.amount]
+FAILED tests/test_spec038_float_c.py::test_un_entero_json_tampoco[movement.amount]
+FAILED tests/test_spec038_float_c.py::test_mas_decimales_de_los_que_caben_se_rechazan_sin_redondear[movement.amount]
+FAILED tests/test_spec038_float_c.py::test_el_movimiento_de_caja_vuelve_exacto
+RESTAURADO: idéntico al original
+##### M038-C-03 · float vuelve a la transferencia
+FAILED tests/test_spec038_float_c.py::test_un_numero_json_no_es_dinero[transfer.amount]
+FAILED tests/test_spec038_float_c.py::test_un_entero_json_tampoco[transfer.amount]
+FAILED tests/test_spec038_float_c.py::test_mas_decimales_de_los_que_caben_se_rechazan_sin_redondear[transfer.amount]
+FAILED tests/test_spec038_float_c.py::test_la_transferencia_vuelve_exacta - A...
+RESTAURADO: idéntico al original

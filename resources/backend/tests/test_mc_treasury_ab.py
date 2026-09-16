@@ -125,13 +125,13 @@ def test_la_sesion_de_caja_de_b_no_se_opera_desde_a(mundo):
     caja_b = mundo.crear("/treasury/cashboxes", "ub", mundo.company_b,
                          {"code": "CAJA-B", "name": "Caja B", "currency": "VED"})
     ses_b = mundo.crear("/treasury/cash-sessions", "ub", mundo.company_b,
-                        {"cashbox_id": caja_b, "opened_amount": 0})
+                        {"cashbox_id": caja_b, "opened_amount": "0"})
     assert mundo.dueño("cash_sessions", ses_b) == mundo.company_b
 
     assert mundo.get(f"/treasury/cash-sessions/{ses_b}", "ua", mundo.company_a).status_code == 404
     # Payloads válidos a propósito: un 422 significaría que la petición murió
     # en la validación de forma, sin llegar a preguntarse de quién es la caja.
-    for ruta, cuerpo in (("movements", {"movement_type": "IN", "amount": 5}),
+    for ruta, cuerpo in (("movements", {"movement_type": "IN", "amount": "5.00"}),
                          ("arqueo", {"counted_amount": "5.00"}),
                          ("pre-close", {}),
                          ("close", {"difference_approved": False}),
@@ -144,7 +144,7 @@ def test_no_se_abre_sesion_sobre_una_caja_ajena(mundo):
     caja_b = mundo.crear("/treasury/cashboxes", "ub", mundo.company_b,
                          {"code": "CAJA-B2", "name": "Caja B2", "currency": "VED"})
     r = mundo.post("/treasury/cash-sessions", "ua", mundo.company_a,
-                   {"cashbox_id": caja_b, "opened_amount": 0})
+                   {"cashbox_id": caja_b, "opened_amount": "0"})
     assert r.status_code == 404, f"A abrió caja en una caja de B: {r.text}"
 
 
@@ -160,7 +160,7 @@ def test_no_hay_transferencia_entre_empresas(mundo):
     cb = _cuenta(mundo, "ub", mundo.company_b, _banco(mundo, "ub", mundo.company_b, "BT"), "T-B")
 
     r = mundo.post("/treasury/transfers", "ua", mundo.company_a, {
-        "amount": 500, "currency": "VED", "from_account_id": ca, "to_account_id": cb})
+        "amount": "500.00", "currency": "VED", "from_account_id": ca, "to_account_id": cb})
     assert r.status_code == 404, f"se transfirió dinero de A a B: {r.text}"
 
     db = mundo.factory()
@@ -195,7 +195,7 @@ def test_la_auditoria_registra_la_empresa_real(mundo):
     caja = mundo.crear("/treasury/cashboxes", "ua", mundo.company_a,
                        {"code": "CAJA-AUD", "name": "Caja auditada", "currency": "VED"})
     ses = mundo.crear("/treasury/cash-sessions", "ua", mundo.company_a,
-                      {"cashbox_id": caja, "opened_amount": 0})
+                      {"cashbox_id": caja, "opened_amount": "0"})
     r = mundo.post(f"/treasury/cash-sessions/{ses}/arqueo", "ua", mundo.company_a,
                    {"counted_amount": "0.00"})
     assert r.status_code == 200, r.text

@@ -57,9 +57,16 @@ export function CajasPage(): React.JSX.Element {
       notify({ type: "error", title: "Falta la caja", description: "Seleccione la caja a abrir." });
       return;
     }
+    // Spec 038 · FLOAT-038-C: el fondo de apertura sale como texto exacto. `Number`
+    // lo habría redondeado en el navegador, antes de que nadie pudiera validarlo.
+    const apertura = toDecimalString(openedAmount);
+    if (apertura === null) {
+      notify({ type: "error", title: "Importe inválido", description: "Use números con hasta dos decimales, por ejemplo 1234,56." });
+      return;
+    }
     await apiFetch("/treasury/cash-sessions", {
       method: "POST",
-      body: { cashbox_id: cashboxId, opened_amount: Number(openedAmount) || 0 },
+      body: { cashbox_id: cashboxId, opened_amount: apertura },
     });
     notify({ type: "success", title: "Caja abierta", description: "La sesión de caja fue abierta." });
     setCashboxId("");

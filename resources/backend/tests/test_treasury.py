@@ -94,7 +94,8 @@ def _make_payment(db: Session, company: str = COMPANY, direction: str = "OUT", a
     return p
 
 
-def _open_cash_session(db: Session, cashbox: Cashbox, company: str = COMPANY, opened: float = 0.0) -> CashSession:
+def _open_cash_session(db: Session, cashbox: Cashbox, company: str = COMPANY,
+                       opened: Decimal = Decimal("0")) -> CashSession:
     s = treasury_service.open_session(db, company_id=company, cashbox_id=str(cashbox.id), opened_amount=opened)
     db.flush()
     return s
@@ -127,14 +128,14 @@ class TestMaestrosFinancieros:
 class TestCajas:
     def test_open_session(self, db_session) -> None:
         cb = _make_cashbox(db_session)
-        s = _open_cash_session(db_session, cb, opened=500.0)
+        s = _open_cash_session(db_session, cb, opened=Decimal("500"))
         assert s.status == "OPEN" and s.opened_amount == 500.0
 
     def test_full_cash_cycle(self, db_session) -> None:
         cb = _make_cashbox(db_session)
         s = _open_cash_session(db_session, cb, opened=1000.0)
-        treasury_service.add_session_movement(db_session, session_id=str(s.id), movement_type="IN", amount=200.0)
-        treasury_service.add_session_movement(db_session, session_id=str(s.id), movement_type="OUT", amount=50.0)
+        treasury_service.add_session_movement(db_session, session_id=str(s.id), movement_type="IN", amount=Decimal("200"))
+        treasury_service.add_session_movement(db_session, session_id=str(s.id), movement_type="OUT", amount=Decimal("50"))
         treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=Decimal("1150.00"))
         assert s.status == "ARCHED" and s.difference == 0.0
         treasury_service.pre_close_session(db_session, session_id=str(s.id))
@@ -145,7 +146,7 @@ class TestCajas:
     def test_arqueo_difference_reported(self, db_session) -> None:
         cb = _make_cashbox(db_session)
         s = _open_cash_session(db_session, cb, opened=1000.0)
-        treasury_service.add_session_movement(db_session, session_id=str(s.id), movement_type="IN", amount=200.0)
+        treasury_service.add_session_movement(db_session, session_id=str(s.id), movement_type="IN", amount=Decimal("200"))
         treasury_service.arqueo_session(db_session, session_id=str(s.id), counted_amount=Decimal("1150.00"))
         assert s.counted_amount == 1150.0 and s.expected_amount == 1200.0 and s.difference == -50.0
 
@@ -174,7 +175,7 @@ class TestCajas:
         treasury_service.pre_close_session(db_session, session_id=str(s.id))
         treasury_service.close_session(db_session, session_id=str(s.id))
         with pytest.raises(ConflictError):
-            treasury_service.add_session_movement(db_session, session_id=str(s.id), movement_type="IN", amount=10.0)
+            treasury_service.add_session_movement(db_session, session_id=str(s.id), movement_type="IN", amount=Decimal("10"))
 
 
 class TestBancosYEgresos:
@@ -203,7 +204,7 @@ class TestBancosYEgresos:
 
     def test_execute_egreso_against_cashbox(self, db_session) -> None:
         cb = _make_cashbox(db_session)
-        s = _open_cash_session(db_session, cb, opened=500.0)
+        s = _open_cash_session(db_session, cb, opened=Decimal("500"))
         payment = _make_payment(db_session, direction="OUT", amount=80.0)
         result = treasury_service.execute_payment(db_session, company_id=COMPANY, payment_id=str(payment.id),
                                                   target_type="CASHBOX", target_id=str(cb.id))
@@ -223,7 +224,7 @@ class TestBancosYEgresos:
         c2 = treasury_service.create_cashbox(db_session, company_id=COMPANY, code="CAJ-2", name="Caja Secundaria")
         s1 = _open_cash_session(db_session, c1, opened=1000.0)
         s2 = _open_cash_session(db_session, c2, opened=0.0)
-        t = treasury_service.create_transfer(db_session, company_id=COMPANY, amount=300.0,
+        t = treasury_service.create_transfer(db_session, company_id=COMPANY, amount=Decimal("300"),
                                              from_cashbox_id=str(c1.id), to_cashbox_id=str(c2.id))
         assert t.status == "POSTED"
         assert treasury_service.session_dict(db_session, s1)["expected_amount"] == "700.00"
@@ -233,7 +234,7 @@ class TestBancosYEgresos:
         a1 = _make_account(db_session)
         a2 = treasury_service.create_account(db_session, company_id=COMPANY, bank_id=str(_make_bank(db_session).id),
                                              code="CTA-2", name="Cuenta Secundaria")
-        t = treasury_service.create_transfer(db_session, company_id=COMPANY, amount=200.0,
+        t = treasury_service.create_transfer(db_session, company_id=COMPANY, amount=Decimal("200"),
                                              from_account_id=str(a1.id), to_account_id=str(a2.id))
         assert t.status == "POSTED"
         txs = db_session.query(BankTransaction).filter(BankTransaction.source == "TRANSFER").count()
@@ -289,14 +290,14 @@ class TestIGTF:
     def test_igft_by_rule_and_event(self, db_session) -> None:
         self._make_igft_rule(db_session)
         event = treasury_service.evaluate_igft(db_session, company_id=COMPANY, event_type="PAYMENT",
-                                               source_document="FAC-1", amount=100.0, currency="VED")
+                                               source_document="FAC-1", amount=Decimal("100"), currency="VED")
         assert event.igft_amount == 3.0 and event.status == "EVALUATED" and event.rule_id is not None
 
     def test_igft_not_confused_with_iva(self, db_session) -> None:
         self._make_igft_rule(db_session)
         iva = 16.0  # IVA adicional de una base de 100 al 16%
         event = treasury_service.evaluate_igft(db_session, company_id=COMPANY, event_type="PAYMENT",
-                                               amount=100.0, currency="VED")
+                                               amount=Decimal("100"), currency="VED")
         # El IGTF se evalúa por regla y queda separado del IVA (nunca se suman)
         assert event.igft_amount == 3.0
         assert event.igft_amount != iva
@@ -304,7 +305,7 @@ class TestIGTF:
 
     def test_igft_requires_active_rule(self, db_session) -> None:
         with pytest.raises(NotFoundError):
-            treasury_service.evaluate_igft(db_session, company_id=COMPANY, event_type="PAYMENT", amount=100.0)
+            treasury_service.evaluate_igft(db_session, company_id=COMPANY, event_type="PAYMENT", amount=Decimal("100"))
 
 
 class TestAnticiposYMultiempresa:

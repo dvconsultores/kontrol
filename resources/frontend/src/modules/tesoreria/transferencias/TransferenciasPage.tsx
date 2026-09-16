@@ -10,6 +10,8 @@ import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { MoneyInput } from "@/components/MoneyInput";
+import { isZeroDecimal, toDecimalString } from "@/lib/decimal";
+import { formatMoney } from "@/lib/format";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
@@ -58,10 +60,16 @@ export function TransferenciasPage(): React.JSX.Element {
       notify({ type: "error", title: "Faltan datos", description: "Seleccione origen y destino." });
       return;
     }
+    // Spec 038 · FLOAT-038-C: el importe viaja como texto decimal exacto.
+    const importe = toDecimalString(amount);
+    if (!importe || isZeroDecimal(importe)) {
+      notify({ type: "error", title: "Importe inválido", description: "Indique un importe mayor que cero, con hasta dos decimales." });
+      return;
+    }
     await apiFetch("/treasury/transfers", {
       method: "POST",
       body: {
-        amount: Number(amount) || 0,
+        amount: importe,
         currency: "VED",
         from_cashbox_id: from.type === "CASHBOX" ? from.id : null,
         from_account_id: from.type === "ACCOUNT" ? from.id : null,
@@ -93,7 +101,7 @@ export function TransferenciasPage(): React.JSX.Element {
           : { type: "ACCOUNT", id: row.original.to_account_id ?? "" },
       ),
     }),
-    columnHelper.accessor("amount", { header: "Monto" }),
+    columnHelper.accessor("amount", { header: "Monto", cell: (c) => formatMoney(c.getValue()) }),
     columnHelper.accessor("currency", { header: "Moneda" }),
     columnHelper.accessor("value_date", { header: "Fecha valor" }),
     columnHelper.accessor("reference", { header: "Referencia" }),

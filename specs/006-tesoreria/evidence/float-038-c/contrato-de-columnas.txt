@@ -1,0 +1,16 @@
+FLOAT-038-C · CONTRATO FÍSICO DE LOS SEIS CAMPOS
+Leído de PostgreSQL 16.2, base kontrol_clean en la cabeza 0057.
+
+CAMPO                                      TIPO             NULO   REGLA DE SIGNO Y CERO (conservada)
+cash_sessions.opened_amount                numeric(18,2)    NO     cualquier signo · cero sí
+cash_session_movements.amount              numeric(18,2)    NO     > 0 · cero no
+treasury_transfers.amount                  numeric(18,2)    NO     > 0 · cero no
+reconciliations.opening_balance            numeric(18,2)    SI     cualquier signo · cero sí
+reconciliations.closing_balance            numeric(18,2)    SI     cualquier signo · cero sí
+igft_events.amount                         numeric(18,2)    NO     > 0 · cero no
+
+En el mismo camino atómico, por aritmética:
+igft_events.igft_amount                    numeric(18,2)    SI     resultado del cálculo
+igft_events.rate_snapshot                  numeric(14,6)    SI     tasa, no dinero
+
+ORM contra base: sin contradicción. Migración necesaria: ninguna.

@@ -15,6 +15,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { formatMoney } from "@/lib/format";
 
+/** Saldo del estado de cuenta: texto exacto del servidor, sin `Number` (FLOAT-038-C). */
+const saldo = (valor: string | null): string => (valor === null ? "—" : formatMoney(valor));
+
 const columnHelper = createColumnHelper<ReconciliationSummary>();
 
 export function ConciliacionPage(): React.JSX.Element {
@@ -105,8 +108,8 @@ export function ConciliacionPage(): React.JSX.Element {
     columnHelper.accessor("account_id", { header: "Cuenta", cell: (info) => accountName(info.getValue()) }),
     columnHelper.accessor("statement_date", { header: "Fecha estado" }),
     columnHelper.accessor("statement_ref", { header: "Referencia" }),
-    columnHelper.accessor("opening_balance", { header: "Inicial" }),
-    columnHelper.accessor("closing_balance", { header: "Final" }),
+    columnHelper.accessor("opening_balance", { header: "Inicial", cell: (c) => saldo(c.getValue()) }),
+    columnHelper.accessor("closing_balance", { header: "Final", cell: (c) => saldo(c.getValue()) }),
     columnHelper.accessor("status", { header: "Estado" }),
     columnHelper.display({
       id: "actions",

@@ -1444,3 +1444,43 @@ y cuyo patrón se ha aplicado dos veces. **Revalidado: sigue siendo el mejor sig
 Ni los seis `float`, ni CLOCK-013, ni E2E-031-RESERVAS, ni la certificación de compras,
 ni la validación de respaldo, ni AUTH-MC-INTERMITENTE, ni ninguna de las decisiones
 abiertas (D0-06, D0-07, OQ-048, MD-049, camino tras `EXPIRED`).
+
+---
+
+## Tras converger FLOAT-038-C — 2026-09-16
+
+Las **seis fronteras `float`** que quedaban en el borde monetario de Tesorería están
+cerradas. Con A, B y C, ese borde ya no tiene ni un `float`.
+
+| Hecho | Detalle |
+|---|---|
+| Alcance | `opened_amount`, movimiento de caja, transferencia, los dos saldos de conciliación y la base del IGTF |
+| Política | La misma de A y B, sin reabrir nada: texto en el contrato, `Decimal` dentro, `Numeric` en la base, 422 al exceso de escala, cero redondeos silenciosos |
+| Reglas de signo | **Tres distintas, todas conservadas**: apertura y saldos admiten signo y cero; movimiento, transferencia e IGTF exigen positivo |
+| Lo que no cambió | La fórmula del IGTF, el emparejamiento de la conciliación, la dirección de los movimientos y las comprobaciones de la transferencia |
+| Migración | Ninguna: las columnas ya eran `Numeric(18,2)`; lo que mentía era la anotación del ORM |
+| Evidencia | 39 dirigidas · regresión 1628/0/8 · frontend 372/372 · E2E 87/87 en tres navegadores · 8 mutaciones sin supervivientes · deriva nueva 0 |
+| Cobertura declarada | Movimientos de caja y saldos de conciliación **no tienen interfaz**: certificados por API, no por pantalla. Se dice en vez de fingirlo |
+
+`D0-07` sigue abierta: este delta no homologa nada fiscal.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **CLOCK-013** · cinco pruebas de la 013 dependen del reloj local | 013 | no |
+| 2 | **E2E-031-RESERVAS** · `GET /inventory/reservations` ignora `source_order_id` | 031 · 023 | no |
+| 3 | Certificar compras (015, 016, 017, 027) | 004-compras | no |
+| 4 | Verificar restauración (DT-11) | 053 | no |
+
+Revalidado tras ver el estado global: **CLOCK-013** sigue siendo el mejor siguiente.
+Es barato, no depende de ninguna decisión de dueña y elimina un rojo intermitente que
+contamina toda regresión nocturna, lo que abarata cualquier ciclo posterior.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguno se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni CLOCK-013, ni E2E-031-RESERVAS, ni la certificación de compras, ni la validación de
+respaldo, ni AUTH-MC-INTERMITENTE, ni las deudas de 045/046, ni ninguna decisión abierta
+(D0-06, D0-07, OQ-048, MD-049, camino tras `EXPIRED`).

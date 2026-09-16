@@ -108,12 +108,12 @@ class ExchangeRateCreate(BaseModel):
 
 class SessionOpen(BaseModel):
     cashbox_id: str
-    opened_amount: float = 0.0
+    opened_amount: AperturaDeCaja = Decimal("0")
 
 
 class SessionMovementCreate(BaseModel):
     movement_type: str = Field(pattern="^(IN|OUT|ADJUST)$")
-    amount: float = Field(gt=0)
+    amount: ImporteDeMovimiento
     instrument_id: str | None = None
     payment_id: str | None = None
     source: str = "PAYMENT"
@@ -124,6 +124,18 @@ class SessionMovementCreate(BaseModel):
 # Spec 038 · FLOAT-038-B — el conteo del arqueo es texto decimal exacto con la escala
 # de su columna y la regla de siempre: cero sí, signo no. Mismo helper que FLOAT-038-A.
 ConteoDeCaja = texto_decimal(CashSession.__table__.c.counted_amount.type, positivo=True, admite_cero=True)
+#: Spec 038 · FLOAT-038-C — las seis fronteras que A y B dejaron fuera. Mismo helper y
+#: misma política; la regla de signo de cada campo es la que ya tenía, ni una más.
+#: La apertura de caja nunca tuvo regla de signo y este delta no le inventa una.
+AperturaDeCaja = texto_decimal(CashSession.__table__.c.opened_amount.type, positivo=False)
+ImporteDeMovimiento = texto_decimal(CashSessionMovement.__table__.c.amount.type, positivo=True)
+ImporteDeTransferencia = texto_decimal(TreasuryTransfer.__table__.c.amount.type, positivo=True)
+#: Un saldo de conciliación puede venir en descubierto: admite signo y admite faltar.
+SaldoDeConciliacion = texto_decimal(Reconciliation.__table__.c.opening_balance.type, positivo=False)
+ImporteIgtf = texto_decimal(IgftEvent.__table__.c.amount.type, positivo=True)
+ImporteDeTransferenciaSalida = texto_de_salida(TreasuryTransfer.__table__.c.amount.type)
+SaldoDeConciliacionSalida = texto_de_salida(Reconciliation.__table__.c.opening_balance.type)
+ImporteIgtfSalida = texto_de_salida(IgftEvent.__table__.c.amount.type)
 ImporteDeCaja = texto_de_salida(CashSession.__table__.c.opened_amount.type)
 ImporteDeMovimientoDeCaja = texto_de_salida(CashSessionMovement.__table__.c.amount.type)
 
@@ -223,8 +235,30 @@ class ExecutionBody(BaseModel):
     idempotency_key: str | None = None
 
 
+class TreasuryTransferOut(BaseModel):
+    """La transferencia con su importe en texto exacto (FLOAT-038-C)."""
+
+    id: str
+    from_cashbox_id: str | None
+    from_account_id: str | None
+    to_cashbox_id: str | None
+    to_account_id: str | None
+    amount: ImporteDeTransferenciaSalida
+    currency: str
+    value_date: str | None
+    reference: str | None
+    status: str
+
+
+class TreasuryTransferPage(BaseModel):
+    items: list[TreasuryTransferOut]
+    total: int
+    page: int
+    page_size: int
+
+
 class TransferCreate(BaseModel):
-    amount: float = Field(gt=0)
+    amount: ImporteDeTransferencia
     currency: str = "VED"
     from_cashbox_id: str | None = None
     from_account_id: str | None = None
@@ -238,8 +272,9 @@ class ReconciliationCreate(BaseModel):
     account_id: str
     statement_date: date | None = None
     statement_ref: str | None = None
-    opening_balance: float | None = None
-    closing_balance: float | None = None
+    #: Un saldo bancario puede ser negativo: la regla de signo se conserva.
+    opening_balance: SaldoDeConciliacion | None = None
+    closing_balance: SaldoDeConciliacion | None = None
 
 
 class ReconciliationLineCreate(BaseModel):
@@ -269,7 +304,7 @@ class FiscalRuleCreate(BaseModel):
 class IgftEvaluateBody(BaseModel):
     event_type: str = Field(pattern="^(PAYMENT|COLLECTION|TRANSFER)$")
     source_document: str | None = None
-    amount: float = Field(gt=0)
+    amount: ImporteIgtf
     currency: str = "VED"
     on_date: date | None = None
 
@@ -540,7 +575,7 @@ def execute_ingreso(body: ExecutionBody, db: Session = Depends(get_db),
             "amount": result["amount"], "currency": result["currency"]}
 
 
-@router.get("/transfers")
+@router.get("/transfers", response_model=TreasuryTransferPage)
 def list_transfers(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(TreasuryTransfer).where(TreasuryTransfer.company_id == ctx.company_id)
                        .order_by(TreasuryTransfer.created_at.desc())).scalars().all()
@@ -548,7 +583,7 @@ def list_transfers(db: Session = Depends(get_db), user: User = Depends(get_curre
             "page": 1, "page_size": len(items) or 1}
 
 
-@router.post("/transfers", dependencies=[Depends(require_write_allowed)])
+@router.post("/transfers", response_model=TreasuryTransferOut, dependencies=[Depends(require_write_allowed)])
 def create_transfer(body: TransferCreate, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("tesoreria", "create")), ctx: CompanyContext = Depends(get_company_context)):
     t = treasury_service.create_transfer(db, company_id=ctx.company_id, amount=body.amount, currency=body.currency,

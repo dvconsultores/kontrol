@@ -1331,7 +1331,8 @@ export interface TreasuryTransferSummary {
   from_account_id: string | null;
   to_cashbox_id: string | null;
   to_account_id: string | null;
-  amount: number;
+  /** Texto decimal exacto (Spec 038 · FLOAT-038-C). */
+  amount: string;
   currency: string;
   value_date: string | null;
   reference: string | null;
@@ -1355,8 +1356,9 @@ export interface ReconciliationSummary {
   account_id: string;
   statement_date: string | null;
   statement_ref: string | null;
-  opening_balance: number | null;
-  closing_balance: number | null;
+  /** Texto decimal exacto, con signo si el saldo está en descubierto (FLOAT-038-C). */
+  opening_balance: string | null;
+  closing_balance: string | null;
   status: string;
   approved_by: string | null;
   approved_at: string | null;
@@ -1380,10 +1382,11 @@ export interface IgftEventSummary {
   id: string;
   event_type: string;
   source_document: string | null;
-  amount: number;
+  /** Texto decimal exacto (Spec 038 · FLOAT-038-C). */
+  amount: string;
   currency: string;
   rate_snapshot: number | null;
-  igft_amount: number | null;
+  igft_amount: string | null;
   rule_id: string | null;
   evaluated_at: string | null;
   status: string;

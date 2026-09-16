@@ -36,8 +36,8 @@ APP = Path(__file__).resolve().parents[1] / "app"
 _serie = itertools.count(1)
 
 
-def _sesion(mundo, fondo: float = 100, usuario: str = "ua", empresa: str | None = None) -> str:
-    """Abre una sesión. El fondo viaja como número: esa entrada es otro contrato, fuera de este delta."""
+def _sesion(mundo, fondo: str = "100.00", usuario: str = "ua", empresa: str | None = None) -> str:
+    """Abre una sesión. El fondo viaja como texto exacto desde FLOAT-038-C."""
     empresa = empresa or mundo.company_a
     n = f"{next(_serie)}{uuid.uuid4().hex[:4]}"
     caja = mundo.crear("/treasury/cashboxes", usuario, empresa,
@@ -101,7 +101,7 @@ def test_el_esquema_entrega_decimal_y_no_float():
 
 
 def test_un_conteo_en_texto_llega_exacto(mundo):
-    sesion = _sesion(mundo, fondo=100)
+    sesion = _sesion(mundo, fondo="100.00")
     r = _arquear(mundo, sesion, "100.00")
     assert r.status_code == 200, r.text
     cuerpo = r.json()
@@ -111,7 +111,7 @@ def test_un_conteo_en_texto_llega_exacto(mundo):
 
 
 def test_un_importe_de_dieciocho_digitos_llega_exacto_a_base_respuesta_y_auditoria(mundo):
-    sesion = _sesion(mundo, fondo=0)
+    sesion = _sesion(mundo, fondo="0.00")
     r = _arquear(mundo, sesion, EXACTO)
     assert r.status_code == 200, r.text
     assert r.json()["counted_amount"] == EXACTO, "la respuesta degradó el conteo"
@@ -150,7 +150,7 @@ def test_lo_que_no_es_un_conteo_valido_se_rechaza(mundo, malformado):
 
 
 def test_cero_sigue_siendo_un_conteo_valido(mundo):
-    sesion = _sesion(mundo, fondo=0)
+    sesion = _sesion(mundo, fondo="0.00")
     r = _arquear(mundo, sesion, "0.00")
     assert r.status_code == 200, r.text
     assert r.json()["difference"] == "0.00"
@@ -175,7 +175,7 @@ def test_la_diferencia_es_decimal_y_conserva_formula_y_signo(mundo):
 
 
 def test_si_cuadra_exacto_cierra_sin_aprobacion(mundo):
-    sesion = _sesion(mundo, fondo=100)
+    sesion = _sesion(mundo, fondo="100.00")
     assert _arquear(mundo, sesion, "100.00").status_code == 200
     _precerrar(mundo, sesion)
     r = _cerrar(mundo, sesion)
@@ -185,7 +185,7 @@ def test_si_cuadra_exacto_cierra_sin_aprobacion(mundo):
 
 
 def test_un_centimo_de_menos_es_diferencia_y_exige_aprobacion(mundo):
-    sesion = _sesion(mundo, fondo=100)
+    sesion = _sesion(mundo, fondo="100.00")
     r = _arquear(mundo, sesion, "99.99")
     assert r.json()["difference"] == "-0.01", "el faltante perdió su signo"
     _precerrar(mundo, sesion)
@@ -201,7 +201,7 @@ def test_un_centimo_de_menos_es_diferencia_y_exige_aprobacion(mundo):
 
 
 def test_un_centimo_de_mas_es_diferencia_con_su_signo(mundo):
-    sesion = _sesion(mundo, fondo=100)
+    sesion = _sesion(mundo, fondo="100.00")
     assert _arquear(mundo, sesion, "100.01").json()["difference"] == "0.01", "el sobrante perdió su signo"
     _precerrar(mundo, sesion)
     r = _cerrar(mundo, sesion)
@@ -209,7 +209,7 @@ def test_un_centimo_de_mas_es_diferencia_con_su_signo(mundo):
 
 
 def test_cerrar_dos_veces_no_cierra_dos_veces(mundo):
-    sesion = _sesion(mundo, fondo=100)
+    sesion = _sesion(mundo, fondo="100.00")
     _arquear(mundo, sesion, "100.00")
     _precerrar(mundo, sesion)
     assert _cerrar(mundo, sesion).status_code == 200
@@ -219,7 +219,7 @@ def test_cerrar_dos_veces_no_cierra_dos_veces(mundo):
 
 # --------------------------------------------------------------- auditoría y respuesta
 def test_la_auditoria_guarda_texto_exacto_con_signo(mundo):
-    sesion = _sesion(mundo, fondo=100)
+    sesion = _sesion(mundo, fondo="100.00")
     _arquear(mundo, sesion, "99.99")
     _precerrar(mundo, sesion)
     _cerrar(mundo, sesion, aprobada=True)
@@ -232,8 +232,8 @@ def test_la_auditoria_guarda_texto_exacto_con_signo(mundo):
 
 
 def test_la_sesion_dice_todos_sus_importes_en_texto(mundo):
-    sesion = _sesion(mundo, fondo=100)
-    r = mundo.post(f"{BASE}/{sesion}/movements", "ua", mundo.company_a, {"movement_type": "IN", "amount": 25.5})
+    sesion = _sesion(mundo, fondo="100.00")
+    r = mundo.post(f"{BASE}/{sesion}/movements", "ua", mundo.company_a, {"movement_type": "IN", "amount": "25.50"})
     assert r.status_code == 200, r.text
 
     detalle = mundo.get(f"{BASE}/{sesion}", "ua", mundo.company_a).json()
@@ -270,7 +270,7 @@ def test_openapi_declara_texto_en_el_arqueo_y_en_la_sesion(mundo):
     for campo in ("counted_amount", "difference"):
         assert {v.get("type") for v in salida[campo]["anyOf"]} == {"string", "null"}, campo
 
-    sesion = _sesion(mundo, fondo=0)
+    sesion = _sesion(mundo, fondo="0.00")
     respuesta = _arquear(mundo, sesion, EXACTO).json()
     patron = salida["expected_amount"]["pattern"]
     assert all(re.fullmatch(patron, respuesta[c]) for c in ("opened_amount", "expected_amount", "difference"))

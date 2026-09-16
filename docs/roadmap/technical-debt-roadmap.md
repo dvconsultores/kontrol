@@ -46,3 +46,9 @@ permanente. Deben tratarse con prioridad superior a su severidad nominal.
 
 **DT-08** (`alembic check` nunca ejecutado) quedó cerrada al ejecutarse en la auditoría
 maestra; las demás del registro conservan el estado que allí se midió.
+
+| **SEIS FRONTERAS `float` DE TESORERÍA** | `SessionOpen.opened_amount`, `SessionMovementCreate.amount`, `TransferCreate.amount`, `ReconciliationCreate.opening_balance` y `closing_balance`, `IgftEvaluateBody.amount` | **CLOSED / CONVERGED** (2026-09-16) | `specs/006-tesoreria/spec038-remaining-float-boundaries-delta.md` · `evidence/float-038-c/` |
+
+Con FLOAT-038-A, FLOAT-038-B y FLOAT-038-C, **el borde monetario público de Tesorería
+queda sin un solo `float`**. Lo que sigue en `Float` en ese módulo es `match_score`,
+que es una puntuación de coincidencia y no dinero.

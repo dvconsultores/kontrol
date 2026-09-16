@@ -152,7 +152,7 @@ def active_fx_policy(db: Session, company_id: str, on_date: date | None = None) 
         ).order_by(TreasuryFxPolicy.version.desc())).scalars().first()
 
 
-def _rate_snapshot(db: Session, company_id: str, currency: str) -> float | None:
+def _rate_snapshot(db: Session, company_id: str, currency: str) -> Decimal | None:
     """Compatibilidad: la tasa registrada, o `None` si no hay ninguna.
 
     **Devolvía `1.0`** cuando no encontraba la moneda o no había tasa cargada.
@@ -160,7 +160,9 @@ def _rate_snapshot(db: Session, company_id: str, currency: str) -> float | None:
     devuelve `None`: no saber la tasa es un hecho, no el número uno.
     """
     if currency in ("VED", "VES"):
-        return 1.0
+        # La moneda funcional no se convierte. `Decimal` y no `1.0`: este uno
+        # multiplica importes exactos y un `float` los contaminaría (FLOAT-038-C).
+        return Decimal(1)
     cur = db.execute(select(Currency).where(
         Currency.company_id == company_id, Currency.code == currency)).scalars().first()
     if not cur:
@@ -388,7 +390,7 @@ def set_exchange_rate(db: Session, *, company_id: str, currency_id: str, rate_da
 # --------------------------------------------------------------------------- #
 # Cajas — sesiones
 # --------------------------------------------------------------------------- #
-def open_session(db: Session, *, company_id: str, cashbox_id: str, opened_amount: float = 0.0,
+def open_session(db: Session, *, company_id: str, cashbox_id: str, opened_amount: Decimal = Decimal("0"),
                  actor: str | None = None) -> CashSession:
     company_id = _company(company_id, obj="sesión de caja")
     _require_cashbox(db, company_id, cashbox_id)
@@ -399,7 +401,7 @@ def open_session(db: Session, *, company_id: str, cashbox_id: str, opened_amount
     return s
 
 
-def add_session_movement(db: Session, *, session_id: str, movement_type: str, amount: float,
+def add_session_movement(db: Session, *, session_id: str, movement_type: str, amount: Decimal,
                          instrument_id: str | None = None, payment_id: str | None = None,
                          source: str = "PAYMENT", reference: str | None = None,
                          note: str | None = None) -> CashSessionMovement:
@@ -635,7 +637,7 @@ def execute_collection(db: Session, *, company_id: str, payment_id: str, target_
     return result
 
 
-def create_transfer(db: Session, *, company_id: str, amount: float, currency: str = "VED",
+def create_transfer(db: Session, *, company_id: str, amount: Decimal, currency: str = "VED",
                     from_cashbox_id: str | None = None, from_account_id: str | None = None,
                     to_cashbox_id: str | None = None, to_account_id: str | None = None,
                     value_date: date | None = None, reference: str | None = None,
@@ -702,7 +704,8 @@ def bank_transaction_dict(bt: BankTransaction) -> dict:
 
 def transfer_dict(t: TreasuryTransfer) -> dict:
     return {"id": t.id, "from_cashbox_id": t.from_cashbox_id, "from_account_id": t.from_account_id,
-            "to_cashbox_id": t.to_cashbox_id, "to_account_id": t.to_account_id, "amount": t.amount,
+            "to_cashbox_id": t.to_cashbox_id, "to_account_id": t.to_account_id,
+            "amount": str(_money(t.amount)),
             "currency": t.currency, "value_date": t.value_date.isoformat() if t.value_date else None,
             "reference": t.reference, "status": t.status}
 
@@ -711,8 +714,8 @@ def transfer_dict(t: TreasuryTransfer) -> dict:
 # Conciliación (FR-006-030/031)
 # --------------------------------------------------------------------------- #
 def create_reconciliation(db: Session, *, company_id: str, account_id: str, statement_date: date | None = None,
-                          statement_ref: str | None = None, opening_balance: float | None = None,
-                          closing_balance: float | None = None, actor: str | None = None) -> Reconciliation:
+                          statement_ref: str | None = None, opening_balance: Decimal | None = None,
+                          closing_balance: Decimal | None = None, actor: str | None = None) -> Reconciliation:
     company_id = _company(company_id, obj="conciliación")
     _require_account(db, company_id, account_id)
     r = Reconciliation(company_id=company_id, account_id=account_id, statement_date=statement_date,
@@ -834,8 +837,10 @@ def reconciliation_dict(db: Session, rec: Reconciliation) -> dict:
         ReconciliationLine.reconciliation_id == rec.id).order_by(ReconciliationLine.created_at)).scalars().all()
     return {"id": rec.id, "account_id": rec.account_id,
             "statement_date": rec.statement_date.isoformat() if rec.statement_date else None,
-            "statement_ref": rec.statement_ref, "opening_balance": rec.opening_balance,
-            "closing_balance": rec.closing_balance, "status": rec.status, "approved_by": rec.approved_by,
+            "statement_ref": rec.statement_ref,
+            "opening_balance": None if rec.opening_balance is None else str(_money(rec.opening_balance)),
+            "closing_balance": None if rec.closing_balance is None else str(_money(rec.closing_balance)),
+            "status": rec.status, "approved_by": rec.approved_by,
             "approved_at": rec.approved_at.isoformat() if rec.approved_at else None,
             "allowed_actions": reconciliation_allowed_actions(rec),
             "lines": [{"id": line.id, "bank_transaction_id": line.bank_transaction_id,
@@ -876,7 +881,7 @@ def _active_rule(db: Session, company_id: str, rule_type: str, on_date: date) ->
 
 
 def evaluate_igft(db: Session, *, company_id: str, event_type: str, source_document: str | None = None,
-                  amount: float, currency: str = "VED", on_date: date | None = None) -> IgftEvent:
+                  amount: Decimal, currency: str = "VED", on_date: date | None = None) -> IgftEvent:
     """Evalúa IGTF por regla y evento; no confundir con IVA adicional (FR-006-040)."""
     company_id = _company(company_id, obj="evento IGTF")
     if amount <= 0:
@@ -887,7 +892,9 @@ def evaluate_igft(db: Session, *, company_id: str, event_type: str, source_docum
     import json
 
     params = json.loads(rule.params or "{}")
-    rate = float(params.get("rate", 0.0))
+    # La fórmula no cambia: los mismos factores y el mismo redondeo a dos decimales.
+    # Lo que cambia es que ninguno de los tres es ya un `float` (FLOAT-038-C).
+    rate = Decimal(str(params.get("rate", 0)))
     snapshot = _rate_snapshot(db, company_id, currency)
     igft_amount = round(amount * rate * snapshot, 2) if currency not in ("VED", "VES") else round(amount * rate, 2)
     event = IgftEvent(company_id=company_id, event_type=event_type, source_document=source_document, amount=amount,
@@ -899,8 +906,9 @@ def evaluate_igft(db: Session, *, company_id: str, event_type: str, source_docum
 
 
 def igft_event_dict(e: IgftEvent) -> dict:
-    return {"id": e.id, "event_type": e.event_type, "source_document": e.source_document, "amount": e.amount,
-            "currency": e.currency, "rate_snapshot": e.rate_snapshot, "igft_amount": e.igft_amount,
+    return {"id": e.id, "event_type": e.event_type, "source_document": e.source_document,
+            "amount": str(_money(e.amount)), "currency": e.currency, "rate_snapshot": e.rate_snapshot,
+            "igft_amount": None if e.igft_amount is None else str(_money(e.igft_amount)),
             "rule_id": e.rule_id, "evaluated_at": e.evaluated_at.isoformat() if e.evaluated_at else None,
             "status": e.status}
 

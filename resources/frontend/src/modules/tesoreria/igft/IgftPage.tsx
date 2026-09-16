@@ -10,6 +10,8 @@ import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { MoneyInput } from "@/components/MoneyInput";
+import { isZeroDecimal, toDecimalString } from "@/lib/decimal";
+import { formatMoney } from "@/lib/format";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
@@ -56,14 +58,21 @@ export function IgftPage(): React.JSX.Element {
   };
 
   const evaluate = async (): Promise<void> => {
-    const res = await apiFetch<{ igft_amount: number | null }>("/treasury/igft-events/evaluate", {
+    // Spec 038 · FLOAT-038-C: la base imponible viaja como texto exacto y el importe
+    // calculado vuelve como texto. El impuesto no cambia; cambia cómo se transporta.
+    const base = toDecimalString(amount);
+    if (!base || isZeroDecimal(base)) {
+      notify({ type: "error", title: "Base inválida", description: "Indique un importe mayor que cero, con hasta dos decimales." });
+      return;
+    }
+    const res = await apiFetch<{ igft_amount: string | null }>("/treasury/igft-events/evaluate", {
       method: "POST",
-      body: { event_type: eventType, source_document: sourceDoc || null, amount: Number(amount) || 0, currency },
+      body: { event_type: eventType, source_document: sourceDoc || null, amount: base, currency },
     });
     notify({
       type: "success",
       title: "Evento IGTF evaluado",
-      description: `IGTF calculado: ${(res.igft_amount ?? 0).toFixed(2)} (independiente del IVA).`,
+      description: `IGTF calculado: ${res.igft_amount === null ? "—" : formatMoney(res.igft_amount)} (independiente del IVA).`,
     });
     setAmount("");
     refresh();
@@ -72,10 +81,10 @@ export function IgftPage(): React.JSX.Element {
   const columns = [
     columnHelper.accessor("event_type", { header: "Evento" }),
     columnHelper.accessor("source_document", { header: "Documento" }),
-    columnHelper.accessor("amount", { header: "Base" }),
+    columnHelper.accessor("amount", { header: "Base", cell: (c) => formatMoney(c.getValue()) }),
     columnHelper.accessor("currency", { header: "Moneda" }),
     columnHelper.accessor("rate_snapshot", { header: "Tasa" }),
-    columnHelper.accessor("igft_amount", { header: "IGTF" }),
+    columnHelper.accessor("igft_amount", { header: "IGTF", cell: (c) => { const v = c.getValue(); return v === null ? "—" : formatMoney(v); } }),
     columnHelper.accessor("evaluated_at", { header: "Fecha" }),
     columnHelper.accessor("status", { header: "Estado" }),
   ];

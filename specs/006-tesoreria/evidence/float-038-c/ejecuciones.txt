@@ -1,0 +1,23 @@
+FLOAT-038-C · EJECUCIONES
+Base: ab02bba · PostgreSQL 16.2 · TZ=UTC
+
+== Dirigidas de backend (tests/test_spec038_float_c.py)
+   39 pasadas / 0 fallos
+
+== Regresión de FLOAT-038-A, FLOAT-038-B y el resto de tesorería
+   test_spec038_float_a + float_b + float_c + test_treasury + test_spec038_treasury
+   + test_mc_treasury_ab + test_spec013_financial_masters: 33 pasadas / 0 fallos
+
+== Regresión completa de backend, sola
+   TOTAL 1636 · PASSED 1628 · FAILED 0 · ERRORS 0 · SKIPPED 8 (S3, esperados)
+   UNEXPECTED SKIPS 0 · WARNINGS 0 · EXIT 0
+   Denominador remedido: 1597 de la tanda anterior + 39 nuevas = 1636
+
+== Frontend
+   vitest 19 ficheros / 372 pruebas / 0 fallos   (368 + 4 nuevas)
+   tsc --noEmit: limpio · eslint: limpio · vite build: correcto
+
+== E2E
+   Chromium, tesorería: 16/16
+   Tres navegadores, tesorería + tasas: 87/87
+   Backend durante el E2E: 0 respuestas 5xx, 0 trazas
