@@ -11,6 +11,8 @@
  */
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
+import { reservasDePedido } from "./helpers/reservas";
+
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
@@ -297,10 +299,12 @@ test.describe("Spec 031 — cola y ruta de picking", () => {
       });
     }
     await post(request, c, `/sales/picking/${e.plan}/confirmar`, {});
-    const reservasAntes = await get(request, c, `/inventory/reservations?source_order_id=${e.pedido}`);
-    const activasAntes = (reservasAntes.items as Array<{ status: string }>).filter(
-      (r) => r.status === "ACTIVE",
-    ).length;
+    // Se pedía `?source_order_id=`, que el servidor no declara y por tanto
+    // ignora en silencio: la respuesta traía las reservas de toda la empresa y
+    // lo que se contaba eran las ajenas. El pedido se identifica por el campo
+    // que el servidor sí publica.
+    const activasAntes = (await reservasDePedido(request, c.headers, e.pedido))
+      .filter((r) => r.status === "ACTIVE").length;
 
     const plan = await post(request, c, `/sales/picking/${e.plan}/cancelar`, {
       reason: "el cliente cambió la fecha de entrega",
@@ -311,11 +315,11 @@ test.describe("Spec 031 — cola y ruta de picking", () => {
     const pedido = await get(request, c, `/sales/orders/${e.pedido}`);
     expect(pedido.status, "el pedido quedó varado en preparación").toBe("RELEASED");
 
-    const reservas = await get(request, c, `/inventory/reservations?source_order_id=${e.pedido}`);
-    const activas = (reservas.items as Array<{ status: string }>).filter(
-      (r) => r.status === "ACTIVE",
-    ).length;
+    const activas = (await reservasDePedido(request, c.headers, e.pedido))
+      .filter((r) => r.status === "ACTIVE").length;
     expect(activas, "cancelar el plan liberó la reserva comercial").toBe(activasAntes);
+    expect(activasAntes, "el escenario no dejó ninguna reserva viva que comprobar")
+      .toBeGreaterThan(0);
 
     const cola = await get(request, c, "/sales/picking/cola");
     expect(

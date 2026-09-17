@@ -1,0 +1,25 @@
+# E2E-031-RESERVAS · reproducción y contrato
+
+## Aislado frente a global
+  putaway sola .................................   9 passed (16.4s)
+  putaway + picking, 2 trabajadores ............   17 passed (34.3s)
+  + sales-orders + dispatch + order-confirmation, 4 trabajadores   36 passed (1.1m)
+  suite global antes de tocar nada .............   220 passed (6.0m)
+
+  => la manifestación natural NO reapareció: es intermitente.
+
+## Mecanismo, demostrado sin depender de la suerte
+  lectura 1 · reservas de la empresa: 369
+  (otro cliente reserva)
+  lectura 2 · reservas de la empresa: 370
+  la aserción de putaway:341 compara 370 con 369: FALLA
+  identificando la reserva propia por su documento: 0 -> 1
+
+## Contrato del endpoint, medido
+  sin filtro ....................... items 330 · total 330
+  ?status=ACTIVE ................... items 204          <- filtra
+  ?product_id=<inexistente> ........ items   0          <- filtra
+  ?source_order_id=<inexistente> ... items 330          <- NO filtra (no está declarado)
+
+  contrato de la 023: GET /api/v1/inventory/reservations -> «Reservas activas/históricas»
+  (specs/003-inventario-logistica/contracts/api-contracts.md:40) — sin filtro por pedido

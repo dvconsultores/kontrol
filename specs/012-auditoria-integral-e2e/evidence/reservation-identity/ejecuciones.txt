@@ -1,0 +1,10 @@
+# Ejecuciones tras la corrección
+
+dirigida chromium (identidad+putaway+picking)    42 passed (1.4m)
+firefox                                          20 passed (1.2m)
+webkit                                           20 passed (49.5s)
+
+# Suite global re-medida
+Running 224 tests using 2 workers
+  224 passed (6.6m)
+  ficheros de prueba: 30 · fallos: 0 · UNKNOWN: 0

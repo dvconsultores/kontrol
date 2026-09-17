@@ -1695,3 +1695,56 @@ pasa el turno a la 031, que además acaba de manifestarse.
 Ni E2E-031-RESERVAS, ni INV-MOVTYPE-CARRERA, ni E2E-046-TIPOS, ni INBOX-045-AISLAMIENTO, ni
 AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053, ni el índice único de
 `companies`, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+---
+
+## 2026-09-17 · Tras converger el delta E2E-031-RESERVAS (dueña 054)
+
+`E2E-031-RESERVAS` queda **CERRADA**, y con ella **la señal global del E2E queda
+restaurada: 30 ficheros, 224 pruebas, 224 pasan, 0 fallan.**
+
+La causa no era del producto. `GET /inventory/reservations` cumple su contrato —«reservas
+activas/históricas», acotado a la empresa, con `status` y `product_id` como filtros—; lo
+que fallaba era la aserción: `putaway` y `picking` afirmaban sobre el **tamaño** de un
+conjunto compartido que crece mientras la suite corre (medido: de 330 a 369 reservas en un
+mismo ciclo). `picking` además enviaba `?source_order_id=`, que el servidor no declara y
+por tanto ignora en silencio, así que creía filtrar y contaba la empresa entera.
+
+El arreglo es de pruebas: un ayudante canónico de identidad y cuatro casos que fijan la
+diferencia entre «hay las mismas reservas» y «la mía sigue siendo la que era». Las
+aserciones no se debilitan: donde había una comparación de tamaños hay cuatro
+comprobaciones sobre la reserva concreta.
+
+**Conviene no confundir el verde con la prueba.** Este fallo era intermitente y ya hubo
+ejecuciones verdes con el defecto dentro; de hecho, en este mismo ciclo la suite pasó
+220/220 antes de tocar nada. Lo que demuestra el cierre es que la premisa frágil ya no
+está y que cuatro mutaciones mueren si vuelve.
+
+### Deudas nuevas registradas, no absorbidas
+
+- **`API-QUERY-SILENCIOSA`** (dueña 023): el endpoint acepta sin protestar parámetros de
+  consulta que no declara. Cambiarlo es semántica pública.
+- **`E2E-SIN-TYPECHECK`** (dueña 054): `e2e/` no entra en el typecheck del proyecto.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **INV-MOVTYPE-CARRERA** · alta concurrente devuelve 500 en vez de 409 | 022 · 003 | no |
+| 2 | **SEED-EMPRESA-CODIGO-NO-UNICO** · exige migración | por decidir | no |
+| 3 | **API-QUERY-SILENCIOSA** | 023 | no |
+| 4 | **E2E-SIN-TYPECHECK** | 054 | no |
+| 5 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 6 | Verificar restauración (DT-11) · SPEC053 | 053 | no |
+
+**Candidata siguiente: `INV-MOVTYPE-CARRERA`**, por ser defecto real de producto con un
+HTTP 500 bajo concurrencia, frente a deudas de QA o de esquema.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni INV-MOVTYPE-CARRERA, ni SEED-EMPRESA-CODIGO-NO-UNICO, ni API-QUERY-SILENCIOSA, ni
+E2E-SIN-TYPECHECK, ni E2E-046-TIPOS —que **sigue OPEN** aunque no se haya reproducido—, ni
+INBOX-045-AISLAMIENTO, ni la certificación de compras, ni la Spec 053, ni ninguna decisión
+abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

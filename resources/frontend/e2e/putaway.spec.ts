@@ -10,6 +10,8 @@
  */
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
+import { laReservaDe, reservasDeProducto } from "./helpers/reservas";
+
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
@@ -320,7 +322,7 @@ test.describe("Spec 022 — put-away", () => {
       product_id: e.producto, warehouse_id: e.almacen, quantity: 30,
       source_document: `E2E-${e.producto.slice(0, 8)}`,
     });
-    const reservasAntes = (await get(request, c, "/inventory/reservations")).items as unknown[];
+    const reservaAntes = await laReservaDe(request, c.headers, e.producto);
 
     await post(request, c, "/inventory/putaway", {
       product_id: e.producto, warehouse_id: e.almacen,
@@ -337,8 +339,17 @@ test.describe("Spec 022 — put-away", () => {
       .reduce((acc, b) => acc + Number(b.qty_reserved), 0);
     expect(reservado, "el compromiso se perdió al ubicar").toBe(30);
 
-    const reservasDespues = (await get(request, c, "/inventory/reservations")).items as unknown[];
-    expect(reservasDespues.length).toBe(reservasAntes.length);
+    // Se comprueba la reserva del escenario, no cuántas hay en la empresa: el
+    // conjunto es compartido y crece mientras la suite corre, así que contarlo
+    // afirmaba «nadie más reservó mientras yo ubicaba», que no es lo que esta
+    // prueba quiere decir ni depende del código que prueba.
+    const reservaDespues = await laReservaDe(request, c.headers, e.producto);
+    expect(reservaDespues.id, "ubicar cambió la reserva por otra").toBe(reservaAntes.id);
+    expect(reservaDespues.status, "ubicar cambió el estado de la reserva").toBe(reservaAntes.status);
+    expect(Number(reservaDespues.quantity), "ubicar cambió la cantidad reservada")
+      .toBe(Number(reservaAntes.quantity));
+    expect(reservaDespues.warehouse_id, "ubicar movió la reserva de almacén")
+      .toBe(reservaAntes.warehouse_id);
   });
 
   test("la mercancía ubicada sigue pudiéndose reservar", async ({ request }) => {
@@ -408,9 +419,10 @@ test.describe("Spec 022 — put-away", () => {
       (despues.items as unknown[]).length,
       "ubicar creó una lista de preparación: eso es de la Spec 031",
     ).toBe((antes.items as unknown[]).length);
-    // Y ninguna reserva quedó atada a una ubicación.
-    const reservas = await get(request, c, "/inventory/reservations");
-    for (const x of reservas.items as Array<Record<string, unknown>>) {
+    // Y la reserva de este escenario no quedó atada a una ubicación. Se mira la
+    // propia y no el conjunto de la empresa: lo que se comprueba es la forma de
+    // la reserva que esta prueba creó.
+    for (const x of await reservasDeProducto(request, c.headers, e.producto)) {
       expect(Object.keys(x)).not.toContain("location_id");
     }
   });

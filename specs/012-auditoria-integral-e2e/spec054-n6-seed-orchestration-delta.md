@@ -421,7 +421,8 @@ Se intentaron y **se descartan** dos, en vez de contarlas:
 | `e2e/notifications.spec.ts` (SPEC047) | verde en la global, incluida `lo de una empresa no se ve ni se cuenta en otra` |
 | Regresión de backend | **1664 recolectadas, 0 fallos** (salida 0), igual que la línea base de POLICY-CLOCK-LOCAL: 1656 pasan · 8 omitidas |
 | `POLICY-CLOCK-LOCAL` | no se reabre: ningún fichero de `app/` ni de `src/` tocado |
-| `tsc --noEmit` y `eslint` sobre los ficheros nuevos | sin hallazgos |
+| `eslint` sobre los ficheros nuevos | sin hallazgos |
+| `tsc --noEmit` | **Corregido después** (2026-09-17): `tsc -p tsconfig.json` solo cubre `src` —`tsconfig.app.json` declara `include: ["src"]`—, así que **`e2e/` no entra en el typecheck del proyecto** y aquella ejecución, aunque limpia, no comprobó los ficheros nuevos. Verificado después con un typecheck explícito sobre `e2e/`: sin hallazgos. La conclusión no cambia; la afirmación estaba mal |
 | `ruff` sobre `qa/` | mismo recuento antes y después: ningún hallazgo nuevo |
 | Deriva de esquema | 21 operaciones, idéntica |
 

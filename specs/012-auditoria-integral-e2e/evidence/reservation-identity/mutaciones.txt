@@ -1,0 +1,23 @@
+# Mutaciones · E2E-031-RESERVAS
+
+## RES-01
+    5 failed  16 passed (44.2s)
+  1) [chromium] › e2e/putaway.spec.ts:317:3 › Spec 022 — put-away › ubicar no cambia lo reservado ni lo disponible del almacén
+  2) [chromium] › e2e/reservas-identidad.spec.ts:101:1 › el escenario identifica su reserva aunque aparezcan otras a la vez
+  3) [chromium] › e2e/reservas-identidad.spec.ts:126:1 › una reserva manual no se confunde con la de ningún pedido
+  4) [chromium] › e2e/reservas-identidad.spec.ts:142:1 › el filtro por producto lo aplica el servidor, no la prueba
+  5) [chromium] › e2e/reservas-identidad.spec.ts:157:1 › con dos reservas del mismo producto el ayudante se niega a elegir
+
+## RES-02
+    1 failed  20 passed (48.7s)
+  1) [chromium] › e2e/reservas-identidad.spec.ts:157:1 › con dos reservas del mismo producto el ayudante se niega a elegir
+
+## RES-03
+    1 failed  20 passed (59.9s)
+  1) [chromium] › e2e/reservas-identidad.spec.ts:126:1 › una reserva manual no se confunde con la de ningún pedido
+
+## RES-04
+    1 failed  20 passed (56.0s)
+  1) [chromium] › e2e/picking.spec.ts:290:3 › Spec 031 — cola y ruta de picking › cancelar un plan confirmado devuelve el pedido a la cola sin tocar la reserva
+
+4/4 mueren, cada una en un camino distinto. Restauración verificada con cmp.
