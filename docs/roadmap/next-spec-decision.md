@@ -1644,3 +1644,54 @@ Deuda nueva registrada: **SEED-EMPRESA-CODIGO-NO-UNICO** — `companies` no tien
 Ni E2E-031-RESERVAS, ni E2E-SEED-EMPRESA-UNICA, ni E2E-046-TIPOS, ni INBOX-045-AISLAMIENTO,
 ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053, ni el índice único
 de `companies`, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+---
+
+## 2026-09-17 · Tras converger el delta E2E-SEED-EMPRESA-UNICA (dueña 054)
+
+`E2E-SEED-EMPRESA-UNICA` queda **CERRADA**. La causa era más precisa de lo que decía su
+registro: el fixture **sí** declaraba una empresa, pero en `user_roles` —que es el alcance
+del permiso— creyendo que eso limitaba el acceso. La autoridad de acceso es `user_scopes`, y
+no tiene ni ruta de API ni pantalla: solo se escribe desde `qa/`. Ahora la escribe
+`qa/alcance_de_usuario.py`, autoridad única del repositorio, invocada desde el ayudante
+canónico `e2e/helpers/usuario.ts` con el mismo patrón que ya usaba `helpers/planificador.ts`.
+
+Las seis copias literales del verificador de escenario quedan en una. `notifications` se
+preserva **sin restricción a propósito** —necesita alcanzar las dos empresas— y hay una
+prueba que fija ese contrato para que nadie se lo cambie por descuido.
+
+**Suite global re-medida sobre base limpia con `D1` y `D2` activas: 29 ficheros, 220
+pruebas, 219 pasan, 1 falla.** 0 ficheros de producto, 0 migraciones, deriva 21 → 21,
+6 mutaciones que mueren.
+
+### Dos hallazgos que no se absorben
+
+- **`INV-MOVTYPE-CARRERA`** (nuevo): `create_movement_type` consulta y luego inserta sin
+  proteger la carrera, y la segunda alta simultánea sale como 500 en vez de 409. El helper
+  interno del mismo módulo sí lo hace bien. Defecto de producto, registrado.
+- **`E2E-031-RESERVAS`**: el único fallo de la global es `putaway.spec.ts:341`, que cuenta
+  **todas** las reservas de la empresa porque el endpoint no sabe filtrar por documento.
+  Es el mecanismo que esa deuda ya describe; se precisa que también se manifiesta en
+  `putaway`, no solo en `picking`.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **E2E-031-RESERVAS** · el filtro `source_order_id` que la API ignora | 031 · 023 | no |
+| 2 | **INV-MOVTYPE-CARRERA** · alta concurrente de tipo de movimiento | 022 · 003 | no |
+| 3 | Certificar compras (015, 016, 017, 027) | 004-compras | no |
+| 4 | Verificar restauración (DT-11) | 053 | no |
+| 5 | **SEED-EMPRESA-CODIGO-NO-UNICO** · exige migración | por decidir | no |
+
+**Candidata siguiente: `E2E-031-RESERVAS`**, por la regla del propio encargo: `E2E-046-TIPOS`
+no se reprodujo —con el antivirus disponible las dos suites de documentos van 12/12—, así que
+pasa el turno a la 031, que además acaba de manifestarse.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni E2E-031-RESERVAS, ni INV-MOVTYPE-CARRERA, ni E2E-046-TIPOS, ni INBOX-045-AISLAMIENTO, ni
+AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053, ni el índice único de
+`companies`, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

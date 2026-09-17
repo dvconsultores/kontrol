@@ -12,6 +12,8 @@
  */
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
+import { verificadorDeEscenario } from "./helpers/usuario";
+
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
@@ -168,27 +170,10 @@ async function escenario(
  * probar, y el propio backend lo impide —que es justo lo que se quiere.
  */
 async function verificador(request: APIRequestContext, c: Ctx, m: string): Promise<Ctx> {
-  const roles = await get(request, c, "/roles");
-  const rol = (roles.items as Array<{ id: string; code?: string; name?: string }>).find(
-    (r) => (r.code ?? r.name ?? "").toUpperCase().includes("ADMIN"),
-  ) ?? (roles.items as Array<{ id: string }>)[0];
-  const usuario = await post(request, c, "/users", {
-    username: `check-${m.toLowerCase()}`,
-    email: `check-${m.toLowerCase()}@kontrol-qa.com`,
-    password: PASSWORD,
-    must_change_password: false,
+  return verificadorDeEscenario(request, c, {
+    usuario: `check-${m.toLowerCase()}`,
+    empresas: [c.company],
   });
-  await post(request, c, `/users/${usuario.id}/roles`, { role_id: rol.id, company_id: c.company });
-  const login = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: `check-${m.toLowerCase()}`, password: PASSWORD },
-  });
-  expect(login.ok(), `login del verificador: ${login.status()} ${await login.text()}`).toBeTruthy();
-  const token = (await login.json()).access_token as string;
-  return {
-    token,
-    company: c.company,
-    headers: { Authorization: `Bearer ${token}`, "X-Kontrol-Company": c.company },
-  };
 }
 
 async function uiLogin(page: Page, usuario = USER): Promise<void> {

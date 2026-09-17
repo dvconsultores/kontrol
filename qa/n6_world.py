@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import alcance_de_usuario
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -114,6 +115,9 @@ def _usuario(db: Session, tenant, username: str, empresas: list[str]):
     de empresas del usuario dependería de cuántas haya en la base en ese
     momento, y la prueba pasaría o fallaría según lo que hubiera sembrado otro.
 
+    Quien lo escribe es `qa/alcance_de_usuario.py`, que es la única autoridad
+    del repositorio para conceder acceso a una empresa.
+
     `must_change_password` va en falso porque estas cuentas no son de nadie:
     nunca habrá quien cambie esa contraseña, y dejar sembrado un cambio
     pendiente que no ocurrirá describe mal el mundo. Conviene decir lo que se
@@ -122,7 +126,7 @@ def _usuario(db: Session, tenant, username: str, empresas: list[str]):
     algo pase.
     """
     from app.modules.identity_access import service as identity_service
-    from app.modules.identity_access.models import User, UserRole, UserScope
+    from app.modules.identity_access.models import User, UserRole
     from app.modules.setup.api import _bootstrap_roles
 
     u = db.execute(select(User).where(
@@ -139,12 +143,8 @@ def _usuario(db: Session, tenant, username: str, empresas: list[str]):
     if tiene_rol is None:
         db.add(UserRole(user_id=str(u.id), role_id=str(rol.id), company_id=None))
 
-    declarados = {s.company_id for s in db.execute(select(UserScope).where(
-        UserScope.user_id == str(u.id))).scalars().all()}
-    for c in empresas:
-        if c not in declarados:
-            db.add(UserScope(user_id=str(u.id), company_id=c))
     db.flush()
+    alcance_de_usuario.declarar(db, tenant_code=tenant.code, username=username, empresas=empresas)
     return u
 
 

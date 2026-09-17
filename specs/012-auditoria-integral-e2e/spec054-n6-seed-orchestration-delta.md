@@ -460,11 +460,20 @@ medición directa y con la declaración explícita de lo descartado.
 
 ## 22. Cobertura que este entorno no permite, declarada
 
-- **La pila SQLite autónoma no se re-ejecutó de extremo a extremo.** `qa/n6-multicompany-bootstrap.py`
-  delega ahora en el módulo compartido y su parte propia —sucursales y almacenes— pasó a
-  ser idempotente, pero levantar esa pila exige reapuntar backend y frontend a otra base y
-  no se hizo. Lo que sí está medido es que el módulo al que delega funciona contra
-  PostgreSQL con 25/25 en tres navegadores. **No se finge la otra mitad.**
+- ~~La pila SQLite autónoma no se re-ejecutó de extremo a extremo.~~ **Cubierto después**
+  (2026-09-17, tras el commit): se levantó esa pila —`qa/n6-multicompany-bootstrap.py`,
+  backend sobre `sqlite+pysqlite:////tmp/kontrol-qa-n6.db`, Vite— y la suite pasa
+  **25/25 en Chromium, Firefox y WebKit** también ahí. El mundo se verificó fila a fila:
+  dos tenants, `D1`/`D2`/`E1`, sucursales `A1`/`B1`/`C1`, almacenes `ALM-A`/`ALM-B`,
+  ambos terceros marcadores y `ua→D1`, `ub→D2`, `uab→D1+D2`, `uc→E1`.
+
+  Lo que esto demuestra, y no se podía demostrar antes: en esa pila la empresa A se llama
+  `GLOBAL DV ASESORES, C.A.` y en la del E2E `Demo C.A.`, y **la misma suite sin tocar
+  pasa contra las dos**. Es la comprobación directa de FR-054-N6-014.
+
+  De paso quedó verificada la guarda de FR-054-N6-008: sin `KONTROL_E2E_DB_URL`, la
+  ejecución arranca en «Running 25 tests» sin cadena de siembra alguna, porque el
+  `globalSetup` no escribe en una base que no administra.
 - **A→B en las suites que no son de N6** sigue sin cubrirse: el `admin` de la base del E2E
   está acotado a `D1` a propósito. Lo que sí quedó cubierto, y antes no, es el cambio de
   empresa completo dentro de `n6-multicompany.spec.ts`.

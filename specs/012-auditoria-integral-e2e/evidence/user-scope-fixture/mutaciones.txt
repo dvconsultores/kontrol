@@ -1,0 +1,38 @@
+# Mutaciones · E2E-SEED-EMPRESA-UNICA
+
+## UNICA-01
+    5 failed  10 passed (20.8s)
+  1) [chromium] › e2e/alcance-de-usuario.spec.ts:62:1 › U1 · quien se declara de una empresa alcanza solo esa 
+  2) [chromium] › e2e/alcance-de-usuario.spec.ts:68:1 › U1b · y opera sin que nadie le pregunte en cuál 
+  3) [chromium] › e2e/alcance-de-usuario.spec.ts:80:1 › U2 · la empresa es la que pide el escenario, no la primera 
+  4) [chromium] › e2e/alcance-de-usuario.spec.ts:133:1 › pedir un alcance que contradice el ya declarado falla, no se acumula 
+
+## UNICA-02
+    11 failed  4 passed (39.5s)
+  1) [chromium] › e2e/alcance-de-usuario.spec.ts:62:1 › U1 · quien se declara de una empresa alcanza solo esa 
+  2) [chromium] › e2e/alcance-de-usuario.spec.ts:80:1 › U2 · la empresa es la que pide el escenario, no la primera 
+  3) [chromium] › e2e/alcance-de-usuario.spec.ts:117:1 › declarar dos veces lo mismo no acumula alcance 
+  4) [chromium] › e2e/alcance-de-usuario.spec.ts:133:1 › pedir un alcance que contradice el ya declarado falla, no se acumula 
+
+## UNICA-03
+    2 failed  13 passed (23.8s)
+  1) [chromium] › e2e/alcance-de-usuario.spec.ts:80:1 › U2 · la empresa es la que pide el escenario, no la primera 
+  2) [chromium] › e2e/alcance-de-usuario.spec.ts:87:1 › U3 · quien se declara de dos alcanza las dos 
+
+## UNICA-04
+    1 failed  14 passed (23.5s)
+  1) [chromium] › e2e/alcance-de-usuario.spec.ts:133:1 › pedir un alcance que contradice el ya declarado falla, no se acumula 
+
+## UNICA-05
+    1 failed  14 passed (25.1s)
+  1) [chromium] › e2e/alcance-de-usuario.spec.ts:125:1 › pedir un usuario sin decir su empresa falla al instante 
+
+## UNICA-06
+    13 failed  2 passed (21.6s)
+  1) [chromium] › e2e/alcance-de-usuario.spec.ts:62:1 › U1 · quien se declara de una empresa alcanza solo esa 
+  2) [chromium] › e2e/alcance-de-usuario.spec.ts:68:1 › U1b · y opera sin que nadie le pregunte en cuál 
+  3) [chromium] › e2e/alcance-de-usuario.spec.ts:80:1 › U2 · la empresa es la que pide el escenario, no la primera 
+  4) [chromium] › e2e/alcance-de-usuario.spec.ts:87:1 › U3 · quien se declara de dos alcanza las dos 
+
+6/6 mueren. Restauración verificada con cmp en las seis.
+UNICA-02 además ensució la base: se repararon los cinco usuarios sembrados y se verificó.

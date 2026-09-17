@@ -22,7 +22,8 @@ os.environ.setdefault("KONTROL_SECRET_KEY", "qa-secret-key-0123456789abcdef01234
 os.environ.setdefault("KONTROL_ENVIRONMENT", "local")
 os.environ.setdefault("KONTROL_LOG_JSON", "false")
 
-import n6_world  # noqa: E402  (mismo directorio que este guion)
+import alcance_de_usuario  # noqa: E402  (mismo directorio que este guion)
+import n6_world  # noqa: E402
 from sqlalchemy import select  # noqa: E402
 
 from app.core.database import get_session_factory, init_models  # noqa: E402
@@ -44,7 +45,11 @@ def main() -> None:
         admin = db.execute(select(User).where(User.tenant_id == tenant.id, User.username == "admin")).scalars().one()
         ambitos = db.execute(select(UserScope).where(UserScope.user_id == str(admin.id))).scalars().all()
         if not ambitos:
-            db.add(UserScope(user_id=str(admin.id), company_id=str(d1.id)))
+            # El acceso a una empresa lo concede `qa/alcance_de_usuario.py`, aquí
+            # y en cualquier otro sitio: dos maneras de concederlo son dos
+            # maneras de concederlo mal.
+            alcance_de_usuario.declarar(db, tenant_code="DEMO", username="admin",
+                                        empresas=[str(d1.id)])
         db.commit()
         print({"tenant": str(tenant.id), "d1": str(d1.id), "d2": str(d2.id), "admin_scoped_to": "D1"})
     finally:

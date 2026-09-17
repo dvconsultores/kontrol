@@ -1,0 +1,25 @@
+# Reproducción previa · base keu limpia, D1 y D2 activas
+
+## R1 · D2 activa, usuario sin alcance
+  dos trabajadores :   2 failed   5 passed (13.4s) 
+  serializado      :   1 failed   6 passed (15.2s) 
+  falla siempre    : order-confirmation.spec.ts:323
+
+## R2 · D2 inactiva, única variable
+    7 passed (10.0s)   · D2 restaurada a ACTIVE y verificado
+
+## R3 · D2 activa y alcance explícito (sonda directa contra el producto)
+  A · como lo crea el fixture hoy (rol acotado a D1, sin UserScope): 2 empresas ['D1','D2']
+  B · con UserScope(D1) declarado:                                   1 empresa  ['D1']
+  C · sin cabecera de empresa el servidor resuelve solo:             SÍ (200)
+
+  => el producto hace lo especificado. PRODUCT FIX REQUIRED = NO.
+
+## Modelo de alcance, medido
+  entidad: UserScope / tabla user_scopes (user_id, company_id, branch_id)
+  escrituras en TODO el repo: 2, ambas en qa/ — ninguna ruta de API, ninguna pantalla
+
+## Defecto de producto ajeno, encontrado
+  order-confirmation:204 -> 500 INTERNAL_ERROR
+  psycopg2.errors.UniqueViolation: uq_movement_types_company_code
+  aislada pasa · serializada pasa · con dos trabajadores falla => carrera

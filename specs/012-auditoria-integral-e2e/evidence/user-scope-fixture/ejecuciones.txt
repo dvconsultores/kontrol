@@ -1,0 +1,18 @@
+# Ejecuciones tras la corrección
+
+order-confirmation (D2 activa)        7 passed (14.7s)
+contrato del fixture (U1..U4)         8 passed (13.8s)
+los ocho consumidores                 80 passed (1.6m)
+N6 + ayudante de empresa              29 passed (29.2s)
+dirigida en firefox                   15 passed (25.6s)
+dirigida en webkit                    15 passed (24.9s)
+
+# Suite global re-medida
+Running 220 tests using 2 workers
+  1 failed
+  219 passed (5.7m)
+
+## El fallo que queda
+  1) [chromium] › e2e/putaway.spec.ts:315:3 › Spec 022 — put-away › ubicar no cambia lo reservado ni lo disponible del almacén
+  putaway aislada:   9 passed (16.4s)
+  => E2E_031_RESERVAS: cuenta todas las reservas de la empresa porque el endpoint no filtra

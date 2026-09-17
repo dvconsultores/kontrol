@@ -11,6 +11,8 @@
  */
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
+import { verificadorDeEscenario } from "./helpers/usuario";
+
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
@@ -57,27 +59,10 @@ const marca = (): string =>
 
 /** Un verificador distinto del preparador: `R-D0-12-5` lo exige por defecto. */
 async function verificador(request: APIRequestContext, c: Ctx, m: string): Promise<Ctx> {
-  const roles = await get(request, c, "/roles");
-  const rol = (roles.items as Array<{ id: string; code?: string; name?: string }>).find(
-    (r) => (r.code ?? r.name ?? "").toUpperCase().includes("ADMIN"),
-  ) ?? (roles.items as Array<{ id: string }>)[0];
-  const usuario = await post(request, c, "/users", {
-    username: `bill-${m.toLowerCase()}`,
-    email: `bill-${m.toLowerCase()}@kontrol-qa.com`,
-    password: PASSWORD,
-    must_change_password: false,
+  return verificadorDeEscenario(request, c, {
+    usuario: `bill-${m.toLowerCase()}`,
+    empresas: [c.company],
   });
-  await post(request, c, `/users/${usuario.id}/roles`, { role_id: rol.id, company_id: c.company });
-  const login = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: `bill-${m.toLowerCase()}`, password: PASSWORD },
-  });
-  expect(login.ok(), `login del verificador: ${login.status()}`).toBeTruthy();
-  const token = (await login.json()).access_token as string;
-  return {
-    token,
-    company: c.company,
-    headers: { Authorization: `Bearer ${token}`, "X-Kontrol-Company": c.company },
-  };
 }
 
 /** Regla de impuesto vigente, serie de numeración y lote de control. */
