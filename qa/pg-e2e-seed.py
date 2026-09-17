@@ -33,8 +33,25 @@ get_settings.cache_clear()
 
 from app.core.database import get_session_factory  # noqa: E402
 from app.modules.licensing import service as licensing_service  # noqa: E402
+from app.modules.licensing.models import LicenseState  # noqa: E402
 from app.modules.organization.models import Installation  # noqa: E402
 from app.modules.setup.api import SetupRequest, initialize  # noqa: E402
+
+
+def _licencia_vigente(db) -> bool:
+    """¿Hay ya una licencia que sirva?
+
+    Esta siembra corre ahora antes de cada ejecución de la suite. Importar otra
+    vez una licencia equivalente dejaría el estado igual —se actualiza por
+    instalación— pero añadiría un artefacto y un evento de auditoría por
+    ejecución: una historia de importaciones que nunca ocurrieron, sobre una
+    base de QA que dura semanas. Se importa cuando hace falta, no siempre.
+    """
+    estado = db.execute(select(LicenseState).limit(1)).scalars().first()
+    return (estado is not None
+            and estado.mode in {"FULL_ACCESS", "GRACE"}
+            and estado.period_end > datetime.now(UTC))
+
 
 ADMIN_PASSWORD = os.environ.get("KONTROL_E2E_PASSWORD", "Kontrol2026Segura!")
 
@@ -50,6 +67,10 @@ try:
     except Exception as exc:  # ya inicializada
         db.rollback()
         print(f"setup: {str(exc)[:60]}")
+
+    if _licencia_vigente(db):
+        print("licencia: ya vigente, no se reimporta")
+        raise SystemExit(0)
 
     key = Ed25519PrivateKey.generate()
     pub = key.public_key().public_bytes(

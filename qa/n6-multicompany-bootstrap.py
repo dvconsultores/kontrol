@@ -92,91 +92,50 @@ db.close()
 # ---------------------------------------------------------------------------
 # Mundo multiempresa de N6 (ARCH-MC-001 §7)
 #
-# Dos empresas del mismo tenant, que es el único escenario donde el defecto que
-# esta fase corrige se puede manifestar, más un segundo tenant para comprobar
-# que la frontera de arriba tampoco se cruza.
+# La definición no vive aquí: vive en `qa/n6_world.py`, compartida con la
+# siembra sobre la base del E2E (`qa/n6-e2e-seed.py`). Tenerla dos veces era
+# tenerla mal —los mismos `(tenant, code)` se describían distinto en cada
+# guion y cuál quedaba dependía de cuál corriera último—.
 #
-#   T1 (DEMO) ─ Empresa A ─ Sucursal A1 ─ Almacén A1
-#             └ Empresa B ─ Sucursal B1 ─ Almacén B1
-#   T2 (DEMO2) ─ Empresa C
+#   T1 (DEMO) ─ Empresa A (D1) ─ Sucursal A1 ─ Almacén ALM-A
+#             └ Empresa B (D2) ─ Sucursal B1 ─ Almacén ALM-B
+#   T2 (DEMO2) ─ Empresa C (E1) ─ Sucursal C1
 #
 # Usuarios: ua (solo A) · ub (solo B) · uab (A+B) · uc (T2).
 # ---------------------------------------------------------------------------
-from app.modules.identity_access import service as identity_service  # noqa: E402
-from app.modules.identity_access.models import UserRole, UserScope  # noqa: E402
-from app.modules.organization.models import Branch, Company, Tenant, Warehouse  # noqa: E402
-from app.modules.setup.api import _bootstrap_roles  # noqa: E402
+import n6_world  # noqa: E402  (mismo directorio que este guion)
 
-PASS = "Kontrol2026Segura!"
+from app.modules.organization.models import Branch, Warehouse  # noqa: E402
+
 db = factory()
+ids = n6_world.sembrar(db)
 
-t1 = db.execute(select(Tenant).where(Tenant.code == "DEMO")).scalars().one()
-ca = db.execute(select(Company).where(Company.tenant_id == str(t1.id))).scalars().first()
+# Sucursales y almacenes existen solo en esta pila autónoma, que sirve además
+# para recorrer la interfaz a mano. Las 25 pruebas de N6 no los ejercitan, así
+# que la siembra compartida no los escribe: añadir estructura que nadie mira a
+# una base compartida solo puede estorbar a las suites que sí cuentan almacenes.
+from sqlalchemy import select as _select  # noqa: E402
 
-cb = Company(tenant_id=str(t1.id), code="D2",
-             legal_name="INVERSIONES SEGUNDA EMPRESA COMPAÑIA ANONIMA",
-             rif="J-40771283-5", legal_type="JURIDICA",
-             functional_currency="VED", status="ACTIVE")
-db.add(cb)
-db.flush()
-
-t2 = Tenant(installation_id=str(inst.id), code="DEMO2", name="Otro Cliente",
-            plan="MONO_COMPANY", status="ACTIVE")
-db.add(t2)
-db.flush()
-cc = Company(tenant_id=str(t2.id), code="E1", legal_name="TERCERA EMPRESA CA",
-             rif="J-30303030-3", legal_type="JURIDICA",
-             functional_currency="VED", status="ACTIVE")
-db.add(cc)
-db.flush()
-
-for empresa, code in ((ca, "A1"), (cb, "B1"), (cc, "C1")):
-    db.add(Branch(company_id=str(empresa.id), code=code, name=f"Sucursal {code}", status="ACTIVE"))
-db.flush()
-
-for empresa, code in ((ca, "ALM-A"), (cb, "ALM-B")):
-    db.add(Warehouse(company_id=str(empresa.id), code=code, name=f"Almacen {code}",
-                     status="ACTIVE"))
-db.flush()
-
-
-def _usuario(tenant_id, username, empresas):
-    u = identity_service.create_user(db, tenant_id=tenant_id, username=username,
-                                     email=f"{username}@qa.test", password=PASS, created_by=None)
-    rol = _bootstrap_roles(db, tenant_id, str(u.id))
-    db.add(UserRole(user_id=str(u.id), role_id=str(rol.id), company_id=None))
-    for c in empresas:
-        db.add(UserScope(user_id=str(u.id), company_id=c))
-    db.flush()
-
-
-# Un tercero identificable en cada empresa. Es lo que permite comprobar que la
-# lista de una no aparece bajo la otra: sin datos distintos, dos listas vacías
-# tampoco se contaminan y el aislamiento quedaría "demostrado" por no haber nada.
-from app.modules.master_data.models import Party  # noqa: E402
-
-for empresa, marca in ((ca, "SOLO-DE-A"), (cb, "SOLO-DE-B")):
-    db.add(Party(company_id=str(empresa.id), code=marca, name=f"Tercero {marca}",
-                 legal_name=f"Tercero {marca}", person_type="JURIDICA",
-                 roles=["CLIENTE"], status="ACTIVE"))
-db.flush()
-
-_usuario(str(t1.id), "ua", [str(ca.id)])
-_usuario(str(t1.id), "ub", [str(cb.id)])
-_usuario(str(t1.id), "uab", [str(ca.id), str(cb.id)])
-_usuario(str(t2.id), "uc", [str(cc.id)])
+for _empresa, _code in ((ids["empresa_a"], "A1"), (ids["empresa_b"], "B1"),
+                        (ids["empresa_c"], "C1")):
+    if not db.execute(_select(Branch).where(Branch.company_id == _empresa,
+                                            Branch.code == _code)).scalars().first():
+        db.add(Branch(company_id=_empresa, code=_code, name=f"Sucursal {_code}", status="ACTIVE"))
+for _empresa, _code in ((ids["empresa_a"], "ALM-A"), (ids["empresa_b"], "ALM-B")):
+    if not db.execute(_select(Warehouse).where(Warehouse.company_id == _empresa,
+                                               Warehouse.code == _code)).scalars().first():
+        db.add(Warehouse(company_id=_empresa, code=_code, name=f"Almacen {_code}", status="ACTIVE"))
 db.commit()
+
 # Los identificadores quedan escritos para que las pruebas no los codifiquen a
 # mano: sembrar de nuevo genera otros, y una prueba con ids fijos empezaría a
 # pasar por el motivo equivocado.
 IDS_FILE = os.environ.get("KONTROL_QA_IDS_FILE", os.path.join(tempfile.gettempdir(), "kontrol-n6-ids.json"))
 with open(IDS_FILE, "w", encoding="utf-8") as fh:
-    json.dump({"empresa_a": str(ca.id), "empresa_b": str(cb.id), "empresa_c": str(cc.id),
-               "tenant_1": str(t1.id), "tenant_2": str(t2.id)}, fh)
+    json.dump(ids, fh)
 print(f"  ids en {IDS_FILE}")
-print(f"  empresa A = {ca.id}  ({ca.legal_name})")
-print(f"  empresa B = {cb.id}  ({cb.legal_name})")
-print(f"  empresa C = {cc.id}  (tenant DEMO2)")
+for _clave in ("empresa_a", "empresa_b", "empresa_c"):
+    print(f"  {_clave} = {ids[_clave]}")
 db.close()
 
 print(f"OK backend N6 listo. DB={DB_FILE}")

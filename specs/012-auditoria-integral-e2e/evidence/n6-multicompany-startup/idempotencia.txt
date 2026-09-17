@@ -1,0 +1,22 @@
+# Idempotencia de la cadena completa (qa/e2e-seed.sh) sobre kn6
+
+## Instantánea lógica
+tenants=2 companies=3 users=73 scopes=6 roles=73 parties=95 lic_art=4 lic_ev=4
+D1|Demo C.A.|J-12345678-9|ACTIVE
+D2|SEGUNDA EMPRESA E2E 047 CA|J-40470470-7|ACTIVE
+E1|TERCERA EMPRESA CA|J-30303030-3|ACTIVE
+admin->D1
+ua->D1
+uab->D1+D2
+ub->D2
+uc->E1
+SOLO-DE-A
+SOLO-DE-B
+
+## Comparación entre repeticiones
+  0->1: IDENTICO
+  1->2: IDENTICO
+  2->3: IDENTICO
+
+## Fuga corregida: la licencia dejó de reimportarse
+antes: license_artifacts 1 -> 4 en tres repeticiones · después: estable en 4

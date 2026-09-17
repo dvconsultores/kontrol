@@ -1,0 +1,20 @@
+# N6 en los tres navegadores, tras la corrección
+chromium     25 passed (27.2s)
+firefox      25 passed (40.7s)
+webkit       25 passed (43.1s)
+
+# Suite global re-medida (Chromium, base limpia, D2 activa)
+  1 failed
+  211 passed (4.5m)
+
+## El fallo que queda
+  1) [chromium] › e2e/order-confirmation.spec.ts:323:3 › Spec 033 — confirmación independiente del pedido › la interfaz registra el control y el dominio lo confirma
+
+## Regresiones verificadas en esa misma ejecución
+  empresa-helper       pasan=4 fallan=0
+  uom-a11y             pasan=4 fallan=0
+  uom-conversion       pasan=6 fallan=0
+  warehouse-a11y       pasan=3 fallan=0
+  warehouse-structure  pasan=5 fallan=0
+  notifications        pasan=7 fallan=0
+  documents            pasan=8 fallan=0

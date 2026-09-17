@@ -22,6 +22,7 @@ os.environ.setdefault("KONTROL_SECRET_KEY", "qa-secret-key-0123456789abcdef01234
 os.environ.setdefault("KONTROL_ENVIRONMENT", "local")
 os.environ.setdefault("KONTROL_LOG_JSON", "false")
 
+import n6_world  # noqa: E402  (mismo directorio que este guion)
 from sqlalchemy import select  # noqa: E402
 
 from app.core.database import get_session_factory, init_models  # noqa: E402
@@ -35,12 +36,11 @@ def main() -> None:
     try:
         tenant = db.execute(select(Tenant).where(Tenant.code == "DEMO")).scalars().one()
         d1 = db.execute(select(Company).where(Company.tenant_id == tenant.id, Company.code == "D1")).scalars().one()
-        d2 = db.execute(select(Company).where(Company.tenant_id == tenant.id, Company.code == "D2")).scalars().first()
-        if d2 is None:
-            d2 = Company(tenant_id=str(tenant.id), code="D2", legal_name="SEGUNDA EMPRESA E2E 047 CA",
-                         rif="J-40470470-7", legal_type="JURIDICA", functional_currency="VED", status="ACTIVE")
-            db.add(d2)
-            db.flush()
+        # La segunda empresa la describe `qa/n6_world.py`, no este guion. Antes
+        # la definían dos guiones por su cuenta —este y el arranque de N6— con
+        # distinto nombre y distinto RIF para el mismo `(tenant, code)`, y cuál
+        # quedaba dependía de cuál corriera último.
+        d2 = n6_world.empresa(db, tenant, **n6_world.EMPRESA_B)
         admin = db.execute(select(User).where(User.tenant_id == tenant.id, User.username == "admin")).scalars().one()
         ambitos = db.execute(select(UserScope).where(UserScope.user_id == str(admin.id))).scalars().all()
         if not ambitos:

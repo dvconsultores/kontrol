@@ -8,6 +8,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
+import { mundoN6 } from "./helpers/n6-mundo";
+
+const IDS = mundoN6();
 const TENANT = "DEMO";
 const PASS = "Kontrol2026Segura!";
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -61,7 +64,7 @@ test.describe("accesibilidad del contexto de empresa", () => {
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
 
-    await expect(boton).toContainText("SEGUNDA");
+    await expect(boton).toContainText(IDS.nombre_b);
     // El foco vuelve al botón: perderlo dejaría al usuario de teclado al
     // principio del documento después de cada cambio.
     await expect(boton).toBeFocused();
@@ -75,7 +78,7 @@ test.describe("accesibilidad del contexto de empresa", () => {
     await expect(page.getByRole("listbox")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("listbox")).toHaveCount(0);
-    await expect(boton).toContainText("GLOBAL DV");
+    await expect(boton).toContainText(IDS.nombre_a);
     await expect(boton).toBeFocused();
   });
 
@@ -84,7 +87,7 @@ test.describe("accesibilidad del contexto de empresa", () => {
     await page.getByTestId("elegir-empresa-D1").click();
     const boton = page.getByTestId("selector-empresa");
     const etiqueta = await boton.getAttribute("aria-label");
-    expect(etiqueta).toContain("GLOBAL DV");
+    expect(etiqueta).toContain(IDS.nombre_a);
     expect(etiqueta).toContain("Cambiar de empresa");
     expect(await boton.getAttribute("aria-haspopup")).toBe("listbox");
     expect(await boton.getAttribute("aria-expanded")).toBe("false");
@@ -97,8 +100,8 @@ test.describe("accesibilidad del contexto de empresa", () => {
     const opciones = page.getByRole("option");
     // `aria-selected` lo dice al lector de pantalla; el icono, a quien no
     // distingue el color.
-    await expect(opciones.filter({ hasText: "GLOBAL DV" })).toHaveAttribute("aria-selected", "true");
-    await expect(opciones.filter({ hasText: "SEGUNDA" })).toHaveAttribute("aria-selected", "false");
+    await expect(opciones.filter({ hasText: IDS.nombre_a })).toHaveAttribute("aria-selected", "true");
+    await expect(opciones.filter({ hasText: IDS.nombre_b })).toHaveAttribute("aria-selected", "false");
   });
 });
 
@@ -140,7 +143,7 @@ test.describe("el selector en cada tamaño", () => {
       await boton.click();
       await expect(page.getByRole("listbox")).toBeVisible();
       await page.getByTestId("opcion-empresa-D2").click();
-      await expect(boton).toContainText("SEGUNDA");
+      await expect(boton).toContainText(IDS.nombre_b);
     });
   }
 });

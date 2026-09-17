@@ -1340,7 +1340,7 @@ empresa. Se corrigió con `exact: true`. **Es el mismo defecto que E2E-045** en
 
 | Deuda | Dueña | Hallazgo | Prioridad sugerida |
 |---|---|---|---|
-| E2E-046-TIPOS | 046 | `documents.spec.ts:309` espera «Página siguiente», que solo existe con más de 10 filas; falla si los otros navegadores aún no llenaron la tabla | baja: aislada pasa |
+| E2E-046-TIPOS | 046 | `documents.spec.ts:309` espera «Página siguiente», que solo existe con más de 10 filas; falla si la tabla aún no tiene suficientes. Precisado el 2026-09-17: sobre una base recién instalada **falla también aislada** —`isEnabled()` sobre un botón que no existe espera hasta agotar la prueba—, y pasa en cuanto la base acumula tipos. No es intermitencia de carga: es el recuento de filas | baja |
 | ORPHAN-046-SINGLE | 046 | con un tipo `SINGLE`, `VERSION_NOT_ALLOWED` se lanza después de escribir el binario, que queda huérfano | baja: basura recuperable |
 | IDEM-046-TRUNC | 046 | la clave idempotente de subida se trunca a 64 caracteres y solo 10 de la clave del cliente distinguen | media: dos claves largas con el mismo prefijo en el mismo documento se confunden |
 
@@ -1597,3 +1597,50 @@ objetivo es dejar el E2E en verde, van antes que la 031.
 Ni E2E-031-RESERVAS, ni el arranque de n6, ni el conflicto de semillas, ni E2E-046-TIPOS,
 ni INBOX-045-AISLAMIENTO, ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la
 Spec 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+---
+
+## 2026-09-17 · Tras converger el delta N6-MULTICOMPANY-STARTUP (dueña 054)
+
+`E2E-N6-ARRANQUE` queda **CERRADA**. El mundo multiempresa que las 25 pruebas necesitaban
+solo existía en una base SQLite que su propio arranque borraba al empezar, así que contra
+la base del E2E ni siquiera abrían sesión. Ahora ese mundo se define una vez
+(`qa/n6_world.py`), se siembra en la base que sea (`qa/n6-e2e-seed.py`), la cadena tiene un
+orden fijado (`qa/e2e-seed.sh`) y la ejecuta la propia suite (`e2e/global-setup.ts`).
+25/25 en Chromium, Firefox y WebKit; 0 ficheros de producto; 0 migraciones.
+
+Al poder correr por primera vez afloraron siete suposiciones que la suite había heredado de
+su base privada —el nombre literal de la empresa A y que el tercero marcador cupiera en la
+primera página—, corregidas leyendo el mundo en vez de suponerlo.
+
+**Sobre base limpia, la suite completa pasa de 185/27 a 211/1.** Las cifras anteriores
+(185/26) se descartan: aquella base tenía `D2` inactiva por un experimento de causalidad y
+la medición estaba contaminada.
+
+`E2E-SEED-EMPRESA-UNICA` sigue **OPEN**, ahora con causa raíz y radio medidos: los usuarios
+que crean las suites no declaran alcance, y sin alcance el servidor admite todas las
+empresas del tenant; de las seis suites que crean usuarios por API solo `order-confirmation`
+entra por la interfaz con uno, de ahí el único fallo que queda. Se clasificó
+`INDEPENDENT_ROOT_CAUSE` frente al arranque de n6 —ninguna de las dos correcciones arregla
+la otra— y por eso **no se absorbió**.
+
+Deuda nueva registrada: **SEED-EMPRESA-CODIGO-NO-UNICO** — `companies` no tiene índice
+único sobre `(tenant_id, code)`. Corregirlo es una migración; no se hace aquí.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **E2E-031-RESERVAS** · `GET /inventory/reservations` ignora `source_order_id` | 031 · 023 | no |
+| 2 | **E2E-SEED-EMPRESA-UNICA** · el único fallo que queda en la suite | 054 | no |
+| 3 | Certificar compras (015, 016, 017, 027) | 004-compras | no |
+| 4 | Verificar restauración (DT-11) | 053 | no |
+| 5 | **SEED-EMPRESA-CODIGO-NO-UNICO** · exige migración | por decidir | no |
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguno se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni E2E-031-RESERVAS, ni E2E-SEED-EMPRESA-UNICA, ni E2E-046-TIPOS, ni INBOX-045-AISLAMIENTO,
+ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053, ni el índice único
+de `companies`, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

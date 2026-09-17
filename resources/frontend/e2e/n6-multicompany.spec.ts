@@ -9,11 +9,9 @@
  * Requiere el arranque `qa/n6-multicompany-bootstrap.py`: dos empresas en el
  * tenant DEMO y los usuarios ua / ub / uab.
  */
-import { readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+
+import { mundoN6 } from "./helpers/n6-mundo";
 
 /**
  * Identificadores del mundo sembrado.
@@ -22,9 +20,7 @@ import { expect, test, type APIRequestContext, type Page } from "@playwright/tes
  * una prueba con ids fijos empezaría a pasar por el motivo equivocado —el id ya
  * no existe, así que claro que se rechaza—.
  */
-const IDS = JSON.parse(
-  readFileSync(process.env.KONTROL_QA_IDS_FILE ?? join(tmpdir(), "kontrol-n6-ids.json"), "utf8"),
-) as { empresa_a: string; empresa_b: string; empresa_c: string; tenant_1: string };
+const IDS = mundoN6();
 
 const TENANT = "DEMO";
 const PASS = "Kontrol2026Segura!";
@@ -153,10 +149,10 @@ test.describe("dos empresas", () => {
     await entrar(page, "uab");
     const [, b] = await (await empresas);
     await page.getByTestId("elegir-empresa-D2").click();
-    await expect(page.getByTestId("selector-empresa")).toContainText("SEGUNDA");
+    await expect(page.getByTestId("selector-empresa")).toContainText(IDS.nombre_b);
 
     await page.reload();
-    await expect(page.getByTestId("selector-empresa")).toContainText("SEGUNDA");
+    await expect(page.getByTestId("selector-empresa")).toContainText(IDS.nombre_b);
     const guardada = await page.evaluate(() =>
       window.sessionStorage.getItem("kontrol.company-tab.v1"));
     expect(guardada, "la pestaña no recordó su empresa").toContain(b.id);
@@ -169,7 +165,7 @@ test.describe("aislamiento entre pestañas", () => {
     const tab1 = await context.newPage();
     await entrar(tab1, "uab");
     await tab1.getByTestId("elegir-empresa-D1").click();
-    await expect(tab1.getByTestId("selector-empresa")).toContainText("GLOBAL DV");
+    await expect(tab1.getByTestId("selector-empresa")).toContainText(IDS.nombre_a);
 
     // La segunda pestaña arranca con la preferencia, y cambiar aquí no puede
     // arrastrar a la primera: es el caso que `localStorage` rompía.
@@ -183,12 +179,12 @@ test.describe("aislamiento entre pestañas", () => {
     } else {
       await tab2.getByTestId("elegir-empresa-D2").click();
     }
-    await expect(tab2.getByTestId("selector-empresa")).toContainText("SEGUNDA");
+    await expect(tab2.getByTestId("selector-empresa")).toContainText(IDS.nombre_b);
 
     // La primera sigue donde estaba, incluso después de recargar.
-    await expect(tab1.getByTestId("selector-empresa")).toContainText("GLOBAL DV");
+    await expect(tab1.getByTestId("selector-empresa")).toContainText(IDS.nombre_a);
     await tab1.reload();
-    await expect(tab1.getByTestId("selector-empresa")).toContainText("GLOBAL DV");
+    await expect(tab1.getByTestId("selector-empresa")).toContainText(IDS.nombre_a);
 
     // Y las peticiones de cada una llevan su propia empresa.
     const deTab1 = observarEmpresas(tab1);
@@ -214,19 +210,31 @@ test.describe("aislamiento de la caché", () => {
     await page.getByTestId("elegir-empresa-D1").click();
     await irA(page, /Terceros/);
 
-    // Cada empresa tiene un tercero propio sembrado en el arranque. Sin datos
-    // distintos, dos listas vacías tampoco se contaminan y el aislamiento
-    // quedaría "demostrado" por no haber nada que mezclar.
+    // Cada empresa tiene un tercero propio sembrado. Sin datos distintos, dos
+    // listas vacías tampoco se contaminan y el aislamiento quedaría
+    // "demostrado" por no haber nada que mezclar.
+    //
+    // Se busca por el prefijo común de los dos en vez de mirar la primera
+    // página: la lista pagina de veinte en veinte y la base del E2E lleva casi
+    // cien terceros de otras suites, así que "está en pantalla" dependía de
+    // cuántos hubiera sembrado otro. Buscar el prefijo es además más exigente
+    // que mirar la página: si el tercero de la otra empresa se colara, la
+    // búsqueda lo traería a primera fila en lugar de esconderlo al final.
+    const buscar = page.getByLabel("Buscar");
     expect(a.id).toBe(IDS.empresa_a);
-    await expect(page.getByText("SOLO-DE-A").first()).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText("SOLO-DE-B")).toHaveCount(0);
+    await buscar.fill("SOLO-DE");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByText(IDS.tercero_a).first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDS.tercero_b)).toHaveCount(0);
 
     // Al cambiar de empresa, el tercero de A no puede seguir en pantalla.
     await page.getByTestId("selector-empresa").click();
     await page.getByTestId("opcion-empresa-D2").click();
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText("SOLO-DE-B").first()).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText("SOLO-DE-A"),
+    await buscar.fill("SOLO-DE");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByText(IDS.tercero_b).first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDS.tercero_a),
       "el tercero de la empresa A siguió visible bajo la B").toHaveCount(0);
   });
 });
@@ -289,11 +297,13 @@ test.describe("manipulación del cliente", () => {
     // Sin esto, los dos bloqueos anteriores podrían deberse a que la ruta
     // rechaza cualquier cosa.
     const token = await sesionCruda(request, "ua");
-    const r = await request.get("/api/v1/maestros/terceros", {
+    // Se pregunta por el tercero, no por la primera página: la lista pagina y
+    // la base del E2E acumula los terceros de todas las suites.
+    const r = await request.get(`/api/v1/maestros/terceros?q=${IDS.tercero_a}`, {
       headers: { Authorization: `Bearer ${token}`, "X-Kontrol-Company": IDS.empresa_a },
     });
     expect(r.status()).toBe(200);
-    expect(JSON.stringify(await r.json())).toContain("SOLO-DE-A");
+    expect(JSON.stringify(await r.json())).toContain(IDS.tercero_a);
   });
 
   test("la escritura tampoco cruza: el cuerpo no impone la empresa", async ({ request }) => {
@@ -317,7 +327,7 @@ test.describe("usuarios distintos en el mismo navegador", () => {
   test("quien entra después no hereda la empresa del anterior", async ({ page }) => {
     await entrar(page, "uab");
     await page.getByTestId("elegir-empresa-D2").click();
-    await expect(page.getByTestId("selector-empresa")).toContainText("SEGUNDA");
+    await expect(page.getByTestId("selector-empresa")).toContainText(IDS.nombre_b);
 
     await page.keyboard.press("Escape");
     // Las notificaciones pueden quedar encima del botón: se espera a que se
@@ -335,6 +345,6 @@ test.describe("usuarios distintos en el mismo navegador", () => {
 
     // `ua` solo opera en A: la preferencia de `uab` no puede arrastrarlo.
     expect(empresas).not.toContain(IDS.empresa_b);
-    await expect(page.getByTestId("empresa-activa")).toContainText("GLOBAL DV");
+    await expect(page.getByTestId("empresa-activa")).toContainText(IDS.nombre_a);
   });
 });

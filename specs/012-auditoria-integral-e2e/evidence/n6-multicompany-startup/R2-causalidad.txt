@@ -1,0 +1,18 @@
+# R2 — causalidad de E2E_SEED_EMPRESA_UNICA, una sola variable
+
+## R2a · D2 ACTIVE
+  1 failed
+  6 passed (10.0s)
+
+## R2b · D2 INACTIVE
+  7 passed (5.8s)
+
+## Restaurado a D2 ACTIVE, verificado por consulta
+
+## Sonda directa del mecanismo
+admin              -> empresas alcanzables: 1  ['D1']   (alcance declarado por qa/spec047-e2e-seed.py:47)
+check-mu5m7p1lm1c1 -> empresas alcanzables: 2  ['D1','D2']  (sin ninguna fila en user_scopes)
+53 usuarios en la base; 52 sin alcance declarado
+
+## Radio de impacto: suites que crean usuarios por API y entran por la interfaz con ellos
+billing 0 · dispatch 0 · receivables 0 · returns 0 · notifications 0 · order-confirmation 1

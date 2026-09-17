@@ -1,0 +1,43 @@
+# Mutaciones · N6-MULTICOMPANY-STARTUP
+
+## M1-alcance
+  4 failed  21 passed (35.2s)
+  1) [chromium] › e2e/n6-multicompany.spec.ts:80:3 › una sola empresa › se resuelve sola y opera sin pedir selección
+  2) [chromium] › e2e/n6-multicompany.spec.ts:244:3 › manipulación del cliente › una empresa inventada en el almacenamiento no concede nada
+  3) [chromium] › e2e/n6-multicompany.spec.ts:287:3 › manipulación del cliente › una empresa a la que no se tiene acceso se rechaza
+  4) [chromium] › e2e/n6-multicompany.spec.ts:327:3 › usuarios distintos en el mismo navegador › quien entra después no hereda la empresa del anterior
+
+## M2-reutilizar
+  13 failed  12 passed (28.9s)
+  1) [chromium] › e2e/n6-a11y-responsive.spec.ts:96:3 › accesibilidad del contexto de empresa › la empresa activa se distingue sin depender del color
+  2) [chromium] › e2e/n6-a11y-responsive.spec.ts:119:5 › el selector en cada tamaño › móvil pequeño (320px): usable y sin desbordar
+  3) [chromium] › e2e/n6-a11y-responsive.spec.ts:119:5 › el selector en cada tamaño › móvil (375px): usable y sin desbordar
+  4) [chromium] › e2e/n6-a11y-responsive.spec.ts:119:5 › el selector en cada tamaño › tableta (768px): usable y sin desbordar
+  5) [chromium] › e2e/n6-a11y-responsive.spec.ts:119:5 › el selector en cada tamaño › portátil (1024px): usable y sin desbordar
+  6) [chromium] › e2e/n6-a11y-responsive.spec.ts:119:5 › el selector en cada tamaño › escritorio (1280px): usable y sin desbordar
+
+## M5-orquestacion
+
+Error: no está el mundo de N6 en /tmp/kontrol-n6-ids.json: siémbrelo con «bash qa/e2e-seed.sh <URL de la base>» sobre la misma base contra la que corre esta suite
+
+
+## M6-nombre-fijo
+  5 failed  20 passed (39.9s)
+  1) [chromium] › e2e/n6-a11y-responsive.spec.ts:73:3 › accesibilidad del contexto de empresa › Escape cierra sin cambiar la empresa
+  2) [chromium] › e2e/n6-a11y-responsive.spec.ts:85:3 › accesibilidad del contexto de empresa › el botón anuncia la empresa activa y su función
+  3) [chromium] › e2e/n6-a11y-responsive.spec.ts:96:3 › accesibilidad del contexto de empresa › la empresa activa se distingue sin depender del color
+  4) [chromium] › e2e/n6-multicompany.spec.ts:164:3 › aislamiento entre pestañas › cada pestaña conserva su empresa
+  5) [chromium] › e2e/n6-multicompany.spec.ts:327:3 › usuarios distintos en el mismo navegador › quien entra después no hereda la empresa del anterior
+
+## M7-paginacion
+  1 failed  24 passed (43.9s)
+  1) [chromium] › e2e/n6-multicompany.spec.ts:205:3 › aislamiento de la caché › los datos de una empresa no aparecen bajo la otra
+
+## M3-idempotencia
+  25 passed (28.9s)
+
+## M4-cambio-clave
+  25 passed — no muere. Verificado que la mutación llega a la base (ua must_change=true)
+  y que el servidor la publica en la respuesta de acceso.
+
+Restauración verificada con cmp en todas. Filas dejadas por M2 y M3 retiradas y recontadas.

@@ -1,0 +1,52 @@
+# R1 — base limpia (kn6), siembra estándar 045+047, D2 ACTIVA, Chromium
+
+  27 failed
+  185 passed (7.4m)
+
+## Los 27 fallos
+  1) [chromium] › e2e/documents.spec.ts:309:1 › los tipos documentales declaran la política sin código
+  2) [chromium] › e2e/n6-a11y-responsive.spec.ts:38:3 › accesibilidad del contexto de empresa › la pantalla de selección no tiene violaciones serias
+  3) [chromium] › e2e/n6-a11y-responsive.spec.ts:44:3 › accesibilidad del contexto de empresa › el selector abierto no tiene violaciones serias
+  4) [chromium] › e2e/n6-a11y-responsive.spec.ts:52:3 › accesibilidad del contexto de empresa › se opera con teclado de principio a fin
+  5) [chromium] › e2e/n6-a11y-responsive.spec.ts:70:3 › accesibilidad del contexto de empresa › Escape cierra sin cambiar la empresa
+  6) [chromium] › e2e/n6-a11y-responsive.spec.ts:82:3 › accesibilidad del contexto de empresa › el botón anuncia la empresa activa y su función
+  7) [chromium] › e2e/n6-a11y-responsive.spec.ts:93:3 › accesibilidad del contexto de empresa › la empresa activa se distingue sin depender del color
+  8) [chromium] › e2e/n6-a11y-responsive.spec.ts:116:5 › el selector en cada tamaño › móvil pequeño (320px): usable y sin desbordar
+  9) [chromium] › e2e/n6-a11y-responsive.spec.ts:116:5 › el selector en cada tamaño › móvil (375px): usable y sin desbordar
+  10) [chromium] › e2e/n6-a11y-responsive.spec.ts:116:5 › el selector en cada tamaño › tableta (768px): usable y sin desbordar
+  11) [chromium] › e2e/n6-a11y-responsive.spec.ts:116:5 › el selector en cada tamaño › portátil (1024px): usable y sin desbordar
+  12) [chromium] › e2e/n6-a11y-responsive.spec.ts:116:5 › el selector en cada tamaño › escritorio (1280px): usable y sin desbordar
+  13) [chromium] › e2e/n6-a11y-responsive.spec.ts:116:5 › el selector en cada tamaño › escritorio ancho (1440px): usable y sin desbordar
+  14) [chromium] › e2e/n6-multicompany.spec.ts:84:3 › una sola empresa › se resuelve sola y opera sin pedir selección
+  15) [chromium] › e2e/n6-multicompany.spec.ts:103:3 › dos empresas › exige elegir y no decide por el usuario
+  16) [chromium] › e2e/n6-multicompany.spec.ts:112:3 › dos empresas › cambiar de empresa cambia la cabecera de las peticiones
+  17) [chromium] › e2e/n6-multicompany.spec.ts:134:3 › dos empresas › la cabecera nunca lleva el tenant
+  18) [chromium] › e2e/n6-multicompany.spec.ts:151:3 › dos empresas › la empresa elegida se recuerda al recargar
+  19) [chromium] › e2e/n6-multicompany.spec.ts:168:3 › aislamiento entre pestañas › cada pestaña conserva su empresa
+  20) [chromium] › e2e/n6-multicompany.spec.ts:209:3 › aislamiento de la caché › los datos de una empresa no aparecen bajo la otra
+  21) [chromium] › e2e/n6-multicompany.spec.ts:236:3 › manipulación del cliente › una empresa inventada en el almacenamiento no concede nada
+  22) [chromium] › e2e/n6-multicompany.spec.ts:271:3 › manipulación del cliente › la empresa de otro tenant se rechaza en el servidor
+  23) [chromium] › e2e/n6-multicompany.spec.ts:279:3 › manipulación del cliente › una empresa a la que no se tiene acceso se rechaza
+  24) [chromium] › e2e/n6-multicompany.spec.ts:288:3 › manipulación del cliente › el contexto propio sí funciona
+  25) [chromium] › e2e/n6-multicompany.spec.ts:299:3 › manipulación del cliente › la escritura tampoco cruza: el cuerpo no impone la empresa
+  26) [chromium] › e2e/n6-multicompany.spec.ts:317:3 › usuarios distintos en el mismo navegador › quien entra después no hereda la empresa del anterior
+  27) [chromium] › e2e/order-confirmation.spec.ts:323:3 › Spec 033 — confirmación independiente del pedido › la interfaz registra el control y el dominio lo confirma
+
+## Causa del fallo de n6 (idéntica en los 25)
+  2) [chromium] › e2e/n6-a11y-responsive.spec.ts:38:3 › accesibilidad del contexto de empresa › la pantalla de selección no tiene violaciones serias 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/$/
+    Received string:  "http://localhost:5173/login"
+    Timeout: 20000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 20000ms
+        43 × locator resolved to <html lang="es">…</html>
+           - unexpected value "http://localhost:5173/login"
+
+
+## El mundo de n6 no está en la base del E2E
+usuarios ua/ub/uab/uc = 0 · tenants = [DEMO] · companies = [D1, D2] · ninguna E1
+/tmp/kontrol-n6-ids.json apunta a los ids del mundo SQLite (empresa_a=b43007f6…), inexistentes en PostgreSQL
