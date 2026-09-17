@@ -5,6 +5,7 @@
  * puede introducirlos.
  */
 import AxeBuilder from "@axe-core/playwright";
+import { activarEmpresa } from "./helpers/empresa";
 import { expect, test, type Page } from "@playwright/test";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
@@ -25,12 +26,7 @@ async function uiLogin(page: Page): Promise<void> {
   await page.locator('nav a[href="/organizacion/empresas"]').first().click();
   await page.waitForURL((u) => u.pathname === "/organizacion/empresas", { timeout: 15000 });
   await page.waitForLoadState("networkidle");
-  const activar = page.getByRole("button", { name: "Activar" }).first();
-  if (await activar.count()) {
-    await activar.click();
-    await expect(page.getByRole("button", { name: "Desactivar" }).first())
-      .toBeVisible({ timeout: 15000 });
-  }
+  await activarEmpresa(page);
 }
 
 async function goto(page: Page, href: string): Promise<void> {

@@ -1560,3 +1560,40 @@ objetivo es recuperar señal de la suite E2E, conviene antes que la 031.
 Ni E2E-031-RESERVAS, ni el ayudante compartido de empresa, ni la certificación de
 compras, ni la Spec 053, ni AUTH-MC-INTERMITENTE, ni la retirada de `license_timezone`,
 ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, camino tras `EXPIRED`).
+
+---
+
+## Tras converger E2E-HELPER-EMPRESA-AMBIGUO — 2026-09-17
+
+La suite E2E vuelve a tener señal. El ayudante que apagaba la empresa que necesitaba
+encendida queda corregido, y **sin tocar una línea de producto**.
+
+| Hecho | Detalle |
+|---|---|
+| Defecto | `getByRole("button", { name: "Activar" })` casa por subcadena con «Des**activar**». Con la empresa ya activa, el ayudante pulsaba el control contrario y luego esperaba el botón que él mismo había hecho desaparecer |
+| Prueba | `ambiguo=1 exacto=0 desactivar=1 nombres=["Desactivar"]`. El producto expone tres nombres exactos y distintos: la ambigüedad era de la prueba |
+| Corrección | Ayudante canónico único: nombre exacto, guarda de regresión, idempotencia, compuerta por identificador del producto, fallo explícito y **postcondición verificada** |
+| Señal | La suite completa pasa de **164/38** a **185/26** |
+| Restantes | 25 del arranque de `n6-multicompany` y 1 del conflicto de semillas. **Ninguno del ayudante.** Ambos registrados como deuda nueva, no absorbidos |
+| Cobertura declarada | A→B y B→A **no se cubren**: no hay usuario con dos empresas en esta base, por diseño de la semilla. Se dice, no se finge |
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **E2E-031-RESERVAS** · `GET /inventory/reservations` ignora `source_order_id` | 031 · 023 | no |
+| 2 | **E2E-N6-ARRANQUE** y **E2E-SEED-EMPRESA-UNICA** · 26 pruebas y el conflicto de semillas | 054 | no |
+| 3 | Certificar compras (015, 016, 017, 027) | 004-compras | no |
+| 4 | Verificar restauración (DT-11) | 053 | no |
+
+Revalidado: **E2E-031-RESERVAS** sigue primero, como estaba previsto. Dicho eso, las dos
+deudas nuevas de QA concentran hoy **26 de los 26 fallos** que quedan en la suite: si el
+objetivo es dejar el E2E en verde, van antes que la 031.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguno se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni E2E-031-RESERVAS, ni el arranque de n6, ni el conflicto de semillas, ni E2E-046-TIPOS,
+ni INBOX-045-AISLAMIENTO, ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la
+Spec 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

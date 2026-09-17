@@ -1,0 +1,31 @@
+E2E-HELPER-EMPRESA-AMBIGUO · REPRODUCCIÓN ANTES DE CORREGIR
+Base: 0c47f61 · Chromium · TZ=Europe/Amsterdam
+
+== Los cuatro ficheros con el ayudante defectuoso
+   12 failed · 6 passed
+
+   Error literal, repetido:
+       Locator: getByRole('button', { name: 'Desactivar' }).first()
+       Error: element(s) not found
+
+== Diagnóstico de los nombres accesibles reales (pantalla de empresas, empresa activa)
+   DIAGNOSTICO ambiguo=1 exacto=0 desactivar=1 activa=1
+               nombres_del_ambiguo=["Desactivar"]
+               botones=["","Salir","Activa","Desactivar",""]
+
+   El localizador exacto de «Activar» encuentra CERO elementos; el ambiguo encuentra
+   UNO, y se llama «Desactivar». El producto expone tres nombres exactos y distintos:
+   la ambigüedad la pone la prueba. TEST_DEFECT. PRODUCT_DEFECT = 0.
+
+== Suite completa antes del arreglo (Chromium)
+   208 ejecutadas · 164 pasadas · 38 fallidas · 6 sin ejecutar
+
+   Clasificación de las 38:
+     12  E2E_HELPER_EMPRESA_AMBIGUO   warehouse-structure 4 · uom-a11y 4
+                                      warehouse-a11y 3 · uom-conversion 1
+     25  N6_MULTICOMPANY_STARTUP      n6-multicompany 13 · n6-a11y-responsive 12
+                                      (la sesión no arranca: usan usuarios ua/ub/uab
+                                      que crea su propio bootstrap en OTRA base)
+      1  EXTERNAL_ENVIRONMENT         notifications: faltaba KONTROL_E2E_DB_URL en el
+                                      lanzador y la segunda empresa (+6 en cascada)
+      0  E2E_046_TIPOS / PRODUCT_DEFECT / UNKNOWN

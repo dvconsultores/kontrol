@@ -80,7 +80,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | 051 | Auditoría empresarial avanzada | `PARTIALLY_IMPLEMENTED` | bitácora con actor, tenant y empresa | 006 |
 | 052 | Instalador / actualización | `PARTIALLY_IMPLEMENTED` | `scripts/`, `alembic` a cabeza | Planificador de retención (P1). Delta **MIGR-0033-FK-HUERFANA** (2026-09-16): **COMPLETE / CONVERGED** — histórico preservado sin fabricar ni reasignar empresa, integridad exigida a toda escritura nueva, cero→cabeza y legado→cabeza en verde, 5 mutaciones, regresión 1573/0/24, deriva nueva 0. Siguen abiertos instalador y actualizador sin ejecutar, y la etiqueta `latest`. El estado global no cambia |
 | 053 | Copia de seguridad / continuidad | `PARTIALLY_IMPLEMENTED` | `scripts/backup.sh`, `restore.sh` | Sin verificación de restauración |
-| 054 | QA integral | `PARTIALLY_IMPLEMENTED` | `specs/012-auditoria-integral-e2e`, suites vigentes | Deuda responsive |
+| 054 | QA integral | `PARTIALLY_IMPLEMENTED` | `specs/012-auditoria-integral-e2e`, suites vigentes | Deuda responsive. Delta **E2E-HELPER-EMPRESA-AMBIGUO** (2026-09-17): cuatro suites buscaban «Activar» por subcadena y pulsaban «Desactivar», apagando la empresa que necesitaban; 12 fallos y 6 pruebas sin llegar a correr. Ayudante canónico en `e2e/helpers/empresa.ts` con nombre exacto, idempotencia y postcondición verificada; 0 ficheros de producto; 22/22 en tres navegadores; 4 mutaciones. La suite completa pasa de 164/38 a **185/26**, y los 26 restantes quedan clasificados: 25 del arranque de n6-multicompany y 1 del conflicto de semillas, ambos **no absorbidos**. Deudas nuevas registradas: `E2E-SEED-EMPRESA-UNICA` y el arranque de n6. El estado global no cambia |
 | 055 | Seguridad y *hardening* | `PARTIALLY_IMPLEMENTED` | barridos de N5/N10, sin fugas | Sin Spec propietaria |
 | 056 | Homologación fiscal y release | `BLOCKED_BY_LEGAL_VALIDATION` | `homologation` 3 tablas | D0-07, 039–043 |
 
@@ -99,7 +99,7 @@ carpeta propia **no** es `NOT_STARTED`: puede vivir dentro de otra Spec.
 | `BLOCKED_BY_EXTERNAL_SERVICE` | 1 — 044 |
 | **Sin estado** | **0** |
 
-Suma: 20 + 1 + 0 + 26 + 1 + 0 + 1 + 6 + 1 = **56**. Sin estado: **0**. Recontado desde las filas el 2026-09-14, tras converger la 047, otra vez tras detenerse el delta FLOAT-038-A, y de nuevo el 2026-09-16 tras los deltas E2E-045, MIGR-0033-FK-HUERFANA y FLOAT-038-C, y el 2026-09-17 tras CLOCK-013 y POLICY-CLOCK-LOCAL —56 filas, 20·1·0·26·1·0·1·6·1 en los cinco recuentos—: sin cambio (la 022, `COMPLETE / CONVERGED / EVIDENCE SEALED`, cuenta entre las 20). Recontado de nuevo el 2026-09-15, tras converger FLOAT-038-A: sin cambio. Y tras converger FLOAT-038-B, el mismo día: sin cambio. Y tras converger CONC-046: sin cambio.
+Suma: 20 + 1 + 0 + 26 + 1 + 0 + 1 + 6 + 1 = **56**. Sin estado: **0**. Recontado desde las filas el 2026-09-14, tras converger la 047, otra vez tras detenerse el delta FLOAT-038-A, y de nuevo el 2026-09-16 tras los deltas E2E-045, MIGR-0033-FK-HUERFANA y FLOAT-038-C, y el 2026-09-17 tras CLOCK-013, POLICY-CLOCK-LOCAL y E2E-HELPER-EMPRESA-AMBIGUO —56 filas, 20·1·0·26·1·0·1·6·1 en los seis recuentos—: sin cambio (la 022, `COMPLETE / CONVERGED / EVIDENCE SEALED`, cuenta entre las 20). Recontado de nuevo el 2026-09-15, tras converger FLOAT-038-A: sin cambio. Y tras converger FLOAT-038-B, el mismo día: sin cambio. Y tras converger CONC-046: sin cambio.
 
 El grupo dominante —26 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el

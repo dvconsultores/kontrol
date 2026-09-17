@@ -1,0 +1,25 @@
+##### E2E-HLP-01 · vuelve la coincidencia parcial
+  1 failed
+RESTAURADO: idéntico al original
+##### E2E-HLP-02 · se retira exact del control de desactivación
+RESTAURADO: idéntico al original
+##### E2E-HLP-03 · el selector semántico se sustituye por first()
+  1 failed
+RESTAURADO: idéntico al original
+##### E2E-HLP-04 · se elimina la postcondición
+  5 passed (7.9s)
+RESTAURADO: idéntico al original
+##### E2E-HLP-05 · se rompe la idempotencia
+  1 failed
+RESTAURADO: idéntico al original
+##### E2E-HLP-02 (nueva) · la postcondición afirma lo contrario
+  1 passed (2.1s)
+RESTAURADO: idéntico al original
+##### E2E-HLP-04 (nueva) · la compuerta se resuelve por posición, no por identificador
+    Error: expect(locator).toHaveCount(expected) failed
+  1 failed
+RESTAURADO: idéntico al original
+##### E2E-HLP-02 (definitiva) · se retira la guarda de regresión permanente
+  (y vuelve la subcadena: es el defecto original completo)
+  3 passed (7.9s)
+RESTAURADO: idéntico al original

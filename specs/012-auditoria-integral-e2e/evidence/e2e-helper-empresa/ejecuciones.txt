@@ -1,0 +1,41 @@
+E2E-HELPER-EMPRESA-AMBIGUO · EJECUCIONES DESPUÉS DEL ARREGLO
+Chromium salvo donde se indique · TZ=Europe/Amsterdam · 0 ficheros de producto
+
+== Los cuatro ficheros afectados
+   Antes: 12 fallidas + 6 sin ejecutar
+   Después: 18/18 pasadas
+
+== Conjunto dirigido (los cuatro + las pruebas nuevas del ayudante)
+   Chromium 22/22 · Firefox 22/22 · WebKit 22/22
+
+== Regresión de E2E-045 y documentos
+   approvals + documents + documents-a11y: 25/25
+
+== Suite E2E completa — dos mediciones
+   Antes del arreglo   208 ejecutadas · 164 pasadas · 38 fallidas · 6 sin ejecutar
+   Después (1ª)        212 ejecutadas · 183 pasadas · 28 fallidas · 1 sin ejecutar
+   Después (2ª)        212 ejecutadas · 185 pasadas · 26 fallidas · 1 sin ejecutar
+
+   El denominador sube de 208 a 212 por las cuatro pruebas dirigidas nuevas.
+
+== Clasificación de los 26 fallos restantes (2ª medición)
+     25  N6_MULTICOMPANY_STARTUP   n6-multicompany 13 · n6-a11y-responsive 12.
+                                   Usan ua/ub/uab, creados por su propio bootstrap en
+                                   otra base; la sesión no llega a arrancar.
+      1  E2E_SEED_EMPRESA_UNICA    notifications:243 exige la segunda empresa (D2) que
+                                   añade qa/spec047-e2e-seed.py; con D2 activa, las
+                                   suites cuyos usuarios no están acotados caen en la
+                                   compuerta de selección. Deuda NUEVA, no absorbida.
+      1  (sin ejecutar)            cascada del anterior.
+      0  E2E_HELPER_EMPRESA_AMBIGUO
+      0  NEW_REGRESSION_E2E_HELPER
+      0  E2E_046_TIPOS · PRODUCT_DEFECT_DISCOVERED · UNKNOWN
+
+== Intermitencia observada y descartada
+   En la 1ª medición fallaron además approvals:214 y approvals:391. Aislados pasan
+   13/13, y en la 2ª medición pasaron. No usan el ayudante corregido: TEST_DEFECT_OTHER,
+   intermitente bajo carga de la suite completa. Registrado, no absorbido.
+
+== Causación demostrada de la segunda empresa
+   Con D2 en INACTIVE, order-confirmation y putaway pasan 16/16. Con D2 activa fallaban.
+   Prueba directa de que el conflicto de semillas —y no el ayudante— los tumbaba.
