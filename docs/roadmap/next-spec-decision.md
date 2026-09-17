@@ -1484,3 +1484,41 @@ contamina toda regresión nocturna, lo que abarata cualquier ciclo posterior.
 Ni CLOCK-013, ni E2E-031-RESERVAS, ni la certificación de compras, ni la validación de
 respaldo, ni AUTH-MC-INTERMITENTE, ni las deudas de 045/046, ni ninguna decisión abierta
 (D0-06, D0-07, OQ-048, MD-049, camino tras `EXPIRED`).
+
+---
+
+## Tras converger CLOCK-013 — 2026-09-17
+
+La deuda de determinismo de las pruebas financieras queda **cerrada**, y con ella el
+parche que la ocultaba: la suite de la 013 ya no necesita `TZ=UTC`.
+
+| Hecho | Detalle |
+|---|---|
+| Defecto | Las pruebas registraban en instante UTC y preguntaban por el día civil **local**. A las 01:24 UTC, en Caracas aún era el día anterior: la tasa empezaba a regir hora y media después del final del día por el que se preguntaba |
+| Reproducción | Mismo código y mismos datos: `TZ=UTC` 58/0 · `TZ=America/Caracas` 1 fallo (`MISSING_RATE`) |
+| Corrección | Todas las fechas derivan de una referencia fija y pasada; los cinco instantes que quedaban también. **0 lecturas de reloj** en el fichero |
+| Producto | **No se toca**: mide en UTC, que es la autoridad de `ADR-D0-001` |
+| Evidencia | 62/62 bajo cinco entornos (dos en día civil distinto y uno **sin `TZ`**) · 4 mutaciones sin supervivientes · regresión 1632/0/8 sin forzar zona |
+| Observación declarada | `POLICY-CLOCK-LOCAL`: `active_policy` usa el día civil del servidor. Coherente hoy; se registra sin absorberla |
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **E2E-031-RESERVAS** · `GET /inventory/reservations` ignora `source_order_id` | 031 · 023 | no |
+| 2 | Certificar compras (015, 016, 017, 027) | 004-compras | no |
+| 3 | Verificar restauración (DT-11) | 053 | no |
+| 4 | Deudas de 045/046 y el ayudante E2E compartido | varias | no |
+
+Revalidado: **E2E-031-RESERVAS** sigue siendo el mejor siguiente. Cierra la última deuda
+conocida de la cadena de salida, es acotada y no depende de ninguna decisión de dueña.
+Después conviene decidir entre certificar compras —el trabajo de mayor valor— y la
+validación de respaldo, que es requisito de operación responsable.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguno se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni E2E-031-RESERVAS, ni la certificación de compras, ni la Spec 053, ni
+AUTH-MC-INTERMITENTE, ni `POLICY-CLOCK-LOCAL`, ni las deudas de 045/046, ni ninguna
+decisión abierta (D0-06, D0-07, OQ-048, MD-049, camino tras `EXPIRED`).

@@ -12,6 +12,7 @@ corregir una tasa no reescriba la operación que ya usó la anterior.
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
@@ -24,6 +25,28 @@ from app.modules.treasury import service as tz
 from app.modules.treasury.models import ExchangeRate
 
 pytest_plugins = ("tests.conftest_multicompany",)
+
+
+# --------------------------------------------------------------------------- #
+# El día de negocio de estas pruebas (CLOCK-013)
+# --------------------------------------------------------------------------- #
+#: La autoridad temporal del módulo es **UTC** (`ADR-D0-001`): una fecha suelta
+#: empieza a regir a las cero UTC y se consulta hasta el final de ese día UTC.
+#: Estas pruebas construían sus fechas con `REFERENCIA`, que es el día civil del
+#: proceso que las ejecuta, así que registraban en una autoridad y preguntaban en
+#: otra. A las 01:24 UTC del 17 de septiembre en Caracas todavía era el 16: la tasa
+#: registrada «ahora» empezaba a regir hora y media después del final del día por el
+#: que la prueba preguntaba, y el producto contestaba —con razón— que no había tasa.
+#:
+#: Desde aquí el día de negocio de las pruebas es una **fecha fija**: pasada, para que
+#: lo registrado en ella siga vigente en cualquier ejecución; a mitad de mes, para no
+#: rozar fronteras de mes ni de año; y posterior a la vigencia de la política que estas
+#: pruebas activan (`2020-01-01`). Todo lo demás se deriva de ella.
+REFERENCIA = date(2026, 3, 11)
+
+#: La tasa del día se publica a media mañana, no a las cero. Este instante existe para
+#: probar precisamente eso: que preguntar por un día es preguntar por el día entero.
+REFERENCIA_MEDIA_MANANA = datetime(2026, 3, 11, 10, 30, tzinfo=UTC)
 
 
 def _moneda(db, company_id, codigo):
@@ -88,7 +111,7 @@ def test_la_observacion_guarda_su_par_explicito(mundo):
         fuente = _fuente(db, mundo)
         obs = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                quote_code=quote.code, rate="100.00",
-                               effective_at=date.today(), source_id=str(fuente.id),
+                               effective_at=REFERENCIA, source_id=str(fuente.id),
                                actor="tesorero")
         db.flush()
         assert str(obs.base_currency_id) == str(base.id)
@@ -105,7 +128,7 @@ def test_una_moneda_no_cotiza_contra_si_misma(mundo):
         c = _moneda(db, mundo.company_a, _codigo())
         with pytest.raises(KontrolError) as exc:
             rz.register_rate(db, company_id=mundo.company_a, base_code=c.code,
-                             quote_code=c.code, rate="1", effective_at=date.today(),
+                             quote_code=c.code, rate="1", effective_at=REFERENCIA,
                              actor="qa")
         assert exc.value.code == "INVALID_PAIR"
     finally:
@@ -124,7 +147,7 @@ def test_sin_observacion_el_par_no_se_resuelve(mundo):
         b = _moneda(db, mundo.company_a, _codigo())
         with pytest.raises(ConflictError) as exc:
             rz.resolve_rate(db, company_id=mundo.company_a, base_code=a.code,
-                            quote_code=b.code, effective_at=date.today())
+                            quote_code=b.code, effective_at=REFERENCIA)
         assert exc.value.code == "MISSING_RATE"
     finally:
         db.close()
@@ -135,7 +158,7 @@ def test_la_misma_moneda_es_identidad_sin_fila_de_mercado(mundo):
     try:
         c = _moneda(db, mundo.company_a, _codigo())
         r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=c.code,
-                            quote_code=c.code, effective_at=date.today())
+                            quote_code=c.code, effective_at=REFERENCIA)
         assert r.rate == Decimal(1)
         assert r.identity is True
         assert r.observation_id is None, "inventó una fila de mercado para la identidad"
@@ -152,11 +175,11 @@ def test_la_resolucion_devuelve_la_procedencia_entera(mundo):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         fuente = _fuente(db, mundo)
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
-                         quote_code=quote.code, rate="100.00", effective_at=date.today(),
+                         quote_code=quote.code, rate="100.00", effective_at=REFERENCIA,
                          source_id=str(fuente.id), actor="tesorero")
         db.flush()
         r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
-                            quote_code=quote.code, effective_at=date.today())
+                            quote_code=quote.code, effective_at=REFERENCIA)
         assert r.rate == Decimal("100.000000")
         assert r.source_code == fuente.code
         assert r.rate_type == "REFERENCE"
@@ -176,13 +199,13 @@ def test_una_tasa_de_manana_no_valora_una_operacion_de_ayer(mundo):
         base = _moneda(db, mundo.company_a, _codigo())
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         fuente = _fuente(db, mundo)
-        ayer = date.today() - timedelta(days=1)
+        ayer = REFERENCIA - timedelta(days=1)
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                          quote_code=quote.code, rate="100.00", effective_at=ayer,
                          source_id=str(fuente.id), actor="qa")
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                          quote_code=quote.code, rate="120.00",
-                         effective_at=date.today() + timedelta(days=1),
+                         effective_at=REFERENCIA + timedelta(days=1),
                          source_id=str(fuente.id), actor="qa")
         db.flush()
         r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
@@ -201,7 +224,7 @@ def test_la_tasa_caduca_cuando_la_politica_lo_dice(mundo):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         fuente = _fuente(db, mundo)
         _politica(db, mundo)
-        vieja = date.today() - timedelta(days=90)
+        vieja = REFERENCIA - timedelta(days=90)
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                          quote_code=quote.code, rate="100.00", effective_at=vieja,
                          source_id=str(fuente.id), actor="qa")
@@ -231,12 +254,12 @@ def test_sin_politica_no_se_invierte_una_tasa(mundo):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         fuente = _fuente(db, mundo)
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
-                         quote_code=quote.code, rate="100.00", effective_at=date.today(),
+                         quote_code=quote.code, rate="100.00", effective_at=REFERENCIA,
                          source_id=str(fuente.id), actor="qa")
         db.flush()
         with pytest.raises(ConflictError) as exc:
             rz.resolve_rate(db, company_id=mundo.company_a, base_code=quote.code,
-                            quote_code=base.code, effective_at=date.today())
+                            quote_code=base.code, effective_at=REFERENCIA)
         assert exc.value.code == "INVERSION_NOT_ALLOWED"
         assert exc.value.details["available_pair"] == f"{base.code}/{quote.code}"
     finally:
@@ -252,10 +275,10 @@ def test_con_politica_se_invierte_y_queda_dicho(mundo):
         fuente = _fuente(db, mundo)
         obs = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                quote_code=quote.code, rate="100.00",
-                               effective_at=date.today(), source_id=str(fuente.id), actor="qa")
+                               effective_at=REFERENCIA, source_id=str(fuente.id), actor="qa")
         db.flush()
         r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=quote.code,
-                            quote_code=base.code, effective_at=date.today())
+                            quote_code=base.code, effective_at=REFERENCIA)
         assert r.rate == Decimal("0.010000")
         assert r.derived == "INVERSE", "derivó sin dejar constancia"
         assert r.derived_from == (str(obs.id),)
@@ -274,12 +297,12 @@ def test_sin_politica_no_se_triangula(mundo):
         fuente = _fuente(db, mundo)
         for cur, valor in ((a, "100.00"), (b, "50.00")):
             rz.register_rate(db, company_id=mundo.company_a, base_code=cur.code,
-                             quote_code=funcional, rate=valor, effective_at=date.today(),
+                             quote_code=funcional, rate=valor, effective_at=REFERENCIA,
                              source_id=str(fuente.id), actor="qa")
         db.flush()
         with pytest.raises(ConflictError) as exc:
             rz.resolve_rate(db, company_id=mundo.company_a, base_code=a.code,
-                            quote_code=b.code, effective_at=date.today())
+                            quote_code=b.code, effective_at=REFERENCIA)
         assert exc.value.code == "MISSING_RATE"
     finally:
         db.close()
@@ -296,11 +319,11 @@ def test_con_politica_se_triangula_y_queda_dicho(mundo):
         fuente = _fuente(db, mundo)
         for cur, valor in ((a, "100.00"), (b, "50.00")):
             rz.register_rate(db, company_id=mundo.company_a, base_code=cur.code,
-                             quote_code=funcional, rate=valor, effective_at=date.today(),
+                             quote_code=funcional, rate=valor, effective_at=REFERENCIA,
                              source_id=str(fuente.id), actor="qa")
         db.flush()
         r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=a.code,
-                            quote_code=b.code, effective_at=date.today())
+                            quote_code=b.code, effective_at=REFERENCIA)
         assert r.rate == Decimal("2.000000")
         assert r.derived == "TRIANGULATION"
         assert len(r.derived_from) == 2
@@ -320,7 +343,7 @@ def test_corregir_una_tasa_sucede_a_la_anterior(mundo):
         fuente = _fuente(db, mundo)
         vieja = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                  quote_code=quote.code, rate="100.00",
-                                 effective_at=date.today(), source_id=str(fuente.id),
+                                 effective_at=REFERENCIA, source_id=str(fuente.id),
                                  actor="qa")
         db.flush()
         vieja_id, importe_viejo = str(vieja.id), Decimal(str(vieja.rate))
@@ -336,7 +359,7 @@ def test_corregir_una_tasa_sucede_a_la_anterior(mundo):
         assert nueva.version == vieja.version + 1
 
         r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
-                            quote_code=quote.code, effective_at=date.today())
+                            quote_code=quote.code, effective_at=REFERENCIA)
         assert r.rate == Decimal("120.000000")
     finally:
         db.close()
@@ -350,7 +373,7 @@ def test_corregir_exige_motivo(mundo):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         obs = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                quote_code=quote.code, rate="100.00",
-                               effective_at=date.today(), actor="qa")
+                               effective_at=REFERENCIA, actor="qa")
         db.flush()
         with pytest.raises(KontrolError) as exc:
             rz.correct_rate(db, company_id=mundo.company_a, observation_id=str(obs.id),
@@ -372,7 +395,7 @@ def test_una_fuente_desactivada_no_produce_tasas_pero_conserva_historia(mundo):
         fuente = _fuente(db, mundo)
         obs = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                quote_code=quote.code, rate="100.00",
-                               effective_at=date.today(), source_id=str(fuente.id), actor="qa")
+                               effective_at=REFERENCIA, source_id=str(fuente.id), actor="qa")
         db.flush()
         rz.set_source_status(db, company_id=mundo.company_a, source_id=str(fuente.id),
                              status="DISABLED", actor="qa")
@@ -380,13 +403,13 @@ def test_una_fuente_desactivada_no_produce_tasas_pero_conserva_historia(mundo):
 
         with pytest.raises(ConflictError) as exc:
             rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
-                            quote_code=quote.code, effective_at=date.today())
+                            quote_code=quote.code, effective_at=REFERENCIA)
         assert exc.value.code == "MISSING_RATE"
         assert db.get(ExchangeRate, str(obs.id)) is not None, "la desactivación borró historia"
 
         with pytest.raises(ConflictError) as exc2:
             rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
-                             quote_code=quote.code, rate="110", effective_at=date.today(),
+                             quote_code=quote.code, rate="110", effective_at=REFERENCIA,
                              source_id=str(fuente.id), actor="qa")
         assert exc2.value.code == "SOURCE_DISABLED"
     finally:
@@ -401,7 +424,7 @@ def test_entre_dos_fuentes_manda_la_prioridad_no_el_orden_de_la_tabla(mundo):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         floja = _fuente(db, mundo, prioridad=900)
         buena = _fuente(db, mundo, prioridad=10)
-        hoy = date.today()
+        hoy = REFERENCIA
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                          quote_code=quote.code, rate="900.00", effective_at=hoy,
                          source_id=str(floja.id), actor="qa")
@@ -423,7 +446,7 @@ def test_dos_observaciones_en_las_mismas_coordenadas_no_conviven(mundo):
         base = _moneda(db, mundo.company_a, _codigo())
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         fuente = _fuente(db, mundo)
-        hoy = date.today()
+        hoy = REFERENCIA
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                          quote_code=quote.code, rate="100.00", effective_at=hoy,
                          source_id=str(fuente.id), actor="qa")
@@ -449,7 +472,7 @@ def test_la_tasa_no_pasa_por_coma_flotante(mundo):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         fuente = _fuente(db, mundo)
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
-                         quote_code=quote.code, rate="0.300000", effective_at=date.today(),
+                         quote_code=quote.code, rate="0.300000", effective_at=REFERENCIA,
                          source_id=str(fuente.id), actor="qa")
         db.flush()
         r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
@@ -469,7 +492,7 @@ def test_la_tasa_conserva_todos_sus_decimales(mundo):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         fuente = _fuente(db, mundo)
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
-                         quote_code=quote.code, rate="36.123456", effective_at=date.today(),
+                         quote_code=quote.code, rate="36.123456", effective_at=REFERENCIA,
                          source_id=str(fuente.id), actor="qa")
         db.commit()
         r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
@@ -487,7 +510,7 @@ def test_una_tasa_no_positiva_se_rechaza(mundo, valor):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         with pytest.raises(KontrolError) as exc:
             rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
-                             quote_code=quote.code, rate=valor, effective_at=date.today(),
+                             quote_code=quote.code, rate=valor, effective_at=REFERENCIA,
                              actor="qa")
         assert exc.value.code == "INVALID_RATE"
     finally:
@@ -506,7 +529,7 @@ def test_la_tasa_de_una_empresa_no_resuelve_en_otra(mundo):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         fuente = _fuente(db, mundo)
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
-                         quote_code=quote.code, rate="100.00", effective_at=date.today(),
+                         quote_code=quote.code, rate="100.00", effective_at=REFERENCIA,
                          source_id=str(fuente.id), actor="qa")
         # La empresa B tiene las mismas monedas y ninguna tasa.
         _moneda(db, mundo.company_b, codigo)
@@ -515,7 +538,7 @@ def test_la_tasa_de_una_empresa_no_resuelve_en_otra(mundo):
         with pytest.raises(ConflictError) as exc:
             rz.resolve_rate(db, company_id=mundo.company_b, base_code=codigo,
                             quote_code=rz.moneda_funcional(db, mundo.company_b),
-                            effective_at=date.today())
+                            effective_at=REFERENCIA)
         assert exc.value.code == "MISSING_RATE"
     finally:
         db.close()
@@ -528,7 +551,7 @@ def test_no_se_corrige_una_observacion_de_otra_empresa(mundo):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         obs = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                quote_code=quote.code, rate="100.00",
-                               effective_at=date.today(), actor="qa")
+                               effective_at=REFERENCIA, actor="qa")
         db.commit()
         with pytest.raises(NotFoundError):
             rz.correct_rate(db, company_id=mundo.company_b, observation_id=str(obs.id),
@@ -546,7 +569,7 @@ def test_no_se_usa_una_fuente_de_otra_empresa(mundo):
         db.flush()
         with pytest.raises(NotFoundError):
             rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
-                             quote_code=quote.code, rate="100", effective_at=date.today(),
+                             quote_code=quote.code, rate="100", effective_at=REFERENCIA,
                              source_id=str(ajena.id), actor="qa")
     finally:
         db.close()
@@ -564,7 +587,7 @@ def test_con_politica_de_aprobacion_la_tasa_nace_pendiente_y_no_resuelve(mundo):
         fuente = _fuente(db, mundo)
         obs = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                quote_code=quote.code, rate="100.00",
-                               effective_at=date.today(), source_id=str(fuente.id),
+                               effective_at=REFERENCIA, source_id=str(fuente.id),
                                actor="cajero")
         db.flush()
         assert obs.status == "PENDING_APPROVAL"
@@ -590,7 +613,7 @@ def test_quien_registra_una_tasa_no_la_aprueba(mundo):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         obs = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                quote_code=quote.code, rate="100.00",
-                               effective_at=date.today(), actor="cajero")
+                               effective_at=REFERENCIA, actor="cajero")
         db.flush()
         with pytest.raises(ConflictError) as exc:
             rz.approve_rate(db, company_id=mundo.company_a, observation_id=str(obs.id),
@@ -616,7 +639,7 @@ def test_importar_crea_las_tasas_y_reimportar_no_duplica(mundo):
         _moneda(db, mundo.company_a, funcional)
         a, b = _moneda(db, mundo.company_a, _codigo()), _moneda(db, mundo.company_a, _codigo())
         fuente = _fuente(db, mundo)
-        hoy = date.today().isoformat()
+        hoy = REFERENCIA.isoformat()
         contenido = _csv([f"{a.code},{funcional},100.00,{hoy}",
                           f"{b.code},{funcional},50.00,{hoy}"])
         r = rz.import_rates(db, company_id=mundo.company_a, contenido=contenido,
@@ -640,7 +663,7 @@ def test_ninguna_fila_invalida_se_descarta_en_silencio(mundo):
         _moneda(db, mundo.company_a, funcional)
         buena = _moneda(db, mundo.company_a, _codigo())
         fuente = _fuente(db, mundo)
-        hoy = date.today().isoformat()
+        hoy = REFERENCIA.isoformat()
         contenido = _csv([
             f"{buena.code},{funcional},100.00,{hoy}",
             f"{buena.code},{funcional},0,{hoy}",
@@ -672,7 +695,7 @@ def test_el_proveedor_no_duplica_la_misma_observacion(mundo):
         fuente = _fuente(db, mundo)
         lote = [{"provider_observation_id": "prov-1", "base_currency": base.code,
                  "quote_currency": funcional, "rate": "100.00",
-                 "effective_at": date.today()}]
+                 "effective_at": REFERENCIA}]
         r1 = rz.ingest_provider_observations(db, company_id=mundo.company_a,
                                              source_id=str(fuente.id),
                                              observaciones=lote, actor="qa")
@@ -710,7 +733,7 @@ def test_la_tesoreria_obtiene_la_tasa_real_y_congela_su_procedencia(mundo):
 
         obs = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                quote_code=funcional, rate="100.00",
-                               effective_at=date.today(), source_id=str(fuente.id), actor="qa")
+                               effective_at=REFERENCIA, source_id=str(fuente.id), actor="qa")
         db.flush()
         snap = tz.capture_rate_snapshot(db, company_id=mundo.company_a,
                                         source_currency=base.code, target_currency=funcional,
@@ -734,7 +757,7 @@ def test_corregir_la_tasa_no_cambia_la_operacion_que_uso_la_anterior(mundo):
         fuente = _fuente(db, mundo)
         obs = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                quote_code=funcional, rate="100.00",
-                               effective_at=date.today(), source_id=str(fuente.id), actor="qa")
+                               effective_at=REFERENCIA, source_id=str(fuente.id), actor="qa")
         db.flush()
         snap = tz.capture_rate_snapshot(db, company_id=mundo.company_a,
                                         source_currency=base.code, target_currency=funcional,
@@ -767,7 +790,7 @@ def test_la_tesoreria_marca_la_tasa_derivada_en_su_instantanea(mundo):
         fuente = _fuente(db, mundo)
         obs = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                quote_code=funcional, rate="100.00",
-                               effective_at=date.today(), source_id=str(fuente.id), actor="qa")
+                               effective_at=REFERENCIA, source_id=str(fuente.id), actor="qa")
         db.flush()
         snap = tz.capture_rate_snapshot(db, company_id=mundo.company_a,
                                         source_currency=funcional, target_currency=base.code,
@@ -791,7 +814,7 @@ def test_el_camino_antiguo_sigue_funcionando_y_ya_escribe_el_par(mundo):
         quote = _moneda(db, mundo.company_a, funcional)
         base = _moneda(db, mundo.company_a, _codigo())
         obs = tz.set_exchange_rate(db, company_id=mundo.company_a, currency_id=str(base.id),
-                                   rate_date=date.today(), rate=Decimal("100.00"),
+                                   rate_date=REFERENCIA, rate=Decimal("100.00"),
                                    source="BCV", actor="qa")
         db.flush()
         assert str(obs.base_currency_id) == str(base.id)
@@ -811,7 +834,7 @@ def test_la_moneda_funcional_no_se_cotiza_contra_si_misma_por_el_camino_antiguo(
         db.flush()
         with pytest.raises(KontrolError) as exc:
             tz.set_exchange_rate(db, company_id=mundo.company_a, currency_id=str(propia.id),
-                                 rate_date=date.today(), rate=Decimal("1"), actor="qa")
+                                 rate_date=REFERENCIA, rate=Decimal("1"), actor="qa")
         assert exc.value.code == "INVALID_PAIR"
     finally:
         db.close()
@@ -877,7 +900,7 @@ def test_una_moneda_de_otra_empresa_no_sirve_para_registrar_aqui(mundo):
         with pytest.raises(ConflictError) as exc2:
             rz.register_rate(db, company_id=mundo.company_b, base_code=codigo,
                              quote_code=rz.moneda_funcional(db, mundo.company_b),
-                             rate="100", effective_at=date.today(), actor="qa")
+                             rate="100", effective_at=REFERENCIA, actor="qa")
         assert exc2.value.code == "CURRENCY_INACTIVE"
 
         # Y la moneda de A sigue siendo de A.
@@ -903,17 +926,17 @@ def test_el_arrastre_toma_la_ultima_anterior_no_la_primera(mundo):
         for dias, valor in ((30, "100.00"), (10, "110.00"), (1, "120.00")):
             rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                              quote_code=quote.code, rate=valor,
-                             effective_at=date.today() - timedelta(days=dias),
+                             effective_at=REFERENCIA - timedelta(days=dias),
                              source_id=str(fuente.id), actor="qa")
         db.flush()
         r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
-                            quote_code=quote.code, effective_at=date.today())
+                            quote_code=quote.code, effective_at=REFERENCIA)
         assert r.rate == Decimal("120.000000"), "arrastró una tasa más vieja que la vigente"
 
         # Y consultando una fecha intermedia, la que regía entonces.
         media = rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
                                 quote_code=quote.code,
-                                effective_at=date.today() - timedelta(days=5))
+                                effective_at=REFERENCIA - timedelta(days=5))
         assert media.rate == Decimal("110.000000")
     finally:
         db.close()
@@ -945,7 +968,7 @@ def test_dos_registros_simultaneos_no_crean_dos_observaciones(mundo):
     finally:
         preparar.close()
 
-    hoy = date.today()
+    hoy = REFERENCIA
 
     def registrar(sesion):
         return rz.register_rate(sesion, company_id=mundo.company_a, base_code=base_code,
@@ -1035,7 +1058,7 @@ def test_subir_dos_veces_a_la_vez_el_mismo_fichero_no_da_un_500(mundo):
         preparar.commit()
         fuente_id = str(fuente.id)
         contenido = ("base_currency,quote_currency,rate,effective_at\n"
-                     f"{base.code},{funcional},100.00,{date.today().isoformat()}\n")
+                     f"{base.code},{funcional},100.00,{REFERENCIA.isoformat()}\n")
     finally:
         preparar.close()
 
@@ -1071,7 +1094,7 @@ def test_corregir_dos_veces_la_misma_tasa_original_no_da_un_500(mundo):
         quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
         obs = rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                                quote_code=quote.code, rate="100.00",
-                               effective_at=date.today(), actor="qa")
+                               effective_at=REFERENCIA, actor="qa")
         db.flush()
         rz.correct_rate(db, company_id=mundo.company_a, observation_id=str(obs.id),
                         rate="110.00", reason="Primera corrección", actor="qa")
@@ -1094,7 +1117,7 @@ def test_dos_correcciones_simultaneas_de_la_misma_tasa_no_dan_un_500(mundo):
         quote = _moneda(preparar, mundo.company_a, rz.moneda_funcional(preparar, mundo.company_a))
         obs = rz.register_rate(preparar, company_id=mundo.company_a, base_code=base.code,
                                quote_code=quote.code, rate="100.00",
-                               effective_at=date.today(), actor="qa")
+                               effective_at=REFERENCIA, actor="qa")
         preparar.commit()
         obs_id = str(obs.id)
     finally:
@@ -1125,7 +1148,7 @@ def test_el_universo_de_tasas_se_recorre_entero_por_paginas(mundo):
         for i in range(237):
             rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                              quote_code=quote.code, rate=Decimal("100") + Decimal(i),
-                             effective_at=datetime.now(UTC) - timedelta(hours=i + 1),
+                             effective_at=REFERENCIA_MEDIA_MANANA - timedelta(hours=i + 1),
                              source_id=str(fuente.id), actor="qa")
         db.commit()
 
@@ -1172,7 +1195,7 @@ def test_la_api_resuelve_y_dice_lo_que_significa(mundo):
     r = mundo.post("/treasury/exchange-rates/observations", "admin", mundo.company_a,
                    {"base_currency": base_code, "quote_currency": funcional,
                     "rate": "100.000000",
-                    "effective_at": datetime.now(UTC).isoformat(),
+                    "effective_at": REFERENCIA_MEDIA_MANANA.isoformat(),
                     "source_id": fuente_id})
     assert r.status_code == 200, r.text
     assert r.json()["base_currency"] == base_code
@@ -1231,7 +1254,7 @@ def test_la_api_importa_y_detalla_cada_fila_rechazada(mundo):
     finally:
         db.close()
 
-    hoy = date.today().isoformat()
+    hoy = REFERENCIA.isoformat()
     contenido = ("base_currency,quote_currency,rate,effective_at\n"
                  f"{codigo},{funcional},100.00,{hoy}\n"
                  f"{codigo},{funcional},0,{hoy}\n"
@@ -1259,7 +1282,7 @@ def test_la_api_pagina_el_historico_con_el_contrato_real(mundo):
         for i in range(120):
             rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                              quote_code=funcional, rate=Decimal("10") + Decimal(i),
-                             effective_at=datetime.now(UTC) - timedelta(hours=i + 1),
+                             effective_at=REFERENCIA_MEDIA_MANANA - timedelta(hours=i + 1),
                              source_id=str(fuente.id), actor="qa")
         db.commit()
         fuente_id = str(fuente.id)
@@ -1313,29 +1336,29 @@ def test_la_tasa_de_hoy_sirve_para_una_operacion_de_hoy(mundo):
         fuente = _fuente(db, mundo)
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                          quote_code=funcional, rate="40.00",
-                         effective_at=datetime.now(UTC), source_id=str(fuente.id), actor="qa")
+                         effective_at=REFERENCIA_MEDIA_MANANA, source_id=str(fuente.id), actor="qa")
         db.flush()
 
         # Consultando por la fecha, sin hora: tiene que encontrarla.
         r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
-                            quote_code=funcional, effective_at=date.today())
+                            quote_code=funcional, effective_at=REFERENCIA)
         assert r.rate == Decimal("40.000000")
 
         # Y la tesorería, que consulta por fecha, también.
         snap = tz.capture_rate_snapshot(db, company_id=mundo.company_a,
                                         source_currency=base.code, target_currency=funcional,
-                                        on_date=date.today(), actor="tesorero")
+                                        on_date=REFERENCIA, actor="tesorero")
         db.flush()
         assert Decimal(str(snap.rate)) == Decimal("40.00000000")
 
         # Pero una tasa de mañana sigue sin valorar hoy.
         rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
                          quote_code=funcional, rate="99.00",
-                         effective_at=datetime.now(UTC) + timedelta(days=1),
+                         effective_at=REFERENCIA_MEDIA_MANANA + timedelta(days=1),
                          source_id=str(fuente.id), actor="qa")
         db.flush()
         hoy = rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
-                              quote_code=funcional, effective_at=date.today())
+                              quote_code=funcional, effective_at=REFERENCIA)
         assert hoy.rate == Decimal("40.000000"), "una tasa de mañana valoró hoy"
     finally:
         db.close()
@@ -1421,15 +1444,15 @@ def test_el_clasificador_distingue_la_violacion_unica_de_un_check_y_de_una_foran
             "unica": lambda: rz.ExchangeRateSource(company_id=mundo.company_a, code=fuente.code,
                                                    name="repetida", status="ACTIVE"),
             "check": lambda: ExchangeRate(company_id=mundo.company_a, currency_id=str(base.id),
-                                          rate_date=date.today(), rate=Decimal("0"),
+                                          rate_date=REFERENCIA, rate=Decimal("0"),
                                           base_currency_id=str(base.id),
                                           quote_currency_id=str(quote.id),
-                                          source_id=str(fuente.id), effective_at=datetime.now(UTC)),
+                                          source_id=str(fuente.id), effective_at=REFERENCIA_MEDIA_MANANA),
             "foranea": lambda: ExchangeRate(company_id=mundo.company_a, currency_id=str(base.id),
-                                            rate_date=date.today(), rate=Decimal("1"),
+                                            rate_date=REFERENCIA, rate=Decimal("1"),
                                             base_currency_id=str(base.id),
                                             quote_currency_id=str(quote.id),
-                                            source_id=str(uuid4()), effective_at=datetime.now(UTC)),
+                                            source_id=str(uuid4()), effective_at=REFERENCIA_MEDIA_MANANA),
         }.items():
             try:
                 with db.begin_nested():
@@ -1463,7 +1486,7 @@ def test_registrar_no_disfraza_de_duplicado_un_error_que_no_lo_es(mundo, monkeyp
         monkeypatch.setattr(rz, "_exigir_fuente", lambda *_a, **_k: fantasma)
         with pytest.raises(IntegrityError):
             rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
-                             quote_code=quote.code, rate="10.00", effective_at=date.today(),
+                             quote_code=quote.code, rate="10.00", effective_at=REFERENCIA,
                              source_id=fantasma.id, actor="qa")
     finally:
         db.rollback()
@@ -1493,3 +1516,108 @@ def test_la_fuente_conserva_y_devuelve_su_identidad_entera(mundo):
     for campo, valor in esperado.items():
         assert r.json()[campo] == valor, f"la respuesta del alta perdió {campo}"
         assert guardada[campo] == valor, f"lo guardado perdió {campo}"
+
+
+# --------------------------------------------------------------------------- #
+# CLOCK-013 · la vigencia no depende de la zona del proceso
+# --------------------------------------------------------------------------- #
+def _tasa_en(db, mundo, *, dia):
+    """Un par nuevo con una sola observación vigente desde `dia`."""
+    base = _moneda(db, mundo.company_a, _codigo())
+    quote = _moneda(db, mundo.company_a, rz.moneda_funcional(db, mundo.company_a))
+    fuente = _fuente(db, mundo)
+    rz.register_rate(db, company_id=mundo.company_a, base_code=base.code,
+                     quote_code=quote.code, rate="42.00", effective_at=dia,
+                     source_id=str(fuente.id), actor="qa")
+    db.flush()
+    return base, quote
+
+
+def test_la_vigencia_no_depende_de_la_zona_horaria_del_proceso(mundo):
+    """La misma pregunta, contestada bajo tres zonas, da la misma tasa.
+
+    Ésta es la prueba que CLOCK-013 no tenía. El defecto no estaba en el producto
+    —que mide en UTC— sino en preguntar por el día civil del proceso: a las 01:24
+    UTC del 17, en Caracas era el 16, y la tasa registrada «hoy» empezaba a regir
+    después del final del día por el que se preguntaba.
+    """
+    import time
+
+    db = mundo.factory()
+    tz_original = os.environ.get("TZ")
+    try:
+        _politica(db, mundo)
+        base, quote = _tasa_en(db, mundo, dia=REFERENCIA)
+
+        resultados = {}
+        for zona in ("UTC", "America/Caracas", "Pacific/Kiritimati"):
+            os.environ["TZ"] = zona
+            time.tzset()
+            r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
+                                quote_code=quote.code, effective_at=REFERENCIA)
+            resultados[zona] = r.rate
+
+        assert len(set(resultados.values())) == 1, f"la zona cambió el resultado: {resultados}"
+        assert set(resultados.values()) == {Decimal("42.000000")}
+    finally:
+        if tz_original is None:
+            os.environ.pop("TZ", None)
+        else:
+            os.environ["TZ"] = tz_original
+        time.tzset()
+        db.close()
+
+
+def test_las_fronteras_de_vigencia_se_miden_contra_la_referencia(mundo):
+    """Antes no rige; el día mismo sí; después se arrastra hasta que haya otra.
+
+    Las tres relaciones se construyen desde `REFERENCIA`, no desde el calendario:
+    la respuesta es la misma se ejecute cuando se ejecute.
+    """
+    db = mundo.factory()
+    try:
+        _politica(db, mundo)
+        base, quote = _tasa_en(db, mundo, dia=REFERENCIA)
+        pregunta = lambda dia: rz.resolve_rate(  # noqa: E731 — tres llamadas idénticas salvo el día
+            db, company_id=mundo.company_a, base_code=base.code,
+            quote_code=quote.code, effective_at=dia)
+
+        with pytest.raises(ConflictError) as exc:
+            pregunta(REFERENCIA - timedelta(days=1))
+        assert exc.value.code == "MISSING_RATE", "una tasa valoró un día anterior a su vigencia"
+
+        assert pregunta(REFERENCIA).rate == Decimal("42.000000")
+        assert pregunta(REFERENCIA + timedelta(days=1)).rate == Decimal("42.000000"), \
+            "el arrastre dejó de funcionar"
+
+
+    finally:
+        db.close()
+
+
+def test_el_dia_entero_cuenta_aunque_la_tasa_se_publique_a_media_manana(mundo):
+    """Preguntar por un día es preguntar por el día entero, no por su comienzo."""
+    db = mundo.factory()
+    try:
+        _politica(db, mundo)
+        base, quote = _tasa_en(db, mundo, dia=REFERENCIA_MEDIA_MANANA)
+        r = rz.resolve_rate(db, company_id=mundo.company_a, base_code=base.code,
+                            quote_code=quote.code, effective_at=REFERENCIA)
+        assert r.rate == Decimal("42.000000"), "una tasa de media mañana no valoró su propio día"
+    finally:
+        db.close()
+
+
+def test_estas_pruebas_no_leen_el_reloj(mundo):
+    """Guarda dirigida: si vuelve el reloj a este fichero, esto lo dice.
+
+    No prohíbe `date.today()` en el repositorio —hay sitios donde es correcto—,
+    solo aquí, que es donde mezclaba dos autoridades temporales.
+    """
+    from pathlib import Path
+
+    fuente = Path(__file__).read_text(encoding="utf-8")
+    cuerpo = fuente.split("def test_estas_pruebas_no_leen_el_reloj")[0]
+    for lectura in ("date.today()", "datetime.now(", "datetime.today()", "utcnow(", "time.time()"):
+        assert lectura not in cuerpo, (
+            f"{lectura} volvió a este fichero: las fechas se derivan de REFERENCIA (CLOCK-013)")

@@ -52,3 +52,6 @@ maestra; las demás del registro conservan el estado que allí se midió.
 Con FLOAT-038-A, FLOAT-038-B y FLOAT-038-C, **el borde monetario público de Tesorería
 queda sin un solo `float`**. Lo que sigue en `Float` en ese módulo es `match_score`,
 que es una puntuación de coincidencia y no dinero.
+
+| **CLOCK-013** | Las pruebas de maestros financieros construían sus fechas con `date.today()` —el día civil del proceso— mientras el producto mide en UTC; el resultado dependía de la zona horaria y la suite exigía `TZ=UTC` para ser verde | **CLOSED / CONVERGED** (2026-09-17) | `specs/006-tesoreria/spec013-clock-determinism-delta.md` · `evidence/clock-013/` |
+| **POLICY-CLOCK-LOCAL** | `active_policy` usa el día civil del servidor mientras la resolución de tasas usa el instante UTC. Coherente sobre el despliegue documentado (servidor en UTC, `ADR-D0-001`); divergiría sobre un servidor en otra zona | **OPEN** — observación, dueña 013/052 | `spec013-clock-determinism-delta.md` §6 |

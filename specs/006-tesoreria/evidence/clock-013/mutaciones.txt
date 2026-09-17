@@ -1,0 +1,15 @@
+##### M013-CLOCK-01 · el reloj vuelve al registro de la tasa del día
+FAILED tests/test_spec013_financial_masters.py::test_la_tasa_de_hoy_sirve_para_una_operacion_de_hoy
+FAILED tests/test_spec013_financial_masters.py::test_estas_pruebas_no_leen_el_reloj
+RESTAURADO: idéntico al original
+##### M013-CLOCK-02 · una fecha derivada vuelve a colgar del calendario
+FAILED tests/test_spec013_financial_masters.py::test_las_fronteras_de_vigencia_se_miden_contra_la_referencia
+RESTAURADO: idéntico al original
+##### M013-CLOCK-03 · la vigencia se siembra con el reloj y no con la referencia
+FAILED tests/test_spec013_financial_masters.py::test_la_vigencia_no_depende_de_la_zona_horaria_del_proceso
+FAILED tests/test_spec013_financial_masters.py::test_las_fronteras_de_vigencia_se_miden_contra_la_referencia
+FAILED tests/test_spec013_financial_masters.py::test_el_dia_entero_cuenta_aunque_la_tasa_se_publique_a_media_manana
+RESTAURADO: idéntico al original
+##### M013-CLOCK-04 · se retira la referencia controlada
+FAILED tests/test_spec013_financial_masters.py::test_estas_pruebas_no_leen_el_reloj
+RESTAURADO: idéntico al original

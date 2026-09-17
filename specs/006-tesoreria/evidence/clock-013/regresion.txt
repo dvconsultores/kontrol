@@ -1,0 +1,18 @@
+CLOCK-013 · REGRESIÓN COMPLETA DE BACKEND
+Sin forzar TZ. Zona del sistema: Europe/Amsterdam (CEST, UTC+2),
+que es precisamente el entorno cuyo desfase originó la deuda.
+
+TOTAL   1640
+PASSED  1632
+FAILED     0
+ERRORS     0
+SKIPPED    8   (S3, dependencia externa declarada)
+UNEXPECTED SKIPS 0
+WARNINGS   0
+EXIT       0
+
+Denominador remedido: 1636 del delta anterior + 4 pruebas nuevas = 1640.
+
+Tanda previa a reconstruir el entorno: 37 fallos, todos de documentos, por
+ausencia de ClamAV tras rotar /tmp (EXTERNAL_ENVIRONMENT). Reinstalado
+ClamAV 1.4.3 y verificado con EICAR, la tanda queda en 0 fallos.

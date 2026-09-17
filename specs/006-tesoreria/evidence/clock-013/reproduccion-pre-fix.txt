@@ -1,0 +1,22 @@
+CLOCK-013 · REPRODUCCIÓN ANTES DE CORREGIR
+Base: e43cf48 · PostgreSQL 16.2 · sistema Europe/Amsterdam
+
+Instante de la reproducción:
+  UTC              2026-09-17 01:24
+  America/Caracas  2026-09-16 21:24    <- día civil distinto
+
+Mismo código, mismos datos, misma intención de negocio:
+  TZ=UTC               58 pasadas, 0 fallos
+  TZ=America/Caracas   1 FALLO
+
+FALLO: tests/test_spec013_financial_masters.py::test_la_tasa_de_hoy_sirve_para_una_operacion_de_hoy
+  app.core.errors.ConflictError: No hay tasa registrada para ese par en esa fecha.
+  rates.py:660 · code=MISSING_RATE
+
+Causa: la prueba registraba en instante UTC (effective_at=datetime.now(UTC) =
+2026-09-17T01:24Z) y consultaba por día civil local (date.today() = 2026-09-16 en
+Caracas), que el producto mira hasta 2026-09-16T23:59:59.999999Z — hora y media
+antes de que la tasa empezara a regir. El producto contestó correctamente.
+
+Dirección contraria (día local por delante del de UTC): no reproducible por zona
+horaria a las 01:24 UTC —ninguna zona está ya en el día siguiente—. Se declara.
