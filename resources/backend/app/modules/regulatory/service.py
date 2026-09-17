@@ -34,6 +34,7 @@ from app.modules.regulatory.models import (
     TransportVehicle,
 )
 from app.shared import audit as audit_service
+from app.shared.clock import hoy_de_negocio
 
 
 def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
@@ -260,7 +261,7 @@ def evaluate_shipment(db: Session, *, company_id: str, shipment_id: str, actor: 
         profiles = _applicable_profiles(db, company_id, "DESPACHO", line.product_id)
         required = _required_kinds(profiles)
         blockers: list[dict] = []
-        today = date.today()
+        today = hoy_de_negocio()
         for kind in required:
             doc = db.execute(select(OfficialDocument).where(
                 OfficialDocument.company_id == company_id, OfficialDocument.kind == kind,

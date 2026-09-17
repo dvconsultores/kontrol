@@ -11,14 +11,16 @@ dice: es la lección que N5 dejó escrita y con la que N10 tropezó dos veces.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
+
+from app.shared.clock import hoy_de_negocio
 
 pytest_plugins = ("tests.conftest_multicompany",)
 
 BLOQUEO = (403, 404)
-HOY = date.today()
+HOY = hoy_de_negocio()
 
 
 # --------------------------------------------------------------------------- #

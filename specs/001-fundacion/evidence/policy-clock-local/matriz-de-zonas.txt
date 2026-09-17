@@ -1,0 +1,4 @@
+America/Caracas        día civil 2026-09-16  →  .....................   [100%]
+UTC                    día civil 2026-09-17  →  .....................   [100%]
+Europe/Amsterdam       día civil 2026-09-17  →  .....................   [100%]
+Pacific/Kiritimati     día civil 2026-09-17  →  .....................   [100%]

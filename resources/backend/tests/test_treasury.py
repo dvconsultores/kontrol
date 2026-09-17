@@ -9,7 +9,7 @@ snapshot de tasa y aislamiento multiempresa.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
@@ -29,6 +29,7 @@ from app.modules.treasury.models import (
     FinancialAccount,
     FinancialBank,
 )
+from app.shared.clock import hoy_de_negocio
 from tests.company_seed import EMPRESA_DOS, EMPRESA_UNO, sembrar_empresas
 
 
@@ -115,14 +116,14 @@ class TestMaestrosFinancieros:
                                                         code="EF-1", name="Efectivo Bs")
         currency = treasury_service.create_currency(db_session, company_id=COMPANY, code="USD", name="Dólar", symbol="$")
         rate = treasury_service.set_exchange_rate(db_session, company_id=COMPANY, currency_id=str(currency.id),
-                                                  rate_date=date.today(), rate=36.5, source="BCV")
+                                                  rate_date=hoy_de_negocio(), rate=36.5, source="BCV")
         assert instrument.method_id == str(method.id) and rate.rate == 36.5
 
     def test_currency_isolated(self, db_session) -> None:
         currency = treasury_service.create_currency(db_session, company_id=COMPANY, code="USD")
         with pytest.raises(NotFoundError):
             treasury_service.set_exchange_rate(db_session, company_id=OTHER, currency_id=str(currency.id),
-                                               rate_date=date.today(), rate=36.0)
+                                               rate_date=hoy_de_negocio(), rate=36.0)
 
 
 class TestCajas:
@@ -284,7 +285,7 @@ class TestIGTF:
     def _make_igft_rule(self, db_session, rate: float = 0.03) -> None:
         treasury_service.create_fiscal_rule(db_session, company_id=COMPANY, rule_code="IGTF-2026",
                                             name="IGTF ventas", rule_type="IGTF", version="1.0",
-                                            effective_from=date.today() - timedelta(days=30),
+                                            effective_from=hoy_de_negocio() - timedelta(days=30),
                                             params=f'{{"rate": {rate}}}')
 
     def test_igft_by_rule_and_event(self, db_session) -> None:
@@ -331,7 +332,7 @@ class TestAnticiposYMultiempresa:
                                                   code="CTA-USD", name="Cuenta USD", currency="USD")
         currency = treasury_service.create_currency(db_session, company_id=COMPANY, code="USD")
         treasury_service.set_exchange_rate(db_session, company_id=COMPANY, currency_id=str(currency.id),
-                                           rate_date=date.today(), rate=36.5)
+                                           rate_date=hoy_de_negocio(), rate=36.5)
         bt = treasury_service.create_bank_transaction(db_session, company_id=COMPANY, account_id=str(account.id),
                                                       direction="IN", amount=100.0, currency="USD")
         assert bt.rate_snapshot == 36.5

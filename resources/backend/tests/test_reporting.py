@@ -7,7 +7,7 @@ timeline de auditoría y aislamiento multiempresa.
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from conftest import make_engine, seed_org_chain
@@ -23,6 +23,7 @@ from app.modules.organization.models import Warehouse
 from app.modules.purchasing.models import SupplierInvoice
 from app.modules.reporting import service as reporting_service
 from app.modules.sales.models import SalesInvoice
+from app.shared.clock import hoy_de_negocio
 from tests.company_seed import EMPRESA_DOS, EMPRESA_UNO
 
 
@@ -105,7 +106,7 @@ class TestDashboard:
 
         db_session.add(OpenItem(company_id=COMPANY, party_id=str(party.id), source_document="FACT-1",
                                 item_type="PAYABLE", currency="VED", original=100.0,
-                                due_date=date.today() - timedelta(days=5), status="OPEN"))
+                                due_date=hoy_de_negocio() - timedelta(days=5), status="OPEN"))
         db_session.flush()
         dash = reporting_service.dashboard(db_session, company_id=COMPANY)
         assert dash["vencimientos"]["open_items_vencidos"] == 1

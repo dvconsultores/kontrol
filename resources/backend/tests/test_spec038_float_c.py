@@ -19,10 +19,11 @@ from __future__ import annotations
 import itertools
 import json
 import uuid
-from datetime import date
 from decimal import Decimal
 
 import pytest
+
+from app.shared.clock import hoy_de_negocio
 
 pytest_plugins = ("tests.conftest_multicompany",)
 
@@ -57,7 +58,7 @@ def _sesion(mundo, fondo: str = "100.00") -> str:
 def _regla_igtf(mundo) -> None:
     mundo.post("/treasury/fiscal-rules", "ua", mundo.company_a, {
         "rule_code": f"IGTF-{_n()}", "name": "IGTF", "rule_type": "IGTF", "version": "1.0",
-        "effective_from": date.today().isoformat(), "params": json.dumps({"rate": 0.03})})
+        "effective_from": hoy_de_negocio().isoformat(), "params": json.dumps({"rate": 0.03})})
 
 
 # --------------------------------------------------------------------------- #

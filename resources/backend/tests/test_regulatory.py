@@ -8,7 +8,7 @@ contingencias con regla oficial y aislamiento multiempresa.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 from conftest import make_engine, seed_org_chain
@@ -22,6 +22,7 @@ from app.modules.organization.models import Warehouse
 from app.modules.regulatory import service as regulatory_service
 from app.modules.regulatory.models import PermitInstance, RegulatoryAuthority, RegulatoryEvaluation
 from app.modules.sales.models import SalesOrder, Shipment, ShipmentLine
+from app.shared.clock import hoy_de_negocio
 from tests.company_seed import EMPRESA_DOS, EMPRESA_UNO
 
 
@@ -158,7 +159,7 @@ class TestEvaluacionYBloqueo:
         regulatory_service.create_profile(db_session, company_id=COMPANY, operation="DESPACHO", required_documents=["SICA"])
         _make_authority(db_session)
         regulatory_service.register_official_document(db_session, company_id=COMPANY, kind="SICA", number="G-1",
-                                                      expires_at=date.today() + timedelta(days=30))
+                                                      expires_at=hoy_de_negocio() + timedelta(days=30))
         result = regulatory_service.evaluate_shipment(db_session, company_id=COMPANY, shipment_id=str(shipment.id))
         assert result["status"] == "CLEARED"
 
@@ -167,7 +168,7 @@ class TestEvaluacionYBloqueo:
         regulatory_service.create_profile(db_session, company_id=COMPANY, operation="DESPACHO", required_documents=["SICA"])
         _make_authority(db_session)
         regulatory_service.register_official_document(db_session, company_id=COMPANY, kind="SICA", number="G-2",
-                                                      expires_at=date.today() - timedelta(days=1))
+                                                      expires_at=hoy_de_negocio() - timedelta(days=1))
         result = regulatory_service.evaluate_shipment(db_session, company_id=COMPANY, shipment_id=str(shipment.id))
         assert result["status"] == "BLOCKED"
 

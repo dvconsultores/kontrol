@@ -8,6 +8,10 @@ After=docker.service
 Requires=docker.service
 
 [Service]
+# Cinturón de seguridad: el disparo va por intervalo y los manejadores comparan
+# instantes UTC, pero si algún día uno pregunta por el día de negocio, que no lo
+# herede del anfitrión (Spec 001 · POLICY-CLOCK-LOCAL).
+Environment=TZ=America/Caracas
 Type=oneshot
 WorkingDirectory=@KONTROL_DIR@
 ExecStart=/usr/bin/env python3 @KONTROL_DIR@/kontrol.py scheduler-tick

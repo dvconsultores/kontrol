@@ -28,6 +28,7 @@ from app.modules.commercial.models import (
     PricePrecedence,
     SalesChannel,
 )
+from app.shared.clock import hoy_de_negocio
 
 T = TypeVar("T")
 
@@ -392,7 +393,7 @@ def resolver_precio(db: Session, *, company_id: str, item_id: str,
     _exige_articulo(db, company_id, item_id)
     if presentation_id:
         _exige_presentacion(db, company_id, presentation_id)
-    fecha = as_of or date.today()
+    fecha = as_of or hoy_de_negocio()
     cantidad = Decimal(str(quantity)) if quantity is not None else None
 
     orden, configurada = precedencia_vigente(db, company_id)

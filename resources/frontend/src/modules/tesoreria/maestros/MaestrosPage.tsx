@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
+import { hoyDeNegocio } from "@/lib/fecha-de-negocio";
 import type {
   CashboxSummary,
   CurrencySummary,
@@ -116,7 +117,7 @@ export function MaestrosPage(): React.JSX.Element {
   };
 
   const loadRate = async (currencyId: string): Promise<void> => {
-    await apiFetch("/treasury/exchange-rates", { method: "POST", body: { currency_id: currencyId, rate_date: new Date().toISOString().slice(0, 10), rate: Number(rate) || 0 } });
+    await apiFetch("/treasury/exchange-rates", { method: "POST", body: { currency_id: currencyId, rate_date: hoyDeNegocio(), rate: Number(rate) || 0 } });
     notify({ type: "success", title: "Tasa registrada", description: `Tasa ${rate} cargada.` });
     setRate("");
     invalidateAll();

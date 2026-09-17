@@ -24,6 +24,7 @@ from app.modules.sales import service as sz
 from app.modules.sales.models import SalesCreditNote
 from app.modules.treasury import service as tz
 from app.modules.treasury.models import BankTransaction, TreasuryRateSnapshot
+from app.shared.clock import hoy_de_negocio
 
 pytest_plugins = ("tests.conftest_multicompany",)
 
@@ -96,7 +97,7 @@ def _tasa(db, mundo, *, codigo="USD", valor="40.00", dia=None):
     cur = tz.create_currency(db, company_id=mundo.company_a, code=codigo, name=codigo,
                              actor="qa")
     tz.set_exchange_rate(db, company_id=mundo.company_a, currency_id=str(cur.id),
-                         rate_date=dia or date.today(), rate=Decimal(valor), source="BCV",
+                         rate_date=dia or hoy_de_negocio(), rate=Decimal(valor), source="BCV",
                          actor="qa")
     db.flush()
     return cur
@@ -142,7 +143,7 @@ def test_la_instantanea_guarda_la_procedencia_entera(mundo):
         assert Decimal(str(snap.rate)) == Decimal("40.00000000")
         assert snap.rate_source == "BCV"
         assert snap.origin == "REGISTERED"
-        assert snap.rate_date == date.today()
+        assert snap.rate_date == hoy_de_negocio()
         assert snap.policy_version == politica.version
         assert snap.exchange_rate_id is not None, "no dice de qué fila salió"
     finally:
@@ -167,10 +168,10 @@ def test_una_tasa_de_hoy_no_valora_una_operacion_de_ayer(mundo):
     db = mundo.factory()
     try:
         _politica(db, mundo)
-        ayer = date.today() - timedelta(days=1)
+        ayer = hoy_de_negocio() - timedelta(days=1)
         cur = _tasa(db, mundo, valor="40.00", dia=ayer)
         tz.set_exchange_rate(db, company_id=mundo.company_a, currency_id=str(cur.id),
-                             rate_date=date.today(), rate=Decimal("60.00"), source="BCV",
+                             rate_date=hoy_de_negocio(), rate=Decimal("60.00"), source="BCV",
                              actor="qa")
         db.flush()
         snap = tz.capture_rate_snapshot(db, company_id=mundo.company_a, source_currency="USD",
@@ -309,7 +310,6 @@ def test_lo_reservado_no_puede_aplicarse_a_una_cuenta_por_cobrar(mundo):
     """El P0 del doble gasto: reservado y aplicable son excluyentes."""
     db = mundo.factory()
     try:
-        from datetime import date as _date
 
         from app.modules.purchasing.models import OpenItem
         from app.modules.sales import service as sales
@@ -326,7 +326,7 @@ def test_lo_reservado_no_puede_aplicarse_a_una_cuenta_por_cobrar(mundo):
         doc = OpenItem(company_id=mundo.company_a, party_id=x,
                        source_document=f"SALES_INVOICE:{uuid4()}", item_type="RECEIVABLE",
                        currency="VED", original=Decimal("100.00"), applied=Decimal("0.00"),
-                       due_date=_date.today(), status="OPEN")
+                       due_date=hoy_de_negocio(), status="OPEN")
         db.add(doc)
         db.flush()
         # Quedan 40 aplicables: pedir 60 tiene que fallar.
@@ -591,7 +591,7 @@ def test_la_instantanea_sobrevive_al_cambio_de_tasa(mundo):
                                    actor="tesorero")
         db.commit()
         tz.set_exchange_rate(db, company_id=mundo.company_a, currency_id=str(cur.id),
-                             rate_date=date.today() + timedelta(days=1), rate=Decimal("80.00"),
+                             rate_date=hoy_de_negocio() + timedelta(days=1), rate=Decimal("80.00"),
                              source="BCV", actor="qa")
         db.commit()
         snap = db.get(TreasuryRateSnapshot, str(conv.rate_snapshot_id))

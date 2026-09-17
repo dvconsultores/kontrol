@@ -1,0 +1,16 @@
+POLICY-CLOCK-LOCAL · EXPERIMENTO QUE ORIGINÓ EL DELTA (antes de corregir)
+Base descartable, dos políticas: una vigente desde el 16 y otra desde el 17.
+Mismo instante: 2026-09-17 02:36 UTC. Solo cambia la zona del proceso.
+
+  zona del proceso       día civil    política elegida
+  America/Caracas        2026-09-16   POL-16   <- la correcta
+  UTC                    2026-09-17   POL-17
+  Europe/Amsterdam       2026-09-17   POL-17
+  Pacific/Kiritimati     2026-09-17   POL-17
+
+Con el despliegue documentado en UTC, entre las 00:00 y las 04:00 UTC
+—20:00 a 24:00 en Caracas— KONTROL aplicaba la política del día siguiente.
+
+DESPUÉS DEL DELTA: las cuatro zonas eligen la del 16.
+  test_la_politica_vigente_no_depende_de_la_zona_del_proceso[<zona>]
+  test_sin_fecha_la_politica_sale_del_calendario_de_negocio[<zona>]

@@ -26,6 +26,7 @@ from app.modules.organization.models import WarehouseLocation
 from app.modules.regulatory import service as reg
 from app.modules.sales import service as sales
 from app.modules.sales.models import PickList, SalesOrder, SalesOrderLine, Shipment, ShipmentLine
+from app.shared.clock import hoy_de_negocio
 
 pytest_plugins = ("tests.conftest_multicompany",)
 
@@ -257,8 +258,8 @@ def test_un_requisito_vencido_tambien_bloquea(mundo):
                            product_id=e["prod"], required_documents=["SIGESAI"], actor="qa")
         reg.register_official_document(db, company_id=mundo.company_a, kind="SIGESAI",
                                        number=f"SG-{uuid4().hex[:6]}",
-                                       issued_at=date.today() - timedelta(days=400),
-                                       expires_at=date.today() - timedelta(days=1), actor="qa")
+                                       issued_at=hoy_de_negocio() - timedelta(days=400),
+                                       expires_at=hoy_de_negocio() - timedelta(days=1), actor="qa")
         db.commit()
         sh = _despacho(db, mundo, e)
         with pytest.raises(ConflictError) as exc:
@@ -278,7 +279,7 @@ def test_cada_requisito_se_evalua_por_separado(mundo):
                            product_id=e["prod"], required_documents=["SICA", "SIGESAI"], actor="qa")
         reg.register_official_document(db, company_id=mundo.company_a, kind="SICA",
                                        number=f"SC-{uuid4().hex[:6]}",
-                                       expires_at=date.today() + timedelta(days=200), actor="qa")
+                                       expires_at=hoy_de_negocio() + timedelta(days=200), actor="qa")
         db.commit()
         sh = _despacho(db, mundo, e)
         with pytest.raises(ConflictError) as exc:

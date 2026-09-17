@@ -1,0 +1,18 @@
+POLICY-CLOCK-LOCAL · REGRESIÓN COMPLETA DE BACKEND
+
+Ejecutada sola y con TZ=Europe/Amsterdam: a propósito una zona que NO es la de
+negocio, porque lo que hay que demostrar es que el producto no depende del anfitrión.
+
+TOTAL   1664
+PASSED  1656
+FAILED     0
+ERRORS     0
+SKIPPED    8   (S3, dependencia externa declarada)
+UNEXPECTED SKIPS 0
+WARNINGS   0
+EXIT       0
+
+Denominador remedido: 1640 del delta anterior + 24 pruebas nuevas = 1664.
+
+Se ejecutó dos veces: la primera antes de descubrir que la ventana del día seguía
+siendo la de UTC, y la segunda —ésta— con esa corrección incluida. Las dos en cero.

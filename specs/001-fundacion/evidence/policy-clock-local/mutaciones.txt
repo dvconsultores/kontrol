@@ -1,0 +1,36 @@
+##### CLOCK-POLICY-01 · el reloj local vuelve a active_policy
+RESTAURADO: idéntico al original
+##### CLOCK-POLICY-02 · el ayudante devuelve el día en UTC, sin convertir
+FAILED tests/test_business_clock.py::test_el_dia_de_negocio_no_cambia_con_la_zona_del_proceso[Europe/Amsterdam]
+FAILED tests/test_business_clock.py::test_el_dia_de_negocio_no_cambia_con_la_zona_del_proceso[Pacific/Kiritimati]
+FAILED tests/test_business_clock.py::test_la_frontera_del_dia_esta_donde_dice_caracas
+RESTAURADO: idéntico al original
+##### CLOCK-POLICY-03 · se retira ZoneInfo y manda el anfitrión
+FAILED tests/test_business_clock.py::test_el_dia_de_negocio_no_cambia_con_la_zona_del_proceso[Europe/Amsterdam]
+FAILED tests/test_business_clock.py::test_el_dia_de_negocio_no_cambia_con_la_zona_del_proceso[Pacific/Kiritimati]
+FAILED tests/test_business_clock.py::test_la_frontera_del_dia_esta_donde_dice_caracas
+RESTAURADO: idéntico al original
+##### CLOCK-POLICY-04 · la licencia vuelve a leerse sin zona
+FAILED tests/test_business_clock.py::test_las_fronteras_de_licencia_son_las_de_caracas
+RESTAURADO: idéntico al original
+##### CLOCK-POLICY-05 · se cuela el reloj local en la tesorería
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+AssertionError: patrón no único (2) en /home/maria/Proyectos/kontrol/resources/backend/app/modules/treasury/service.py
+RESTAURADO: idéntico al original
+##### CLOCK-POLICY-06 · el navegador vuelve a decidir la fecha
+   × hoyDeNegocio > devuelve el día de Caracas, no el de UTC 16ms
+   × hoyDeNegocio > la frontera del día está donde dice Caracas 1ms
+   × hoyDeNegocio > no depende de la zona del navegador porque la nombra explícitamente 1ms
+RESTAURADO: idéntico al original
+##### CLOCK-POLICY-01 · el reloj local vuelve al respaldo de active_policy
+FAILED tests/test_business_clock.py::test_sin_fecha_la_politica_sale_del_calendario_de_negocio[UTC]
+FAILED tests/test_business_clock.py::test_sin_fecha_la_politica_sale_del_calendario_de_negocio[Europe/Amsterdam]
+FAILED tests/test_business_clock.py::test_sin_fecha_la_politica_sale_del_calendario_de_negocio[Pacific/Kiritimati]
+RESTAURADO: idéntico al original
+##### CLOCK-POLICY-05 · se cuela el reloj local en la política de cambio
+mutada la política de cambio
+E       SyntaxError: expected ':'
+/usr/lib/python3.11/ast.py:50: SyntaxError
+FAILED tests/test_business_clock_guard.py::test_la_logica_de_negocio_no_lee_el_reloj_del_proceso
+RESTAURADO: idéntico al original

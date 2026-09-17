@@ -8,8 +8,6 @@ retenciones y aislamiento multiempresa.
 
 from __future__ import annotations
 
-from datetime import date
-
 import pytest
 from conftest import make_engine, seed_org_chain
 from sqlalchemy.orm import Session, sessionmaker
@@ -22,6 +20,7 @@ from app.modules.master_data.models import CatalogItem, Party
 from app.modules.organization.models import Warehouse
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import OpenItem, SupplierInvoice
+from app.shared.clock import hoy_de_negocio
 from tests.company_seed import EMPRESA_DOS, EMPRESA_UNO
 
 
@@ -306,7 +305,7 @@ class TestCxP:
         item = db_session.query(OpenItem).first()
         from datetime import timedelta
 
-        item.due_date = date.today() - timedelta(days=45)
+        item.due_date = hoy_de_negocio() - timedelta(days=45)
         db_session.flush()
         result = ap_service.aging(db_session, company_id=COMPANY)
         assert result["total"] == 1000.0

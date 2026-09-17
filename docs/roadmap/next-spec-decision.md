@@ -1522,3 +1522,41 @@ validación de respaldo, que es requisito de operación responsable.
 Ni E2E-031-RESERVAS, ni la certificación de compras, ni la Spec 053, ni
 AUTH-MC-INTERMITENTE, ni `POLICY-CLOCK-LOCAL`, ni las deudas de 045/046, ni ninguna
 decisión abierta (D0-06, D0-07, OQ-048, MD-049, camino tras `EXPIRED`).
+
+---
+
+## Tras converger POLICY-CLOCK-LOCAL — 2026-09-17
+
+La deuda transversal que la auditoría destapó queda **cerrada**. KONTROL ya tiene una
+autoridad de fecha de negocio, y está en el código.
+
+| Hecho | Detalle |
+|---|---|
+| Defecto | `date.today()` en 26 reglas de negocio de 7 módulos, sin una sola conversión de zona en el producto. Con el despliegue en UTC, entre las 20:00 y las 24:00 de Caracas se aplicaba la política, la tasa y la regla fiscal **del día siguiente** |
+| Corrección | `app/shared/clock.py` es la autoridad; `business_timezone` la declara; los 26 usos migran; las 2 pantallas que enviaban el día del navegador dejan de hacerlo; `TZ` en contenedor y unidad systemd queda como **cinturón**, no como autoridad |
+| Descubierto dentro | La ventana del día seguía siendo la de UTC: una tasa registrada «ahora» caía fuera de su propio día de negocio. Lo encontró el E2E, no un razonamiento |
+| Rectificación | La auditoría dijo que la licencia evaluaba en UTC. **No era cierto**: el contrato emite el desfase de Caracas. Se comprobó contra el motor y se fijó con una prueba |
+| Evidencia | Matriz de cuatro zonas · política idéntica en las cuatro · 6 mutaciones sin supervivientes · regresión 1656/0/8 **bajo Ámsterdam** · frontend 376/376 · E2E de los flujos tocados 29/29 |
+| Cobertura declarada | Las dos pantallas corregidas no tienen E2E que las visite; se dice, no se finge |
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **E2E-031-RESERVAS** · `GET /inventory/reservations` ignora `source_order_id` | 031 · 023 | no |
+| 2 | **E2E-HELPER-EMPRESA-AMBIGUO** · cuatro suites siguen pulsando «Desactivar» | almacén · UoM | no |
+| 3 | Certificar compras (015, 016, 017, 027) | 004-compras | no |
+| 4 | Verificar restauración (DT-11) | 053 | no |
+
+Revalidado: **E2E-031-RESERVAS** sigue primero. Pero la ejecución completa de E2E de este
+delta deja un dato nuevo que conviene pesar: **E2E-HELPER-EMPRESA-AMBIGUO** tumba 39
+pruebas de la suite completa, más que ninguna otra deuda abierta, y es barata. Si el
+objetivo es recuperar señal de la suite E2E, conviene antes que la 031.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguno se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni E2E-031-RESERVAS, ni el ayudante compartido de empresa, ni la certificación de
+compras, ni la Spec 053, ni AUTH-MC-INTERMITENTE, ni la retirada de `license_timezone`,
+ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, camino tras `EXPIRED`).

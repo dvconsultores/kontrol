@@ -45,6 +45,7 @@ from app.modules.treasury.models import (
     TreasuryTransfer,
 )
 from app.shared import audit as audit_service
+from app.shared.clock import hoy_de_negocio
 
 
 def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
@@ -142,7 +143,7 @@ def active_fx_policy(db: Session, company_id: str, on_date: date | None = None) 
     código, porque dos políticas a la vez darían dos respuestas a la misma
     pregunta.
     """
-    dia = on_date or date.today()
+    dia = on_date or hoy_de_negocio()
     return db.execute(
         select(TreasuryFxPolicy).where(
             TreasuryFxPolicy.company_id == company_id,
@@ -188,7 +189,7 @@ def capture_rate_snapshot(db: Session, *, company_id: str, source_currency: str,
     parece un número correcto.
     """
     company_id = _company(company_id, obj="tasa")
-    dia = on_date or date.today()
+    dia = on_date or hoy_de_negocio()
     politica = active_fx_policy(db, company_id, dia)
 
     if manual_rate is not None:
@@ -395,7 +396,7 @@ def open_session(db: Session, *, company_id: str, cashbox_id: str, opened_amount
     company_id = _company(company_id, obj="sesión de caja")
     _require_cashbox(db, company_id, cashbox_id)
     s = CashSession(company_id=company_id, cashbox_id=cashbox_id, opened_by=actor,
-                    opened_at=date.today(), opened_amount=opened_amount, status="OPEN", created_by=actor)
+                    opened_at=hoy_de_negocio(), opened_amount=opened_amount, status="OPEN", created_by=actor)
     db.add(s)
     db.flush()
     return s
@@ -482,7 +483,7 @@ def close_session(db: Session, *, session_id: str, difference_approved: bool = F
         raise ConflictError(code="DIFFERENCE_NOT_APPROVED",
                             message="La caja tiene diferencia y debe aprobarse/justificarse para cerrarla.")
     session.status = "CLOSED"
-    session.closed_at = date.today()
+    session.closed_at = hoy_de_negocio()
     session.approval_note = approval_note
     session.audit = f'{{"difference_approved": {str(difference_approved).lower()}, "closed_by": {actor!r}}}'
     session.updated_at = datetime.now(UTC)
@@ -531,8 +532,8 @@ def create_bank_transaction(db: Session, *, company_id: str, account_id: str, di
     _require_account(db, company_id, account_id)
     if amount <= 0:
         raise KontrolError(code="INVALID_AMOUNT", message="El monto debe ser positivo", status_code=422)
-    bt = BankTransaction(company_id=company_id, account_id=account_id, txn_date=txn_date or date.today(),
-                         value_date=value_date or txn_date or date.today(), direction=direction, amount=amount,
+    bt = BankTransaction(company_id=company_id, account_id=account_id, txn_date=txn_date or hoy_de_negocio(),
+                         value_date=value_date or txn_date or hoy_de_negocio(), direction=direction, amount=amount,
                          currency=currency, reference=reference, source=source, payment_id=payment_id,
                          commission=commission, rate_snapshot=_rate_snapshot(db, company_id, currency),
                          status="PENDING", created_by=actor)
@@ -654,7 +655,7 @@ def create_transfer(db: Session, *, company_id: str, amount: Decimal, currency: 
         raise KontrolError(code="INVALID_AMOUNT", message="El monto debe ser positivo", status_code=422)
     t = TreasuryTransfer(company_id=company_id, from_cashbox_id=from_cashbox_id, from_account_id=from_account_id,
                          to_cashbox_id=to_cashbox_id, to_account_id=to_account_id, amount=amount,
-                         currency=currency, value_date=value_date or date.today(), reference=reference,
+                         currency=currency, value_date=value_date or hoy_de_negocio(), reference=reference,
                          status="PENDING", created_by=actor)
     db.add(t)
     db.flush()
@@ -825,7 +826,7 @@ def transition_reconciliation(db: Session, *, reconciliation_id: str, target: st
     rec.updated_at = datetime.now(UTC)
     if target == "APPROVED":
         rec.approved_by = actor
-        rec.approved_at = date.today()
+        rec.approved_at = hoy_de_negocio()
     db.flush()
     _audit(db, action="RECONCILIATION_TRANSITIONED", entity_type="Reconciliation", entity_id=str(rec.id),
            company_id=rec.company_id, actor=actor, after={"target": rec.status})
@@ -872,7 +873,7 @@ def create_fiscal_rule(db: Session, *, company_id: str, rule_code: str, name: st
 
 
 def _active_rule(db: Session, company_id: str, rule_type: str, on_date: date) -> FiscalRule | None:
-    today = on_date or date.today()
+    today = on_date or hoy_de_negocio()
     return db.execute(select(FiscalRule).where(
         FiscalRule.company_id == company_id, FiscalRule.rule_type == rule_type, FiscalRule.status == "ACTIVE",
         (FiscalRule.effective_from.is_(None)) | (FiscalRule.effective_from <= today),
@@ -886,7 +887,7 @@ def evaluate_igft(db: Session, *, company_id: str, event_type: str, source_docum
     company_id = _company(company_id, obj="evento IGTF")
     if amount <= 0:
         raise KontrolError(code="INVALID_AMOUNT", message="El monto debe ser positivo", status_code=422)
-    rule = _active_rule(db, company_id, "IGTF", on_date or date.today())
+    rule = _active_rule(db, company_id, "IGTF", on_date or hoy_de_negocio())
     if rule is None:
         raise NotFoundError(code="NO_IGTF_RULE", message="No hay una regla IGTF vigente.")
     import json
@@ -899,7 +900,7 @@ def evaluate_igft(db: Session, *, company_id: str, event_type: str, source_docum
     igft_amount = round(amount * rate * snapshot, 2) if currency not in ("VED", "VES") else round(amount * rate, 2)
     event = IgftEvent(company_id=company_id, event_type=event_type, source_document=source_document, amount=amount,
                       currency=currency, rate_snapshot=snapshot, igft_amount=igft_amount, rule_id=str(rule.id),
-                      evaluated_at=on_date or date.today(), status="EVALUATED")
+                      evaluated_at=on_date or hoy_de_negocio(), status="EVALUATED")
     db.add(event)
     db.flush()
     return event
@@ -952,7 +953,7 @@ def convert_currency(db: Session, *, company_id: str, source_account_id: str,
             code="SAME_CURRENCY_CONVERSION",
             message="Las dos cuentas están en la misma moneda: eso es una transferencia.")
 
-    dia = on_date or date.today()
+    dia = on_date or hoy_de_negocio()
     politica = active_fx_policy(db, company_id, dia)
     if politica is None or not politica.allow_cross_currency:
         raise ConflictError(

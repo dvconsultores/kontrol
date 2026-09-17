@@ -12,9 +12,11 @@ inventario tomaba la cantidad tecleada como si fuera la base.
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import text
+
+from app.shared.clock import hoy_de_negocio
 
 pytest_plugins = ("tests.conftest_multicompany",)
 
@@ -301,7 +303,7 @@ def test_lote_serial_y_vencimiento_se_capturan_al_recibir(mundo):
     prod = _producto(mundo, "ua", mundo.company_a, "P019-LOTE")
     oc = _orden_aprobada(mundo, "ua", mundo.company_a, "LOTE", prod)
     rec = _recepcion(mundo, "ua", mundo.company_a, "LOTE", oc["orden"], mundo.warehouse_a)
-    vence = date.today() + timedelta(days=180)
+    vence = hoy_de_negocio() + timedelta(days=180)
     r = _linea(mundo, "ua", mundo.company_a, rec["id"], oc["linea"], prod, 3,
                lot_number="L-4491", expiry_date=vence.isoformat(), serials=["S-1", "S-2", "S-3"])
     assert r.status_code == 200, r.text

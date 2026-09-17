@@ -7,7 +7,7 @@ crédito, aging y aislamiento multiempresa.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 from conftest import make_engine, seed_org_chain
@@ -22,6 +22,7 @@ from app.modules.organization.models import Warehouse
 from app.modules.purchasing.models import OpenItem, Payment
 from app.modules.sales import service as sales_service
 from app.modules.sales.models import SalesInvoice
+from app.shared.clock import hoy_de_negocio
 from tests.company_seed import EMPRESA_DOS, EMPRESA_UNO
 
 
@@ -255,7 +256,7 @@ class TestCxC:
     def test_aging_receivable(self, db_session) -> None:
         self._emit(db_session, 1000.0)
         item = db_session.query(OpenItem).first()
-        item.due_date = date.today() - timedelta(days=75)
+        item.due_date = hoy_de_negocio() - timedelta(days=75)
         db_session.flush()
         from app.modules.purchasing import service as ap_service
 

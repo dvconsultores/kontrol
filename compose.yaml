@@ -43,6 +43,10 @@ services:
       KONTROL_STORAGE_PATH: "/data/storage"
       KONTROL_BACKUP_PATH: "/data/backups"
       KONTROL_LOG_JSON: "true"
+      # Cinturón de seguridad, no autoridad: el día de negocio lo decide
+      # `app/shared/clock.py`, y el producto es correcto aunque el anfitrión
+      # esté en otra zona (Spec 001 · POLICY-CLOCK-LOCAL).
+      TZ: "${KONTROL_TZ:-America/Caracas}"
     volumes:
       - kontrol-license-state:/data/license-state
       - kontrol-storage:/data/storage

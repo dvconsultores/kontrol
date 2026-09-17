@@ -1,0 +1,12 @@
+POLICY-CLOCK-LOCAL · LICENCIAMIENTO — CORRECCIÓN DE LA AUDITORÍA PREVIA
+
+La auditoría afirmó que las fronteras del contrato se evaluaban en UTC y por
+tanto cuatro horas antes. Comprobado contra el motor real, NO era cierto:
+
+  read_only_start = 2027-05-01T00:00:00-04:00   (el contrato emite el desfase)
+  30 abr 23:59 Caracas (1 may 03:59 UTC) -> CRITICAL_RENEWAL_NOTICE
+   1 may 00:00 Caracas (1 may 04:00 UTC) -> READ_ONLY
+   1 may 00:00 UTC (30 abr 20:00 Caracas) -> CRITICAL_RENEWAL_NOTICE
+
+Licenciamiento ya era correcto. Este delta no lo modifica: añade la prueba
+test_las_fronteras_de_licencia_son_las_de_caracas para que nadie lo rompa.

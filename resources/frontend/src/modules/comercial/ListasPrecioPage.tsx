@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
+import { hoyDeNegocio } from "@/lib/fecha-de-negocio";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -90,7 +91,7 @@ export function ListasPrecioPage(): React.JSX.Element {
 
   const crearVersion = useMutation({
     mutationFn: (listaId: string) =>
-      comercial.crearVersion(listaId, { valid_from: new Date().toISOString().slice(0, 10) }),
+      comercial.crearVersion(listaId, { valid_from: hoyDeNegocio() }),
     onSuccess: () => {
       notify({ type: "success", title: "Versión creada", description: "Nace como borrador." });
       invalidar();

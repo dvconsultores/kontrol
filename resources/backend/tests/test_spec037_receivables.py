@@ -11,7 +11,7 @@ aplicarse al documento de otro dentro de la misma empresa.
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
@@ -23,6 +23,7 @@ from app.modules.purchasing import service as ap
 from app.modules.purchasing.models import Application, OpenItem
 from app.modules.sales import service as sales
 from app.modules.sales.models import SalesCreditNote
+from app.shared.clock import hoy_de_negocio
 
 pytest_plugins = ("tests.conftest_multicompany",)
 
@@ -40,7 +41,7 @@ def _documento(db, company_id, party_id, *, original="100.00", currency="VED"):
     item = OpenItem(company_id=company_id, party_id=party_id,
                     source_document=f"SALES_INVOICE:{uuid4()}", item_type="RECEIVABLE",
                     currency=currency, original=Decimal(original), applied=Decimal("0.00"),
-                    due_date=date.today(), status="OPEN")
+                    due_date=hoy_de_negocio(), status="OPEN")
     db.add(item)
     db.flush()
     return item

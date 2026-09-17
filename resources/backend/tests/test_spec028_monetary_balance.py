@@ -12,13 +12,13 @@ Estas pruebas existen para que no vuelva. Cada una está escrita con cifras que
 
 from __future__ import annotations
 
-from datetime import date
 from decimal import Decimal
 
 import pytest
 
 from app.modules.purchasing import service as ap
 from app.modules.purchasing.models import OpenItem
+from app.shared.clock import hoy_de_negocio
 
 pytest_plugins = ("tests.conftest_multicompany",)
 
@@ -27,7 +27,7 @@ def _documento(db, company_id, party_id, *, original, applied="0.00", tipo="RECE
     item = OpenItem(company_id=company_id, party_id=party_id,
                     source_document=f"TEST:{original}-{applied}", item_type=tipo,
                     currency="VED", original=Decimal(original), applied=Decimal(applied),
-                    due_date=date.today(), status="OPEN")
+                    due_date=hoy_de_negocio(), status="OPEN")
     db.add(item)
     db.flush()
     return item

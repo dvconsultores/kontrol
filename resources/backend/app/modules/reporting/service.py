@@ -14,7 +14,7 @@ from __future__ import annotations
 import csv
 import io
 import json
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy import func, select
@@ -25,6 +25,7 @@ from app.core.errors import KontrolError, NotFoundError
 from app.modules.purchasing import service as ap_service
 from app.modules.reporting.models import ReportExport, ReportJob
 from app.shared import audit as audit_service
+from app.shared.clock import hoy_de_negocio
 
 
 def _company(company_id: str | None, *, obj: str) -> str:
@@ -73,7 +74,7 @@ def dashboard(db: Session, *, company_id: str) -> dict:
     # Vencimientos
     from app.modules.purchasing.models import OpenItem
 
-    today = date.today()
+    today = hoy_de_negocio()
     due_items = db.execute(select(func.count()).select_from(OpenItem).where(
         OpenItem.company_id == company_id, OpenItem.status == "OPEN",
         OpenItem.due_date.isnot(None), OpenItem.due_date < today)).scalar() or 0

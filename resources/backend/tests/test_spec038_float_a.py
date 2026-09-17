@@ -17,7 +17,6 @@ import ast
 import itertools
 import re
 import uuid
-from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
@@ -27,6 +26,7 @@ from sqlalchemy import text
 from app.core.errors import KontrolError
 from app.modules.treasury import service as treasury_service
 from app.modules.treasury.api import BankTransactionCreate, BankTransactionOut, BankTransactionPage, router
+from app.shared.clock import hoy_de_negocio
 
 pytest_plugins = ("tests.conftest_multicompany",)
 
@@ -257,9 +257,9 @@ def test_la_conciliacion_empareja_el_importe_exacto_y_no_el_degradado(mundo):
         # La regla empareja con puntuación ≥ 0,8: importe y fecha valor. Los dos pagos
         # tienen la fecha del movimiento; lo único que los distingue es el importe.
         exacto = Payment(company_id=mundo.company_a, party_id=str(parte.id), direction="IN", currency="VED",
-                         amount=Decimal(EXACTO), applied=Decimal("0"), status="APPROVED", date=date.today())
+                         amount=Decimal(EXACTO), applied=Decimal("0"), status="APPROVED", date=hoy_de_negocio())
         degradado = Payment(company_id=mundo.company_a, party_id=str(parte.id), direction="IN", currency="VED",
-                            amount=Decimal(CORROMPIDO), applied=Decimal("0"), status="APPROVED", date=date.today())
+                            amount=Decimal(CORROMPIDO), applied=Decimal("0"), status="APPROVED", date=hoy_de_negocio())
         db.add_all([exacto, degradado])
         db.commit()
         pago_exacto, pago_degradado = str(exacto.id), str(degradado.id)

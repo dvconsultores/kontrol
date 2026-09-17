@@ -55,7 +55,20 @@ export async function get(request: APIRequestContext, c: Ctx, ruta: string) {
 export const marca = (): string =>
   `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
 
-export const hoy = (): string => new Date().toISOString().slice(0, 10);
+/**
+ * El día de negocio, que es el de Caracas (Spec 001 · POLICY-CLOCK-LOCAL).
+ *
+ * `toISOString()` daba el día en UTC: entre las 20:00 y las 24:00 de Caracas ya
+ * estaba en mañana, y el backend —que resuelve por día de negocio— no encontraba
+ * lo que el propio E2E acababa de sembrar.
+ */
+export const hoy = (): string =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Caracas",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 
 /** Un verificador distinto del preparador: `R-D0-12-5` lo exige por defecto. */
 async function verificador(request: APIRequestContext, c: Ctx, m: string): Promise<Ctx> {

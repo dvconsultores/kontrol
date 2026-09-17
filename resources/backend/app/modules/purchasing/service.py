@@ -13,7 +13,7 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -59,6 +59,7 @@ from app.modules.purchasing.models import (
     Withholding,
 )
 from app.shared import audit as audit_service
+from app.shared.clock import hoy_de_negocio
 
 
 def _dec(value: Any, places: int = 6) -> Decimal:
@@ -1349,7 +1350,7 @@ def post_invoice(db: Session, *, invoice: SupplierInvoice, actor: str | None = N
     open_item = OpenItem(company_id=invoice.company_id, party_id=invoice.supplier_id,
                          source_document=f"INVOICE:{invoice.id}", item_type="PAYABLE", currency=invoice.currency,
                          original=invoice.total, applied=0.0,
-                         due_date=(date.today() + timedelta(days=due_days)) if due_days else None,
+                         due_date=(hoy_de_negocio() + timedelta(days=due_days)) if due_days else None,
                          status="OPEN")
     db.add(open_item)
     db.flush()
@@ -1577,7 +1578,7 @@ def apply_source(db: Session, *, company_id: str, source_type: str, source_id: s
     _reduce_source(db, source_type=source_type, source_id=source_id, amount=amount)
     app = Application(company_id=company_id, source_type=source_type, source_id=source_id,
                       target_open_item_id=target_open_item_id, amount=amount, currency=currency,
-                      rate=rate, date=date.today(), status="APPLIED")
+                      rate=rate, date=hoy_de_negocio(), status="APPLIED")
     db.add(app)
     db.flush()
     _sync_invoice_paid(db, target_open_item_id=str(target.id))
@@ -1640,7 +1641,7 @@ def aging(db: Session, *, company_id: str, party_id: str | None = None, item_typ
     if party_id:
         query = query.where(OpenItem.party_id == party_id)
     items = db.execute(query).scalars().all()
-    today = date.today()
+    today = hoy_de_negocio()
     buckets = {"0-30": Decimal(0), "31-60": Decimal(0), "61-90": Decimal(0), "90+": Decimal(0)}
     total = Decimal(0)
     for item in items:

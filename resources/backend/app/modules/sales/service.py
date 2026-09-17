@@ -56,6 +56,7 @@ from app.modules.sales.models import (
     ShipmentLine,
 )
 from app.shared import audit as audit_service
+from app.shared.clock import hoy_de_negocio
 
 
 def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
@@ -442,7 +443,7 @@ def _vencida(cotizacion: SalesQuote, hoy: date | None = None) -> bool:
     """Nula significa **sin vencimiento**, no «vencida»."""
     if cotizacion.validity_until is None:
         return False
-    return cotizacion.validity_until < (hoy or date.today())
+    return cotizacion.validity_until < (hoy or hoy_de_negocio())
 
 
 def convertir_en_pedido(db: Session, *, company_id: str, quote_id: str,
@@ -2572,7 +2573,7 @@ def _abrir_cuenta_por_cobrar(db: Session, invoice: SalesInvoice) -> OpenItem | N
     item = OpenItem(company_id=invoice.company_id, party_id=invoice.customer_id,
                     source_document=f"SALES_INVOICE:{invoice.id}", item_type="RECEIVABLE",
                     currency=invoice.base_fiscal_currency, original=invoice.total, applied=0.0,
-                    due_date=date.today(), status="OPEN")
+                    due_date=hoy_de_negocio(), status="OPEN")
     db.add(item)
     db.flush()
     return item
@@ -2700,7 +2701,7 @@ def apply_credit_note(db: Session, *, note: SalesCreditNote, target_open_item_id
     db.add(Application(company_id=str(note.company_id), source_type="CREDIT",
                        source_id=str(note.id), target_open_item_id=str(target.id),
                        amount=aplicar, currency=note.currency or "VED",
-                       rate=Decimal(1), date=date.today(), status="APPLIED"))
+                       rate=Decimal(1), date=hoy_de_negocio(), status="APPLIED"))
     db.flush()
     _sync_invoice_status(db, target_open_item_id=str(target.id))
     _audit(db, action="CREDIT_NOTE_APPLIED", entity_type="SalesCreditNote", entity_id=str(note.id),
@@ -2931,7 +2932,7 @@ def reverse_credit_application(db: Session, *, company_id: str, application_id: 
     inverso = Application(company_id=company_id, source_type="CREDIT",
                           source_id=str(nota.id), target_open_item_id=str(target.id),
                           amount=-importe, currency=original.currency,
-                          rate=original.rate, date=date.today(), status="REVERSAL")
+                          rate=original.rate, date=hoy_de_negocio(), status="REVERSAL")
     db.add(inverso)
     db.flush()
     _sync_invoice_status(db, target_open_item_id=str(target.id))
@@ -3961,7 +3962,7 @@ def issue_debit_note(db: Session, *, company_id: str, note_id: str, series_id: s
     db.add(OpenItem(company_id=company_id, party_id=str(nota.customer_id),
                     source_document=f"SALES_DEBIT_NOTE:{nota.id}", item_type="RECEIVABLE",
                     currency=nota.currency, original=nota.amount, applied=0.0,
-                    due_date=date.today(), status="OPEN"))
+                    due_date=hoy_de_negocio(), status="OPEN"))
     db.flush()
     _audit(db, action="SALES_DEBIT_NOTE_ISSUED", entity_type="SalesDebitNote",
            entity_id=str(nota.id), company_id=company_id, actor=actor,

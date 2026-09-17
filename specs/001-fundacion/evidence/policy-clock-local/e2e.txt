@@ -1,0 +1,33 @@
+POLICY-CLOCK-LOCAL · E2E
+Ejecutado con TZ=Europe/Amsterdam, es decir con el anfitrión en otra zona.
+
+== Flujos tocados por el cambio (tesorería y tasas), Chromium
+   29/29 pasadas, 0 fallos.
+   Antes de completar el delta fallaban 3: el E2E sembraba la tasa con el día en UTC
+   y el backend ya resolvía por día de negocio. Se alineó el ayudante compartido
+   e2e/helpers/ventas.ts::hoy(), que es un cliente más y como tal debe enviar el
+   día de negocio.
+
+== Suite E2E completa, Chromium: 163 pasadas / 39 fallos
+   Ninguno tiene que ver con fechas. Clasificados:
+
+   - E2E-HELPER-EMPRESA-AMBIGUO  (deuda registrada, no absorbida)
+     Las suites de almacén, unidades de medida y n6-a11y conservan el ayudante que
+     busca «Activar» por subcadena y pulsa «Desactivar». Error literal:
+         Locator: getByRole('button', { name: 'Desactivar' }).first()
+     Es la misma deuda que el delta E2E-045 registró citando
+     warehouse-a11y.spec.ts:11, warehouse-structure.spec.ts:51,
+     uom-conversion.spec.ts:44 y uom-a11y.spec.ts:28.
+
+   - E2E-046-TIPOS  (deuda registrada)
+     documents.spec.ts:309 espera «Página siguiente», que solo existe con más de
+     diez filas.
+
+   - n6-multicompany
+     Su arranque (qa/n6-multicompany-bootstrap.py) prepara su propia base y no la
+     de este entorno. EXTERNAL_ENVIRONMENT.
+
+== Cobertura declarada sin adornos
+   Las dos pantallas corregidas —maestros de tesorería y listas de precio— NO tienen
+   E2E que las visite. Su corrección queda cubierta por pruebas de frontend sobre el
+   ayudante, no por E2E, y así se dice en vez de fingirlo.

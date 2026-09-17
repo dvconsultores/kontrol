@@ -43,6 +43,7 @@ from app.modules.treasury.models import (
     ExchangeRatePolicy,
     ExchangeRateSource,
 )
+from app.shared.clock import hoy_de_negocio, zona_de_negocio
 
 #: Escala por omisión de la tasa. Es lo que `Numeric(14, 6)` viene aplicando
 #: desde siempre; queda como valor heredado **declarado**, y la política puede
@@ -75,7 +76,10 @@ def _momento(valor: date | datetime | None) -> datetime:
         return datetime.now(UTC)
     if isinstance(valor, datetime):
         return valor if valor.tzinfo else valor.replace(tzinfo=UTC)
-    return datetime(valor.year, valor.month, valor.day, tzinfo=UTC)
+    # El día es el del calendario de negocio, no el de UTC: sus cero horas son las
+    # cero de Caracas (POLICY-CLOCK-LOCAL). Interpretarlo en UTC dejaba la tasa de
+    # hoy fuera del día de hoy durante las cuatro horas de diferencia.
+    return datetime(valor.year, valor.month, valor.day, tzinfo=zona_de_negocio())
 
 
 def _momento_consulta(valor: date | datetime | None) -> datetime:
@@ -93,7 +97,8 @@ def _momento_consulta(valor: date | datetime | None) -> datetime:
         return datetime.now(UTC)
     if isinstance(valor, datetime):
         return valor if valor.tzinfo else valor.replace(tzinfo=UTC)
-    return datetime(valor.year, valor.month, valor.day, 23, 59, 59, 999999, tzinfo=UTC)
+    return datetime(valor.year, valor.month, valor.day, 23, 59, 59, 999999,
+                    tzinfo=zona_de_negocio())
 
 
 # --------------------------------------------------------------------------- #
@@ -339,7 +344,7 @@ def activate_policy(db: Session, *, company_id: str, policy_id: str,
 
 def active_policy(db: Session, company_id: str,
                   on_date: date | None = None) -> ExchangeRatePolicy | None:
-    dia = on_date or date.today()
+    dia = on_date or hoy_de_negocio()
     return db.execute(select(ExchangeRatePolicy).where(
         ExchangeRatePolicy.company_id == company_id,
         ExchangeRatePolicy.status == "ACTIVE",

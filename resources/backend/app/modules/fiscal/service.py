@@ -42,6 +42,7 @@ from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import SupplierInvoice
 from app.modules.purchasing.models import Withholding as ApWithholding
 from app.shared import audit as audit_service
+from app.shared.clock import hoy_de_negocio
 
 
 def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
@@ -130,7 +131,7 @@ def approve_tax_rule(db: Session, *, rule_id: str, approver: str | None = None) 
 
 
 def _active_tax_rule(db: Session, tax_code: str, on_date: date) -> TaxRuleVersion:
-    on = on_date or date.today()
+    on = on_date or hoy_de_negocio()
     rule = db.execute(select(TaxRuleVersion).where(
         TaxRuleVersion.tax_code == tax_code, TaxRuleVersion.status == "ACTIVE",
         (TaxRuleVersion.effective_from.is_(None)) | (TaxRuleVersion.effective_from <= on),
@@ -161,7 +162,7 @@ def calculate_tax(db: Session, *, company_id: str, tax_code: str, base: float,
     company_id = _company(company_id, obj="cálculo fiscal")
     if base < 0:
         raise KontrolError(code="INVALID_BASE", message="La base no puede ser negativa", status_code=422)
-    rule = _active_tax_rule(db, tax_code, on_date or date.today())
+    rule = _active_tax_rule(db, tax_code, on_date or hoy_de_negocio())
     rate = _rule_rate(rule)
     amount = round(base * rate / 100.0, 2) if rate > 1 else round(base * rate, 2)
     calc = TaxCalculation(company_id=company_id, document_ref=document_ref, line_ref=line_ref,

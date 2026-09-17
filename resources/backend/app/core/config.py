@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     lockout_after_failures: int = 5
     lockout_minutes: int = 15
 
+    #: Zona del **calendario de negocio** (Spec 001 · POLICY-CLOCK-LOCAL). Decide qué
+    #: día es «hoy» para vigencias, vencimientos y selección de reglas. No confundir
+    #: con los instantes técnicos, que son UTC por `ADR-D0-001` y no se convierten.
+    business_timezone: str = "America/Caracas"
+
     # Licencia
     license_public_key_kid: str = "kontrol-lic-2026-01"
     license_public_key_pem: str | None = None  # clave pública Ed25519 embebida o inyectada

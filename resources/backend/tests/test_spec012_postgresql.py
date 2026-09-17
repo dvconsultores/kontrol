@@ -13,15 +13,17 @@ from __future__ import annotations
 
 import os
 import uuid
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
+from app.shared.clock import hoy_de_negocio
+
 pytest_plugins = ("tests.conftest_multicompany",)
 
-HOY = date.today()
+HOY = hoy_de_negocio()
 
 
 def _pg(mundo) -> None:
