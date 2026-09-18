@@ -1812,3 +1812,64 @@ Ni SEED-EMPRESA-CODIGO-NO-UNICO, ni MOVTYPE-GLOBAL-SIN-UNICIDAD, ni E2E-046-TIPO
 API-QUERY-SILENCIOSA, ni E2E-SIN-TYPECHECK, ni INBOX-045-AISLAMIENTO, ni ORPHAN-046-SINGLE,
 ni IDEM-046-TRUNC, ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053,
 ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+---
+
+## 2026-09-18 · Tras converger el delta E2E-046-TIPOS (dueña 054)
+
+`E2E-046-TIPOS` queda **CERRADA**, y con ella **la suite E2E global vuelve a 224 · 224 · 0**.
+
+La causa no era del producto. `DataTable` solo pinta el paginador con más de diez
+registros, y eso está escrito tres veces: en el componente, en `Pagination.tsx` y en
+`FR-001-065` de la Spec 001. La prueba de tipos documentales daba por hecho que «Página
+siguiente» siempre está y esperaba por ella con `isEnabled()`, así que cuando la base llegó
+a **exactamente diez** la espera agotó la prueba. No era una aserción que fallara: era una
+espera que no terminaba, y por eso el síntoma era un *timeout* y no un «esperaba X, había Y».
+
+Dato que conviene retener: **ninguna semilla fija esos diez tipos**. Los crean las propias
+suites, así que el número depende de cuántas veces se haya ejecutado el E2E; la prueba
+llevaba una bomba de relojería, no un fallo estable.
+
+El arreglo usa la palanca que el producto ofrece justo cuando hace falta —el selector de
+tamaño de página, que existe exactamente cuando hay más de una página— y el borde se cubre
+donde vive el contrato: `DataTable.test.tsx`, con 10 y con 11. Verificado en los tres
+estados (9, 10 y 11) ejecutando tres veces seguidas.
+
+### Un hallazgo que cambia la cola: la rama no compila
+
+**`BUILD-TSC-TESORERIA`** — `npm run build` encadena `tsc -b && vite build`, y `tsc -b`
+sale con **código 2** por un parámetro sin usar en `importes-float-c.test.tsx`. Entró en
+`e43cf48` (FLOAT-038-C) y no se detectó porque aquellos ciclos ejecutaron
+`tsc --noEmit -p tsconfig.json`: ese `tsconfig.json` es de tipo *solution* —`files: []` más
+`references`— y **sin `-b` no compila nada, así que sale limpio siempre**. La orden correcta
+es la que el propio `package.json` usa en `typecheck` y en `build`.
+
+Es la segunda afirmación vacía sobre `tsc` en esta serie de deltas; la primera fue el
+directorio `e2e/`, ya corregida en su documento. Las dos comparten raíz: comprobar con una
+orden que no comprueba.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **BUILD-TSC-TESORERIA** · la rama no compila | 038 | no |
+| 2 | **SEED-EMPRESA-CODIGO-NO-UNICO** · `companies` sin único sobre `(tenant_id, code)` | por decidir | no |
+| 3 | **MOVTYPE-GLOBAL-SIN-UNICIDAD** · exige decisión de identidad | 023 | no |
+| 4 | **API-QUERY-SILENCIOSA** | 023 | no |
+| 5 | **E2E-SIN-TYPECHECK** | 054 | no |
+| 6 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 7 | SPEC053 · verificar restauración (DT-11) | 053 | no |
+
+**Candidata siguiente: `BUILD-TSC-TESORERIA`.** Pasa por delante de todo lo demás por una
+razón simple: una rama que no compila es peor que cualquier deuda de identidad o de QA, y
+su corrección es pequeña y acotada. Conviene que ese ciclo arregle también el hábito —usar
+`tsc -b`— y no solo el símbolo sin usar.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni BUILD-TSC-TESORERIA, ni SEED-EMPRESA-CODIGO-NO-UNICO, ni MOVTYPE-GLOBAL-SIN-UNICIDAD, ni
+API-QUERY-SILENCIOSA, ni E2E-SIN-TYPECHECK, ni INBOX-045-AISLAMIENTO, ni ORPHAN-046-SINGLE,
+ni IDEM-046-TRUNC, ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053,
+ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

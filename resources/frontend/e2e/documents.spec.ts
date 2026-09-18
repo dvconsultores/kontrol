@@ -319,13 +319,20 @@ test("los tipos documentales declaran la política sin código", async ({ page }
   await expect(page.getByText("Tipo documental creado")).toBeVisible({ timeout: 15000 });
   await closeNotifications(page);
 
-  // La tabla pagina: el tipo recién creado ordena al final, así que se avanza
-  // hasta encontrarlo. Es lo que haría quien lo acaba de crear.
-  const next = page.getByRole("button", { name: "Página siguiente" });
-  for (let i = 0; i < 20 && await next.isEnabled(); i += 1) {
-    if (await page.getByRole("cell", { name: code }).count()) break;
-    await next.click();
-    await page.waitForTimeout(150);
+  // El tipo recién creado ordena al final, así que puede quedar fuera de la
+  // primera página. Antes se avanzaba con «Página siguiente» dando por hecho que
+  // ese control existe, y no existe siempre: el producto solo pinta el paginador
+  // con más de diez registros (`FR-001-065`, `DataTable.tsx:112`). La base del
+  // E2E tenía exactamente diez —los crean las propias suites, ninguna semilla los
+  // fija— y `isEnabled()` sobre un botón que no está espera hasta agotar la
+  // prueba: el fallo no era una aserción, era una espera que no terminaba.
+  //
+  // Se usa la palanca que el producto ofrece justo cuando hace falta. Si hay
+  // paginador se piden cien por página y todo cabe; si no lo hay es que todo
+  // cabía ya. Lo que se comprueba no cambia.
+  const porPagina = page.getByLabel("Registros por página");
+  if (await porPagina.count()) {
+    await porPagina.selectOption("100");
   }
   await expect(page.getByRole("cell", { name: code })).toBeVisible();
 });

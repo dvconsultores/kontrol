@@ -1,0 +1,23 @@
+# E2E-046-TIPOS · datos y contrato, medidos
+
+## Los datos
+  tipos documentales en la base del E2E: 10 · todos de D1 · todos ACTIVE
+  origen: NINGUNA semilla ni migración los crea; los crean las propias suites
+          (dos con prefijo UI… son de esta misma prueba en ejecuciones anteriores)
+
+## El contrato
+  DataTable.tsx:112   {total > 10 ? <Pagination …/> : null}
+  Pagination.tsx:1    «Pagination — solo si total > 10 (FR-019)»
+  specs/001-fundacion/spec.md:167  FR-001-065: «… paginación >10 …»
+  tamaño de página: 10 (selector: 10/25/50/100)
+  con total = 10: no se pinta ningún control de paginación
+
+## El síntoma
+  Test timeout of 30000ms exceeded.
+  locator.isEnabled: waiting for getByRole('button', { name: 'Página siguiente' })
+  => no era una aserción que fallara, era una espera que no terminaba
+
+## Verificación en los tres estados del borde
+  vuelta 1: tipos  8 ->  9  · 1 passed
+  vuelta 2: tipos  9 -> 10  · 1 passed   <- el borde exacto que fallaba
+  vuelta 3: tipos 10 -> 11  · 1 passed

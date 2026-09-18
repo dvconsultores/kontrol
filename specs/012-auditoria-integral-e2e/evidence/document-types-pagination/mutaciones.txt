@@ -1,0 +1,23 @@
+# Mutaciones · E2E-046-TIPOS
+
+## TIPOS-01 · el paginador aparece con exactamente diez (total >= 10)
+     × DataTable > no muestra paginación con exactamente 10 registros (FR-019) 18ms
+  nota: la prueba preexistente de «<= 10» (5 filas) SOBREVIVE -> el borde estaba sin cubrir
+
+## TIPOS-02 · «Página siguiente» sigue habilitada en la última página
+     × DataTable > con 11 registros la segunda página trae el que sobra (FR-019) 47ms
+
+## TIPOS-03 · vuelve la suposición original, con la base en el borde
+    1 failed
+      Test timeout of 30000ms exceeded.
+      Error: locator.isEnabled: Test timeout of 30000ms exceeded.
+  => muere con el síntoma exacto de la deuda
+
+## TIPOS-04 · se piden diez por página en vez de cien
+    1 failed
+
+## TIPOS-05 · el control de tamaño se elige por posición  — DESCARTADA
+    1 passed (5.7s)
+  no muere: esa pantalla tiene un solo <select>, así que posición y nombre coinciden
+
+4/4 significativas. Restauración verificada con cmp en las cuatro.

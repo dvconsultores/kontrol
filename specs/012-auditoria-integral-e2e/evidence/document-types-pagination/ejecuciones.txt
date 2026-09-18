@@ -1,0 +1,21 @@
+# Ejecuciones
+
+documents + documents-a11y · chromium    12 passed (22.3s)
+documents + documents-a11y · webkit      12 passed (36.2s)
+documents + documents-a11y · firefox   1ª vuelta: 1 fallo intermitente en :159 (createDocument)
+                                       2ª y 3ª:    12 passed (32.8s) /   12 passed (32.7s)
+                                       aislada en firefox: 1 passed
+
+vitest completo: 20 ficheros · 379 pruebas (376 + 3 nuevas) · 0 fallos
+eslint: sin hallazgos · typecheck explícito de e2e/: sin hallazgos
+
+# Suite global
+Running 224 tests using 2 workers
+  224 passed (4.8m)
+PLAYWRIGHT_EXIT=0
+  30 ficheros · 0 fallos · UNKNOWN = 0
+
+# Hallazgo ajeno, registrado y no absorbido
+  tsc -b --noEmit -> exit 2
+  src/modules/tesoreria/importes-float-c.test.tsx(108,34): TS6133 'ruta' sin usar
+  idéntico antes y después de esta delta · introducido en e43cf48 -> BUILD-TSC-TESORERIA
