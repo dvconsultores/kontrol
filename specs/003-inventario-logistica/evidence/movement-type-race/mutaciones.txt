@@ -1,0 +1,33 @@
+# Mutaciones · INV-MOVTYPE-CARRERA
+
+Cada una: código bueno -> 10/10 pasan · mutado -> falla · restaurado (cmp) -> 10/10.
+
+## MOVTYPE-01
+  muere: test_dos_altas_simultaneas_del_mismo_codigo_dan_un_conflicto_y_no_un_500
+  muere: test_la_carrera_se_resuelve_igual_cada_vez
+  muere: test_tras_la_colision_real_la_sesion_sigue_sirviendo
+
+## MOVTYPE-02
+  muere: test_otro_error_de_integridad_no_se_disfraza_de_duplicado
+
+## MOVTYPE-03
+  muere: test_tras_la_colision_real_la_sesion_sigue_sirviendo
+
+## MOVTYPE-04
+  muere: test_el_alta_repetida_responde_conflicto_y_deja_una_sola_fila
+  muere: test_tras_el_conflicto_la_sesion_sigue_sirviendo
+
+## MOVTYPE-05
+  muere: test_dos_altas_simultaneas_del_mismo_codigo_dan_un_conflicto_y_no_un_500
+  muere: test_la_carrera_se_resuelve_igual_cada_vez
+  muere: test_tras_la_colision_real_la_sesion_sigue_sirviendo
+
+## MOVTYPE-06
+  muere: test_el_mismo_codigo_en_otra_empresa_es_otro_tipo
+
+6/6 significativas, cada una en un camino distinto de la corrección.
+
+Nota honesta: MOVTYPE-03 (quitar el savepoint) NO moría con la primera versión de
+la prueba de recuperación, porque aquella resolvía el conflicto con la consulta
+previa y nunca llegaba a la violación. Se añadió una prueba en la que la sesión
+perdedora, tras recibir el conflicto de una colisión real, sigue trabajando.

@@ -1,0 +1,27 @@
+# INV-MOVTYPE-CARRERA · reproducción previa, sobre PostgreSQL real
+
+## Duplicado secuencial (HTTP)
+  alta 1 -> 200
+  alta 2 -> 409 MOVEMENT_TYPE_DUPLICATE
+  filas  -> 1
+
+## Mismo código en otra empresa
+  empresa A -> 200 · empresa B -> 200   => la identidad incluye la empresa
+
+## Carrera forzada con la lógica de la ruta (tests/concurrency.py::carrera)
+  primero = 'CREADO'
+  segundo = IntegrityError
+  pgcode  = 23505
+  restricción = uq_movement_types_company_code
+  filas en la base = 1
+  => la base protege; lo que falta es traducir. Sin captura, FastAPI responde 500.
+
+## Carrera con alcance global (company_id NULL)
+  el arnés informa: «la segunda transacción nunca chocó»
+  filas globales con ese código = 2
+  => sin garantía; identidad no declarada por la Spec -> MOVTYPE-GLOBAL-SIN-UNICIDAD
+
+## Garantía de la base, leída
+  uq_movement_types_company_code UNIQUE btree (company_id, code)
+  contrato de duplicado: ConflictError -> HTTP 409 (app/core/errors.py:68)
+  discriminación: app/core/integrity.py::es_violacion_unica (23505 + nombre)

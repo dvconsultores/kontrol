@@ -1,0 +1,18 @@
+# Regresión y suite global
+
+## Backend completo
+  1672 recolectadas · 1648 pasan · 0 fallan · 0 errores · 24 omitidas · salida 0
+  16 de las omitidas eran por no haber base legacy: sembrada y ejecutadas aparte,
+  tests/test_mc_preflight.py -> 32/32
+  las 8 restantes, por KONTROL_S3_ENDPOINT sin configurar (igual que la línea base)
+
+## Esquema
+  migraciones 57 · cabeza 0057_spec047_notifications · deriva 21 -> 21 · nueva 0
+
+## E2E global (Chromium)
+Running 224 tests using 2 workers
+  1 failed
+  223 passed (4.9m)
+  único fallo: documents.spec.ts:309 = E2E-046-TIPOS
+  medido: document_types = 10 filas y la tabla pagina de 10 en 10 -> no hay «Página siguiente»
+  aislada falla igual · no toca ningún fichero de esta delta · NO se cierra aquí

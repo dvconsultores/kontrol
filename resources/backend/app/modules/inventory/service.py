@@ -1631,6 +1631,65 @@ def apply_adjustment(db: Session, *, adjustment: InventoryAdjustment, actor: str
 # --------------------------------------------------------------------------- #
 # Utilidades
 # --------------------------------------------------------------------------- #
+def crear_tipo_de_movimiento(db: Session, *, company_id: str | None, code: str, name: str,
+                             direction: str, actor: str | None) -> MovementType:
+    """Crea un tipo de movimiento, o responde que ya existe. **No confirma.**
+
+    Quien alta explícitamente un tipo no está pidiendo idempotencia: si el
+    código ya está, lo que corresponde es decirlo, no devolverle la fila de otro.
+    Eso distingue este camino del de `_get_movement_type_by_code`, que sí es
+    auto-configuración y por eso relee.
+
+    El mecanismo, en cambio, es el mismo que allí y que en el resto del
+    repositorio: la consulta previa no basta —dos altas simultáneas la pasan las
+    dos— así que la inserción va en un savepoint y la colisión se traduce. Sin el
+    savepoint, la violación dejaría la transacción abortada y el conflicto se
+    llevaría por delante el resto de la unidad de trabajo.
+
+    La captura es **de esa restricción**: cualquier otro error de integridad
+    —una clave foránea rota, un `CHECK`— se propaga tal cual, porque
+    contestar «ya existe» a un error distinto esconde el error real.
+
+    Ojo con el alcance global (`company_id` nulo): en PostgreSQL los nulos no
+    colisionan entre sí, así que ahí la consulta previa sigue siendo la única
+    defensa y no la respalda ningún índice. Está medido y registrado como deuda
+    aparte —`MOVTYPE-GLOBAL-SIN-UNICIDAD`—; decidir si dos tipos globales pueden
+    compartir código es una decisión de identidad que la Spec no toma.
+    """
+    from app.core.errors import ConflictError
+
+    duplicado = ConflictError(code="MOVEMENT_TYPE_DUPLICATE",
+                              message="Ya existe un tipo de movimiento con ese código.")
+    if _tipo_por_codigo(db, company_id, code) is not None:
+        raise duplicado
+
+    tipo = MovementType(company_id=company_id, code=code, name=name, direction=direction,
+                        affects_balance=True, status="ACTIVE", created_by=actor)
+    try:
+        with db.begin_nested():
+            db.add(tipo)
+            db.flush()
+    except IntegrityError as e:
+        if not es_violacion_unica(e, "uq_movement_types_company_code"):
+            raise
+        raise duplicado from e
+    return tipo
+
+
+def _tipo_por_codigo(db: Session, company_id: str | None, code: str) -> MovementType | None:
+    """El tipo de ese código en ese alcance, cualquiera que sea su estado.
+
+    No se filtra por estado a propósito: un tipo inactivo con el mismo código
+    ocupa el código igualmente —lo dice el índice único, que tampoco mira el
+    estado—, y dejar crear otro encima produciría dos filas imposibles de
+    distinguir.
+    """
+    consulta = select(MovementType).where(MovementType.code == code)
+    consulta = consulta.where(MovementType.company_id.is_(None) if company_id is None
+                              else MovementType.company_id == company_id)
+    return db.execute(consulta).scalars().first()
+
+
 def _get_movement_type_by_code(db: Session, company_id: str, code: str) -> MovementType:
     mtype = _get_movement_type_by_code_optional(db, company_id, code)
     if not mtype and code in BASE_MOVEMENT_TYPES:

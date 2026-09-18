@@ -188,15 +188,13 @@ def list_movement_types(db: Session = Depends(get_db), user: User = Depends(get_
 @router.post("/movement-types", dependencies=[Depends(require_write_allowed)])
 def create_movement_type(body: MovementTypeCreate, db: Session = Depends(get_db),
                          actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
-    company_id = None if body.global_scope else ctx.company_id
-    dup = db.execute(select(MovementType).where(MovementType.company_id == company_id, MovementType.code == body.code)).scalars().first()
-    if dup:
-        from app.core.errors import ConflictError
-
-        raise ConflictError(code="MOVEMENT_TYPE_DUPLICATE", message="Ya existe un tipo de movimiento con ese código.")
-    mtype = MovementType(company_id=company_id, code=body.code, name=body.name, direction=body.direction,
-                         affects_balance=True, status="ACTIVE", created_by=str(actor.id))
-    db.add(mtype)
+    # La creación vive en el servicio porque ahí puede protegerse: consultar y
+    # luego insertar no es atómico, y dos altas simultáneas del mismo código
+    # pasaban ambas la consulta y la segunda subía como 500. La ruta se queda
+    # con lo suyo, que es confirmar.
+    mtype = inv_service.crear_tipo_de_movimiento(
+        db, company_id=None if body.global_scope else ctx.company_id,
+        code=body.code, name=body.name, direction=body.direction, actor=str(actor.id))
     db.commit()
     db.refresh(mtype)
     return _mtype_dict(mtype)

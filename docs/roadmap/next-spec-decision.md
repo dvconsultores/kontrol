@@ -1748,3 +1748,67 @@ Ni INV-MOVTYPE-CARRERA, ni SEED-EMPRESA-CODIGO-NO-UNICO, ni API-QUERY-SILENCIOSA
 E2E-SIN-TYPECHECK, ni E2E-046-TIPOS —que **sigue OPEN** aunque no se haya reproducido—, ni
 INBOX-045-AISLAMIENTO, ni la certificación de compras, ni la Spec 053, ni ninguna decisión
 abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+---
+
+## 2026-09-18 · Tras converger el delta INV-MOVTYPE-CARRERA (dueña 023)
+
+`INV-MOVTYPE-CARRERA` queda **CERRADA**. Era un defecto de producto real: el alta explícita
+de un tipo de movimiento consultaba y luego insertaba sin nada entre medias, así que dos
+altas simultáneas del mismo código pasaban ambas la consulta y la segunda subía como **500**
+—`IntegrityError` crudo, `pgcode=23505`, restricción `uq_movement_types_company_code`— en
+vez del `409 MOVEMENT_TYPE_DUPLICATE` que el camino secuencial ya contestaba.
+
+Lo llamativo es que el mismo módulo ya sabía hacerlo: `_get_movement_type_by_code` resolvía
+la misma carrera para la auto-configuración, con savepoint y captura precisa, y su comentario
+describía el caso. Faltaba en el otro camino. La creación baja al servicio —la ruta confirma
+la transacción y una carrera forzada exige que quien inserta no confirme— y se queda con el
+patrón del repositorio.
+
+**No hubo migración**: la restricción existe y protege la identidad por empresa. La base
+nunca creó dos filas; lo único que faltaba era traducir la colisión.
+
+8 pruebas nuevas, todas sobre PostgreSQL real y con la carrera **forzada** por
+`tests/concurrency.py::carrera`, que falla si la carrera no llega a ocurrir. 6 mutaciones,
+6 muertas. Regresión completa de backend **1672 · 0 fallos**; deriva 21 → 21.
+
+### Deuda nueva escalada, no resuelta
+
+**`MOVTYPE-GLOBAL-SIN-UNICIDAD`** — un tipo «de toda la instalación» lleva `company_id`
+nulo, y en PostgreSQL los nulos no colisionan entre sí: medido, dos altas concurrentes
+dejan **dos filas**. Protegerlo exige un índice único parcial, es decir una migración; pero
+la Spec no declara unicidad del código —solo dice «company_id/global»—, y decidir si dos
+tipos globales pueden compartir código es una decisión de identidad de negocio, no una
+inferencia. `MATERIAL_DECISION_REQUIRED`, dueña 023.
+
+### E2E
+
+224 · 223 · 1. El fallo es `documents:309` = **E2E-046-TIPOS**, reproducida: la base tiene
+exactamente 10 tipos documentales y la tabla pagina de diez en diez, así que no hay «Página
+siguiente» y la espera agota la prueba. No es regresión de esta delta y **no se cierra
+aquí**.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **SEED-EMPRESA-CODIGO-NO-UNICO** · `companies` sin único sobre `(tenant_id, code)` | por decidir | no |
+| 2 | **MOVTYPE-GLOBAL-SIN-UNICIDAD** · exige decisión de identidad antes que código | 023 | no |
+| 3 | **E2E-046-TIPOS** · reproducida hoy | 046 | no |
+| 4 | **API-QUERY-SILENCIOSA** | 023 | no |
+| 5 | **E2E-SIN-TYPECHECK** | 054 | no |
+| 6 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 7 | SPEC053 · verificar restauración (DT-11) | 053 | no |
+
+**Candidata siguiente: `SEED-EMPRESA-CODIGO-NO-UNICO`**, como estaba previsto. Conviene
+notar que se parece a la que se acaba de cerrar —una identidad sin garantía en la base— y
+que, a diferencia de ella, sí exigirá migración y auditoría de duplicados.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni SEED-EMPRESA-CODIGO-NO-UNICO, ni MOVTYPE-GLOBAL-SIN-UNICIDAD, ni E2E-046-TIPOS, ni
+API-QUERY-SILENCIOSA, ni E2E-SIN-TYPECHECK, ni INBOX-045-AISLAMIENTO, ni ORPHAN-046-SINGLE,
+ni IDEM-046-TRUNC, ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053,
+ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
