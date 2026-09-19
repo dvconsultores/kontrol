@@ -1873,3 +1873,61 @@ Ni BUILD-TSC-TESORERIA, ni SEED-EMPRESA-CODIGO-NO-UNICO, ni MOVTYPE-GLOBAL-SIN-U
 API-QUERY-SILENCIOSA, ni E2E-SIN-TYPECHECK, ni INBOX-045-AISLAMIENTO, ni ORPHAN-046-SINGLE,
 ni IDEM-046-TRUNC, ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053,
 ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+---
+
+## 2026-09-19 · Tras converger el delta BUILD-TSC-TESORERIA (dueña 054, apoyo 038)
+
+`BUILD-TSC-TESORERIA` queda **CERRADA**. `npm run build` vuelve a salir en 0 y el
+empaquetado se ejecuta.
+
+El defecto de compilación era un parámetro sin usar; se corrige con un carácter, según la
+convención del propio repositorio (`_ruta`). Lo que importa de este ciclo es lo otro.
+
+**La orden que se venía usando como evidencia de typecheck no comprobaba nada.**
+`tsc --noEmit -p tsconfig.json` sobre una raíz que es un *solution config* —`files: []` más
+`references`— recorre **cero ficheros** y termina en 0. Medido: cero frente a los 997 que
+recorre el proyecto real. Y demostrado con un control negativo que no deja lugar a dudas:
+con `const x: number = "no soy un número"` metido en `src/lib/format.ts`, esa orden sigue
+diciendo **exit 0 y cero líneas**, mientras `npm run typecheck` y `npm run build` dicen
+**exit 2** y nombran el error.
+
+Conviene decir dónde estaba el fallo y dónde no. **Los gates del repositorio eran
+correctos**: `build = tsc -b && vite build` y `typecheck = tsc -b --noEmit` existían desde
+antes, y la guía viva ya mandaba `npx tsc -b`. Lo que falló fue no ejecutarlos y sustituirlos
+por una orden inventada. Por eso este ciclo **no cambia ninguna configuración**: añade una
+guarda —`src/tests/typecheck-gate.test.ts`, seis invariantes— que se rompe si el gate deja
+de recorrer las referencias, si se apaga la severidad que detectó el defecto, si las
+pruebas salen del grafo o si se pierde una referencia.
+
+Se corrigen además dos afirmaciones escritas en deltas anteriores de esta serie: una daba
+el `tsc` por limpio cuando la rama ya no compilaba, y otra describía mal el alcance de la
+orden. La evidencia falsa no se corrige sola.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **SEED-EMPRESA-CODIGO-NO-UNICO** · `companies` sin único sobre `(tenant_id, code)` | por decidir | no |
+| 2 | **API-QUERY-SILENCIOSA** · el servidor acepta parámetros que no declara | 023 | no |
+| 3 | **E2E-SIN-TYPECHECK** · `e2e/` fuera del grafo TypeScript | 054 | no |
+| 4 | **MOVTYPE-GLOBAL-SIN-UNICIDAD** · exige decisión de identidad | 023 | no |
+| 5 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 6 | SPEC053 · verificar restauración (DT-11) | 053 | no |
+
+**Candidata siguiente: `SEED-EMPRESA-CODIGO-NO-UNICO`**, como estaba previsto antes de que
+el build roto se colara por delante.
+
+Vale la pena notar el parecido entre las tres primeras: las tres son **una comprobación que
+no comprueba**. Un índice único que no cubre el caso, un parámetro que el servidor ignora en
+silencio, y un directorio que ningún typecheck mira. La deuda que se acaba de cerrar era la
+cuarta de esa familia.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni SEED-EMPRESA-CODIGO-NO-UNICO, ni API-QUERY-SILENCIOSA, ni E2E-SIN-TYPECHECK, ni
+MOVTYPE-GLOBAL-SIN-UNICIDAD, ni INBOX-045-AISLAMIENTO, ni ORPHAN-046-SINGLE, ni
+IDEM-046-TRUNC, ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053, ni
+ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

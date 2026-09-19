@@ -1,0 +1,28 @@
+# Mutaciones · BUILD-TSC-TESORERIA
+
+## BUILD-01 · vuelve el parámetro sin usar
+  npm run typecheck exit = 2 · npm run build exit = 2
+  TS6133 'ruta' is declared but its value is never read
+
+## BUILD-02
+     × el gate de tipos > las órdenes del repositorio recorren las referencias 4ms
+  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+        Tests  1 failed | 5 passed (6)
+
+## BUILD-03
+     × el gate de tipos > sigue encendida la severidad que detectó el defecto 5ms
+  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+        Tests  1 failed | 5 passed (6)
+
+## BUILD-04
+     × el gate de tipos > las pruebas del proyecto entran en el grafo 4ms
+  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+        Tests  1 failed | 5 passed (6)
+
+## BUILD-05
+     × el gate de tipos > las referencias cubren el grafo principal 5ms
+  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+        Tests  1 failed | 5 passed (6)
+
+5/5 significativas, cada una en una aserción distinta de la guarda.
+Restauración verificada con cmp en las cinco; árbol sin residuos.

@@ -1,0 +1,29 @@
+# BUILD-TSC-TESORERIA · el grafo y las órdenes, medidos
+
+## Antes de tocar nada
+  npm run build -> exit 2
+  src/modules/tesoreria/importes-float-c.test.tsx(108,34): TS6133 'ruta' sin usar
+  un solo error (confirmado con tsc -b --force); el bundler ni se ejecuta
+
+## El grafo
+  tsconfig.json       solution: files: [] + references      -> recorre 0 ficheros
+  tsconfig.app.json   include: [src]                        -> 997 ficheros (193 del repo)
+  tsconfig.node.json  include: [vite.config.ts]             -> 1 fichero del repo
+  e2e/                en NINGUNO -> E2E-SIN-TYPECHECK, sigue abierta
+
+## Qué valida cada orden
+  tsc --noEmit -p tsconfig.json --listFiles   exit 0 · 0 ficheros
+  tsc --noEmit -p tsconfig.app.json           exit 2 · 997 ficheros
+  npm run typecheck (tsc -b --noEmit)         exit 2
+  npm run build     (tsc -b && vite build)    exit 2
+
+## Control negativo: const kontrolControlNegativo: number = "no soy un número"
+  (en src/lib/format.ts, dentro del grafo principal)
+  tsc --noEmit -p tsconfig.json  ->  exit 0 · CERO líneas de salida
+  npm run typecheck              ->  exit 2 · TS2322 Type 'string' is not assignable to type 'number'
+  npm run build                  ->  exit 2 · el mismo error
+  restaurado con cmp · git diff de src/lib/ vacío
+
+## Después
+  npm run typecheck -> exit 0
+  npm run build     -> exit 0 · ✓ built in 3.20s

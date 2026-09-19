@@ -105,7 +105,7 @@ describe("FLOAT-038-C · el importe sale como texto exacto", () => {
   });
 
   it("el IGTF envía la base como texto y muestra el impuesto que el servidor calculó", async () => {
-    apiFetch.mockImplementation((ruta: string, opciones?: { method?: string }) => {
+    apiFetch.mockImplementation((_ruta: string, opciones?: { method?: string }) => {
       if (opciones?.method === "POST") return Promise.resolve({ igft_amount: "37037.04" });
       return Promise.resolve({ items: [] });
     });

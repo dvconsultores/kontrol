@@ -361,7 +361,8 @@ restituye un fichero sin seguimiento. Corregido a mano y comprobado.
 | Suite | Resultado |
 |---|---|
 | Backend completo, `TZ=Europe/Amsterdam` | **1.656 pasadas · 0 fallos · 8 saltadas (S3)** de 1.664 |
-| Frontend | vitest **376/376** · `tsc` limpio · ESLint limpio · `vite build` correcto |
+| Frontend | vitest **376/376** · ESLint limpio · `vite build` correcto · ~~`tsc` limpio~~ |
+| ↳ **Corrección (2026-09-19)** | El `tsc` de aquella ejecución fue `tsc --noEmit -p tsconfig.json`, y ese `tsconfig.json` es un *solution config* (`files: []`): recorre **cero ficheros** y termina en 0 siempre. Medido en el ciclo `BUILD-TSC-TESORERIA`. En ese momento la rama **ya no compilaba** —`e43cf48` había introducido un error de tipos—, así que aquella línea daba por limpio un gate que no miró nada. La orden válida es `npm run typecheck` (`tsc -b`). Ninguna conclusión de esta delta cambia: el defecto estaba en tesorería, no aquí |
 | E2E de los flujos tocados (tesorería y tasas) | **29/29** |
 | E2E completa | 163 pasadas / 39 fallos, **ninguno de fechas** (§17) |
 | CLOCK-013 | **verde** bajo las cuatro zonas |

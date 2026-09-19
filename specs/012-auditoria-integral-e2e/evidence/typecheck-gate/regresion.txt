@@ -1,0 +1,19 @@
+# Regresión
+
+vitest completo                    385 passed (379 + 6 de la guarda)
+dirigida de tesorería (FLOAT-038-C)  17 passed
+eslint                             exit 0
+typecheck explícito de e2e/        sin hallazgos (regresión; la deuda sigue OPEN)
+npm run typecheck                  exit 0
+npm run build                      exit 0 · bundler ejecutado
+deriva de esquema                  21 -> 21 · cabeza 0057_spec047_notifications
+
+# Suite E2E global
+Running 224 tests using 2 workers
+  224 passed (4.6m)
+PLAYWRIGHT_EXIT=0
+
+# El cambio funcional, íntegro
+  -    apiFetch.mockImplementation((ruta: string, opciones?: { method?: string }) => {
+  +    apiFetch.mockImplementation((_ruta: string, opciones?: { method?: string }) => {
+  un carácter · ninguna conducta cambia · FLOAT-038-C intacta

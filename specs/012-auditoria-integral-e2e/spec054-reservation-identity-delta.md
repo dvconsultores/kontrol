@@ -348,10 +348,13 @@ Cobertura **100 %**, huérfanos **0**.
   parámetro de consulta que no declara —medido: `?source_order_id=<inexistente>` devuelve
   las 330 reservas—, de modo que un cliente puede creer que filtró cuando no filtró nada.
   Es lo que le pasaba a `picking`. Cambiar eso es semántica pública: fuera de alcance.
-- **`E2E-SIN-TYPECHECK`** (nueva): `tsc -p tsconfig.json` solo cubre `src`
-  (`tsconfig.app.json` declara `include: ["src"]`), así que **`e2e/` no se comprueba de
-  tipos** en el flujo del proyecto y un error de tipos solo aparece como fallo en
-  ejecución. Se verificó a mano con un typecheck explícito sobre `e2e/`: sin hallazgos.
+- **`E2E-SIN-TYPECHECK`** (nueva): el grafo TypeScript del proyecto cubre `src` y
+  `vite.config.ts` —`tsconfig.app.json` y `tsconfig.node.json`—, así que **`e2e/` no se
+  comprueba de tipos** en el flujo del proyecto y un error de tipos solo aparece como fallo
+  en ejecución. *(Precisión añadida el 2026-09-19: aquí se escribió que «`tsc -p
+  tsconfig.json` solo cubre `src`», y es más grave que eso: esa orden no cubre **nada**,
+  porque la raíz es un* solution config *con `files: []`. Quien cubre `src` es
+  `tsconfig.app.json`. Medido en `BUILD-TSC-TESORERIA`.)* Se verificó a mano con un typecheck explícito sobre `e2e/`: sin hallazgos.
   Corregida además la afirmación equivocada que quedó escrita en la delta anterior.
 
 ## 20. Convergencia
