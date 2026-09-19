@@ -1,0 +1,30 @@
+# API-QUERY-SILENCIOSA · lo medido
+
+## El endpoint del hallazgo
+  /inventory/reservations                                  200
+  ?source_order_id=<inexistente>                           200  idéntico
+  ?__kontrol_unknown_query_probe__=1                       200  idéntico
+
+## El riesgo, con datos (/maestros/terceros declara q y status)
+  ?status=INACTIVE   -> 200 · 0 elementos   ← el filtro funciona
+  ?sttaus=INACTIVE   -> 200 · 1 elemento    ← errata: devuelve lo no filtrado
+  ?q=SOLO-DE-A       -> filtra
+  ?qq=SOLO-DE-A      -> no filtra
+
+## Lo que sí valida
+  ?page_size=abc     -> 422 VALIDATION_ERROR
+
+## OpenAPI del endpoint de reservas
+  parámetros declarados: status (query), product_id (query), X-Kontrol-Company (header)
+  source_order_id declarado: NO
+  respuestas documentadas: 200, 422
+
+## Uniformidad (10 endpoints, 7 módulos)
+  terceros · catálogo · reservas · tipos de movimiento · tipos documentales ·
+  almacenes · usuarios · roles · pedidos · compras
+  en todos: con y sin parámetro desconocido -> misma respuesta
+
+## Contrato
+  Constitución, 15 ADR de fundación, api-contracts.md, specs 023/030/031/048/054: NADA
+  lo que existe: ConfigDict(extra="forbid") en 16 modelos, de CUERPO,
+  motivado en sales/api.py:99-101, id IMP-030-035 solo en comentarios, sin prueba

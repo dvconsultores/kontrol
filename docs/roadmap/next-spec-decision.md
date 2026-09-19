@@ -2002,3 +2002,82 @@ Ni API-QUERY-SILENCIOSA, ni E2E-SIN-TYPECHECK, ni SEED-EMPRESA-CODIGO-NO-UNICO, 
 MOVTYPE-GLOBAL-SIN-UNICIDAD, ni INBOX-045-AISLAMIENTO, ni ORPHAN-046-SINGLE, ni
 IDEM-046-TRUNC, ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053, ni
 ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+---
+
+## 2026-09-20 · `API-QUERY-SILENCIOSA` se detiene en clarify
+
+**No converge: no hay contrato que aplicar, y cambiarlo tiene un precio medido.**
+
+La pregunta era si un endpoint debe rechazar los parámetros de consulta que no declara. Se
+buscó la respuesta donde tenía que estar —Constitución, los quince ADR de fundación,
+`api-contracts.md`, las Specs 023, 030, 031, 048 y 054, y el propio OpenAPI— y **no existe**.
+Lo que sí existe es estrictez **de cuerpo**: `extra="forbid"` en dieciséis modelos, con su
+motivo escrito —«`company_id` u otro campo ajeno responde 422, nunca se lee»— pero aplicada
+a mano, sin prueba que la fije y sin nada equivalente para la consulta.
+
+El comportamiento actual es uniforme: diez endpoints de siete módulos, y en todos la
+respuesta con parámetro desconocido es idéntica a la respuesta sin él. Eso no es una
+decisión de KONTROL: es lo que hace el framework.
+
+**Coste de cambiarlo, medido, no estimado.** Con una sonda estricta temporal —retirada, y
+`main.py` verificado idéntico con `cmp`— la suite E2E pasa de 224/224 a **197 pasan y 27
+fallan**, en ocho ficheros. Rechazar sería un cambio incompatible, no un endurecimiento
+inocuo. *(Una primera medición dio 112 fallos y se descartó: Vite no estaba levantado.)*
+
+### Lo que el silencio estaba escondiendo
+
+Cruzando todas las llamadas con query string del frontend contra el OpenAPI vivo aparecen
+**diez llamadas de producto** que envían parámetros no declarados. Tres de ellas son un
+defecto visible para el usuario: **`EmpresasPage`, `AuditoriaPage` y `ExistenciasPage` tienen
+una caja de búsqueda que no busca**. Envían `?q=` a endpoints que no declaran `q`, el
+servidor responde 200 y devuelve la lista entera.
+
+```
+/maestros/terceros?q=ZZZ-NO-EXISTE        -> 0 terceros    ← el filtro existe
+/organization/companies?q=ZZZ-NO-EXISTE   -> 1 empresa     ← el filtro no existe
+```
+
+Y no es una libertad del producto: el contrato de listados de la propia Fundación dice
+«Listados con `q`, `status`, `sort`, `page`, `page_size`», y `FR-001-065` exige «búsqueda
+general». Queda registrado aparte como **`UI-BUSQUEDA-MUERTA`**, con tres dueñas distintas,
+y **no se absorbe**: existe con independencia de cómo se decida la política.
+
+Las otras siete envían `company_id` donde la empresa ya la decide la cabecera validada.
+Inocuo hoy, pero la asimetría merece quedar escrita: el mismo campo está prohibido en el
+cuerpo con un 422 y aceptado en silencio en la consulta. Registrado como
+**`API-COMPANY-ID-EN-CONSULTA`**.
+
+**Pregunta escalada:** ¿rechazar los parámetros no declarados, o ignorarlos?
+
+Si se rechaza, hay que arreglar antes esas diez llamadas, decidir el alcance —un endpoint,
+un módulo o toda la API— y contar con proxies e integraciones que añaden parámetros por su
+cuenta. Si se ignora, conviene escribirlo en el contrato y fijarlo con una prueba, para que
+deje de ser «lo que hace el framework» y pase a ser una decisión.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **UI-BUSQUEDA-MUERTA** · tres buscadores que no buscan | 001/007 · 023 · 012 | no |
+| 2 | **E2E-SIN-TYPECHECK** · `e2e/` fuera del grafo TypeScript | 054 | no |
+| 3 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 4 | SPEC053 · verificar restauración (DT-11) | 053 | no |
+| 5 | **API-COMPANY-ID-EN-CONSULTA** · menor | 001 | no |
+
+**A la espera de decisión del owner** (no son cola de implementación):
+`API-QUERY-SILENCIOSA`, `SEED-EMPRESA-CODIGO-NO-UNICO` y `MOVTYPE-GLOBAL-SIN-UNICIDAD`.
+
+**Candidata siguiente: `UI-BUSQUEDA-MUERTA`.** Pasa delante porque es lo único de esta
+tanda que un usuario nota: escribe en un buscador y no ocurre nada. Y porque, a diferencia
+de las tres en espera, su contrato **sí** está escrito.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni UI-BUSQUEDA-MUERTA, ni API-COMPANY-ID-EN-CONSULTA, ni API-QUERY-SILENCIOSA, ni
+E2E-SIN-TYPECHECK, ni SEED-EMPRESA-CODIGO-NO-UNICO, ni MOVTYPE-GLOBAL-SIN-UNICIDAD, ni
+INBOX-045-AISLAMIENTO, ni ORPHAN-046-SINGLE, ni IDEM-046-TRUNC, ni AUTH-MC-INTERMITENTE, ni
+la certificación de compras, ni la Spec 053, ni ninguna decisión abierta (D0-06, D0-07,
+OQ-048, MD-049, `EXPIRED`).

@@ -1,0 +1,35 @@
+# Coste de cambiar a rechazo — control negativo
+
+Sonda estricta temporal en main.py: rechaza con 422 todo parámetro no declarado,
+resolviendo ruta y dependencias con fastapi.dependencies.utils.get_flat_params.
+
+  ?__probe__=1     -> 422   · ?status=ACTIVE -> 200 · ?q=x -> 200 · ?page_size=5 -> 200
+
+## Suite E2E completa con la sonda activa
+Running 224 tests using 2 workers
+  27 failed
+  197 passed (5.7m)
+
+  ficheros afectados:
+          7 approvals
+          4 warehouse-structure
+          4 uom-a11y
+          4 empresa-helper
+          3 warehouse-a11y
+          3 documents
+          1 uom-conversion
+          1 documents-a11y
+
+## Restauración
+  main.py restaurado idéntico (cmp) · git diff de resources/backend/ vacío
+  ?__probe__=1 -> 200 de nuevo
+
+## Medición descartada
+  una primera ejecución dio 112 fallos con Vite caído (vite=000). No se reporta como dato.
+
+## Línea base tras retirar la sonda
+Running 224 tests using 2 workers
+  224 passed (4.9m)
+PLAYWRIGHT_EXIT=0
+  (una ejecución intermedia dio 4 fallos de documents: faltaba ClamAV en el
+   lanzador reconstruido hoy. Reinstalado 1.4.3 y firma rehecha -> 224/224)

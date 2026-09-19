@@ -1,0 +1,18 @@
+# Lo que el silencio escondía
+
+10 llamadas del frontend envían parámetros que el servidor NO declara:
+
+## Familia A — buscadores que no buscan (3)
+  pages/EmpresasPage.tsx:25                    /organization/companies?q=   declara: NADA
+  pages/AuditoriaPage.tsx                      /audit/events?q=             declara: action, entity_id, entity_type, page, page_size
+  modules/inventario/existencias/...           /inventory/balances?q=       declara: location_id, lot_id, page, page_size, product_id, serial_id, state, warehouse_id
+
+  demostración lado a lado:
+    /maestros/terceros?q=ZZZ-NO-EXISTE       -> 0 terceros
+    /organization/companies?q=ZZZ-NO-EXISTE  -> 1 empresa
+
+## Familia B — company_id en la consulta (7)
+  organization/branches ×3 (sucursales, establecimientos, almacenes)
+  approvals ×4 (historial, bandeja, delegaciones, políticas)
+  la empresa la decide X-Kontrol-Company; el parámetro se ignora
+  asimetría: prohibido en el cuerpo con 422, aceptado en silencio en la consulta
