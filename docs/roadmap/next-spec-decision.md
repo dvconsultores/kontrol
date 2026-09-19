@@ -1931,3 +1931,74 @@ Ni SEED-EMPRESA-CODIGO-NO-UNICO, ni API-QUERY-SILENCIOSA, ni E2E-SIN-TYPECHECK, 
 MOVTYPE-GLOBAL-SIN-UNICIDAD, ni INBOX-045-AISLAMIENTO, ni ORPHAN-046-SINGLE, ni
 IDEM-046-TRUNC, ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053, ni
 ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+---
+
+## 2026-09-19 · `SEED-EMPRESA-CODIGO-NO-UNICO` se detiene en clarify
+
+**No converge, y no por falta de trabajo: por falta de una decisión.**
+
+La deuda decía que `companies` carece de un índice único sobre `(tenant_id, code)` y que
+«la identidad de empresa descansa en la disciplina de cada guion, no en el motor». La
+primera mitad es cierta. La segunda era una suposición mía, escrita durante N6, y al
+medirla no se sostiene: **esa identidad no existe en ninguna parte del producto**.
+
+Lo que se midió:
+
+- ninguna Spec declara unicidad del código de empresa —`data-model.md:31` enumera campos y
+  ya; el contrato de la ruta dice «Listar/crear empresa»—;
+- el ORM tampoco la declara, y la migración `0001` nunca la creó: no se perdió, nunca estuvo;
+- `create_company` **no comprueba duplicados**: dos altas con el mismo código responden
+  **200 y 200**, y quedan dos empresas;
+- tampoco normaliza: `sonda` y ` SONDA ` se guardan literalmente, como códigos distintos;
+- y el producto **nunca** resuelve una empresa por código: cero apariciones de
+  `Company.code ==` en todo `app/`. La empresa viaja por `id`, y un centenar de tablas la
+  referencian por `id`.
+
+Hoy, en KONTROL, el código de empresa es una **etiqueta**, no un identificador.
+
+El patrón de los hermanos —`uq_warehouses_company_code` y compañía— empieza en el almacén:
+`Tenant`, `Company` y `Branch` no lo tienen. Eso admite dos lecturas, omisión o decisión, y
+la evidencia no distingue.
+
+### Por qué no se implementó igualmente
+
+Porque añadir `UNIQUE(tenant_id, code)` no es completar algo a medias: es **crear una regla
+nueva**. Quien hoy tenga dos empresas con el mismo código está dentro de lo permitido, y
+tras una actualización dejaría de estarlo, sin que ninguna Spec se lo hubiera dicho. Eso es
+una decisión de negocio, no una inferencia de ingeniería.
+
+**Pregunta escalada:** ¿el código de empresa identifica dentro de su tenant, o etiqueta?
+
+Si identifica, el análisis deja listo el camino: `uq_companies_tenant_code`, `tenant_id` es
+`NOT NULL` —así que basta una unicidad normal—, 0 duplicados en este entorno, y la lista de
+lo que arrastra: contrato de duplicado en la API (hoy inexistente, y sin él la colisión
+saldría como 500), mayúsculas, espacios, y qué pasa con una empresa inactiva que ocupa un
+código.
+
+Si etiqueta, la deuda se cierra como no aplicable y basta con dejarlo escrito.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **API-QUERY-SILENCIOSA** · el servidor acepta parámetros que no declara | 023 | no |
+| 2 | **E2E-SIN-TYPECHECK** · `e2e/` fuera del grafo TypeScript | 054 | no |
+| 3 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 4 | SPEC053 · verificar restauración (DT-11) | 053 | no |
+
+**A la espera de decisión del owner** (no son cola de implementación):
+`SEED-EMPRESA-CODIGO-NO-UNICO` y `MOVTYPE-GLOBAL-SIN-UNICIDAD`. Son **la misma pregunta en
+dos tablas**: si un código identifica o etiqueta. Conviene responderlas juntas.
+
+**Candidata siguiente: `API-QUERY-SILENCIOSA`**, la primera que no depende de una decisión
+pendiente.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni API-QUERY-SILENCIOSA, ni E2E-SIN-TYPECHECK, ni SEED-EMPRESA-CODIGO-NO-UNICO, ni
+MOVTYPE-GLOBAL-SIN-UNICIDAD, ni INBOX-045-AISLAMIENTO, ni ORPHAN-046-SINGLE, ni
+IDEM-046-TRUNC, ni AUTH-MC-INTERMITENTE, ni la certificación de compras, ni la Spec 053, ni
+ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

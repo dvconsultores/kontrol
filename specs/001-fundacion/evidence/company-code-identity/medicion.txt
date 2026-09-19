@@ -1,0 +1,42 @@
+# SEED-EMPRESA-CODIGO-NO-UNICO · lo medido
+
+## Esquema real de companies (PostgreSQL)
+  pk_companies PRIMARY KEY (id)
+  ix_companies_rif        btree (rif)        <- índice, NO único
+  ix_companies_tenant_id  btree (tenant_id)  <- índice, NO único
+  fk_companies_tenant_id_tenants
+  => ninguna unicidad sobre code · tenant_id NOT NULL · code NOT NULL
+  ~100 tablas referencian companies(id): el identificador real es el id
+
+## Historia
+  alembic/versions/0001_fundacion.py:70-71 crea los dos índices; nunca hubo unicidad
+
+## Conducta del alta, medida contra el servidor
+  POST /organization/companies code=SONDA    -> 200
+  POST /organization/companies code=SONDA    -> 200   <- duplicado aceptado
+  POST /organization/companies code=sonda    -> 200   <- sin normalizar
+  POST /organization/companies code=' SONDA '-> 200   <- espacios conservados
+  filas resultantes: [SONDA] [SONDA] [sonda] [ SONDA ]
+  (datos de sonda retirados después; base verificada: D1, D2, E1)
+
+## ¿El producto usa el código como identificador?
+  grep 'Company.code ==' en app/  -> 0 resultados
+  (Tenant.code sí se usa, en el login)
+
+## Contrato
+  specs/001-fundacion/data-model.md:31   enumera campos, no declara unicidad
+  contracts/api-contracts.md:50          «Listar/crear empresa», sin contrato de duplicado
+  ningún FR-001-* menciona el código de empresa
+  la unicidad de RIF de las specs es de terceros: Unique (company_id, tax_id, role)
+
+## Hermanos del módulo
+  Tenant, Company, Branch        -> sin unicidad de código
+  Warehouse y por debajo         -> UNIQUE (padre, code)
+
+## Auditoría de duplicados
+  keu: 3 empresas · 0 grupos duplicados · 0 filas duplicadas
+
+## Regresión de sanidad tras retirar los datos de sonda
+  n6-multicompany + n6-a11y + empresa-helper -> 29 passed
+
+=> MATERIAL_DECISION_REQUIRED. No se implementa.
