@@ -2081,3 +2081,98 @@ E2E-SIN-TYPECHECK, ni SEED-EMPRESA-CODIGO-NO-UNICO, ni MOVTYPE-GLOBAL-SIN-UNICID
 INBOX-045-AISLAMIENTO, ni ORPHAN-046-SINGLE, ni IDEM-046-TRUNC, ni AUTH-MC-INTERMITENTE, ni
 la certificación de compras, ni la Spec 053, ni ninguna decisión abierta (D0-06, D0-07,
 OQ-048, MD-049, `EXPIRED`).
+
+## 2026-09-24 · `UI-BUSQUEDA-MUERTA` se detiene en clarify, con una pantalla ya decidida
+
+Las tres cajas de búsqueda están muertas, y ahora está medido en los dos sitios donde se
+puede medir. Contra la API, con un término que no existe: `companies` 1→1,
+`audit/events` 18→18, `balances` 0→0, frente a `terceros` 1→0, que sí filtra. Y en un
+navegador real, entrando por los enlaces del menú: el usuario escribe, la pantalla llama
+al servidor, el servidor responde 200 con la lista entera, y no pasa nada.
+
+Que la búsqueda **exista** no era discutible —`FR-001-065`, `api-contracts.md` y DOC-08
+§10 la exigen—, y por eso esta delta no se parecía a las tres que esperan decisión: aquí
+sí había contrato. Lo que no había, y no lo vimos hasta buscarlo, es **sobre qué campos**
+se busca. DOC-08 §10 describe la caja —una por pantalla, debounce, backend— y no enumera
+columnas. Solo un FR nombra campos, y solo para su módulo: `FR-002-042`, «RIF/nombre/
+código».
+
+Así que la pregunta pasó a ser si se podía deducir. Hay dos buscadores vivos —terceros y
+kardex— y de los dos sale la misma regla: `q` busca los **nombres** y los
+**identificadores de negocio** propios de la entidad que el listado ya publica, y deja
+fuera lo que ya tiene filtro dedicado, los estados, las cantidades y las fechas. No es una
+excusa: aplicada a ciegas reproduce exactamente los dos conjuntos implementados, y el
+placeholder de terceros se la declara al usuario palabra por palabra.
+
+Aplicada a las tres pantallas, la regla decide una y se rompe en dos.
+
+**Empresas queda decidida.** `Company` publica código, dos nombres y RIF: `q` busca
+`code`, `legal_name`, `trade_name`, `rif`. Es la misma terna que `FR-002-042` ya decidió
+para terceros, sobre una entidad de la misma forma.
+
+**Auditoría, no.** `AuditEvent` no tiene nombre, y `action`, `entity_type` y `entity_id`
+ya tienen filtro dedicado, así que la regla los excluye igual que excluye el estado en
+terceros. Queda `request_id` y un borde que ningún precedente cubre. Pero el problema real
+apareció debajo: **el listado no filtra por tenant**. Medido: de 20 eventos, uno es de
+`DEMO2` y se le devuelve a un administrador de `DEMO`. Poner `q` ahí sería filtrar un
+conjunto que antes de `q` ya está mal.
+
+**Existencias, tampoco, y de forma más terminante:** la regla devuelve el **conjunto
+vacío**. El listado no publica ni una columna de texto —todo son UUID con filtro propio,
+un enum con filtro propio, tres cantidades y una fecha—. Y su caja promete «Buscar por
+producto…» mientras la columna «Producto» enseña un UUID crudo, porque el texto del
+producto está dos saltos más allá: `balances → products → catalog_items`. Cumplir la
+promesa exige decidir que la búsqueda general alcanza una entidad relacionada y publicar
+la identidad del producto en la fila, que es cambiar el payload de un listado P0. Y el
+contrato del módulo, `FR-003-012`, describe esta consulta por filtros, no por texto.
+
+### Lo que la caja muerta estaba tapando
+
+La pantalla de auditoría **no ha mostrado nunca una fila**. El servidor devuelve un sobre
+paginado y la pantalla lo trata como un array; `tsc` no puede verlo porque `apiFetch` es
+genérico y quien llama afirma el tipo, y ningún E2E visita esa ruta. La columna «Fecha»
+lee `created_at`, que el servidor no publica. Y hay dos entradas «Auditoría» en el menú,
+con dos contratos distintos.
+
+Es otra vez lo mismo de esta tanda: un control que no controla. Un índice único que no
+cubre su caso, un parámetro que el servidor ignora, un directorio que ningún typecheck
+lee, y ahora una tabla que nunca pinta y una caja que nunca busca.
+
+### Por qué no se implementó Empresas, estando decidida
+
+Porque el gate detiene el ciclo con `MATERIAL OQ > 0`, y un gate que se salta cuando
+conviene no es un gate. Queda preparada para una sola pasada en cuanto se autorice: campos
+resueltos, `q` después del filtro de empresas accesibles y antes de cualquier recorte,
+placeholder que nombre los campos como en terceros, y el sobre paginado que hoy le falta.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **AUDIT-EVENTS-SIN-TENANT** · fuga entre inquilinos, medida | 001 | no |
+| 2 | **UI-BUSQUEDA-MUERTA · Empresas** · decidida, lista | 001/007 | no |
+| 3 | **AUDITORIA-SOBRE-VS-ARRAY** · la tabla nunca pinta | 012 | no |
+| 4 | **E2E-SIN-TYPECHECK** · `e2e/` fuera del grafo TypeScript | 054 | no |
+| 5 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 6 | SPEC053 · verificar restauración (DT-11) | 053 | no |
+
+**A la espera de decisión del owner** (no son cola de implementación):
+`API-QUERY-SILENCIOSA`, `SEED-EMPRESA-CODIGO-NO-UNICO`, `MOVTYPE-GLOBAL-SIN-UNICIDAD` y,
+desde hoy, **`UI-BUSQUEDA-MUERTA` en Auditoría y en Existencias**.
+
+**Candidata siguiente: `AUDIT-EVENTS-SIN-TENANT`.** Pasa delante de todo lo demás porque
+es la única de la lista que enseña datos de un inquilino a otro, porque `FR-001-032` y
+`FR-001-033` ya la decidieron —no hay nada que clarificar— y porque bloquea la búsqueda de
+esa misma pantalla.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni implementar `q` en ninguna de las tres pantallas —tampoco en Empresas, aunque esté
+decidida—, ni corregir el alcance de auditoría, ni el sobre de `AuditoriaPage`, ni
+`created_at`, ni la duplicidad del menú, ni `API-QUERY-SILENCIOSA`, ni
+`API-COMPANY-ID-EN-CONSULTA`, ni `E2E-SIN-TYPECHECK`, ni `SEED-EMPRESA-CODIGO-NO-UNICO`,
+ni `MOVTYPE-GLOBAL-SIN-UNICIDAD`, ni `INBOX-045-AISLAMIENTO`, ni `ORPHAN-046-SINGLE`, ni
+`IDEM-046-TRUNC`, ni `AUTH-MC-INTERMITENTE`, ni la certificación de compras, ni la Spec
+053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

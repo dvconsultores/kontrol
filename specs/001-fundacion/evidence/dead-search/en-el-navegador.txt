@@ -1,0 +1,20 @@
+Navegador real (chromium), sesión admin/DEMO, enlaces del menú.
+
+EMPRESAS  (/organizacion/empresas)
+  placeholder .......... "Buscar en esta pantalla…"
+  filas sin buscar ..... 1     via  200 /organization/companies?q=
+  filas buscando ZZZ ... 1     via  200 /organization/companies?q=ZZZNOEXISTE
+  veredicto ............ la caja NO filtra
+
+AUDITORIA  (/auditoria)
+  placeholder .......... "Buscar en esta pantalla…"
+  filas sin buscar ..... 0     via  200 /audit/events?q=
+  filas buscando ZZZ ... 0     via  200 /audit/events?q=ZZZNOEXISTE
+  veredicto ............ la caja NO filtra  ·  y la tabla nunca pinta filas
+
+EXISTENCIAS  (/inventario/existencias)
+  placeholder .......... "Buscar por producto…"
+  filas sin buscar ..... 0     via  200 /inventory/balances?q=
+  filas buscando ZZZ ... 0     via  200 /inventory/balances?q=ZZZNOEXISTE
+  veredicto ............ la caja NO filtra  ·  y la tabla nunca pinta filas
+

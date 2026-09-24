@@ -1,0 +1,24 @@
+UI-BUSQUEDA-MUERTA · comportamiento medido · 2026-09-24
+Base eaa93fe · rama develop · backend 127.0.0.1:8000 · Vite 5173 · PG 55432/keu
+
+== 1. Lo que cada endpoint DECLARA (OpenAPI vivo) ==
+  /api/v1/organization/companies         []  <- q AUSENTE
+  /api/v1/audit/events                   ['action', 'entity_id', 'entity_type', 'page', 'page_size']  <- q AUSENTE
+  /api/v1/inventory/balances             ['location_id', 'lot_id', 'page', 'page_size', 'product_id', 'serial_id', 'state', 'warehouse_id']  <- q AUSENTE
+  /api/v1/maestros/terceros              ['page', 'page_size', 'q', 'status']
+  /api/v1/inventory/movements            ['page', 'page_size', 'product_id', 'q', 'warehouse_id']
+
+== 2. Lo que q HACE hoy (misma sesión, mismo usuario admin/DEMO) ==
+  companies q=''             -> 1 empresas
+  companies q='D1'           -> 1 empresas
+  companies q='Demo'         -> 1 empresas
+  companies q='ZZZNOEXISTE'  -> 1 empresas
+  audit/events q=''             -> total 18
+  audit/events q='LOGIN_SUCCESS' -> total 18
+  audit/events q='ZZZNOEXISTE'  -> total 18
+  balances q=''             -> total 0
+  balances q='ZZZNOEXISTE'  -> total 0
+
+  Contraste con el precedente que SÍ filtra:
+  terceros  q=''             -> total 1
+  terceros  q='ZZZNOEXISTE'  -> total 0

@@ -1,0 +1,23 @@
+AUDITORIA · lo que se encontró debajo de la caja muerta · 2026-09-24
+
+== A. El servidor devuelve un SOBRE; la pantalla lo trata como ARRAY ==
+  claves de la respuesta: ['items', 'page', 'page_size', 'total']
+  items: 20 · total: 20
+  AuditoriaPage.tsx:30   apiFetch<AuditEvent[]>(`/audit/events?q=...`)
+  AuditoriaPage.tsx:46   data={query.data ?? []}
+  -> DataTable recibe un objeto donde espera un array: 0 filas, siempre, con 200 y datos.
+     Comprobado con un render real de DataTable (sonda vitest): no lanza, no pinta.
+     Comprobado en el navegador: /audit/events?q= responde 200 y la tabla muestra 0 filas.
+
+== B. La columna Fecha lee un campo que el servidor no publica ==
+  el evento publica: ['action', 'entity_id', 'entity_type', 'event_time', 'id', 'request_id', 'source', 'user_id']
+  created_at presente: False · event_time presente: True
+  AuditoriaPage.tsx:16   columnHelper.accessor("created_at", …) -> new Date(undefined)
+  api/types.ts:52        created_at: string;  <- el tipo declara un campo que no llega
+
+== C. El listado no filtra por tenant: fuga entre inquilinos ==
+  audit_events en la base · tenant DEMO: 19
+  audit_events en la base · tenant DEMO2: 1
+  eventos de DEMO2: 1 · devueltos a un admin de DEMO: 1
+  audit/api.py:18-55  list_events no aplica filtro de tenant ni de empresa;
+  solo require_permission('audit','view'). Contradice FR-001-032 y FR-001-033.

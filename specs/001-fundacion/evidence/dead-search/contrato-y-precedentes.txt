@@ -1,0 +1,85 @@
+UI-BUSQUEDA-MUERTA · dónde estaba el contrato y qué regla usan los que SÍ funcionan
+
+== 1. El contrato que obliga a que exista una búsqueda ==
+FR-001-065 (P0, DOC-08)   "DataTables sin scroll horizontal, búsqueda general, filtro de
+                           estado, paginación >10, acciones a la derecha."
+api-contracts.md           "Listados con q, status, sort, page, page_size."
+DOC-08 §10                 "Una búsqueda general por pantalla. Debounce de 300-500 ms y
+                           ejecución backend para volúmenes grandes."
+=> Que exista q NO es discutible: es contractual. Esta delta sí es implementable, a
+   diferencia de API-QUERY-SILENCIOSA, donde no había contrato ninguno.
+
+== 2. El contrato que NO dice sobre qué columnas se busca ==
+DOC-08 §10 describe el comportamiento de la caja (una por pantalla, debounce, backend).
+No enumera campos. Lo más cercano es DOC-08 §10.1, "Prioridad de columnas":
+   "Prioridad 1: identificador, nombre, estado y acciones."
+Y un único FR que sí nombra campos, y solo para su módulo:
+FR-002-042 (P0)  "Listados con búsqueda general (RIF/nombre/código), filtro de estado…"
+US-002-010       "…buscar un cliente/proveedor por RIF, nombre o código."
+
+== 3. La regla que los dos precedentes implementados cumplen ==
+master_data/api.py:189-201   terceros   q -> name | tax_id | code
+inventory/api.py:244-258     kardex     q -> document_ref | id
+
+   terceros  pinta: Código, Nombre, RIF, Roles, Estado
+             busca: código, nombre, RIF          (no estado: tiene filtro propio
+                                                  no roles: no es identidad)
+   kardex    pinta: Fecha, Producto, Tipo, Cantidad, Costo, Documento, Estado
+             busca: documento, id                (no producto ni almacén: tienen
+                                                  filtro dedicado propio
+                                                  no cantidades, no fechas, no estado)
+
+REGLA DESTILADA — q busca los NOMBRES y los IDENTIFICADORES DE NEGOCIO propios de la
+entidad que el listado ya publica, y excluye: lo que ya tiene un filtro dedicado, los
+estados/clasificaciones, las cantidades y las fechas.
+
+Prueba de que es una regla y no una excusa: aplicada a ciegas reproduce exactamente los
+dos conjuntos ya implementados. Y el placeholder de terceros la declara al usuario
+palabra por palabra: "Buscar por nombre, RIF o código…".
+
+== 4. La regla aplicada a las tres pantallas de esta delta ==
+
+EMPRESAS · /organization/companies · publica code, legal_name, trade_name, rif, status
+   nombres ............... legal_name, trade_name
+   ident. de negocio ..... code, rif
+   excluido .............. status (estado)
+   => q = code, legal_name, trade_name, rif
+   Es la misma terna que FR-002-042 ya decidió para terceros (RIF/nombre/código), sobre
+   una entidad de la misma forma. DECIDIDO POR ANALOGÍA DIRECTA CON UN FR EXISTENTE.
+
+AUDITORIA · /audit/events · publica action, entity_type, entity_id, user_id, request_id,
+                            source, event_time, id
+   nombres ............... ninguno. AuditEvent no tiene nombre.
+   ident. de negocio ..... request_id (el que DOC-08 §11 manda enseñar al usuario ante un
+                           error: "Mensaje, acción Reintentar y request ID")
+   con filtro dedicado ... action, entity_type, entity_id  -> excluidos por la regla
+   sin decidir ........... user_id y source son identificadores ajenos/clasificaciones sin
+                           filtro propio; ningún precedente cubre ese caso, e `id` entra en
+                           kardex pero no en terceros.
+   => q = {request_id} o {request_id, user_id, source, id}: la regla NO lo decide.
+
+EXISTENCIAS · /inventory/balances · publica id, company_id, warehouse_id, location_id,
+                            product_id, lot_id, serial_id, state, qty_on_hand,
+                            qty_reserved, qty_available, last_rebuilt_at
+   nombres ............... NINGUNO
+   ident. de negocio ..... NINGUNO
+   con filtro dedicado ... product_id, warehouse_id, location_id, lot_id, serial_id, state
+   cantidades/fechas ..... qty_on_hand, qty_reserved, qty_available, last_rebuilt_at
+   => la regla devuelve el CONJUNTO VACÍO. No hay ni una columna de texto que buscar.
+
+== 5. Por qué Existencias no se resuelve "buscando por producto" sin decidir antes ==
+El placeholder de la pantalla promete "Buscar por producto…" y la columna "Producto"
+enseña hoy un UUID crudo. El texto del producto no está en el listado ni a un salto:
+   inventory_balances.product_id -> products.item_id -> catalog_items.code / .name
+products no tiene ni code ni name; están dos saltos más allá, en catalog_items.
+Buscar "por producto" exige entonces:
+   (a) decidir que la búsqueda general alcanza el texto de una entidad RELACIONADA
+       — algo que no hace ningún endpoint de KONTROL hoy —, y
+   (b) publicar la identidad del producto en cada fila, porque si no el usuario no puede
+       leer por qué una fila coincidió: seguiría viendo un UUID.
+(b) es un cambio de payload en un listado P0.
+
+Y el contrato del módulo describe esta consulta por filtros, no por texto:
+FR-003-012 (P0)  "Consulta de existencias con filtros (producto, almacén, ubicación, lote,
+                  serial, estado, vencimiento) y paginación."
+US-003-001       "…consultar existencias por producto/almacén/ubicación/lote/serial/estado."
