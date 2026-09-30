@@ -1,0 +1,11 @@
+AUDITORIA-CREATED-AT · E2E dirigido · auditoria-fecha + auditoria-sobre (regresión del envelope) · Chromium, Firefox, WebKit · 2026-09-30T18:01:27-04:00
+  ✓  4 [chromium] › e2e/auditoria-sobre.spec.ts:103:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-04 · el rastro de otro tenant no está en el sobre ni en la tabla (2.5s
+  ✓  6 [chromium] › e2e/auditoria-sobre.spec.ts:60:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-01/02 · dos eventos controlados del tenant aparecen como filas, y son lo
+  ✓  1 [chromium] › e2e/auditoria-fecha.spec.ts:54:3 › AUDITORIA-CREATED-AT · la columna Fecha muestra event_time › DATE-01/02/03 · la fila del evento controlado enseña su event_time con la
+  ✓  2 [firefox] › e2e/auditoria-sobre.spec.ts:103:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-04 · el rastro de otro tenant no está en el sobre ni en la tabla (4.6s)
+  ✓  3 [firefox] › e2e/auditoria-fecha.spec.ts:54:3 › AUDITORIA-CREATED-AT · la columna Fecha muestra event_time › DATE-01/02/03 · la fila del evento controlado enseña su event_time con la 
+  ✓  7 [webkit] › e2e/auditoria-fecha.spec.ts:54:3 › AUDITORIA-CREATED-AT · la columna Fecha muestra event_time › DATE-01/02/03 · la fila del evento controlado enseña su event_time con la c
+  ✓  8 [webkit] › e2e/auditoria-sobre.spec.ts:60:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-01/02 · dos eventos controlados del tenant aparecen como filas, y son los 
+  ✓  5 [firefox] › e2e/auditoria-sobre.spec.ts:60:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-01/02 · dos eventos controlados del tenant aparecen como filas, y son los
+  ✓  9 [webkit] › e2e/auditoria-sobre.spec.ts:103:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-04 · el rastro de otro tenant no está en el sobre ni en la tabla (3.3s)
+  9 passed (14.7s)

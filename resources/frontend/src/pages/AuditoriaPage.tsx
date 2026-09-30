@@ -8,14 +8,15 @@ import { DataTable } from "@/components/DataTable";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { SearchInput } from "@/components/SearchInput";
+import { formatearFecha } from "@/i18n";
 import { createColumnHelper } from "@tanstack/react-table";
 
 const columnHelper = createColumnHelper<AuditEvent>();
 
 const columns = [
-  columnHelper.accessor("created_at", {
+  columnHelper.accessor("event_time", {
     header: "Fecha",
-    cell: (info) => new Date(info.getValue()).toLocaleString("es-VE"),
+    cell: (info) => formatearFecha(info.getValue()),
   }),
   columnHelper.accessor("action", { header: "Acción" }),
   columnHelper.accessor("entity_type", { header: "Entidad" }),

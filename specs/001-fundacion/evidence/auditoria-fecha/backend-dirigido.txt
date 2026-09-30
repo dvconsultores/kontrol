@@ -1,0 +1,10 @@
+AUDITORIA-CREATED-AT · sanidad backend dirigida (0 ficheros de producto backend) · .venv del repositorio · 2026-09-30T17:58:47-04:00
+== SQLite: aislamiento hostil de auditoría (11) + búsqueda de empresas (17) ==
+28 passed in 7.43s
+== PostgreSQL (ktest recién creada): las mismas ==
+28 passed in 11.06s
+== event_time en el contrato: ORM, fábrica, respuesta ==
+app/modules/audit/api.py:44:        .order_by(AuditEvent.event_time.desc())
+app/modules/audit/api.py:68:                "event_time": e.event_time.isoformat(),
+app/modules/audit/models.py:34:    event_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+app/shared/audit.py:64:        event_time=_now(),

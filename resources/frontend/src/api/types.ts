@@ -49,7 +49,8 @@ export interface AuditEvent {
   request_id: string | null;
   source: string | null;
   reason: string | null;
-  created_at: string;
+  /** Sello del servidor (ISO 8601 con zona, nunca nulo). El servidor no publica `created_at`. */
+  event_time: string;
 }
 
 export interface SetupStatus {

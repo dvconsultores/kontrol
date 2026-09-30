@@ -2405,3 +2405,67 @@ servidor de la tabla, ni `response_model` en el backend, ni `EMPRESAS-SIN-SOBRE`
 `API-QUERY-SILENCIOSA`, ni `API-COMPANY-ID-EN-CONSULTA`, ni `SEED-EMPRESA-CODIGO-NO-UNICO`,
 ni `MOVTYPE-GLOBAL-SIN-UNICIDAD`, ni `INBOX-045-AISLAMIENTO`, ni la certificación de compras,
 ni la Spec 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+## 2026-09-30 · Tras converger el delta AUDITORIA-CREATED-AT (dueña 001, apoyo 012)
+
+En cuanto la tabla de auditoría pintó filas, cada una decía «Invalid Date». El origen está
+en el primer commit del repositorio: el tipo del frontend y la columna «Fecha» decían
+`created_at` —el nombre de la columna del mixin de la tabla— mientras el listado publicaba
+`event_time` desde ese mismo día. Nadie lo vio porque durante siete semanas la tabla no
+pintó nada. Reproducido con un evento controlado: un login por API cuyo `X-Request-ID`
+devuelve el servidor, `event_time` `2026-09-30T21:54:06.507259+00:00` en la API y
+«Invalid Date» en su fila.
+
+La pregunta que había que contestar antes de tocar nada no era el campo —ese lo decide el
+contrato— sino cómo se enseña un instante en KONTROL. La respuesta existe y tiene nombre:
+`formatearFecha`, en `i18n`, que es `toLocaleString("es-VE")` en la zona del navegador, lo
+mismo que escriben a mano las otras ocho pantallas con instantes. `fecha-de-negocio` no
+aplica: da el día civil de negocio en Caracas para reglas funcionales, y un evento de
+auditoría es un instante técnico. Fijar `America/Caracas` como zona de presentación sería
+una decisión nueva que alcanza a nueve pantallas: se registra
+(`FECHAS-ZONA-DE-PRESENTACION`), no se toma.
+
+El fix son cuatro líneas: `event_time` en el tipo y en la columna, y el formateador
+canónico. Volver a `created_at` en el camino tipado no compila (control negativo medido).
+Cinco pruebas de página con dos instantes —uno que cruza la medianoche civil según la
+zona—, fijadas literalmente bajo UTC, Caracas y Ámsterdam, porque el texto depende de la
+zona por convención y el instante no; un E2E con evento controlado en tres navegadores;
+siete mutantes, siete muertos. Vitest 400/400 bajo las tres zonas.
+
+### Lo que este delta enseñó del entorno
+
+`/tmp` se vació entre sesiones: el clúster PostgreSQL de QA, el mundo sembrado y el
+intérprete del scratchpad desaparecieron. Reaprovisionar cuesta un minuto con el `.venv`
+reparado del repositorio; queda escrito en memoria de sesión, no en el producto.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **EMPRESAS-SIN-SOBRE** · el listado no pagina en el servidor | 001/007 | no |
+| 2 | **AUDITORIA-PAGINACION-CLIENTE** · página 1 de 20 y `total` invisible | 001 | no |
+| 3 | **E2E-SIN-TYPECHECK** · `e2e/` fuera del grafo TypeScript | 054 | no |
+| 4 | **LOCK-SIN-REPORTLAB-MAGIC** · el lock no reconstruye el entorno | 001/052 | no |
+| 5 | **TEST-SCHEMAS-PG-SIN-LIMPIEZA** · la suite llena el disco y agota conexiones | 054/052 | no |
+| 6 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 7 | SPEC053 · verificar restauración (DT-11) | 053 | no |
+
+**A la espera de decisión del owner**: `FECHAS-ZONA-DE-PRESENTACION` (nueva),
+`API-QUERY-SILENCIOSA`, `SEED-EMPRESA-CODIGO-NO-UNICO`, `MOVTYPE-GLOBAL-SIN-UNICIDAD`,
+`UI-BUSQUEDA-MUERTA` en Auditoría (campos) y en Existencias.
+
+**Candidata siguiente: `EMPRESAS-SIN-SOBRE`.** Es la única deuda funcional de la cola con
+contrato escrito (`api-contracts.md`: listados con `page`, `page_size`, `total`) y sin
+decisión pendiente; y `AUDITORIA-PAGINACION-CLIENTE` necesitará el mismo mecanismo de
+paginación de servidor en `DataTable`, así que conviene resolverlas con una sola forma.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni el sobre de Empresas, ni la paginación de servidor de la tabla, ni fijar una zona de
+presentación, ni `q` en Auditoría ni en Existencias, ni `response_model` en el backend, ni
+`E2E-SIN-TYPECHECK`, ni el lockfile, ni `conftest.py`, ni `API-QUERY-SILENCIOSA`, ni
+`API-COMPANY-ID-EN-CONSULTA`, ni `SEED-EMPRESA-CODIGO-NO-UNICO`, ni
+`MOVTYPE-GLOBAL-SIN-UNICIDAD`, ni `INBOX-045-AISLAMIENTO`, ni la certificación de compras,
+ni la Spec 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

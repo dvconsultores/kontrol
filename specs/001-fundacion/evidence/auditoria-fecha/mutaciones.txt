@@ -1,0 +1,35 @@
+AUDITORIA-CREATED-AT · mutaciones sobre AuditoriaPage.tsx / api/types.ts · gates: tsc -b y vitest (fecha + sobre) bajo TZ=UTC y TZ=Europe/Amsterdam
+
+DATE-M1 · la columna vuelve a created_at
+  -> muere: tsc=FALLA src/pages/AuditoriaPage.tsx(17,25): error TS2345: Argument of type '"created_at"' is not a
+     vitest UTC: DATE-01/02, DATE-03/04/05/06/07, DATE-08, DATE-13 · Amsterdam: DATE-01/02, DATE-03/04/05/06/07, DATE-08, DATE-13
+
+DATE-M2 · sin formateador: el ISO crudo
+  -> muere: tsc=FALLA src/pages/AuditoriaPage.tsx(11,1): error TS6133: 'formatearFecha' is declared but its valu
+     vitest UTC: DATE-01/02, DATE-03/04/05/06/07, DATE-13 · Amsterdam: DATE-01/02, DATE-03/04/05/06/07, DATE-13
+
+DATE-M3 · zona forzada a UTC en vez de la convención
+  -> muere: tsc=FALLA src/pages/AuditoriaPage.tsx(11,1): error TS6133: 'formatearFecha' is declared but its valu
+     vitest UTC: - · Amsterdam: DATE-01/02, DATE-03/04/05/06/07
+
+DATE-M5 · un valor inválido se disfraza de «ahora»
+  -> muere: tsc=pasa
+     vitest UTC: DATE-13 · Amsterdam: DATE-13
+
+DATE-M6 · otro formato (solo fecha, sin hora)
+  -> muere: tsc=FALLA src/pages/AuditoriaPage.tsx(11,1): error TS6133: 'formatearFecha' is declared but its valu
+     vitest UTC: DATE-01/02, DATE-03/04/05/06/07 · Amsterdam: DATE-01/02, DATE-03/04/05/06/07
+
+DATE-M7 · el sobre entero como filas (regresión del envelope)
+  -> muere: tsc=FALLA src/pages/AuditoriaPage.tsx(48,9): error TS2322: Type 'never[] | NoInfer<AuditEventPage>' 
+     vitest UTC: DATE-01/02, DATE-03/04/05/06/07, DATE-08, DATE-13, ENV-01, ENV-02, ENV-03, ENV-05, ENV-08 · Amsterdam: DATE-01/02, DATE-03/04/05/06/07, DATE-08, DATE-13, ENV-01, ENV-02, ENV-03, ENV-05, ENV-08
+
+DATE-M8 · event_time desaparece del tipo
+  -> muere: tsc=FALLA src/pages/AuditoriaPage.fecha.test.tsx(43,61): error TS2353: Object literal may only speci
+     vitest UTC: - · Amsterdam: -
+
+restaurado: True
+
+CONTROL NEGATIVO DE TIPOS · `event.created_at` en el camino tipado de AuditEvent:
+  -> tsc FALLA: src/pages/AuditoriaPage.tsx(19,54): error TS2339: Property 'created_at' does not exist on type 'AuditEvent'.
+  restaurado · tsc: pasa

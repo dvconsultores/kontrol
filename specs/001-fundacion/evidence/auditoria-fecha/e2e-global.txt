@@ -1,0 +1,6 @@
+AUDITORIA-CREATED-AT · E2E GLOBAL · Chromium · backend 127.0.0.1:8000 sobre kaud (PostgreSQL, reaprovisionada y resembrada esta sesión) · Vite 5173 · 2026-09-30T18:01:43-04:00
+
+RuntimeError: 'choque-muonhccmevbx' ya opera en ['72fec427-f674-44d2-bc9f-ad059be414e6'] y se pide ['0ee10703-9c5a-4772-b54e-52ec9bed6b72']: ['72fec427-f674-44d2-bc9f-ad059be414e6'] quedaría de más. No se escribe nada
+40 skipped
+192 passed (2.9m)
+exit=0

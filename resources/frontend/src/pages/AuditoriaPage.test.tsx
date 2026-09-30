@@ -7,8 +7,7 @@
  * `items`, un sobre vacío es el estado vacío, un error sigue siendo un error,
  * y una respuesta que no sea el sobre no se acepta por la puerta de atrás.
  *
- * La columna «Fecha» lee `created_at`, que el servidor no publica: es la deuda
- * `AUDITORIA-CREATED-AT`, separada, y por eso ninguna aserción mira la fecha.
+ * La columna «Fecha» tiene su propia prueba (`AuditoriaPage.fecha.test.tsx`).
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -29,7 +28,7 @@ const { listAuditEvents } = await import("@/api/audit");
 function evento(n: number, action: string): AuditEvent {
   return {
     id: `ev-${n}`, action, entity_type: "Probe", entity_id: `probe-${n}`, user_id: `usuario-${n}`,
-    request_id: `req-${n}-${action.toLowerCase()}`, source: "QA", reason: null, created_at: "",
+    request_id: `req-${n}-${action.toLowerCase()}`, source: "QA", reason: null, event_time: "2026-09-30T18:30:00+00:00",
   };
 }
 

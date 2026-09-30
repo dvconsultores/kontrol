@@ -1,0 +1,17 @@
+AUDITORIA-CREATED-AT · puertas del frontend · 2026-09-30T17:58:10-04:00
+== typecheck ==
+tsc exit=0
+== eslint ==
+eslint exit=0
+== vitest completo TZ=UTC ==
+ Test Files  24 passed (24)
+      Tests  400 passed (400)
+== vitest completo TZ=America/Caracas ==
+ Test Files  24 passed (24)
+      Tests  400 passed (400)
+== vitest completo TZ=Europe/Amsterdam ==
+ Test Files  24 passed (24)
+      Tests  400 passed (400)
+== build ==
+✓ built in 2.80s
+build exit=0

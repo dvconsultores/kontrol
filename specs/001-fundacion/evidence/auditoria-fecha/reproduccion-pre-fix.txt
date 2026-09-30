@@ -1,0 +1,9 @@
+== FASE pre · /auditoria por el menú · sesión admin/DEMO · Chromium (zona del navegador: America/Caracas) ==
+EVENT_ID .......... 3940a33b-9e5b-4eeb-9383-39441d8dfc4b
+REQUEST_ID ........ a82a5b60607e404f86a0cf03941e8fc9
+EVENT_TIME_RAW .... 2026-09-30T21:54:06.507259+00:00 (string)
+¿created_at en el item? false
+fila encontrada ... sí
+UI_DATE_TEXT ...... "Invalid Date"
+esperado (convención es-VE en este navegador) "30/9/2026, 5:54:06 p. m."
+veredicto ......... FECHA INCORRECTA
