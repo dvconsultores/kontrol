@@ -53,7 +53,7 @@ class EstablishmentCreate(BaseModel):
 
 
 @router.get("/companies")
-def list_companies(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def list_companies(q: str = "", db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """Las empresas en las que este usuario puede operar.
 
     Es la autoridad del selector de empresa: lo que salga de aquí es lo que la
@@ -63,14 +63,25 @@ def list_companies(db: Session = Depends(get_db), user: User = Depends(get_curre
 
     Se resuelve con `accessible_company_ids`, la misma autoridad que valida cada
     petición, para que la lista y el permiso no puedan divergir.
+
+    `q` es la búsqueda general de la pantalla (FR-001-065): busca **código,
+    razón social, nombre comercial y RIF**, la misma terna que `FR-002-042`
+    decidió para terceros, con la misma semántica que ese precedente —contiene,
+    sin distinguir mayúsculas— y dentro del tenant, nunca fuera. La caja ya
+    enviaba `q`; el servidor la ignoraba y devolvía la lista entera con 200.
     """
     from app.core.company_context import accessible_company_ids
 
+    query = select(Company).where(Company.tenant_id == user.tenant_id)
+    if q:
+        like = f"%{q}%"
+        query = query.where(
+            Company.code.ilike(like) | Company.legal_name.ilike(like)
+            | Company.trade_name.ilike(like) | Company.rif.ilike(like))
+
     alcanzables = set(accessible_company_ids(db, user))
     companies = [
-        c for c in db.execute(
-            select(Company).where(Company.tenant_id == user.tenant_id)
-            .order_by(Company.created_at)).scalars().all()
+        c for c in db.execute(query.order_by(Company.created_at)).scalars().all()
         if str(c.id) in alcanzables
     ]
     return [

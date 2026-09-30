@@ -1,0 +1,9 @@
+== FASE post · /organizacion/empresas · sesión uab/DEMO (D1 y D2) ==
+placeholder ........ "Buscar en esta pantalla…"
+filas sin buscar ... 2  ["D1\tDemo C.A.\tJ-12345678-9\tACTIVE","D2\tSEGUNDA EMPRESA E2E 047 CA\tJ-40470470-7\tACTIVE"]
+buscando "ZZZ-NO-EXISTE-EMPRESA-Q" .. 0  []
+buscando "SEGUNDA" .. 1  ["D2\tSEGUNDA EMPRESA E2E 047 CA\tJ-40470470-7\tACTIVE"]
+buscando "segunda" .. 1  ["D2\tSEGUNDA EMPRESA E2E 047 CA\tJ-40470470-7\tACTIVE"]
+buscando "J-4047" .. 1  ["D2\tSEGUNDA EMPRESA E2E 047 CA\tJ-40470470-7\tACTIVE"]
+tras limpiar ....... 2  ["D1\tDemo C.A.\tJ-12345678-9\tACTIVE","D2\tSEGUNDA EMPRESA E2E 047 CA\tJ-40470470-7\tACTIVE"]
+peticiones ......... ["/api/v1/organization/companies","/api/v1/organization/companies?q=","/api/v1/organization/companies?q=ZZZ-NO-EXISTE-EMPRESA-Q","/api/v1/organization/companies?q=SEGUNDA","/api/v1/organization/companies?q=segunda","/api/v1/organization/companies?q=J-4047"]

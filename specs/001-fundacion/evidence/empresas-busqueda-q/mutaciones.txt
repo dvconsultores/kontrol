@@ -1,0 +1,40 @@
+EMPRESAS-BUSQUEDA-Q · mutaciones sobre app/modules/organization/api.py · suite tests/test_company_search.py (SQLite)
+
+SEARCH-COMP-01 · q deja de aplicarse
+  -> muere: 15 caída(s): 02_un_termino_inexistente_devuelve_una_lista_vacia_con_200, 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[code], 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[legal_name], 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[rif], 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[trade_name], 07_no_distingue_mayusculas, 08_encuentra_un_fragmento_interior, 09_un_nombre_comercial_nulo_ni_rompe_ni_se_busca_como_texto, 10_la_misma_empresa_en_dos_tenants_solo_aparece_en_el_suyo, 11_la_busqueda_actua_dentro_del_alcance_del_usuario_no_lo_sustituye, 12_13_el_resultado_es_el_conjunto_filtrado_entero, 14_la_busqueda_conserva_el_orden_por_fecha_de_alta, 16_un_parametro_desconocido_se_sigue_ignorando_como_antes, 17_dos_empresas_con_el_mismo_codigo_siguen_conviviendo_y_ambas_se_encuentran, campos_no_decididos_no_se_buscan
+
+SEARCH-COMP-02 · code fuera del OR
+  -> muere: 5 caída(s): 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[code], 07_no_distingue_mayusculas, 10_la_misma_empresa_en_dos_tenants_solo_aparece_en_el_suyo, 16_un_parametro_desconocido_se_sigue_ignorando_como_antes, 17_dos_empresas_con_el_mismo_codigo_siguen_conviviendo_y_ambas_se_encuentran
+
+SEARCH-COMP-03 · legal_name fuera del OR
+  -> muere: 8 caída(s): 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[legal_name], 07_no_distingue_mayusculas, 08_encuentra_un_fragmento_interior, 09_un_nombre_comercial_nulo_ni_rompe_ni_se_busca_como_texto, 10_la_misma_empresa_en_dos_tenants_solo_aparece_en_el_suyo, 11_la_busqueda_actua_dentro_del_alcance_del_usuario_no_lo_sustituye, 12_13_el_resultado_es_el_conjunto_filtrado_entero, 14_la_busqueda_conserva_el_orden_por_fecha_de_alta
+
+SEARCH-COMP-04 · trade_name fuera del OR
+  -> muere: 2 caída(s): 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[trade_name], 08_encuentra_un_fragmento_interior
+
+SEARCH-COMP-05 · rif fuera del OR
+  -> muere: 2 caída(s): 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[rif], 08_encuentra_un_fragmento_interior
+
+SEARCH-COMP-06 · con q, la búsqueda sustituye al alcance de tenant (OR)
+  -> SOBREVIVE: 0 caída(s): -
+
+SEARCH-COMP-07 · q después del recorte (filtro en Python sobre 1 fila)
+  -> muere: 12 caída(s): 01_sin_q_y_con_q_vacia_el_listado_es_el_de_siempre, 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[code], 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[legal_name], 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[rif], 03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[trade_name], 07_no_distingue_mayusculas, 08_encuentra_un_fragmento_interior, 09_un_nombre_comercial_nulo_ni_rompe_ni_se_busca_como_texto, 10_la_misma_empresa_en_dos_tenants_solo_aparece_en_el_suyo, 12_13_el_resultado_es_el_conjunto_filtrado_entero, 16_un_parametro_desconocido_se_sigue_ignorando_como_antes, 17_dos_empresas_con_el_mismo_codigo_siguen_conviviendo_y_ambas_se_encuentran
+
+SEARCH-COMP-08 · like en vez de ilike (distingue mayúsculas)
+  -> SOBREVIVE: 0 caída(s): -
+
+SEARCH-COMP-09 · igualdad en vez de contiene
+  -> muere: 7 caída(s): 07_no_distingue_mayusculas, 08_encuentra_un_fragmento_interior, 09_un_nombre_comercial_nulo_ni_rompe_ni_se_busca_como_texto, 10_la_misma_empresa_en_dos_tenants_solo_aparece_en_el_suyo, 11_la_busqueda_actua_dentro_del_alcance_del_usuario_no_lo_sustituye, 12_13_el_resultado_es_el_conjunto_filtrado_entero, 14_la_busqueda_conserva_el_orden_por_fecha_de_alta
+
+restaurado: True · HAY MUTANTES VIVOS
+
+Los dos supervivientes de SQLite, repetidos sobre PostgreSQL 16.2:
+
+SEARCH-COMP-06 · con q, la búsqueda sustituye al alcance de tenant (OR)
+  -> SOBREVIVE: 0 caída(s): -
+
+SEARCH-COMP-08 · like en vez de ilike (distingue mayúsculas)
+  -> muere: 2 caída(s): 07_no_distingue_mayusculas, 10_la_misma_empresa_en_dos_tenants_solo_aparece_en_el_suyo
+
+restaurado: True

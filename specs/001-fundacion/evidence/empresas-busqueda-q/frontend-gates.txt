@@ -1,0 +1,13 @@
+EMPRESAS-BUSQUEDA-Q · puertas del frontend · 2026-09-30T12:43:38-04:00
+== npm run typecheck (tsc -b --noEmit) ==
+tsc exit=0
+== npm run lint (eslint . --max-warnings 0) ==
+eslint exit=0
+== npm test (vitest run) ==
+ Test Files  22 passed (22)
+      Tests  388 passed (388)
+== npm run build (tsc -b && vite build) ==
+dist/assets/DataTable-Bg8krvLJ.js                  52.49 kB │ gzip:  14.24 kB
+dist/assets/index-CGBZFQYV.js                     416.03 kB │ gzip: 126.79 kB
+✓ built in 2.82s
+build exit=0

@@ -1,0 +1,37 @@
+EMPRESAS-BUSQUEDA-Q · el precedente vivo de q, tal como está escrito · HEAD e6968fe
+
+== terceros (master_data/api.py::list_parties) ==
+def list_parties(
+    q: str = "",
+    status: str | None = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    query = select(Party).where(Party.company_id == ctx.company_id)
+    if q:
+        like = f"%{q}%"
+        query = query.where((Party.name.ilike(like)) | (Party.tax_id.ilike(like)) | (Party.code.ilike(like)))
+    if status:
+        query = query.where(Party.status == status)
+    total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
+    items = db.execute(query.order_by(Party.created_at).offset((page - 1) * page_size).limit(page_size)).scalars().all()
+    return {"items": [_party_dict(db, p) for p in items], "total": total, "page": page, "page_size": page_size}
+
+== los demás q del producto: mismo patrón ==
+/home/maria/Projectos/Kontrol/resources/backend/app/modules/inventory/api.py:255:        query = query.where((InventoryMovement.document_ref.ilike(like)) | (InventoryMovement.id.ilike(like)))
+/home/maria/Projectos/Kontrol/resources/backend/app/modules/inventory/api.py:428:        query = query.where((ProductSerial.serial.ilike(like)) | (ProductSerial.imei1.ilike(like)))
+/home/maria/Projectos/Kontrol/resources/backend/app/modules/organization/warehouse_api.py:279:        query = query.where(Warehouse.code.ilike(pattern) | Warehouse.name.ilike(pattern))
+/home/maria/Projectos/Kontrol/resources/backend/app/modules/organization/warehouse_api.py:720:        query = query.where(WarehouseLocation.code.ilike(pattern)
+/home/maria/Projectos/Kontrol/resources/backend/app/modules/organization/warehouse_api.py:721:                            | WarehouseLocation.name.ilike(pattern))
+/home/maria/Projectos/Kontrol/resources/backend/app/modules/master_data/api.py:201:        query = query.where((Party.name.ilike(like)) | (Party.tax_id.ilike(like)) | (Party.code.ilike(like)))
+/home/maria/Projectos/Kontrol/resources/backend/app/modules/master_data/api.py:295:        query = query.where((CatalogItem.name.ilike(like)) | (CatalogItem.code.ilike(like)))
+/home/maria/Projectos/Kontrol/resources/backend/app/modules/master_data/api.py:334:        query = query.where((CatalogItem.name.ilike(like)) | (CatalogItem.code.ilike(like)))
+/home/maria/Projectos/Kontrol/resources/backend/app/modules/master_data/uom_api.py:203:        query = query.where(UnitOfMeasure.code.ilike(pattern) | UnitOfMeasure.name.ilike(pattern))
+/home/maria/Projectos/Kontrol/resources/backend/app/modules/documents/api.py:367:        query = query.where(Document.title.ilike(pattern)
+/home/maria/Projectos/Kontrol/resources/backend/app/modules/documents/api.py:368:                            | Document.document_number.ilike(pattern))
+
+== ningún helper de escape ni de trim ==
+(sin resultados: ninguno)

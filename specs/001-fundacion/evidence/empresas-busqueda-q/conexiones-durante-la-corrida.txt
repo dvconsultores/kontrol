@@ -1,0 +1,16 @@
+13:00:22 conexiones_ktest=2 tmp_libre=5,9G
+13:00:52 conexiones_ktest=11 tmp_libre=5,8G
+13:01:22 conexiones_ktest=40 tmp_libre=5,4G
+13:01:52 conexiones_ktest=15 tmp_libre=4,9G
+13:02:22 conexiones_ktest=19 tmp_libre=4,8G
+13:02:52 conexiones_ktest=27 tmp_libre=4,7G
+13:03:22 conexiones_ktest=34 tmp_libre=4,5G
+13:03:52 conexiones_ktest=79 tmp_libre=4,0G
+13:04:22 conexiones_ktest=36 tmp_libre=4,0G
+13:04:52 conexiones_ktest=38 tmp_libre=4,0G
+13:05:22 conexiones_ktest=45 tmp_libre=3,9G
+13:05:52 conexiones_ktest=49 tmp_libre=3,9G
+13:06:22 conexiones_ktest=62 tmp_libre=3,8G
+13:06:52 conexiones_ktest=64 tmp_libre=3,8G
+13:07:22 conexiones_ktest=77 tmp_libre=3,7G
+13:07:52 conexiones_ktest=80 tmp_libre=3,6G

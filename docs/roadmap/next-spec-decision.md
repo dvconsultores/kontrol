@@ -2266,3 +2266,71 @@ auditoría, ni `API-QUERY-SILENCIOSA`, ni `API-COMPANY-ID-EN-CONSULTA`, ni
 ni `INBOX-045-AISLAMIENTO`, ni `ORPHAN-046-SINGLE`, ni `IDEM-046-TRUNC`, ni
 `AUTH-MC-INTERMITENTE`, ni tocar el lockfile, ni la certificación de compras, ni la Spec
 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+## 2026-09-30 · Tras converger el delta EMPRESAS-BUSQUEDA-Q (dueña 001, apoyo 012)
+
+Era la única de la cola con todo decidido, y por eso ha sido corta. La caja de Empresas
+enviaba `q`; el servidor no lo declaraba y devolvía la lista entera con 200. Medido otra
+vez antes de tocar nada, en la API y en Chromium, entrando por el menú: `uab` con dos
+empresas, `uc` con una, y cualquier término —inexistente, la razón social de la segunda,
+el RIF, el código— devolvía las mismas filas. `B == A`.
+
+Los campos venían decididos de `aae7cd2` —`code`, `legal_name`, `trade_name`, `rif`, la
+terna de `FR-002-042` con el segundo nombre que la entidad tiene— y no se reabrieron. La
+semántica tampoco se inventó: se leyó del precedente vivo de terceros, que es el mismo
+patrón en los siete `q` del producto —`ilike` con `%q%` sobre cada campo en OR, sin `trim`,
+sin escape de comodines, `q` vacía sin filtro—. El backend ya acotaba por tenant en SQL y
+por `accessible_company_ids` después; el predicado entra entre los dos. Un parámetro y
+cuatro `ilike`: ficheros de producto, 1.
+
+El frontend no se tocó porque ya hacía todo lo que debía: caja, `q` en la petición, `q`
+en la `queryKey`. Lo que no existe en este endpoint —`total`, `page`, recorte— tampoco
+se inventó: `EMPRESAS-SIN-SOBRE` sigue abierta y el encargo fijaba «no cambiar la forma
+pública salvo declarar `q`». Lo exigible, y exigido, es que la respuesta sea el conjunto
+que coincide, entero y en el orden de siempre.
+
+Diecisiete pruebas backend con la misma `ALFA-OBJETIVO` en dos tenants y un usuario
+limitado a D1; tres de página con un servidor de mentira que busca de verdad, para que la
+pantalla no pueda fingirlo; cinco E2E sobre el mundo sembrado. Nueve mutantes: siete
+muertos en SQLite, el de `like` por `ilike` muere en PostgreSQL —SQLite no distingue
+mayúsculas en `LIKE`, así que ahí no podía morir— y el de «la búsqueda sustituye al tenant»
+es equivalente, porque la segunda capa lo tapa. Vitest 388/388, `tsc -b` y ESLint limpios,
+`vite build` correcto, E2E de la pantalla 22/22.
+
+### Lo que este delta enseñó del entorno
+
+`make_engine` crea un schema de PostgreSQL por módulo de prueba y nunca lo suelta: tres
+corridas completas dejaron la base de pruebas en 6,8 GB, llenaron el `tmpfs` de 7,6 GB
+donde vive el clúster de QA y PostgreSQL cayó a mitad de la cuarta. Se soltó la base, se
+recreó y la regresión se repitió limpia. Registrado como `TEST-SCHEMAS-PG-SIN-LIMPIEZA`.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **AUDITORIA-SOBRE-VS-ARRAY** · la tabla nunca pinta | 012 | no |
+| 2 | **EMPRESAS-SIN-SOBRE** · el listado no pagina en el servidor | 001/007 | no |
+| 3 | **E2E-SIN-TYPECHECK** · `e2e/` fuera del grafo TypeScript | 054 | no |
+| 4 | **LOCK-SIN-REPORTLAB-MAGIC** · el lock no reconstruye el entorno | 001/052 | no |
+| 5 | **TEST-SCHEMAS-PG-SIN-LIMPIEZA** · la suite llena el disco | 054/052 | no |
+| 6 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 7 | SPEC053 · verificar restauración (DT-11) | 053 | no |
+
+**A la espera de decisión del owner**: `API-QUERY-SILENCIOSA`, `SEED-EMPRESA-CODIGO-NO-UNICO`,
+`MOVTYPE-GLOBAL-SIN-UNICIDAD`, `UI-BUSQUEDA-MUERTA` en Auditoría (campos) y en Existencias.
+
+**Candidata siguiente: `AUDITORIA-SOBRE-VS-ARRAY`.** Con el listado ya acotado por tenant,
+la pantalla de auditoría es la única del producto que nunca ha mostrado una fila; el
+defecto es de una línea de tipo y una de datos, arrastra `AUDITORIA-CREATED-AT`, y no
+espera ninguna decisión.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni `q` en Auditoría ni en Existencias, ni el sobre de `AuditoriaPage`, ni `created_at`, ni
+`EMPRESAS-SIN-SOBRE`, ni el placeholder de Empresas, ni una política de escape de
+comodines, ni `API-QUERY-SILENCIOSA`, ni `API-COMPANY-ID-EN-CONSULTA`, ni
+`E2E-SIN-TYPECHECK`, ni `SEED-EMPRESA-CODIGO-NO-UNICO`, ni `MOVTYPE-GLOBAL-SIN-UNICIDAD`,
+ni `INBOX-045-AISLAMIENTO`, ni tocar el lockfile ni `conftest.py`, ni la certificación de
+compras, ni la Spec 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

@@ -1,0 +1,330 @@
+EMPRESAS-BUSQUEDA-Q · REGRESIÓN COMPLETA DE BACKEND · PostgreSQL 16.2 (pgserver 55432, base ktest recién creada, un schema por módulo) · en solitario · 2026-09-30T13:08:14-04:00
+KONTROL_TEST_DB_URL=postgresql+psycopg2://postgres@localhost:55432/ktest · entorno reconstruido (uv 3.11.16 + lock + reportlab + python-magic; sin clamscan) · pytest tests
+
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+        Any other keyword parameter will be passed to the underlying client
+E       psycopg2.OperationalError: connection to server at "localhost" (::1), port 55432 failed: FATAL:  sorry, too many clients already
+        Any other keyword parameter will be passed to the underlying client
+E       sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 55432 failed: FATAL:  sorry, too many clients already
+E       (Background on this error at: https://sqlalche.me/e/20/e3q8)
+        Any other keyword parameter will be passed to the underlying client
+E       psycopg2.OperationalError: connection to server at "localhost" (::1), port 55432 failed: FATAL:  sorry, too many clients already
+        Any other keyword parameter will be passed to the underlying client
+E       sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 55432 failed: FATAL:  sorry, too many clients already
+E       (Background on this error at: https://sqlalche.me/e/20/e3q8)
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"7e6cda37d55f4ed48d0a788c6705ecf6","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"5fa14b6f94d14edba7af269128868c85","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E   AssertionError: ('../../../../etc/passwd.pdf', '{"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"338b648c367a4566a831c2b37d858278","details":{"scan_result":"SCAN_FAILED","signature":null}}')
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"bd3df84975a7462b84da3ac7972acbd9","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"8f573059a4f2475ca83c9f8eca7001eb","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"a4badcc8b0f54b648a321cc4700e5d24","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"281aa862996a4a689586e7f5a61569d3","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E                                           app.core.errors.KontrolError: No se pudo verificar la seguridad del archivo
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"d16af99722654cb29c2fa3604da09261","details":{"scan_result":"SCAN_FAILED","signature":null}}
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+E   AssertionError: no se pudo descargar el original: {"code":"FILE_NOT_SCANNED","message":"El archivo aún no superó la verificación de seguridad","field_errors":{},"request_id":"c5376686fee94d9f9562b0449a5f29e6","details":null}
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+        Any other keyword parameter will be passed to the underlying client
+E       psycopg2.OperationalError: connection to server at "localhost" (::1), port 55432 failed: FATAL:  sorry, too many clients already
+        Any other keyword parameter will be passed to the underlying client
+E       sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 55432 failed: FATAL:  sorry, too many clients already
+E       (Background on this error at: https://sqlalche.me/e/20/e3q8)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+FAILED tests/test_documents.py::test_subida_valida_calcula_hash_en_servidor
+FAILED tests/test_documents.py::test_el_nombre_del_usuario_nunca_es_ruta
+FAILED tests/test_documents.py::test_versionado_sin_sobrescritura
+FAILED tests/test_documents.py::test_subida_idempotente
+FAILED tests/test_documents.py::test_vinculacion_y_documento_compartido
+FAILED tests/test_documents.py::test_version_congelada_el_historico_no_se_reinterpreta
+FAILED tests/test_documents.py::test_vinculo_congelado_no_se_desvincula
+FAILED tests/test_documents.py::test_borrado_protegido_y_archivado_conserva_binario
+FAILED tests/test_documents.py::test_el_mismo_archivo_dos_veces_no_se_deduplica_ni_se_bloquea
+FAILED tests/test_documents.py::test_una_version_referenciada_no_se_purga
+FAILED tests/test_documents_security.py::test_amz_01_recorrido_de_rutas
+FAILED tests/test_documents_security.py::test_amz_05_xss_por_nombre_de_archivo
+FAILED tests/test_documents_security.py::test_amz_12_clave_de_almacenamiento_opaca
+FAILED tests/test_documents_security.py::test_amz_13_sin_sobrescritura_del_historico
+FAILED tests/test_documents_security.py::test_amz_14_el_hash_no_autoriza
+FAILED tests/test_documents_security.py::test_amz_15_asignacion_masiva
+FAILED tests/test_documents_security.py::test_amz_17_desvinculacion_no_autorizada
+FAILED tests/test_documents_security.py::test_amz_19_inyeccion_de_cabeceras
+FAILED tests/test_documents_security.py::test_amz_20_los_registros_no_filtran_contenido
+FAILED tests/test_documents_security.py::test_fallo_de_escritura_no_deja_version
+FAILED tests/test_documents_security.py::test_objeto_ausente_no_se_entrega_otra_cosa
+FAILED tests/test_documents_security.py::test_huella_distinta_no_se_entrega
+FAILED tests/test_documents_security.py::test_pendiente_de_analisis_no_se_entrega
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[0]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[1]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[2]
+FAILED tests/test_documents_security.py::test_la_primera_version_simultanea_tampoco_da_un_500
+FAILED tests/test_documents_security.py::test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500
+FAILED tests/test_documents_security.py::test_tres_subidas_simultaneas_crean_una_sola_version
+FAILED tests/test_documents_security.py::test_la_misma_clave_en_carrera_devuelve_la_version_ganadora
+FAILED tests/test_documents_security.py::test_un_reintento_devuelve_la_version_de_su_clave_aunque_haya_otra_despues
+FAILED tests/test_documents_security.py::test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena
+FAILED tests/test_documents_security.py::test_subidas_a_documentos_distintos_no_se_esperan
+FAILED tests/test_documents_security.py::test_otro_tenant_no_alcanza_un_documento_ajeno_durante_la_carrera
+FAILED tests/test_documents_security.py::test_el_contrato_nunca_expone_almacenamiento
+FAILED tests/test_migrations_offline.py::test_schema_chain_compiles_offline_postgres
+FAILED tests/test_migrations_offline.py::test_approvals_migrations_compile_offline_postgres
+FAILED tests/test_n9_integrity.py::test_un_objeto_alterado_no_se_entrega_como_si_nada
+FAILED tests/test_n9_integrity.py::test_el_binario_ausente_tampoco_se_entrega_en_silencio
+FAILED tests/test_spec052_migration_0033_legacy.py::test_una_instalacion_limpia_termina_con_todo_validado
+FAILED tests/test_uom_backfill.py::test_backfill_deterministico
+FAILED tests/test_uom_backfill.py::test_backfill_reconstruible_con_candidata_unica
+FAILED tests/test_uom_backfill.py::test_backfill_ambiguo_no_adivina
+FAILED tests/test_uom_backfill.py::test_linea_fiscal_irreconstruible_aborta_sin_escribir
+FAILED tests/test_uom_backfill.py::test_umbral_configurable_permite_continuar_deliberadamente
+FAILED tests/test_uom_backfill.py::test_conversion_de_tipo_conserva_los_valores
+FAILED tests/test_uom_backfill.py::test_reejecucion_es_idempotente
+FAILED tests/test_warehouse_migration_0018.py::test_caso_1_todas_las_referencias_validas
+FAILED tests/test_warehouse_migration_0018.py::test_caso_3_no_reconstruible_con_nulo_legitimo
+FAILED tests/test_warehouse_migration_0018.py::test_caso_2_huerfana_reconstruible_se_repara
+FAILED tests/test_warehouse_migration_0018.py::test_reconstruccion_ambigua_no_adivina
+FAILED tests/test_warehouse_migration_0018.py::test_caso_4_huerfana_critica_bloquea_la_migracion
+FAILED tests/test_warehouse_migration_0018.py::test_caso_5_y_6_idempotencia_y_upgrade_desde_base_real
+FAILED tests/test_warehouse_migration_0018.py::test_permisos_de_008_los_concede_la_migracion
+ERROR tests/test_documents_migration_0024.py::test_ninguna_anotacion_crea_un_documento
+ERROR tests/test_documents_migration_0024.py::test_ninguna_columna_heredada_se_modifica
+ERROR tests/test_documents_migration_0024.py::test_url_absoluta_se_clasifica_como_referencia_externa
+ERROR tests/test_documents_migration_0024.py::test_ruta_relativa_queda_sin_verificar_no_valida
+ERROR tests/test_documents_migration_0024.py::test_un_hash_sin_binario_no_es_un_documento
+ERROR tests/test_documents_migration_0024.py::test_los_vacios_y_nulos_no_se_anotan
+ERROR tests/test_documents_migration_0024.py::test_el_texto_libre_se_anota_sin_interpretarse
+ERROR tests/test_documents_migration_0024.py::test_ninguna_anotacion_se_pierde
+ERROR tests/test_documents_migration_0024.py::test_los_permisos_documentales_quedan_concedidos
+ERROR tests/test_documents_migration_0024.py::test_la_reversion_borra_solo_las_anotaciones
+ERROR tests/test_spec004_installation_race.py::test_dos_altas_simultaneas_dejan_una_instalacion_y_una_sola_clave
+ERROR tests/test_spec004_installation_race.py::test_repetir_la_peticion_no_crea_otra_identidad_ni_reescribe_la_clave
+ERROR tests/test_spec004_installation_race.py::test_con_dos_filas_heredadas_todas_las_lecturas_eligen_la_mas_antigua
+ERROR tests/test_spec004_installation_race.py::test_una_licencia_firmada_para_otra_instalacion_se_rechaza_sin_tocar_el_estado[KTL-VE-OTRA0000-0000]
+ERROR tests/test_spec004_installation_race.py::test_una_licencia_firmada_para_otra_instalacion_se_rechaza_sin_tocar_el_estado[FALSIFICADA]
+ERROR tests/test_spec004_installation_race.py::test_control_positivo_la_licencia_de_esta_instalacion_si_se_acepta
+ERROR tests/test_spec019_migration_0044.py::test_la_recepcion_pasada_no_recibe_un_arribo_inventado
+ERROR tests/test_spec019_migration_0044.py::test_la_linea_pasada_no_recibe_una_observacion_inventada
+ERROR tests/test_spec019_migration_0044.py::test_no_se_añadio_un_veredicto_de_conformidad_duplicado
+ERROR tests/test_spec019_migration_0044.py::test_las_restricciones_existen_con_el_nombre_del_orm
+ERROR tests/test_spec019_migration_0044.py::test_la_restriccion_de_bultos_rechaza_un_negativo
+ERROR tests/test_spec019_migration_0044.py::test_la_migracion_declara_lo_que_encontro
+ERROR tests/test_spec020_migration_0045.py::test_no_se_fabrica_ninguna_incidencia_retroactiva
+ERROR tests/test_spec020_migration_0045.py::test_la_tabla_existe_con_sus_restricciones
+ERROR tests/test_spec020_migration_0045.py::test_un_tipo_inventado_no_entra_ni_por_sql
+ERROR tests/test_spec020_migration_0045.py::test_una_diferencia_documental_con_linea_no_entra
+ERROR tests/test_spec020_migration_0045.py::test_una_cantidad_no_positiva_no_entra
+ERROR tests/test_spec020_migration_0045.py::test_una_incidencia_resuelta_sin_tratamiento_no_entra
+ERROR tests/test_spec020_migration_0045.py::test_las_claves_foraneas_sujetan_la_cadena
+ERROR tests/test_spec020_migration_0045.py::test_el_codigo_es_unico_por_empresa
+ERROR tests/test_spec020_migration_0045.py::test_la_aplicacion_puede_insertar_en_la_tabla_que_crea_la_migracion
+ERROR tests/test_spec021_migration_0047.py::test_lo_ya_aceptado_queda_confirmado_y_lo_demas_pendiente
+ERROR tests/test_spec021_migration_0047.py::test_el_permiso_nuevo_llega_a_quien_ya_podia_aprobar
+ERROR tests/test_spec021_migration_0047.py::test_el_permiso_no_se_duplica_al_reaplicar
+ERROR tests/test_spec021_migration_0047.py::test_la_tabla_de_confirmaciones_rechaza_lo_imposible
+ERROR tests/test_spec021_migration_0047.py::test_la_aplicacion_puede_insertar_en_la_tabla_que_crea_la_migracion
+ERROR tests/test_spec021_migration_0047.py::test_bajar_y_subir_deja_la_base_igual
+ERROR tests/test_spec022_migration_0048.py::test_la_direccion_historica_la_da_el_signo_no_una_suposicion
+ERROR tests/test_spec022_migration_0048.py::test_un_movimiento_sin_ubicacion_no_se_le_inventa_una
+ERROR tests/test_spec022_migration_0048.py::test_la_restriccion_rechaza_un_traslado_sin_procedencia
+ERROR tests/test_spec022_migration_0048.py::test_la_aplicacion_puede_insertar_en_la_tabla_que_crea_la_migracion
+ERROR tests/test_spec022_migration_0048.py::test_bajar_y_subir_deja_la_base_igual
+ERROR tests/test_spec022_migration_0048.py::test_dos_colocaciones_simultaneas_no_ubican_la_misma_existencia
+ERROR tests/test_spec022_migration_0048.py::test_reservar_y_ubicar_a_la_vez_no_pierde_el_compromiso
+ERROR tests/test_spec023_migration_0046.py::test_la_clasificacion_historica_distingue_entradas_de_salidas
+ERROR tests/test_spec023_migration_0046.py::test_un_movimiento_en_cero_no_deja_la_migracion_a_medias
+ERROR tests/test_spec023_migration_0046.py::test_ningun_movimiento_queda_sin_procedencia
+ERROR tests/test_spec023_migration_0046.py::test_la_restriccion_de_procedencia_existe_y_rechaza
+ERROR tests/test_spec023_migration_0046.py::test_la_aplicacion_puede_insertar_en_la_tabla_que_crea_la_migracion
+ERROR tests/test_spec023_migration_0046.py::test_bajar_y_volver_a_subir_deja_la_base_igual
+ERROR tests/test_spec023_migration_0046.py::test_dos_reclasificaciones_simultaneas_no_mueven_la_misma_existencia
+ERROR tests/test_spec030_migration_0043.py::test_la_reserva_de_pedido_reconstruible_recibe_pedido_linea_y_trigger_legado
+ERROR tests/test_spec030_migration_0043.py::test_la_reserva_ambigua_no_recibe_linea_inventada
+ERROR tests/test_spec030_migration_0043.py::test_la_manual_y_la_huerfana_se_clasifican_sin_pedido
+ERROR tests/test_spec030_migration_0043.py::test_los_estados_del_pedido_se_renombran_con_evidencia
+ERROR tests/test_spec030_migration_0043.py::test_el_indice_parcial_y_los_checks_existen_con_el_nombre_del_orm
+ERROR tests/test_spec030_migration_0043.py::test_el_permiso_submit_existe_y_admin_lo_tiene
+ERROR tests/test_spec030_migration_0043.py::test_la_migracion_es_idempotente_en_columnas_y_permisos
+ERROR tests/test_spec047_schema.py::test_la_migracion_concede_los_permisos_nuevos_al_administrador
+ERROR tests/test_spec047_schema.py::test_el_orm_y_la_base_migrada_declaran_lo_mismo
+ERROR tests/test_spec047_schema.py::test_la_unicidad_y_los_checks_existen_de_verdad_en_la_base_migrada
+ERROR tests/test_spec047_schema.py::test_zz_la_migracion_se_deshace_y_se_rehace
+ERROR tests/test_spec052_migration_0033_legacy.py::test_una_instalacion_con_historico_huerfano_llega_a_la_cabeza
+ERROR tests/test_spec052_migration_0033_legacy.py::test_el_historico_sobrevive_entero_y_sin_un_solo_cambio
+ERROR tests/test_spec052_migration_0033_legacy.py::test_no_se_fabrica_ninguna_empresa
+ERROR tests/test_spec052_migration_0033_legacy.py::test_solo_se_migra_al_motor_lo_que_tiene_empresa_viva
+ERROR tests/test_spec052_migration_0033_legacy.py::test_la_restriccion_existe_y_tolera_solo_lo_historico
+ERROR tests/test_spec052_migration_0033_legacy.py::test_una_escritura_nueva_con_empresa_inexistente_es_rechazada
+ERROR tests/test_spec052_migration_0033_legacy.py::test_mover_una_fila_a_una_empresa_inexistente_tambien_es_rechazado
+ERROR tests/test_spec052_migration_0033_legacy.py::test_una_escritura_nueva_con_empresa_real_se_acepta
+ERROR tests/test_spec052_migration_0033_legacy.py::test_repetir_la_actualizacion_no_cambia_nada
+ERROR tests/test_treasury.py::TestAnticiposYMultiempresa::test_tenant_isolation_for_cashbox
+ERROR tests/test_treasury.py::TestAnticiposYMultiempresa::test_rate_snapshot_captured
+54 failed, 1546 passed, 27 skipped, 73 errors in 482.45s (0:08:02)
