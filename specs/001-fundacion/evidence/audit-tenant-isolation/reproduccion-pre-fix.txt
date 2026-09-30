@@ -1,0 +1,15 @@
+== FASE pre == tenants: {'DEMO': '3da11f2e-0603-430e-91a5-aea18e2cbc68', 'DEMO2': 'a8ea4089-46c0-4208-b2ef-0dfa1f6422ab'}
+HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+HTTP Request: GET http://testserver/api/v1/audit/events?page=1&page_size=100 "HTTP/1.1 200 OK"
+A. admin/DEMO GET /audit/events -> total=7 items=7 por tenant real={'DEMO2': 2, 'DEMO': 5}
+A. eventos de DEMO2 devueltos a admin/DEMO: 2 ['ae38eefd-232d-4311-a2e2-759daa06f788', '26bdb1de-d6d4-4016-a27d-9eee1b2d5c54']
+B. EVENT_A=46d2ff2e-7700-48f6-a4a3-c8237cc6f03e tenant=DEMO(3da11f2e-0603-430e-91a5-aea18e2cbc68)
+B. EVENT_B=41c4c5fc-b765-4807-9cb2-b3e6f0f0d121 tenant=DEMO2(a8ea4089-46c0-4208-b2ef-0dfa1f6422ab)
+HTTP Request: GET http://testserver/api/v1/audit/events?page=1&page_size=100&action=AUDTEN_PROBE "HTTP/1.1 200 OK"
+B. admin/DEMO  ?action=AUDTEN_PROBE -> total=2 EVENT_A visible=True EVENT_B visible=True
+HTTP Request: GET http://testserver/api/v1/audit/events?page=1&page_size=100&action=AUDTEN_PROBE "HTTP/1.1 200 OK"
+B. uc/DEMO2    ?action=AUDTEN_PROBE -> total=2 EVENT_A visible=True EVENT_B visible=True
+C. último LOGIN_SUCCESS con tenant=DEMO: existe company_id=None
+C. último LOGIN_SUCCESS con tenant=DEMO2: existe company_id=None
+== VEREDICTO pre: LEAK ==

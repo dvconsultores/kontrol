@@ -1,0 +1,10 @@
+== FASE post == tenants: {'DEMO': '3da11f2e-0603-430e-91a5-aea18e2cbc68', 'DEMO2': 'a8ea4089-46c0-4208-b2ef-0dfa1f6422ab'}
+A. admin/DEMO GET /audit/events -> total=7 items=7 por tenant real={'DEMO': 7}
+A. eventos de DEMO2 devueltos a admin/DEMO: 0 []
+B. EVENT_A=1dbc9554-b13f-4039-8f91-36055880c278 tenant=DEMO(3da11f2e-0603-430e-91a5-aea18e2cbc68)
+B. EVENT_B=3b500aa9-f147-4987-b406-e0a4bf42b1c6 tenant=DEMO2(a8ea4089-46c0-4208-b2ef-0dfa1f6422ab)
+B. admin/DEMO  ?action=AUDTEN_PROBE -> total=2 EVENT_A visible=True EVENT_B visible=False
+B. uc/DEMO2    ?action=AUDTEN_PROBE -> total=2 EVENT_A visible=False EVENT_B visible=True
+C. último LOGIN_SUCCESS con tenant=DEMO: existe company_id=None
+C. último LOGIN_SUCCESS con tenant=DEMO2: existe company_id=None
+== VEREDICTO post: AISLADO ==

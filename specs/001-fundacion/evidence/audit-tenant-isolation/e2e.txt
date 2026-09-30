@@ -1,0 +1,27 @@
+AUDIT-EVENTS-SIN-TENANT · E2E del consumidor del listado (approvals.spec.ts lee /audit/events) · Chromium · backend 127.0.0.1:8000 sobre kaud (PostgreSQL) · Vite 5173 · 2026-09-30T11:48:02-04:00
+
+· qa/pg-e2e-seed.py
+setup: La instalación ya fue inicializada
+licencia: ya vigente, no se reimporta
+· qa/spec047-e2e-seed.py
+{'tenant': '3da11f2e-0603-430e-91a5-aea18e2cbc68', 'd1': 'a2cbdcd5-a757-4ee0-b28b-e59e80c839e5', 'd2': '3986120c-c6f9-4a2c-83fd-500375b0531f', 'admin_scoped_to': 'D1'}
+· qa/n6-e2e-seed.py
+{'empresa_a': 'a2cbdcd5-a757-4ee0-b28b-e59e80c839e5', 'empresa_b': '3986120c-c6f9-4a2c-83fd-500375b0531f', 'empresa_c': 'e4b03795-4902-4560-9bbf-add5f67f7af6', 'tenant_1': '3da11f2e-0603-430e-91a5-aea18e2cbc68', 'tenant_2': 'a8ea4089-46c0-4208-b2ef-0dfa1f6422ab', 'nombre_a': 'Demo C.A.', 'nombre_b': 'SEGUNDA EMPRESA E2E 047 CA', 'nombre_c': 'TERCERA EMPRESA CA', 'tercero_a': 'SOLO-DE-A', 'tercero_b': 'SOLO-DE-B', 'ids_file': '/tmp/kontrol-n6-ids.json'}
+
+Running 13 tests using 6 workers
+
+  ✓   6 [chromium] › e2e/approvals.spec.ts:369:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › usuario sin sesión: el backend deniega, no la UI (360ms)
+  ✓   3 [chromium] › e2e/approvals.spec.ts:377:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › solicitud obsoleta: el documento cambió después de solicitar (926ms)
+  ✓   2 [chromium] › e2e/approvals.spec.ts:306:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › rechazo con motivo obligatorio (942ms)
+  ✓   4 [chromium] › e2e/approvals.spec.ts:350:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › segregación: el creador no puede aprobar y no ve acciones (922ms)
+  ✓   7 [chromium] › e2e/approvals.spec.ts:391:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › If-Match: versión obsoleta produce 409 y no duplica decisión (639ms)
+  ✓   5 [chromium] › e2e/approvals.spec.ts:325:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › devolución para corrección y reenvío (1.2s)
+  ✓   8 [chromium] › e2e/approvals.spec.ts:409:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › idempotencia: doble envío no duplica la solicitud (578ms)
+  ✓  10 [chromium] › e2e/approvals.spec.ts:458:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › multiempresa: la bandeja la delimita el contexto, no el parámetro de consulta (624ms)
+  ✓   9 [chromium] › e2e/approvals.spec.ts:432:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › concurrencia: dos decisiones simultáneas, sólo una prospera (670ms)
+  ✓  13 [chromium] › e2e/approvals.spec.ts:538:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › eventos de dominio emitidos para la Spec 047 (313ms)
+  ✓  11 [chromium] › e2e/approvals.spec.ts:496:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › E2E-045 · el localizador de «Activar» nunca alcanza «Desactivar» (1.3s)
+  ✓  12 [chromium] › e2e/approvals.spec.ts:512:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › E2E-045 · el ayudante de empresa es idempotente (1.7s)
+  ✓   1 [chromium] › e2e/approvals.spec.ts:214:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › flujo principal: configurar → solicitar → bandeja → aprobar 2 niveles → historial (3.1s)
+
+  13 passed (7.4s)

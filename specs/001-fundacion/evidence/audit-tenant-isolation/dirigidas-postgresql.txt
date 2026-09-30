@@ -1,0 +1,6 @@
+=============================== warnings summary ===============================
+../../../../../../tmp/claude-1000/-home-maria-Projectos-Kontrol/31ae8f1b-7f0f-400f-aa41-00d508b7f488/scratchpad/venv/lib/python3.11/site-packages/fastapi/testclient.py:1
+=========================== short test summary info ============================
+FAILED tests/test_reporting.py::TestExportacionYJobs::test_export_pdf_genera_archivo
+FAILED tests/test_mc_security_045_046.py::test_ni_las_versiones_ni_el_archivo_de_b_son_accesibles_desde_a
+ERROR tests/test_n10_convergence.py::test_el_orm_y_la_base_no_difieren_en_nada

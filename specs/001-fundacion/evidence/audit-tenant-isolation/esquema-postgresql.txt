@@ -1,0 +1,46 @@
+AUDIT-EVENTS-SIN-TENANT · esquema real de audit_events en PostgreSQL 16.2 (kaud, cabeza 0057) · 2026-09-30
+
+== columnas ==
+ n  | column_name |        data_type         | is_nullable |      column_default      
+----+-------------+--------------------------+-------------+--------------------------
+  1 | id          | character varying        | NO          | 
+  2 | tenant_id   | character varying        | YES         | 
+  3 | company_id  | character varying        | YES         | 
+  4 | user_id     | character varying        | YES         | 
+  5 | session_id  | character varying        | YES         | 
+  6 | request_id  | character varying        | YES         | 
+  7 | action      | character varying        | NO          | 
+  8 | entity_type | character varying        | NO          | 
+  9 | entity_id   | character varying        | YES         | 
+ 10 | before      | json                     | YES         | 
+ 11 | after       | json                     | YES         | 
+ 12 | source      | character varying        | NO          | 'API'::character varying
+ 13 | reason      | character varying        | YES         | 
+ 14 | evidence    | json                     | YES         | 
+ 15 | ip          | character varying        | YES         | 
+ 16 | event_time  | timestamp with time zone | NO          | 
+ 17 | created_at  | timestamp with time zone | NO          | now()
+ 18 | updated_at  | timestamp with time zone | NO          | now()
+(18 rows)
+
+== restricciones ==
+         conname         | contype |               pg_get_constraintdef                
+-------------------------+---------+---------------------------------------------------
+ fk_audit_events_company | f       | FOREIGN KEY (company_id) REFERENCES companies(id)
+ fk_audit_events_tenant  | f       | FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+ pk_audit_events         | p       | PRIMARY KEY (id)
+(3 rows)
+
+== índices ==
+          indexname          |                                         indexdef                                          
+-----------------------------+-------------------------------------------------------------------------------------------
+ ix_audit_events_action      | CREATE INDEX ix_audit_events_action ON public.audit_events USING btree (action)
+ ix_audit_events_company_id  | CREATE INDEX ix_audit_events_company_id ON public.audit_events USING btree (company_id)
+ ix_audit_events_entity_id   | CREATE INDEX ix_audit_events_entity_id ON public.audit_events USING btree (entity_id)
+ ix_audit_events_entity_type | CREATE INDEX ix_audit_events_entity_type ON public.audit_events USING btree (entity_type)
+ ix_audit_events_request_id  | CREATE INDEX ix_audit_events_request_id ON public.audit_events USING btree (request_id)
+ ix_audit_events_tenant_id   | CREATE INDEX ix_audit_events_tenant_id ON public.audit_events USING btree (tenant_id)
+ ix_audit_events_user_id     | CREATE INDEX ix_audit_events_user_id ON public.audit_events USING btree (user_id)
+ pk_audit_events             | CREATE UNIQUE INDEX pk_audit_events ON public.audit_events USING btree (id)
+(8 rows)
+

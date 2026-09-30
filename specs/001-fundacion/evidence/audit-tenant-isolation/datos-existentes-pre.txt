@@ -1,0 +1,33 @@
+AUDIT-EVENTS-SIN-TENANT · datos existentes tras la siembra E2E (kaud) · antes de cualquier reproducción · 2026-09-30
+
+ total | tenant_null | company_null | company_sin_tenant | user_null 
+-------+-------------+--------------+--------------------+-----------
+     5 |           0 |            5 |                  0 |         4
+(1 row)
+
+== por tenant ==
+ tenant | count 
+--------+-------
+ DEMO   |     4
+ DEMO2  |     1
+(2 rows)
+
+== por tenant y empresa ==
+ tenant | company | count 
+--------+---------+-------
+ DEMO   | <NULL>  |     4
+ DEMO2  | <NULL>  |     1
+(2 rows)
+
+== por acción y fuente ==
+    action    | source | count | tenant_null | company_null 
+--------------+--------+-------+-------------+--------------
+ USER_CREATED | API    |     5 |           0 |            5
+(1 row)
+
+== contradicciones tenant/empresa ==
+ empresa_de_otro_tenant 
+------------------------
+                      0
+(1 row)
+

@@ -1,0 +1,112 @@
+AUDIT-EVENTS-SIN-TENANT · inventario físico de escritores de AuditEvent · HEAD aae7cd2 · 2026-09-30
+
+== 1. Única fábrica: app/shared/audit.py::record_audit (construye AuditEvent; deduce tenant de la empresa si falta) ==
+app/modules/audit/models.py:16:class AuditEvent(UUIDMixin, TimestampMixin, Base):
+app/shared/audit.py:49:    event = AuditEvent(
+
+== 2. Envoltorios por módulo y su fuente de tenant/empresa ==
+app/modules/organization/warehouse_api.py:88:def _audit(db: Session, user: User, ctx: CompanyContext, action: str, entity_type: str,
+app/modules/organization/warehouse_api.py-89-           entity_id: str, before: dict | None = None, after: dict | None = None) -> None:
+app/modules/organization/warehouse_api.py-90-    """El rastro guarda también la empresa.
+app/modules/organization/warehouse_api.py-91-
+app/modules/regulatory/service.py:40:def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+app/modules/regulatory/service.py-41-           company_id: str, actor: str | None = None, **kw: Any) -> None:
+app/modules/regulatory/service.py-42-    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+app/modules/regulatory/service.py-43-    audit_service.record_audit(
+app/modules/identity_access/service.py:59:def _audit(db: Session, **kwargs: Any) -> None:
+app/modules/identity_access/service.py-60-    audit_service.record_audit(db, **kwargs)
+app/modules/identity_access/service.py-61-
+app/modules/identity_access/service.py-62-
+app/modules/inventory/service.py:50:def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+app/modules/inventory/service.py-51-           company_id: str, actor: str | None = None, **kw: Any) -> None:
+app/modules/inventory/service.py-52-    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+app/modules/inventory/service.py-53-    audit_service.record_audit(
+app/modules/inventory/service.py:736:def _audit_reservation(db: Session, *, action: str, reservation: Reservation, actor: str | None,
+app/modules/inventory/service.py-737-                       before_status: str | None, extra: dict[str, Any] | None = None) -> None:
+app/modules/inventory/service.py-738-    """Contrato de auditoría de D0-03 §7: quién, qué pedido y línea, cuánto en
+app/modules/inventory/service.py-739-    tecleado y en base, con qué disparador y por qué motivo."""
+app/modules/treasury/service.py:51:def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+app/modules/treasury/service.py-52-           company_id: str, actor: str | None = None, **kw: Any) -> None:
+app/modules/treasury/service.py-53-    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+app/modules/treasury/service.py-54-    audit_service.record_audit(
+app/modules/purchasing/service.py:102:def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+app/modules/purchasing/service.py-103-           company_id: str, actor: str | None = None, **kw: Any) -> None:
+app/modules/purchasing/service.py-104-    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+app/modules/purchasing/service.py-105-    audit_service.record_audit(
+app/modules/notifications/service.py:84:def _auditar(db: Session, *, accion: str, entidad: str, entidad_id: str, company_id: str,
+app/modules/notifications/service.py-85-             actor: Actor, after: dict[str, Any] | None = None,
+app/modules/notifications/service.py-86-             before: dict[str, Any] | None = None, reason: str | None = None) -> None:
+app/modules/notifications/service.py-87-    record_audit(db, action=accion, entity_type=entidad, entity_id=entidad_id,
+app/modules/notifications/service.py:583:def _auditar_tarea(db: Session, tarea: Task, accion: str, ctx: CompanyContext,
+app/modules/notifications/service.py-584-                   before: dict | None = None, reason: str | None = None) -> None:
+app/modules/notifications/service.py-585-    _auditar(db, accion=accion, entidad="Task", entidad_id=str(tarea.id), company_id=tarea.company_id,
+app/modules/notifications/service.py-586-             actor=persona(ctx.user_id), before=before,
+app/modules/approvals/service.py:66:def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+app/modules/approvals/service.py-67-           company_id: str, actor: str | None = None, **kw: Any) -> None:
+app/modules/approvals/service.py-68-    """Auditoría de negocio del motor (FR-045-064, ADR-012)."""
+app/modules/approvals/service.py-69-    audit_service.record_audit(
+app/modules/master_data/uom_api.py:95:def _audit(db: Session, user: User, action: str, entity_type: str, entity_id: str,
+app/modules/master_data/uom_api.py-96-           before: dict | None = None, after: dict | None = None) -> None:
+app/modules/master_data/uom_api.py-97-    record_audit(db, action=action, entity_type=entity_type, entity_id=entity_id,
+app/modules/master_data/uom_api.py-98-                 tenant_id=user.tenant_id, user_id=str(user.id), before=before, after=after)
+app/modules/fiscal/service.py:48:def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+app/modules/fiscal/service.py-49-           company_id: str, actor: str | None = None, **kw: Any) -> None:
+app/modules/fiscal/service.py-50-    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+app/modules/fiscal/service.py-51-    audit_service.record_audit(
+app/modules/documents/api.py:132:def _audit(db: Session, user: User, action: str, entity_id: str,
+app/modules/documents/api.py-133-           before: dict | None = None, after: dict | None = None) -> None:
+app/modules/documents/api.py-134-    record_audit(db, action=action, entity_type="Document", entity_id=entity_id,
+app/modules/documents/api.py-135-                 tenant_id=user.tenant_id, user_id=str(user.id), before=before, after=after)
+app/modules/sales/service.py:62:def _audit(db: Session, *, action: str, entity_type: str, entity_id: str,
+app/modules/sales/service.py-63-           company_id: str, actor: str | None = None, **kw: Any) -> None:
+app/modules/sales/service.py-64-    """Registra un evento de auditoría de negocio (KAUD-001 → FR-009-022)."""
+app/modules/sales/service.py-65-    audit_service.record_audit(
+app/modules/documents/service.py:73:def _audit(db: Session, actor: Any, action: str, entity_id: str,
+app/modules/documents/service.py-74-           before: dict | None = None, after: dict | None = None) -> None:
+app/modules/documents/service.py-75-    record_audit(db, action=action, entity_type="Document", entity_id=entity_id,
+app/modules/documents/service.py-76-                 tenant_id=getattr(actor, "tenant_id", None),
+
+== 3. Llamadas directas a record_audit fuera de los envoltorios ==
+app/modules/identity_access/service.py:60:    audit_service.record_audit(db, **kwargs)
+app/modules/organization/warehouse_api.py:96:    record_audit(db, action=action, entity_type=entity_type, entity_id=entity_id,
+app/modules/notifications/service.py:87:    record_audit(db, action=accion, entity_type=entidad, entity_id=entidad_id,
+app/modules/reporting/service.py:247:    audit_service.record_audit(db, action="REPORT_EXPORTED", entity_type="ReportExport",
+app/modules/master_data/uom_api.py:97:    record_audit(db, action=action, entity_type=entity_type, entity_id=entity_id,
+app/modules/documents/api.py:134:    record_audit(db, action=action, entity_type="Document", entity_id=entity_id,
+app/modules/documents/service.py:75:    record_audit(db, action=action, entity_type="Document", entity_id=entity_id,
+
+== 4. Llamadas con tenant_id explícito ==
+app/modules/identity_access/service.py:139:        _audit(db, action="LOGIN_BLOCKED", entity_type="User", entity_id=str(user.id), tenant_id=tenant_id, request_id=request_id)
+app/modules/identity_access/service.py:148:        _audit(db, action="LOGIN_FAILED", entity_type="User", entity_id=str(user.id), tenant_id=tenant_id, request_id=request_id)
+app/modules/identity_access/service.py:153:        _audit(db, action="LOGIN_FAILED", entity_type="User", entity_id=str(user.id), tenant_id=tenant_id, request_id=request_id, reason="USUARIO_INACTIVO")
+app/modules/identity_access/service.py:160:    _audit(db, action="LOGIN_SUCCESS", entity_type="User", entity_id=str(user.id), tenant_id=tenant_id, request_id=request_id)
+app/modules/identity_access/service.py:222:    _audit(db, action="SESSION_REFRESHED", entity_type="User", entity_id=str(user.id), tenant_id=user.tenant_id, request_id=request_id)
+app/modules/identity_access/service.py:235:    _audit(db, action="SESSION_REVOKED", entity_type="Session", entity_id=str(session.id), tenant_id=user.tenant_id if user else None, request_id=request_id)
+app/modules/identity_access/service.py:261:    _audit(db, action="PASSWORD_CHANGED", entity_type="User", entity_id=str(user.id), tenant_id=user.tenant_id, request_id=request_id, reason="CAMBIO")
+app/modules/identity_access/service.py:281:    _audit(db, action="PASSWORD_RESET_REQUESTED", entity_type="User", entity_id=str(user.id), tenant_id=tenant_id, request_id=request_id)
+app/modules/identity_access/service.py:299:    _audit(db, action="PASSWORD_RESET_CONFIRMED", entity_type="User", entity_id=str(user.id), tenant_id=user.tenant_id, request_id=request_id)
+app/shared/audit.py:53:        tenant_id=tenant_id,
+
+== 5. Escritores de fondo (sin petición HTTP): el único actor de sistema ==
+app/modules/notifications/service.py-54-@dataclass(frozen=True)
+app/modules/notifications/service.py:55:class Actor:
+app/modules/notifications/service.py-56-    """Quién produce el efecto. El sistema no finge ser un usuario (FR-047-045)."""
+app/modules/notifications/service.py-57-
+app/modules/notifications/service.py-58-    tipo: str
+app/modules/notifications/service.py-59-    user_id: str | None = None
+app/modules/notifications/service.py-60-
+app/modules/notifications/service.py-61-    @property
+app/modules/notifications/service.py-62-    def fuente_auditoria(self) -> str:
+app/modules/notifications/service.py-63-        return "SCHEDULER" if self.tipo == "SYSTEM" else "API"
+
+== 6. Eventos de instalación: tablas propias, no AuditEvent ==
+app/modules/licensing/models.py:48:class LicenseEvent(UUIDMixin, TimestampMixin, Base):
+app/modules/homologation/models.py:43:class HomologationEvent(UUIDMixin, TimestampMixin, Base):
+app/modules/licensing/service.py:243:        LicenseEvent(
+app/modules/homologation/service.py:70:        HomologationEvent(
+
+== 7. Fuentes distintas de API ==
+app/modules/notifications/handlers.py:56:                    company_id=evento.company_id, source=catalogo.FUENTE_APROBACION,
+app/modules/notifications/service.py:88:                 company_id=company_id, user_id=actor.user_id, source=actor.fuente_auditoria,
+app/shared/audit.py:60:        source=source,
+app/modules/treasury/rates.py:413:        rate=valor, source=source_reference or fuente.code,

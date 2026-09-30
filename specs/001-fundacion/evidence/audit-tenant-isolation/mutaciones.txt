@@ -1,0 +1,24 @@
+AUDIT-EVENTS-SIN-TENANT · mutaciones sobre app/modules/audit/api.py · suite tests/test_audit_tenant_isolation.py (SQLite)
+
+AUD-TENANT-M1 · se retira el filtro de tenant
+  -> muere: 9 prueba(s) caídas: 01_el_administrador_de_a_no_recibe_eventos_de_b, 02_inverso_el_administrador_de_b_no_recibe_eventos_de_a, 03_dos_eventos_identicos_solo_se_separan_por_el_tenant, 04_el_total_cuenta_solo_el_tenant_propio, 05_la_paginacion_recorre_solo_el_tenant_propio, 06_los_filtros_funcionales_actuan_dentro_del_tenant, 08_los_escritores_persisten_el_tenant_del_contexto_autenticado, 09_el_listado_es_de_tenant_y_la_vista_por_empresa_es_la_de_reportes, 10_un_evento_sin_tenant_no_lo_lee_ningun_tenant
+
+AUD-TENANT-M2 · filtro en Python después de paginar
+  -> muere: 6 prueba(s) caídas: 01_el_administrador_de_a_no_recibe_eventos_de_b, 02_inverso_el_administrador_de_b_no_recibe_eventos_de_a, 04_el_total_cuenta_solo_el_tenant_propio, 05_la_paginacion_recorre_solo_el_tenant_propio, 06_los_filtros_funcionales_actuan_dentro_del_tenant, 10_un_evento_sin_tenant_no_lo_lee_ningun_tenant
+
+AUD-TENANT-M3 · tenant_id IS NULL OR tenant propio
+  -> muere: 1 prueba(s) caídas: 10_un_evento_sin_tenant_no_lo_lee_ningun_tenant
+
+AUD-TENANT-M4 · la empresa accesible como sustituto del tenant
+  -> muere: 7 prueba(s) caídas: 01_el_administrador_de_a_no_recibe_eventos_de_b, 02_inverso_el_administrador_de_b_no_recibe_eventos_de_a, 03_dos_eventos_identicos_solo_se_separan_por_el_tenant, 04_el_total_cuenta_solo_el_tenant_propio, 05_la_paginacion_recorre_solo_el_tenant_propio, 06_los_filtros_funcionales_actuan_dentro_del_tenant, 09_el_listado_es_de_tenant_y_la_vista_por_empresa_es_la_de_reportes
+
+AUD-TENANT-M5 · un rol asignado exime del filtro (admin = cross-tenant)
+  -> muere: 9 prueba(s) caídas: 01_el_administrador_de_a_no_recibe_eventos_de_b, 02_inverso_el_administrador_de_b_no_recibe_eventos_de_a, 03_dos_eventos_identicos_solo_se_separan_por_el_tenant, 04_el_total_cuenta_solo_el_tenant_propio, 05_la_paginacion_recorre_solo_el_tenant_propio, 06_los_filtros_funcionales_actuan_dentro_del_tenant, 08_los_escritores_persisten_el_tenant_del_contexto_autenticado, 09_el_listado_es_de_tenant_y_la_vista_por_empresa_es_la_de_reportes, 10_un_evento_sin_tenant_no_lo_lee_ningun_tenant
+
+AUD-TENANT-M6 · el tenant lo propone la consulta
+  -> muere: 2 prueba(s) caídas: 01_el_administrador_de_a_no_recibe_eventos_de_b, 11_la_superficie_publica_de_auditoria_y_su_contrato_no_cambian
+
+AUD-TENANT-M7 · total global, items acotados
+  -> muere: 6 prueba(s) caídas: 01_el_administrador_de_a_no_recibe_eventos_de_b, 02_inverso_el_administrador_de_b_no_recibe_eventos_de_a, 04_el_total_cuenta_solo_el_tenant_propio, 05_la_paginacion_recorre_solo_el_tenant_propio, 06_los_filtros_funcionales_actuan_dentro_del_tenant, 10_un_evento_sin_tenant_no_lo_lee_ningun_tenant
+
+restaurado: True · 7/7 efectivas

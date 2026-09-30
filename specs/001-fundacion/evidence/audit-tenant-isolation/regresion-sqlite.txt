@@ -1,0 +1,62 @@
+AUDIT-EVENTS-SIN-TENANT · REGRESIÓN COMPLETA DE BACKEND · SQLite en memoria (motor por defecto) · en solitario · 2026-09-30T12:01:34-04:00
+Entorno: CPython 3.11.16 (uv) + requirements.lock + reportlab + python-magic · sin clamscan en la máquina · pytest tests
+
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"9fbec43792734e28b721667c981b67ff","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"5e36d99a4715495f815ef35de0af51f5","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E   AssertionError: ('../../../../etc/passwd.pdf', '{"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"aa295b844f03498db1a76fbc6a93aff2","details":{"scan_result":"SCAN_FAILED","signature":null}}')
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"b72fac7edaae47348f5ab07ee6ee0665","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"b4e2b4085a1f461da42590132b75abb0","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"b32e46b2832d4bc3a10abd70d59b0352","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"08d14db2f51e49c6b3c9eeffb3b13d50","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E                                           app.core.errors.KontrolError: No se pudo verificar la seguridad del archivo
+E   AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"c8bd58cad8d544b89e42ec3b29246ece","details":{"scan_result":"SCAN_FAILED","signature":null}}
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+                    # The error must be from chdir(cwd).
+                    err_msg = os.strerror(errno_num)
+FAILED tests/test_auth_session_rotation.py::test_dos_renovaciones_simultaneas_no_pueden_ganar_las_dos
+FAILED tests/test_documents.py::test_subida_valida_calcula_hash_en_servidor
+FAILED tests/test_documents.py::test_el_nombre_del_usuario_nunca_es_ruta
+FAILED tests/test_documents.py::test_versionado_sin_sobrescritura
+FAILED tests/test_documents.py::test_subida_idempotente
+FAILED tests/test_documents.py::test_vinculacion_y_documento_compartido
+FAILED tests/test_documents.py::test_version_congelada_el_historico_no_se_reinterpreta
+FAILED tests/test_documents.py::test_vinculo_congelado_no_se_desvincula
+FAILED tests/test_documents.py::test_borrado_protegido_y_archivado_conserva_binario
+FAILED tests/test_documents.py::test_el_mismo_archivo_dos_veces_no_se_deduplica_ni_se_bloquea
+FAILED tests/test_documents.py::test_una_version_referenciada_no_se_purga
+FAILED tests/test_documents_legacy_import.py::test_binario_localizable_y_verificable_se_importa
+FAILED tests/test_documents_legacy_import.py::test_lo_importado_no_se_entrega_hasta_verificarse
+FAILED tests/test_documents_legacy_import.py::test_una_url_externa_no_se_importa_como_archivo_propio
+FAILED tests/test_documents_legacy_import.py::test_un_archivo_que_no_esta_se_reporta_no_se_inventa
+FAILED tests/test_documents_legacy_import.py::test_una_huella_que_no_coincide_detiene_la_importacion
+FAILED tests/test_documents_legacy_import.py::test_un_hash_suelto_sigue_sin_ser_un_documento
+FAILED tests/test_documents_legacy_import.py::test_una_ruta_heredada_no_autoriza_a_salir_del_volumen
+FAILED tests/test_documents_security.py::test_amz_01_recorrido_de_rutas
+FAILED tests/test_documents_security.py::test_amz_05_xss_por_nombre_de_archivo
+FAILED tests/test_documents_security.py::test_amz_12_clave_de_almacenamiento_opaca
+FAILED tests/test_documents_security.py::test_amz_13_sin_sobrescritura_del_historico
+FAILED tests/test_documents_security.py::test_amz_14_el_hash_no_autoriza
+FAILED tests/test_documents_security.py::test_amz_15_asignacion_masiva
+FAILED tests/test_documents_security.py::test_amz_17_desvinculacion_no_autorizada
+FAILED tests/test_documents_security.py::test_amz_19_inyeccion_de_cabeceras
+FAILED tests/test_documents_security.py::test_amz_20_los_registros_no_filtran_contenido
+FAILED tests/test_documents_security.py::test_fallo_de_escritura_no_deja_version
+FAILED tests/test_documents_security.py::test_objeto_ausente_no_se_entrega_otra_cosa
+FAILED tests/test_documents_security.py::test_huella_distinta_no_se_entrega
+FAILED tests/test_documents_security.py::test_pendiente_de_analisis_no_se_entrega
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[0]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[1]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[2]
+FAILED tests/test_documents_security.py::test_la_primera_version_simultanea_tampoco_da_un_500
+FAILED tests/test_documents_security.py::test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500
+FAILED tests/test_documents_security.py::test_tres_subidas_simultaneas_crean_una_sola_version
+FAILED tests/test_documents_security.py::test_la_misma_clave_en_carrera_devuelve_la_version_ganadora
+FAILED tests/test_documents_security.py::test_un_reintento_devuelve_la_version_de_su_clave_aunque_haya_otra_despues
+FAILED tests/test_documents_security.py::test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena
+FAILED tests/test_documents_security.py::test_subidas_a_documentos_distintos_no_se_esperan
+FAILED tests/test_documents_security.py::test_otro_tenant_no_alcanza_un_documento_ajeno_durante_la_carrera
+FAILED tests/test_documents_security.py::test_el_contrato_nunca_expone_almacenamiento
+FAILED tests/test_migrations_offline.py::test_schema_chain_compiles_offline_postgres
+FAILED tests/test_migrations_offline.py::test_approvals_migrations_compile_offline_postgres
+45 failed, 696 passed, 942 skipped in 88.90s (0:01:28)

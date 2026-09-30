@@ -2176,3 +2176,93 @@ decidida—, ni corregir el alcance de auditoría, ni el sobre de `AuditoriaPage
 ni `MOVTYPE-GLOBAL-SIN-UNICIDAD`, ni `INBOX-045-AISLAMIENTO`, ni `ORPHAN-046-SINGLE`, ni
 `IDEM-046-TRUNC`, ni `AUTH-MC-INTERMITENTE`, ni la certificación de compras, ni la Spec
 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+## 2026-09-30 · Tras converger el delta AUDIT-EVENTS-SIN-TENANT (dueña 001, contrato ARCH-MC-001, apoyo 012)
+
+La fuga estaba donde el análisis del 24 la había dejado: `GET /audit/events` hacía
+`select(AuditEvent)` sin `where` de tenant, exigía `audit:view` y **descartaba** el usuario
+que esa misma dependencia le devolvía. La base que vio el hallazgo (`keu`, 20 eventos) ya
+no existe —vivía en `/tmp`—, así que la medida se rehízo desde cero sobre PostgreSQL real:
+sembrada con `qa/e2e-seed.sh`, un login en DEMO y otro en DEMO2, y el administrador de DEMO
+recibe **2 eventos de DEMO2**. Y para no depender de eventos accidentales, dos eventos
+**de contenido idéntico** —misma acción, misma entidad, mismo `request_id`—, uno por tenant:
+visibles en las dos direcciones, `total` global. Lo único que los distinguía era el tenant,
+y eso era lo único que no se miraba.
+
+El encargo prohibía escribir el `where` sin demostrar antes que había algo que filtrar. Lo
+había, y de sobra: `tenant_id` existe en `audit_events` desde `0001`, con índice, y con
+clave foránea desde `0034`; ORM y PostgreSQL dicen lo mismo (N10 verde); las dos únicas
+migraciones que tocan la tabla no hacen backfill porque nunca hizo falta; los **22**
+escritores pasan por una sola fábrica, `record_audit`, y todos llevan el tenant —del usuario
+autenticado, o deducido de la empresa validada por `CompanyContext`—; el único actor de
+fondo, `SISTEMA` de notificaciones, escribe con empresa explícita; y los eventos de
+instalación (licencia, homologación) tienen tablas propias, no `AuditEvent`. Filas con tenant
+nulo: **0**. Eventos globales de auditoría: **no existen contractualmente**. Migración: 0.
+Backfill: 0.
+
+La pregunta que podía parar el ciclo —qué ve un usuario, dentro de su tenant, de las
+empresas en las que no opera— ya la había contestado ARCH-MC-001 antes de que nadie la
+hiciera: la matriz de alcance por endpoint clasifica `/audit/events` como
+`TENANT/INSTALLATION`, empresa «no aplica», y la guarda N10 lo fija en código («tenant: la
+bitácora se consulta por tenant»). La vista **por empresa** ya existe y es otra:
+`/reporting/audit/timeline`, `COMPANY_SCOPE`, que valida la cabecera y responde 404 a una
+empresa ajena. Así que el listado enseña el tenant entero a quien tiene `audit:view`, y no
+se acota «indebidamente a la empresa actual». MATERIAL OQ = 0.
+
+El fix es una cláusula, en el sitio donde nace el conjunto: `WHERE tenant_id =
+user.tenant_id` antes de los filtros, del recuento y de la paginación. Ni parámetro nuevo,
+ni cabecera, ni excepción para `admin` —no existe rol cross-tenant en KONTROL—, ni
+`IS NULL OR` que regale a todos lo que no es de nadie. Once pruebas hostiles con dos
+tenants; siete mutantes —quitar el filtro, filtrar en Python tras paginar, `IS NULL OR`,
+la empresa como sustituto, un rol que exime, el tenant por consulta, `total` global—, los
+siete muertos. El sello de integridad de las filas anteriores al fix es idéntico después:
+nada se borró, nada se reasignó. Contrato público sin cambio de forma; frontend sin tocar.
+
+### Lo que este delta enseñó del entorno
+
+El `.venv` del backend y `node_modules/.bin` son enlaces simbólicos **aplanados** por la
+copia del árbol, y el `python3.11` al que apuntaban ya no existe. Se reconstruyó fuera del
+repositorio desde `requirements.lock` —que no trae `reportlab` ni `python-magic`, que el
+entorno antiguo sí tenía—, `clamscan` no está instalado y 13 ficheros de prueba invocan
+`.venv/bin/alembic` por ruta fija. Nada de eso es del producto, y todo queda registrado
+(`LOCK-SIN-REPORTLAB-MAGIC`, `TEST-MIGRACIONES-VENV-FIJO`), con los fallos atribuidos: las
+mismas familias fallan igual con el `api.py` original y con el corregido.
+
+### Hallazgos nuevos, registrados y no absorbidos
+
+`AUDIT-DETAIL-NO-IMPLEMENTADO` (el contrato declara `/audit/events/{id}`; el código no lo
+tiene), `AUDIT-TOTAL-MATERIALIZA` (`total` carga todas las filas del alcance en lugar de
+contar), `E2E-APPROVALS-LIMIT-NO-DECLARADO` (`?limit=200` a un endpoint que no lo declara).
+De `UI-BUSQUEDA-MUERTA` en Auditoría queda solo la mitad de OQ-1: **sobre qué campos**; el
+conjunto ya es el del tenant.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **UI-BUSQUEDA-MUERTA · Empresas** · decidida, lista | 001/007 | no |
+| 2 | **AUDITORIA-SOBRE-VS-ARRAY** · la tabla nunca pinta | 012 | no |
+| 3 | **E2E-SIN-TYPECHECK** · `e2e/` fuera del grafo TypeScript | 054 | no |
+| 4 | **LOCK-SIN-REPORTLAB-MAGIC** · el lock no reconstruye el entorno | 001/052 | no |
+| 5 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 6 | SPEC053 · verificar restauración (DT-11) | 053 | no |
+
+**A la espera de decisión del owner**: `API-QUERY-SILENCIOSA`, `SEED-EMPRESA-CODIGO-NO-UNICO`,
+`MOVTYPE-GLOBAL-SIN-UNICIDAD`, `UI-BUSQUEDA-MUERTA` en Auditoría (campos) y en Existencias.
+
+**Candidata siguiente: `UI-BUSQUEDA-MUERTA · Empresas`.** Es la única de la cola con los
+campos decididos (`code, legal_name, trade_name, rif`, la terna de `FR-002-042`), ya no
+comparte ciclo con una pregunta material, y arrastra `EMPRESAS-SIN-SOBRE`, que le hace
+falta para paginar bien lo que filtre.
+
+`READY_FOR_IMPLEMENTATION = 1` (Empresas). **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni implementar `q` en ninguna pantalla —tampoco en Empresas, aunque esté decidida—, ni el
+sobre de `AuditoriaPage`, ni `created_at`, ni la duplicidad del menú, ni el detalle de
+auditoría, ni `API-QUERY-SILENCIOSA`, ni `API-COMPANY-ID-EN-CONSULTA`, ni
+`E2E-SIN-TYPECHECK`, ni `SEED-EMPRESA-CODIGO-NO-UNICO`, ni `MOVTYPE-GLOBAL-SIN-UNICIDAD`,
+ni `INBOX-045-AISLAMIENTO`, ni `ORPHAN-046-SINGLE`, ni `IDEM-046-TRUNC`, ni
+`AUTH-MC-INTERMITENTE`, ni tocar el lockfile, ni la certificación de compras, ni la Spec
+053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

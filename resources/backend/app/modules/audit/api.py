@@ -1,4 +1,12 @@
-"""API de auditoría (FR-001-070/071/072)."""
+"""API de auditoría (FR-001-070/071/072).
+
+El listado es de **tenant** (ARCH-MC-001, matriz de alcance por endpoint:
+`TENANT/INSTALLATION`, sin contexto de empresa; la vista por empresa vive en
+`/reporting/audit/timeline`). El tenant no lo elige el cliente: sale del
+usuario autenticado, que es la única autoridad que la petición tiene sobre esa
+pregunta. Ni la consulta ni el cuerpo pueden ampliarlo, y `admin` no significa
+«todos los tenants»: no existe rol con esa autoridad.
+"""
 
 from __future__ import annotations
 
@@ -22,9 +30,19 @@ def list_events(
     entity_id: str | None = None,
     action: str | None = None,
     db: Session = Depends(get_db),
-    _: User = Depends(require_permission("audit", "view")),
+    user: User = Depends(require_permission("audit", "view")),
 ):
-    query = select(AuditEvent).order_by(AuditEvent.event_time.desc())
+    # El alcance de tenant va primero (FR-001-032/033): el conjunto sobre el que
+    # actúan los filtros, el recuento y la paginación ya es solo el propio. Un
+    # `total` que contara lo ajeno, o una página recortada después de cortarla,
+    # no serían un filtro: serían un disfraz. Un evento sin tenant no es de
+    # nadie y aquí no lo lee nadie; la Spec no define eventos globales de
+    # auditoría (los de instalación viven en sus propias tablas).
+    query = (
+        select(AuditEvent)
+        .where(AuditEvent.tenant_id == user.tenant_id)
+        .order_by(AuditEvent.event_time.desc())
+    )
     if entity_type:
         query = query.where(AuditEvent.entity_type == entity_type)
     if entity_id:

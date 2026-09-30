@@ -1,0 +1,43 @@
+AUDIT-EVENTS-SIN-TENANT · inventario de superficies de lectura de AuditEvent · HEAD aae7cd2 · 2026-09-30
+
+== 1. Consultas sobre AuditEvent / audit_events en el producto (fuera de la fábrica y del modelo) ==
+app/modules/audit/api.py:42:        select(AuditEvent)
+app/modules/audit/api.py:43:        .where(AuditEvent.tenant_id == user.tenant_id)
+app/modules/audit/api.py:44:        .order_by(AuditEvent.event_time.desc())
+app/modules/audit/api.py:47:        query = query.where(AuditEvent.entity_type == entity_type)
+app/modules/audit/api.py:49:        query = query.where(AuditEvent.entity_id == entity_id)
+app/modules/audit/api.py:51:        query = query.where(AuditEvent.action == action)
+app/modules/reporting/service.py:6:`AuditEvent` de 001).
+app/modules/reporting/service.py:300:# Auditoría (reutiliza AuditEvent de 001)
+app/modules/reporting/service.py:304:    from app.modules.audit.models import AuditEvent
+app/modules/reporting/service.py:306:    query = select(AuditEvent).where(AuditEvent.company_id == company_id)
+app/modules/reporting/service.py:308:        query = query.where(AuditEvent.entity_type == entity_type)
+app/modules/reporting/service.py:310:        query = query.where(AuditEvent.action == action)
+app/modules/reporting/service.py:312:        query = query.where(AuditEvent.user_id == user_id)
+app/modules/reporting/service.py:313:    items = db.execute(query.order_by(AuditEvent.event_time.desc()).limit(200)).scalars().all()
+app/modules/reporting/models.py:5:003-008 (nunca tablas editables); la auditoría reutiliza `AuditEvent` de 001.
+
+== 2. Rutas publicadas bajo /audit y /reporting/audit ==
+app/modules/audit/api.py:25:@router.get("/events")
+app/modules/reporting/api.py:145:@router.get("/audit/timeline")
+
+== 3. Contrato declarado por Spec 001 (api-contracts.md) ==
+71:| GET | `/api/v1/audit/events` | Timeline con filtros y paginación |
+72:| GET | `/api/v1/audit/events/{id}` | Detalle de evento |
+
+== 4. Consumidores de frontend y E2E ==
+/home/maria/Projectos/Kontrol/resources/frontend/src/modules/reportes/auditoria/ReportesAuditoriaPage.tsx:26:    queryFn: () => apiFetch<{ items: AuditTimelineItem[] }>(`/reporting/audit/timeline${qs ? `?${qs}` : ""}`),
+/home/maria/Projectos/Kontrol/resources/frontend/src/pages/AuditoriaPage.tsx:30:    queryFn: () => apiFetch<AuditEvent[]>(`/audit/events?q=${encodeURIComponent(search)}`),
+/home/maria/Projectos/Kontrol/resources/frontend/e2e/approvals.spec.ts:300:    const audit = await request.get(`${API}/audit/events?limit=200`, { headers: c.headers });
+
+== 5. Exportaciones: lo que exporta reporting son filas de informes, no AuditEvent ==
+108:def report(db: Session, *, company_id: str, key: str, period: str = "") -> dict:
+233:    data = report(db, company_id=company_id, key=report_key, period=(filters or {}).get("period", ""))
+253:def get_export_file(db: Session, *, export_id: str, company_id: str) -> tuple[str, bytes]:
+288:        report(db, company_id=company_id, key=job.report_key, period=params.get("period", ""))
+
+== 6. Clasificación ARCH-MC-001 ==
+436:| GET | `/api/v1/reporting/audit/timeline` | `COMPANY_SCOPE` | CompanyContext | `tenant_id` del usuario | Filtrar y escribir por CompanyContext |
+528:### audit (1)
+532:| GET | `/api/v1/audit/events` | `TENANT/INSTALLATION` | no aplica | tenant | Sin cambio |
+204:        "/api/v1/audit": "tenant: la bitácora se consulta por tenant",

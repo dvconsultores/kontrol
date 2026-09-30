@@ -1,0 +1,12 @@
+AUDIT-EVENTS-SIN-TENANT · sello de integridad DESPUÉS del fix, sobre las filas que existían antes (kaud) · 2026-09-30T11:32:10-04:00
+Las filas nuevas de la reproducción post-fix (2 logins + 2 sondas) se excluyen por created_at para comparar el mismo conjunto.
+ filas |              sello               
+-------+----------------------------------
+     9 | 3bff2b1acadb0c7db5aaee8e565678a6
+(1 row)
+
+ filas_totales_ahora | tenant_null | filas_modificadas 
+---------------------+-------------+-------------------
+                  13 |           0 |                 0
+(1 row)
+
