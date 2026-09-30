@@ -1,0 +1,13 @@
+AUDITORIA-SOBRE-VS-ARRAY · forma exacta de la respuesta de GET /api/v1/audit/events · backend 127.0.0.1:8000 sobre kaud · 2026-09-30T13:29:10-04:00
+
+tipo raíz .......... dict (no es array)
+KEYS ............... ['items', 'page', 'page_size', 'total']
+ITEMS_TYPE ......... list de 3 elementos
+TOTAL_TYPE           int = 109
+PAGE_TYPE            int = 1
+PAGE_SIZE_TYPE       int = 3
+claves de un item .. ['action', 'entity_id', 'entity_type', 'event_time', 'id', 'request_id', 'source', 'user_id']
+¿created_at en el item?  False · ¿event_time?  True
+
+== OpenAPI: la operación no declara response_model (schema {}) ==
+list_events_api_v1_audit_events_get {"application/json": {"schema": {}}}

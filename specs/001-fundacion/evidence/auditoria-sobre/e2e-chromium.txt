@@ -1,0 +1,4 @@
+AUDITORIA-SOBRE-VS-ARRAY · E2E dirigido · Chromium · 2026-09-30T13:41:08-04:00
+  ✓  1 [chromium] › e2e/auditoria-sobre.spec.ts:49:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-01/02 · dos eventos controlados del tenant aparecen como filas, y son los del sobre (1.4s)
+  ✓  2 [chromium] › e2e/auditoria-sobre.spec.ts:75:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-04 · el rastro de otro tenant no está en el sobre ni en la tabla (1.5s)
+  2 passed (2.0s)

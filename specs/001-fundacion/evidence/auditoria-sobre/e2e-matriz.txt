@@ -1,0 +1,9 @@
+AUDITORIA-SOBRE-VS-ARRAY · E2E dirigido · matriz de navegadores (SPEC054) · 2026-09-30T13:45:13-04:00
+(Primer intento: WebKit falló en ENV-01/02 porque, con seis pruebas en paralelo, otros inicios de sesión empujaban el evento controlado fuera de la primera página de cliente; la aserción pasó a comprobar la correspondencia items→filas completa.)
+  ✓  3 [chromium] › e2e/auditoria-sobre.spec.ts:49:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-01/02 · dos eventos controlados del tenant aparecen como filas, y son los del sobre (2.5s)
+  ✓  1 [chromium] › e2e/auditoria-sobre.spec.ts:90:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-04 · el rastro de otro tenant no está en el sobre ni en la tabla (2.5s)
+  ✓  6 [webkit] › e2e/auditoria-sobre.spec.ts:90:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-04 · el rastro de otro tenant no está en el sobre ni en la tabla (3.1s)
+  ✓  2 [webkit] › e2e/auditoria-sobre.spec.ts:49:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-01/02 · dos eventos controlados del tenant aparecen como filas, y son los del sobre (3.2s)
+  ✓  4 [firefox] › e2e/auditoria-sobre.spec.ts:90:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-04 · el rastro de otro tenant no está en el sobre ni en la tabla (3.1s)
+  ✓  5 [firefox] › e2e/auditoria-sobre.spec.ts:49:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-01/02 · dos eventos controlados del tenant aparecen como filas, y son los del sobre (2.8s)
+  6 passed (5.3s)

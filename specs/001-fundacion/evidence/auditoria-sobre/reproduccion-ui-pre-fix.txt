@@ -1,0 +1,8 @@
+== FASE pre · /auditoria por el menú · sesión admin/DEMO ==
+petición ............ /api/v1/audit/events?q= -> 200
+forma del cuerpo .... OBJETO claves=["items","page","page_size","total"]
+items.length ........ 20  total=108 (number)  page=1 (number)  page_size=20 (number)
+items[0] ............ {"id":"024d67cd-dec9-41a4-a3db-e9470b306602","action":"LOGIN_SUCCESS","entity_type":"User","entity_id":"665de9b6-1be1-4f39-a926-0005a3e68f2d","user_id":null,"request_id":"f2faf1c1ae044d3e97dd9637358ec0d1","source":"API","event_time":"2026-09-30T17:27:41.813608+00:00"}
+filas en la tabla ... 0
+estado vacío ........ no visible
+consola ............. ["warning: No `HydrateFallback` element provided to render during initial hydration","error: Failed to load resource: the server responded with a status of 401 (Unauthorized)"]

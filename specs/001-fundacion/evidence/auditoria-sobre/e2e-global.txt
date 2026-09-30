@@ -1,0 +1,7 @@
+AUDITORIA-SOBRE-VS-ARRAY · E2E GLOBAL · Chromium · backend 127.0.0.1:8000 sobre kaud (PostgreSQL) · Vite 5173 · 2026-09-30T13:50:21-04:00
+Segunda corrida. La primera (182/3/40) tuvo tres fallos: los dos de auditoria-sobre por buscar el rastro en la página 1 de 20 bajo carga paralela (aserción corregida a verdad del servidor con página amplia) y notifications:142 porque el planificador del E2E se lanza con el entorno del proceso y a este le faltaban las variables del backend (ValidationError de Settings): ahora se exportan. KONTROL_E2E_DB_URL declarada: global-setup siembra y declararAlcance usa .venv/bin/python (reparado localmente).
+
+RuntimeError: 'choque-muoei32lkdn4' ya opera en ['a2cbdcd5-a757-4ee0-b28b-e59e80c839e5'] y se pide ['3986120c-c6f9-4a2c-83fd-500375b0531f']: ['a2cbdcd5-a757-4ee0-b28b-e59e80c839e5'] quedaría de más. No se escribe nada
+40 skipped
+191 passed (2.7m)
+exit=0

@@ -1,0 +1,38 @@
+AUDITORIA-SOBRE-VS-ARRAY · mutaciones sobre AuditoriaPage.tsx / api/audit.ts · gates: tsc -b y vitest AuditoriaPage.test.tsx
+
+ENV-M1 · las filas vuelven a ser el sobre entero (data={query.data ?? []})
+  -> muere: tsc=FALLA src/pages/AuditoriaPage.tsx(47,9): error TS2322: Type 'never[] | NoInfer<AuditEventPage>' is not assignable to
+     vitest caídas: ENV-01, ENV-02, ENV-03, ENV-05, ENV-08
+
+ENV-M2 · la petición se tipa como AuditEvent[]
+  -> muere: tsc=FALLA src/api/audit.ts(14,27): error TS6196: 'PagedResult' is declared but never used.
+     vitest caídas: -
+
+ENV-M3 · soporte dual (items ?? sobre)
+  -> muere: tsc=FALLA src/pages/AuditoriaPage.tsx(47,9): error TS2322: Type 'NoInfer<AuditEventPage> | AuditEvent[]' is not assignab
+     vitest caídas: ENV-08
+
+ENV-M4 · se ignoran los items (data=[])
+  -> muere: tsc=pasa 
+     vitest caídas: ENV-01, ENV-03, ENV-05
+
+ENV-M6 · la petición devuelve any
+  -> muere: tsc=FALLA src/pages/AuditoriaPage.test.tsx(122,66): error TS2344: Type 'PagedResult<AuditEvent>' does not satisfy the co
+     vitest caídas: -
+
+ENV-M7 · el error se convierte en lista vacía
+  -> muere: tsc=pasa 
+     vitest caídas: ENV-04
+
+restaurado: True · tsc tras restaurar: pasa
+
+ENV-M2 reforzada · AuditEvent[] y además se retira la importación de PagedResult (sin el error de símbolo sin usar):
+src/pages/AuditoriaPage.test.tsx(122,66): error TS2344: Type 'PagedResult<AuditEvent>' does not satisfy the constraint '{ [x: number]: { request_id?: 
+src/pages/AuditoriaPage.test.tsx(123,56): error TS2554: Expected 1 arguments, but got 0.
+src/pages/AuditoriaPage.tsx(47,27): error TS2339: Property 'items' does not exist on type 'NoInfer<AuditEventPage>'.
+  -> tsc exit=0 (0 = compiló)
+  restaurado
+
+CONTROL NEGATIVO DE TIPOS · tratar el sobre como array en la página (data={query.data ?? []}):
+  -> tsc: 1 error(es): FALLA, como debe
+  restaurado

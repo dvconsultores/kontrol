@@ -1,0 +1,12 @@
+AUDITORIA-SOBRE-VS-ARRAY · puertas del frontend · 2026-09-30T13:40:44-04:00
+== typecheck ==
+tsc exit=0
+== eslint ==
+eslint exit=0
+== vitest ==
+ Test Files  23 passed (23)
+      Tests  395 passed (395)
+== build ==
+dist/assets/index-B4Ognog0.js                     416.03 kB │ gzip: 126.79 kB
+✓ built in 2.77s
+build exit=0

@@ -1,0 +1,9 @@
+AUDITORIA-SOBRE-VS-ARRAY · sanidad backend dirigida (0 ficheros de producto backend tocados) · 2026-09-30T13:39:16-04:00
+== SQLite: aislamiento hostil de auditoría (11) + búsqueda de empresas (17) ==
+28 passed in 8.46s
+== PostgreSQL: las mismas ==
+28 passed in 9.69s
+== el contrato del sobre, tal como lo fijan las pruebas backend ==
+175:    return {i["id"] for i in body["items"]}
+215:    assert body["total"] == 1
+231:    assert body["total"] == 1

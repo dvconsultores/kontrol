@@ -2334,3 +2334,74 @@ comodines, ni `API-QUERY-SILENCIOSA`, ni `API-COMPANY-ID-EN-CONSULTA`, ni
 `E2E-SIN-TYPECHECK`, ni `SEED-EMPRESA-CODIGO-NO-UNICO`, ni `MOVTYPE-GLOBAL-SIN-UNICIDAD`,
 ni `INBOX-045-AISLAMIENTO`, ni tocar el lockfile ni `conftest.py`, ni la certificación de
 compras, ni la Spec 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+## 2026-09-30 · Tras converger el delta AUDITORIA-SOBRE-VS-ARRAY (dueña 001, apoyo 012)
+
+La pantalla de auditoría nunca había pintado una fila, y ahora se sabe con números por
+qué: el servidor respondía un sobre con 20 eventos y `total` 108, la pantalla lo pedía
+como `AuditEvent[]` y se lo entregaba entero a la tabla, que al no encontrar una lista ni
+pintaba ni avisaba. Sin error, sin estado vacío: una tabla muda con un 200 detrás. `tsc`
+no podía verlo porque `apiFetch<T>` devuelve `payload as T`: el tipo lo afirma quien
+llama, y quien llamaba afirmaba mal.
+
+Antes de tocar nada se comprobó que el sobre es el contrato y no un accidente:
+`api-contracts.md` lo llama «timeline con filtros y paginación», el contrato de listados
+nombra `page` y `page_size`, el handler lo devuelve desde su primera versión, las once
+pruebas de aislamiento lo fijan y el E2E de aprobaciones lo consume por `.items`. Lo
+único que no lo dice es OpenAPI, porque la operación no declara `response_model`: queda
+registrado (`AUDIT-OPENAPI-SIN-RESPONSE-MODEL`), y el backend no se toca.
+
+El fix es del tamaño del defecto: una función tipada por endpoint,
+`listAuditEvents(): Promise<PagedResult<AuditEvent>>`, con el tipo de sobre que el
+frontend ya tenía, y `items` como filas. A partir de ahí, tratar el sobre como array no
+compila —medido con un control negativo— y retipar la petición tampoco, porque una
+prueba de tipo lo impide. Ni `as`, ni `Array.isArray`, ni `items ?? data`: el objetivo era
+quitar la ambigüedad, no institucionalizarla. Siete pruebas de página —filas, vacío,
+carga, error, paginación de cliente, respuesta que no es sobre, contrato de tipo—, dos
+E2E con inicios de sesión controlados cuyo `X-Request-ID` devuelve el servidor, en
+Chromium, Firefox y WebKit; seis mutantes, seis muertos.
+
+Lo que sigue igual, a propósito: la columna «Fecha» pinta «Invalid Date» porque lee
+`created_at` y el servidor publica `event_time` (`AUDITORIA-CREATED-AT`); la caja de
+búsqueda sigue muerta hasta que alguien decida sobre qué campos busca; y la tabla pagina
+en cliente sobre la página 1 de 20 del servidor, sin enseñar `total` ni poder pedir la 2
+(`AUDITORIA-PAGINACION-CLIENTE`, nueva, menor).
+
+### Lo que este delta enseñó del entorno
+
+El `.venv` se reparó **fuera del repositorio**: los intérpretes aplanados apuntan ahora al
+3.11 de `uv` y los 26 guiones llevaban aún la ruta del repositorio anterior en su primera
+línea. Con eso, `alembic`, `pytest` y `declararAlcance` del E2E vuelven a funcionar; las
+deudas de entorno siguen abiertas porque el repositorio no cambió. Y Vitest tiene una
+rareza documentada: limpiar un mock dentro de `beforeEach` hace que una prueba cuya
+consulta rechaza falle con el propio rechazo (`VITEST-MOCKCLEAR-EN-HOOK`).
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **AUDITORIA-CREATED-AT** · la columna Fecha lee un campo que no llega | 012 | no |
+| 2 | **EMPRESAS-SIN-SOBRE** · el listado no pagina en el servidor | 001/007 | no |
+| 3 | **E2E-SIN-TYPECHECK** · `e2e/` fuera del grafo TypeScript | 054 | no |
+| 4 | **LOCK-SIN-REPORTLAB-MAGIC** · el lock no reconstruye el entorno | 001/052 | no |
+| 5 | **TEST-SCHEMAS-PG-SIN-LIMPIEZA** · la suite llena el disco y agota conexiones | 054/052 | no |
+| 6 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 7 | SPEC053 · verificar restauración (DT-11) | 053 | no |
+
+**A la espera de decisión del owner**: `API-QUERY-SILENCIOSA`, `SEED-EMPRESA-CODIGO-NO-UNICO`,
+`MOVTYPE-GLOBAL-SIN-UNICIDAD`, `UI-BUSQUEDA-MUERTA` en Auditoría (campos) y en Existencias.
+
+**Candidata siguiente: `AUDITORIA-CREATED-AT`.** Ahora que la tabla pinta, la fecha
+inválida es lo primero que se ve; el servidor publica `event_time`, el tipo del frontend
+declara `created_at`, y no hay nada que decidir.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni `created_at` → `event_time`, ni `q` en Auditoría ni en Existencias, ni la paginación de
+servidor de la tabla, ni `response_model` en el backend, ni `EMPRESAS-SIN-SOBRE`, ni tocar
+`apiFetch`, ni `E2E-SIN-TYPECHECK`, ni el lockfile, ni `conftest.py`, ni
+`API-QUERY-SILENCIOSA`, ni `API-COMPANY-ID-EN-CONSULTA`, ni `SEED-EMPRESA-CODIGO-NO-UNICO`,
+ni `MOVTYPE-GLOBAL-SIN-UNICIDAD`, ni `INBOX-045-AISLAMIENTO`, ni la certificación de compras,
+ni la Spec 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

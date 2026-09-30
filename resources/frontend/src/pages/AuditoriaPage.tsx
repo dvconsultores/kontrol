@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { apiFetch } from "@/api/client";
+import { listAuditEvents } from "@/api/audit";
 import type { AuditEvent } from "@/api/types";
 import { DataTable } from "@/components/DataTable";
 import { PageContent } from "@/layout/PageContent";
@@ -27,7 +27,7 @@ export function AuditoriaPage(): React.JSX.Element {
   const [search, setSearch] = useState("");
   const query = useQuery({
     queryKey: ["audit", "events", search],
-    queryFn: () => apiFetch<AuditEvent[]>(`/audit/events?q=${encodeURIComponent(search)}`),
+    queryFn: () => listAuditEvents(search),
     retry: false,
   });
 
@@ -43,7 +43,8 @@ export function AuditoriaPage(): React.JSX.Element {
       </div>
       <DataTable
         columns={columns}
-        data={query.data ?? []}
+        // El servidor responde un sobre paginado: las filas son `items`.
+        data={query.data?.items ?? []}
         loading={query.isLoading}
         error={query.isError ? "No fue posible cargar la auditoría." : null}
         getRowId={(row) => row.id}
