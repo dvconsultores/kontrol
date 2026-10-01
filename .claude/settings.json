@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.production)",
+      "Read(./resources/backend/.env)",
+      "Bash(psql *DATABASE_URL_PROD*)",
+      "Bash(psql *KONTROL_DB_URL_PROD*)"
+    ]
+  }
+}
