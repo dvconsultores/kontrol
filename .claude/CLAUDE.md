@@ -48,7 +48,7 @@ no edita, no decide, no certifica.** Devuelve bloques SEARCH/REPLACE que Claude 
 ### Clasificación, tarea por tarea
 
 Cada tarea de `tasks.md` lleva: `EXECUTOR` (`CLAUDE` | `DEEPSEEK`), `MODEL`
-(`flash` | `pro` | `n-a`), `SECURITY_SENSITIVE`, `EGRESS_SAFE`, `RETRY_MAX: 2`, `FILES`,
+(`deepseek-v4-flash` | `deepseek-v4-pro` | `n-a`), `SECURITY_SENSITIVE`, `EGRESS_SAFE`, `RETRY_MAX: 2`, `FILES`,
 `TEST`, `DONE_WHEN`. Nunca se clasifica una Spec entera.
 
 `DEEPSEEK_ELIGIBLE` exige **todo** esto: contrato cerrado, `MATERIAL OQ = 0`, sin incógnitas
@@ -90,7 +90,7 @@ IMPLEMENTATION STYLE: patrón existente que debe imitar
 OUTPUT FORMAT:   solo bloques SEARCH/REPLACE
 DONE WHEN:       condiciones exactas
 TESTS EXPECTED:  las pruebas diseñadas por Claude
-MODEL:           flash | pro
+MODEL:           deepseek-v4-flash | deepseek-v4-pro
 ```
 
 Contexto mínimo suficiente: ficheros objetivo, interfaces, función hermana, prueba
@@ -111,6 +111,16 @@ ni logs con secretos. La clave de DeepSeek vive solo en `~/.claude.json` (entrad
 del MCP de este proyecto); no se imprime, no se registra y no entra en el repositorio. Una
 clave expuesta detiene el trabajo: `SECRET_EXPOSURE`.
 
+### El MCP, tal como es
+
+Servidor `deepseek`, paquete `@arikusi/deepseek-mcp-server` **con versión fijada** (la que
+declara `scripts/set_deepseek_key.py`). Herramienta de delegación:
+`mcp__deepseek__deepseek_chat`, sin `session_id` y sin `thinking`. Modelos:
+`deepseek-v4-flash` (por defecto: lo pequeño y mecánico) y `deepseek-v4-pro` (lógica local
+más compleja); un modelo más fuerte nunca convierte en delegable una tarea `CLAUDE_ONLY`.
+Montaje: `python scripts/set_deepseek_key.py`; auditoría del montaje:
+`python scripts/orchestration_readiness.py --handshake`.
+
 ### Auditoría del parche (Claude, antes de aplicar)
 
 Tarea exacta · solo ficheros objetivo · sin imports ni dependencias nuevas · sin cambio de
@@ -127,7 +137,7 @@ atribuírselo después al ejecutor.
 
 Intento → rechazo → reintento 1 → rechazo → reintento 2 → **alto**. Cada reintento reenvía
 el contexto completo, el intento anterior y el motivo exacto del rechazo. Tras dos
-reintentos Claude reclasifica: dividir la tarea, pasar a `pro` o implementarla él.
+reintentos Claude reclasifica: dividir la tarea, pasar a `deepseek-v4-pro` o implementarla él.
 
 ### Probar tras cada tarea
 

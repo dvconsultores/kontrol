@@ -3,9 +3,11 @@
 | Campo | Valor |
 |---|---|
 | Estado | **Adoptada** por la dueña el 2026-10-01 · transversal y permanente hasta indicación en contrario |
-| Estado del montaje | **`CONFIGURATION_INCOMPLETE`** — falta la entrada local del MCP y la clave (§9) |
+| Estado del montaje | **`CONFIGURATION_INCOMPLETE`** — todo lo del repositorio está verificado; falta un único paso local: cablear la clave (§9) |
 | Reglas operativas | `.claude/CLAUDE.md` (este documento las explica; no las duplica) |
 | Agentes | `.claude/agents/deepseek-executor.md` · `.claude/agents/spec-kit-coordinator.md` |
+| Herramientas | `scripts/set_deepseek_key.py` (montaje) · `scripts/orchestration_readiness.py` (auditoría) · `scripts/orch_probe.py` (certificación ORCH-01..10) |
+| Ciclo Spec Kit | `specs/001-fundacion/spec001-orquestacion-ia-delta.md` |
 | Referencia | el montaje de otro proyecto de la dueña, **adaptado, no copiado** (§8) |
 
 ## 1. La idea, en una línea
@@ -57,7 +59,7 @@ añade dependencias, no crea migraciones, no «mejora» el alcance y no certific
 Se clasifica **tarea por tarea**, nunca una Spec entera. Cada tarea de `tasks` declara:
 
 ```
-EXECUTOR: CLAUDE | DEEPSEEK      MODEL: flash | pro | n-a
+EXECUTOR: CLAUDE | DEEPSEEK      MODEL: deepseek-v4-flash | deepseek-v4-pro | n-a
 SECURITY_SENSITIVE: YES | NO     EGRESS_SAFE: YES | NO     RETRY_MAX: 2
 FILES · TEST · DONE_WHEN
 ```
@@ -134,17 +136,23 @@ por implementación, sin código muerto, sin formato ajeno. Resultado: `AUDIT_PA
 retoca el parche en silencio para atribuírselo luego al ejecutor.
 
 **Reintentos: dos como máximo.** Tras el segundo fallo se detiene la delegación automática
-y Claude reclasifica: dividir, subir a `pro` o implementar él.
+y Claude reclasifica: dividir, subir a `deepseek-v4-pro` o implementar él. El ejecutor hace
+**una** llamada por encargo y no reintenta por su cuenta; el `MAX_RETRIES` del servidor MCP
+es otra cosa (reintentos de red de una misma llamada) y no cuenta como reintento de delegación.
 
 **Probar tras cada tarea.** Se ejecuta la prueba más pequeña que demuestra el cambio antes
 de seguir. Claude diseña las pruebas —qué, por qué, fixture, esperado, mutante que mata— y
 DeepSeek puede escribirlas; Claude verifica después que matan el defecto y busca verdes
 falsos. Las mutaciones las diseña e interpreta Claude.
 
-**Modelos.** El rápido para lo pequeño y mecánico; el fuerte solo para tareas que siguen
-siendo delegables pero tienen lógica local más compleja o ficheros grandes, nunca para
-saltarse `CLAUDE_ONLY`. Sin razonamiento extendido por defecto: razonar es de Claude. Los
-identificadores exactos se toman del esquema de la herramienta, no de memoria (§9).
+**Modelos**, con los nombres que el servidor declara (no los alias `flash`/`pro`):
+`deepseek-v4-flash` para lo pequeño y mecánico, y es el valor por defecto;
+`deepseek-v4-pro` solo para tareas que siguen siendo delegables pero tienen lógica local
+más compleja o ficheros grandes, nunca para saltarse `CLAUDE_ONLY`. `deepseek-chat` y
+`deepseek-reasoner` son alias obsoletos y no se usan. Sin `thinking`: razonar es de Claude.
+Sin `session_id`: cada delegación empieza de cero. El montaje desactiva el cambio
+silencioso de modelo (`FALLBACK_ENABLED=false`): qué modelo ejecuta lo decide Claude, y el
+ejecutor informa el modelo realmente servido (`request.wire_model`).
 
 **Coste.** Por delegación se anota modelo, tokens de entrada y salida, coste y reintentos,
 si la herramienta los da. El objetivo es coste y velocidad **sin** rebajar seguridad,
@@ -172,67 +180,94 @@ commits de DeepSeek. Un ciclo se cierra, tras converger, con commit y push a
 | Unidad de trabajo | lote de tareas | **una tarea** por delegación |
 | Artefactos de Spec Kit | `specs/<NNN>-<slug>/` | deltas dentro de la Spec dueña |
 | Permisos del proyecto | lista `allow` amplia y herramienta de DeepSeek preaprobada | **sin `allow` añadido**: solo `deny` de `.env` y de `psql` productivo; preaprobar la herramienta es decisión de la dueña |
-| MCP | `@arikusi/deepseek-mcp-server` por `npx` absoluto y `PATH` explícito | el mismo, creado por `scripts/set_deepseek_key.py` |
+| MCP | `@arikusi/deepseek-mcp-server` por `npx` absoluto y `PATH` explícito, **sin versión** | el mismo, **fijado a `2.3.0`** y sin cambio silencioso de modelo, creado por `scripts/set_deepseek_key.py` |
 
 ## 9. Estado del montaje, medido el 2026-10-01
 
+Se audita con `python scripts/orchestration_readiness.py --handshake` (no lee ni muestra la
+clave) y se certifica con `python scripts/orch_probe.py`. Evidencia en
+`specs/001-fundacion/evidence/orquestacion-ia/`.
+
 | Comprobación | Resultado |
 |---|---|
-| `.claude/CLAUDE.md` | **creado** (no existía; `.claude/` estaba vacío) |
-| `.claude/agents/deepseek-executor.md` | **creado**, solo propone |
-| `.claude/agents/spec-kit-coordinator.md` | **creado**, clasifica y no decide |
-| `.claude/settings.json` | **creado**, solo `deny` |
-| Integración Spec Kit `claude` | **instalada** con `specify integration install claude` (CLI 1.0.10.dev0): estado `OK`, diez skills `speckit-*`, plantillas y guiones; Constitución y `README` intactos (misma huella antes y después); ningún guion crea ramas |
-| Integración `copilot` | no estaba instalada; nada que preservar |
-| `.mcp.json` del repositorio | era un fichero vacío (JSON inválido); queda `{"mcpServers": {}}`. El servidor de DeepSeek **no** va aquí: lleva clave y es local |
-| `scripts/set_deepseek_key.py` | **creado**: `--status`, alta de la entrada y clave por aviso oculto, `--check` |
-| MCP `deepseek` configurado para KONTROL | **NO** — `~/.claude.json` no registra este proyecto ni la entrada |
-| MCP conectado en la sesión | **NO** — la sesión no expone ninguna herramienta `mcp__deepseek__*` |
-| Nombres exactos de herramientas y modelos | **sin verificar**: en la referencia, `mcp__deepseek__deepseek_chat`; se comprobarán contra el esquema real al conectar |
-| Clave de API para KONTROL | **NO configurada** (no se buscó ni se copió la de otro proyecto) |
-| Node para el MCP | `npx` por ruta absoluta de nvm (`v24.21.0`), para no depender del `PATH` de VS Code |
-| Paquete del MCP | `@arikusi/deepseek-mcp-server`, publicado `2.3.0`; la referencia lo lanza **sin versión fijada** (observación, §10) |
-| Regla solo-`develop`, tope de reintentos, exclusiones, egress | escritas en `CLAUDE.md` y en los agentes |
-| Base de datos productiva | no expuesta: no hay credenciales productivas en el repositorio; `deny` de lectura de `.env` y de `psql` productivo |
+| Configuración de Claude (`.claude/CLAUDE.md`) | **PASS** |
+| Spec Kit: integración `claude`, diez skills `speckit-*`, Constitución | **PASS** — una sesión nueva las carga |
+| Agentes `deepseek-executor` y `spec-kit-coordinator` | **PASS** — una sesión nueva los carga; el ejecutor solo tiene `Read`, `Glob`, `Grep` y la herramienta de DeepSeek |
+| Tope de reintentos | **PASS** — `RETRY_MAX: 2` en `CLAUDE.md`, en los dos agentes y aquí |
+| `settings.json` | **PASS** — los seis `deny` siguen; la herramienta de DeepSeek no está preaprobada |
+| `.mcp.json` del repositorio | **PASS** — válido y sin servidores: el de DeepSeek lleva clave y es local |
+| Claves en el repositorio | **PASS** — ninguna en los ficheros versionados ni en la evidencia |
+| Clave de DeepSeek en la máquina | **Existe**: está en `~/.claude.json`, en la entrada local de otro proyecto de la dueña (presente, no vacía; el valor no se leyó ni se mostró) |
+| Paquete y versión | **PASS** — `@arikusi/deepseek-mcp-server@2.3.0`: es la que la máquina venía usando, la última publicada y la que arranca en la prueba |
+| Arranque del servidor fijado | **PASS** — por `npx` absoluto de nvm (`node v24.21.0`; el paquete exige `>=22`) y `PATH` explícito |
+| Herramientas reales | **PASS** — `deepseek_chat`, `deepseek_fim`, `deepseek_sessions`; en Claude Code, `mcp__deepseek__deepseek_chat` es la única que el ejecutor usa |
+| Modelos reales | **PASS** en el esquema del servidor — `deepseek-v4-flash` (por defecto), `deepseek-v4-pro`; alias obsoletos `deepseek-chat`, `deepseek-reasoner`. Falta confirmarlos contra la API, que exige la clave |
+| Entrada local del MCP para KONTROL | **FAIL** — `~/.claude.json` no la tiene |
+| Clave cableada a KONTROL | **FAIL** — depende de la entrada |
+| MCP conectado | **FAIL** — depende de las dos anteriores |
+| Delegación real | **FAIL** — `DEEPSEEK CALLS = 0` |
 
 `ORCHESTRATION_STATUS = CONFIGURATION_INCOMPLETE`
 
-### Lo que falta, exactamente, y quién puede hacerlo
+### El único paso que falta, y por qué no lo dio Claude
 
-1. **La dueña**, en su terminal, fuera de cualquier chat:
-   `python scripts/set_deepseek_key.py --check` — crea la entrada local del MCP para este
-   proyecto y pide la clave sin mostrarla.
-2. **Reiniciar Claude Code** y comprobar con `/mcp` que `deepseek` aparece conectado.
-3. **Claude**, en la sesión siguiente: la prueba de extremo a extremo de abajo. Hasta
-   entonces DeepSeek **no se da por operativo** y ningún ciclo de producto lo usa.
+La dueña autorizó a Claude a reutilizar la clave que ya existe en la máquina. Claude la
+localizó, pero **el clasificador de permisos de Claude Code (modo automático) le denegó
+leerla** —la considera exploración de credenciales— y una denegación así no se rodea por
+otra vía. No es un hueco de configuración: es un permiso de la propia herramienta.
 
-### Prueba de extremo a extremo, pendiente
+Lo desbloquea la dueña, de una de estas dos formas:
 
-Sobre un fichero de arena fuera del producto, que se elimina al terminar; sin tocar
-autenticación, tenant, dinero, fiscal, migraciones, Specs ni el Master 56.
+1. En su terminal, sin volver a escribir la clave:
 
-| ID | Debe demostrar | Estado |
+   ```
+   python scripts/set_deepseek_key.py --reuse-from <ruta del otro proyecto> --check
+   ```
+
+   Copia la clave en memoria de una entrada local a la otra, la valida contra DeepSeek,
+   fija la versión, respalda `~/.claude.json` y no la muestra.
+2. O concediendo a Claude ese permiso, y lo ejecuta él.
+
+Después, la certificación es un comando —`python scripts/orch_probe.py`— que abre una
+sesión nueva de Claude Code, así que **no hace falta reiniciar nada para certificar**; el
+reinicio solo es necesario para que la sesión interactiva abierta vea el MCP.
+
+### Prueba de extremo a extremo
+
+`scripts/orch_probe.py` trabaja sobre `/tmp/kontrol-orchestration-probe/`, fuera del
+producto, y lo borra al terminar. Decide sobre la **traza de eventos** de la sesión, no
+sobre lo que el modelo afirme. Resultado del 2026-10-01, sin MCP cableado:
+
+| ID | Debe demostrar | Hoy |
 |---|---|---|
-| ORCH-01 | Claude invoca `deepseek-executor` | pendiente |
-| ORCH-02 | el ejecutor llama al MCP y se verifican nombres de herramienta y modelo | pendiente |
-| ORCH-03 | el control de egress se declara y no hay secretos en la carga | pendiente |
-| ORCH-04 | DeepSeek devuelve bloques SEARCH/REPLACE | pendiente |
-| ORCH-05 | Claude audita | pendiente |
-| ORCH-06 | Claude rechaza un parche (se provoca uno fuera de alcance) | pendiente |
-| ORCH-07 | Claude aplica un parche aprobado | pendiente |
-| ORCH-08 | la prueba dirigida se ejecuta | pendiente |
-| ORCH-09 | el resultado se registra con tokens y coste | pendiente |
-| ORCH-10 | el tope de dos reintentos detiene la delegación | pendiente |
+| ORCH-01 | Claude invoca `deepseek-executor` en una sesión nueva | **PASS** |
+| ORCH-02 | el ejecutor llama al MCP y DeepSeek responde (`DEEPSEEK CALLS ≥ 1`), sin que el orquestador lo llame directamente | FAIL — 0 llamadas; el ejecutor lo intentó una vez y devolvió `MCP_UNAVAILABLE` sin inventar un parche |
+| ORCH-03 | la carga no lleva secretos, `.env` ni `session_id` | **PASS** sobre la carga que iba a salir |
+| ORCH-04 | DeepSeek devuelve bloques SEARCH/REPLACE | FAIL — no hubo respuesta |
+| ORCH-05 | Claude audita antes de aplicar: `AUDIT_PASS` | FAIL — no hubo parche |
+| ORCH-06 | Claude rechaza un parche no conforme (`alpha=999`): `AUDIT_REJECT · UNAUTHORIZED_EXTRA_CHANGE`, sin aplicarlo | **PASS** |
+| ORCH-07 | Claude aplica solo el parche aprobado | FAIL — nada que aplicar |
+| ORCH-08 | `alpha == 1`, `beta == 20`, `gamma == 3` | FAIL |
+| ORCH-09 | servidor, herramienta, modelo y uso tal como los devuelve la herramienta | FAIL — sin respuesta |
+| ORCH-10 | tope de dos reintentos en los cuatro documentos; el ejecutor no reintenta | **PASS** |
+
+`ORCH = 4/10`. Los seis que fallan dependen del mismo paso.
 
 ## 10. Observaciones registradas
 
-- **`MCP-DEEPSEEK-SIN-VERSION-FIJADA`** — el servidor se lanza con `npx -y` sin versión:
-  cada arranque puede traer una versión nueva de un paquete que recibe la clave y el código
-  enviado. Fijar la versión (`@2.3.0` hoy) es una decisión de la dueña.
+- **`MCP-DEEPSEEK-SIN-VERSION-FIJADA`** — **resuelta en el repositorio**: el montaje crea la
+  entrada con `@arikusi/deepseek-mcp-server@2.3.0`, lleva a esa versión una entrada antigua
+  sin tocar su clave, y la auditoría falla si la entrada local no está fijada. Queda
+  **cerrada** cuando la entrada de KONTROL exista y ORCH-01..10 pasen sobre esa versión.
+  Subir de versión es deliberado: cambiar `PACKAGE_VERSION`, volver a montar y repetir la sonda.
+- **`NPX-RESUELTO-ROMPE-EL-MCP`** — corregida. El montaje del ciclo anterior resolvía el
+  enlace `bin/npx` hasta `lib/node_modules/npm/bin/`, y desde ahí npx no encuentra `node`:
+  la entrada habría quedado «not connected». Lo destapó el arranque real del servidor; hay
+  prueba y mutante que lo vigilan.
 - **`SPECKIT-SKILLS-VS-DELTAS`** — las skills trabajan sobre `specs/<feature>/spec.md`,
-  `plan.md` y `tasks.md`; los deltas de KONTROL son un único documento dentro de la Spec
-  dueña. Las fases se siguen ejecutando; la forma del artefacto la fija `CLAUDE.md`.
-- **Checkpoint del encargo** — el encargo daba `8b845a1` y `EMPRESAS-SIN-SOBRE` sin iniciar.
-  El repositorio dice `e813e6f`: esa deuda está **CLOSED / CONVERGED** y subida desde el
-  2026-09-30, ejecutada entera por Claude antes de esta política. La evidencia del
-  repositorio manda; no se rehace.
+  `plan.md` y `tasks.md`, y `speckit-specify` abre una carpeta de Spec nueva; los deltas de
+  KONTROL son un único documento dentro de la Spec dueña. Las fases se siguen ejecutando; la
+  forma del artefacto la fija `CLAUDE.md`.
+- **`CLASIFICADOR-VS-AUTORIZACION-DE-LA-DUENA`** — una autorización escrita en el encargo no
+  levanta una denegación del clasificador de permisos de Claude Code. Para que Claude maneje
+  un secreto local hace falta una regla de permiso, o que el paso lo dé la dueña.

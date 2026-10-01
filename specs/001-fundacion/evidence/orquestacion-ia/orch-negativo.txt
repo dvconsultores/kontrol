@@ -1,0 +1,34 @@
+# python scripts/orch_probe.py   (2026-10-01, sin MCP cableado: camino negativo)
+EGRESS_CHECK (encargo): ENV_FILES=0 SECRETS=0 PROD_URLS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_PII=0 REAL_PAYROLL=0 BANK_DATA=0 — verificado
+
+PASS  ORCH-01 Claude → executor            1 delegación(es) a `deepseek-executor`; agentes cargados: ['claude', 'deepseek-executor', 'Explore', 'general-purpose', 'Plan', 'spec-kit-coordinator', 'statusline-setup']
+FAIL  ORCH-02 executor → MCP → DeepSeek    DEEPSEEK CALLS = 0 (intentos del ejecutor: 1); llamadas directas del orquestador: 0; MCP `deepseek`: no cargado
+PASS  ORCH-03 egress                       carga de 2340 caracteres; secretos: 0; ficheros .env: 0; session_id: ninguno (sin memoria)
+FAIL  ORCH-04 patch format                 0 bloque(s) SEARCH/REPLACE en la respuesta
+FAIL  ORCH-05 audit-pass                   AUDIT_REJECT: NOT_A_SINGLE_BLOCK (0)
+PASS  ORCH-06 audit-reject                 candidato sintético (alpha=999): AUDIT_REJECT: UNAUTHORIZED_EXTRA_CHANGE [('alpha=1', 'alpha=999')]; no aplicado: sí
+FAIL  ORCH-07 apply                        nada que aplicar: no hubo parche aprobado
+FAIL  ORCH-08 test                         fichero: {'alpha': '1', 'beta': '2', 'gamma': '3'}
+FAIL  ORCH-09 tool/model/usage             servidor `deepseek` @arikusi/deepseek-mcp-server@2.3.0; herramienta ['mcp__deepseek__deepseek_chat']; modelo pedido ['deepseek-v4-flash']; devuelto por la herramienta: not reported
+PASS  ORCH-10 retry cap                    RETRY_MAX: 2 en los cuatro documentos; llamadas del ejecutor en un encargo: 1 (no reintenta por su cuenta)
+
+SANDBOX_RESIDUAL = 0
+ORCH = 4/10
+ORCHESTRATION_STATUS = NOT_VERIFIED
+exit=1
+
+# Respuesta literal del ejecutor en esa sesión
+STATUS: MCP_UNAVAILABLE
+TASK: ORCH-PROBE-001
+MODEL: not reported (pedido: deepseek-v4-flash; fallback_used: not reported)
+USAGE: not reported
+EGRESS_CHECK: ENV_FILES=0 SECRETS=0 PROD_URLS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_PII=0 REAL_PAYROLL=0 BANK_DATA=0
+OUT_OF_SCOPE_FILES: none
+
+No se hizo ninguna llamada a DeepSeek. La herramienta `mcp__deepseek__deepseek_chat` no está disponible en esta sesión. El error textual fue: `Error: No such tool available: mcp__deepseek__deepseek_chat`. Parece que el servidor MCP `deepseek` no está conectado o no está registrado.
+
+Lo que sí se comprobó:
+- Leí `/tmp/kontrol-orchestration-probe/orchestration_probe.txt`. Contiene `alpha=1`, `beta=2` y `gamma=3`, igual que en el encargo.
+- El contenido que habría salido es una prueba sintética sin secretos ni datos personales, así que el control de egress da cero en todos los contadores.
+
+Para desbloquearlo, Claude puede ejecutar `python scripts/orchestration_readiness.py --handshake` y revisar la entrada local del MCP en `~/.claude.json`. Ese montaje depende de `scripts/set_deepseek_key.py`. Después de reconectar el servidor se puede relanzar el encargo. No cuenta como reintento, porque no hubo propuesta que rechazar.

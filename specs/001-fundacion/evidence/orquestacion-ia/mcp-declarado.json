@@ -1,0 +1,98 @@
+{
+  "serverInfo": {
+    "name": "deepseek-mcp-server",
+    "version": "2.3.0"
+  },
+  "protocolVersion": "2025-06-18",
+  "tools": [
+    {
+      "name": "deepseek_chat",
+      "required": [
+        "messages"
+      ],
+      "optional": [
+        "json_mode",
+        "max_tokens",
+        "model",
+        "reasoning_effort",
+        "response_schema",
+        "session_id",
+        "stream",
+        "temperature",
+        "thinking",
+        "tool_choice",
+        "tools"
+      ],
+      "model": {
+        "default": "deepseek-v4-flash",
+        "description": "Model to use. deepseek-v4-flash (default, fast/economical) or deepseek-v4-pro (most capable), both 1M context, up to 384K output. Non-thinking by default for speed; pass thinking:{type:\"enabled\"} to reason. Deprecated aliases (still accepted, prefer v4 names): deepseek-chat -> v4-flash non-thinking, deepseek-reasoner -> v4-flash thinking.",
+        "type": "string",
+        "enum": [
+          "deepseek-v4-flash",
+          "deepseek-v4-pro",
+          "deepseek-chat",
+          "deepseek-reasoner"
+        ]
+      },
+      "output": [
+        "content",
+        "cost_usd",
+        "effective",
+        "fallback",
+        "finish_reason",
+        "json_parse_error",
+        "model",
+        "reasoning_content",
+        "request",
+        "routed_from",
+        "schema",
+        "session_id",
+        "tool_calls",
+        "usage"
+      ]
+    },
+    {
+      "name": "deepseek_fim",
+      "required": [
+        "prompt"
+      ],
+      "optional": [
+        "max_tokens",
+        "model",
+        "stop",
+        "suffix",
+        "temperature"
+      ],
+      "model": {
+        "default": "deepseek-v4-flash",
+        "description": "Model to use. deepseek-v4-flash (default, fast/economical) or deepseek-v4-pro (most capable). Deprecated aliases deepseek-chat / deepseek-reasoner are still accepted and resolve to v4-flash. FIM is always non-thinking.",
+        "type": "string",
+        "enum": [
+          "deepseek-v4-flash",
+          "deepseek-v4-pro",
+          "deepseek-chat",
+          "deepseek-reasoner"
+        ]
+      },
+      "output": [
+        "cost_usd",
+        "finish_reason",
+        "model",
+        "routed_from",
+        "text",
+        "usage"
+      ]
+    },
+    {
+      "name": "deepseek_sessions",
+      "required": [
+        "action"
+      ],
+      "optional": [
+        "session_id"
+      ],
+      "model": {},
+      "output": []
+    }
+  ]
+}

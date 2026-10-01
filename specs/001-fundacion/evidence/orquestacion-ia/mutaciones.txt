@@ -1,0 +1,70 @@
+ORCH-M01  MUERTO  la clave se imprime al guardarla
+            lo mata: scripts/tests/test_set_deepseek_key.py::test_key03_la_clave_no_se_imprime_en_ningun_modo[entorno]
+ORCH-M02  MUERTO  la entrada se crea sin versión fijada
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r08_la_entrada_local_exige_ruta_absoluta_y_version_fijada
+ORCH-M03  MUERTO  npx se resuelve siguiendo el enlace
+            lo mata: scripts/tests/test_set_deepseek_key.py::test_key01_la_entrada_nueva_fija_la_version_y_usa_el_npx_sin_resolver
+ORCH-M04  MUERTO  los valores base pisan las variables que la entrada ya tenía
+            lo mata: scripts/tests/test_set_deepseek_key.py::test_key07_una_entrada_sin_version_se_fija_y_conserva_clave_y_variables
+ORCH-M05  MUERTO  el fichero con la clave no se cierra a 600
+            lo mata: scripts/tests/test_set_deepseek_key.py::test_key08_el_fichero_y_el_respaldo_quedan_solo_para_la_duena
+ORCH-M06  MUERTO  un origen sin clave no detiene la escritura
+            lo mata: scripts/tests/test_set_deepseek_key.py::test_key05_si_el_otro_proyecto_no_tiene_clave_no_se_escribe_nada
+ORCH-M07  MUERTO  una clave rechazada se guarda igualmente
+            lo mata: scripts/tests/test_set_deepseek_key.py::test_key10_una_clave_rechazada_no_se_guarda
+ORCH-M08  MUERTO  el estado da por bueno un montaje sin versión fijada
+            lo mata: scripts/tests/test_set_deepseek_key.py::test_key09_estado_no_escribe_y_su_codigo_dice_la_verdad
+ORCH-M09  MUERTO  el modelo puede cambiar en silencio (fallback activo)
+            lo mata: scripts/tests/test_set_deepseek_key.py::test_key01_la_entrada_nueva_fija_la_version_y_usa_el_npx_sin_resolver
+ORCH-M10  MUERTO  el entorno deja de mandar sobre --reuse-from
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r08_la_entrada_local_exige_ruta_absoluta_y_version_fijada
+ORCH-M11  MUERTO  el ejecutor puede tener Bash
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r01_un_ejecutor_que_puede_editar_o_ejecutar_no_pasa[Bash]
+ORCH-M12  MUERTO  el ejecutor puede tener Edit
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r01_un_ejecutor_que_puede_editar_o_ejecutar_no_pasa[Edit]
+ORCH-M13  MUERTO  un ejecutor sin lista de herramientas pasa
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r02_un_ejecutor_sin_lista_de_herramientas_no_pasa
+ORCH-M14  MUERTO  basta con que algún documento diga un tope, cualquiera
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r04_el_tope_de_reintentos_es_dos_en_todos_los_documentos[RETRY_MAX: 3-.claude/CLAUDE.md]
+ORCH-M15  MUERTO  un documento sin tope pasa
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r04_el_tope_de_reintentos_es_dos_en_todos_los_documentos[sin tope-.claude/CLAUDE.md]
+ORCH-M16  MUERTO  el informe de la clave incluye su valor
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r09_de_la_clave_solo_se_informa_la_presencia
+ORCH-M17  MUERTO  una clave incrustada en el repositorio no se detecta
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r06_una_clave_incrustada_en_el_repo_se_detecta_y_el_nombre_a_secas_no
+ORCH-M18  MUERTO  una entrada local sin versión fijada pasa
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r08_la_entrada_local_exige_ruta_absoluta_y_version_fijada
+ORCH-M19  MUERTO  el servidor con clave puede vivir en .mcp.json
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r05_el_servidor_con_clave_no_vive_en_el_mcp_versionado
+ORCH-M20  MUERTO  se puede quitar un deny de .env
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r07_los_deny_de_seguridad_no_se_relajan
+ORCH-M21  MUERTO  se puede quitar el deny de psql productivo
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r07_los_deny_de_seguridad_no_se_relajan
+ORCH-M22  MUERTO  una orden relativa (npx a secas) pasa
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r08_la_entrada_local_exige_ruta_absoluta_y_version_fijada
+ORCH-M23  MUERTO  la auditoría deja pasar cambios ajenos al autorizado
+            lo mata: scripts/tests/test_orch_probe.py::test_probe03_rechaza_todo_parche_no_conforme[candidato0-UNAUTHORIZED_EXTRA_CHANGE]
+ORCH-M24  MUERTO  la auditoría acepta un SEARCH que no coincide exactamente
+            lo mata: scripts/tests/test_orch_probe.py::test_probe03_rechaza_todo_parche_no_conforme[candidato3-SEARCH_MISMATCH]
+ORCH-M25  MUERTO  la auditoría acepta un fichero fuera del objetivo
+            lo mata: scripts/tests/test_orch_probe.py::test_probe03_rechaza_todo_parche_no_conforme[candidato5-OUT_OF_SCOPE_FILE]
+ORCH-M26  MUERTO  la auditoría acepta varios bloques
+            lo mata: scripts/tests/test_orch_probe.py::test_probe03_rechaza_todo_parche_no_conforme[candidato10-NOT_A_SINGLE_BLOCK]
+ORCH-M27  MUERTO  la auditoría no mira si el parche trae un secreto
+            lo mata: scripts/tests/test_orch_probe.py::test_probe03_rechaza_todo_parche_no_conforme[candidato8-SECRET_IN_PATCH]
+ORCH-M28  MUERTO  vale que el orquestador llame a DeepSeek saltándose al ejecutor
+            lo mata: scripts/tests/test_orch_probe.py::test_probe06_si_el_orquestador_llama_a_deepseek_sin_pasar_por_el_ejecutor_no_vale
+ORCH-M29  MUERTO  se certifica ORCH-02 aunque DeepSeek no respondiera
+            lo mata: scripts/tests/test_orch_probe.py::test_probe06_si_el_orquestador_llama_a_deepseek_sin_pasar_por_el_ejecutor_no_vale
+ORCH-M30  MUERTO  una carga con session_id pasa el egress
+            lo mata: scripts/tests/test_orch_probe.py::test_probe08_una_carga_con_memoria_o_con_secretos_rompe_el_egress[extra0]
+ORCH-M31  MUERTO  una carga con secretos pasa el egress
+            lo mata: scripts/tests/test_orch_probe.py::test_probe08_una_carga_con_memoria_o_con_secretos_rompe_el_egress[extra1]
+ORCH-M32  MUERTO  se aplica el parche aunque la auditoría lo rechace
+            lo mata: scripts/tests/test_orch_probe.py::test_probe10_un_parche_con_cambio_ajeno_se_rechaza_y_no_se_aplica
+ORCH-M33  MUERTO  cualquier modelo certifica ORCH-09
+            lo mata: scripts/tests/test_orch_probe.py::test_probe09_un_modelo_distinto_del_pedido_no_certifica
+ORCH-M34  MUERTO  ORCH-01 pasa sin que nadie invoque al ejecutor
+            lo mata: scripts/tests/test_orch_probe.py::test_probe07_si_nadie_invoca_al_ejecutor_orch01_falla
+
+MUTANTES 34 · MUERTOS 34 · VIVOS 0

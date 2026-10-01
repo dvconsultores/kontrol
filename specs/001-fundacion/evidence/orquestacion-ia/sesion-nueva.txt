@@ -1,0 +1,13 @@
+# Sesión nueva de Claude Code 2.1.285 en el repositorio (claude -p, evento system/init)
+cwd: /home/maria/Projectos/Kontrol
+versión: 2.1.285
+agents: ['claude', 'deepseek-executor', 'Explore', 'general-purpose', 'Plan', 'spec-kit-coordinator', 'statusline-setup']
+skills speckit: ['speckit-analyze', 'speckit-checklist', 'speckit-clarify', 'speckit-constitution', 'speckit-converge', 'speckit-implement', 'speckit-plan', 'speckit-specify', 'speckit-tasks', 'speckit-taskstoissues']
+mcp_servers: [('claude.ai Claude Docs', 'pending'), ('claude.ai Canva', 'pending')]
+tools mcp__deepseek__*: ninguna (el MCP aún no está cableado)
+
+# claude mcp list
+Checking MCP server health…
+
+claude.ai Claude Docs: https://api.anthropic.com/v1/pages/mcp - ✔ Connected
+claude.ai Canva: https://mcp.canva.com/mcp - ✔ Connected

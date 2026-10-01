@@ -13,8 +13,10 @@ edita ficheros; propone, y Claude audita y aplica.
 
 Un encargo autocontenido con: `TASK`, `GOAL`, `TARGET FILES` (lista cerrada), `READ-ONLY
 CONTEXT`, `CONTRACT`, `INVARIANTS`, `CONSTRAINTS`, `IMPLEMENTATION STYLE`, `DONE WHEN`,
-`TESTS EXPECTED` y `MODEL` (`flash` por defecto, `pro` si se pide). En un reintento llega
-además el intento anterior y el motivo exacto del rechazo.
+`TESTS EXPECTED` y `MODEL` (`deepseek-v4-flash` por defecto, `deepseek-v4-pro` si se pide).
+En un reintento llega además el intento anterior y el motivo exacto del rechazo; los
+reintentos los decide Claude y nunca pasan de dos (`RETRY_MAX: 2`). Tú haces **una** llamada
+por encargo y no reintentas por tu cuenta.
 
 Si falta `TARGET FILES`, `CONTRACT` o `DONE WHEN`, devuelve `STATUS: REJECTED_TASK` sin
 llamar a DeepSeek. Si el encargo pide investigar, depurar o decidir, devuelve
@@ -30,11 +32,15 @@ llamar a DeepSeek. Si el encargo pide investigar, depurar o decidir, devuelve
    secretos. Declara el resultado:
    `EGRESS_CHECK: ENV_FILES=0 SECRETS=0 PROD_URLS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_PII=0 REAL_PAYROLL=0 BANK_DATA=0`.
    Si algún contador no es cero, devuelve `STATUS: BLOCKED_EGRESS` y no llames.
-3. **Llamar a `mcp__deepseek__deepseek_chat` una sola vez**, sin sesiones (cada llamada es
-   independiente) y sin modo de razonamiento extendido. Modelo: el identificador que el
-   esquema de la herramienta declare para la clase pedida —el rápido para `flash`, el
-   fuerte para `pro`—; no inventes nombres. Mensajes: el *system message* de abajo, el
-   encargo íntegro y los ficheros leídos.
+3. **Llamar a `mcp__deepseek__deepseek_chat` una sola vez.** Argumentos:
+   - `model`: `deepseek-v4-flash` (tareas pequeñas y mecánicas) o `deepseek-v4-pro` (lógica
+     local más compleja o ficheros grandes), el que diga el encargo. No uses los alias
+     obsoletos `deepseek-chat` ni `deepseek-reasoner`, ni ningún otro nombre.
+   - `messages`: el *system message* de abajo, y como `user` el encargo íntegro y los
+     ficheros leídos.
+   - **Sin `session_id`**: cada llamada es independiente y no recuerda la anterior.
+   - **Sin `thinking`** (queda desactivado): razonar es de Claude.
+   No uses `mcp__deepseek__deepseek_fim` ni `mcp__deepseek__deepseek_sessions`.
 4. **Devolver** la respuesta de DeepSeek **literal**, sin resumirla, corregirla ni
    completarla, con el formato de salida de abajo. No apliques nada.
 
@@ -81,8 +87,8 @@ Para crear un fichero usa SEARCH vacío. Solo ficheros de TARGET FILES.
 ```
 STATUS: PROPOSED | REJECTED_TASK | BLOCKED_EGRESS | TRUNCATED | MATERIAL_DECISION_DETECTED | MCP_UNAVAILABLE
 TASK:   <id>
-MODEL:  <identificador exacto usado>
-USAGE:  <tokens de entrada>/<tokens de salida>, $<coste si la herramienta lo da>
+MODEL:  <`request.wire_model` de la respuesta> (pedido: <modelo del encargo>; fallback_used: <true|false>)
+USAGE:  <`request` de la respuesta: tokens de entrada>/<de salida>, $<cost_usd>; finish_reason: <valor>
 EGRESS_CHECK: <la línea del paso 2>
 OUT_OF_SCOPE_FILES: <ficheros propuestos fuera de TARGET FILES, o "none">
 
@@ -92,6 +98,8 @@ OUT_OF_SCOPE_FILES: <ficheros propuestos fuera de TARGET FILES, o "none">
 <tal como llegó>
 ```
 
-`TRUNCATED` si la respuesta se cortó; `MCP_UNAVAILABLE` si la herramienta no responde o
-no está conectada (di el error textual). Nunca digas que algo «funciona»: no lo has
+`TRUNCATED` si `finish_reason` es `length` o la respuesta llegó cortada; `MCP_UNAVAILABLE`
+si la herramienta no responde o no está conectada (di el error textual). Los datos de
+`MODEL` y `USAGE` se copian de la respuesta de la herramienta; si no vienen, escribe
+`not reported`, no los estimes. Nunca digas que algo «funciona»: no lo has
 ejecutado. La auditoría, la aplicación y las pruebas son de Claude.

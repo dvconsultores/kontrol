@@ -1,0 +1,22 @@
+# python scripts/orchestration_readiness.py --handshake   (2026-10-01, HEAD c8adc0d + delta)
+PASS  Claude configuration       completo
+PASS  Executor patch-only        solo propone: ['Glob', 'Grep', 'Read', 'mcp__deepseek__deepseek_chat']
+PASS  Coordinator                clasifica y no implementa
+PASS  Retry cap = 2              RETRY_MAX: 2 en los cuatro documentos
+PASS  Model names documented     el ejecutor nombra ['deepseek-v4-flash', 'deepseek-v4-pro']
+PASS  Settings deny              deny íntegro (6); herramienta de DeepSeek preaprobada: no
+PASS  Spec Kit                   10 skills speckit-*, constitución presente
+PASS  Repo .mcp.json             JSON válido, sin secretos, servidores: ninguno
+PASS  No key in repository       1671 ficheros sin claves incrustadas
+FAIL  DeepSeek MCP local entry   sin entrada `deepseek` para /home/maria/Projectos/Kontrol
+FAIL  DeepSeek API key           PRESENT=NO NONEMPTY=NO
+PASS  MCP server handshake       v2.3.0; herramientas ['deepseek_chat', 'deepseek_fim', 'deepseek_sessions']; modelos ['deepseek-v4-flash', 'deepseek-v4-pro', 'deepseek-chat', 'deepseek-reasoner']
+
+READINESS = FAIL (10/12)
+exit=1
+
+# python scripts/set_deepseek_key.py --status
+proyecto .............. /home/maria/Projectos/Kontrol
+registrado en Claude .. no
+entrada `deepseek` ..... NO
+exit=1

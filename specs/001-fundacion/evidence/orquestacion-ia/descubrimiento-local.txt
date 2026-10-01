@@ -1,0 +1,14 @@
+# Inspección local sin valores: nombres, presencia y forma (2026-10-01)
+== variables de entorno (solo nombres) ==
+  MCP_CONNECTION_NONBLOCKING: PRESENT=YES NONEMPTY=YES
+  DEEPSEEK_API_KEY: PRESENT=NO NONEMPTY=NO
+== /home/maria/.claude.json (modo 0o600) ==
+  ámbito user mcpServers: ninguno
+  proyecto <otro proyecto de la dueña>: mcpServers=['deepseek'] enabledMcpjson=None 
+  [local] deepseek: type=stdio command=/home/maria/.nvm/versions/node/v24.21.0/bin/npx args=['-y', '@arikusi/deepseek-mcp-server']
+      env DEEPSEEK_API_KEY: PRESENT=YES NONEMPTY=YES
+      env PATH = /home/maria/.nvm/versions/node/v24.21.0/bin:/usr/local/bin:/usr/bin:/bin
+      env REQUEST_TIMEOUT = 120000
+== /home/maria/.claude/settings.json: claves=['model', 'modelSettings'] mcpServers=[] env_nombres=[]
+== /home/maria/.claude/settings.local.json: no existe
+== /home/maria/.mcp.json: no existe

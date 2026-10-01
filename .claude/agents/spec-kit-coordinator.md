@@ -31,7 +31,7 @@ ciclo Claude + DeepSeek. No implementas tareas y no tomas decisiones de la dueñ
 3. Clasifica cada tarea, una por una, con sus metadatos:
 
    ```
-   EXECUTOR: CLAUDE | DEEPSEEK      MODEL: flash | pro | n-a
+   EXECUTOR: CLAUDE | DEEPSEEK      MODEL: deepseek-v4-flash | deepseek-v4-pro | n-a
    SECURITY_SENSITIVE: YES | NO     EGRESS_SAFE: YES | NO     RETRY_MAX: 2
    FILES:  <rutas exactas>
    TEST:   <prueba dirigida>
