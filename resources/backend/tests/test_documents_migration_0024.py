@@ -84,6 +84,10 @@ def seeded_db() -> str:
         conn.execute(text(f'DROP DATABASE IF EXISTS "{DB_NAME}" WITH (FORCE)'))
         conn.execute(text(f'CREATE DATABASE "{DB_NAME}" ENCODING \'UTF8\''))
     engine.dispose()
+    # La base tiene dueño: se suelta al terminar el ámbito —la prueba o el módulo— que la creó.
+    from pg_harness import registrar_base
+
+    registrar_base(DB_NAME)
 
     result = _alembic(DB_NAME, PRE_046)
     assert result.returncode == 0, result.stderr[-3000:]

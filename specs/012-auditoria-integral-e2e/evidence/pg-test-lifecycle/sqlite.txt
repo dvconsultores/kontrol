@@ -1,0 +1,13 @@
+# TEST-SCHEMAS-PG-SIN-LIMPIEZA · SQLite · pytest tests -rfE · 2026-10-01T12:12:30-04:00
+43 failed, 790 passed, 968 skipped, 6 warnings in 118.38s (0:01:58)
+fallos por fichero:
+      1 test_auth_session_rotation
+     10 test_documents
+      7 test_documents_legacy_import
+     25 test_documents_security
+conjunto de fallos frente al de 3ea8d66: IDÉNTICO (43 y 43, diff vacío)
+clasificación: 42 PREEXISTING_ENVIRONMENT_CLAMSCAN (documentos) + 1 PREEXISTING_SQLITE_THREAD_FLAKE (test_auth_session_rotation, AUTH-ROTACION-SQLITE-HILOS)
+sección «recursos de prueba en PostgreSQL»: no aparece (en SQLite el arnés no apunta nada)
+
+# dirigido: pytest tests/test_pg_harness_gate.py tests/test_pg_harness_lifecycle.py
+SQLite: 45 passed, 26 skipped · PostgreSQL: 71 passed

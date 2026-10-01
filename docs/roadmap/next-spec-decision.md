@@ -2585,3 +2585,33 @@ sirva. `AUDIT-ORDEN-SIN-DESEMPATE` y `AUDITORIA-OFFSET-EN-BITACORA-VIVA` siguen 
 `AUDITORIA-TIMELINE-FECHA-CRUDA`, `LISTADOS-SIN-RESPONSE-MODEL` (con
 `AUDIT-OPENAPI-SIN-RESPONSE-MODEL`), `E2E-SIN-TYPECHECK`, `TEST-SCHEMAS-PG-SIN-LIMPIEZA`,
 `API-COMPANY-ID-EN-CONSULTA`, `E2E-FLAKY-BAJO-CARGA`. `NEXT SPEC = 029` no cambia.
+
+## 2026-10-01 · Tras converger el delta TEST-SCHEMAS-PG-SIN-LIMPIEZA (dueña 054, apoyo 052)
+
+La suite se ejecuta sobre PostgreSQL desde `579affb`, y desde entonces `make_engine` creaba
+un schema entero y un motor en cada llamada sin que nadie los soltara. Trece suites lo
+llaman una vez por prueba. Una corrida completa dejaba 313 schemas y 3,2 GB; tres seguidas
+llenaron el `tmpfs` y tumbaron el servidor de QA. El remedio era borrar la base y volver a
+crearla, a mano, después de cada certificación.
+
+No se reescribieron las 27 fixtures. El ciclo de vida vive ahora en un solo sitio: lo que
+la suite crea se apunta al ámbito abierto —la prueba o el módulo— y dos fixtures `autouse`
+lo sueltan al cerrarlo, pase o falle la prueba; primero las conexiones, después el schema,
+y al final se comprueba que ya no existe. Las bases enteras de las pruebas de migración
+entran en el mismo registro. Y nada de eso ocurre si la base no es, por varias señales a la
+vez, de prueba.
+
+Medido con dos corridas completas seguidas sin recrear la base: 0 schemas, 0 conexiones,
+171 MB al final donde había 3 240, pico de 5 conexiones donde había 60, y siete minutos
+menos por corrida. Los fallos son los de siempre —documentos, por falta de `clamscan`— y
+son el mismo conjunto que antes del cambio.
+
+Era casi todo trabajo de Claude: diseño del ciclo de vida, seguridad de lo destructivo y
+ficheros con direcciones de base de QA. DeepSeek escribió las pruebas de la compuerta, una
+función pura, y pasaron la auditoría a la primera.
+
+**Con esto, certificar un cambio de backend en PostgreSQL deja de costar una base.**
+Candidatas siguientes, sin decisión de la dueña pendiente: `AUDIT-ORDEN-SIN-DESEMPATE`,
+`AUDIT-PAGINA-SIN-INDICE-DE-ORDEN`, `AUDITORIA-TIMELINE-FECHA-CRUDA`,
+`LISTADOS-SIN-RESPONSE-MODEL`, `E2E-SIN-TYPECHECK`, `E2E-FLAKY-BAJO-CARGA`,
+`ENTORNO-SIN-CLAMSCAN`. `NEXT SPEC = 029` no cambia.

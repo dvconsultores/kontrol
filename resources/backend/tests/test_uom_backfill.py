@@ -66,6 +66,10 @@ def _fresh(name: str) -> str:
         conn.execute(text(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)'))
         conn.execute(text(f'CREATE DATABASE "{name}" ENCODING \'UTF8\''))
     engine.dispose()
+    # La base tiene dueño: se suelta al terminar el ámbito —la prueba o el módulo— que la creó.
+    from pg_harness import registrar_base
+
+    registrar_base(name)
 
     result = _alembic(name, PRE_011)
     assert result.returncode == 0, result.stderr[-2000:]

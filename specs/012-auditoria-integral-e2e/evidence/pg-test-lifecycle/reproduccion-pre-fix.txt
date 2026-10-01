@@ -1,0 +1,28 @@
+# TEST-SCHEMAS-PG-SIN-LIMPIEZA · reproducción PRE-FIX · HEAD 3ea8d66 · base ktest (PostgreSQL de QA, localhost:55432) · 2026-10-01T11:27:58-04:00
+# resources/backend/.venv/bin/python qa/repro-pg-test-residuos.py <subconjunto>   (3 corridas del mismo subconjunto)
+
+## A · fixture por prueba: tests/test_fiscal.py (21 pruebas, cada una llama a make_engine)
+antes                  schemas temporales=   0 · tamaño=  259 MB · relaciones=   413 · conexiones=  0 · libre=5424 MB
+corrida 1: 21 passed in 16.51s · 18 s · pico de conexiones=11 · pico de schemas=21
+tras la corrida 1      schemas temporales=  21 · tamaño=  463 MB · relaciones= 24122 · conexiones=  0 · libre=5060 MB
+corrida 2: 21 passed in 11.80s · 13 s · pico de conexiones=11 · pico de schemas=42
+tras la corrida 2      schemas temporales=  42 · tamaño=  640 MB · relaciones= 47831 · conexiones=  1 · libre=4690 MB
+corrida 3: 21 passed in 11.80s · 13 s · pico de conexiones=11 · pico de schemas=63
+tras la corrida 3      schemas temporales=  63 · tamaño=  791 MB · relaciones= 71540 · conexiones=  0 · libre=4492 MB
+
+RESIDUO: schemas huérfanos=63 · crecimiento=532 MB · conexiones residuales=0
+
+## B · fixture de módulo: tests/test_audit_tenant_isolation.py (un make_engine por módulo)
+antes                  schemas temporales=  63 · tamaño=  791 MB · relaciones= 71540 · conexiones=  0 · libre=4492 MB
+corrida 1: 11 passed in 5.68s · 8 s · pico de conexiones=1 · pico de schemas=64
+tras la corrida 1      schemas temporales=  64 · tamaño=  798 MB · relaciones= 72669 · conexiones=  0 · libre=4484 MB
+corrida 2: 11 passed in 5.51s · 8 s · pico de conexiones=1 · pico de schemas=65
+tras la corrida 2      schemas temporales=  65 · tamaño=  806 MB · relaciones= 73798 · conexiones=  0 · libre=4477 MB
+corrida 3: 11 passed in 5.46s · 8 s · pico de conexiones=1 · pico de schemas=66
+tras la corrida 3      schemas temporales=  66 · tamaño=  813 MB · relaciones= 74927 · conexiones=  0 · libre=4469 MB
+
+RESIDUO: schemas huérfanos=3 · crecimiento=22 MB · conexiones residuales=0
+
+## C · pruebas de migración que crean bases enteras con nombre fijo y no las sueltan
+bases que quedaron de corridas anteriores: 17 · 319 MB
+  k008_amb, k008_c1, k008_c2, k008_c3, k008_c4, k008_c56, k008_perm, k011_amb, k011_crit, k011_det, k011_idem, k011_num, k011_rec, k011_thr, kontrol_doc_legacy, kontrol_fresh_fk_0033, kontrol_legacy_fk_0033

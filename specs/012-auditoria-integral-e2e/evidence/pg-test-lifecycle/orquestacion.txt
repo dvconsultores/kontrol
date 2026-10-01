@@ -1,0 +1,21 @@
+# TEST-SCHEMAS-PG-SIN-LIMPIEZA · delegación a DeepSeek · leído de la traza del ejecutor
+# servidor MCP deepseek · @arikusi/deepseek-mcp-server@2.3.0 · herramienta mcp__deepseek__deepseek_chat
+
+T10 · intento 1 — pruebas de la compuerta de identidad (tests/test_pg_harness_gate.py)
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 3406/2416 · $0.001136 · finish_reason=stop
+  egress: carga de 10288 caracteres · URLs con credenciales=0 · contraseña de siembra=no · ficheros del repositorio leídos por el puente=0
+  contexto: el encargo llegó íntegro a DeepSeek: sí
+  bloques=1 · relevo literal=sí
+  AUDIT_PASS: las 13 pruebas (43 casos) son las diseñadas; aplicado; 43/43 en SQLite y en PostgreSQL; matan M-14, M-15, M-16 y M-17
+
+DESVIACIÓN DE EGRESS, de Claude: las URLs de ejemplo del encargo llevan el servidor, el puerto y el nombre de la base
+  de QA local (localhost:55432/ktest): presente en la carga = sí. El encargo de este ciclo pedía no enviar URLs
+  de QA. No llevan usuario real ni contraseña, la base es local y esa misma dirección está escrita en .claude/CLAUDE.md;
+  no es un secreto, pero es una desviación de la regla y se anota. Debieron usarse un servidor y un puerto inventados.
+
+TASKS TOTAL = 12 · CLAUDE_ONLY = 11 · DEEPSEEK_ELIGIBLE = 1 · DEEPSEEK EXECUTED = 1
+DEEPSEEK CALLS = 1 · DEEPSEEK RETRIES = 0 · PATCHES ACCEPTED = 1 · PATCHES REJECTED = 0 · parches retocados a mano = 0
+MODELS USED = deepseek-v4-flash · DEEPSEEK TOKENS = 3406 de entrada / 2416 de salida · DEEPSEEK COST = $0.001136
+SONNET BRIDGE TOKENS = 32960 (según el arnés)
+EJECUTOR-ABREVIA-EL-CONTEXTO: no se reprodujo; el puente no leyó ningún fichero y envió el encargo entero

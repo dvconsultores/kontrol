@@ -1,0 +1,48 @@
+# TEST-SCHEMAS-PG-SIN-LIMPIEZA · mutaciones del arnés · 2026-10-01T11:41:13-04:00
+motor: PostgreSQL
+GOOD      → PASS
+M-01   MUERTO  no se libera el motor (sin engine.dispose())
+         lo matan (2): pglife_01, pglife_04
+M-02   MUERTO  no se elimina el schema (sin DROP SCHEMA); la comprobación sigue
+         lo matan (12): pglife_01, pglife_02, pglife_03, pglife_04, pglife_05, pglife_08, pglife_09, pglife_09b, pglife_10b, pglife_13, pglife_13b, pglife_14c
+M-02b  MUERTO  ni se elimina el schema ni se comprueba
+         lo matan (9): pglife_02, pglife_04, pglife_05, pglife_08, pglife_09, pglife_09b, pglife_10b, pglife_13, pglife_13b
+M-03   MUERTO  se limpia solo si la prueba pasó
+         lo matan (1): pglife_05
+M-04   MUERTO  la conexión que quedó abierta no se corta
+         lo matan (2): pglife_13, pglife_13b
+M-06   MUERTO  se elimina sin compuerta de identidad
+         lo matan (1): pglife_10b
+M-06a  MUERTO  se crea sin compuerta de identidad
+         lo matan (1): pglife_10
+M-06b  MUERTO  se elimina sin comprobar la marca del arnés
+         lo matan (1): pglife_14b
+M-06c  MUERTO  se elimina sin comprobar el nombre
+         lo matan (1): pglife_14
+M-07   MUERTO  make_engine no apunta lo que crea
+         lo matan (11): pglife_01, pglife_02, pglife_03, pglife_04, pglife_05, pglife_08, pglife_09, pglife_09b, pglife_10b, pglife_13, pglife_13b
+M-08   MUERTO  la base temporal registrada no se elimina
+         lo matan (1): pglife_15
+M-08b  MUERTO  soltar_base acepta cualquier nombre que no esté en la lista protegida
+         lo matan (1): pglife_15b
+M-09   MUERTO  sin red de seguridad al acabar la sesión
+         lo matan (1): pglife_09
+M-10   MUERTO  sin ámbito de módulo: lo del módulo espera al final de la corrida
+         lo matan (1): pglife_08
+M-11   MUERTO  sin ámbito de prueba: lo de cada prueba espera al final del módulo
+         lo matan (1): pglife_04
+M-12   MUERTO  las conexiones no llevan el nombre de aplicación del schema
+         lo matan (4): pglife_01, pglife_03, pglife_13, pglife_13b
+M-13   MUERTO  el schema se crea sin marca
+         lo matan (12): pglife_01, pglife_02, pglife_03, pglife_04, pglife_05, pglife_08, pglife_09, pglife_09b, pglife_10b, pglife_13, pglife_13b, pglife_14c
+M-14   MUERTO  la compuerta acepta cualquier nombre de base
+         lo matan (1): gate_05
+M-15   MUERTO  la compuerta acepta cualquier entorno
+         lo matan (3): gate_07, pglife_10, pglife_10b
+M-16   MUERTO  la compuerta no compara con la base del producto
+         lo matan (2): gate_09, gate_11
+M-17   MUERTO  la compuerta no exige que la URL sea la declarada
+         lo matan (2): gate_02, gate_03
+RESTORED  → PASS
+
+MUTANTES 21 · MUERTOS 21 · VIVOS 0

@@ -1,0 +1,46 @@
+# TEST-SCHEMAS-PG-SIN-LIMPIEZA · suite completa en PostgreSQL, DOS corridas seguidas sin recrear la base · 2026-10-01T11:49:25-04:00 → 2026-10-01T12:11:26-04:00
+# KONTROL_TEST_DB_URL=…@localhost:55432/ktest resources/backend/.venv/bin/python qa/repro-pg-test-residuos.py --repeticiones 2 -- tests -rfE
+# (cada corrida: .venv/bin/python -m pytest tests -rfE -p no:cacheprovider, un solo proceso, sin xdist)
+# línea base: ktest recién creada (7 MB) para que la medida sea comparable con las históricas
+
+subconjunto: tests -rfE · repeticiones: 2
+antes                  schemas temporales=   0 · tamaño= 7476 kB · (catálogo 7704 kB) · relaciones=   413 · conexiones=  0 · libre=6032 MB
+corrida 1: 37 failed, 1737 passed, 27 skipped, 6 warnings in 656.45s (0:10:56) · 674 s · pico de conexiones=5 · pico de schemas=1 · pico de tamaño=318 MB · mínimo libre=5390 MB
+tras la corrida 1      schemas temporales=   0 · tamaño=  185 MB · (catálogo  186 MB) · relaciones=   413 · conexiones=  0 · libre=6073 MB
+corrida 2: 37 failed, 1737 passed, 27 skipped, 6 warnings in 628.27s (0:10:28) · 646 s · pico de conexiones=5 · pico de schemas=1 · pico de tamaño=338 MB · mínimo libre=5311 MB
+tras la corrida 2      schemas temporales=   0 · tamaño=  171 MB · (catálogo  171 MB) · relaciones=   413 · conexiones=  0 · libre=6167 MB
+RESIDUO: schemas huérfanos=0 · crecimiento=163 MB · conexiones residuales=0
+
+## Fallos
+corrida 1: 37 fallos ·  10 test_documents; 25 test_documents_security; 2 test_n9_integrity;
+corrida 2: 37 fallos ·  10 test_documents; 25 test_documents_security; 2 test_n9_integrity;
+conjunto de fallos de las dos corridas frente al de 3ea8d66 (antes de este cambio): IDÉNTICO, diff vacío
+clasificación: PREEXISTING_ENVIRONMENT_CLAMSCAN — pruebas de documentos; la máquina no tiene clamscan
+fallos nuevos por este delta: 0 · pruebas nuevas que pasan: 71 (1666 → 1737)
+
+## Lo que el arnés dijo al terminar
+sección «recursos de prueba en PostgreSQL» en la salida de pytest: no aparece en ninguna de las dos corridas
+  → conexiones que una prueba dejara abiertas y hubiera que cortar: 0 · recursos que no se pudieran soltar: 0
+
+## Después, sin recrear la base
+pytest tests/test_audit_total_count.py → 15 passed in 5.15s
+base ......................... ktest
+tamaño ....................... 142 MB
+relaciones (pg_class) ........ 413
+de ello, catálogo ............ 143 MB
+schemas temporales ........... 0 (con marca del arnés: 0)
+conexiones a la base ......... 0 {} de 100
+conexiones del arnés ......... 0
+libre en el volumen de datos . 6195 MB
+bases en el servidor: kaud, ktest, postgres (las 17 temporales de las pruebas de migración ya no están)
+
+## Frente a la última corrida completa anterior (AUDIT-TOTAL-CARGA-TODO, 3ea8d66, mismo día)
+                          antes            ahora (corrida 1 / corrida 2)
+schemas al terminar       313              0 / 0
+pico de schemas vivos     313              1 / 1
+tamaño de ktest al final  3 240 MB         185 MB / 171 MB   (todo catálogo; 142 MB minutos después)
+pico de tamaño            3 240 MB         318 MB / 338 MB
+pico de conexiones        60               5 / 5
+tmpfs libre al terminar   2,5 G            6,1 G
+duración                  17 min 37 s      10 min 56 s / 10 min 28 s
+recrear ktest después     necesario        no

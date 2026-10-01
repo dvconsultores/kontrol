@@ -1,0 +1,29 @@
+# TEST-SCHEMAS-PG-SIN-LIMPIEZA · reproducción POST-FIX · base ktest (PostgreSQL de QA) · 2026-10-01T11:46:17-04:00
+# los mismos subconjuntos y el mismo guion que en reproduccion-pre-fix.txt
+
+## A · fixture por prueba: tests/test_fiscal.py
+antes                  schemas temporales=   0 · tamaño=  205 MB · (catálogo  206 MB) · relaciones=   413 · conexiones=  0 · libre=5189 MB
+corrida 1: 21 passed in 15.45s · 17 s · pico de conexiones=1 · pico de schemas=1 · pico de tamaño=232 MB · mínimo libre=5166 MB
+tras la corrida 1      schemas temporales=   0 · tamaño=  214 MB · (catálogo  215 MB) · relaciones=   413 · conexiones=  0 · libre=5180 MB
+corrida 2: 21 passed in 15.71s · 17 s · pico de conexiones=1 · pico de schemas=1 · pico de tamaño=271 MB · mínimo libre=5121 MB
+tras la corrida 2      schemas temporales=   0 · tamaño=  270 MB · (catálogo  270 MB) · relaciones=   413 · conexiones=  0 · libre=5125 MB
+corrida 3: 21 passed in 15.70s · 17 s · pico de conexiones=1 · pico de schemas=1 · pico de tamaño=330 MB · mínimo libre=5070 MB
+tras la corrida 3      schemas temporales=   0 · tamaño=  324 MB · (catálogo  325 MB) · relaciones=   413 · conexiones=  0 · libre=5070 MB
+
+RESIDUO: schemas huérfanos=0 · crecimiento=119 MB · conexiones residuales=0
+
+## B · fixture de módulo: tests/test_audit_tenant_isolation.py
+antes                  schemas temporales=   0 · tamaño=  324 MB · (catálogo  325 MB) · relaciones=   413 · conexiones=  0 · libre=5070 MB
+corrida 1: 11 passed in 6.02s · 8 s · pico de conexiones=1 · pico de schemas=1 · pico de tamaño=333 MB · mínimo libre=5061 MB
+tras la corrida 1      schemas temporales=   0 · tamaño=  327 MB · (catálogo  327 MB) · relaciones=   413 · conexiones=  0 · libre=5067 MB
+corrida 2: 11 passed in 6.01s · 8 s · pico de conexiones=1 · pico de schemas=1 · pico de tamaño=336 MB · mínimo libre=5058 MB
+tras la corrida 2      schemas temporales=   0 · tamaño=  330 MB · (catálogo  330 MB) · relaciones=   413 · conexiones=  0 · libre=5065 MB
+corrida 3: 11 passed in 6.02s · 8 s · pico de conexiones=1 · pico de schemas=1 · pico de tamaño=333 MB · mínimo libre=5061 MB
+tras la corrida 3      schemas temporales=   0 · tamaño=  327 MB · (catálogo  327 MB) · relaciones=   413 · conexiones=  0 · libre=5068 MB
+
+RESIDUO: schemas huérfanos=0 · crecimiento=2 MB · conexiones residuales=0
+
+## C · pruebas de migración que crean bases: las cuatro que no las soltaban
+# .venv/bin/python -m pytest tests/test_documents_migration_0024.py tests/test_spec052_migration_0033_legacy.py tests/test_uom_backfill.py tests/test_warehouse_migration_0018.py
+34 passed in 56.38s
+bases temporales que quedan tras la corrida: 0 []  (antes: 17, 319 MB)

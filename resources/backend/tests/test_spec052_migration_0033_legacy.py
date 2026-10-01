@@ -65,6 +65,10 @@ def _crear_base(nombre: str) -> None:
         conn.execute(text(f'DROP DATABASE IF EXISTS "{nombre}" WITH (FORCE)'))
         conn.execute(text(f'CREATE DATABASE "{nombre}" ENCODING \'UTF8\''))
     engine.dispose()
+    # La base tiene dueño: se suelta al terminar el ámbito —la prueba o el módulo— que la creó.
+    from pg_harness import registrar_base
+
+    registrar_base(nombre)
 
 
 def _sql(db_name: str, statements: list[str]) -> None:

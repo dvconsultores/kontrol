@@ -9,6 +9,8 @@ from __future__ import annotations
 import os
 import tempfile
 
+import pytest
+
 # Clave de prueba (>=32 caracteres). Nunca usar en producción.
 os.environ.setdefault(
     "KONTROL_SECRET_KEY",
@@ -38,16 +40,19 @@ def make_engine(**kwargs):
     """Motor para los fixtures de prueba.
 
     Por defecto SQLite en memoria (rápido, para pruebas que no ejercitan el
-    dialecto). Si `KONTROL_TEST_DB_URL` apunta a PostgreSQL, cada módulo de
-    prueba recibe su propio `schema` aislado, de modo que la misma suite se
-    ejecuta sobre el motor de producción sin colisiones.
+    dialecto). Si `KONTROL_TEST_DB_URL` apunta a PostgreSQL, cada llamada recibe
+    su propio `schema` aislado, de modo que la misma suite se ejecuta sobre el
+    motor de producción sin colisiones.
+
+    Ese schema y su motor tienen dueño: se apuntan al ámbito abierto —la prueba o
+    el módulo, según la fixture que llame— y las fixtures `_recursos_pg_*` de este
+    fichero los sueltan al terminar ese ámbito (`pg_harness`). Quien llama no
+    tiene que limpiar nada, y tampoco puede olvidarse.
 
     Uso:
         KONTROL_TEST_DB_URL=postgresql+psycopg2://... pytest tests/
     """
-    import uuid as _uuid
-
-    from sqlalchemy import create_engine, text
+    from sqlalchemy import create_engine
     from sqlalchemy.pool import StaticPool
 
     url = os.environ.get("KONTROL_TEST_DB_URL")
@@ -56,19 +61,60 @@ def make_engine(**kwargs):
         params.update(kwargs)
         return create_engine("sqlite+pysqlite:///:memory:", future=True, **params)
 
-    schema = f"t_{_uuid.uuid4().hex[:12]}"
-    # El schema se fija en `connect_args`, no con un listener de evento: si se
-    # registra el listener después de abrir la primera conexión, ésta queda en
-    # el pool SIN `search_path` y todas las pruebas acaban compartiendo
-    # `public`. Detectado al ejecutar la suite sobre PostgreSQL real.
-    admin = create_engine(url, future=True)
-    with admin.begin() as conn:
-        conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema}"'))
-    admin.dispose()
+    import pg_harness
 
-    connect_args = dict(kwargs.pop("connect_args", {}))
-    connect_args["options"] = f"-csearch_path={schema}"
-    return create_engine(url, future=True, connect_args=connect_args, **kwargs)
+    return pg_harness.crear_motor_de_prueba(url, **kwargs)
+
+
+# --------------------------------------------------------------------------- #
+# Ciclo de vida de lo que la suite crea en PostgreSQL (SPEC054 · PGLIFE)
+# --------------------------------------------------------------------------- #
+# Lo que nace durante una prueba se suelta al acabar la prueba; lo que nace en
+# una fixture de módulo, al acabar el módulo. Son `autouse` y se desmontan
+# después que las fixtures de cada módulo, es decir, cuando éstas ya cerraron sus
+# sesiones; y pytest desmonta una fixture pase o falle la prueba. En SQLite no
+# hay nada apuntado y no hacen nada.
+@pytest.fixture(scope="module", autouse=True)
+def _recursos_pg_del_modulo(request):
+    import pg_harness
+
+    ambito = pg_harness.abrir_ambito(f"módulo {request.module.__name__}")
+    yield
+    pg_harness.cerrar_ambito(ambito)
+
+
+@pytest.fixture(autouse=True)
+def _recursos_pg_de_la_prueba(request):
+    import pg_harness
+
+    ambito = pg_harness.abrir_ambito(f"prueba {request.node.nodeid}")
+    yield
+    pg_harness.cerrar_ambito(ambito)
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Red de seguridad: lo que quedara sin soltar se suelta aquí, y la corrida dice qué fue."""
+    import pg_harness
+
+    pg_harness.cerrar_sesion()
+    if pg_harness.INFORME.residuos and session.exitstatus == 0:
+        session.exitstatus = 1
+
+
+def pytest_terminal_summary(terminalreporter):
+    import pg_harness
+
+    informe = pg_harness.INFORME
+    if not (informe.conexiones_cortadas or informe.residuos):
+        return
+    terminalreporter.section("recursos de prueba en PostgreSQL")
+    terminalreporter.write_line(
+        f"schemas creados: {informe.schemas_creados} · soltados: {informe.schemas_soltados} · "
+        f"bases soltadas: {informe.bases_soltadas}")
+    for ambito, schema, n in informe.conexiones_cortadas:
+        terminalreporter.write_line(f"conexiones que quedaron abiertas y se cortaron: {n} · {ambito} · {schema}")
+    for residuo in informe.residuos:
+        terminalreporter.write_line(f"NO SE PUDO SOLTAR: {residuo}")
 
 
 def seed_org_chain(session, *company_ids: str) -> None:
