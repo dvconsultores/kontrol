@@ -1,0 +1,47 @@
+AUDITORIA-PAGINACION-CLIENTE · E2E GLOBAL · Chromium · backend 127.0.0.1:8000 sobre kaud (PostgreSQL) · Vite 5173 · UNA corrida autoritativa · inicio 2026-10-01T09:37:02-04:00
+ficheros de suite: 35 · pruebas: 240 (236 de la referencia + 4 de auditoria-paginacion)
+  1 failed
+  40 skipped
+  199 passed (4.0m)
+exit=1
+
+Fallo:
+  ✘  150 [chromium] › e2e/putaway.spec.ts:187:3 › Spec 022 — put-away › el operario ubica la mercancía y el dominio lo confirma (30.1s)
+  1) [chromium] › e2e/putaway.spec.ts:187:3 › Spec 022 — put-away › el operario ubica la mercancía y el dominio lo confirma 
+    Test timeout of 30000ms exceeded.
+    Error: page.waitForLoadState: Test timeout of 30000ms exceeded.
+      180 |   await page.waitForURL((u) => u.pathname === "/inventario/putaway", { timeout: 15_000 });
+      181 |   await expect(page.getByRole("heading", { name: "Put-away" })).toBeVisible();
+    > 182 |   await page.waitForLoadState("networkidle");
+          |              ^
+      183 | }
+      184 |
+      185 | test.describe("Spec 022 — put-away", () => {
+        at irAPutAway (/home/maria/Projectos/Kontrol/resources/frontend/e2e/putaway.spec.ts:182:14)
+        at /home/maria/Projectos/Kontrol/resources/frontend/e2e/putaway.spec.ts:196:5
+
+Atribución:
+  TEST                        = putaway.spec.ts:187 (Spec 022 — put-away)
+  TARGET RELATED              = NO — no toca /auditoria ni /audit/events (0 referencias); pantalla y endpoints de inventario
+  PASSES ALONE                =   3 passed (22.1s) (repetida 3 veces en solitario)
+  PREEXISTING FLAKY EVIDENCE  = SÍ — E2E-FLAKY-BAJO-CARGA: caducidad de waitForLoadState("networkidle") con el backend de QA de un solo proceso bajo 6 trabajadores; putaway.spec.ts ya figura en esa deuda (línea 405, 2026-09-30)
+  NEW REGRESSION              = NO
+  CLASIFICACIÓN               = PREEXISTING_FLAKY
+
+Las suites del objetivo en esta misma corrida global:
+✓   44 [chromium] › e2e/auditoria-fecha.spec.ts:54:3 › AUDITORIA-CREATED-AT · la columna Fecha muestra event_time › DATE-01/02/03 · la fila 
+✓   46 [chromium] › e2e/auditoria-paginacion.spec.ts:144:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-0
+✓   45 [chromium] › e2e/auditoria-paginacion.spec.ts:105:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-0
+✓   48 [chromium] › e2e/auditoria-paginacion.spec.ts:175:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-0
+✓   49 [chromium] › e2e/auditoria-sobre.spec.ts:60:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-01/02 · dos eventos co
+✓   47 [chromium] › e2e/auditoria-paginacion.spec.ts:158:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-0
+✓   50 [chromium] › e2e/auditoria-sobre.spec.ts:102:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-04 · el rastro de otr
+✓   83 [chromium] › e2e/empresas-busqueda.spec.ts:47:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-01 · buscar la razón social de una e
+✓   85 [chromium] › e2e/empresas-busqueda.spec.ts:73:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-03 · la búsqueda no cruza tenants: c
+✓   84 [chromium] › e2e/empresas-busqueda.spec.ts:58:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-02 · un término inexistente deja la 
+✓   89 [chromium] › e2e/empresas-sobre.spec.ts:61:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-02 · la paginac
+✓   88 [chromium] › e2e/empresas-sobre.spec.ts:43:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-01 · la API res
+✓   90 [chromium] › e2e/empresas-sobre.spec.ts:75:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-03 · q sigue bu
+✓   86 [chromium] › e2e/empresas-busqueda.spec.ts:81:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-04 · el otro tenant sí encuentra su 
+✓   87 [chromium] › e2e/empresas-busqueda.spec.ts:89:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-05 · la búsqueda no distingue mayús
+✓   91 [chromium] › e2e/empresas-sobre.spec.ts:85:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-04 · la pantall

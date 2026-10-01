@@ -1,0 +1,7 @@
+# Mutaciones contra el E2E dirigido (Chromium, suite final): ¿la suite de navegador ve el defecto? · 2026-10-01T09:34:47-04:00
+GOOD →   4 passed (8.1s) 
+M-01  se quita manualPagination →   3 failed   1 passed (10.0s)  · caen: PAG-E2E-01 PAG-E2E-02 PAG-E2E-03 
+M-03  la clave no incluye la página →   2 failed   2 passed (31.1s)  · caen: PAG-E2E-01 PAG-E2E-03 
+M-05  desfase de uno →   3 failed   1 passed (31.2s)  · caen: PAG-E2E-01 PAG-E2E-02 PAG-E2E-03 
+M-06  el tamaño no vuelve a la primera página →   1 failed   3 passed (31.1s)  · caen: PAG-E2E-03 
+RESTORED → fichero idéntico ·   4 passed (8.5s) 

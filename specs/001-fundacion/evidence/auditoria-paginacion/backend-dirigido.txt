@@ -1,0 +1,7 @@
+# Backend dirigido · tenant + paginación de auditoría · backend sin cambios (git diff resources/backend = vacío) · 2026-10-01T09:20:52-04:00
+## SQLite
+...........                                                              [100%]
+11 passed in 9.56s
+## PostgreSQL (ktest)
+...........                                                              [100%]
+11 passed in 5.94s

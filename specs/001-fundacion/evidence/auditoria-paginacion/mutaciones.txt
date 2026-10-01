@@ -1,0 +1,39 @@
+# AUDITORIA-PAGINACION-CLIENTE · mutaciones de frontend · 2026-10-01T09:22:59-04:00
+GOOD      → PASS
+M-01   MUERTO  se quita manualPagination: la tabla vuelve a paginar lo recibido
+         lo matan (3): PAG-01, PAG-02, PAG-05
+M-02   MUERTO  el paginador se gobierna con items.length en vez de total
+         lo matan (8): PAG-01, PAG-02, PAG-03, PAG-04, PAG-06, PAG-07, PAG-10, PAG-18
+M-02b  MUERTO  el umbral del paginador mira items.length en vez de total
+         lo matan (9): PAG-01, PAG-02, PAG-03, PAG-04, PAG-05, PAG-06, PAG-07, PAG-10, PAG-18
+M-03   MUERTO  la clave de caché no incluye la página
+         lo matan (5): PAG-03, PAG-04, PAG-06, PAG-07, PAG-10
+M-04   MUERTO  la clave de caché no incluye el tamaño
+         lo matan (2): PAG-02, PAG-05
+M-05   MUERTO  desfase de uno: page = índice de la interfaz
+         lo matan (12): ENV-01, PAG-01, PAG-02, PAG-03, PAG-04, PAG-05, PAG-06, PAG-07, PAG-10, PAG-16, PAG-17, PAG-18
+M-06   MUERTO  cambiar el tamaño no vuelve a la primera página
+         lo matan (1): PAG-06
+M-08   MUERTO  segundo corte local sobre los items
+         lo matan (2): PAG-02, PAG-05
+M-09   MUERTO  el paginador aparece también con diez eventos (>= en vez de >)
+         lo matan (1): PAG-17
+M-09b  MUERTO  el paginador aparece siempre que hay datos
+         lo matan (3): PAG-11, PAG-16, PAG-17
+M-10   MUERTO  la pantalla no envía el tamaño elegido
+         lo matan (10): ENV-01, PAG-01, PAG-02, PAG-03, PAG-04, PAG-05, PAG-06, PAG-07, PAG-10, PAG-18
+M-11   MUERTO  el cliente no envía page
+         lo matan (11): CLI-01, CLI-02, CLI-03, ENV-01, PAG-02, PAG-03, PAG-04, PAG-05, PAG-06, PAG-07, PAG-10
+M-12   MUERTO  el cliente no envía page_size
+         lo matan (13): CLI-01, CLI-02, CLI-03, ENV-01, PAG-01, PAG-02, PAG-03, PAG-04, PAG-05, PAG-06, PAG-07, PAG-10, PAG-18
+M-13   MUERTO  el cliente toma 10 como tamaño por defecto en vez del 20 del contrato
+         lo matan (2): CLI-01, CLI-03
+M-14   MUERTO  el tamaño inicial de la pantalla es 20 en vez de 10
+         lo matan (8): ENV-01, PAG-01, PAG-03, PAG-04, PAG-06, PAG-07, PAG-10, PAG-18
+M-15   MUERTO  «anterior/siguiente» no cambia la página (manejador desconectado)
+         lo matan (5): PAG-03, PAG-04, PAG-06, PAG-07, PAG-10
+M-16   MUERTO  la columna Fecha vuelve a leer created_at
+         lo matan (4): DATE-01/02, DATE-03/04/05/06/07, DATE-08, DATE-13
+RESTORED  → PASS
+
+MUTANTES 17 · MUERTOS 17 · VIVOS 0

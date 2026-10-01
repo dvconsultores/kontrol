@@ -7,7 +7,8 @@
  * `items`, un sobre vacío es el estado vacío, un error sigue siendo un error,
  * y una respuesta que no sea el sobre no se acepta por la puerta de atrás.
  *
- * La columna «Fecha» tiene su propia prueba (`AuditoriaPage.fecha.test.tsx`).
+ * La columna «Fecha» tiene su propia prueba (`AuditoriaPage.fecha.test.tsx`), y la
+ * paginación de servidor la suya (`AuditoriaPage.paginacion.test.tsx`).
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -57,7 +58,7 @@ describe("AuditoriaPage · consumo del sobre paginado", () => {
     expect(screen.getByText("LOGIN_SUCCESS")).toBeInTheDocument();
     expect(screen.getByText("ROLE_ASSIGNED")).toBeInTheDocument();
     expect(screen.getAllByRole("row")).toHaveLength(3); // cabecera + 2
-    expect(apiFetch).toHaveBeenCalledWith("/audit/events?q=");
+    expect(apiFetch).toHaveBeenCalledWith("/audit/events?page=1&page_size=10");
   });
 
   it("ENV-02 · un sobre vacío es el estado vacío, no una tabla muda", async () => {
@@ -92,17 +93,6 @@ describe("AuditoriaPage · consumo del sobre paginado", () => {
     montar();
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("No fue posible cargar la auditoría."));
     expect(screen.queryByText("Sin eventos")).not.toBeInTheDocument();
-  });
-
-  it("ENV-05 · la tabla pagina en cliente sobre los `items` recibidos, no sobre `total`", async () => {
-    apiFetch.mockClear();
-    const veinte = Array.from({ length: 20 }, (_, i) => evento(i + 1, "LOGIN_SUCCESS"));
-    apiFetch.mockResolvedValue(sobre(veinte, 108));
-    montar();
-    expect(await screen.findByText("req-1-login_success")).toBeInTheDocument();
-    // 10 por página en cliente: 10 filas + cabecera, y el pie cuenta los 20 recibidos.
-    expect(screen.getAllByRole("row")).toHaveLength(11);
-    expect(screen.getByText(/de 20 registros/)).toBeInTheDocument();
   });
 
   it("ENV-08 · una respuesta que no es el sobre no se pinta por una puerta de atrás", async () => {

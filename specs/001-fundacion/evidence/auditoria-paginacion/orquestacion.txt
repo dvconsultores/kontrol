@@ -1,0 +1,62 @@
+# AUDITORIA-PAGINACION-CLIENTE · delegaciones a DeepSeek · leído de las trazas de cada ejecutor
+# servidor MCP deepseek · @arikusi/deepseek-mcp-server@2.3.0 · herramienta mcp__deepseek__deepseek_chat
+
+T10 · intento 1
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 1598/1191 · $0.000540 · finish_reason=stop
+  egress: carga de 5598 caracteres · secretos=0 · bloques=1 · relevo literal=sí
+  AUDIT_REJECT: invariante incumplido: import dinámico dentro de cada prueba; prueba de tipos asíncrona
+
+T10 · reintento 1
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 2882/1160 · $0.000711 · finish_reason=stop
+  egress: carga de 9948 caracteres · secretos=0 · bloques=1 · relevo literal=sí
+  AUDIT_PASS: aplicado; rojo contra el código anterior (3 de 5), verde tras T13
+
+T11 · intento 1
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 4175/3530 · $0.001555 · finish_reason=stop
+  egress: carga de 14005 caracteres · secretos=0 · bloques=1 · relevo literal=sí
+  AUDIT_REJECT: import estático a mitad de fichero; cabecera que describía mal el defecto; prueba de tipos asíncrona
+
+T11 · reintento 1
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 3953/3347 · $0.001473 · finish_reason=stop
+  egress: carga de 14345 caracteres · secretos=0 · bloques=1 · relevo literal=sí
+  AUDIT_PASS: aplicado; diferencia con el intento 1 = solo los tres motivos; rojo 8 de 15 antes de T13, verde después
+
+T12 · intento 1
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 1073/795 · $0.000355 · finish_reason=stop
+  egress: carga de 3774 caracteres · secretos=0 · bloques=3 · relevo literal=sí
+  AUDIT_PASS: aplicado; ENV-01 rojo antes de T13, verde después
+
+T13 · intento 1
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 2765/1764 · $0.000863 · finish_reason=stop
+  egress: carga de 10031 caracteres · secretos=0 · bloques=4 · relevo literal=sí
+  AUDIT_PASS: aplicado; 20 pruebas dirigidas, tsc y eslint en verde
+
+T14 · intento 1
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 5242/3501 · $0.001697 · finish_reason=stop
+  egress: carga de 17661 caracteres · secretos=0 · bloques=5 · relevo literal=sí
+  AUDIT_REJECT: error de contrato de CLAUDE: la app cachea 30 s y «anterior» no vuelve a pedir la página 1; no se aplicó
+
+T14 · reintento 1
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 5935/3614 · $0.001825 · finish_reason=stop
+  egress: carga de 20778 caracteres · secretos=0 · bloques=5 · relevo literal=sí
+  AUDIT_PASS → TEST_REJECT: aplicado; falló en la matriz en paralelo: otro error de contrato de CLAUDE (orden entre páginas en una bitácora que crece)
+
+T14 · reintento 2
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 3663/903 · $0.000748 · finish_reason=stop
+  egress: carga de 12987 caracteres · secretos=0 · bloques=2 · relevo literal=sí
+  AUDIT_PASS: aplicado; 3 corridas × 48 pruebas en tres navegadores, 0 fallos
+
+DEEPSEEK CALLS = 9 · tokens DeepSeek 31286 de entrada / 19805 de salida · coste DeepSeek $0.009767
+tokens del subagente puente (Sonnet), según el arnés: 323131
+tareas delegadas 5 (T10, T11, T12, T13, T14) · reintentos 4 (T10: 1 · T11: 1 · T14: 2) · tope de 2 respetado
+rechazos 4: dos por desviación del parche (T10, T11) y dos por error de contrato de quien redactó el encargo (T14)
+parches aplicados 6 · parches corregidos a mano por Claude 0

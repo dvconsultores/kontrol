@@ -1,0 +1,19 @@
+# node qa/repro-auditoria-paginacion.mjs · POST-FIX · 2026-10-01T09:28:12-04:00
+API por defecto: page=1 page_size=20 items=20 total=10432
+API última página (522): items=12 · más allá del final (page=523): items=0
+[al entrar] filas visibles=10 · paginadores=1 · Página 1 de 1044 · pie: — · caption: Resultados: 10 registros
+[tras «siguiente» nº 1] filas visibles=10 · paginadores=1 · Página 2 de 1044 · pie: — · caption: Resultados: 10 registros
+[tras «siguiente» nº 2] filas visibles=10 · paginadores=1 · Página 3 de 1044 · pie: — · caption: Resultados: 10 registros
+[tras «siguiente» nº 3] filas visibles=10 · paginadores=1 · Página 4 de 1044 · pie: — · caption: Resultados: 10 registros
+peticiones a /audit/events al entrar: 1 · provocadas por «siguiente» (3 pulsaciones): 3
+  200 /audit/events?page=1&page_size=10 → {items,page,page_size,total} items=10 total=10433 page=1 page_size=10
+  200 /audit/events?page=2&page_size=10 → {items,page,page_size,total} items=10 total=10433 page=2 page_size=10
+  200 /audit/events?page=3&page_size=10 → {items,page,page_size,total} items=10 total=10433 page=3 page_size=10
+  200 /audit/events?page=4&page_size=10 → {items,page,page_size,total} items=10 total=10433 page=4 page_size=10
+[final] filas visibles=10 · paginadores=1 · Página 4 de 1044 · pie: — · caption: Resultados: 10 registros
+API_PAGE=1 API_PAGE_SIZE=10 API_ITEMS=10 API_TOTAL=10433
+eventos alcanzables desde la pantalla: todas las páginas del servidor
+DOUBLE_PAGINATION=NO
+errores de consola: 1
+  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+URL final: http://localhost:5173/auditoria · título: Auditoría

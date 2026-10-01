@@ -2525,3 +2525,35 @@ ni `E2E-SIN-TYPECHECK`, ni el lockfile, ni `conftest.py`, ni `API-QUERY-SILENCIO
 `API-COMPANY-ID-EN-CONSULTA`, ni `SEED-EMPRESA-CODIGO-NO-UNICO`, ni
 `MOVTYPE-GLOBAL-SIN-UNICIDAD`, ni `INBOX-045-AISLAMIENTO`, ni la certificación de compras,
 ni la Spec 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+## 2026-10-01 · Tras converger el delta AUDITORIA-PAGINACION-CLIENTE (dueña 001, apoyo 012)
+
+El servidor paginaba la bitácora desde siempre; la pantalla no le pedía más que la primera
+página y, encima, la tabla volvía a paginar en cliente los veinte eventos recibidos. Medido
+en el navegador antes de tocar nada: 10 279 eventos en el servidor, 20 alcanzables desde la
+pantalla, y «siguiente» sin producir ninguna petición.
+
+No hubo nada que diseñar: el mecanismo se había construido en `EMPRESAS-SIN-SOBRE` y se
+reutilizó tal cual. La página y su tamaño son estado de la pantalla, viajan en la petición
+y en la clave de caché; la tabla recibe `manualPagination`; el paginador es uno y se
+gobierna con el `total` del sobre. Dos ficheros de frontend. Backend, `DataTable`, esquema:
+cero. La caja de búsqueda no se tocó, y a propósito no reinicia la página: el servidor
+ignora `q`, y qué hace esa caja es decisión de la dueña (`UI-BUSQUEDA-MUERTA`).
+
+Fue el primer delta ejecutado con la orquestación Claude + DeepSeek. Claude investigó,
+reprodujo, fijó el contrato, diseñó las pruebas y los mutantes, auditó y aplicó; DeepSeek
+propuso el producto y las suites: cinco tareas, nueve llamadas, $0.0098. Cuatro propuestas
+se rechazaron. Dos, por desviarse del encargo. Las otras dos, por errores de contrato de
+quien redactó el encargo —Claude—, que la auditoría y las pruebas bajo carga destaparon: la
+aplicación cachea treinta segundos, y una bitácora que crece mientras se pagina repite filas
+entre páginas. Ningún parche se retocó a mano. El coste real de delegar no fue DeepSeek sino
+el subagente que hace de puente (`EJECUTOR-ABREVIA-EL-CONTEXTO`).
+
+Lo que este delta deja medido y no absorbe: `AUDITORIA-OFFSET-EN-BITACORA-VIVA`,
+`AUDIT-TOTAL-CARGA-TODO` (450 ms por página con 10 648 eventos) y
+`AUDIT-ORDEN-SIN-DESEMPATE`.
+
+**Candidatas siguientes, sin decisión de la dueña pendiente:** `AUDIT-TOTAL-CARGA-TODO` junto
+con `AUDIT-ORDEN-SIN-DESEMPATE` (mismo handler, backend, pequeño), `AUDITORIA-TIMELINE-FECHA-CRUDA`
+o `LISTADOS-SIN-RESPONSE-MODEL`. **Con decisión pendiente:** `UI-BUSQUEDA-MUERTA` en Auditoría
+y en Existencias. `NEXT SPEC = 029` no cambia.

@@ -1,0 +1,14 @@
+# node qa/repro-auditoria-paginacion.mjs · PRE-FIX · HEAD 571e589 · 2026-10-01T09:11:34-04:00
+API por defecto: page=1 page_size=20 items=20 total=10278
+API última página (514): items=18 · más allá del final (page=515): items=0
+[al entrar] filas visibles=10 · paginadores=1 · Página 1 de 2 · pie: Mostrando 1–10 de 20 registros · caption: Resultados: 20 registros
+[tras «siguiente» nº 1] filas visibles=10 · paginadores=1 · Página 2 de 2 · pie: Mostrando 11–20 de 20 registros · caption: Resultados: 20 registros
+peticiones a /audit/events al entrar: 1 · provocadas por «siguiente» (1 pulsaciones): 0
+  200 /audit/events?q= → {items,page,page_size,total} items=20 total=10279 page=1 page_size=20
+[final] filas visibles=10 · paginadores=1 · Página 2 de 2 · pie: Mostrando 11–20 de 20 registros · caption: Resultados: 20 registros
+API_PAGE=1 API_PAGE_SIZE=20 API_ITEMS=20 API_TOTAL=10279
+eventos alcanzables desde la pantalla: 20 de 10279
+DOUBLE_PAGINATION=YES
+errores de consola: 1
+  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+URL final: http://localhost:5173/auditoria · título: Auditoría

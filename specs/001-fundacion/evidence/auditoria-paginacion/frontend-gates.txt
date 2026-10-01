@@ -1,0 +1,13 @@
+# AUDITORIA-PAGINACION-CLIENTE · gates de frontend · 2026-10-01T09:31:35-04:00
+## npm run typecheck (tsc -b --noEmit)
+exit=0
+## npm run lint (eslint . --max-warnings 0)
+exit=0
+## npm test (vitest run)
+ Test Files  27 passed (27)
+      Tests  431 passed (431)
+## npm run build (tsc -b && vite build)
+tsc exit=0
+✓ 2675 modules transformed.
+✓ built in 2.94s
+vite exit=0

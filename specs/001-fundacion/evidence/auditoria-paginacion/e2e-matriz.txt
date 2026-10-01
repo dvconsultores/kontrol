@@ -1,0 +1,5 @@
+# AUDITORIA-PAGINACION-CLIENTE · E2E dirigido · matriz Chromium / Firefox / WebKit en paralelo, tres corridas seguidas · 2026-10-01T09:32:35-04:00
+# suites: auditoria-paginacion (nueva) · auditoria-sobre · auditoria-fecha · empresas-sobre · empresas-busqueda
+corrida 1:   48 passed (36.0s)  
+corrida 2:   48 passed (35.5s)  
+corrida 3:   48 passed (36.4s)  

@@ -7,14 +7,28 @@
  * llama, no una comprobación. Con la respuesta tipada aquí, quien vuelva a
  * tratar el sobre como array deja de compilar.
  *
- * `q` sigue viajando tal cual lo enviaba la pantalla: la búsqueda de auditoría
- * es una decisión pendiente (`UI-BUSQUEDA-MUERTA`), no parte de este contrato.
+ * La página y su tamaño viajan siempre, con los valores por defecto del
+ * contrato (`page` desde 1, `page_size` hasta 100): así la ruta es una
+ * plantilla plana y la guarda de completitud puede leer qué endpoint pide
+ * este módulo. `q` sigue viajando cuando la pantalla lo envía: la búsqueda
+ * de auditoría es una decisión pendiente (`UI-BUSQUEDA-MUERTA`), no parte
+ * de este contrato.
  */
 import { apiFetch } from "@/api/client";
 import type { AuditEvent, PagedResult } from "@/api/types";
 
 export type AuditEventPage = PagedResult<AuditEvent>;
 
-export function listAuditEvents(search: string): Promise<AuditEventPage> {
-  return apiFetch<AuditEventPage>(`/audit/events?q=${encodeURIComponent(search)}`);
+export interface ConsultaDeAuditoria {
+  q?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export function listAuditEvents(consulta: ConsultaDeAuditoria = {}): Promise<AuditEventPage> {
+  const params = new URLSearchParams();
+  if (consulta.q) params.set("q", consulta.q);
+  params.set("page", String(consulta.page ?? 1));
+  params.set("page_size", String(consulta.page_size ?? 20));
+  return apiFetch<AuditEventPage>(`/audit/events?${params.toString()}`);
 }

@@ -7,6 +7,7 @@ import type { AuditEvent } from "@/api/types";
 import { DataTable } from "@/components/DataTable";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
+import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
 import { formatearFecha } from "@/i18n";
 import { createColumnHelper } from "@tanstack/react-table";
@@ -26,9 +27,16 @@ const columns = [
 
 export function AuditoriaPage(): React.JSX.Element {
   const [search, setSearch] = useState("");
+  // Paginación de servidor (contrato de listados), como en Empresas: la
+  // página es cero-based en la interfaz y uno-based en la petición, y
+  // cambiar el tamaño vuelve a la primera. La caja de búsqueda no reinicia
+  // la página: el servidor ignora `q` (`UI-BUSQUEDA-MUERTA`, decisión
+  // pendiente).
+  const [pagina, setPagina] = useState(0);
+  const [tamano, setTamano] = useState(10);
   const query = useQuery({
-    queryKey: ["audit", "events", search],
-    queryFn: () => listAuditEvents(search),
+    queryKey: ["audit", "events", search, pagina, tamano],
+    queryFn: () => listAuditEvents({ q: search, page: pagina + 1, page_size: tamano }),
     retry: false,
   });
 
@@ -44,14 +52,27 @@ export function AuditoriaPage(): React.JSX.Element {
       </div>
       <DataTable
         columns={columns}
-        // El servidor responde un sobre paginado: las filas son `items`.
+        // El servidor ya entrega una página: las filas son `items` y la tabla no vuelve a paginar.
         data={query.data?.items ?? []}
         loading={query.isLoading}
         error={query.isError ? "No fue posible cargar la auditoría." : null}
         getRowId={(row) => row.id}
         emptyTitle="Sin eventos"
         emptyDescription="No hay eventos de auditoría registrados con los filtros actuales."
+        manualPagination
       />
+      {query.data && query.data.total > 10 ? (
+        <Pagination
+          pageIndex={pagina}
+          pageSize={tamano}
+          total={query.data.total}
+          onPageChange={setPagina}
+          onPageSizeChange={(valor) => {
+            setTamano(valor);
+            setPagina(0);
+          }}
+        />
+      ) : null}
     </PageContent>
   );
 }

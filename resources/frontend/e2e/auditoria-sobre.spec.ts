@@ -25,7 +25,7 @@ async function loginConRastro(request: APIRequestContext, tenant: string, usuari
 }
 
 /** ¿Está el rastro en la bitácora del tenant de `token`? Por API, con página amplia:
- * con muchas pruebas en paralelo la página 1 de 20 que pide la pantalla puede no bastar. */
+ * con muchas pruebas en paralelo la página 1 de 10 que pide la pantalla puede no bastar. */
 async function rastroEnLaBitacora(request: APIRequestContext, token: string, rastro: string): Promise<boolean> {
   const r = await request.get(`${API}/audit/events?page_size=100&action=LOGIN_SUCCESS`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -78,12 +78,11 @@ test.describe("AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan", () =>
     expect(sobre!.items.length).toBeGreaterThan(0);
     expect(sobre!.total).toBeGreaterThanOrEqual(sobre!.items.length);
 
-    // Y lo que la persona ve: la tabla pagina en cliente de 10 en 10, así que la
-    // primera página son exactamente los diez primeros `items`, en su orden, y cada
-    // fila lleva la acción, la entidad y el Request ID de su item. Con varias pruebas
-    // en paralelo, otros inicios de sesión se cuelan entre los dos controlados, y por
-    // eso la prueba mira la correspondencia entera y no la posición de uno concreto.
-    const esperadas = sobre!.items.slice(0, 10);
+    // Y lo que la persona ve: la pantalla pide su página al servidor y la tabla la
+    // pinta entera, así que las filas son exactamente los `items` recibidos, en su
+    // orden. Con varias pruebas en paralelo, otros inicios de sesión se cuelan entre
+    // los dos controlados: se mira la correspondencia entera, no la posición de uno.
+    const esperadas = sobre!.items;
     const filas = page.locator("table tbody tr");
     await expect(filas).toHaveCount(esperadas.length);
     for (const [i, item] of esperadas.entries()) {
@@ -116,7 +115,7 @@ test.describe("AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan", () =>
     expect(await rastroEnLaBitacora(request, token, ajeno)).toBe(false);
     expect(sobre!.items.map((i) => i.request_id)).not.toContain(ajeno);
     await expect(page.getByRole("row", { name: new RegExp(ajeno) })).toHaveCount(0);
-    if (sobre!.items.slice(0, 10).some((i) => i.request_id === propio)) {
+    if (sobre!.items.some((i) => i.request_id === propio)) {
       await expect(page.getByRole("row", { name: new RegExp(propio) })).toBeVisible();
     }
   });
