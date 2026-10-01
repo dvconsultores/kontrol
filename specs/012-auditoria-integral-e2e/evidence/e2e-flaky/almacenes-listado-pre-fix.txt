@@ -1,0 +1,19 @@
+# qa/repro-almacenes-listado.py · PRE-FIX · HEAD 42cd793 · base kaud (PostgreSQL de QA) · 2026-10-01T14:08:29-04:00
+== en proceso: sentencias SQL por petición ==
+  GET /organization/warehouses?limit=1             items=  1 total=543 · sentencias=   22 (22.0 por almacén) · 22 ms
+  GET /organization/warehouses?limit=50            items= 50 total=543 · sentencias=  610 (12.2 por almacén) · 172 ms
+  GET /organization/warehouses?limit=200&offset=0  items=200 total=543 · sentencias= 2410 (12.1 por almacén) · 657 ms
+  GET /organization/warehouses?limit=500           items=500 total=543 · sentencias= 6370 (12.7 por almacén) · 1680 ms
+almacenes de la empresa: 543
+
+== por HTTP contra http://127.0.0.1:8000/api/v1: la misma petición, sola y con otras a la vez ==
+  Put-away (limit=500)
+    1 petición ........ mediana 1606 ms
+    3 a la vez ........ la más lenta 3786 ms · mediana 3743 ms
+    6 a la vez ........ la más lenta 7667 ms · mediana 7487 ms
+  Picking, una tanda (limit=200)
+    1 petición ........ mediana 600 ms
+    3 a la vez ........ la más lenta 1400 ms · mediana 1387 ms
+    6 a la vez ........ la más lenta 2947 ms · mediana 2876 ms
+  Picking carga el desplegable con 3 tandas seguidas de 200: la opción del almacén recién creado
+  no existe en la página hasta que termina la última.

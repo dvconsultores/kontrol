@@ -433,6 +433,65 @@ def warehouse_history(db: Session, warehouse_id: str) -> dict[str, Any]:
     return {"movements": movements} if movements else {}
 
 
+def warehouses_dependencies(db: Session, warehouse_ids: list[str]) -> dict[str, dict[str, int]]:
+    """Lo que impide borrar cada almacén, para una página entera de una vez.
+
+    `can_delete_warehouse` y `current_regime` lo preguntan almacén por almacén:
+    los cuatro tramos, las ubicaciones y los movimientos. En un listado eso son
+    seis consultas por fila —y el doble, porque `warehouse_allowed_actions` las
+    repite—; aquí es una por tabla, agrupada. Por cada almacén se devuelve el
+    mismo diccionario que `can_delete_warehouse` arma en `dependencies`: solo lo
+    que tiene algo, y en el mismo orden.
+    """
+    from app.modules.inventory.models import InventoryMovement
+
+    dependencies: dict[str, dict[str, int]] = {warehouse_id: {} for warehouse_id in warehouse_ids}
+    if not dependencies:
+        return dependencies
+    sources: list[tuple[str, Any]] = [
+        *LEVEL_MODEL.items(), ("locations", WarehouseLocation), ("movements", InventoryMovement),
+    ]
+    for key, model in sources:
+        rows = db.execute(
+            select(model.warehouse_id, func.count())
+            .where(model.warehouse_id.in_(list(dependencies)))
+            .group_by(model.warehouse_id)
+        ).all()
+        for warehouse_id, total in rows:
+            dependencies[warehouse_id][key] = int(total)
+    return dependencies
+
+
+def warehouse_view(
+    warehouse: Warehouse, dependencies: dict[str, int], permissions: set[str] | None = None
+) -> dict[str, Any]:
+    """Lo que el listado dice de un almacén, a partir de sus dependencias ya contadas.
+
+    Son las reglas de `can_delete_warehouse`, `current_regime` y
+    `warehouse_allowed_actions`, sin volver a la base: no se borra lo que tiene
+    algo debajo; el régimen es operativo si se guardó así o si hay algún nodo o
+    ubicación —los movimientos no cuentan como estructura—; y las acciones se
+    recortan a las que este usuario puede ejecutar.
+    """
+    has_structure = any(key != "movements" for key in dependencies)
+    operational = warehouse.structure_regime == REGIME_OPERATIONAL or has_structure
+    regime = REGIME_OPERATIONAL if operational else REGIME_INITIAL
+    can_delete = not dependencies
+    actions = ["edit", "deactivate" if warehouse.status == "ACTIVE" else "activate"]
+    if regime == REGIME_INITIAL:
+        actions.append("manage_structure")
+    actions.extend(f"add_{level}" for level in declared_levels(warehouse))
+    actions.append("add_location")
+    if can_delete:
+        actions.append("delete")
+    return {
+        "can_delete": can_delete,
+        "delete_blocked_by": dict(dependencies) if dependencies else None,
+        "structure_regime": regime,
+        "allowed_actions": _filter_by_permission(actions, permissions),
+    }
+
+
 def can_delete_location(db: Session, location: WarehouseLocation) -> tuple[bool, dict[str, Any]]:
     history = location_history(db, location.id)
     return (not history), history

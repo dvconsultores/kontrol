@@ -406,19 +406,23 @@ test.describe("Spec 022 — put-away", () => {
     const c = await ctx(request);
     const e = await escenario(request, c, marca());
     // La ruta de listas de preparación ya existe de antes; lo que no puede
-    // existir es un artefacto **nuevo** creado por ubicar mercancía.
-    const antes = await get(request, c, "/sales/pick-lists");
+    // existir es un artefacto **nuevo** creado por ubicar mercancía. Se miran las
+    // listas del almacén de este escenario y no las de toda la empresa: otras
+    // suites crean las suyas a la vez, y contarlas es medir lo ajeno.
+    const delAlmacen = async (): Promise<unknown[]> =>
+      ((await get(request, c, "/sales/pick-lists")).items as { warehouse_id: string }[])
+        .filter((x) => x.warehouse_id === e.almacen);
+    expect(await delAlmacen(), "el almacén del escenario ya tenía listas de preparación").toEqual([]);
 
     await post(request, c, "/inventory/putaway", {
       product_id: e.producto, warehouse_id: e.almacen,
       target_location_id: e.activa, quantity: "100",
     });
 
-    const despues = await get(request, c, "/sales/pick-lists");
     expect(
-      (despues.items as unknown[]).length,
+      await delAlmacen(),
       "ubicar creó una lista de preparación: eso es de la Spec 031",
-    ).toBe((antes.items as unknown[]).length);
+    ).toEqual([]);
     // Y la reserva de este escenario no quedó atada a una ubicación. Se mira la
     // propia y no el conjunto de la empresa: lo que se comprueba es la forma de
     // la reserva que esta prueba creó.

@@ -1,0 +1,126 @@
+# E2E-FLAKY-BAJO-CARGA · experimentos POST-FIX · Chromium · árbol de trabajo sobre 42cd793 · backend de QA (un proceso) sobre kaud · 2026-10-01
+# Playwright sin tocar: fullyParallel, 6 trabajadores, 30 s por prueba, 0 reintentos. La base conserva los almacenes acumulados y los 400 sintéticos.
+
+## 1 · el par que caducaba 3 de 3 con 1 434 almacenes, ahora con más
+almacenes: 1570 · sintéticos: 400
+POST-FIX par picking+putaway, misma dosis (6 trabajadores) · corrida 1:  17 passed (10.3s); caídas: ninguna · la verde más lenta: 5.2 picking:240s
+POST-FIX par picking+putaway, misma dosis (6 trabajadores) · corrida 2:  17 passed (10.0s); caídas: ninguna · la verde más lenta: 4.9 picking:240s
+POST-FIX par picking+putaway, misma dosis (6 trabajadores) · corrida 3:  17 passed (10.0s); caídas: ninguna · la verde más lenta: 4.9 picking:240s
+POST-FIX par picking+putaway, misma dosis (6 trabajadores) · corrida 4:  17 passed (10.0s); caídas: ninguna · la verde más lenta: 5.1 picking:240s
+POST-FIX par picking+putaway, misma dosis (6 trabajadores) · corrida 5:  17 passed (10.0s); caídas: ninguna · la verde más lenta: 4.9 picking:240s
+POST-FIX par picking+putaway, misma dosis (6 trabajadores) → RUNS=5 PASS=5 FAIL=0
+
+## 2 · el reproductor de 7 suites y cada suite afectada sola
+POST-FIX reproductor: 7 suites que piden el listado (6 trabajadores) · corrida 1:  40 passed (22.2s); caídas: ninguna · la verde más lenta: 7.2 dispatch:319s
+POST-FIX reproductor: 7 suites que piden el listado (6 trabajadores) · corrida 2:  40 passed (23.1s); caídas: ninguna · la verde más lenta: 7.5 dispatch:319s
+POST-FIX reproductor: 7 suites que piden el listado (6 trabajadores) · corrida 3:  40 passed (23.5s); caídas: ninguna · la verde más lenta: 8.3 dispatch:319s
+POST-FIX reproductor: 7 suites que piden el listado (6 trabajadores) → RUNS=3 PASS=3 FAIL=0
+POST-FIX picking solo (6 trabajadores) · corrida 1:  8 passed (9.1s); caídas: ninguna · la verde más lenta: 5.0 picking:240s
+POST-FIX picking solo (6 trabajadores) · corrida 2:  8 passed (8.7s); caídas: ninguna · la verde más lenta: 4.6 picking:240s
+POST-FIX picking solo (6 trabajadores) · corrida 3:  8 passed (8.9s); caídas: ninguna · la verde más lenta: 4.8 picking:240s
+POST-FIX picking solo (6 trabajadores) → RUNS=3 PASS=3 FAIL=0
+POST-FIX putaway solo (6 trabajadores) · corrida 1:  9 passed (6.9s); caídas: ninguna · la verde más lenta: 2.9 putaway:187s
+POST-FIX putaway solo (6 trabajadores) · corrida 2:  9 passed (6.6s); caídas: ninguna · la verde más lenta: 2.7 putaway:187s
+POST-FIX putaway solo (6 trabajadores) · corrida 3:  9 passed (6.6s); caídas: ninguna · la verde más lenta: 2.6 putaway:187s
+POST-FIX putaway solo (6 trabajadores) → RUNS=3 PASS=3 FAIL=0
+POST-FIX pick-execution solo (6 trabajadores) · corrida 1:  7 passed (7.3s); caídas: ninguna · la verde más lenta: 1.9 pick-execution:297s
+POST-FIX pick-execution solo (6 trabajadores) · corrida 2:  7 passed (7.2s); caídas: ninguna · la verde más lenta: 1.8 pick-execution:297s
+POST-FIX pick-execution solo (6 trabajadores) · corrida 3:  7 passed (7.1s); caídas: ninguna · la verde más lenta: 1.9 pick-execution:297s
+POST-FIX pick-execution solo (6 trabajadores) → RUNS=3 PASS=3 FAIL=0
+almacenes: 1826 · sintéticos: 400
+
+## 3 · corridas globales, midiendo el latido del backend
+--- corrida global 1 · inicio 2026-10-01T14:53:33-04:00
+  ✘   84 [chromium] › e2e/empresas-busqueda.spec.ts:58:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-02 · un término inexistente deja la tabla vacía, y limpiar la devuelve (30.0s)
+  1 failed
+  40 skipped
+  199 passed (2.6m)
+LATIDO /health/ready: 302 muestras · mediana 5 ms · p95 40 ms · máximo 206 ms · por encima de 1 s: 0 · perdidos: 0
+--- corrida global 2 · inicio 2026-10-01T14:57:52-04:00
+  40 skipped
+  200 passed (2.5m)
+LATIDO /health/ready: 298 muestras · mediana 5 ms · p95 36 ms · máximo 243 ms · por encima de 1 s: 0 · perdidos: 0
+--- corrida global 3 · inicio 2026-10-01T15:00:33-04:00 · con --trace retain-on-failure, para capturar evidencia de cualquier caída
+  40 skipped
+  200 passed (3.1m)
+LATIDO /health/ready: 357 muestras · mediana 6 ms · p95 45 ms · máximo 437 ms · por encima de 1 s: 0 · perdidos: 0
+
+## 4 · el único fallo de las tres corridas: empresas-busqueda.spec.ts:58 (corrida 1)
+263:  1) [chromium] › e2e/empresas-busqueda.spec.ts:58:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-02 · un término inexistente deja la tabla vacía, y limpiar la devuelve 
+264-
+265-    Test timeout of 30000ms exceeded.
+266-
+267-    Error: locator.fill: Test timeout of 30000ms exceeded.
+268-    Call log:
+269-      - waiting for getByLabel(/Empresa \(código\)/)
+270-
+271-
+272-      18 | async function entrar(page: Page, tenant: string, usuario: string): Promise<void> {
+273-      19 |   await page.goto("/login");
+274-    > 20 |   await page.getByLabel(/Empresa \(código\)/).fill(tenant);
+275-         |                                               ^
+276-      21 |   await page.getByLabel(/Usuario/).fill(usuario);
+277-      22 |   await page.getByLabel(/Contraseña/).fill(PASSWORD);
+278-      23 |   await page.getByRole("button", { name: "Iniciar sesión" }).click();
+279-        at entrar (/home/maria/Projectos/Kontrol/resources/frontend/e2e/empresas-busqueda.spec.ts:20:47)
+280-        at /home/maria/Projectos/Kontrol/resources/frontend/e2e/empresas-busqueda.spec.ts:59:5
+281-
+(error-context.md no trae instantánea de la página: no había nada pintado)
+
+--- la misma suite, sola, 5 veces
+POST-FIX empresas-busqueda sola (6 trabajadores) · corrida 1:  5 passed (5.7s); caídas: ninguna · la verde más lenta: 1.8 empresas-busqueda:81s
+POST-FIX empresas-busqueda sola (6 trabajadores) · corrida 2:  5 passed (5.7s); caídas: ninguna · la verde más lenta: 1.8 empresas-busqueda:73s
+POST-FIX empresas-busqueda sola (6 trabajadores) · corrida 3:  5 passed (5.8s); caídas: ninguna · la verde más lenta: 1.9 empresas-busqueda:58s
+POST-FIX empresas-busqueda sola (6 trabajadores) · corrida 4:  5 passed (5.8s); caídas: ninguna · la verde más lenta: 1.9 empresas-busqueda:58s
+POST-FIX empresas-busqueda sola (6 trabajadores) · corrida 5:  5 passed (5.7s); caídas: ninguna · la verde más lenta: 1.8 empresas-busqueda:58s
+POST-FIX empresas-busqueda sola (6 trabajadores) → RUNS=5 PASS=5 FAIL=0
+
+--- la pantalla de login cargada 800 veces con 6 trabajadores (smoke.spec.ts --repeat-each=400)
+  800 passed (3.2m)
+tiempo por prueba: mediana 0,68 s · p99 0,76 s · máximo 0,80 s · ninguna carga en blanco
+
+## 5 · corridas globales 4 y 5 — INVÁLIDAS como certificación: contaminadas por un experimento de Claude
+# Corrieron a la vez que el experimento de keep-alive (keepalive.txt), que lanzaba tandas de 40 conexiones contra el mismo backend.
+# El pool de conexiones del backend (5 + 10) se agotó: 16 «QueuePool limit of size 5 overflow 10 reached… timeout 30.00» en su registro,
+# todas dentro de LicenseMiddleware → current_mode, que consulta la base en el bucle de eventos; el latido lo vio (máximo 30 s).
+--- corrida global 4 · inicio 2026-10-01T15:23:05-04:00
+  6 failed
+  40 skipped
+  194 passed (3.6m)
+LATIDO /health/ready: 363 muestras · mediana 4 ms · p95 39 ms · máximo 30398 ms · por encima de 1 s: 1 · perdidos: 0
+  putaway:187 (30.4s)
+  treasury:486 (21.2s)
+  notifications:261 (28.8s)
+  treasury:286 (30.1s)
+  treasury:401 (30.4s)
+  treasury:455 (30.0s)
+--- corrida global 5 · inicio 2026-10-01T15:26:41-04:00
+  7 failed
+  40 skipped
+  193 passed (3.6m)
+LATIDO /health/ready: 365 muestras · mediana 5 ms · p95 49 ms · máximo 29982 ms · por encima de 1 s: 1 · perdidos: 0
+  approvals:214 (30.3s)
+  approvals:325 (30.0s)
+  approvals:350 (30.0s)
+  approvals:377 (30.0s)
+  approvals:391 (30.0s)
+  approvals:409 (30.0s)
+  putaway:187 (30.2s)
+# Seis pruebas caen juntas a los 30 s en cada una (una por trabajador): es la congelación. putaway:187 cae aparte, por el corte en 500 (putaway-corte-500.txt).
+
+## 6 · corrida global final · backend reiniciado, nada más en marcha, árbol final (arreglo del listado + T11 + T12) · inicio 2026-10-01T15:33:55-04:00
+  ✘  122 [chromium] › e2e/notifications.spec.ts:142:1 › la campana cuenta en el servidor y leer una notificación la actualiza sin recargar (35.2s)
+  1 failed
+  40 skipped
+  6 did not run
+  193 passed (3.0m)
+LATIDO /health/ready: 353 muestras · mediana 5 ms · p95 48 ms · máximo 399 ms · por encima de 1 s: 0 · perdidos: 0
+# registro del backend en esa corrida: errores no controlados=0 · QueuePool=0
+# La caída es notifications.spec.ts:142: su primer tick del planificador tardó 33 s (planificador-acumulacion.txt). Las 6 «did not run» son el resto de esa suite, que es en serie.
+# picking, pick-execution, putaway (187 y 405) y treasury (486): verdes.
+
+## 7 · approvals + notifications, sin el resto
+approvals + notifications (6 trabajadores), base acumulada · corrida 1:  20 passed (1.1m); caídas: ninguna · la verde más lenta: 29.7 notifications:142s
+approvals + notifications (6 trabajadores), base acumulada → RUNS=1 PASS=1 FAIL=0
+ticks con trabajo en esta corrida (inicio UTC, s, eventos): [('19:40:21', Decimal('26.93'), 43), ('19:40:54', Decimal('0.14'), 2), ('19:41:05', Decimal('2.30'), 42)]
+reglas activas approval.step_opened: 28 · usuarios: 868

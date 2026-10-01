@@ -242,21 +242,34 @@ class StructureLevelsPatch(BaseModel):
     structure_levels: dict[str, Any]
 
 
-def _warehouse_dict(db: Session, w: Warehouse, permissions: set[str] | None = None) -> dict[str, Any]:
-    can_delete, blocking = st.can_delete_warehouse(db, w)
+def _warehouse_dict(db: Session, w: Warehouse, permissions: set[str] | None = None, *,
+                    dependencies: dict[str, int] | None = None) -> dict[str, Any]:
+    # Un almacén suelto se pregunta a la base. Una página entera trae sus
+    # dependencias ya contadas (`st.warehouses_dependencies`) y no vuelve a
+    # preguntar fila por fila: eran una docena de consultas por almacén.
+    if dependencies is None:
+        can_delete, blocking = st.can_delete_warehouse(db, w)
+        view = {
+            "can_delete": can_delete,
+            "delete_blocked_by": blocking.get("dependencies") if blocking else None,
+            "structure_regime": st.current_regime(db, w),
+            "allowed_actions": st.warehouse_allowed_actions(db, w, permissions),
+        }
+    else:
+        view = st.warehouse_view(w, dependencies, permissions)
     return {
         "id": str(w.id), "company_id": w.company_id, "branch_id": w.branch_id,
         "code": w.code, "name": w.name, "warehouse_type": w.warehouse_type,
         "address": w.address, "manager_id": w.manager_id, "description": w.description,
         "location_managed": w.location_managed,
         "structure_levels": st.normalize_structure_levels(w.structure_levels),
-        "structure_regime": st.current_regime(db, w),
+        "structure_regime": view["structure_regime"],
         "declared_levels": st.declared_levels(w),
         "code_policy": w.code_policy, "code_pattern": w.code_pattern,
         "status": w.status, "version": int(w.version),
-        "can_delete": can_delete,
-        "delete_blocked_by": blocking.get("dependencies") if blocking else None,
-        "allowed_actions": st.warehouse_allowed_actions(db, w, permissions),
+        "can_delete": view["can_delete"],
+        "delete_blocked_by": view["delete_blocked_by"],
+        "allowed_actions": view["allowed_actions"],
     }
 
 
@@ -280,8 +293,10 @@ def search_warehouses(q: str | None = None, branch_id: str | None = None,
     total = int(db.execute(select(func.count()).select_from(query.subquery())).scalar_one())
     rows = db.execute(query.order_by(Warehouse.code).limit(limit).offset(offset)).scalars().all()
     permissions = st.user_permission_set(db, user)
+    dependencies = st.warehouses_dependencies(db, [str(w.id) for w in rows])
     return {"total": total, "limit": limit, "offset": offset,
-            "items": [_warehouse_dict(db, w, permissions) for w in rows]}
+            "items": [_warehouse_dict(db, w, permissions, dependencies=dependencies[str(w.id)])
+                      for w in rows]}
 
 
 @router.post("/warehouses", dependencies=[Depends(require_write_allowed)])

@@ -2615,3 +2615,38 @@ Candidatas siguientes, sin decisión de la dueña pendiente: `AUDIT-ORDEN-SIN-DE
 `AUDIT-PAGINA-SIN-INDICE-DE-ORDEN`, `AUDITORIA-TIMELINE-FECHA-CRUDA`,
 `LISTADOS-SIN-RESPONSE-MODEL`, `E2E-SIN-TYPECHECK`, `E2E-FLAKY-BAJO-CARGA`,
 `ENTORNO-SIN-CLAMSCAN`. `NEXT SPEC = 029` no cambia.
+
+## 2026-10-01 · Tras el delta E2E-FLAKY-BAJO-CARGA (dueña 054, apoyo 008) — parcial, la deuda sigue abierta
+
+La deuda decía que ocho pruebas E2E caían de vez en cuando en las corridas globales y que la
+inestabilidad crecía con la base de QA. Lo segundo era literal.
+
+Picking, Pick-execution y Put-away caducaban porque el listado de almacenes preguntaba a la
+base doce veces por almacén y la empresa del E2E acumula los almacenes de cada corrida. Se
+reprodujo a voluntad —con 1 434 almacenes, 0 de 3— y se corrigió en producto sin cambiar el
+contrato: 6 370 sentencias pasan a 16. Otras dos caídas eran carreras escritas en la propia
+prueba, y se corrigieron. El `ECONNRESET` también tiene causa: uvicorn y el cliente de
+Playwright sueltan una conexión inactiva a los mismos 5 segundos.
+
+Pero al certificar cayó una prueba que nunca había caído, `notifications.spec.ts:142`: el
+planificador, que esa prueba ejecuta dentro de sus 30 segundos, tarda ya 33, porque cada
+corrida deja reglas y usuarios que multiplican el reparto de la siguiente. Y mis propios
+experimentos empujaron la base por encima de otro corte, el de los 500 almacenes del
+desplegable de Put-away. **La corrida global final quedó 193/1/40.** No hay un defecto: hay
+una base que crece sin límite y varios caminos cuyo coste depende de su tamaño.
+
+Por eso la deuda **no se cierra**: queda `PARTIALLY_CONVERGED`, y lo que la cierra tiene
+nombre propio y es una decisión de la dueña.
+
+**Decisión pendiente — `E2E-BASE-QA-ACUMULA` (`MATERIAL_DECISION_REQUIRED`):** cómo se da
+ciclo de vida a la base del E2E. Base nueva por corrida, tenant por corrida o limpieza por
+prueba. Hasta entonces, `E2E-NOTIFICACIONES-REGLAS-VIVAS` deja la corrida global en rojo.
+
+Registradas y sin absorber: `ALMACENES-DESPLEGABLES-TRUNCADOS` (nueve pantallas),
+`BACKEND-KEEPALIVE-5S`, `LICENCIA-MIDDLEWARE-BD-EN-EL-BUCLE`, `PICKLIST-DUPLICADA-500`,
+`E2E-PANTALLA-SIN-PINTAR` (dos fallos sin causa demostrada) y `LISTADOS-SIN-TOPE`.
+
+**Candidata siguiente, y con diferencia:** `E2E-BASE-QA-ACUMULA`, en cuanto la dueña decida.
+Detrás, sin decisión pendiente: `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
+`AUDIT-ORDEN-SIN-DESEMPATE`, `AUDIT-PAGINA-SIN-INDICE-DE-ORDEN`, `LISTADOS-SIN-RESPONSE-MODEL`,
+`E2E-SIN-TYPECHECK`, `ENTORNO-SIN-CLAMSCAN`. `NEXT SPEC = 029` no cambia.

@@ -1,0 +1,18 @@
+# E2E-FLAKY-BAJO-CARGA · el desplegable de Put-away corta en 500 almacenes · 2026-10-01
+# PutAwayPage pide /organization/warehouses?limit=500 (orden por código). Los experimentos de este ciclo crearon 418 almacenes W1-… en dos horas.
+# En las corridas globales 4 y 5 putaway:187 caducó con «did not find some options»: la opción del almacén de la prueba no estaba en la lista.
+
+## A · putaway:187 sola, con 539+ almacenes ordenando antes que el suyo (PutAwayPage pide limit=500)
+putaway:187 sola, base tal como la dejaron los experimentos · corrida 1:  1 failed; caídas: putaway:187 (30.1s)  · la verde más lenta: s
+putaway:187 sola, base tal como la dejaron los experimentos · corrida 2:  1 failed; caídas: putaway:187 (30.1s)  · la verde más lenta: s
+putaway:187 sola, base tal como la dejaron los experimentos → RUNS=2 PASS=0 FAIL=2
+## B · base kaud en ::1/128:55432 (QA local): almacenes W1- antes=494 · renombrados a ZX-W1-… (creados en los experimentos de este ciclo, desde 2026-10-01 18:00 UTC)=418 · quedan W1-=76
+almacenes que ordenan antes que un W1- nuevo: 124 (el corte de PutAwayPage está en 500)
+## C · putaway:187 sola, después de renombrar
+putaway:187 sola, tras devolver el orden · corrida 1:  1 passed (5.6s); caídas: ninguna · la verde más lenta: 1.9 putaway:187s
+putaway:187 sola, tras devolver el orden · corrida 2:  1 passed (5.6s); caídas: ninguna · la verde más lenta: 1.8 putaway:187s
+putaway:187 sola, tras devolver el orden → RUNS=2 PASS=2 FAIL=0
+
+Nota: el renombrado es higiene de la base de QA local (kaud) sobre filas creadas por los experimentos de este ciclo; no toca producto.
+A ritmo normal (9 almacenes W1- por corrida global; 124 ordenan hoy por delante) el corte se alcanzaría en unas 40 corridas.
+Otras ocho pantallas piden el listado con el límite por defecto, 50: Órdenes de venta, Transferencias, Conteos, Ajustes, Reservas, Seriales, Movimientos y Ubicaciones.

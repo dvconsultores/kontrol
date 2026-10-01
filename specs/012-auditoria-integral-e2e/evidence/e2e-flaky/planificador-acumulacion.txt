@@ -1,0 +1,30 @@
+# E2E-FLAKY-BAJO-CARGA · el primer tick del planificador de cada corrida global tarda más cada vez · leído de scheduler_runs / scheduler_handler_runs en kaud · 2026-10-01
+# notifications.spec.ts llama al tick dentro de la prueba (helpers/planificador.ts, execFileSync) y la prueba tiene 30 s.
+
+inicio (UTC)      approval_event_intake   eventos   s/evento
+09-30 22:02:18       0.31 s              43      0.01
+09-30 22:40:10       0.82 s              43      0.02
+10-01 00:23:58       1.62 s              43      0.04
+10-01 00:31:22       2.56 s              43      0.06
+10-01 13:37:48       4.09 s              43      0.10
+10-01 14:34:48       5.62 s              43      0.13
+10-01 18:31:21       8.16 s              43      0.19
+10-01 18:54:13      11.81 s              43      0.27
+10-01 18:58:30      15.77 s              43      0.37
+10-01 19:01:20      20.30 s              43      0.47
+10-01 19:23:52      24.42 s              43      0.57
+10-01 19:34:42      33.09 s              43      0.77
+10-01 19:40:21      26.93 s              43      0.63
+
+reglas activas para approval.step_opened (dos por corrida de notifications.spec.ts, nunca se desactivan): 28
+usuarios en la base (cada corrida crea los suyos, con rol): 868
+lo que escribió el tick de 33,09 s (19:34:42 UTC, corrida global final):
+  notifications: 182
+  tasks: 182
+  notification_recipients: 132977
+  task_candidates: 132977
+
+Traza de la prueba caída (notifications.spec.ts:142, corrida global final): la solicitud se crea a 1,51 s; el primer tick() ocupa de 1,51 s a 36,50 s;
+la primera consulta de la condición sale cuando la prueba ya había caducado («Request context disposed»).
+Solo approvals + notifications, sin el resto de la suite: tick de 26,93 s y la prueba pasa en 29,7 s, a 0,3 s del límite.
+Un tick sin trabajo tarda 1,4 s en esta máquina.

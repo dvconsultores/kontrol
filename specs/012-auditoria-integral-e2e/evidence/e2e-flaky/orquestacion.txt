@@ -1,0 +1,36 @@
+# E2E-FLAKY-BAJO-CARGA · delegación a DeepSeek · leído de la traza de cada ejecutor
+# servidor MCP deepseek · @arikusi/deepseek-mcp-server@2.3.0 · herramienta mcp__deepseek__deepseek_chat · sin session_id · sin thinking
+
+T10 · intento 1 — unitarias de la función pura warehouse_view (resources/backend/tests/test_warehouse_view_pure.py, nuevo)
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False
+  tokens 3668/2747 · $0.001265 · finish_reason=stop
+  egress: carga de 12445 caracteres · secretos=0 · ficheros .env=0 · ficheros del repositorio leídos por el puente=0
+  bloques=1 · relevo literal=sí · SEARCH vacío sobre fichero inexistente: correcto
+  AUDIT_PASS: las 15 pruebas (53 casos) son las encargadas, sin imports ni dependencias nuevas; ninguna línea pasa de 120 columnas.
+    Observación: el encargo decía «WHV-11 parametrizada con ids» sin dar los ids; DeepSeek no los puso y lo declaró. Ambigüedad del encargo, de Claude; no es desviación.
+  aplicado tal cual · 53/53 en SQLite y PostgreSQL · participan en la muerte de 10 de los 16 mutantes
+
+T11 · intento 1 — aserción sobre datos propios en resources/frontend/e2e/putaway.spec.ts («ubicar no crea nada de picking»)
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash · fallback=False
+  tokens 1464/874 · $0.000432 · finish_reason=stop
+  egress: carga de 5216 caracteres · secretos=0 · ficheros .env=0 · ficheros leídos por el puente=0
+  bloques=1 · relevo literal=sí · SEARCH de 14 líneas coincide 1 vez: exacto
+  AUDIT_PASS: el REPLACE es el texto encargado; solo el fichero objetivo; sin esperas, reintentos ni cambios de modo
+  aplicado tal cual · eslint limpio · 24/24 junto a picking y pick-execution (antes 1 caída en 12) · el mutante de prueba cae
+
+T12 · intento 1 — espera exacta del estado en resources/frontend/e2e/treasury.spec.ts («FLOAT-038-B · la interfaz de cajas…»)
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash · fallback=False
+  tokens 1016/442 · $0.000248 · finish_reason=stop
+  egress: carga de 3534 caracteres · secretos=0 · ficheros .env=0 · ficheros leídos por el puente=0
+  bloques=1 · relevo literal=sí · SEARCH de 3 líneas coincide 1 vez: exacto
+  AUDIT_PASS: el REPLACE es el texto encargado; el tiempo de espera no cambia (20 s)
+  aplicado tal cual · eslint limpio · pasa 3/3 con el cierre retrasado 1,5 s (antes caía 3/3) · el mutante de prueba cae
+
+EGRESS_CHECK de las tres: ENV_FILES=0 SECRETS=0 PROD_URLS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_PII=0 REAL_PAYROLL=0 BANK_DATA=0
+Los tres encargos llevan solo contrato y fragmentos de prueba; ninguno lleva la contraseña de siembra ni direcciones de base.
+
+TASKS TOTAL = 15 · CLAUDE_ONLY = 12 · DEEPSEEK_ELIGIBLE = 3 · DEEPSEEK EXECUTED = 3
+DEEPSEEK CALLS = 3 · DEEPSEEK RETRIES = 0 · PATCHES ACCEPTED = 3 · PATCHES REJECTED = 0 · parches retocados a mano = 0
+MODELS USED = deepseek-v4-flash · DEEPSEEK TOKENS = 6148 de entrada / 4063 de salida · DEEPSEEK COST = $0.001945
+SONNET BRIDGE TOKENS = 77135 (35483 + 22162 + 19490, según el arnés)
+EJECUTOR-ABREVIA-EL-CONTEXTO: no se reprodujo; el puente no leyó ningún fichero y envió cada encargo entero

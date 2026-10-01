@@ -533,7 +533,8 @@ test.describe("Spec 038 — tesorería", () => {
     await expect(page.getByRole("button", { name: "Cerrar caja" }), "cerraría un céntimo sin aprobar").toBeDisabled();
     await aprobar.check();
     await page.getByRole("button", { name: "Cerrar caja" }).click();
-    await expect(await filaDe(corta.caja)).toContainText("CLOSED", { timeout: 20_000 });
+    // `PRE_CLOSED` contiene el texto `CLOSED`: se espera el estado exacto, no un trozo suyo.
+    await expect(await filaDe(corta.caja)).toContainText(/(^|[^_])CLOSED/, { timeout: 20_000 });
 
     const final = await get(request, c, `/treasury/cash-sessions/${corta.sesion}`);
     expect([final.status, final.difference]).toEqual(["CLOSED", "-0.01"]);

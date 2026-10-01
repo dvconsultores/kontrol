@@ -1,0 +1,35 @@
+# E2E-FLAKY-BAJO-CARGA · ECONNRESET: la conexión inactiva que el servidor cierra a los 5 s · 2026-10-01T15:28:06-04:00
+# backend de QA: uvicorn 0.32.1 con sus valores por defecto (timeout-keep-alive = 5 s) · Node v24.21.0 · cliente: el APIRequestContext de Playwright (el `request` de las pruebas)
+# guion: dos peticiones GET /health/ready por la misma conexión, separadas por la espera indicada; 40 conexiones por tanda
+
+agente global: keepAlive= true timeout= 5000
+espera 4000 ms: reutilizó la conexión 12/12 · errores 0 
+espera 4950 ms: reutilizó la conexión 12/12 · errores 0 
+espera 4990 ms: reutilizó la conexión 12/12 · errores 1 ECONNRESET
+espera 5000 ms: reutilizó la conexión 0/12 · errores 0 
+espera 5010 ms: reutilizó la conexión 0/12 · errores 0 
+espera 5050 ms: reutilizó la conexión 0/12 · errores 0 
+espera 6000 ms: reutilizó la conexión 0/12 · errores 0 
+Playwright APIRequestContext · espera 3000–3009 ms entre dos peticiones: 0/40 fallan 
+Playwright APIRequestContext · espera 4980–4989 ms entre dos peticiones: 0/40 fallan 
+Playwright APIRequestContext · espera 4990–4999 ms entre dos peticiones: 1/40 fallan apiRequestContext.get: read ECONNRESET
+Playwright APIRequestContext · espera 5000–5009 ms entre dos peticiones: 40/40 fallan apiRequestContext.get: Timeout 30000ms exceeded.
+Playwright APIRequestContext · espera 5010–5019 ms entre dos peticiones: 0/40 fallan 
+Playwright APIRequestContext · espera 7000–7009 ms entre dos peticiones: 0/40 fallan 
+== uvicorn con --timeout-keep-alive 60 (puerto 8001, temporal) ==
+espera 4980–4989 ms entre dos peticiones: 0/40 fallan 
+espera 4990–4999 ms entre dos peticiones: 0/40 fallan 
+espera 5000–5009 ms entre dos peticiones: 0/40 fallan 
+espera 5010–5019 ms entre dos peticiones: 0/40 fallan 
+== uvicorn por defecto, 5 s (puerto 8000), mismo guion, peticiones con límite de 8 s ==
+espera 4980–4989 ms entre dos peticiones: 3/40 fallan apiRequestContext.get: socket hang up | apiRequestContext.get: read ECONNRESET
+espera 4990–4999 ms entre dos peticiones: 12/40 fallan apiRequestContext.get: read ECONNRESET
+espera 5000–5009 ms entre dos peticiones: 0/40 fallan 
+espera 5010–5019 ms entre dos peticiones: 40/40 fallan apiRequestContext.get: Timeout 8000ms exceeded.
+
+Lectura: el servidor cierra una conexión que lleva 5 s sin uso; el cliente de Node la conserva esos mismos 5 s.
+Una petición que sale justo entonces viaja por una conexión que se está cerrando: recibe ECONNRESET o 'socket hang up',
+o no recibe nada y caduca. Con el servidor conservando la conexión 60 s, 0 fallos de 160.
+La tanda de 40/40 caducadas se mueve entre 5000–5009 y 5010–5019 ms de una ejecución a otra: es una ventana de unos 10 ms.
+Durante las corridas globales de este ciclo no se observó ningún ECONNRESET; el del 2026-09-30 (inventory-confirmation:96, a los 205 ms,
+en su primera petición de API) y los dos anteriores registrados (Spec 013, AUDITORIA-PAGINACION) tienen esta misma firma.

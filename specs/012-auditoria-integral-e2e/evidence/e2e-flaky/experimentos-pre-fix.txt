@@ -1,0 +1,64 @@
+# E2E-FLAKY-BAJO-CARGA · experimentos PRE-FIX · Chromium · HEAD 42cd793 · backend de QA (un proceso) sobre kaud · 2026-10-01
+# Playwright: fullyParallel, 6 trabajadores (la mitad de 12 núcleos), 30 s por prueba, 0 reintentos. Nada de eso se cambió.
+
+## 1 · cada suite sola, 5 veces (543 almacenes al empezar)
+picking solo (6 trabajadores) · corrida 1:  8 passed (19.0s); caídas: ninguna · la verde más lenta: 18.3 picking:240s
+picking solo (6 trabajadores) · corrida 2:  8 passed (18.6s); caídas: ninguna · la verde más lenta: 17.8 picking:208s
+picking solo (6 trabajadores) · corrida 3:  8 passed (18.7s); caídas: ninguna · la verde más lenta: 17.9 picking:208s
+picking solo (6 trabajadores) · corrida 4:  8 passed (19.7s); caídas: ninguna · la verde más lenta: 18.8 picking:240s
+picking solo (6 trabajadores) · corrida 5:  8 passed (18.9s); caídas: ninguna · la verde más lenta: 18.0 picking:240s
+picking solo (6 trabajadores) → RUNS=5 PASS=5 FAIL=0
+putaway solo (6 trabajadores) · corrida 1:  9 passed (15.6s); caídas: ninguna · la verde más lenta: 14.8 putaway:187s
+putaway solo (6 trabajadores) · corrida 2:  9 passed (16.3s); caídas: ninguna · la verde más lenta: 15.5 putaway:187s
+putaway solo (6 trabajadores) · corrida 3:  9 passed (16.6s); caídas: ninguna · la verde más lenta: 15.7 putaway:187s
+putaway solo (6 trabajadores) · corrida 4:  9 passed (16.4s); caídas: ninguna · la verde más lenta: 15.6 putaway:187s
+putaway solo (6 trabajadores) · corrida 5:  9 passed (16.7s); caídas: ninguna · la verde más lenta: 15.6 putaway:187s
+putaway solo (6 trabajadores) → RUNS=5 PASS=5 FAIL=0
+
+## 2 · las dos juntas, y matriz de trabajadores
+par picking+putaway (6 trabajadores) · corrida 1:  17 passed (34.0s); caídas: ninguna · la verde más lenta: 20.6 picking:240s
+par picking+putaway (6 trabajadores) · corrida 2:  17 passed (34.2s); caídas: ninguna · la verde más lenta: 21.0 picking:240s
+par picking+putaway (6 trabajadores) · corrida 3:  17 passed (34.8s); caídas: ninguna · la verde más lenta: 21.2 picking:240s
+par picking+putaway (6 trabajadores) · corrida 4:  17 passed (34.5s); caídas: ninguna · la verde más lenta: 21.7 picking:208s
+par picking+putaway (6 trabajadores) · corrida 5:  17 passed (34.9s); caídas: ninguna · la verde más lenta: 21.6 picking:240s
+par picking+putaway (6 trabajadores) → RUNS=5 PASS=5 FAIL=0
+par (1 trabajador) · corrida 1:  17 passed (44.4s); caídas: ninguna · la verde más lenta: 5.7 picking:240s
+par (1 trabajador) → RUNS=1 PASS=1 FAIL=0
+par (3 trabajadores) · corrida 1:  17 passed (32.9s); caídas: ninguna · la verde más lenta: 10.9 picking:240s
+par (3 trabajadores) · corrida 2:  17 passed (33.1s); caídas: ninguna · la verde más lenta: 11.0 picking:240s
+par (3 trabajadores) → RUNS=2 PASS=2 FAIL=0
+
+## 3 · carga reducida: las dos más cinco suites que también piden el listado de almacenes
+reproductor: 7 suites que piden el listado (6 trabajadores) · corrida 1:  40 passed (52.9s); caídas: ninguna · la verde más lenta: 23.8 picking:208s
+reproductor: 7 suites que piden el listado (6 trabajadores) · corrida 2:  40 passed (54.4s); caídas: ninguna · la verde más lenta: 24.4 picking:208s
+reproductor: 7 suites que piden el listado (6 trabajadores) · corrida 3:  40 passed (56.9s); caídas: ninguna · la verde más lenta: 26.3 picking:208s
+reproductor: 7 suites que piden el listado (6 trabajadores) · corrida 4:  40 passed (56.8s); caídas: ninguna · la verde más lenta: 26.9 picking:240s
+reproductor: 7 suites que piden el listado (6 trabajadores) → RUNS=4 PASS=4 FAIL=0
+
+## 4 · dosis controlada: las dos juntas según el número de almacenes de la empresa
+almacenes: 1000 · sintéticos: 0
+par, sin dosis · corrida 1:  17 passed (39.3s); caídas: ninguna · la verde más lenta: 25.0 picking:208s
+par, sin dosis · corrida 2:  17 passed (40.1s); caídas: ninguna · la verde más lenta: 25.1 picking:240s
+par, sin dosis → RUNS=2 PASS=2 FAIL=0
+añadidos: 400
+almacenes: 1434 · sintéticos: 400
+par, +400 almacenes · corrida 1:  3 failed; 14 passed (43.6s); caídas: picking:192 (30.1s) picking:240 (30.1s) picking:208 (30.1s)  · la verde más lenta: 16.7 putaway:187s
+par, +400 almacenes · corrida 2:  3 failed; 14 passed (42.8s); caídas: picking:208 (30.1s) picking:192 (30.1s) picking:240 (30.1s)  · la verde más lenta: 17.4 putaway:187s
+par, +400 almacenes · corrida 3:  3 failed; 14 passed (42.9s); caídas: picking:192 (30.1s) picking:240 (30.1s) picking:208 (30.1s)  · la verde más lenta: 17.6 putaway:187s
+par, +400 almacenes → RUNS=3 PASS=0 FAIL=3
+
+## 5 · corrida global, con 1 485 almacenes, midiendo el latido del backend · inicio 2026-10-01T14:30:43-04:00
+  4 failed
+  40 skipped
+  196 passed (3.2m)
+LATIDO /health/ready: 371 muestras · mediana 7 ms · p95 36 ms · máximo 231 ms · por encima de 1 s: 0 · perdidos: 0
+exit=1
+✘  136 [chromium] › e2e/pick-execution.spec.ts:297:3 › Spec 032 — preparación física y consolidación › la interfaz registra la recogida y el dominio lo confirma (30.1s)
+✘  137 [chromium] › e2e/picking.spec.ts:192:3 › Spec 031 — cola y ruta de picking › el pedido liberado aparece en la cola con su puesto (30.1s)
+✘  138 [chromium] › e2e/picking.spec.ts:208:3 › Spec 031 — cola y ruta de picking › la interfaz reparte entre dos ubicaciones y el recorrido sale en orden (30.1s)
+✘  139 [chromium] › e2e/picking.spec.ts:240:3 › Spec 031 — cola y ruta de picking › no se confirma con remanente, y el dominio lo impide (30.1s)
+      3     > 186 |     await page.getByLabel("Almacén").selectOption(almacen);
+      1     > 51 |   const r = await request.get(`${API}${ruta}`, { headers: c.headers });
+      1     Error: apiRequestContext.get: Target page, context or browser has been closed
+      3     Error: locator.selectOption: Test timeout of 30000ms exceeded.
+      1 RuntimeError: 'choque-mupvdujv3dnn' ya opera en ['72fec427-f674-44d2-bc9f-ad059be414e6'] y se pide ['0ee10703-9c5a-4772-b54e-52ec9bed6b72']: ['72fec427-

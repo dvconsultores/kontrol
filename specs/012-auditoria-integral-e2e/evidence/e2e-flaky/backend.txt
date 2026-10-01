@@ -1,0 +1,29 @@
+# E2E-FLAKY-BAJO-CARGA · backend tras el arreglo del listado de almacenes · 2026-10-01
+
+## dirigidas (SQLite y PostgreSQL)
+tests/test_warehouse_list_cost.py (14) + tests/test_warehouse_view_pure.py (53) + tests/test_warehouse_structure.py (33 + 1 omitida en SQLite; 34 en PostgreSQL): verdes en las dos bases
+ruff check app/modules/organization tests/test_warehouse_list_cost.py tests/test_warehouse_view_pure.py: All checks passed
+mypy: las mismas 16 líneas que en 42cd793 (comparado con git stash), ninguna nueva
+
+## suite completa, SQLite · .venv/bin/python -m pytest tests -rfE -p no:cacheprovider
+43 failed, 857 passed, 968 skipped, 7 warnings in 112.13s (0:01:52)
+línea base 42cd793: 43 failed, 790 passed, 968 skipped · conjunto de fallos frente a la base: IDÉNTICO (diff vacío) · pruebas nuevas que pasan: 67 (14 WHL + 53 WHV)
+
+## suite completa, PostgreSQL (ktest) · KONTROL_TEST_DB_URL=…@localhost:55432/ktest .venv/bin/python -m pytest tests -q -p no:logging -p no:cacheprovider
+pasan 1804 · omitidas 27 · fallan 36 + 1 error = 37 (contado de la línea de progreso; con -q y el complemento de registro desactivado no hay línea de resumen)
+línea base 42cd793: 37 failed, 1737 passed, 27 skipped · los 37 son las mismas 37 pruebas
+diferencia de etiqueta, no de conjunto: tests/test_documents_security.py::test_amz_20_los_registros_no_filtran_contenido sale como ERROR en vez de FAILED
+  porque esta corrida se lanzó con -p no:logging y la prueba pide el fixture caplog; en la base falla igual, por clamscan. Es un artefacto de la orden, de Claude.
+  La corrida de SQLite se repitió sin ese indicador y el conjunto es idéntico.
+clasificación de los 37/43: PREEXISTING_ENVIRONMENT_CLAMSCAN (documentos) y, en SQLite, AUTH-ROTACION-SQLITE-HILOS · fallos nuevos por este delta: 0
+
+## residuos en la base de prueba tras la corrida completa en PostgreSQL · qa/pg-test-residuos.py
+base ......................... ktest
+tamaño ....................... 140 MB
+relaciones (pg_class) ........ 413
+de ello, catálogo ............ 141 MB
+schemas temporales ........... 0 (con marca del arnés: 0)
+conexiones a la base ......... 0 {} de 100
+conexiones del arnés ......... 0
+libre en el volumen de datos . 5076 MB
+TEST-SCHEMAS-PG-SIN-LIMPIEZA: sigue cerrada (0 schemas temporales, 0 conexiones)

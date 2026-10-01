@@ -1,0 +1,23 @@
+# E2E-FLAKY-BAJO-CARGA · mutaciones del arreglo del listado de almacenes · 2026-10-01T15:14:35-04:00
+# suites: tests/test_warehouse_list_cost.py (WHL, Claude) y tests/test_warehouse_view_pure.py (WHV, DeepSeek) · SQLite
+# cada mutante: se aplica, se corren las dos suites, se restaura. GOOD -> PASS · MUTATED -> FAIL · RESTORED -> PASS
+
+GOOD: rc=0
+M-01   KILLED   el listado vuelve a preguntar almacén por almacén [warehouse_api.py] · caen: WHL-03, WHL-04, WHL-05
+M-02a  KILLED   las cuentas no filtran por los almacenes de la página [structure.py] · caen: WHL-01, WHL-02, WHL-03, WHL-04, WHL-05, WHL-07
+M-02b  KILLED   las cuentas no filtran y aceptan en silencio almacenes ajenos a la página [structure.py] · caen: WHL-05
+M-03   KILLED   se omiten los movimientos [structure.py] · caen: WHL-01, WHL-02, WHL-04, WHL-05
+M-04   KILLED   las ubicaciones no cuentan como estructura [structure.py] · caen: WHL-01, WHL-02, WHV-05, WHV-14
+M-05   KILLED   allowed_actions sin recortar por permisos [structure.py] · caen: WHL-02, WHV-10, WHV-11, WHV-12
+M-06   KILLED   «delete» se ofrece aunque haya dependencias [structure.py] · caen: WHL-01, WHL-02, WHV-05, WHV-06, WHV-13, WHV-14
+M-07   KILLED   un tramo usado (zona) no se cuenta [structure.py] · caen: WHL-01, WHL-02, WHL-04, WHL-05
+M-08   KILLED   el régimen OPERATIONAL guardado se ignora [structure.py] · caen: WHL-01, WHL-02, WHV-07, WHV-14
+M-09   KILLED   se devuelve el diccionario de entrada, no una copia [structure.py] · caen: WHV-08
+M-10   KILLED   la página vacía consulta igualmente (IN vacío) [structure.py] · caen: WHL-06
+M-11   KILLED   el listado ignora los permisos de quien pregunta [warehouse_api.py] · caen: WHL-02
+M-12   KILLED   las cuentas se aplastan a 1 [structure.py] · caen: WHL-01, WHL-02
+M-13   KILLED   los movimientos no impiden borrar [structure.py] · caen: WHL-01, WHL-02, WHV-06, WHV-13, WHV-14
+M-14   KILLED   activar y desactivar intercambiados [structure.py] · caen: WHL-01, WHL-07, WHV-01, WHV-03, WHV-04, WHV-06, WHV-07, WHV-09, WHV-11, WHV-12, WHV-14
+M-15   KILLED   los tramos declarados no generan altas [structure.py] · caen: WHL-01, WHV-04, WHV-09, WHV-11
+RESTORED: rc=0 · sha structure.py=igual warehouse_api.py=igual
+MUTANTES=16 MUERTOS=16 VIVOS=0

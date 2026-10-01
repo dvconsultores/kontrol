@@ -1,0 +1,78 @@
+# E2E-FLAKY-BAJO-CARGA · dos carreras escritas en las pruebas · 2026-10-01T15:14:35-04:00
+
+## 1 · putaway.spec.ts:405 «ubicar no crea nada de picking» — ANTES del arreglo de la prueba, con el backend YA arreglado
+# orden: playwright test e2e/putaway.spec.ts:405 e2e/picking.spec.ts e2e/pick-execution.spec.ts --project=chromium --repeat-each=12
+  1 failed
+  191 passed (1.9m)
+✘   48 [chromium] › e2e/putaway.spec.ts:405:3 › Spec 022 — put-away › ubicar no crea nada de picking (1.5s)
+  1) [chromium] › e2e/putaway.spec.ts:405:3 › Spec 022 — put-away › ubicar no crea nada de picking ─
+
+    Error: ubicar creó una lista de preparación: eso es de la Spec 031
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1189
+    Received: 1190
+
+      419 |       (despues.items as unknown[]).length,
+      420 |       "ubicar creó una lista de preparación: eso es de la Spec 031",
+    > 421 |     ).toBe((antes.items as unknown[]).length);
+          |       ^
+      422 |     // Y la reserva de este escenario no quedó atada a una ubicación. Se mira la
+      423 |     // propia y no el conjunto de la empresa: lo que se comprueba es la forma de
+      424 |     // la reserva que esta prueba creó.
+        at /home/maria/Projectos/Kontrol/resources/frontend/e2e/putaway.spec.ts:421:7
+
+
+## 2 · treasury.spec.ts:486 «FLOAT-038-B · la interfaz de cajas…» — ANTES del arreglo de la prueba
+# copia temporal de la prueba con la respuesta de POST …/close retrasada 1,5 s (page.route); la copia se borró después
+--- corrida 1
+    - Expected  - 1
+    + Received  + 1
+    -   "CLOSED",
+    +   "PRE_CLOSED",
+  1 failed
+--- corrida 2
+    - Expected  - 1
+    + Received  + 1
+    -   "CLOSED",
+    +   "PRE_CLOSED",
+  1 failed
+--- corrida 3
+    - Expected  - 1
+    + Received  + 1
+    -   "CLOSED",
+    +   "PRE_CLOSED",
+  1 failed
+--- la prueba original, sin retraso, 5 veces: 5 passed (la carrera solo se ve cuando el cierre tarda)
+
+## 3 · DESPUÉS del arreglo de las dos pruebas (T11, T12) · 2026-10-01T15:15:22-04:00
+--- treasury:486 con la respuesta del cierre retrasada 1,5 s (copia temporal), 3 veces
+  3 passed (11.0s)
+--- mutante de prueba: el cierre nunca llega (copia temporal; route.abort) → debe caer
+    Error: expect(locator).toContainText(expected) failed
+    Expected pattern: /(^|[^_])CLOSED/
+    Received string:  "500ada8f-fc44-4c65-a44a-26aa2215d6252026-10-01100,00100,0099,99-0,01PRE_CLOSEDcerrarrechazar"
+  1 failed
+--- mutante de prueba: aparece una lista de preparación en el almacén propio (copia temporal) → debe caer
+    Error: /sales/pick-lists: 500 {"code":"INTERNAL_ERROR","message":"Ocurrió un error interno. Intente nuevamente.","field_errors":{},"request_id":"c4eab883e285405aba273e830a3a1437","details":null}
+  1 failed
+--- treasury:486 original arreglada, 5 veces
+  5 passed (14.5s)
+--- mutante de prueba: aparece una lista de preparación en el almacén propio (copia temporal) → debe caer
+    Error: ubicar creó una lista de preparación: eso es de la Spec 031
+    - Expected  - 1
+    + Received  + 9
+    - Array []
+    + Array [
+    +   Object {
+    +     "code": "MUT-MUPX1PEVE7JI",
+    +     "id": "c9085b2d-1c56-4183-b4d2-8b2b3f1ad741",
+    +     "order_id": "a88f866e-3eb1-4571-88b6-50d6efc11220",
+    +     "status": "DRAFT",
+    +     "warehouse_id": "d52bd255-e610-4be9-87c5-83d172c66be5",
+    +   },
+--- putaway:405 arreglada, repetida 24 veces junto a picking y pick-execution (antes: 1 caída en 12)
+exit=0
+  384 passed (4.0m)
+putaway:405 ejecutadas: 24 verdes, 0 caídas
