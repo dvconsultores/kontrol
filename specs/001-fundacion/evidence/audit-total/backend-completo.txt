@@ -1,0 +1,38 @@
+# AUDIT-TOTAL-CARGA-TODO · backend completo · una corrida por motor · 2026-10-01T10:33:29-04:00
+
+## SQLite (pytest tests) — 2026-10-01T10:11:04 → 10:13:14
+42 failed, 746 passed, 942 skipped in 118.19s
+(repetida con -rfE para listar los fallos, en paralelo con la corrida de PostgreSQL: 43 failed; el fallo de más es
+ test_auth_session_rotation, la prueba de hilos sobre SQLite registrada como AUTH-ROTACION-SQLITE-HILOS)
+
+Fallos por fichero (árbol de trabajo):
+      1 test_auth_session_rotation
+     10 test_documents
+      7 test_documents_legacy_import
+     25 test_documents_security
+
+Base de referencia: la misma suite sobre una exportación limpia de cf35c27 (git archive), mismo intérprete:
+  fallos en la base: 45 · en el árbol de trabajo: 43
+  diferencia: los 2 de test_spec047_architecture solo fallan en la exportación (comprueban ficheros de docs/ que la exportación no incluye).
+  resto del conjunto: IDÉNTICO. Fallos nuevos por este delta: 0. Fallos en pruebas de auditoría: 0.
+  causa de los de documentos: el entorno no tiene clamscan (la subida no llega a crear versión); test_auth_session_rotation: AUTH-ROTACION-SQLITE-HILOS.
+
+## PostgreSQL (KONTROL_TEST_DB_URL=…/ktest pytest tests) — 2026-10-01T10:13:14 → 10:31:10
+37 failed, 1666 passed, 27 skipped, 6 warnings in 1057.44s (0:17:37)
+
+Fallos por fichero:
+     10 test_documents
+     25 test_documents_security
+      2 test_n9_integrity
+
+Base de referencia: esos tres ficheros sobre la exportación de cf35c27, en PostgreSQL: 37 fallos.
+  conjunto de fallos: IDÉNTICO (diff vacío). Fallos nuevos por este delta: 0. Fallos en pruebas de auditoría: 0.
+  causa: el entorno no tiene clamscan; son pruebas de entrega y versionado de documentos.
+
+## Control de recursos (TEST-SCHEMAS-PG-SIN-LIMPIEZA, no se corrige aquí)
+PG_SIZE_BEFORE     ktest = 111 MB (10 esquemas t_*) · kaud = 82 MB
+PG_SIZE_AFTER      ktest = 3240 MB (313 esquemas t_*) tras la corrida completa
+CONNECTIONS_PEAK   60 a ktest (104 muestras, cada 10 s; max_connections = 100)
+TMPFS_FREE_BEFORE  6,4 G libres de 7,6 G
+TMPFS_FREE_AFTER   2,5 G libres tras la corrida
+Limpieza de entorno posterior: DROP DATABASE ktest + CREATE DATABASE ktest; /tmp antes: 5,2G usados, 2,4G libres · después: 2,0G usados, 5,7G libres

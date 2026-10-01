@@ -1,0 +1,42 @@
+# qa/repro-audit-total.py · POST-FIX · base kaud (PostgreSQL de QA) · 2026-10-01T10:03:11-04:00
+motor: postgresql · índices de audit_events: ['ix_audit_events_action', 'ix_audit_events_company_id', 'ix_audit_events_entity_id', 'ix_audit_events_entity_type', 'ix_audit_events_request_id', 'ix_audit_events_tenant_id', 'ix_audit_events_user_id']
+filas en audit_events (todos los tenants): 13642
+
+== primera página: page=1 page_size=10 · 5 peticiones ==
+respuesta: claves=['items', 'page', 'page_size', 'total'] items=10 total=13577
+latencia del endpoint (ms): min=28 mediana=30 max=42
+sentencias sobre audit_events por petición: [2]
+filas que la base devuelve por petición: [11]
+entidades AuditEvent construidas por petición: [10]
+tiempo en la base por petición (ms): mediana=14.4
+  [1] filas=1 · 1.6 ms · SELECT count(*) FROM (SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s) AS anon_1
+  [2] filas=10 · 12.5 ms · SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s ORDER BY audit_events.event_time DESC LIMIT %(param_1)s OFFSET %(param_2)s
+
+== página 51: page=51 page_size=10 · 5 peticiones ==
+respuesta: claves=['items', 'page', 'page_size', 'total'] items=10 total=13577
+latencia del endpoint (ms): min=29 mediana=30 max=31
+sentencias sobre audit_events por petición: [2]
+filas que la base devuelve por petición: [11]
+entidades AuditEvent construidas por petición: [10]
+tiempo en la base por petición (ms): mediana=16.0
+  [1] filas=1 · 1.5 ms · SELECT count(*) FROM (SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s) AS anon_1
+  [2] filas=10 · 14.5 ms · SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s ORDER BY audit_events.event_time DESC LIMIT %(param_1)s OFFSET %(param_2)s
+
+== EXPLAIN ANALYZE de las sentencias de la última petición ==
+  [1] SELECT count(*) FROM (SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s) AS a
+      Aggregate (actual rows=1 loops=1)
+        ->  Index Only Scan using ix_audit_events_tenant_id on audit_events (actual rows=13577 loops=1)
+              Index Cond: (tenant_id = 'ed2a0cfa-cbd8-45ec-aa9e-dd60f73a547c'::text)
+              Heap Fetches: 136
+      Planning Time: 0.107 ms
+      Execution Time: 1.412 ms
+  [2] SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s ORDER BY audit_events.event
+      Limit (actual rows=10 loops=1)
+        ->  Sort (actual rows=510 loops=1)
+              Sort Key: event_time DESC
+              Sort Method: top-N heapsort  Memory: 545kB
+              ->  Seq Scan on audit_events (actual rows=13577 loops=1)
+                    Filter: ((tenant_id)::text = 'ed2a0cfa-cbd8-45ec-aa9e-dd60f73a547c'::text)
+                    Rows Removed by Filter: 65
+      Planning Time: 0.077 ms
+      Execution Time: 14.387 ms

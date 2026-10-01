@@ -1,0 +1,25 @@
+# AUDIT-TOTAL-CARGA-TODO · delegaciones a DeepSeek · leído de las trazas de cada ejecutor
+# servidor MCP deepseek · @arikusi/deepseek-mcp-server@2.3.0 · herramienta mcp__deepseek__deepseek_chat
+
+T10 · intento 1
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 5071/4094 · $0.001839 · finish_reason=stop
+  egress: carga de 15635 caracteres · secretos=0 · credencial de la siembra de QA en la carga=no · módulo de apoyo en la carga=no
+  contexto: lecturas del puente=ninguna · ¿llegó íntegro a DeepSeek lo autorizado? NO (marcas ['TASK: T10', 'COUNT-16', 'DONE WHEN', 'NO leas ni envíes'])
+  bloques=1 · relevo literal=sí
+  AUDIT_REJECT: las 15 pruebas, conformes al diseño; el docstring añadía una frase («fallan contra el código actual») que sería falsa tras el arreglo
+
+T10 · reintento 1
+  llamadas=1 · modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False · session_id=no · thinking=no
+  tokens 4569/4095 · $0.001769 · finish_reason=stop
+  egress: carga de 15882 caracteres · secretos=0 · credencial de la siembra de QA en la carga=no · módulo de apoyo en la carga=no
+  contexto: lecturas del puente=['Read:T10-count-intento-1.py'] · ¿llegó íntegro a DeepSeek lo autorizado? sí (marcas ['test_count_01_', 'test_count_16_el_total_coincide', 'R1.'])
+  bloques=1 · relevo literal=sí
+  AUDIT_PASS: aplicado; su diferencia con el intento 1 es exactamente la frase eliminada; 15/15 en SQLite y PostgreSQL tras T11
+
+TASKS TOTAL = 12 · CLAUDE_ONLY = 11 · DEEPSEEK_ELIGIBLE = 1 · DEEPSEEK EXECUTED = 1
+DEEPSEEK CALLS = 2 · DEEPSEEK RETRIES = 1 (tope 2) · PATCHES ACCEPTED = 1 · PATCHES REJECTED = 1 · parches retocados a mano = 0
+MODELS USED = deepseek-v4-flash · DEEPSEEK TOKENS = 9640 de entrada / 8189 de salida · DEEPSEEK COST = $0.003608
+SONNET BRIDGE TOKENS = 88591 (según el arnés)
+EJECUTOR-ABREVIA-EL-CONTEXTO en este ciclo: no se reprodujo — en las dos delegaciones el encargo y el fichero autorizado llegaron íntegros
+T11 (el cambio del handler) NO se delegó: mueve la línea del predicado de tenant, que CLAUDE.md reserva a Claude

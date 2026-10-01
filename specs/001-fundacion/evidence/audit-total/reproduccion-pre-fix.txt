@@ -1,0 +1,44 @@
+# qa/repro-audit-total.py · PRE-FIX · HEAD cf35c27 · base kaud (PostgreSQL de QA) · 2026-10-01T09:56:11-04:00
+motor: postgresql · índices de audit_events: ['ix_audit_events_action', 'ix_audit_events_company_id', 'ix_audit_events_entity_id', 'ix_audit_events_entity_type', 'ix_audit_events_request_id', 'ix_audit_events_tenant_id', 'ix_audit_events_user_id']
+filas en audit_events (todos los tenants): 13641
+
+== primera página: page=1 page_size=10 · 5 peticiones ==
+respuesta: claves=['items', 'page', 'page_size', 'total'] items=10 total=13576
+latencia del endpoint (ms): min=199 mediana=377 max=387
+sentencias sobre audit_events por petición: [2]
+filas que la base devuelve por petición: [13586]
+entidades AuditEvent construidas por petición: [13586]
+tiempo en la base por petición (ms): mediana=41.2
+  [1] filas=13576 · 36.1 ms · SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s ORDER BY audit_events.event_time DESC
+  [2] filas=10 · 7.4 ms · SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s ORDER BY audit_events.event_time DESC LIMIT %(param_1)s OFFSET %(param_2)s
+
+== página 51: page=51 page_size=10 · 5 peticiones ==
+respuesta: claves=['items', 'page', 'page_size', 'total'] items=10 total=13576
+latencia del endpoint (ms): min=194 mediana=370 max=381
+sentencias sobre audit_events por petición: [2]
+filas que la base devuelve por petición: [13586]
+entidades AuditEvent construidas por petición: [13586]
+tiempo en la base por petición (ms): mediana=39.1
+  [1] filas=13576 · 30.2 ms · SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s ORDER BY audit_events.event_time DESC
+  [2] filas=10 · 8.9 ms · SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s ORDER BY audit_events.event_time DESC LIMIT %(param_1)s OFFSET %(param_2)s
+
+== EXPLAIN ANALYZE de las sentencias de la última petición ==
+  [1] SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s ORDER BY audit_events.event
+      Sort (actual rows=13576 loops=1)
+        Sort Key: event_time DESC
+        Sort Method: external merge  Disk: 5256kB
+        ->  Seq Scan on audit_events (actual rows=13576 loops=1)
+              Filter: ((tenant_id)::text = 'ed2a0cfa-cbd8-45ec-aa9e-dd60f73a547c'::text)
+              Rows Removed by Filter: 65
+      Planning Time: 0.130 ms
+      Execution Time: 15.848 ms
+  [2] SELECT <columnas> FROM audit_events WHERE audit_events.tenant_id = %(tenant_id_1)s ORDER BY audit_events.event
+      Limit (actual rows=10 loops=1)
+        ->  Sort (actual rows=510 loops=1)
+              Sort Key: event_time DESC
+              Sort Method: top-N heapsort  Memory: 545kB
+              ->  Seq Scan on audit_events (actual rows=13576 loops=1)
+                    Filter: ((tenant_id)::text = 'ed2a0cfa-cbd8-45ec-aa9e-dd60f73a547c'::text)
+                    Rows Removed by Filter: 65
+      Planning Time: 0.109 ms
+      Execution Time: 8.077 ms

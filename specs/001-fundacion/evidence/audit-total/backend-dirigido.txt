@@ -1,0 +1,6 @@
+# AUDIT-TOTAL-CARGA-TODO · backend dirigido · conteo + aislamiento de tenant · 2026-10-01T10:04:16-04:00
+## Antes del cambio del handler (HEAD cf35c27), SQLite: 4 failed, 11 passed — rojas COUNT-10, COUNT-11, COUNT-14, COUNT-15
+## Después · SQLite
+============================= 26 passed in 13.05s ==============================
+## Después · PostgreSQL (ktest)
+26 passed in 11.61s

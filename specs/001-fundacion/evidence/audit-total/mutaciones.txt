@@ -1,0 +1,68 @@
+# AUDIT-TOTAL-CARGA-TODO · mutaciones del handler · 2026-10-01T10:04:47-04:00
+motor: SQLite
+GOOD      → PASS
+M-01   MUERTO  volver a len(...all()): se materializa el conjunto
+         lo matan (4): count_10, count_11, count_14, count_15
+M-02   MUERTO  el conteo no lleva el predicado de tenant (sí los filtros)
+         lo matan (11): aud_tenant_01, aud_tenant_02, aud_tenant_04, aud_tenant_05, aud_tenant_06, aud_tenant_10, count_04, count_05, count_06, count_09, count_16
+M-03   MUERTO  el conteo ignora action (se cuenta antes de aplicar ese filtro)
+         lo matan (4): aud_tenant_06, count_05, count_09, count_16
+M-03b  MUERTO  el conteo ignora entity_id y action
+         lo matan (19): aud_tenant_01, aud_tenant_02, aud_tenant_04, aud_tenant_05, aud_tenant_06, aud_tenant_10, count_01, count_02, count_03, count_04, count_05, count_07, count_09, count_10, count_12, count_13, count_14, count_15, count_16
+M-03c  MUERTO  el conteo ignora entity_type
+         lo matan (3): count_06, count_09, count_16
+M-05   MUERTO  el conteo se hace después de LIMIT/OFFSET
+         lo matan (11): aud_tenant_05, count_01, count_02, count_03, count_04, count_10, count_11, count_12, count_13, count_15, count_16
+M-06   MUERTO  el conteo es de todo el tenant, sin filtros
+         lo matan (20): aud_tenant_01, aud_tenant_02, aud_tenant_04, aud_tenant_05, aud_tenant_06, aud_tenant_10, count_01, count_02, count_03, count_04, count_05, count_06, count_07, count_09, count_10, count_12, count_13, count_14, count_15, count_16
+M-07   MUERTO  total = número de items de la página
+         lo matan (12): aud_tenant_05, count_01, count_02, count_03, count_04, count_10, count_11, count_12, count_13, count_14, count_15, count_16
+M-09   MUERTO  el conteo arrastra el ORDER BY de los items
+         lo matan (1): count_11
+M-10   MUERTO  los items pierden el ORDER BY
+         lo matan (2): count_11, count_13
+M-10b  MUERTO  los items se ordenan ascendente
+         lo matan (2): count_11, count_13
+M-11   MUERTO  los items pierden el predicado de tenant (el conteo lo conserva)
+         lo matan (11): aud_tenant_01, aud_tenant_02, aud_tenant_03, aud_tenant_04, aud_tenant_05, aud_tenant_06, aud_tenant_08, aud_tenant_09, aud_tenant_10, count_09, count_16
+M-12   MUERTO  el conteo estima: cuenta entidades distintas por acción
+         lo matan (15): aud_tenant_04, aud_tenant_05, count_01, count_02, count_03, count_04, count_05, count_06, count_07, count_09, count_10, count_12, count_13, count_15, count_16
+M-13   MUERTO  desfase de página en los items
+         lo matan (15): aud_tenant_01, aud_tenant_02, aud_tenant_03, aud_tenant_04, aud_tenant_05, aud_tenant_06, aud_tenant_09, count_02, count_03, count_05, count_06, count_07, count_09, count_13, count_16
+RESTORED  → PASS
+
+MUTANTES 14 · MUERTOS 14 · VIVOS 0
+
+motor: PostgreSQL
+GOOD      → PASS
+M-01   MUERTO  volver a len(...all()): se materializa el conjunto
+         lo matan (4): count_10, count_11, count_14, count_15
+M-02   MUERTO  el conteo no lleva el predicado de tenant (sí los filtros)
+         lo matan (11): aud_tenant_01, aud_tenant_02, aud_tenant_04, aud_tenant_05, aud_tenant_06, aud_tenant_10, count_04, count_05, count_06, count_09, count_16
+M-03   MUERTO  el conteo ignora action (se cuenta antes de aplicar ese filtro)
+         lo matan (4): aud_tenant_06, count_05, count_09, count_16
+M-03b  MUERTO  el conteo ignora entity_id y action
+         lo matan (19): aud_tenant_01, aud_tenant_02, aud_tenant_04, aud_tenant_05, aud_tenant_06, aud_tenant_10, count_01, count_02, count_03, count_04, count_05, count_07, count_09, count_10, count_12, count_13, count_14, count_15, count_16
+M-03c  MUERTO  el conteo ignora entity_type
+         lo matan (3): count_06, count_09, count_16
+M-05   MUERTO  el conteo se hace después de LIMIT/OFFSET
+         lo matan (11): aud_tenant_05, count_01, count_02, count_03, count_04, count_10, count_11, count_12, count_13, count_15, count_16
+M-06   MUERTO  el conteo es de todo el tenant, sin filtros
+         lo matan (20): aud_tenant_01, aud_tenant_02, aud_tenant_04, aud_tenant_05, aud_tenant_06, aud_tenant_10, count_01, count_02, count_03, count_04, count_05, count_06, count_07, count_09, count_10, count_12, count_13, count_14, count_15, count_16
+M-07   MUERTO  total = número de items de la página
+         lo matan (12): aud_tenant_05, count_01, count_02, count_03, count_04, count_10, count_11, count_12, count_13, count_14, count_15, count_16
+M-09   MUERTO  el conteo arrastra el ORDER BY de los items
+         lo matan (1): count_11
+M-10   MUERTO  los items pierden el ORDER BY
+         lo matan (2): count_11, count_13
+M-10b  MUERTO  los items se ordenan ascendente
+         lo matan (2): count_11, count_13
+M-11   MUERTO  los items pierden el predicado de tenant (el conteo lo conserva)
+         lo matan (11): aud_tenant_01, aud_tenant_02, aud_tenant_03, aud_tenant_04, aud_tenant_05, aud_tenant_06, aud_tenant_08, aud_tenant_09, aud_tenant_10, count_09, count_16
+M-12   MUERTO  el conteo estima: cuenta entidades distintas por acción
+         lo matan (15): aud_tenant_04, aud_tenant_05, count_01, count_02, count_03, count_04, count_05, count_06, count_07, count_09, count_10, count_12, count_13, count_15, count_16
+M-13   MUERTO  desfase de página en los items
+         lo matan (15): aud_tenant_01, aud_tenant_02, aud_tenant_03, aud_tenant_04, aud_tenant_05, aud_tenant_06, aud_tenant_09, count_02, count_03, count_05, count_06, count_07, count_09, count_13, count_16
+RESTORED  → PASS
+
+MUTANTES 14 · MUERTOS 14 · VIVOS 0

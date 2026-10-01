@@ -1,0 +1,44 @@
+AUDIT-TOTAL-CARGA-TODO · E2E GLOBAL · Chromium · backend 127.0.0.1:8000 (handler nuevo) sobre kaud (PostgreSQL) · Vite 5173 · UNA corrida autoritativa · inicio 2026-10-01T10:34:07-04:00
+ficheros de suite: 35 · pruebas: 240
+  4 failed
+  40 skipped
+  196 passed (4.0m)
+exit=1
+
+Fallos:
+✘  137 [chromium] › e2e/picking.spec.ts:192:3 › Spec 031 — cola y ruta de picking › el pedido liberado aparece en la cola con su puesto (30.1s)
+✘  138 [chromium] › e2e/picking.spec.ts:208:3 › Spec 031 — cola y ruta de picking › la interfaz reparte entre dos ubicaciones y el recorrido sale en orden (30.1s)
+✘  139 [chromium] › e2e/picking.spec.ts:240:3 › Spec 031 — cola y ruta de picking › no se confirma con remanente, y el dominio lo impide (30.1s)
+✘  148 [chromium] › e2e/putaway.spec.ts:187:3 › Spec 022 — put-away › el operario ubica la mercancía y el dominio lo confirma (30.1s)
+
+Atribución (una fila por fallo):
+  TEST = picking.spec.ts:192 · TARGET RELATED = NO · PASSES ALONE = SÍ (1 de 1, un trabajador) · NEW REGRESSION = NO
+  TEST = picking.spec.ts:208 · TARGET RELATED = NO · PASSES ALONE = SÍ (1 de 1, un trabajador) · NEW REGRESSION = NO
+  TEST = picking.spec.ts:240 · TARGET RELATED = NO · PASSES ALONE = SÍ (1 de 1, un trabajador) · NEW REGRESSION = NO
+  TEST = putaway.spec.ts:187 · TARGET RELATED = NO · PASSES ALONE = SÍ (1 de 1, un trabajador) · NEW REGRESSION = NO
+
+  Causa del fallo en la corrida: caducidad de 30 s (selectOption del almacén en picking; waitForLoadState("networkidle") en put-away).
+  Las cuatro pruebas, ejecutadas una a una, hicieron 0 peticiones a /audit/events (contadas en el registro de acceso del backend):
+  no ejercen el handler que cambió. Sus ficheros no contienen ninguna referencia a auditoría.
+  PREEXISTING FLAKY EVIDENCE: putaway.spec.ts:187 cayó igual en la corrida global del ciclo anterior (cf35c27, antes de este cambio);
+  putaway.spec.ts ya estaba en E2E-FLAKY-BAJO-CARGA. picking.spec.ts es nuevo en esa lista: lanzadas las dos suites juntas (17 pruebas,
+  6 trabajadores) cayeron 2 de 17; una a una, pasan todas. Es contención sobre una base de QA compartida que acumula corridas.
+  CLASIFICACIÓN = PREEXISTING_FLAKY (E2E-FLAKY-BAJO-CARGA). No se repite la corrida global.
+
+Las suites de Auditoría y Empresas en esta misma corrida global:
+✓   48 [chromium] › e2e/auditoria-paginacion.spec.ts:175:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-0
+✓   43 [chromium] › e2e/auditoria-fecha.spec.ts:54:3 › AUDITORIA-CREATED-AT · la columna Fecha muestra event_time › DATE-01/02/03 · la fila 
+✓   45 [chromium] › e2e/auditoria-paginacion.spec.ts:105:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-0
+✓   46 [chromium] › e2e/auditoria-paginacion.spec.ts:144:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-0
+✓   49 [chromium] › e2e/auditoria-sobre.spec.ts:60:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-01/02 · dos eventos co
+✓   47 [chromium] › e2e/auditoria-paginacion.spec.ts:158:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-0
+✓   50 [chromium] › e2e/auditoria-sobre.spec.ts:102:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-04 · el rastro de otr
+✓   83 [chromium] › e2e/empresas-busqueda.spec.ts:47:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-01 · buscar la razón social de una e
+✓   84 [chromium] › e2e/empresas-busqueda.spec.ts:58:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-02 · un término inexistente deja la 
+✓   88 [chromium] › e2e/empresas-sobre.spec.ts:43:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-01 · la API res
+✓   85 [chromium] › e2e/empresas-busqueda.spec.ts:73:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-03 · la búsqueda no cruza tenants: c
+✓   89 [chromium] › e2e/empresas-sobre.spec.ts:61:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-02 · la paginac
+✓   90 [chromium] › e2e/empresas-sobre.spec.ts:75:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-03 · q sigue bu
+✓   86 [chromium] › e2e/empresas-busqueda.spec.ts:81:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-04 · el otro tenant sí encuentra su 
+✓   87 [chromium] › e2e/empresas-busqueda.spec.ts:89:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-05 · la búsqueda no distingue mayús
+✓   91 [chromium] › e2e/empresas-sobre.spec.ts:85:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-04 · la pantall

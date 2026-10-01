@@ -11,7 +11,7 @@ pregunta. Ni la consulta ni el cuerpo pueden ampliarlo, y `admin` no significa
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -38,11 +38,7 @@ def list_events(
     # no serían un filtro: serían un disfraz. Un evento sin tenant no es de
     # nadie y aquí no lo lee nadie; la Spec no define eventos globales de
     # auditoría (los de instalación viven en sus propias tablas).
-    query = (
-        select(AuditEvent)
-        .where(AuditEvent.tenant_id == user.tenant_id)
-        .order_by(AuditEvent.event_time.desc())
-    )
+    query = select(AuditEvent).where(AuditEvent.tenant_id == user.tenant_id)
     if entity_type:
         query = query.where(AuditEvent.entity_type == entity_type)
     if entity_id:
@@ -50,8 +46,14 @@ def list_events(
     if action:
         query = query.where(AuditEvent.action == action)
 
-    total = len(db.execute(query).scalars().all())
-    items = db.execute(query.offset((page - 1) * page_size).limit(page_size)).scalars().all()
+    # `total` lo cuenta la base, sobre el mismo `query` del que después se corta la
+    # página: un solo conjunto, sin dos listas de filtros que puedan divergir. El
+    # orden es solo de los items; contar no lo necesita, y traerse la bitácora
+    # entera del tenant para medirla con `len()` era el coste de cada petición.
+    total = db.execute(select(func.count()).select_from(query.subquery())).scalar_one()
+    items = db.execute(
+        query.order_by(AuditEvent.event_time.desc()).offset((page - 1) * page_size).limit(page_size)
+    ).scalars().all()
     return {
         "page": page,
         "page_size": page_size,

@@ -2557,3 +2557,31 @@ Lo que este delta deja medido y no absorbe: `AUDITORIA-OFFSET-EN-BITACORA-VIVA`,
 con `AUDIT-ORDEN-SIN-DESEMPATE` (mismo handler, backend, pequeño), `AUDITORIA-TIMELINE-FECHA-CRUDA`
 o `LISTADOS-SIN-RESPONSE-MODEL`. **Con decisión pendiente:** `UI-BUSQUEDA-MUERTA` en Auditoría
 y en Existencias. `NEXT SPEC = 029` no cambia.
+
+## 2026-10-01 · Tras converger el delta AUDIT-TOTAL-CARGA-TODO (dueña 001, apoyo 012)
+
+Para decir un número, el servidor construía trece mil objetos. `list_events` calculaba
+`total` con `len()` sobre la lista de todas las entidades del tenant: medido en PostgreSQL
+con 13 576 eventos y una página de diez, 13 586 filas y 13 586 entidades por petición, y de
+los 377 ms del endpoint la base solo gastaba 41. Era el único de los diecisiete listados
+que contaba así.
+
+El arreglo son tres cambios en un fichero: `total` sale de un `SELECT count(*)` sobre el
+mismo objeto de consulta del que después se corta la página, de modo que el tenant y los
+filtros no pueden divergir entre el conteo y los items; y el orden, que contar no necesita,
+se aplica solo a los items, cuyo SQL queda idéntico. Después: 11 filas, 10 entidades, 30 ms.
+Contrato, sobre, paginación, orden, alcance de tenant, frontend, esquema e índices no cambian.
+
+Las pruebas no miran el código fuente sino lo que la petición hace: un observador cuenta
+las sentencias sobre `audit_events` y las entidades que el ORM construye. El cambio del
+handler lo hizo Claude —mueve la línea del predicado de tenant, que la política reserva—;
+la suite la propuso DeepSeek en una tarea, con un reintento.
+
+Queda medido y sin absorber `AUDIT-PAGINA-SIN-INDICE-DE-ORDEN`: lo que ahora domina la
+petición es la página, que recorre y ordena los eventos del tenant sin un índice que la
+sirva. `AUDIT-ORDEN-SIN-DESEMPATE` y `AUDITORIA-OFFSET-EN-BITACORA-VIVA` siguen abiertas.
+
+**Candidatas siguientes, sin decisión de la dueña pendiente:** `AUDIT-ORDEN-SIN-DESEMPATE`,
+`AUDITORIA-TIMELINE-FECHA-CRUDA`, `LISTADOS-SIN-RESPONSE-MODEL` (con
+`AUDIT-OPENAPI-SIN-RESPONSE-MODEL`), `E2E-SIN-TYPECHECK`, `TEST-SCHEMAS-PG-SIN-LIMPIEZA`,
+`API-COMPANY-ID-EN-CONSULTA`, `E2E-FLAKY-BAJO-CARGA`. `NEXT SPEC = 029` no cambia.
