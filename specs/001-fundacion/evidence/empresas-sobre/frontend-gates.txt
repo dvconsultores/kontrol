@@ -1,0 +1,11 @@
+EMPRESAS-SIN-SOBRE · puertas del frontend · 2026-09-30T18:42:41-04:00
+== typecheck ==
+tsc exit=0
+== eslint ==
+eslint exit=0
+== vitest ==
+ Test Files  25 passed (25)
+      Tests  412 passed (412)
+== build ==
+✓ built in 2.84s
+build exit=0

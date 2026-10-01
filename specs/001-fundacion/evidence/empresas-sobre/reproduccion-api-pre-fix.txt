@@ -1,0 +1,14 @@
+EMPRESAS-SIN-SOBRE · forma actual de GET /api/v1/organization/companies · backend 127.0.0.1:8000 sobre kaud · 2026-09-30T18:23:59-04:00
+
+uab                 -> ARRAY_OR_OBJECT=ARRAY CURRENT_COUNT=2 claves_item=['allowed_actions', 'code', 'functional_currency', 'id', 'legal_name', 'rif', 'status', 'trade_name']
+uab  ?q=SEGUNDA     -> ARRAY_OR_OBJECT=ARRAY CURRENT_COUNT=1 claves_item=['allowed_actions', 'code', 'functional_currency', 'id', 'legal_name', 'rif', 'status', 'trade_name']
+uab  ?page=2        -> ARRAY_OR_OBJECT=ARRAY CURRENT_COUNT=2 claves_item=['allowed_actions', 'code', 'functional_currency', 'id', 'legal_name', 'rif', 'status', 'trade_name']
+uab  ?page_size=1   -> ARRAY_OR_OBJECT=ARRAY CURRENT_COUNT=2 claves_item=['allowed_actions', 'code', 'functional_currency', 'id', 'legal_name', 'rif', 'status', 'trade_name']
+uc                  -> ARRAY_OR_OBJECT=ARRAY CURRENT_COUNT=1 claves_item=['allowed_actions', 'code', 'functional_currency', 'id', 'legal_name', 'rif', 'status', 'trade_name']
+uc   ?q=SEGUNDA     -> ARRAY_OR_OBJECT=ARRAY CURRENT_COUNT=0 claves_item=-
+uc   ?page=2        -> ARRAY_OR_OBJECT=ARRAY CURRENT_COUNT=1 claves_item=['allowed_actions', 'code', 'functional_currency', 'id', 'legal_name', 'rif', 'status', 'trade_name']
+uc   ?page_size=1   -> ARRAY_OR_OBJECT=ARRAY CURRENT_COUNT=1 claves_item=['allowed_actions', 'code', 'functional_currency', 'id', 'legal_name', 'rif', 'status', 'trade_name']
+
+== OpenAPI hoy ==
+list_companies_api_v1_organization_companies_get ['q'] {"application/json": {"schema": {}}}
+(page y page_size no existen: se ignoran en silencio; sin total)

@@ -70,7 +70,7 @@ def _headers() -> dict:
 
 
 def _company_id() -> str:
-    return _CLIENT.get("/api/v1/organization/companies", headers=_headers()).json()[0]["id"]
+    return _CLIENT.get("/api/v1/organization/companies", headers=_headers()).json()["items"][0]["id"]
 
 
 def _new_warehouse(code: str, levels: dict | None = None, **extra) -> dict:
@@ -517,7 +517,7 @@ def test_referencia_a_tramo_de_otra_empresa_rechazada():
     zone_a = _CLIENT.post(f"/api/v1/organization/warehouses/{wh_a['id']}/zones", headers=h_a,
                           json={"code": "ZC", "name": "Zona C"}).json()
     h_b = _second_tenant()
-    company_b = _CLIENT.get("/api/v1/organization/companies", headers=h_b).json()[0]["id"]
+    company_b = _CLIENT.get("/api/v1/organization/companies", headers=h_b).json()["items"][0]["id"]
     wh_b = _CLIENT.post("/api/v1/organization/warehouses", headers=h_b, json={
         "company_id": company_b, "code": "ISO-D", "name": "Almacén B",
         "structure_levels": {"zone": True}}).json()

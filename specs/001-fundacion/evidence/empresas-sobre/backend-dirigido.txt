@@ -1,0 +1,6 @@
+EMPRESAS-SIN-SOBRE · backend dirigido · 2026-09-30T18:33:55-04:00
+== SQLite: sobre + búsqueda + los 11 ficheros migrados que consumen el listado ==
+116 passed, 1 skipped in 37.72s
+== PostgreSQL (ktest): sobre + búsqueda + aislamiento multiempresa + contrato N8 + N10 ==
+ERROR tests/test_n10_convergence.py::test_el_orm_y_la_base_no_difieren_en_nada
+70 passed, 1 error in 30.70s

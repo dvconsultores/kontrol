@@ -235,7 +235,7 @@ def test_cross_tenant_write_blocked():
 
 def test_org_tenant_isolation():
     a = _auth()
-    companies = _CLIENT.get("/api/v1/organization/companies", headers=a).json()
+    companies = _CLIENT.get("/api/v1/organization/companies", headers=a).json()["items"]
     assert len(companies) == 1
     company_a = companies[0]["id"]
 
@@ -247,7 +247,7 @@ def test_org_tenant_isolation():
     # B tiene su propia empresa; lo que no puede es ver la de A. Afirmar que su
     # lista está vacía probaría que el fixture no le dio ninguna, no que el
     # aislamiento funciona.
-    empresas_b = _CLIENT.get("/api/v1/organization/companies", headers=b).json()
+    empresas_b = _CLIENT.get("/api/v1/organization/companies", headers=b).json()["items"]
     assert company_a not in [c["id"] for c in empresas_b]
     assert _CLIENT.get(f"/api/v1/organization/warehouses?company_id={company_a}", headers=b).json()["items"] == []
 

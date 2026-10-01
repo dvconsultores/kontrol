@@ -61,7 +61,7 @@ test("detalle de almacén: sin violaciones serias de WCAG 2.2 AA", async ({ page
   const token = (await login.json()).access_token as string;
   const headers = { Authorization: `Bearer ${token}` };
   const companies = await (await request.get(`${API}/organization/companies`, { headers })).json();
-  const company = (Array.isArray(companies) ? companies : companies.items)[0].id;
+  const company = companies.items[0].id;
   const code = `A11Y-${Date.now().toString(36).toUpperCase()}`;
   const created = await request.post(`${API}/organization/warehouses`, {
     headers,

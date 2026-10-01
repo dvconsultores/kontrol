@@ -25,11 +25,17 @@ vi.mock("@/app/contexts/AuthContext", () => ({
   }),
 }));
 
-function servir(empresas: unknown[]): void {
-  globalThis.fetch = vi.fn(async () =>
-    new Response(JSON.stringify(empresas), {
+/** La API responde el sobre de listados; el proveedor recorre sus páginas. */
+function servir(empresas: unknown[], tamano = 100): void {
+  globalThis.fetch = vi.fn(async (entrada: RequestInfo | URL) => {
+    const url = new URL(String(entrada), "http://k");
+    const page = Number(url.searchParams.get("page") ?? "1");
+    const page_size = Number(url.searchParams.get("page_size") ?? String(tamano));
+    const items = empresas.slice((page - 1) * page_size, page * page_size);
+    return new Response(JSON.stringify({ items, total: empresas.length, page, page_size }), {
       status: 200, headers: { "content-type": "application/json" },
-    })) as unknown as typeof fetch;
+    });
+  }) as unknown as typeof fetch;
 }
 
 function Sonda(): React.JSX.Element {

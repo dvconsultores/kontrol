@@ -29,7 +29,7 @@ async function moneda(request: APIRequestContext, c: Ctx, code: string) {
 
 async function funcional(request: APIRequestContext, c: Ctx): Promise<string> {
   const empresas = await get(request, c, "/organization/companies");
-  const lista = (Array.isArray(empresas) ? empresas : empresas.items) as Array<{
+  const lista = empresas.items as Array<{
     id: string;
     functional_currency: string;
   }>;

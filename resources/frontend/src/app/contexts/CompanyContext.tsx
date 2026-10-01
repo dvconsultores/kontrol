@@ -30,7 +30,8 @@ import {
   type ReactNode,
 } from "react";
 
-import { apiFetch, setCompanyResolver } from "@/api/client";
+import { listAllCompanies } from "@/api/organization";
+import { setCompanyResolver } from "@/api/client";
 import type { CompanySummary } from "@/api/types";
 import { useAuth } from "@/app/contexts/AuthContext";
 
@@ -199,8 +200,9 @@ export function CompanyProvider({ children }: { children: ReactNode }): React.JS
     setCargando(true);
     setError(null);
     try {
-      const lista = await apiFetch<CompanySummary[]>("/organization/companies");
-      const autorizadas = Array.isArray(lista) ? lista : [];
+      // El listado es paginado por contrato; el selector necesita todas las
+      // empresas en las que el usuario opera, así que recorre las páginas.
+      const autorizadas = await listAllCompanies();
       setCompanies(autorizadas);
       resolver(autorizadas);
       setResuelto(true);

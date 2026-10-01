@@ -70,7 +70,7 @@ async function capturarEmpresas(page: Page): Promise<Promise<Empresa[]>> {
   const espera = page.waitForResponse(
     (r) => r.url().includes("/api/v1/organization/companies") && r.status() === 200,
     { timeout: 20_000 });
-  return espera.then((r) => r.json() as Promise<Empresa[]>);
+  return espera.then((r) => (r.json() as Promise<{ items: Empresa[] }>).then((b) => b.items));
 }
 
 interface Empresa { id: string; code: string; legal_name: string }

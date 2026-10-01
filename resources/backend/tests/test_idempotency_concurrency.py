@@ -162,7 +162,7 @@ def test_inventory_movement_idempotency_no_duplicate_balance():
 
     h = _auth()
     # producto + almacén
-    comp = _CLIENT.get("/api/v1/organization/companies", headers=h).json()[0]
+    comp = _CLIENT.get("/api/v1/organization/companies", headers=h).json()["items"][0]
     prod = _CLIENT.post("/api/v1/maestros/catalogos/items", headers=h,
                         json={"code": "PR-IDEM", "name": "Prod Idem", "item_type": "PRODUCT",
                               "tracking": "SIMPLE", "status": "ACTIVE"}).json()

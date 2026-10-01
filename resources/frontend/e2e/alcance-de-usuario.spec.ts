@@ -43,7 +43,7 @@ async function suyas(request: APIRequestContext, c: Contexto): Promise<string[]>
   });
   expect(r.ok(), `empresas: ${r.status()}`).toBeTruthy();
   const cuerpo = await r.json();
-  return (Array.isArray(cuerpo) ? cuerpo : cuerpo.items).map((e: { id: string }) => e.id).sort();
+  return cuerpo.items.map((e: { id: string }) => e.id).sort();
 }
 
 test.beforeAll(async ({ request }) => {

@@ -32,7 +32,7 @@ async function ctx(request: APIRequestContext): Promise<Ctx> {
   const r = await request.get(`${API}/organization/companies`, { headers: { Authorization: `Bearer ${token}` } });
   expect(r.ok(), `companies: ${r.status()}`).toBeTruthy();
   const body = await r.json();
-  const items = Array.isArray(body) ? body : body.items;
+  const items = body.items;
   const company = items[0].id as string;
   return { token, company, headers: { Authorization: `Bearer ${token}`, "X-Kontrol-Company": company } };
 }

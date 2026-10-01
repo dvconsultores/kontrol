@@ -42,6 +42,7 @@ for tenant, user in (("DEMO", "uab"), ("DEMO2", "uc")):
     for q in TERMINOS:
         sufijo = "" if q is None else "?" + (q if "=" in q else "q=" + urllib.parse.quote(q))
         st, b = llamar("GET", "/organization/companies" + sufijo, tok)
-        filas = [f"{c['code']}·{c['legal_name']}" for c in b] if isinstance(b, list) else b
-        n = len(b) if isinstance(b, list) else "-"
+        items = b["items"] if isinstance(b, dict) and "items" in b else None
+        filas = [f"{c['code']}·{c['legal_name']}" for c in items] if items is not None else b
+        n = f"{len(items)}/{b['total']}" if items is not None else "-"
         print(f"{user}/{tenant:5} /organization/companies{sufijo:45} -> {st} n={n} {filas}")

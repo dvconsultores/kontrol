@@ -1,0 +1,22 @@
+EMPRESAS-SIN-SOBRE · E2E GLOBAL · Chromium · backend 127.0.0.1:8000 sobre kaud (PostgreSQL) · Vite 5173 · tercera corrida · 2026-09-30T20:30:41-04:00
+Primera: 195/1/40, fallo treasury.spec.ts:486 (pasa 3/3 en solitario). Segunda: 195/1/40, fallo route-crawl (/comercial/listas-precio sin H1 bajo carga; en solitario pasó, y un segundo intento cayó porque el backend de QA murió por su límite de tiempo en segundo plano). Tercera, con el backend recién reiniciado:
+
+RuntimeError: 'choque-muost0jnpbst' ya opera en ['72fec427-f674-44d2-bc9f-ad059be414e6'] y se pide ['0ee10703-9c5a-4772-b54e-52ec9bed6b72']: ['72fec427-f674-44d2-bc9f-ad059be414e6'] quedaría de más. No se escribe nada
+✘   90 [chromium] › e2e/inventory-confirmation.spec.ts:96:3 › Spec 021 — confirmación de inventario › aceptar no libera; confirmar sí, y la pantalla lo hace de punta a punta (205ms)
+✘  155 [chromium] › e2e/putaway.spec.ts:405:3 › Spec 022 — put-away › ubicar no crea nada de picking (13.9s)
+Error: apiRequestContext.post: read ECONNRESET
+Error: ubicar creó una lista de preparación: eso es de la Spec 031
+2 failed
+40 skipped
+194 passed (3.6m)
+exit=1
+
+== Los fallos de las tres corridas globales, repetidos en solitario ==
+--- e2e/inventory-confirmation.spec.ts
+  3 passed (5.1s)
+--- e2e/putaway.spec.ts
+  9 passed (29.2s)
+--- e2e/treasury.spec.ts:486
+  1 passed (4.3s)
+--- e2e/route-crawl.spec.ts
+  1 passed (1.7m)

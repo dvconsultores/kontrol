@@ -1,0 +1,8 @@
+== FASE post · /organizacion/empresas · sesión uab/DEMO (D1 y D2) ==
+compuerta de selección ... 2 empresas ofrecidas al entrar
+filas sin buscar ......... 2  ["D1\tDemo C.A.\tJ-12345678-9\tACTIVE","D2\tSEGUNDA EMPRESA E2E 047 CA\tJ-40470470-7\tACTIVE"]
+forma de la respuesta .... OBJETO {"total":2,"page":1,"page_size":10,"items":2}
+paginadores visibles ..... 0 (con 2 empresas no debe haber: paginación >10)
+buscando "SEGUNDA" ....... 1  ["D2\tSEGUNDA EMPRESA E2E 047 CA\tJ-40470470-7\tACTIVE"]  total=1
+tras limpiar ............. 2
+peticiones ............... ["/api/v1/organization/companies?page=1&page_size=100","/api/v1/organization/companies?page=1&page_size=10","/api/v1/organization/companies?q=SEGUNDA&page=1&page_size=10"]

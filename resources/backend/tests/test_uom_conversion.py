@@ -91,7 +91,7 @@ def _company_id() -> str:
     la semántica equivocada que la remediación corrige. Ahora la API resuelve la
     empresa de verdad, y un producto sembrado con el tenant no lo encontraría.
     """
-    return _CLIENT.get("/api/v1/organization/companies", headers=_headers()).json()[0]["id"]
+    return _CLIENT.get("/api/v1/organization/companies", headers=_headers()).json()["items"][0]["id"]
 
 
 _SEQ = {"n": 0}

@@ -66,7 +66,7 @@ test("detalle documental: sin violaciones serias de WCAG 2.2 AA", async ({ page,
   const token = (await login.json()).access_token as string;
   const headers = { Authorization: `Bearer ${token}` };
   const companies = await (await request.get(`${API}/organization/companies`, { headers })).json();
-  const company = (Array.isArray(companies) ? companies : companies.items)[0].id;
+  const company = companies.items[0].id;
 
   const suffix = Date.now().toString(36).toUpperCase();
   const type = await request.post(`${API}/documentos/tipos`, {
@@ -100,7 +100,7 @@ test("la carga de archivo es operable solo con teclado", async ({ page, request 
   const token = (await login.json()).access_token as string;
   const headers = { Authorization: `Bearer ${token}` };
   const companies = await (await request.get(`${API}/organization/companies`, { headers })).json();
-  const company = (Array.isArray(companies) ? companies : companies.items)[0].id;
+  const company = companies.items[0].id;
 
   const suffix = `K${Date.now().toString(36).toUpperCase()}`;
   const type = await request.post(`${API}/documentos/tipos`, {

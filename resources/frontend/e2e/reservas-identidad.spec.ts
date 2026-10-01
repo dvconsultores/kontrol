@@ -47,7 +47,7 @@ async function ctx(request: APIRequestContext): Promise<Ctx> {
     headers: { Authorization: `Bearer ${token}` },
   });
   const lista = await empresas.json();
-  const empresa = (Array.isArray(lista) ? lista : lista.items)[0].id as string;
+  const empresa = lista.items[0].id as string;
   return { company: empresa,
            headers: { Authorization: `Bearer ${token}`, "X-Kontrol-Company": empresa } };
 }

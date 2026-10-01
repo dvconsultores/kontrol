@@ -123,17 +123,32 @@ def _login(tenant: str, user: str) -> dict:
 
 
 def _buscar(h: dict, q: str | None = None, **params) -> list[dict]:
+    """Los items de la búsqueda, con la página máxima del contrato (100) para
+    que este fichero siga probando el conjunto completo; la paginación en sí
+    se prueba en `test_company_list_envelope.py`."""
     if q is not None:
         params["q"] = q
+    params.setdefault("page_size", 100)
     r = _CLIENT.get("/api/v1/organization/companies", headers=h, params=params)
     assert r.status_code == 200, r.text
     body = r.json()
-    assert isinstance(body, list), "el listado de empresas es un array plano (EMPRESAS-SIN-SOBRE sigue abierta)"
-    return body
+    assert isinstance(body, dict) and set(body) == {"items", "total", "page", "page_size"}, "el listado es el sobre del contrato"
+    assert body["total"] == len(body["items"]), "con la página máxima, total y items son el mismo conjunto"
+    return body["items"]
 
 
 def _ids(filas: list[dict]) -> list[str]:
     return [f["id"] for f in filas]
+
+
+def _orden_contractual(ids: list[str]) -> list[str]:
+    """El orden del contrato: fecha de alta y, a igual fecha, identificador."""
+    db = _FACTORY()
+    try:
+        filas = db.execute(select(Company.id, Company.created_at).where(Company.id.in_(ids))).all()
+    finally:
+        db.close()
+    return [str(i) for i, _ in sorted(filas, key=lambda f: (f[1], str(f[0])))]
 
 
 # --------------------------------------------------------------------------- #
@@ -142,7 +157,8 @@ def _ids(filas: list[dict]) -> list[str]:
 def test_emp_q_01_sin_q_y_con_q_vacia_el_listado_es_el_de_siempre():
     h = _login("DEMO", "admin")
     base = _buscar(h)
-    assert len(base) == 7 and base[0]["id"] == W["d1"], "todas las del tenant, por fecha de alta"
+    assert len(base) == 7, "todas las del tenant"
+    assert _ids(base) == _orden_contractual(_ids(base)), "por fecha de alta, con el id como desempate"
     assert _ids(_buscar(h, "")) == _ids(base)
     assert _ids(_buscar(h, q=None)) == _ids(base)
 
@@ -218,8 +234,9 @@ def test_emp_q_11_la_busqueda_actua_dentro_del_alcance_del_usuario_no_lo_sustitu
 # EMP-Q-12 / 13 / 14 · el conjunto completo, en el orden de siempre
 # --------------------------------------------------------------------------- #
 def test_emp_q_12_13_el_resultado_es_el_conjunto_filtrado_entero():
-    """Este listado no pagina (`EMPRESAS-SIN-SOBRE`): lo que se devuelve es
-    exactamente el conjunto que coincide, sin recorte previo ni posterior."""
+    """Con la página por defecto (20) caben las 15 que coinciden: lo que se
+    devuelve es exactamente el conjunto que coincide (`EMPRESAS-SIN-SOBRE`
+    cerrada: la paginación se prueba en `test_company_list_envelope.py`)."""
     db = _FACTORY()
     try:
         lote = [_empresa(db, W["tenant_a"], legal_name=f"Lote Q {i:02d} CA") for i in range(15)]
@@ -243,7 +260,7 @@ def test_emp_q_14_la_busqueda_conserva_el_orden_por_fecha_de_alta():
 def test_emp_q_15_openapi_declara_q_opcional_y_ninguna_autoridad_nueva():
     op = _CLIENT.app.openapi()["paths"]["/api/v1/organization/companies"]["get"]
     params = {p["name"]: p for p in op.get("parameters", [])}
-    assert set(params) == {"q"}
+    assert set(params) == {"q", "page", "page_size"}
     assert params["q"]["in"] == "query" and params["q"].get("required", False) is False
     assert params["q"]["schema"].get("type") == "string"
     assert "tenant_id" not in params and "company_id" not in params
@@ -253,11 +270,11 @@ def test_emp_q_16_un_parametro_desconocido_se_sigue_ignorando_como_antes():
     """`API-QUERY-SILENCIOSA` sigue abierta: declarar `q` no convierte al endpoint en estricto."""
     h = _login("DEMO", "admin")
     base = _ids(_buscar(h))
-    r = _CLIENT.get("/api/v1/organization/companies", headers=h, params={"__kontrol_unknown_query_probe__": "1"})
-    assert r.status_code == 200 and _ids(r.json()) == base
+    r = _CLIENT.get("/api/v1/organization/companies", headers=h, params={"__kontrol_unknown_query_probe__": "1", "page_size": 100})
+    assert r.status_code == 200 and _ids(r.json()["items"]) == base
     r = _CLIENT.get("/api/v1/organization/companies", headers=h,
-                    params={"q": "ALFA-OBJETIVO", "__kontrol_unknown_query_probe__": "1"})
-    assert r.status_code == 200 and _ids(r.json()) == [W["alfa_a"]]
+                    params={"q": "ALFA-OBJETIVO", "__kontrol_unknown_query_probe__": "1", "page_size": 100})
+    assert r.status_code == 200 and _ids(r.json()["items"]) == [W["alfa_a"]]
 
 
 # --------------------------------------------------------------------------- #

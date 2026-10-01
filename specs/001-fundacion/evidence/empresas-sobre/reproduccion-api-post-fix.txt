@@ -1,0 +1,23 @@
+EMPRESAS-SIN-SOBRE · forma de GET /api/v1/organization/companies tras el fix · backend 127.0.0.1:8000 sobre kaud · 2026-09-30T18:30:19-04:00
+
+uab                         -> 200 OBJETO total=2 page=1 page_size=20 items=['D1', 'D2']
+uab  ?q=SEGUNDA             -> 200 OBJETO total=1 page=1 page_size=20 items=['D2']
+uab  ?page=2&page_size=1    -> 200 OBJETO total=2 page=2 page_size=1 items=['D2']
+uab  ?page=9                -> 200 OBJETO total=2 page=9 page_size=20 items=[]
+uab  ?page=0                -> 422 VALIDATION_ERROR
+uab  ?page_size=101         -> 422 VALIDATION_ERROR
+ua                          -> 200 OBJETO total=1 page=1 page_size=20 items=['D1']
+ua   ?q=SEGUNDA             -> 200 OBJETO total=0 page=1 page_size=20 items=[]
+ua   ?page=2&page_size=1    -> 200 OBJETO total=1 page=2 page_size=1 items=[]
+ua   ?page=9                -> 200 OBJETO total=1 page=9 page_size=20 items=[]
+ua   ?page=0                -> 422 VALIDATION_ERROR
+ua   ?page_size=101         -> 422 VALIDATION_ERROR
+uc                          -> 200 OBJETO total=1 page=1 page_size=20 items=['E1']
+uc   ?q=SEGUNDA             -> 200 OBJETO total=0 page=1 page_size=20 items=[]
+uc   ?page=2&page_size=1    -> 200 OBJETO total=1 page=2 page_size=1 items=[]
+uc   ?page=9                -> 200 OBJETO total=1 page=9 page_size=20 items=[]
+uc   ?page=0                -> 422 VALIDATION_ERROR
+uc   ?page_size=101         -> 422 VALIDATION_ERROR
+
+== OpenAPI ==
+list_companies_api_v1_organization_companies_get [('q', '', None, None), ('page', 1, 1, None), ('page_size', 20, 1, 100)]

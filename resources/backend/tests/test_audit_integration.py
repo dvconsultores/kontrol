@@ -118,7 +118,7 @@ def test_business_operations_generate_audit_events():
     # La empresa en la que se opera. Antes bastaba con no decirlo, porque el
     # tenant tenía una sola; al crear la segunda hay que declararlo, y eso es
     # justamente lo que ARCH-MC-001 vino a hacer explícito.
-    empresa = _CLIENT.get("/api/v1/organization/companies", headers=h).json()[0]["id"]
+    empresa = _CLIENT.get("/api/v1/organization/companies", headers=h).json()["items"][0]["id"]
 
     # organización
     comp = _CLIENT.post("/api/v1/organization/companies", headers=h,

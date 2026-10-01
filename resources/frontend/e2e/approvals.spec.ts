@@ -35,7 +35,7 @@ async function empresa(request: APIRequestContext, token: string): Promise<Empre
   });
   expect(r.ok(), `companies: ${r.status()}`).toBeTruthy();
   const body = await r.json();
-  const items = Array.isArray(body) ? body : body.items;
+  const items = body.items;
   return { id: items[0].id as string, code: items[0].code as string };
 }
 

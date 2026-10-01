@@ -133,7 +133,7 @@ def main() -> None:
     def _empresa():
         global company_id
         companies = call("GET", "/organization/companies")
-        assert companies and companies[0]["rif"] == "J-50662172-0"
+        assert companies["items"] and companies["items"][0]["rif"] == "J-50662172-0"
         company_id = companies[0]["id"]
     step("empresa GLOBAL DV", _empresa)
 

@@ -128,7 +128,7 @@ def test_org_chain_complete():
     H = _auth_headers()
     companies = _CLIENT.get("/api/v1/organization/companies", headers=H)
     assert companies.status_code == 200
-    company_id = companies.json()[0]["id"]
+    company_id = companies.json()["items"][0]["id"]
 
     branch = _CLIENT.post("/api/v1/organization/branches", headers=H,
                           json={"company_id": company_id, "code": "SUC-01", "name": "Sucursal Centro"})
@@ -186,7 +186,7 @@ def test_security_chain_roles():
 
 def test_read_only_blocks_business_writes():
     H = _auth_headers()
-    companies = _CLIENT.get("/api/v1/organization/companies", headers=H).json()
+    companies = _CLIENT.get("/api/v1/organization/companies", headers=H).json()["items"]
     company_id = companies[0]["id"]
 
     # licencia con read_only_start en el pasado → modo READ_ONLY (enforcement real)

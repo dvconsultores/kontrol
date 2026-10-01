@@ -80,4 +80,12 @@ describe("DataTable", () => {
     expect(screen.getByRole("button", { name: "Página siguiente" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Página anterior" })).toBeEnabled();
   });
+
+  it("con paginación manual pinta la página recibida tal cual y deja el paginador a la pantalla", () => {
+    const filas = Array.from({ length: 25 }, (_, i) => ({ id: String(i + 1), name: `Fila ${i + 1}` }));
+    render(<DataTable columns={columns} data={filas} manualPagination getRowId={(r) => r.id} />);
+    expect(screen.getAllByRole("row")).toHaveLength(26);
+    expect(screen.queryByRole("navigation", { name: "Paginación" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mostrando/)).not.toBeInTheDocument();
+  });
 });

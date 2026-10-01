@@ -96,7 +96,7 @@ test.beforeAll(async ({ request }) => {
   const base = { Authorization: `Bearer ${adminToken}` };
   const empresas = await pedir<{ id: string; code: string }[] | { items: { id: string; code: string }[] }>(
     request, base, "get", "/organization/companies");
-  const lista = Array.isArray(empresas) ? empresas : empresas.items;
+  const lista = empresas.items;
   const d1 = lista.find((e) => e.code === "D1");
   expect(d1, "la base del E2E no tiene la empresa D1").toBeTruthy();
   estado.admin = { ...base, "X-Kontrol-Company": d1!.id };
@@ -117,7 +117,7 @@ test.beforeAll(async ({ request }) => {
   // 047 limita al administrador a D1 para no alterar el resto de la cadena.
   const suyas = await pedir<{ id: string; code: string }[] | { items: { id: string; code: string }[] }>(
     request, { Authorization: `Bearer ${usuarioToken}` }, "get", "/organization/companies");
-  const d2 = (Array.isArray(suyas) ? suyas : suyas.items).find((e) => e.code === "D2");
+  const d2 = suyas.items.find((e) => e.code === "D2");
   estado.usuarioD2 = d2 ? { Authorization: `Bearer ${usuarioToken}`, "X-Kontrol-Company": d2.id } : null;
 
   for (const effect of ["NOTIFICATION", "TASK"]) {

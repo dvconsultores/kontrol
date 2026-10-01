@@ -59,7 +59,7 @@ def main() -> None:
     def _empresa():
         nonlocal company_id
         companies = _request("GET", "/organization/companies", h)
-        assert companies and companies[0]["rif"] == "J-50662172-0"
+        assert companies["items"] and companies["items"][0]["rif"] == "J-50662172-0"
         company_id = companies[0]["id"]
     step("empresa GLOBAL DV", _empresa)
 

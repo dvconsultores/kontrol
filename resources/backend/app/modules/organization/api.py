@@ -6,9 +6,9 @@ que es la autoridad única sobre la jerarquía (P22).
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
@@ -53,7 +53,13 @@ class EstablishmentCreate(BaseModel):
 
 
 @router.get("/companies")
-def list_companies(q: str = "", db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def list_companies(
+    q: str = "",
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     """Las empresas en las que este usuario puede operar.
 
     Es la autoridad del selector de empresa: lo que salga de aquí es lo que la
@@ -67,39 +73,53 @@ def list_companies(q: str = "", db: Session = Depends(get_db), user: User = Depe
     `q` es la búsqueda general de la pantalla (FR-001-065): busca **código,
     razón social, nombre comercial y RIF**, la misma terna que `FR-002-042`
     decidió para terceros, con la misma semántica que ese precedente —contiene,
-    sin distinguir mayúsculas— y dentro del tenant, nunca fuera. La caja ya
-    enviaba `q`; el servidor la ignoraba y devolvía la lista entera con 200.
+    sin distinguir mayúsculas— y dentro del tenant, nunca fuera.
+
+    La respuesta es el sobre de listados del contrato (`api-contracts.md`:
+    «listados con `q`, `page`, `page_size`»): `{items, total, page, page_size}`,
+    como los otros dieciséis listados del producto. `total` cuenta el mismo
+    conjunto que `items` —tenant, alcance del usuario y `q`— antes de cortar la
+    página; y el orden es por fecha de alta con el identificador como desempate,
+    para que dos páginas nunca repitan ni pierdan una empresa.
     """
     from app.core.company_context import accessible_company_ids
 
-    query = select(Company).where(Company.tenant_id == user.tenant_id)
+    alcanzables = accessible_company_ids(db, user)
+    query = select(Company).where(
+        Company.tenant_id == user.tenant_id,
+        Company.id.in_(alcanzables),
+    )
     if q:
         like = f"%{q}%"
         query = query.where(
             Company.code.ilike(like) | Company.legal_name.ilike(like)
             | Company.trade_name.ilike(like) | Company.rif.ilike(like))
 
-    alcanzables = set(accessible_company_ids(db, user))
-    companies = [
-        c for c in db.execute(query.order_by(Company.created_at)).scalars().all()
-        if str(c.id) in alcanzables
-    ]
-    return [
-        {
-            "id": str(c.id),
-            "code": c.code,
-            "legal_name": c.legal_name,
-            "trade_name": c.trade_name,
-            "rif": c.rif,
-            "status": c.status,
-            # La moneda funcional deja de ser un dato interno con la Spec 013:
-            # es el ancla contra la que cotiza casi todo par, y la interfaz no
-            # tenía forma de saberla.
-            "functional_currency": c.functional_currency,
-            "allowed_actions": {"view": True, "edit": True, "activate": True, "deactivate": True, "delete": False},
-        }
-        for c in companies
-    ]
+    total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
+    companies = db.execute(
+        query.order_by(Company.created_at, Company.id)
+        .offset((page - 1) * page_size).limit(page_size)).scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(c.id),
+                "code": c.code,
+                "legal_name": c.legal_name,
+                "trade_name": c.trade_name,
+                "rif": c.rif,
+                "status": c.status,
+                # La moneda funcional deja de ser un dato interno con la Spec 013:
+                # es el ancla contra la que cotiza casi todo par, y la interfaz no
+                # tenía forma de saberla.
+                "functional_currency": c.functional_currency,
+                "allowed_actions": {"view": True, "edit": True, "activate": True, "deactivate": True, "delete": False},
+            }
+            for c in companies
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 
 @router.post("/companies", dependencies=[Depends(require_write_allowed)])

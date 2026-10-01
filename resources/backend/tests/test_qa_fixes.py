@@ -209,7 +209,7 @@ def test_sales_invoice_collection_no_decimal_error():
 def test_receipt_accept_autoseeds_movement_type_and_updates_stock():
     """Bug B: recepción se completa (auto-configura ENTRADA_RECEPCION) y actualiza inventario."""
     h = _auth()
-    companies = _CLIENT.get("/api/v1/organization/companies", headers=h).json()
+    companies = _CLIENT.get("/api/v1/organization/companies", headers=h).json()["items"]
     cid = companies[0]["id"]
     wh = _CLIENT.post("/api/v1/organization/warehouses", headers=h,
                       json={"company_id": cid, "branch_id": None, "code": "ALM-FIX", "name": "Almacén Fix"})

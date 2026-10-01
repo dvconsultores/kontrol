@@ -61,12 +61,25 @@ const routePages = [...router.matchAll(
 
 const normalizeMenuRoute = (to: string): string => to.replace(/^\//, "");
 
-function pageApiCalls(rel: string): string[] {
-  const text = read(rel);
+function apiCallsIn(text: string): string[] {
   const calls: string[] = [];
   // apiFetch<...genéricos (anidados)...>( "path" | `path` )
   for (const m of text.matchAll(/apiFetch\s*(?:<[^()]*>)?\s*\(\s*(["'`])([^"'`]*)/g)) {
     calls.push(m[2]);
+  }
+  return calls;
+}
+
+function pageApiCalls(rel: string): string[] {
+  const text = read(rel);
+  const calls = apiCallsIn(text);
+  // Una página puede delegar la petición en un módulo tipado por endpoint
+  // (`@/api/<módulo>`, como `@/api/audit` u `@/api/organization`): las rutas que
+  // ese módulo llama cuentan como llamadas de la página, y se validan igual.
+  for (const m of text.matchAll(/from\s+["']@\/api\/([\w-]+)["']/g)) {
+    if (m[1] === "client" || m[1] === "types") continue;
+    const modulo = `api/${m[1]}.ts`;
+    if (existsSync(resolve(SRC, modulo))) calls.push(...apiCallsIn(read(modulo)));
   }
   return calls;
 }

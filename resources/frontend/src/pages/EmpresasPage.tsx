@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
-import { apiFetch } from "@/api/client";
+import { listCompanies } from "@/api/organization";
 import type { CompanySummary } from "@/api/types";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
@@ -11,6 +11,7 @@ import { Button } from "@/components/Button";
 import { DataTable } from "@/components/DataTable";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
+import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
 
 const columnHelper = createColumnHelper<CompanySummary>();
@@ -19,12 +20,22 @@ export function EmpresasPage(): React.JSX.Element {
   const { activeCompany, selectCompany, clearCompany } = useCompany();
   const { notify } = useNotifications();
   const [search, setSearch] = useState("");
+  // Paginación de servidor (contrato de listados): la página es estado de la
+  // pantalla, cero-based en la interfaz y uno-based en la petición, como en
+  // Alertas. Cambiar la búsqueda o el tamaño vuelve a la primera página.
+  const [pagina, setPagina] = useState(0);
+  const [tamano, setTamano] = useState(10);
 
   const query = useQuery({
-    queryKey: ["organization", "companies", search],
-    queryFn: () => apiFetch<CompanySummary[]>(`/organization/companies?q=${encodeURIComponent(search)}`),
+    queryKey: ["organization", "companies", search, pagina, tamano],
+    queryFn: () => listCompanies({ q: search, page: pagina + 1, page_size: tamano }),
     retry: false,
   });
+
+  const buscar = (valor: string): void => {
+    setSearch(valor);
+    setPagina(0);
+  };
 
   const activate = (company: CompanySummary): void => {
     selectCompany(company.id);
@@ -84,17 +95,30 @@ export function EmpresasPage(): React.JSX.Element {
         crumbs={[{ label: "Organización" }, { label: "Empresas" }]}
       />
       <div className="mb-4">
-        <SearchInput value={search} onChange={setSearch} />
+        <SearchInput value={search} onChange={buscar} />
       </div>
       <DataTable
         columns={columns}
-        data={query.data ?? []}
+        data={query.data?.items ?? []}
         loading={query.isLoading}
         error={query.isError ? "No fue posible cargar las empresas." : null}
         getRowId={(row) => row.id}
         emptyTitle="Sin empresas"
         emptyDescription="Aún no hay empresas registradas."
+        manualPagination
       />
+      {query.data && query.data.total > 10 ? (
+        <Pagination
+          pageIndex={pagina}
+          pageSize={tamano}
+          total={query.data.total}
+          onPageChange={setPagina}
+          onPageSizeChange={(valor) => {
+            setTamano(valor);
+            setPagina(0);
+          }}
+        />
+      ) : null}
     </PageContent>
   );
 }

@@ -2469,3 +2469,59 @@ presentación, ni `q` en Auditoría ni en Existencias, ni `response_model` en el
 `API-COMPANY-ID-EN-CONSULTA`, ni `SEED-EMPRESA-CODIGO-NO-UNICO`, ni
 `MOVTYPE-GLOBAL-SIN-UNICIDAD`, ni `INBOX-045-AISLAMIENTO`, ni la certificación de compras,
 ni la Spec 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).
+
+## 2026-09-30 · Tras converger el delta EMPRESAS-SIN-SOBRE (dueña 001, apoyo 012)
+
+El contrato de listados estaba escrito desde la fundación —`api-contracts.md`: «listados
+con `q`, `status`, `sort`, `page`, `page_size`»— y dieciséis listados lo cumplían con el
+mismo sobre. Empresas era el decimoséptimo y devolvía un array plano: sin `total`, y con
+`page` y `page_size` ignorados en silencio, que es la familia de `API-QUERY-SILENCIOSA`.
+Medido antes de tocar nada: `?page=2` y `?page_size=1` devolvían las mismas dos empresas.
+
+Lo delicado no era el sobre sino quién lo consume. Treinta y seis consumidores, y uno de
+ellos no puede quedarse con una página: el selector de contexto, que es la autoridad de
+qué empresa puede activarse. No se le dio un `page_size` inventado ni un `all=true` que el
+contrato no tiene: recorre las páginas declaradas, con el tamaño máximo que el contrato
+admite, hasta reunir `total`. La pantalla, en cambio, pagina de verdad en el servidor:
+diez por página, un solo paginador con el `total` del sobre, y a la primera página al
+cambiar la búsqueda. Para eso `DataTable` gana una opción aditiva, `manualPagination`,
+que deja de re-paginar en cliente lo que ya vino paginado; el resto de pantallas no cambia.
+
+En el backend, `total` cuenta el mismo conjunto que `items` —tenant, alcance del usuario,
+`q`— antes de cortar, y el orden lleva el identificador como desempate porque una siembra
+en una transacción deja la fecha de alta igual en todas. Doce pruebas de contrato, quince
+de frontend, cuatro E2E; quince mutantes, quince muertos, uno de ellos gracias a una prueba
+que hubo que escribir (a diez por página la doble paginación era invisible; a veinticinco
+no). Los veintidós E2E que toleraban «array o sobre» pasan a exigir el sobre: la
+ambigüedad se retira, no se institucionaliza.
+
+### Cola esperada, por orden
+
+| # | Deuda | Dueña | Autorizada |
+|---|---|---|---|
+| 1 | **AUDITORIA-PAGINACION-CLIENTE** · ya tiene mecanismo y precedente | 001 | no |
+| 2 | **E2E-SIN-TYPECHECK** · `e2e/` fuera del grafo TypeScript | 054 | no |
+| 3 | **LOCK-SIN-REPORTLAB-MAGIC** · el lock no reconstruye el entorno | 001/052 | no |
+| 4 | **TEST-SCHEMAS-PG-SIN-LIMPIEZA** · la suite llena el disco y agota conexiones | 054/052 | no |
+| 5 | **LISTADOS-SIN-RESPONSE-MODEL** · diecisiete sobres sin declarar en OpenAPI | 001 | no |
+| 6 | Certificar compras (015 → 016 → 017 → 027 → revalidar 028) | 004-compras | no |
+| 7 | SPEC053 · verificar restauración (DT-11) | 053 | no |
+
+**A la espera de decisión del owner**: `FECHAS-ZONA-DE-PRESENTACION`, `API-QUERY-SILENCIOSA`,
+`SEED-EMPRESA-CODIGO-NO-UNICO`, `MOVTYPE-GLOBAL-SIN-UNICIDAD`, `UI-BUSQUEDA-MUERTA` en
+Auditoría (campos) y en Existencias.
+
+**Candidata siguiente: `AUDITORIA-PAGINACION-CLIENTE`.** Es la misma forma que acaba de
+converger —sobre, `manualPagination`, `Pagination` con `total`— aplicada a la única otra
+pantalla que la necesita, y no espera ninguna decisión.
+
+`READY_FOR_IMPLEMENTATION = 0`. **Ninguna se ha iniciado.**
+
+### Lo que esta decisión NO autoriza
+
+Ni la paginación de Auditoría, ni `status`/`sort` en Empresas, ni `response_model` en
+ningún listado, ni fijar una zona de presentación, ni `q` en Auditoría ni en Existencias,
+ni `E2E-SIN-TYPECHECK`, ni el lockfile, ni `conftest.py`, ni `API-QUERY-SILENCIOSA`, ni
+`API-COMPANY-ID-EN-CONSULTA`, ni `SEED-EMPRESA-CODIGO-NO-UNICO`, ni
+`MOVTYPE-GLOBAL-SIN-UNICIDAD`, ni `INBOX-045-AISLAMIENTO`, ni la certificación de compras,
+ni la Spec 053, ni ninguna decisión abierta (D0-06, D0-07, OQ-048, MD-049, `EXPIRED`).

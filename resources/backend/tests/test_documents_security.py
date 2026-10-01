@@ -135,7 +135,7 @@ def _headers_b() -> dict:
 
 
 def _company_id() -> str:
-    return _CLIENT.get("/api/v1/organization/companies", headers=_headers()).json()[0]["id"]
+    return _CLIENT.get("/api/v1/organization/companies", headers=_headers()).json()["items"][0]["id"]
 
 
 _N = {"i": 0}

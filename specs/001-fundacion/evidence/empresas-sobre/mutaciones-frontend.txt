@@ -1,0 +1,35 @@
+EMPRESAS-SIN-SOBRE · mutaciones de frontend · gates: tsc -b y vitest (EmpresasPage, organization, companyProvider, DataTable)
+
+SOBRE-F1 · las filas vuelven a ser la respuesta entera (data={query.data ?? []})
+  -> muere: tsc=FALLA src/pages/EmpresasPage.tsx(102,9): error TS2322: Type 'never[] | NoInfer<CompanyPage>' is not assign
+     vitest caídas: F-Q-01, F-Q-02, F-Q-03, LIST-F-01, LIST-F-02, LIST-F-03, LIST-F-04
+
+SOBRE-F2 · la petición se tipa como Company[]
+  -> muere: tsc=FALLA src/api/organization.ts(10,31): error TS6196: 'PagedResult' is declared but never used.
+     vitest caídas: -
+
+SOBRE-F3 · soporte dual (items ?? sobre)
+  -> muere: tsc=FALLA src/pages/EmpresasPage.tsx(102,9): error TS2322: Type 'CompanySummary[] | NoInfer<CompanyPage>' is n
+     vitest caídas: LIST-F-04
+
+SOBRE-F4 · el selector se queda con la primera página
+  -> muere: tsc=pasa
+     vitest caídas: con más empresas que una página, recorre todas
+
+SOBRE-F5 · cambiar la búsqueda no vuelve a la primera página
+  -> muere: tsc=pasa
+     vitest caídas: LIST-F-03
+
+SOBRE-F6 · la tabla vuelve a paginar en cliente la página del servidor (doble paginación)
+  -> SOBREVIVE: tsc=pasa
+     vitest caídas: -
+
+SOBRE-F7 · la página no envía page/page_size al servidor
+  -> muere: tsc=pasa
+     vitest caídas: F-Q-01, LIST-F-01, LIST-F-02, LIST-F-03
+
+restaurado: True · tsc tras restaurar: pasa
+
+CONTROL NEGATIVO DE TIPOS · tratar el sobre como array en la página:
+  -> tsc FALLA: src/pages/EmpresasPage.tsx(102,9): error TS2322: Type 'never[] | NoInfer<CompanyPage>' is not assignable to type 'Compan
+  restaurado · tsc: pasa

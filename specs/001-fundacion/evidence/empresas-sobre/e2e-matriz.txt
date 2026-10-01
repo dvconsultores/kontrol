@@ -1,0 +1,2 @@
+EMPRESAS-SIN-SOBRE · E2E dirigido · empresas-sobre (nueva) + empresas-busqueda + empresa-helper · Chromium, Firefox, WebKit · tras aplanar la plantilla de la petición · 2026-09-30T18:44:43-04:00
+  39 passed (20.4s)

@@ -1,0 +1,27 @@
+EMPRESAS-SIN-SOBRE · mutaciones de backend sobre organization/api.py · suites test_company_list_envelope + test_company_search (SQLite)
+
+SOBRE-B1 · vuelve el array plano
+  -> muere: 25 caída(s): Q01_sin_q_y_con_q_vacia_el_listado_es_el_de_siempre, Q02_un_termino_inexistente_devuelve_una_lista_vacia_con_200, Q03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[code], Q03_a_06_cada_campo_decidido_encuentra_solo_
+
+SOBRE-B2 · total global del tenant, sin alcance ni q
+  -> muere: 17 caída(s): Q02_un_termino_inexistente_devuelve_una_lista_vacia_con_200, Q03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[code], Q03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[legal_name], Q03_a_06_cada_campo_decidido_
+
+SOBRE-B3 · total sin q
+  -> muere: 17 caída(s): Q02_un_termino_inexistente_devuelve_una_lista_vacia_con_200, Q03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[code], Q03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[legal_name], Q03_a_06_cada_campo_decidido_
+
+SOBRE-B4 · la página se corta antes de aplicar q (q en Python tras paginar)
+  -> muere: 17 caída(s): Q02_un_termino_inexistente_devuelve_una_lista_vacia_con_200, Q03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[code], Q03_a_06_cada_campo_decidido_encuentra_solo_su_empresa[legal_name], Q03_a_06_cada_campo_decidido_
+
+SOBRE-B5 · items sin alcance del usuario (cuenta bien, lista de más)
+  -> muere: 2 caída(s): Q11_la_busqueda_actua_dentro_del_alcance_del_usuario_no_lo_sustituye, L10_el_total_es_el_del_alcance_del_usuario_no_el_del_tenant
+
+SOBRE-B6 · sin desempate por id en el orden
+  -> muere: 2 caída(s): Q01_sin_q_y_con_q_vacia_el_listado_es_el_de_siempre, L05_la_segunda_pagina_completa_el_conjunto_sin_duplicados_ni_ausencias
+
+SOBRE-B7 · page_size sin tope
+  -> muere: 2 caída(s): L08_paginacion_invalida_responde_422[params3], L12_openapi_declara_q_page_y_page_size_y_nada_mas
+
+SOBRE-B8 · la página se ignora (siempre la primera)
+  -> muere: 4 caída(s): L05_la_segunda_pagina_completa_el_conjunto_sin_duplicados_ni_ausencias, L06_una_pagina_mas_alla_del_final_responde_200_vacia_con_el_total, L07_el_orden_es_estable_entre_llamadas_y_tamanos, L09_q_se_aplica_antes_de_contar
+
+restaurado: True

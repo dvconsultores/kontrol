@@ -28,6 +28,12 @@ export interface DataTableProps<TData> {
   /** Clave para construir la clave de identidad de fila. */
   getRowId?: (row: TData) => string;
   footer?: ReactNode;
+  /**
+   * La paginación la hace el servidor: `data` ya es una página y la pantalla
+   * pinta su propio `Pagination` con el `total` del sobre. La tabla no vuelve
+   * a paginar lo recibido ni pinta su contador, que sería el de la página.
+   */
+  manualPagination?: boolean;
 }
 
 export function DataTable<TData>({
@@ -40,12 +46,13 @@ export function DataTable<TData>({
   emptyAction,
   getRowId,
   footer,
+  manualPagination = false,
 }: DataTableProps<TData>): React.JSX.Element {
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(manualPagination ? {} : { getPaginationRowModel: getPaginationRowModel() }),
     getRowId,
   });
 
@@ -109,7 +116,7 @@ export function DataTable<TData>({
           {footer ? <tfoot>{footer}</tfoot> : null}
         </table>
       </div>
-      {total > 10 ? (
+      {!manualPagination && total > 10 ? (
         <Pagination
           pageIndex={pageIndex}
           pageSize={pageSize}
@@ -118,10 +125,12 @@ export function DataTable<TData>({
           onPageSizeChange={(size) => table.setPageSize(size)}
         />
       ) : null}
-      <p className="mt-1 text-xs text-text-500">
-        Mostrando {pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} de {total}{" "}
-        registros
-      </p>
+      {manualPagination ? null : (
+        <p className="mt-1 text-xs text-text-500">
+          Mostrando {pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} de {total}{" "}
+          registros
+        </p>
+      )}
     </div>
   );
 }
