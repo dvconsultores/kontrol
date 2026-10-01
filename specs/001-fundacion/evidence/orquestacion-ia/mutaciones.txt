@@ -21,7 +21,7 @@ ORCH-M10  MUERTO  el entorno deja de mandar sobre --reuse-from
 ORCH-M11  MUERTO  el ejecutor puede tener Bash
             lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r01_un_ejecutor_que_puede_editar_o_ejecutar_no_pasa[Bash]
 ORCH-M12  MUERTO  el ejecutor puede tener Edit
-            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r01_un_ejecutor_que_puede_editar_o_ejecutar_no_pasa[Edit]
+            lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r01_un_ejecutor_que_puede_editar_o_ejecutar_no_pasa[Bash]
 ORCH-M13  MUERTO  un ejecutor sin lista de herramientas pasa
             lo mata: scripts/tests/test_orchestration_readiness.py::test_orch_r02_un_ejecutor_sin_lista_de_herramientas_no_pasa
 ORCH-M14  MUERTO  basta con que algún documento diga un tope, cualquiera
@@ -66,5 +66,9 @@ ORCH-M33  MUERTO  cualquier modelo certifica ORCH-09
             lo mata: scripts/tests/test_orch_probe.py::test_probe09_un_modelo_distinto_del_pedido_no_certifica
 ORCH-M34  MUERTO  ORCH-01 pasa sin que nadie invoque al ejecutor
             lo mata: scripts/tests/test_orch_probe.py::test_probe07_si_nadie_invoca_al_ejecutor_orch01_falla
+ORCH-M35  MUERTO  se certifica aunque el ejecutor haya retocado la propuesta de DeepSeek
+            lo mata: scripts/tests/test_orch_probe.py::test_probe14_si_el_ejecutor_retoca_lo_que_deepseek_devolvio_no_certifica
+ORCH-M36  MUERTO  el marco de dos espacios del arnés no se quita
+            lo mata: scripts/tests/test_orch_probe.py::test_probe13_el_marco_de_dos_espacios_se_quita_y_solo_ese
 
-MUTANTES 34 · MUERTOS 34 · VIVOS 0
+MUTANTES 36 · MUERTOS 36 · VIVOS 0

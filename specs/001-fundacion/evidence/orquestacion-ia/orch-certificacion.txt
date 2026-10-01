@@ -1,0 +1,60 @@
+# python scripts/orch_probe.py   (2026-10-01, MCP cableado; corrida 3, la del guion que queda en el repositorio)
+EGRESS_CHECK (encargo): ENV_FILES=0 SECRETS=0 PROD_URLS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_PII=0 REAL_PAYROLL=0 BANK_DATA=0 — verificado
+
+PASS  ORCH-01 Claude → executor            1 delegación(es) a `deepseek-executor`; agentes cargados: ['claude', 'deepseek-executor', 'Explore', 'general-purpose', 'Plan', 'spec-kit-coordinator', 'statusline-setup']
+PASS  ORCH-02 executor → MCP → DeepSeek    DEEPSEEK CALLS = 1 (intentos del ejecutor: 1); llamadas directas del orquestador: 0; MCP `deepseek`: ['pending']
+PASS  ORCH-03 egress                       carga de 2279 caracteres; secretos: 0; ficheros .env: 0; session_id: ninguno (sin memoria)
+PASS  ORCH-04 patch format                 DeepSeek devolvió 1 bloque(s) SEARCH/REPLACE; el ejecutor entregó 1, idénticos
+PASS  ORCH-05 audit-pass                   AUDIT_PASS: un bloque, fichero objetivo, SEARCH exacto, solo beta=2 → beta=20
+PASS  ORCH-06 audit-reject                 candidato sintético (alpha=999): AUDIT_REJECT: UNAUTHORIZED_EXTRA_CHANGE [('alpha=1', 'alpha=999')]; no aplicado: sí
+PASS  ORCH-07 apply                        aplicado por Claude, tras la auditoría
+PASS  ORCH-08 test                         fichero: {'alpha': '1', 'beta': '20', 'gamma': '3'}
+PASS  ORCH-09 tool/model/usage             servidor `deepseek` @arikusi/deepseek-mcp-server@2.3.0; herramienta ['mcp__deepseek__deepseek_chat']; modelo pedido ['deepseek-v4-flash']; devuelto por la herramienta: {'model': 'deepseek-flash', 'wire_model': 'deepseek-v4-flash', 'fallback_used': False, 'finish_reason': 'stop', 'prompt_tokens': 654, 'completion_tokens': 196, 'cost_usd': 7.6e-05}
+PASS  ORCH-10 retry cap                    RETRY_MAX: 2 en los cuatro documentos; llamadas del ejecutor en un encargo: 1 (no reintenta por su cuenta)
+
+SANDBOX_RESIDUAL = 0
+ORCH = 10/10
+ORCHESTRATION_STATUS = VERIFIED_END_TO_END
+
+# Informe del ejecutor en esa sesión, tal como lo devolvió el subagente
+STATUS: PROPOSED
+TASK: ORCH-PROBE-001
+MODEL: deepseek-v4-flash (pedido: deepseek-v4-flash; fallback_used: false)
+USAGE: 654/196 tokens, $0.000076; finish_reason: stop
+EGRESS_CHECK: ENV_FILES=0 SECRETS=0 PROD_URLS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_PII=0 REAL_PAYROLL=0 BANK_DATA=0
+OUT_OF_SCOPE_FILES: none
+
+/tmp/kontrol-orchestration-probe/orchestration_probe.txt
+<<<<<<< SEARCH
+beta=2
+=======
+beta=20
+>>>>>>> REPLACE
+
+# DEEPSEEK PROPOSAL REPORT
+## Task
+ORCH-PROBE-001: en `/tmp/kontrol-orchestration-probe/orchestration_probe.txt`, cambiar exclusivamente `beta=2` por `beta=20`.
+## Files Proposed
+- /tmp/kontrol-orchestration-probe/orchestration_probe.txt
+## Dependencies Added
+none
+## Migrations
+none
+## Tests Proposed
+Ninguno (no solicitado en TARGET FILES). Verificación esperada: alpha == 1, beta == 20, gamma == 3.
+## Assumptions
+- El fichero conserva sus tres líneas y solo la línea `beta` cambia de valor.
+## Questions
+Ninguna.
+
+# Coste de la sesión de Claude que orquestó la sonda (USD): 0.1304991
+
+# Las tres corridas con llamada real a DeepSeek
+# 1  10/10  delegación en segundo plano; DeepSeek 661/166 tokens, $0.000139
+# 2   6/10  delegación en primer plano; DeepSeek 654/143 tokens, $0.000132. DeepSeek respondió bien: fallaron
+#           ORCH-04/05/07/08 porque la sonda leía el parche del texto retransmitido, que Claude Code entrega
+#           sangrado dos espacios. Corregida la sonda: lee el informe del ejecutor de la traza y exige que sus
+#           bloques sean idénticos a los que DeepSeek devolvió.
+# 3  10/10  con la sonda corregida; DeepSeek 654/196 tokens, $0.000076
+# Las trazas 1 y 2, repetidas con --replay sobre la sonda corregida: 10/10 y 10/10.
+# DEEPSEEK CALLS = 3 · coste total en DeepSeek: $0.000347 · ninguna llevó session_id

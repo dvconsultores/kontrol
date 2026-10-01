@@ -118,8 +118,11 @@ declara `scripts/set_deepseek_key.py`). Herramienta de delegación:
 `mcp__deepseek__deepseek_chat`, sin `session_id` y sin `thinking`. Modelos:
 `deepseek-v4-flash` (por defecto: lo pequeño y mecánico) y `deepseek-v4-pro` (lógica local
 más compleja); un modelo más fuerte nunca convierte en delegable una tarea `CLAUDE_ONLY`.
+La API responde `deepseek-flash` como nombre del primero: es el mismo modelo; a la
+herramienta se le pide siempre con el nombre `deepseek-v4-…`.
 Montaje: `python scripts/set_deepseek_key.py`; auditoría del montaje:
-`python scripts/orchestration_readiness.py --handshake`.
+`python scripts/orchestration_readiness.py --handshake`; certificación de extremo a extremo
+(ORCH-01..10, en una sesión nueva): `python scripts/orch_probe.py`.
 
 ### Auditoría del parche (Claude, antes de aplicar)
 
@@ -132,6 +135,9 @@ implementación · sin código muerto · sin formato ajeno.
 Resultado: `AUDIT_PASS` (Claude aplica) o `AUDIT_REJECT` con motivo concreto. **Un bloque
 SEARCH que no coincide exactamente se rechaza**; Claude no arregla a mano el parche para
 atribuírselo después al ejecutor.
+
+Claude Code entrega el informe de un subagente **sangrado dos espacios**. Ese marco —y solo
+ese— se quita antes de comparar el SEARCH: no es parte del parche ni un retoque.
 
 ### Reintentos: máximo 2
 

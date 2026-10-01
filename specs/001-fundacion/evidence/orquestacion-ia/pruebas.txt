@@ -13,6 +13,10 @@ scripts/tests/test_orch_probe.py::test_probe03_rechaza_todo_parche_no_conforme[c
 scripts/tests/test_orch_probe.py::test_probe03_rechaza_todo_parche_no_conforme[candidato9-NOT_A_SINGLE_BLOCK] PASSED
 scripts/tests/test_orch_probe.py::test_probe03_rechaza_todo_parche_no_conforme[candidato10-NOT_A_SINGLE_BLOCK] PASSED
 scripts/tests/test_orch_probe.py::test_probe04_una_cadena_completa_certifica_los_diez_y_aplica_el_parche PASSED
+scripts/tests/test_orch_probe.py::test_probe12_certifica_igual_en_primer_y_en_segundo_plano[True] PASSED
+scripts/tests/test_orch_probe.py::test_probe12_certifica_igual_en_primer_y_en_segundo_plano[False] PASSED
+scripts/tests/test_orch_probe.py::test_probe13_el_marco_de_dos_espacios_se_quita_y_solo_ese PASSED
+scripts/tests/test_orch_probe.py::test_probe14_si_el_ejecutor_retoca_lo_que_deepseek_devolvio_no_certifica PASSED
 scripts/tests/test_orch_probe.py::test_probe05_sin_respuesta_del_mcp_no_se_certifica_ni_se_aplica_nada PASSED
 scripts/tests/test_orch_probe.py::test_probe06_si_el_orquestador_llama_a_deepseek_sin_pasar_por_el_ejecutor_no_vale PASSED
 scripts/tests/test_orch_probe.py::test_probe07_si_nadie_invoca_al_ejecutor_orch01_falla PASSED
@@ -72,7 +76,7 @@ scripts/tests/test_set_deepseek_key.py::test_key09_estado_no_escribe_y_su_codigo
 scripts/tests/test_set_deepseek_key.py::test_key10_una_clave_rechazada_no_se_guarda PASSED
 scripts/tests/test_set_deepseek_key.py::test_key11_el_entorno_manda_sobre_el_otro_proyecto PASSED
 scripts/tests/test_set_deepseek_key.py::test_key12_sin_ninguna_fuente_se_pide_por_el_aviso_oculto PASSED
-============================== 73 passed in 0.29s ==============================
+============================== 77 passed in 0.64s ==============================
 
 # ruff check scripts/*.py scripts/tests
 All checks passed!

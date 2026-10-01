@@ -61,7 +61,8 @@ MODEL: {MODELO}
 CONTENIDO ACTUAL DEL FICHERO OBJETIVO:
 {ORIGINAL}"""
 PETICION = f"""Eres el orquestador de KONTROL. Delega el encargo de abajo en el subagente
-`{SUBAGENTE}` con la herramienta Agent, pasándoselo íntegro y sin cambios. No lo resuelvas
+`{SUBAGENTE}` con la herramienta Agent (en primer plano: `run_in_background: false`),
+pasándoselo íntegro y sin cambios. No lo resuelvas
 tú, no edites ningún fichero y no llames tú a DeepSeek. Cuando el subagente responda,
 devuelve su salida literal y completa, sin añadir nada.
 
@@ -77,6 +78,7 @@ class Traza:
     llamadas_mcp: list = field(default_factory=list)      # (herramienta, argumentos, desde_subagente)
     otras_del_subagente: list = field(default_factory=list)
     respuestas_mcp: list = field(default_factory=list)
+    informe_del_ejecutor: str = ""                        # lo que el subagente devolvió, sin marco
     texto_final: str = ""
     coste_claude: float | None = None
 
@@ -84,6 +86,7 @@ class Traza:
 def leer_traza(lineas: list[str]) -> Traza:
     traza = Traza()
     ids_mcp: set[str] = set()
+    ids_agente: set[str] = set()
     for linea in lineas:
         try:
             evento = json.loads(linea)
@@ -101,6 +104,7 @@ def leer_traza(lineas: list[str]) -> Traza:
                 desde_subagente = bool(evento.get("parent_tool_use_id"))
                 if nombre in ("Agent", "Task"):
                     traza.delegaciones.append(argumentos)
+                    ids_agente.add(bloque.get("id"))
                 elif nombre.startswith(f"mcp__{montaje.SERVER_NAME}__"):
                     traza.llamadas_mcp.append((nombre, argumentos, desde_subagente))
                     ids_mcp.add(bloque.get("id"))
@@ -108,14 +112,40 @@ def leer_traza(lineas: list[str]) -> Traza:
                     traza.otras_del_subagente.append(nombre)
         elif tipo == "user":
             for bloque in evento.get("message", {}).get("content", []):
-                if isinstance(bloque, dict) and bloque.get("type") == "tool_result" and bloque.get("tool_use_id") in ids_mcp:
+                if not (isinstance(bloque, dict) and bloque.get("type") == "tool_result"):
+                    continue
+                if bloque.get("tool_use_id") in ids_mcp:
                     traza.respuestas_mcp.append({"is_error": bool(bloque.get("is_error")),
                                                  "contenido": bloque.get("content"),
                                                  "estructurado": evento.get("tool_use_result")})
+                elif bloque.get("tool_use_id") in ids_agente:
+                    devuelto = evento.get("tool_use_result")
+                    partes = devuelto.get("content", []) if isinstance(devuelto, dict) else []
+                    traza.informe_del_ejecutor = "\n".join(x.get("text", "") for x in partes if isinstance(x, dict))
         elif tipo == "result":
             traza.texto_final = evento.get("result") or ""
             traza.coste_claude = evento.get("total_cost_usd")
     return traza
+
+
+def quitar_marco(texto: str) -> str:
+    """Claude Code entrega el informe de un subagente sangrado dos espacios, para que nada
+    dentro de él pueda pasar por un mensaje del sistema. Un SEARCH se compara sin ese marco."""
+    lineas = texto.splitlines()
+    if lineas and all(linea.startswith("  ") or not linea.strip() for linea in lineas):
+        return "\n".join(linea[2:] for linea in lineas)
+    return texto
+
+
+def texto_de(respuesta: dict) -> str:
+    """El texto que DeepSeek devolvió, tal como lo entrega la herramienta."""
+    contenido = respuesta.get("contenido")
+    if isinstance(contenido, list):
+        contenido = "\n".join(x.get("text", "") for x in contenido if isinstance(x, dict))
+    try:
+        return json.loads(contenido).get("content", "") if isinstance(contenido, str) else ""
+    except (ValueError, AttributeError):
+        return contenido if isinstance(contenido, str) else ""
 
 
 def extraer_bloques(texto: str) -> list[dict]:
@@ -208,8 +238,12 @@ def certificar(lineas: list[str]) -> list[tuple[str, bool, str]]:
               f"carga de {len(carga)} caracteres; secretos: {'SÍ' if SECRETO.search(carga) else '0'}; ficheros .env: "
               f"{'SÍ' if '.env' in carga else '0'}; session_id: {'SÍ' if con_sesion else 'ninguno (sin memoria)'}"))
 
-    bloques = extraer_bloques(traza.texto_final)
-    r.append(("ORCH-04 patch format", len(bloques) >= 1, f"{len(bloques)} bloque(s) SEARCH/REPLACE en la respuesta"))
+    de_deepseek = extraer_bloques(texto_de(buenas[0])) if buenas else []
+    bloques = extraer_bloques(traza.informe_del_ejecutor or quitar_marco(traza.texto_final))
+    literal = bool(de_deepseek) and bloques == de_deepseek
+    r.append(("ORCH-04 patch format", literal,
+              f"DeepSeek devolvió {len(de_deepseek)} bloque(s) SEARCH/REPLACE; el ejecutor entregó {len(bloques)}, "
+              f"{'idénticos' if literal else 'DISTINTOS de los de DeepSeek'}"))
 
     veredicto, motivo = auditar(bloques, OBJETIVO.read_text(), str(OBJETIVO))
     r.append(("ORCH-05 audit-pass", veredicto == "AUDIT_PASS", f"{veredicto}: {motivo}"))

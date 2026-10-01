@@ -1,4 +1,4 @@
-# python scripts/orchestration_readiness.py --handshake   (2026-10-01, HEAD c8adc0d + delta)
+# python scripts/orchestration_readiness.py --handshake   (2026-10-01, tras cablear la clave)
 PASS  Claude configuration       completo
 PASS  Executor patch-only        solo propone: ['Glob', 'Grep', 'Read', 'mcp__deepseek__deepseek_chat']
 PASS  Coordinator                clasifica y no implementa
@@ -7,16 +7,27 @@ PASS  Model names documented     el ejecutor nombra ['deepseek-v4-flash', 'deeps
 PASS  Settings deny              deny íntegro (6); herramienta de DeepSeek preaprobada: no
 PASS  Spec Kit                   10 skills speckit-*, constitución presente
 PASS  Repo .mcp.json             JSON válido, sin secretos, servidores: ninguno
-PASS  No key in repository       1671 ficheros sin claves incrustadas
-FAIL  DeepSeek MCP local entry   sin entrada `deepseek` para /home/maria/Projectos/Kontrol
-FAIL  DeepSeek API key           PRESENT=NO NONEMPTY=NO
+PASS  No key in repository       1677 ficheros sin claves incrustadas
+PASS  DeepSeek MCP local entry   /home/maria/.nvm/versions/node/v24.21.0/bin/npx -y @arikusi/deepseek-mcp-server@2.3.0
+PASS  DeepSeek API key           PRESENT=YES NONEMPTY=YES
 PASS  MCP server handshake       v2.3.0; herramientas ['deepseek_chat', 'deepseek_fim', 'deepseek_sessions']; modelos ['deepseek-v4-flash', 'deepseek-v4-pro', 'deepseek-chat', 'deepseek-reasoner']
 
-READINESS = FAIL (10/12)
-exit=1
+READINESS = PASS (12/12)
+exit=0
 
 # python scripts/set_deepseek_key.py --status
 proyecto .............. /home/maria/Projectos/Kontrol
-registrado en Claude .. no
-entrada `deepseek` ..... NO
-exit=1
+registrado en Claude .. sí
+entrada `deepseek` ..... sí
+orden ................. /home/maria/.nvm/versions/node/v24.21.0/bin/npx -y @arikusi/deepseek-mcp-server@2.3.0
+la orden existe ....... sí
+versión fijada ........ sí, 2.3.0
+clave configurada ..... sí
+exit=0
+
+# claude mcp list
+Checking MCP server health…
+
+claude.ai Claude Docs: https://api.anthropic.com/v1/pages/mcp - ✔ Connected
+claude.ai Canva: https://mcp.canva.com/mcp - ✔ Connected
+deepseek: /home/maria/.nvm/versions/node/v24.21.0/bin/npx -y @arikusi/deepseek-mcp-server@2.3.0 - ✔ Connected

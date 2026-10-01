@@ -42,10 +42,14 @@ def test_probe03_rechaza_todo_parche_no_conforme(candidato, motivo):
     assert veredicto == "AUDIT_REJECT" and motivo in por_que
 
 
-def traza(*, agente=True, mcp_desde_subagente=True, respuesta=True, argumentos=None, salida=None):
+def traza(*, agente=True, mcp_desde_subagente=True, respuesta=True, argumentos=None, salida=None,
+          primer_plano=True, de_deepseek=None):
     """Una traza con la forma real del flujo `stream-json` de Claude Code. El parche apunta
-    al fichero de arena de la prueba, como el real apunta al de la sonda."""
+    al fichero de arena de la prueba, como el real apunta al de la sonda. En primer plano el
+    informe del subagente llega en `tool_use_result.content` y el texto final va sangrado
+    dos espacios; en segundo plano solo hay texto final, sin sangrar."""
     salida = (salida or SALIDA_DEL_EJECUTOR).replace(OBJETIVO, str(sonda.OBJETIVO))
+    de_deepseek = (de_deepseek or PARCHE_BUENO).replace(OBJETIVO, str(sonda.OBJETIVO))
     argumentos = argumentos or {"model": sonda.MODELO, "messages": [{"role": "user", "content": sonda.ENCARGO}]}
     eventos = [{"type": "system", "subtype": "init", "agents": ["claude", sonda.SUBAGENTE],
                 "mcp_servers": [{"name": "deepseek", "status": "connected"}]}]
@@ -55,15 +59,26 @@ def traza(*, agente=True, mcp_desde_subagente=True, respuesta=True, argumentos=N
     eventos.append({"type": "assistant", "parent_tool_use_id": "a1" if mcp_desde_subagente else None, "message": {"content": [
         {"type": "tool_use", "id": "m1", "name": "mcp__deepseek__deepseek_chat", "input": argumentos}]}})
     if respuesta:
-        estructurado = {"content": PARCHE_BUENO, "model": sonda.MODELO, "request": {
-            "model": sonda.MODELO, "wire_model": sonda.MODELO, "fallback_used": False, "finish_reason": "stop",
+        # La herramienta entrega un JSON en texto; `tool_use_result` llega vacío.
+        devuelto = {"content": de_deepseek, "model": "deepseek-flash", "request": {
+            "model": "deepseek-flash", "wire_model": sonda.MODELO, "fallback_used": False, "finish_reason": "stop",
             "prompt_tokens": 410, "completion_tokens": 28, "cost_usd": 0.000065}}
-        eventos.append({"type": "user", "parent_tool_use_id": "a1", "tool_use_result": {"structuredContent": estructurado},
-                        "message": {"content": [{"type": "tool_result", "tool_use_id": "m1", "content": [{"type": "text", "text": PARCHE_BUENO}]}]}})
+        eventos.append({"type": "user", "parent_tool_use_id": "a1", "tool_use_result": None,
+                        "message": {"content": [{"type": "tool_result", "tool_use_id": "m1",
+                                                 "content": [{"type": "text", "text": json.dumps(devuelto)}]}]}})
     else:
         eventos.append({"type": "user", "parent_tool_use_id": "a1", "message": {"content": [
             {"type": "tool_result", "tool_use_id": "m1", "is_error": True, "content": "No such tool available"}]}})
-    eventos.append({"type": "result", "result": salida, "total_cost_usd": 0.1})
+    sangrada = "\n".join("  " + linea for linea in salida.splitlines())
+    if agente and primer_plano:
+        eventos.append({"type": "user", "parent_tool_use_id": None,
+                        "tool_use_result": {"status": "completed", "content": [{"type": "text", "text": salida}]},
+                        "message": {"content": [{"type": "tool_result", "tool_use_id": "a1",
+                                                 "content": [{"type": "text", "text": "[Subagent hand-back]\n" + sangrada}]}]}})
+    elif agente:
+        eventos.append({"type": "user", "parent_tool_use_id": None, "tool_use_result": {"status": "async_launched"},
+                        "message": {"content": [{"type": "tool_result", "tool_use_id": "a1", "content": "Async agent launched"}]}})
+    eventos.append({"type": "result", "result": sangrada if primer_plano else salida, "total_cost_usd": 0.1})
     return [json.dumps(e) for e in eventos]
 
 
@@ -86,6 +101,26 @@ def test_probe04_una_cadena_completa_certifica_los_diez_y_aplica_el_parche(arena
     assert arena.read_text() == sonda.ESPERADO
     uso = next(detalle for nombre, _, detalle in resultados if nombre.startswith("ORCH-09"))
     assert "'prompt_tokens': 410" in uso and "'cost_usd': 6.5e-05" in uso
+
+
+@pytest.mark.parametrize("primer_plano", [True, False])
+def test_probe12_certifica_igual_en_primer_y_en_segundo_plano(arena, primer_plano):
+    assert fallos(sonda.certificar(traza(primer_plano=primer_plano))) == []
+    assert arena.read_text() == sonda.ESPERADO
+
+
+def test_probe13_el_marco_de_dos_espacios_se_quita_y_solo_ese():
+    enmarcado = "\n".join("  " + linea for linea in SALIDA_DEL_EJECUTOR.splitlines())
+    assert sonda.extraer_bloques(enmarcado) == []
+    assert sonda.extraer_bloques(sonda.quitar_marco(enmarcado)) == bloque("beta=2", "beta=20")
+    sin_marco = "titulo\n  sangrado propio"
+    assert sonda.quitar_marco(sin_marco) == sin_marco
+
+
+def test_probe14_si_el_ejecutor_retoca_lo_que_deepseek_devolvio_no_certifica(arena):
+    """El ejecutor devuelve la propuesta literal: no la corrige ni la completa."""
+    de_deepseek = PARCHE_BUENO.replace("<<<<<<< SEARCH\nbeta=2", "<<<<<<< SEARCH\nbeta = 2")
+    assert "ORCH-04" in fallos(sonda.certificar(traza(de_deepseek=de_deepseek)))
 
 
 def test_probe05_sin_respuesta_del_mcp_no_se_certifica_ni_se_aplica_nada(arena):
@@ -120,7 +155,8 @@ def test_probe09_un_modelo_distinto_del_pedido_no_certifica(arena):
 
 def test_probe10_un_parche_con_cambio_ajeno_se_rechaza_y_no_se_aplica(arena):
     malo = SALIDA_DEL_EJECUTOR.replace("<<<<<<< SEARCH\nbeta=2\n=======\nbeta=20", "<<<<<<< SEARCH\nalpha=1\nbeta=2\n=======\nalpha=999\nbeta=20")
-    assert fallos(sonda.certificar(traza(salida=malo))) == ["ORCH-05", "ORCH-07", "ORCH-08"]
+    de_deepseek = PARCHE_BUENO.replace("<<<<<<< SEARCH\nbeta=2\n=======\nbeta=20", "<<<<<<< SEARCH\nalpha=1\nbeta=2\n=======\nalpha=999\nbeta=20")
+    assert fallos(sonda.certificar(traza(salida=malo, de_deepseek=de_deepseek))) == ["ORCH-05", "ORCH-07", "ORCH-08"]
     assert arena.read_text() == sonda.ORIGINAL
 
 
