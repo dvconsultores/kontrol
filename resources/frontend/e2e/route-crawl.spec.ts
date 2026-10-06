@@ -74,6 +74,10 @@ test.describe("Crawler de rutas", () => {
       currentRoute = href;
       await page.goto(href);
       await page.waitForLoadState("networkidle").catch(() => undefined);
+      // Abrir una ruta tiene que dejar en esa ruta. Sin esta comprobación, una pantalla
+      // que caía al pintarse pasaba el recorrido cada vez que la aplicación acababa en
+      // Inicio, que tiene su H1 y ningún error.
+      expect(new URL(page.url()).pathname, `ruta ${href}: la aplicación acabó en otra ruta`).toBe(href);
       const body = await page.locator("body").innerText();
       expect(body, `ruta ${href}: mostró 404 (página o menú sin implementar)`).not.toContain("Página no encontrada");
       expect(body, `ruta ${href}: error de carga de datos`).not.toContain("No fue posible cargar");

@@ -79,3 +79,6 @@ resources/frontend/qa/
 # Artefactos de ejecución de Playwright (reportes y resultados locales)
 resources/frontend/test-results/
 resources/frontend/playwright-report/
+
+# Evidencia de cada corrida E2E sobre base efímera (qa/e2e-run.py): registros, manifiesto, trazas
+qa/e2e-runs/

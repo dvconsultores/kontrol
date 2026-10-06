@@ -1,0 +1,64 @@
+# E2E-BASE-QA-ACUMULA · corridas E2E sobre base nueva · 2026-10-01
+# orden: resources/backend/.venv/bin/python qa/e2e-run.py [-- args de Playwright] · Chromium, 6 trabajadores, 30 s por prueba, 0 reintentos
+# cada corrida: base PostgreSQL nueva (kontrol_e2e_test_<run>), migrada a la cabeza, sembrada, backend y Vite propios, y eliminada al terminar
+# (los identificadores de corrida y los nombres de base son de ejecución: aquí se dejan como «corrida N»; el detalle está en qa/e2e-runs/, sin versionar)
+
+## 1 · dirigida: approvals + notifications (antes de tocar nada más)
+  20 passed (20.1s)
+primer tick del planificador: 0,42 s para 43 hechos · reglas=2 · usuarios=6   (en kaud, el mismo tick: 33,09 s)
+
+## 2 · global exploratoria (código de c94eed4 + arnés): destapa route-crawl
+  ✘  200 [chromium] › e2e/route-crawl.spec.ts:28:3 › Crawler de rutas › recorre el menú sin 404, sin errores de consola y con H1 (1.5m)
+  1 failed
+  40 skipped
+  199 passed (2.7m)
+→ causa en recorrido-de-rutas.txt
+
+## 3 · certificación: tres corridas globales consecutivas, árbol final, con --trace retain-on-failure
+== corrida 1 · base propia, nueva
+   inicio 2026-10-01T22:50:03+00:00 · fin 2026-10-01T22:53:11+00:00 · suite {'skipped': 40, 'passed': 200} en 178.9 s · salida 0
+   migración: esperada=0057_spec047_notifications actual=0057_spec047_notifications cabezas=1 · siembra: versión=2991541f7d54b285 commit=c94eed4
+   backend: base=True · limpieza: {'suite': 'detenido', 'frontend': 'detenido', 'backend': 'detenido', 'base': {'estado': 'ELIMINADA', 'cortadas': 0}, 'estado': 'eliminado', 'resultado': 'LIMPIA'} · protegidas sin cambios: True
+   al terminar: usuarios=64 reglas=2 almacenes=85 base=28 MB · ticks=7 · el más lento 0.84 s
+   primer tick con trabajo: 22:50:54 UTC · 0.68 s · 43 hechos · usuarios antes=30 · reglas activas antes=2
+   ticks con trabajo: [('22:50:54', '0.68', 43), ('22:51:04', '0.46', 2), ('22:51:23', '0.84', 42)]
+   pruebas de la deuda: {'picking:192': '3.7s', 'picking:208': '4.0s', 'picking:240': '4.0s', 'pick-exec:297': '4.1s', 'putaway:187': '3.3s', 'putaway:405': '811ms', 'treasury:486': '5.5s', 'inv-conf:96': '4.8s', 'notif:142': '5.1s', 'route-crawl': 'pasa (1,5 min)', 'empresas:58': '2.4s'}
+   backend.log: errores no controlados=0 · QueuePool=0 · ' 500 '=0 | suite.log: ECONNRESET=0
+== corrida 2 · base propia, nueva
+   inicio 2026-10-01T22:53:12+00:00 · fin 2026-10-01T22:56:21+00:00 · suite {'skipped': 40, 'passed': 200} en 179.3 s · salida 0
+   migración: esperada=0057_spec047_notifications actual=0057_spec047_notifications cabezas=1 · siembra: versión=2991541f7d54b285 commit=c94eed4
+   backend: base=True · limpieza: {'suite': 'detenido', 'frontend': 'detenido', 'backend': 'detenido', 'base': {'estado': 'ELIMINADA', 'cortadas': 0}, 'estado': 'eliminado', 'resultado': 'LIMPIA'} · protegidas sin cambios: True
+   al terminar: usuarios=64 reglas=2 almacenes=85 base=28 MB · ticks=7 · el más lento 0.8 s
+   primer tick con trabajo: 22:54:03 UTC · 0.70 s · 43 hechos · usuarios antes=29 · reglas activas antes=2
+   ticks con trabajo: [('22:54:03', '0.70', 43), ('22:54:13', '0.67', 2), ('22:54:32', '0.80', 42)]
+   pruebas de la deuda: {'picking:192': '3.4s', 'picking:208': '4.0s', 'picking:240': '3.8s', 'pick-exec:297': '3.9s', 'putaway:187': '3.2s', 'putaway:405': '811ms', 'treasury:486': '5.5s', 'inv-conf:96': '4.6s', 'notif:142': '5.0s', 'route-crawl': 'pasa (1,5 min)', 'empresas:58': '2.7s'}
+   backend.log: errores no controlados=0 · QueuePool=0 · ' 500 '=0 | suite.log: ECONNRESET=0
+== corrida 3 · base propia, nueva
+   inicio 2026-10-01T22:56:21+00:00 · fin 2026-10-01T22:59:30+00:00 · suite {'skipped': 40, 'passed': 200} en 179.6 s · salida 0
+   migración: esperada=0057_spec047_notifications actual=0057_spec047_notifications cabezas=1 · siembra: versión=2991541f7d54b285 commit=c94eed4
+   backend: base=True · limpieza: {'suite': 'detenido', 'frontend': 'detenido', 'backend': 'detenido', 'base': {'estado': 'ELIMINADA', 'cortadas': 0}, 'estado': 'eliminado', 'resultado': 'LIMPIA'} · protegidas sin cambios: True
+   al terminar: usuarios=64 reglas=2 almacenes=85 base=28 MB · ticks=7 · el más lento 0.84 s
+   primer tick con trabajo: 22:57:13 UTC · 0.60 s · 43 hechos · usuarios antes=32 · reglas activas antes=2
+   ticks con trabajo: [('22:57:13', '0.60', 43), ('22:57:24', '0.49', 2), ('22:57:42', '0.84', 42)]
+   pruebas de la deuda: {'picking:192': '3.8s', 'picking:208': '3.8s', 'picking:240': '3.9s', 'pick-exec:297': '3.9s', 'putaway:187': '3.4s', 'putaway:405': '790ms', 'treasury:486': '5.6s', 'inv-conf:96': '4.8s', 'notif:142': '4.9s', 'route-crawl': 'pasa (1,5 min)', 'empresas:58': '2.6s'}
+   backend.log: errores no controlados=0 · QueuePool=0 · ' 500 '=0 | suite.log: ECONNRESET=0
+
+## 4 · lo que dicen las tres juntas
+resultado: 200 passed / 0 failed / 40 skipped en las tres · limpieza LIMPIA en las tres · 0 bases de corrida en el servidor al terminar
+estado final idéntico en las tres: 64 usuarios, 2 reglas de notificación, 85 almacenes, 28 MB — ninguna heredó nada de la anterior
+planificador: el tick más lento, 0,84 s; el primero con trabajo, 0,60–0,70 s con 29–32 usuarios y 2 reglas activas
+backend: 0 errores no controlados, 0 esperas de pool, 0 respuestas 500 · suite: 0 ECONNRESET
+las 40 omitidas son las suites que exigen KONTROL_E2E_USER (accesibilidad, documentos): igual que en todas las corridas anteriores
+
+## 5 · kaud y ktest, intactas
+huella tomada por un auditor externo al lanzador, en solo lectura, antes y después de las tres corridas:
+antes:   {"kaud": {"approval_events": 1159, "audit_events": 58134, "companies": 3, "notification_rules": 28, "pick_lists": 1884, "scheduler_runs": 94, "sessions": 8320, "tamano_bytes": 867807715, "tenants": 2, "users": 868, "warehouses": 2518}, "ktest": {"relaciones_publicas": 0, "schemas": 1}}
+después: {"kaud": {"approval_events": 1159, "audit_events": 58134, "companies": 3, "notification_rules": 28, "pick_lists": 1884, "scheduler_runs": 94, "sessions": 8320, "tamano_bytes": 867807715, "tenants": 2, "users": 868, "warehouses": 2518}, "ktest": {"relaciones_publicas": 0, "schemas": 1}}
+diff: vacío. Y el propio lanzador, sin conectarse a ellas (pg_stat_database): sesiones y escrituras sin cambios en las tres corridas.
+
+## 6 · una más, el 2026-10-06, tras un reinicio de la máquina
+El 2026-10-04 la máquina se reinició y `/tmp` —donde vive el clúster de QA— quedó vacío: `kaud` y `ktest` desaparecieron con él
+(propiedad conocida del entorno, no acción de este ciclo). Se reaprovisionó el clúster con `qa/pg-provision.sh start` y `mkdb ktest`;
+`kaud` no se recreó: ya no hace falta para certificar. Con el árbol final, sin `kaud` siquiera en el servidor:
+  200 passed / 0 failed / 40 skipped (3,5 min) · limpieza LIMPIA · 0 bases de corrida al terminar
+

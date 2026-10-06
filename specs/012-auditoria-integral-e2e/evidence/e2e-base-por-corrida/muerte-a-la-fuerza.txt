@@ -1,0 +1,31 @@
+# E2E-BASE-QA-ACUMULA · muerte a la fuerza del lanzador y recuperación · 2026-10-01T19:42:36-04:00
+# orden: qa/e2e-run.py --sin-frontend --orden sleep -- 300   (la «suite» es una espera, para matarlo a media corrida)
+
+## 1 · la corrida, hasta que empieza la suite
+[e2e <run>] comprobar
+[e2e <run>] crear base
+[e2e <run>] migrar
+[e2e <run>] sembrar
+[e2e <run>] backend
+[e2e <run>] comprobar la base del backend
+[e2e <run>] suite
+
+## 2 · kill -9 al lanzador (no hay finally que valga)
+lanzador vivo: no · backend sigue respondiendo en :8000: 200
+
+## 3 · qa/e2e-bases.py listar
+servidor localhost:55432 · bases de corrida: 1
+  HUERFANA  kontrol_e2e_test_<run>  19 MB · conexiones 1 · procesos 2 · lanzador <pid> · creada 2026-10-01T23:42:27+00:00
+
+## 4 · qa/e2e-bases.py purgar   (sin --confirmar: no elimina nada)
+  PENDIENTE  kontrol_e2e_test_<run>  (HUERFANA)
+1 base(s) huérfana(s): repita con --confirmar para eliminarlas
+servidor localhost:55432 · bases de corrida: 1
+
+## 5 · qa/e2e-bases.py purgar --confirmar
+  ELIMINADA  kontrol_e2e_test_<run>  (HUERFANA)
+
+## 6 · después
+servidor localhost:55432 · bases de corrida: 0
+backend en :8000: 000 (000 = ya no escucha)
+estado efímero en /tmp/kontrol-e2e: 0 carpetas

@@ -23,6 +23,10 @@ import { fileURLToPath } from "node:url";
 export default function sembrar(): void {
   const url = process.env.KONTROL_E2E_DB_URL;
   if (!url) return;
+  // Una corrida lanzada por `qa/e2e-run.py` trae su propia base, recién creada y ya
+  // sembrada una vez: sembrarla de nuevo aquí sería la segunda siembra de una base que
+  // solo debe tener una.
+  if (process.env.KONTROL_E2E_RUN_ID) return;
 
   const guion = fileURLToPath(new URL("../../../qa/e2e-seed.sh", import.meta.url));
   execFileSync("bash", [guion, url], { stdio: "inherit" });

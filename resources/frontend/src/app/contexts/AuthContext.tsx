@@ -9,6 +9,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -72,12 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     }
   }, []);
 
+  // La carga del usuario que puso en marcha la última renovación.
+  const cargaDeUsuario = useRef<Promise<void>>(Promise.resolve());
+
   const refreshSession = useCallback(async (): Promise<boolean> => {
     try {
       const data = await apiFetch<{ access_token: string }>("/auth/refresh", { method: "POST" });
       setAccessToken(data.access_token);
       setToken(data.access_token);
-      void loadMe();
+      cargaDeUsuario.current = loadMe();
       return true;
     } catch {
       setAccessToken(null);
@@ -104,8 +108,15 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   // renovaciones simultáneas con la misma cookie dejan a la segunda con la
   // sesión ya revocada (401). Compartiendo la petición en vuelo, la segunda
   // espera a la primera en lugar de competir con ella.
+  //
+  // La sesión no está restaurada hasta que se sabe de quién es. Con el token y
+  // todavía sin el usuario, `RouteGuard` veía «listo y sin sesión», mandaba a
+  // /login y, al llegar el usuario, el login mandaba a Inicio: recargar una
+  // pantalla llevaba a otra.
   useEffect(() => {
-    void requestSessionRefresh().finally(() => setReady(true));
+    void requestSessionRefresh()
+      .then(() => cargaDeUsuario.current)
+      .finally(() => setReady(true));
   }, [refreshSession]);
 
   const hasPermission = useCallback(

@@ -48,7 +48,7 @@ export function ListasPrecioPage(): React.JSX.Element {
 
   const monedas = useQuery({
     queryKey: ["tesoreria", "monedas"],
-    queryFn: () => apiFetch<Moneda[]>("/treasury/currencies"),
+    queryFn: async () => (await apiFetch<{ items: Moneda[] }>("/treasury/currencies")).items,
     enabled: Boolean(companyId),
     retry: false,
   });

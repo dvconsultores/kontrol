@@ -1,0 +1,47 @@
+# E2E-BASE-QA-ACUMULA · route-crawl «sin H1»: la causa · 2026-10-01
+# todas las corridas con qa/e2e-run.py: una base PostgreSQL nueva por corrida, eliminada al terminar
+
+## 1 · primera corrida global sobre base nueva (código de c94eed4 + arnés), con --trace retain-on-failure
+  ✘  200 [chromium] › e2e/route-crawl.spec.ts:28:3 › Crawler de rutas › recorre el menú sin 404, sin errores de consola y con H1 (1.5m)
+    Error: ruta /comercial/listas-precio: sin H1
+  1 failed
+  40 skipped
+  199 passed (2.7m)
+
+## 2 · route-crawl sola sobre base nueva (código de c94eed4)
+  ✘  1 [chromium] › e2e/route-crawl.spec.ts:28:3 › Crawler de rutas › recorre el menú sin 404, sin errores de consola y con H1 (1.1m)
+    Error: ruta /comercial/listas-precio: sin H1
+  1 failed
+
+## 3 · lo que dice la traza de la ruta que falla (/comercial/listas-precio)
+red: GET /treasury/currencies → 200 · GET /comercial/listas-precio → 200 (nada falla en el servidor)
+consola: TypeError: (monedas.data ?? []).map is not a function  at ListasPrecioPage (ListasPrecioPage.tsx)
+consola: React Router caught the following error during render TypeError: (monedas.data ?? []).map is not a function
+ListasPrecioPage: apiFetch<Moneda[]>("/treasury/currencies") · el servidor responde {items, total, page, page_size}
+
+## 4 · recorrido de diagnóstico (spec temporal, ya borrada): abre cada ruta del menú y anota dónde acaba, si hay H1 y los errores de consola
+--- sobre el producto de c94eed4
+RUTAS=96 · acabaron en otra ruta=81 · con problemas=82
+  (81 de las 96 rutas acaban en «/», con el H1 de Inicio y sin errores: las primeras)
+  PROBLEMA /mi-licencia → / · h1=1 · 
+  PROBLEMA /notificaciones → / · h1=1 · 
+  PROBLEMA /tareas → / · h1=1 · 
+  PROBLEMA /alertas → / · h1=1 · 
+  PROBLEMA /notificaciones/reglas → / · h1=1 · 
+  PROBLEMA /notificaciones/preferencias → / · h1=1 · 
+--- con la restauración de sesión corregida de forma provisional (y las monedas de Listas de precios)
+RUTAS=96 · acabaron en otra ruta=0 · con problemas=1
+  PROBLEMA /diagnostico → /diagnostico · h1=0 · %o %s %s TypeError: Cannot convert undefined or null to object at Object.entries (<anonymous>) at DiagnosticoPage (http://localhost:5173/src/pages/Dia ¦ React Router caught the following error during render 
+
+## 5 · por qué acaban en «/»: AuthProvider (c94eed4)
+refreshSession(): setToken(...); void loadMe(); return true      ← el usuario se pide sin esperar
+restauración:     requestSessionRefresh().finally(() => setReady(true))
+RouteGuard:       isReady && !isAuthenticated → <Navigate to="/login">     (isAuthenticated = user && accessToken)
+LoginPage:        isAuthenticated → <Navigate to="/">
+Prueba unitaria RESTAURA-01 sobre el código de c94eed4: «expected [ 'login' ] to deeply equal []»
+
+## 6 · después de los tres arreglos y de que el recorrido compruebe la ruta: route-crawl sola, dos bases nuevas
+  ✓  1 [chromium] › e2e/route-crawl.spec.ts:28:3 › Crawler de rutas › recorre el menú sin 404, sin errores de consola y con H1 (1.5m)
+  1 passed (1.5m)
+  ✓  1 [chromium] › e2e/route-crawl.spec.ts:28:3 › Crawler de rutas › recorre el menú sin 404, sin errores de consola y con H1 (1.5m)
+  1 passed (1.5m)

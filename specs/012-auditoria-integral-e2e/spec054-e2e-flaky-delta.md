@@ -556,3 +556,500 @@ las tres ejecutadas por DeepSeek (`deepseek-v4-flash`) · 3 llamadas · 0 reinte
 parches aceptados, 0 rechazados, 0 retocados · 6 148 / 4 063 tokens · $0,001945 · puente:
 77 135 tokens. Investigación, causa raíz, diseño, T04 y T05, auditoría, mutaciones y
 certificación: Claude.
+
+---
+
+# PARTE II — `E2E-BASE-QA-ACUMULA`: una base nueva por corrida, y reconvergencia
+
+**Fecha** 2026-10-01 · **Dueña** SPEC054 (`specs/012-auditoria-integral-e2e`) · **Apoyo de
+ciclo de vida de base** Master 052 → `001-fundacion` (las migraciones canónicas, sin
+cambios) · **Base** `c94eed4` · **Rama** `develop`
+
+## 22. Checkpoint y decisión
+
+| Comprobación | Valor |
+|---|---|
+| `EXPECTED_HEAD` / `ACTUAL_HEAD` / `REMOTE_HEAD` | `c94eed4` / **`c94eed4`** / `c94eed4` |
+| `ACTUAL_BRANCH` · `WORKTREE_STATE` · `COMMITS_AFTER_C94EED4` | `develop` · limpio · 0 |
+| `ORCHESTRATION_STATUS` | `VERIFIED_END_TO_END`; `orchestration_readiness.py` 11/11 |
+| `DEEPSEEK_TOOL` · `MODEL_ROUTING` · `RETRY_MAX` | `mcp__deepseek__deepseek_chat` · `deepseek-v4-flash` · 2 |
+| `PRIMARY_OWNER` | **SPEC054** — `specs/012-auditoria-integral-e2e` |
+| `DB_LIFECYCLE_SUPPORT` | Master 052 → `001-fundacion`: `alembic upgrade head`, sin tocar |
+| `PRODUCT_SUPPORTS` | ninguno previsto; si la reconvergencia destapa un defecto de producto, se amplía antes de implementar |
+| `OWNER_IDENTITY_CONFLICT` | **0** |
+
+**Decisión de la dueña, ya tomada:** `E2E-BASE-QA-ACUMULA = FRESH_DATABASE_PER_E2E_RUN`.
+Cada corrida E2E certificable corre contra una base PostgreSQL nueva, creada para ella y
+eliminada al terminar. `kaud` queda para QA manual y deja de ser la base de certificación.
+`TENANT_PER_RUN` y `CLEANUP_PER_TEST` quedan rechazados como mecanismo primario. Dentro de
+la base de la corrida, cada prueba sigue obligada a usar datos propios.
+
+Es además lo que la Constitución ya pedía: PostgreSQL recién creado, de cero a la cabeza de
+migraciones, semilla mínima y E2E (P21, P24).
+
+## 23. Lo que hay hoy (W05–W08)
+
+| | Hoy | Evidencia |
+|---|---|---|
+| Lanzador | **no existe**. El backend (`uvicorn`), Vite y Playwright se arrancan a mano, cada uno con sus variables | `Dockerfile.backend` es el único sitio del repositorio que arranca uvicorn |
+| Base del E2E | `kaud`, creada una vez con `qa/pg-provision.sh mkdb` y nunca renovada: 828 MB | `pg_database` |
+| Siembra | `qa/e2e-seed.sh <url>` → `pg-e2e-seed.py` (instalación, tenant DEMO, D1, `admin`, licencia), `spec047-e2e-seed.py` (D2), `n6-e2e-seed.py` (DEMO2/E1, `ua`/`ub`/`uab`/`uc`, fichero de ids). Idempotente. La invoca `e2e/global-setup.ts` si hay `KONTROL_E2E_DB_URL` | los tres guiones |
+| Migraciones | `alembic upgrade head` con `KONTROL_DB_URL`; **un** head, `0057_spec047_notifications` | `alembic heads` |
+| Planificador | no es un proceso: `helpers/planificador.ts` ejecuta `python -m app.modules.scheduler tick` contra `KONTROL_E2E_DB_URL` | el ayudante |
+| Puertos | fijos: backend 8000, Vite 5173 (`strictPort`); el proxy de Vite apunta a `KONTROL_API_URL` | `vite.config.ts` |
+| Servidor | PostgreSQL 16.2 local de QA (`qa/pg-provision.sh`); `postgres` es el único rol que puede crear bases; `kontrol_migrator` es el dueño de `kaud` | `pg_roles` |
+
+Prototipo a mano, con una base desechable: crear y migrar a `0057`, **2,1 s**; sembrar,
+**3,8 s**; 20 MB. Línea base tras sembrar: 1 instalación, 2 tenants, 3 empresas, 5 usuarios,
+licencia `FULL_ACCESS`, **0 almacenes, 0 reglas de notificación**.
+
+Hallazgo del prototipo: `installations.key_reference` es `String(120)` y guarda la ruta de
+la clave de instalación; con un volumen de ruta larga la siembra falla con
+`StringDataRightTruncation`. El estado de la corrida vivirá en una ruta corta, y el lanzador
+la comprueba antes de crear nada. Se registra (§ final), no se absorbe.
+
+## 24. `/speckit.specify`
+
+`FR-054-E2EDB-001` … `-028`, con el texto del encargo. En corto:
+
+| ID | Requisito |
+|---|---|
+| 001–003 | base PostgreSQL nueva y exclusiva por corrida; `RUN_ID` único; nombre con marcadores inequívocos `e2e` y `test` |
+| 004, 015 | nada destructivo sobre una base que no cumpla la identidad E2E; la purga solo actúa sobre bases inequívocamente E2E |
+| 005, 009 | `kaud` no se crea, trunca, recrea, migra ni elimina; ningún proceso de la corrida se conecta a ella |
+| 006–007 | migraciones canónicas hasta el head real; siembra canónica y determinista |
+| 008 | el backend arranca contra la base de la corrida, y se comprueba en ejecución |
+| 010–012 | los procesos se cierran antes de eliminar la base; se elimina tras una corrida verde y tras una roja |
+| 013 | la limpieza no oculta el código de salida de la suite |
+| 014 | herramienta para listar y purgar bases E2E huérfanas tras una muerte anormal |
+| 016 | evidencia por corrida: run, head, siembra, resultado, limpieza; sin URLs con secretos |
+| 017–018 | dos corridas no heredan datos; dentro de una corrida, cada prueba sigue usando los suyos |
+| 019 | sin reintentos, esperas, omisiones, menos trabajadores ni serialización |
+| 020–022 | reevaluar `E2E-FLAKY-BAJO-CARGA`; medir el tick del planificador en `notifications:142`; reevaluar `route-crawl` y `empresas-busqueda:58` |
+| 023–025 | sin cambios de esquema ni migraciones de producto; `TEST-SCHEMAS-PG-SIN-LIMPIEZA` sigue cerrada |
+| 026–027 | al menos dos corridas globales desde base nueva; todo fallo, atribuido con evidencia |
+| 028 | la deuda solo se cierra si no queda una inestabilidad agregada sin causa |
+
+## 25. `/speckit.clarify` — 38 preguntas, respondidas con el repositorio
+
+| # | Pregunta | Respuesta |
+|---|---|---|
+| 1 | Dueña | SPEC054; apoyo 052 por las migraciones |
+| 2–3 | Lanzador y base actuales | §23: no hay lanzador; `kaud` |
+| 4 | Conexión administrativa | motor `AUTOCOMMIT` sin pool contra la base `postgres` del servidor de QA, con un rol que pueda crear bases. `CREATE`/`DROP DATABASE` no van dentro de una transacción |
+| 5–6 | Nombre y `RUN_ID` | `RUN_ID = r<AAAAMMDD>t<HHMMSS>p<pid>n<6 hex>` (UTC, solo `[a-z0-9]`, no es secreto). Base: **`kontrol_e2e_test_<RUN_ID>`** — 48 caracteres como mucho, de los 63 de PostgreSQL. Patrón exacto: `^kontrol_e2e_test_r\d{8}t\d{6}p\d{1,7}n[0-9a-f]{6}$`. No colisiona con nada del repositorio: las pruebas de migración usan otros prefijos y `ktest` es de la suite de backend |
+| 7 | Compuerta de identidad | `exigir_base_e2e`: el nombre cumple el patrón **entero**; no es una base protegida (`postgres`, `template0`, `template1`, `kaud`, `ktest`, la de `KONTROL_DB_URL`, la de `KONTROL_TEST_DB_URL`, la administrativa); y, para destruir, la base lleva la **marca** que el arnés le puso al crearla (`COMMENT ON DATABASE`: run, pid, máquina, fecha). El arnés nunca elimina un nombre que le llegue de fuera: lo construye él a partir del `RUN_ID`, o lo lee del catálogo ya filtrado |
+| 8 | Compuerta de entorno | `KONTROL_ENVIRONMENT` ∈ {`local`, `dev`, `qa`}; servidor en la lista de permitidos (`KONTROL_E2E_PG_HOSTS`, por defecto solo `localhost`) |
+| 9–10 | Migraciones | `alembic upgrade head` en `resources/backend`, con `KONTROL_DB_URL` de la corrida. Se exige **un** head en el árbol y que `alembic_version` de la base sea ese |
+| 11–13 | Siembra | `qa/e2e-seed.sh`, sin cambios. No copia nada de `kaud`. Se niega a sembrar una base que ya tenga tenants —así se detecta una doble siembra— y comprueba la línea base al terminar. Secretos: solo la contraseña de siembra de QA, que ya está en el repositorio; no se añade ninguno |
+| 14–16 | Backend, frontend, planificador | `uvicorn app.main:app` en 127.0.0.1:8000 con `KONTROL_DB_URL` de la corrida y su propio volumen de instalación; Vite en 5173 con `KONTROL_API_URL`; el planificador no es un proceso (§23) |
+| 17–19 | Procesos, salud, orden de limpieza | un solo dueño: `qa/e2e-run.py`. Cada proceso en su grupo. Salud: `/api/v1/health/ready` y la raíz de Vite. Limpieza: suite → Vite → backend → esperar su salida → comprobar que nadie sigue conectado → base |
+| 20 | Cortar conexiones | solo si, con los consumidores ya parados, queda alguien: se cortan **solo** las de la base de la corrida (`datname = …`), y se anota cuántas |
+| 21 | Corrida fallida | todo va en un `finally`: migración, siembra, backend, Vite o suite que fallen dejan la base eliminada |
+| 22–23 | `kill -9` y huérfanas | no hay `finally` que valga: `qa/e2e-bases.py listar` y `purgar --confirmar`. Huérfana = patrón + marca + el proceso lanzador de la marca ya no existe en esta máquina. Una base cuyo lanzador vive no se purga |
+| 24–25 | Corridas simultáneas y puertos | nombres, estado y evidencia no colisionan; **los puertos sí**. Dos corridas globales a la vez en la misma máquina **no están soportadas**: el lanzador se niega a empezar si 8000 o 5173 están ocupados, antes de crear la base. No se rediseña |
+| 26 | Evidencia | `qa/e2e-runs/<RUN_ID>/` (ignorado por Git): `manifest.json`, registros del backend, de Vite y de la suite, resultados de Playwright. El estado efímero —clave de instalación, almacenamiento— va en `/tmp/kontrol-e2e/<RUN_ID>/` y se elimina con la base |
+| 27–28 | `kaud` y `ktest` | protegidas por nombre en la compuerta, además del patrón. El lanzador toma la huella de las dos antes y después sin conectarse a ellas (`pg_stat_database`: sesiones y tuplas escritas) |
+| 29 | Esquema de producto | 0. La base efímera es el esquema de producto, migrado |
+| 30 | Notificaciones | el lanzador lee, antes de eliminar la base, reglas, usuarios y la serie de ticks del planificador, y los deja en el manifiesto |
+| 31–32 | `route-crawl`, `empresas-busqueda:58` | se reevalúan en las corridas globales, con `--trace retain-on-failure` para capturar HTML, consola y red si vuelven |
+| 33 | `inventory-confirmation` | frontera: si reaparece un `ECONNRESET`, es `BACKEND-KEEPALIVE-5S`, deuda aparte; no se arregla aquí |
+| 34–35 | Regresiones | `picking`, `pick-execution`, `putaway` (187 y 405) y `treasury:486` se miran en cada corrida |
+| 36 | Corridas globales | dos como mínimo, cada una desde su base; una tercera si hace falta para atribuir |
+| 37 | Reintentos | ninguno; `playwright.config.ts` no se toca |
+| 38 | DeepSeek | §28 |
+
+`MATERIAL OQ = 0`. `UNKNOWN = 0`.
+
+## 26. `/speckit.plan` y compuerta constitucional
+
+W01–W17 hechos (§22–§25, §28). W18–W25: `qa/e2e_nombres.py` (puro), `qa/e2e_base.py`
+(compuerta, crear, migrar, sembrar, soltar, listar), `qa/e2e_corrida.py` (procesos y
+ciclo), `qa/e2e-run.py` y `qa/e2e-bases.py` (órdenes), y `e2e/global-setup.ts` deja de
+sembrar cuando la corrida la lanza el arnés. W26–W29: pruebas DB-01..22. W30–W39:
+dirigidas, medida de notificaciones, corridas globales, atribución y residuales. W40
+mutaciones. W41–W45 limpieza, `kaud` intacta, `analyze`, trazabilidad, convergencia.
+
+| Compuerta | | |
+|---|---|---|
+| G01–G04 checkpoint, orquestación, dueña, decisión | §22 | ✅ |
+| G05–G08 lanzador, dependencia de `kaud`, migraciones, siembra | §23 | ✅ |
+| G09–G13 nombre, `RUN_ID`, compuerta, conexión administrativa, cableado del backend | §25 | ✅ |
+| G14–G17 procesos, limpieza, corrida fallida, huérfanas | §25 | ✅ |
+| G18–G21 `kaud`, `ktest`, simultaneidad, puertos | §25 | ✅ |
+| G22–G24 notificaciones, `route-crawl`, login | §25 | ✅ |
+| G25–G26 sin migración de producto; sin reintentos ni esperas | §24 | ✅ |
+| G27–G29 pruebas, mutaciones, tareas clasificadas | §27, §28 | ✅ |
+| G30–G32 `MATERIAL OQ` 0 · `UNKNOWN` 0 · trazabilidad 100 % | | ✅ |
+
+Principios: 21 y 24 (PostgreSQL recién creado como evidencia), 10, 22, 27. **PASS.**
+
+Checklist: las 47 casillas del encargo, verificadas contra §22–§28; ninguna abierta.
+
+## 27. Pruebas y mutaciones, diseñadas antes de implementar
+
+`resources/backend/tests/` (solo PostgreSQL; el servidor administrativo se deriva de
+`KONTROL_TEST_DB_URL`, y el rol dueño es el mismo: las pruebas no llevan credenciales).
+
+| ID | Caso | Req. |
+|---|---|---|
+| DB-01 | nombres inválidos —vacío, `None`, sin marcadores, con sufijo o prefijo de más, mayúsculas, inyección— rechazados | 003, 004 |
+| DB-02 | `kaud`: denegada **antes** de cualquier SQL | 005 |
+| DB-03 | `ktest`: denegada | 004 |
+| DB-04 | la base de `KONTROL_DB_URL`, un entorno `prod`/`staging`/`uat` o un servidor fuera de la lista: denegados | 004 |
+| DB-05 | dos `RUN_ID`, dos bases; crear una que ya existe falla y no la reutiliza | 001, 002 |
+| DB-06 | base recién creada migrada: `alembic_version` = head, un solo head | 006 |
+| DB-07 | siembra: línea base exacta; sembrar una base ya sembrada se rechaza | 007 |
+| DB-08 | el backend de la corrida escribe en la base de la corrida, y solo en ella | 008, 009 |
+| DB-09 | corrida verde: la base desaparece | 011 |
+| DB-10, DB-20 | suite que falla con código 3: la base desaparece y el lanzador sale con 3 | 012, 013 |
+| DB-11..13 | fallo en migración, en siembra, en el arranque del backend: la base desaparece y el lanzador falla | 012 |
+| DB-14 | una base E2E sin lanzador vivo aparece como huérfana; la de un lanzador vivo, como viva | 014 |
+| DB-15 | purgar elimina solo las huérfanas; sin `--confirmar` no elimina nada; una base con el patrón pero sin la marca no se toca | 014, 015 |
+| DB-16 | la corrida B no ve el dato que creó la corrida A | 017 |
+| DB-17, DB-18 | huella de `kaud` y `ktest` igual antes y después | 005 |
+| DB-19 | ni la salida del lanzador ni el manifiesto contienen una URL con credenciales | 016 |
+| DB-21 | limpiar dos veces: la segunda no hace nada y no falla | 010 |
+| DB-22 | dos `RUN_ID` simultáneos no comparten nombre, estado ni evidencia; con el puerto ocupado el lanzador se niega antes de crear la base | 002 |
+
+| Mutante | Cambio | Debe matarlo |
+|---|---|---|
+| M-01 | quitar la comprobación del patrón del nombre | DB-01 |
+| M-02 | sacar `kaud` de las protegidas y relajar el patrón | DB-02 |
+| M-03 | reutilizar en silencio una base que ya existe | DB-05 |
+| M-04 | eliminar sin mirar la marca | DB-15 |
+| M-05 | no comprobar el head tras migrar | DB-06 |
+| M-06 | sembrar sin mirar si la base ya tiene tenants | DB-07 |
+| M-07 | no eliminar la base si la suite falla | DB-10 |
+| M-08 | devolver 0 si la limpieza fue bien | DB-20 |
+| M-09 | no eliminar la base si falla la preparación | DB-11..13 |
+| M-10 | purgar sin exigir `--confirmar` | DB-15 |
+| M-11 | purgar también las bases de un lanzador vivo | DB-14, DB-15 |
+| M-12 | cortar las conexiones de todo el servidor, no solo las de la base | DB-21 (con una conexión testigo a otra base) |
+| M-13 | el backend arranca contra `KONTROL_DB_URL` heredada, no contra la de la corrida | DB-08 |
+| M-14 | aceptar un entorno `prod` | DB-04 |
+
+## 28. `/speckit.tasks` y `/speckit.analyze` previo
+
+| ID | Tarea | Req. | EXECUTOR · MODEL | SEC | EGRESS | Ficheros |
+|---|---|---|---|---|---|---|
+| T30 | Reconciliación, inventario, prototipo, diseño | todos | CLAUDE | YES | n-a | este documento |
+| T31 | Nombres y marcas: funciones puras | 002, 003 | **DEEPSEEK** `deepseek-v4-flash` | NO | YES | `qa/e2e_nombres.py` (nuevo) |
+| T32 | Pruebas de T31 | 002, 003 | **DEEPSEEK** `deepseek-v4-flash` | NO | YES | `resources/backend/tests/test_e2e_nombres.py` (nuevo) |
+| T33 | Compuerta, crear, migrar, sembrar, soltar, listar, huella | 001–007, 014, 015 | CLAUDE | YES | n-a | `qa/e2e_base.py` |
+| T34 | Ciclo de vida y procesos; órdenes | 008–013, 016 | CLAUDE | YES | n-a | `qa/e2e_corrida.py`, `qa/e2e-run.py`, `qa/e2e-bases.py` |
+| T35 | La siembra de Playwright cede ante el arnés | 007 | CLAUDE | NO | n-a | `resources/frontend/e2e/global-setup.ts`, `.gitignore` |
+| T36 | Pruebas de la compuerta con direcciones sintéticas (DB-01..04) | 004, 005 | **DEEPSEEK** `deepseek-v4-flash` | NO | YES | `resources/backend/tests/test_e2e_base_identidad.py` (nuevo) |
+| T37 | Pruebas de ciclo sobre PostgreSQL real (DB-05..22) | 001–017 | CLAUDE | YES | n-a | `tests/test_e2e_base_ciclo.py`, `tests/test_e2e_corrida.py` |
+| T38 | Auditar, aplicar y probar T31, T32, T36 | — | CLAUDE | NO | n-a | — |
+| T39 | Mutaciones | 004–015 | CLAUDE | YES | n-a | — |
+| T40 | Dirigidas en base nueva; medida de notificaciones | 020, 021 | CLAUDE | NO | n-a | — |
+| T41 | Corridas globales 1 y 2 (y 3 si hace falta); atribución | 022, 026, 027 | CLAUDE | NO | n-a | — |
+| T42 | Residuales: causa, dueña y arreglo, si `MATERIAL OQ = 0` | 028 | CLAUDE (se reclasifica tarea a tarea) | — | — | por determinar tras T41 |
+| T43 | Backend completo, residuos, `kaud`/`ktest` intactas | 023–025 | CLAUDE | NO | n-a | — |
+| T44 | `analyze` final, trazabilidad, convergencia, hoja de ruta, Git | — | CLAUDE | NO | n-a | documentos |
+
+`RETRY_MAX: 2` en T31, T32 y T36. Los tres encargos usan direcciones inventadas
+(`postgresql://user:pass@host:5432/test_db`): ni el servidor, ni el puerto, ni los nombres
+de rol de QA salen del repositorio. `kaud` y `ktest` son nombres de base, no secretos, y
+forman parte del contrato de la compuerta.
+
+`analyze` previo: `BLOCKER` · `CRITICAL` · `CONTRADICTIONS` · `OWNER CONFLICT` = 0;
+requisitos y tareas huérfanas = 0; `MATERIAL OQ` = 0; `UNKNOWN` = 0; trazabilidad 100 %.
+Riesgos mirados uno a uno: base de producto (compuerta), `kaud` compartida (protegida y con
+huella), huérfanas (herramienta), puertos fijos (negativa temprana), secretos en registros
+(DB-19), esquema o migración ocultos (0), reintentos, esperas, omisiones, trabajadores,
+serie (0).
+
+**Autorización de `implement`:** la del encargo `E2E-BASE-QA-ACUMULA`.
+
+## 29. Primera corrida global sobre base nueva, y tercera ampliación de alcance
+
+El arnés (§30) funciona: en 9 s crea la base, la migra, la siembra, levanta el backend,
+comprueba que escribe en ella y lo elimina todo. La primera corrida global exploratoria
+sobre base nueva dio **199 / 1 / 40**, y el fallo fue `route-crawl`:
+`/comercial/listas-precio` sin H1. **El mismo del 2026-09-30, que estaba sin causa.** Esta
+vez había traza, y sola sobre base nueva falla siempre.
+
+Lo que se encontró, medido antes de decidir nada
+(`evidence/e2e-base-por-corrida/recorrido-de-rutas.txt`):
+
+| | Defecto | Evidencia |
+|---|---|---|
+| **A** · producto, sesión | Al recargar una ruta, `AuthProvider` da la sesión por restaurada (`isReady`) cuando llega el token, **antes** de tener al usuario (`/auth/me` va sin esperar). `RouteGuard` ve «listo y sin usuario», manda a `/login`, y `LoginPage`, ya con usuario, manda a **Inicio**. La ruta pedida se pierde | recorrido de diagnóstico sobre el código de `c94eed4`: **81 de 96 rutas** del menú acaban en `/`. Que una ruta se llegue a pintar depende de qué llegue antes, su módulo o `/auth/me` |
+| **Prueba** · `route-crawl` | no comprueba que sigue en la ruta que pidió: en 81 de 96 casos lee el H1 de Inicio y lo da por bueno | ídem |
+| **B** · producto | `ListasPrecioPage` trata `GET /treasury/currencies` como un array; el servidor responde el sobre `{items, …}`. En cuanto llegan las monedas, `(monedas.data ?? []).map is not a function` y la pantalla cae | traza: error de consola en el render; sola, 2 de 2 |
+| **C** · producto | `DiagnosticoPage` espera `{status, services, version}`; `GET /system/diagnostics` responde `{environment, version, database, installation, license, …}`. `Object.entries(undefined)`: la pantalla cae siempre que se llega a pintar, desde el commit fundacional | recorrido de diagnóstico con A corregido de forma provisional: 96 rutas en su sitio, 1 rota |
+
+Por eso el fallo era «esporádico»: la pantalla rota solo se ve cuando la ruta gana la
+carrera de A. No era carga ni acumulación; `kaud` no lo tapaba más que cualquier otra base.
+
+**Alcance ampliado, antes de implementar** — producto, frontend:
+
+| Dueña | Fichero | Cambio |
+|---|---|---|
+| Master 002 (seguridad y sesiones) → `001-fundacion`, FR-001-042 | `src/app/contexts/AuthContext.tsx` | la restauración de sesión no se da por terminada hasta tener al usuario |
+| Master 012 (maestros comerciales) → `specs/012-maestros-comerciales` | `src/modules/comercial/ListasPrecioPage.tsx` | leer `items` del sobre de monedas |
+| Master 001, FR-001-084 → `001-fundacion` | `src/pages/DiagnosticoPage.tsx`, `src/api/types.ts` | pintar lo que el diagnóstico responde de verdad |
+| SPEC054 | `e2e/route-crawl.spec.ts` | comprobar que cada ruta sigue siendo la pedida |
+
+Sin decisión material: los tres son defectos frente a contratos que ya existen —recargar no
+debe cambiar de página; el sobre de listados es el de `api-contracts.md`; FR-001-084 pide
+versión, identidad y licencia, que es lo que el servidor da—. Backend, esquema, migraciones: 0.
+
+| ID | Requisito |
+|---|---|
+| FR-054-E2EDB-029 | Tras recargar o abrir directamente una ruta con sesión válida, la aplicación pinta esa ruta: nunca pasa por `/login` ni acaba en Inicio |
+| FR-054-E2EDB-030 | Listas de precios pinta las monedas de la empresa y no cae al recibirlas |
+| FR-054-E2EDB-031 | Diagnóstico pinta versión, entorno, base de datos, instalación y licencia tal como los responde el servidor, y no cae |
+| FR-054-E2EDB-032 | `route-crawl` falla si una ruta del menú acaba en otra ruta |
+
+| ID | Tarea | Req. | EXECUTOR · MODEL | SEC | EGRESS | Ficheros |
+|---|---|---|---|---|---|---|
+| T50 | Restauración de sesión y su prueba | 029 | CLAUDE | **YES** (sesión) | n-a | `AuthContext.tsx`, `src/app/contexts/AuthContext.restauracion.test.tsx` |
+| T51 | Monedas de Listas de precios y su prueba | 030 | **DEEPSEEK** `deepseek-v4-flash` | NO | YES | `ListasPrecioPage.tsx`, `ListasPrecioPage.test.tsx` |
+| T52 | Diagnóstico y su prueba | 031 | **DEEPSEEK** `deepseek-v4-flash` | NO | YES | `DiagnosticoPage.tsx`, `src/api/types.ts`, `DiagnosticoPage.test.tsx` |
+| T53 | El recorrido comprueba la ruta | 032 | CLAUDE | NO | n-a | `e2e/route-crawl.spec.ts` |
+| T54 | Auditar y aplicar T51, T52; recorrido de diagnóstico de nuevo; mutaciones de A, B, C | 029–032 | CLAUDE | NO | n-a | — |
+
+T36 se **reclasifica a `CLAUDE_ONLY` antes de ejecutarse**: su contrato lleva los nombres
+de las bases de QA, y el encargo pide no enviarlos. `DEEPSEEK CALLS` de T36 = 0.
+
+`analyze` de la ampliación: `BLOCKER` · `CRITICAL` · `CONTRADICTIONS` · `OWNER CONFLICT` = 0;
+`MATERIAL OQ` = 0; trazabilidad 100 %.
+
+Hallazgos del mismo recorrido que **no** se absorben (§ final): `GET /system/diagnostics` no
+exige sesión y devuelve la ruta de almacenamiento del servidor, contra su propio docstring.
+
+## 30. Implementación — el arnés
+
+| Fichero | Qué es |
+|---|---|
+| `qa/e2e_nombres.py` | puro: `RUN_ID`, nombre de la base, marca, nombre de aplicación. Solo lo que cumple el patrón entero es una base de corrida |
+| `qa/e2e_base.py` | la compuerta (`exigir_base_e2e`), crear, migrar y comprobar la cabeza, sembrar una sola vez y comprobar la línea base, eliminar y comprobar que no está, listar y purgar huérfanas, huella de las bases protegidas |
+| `qa/e2e_corrida.py` | el ciclo entero y sus procesos, con la limpieza en `finally` |
+| `qa/e2e-run.py` · `qa/e2e-bases.py` | las dos órdenes |
+| `e2e/global-setup.ts` | no vuelve a sembrar una corrida que ya trae su base sembrada |
+| `.gitignore` | `qa/e2e-runs/`, la evidencia local de cada corrida |
+
+```
+resources/backend/.venv/bin/python qa/e2e-run.py                       # la suite entera
+resources/backend/.venv/bin/python qa/e2e-run.py -- e2e/picking.spec.ts --trace retain-on-failure
+resources/backend/.venv/bin/python qa/e2e-bases.py listar | purgar [--confirmar]
+```
+
+Decisiones de implementación, todas dentro de lo clarificado:
+
+- **La base nace de `template0`**, con dueño, UTF-8 y UTC, y con un `COMMENT ON DATABASE`
+  que dice de qué corrida es, qué proceso la creó, en qué máquina y cuándo. Para eliminarla
+  hacen falta el patrón **y** esa marca; una base con nombre de corrida y sin marca no se toca.
+- **El backend se comprueba en ejecución**, no por configuración: el lanzador inicia sesión
+  por la API y exige que la sesión aparezca en la base de la corrida, y que todas las
+  conexiones con el nombre de aplicación de la corrida estén en ella. Si no, aborta.
+- **Los procesos de la corrida solo conocen su base**: `KONTROL_DB_URL` y `KONTROL_E2E_DB_URL`
+  se fijan, y `KONTROL_TEST_DB_URL` se quita, aunque el operador las tuviera puestas.
+- **Se eliminan solo las sesiones de la base de la corrida**, y solo si, con Vite y el
+  backend ya parados, queda alguien: `DROP DATABASE … WITH (FORCE)`, que PostgreSQL limita a
+  esa base. Se anota cuántas eran. En las corridas reales: 0.
+- **Huérfana** es la base con patrón y marca cuyo lanzador ya no existe en esta máquina. El
+  número de proceso se recicla: solo cuenta como lanzador el proceso que ya existía cuando
+  se creó la base. La purga detiene antes lo que la corrida dejó en marcha, que se reconoce
+  porque lleva su `RUN_ID` en el entorno.
+- **`kaud` y `ktest` no se tocan**: están fuera del patrón, están en la lista de protegidas,
+  y el lanzador compara su huella antes y después sin conectarse a ellas.
+- **Código de salida**: el de la suite; 70 si la preparación falló; 75 si la suite pasó y la
+  limpieza no; 130 si se interrumpió.
+- **Nada con usuario y clave en la salida**: consola, registros y manifiesto se tachan.
+- **Dos corridas a la vez en una máquina no están soportadas** (puertos 8000 y 5173): si
+  están ocupados, el lanzador no crea nada. También impide certificar con otra pila levantada.
+
+## 31. Pruebas y mutaciones
+
+| Suite | Casos | Dónde | Autor |
+|---|---|---|---|
+| `tests/test_e2e_nombres.py` | 76 | puras | DeepSeek (T32, un reintento) |
+| `tests/test_e2e_base_identidad.py` | 54 | puras, direcciones inventadas | Claude (T36 reclasificada) |
+| `tests/test_e2e_base_ciclo.py` | 23 | PostgreSQL real | Claude |
+| `tests/test_e2e_corrida.py` | 14 | PostgreSQL real, lanzador y backend de verdad | Claude |
+| `AuthContext.restauracion.test.tsx` | 3 | Vitest | Claude |
+| `ListasPrecioPage.test.tsx` · `DiagnosticoPage.test.tsx` | 3 · 4 | Vitest | DeepSeek (T51; T52 con un reintento) |
+
+DB-01..22 quedan cubiertas (§36). **Mutaciones: 29 de 29 en el arnés, 10 de 10 en el
+frontend** (`mutaciones.txt`), y una más de extremo a extremo: con el defecto de sesión
+reintroducido, el recorrido reforzado cae en la primera ruta (`/mi-licencia` → `/`). Un
+mutante sobrevivió en la primera pasada —la censura de credenciales estaba hecha dos veces
+y quitar una no se notaba—: se dejó una sola por sitio y se endureció la prueba.
+
+Y la muerte a la fuerza, de verdad (`muerte-a-la-fuerza.txt`): con `kill -9` al lanzador a media
+corrida, la base queda y el backend sigue respondiendo; `e2e-bases.py listar` la da por
+huérfana, con sus dos procesos; `purgar` sin confirmar no elimina nada; con `--confirmar`
+desaparecen la base, el backend y el estado.
+
+## 32. Resultados
+
+### Tres corridas globales consecutivas, cada una sobre su base (`corridas-globales.txt`)
+
+| Corrida | Resultado | Suite | Limpieza | Usuarios · reglas · almacenes al acabar | Tick más lento |
+|---|---|---|---|---|---|
+| 1 | **200 / 0 / 40** | 179 s | LIMPIA | 64 · 2 · 85 | 0,84 s |
+| 2 | **200 / 0 / 40** | 179 s | LIMPIA | 64 · 2 · 85 | 0,80 s |
+| 3 | **200 / 0 / 40** | 180 s | LIMPIA | 64 · 2 · 85 | 0,84 s |
+
+Las tres acaban en el mismo estado, hasta el megabyte: ninguna heredó nada. Backend: 0
+errores no controlados, 0 esperas de pool, 0 respuestas 500. Suite: 0 `ECONNRESET`. Al
+terminar no queda ninguna base de corrida en el servidor, y la huella de `kaud` y `ktest`
+tomada antes y después es idéntica.
+
+### Notificaciones (FR-021)
+
+| | En `kaud` (2026-10-01) | En base nueva |
+|---|---|---|
+| `RULES_AT_START` | 26–28 | **0** |
+| `RULES_BEFORE_NOTIFICATIONS_TEST` | 28 | **2** |
+| `USERS_AT_START` | 868 | **5** |
+| `USERS_BEFORE_NOTIFICATIONS_TEST` | 868 | **29–32** |
+| `TICK_DURATION` del primer tick con trabajo (43 hechos) | **33,09 s** | **0,60–0,70 s** |
+| `TICK_DURATION` del más lento de la corrida | 33,09 s | 0,80–0,84 s |
+| `notifications:142` | cae a los 30 s | pasa en 5 s |
+
+Clasificación: **`INTER-RUN QA ACCUMULATION`**. Dentro de una corrida el tick no crece: con
+64 usuarios y 2 reglas al final, el más lento tarda menos de un segundo. No hay acumulación
+intra-corrida que investigar.
+
+### Recorrido de rutas (FR-022) — §29
+
+Con los tres arreglos y la comprobación de ruta: `route-crawl` sola, 2 de 2; en las tres
+corridas globales, 3 de 3. Y ahora comprueba las 96 rutas de verdad.
+
+### `empresas-busqueda:58` (FR-022)
+
+Pasa en las cuatro corridas globales sobre base nueva (2,4–2,7 s). El login en blanco del
+2026-10-01 **no se ha reproducido** —ni entonces en 800 cargas aisladas, ni ahora— y su
+causa sigue sin demostrar. Queda como deuda propia (§34), con una diferencia: cada corrida
+guarda ya el registro de Vite, el del backend y, si algo cae, la traza del navegador.
+
+### Backend y frontend (`backend-y-frontend.txt`)
+
+PostgreSQL: 1 971 pasan · 27 omitidas · 37 fallan; el conjunto de fallos es el de `c94eed4`
+y hay 167 pruebas nuevas. SQLite: 986 · 1 005 · 44: los 43 de siempre y uno más,
+`test_concurrencia_de_codigo_resuelta_por_constraint`, que es **preexistente e
+intermitente solo en SQLite** —sola falla 9 de 20 en `42cd793`, dos ciclos atrás, y pasa 5
+de 5 en PostgreSQL—; este ciclo no toca `app/` ni esa suite. Tras la corrida en PostgreSQL:
+0 schemas temporales, 0 conexiones, 0 bases de corrida. Frontend: 441 pruebas, `eslint` y
+`tsc` limpios.
+
+## 33. `E2E-FLAKY-BAJO-CARGA`, fallo por fallo, después de la base nueva
+
+| Fallo | Causa | Qué se hizo | En base nueva (4 corridas globales) |
+|---|---|---|---|
+| `picking:192`, `:208`, `:240` · `pick-execution:297` · `putaway:187` (caducidad) | N+1 del listado de almacenes × almacenes acumulados | corregido en producto (`c94eed4`) | pasan en 3–4 s |
+| `putaway:405` | la prueba contaba las listas de toda la empresa | corregida la prueba (`c94eed4`) | pasa en 0,8 s |
+| `treasury:486` | la prueba esperaba `CLOSED`, que está en `PRE_CLOSED` | corregida la prueba (`c94eed4`) | pasa en 5,5 s |
+| `notifications:142` | reglas y usuarios acumulados entre corridas: tick de 33 s | **base nueva por corrida** | tick de 0,6–0,8 s; pasa en 5 s |
+| `putaway:187` («did not find some options») | corte en 500 del desplegable × almacenes acumulados | base nueva: 85 almacenes por corrida. El corte sigue en el producto (`ALMACENES-DESPLEGABLES-TRUNCADOS`, abierta) | pasa en 3,3 s |
+| `route-crawl` sin H1 | dos pantallas que caían al pintarse, visibles solo cuando la ruta ganaba una carrera de la restauración de sesión; y un recorrido que no miraba en qué ruta estaba | **corregidos los tres defectos de producto y la prueba** (§29) | pasa, y recorre de verdad las 96 rutas |
+| `inventory-confirmation` — `ECONNRESET` | keep-alive de 5 s en los dos extremos | **explicado y reproducido; no corregido** → `BACKEND-KEEPALIVE-5S`, deuda propia, decisión de despliegue | 0 apariciones |
+| `empresas-busqueda:58` — login en blanco | **sin causa demostrada** | deuda propia, `E2E-PANTALLA-SIN-PINTAR`, reducida a este único caso | 0 apariciones; pasa en 2,5 s |
+| Seis pruebas a la vez a los 30 s | mi experimento de 40 conexiones (ciclo anterior) | no se repite el experimento; el mecanismo, en `LICENCIA-MIDDLEWARE-BD-EN-EL-BUCLE` | 0 esperas de pool |
+
+## 34. Deudas
+
+| Deuda | Estado tras este ciclo |
+|---|---|
+| **`E2E-BASE-QA-ACUMULA`** | **CLOSED / CONVERGED** — decisión de la dueña implementada: base nueva por corrida |
+| **`E2E-NOTIFICACIONES-REGLAS-VIVAS`** | **CLOSED** — era acumulación entre corridas; en base nueva no existe. En `kaud` las reglas siguen ahí: es una base de QA manual |
+| **`E2E-FLAKY-BAJO-CARGA`** | **CLOSED / CONVERGED** (§35) |
+| `E2E-PANTALLA-SIN-PINTAR` | **OPEN**, reducida: queda solo el login en blanco del 2026-10-01, sin causa. El caso de `route-crawl` está explicado y corregido |
+| `BACKEND-KEEPALIVE-5S` | **OPEN** — sin tocar, como pedía el encargo |
+| `ALMACENES-DESPLEGABLES-TRUNCADOS` | **OPEN** — la base nueva no la cierra: el corte sigue en nueve pantallas |
+| `LICENCIA-MIDDLEWARE-BD-EN-EL-BUCLE` · `PICKLIST-DUPLICADA-500` · `LISTADOS-SIN-TOPE` · `ENTORNO-SIN-CLAMSCAN` | **OPEN** — sin tocar |
+| `TEST-SCHEMAS-PG-SIN-LIMPIEZA` | sigue **CLOSED / CONVERGED** |
+
+Nuevas, encontradas y **no absorbidas**:
+
+| Deuda | Qué |
+|---|---|
+| **`DIAGNOSTICO-SIN-SESION`** | `GET /system/diagnostics` no exige sesión —su única dependencia es `get_db`— y responde identificador de instalación, modo y vigencia de licencia, y la **ruta de almacenamiento** del servidor, contra su propio docstring («no expone rutas internas»). Seguridad: decisión de la dueña |
+| **`INSTALACION-KEY-REFERENCE-120`** | `installations.key_reference` es `String(120)` y guarda la ruta de la clave de instalación: con un volumen de ruta larga, el alta de la instalación falla con `StringDataRightTruncation` |
+| **`MIGRACIONES-URL-CON-PORCENTAJE`** | `alembic/env.py` pasa `KONTROL_DB_URL` por `configparser`: una URL con «%» —una contraseña con caracteres codificados— rompe `alembic upgrade head`, que es lo primero que hace el contenedor al arrancar |
+| **`ALMACENES-CARRERA-SQLITE-HILOS`** | `test_concurrencia_de_codigo_resuelta_por_constraint` es intermitente en SQLite (9 de 20 sola, ya en `42cd793`); en PostgreSQL pasa |
+| **`E2E-CUARENTA-OMITIDAS`** | 40 de las 240 pruebas E2E se omiten porque exigen `KONTROL_E2E_USER`, que ninguna corrida de certificación ha definido: accesibilidad y documentos no se certifican |
+
+## 35. Veredicto
+
+**`E2E-BASE-QA-ACUMULA`: cerrada.** Cada corrida E2E certificable crea su base, la migra a
+la cabeza, la siembra, levanta contra ella backend y Vite, corre la suite y lo elimina todo,
+pase o falle; lo que queda tras una muerte a la fuerza se lista y se purga. `kaud` sale de
+la certificación y no se toca.
+
+**`E2E-FLAKY-BAJO-CARGA`: cerrada**, con la condición que fijó la dueña (FR-028): no queda
+una inestabilidad agregada sin causa.
+
+- **Todo lo que tiene causa demostrada y arreglo propio está corregido**: en producto, el
+  N+1 del listado de almacenes, la restauración de sesión que perdía la ruta y las dos
+  pantallas que caían al pintarse; en las pruebas, las dos carreras y el recorrido de
+  rutas, que ahora comprueba lo que decía comprobar; y en el arnés, la acumulación entre
+  corridas, que desaparece con la base nueva.
+- **Uno está explicado y sin corregir**, en su propia deuda: `BACKEND-KEEPALIVE-5S`. Mientras
+  esté abierta, una corrida puede recibir un `ECONNRESET` puntual: se sabrá qué es.
+- **Uno sigue sin causa**, en su propia deuda: el login en blanco, visto una vez y no
+  reproducido en más de 800 cargas ni en cuatro corridas globales sobre base nueva.
+
+Tres corridas globales consecutivas desde base nueva: 200 / 0 / 40 las tres; y una cuarta el
+2026-10-06, en un clúster reaprovisionado tras un reinicio y sin `kaud`, igual.
+
+Lo que esta deuda era, al final: una base que crecía sin límite destapando caminos cuyo
+coste dependía de su tamaño, dos pruebas con carreras, y —lo que la base vieja no dejaba
+ver— dos pantallas rotas detrás de una restauración de sesión que perdía la ruta.
+
+| | |
+|---|---|
+| `STATUS` | **`CONVERGED`** |
+| Corridas globales desde base nueva | 5 (1 exploratoria, 3 de certificación, 1 el 2026-10-06 tras un reinicio que vació `/tmp` y se llevó `kaud` y `ktest`): la exploratoria destapó `route-crawl`; las 4 finales, 200/0/40 |
+| Reintentos, esperas fijas, omisiones, serialización, menos trabajadores, más tiempo | 0 |
+| Esquema, migraciones, índices | 0 |
+| Producto | frontend: `AuthContext.tsx`, `ListasPrecioPage.tsx`, `DiagnosticoPage.tsx`, `api/types.ts`. Backend: 0 |
+| `kaud` · `ktest` | intactas (huella idéntica) |
+
+## 36. `analyze` final y trazabilidad
+
+| Requisito | Prueba o evidencia | |
+|---|---|---|
+| 001–003 base nueva, `RUN_ID`, nombre | E2ENOM-01..12, E2ECICLO-01..03 | ✅ |
+| 004, 015 compuerta y purga | E2EID-01..18, E2ECICLO-13..15, 18..21 (DB-01..04, 15) | ✅ |
+| 005, 009 `kaud` | E2EID-03, 04; huella antes/después; E2ECORRIDA-01, 13 (DB-02, 17, 18) | ✅ |
+| 006 migraciones | E2ECICLO-04..07 (DB-06) | ✅ |
+| 007 siembra | E2ECICLO-08..10 (DB-07); `global-setup.ts` | ✅ |
+| 008 backend contra su base | E2ECORRIDA-01, 06 (DB-08) | ✅ |
+| 010–012 limpieza | E2ECORRIDA-01..05, 12; E2ECICLO-11, 12 (DB-09..13, 21) | ✅ |
+| 013 código de salida | E2ECORRIDA-02 (DB-10, 20) | ✅ |
+| 014 huérfanas | E2ECICLO-16, 17, 19..22 (DB-14, 15) | ✅ |
+| 016 evidencia sin secretos | E2ECORRIDA-01, 03 (DB-19); manifiestos | ✅ |
+| 017 aislamiento | E2ECORRIDA-07 (DB-16); tres corridas con el mismo estado final | ✅ |
+| 018 datos propios | sin cambio: las pruebas siguen usando su marca | ✅ |
+| 019 sin reintentos ni esperas | `playwright.config.ts` sin cambios; E2ECORRIDA-14 | ✅ |
+| 020–022 reevaluación | §32, §33 | ✅ |
+| 023–025 sin esquema ni migraciones; `TEST-SCHEMAS` cerrada | diff; residuos 0 | ✅ |
+| 026 dos corridas desde base nueva | tres | ✅ |
+| 027 todo fallo atribuido | §33; el de SQLite, §32 | ✅ |
+| 028 cierre sin inestabilidad agregada | §35 | ✅ |
+| 029 recargar no cambia de ruta | RESTAURA-01..03; `route-crawl` | ✅ |
+| 030 Listas de precios | LM-01..03 | ✅ |
+| 031 Diagnóstico | DIAG-01..04 | ✅ |
+| 032 el recorrido comprueba la ruta | mutante de extremo a extremo | ✅ |
+| DB-22 simultaneidad | E2ECORRIDA-08, 11: nombres aislados; con el puerto ocupado no se crea nada | ✅ |
+
+`BLOCKER` · `CRITICAL` · `CONTRADICTIONS` · `OWNER CONFLICT` = 0 · `MATERIAL OQ` = 0 ·
+`UNKNOWN` = 1 fallo, en deuda propia · requisitos y tareas huérfanas = 0 · trazabilidad 100 %.
+
+Desviaciones mías, dichas: el encargo de T32 llevaba los nombres `kaud` y `ktest` como
+literales de prueba —sin servidor, puerto, rol ni credenciales—, y debieron ser inventados;
+dos rechazos de parche fueron por errores de mis encargos (una línea en blanco que no
+dicté bien, un `beforeEach` que devolvía una función); una primera reproducción manual
+contra `kaud` estaba mal planteada y no demostraba nada, y se descartó; al detener esa pila
+manual, dos órdenes mías se mataron a sí mismas y dejaron Vite vivo unos minutos.
+
+Orquestación (`orquestacion.txt`): 20 tareas · 16 `CLAUDE_ONLY` · 4 `DEEPSEEK_ELIGIBLE`,
+las cuatro ejecutadas por DeepSeek (`deepseek-v4-flash`) · 6 llamadas · 2 reintentos · 4
+parches aceptados, 2 rechazados, 0 retocados · 18 930 / 14 378 tokens · $0,006570 · puente:
+194 581 tokens.

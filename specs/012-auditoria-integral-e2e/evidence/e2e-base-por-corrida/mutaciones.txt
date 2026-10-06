@@ -1,0 +1,64 @@
+# E2E-BASE-QA-ACUMULA · mutaciones · 2026-10-01
+# cada mutante: se aplica, se corren las suites que deben matarlo, se restaura. GOOD -> PASS · MUTATED -> FAIL · RESTORED -> PASS
+
+## 1 · ciclo de vida de la base efímera (qa/e2e_nombres.py, qa/e2e_base.py, qa/e2e_corrida.py) · pasada completa sobre el código final
+# suites: tests/test_e2e_nombres.py, test_e2e_base_identidad.py (puras) · test_e2e_base_ciclo.py, test_e2e_corrida.py (PostgreSQL real, lanzador y backend de verdad)
+GOOD: rc=0
+M-01   KILLED   se quita la comprobación del patrón del nombre [e2e_base.py] · caen 1: E2EID-02
+M-02   KILLED   el patrón acepta cualquier nombre que empiece por «k» y las protegidas por defecto se vacían [e2e_nombres.py] · caen 9: E2EID-01, E2EID-02, E2EID-08, E2EID-09, E2EID-10, E2EID-13, E2EID-14, E2ENOM-05…
+M-02b  KILLED   kaud y ktest dejan de estar protegidas [e2e_base.py] · caen 1: E2EID-12
+M-03   KILLED   una base que ya existe se reutiliza en silencio [e2e_base.py] · caen 1: E2ECICLO-03
+M-04   KILLED   se elimina sin mirar la marca [e2e_base.py] · caen 2: E2ECICLO-14, E2ECICLO-15
+M-04b  KILLED   vale la marca de cualquier corrida [e2e_base.py] · caen 1: E2ECICLO-15
+M-05   KILLED   no se comprueba la cabeza tras migrar [e2e_base.py] · caen 1: E2ECICLO-05
+M-05b  KILLED   se migra aunque el árbol tenga varias cabezas [e2e_base.py] · caen 1: E2ECICLO-06
+M-06   KILLED   se siembra sin mirar si la base ya tiene datos [e2e_base.py] · caen 1: E2ECICLO-09
+M-06b  KILLED   no se comprueba la línea base tras sembrar [e2e_base.py] · caen 1: E2ECICLO-10
+M-07   KILLED   la base no se elimina si la suite falla [e2e_corrida.py] · caen 1: E2ECORRIDA-02
+M-08   KILLED   limpiar bien convierte un fallo en acierto [e2e_corrida.py] · caen 9: E2ECORRIDA-02, E2ECORRIDA-03, E2ECORRIDA-04, E2ECORRIDA-05, E2ECORRIDA-06, E2ECORRIDA-08, E2ECORRIDA-09, E2ECORRIDA-10…
+M-09   KILLED   la base no se elimina si falla la preparación [e2e_corrida.py] · caen 5: E2ECORRIDA-03, E2ECORRIDA-04, E2ECORRIDA-05, E2ECORRIDA-06, E2ECORRIDA-12
+M-10   KILLED   purgar no exige confirmación [e2e_base.py] · caen 1: E2ECICLO-19
+M-11   KILLED   purgar también elimina las bases de un lanzador vivo [e2e_base.py] · caen 1: E2ECICLO-20
+M-11b  KILLED   un número de proceso reciclado cuenta como lanzador vivo [e2e_base.py] · caen 1: E2ECICLO-17
+M-12   KILLED   al eliminar se cortan las sesiones de todo el servidor [e2e_base.py] · caen 1: E2ECICLO-12
+M-13   KILLED   el backend hereda KONTROL_DB_URL en lugar de usar la base de la corrida [e2e_corrida.py] · caen 6: E2ECORRIDA-01, E2ECORRIDA-02, E2ECORRIDA-06, E2ECORRIDA-07, E2ECORRIDA-12, E2ECORRIDA-13
+M-13b  KILLED   no se comprueba que la sesión abierta por la API esté en la base de la corrida [e2e_corrida.py] · caen 1: E2ECORRIDA-06
+M-14   KILLED   se acepta un entorno prod [e2e_base.py] · caen 2: E2ECORRIDA-10, E2EID-07
+M-15   KILLED   el servidor no se compara con la lista de permitidos [e2e_base.py] · caen 1: E2EID-09
+M-16   KILLED   no se comprueban los puertos antes de crear la base [e2e_corrida.py] · caen 1: E2ECORRIDA-08
+M-17   KILLED   la consola enseña las credenciales de una URL [e2e_corrida.py] · caen 2: E2ECORRIDA-01, E2ECORRIDA-03
+M-17b  KILLED   los registros de la corrida conservan las credenciales de una URL [e2e_corrida.py] · caen 1: E2ECORRIDA-01
+M-17c  KILLED   el manifiesto se escribe sin tachar credenciales [e2e_corrida.py] · caen 1: E2ECORRIDA-03
+M-18   KILLED   los procesos de la corrida conservan KONTROL_TEST_DB_URL [e2e_corrida.py] · caen 3: E2ECORRIDA-01, E2ECORRIDA-07, E2ECORRIDA-13
+M-19   KILLED   una corrida interrumpida no detiene la suite [e2e_corrida.py] · caen 1: E2ECORRIDA-12
+M-20   KILLED   purgar no detiene los procesos que dejó la corrida [e2e_base.py] · caen 1: E2ECICLO-22
+M-21   KILLED   el estado efímero no se elimina [e2e_corrida.py] · caen 8: E2ECORRIDA-01, E2ECORRIDA-02, E2ECORRIDA-03, E2ECORRIDA-04, E2ECORRIDA-05, E2ECORRIDA-06, E2ECORRIDA-07, E2ECORRIDA-12
+tras los mutantes: servidor localhost:55432 · bases de corrida: 0
+RESTORED: rc=0 · sha e2e_base.py=igual e2e_corrida.py=igual e2e_nombres.py=igual
+MUTANTES=29 MUERTOS=29 VIVOS=0
+
+# En una primera pasada sobrevivió un mutante: la censura de credenciales estaba hecha dos veces (al copiar la salida de la
+# suite y al cerrar la corrida), y quitar una no cambiaba nada observable. Se dejó una sola por sitio —consola, registros,
+# manifiesto—, la prueba del fallo de migración pasó a llevar una URL con clave en el mensaje de error, y se repitió todo.
+
+## 2 · los tres arreglos de frontend (AuthContext, ListasPrecioPage, DiagnosticoPage) · Vitest
+GOOD: rc=0
+F-01 KILLED   la restauración se da por lista sin esperar al usuario (el defecto original) [AuthContext.tsx] · caen: RESTAURA-01, RESTAURA-03
+F-02 KILLED   la renovación no guarda la carga del usuario que puso en marcha [AuthContext.tsx] · caen: RESTAURA-01, RESTAURA-03
+F-03 KILLED   la sesión nunca se da por restaurada [AuthContext.tsx] · caen: RESTAURA-01, RESTAURA-02, RESTAURA-03
+F-04 KILLED   las monedas se leen como array (el defecto original) [ListasPrecioPage.tsx] · caen: LM-01, LM-02
+F-05 KILLED   las monedas se piden aunque no haya empresa [ListasPrecioPage.tsx] · caen: LM-03
+F-06 KILLED   el diagnóstico vuelve a recorrer `services` (el defecto original) [DiagnosticoPage.tsx] · caen: DIAG-01, DIAG-02
+F-07 KILLED   la base de datos caída se pinta como correcta [DiagnosticoPage.tsx] · caen: DIAG-04
+F-08 KILLED   una licencia sin activar se pinta como correcta [DiagnosticoPage.tsx] · caen: DIAG-04
+F-09 KILLED   falta la fila del identificador [DiagnosticoPage.tsx] · caen: DIAG-01, DIAG-02, DIAG-04
+F-10 KILLED   una instalación sin identidad se pinta vacía [DiagnosticoPage.tsx] · caen: DIAG-02, DIAG-04
+RESTORED: rc=0 · sha AuthContext.tsx=igual ListasPrecioPage.tsx=igual DiagnosticoPage.tsx=igual
+MUTANTES=10 MUERTOS=10 VIVOS=0
+
+## 3 · de extremo a extremo: el defecto de sesión reintroducido (F-01) frente al recorrido de rutas reforzado, sobre base nueva
+    Error: ruta /mi-licencia: la aplicación acabó en otra ruta
+    Expected: "/mi-licencia"
+    Received: "/"
+  1 failed
+(antes de reforzarlo, ese mismo recorrido pasaba con 81 de 96 rutas acabando en Inicio)

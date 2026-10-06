@@ -1,0 +1,39 @@
+# E2E-BASE-QA-ACUMULA · backend y frontend tras el cambio · 2026-10-01
+
+## dirigidas
+tests/test_e2e_nombres.py (76) · test_e2e_base_identidad.py (54): puras, verdes en SQLite y PostgreSQL
+tests/test_e2e_base_ciclo.py (23) · test_e2e_corrida.py (14): PostgreSQL real, verdes; en SQLite se omiten (el ciclo de vida de una base solo existe en PostgreSQL)
+ruff check qa/e2e_nombres.py qa/e2e_base.py qa/e2e_corrida.py qa/e2e-run.py qa/e2e-bases.py tests/test_e2e_*.py: All checks passed
+
+## suite completa, SQLite · .venv/bin/python -m pytest tests -rfE -p no:cacheprovider
+44 failed, 986 passed, 1005 skipped, 7 warnings in 113.15s (0:01:53)
+línea base c94eed4: 43 failed, 857 passed, 968 skipped
+conjunto de fallos frente a la base: los mismos 43 (documentos sin clamscan; rotación de sesión en SQLite) + 1:
+  tests/test_warehouse_structure.py::test_concurrencia_de_codigo_resuelta_por_constraint
+  dos hilos contra SQLite; en uno la violación de unicidad sube como sqlite3.DatabaseError y no como IntegrityError, y la prueba recoge un solo resultado.
+  atribución: PREEXISTENTE e intermitente, solo en SQLite. Este ciclo no toca app/ ni esa suite (git diff c94eed4 vacío).
+    sola en SQLite, árbol actual, 25 veces: pasa 8 · falla 17
+    sola en SQLite, exportación de 42cd793 (dos ciclos atrás), 20 veces: pasa 11 · falla 9
+    sola en PostgreSQL, 5 veces: pasa 5
+  se registra como ALMACENES-CARRERA-SQLITE-HILOS; no se absorbe.
+pruebas nuevas que pasan en SQLite: 130 (76 + 54) menos la intermitente: 857 → 986
+
+## suite completa, PostgreSQL (ktest) · KONTROL_TEST_DB_URL=… .venv/bin/python -m pytest tests -rfE -p no:cacheprovider
+37 failed, 1971 passed, 27 skipped, 6 warnings in 762.01s (0:12:42)
+línea base c94eed4: 37 failed, 1804 passed, 27 skipped · conjunto de fallos: IDÉNTICO (diff vacío) · pruebas nuevas que pasan: 167 (76 + 54 + 23 + 14)
+clasificación de los 37: PREEXISTING_ENVIRONMENT_CLAMSCAN · fallos nuevos por este delta: 0
+
+## residuos tras la corrida completa en PostgreSQL
+base ......................... ktest
+tamaño ....................... 143 MB
+relaciones (pg_class) ........ 413
+de ello, catálogo ............ 144 MB
+schemas temporales ........... 0 (con marca del arnés: 0)
+conexiones a la base ......... 0 {} de 100
+conexiones del arnés ......... 0
+bases de corrida E2E en el servidor: 0 (qa/e2e-bases.py listar) — las 37 pruebas de ciclo y de corrida crean y eliminan las suyas
+TEST-SCHEMAS-PG-SIN-LIMPIEZA: sigue cerrada
+
+## frontend
+vitest run: 30 ficheros, 441 pruebas, todas verdes (10 nuevas: RESTAURA-01..03, LM-01..03, DIAG-01..04)
+eslint . --max-warnings 0: limpio · tsc -b --noEmit: 0

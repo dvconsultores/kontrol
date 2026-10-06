@@ -1,0 +1,308 @@
+"""E2ECORRIDA · Una corrida entera: lo que se crea se elimina, pase lo que pase (FR-054-E2EDB-008..017).
+
+El lanzador de verdad (`qa/e2e_corrida.py`), con su backend de verdad, contra el servidor
+PostgreSQL de `KONTROL_TEST_DB_URL`. En lugar de Playwright corre una orden mínima: lo que se
+prueba no es la suite sino el ciclo —la base nace, el backend escribe en ella, y desaparece
+cuando la corrida acaba bien, cuando acaba mal y cuando no llega a empezar—.
+
+Necesita el puerto del backend libre: en una máquina cabe una corrida a la vez.
+"""
+
+from __future__ import annotations
+
+import io
+import json
+import os
+import shutil
+import signal
+import socket
+import sys
+import tempfile
+import threading
+from pathlib import Path
+
+import pytest
+from sqlalchemy import text
+from sqlalchemy.engine import make_url
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "qa"))
+
+import e2e_base as b  # noqa: E402
+import e2e_corrida as k  # noqa: E402
+
+URL_DE_PRUEBA = os.environ.get("KONTROL_TEST_DB_URL", "")
+pytestmark = pytest.mark.skipif(not URL_DE_PRUEBA.startswith("postgresql"),
+                                reason="una corrida E2E solo existe sobre PostgreSQL")
+
+#: Lo que corre en lugar de la suite: comprueba que su entorno apunta a la base de su corrida.
+MIRA_SU_BASE = (
+    "import os, urllib.request\n"
+    "from sqlalchemy import create_engine, text\n"
+    "run = os.environ['KONTROL_E2E_RUN_ID']\n"
+    "assert os.environ['KONTROL_DB_URL'] == os.environ['KONTROL_E2E_DB_URL']\n"
+    "assert 'KONTROL_TEST_DB_URL' not in os.environ\n"
+    "with create_engine(os.environ['KONTROL_E2E_DB_URL']).connect() as c:\n"
+    "    assert c.execute(text('select current_database()')).scalar_one() == 'kontrol_e2e_test_' + run\n"
+    "    assert c.execute(text('select count(*) from users')).scalar_one() == 5\n"
+    "    {extra}\n"
+    "assert urllib.request.urlopen(os.environ['KONTROL_E2E_API'] + '/health/ready', timeout=10).status == 200\n"
+    "print('postgresql://usuario:secreto@host:5432/test_db')\n"
+)
+
+
+def _servidor() -> b.Servidor:
+    mantenimiento = make_url(URL_DE_PRUEBA).set(database="postgres").render_as_string(hide_password=False)
+    return b.Servidor(admin_url=mantenimiento, duena_url=mantenimiento)
+
+
+def _existe(nombre: str) -> bool:
+    admin = b.motor_administrativo(_servidor())
+    try:
+        with admin.connect() as c:
+            return bool(c.execute(text("select count(*) from pg_database where datname = :n"), {"n": nombre}).scalar())
+    finally:
+        admin.dispose()
+
+
+@pytest.fixture
+def entorno(tmp_path):
+    """El entorno de una corrida de prueba: estado en una ruta corta, evidencia en la carpeta de la prueba.
+
+    Lleva a propósito tres variables que apuntan a otra base: la corrida tiene que ignorarlas.
+    """
+    estado = Path(tempfile.mkdtemp(prefix="ke2e-", dir="/tmp"))
+    env = {clave: valor for clave, valor in os.environ.items()}
+    env.update({
+        "KONTROL_ENVIRONMENT": "local",
+        "KONTROL_E2E_PG_HOSTS": (make_url(URL_DE_PRUEBA).host or "localhost").replace("127.0.0.1", "localhost"),
+        "KONTROL_E2E_STATE_DIR": str(estado),
+        "KONTROL_E2E_EVIDENCE_DIR": str(tmp_path / "evidencia"),
+        "KONTROL_TEST_DB_URL": URL_DE_PRUEBA,
+        "KONTROL_DB_URL": URL_DE_PRUEBA,
+        "KONTROL_E2E_DB_URL": URL_DE_PRUEBA,
+    })
+    yield env
+    shutil.rmtree(estado, ignore_errors=True)
+
+
+@pytest.fixture
+def puerto_libre():
+    if k._puerto_ocupado("127.0.0.1", k.PUERTO_BACKEND):
+        pytest.skip(f"el puerto {k.PUERTO_BACKEND} está ocupado: hay otra pila en marcha")
+
+
+def _corrida(entorno, codigo_python: str, **kwargs) -> tuple[k.Corrida, io.StringIO]:
+    salida = io.StringIO()
+    corrida = k.Corrida(_servidor(), orden=[sys.executable], argumentos=["-c", codigo_python],
+                        sin_frontend=True, entorno=entorno, salida=salida, **kwargs)
+    return corrida, salida
+
+
+def _manifiesto(corrida: k.Corrida) -> dict:
+    return json.loads((corrida.evidencia / "manifest.json").read_text())
+
+
+def _sin_rastro(corrida: k.Corrida) -> None:
+    assert not _existe(corrida.base), "la base de la corrida sigue existiendo"
+    assert not corrida.estado.exists(), "el estado efímero de la corrida sigue en disco"
+    assert all(p.poll() is not None for p in corrida.procesos.values()), "queda un proceso de la corrida en marcha"
+    assert not k._puerto_ocupado("127.0.0.1", k.PUERTO_BACKEND), "el backend de la corrida sigue escuchando"
+    assert b.procesos_de(corrida.run_id) == []
+
+
+# ---------------------------------------------------------------- DB-08, DB-09, DB-17..19
+def test_e2ecorrida_01_una_corrida_verde_usa_su_base_y_no_deja_nada(entorno, puerto_libre):
+    corrida, salida = _corrida(entorno, MIRA_SU_BASE.format(extra="pass"))
+    assert corrida.ejecutar() == 0
+    _sin_rastro(corrida)
+
+    m = _manifiesto(corrida)
+    assert m["base"] == corrida.base == "kontrol_e2e_test_" + corrida.run_id
+    assert m["backend"] == {"base": corrida.base, "sesiones": 1}
+    assert m["migracion"]["actual"] == m["migracion"]["esperada"] and m["migracion"]["cabezas"] == 1
+    assert m["siembra"]["linea_base"] == b.LINEA_BASE and len(m["siembra"]["version"]) == 16
+    assert m["suite"]["codigo"] == 0 and m["codigo_de_salida"] == 0
+    assert m["limpieza"]["base"] == {"estado": "ELIMINADA", "cortadas": 0} and m["limpieza"]["resultado"] == "LIMPIA"
+    assert m["medidas"]["usuarios"] == 5 and m["medidas"]["almacenes"] == 0
+    assert m["fases"] == ["comprobar", "crear base", "migrar", "sembrar", "backend",
+                          "comprobar la base del backend", "suite", "limpiar"]
+    # La base de las pruebas de backend, protegida: nadie se conectó a ella ni la escribió.
+    de_prueba = make_url(URL_DE_PRUEBA).database
+    assert de_prueba in m["protegidas_antes"] and m["protegidas_sin_cambios"] is True
+
+    # Ni la consola ni lo que queda escrito llevan una URL con usuario y clave.
+    escrito = salida.getvalue() + "".join(p.read_text(errors="replace")
+                                          for p in corrida.evidencia.iterdir() if p.is_file())
+    assert "secreto" not in escrito and k.URL_CON_CREDENCIALES.search(escrito) is None
+    assert "://***@host:5432/test_db" in salida.getvalue()
+    assert "://***@host:5432/test_db" in (corrida.evidencia / "suite.log").read_text()
+
+
+# ---------------------------------------------------------------- DB-10, DB-20
+def test_e2ecorrida_02_si_la_suite_falla_la_base_desaparece_y_el_codigo_es_el_de_la_suite(entorno, puerto_libre):
+    corrida, _ = _corrida(entorno, "import sys; sys.exit(3)")
+    assert corrida.ejecutar() == 3
+    _sin_rastro(corrida)
+    m = _manifiesto(corrida)
+    assert m["suite"]["codigo"] == 3 and m["codigo_de_salida"] == 3
+    assert m["limpieza"]["resultado"] == "LIMPIA" and m["limpieza"]["base"]["estado"] == "ELIMINADA"
+
+
+# ---------------------------------------------------------------- DB-11, DB-12, DB-13
+def test_e2ecorrida_03_si_falla_la_migracion_la_base_desaparece(entorno, puerto_libre, monkeypatch):
+    def rota(*_a, **_k):
+        # Un error de migración suele traer la URL de la base, con su clave, en el mensaje.
+        raise b.CicloDeBaseRoto("alembic upgrade head terminó con código 1 en postgresql://usuario:secreto@host:5432/test_db")
+
+    monkeypatch.setattr(b, "migrar", rota)
+    corrida, salida = _corrida(entorno, "raise SystemExit(0)")
+    assert corrida.ejecutar() == k.SALIDA_PREPARACION
+    assert corrida.creada is True
+    _sin_rastro(corrida)
+    m = _manifiesto(corrida)
+    assert "suite" not in m and "alembic" in m["error"] and m["limpieza"]["base"]["estado"] == "ELIMINADA"
+    assert "backend" not in corrida.procesos
+    assert "FALLO" in salida.getvalue()
+    # El error queda escrito y dicho, sin la clave.
+    escrito = (corrida.evidencia / "manifest.json").read_text()
+    assert "://***@host:5432/test_db" in m["error"] and "secreto" not in escrito
+    assert "://***@host:5432/test_db" in salida.getvalue() and "secreto" not in salida.getvalue()
+
+
+def test_e2ecorrida_04_si_falla_la_siembra_la_base_desaparece(entorno, puerto_libre, monkeypatch):
+    def rota(*_a, **_k):
+        raise b.CicloDeBaseRoto("la siembra terminó con código 1")
+
+    monkeypatch.setattr(b, "sembrar", rota)
+    corrida, _ = _corrida(entorno, "raise SystemExit(0)")
+    assert corrida.ejecutar() == k.SALIDA_PREPARACION
+    _sin_rastro(corrida)
+    m = _manifiesto(corrida)
+    assert m["migracion"]["cabezas"] == 1 and "siembra" not in m and "suite" not in m
+
+
+def test_e2ecorrida_05_si_el_backend_no_arranca_se_detiene_y_la_base_desaparece(entorno, puerto_libre, monkeypatch):
+    def nunca(self, nombre, url, limite=60.0):
+        raise b.CicloDeBaseRoto(f"{nombre} no respondió")
+
+    monkeypatch.setattr(k.Corrida, "esperar_salud", nunca)
+    corrida, _ = _corrida(entorno, "raise SystemExit(0)")
+    assert corrida.ejecutar() == k.SALIDA_PREPARACION
+    assert "backend" in corrida.procesos, "la prueba no llegó a arrancar el backend"
+    _sin_rastro(corrida)
+    assert _manifiesto(corrida)["limpieza"]["backend"].startswith("detenido")
+
+
+def test_e2ecorrida_06_si_el_backend_escribe_en_otra_base_la_corrida_se_aborta(entorno, puerto_libre, monkeypatch):
+    monkeypatch.setattr(k.Corrida, "_sesiones", lambda self: 0)  # la sesión de la API «no aparece» en la base
+    corrida, _ = _corrida(entorno, "raise SystemExit(0)")
+    assert corrida.ejecutar() == k.SALIDA_PREPARACION
+    _sin_rastro(corrida)
+    m = _manifiesto(corrida)
+    assert "otra base" in m["error"] and "suite" not in m
+
+
+# ---------------------------------------------------------------- DB-16
+def test_e2ecorrida_07_la_segunda_corrida_no_ve_lo_que_dejo_la_primera(entorno, puerto_libre):
+    deja = MIRA_SU_BASE.format(
+        extra="c.execute(text('create table rastro_de_la_corrida_a (x int)')); "
+              "c.execute(text(\"update tenants set name = 'tocado por A' where code = 'DEMO'\")); c.commit()")
+    busca = MIRA_SU_BASE.format(
+        extra="assert c.execute(text(\"select to_regclass('public.rastro_de_la_corrida_a')\")).scalar_one() is None; "
+              "assert c.execute(text(\"select name from tenants where code = 'DEMO'\")).scalar_one() != 'tocado por A'")
+    a, _ = _corrida(entorno, deja)
+    assert a.ejecutar() == 0
+    segunda, _ = _corrida(entorno, busca)
+    assert segunda.ejecutar() == 0
+    assert a.base != segunda.base and a.estado != segunda.estado and a.evidencia != segunda.evidencia
+    _sin_rastro(a)
+    _sin_rastro(segunda)
+
+
+# ---------------------------------------------------------------- DB-22
+def test_e2ecorrida_08_con_el_puerto_ocupado_no_se_crea_nada(entorno, puerto_libre):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as ocupante:
+        ocupante.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        ocupante.bind(("127.0.0.1", k.PUERTO_BACKEND))
+        ocupante.listen(1)
+        corrida, _ = _corrida(entorno, "raise SystemExit(0)")
+        assert corrida.ejecutar() == k.SALIDA_PREPARACION
+    assert corrida.creada is False and not _existe(corrida.base)
+    m = _manifiesto(corrida)
+    assert "puertos ocupados" in m["error"] and m["limpieza"]["base"] == {"estado": "NO_CREADA"}
+    assert m["fases"] == ["comprobar", "limpiar"]
+
+
+def test_e2ecorrida_09_una_ruta_de_estado_demasiado_larga_se_dice_antes_de_crear_nada(entorno, puerto_libre):
+    entorno["KONTROL_E2E_STATE_DIR"] = "/tmp/" + "ruta-larga-" * 9
+    corrida, _ = _corrida(entorno, "raise SystemExit(0)")
+    assert corrida.ejecutar() == k.SALIDA_PREPARACION
+    assert corrida.creada is False and not _existe(corrida.base)
+    assert "demasiado larga" in _manifiesto(corrida)["error"]
+
+
+def test_e2ecorrida_10_en_un_entorno_que_sirve_a_usuarios_no_se_crea_nada(entorno, puerto_libre):
+    entorno["KONTROL_ENVIRONMENT"] = "prod"
+    corrida, _ = _corrida(entorno, "raise SystemExit(0)")
+    assert corrida.ejecutar() == k.SALIDA_PREPARACION
+    assert corrida.creada is False and not _existe(corrida.base)
+    assert "BaseNoEsE2E" in _manifiesto(corrida)["error"]
+
+
+def test_e2ecorrida_11_dos_corridas_no_comparten_nombre_estado_ni_evidencia(entorno):
+    a, _ = _corrida(entorno, "pass")
+    otra, _ = _corrida(entorno, "pass")
+    assert len({a.run_id, otra.run_id}) == len({a.base, otra.base}) == 2
+    assert len({a.estado, otra.estado}) == len({a.evidencia, otra.evidencia}) == 2
+
+
+# ---------------------------------------------------------------- FR-012 · interrupción
+def test_e2ecorrida_12_una_corrida_interrumpida_tambien_limpia(entorno, puerto_libre):
+    corrida, salida = _corrida(entorno, "import time; time.sleep(120)")
+    temporizador = threading.Timer(1.0, lambda: None)
+
+    def interrumpir_cuando_corra_la_suite() -> None:
+        while "suite" not in corrida.procesos:
+            if not hilo_vigia_activo.is_set():
+                return
+            threading.Event().wait(0.05)
+        os.kill(os.getpid(), signal.SIGTERM)
+
+    hilo_vigia_activo = threading.Event()
+    hilo_vigia_activo.set()
+    vigia = threading.Thread(target=interrumpir_cuando_corra_la_suite, daemon=True)
+    vigia.start()
+    try:
+        assert corrida.ejecutar() == k.SALIDA_INTERRUMPIDA
+    finally:
+        hilo_vigia_activo.clear()
+        temporizador.cancel()
+    _sin_rastro(corrida)
+    m = _manifiesto(corrida)
+    assert "interrumpida" in m["error"] and m["limpieza"]["resultado"] == "LIMPIA"
+    assert "interrumpida" in salida.getvalue()
+
+
+# ---------------------------------------------------------------- el entorno de los procesos
+def test_e2ecorrida_13_los_procesos_de_la_corrida_solo_conocen_su_base(entorno):
+    corrida, _ = _corrida(entorno, "pass")
+    with pytest.raises(b.CicloDeBaseRoto):
+        corrida.entorno_de_procesos()
+    corrida.url = corrida.servidor.url_de(corrida.base)
+    env = corrida.entorno_de_procesos()
+    assert env["KONTROL_DB_URL"] == env["KONTROL_E2E_DB_URL"] == corrida.url
+    assert make_url(env["KONTROL_DB_URL"]).database == corrida.base
+    assert "KONTROL_TEST_DB_URL" not in env
+    assert env["KONTROL_E2E_RUN_ID"] == corrida.run_id
+    for clave in ("KONTROL_INSTALLATION_VOLUME_PATH", "KONTROL_STORAGE_PATH", "KONTROL_BACKUP_PATH",
+                  "KONTROL_QA_IDS_FILE"):
+        assert env[clave].startswith(str(corrida.estado))
+
+
+def test_e2ecorrida_14_la_orden_por_defecto_es_la_suite_de_playwright_con_su_evidencia_aparte(entorno):
+    corrida = k.Corrida(_servidor(), argumentos=["e2e/smoke.spec.ts"], entorno=entorno, salida=io.StringIO())
+    orden, cwd = corrida.orden_de_la_suite()
+    assert orden[:4] == ["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium"]
+    assert orden[4:] == ["--output", str(corrida.evidencia / "test-results"), "e2e/smoke.spec.ts"]
+    assert cwd == k.FRONTEND
+    assert not any(a.startswith(("--retries", "--workers")) for a in orden)

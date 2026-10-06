@@ -1,0 +1,49 @@
+# E2E-BASE-QA-ACUMULA · delegación a DeepSeek · leído de la traza de cada ejecutor
+# servidor MCP deepseek · @arikusi/deepseek-mcp-server@2.3.0 · herramienta mcp__deepseek__deepseek_chat · sin session_id · sin thinking
+
+T31 · intento 1 — funciones puras de nombres y marcas (qa/e2e_nombres.py, nuevo)
+  modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False
+  tokens 2129/1956 · $0.000828 · carga de 6461 caracteres · secretos=0 · ficheros leídos por el puente=0
+  bloques=1 · relevo literal=sí
+  AUDIT_PASS: constantes y las siete funciones del contrato; añadió una tercera auxiliar privada (`_exigir_fecha`) y lo declaró.
+  aplicado tal cual · ruff limpio
+
+T32 · intento 1 — pruebas de T31 (resources/backend/tests/test_e2e_nombres.py, nuevo)
+  tokens 3617/3001 · $0.001329 · carga de 10091 caracteres · secretos=0
+  AUDIT_REJECT: `ruff check` falla con I001 — falta la línea en blanco entre el import con `# noqa: E402` y la primera constante.
+    Las 76 pruebas pasaban. No se retocó: se retiró el fichero y se reenvió el encargo entero con el intento y el motivo.
+T32 · reintento 1
+  tokens 3618/2588 · $0.001214 · carga de 10825 caracteres · secretos=0
+  AUDIT_PASS: idéntico al intento anterior salvo la línea en blanco (comprobado con diff) · 76/76 · ruff limpio
+
+T51 · intento 1 — monedas de Listas de precios y su prueba (ListasPrecioPage.tsx, ListasPrecioPage.test.tsx)
+  tokens 2571/1579 · $0.000784 · carga de 8859 caracteres · secretos=0
+  bloques=2 · relevo literal=sí · SEARCH de 1 línea coincide 1 vez: exacto
+  AUDIT_PASS: el arreglo es la línea encargada; LM-01..03 verdes; eslint y tsc limpios.
+    Una línea de la prueba mide 128 columnas: es el nombre de la prueba, dictado en el encargo. Incoherencia del encargo, de Claude.
+
+T52 · intento 1 — pantalla de Diagnóstico y su prueba (types.ts, DiagnosticoPage.tsx, DiagnosticoPage.test.tsx)
+  tokens 3359/2649 · $0.001194 · carga de 12196 caracteres · secretos=0
+  bloques=5 · relevo literal=sí · los cuatro SEARCH coinciden 1 vez: exactos
+  AUDIT_REJECT: DIAG-03 falla. Causa: el encargo dictaba `beforeEach(() => apiFetch.mockReset())`, que devuelve el simulacro;
+    Vitest lo toma por función de limpieza y la llama al acabar cada prueba, y en DIAG-03 esa llamada devuelve una promesa
+    rechazada. Error del encargo, de Claude, no del ejecutor. Se revirtieron los cinco bloques y se reenvió todo con la corrección.
+T52 · reintento 1
+  tokens 3636/2605 · $0.001221 · carga de 13119 caracteres · secretos=0
+  AUDIT_PASS: 4/4 · eslint y tsc limpios
+
+T36 (pruebas de la compuerta) — RECLASIFICADA a CLAUDE_ONLY antes de ejecutarse: su contrato lleva los nombres de las bases de QA.
+  DEEPSEEK CALLS = 0.
+
+EGRESS_CHECK de las seis llamadas: ENV_FILES=0 SECRETS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_DB_CREDENTIALS=0 PROD_DB_URLS=0
+  QA_SECRET_URLS=0 REAL_PII=0 BANK_DATA=0. Ningún encargo lleva servidor, puerto, rol ni contraseña de QA.
+DESVIACIÓN DE EGRESS, de Claude: el encargo de T32 (intento y reintento) lleva los literales «kaud» y «ktest» dentro de la lista
+  de nombres que el patrón debe rechazar, y la cadena «; drop database kaud» como caso de inyección. Son nombres de base sueltos,
+  sin servidor, puerto, rol ni credenciales; pero el encargo de este ciclo pedía valores sintéticos y debieron ser nombres
+  inventados. Al advertirlo se reclasificó T36, que los necesitaba por contrato, para no enviarlos de nuevo.
+
+TASKS TOTAL = 20 · CLAUDE_ONLY = 16 · DEEPSEEK_ELIGIBLE = 4 · DEEPSEEK EXECUTED = 4
+DEEPSEEK CALLS = 6 · DEEPSEEK RETRIES = 2 · PATCHES ACCEPTED = 4 · PATCHES REJECTED = 2 · parches retocados a mano = 0
+MODELS USED = deepseek-v4-flash · DEEPSEEK TOKENS = 18930 de entrada / 14378 de salida · DEEPSEEK COST = $0.006570
+SONNET BRIDGE TOKENS = 194581 (27283 + 34581 + 33776 + 28132 + 35042 + 35767, según el arnés)
+EJECUTOR-ABREVIA-EL-CONTEXTO: no se reprodujo; el puente no leyó ficheros y envió cada encargo entero

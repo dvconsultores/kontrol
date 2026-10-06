@@ -2650,3 +2650,36 @@ Registradas y sin absorber: `ALMACENES-DESPLEGABLES-TRUNCADOS` (nueve pantallas)
 Detrás, sin decisión pendiente: `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
 `AUDIT-ORDEN-SIN-DESEMPATE`, `AUDIT-PAGINA-SIN-INDICE-DE-ORDEN`, `LISTADOS-SIN-RESPONSE-MODEL`,
 `E2E-SIN-TYPECHECK`, `ENTORNO-SIN-CLAMSCAN`. `NEXT SPEC = 029` no cambia.
+
+## 2026-10-01 · Tras converger E2E-BASE-QA-ACUMULA y cerrar E2E-FLAKY-BAJO-CARGA (dueña 054)
+
+La dueña decidió: una base nueva por corrida E2E. Está hecho. `qa/e2e-run.py` crea la base,
+la migra a la cabeza, la siembra, levanta contra ella el backend y Vite, corre la suite y
+lo elimina todo, pase o falle; nada destructivo ocurre sobre una base que no sea, por
+nombre, marca, entorno y servidor, de una corrida. `kaud` queda para QA manual y no se toca.
+
+Con la base limpia, lo que era acumulación desapareció sin tocarlo —el planificador pasó de
+33 segundos a menos de uno— y lo que no lo era quedó a la vista. La primera corrida global
+sobre base nueva falló donde la deuda decía «sin causa»: el recorrido de rutas. Había dos
+pantallas que caían al pintarse, Listas de precios y Diagnóstico, y una restauración de
+sesión que, al recargar, mandaba a Inicio 81 de las 96 rutas del menú; el recorrido leía el
+título de Inicio y lo daba por bueno. Los tres defectos están corregidos y el recorrido
+comprueba ahora en qué ruta está.
+
+Tres corridas globales seguidas, cada una desde su base: 200 / 0 / 40 las tres, y las tres
+acaban en el mismo estado.
+
+**Con esto se cierran `E2E-BASE-QA-ACUMULA`, `E2E-NOTIFICACIONES-REGLAS-VIVAS` y
+`E2E-FLAKY-BAJO-CARGA`.** De esta última quedan dos deudas propias: `BACKEND-KEEPALIVE-5S`,
+con causa y pendiente de una decisión de despliegue, y `E2E-PANTALLA-SIN-PINTAR`, un login
+en blanco visto una vez y sin causa.
+
+Nuevas, sin absorber: `DIAGNOSTICO-SIN-SESION` (seguridad: el diagnóstico responde sin
+sesión y enseña una ruta interna), `INSTALACION-KEY-REFERENCE-120`,
+`MIGRACIONES-URL-CON-PORCENTAJE`, `ALMACENES-CARRERA-SQLITE-HILOS` y `E2E-CUARENTA-OMITIDAS`.
+
+**Decisiones pendientes de la dueña:** `DIAGNOSTICO-SIN-SESION` y `BACKEND-KEEPALIVE-5S`.
+Candidatas siguientes, sin decisión pendiente: `ALMACENES-DESPLEGABLES-TRUNCADOS`,
+`PICKLIST-DUPLICADA-500`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `AUDIT-ORDEN-SIN-DESEMPATE`, `LISTADOS-SIN-RESPONSE-MODEL`,
+`E2E-SIN-TYPECHECK`, `ENTORNO-SIN-CLAMSCAN`. `NEXT SPEC = 029` no cambia.

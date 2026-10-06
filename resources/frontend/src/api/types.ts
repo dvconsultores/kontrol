@@ -153,6 +153,15 @@ export interface HealthResponse {
   version: string;
 }
 
+/** Lo que responde `GET /system/diagnostics` (FR-001-084). */
+export interface DiagnosticsResponse {
+  environment: string;
+  version: string;
+  database: { ok: boolean };
+  installation: { id: string | null; state: string | null };
+  license: { activated: boolean; mode: string | null; period_end: string | null };
+}
+
 // ---------------------------------------------------------------------------
 // Inventario y logística (003-inventario-logistica)
 // ---------------------------------------------------------------------------
