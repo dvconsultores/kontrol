@@ -72,7 +72,18 @@ try:
         print("licencia: ya vigente, no se reimporta")
         raise SystemExit(0)
 
-    key = Ed25519PrivateKey.generate()
+    # Firmante sintético. En una corrida de `qa/e2e-run.py` es el de la corrida, cuya pública ya
+    # es el ancla del backend y de este proceso; fuera de una corrida (siembra manual de QA) se
+    # genera uno efímero y se declara su pública como ancla de ESTE proceso, explícitamente.
+    # Nunca la clave de la instalación, y nunca en producción.
+    if os.environ.get("KONTROL_ENVIRONMENT", "local") not in ("local", "dev", "qa"):
+        raise SystemExit("pg-e2e-seed.py: la licencia sintética solo se siembra en entornos de QA")
+    ruta_firmante = os.environ.get("KONTROL_E2E_LICENSE_SIGNING_KEY")
+    if ruta_firmante:
+        with open(ruta_firmante, "rb") as fh:
+            key = serialization.load_pem_private_key(fh.read(), password=None)
+    else:
+        key = Ed25519PrivateKey.generate()
     pub = key.public_key().public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo).decode()

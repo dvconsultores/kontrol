@@ -10,7 +10,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,6 +20,9 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="ignore",
         case_sensitive=False,
+        # Un error de validación no reproduce los valores: la configuración lleva secretos y el
+        # ancla de la licencia, y el mensaje acaba en el registro de arranque (FR-010-151/156).
+        hide_input_in_errors=True,
     )
 
     # Identidad del entorno
@@ -52,7 +55,10 @@ class Settings(BaseSettings):
 
     # Licencia
     license_public_key_kid: str = "kontrol-lic-2026-01"
-    license_public_key_pem: str | None = None  # clave pública Ed25519 embebida o inyectada
+    # Ancla de confianza de la licencia: la clave pública Ed25519 del propietario, inyectada
+    # desde fuera de la instalación. Obligatoria en `prod` (falla al inicio si falta o no sirve);
+    # sin ella nunca se verifica una licencia, en ningún entorno (FR-010-148..151).
+    license_public_key_pem: str | None = None
     license_timezone: str = "America/Caracas"
     installation_volume_path: str = "/data/license-state"
 
@@ -71,6 +77,23 @@ class Settings(BaseSettings):
         if not v or len(v) < 32:
             raise ValueError("KONTROL_SECRET_KEY debe tener al menos 32 caracteres")
         return v
+
+    @model_validator(mode="after")
+    def _trust_anchor_required_in_prod(self) -> Settings:
+        """En `prod`, el ancla del propietario es obligatoria y debe servir: mismo contrato que
+        `secret_key`, fallar al inicio. No se genera, no se sustituye, no se avisa a medias."""
+        if self.environment != "prod":
+            return self
+        from app.core.trust_anchor import TrustAnchorError, load_trust_anchor
+
+        try:
+            load_trust_anchor(self.license_public_key_pem)
+        except TrustAnchorError as exc:
+            raise ValueError(
+                f"KONTROL_LICENSE_PUBLIC_KEY_PEM es obligatoria en prod y debe ser la clave pública "
+                f"Ed25519 del propietario en PEM (ancla {exc.reason})"
+            ) from None
+        return self
 
 
 @lru_cache

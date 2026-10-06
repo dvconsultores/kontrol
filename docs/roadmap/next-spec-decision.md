@@ -2761,3 +2761,26 @@ pendiente: `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKL
 `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
 
+## 2026-10-06 · Tras converger LICENCIA-ANCLA-AUTOFIRMADA (dueña 004)
+
+Sin la clave del propietario configurada, la instalación verificaba las licencias con su propia
+clave pública: quien leyera la clave privada del servidor se emitía una licencia a sí mismo, también
+en producción. Reproducido en `prod` con un artefacto sintético. La dueña decidió: ancla del
+propietario obligatoria en producción, cerrado si falta, y nada de prueba por ausencia de
+configuración. El repositorio ya tenía el contrato para eso —`secret_key` «obligatoria: falla al
+inicio»—, así que en `prod` la configuración no carga sin el ancla y, en cualquier entorno, importar
+sin ella o con una que no sirve responde 503 sin sustituto, sin evento y sin material en el
+registro. La clave de la instalación vuelve a ser solo identidad. QA firma con un firmante sintético
+por corrida cuya pública se declara como ancla de esa corrida; los guiones de licencia de prueba se
+niegan en producción.
+
+De paso quedó registrado, sin absorber: el ancla es una sola clave sin rotación ni `kid`
+verificado (`LICENCIA-SIN-ROTACION-DE-CLAVE`). `LICENCIA-DOWNGRADE-FIRMADO` sigue abierta y es la
+siguiente de esta familia.
+
+**Decisiones pendientes de la dueña:** `BACKEND-KEEPALIVE-5S`, `PANEL-VERSION-VACIA`,
+`LICENCIA-DOWNGRADE-FIRMADO`, `LICENCIA-SIN-ROTACION-DE-CLAVE`. Candidatas siguientes, sin decisión
+pendiente: `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
+`ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
+

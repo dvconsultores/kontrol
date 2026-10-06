@@ -1,0 +1,14 @@
+# Después del arreglo · árbol de trabajo sobre f096b1d
+
+## KONTROL_ENVIRONMENT=prod sin KONTROL_LICENSE_PUBLIC_KEY_PEM → la configuración no carga (el backend no arranca); el error no reproduce la configuración:
+  File "/tmp/claude-1000/-home-maria-Projectos-Kontrol/31ae8f1b-7f0f-400f-aa41-00d508b7f488/scratchpad/repro_ancla.py", line 26, in <module>
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+  Value error, KONTROL_LICENSE_PUBLIC_KEY_PEM es obligatoria en prod y debe ser la clave pública Ed25519 del propietario en PEM (ancla missing) [type=value_error]
+
+## KONTROL_ENVIRONMENT=local sin ancla (el backend arranca; la importación falla cerrada):
+
+## Administrador (license:create) importa una licencia firmada con la CLAVE DE LA PROPIA INSTALACIÓN, sin clave del propietario
+503 {"code":"LICENSE_TRUST_ANCHOR_MISSING","message":"La instalación no tiene configurada una clave pública válida del propietario; no se puede verificar la licencia.","field_errors":{},"request_id":"bff7
+→ estado: ninguno
+
+OWNER_KEY_CONFIGURED = False · INSTALLATION_KEY_AVAILABLE = True · FALLBACK_USED = False · SELF_SIGNED_TEST_LICENSE_ACCEPTED = False

@@ -1,14 +1,14 @@
 """Firma una licencia SINTÉTICA para la instalación de una corrida E2E.
 
 Uso (la URL de la base viaja en el entorno, nunca en la línea de órdenes):
-    KONTROL_DB_URL=postgresql+psycopg2://... KONTROL_INSTALLATION_VOLUME_PATH=<estado>/license \\
+    KONTROL_DB_URL=postgresql+psycopg2://... KONTROL_E2E_LICENSE_SIGNING_KEY=<estado>/license/qa_license_signing_key.pem \\
     PYTHONPATH=resources/backend python qa/licencia_firmada.py <license_id> [--otra-instalacion] [--firma-invalida]
 
 Imprime en la salida estándar el JSON `{"payload": {...}, "signature_hex": "..."}` que espera
-`POST /api/v1/license/activate`. Firma con la **clave privada de la propia instalación** de la
-corrida, que es el ancla de confianza cuando `KONTROL_LICENSE_PUBLIC_KEY_PEM` está vacía (así
-funciona la licencia de prueba de `scripts/activate-test-license.sh`). Solo en entornos de QA:
-una instalación con la clave del propietario configurada no aceptaría esta firma, y así debe ser.
+`POST /api/v1/license/activate`. Firma con el **firmante sintético de la corrida** —el par que
+`qa/e2e-run.py` genera y cuya clave pública declara como `KONTROL_LICENSE_PUBLIC_KEY_PEM` del
+backend de esa corrida (FR-010-154)—. Nunca con la clave de la instalación: esa identifica a la
+instalación y no es ancla de confianza. Solo en entornos de QA.
 """
 
 from __future__ import annotations
@@ -56,13 +56,12 @@ def main(argv: list[str]) -> int:
         return 2
     if os.environ.get("KONTROL_ENVIRONMENT", "local") not in ("local", "dev", "qa"):
         raise RuntimeError("este guion solo firma licencias de prueba en entornos de QA")
-    volumen = os.environ.get("KONTROL_INSTALLATION_VOLUME_PATH")
-    if not volumen:
-        raise RuntimeError("KONTROL_INSTALLATION_VOLUME_PATH es obligatoria: ahí vive la clave de la instalación de la corrida")
-    ruta = Path(volumen) / "installation_private_key.pem"
-    clave = serialization.load_pem_private_key(ruta.read_bytes(), password=None)
+    ruta_firmante = os.environ.get("KONTROL_E2E_LICENSE_SIGNING_KEY")
+    if not ruta_firmante:
+        raise RuntimeError("KONTROL_E2E_LICENSE_SIGNING_KEY es obligatoria: el firmante sintético lo genera la corrida")
+    clave = serialization.load_pem_private_key(Path(ruta_firmante).read_bytes(), password=None)
     if not isinstance(clave, Ed25519PrivateKey):
-        raise RuntimeError("la clave de la instalación no es Ed25519")
+        raise RuntimeError("el firmante sintético no es Ed25519")
 
     init_models()
     db = get_session_factory()()

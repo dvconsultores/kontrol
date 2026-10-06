@@ -137,6 +137,11 @@ class Corrida:
             "KONTROL_COOKIE_SECURE": "false",
             "KONTROL_LOG_JSON": "false",
             "KONTROL_INSTALLATION_VOLUME_PATH": str(self.estado / "license"),
+            # Ancla de confianza de la licencia para ESTA corrida: la clave pública del firmante
+            # sintético que la corrida genera; la privada queda en el estado efímero, solo para
+            # la siembra y `qa/licencia_firmada.py`. Explícita, nunca la clave de la instalación.
+            "KONTROL_LICENSE_PUBLIC_KEY_PEM": self.ancla_publica(),
+            "KONTROL_E2E_LICENSE_SIGNING_KEY": str(self.clave_de_firma),
             "KONTROL_STORAGE_PATH": str(self.estado / "storage"),
             "KONTROL_BACKUP_PATH": str(self.estado / "backups"),
             "KONTROL_QA_IDS_FILE": str(self.estado / "n6-ids.json"),
@@ -148,6 +153,38 @@ class Corrida:
         return env
 
     # ------------------------------------------------------------- preparación
+    @property
+    def clave_de_firma(self) -> Path:
+        """La clave privada del firmante sintético de la corrida (estado efímero, 0600)."""
+        return self.estado / "license" / "qa_license_signing_key.pem"
+
+    def generar_firmante(self) -> None:
+        """Un par Ed25519 nuevo por corrida: su pública es el ancla de confianza del backend y de
+        la siembra; su privada firma las licencias sintéticas. Nunca sale del estado efímero.
+        Una sola vez por corrida: el ancla no cambia a mitad de camino."""
+        if getattr(self, "_ancla", None):
+            return
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+        privada = Ed25519PrivateKey.generate()
+        self.clave_de_firma.parent.mkdir(parents=True, exist_ok=True)
+        descriptor = os.open(self.clave_de_firma, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(descriptor, "wb") as fichero:
+            fichero.write(privada.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()))
+        self._ancla = privada.public_key().public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo).decode("utf-8")
+
+    def ancla_publica(self) -> str:
+        """El ancla de la corrida; si aún no hay firmante, se genera: todo proceso de la corrida
+        recibe la misma pública, sea cual sea el orden en que se pida el entorno."""
+        self.generar_firmante()
+        return self._ancla
+
     def comprobar(self) -> None:
         """Lo que tiene que ser cierto antes de crear nada."""
         base.exigir_base_e2e(self.base, admin_url=self.servidor.admin_url, entorno=self.entorno)
@@ -172,6 +209,7 @@ class Corrida:
         self.creada = True
         self.url = self.servidor.url_de(self.base)
         self.estado.mkdir(parents=True, exist_ok=True)
+        self.generar_firmante()
 
         self.fase("migrar")
         self.manifiesto["migracion"] = base.migrar(

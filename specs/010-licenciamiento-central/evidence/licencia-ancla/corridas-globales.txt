@@ -1,0 +1,16 @@
+# Corridas E2E del ciclo LICENCIA-ANCLA-AUTOFIRMADA · qa/e2e-run.py, base nueva por corrida, firmante sintético por corrida (pública en KONTROL_LICENSE_PUBLIC_KEY_PEM; privada en el estado efímero, 0600) · reloj sincronizado
+# Una primera invocación dirigida (~15:33) no produjo salida ni corrida (sin manifiesto, sin base); repetida de inmediato:
+# 1) dirigida r…153559: licencia-import + licencia + diagnostico → 24/24 (E2E-LICIMP-04 firma con el firmante de la corrida, no con la clave de la instalación)
+# 2) mutante M-07 r…153850: el ayudante firma con la clave de la instalación → E2E-LICIMP-04 y 06 fallan (2/6): la autofirmada ya es «firma inválida»; ayudante restaurado
+# 3) global 1 r…154115 → 224 / 0 / 40
+# 4) global 2 r…154352 → 224 / 0 / 40
+# Después, el firmante se hizo idempotente/a demanda (test_e2ecorrida_13 lo pedía sin preparar). La dirigida de verificación (~15:50) murió con la máquina: reinicio a las 14:32 locales (18:32 UTC), /tmp y el clúster de PostgreSQL perdidos, sin base huérfana (listar → 0). Reprovisionado el clúster y recreada ktest:
+# 5) dirigida r…184251 → 24/24
+# 6) global 3 r20261006t184327p12441n6ffc9b → 224 / 0 / 40 (inicio 18:43:27 UTC, 2,5 min, limpieza LIMPIA, base ELIMINADA)
+
+r20261006t153559p1739283n0bb151 · inicio 2026-10-06T15:35:59+00:00 · fin 2026-10-06T15:36:17+00:00 · suite {'passed': 24} · 8.7 s · limpieza LIMPIA · base ELIMINADA · usuarios 11
+r20261006t153850p1746462n39afa4 · inicio 2026-10-06T15:38:50+00:00 · fin 2026-10-06T15:39:03+00:00 · suite {'failed': 2, 'passed': 6} · 4.5 s · limpieza LIMPIA · base ELIMINADA · usuarios 8
+r20261006t154115p1754918n4a2779 · inicio 2026-10-06T15:41:15+00:00 · fin 2026-10-06T15:43:52+00:00 · suite {'skipped': 40, 'passed': 224} · 147.6 s · limpieza LIMPIA · base ELIMINADA · usuarios 70
+r20261006t154352p1776608n45bb6c · inicio 2026-10-06T15:43:52+00:00 · fin 2026-10-06T15:46:47+00:00 · suite {'skipped': 40, 'passed': 224} · 164.1 s · limpieza LIMPIA · base ELIMINADA · usuarios 70
+
+bases de corrida al terminar: 0 (qa/e2e-bases.py listar)

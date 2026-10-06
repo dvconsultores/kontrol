@@ -1,0 +1,30 @@
+GOOD: (0, '16 passed in 4.78s') (0, '12 passed in 0.23s') (0, '2 passed, 24 deselected in 3.48s')
+M-01 vuelve el fallback a la clave de la instalación
+  MUTATED → FAIL (muere) · 1 failed, 14 deselected in 3.48s
+  RESTORED → PASS · 2 passed, 14 deselected in 3.59s
+M-02 se acepta un ancla ausente (no se carga ni se comprueba)
+  MUTATED → FAIL (muere) · 1 failed, 15 deselected in 3.45s
+  RESTORED → PASS · 1 passed, 15 deselected in 3.41s
+M-03 el validador de configuración ignora el entorno
+  MUTATED → FAIL (muere) · 1 failed, 10 deselected in 0.14s
+  RESTORED → PASS · 2 passed, 10 deselected in 0.12s
+M-04 se confía en la clave pública que trae el artefacto
+  MUTATED → FAIL (muere) · 1 failed, 15 deselected in 3.44s
+  RESTORED → PASS · 1 passed, 15 deselected in 3.42s
+M-05 no se comprueba la instalación
+  MUTATED → FAIL (muere) · 1 failed, 15 deselected in 3.44s
+  RESTORED → PASS · 1 passed, 15 deselected in 3.46s
+M-06 /license/activate sin autorización del llamador
+  MUTATED → FAIL (muere) · 1 failed, 24 deselected in 3.52s
+  RESTORED → PASS · 2 passed, 24 deselected in 3.50s
+M-08 el registro lleva el material del ancla
+  MUTATED → FAIL (muere) · 1 failed, 15 deselected in 3.51s
+  RESTORED → PASS · 1 passed, 15 deselected in 3.50s
+M-09 un ancla que no parsea cae en la clave de la instalación
+  MUTATED → FAIL (muere) · 1 failed, 12 deselected in 3.42s
+  RESTORED → PASS · 4 passed, 12 deselected in 3.67s
+  ✘  2 [chromium] › e2e/licencia-import.spec.ts:113:3 › Licencia · importar exige autoridad › E2E-LICIMP-04 · el administrador importa un artefacto válido y el detalle lo refleja (1.8s)
+  ✘  3 [chromium] › e2e/licencia-import.spec.ts:137:3 › Licencia · importar exige autoridad › E2E-LICIMP-06 · el administrador con una licencia de otra instalación: 423 y la licencia sigue igual (1.8s)
+  2 failed
+  6 passed (4.0s)
+[e2e r20261006t153850p1746462n39afa4] suite: {'failed': 2, 'passed': 6} · limpieza: LIMPIA · salida: 1 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261006t153850p1746462n39afa4

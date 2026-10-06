@@ -41,6 +41,11 @@ MIRA_SU_BASE = (
     "run = os.environ['KONTROL_E2E_RUN_ID']\n"
     "assert os.environ['KONTROL_DB_URL'] == os.environ['KONTROL_E2E_DB_URL']\n"
     "assert 'KONTROL_TEST_DB_URL' not in os.environ\n"
+    # El ancla de confianza de la corrida es explícita y sintética: la pública en el entorno y la
+    # privada del firmante en el estado efímero, nunca la clave de la instalación (FR-010-154).
+    "assert os.environ['KONTROL_LICENSE_PUBLIC_KEY_PEM'].startswith('-----BEGIN PUBLIC KEY-----')\n"
+    "assert os.path.exists(os.environ['KONTROL_E2E_LICENSE_SIGNING_KEY'])\n"
+    "assert (os.stat(os.environ['KONTROL_E2E_LICENSE_SIGNING_KEY']).st_mode & 0o777) == 0o600\n"
     "with create_engine(os.environ['KONTROL_E2E_DB_URL']).connect() as c:\n"
     "    assert c.execute(text('select current_database()')).scalar_one() == 'kontrol_e2e_test_' + run\n"
     "    assert c.execute(text('select count(*) from users')).scalar_one() == 5\n"
@@ -295,8 +300,14 @@ def test_e2ecorrida_13_los_procesos_de_la_corrida_solo_conocen_su_base(entorno):
     assert "KONTROL_TEST_DB_URL" not in env
     assert env["KONTROL_E2E_RUN_ID"] == corrida.run_id
     for clave in ("KONTROL_INSTALLATION_VOLUME_PATH", "KONTROL_STORAGE_PATH", "KONTROL_BACKUP_PATH",
-                  "KONTROL_QA_IDS_FILE"):
+                  "KONTROL_QA_IDS_FILE", "KONTROL_E2E_LICENSE_SIGNING_KEY"):
         assert env[clave].startswith(str(corrida.estado))
+    # El ancla de confianza es la del firmante sintético de la corrida, la misma para todos sus
+    # procesos, y nunca la clave de la instalación (FR-010-154).
+    assert env["KONTROL_LICENSE_PUBLIC_KEY_PEM"].startswith("-----BEGIN PUBLIC KEY-----")
+    assert corrida.entorno_de_procesos()["KONTROL_LICENSE_PUBLIC_KEY_PEM"] == env["KONTROL_LICENSE_PUBLIC_KEY_PEM"]
+    assert env["KONTROL_E2E_LICENSE_SIGNING_KEY"].endswith("qa_license_signing_key.pem")
+    assert not env["KONTROL_E2E_LICENSE_SIGNING_KEY"].endswith("installation_private_key.pem")
 
 
 def test_e2ecorrida_14_la_orden_por_defecto_es_la_suite_de_playwright_con_su_evidencia_aparte(entorno):

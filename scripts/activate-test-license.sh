@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# KONTROL - activa una licencia de PRUEBA autofirmada con la clave privada de
-# la propia instalación (solo válida mientras KONTROL_LICENSE_PUBLIC_KEY_PEM
-# esté vacío). En producción, el propietario de KONTROL firma con su clave
+# KONTROL - activa una licencia de PRUEBA firmada por un firmante sintético
+# efímero, cuya clave pública se declara como ancla solo dentro de este proceso
+# (nunca la clave de la instalación; se niega en prod). En producción, el
+# propietario de KONTROL firma con su clave
 # privada central y el archivo lo importa el administrador local, con sesión y
 # `license:create`, por POST /api/v1/license/activate.
 # Uso (desde cualquier directorio del servidor):
@@ -27,6 +28,7 @@ import os
 from datetime import UTC, datetime, timedelta
 
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from app.core.config import get_settings
 from app.core.database import get_session_factory
@@ -53,10 +55,16 @@ payload = {
 
 canonical = json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")
 
-key_path = os.path.join(get_settings().installation_volume_path, "installation_private_key.pem")
-with open(key_path, "rb") as fh:
-    priv = serialization.load_pem_private_key(fh.read(), password=None)
-signature_hex = priv.sign(canonical).hex()
+# Firmante SINTÉTICO, solo de prueba: un par efímero cuya clave pública se declara aquí,
+# explícitamente, como ancla de confianza de ESTE proceso. Nunca la clave de la instalación
+# (identifica a la instalación; no es ancla) y nunca en producción.
+if get_settings().environment == "prod":
+    raise SystemExit("La licencia de PRUEBA no se activa en prod: configure KONTROL_LICENSE_PUBLIC_KEY_PEM con la clave del propietario e importe su licencia firmada.")
+firmante = Ed25519PrivateKey.generate()
+os.environ["KONTROL_LICENSE_PUBLIC_KEY_PEM"] = firmante.public_key().public_bytes(
+    encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo).decode("utf-8")
+get_settings.cache_clear()
+signature_hex = firmante.sign(canonical).hex()
 
 state = ls.import_license(db, payload=payload, signature_hex=signature_hex, source="TEST")
 print(f"✓ Licencia de prueba ACTIVADA: {state.license_id} | modo: {state.mode}")

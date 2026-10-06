@@ -1,0 +1,18 @@
+# Reproducción antes del arreglo · HEAD f096b1d · KONTROL_ENVIRONMENT=prod · clave del propietario configurada: False
+# clave privada de la instalación disponible en el volumen: True (generada por la propia instalación)
+
+## Administrador (license:create) importa una licencia firmada con la CLAVE DE LA PROPIA INSTALACIÓN, sin clave del propietario
+200 {"ok":true,"license_id":"LIC-AUTOFIRMADA","mode":"FULL_ACCESS"}
+→ estado: LIC-AUTOFIRMADA / FULL_ACCESS / hasta 2036-10-03 / entitlements {'companies': 999, 'users': 9999}
+
+OWNER_KEY_CONFIGURED = False · INSTALLATION_KEY_AVAILABLE = True · FALLBACK_USED = True · SELF_SIGNED_TEST_LICENSE_ACCEPTED = True
+
+# Reproducción antes del arreglo · HEAD f096b1d · KONTROL_ENVIRONMENT=local · clave del propietario configurada: False
+# clave privada de la instalación disponible en el volumen: True (generada por la propia instalación)
+
+## Administrador (license:create) importa una licencia firmada con la CLAVE DE LA PROPIA INSTALACIÓN, sin clave del propietario
+200 {"ok":true,"license_id":"LIC-AUTOFIRMADA","mode":"FULL_ACCESS"}
+→ estado: LIC-AUTOFIRMADA / FULL_ACCESS / hasta 2036-10-03 / entitlements {'companies': 999, 'users': 9999}
+
+OWNER_KEY_CONFIGURED = False · INSTALLATION_KEY_AVAILABLE = True · FALLBACK_USED = True · SELF_SIGNED_TEST_LICENSE_ACCEPTED = True
+

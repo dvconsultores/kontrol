@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import uuid
 from collections.abc import Callable
@@ -24,6 +25,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.core import license as license_engine
+from app.core import trust_anchor
 from app.core.config import get_settings
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.licensing.models import (
@@ -36,6 +38,8 @@ from app.modules.licensing.models import (
     LicenseSyncRun,
 )
 from app.modules.organization.models import Installation
+
+logger = logging.getLogger(__name__)
 
 
 def _now() -> datetime:
@@ -170,9 +174,24 @@ def import_license(
     """
     installation = get_installation(db)
 
-    # 1) Verificar firma (Ed25519) con la clave pública distribuida.
-    public_key_pem = get_settings().license_public_key_pem or installation.public_key
-    if not public_key_pem or not license_engine.verify_license_signature(payload, signature_hex, public_key_pem):
+    # 1) El ancla de confianza es la clave pública del propietario, configurada fuera de la
+    #    instalación; nunca la clave de la propia instalación (FR-010-148/149). Sin ancla, o con
+    #    una que no sirve, se falla cerrado antes de mirar el artefacto: no es un artefacto malo,
+    #    es una instalación que no puede verificar nada, y no se anota como evento de licencia.
+    public_key_pem = get_settings().license_public_key_pem
+    try:
+        trust_anchor.load_trust_anchor(public_key_pem)
+    except trust_anchor.TrustAnchorError as exc:
+        logger.warning("licencia: ancla de confianza del propietario %s; importación rechazada", exc.reason)
+        raise KontrolError(
+            code=f"LICENSE_TRUST_ANCHOR_{exc.reason.upper()}",
+            message="La instalación no tiene configurada una clave pública válida del propietario; no se puede verificar la licencia.",
+            status_code=503,
+        ) from None
+    assert public_key_pem is not None  # lo garantiza el ancla cargada
+
+    # 2) Verificar firma (Ed25519) contra el ancla.
+    if not license_engine.verify_license_signature(payload, signature_hex, public_key_pem):
         _record_event(db, installation, "LICENSE_SIGNATURE_INVALID", {"license_id": payload.get("license_id")}, user_id)
         db.commit()
         raise KontrolError(
@@ -181,7 +200,7 @@ def import_license(
             status_code=423,
         )
 
-    # 2) Validar installation_id (una licencia no sirve en otra instalación).
+    # 3) Validar installation_id (una licencia no sirve en otra instalación).
     if payload.get("installation_id") != installation.installation_uuid:
         _record_event(db, installation, "LICENSE_INSTALLATION_MISMATCH", {"license_id": payload.get("license_id")}, user_id)
         db.commit()
@@ -193,7 +212,7 @@ def import_license(
 
     license_data = license_engine.parse_license_payload(payload)
 
-    # 3) Calcular modo actual.
+    # 4) Calcular modo actual.
     state = db.execute(select(LicenseState).where(LicenseState.installation_id == installation.installation_uuid)).scalars().first()
     last_reliable = state.last_reliable_date if state else None
     mode = license_engine.compute_mode(license_data, _now(), last_reliable_date=last_reliable)
