@@ -1,7 +1,11 @@
-/** LicenseBanner — banner de estado de licencia (FR-001-067, DOC-08 §15.3). */
+/**
+ * LicenseBanner — banner de estado de licencia (FR-001-067, DOC-08 §15.3).
+ * El aviso lo ve todo usuario; el enlace a «Mi licencia», solo quien puede entrar (FR-010-114).
+ */
 import { Link } from "react-router";
 
-import { useLicense } from "@/app/contexts/LicenseContext";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { PERMISO_DE_LICENCIA, useLicense } from "@/app/contexts/LicenseContext";
 
 const messages: Record<string, { title: string; detail: string; tone: "warning" | "danger" }> = {
   RENEWAL_NOTICE: {
@@ -23,10 +27,12 @@ const messages: Record<string, { title: string; detail: string; tone: "warning" 
 
 export function LicenseBanner(): React.JSX.Element | null {
   const { mode, status } = useLicense();
+  const { hasPermission } = useAuth();
   if (!mode || !(mode in messages)) {
     return null;
   }
   const info = messages[mode];
+  const puedeVerLaLicencia = hasPermission(PERMISO_DE_LICENCIA);
   return (
     <div
       role="status"
@@ -37,12 +43,14 @@ export function LicenseBanner(): React.JSX.Element | null {
       <p className="font-medium text-text-900">
         {info.title} — <span className="font-normal text-text-700">{info.detail}</span>
       </p>
-      <Link
-        to={status?.license_url ?? "/mi-licencia"}
-        className="rounded px-2 py-1 font-medium text-brand-700 underline-offset-2 hover:underline"
-      >
-        Ver Mi licencia
-      </Link>
+      {puedeVerLaLicencia && (
+        <Link
+          to={status?.license_url ?? "/mi-licencia"}
+          className="rounded px-2 py-1 font-medium text-brand-700 underline-offset-2 hover:underline"
+        >
+          Ver Mi licencia
+        </Link>
+      )}
     </div>
   );
 }

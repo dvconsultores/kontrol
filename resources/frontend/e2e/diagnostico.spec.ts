@@ -128,7 +128,7 @@ test.describe("Diagnóstico · acceso", () => {
     const ready = await request.get(`${API}/health/ready`);
     expect(live.status()).toBe(200);
     expect(ready.status()).toBe(200);
-    expect(Object.keys(await live.json()).sort()).toEqual(["service", "status", "version"]);
+    expect(Object.keys(await live.json()).sort()).toEqual(["service", "status"]); // sin versión (FR-010-116)
     expect(await ready.json()).toEqual({ status: "ok", service: "kontrol-backend", database: "ok" });
     for (const texto of [await live.text(), await ready.text()]) {
       expect(texto).not.toMatch(/installation|license|environment|storage|\/tmp|\/data|postgres|password|tenant_id|company_id/i);

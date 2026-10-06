@@ -1,0 +1,56 @@
+# Después del arreglo · árbol de trabajo sobre ecd22fc · SQLite en memoria, TestClient, licencia firmada de prueba (LIC-010000)
+
+## ANON GET /license/status
+200 {"mode":"FULL_ACCESS","license_url":"/mi-licencia"}
+
+## ANON GET /license/status con token inventado
+200 {"mode":"FULL_ACCESS","license_url":"/mi-licencia"}
+
+## ANON GET /license/detail
+401 {"code":"AUTH_REQUIRED","message":"Debe iniciar sesión","field_errors":{},"request_id":"08a1034afcb941f68d4c7c8d609141b4","details":null}
+
+## SIN license:view GET /license/detail
+403 {"code":"PERMISSION_DENIED","message":"No tiene permiso para esta acción","field_errors":{},"request_id":"620c663a1aea43b4a6f3c6f9540cbf7e","details":null}
+
+## SIN license:view GET /license/installation-request
+403 {"code":"PERMISSION_DENIED","message":"No tiene permiso para esta acción","field_errors":{},"request_id":"d4cf536656ca486390dc717704a90e62","details":null}
+
+## ANON GET /license/history
+401 {"code":"AUTH_REQUIRED","message":"Debe iniciar sesión","field_errors":{},"request_id":"49f83e73cc7a4e32abf54e71426711b4","details":null}
+
+## ANON GET /license/installation-request
+401 {"code":"AUTH_REQUIRED","message":"Debe iniciar sesión","field_errors":{},"request_id":"5042197fd51e44f38d1f1b5124de3130","details":null}
+
+## ANON GET /licensing/overview
+401 {"code":"AUTH_REQUIRED","message":"Debe iniciar sesión","field_errors":{},"request_id":"82f748f1cf6f4025948110f4b5fda7fc","details":null}
+
+## SIN license:view GET /license/history
+403 {"code":"PERMISSION_DENIED","message":"No tiene permiso para esta acción","field_errors":{},"request_id":"dbd4d33cd4c946cabfc056bc484f47d7","details":null}
+
+## SIN license:view GET /licensing/overview
+403 {"code":"PERMISSION_DENIED","message":"No tiene permiso para esta acción","field_errors":{},"request_id":"6c79c1aeec0e4c06b88144fa28d9d868","details":null}
+
+## SIN license:view GET /licensing/central-config
+403 {"code":"PERMISSION_DENIED","message":"No tiene permiso para esta acción","field_errors":{},"request_id":"74e64df39b7d4e67a8ca6f824497f1e9","details":null}
+
+## SIN license:view GET /licensing/entitlements
+403 {"code":"PERMISSION_DENIED","message":"No tiene permiso para esta acción","field_errors":{},"request_id":"348a7d94c3a948dea43d335e753c4653","details":null}
+
+## SIN license:view GET /licensing/entitlement-snapshots
+403 {"code":"PERMISSION_DENIED","message":"No tiene permiso para esta acción","field_errors":{},"request_id":"1631731f56ce413898e97312d1168db9","details":null}
+
+## SIN license:view GET /licensing/offline-status
+403 {"code":"PERMISSION_DENIED","message":"No tiene permiso para esta acción","field_errors":{},"request_id":"5c38fb8b290a47be9238222e1ef8fc36","details":null}
+
+## SIN license:view GET /licensing/sync-runs
+403 {"code":"PERMISSION_DENIED","message":"No tiene permiso para esta acción","field_errors":{},"request_id":"21afa7186dfb4b6a9cbd424c2cadadcd","details":null}
+
+## SIN license:view GET /licensing/renewal-requests
+403 {"code":"PERMISSION_DENIED","message":"No tiene permiso para esta acción","field_errors":{},"request_id":"74a485543fde48f5891619226e443b48","details":null}
+
+## ANON GET /health/live
+200 {"status":"ok","service":"kontrol-backend"}
+
+## ANON GET /health/ready
+200 {"status":"ok","service":"kontrol-backend","database":"ok"}
+

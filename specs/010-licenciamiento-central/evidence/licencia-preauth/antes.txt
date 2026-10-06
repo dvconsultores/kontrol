@@ -1,0 +1,47 @@
+# Reproducción antes del arreglo · HEAD ecd22fc · SQLite en memoria, TestClient, licencia firmada de prueba (LIC-010000)
+
+## ANON GET /license/status
+200 {"installation_id":"KTL-VE-D56E1EB2-31FC","activated":true,"license_id":"LIC-010000","mode":"FULL_ACCESS","period_start":"2026-04-01T00:00:00","period_end":"2027-03-31T23:59:59","critical_warning_start":"2027-04-21T00:00:00","read_only_start":"2027-05-01T00:00:00","entitlements":{"companies":1,"users":25,"modules":["ventas","compras"]},"minimum_version":"1.0.0","kid":"kontrol-lic-2026-01","license_url":"/mi-licencia"}
+
+## ANON GET /license/status con token inventado
+200 {"installation_id":"KTL-VE-D56E1EB2-31FC","activated":true,"license_id":"LIC-010000","mode":"FULL_ACCESS","period_start":"2026-04-01T00:00:00","period_end":"2027-03-31T23:59:59","critical_warning_start":"2027-04-21T00:00:00","read_only_start":"2027-05-01T00:00:00","entitlements":{"companies":1,"users":25,"modules":["ventas","compras"]},"minimum_version":"1.0.0","kid":"kontrol-lic-2026-01","license_url":"/mi-licencia"}
+
+## ANON GET /license/history
+200 [{"id":"<uuid-de-la-instalación>","event_type":"LICENSE_IMPORTED","detail":{"license_id":"LIC-010000","mode":"FULL_ACCESS"},"source":"LOCAL","created_at":"2026-10-06T11:31:40"}]
+
+## ANON GET /license/installation-request
+200 {"installation_id":"KTL-VE-D56E1EB2-31FC","public_key":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEANniQNSzoZeVpum7guQ8ny6YcqJ57swD4FMG/jGQfBw8=\n-----END PUBLIC KEY-----\n","version":"1.0.0","nonce":"855c58ee345f42b4bdd6209318acb9ef","requested_at":"2026-10-06T11:31:42.149236+00:00"}
+
+## ANON GET /licensing/overview
+401 {"code":"AUTH_REQUIRED","message":"Debe iniciar sesión","field_errors":{},"request_id":"a7d29f6a2f50456f8cb730decbca2d66","details":null}
+
+## SIN license:view GET /license/history
+200 [{"id":"<uuid-de-la-instalación>","event_type":"LICENSE_IMPORTED","detail":{"license_id":"LIC-010000","mode":"FULL_ACCESS"},"source":"LOCAL","created_at":"2026-10-06T11:31:40"}]
+
+## SIN license:view GET /licensing/overview
+500 {"code":"INTERNAL_ERROR","message":"Ocurrió un error interno. Intente nuevamente.","field_errors":{},"request_id":"6c73952c8bd64efe8392ca1890cccf0c","details":null}
+
+## SIN license:view GET /licensing/central-config
+200 null
+
+## SIN license:view GET /licensing/entitlements
+200 {"modules":{"ventas":true,"compras":true,"inventario":false,"tesoreria":false,"fiscal":false,"regulatorio":false,"reportes":false},"version":"local","taken_at":null}
+
+## SIN license:view GET /licensing/entitlement-snapshots
+200 {"items":[],"total":0}
+
+## SIN license:view GET /licensing/offline-status
+500 {"code":"INTERNAL_ERROR","message":"Ocurrió un error interno. Intente nuevamente.","field_errors":{},"request_id":"5792b61a3e0e4038923969a4c0c2d373","details":null}
+
+## SIN license:view GET /licensing/sync-runs
+200 {"items":[],"total":0}
+
+## SIN license:view GET /licensing/renewal-requests
+200 {"items":[],"total":0}
+
+## ANON GET /health/live
+200 {"status":"ok","service":"kontrol-backend","version":"1.0.0"}
+
+## ANON GET /health/ready
+200 {"status":"ok","service":"kontrol-backend","database":"ok"}
+

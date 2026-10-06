@@ -1,12 +1,20 @@
-/** MiLicencia — estado de la licencia, ruta completa (FR-001-054, DOC-07 §13.1). */
+/**
+ * MiLicencia — estado de la licencia, ruta completa (FR-001-054, DOC-07 §13.1).
+ * La ve quien tiene `license:view` (FR-010-113): el backend es la autoridad —`GET /license/detail`
+ * responde 401/403—; aquí se decide antes de pedir nada, para no pintar ni solicitar el detalle
+ * a quien no puede verlo.
+ */
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { LicenseStatus } from "@/api/types";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { PERMISO_DE_LICENCIA } from "@/app/contexts/LicenseContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { ErrorState } from "@/components/ErrorState";
+import { ForbiddenState } from "@/components/ForbiddenState";
 import { FormField } from "@/components/FormField";
 import { LoadingState } from "@/components/LoadingState";
 import { PageContent } from "@/layout/PageContent";
@@ -15,12 +23,15 @@ import { TextInput } from "@/components/TextInput";
 
 export function MiLicenciaPage(): React.JSX.Element {
   const { notify } = useNotifications();
+  const { hasPermission } = useAuth();
   const [proofRef, setProofRef] = useState("");
 
+  const permitido = hasPermission(PERMISO_DE_LICENCIA);
   const query = useQuery({
-    queryKey: ["license", "status"],
-    queryFn: () => apiFetch<LicenseStatus>("/license/status"),
+    queryKey: ["license", "detail"],
+    queryFn: () => apiFetch<LicenseStatus>("/license/detail"),
     retry: false,
+    enabled: permitido,
   });
 
   const submitProof = async (): Promise<void> => {
@@ -37,6 +48,9 @@ export function MiLicenciaPage(): React.JSX.Element {
     await query.refetch();
   };
 
+  if (!permitido) {
+    return <ForbiddenState />;
+  }
   if (query.isLoading) {
     return <LoadingState rows={4} />;
   }

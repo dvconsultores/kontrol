@@ -16,8 +16,8 @@ router = APIRouter(tags=["system"])
 
 @router.get("/health/live")
 def liveness():
-    """El proceso está vivo."""
-    return {"status": "ok", "service": "kontrol-backend", "version": get_settings().app_version}
+    """El proceso está vivo. Público y mínimo: sin versión (FR-010-116); la versión la da el diagnóstico."""
+    return {"status": "ok", "service": "kontrol-backend"}
 
 
 @router.get("/health/ready")

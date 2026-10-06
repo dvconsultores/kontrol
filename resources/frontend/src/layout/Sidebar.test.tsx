@@ -56,7 +56,7 @@ describe("Sidebar · Diagnóstico", () => {
     expect(enlace("Configuración central")).toBeNull();
     expect(enlace("Empresas")).toBeNull();
     expect(enlace("Inicio")).not.toBeNull();
-    expect(enlace("Mi licencia")).not.toBeNull();
+    expect(enlace("Mi licencia")).toBeNull(); // el detalle de la licencia exige license:view (FR-010-114)
     expect(enlace("Auditoría")).not.toBeNull();
   });
 
@@ -66,5 +66,18 @@ describe("Sidebar · Diagnóstico", () => {
     expect(enlace("Diagnóstico")).not.toBeNull();
     expect(enlace("Configuración central")).not.toBeNull();
     expect(enlace("Empresas")).toBeNull();
+  });
+
+  it("NAV-05 · «Mi licencia» solo con license:view, y apunta a su ruta", () => {
+    permisos = new Set(["license:view"]);
+    montar();
+    expect(enlace("Mi licencia")?.getAttribute("href")).toBe("/mi-licencia");
+  });
+
+  it("NAV-06 · con otros permisos pero sin license:view no hay «Mi licencia»", () => {
+    permisos = new Set(["organization:view", "dashboard:view", "audit:view"]);
+    montar();
+    expect(enlace("Mi licencia")).toBeNull();
+    expect(enlace("Inicio")).not.toBeNull();
   });
 });

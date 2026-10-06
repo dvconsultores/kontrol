@@ -20,14 +20,15 @@
 
 | Método | Ruta | Uso |
 |---|---|---|
-| GET | `/api/v1/health/live` | Liveness |
+| GET | `/api/v1/health/live` | Liveness: `{status, service}`, público, sin versión (FR-010-116) |
 | GET | `/api/v1/health/ready` | Readiness |
-| GET | `/api/v1/license/status` | Estado, modo, fechas, derechos |
+| GET | `/api/v1/license/status` | Estado público mínimo, sin sesión: `{mode, license_url}` (FR-010-102) |
+| GET | `/api/v1/license/detail` | Estado completo —identidad, modo, fechas, derechos—; sesión + `license:view` (FR-010-107) |
 | POST | `/api/v1/license/activate` | Importar licencia inicial firmada |
 | POST | `/api/v1/license/import` | Importar archivo firmado offline |
-| GET | `/api/v1/license/installation-request` | Descargar solicitud de activación |
+| GET | `/api/v1/license/installation-request` | Descargar solicitud de activación; sesión + `license:view` (FR-010-108) |
 | POST | `/api/v1/license/renewal-request` | Registrar comprobante/solicitud |
-| GET | `/api/v1/license/history` | Historial local |
+| GET | `/api/v1/license/history` | Historial local; sesión + `license:view` (FR-010-108) |
 | POST | `/api/v1/license/sync` | Sincronización manual autorizada |
 
 ### Autenticación

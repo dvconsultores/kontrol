@@ -19,6 +19,12 @@ export interface LicenseStatus {
   license_url: string;
 }
 
+/** Contrato mínimo pre-sesión de `GET /license/status` (FR-010-102): solo lo que el acceso necesita. */
+export interface LicensePublicStatus {
+  mode: LicenseMode | "PENDING";
+  license_url: string;
+}
+
 export interface UserInfo {
   id: string;
   username: string;

@@ -634,6 +634,10 @@
     },
     {
       "method": "GET",
+      "path": "/license/detail"
+    },
+    {
+      "method": "GET",
       "path": "/license/history"
     },
     {

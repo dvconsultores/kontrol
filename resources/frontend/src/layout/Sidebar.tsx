@@ -52,7 +52,8 @@ const navSections = [
     title: "Principal",
     items: [
       { to: "/", label: "Inicio", icon: LayoutDashboard },
-      { to: "/mi-licencia", label: "Mi licencia", icon: Lock },
+      // El detalle de la licencia lo gobierna el mismo permiso que la sección «Licenciamiento» (FR-010-114).
+      { to: "/mi-licencia", label: "Mi licencia", icon: Lock, permission: "license:view" },
     ],
   },
   {

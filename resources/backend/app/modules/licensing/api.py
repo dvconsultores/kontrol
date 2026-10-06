@@ -1,11 +1,16 @@
-"""API de licenciamiento local (FR-001-050..056, DOC-07 §12.2)."""
+"""API de licenciamiento local (FR-001-050..056, DOC-07 §12.2).
+
+Frontera de lectura (FR-010-102..111): `GET /license/status` es público y mínimo —solo lo
+que la experiencia de acceso necesita—; toda lectura detallada de licencia o instalación
+exige sesión y `license:view`. El backend es la autoridad: el frontend solo lo respeta.
+"""
 
 from __future__ import annotations
 
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -27,9 +32,27 @@ class RenewalRequestCreate(BaseModel):
     notes: str | None = None
 
 
+class LicensePublicStatus(BaseModel):
+    """Contrato mínimo pre-sesión (FR-010-102..105): lista explícita, nada más.
+
+    `mode` es la única fuente de verdad del acceso; `license_url` es el enlace del aviso.
+    Se construye campo a campo desde el estado del servicio —no se serializa y excluye—,
+    así un campo nuevo en `get_status` nunca sale por aquí. `extra="forbid"` lo refuerza.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    mode: str = Field(description="FULL_ACCESS, RENEWAL_NOTICE, CRITICAL_RENEWAL_NOTICE, READ_ONLY, SECURITY_SUSPENSION o PENDING")
+    license_url: str = Field(description="Ruta de la pantalla «Mi licencia»")
+
+
 @router.get("/installation-request")
-def installation_request(db: Session = Depends(get_db)):
-    """Descarga la solicitud de activación (DOC-07 §6.2)."""
+def installation_request(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_permission("license", "view")),
+):
+    """Descarga la solicitud de activación (DOC-07 §6.2): identidad y clave pública de la
+    instalación, así que la lee quien puede ver la licencia (FR-010-108)."""
     installation = licensing_service.get_or_create_installation(db)
     return licensing_service.installation_request_payload(installation)
 
@@ -58,9 +81,23 @@ def import_offline(payload: LicenseImportRequest, db: Session = Depends(get_db))
     return {"ok": True, "license_id": state.license_id, "mode": state.mode}
 
 
-@router.get("/status")
-def status(db: Session = Depends(get_db)):
-    """Estado, modo, fechas y derechos (FR-001-052/054)."""
+@router.get("/status", response_model=LicensePublicStatus)
+def status(db: Session = Depends(get_db)) -> LicensePublicStatus:
+    """Estado público mínimo, sin sesión (FR-010-102..106): solo `mode` y `license_url`.
+
+    Cerrado ante error: sin licencia el servicio dice `PENDING`; si el estado no trae `mode`,
+    esto falla en vez de responder un modo inventado.
+    """
+    estado = licensing_service.get_status(db)
+    return LicensePublicStatus(mode=estado["mode"], license_url=estado["license_url"])
+
+
+@router.get("/detail")
+def detail(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_permission("license", "view")),
+):
+    """Estado completo: identidad, licencia, modo, fechas y derechos (FR-001-052/054, FR-010-107)."""
     return licensing_service.get_status(db)
 
 
@@ -76,8 +113,8 @@ def renewal_request(
 
 
 @router.get("/history")
-def history(db: Session = Depends(get_db)):
-    """Historial local inmutable."""
+def history(db: Session = Depends(get_db), _: User = Depends(require_permission("license", "view"))):
+    """Historial local inmutable (FR-010-108)."""
     return licensing_service.get_history(db)
 
 
@@ -106,7 +143,7 @@ class ModeTransitionBody(BaseModel):
 
 
 @central_router.get("/central-config")
-def get_central_config(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def get_central_config(db: Session = Depends(get_db), _: User = Depends(require_permission("license", "view"))):
     """Configuración del servidor central (FR-010-001)."""
     return licensing_service.get_central_config(db)
 
@@ -139,31 +176,31 @@ def sync_license(
 
 
 @central_router.get("/sync-runs")
-def list_sync_runs(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def list_sync_runs(db: Session = Depends(get_db), _: User = Depends(require_permission("license", "view"))):
     """Historial de sincronizaciones (FR-010-004)."""
     return {"items": licensing_service.list_sync_runs(db), "total": len(licensing_service.list_sync_runs(db))}
 
 
 @central_router.get("/entitlements")
-def entitlements(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def entitlements(db: Session = Depends(get_db), _: User = Depends(require_permission("license", "view"))):
     """Matriz vigente de entitlements por módulo (FR-010-010)."""
     return licensing_service.current_entitlements(db)
 
 
 @central_router.get("/entitlement-snapshots")
-def entitlement_snapshots(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def entitlement_snapshots(db: Session = Depends(get_db), _: User = Depends(require_permission("license", "view"))):
     """Snapshots de la matriz (FR-010-012)."""
     return {"items": licensing_service.list_entitlement_snapshots(db), "total": len(licensing_service.list_entitlement_snapshots(db))}
 
 
 @central_router.get("/offline-status")
-def offline_status(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def offline_status(db: Session = Depends(get_db), _: User = Depends(require_permission("license", "view"))):
     """Tolerancia offline con reloj confiable (FR-010-003)."""
     return licensing_service.verify_offline(db)
 
 
 @central_router.get("/renewal-requests")
-def list_renewal_requests(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def list_renewal_requests(db: Session = Depends(get_db), _: User = Depends(require_permission("license", "view"))):
     """Solicitudes de renovación (FR-010-020)."""
     return {"items": licensing_service.list_renewal_requests(db), "total": len(licensing_service.list_renewal_requests(db))}
 
@@ -203,6 +240,6 @@ def transition_mode(
 
 
 @central_router.get("/overview")
-def overview(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def overview(db: Session = Depends(get_db), _: User = Depends(require_permission("license", "view"))):
     """Vista consolidada para el frontend (FR-010-101)."""
     return licensing_service.central_overview(db)

@@ -1,0 +1,19 @@
+GOOD: (0, 'Tests  16 passed (16)')
+M-05 MiLicenciaPage pide el detalle aunque no haya permiso (sin enabled)
+  MUTATED → FAIL (muere) · ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  RESTORED → PASS · Tests  3 passed (3)
+M-05b MiLicenciaPage no devuelve ForbiddenState
+  MUTATED → FAIL (muere) · ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  RESTORED → PASS · Tests  3 passed (3)
+M-06 Sidebar: «Mi licencia» sin permiso
+  MUTATED → FAIL (muere) · ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+  RESTORED → PASS · Tests  6 passed (6)
+M-07 LicenseBanner: el enlace sale sin permiso
+  MUTATED → FAIL (muere) · ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  RESTORED → PASS · Tests  3 passed (3)
+M-07b LicenseBanner: el aviso desaparece sin permiso
+  MUTATED → FAIL (muere) · ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  RESTORED → PASS · Tests  3 passed (3)
+M-10 LicenseContext: blocksWrite siempre falso
+  MUTATED → FAIL (muere) · ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  RESTORED → PASS · Tests  4 passed (4)

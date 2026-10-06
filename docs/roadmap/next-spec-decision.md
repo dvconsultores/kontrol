@@ -2710,3 +2710,29 @@ traza) y seis pruebas recibieron tokens caducados al instante. La siguiente corr
 `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
 
+## 2026-10-06 · Tras converger LICENCIA-STATUS-SIN-SESION, LICENCIA-LECTURA-SIN-PERMISO y HEALTH-LIVE-VERSION (dueña 004)
+
+El estado de la licencia respondía a cualquiera, sin sesión, la identidad de la instalación, el
+identificador de la licencia, su `kid`, las cuatro fechas y los derechos; el historial y la
+solicitud de activación —con la clave pública de la instalación— también eran anónimos, y las
+lecturas de licenciamiento central exigían sesión pero no `license:view`. La dueña decidió
+(D1–D4): el estado sigue público porque lo pide la pantalla de acceso, pero **mínimo** —`mode` y
+`license_url`, por lista explícita, nunca por exclusión—; todo lo detallado exige sesión y
+`license:view` en el backend; `/health/live` deja de publicar la versión y `/health/ready` sigue
+mínimo. Nadie parseaba la versión: Docker mira el código, los guiones imprimen el cuerpo y el panel
+la leía de un endpoint que nunca la trajo. «Mi licencia» —pantalla del Administrador— exige el
+permiso antes de pedir nada, y lo respetan su entrada de menú y el enlace del aviso; el aviso del
+modo lo ve todo usuario, porque a eso sirve el estado público. Sin permiso nuevo, sin rol nuevo,
+sin esquema, sin migración, sin tocar vigencia, zona horaria, firma ni identidad.
+
+De paso quedó registrado, sin absorber: sobre SQLite la tolerancia offline compara una fecha sin
+zona con UTC y rompe dos lecturas (`OFFLINE-NAIVE-EN-SQLITE`); la tarjeta «Versión» del panel
+siempre dijo «—» (`PANEL-VERSION-VACIA`); y la importación de licencia sigue anónima, con la
+firma como única autoridad (`LICENCIA-IMPORT-SIN-SESION`, decisión de la dueña).
+
+**Decisiones pendientes de la dueña:** `BACKEND-KEEPALIVE-5S`, `LICENCIA-IMPORT-SIN-SESION`,
+`PANEL-VERSION-VACIA`. Candidatas siguientes, sin decisión pendiente:
+`OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
+`ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
+

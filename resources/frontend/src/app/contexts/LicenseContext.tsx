@@ -1,6 +1,7 @@
 /**
  * Contexto global de licencia (FR-001-067, DOC-08 §15.3).
- * Informa FULL_ACCESS/RENEWAL_NOTICE/CRITICAL_RENEWAL_NOTICE/READ_ONLY.
+ * Informa FULL_ACCESS/RENEWAL_NOTICE/CRITICAL_RENEWAL_NOTICE/READ_ONLY a partir del contrato
+ * mínimo pre-sesión de `GET /license/status` (FR-010-102/112): solo `mode` y `license_url`.
  * El reloj del navegador nunca decide el estado (FR-001-056).
  */
 import {
@@ -14,16 +15,19 @@ import {
 } from "react";
 
 import { apiFetch } from "@/api/client";
-import type { LicenseStatus } from "@/api/types";
+import type { LicensePublicStatus } from "@/api/types";
 
 export const LICENSE_BLOCKS_WRITE = new Set([
   "READ_ONLY",
   "SECURITY_SUSPENSION",
 ]);
 
+/** El permiso que gobierna leer el detalle de la licencia: «Mi licencia», su entrada de menú y el enlace del aviso. */
+export const PERMISO_DE_LICENCIA = "license:view";
+
 interface LicenseContextValue {
-  status: LicenseStatus | null;
-  mode: LicenseStatus["mode"] | null;
+  status: LicensePublicStatus | null;
+  mode: LicensePublicStatus["mode"] | null;
   loading: boolean;
   blocksWrite: boolean;
   refresh: () => Promise<void>;
@@ -32,12 +36,12 @@ interface LicenseContextValue {
 const LicenseContext = createContext<LicenseContextValue | null>(null);
 
 export function LicenseProvider({ children }: { children: ReactNode }): React.JSX.Element {
-  const [status, setStatus] = useState<LicenseStatus | null>(null);
+  const [status, setStatus] = useState<LicensePublicStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
-      const data = await apiFetch<LicenseStatus>("/license/status");
+      const data = await apiFetch<LicensePublicStatus>("/license/status");
       setStatus(data);
     } catch {
       setStatus(null);

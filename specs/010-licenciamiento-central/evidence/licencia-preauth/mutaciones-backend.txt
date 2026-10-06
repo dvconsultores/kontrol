@@ -1,0 +1,44 @@
+GOOD: (0, '........................................................                 [100%]\n')
+M-01 /status devuelve get_status entero (sin lista explícita)
+  MUTATED → FAIL (muere) · fastapi.exceptions.ResponseValidationError: 10 validation errors:
+  RESTORED → PASS · ...                                                                      [100%]
+
+M-02 /detail con get_current_user en vez de license:view
+  MUTATED → FAIL (muere) · =====================
+FAILED tests/test_license_access.py::test_lic_09_una_sesion_valida_sin_el_permiso_403_y_sin_fuga
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  RESTORED → PASS · ...........                                                              [100%]
+
+M-03 /license/history vuelve a get_current_user
+  MUTATED → FAIL (muere) · s/test_license_access.py::test_lic_12_sin_el_permiso_toda_lectura_detallada_es_403_y_sin_fuga[/api/v1/license/history]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  RESTORED → PASS · ..........                                                               [100%]
+
+M-03b /licensing/entitlements vuelve a get_current_user
+  MUTATED → FAIL (muere) · license_access.py::test_lic_12_sin_el_permiso_toda_lectura_detallada_es_403_y_sin_fuga[/api/v1/licensing/entitlements]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  RESTORED → PASS · ..........                                                               [100%]
+
+M-04 /health/live vuelve a publicar version
+  MUTATED → FAIL (muere) · ======================
+FAILED tests/test_license_access.py::test_health_01_live_responde_estado_y_servicio_exactamente
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  RESTORED → PASS · ....                                                                     [100%]
+
+M-08 /installation-request vuelve a ser anónimo
+  MUTATED → FAIL (muere) · st_license_access.py::test_lic_11_sin_credenciales_toda_lectura_detallada_es_401[/api/v1/license/installation-request]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  RESTORED → PASS · ....................                                                     [100%]
+
+M-09 el DTO admite extra (sin forbid) y /status se construye con **estado
+  MUTATED → FAIL (muere) · ========
+FAILED tests/test_license_access.py::test_lic_16_lista_explicita_un_campo_extra_no_sale_y_sin_modo_no_hay_200
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  RESTORED → PASS · ..                                                                       [100%]
+

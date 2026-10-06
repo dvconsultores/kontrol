@@ -180,7 +180,7 @@ def test_sys_06_la_cabecera_de_empresa_no_concede_ni_cambia_nada(empresa):
 def test_sys_07_los_health_siguen_publicos_con_su_contrato_de_hoy():
     live = _CLIENT.get("/api/v1/health/live")
     ready = _CLIENT.get("/api/v1/health/ready")
-    assert live.status_code == 200 and set(live.json()) == {"status", "service", "version"}
+    assert live.status_code == 200 and set(live.json()) == {"status", "service"}  # sin versión (FR-010-116)
     assert live.json()["status"] == "ok"
     assert ready.status_code == 200 and set(ready.json()) == {"status", "service", "database"}
     assert ready.json() == {"status": "ok", "service": "kontrol-backend", "database": "ok"}
