@@ -248,7 +248,8 @@ const navSections = [
     title: "Sistema",
     items: [
       { to: "/auditoria", label: "Auditoría", icon: FileText },
-      { to: "/diagnostico", label: "Diagnóstico", icon: Settings },
+      // El diagnóstico de la instalación lo gobierna el mismo permiso que la sección «Licenciamiento».
+      { to: "/diagnostico", label: "Diagnóstico", icon: Settings, permission: "license:view" },
     ],
   },
 ];

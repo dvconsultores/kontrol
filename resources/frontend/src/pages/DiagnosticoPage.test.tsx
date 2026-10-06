@@ -19,7 +19,13 @@ vi.mock("@/api/client", async (original) => ({
   apiFetch: (...args: unknown[]) => apiFetch(...args),
 }));
 
-const { DiagnosticoPage, filasDeDiagnostico } = await import("./DiagnosticoPage");
+let permisos = new Set(["license:view"]);
+
+vi.mock("@/app/contexts/AuthContext", () => ({
+  useAuth: () => ({ hasPermission: (permiso: string) => permisos.has(permiso) }),
+}));
+
+const { DiagnosticoPage, PERMISO_DE_DIAGNOSTICO, filasDeDiagnostico } = await import("./DiagnosticoPage");
 
 const SANO: DiagnosticsResponse = {
   environment: "qa",
@@ -43,6 +49,7 @@ function montar(): void {
 describe("DiagnosticoPage", () => {
   beforeEach(() => {
     apiFetch.mockReset();
+    permisos = new Set(["license:view"]);
   });
 
   it("DIAG-01 · con la respuesta real del servidor la pantalla se pinta entera", async () => {
@@ -87,6 +94,20 @@ describe("DiagnosticoPage", () => {
     apiFetch.mockRejectedValue(new Error("caído"));
     montar();
     expect(await screen.findByText("No fue posible obtener el diagnóstico.")).toBeTruthy();
+  });
+
+  it("DIAG-05 · sin el permiso: acceso prohibido, nada del diagnóstico y ni una petición", () => {
+    permisos = new Set(["dashboard:view", "organization:view"]);
+    apiFetch.mockResolvedValue(SANO);
+    montar();
+    expect(screen.getByRole("heading", { level: 1, name: "Acceso prohibido" })).toBeTruthy();
+    expect(screen.queryByText("1.0.0")).toBeNull();
+    expect(screen.queryByText("Entorno")).toBeNull();
+    expect(apiFetch).not.toHaveBeenCalled();
+  });
+
+  it("DIAG-06 · el permiso que abre la pantalla es el de leer la licencia", () => {
+    expect(PERMISO_DE_DIAGNOSTICO).toBe("license:view");
   });
 
   it("DIAG-04 · cada fila dice si lo que muestra está bien", () => {

@@ -2683,3 +2683,30 @@ Candidatas siguientes, sin decisión pendiente: `ALMACENES-DESPLEGABLES-TRUNCADO
 `PICKLIST-DUPLICADA-500`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `AUDIT-ORDEN-SIN-DESEMPATE`, `LISTADOS-SIN-RESPONSE-MODEL`,
 `E2E-SIN-TYPECHECK`, `ENTORNO-SIN-CLAMSCAN`. `NEXT SPEC = 029` no cambia.
+
+## 2026-10-06 · Tras converger DIAGNOSTICO-SIN-SESION (dueña 001; apoyo 004 por el permiso)
+
+El diagnóstico de la instalación respondía a cualquiera, sin sesión y con un token inventado:
+identidad de la instalación, licencia y la ruta de almacenamiento del servidor. La dueña
+decidió: sesión válida y permiso existente. No había recurso de sistema en el catálogo; se
+reutiliza `license:view`, que ya gobierna leer licencia e instalación en el menú. Sin sesión
+401, sin permiso 403, y el cuerpo ya no lleva la ruta. La pantalla y el menú respetan el mismo
+permiso, y los health checks públicos siguen como estaban: Docker, el panel y el lanzador de QA
+los usan.
+
+De paso quedó registrado, sin absorber, lo que estaba al lado: `GET /license/status` también
+responde sin sesión (lo pide la pantalla de acceso), las lecturas de licenciamiento no exigen
+`license:view` aunque exista, no hay API de alta de roles con permisos, y el OpenAPI no
+declara ningún esquema de seguridad.
+
+Y una corrida global dejó una lección de entorno: el reloj del equipo saltó cinco horas en
+medio de la corrida —NTP, tras el reinicio— y con él un cambio de red; Chromium abortó una
+carga (`ERR_NETWORK_CHANGED`: el «login en blanco» de `E2E-PANTALLA-SIN-PINTAR`, por fin con
+traza) y seis pruebas recibieron tokens caducados al instante. La siguiente corrida, limpia.
+
+**Decisiones pendientes de la dueña:** `LICENCIA-STATUS-SIN-SESION`, `BACKEND-KEEPALIVE-5S`,
+`HEALTH-LIVE-VERSION`. Candidatas siguientes, sin decisión pendiente:
+`LICENCIA-LECTURA-SIN-PERMISO`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
+`ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
+

@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
 import type { DiagnosticsResponse } from "@/api/types";
+import { useAuth } from "@/app/contexts/AuthContext";
 import { ErrorState } from "@/components/ErrorState";
+import { ForbiddenState } from "@/components/ForbiddenState";
 import { LoadingState } from "@/components/LoadingState";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
@@ -25,12 +27,24 @@ export function filasDeDiagnostico(d: DiagnosticsResponse): Fila[] {
   ];
 }
 
+/** El permiso que gobierna leer la identidad y la licencia de la instalación: el del diagnóstico. */
+export const PERMISO_DE_DIAGNOSTICO = "license:view";
+
 export function DiagnosticoPage(): React.JSX.Element {
+  const { hasPermission } = useAuth();
+  // El backend es la autoridad (401/403); aquí se decide antes de pedir nada, para no
+  // pintar ni solicitar el diagnóstico a quien no puede verlo (FR-001-042).
+  const permitido = hasPermission(PERMISO_DE_DIAGNOSTICO);
   const query = useQuery({
     queryKey: ["diagnostics"],
     queryFn: () => apiFetch<DiagnosticsResponse>("/system/diagnostics"),
+    enabled: permitido,
     retry: false,
   });
+
+  if (!permitido) {
+    return <ForbiddenState />;
+  }
 
   return (
     <PageContent maxWidth="md">

@@ -178,6 +178,11 @@ mutaciones, regresiones y coste. Si Claude hizo la tarea entera, se dice.
 - Frontend (desde `resources/frontend/`): `npm run typecheck` · `npm run lint` · `npm test` ·
   `npm run build` · `npm run test:e2e`.
 - PostgreSQL de QA: `bash qa/pg-provision.sh start`; siembra E2E: `bash qa/e2e-seed.sh <url>`.
+- **Certificación E2E completa**: `resources/backend/.venv/bin/python qa/e2e-run.py` (desde la
+  raíz; `-- <args de Playwright>` para dirigirla). Cada corrida crea una base PostgreSQL efímera
+  nueva, la migra a la cabeza, la siembra, levanta backend y Vite contra ella, corre Playwright y
+  lo elimina todo al terminar; `kaud` es solo QA manual. Huérfanas tras una muerte a la fuerza:
+  `qa/e2e-bases.py listar | purgar --confirmar`.
 
 Delegar no rebaja ningún gate: backend, frontend, build, E2E, mutaciones y regresiones de
 seguridad se ejecutan cuando el ciclo los exige.

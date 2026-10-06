@@ -1,0 +1,37 @@
+# DIAGNOSTICO-SIN-SESION · backend y frontend · 2026-10-06
+
+## dirigidas
+tests/test_system_access.py (SYS-01..08, 14 casos): verdes en SQLite y en PostgreSQL · ruff y mypy limpios en app/modules/system/api.py
+
+## suite completa, SQLite · .venv/bin/python -m pytest tests -rfE -p no:cacheprovider
+43 failed, 1001 passed, 1005 skipped, 7 warnings in 107.17s (0:01:47)
+por fichero:
+     10   test_documents
+      7   test_documents_legacy_import
+     25   test_documents_security
+      1   test_warehouse_structure
+línea base ecb3c8a: 43 failed (42 de documentos sin clamscan + test_auth_session_rotation), 986 passed. Hoy: los mismos 42 de documentos y, en vez
+de la rotación de sesión, test_warehouse_structure::test_concurrencia_de_codigo_resuelta_por_constraint — los dos son los intermitentes conocidos
+de SQLite con hilos (AUTH-ROTACION-SQLITE-HILOS, ALMACENES-CARRERA-SQLITE-HILOS). Pruebas nuevas que pasan: 14 (986 → 1001, con la rotación verde esta vez).
+
+## suite completa, PostgreSQL (ktest) · KONTROL_TEST_DB_URL=… -rfE -p no:cacheprovider
+37 failed, 1985 passed, 27 skipped, 6 warnings in 1010.07s (0:16:50)
+por fichero:
+     10   test_documents
+     25   test_documents_security
+      2   test_n9_integrity
+línea base ecb3c8a: 37 failed (10 test_documents, 25 test_documents_security, 2 test_n9_integrity), 1971 passed · hoy la misma composición · pruebas nuevas que pasan: 14 (1971 → 1985)
+clasificación: PREEXISTING_ENVIRONMENT_CLAMSCAN · fallos nuevos por este delta: 0
+
+## residuos tras la corrida completa en PostgreSQL
+base ......................... ktest
+tamaño ....................... 127 MB
+relaciones (pg_class) ........ 413
+de ello, catálogo ............ 128 MB
+schemas temporales ........... 0 (con marca del arnés: 0)
+conexiones a la base ......... 0 {} de 100
+conexiones del arnés ......... 0
+bases de corrida E2E: servidor localhost:55432 · bases de corrida: 0
+
+## frontend
+vitest run: 31 ficheros, 447 pruebas, todas verdes (6 nuevas: DIAG-05, DIAG-06, NAV-01..04) · eslint . --max-warnings 0: limpio · tsc -b --noEmit: 0

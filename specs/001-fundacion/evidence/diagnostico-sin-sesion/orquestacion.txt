@@ -1,0 +1,26 @@
+# DIAGNOSTICO-SIN-SESION · delegación a DeepSeek · leído de la traza de cada ejecutor
+# servidor MCP deepseek · @arikusi/deepseek-mcp-server@2.3.0 · herramienta mcp__deepseek__deepseek_chat · sin session_id · sin thinking
+
+T05 · intento 1 — DiagnosticoPage.test.tsx: simular useAuth y añadir DIAG-05 (sin permiso: prohibido, sin petición) y DIAG-06
+  modelo pedido=deepseek-v4-flash · servido=deepseek-v4-flash (model: deepseek-flash) · fallback=False
+  tokens 1449/924 · $0.000444 · carga de 4992 caracteres · secretos=0 · ficheros leídos por el puente=0
+  bloques=3 · relevo literal=sí · los tres SEARCH coinciden 1 vez: exactos
+  AUDIT_PASS · aplicado tal cual · 6/6 · eslint y tsc limpios
+
+T06 · intento 1 — Sidebar.test.tsx (nuevo): la entrada «Diagnóstico» solo con license:view
+  tokens 1753/1082 · $0.000531 · carga de 6001 caracteres · secretos=0
+  AUDIT_REJECT: NAV-03 falla («expected <a title="Mi licencia"> to be null»). Causa: el encargo afirmaba que «Mi licencia»
+    exige license:view; es falso (lo que ese permiso gobierna es la sección «Licenciamiento»). Error del encargo, de Claude.
+    Se retiró el fichero y se reenvió el encargo entero con el contrato corregido.
+T06 · reintento 1
+  tokens 1996/1042 · $0.000554 · carga de 6509 caracteres · secretos=0
+  AUDIT_PASS · 4/4 · eslint y tsc limpios
+
+EGRESS_CHECK de las tres llamadas: ENV_FILES=0 SECRETS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_DB_CREDENTIALS=0 REAL_DB_URLS=0
+  REAL_QA_HOSTS=0 REAL_PII=0 BANK_DATA=0. Los encargos llevan fragmentos de prueba, nombres de permisos y etiquetas del menú.
+
+TASKS TOTAL = 12 · CLAUDE_ONLY = 10 · DEEPSEEK_ELIGIBLE = 2 · DEEPSEEK EXECUTED = 2
+DEEPSEEK CALLS = 3 · DEEPSEEK RETRIES = 1 · PATCHES ACCEPTED = 2 · PATCHES REJECTED = 1 · parches retocados a mano = 0
+MODELS USED = deepseek-v4-flash · DEEPSEEK TOKENS = 5198 de entrada / 3048 de salida · DEEPSEEK COST = $0.001529
+SONNET BRIDGE TOKENS = 70927 (22267 + 23995 + 24665, según el arnés)
+EXECUTOR_ABRIDGEMENT: no se reprodujo; el puente no leyó ficheros y envió cada encargo entero

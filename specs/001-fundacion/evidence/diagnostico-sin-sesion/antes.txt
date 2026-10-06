@@ -1,0 +1,22 @@
+# DIAGNOSTICO-SIN-SESION · reproducción ANTES del arreglo · 2026-10-06 · ecb3c8a
+# pila completa sobre base nueva (qa/e2e-run.py -- spec temporal, borrada después); salida literal, identificadores de corrida tachados
+
+ANON GET /api/v1/system/diagnostics → 200 {"environment":"local","version":"1.0.0","database":{"ok":true},"installation":{"id":"KTL-VE-CF761DE6-5922","state":"ACTIVE"},"license":{"activated":true,"mode":"FULL_ACCESS","period_end":"2027-08-02T04:41:05.143862+00:00"},"storage":"/tmp/kontrol-e2e/<run>/storage"}
+ANON GET /api/v1/health/live → 200 {"status":"ok","service":"kontrol-backend","version":"1.0.0"}
+ANON GET /api/v1/health/ready → 200 {"status":"ok","service":"kontrol-backend","database":"ok"}
+ANON GET /api/v1/license/status → 200 {"installation_id":"KTL-VE-CF761DE6-5922","activated":true,"license_id":"LIC-E2E","mode":"FULL_ACCESS","period_start":"…","period_end":"…","critical_warning_start":"…","read_only_start":"…","entitlements":{},"minimum_version":"1.0.0","kid":"kontrol-lic-2026-01","license_url":…}
+GET /api/v1/system/diagnostics con «Authorization: Bearer no.es.un.token» → 200 (el mismo cuerpo)
+
+Frontend, sin sesión: /diagnostico → /login · h1=KONTROL · diagnóstico pintado=0   (RouteGuard: solo protege la sesión)
+Frontend, administrador: el menú tiene «Diagnóstico» (1) · /diagnostico pinta Entorno, Base de datos, Instalación, Identificador, Licencia
+
+FRONTEND_ROUTE   = /diagnostico
+BACKEND_ENDPOINTS = GET /api/v1/system/diagnostics (única dependencia: get_db)
+ANON_STATUS      = 200 (también con token inventado)
+ANON_PAYLOAD     = entorno, versión, estado de la base, identificador y estado de la instalación, modo y vigencia de la licencia, ruta de almacenamiento del servidor
+DATA_EXPOSED     = identidad de instalación, licencia y una ruta interna, contra el docstring del endpoint («no expone secretos, rutas internas…», FR-001-084)
+
+Catálogo de permisos (setup/api.py::_bootstrap_roles): 23 recursos; ninguno «sistema», «diagnóstico» ni «configuración».
+license:view existe, no lo exige ningún endpoint, y gobierna en el menú la sección «Licenciamiento». Es el permiso que se reutiliza.
+OpenAPI: 0 de 542 operaciones declaran security; sin securitySchemes (patrón vigente).
+Hallazgo vecino, no absorbido: GET /license/status responde sin sesión (lo pide LicenseContext antes del inicio de sesión).

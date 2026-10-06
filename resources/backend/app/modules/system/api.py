@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.database import get_db
+from app.core.dependencies import require_permission
+from app.modules.identity_access.models import User
 
 router = APIRouter(tags=["system"])
 
@@ -29,10 +31,14 @@ def readiness(db: Session = Depends(get_db)):
 
 
 @router.get("/system/diagnostics")
-def diagnostics(db: Session = Depends(get_db)):
+def diagnostics(db: Session = Depends(get_db), _: User = Depends(require_permission("license", "view"))):
     """Diagnóstico sanitizado: servicios, versión, identidad y licencia.
 
-    No expone secretos, rutas internas ni datos de negocio (FR-001-084).
+    No expone secretos, rutas internas ni datos de negocio (FR-001-084). Es el
+    diagnóstico **de la instalación**: no hay alcance de empresa que aplicar, y por
+    eso lo gobierna el permiso que ya gobierna leer la identidad y la licencia,
+    `license:view`. Sin sesión, 401; sin permiso, 403: el backend es la
+    autoridad, no la navegación (FR-001-042, DIAGNOSTICO-SIN-SESION).
     """
     from app.modules.licensing import service as licensing_service
     from app.modules.organization.models import Installation
@@ -58,5 +64,4 @@ def diagnostics(db: Session = Depends(get_db)):
             "mode": license_status.get("mode"),
             "period_end": license_status.get("period_end"),
         },
-        "storage": get_settings().storage_path,
     }
