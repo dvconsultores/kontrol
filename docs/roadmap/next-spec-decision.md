@@ -2736,3 +2736,28 @@ firma como única autoridad (`LICENCIA-IMPORT-SIN-SESION`, decisión de la dueñ
 `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
 
+## 2026-10-06 · Tras converger LICENCIA-IMPORT-SIN-SESION (dueña 004)
+
+Importar una licencia firmada era una operación anónima. Reproducido con un artefacto sintético:
+cualquiera activaba la instalación con una licencia válida, la dejaba en solo lectura con una
+firmada más vieja, y cada intento fallido engordaba la auditoría. La dueña decidió que no siga
+anónima y que se reutilice una autoridad canónica existente sin inventar permiso, rol ni token.
+Existía: el administrador local es quien carga la licencia por contrato (US-003) y
+`license:create` ya era el permiso de activarla contra el servidor central (US-010-002). Ahora
+las dos rutas exigen sesión y ese permiso como dependencia, antes del cuerpo y de la firma; la
+firma del propietario y la identidad de la instalación siguen siendo la segunda compuerta, y el
+evento lleva quién importó. Se comprobó físicamente que ningún estado deja fuera al administrador:
+el login no consulta la licencia, `/api/v1/license/` está exento del bloqueo de solo lectura y el
+administrador nace en `setup/initialize`, antes de que exista licencia.
+
+De paso quedó registrado, sin absorber: una licencia firmada **más vieja** sigue reemplazando a la
+vigente (`LICENCIA-DOWNGRADE-FIRMADO`), y sin la clave del propietario configurada el ancla de
+confianza es la clave de la propia instalación (`LICENCIA-ANCLA-AUTOFIRMADA`). Ambas, decisión de
+la dueña.
+
+**Decisiones pendientes de la dueña:** `BACKEND-KEEPALIVE-5S`, `PANEL-VERSION-VACIA`,
+`LICENCIA-DOWNGRADE-FIRMADO`, `LICENCIA-ANCLA-AUTOFIRMADA`. Candidatas siguientes, sin decisión
+pendiente: `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
+`ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
+

@@ -1,0 +1,28 @@
+GOOD: (0, '26 passed in 6.18s') (0, '1 passed, 55 deselected in 3.41s') (0, '1 passed, 13 deselected in 3.39s')
+M-01 /license/activate sin autorización del llamador
+  MUTATED → FAIL (muere) · 1 failed, 24 deselected in 3.56s
+  RESTORED → PASS · 2 passed, 24 deselected in 3.47s
+M-02 /license/activate con license:view en vez de license:create
+  MUTATED → FAIL (muere) · 1 failed, 24 deselected in 3.52s
+  RESTORED → PASS · 2 passed, 24 deselected in 3.67s
+M-03 la firma no se verifica
+  MUTATED → FAIL (muere) · 1 failed, 24 deselected in 3.84s
+  RESTORED → PASS · 2 passed, 24 deselected in 3.69s
+M-04 la instalación no se comprueba
+  MUTATED → FAIL (muere) · 1 failed, 25 deselected in 3.67s
+  RESTORED → PASS · 1 passed, 25 deselected in 3.65s
+M-06 /license/import sin autorización (muta sin autoridad)
+  MUTATED → FAIL (muere) · 1 failed, 25 deselected in 3.69s
+  RESTORED → PASS · 1 passed, 25 deselected in 3.73s
+M-07 el catálogo del administrador pierde license:create (primera activación imposible)
+  MUTATED → FAIL (muere) · 25 deselected, 1 error in 1.50s
+  RESTORED → PASS · 1 passed, 25 deselected in 4.66s
+M-08 /api/v1/license/ deja de estar exento del bloqueo de solo lectura
+  MUTATED → FAIL (muere) · 1 failed, 25 deselected in 3.82s
+  RESTORED → PASS · 1 passed, 25 deselected in 3.80s
+M-09 /license/detail vuelve a sesión sin permiso
+  MUTATED → FAIL (muere) · 1 failed, 55 deselected in 3.61s
+  RESTORED → PASS · 1 passed, 55 deselected in 3.60s
+M-10 el diagnóstico vuelve a sesión sin permiso
+  MUTATED → FAIL (muere) · 1 failed, 13 deselected in 3.64s
+  RESTORED → PASS · 1 passed, 13 deselected in 3.60s

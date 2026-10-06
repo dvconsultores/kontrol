@@ -2,7 +2,8 @@
 # KONTROL - activa una licencia de PRUEBA autofirmada con la clave privada de
 # la propia instalación (solo válida mientras KONTROL_LICENSE_PUBLIC_KEY_PEM
 # esté vacío). En producción, el propietario de KONTROL firma con su clave
-# privada central y el archivo se importa por POST /api/v1/license/activate.
+# privada central y el archivo lo importa el administrador local, con sesión y
+# `license:create`, por POST /api/v1/license/activate.
 # Uso (desde cualquier directorio del servidor):
 #   bash scripts/activate-test-license.sh
 # Re-ejecutar con bash aunque se invoque con sh (sh/dash no soporta bashisms).

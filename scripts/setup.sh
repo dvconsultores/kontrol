@@ -7,7 +7,8 @@
 #   KONTROL_TEST_LICENSE=0 bash scripts/setup.sh   # sin licencia de prueba (producción)
 #
 # En producción, la licencia la firma el propietario de KONTROL con su clave
-# privada central y se importa por POST /api/v1/license/activate (UI o curl).
+# privada central y la importa el administrador local, con sesión y el permiso
+# `license:create`, por POST /api/v1/license/activate (curl con Authorization: Bearer).
 # Re-ejecutar con bash aunque se invoque con sh (sh/dash no soporta bashisms).
 if [ -z "${BASH_VERSION:-}" ]; then
   exec bash "$0" "$@"
@@ -98,7 +99,7 @@ print(f"✓ Licencia de prueba ACTIVADA: {state.license_id} | modo: {state.mode}
 db.close()
 PY
 else
-  echo "6/6 Licencia: omitida (KONTROL_TEST_LICENSE=0). Importe la licencia firmada del propietario (POST /api/v1/license/activate)."
+  echo "6/6 Licencia: omitida (KONTROL_TEST_LICENSE=0). Importe la licencia firmada del propietario con sesión de administrador (license:create): POST /api/v1/license/activate."
 fi
 
 echo ""

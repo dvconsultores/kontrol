@@ -57,26 +57,40 @@ def installation_request(
     return licensing_service.installation_request_payload(installation)
 
 
+# Importar una licencia muta el estado de la instalación: la carga el administrador local
+# (US-003) con la autoridad de activar que ya existe, `license:create` —la misma de
+# `POST /licensing/sync`—; la firma del propietario es la otra compuerta, no esta (FR-010-125..127).
+# Sin `require_write_allowed`: renovar en READ_ONLY debe poder entrar (FR-010-131/132).
 @router.post("/activate")
-def activate(payload: LicenseImportRequest, db: Session = Depends(get_db)):
+def activate(
+    payload: LicenseImportRequest,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission("license", "create")),
+):
     """Importa la licencia inicial firmada (FR-001-054)."""
     state = licensing_service.import_license(
         db,
         payload=payload.payload,
         signature_hex=payload.signature_hex,
         source="MANUAL",
+        user_id=str(actor.id),
     )
     return {"ok": True, "license_id": state.license_id, "mode": state.mode}
 
 
 @router.post("/import")
-def import_offline(payload: LicenseImportRequest, db: Session = Depends(get_db)):
+def import_offline(
+    payload: LicenseImportRequest,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission("license", "create")),
+):
     """Importa archivo firmado en modo offline."""
     state = licensing_service.import_license(
         db,
         payload=payload.payload,
         signature_hex=payload.signature_hex,
         source="OFFLINE",
+        user_id=str(actor.id),
     )
     return {"ok": True, "license_id": state.license_id, "mode": state.mode}
 

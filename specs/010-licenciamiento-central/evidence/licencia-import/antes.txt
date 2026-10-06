@@ -1,0 +1,29 @@
+# Reproducción antes del arreglo · HEAD 0a888d9 · SQLite en memoria, TestClient, clave de prueba generada en el proceso, licencia SINTÉTICA
+
+antes de todo: estado=ninguno eventos=0 
+
+## ANON POST /license/activate con firma INVÁLIDA
+423 {"code":"LICENSE_SIGNATURE_INVALID","message":"La licencia no es válida o su firma no pudo verificarse.","field_errors":{},"request_id":"ddd3f322a5ba4afcbe66cf6da61aa026","details":null}
+→ estado=ninguno eventos=1
+
+## ANON POST /license/activate con licencia de OTRA instalación (firma válida)
+423 {"code":"LICENSE_INSTALLATION_MISMATCH","message":"La licencia no corresponde a esta instalación.","field_errors":{},"request_id":"fc1a053848dd4d7ca5da9c84146a775f","details":null}
+→ estado=ninguno eventos=2
+
+## ANON POST /license/activate con firma VÁLIDA
+200 {"ok":true,"license_id":"LIC-SINTETICA-1","mode":"FULL_ACCESS"}
+→ estado=LIC-SINTETICA-1/FULL_ACCESS eventos=3
+
+## ANON POST /license/import con una licencia firmada MÁS VIEJA (vencida)
+200 {"ok":true,"license_id":"LIC-SINTETICA-VIEJA","mode":"READ_ONLY"}
+→ estado=LIC-SINTETICA-VIEJA/READ_ONLY eventos=4
+
+## Token inventado POST /license/import con firma válida (la actual otra vez)
+200 {"ok":true,"license_id":"LIC-SINTETICA-1","mode":"FULL_ACCESS"}
+→ estado=LIC-SINTETICA-1/FULL_ACCESS eventos=5
+
+## Sesión con license:view pero SIN license:create, POST /license/activate firma válida
+200 {"ok":true,"license_id":"LIC-SINTETICA-1","mode":"FULL_ACCESS"}
+→ estado=LIC-SINTETICA-1/FULL_ACCESS eventos=6
+
+## 5 intentos anónimos con firma inválida → estado=LIC-SINTETICA-1/FULL_ACCESS eventos=11

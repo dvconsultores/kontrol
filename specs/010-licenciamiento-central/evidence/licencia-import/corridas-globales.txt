@@ -1,0 +1,11 @@
+# Corridas E2E del ciclo LICENCIA-IMPORT-SIN-SESION · qa/e2e-run.py, base nueva por corrida, eliminada al terminar · reloj sincronizado
+# 0) dirigida r20261006t135917p1363330n0349bf: 20/4 — las cuatro caídas eran de mi prueba: comparaba el detalle entero y E2E-LICIMP-04 reimporta LIC-E2E en paralelo con otras fechas; la invariante es identificador y modo. Corregida la prueba, no el producto.
+# 1) dirigida: licencia-import + licencia + diagnostico → 24/24
+# 2) global 1 → 224 / 0 / 40 (216 + las 8 nuevas)
+# 3) global 2 → 224 / 0 / 40
+
+r20261006t140003p1365727nfe59ce · inicio 2026-10-06T14:00:03+00:00 · fin 2026-10-06T14:00:21+00:00 · suite {'passed': 24} · 8.8 s · limpieza LIMPIA · base ELIMINADA · usuarios 11 · tick más lento 0.0 s
+r20261006t140033p1367942nd774bb · inicio 2026-10-06T14:00:33+00:00 · fin 2026-10-06T14:03:13+00:00 · suite {'skipped': 40, 'passed': 224} · 150.3 s · limpieza LIMPIA · base ELIMINADA · usuarios 70 · tick más lento 0.75 s
+r20261006t140324p1389783na2975a · inicio 2026-10-06T14:03:24+00:00 · fin 2026-10-06T14:06:03+00:00 · suite {'skipped': 40, 'passed': 224} · 149.5 s · limpieza LIMPIA · base ELIMINADA · usuarios 70 · tick más lento 0.73 s
+
+bases de corrida al terminar: 0 (qa/e2e-bases.py listar)

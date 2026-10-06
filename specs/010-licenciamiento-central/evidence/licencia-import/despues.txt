@@ -1,0 +1,37 @@
+# Después del arreglo · árbol de trabajo sobre 0a888d9 · SQLite en memoria, TestClient, clave de prueba generada en el proceso, licencia SINTÉTICA
+
+antes de todo: estado=ninguno eventos=0 
+
+## ANON POST /license/activate con firma INVÁLIDA
+401 {"code":"AUTH_REQUIRED","message":"Debe iniciar sesión","field_errors":{},"request_id":"c577264655764bf9b9f565b4d39a463b","details":null}
+→ estado=ninguno eventos=0
+
+## ANON POST /license/activate con licencia de OTRA instalación (firma válida)
+401 {"code":"AUTH_REQUIRED","message":"Debe iniciar sesión","field_errors":{},"request_id":"5618e66322d84d1f8f0100b5707f0f59","details":null}
+→ estado=ninguno eventos=0
+
+## ANON POST /license/activate con firma VÁLIDA
+401 {"code":"AUTH_REQUIRED","message":"Debe iniciar sesión","field_errors":{},"request_id":"045707522d034abeacdfad2ea2b6eec7","details":null}
+→ estado=ninguno eventos=0
+
+## ANON POST /license/import con una licencia firmada MÁS VIEJA (vencida)
+401 {"code":"AUTH_REQUIRED","message":"Debe iniciar sesión","field_errors":{},"request_id":"5a7f9e1021054de7a48a3958f7fae679","details":null}
+→ estado=ninguno eventos=0
+
+## Token inventado POST /license/import con firma válida (la actual otra vez)
+401 {"code":"AUTH_INVALID_TOKEN","message":"Sesión inválida o expirada","field_errors":{},"request_id":"a80f5925f2644b3485fc54455c2e9282","details":null}
+→ estado=ninguno eventos=0
+
+## Sesión con license:view pero SIN license:create, POST /license/activate firma válida
+403 {"code":"PERMISSION_DENIED","message":"No tiene permiso para esta acción","field_errors":{},"request_id":"960de85841a14b37b078ae7e5a9057ca","details":null}
+→ estado=ninguno eventos=0
+
+## 5 intentos anónimos con firma inválida → estado=ninguno eventos=0
+## Administrador (license:create) POST /license/activate con firma INVÁLIDA
+423 {"code":"LICENSE_SIGNATURE_INVALID","message":"La licencia no es válida o su firma no pudo verificarse.","field_errors":{},"request_id":"e2cd6e4129e648359565943b945f312f","details":null}
+→ estado=ninguno eventos=1
+
+## Administrador (license:create) POST /license/activate con firma VÁLIDA
+200 {"ok":true,"license_id":"LIC-SINTETICA-1","mode":"FULL_ACCESS"}
+→ estado=LIC-SINTETICA-1/FULL_ACCESS eventos=2
+
