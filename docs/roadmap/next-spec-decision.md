@@ -2784,3 +2784,27 @@ pendiente: `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKL
 `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
 
+## 2026-10-06 · LICENCIA-DOWNGRADE-FIRMADO detenida antes de implementar (dueña 004)
+
+Una licencia firmada por el propietario, para esta instalación y presentada por un administrador
+con `license:create` puede ser anterior a la vigente y aun así reemplazarla: reproducido en siete
+variantes, incluida la licencia vencida que deja en solo lectura una instalación activa, y una
+carrera en PostgreSQL en la que dos importaciones concurrentes dejan la más vieja en tres de seis
+rondas. La dueña decidió que una licencia anterior no sustituya a la vigente, y exigió no inventar
+qué significa «anterior». El contrato (DOC-07) ordena las licencias por **período** y prohíbe
+retroceder el período; pero también permite reemitir la licencia dentro del mismo período para
+ampliar o reducir límites, y el paquete firmado no lleva fecha ni número de emisión: dos
+reemisiones del mismo período no se pueden ordenar. Orden parcial, empate sin contrato: el ciclo
+se detuvo con el informe para la dueña, sin tocar código, esquema ni migración.
+
+**Decisión material pendiente:** `LICENCIA-DOWNGRADE-FIRMADO` — orden por período ahora (A), claim
+firmado de emisión en el paquete (B), o cerrado intra-período (C); recomendación A ahora y B como
+objetivo, ambas con bloqueo de fila. Registradas aparte `LICENCIA-IMPORT-SIN-BLOQUEO` (la carrera)
+y `LICENCIA-ESTADO-SIN-REVERIFICAR` (observación).
+
+**Decisiones pendientes de la dueña:** `LICENCIA-DOWNGRADE-FIRMADO`, `BACKEND-KEEPALIVE-5S`,
+`PANEL-VERSION-VACIA`, `LICENCIA-SIN-ROTACION-DE-CLAVE`. Candidatas siguientes, sin decisión
+pendiente: `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
+`ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
+

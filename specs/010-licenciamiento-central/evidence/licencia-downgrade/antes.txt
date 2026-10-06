@@ -1,0 +1,58 @@
+# Reproducción antes del arreglo · HEAD 3360a50 · SQLite, TestClient, ancla sintética explícita, administrador con license:create · hoy 2026-10-06
+
+## 1. Primera activación: A (período 2026-27)
+antes:   ninguna
+respuesta: 200 {"ok":true,"license_id":"LIC-2026","mode":"FULL_ACCESS"}
+después: vigente=LIC-2026 modo=FULL_ACCESS período=2026-04-01→2027-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=1 eventos=1
+
+## 2. Renovación: B (período 2027-28, posterior) → debe aceptarse
+antes:   vigente=LIC-2026 modo=FULL_ACCESS período=2026-04-01→2027-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=1 eventos=1
+respuesta: 200 {"ok":true,"license_id":"LIC-2027","mode":"FULL_ACCESS"}
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=2 eventos=2
+
+## 3. REGRESIÓN DE PERÍODO: volver a A (2026-27) con B vigente
+antes:   vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=2 eventos=2
+respuesta: 200 {"ok":true,"license_id":"LIC-2026","mode":"FULL_ACCESS"}
+después: vigente=LIC-2026 modo=FULL_ACCESS período=2026-04-01→2027-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=3 eventos=3
+
+## 4. Restaurar B
+antes:   vigente=LIC-2026 modo=FULL_ACCESS período=2026-04-01→2027-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=3 eventos=3
+respuesta: 200 {"ok":true,"license_id":"LIC-2027","mode":"FULL_ACCESS"}
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=4 eventos=4
+
+## 5. MISMA LICENCIA otra vez: B sobre B (idempotencia canónica)
+antes:   vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=4 eventos=4
+respuesta: 200 {"ok":true,"license_id":"LIC-2027","mode":"FULL_ACCESS"}
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=5 eventos=5
+
+## 6. Mismo período, OTRO artefacto: A ampliada (2026-27, más derechos) sobre B (2027-28) → también es regresión de período
+antes:   vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=5 eventos=5
+respuesta: 200 {"ok":true,"license_id":"LIC-2026-AMPLIADA","mode":"FULL_ACCESS"}
+después: vigente=LIC-2026-AMPLIADA modo=FULL_ACCESS período=2026-04-01→2027-03-31 entitlements={'companies': 10, 'users': 100} · artefactos=6 eventos=6
+
+## 7. Restaurar B
+antes:   vigente=LIC-2026-AMPLIADA modo=FULL_ACCESS período=2026-04-01→2027-03-31 entitlements={'companies': 10, 'users': 100} · artefactos=6 eventos=6
+respuesta: 200 {"ok":true,"license_id":"LIC-2027","mode":"FULL_ACCESS"}
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=7 eventos=7
+
+## 8. Licencia VENCIDA (2024-25) sobre B vigente → hoy deja la instalación en READ_ONLY
+antes:   vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=7 eventos=7
+respuesta: 200 {"ok":true,"license_id":"LIC-2024","mode":"READ_ONLY"}
+después: vigente=LIC-2024 modo=READ_ONLY período=2024-04-01→2025-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=8 eventos=8
+
+## 9. Restaurar B
+antes:   vigente=LIC-2024 modo=READ_ONLY período=2024-04-01→2025-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=8 eventos=8
+respuesta: 200 {"ok":true,"license_id":"LIC-2027","mode":"FULL_ACCESS"}
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=9 eventos=9
+
+## 10. Mismo período que la vigente, derechos REDUCIDOS (reemisión §7.1 DOC-07: 'ampliar o reducir el límite mediante una nueva licencia firmada')
+antes:   vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=9 eventos=9
+respuesta: 200 {"ok":true,"license_id":"LIC-2027-REDUCIDA","mode":"FULL_ACCESS"}
+después: vigente=LIC-2027-REDUCIDA modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 1, 'users': 5} · artefactos=10 eventos=10
+
+## 11. Mismo período, el artefacto ANTERIOR (B, con más derechos) otra vez: nada en el paquete dice cuál es la reemisión más reciente
+antes:   vigente=LIC-2027-REDUCIDA modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 1, 'users': 5} · artefactos=10 eventos=10
+respuesta: 200 {"ok":true,"license_id":"LIC-2027","mode":"FULL_ACCESS"}
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=11 eventos=11
+
+# ORDERING_FIELDS presentes en el paquete firmado (DOC-07 §10.2 / LicenseData): license_id, period_start, period_end, critical_warning_start, read_only_start, entitlements, minimum_version, kid. Sin issued_at, sequence, revision ni serial.

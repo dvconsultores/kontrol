@@ -1,0 +1,8 @@
+ronda 1: B y C concurrentes sobre A → vigente al final: LIC-2027 · {'C': 'ok', 'B': 'ok'}
+ronda 2: B y C concurrentes sobre A → vigente al final: LIC-2028 · {'C': 'ok', 'B': 'ok'}
+ronda 3: B y C concurrentes sobre A → vigente al final: LIC-2027 · {'C': 'ok', 'B': 'ok'}
+ronda 4: B y C concurrentes sobre A → vigente al final: LIC-2028 · {'C': 'ok', 'B': 'ok'}
+ronda 5: B y C concurrentes sobre A → vigente al final: LIC-2027 · {'C': 'ok', 'B': 'ok'}
+ronda 6: B y C concurrentes sobre A → vigente al final: LIC-2028 · {'C': 'ok', 'B': 'ok'}
+
+RESULTADO: en 3 de 6 rondas la licencia MÁS VIEJA (B, 2027) quedó vigente por encima de C (2028): downgrade por carrera. Sin bloqueo de fila ni comparación con la vigente, gana el último en escribir.
