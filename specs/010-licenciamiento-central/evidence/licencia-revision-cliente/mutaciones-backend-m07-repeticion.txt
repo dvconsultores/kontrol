@@ -1,0 +1,4 @@
+GOOD: (0, '49 passed in 5.88s') 
+M-07 el artefacto vigente es el más antiguo, no el último [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 24 passed in 5.88s
+  RESTORED → PASS · 25 passed in 5.90s

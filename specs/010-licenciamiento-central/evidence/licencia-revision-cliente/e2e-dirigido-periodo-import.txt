@@ -1,0 +1,27 @@
+[e2e r20261007t160102p105296nbc6263] comprobar
+[e2e r20261007t160102p105296nbc6263] crear base
+[e2e r20261007t160102p105296nbc6263] migrar
+[e2e r20261007t160102p105296nbc6263] sembrar
+[e2e r20261007t160102p105296nbc6263] backend
+[e2e r20261007t160102p105296nbc6263] comprobar la base del backend
+[e2e r20261007t160102p105296nbc6263] frontend
+[e2e r20261007t160102p105296nbc6263] suite
+
+Running 12 tests using 6 workers
+
+  ✓   1 [chromium] › e2e/licencia-import.spec.ts:113:3 › Licencia · importar exige autoridad › E2E-LICIMP-04 · el administrador importa un artefacto válido y el detalle lo refleja (1.8s)
+  ✓   7 [chromium] › e2e/licencia-import.spec.ts:147:3 › Licencia · importar exige autoridad › E2E-LICIMP-09 · el estado público sigue anónimo y mínimo (16ms)
+  ✓   6 [chromium] › e2e/licencia-import.spec.ts:129:3 › Licencia · importar exige autoridad › E2E-LICIMP-05 · el administrador con firma inválida: 423 y la licencia sigue igual (1.8s)
+  ✓   3 [chromium] › e2e/licencia-import.spec.ts:76:3 › Licencia · importar exige autoridad › E2E-LICIMP-01 · anónimo con un artefacto válido: 401, sin fuga, y la licencia sigue igual (1.9s)
+  ✓   2 [chromium] › e2e/licencia-import.spec.ts:138:3 › Licencia · importar exige autoridad › E2E-LICIMP-06 · el administrador con una licencia de otra instalación: 423 y la licencia sigue igual (2.0s)
+  ✓   8 [chromium] › e2e/licencia-import.spec.ts:154:3 › Licencia · importar exige autoridad › E2E-LICIMP-10 · el diagnóstico sigue con sesión y license:view; los health, públicos y mínimos (2.3s)
+  ✓  10 [chromium] › e2e/licencia-periodo.spec.ts:124:3 › Licencia · el período no retrocede › E2E-ROLLA-09 · sin license:create ni una licencia posterior entra, y el período vigente no cambia (2.3s)
+  ✓  12 [chromium] › e2e/licencia-periodo.spec.ts:147:3 › Licencia · el período no retrocede › E2E-ROLLA-11 · el estado público sigue mínimo y los health, públicos (31ms)
+  ✓   4 [chromium] › e2e/licencia-import.spec.ts:102:3 › Licencia · importar exige autoridad › E2E-LICIMP-03 · license:view sin license:create lee pero no importa: 403 y nada cambia (4.2s)
+  ✓   5 [chromium] › e2e/licencia-import.spec.ts:91:3 › Licencia · importar exige autoridad › E2E-LICIMP-02 · un usuario sin permisos de licencia: 403 y nada cambia (4.2s)
+  ✓  11 [chromium] › e2e/licencia-periodo.spec.ts:133:3 › Licencia · el período no retrocede › E2E-ROLLA-10 · firma inválida u otra instalación se rechazan antes de comparar períodos (3.3s)
+  ✓   9 [chromium] › e2e/licencia-periodo.spec.ts:75:3 › Licencia · el período no retrocede › E2E-ROLLA-01..08 · anterior rechazada sin mover nada; reemisión del mismo período aceptada; posterior aceptada; y después la anterior sigue rechazada (6.7s)
+
+  12 passed (9.9s)
+[e2e r20261007t160102p105296nbc6263] limpiar
+[e2e r20261007t160102p105296nbc6263] suite: {'passed': 12} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261007t160102p105296nbc6263

@@ -63,16 +63,8 @@ async function token(request: APIRequestContext, usuario: string): Promise<strin
   return (await r.json()).access_token as string;
 }
 
-/** Lo observable de la licencia vigente: identificador y modo. Las fechas las reescribe la
- * reimportación legítima de E2E-LICIMP-04, que corre en paralelo con el mismo identificador. */
-/** El período de la licencia vigente, tal como lo publica el detalle. */
-async function periodoVigente(request: APIRequestContext, bearer: string): Promise<{ start: string; end: string }> {
-  const r = await request.get(`${API}/license/detail`, { headers: { Authorization: `Bearer ${bearer}` } });
-  expect(r.status()).toBe(200);
-  const cuerpo = (await r.json()) as { period_start: string; period_end: string };
-  return { start: cuerpo.period_start, end: cuerpo.period_end };
-}
-
+/** Lo observable de la licencia vigente: identificador y modo (E2E-LICIMP-04 reimporta el artefacto
+ * vigente exacto, así que no mueve nada para los demás trabajadores). */
 async function detalle(request: APIRequestContext, bearer: string): Promise<{ license_id: string; mode: string }> {
   const r = await request.get(`${API}/license/detail`, { headers: { Authorization: `Bearer ${bearer}` } });
   expect(r.status()).toBe(200);
@@ -120,10 +112,10 @@ test.describe("Licencia · importar exige autoridad", () => {
 
   test("E2E-LICIMP-04 · el administrador importa un artefacto válido y el detalle lo refleja", async ({ request }) => {
     const admin = await token(request, "admin");
-    // Mismo identificador y el período VIGENTE (una reemisión, FR-010-206): el estado observable no
-    // cambia para los demás trabajadores, y la prueba no depende de qué período haya quedado antes.
-    const periodo = await periodoVigente(request, admin);
-    const r = await request.post(ACTIVATE, { data: licenciaFirmada("LIC-E2E", "--periodo", periodo.start, periodo.end), headers: { Authorization: `Bearer ${admin}` } });
+    // El artefacto VIGENTE exacto (reimportación idempotente): el estado observable no cambia para los
+    // demás trabajadores y la prueba no depende de qué período haya quedado antes. Otra legacy distinta del
+    // mismo período ya no entra (FR-010-330; `licencia-periodo.spec.ts`).
+    const r = await request.post(ACTIVATE, { data: licenciaFirmada("--vigente"), headers: { Authorization: `Bearer ${admin}` } });
     expect(r.status(), await r.text()).toBe(200);
     expect(await r.json()).toEqual({ ok: true, license_id: "LIC-E2E", mode: "FULL_ACCESS" });
     const despues = await detalle(request, admin);

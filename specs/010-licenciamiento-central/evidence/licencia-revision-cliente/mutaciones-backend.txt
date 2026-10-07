@@ -1,0 +1,34 @@
+GOOD: (0, '48 passed in 5.75s') (0, '5 passed in 5.36s')
+M-01 el mismo período no se ordena (rama 5b desactivada) [SQLite]
+  MUTATED → FAIL (muere) · 9 failed, 15 passed in 5.45s
+  RESTORED → PASS · 24 passed in 5.68s
+M-02 una revision igual cuenta como mayor (> → >=) [SQLite]
+  MUTATED → FAIL (muere) · 4 failed, 44 passed in 5.53s
+  RESTORED → PASS · 48 passed in 5.65s
+M-03 una legacy tras una revisionada entra [SQLite]
+  MUTATED → FAIL (muere) · 3 failed, 45 passed in 5.60s
+  RESTORED → PASS · 48 passed in 5.68s
+M-04 el puente legacy→revisionada se rechaza [SQLite]
+  MUTATED → FAIL (muere) · 9 failed, 39 passed in 5.30s
+  RESTORED → PASS · 48 passed in 5.70s
+M-05 una revision menor entra [SQLite]
+  MUTATED → FAIL (muere) · 10 failed, 38 passed in 5.73s
+  RESTORED → PASS · 48 passed in 5.67s
+M-06 misma revision con otra carga se trata como el mismo artefacto [SQLite]
+  MUTATED → FAIL (muere) · 3 failed, 45 passed in 5.64s
+  RESTORED → PASS · 48 passed in 5.73s
+M-07 el artefacto vigente es el más antiguo, no el último [SQLite]
+  MUTATED → PASS (SOBREVIVE) · 24 passed in 6.09s
+  RESTORED → PASS · 24 passed in 5.70s
+M-08 el rechazo se decide pero no se aplica (persiste igual) [SQLite]
+  MUTATED → FAIL (muere) · 9 failed, 15 passed in 5.49s
+  RESTORED → PASS · 24 passed in 5.69s
+M-09 el período se guarda sin normalizar a UTC (SQLite lo lee 4 h corrido) [SQLite]
+  MUTATED → FAIL (muere) · 9 failed, 15 passed in 5.73s
+  RESTORED → PASS · 24 passed in 5.72s
+M-10 un booleano pasa por revision válida [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 22 passed in 0.16s
+  RESTORED → PASS · 24 passed in 0.13s
+M-11 la comparación de revision ya no va bajo bloqueo (sin FOR UPDATE en instalación ni estado) [PostgreSQL]
+  MUTATED → FAIL (muere) · 2 failed, 3 passed in 5.38s
+  RESTORED → PASS · 5 passed in 5.59s

@@ -274,13 +274,15 @@ def test_licimp_05_license_view_no_es_license_create_403_y_nada_cambia(ruta):
 # ---------------------------------------------------------------- LICIMP-06..10 · con autoridad, la segunda compuerta manda
 def test_licimp_06_el_administrador_con_licencia_valida_activa_y_el_evento_lleva_su_identidad():
     _, _, eventos = _estado()
-    r = _CLIENT.post(IMPORT, json=_firmada(_licencia("LIC-NUEVA", _INSTALACION)), headers=_sesion("admin"))
-    assert r.status_code == 200 and r.json() == {"ok": True, "license_id": "LIC-NUEVA", "mode": "FULL_ACCESS"}, r.text
+    # El artefacto base exacto: con el período vigente, otra legacy distinta ya no entra (FR-010-330); la
+    # reimportación exacta sí, y es la que prueba la compuerta del llamador y la identidad en el evento.
+    r = _CLIENT.post(IMPORT, json=_BASE, headers=_sesion("admin"))
+    assert r.status_code == 200 and r.json() == {"ok": True, "license_id": "LIC-BASE", "mode": "FULL_ACCESS"}, r.text
     with _FACTORY() as db:
         estado = db.execute(select(LicenseState)).scalars().one()
         ultimo = db.execute(select(LicenseEvent).order_by(LicenseEvent.created_at.desc())).scalars().first()
         admin = db.execute(select(User).where(User.username == "admin")).scalars().one()
-    assert estado.license_id == "LIC-NUEVA" and estado.mode == "FULL_ACCESS"
+    assert estado.license_id == "LIC-BASE" and estado.mode == "FULL_ACCESS"
     assert ultimo.event_type == "LICENSE_IMPORTED" and ultimo.user_id == str(admin.id)  # el evento lleva ahora quién importó
     assert _estado()[2] == eventos + 1
     _restaurar_base()
@@ -350,8 +352,10 @@ def test_licimp_12_en_solo_lectura_las_escrituras_se_bloquean_pero_el_administra
         assert _CLIENT.get("/api/v1/license/status").json()["mode"] == "READ_ONLY"
         bloqueada = _CLIENT.put("/api/v1/licensing/central-config", json={"server_url": "https://central.test"}, headers=_sesion("admin"))
         assert bloqueada.status_code == 423 and bloqueada.json()["code"] == "LICENSE_READ_ONLY", bloqueada.text
-        assert _CLIENT.post(IMPORT, json=_firmada(_licencia("LIC-RENOVADA", _INSTALACION)), headers=_sesion("lector")).status_code == 403
-        r = _CLIENT.post(IMPORT, json=_firmada(_licencia("LIC-RENOVADA", _INSTALACION)), headers=_sesion("admin"))
+        # La renovación es la licencia base (período posterior al estado envejecido): otra legacy distinta del
+        # mismo período que la base ya no podría volver a ella (FR-010-330).
+        assert _CLIENT.post(IMPORT, json=_BASE, headers=_sesion("lector")).status_code == 403
+        r = _CLIENT.post(IMPORT, json=_BASE, headers=_sesion("admin"))
         assert r.status_code == 200 and r.json()["mode"] == "FULL_ACCESS", r.text
         assert _CLIENT.get("/api/v1/license/status").json()["mode"] == "FULL_ACCESS"
 
@@ -363,7 +367,7 @@ def test_licimp_12_en_solo_lectura_las_escrituras_se_bloquean_pero_el_administra
 def test_licimp_13_en_aviso_y_aviso_critico_el_administrador_renueva(fechas, modo):
     with _fechas(fin_en_dias=fechas[0], critico_en_dias=fechas[1], solo_lectura_en_dias=fechas[2]):
         assert _CLIENT.get("/api/v1/license/status").json()["mode"] == modo
-        r = _CLIENT.post(ACTIVATE, json=_firmada(_licencia("LIC-RENOVADA", _INSTALACION)), headers=_sesion("admin"))
+        r = _CLIENT.post(ACTIVATE, json=_BASE, headers=_sesion("admin"))  # posterior al estado envejecido
         assert r.status_code == 200 and r.json()["mode"] == "FULL_ACCESS", r.text
 
 

@@ -200,13 +200,16 @@ def test_rolla_02_el_mismo_artefacto_otra_vez_es_idempotente_en_el_estado_y_se_a
     assert despues["artefactos"] == antes["artefactos"] + 1 and despues["eventos"] == antes["eventos"] + 1  # contrato canónico de hoy
 
 
-def test_rolla_03_una_reemision_del_mismo_periodo_con_otros_derechos_se_acepta_transitoriamente():
-    """DOC-07 §7.1. Riesgo residual LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN: la anterior también entraría."""
+def test_rolla_03_otra_legacy_del_mismo_periodo_ya_no_entra_sin_revision_del_emisor():
+    """Cerrado LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN (FR-010-330): con una legacy vigente, otra legacy
+    distinta del mismo período se rechaza; solo la reemisión revisionada del emisor la sustituye
+    (`test_license_revision_client.py`). Nada se mueve salvo el evento de rechazo."""
+    antes = _huella()
     r = _importa(_anual("LIC-VIGENTE-REDUCIDA", ANIO_VIGENTE, entitlements={"companies": 1, "users": 5}))
-    assert r.status_code == 200, r.text
-    assert _huella()["entitlements"] == {"companies": 1, "users": 5}
-    _restaurar(ANIO_VIGENTE)
-    assert _huella()["entitlements"] == {"companies": 3, "users": 25}
+    assert r.status_code == 423 and r.json()["code"] == "LICENSE_LEGACY_REISSUE_REQUIRES_REVISION", r.text
+    despues = _huella()
+    assert {k: v for k, v in despues.items() if k != "eventos"} == {k: v for k, v in antes.items() if k != "eventos"}
+    assert despues["eventos"] == antes["eventos"] + 1 and _huella()["entitlements"] == {"companies": 3, "users": 25}
 
 
 def test_rolla_04_un_periodo_posterior_se_acepta():

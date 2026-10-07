@@ -3,11 +3,16 @@
 Uso (la URL de la base viaja en el entorno, nunca en la línea de órdenes):
     KONTROL_DB_URL=postgresql+psycopg2://... KONTROL_E2E_LICENSE_SIGNING_KEY=<estado>/license/qa_license_signing_key.pem \\
     PYTHONPATH=resources/backend python qa/licencia_firmada.py <license_id> [--otra-instalacion] [--firma-invalida]
-        [--anio <AAAA>] [--periodo <inicio ISO> <fin ISO>]
+        [--anio <AAAA>] [--periodo <inicio ISO> <fin ISO>] [--revision <json>]
+    PYTHONPATH=resources/backend python qa/licencia_firmada.py --vigente
 
 `--anio` firma el período anual del contrato (1 abr <AAAA> → 31 mar <AAAA+1>, America/Caracas);
 `--periodo` firma exactamente las fechas dadas (p. ej. las del detalle vigente, para una reemisión
-del mismo período). Sin ninguna de las dos, el período relativo a hoy de la siembra.
+del mismo período). Sin ninguna de las dos, el período relativo a hoy de la siembra. `--revision`
+añade el claim tal cual (`3`, `999`, `true`, `0`…): revisionadas sintéticas **hostiles**, para probar
+conflicto, manipulación y valores inválidos; las revisionadas legítimas las emite
+`qa/autoridad_central.py`. `--vigente` imprime el artefacto vigente exacto, tal como está guardado
+(carga y firma): la reimportación idempotente.
 
 Imprime en la salida estándar el JSON `{"payload": {...}, "signature_hex": "..."}` que espera
 `POST /api/v1/license/activate`. Firma con el **firmante sintético de la corrida** —el par que
@@ -33,6 +38,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey 
 from sqlalchemy import select  # noqa: E402
 
 from app.core.database import get_session_factory, init_models  # noqa: E402
+from app.modules.licensing.models import LicenseArtifact, LicenseState  # noqa: E402
 from app.modules.organization.models import Installation  # noqa: E402
 
 
@@ -69,9 +75,33 @@ def firmar(payload: dict[str, object], clave: Ed25519PrivateKey) -> str:
     return clave.sign(canonico).hex()
 
 
+def artefacto_vigente() -> dict[str, object]:
+    """El artefacto de la licencia vigente, exactamente como se guardó: la última fila aceptada de ese identificador."""
+    init_models()
+    db = get_session_factory()()
+    try:
+        estado = db.execute(select(LicenseState)).scalars().first()
+        if estado is None:
+            raise RuntimeError("la base no tiene licencia vigente")
+        fila = db.execute(
+            select(LicenseArtifact).where(LicenseArtifact.license_id == estado.license_id)
+            .order_by(LicenseArtifact.imported_at.desc(), LicenseArtifact.created_at.desc())
+        ).scalars().first()
+    finally:
+        db.close()
+    if fila is None:
+        raise RuntimeError("la licencia vigente no tiene artefacto guardado")
+    return {"payload": fila.payload, "signature_hex": fila.signature_hex}
+
+
 def main(argv: list[str]) -> int:
+    if argv == ["--vigente"]:
+        if os.environ.get("KONTROL_ENVIRONMENT", "local") not in ("local", "dev", "qa"):
+            raise RuntimeError("este guion solo lee licencias de prueba en entornos de QA")
+        print(json.dumps(artefacto_vigente(), ensure_ascii=False))
+        return 0
     if not argv or argv[0].startswith("--"):
-        print("uso: licencia_firmada.py <license_id> [--otra-instalacion] [--firma-invalida]", file=sys.stderr)
+        print("uso: licencia_firmada.py <license_id> [--otra-instalacion] [--firma-invalida] [--revision <json>] | --vigente", file=sys.stderr)
         return 2
     if os.environ.get("KONTROL_ENVIRONMENT", "local") not in ("local", "dev", "qa"):
         raise RuntimeError("este guion solo firma licencias de prueba en entornos de QA")
@@ -95,6 +125,8 @@ def main(argv: list[str]) -> int:
     anio = int(argv[argv.index("--anio") + 1]) if "--anio" in argv else None
     periodo = (argv[argv.index("--periodo") + 1], argv[argv.index("--periodo") + 2]) if "--periodo" in argv else None
     payload = payload_sintetico(argv[0], destino, anio=anio, periodo=periodo)
+    if "--revision" in argv:
+        payload["revision"] = json.loads(argv[argv.index("--revision") + 1])  # tal cual: también valores inválidos, a propósito
     firma = "00" * 64 if "--firma-invalida" in argv else firmar(payload, clave)
     print(json.dumps({"payload": payload, "signature_hex": firma}, ensure_ascii=False))
     return 0

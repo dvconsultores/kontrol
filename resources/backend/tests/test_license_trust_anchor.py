@@ -256,7 +256,11 @@ def test_trust_05_una_licencia_del_propietario_para_otra_instalacion_se_rechaza(
 # ---------------------------------------------------------------- PROD-06/07 · las dos compuertas, en orden
 def test_trust_06_07_la_autorizacion_del_llamador_va_antes_que_el_ancla_y_sigue_igual():
     antes = _estado()
-    cuerpo = _firmada(_licencia("LIC-ORDEN", _INSTALACION), _PROPIETARIO)
+    # Período posterior al vigente: otra legacy distinta del mismo período ya no entra (FR-010-330) y aquí
+    # lo que se prueba es el orden de las compuertas, no la reemisión.
+    posterior = {"period_start": (AHORA - timedelta(days=29)).isoformat(), "period_end": (AHORA + timedelta(days=301)).isoformat(),
+                 "critical_warning_start": (AHORA + timedelta(days=321)).isoformat(), "read_only_start": (AHORA + timedelta(days=331)).isoformat()}
+    cuerpo = _firmada(_licencia("LIC-ORDEN", _INSTALACION, **posterior), _PROPIETARIO)
     with _ancla(None):
         # Sin ancla, un anónimo o un lector reciben su 401/403: el ancla no se consulta antes de autorizar.
         assert _CLIENT.post(ACTIVATE, json=cuerpo).status_code == 401

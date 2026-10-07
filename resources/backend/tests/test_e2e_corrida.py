@@ -313,7 +313,8 @@ def test_e2ecorrida_13_los_procesos_de_la_corrida_solo_conocen_su_base(entorno):
 def test_e2ecorrida_14_la_orden_por_defecto_es_la_suite_de_playwright_con_su_evidencia_aparte(entorno):
     corrida = k.Corrida(_servidor(), argumentos=["e2e/smoke.spec.ts"], entorno=entorno, salida=io.StringIO())
     orden, cwd = corrida.orden_de_la_suite()
-    assert orden[:4] == ["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium"]
-    assert orden[4:] == ["--output", str(corrida.evidencia / "test-results"), "e2e/smoke.spec.ts"]
+    # `chromium` y, detrás (depende de él), el proyecto `licencia-revision`: el linaje de la licencia corre al final.
+    assert orden[:5] == ["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium", "--project=licencia-revision"]
+    assert orden[5:] == ["--output", str(corrida.evidencia / "test-results"), "e2e/smoke.spec.ts"]
     assert cwd == k.FRONTEND
     assert not any(a.startswith(("--retries", "--workers")) for a in orden)

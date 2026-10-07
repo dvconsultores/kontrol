@@ -37,6 +37,17 @@ INCOMPARABLE_PERIOD = "INCOMPARABLE_PERIOD"
 
 ISSUER_NAME = "KONTROL Licensing Authority"
 
+# Reemisión dentro del mismo período (Spec 004 · `revision` en el cliente). Los tres primeros
+# resultados aceptan; los cuatro últimos rechazan y son, con el prefijo `LICENSE_`, el código del error.
+SAME_ARTIFACT = "SAME_ARTIFACT"
+NEWER_REVISION = "NEWER_REVISION"
+LEGACY_TO_REVISION_BRIDGE = "LEGACY_TO_REVISION_BRIDGE"
+LEGACY_REISSUE_REQUIRES_REVISION = "LEGACY_REISSUE_REQUIRES_REVISION"
+LEGACY_AFTER_REVISION = "LEGACY_AFTER_REVISION"
+REVISION_DOWNGRADE = "REVISION_DOWNGRADE"
+REVISION_CONFLICT = "REVISION_CONFLICT"
+REISSUE_REJECTIONS = frozenset({LEGACY_REISSUE_REQUIRES_REVISION, LEGACY_AFTER_REVISION, REVISION_DOWNGRADE, REVISION_CONFLICT})
+
 
 class LicenseContractError(ValueError):
     """El paquete no cumple el contrato (p. ej. una `revision` que no es un entero ≥ 1)."""
@@ -169,3 +180,40 @@ def compare_period(current_start: datetime, current_end: datetime, incoming_star
     if is_ < cs and ie < ce:
         return OLDER_PERIOD
     return INCOMPARABLE_PERIOD
+
+
+def _revision_valida(valor: int | None) -> int | None:
+    if valor is None:
+        return None
+    if isinstance(valor, bool) or not isinstance(valor, int) or valor < 1:
+        raise LicenseContractError("LICENSE_INVALID_REVISION", "La revisión de la licencia debe ser un entero mayor o igual que 1.")
+    return valor
+
+
+def resolve_same_period_reissue(*, current_revision: int | None, current_payload_hash: str | None,
+                                incoming_revision: int | None, incoming_payload_hash: str) -> str:
+    """Ordena dos licencias del MISMO período por su `revision` firmada, y decide la transición legacy.
+
+    `None` es legacy (claim ausente). Legacy vigente: la misma legacy exacta (igual `payload_hash`) →
+    `SAME_ARTIFACT`; otra legacy → `LEGACY_REISSUE_REQUIRES_REVISION`; una revisionada (≥ 1) →
+    `LEGACY_TO_REVISION_BRIDGE`, que fija el linaje del período. Revisionada vigente: una legacy →
+    `LEGACY_AFTER_REVISION`; mayor → `NEWER_REVISION`; menor → `REVISION_DOWNGRADE`; igual con el
+    mismo artefacto → `SAME_ARTIFACT`; igual con otra carga → `REVISION_CONFLICT`. Legacy nunca es
+    la revisión 0. Nada más participa: ni derechos, ni `kid`, ni fechas de emisión o importación,
+    ni versión mínima, ni el reloj. Entre períodos distintos no se llama: decide `compare_period`.
+    Un vigente sin huella (`current_payload_hash` None) no puede probar igualdad: solo entra una revisionada.
+    """
+    actual, entrante = _revision_valida(current_revision), _revision_valida(incoming_revision)
+    if actual is None:
+        if entrante is None:
+            if current_payload_hash is not None and incoming_payload_hash == current_payload_hash:
+                return SAME_ARTIFACT
+            return LEGACY_REISSUE_REQUIRES_REVISION
+        return LEGACY_TO_REVISION_BRIDGE
+    if entrante is None:
+        return LEGACY_AFTER_REVISION
+    if entrante > actual:
+        return NEWER_REVISION
+    if entrante < actual:
+        return REVISION_DOWNGRADE
+    return SAME_ARTIFACT if incoming_payload_hash == current_payload_hash else REVISION_CONFLICT

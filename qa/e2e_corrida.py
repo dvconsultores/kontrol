@@ -312,7 +312,7 @@ class Corrida:
     def orden_de_la_suite(self) -> tuple[list[str], Path]:
         if self.orden is not None:
             return [*self.orden, *self.argumentos], base.RAIZ
-        return (["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium",
+        return (["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium", "--project=licencia-revision",
                  "--output", str(self.evidencia / "test-results"), *self.argumentos], FRONTEND)
 
     def suite(self) -> int:

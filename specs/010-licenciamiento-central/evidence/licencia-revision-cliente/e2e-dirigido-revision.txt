@@ -1,0 +1,27 @@
+[e2e r20261007t160323p107490nb6aeb0] comprobar
+[e2e r20261007t160323p107490nb6aeb0] crear base
+[e2e r20261007t160323p107490nb6aeb0] migrar
+[e2e r20261007t160323p107490nb6aeb0] sembrar
+[e2e r20261007t160323p107490nb6aeb0] backend
+[e2e r20261007t160323p107490nb6aeb0] comprobar la base del backend
+[e2e r20261007t160323p107490nb6aeb0] frontend
+[e2e r20261007t160323p107490nb6aeb0] suite
+
+Running 1 test using 1 worker
+
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_cla_fase1, Autoridad Central · Fase 1: registro de instalaciones, linajes de revisión, libro de emisiones y auditoría.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+  ✓  1 [licencia-revision] › e2e/licencia-revision.spec.ts:115:3 › Licencia · la revisión del emisor ordena dentro del período › E2E-REV-01..14 · puente legacy, linaje r1→r2→r3 del emisor real, hostiles, otro período y compuertas (17.3s)
+
+  1 passed (17.8s)
+[e2e r20261007t160323p107490nb6aeb0] limpiar
+[e2e r20261007t160323p107490nb6aeb0] suite: {'passed': 1} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261007t160323p107490nb6aeb0

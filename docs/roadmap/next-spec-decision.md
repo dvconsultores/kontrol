@@ -2881,3 +2881,27 @@ siguiente natural de la familia, ya sin bloqueo: `LICENCIA-REEMISION-INTRAPERIOD
 `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
 `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
+
+## 2026-10-07 · LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN cerrada en el cliente; LICENCIA-DOWNGRADE-FIRMADO convergida (dueña 004)
+
+Con el emisor real disponible, el cliente aplica ya la `revision` firmada como segundo criterio de
+orden, después del período y dentro de la misma sección crítica de la Fase A: mayor entra, menor se
+rechaza, igual con el mismo artefacto es idempotente, igual con otra carga es conflicto; una legacy
+exacta sigue siendo idempotente, otra legacy del mismo período se rechaza, la revisionada del emisor
+sustituye a la legacy y fija el linaje, y ninguna legacy vuelve tras ella. El cliente no asigna,
+calcula ni corrige revisiones. Esquema y migraciones del cliente: 0. La certificación E2E usa la
+Autoridad Central real (efímera, sobre su propia base) como fuente de los artefactos, en un proyecto
+Playwright que corre tras el resto porque el linaje cambia el identificador vigente. Las pruebas que
+afirmaban la tolerancia transitoria de la Fase A se adaptaron al contrato nuevo, pieza por pieza.
+
+**Hallazgo colateral, cerrado:** SQLite guardaba el período con la hora de pared y perdía el
+`-04:00`, así que leía el mismo período como posterior por cuatro horas; el estado guarda ahora los
+instantes normalizados a UTC (mismo instante; PostgreSQL ya lo conservaba).
+
+**Decisiones pendientes de la dueña:** `CENTRAL-SYNC-AUTHORITY-UNDEFINED` (decidida: identidad
+Ed25519 de la instalación + desafío-respuesta + nonce + vinculación canónica; **sin implementar**),
+`LICENCIA-SIN-ROTACION-DE-CLAVE`, `BACKEND-KEEPALIVE-5S`, `PANEL-VERSION-VACIA`. Candidatas sin
+decisión pendiente: `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`,
+`PICKLIST-DUPLICADA-500`, `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`,
+`MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`,
+`OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.

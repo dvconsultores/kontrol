@@ -200,15 +200,16 @@ def test_race_03_c_confirma_primero_y_b_relee_bajo_bloqueo_y_se_rechaza(mundo, m
     assert tipos.count("LICENSE_IMPORTED") == 2 and tipos.count("LICENSE_PERIOD_DOWNGRADE_REJECTED") == 1  # A, C y el rechazo de B
 
 
-def test_race_04_dos_reemisiones_del_mismo_periodo_son_admisibles_y_el_resultado_sigue_la_serializacion(mundo, monkeypatch):
-    """Documenta el residual LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN: la Fase A no afirma cuál es
-    la más nueva; solo garantiza que entran de una en una."""
+def test_race_04_dos_legacy_distintas_del_mismo_periodo_concurrentes_se_rechazan_las_dos(mundo, monkeypatch):
+    """Cerrado LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN (FR-010-330): con A legacy vigente, otras dos legacy
+    del mismo período no entran, en ningún orden; el orden dentro del período lo da la `revision` del emisor
+    (`test_license_revision_race.py`). Un rechazo nunca entra en la sección crítica."""
     inst = mundo["instalacion"]
     vigia = Vigia(monkeypatch, 2)
     resultados = _concurrentes(mundo, vigia, _anual("LIC-A-X", ANIO, inst, entitlements={"companies": 1}), _anual("LIC-A-Y", ANIO, inst, entitlements={"companies": 9}))
-    assert resultados == {"LIC-A-X": "ok", "LIC-A-Y": "ok"}
-    assert mundo["vigente"]() in ("LIC-A-X", "LIC-A-Y")
-    assert vigia.maximo_dentro == 1
+    assert resultados == {"LIC-A-X": "LICENSE_LEGACY_REISSUE_REQUIRES_REVISION", "LIC-A-Y": "LICENSE_LEGACY_REISSUE_REQUIRES_REVISION"}
+    assert mundo["vigente"]() == "LIC-A"
+    assert vigia.maximo_dentro == 0
 
 
 def test_race_05_tras_un_rechazo_la_sesion_queda_limpia_y_la_siguiente_importacion_entra(mundo):

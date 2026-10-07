@@ -1,0 +1,16 @@
+legacy A (2030) primera activación
+   → 200 OK · vigente: LIC-A entitlements={'companies': 3}
+legacy B distinta, mismo período (debería rechazarse: REQUIRES_REVISION)
+   → 200 OK · vigente: LIC-B entitlements={'companies': 1}
+revisionada r2 mismo período (puente legacy→revisionada: aceptar)
+   → 200 OK · vigente: LIC-R2 entitlements={'companies': 3}
+revisionada r1 mismo período (debería rechazarse: REVISION_DOWNGRADE)
+   → 200 OK · vigente: LIC-R1 entitlements={'companies': 3}
+legacy C mismo período tras revisionada (debería rechazarse: LEGACY_AFTER_REVISION)
+   → 200 OK · vigente: LIC-C entitlements={'companies': 3}
+revisionada r2 OTRA carga, mismo período (debería rechazarse: REVISION_CONFLICT)
+   → 200 OK · vigente: LIC-R2-BIS entitlements={'companies': 99}
+revisionada r1 período 2031 (aceptar: la revision no cruza períodos)
+   → 200 OK · vigente: LIC-2031-R1 entitlements={'companies': 3}
+revisionada r999 período 2030 (rechazar: PERIOD_DOWNGRADE)
+   → 423 LICENSE_PERIOD_DOWNGRADE · vigente: LIC-2031-R1 entitlements={'companies': 3}

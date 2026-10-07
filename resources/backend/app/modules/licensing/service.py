@@ -158,6 +158,19 @@ def _payload_hash(payload: dict[str, Any]) -> str:
     return license_engine.payload_hash(payload)
 
 
+def _utc(dt: datetime) -> datetime:
+    """Un instante con zona, expresado en UTC; uno sin zona se deja como está."""
+    return dt.astimezone(UTC) if dt.tzinfo is not None else dt
+
+
+_MENSAJES_DE_REEMISION = {
+    license_engine.LEGACY_REISSUE_REQUIRES_REVISION: "Ya hay una licencia vigente de este período sin número de emisión; otra licencia distinta del mismo período solo puede sustituirla con una revisión del emisor.",
+    license_engine.LEGACY_AFTER_REVISION: "La licencia vigente de este período lleva número de emisión; una licencia sin revisión del mismo período no puede sustituirla.",
+    license_engine.REVISION_DOWNGRADE: "La licencia tiene un número de emisión anterior al vigente para este período y no puede sustituirlo.",
+    license_engine.REVISION_CONFLICT: "La licencia repite el número de emisión vigente con un contenido distinto; no se aplica.",
+}
+
+
 def import_license(
     db: Session,
     *,
@@ -249,6 +262,40 @@ def import_license(
                 ),
                 status_code=423,
             )
+        if orden == license_engine.SAME_PERIOD:
+            # 5b) Mismo período: ordena la `revision` firmada que asignó el emisor, bajo el MISMO
+            #     bloqueo (FR-010-322..348). El vigente es el último artefacto aceptado de la licencia
+            #     vigente; cada importación aceptada inserta uno. El cliente no asigna ni corrige
+            #     revisiones: solo valida y compara. Legacy es claim ausente, nunca 0 ni `null`.
+            vigente = db.execute(
+                select(LicenseArtifact)
+                .where(LicenseArtifact.license_id == state.license_id)
+                .order_by(LicenseArtifact.imported_at.desc(), LicenseArtifact.created_at.desc())
+            ).scalars().first()
+            try:
+                revision_vigente = license_engine.parse_revision(vigente.payload) if vigente is not None else None
+            except license_engine.LicenseContractError:
+                # El artefacto guardado no cumple el contrato: no se ordena contra él, se rechaza cerrado.
+                _record_event(db, installation, "LICENSE_REISSUE_REJECTED",
+                              {"license_id": license_data.license_id, "current_license_id": state.license_id,
+                               "outcome": "CURRENT_ARTIFACT_INVALID"}, user_id)
+                db.commit()
+                raise KontrolError(code="LICENSE_CURRENT_ARTIFACT_INVALID",
+                                   message="El artefacto de la licencia vigente no cumple el contrato; no se puede ordenar la reemisión.",
+                                   status_code=423) from None
+            resultado = license_engine.resolve_same_period_reissue(
+                current_revision=revision_vigente, current_payload_hash=vigente.payload_hash if vigente is not None else None,
+                incoming_revision=license_data.revision, incoming_payload_hash=_payload_hash(payload),
+            )
+            if resultado in license_engine.REISSUE_REJECTIONS:
+                _record_event(
+                    db, installation, "LICENSE_REISSUE_REJECTED",
+                    {"license_id": license_data.license_id, "current_license_id": state.license_id,
+                     "current_revision": revision_vigente, "incoming_revision": license_data.revision, "outcome": resultado},
+                    user_id,
+                )
+                db.commit()
+                raise KontrolError(code=f"LICENSE_{resultado}", message=_MENSAJES_DE_REEMISION[resultado], status_code=423)
 
     # 6) Calcular modo actual.
     last_reliable = state.last_reliable_date if state else None
@@ -270,10 +317,14 @@ def import_license(
         db.add(state)
     state.license_id = license_data.license_id
     state.mode = mode
-    state.period_start = license_data.period_start
-    state.period_end = license_data.period_end
-    state.critical_warning_start = license_data.critical_warning_start
-    state.read_only_start = license_data.read_only_start
+    # Los instantes firmados, normalizados a UTC: el instante no cambia, pero SQLite guarda la hora de
+    # pared y pierde el desplazamiento, con lo que un período leído de vuelta quedaba 4 h corrido y la
+    # reemisión del mismo período se ordenaba como posterior. PostgreSQL (`timestamptz`) ya conservaba
+    # el instante; así los dos motores comparan lo mismo (FR-010-323).
+    state.period_start = _utc(license_data.period_start)
+    state.period_end = _utc(license_data.period_end)
+    state.critical_warning_start = _utc(license_data.critical_warning_start)
+    state.read_only_start = _utc(license_data.read_only_start)
     state.entitlements = license_data.entitlements
     state.minimum_version = license_data.minimum_version
     state.kid = license_data.kid
@@ -282,7 +333,7 @@ def import_license(
 
     installation.state = "ACTIVE"
 
-    _record_event(db, installation, "LICENSE_IMPORTED", {"license_id": license_data.license_id, "mode": mode}, user_id)
+    _record_event(db, installation, "LICENSE_IMPORTED", {"license_id": license_data.license_id, "mode": mode, "revision": license_data.revision}, user_id)
     db.commit()
     db.refresh(state)
     return state

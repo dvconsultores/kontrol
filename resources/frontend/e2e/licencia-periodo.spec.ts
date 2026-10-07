@@ -4,8 +4,9 @@
  *
  * Compuertas 1 y 2 delante (sesión + `license:create`; ancla sintética explícita de la corrida).
  * La tercera compara solo el período firmado: anterior → 423 `LICENSE_PERIOD_DOWNGRADE` sin tocar
- * nada; posterior → se aplica; el mismo período → reemisión aceptada (DOC-07 §7.1, riesgo residual
- * `LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN`). El escenario ordenado va en una sola prueba porque
+ * nada; posterior → se aplica; el mismo período → solo la reimportación exacta (idempotente) u otra
+ * con `revision` del emisor (`licencia-revision.spec.ts`): otra legacy distinta se rechaza
+ * (`LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN`, cerrada). El escenario ordenado va en una sola prueba porque
  * la suite corre en paralelo y el período vigente es estado compartido de la corrida: solo avanza,
  * nunca retrocede, y conserva el identificador `LIC-E2E` que otras pruebas afirman. `READ_ONLY` y
  * la carrera se prueban en el backend sobre PostgreSQL (ROLLA-08/09, RACE-01..05).
@@ -87,10 +88,16 @@ test.describe("Licencia · el período no retrocede", () => {
     const publico = await request.get(`${API}/license/status`);
     expect((await publico.json()).mode).toBe(antes.mode);
 
-    // 3) Reemisión del mismo período (mismo identificador, mismas fechas): entra (§7.1, transitorio).
-    const reemision = await request.post(IMPORT, { data: licenciaFirmada(antes.license_id, "--periodo", antes.period_start, antes.period_end), headers: cabecera });
-    expect(reemision.status(), await reemision.text()).toBe(200);
-    expect((await detalle(request, admin)).license_id).toBe(antes.license_id);
+    // 3) Mismo período: el artefacto vigente exacto entra (idempotente); otra legacy distinta del mismo
+    //    período, aunque lleve el mismo identificador, ya no (FR-010-330), y nada cambia.
+    const exacta = await request.post(IMPORT, { data: licenciaFirmada("--vigente"), headers: cabecera });
+    expect(exacta.status(), await exacta.text()).toBe(200);
+    expect(await detalle(request, admin)).toEqual(antes);
+    const otraLegacy = await request.post(IMPORT, { data: licenciaFirmada(antes.license_id, "--periodo", antes.period_start, antes.period_end), headers: cabecera });
+    expect(otraLegacy.status(), await otraLegacy.text()).toBe(423);
+    expect((await otraLegacy.json()).code).toBe("LICENSE_LEGACY_REISSUE_REQUIRES_REVISION");
+    expect(await otraLegacy.text()).not.toMatch(SENSIBLE);
+    expect(await detalle(request, admin)).toEqual(antes);
 
     // 4) Un período posterior, con el identificador que la corrida comparte: entra y el detalle lo refleja.
     const anioPosterior = anioContractual(antes.period_end) + 2;

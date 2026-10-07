@@ -12,6 +12,7 @@ llama sin autenticación ligada a la instalación. No se expone ni se afirma lis
 **D0-06:** CLOSED / IMPLEMENTED en cuanto a frontera y hospedaje lógico (vendor-hosted, aislado,
 agnóstico de proveedor); el proveedor físico no es condición.
 
-**Siguiente paso de la familia:** reabrir `LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN` en el cliente
-(comparación de `revision` bajo el bloqueo existente, puente legacy, carrera) con este emisor como
-fuente de los artefactos.
+**Siguiente paso de la familia (hecho el 2026-10-07):** `LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN`
+se cerró en el cliente con este emisor como fuente de los artefactos
+(`spec004-licencia-revision-cliente-delta.md`); la autoridad no cambió. Sigue pendiente la
+autenticación de la instalación para sync (`CENTRAL-SYNC-AUTHORITY-UNDEFINED`, decidida, sin implementar).
