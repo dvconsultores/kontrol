@@ -28,7 +28,7 @@ LEGAL_VALIDATION_REQUIRED ──(profesional identificado)──► VALIDATED �
 
 ## 4. Declaraciones prohibidas
 
-Está prohibido afirmar «KONTROL cumple SENIAT» u «homologado» sin el acto formal de la Spec 056.
+Está prohibido afirmar «KONTROL cumple SENIAT» u «homologado». La homologación del software bajo SNAT/2024/000121 fue derogada (SNAT/2026/00084, G.O. N.º 43.435, 12-08-2026); lo que la Spec 056 produce es una validación de cumplimiento fiscal con evidencia, y así se declara.
 Aplica a interfaz, documentación, material comercial y respuestas del producto.
 
 ## 5. Organismos externos

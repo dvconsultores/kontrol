@@ -72,12 +72,13 @@ Este backlog es una **propuesta**; no se ha ejecutado ninguna de sus tareas.
 | B-070 | 039-043 | Alícuotas y conceptos no cargados | **LEGAL_BLOCKER** | Equipo fiscal | Reglas vigentes cargadas | Cada regla con fuente legal, Gaceta, vigencia y versión; certificada por abogado tributario y contador público | L |
 | B-071 | 042 | Contingencia sin UI ni flujo | P1 | B-070 | Contingencia operable | Flujo de contingencia con regla oficial versionada y regularización posterior | M |
 | B-072 | 044 | Matrices oficiales no cargadas | P1 | Equipo regulatorio | Perfiles por organismo/rubro | Matriz cargada como perfil versionado con fuente | M |
-| B-073 | 056 | Acto formal no ejecutado | **LEGAL_BLOCKER** | B-070, B-002 | Versión fiscal homologada | Acto formal firmado + gates verdes + versión liberada | M |
+| B-073 | 056 | Validación de cumplimiento fiscal no ejecutada (redefinida el 2026-10-07: la homologación del software bajo SNAT/2024/000121 fue derogada) | **LEGAL_BLOCKER** (D0-07) | B-070, B-002 | Versión fiscal validada contra la normativa vigente y liberada | Reglas validadas + QA/UAT fiscal + gates verdes + acto de validación/liberación con evidencia | M |
 
 ## OLA 8 — Transversales e información
 
 | ID | Spec | Brecha | Prio | Resultado esperado | Est. |
 |---|---|---|---|---|---|
+| B-094 | **057** | Gestión Integral de Activos Fijos — `PLANNED / NOT_STARTED` (2026-10-07; `NEW PRODUCT SCOPE`) | Planificada | Spec Kit propio con autorización expresa cuando 007, 009, 013, 017, 019, 026, 027, 045 y 046 estén estables; fuente `requerimientos/KONTROL_SPEC057_…pdf` | XL (5 ciclos orientativos) |
 | B-080 | 047 | Sin notificaciones ni tareas | P1 | Mis tareas, Mis aprobaciones, alertas, vencimientos y correo | L |
 | B-081 | 048 | Integraciones ausentes | P1 | BCV, SMTP, storage y webhooks con contrato y prueba | L |
 | B-082 | 049 | Analítica insuficiente | P2 | Rotación, tendencias e indicadores por módulo | M |

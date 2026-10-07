@@ -60,11 +60,17 @@ una **decisión**, y 031/032 esperan una **capacidad**. Solo 029 no espera nada.
      ├→ 041 IGTF        ⛔ D0-07
      └→ 042 Documentos  ⛔ D0-07
          └→ 043 Libros  ⛔ D0-07
-             └→ 056 Homologación ⛔ D0-07
+             └→ 056 Validación fiscal y liberación ⛔ D0-07 (reglas)
 ```
 
 Un solo bloqueo, externo a la ingeniería, gobierna seis Specs. Se puede
 **construir** contra él; no se puede **liberar**.
+
+> **2026-10-07.** El riesgo externo de la **homologación del software ante el SENIAT** bajo SNAT/2024/000121
+> deja de formar parte de la ruta crítica: esa providencia fue derogada por SNAT/2026/00084 (G.O. N.º
+> 43.435, 12-08-2026). Lo que sigue bloqueando es la validación profesional de las reglas (D0-07), y
+> el trabajo técnico fiscal no cambia. Ruta fiscal ahora: implementación → validación contra la
+> normativa vigente → QA/UAT → liberación.
 
 ## Camino D — transversal
 

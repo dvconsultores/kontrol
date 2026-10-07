@@ -1,4 +1,6 @@
-# MAPA DE EQUIVALENCIAS — 12 SPECS ACTUALES ↔ 56 SPECS MAESTRAS
+# MAPA DE EQUIVALENCIAS — SPECS ACTUALES ↔ 57 SPECS MAESTRAS
+
+> **2026-10-07:** el universo de control pasa de 56 a **57** con la Spec 057 (Activos Fijos), `PLANNED / NOT_STARTED`, sin carpeta todavía.
 
 > Regla aplicada: **no renombrar**. Las Specs existentes se conservan; el catálogo de 56 es el
 > universo de control funcional.
@@ -60,7 +62,8 @@
 | 053 Backup/continuidad | `001-fundacion` | 32 % | — |
 | 054 QA integral | `012-auditoria-integral-e2e` | 78 % | Spec de auditoría, no funcional |
 | 055 Seguridad y hardening | `001-fundacion` + `012` | 65 % | Sin Spec propietaria |
-| 056 Homologación y release | `011-homologacion-liberacion` | 73 % | LEGAL_BLOCKER |
+| 056 Validación de cumplimiento fiscal y liberación (antes Homologación y release) | `011-homologacion-liberacion` | 73 % | LEGAL_BLOCKER (D0-07); la homologación bajo SNAT/2024/000121 fue derogada el 12-08-2026 |
+| **057 Gestión Integral de Activos Fijos** | **ninguna** | **0 %** | **`PLANNED / NOT_STARTED` (2026-10-07). Fuente: `requerimientos/KONTROL_SPEC057_Ingenieria_Requerimientos_Activos_Fijos.pdf`. No la cubre la 023** |
 
 ## Recomendación por Spec existente
 

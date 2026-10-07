@@ -13,7 +13,7 @@ Clasificación estricta: **CONFIG** = configuración de cliente (no bloquea) ·
 | OQ-06 | D0-05 | ¿Se confirma el orden de precedencia propuesto? ¿Cuál es el límite de descuento por rol? ¿Entran comisiones en el alcance? ¿Qué parámetros de crédito? | BUSINESS | Producto · Ventas · Crédito | Implantación |
 | OQ-07 | D0-06 | ¿Dónde se hospeda la autoridad de licencias y quién custodia la clave privada? | **BUSINESS** | Producto · Infraestructura | **Cierre de la Spec 004** |
 | OQ-08 | D0-07 | Las 24 reglas de `D0-fiscal-validation-matrix.md` | **LEGAL** | Abogado tributario · Contador público | **Certificación fiscal** |
-| OQ-09 | D0-07 | ¿Qué modalidad de facturación se solicita y en qué plazo se inicia la homologación? | BUSINESS + LEGAL | Producto · Homologación | Spec 056 |
+| OQ-09 | D0-07 | ¿Qué modalidad de facturación se adopta? (La pregunta «¿en qué plazo se inicia la homologación?» quedó sin objeto el 12-08-2026: SNAT/2024/000121 fue derogada por SNAT/2026/00084) | BUSINESS + LEGAL | Producto · Fiscal | Spec 056 |
 | OQ-10 | D0-08 | ¿Política de retención documental por tipo y por empresa? | BUSINESS | Producto · Legal | No |
 | OQ-11 | D0-09 | ¿Existe algún producto cuya conversión no sea exacta en unidad base? | CONFIG | Inventario | No (la regla exige declararlo) |
 | OQ-12 | D0-12 | ¿Qué procesos exigen segregación entre preparación y confirmación en cada empresa? | CONFIG | Auditoría interna del cliente | Implantación |

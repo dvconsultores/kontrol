@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Código | 011-homologacion-liberacion |
-| Nombre | Homologación fiscal y liberación de versión: acto formal, versión fiscal, gates de liberación y trazabilidad |
+| Nombre | Validación de cumplimiento fiscal y liberación a producción (antes «Homologación fiscal y liberación de versión»): validación contra la normativa vigente, versión fiscal, QA/UAT fiscal, gates de liberación y trazabilidad |
 | Versión | 1.0 (especificada — pendiente de `/speckit.analyze` y autorización expresa) |
 | Estado | ESPECIFICADA |
 | Fecha | 2026-08-04 |
@@ -15,6 +15,16 @@
 > **Regla de inicio (Constitución P1/P2):** esta iniciativa se implementa solo tras completar su propio flujo `/speckit.specify → clarify → plan → checklist → tasks → analyze` y obtener autorización expresa que mencione **011-homologacion-liberacion**.
 
 ---
+
+> **Actualización de alcance — 2026-10-07.** La Providencia SNAT/2024/000121, que exigía proveedor
+> autorizado y sistema homologado, fue **derogada** por SNAT/2026/00084 (G.O. N.º 43.435, 12-08-2026).
+> La **homologación obligatoria del software ya no es requisito** y esta Spec deja de representarla.
+> Conserva su propósito como **compuerta final de preparación fiscal para producción**: validación
+> funcional de cumplimiento contra la normativa vigente (reglas D0-07 `VALIDATED`), certificación
+> técnica, QA y UAT fiscal, integridad, documentación, evidencia con hash y liberación de versión. El
+> «acto formal» pasa a ser el acto de validación/liberación con evidencia (modelo `HomologationRecord`
+> sin cambio de código en este ciclo). Sigue prohibido afirmar «homologado» o «cumple SENIAT». Nada
+> de lo que sigue (redactado en 2026-08-04) se reescribe: se lee con esta actualización delante.
 
 ## 1. Problema
 

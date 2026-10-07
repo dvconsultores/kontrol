@@ -95,3 +95,16 @@ Fuente: Vol. 1 §4/§5/§7/§9, Vol. 2 §1/§3/§4/§5, DOCX de proceso (2026-08
 **Total: 9 bloques de requisito documentado sin Spec que los gobierne.**
 
 Incidencias de recepción salió de esta tabla el 2026-09-03: la Spec 020 la gobierna e implementa.
+
+## SPEC057 — Gestión Integral de Activos Fijos (incorporada el 2026-10-07)
+
+| Requisito | Fuente | Spec maestra |
+|---|---|---|
+| Políticas y maestros de activos; alta/capitalización; ficha patrimonial; componentes; costo inicial multimoneda; activo en construcción; ubicación, custodia, historial y etiquetado; libros contables/fiscales configurables; depreciación, vida útil y valor residual; mejoras; revaluación; deterioro; transferencias; inventario físico; desincorporación; documentos, garantías y seguros; mantenimiento mínimo; eventos contables y cierres; SoD; multiempresa; auditoría; reportes | `requerimientos/KONTROL_SPEC057_Ingenieria_Requerimientos_Activos_Fijos.pdf` §4–§26 | **057** (`PLANNED / NOT_STARTED`) |
+
+Regla de ownership (PDF §28): la **023 Inventario/Kardex no es dueña** del activo fijo; puede aportar el
+origen cuando una adquisición pasa por inventario, pero el activo patrimonial tiene ledger y ciclo
+de vida propios. Integraciones declaradas: 003, 006, 007, 008, 009, 010, 013, 015–017, 018, 019, 026,
+027, 043, 045, 046, 047, 048, 049, 050, 051, 052, 053, 054, 055. Exclusiones v1 (§31): CMMS avanzado,
+telemetría/IoT, GPS, combustible, flotas, mantenimiento predictivo, leasing e IFRS 16 completos,
+inmobiliaria integral, CAPEX completo, módulo asegurador, tasación automática.

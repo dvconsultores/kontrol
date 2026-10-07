@@ -47,7 +47,8 @@ Cada norma recibe uno de estos estados:
 | Providencia SNAT/2011/00071 | G.O. N.º 39.795 08-11-2011 | Emisión de facturas y otros documentos | `LEGAL_VALIDATION_REQUIRED` | Forma libre, requisitos, guías de despacho |
 | Providencia SNAT/2018/0141 | G.O. N.º 41.518 06-11-2018 | Imprentas y máquinas fiscales | `LEGAL_VALIDATION_REQUIRED` | Lotes de números de control |
 | Providencia SNAT/2024/000102 | G.O. N.º 43.032 19-12-2024 | Medios digitales de emisión | `LEGAL_VALIDATION_REQUIRED` | Facturación digital, contingencia, conservación 10 años |
-| Providencia SNAT/2024/000121 | G.O. N.º 43.032 19-12-2024 | Requisitos proveedores de sistemas / homologación | `LEGAL_VALIDATION_REQUIRED` | Homologación, registro inalterable, eventos |
+| Providencia SNAT/2024/000121 | G.O. N.º 43.032 19-12-2024 | Requisitos proveedores de sistemas / homologación | **`DEROGADA`** (12-08-2026) | Homologación: ya no es requisito. El registro inalterable y los eventos de auditoría se conservan por principio propio (Constitución P4/P5), no por esta norma |
+| Providencia SNAT/2026/00084 | G.O. N.º 43.435 12-08-2026 | Deroga SNAT/2024/000121 | `VERIFIED` (fuentes jurídicas fiables; texto íntegro no incorporado) | Retira la homologación obligatoria del software; sin nuevo régimen a la fecha |
 | Providencia SNAT/2025/000054 | G.O. N.º 43.171 16-07-2025 | Agentes de retención IVA (75%/100%) | `LEGAL_VALIDATION_REQUIRED` | Motor retención IVA |
 | Providencia SNAT/2016/0004 | G.O. N.º 40.834 22-01-2016 | IGTF sector bancario (percepción) | `LEGAL_VALIDATION_REQUIRED` | Percepción IGTF |
 | Providencia SNAT/2016/0005 | G.O. N.º 40.835 25-01-2016 | Declaración y pago IGTF | `LEGAL_VALIDATION_REQUIRED` | Declaración IGTF |

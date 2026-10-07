@@ -2927,3 +2927,37 @@ debilitó el diseño para evitarla).
 `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`, `ROLES-SIN-API-DE-ALTA`,
 `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`,
 `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`, `CENTRAL-SYNC-SIN-LIMITE-DE-TASA`. `NEXT SPEC = 029` no cambia.
+
+## 2026-10-07 · Reconciliación global: MASTER57, SPEC057 y marco fiscal; el puntero `NEXT SPEC = 029` revisado
+
+**Qué significa físicamente `NEXT SPEC = 029`.** Fue la selección del checkpoint maestro del 2026-08-31
+(`master-56-convergence.md`): la siguiente Master Spec a ejecutar entre las candidatas de aquel
+momento. La 029 quedó `COMPLETE / CONVERGED` el 2026-09-01 y la 030 el 2026-09-02; el checkpoint de la
+cadena operativa del 2026-09-03 volvió a elegir (`NEXT SPEC = 019`), y la 019 también convergió. Desde
+entonces ningún checkpoint maestro ha vuelto a seleccionar. La frase «`NEXT SPEC = 029` no cambia» que
+repiten los deltas de licenciamiento de octubre es el invariante de esos encargos («no iniciar ninguna
+Spec nueva»), no una reselección: como puntero a «la siguiente Spec realmente pendiente de iniciar» está
+**obsoleto** (caso C del encargo), y como registro histórico de aquella decisión es exacto y se conserva
+arriba tal cual.
+
+**Qué no se hace aquí.** Elegir la siguiente Master Spec exige priorizar entre candidatas que hoy
+compiten de verdad —018 Importaciones (`NOT_STARTED`), 047 Notificaciones, 048 Integraciones, las 26
+parciales, y la nueva 057 cuando sus dependencias estén estables— y eso es decisión de la dueña:
+**`NEXT-SPEC-POINTER-AMBIGUO — MATERIAL_DECISION_REQUIRED`**. No se inventa un número; el encabezado
+histórico queda intacto. Lo que sí se fija: ninguna Spec nueva se inicia en este ciclo, y la 057 **no**
+es la siguiente por el hecho de incorporarse.
+
+**Lo reconciliado.** Inventario maestro **57** (`master-56-specs-status.md`, nombre histórico, título y
+recuento en 57): la 057 Gestión Integral de Activos Fijos entra `PLANNED / NOT_STARTED` con su PDF de
+Ingeniería de Requerimientos bajo control de versiones y referenciado desde el mapa de equivalencias,
+la matriz de brechas (adenda), las olas (OLA 7b), el grafo de dependencias, el inventario de fuentes,
+el mapa de requisitos y el backlog (B-094); la 023 no es su dueña. Marco fiscal: SNAT/2024/000121 fue
+derogada por SNAT/2026/00084 (G.O. N.º 43.435, 12-08-2026; verificada con documentación jurídica
+fiable); la homologación del software deja de ser requisito vigente (D0-07 `NARROWED`,
+`HOMOLOGATION_REQUIREMENT_REMOVED`), la 056 pasa a «Validación de cumplimiento fiscal y liberación a
+producción», las 039–043 siguen bloqueadas por la validación de sus reglas y ninguna se declara
+completa; la 044 no cambia. Detalle: `master-57-reconciliation.md`.
+
+**Candidatas técnicas tras esta reconciliación (sin iniciar):** `LICENCIA-SIN-ROTACION-DE-CLAVE`, después
+`LICENCIA-ESTADO-SIN-REVERIFICAR`, `CENTRAL-SYNC-SIN-LIMITE-DE-TASA`, `BACKEND-KEEPALIVE-5S`,
+`PANEL-VERSION-VACIA`, y la convergencia priorizada de las Specs parciales.

@@ -3,7 +3,7 @@
 | ID | Decisión | Descripción | Tipo | Impacto | Acción requerida | Responsable |
 |---|---|---|---|---|---|---|
 | **BLK-D0-01** | D0-01 | No existe instancia PostgreSQL para desarrollo, CI ni QA | TECHNICAL_BLOCKER | Ninguna Spec puede alcanzar `COMPLETE_100`; el drift real es desconocido | Aprovisionar PG 18.x en `compose.dev` y en CI; ejecutar `upgrade head` y `check` | DevOps · DBA |
-| **BLK-D0-02** | D0-07 | Las 24 reglas fiscales carecen de validación profesional | **LEGAL_BLOCKER** | Sin certificación fiscal ni homologación; prohibido declarar cumplimiento | Contratar abogado tributario venezolano y contador público para revisar la matriz | Legal · Fiscal |
+| **BLK-D0-02** | D0-07 | Las 24 reglas fiscales carecen de validación profesional | **LEGAL_BLOCKER** | Sin validación profesional de las reglas; prohibido declarar cumplimiento. La homologación del software bajo SNAT/2024/000121 **ya no es requisito** (derogada el 12-08-2026) | Contratar abogado tributario venezolano y contador público para revisar la matriz | Legal · Fiscal |
 | **BLK-D0-03** | D0-02 | Umbrales y niveles de autoridad sin definir | PROCESS_BLOCKER | **No bloquea** el motor; bloquea la implantación en cliente | Definir política de aprobación por proceso | Producto · Compras · Finanzas |
 | **BLK-D0-04** | D0-03 | Disparador de reserva y vigencia sin confirmar | PROCESS_BLOCKER | **No bloquea** la Spec 030; el defecto está decidido | Confirmar disparador y duración | Producto · Ventas |
 | **BLK-D0-05** | D0-04 | Mapa físico real del almacén sin levantar | PROCESS_BLOCKER | **No bloquea** la Spec 008; bloquea la puesta en marcha del put-away | Levantamiento físico: zonas, pasillos, racks, niveles, posiciones | Almacén · Logística |

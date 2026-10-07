@@ -22,6 +22,7 @@
 | 16 | **`Procesos - Importacion - Recepcion de Importación y Distribucion en Almacen.docx`** | **Proceso** | Nivel 3 | **Sin track (2026-08-25).** Autoridad de las Specs 015-026 |
 | 17 | **`Pedido - Organizar Pedido - Confirmar - Facturar - Despachar.docx`** | **Proceso** | Nivel 3 | **Sin track (2026-08-25).** Autoridad de las Specs 029-035 |
 | 18 | `procesos.png` | Diagrama | Nivel 3 | Sin track. Diagrama de procesos (no interpretado en esta pasada) |
+| 19 | **`KONTROL_SPEC057_Ingenieria_Requerimientos_Activos_Fijos.pdf`** | **Requerimientos** | Nivel 3 | **Con track desde el 2026-10-07.** Ingeniería de Requerimientos v1.0 de la Spec **057 — Gestión Integral de Activos Fijos** (24 páginas; RF-AF-001..202, RN-AF-001..006, AF-INV-01..24, RNF-AF-001..018; dependencias §33; exclusiones §31). Entrada de su futuro `/speckit.specify` |
 
 ## Documentación interna del proyecto
 

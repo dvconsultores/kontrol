@@ -3,9 +3,9 @@
 | Campo | Valor |
 |---|---|
 | ID | D0-07 |
-| Estado | **APPROVED** (arquitectura de gobierno) · **LEGAL_VALIDATION_PENDING** (todos los valores) |
+| Estado | **APPROVED** (arquitectura de gobierno) · **LEGAL_VALIDATION_PENDING / NARROWED** (todos los valores; **`HOMOLOGATION_REQUIREMENT_REMOVED`** el 2026-10-07) |
 | Fecha | 2026-08-29 |
-| Responsable | Arquitecto empresarial · Abogado tributario · Contador público · Especialista en homologación |
+| Responsable | Arquitecto empresarial · Abogado tributario · Contador público · Especialista fiscal en facturación |
 | Specs afectadas | **039, 040, 041, 042, 043** · 014, 027, 028, 034, 037, 056 |
 
 ## Problema
@@ -48,9 +48,11 @@ tributario que nadie validó, y la afirmación se propaga a facturas, libros y d
 > **R-D0-07-4.** El sistema **no puede emitir** un documento fiscal aplicando una regla que no esté
 > `VALIDATED` y vigente. No hay modo permisivo ni bandera de desarrollo que lo eluda en producción.
 
-> **R-D0-07-5.** Está prohibido afirmar «KONTROL cumple SENIAT» u «homologado» sin el acto formal
-> de la Spec 056. La afirmación es un entregable regulado, no una descripción de funcionalidad
-> (Constitución P19, P20 y Vol. 1 §5).
+> **R-D0-07-5.** Está prohibido afirmar «KONTROL cumple SENIAT» u «homologado». La homologación del
+> software bajo SNAT/2024/000121 **dejó de existir** (derogada por SNAT/2026/00084, G.O. N.º 43.435,
+> 12-08-2026); lo que la Spec 056 produce es una **validación de cumplimiento fiscal** contra la
+> normativa vigente, con evidencia, y así se declara. La afirmación de cumplimiento es un entregable
+> regulado, no una descripción de funcionalidad (Constitución P19, P20 y Vol. 1 §5).
 
 > **R-D0-07-6.** Una regla derogada **no se borra ni se reescribe**: se cierra su vigencia. Los
 > documentos emitidos bajo ella conservan su snapshot y siguen siendo reconstruibles (P4, P5).
@@ -95,14 +97,34 @@ emisiones se apoyan en valores que nadie validó.
 - [ ] Emitir con regla no `VALIDATED` es imposible en producción (probado).
 - [ ] Promover una regla exige profesional identificado y queda auditado.
 - [ ] Derogar cierra vigencia sin alterar documentos históricos (probado).
-- [ ] Ningún texto del producto afirma homologación sin acto formal.
+- [ ] Ningún texto del producto afirma homologación ni cumplimiento SENIAT; la validación de la Spec 056 se declara como validación, con su evidencia.
 
 ## Preguntas pendientes
 
 **LEGAL_VALIDATION_REQUIRED** — OQ-08: las 24 reglas. **Ninguna puede resolverla el equipo de
 software.** Requieren abogado tributario venezolano y contador público sobre el ejercicio vigente.
 
+## Actualización 2026-10-07 — derogatoria de SNAT/2024/000121
+
+| | |
+|---|---|
+| `LEGAL_REFERENCE` | Providencia Administrativa SNAT/2026/00084 |
+| `OFFICIAL_GAZETTE` / `DATE` | G.O. N.º 43.435 · 12-08-2026 |
+| `REPEALED_RULE` | SNAT/2024/000121 (G.O. N.º 43.032, 19-12-2024): requisitos de los proveedores de sistemas informáticos para la emisión de facturas y otros documentos fiscales (homologación) |
+| `SOURCE` / `VERIFIED` | Nota de Actualidad Corporativa STL de PwC Venezuela (14-08-2026), sumario de la G.O. 43.435 (IUSDATA), Acceso a la Justicia · **VERIFIED** por documentación jurídica fiable; el texto íntegro de la Gaceta no está incorporado al repositorio (`docs/evidence/master-57-reconciliation/referencia-legal.md`) |
+
+**Qué cambia:** la parte de D0-07 asociada a la homologación/autorización del proveedor y del software
+(OQ-09 en su mitad de «plazo de homologación», rol «especialista en homologación», acto formal externo
+de la Spec 056) **se retira como bloqueo vigente** (`HOMOLOGATION_REQUIREMENT_REMOVED`). **Qué no
+cambia:** las 24 reglas siguen `LEGAL_VALIDATION_REQUIRED`; las obligaciones de factura, IVA, ISLR,
+IGTF, documentos fiscales, numeración y control, contingencia, libros y cierres siguen vigentes y
+siguen exigiendo validación profesional; R-D0-07-2..4 y R-D0-07-6 no se tocan; ninguna Spec fiscal se
+declara completa por esta derogatoria. La derogatoria dejó, según las mismas fuentes, un vacío a la
+espera de nuevos lineamientos: si el SENIAT dictara un régimen nuevo, se incorporará como norma
+vigente en la matriz, no como reaparición de la 121.
+
 ## Estado final
 
 **APPROVED** para el gobierno; los valores quedan formalmente fuera del alcance del software.
-Clasificación de cierre: **LEGAL_VALIDATION_PENDING**.
+Clasificación de cierre: **LEGAL_VALIDATION_PENDING / NARROWED** (homologación retirada; validación de
+reglas pendiente).

@@ -119,6 +119,18 @@ migración aditiva si se acepta backfill nulo para las facturas históricas.
 
 ---
 
+## OLA 7b — Activos fijos (SPEC057, planificada; 2026-10-07)
+
+| Spec | Estado | Entra cuando |
+|---|---|---|
+| **057 Gestión Integral de Activos Fijos** | `PLANNED / NOT_STARTED` — `NEW PRODUCT SCOPE` | Estén estables los contratos de **007** organización, **009** terceros, **013** maestros financieros, **017** orden de compra, **019** recepción, **026** costos, **027** factura de proveedor, **045** aprobaciones y **046** documentos (y, a ser posible, **018** importaciones). Después de compras/CxP y costos/cierres; antes de completar reportes, dashboard e integraciones |
+
+Fuente: `requerimientos/KONTROL_SPEC057_Ingenieria_Requerimientos_Activos_Fijos.pdf` (§33). Es una sola
+Master Spec que se ejecutará en varios ciclos (AF-1..AF-5 orientativos). **No se inicia** hasta su
+propio Spec Kit con autorización expresa; la 023 Inventario/Kardex no es su dueña.
+
+---
+
 ## OLA 8 — Información gerencial y transversales
 
 | Spec | Estado actual |
@@ -131,14 +143,14 @@ migración aditiva si se acepta backfill nulo para las facturas históricas.
 
 ---
 
-## OLA 9 — Operación, calidad y homologación
+## OLA 9 — Operación, calidad y liberación
 
 | Spec | Trabajo |
 |---|---|
 | 052, 053 | Actualización, rollback, RPO/RTO documentados y probados |
 | 054 | Dispositivos reales, carga, regresión sobre PG |
 | 055 | SBOM, rate limiting, política de uploads |
-| 056 | Acto formal de homologación y liberación de versión fiscal |
+| 056 | Validación de cumplimiento fiscal contra la normativa vigente, QA/UAT fiscal, certificación técnica y liberación de versión (la homologación del software bajo SNAT/2024/000121 fue derogada el 12-08-2026: ya no es requisito) |
 
 ---
 

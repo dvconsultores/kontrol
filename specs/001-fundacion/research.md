@@ -206,7 +206,7 @@ Documentar la investigación de decisiones técnicas y normativas de la fundaci�
 | Tema | Hallazgo | Estado |
 |---|---|---|
 | Núcleo fiscal separado | Decisión central de producto (Volumen 1) | Vigente |
-| Homologación | SNAT/2024/000121 exige proveedor autorizado y sistema homologado; cada nueva versión fiscal requiere nueva homologación | `LEGAL_VALIDATION_REQUIRED` |
+| Homologación | SNAT/2024/000121 exigía proveedor autorizado y sistema homologado; **derogada** por SNAT/2026/00084 (G.O. N.º 43.435, 12-08-2026): el requisito se retira; la auditoría inmutable se mantiene por principio propio | `DEROGADA (2026-08-12)` |
 | Alícuotas IVA | General 16%, reducida 8% (art. 64), exportación 0%, consumo suntuario 15% (configurable) | `LEGAL_VALIDATION_REQUIRED` |
 | IGTF | Decreto 4.972: 0% numerales 1-4; 3% numerales 5-6; ligado al pago, no a la moneda de la factura | `LEGAL_VALIDATION_REQUIRED` |
 | Retención IVA | SNAT/2025/000054: 75% regla general, 100% supuestos | `LEGAL_VALIDATION_REQUIRED` |

@@ -74,7 +74,7 @@ Ninguna decisión de arquitectura queda pendiente. Lo pendiente es de otra natur
 | ID | Estado | Naturaleza |
 |---|---|---|
 | **D0-06** | **CLOSED / IMPLEMENTED** (2026-10-07) | Frontera y hospedaje lógico resueltos: servicio del propietario, aislado, agnóstico de proveedor (`ADR-D0-006`, Fase 1). Sincronización autenticada implementada el mismo día (`CENTRAL-SYNC-AUTHORITY-UNDEFINED`, convergida) |
-| **D0-07** | LEGAL_VALIDATION_PENDING | Contenido tributario de 24 reglas |
+| **D0-07** | LEGAL_VALIDATION_PENDING / **NARROWED** (2026-10-07) | Contenido tributario de 24 reglas. La homologación del software bajo SNAT/2024/000121 dejó de ser requisito: derogada por SNAT/2026/00084 (G.O. N.º 43.435, 12-08-2026) — `HOMOLOGATION_REQUIREMENT_REMOVED` |
 
 ---
 
@@ -98,7 +98,7 @@ una regla no validada no puede emitir documento en producción.
 | OQ-02 | Niveles y umbrales de aprobación | Implantación |
 | OQ-03 | Disparador de reserva y vigencia | Implantación |
 | OQ-06 | Precedencia de precio, límites de descuento, comisiones | Implantación |
-| OQ-09 | Modalidad de facturación y plazo de homologación | Spec 056 |
+| OQ-09 | Modalidad de facturación (la mitad «plazo de homologación» quedó sin objeto el 12-08-2026: la 121 fue derogada) | Spec 056 |
 | OQ-05, OQ-12, OQ-13 | Mapa físico, segregación, dimensiones activas | Puesta en marcha |
 
 ---

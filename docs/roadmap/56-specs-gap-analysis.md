@@ -103,3 +103,17 @@
 | M3 — Integrada | 003, 006, 007, 015, 019, 029, 034, 035, 039, 040, 042, 051 | 12 |
 | M4 — E2E probada | 001,002,004,005,009,010,013,014,016,017,023,024,025,027,028,030,036,037,038,041,043,044,050,054,056 | 25 |
 | M5 — Production-ready | **ninguna** | 0 |
+
+## Adenda 2026-10-07 — el universo pasa a 57
+
+La numeración 001–056 de esta matriz sigue inmutable. La dueña incorporó una Master Spec nueva, que
+toma el siguiente número:
+
+| # | Spec | Documentada | Spec actual | Front | Back | DB | Integr. | E2E | % | Estado | Brecha principal |
+|---|---|---|---|---:|---:|---:|---:|---:|---:|---|---|
+| 057 | Gestión Integral de Activos Fijos | Sí — `requerimientos/KONTROL_SPEC057_Ingenieria_Requerimientos_Activos_Fijos.pdf` (v1.0) | ninguna | 0 | 0 | 0 | 0 | 0 | 0 | PLANNED / NOT_STARTED | `NEW PRODUCT SCOPE`; no iniciada; no es una extensión de la 023 |
+
+El inventario autoritativo (`master-56-specs-status.md`, nombre histórico) cuenta **57** desde esta
+fecha. La 056 pasa a llamarse «Validación de cumplimiento fiscal y liberación a producción»: su
+`LEGAL_BLOCKER` es la validación de las reglas (D0-07), no un acto de homologación del software, que
+dejó de existir con la derogatoria de SNAT/2024/000121 (SNAT/2026/00084, G.O. N.º 43.435, 12-08-2026).

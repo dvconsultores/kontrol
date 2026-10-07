@@ -19,15 +19,15 @@
 | F-11 | Unidad tributaria aplicable y su conversión | Providencia vigente | Por determinar | Sí | **No** | Contador público | LEGAL_VALIDATION_REQUIRED |
 | F-12 | Hecho generador del IGTF | Ley de Reforma del IGTF · G.O. 6.687 Ext. | Por determinar | Sí | **No** | Abogado tributario | LEGAL_VALIDATION_REQUIRED |
 | F-13 | Alícuota y base del IGTF por medio de pago | Ley IGTF · providencias | Por determinar | Sí | **No** | Abogado tributario | LEGAL_VALIDATION_REQUIRED |
-| F-14 | Modalidad de facturación autorizada (forma libre computarizada) | SNAT/2011/00071 y sucesivas | Por determinar | Sí | **No** | Especialista en homologación | LEGAL_VALIDATION_REQUIRED |
-| F-15 | Formato y contenido obligatorio de la factura | SNAT/2011/00071 | Por determinar | Sí | **No** | Contador + homologación | LEGAL_VALIDATION_REQUIRED |
+| F-14 | Modalidad de facturación autorizada (forma libre computarizada) | SNAT/2011/00071 y sucesivas | Por determinar | Sí | **No** | Especialista fiscal (facturación) | LEGAL_VALIDATION_REQUIRED |
+| F-15 | Formato y contenido obligatorio de la factura | SNAT/2011/00071 | Por determinar | Sí | **No** | Contador + especialista fiscal | LEGAL_VALIDATION_REQUIRED |
 | F-16 | Requisitos de la nota de crédito y de débito | SNAT/2011/00071 | Por determinar | Sí | **No** | Contador público | LEGAL_VALIDATION_REQUIRED |
-| F-17 | Estructura del número de control y su autorización | SNAT/2011/00071 | Por determinar | Sí | **No** | Especialista en homologación | LEGAL_VALIDATION_REQUIRED |
-| F-18 | Reglas de correlativo, series y lotes de imprenta | Providencia vigente | Por determinar | Sí | **No** | Contador + homologación | LEGAL_VALIDATION_REQUIRED |
+| F-17 | Estructura del número de control y su autorización | SNAT/2011/00071 | Por determinar | Sí | **No** | Especialista fiscal (facturación) | LEGAL_VALIDATION_REQUIRED |
+| F-18 | Reglas de correlativo, series y lotes de imprenta | Providencia vigente | Por determinar | Sí | **No** | Contador + especialista fiscal | LEGAL_VALIDATION_REQUIRED |
 | F-19 | Columnas y formato del libro de ventas | Ley del IVA · reglamento | Por determinar | Sí | **No** | Contador público | LEGAL_VALIDATION_REQUIRED |
 | F-20 | Columnas y formato del libro de compras | Ley del IVA · reglamento | Por determinar | Sí | **No** | Contador público | LEGAL_VALIDATION_REQUIRED |
 | F-21 | Plazos de cierre y de declaración | COT · calendario fiscal | Por determinar | Sí | **No** | Contador público | LEGAL_VALIDATION_REQUIRED |
-| F-22 | Procedimiento de contingencia de facturación | Providencia vigente | Por determinar | Sí | **No** | Homologación | LEGAL_VALIDATION_REQUIRED |
+| F-22 | Procedimiento de contingencia de facturación | Providencia vigente | Por determinar | Sí | **No** | Especialista fiscal (facturación) | LEGAL_VALIDATION_REQUIRED |
 | F-23 | Requisitos de guía SICA / SUNAGRO | Expediente SICA · manuales | Por determinar | Sí | **No** | Especialista SICA | LEGAL_VALIDATION_REQUIRED |
 | F-24 | Requisitos de SIGESAI / INSAI y de SACS | Manuales INSAI · normativa SACS | Por determinar | Sí | **No** | Especialistas SIGESAI y SACS | LEGAL_VALIDATION_REQUIRED |
 
@@ -53,4 +53,4 @@ El **mecanismo** que soporta las 24 reglas está aprobado y no requiere validaci
 
 Que el mecanismo funcione y las pruebas pasen **no significa cumplimiento normativo**. La única
 evidencia admisible de conformidad es la revisión profesional de cada regla y, para declarar
-homologación, el acto formal de la Spec 056.
+homologación, la validación de cumplimiento fiscal de la Spec 056 (la homologación del software bajo SNAT/2024/000121 fue derogada el 12-08-2026 por SNAT/2026/00084).

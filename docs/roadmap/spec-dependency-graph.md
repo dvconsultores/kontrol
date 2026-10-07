@@ -1,4 +1,6 @@
-# GRAFO DE DEPENDENCIAS — 56 SPECS
+# GRAFO DE DEPENDENCIAS — 57 SPECS
+
+> **2026-10-07:** se añade la 057 Activos Fijos (`PLANNED / NOT_STARTED`) en la capa 7 con sus dependencias; la 056 pasa a «Validación de cumplimiento fiscal y liberación».
 
 Notación: `A → B` significa «A debe existir antes que B».
 `⛔` marca la dependencia que hoy está incumplida (se construyó B sin A).
@@ -107,7 +109,8 @@ dejan de nombrar Specs y nombran capacidades:
 050 Reportes ← 049, 046
 051 Auditoría avanzada ← 006
 054 QA integral ← todas
-056 Homologación y release ← 039..043, 054, 055
+056 Validación de cumplimiento fiscal y liberación ← 039..043, 054, 055   (sin homologación externa: derogada 12-08-2026)
+057 Activos fijos (PLANNED) ← 007, 009, 013, 017, 019, 026, 027, 045, 046 (018 idealmente)
 ```
 
 ## Dependencias incumplidas (deuda estructural ya contraída)

@@ -1,0 +1,19 @@
+VAL-01 filas de Spec en el inventario: 57
+VAL-02 apariciones de la fila 057: 1
+VAL-03 estado 057: PLANNED / NOT_STARTED
+VAL-06/07/08 cambios fuera de docs/specs/requerimientos: 0
+VAL-06 ficheros de activos fijos en código: 0
+VAL-09 docs vivos que afirman total 56 (inventario, equivalencias, olas, grafo, backlog, brechas-adenda):
+docs/roadmap/spec-dependency-graph.md:1:# GRAFO DE DEPENDENCIAS — 56 SPECS
+VAL-11 homologación como requisito vigente en olas/backlog/ruta crítica/grafo:
+docs/roadmap/critical-path-analysis.md:69:> **2026-10-07.** El riesgo externo de la **homologación del software ante el SENIAT** bajo SNAT/2024/000121
+VAL-13 039–043 estados:
+5
+VAL-15 044 cambiada:  1 file changed, 15 insertions(+), 8 deletions(-); 0
+VAL-16/17/18 código/esquema/licenciamiento tocados: 0
+Referencias nuevas existen:
+  FALTA docs/roadmap/master-57-reconciliation.md
+  OK docs/evidence/master-57-reconciliation/referencia-legal.md
+  OK requerimientos/KONTROL_SPEC057_Ingenieria_Requerimientos_Activos_Fijos.pdf
+VAL-09 recuento tras corregir el grafo: 0
+VAL-04 PDF en el índice: 1
