@@ -53,5 +53,10 @@ violación de P15 y exige enmienda del ADR.
 
 ## 8. Pendiente
 
-**BUSINESS_DECISION_PENDING** — OQ-07: hospedaje de la autoridad. No se recomienda proveedor.
-Riesgo asociado: la custodia de la clave privada es el activo más crítico del modelo comercial.
+**OQ-07 resuelta (2026-10-07):** la autoridad es un servicio del propietario, aislado del cliente y
+agnóstico de proveedor, implementado en su Fase 1 (`ADR-D0-006`, `resources/backend/central_authority/`).
+No se recomienda proveedor físico: es operación del propietario. Riesgo que sigue vigente: la custodia
+de la clave privada es el activo más crítico del modelo comercial.
+
+**MATERIAL_DECISION_REQUIRED** — `CENTRAL-SYNC-AUTHORITY-UNDEFINED`: cómo se autentica la instalación
+ante la autoridad antes de exponer activación y sincronización.

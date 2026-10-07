@@ -3,8 +3,8 @@
 | Campo | Valor |
 |---|---|
 | ID | D0-06 |
-| Estado | **APPROVED** (arquitectura) · **BUSINESS_DECISION_PENDING** (hospedaje) |
-| Fecha | 2026-08-29 |
+| Estado | **APPROVED** (arquitectura) · **CLOSED / IMPLEMENTED** (frontera y hospedaje lógico, Fase 1, 2026-10-07) · sincronización **BLOCKED** (`CENTRAL-SYNC-AUTHORITY-UNDEFINED`) |
+| Fecha | 2026-08-29 · actualizado 2026-10-07 |
 | Responsable | Arquitecto de seguridad · Arquitecto de infraestructura · Product Owner |
 | Extiende | `ADR-005 — Licenciamiento con Firma Asimétrica` (PROPUESTO) · `ADR-002 — Instalación Independiente` |
 | Specs afectadas | **004** · 048, 052, 053 |
@@ -95,7 +95,16 @@ Período **1 de abril → 31 de marzo**. Desde el **1 de abril**, aviso de renov
 > contrato que transporte datos de negocio es una violación del Principio 15 y exige enmienda de
 > este ADR.
 
-## Hospedaje — decisión empresarial
+## Hospedaje — decisión tomada: servicio del propietario, aislado y agnóstico de proveedor
+
+**Decisión de la dueña (2026-10-07).** La autoridad es un servicio **hospedado por el propietario**,
+separado de toda instalación de cliente, **agnóstico de proveedor**: se entrega como imagen de
+contenedor (`Dockerfile.central`) con su propio PostgreSQL, sus propias migraciones
+(`cla_alembic_version`), sus propios secretos (`KONTROL_CENTRAL_*`) y su propia clave de firma, y
+corre en cualquier infraestructura que cumpla los requisitos de abajo. El proveedor físico concreto
+es **operación del propietario**, no condición de esta decisión ni de la frontera. Implementación:
+`resources/backend/central_authority/` (Spec Kit en
+`specs/010-licenciamiento-central/central-authority/`, ADR-004-CLA-001).
 
 **No se recomienda ni se inventa proveedor.** Requisitos técnicos que cualquier opción debe cumplir:
 
@@ -107,14 +116,29 @@ recuperación probada · aislamiento del entorno de emisión.
 **Riesgo:** perder la clave privada invalida la capacidad de emitir y renovar **todas** las
 licencias. La custodia de esa clave es el activo más crítico del modelo comercial.
 
-Ver OQ-07 — **BUSINESS_DECISION_PENDING**.
+OQ-07 queda **resuelta** en cuanto a frontera y hospedaje lógico; la custodia operativa de la clave
+(dónde vive la variable, respaldo, quién la carga) es procedimiento del propietario y no bloquea.
+
+## Fase 1 implementada (2026-10-07)
+
+| Pieza | Estado |
+|---|---|
+| Registro de instalaciones (`installation_uuid`, clave pública, cliente) | Implementado; idempotente; conflicto explícito |
+| Libro de emisiones *append-only* con auditoría | Implementado; sin función de actualización ni borrado |
+| `revision` firmada, monótona por instalación + período, concurrencia segura | Implementado (`SELECT … FOR UPDATE`, unicidad en base); probado en PostgreSQL |
+| Paquete firmado DOC-07 §10.2 + `revision` + `kid`; el cliente lo importa | Implementado; legacy intacto byte a byte |
+| CLI del propietario (`register-installation`, `issue-license`, `reissue-license`, …) | Implementado; `--operator` como etiqueta de atribución |
+| Health mínimo (`/health/live`, `/health/ready`), sin `/docs` | Implementado |
+| Imagen y compose propios | Entregados; construcción real pendiente de un entorno con `docker` |
+| `activate` / `sync` / `renew` / `heartbeat` / `replace_installation` | **No expuestos**: la instalación no se autentica ante la autoridad (`CENTRAL-SYNC-AUTHORITY-UNDEFINED`, decisión material) |
+| Rotación por `kid` | **No**: una clave activa (`LICENCIA-SIN-ROTACION-DE-CLAVE`, OPEN) |
 
 ## Impacto
 
 | Dimensión | Impacto |
 |---|---|
 | Frontend | Ninguno (las pantallas existen) |
-| Backend | Cliente ya implementado; falta prueba contra servidor real y rotación por `kid` |
+| Backend | Cliente implementado; **autoridad Fase 1 implementada** (componente separado); faltan la autenticación de la instalación para sync y la rotación por `kid` |
 | Base de datos | Ninguno |
 | Integraciones | **Alto** — es la única integración externa real del producto |
 | QA | Pruebas contra servidor de pruebas; manipulación de reloj; firma inválida; expiración |
@@ -127,16 +151,18 @@ Ver OQ-07 — **BUSINESS_DECISION_PENDING**.
 
 ## Criterios de aceptación
 
-- [ ] Instalación limpia activa contra la autoridad y recibe licencia firmada válida.
-- [ ] Licencia de otra instalación rechazada.
+- [ ] Instalación limpia activa contra la autoridad y recibe licencia firmada válida. *(Fase 1: la licencia emitida por la autoridad se importa y verifica — CLA-11; la activación en línea espera la autenticación de la instalación.)*
+- [x] Licencia de otra instalación rechazada.
 - [ ] Firma inválida → `SECURITY_SUSPENSION` con evento.
 - [ ] Retrasar el reloj no extiende la tolerancia offline.
 - [ ] Rotación de `kid` sin interrumpir instalaciones vigentes.
 - [ ] En `READ_ONLY` la consulta y la exportación siguen funcionando.
-- [ ] Auditoría del contrato demuestra que no viaja ningún dato de negocio.
+- [x] Auditoría del contrato demuestra que no viaja ningún dato de negocio *(el paquete y el registro solo llevan `installation_id`, `customer_id` opaco, período, derechos y versión mínima — CLA-07, CLA-17)*.
 
 ## Estado final
 
 **APPROVED** para la arquitectura, el contrato, la seguridad y la privacidad.
-**BUSINESS_DECISION_PENDING** para el hospedaje.
-Clasificación de cierre: **BUSINESS_DECISION_PENDING**.
+**CLOSED / IMPLEMENTED** para la frontera y el hospedaje lógico (Fase 1, 2026-10-07): servicio del
+propietario, aislado, agnóstico de proveedor, con persistencia, secretos y clave propios.
+**BLOCKED** la exposición de sync/activación hasta resolver `CENTRAL-SYNC-AUTHORITY-UNDEFINED`.
+Clasificación de cierre: **CLOSED / IMPLEMENTED (frontera)**.

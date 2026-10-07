@@ -155,8 +155,7 @@ def installation_request_payload(installation: Installation) -> dict[str, Any]:
 # Importación y verificación de licencia
 # --------------------------------------------------------------------------- #
 def _payload_hash(payload: dict[str, Any]) -> str:
-    canonical = json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")
-    return hashlib.sha256(canonical).hexdigest()
+    return license_engine.payload_hash(payload)
 
 
 def import_license(
@@ -210,7 +209,12 @@ def import_license(
             status_code=423,
         )
 
-    license_data = license_engine.parse_license_payload(payload)
+    try:
+        license_data = license_engine.parse_license_payload(payload)
+    except license_engine.LicenseContractError as exc:
+        # Firmado por el propietario pero fuera del contrato (p. ej. `revision` que no es un
+        # entero ≥ 1): error del emisor, se rechaza cerrado y sin tocar nada (Spec 004 · Autoridad Central).
+        raise KontrolError(code=exc.code, message=str(exc), status_code=423) from None
 
     # 4) Serializar: la fila de la instalación existe siempre (también antes de la primera
     #    licencia), así que es ella la que se bloquea; después se lee el estado vigente BAJO el

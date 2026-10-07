@@ -1,0 +1,45 @@
+# Autoridad Central de Licencias de KONTROL — despliegue INDEPENDIENTE del propietario.
+# No forma parte del `compose.yaml` de ninguna instalación cliente: base, red, volúmenes y secretos propios.
+services:
+  central-db:
+    image: postgres:16
+    container_name: kontrol-central-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kontrol_central
+      POSTGRES_USER: central
+      POSTGRES_PASSWORD: "${KONTROL_CENTRAL_DB_PASSWORD:?KONTROL_CENTRAL_DB_PASSWORD es obligatoria}"
+    volumes:
+      - kontrol-central-db:/var/lib/postgresql/data
+    networks:
+      - kontrol-central-net
+
+  central-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.central
+    image: ${KONTROL_IMAGE_REGISTRY:-dvconsultores}/kontrol-central-authority:${KONTROL_CENTRAL_IMAGE_TAG:-latest}
+    container_name: kontrol-central-api
+    restart: unless-stopped
+    depends_on:
+      - central-db
+    environment:
+      KONTROL_CENTRAL_ENVIRONMENT: "${KONTROL_CENTRAL_ENVIRONMENT:-prod}"
+      KONTROL_CENTRAL_DB_URL: "postgresql+psycopg2://central:${KONTROL_CENTRAL_DB_PASSWORD}@central-db:5432/kontrol_central"
+      KONTROL_CENTRAL_SIGNING_PRIVATE_KEY_PEM: "${KONTROL_CENTRAL_SIGNING_PRIVATE_KEY_PEM:?KONTROL_CENTRAL_SIGNING_PRIVATE_KEY_PEM es obligatoria: la clave privada del propietario}"
+      KONTROL_CENTRAL_SIGNING_KID: "${KONTROL_CENTRAL_SIGNING_KID:-kontrol-lic-2026-01}"
+      TZ: "America/Caracas"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8010/health/live')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - kontrol-central-net
+
+volumes:
+  kontrol-central-db:
+
+networks:
+  kontrol-central-net:
+    name: kontrol-central-net

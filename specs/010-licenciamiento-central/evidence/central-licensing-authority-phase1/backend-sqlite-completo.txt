@@ -1,0 +1,3223 @@
+....................sss................................................. [  3%]
+........................................................................ [  6%]
+...........F.............sssssssss...................................... [  9%]
+.FF..FFss....FFFF...F.FFFFFFFF.ssssssssssF..sF......FFFF.F.FFFFFFFFFFFFF [ 12%]
+FFFFF..s.s.s.s.s.s.s.s..sssssssssssssssssssssss......................... [ 16%]
+.............................ssssssssssssss............................. [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 25%]
+............................................................ssss........ [ 28%]
+.................................................................sssssss [ 32%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 35%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss...... [ 38%]
+...ssssssssssssssssssssssssssssssssssss....sss..sssss..sssssssssssssssss [ 41%]
+sssssssssssssssssssssssssssssss......................................... [ 45%]
+....sssssssssss..sssssssssssssss........................................ [ 48%]
+..............................................................ssssss.... [ 51%]
+....ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 54%]
+ssssssssssssssssssss.ssssssss.............sssssssssssssssssssssssssss... [ 57%]
+...........sssssssssssssssssssssssssssssssss...............sssssssssssss [ 61%]
+sssssssssssss...............ssssssssssssssssssss..............ssssssssss [ 64%]
+sssssss.....s.sssssssssssss......sssssss........sssssssssssssssssss..... [ 67%]
+......sssssssssssssssssssssssssssssssssssssssssssss..............sssssss [ 70%]
+sssssssssssss...................sssssssssssssssss....................sss [ 74%]
+ssssssssssssss.................ssssssssssssssss.................ssssssss [ 77%]
+ssssssss.......................sssssssssssssssssssssssssssssssssssssssss [ 80%]
+ssssss.ssssssssssssssssssssssssssssssssssssssssssss.....ssssssssssssssss [ 83%]
+sssssssssssss...ssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 86%]
+ssssssssssssssss.......................sssssssssssssssssssssssssssssssss [ 90%]
+sssssssssssssssssssssssssssssssssssssss................................. [ 93%]
+................sssssss..............................sssssss............ [ 96%]
+.....................s.................................................. [ 99%]
+...                                                                      [100%]
+=================================== FAILURES ===================================
+__________ test_dos_renovaciones_simultaneas_no_pueden_ganar_las_dos ___________
+
+    def test_dos_renovaciones_simultaneas_no_pueden_ganar_las_dos():
+        """El defecto que originó `REM-AUTH-ROUTE-CRAWL-001`.
+    
+        No se «arregla» en el servidor: que la segunda falle es **correcto** con
+        tokens de un solo uso. Lo que se fija aquí es el hecho, para que quien lea
+        el cliente entienda por qué comparte la petición en vuelo, y para que nadie
+        intente resolverlo relajando la rotación.
+        """
+        cookie = _login_cookie()
+        resultados: list[int] = []
+        lock = threading.Lock()
+    
+        def _renovar() -> None:
+            r = _CLIENT.post("/api/v1/auth/refresh", cookies={"kontrol_refresh": cookie})
+            with lock:
+                resultados.append(r.status_code)
+    
+        hilos = [threading.Thread(target=_renovar) for _ in range(2)]
+        for h in hilos:
+            h.start()
+        for h in hilos:
+            h.join()
+    
+        assert len(resultados) == 2
+        assert 200 in resultados, "alguna de las dos debe prosperar"
+        # Como mucho una gana. Si ganaran las dos, la rotación no sería de un solo uso.
+>       assert resultados.count(200) == 1, f"dos renovaciones prosperaron: {resultados}"
+E       AssertionError: dos renovaciones prosperaron: [200, 200]
+E       assert 2 == 1
+E        +  where 2 = <built-in method count of list object at 0x7fca9e22ffc0>(200)
+E        +    where <built-in method count of list object at 0x7fca9e22ffc0> = [200, 200].count
+
+tests/test_auth_session_rotation.py:184: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/refresh "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/refresh "HTTP/1.1 200 OK"
+_________________ test_subida_valida_calcula_hash_en_servidor __________________
+
+    def test_subida_valida_calcula_hash_en_servidor():
+        document = _document(_doc_type()["id"])
+        r = _upload(document["id"], PDF, name="packing-list.pdf")
+>       assert r.status_code == 200, r.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"05361ef75e7a46d3ae3d251f419d96e3","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents.py:168: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/9c58716f-973f-4a4d-a21f-e849dcb5e5f4/versiones "HTTP/1.1 422 Unprocessable Entity"
+___________________ test_el_nombre_del_usuario_nunca_es_ruta ___________________
+
+    def test_el_nombre_del_usuario_nunca_es_ruta():
+        """Ningún nombre escribe fuera de la raíz del proveedor."""
+        for evil in ("../../../etc/passwd", "..\\win.ini", "/etc/shadow", "CON.pdf",
+                     "a\rb\nc.pdf", "  ...  ", "x" * 400 + ".pdf", 'co"millas.pdf'):
+            clean = sanitize_filename(evil)
+            assert "/" not in clean and "\\" not in clean
+            assert not clean.startswith("..")
+            assert "\r" not in clean and "\n" not in clean
+            assert '"' not in clean
+            assert len(clean) <= 255
+    
+        document = _document(_doc_type()["id"])
+        r = _upload(document["id"], PDF, name="../../../etc/passwd.pdf")
+>       assert r.status_code == 200, r.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"02fe48ad91f14e668253900af8ae11e2","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents.py:200: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/065533e9-6726-4bfd-b94f-bc3d109ac829/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________________ test_versionado_sin_sobrescritura _______________________
+
+    def test_versionado_sin_sobrescritura():
+        document = _document(_doc_type()["id"])
+        first = _upload(document["id"], PDF).json()
+        second_content = PDF + b"% v2\n"
+        second = _upload(document["id"], second_content,
+                         data={"replacement_reason": "Corrección"}).json()
+    
+>       assert second["version_number"] == 2
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'version_number'
+
+tests/test_documents.py:245: KeyError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/510949c2-697d-458f-8343-2dcf1573570b/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/510949c2-697d-458f-8343-2dcf1573570b/versiones "HTTP/1.1 422 Unprocessable Entity"
+___________________________ test_subida_idempotente ____________________________
+
+    def test_subida_idempotente():
+        document = _document(_doc_type()["id"])
+        key = {"Idempotency-Key": "abc-123"}
+        first = _upload(document["id"], PDF, extra_headers=key)
+>       assert first.status_code == 200
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents.py:268: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/e798e27d-1dd4-4c84-a28d-56a51f2fe194/versiones "HTTP/1.1 422 Unprocessable Entity"
+___________________ test_vinculacion_y_documento_compartido ____________________
+
+    def test_vinculacion_y_documento_compartido():
+        doc_type = _doc_type()
+        document = _document(doc_type["id"])
+        _upload(document["id"], PDF)
+        first = _approval_request()
+        second = _approval_request()
+    
+        for request_id in (first, second):
+            r = _CLIENT.post(f"/api/v1/documentos/{document['id']}/vinculos", headers=_headers(),
+                             json={"resource_type": "ApprovalRequest", "resource_id": request_id})
+            assert r.status_code == 200, r.text
+    
+        for request_id in (first, second):
+            listed = _CLIENT.get(
+                f"/api/v1/documentos/por-recurso/ApprovalRequest/{request_id}",
+                headers=_headers()).json()
+            assert any(d["id"] == document["id"] for d in listed)
+    
+        # Un solo binario para los dos vínculos.
+        db = _FACTORY()
+        try:
+            versions = db.execute(select(DocumentVersion).where(
+                DocumentVersion.document_id == document["id"])).scalars().all()
+>           assert len({v.stored_file_id for v in versions}) == 1
+E           assert 0 == 1
+E            +  where 0 = len(set())
+
+tests/test_documents.py:426: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/e6781e72-b227-4bf6-9638-4ca57cd2756a/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/e6781e72-b227-4bf6-9638-4ca57cd2756a/vinculos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/e6781e72-b227-4bf6-9638-4ca57cd2756a/vinculos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/documentos/por-recurso/ApprovalRequest/e58b0d51-c669-40d5-b10a-af99595b260a "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/documentos/por-recurso/ApprovalRequest/31d965cb-b057-426b-b191-496ef2217428 "HTTP/1.1 200 OK"
+____________ test_version_congelada_el_historico_no_se_reinterpreta ____________
+
+    def test_version_congelada_el_historico_no_se_reinterpreta():
+        """Una aprobación resuelta conserva la versión que usó.
+    
+        Es el contrato que la Spec 045 dejó declarado, y se satisface **sin cambiar
+        su modelo**: el vínculo vive en la tabla de 046.
+        """
+        doc_type = _doc_type()
+        document = _document(doc_type["id"])
+        v1 = _upload(document["id"], PDF).json()
+        request_id = _approval_request()
+    
+        link = _CLIENT.post(f"/api/v1/documentos/{document['id']}/vinculos", headers=_headers(),
+                            json={"resource_type": "ApprovalRequest", "resource_id": request_id})
+        assert link.status_code == 200, link.text
+    
+        # La entidad se vuelve inmutable: el consumidor congela.
+        db = _FACTORY()
+        try:
+            frozen = service.freeze_links(db, resource_type="ApprovalRequest",
+                                          resource_id=request_id)
+            db.commit()
+>           assert len(frozen) == 1
+E           assert 0 == 1
+E            +  where 0 = len([])
+
+tests/test_documents.py:453: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/5c109437-6d29-4750-b111-64c32a1f598a/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/5c109437-6d29-4750-b111-64c32a1f598a/vinculos "HTTP/1.1 200 OK"
+___________________ test_vinculo_congelado_no_se_desvincula ____________________
+
+    def test_vinculo_congelado_no_se_desvincula():
+        doc_type = _doc_type()
+        document = _document(doc_type["id"])
+        _upload(document["id"], PDF)
+        request_id = _approval_request()
+        link = _CLIENT.post(f"/api/v1/documentos/{document['id']}/vinculos", headers=_headers(),
+                            json={"resource_type": "ApprovalRequest",
+                                  "resource_id": request_id}).json()
+        db = _FACTORY()
+        try:
+            service.freeze_links(db, resource_type="ApprovalRequest", resource_id=request_id)
+            db.commit()
+        finally:
+            db.close()
+    
+        r = _CLIENT.delete(f"/api/v1/documentos/vinculos/{link['id']}", headers=_headers())
+>       assert r.status_code == 409
+E       assert 200 == 409
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests/test_documents.py:499: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/4f0fdc61-0538-4c72-979f-53b8051cbca6/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/4f0fdc61-0538-4c72-979f-53b8051cbca6/vinculos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: DELETE http://testserver/api/v1/documentos/vinculos/7f301573-fef3-42d5-af01-daffee88da46 "HTTP/1.1 200 OK"
+_____________ test_borrado_protegido_y_archivado_conserva_binario ______________
+
+    def test_borrado_protegido_y_archivado_conserva_binario():
+        doc_type = _doc_type()
+        document = _document(doc_type["id"])
+        version = _upload(document["id"], PDF).json()
+    
+        r = _CLIENT.delete(f"/api/v1/documentos/{document['id']}", headers=_headers())
+>       assert r.status_code == 409
+E       assert 200 == 409
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests/test_documents.py:510: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/e75ef031-6095-44dd-be81-54fddc239eff/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: DELETE http://testserver/api/v1/documentos/e75ef031-6095-44dd-be81-54fddc239eff "HTTP/1.1 200 OK"
+________ test_el_mismo_archivo_dos_veces_no_se_deduplica_ni_se_bloquea _________
+
+    def test_el_mismo_archivo_dos_veces_no_se_deduplica_ni_se_bloquea():
+        """La coincidencia de hash se registra; no unifica ni impide nada."""
+        from app.modules.audit.models import AuditEvent
+    
+        doc_type = _doc_type()
+        first = _document(doc_type["id"])
+        second = _document(doc_type["id"])
+>       assert _upload(first["id"], PDF).status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('de10216f-4ae6-4a66-8be3-736fa4405d75', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n')
+
+tests/test_documents.py:643: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/de10216f-4ae6-4a66-8be3-736fa4405d75/versiones "HTTP/1.1 422 Unprocessable Entity"
+__________________ test_una_version_referenciada_no_se_purga ___________________
+
+    def test_una_version_referenciada_no_se_purga():
+        doc_type = _doc_type()
+        document = _document(doc_type["id"])
+        _upload(document["id"], PDF, name="v1.pdf")
+        _upload(document["id"], PNG, name="v2.png", mime="image/png")
+        request_id = _approval_request()
+        _CLIENT.post(f"/api/v1/documentos/{document['id']}/vinculos", headers=_headers(),
+                     json={"resource_type": "ApprovalRequest", "resource_id": request_id})
+    
+        db = _FACTORY()
+        try:
+            service.freeze_links(db, resource_type="ApprovalRequest", resource_id=request_id)
+            db.commit()
+    
+            versions = db.execute(select(DocumentVersion).where(
+                DocumentVersion.document_id == document["id"])
+                .order_by(DocumentVersion.version_number)).scalars().all()
+>           current, frozen = versions[0], versions[1]
+                              ^^^^^^^^^^^
+E           IndexError: list index out of range
+
+tests/test_documents.py:693: IndexError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/70eb55c5-ed6a-49bf-accd-57e84bb8c536/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/70eb55c5-ed6a-49bf-accd-57e84bb8c536/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/70eb55c5-ed6a-49bf-accd-57e84bb8c536/vinculos "HTTP/1.1 200 OK"
+______________ test_binario_localizable_y_verificable_se_importa _______________
+
+    def test_binario_localizable_y_verificable_se_importa():
+        db = _FACTORY()
+        try:
+            doc_type = _doc_type(db)
+            reference = _reference(db, "facturas/2023/F-0001.pdf")
+>           document = service.import_legacy_reference(
+                db, reference=reference, search_roots=[_LEGACY], doc_type=doc_type,
+                actor=_actor(), expected_sha256=CHECKSUM)
+
+tests/test_documents_legacy_import.py:143: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/documents/service.py:702: in import_legacy_reference
+    db.flush()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4352: in flush
+    self._flush(objects)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4487: in _flush
+    with util.safe_reraise():
+.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4448: in _flush
+    flush_context.execute()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:466: in execute
+    rec.execute(self)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:85: in save_obj
+    _emit_update_statements(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+base_mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+uowtransaction = <sqlalchemy.orm.unitofwork.UOWTransaction object at 0x7fca9c905c50>
+mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+table = Table('legacy_document_references', MetaData(), Column('source_table', String(length=64), table=<legacy_document_refer...), server_default=DefaultClause(<sqlalchemy.sql.functions.now at 0x7fcaaa3ffed0; now>, for_update=False)), schema=None)
+update = <generator object _collect_update_commands at 0x7fcaa64f09a0>
+
+    def _emit_update_statements(
+        base_mapper,
+        uowtransaction,
+        mapper,
+        table,
+        update,
+        *,
+        bookkeeping=True,
+        use_orm_update_stmt=None,
+        enable_check_rowcount=True,
+    ):
+        """Emit UPDATE statements corresponding to value lists collected
+        by _collect_update_commands()."""
+    
+        needs_version_id = (
+            mapper.version_id_col is not None
+            and mapper.version_id_col in mapper._cols_by_table[table]
+        )
+    
+        execution_options = {"compiled_cache": base_mapper._compiled_cache}
+    
+        def update_stmt(existing_stmt=None):
+            clauses = BooleanClauseList._construct_raw(operators.and_)
+    
+            for col in mapper._pks_by_table[table]:
+                clauses._append_inplace(
+                    col == sql.bindparam(col._label, type_=col.type)
+                )
+    
+            if needs_version_id:
+                clauses._append_inplace(
+                    mapper.version_id_col
+                    == sql.bindparam(
+                        mapper.version_id_col._label,
+                        type_=mapper.version_id_col.type,
+                    )
+                )
+    
+            if existing_stmt is not None:
+                stmt = existing_stmt.where(clauses)
+            else:
+                stmt = table.update().where(clauses)
+            return stmt
+    
+        if use_orm_update_stmt is not None:
+            cached_stmt = update_stmt(use_orm_update_stmt)
+    
+        else:
+            cached_stmt = base_mapper._memo(("update", table), update_stmt)
+    
+        for (
+            (connection, paramkeys, hasvalue, has_all_defaults, has_all_pks),
+            records,
+        ) in groupby(
+            update,
+            lambda rec: (
+                rec[4],  # connection
+                set(rec[2]),  # set of parameter keys
+                bool(rec[5]),  # whether or not we have "value" parameters
+                rec[6],  # has_all_defaults
+                rec[7],  # has all pks
+            ),
+        ):
+            rows = 0
+            records = list(records)
+    
+            statement = cached_stmt
+    
+            if use_orm_update_stmt is not None:
+                statement = statement._annotate(
+                    {
+                        "_emit_update_table": table,
+                        "_emit_update_mapper": mapper,
+                    }
+                )
+    
+            return_defaults = False
+    
+            if not has_all_pks:
+                statement = statement.return_defaults(*mapper._pks_by_table[table])
+                return_defaults = True
+    
+            if (
+                bookkeeping
+                and not has_all_defaults
+                and mapper.base_mapper.eager_defaults is True
+                # change as of #8889 - if RETURNING is not going to be used anyway,
+                # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+                # we can do an executemany UPDATE which is more efficient
+                and table.implicit_returning
+                and connection.dialect.update_returning
+            ):
+                statement = statement.return_defaults(
+                    *mapper._server_onupdate_default_cols[table]
+                )
+                return_defaults = True
+    
+            if mapper._version_id_has_server_side_value:
+                statement = statement.return_defaults(mapper.version_id_col)
+                return_defaults = True
+    
+            assert_singlerow = connection.dialect.supports_sane_rowcount
+    
+            assert_multirow = (
+                assert_singlerow
+                and connection.dialect.supports_sane_multi_rowcount
+            )
+    
+            # change as of #8889 - if RETURNING is not going to be used anyway,
+            # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+            # we can do an executemany UPDATE which is more efficient
+            allow_executemany = not return_defaults and not needs_version_id
+    
+            if hasvalue:
+                for (
+                    state,
+                    state_dict,
+                    params,
+                    mapper,
+                    connection,
+                    value_params,
+                    has_all_defaults,
+                    has_all_pks,
+                ) in records:
+                    c = connection.execute(
+                        statement.values(value_params),
+                        params,
+                        execution_options=execution_options,
+                    )
+                    if bookkeeping:
+                        _postfetch(
+                            mapper,
+                            uowtransaction,
+                            table,
+                            state,
+                            state_dict,
+                            c,
+                            c.context.compiled_parameters[0],
+                            value_params,
+                            True,
+                            c.returned_defaults,
+                        )
+                    rows += c.rowcount
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+            else:
+                if not allow_executemany:
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        c = connection.execute(
+                            statement, params, execution_options=execution_options
+                        )
+    
+                        # TODO: why with bookkeeping=False?
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                c.returned_defaults,
+                            )
+                        rows += c.rowcount
+                else:
+                    multiparams = [rec[2] for rec in records]
+    
+                    check_rowcount = enable_check_rowcount and (
+                        assert_multirow
+                        or (assert_singlerow and len(multiparams) == 1)
+                    )
+    
+                    c = connection.execute(
+                        statement, multiparams, execution_options=execution_options
+                    )
+    
+                    rows += c.rowcount
+    
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                (
+                                    c.returned_defaults
+                                    if not c.context.executemany
+                                    else None
+                                ),
+                            )
+    
+            if check_rowcount:
+                if rows != len(records):
+>                   raise orm_exc.StaleDataError(
+                        "UPDATE statement on table '%s' expected to "
+                        "update %d row(s); %d were matched."
+                        % (table.description, len(records), rows)
+                    )
+E                   sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected to update 1 row(s); 0 were matched.
+
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: StaleDataError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+______________ test_lo_importado_no_se_entrega_hasta_verificarse _______________
+
+    def test_lo_importado_no_se_entrega_hasta_verificarse():
+        """`PENDING_SCAN` no es `CLEAN`: importar no es dar por bueno."""
+        db = _FACTORY()
+        try:
+            doc_type = _doc_type(db)
+            reference = _reference(db, "facturas/2023/F-0001.pdf")
+>           document = service.import_legacy_reference(
+                db, reference=reference, search_roots=[_LEGACY], doc_type=doc_type,
+                actor=_actor())
+
+tests/test_documents_legacy_import.py:172: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/documents/service.py:702: in import_legacy_reference
+    db.flush()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4352: in flush
+    self._flush(objects)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4487: in _flush
+    with util.safe_reraise():
+.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4448: in _flush
+    flush_context.execute()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:466: in execute
+    rec.execute(self)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:85: in save_obj
+    _emit_update_statements(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+base_mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+uowtransaction = <sqlalchemy.orm.unitofwork.UOWTransaction object at 0x7fca9c549e90>
+mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+table = Table('legacy_document_references', MetaData(), Column('source_table', String(length=64), table=<legacy_document_refer...), server_default=DefaultClause(<sqlalchemy.sql.functions.now at 0x7fcaaa3ffed0; now>, for_update=False)), schema=None)
+update = <generator object _collect_update_commands at 0x7fcaa64f0400>
+
+    def _emit_update_statements(
+        base_mapper,
+        uowtransaction,
+        mapper,
+        table,
+        update,
+        *,
+        bookkeeping=True,
+        use_orm_update_stmt=None,
+        enable_check_rowcount=True,
+    ):
+        """Emit UPDATE statements corresponding to value lists collected
+        by _collect_update_commands()."""
+    
+        needs_version_id = (
+            mapper.version_id_col is not None
+            and mapper.version_id_col in mapper._cols_by_table[table]
+        )
+    
+        execution_options = {"compiled_cache": base_mapper._compiled_cache}
+    
+        def update_stmt(existing_stmt=None):
+            clauses = BooleanClauseList._construct_raw(operators.and_)
+    
+            for col in mapper._pks_by_table[table]:
+                clauses._append_inplace(
+                    col == sql.bindparam(col._label, type_=col.type)
+                )
+    
+            if needs_version_id:
+                clauses._append_inplace(
+                    mapper.version_id_col
+                    == sql.bindparam(
+                        mapper.version_id_col._label,
+                        type_=mapper.version_id_col.type,
+                    )
+                )
+    
+            if existing_stmt is not None:
+                stmt = existing_stmt.where(clauses)
+            else:
+                stmt = table.update().where(clauses)
+            return stmt
+    
+        if use_orm_update_stmt is not None:
+            cached_stmt = update_stmt(use_orm_update_stmt)
+    
+        else:
+            cached_stmt = base_mapper._memo(("update", table), update_stmt)
+    
+        for (
+            (connection, paramkeys, hasvalue, has_all_defaults, has_all_pks),
+            records,
+        ) in groupby(
+            update,
+            lambda rec: (
+                rec[4],  # connection
+                set(rec[2]),  # set of parameter keys
+                bool(rec[5]),  # whether or not we have "value" parameters
+                rec[6],  # has_all_defaults
+                rec[7],  # has all pks
+            ),
+        ):
+            rows = 0
+            records = list(records)
+    
+            statement = cached_stmt
+    
+            if use_orm_update_stmt is not None:
+                statement = statement._annotate(
+                    {
+                        "_emit_update_table": table,
+                        "_emit_update_mapper": mapper,
+                    }
+                )
+    
+            return_defaults = False
+    
+            if not has_all_pks:
+                statement = statement.return_defaults(*mapper._pks_by_table[table])
+                return_defaults = True
+    
+            if (
+                bookkeeping
+                and not has_all_defaults
+                and mapper.base_mapper.eager_defaults is True
+                # change as of #8889 - if RETURNING is not going to be used anyway,
+                # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+                # we can do an executemany UPDATE which is more efficient
+                and table.implicit_returning
+                and connection.dialect.update_returning
+            ):
+                statement = statement.return_defaults(
+                    *mapper._server_onupdate_default_cols[table]
+                )
+                return_defaults = True
+    
+            if mapper._version_id_has_server_side_value:
+                statement = statement.return_defaults(mapper.version_id_col)
+                return_defaults = True
+    
+            assert_singlerow = connection.dialect.supports_sane_rowcount
+    
+            assert_multirow = (
+                assert_singlerow
+                and connection.dialect.supports_sane_multi_rowcount
+            )
+    
+            # change as of #8889 - if RETURNING is not going to be used anyway,
+            # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+            # we can do an executemany UPDATE which is more efficient
+            allow_executemany = not return_defaults and not needs_version_id
+    
+            if hasvalue:
+                for (
+                    state,
+                    state_dict,
+                    params,
+                    mapper,
+                    connection,
+                    value_params,
+                    has_all_defaults,
+                    has_all_pks,
+                ) in records:
+                    c = connection.execute(
+                        statement.values(value_params),
+                        params,
+                        execution_options=execution_options,
+                    )
+                    if bookkeeping:
+                        _postfetch(
+                            mapper,
+                            uowtransaction,
+                            table,
+                            state,
+                            state_dict,
+                            c,
+                            c.context.compiled_parameters[0],
+                            value_params,
+                            True,
+                            c.returned_defaults,
+                        )
+                    rows += c.rowcount
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+            else:
+                if not allow_executemany:
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        c = connection.execute(
+                            statement, params, execution_options=execution_options
+                        )
+    
+                        # TODO: why with bookkeeping=False?
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                c.returned_defaults,
+                            )
+                        rows += c.rowcount
+                else:
+                    multiparams = [rec[2] for rec in records]
+    
+                    check_rowcount = enable_check_rowcount and (
+                        assert_multirow
+                        or (assert_singlerow and len(multiparams) == 1)
+                    )
+    
+                    c = connection.execute(
+                        statement, multiparams, execution_options=execution_options
+                    )
+    
+                    rows += c.rowcount
+    
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                (
+                                    c.returned_defaults
+                                    if not c.context.executemany
+                                    else None
+                                ),
+                            )
+    
+            if check_rowcount:
+                if rows != len(records):
+>                   raise orm_exc.StaleDataError(
+                        "UPDATE statement on table '%s' expected to "
+                        "update %d row(s); %d were matched."
+                        % (table.description, len(records), rows)
+                    )
+E                   sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected to update 1 row(s); 0 were matched.
+
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: StaleDataError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+____________ test_una_url_externa_no_se_importa_como_archivo_propio ____________
+
+    def test_una_url_externa_no_se_importa_como_archivo_propio():
+        db = _FACTORY()
+        try:
+            doc_type = _doc_type(db)
+            reference = _reference(db, "https://proveedor.example/facturas/F-9.pdf")
+>           document = service.import_legacy_reference(
+                db, reference=reference, search_roots=[_LEGACY], doc_type=doc_type,
+                actor=_actor())
+
+tests/test_documents_legacy_import.py:191: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/documents/service.py:647: in import_legacy_reference
+    db.flush()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4352: in flush
+    self._flush(objects)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4487: in _flush
+    with util.safe_reraise():
+.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4448: in _flush
+    flush_context.execute()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:466: in execute
+    rec.execute(self)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:85: in save_obj
+    _emit_update_statements(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+base_mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+uowtransaction = <sqlalchemy.orm.unitofwork.UOWTransaction object at 0x7fca9c852350>
+mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+table = Table('legacy_document_references', MetaData(), Column('source_table', String(length=64), table=<legacy_document_refer...), server_default=DefaultClause(<sqlalchemy.sql.functions.now at 0x7fcaaa3ffed0; now>, for_update=False)), schema=None)
+update = <generator object _collect_update_commands at 0x7fcaa64f18a0>
+
+    def _emit_update_statements(
+        base_mapper,
+        uowtransaction,
+        mapper,
+        table,
+        update,
+        *,
+        bookkeeping=True,
+        use_orm_update_stmt=None,
+        enable_check_rowcount=True,
+    ):
+        """Emit UPDATE statements corresponding to value lists collected
+        by _collect_update_commands()."""
+    
+        needs_version_id = (
+            mapper.version_id_col is not None
+            and mapper.version_id_col in mapper._cols_by_table[table]
+        )
+    
+        execution_options = {"compiled_cache": base_mapper._compiled_cache}
+    
+        def update_stmt(existing_stmt=None):
+            clauses = BooleanClauseList._construct_raw(operators.and_)
+    
+            for col in mapper._pks_by_table[table]:
+                clauses._append_inplace(
+                    col == sql.bindparam(col._label, type_=col.type)
+                )
+    
+            if needs_version_id:
+                clauses._append_inplace(
+                    mapper.version_id_col
+                    == sql.bindparam(
+                        mapper.version_id_col._label,
+                        type_=mapper.version_id_col.type,
+                    )
+                )
+    
+            if existing_stmt is not None:
+                stmt = existing_stmt.where(clauses)
+            else:
+                stmt = table.update().where(clauses)
+            return stmt
+    
+        if use_orm_update_stmt is not None:
+            cached_stmt = update_stmt(use_orm_update_stmt)
+    
+        else:
+            cached_stmt = base_mapper._memo(("update", table), update_stmt)
+    
+        for (
+            (connection, paramkeys, hasvalue, has_all_defaults, has_all_pks),
+            records,
+        ) in groupby(
+            update,
+            lambda rec: (
+                rec[4],  # connection
+                set(rec[2]),  # set of parameter keys
+                bool(rec[5]),  # whether or not we have "value" parameters
+                rec[6],  # has_all_defaults
+                rec[7],  # has all pks
+            ),
+        ):
+            rows = 0
+            records = list(records)
+    
+            statement = cached_stmt
+    
+            if use_orm_update_stmt is not None:
+                statement = statement._annotate(
+                    {
+                        "_emit_update_table": table,
+                        "_emit_update_mapper": mapper,
+                    }
+                )
+    
+            return_defaults = False
+    
+            if not has_all_pks:
+                statement = statement.return_defaults(*mapper._pks_by_table[table])
+                return_defaults = True
+    
+            if (
+                bookkeeping
+                and not has_all_defaults
+                and mapper.base_mapper.eager_defaults is True
+                # change as of #8889 - if RETURNING is not going to be used anyway,
+                # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+                # we can do an executemany UPDATE which is more efficient
+                and table.implicit_returning
+                and connection.dialect.update_returning
+            ):
+                statement = statement.return_defaults(
+                    *mapper._server_onupdate_default_cols[table]
+                )
+                return_defaults = True
+    
+            if mapper._version_id_has_server_side_value:
+                statement = statement.return_defaults(mapper.version_id_col)
+                return_defaults = True
+    
+            assert_singlerow = connection.dialect.supports_sane_rowcount
+    
+            assert_multirow = (
+                assert_singlerow
+                and connection.dialect.supports_sane_multi_rowcount
+            )
+    
+            # change as of #8889 - if RETURNING is not going to be used anyway,
+            # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+            # we can do an executemany UPDATE which is more efficient
+            allow_executemany = not return_defaults and not needs_version_id
+    
+            if hasvalue:
+                for (
+                    state,
+                    state_dict,
+                    params,
+                    mapper,
+                    connection,
+                    value_params,
+                    has_all_defaults,
+                    has_all_pks,
+                ) in records:
+                    c = connection.execute(
+                        statement.values(value_params),
+                        params,
+                        execution_options=execution_options,
+                    )
+                    if bookkeeping:
+                        _postfetch(
+                            mapper,
+                            uowtransaction,
+                            table,
+                            state,
+                            state_dict,
+                            c,
+                            c.context.compiled_parameters[0],
+                            value_params,
+                            True,
+                            c.returned_defaults,
+                        )
+                    rows += c.rowcount
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+            else:
+                if not allow_executemany:
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        c = connection.execute(
+                            statement, params, execution_options=execution_options
+                        )
+    
+                        # TODO: why with bookkeeping=False?
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                c.returned_defaults,
+                            )
+                        rows += c.rowcount
+                else:
+                    multiparams = [rec[2] for rec in records]
+    
+                    check_rowcount = enable_check_rowcount and (
+                        assert_multirow
+                        or (assert_singlerow and len(multiparams) == 1)
+                    )
+    
+                    c = connection.execute(
+                        statement, multiparams, execution_options=execution_options
+                    )
+    
+                    rows += c.rowcount
+    
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                (
+                                    c.returned_defaults
+                                    if not c.context.executemany
+                                    else None
+                                ),
+                            )
+    
+            if check_rowcount:
+                if rows != len(records):
+>                   raise orm_exc.StaleDataError(
+                        "UPDATE statement on table '%s' expected to "
+                        "update %d row(s); %d were matched."
+                        % (table.description, len(records), rows)
+                    )
+E                   sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected to update 1 row(s); 0 were matched.
+
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: StaleDataError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+_____________ test_un_archivo_que_no_esta_se_reporta_no_se_inventa _____________
+
+    def test_un_archivo_que_no_esta_se_reporta_no_se_inventa():
+        db = _FACTORY()
+        try:
+            doc_type = _doc_type(db)
+            reference = _reference(db, "facturas/2019/F-INEXISTENTE.pdf")
+>           document = service.import_legacy_reference(
+                db, reference=reference, search_roots=[_LEGACY], doc_type=doc_type,
+                actor=_actor())
+
+tests/test_documents_legacy_import.py:210: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/documents/service.py:647: in import_legacy_reference
+    db.flush()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4352: in flush
+    self._flush(objects)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4487: in _flush
+    with util.safe_reraise():
+.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4448: in _flush
+    flush_context.execute()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:466: in execute
+    rec.execute(self)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:85: in save_obj
+    _emit_update_statements(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+base_mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+uowtransaction = <sqlalchemy.orm.unitofwork.UOWTransaction object at 0x7fca9c53f5d0>
+mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+table = Table('legacy_document_references', MetaData(), Column('source_table', String(length=64), table=<legacy_document_refer...), server_default=DefaultClause(<sqlalchemy.sql.functions.now at 0x7fcaaa3ffed0; now>, for_update=False)), schema=None)
+update = <generator object _collect_update_commands at 0x7fcaa64f1300>
+
+    def _emit_update_statements(
+        base_mapper,
+        uowtransaction,
+        mapper,
+        table,
+        update,
+        *,
+        bookkeeping=True,
+        use_orm_update_stmt=None,
+        enable_check_rowcount=True,
+    ):
+        """Emit UPDATE statements corresponding to value lists collected
+        by _collect_update_commands()."""
+    
+        needs_version_id = (
+            mapper.version_id_col is not None
+            and mapper.version_id_col in mapper._cols_by_table[table]
+        )
+    
+        execution_options = {"compiled_cache": base_mapper._compiled_cache}
+    
+        def update_stmt(existing_stmt=None):
+            clauses = BooleanClauseList._construct_raw(operators.and_)
+    
+            for col in mapper._pks_by_table[table]:
+                clauses._append_inplace(
+                    col == sql.bindparam(col._label, type_=col.type)
+                )
+    
+            if needs_version_id:
+                clauses._append_inplace(
+                    mapper.version_id_col
+                    == sql.bindparam(
+                        mapper.version_id_col._label,
+                        type_=mapper.version_id_col.type,
+                    )
+                )
+    
+            if existing_stmt is not None:
+                stmt = existing_stmt.where(clauses)
+            else:
+                stmt = table.update().where(clauses)
+            return stmt
+    
+        if use_orm_update_stmt is not None:
+            cached_stmt = update_stmt(use_orm_update_stmt)
+    
+        else:
+            cached_stmt = base_mapper._memo(("update", table), update_stmt)
+    
+        for (
+            (connection, paramkeys, hasvalue, has_all_defaults, has_all_pks),
+            records,
+        ) in groupby(
+            update,
+            lambda rec: (
+                rec[4],  # connection
+                set(rec[2]),  # set of parameter keys
+                bool(rec[5]),  # whether or not we have "value" parameters
+                rec[6],  # has_all_defaults
+                rec[7],  # has all pks
+            ),
+        ):
+            rows = 0
+            records = list(records)
+    
+            statement = cached_stmt
+    
+            if use_orm_update_stmt is not None:
+                statement = statement._annotate(
+                    {
+                        "_emit_update_table": table,
+                        "_emit_update_mapper": mapper,
+                    }
+                )
+    
+            return_defaults = False
+    
+            if not has_all_pks:
+                statement = statement.return_defaults(*mapper._pks_by_table[table])
+                return_defaults = True
+    
+            if (
+                bookkeeping
+                and not has_all_defaults
+                and mapper.base_mapper.eager_defaults is True
+                # change as of #8889 - if RETURNING is not going to be used anyway,
+                # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+                # we can do an executemany UPDATE which is more efficient
+                and table.implicit_returning
+                and connection.dialect.update_returning
+            ):
+                statement = statement.return_defaults(
+                    *mapper._server_onupdate_default_cols[table]
+                )
+                return_defaults = True
+    
+            if mapper._version_id_has_server_side_value:
+                statement = statement.return_defaults(mapper.version_id_col)
+                return_defaults = True
+    
+            assert_singlerow = connection.dialect.supports_sane_rowcount
+    
+            assert_multirow = (
+                assert_singlerow
+                and connection.dialect.supports_sane_multi_rowcount
+            )
+    
+            # change as of #8889 - if RETURNING is not going to be used anyway,
+            # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+            # we can do an executemany UPDATE which is more efficient
+            allow_executemany = not return_defaults and not needs_version_id
+    
+            if hasvalue:
+                for (
+                    state,
+                    state_dict,
+                    params,
+                    mapper,
+                    connection,
+                    value_params,
+                    has_all_defaults,
+                    has_all_pks,
+                ) in records:
+                    c = connection.execute(
+                        statement.values(value_params),
+                        params,
+                        execution_options=execution_options,
+                    )
+                    if bookkeeping:
+                        _postfetch(
+                            mapper,
+                            uowtransaction,
+                            table,
+                            state,
+                            state_dict,
+                            c,
+                            c.context.compiled_parameters[0],
+                            value_params,
+                            True,
+                            c.returned_defaults,
+                        )
+                    rows += c.rowcount
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+            else:
+                if not allow_executemany:
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        c = connection.execute(
+                            statement, params, execution_options=execution_options
+                        )
+    
+                        # TODO: why with bookkeeping=False?
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                c.returned_defaults,
+                            )
+                        rows += c.rowcount
+                else:
+                    multiparams = [rec[2] for rec in records]
+    
+                    check_rowcount = enable_check_rowcount and (
+                        assert_multirow
+                        or (assert_singlerow and len(multiparams) == 1)
+                    )
+    
+                    c = connection.execute(
+                        statement, multiparams, execution_options=execution_options
+                    )
+    
+                    rows += c.rowcount
+    
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                (
+                                    c.returned_defaults
+                                    if not c.context.executemany
+                                    else None
+                                ),
+                            )
+    
+            if check_rowcount:
+                if rows != len(records):
+>                   raise orm_exc.StaleDataError(
+                        "UPDATE statement on table '%s' expected to "
+                        "update %d row(s); %d were matched."
+                        % (table.description, len(records), rows)
+                    )
+E                   sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected to update 1 row(s); 0 were matched.
+
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: StaleDataError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+____________ test_una_huella_que_no_coincide_detiene_la_importacion ____________
+
+    def test_una_huella_que_no_coincide_detiene_la_importacion():
+        db = _FACTORY()
+        try:
+            doc_type = _doc_type(db)
+            reference = _reference(db, "facturas/2023/F-0002.pdf")
+            with pytest.raises(ConflictError) as excinfo:
+>               service.import_legacy_reference(
+                    db, reference=reference, search_roots=[_LEGACY], doc_type=doc_type,
+                    actor=_actor(), expected_sha256=CHECKSUM)
+
+tests/test_documents_legacy_import.py:231: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/documents/service.py:664: in import_legacy_reference
+    db.flush()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4352: in flush
+    self._flush(objects)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4487: in _flush
+    with util.safe_reraise():
+.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4448: in _flush
+    flush_context.execute()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:466: in execute
+    rec.execute(self)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:85: in save_obj
+    _emit_update_statements(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+base_mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+uowtransaction = <sqlalchemy.orm.unitofwork.UOWTransaction object at 0x7fca9c8cba50>
+mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+table = Table('legacy_document_references', MetaData(), Column('source_table', String(length=64), table=<legacy_document_refer...), server_default=DefaultClause(<sqlalchemy.sql.functions.now at 0x7fcaaa3ffed0; now>, for_update=False)), schema=None)
+update = <generator object _collect_update_commands at 0x7fcaa64f14e0>
+
+    def _emit_update_statements(
+        base_mapper,
+        uowtransaction,
+        mapper,
+        table,
+        update,
+        *,
+        bookkeeping=True,
+        use_orm_update_stmt=None,
+        enable_check_rowcount=True,
+    ):
+        """Emit UPDATE statements corresponding to value lists collected
+        by _collect_update_commands()."""
+    
+        needs_version_id = (
+            mapper.version_id_col is not None
+            and mapper.version_id_col in mapper._cols_by_table[table]
+        )
+    
+        execution_options = {"compiled_cache": base_mapper._compiled_cache}
+    
+        def update_stmt(existing_stmt=None):
+            clauses = BooleanClauseList._construct_raw(operators.and_)
+    
+            for col in mapper._pks_by_table[table]:
+                clauses._append_inplace(
+                    col == sql.bindparam(col._label, type_=col.type)
+                )
+    
+            if needs_version_id:
+                clauses._append_inplace(
+                    mapper.version_id_col
+                    == sql.bindparam(
+                        mapper.version_id_col._label,
+                        type_=mapper.version_id_col.type,
+                    )
+                )
+    
+            if existing_stmt is not None:
+                stmt = existing_stmt.where(clauses)
+            else:
+                stmt = table.update().where(clauses)
+            return stmt
+    
+        if use_orm_update_stmt is not None:
+            cached_stmt = update_stmt(use_orm_update_stmt)
+    
+        else:
+            cached_stmt = base_mapper._memo(("update", table), update_stmt)
+    
+        for (
+            (connection, paramkeys, hasvalue, has_all_defaults, has_all_pks),
+            records,
+        ) in groupby(
+            update,
+            lambda rec: (
+                rec[4],  # connection
+                set(rec[2]),  # set of parameter keys
+                bool(rec[5]),  # whether or not we have "value" parameters
+                rec[6],  # has_all_defaults
+                rec[7],  # has all pks
+            ),
+        ):
+            rows = 0
+            records = list(records)
+    
+            statement = cached_stmt
+    
+            if use_orm_update_stmt is not None:
+                statement = statement._annotate(
+                    {
+                        "_emit_update_table": table,
+                        "_emit_update_mapper": mapper,
+                    }
+                )
+    
+            return_defaults = False
+    
+            if not has_all_pks:
+                statement = statement.return_defaults(*mapper._pks_by_table[table])
+                return_defaults = True
+    
+            if (
+                bookkeeping
+                and not has_all_defaults
+                and mapper.base_mapper.eager_defaults is True
+                # change as of #8889 - if RETURNING is not going to be used anyway,
+                # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+                # we can do an executemany UPDATE which is more efficient
+                and table.implicit_returning
+                and connection.dialect.update_returning
+            ):
+                statement = statement.return_defaults(
+                    *mapper._server_onupdate_default_cols[table]
+                )
+                return_defaults = True
+    
+            if mapper._version_id_has_server_side_value:
+                statement = statement.return_defaults(mapper.version_id_col)
+                return_defaults = True
+    
+            assert_singlerow = connection.dialect.supports_sane_rowcount
+    
+            assert_multirow = (
+                assert_singlerow
+                and connection.dialect.supports_sane_multi_rowcount
+            )
+    
+            # change as of #8889 - if RETURNING is not going to be used anyway,
+            # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+            # we can do an executemany UPDATE which is more efficient
+            allow_executemany = not return_defaults and not needs_version_id
+    
+            if hasvalue:
+                for (
+                    state,
+                    state_dict,
+                    params,
+                    mapper,
+                    connection,
+                    value_params,
+                    has_all_defaults,
+                    has_all_pks,
+                ) in records:
+                    c = connection.execute(
+                        statement.values(value_params),
+                        params,
+                        execution_options=execution_options,
+                    )
+                    if bookkeeping:
+                        _postfetch(
+                            mapper,
+                            uowtransaction,
+                            table,
+                            state,
+                            state_dict,
+                            c,
+                            c.context.compiled_parameters[0],
+                            value_params,
+                            True,
+                            c.returned_defaults,
+                        )
+                    rows += c.rowcount
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+            else:
+                if not allow_executemany:
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        c = connection.execute(
+                            statement, params, execution_options=execution_options
+                        )
+    
+                        # TODO: why with bookkeeping=False?
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                c.returned_defaults,
+                            )
+                        rows += c.rowcount
+                else:
+                    multiparams = [rec[2] for rec in records]
+    
+                    check_rowcount = enable_check_rowcount and (
+                        assert_multirow
+                        or (assert_singlerow and len(multiparams) == 1)
+                    )
+    
+                    c = connection.execute(
+                        statement, multiparams, execution_options=execution_options
+                    )
+    
+                    rows += c.rowcount
+    
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                (
+                                    c.returned_defaults
+                                    if not c.context.executemany
+                                    else None
+                                ),
+                            )
+    
+            if check_rowcount:
+                if rows != len(records):
+>                   raise orm_exc.StaleDataError(
+                        "UPDATE statement on table '%s' expected to "
+                        "update %d row(s); %d were matched."
+                        % (table.description, len(records), rows)
+                    )
+E                   sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected to update 1 row(s); 0 were matched.
+
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: StaleDataError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+________________ test_un_hash_suelto_sigue_sin_ser_un_documento ________________
+
+    def test_un_hash_suelto_sigue_sin_ser_un_documento():
+        db = _FACTORY()
+        try:
+            doc_type = _doc_type(db)
+            reference = _reference(db, "9f" * 32, classification="LEGACY_HASH_WITHOUT_FILE")
+>           document = service.import_legacy_reference(
+                db, reference=reference, search_roots=[_LEGACY], doc_type=doc_type,
+                actor=_actor())
+
+tests/test_documents_legacy_import.py:251: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/documents/service.py:647: in import_legacy_reference
+    db.flush()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4352: in flush
+    self._flush(objects)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4487: in _flush
+    with util.safe_reraise():
+.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4448: in _flush
+    flush_context.execute()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:466: in execute
+    rec.execute(self)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:85: in save_obj
+    _emit_update_statements(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+base_mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+uowtransaction = <sqlalchemy.orm.unitofwork.UOWTransaction object at 0x7fca9cad3dd0>
+mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+table = Table('legacy_document_references', MetaData(), Column('source_table', String(length=64), table=<legacy_document_refer...), server_default=DefaultClause(<sqlalchemy.sql.functions.now at 0x7fcaaa3ffed0; now>, for_update=False)), schema=None)
+update = <generator object _collect_update_commands at 0x7fcaa64f1a80>
+
+    def _emit_update_statements(
+        base_mapper,
+        uowtransaction,
+        mapper,
+        table,
+        update,
+        *,
+        bookkeeping=True,
+        use_orm_update_stmt=None,
+        enable_check_rowcount=True,
+    ):
+        """Emit UPDATE statements corresponding to value lists collected
+        by _collect_update_commands()."""
+    
+        needs_version_id = (
+            mapper.version_id_col is not None
+            and mapper.version_id_col in mapper._cols_by_table[table]
+        )
+    
+        execution_options = {"compiled_cache": base_mapper._compiled_cache}
+    
+        def update_stmt(existing_stmt=None):
+            clauses = BooleanClauseList._construct_raw(operators.and_)
+    
+            for col in mapper._pks_by_table[table]:
+                clauses._append_inplace(
+                    col == sql.bindparam(col._label, type_=col.type)
+                )
+    
+            if needs_version_id:
+                clauses._append_inplace(
+                    mapper.version_id_col
+                    == sql.bindparam(
+                        mapper.version_id_col._label,
+                        type_=mapper.version_id_col.type,
+                    )
+                )
+    
+            if existing_stmt is not None:
+                stmt = existing_stmt.where(clauses)
+            else:
+                stmt = table.update().where(clauses)
+            return stmt
+    
+        if use_orm_update_stmt is not None:
+            cached_stmt = update_stmt(use_orm_update_stmt)
+    
+        else:
+            cached_stmt = base_mapper._memo(("update", table), update_stmt)
+    
+        for (
+            (connection, paramkeys, hasvalue, has_all_defaults, has_all_pks),
+            records,
+        ) in groupby(
+            update,
+            lambda rec: (
+                rec[4],  # connection
+                set(rec[2]),  # set of parameter keys
+                bool(rec[5]),  # whether or not we have "value" parameters
+                rec[6],  # has_all_defaults
+                rec[7],  # has all pks
+            ),
+        ):
+            rows = 0
+            records = list(records)
+    
+            statement = cached_stmt
+    
+            if use_orm_update_stmt is not None:
+                statement = statement._annotate(
+                    {
+                        "_emit_update_table": table,
+                        "_emit_update_mapper": mapper,
+                    }
+                )
+    
+            return_defaults = False
+    
+            if not has_all_pks:
+                statement = statement.return_defaults(*mapper._pks_by_table[table])
+                return_defaults = True
+    
+            if (
+                bookkeeping
+                and not has_all_defaults
+                and mapper.base_mapper.eager_defaults is True
+                # change as of #8889 - if RETURNING is not going to be used anyway,
+                # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+                # we can do an executemany UPDATE which is more efficient
+                and table.implicit_returning
+                and connection.dialect.update_returning
+            ):
+                statement = statement.return_defaults(
+                    *mapper._server_onupdate_default_cols[table]
+                )
+                return_defaults = True
+    
+            if mapper._version_id_has_server_side_value:
+                statement = statement.return_defaults(mapper.version_id_col)
+                return_defaults = True
+    
+            assert_singlerow = connection.dialect.supports_sane_rowcount
+    
+            assert_multirow = (
+                assert_singlerow
+                and connection.dialect.supports_sane_multi_rowcount
+            )
+    
+            # change as of #8889 - if RETURNING is not going to be used anyway,
+            # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+            # we can do an executemany UPDATE which is more efficient
+            allow_executemany = not return_defaults and not needs_version_id
+    
+            if hasvalue:
+                for (
+                    state,
+                    state_dict,
+                    params,
+                    mapper,
+                    connection,
+                    value_params,
+                    has_all_defaults,
+                    has_all_pks,
+                ) in records:
+                    c = connection.execute(
+                        statement.values(value_params),
+                        params,
+                        execution_options=execution_options,
+                    )
+                    if bookkeeping:
+                        _postfetch(
+                            mapper,
+                            uowtransaction,
+                            table,
+                            state,
+                            state_dict,
+                            c,
+                            c.context.compiled_parameters[0],
+                            value_params,
+                            True,
+                            c.returned_defaults,
+                        )
+                    rows += c.rowcount
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+            else:
+                if not allow_executemany:
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        c = connection.execute(
+                            statement, params, execution_options=execution_options
+                        )
+    
+                        # TODO: why with bookkeeping=False?
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                c.returned_defaults,
+                            )
+                        rows += c.rowcount
+                else:
+                    multiparams = [rec[2] for rec in records]
+    
+                    check_rowcount = enable_check_rowcount and (
+                        assert_multirow
+                        or (assert_singlerow and len(multiparams) == 1)
+                    )
+    
+                    c = connection.execute(
+                        statement, multiparams, execution_options=execution_options
+                    )
+    
+                    rows += c.rowcount
+    
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                (
+                                    c.returned_defaults
+                                    if not c.context.executemany
+                                    else None
+                                ),
+                            )
+    
+            if check_rowcount:
+                if rows != len(records):
+>                   raise orm_exc.StaleDataError(
+                        "UPDATE statement on table '%s' expected to "
+                        "update %d row(s); %d were matched."
+                        % (table.description, len(records), rows)
+                    )
+E                   sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected to update 1 row(s); 0 were matched.
+
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: StaleDataError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+____________ test_una_ruta_heredada_no_autoriza_a_salir_del_volumen ____________
+
+    def test_una_ruta_heredada_no_autoriza_a_salir_del_volumen():
+        """`../../etc/passwd` en el legado no saca nada de la raíz autorizada."""
+        db = _FACTORY()
+        try:
+            doc_type = _doc_type(db)
+            reference = _reference(db, "../../../../etc/passwd")
+>           document = service.import_legacy_reference(
+                db, reference=reference, search_roots=[_LEGACY], doc_type=doc_type,
+                actor=_actor())
+
+tests/test_documents_legacy_import.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/documents/service.py:647: in import_legacy_reference
+    db.flush()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4352: in flush
+    self._flush(objects)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4487: in _flush
+    with util.safe_reraise():
+.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4448: in _flush
+    flush_context.execute()
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:466: in execute
+    rec.execute(self)
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:85: in save_obj
+    _emit_update_statements(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+base_mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+uowtransaction = <sqlalchemy.orm.unitofwork.UOWTransaction object at 0x7fca856d4790>
+mapper = <Mapper at 0x7fcaa9ea3950; LegacyDocumentReference>
+table = Table('legacy_document_references', MetaData(), Column('source_table', String(length=64), table=<legacy_document_refer...), server_default=DefaultClause(<sqlalchemy.sql.functions.now at 0x7fcaaa3ffed0; now>, for_update=False)), schema=None)
+update = <generator object _collect_update_commands at 0x7fcaa64f1c60>
+
+    def _emit_update_statements(
+        base_mapper,
+        uowtransaction,
+        mapper,
+        table,
+        update,
+        *,
+        bookkeeping=True,
+        use_orm_update_stmt=None,
+        enable_check_rowcount=True,
+    ):
+        """Emit UPDATE statements corresponding to value lists collected
+        by _collect_update_commands()."""
+    
+        needs_version_id = (
+            mapper.version_id_col is not None
+            and mapper.version_id_col in mapper._cols_by_table[table]
+        )
+    
+        execution_options = {"compiled_cache": base_mapper._compiled_cache}
+    
+        def update_stmt(existing_stmt=None):
+            clauses = BooleanClauseList._construct_raw(operators.and_)
+    
+            for col in mapper._pks_by_table[table]:
+                clauses._append_inplace(
+                    col == sql.bindparam(col._label, type_=col.type)
+                )
+    
+            if needs_version_id:
+                clauses._append_inplace(
+                    mapper.version_id_col
+                    == sql.bindparam(
+                        mapper.version_id_col._label,
+                        type_=mapper.version_id_col.type,
+                    )
+                )
+    
+            if existing_stmt is not None:
+                stmt = existing_stmt.where(clauses)
+            else:
+                stmt = table.update().where(clauses)
+            return stmt
+    
+        if use_orm_update_stmt is not None:
+            cached_stmt = update_stmt(use_orm_update_stmt)
+    
+        else:
+            cached_stmt = base_mapper._memo(("update", table), update_stmt)
+    
+        for (
+            (connection, paramkeys, hasvalue, has_all_defaults, has_all_pks),
+            records,
+        ) in groupby(
+            update,
+            lambda rec: (
+                rec[4],  # connection
+                set(rec[2]),  # set of parameter keys
+                bool(rec[5]),  # whether or not we have "value" parameters
+                rec[6],  # has_all_defaults
+                rec[7],  # has all pks
+            ),
+        ):
+            rows = 0
+            records = list(records)
+    
+            statement = cached_stmt
+    
+            if use_orm_update_stmt is not None:
+                statement = statement._annotate(
+                    {
+                        "_emit_update_table": table,
+                        "_emit_update_mapper": mapper,
+                    }
+                )
+    
+            return_defaults = False
+    
+            if not has_all_pks:
+                statement = statement.return_defaults(*mapper._pks_by_table[table])
+                return_defaults = True
+    
+            if (
+                bookkeeping
+                and not has_all_defaults
+                and mapper.base_mapper.eager_defaults is True
+                # change as of #8889 - if RETURNING is not going to be used anyway,
+                # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+                # we can do an executemany UPDATE which is more efficient
+                and table.implicit_returning
+                and connection.dialect.update_returning
+            ):
+                statement = statement.return_defaults(
+                    *mapper._server_onupdate_default_cols[table]
+                )
+                return_defaults = True
+    
+            if mapper._version_id_has_server_side_value:
+                statement = statement.return_defaults(mapper.version_id_col)
+                return_defaults = True
+    
+            assert_singlerow = connection.dialect.supports_sane_rowcount
+    
+            assert_multirow = (
+                assert_singlerow
+                and connection.dialect.supports_sane_multi_rowcount
+            )
+    
+            # change as of #8889 - if RETURNING is not going to be used anyway,
+            # (applies to MySQL, MariaDB which lack UPDATE RETURNING) ensure
+            # we can do an executemany UPDATE which is more efficient
+            allow_executemany = not return_defaults and not needs_version_id
+    
+            if hasvalue:
+                for (
+                    state,
+                    state_dict,
+                    params,
+                    mapper,
+                    connection,
+                    value_params,
+                    has_all_defaults,
+                    has_all_pks,
+                ) in records:
+                    c = connection.execute(
+                        statement.values(value_params),
+                        params,
+                        execution_options=execution_options,
+                    )
+                    if bookkeeping:
+                        _postfetch(
+                            mapper,
+                            uowtransaction,
+                            table,
+                            state,
+                            state_dict,
+                            c,
+                            c.context.compiled_parameters[0],
+                            value_params,
+                            True,
+                            c.returned_defaults,
+                        )
+                    rows += c.rowcount
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+            else:
+                if not allow_executemany:
+                    check_rowcount = enable_check_rowcount and assert_singlerow
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        c = connection.execute(
+                            statement, params, execution_options=execution_options
+                        )
+    
+                        # TODO: why with bookkeeping=False?
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                c.returned_defaults,
+                            )
+                        rows += c.rowcount
+                else:
+                    multiparams = [rec[2] for rec in records]
+    
+                    check_rowcount = enable_check_rowcount and (
+                        assert_multirow
+                        or (assert_singlerow and len(multiparams) == 1)
+                    )
+    
+                    c = connection.execute(
+                        statement, multiparams, execution_options=execution_options
+                    )
+    
+                    rows += c.rowcount
+    
+                    for (
+                        state,
+                        state_dict,
+                        params,
+                        mapper,
+                        connection,
+                        value_params,
+                        has_all_defaults,
+                        has_all_pks,
+                    ) in records:
+                        if bookkeeping:
+                            _postfetch(
+                                mapper,
+                                uowtransaction,
+                                table,
+                                state,
+                                state_dict,
+                                c,
+                                c.context.compiled_parameters[0],
+                                value_params,
+                                True,
+                                (
+                                    c.returned_defaults
+                                    if not c.context.executemany
+                                    else None
+                                ),
+                            )
+    
+            if check_rowcount:
+                if rows != len(records):
+>                   raise orm_exc.StaleDataError(
+                        "UPDATE statement on table '%s' expected to "
+                        "update %d row(s); %d were matched."
+                        % (table.description, len(records), rows)
+                    )
+E                   sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected to update 1 row(s); 0 were matched.
+
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: StaleDataError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+________________________ test_amz_01_recorrido_de_rutas ________________________
+
+    def test_amz_01_recorrido_de_rutas():
+        """Ningún nombre del usuario alcanza el sistema de archivos."""
+        document = _document(_doc_type()["id"])
+        hostiles = [
+            "../../../../etc/passwd.pdf",
+            "/etc/passwd.pdf",
+            "..\\..\\windows\\system32\\config.pdf",
+            "..%2f..%2fetc%2fpasswd.pdf",
+            "%2e%2e%2f%2e%2e%2fetc%2fshadow.pdf",
+            "../../etc/hosts.pdf",
+        ]
+        for name in hostiles:
+            r = _upload(document["id"], PDF, name=name)
+>           assert r.status_code == 200, (name, r.text)
+E           AssertionError: ('../../../../etc/passwd.pdf', '{"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"85531b6e969747098d30ccb68f9ca361","details":{"scan_result":"SCAN_FAILED","signature":null}}')
+E           assert 422 == 200
+E            +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:213: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/6e08f59e-5167-45fe-ad74-8e75f31fd704/versiones "HTTP/1.1 422 Unprocessable Entity"
+____________________ test_amz_05_xss_por_nombre_de_archivo _____________________
+
+    def test_amz_05_xss_por_nombre_de_archivo():
+        document = _document(_doc_type()["id"])
+        hostile = '<script>alert("x")</script>.pdf'
+        r = _upload(document["id"], PDF, name=hostile)
+>       assert r.status_code == 200, r.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"48cd295c7aaf42ff86dba060ea513405","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:269: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/d1f59179-4ca3-4cc7-8694-08c6bf271444/versiones "HTTP/1.1 422 Unprocessable Entity"
+__________________ test_amz_12_clave_de_almacenamiento_opaca ___________________
+
+    def test_amz_12_clave_de_almacenamiento_opaca():
+        """La clave no se deriva del nombre ni del contenido: es aleatoria."""
+        doc_type = _doc_type()
+        first = _document(doc_type["id"])
+        second = _document(doc_type["id"])
+        _upload(first["id"], PDF, name="mismo-nombre.pdf")
+        _upload(second["id"], PDF, name="mismo-nombre.pdf")
+    
+>       key_a = _stored_of(first["id"]).storage_key
+                ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = '1e6bdb98-6737-4741-a782-e23b0c9774d1'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/1e6bdb98-6737-4741-a782-e23b0c9774d1/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/35e0f571-6b41-40ae-98f1-9aebcd602811/versiones "HTTP/1.1 422 Unprocessable Entity"
+_________________ test_amz_13_sin_sobrescritura_del_historico __________________
+
+    def test_amz_13_sin_sobrescritura_del_historico():
+        document = _document(_doc_type()["id"])
+        _upload(document["id"], PDF, name="v1.pdf")
+>       first_key = _stored_of(document["id"]).storage_key
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:405: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = '891f6764-59a8-463b-82a9-7f636d437fcd'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/891f6764-59a8-463b-82a9-7f636d437fcd/versiones "HTTP/1.1 422 Unprocessable Entity"
+_______________________ test_amz_14_el_hash_no_autoriza ________________________
+
+    def test_amz_14_el_hash_no_autoriza():
+        """No existe ninguna vía que convierta conocer el hash en acceso."""
+        document = _document(_doc_type()["id"])
+        r = _upload(document["id"], PDF)
+>       checksum = r.json()["sha256"]
+                   ^^^^^^^^^^^^^^^^^^
+E       KeyError: 'sha256'
+
+tests/test_documents_security.py:421: KeyError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/01d4cb63-533d-4c94-9380-3a95155a5a6a/versiones "HTTP/1.1 422 Unprocessable Entity"
+________________________ test_amz_15_asignacion_masiva _________________________
+
+    def test_amz_15_asignacion_masiva():
+        """Lo que el servidor determina, lo determina el servidor."""
+        document = _document(_doc_type()["id"])
+        r = _upload(document["id"], PDF, data={
+            "storage_key": "controlado/por/el/cliente",
+            "sha256": "0" * 64,
+            "version_number": "99",
+            "security_status": "CLEAN",
+            "status": "AVAILABLE",
+        })
+>       assert r.status_code == 200, r.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"0a8c89a9ad0442428f05b68f7b8e89ca","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:443: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/3c63cc5f-e8ac-465b-901c-59b494531f02/versiones "HTTP/1.1 422 Unprocessable Entity"
+___________________ test_amz_17_desvinculacion_no_autorizada ___________________
+
+    def test_amz_17_desvinculacion_no_autorizada():
+        """La evidencia de un proceso cerrado no se puede retirar."""
+        document = _document(_doc_type()["id"])
+        _upload(document["id"], PDF)
+        request_id = _approval_request()
+        link = _CLIENT.post(f"/api/v1/documentos/{document['id']}/vinculos", headers=_headers(),
+                            json={"resource_type": "ApprovalRequest",
+                                  "resource_id": request_id}).json()
+    
+        db = _FACTORY()
+        try:
+            service.freeze_links(db, resource_type="ApprovalRequest", resource_id=request_id)
+            db.commit()
+        finally:
+            db.close()
+    
+        # Ni el ajeno…
+        assert _CLIENT.delete(f"/api/v1/documentos/vinculos/{link['id']}",
+                              headers=_headers_b()).status_code == 404
+        # …ni el propio dueño.
+        r = _CLIENT.delete(f"/api/v1/documentos/vinculos/{link['id']}", headers=_headers())
+>       assert r.status_code == 409, r.text
+E       AssertionError: {"deleted":true}
+E       assert 200 == 409
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests/test_documents_security.py:495: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/0e547832-0ca9-4df9-b32f-0dbd95264cc8/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/0e547832-0ca9-4df9-b32f-0dbd95264cc8/vinculos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: DELETE http://testserver/api/v1/documentos/vinculos/ceee0796-abcb-4ffd-be09-869c0cf46277 "HTTP/1.1 404 Not Found"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: DELETE http://testserver/api/v1/documentos/vinculos/ceee0796-abcb-4ffd-be09-869c0cf46277 "HTTP/1.1 200 OK"
+______________________ test_amz_19_inyeccion_de_cabeceras ______________________
+
+    def test_amz_19_inyeccion_de_cabeceras():
+        """CR/LF en el nombre no puede partir la cabecera de descarga."""
+        document = _document(_doc_type()["id"])
+        hostile = 'informe\r\nSet-Cookie: sesion=robada\r\n\r\n.pdf'
+        r = _upload(document["id"], PDF, name=hostile)
+>       assert r.status_code == 200, r.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"bf3d5a83b8114eaca3c50acfaa4e9098","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:524: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/7d2df503-d06f-427a-9849-5b5867c2dde6/versiones "HTTP/1.1 422 Unprocessable Entity"
+________________ test_amz_20_los_registros_no_filtran_contenido ________________
+
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7fca85087b50>
+
+    def test_amz_20_los_registros_no_filtran_contenido(caplog):
+        """Se registran identificadores; nunca contenido, nombres de ruta ni secretos."""
+        import logging
+    
+        document = _document(_doc_type()["id"])
+        with caplog.at_level(logging.DEBUG):
+            _upload(document["id"], PDF, name="confidencial.pdf")
+            _CLIENT.get(f"/api/v1/documentos/{document['id']}/descargar", headers=_headers())
+    
+        text = caplog.text
+        assert "%PDF" not in text
+        assert str(_ROOT) not in text
+        assert "Kontrol2026Segura!" not in text
+>       assert _stored_of(document["id"]).storage_key not in text
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:562: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = '24956707-3073-4a0c-8931-41fc8b5a66e8'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_part_begin with no data
+DEBUG    python_multipart.multipart:multipart.py:625 Calling on_header_field with data[36:55]
+DEBUG    python_multipart.multipart:multipart.py:625 Calling on_header_value with data[57:108]
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_header_end with no data
+DEBUG    python_multipart.multipart:multipart.py:625 Calling on_header_field with data[110:122]
+DEBUG    python_multipart.multipart:multipart.py:625 Calling on_header_value with data[124:139]
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_header_end with no data
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_headers_finished with no data
+DEBUG    python_multipart.multipart:multipart.py:625 Calling on_part_data with data[143:202]
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_part_end with no data
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_end with no data
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/24956707-3073-4a0c-8931-41fc8b5a66e8/versiones "HTTP/1.1 422 Unprocessable Entity"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/documentos/24956707-3073-4a0c-8931-41fc8b5a66e8/descargar "HTTP/1.1 404 Not Found"
+___________________ test_fallo_de_escritura_no_deja_version ____________________
+
+    def test_fallo_de_escritura_no_deja_version():
+        """Si el almacenamiento falla, no nace ninguna versión."""
+        document = _document(_doc_type()["id"])
+        real = get_storage()
+    
+        class _FailingStorage(FilesystemStorageProvider):
+            def put(self, key, source):  # noqa: D102
+                raise StorageError("disco lleno")
+    
+        set_storage(_FailingStorage(_ROOT))
+        try:
+            r = _upload(document["id"], PDF)
+>           assert r.status_code >= 500, r.text
+E           AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"ea22943adae84cef86eed9f0cd848482","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E           assert 422 >= 500
+E            +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:594: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/6e9115c1-e89d-439f-8069-8bdc7582bd20/versiones "HTTP/1.1 422 Unprocessable Entity"
+_________________ test_objeto_ausente_no_se_entrega_otra_cosa __________________
+
+    def test_objeto_ausente_no_se_entrega_otra_cosa():
+        document = _document(_doc_type()["id"])
+        _upload(document["id"], PDF)
+>       stored = _stored_of(document["id"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:609: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = 'fb687f29-300e-4cd7-82e8-afba6845da35'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/fb687f29-300e-4cd7-82e8-afba6845da35/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________________ test_huella_distinta_no_se_entrega ______________________
+
+    def test_huella_distinta_no_se_entrega():
+        """Si el binario cambió bajo los pies, no se entrega en silencio."""
+        document = _document(_doc_type()["id"])
+        _upload(document["id"], PDF)
+>       stored = _stored_of(document["id"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:630: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = '6b97a9ca-5136-47e2-b977-d8fbe14c3579'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/6b97a9ca-5136-47e2-b977-d8fbe14c3579/versiones "HTTP/1.1 422 Unprocessable Entity"
+___________________ test_pendiente_de_analisis_no_se_entrega ___________________
+
+    def test_pendiente_de_analisis_no_se_entrega():
+        """`SCAN_FAILED` no es `CLEAN`: mientras no se verifique, no se entrega."""
+        document = _document(_doc_type()["id"])
+        _upload(document["id"], PDF)
+>       stored = _stored_of(document["id"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:647: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = '7771af95-2579-44fc-83e7-7de292556cf4'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/7771af95-2579-44fc-83e7-7de292556cf4/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________ test_dos_subidas_simultaneas_no_producen_dos_v2[0] ______________
+
+vuelta = 0
+
+    @pytest.mark.parametrize("vuelta", range(3))
+    def test_dos_subidas_simultaneas_no_producen_dos_v2(vuelta):
+        """La carrera ocurre de verdad, tres veces: una V2, una vigente y un conflicto de dominio."""
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('0cefc000-b0c9-49df-92e8-d88a3f1f14f1', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:741: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/0cefc000-b0c9-49df-92e8-d88a3f1f14f1/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________ test_dos_subidas_simultaneas_no_producen_dos_v2[1] ______________
+
+vuelta = 1
+
+    @pytest.mark.parametrize("vuelta", range(3))
+    def test_dos_subidas_simultaneas_no_producen_dos_v2(vuelta):
+        """La carrera ocurre de verdad, tres veces: una V2, una vigente y un conflicto de dominio."""
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('c1884081-ac2d-49e3-9f2b-db984995fdd6', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:741: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/c1884081-ac2d-49e3-9f2b-db984995fdd6/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________ test_dos_subidas_simultaneas_no_producen_dos_v2[2] ______________
+
+vuelta = 2
+
+    @pytest.mark.parametrize("vuelta", range(3))
+    def test_dos_subidas_simultaneas_no_producen_dos_v2(vuelta):
+        """La carrera ocurre de verdad, tres veces: una V2, una vigente y un conflicto de dominio."""
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('3335445c-ba6b-4779-9e42-b25c4acf60a4', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:741: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/3335445c-ba6b-4779-9e42-b25c4acf60a4/versiones "HTTP/1.1 422 Unprocessable Entity"
+_____________ test_la_primera_version_simultanea_tampoco_da_un_500 _____________
+
+    def test_la_primera_version_simultanea_tampoco_da_un_500():
+        """Sin versión previa la segunda espera en el índice único, no en una fila: mismo resultado."""
+        document = _document(_doc_type()["id"])["id"]
+>       primero, segundo = carrera(_FACTORY, _subida(document, PDF + b"%1", "uno.pdf"),
+                                   _subida(document, PDF + b"%2", "dos.pdf"))
+
+tests/test_documents_security.py:758: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/concurrency.py:55: in carrera
+    r1 = primero(s1)
+         ^^^^^^^^^^^
+tests/test_documents_security.py:681: in subir
+    return service.upload_version(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db = <sqlalchemy.orm.session.Session object at 0x7fca84d02910>
+
+    def upload_version(
+        db: Session,
+        *,
+        document: Document,
+        doc_type: DocumentType,
+        stream: BinaryIO,
+        original_name: str,
+        declared_mime: str | None,
+        actor: Any,
+        replacement_reason: str | None = None,
+    ) -> DocumentVersion:
+        """Crea una versión a partir de un archivo.
+    
+        Orden obligatorio: temporal → tamaño → MIME real → política → análisis →
+        hash → almacenamiento → verificación → confirmación. Un archivo solo llega
+        a `AVAILABLE` cuando ha pasado **todos** los controles (§14).
+        """
+        if not document.is_managed:
+            raise KontrolError(code="EXTERNAL_DOCUMENT_NO_FILE",
+                               message="Un documento de referencia externa no admite archivos",
+                               status_code=422)
+    
+        validate_metadata(doc_type, document.doc_metadata)
+    
+        max_size = min(doc_type.max_size_bytes or GLOBAL_MAX_SIZE, GLOBAL_MAX_SIZE)
+        safe_name = sanitize_filename(original_name)
+        extension = safe_extension(original_name)
+    
+        # 1. Temporal: nada se registra hasta pasar los controles.
+        temp_dir = Path(tempfile.mkdtemp(prefix="kontrol-doc-"))
+        temp_path = temp_dir / "upload.bin"
+        digest = hashlib.sha256()
+        size = 0
+        try:
+            with open(temp_path, "wb") as out:
+                while True:
+                    chunk = stream.read(CHUNK)
+                    if not chunk:
+                        break
+                    size += len(chunk)
+                    if size > max_size:
+                        # Corte temprano: no se consume el flujo completo (§30).
+                        raise KontrolError(
+                            code="FILE_TOO_LARGE",
+                            message=f"El archivo supera el máximo permitido ({max_size} bytes)",
+                            status_code=413,
+                            details={"max_size_bytes": max_size})
+                    digest.update(chunk)
+                    out.write(chunk)
+            if size == 0:
+                raise KontrolError(code="FILE_EMPTY", message="El archivo está vacío",
+                                   status_code=422)
+    
+            # 2. MIME real, por contenido.
+            detected = detect_mime(str(temp_path))
+    
+            # 3. Política del tipo.
+            if not _mime_allowed(doc_type, detected):
+                if declared_mime and declared_mime != detected and _mime_allowed(doc_type, declared_mime):
+                    # Dijo una cosa y es otra: suplantación (§20).
+                    raise KontrolError(
+                        code="MIME_MISMATCH",
+                        message="El contenido del archivo no corresponde con el tipo declarado",
+                        status_code=422,
+                        details={"declared": declared_mime, "detected": detected})
+                raise KontrolError(
+                    code="MIME_NOT_ALLOWED",
+                    message=f"El tipo documental no admite archivos «{detected}»",
+                    status_code=422,
+                    details={"detected": detected,
+                             "allowed": doc_type.allowed_mime_types or []})
+            if not _extension_allowed(doc_type, extension):
+                raise KontrolError(code="MIME_NOT_ALLOWED",
+                                   message="Extensión no admitida por el tipo documental",
+                                   status_code=422)
+            if (detected in DANGEROUS_MIME or detected.startswith(DANGEROUS_MIME_PREFIXES)) \
+                    and detected not in (doc_type.allowed_mime_types or []):
+                raise KontrolError(code="MIME_NOT_ALLOWED",
+                                   message="Tipo de archivo peligroso no admitido",
+                                   status_code=422, details={"detected": detected})
+    
+            # 4. Análisis. Falso seguro: sin analizador no hay limpieza (§26).
+            scanner = scanning.get_scanner()
+            scan = scanner.scan(str(temp_path))
+            if doc_type.scan_required and scan.result != scanning.CLEAN:
+                code = "FILE_INFECTED" if scan.result == scanning.INFECTED else "SCAN_FAILED"
+                message = ("El archivo fue identificado como malicioso"
+                           if scan.result == scanning.INFECTED
+                           else "No se pudo verificar la seguridad del archivo")
+                _audit(db, actor, "DOCUMENT_SCAN_REJECTED", str(document.id),
+                       after={"result": scan.result, "signature": scan.signature})
+                db.flush()
+>               raise KontrolError(code=code, message=message, status_code=422,
+                                   details={"scan_result": scan.result,
+                                            "signature": scan.signature})
+E                                           app.core.errors.KontrolError: No se pudo verificar la seguridad del archivo
+
+app/modules/documents/service.py:211: KontrolError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+____ test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500 _____
+
+    def test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500():
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('b51982ce-c39a-41ba-9966-861ba65d009e', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:767: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/b51982ce-c39a-41ba-9966-861ba65d009e/versiones "HTTP/1.1 422 Unprocessable Entity"
+_____________ test_tres_subidas_simultaneas_crean_una_sola_version _____________
+
+    def test_tres_subidas_simultaneas_crean_una_sola_version():
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('b80a65cd-4e5e-45e8-8251-5560433fdf91', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:794: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/b80a65cd-4e5e-45e8-8251-5560433fdf91/versiones "HTTP/1.1 422 Unprocessable Entity"
+_________ test_la_misma_clave_en_carrera_devuelve_la_version_ganadora __________
+
+    def test_la_misma_clave_en_carrera_devuelve_la_version_ganadora():
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('61d697f6-80a1-43af-894a-a082a07adaf0', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:820: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/61d697f6-80a1-43af-894a-a082a07adaf0/versiones "HTTP/1.1 422 Unprocessable Entity"
+__ test_un_reintento_devuelve_la_version_de_su_clave_aunque_haya_otra_despues __
+
+    def test_un_reintento_devuelve_la_version_de_su_clave_aunque_haya_otra_despues():
+        """Antes devolvía la vigente: tras otra subida, el reintento recibía una versión que no pidió."""
+        document = _document(_doc_type()["id"])["id"]
+        clave = {**_headers(), "Idempotency-Key": "reintento-tardio"}
+        primera = _post_version(document, PDF + b"%P", clave)
+>       assert primera.status_code == 200, primera.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"2723b5a697b7445ea9e1a50cb5d8e8d8","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:856: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/1564a1ca-ffa1-4796-948c-4eb7c920ca19/versiones "HTTP/1.1 422 Unprocessable Entity"
+_____ test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena ______
+
+    def test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena():
+        tipo = _doc_type()["id"]
+        uno, dos = _document(tipo)["id"], _document(tipo)["id"]
+        clave = {**_headers(), "Idempotency-Key": "clave-compartida"}
+    
+>       assert _post_version(uno, PDF + b"%U", clave).status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _post_version('7a5e073b-10b9-4b00-b004-9acf877de22d', (b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n' + b'%U'), {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MzUzZmY5OS0xYWU3LTQ2NTEtODhmYS03NTdlZjI5MTc...ItNDQ4My1hOTc3LTE3NWU3ZDcwODgzMSJ9.LatHSVh_Ag126L-MsN3bapwveSgkvt3ReD5qCtm0KDY', 'Idempotency-Key': 'clave-compartida'})
+
+tests/test_documents_security.py:871: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/7a5e073b-10b9-4b00-b004-9acf877de22d/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________ test_subidas_a_documentos_distintos_no_se_esperan _______________
+
+    def test_subidas_a_documentos_distintos_no_se_esperan():
+        """Ni otro documento de la misma empresa ni el de otro tenant esperan a una carrera ajena."""
+        tipo = _doc_type()["id"]
+        bloqueado = _document(tipo)["id"]
+>       assert _upload(bloqueado, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('f2556241-68c8-4d27-80cd-a09b908ea9b7', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:901: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/f2556241-68c8-4d27-80cd-a09b908ea9b7/versiones "HTTP/1.1 422 Unprocessable Entity"
+______ test_otro_tenant_no_alcanza_un_documento_ajeno_durante_la_carrera _______
+
+    def test_otro_tenant_no_alcanza_un_documento_ajeno_durante_la_carrera():
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('e7f5b942-c003-45f0-9837-23ecca3db62d', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:935: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/e7f5b942-c003-45f0-9837-23ecca3db62d/versiones "HTTP/1.1 422 Unprocessable Entity"
+_________________ test_el_contrato_nunca_expone_almacenamiento _________________
+
+    def test_el_contrato_nunca_expone_almacenamiento():
+        """Ninguna clave de respuesta habla de almacenamiento (NFR-046-01)."""
+        document = _document(_doc_type()["id"])
+        upload = _upload(document["id"], PDF).json()
+        detail = _CLIENT.get(f"/api/v1/documentos/{document['id']}", headers=_headers()).json()
+        versions = _CLIENT.get(f"/api/v1/documentos/{document['id']}/versiones",
+                               headers=_headers()).json()
+    
+        prohibited = {"storage_key", "storage_provider", "storage_path", "path", "uploaded_by"}
+    
+        def _keys(value) -> set[str]:
+            if isinstance(value, dict):
+                found = set(value)
+                for nested in value.values():
+                    found |= _keys(nested)
+                return found
+            if isinstance(value, list):
+                found: set[str] = set()
+                for item in value:
+                    found |= _keys(item)
+                return found
+            return set()
+    
+        for payload in (upload, detail, versions):
+            assert not (_keys(payload) & prohibited), _keys(payload) & prohibited
+    
+        # Y el estado de seguridad **siempre** viaja: nunca se omite (§27).
+>       assert upload["file"]["security_status"]
+               ^^^^^^^^^^^^^^
+E       KeyError: 'file'
+
+tests/test_documents_security.py:983: KeyError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/3550cae9-25a1-4fab-a156-6699103c3704/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/documentos/3550cae9-25a1-4fab-a156-6699103c3704 "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/documentos/3550cae9-25a1-4fab-a156-6699103c3704/versiones "HTTP/1.1 200 OK"
+=============================== warnings summary ===============================
+tests/test_documents_security.py::test_amz_12_clave_de_almacenamiento_opaca
+tests/test_documents_security.py::test_amz_13_sin_sobrescritura_del_historico
+tests/test_documents_security.py::test_amz_20_los_registros_no_filtran_contenido
+tests/test_documents_security.py::test_objeto_ausente_no_se_entrega_otra_cosa
+tests/test_documents_security.py::test_huella_distinta_no_se_entrega
+tests/test_documents_security.py::test_pendiente_de_analisis_no_se_entrega
+  /home/maria/Projectos/Kontrol/resources/backend/tests/test_documents_security.py:193: SAWarning: fully NULL primary key identity cannot load any object.  This condition may raise an error in a future release.
+    version = db.get(DocumentVersion, document.current_version_id)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_auth_session_rotation.py::test_dos_renovaciones_simultaneas_no_pueden_ganar_las_dos
+FAILED tests/test_documents.py::test_subida_valida_calcula_hash_en_servidor
+FAILED tests/test_documents.py::test_el_nombre_del_usuario_nunca_es_ruta - As...
+FAILED tests/test_documents.py::test_versionado_sin_sobrescritura - KeyError:...
+FAILED tests/test_documents.py::test_subida_idempotente - assert 422 == 200
+FAILED tests/test_documents.py::test_vinculacion_y_documento_compartido - ass...
+FAILED tests/test_documents.py::test_version_congelada_el_historico_no_se_reinterpreta
+FAILED tests/test_documents.py::test_vinculo_congelado_no_se_desvincula - ass...
+FAILED tests/test_documents.py::test_borrado_protegido_y_archivado_conserva_binario
+FAILED tests/test_documents.py::test_el_mismo_archivo_dos_veces_no_se_deduplica_ni_se_bloquea
+FAILED tests/test_documents.py::test_una_version_referenciada_no_se_purga - I...
+FAILED tests/test_documents_legacy_import.py::test_binario_localizable_y_verificable_se_importa
+FAILED tests/test_documents_legacy_import.py::test_lo_importado_no_se_entrega_hasta_verificarse
+FAILED tests/test_documents_legacy_import.py::test_una_url_externa_no_se_importa_como_archivo_propio
+FAILED tests/test_documents_legacy_import.py::test_un_archivo_que_no_esta_se_reporta_no_se_inventa
+FAILED tests/test_documents_legacy_import.py::test_una_huella_que_no_coincide_detiene_la_importacion
+FAILED tests/test_documents_legacy_import.py::test_un_hash_suelto_sigue_sin_ser_un_documento
+FAILED tests/test_documents_legacy_import.py::test_una_ruta_heredada_no_autoriza_a_salir_del_volumen
+FAILED tests/test_documents_security.py::test_amz_01_recorrido_de_rutas - Ass...
+FAILED tests/test_documents_security.py::test_amz_05_xss_por_nombre_de_archivo
+FAILED tests/test_documents_security.py::test_amz_12_clave_de_almacenamiento_opaca
+FAILED tests/test_documents_security.py::test_amz_13_sin_sobrescritura_del_historico
+FAILED tests/test_documents_security.py::test_amz_14_el_hash_no_autoriza - Ke...
+FAILED tests/test_documents_security.py::test_amz_15_asignacion_masiva - Asse...
+FAILED tests/test_documents_security.py::test_amz_17_desvinculacion_no_autorizada
+FAILED tests/test_documents_security.py::test_amz_19_inyeccion_de_cabeceras
+FAILED tests/test_documents_security.py::test_amz_20_los_registros_no_filtran_contenido
+FAILED tests/test_documents_security.py::test_fallo_de_escritura_no_deja_version
+FAILED tests/test_documents_security.py::test_objeto_ausente_no_se_entrega_otra_cosa
+FAILED tests/test_documents_security.py::test_huella_distinta_no_se_entrega
+FAILED tests/test_documents_security.py::test_pendiente_de_analisis_no_se_entrega
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[0]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[1]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[2]
+FAILED tests/test_documents_security.py::test_la_primera_version_simultanea_tampoco_da_un_500
+FAILED tests/test_documents_security.py::test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500
+FAILED tests/test_documents_security.py::test_tres_subidas_simultaneas_crean_una_sola_version
+FAILED tests/test_documents_security.py::test_la_misma_clave_en_carrera_devuelve_la_version_ganadora
+FAILED tests/test_documents_security.py::test_un_reintento_devuelve_la_version_de_su_clave_aunque_haya_otra_despues
+FAILED tests/test_documents_security.py::test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena
+FAILED tests/test_documents_security.py::test_subidas_a_documentos_distintos_no_se_esperan
+FAILED tests/test_documents_security.py::test_otro_tenant_no_alcanza_un_documento_ajeno_durante_la_carrera
+FAILED tests/test_documents_security.py::test_el_contrato_nunca_expone_almacenamiento
+43 failed, 1180 passed, 1012 skipped, 6 warnings in 128.34s (0:02:08)
+1 failed, 7 passed, 1 warning in 3.61s
+Atribución: test_dos_renovaciones_simultaneas_no_pueden_ganar_las_dos falla también sobre git archive 52b133c (3/3 corridas, SQLite): preexistente, no de este ciclo.

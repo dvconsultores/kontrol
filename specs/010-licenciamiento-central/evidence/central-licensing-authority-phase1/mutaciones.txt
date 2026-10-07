@@ -1,0 +1,31 @@
+GOOD: (0, '20 passed in 1.82s') (0, '18 passed in 0.03s') (0, '3 passed in 1.54s')
+M-01 asignar revision sin ningún bloqueo (último + 1 inseguro: ni instalación ni linaje) [PostgreSQL]
+  MUTATED → FAIL (muere) · 1 failed, 2 passed, 1 warning in 1.51s
+  RESTORED → PASS · 3 passed in 1.60s
+M-02 la revision no viaja firmada (se firma el paquete sin ella) [SQLite]
+  MUTATED → FAIL (muere) · 4 failed, 16 passed in 1.83s
+  RESTORED → PASS · 20 passed in 1.83s
+M-03 el linaje no reinicia por período (contador por instalación) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 19 passed in 1.81s
+  RESTORED → PASS · 20 passed in 1.89s
+M-04 un fallo de firma consume la revision (linaje actualizado antes de firmar) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 19 passed in 1.86s
+  RESTORED → PASS · 20 passed in 1.83s
+M-05 en prod sin clave se genera una (no falla cerrado) [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 18 passed in 1.76s
+  RESTORED → PASS · 20 passed in 1.78s
+M-06 el kid se deriva de la revision [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 19 passed in 1.84s
+  RESTORED → PASS · 20 passed in 1.77s
+M-07 el registro sobrescribe datos distintos en silencio [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 19 passed in 1.84s
+  RESTORED → PASS · 20 passed in 1.77s
+M-08 el parser acepta revision 0 (y el cliente la deja pasar) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 17 passed in 0.05s
+  RESTORED → PASS · 18 passed in 0.03s
+M-09 health expone la URL de la base [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 19 passed in 1.81s
+  RESTORED → PASS · 20 passed in 1.78s
+M-10 la migración pierde la unicidad (lineage_id, revision) [PostgreSQL]
+  MUTATED → FAIL (muere) · 1 failed, 2 passed in 0.63s
+  RESTORED → PASS · 3 passed in 1.42s

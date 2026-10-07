@@ -2855,3 +2855,29 @@ esperar a D0-06. De ella cuelgan la `revision`, la rotación de claves y la acti
 `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
 
+## 2026-10-07 · Autoridad Central de Licencias, Fase 1: el emisor existe (dueña 004)
+
+La dueña decidió construir la autoridad como servicio del propietario, separado del cliente y
+agnóstico de proveedor. Este ciclo la implementó en `resources/backend/central_authority/` con
+base, migraciones, configuración y clave propias; registro de instalaciones; libro de emisiones
+inmutable; `revision` firmada, monótona por instalación + período y segura en concurrencia
+(PostgreSQL); CLI del propietario; health mínimo; imagen y compose propios; y una prueba de grafo
+de importación que impide que la autoridad dependa de nada del cliente salvo el contrato puro
+(`app/core/license_contract.py`, extraído sin cambiar un byte de las licencias legacy). Diez
+mutaciones, diez muertas. El cliente importa el paquete emitido y rechaza cerrado una `revision`
+inválida. **La API de sync productiva no se expone**: el cliente la llama sin autenticación ligada
+a la instalación, y definirla es decisión material de la dueña.
+
+**D0-06** pasa a `CLOSED / IMPLEMENTED` en frontera y hospedaje lógico; el proveedor físico es
+operación del propietario, no condición de la decisión.
+
+**Decisión material nueva:** `CENTRAL-SYNC-AUTHORITY-UNDEFINED` — cómo se autentica la
+instalación ante la autoridad (clave por instalación, secreto de activación, mTLS…).
+
+**Decisiones pendientes de la dueña:** `CENTRAL-SYNC-AUTHORITY-UNDEFINED`,
+`LICENCIA-SIN-ROTACION-DE-CLAVE`, `BACKEND-KEEPALIVE-5S`, `PANEL-VERSION-VACIA`. Candidata
+siguiente natural de la familia, ya sin bloqueo: `LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN`
+(ciclo del cliente con este emisor como fuente). Otras candidatas sin decisión pendiente:
+`OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
+`ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.

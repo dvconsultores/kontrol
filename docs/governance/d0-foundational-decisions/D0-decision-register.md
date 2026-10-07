@@ -7,7 +7,7 @@
 | **D0-03** | Momento de reserva de inventario | APPROVED · ACTIVE (v2 2026-09-02) | **CLOSED** — `RESERVATION TRIGGER = ORDER_CONFIRMATION` | Arq. procesos · Ventas · Inventario | 030 + 9 Specs | 030, 029, 031, 032 |
 | **D0-04** | Modelo físico genérico de almacén | APPROVED | **CLOSED** | Arq. datos · Almacén · PO | 008 + 9 Specs | 008, 022, 031, 032 |
 | **D0-05** | Reglas comerciales | APPROVED | **CLOSED_WITH_CONFIGURATION_PENDING** | Arq. datos · Ventas · Crédito | 012 + 6 Specs | 012, 029, 034 |
-| **D0-06** | Autoridad central de licenciamiento | APPROVED (arquitectura) | **BUSINESS_DECISION_PENDING** | Arq. seguridad · Infra · PO | 004, 048, 052, 053 | Ninguna de código; sí el cierre de 004 |
+| **D0-06** | Autoridad central de licenciamiento | APPROVED (arquitectura) | **CLOSED / IMPLEMENTED** (frontera, Fase 1, 2026-10-07) | Arq. seguridad · Infra · PO | 004, 048, 052, 053 | Ninguna de código; sí el cierre de 004 |
 | **D0-07** | Gobierno fiscal | APPROVED (gobierno) | **LEGAL_VALIDATION_PENDING** | Abogado tributario · Contador | 039-043, 014, 056 | Cierre de 039, 040, 041, 042, 043, 056 |
 | **D0-08** | Gestión documental transversal | APPROVED | **CLOSED** | Arq. backend · Seguridad | 046 + 9 Specs | 046, 018, 020, 035 |
 | **D0-09** | Unidad, presentación y conversión | APPROVED | **CLOSED** | Arq. datos · Compras · Ventas | 011 + 15 Specs | 011, 019, 021, 029, 032 |
@@ -22,9 +22,9 @@
 
 | Clasificación | Cantidad | Decisiones |
 |---|---:|---|
-| **CLOSED** | **10** | D0-01, D0-03 (2026-09-02), D0-04, D0-08, D0-09, D0-10, D0-11, D0-13, D0-14, **D0-15** |
+| **CLOSED** | **11** | D0-01, D0-03 (2026-09-02), D0-04, **D0-06** (2026-10-07, frontera implementada), D0-08, D0-09, D0-10, D0-11, D0-13, D0-14, **D0-15** |
 | **CLOSED_WITH_CONFIGURATION_PENDING** | **3** | D0-02, D0-05, D0-12 |
-| **BUSINESS_DECISION_PENDING** | **1** | D0-06 |
+| **BUSINESS_DECISION_PENDING** | 0 | — (D0-06 cerrada el 2026-10-07: autoridad implementada como servicio del propietario) |
 | **LEGAL_VALIDATION_PENDING** | **1** | D0-07 |
 | **TECHNICAL_VALIDATION_PENDING** | 0 | — |
 | **BLOCKED** | 0 | — |
@@ -33,7 +33,7 @@
 **13 de 15 decisiones quedan cerradas para efectos de construcción.** El recuento decía «11 de 13»
 con un total de 13 desde que se registró `D0-14`: las clasificaciones ya sumaban 14 y el total no se
 actualizó. Corregido aquí. Las dos restantes no impiden
-escribir Specs: D0-06 tiene la arquitectura cerrada y solo falta contratar hospedaje; D0-07 tiene el
+escribir Specs: D0-06 tiene la arquitectura cerrada y la autoridad implementada desde el 2026-10-07 (queda la autenticación de sync); D0-07 tiene el
 gobierno cerrado y lo que falta es contenido tributario, que por definición no lo produce el software.
 
 ## Nota metodológica
