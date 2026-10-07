@@ -130,7 +130,8 @@ def test_e2ecorrida_01_una_corrida_verde_usa_su_base_y_no_deja_nada(entorno, pue
     assert m["limpieza"]["base"] == {"estado": "ELIMINADA", "cortadas": 0} and m["limpieza"]["resultado"] == "LIMPIA"
     assert m["medidas"]["usuarios"] == 5 and m["medidas"]["almacenes"] == 0
     assert m["fases"] == ["comprobar", "crear base", "migrar", "sembrar", "backend",
-                          "comprobar la base del backend", "suite", "limpiar"]
+                          "comprobar la base del backend", "autoridad central", "suite", "limpiar"]
+    assert "autoridad" in m["procesos"] and m["limpieza"]["autoridad"] == "detenido"  # la autoridad real de la corrida, y se detiene
     # La base de las pruebas de backend, protegida: nadie se conectó a ella ni la escribió.
     de_prueba = make_url(URL_DE_PRUEBA).database
     assert de_prueba in m["protegidas_antes"] and m["protegidas_sin_cambios"] is True
@@ -314,7 +315,7 @@ def test_e2ecorrida_14_la_orden_por_defecto_es_la_suite_de_playwright_con_su_evi
     corrida = k.Corrida(_servidor(), argumentos=["e2e/smoke.spec.ts"], entorno=entorno, salida=io.StringIO())
     orden, cwd = corrida.orden_de_la_suite()
     # `chromium` y, detrás (depende de él), el proyecto `licencia-revision`: el linaje de la licencia corre al final.
-    assert orden[:5] == ["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium", "--project=licencia-revision"]
-    assert orden[5:] == ["--output", str(corrida.evidencia / "test-results"), "e2e/smoke.spec.ts"]
+    assert orden[:6] == ["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium", "--project=licencia-revision", "--project=licencia-sync"]
+    assert orden[6:] == ["--output", str(corrida.evidencia / "test-results"), "e2e/smoke.spec.ts"]
     assert cwd == k.FRONTEND
     assert not any(a.startswith(("--retries", "--workers")) for a in orden)

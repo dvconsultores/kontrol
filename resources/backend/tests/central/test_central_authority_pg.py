@@ -134,7 +134,7 @@ def test_clapg_03_instalacion_limpia_de_las_migraciones_de_la_autoridad(base_cen
     motor = create_engine(base_central_limpia, future=True)
     insp = inspect(motor)
     tablas = set(insp.get_table_names())
-    assert {"cla_installations", "cla_period_lineages", "cla_issuances", "cla_audit_events", "cla_alembic_version"} <= tablas
+    assert {"cla_installations", "cla_period_lineages", "cla_issuances", "cla_audit_events", "cla_sync_challenges", "cla_alembic_version"} <= tablas
     assert not any(t.startswith(("license_", "users", "tenants", "companies")) for t in tablas)  # ni una tabla del cliente
     unicos = {u["name"] for u in insp.get_unique_constraints("cla_issuances")}
     assert "uq_cla_issuance_lineage_revision" in unicos and "uq_cla_issuances_license_id" in unicos
@@ -142,7 +142,7 @@ def test_clapg_03_instalacion_limpia_de_las_migraciones_de_la_autoridad(base_cen
     indices = {i["name"] for i in insp.get_indexes("cla_installations")}
     assert "ix_cla_installations_installation_uuid" in indices
     with motor.connect() as c:
-        assert c.execute(text("select version_num from cla_alembic_version")).scalar_one() == "0001_cla_fase1"
+        assert c.execute(text("select version_num from cla_alembic_version")).scalar_one() == "0002_cla_sync_auth"  # una sola cabeza
     # La actualización es idempotente y el esquema coincide con los modelos (P26).
     r2 = _alembic(base_central_limpia, "upgrade", "head")
     assert r2.returncode == 0

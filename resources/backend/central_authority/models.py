@@ -35,6 +35,8 @@ class Installation(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     installation_uuid: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
     public_key_pem: Mapped[str] = mapped_column(Text, nullable=False)
+    #: SHA-256 del DER (SPKI) de la clave pública: una clave de identidad pertenece a UNA instalación.
+    public_key_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     customer_id: Mapped[str] = mapped_column(String(64), nullable=False)
     contract_id: Mapped[str] = mapped_column(String(64), nullable=False)
     company_tax_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
@@ -102,3 +104,24 @@ class AuditEvent(Base):
     outcome: Mapped[str] = mapped_column(String(64), nullable=False)
     detail: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+
+
+class SyncChallenge(Base):
+    """Desafío de autenticación del sync (un solo uso, caducidad corta). La FK es anulable a propósito:
+    una instalación desconocida recibe un desafío igual que las demás (sin enumeración) y esa fila
+    nunca autentica. Se guarda el resumen del nonce, no el nonce. El estado vive en la base de la
+    autoridad, no en memoria: vale para varios procesos y para peticiones concurrentes."""
+
+    __tablename__ = "cla_sync_challenges"
+    __table_args__ = (
+        Index("ix_cla_sync_challenges_installation", "installation_id"),
+        Index("ix_cla_sync_challenges_expires_at", "expires_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    installation_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("cla_installations.id"), nullable=True)
+    nonce_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    protocol_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

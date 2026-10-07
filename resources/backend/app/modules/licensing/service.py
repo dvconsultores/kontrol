@@ -15,9 +15,8 @@ import json
 import logging
 import os
 import uuid
-from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, Protocol
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -25,7 +24,8 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.core import license as license_engine
-from app.core import trust_anchor
+from app.core import license_contract, trust_anchor
+from app.core import sync_auth_contract as sync_auth
 from app.core.config import get_settings
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.licensing.models import (
@@ -511,25 +511,73 @@ def _dt_from(value: str | datetime) -> datetime:
     return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
 
 
-def default_sync_client(request_payload: dict[str, Any], server_url: str) -> dict[str, Any]:
-    """Cliente HTTP del contrato v1 (POST /v1/license/sync) (FR-010-002).
+class CentralSyncRejected(Exception):
+    """La autoridad rechazó la petición con un código del protocolo (4xx): no es un fallo de red."""
 
-    Inyectable en `sync_license` para pruebas (fake server); en producción se
-    usa este cliente estándar contra el servidor central configurado.
-    """
-    import json as _json
-    import urllib.request as _url
+    def __init__(self, code: str, status_code: int, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+        self.status_code = status_code
 
-    data = _json.dumps(request_payload).encode("utf-8")
-    url = server_url.rstrip("/") + "/v1/license/sync"
-    req = _url.Request(
-        url,
-        data=data,
-        headers={"Content-Type": "application/json", "Accept": "application/json"},
-        method="POST",
-    )
-    with _url.urlopen(req, timeout=15) as resp:
-        return _json.loads(resp.read().decode("utf-8"))
+
+class SyncTransport(Protocol):
+    """Transporte del sync autenticado: pide el desafío y envía los bytes EXACTOS firmados con sus cabeceras."""
+
+    def challenge(self, server_url: str, installation_id: str) -> dict[str, Any]: ...
+
+    def sync(self, server_url: str, body: bytes, headers: dict[str, str]) -> dict[str, Any]: ...
+
+
+class UrllibSyncTransport:
+    """Transporte estándar (`urllib`) del protocolo (FR-010-002, FR-010-400..404). Inyectable en pruebas."""
+
+    timeout = 15
+
+    def _post(self, url: str, data: bytes, headers: dict[str, str]) -> dict[str, Any]:
+        import urllib.error as _err
+        import urllib.request as _url
+
+        req = _url.Request(url, data=data, headers={"Content-Type": "application/json", "Accept": "application/json", **headers}, method="POST")
+        try:
+            with _url.urlopen(req, timeout=self.timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except _err.HTTPError as exc:
+            if 400 <= exc.code < 500:
+                try:
+                    cuerpo = json.loads(exc.read().decode("utf-8"))
+                except ValueError:
+                    cuerpo = {}
+                raise CentralSyncRejected(str(cuerpo.get("code") or f"HTTP_{exc.code}"), exc.code,
+                                          str(cuerpo.get("message") or "La autoridad rechazó la petición.")) from None
+            raise
+
+    def challenge(self, server_url: str, installation_id: str) -> dict[str, Any]:
+        return self._post(server_url.rstrip("/") + sync_auth.CHALLENGE_TARGET, sync_auth.canonical_body({"installation_id": installation_id}), {})
+
+    def sync(self, server_url: str, body: bytes, headers: dict[str, str]) -> dict[str, Any]:
+        return self._post(server_url.rstrip("/") + sync_auth.SYNC_TARGET, body, headers)
+
+
+def _installation_private_key() -> Ed25519PrivateKey:
+    """La clave privada de la instalación, desde su volumen protegido (cargador canónico). Nunca sale de aquí."""
+    try:
+        with open(_private_key_path(), encoding="utf-8") as fh:
+            return license_contract.load_private_key(fh.read())
+    except (OSError, ValueError, TypeError):
+        raise KontrolError(
+            code="INSTALLATION_KEY_UNAVAILABLE",
+            message="La clave privada de la instalación no está disponible; no se puede autenticar la sincronización.",
+            status_code=503,
+        ) from None
+
+
+def _exigir_https_en_produccion(server_url: str) -> None:
+    if get_settings().environment == "prod" and not server_url.strip().lower().startswith("https://"):
+        raise KontrolError(
+            code="CENTRAL_URL_INSECURE",
+            message="En producción el servidor central de licencias debe usar HTTPS.",
+            status_code=422,
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -572,6 +620,7 @@ def upsert_central_config(
     if row is None:
         row = LicenseCentralConfig(installation_id=installation.installation_uuid)
         db.add(row)
+    _exigir_https_en_produccion(server_url)
     row.server_url = server_url.strip().rstrip("/")
     row.public_key = public_key
     row.sync_policy = sync_policy or {}
@@ -611,18 +660,22 @@ def _central_config_row(db: Session) -> LicenseCentralConfig:
 def sync_license(
     db: Session,
     *,
-    sync_client: Callable[[dict[str, Any], str], dict[str, Any]] | None = None,
+    transport: SyncTransport | None = None,
     actor: str | None = None,
 ) -> dict[str, Any]:
-    """Sincroniza la licencia con el servidor central (FR-010-002/003/010).
+    """Sincroniza la licencia con la Autoridad Central AUTENTICANDO a la instalación (FR-010-002/003/010;
+    FR-010-400..412).
 
-    Idempotente por día: si la misma sincronización ya tuvo éxito, devuelve el
-    resultado previo sin repetir el llamado. Registra `license_sync_runs`,
-    actualiza `last_reliable_date` (reloj confiable), aplica entitlements y
-    genera un snapshot versionado.
+    Un intento lógico = desafío nuevo → sobre canónico firmado con la clave privada de la instalación →
+    envío de los bytes exactos hasheados. Lo que la autoridad devuelve es su artefacto firmado y pasa
+    por `import_license` con todas sus compuertas (firma del propietario, identidad, período,
+    `revision`): la autenticación remota no sustituye la validación. No hay retroceso a un sync
+    anónimo. Idempotente por día: si la misma sincronización ya tuvo éxito, devuelve el resultado
+    previo sin contactar. Registra `license_sync_runs` y el reloj confiable (`server_time`, monótono).
     """
     installation = get_installation(db)
     config = _central_config_row(db)
+    _exigir_https_en_produccion(config.server_url)
 
     state = db.execute(
         select(LicenseState).where(LicenseState.installation_id == installation.installation_uuid)
@@ -655,7 +708,6 @@ def sync_license(
         (json.dumps(idem_source, sort_keys=True, ensure_ascii=False) + _now().strftime("%Y%m%d")).encode("utf-8")
     ).hexdigest()
 
-    # Idempotencia: mismo payload y mismo día ya sincronizado con éxito.
     previous = db.execute(
         select(LicenseSyncRun).where(
             LicenseSyncRun.idempotency_key == idem,
@@ -665,27 +717,67 @@ def sync_license(
     if previous is not None:
         return {"id": str(previous.id), "status": "SUCCESS", "idempotent": True, "response": previous.response}
 
-    client = sync_client or default_sync_client
-    try:
-        response = client(request_payload, config.server_url)
-    except Exception as exc:  # noqa: BLE001 - el cliente externo puede lanzar cualquier cosa
-        run = LicenseSyncRun(
-            installation_id=installation.installation_uuid,
-            status="FAILED",
-            request=request_payload,
-            error=str(exc),
-            idempotency_key=idem,
-            ran_at=_now(),
-        )
-        db.add(run)
+    def fallo(error: str, evento: str, detalle: dict[str, Any], exc: KontrolError) -> KontrolError:
+        db.rollback()
+        db.add(LicenseSyncRun(installation_id=installation.installation_uuid, status="FAILED", request=request_payload,
+                              error=error, idempotency_key=idem, ran_at=_now()))
         config.status = "DISCONNECTED"
-        _record_event(db, installation, "LICENSE_SYNC_FAILED", {"error": str(exc)}, actor)
+        _record_event(db, installation, evento, detalle, actor)
         db.commit()
-        raise KontrolError(
+        return exc
+
+    # El cuerpo se serializa UNA vez: se hashea, se firma el sobre y se envían ESTOS bytes (FR-010-426).
+    body = sync_auth.canonical_body(request_payload)
+    transporte: SyncTransport = transport or UrllibSyncTransport()
+    try:
+        clave = _installation_private_key()
+    except KontrolError as exc:
+        raise fallo(exc.code, "LICENSE_SYNC_FAILED", {"error": exc.code}, exc) from None
+    try:
+        desafio = transporte.challenge(config.server_url, installation.installation_uuid)
+        version = sync_auth.parse_protocol_version(desafio.get("protocol_version"))
+        sobre = sync_auth.build_envelope(
+            installation_id=installation.installation_uuid, challenge_id=str(desafio.get("challenge_id", "")),
+            nonce=str(desafio.get("nonce", "")), method=sync_auth.SYNC_METHOD, target=sync_auth.SYNC_TARGET,
+            body_sha256=sync_auth.body_sha256(body), protocol_version=version,
+        )
+        headers = {
+            sync_auth.HEADER_PROTOCOL: str(version),
+            sync_auth.HEADER_INSTALLATION: installation.installation_uuid,
+            sync_auth.HEADER_CHALLENGE: sobre["challenge_id"],
+            sync_auth.HEADER_NONCE: sobre["nonce"],
+            sync_auth.HEADER_SIGNATURE: sync_auth.sign_envelope(sobre, clave),
+        }
+        response = transporte.sync(config.server_url, body, headers)
+    except CentralSyncRejected as exc:
+        raise fallo(exc.code, "LICENSE_SYNC_REJECTED", {"central_code": exc.code}, KontrolError(
+            code="CENTRAL_SYNC_REJECTED",
+            message="La autoridad central rechazó la sincronización de esta instalación.",
+            status_code=502,
+            details={"central_code": exc.code},
+        )) from None
+    except Exception as exc:  # noqa: BLE001 - el transporte externo puede lanzar cualquier cosa; sin retroceso a un sync anónimo
+        raise fallo(str(exc), "LICENSE_SYNC_FAILED", {"error": str(exc)}, KontrolError(
             code="CENTRAL_UNREACHABLE",
             message="No se pudo contactar el servidor central de licencias.",
             status_code=503,
-        ) from exc
+        )) from exc
+
+    estado_servidor = response.get("status") if isinstance(response, dict) else None
+    licencia = response.get("license") if isinstance(response, dict) else None
+    if estado_servidor == "LICENSE" and isinstance(licencia, dict):
+        # El artefacto pasa por TODAS las compuertas del cliente: firma del propietario, identidad, período, revisión.
+        try:
+            state = import_license(db, payload=dict(licencia.get("payload") or {}), signature_hex=str(licencia.get("signature_hex", "")),
+                                   source="CENTRAL", user_id=actor)
+        except KontrolError as exc:
+            raise fallo(exc.code, "LICENSE_SYNC_FAILED", {"error": exc.code}, exc) from None
+    elif estado_servidor != "NO_LICENSE":
+        raise fallo("CENTRAL_RESPONSE_INVALID", "LICENSE_SYNC_FAILED", {"error": "CENTRAL_RESPONSE_INVALID"}, KontrolError(
+            code="CENTRAL_RESPONSE_INVALID",
+            message="La respuesta del servidor central no cumple el contrato.",
+            status_code=502,
+        ))
 
     run = LicenseSyncRun(
         installation_id=installation.installation_uuid,
@@ -697,23 +789,25 @@ def sync_license(
     )
     db.add(run)
 
-    server_status = response.get("status")
     server_time = response.get("server_time")
-    entitlements = response.get("entitlements", {})
-
+    modulos: dict[str, Any] = {}
     if state is not None:
         if server_time:
-            state.last_reliable_date = _dt_from(server_time)
-        if entitlements:
-            state.entitlements = {**(state.entitlements or {}), "modules": list(entitlements.keys())}
-        if server_status in MODES:
-            state.mode = server_status
+            recibido = _dt_from(server_time)
+            actual = state.last_reliable_date
+            state.last_reliable_date = recibido if actual is None or license_contract._as_utc(actual) < license_contract._as_utc(recibido) else actual
         state.verified_at = _now()
+        # La matriz de módulos sale del paquete FIRMADO: objeto módulo → bool, o lista de módulos habilitados.
+        candidatos = (state.entitlements or {}).get("modules")
+        if isinstance(candidatos, dict):
+            modulos = {str(k): bool(v) for k, v in candidatos.items()}
+        elif isinstance(candidatos, list):
+            modulos = {str(m): True for m in candidatos}
 
     snapshot = LicenseEntitlementSnapshot(
         installation_id=installation.installation_uuid,
-        modules=entitlements or {},
-        version=str(response.get("version", "v1")),
+        modules=modulos,
+        version=str(response.get("version", "1")),
         taken_at=_now(),
     )
     db.add(snapshot)
@@ -722,7 +816,7 @@ def sync_license(
         db,
         installation,
         "LICENSE_SYNCED",
-        {"status": server_status, "expires_at": response.get("expires_at")},
+        {"status": estado_servidor, "license_id": response.get("license_id"), "revision": response.get("revision")},
         actor,
     )
     db.commit()

@@ -320,16 +320,31 @@ def test_cla_14_la_autoridad_no_importa_nada_del_cliente_salvo_el_contrato_puro(
             for m in modulos:
                 assert not m.startswith(prohibidos), f"{fichero.name} importa {m}"
                 if m.startswith("app."):
-                    assert m == "app.core.license_contract" or m.startswith("app.core.license_contract."), f"{fichero.name} importa {m}"
+                    assert m.split(".")[:3] in (["app", "core", "license_contract"], ["app", "core", "sync_auth_contract"]), f"{fichero.name} importa {m}"
     assert not (pathlib.Path(__file__).resolve().parents[2] / "central_authority" / "alembic" / "versions" / "0001_cla_fase1.py").read_text().count("app.")
+    # Y los contratos puros no traen nada del cliente consigo.
+    for contrato in ("license_contract.py", "sync_auth_contract.py"):
+        arbol = ast.parse((pathlib.Path(__file__).resolve().parents[2] / "app" / "core" / contrato).read_text())
+        for nodo in ast.walk(arbol):
+            if isinstance(nodo, ast.ImportFrom) and nodo.module and nodo.module.startswith("app."):
+                assert nodo.module in ("app.core.license_contract",), f"{contrato} importa {nodo.module}"
 
 
-def test_cla_15_health_minimo_sin_informacion_sensible(ajustes, monkeypatch):
+def test_cla_15_health_minimo_sin_informacion_sensible(ajustes, factoria, monkeypatch):
     from central_authority import database, main
     monkeypatch.setattr(main, "get_settings", lambda: ajustes)
     monkeypatch.setattr(database, "get_settings", lambda: ajustes)
     database.get_engine.cache_clear()
     app = main.create_app()
+
+    def _db():
+        d = factoria()
+        try:
+            yield d
+        finally:
+            d.close()
+
+    app.dependency_overrides[database.get_db] = _db
     c = TestClient(app)
     assert c.get("/health/live").json() == {"status": "ok", "service": "kontrol-central-authority"}
     listo = c.get("/health/ready")
@@ -337,7 +352,10 @@ def test_cla_15_health_minimo_sin_informacion_sensible(ajustes, monkeypatch):
     for texto in (c.get("/health/live").text, listo.text):
         assert not any(t in texto for t in MATERIAL) and "sqlite" not in texto and "version" not in texto
     assert c.get("/docs").status_code == 404 and c.get("/openapi.json").status_code == 404
-    assert c.post("/v1/license/sync", json={}).status_code in (404, 405)  # el sync NO está expuesto
+    # El sync existe, pero solo autenticado: sin la prueba de la instalación responde 401 y no dice nada más.
+    sin_prueba = c.post("/v1/license/sync", json={})
+    assert sin_prueba.status_code == 401 and sin_prueba.json()["code"] == "SYNC_AUTH_INVALID"
+    assert not any(t in sin_prueba.text for t in MATERIAL)
     database.get_engine.cache_clear()
 
 

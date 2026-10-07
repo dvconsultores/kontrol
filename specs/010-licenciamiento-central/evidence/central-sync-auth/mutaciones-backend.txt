@@ -1,0 +1,46 @@
+GOOD: (0, '67 passed in 4.53s') (0, '2 passed in 1.71s')
+M-01 una firma inválida consume el desafío (consumir antes de verificar) [SQLite]
+  MUTATED → FAIL (muere) · 10 failed, 14 passed in 0.94s
+  RESTORED → PASS · 24 passed in 0.88s
+M-02 el nonce no se comprueba [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 22 passed in 0.93s
+  RESTORED → PASS · 24 passed in 0.89s
+M-03 la caducidad no se comprueba [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 22 passed in 0.93s
+  RESTORED → PASS · 24 passed in 0.90s
+M-04 el consumo deja de ser atómico (sin condición consumed_at IS NULL) [PostgreSQL]
+  MUTATED → PASS (SOBREVIVE) · 2 passed in 1.74s
+  RESTORED → PASS · 2 passed in 1.72s
+M-05 el hash del cuerpo no liga los bytes recibidos (se firma un hash fijo) [SQLite]
+  MUTATED → FAIL (muere) · 9 failed, 15 passed in 0.93s
+  RESTORED → PASS · 24 passed in 0.89s
+M-06 el destino no se comprueba (consulta admitida) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 23 passed in 0.91s
+  RESTORED → PASS · 24 passed in 0.89s
+M-07 cualquier versión de protocolo se acepta [SQLite]
+  MUTATED → FAIL (muere) · 5 failed, 49 passed in 0.98s
+  RESTORED → PASS · 54 passed in 0.94s
+M-08 el desafío de otra instalación vale [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 23 passed in 0.93s
+  RESTORED → PASS · 24 passed in 0.89s
+M-09 la instalación del cuerpo no se compara con la autenticada [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 22 passed in 0.92s
+  RESTORED → PASS · 24 passed in 0.89s
+M-10 la misma clave pública puede vincularse a otra instalación [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 23 passed in 1.17s
+  RESTORED → PASS · 24 passed in 0.89s
+M-11 el artefacto se elige por fecha de emisión, no por período y revisión [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 23 passed in 0.94s
+  RESTORED → PASS · 24 passed in 0.89s
+M-12 el cliente aplica lo recibido sin pasar por la importación (confía en el servidor autenticado) [SQLite]
+  MUTATED → FAIL (muere) · 5 failed, 8 passed in 3.96s
+  RESTORED → PASS · 13 passed in 3.92s
+M-13 el cliente hashea una serialización distinta de la que envía [SQLite]
+  MUTATED → FAIL (muere) · 9 failed, 4 passed in 3.97s
+  RESTORED → PASS · 13 passed in 3.93s
+M-14 HTTPS deja de exigirse en producción [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 12 passed in 3.94s
+  RESTORED → PASS · 13 passed in 3.95s
+M-15 el sobre canónico ya no es determinista (sin claves ordenadas) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 29 passed in 0.17s
+  RESTORED → PASS · 30 passed in 0.14s

@@ -1,0 +1,19 @@
+[e2e r20261007t211836p459063n9f9482] comprobar
+[e2e r20261007t211836p459063n9f9482] crear base
+[e2e r20261007t211836p459063n9f9482] migrar
+[e2e r20261007t211836p459063n9f9482] sembrar
+[e2e r20261007t211836p459063n9f9482] backend
+[e2e r20261007t211836p459063n9f9482] comprobar la base del backend
+[e2e r20261007t211836p459063n9f9482] autoridad central
+[e2e r20261007t211836p459063n9f9482] frontend
+[e2e r20261007t211836p459063n9f9482] suite
+
+Running 1 test using 1 worker
+
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+  ✓  1 [licencia-sync] › e2e/licencia-sync.spec.ts:91:3 › Licencia · sincronización autenticada con la Autoridad Central real › E2E-SYNC-01..08 · configurar, sincronizar, importar, idempotencia, compuertas locales y la autoridad no habla sin prueba (2.8s)
+
+  1 passed (3.3s)
+[e2e r20261007t211836p459063n9f9482] limpiar
+[e2e r20261007t211836p459063n9f9482] suite: {'passed': 1} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261007t211836p459063n9f9482

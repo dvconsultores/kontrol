@@ -1,5 +1,5 @@
 # Autoridad Central de Licencias de KONTROL — imagen propia, separada del backend del cliente.
-# Solo entra el contrato puro compartido (`app/core/license_contract.py`) y el paquete `central_authority`.
+# Solo entran los contratos puros compartidos (`app/core/license_contract.py`, `app/core/sync_auth_contract.py`) y el paquete `central_authority`.
 FROM python:3.13-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY resources/backend/app/__init__.py ./app/__init__.py
 COPY resources/backend/app/core/__init__.py ./app/core/__init__.py
 COPY resources/backend/app/core/license_contract.py ./app/core/license_contract.py
+COPY resources/backend/app/core/sync_auth_contract.py ./app/core/sync_auth_contract.py
 COPY resources/backend/central_authority ./central_authority
 RUN useradd --system --uid 10002 central && chown -R central:central /app && chmod +x /app/central_authority/entrypoint.sh
 USER central

@@ -24,6 +24,7 @@ WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 # exista Installation (sin instalación no hay licencia que bloquear).
 LICENSE_EXEMPT_PREFIXES = (
     "/api/v1/license/",
+    "/api/v1/licensing/sync",  # renovar por sync autenticado en READ_ONLY es legítimo (FR-010-412)
     "/api/v1/setup/",
     "/api/v1/auth/login",
     "/api/v1/auth/refresh",

@@ -5,8 +5,10 @@ import { defineConfig, devices } from "@playwright/test";
  * Los flujos críticos requieren el backend levantado (compose.dev) y un
  * servidor de prueba. Se definen los proyectos base.
  */
-/** Suites que necesitan el estado que el resto deja: van en un proyecto dependiente, al final. */
+/** Suites que necesitan el estado que el resto deja: van en proyectos dependientes, al final y en orden. */
 const TRAS_LA_SUITE = /licencia-revision\.spec\.ts/;
+const TRAS_LA_REVISION = /licencia-sync\.spec\.ts/;
+const DEPENDIENTES = /licencia-(revision|sync)\.spec\.ts/;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -19,11 +21,13 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [
-    { name: "chromium", testIgnore: TRAS_LA_SUITE, use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", testIgnore: TRAS_LA_SUITE, use: { ...devices["Desktop Firefox"] } },
-    { name: "webkit", testIgnore: TRAS_LA_SUITE, use: { ...devices["Desktop Safari"] } },
+    { name: "chromium", testIgnore: DEPENDIENTES, use: { ...devices["Desktop Chrome"] } },
+    { name: "firefox", testIgnore: DEPENDIENTES, use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit", testIgnore: DEPENDIENTES, use: { ...devices["Desktop Safari"] } },
     // El linaje revisionado de la licencia cambia el identificador vigente y deja el estado revisionado:
     // corre después de todo lo demás (depende de `chromium`), sobre la misma base de la corrida.
     { name: "licencia-revision", testMatch: TRAS_LA_SUITE, dependencies: ["chromium"], use: { ...devices["Desktop Chrome"] } },
+    // El sync autenticado contra la Autoridad Central real de la corrida: después del linaje, sobre el estado que deja.
+    { name: "licencia-sync", testMatch: TRAS_LA_REVISION, dependencies: ["licencia-revision"], use: { ...devices["Desktop Chrome"] } },
   ],
 });

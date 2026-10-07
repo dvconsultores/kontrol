@@ -42,6 +42,8 @@ from sqlalchemy.pool import NullPool
 FRONTEND = base.RAIZ / "resources" / "frontend"
 PUERTO_BACKEND = 8000
 PUERTO_FRONTEND = 5173
+#: La Autoridad Central REAL de la corrida (`central_authority.main:app`), sobre su propia base efímera.
+PUERTO_CENTRAL = 8010
 API = f"http://127.0.0.1:{PUERTO_BACKEND}/api/v1"
 WEB = f"http://localhost:{PUERTO_FRONTEND}"
 
@@ -149,6 +151,22 @@ class Corrida:
             "KONTROL_E2E_API": API,
             "KONTROL_E2E_BASE_URL": WEB,
             "KONTROL_API_URL": f"http://127.0.0.1:{PUERTO_BACKEND}",
+            # La autoridad de la corrida, para que el cliente sincronice contra ella por HTTP local (solo QA).
+            "KONTROL_E2E_CENTRAL_URL": f"http://127.0.0.1:{PUERTO_CENTRAL}",
+        })
+        return env
+
+    def entorno_de_la_autoridad(self) -> dict[str, str]:
+        """El entorno del proceso de la Autoridad Central: base SQLite efímera en el estado de la corrida (la
+        misma que usa `qa/autoridad_central.py`) y la clave sintética de la corrida como clave del propietario.
+        Nada de esto va al backend ni al frontend."""
+        env = self.entorno_de_procesos()
+        env.update({
+            "KONTROL_CENTRAL_DB_URL": f"sqlite+pysqlite:///{self.estado / 'license' / 'central.sqlite'}",
+            "KONTROL_CENTRAL_SIGNING_PRIVATE_KEY_PEM": self.clave_de_firma.read_text(),
+            "KONTROL_CENTRAL_ENVIRONMENT": "qa",
+            "KONTROL_CENTRAL_SIGNING_KID": "kontrol-lic-2026-01",
+            "KONTROL_CENTRAL_LOG_JSON": "false",
         })
         return env
 
@@ -193,8 +211,8 @@ class Corrida:
             raise base.CicloDeBaseRoto(
                 f"la ruta de estado es demasiado larga ({len(str(ruta_de_clave))} > {LARGO_MAXIMO_DE_RUTA}): "
                 "acórtela con KONTROL_E2E_STATE_DIR")
-        ocupados = [puerto for host, puerto in (("127.0.0.1", PUERTO_BACKEND), ("localhost", PUERTO_FRONTEND))
-                    if (puerto == PUERTO_BACKEND or not self.sin_frontend) and _puerto_ocupado(host, puerto)]
+        ocupados = [puerto for host, puerto in (("127.0.0.1", PUERTO_BACKEND), ("127.0.0.1", PUERTO_CENTRAL), ("localhost", PUERTO_FRONTEND))
+                    if (puerto != PUERTO_FRONTEND or not self.sin_frontend) and _puerto_ocupado(host, puerto)]
         if ocupados:
             raise base.CicloDeBaseRoto(
                 f"puertos ocupados {ocupados}: hay otra pila en marcha y en esta máquina cabe una corrida a la vez")
@@ -258,6 +276,28 @@ class Corrida:
                                   "--port", str(PUERTO_BACKEND)], base.BACKEND)
         self.esperar_salud("backend", f"{API}/health/ready")
 
+    def arrancar_autoridad(self) -> None:
+        """La Autoridad Central real: migra su base efímera y levanta su API en el puerto propio."""
+        self.fase("autoridad central")
+        entorno = self.entorno_de_la_autoridad()
+        registro = open(self.evidencia / "autoridad-migraciones.log", "ab")  # noqa: SIM115 - vive lo que la orden
+        try:
+            resultado = subprocess.run([str(base.BACKEND / ".venv/bin/alembic"), "-c", "central_authority/alembic.ini", "upgrade", "head"],
+                                       cwd=base.BACKEND, env=entorno, stdout=registro, stderr=subprocess.STDOUT, check=False)
+        finally:
+            registro.close()
+        if resultado.returncode != 0:
+            raise base.CicloDeBaseRoto("las migraciones de la Autoridad Central fallaron (ver autoridad-migraciones.log)")
+        registro = open(self.evidencia / "autoridad.log", "ab")  # noqa: SIM115 - vive lo que el proceso
+        proceso = subprocess.Popen([sys.executable, "-m", "uvicorn", "central_authority.main:app", "--host", "127.0.0.1",
+                                    "--port", str(PUERTO_CENTRAL)], cwd=base.BACKEND, env=entorno, stdout=registro,
+                                   stderr=subprocess.STDOUT, start_new_session=True)
+        registro.close()
+        self.procesos["autoridad"] = proceso
+        self.manifiesto.setdefault("procesos", {})["autoridad"] = proceso.pid
+        self.anotar()
+        self.esperar_salud("autoridad", f"http://127.0.0.1:{PUERTO_CENTRAL}/health/ready")
+
     def verificar_backend(self) -> None:
         """El backend que responde es el de esta corrida y escribe en la base de esta corrida.
 
@@ -312,7 +352,7 @@ class Corrida:
     def orden_de_la_suite(self) -> tuple[list[str], Path]:
         if self.orden is not None:
             return [*self.orden, *self.argumentos], base.RAIZ
-        return (["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium", "--project=licencia-revision",
+        return (["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium", "--project=licencia-revision", "--project=licencia-sync",
                  "--output", str(self.evidencia / "test-results"), *self.argumentos], FRONTEND)
 
     def suite(self) -> int:
@@ -417,7 +457,7 @@ class Corrida:
         limpieza: dict[str, Any] = {}
         self.manifiesto["limpieza"] = limpieza
         correcto = True
-        for nombre in ("suite", "frontend", "backend"):
+        for nombre in ("suite", "frontend", "autoridad", "backend"):
             try:
                 limpieza[nombre] = self.detener(nombre)
             except Exception as error:  # noqa: BLE001 - se intenta limpiar todo y se informa de lo que no se pudo
@@ -454,6 +494,7 @@ class Corrida:
             self.preparar()
             self.arrancar_backend()
             self.verificar_backend()
+            self.arrancar_autoridad()
             if not self.sin_frontend:
                 self.arrancar_frontend()
             codigo = self.suite()

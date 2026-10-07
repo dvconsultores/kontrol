@@ -12,7 +12,7 @@ rehacer, no meramente ajustar.
 | D0-03 | **CLOSED** | 030, 029, 031, 032, **023** → **desbloqueadas** |
 | D0-04 | **CLOSED** | 008, 022, 031, 032 → **desbloqueadas** |
 | D0-05 | **CLOSED** | 012, 029, 034 → **desbloqueadas** |
-| D0-06 | **CLOSED / IMPLEMENTED** (frontera, 2026-10-07) | Ninguna. 004 no puede **cerrarse** sin sincronización con autoridad definida (`CENTRAL-SYNC-AUTHORITY-UNDEFINED`) |
+| D0-06 | **CLOSED / IMPLEMENTED** (frontera, 2026-10-07) | Ninguna. Sincronización autenticada implementada (2026-10-07); 004 sigue abierta solo por la prueba contra red real desplegada y la rotación de claves |
 | D0-07 | LEGAL_VALIDATION_PENDING | Ninguna. 039-043 y 056 no pueden **cerrarse** sin validación |
 | D0-08 | **CLOSED** | 046, 018, 020, 035 → **desbloqueadas** |
 | D0-09 | **CLOSED** | 011, 019, 021, 029, 032 → **desbloqueadas** |

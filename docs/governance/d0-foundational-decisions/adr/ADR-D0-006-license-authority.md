@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | ID | D0-06 |
-| Estado | **APPROVED** (arquitectura) · **CLOSED / IMPLEMENTED** (frontera y hospedaje lógico, Fase 1, 2026-10-07) · sincronización **BLOCKED** (`CENTRAL-SYNC-AUTHORITY-UNDEFINED`) |
+| Estado | **APPROVED** (arquitectura) · **CLOSED / IMPLEMENTED** (frontera y hospedaje lógico, Fase 1, 2026-10-07) · sincronización **IMPLEMENTED** (desafío-respuesta Ed25519 de la instalación, 2026-10-07) |
 | Fecha | 2026-08-29 · actualizado 2026-10-07 |
 | Responsable | Arquitecto de seguridad · Arquitecto de infraestructura · Product Owner |
 | Extiende | `ADR-005 — Licenciamiento con Firma Asimétrica` (PROPUESTO) · `ADR-002 — Instalación Independiente` |
@@ -130,7 +130,8 @@ OQ-07 queda **resuelta** en cuanto a frontera y hospedaje lógico; la custodia o
 | CLI del propietario (`register-installation`, `issue-license`, `reissue-license`, …) | Implementado; `--operator` como etiqueta de atribución |
 | Health mínimo (`/health/live`, `/health/ready`), sin `/docs` | Implementado |
 | Imagen y compose propios | Entregados; construcción real pendiente de un entorno con `docker` |
-| `activate` / `sync` / `renew` / `heartbeat` / `replace_installation` | **No expuestos**: la instalación no se autentica ante la autoridad (`CENTRAL-SYNC-AUTHORITY-UNDEFINED`, decisión material) |
+| `sync` | **Expuesto y autenticado** (2026-10-07): desafío-respuesta con la identidad Ed25519 de la instalación, nonce de un solo uso, sobre canónico ligado a la petición, clave pública vinculada por el vendor; artefacto exacto del libro |
+| `activate` / `renew` / `heartbeat` / `replace_installation` | No expuestos todavía: se construirán sobre el mismo protocolo de prueba |
 | Rotación por `kid` | **No**: una clave activa (`LICENCIA-SIN-ROTACION-DE-CLAVE`, OPEN) |
 
 ## Impacto
@@ -164,5 +165,7 @@ OQ-07 queda **resuelta** en cuanto a frontera y hospedaje lógico; la custodia o
 **APPROVED** para la arquitectura, el contrato, la seguridad y la privacidad.
 **CLOSED / IMPLEMENTED** para la frontera y el hospedaje lógico (Fase 1, 2026-10-07): servicio del
 propietario, aislado, agnóstico de proveedor, con persistencia, secretos y clave propios.
-**BLOCKED** la exposición de sync/activación hasta resolver `CENTRAL-SYNC-AUTHORITY-UNDEFINED`.
+**IMPLEMENTED** la sincronización autenticada (`CENTRAL-SYNC-AUTHORITY-UNDEFINED`, 2026-10-07): la instalación prueba su
+identidad con su clave Ed25519 en un desafío-respuesta de un solo uso; `activate`/`renew`/`heartbeat`/`replace_installation`
+quedan como operaciones futuras sobre el mismo mecanismo.
 Clasificación de cierre: **CLOSED / IMPLEMENTED (frontera)**.

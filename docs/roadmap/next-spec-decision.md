@@ -2905,3 +2905,25 @@ decisión pendiente: `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADO
 `PICKLIST-DUPLICADA-500`, `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`,
 `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`,
 `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
+
+## 2026-10-07 · CENTRAL-SYNC-AUTHORITY-UNDEFINED convergida: la instalación se autentica ante la autoridad (dueña 004)
+
+El mecanismo que la dueña ratificó quedó implementado en los dos lados. La instalación firma con su
+clave privada Ed25519 un sobre canónico que liga versión del protocolo, identidad, desafío, nonce,
+método, destino y el SHA-256 de los bytes exactos que envía; la autoridad emite desafíos de 256 bits
+con caducidad corta, los consume de forma atómica en su PostgreSQL (dos peticiones idénticas a la
+vez: una sola autentica), verifica contra la clave pública que el vendor vinculó en el alta (huella
+única; sin autorregistro; una clave que llegue en la petición se ignora) y devuelve el artefacto exacto
+de su libro, que el cliente pasa por la importación con todas sus compuertas. Sin retroceso a sync
+anónimo, HTTPS obligatorio en producción, renovación posible en `READ_ONLY` (el bloqueo estaba en la
+ruta y en el middleware; se quitó de los dos). La corrida E2E levanta la autoridad real y el cliente
+sincroniza contra ella por HTTP local.
+
+**Deuda nueva:** `CENTRAL-SYNC-SIN-LIMITE-DE-TASA` (endurecimiento del endpoint de desafío; no se
+debilitó el diseño para evitarla).
+
+**Decisiones pendientes de la dueña:** `LICENCIA-SIN-ROTACION-DE-CLAVE`, `BACKEND-KEEPALIVE-5S`,
+`PANEL-VERSION-VACIA`. Candidatas sin decisión pendiente: `OFFLINE-NAIVE-EN-SQLITE`,
+`ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`, `ROLES-SIN-API-DE-ALTA`,
+`E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`,
+`OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`, `CENTRAL-SYNC-SIN-LIMITE-DE-TASA`. `NEXT SPEC = 029` no cambia.

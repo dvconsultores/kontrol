@@ -8,7 +8,7 @@
 | **BLK-D0-04** | D0-03 | Disparador de reserva y vigencia sin confirmar | PROCESS_BLOCKER | **No bloquea** la Spec 030; el defecto está decidido | Confirmar disparador y duración | Producto · Ventas |
 | **BLK-D0-05** | D0-04 | Mapa físico real del almacén sin levantar | PROCESS_BLOCKER | **No bloquea** la Spec 008; bloquea la puesta en marcha del put-away | Levantamiento físico: zonas, pasillos, racks, niveles, posiciones | Almacén · Logística |
 | **BLK-D0-06** | D0-05 | Precedencia de precio, límites de descuento y alcance de comisiones sin confirmar | PROCESS_BLOCKER | **No bloquea** la Spec 012; el defecto está propuesto | Confirmar precedencia y límites | Producto · Ventas |
-| **BLK-D0-07** | D0-06 | Hospedaje de la autoridad de licencias — **resuelto el 2026-10-07** (servicio del propietario, aislado, agnóstico de proveedor; Fase 1 implementada) | **RESOLVED** | Ya no bloquea la construcción; el cierre de la 004 depende de `CENTRAL-SYNC-AUTHORITY-UNDEFINED` (autenticación de la instalación para sync) | Definir la autenticación de la instalación; desplegar la imagen en la infraestructura del propietario | Producto · Infraestructura |
+| **BLK-D0-07** | D0-06 | Hospedaje de la autoridad de licencias — **resuelto el 2026-10-07** (servicio del propietario, aislado, agnóstico de proveedor; Fase 1 implementada) | **RESOLVED** | Ya no bloquea; la autenticación de la instalación para sync quedó implementada el 2026-10-07 (desafío-respuesta Ed25519) | Desplegar la imagen en la infraestructura del propietario | Producto · Infraestructura |
 
 ## Cambio respecto al GAP Analysis
 

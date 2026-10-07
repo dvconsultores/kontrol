@@ -11,15 +11,19 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta, timezone
 from typing import Any
 
+from sqlalchemy import delete as _sql_delete
 from sqlalchemy import select
+from sqlalchemy import update as _sql_update
 from sqlalchemy.orm import Session
 
 from app.core import license_contract as contract
+from app.core import sync_auth_contract as sync_auth
 from central_authority.config import Settings, SigningKeyError, load_signing_key
-from central_authority.models import AuditEvent, Installation, Issuance, PeriodLineage
+from central_authority.models import AuditEvent, Installation, Issuance, PeriodLineage, SyncChallenge
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +37,18 @@ class CentralError(Exception):
     def __init__(self, code: str, message: str) -> None:
         super().__init__(message)
         self.code = code
+
+
+class SyncAuthError(CentralError):
+    """Rechazo del protocolo de sincronización: código estable, estado HTTP, nada del registro ni de la licencia."""
+
+    def __init__(self, code: str, status_code: int, message: str) -> None:
+        super().__init__(code, message)
+        self.status_code = status_code
+
+
+#: Etiqueta de atribución de lo que hace el propio protocolo (no es un operador humano).
+OPERADOR_PROTOCOLO = "sync-protocol"
 
 
 def _now() -> datetime:
@@ -73,6 +89,7 @@ def register_installation(db: Session, *, installation_uuid: str, public_key_pem
         raise CentralError("INVALID_ARGUMENT", "La identidad de la instalación y el operador son obligatorios.")
     try:
         contract.load_public_key(public_key_pem)
+        huella = sync_auth.public_key_fingerprint(public_key_pem)
     except ValueError:
         raise CentralError("INVALID_PUBLIC_KEY", "La clave pública de la instalación no es una clave Ed25519 en PEM.") from None
     existente = db.execute(select(Installation).where(Installation.installation_uuid == installation_uuid)).scalars().first()
@@ -85,8 +102,15 @@ def register_installation(db: Session, *, installation_uuid: str, public_key_pem
         if not iguales:
             raise CentralError("INSTALLATION_CONFLICT", "La instalación ya está registrada con otros datos; no se sobrescribe.")
         return existente
-    fila = Installation(installation_uuid=installation_uuid, public_key_pem=public_key_pem, customer_id=customer_id,
-                        contract_id=contract_id, company_tax_id=company_tax_id, registered_by=operator)
+    # Una clave de identidad pertenece a UNA instalación: la misma clave para otra identidad se rechaza (FR-010-367/372).
+    otra = db.execute(select(Installation).where(Installation.public_key_fingerprint == huella)).scalars().first()
+    if otra is not None:
+        _audit(db, operation="REGISTER_INSTALLATION", operator=operator, installation_uuid=installation_uuid,
+               outcome="INSTALLATION_KEY_ALREADY_BOUND")
+        db.commit()
+        raise CentralError("INSTALLATION_KEY_ALREADY_BOUND", "Esa clave pública ya está vinculada a otra instalación; no se vincula.")
+    fila = Installation(installation_uuid=installation_uuid, public_key_pem=public_key_pem, public_key_fingerprint=huella,
+                        customer_id=customer_id, contract_id=contract_id, company_tax_id=company_tax_id, registered_by=operator)
     db.add(fila)
     db.flush()
     _audit(db, operation="REGISTER_INSTALLATION", operator=operator, installation_uuid=installation_uuid, outcome="OK")
@@ -211,3 +235,134 @@ def list_issuances(db: Session, installation_uuid: str) -> list[dict[str, Any]]:
         select(Issuance).where(Issuance.installation_id == inst.id).order_by(Issuance.period_start, Issuance.revision)
     ).scalars().all()
     return [_fila(e) for e in filas]
+
+
+# --------------------------------------------------------------------------- sync autenticado (desafío-respuesta)
+def create_sync_challenge(db: Session, *, settings: Settings, installation_uuid: Any) -> dict[str, Any]:
+    """Un desafío nuevo: nonce aleatorio de 256 bits, caducidad corta del servidor, un solo uso.
+
+    Responde igual para una instalación desconocida (la fila queda sin instalación y nunca autentica):
+    el endpoint no enumera el registro. Devuelve solo lo necesario para construir la prueba.
+    """
+    if not isinstance(installation_uuid, str) or not installation_uuid.strip() or len(installation_uuid) > 64:
+        raise SyncAuthError("SYNC_INSTALLATION_INVALID", 400, "La identidad de la instalación no es válida.")
+    ahora = _now()
+    # Limpieza perezosa y acotada: lo que venció hace más de una hora ya no puede volver a valer.
+    db.execute(_sql_delete(SyncChallenge).where(SyncChallenge.expires_at < ahora - timedelta(hours=1)))
+    inst = db.execute(select(Installation).where(Installation.installation_uuid == installation_uuid)).scalars().first()
+    nonce = sync_auth.new_nonce()
+    fila = SyncChallenge(installation_id=inst.id if inst is not None else None, nonce_sha256=sync_auth.nonce_digest(nonce),
+                         protocol_version=sync_auth.PROTOCOL_VERSION, created_at=ahora,
+                         expires_at=ahora + timedelta(seconds=settings.sync_challenge_ttl_seconds))
+    db.add(fila)
+    db.flush()
+    _audit(db, operation="SYNC_CHALLENGE", operator=OPERADOR_PROTOCOLO, installation_uuid=inst.installation_uuid if inst else None,
+           outcome="OK" if inst is not None else "UNKNOWN_INSTALLATION", detail={"challenge_id": fila.id})
+    db.commit()
+    return {"protocol_version": sync_auth.PROTOCOL_VERSION, "challenge_id": fila.id, "nonce": nonce,
+            "expires_at": fila.expires_at.isoformat()}
+
+
+def _rechazo_sync(db: Session, *, code: str, status_code: int, message: str, installation_uuid: str | None,
+                  challenge_id: str | None) -> SyncAuthError:
+    db.rollback()
+    _audit(db, operation="SYNC", operator=OPERADOR_PROTOCOLO, installation_uuid=installation_uuid, outcome=code,
+           detail={"challenge_id": challenge_id} if challenge_id else None)
+    db.commit()
+    return SyncAuthError(code, status_code, message)
+
+
+def authenticate_sync(db: Session, *, headers: Mapping[str, str], method: str, path: str, query: str, body: bytes) -> Installation:
+    """Verifica la prueba de la instalación y consume el desafío atómicamente (FR-010-379..399).
+
+    Orden: versión → cabeceras → destino → desafío (bajo `FOR UPDATE`) con su instalación, nonce y
+    versión → consumido → caducado → firma con la clave del REGISTRO (una firma inválida no consume)
+    → consumo atómico (exactamente una fila). Instalación desconocida y firma inválida comparten
+    código: el sync no dice qué identidades existen.
+    """
+    cabeceras = {k.lower(): v for k, v in headers.items()}
+
+    def cabecera(nombre: str) -> str:
+        valor = cabeceras.get(nombre.lower(), "")
+        if not valor.strip():
+            raise _rechazo_sync(db, code="SYNC_AUTH_INVALID", status_code=401, message="Faltan las credenciales del protocolo de sincronización.",
+                                installation_uuid=None, challenge_id=None)
+        return valor.strip()
+
+    try:
+        version = sync_auth.parse_protocol_version(cabecera(sync_auth.HEADER_PROTOCOL))
+    except sync_auth.SyncAuthContractError as exc:
+        raise _rechazo_sync(db, code=exc.code, status_code=400, message=str(exc), installation_uuid=None, challenge_id=None) from None
+    installation_uuid = cabecera(sync_auth.HEADER_INSTALLATION)
+    challenge_id = cabecera(sync_auth.HEADER_CHALLENGE)
+    nonce = cabecera(sync_auth.HEADER_NONCE)
+    firma = cabecera(sync_auth.HEADER_SIGNATURE)
+    if query or method.upper() != sync_auth.SYNC_METHOD or path != sync_auth.SYNC_TARGET:
+        raise _rechazo_sync(db, code="SYNC_TARGET_MISMATCH", status_code=401, message="El destino de la petición no es el del protocolo.",
+                            installation_uuid=installation_uuid, challenge_id=challenge_id)
+    try:
+        sobre = sync_auth.build_envelope(installation_id=installation_uuid, challenge_id=challenge_id, nonce=nonce, method=method,
+                                         target=path, body_sha256=sync_auth.body_sha256(body), protocol_version=version)
+    except sync_auth.SyncAuthContractError:
+        raise _rechazo_sync(db, code="SYNC_AUTH_INVALID", status_code=401, message="Las credenciales del protocolo no son válidas.",
+                            installation_uuid=installation_uuid, challenge_id=challenge_id) from None
+
+    inst = db.execute(select(Installation).where(Installation.installation_uuid == installation_uuid)).scalars().first()
+    desafio = db.execute(select(SyncChallenge).where(SyncChallenge.id == challenge_id).with_for_update()).scalars().first()
+    if inst is None:
+        raise _rechazo_sync(db, code="SYNC_AUTH_INVALID", status_code=401, message="Las credenciales del protocolo no son válidas.",
+                            installation_uuid=None, challenge_id=challenge_id)
+    if (desafio is None or desafio.installation_id != inst.id or desafio.nonce_sha256 != sync_auth.nonce_digest(nonce)
+            or desafio.protocol_version != version):
+        raise _rechazo_sync(db, code="SYNC_CHALLENGE_INVALID", status_code=401, message="El desafío no es válido para esta instalación.",
+                            installation_uuid=inst.installation_uuid, challenge_id=challenge_id)
+    if desafio.consumed_at is not None:
+        raise _rechazo_sync(db, code="SYNC_CHALLENGE_USED", status_code=401, message="El desafío ya fue utilizado.",
+                            installation_uuid=inst.installation_uuid, challenge_id=challenge_id)
+    ahora = _now()
+    if contract._as_utc(desafio.expires_at) <= ahora:
+        raise _rechazo_sync(db, code="SYNC_CHALLENGE_EXPIRED", status_code=401, message="El desafío ha caducado.",
+                            installation_uuid=inst.installation_uuid, challenge_id=challenge_id)
+    if not sync_auth.verify_envelope(sobre, firma, inst.public_key_pem):
+        raise _rechazo_sync(db, code="SYNC_AUTH_INVALID", status_code=401, message="Las credenciales del protocolo no son válidas.",
+                            installation_uuid=inst.installation_uuid, challenge_id=challenge_id)
+    consumido = db.execute(
+        _sql_update(SyncChallenge)
+        .where(SyncChallenge.id == challenge_id, SyncChallenge.consumed_at.is_(None), SyncChallenge.expires_at > ahora)
+        .values(consumed_at=ahora)
+        .execution_options(synchronize_session=False)  # el consumo lo decide la base, no una evaluación en memoria
+    )
+    if consumido.rowcount != 1:
+        raise _rechazo_sync(db, code="SYNC_CHALLENGE_USED", status_code=401, message="El desafío ya fue utilizado.",
+                            installation_uuid=inst.installation_uuid, challenge_id=challenge_id)
+    db.commit()  # el consumo queda escrito pase lo que pase después: un desafío consumido no resucita
+    return inst
+
+
+def select_current_issuance(db: Session, installation: Installation) -> Issuance | None:
+    """El artefacto vigente del libro: período primero, `revision` después; nunca por fecha de emisión."""
+    return db.execute(
+        select(Issuance).where(Issuance.installation_id == installation.id)
+        .order_by(Issuance.period_end.desc(), Issuance.period_start.desc(), Issuance.revision.desc())
+    ).scalars().first()
+
+
+def sync_response(db: Session, *, installation: Installation, body: Any, challenge_id: str) -> dict[str, Any]:
+    """Tras autenticar: la identidad del cuerpo debe ser la del sobre; se devuelve el artefacto exacto del libro."""
+    if not isinstance(body, dict) or body.get("installation_id") != installation.installation_uuid:
+        raise _rechazo_sync(db, code="SYNC_INSTALLATION_MISMATCH", status_code=403,
+                            message="La instalación del cuerpo no es la instalación autenticada.",
+                            installation_uuid=installation.installation_uuid, challenge_id=challenge_id)
+    emision = select_current_issuance(db, installation)
+    ahora = _now()
+    if emision is None:
+        _audit(db, operation="SYNC", operator=OPERADOR_PROTOCOLO, installation_uuid=installation.installation_uuid, outcome="NO_LICENSE",
+               detail={"challenge_id": challenge_id})
+        db.commit()
+        return {"version": "1", "status": "NO_LICENSE", "server_time": ahora.isoformat(), "license": None}
+    _audit(db, operation="SYNC", operator=OPERADOR_PROTOCOLO, installation_uuid=installation.installation_uuid, outcome="OK",
+           revision=emision.revision, issuance_id=emision.id, detail={"challenge_id": challenge_id, "license_id": emision.license_id})
+    db.commit()
+    return {"version": "1", "status": "LICENSE", "server_time": ahora.isoformat(),
+            "license": {"payload": emision.payload, "signature_hex": emision.signature_hex},
+            "license_id": emision.license_id, "revision": emision.revision}

@@ -1,0 +1,1369 @@
+........................................................................ [  3%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+...........................FF..FFss....FFFF...F.F..................F..sF [ 12%]
+......FFFF.F.FFFFFFFFFFFFFFFFFF..s.s.s.s.s.s.s.s........................ [ 15%]
+.......................................................F................ [ 18%]
+........................................................................ [ 21%]
+........................................................................ [ 24%]
+........................................................................ [ 27%]
+........................................................................ [ 30%]
+........................................................................ [ 33%]
+.......................................................................s [ 36%]
+sssss....sssssssss.s.................................................... [ 39%]
+.......................................................................F [ 42%]
+F....................................................................... [ 45%]
+........................................................................ [ 48%]
+........................................................................ [ 51%]
+........................................................................ [ 54%]
+........................................................................ [ 58%]
+........................................................................ [ 61%]
+........................................................................ [ 64%]
+........................................................................ [ 67%]
+........................................................................ [ 70%]
+........................................................................ [ 73%]
+........................................................................ [ 76%]
+........................................................................ [ 79%]
+........................................................................ [ 82%]
+........................................................................ [ 85%]
+........................................................................ [ 88%]
+........................................................................ [ 91%]
+........................................................................ [ 94%]
+........................................................................ [ 97%]
+......................................................                   [100%]
+=================================== FAILURES ===================================
+_________________ test_subida_valida_calcula_hash_en_servidor __________________
+
+    def test_subida_valida_calcula_hash_en_servidor():
+        document = _document(_doc_type()["id"])
+        r = _upload(document["id"], PDF, name="packing-list.pdf")
+>       assert r.status_code == 200, r.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"4aa6c0c5349d4a68803b145dfd0c2671","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents.py:168: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/f4c7745b-a162-4470-b229-f1fa8ffe97e2/versiones "HTTP/1.1 422 Unprocessable Entity"
+___________________ test_el_nombre_del_usuario_nunca_es_ruta ___________________
+
+    def test_el_nombre_del_usuario_nunca_es_ruta():
+        """Ningún nombre escribe fuera de la raíz del proveedor."""
+        for evil in ("../../../etc/passwd", "..\\win.ini", "/etc/shadow", "CON.pdf",
+                     "a\rb\nc.pdf", "  ...  ", "x" * 400 + ".pdf", 'co"millas.pdf'):
+            clean = sanitize_filename(evil)
+            assert "/" not in clean and "\\" not in clean
+            assert not clean.startswith("..")
+            assert "\r" not in clean and "\n" not in clean
+            assert '"' not in clean
+            assert len(clean) <= 255
+    
+        document = _document(_doc_type()["id"])
+        r = _upload(document["id"], PDF, name="../../../etc/passwd.pdf")
+>       assert r.status_code == 200, r.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"07815c37ea1c4a66880a8ca3562ae3bf","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents.py:200: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/91e007ed-57a4-4f66-acc3-0ca39c68bba0/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________________ test_versionado_sin_sobrescritura _______________________
+
+    def test_versionado_sin_sobrescritura():
+        document = _document(_doc_type()["id"])
+        first = _upload(document["id"], PDF).json()
+        second_content = PDF + b"% v2\n"
+        second = _upload(document["id"], second_content,
+                         data={"replacement_reason": "Corrección"}).json()
+    
+>       assert second["version_number"] == 2
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'version_number'
+
+tests/test_documents.py:245: KeyError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/6efcb9de-f789-45c5-8ea8-13e705ed5e92/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/6efcb9de-f789-45c5-8ea8-13e705ed5e92/versiones "HTTP/1.1 422 Unprocessable Entity"
+___________________________ test_subida_idempotente ____________________________
+
+    def test_subida_idempotente():
+        document = _document(_doc_type()["id"])
+        key = {"Idempotency-Key": "abc-123"}
+        first = _upload(document["id"], PDF, extra_headers=key)
+>       assert first.status_code == 200
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents.py:268: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/114c16c5-f4ef-4791-9b44-803fc5a8d063/versiones "HTTP/1.1 422 Unprocessable Entity"
+___________________ test_vinculacion_y_documento_compartido ____________________
+
+    def test_vinculacion_y_documento_compartido():
+        doc_type = _doc_type()
+        document = _document(doc_type["id"])
+        _upload(document["id"], PDF)
+        first = _approval_request()
+        second = _approval_request()
+    
+        for request_id in (first, second):
+            r = _CLIENT.post(f"/api/v1/documentos/{document['id']}/vinculos", headers=_headers(),
+                             json={"resource_type": "ApprovalRequest", "resource_id": request_id})
+            assert r.status_code == 200, r.text
+    
+        for request_id in (first, second):
+            listed = _CLIENT.get(
+                f"/api/v1/documentos/por-recurso/ApprovalRequest/{request_id}",
+                headers=_headers()).json()
+            assert any(d["id"] == document["id"] for d in listed)
+    
+        # Un solo binario para los dos vínculos.
+        db = _FACTORY()
+        try:
+            versions = db.execute(select(DocumentVersion).where(
+                DocumentVersion.document_id == document["id"])).scalars().all()
+>           assert len({v.stored_file_id for v in versions}) == 1
+E           assert 0 == 1
+E            +  where 0 = len(set())
+
+tests/test_documents.py:426: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/57881a31-ed32-4303-9f41-92dfcca7c39f/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/57881a31-ed32-4303-9f41-92dfcca7c39f/vinculos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/57881a31-ed32-4303-9f41-92dfcca7c39f/vinculos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/documentos/por-recurso/ApprovalRequest/87584a91-2ebf-470a-8263-177520940005 "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/documentos/por-recurso/ApprovalRequest/8fcbc1f1-e0d5-4753-8b63-88c647086c7b "HTTP/1.1 200 OK"
+____________ test_version_congelada_el_historico_no_se_reinterpreta ____________
+
+    def test_version_congelada_el_historico_no_se_reinterpreta():
+        """Una aprobación resuelta conserva la versión que usó.
+    
+        Es el contrato que la Spec 045 dejó declarado, y se satisface **sin cambiar
+        su modelo**: el vínculo vive en la tabla de 046.
+        """
+        doc_type = _doc_type()
+        document = _document(doc_type["id"])
+        v1 = _upload(document["id"], PDF).json()
+        request_id = _approval_request()
+    
+        link = _CLIENT.post(f"/api/v1/documentos/{document['id']}/vinculos", headers=_headers(),
+                            json={"resource_type": "ApprovalRequest", "resource_id": request_id})
+        assert link.status_code == 200, link.text
+    
+        # La entidad se vuelve inmutable: el consumidor congela.
+        db = _FACTORY()
+        try:
+            frozen = service.freeze_links(db, resource_type="ApprovalRequest",
+                                          resource_id=request_id)
+            db.commit()
+>           assert len(frozen) == 1
+E           assert 0 == 1
+E            +  where 0 = len([])
+
+tests/test_documents.py:453: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/0e3344cf-b533-474f-9de5-17cef6dc7eb3/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/0e3344cf-b533-474f-9de5-17cef6dc7eb3/vinculos "HTTP/1.1 200 OK"
+___________________ test_vinculo_congelado_no_se_desvincula ____________________
+
+    def test_vinculo_congelado_no_se_desvincula():
+        doc_type = _doc_type()
+        document = _document(doc_type["id"])
+        _upload(document["id"], PDF)
+        request_id = _approval_request()
+        link = _CLIENT.post(f"/api/v1/documentos/{document['id']}/vinculos", headers=_headers(),
+                            json={"resource_type": "ApprovalRequest",
+                                  "resource_id": request_id}).json()
+        db = _FACTORY()
+        try:
+            service.freeze_links(db, resource_type="ApprovalRequest", resource_id=request_id)
+            db.commit()
+        finally:
+            db.close()
+    
+        r = _CLIENT.delete(f"/api/v1/documentos/vinculos/{link['id']}", headers=_headers())
+>       assert r.status_code == 409
+E       assert 200 == 409
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests/test_documents.py:499: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/4a847940-042b-41a7-a885-c46881303109/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/4a847940-042b-41a7-a885-c46881303109/vinculos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: DELETE http://testserver/api/v1/documentos/vinculos/5a6060ef-0345-46c0-a51e-3b33951cbc73 "HTTP/1.1 200 OK"
+_____________ test_borrado_protegido_y_archivado_conserva_binario ______________
+
+    def test_borrado_protegido_y_archivado_conserva_binario():
+        doc_type = _doc_type()
+        document = _document(doc_type["id"])
+        version = _upload(document["id"], PDF).json()
+    
+        r = _CLIENT.delete(f"/api/v1/documentos/{document['id']}", headers=_headers())
+>       assert r.status_code == 409
+E       assert 200 == 409
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests/test_documents.py:510: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/d32f5ba9-f7b9-4827-b799-9ed2d5af8d05/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: DELETE http://testserver/api/v1/documentos/d32f5ba9-f7b9-4827-b799-9ed2d5af8d05 "HTTP/1.1 200 OK"
+________ test_el_mismo_archivo_dos_veces_no_se_deduplica_ni_se_bloquea _________
+
+    def test_el_mismo_archivo_dos_veces_no_se_deduplica_ni_se_bloquea():
+        """La coincidencia de hash se registra; no unifica ni impide nada."""
+        from app.modules.audit.models import AuditEvent
+    
+        doc_type = _doc_type()
+        first = _document(doc_type["id"])
+        second = _document(doc_type["id"])
+>       assert _upload(first["id"], PDF).status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('ad1edc5b-2d15-4425-a400-334556eb767f', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n')
+
+tests/test_documents.py:643: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/ad1edc5b-2d15-4425-a400-334556eb767f/versiones "HTTP/1.1 422 Unprocessable Entity"
+__________________ test_una_version_referenciada_no_se_purga ___________________
+
+    def test_una_version_referenciada_no_se_purga():
+        doc_type = _doc_type()
+        document = _document(doc_type["id"])
+        _upload(document["id"], PDF, name="v1.pdf")
+        _upload(document["id"], PNG, name="v2.png", mime="image/png")
+        request_id = _approval_request()
+        _CLIENT.post(f"/api/v1/documentos/{document['id']}/vinculos", headers=_headers(),
+                     json={"resource_type": "ApprovalRequest", "resource_id": request_id})
+    
+        db = _FACTORY()
+        try:
+            service.freeze_links(db, resource_type="ApprovalRequest", resource_id=request_id)
+            db.commit()
+    
+            versions = db.execute(select(DocumentVersion).where(
+                DocumentVersion.document_id == document["id"])
+                .order_by(DocumentVersion.version_number)).scalars().all()
+>           current, frozen = versions[0], versions[1]
+                              ^^^^^^^^^^^
+E           IndexError: list index out of range
+
+tests/test_documents.py:693: IndexError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/4c6424f9-2deb-474c-bc98-a8cc6439b572/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/4c6424f9-2deb-474c-bc98-a8cc6439b572/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/4c6424f9-2deb-474c-bc98-a8cc6439b572/vinculos "HTTP/1.1 200 OK"
+________________________ test_amz_01_recorrido_de_rutas ________________________
+
+    def test_amz_01_recorrido_de_rutas():
+        """Ningún nombre del usuario alcanza el sistema de archivos."""
+        document = _document(_doc_type()["id"])
+        hostiles = [
+            "../../../../etc/passwd.pdf",
+            "/etc/passwd.pdf",
+            "..\\..\\windows\\system32\\config.pdf",
+            "..%2f..%2fetc%2fpasswd.pdf",
+            "%2e%2e%2f%2e%2e%2fetc%2fshadow.pdf",
+            "../../etc/hosts.pdf",
+        ]
+        for name in hostiles:
+            r = _upload(document["id"], PDF, name=name)
+>           assert r.status_code == 200, (name, r.text)
+E           AssertionError: ('../../../../etc/passwd.pdf', '{"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"c67c2ffe976f4ab3a812c70b5269f262","details":{"scan_result":"SCAN_FAILED","signature":null}}')
+E           assert 422 == 200
+E            +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:213: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/36868d7c-b3ce-40c5-8a10-98b40f3f93f4/versiones "HTTP/1.1 422 Unprocessable Entity"
+____________________ test_amz_05_xss_por_nombre_de_archivo _____________________
+
+    def test_amz_05_xss_por_nombre_de_archivo():
+        document = _document(_doc_type()["id"])
+        hostile = '<script>alert("x")</script>.pdf'
+        r = _upload(document["id"], PDF, name=hostile)
+>       assert r.status_code == 200, r.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"5b2802b431a246d9b2e8fd399ae7e686","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:269: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/50014eae-a5ee-4e31-86a2-75028090db03/versiones "HTTP/1.1 422 Unprocessable Entity"
+__________________ test_amz_12_clave_de_almacenamiento_opaca ___________________
+
+    def test_amz_12_clave_de_almacenamiento_opaca():
+        """La clave no se deriva del nombre ni del contenido: es aleatoria."""
+        doc_type = _doc_type()
+        first = _document(doc_type["id"])
+        second = _document(doc_type["id"])
+        _upload(first["id"], PDF, name="mismo-nombre.pdf")
+        _upload(second["id"], PDF, name="mismo-nombre.pdf")
+    
+>       key_a = _stored_of(first["id"]).storage_key
+                ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = 'e2b86b5d-fd1a-4179-adc0-cca7d6cad2ab'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/e2b86b5d-fd1a-4179-adc0-cca7d6cad2ab/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/4d802a91-340f-4831-862a-4dac2a0d66af/versiones "HTTP/1.1 422 Unprocessable Entity"
+_________________ test_amz_13_sin_sobrescritura_del_historico __________________
+
+    def test_amz_13_sin_sobrescritura_del_historico():
+        document = _document(_doc_type()["id"])
+        _upload(document["id"], PDF, name="v1.pdf")
+>       first_key = _stored_of(document["id"]).storage_key
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:405: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = '1a7939e3-7b5c-4266-8696-c730a97b12e9'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/1a7939e3-7b5c-4266-8696-c730a97b12e9/versiones "HTTP/1.1 422 Unprocessable Entity"
+_______________________ test_amz_14_el_hash_no_autoriza ________________________
+
+    def test_amz_14_el_hash_no_autoriza():
+        """No existe ninguna vía que convierta conocer el hash en acceso."""
+        document = _document(_doc_type()["id"])
+        r = _upload(document["id"], PDF)
+>       checksum = r.json()["sha256"]
+                   ^^^^^^^^^^^^^^^^^^
+E       KeyError: 'sha256'
+
+tests/test_documents_security.py:421: KeyError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/e09bc710-346d-480c-8bcc-d3e595e1311c/versiones "HTTP/1.1 422 Unprocessable Entity"
+________________________ test_amz_15_asignacion_masiva _________________________
+
+    def test_amz_15_asignacion_masiva():
+        """Lo que el servidor determina, lo determina el servidor."""
+        document = _document(_doc_type()["id"])
+        r = _upload(document["id"], PDF, data={
+            "storage_key": "controlado/por/el/cliente",
+            "sha256": "0" * 64,
+            "version_number": "99",
+            "security_status": "CLEAN",
+            "status": "AVAILABLE",
+        })
+>       assert r.status_code == 200, r.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"accdc8b70da144a08d423cb749d92520","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:443: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/18aca52d-e389-443f-a6c3-9ac6e4844d5d/versiones "HTTP/1.1 422 Unprocessable Entity"
+___________________ test_amz_17_desvinculacion_no_autorizada ___________________
+
+    def test_amz_17_desvinculacion_no_autorizada():
+        """La evidencia de un proceso cerrado no se puede retirar."""
+        document = _document(_doc_type()["id"])
+        _upload(document["id"], PDF)
+        request_id = _approval_request()
+        link = _CLIENT.post(f"/api/v1/documentos/{document['id']}/vinculos", headers=_headers(),
+                            json={"resource_type": "ApprovalRequest",
+                                  "resource_id": request_id}).json()
+    
+        db = _FACTORY()
+        try:
+            service.freeze_links(db, resource_type="ApprovalRequest", resource_id=request_id)
+            db.commit()
+        finally:
+            db.close()
+    
+        # Ni el ajeno…
+        assert _CLIENT.delete(f"/api/v1/documentos/vinculos/{link['id']}",
+                              headers=_headers_b()).status_code == 404
+        # …ni el propio dueño.
+        r = _CLIENT.delete(f"/api/v1/documentos/vinculos/{link['id']}", headers=_headers())
+>       assert r.status_code == 409, r.text
+E       AssertionError: {"deleted":true}
+E       assert 200 == 409
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests/test_documents_security.py:495: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/d6009270-ec8a-4c54-b072-1b24c327b27c/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/d6009270-ec8a-4c54-b072-1b24c327b27c/vinculos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: DELETE http://testserver/api/v1/documentos/vinculos/52ce3e16-e78f-4ccd-8d56-bfdc5ff7d8ca "HTTP/1.1 404 Not Found"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: DELETE http://testserver/api/v1/documentos/vinculos/52ce3e16-e78f-4ccd-8d56-bfdc5ff7d8ca "HTTP/1.1 200 OK"
+______________________ test_amz_19_inyeccion_de_cabeceras ______________________
+
+    def test_amz_19_inyeccion_de_cabeceras():
+        """CR/LF en el nombre no puede partir la cabecera de descarga."""
+        document = _document(_doc_type()["id"])
+        hostile = 'informe\r\nSet-Cookie: sesion=robada\r\n\r\n.pdf'
+        r = _upload(document["id"], PDF, name=hostile)
+>       assert r.status_code == 200, r.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"3709e6e27e9947bba866ea9cc6346b03","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:524: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/592109d4-760b-40e7-9666-0f41b97f679c/versiones "HTTP/1.1 422 Unprocessable Entity"
+________________ test_amz_20_los_registros_no_filtran_contenido ________________
+
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7fe96a984b10>
+
+    def test_amz_20_los_registros_no_filtran_contenido(caplog):
+        """Se registran identificadores; nunca contenido, nombres de ruta ni secretos."""
+        import logging
+    
+        document = _document(_doc_type()["id"])
+        with caplog.at_level(logging.DEBUG):
+            _upload(document["id"], PDF, name="confidencial.pdf")
+            _CLIENT.get(f"/api/v1/documentos/{document['id']}/descargar", headers=_headers())
+    
+        text = caplog.text
+        assert "%PDF" not in text
+        assert str(_ROOT) not in text
+        assert "Kontrol2026Segura!" not in text
+>       assert _stored_of(document["id"]).storage_key not in text
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:562: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = 'bfabecd2-41a1-4ad2-b916-53361d73d062'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_part_begin with no data
+DEBUG    python_multipart.multipart:multipart.py:625 Calling on_header_field with data[36:55]
+DEBUG    python_multipart.multipart:multipart.py:625 Calling on_header_value with data[57:108]
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_header_end with no data
+DEBUG    python_multipart.multipart:multipart.py:625 Calling on_header_field with data[110:122]
+DEBUG    python_multipart.multipart:multipart.py:625 Calling on_header_value with data[124:139]
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_header_end with no data
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_headers_finished with no data
+DEBUG    python_multipart.multipart:multipart.py:625 Calling on_part_data with data[143:202]
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_part_end with no data
+DEBUG    python_multipart.multipart:multipart.py:628 Calling on_end with no data
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/bfabecd2-41a1-4ad2-b916-53361d73d062/versiones "HTTP/1.1 422 Unprocessable Entity"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/documentos/bfabecd2-41a1-4ad2-b916-53361d73d062/descargar "HTTP/1.1 404 Not Found"
+___________________ test_fallo_de_escritura_no_deja_version ____________________
+
+    def test_fallo_de_escritura_no_deja_version():
+        """Si el almacenamiento falla, no nace ninguna versión."""
+        document = _document(_doc_type()["id"])
+        real = get_storage()
+    
+        class _FailingStorage(FilesystemStorageProvider):
+            def put(self, key, source):  # noqa: D102
+                raise StorageError("disco lleno")
+    
+        set_storage(_FailingStorage(_ROOT))
+        try:
+            r = _upload(document["id"], PDF)
+>           assert r.status_code >= 500, r.text
+E           AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"e6383d3256e242079f4820ee928b6ca6","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E           assert 422 >= 500
+E            +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:594: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/9a80e3c6-a716-431d-86d5-728a86852c76/versiones "HTTP/1.1 422 Unprocessable Entity"
+_________________ test_objeto_ausente_no_se_entrega_otra_cosa __________________
+
+    def test_objeto_ausente_no_se_entrega_otra_cosa():
+        document = _document(_doc_type()["id"])
+        _upload(document["id"], PDF)
+>       stored = _stored_of(document["id"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:609: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = 'd55efa75-2c90-4f21-9181-4abb46cf9cfa'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/d55efa75-2c90-4f21-9181-4abb46cf9cfa/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________________ test_huella_distinta_no_se_entrega ______________________
+
+    def test_huella_distinta_no_se_entrega():
+        """Si el binario cambió bajo los pies, no se entrega en silencio."""
+        document = _document(_doc_type()["id"])
+        _upload(document["id"], PDF)
+>       stored = _stored_of(document["id"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:630: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = '5aef5401-8700-4e6b-99b7-933df2c6ea01'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/5aef5401-8700-4e6b-99b7-933df2c6ea01/versiones "HTTP/1.1 422 Unprocessable Entity"
+___________________ test_pendiente_de_analisis_no_se_entrega ___________________
+
+    def test_pendiente_de_analisis_no_se_entrega():
+        """`SCAN_FAILED` no es `CLEAN`: mientras no se verifique, no se entrega."""
+        document = _document(_doc_type()["id"])
+        _upload(document["id"], PDF)
+>       stored = _stored_of(document["id"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_documents_security.py:647: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document_id = '5a17a326-529d-4af6-958a-9d664d16f0cf'
+
+    def _stored_of(document_id: str) -> StoredFile:
+        db = _FACTORY()
+        try:
+            document = db.get(Document, document_id)
+            version = db.get(DocumentVersion, document.current_version_id)
+>           return db.get(StoredFile, version.stored_file_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+
+tests/test_documents_security.py:194: AttributeError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/5a17a326-529d-4af6-958a-9d664d16f0cf/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________ test_dos_subidas_simultaneas_no_producen_dos_v2[0] ______________
+
+vuelta = 0
+
+    @pytest.mark.parametrize("vuelta", range(3))
+    def test_dos_subidas_simultaneas_no_producen_dos_v2(vuelta):
+        """La carrera ocurre de verdad, tres veces: una V2, una vigente y un conflicto de dominio."""
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('82cf11a7-2480-44c2-908d-21fcc3acb4bd', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:741: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/82cf11a7-2480-44c2-908d-21fcc3acb4bd/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________ test_dos_subidas_simultaneas_no_producen_dos_v2[1] ______________
+
+vuelta = 1
+
+    @pytest.mark.parametrize("vuelta", range(3))
+    def test_dos_subidas_simultaneas_no_producen_dos_v2(vuelta):
+        """La carrera ocurre de verdad, tres veces: una V2, una vigente y un conflicto de dominio."""
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('dc3096df-341b-47c1-a3e4-23e530ac07e7', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:741: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/dc3096df-341b-47c1-a3e4-23e530ac07e7/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________ test_dos_subidas_simultaneas_no_producen_dos_v2[2] ______________
+
+vuelta = 2
+
+    @pytest.mark.parametrize("vuelta", range(3))
+    def test_dos_subidas_simultaneas_no_producen_dos_v2(vuelta):
+        """La carrera ocurre de verdad, tres veces: una V2, una vigente y un conflicto de dominio."""
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('01ad139a-cc75-4840-a8ac-61d2acffb3b6', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:741: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/01ad139a-cc75-4840-a8ac-61d2acffb3b6/versiones "HTTP/1.1 422 Unprocessable Entity"
+_____________ test_la_primera_version_simultanea_tampoco_da_un_500 _____________
+
+    def test_la_primera_version_simultanea_tampoco_da_un_500():
+        """Sin versión previa la segunda espera en el índice único, no en una fila: mismo resultado."""
+        document = _document(_doc_type()["id"])["id"]
+>       primero, segundo = carrera(_FACTORY, _subida(document, PDF + b"%1", "uno.pdf"),
+                                   _subida(document, PDF + b"%2", "dos.pdf"))
+
+tests/test_documents_security.py:758: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/concurrency.py:55: in carrera
+    r1 = primero(s1)
+         ^^^^^^^^^^^
+tests/test_documents_security.py:681: in subir
+    return service.upload_version(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db = <sqlalchemy.orm.session.Session object at 0x7fe96b7b4450>
+
+    def upload_version(
+        db: Session,
+        *,
+        document: Document,
+        doc_type: DocumentType,
+        stream: BinaryIO,
+        original_name: str,
+        declared_mime: str | None,
+        actor: Any,
+        replacement_reason: str | None = None,
+    ) -> DocumentVersion:
+        """Crea una versión a partir de un archivo.
+    
+        Orden obligatorio: temporal → tamaño → MIME real → política → análisis →
+        hash → almacenamiento → verificación → confirmación. Un archivo solo llega
+        a `AVAILABLE` cuando ha pasado **todos** los controles (§14).
+        """
+        if not document.is_managed:
+            raise KontrolError(code="EXTERNAL_DOCUMENT_NO_FILE",
+                               message="Un documento de referencia externa no admite archivos",
+                               status_code=422)
+    
+        validate_metadata(doc_type, document.doc_metadata)
+    
+        max_size = min(doc_type.max_size_bytes or GLOBAL_MAX_SIZE, GLOBAL_MAX_SIZE)
+        safe_name = sanitize_filename(original_name)
+        extension = safe_extension(original_name)
+    
+        # 1. Temporal: nada se registra hasta pasar los controles.
+        temp_dir = Path(tempfile.mkdtemp(prefix="kontrol-doc-"))
+        temp_path = temp_dir / "upload.bin"
+        digest = hashlib.sha256()
+        size = 0
+        try:
+            with open(temp_path, "wb") as out:
+                while True:
+                    chunk = stream.read(CHUNK)
+                    if not chunk:
+                        break
+                    size += len(chunk)
+                    if size > max_size:
+                        # Corte temprano: no se consume el flujo completo (§30).
+                        raise KontrolError(
+                            code="FILE_TOO_LARGE",
+                            message=f"El archivo supera el máximo permitido ({max_size} bytes)",
+                            status_code=413,
+                            details={"max_size_bytes": max_size})
+                    digest.update(chunk)
+                    out.write(chunk)
+            if size == 0:
+                raise KontrolError(code="FILE_EMPTY", message="El archivo está vacío",
+                                   status_code=422)
+    
+            # 2. MIME real, por contenido.
+            detected = detect_mime(str(temp_path))
+    
+            # 3. Política del tipo.
+            if not _mime_allowed(doc_type, detected):
+                if declared_mime and declared_mime != detected and _mime_allowed(doc_type, declared_mime):
+                    # Dijo una cosa y es otra: suplantación (§20).
+                    raise KontrolError(
+                        code="MIME_MISMATCH",
+                        message="El contenido del archivo no corresponde con el tipo declarado",
+                        status_code=422,
+                        details={"declared": declared_mime, "detected": detected})
+                raise KontrolError(
+                    code="MIME_NOT_ALLOWED",
+                    message=f"El tipo documental no admite archivos «{detected}»",
+                    status_code=422,
+                    details={"detected": detected,
+                             "allowed": doc_type.allowed_mime_types or []})
+            if not _extension_allowed(doc_type, extension):
+                raise KontrolError(code="MIME_NOT_ALLOWED",
+                                   message="Extensión no admitida por el tipo documental",
+                                   status_code=422)
+            if (detected in DANGEROUS_MIME or detected.startswith(DANGEROUS_MIME_PREFIXES)) \
+                    and detected not in (doc_type.allowed_mime_types or []):
+                raise KontrolError(code="MIME_NOT_ALLOWED",
+                                   message="Tipo de archivo peligroso no admitido",
+                                   status_code=422, details={"detected": detected})
+    
+            # 4. Análisis. Falso seguro: sin analizador no hay limpieza (§26).
+            scanner = scanning.get_scanner()
+            scan = scanner.scan(str(temp_path))
+            if doc_type.scan_required and scan.result != scanning.CLEAN:
+                code = "FILE_INFECTED" if scan.result == scanning.INFECTED else "SCAN_FAILED"
+                message = ("El archivo fue identificado como malicioso"
+                           if scan.result == scanning.INFECTED
+                           else "No se pudo verificar la seguridad del archivo")
+                _audit(db, actor, "DOCUMENT_SCAN_REJECTED", str(document.id),
+                       after={"result": scan.result, "signature": scan.signature})
+                db.flush()
+>               raise KontrolError(code=code, message=message, status_code=422,
+                                   details={"scan_result": scan.result,
+                                            "signature": scan.signature})
+E                                           app.core.errors.KontrolError: No se pudo verificar la seguridad del archivo
+
+app/modules/documents/service.py:211: KontrolError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+____ test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500 _____
+
+    def test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500():
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('0ad40894-d93a-42c5-a8fb-106121fd6401', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:767: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/0ad40894-d93a-42c5-a8fb-106121fd6401/versiones "HTTP/1.1 422 Unprocessable Entity"
+_____________ test_tres_subidas_simultaneas_crean_una_sola_version _____________
+
+    def test_tres_subidas_simultaneas_crean_una_sola_version():
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('72c96ed9-8c49-49ee-b4a3-861ba130ad05', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:794: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/72c96ed9-8c49-49ee-b4a3-861ba130ad05/versiones "HTTP/1.1 422 Unprocessable Entity"
+_________ test_la_misma_clave_en_carrera_devuelve_la_version_ganadora __________
+
+    def test_la_misma_clave_en_carrera_devuelve_la_version_ganadora():
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('ef68cfbb-b04c-4515-9513-382747e04109', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:820: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/ef68cfbb-b04c-4515-9513-382747e04109/versiones "HTTP/1.1 422 Unprocessable Entity"
+__ test_un_reintento_devuelve_la_version_de_su_clave_aunque_haya_otra_despues __
+
+    def test_un_reintento_devuelve_la_version_de_su_clave_aunque_haya_otra_despues():
+        """Antes devolvía la vigente: tras otra subida, el reintento recibía una versión que no pidió."""
+        document = _document(_doc_type()["id"])["id"]
+        clave = {**_headers(), "Idempotency-Key": "reintento-tardio"}
+        primera = _post_version(document, PDF + b"%P", clave)
+>       assert primera.status_code == 200, primera.text
+E       AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"183e33aa582f459ca969072e7d783c2b","details":{"scan_result":"SCAN_FAILED","signature":null}}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests/test_documents_security.py:856: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/ad862604-20ac-4a27-b0aa-d6ee4aa329ef/versiones "HTTP/1.1 422 Unprocessable Entity"
+_____ test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena ______
+
+    def test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena():
+        tipo = _doc_type()["id"]
+        uno, dos = _document(tipo)["id"], _document(tipo)["id"]
+        clave = {**_headers(), "Idempotency-Key": "clave-compartida"}
+    
+>       assert _post_version(uno, PDF + b"%U", clave).status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _post_version('0b37408b-660c-4d47-9492-74b94fdff251', (b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n' + b'%U'), {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZTFiZjRkMC0xMzcwLTQzNzMtODI3ZC0yZTI0NDA2ODl...ItNDQ1Ny04ZDY2LWQ3MDIyYzlmMGUwYSJ9.Ivfs1U2peFrmo8jqHWO-ZDK9diaB5ZJbP3Ejg8re4x8', 'Idempotency-Key': 'clave-compartida'})
+
+tests/test_documents_security.py:871: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/0b37408b-660c-4d47-9492-74b94fdff251/versiones "HTTP/1.1 422 Unprocessable Entity"
+______________ test_subidas_a_documentos_distintos_no_se_esperan _______________
+
+    def test_subidas_a_documentos_distintos_no_se_esperan():
+        """Ni otro documento de la misma empresa ni el de otro tenant esperan a una carrera ajena."""
+        tipo = _doc_type()["id"]
+        bloqueado = _document(tipo)["id"]
+>       assert _upload(bloqueado, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('9f63d3aa-9c62-4156-93a8-95b2677f54e3', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:901: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/9f63d3aa-9c62-4156-93a8-95b2677f54e3/versiones "HTTP/1.1 422 Unprocessable Entity"
+______ test_otro_tenant_no_alcanza_un_documento_ajeno_durante_la_carrera _______
+
+    def test_otro_tenant_no_alcanza_un_documento_ajeno_durante_la_carrera():
+        document = _document(_doc_type()["id"])["id"]
+>       assert _upload(document, PDF, name="base.pdf").status_code == 200
+E       AssertionError: assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E        +    where <Response [422 Unprocessable Entity]> = _upload('c4a5c1bb-13fb-4a22-8d2c-94540db85f34', b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n', name='base.pdf')
+
+tests/test_documents_security.py:935: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/c4a5c1bb-13fb-4a22-8d2c-94540db85f34/versiones "HTTP/1.1 422 Unprocessable Entity"
+_________________ test_el_contrato_nunca_expone_almacenamiento _________________
+
+    def test_el_contrato_nunca_expone_almacenamiento():
+        """Ninguna clave de respuesta habla de almacenamiento (NFR-046-01)."""
+        document = _document(_doc_type()["id"])
+        upload = _upload(document["id"], PDF).json()
+        detail = _CLIENT.get(f"/api/v1/documentos/{document['id']}", headers=_headers()).json()
+        versions = _CLIENT.get(f"/api/v1/documentos/{document['id']}/versiones",
+                               headers=_headers()).json()
+    
+        prohibited = {"storage_key", "storage_provider", "storage_path", "path", "uploaded_by"}
+    
+        def _keys(value) -> set[str]:
+            if isinstance(value, dict):
+                found = set(value)
+                for nested in value.values():
+                    found |= _keys(nested)
+                return found
+            if isinstance(value, list):
+                found: set[str] = set()
+                for item in value:
+                    found |= _keys(item)
+                return found
+            return set()
+    
+        for payload in (upload, detail, versions):
+            assert not (_keys(payload) & prohibited), _keys(payload) & prohibited
+    
+        # Y el estado de seguridad **siempre** viaja: nunca se omite (§27).
+>       assert upload["file"]["security_status"]
+               ^^^^^^^^^^^^^^
+E       KeyError: 'file'
+
+tests/test_documents_security.py:983: KeyError
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/tipos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/organization/companies "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/documentos/bded604a-958d-48c2-8f8d-402cf7e7cfa7/versiones "HTTP/1.1 422 Unprocessable Entity"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/documentos/bded604a-958d-48c2-8f8d-402cf7e7cfa7 "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/documentos/bded604a-958d-48c2-8f8d-402cf7e7cfa7/versiones "HTTP/1.1 200 OK"
+_______ test_e2ecorrida_01_una_corrida_verde_usa_su_base_y_no_deja_nada ________
+
+entorno = {'AI_AGENT': 'claude-code_2-1-291_agent', 'APPLICATION_INSIGHTS_NO_STATSBEAT': 'true', 'CHROME_DESKTOP': 'code.desktop', 'CLAUDECODE': '1', ...}
+puerto_libre = None
+
+    def test_e2ecorrida_01_una_corrida_verde_usa_su_base_y_no_deja_nada(entorno, puerto_libre):
+        corrida, salida = _corrida(entorno, MIRA_SU_BASE.format(extra="pass"))
+        assert corrida.ejecutar() == 0
+        _sin_rastro(corrida)
+    
+        m = _manifiesto(corrida)
+        assert m["base"] == corrida.base == "kontrol_e2e_test_" + corrida.run_id
+        assert m["backend"] == {"base": corrida.base, "sesiones": 1}
+        assert m["migracion"]["actual"] == m["migracion"]["esperada"] and m["migracion"]["cabezas"] == 1
+        assert m["siembra"]["linea_base"] == b.LINEA_BASE and len(m["siembra"]["version"]) == 16
+        assert m["suite"]["codigo"] == 0 and m["codigo_de_salida"] == 0
+        assert m["limpieza"]["base"] == {"estado": "ELIMINADA", "cortadas": 0} and m["limpieza"]["resultado"] == "LIMPIA"
+        assert m["medidas"]["usuarios"] == 5 and m["medidas"]["almacenes"] == 0
+>       assert m["fases"] == ["comprobar", "crear base", "migrar", "sembrar", "backend",
+                              "comprobar la base del backend", "suite", "limpiar"]
+E       AssertionError: assert ['comprobar',...backend', ...] == ['comprobar',...backend', ...]
+E         
+E         At index 6 diff: 'autoridad central' != 'suite'
+E         Left contains one more item: 'limpiar'
+E         Use -v to get more diff
+
+tests/test_e2e_corrida.py:132: AssertionError
+______________ test_un_objeto_alterado_no_se_entrega_como_si_nada ______________
+
+mundo = Mundo(client=<starlette.testclient.TestClient object at 0x7fe9577db890>, factory=sessionmaker(class_='Session', bind=E...-80c5431ad4bd', warehouse_b='c317c24c-8471-41ea-8e67-7226ff887848', warehouse_c='77006a8b-7019-4530-96bf-63dbad1f7ae2')
+
+    def test_un_objeto_alterado_no_se_entrega_como_si_nada(mundo):
+        """Se altera el binario en el almacenamiento, por detrás del sistema.
+    
+        El hash quedó registrado al subirlo. Entregar el contenido nuevo bajo ese
+        hash sería servir una cosa diciendo que es otra — y en un sistema documental
+        eso es exactamente lo que no puede pasar.
+        """
+        _pg(mundo)
+        doc, _ = _documento_con_archivo(mundo, "ua", mundo.company_a, "ALT")
+    
+        # Se descarga bien antes de tocarlo: si no, lo de después no probaría nada.
+        r = mundo.client.get(f"/api/v1/documentos/{doc}/descargar",
+                             headers=mundo.como("ua", mundo.company_a))
+>       assert r.status_code == 200, f"no se pudo descargar el original: {r.text}"
+E       AssertionError: no se pudo descargar el original: {"code":"FILE_NOT_SCANNED","message":"El archivo aún no superó la verificación de seguridad","field_errors":{},"request_id":"bf0e817698e24ebd9b49bff9fd237ba1","details":null}
+E       assert 409 == 200
+E        +  where 409 = <Response [409 Conflict]>.status_code
+
+tests/test_n9_integrity.py:52: AssertionError
+____________ test_el_binario_ausente_tampoco_se_entrega_en_silencio ____________
+
+mundo = Mundo(client=<starlette.testclient.TestClient object at 0x7fe9577db890>, factory=sessionmaker(class_='Session', bind=E...-80c5431ad4bd', warehouse_b='c317c24c-8471-41ea-8e67-7226ff887848', warehouse_c='77006a8b-7019-4530-96bf-63dbad1f7ae2')
+
+    def test_el_binario_ausente_tampoco_se_entrega_en_silencio(mundo):
+        """Un hash sin binario no es un documento (R-046-5)."""
+        _pg(mundo)
+        doc, _ = _documento_con_archivo(mundo, "ua", mundo.company_a, "AUS")
+        db = mundo.factory()
+        try:
+            clave = db.execute(text(
+                "SELECT sf.storage_key FROM stored_files sf "
+                "JOIN document_versions dv ON dv.stored_file_id = sf.id "
+                "WHERE dv.document_id = :d ORDER BY dv.version_number DESC LIMIT 1"),
+                {"d": doc}).scalar_one()
+        finally:
+            db.close()
+    
+        from app.modules.documents.storage import get_storage
+    
+        almacen = get_storage()
+        raiz = getattr(almacen, "root", None) or getattr(almacen, "_root", None)
+        if raiz is None:
+            pytest.skip("el proveedor de almacenamiento no expone su raíz en este entorno")
+        (Path(raiz) / clave).unlink()
+    
+        r = mundo.client.get(f"/api/v1/documentos/{doc}/descargar",
+                             headers=mundo.como("ua", mundo.company_a))
+>       assert r.status_code == 500
+E       assert 409 == 500
+E        +  where 409 = <Response [409 Conflict]>.status_code
+
+tests/test_n9_integrity.py:105: AssertionError
+=============================== warnings summary ===============================
+tests/test_documents_security.py::test_amz_12_clave_de_almacenamiento_opaca
+tests/test_documents_security.py::test_amz_13_sin_sobrescritura_del_historico
+tests/test_documents_security.py::test_amz_20_los_registros_no_filtran_contenido
+tests/test_documents_security.py::test_objeto_ausente_no_se_entrega_otra_cosa
+tests/test_documents_security.py::test_huella_distinta_no_se_entrega
+tests/test_documents_security.py::test_pendiente_de_analisis_no_se_entrega
+  /home/maria/Projectos/Kontrol/resources/backend/tests/test_documents_security.py:193: SAWarning: fully NULL primary key identity cannot load any object.  This condition may raise an error in a future release.
+    version = db.get(DocumentVersion, document.current_version_id)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_documents.py::test_subida_valida_calcula_hash_en_servidor
+FAILED tests/test_documents.py::test_el_nombre_del_usuario_nunca_es_ruta - As...
+FAILED tests/test_documents.py::test_versionado_sin_sobrescritura - KeyError:...
+FAILED tests/test_documents.py::test_subida_idempotente - assert 422 == 200
+FAILED tests/test_documents.py::test_vinculacion_y_documento_compartido - ass...
+FAILED tests/test_documents.py::test_version_congelada_el_historico_no_se_reinterpreta
+FAILED tests/test_documents.py::test_vinculo_congelado_no_se_desvincula - ass...
+FAILED tests/test_documents.py::test_borrado_protegido_y_archivado_conserva_binario
+FAILED tests/test_documents.py::test_el_mismo_archivo_dos_veces_no_se_deduplica_ni_se_bloquea
+FAILED tests/test_documents.py::test_una_version_referenciada_no_se_purga - I...
+FAILED tests/test_documents_security.py::test_amz_01_recorrido_de_rutas - Ass...
+FAILED tests/test_documents_security.py::test_amz_05_xss_por_nombre_de_archivo
+FAILED tests/test_documents_security.py::test_amz_12_clave_de_almacenamiento_opaca
+FAILED tests/test_documents_security.py::test_amz_13_sin_sobrescritura_del_historico
+FAILED tests/test_documents_security.py::test_amz_14_el_hash_no_autoriza - Ke...
+FAILED tests/test_documents_security.py::test_amz_15_asignacion_masiva - Asse...
+FAILED tests/test_documents_security.py::test_amz_17_desvinculacion_no_autorizada
+FAILED tests/test_documents_security.py::test_amz_19_inyeccion_de_cabeceras
+FAILED tests/test_documents_security.py::test_amz_20_los_registros_no_filtran_contenido
+FAILED tests/test_documents_security.py::test_fallo_de_escritura_no_deja_version
+FAILED tests/test_documents_security.py::test_objeto_ausente_no_se_entrega_otra_cosa
+FAILED tests/test_documents_security.py::test_huella_distinta_no_se_entrega
+FAILED tests/test_documents_security.py::test_pendiente_de_analisis_no_se_entrega
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[0]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[1]
+FAILED tests/test_documents_security.py::test_dos_subidas_simultaneas_no_producen_dos_v2[2]
+FAILED tests/test_documents_security.py::test_la_primera_version_simultanea_tampoco_da_un_500
+FAILED tests/test_documents_security.py::test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500
+FAILED tests/test_documents_security.py::test_tres_subidas_simultaneas_crean_una_sola_version
+FAILED tests/test_documents_security.py::test_la_misma_clave_en_carrera_devuelve_la_version_ganadora
+FAILED tests/test_documents_security.py::test_un_reintento_devuelve_la_version_de_su_clave_aunque_haya_otra_despues
+FAILED tests/test_documents_security.py::test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena
+FAILED tests/test_documents_security.py::test_subidas_a_documentos_distintos_no_se_esperan
+FAILED tests/test_documents_security.py::test_otro_tenant_no_alcanza_un_documento_ajeno_durante_la_carrera
+FAILED tests/test_documents_security.py::test_el_contrato_nunca_expone_almacenamiento
+FAILED tests/test_e2e_corrida.py::test_e2ecorrida_01_una_corrida_verde_usa_su_base_y_no_deja_nada
+FAILED tests/test_n9_integrity.py::test_un_objeto_alterado_no_se_entrega_como_si_nada
+FAILED tests/test_n9_integrity.py::test_el_binario_ausente_tampoco_se_entrega_en_silencio
+38 failed, 2293 passed, 27 skipped, 6 warnings in 761.04s (0:12:41)
+14 passed in 66.86s (0:01:06)

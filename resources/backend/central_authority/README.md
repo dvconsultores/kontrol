@@ -39,3 +39,15 @@ emitir el mismo período es una reemisión: la autoridad asigna la siguiente `re
 
 Sync remoto (bloqueado hasta decidir la autenticación de la instalación), rotación de claves,
 portales, pagos, revocación remota.
+
+## Sincronización autenticada (`CENTRAL-SYNC-AUTHORITY-UNDEFINED`)
+
+`POST /v1/license/sync/challenge` y `POST /v1/license/sync`: la instalación prueba su identidad con su
+clave privada Ed25519 (desafío de un solo uso, nonce de 256 bits, sobre canónico ligado a la petición,
+SHA-256 de los bytes exactos del cuerpo); la autoridad verifica contra la clave pública vinculada en el
+alta (`register-installation --public-key-file`, huella única) y devuelve el artefacto exacto de su
+libro. Caducidad del desafío: `KONTROL_CENTRAL_SYNC_CHALLENGE_TTL_SECONDS` (120 s por defecto). El
+estado de los desafíos vive en la base de la autoridad (`cla_sync_challenges`), nunca en memoria.
+Contrato completo: `specs/010-licenciamiento-central/central-authority/contracts/health-and-sync.md`.
+En producción el cliente exige `https://`; el endpoint de desafío no tiene límite de tasa propio
+(`CENTRAL-SYNC-SIN-LIMITE-DE-TASA`): póngalo detrás de la pasarela que corresponda.

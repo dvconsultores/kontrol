@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     signing_private_key_pem: str | None = None
     # Identificador de la clave de firma (semántica actual del `kid`): una sola clave activa en Fase 1.
     signing_kid: str = "kontrol-lic-2026-01"
+    #: Vida de un desafío de autenticación del sync (FR-010-376): corta y configurable; técnica, no de negocio.
+    sync_challenge_ttl_seconds: int = Field(default=120, ge=5, le=900)
     log_json: bool = False
 
     @model_validator(mode="after")

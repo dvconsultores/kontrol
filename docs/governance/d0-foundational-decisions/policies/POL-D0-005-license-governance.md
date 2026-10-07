@@ -58,5 +58,6 @@ agnóstico de proveedor, implementado en su Fase 1 (`ADR-D0-006`, `resources/bac
 No se recomienda proveedor físico: es operación del propietario. Riesgo que sigue vigente: la custodia
 de la clave privada es el activo más crítico del modelo comercial.
 
-**MATERIAL_DECISION_REQUIRED** — `CENTRAL-SYNC-AUTHORITY-UNDEFINED`: cómo se autentica la instalación
-ante la autoridad antes de exponer activación y sincronización.
+**Resuelto (2026-10-07)** — `CENTRAL-SYNC-AUTHORITY-UNDEFINED`: la instalación se autentica ante la autoridad con
+su clave Ed25519 en un desafío-respuesta de un solo uso ligado a la petición; la clave pública la vincula el
+vendor (`contracts/health-and-sync.md` de la Autoridad Central).

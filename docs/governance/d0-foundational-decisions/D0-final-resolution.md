@@ -73,7 +73,7 @@ Ninguna decisión de arquitectura queda pendiente. Lo pendiente es de otra natur
 
 | ID | Estado | Naturaleza |
 |---|---|---|
-| **D0-06** | **CLOSED / IMPLEMENTED** (2026-10-07) | Frontera y hospedaje lógico resueltos: servicio del propietario, aislado, agnóstico de proveedor (`ADR-D0-006`, Fase 1). Pendiente de otra naturaleza: `CENTRAL-SYNC-AUTHORITY-UNDEFINED` (decisión material sobre la autenticación de la instalación) |
+| **D0-06** | **CLOSED / IMPLEMENTED** (2026-10-07) | Frontera y hospedaje lógico resueltos: servicio del propietario, aislado, agnóstico de proveedor (`ADR-D0-006`, Fase 1). Sincronización autenticada implementada el mismo día (`CENTRAL-SYNC-AUTHORITY-UNDEFINED`, convergida) |
 | **D0-07** | LEGAL_VALIDATION_PENDING | Contenido tributario de 24 reglas |
 
 ---
@@ -94,7 +94,7 @@ una regla no validada no puede emitir documento en producción.
 
 | ID | Pregunta | Bloquea |
 |---|---|---|
-| OQ-07 | Hospedaje de la autoridad de licencias y custodia de la clave — **resuelta el 2026-10-07** (servicio del propietario, agnóstico de proveedor; custodia operativa = procedimiento del propietario) | Ya no bloquea; el cierre de la 004 depende ahora de `CENTRAL-SYNC-AUTHORITY-UNDEFINED` |
+| OQ-07 | Hospedaje de la autoridad de licencias y custodia de la clave — **resuelta el 2026-10-07** (servicio del propietario, agnóstico de proveedor; custodia operativa = procedimiento del propietario) | Ya no bloquea; la sincronización autenticada quedó implementada el 2026-10-07 |
 | OQ-02 | Niveles y umbrales de aprobación | Implantación |
 | OQ-03 | Disparador de reserva y vigencia | Implantación |
 | OQ-06 | Precedencia de precio, límites de descuento, comisiones | Implantación |
@@ -183,7 +183,7 @@ Para **cerrarse**:
 |---|---|
 | Las 56 | BLK-D0-01 — PostgreSQL real (técnico, resoluble por el equipo) |
 | 039, 040, 041, 042, 043, 014, 056 | BLK-D0-02 — validación tributaria (externo) |
-| 004 | BLK-D0-07 — hospedaje de la autoridad: **resuelto** (2026-10-07, Fase 1); queda `CENTRAL-SYNC-AUTHORITY-UNDEFINED` (decisión material) |
+| 004 | BLK-D0-07 — hospedaje de la autoridad: **resuelto** (2026-10-07, Fase 1); y sincronización autenticada implementada (`CENTRAL-SYNC-AUTHORITY-UNDEFINED`, convergida el 2026-10-07) |
 
 ---
 

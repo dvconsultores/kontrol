@@ -113,29 +113,31 @@ def _configure_central(db: Session) -> dict:
     )
 
 
-def _fake_sync_client(response: dict | None = None, error: Exception | None = None):
-    default = {
-        "version": "1.0",
-        "status": "FULL_ACCESS",
-        "server_time": "2026-08-04T12:00:00+00:00",
-        "expires_at": "2026-12-31T23:59:59+00:00",
-        "entitlements": {
-            "ventas": True,
-            "compras": True,
-            "inventario": True,
-            "tesoreria": True,
-            "fiscal": True,
-            "regulatorio": True,
-            "reportes": True,
-        },
-    }
+SERVER_TIME = (datetime.now(UTC) + timedelta(minutes=5)).replace(microsecond=0)
 
-    def client(payload: dict, server_url: str) -> dict:
-        if error is not None:
-            raise error
-        return response if response is not None else default
 
-    return client
+class _TransporteFalso:
+    """Transporte del protocolo autenticado que responde como la autoridad: `NO_LICENSE` por defecto.
+    Registra las llamadas (desafío y sync) para afirmar que no hay retroceso a un sync anónimo."""
+
+    def __init__(self, response: dict | None = None, error: Exception | None = None) -> None:
+        self.response = response if response is not None else {"version": "1", "status": "NO_LICENSE", "server_time": SERVER_TIME.isoformat(), "license": None}
+        self.error = error
+        self.llamadas: list[tuple[str, object]] = []
+
+    def challenge(self, server_url: str, installation_id: str) -> dict:
+        self.llamadas.append(("challenge", installation_id))
+        return {"protocol_version": 1, "challenge_id": "11111111-1111-1111-1111-111111111111", "nonce": "ab" * 32, "expires_at": SERVER_TIME.isoformat()}
+
+    def sync(self, server_url: str, body: bytes, headers: dict[str, str]) -> dict:
+        self.llamadas.append(("sync", (body, headers)))
+        if self.error is not None:
+            raise self.error
+        return self.response
+
+
+def _fake_sync_client(response: dict | None = None, error: Exception | None = None) -> _TransporteFalso:
+    return _TransporteFalso(response=response, error=error)
 
 
 class TestConfiguracionCentral:
@@ -155,7 +157,7 @@ class TestConfiguracionCentral:
         _setup(db_session)
         _activate_license(db_session)
         with pytest.raises(KontrolError) as exc:
-            licensing_service.sync_license(db_session, sync_client=_fake_sync_client())
+            licensing_service.sync_license(db_session, transport=_fake_sync_client())
         assert exc.value.code == "CENTRAL_NOT_CONFIGURED"
 
 
@@ -165,7 +167,7 @@ class TestSincronizacion:
         _activate_license(db_session)
         _configure_central(db_session)
 
-        result = licensing_service.sync_license(db_session, sync_client=_fake_sync_client(), actor="admin")
+        result = licensing_service.sync_license(db_session, transport=_fake_sync_client(), actor="admin")
 
         assert result["status"] == "SUCCESS"
         assert result["idempotent"] is False
@@ -180,9 +182,9 @@ class TestSincronizacion:
             select_state(installation.installation_uuid)
         ).scalars().first()
         assert state is not None
-        assert state.last_reliable_date.replace(tzinfo=UTC) == datetime(2026, 8, 4, 12, 0, tzinfo=UTC)
+        assert state.last_reliable_date.replace(tzinfo=UTC) == SERVER_TIME  # el reloj confiable viene del servidor autenticado
         assert state.mode == "FULL_ACCESS"
-        assert "ventas" in (state.entitlements or {}).get("modules", [])
+        assert "ventas" in (state.entitlements or {}).get("modules", [])  # los módulos vienen del paquete firmado, no del servidor
 
         snapshots = licensing_service.list_entitlement_snapshots(db_session)
         assert len(snapshots) == 1
@@ -196,8 +198,8 @@ class TestSincronizacion:
         _activate_license(db_session)
         _configure_central(db_session)
 
-        first = licensing_service.sync_license(db_session, sync_client=_fake_sync_client())
-        second = licensing_service.sync_license(db_session, sync_client=_fake_sync_client())
+        first = licensing_service.sync_license(db_session, transport=_fake_sync_client())
+        second = licensing_service.sync_license(db_session, transport=_fake_sync_client())
 
         assert first["idempotent"] is False
         assert second["idempotent"] is True
@@ -211,7 +213,7 @@ class TestSincronizacion:
         with pytest.raises(KontrolError) as exc:
             licensing_service.sync_license(
                 db_session,
-                sync_client=_fake_sync_client(error=ConnectionError("servidor caído")),
+                transport=_fake_sync_client(error=ConnectionError("servidor caído")),
                 actor="admin",
             )
         assert exc.value.code == "CENTRAL_UNREACHABLE"
@@ -227,25 +229,19 @@ class TestEntitlements:
         _setup(db_session)
         _activate_license(db_session)
         _configure_central(db_session)
-        licensing_service.sync_license(db_session, sync_client=_fake_sync_client())
+        licensing_service.sync_license(db_session, transport=_fake_sync_client())
 
         matrix = licensing_service.current_entitlements(db_session)
         assert matrix["modules"]["ventas"] is True
-        assert matrix["modules"]["reportes"] is True
+        assert matrix["modules"].get("reportes") is not True  # no está en la licencia firmada: no se concede
         assert licensing_service.module_entitled(db_session, "ventas") is True
 
     def test_module_not_entitled_denied_by_default(self, db_session) -> None:
         _setup(db_session)
         _activate_license(db_session)
         _configure_central(db_session)
-        response = {
-            "version": "1.0",
-            "status": "FULL_ACCESS",
-            "server_time": "2026-08-04T12:00:00+00:00",
-            "expires_at": "2026-12-31T23:59:59+00:00",
-            "entitlements": {"ventas": True, "reportes": False},
-        }
-        licensing_service.sync_license(db_session, sync_client=_fake_sync_client(response=response))
+        # La matriz sale de la licencia firmada (`ventas`, `compras`): lo que no está en ella se deniega.
+        licensing_service.sync_license(db_session, transport=_fake_sync_client())
 
         assert licensing_service.module_entitled(db_session, "ventas") is True
         assert licensing_service.module_entitled(db_session, "reportes") is False

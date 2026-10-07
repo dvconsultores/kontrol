@@ -180,12 +180,15 @@ def upsert_central_config(
     )
 
 
-@central_router.post("/sync", dependencies=[Depends(require_write_allowed)])
+@central_router.post("/sync")
 def sync_license(
     db: Session = Depends(get_db),
     actor: User = Depends(require_permission("license", "create")),
 ):
-    """Sincroniza/activa la licencia con el servidor central (FR-010-002)."""
+    """Sincroniza/activa la licencia con el servidor central autenticando a la instalación (FR-010-002).
+
+    Sin `require_write_allowed`: en `READ_ONLY` la renovación legítima debe seguir siendo posible
+    (FR-010-412); la compuerta es la sesión con `license:create`."""
     return licensing_service.sync_license(db, actor=str(actor.id))
 
 

@@ -1,0 +1,3 @@
+M-04 el consumo pierde sus dos guardas (ni comprobación previa ni condición consumed_at IS NULL) [PostgreSQL]
+  MUTATED → FAIL (muere) · 2 failed, 24 passed in 3.40s
+  RESTORED → PASS · 26 passed in 3.04s
