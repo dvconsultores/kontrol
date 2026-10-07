@@ -1,0 +1,48 @@
+# Después de la Fase A · árbol sobre 65374ac · SQLite, TestClient, ancla sintética explícita, administrador con license:create · hoy 2026-10-06
+
+## 1. Primera activación: A (período 2026-27)
+antes:   ninguna
+respuesta: 200 {"ok":true,"license_id":"LIC-2026","mode":"FULL_ACCESS"}
+después: vigente=LIC-2026 modo=FULL_ACCESS período=2026-04-01→2027-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=1 eventos=1
+
+## 2. Renovación: B (período 2027-28, posterior) → se acepta
+antes:   vigente=LIC-2026 modo=FULL_ACCESS período=2026-04-01→2027-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=1 eventos=1
+respuesta: 200 {"ok":true,"license_id":"LIC-2027","mode":"FULL_ACCESS"}
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=2 eventos=2
+
+## 3. REGRESIÓN DE PERÍODO: volver a A (2026-27) con B vigente → rechazada
+antes:   vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=2 eventos=2
+respuesta: 423 {"code":"LICENSE_PERIOD_DOWNGRADE","message":"La licencia corresponde a un período anterior al vigente y no puede sustit
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=2 eventos=3
+
+## 5. MISMA LICENCIA otra vez: B sobre B (idempotencia canónica: estado igual, +1 artefacto, +1 evento)
+antes:   vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=2 eventos=3
+respuesta: 200 {"ok":true,"license_id":"LIC-2027","mode":"FULL_ACCESS"}
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=3 eventos=4
+
+## 6. Mismo período anterior, OTRO artefacto: A ampliada (2026-27, más derechos) sobre B → rechazada
+antes:   vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=3 eventos=4
+respuesta: 423 {"code":"LICENSE_PERIOD_DOWNGRADE","message":"La licencia corresponde a un período anterior al vigente y no puede sustit
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=3 eventos=5
+
+## 8. Licencia VENCIDA (2024-25) sobre B vigente → rechazada: la instalación sigue FULL_ACCESS
+antes:   vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=3 eventos=5
+respuesta: 423 {"code":"LICENSE_PERIOD_DOWNGRADE","message":"La licencia corresponde a un período anterior al vigente y no puede sustit
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=3 eventos=6
+
+## 10. Mismo período que la vigente, derechos REDUCIDOS (reemisión §7.1) → se acepta (transitorio)
+antes:   vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=3 eventos=6
+respuesta: 200 {"ok":true,"license_id":"LIC-2027-REDUCIDA","mode":"FULL_ACCESS"}
+después: vigente=LIC-2027-REDUCIDA modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 1, 'users': 5} · artefactos=4 eventos=7
+
+## 11. Mismo período, el artefacto ANTERIOR (B) otra vez → se acepta: RESIDUAL LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN
+antes:   vigente=LIC-2027-REDUCIDA modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 1, 'users': 5} · artefactos=4 eventos=7
+respuesta: 200 {"ok":true,"license_id":"LIC-2027","mode":"FULL_ACCESS"}
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=5 eventos=8
+
+## 12. Período incoherente (empieza después y termina antes que el vigente) → rechazado como conflicto
+antes:   vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=5 eventos=8
+respuesta: 423 {"code":"LICENSE_PERIOD_CONFLICT","message":"El período de la licencia no es comparable con el vigente; no se aplica.","
+después: vigente=LIC-2027 modo=FULL_ACCESS período=2027-04-01→2028-03-31 entitlements={'companies': 3, 'users': 25} · artefactos=5 eventos=9
+
+# eventos de rechazo: [('LIC-2026', 'OLDER_PERIOD'), ('LIC-2026-AMPLIADA', 'OLDER_PERIOD'), ('LIC-2024', 'OLDER_PERIOD'), ('LIC-CRUZADA', 'INCOMPARABLE_PERIOD')]

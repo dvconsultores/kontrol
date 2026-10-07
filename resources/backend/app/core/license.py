@@ -131,6 +131,38 @@ def compute_mode(license_data: LicenseData, now: datetime, *, last_reliable_date
     return FULL_ACCESS
 
 
+# --------------------------------------------------------------------------- #
+# Orden entre licencias: el período (FR-010-200..202)
+# --------------------------------------------------------------------------- #
+#: Resultados de `compare_period`. Entre períodos distintos el orden es el del contrato
+#: (DOC-07 §5.1: períodos anuales, consecutivos, 1 abr → 31 mar; §10.4/§15.1/§18.2: «no
+#: retroceder el período»). Dentro de un mismo período NO hay orden: la Fase A acepta la
+#: reemisión (§7.1) y lo deja registrado como riesgo residual.
+SAME_PERIOD = "SAME_PERIOD"
+NEWER_PERIOD = "NEWER_PERIOD"
+OLDER_PERIOD = "OLDER_PERIOD"
+INCOMPARABLE_PERIOD = "INCOMPARABLE_PERIOD"
+
+
+def compare_period(current_start: datetime, current_end: datetime, incoming_start: datetime, incoming_end: datetime) -> str:
+    """Ordena dos licencias por su período firmado, y solo por él.
+
+    Igual inicio e igual fin → `SAME_PERIOD`. Inicio y fin ambos posteriores → `NEWER_PERIOD`.
+    Inicio y fin ambos anteriores → `OLDER_PERIOD`. Si inicio y fin no se mueven en el mismo
+    sentido (períodos que se cruzan o comparten un extremo), el paquete no describe un período
+    del contrato y no se ordena: `INCOMPARABLE_PERIOD`, que el llamador trata cerrado. Nada más
+    participa: ni `kid`, ni `license_id`, ni derechos, ni la fecha de importación, ni el reloj.
+    """
+    cs, ce, is_, ie = _as_utc(current_start), _as_utc(current_end), _as_utc(incoming_start), _as_utc(incoming_end)
+    if is_ == cs and ie == ce:
+        return SAME_PERIOD
+    if is_ > cs and ie > ce:
+        return NEWER_PERIOD
+    if is_ < cs and ie < ce:
+        return OLDER_PERIOD
+    return INCOMPARABLE_PERIOD
+
+
 def mode_blocks_write(mode: str) -> bool:
     return mode in {READ_ONLY, SECURITY_SUSPENSION}
 

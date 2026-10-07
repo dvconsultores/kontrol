@@ -212,12 +212,45 @@ def import_license(
 
     license_data = license_engine.parse_license_payload(payload)
 
-    # 4) Calcular modo actual.
-    state = db.execute(select(LicenseState).where(LicenseState.installation_id == installation.installation_uuid)).scalars().first()
+    # 4) Serializar: la fila de la instalación existe siempre (también antes de la primera
+    #    licencia), así que es ella la que se bloquea; después se lee el estado vigente BAJO el
+    #    bloqueo, nunca el leído antes. Dos importaciones concurrentes pasan de una en una y la
+    #    segunda compara contra lo que la primera dejó (FR-010-210..212; LICENCIA-IMPORT-SIN-BLOQUEO).
+    #    En SQLite `with_for_update` no hace nada: la autoridad de concurrencia es PostgreSQL.
+    db.execute(select(Installation).where(Installation.id == installation.id).with_for_update()).scalars().one()
+    state = db.execute(
+        select(LicenseState).where(LicenseState.installation_id == installation.installation_uuid).with_for_update()
+    ).scalars().first()
+
+    # 5) Anti-retroceso por período (Fase A, FR-010-200..209): una licencia de período anterior al
+    #    vigente no lo sustituye; posterior, sí; el mismo período se acepta como reemisión (§7.1,
+    #    riesgo residual LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN). Antes de persistir nada.
+    if state is not None:
+        orden = license_engine.compare_period(state.period_start, state.period_end, license_data.period_start, license_data.period_end)
+        if orden in (license_engine.OLDER_PERIOD, license_engine.INCOMPARABLE_PERIOD):
+            _record_event(
+                db, installation, "LICENSE_PERIOD_DOWNGRADE_REJECTED",
+                {"license_id": license_data.license_id, "current_license_id": state.license_id,
+                 "current_period_end": state.period_end.isoformat(), "incoming_period_end": license_data.period_end.isoformat(),
+                 "outcome": orden},
+                user_id,
+            )
+            db.commit()
+            raise KontrolError(
+                code="LICENSE_PERIOD_DOWNGRADE" if orden == license_engine.OLDER_PERIOD else "LICENSE_PERIOD_CONFLICT",
+                message=(
+                    "La licencia corresponde a un período anterior al vigente y no puede sustituirlo."
+                    if orden == license_engine.OLDER_PERIOD
+                    else "El período de la licencia no es comparable con el vigente; no se aplica."
+                ),
+                status_code=423,
+            )
+
+    # 6) Calcular modo actual.
     last_reliable = state.last_reliable_date if state else None
     mode = license_engine.compute_mode(license_data, _now(), last_reliable_date=last_reliable)
 
-    # 4) Persistir artefacto y estado (versionado, sin sobrescribir historial).
+    # 7) Persistir artefacto y estado (versionado, sin sobrescribir historial).
     artifact = LicenseArtifact(
         license_id=license_data.license_id,
         payload=payload,

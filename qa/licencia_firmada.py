@@ -3,6 +3,11 @@
 Uso (la URL de la base viaja en el entorno, nunca en la línea de órdenes):
     KONTROL_DB_URL=postgresql+psycopg2://... KONTROL_E2E_LICENSE_SIGNING_KEY=<estado>/license/qa_license_signing_key.pem \\
     PYTHONPATH=resources/backend python qa/licencia_firmada.py <license_id> [--otra-instalacion] [--firma-invalida]
+        [--anio <AAAA>] [--periodo <inicio ISO> <fin ISO>]
+
+`--anio` firma el período anual del contrato (1 abr <AAAA> → 31 mar <AAAA+1>, America/Caracas);
+`--periodo` firma exactamente las fechas dadas (p. ej. las del detalle vigente, para una reemisión
+del mismo período). Sin ninguna de las dos, el período relativo a hoy de la siembra.
 
 Imprime en la salida estándar el JSON `{"payload": {...}, "signature_hex": "..."}` que espera
 `POST /api/v1/license/activate`. Firma con el **firmante sintético de la corrida** —el par que
@@ -31,16 +36,30 @@ from app.core.database import get_session_factory, init_models  # noqa: E402
 from app.modules.organization.models import Installation  # noqa: E402
 
 
-def payload_sintetico(license_id: str, installation_id: str) -> dict[str, object]:
-    """Una licencia como la de la siembra E2E (`qa/pg-e2e-seed.py`): vigente, mismo `kid`."""
-    ahora = datetime.now(UTC)
+def payload_sintetico(license_id: str, installation_id: str, *, anio: int | None = None,
+                      periodo: tuple[str, str] | None = None) -> dict[str, object]:
+    """Una licencia como la de la siembra E2E (`qa/pg-e2e-seed.py`): mismo `kid`, mismos campos.
+
+    Por defecto, el período relativo a hoy de la siembra. Con `anio`, el período anual del
+    contrato (DOC-07 §5.1). Con `periodo`, exactamente ese inicio y fin (reemisión del vigente).
+    """
+    if periodo is not None:
+        inicio, fin = datetime.fromisoformat(periodo[0]), datetime.fromisoformat(periodo[1])
+        critico, solo_lectura = fin + timedelta(days=21), fin + timedelta(days=31)
+    elif anio is not None:
+        inicio = datetime.fromisoformat(f"{anio}-04-01T00:00:00-04:00")
+        fin = datetime.fromisoformat(f"{anio + 1}-03-31T23:59:59-04:00")
+        critico = datetime.fromisoformat(f"{anio + 1}-04-21T00:00:00-04:00")
+        solo_lectura = datetime.fromisoformat(f"{anio + 1}-05-01T00:00:00-04:00")
+    else:
+        ahora = datetime.now(UTC)
+        inicio, fin = ahora - timedelta(days=30), ahora + timedelta(days=300)
+        critico, solo_lectura = ahora + timedelta(days=320), ahora + timedelta(days=330)
     return {
         "issuer": "KONTROL-QA", "license_id": license_id, "installation_id": installation_id,
         "customer_id": "C1", "contract_id": "C1", "company_tax_id": "J-12345678-9",
-        "period_start": (ahora - timedelta(days=30)).isoformat(),
-        "period_end": (ahora + timedelta(days=300)).isoformat(),
-        "critical_warning_start": (ahora + timedelta(days=320)).isoformat(),
-        "read_only_start": (ahora + timedelta(days=330)).isoformat(),
+        "period_start": inicio.isoformat(), "period_end": fin.isoformat(),
+        "critical_warning_start": critico.isoformat(), "read_only_start": solo_lectura.isoformat(),
         "plan": "MULTI_COMPANY", "minimum_version": "1.0.0", "kid": "kontrol-lic-2026-01",
     }
 
@@ -73,7 +92,9 @@ def main(argv: list[str]) -> int:
         raise RuntimeError("la base no tiene instalación")
 
     destino = "KTL-QA-OTRA-INSTALACION" if "--otra-instalacion" in argv else instalacion.installation_uuid
-    payload = payload_sintetico(argv[0], destino)
+    anio = int(argv[argv.index("--anio") + 1]) if "--anio" in argv else None
+    periodo = (argv[argv.index("--periodo") + 1], argv[argv.index("--periodo") + 2]) if "--periodo" in argv else None
+    payload = payload_sintetico(argv[0], destino, anio=anio, periodo=periodo)
     firma = "00" * 64 if "--firma-invalida" in argv else firmar(payload, clave)
     print(json.dumps({"payload": payload, "signature_hex": firma}, ensure_ascii=False))
     return 0

@@ -1,0 +1,10 @@
+# Corridas E2E de la Fase A · qa/e2e-run.py, base nueva por corrida, firmante sintético por corrida · reloj sincronizado
+# 1) dirigida: licencia-periodo + licencia-import + licencia + diagnostico → 28/28
+# 2) global 1 → 228 / 0 / 40 (224 + las 4 nuevas)
+# 3) global 2 → 228 / 0 / 40
+
+r20261006t195729p409682nde9969 · inicio 2026-10-06T19:57:29+00:00 · fin 2026-10-06T19:57:49+00:00 · suite {'passed': 28} · 11.0 s · limpieza LIMPIA · base ELIMINADA · usuarios 11
+r20261006t195941p412261nfe3bbb · inicio 2026-10-06T19:59:41+00:00 · fin 2026-10-06T20:02:19+00:00 · suite {'skipped': 40, 'passed': 228} · 149.4 s · limpieza LIMPIA · base ELIMINADA · usuarios 70
+r20261006t200219p434362nabd7fe · inicio 2026-10-06T20:02:19+00:00 · fin 2026-10-06T20:05:04+00:00 · suite {'skipped': 40, 'passed': 228} · 155.3 s · limpieza LIMPIA · base ELIMINADA · usuarios 70
+
+bases de corrida al terminar: 0 (qa/e2e-bases.py listar) · la concurrencia no se prueba desde el navegador: la autoridad es tests/test_license_import_race.py sobre PostgreSQL

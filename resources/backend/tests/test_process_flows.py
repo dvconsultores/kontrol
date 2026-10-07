@@ -23,6 +23,7 @@ from sqlalchemy.pool import StaticPool
 from app.core.config import get_settings
 from app.core.database import Base, get_db, init_models
 from app.modules.licensing import service as licensing_service
+from app.modules.licensing.models import LicenseState
 from app.modules.organization.models import Installation
 from app.modules.setup.api import SetupRequest, initialize
 
@@ -32,7 +33,7 @@ _APP = None
 _CLIENT = None
 
 
-def _import_license(db: Session, *, read_only_past: bool = False) -> str:
+def _import_license(db: Session) -> str:
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
@@ -43,14 +44,9 @@ def _import_license(db: Session, *, read_only_past: bool = False) -> str:
     ).decode("utf-8")
     inst = db.execute(select(Installation).limit(1)).scalars().first()
     now = datetime.now(UTC)
-    if read_only_past:
-        period_end = (now - timedelta(days=1)).isoformat()
-        critical = (now - timedelta(days=3)).isoformat()
-        read_only = (now - timedelta(days=2)).isoformat()
-    else:
-        period_end = (now + timedelta(days=120)).isoformat()
-        critical = (now + timedelta(days=180)).isoformat()
-        read_only = (now + timedelta(days=200)).isoformat()
+    period_end = (now + timedelta(days=120)).isoformat()
+    critical = (now + timedelta(days=180)).isoformat()
+    read_only = (now + timedelta(days=200)).isoformat()
     payload = {
         "issuer": "K", "license_id": "LIC-E2E", "installation_id": inst.installation_uuid,
         "customer_id": "C1", "contract_id": "C1", "company_tax_id": "J-12345678-9",
@@ -73,6 +69,23 @@ def _import_license(db: Session, *, read_only_past: bool = False) -> str:
 
 def _activate_full_access(db: Session) -> None:
     _import_license(db)
+
+
+def _simular_licencia_vencida(db: Session) -> str:
+    """El tiempo pasa sobre la licencia vigente: su período queda atrás y el 1 de mayo ya ocurrió.
+
+    Antes se simulaba importando otra licencia con fechas pasadas; desde la Fase A de
+    LICENCIA-DOWNGRADE-FIRMADO un período anterior o incoherente no sustituye al vigente, así que
+    la expiración se simula como ocurre de verdad: con las fechas del estado, coherentes entre sí.
+    """
+    estado = db.execute(select(LicenseState)).scalars().one()
+    now = datetime.now(UTC)
+    estado.period_start = now - timedelta(days=400)
+    estado.period_end = now - timedelta(days=1)
+    estado.critical_warning_start = now - timedelta(days=3)
+    estado.read_only_start = now - timedelta(days=2)
+    db.commit()
+    return licensing_service.current_mode(db)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -189,10 +202,10 @@ def test_read_only_blocks_business_writes():
     companies = _CLIENT.get("/api/v1/organization/companies", headers=H).json()["items"]
     company_id = companies[0]["id"]
 
-    # licencia con read_only_start en el pasado → modo READ_ONLY (enforcement real)
+    # la licencia vigente envejece hasta pasado el 1 de mayo → modo READ_ONLY (enforcement real)
     db = _FACTORY()
     try:
-        mode = _import_license(db, read_only_past=True)
+        mode = _simular_licencia_vencida(db)
     finally:
         db.close()
     assert mode == "READ_ONLY"

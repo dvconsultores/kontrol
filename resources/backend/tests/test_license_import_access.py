@@ -79,9 +79,15 @@ def _usuario(db: Session, tenant_id: str, empresa: str, username: str, *, sin: s
     db.add(UserScope(user_id=str(usuario.id), company_id=empresa))
 
 
+#: El período de todas las licencias sintéticas del módulo, fijado una vez: licencias del mismo
+#: período son reemisiones entre sí (Fase A, FR-010-206..208); una con fechas anteriores es un
+#: retroceso y se rechaza (FR-010-200). Congelarlo evita que los segundos entre pruebas ordenen.
+AHORA = datetime.now(UTC).replace(microsecond=0)
+
+
 def _licencia(license_id: str, instalacion: str, *, fin_en_dias: int = 300, inicio_en_dias: int = -30) -> dict:
-    """Payload sintético; las fechas relativas fijan el modo que calculará el servidor."""
-    ahora = datetime.now(UTC)
+    """Payload sintético; las fechas relativas al instante congelado fijan período y modo."""
+    ahora = AHORA
     return {
         "issuer": "QA", "license_id": license_id, "installation_id": instalacion,
         "customer_id": "C-TEST", "contract_id": "K-TEST", "company_tax_id": "J-00000000-0",
@@ -308,17 +314,15 @@ def test_licimp_09_la_misma_licencia_otra_vez_deja_el_estado_igual_y_anota_el_ev
     assert _estado() == (licencia, modo, eventos + 1)
 
 
-def test_licimp_10_hoy_una_licencia_firmada_mas_vieja_reemplaza_la_actual_deuda_licencia_downgrade_firmado():
-    """Contrato de hoy, documentado, no deseado: LICENCIA-DOWNGRADE-FIRMADO (fuera de este delta).
-    Lo que este delta sí garantiza es que solo el administrador puede provocarlo."""
+def test_licimp_10_una_licencia_firmada_mas_vieja_ya_no_reemplaza_la_actual_ni_siquiera_al_administrador():
+    """Cerrado en la Fase A de LICENCIA-DOWNGRADE-FIRMADO (FR-010-200): antes, el administrador la
+    aplicaba y la instalación quedaba en READ_ONLY. Las compuertas 1 y 2 siguen delante."""
     vieja = _firmada(_licencia("LIC-VIEJA", _INSTALACION, inicio_en_dias=-800, fin_en_dias=-400))
     assert _CLIENT.post(IMPORT, json=vieja).status_code == 401
     assert _CLIENT.post(IMPORT, json=vieja, headers=_sesion("lector")).status_code == 403
     assert _estado()[0] == "LIC-BASE"
     r = _CLIENT.post(IMPORT, json=vieja, headers=_sesion("admin"))
-    assert r.status_code == 200 and r.json()["mode"] == "READ_ONLY", r.text
-    assert _estado()[:2] == ("LIC-VIEJA", "READ_ONLY")
-    _restaurar_base()
+    assert r.status_code == 423 and r.json()["code"] == "LICENSE_PERIOD_DOWNGRADE", r.text
     assert _estado()[:2] == ("LIC-BASE", "FULL_ACCESS")
 
 

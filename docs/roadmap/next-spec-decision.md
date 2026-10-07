@@ -2808,3 +2808,26 @@ pendiente: `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKL
 `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
 
+## 2026-10-06 · Fase A de LICENCIA-DOWNGRADE-FIRMADO y cierre de LICENCIA-IMPORT-SIN-BLOQUEO (dueña 004)
+
+La dueña resolvió el bloqueo con la opción A: ordenar por período ahora y dejar explícito lo que
+el contrato no ordena. El comparador compara solo el período firmado —igual inicio e igual fin es
+el mismo período; ambos posteriores, más nuevo; ambos anteriores, más viejo; cualquier otra forma
+no es un período del contrato y no se aplica— y la importación bloquea la fila de la instalación,
+relee el estado bajo el bloqueo y rechaza antes de persistir: una licencia de período anterior ya
+no sustituye a la vigente ni cuando la vigente está vencida o en solo lectura; una posterior entra;
+la misma es idempotente; la reemisión del mismo período entra como permite §7.1. Dos importaciones
+concurrentes pasan de una en una y terminan siempre en el período mayor, con una prueba
+determinista en PostgreSQL y dos mutaciones que demuestran que la carrera está cubierta.
+
+Lo que sigue abierto, con nombre: `LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN`, con el objetivo
+ratificado de una `revision` firmada que no se implementa hasta que cambien el paquete y el emisor.
+`LICENCIA-DOWNGRADE-FIRMADO` queda parcialmente convergida, no cerrada.
+
+**Decisiones pendientes de la dueña:** `LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN` (cuándo y cómo
+introducir la `revision` en el paquete y el emisor), `BACKEND-KEEPALIVE-5S`, `PANEL-VERSION-VACIA`,
+`LICENCIA-SIN-ROTACION-DE-CLAVE`. Candidatas siguientes, sin decisión pendiente:
+`OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
+`ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
+

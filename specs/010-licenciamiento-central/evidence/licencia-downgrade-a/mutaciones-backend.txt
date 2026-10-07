@@ -1,0 +1,31 @@
+GOOD: (0, '18 passed in 4.59s') (0, '4 passed in 4.22s')
+M-01 sin comprobación de período [SQLite]
+  MUTATED → FAIL (muere) · 8 failed, 10 passed in 4.45s
+  RESTORED → PASS · 18 passed in 4.66s
+M-02 comparador invertido [SQLite]
+  MUTATED → FAIL (muere) · 10 failed, 8 passed in 4.53s
+  RESTORED → PASS · 18 passed in 4.59s
+M-03 se acepta un período anterior si el estado está en READ_ONLY [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 17 passed in 4.59s
+  RESTORED → PASS · 18 passed in 4.62s
+M-04 se ordena por la fecha de verificación/importación local [SQLite]
+  MUTATED → FAIL (muere) · 12 failed, 6 passed in 4.44s
+  RESTORED → PASS · 18 passed in 4.60s
+M-05 se ordena por el kid [SQLite]
+  MUTATED → FAIL (muere) · 10 failed, 8 passed in 4.58s
+  RESTORED → PASS · 18 passed in 4.59s
+M-06 sin bloqueo de fila [PostgreSQL]
+  MUTATED → FAIL (muere) · 2 failed, 2 passed in 4.23s
+  RESTORED → PASS · 4 passed in 4.23s
+M-07 se compara con el estado leído al entrar, antes del bloqueo [PostgreSQL]
+  MUTATED → FAIL (muere) · 2 failed, 2 passed in 4.31s
+  RESTORED → PASS · 4 passed in 4.30s
+M-08 se muta el estado antes de comparar [SQLite]
+  MUTATED → FAIL (muere) · 8 failed, 10 passed in 4.45s
+  RESTORED → PASS · 18 passed in 4.57s
+M-09 se rechaza la reemisión del mismo período [SQLite guarda las fechas sin zona: el mismo período se ve 4 h «más nuevo»; la igualdad exacta la decide PostgreSQL] [PostgreSQL]
+  MUTATED → FAIL (muere) · 3 failed, 15 passed in 5.24s
+  RESTORED → PASS · 18 passed in 5.26s
+M-10 vuelve la confianza en la clave de la instalación (además del ancla) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 17 passed in 4.65s
+  RESTORED → PASS · 18 passed in 4.64s

@@ -77,8 +77,13 @@ def _usuario(db: Session, tenant_id: str, empresa: str, username: str, *, sin: s
     db.add(UserScope(user_id=str(usuario.id), company_id=empresa))
 
 
+#: Período congelado para todo el módulo: las licencias sintéticas son reemisiones del mismo
+#: período (Fase A de LICENCIA-DOWNGRADE-FIRMADO), no retrocesos por segundos de diferencia.
+AHORA = datetime.now(UTC).replace(microsecond=0)
+
+
 def _licencia(license_id: str, instalacion: str, **extra) -> dict:
-    ahora = datetime.now(UTC)
+    ahora = AHORA
     return {
         "issuer": "QA", "license_id": license_id, "installation_id": instalacion,
         "customer_id": "C-TEST", "contract_id": "K-TEST", "company_tax_id": "J-00000000-0",
