@@ -1,0 +1,14 @@
+# Canonicalizador real (app/core/license.py:86 y licensing/service.py:158): json.dumps(payload, sort_keys=True, ensure_ascii=False).encode('utf-8') sobre el DICCIONARIO RECIBIDO, no sobre el modelo.
+
+## 1. Legacy sintética firmada hoy · bytes canónicos: 441 bytes · sha256 1668aed21829b814
+   verifica con el verificador actual: True
+   LicenseData parsea la legacy sin `revision`: ['company_tax_id', 'contract_id', 'critical_warning_start', 'customer_id'] ... (revision no es campo del modelo hoy)
+
+## 2. Camino COMPATIBLE: una revisionada trae `revision` DENTRO del dict firmado; la legacy no lo trae, y sus bytes no cambian.
+   bytes legacy después (misma función, mismo dict): True · revisionada incluye revision: True
+   quitar `revision` del dict antes de verificar invalida la firma de la revisionada: False
+
+## 3. Camino INCOMPATIBLE (lo que NO debe hacerse): reconstruir el payload desde un modelo con revision=None añade '"revision": null' y rompe la firma legacy.
+   bytes iguales: False · la firma legacy verifica sobre el reconstruido: False
+
+LEGACY_CANONICALIZATION_COMPATIBILITY = PROVEN mientras `revision` viva solo en el dict firmado y el verificador siga trabajando sobre el dict recibido (así es hoy). Un campo opcional en LicenseData, poblado desde payload.get('revision'), no toca los bytes.

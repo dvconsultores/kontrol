@@ -2831,3 +2831,27 @@ introducir la `revision` en el paquete y el emisor), `BACKEND-KEEPALIVE-5S`, `PA
 `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
 
+## 2026-10-06 · LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN detenida: no hay emisor (dueña 004)
+
+La dueña ratificó la `revision` firmada: entera, positiva, monótona por instalación y período,
+asignada por el emisor, con la transición legacy definida al detalle. Este ciclo probó que el
+paquete puede llevarla sin romper una sola licencia emitida: el verificador trabaja sobre el
+diccionario recibido, así que una `revision` presente solo en los paquetes nuevos no cambia los
+bytes de las legacy (y quedó demostrado el camino que sí los rompería). Pero la `revision` es del
+emisor, y el emisor —la Autoridad Central de Licencias de DOC-07— no existe en este repositorio ni
+en ninguno accesible: aquí solo hay el cliente y firmantes sintéticos de QA, y el hospedaje de la
+autoridad sigue en la decisión empresarial D0-06. Asignarla desde el cliente o desde el firmante de
+QA sería aparentar un orden que nadie garantiza, y el encargo lo prohíbe expresamente. El ciclo se
+detuvo con el informe para la dueña y las reglas listas para cuando el emisor exista.
+
+**Decisión material nueva:** `EMISOR-DE-LICENCIAS-SIN-IMPLEMENTAR` — construir la autoridad
+central (Spec propia), una herramienta mínima de emisión del propietario fuera del cliente, o
+esperar a D0-06. De ella cuelgan la `revision`, la rotación de claves y la activación en línea.
+
+**Decisiones pendientes de la dueña:** `EMISOR-DE-LICENCIAS-SIN-IMPLEMENTAR` (y con ella
+`LICENCIA-REEMISION-INTRAPERIODO-SIN-ORDEN` y `LICENCIA-SIN-ROTACION-DE-CLAVE`),
+`BACKEND-KEEPALIVE-5S`, `PANEL-VERSION-VACIA`. Candidatas siguientes, sin decisión pendiente:
+`OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
+`ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`. `NEXT SPEC = 029` no cambia.
+
