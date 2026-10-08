@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.core import license_contract as contract
 from app.core import sync_auth_contract as sync_auth
-from central_authority.config import Settings, SigningKeyError, load_signing_key
+from central_authority.config import Settings, SigningKeyError, active_signing_pem, load_signing_key
 from central_authority.models import AuditEvent, Installation, Issuance, PeriodLineage, SyncChallenge
 
 logger = logging.getLogger(__name__)
@@ -144,7 +144,7 @@ def issue_license(db: Session, *, settings: Settings, installation_uuid: str, pe
     if not isinstance(entitlements, dict):
         raise CentralError("INVALID_ENTITLEMENTS", "Los derechos deben ser un objeto.")
     try:
-        clave = load_signing_key(settings.signing_private_key_pem)
+        clave = load_signing_key(active_signing_pem(settings))  # la privada del `kid` activo, y solo esa (FR-010-450/451)
     except SigningKeyError as exc:
         logger.warning("autoridad: clave de firma del propietario %s; emisión rechazada", exc.reason)
         _audit(db, operation="ISSUE_LICENSE", operator=operator, installation_uuid=installation_uuid,

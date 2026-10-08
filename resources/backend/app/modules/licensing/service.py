@@ -186,23 +186,38 @@ def import_license(
     """
     installation = get_installation(db)
 
-    # 1) El ancla de confianza es la clave pública del propietario, configurada fuera de la
-    #    instalación; nunca la clave de la propia instalación (FR-010-148/149). Sin ancla, o con
-    #    una que no sirve, se falla cerrado antes de mirar el artefacto: no es un artefacto malo,
-    #    es una instalación que no puede verificar nada, y no se anota como evento de licencia.
-    public_key_pem = get_settings().license_public_key_pem
+    # 1) El conjunto de confianza del propietario se configura fuera de la instalación; nunca la clave
+    #    de la propia instalación (FR-010-148/149) ni nada que traiga el paquete (FR-010-444). Sin
+    #    conjunto, o con uno que se contradice, se falla cerrado antes de mirar el artefacto: no es un
+    #    artefacto malo, es una instalación que no puede verificar nada, y no se anota como evento.
+    ajustes = get_settings()
     try:
-        trust_anchor.load_trust_anchor(public_key_pem)
+        confianza = trust_anchor.load_trust_set(
+            trust_keys=ajustes.license_trust_keys, legacy_pem=ajustes.license_public_key_pem, legacy_kid=ajustes.license_public_key_kid)
     except trust_anchor.TrustAnchorError as exc:
         logger.warning("licencia: ancla de confianza del propietario %s; importación rechazada", exc.reason)
         raise KontrolError(
             code=f"LICENSE_TRUST_ANCHOR_{exc.reason.upper()}",
-            message="La instalación no tiene configurada una clave pública válida del propietario; no se puede verificar la licencia.",
+            message="La instalación no tiene configurado un conjunto válido de claves públicas del propietario; no se puede verificar la licencia.",
             status_code=503,
         ) from None
-    assert public_key_pem is not None  # lo garantiza el ancla cargada
 
-    # 2) Verificar firma (Ed25519) contra el ancla.
+    # 2) La clave la elige el `kid` FIRMADO del paquete, y solo esa (FR-010-440..443): sin `kid`, o con
+    #    uno que no está en el conjunto, se rechaza aunque alguna otra clave de confianza verificara la
+    #    firma. Nunca se prueban todas las claves. Después, la firma Ed25519 contra esa clave exacta.
+    kid_recibido = payload.get("kid")
+    try:
+        public_key_pem = trust_anchor.resolve_trusted_owner_key(kid_recibido, confianza)
+    except trust_anchor.TrustAnchorError as exc:
+        _record_event(db, installation, "LICENSE_SIGNING_KEY_REJECTED",
+                      {"license_id": payload.get("license_id"), "kid": kid_recibido if isinstance(kid_recibido, str) else None, "reason": exc.reason}, user_id)
+        db.commit()
+        raise KontrolError(
+            code="LICENSE_SIGNING_KID_UNKNOWN" if exc.reason == "unknown_kid" else "LICENSE_SIGNING_KID_MISSING",
+            message=("La licencia señala una clave de firma que esta instalación no reconoce." if exc.reason == "unknown_kid"
+                     else "La licencia no señala la clave de firma del propietario (kid)."),
+            status_code=423,
+        ) from None
     if not license_engine.verify_license_signature(payload, signature_hex, public_key_pem):
         _record_event(db, installation, "LICENSE_SIGNATURE_INVALID", {"license_id": payload.get("license_id")}, user_id)
         db.commit()

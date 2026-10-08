@@ -2961,3 +2961,15 @@ completa; la 044 no cambia. Detalle: `master-57-reconciliation.md`.
 **Candidatas técnicas tras esta reconciliación (sin iniciar):** `LICENCIA-SIN-ROTACION-DE-CLAVE`, después
 `LICENCIA-ESTADO-SIN-REVERIFICAR`, `CENTRAL-SYNC-SIN-LIMITE-DE-TASA`, `BACKEND-KEEPALIVE-5S`,
 `PANEL-VERSION-VACIA`, y la convergencia priorizada de las Specs parciales.
+
+## 2026-10-07 · `NEXT-SPEC-POINTER-AMBIGUO` — OWNER_DECIDED / CLOSED
+
+La dueña decidió: `NEXT SPEC = 029` **deja de ser un puntero operativo vigente** (queda arriba como
+registro histórico de la selección del 2026-08-31). A partir de ahora se separan dos cosas:
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `LICENCIA-SIN-ROTACION-DE-CLAVE` (ejecutado y convergido el mismo día: `specs/010-licenciamiento-central/spec004-licencia-rotacion-de-clave-delta.md`) |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — no se elige 018, 047, 048, 057 ni ninguna otra; la priorización se hará después |
+
+Los informes de cierre dejan de repetir «`NEXT SPEC = 029` no cambia» y pasan a estos dos punteros.

@@ -1,0 +1,24 @@
+M-04 un kid con dos claves distintas no se detecta (gana la última) [SQLite]
+  MUTATED → FAIL (muere) · 3 failed, 35 passed in 5.00s
+  RESTORED → PASS · 38 passed in 5.03s
+M-05 la misma clave bajo dos kid se admite como alias [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 36 passed in 5.04s
+  RESTORED → PASS · 38 passed in 5.02s
+M-06 el par legacy se admite sin kid (kid inventado) [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 17 passed in 0.21s
+  RESTORED → PASS · 19 passed in 0.17s
+M-07 la licencia que trae su clave pública se vuelve de confianza [SQLite]
+  MUTATED → FAIL (muere) · 3 failed, 16 passed in 4.79s
+  RESTORED → PASS · 19 passed in 4.95s
+M-08 la autoridad firma con la primera clave si el kid activo no tiene clave [SQLite]
+  MUTATED → FAIL (muere) · 3 failed, 35 passed in 5.02s
+  RESTORED → PASS · 38 passed in 5.03s
+M-09 la autoridad firma con una clave que no es la del kid del paquete [SQLite]
+  MUTATED → FAIL (muere) · 4 failed, 15 passed in 4.74s
+  RESTORED → PASS · 19 passed in 4.99s
+M-10 kid duplicado con material distinto en el conjunto de firma gana el último [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 18 passed in 0.20s
+  RESTORED → PASS · 19 passed in 0.16s
+M-11 el kid pasa a ordenar (kid B vence a kid A) en la reemisión [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 18 passed in 4.93s
+  RESTORED → PASS · 19 passed in 4.93s

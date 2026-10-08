@@ -48,7 +48,7 @@ def test_cfg_01_en_prod_sin_ancla_la_configuracion_no_carga(monkeypatch: pytest.
     with pytest.raises(ValidationError) as excinfo:
         Settings(_env_file=None, environment="prod", secret_key=SECRETO, license_public_key_pem=None)
     texto = str(excinfo.value)
-    assert "KONTROL_LICENSE_PUBLIC_KEY_PEM es obligatoria en prod" in texto
+    assert "KONTROL_LICENSE_PUBLIC_KEY_PEM (con KONTROL_LICENSE_PUBLIC_KEY_KID) o KONTROL_LICENSE_TRUST_KEYS es obligatoria" in texto
     assert "ancla missing" in texto
 
 
@@ -57,7 +57,7 @@ def test_cfg_01b_en_prod_un_ancla_en_blanco_tampoco(monkeypatch: pytest.MonkeyPa
     with pytest.raises(ValidationError) as excinfo:
         Settings(_env_file=None, environment="prod", secret_key=SECRETO, license_public_key_pem="   ")
     texto = str(excinfo.value)
-    assert "KONTROL_LICENSE_PUBLIC_KEY_PEM es obligatoria en prod" in texto
+    assert "KONTROL_LICENSE_PUBLIC_KEY_PEM (con KONTROL_LICENSE_PUBLIC_KEY_KID) o KONTROL_LICENSE_TRUST_KEYS es obligatoria" in texto
     assert "ancla missing" in texto
 
 
@@ -71,7 +71,7 @@ def test_cfg_02_en_prod_un_ancla_que_no_es_pem_no_carga(monkeypatch: pytest.Monk
             license_public_key_pem="esto no es una clave",
         )
     texto = str(excinfo.value)
-    assert "KONTROL_LICENSE_PUBLIC_KEY_PEM es obligatoria en prod" in texto
+    assert "KONTROL_LICENSE_PUBLIC_KEY_PEM (con KONTROL_LICENSE_PUBLIC_KEY_KID) o KONTROL_LICENSE_TRUST_KEYS es obligatoria" in texto
     assert "ancla invalid" in texto
 
 
@@ -85,7 +85,7 @@ def test_cfg_03_en_prod_una_clave_que_no_es_ed25519_no_carga(monkeypatch: pytest
             license_public_key_pem=pem_rsa(),
         )
     texto = str(excinfo.value)
-    assert "KONTROL_LICENSE_PUBLIC_KEY_PEM es obligatoria en prod" in texto
+    assert "KONTROL_LICENSE_PUBLIC_KEY_PEM (con KONTROL_LICENSE_PUBLIC_KEY_KID) o KONTROL_LICENSE_TRUST_KEYS es obligatoria" in texto
     assert "ancla invalid" in texto
 
 

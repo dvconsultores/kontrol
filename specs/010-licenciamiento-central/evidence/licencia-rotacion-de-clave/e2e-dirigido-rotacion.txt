@@ -1,0 +1,17 @@
+[e2e r20261007t233013p841105nf2210e] comprobar
+[e2e r20261007t233013p841105nf2210e] crear base
+[e2e r20261007t233013p841105nf2210e] migrar
+[e2e r20261007t233013p841105nf2210e] sembrar
+[e2e r20261007t233013p841105nf2210e] backend
+[e2e r20261007t233013p841105nf2210e] comprobar la base del backend
+[e2e r20261007t233013p841105nf2210e] autoridad central
+[e2e r20261007t233013p841105nf2210e] frontend
+[e2e r20261007t233013p841105nf2210e] suite
+
+Running 1 test using 1 worker
+
+  ✓  1 [licencia-rotacion] › e2e/licencia-rotacion.spec.ts:76:3 › Licencia · rotación de la clave del propietario con solapamiento › E2E-KEYROT-01..08 · A y B entran cada una por su kid; kid desconocido, ausente o cruzado se rechaza; el orden no cambia (6.8s)
+
+  1 passed (7.2s)
+[e2e r20261007t233013p841105nf2210e] limpiar
+[e2e r20261007t233013p841105nf2210e] suite: {'passed': 1} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261007t233013p841105nf2210e

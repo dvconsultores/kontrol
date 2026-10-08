@@ -115,8 +115,9 @@ automática. Nada del PDF se reescribe: el repositorio lo enlaza.
 
 `GLOBAL ROADMAP RECONCILIATION — CLOSED / CONVERGED` · `MASTER57 — ACTIVE` · `SPEC057 — PLANNED / NOT
 STARTED` · `FISCAL HOMOLOGATION ASSUMPTION — RECONCILED` · `D0-07 — LEGAL_VALIDATION_PENDING / NARROWED`
-· **aparte:** `NEXT-SPEC-POINTER-AMBIGUO — MATERIAL_DECISION_REQUIRED` (no impide el cierre: MASTER57 y
-057 quedan correctamente incorporadas).
+· **aparte:** `NEXT-SPEC-POINTER-AMBIGUO`, que la dueña cerró el mismo día (**OWNER_DECIDED / CLOSED**:
+`NEXT SPEC = 029` deja de ser operativo; `NEXT TECHNICAL CYCLE` separado de `NEXT MASTER SPEC = NOT YET
+PRIORITIZED`; ver `next-spec-decision.md`).
 
 Validaciones (`docs/evidence/master-57-reconciliation/validaciones.txt`): VAL-01 57 filas · VAL-02 la
 057 una vez · VAL-03 `PLANNED / NOT_STARTED` · VAL-04 PDF con seguimiento · VAL-05 referenciado desde

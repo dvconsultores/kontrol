@@ -28,6 +28,8 @@ services:
       KONTROL_CENTRAL_DB_URL: "postgresql+psycopg2://central:${KONTROL_CENTRAL_DB_PASSWORD}@central-db:5432/kontrol_central"
       KONTROL_CENTRAL_SIGNING_PRIVATE_KEY_PEM: "${KONTROL_CENTRAL_SIGNING_PRIVATE_KEY_PEM:?KONTROL_CENTRAL_SIGNING_PRIVATE_KEY_PEM es obligatoria: la clave privada del propietario}"
       KONTROL_CENTRAL_SIGNING_KID: "${KONTROL_CENTRAL_SIGNING_KID:-kontrol-lic-2026-01}"
+      # Rotación con solapamiento: conjunto `kid → PEM privada` (JSON) además del par anterior; el kid activo es SIGNING_KID.
+      KONTROL_CENTRAL_SIGNING_KEYS: "${KONTROL_CENTRAL_SIGNING_KEYS:-}"
       TZ: "America/Caracas"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8010/health/live')"]

@@ -44,6 +44,9 @@ PUERTO_BACKEND = 8000
 PUERTO_FRONTEND = 5173
 #: La Autoridad Central REAL de la corrida (`central_authority.main:app`), sobre su propia base efímera.
 PUERTO_CENTRAL = 8010
+#: Identificadores de las dos claves sintéticas del propietario de la corrida (A firma; B solo es de confianza).
+KID_A = "kontrol-lic-2026-01"
+KID_B = "kontrol-lic-2027-01"
 API = f"http://127.0.0.1:{PUERTO_BACKEND}/api/v1"
 WEB = f"http://localhost:{PUERTO_FRONTEND}"
 
@@ -144,6 +147,14 @@ class Corrida:
             # la siembra y `qa/licencia_firmada.py`. Explícita, nunca la clave de la instalación.
             "KONTROL_LICENSE_PUBLIC_KEY_PEM": self.ancla_publica(),
             "KONTROL_E2E_LICENSE_SIGNING_KEY": str(self.clave_de_firma),
+            # Rotación con solapamiento (LICENCIA-SIN-ROTACION-DE-CLAVE): un segundo firmante sintético B por
+            # corrida; el backend confía en A (par de una clave) y en B (conjunto `kid → PEM`). La autoridad
+            # de la corrida sigue firmando con A: la rotación del activo se certifica en el backend.
+            "KONTROL_LICENSE_PUBLIC_KEY_KID": KID_A,
+            "KONTROL_LICENSE_TRUST_KEYS": json.dumps({KID_A: self.ancla_publica(), KID_B: self.ancla_publica_b()}),
+            "KONTROL_E2E_LICENSE_SIGNING_KEY_B": str(self.clave_de_firma_b),
+            "KONTROL_E2E_LICENSE_KID_A": KID_A,
+            "KONTROL_E2E_LICENSE_KID_B": KID_B,
             "KONTROL_STORAGE_PATH": str(self.estado / "storage"),
             "KONTROL_BACKUP_PATH": str(self.estado / "backups"),
             "KONTROL_QA_IDS_FILE": str(self.estado / "n6-ids.json"),
@@ -176,6 +187,15 @@ class Corrida:
         """La clave privada del firmante sintético de la corrida (estado efímero, 0600)."""
         return self.estado / "license" / "qa_license_signing_key.pem"
 
+    @property
+    def clave_de_firma_b(self) -> Path:
+        """La segunda clave sintética del propietario (B), para la rotación con solapamiento."""
+        return self.estado / "license" / "qa_license_signing_key_b.pem"
+
+    def ancla_publica_b(self) -> str:
+        self.generar_firmante()
+        return self._ancla_b
+
     def generar_firmante(self) -> None:
         """Un par Ed25519 nuevo por corrida: su pública es el ancla de confianza del backend y de
         la siembra; su privada firma las licencias sintéticas. Nunca sale del estado efímero.
@@ -185,17 +205,20 @@ class Corrida:
         from cryptography.hazmat.primitives import serialization
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-        privada = Ed25519PrivateKey.generate()
         self.clave_de_firma.parent.mkdir(parents=True, exist_ok=True)
-        descriptor = os.open(self.clave_de_firma, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        with os.fdopen(descriptor, "wb") as fichero:
-            fichero.write(privada.private_bytes(
+        publicas = []
+        for ruta in (self.clave_de_firma, self.clave_de_firma_b):
+            privada = Ed25519PrivateKey.generate()
+            descriptor = os.open(ruta, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            with os.fdopen(descriptor, "wb") as fichero:
+                fichero.write(privada.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.PKCS8,
+                    encryption_algorithm=serialization.NoEncryption()))
+            publicas.append(privada.public_key().public_bytes(
                 encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()))
-        self._ancla = privada.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo).decode("utf-8")
+                format=serialization.PublicFormat.SubjectPublicKeyInfo).decode("utf-8"))
+        self._ancla, self._ancla_b = publicas
 
     def ancla_publica(self) -> str:
         """El ancla de la corrida; si aún no hay firmante, se genera: todo proceso de la corrida
@@ -352,7 +375,7 @@ class Corrida:
     def orden_de_la_suite(self) -> tuple[list[str], Path]:
         if self.orden is not None:
             return [*self.orden, *self.argumentos], base.RAIZ
-        return (["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium", "--project=licencia-revision", "--project=licencia-sync",
+        return (["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium", "--project=licencia-revision", "--project=licencia-sync", "--project=licencia-rotacion",
                  "--output", str(self.evidencia / "test-results"), *self.argumentos], FRONTEND)
 
     def suite(self) -> int:

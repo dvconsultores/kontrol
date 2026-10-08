@@ -4,6 +4,7 @@ Uso (la URL de la base viaja en el entorno, nunca en la línea de órdenes):
     KONTROL_DB_URL=postgresql+psycopg2://... KONTROL_E2E_LICENSE_SIGNING_KEY=<estado>/license/qa_license_signing_key.pem \\
     PYTHONPATH=resources/backend python qa/licencia_firmada.py <license_id> [--otra-instalacion] [--firma-invalida]
         [--anio <AAAA>] [--periodo <inicio ISO> <fin ISO>] [--revision <json>]
+        [--kid <kid>] [--sin-kid] [--firmante-b]
     PYTHONPATH=resources/backend python qa/licencia_firmada.py --vigente
 
 `--anio` firma el período anual del contrato (1 abr <AAAA> → 31 mar <AAAA+1>, America/Caracas);
@@ -12,7 +13,10 @@ del mismo período). Sin ninguna de las dos, el período relativo a hoy de la si
 añade el claim tal cual (`3`, `999`, `true`, `0`…): revisionadas sintéticas **hostiles**, para probar
 conflicto, manipulación y valores inválidos; las revisionadas legítimas las emite
 `qa/autoridad_central.py`. `--vigente` imprime el artefacto vigente exacto, tal como está guardado
-(carga y firma): la reimportación idempotente.
+(carga y firma): la reimportación idempotente. Rotación de clave: `--firmante-b` firma con la segunda
+clave sintética de la corrida (`KONTROL_E2E_LICENSE_SIGNING_KEY_B`); `--kid` fija el `kid` del paquete
+(por defecto el de A) y `--sin-kid` lo omite: los tres sirven para probar que el cliente elige la clave
+exactamente por el `kid` firmado.
 
 Imprime en la salida estándar el JSON `{"payload": {...}, "signature_hex": "..."}` que espera
 `POST /api/v1/license/activate`. Firma con el **firmante sintético de la corrida** —el par que
@@ -105,9 +109,9 @@ def main(argv: list[str]) -> int:
         return 2
     if os.environ.get("KONTROL_ENVIRONMENT", "local") not in ("local", "dev", "qa"):
         raise RuntimeError("este guion solo firma licencias de prueba en entornos de QA")
-    ruta_firmante = os.environ.get("KONTROL_E2E_LICENSE_SIGNING_KEY")
+    ruta_firmante = os.environ.get("KONTROL_E2E_LICENSE_SIGNING_KEY_B" if "--firmante-b" in argv else "KONTROL_E2E_LICENSE_SIGNING_KEY")
     if not ruta_firmante:
-        raise RuntimeError("KONTROL_E2E_LICENSE_SIGNING_KEY es obligatoria: el firmante sintético lo genera la corrida")
+        raise RuntimeError("KONTROL_E2E_LICENSE_SIGNING_KEY(_B) es obligatoria: los firmantes sintéticos los genera la corrida")
     clave = serialization.load_pem_private_key(Path(ruta_firmante).read_bytes(), password=None)
     if not isinstance(clave, Ed25519PrivateKey):
         raise RuntimeError("el firmante sintético no es Ed25519")
@@ -127,6 +131,10 @@ def main(argv: list[str]) -> int:
     payload = payload_sintetico(argv[0], destino, anio=anio, periodo=periodo)
     if "--revision" in argv:
         payload["revision"] = json.loads(argv[argv.index("--revision") + 1])  # tal cual: también valores inválidos, a propósito
+    if "--kid" in argv:
+        payload["kid"] = argv[argv.index("--kid") + 1]
+    if "--sin-kid" in argv:
+        payload.pop("kid", None)
     firma = "00" * 64 if "--firma-invalida" in argv else firmar(payload, clave)
     print(json.dumps({"payload": payload, "signature_hex": firma}, ensure_ascii=False))
     return 0

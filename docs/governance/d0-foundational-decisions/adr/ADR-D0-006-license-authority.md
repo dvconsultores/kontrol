@@ -78,7 +78,7 @@ Período **1 de abril → 31 de marzo**. Desde el **1 de abril**, aviso de renov
 | Algoritmo | Ed25519 (ratifica ADR-005) |
 | Clave privada | Solo en la autoridad; nunca en imagen, repositorio ni instalación |
 | Clave pública | Distribuida con la instalación, identificada por `kid` |
-| Rotación | Por `kid`: la instalación acepta varias claves públicas vigentes; la retirada de una clave es un evento con vigencia, no un corte |
+| Rotación | Por `kid` (implementada el 2026-10-07): la instalación acepta las claves públicas de su conjunto de confianza, provisto desde fuera; retirar una clave del conjunto hace que una importación nueva con ese `kid` se rechace; el estado ya persistido no se revalida en esta fase (`LICENCIA-ESTADO-SIN-REVERIFICAR`) |
 | Payload | Incluye `installation_id`; una licencia de otra instalación se rechaza (ya implementado) |
 | Integridad | Hash canónico del payload; firma inválida → `SECURITY_SUSPENSION` |
 | Reloj | Tolerancia offline anclada a `last_reliable_date` monótona: retrasar el reloj del servidor no extiende la licencia |
@@ -132,7 +132,7 @@ OQ-07 queda **resuelta** en cuanto a frontera y hospedaje lógico; la custodia o
 | Imagen y compose propios | Entregados; construcción real pendiente de un entorno con `docker` |
 | `sync` | **Expuesto y autenticado** (2026-10-07): desafío-respuesta con la identidad Ed25519 de la instalación, nonce de un solo uso, sobre canónico ligado a la petición, clave pública vinculada por el vendor; artefacto exacto del libro |
 | `activate` / `renew` / `heartbeat` / `replace_installation` | No expuestos todavía: se construirán sobre el mismo protocolo de prueba |
-| Rotación por `kid` | **No**: una clave activa (`LICENCIA-SIN-ROTACION-DE-CLAVE`, OPEN) |
+| Rotación por `kid` | **Implementada** (2026-10-07): conjunto de confianza `kid → pública` en el cliente y conjunto de firma con un `kid` activo en la autoridad; rotación A → B con solapamiento y retiro (`runbook-rotacion-de-clave.md`) |
 
 ## Impacto
 
@@ -156,7 +156,7 @@ OQ-07 queda **resuelta** en cuanto a frontera y hospedaje lógico; la custodia o
 - [x] Licencia de otra instalación rechazada.
 - [ ] Firma inválida → `SECURITY_SUSPENSION` con evento.
 - [ ] Retrasar el reloj no extiende la tolerancia offline.
-- [ ] Rotación de `kid` sin interrumpir instalaciones vigentes.
+- [x] Rotación de `kid` sin interrumpir instalaciones vigentes *(solapamiento A+B probado; KEYROT-05..12)*.
 - [ ] En `READ_ONLY` la consulta y la exportación siguen funcionando.
 - [x] Auditoría del contrato demuestra que no viaja ningún dato de negocio *(el paquete y el registro solo llevan `installation_id`, `customer_id` opaco, período, derechos y versión mínima — CLA-07, CLA-17)*.
 

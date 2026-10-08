@@ -294,14 +294,17 @@ def test_rolla_12_el_nombre_de_la_licencia_no_ordena():
 
 
 def test_rolla_13_el_kid_no_ordena_ni_cambia_su_semantica():
+    """Desde LICENCIA-SIN-ROTACION-DE-CLAVE (2026-10-07) el `kid` identifica la clave de firma y el cliente elige
+    la clave exactamente por él: uno desconocido se rechaza ANTES de comparar períodos, y el conocido no
+    ordena nada (un período posterior entra, uno anterior no, con el mismo `kid`)."""
     antes = _huella()
     r = _importa(_anual("LIC-KID-NUEVO", ANIO_VIGENTE, kid="kontrol-lic-2099-99"))
-    assert r.status_code == 423 and r.json()["code"] == "LICENSE_PERIOD_DOWNGRADE", r.text
+    assert r.status_code == 423 and r.json()["code"] == "LICENSE_SIGNING_KID_UNKNOWN", r.text
     assert _huella()["license_id"] == antes["license_id"]
-    r = _importa(_anual("LIC-KID-VIEJO", ANIO_VIGENTE + 6, kid="kontrol-lic-2000-00"))
+    r = _importa(_anual("LIC-KID-VIEJO", ANIO_VIGENTE + 6))  # el único kid de confianza, período posterior: entra
     assert r.status_code == 200, r.text
     with _FACTORY() as db:
-        assert db.execute(select(LicenseState)).scalars().one().kid == "kontrol-lic-2000-00"  # se guarda tal cual, como hoy
+        assert db.execute(select(LicenseState)).scalars().one().kid == "kontrol-lic-2026-01"  # el kid de la clave que firmó
 
 
 # ---------------------------------------------------------------- ROLLA-14..17 · las compuertas 1 y 2 siguen delante

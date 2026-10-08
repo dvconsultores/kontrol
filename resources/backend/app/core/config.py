@@ -53,12 +53,14 @@ class Settings(BaseSettings):
     #: con los instantes técnicos, que son UTC por `ADR-D0-001` y no se convierten.
     business_timezone: str = "America/Caracas"
 
-    # Licencia
+    # Licencia · conjunto de confianza del propietario (FR-010-148..151, 437..444). Dos formas, que se suman:
+    # el par de una sola clave (`KONTROL_LICENSE_PUBLIC_KEY_PEM` identificada por `KONTROL_LICENSE_PUBLIC_KEY_KID`)
+    # y `KONTROL_LICENSE_TRUST_KEYS`, un JSON `kid → PEM pública` para rotar con solapamiento (A + B).
+    # Siempre desde fuera de la instalación; una licencia nunca añade ni sustituye anclas. Obligatorio en
+    # `prod` (falla al inicio si no hay un conjunto válido); sin él nunca se verifica una licencia.
     license_public_key_kid: str = "kontrol-lic-2026-01"
-    # Ancla de confianza de la licencia: la clave pública Ed25519 del propietario, inyectada
-    # desde fuera de la instalación. Obligatoria en `prod` (falla al inicio si falta o no sirve);
-    # sin ella nunca se verifica una licencia, en ningún entorno (FR-010-148..151).
     license_public_key_pem: str | None = None
+    license_trust_keys: str | None = None
     license_timezone: str = "America/Caracas"
     installation_volume_path: str = "/data/license-state"
 
@@ -84,14 +86,14 @@ class Settings(BaseSettings):
         `secret_key`, fallar al inicio. No se genera, no se sustituye, no se avisa a medias."""
         if self.environment != "prod":
             return self
-        from app.core.trust_anchor import TrustAnchorError, load_trust_anchor
+        from app.core.trust_anchor import TrustAnchorError, load_trust_set
 
         try:
-            load_trust_anchor(self.license_public_key_pem)
+            load_trust_set(trust_keys=self.license_trust_keys, legacy_pem=self.license_public_key_pem, legacy_kid=self.license_public_key_kid)
         except TrustAnchorError as exc:
             raise ValueError(
-                f"KONTROL_LICENSE_PUBLIC_KEY_PEM es obligatoria en prod y debe ser la clave pública "
-                f"Ed25519 del propietario en PEM (ancla {exc.reason})"
+                f"KONTROL_LICENSE_PUBLIC_KEY_PEM (con KONTROL_LICENSE_PUBLIC_KEY_KID) o KONTROL_LICENSE_TRUST_KEYS es obligatoria "
+                f"en prod y debe contener claves públicas Ed25519 del propietario en PEM, una por kid (ancla {exc.reason})"
             ) from None
         return self
 

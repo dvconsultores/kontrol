@@ -21,7 +21,7 @@ Ed25519 sobre esos bytes, `signature_hex`. Verificación: sobre el dict recibido
 | Claim | Regla |
 |---|---|
 | `revision` | entero ≥ 1; **dentro** del material firmado; asignado solo por la autoridad; monótono por `installation_id` + período; reinicia en 1 por período; no es `kid`, ni fecha, ni orden de llegada. Ausente = paquete **legacy** (bytes históricos intactos; nunca `revision: null`) |
-| `kid` | identificador de la clave de firma (semántica actual); una sola clave activa en Fase 1 |
+| `kid` | identificador de la clave de firma del propietario (DOC-07 §10.1: la pública se versiona mediante `kid`); dentro del material firmado; obligatorio (§10.2). La autoridad lo toma de su `kid` **activo** y firma con la privada de ese `kid`; el cliente elige la pública **exactamente** por él (desconocido o ausente → rechazo; `kid` A con firma de B → firma inválida). No ordena nada (FR-010-437..466) |
 | período | DOC-07 §5.1: 1 abr 00:00:00 → 31 mar 23:59:59 (`-04:00`); aviso crítico 21 abr; solo lectura 1 may |
 | derechos | libres entre reemisiones; no ordenan |
 

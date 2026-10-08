@@ -12,7 +12,8 @@ respaldo con recuperación probada, aislamiento del entorno de emisión).
 |---|---|---|
 | `KONTROL_CENTRAL_DB_URL` | sí | la base **propia** de la autoridad |
 | `KONTROL_CENTRAL_SIGNING_PRIVATE_KEY_PEM` | sí en `prod` | clave privada Ed25519 del propietario; nunca se genera ni se registra |
-| `KONTROL_CENTRAL_SIGNING_KID` | no (`kontrol-lic-2026-01`) | identificador de la clave: una sola activa en Fase 1 |
+| `KONTROL_CENTRAL_SIGNING_KID` | no (`kontrol-lic-2026-01`) | el `kid` **activo**: identifica la clave que firma las emisiones nuevas y debe existir en el conjunto |
+| `KONTROL_CENTRAL_SIGNING_KEYS` | no | JSON `kid → PEM privada` para rotar con solapamiento (se suma al par anterior); `kid` duplicado con otra clave o la misma clave bajo dos `kid` → no arranca; runbook: `specs/010-licenciamiento-central/central-authority/runbook-rotacion-de-clave.md` |
 | `KONTROL_CENTRAL_ENVIRONMENT` | no (`local`) | `prod` exige la clave al arrancar |
 
 La clave pública correspondiente es la que cada instalación cliente recibe como

@@ -1,0 +1,310 @@
+[e2e r20261007t234612p1136081nd38e54] comprobar
+[e2e r20261007t234612p1136081nd38e54] crear base
+[e2e r20261007t234612p1136081nd38e54] migrar
+[e2e r20261007t234612p1136081nd38e54] sembrar
+[e2e r20261007t234612p1136081nd38e54] backend
+[e2e r20261007t234612p1136081nd38e54] comprobar la base del backend
+[e2e r20261007t234612p1136081nd38e54] autoridad central
+[e2e r20261007t234612p1136081nd38e54] frontend
+[e2e r20261007t234612p1136081nd38e54] suite
+
+Running 271 tests using 6 workers
+
+  -    1 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /
+  -    2 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /organizacion/empresas
+  -    3 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /organizacion/sucursales
+  -    4 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /maestros/terceros
+  -    5 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /maestros/productos
+  -    6 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /maestros/atributos
+  -    7 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /ventas/facturas
+  -    8 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /ventas/ordenes
+  -    9 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /compras/facturas
+  -   10 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /compras/cotizaciones
+  -   11 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/existencias
+  -   12 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/movimientos
+  -   13 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/seriales
+  -   14 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/reservas
+  -   15 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/tipos-movimiento
+  -   16 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /fiscal/lotes-declaracion
+  -   17 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /seguridad/usuarios
+  -   18 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /regulatorio/aprobaciones
+  -   19 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /aprobaciones/bandeja
+  -   20 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /aprobaciones/politicas
+  -   21 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /aprobaciones/delegaciones
+  ✓   25 [chromium] › e2e/alcance-de-usuario.spec.ts:125:1 › pedir un usuario sin decir su empresa falla al instante (220ms)
+  ✓   22 [chromium] › e2e/alcance-de-usuario.spec.ts:94:1 › U4 · sin alcance declarado se sigue alcanzando todo el tenant (567ms)
+  ✓   27 [chromium] › e2e/accessibility.spec.ts:25:1 › login: sin violaciones serias de accesibilidad (1.2s)
+  ✓   30 [chromium] › e2e/approvals.spec.ts:306:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › rechazo con motivo obligatorio (261ms)
+  ✓   31 [chromium] › e2e/approvals.spec.ts:325:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › devolución para corrección y reenvío (306ms)
+  ✓   32 [chromium] › e2e/approvals.spec.ts:350:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › segregación: el creador no puede aprobar y no ve acciones (250ms)
+  ✓   33 [chromium] › e2e/approvals.spec.ts:369:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › usuario sin sesión: el backend deniega, no la UI (89ms)
+  ✓   34 [chromium] › e2e/approvals.spec.ts:377:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › solicitud obsoleta: el documento cambió después de solicitar (295ms)
+  ✓   24 [chromium] › e2e/alcance-de-usuario.spec.ts:62:1 › U1 · quien se declara de una empresa alcanza solo esa (2.4s)
+  ✓   26 [chromium] › e2e/alcance-de-usuario.spec.ts:80:1 › U2 · la empresa es la que pide el escenario, no la primera (2.6s)
+  ✓   35 [chromium] › e2e/approvals.spec.ts:391:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › If-Match: versión obsoleta produce 409 y no duplica decisión (508ms)
+  ✓   38 [chromium] › e2e/approvals.spec.ts:409:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › idempotencia: doble envío no duplica la solicitud (207ms)
+  ✓   39 [chromium] › e2e/approvals.spec.ts:432:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › concurrencia: dos decisiones simultáneas, sólo una prospera (270ms)
+  ✓   23 [chromium] › e2e/approvals.spec.ts:214:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › flujo principal: configurar → solicitar → bandeja → aprobar 2 niveles → historial (3.9s)
+  ✓   40 [chromium] › e2e/approvals.spec.ts:458:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › multiempresa: la bandeja la delimita el contexto, no el parámetro de consulta (258ms)
+Traceback (most recent call last):
+  File "/home/maria/Projectos/Kontrol/qa/alcance_de_usuario.py", line 112, in <module>
+    raise SystemExit(main(sys.argv[1:]))
+                     ^^^^^^^^^^^^^^^^^^
+  File "/home/maria/Projectos/Kontrol/qa/alcance_de_usuario.py", line 104, in main
+    final = declarar(db, tenant_code=argv[0], username=argv[1], empresas=argv[2:])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/maria/Projectos/Kontrol/qa/alcance_de_usuario.py", line 78, in declarar
+    raise RuntimeError(
+RuntimeError: 'choque-muyratdy1wcu' ya opera en ['869c126f-8321-4f14-abcd-dbb903bc731f'] y se pide ['329c06f6-0153-4bd0-b987-24c83b418b71']: ['869c126f-8321-4f14-abcd-dbb903bc731f'] quedaría de más. No se escribe nada
+  ✓   36 [chromium] › e2e/alcance-de-usuario.spec.ts:68:1 › U1b · y opera sin que nadie le pregunte en cuál (2.3s)
+  ✓   37 [chromium] › e2e/alcance-de-usuario.spec.ts:87:1 › U3 · quien se declara de dos alcanza las dos (2.2s)
+  ✓   43 [chromium] › e2e/approvals.spec.ts:538:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › eventos de dominio emitidos para la Spec 047 (240ms)
+  ✓   41 [chromium] › e2e/approvals.spec.ts:496:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › E2E-045 · el localizador de «Activar» nunca alcanza «Desactivar» (1.6s)
+  ✓   42 [chromium] › e2e/approvals.spec.ts:512:3 › Spec 045 · motor de aprobaciones sobre PostgreSQL real › E2E-045 · el ayudante de empresa es idempotente (2.2s)
+  ✓   28 [chromium] › e2e/alcance-de-usuario.spec.ts:133:1 › pedir un alcance que contradice el ya declarado falla, no se acumula (6.4s)
+  ✓   44 [chromium] › e2e/auditoria-fecha.spec.ts:54:3 › AUDITORIA-CREATED-AT · la columna Fecha muestra event_time › DATE-01/02/03 · la fila del evento controlado enseña su event_time con la convención del producto (1.7s)
+  ✓   29 [chromium] › e2e/alcance-de-usuario.spec.ts:117:1 › declarar dos veces lo mismo no acumula alcance (6.2s)
+  ✓   48 [chromium] › e2e/auditoria-paginacion.spec.ts:175:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-04 · por API: el final de la bitácora y los límites del contrato (300ms)
+  ✓   45 [chromium] › e2e/auditoria-paginacion.spec.ts:105:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-01 · siguiente pide la página 2 al servidor, y la tabla pinta la página que recibe (2.3s)
+  ✓   46 [chromium] › e2e/auditoria-paginacion.spec.ts:144:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-02 · con 25 por página se ven las 25 filas recibidas y un solo paginador (2.1s)
+  ✓   52 [chromium] › e2e/billing.spec.ts:229:3 › Spec 034 — liberación y facturación › no se factura un pedido sin confirmación independiente (358ms)
+  ✓   47 [chromium] › e2e/auditoria-paginacion.spec.ts:158:3 › AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor › PAG-E2E-03 · cambiar el tamaño desde otra página vuelve a la primera (2.0s)
+  ✓   49 [chromium] › e2e/auditoria-sobre.spec.ts:60:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-01/02 · dos eventos controlados del tenant aparecen como filas, y son los del sobre (2.0s)
+  ✓   50 [chromium] › e2e/auditoria-sobre.spec.ts:102:3 › AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan › ENV-04 · el rastro de otro tenant no está en el sobre ni en la tabla (1.9s)
+  ✓   53 [chromium] › e2e/billing.spec.ts:243:3 › Spec 034 — liberación y facturación › no se genera factura sin solicitud (3.0s)
+  ✓   51 [chromium] › e2e/billing.spec.ts:204:3 › Spec 034 — liberación y facturación › el pedido confirmado se libera, se factura y se emite (3.6s)
+  ✓   54 [chromium] › e2e/billing.spec.ts:252:3 › Spec 034 — liberación y facturación › un pedido no se factura dos veces (3.0s)
+  ✓   60 [chromium] › e2e/diagnostico.spec.ts:73:3 › Diagnóstico · acceso › E2E-DIAG-06 · sin sesión, el backend responde 401 y nada del diagnóstico (25ms)
+  ✓   55 [chromium] › e2e/billing.spec.ts:263:3 › Spec 034 — liberación y facturación › emitir dos veces no gasta dos números (3.2s)
+  ✓   59 [chromium] › e2e/diagnostico.spec.ts:64:3 › Diagnóstico · acceso › E2E-DIAG-01 · sin sesión, la URL directa lleva al acceso y no pinta nada del diagnóstico (930ms)
+  ✓   56 [chromium] › e2e/billing.spec.ts:280:3 › Spec 034 — liberación y facturación › facturar no mueve una sola unidad (3.1s)
+  ✓   64 [chromium] › e2e/diagnostico.spec.ts:126:3 › Diagnóstico · acceso › E2E-DIAG-07 y 08 · los health siguen públicos, con su contrato mínimo y sin nada del diagnóstico (30ms)
+  ✓   57 [chromium] › e2e/billing.spec.ts:307:3 › Spec 034 — liberación y facturación › el despacho puede consultar si el pedido está facturado (3.1s)
+  ✓   62 [chromium] › e2e/diagnostico.spec.ts:104:3 › Diagnóstico · acceso › E2E-DIAG-03 y 05 · el administrador ve la entrada y la pantalla, sin rutas del servidor (1.0s)
+  ✓   63 [chromium] › e2e/diagnostico.spec.ts:116:3 › Diagnóstico · acceso › E2E-DIAG-04 · recargar con permiso mantiene la ruta y el contenido (1.7s)
+  ✓   61 [chromium] › e2e/diagnostico.spec.ts:84:3 › Diagnóstico · acceso › E2E-DIAG-02 · con sesión pero sin permiso: sin entrada de menú, acceso prohibido, sin petición y 403 en la API (4.2s)
+  ✓   58 [chromium] › e2e/billing.spec.ts:326:3 › Spec 034 — liberación y facturación › la interfaz factura y el dominio lo confirma (4.6s)
+  ✓   66 [chromium] › e2e/dispatch.spec.ts:257:3 › Spec 035 — despacho, transporte y regulación › no se despacha un pedido sin factura emitida (3.1s)
+  ✓   65 [chromium] › e2e/dispatch.spec.ts:222:3 › Spec 035 — despacho, transporte y regulación › el pedido facturado sale del almacén y la reserva se consume (3.7s)
+  ✓   67 [chromium] › e2e/dispatch.spec.ts:268:3 › Spec 035 — despacho, transporte y regulación › no se autoriza la salida sin decir a dónde va ni con quién (3.5s)
+  -   73 [chromium] › e2e/documents-a11y.spec.ts:53:1 › biblioteca y tipos: sin violaciones serias de WCAG 2.2 AA
+  -   74 [chromium] › e2e/documents-a11y.spec.ts:62:1 › detalle documental: sin violaciones serias de WCAG 2.2 AA
+  -   75 [chromium] › e2e/documents-a11y.spec.ts:96:1 › la carga de archivo es operable solo con teclado
+  -   76 [chromium] › e2e/documents-a11y.spec.ts:140:1 › responsive: sin scroll horizontal entre 320 y 1440
+  -   77 [chromium] › e2e/documents.spec.ts:114:1 › carga, versión y descarga por la interfaz real
+  -   78 [chromium] › e2e/documents.spec.ts:159:1 › un formato no admitido se rechaza con un mensaje accionable
+  -   79 [chromium] › e2e/documents.spec.ts:179:1 › un archivo por encima del máximo se rechaza indicando el límite
+  -   80 [chromium] › e2e/documents.spec.ts:198:1 › un archivo malicioso se rechaza y no queda disponible
+  -   81 [chromium] › e2e/documents.spec.ts:226:1 › un identificador ajeno no abre nada
+  -   82 [chromium] › e2e/documents.spec.ts:241:1 › una versión histórica no se reinterpreta al cargar otra
+  -   83 [chromium] › e2e/documents.spec.ts:280:1 › un reintento tras el fallo no deja el formulario sin salida
+  -   84 [chromium] › e2e/documents.spec.ts:309:1 › los tipos documentales declaran la política sin código
+  ✓   68 [chromium] › e2e/dispatch.spec.ts:280:3 › Spec 035 — despacho, transporte y regulación › no se confirma una salida sin validar (3.1s)
+  ✓   85 [chromium] › e2e/empresa-helper.spec.ts:28:3 › Spec 054 · el ayudante de empresa › el localizador de «Activar» nunca alcanza «Desactivar» (1.3s)
+  ✓   86 [chromium] › e2e/empresa-helper.spec.ts:45:3 › Spec 054 · el ayudante de empresa › es idempotente: pedir la empresa que ya está activa no la apaga (1.5s)
+  ✓   87 [chromium] › e2e/empresa-helper.spec.ts:63:3 › Spec 054 · el ayudante de empresa › desde el estado contrario converge y verifica la postcondición (1.7s)
+  ✓   69 [chromium] › e2e/dispatch.spec.ts:292:3 › Spec 035 — despacho, transporte y regulación › un pedido no se despacha dos veces (3.8s)
+  ✓   71 [chromium] › e2e/dispatch.spec.ts:306:3 › Spec 035 — despacho, transporte y regulación › confirmar dos veces no saca la mercancía dos veces (4.1s)
+  ✓   88 [chromium] › e2e/empresa-helper.spec.ts:80:3 › Spec 054 · el ayudante de empresa › la empresa activa es la que el contexto usa de verdad (1.4s)
+  ✓   89 [chromium] › e2e/empresas-busqueda.spec.ts:47:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-01 · buscar la razón social de una empresa deja solo esa fila (1.5s)
+  ✓   90 [chromium] › e2e/empresas-busqueda.spec.ts:58:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-02 · un término inexistente deja la tabla vacía, y limpiar la devuelve (1.5s)
+  ✓   94 [chromium] › e2e/empresas-sobre.spec.ts:43:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-01 · la API responde el sobre del contrato, con total acotado al usuario (179ms)
+  ✓   95 [chromium] › e2e/empresas-sobre.spec.ts:61:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-02 · la paginación corta el conjunto y una página más allá del final viene vacía (132ms)
+  ✓   91 [chromium] › e2e/empresas-busqueda.spec.ts:73:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-03 · la búsqueda no cruza tenants: cada sesión encuentra solo lo suyo (1.5s)
+  ✓   96 [chromium] › e2e/empresas-sobre.spec.ts:75:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-03 · q sigue buscando y el total es el del conjunto filtrado (111ms)
+  ✓   92 [chromium] › e2e/empresas-busqueda.spec.ts:81:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-04 · el otro tenant sí encuentra su empresa con el mismo término (1.5s)
+  ✓   93 [chromium] › e2e/empresas-busqueda.spec.ts:89:3 › EMP-Q · búsqueda general de Empresas › EMP-Q-05 · la búsqueda no distingue mayúsculas, como en terceros (1.4s)
+  ✓   72 [chromium] › e2e/dispatch.spec.ts:342:3 › Spec 035 — despacho, transporte y regulación › la interfaz despacha y el dominio lo confirma (6.1s)
+  ✓   97 [chromium] › e2e/empresas-sobre.spec.ts:85:3 › EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas › LIST-E2E-04 · la pantalla pinta los items del sobre y el selector ofrece todas las empresas (1.5s)
+  ✓   70 [chromium] › e2e/dispatch.spec.ts:319:3 › Spec 035 — despacho, transporte y regulación › la cola solo trae pedidos facturados y los suelta al salir (7.5s)
+  ✓  101 [chromium] › e2e/inventory-confirmation.spec.ts:136:3 › Spec 021 — confirmación de inventario › confirmar no ubica: el almacén se conoce y la ubicación sigue nula (993ms)
+  ✓  102 [chromium] › e2e/inventory-confirmation.spec.ts:151:3 › Spec 021 — confirmación de inventario › el resultado mixto reparte y conserva el físico (648ms)
+  ✓   99 [chromium] › e2e/incidents.spec.ts:145:3 › Spec 020 — incidencias de recepción › la diferencia documental no pide línea ni cantidad (2.2s)
+  ✓   98 [chromium] › e2e/incidents.spec.ts:97:3 › Spec 020 — incidencias de recepción › registrar el daño, escalarlo y tratarlo, sin tocar el inventario (2.8s)
+  ✓  100 [chromium] › e2e/inventory-confirmation.spec.ts:96:3 › Spec 021 — confirmación de inventario › aceptar no libera; confirmar sí, y la pantalla lo hace de punta a punta (2.7s)
+  ✓  103 [chromium] › e2e/licencia-import.spec.ts:76:3 › Licencia · importar exige autoridad › E2E-LICIMP-01 · anónimo con un artefacto válido: 401, sin fuga, y la licencia sigue igual (1.9s)
+  ✓  109 [chromium] › e2e/licencia-import.spec.ts:147:3 › Licencia · importar exige autoridad › E2E-LICIMP-09 · el estado público sigue anónimo y mínimo (17ms)
+  ✓  106 [chromium] › e2e/licencia-import.spec.ts:113:3 › Licencia · importar exige autoridad › E2E-LICIMP-04 · el administrador importa un artefacto válido y el detalle lo refleja (1.9s)
+  ✓  107 [chromium] › e2e/licencia-import.spec.ts:129:3 › Licencia · importar exige autoridad › E2E-LICIMP-05 · el administrador con firma inválida: 423 y la licencia sigue igual (1.9s)
+  ✓  108 [chromium] › e2e/licencia-import.spec.ts:138:3 › Licencia · importar exige autoridad › E2E-LICIMP-06 · el administrador con una licencia de otra instalación: 423 y la licencia sigue igual (1.8s)
+  ✓  104 [chromium] › e2e/licencia-import.spec.ts:91:3 › Licencia · importar exige autoridad › E2E-LICIMP-02 · un usuario sin permisos de licencia: 403 y nada cambia (4.1s)
+  ✓  114 [chromium] › e2e/licencia-periodo.spec.ts:147:3 › Licencia · el período no retrocede › E2E-ROLLA-11 · el estado público sigue mínimo y los health, públicos (18ms)
+  ✓  115 [chromium] › e2e/licencia.spec.ts:77:3 › Licencia · frontera de lectura › E2E-LIC-01 · sin sesión, el estado público trae exactamente modo y enlace, y nada de la identidad (9ms)
+  ✓  110 [chromium] › e2e/licencia-import.spec.ts:154:3 › Licencia · importar exige autoridad › E2E-LICIMP-10 · el diagnóstico sigue con sesión y license:view; los health, públicos y mínimos (2.2s)
+  ✓  116 [chromium] › e2e/licencia.spec.ts:87:3 › Licencia · frontera de lectura › E2E-LIC-02 · sin sesión o con token inventado, el detalle es 401 y sin fuga (28ms)
+  ✓  105 [chromium] › e2e/licencia-import.spec.ts:102:3 › Licencia · importar exige autoridad › E2E-LICIMP-03 · license:view sin license:create lee pero no importa: 403 y nada cambia (4.1s)
+  ✓  112 [chromium] › e2e/licencia-periodo.spec.ts:124:3 › Licencia · el período no retrocede › E2E-ROLLA-09 · sin license:create ni una licencia posterior entra, y el período vigente no cambia (1.8s)
+  ✓  119 [chromium] › e2e/licencia.spec.ts:128:3 › Licencia · frontera de lectura › E2E-LIC-05 · el administrador ve la entrada y la pantalla con identificador, modo y período (928ms)
+  ✓  121 [chromium] › e2e/licencia.spec.ts:150:3 › Licencia · frontera de lectura › E2E-LIC-07 · el administrador lee el historial y el detalle por la API, con el mismo modo que el público (189ms)
+  ✓  120 [chromium] › e2e/licencia.spec.ts:141:3 › Licencia · frontera de lectura › E2E-LIC-06 · recargar con permiso mantiene la ruta y el contenido (1.6s)
+  ✓  123 [chromium] › e2e/licencia.spec.ts:170:3 › Licencia · frontera de lectura › E2E-LIC-09 · los health siguen públicos: live sin versión, ready igual (12ms)
+  ✓  122 [chromium] › e2e/licencia.spec.ts:161:3 › Licencia · frontera de lectura › E2E-LIC-08 · sin sesión, la URL directa de Mi licencia lleva al acceso y no pide el detalle (838ms)
+  ✓  117 [chromium] › e2e/licencia.spec.ts:98:3 › Licencia · frontera de lectura › E2E-LIC-03 · con sesión pero sin permiso, el detalle y toda lectura de licenciamiento son 403 (2.6s)
+  ✓  124 [chromium] › e2e/licencia.spec.ts:179:3 › Licencia · frontera de lectura › E2E-LIC-10 · el aviso pre-sesión funciona: el navegador pide el estado público al arrancar y en FULL_ACCESS no hay aviso (878ms)
+  ✓  113 [chromium] › e2e/licencia-periodo.spec.ts:133:3 › Licencia · el período no retrocede › E2E-ROLLA-10 · firma inválida u otra instalación se rechazan antes de comparar períodos (4.0s)
+  ✓  127 [chromium] › e2e/n6-a11y-responsive.spec.ts:55:3 › accesibilidad del contexto de empresa › se opera con teclado de principio a fin (1.1s)
+  ✓  125 [chromium] › e2e/n6-a11y-responsive.spec.ts:41:3 › accesibilidad del contexto de empresa › la pantalla de selección no tiene violaciones serias (1.9s)
+  ✓  118 [chromium] › e2e/licencia.spec.ts:113:3 › Licencia · frontera de lectura › E2E-LIC-04 · sin permiso en el navegador: sin entrada de menú, acceso prohibido y ninguna petición al detalle (4.2s)
+  ✓  128 [chromium] › e2e/n6-a11y-responsive.spec.ts:73:3 › accesibilidad del contexto de empresa › Escape cierra sin cambiar la empresa (1.1s)
+  ✓  126 [chromium] › e2e/n6-a11y-responsive.spec.ts:47:3 › accesibilidad del contexto de empresa › el selector abierto no tiene violaciones serias (2.4s)
+  ✓  129 [chromium] › e2e/n6-a11y-responsive.spec.ts:85:3 › accesibilidad del contexto de empresa › el botón anuncia la empresa activa y su función (1.0s)
+  ✓  130 [chromium] › e2e/n6-a11y-responsive.spec.ts:96:3 › accesibilidad del contexto de empresa › la empresa activa se distingue sin depender del color (1.1s)
+  ✓  132 [chromium] › e2e/n6-a11y-responsive.spec.ts:119:5 › el selector en cada tamaño › móvil (375px): usable y sin desbordar (1.3s)
+  ✓  131 [chromium] › e2e/n6-a11y-responsive.spec.ts:119:5 › el selector en cada tamaño › móvil pequeño (320px): usable y sin desbordar (1.5s)
+  ✓  133 [chromium] › e2e/n6-a11y-responsive.spec.ts:119:5 › el selector en cada tamaño › tableta (768px): usable y sin desbordar (1.5s)
+  ✓  134 [chromium] › e2e/n6-a11y-responsive.spec.ts:119:5 › el selector en cada tamaño › portátil (1024px): usable y sin desbordar (1.7s)
+  ✓  136 [chromium] › e2e/n6-a11y-responsive.spec.ts:119:5 › el selector en cada tamaño › escritorio ancho (1440px): usable y sin desbordar (1.2s)
+  ✓  135 [chromium] › e2e/n6-a11y-responsive.spec.ts:119:5 › el selector en cada tamaño › escritorio (1280px): usable y sin desbordar (1.7s)
+  ✓  138 [chromium] › e2e/n6-multicompany.spec.ts:99:3 › dos empresas › exige elegir y no decide por el usuario (975ms)
+  ✓  137 [chromium] › e2e/n6-multicompany.spec.ts:80:3 › una sola empresa › se resuelve sola y opera sin pedir selección (2.3s)
+  ✓  141 [chromium] › e2e/n6-multicompany.spec.ts:147:3 › dos empresas › la empresa elegida se recuerda al recargar (1.3s)
+  ✓  111 [chromium] › e2e/licencia-periodo.spec.ts:75:3 › Licencia · el período no retrocede › E2E-ROLLA-01..08 · anterior rechazada sin mover nada; reemisión del mismo período aceptada; posterior aceptada; y después la anterior sigue rechazada (10.8s)
+  ✓  145 [chromium] › e2e/n6-multicompany.spec.ts:279:3 › manipulación del cliente › la empresa de otro tenant se rechaza en el servidor (87ms)
+  ✓  146 [chromium] › e2e/n6-multicompany.spec.ts:287:3 › manipulación del cliente › una empresa a la que no se tiene acceso se rechaza (75ms)
+  ✓  140 [chromium] › e2e/n6-multicompany.spec.ts:130:3 › dos empresas › la cabecera nunca lleva el tenant (2.3s)
+  ✓  147 [chromium] › e2e/n6-multicompany.spec.ts:296:3 › manipulación del cliente › el contexto propio sí funciona (98ms)
+  ✓  148 [chromium] › e2e/n6-multicompany.spec.ts:309:3 › manipulación del cliente › la escritura tampoco cruza: el cuerpo no impone la empresa (101ms)
+  ✓  144 [chromium] › e2e/n6-multicompany.spec.ts:244:3 › manipulación del cliente › una empresa inventada en el almacenamiento no concede nada (1.5s)
+  ✓  139 [chromium] › e2e/n6-multicompany.spec.ts:108:3 › dos empresas › cambiar de empresa cambia la cabecera de las peticiones (3.8s)
+  ✓  143 [chromium] › e2e/n6-multicompany.spec.ts:205:3 › aislamiento de la caché › los datos de una empresa no aparecen bajo la otra (2.6s)
+  ✓  151 [chromium] › e2e/order-confirmation.spec.ts:189:3 › Spec 033 — confirmación independiente del pedido › el pedido conforme queda confirmado y habilita facturación (2.3s)
+  ✓  149 [chromium] › e2e/n6-multicompany.spec.ts:327:3 › usuarios distintos en el mismo navegador › quien entra después no hereda la empresa del anterior (2.9s)
+  ✓  142 [chromium] › e2e/n6-multicompany.spec.ts:164:3 › aislamiento entre pestañas › cada pestaña conserva su empresa (4.8s)
+  ✓  152 [chromium] › e2e/order-confirmation.spec.ts:210:3 › Spec 033 — confirmación independiente del pedido › se compara contra el pedido, no contra la preparación (2.6s)
+  ✓  150 [chromium] › e2e/notifications.spec.ts:142:1 › la campana cuenta en el servidor y leer una notificación la actualiza sin recargar (3.9s)
+  ✓  154 [chromium] › e2e/order-confirmation.spec.ts:251:3 › Spec 033 — confirmación independiente del pedido › el control es completo o no es control (2.9s)
+  ✓  155 [chromium] › e2e/order-confirmation.spec.ts:261:3 › Spec 033 — confirmación independiente del pedido › el rechazo se conserva cuando hay un segundo intento (3.1s)
+  ✓  156 [chromium] › e2e/order-confirmation.spec.ts:283:3 › Spec 033 — confirmación independiente del pedido › verificar no mueve una sola unidad (3.1s)
+  ✓  153 [chromium] › e2e/order-confirmation.spec.ts:236:3 › Spec 033 — confirmación independiente del pedido › la presentación y la condición bloquean el control (5.1s)
+  ✓  159 [chromium] › e2e/pick-execution.spec.ts:186:3 › Spec 032 — preparación física y consolidación › el recorrido completo deja el pedido preparado en el área (1.0s)
+  ✓  160 [chromium] › e2e/pick-execution.spec.ts:213:3 › Spec 032 — preparación física y consolidación › recoger no resta dos veces el mismo compromiso (1.2s)
+  ✓  161 [chromium] › e2e/pick-execution.spec.ts:232:3 › Spec 032 — preparación física y consolidación › recoger de menos exige motivo y deja la diferencia registrada (1.3s)
+  ✓  162 [chromium] › e2e/pick-execution.spec.ts:258:3 › Spec 032 — preparación física y consolidación › no se puede recoger de más (1.4s)
+  ✓  163 [chromium] › e2e/pick-execution.spec.ts:268:3 › Spec 032 — preparación física y consolidación › no se consolida un recorrido a medias (1.5s)
+  ✓  157 [chromium] › e2e/order-confirmation.spec.ts:308:3 › Spec 033 — confirmación independiente del pedido › la interfaz registra el control y el dominio lo confirma (4.5s)
+  ✓  158 [chromium] › e2e/notifications.spec.ts:180:1 › completar la tarea no aprueba el documento de origen (4.0s)
+  ✓  164 [chromium] › e2e/pick-execution.spec.ts:282:3 › Spec 032 — preparación física y consolidación › una parada se recoge una vez (1.5s)
+  ✓  170 [chromium] › e2e/picking.spec.ts:266:3 › Spec 031 — cola y ruta de picking › confirmar completo mueve el pedido a preparación y lo saca de la cola (1.2s)
+  ✓  165 [chromium] › e2e/pick-execution.spec.ts:297:3 › Spec 032 — preparación física y consolidación › la interfaz registra la recogida y el dominio lo confirma (2.9s)
+  ✓  166 [chromium] › e2e/picking.spec.ts:192:3 › Spec 031 — cola y ruta de picking › el pedido liberado aparece en la cola con su puesto (2.8s)
+  ✓  171 [chromium] › e2e/picking.spec.ts:290:3 › Spec 031 — cola y ruta de picking › cancelar un plan confirmado devuelve el pedido a la cola sin tocar la reserva (941ms)
+  ✓  167 [chromium] › e2e/picking.spec.ts:208:3 › Spec 031 — cola y ruta de picking › la interfaz reparte entre dos ubicaciones y el recorrido sale en orden (3.0s)
+  ✓  172 [chromium] › e2e/picking.spec.ts:331:3 › Spec 031 — cola y ruta de picking › planificar no mueve una sola unidad (880ms)
+  ✓  168 [chromium] › e2e/picking.spec.ts:240:3 › Spec 031 — cola y ruta de picking › no se confirma con remanente, y el dominio lo impide (3.0s)
+  ✓  173 [chromium] › e2e/picking.spec.ts:353:3 › Spec 031 — cola y ruta de picking › no se asigna más de lo reservado ni desde otro almacén (972ms)
+  ✓  174 [chromium] › e2e/picking.spec.ts:373:3 › Spec 031 — cola y ruta de picking › invalidar exige que la precondición esté perdida (1.1s)
+  ✓  176 [chromium] › e2e/putaway.spec.ts:236:3 › Spec 022 — put-away › una ubicación inactiva se rechaza aunque se fuerce por API (874ms)
+  ✓  177 [chromium] › e2e/putaway.spec.ts:252:3 › Spec 022 — put-away › una ubicación de otro almacén se rechaza aunque se fuerce por API (821ms)
+  ✓  169 [chromium] › e2e/notifications.spec.ts:203:1 › reasignar deja la asignación anterior en el historial (4.1s)
+  ✓  178 [chromium] › e2e/putaway.spec.ts:269:3 › Spec 022 — put-away › una ubicación desactivada después de listarla ya no sirve (960ms)
+  ✓  179 [chromium] › e2e/putaway.spec.ts:296:3 › Spec 022 — put-away › dos envíos del mismo put-away no duplican el traslado (881ms)
+  ✓  180 [chromium] › e2e/putaway.spec.ts:317:3 › Spec 022 — put-away › ubicar no cambia lo reservado ni lo disponible del almacén (912ms)
+  ✓  181 [chromium] › e2e/putaway.spec.ts:355:3 › Spec 022 — put-away › la mercancía ubicada sigue pudiéndose reservar (779ms)
+  ✓  183 [chromium] › e2e/putaway.spec.ts:382:3 › Spec 022 — put-away › una capacidad menor que la cantidad no impide ubicar (644ms)
+  ✓  185 [chromium] › e2e/rates.spec.ts:111:3 › Spec 013 — maestros financieros › P0 · un par sin tasa no se resuelve, y no vale uno (357ms)
+  ✓  184 [chromium] › e2e/putaway.spec.ts:405:3 › Spec 022 — put-away › ubicar no crea nada de picking (647ms)
+  ✓  188 [chromium] › e2e/rates.spec.ts:123:3 › Spec 013 — maestros financieros › la misma moneda es identidad y no inventa una fila de mercado (211ms)
+  ✓  175 [chromium] › e2e/putaway.spec.ts:187:3 › Spec 022 — put-away › el operario ubica la mercancía y el dominio lo confirma (2.6s)
+  ✓  190 [chromium] › e2e/rates.spec.ts:134:3 › Spec 013 — maestros financieros › la tasa manual se registra con su par y se resuelve exacta (575ms)
+  ✓  192 [chromium] › e2e/rates.spec.ts:156:3 › Spec 013 — maestros financieros › una tasa no positiva se rechaza (382ms)
+  ✓  193 [chromium] › e2e/rates.spec.ts:171:3 › Spec 013 — maestros financieros › P0 · sin política no se invierte el par (446ms)
+  ✓  194 [chromium] › e2e/rates.spec.ts:189:3 › Spec 013 — maestros financieros › con política se invierte y la respuesta dice que es derivada (260ms)
+  ✓  195 [chromium] › e2e/rates.spec.ts:208:3 › Spec 013 — maestros financieros › una tasa futura no valora una fecha anterior (275ms)
+  ✓  187 [chromium] › e2e/receipts.spec.ts:137:3 › Spec 019 — recepción física › la pantalla registra la inspección y lo que se observó en el muelle (2.6s)
+  ✓  186 [chromium] › e2e/receipts.spec.ts:97:3 › Spec 019 — recepción física › dos cajas de doce entran al inventario como veinticuatro unidades (2.8s)
+  ✓  196 [chromium] › e2e/rates.spec.ts:231:3 › Spec 013 — maestros financieros › corregir una tasa no reescribe la anterior (327ms)
+  ✓  199 [chromium] › e2e/rates.spec.ts:261:3 › Spec 013 — maestros financieros › una fuente desactivada deja de resolver y conserva su historia (458ms)
+  ✓  200 [chromium] › e2e/rates.spec.ts:282:3 › Spec 013 — maestros financieros › importar crea las tasas, reimportar no duplica y lo inválido se detalla (352ms)
+  ✓  189 [chromium] › e2e/receivables.spec.ts:258:3 › Spec 037 — cuentas por cobrar › la factura emitida abre su cuenta por cobrar (4.0s)
+  ✓  201 [chromium] › e2e/rates.spec.ts:309:3 › Spec 013 — maestros financieros › P0 · la tesorería se bloquea sin tasa y funciona en cuanto se registra (730ms)
+  ✓  202 [chromium] › e2e/rates.spec.ts:372:3 › Spec 013 — maestros financieros › la interfaz registra una tasa, dice lo que significa y el dominio lo confirma (1.5s)
+  ✓  197 [chromium] › e2e/receivables.spec.ts:286:3 › Spec 037 — cuentas por cobrar › el crédito se aplica al documento de su propio cliente (3.8s)
+  ✓  198 [chromium] › e2e/receivables.spec.ts:302:3 › Spec 037 — cuentas por cobrar › revertir una aplicación no la borra y reabre el documento (3.8s)
+  ✓  182 [chromium] › e2e/notifications.spec.ts:222:1 › repetir el planificador no duplica notificaciones ni tareas (7.6s)
+  ✓  204 [chromium] › e2e/rates.spec.ts:408:3 › Spec 013 — maestros financieros › la interfaz de fuentes crea, desactiva y muestra la política (1.7s)
+  ✓  207 [chromium] › e2e/notifications.spec.ts:233:1 › el enlace lleva al origen cuando el usuario puede verlo (1.1s)
+  ✓  203 [chromium] › e2e/receivables.spec.ts:326:3 › Spec 037 — cuentas por cobrar › una aplicación no se revierte dos veces (4.1s)
+  ✓  191 [chromium] › e2e/receivables.spec.ts:265:3 › Spec 037 — cuentas por cobrar › P0 · el crédito de un cliente no se aplica al documento de otro (7.9s)
+  ✓  211 [chromium] › e2e/reservas-identidad.spec.ts:101:1 › el escenario identifica su reserva aunque aparezcan otras a la vez (643ms)
+  ✓  209 [chromium] › e2e/notifications.spec.ts:243:1 › lo de una empresa no se ve ni se cuenta en otra (1.2s)
+  ✓  212 [chromium] › e2e/reservas-identidad.spec.ts:126:1 › una reserva manual no se confunde con la de ningún pedido (341ms)
+  ✓  214 [chromium] › e2e/reservas-identidad.spec.ts:142:1 › el filtro por producto lo aplica el servidor, no la prueba (444ms)
+  ✓  215 [chromium] › e2e/reservas-identidad.spec.ts:157:1 › con dos reservas del mismo producto el ayudante se niega a elegir (273ms)
+  ✓  205 [chromium] › e2e/receivables.spec.ts:340:3 › Spec 037 — cuentas por cobrar › aplicar un crédito no crea cobros (4.3s)
+  ✓  206 [chromium] › e2e/receivables.spec.ts:349:3 › Spec 037 — cuentas por cobrar › el saldo del cliente resta el crédito una sola vez (4.3s)
+  ✓  208 [chromium] › e2e/receivables.spec.ts:361:3 › Spec 037 — cuentas por cobrar › el estado de cuenta reconstruye la cronología (4.2s)
+  ✓  210 [chromium] › e2e/receivables.spec.ts:373:3 › Spec 037 — cuentas por cobrar › la interfaz muestra el estado de cuenta y el dominio lo confirma (4.9s)
+  ✓  213 [chromium] › e2e/notifications.spec.ts:261:1 › la página 3 muestra lo que el servidor pone en la página 3 (5.0s)
+  ✓  216 [chromium] › e2e/returns.spec.ts:255:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › los cuatro actos, y solo el último crea existencia (4.1s)
+  ✓  218 [chromium] › e2e/returns.spec.ts:314:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › no se devuelve más de lo despachado (4.0s)
+  ✓  217 [chromium] › e2e/returns.spec.ts:296:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › no se reingresa sin pasar por la aprobación (4.2s)
+  ✓  219 [chromium] › e2e/returns.spec.ts:326:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › el destino de la mercancía devuelta no se inventa (3.9s)
+  ✓  220 [chromium] › e2e/returns.spec.ts:344:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › aceptar la devolución no emite ninguna nota (3.5s)
+  ✓  221 [chromium] › e2e/returns.spec.ts:367:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › la nota reparte el impuesto de la factura y lleva su propio número (3.7s)
+  ✓  222 [chromium] › e2e/returns.spec.ts:386:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › la nota no se emite con la serie de las facturas (3.6s)
+  ✓  223 [chromium] › e2e/returns.spec.ts:401:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › no se acredita por encima de lo pendiente (4.0s)
+  ✓  224 [chromium] › e2e/returns.spec.ts:416:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › la nota de crédito sin devolución no mueve inventario (4.0s)
+  ✓  225 [chromium] › e2e/returns.spec.ts:431:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › la nota de débito aumenta y no toca inventario (3.8s)
+  ✓  226 [chromium] › e2e/returns.spec.ts:448:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › emitir dos veces no gasta dos números (3.6s)
+  ✓  229 [chromium] › e2e/sales-orders.spec.ts:105:3 › Spec 030 — confirmar reserva y liberar › confirmar un pedido de contado lo deja liberado a preparación con la reserva hecha (2.3s)
+  ✓  230 [chromium] › e2e/sales-orders.spec.ts:129:3 › Spec 030 — confirmar reserva y liberar › sin disponible el pedido sigue en borrador y la pantalla dice cuánto falta (2.3s)
+  ✓  233 [chromium] › e2e/smoke.spec.ts:7:1 › la aplicación carga la pantalla de login (368ms)
+  ✓  234 [chromium] › e2e/smoke.spec.ts:15:1 › los campos del login son accesibles por label (379ms)
+  ✓  231 [chromium] › e2e/sales-orders.spec.ts:143:3 › Spec 030 — confirmar reserva y liberar › cancelar exige motivo y libera la reserva (2.5s)
+  ✓  235 [chromium] › e2e/treasury.spec.ts:96:3 › Spec 038 — tesorería › P0 · sin tasa registrada la conversión se niega (568ms)
+  ✓  232 [chromium] › e2e/sales-orders.spec.ts:167:3 › Spec 030 — confirmar reserva y liberar › la política de reserva muestra el disparador fijo y admite vigencia (2.0s)
+  ✓  236 [chromium] › e2e/treasury.spec.ts:118:3 › Spec 038 — tesorería › la conversión mueve las dos cuentas y guarda de dónde salió la tasa (702ms)
+  ✓  227 [chromium] › e2e/returns.spec.ts:466:3 › Spec 036 — devoluciones, notas de crédito y notas de débito › la interfaz solicita la devolución y el dominio lo confirma (5.5s)
+  ✓  241 [chromium] › e2e/treasury.spec.ts:253:3 › Spec 038 — tesorería › la posición de caja no suma monedas distintas (407ms)
+  ✓  237 [chromium] › e2e/treasury.spec.ts:143:3 › Spec 038 — tesorería › P0 · el crédito reservado para devolver no se imputa además a una factura (4.0s)
+  ✓  238 [chromium] › e2e/treasury.spec.ts:171:3 › Spec 038 — tesorería › denegar libera la reserva y el crédito vuelve (4.4s)
+  ✓  239 [chromium] › e2e/treasury.spec.ts:189:3 › Spec 038 — tesorería › aprobar no paga; ejecutar saca el dinero del banco (4.9s)
+  ✓  240 [chromium] › e2e/treasury.spec.ts:214:3 › Spec 038 — tesorería › P0 · ejecutar dos veces no paga dos veces (4.9s)
+  ✓  243 [chromium] › e2e/treasury.spec.ts:334:3 › Spec 038 — tesorería › la interfaz de cambio muestra la política vigente y la procedencia de la tasa (1.6s)
+  ✓  245 [chromium] › e2e/treasury.spec.ts:375:3 › Spec 038 — tesorería › FLOAT-038-A · el movimiento bancario exige texto decimal y no redondea (531ms)
+  ✓  244 [chromium] › e2e/treasury.spec.ts:359:3 › Spec 038 — tesorería › la posición de caja se ve por moneda y sin total (1.3s)
+  ✓  247 [chromium] › e2e/treasury.spec.ts:455:3 › Spec 038 — tesorería › FLOAT-038-B · el arqueo exige texto decimal y el cierre no tolera un céntimo (1.1s)
+  ✓  249 [chromium] › e2e/treasury.spec.ts:545:3 › Spec 038 — tesorería › FLOAT-038-C · las seis fronteras exigen texto decimal y ninguna redondea (1.0s)
+  -  251 [chromium] › e2e/uom-a11y.spec.ts:37:1 › unidades: sin violaciones serias de WCAG 2.2 AA
+  -  252 [chromium] › e2e/uom-a11y.spec.ts:48:1 › unidades: operable con teclado
+  -  253 [chromium] › e2e/uom-a11y.spec.ts:56:1 › unidades: sin scroll horizontal entre 320 y 1920
+  -  254 [chromium] › e2e/uom-a11y.spec.ts:68:1 › unidades: legible con zoom al 150%
+  ✓  246 [chromium] › e2e/treasury.spec.ts:401:3 › Spec 038 — tesorería › FLOAT-038-A · la interfaz envía y muestra el importe exacto (2.3s)
+  ✓  255 [chromium] › e2e/uom-conversion.spec.ts:77:1 › flujo histórico: un documento congelado conserva su factor (846ms)
+  ✓  242 [chromium] › e2e/treasury.spec.ts:286:3 › Spec 038 — tesorería › la interfaz recorre el reembolso y el dominio lo confirma (6.1s)
+  ✓  256 [chromium] › e2e/uom-conversion.spec.ts:132:1 › producto simple: opera sin presentaciones (420ms)
+  ✓  250 [chromium] › e2e/treasury.spec.ts:581:3 › Spec 038 — tesorería › FLOAT-038-C · la interfaz de transferencias envía el importe exacto (1.6s)
+  ✓  259 [chromium] › e2e/uom-conversion.spec.ts:190:1 › multiempresa: la unidad global no se edita desde la empresa (187ms)
+  -  261 [chromium] › e2e/warehouse-a11y.spec.ts:48:1 › almacenes y ubicaciones: sin violaciones serias de WCAG 2.2 AA
+  -  262 [chromium] › e2e/warehouse-a11y.spec.ts:57:1 › detalle de almacén: sin violaciones serias de WCAG 2.2 AA
+  -  263 [chromium] › e2e/warehouse-a11y.spec.ts:87:1 › responsive: sin scroll horizontal entre 320 y 1440
+  ✓  257 [chromium] › e2e/uom-conversion.spec.ts:151:1 › factor decimal sin error binario (445ms)
+  ✓  258 [chromium] › e2e/uom-conversion.spec.ts:170:1 › versión solapada bloqueada por el backend (397ms)
+  ✓  248 [chromium] › e2e/treasury.spec.ts:486:3 › Spec 038 — tesorería › FLOAT-038-B · la interfaz de cajas envía el conteo exacto y no cierra un céntimo sin aprobar (3.3s)
+  ✓  260 [chromium] › e2e/uom-conversion.spec.ts:201:1 › interfaz: crear unidad y presentación con equivalencia legible (2.4s)
+  ✓  268 [chromium] › e2e/warehouse-structure.spec.ts:267:1 › multiempresa: la lista solo muestra almacenes de la empresa activa (178ms)
+  ✓  266 [chromium] › e2e/warehouse-structure.spec.ts:202:1 › el bloqueo estructural lo produce el backend y la UI lo refleja (2.5s)
+  ✓  264 [chromium] › e2e/warehouse-structure.spec.ts:91:1 › almacén simple: crear, ubicar, consultar y desactivar sin tramos (3.0s)
+  ✓  267 [chromium] › e2e/warehouse-structure.spec.ts:229:1 › borrado protegido: la UI ofrece desactivar, no eliminar (2.3s)
+  ✓  265 [chromium] › e2e/warehouse-structure.spec.ts:132:1 › almacén complejo: cadena completa y orden físico determinista (4.0s)
+  ✓  228 [chromium] › e2e/route-crawl.spec.ts:28:3 › Crawler de rutas › recorre el menú sin 404, sin errores de consola y con H1 (1.4m)
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+  ✓  269 [licencia-revision] › e2e/licencia-revision.spec.ts:115:3 › Licencia · la revisión del emisor ordena dentro del período › E2E-REV-01..14 · puente legacy, linaje r1→r2→r3 del emisor real, hostiles, otro período y compuertas (18.2s)
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+  ✓  270 [licencia-sync] › e2e/licencia-sync.spec.ts:91:3 › Licencia · sincronización autenticada con la Autoridad Central real › E2E-SYNC-01..08 · configurar, sincronizar, importar, idempotencia, compuertas locales y la autoridad no habla sin prueba (2.9s)
+  ✓  271 [licencia-rotacion] › e2e/licencia-rotacion.spec.ts:76:3 › Licencia · rotación de la clave del propietario con solapamiento › E2E-KEYROT-01..08 · A y B entran cada una por su kid; kid desconocido, ausente o cruzado se rechaza; el orden no cambia (6.9s)
+
+  40 skipped
+  231 passed (3.0m)
+[e2e r20261007t234612p1136081nd38e54] limpiar
+[e2e r20261007t234612p1136081nd38e54] suite: {'skipped': 40, 'passed': 231} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261007t234612p1136081nd38e54

@@ -63,7 +63,7 @@ def _app_client():
         "critical_warning_start": (now + timedelta(days=180)).isoformat(),
         "read_only_start": (now + timedelta(days=200)).isoformat(),
         "entitlements": {"companies": 1, "users": 25, "modules": ["*"]},
-        "minimum_version": "1.0.0", "kid": "k",
+        "minimum_version": "1.0.0", "kid": "kontrol-lic-2026-01",  # el kid de la clave configurada (LICENCIA-SIN-ROTACION-DE-CLAVE)
     }
     sig = key.sign(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")).hex()
     os.environ["KONTROL_LICENSE_PUBLIC_KEY_PEM"] = pub

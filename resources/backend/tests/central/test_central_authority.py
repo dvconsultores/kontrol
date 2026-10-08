@@ -48,7 +48,7 @@ def _emite(db, ajustes: Settings, anio: int = 2027, entitlements=None, operator:
 def test_cla_01_en_prod_sin_clave_de_firma_la_configuracion_no_carga():
     with pytest.raises(ValidationError) as e:
         Settings(_env_file=None, environment="prod", db_url="postgresql+psycopg2://u:p@h/db", signing_private_key_pem=None)
-    assert "KONTROL_CENTRAL_SIGNING_PRIVATE_KEY_PEM es obligatoria en prod" in str(e.value) and "clave missing" in str(e.value)
+    assert "KONTROL_CENTRAL_SIGNING_PRIVATE_KEY_PEM (con KONTROL_CENTRAL_SIGNING_KID) o KONTROL_CENTRAL_SIGNING_KEYS es obligatoria en prod" in str(e.value) and "clave missing" in str(e.value)
     assert "u:p@h" not in str(e.value)  # el error no reproduce la configuración
 
 

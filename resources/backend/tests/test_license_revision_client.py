@@ -297,21 +297,24 @@ def test_revc_07_la_misma_revisionada_exacta_es_idempotente_y_los_huecos_no_impo
 
 # ---------------------------------------------------------------- REVC-08..11 · hostiles firmados por el propietario
 def test_revc_08_misma_revision_con_otra_carga_es_conflicto_aunque_cambie_el_kid():
-    for extra in ({"entitlements": {"companies": 500}}, {"kid": "kontrol-lic-2099-99"}):
+    for extra in ({"entitlements": {"companies": 500}}, {"minimum_version": "9.9.9"}):
         antes = _huella()
         hostil = _firmada(_anual("LIC-HOSTIL-R3", ANIO, revision=3, **extra))
         r = _importa(hostil)
         assert r.status_code == 423 and r.json()["code"] == "LICENSE_REVISION_CONFLICT", r.text
         _sin_mover(antes, _huella())
     assert _rechazos()[-1].detail["outcome"] == "REVISION_CONFLICT"
+    # Un `kid` distinto ya no es «otra carga»: es una clave desconocida y se rechaza antes (LICENCIA-SIN-ROTACION-DE-CLAVE).
+    assert _importa(_firmada(_anual("LIC-HOSTIL-R3", ANIO, revision=3, kid="kontrol-lic-2099-99"))).json()["code"] == "LICENSE_SIGNING_KID_UNKNOWN"
 
 
 def test_revc_09_ni_el_kid_ni_los_derechos_ni_la_version_minima_ordenan_solo_la_revision():
-    # Una r4 firmada por el propietario con «peor» kid, menos derechos y versión mínima menor: es más nueva y entra.
-    r4 = _firmada(_anual("LIC-R4-SINTETICA", ANIO, revision=4, kid="kontrol-lic-2000-00", entitlements={"companies": 1}, minimum_version="0.0.1"))
+    # Una r4 firmada por el propietario con menos derechos y versión mínima menor: es más nueva y entra (el `kid` es
+    # el de la clave de confianza: ya no es una etiqueta libre, LICENCIA-SIN-ROTACION-DE-CLAVE).
+    r4 = _firmada(_anual("LIC-R4-SINTETICA", ANIO, revision=4, entitlements={"companies": 1}, minimum_version="0.0.1"))
     assert _importa(r4).status_code == 200
     h = _huella()
-    assert h["revision"] == 4 and h["kid"] == "kontrol-lic-2000-00" and h["entitlements"] == {"companies": 1}
+    assert h["revision"] == 4 and h["kid"] == KID and h["entitlements"] == {"companies": 1}
     # El emisor, ajeno a esa r4, emite su r4: misma revisión, otra carga → conflicto; su r5 → entra.
     r4_central = _emite(ANIO)
     assert r4_central["revision"] == 4

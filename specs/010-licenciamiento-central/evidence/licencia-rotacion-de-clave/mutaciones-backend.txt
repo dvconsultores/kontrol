@@ -1,0 +1,15 @@
+GOOD: (0, '58 passed in 5.82s')
+M-01 el cliente prueba todas las claves hasta que una verifique (sin elegir por kid) [SQLite]
+  MUTATED → FAIL (muere) · 3 failed, 16 passed in 5.01s
+  RESTORED → PASS · 19 passed in 5.44s
+M-02 un kid desconocido cae a la primera clave del conjunto [SQLite]
+  MUTATED → FAIL (muere) · 6 failed, 32 passed in 8.18s
+  RESTORED → PASS · 38 passed in 5.05s
+M-03 un paquete sin kid se acepta con la primera clave [SQLite]
+  MUTATED → FAIL (muere) · 3 failed, 35 passed in 4.95s
+  RESTORED → PASS · 38 passed in 5.00s
+Traceback (most recent call last):
+  File "/tmp/claude-1000/-home-maria-Projectos-Kontrol/31ae8f1b-7f0f-400f-aa41-00d508b7f488/scratchpad/mutar_keyrot.py", line 57, in <module>
+    s = f.read_text(); assert s.count(bueno) == 1, nombre
+                              ^^^^^^^^^^^^^^^^^^^
+AssertionError: M-04 un kid con dos claves distintas no se detecta (gana la última)
