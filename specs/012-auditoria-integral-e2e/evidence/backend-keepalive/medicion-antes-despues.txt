@@ -1,0 +1,28 @@
+# BACKEND-KEEPALIVE-5S · medición antes/después · 2026-10-08T09:49:50-04:00
+# uvicorn 0.32.1 · sonda: qa/keepalive_sonda.py · 20 conexiones HTTP/1.1 por punto, una petición, ocio, segunda petición por la MISMA conexión
+# ANTES = uvicorn sin --timeout-keep-alive (5 s por defecto, Dockerfile.backend en 37084cf) · DESPUÉS = --timeout-keep-alive 75 (este ciclo)
+== ocio 1s
+ANTES   {"url": "http://127.0.0.1:8031/api/v1/health/live", "ocio_s": 1.0, "conexiones": 20, "reutilizadas": 20, "cerradas_por_el_servidor": 0, "errores": []}
+DESPUÉS {"url": "http://127.0.0.1:8032/api/v1/health/live", "ocio_s": 1.0, "conexiones": 20, "reutilizadas": 20, "cerradas_por_el_servidor": 0, "errores": []}
+== ocio 4.9s
+ANTES   {"url": "http://127.0.0.1:8031/api/v1/health/live", "ocio_s": 4.9, "conexiones": 20, "reutilizadas": 20, "cerradas_por_el_servidor": 0, "errores": []}
+DESPUÉS {"url": "http://127.0.0.1:8032/api/v1/health/live", "ocio_s": 4.9, "conexiones": 20, "reutilizadas": 20, "cerradas_por_el_servidor": 0, "errores": []}
+== ocio 5.0s
+ANTES   {"url": "http://127.0.0.1:8031/api/v1/health/live", "ocio_s": 5.0, "conexiones": 20, "reutilizadas": 0, "cerradas_por_el_servidor": 20, "errores": ["RemoteDisconnected"]}
+DESPUÉS {"url": "http://127.0.0.1:8032/api/v1/health/live", "ocio_s": 5.0, "conexiones": 20, "reutilizadas": 20, "cerradas_por_el_servidor": 0, "errores": []}
+== ocio 5.3s
+ANTES   {"url": "http://127.0.0.1:8031/api/v1/health/live", "ocio_s": 5.3, "conexiones": 20, "reutilizadas": 0, "cerradas_por_el_servidor": 20, "errores": ["RemoteDisconnected"]}
+DESPUÉS {"url": "http://127.0.0.1:8032/api/v1/health/live", "ocio_s": 5.3, "conexiones": 20, "reutilizadas": 20, "cerradas_por_el_servidor": 0, "errores": []}
+== ocio 10s
+ANTES   {"url": "http://127.0.0.1:8031/api/v1/health/live", "ocio_s": 10.0, "conexiones": 20, "reutilizadas": 0, "cerradas_por_el_servidor": 20, "errores": ["RemoteDisconnected"]}
+DESPUÉS {"url": "http://127.0.0.1:8032/api/v1/health/live", "ocio_s": 10.0, "conexiones": 20, "reutilizadas": 20, "cerradas_por_el_servidor": 0, "errores": []}
+== ocio 30s
+ANTES   {"url": "http://127.0.0.1:8031/api/v1/health/live", "ocio_s": 30.0, "conexiones": 20, "reutilizadas": 0, "cerradas_por_el_servidor": 20, "errores": ["RemoteDisconnected"]}
+DESPUÉS {"url": "http://127.0.0.1:8032/api/v1/health/live", "ocio_s": 30.0, "conexiones": 20, "reutilizadas": 20, "cerradas_por_el_servidor": 0, "errores": []}
+== ocio 60s
+ANTES   {"url": "http://127.0.0.1:8031/api/v1/health/live", "ocio_s": 60.0, "conexiones": 20, "reutilizadas": 0, "cerradas_por_el_servidor": 20, "errores": ["RemoteDisconnected"]}
+DESPUÉS {"url": "http://127.0.0.1:8032/api/v1/health/live", "ocio_s": 60.0, "conexiones": 20, "reutilizadas": 20, "cerradas_por_el_servidor": 0, "errores": []}
+== ocio 74s
+ANTES   {"url": "http://127.0.0.1:8031/api/v1/health/live", "ocio_s": 74.0, "conexiones": 20, "reutilizadas": 0, "cerradas_por_el_servidor": 20, "errores": ["RemoteDisconnected"]}
+DESPUÉS {"url": "http://127.0.0.1:8032/api/v1/health/live", "ocio_s": 74.0, "conexiones": 20, "reutilizadas": 20, "cerradas_por_el_servidor": 0, "errores": []}
+== registros del servidor durante la medición (líneas): antes=1 después=1

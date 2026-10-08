@@ -3023,3 +3023,29 @@ Candidatas técnicas sin decisión pendiente: `TEST-VOLUMEN-DE-INSTALACION-COMPA
 `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`, `E2E-SIN-TYPECHECK`. Pendientes de la
 dueña: `BACKEND-KEEPALIVE-5S`, `PANEL-VERSION-VACIA`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-08 · BACKEND-KEEPALIVE-5S convergida: no había latido, había un valor por defecto (dueña 054)
+
+El descubrimiento primero: no existe en KONTROL ningún sondeo, temporizador ni *keepalive* de cinco
+segundos. El único `refetchInterval` del frontend es la campana de notificaciones (60 s, Spec 047), el
+dashboard lee el health una vez al montar, y ni el backend ni la autoridad tienen temporizadores. El
+«mecanismo de 5 s» es el `timeout_keep_alive` por defecto de uvicorn —cuánto conserva el servidor una
+conexión HTTP ociosa— que coincide con los 5 s del agente de Node, de modo que una petición enviada en
+ese instante por una conexión reutilizada recibe `ECONNRESET` o se queda sin respuesta. Es el caso
+«keep-alive HTTP del servidor», no un problema de producto: no viaja ninguna petición, no toca base,
+sesión ni licencia. Los cinco arranques de uvicorn del repositorio (las dos imágenes, el `dev` con
+`--reload`, el backend y la autoridad de la corrida E2E, y el README) fijan ahora `--timeout-keep-alive
+75`, por encima de Node y del `keepalive_timeout` de upstream de nginx, con una sonda y una prueba que
+arrancan uvicorn con la orden exacta de las imágenes: 20/20 conexiones cerradas a los 5,3 s antes,
+0/20 después. Frontend, sesión, licencia, health, nginx y esquema sin cambio.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `BACKEND-KEEPALIVE-5S` — **ejecutado y convergido** (`specs/012-auditoria-integral-e2e/spec054-backend-keepalive-delta.md`). Siguiente, fijado por la dueña: **`PANEL-VERSION-VACIA`** — **no iniciada** (sigue `OPEN` hasta el próximo encargo) |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Candidatas técnicas sin decisión pendiente: `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`,
+`OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
+`ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`, `E2E-SIN-TYPECHECK`,
+`E2E-PANTALLA-SIN-PINTAR`. MASTER57 y SPEC057 sin cambio.

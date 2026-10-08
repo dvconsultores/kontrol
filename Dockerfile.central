@@ -21,4 +21,6 @@ EXPOSE 8010
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8010/health/live')" || exit 1
 ENTRYPOINT ["/app/central_authority/entrypoint.sh"]
-CMD ["uvicorn", "central_authority.main:app", "--host", "0.0.0.0", "--port", "8010"]
+# `--timeout-keep-alive 75`: mismo defecto de clase que el backend (BACKEND-KEEPALIVE-5S); la pasarela del
+# operador reutiliza conexiones y el servidor debe conservarlas más tiempo que ella.
+CMD ["uvicorn", "central_authority.main:app", "--host", "0.0.0.0", "--port", "8010", "--timeout-keep-alive", "75"]

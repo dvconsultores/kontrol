@@ -32,7 +32,7 @@ Detalle y versiones resueltas: `specs/001-fundacion/dependency-matrix.md`.
 cd resources/backend
 python -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-KONTROL_SECRET_KEY=<clave-segura> uvicorn app.main:app --reload
+KONTROL_SECRET_KEY=<clave-segura> uvicorn app.main:app --reload --timeout-keep-alive 75
 
 # Frontend
 cd resources/frontend

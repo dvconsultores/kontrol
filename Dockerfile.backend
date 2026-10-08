@@ -36,8 +36,12 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live')" || exit 1
 
 # Migraciones automáticas al arranque (base externa por cliente) + API.
+# `--timeout-keep-alive 75` (BACKEND-KEEPALIVE-5S): uvicorn cierra por defecto una conexión ociosa a los 5 s,
+# los mismos que la conserva el agente HTTP de Node (Playwright, el proxy de Vite): una petición enviada en
+# ese instante recibe ECONNRESET o se queda sin respuesta. El servidor debe conservarla MÁS que cualquier
+# cliente o proxy que la reutilice (Node 5 s; nginx `keepalive_timeout` de upstream 60 s por defecto).
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "75"]
 
 # --- Target de desarrollo: hot reload con dependencias de prueba ----------
 FROM base AS dev
@@ -46,4 +50,4 @@ COPY resources/backend/tests ./tests
 COPY resources/backend/pyproject.toml ./pyproject.toml
 RUN pip install --no-cache-dir pytest httpx ruff mypy
 USER kontrol
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--timeout-keep-alive", "75"]

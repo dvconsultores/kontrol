@@ -44,6 +44,9 @@ PUERTO_BACKEND = 8000
 PUERTO_FRONTEND = 5173
 #: La Autoridad Central REAL de la corrida (`central_authority.main:app`), sobre su propia base efímera.
 PUERTO_CENTRAL = 8010
+#: BACKEND-KEEPALIVE-5S: el mismo valor que `Dockerfile.backend`/`Dockerfile.central`; la corrida arranca
+#: uvicorn como producción lo arranca, y el cliente de Node (Playwright) conserva sus conexiones 5 s.
+KEEP_ALIVE_SEGUNDOS = 75
 CAPACIDAD_DE_DESAFIOS_E2E = 40
 #: Identificadores de las dos claves sintéticas del propietario de la corrida (A firma; B solo es de confianza).
 KID_A = "kontrol-lic-2026-01"
@@ -301,7 +304,7 @@ class Corrida:
 
     def arrancar_backend(self) -> None:
         self.fase("backend")
-        self.arrancar("backend", [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1",
+        self.arrancar("backend", [sys.executable, "-m", "uvicorn", "app.main:app", "--timeout-keep-alive", str(KEEP_ALIVE_SEGUNDOS), "--host", "127.0.0.1",
                                   "--port", str(PUERTO_BACKEND)], base.BACKEND)
         self.esperar_salud("backend", f"{API}/health/ready")
 
@@ -318,7 +321,7 @@ class Corrida:
         if resultado.returncode != 0:
             raise base.CicloDeBaseRoto("las migraciones de la Autoridad Central fallaron (ver autoridad-migraciones.log)")
         registro = open(self.evidencia / "autoridad.log", "ab")  # noqa: SIM115 - vive lo que el proceso
-        proceso = subprocess.Popen([sys.executable, "-m", "uvicorn", "central_authority.main:app", "--host", "127.0.0.1",
+        proceso = subprocess.Popen([sys.executable, "-m", "uvicorn", "central_authority.main:app", "--timeout-keep-alive", str(KEEP_ALIVE_SEGUNDOS), "--host", "127.0.0.1",
                                     "--port", str(PUERTO_CENTRAL)], cwd=base.BACKEND, env=entorno, stdout=registro,
                                    stderr=subprocess.STDOUT, start_new_session=True)
         registro.close()

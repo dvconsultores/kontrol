@@ -1,0 +1,31 @@
+GOOD: (0, '6 passed in 27.08s')
+M-01 la imagen de producción vuelve al valor por defecto (sin bandera)
+  MUTATED → FAIL (muere) · 1 failed, 5 passed in 16.14s
+  RESTORED → PASS · 6 passed in 28.97s
+M-02 la imagen de desarrollo (--reload) vuelve al valor por defecto
+  MUTATED → FAIL (muere) · 1 failed, 5 passed in 28.81s
+  RESTORED → PASS · 6 passed in 28.81s
+M-03 la autoridad central vuelve al valor por defecto
+  MUTATED → FAIL (muere) · 2 failed, 4 passed in 22.08s
+  RESTORED → PASS · 6 passed in 28.84s
+M-04 el valor explícito es el defecto (5 s): la bandera está pero no cambia nada
+  MUTATED → FAIL (muere) · 2 failed, 4 passed in 7.90s
+  RESTORED → PASS · 6 passed in 28.75s
+M-05 el valor iguala al del proxy (60 s): la carrera se repite un piso más arriba
+  MUTATED → FAIL (muere) · 2 failed, 4 passed in 7.94s
+  RESTORED → PASS · 6 passed in 28.64s
+M-06 la bandera está mal escrita (uvicorn no arranca)
+  MUTATED → FAIL (muere) · 2 failed, 4 passed in 7.95s
+  RESTORED → PASS · 6 passed in 28.70s
+M-07 la corrida E2E arranca el backend sin la bandera (divergencia con producción)
+  MUTATED → FAIL (muere) · 1 failed, 5 passed in 29.07s
+  RESTORED → PASS · 6 passed in 29.05s
+M-08 la corrida E2E fija otro valor que la imagen
+  MUTATED → FAIL (muere) · 1 failed, 5 passed in 29.10s
+  RESTORED → PASS · 6 passed in 29.20s
+M-09 la imagen de producción y la central divergen (central 60 s)
+  MUTATED → FAIL (muere) · 2 failed, 4 passed in 22.12s
+  RESTORED → PASS · 6 passed in 28.84s
+M-10 nginx empieza a reutilizar conexiones con el backend sin que nadie lo haya decidido
+  MUTATED → FAIL (muere) · 1 failed, 5 passed in 28.79s
+  RESTORED → PASS · 6 passed in 26.73s
