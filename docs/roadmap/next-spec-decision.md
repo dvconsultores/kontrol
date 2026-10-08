@@ -2973,3 +2973,28 @@ registro histórico de la selección del 2026-08-31). A partir de ahora se separ
 | `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — no se elige 018, 047, 048, 057 ni ninguna otra; la priorización se hará después |
 
 Los informes de cierre dejan de repetir «`NEXT SPEC = 029` no cambia» y pasan a estos dos punteros.
+
+## 2026-10-07 · LICENCIA-ESTADO-SIN-REVERIFICAR convergida: el vigente se reverifica al arrancar y antes de escribir (dueña 004)
+
+La licencia que la instalación ya tenía persistida solo se había verificado una vez, al importarla.
+Desde hoy el artefacto vigente (carga + firma + hash) se reverifica con la política de confianza
+**actual** en cada arranque del backend (`lifespan`, informativo: si la base no responde el proceso no
+cae) y antes de cada escritura de negocio (en el cálculo del modo que ya leen el middleware y las
+rutas): `kid` firmado → clave exacta del conjunto (una clave retirada ya no concede nada), firma del
+propietario, integridad del artefacto, vínculo con el estado e identidad de la instalación. Lo que
+no verifica deja `SECURITY_SUSPENSION` —el modo que DOC-07 §10.1 reserva a la licencia alterada— sin
+tocar el artefacto ni el historial; sesión, lectura, importación y sync siguen y son la recuperación.
+Una licencia válida y vencida sigue siendo `READ_ONLY` por fechas. Status público mínimo, diagnóstico
+con la clase, un evento de auditoría por fallo distinto sin material. Esquema 0, central 0, frontend 0.
+Restaurar un respaldo y arrancar es la misma reverificación, probada copiando filas a una base nueva.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `LICENCIA-ESTADO-SIN-REVERIFICAR` — **ejecutado y convergido** (`specs/010-licenciamiento-central/spec004-licencia-estado-reverificado-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Candidatas técnicas sin decisión pendiente: `CENTRAL-SYNC-SIN-LIMITE-DE-TASA`,
+`TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`, `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`,
+`PICKLIST-DUPLICADA-500`, `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`,
+`MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`.
+Pendientes de la dueña: `BACKEND-KEEPALIVE-5S`, `PANEL-VERSION-VACIA`. MASTER57 y SPEC057 sin cambio.

@@ -84,6 +84,12 @@ def _firmada(payload: dict, clave: Ed25519PrivateKey | None = None) -> dict:
     return {"payload": payload, "signature_hex": (clave or _PROPIETARIO).sign(canonico).hex()}
 
 
+def _hash(payload: dict) -> str:
+    import hashlib
+
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
 @pytest.fixture(scope="module", autouse=True)
 def _app_client():
     global _CLIENT, _FACTORY, _PROPIETARIO, _INSTALACION
@@ -166,9 +172,18 @@ def _simular_licencia_antigua(license_id: str, *, inicio_en_dias: int, fin_en_di
     """Simula que el tiempo pasó sobre una licencia **coherente** (las cuatro fechas y su identificador),
     escribiendo el estado como lo habría dejado una importación de hace meses: así el servidor calcula
     otro modo temporal y el período sigue siendo un período del contrato."""
+    ahora = datetime.now(UTC).replace(microsecond=0)
+    payload = _anual(license_id, ANIO_VIGENTE)
+    payload.update({"period_start": (ahora + timedelta(days=inicio_en_dias)).isoformat(), "period_end": (ahora + timedelta(days=fin_en_dias)).isoformat(),
+                    "critical_warning_start": (ahora + timedelta(days=critico_en_dias)).isoformat(),
+                    "read_only_start": (ahora + timedelta(days=solo_lectura_en_dias)).isoformat()})
+    firma = _firmada(payload)["signature_hex"]
     with _FACTORY() as db:
+        # Como lo habría dejado la importación de entonces: su artefacto firmado y el estado derivado de él (el
+        # vigente se reverifica contra el artefacto, LICENCIA-ESTADO-SIN-REVERIFICAR).
+        db.add(LicenseArtifact(license_id=license_id, payload=payload, signature_hex=firma, payload_hash=_hash(payload), kid=payload["kid"],
+                               imported_at=ahora + timedelta(days=inicio_en_dias)))
         estado = db.execute(select(LicenseState)).scalars().one()
-        ahora = datetime.now(UTC)
         estado.license_id = license_id
         estado.period_start = ahora + timedelta(days=inicio_en_dias)
         estado.period_end = ahora + timedelta(days=fin_en_dias)

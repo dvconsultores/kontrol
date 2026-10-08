@@ -16,5 +16,5 @@ confianza nueva y, donde haga falta, su licencia firmada con B; no hay plazo fij
 
 Reglas que el runbook no puede saltarse: el conjunto de confianza nunca se actualiza por sync, por
 respuesta de la autoridad ni por el `kid` de un paquete; un `kid` con dos claves distintas o una clave
-bajo dos `kid` impide arrancar; el estado ya persistido **no** se revalida al retirar A en este ciclo
+bajo dos `kid` impide arrancar; el estado ya persistido **sí** se revalida al retirar A (desde `LICENCIA-ESTADO-SIN-REVERIFICAR`, 2026-10-07): si el vigente de una instalación sigue firmado con A cuando A sale de su conjunto de confianza, el siguiente arranque y la siguiente escritura lo clasifican `KID_UNKNOWN` y la instalación queda en `SECURITY_SUSPENSION` (sesión, lectura, importación y sync siguen) hasta sincronizar o importar una licencia firmada con B. Por eso R4 se ejecuta **después** de que la flota objetivo tenga su vigente con B (R2/R3), nunca antes
 (`LICENCIA-ESTADO-SIN-REVERIFICAR`, abierta); nunca se reescribe ni se vuelve a firmar el historial.

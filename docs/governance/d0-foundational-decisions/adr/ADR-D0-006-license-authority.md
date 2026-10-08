@@ -133,13 +133,14 @@ OQ-07 queda **resuelta** en cuanto a frontera y hospedaje lógico; la custodia o
 | `sync` | **Expuesto y autenticado** (2026-10-07): desafío-respuesta con la identidad Ed25519 de la instalación, nonce de un solo uso, sobre canónico ligado a la petición, clave pública vinculada por el vendor; artefacto exacto del libro |
 | `activate` / `renew` / `heartbeat` / `replace_installation` | No expuestos todavía: se construirán sobre el mismo protocolo de prueba |
 | Rotación por `kid` | **Implementada** (2026-10-07): conjunto de confianza `kid → pública` en el cliente y conjunto de firma con un `kid` activo en la autoridad; rotación A → B con solapamiento y retiro (`runbook-rotacion-de-clave.md`) |
+| Reverificación del vigente persistido (DOC-07 §10.1, §14.5, §15.1, §16.2) | **Implementada** (2026-10-07): al arrancar (`lifespan`) y antes de cada escritura de negocio el cliente reverifica el artefacto vigente contra el conjunto de confianza **actual** (`kid` exacto, firma, integridad, vínculo con el estado, identidad); un fallo deja `SECURITY_SUSPENSION` sin tocar el artefacto, con sesión, lectura, importación y sync disponibles; evento de auditoría deduplicado sin material |
 
 ## Impacto
 
 | Dimensión | Impacto |
 |---|---|
 | Frontend | Ninguno (las pantallas existen) |
-| Backend | Cliente implementado; **autoridad Fase 1 implementada** (componente separado); faltan la autenticación de la instalación para sync y la rotación por `kid` |
+| Backend | Cliente implementado; **autoridad Fase 1 implementada** (componente separado); sync autenticado, rotación por `kid` y reverificación del vigente implementados; falta la prueba contra red real desplegada |
 | Base de datos | Ninguno |
 | Integraciones | **Alto** — es la única integración externa real del producto |
 | QA | Pruebas contra servidor de pruebas; manipulación de reloj; firma inválida; expiración |

@@ -6,6 +6,9 @@ manejadores de errores uniformes y routers de los módulos fundacionales.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,6 +26,7 @@ from app.modules.homologation.api import router as homologation_router
 from app.modules.identity_access.api import roles_router, users_router
 from app.modules.identity_access.api import router as auth_router
 from app.modules.inventory.api import router as inventory_router
+from app.modules.licensing import reverification as license_reverification
 from app.modules.licensing import service as licensing_service
 from app.modules.licensing.api import central_router
 from app.modules.licensing.api import router as license_router
@@ -43,11 +47,21 @@ configure_logging()
 settings = get_settings()
 
 
+@asynccontextmanager
+async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Antes de servir: reverificar el artefacto de licencia vigente con la política de confianza
+    actual (DOC-07 §10.1, §14.5). No tumba el proceso si la base no responde: el middleware vuelve a
+    decidir en cada escritura con la misma reverificación."""
+    license_reverification.reverificar_al_arrancar(get_session_factory())
+    yield
+
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
         description="Plataforma Administrativa Empresarial para Venezuela — API fundacional",
+        lifespan=_lifespan,
         docs_url=None if settings.environment == "prod" else "/docs",
         redoc_url=None if settings.environment == "prod" else "/redoc",
     )

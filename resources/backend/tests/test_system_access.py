@@ -156,7 +156,9 @@ def test_sys_05_con_el_permiso_el_diagnostico_sale_entero_y_sin_rutas():
     assert set(cuerpo) == CLAVES_DEL_DIAGNOSTICO
     assert cuerpo["database"] == {"ok": True}
     assert set(cuerpo["installation"]) == {"id", "state"} and cuerpo["installation"]["id"].startswith("KTL-")
-    assert set(cuerpo["license"]) == {"activated", "mode", "period_end"}
+    # `verification` es la clase de la reverificación del vigente (LICENCIA-ESTADO-SIN-REVERIFICAR): solo la clase, sin material.
+    assert set(cuerpo["license"]) == {"activated", "mode", "period_end", "verification"}
+    assert cuerpo["license"]["verification"] in {"VALID", "NO_CURRENT_LICENSE"} or cuerpo["license"]["verification"].isupper()
     assert isinstance(cuerpo["version"], str) and isinstance(cuerpo["environment"], str)
     assert "storage" not in r.text
     # Ningún valor con aspecto de ruta del servidor.

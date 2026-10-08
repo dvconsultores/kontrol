@@ -90,7 +90,7 @@ def _activate_license(db: Session) -> None:
 
         licensing_service.import_license(db, payload=payload, signature_hex=signature_hex, source="MANUAL")
     finally:
-        os.environ.pop("KONTROL_LICENSE_PUBLIC_KEY_PEM", None)
+        # El ancla se queda configurada: el vigente se reverifica contra ella (LICENCIA-ESTADO-SIN-REVERIFICAR).
         get_settings.cache_clear()
 
 

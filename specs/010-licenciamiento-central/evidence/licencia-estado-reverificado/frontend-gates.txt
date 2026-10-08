@@ -1,0 +1,15 @@
+== typecheck (node node_modules/typescript/bin/tsc -b --noEmit)
+TYPECHECK_OK
+== lint (eslint . --max-warnings 0)
+LINT_OK
+== vitest run
+   ✓ FLOAT-038-C · el importe sale como texto exacto > la apertura de caja envía el fondo como texto, no como número  302ms
+ ✓ src/lib/format.test.ts (4 tests) 3ms
+
+ Test Files  34 passed (34)
+      Tests  459 passed (459)
+   Start at  22:05:12
+   Duration  8.61s (transform 1.61s, setup 5.14s, collect 23.35s, tests 11.65s, environment 20.96s, prepare 3.83s)
+
+== build (tsc -b && vite build)
+BUILD_OK

@@ -63,5 +63,6 @@ def diagnostics(db: Session = Depends(get_db), _: User = Depends(require_permiss
             "activated": license_status.get("activated", False),
             "mode": license_status.get("mode"),
             "period_end": license_status.get("period_end"),
+            "verification": license_status.get("verification", "NO_CURRENT_LICENSE"),  # clase, nunca material
         },
     }

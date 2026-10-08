@@ -63,7 +63,7 @@ def _import_license(db: Session) -> str:
         st = licensing_service.import_license(db, payload=payload, signature_hex=sig, source="MANUAL")
         return st.mode
     finally:
-        os.environ.pop("KONTROL_LICENSE_PUBLIC_KEY_PEM", None)
+        # El ancla se queda configurada: el vigente se reverifica contra ella en cada lectura y escritura (LICENCIA-ESTADO-SIN-REVERIFICAR).
         get_settings.cache_clear()
 
 

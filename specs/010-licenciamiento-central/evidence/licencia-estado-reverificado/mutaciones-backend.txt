@@ -1,0 +1,40 @@
+GOOD: (0, '35 passed in 15.22s')
+M-01 la firma del propietario no se comprueba al reverificar [SQLite]
+  MUTATED → FAIL (muere) · 4 failed, 31 passed in 14.57s
+  RESTORED → PASS · 35 passed in 14.94s
+M-02 se prueban todas las claves de confianza en vez de la del kid [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 34 passed in 14.93s
+  RESTORED → PASS · 35 passed in 15.13s
+M-03 un kid desconocido cae a la primera clave del conjunto [SQLite]
+  MUTATED → FAIL (muere) · 7 failed, 28 passed in 15.16s
+  RESTORED → PASS · 35 passed in 14.76s
+M-04 la identidad de la instalación no se comprueba [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 33 passed in 18.38s
+  RESTORED → PASS · 35 passed in 15.35s
+M-05 la integridad (hash almacenado) no se comprueba [SQLite]
+  MUTATED → FAIL (muere) · 4 failed, 31 passed in 15.16s
+  RESTORED → PASS · 35 passed in 14.79s
+M-06 el vínculo artefacto↔estado (license_id) no se comprueba [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 34 passed in 14.61s
+  RESTORED → PASS · 35 passed in 14.71s
+M-07 un estado sin artefacto se da por válido [SQLite]
+  MUTATED → FAIL (muere) · 6 failed, 9 passed in 13.82s
+  RESTORED → PASS · 15 passed in 15.31s
+M-08 un conjunto de confianza inválido se da por válido [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 14 passed in 14.77s
+  RESTORED → PASS · 15 passed in 15.14s
+M-09 el gate no se aplica al modo (get_status ignora la reverificación) [SQLite]
+  MUTATED → FAIL (muere) · 11 failed, 4 passed in 12.56s
+  RESTORED → PASS · 15 passed in 15.17s
+M-10 KID_UNKNOWN deja de ser fallo (una clave retirada sigue concediendo) [SQLite]
+  MUTATED → FAIL (muere) · 4 failed, 31 passed in 14.50s
+  RESTORED → PASS · 35 passed in 14.99s
+M-11 el arranque tumba el proceso si la base no responde [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 14 passed in 14.58s
+  RESTORED → PASS · 15 passed in 15.20s
+M-12 el evento de auditoría se repite en cada arranque (sin deduplicar) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 14 passed in 15.18s
+  RESTORED → PASS · 15 passed in 17.17s
+M-13 el arranque no reverifica (lifespan sin la llamada) [SQLite]
+  MUTATED → FAIL (muere) · 13 failed, 2 passed in 13.78s
+  RESTORED → PASS · 15 passed in 14.92s

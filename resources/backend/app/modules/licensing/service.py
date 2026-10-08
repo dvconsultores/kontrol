@@ -28,6 +28,7 @@ from app.core import license_contract, trust_anchor
 from app.core import sync_auth_contract as sync_auth
 from app.core.config import get_settings
 from app.core.errors import ConflictError, KontrolError, NotFoundError
+from app.modules.licensing import reverification
 from app.modules.licensing.models import (
     LicenseArtifact,
     LicenseCentralConfig,
@@ -409,7 +410,14 @@ def get_status(db: Session) -> dict[str, Any]:
         _now(),
         last_reliable_date=state.last_reliable_date,
     )
-    # Persistir el modo recalculado si cambió
+    # El vigente se reverifica con la política de confianza de HOY (DOC-07 §10.1/§14.5/§15.1): si el
+    # artefacto persistido no supera firma, `kid`, integridad, vínculo o identidad, no concede autoridad
+    # de escritura (SECURITY_SUSPENSION), sin tocar el artefacto; se sale importando o sincronizando una
+    # licencia válida. Una licencia válida vencida es READ_ONLY por fechas, nunca «firma inválida».
+    reverificacion = reverification.reverificar_vigente(db, installation, state)
+    if reverificacion.status in reverification.nucleo.FAILURES:
+        mode = license_engine.SECURITY_SUSPENSION
+    # Persistir el modo recalculado si cambió (caché del modo, mecanismo existente)
     if mode != state.mode:
         state.mode = mode
         db.commit()
@@ -419,6 +427,7 @@ def get_status(db: Session) -> dict[str, Any]:
         "activated": True,
         "license_id": state.license_id,
         "mode": mode,
+        "verification": reverificacion.status,
         "period_start": state.period_start.isoformat(),
         "period_end": state.period_end.isoformat(),
         "critical_warning_start": state.critical_warning_start.isoformat() if state.critical_warning_start else None,
