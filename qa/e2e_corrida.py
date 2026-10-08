@@ -44,6 +44,7 @@ PUERTO_BACKEND = 8000
 PUERTO_FRONTEND = 5173
 #: La Autoridad Central REAL de la corrida (`central_authority.main:app`), sobre su propia base efímera.
 PUERTO_CENTRAL = 8010
+CAPACIDAD_DE_DESAFIOS_E2E = 40
 #: Identificadores de las dos claves sintéticas del propietario de la corrida (A firma; B solo es de confianza).
 KID_A = "kontrol-lic-2026-01"
 KID_B = "kontrol-lic-2027-01"
@@ -164,6 +165,7 @@ class Corrida:
             "KONTROL_API_URL": f"http://127.0.0.1:{PUERTO_BACKEND}",
             # La autoridad de la corrida, para que el cliente sincronice contra ella por HTTP local (solo QA).
             "KONTROL_E2E_CENTRAL_URL": f"http://127.0.0.1:{PUERTO_CENTRAL}",
+            "KONTROL_E2E_CENTRAL_RATE_CAPACITY": str(CAPACIDAD_DE_DESAFIOS_E2E),
         })
         return env
 
@@ -178,6 +180,10 @@ class Corrida:
             "KONTROL_CENTRAL_ENVIRONMENT": "qa",
             "KONTROL_CENTRAL_SIGNING_KID": "kontrol-lic-2026-01",
             "KONTROL_CENTRAL_LOG_JSON": "false",
+            # Límite de tasa del desafío (CENTRAL-SYNC-SIN-LIMITE-DE-TASA): capacidad reducida para que la suite
+            # `licencia-tasa` pueda llenar la ventana; holgada para el resto de la corrida (una sincronización = un desafío).
+            "KONTROL_CENTRAL_SYNC_CHALLENGE_RATE_LIMIT_CAPACITY": str(CAPACIDAD_DE_DESAFIOS_E2E),
+            "KONTROL_CENTRAL_SYNC_CHALLENGE_RATE_LIMIT_WINDOW_SECONDS": "60",
         })
         return env
 
@@ -376,6 +382,7 @@ class Corrida:
         if self.orden is not None:
             return [*self.orden, *self.argumentos], base.RAIZ
         return (["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium", "--project=licencia-revision", "--project=licencia-sync", "--project=licencia-rotacion",
+                 "--project=licencia-tasa",
                  "--output", str(self.evidencia / "test-results"), *self.argumentos], FRONTEND)
 
     def suite(self) -> int:

@@ -19,7 +19,8 @@ from central_authority.database import get_db
 
 
 def _error(exc: service.SyncAuthError) -> JSONResponse:
-    return JSONResponse({"code": exc.code, "message": str(exc)}, status_code=exc.status_code)
+    cabeceras = {"Retry-After": str(exc.retry_after_seconds)} if isinstance(exc, service.SyncRateLimited) else None
+    return JSONResponse({"code": exc.code, "message": str(exc)}, status_code=exc.status_code, headers=cabeceras)
 
 
 def create_app() -> FastAPI:

@@ -1,0 +1,49 @@
+GOOD: (0, '60 passed in 8.18s') GOOD-PG: (0, '1 passed in 0.48s')
+M-01 el límite no se comprueba (siempre admite) [SQLite]
+  MUTATED → FAIL (muere) · 29 failed, 28 passed in 0.96s
+  RESTORED → PASS · 57 passed in 0.81s
+M-02 el límite es «mayor que» en vez de «mayor o igual» (admite capacidad + 1) [SQLite]
+  MUTATED → FAIL (muere) · 23 failed, 34 passed in 0.91s
+  RESTORED → PASS · 57 passed in 0.80s
+M-03 Retry-After siempre la ventana entera (no determinista desde el más antiguo) [SQLite]
+  MUTATED → FAIL (muere) · 7 failed, 50 passed in 0.92s
+  RESTORED → PASS · 57 passed in 0.81s
+M-04 Retry-After puede ser 0 o negativo [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 42 passed in 0.09s
+  RESTORED → PASS · 44 passed in 0.06s
+M-05 la política apagada rechaza igual (enabled ignorado) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 56 passed in 0.86s
+  RESTORED → PASS · 57 passed in 0.80s
+M-06 la comprobación llega DESPUÉS de crear la fila (el rechazo deja fila) [SQLite]
+  MUTATED → FAIL (muere) · 10 failed, 3 passed in 0.82s
+  RESTORED → PASS · 13 passed in 0.77s
+M-06b la comprobación no se invoca en absoluto [SQLite]
+  MUTATED → FAIL (muere) · 12 failed, 4 passed in 4.27s
+  RESTORED → PASS · 16 passed in 4.15s
+M-07 el rechazo no deshace la transacción (la limpieza y el candado quedan en vuelo) [SQLite]
+  MUTATED → PASS (SOBREVIVE) · 13 passed in 0.76s
+  RESTORED → PASS · 13 passed in 0.81s
+M-08 se cuentan solo los desafíos de la instalación pedida (dimensión por installation_id) [SQLite]
+  MUTATED → FAIL (muere) · 9 failed, 4 passed in 0.83s
+  RESTORED → PASS · 13 passed in 0.77s
+M-09 la ventana no desliza (se cuentan todas las filas vivas) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 12 passed in 0.78s
+  RESTORED → PASS · 13 passed in 0.78s
+M-10 el 429 sale sin Retry-After [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 11 passed in 0.86s
+  RESTORED → PASS · 13 passed in 0.76s
+M-11 el aviso de registro se repite en cada rechazo (no acotado) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 12 passed in 0.82s
+  RESTORED → PASS · 13 passed in 0.76s
+M-12 prod puede apagar el límite [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 55 passed in 0.85s
+  RESTORED → PASS · 57 passed in 0.81s
+M-13 sin candado consultivo: dos trabajadores cuentan el mismo hueco [PostgreSQL] [PostgreSQL]
+  MUTATED → FAIL (muere) · 1 failed in 0.50s
+  RESTORED → PASS · 1 passed in 0.46s
+M-14 el 429 lleva el identificador pedido (fuga de identidad del llamador) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 12 passed in 0.80s
+  RESTORED → PASS · 13 passed in 0.77s
+M-07 el rechazo no deshace la transacción (la limpieza y el candado quedan en vuelo) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 13 passed in 1.62s
+  RESTORED → PASS · 14 passed in 1.23s

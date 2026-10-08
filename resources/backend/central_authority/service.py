@@ -16,12 +16,13 @@ from datetime import UTC, datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import delete as _sql_delete
-from sqlalchemy import select
+from sqlalchemy import func, select, text
 from sqlalchemy import update as _sql_update
 from sqlalchemy.orm import Session
 
 from app.core import license_contract as contract
 from app.core import sync_auth_contract as sync_auth
+from central_authority import rate_limit
 from central_authority.config import Settings, SigningKeyError, active_signing_pem, load_signing_key
 from central_authority.models import AuditEvent, Installation, Issuance, PeriodLineage, SyncChallenge
 
@@ -49,6 +50,62 @@ class SyncAuthError(CentralError):
 
 #: Etiqueta de atribución de lo que hace el propio protocolo (no es un operador humano).
 OPERADOR_PROTOCOLO = "sync-protocol"
+
+
+class SyncRateLimited(SyncAuthError):
+    """429 genérico: ni registro, ni estado interno del límite. `Retry-After` determinista."""
+
+    def __init__(self, retry_after_seconds: int) -> None:
+        super().__init__("SYNC_RATE_LIMITED", 429, "Demasiadas solicitudes de desafío. Inténtelo más tarde.")
+        self.retry_after_seconds = retry_after_seconds
+
+
+#: Clave del candado consultivo (PostgreSQL) que serializa «contar + insertar» en la emisión de desafíos:
+#: una sección crítica de milisegundos que hace el límite EXACTO entre trabajadores; sin él dos
+#: peticiones simultáneas podrían contar el mismo hueco. SQLite serializa las escrituras por sí mismo.
+_CANDADO_EMISION_DE_DESAFIOS = 7_004_001
+#: Registro acotado (por proceso): un aviso por ventana con el recuento de rechazos desde el anterior.
+#: Nunca lleva `installation_id` (lo controla el llamador y no está autenticado) ni IPs.
+_rechazos_de_tasa: dict[str, Any] = {"pendientes": 0, "ultimo_aviso": None}
+
+
+def politica_de_tasa(settings: Settings) -> rate_limit.RateLimitPolicy:
+    return rate_limit.RateLimitPolicy(enabled=settings.sync_challenge_rate_limit_enabled, capacity=settings.sync_challenge_rate_limit_capacity,
+                                      window_seconds=settings.sync_challenge_rate_limit_window_seconds)
+
+
+def _serializar_emision_de_desafios(db: Session) -> None:
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(text("SELECT pg_advisory_xact_lock(:clave)"), {"clave": _CANDADO_EMISION_DE_DESAFIOS})
+
+
+def _anotar_rechazo_de_tasa(ahora: datetime, politica: rate_limit.RateLimitPolicy) -> None:
+    _rechazos_de_tasa["pendientes"] += 1
+    ultimo = _rechazos_de_tasa["ultimo_aviso"]
+    if ultimo is None or (ahora - ultimo).total_seconds() >= politica.window_seconds:
+        logger.warning("central: límite de tasa de desafíos alcanzado (%d rechazos desde el último aviso; capacidad %d por %d s)",
+                       _rechazos_de_tasa["pendientes"], politica.capacity, politica.window_seconds)
+        _rechazos_de_tasa["pendientes"], _rechazos_de_tasa["ultimo_aviso"] = 0, ahora
+
+
+def _comprobar_tasa_de_desafios(db: Session, *, settings: Settings, ahora: datetime) -> None:
+    """Decide ANTES de persistir nada: con la ventana llena, deshace la transacción (no queda fila, no se
+    toca ningún desafío ya emitido) y responde 429 con `Retry-After`. El filtro por `expires_at` usa el
+    índice existente y es un superconjunto de la ventana; `created_at` la hace exacta."""
+    politica = politica_de_tasa(settings)
+    if not politica.enabled:
+        return
+    inicio = rate_limit.window_start(politica, ahora)
+    emitidos, mas_antiguo = db.execute(
+        select(func.count(), func.min(SyncChallenge.created_at)).where(SyncChallenge.expires_at > inicio, SyncChallenge.created_at >= inicio)
+    ).one()
+    decision = rate_limit.decide(policy=politica, now=ahora, issued_in_window=int(emitidos),
+                                 oldest_in_window=contract._as_utc(mas_antiguo) if mas_antiguo is not None else None)
+    if decision.allowed:
+        return
+    db.rollback()
+    _anotar_rechazo_de_tasa(ahora, politica)
+    raise SyncRateLimited(decision.retry_after_seconds or politica.window_seconds)
 
 
 def _now() -> datetime:
@@ -247,8 +304,11 @@ def create_sync_challenge(db: Session, *, settings: Settings, installation_uuid:
     if not isinstance(installation_uuid, str) or not installation_uuid.strip() or len(installation_uuid) > 64:
         raise SyncAuthError("SYNC_INSTALLATION_INVALID", 400, "La identidad de la instalación no es válida.")
     ahora = _now()
+    _serializar_emision_de_desafios(db)
     # Limpieza perezosa y acotada: lo que venció hace más de una hora ya no puede volver a valer.
     db.execute(_sql_delete(SyncChallenge).where(SyncChallenge.expires_at < ahora - timedelta(hours=1)))
+    # Límite de tasa global (defensa en profundidad; `CENTRAL-SYNC-SIN-LIMITE-DE-TASA`): antes de crear la fila.
+    _comprobar_tasa_de_desafios(db, settings=settings, ahora=ahora)
     inst = db.execute(select(Installation).where(Installation.installation_uuid == installation_uuid)).scalars().first()
     nonce = sync_auth.new_nonce()
     fila = SyncChallenge(installation_id=inst.id if inst is not None else None, nonce_sha256=sync_auth.nonce_digest(nonce),

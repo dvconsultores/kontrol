@@ -9,7 +9,8 @@ import { defineConfig, devices } from "@playwright/test";
 const TRAS_LA_SUITE = /licencia-revision\.spec\.ts/;
 const TRAS_LA_REVISION = /licencia-sync\.spec\.ts/;
 const TRAS_EL_SYNC = /licencia-rotacion\.spec\.ts/;
-const DEPENDIENTES = /licencia-(revision|sync|rotacion)\.spec\.ts/;
+const TRAS_LA_ROTACION = /licencia-tasa\.spec\.ts/;
+const DEPENDIENTES = /licencia-(revision|sync|rotacion|tasa)\.spec\.ts/;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -32,5 +33,7 @@ export default defineConfig({
     { name: "licencia-sync", testMatch: TRAS_LA_REVISION, dependencies: ["licencia-revision"], use: { ...devices["Desktop Chrome"] } },
     // La rotación de la clave del propietario (confianza A+B, kid firmado): al final, sobre el estado que deja el sync.
     { name: "licencia-rotacion", testMatch: TRAS_EL_SYNC, dependencies: ["licencia-sync"], use: { ...devices["Desktop Chrome"] } },
+    // El límite de tasa del desafío de la autoridad real: inunda la ventana, así que va el último de todos.
+    { name: "licencia-tasa", testMatch: TRAS_LA_ROTACION, dependencies: ["licencia-rotacion"], use: { ...devices["Desktop Chrome"] } },
   ],
 });

@@ -134,6 +134,7 @@ OQ-07 queda **resuelta** en cuanto a frontera y hospedaje lógico; la custodia o
 | `activate` / `renew` / `heartbeat` / `replace_installation` | No expuestos todavía: se construirán sobre el mismo protocolo de prueba |
 | Rotación por `kid` | **Implementada** (2026-10-07): conjunto de confianza `kid → pública` en el cliente y conjunto de firma con un `kid` activo en la autoridad; rotación A → B con solapamiento y retiro (`runbook-rotacion-de-clave.md`) |
 | Reverificación del vigente persistido (DOC-07 §10.1, §14.5, §15.1, §16.2) | **Implementada** (2026-10-07): al arrancar (`lifespan`) y antes de cada escritura de negocio el cliente reverifica el artefacto vigente contra el conjunto de confianza **actual** (`kid` exacto, firma, integridad, vínculo con el estado, identidad); un fallo deja `SECURITY_SUSPENSION` sin tocar el artefacto, con sesión, lectura, importación y sync disponibles; evento de auditoría deduplicado sin material |
+| Límite de tasa del endpoint de desafío | **Implementado** (2026-10-08): global por autoridad, ventana deslizante exacta sobre PostgreSQL (sin Redis ni tabla nueva), `429 SYNC_RATE_LIMITED` + `Retry-After`, sin enumeración ni efectos sobre desafíos emitidos; límite por origen recomendado en la pasarela (sin contrato de proxy de confianza en la app); no es protección volumétrica |
 
 ## Impacto
 

@@ -2998,3 +2998,28 @@ Candidatas técnicas sin decisión pendiente: `CENTRAL-SYNC-SIN-LIMITE-DE-TASA`,
 `PICKLIST-DUPLICADA-500`, `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`,
 `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`.
 Pendientes de la dueña: `BACKEND-KEEPALIVE-5S`, `PANEL-VERSION-VACIA`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-08 · CENTRAL-SYNC-SIN-LIMITE-DE-TASA convergida: el endpoint de desafío tiene límite de tasa (dueña 004)
+
+El endpoint pre-autenticación que emite desafíos admite ahora una capacidad global por ventana
+deslizante (120 por 60 s por defecto, configurable, imposible de apagar en producción), contada sobre
+las filas que la autoridad ya persiste en PostgreSQL: sin tabla nueva, sin memoria por proceso, sin
+Redis, exacto entre trabajadores y sin un modo de fallo propio. Con la ventana llena responde un 429
+genérico con `Retry-After` determinista, igual para una identidad conocida o desconocida, antes de
+crear la fila y sin tocar los desafíos ya emitidos, que siguen autenticando; el cliente lo recibe como
+un rechazo acotado sin reintentos ni retroceso, y la renovación en `READ_ONLY` sigue posible. Los
+rechazos no inundan la auditoría: un aviso de registro por ventana, sin identidad del llamador. La IP
+de origen no se usa porque no hay contrato de proxy de confianza: el límite por origen va en la
+pasarela del operador, documentado, junto con la advertencia de que esto no es protección volumétrica.
+Esquema central 0, cliente 0, frontend 0; sync autenticado, rotación, reverificación y orden intactos.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `CENTRAL-SYNC-SIN-LIMITE-DE-TASA` — **ejecutado y convergido** (`specs/010-licenciamiento-central/spec004-central-sync-rate-limit-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Candidatas técnicas sin decisión pendiente: `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`,
+`OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-DESPLEGABLES-TRUNCADOS`, `PICKLIST-DUPLICADA-500`,
+`ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`, `E2E-SIN-TYPECHECK`. Pendientes de la
+dueña: `BACKEND-KEEPALIVE-5S`, `PANEL-VERSION-VACIA`. MASTER57 y SPEC057 sin cambio.

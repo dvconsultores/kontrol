@@ -75,4 +75,19 @@ códigos de `import_license` si el artefacto no supera las compuertas.
 ### Fuera de alcance
 
 Rotación de la clave de la instalación o del propietario; mTLS (posible defensa en profundidad de
-infraestructura, no contrato); límite de tasa del endpoint de desafío (`CENTRAL-SYNC-SIN-LIMITE-DE-TASA`).
+infraestructura, no contrato).
+
+## Límite de tasa del desafío (FR-010-538..576) — `CENTRAL-SYNC-SIN-LIMITE-DE-TASA`, implementado
+
+`POST /v1/license/sync/challenge` admite `capacity` desafíos dentro de cualquier ventana deslizante de
+`window_seconds` (**global** por autoridad; 120/60 s por defecto; `KONTROL_CENTRAL_SYNC_CHALLENGE_RATE_LIMIT_*`;
+en `prod` no se apaga). Se decide antes de persistir nada: con la ventana llena → `429 {"code":
+"SYNC_RATE_LIMITED", "message": "<genérico>"}` + cabecera `Retry-After: <1..window_seconds>` (segundos
+hasta que el desafío más antiguo de la ventana salga de ella). Idéntico para identidad conocida o
+desconocida; sin `installation_id`, nonce, recuentos ni estado interno en el cuerpo. Un rechazo no crea
+fila, no consume ni altera desafíos emitidos, no escribe auditoría y no toca el registro ni las
+emisiones; los desafíos ya emitidos siguen valiendo y `POST /v1/license/sync` no se limita por esta
+política. El límite es exacto entre trabajadores/réplicas (estado en PostgreSQL + candado consultivo
+transaccional). El cliente trata el 429 como un rechazo acotado (`502 CENTRAL_SYNC_REJECTED`,
+`details.central_code = SYNC_RATE_LIMITED`), sin reintentos automáticos. No es protección volumétrica:
+el límite por origen va en la pasarela del operador.

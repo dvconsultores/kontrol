@@ -62,12 +62,22 @@ class Settings(BaseSettings):
     signing_keys: str | None = None
     #: Vida de un desafío de autenticación del sync (FR-010-376): corta y configurable; técnica, no de negocio.
     sync_challenge_ttl_seconds: int = Field(default=120, ge=5, le=900)
+    #: Límite de tasa de la emisión de desafíos (`CENTRAL-SYNC-SIN-LIMITE-DE-TASA`): GLOBAL por autoridad,
+    #: ventana deslizante exacta sobre las filas de `cla_sync_challenges` (estado en PostgreSQL: vale para
+    #: varios trabajadores). `capacity` desafíos dentro de cualquier ventana de `window_seconds`; la ráfaga
+    #: admitida es la capacidad entera. Defensa en profundidad: no sustituye a la autenticación. En `prod`
+    #: no se puede apagar. Acota también el crecimiento de la tabla: ≤ capacity por ventana.
+    sync_challenge_rate_limit_enabled: bool = True
+    sync_challenge_rate_limit_capacity: int = Field(default=120, ge=1, le=100_000)
+    sync_challenge_rate_limit_window_seconds: int = Field(default=60, ge=1, le=3600)
     log_json: bool = False
 
     @model_validator(mode="after")
     def _signing_key_required_in_prod(self) -> Settings:
         if self.environment != "prod":
             return self
+        if not self.sync_challenge_rate_limit_enabled:
+            raise ValueError("KONTROL_CENTRAL_SYNC_CHALLENGE_RATE_LIMIT_ENABLED no puede ser false en prod: el endpoint de desafío es pre-autenticación")
         try:
             load_signing_key_set(self)
         except SigningKeyError as exc:

@@ -30,6 +30,9 @@ services:
       KONTROL_CENTRAL_SIGNING_KID: "${KONTROL_CENTRAL_SIGNING_KID:-kontrol-lic-2026-01}"
       # Rotación con solapamiento: conjunto `kid → PEM privada` (JSON) además del par anterior; el kid activo es SIGNING_KID.
       KONTROL_CENTRAL_SIGNING_KEYS: "${KONTROL_CENTRAL_SIGNING_KEYS:-}"
+      # Límite de tasa global del endpoint de desafío (defensa en profundidad; en prod no se apaga). Valores por defecto 120 por 60 s.
+      KONTROL_CENTRAL_SYNC_CHALLENGE_RATE_LIMIT_CAPACITY: "${KONTROL_CENTRAL_SYNC_CHALLENGE_RATE_LIMIT_CAPACITY:-120}"
+      KONTROL_CENTRAL_SYNC_CHALLENGE_RATE_LIMIT_WINDOW_SECONDS: "${KONTROL_CENTRAL_SYNC_CHALLENGE_RATE_LIMIT_WINDOW_SECONDS:-60}"
       TZ: "America/Caracas"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8010/health/live')"]
