@@ -1,0 +1,50 @@
+GOOD: (0, '54 passed in 12.69s')
+M-01 el esquema desaparece del OpenAPI (la dependencia vuelve a leer la cabecera a mano, sin SecurityBase)
+  MUTATED → FAIL (muere) · 26 failed, 28 passed in 9.88s
+  RESTORED → PASS · 54 passed in 7.41s
+M-02 el esquema se declara como apiKey en cabecera (tipo ficticio)
+  MUTATED → FAIL (muere) · 2 failed, 52 passed, 2 warnings in 7.52s
+  RESTORED → PASS · 54 passed in 7.37s
+M-03 el login declara seguridad (una pública documentada como protegida)
+  MUTATED → FAIL (muere) · 2 failed, 52 passed in 7.44s
+  RESTORED → PASS · 54 passed in 7.38s
+M-04 una protegida se documenta sin seguridad (diagnóstico con security: [])
+  MUTATED → PASS (SOBREVIVE) · 54 passed in 7.40s
+  RESTORED → PASS · 54 passed in 7.40s
+M-05 el analizador acepta `bearer` en minúsculas (cambia el runtime)
+  MUTATED → FAIL (muere) · 1 failed, 53 passed in 7.39s
+  RESTORED → PASS · 54 passed in 7.45s
+M-06 una credencial vacía deja de ser inválida y pasa a «no autenticado»
+  MUTATED → FAIL (muere) · 1 failed, 53 passed in 7.42s
+  RESTORED → PASS · 54 passed in 7.34s
+M-07 el diagnóstico deja de exigir el permiso (OpenAPI no sustituye a la autorización)
+  MUTATED → FAIL (muere) · 1 error in 1.87s
+  RESTORED → PASS · 54 passed in 7.39s
+M-08 bearerFormat deja de decir la verdad (Opaque)
+  MUTATED → FAIL (muere) · 1 failed, 53 passed in 7.40s
+  RESTORED → PASS · 54 passed in 7.35s
+M-09 la cabecera de empresa se publica como esquema de seguridad
+  MUTATED → FAIL (muere) · 4 failed, 50 passed in 7.53s
+  RESTORED → PASS · 54 passed in 7.36s
+M-10 seguridad global en toda la API (las públicas la heredan)
+  MUTATED → FAIL (muere) · 1 failed, 53 passed in 7.55s
+  RESTORED → PASS · 54 passed in 7.41s
+M-11 el esquema cambia de nombre (contrato inestable)
+  MUTATED → PASS (SOBREVIVE) · 54 passed in 7.34s
+  RESTORED → PASS · 54 passed in 7.33s
+M-12 una segunda lectura de la cabecera en el contexto de empresa (dos analizadores)
+  MUTATED → FAIL (muere) · 1 failed, 53 passed in 6.77s
+  RESTORED → PASS · 54 passed in 7.34s
+M-13 scopes OAuth inventados sobre el esquema
+  MUTATED → FAIL (muere) · 3 failed, 51 passed in 7.40s
+  RESTORED → PASS · 54 passed in 7.34s
+M-04 una protegida vuelve a leer la cabecera a mano dentro de la función (protegida en runtime, pública en el contrato)
+  MUTATED → FAIL (muere) · 42 failed, 12 passed in 14.86s
+  RESTORED → PASS · 54 passed in 7.38s
+M-11 el esquema cambia de nombre (contrato inestable)
+  MUTATED → FAIL (muere) · 1 failed, 53 passed in 7.54s
+  RESTORED → PASS · 54 passed in 7.48s
+== M-04 repetido con mutante válido (import incluido)
+M-04 una protegida vuelve a leer la cabecera a mano dentro de la función (protegida en runtime, pública en el contrato)
+  MUTATED → FAIL (muere) · 2 failed, 52 passed in 12.52s
+  RESTORED → PASS · 54 passed in 7.65s

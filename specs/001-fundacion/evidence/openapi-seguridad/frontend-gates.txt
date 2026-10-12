@@ -1,0 +1,13 @@
+== typecheck (node node_modules/typescript/bin/tsc -b --noEmit)
+TYPECHECK_OK
+== lint (eslint . --max-warnings 0)
+LINT_OK
+== vitest run
+
+ Test Files  35 passed (35)
+      Tests  467 passed (467)
+   Start at  04:15:15
+   Duration  7.90s (transform 1.45s, setup 4.78s, collect 20.87s, tests 10.34s, environment 19.20s, prepare 3.35s)
+
+== build (tsc -b && vite build)
+BUILD_OK

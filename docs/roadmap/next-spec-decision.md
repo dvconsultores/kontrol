@@ -3075,3 +3075,29 @@ Candidatas técnicas sin decisión pendiente: `TEST-VOLUMEN-DE-INSTALACION-COMPA
 `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`,
 `E2E-SIN-TYPECHECK`. Fuera de ciclo y pendiente de la dueña: el 502 de `kontrol.globaldv.net`
 (backend caído en el servidor; requiere acceso y autorización). MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-12 · OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD convergida: el contrato declara la autenticación que ya existía (dueña 001)
+
+Las 543 operaciones del OpenAPI se publicaban sin `security` y sin `securitySchemes`, porque la
+autenticación se leía a mano de la cabecera. El descubrimiento fijó el mecanismo real —un JWT de
+acceso en `Authorization: Bearer`, con el refresh en cookie HttpOnly que solo consume `/auth/refresh`,
+sin CSRF— y la partición real del runtime leída del árbol de dependencias: 532 operaciones protegidas y
+11 públicas (health, bootstrap, estado de licencia, login/refresh/logout/recuperación, raíz). La
+solución es framework-native y no duplica nada: la misma dependencia que autentica recibe la
+credencial de un `HTTPBearer` con la semántica exacta del analizador anterior, y FastAPI deriva de él
+`securitySchemes.BearerAccessToken` (`http`/`bearer`/`JWT`) y el `security` de cada operación protegida.
+Sin OAuth2 ni scopes, sin apiKey, sin seguridad global, sin lista manual de rutas; `X-Kontrol-Company`
+sigue siendo contexto de empresa, no credencial. El runtime no cambió: 401/403, permisos, alcance,
+login, logout, setup, health, licencia, sync, límite de tasa, reverificación, keep-alive y panel de
+versión intactos; esquema 0, frontend 0, Autoridad Central fuera (no publica OpenAPI).
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD` — **ejecutado y convergido** (`specs/001-fundacion/spec001-openapi-seguridad-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Candidatas técnicas sin decisión pendiente: `ROLES-SIN-API-DE-ALTA`, `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`,
+`OFFLINE-NAIVE-EN-SQLITE`, `E2E-PANTALLA-SIN-PINTAR`, `ALMACENES-CARRERA-SQLITE-HILOS`,
+`PICKLIST-DUPLICADA-500`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
+`INSTALACION-KEY-REFERENCE-120`, `E2E-SIN-TYPECHECK`. Fuera de ciclo y pendiente de la dueña: el 502 de
+`kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
