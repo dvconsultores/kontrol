@@ -17,9 +17,11 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
+from app.core.integrity import es_violacion_unica
 from app.modules.approvals import integration as approvals_integration
 from app.modules.approvals import service as approvals_service
 from app.modules.fiscal import service as fiscal_service
@@ -913,6 +915,27 @@ def transition_order(db: Session, *, order: SalesOrder, target: str, actor: str 
 # --------------------------------------------------------------------------- #
 # Picking y despacho (integración con 003)
 # --------------------------------------------------------------------------- #
+#: Índice único parcial de `pick_lists` (migración 0049): un solo plan vivo por pedido.
+_UN_PLAN_VIVO_POR_PEDIDO = "uq_pick_lists_active_order"
+
+
+def _plan_activo(db: Session, *, company_id: str, order_id: str) -> PickList | None:
+    """El plan vivo (`DRAFT` o `CONFIRMED`) del pedido, si lo hay; mismo predicado que el índice."""
+    return db.execute(
+        select(PickList).where(PickList.company_id == company_id, PickList.order_id == order_id,
+                               PickList.status.in_(PLAN_ACTIVE_STATUSES))
+    ).scalars().first()
+
+
+def _plan_duplicado(db: Session, *, company_id: str, order_id: str) -> ConflictError:
+    vigente = _plan_activo(db, company_id=company_id, order_id=order_id)
+    return ConflictError(code="PICKLIST_DUPLICATE",
+                         message="El pedido ya tiene un plan de picking activo; continúe con ese plan.",
+                         details={"order_id": order_id,
+                                  "picklist_id": str(vigente.id) if vigente else None,
+                                  "status": vigente.status if vigente else None})
+
+
 def create_picklist(db: Session, *, company_id: str, code: str, order_id: str, warehouse_id: str,
                     lines: list[dict] | None = None, actor: str | None = None) -> PickList:
     company_id = _company(company_id, obj="picking")
@@ -920,10 +943,23 @@ def create_picklist(db: Session, *, company_id: str, code: str, order_id: str, w
     if order.status not in ("RELEASED", "PREPARING"):
         raise ConflictError(code="ORDER_NOT_PREPARABLE", message="La orden no está en estado para prepararse.")
     _require_warehouse(db, company_id, warehouse_id)
+    # Un pedido no tiene dos planes vivos a la vez (Spec 031 post-`D0-15`): se comprueba antes de
+    # insertar, y el índice parcial queda como respaldo final de la carrera. Quien pierde la carrera
+    # recibe el mismo conflicto de dominio, nunca un 500; cualquier otra violación de integridad
+    # sigue su camino, porque solo se traduce la de **ese** índice. Mismo patrón que la moneda
+    # funcional (`treasury/rates.py`): comprobar y crear no es atómico, decide la base.
+    if _plan_activo(db, company_id=company_id, order_id=order_id) is not None:
+        raise _plan_duplicado(db, company_id=company_id, order_id=order_id)
     pl = PickList(company_id=company_id, code=code, order_id=order_id, warehouse_id=warehouse_id,
                   status="DRAFT", created_by=actor)
-    db.add(pl)
-    db.flush()
+    try:
+        with db.begin_nested():
+            db.add(pl)
+            db.flush()
+    except IntegrityError as error:
+        if not es_violacion_unica(error, _UN_PLAN_VIVO_POR_PEDIDO):
+            raise
+        raise _plan_duplicado(db, company_id=company_id, order_id=order_id) from None
     for item in lines or []:
         db.add(PickListLine(picklist_id=str(pl.id), product_id=item["product_id"],
                             lot_id=item.get("lot_id"), serial_id=item.get("serial_id"),

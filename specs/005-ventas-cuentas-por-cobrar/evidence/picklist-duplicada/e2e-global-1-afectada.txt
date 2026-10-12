@@ -1,0 +1,13 @@
+# Corrida global canónica 1 · qa/e2e-run.py · tras el arreglo
+[e2e r20261012t165344p2921771n3dd646] analizador: ausente (las cargas con análisis se omiten con nombre)
+  -   75 [chromium] › e2e/documents-a11y.spec.ts:98:1 › la carga de archivo es operable solo con teclado
+  -   77 [chromium] › e2e/documents.spec.ts:118:1 › carga, versión y descarga por la interfaz real
+  -   82 [chromium] › e2e/documents.spec.ts:246:1 › una versión histórica no se reinterpreta al cargar otra
+  -   83 [chromium] › e2e/documents.spec.ts:286:1 › un reintento tras el fallo no deja el formulario sin salida
+  ✘  168 [chromium] › e2e/pick-execution.spec.ts:297:3 › Spec 032 — preparación física y consolidación › la interfaz registra la recogida y el dominio lo confirma
+  ✘  169 [chromium] › e2e/picking.spec.ts:192:3 › Spec 031 — cola y ruta de picking › el pedido liberado aparece en la cola con su puesto
+  2 failed
+  4 skipped
+  267 passed (3.3m)
+[e2e r20261012t165344p2921771n3dd646] suite: {'failed': 2, 'skipped': 4, 'did not run': 4, 'passed': 267} · limpieza: LIMPIA · salida: 1 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t165344p2921771n3dd646
+rc=1

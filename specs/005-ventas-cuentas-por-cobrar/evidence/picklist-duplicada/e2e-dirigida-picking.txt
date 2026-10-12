@@ -1,0 +1,13 @@
+# E2E dirigida · qa/e2e-run.py -- --project=chromium e2e/picking.spec.ts (suite dueña del flujo, con el escenario nuevo)
+  ✓  6 [chromium] › e2e/picking.spec.ts:208:3 › Spec 031 — cola y ruta de picking › un segundo plan vivo para el mismo pedido es un 409 de dominio, no un 500
+  ✓  3 [chromium] › e2e/picking.spec.ts:284:3 › Spec 031 — cola y ruta de picking › confirmar completo mueve el pedido a preparación y lo saca de la cola
+  ✓  2 [chromium] › e2e/picking.spec.ts:308:3 › Spec 031 — cola y ruta de picking › cancelar un plan confirmado devuelve el pedido a la cola sin tocar la reserva
+  ✓  1 [chromium] › e2e/picking.spec.ts:192:3 › Spec 031 — cola y ruta de picking › el pedido liberado aparece en la cola con su puesto
+  ✓  8 [chromium] › e2e/picking.spec.ts:371:3 › Spec 031 — cola y ruta de picking › no se asigna más de lo reservado ni desde otro almacén
+  ✓  9 [chromium] › e2e/picking.spec.ts:391:3 › Spec 031 — cola y ruta de picking › invalidar exige que la precondición esté perdida
+  ✓  7 [chromium] › e2e/picking.spec.ts:349:3 › Spec 031 — cola y ruta de picking › planificar no mueve una sola unidad
+  ✓  4 [chromium] › e2e/picking.spec.ts:226:3 › Spec 031 — cola y ruta de picking › la interfaz reparte entre dos ubicaciones y el recorrido sale en orden
+  ✓  5 [chromium] › e2e/picking.spec.ts:258:3 › Spec 031 — cola y ruta de picking › no se confirma con remanente, y el dominio lo impide
+  9 passed
+[e2e r20261012t165318p2920432na1df6b] suite: {'passed': 9} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t165318p2920432na1df6b
+rc=0

@@ -205,6 +205,24 @@ test.describe("Spec 031 — cola y ruta de picking", () => {
     await expect(page.getByRole("cell", { name: e.pedidoCode })).toBeVisible();
   });
 
+  test("un segundo plan vivo para el mismo pedido es un 409 de dominio, no un 500", async ({ request }) => {
+    // PICKLIST-DUPLICADA-500: el índice parcial `uq_pick_lists_active_order` ya lo impedía en la base, pero
+    // la violación salía como 500. Contra el backend real: 409 `PICKLIST_DUPLICATE`, el plan vigente en
+    // `details`, y el pedido sigue con un solo plan.
+    const c = await ctx(request);
+    const e = await escenario(request, c, marca());
+
+    const segundo = await postCrudo(request, c, "/sales/pick-lists", {
+      code: `PICK-DUP-${marca()}`, order_id: e.pedido, warehouse_id: e.almacen,
+    });
+    expect(segundo.status(), await segundo.text()).toBe(409);
+    const cuerpo = (await segundo.json()) as { code: string; details: { picklist_id: string; status: string } };
+    expect(cuerpo.code).toBe("PICKLIST_DUPLICATE");
+    expect(cuerpo.details).toMatchObject({ picklist_id: e.plan, status: "DRAFT" });
+    const planes = await get(request, c, `/sales/pick-lists?order_id=${e.pedido}`);
+    expect((planes.items as Array<{ id: string }>).map((p) => p.id)).toEqual([e.plan]);
+  });
+
   test("la interfaz reparte entre dos ubicaciones y el recorrido sale en orden", async ({
     page,
     request,

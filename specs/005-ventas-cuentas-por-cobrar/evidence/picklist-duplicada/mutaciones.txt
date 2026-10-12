@@ -1,0 +1,52 @@
+GOOD [SQLite]: (0, '....ss.s......                                                           [100%]\n')
+GOOD [PostgreSQL]: (0, '..............                                                           [100%]\n')
+M-01 sin comprobación previa (solo el índice, que SQLite no tiene) [SQLite]
+  MUTATED → FAIL (muere) · picklist_duplicada.py::test_pl_15b_un_plan_vivo_en_cualquiera_de_sus_dos_estados_bloquea[CONFIRMED]
+ · ['test_pl_01_02_03_el_segundo_plan_vivo_es_un_409_de_dominio_y_no_deja_r', 'test_pl_15b_un_plan_vivo_en_cualquiera_de_sus_dos_estados_bloquea[DRAF', 'test_pl_15b_un_plan_vivo_en_cualquiera_de_sus_dos_estados_bloquea[CONF']
+  RESTORED → PASS · ....ss.s......                                                           [100%]
+
+M-03 la violación del índice ya no se traduce (vuelve el 500 en la carrera) [PostgreSQL]
+  MUTATED → FAIL (muere) · E       (Background on this error at: https://sqlalche.me/e/ · ['test_pl_11_12_bajo_concurrencia_entra_exactamente_uno_y_el_resto_es_40', 'test_pl_14_si_la_carrera_llega_al_indice_la_respuesta_es_el_mismo_409_']
+  RESTORED → PASS · ..............                                                           [100%]
+
+M-04 toda IntegrityError se disfraza de duplicado [SQLite]
+  MUTATED → FAIL (muere) ·         except IntegrityError as error: · ['test_pl_13_otra_violacion_de_integridad_no_se_disfraza_de_duplicado']
+  RESTORED → PASS · ....ss.s......                                                           [100%]
+
+M-05 otro código de dominio [SQLite]
+  MUTATED → FAIL (muere) · _picklist_duplicada.py::test_pl_01_02_03_el_segundo_plan_vivo_es_un_409_de_dominio_y_no_deja_rastro
+ · ['test_pl_01_02_03_el_segundo_plan_vivo_es_un_409_de_dominio_y_no_deja_r']
+  RESTORED → PASS · ....ss.s......                                                           [100%]
+
+M-06 sin savepoint: la sesión queda rota tras la carrera [PostgreSQL]
+  MUTATED → FAIL (muere) · E               (Background on this error at: https://sqlalc · ['test_pl_14_si_la_carrera_llega_al_indice_la_respuesta_es_el_mismo_409_']
+  RESTORED → PASS · ..............                                                           [100%]
+
+M-07 el conflicto toca el pedido (y lo confirma) [SQLite]
+  MUTATED → FAIL (muere) · _picklist_duplicada.py::test_pl_01_02_03_el_segundo_plan_vivo_es_un_409_de_dominio_y_no_deja_rastro
+ · ['test_pl_01_02_03_el_segundo_plan_vivo_es_un_409_de_dominio_y_no_deja_r']
+  RESTORED → PASS · ....ss.s......                                                           [100%]
+
+M-08 el conflicto toca el plan vigente (y lo confirma) [SQLite]
+  MUTATED → FAIL (muere) · _picklist_duplicada.py::test_pl_01_02_03_el_segundo_plan_vivo_es_un_409_de_dominio_y_no_deja_rastro
+ · ['test_pl_01_02_03_el_segundo_plan_vivo_es_un_409_de_dominio_y_no_deja_r']
+  RESTORED → PASS · ....ss.s......                                                           [100%]
+
+M-09 el duplicado se mira antes del pedido y sin alcance de empresa (fuga: 409 para un pedido ajeno) [SQLite]
+  MUTATED → FAIL (muere) · picklist_duplicada.py::test_pl_15b_un_plan_vivo_en_cualquiera_de_sus_dos_estados_bloquea[CONFIRMED]
+ · ['test_pl_01_02_03_el_segundo_plan_vivo_es_un_409_de_dominio_y_no_deja_r', 'test_pl_10_un_pedido_ajeno_con_plan_vivo_sigue_siendo_404_no_409', 'test_pl_15b_un_plan_vivo_en_cualquiera_de_sus_dos_estados_bloquea[DRAF']
+  RESTORED → PASS · ....ss.s......                                                           [100%]
+
+M-10 un plan terminal sigue contando como vivo [SQLite]
+  MUTATED → FAIL (muere) · 
+FAILED tests/test_picklist_duplicada.py::test_pl_15_un_plan_terminal_libera_el_pedido[INVALIDATED]
+ · ['test_pl_15_un_plan_terminal_libera_el_pedido[CLOSED]', 'test_pl_15_un_plan_terminal_libera_el_pedido[CANCELLED]', 'test_pl_15_un_plan_terminal_libera_el_pedido[INVALIDATED]']
+  RESTORED → PASS · ....ss.s......                                                           [100%]
+
+M-12 el alta deja de exigir ventas:create [SQLite]
+  MUTATED → FAIL (muere) · =================
+FAILED tests/test_picklist_duplicada.py::test_pl_09_sin_permiso_403_antes_que_409
+ · ['test_pl_09_sin_permiso_403_antes_que_409']
+  RESTORED → PASS · ....ss.s......                                                           [100%]
+
+rc=0

@@ -3176,3 +3176,30 @@ pendiente: `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`, `TEST-PG-UN-SCHEMA-POR-PRUE
 `PICKLIST-DUPLICADA-500`, `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`. De entorno:
 `ENTORNO-SIN-CLAMSCAN`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-12 · PICKLIST-DUPLICADA-500 convergida: el segundo plan vivo es un 409 de dominio (dueña 031)
+
+Reproducido antes de tocar nada: en PostgreSQL el segundo `POST /sales/pick-lists` era un 500
+(`UniqueViolation` de `uq_pick_lists_active_order` sin traducir; con diez hilos, un 200 y nueve 500); en
+SQLite, sin ese índice parcial, persistía un segundo plan vivo en silencio. El contrato ya estaba escrito
+(«un solo plan activo por pedido», predicado del índice = `PLAN_ACTIVE_STATUSES`), así que no hubo decisión
+de producto: comprobación previa con el alcance de la empresa, 409 `PICKLIST_DUPLICATE` con el plan vigente
+en `details`, inserción en savepoint con el índice como respaldo final traducido solo cuando es esa
+violación (el patrón de la moneda funcional, el hermano con constraint real), sin candado, sin migración, sin
+`except` amplio; un pedido ajeno sigue siendo 404 y 401/403 van por delante. 14 pruebas backend (2 y 10
+hilos, carrera simulada contra el índice, otra violación de integridad que no se disfraza, estados terminales
+que liberan) + 1 escenario E2E; 10/10 mutaciones muertas; suites completas sin regresión; E2E 273/0/4 en
+dos globales consecutivas tras clasificar, con prueba independiente, dos globales afectadas por
+`E2E-PANTALLA-SIN-PINTAR` (sigue OPEN; el host tenía una VPN activa). Frontend de producto 0.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `PICKLIST-DUPLICADA-500` — **ejecutado y convergido** (`specs/005-ventas-cuentas-por-cobrar/spec031-picklist-duplicada-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendiente de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION`. Candidatas técnicas sin decisión
+pendiente: `E2E-PANTALLA-SIN-PINTAR` (volvió a manifestarse hoy en dos globales: dos fallos por corrida,
+siempre el formulario de acceso sin pintar), `OFFLINE-NAIVE-EN-SQLITE`, `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`,
+`TEST-PG-UN-SCHEMA-POR-PRUEBA`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`, `ALMACENES-CARRERA-SQLITE-HILOS`,
+`MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`, `LISTADOS-SIN-TOPE`. De entorno:
+`ENTORNO-SIN-CLAMSCAN`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+

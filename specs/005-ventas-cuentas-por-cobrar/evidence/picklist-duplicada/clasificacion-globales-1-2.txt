@@ -1,0 +1,35 @@
+# Clasificación de los fallos de las globales 1 y 2 (2 por corrida, distintos entre sí, todos «waiting for getByLabel(/Empresa \(código\)/)» a los 30 s: el formulario de acceso no se pintó = E2E-PANTALLA-SIN-PINTAR, deuda abierta)
+## backend.log de ambas corridas: 0 Traceback/ERROR/500 · reloj estable (manifiestos 16:53→16:57 y 16:57→17:00 UTC) · host con interfaz VPN activa (proton0, ipv6leakintrf0): el disparador documentado de esa deuda es un cambio de red en vuelo
+## Dirigida de las cuatro suites afectadas, base nueva: qa/e2e-run.py -- --project=chromium e2e/pick-execution.spec.ts e2e/dispatch.spec.ts e2e/documents-a11y.spec.ts e2e/picking.spec.ts
+  ✓   4 [chromium] › e2e/dispatch.spec.ts:257:3 › Spec 035 — despacho, transporte y regulación › no se despacha un pedido sin factura emitida
+  ✓   2 [chromium] › e2e/dispatch.spec.ts:268:3 › Spec 035 — despacho, transporte y regulación › no se autoriza la salida sin decir a dónde va ni con quién
+  ✓   3 [chromium] › e2e/dispatch.spec.ts:292:3 › Spec 035 — despacho, transporte y regulación › un pedido no se despacha dos veces
+  ✓   6 [chromium] › e2e/dispatch.spec.ts:280:3 › Spec 035 — despacho, transporte y regulación › no se confirma una salida sin validar
+  ✓   5 [chromium] › e2e/dispatch.spec.ts:306:3 › Spec 035 — despacho, transporte y regulación › confirmar dos veces no saca la mercancía dos veces
+  ✓   1 [chromium] › e2e/dispatch.spec.ts:222:3 › Spec 035 — despacho, transporte y regulación › el pedido facturado sale del almacén y la reserva se consume
+  -  11 [chromium] › e2e/documents-a11y.spec.ts:98:1 › la carga de archivo es operable solo con teclado
+  ✓  13 [chromium] › e2e/pick-execution.spec.ts:186:3 › Spec 032 — preparación física y consolidación › el recorrido completo deja el pedido preparado en el área
+  ✓  14 [chromium] › e2e/pick-execution.spec.ts:213:3 › Spec 032 — preparación física y consolidación › recoger no resta dos veces el mismo compromiso
+  ✓  10 [chromium] › e2e/documents-a11y.spec.ts:64:1 › detalle documental: sin violaciones serias de WCAG 2.2 AA
+  ✓  12 [chromium] › e2e/documents-a11y.spec.ts:144:1 › responsive: sin scroll horizontal entre 320 y 1440
+  ✓  15 [chromium] › e2e/pick-execution.spec.ts:232:3 › Spec 032 — preparación física y consolidación › recoger de menos exige motivo y deja la diferencia registrada
+  ✓   9 [chromium] › e2e/documents-a11y.spec.ts:55:1 › biblioteca y tipos: sin violaciones serias de WCAG 2.2 AA
+  ✓  16 [chromium] › e2e/pick-execution.spec.ts:258:3 › Spec 032 — preparación física y consolidación › no se puede recoger de más
+  ✓  17 [chromium] › e2e/pick-execution.spec.ts:268:3 › Spec 032 — preparación física y consolidación › no se consolida un recorrido a medias
+  ✓  18 [chromium] › e2e/pick-execution.spec.ts:282:3 › Spec 032 — preparación física y consolidación › una parada se recoge una vez
+  ✓  21 [chromium] › e2e/picking.spec.ts:208:3 › Spec 031 — cola y ruta de picking › un segundo plan vivo para el mismo pedido es un 409 de dominio, no un 500
+  ✓   8 [chromium] › e2e/dispatch.spec.ts:342:3 › Spec 035 — despacho, transporte y regulación › la interfaz despacha y el dominio lo confirma
+  ✓   7 [chromium] › e2e/dispatch.spec.ts:319:3 › Spec 035 — despacho, transporte y regulación › la cola solo trae pedidos facturados y los suelta al salir
+  ✓  19 [chromium] › e2e/pick-execution.spec.ts:297:3 › Spec 032 — preparación física y consolidación › la interfaz registra la recogida y el dominio lo confirma
+  ✓  20 [chromium] › e2e/picking.spec.ts:192:3 › Spec 031 — cola y ruta de picking › el pedido liberado aparece en la cola con su puesto
+  ✓  24 [chromium] › e2e/picking.spec.ts:284:3 › Spec 031 — cola y ruta de picking › confirmar completo mueve el pedido a preparación y lo saca de la cola
+  ✓  22 [chromium] › e2e/picking.spec.ts:226:3 › Spec 031 — cola y ruta de picking › la interfaz reparte entre dos ubicaciones y el recorrido sale en orden
+  ✓  27 [chromium] › e2e/picking.spec.ts:371:3 › Spec 031 — cola y ruta de picking › no se asigna más de lo reservado ni desde otro almacén
+  ✓  25 [chromium] › e2e/picking.spec.ts:308:3 › Spec 031 — cola y ruta de picking › cancelar un plan confirmado devuelve el pedido a la cola sin tocar la reserva
+  ✓  26 [chromium] › e2e/picking.spec.ts:349:3 › Spec 031 — cola y ruta de picking › planificar no mueve una sola unidad
+  ✓  28 [chromium] › e2e/picking.spec.ts:391:3 › Spec 031 — cola y ruta de picking › invalidar exige que la precondición esté perdida
+  ✓  23 [chromium] › e2e/picking.spec.ts:258:3 › Spec 031 — cola y ruta de picking › no se confirma con remanente, y el dominio lo impide
+  1 skipped
+  27 passed
+[e2e r20261012t170147p2972628n3a62e8] suite: {'skipped': 1, 'passed': 27} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t170147p2972628n3a62e8
+rc=0

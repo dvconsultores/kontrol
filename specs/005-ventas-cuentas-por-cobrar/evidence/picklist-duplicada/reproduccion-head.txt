@@ -1,0 +1,57 @@
+# Reproducción sobre HEAD de8e806 · suite hostil tests/test_picklist_duplicada.py ANTES del arreglo
+## SQLite (sin índice parcial: ddl_if postgresql)
+>       assert segundo.status_code == 409, segundo.text
+E       AssertionError: {"id":"4b4a8216-e840-42aa-94db-114b1ebdbd94","code":"PL-003","status":"DRAFT"}
+>       assert r.status_code == 409 and r.json()["details"]["status"] == vivo
+>       assert r.status_code == 409 and r.json()["details"]["status"] == vivo
+FAILED tests/test_picklist_duplicada.py::test_pl_01_02_03_el_segundo_plan_vivo_es_un_409_de_dominio_y_no_deja_rastro
+FAILED tests/test_picklist_duplicada.py::test_pl_15b_un_plan_vivo_en_cualquiera_de_sus_dos_estados_bloquea[DRAFT]
+FAILED tests/test_picklist_duplicada.py::test_pl_15b_un_plan_vivo_en_cualquiera_de_sus_dos_estados_bloquea[CONFIRMED]
+
+## PostgreSQL
+E       AssertionError: {"code":"INTERNAL_ERROR","message":"Ocurrió un error interno. Intente nuevamente.","field_errors":{},"request_id":"9b11f70aeebc4240881396192fcd8d1c","details":null}
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "uq_pick_lists_active_order"
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_pick_lists_active_order"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/sales/pick-lists "HTTP/1.1 500 Internal Server Error"
+>       assert sorted(estados) == [200] + [409] * (n - 1), estados
+E       AssertionError: [200, 500]
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "uq_pick_lists_active_order"
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_pick_lists_active_order"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/sales/pick-lists "HTTP/1.1 500 Internal Server Error"
+>       assert sorted(estados) == [200] + [409] * (n - 1), estados
+E       AssertionError: [500, 200, 500, 500, 500, 500, ...]
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "uq_pick_lists_active_order"
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_pick_lists_active_order"
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "uq_pick_lists_active_order"
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_pick_lists_active_order"
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "uq_pick_lists_active_order"
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_pick_lists_active_order"
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "uq_pick_lists_active_order"
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_pick_lists_active_order"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/sales/pick-lists "HTTP/1.1 500 Internal Server Error"
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "uq_pick_lists_active_order"
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_pick_lists_active_order"
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "uq_pick_lists_active_order"
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_pick_lists_active_order"
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "uq_pick_lists_active_order"
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_pick_lists_active_order"
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "uq_pick_lists_active_order"
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_pick_lists_active_order"
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "uq_pick_lists_active_order"
+sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_pick_lists_active_order"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/sales/pick-lists "HTTP/1.1 500 Internal Server Error"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/sales/pick-lists "HTTP/1.1 500 Internal Server Error"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/sales/pick-lists "HTTP/1.1 500 Internal Server Error"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/sales/pick-lists "HTTP/1.1 500 Internal Server Error"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/sales/pick-lists "HTTP/1.1 500 Internal Server Error"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/sales/pick-lists "HTTP/1.1 500 Internal Server Error"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/sales/pick-lists "HTTP/1.1 500 Internal Server Error"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/v1/sales/pick-lists "HTTP/1.1 500 Internal Server Error"
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+FAILED tests/test_picklist_duplicada.py::test_pl_01_02_03_el_segundo_plan_vivo_es_un_409_de_dominio_y_no_deja_rastro
+FAILED tests/test_picklist_duplicada.py::test_pl_11_12_bajo_concurrencia_entra_exactamente_uno_y_el_resto_es_409[2]
+FAILED tests/test_picklist_duplicada.py::test_pl_11_12_bajo_concurrencia_entra_exactamente_uno_y_el_resto_es_409[10]
+FAILED tests/test_picklist_duplicada.py::test_pl_14_si_la_carrera_llega_al_indice_la_respuesta_es_el_mismo_409_y_la_sesion_sigue_viva
+FAILED tests/test_picklist_duplicada.py::test_pl_15b_un_plan_vivo_en_cualquiera_de_sus_dos_estados_bloquea[DRAFT]
+FAILED tests/test_picklist_duplicada.py::test_pl_15b_un_plan_vivo_en_cualquiera_de_sus_dos_estados_bloquea[CONFIRMED]
