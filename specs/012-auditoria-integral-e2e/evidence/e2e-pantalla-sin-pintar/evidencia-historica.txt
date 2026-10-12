@@ -1,0 +1,17 @@
+# Mapa de evidencia histórica · E2E-PANTALLA-SIN-PINTAR
+
+## 2026-10-01 · empresas-busqueda.spec.ts:58 · corrida r20261001t21xxxx · sin traza (retries 0, trace on-first-retry) · estado de página: desconocido
+
+## 2026-10-06 · sales-orders.spec.ts:167 · r20261006t045634p289084ndc652a · CON traza (trace.zip retenido por un reintento de ese ciclo)
+Peticiones fallidas en la traza (1-trace.network), todas con net::ERR_NETWORK_CHANGED, todas módulos locales de Vite:
+- GET /src/components/NotificationViewport.tsx → net::ERR_NETWORK_CHANGED (t≈0)
+- GET /src/index.css → net::ERR_NETWORK_CHANGED (t≈0)
+- GET /node_modules/vite/dist/client/env.mjs → net::ERR_NETWORK_CHANGED (t≈0)
+- GET /node_modules/.vite/deps/chunk-OFFQOIRY.js?v=565c4bd5 → net::ERR_NETWORK_CHANGED (t≈0)
+- GET /node_modules/.vite/deps/chunk-WOOG5QLI.js?v=565c4bd5 → net::ERR_NETWORK_CHANGED (t≈0)
+- GET /node_modules/.vite/deps/chunk-KNFVIJSK.js?v=565c4bd5 → net::ERR_NETWORK_CHANGED (t≈0)
+Consecuencia: la aplicación nunca montó (index.html servido; módulos abortados). Reloj del equipo: +5 h 08 min en esa corrida (manifiesto 04:56→10:08 UTC con suite de 211 s); seis pruebas de returns.spec.ts con 401 AUTH_INVALID_TOKEN por tokens caducados por el salto. Clasificación de entonces: EXTERNAL_ENVIRONMENT.
+
+## 2026-10-06 · smoke.spec.ts:7 · r20261006t115327p731912n422f08 · encabezado del login no visible en los 5 s por defecto de esa prueba; prueba hermana del mismo /login verde en ese instante; sin traza
+
+## 2026-10-12 · r20261012t165344p2921771n3dd646 (pick-execution:297, picking:192) y r20261012t165715p2947137n8f61ea (dispatch:342, documents-a11y:64) · sin traza ni captura (configuración canónica) · error-context.md solo trae detalles del error y el código fuente: NO hay instantánea de página → estado de página: desconocido · frontend.log: solo el banner de Vite (4 líneas) · backend.log: 0 errores · reloj estable (16:53→16:57, 16:57→17:00 UTC) · VPN presente en el host (dos interfaces) · las cuatro suites 27/27 dirigidas en base nueva (r20261012t170147p2972628n3a62e8)

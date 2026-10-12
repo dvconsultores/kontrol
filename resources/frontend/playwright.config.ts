@@ -20,7 +20,11 @@ export default defineConfig({
   reporter: [["list"]],
   use: {
     baseURL: process.env.KONTROL_E2E_BASE_URL ?? "http://localhost:5173",
-    trace: "on-first-retry",
+    // Con `retries` 0 nada se reintenta, así que «en el primer reintento» no capturaba nunca el primer
+    // fallo: cuatro fallos de 2026-10-12 quedaron sin explicar por eso (E2E-PANTALLA-SIN-PINTAR). La
+    // traza se retiene solo si la prueba falla; en verde se descarta.
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
   },
   projects: [
     { name: "chromium", testIgnore: DEPENDIENTES, use: { ...devices["Desktop Chrome"] } },

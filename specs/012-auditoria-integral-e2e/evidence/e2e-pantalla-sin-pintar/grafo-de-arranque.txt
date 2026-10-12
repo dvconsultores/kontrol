@@ -1,0 +1,17 @@
+# Grafo de arranque del frontend y peticiones previas al formulario de acceso (HEAD aed0d95)
+
+index.html → <script type=module src=/src/main.tsx> → main.tsx: QueryClientProvider → NotificationProvider → AuthProvider → LicenseProvider → CompanyProvider → RouterProvider(router) → ruta /login: lazy(import('@/pages/LoginPage')) FUERA de RouteGuard → LoginPage renderiza el <form> con «Empresa (código)» INCONDICIONALMENTE (solo <Navigate to='/'> si isAuthenticated).
+
+| Petición | Dónde | ¿Bloquea el render del formulario? | Comportamiento si falla/tarda | Timeout en cliente |
+|---|---|---|---|---|
+| POST /auth/refresh | AuthProvider useEffect (restauración de sesión) | NO: el provider renderiza children siempre; solo RouteGuard (rutas protegidas) espera isReady | setReady(true) en finally; sin sesión queda anónimo | ninguno (apiFetch sin timeout) |
+| GET /license/status | LicenseProvider useEffect | NO: children siempre; loading solo informa | status null, loading false | ninguno |
+| GET /setup/status | LoginPage useEffect | NO: solo decide mostrar el asistente de instalación | catch silencioso | ninguno |
+| GET /src/pages/LoginPage.tsx (chunk lazy de Vite) | router al resolver /login | SÍ: sin el módulo no hay componente; react-router muestra nada (sin fallback) hasta que llega | el router queda en espera; una petición abortada no se reintenta | ninguno |
+| GET /src/main.tsx, /src/index.css, /@vite/client, /node_modules/.vite/deps/* | carga inicial del módulo raíz | SÍ: sin ellos React no monta | abortadas → #root vacío para siempre | ninguno |
+
+Conclusión del grafo: BLOCKING_PRELOGIN_REQUEST (license/refresh/setup) queda DESCARTADA como clase posible: ninguna petición de API condiciona el formulario. Lo único que puede dejar «Empresa (código)» sin pintar es que no llegue (o llegue tarde) un módulo de Vite: MODULE_FETCH_ABORTED / VITE_UNRESPONSIVE_UNDER_LOAD / NETWORK_CHANGE_IN_FLIGHT.
+
+# Configuración Playwright canónica (sin cambio): TIMEOUT 30 s (defecto) · EXPECT_TIMEOUT 5 s (defecto) · ACTION/NAVIGATION_TIMEOUT sin fijar · RETRIES 0 fuera de CI · WORKERS defecto (12 CPU → 6) · TRACE on-first-retry (nunca captura el primer fallo con retries 0) · SCREENSHOT/VIDEO off · WEB_SERVER ninguno (lo levanta el runner) · BASE_URL http://localhost:5173.
+# Runner (qa/e2e_corrida.py): Vite 'node node_modules/vite/bin/vite.js --host localhost --port 5173 --strictPort'; listo cuando GET / responde (esperar_salud, 60 s, monotónico); backend uvicorn 127.0.0.1:8000 keep-alive 75; Central 8010; sin workers fijados; manifiesto con inicio/fin en reloj de pared y 'segundos' de la suite en monotónico; señales SIGTERM/SIGHUP/SIGINT → limpieza.
+# Inicios de sesión por interfaz: 36 ficheros, 39 sitios con page.goto('/login').

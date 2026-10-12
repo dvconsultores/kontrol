@@ -16,6 +16,7 @@ ocupados no se empieza.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -61,6 +62,11 @@ SALIDA_LIMPIEZA = 75
 #: La corrida se interrumpió desde fuera.
 SALIDA_INTERRUMPIDA = 130
 
+#: Prefijos de interfaces de túnel (VPN): su presencia se anota como bandera, nunca con direcciones ni extremos.
+TUNELES = ("proton", "tun", "wg", "tap", "ipv6leak", "ppp")
+#: Desvío entre el reloj de pared y el monotónico a partir del cual la corrida declara un salto de reloj.
+UMBRAL_SALTO_DE_RELOJ_S = 5.0
+
 #: `installations.key_reference` guarda la ruta de la clave de instalación en 120 caracteres.
 LARGO_MAXIMO_DE_RUTA = 120
 #: Variables que apuntarían a otra base si se heredaran: la corrida las fija o las quita.
@@ -89,6 +95,41 @@ def _responde(url: str) -> bool:
             return respuesta.status == 200
     except (urllib.error.URLError, OSError):
         return False
+
+
+def resumir_red(enlaces: str, direcciones: str) -> dict[str, Any]:
+    """El estado de red del equipo **sin datos sensibles**, a partir de `ip -br link` e `ip -br addr`.
+
+    Guarda los nombres y el estado de las interfaces, la bandera de túnel (VPN) y una huella SHA-256
+    truncada de la salida de direcciones, que cambia si cambia cualquier dirección o interfaz. Las
+    direcciones mismas no se guardan: comparar dos huellas basta para saber si la red cambió en vuelo
+    (`E2E-PANTALLA-SIN-PINTAR`: el 2026-10-06 Chromium abortó los módulos con `ERR_NETWORK_CHANGED`).
+    """
+    interfaces = sorted(f"{partes[0]}:{partes[1]}" for linea in enlaces.splitlines()
+                        if len(partes := linea.split()) >= 2)
+    return {"interfaces": interfaces,
+            "tunel_presente": any(i.split(":", 1)[0].startswith(TUNELES) for i in interfaces),
+            "huella": hashlib.sha256(direcciones.encode()).hexdigest()[:12]}
+
+
+def huella_de_red() -> dict[str, Any]:
+    """`resumir_red` sobre el equipo; si `ip` no está, lo dice en vez de inventar."""
+    try:
+        enlaces = subprocess.run(["ip", "-br", "link"], capture_output=True, text=True, check=False, timeout=5).stdout
+        direcciones = subprocess.run(["ip", "-br", "addr"], capture_output=True, text=True, check=False, timeout=5).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return {"disponible": False}
+    return {"disponible": True, **resumir_red(enlaces, direcciones)}
+
+
+def desvio_de_reloj(pared_inicio: datetime, mono_inicio: float, pared_fin: datetime, mono_fin: float) -> dict[str, Any]:
+    """Cuánto se alejó el reloj de pared del monotónico entre dos instantes, y si eso es un salto.
+
+    Un salto del reloj del equipo durante la corrida caduca tokens recién emitidos y descoloca las
+    marcas de tiempo (visto el 2026-10-06: +5 h 08 min en una suite de 211 s). Se mide, no se corrige.
+    """
+    desvio = (pared_fin - pared_inicio).total_seconds() - (mono_fin - mono_inicio)
+    return {"desvio_s": round(desvio, 1), "salto": abs(desvio) > UMBRAL_SALTO_DE_RELOJ_S}
 
 
 class Corrida:
@@ -398,6 +439,23 @@ class Corrida:
                                    str(PUERTO_FRONTEND), "--strictPort"], FRONTEND)
         self.esperar_salud("frontend", f"{WEB}/")
 
+    # ----------------------------------------------------------------- entorno observado
+    def anotar_entorno(self, pared_inicio: datetime, mono_inicio: float) -> None:
+        """Red y reloj al final de la corrida, comparados con el inicio. Solo observa y avisa: no aborta
+        ni invalida (decidir eso es política del arnés y queda para la dueña)."""
+        entorno = self.manifiesto["entorno"]
+        entorno["red_fin"] = huella_de_red()
+        entorno["red_cambio"] = entorno["red_inicio"].get("huella") != entorno["red_fin"].get("huella")
+        entorno["reloj"] = desvio_de_reloj(pared_inicio, mono_inicio, datetime.now(UTC), time.monotonic())
+        avisos = []
+        if entorno["red_cambio"]:
+            avisos.append("la red del equipo cambió durante la corrida (ERR_NETWORK_CHANGED posible)")
+        if entorno["reloj"]["salto"]:
+            avisos.append(f"el reloj del equipo saltó {entorno['reloj']['desvio_s']:+.1f} s respecto al monotónico")
+        if entorno["red_inicio"].get("tunel_presente"):
+            avisos.append("túnel (VPN) presente")
+        self.decir(f"[e2e {self.run_id}] entorno: {' · '.join(avisos) if avisos else 'red sin cambios · reloj coherente · sin túnel'}")
+
     # ------------------------------------------------------------------- suite
     def orden_de_la_suite(self) -> tuple[list[str], Path]:
         if self.orden is not None:
@@ -540,6 +598,8 @@ class Corrida:
     def ejecutar(self) -> int:
         codigo = SALIDA_PREPARACION
         anteriores = {s: signal.signal(s, _al_recibir_senal) for s in (signal.SIGTERM, signal.SIGHUP)}
+        pared_inicio, mono_inicio = datetime.now(UTC), time.monotonic()
+        self.manifiesto["entorno"] = {"red_inicio": huella_de_red()}
         try:
             self.anotar()
             self.preparar()
@@ -565,6 +625,7 @@ class Corrida:
             self.fase("limpiar")
             limpia = self.limpiar()
             self.manifiesto["fin"] = datetime.now(UTC).isoformat(timespec="seconds")
+            self.anotar_entorno(pared_inicio, mono_inicio)
             if codigo == 0 and not limpia:
                 codigo = SALIDA_LIMPIEZA
             self.manifiesto["codigo_de_salida"] = codigo

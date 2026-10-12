@@ -3203,3 +3203,29 @@ siempre el formulario de acceso sin pintar), `OFFLINE-NAIVE-EN-SQLITE`, `TEST-VO
 `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`, `LISTADOS-SIN-TOPE`. De entorno:
 `ENTORNO-SIN-CLAMSCAN`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-13 · E2E-PANTALLA-SIN-PINTAR: NOT REPRODUCED, captura diagnóstica en el arnés (dueña 054)
+
+Se buscó la causa del formulario de acceso sin pintar antes de tocar nada. El grafo de arranque descarta
+que una petición previa lo bloquee (`/login` queda fuera del guardia y los providers renderizan siempre):
+solo un módulo de Vite que no llega lo explica, y la única traza histórica (2026-10-06) muestra
+exactamente eso, seis módulos abortados con `ERR_NETWORK_CHANGED`. Hoy, con traza retenida, una global
+canónica, una en serie y tres dirigidas de las suites históricas dieron 0 fallos en ≈730 ejecuciones, con
+la huella de red idéntica y el reloj coherente: los fallos del 2026-10-12 quedan sin causa por falta de
+captura, y esa es la carencia que se cierra. La configuración canónica retiene traza y captura solo al
+fallar (en verde se descarta, +0,1 min), y el runner anota en el manifiesto el estado de red sin
+direcciones y el desvío pared/monotónico, avisando sin abortar. Producto 0; tiempos, reintentos,
+trabajadores, esperas y omisiones intactos (ahora con un contrato que lo vigila). La deuda sigue OPEN.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `E2E-PANTALLA-SIN-PINTAR` — **ejecutado: NOT REPRODUCED** (`specs/012-auditoria-integral-e2e/spec054-e2e-pantalla-sin-pintar-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION`; y la política del arnés ante red
+cambiada o reloj saltado (avisar, como hoy; abortar antes de la suite; o invalidar la corrida sin contar
+el fallo como de producto). Candidatas técnicas sin decisión pendiente: `OFFLINE-NAIVE-EN-SQLITE`,
+`TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`, `TEST-PG-UN-SCHEMA-POR-PRUEBA`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`,
+`ALMACENES-CARRERA-SQLITE-HILOS`, `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`,
+`LISTADOS-SIN-TOPE`. De entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR` (OPEN, ahora con
+captura). Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+

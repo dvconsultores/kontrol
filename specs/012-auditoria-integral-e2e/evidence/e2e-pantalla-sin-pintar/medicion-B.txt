@@ -1,0 +1,18 @@
+# Medición B · global con --workers=1 (solo diagnóstico) + traza y captura al fallar
+## entorno antes
+wall_utc=2026-10-12T23:14:59 monotonic_s=157256.94 load=2.70 3.96 2.72
+interfaces=lo:UNKNOWN enp2s0:DOWN wlo1:UP ipv6leakintrf0:UNKNOWN proton0:UNKNOWN 
+vpn_present=true interface_fingerprint=bac7befbbed5
+## entorno después
+wall_utc=2026-10-12T23:23:30 monotonic_s=157768.45 load=2.33 2.16 2.28
+interfaces=lo:UNKNOWN enp2s0:DOWN wlo1:UP ipv6leakintrf0:UNKNOWN proton0:UNKNOWN 
+vpn_present=true interface_fingerprint=bac7befbbed5
+## resultado
+  -   75 [chromium] › e2e/documents-a11y.spec.ts:98:1 › la carga de archivo es operable solo con teclado
+  -   77 [chromium] › e2e/documents.spec.ts:118:1 › carga, versión y descarga por la interfaz real
+  -   82 [chromium] › e2e/documents.spec.ts:246:1 › una versión histórica no se reinterpreta al cargar otra
+  -   83 [chromium] › e2e/documents.spec.ts:286:1 › un reintento tras el fallo no deja el formulario sin salida
+  4 skipped
+  273 passed (8.3m)
+[e2e r20261012t231459p3079217n3ec61c] suite: {'skipped': 4, 'passed': 273} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t231459p3079217n3ec61c
+rc=0

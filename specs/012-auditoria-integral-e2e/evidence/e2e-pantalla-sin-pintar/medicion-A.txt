@@ -1,0 +1,18 @@
+# Medición A · global canónica + traza y captura al fallar (config de medición fuera del árbol, extiende la canónica intacta)
+## entorno antes
+wall_utc=2026-10-12T23:10:54 monotonic_s=157012.69 load=0.88 0.80 1.34
+interfaces=lo:UNKNOWN enp2s0:DOWN wlo1:UP ipv6leakintrf0:UNKNOWN proton0:UNKNOWN 
+vpn_present=true interface_fingerprint=bac7befbbed5
+## entorno después
+wall_utc=2026-10-12T23:14:59 monotonic_s=157256.91 load=2.70 3.96 2.72
+interfaces=lo:UNKNOWN enp2s0:DOWN wlo1:UP ipv6leakintrf0:UNKNOWN proton0:UNKNOWN 
+vpn_present=true interface_fingerprint=bac7befbbed5
+## resultado
+  -   75 [chromium] › e2e/documents-a11y.spec.ts:98:1 › la carga de archivo es operable solo con teclado
+  -   77 [chromium] › e2e/documents.spec.ts:118:1 › carga, versión y descarga por la interfaz real
+  -   82 [chromium] › e2e/documents.spec.ts:246:1 › una versión histórica no se reinterpreta al cargar otra
+  -   83 [chromium] › e2e/documents.spec.ts:286:1 › un reintento tras el fallo no deja el formulario sin salida
+  4 skipped
+  273 passed (3.9m)
+[e2e r20261012t231055p3053008nc974a5] suite: {'skipped': 4, 'passed': 273} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t231055p3053008nc974a5
+rc=0

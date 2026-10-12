@@ -1,0 +1,35 @@
+GOOD: runner (0, []) · arnés (0, [])
+M-01 el runner deja de anotar el entorno
+  MUTATED → FAIL (muere) · ['test_e2ecorrida_18_una_corrida_anota_el_entorno_sin_direccio']
+  RESTORED → PASS
+M-02 la huella de red es constante
+  MUTATED → FAIL (muere) · ['test_e2ecorrida_16_la_huella_cambia_si_cambia_la_red_y_no_si']
+  RESTORED → PASS
+M-03 la red siempre «cambió»
+  MUTATED → FAIL (muere) · ['test_e2ecorrida_18_una_corrida_anota_el_entorno_sin_direccio']
+  RESTORED → PASS
+M-04 el salto de reloj nunca se detecta
+  MUTATED → FAIL (muere) · ['test_e2ecorrida_17_el_desvio_de_reloj_detecta_un_salto_y_tol']
+  RESTORED → PASS
+M-05 salto de reloj falso (umbral cero)
+  MUTATED → FAIL (muere) · ['test_e2ecorrida_17_el_desvio_de_reloj_detecta_un_salto_y_tol', 'test_e2ecorrida_18_una_corrida_anota_el_entorno_sin_direccio']
+  RESTORED → PASS
+M-06 la traza vuelve a «en el primer reintento» (sin rastro del primer fallo)
+  MUTATED → FAIL (muere) · ['× el arnés E2E no se relaja > un fallo deja rastro: traza y captura se retienen al fallar ', 'FAIL  src/tests/e2e-harness-contract.test.ts > el arnés E2E no se relaja > un fallo deja r']
+  RESTORED → PASS
+M-07 el manifiesto guarda las direcciones en crudo
+  MUTATED → FAIL (muere) · ['test_e2ecorrida_15_el_resumen_de_red_no_guarda_direcciones', 'test_e2ecorrida_18_una_corrida_anota_el_entorno_sin_direccio']
+  RESTORED → PASS
+M-08 se amplía el tiempo global de prueba
+  MUTATED → FAIL (muere) · ['× el arnés E2E no se relaja > el tiempo de espera, los reintentos y los trabajadores son l', 'FAIL  src/tests/e2e-harness-contract.test.ts > el arnés E2E no se relaja > el tiempo de es']
+  RESTORED → PASS
+M-09 se activan reintentos fuera de CI
+  MUTATED → FAIL (muere) · ['× el arnés E2E no se relaja > el tiempo de espera, los reintentos y los trabajadores son l', 'FAIL  src/tests/e2e-harness-contract.test.ts > el arnés E2E no se relaja > el tiempo de es']
+  RESTORED → PASS
+M-10 una omisión nueva esconde un fallo
+  MUTATED → FAIL (muere) · ['× el arnés E2E no se relaja > el inventario de omisiones de e2e/ es el declarado 8ms', 'FAIL  src/tests/e2e-harness-contract.test.ts > el arnés E2E no se relaja > el inventario d']
+  RESTORED → PASS
+M-11 se fijan los trabajadores a uno como «solución»
+  MUTATED → FAIL (muere) · ['× el arnés E2E no se relaja > el tiempo de espera, los reintentos y los trabajadores son l', 'FAIL  src/tests/e2e-harness-contract.test.ts > el arnés E2E no se relaja > el tiempo de es']
+  RESTORED → PASS
+rc=0

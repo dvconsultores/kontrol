@@ -1,0 +1,43 @@
+# Reproducción acotada · 3 corridas dirigidas (declaradas de antemano) de las suites históricamente afectadas + accessibility (22 inicios por interfaz), workers canónicos, traza/captura al fallar
+## corrida 1 · entorno antes
+wall_utc=2026-10-12T23:24:13 monotonic_s=157811.20 load=2.62 2.33 2.33
+interfaces=lo:UNKNOWN enp2s0:DOWN wlo1:UP ipv6leakintrf0:UNKNOWN proton0:UNKNOWN 
+vpn_present=true interface_fingerprint=bac7befbbed5
+## corrida 1 · entorno después
+wall_utc=2026-10-12T23:24:58 monotonic_s=157855.80 load=6.07 3.19 2.62
+interfaces=lo:UNKNOWN enp2s0:DOWN wlo1:UP ipv6leakintrf0:UNKNOWN proton0:UNKNOWN 
+vpn_present=true interface_fingerprint=bac7befbbed5
+## resultado
+  -  33 [chromium] › e2e/documents-a11y.spec.ts:98:1 › la carga de archivo es operable solo con teclado
+  1 skipped
+  60 passed
+[e2e r20261012t232413p3105280ncc5746] suite: {'skipped': 1, 'passed': 60} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t232413p3105280ncc5746
+rc=0
+## corrida 2 · entorno antes
+wall_utc=2026-10-12T23:24:58 monotonic_s=157855.82 load=6.07 3.19 2.62
+interfaces=lo:UNKNOWN enp2s0:DOWN wlo1:UP ipv6leakintrf0:UNKNOWN proton0:UNKNOWN 
+vpn_present=true interface_fingerprint=bac7befbbed5
+## corrida 2 · entorno después
+wall_utc=2026-10-12T23:25:43 monotonic_s=157901.43 load=9.02 4.35 3.04
+interfaces=lo:UNKNOWN enp2s0:DOWN wlo1:UP ipv6leakintrf0:UNKNOWN proton0:UNKNOWN 
+vpn_present=true interface_fingerprint=bac7befbbed5
+## resultado
+  -  33 [chromium] › e2e/documents-a11y.spec.ts:98:1 › la carga de archivo es operable solo con teclado
+  1 skipped
+  60 passed
+[e2e r20261012t232458p3111851n42f703] suite: {'skipped': 1, 'passed': 60} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t232458p3111851n42f703
+rc=0
+## corrida 3 · entorno antes
+wall_utc=2026-10-12T23:25:43 monotonic_s=157901.45 load=9.02 4.35 3.04
+interfaces=lo:UNKNOWN enp2s0:DOWN wlo1:UP ipv6leakintrf0:UNKNOWN proton0:UNKNOWN 
+vpn_present=true interface_fingerprint=bac7befbbed5
+## corrida 3 · entorno después
+wall_utc=2026-10-12T23:26:30 monotonic_s=157947.93 load=10.59 5.36 3.44
+interfaces=lo:UNKNOWN enp2s0:DOWN wlo1:UP ipv6leakintrf0:UNKNOWN proton0:UNKNOWN 
+vpn_present=true interface_fingerprint=bac7befbbed5
+## resultado
+  -  33 [chromium] › e2e/documents-a11y.spec.ts:98:1 › la carga de archivo es operable solo con teclado
+  1 skipped
+  60 passed
+[e2e r20261012t232543p3118090nd8169c] suite: {'skipped': 1, 'passed': 60} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t232543p3118090nd8169c
+rc=0

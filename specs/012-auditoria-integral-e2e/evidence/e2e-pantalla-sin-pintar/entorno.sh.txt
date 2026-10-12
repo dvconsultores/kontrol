@@ -1,0 +1,5 @@
+#!/bin/bash
+# Instantánea de entorno sin datos sensibles: banderas, huella (hash) de interfaces, reloj de pared y monotónico, carga.
+echo "wall_utc=$(date -u +%Y-%m-%dT%H:%M:%S) monotonic_s=$(cut -d' ' -f1 /proc/uptime) load=$(cut -d' ' -f1-3 /proc/loadavg)"
+echo "interfaces=$(ip -br link | awk '{print $1":"$2}' | tr '\n' ' ')"
+echo "vpn_present=$([ $(ip -br link | grep -cE '^(proton|tun|wg|ipv6leak)') -gt 0 ] && echo true || echo false) interface_fingerprint=$(ip -br addr | sha256sum | cut -c1-12)"

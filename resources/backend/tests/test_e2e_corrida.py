@@ -320,3 +320,65 @@ def test_e2ecorrida_14_la_orden_por_defecto_es_la_suite_de_playwright_con_su_evi
     assert orden[8:] == ["--output", str(corrida.evidencia / "test-results"), "e2e/smoke.spec.ts"]
     assert cwd == k.FRONTEND
     assert not any(a.startswith(("--retries", "--workers")) for a in orden)
+
+
+# ---------------------------------------------------------------- el entorno observado (E2E-PANTALLA-SIN-PINTAR)
+ENLACES_SINTETICOS = ("lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP>\n"
+                      "enp9s9           DOWN           02:00:00:00:00:01 <NO-CARRIER,BROADCAST,MULTICAST,UP>\n"
+                      "wlx0             UP             02:00:00:00:00:02 <BROADCAST,MULTICAST,UP,LOWER_UP>\n"
+                      "tun7             UNKNOWN        <POINTOPOINT,NOARP,UP,LOWER_UP>\n")
+DIRECCIONES_SINTETICAS = ("lo               UNKNOWN        127.0.0.1/8 ::1/128\n"
+                          "wlx0             UP             192.0.2.77/24 2001:db8::77/64\n"
+                          "tun7             UNKNOWN        198.51.100.9/32\n")
+
+
+def test_e2ecorrida_15_el_resumen_de_red_no_guarda_direcciones():
+    """Lo que entra en el manifiesto: nombres y estado, bandera de túnel y una huella; ninguna dirección."""
+    resumen = k.resumir_red(ENLACES_SINTETICOS, DIRECCIONES_SINTETICAS)
+    assert resumen["interfaces"] == ["enp9s9:DOWN", "lo:UNKNOWN", "tun7:UNKNOWN", "wlx0:UP"]
+    assert resumen["tunel_presente"] is True
+    assert len(resumen["huella"]) == 12 and int(resumen["huella"], 16) >= 0
+    plano = json.dumps(resumen)
+    for direccion in ("192.0.2.77", "2001:db8::77", "198.51.100.9", "127.0.0.1", "02:00:00:00:00:02"):
+        assert direccion not in plano, f"el manifiesto filtraría {direccion}"
+    sin_tunel = k.resumir_red(ENLACES_SINTETICOS.replace("tun7", "eth7"), DIRECCIONES_SINTETICAS)
+    assert sin_tunel["tunel_presente"] is False
+
+
+def test_e2ecorrida_16_la_huella_cambia_si_cambia_la_red_y_no_si_no_cambia():
+    antes = k.resumir_red(ENLACES_SINTETICOS, DIRECCIONES_SINTETICAS)["huella"]
+    igual = k.resumir_red(ENLACES_SINTETICOS, DIRECCIONES_SINTETICAS)["huella"]
+    otra_ip = k.resumir_red(ENLACES_SINTETICOS, DIRECCIONES_SINTETICAS.replace("192.0.2.77", "192.0.2.78"))["huella"]
+    sin_tunel = k.resumir_red(ENLACES_SINTETICOS, DIRECCIONES_SINTETICAS.replace("tun7             UNKNOWN        198.51.100.9/32\n", ""))["huella"]
+    assert antes == igual
+    assert antes != otra_ip and antes != sin_tunel and otra_ip != sin_tunel
+
+
+def test_e2ecorrida_17_el_desvio_de_reloj_detecta_un_salto_y_tolera_el_ruido():
+    from datetime import UTC, datetime, timedelta
+
+    t0 = datetime(2026, 10, 6, 4, 56, tzinfo=UTC)
+    # Reloj coherente: 211 s de pared por 211 s monotónicos (más el ruido de medir).
+    coherente = k.desvio_de_reloj(t0, 1000.0, t0 + timedelta(seconds=211.4), 1211.0)
+    assert coherente == {"desvio_s": 0.4, "salto": False}
+    # El salto del 2026-10-06: +5 h 08 min de pared en una suite de 211 s.
+    salto = k.desvio_de_reloj(t0, 1000.0, t0 + timedelta(hours=5, minutes=8, seconds=211), 1211.0)
+    assert salto["salto"] is True and salto["desvio_s"] == 18480.0
+    # Un salto hacia atrás también cuenta.
+    atras = k.desvio_de_reloj(t0, 1000.0, t0 - timedelta(minutes=2), 1211.0)
+    assert atras["salto"] is True and atras["desvio_s"] < 0
+
+
+def test_e2ecorrida_18_una_corrida_anota_el_entorno_sin_direcciones_y_lo_dice(entorno, puerto_libre):
+    corrida, salida = _corrida(entorno, "pass")
+    assert corrida.ejecutar() == 0
+    m = _manifiesto(corrida)
+    observado = m["entorno"]
+    assert observado["red_inicio"]["disponible"] is True and observado["red_fin"]["disponible"] is True
+    assert observado["red_cambio"] is False
+    assert observado["reloj"]["salto"] is False and abs(observado["reloj"]["desvio_s"]) <= k.UMBRAL_SALTO_DE_RELOJ_S
+    assert set(observado["red_inicio"]) == {"disponible", "interfaces", "tunel_presente", "huella"}
+    import re
+
+    assert not re.search(r"\b\d{1,3}(\.\d{1,3}){3}\b", json.dumps(observado)), "el entorno observado no lleva direcciones"
+    assert "] entorno: " in salida.getvalue()

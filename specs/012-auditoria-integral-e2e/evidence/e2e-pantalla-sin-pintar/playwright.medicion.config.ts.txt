@@ -1,0 +1,5 @@
+// Configuración SOLO de medición (fuera del repositorio): la canónica intacta más traza y captura al fallar.
+import base from "/home/maria/Projectos/Kontrol/resources/frontend/playwright.config";
+export default { ...base, testDir: "/home/maria/Projectos/Kontrol/resources/frontend/e2e",
+  globalSetup: "/home/maria/Projectos/Kontrol/resources/frontend/e2e/global-setup.ts",
+  use: { ...base.use, trace: "retain-on-failure", screenshot: "only-on-failure" } };
