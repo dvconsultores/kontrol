@@ -153,10 +153,11 @@ export interface ProfileSummary {
   approval_status: string;
 }
 
+/** Lo que responde `GET /health/ready`: readiness mínima, sin versión (HEALTH-LIVE-VERSION, D4). */
 export interface HealthResponse {
   status: "ok" | "degraded";
-  services: Record<string, string>;
-  version: string;
+  service: string;
+  database: "ok" | "unreachable";
 }
 
 /** Lo que responde `GET /system/diagnostics` (FR-001-084). */

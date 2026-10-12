@@ -28,8 +28,18 @@ class Settings(BaseSettings):
     # Identidad del entorno
     environment: str = Field(default="local", pattern="^(local|dev|qa|uat|staging|prod)$")
     app_name: str = "KONTROL"
-    app_version: str = "1.0.0"
     api_prefix: str = "/api/v1"
+
+    @property
+    def app_version(self) -> str:
+        """La versión del producto (FR-001-084; ADR-D0-006 R-D0-06-4: «versión del producto» en la
+        solicitud de activación). Autoridad única: `app.__version__`, que viaja dentro del artefacto
+        desplegado (`Dockerfile.backend` copia `app/`, no `pyproject.toml`); `pyproject.toml` la refleja y
+        una prueba lo vigila. No es un ajuste: ninguna variable de entorno ni fichero puede declarar
+        una versión distinta de la del código que corre (PANEL-VERSION-VACIA)."""
+        from app import __version__
+
+        return __version__
 
     # Base de datos (usuario restringido, no superusuario)
     db_url: str = Field(default="postgresql+psycopg2://kontrol:kontrol@db:5432/kontrol")

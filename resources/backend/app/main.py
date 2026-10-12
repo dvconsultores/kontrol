@@ -119,7 +119,9 @@ def create_app() -> FastAPI:
 
     @app.get("/")
     def root():
-        return {"service": settings.app_name, "version": settings.app_version, "status": "ok"}
+        # Sin `version`: la versión solo se lee con sesión y `license:view` (diagnóstico), como decidió la
+        # dueña al retirarla de `/health/live` (HEALTH-LIVE-VERSION, D3); una raíz pública no la publica.
+        return {"service": settings.app_name, "status": "ok"}
 
     return app
 

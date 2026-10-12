@@ -3049,3 +3049,29 @@ Candidatas técnicas sin decisión pendiente: `TEST-VOLUMEN-DE-INSTALACION-COMPA
 `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`, `E2E-SIN-TYPECHECK`,
 `E2E-PANTALLA-SIN-PINTAR`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-08 · PANEL-VERSION-VACIA convergida: la versión tiene una autoridad y la tarjeta la pinta a quien puede verla (dueña 001)
+
+La tarjeta «Versión» de Inicio pedía la versión a `/health/ready`, que nunca la trajo, y por eso
+mostraba «—» siempre; el tipo del frontend declaraba campos que ese endpoint nunca tuvo. El
+descubrimiento fijó primero qué significa el campo —la **versión del producto**, la que FR-001-084
+pide al diagnóstico y la que ADR-D0-006 llama «versión del producto» en la solicitud de activación— y
+quién manda: `app/__init__.py:__version__`, lo único que viaja dentro del artefacto desplegado, que
+`pyproject.toml` refleja con un guard y de la que los ajustes se derivan sin literal propio ni puerta
+de entorno. La tarjeta pide ahora el diagnóstico solo a quien tiene `license:view` y pinta la versión,
+«Cargando…» o «No disponible»; sin permiso no existe, como el enlace a «Mi licencia». La raíz pública
+`/` deja de publicar la versión, por la misma decisión que la retiró de `/health/live`. Sin hash de
+commit, sin `.git` ni `git` en tiempo de ejecución, sin comparador de versiones, sin esquema, sin
+cambio en health, diagnóstico, licencia, sync ni keep-alive.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `PANEL-VERSION-VACIA` — **ejecutado y convergido** (`specs/001-fundacion/spec001-panel-version-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Candidatas técnicas sin decisión pendiente: `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`,
+`OFFLINE-NAIVE-EN-SQLITE`, `E2E-PANTALLA-SIN-PINTAR`, `ALMACENES-CARRERA-SQLITE-HILOS`,
+`PICKLIST-DUPLICADA-500`, `ROLES-SIN-API-DE-ALTA`, `E2E-CUARENTA-OMITIDAS`,
+`MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`, `OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD`,
+`E2E-SIN-TYPECHECK`. Fuera de ciclo y pendiente de la dueña: el 502 de `kontrol.globaldv.net`
+(backend caído en el servidor; requiere acceso y autorización). MASTER57 y SPEC057 sin cambio.

@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core import sync_auth_contract as sa
-from central_authority import database, main, service
+from central_authority import database, main
 from central_authority.config import Settings
 from central_authority.models import Base, SyncChallenge
 from tests.central.conftest import pem_privada

@@ -2,15 +2,29 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
-import type { DashboardResult, HealthResponse } from "@/api/types";
+import type { DashboardResult, DiagnosticsResponse, HealthResponse } from "@/api/types";
+import { useAuth } from "@/app/contexts/AuthContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useLicense } from "@/app/contexts/LicenseContext";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 
+/** El permiso que gobierna leer la versión: el del diagnóstico, que es quien la publica (FR-001-084). */
+export const PERMISO_DE_VERSION = "license:view";
+/** Lo que se muestra cuando el servidor no entrega una versión utilizable: un estado dicho, nunca un hueco ni un número inventado. */
+export const VERSION_NO_DISPONIBLE = "No disponible";
+
+/** La versión que se pinta, a partir de lo que responde el diagnóstico (PANEL-VERSION-VACIA, FR-001-084). */
+export function versionMostrada(diagnostico: { version?: unknown } | undefined): string {
+  const version = diagnostico?.version;
+  return typeof version === "string" && version.trim() !== "" ? version : VERSION_NO_DISPONIBLE;
+}
+
 export function DashboardPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
   const { mode } = useLicense();
+  const { hasPermission } = useAuth();
+  const puedeVerVersion = hasPermission(PERMISO_DE_VERSION);
 
   const health = useQuery({
     queryKey: ["health"],
@@ -20,6 +34,14 @@ export function DashboardPage(): React.JSX.Element {
   const dash = useQuery({
     queryKey: ["reporting", "dashboard"],
     queryFn: () => apiFetch<DashboardResult>("/reporting/dashboard"),
+    retry: false,
+  });
+  // La versión la publica el diagnóstico (con sesión y `license:view`), no el health: se pide solo a quien
+  // puede verla y la tarjeta no existe para los demás, como el enlace a «Mi licencia» (FR-001-042).
+  const diagnostico = useQuery({
+    queryKey: ["diagnostics"],
+    queryFn: () => apiFetch<DiagnosticsResponse>("/system/diagnostics"),
+    enabled: puedeVerVersion,
     retry: false,
   });
 
@@ -45,7 +67,12 @@ export function DashboardPage(): React.JSX.Element {
         {indicatorCard("Empresa activa", activeCompany?.legal_name ?? "—")}
         {indicatorCard("Modo de licencia", mode?.replaceAll("_", " ") ?? "Pendiente")}
         {indicatorCard("API", health.isSuccess ? health.data.status : health.isError ? "No disponible" : "Cargando…")}
-        {indicatorCard("Versión", health.data?.version ?? "—")}
+        {puedeVerVersion
+          ? indicatorCard(
+              "Versión",
+              diagnostico.isSuccess ? versionMostrada(diagnostico.data) : diagnostico.isError ? VERSION_NO_DISPONIBLE : "Cargando…",
+            )
+          : null}
       </div>
 
       <h2 className="mt-6 mb-2 text-base font-semibold text-text-900">Indicadores</h2>

@@ -1,0 +1,19 @@
+[e2e r20261008t151549p420934nc48b90] comprobar
+[e2e r20261008t151549p420934nc48b90] crear base
+[e2e r20261008t151549p420934nc48b90] migrar
+[e2e r20261008t151549p420934nc48b90] sembrar
+[e2e r20261008t151549p420934nc48b90] backend
+[e2e r20261008t151549p420934nc48b90] comprobar la base del backend
+[e2e r20261008t151549p420934nc48b90] autoridad central
+[e2e r20261008t151549p420934nc48b90] frontend
+[e2e r20261008t151549p420934nc48b90] suite
+
+Running 3 tests using 3 workers
+
+  ✓  3 [chromium] › e2e/inicio-version.spec.ts:81:3 › inicio · tarjeta «Versión» › E2E-VER-04 · health y raíz siguen mínimos y sin versión; el diagnóstico exige sesión (36ms)
+  ✓  2 [chromium] › e2e/inicio-version.spec.ts:56:3 › inicio · tarjeta «Versión» › E2E-VER-01 · con permiso la tarjeta pinta la versión del diagnóstico, no un hueco (661ms)
+  ✓  1 [chromium] › e2e/inicio-version.spec.ts:69:3 › inicio · tarjeta «Versión» › E2E-VER-02 · sin `license:view` la tarjeta no existe y el navegador no pide el diagnóstico (2.1s)
+
+  3 passed (2.6s)
+[e2e r20261008t151549p420934nc48b90] limpiar
+[e2e r20261008t151549p420934nc48b90] suite: {'passed': 3} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261008t151549p420934nc48b90
