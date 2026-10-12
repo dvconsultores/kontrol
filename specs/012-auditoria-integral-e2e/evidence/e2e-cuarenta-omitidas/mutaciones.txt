@@ -1,0 +1,43 @@
+[LOTE A MUTATED] passed=12 failed=25 skipped=4 · {'failed': 25, 'skipped': 4, 'passed': 12} · limpieza: LIMPIA · salida: 1 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t052838p2373713n6fe663
+  M-01 accessibility · la ruta analizada deja de comprobarse (navegación equivocada aceptada)
+    MUTATED → FAIL (muere) · 21/21 pruebas esperadas fallan
+  M-02 uom-a11y · teclado: se acepta un foco que no es un control
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  M-03 warehouse-a11y · detalle: selector equivocado del enlace al almacén
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  M-04 documents · formato no admitido: el mensaje accionable deja de exigir el formato admitido
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  M-05 documents-a11y · biblioteca y tipos: aserción WCAG invertida
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  fallos no esperados: ninguno · omitidas: 4 (esperadas 4)
+[LOTE B MUTATED] passed=11 failed=26 skipped=4 · {'failed': 26, 'skipped': 4, 'passed': 11} · limpieza: LIMPIA · salida: 1 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t052934p2379135n324d81
+  M-06 accessibility · ayudante: aserción WCAG invertida (alcance: las 22 pruebas del fichero)
+    MUTATED → FAIL (muere) · 22/22 pruebas esperadas fallan
+  M-07 uom-a11y · scroll horizontal: umbral imposible (el valor correcto 0 deja de aceptarse)
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  M-08 warehouse-a11y · responsive: umbral imposible
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  M-09 documents · tamaño: se acepta el error equivocado
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  M-10 documents-a11y · detalle documental: aserción WCAG invertida
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  fallos no esperados: ninguno · omitidas: 4 (esperadas 4)
+[LOTE C MUTATED] passed=29 failed=8 skipped=4 · {'failed': 8, 'skipped': 4, 'passed': 29} · limpieza: LIMPIA · salida: 1 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t053010p2384841nb6642b
+  M-11 documents · malicioso: se acepta que quede un archivo disponible (requisito sorteado)
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  M-12 documents · IDOR: aserción invertida (se exige la fuga)
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  M-13 documents · tipos: se busca un código distinto del creado
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  M-14 uom-a11y · zoom 150 %: umbral imposible
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  M-15 uom-a11y · WCAG: aserción invertida
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  M-16 warehouse-a11y · ayudante WCAG invertido (alcance: las dos pruebas que lo usan)
+    MUTATED → FAIL (muere) · 2/2 pruebas esperadas fallan
+  M-17 documents-a11y · responsive: umbral imposible
+    MUTATED → FAIL (muere) · 1/1 pruebas esperadas fallan
+  fallos no esperados: ninguno · omitidas: 4 (esperadas 4)
+[RESTORED] passed=37 failed=0 skipped=4 · {'skipped': 4, 'passed': 37} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t053042p2389033n5d6777
+  RESTORED → PASS
+rc=0

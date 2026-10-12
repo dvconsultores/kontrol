@@ -11,6 +11,8 @@ const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER;
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD;
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
+/** El runner dice si el backend de la corrida tiene `clamscan`; fuera del runner se asume que sí. */
+const SCANNER = process.env.KONTROL_E2E_SCANNER_AVAILABLE !== "false";
 
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const VIEWPORTS = [320, 375, 768, 1024, 1280, 1440];
@@ -94,6 +96,8 @@ test("detalle documental: sin violaciones serias de WCAG 2.2 AA", async ({ page,
 });
 
 test("la carga de archivo es operable solo con teclado", async ({ page, request }) => {
+  test.skip(!SCANNER, "ENTORNO-SIN-CLAMSCAN: la carga por teclado termina en una versión cargada, y sin clamscan " +
+    "ninguna carga con análisis obligatorio crea versión (SCAN_FAILED, FR-046-072); dueña 046");
   const login = await request.post(`${API}/auth/login`, {
     data: { tenant_code: TENANT, username: USER, password: PASSWORD },
   });

@@ -162,7 +162,14 @@ class Corrida:
             "KONTROL_STORAGE_PATH": str(self.estado / "storage"),
             "KONTROL_BACKUP_PATH": str(self.estado / "backups"),
             "KONTROL_QA_IDS_FILE": str(self.estado / "n6-ids.json"),
+            # La identidad con la que la propia corrida comprueba el backend y con la que las suites inician
+            # sesión: sin este valor cuarenta pruebas se omitían en toda corrida (E2E-CUARENTA-OMITIDAS).
+            "KONTROL_E2E_USER": self.entorno.get("KONTROL_E2E_USER", "admin"),
             "KONTROL_E2E_PASSWORD": self.entorno.get("KONTROL_E2E_PASSWORD", "Kontrol2026Segura!"),
+            # Si el backend de la corrida tiene analizador. Sin `clamscan` toda carga con análisis
+            # obligatorio termina en SCAN_FAILED (falso seguro, FR-046-072): las pruebas que necesitan
+            # una versión cargada se omiten con nombre y causa (ENTORNO-SIN-CLAMSCAN), no fallan a ciegas.
+            "KONTROL_E2E_SCANNER_AVAILABLE": "true" if self.analizador() else "false",
             "KONTROL_E2E_API": API,
             "KONTROL_E2E_BASE_URL": WEB,
             "KONTROL_API_URL": f"http://127.0.0.1:{PUERTO_BACKEND}",
@@ -171,6 +178,14 @@ class Corrida:
             "KONTROL_E2E_CENTRAL_RATE_CAPACITY": str(CAPACIDAD_DE_DESAFIOS_E2E),
         })
         return env
+
+    def analizador(self) -> str | None:
+        """La ruta del `clamscan` que verá el backend, resuelta como la resuelve él (`KONTROL_CLAMSCAN_PATH`,
+        luego el PATH); `None` si no hay binario o si el análisis está apagado (`KONTROL_DOCUMENT_SCAN=off`)."""
+        if self.entorno.get("KONTROL_DOCUMENT_SCAN", "on").lower() in ("off", "false", "0"):
+            return None
+        binario = self.entorno.get("KONTROL_CLAMSCAN_PATH") or shutil.which("clamscan", path=self.entorno.get("PATH"))
+        return binario if binario and os.path.exists(binario) else None
 
     def entorno_de_la_autoridad(self) -> dict[str, str]:
         """El entorno del proceso de la Autoridad Central: base SQLite efímera en el estado de la corrida (la
@@ -253,6 +268,8 @@ class Corrida:
         self.fase("comprobar")
         self.comprobar()
         self.manifiesto["protegidas_antes"] = self.huella_de_protegidas()
+        self.manifiesto["analizador"] = {"clamscan": self.analizador()}
+        self.decir(f"[e2e {self.run_id}] analizador: {self.analizador() or 'ausente (las cargas con análisis se omiten con nombre)'}")
 
         self.fase("crear base")
         base.crear_base(self.servidor, self.run_id, entorno=self.entorno)
@@ -340,8 +357,9 @@ class Corrida:
         if self.url is None:
             raise base.CicloDeBaseRoto("la base de la corrida todavía no existe")
         antes = self._sesiones()
-        cuerpo = json.dumps({"tenant_code": "DEMO", "username": "admin",
-                             "password": self.entorno_de_procesos()["KONTROL_E2E_PASSWORD"]}).encode()
+        entorno = self.entorno_de_procesos()
+        cuerpo = json.dumps({"tenant_code": "DEMO", "username": entorno["KONTROL_E2E_USER"],
+                             "password": entorno["KONTROL_E2E_PASSWORD"]}).encode()
         peticion = urllib.request.Request(f"{API}/auth/login", data=cuerpo,
                                           headers={"Content-Type": "application/json"})
         try:

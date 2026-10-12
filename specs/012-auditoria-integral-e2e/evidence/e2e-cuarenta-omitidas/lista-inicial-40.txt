@@ -1,0 +1,41 @@
+# Lista inicial de las 40 pruebas omitidas · corrida global r20261012t045252p2319011n8f86b8 (HEAD 7575f03) · 236 passed / 0 failed / 40 skipped · suite 185.2 s
+- 1 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /
+- 2 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /organizacion/empresas
+- 3 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /organizacion/sucursales
+- 4 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /maestros/terceros
+- 5 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /maestros/productos
+- 6 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /maestros/atributos
+- 7 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /ventas/facturas
+- 8 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /ventas/ordenes
+- 9 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /compras/facturas
+- 10 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /compras/cotizaciones
+- 11 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/existencias
+- 12 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/movimientos
+- 13 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/seriales
+- 14 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/reservas
+- 15 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/tipos-movimiento
+- 16 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /fiscal/lotes-declaracion
+- 17 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /seguridad/usuarios
+- 18 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /regulatorio/aprobaciones
+- 19 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /aprobaciones/bandeja
+- 20 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /aprobaciones/politicas
+- 21 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /aprobaciones/delegaciones
+- 73 [chromium] › e2e/documents-a11y.spec.ts:53:1 › biblioteca y tipos: sin violaciones serias de WCAG 2.2 AA
+- 74 [chromium] › e2e/documents-a11y.spec.ts:62:1 › detalle documental: sin violaciones serias de WCAG 2.2 AA
+- 75 [chromium] › e2e/documents-a11y.spec.ts:96:1 › la carga de archivo es operable solo con teclado
+- 76 [chromium] › e2e/documents-a11y.spec.ts:140:1 › responsive: sin scroll horizontal entre 320 y 1440
+- 77 [chromium] › e2e/documents.spec.ts:114:1 › carga, versión y descarga por la interfaz real
+- 78 [chromium] › e2e/documents.spec.ts:159:1 › un formato no admitido se rechaza con un mensaje accionable
+- 79 [chromium] › e2e/documents.spec.ts:179:1 › un archivo por encima del máximo se rechaza indicando el límite
+- 80 [chromium] › e2e/documents.spec.ts:198:1 › un archivo malicioso se rechaza y no queda disponible
+- 81 [chromium] › e2e/documents.spec.ts:226:1 › un identificador ajeno no abre nada
+- 82 [chromium] › e2e/documents.spec.ts:241:1 › una versión histórica no se reinterpreta al cargar otra
+- 83 [chromium] › e2e/documents.spec.ts:280:1 › un reintento tras el fallo no deja el formulario sin salida
+- 84 [chromium] › e2e/documents.spec.ts:309:1 › los tipos documentales declaran la política sin código
+- 255 [chromium] › e2e/uom-a11y.spec.ts:37:1 › unidades: sin violaciones serias de WCAG 2.2 AA
+- 256 [chromium] › e2e/uom-a11y.spec.ts:48:1 › unidades: operable con teclado
+- 257 [chromium] › e2e/uom-a11y.spec.ts:56:1 › unidades: sin scroll horizontal entre 320 y 1920
+- 258 [chromium] › e2e/uom-a11y.spec.ts:68:1 › unidades: legible con zoom al 150%
+- 265 [chromium] › e2e/warehouse-a11y.spec.ts:48:1 › almacenes y ubicaciones: sin violaciones serias de WCAG 2.2 AA
+- 266 [chromium] › e2e/warehouse-a11y.spec.ts:57:1 › detalle de almacén: sin violaciones serias de WCAG 2.2 AA
+- 267 [chromium] › e2e/warehouse-a11y.spec.ts:87:1 › responsive: sin scroll horizontal entre 320 y 1440

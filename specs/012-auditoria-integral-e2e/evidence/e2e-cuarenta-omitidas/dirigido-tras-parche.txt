@@ -1,0 +1,46 @@
+# Corrida dirigida de los cinco ficheros con el runner parcheado y SIN variables externas · r20261012t052643p2369568n1cea7a · 37 passed / 4 skipped (20.2 s) · manifest: analizador.clamscan = null
+[e2e r20261012t052643p2369568n1cea7a] analizador: ausente (las cargas con análisis se omiten con nombre)
+  ✓   1 [chromium] › e2e/accessibility.spec.ts:25:1 › login: sin violaciones serias de accesibilidad
+  ✓   5 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /
+  ✓   3 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /maestros/productos
+  ✓   2 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /maestros/terceros
+  ✓   6 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /organizacion/sucursales
+  ✓   4 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /organizacion/empresas
+  ✓   7 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /maestros/atributos
+  ✓   8 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /ventas/facturas
+  ✓  12 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/existencias
+  ✓  10 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /compras/facturas
+  ✓   9 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /ventas/ordenes
+  ✓  11 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /compras/cotizaciones
+  ✓  13 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/movimientos
+  ✓  14 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/seriales
+  ✓  16 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/tipos-movimiento
+  ✓  15 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /inventario/reservas
+  ✓  17 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /fiscal/lotes-declaracion
+  ✓  18 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /seguridad/usuarios
+  ✓  19 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /regulatorio/aprobaciones
+  -  25 [chromium] › e2e/documents-a11y.spec.ts:98:1 › la carga de archivo es operable solo con teclado
+  ✓  20 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /aprobaciones/bandeja
+  -  27 [chromium] › e2e/documents.spec.ts:118:1 › carga, versión y descarga por la interfaz real
+  ✓  21 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /aprobaciones/politicas
+  ✓  22 [chromium] › e2e/accessibility.spec.ts:60:5 › páginas autenticadas (requiere credenciales E2E) › accesibilidad: /aprobaciones/delegaciones
+  ✓  24 [chromium] › e2e/documents-a11y.spec.ts:64:1 › detalle documental: sin violaciones serias de WCAG 2.2 AA
+  ✓  26 [chromium] › e2e/documents-a11y.spec.ts:144:1 › responsive: sin scroll horizontal entre 320 y 1440
+  -  32 [chromium] › e2e/documents.spec.ts:246:1 › una versión histórica no se reinterpreta al cargar otra
+  ✓  23 [chromium] › e2e/documents-a11y.spec.ts:55:1 › biblioteca y tipos: sin violaciones serias de WCAG 2.2 AA
+  -  33 [chromium] › e2e/documents.spec.ts:286:1 › un reintento tras el fallo no deja el formulario sin salida
+  ✓  28 [chromium] › e2e/documents.spec.ts:164:1 › un formato no admitido se rechaza con un mensaje accionable
+  ✓  29 [chromium] › e2e/documents.spec.ts:184:1 › un archivo por encima del máximo se rechaza indicando el límite
+  ✓  30 [chromium] › e2e/documents.spec.ts:203:1 › un archivo malicioso se rechaza y no queda disponible
+  ✓  31 [chromium] › e2e/documents.spec.ts:231:1 › un identificador ajeno no abre nada
+  ✓  34 [chromium] › e2e/documents.spec.ts:316:1 › los tipos documentales declaran la política sin código
+  ✓  36 [chromium] › e2e/uom-a11y.spec.ts:48:1 › unidades: operable con teclado
+  ✓  35 [chromium] › e2e/uom-a11y.spec.ts:37:1 › unidades: sin violaciones serias de WCAG 2.2 AA
+  ✓  38 [chromium] › e2e/uom-a11y.spec.ts:68:1 › unidades: legible con zoom al 150%
+  ✓  37 [chromium] › e2e/uom-a11y.spec.ts:56:1 › unidades: sin scroll horizontal entre 320 y 1920
+  ✓  40 [chromium] › e2e/warehouse-a11y.spec.ts:57:1 › detalle de almacén: sin violaciones serias de WCAG 2.2 AA
+  ✓  39 [chromium] › e2e/warehouse-a11y.spec.ts:48:1 › almacenes y ubicaciones: sin violaciones serias de WCAG 2.2 AA
+  ✓  41 [chromium] › e2e/warehouse-a11y.spec.ts:87:1 › responsive: sin scroll horizontal entre 320 y 1440
+  4 skipped
+  37 passed
+[e2e r20261012t052643p2369568n1cea7a] suite: {'skipped': 4, 'passed': 37} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t052643p2369568n1cea7a

@@ -11,6 +11,10 @@ const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER;
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD;
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
+/** El runner dice si el backend de la corrida tiene `clamscan`; fuera del runner se asume que sí. */
+const SCANNER = process.env.KONTROL_E2E_SCANNER_AVAILABLE !== "false";
+const SIN_CLAMSCAN = "ENTORNO-SIN-CLAMSCAN: sin clamscan ninguna carga con análisis obligatorio crea versión " +
+  "(SCAN_FAILED, falso seguro FR-046-072); dueña 046";
 
 /** Sufijo único: el estado persiste entre navegadores sobre la misma base. */
 const RUN = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
@@ -112,6 +116,7 @@ async function typeNameOf(request: APIRequestContext, c: Ctx, id: string): Promi
 
 // ---------------------------------------------------------------- flujo principal
 test("carga, versión y descarga por la interfaz real", async ({ page, request }) => {
+  test.skip(!SCANNER, SIN_CLAMSCAN);
   // Cada carga se analiza con un antivirus **real**: el archivo se escribe, se
   // escanea, se calcula su huella, se guarda y se relee. En WebKit —el más
   // lento de los tres— dos cargas seguidas superan los 30 s por defecto. No se
@@ -239,6 +244,7 @@ test("un identificador ajeno no abre nada", async ({ page }) => {
 
 // ---------------------------------------------------------------- inmutabilidad
 test("una versión histórica no se reinterpreta al cargar otra", async ({ page, request }) => {
+  test.skip(!SCANNER, SIN_CLAMSCAN);
   // Cada carga se analiza con un antivirus **real**: el archivo se escribe, se
   // escanea, se calcula su huella, se guarda y se relee. En WebKit —el más
   // lento de los tres— dos cargas seguidas superan los 30 s por defecto. No se
@@ -278,6 +284,7 @@ test("una versión histórica no se reinterpreta al cargar otra", async ({ page,
 
 // ---------------------------------------------------------------- reintento
 test("un reintento tras el fallo no deja el formulario sin salida", async ({ page, request }) => {
+  test.skip(!SCANNER, SIN_CLAMSCAN);
   // Cada carga se analiza con un antivirus **real**: el archivo se escribe, se
   // escanea, se calcula su huella, se guarda y se relee. En WebKit —el más
   // lento de los tres— dos cargas seguidas superan los 30 s por defecto. No se

@@ -3127,3 +3127,27 @@ pendiente: `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`, `OFFLINE-NAIVE-EN-SQLITE`, 
 `ALMACENES-CARRERA-SQLITE-HILOS`, `PICKLIST-DUPLICADA-500`, `E2E-CUARENTA-OMITIDAS`,
 `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`, `E2E-SIN-TYPECHECK`. Fuera de ciclo:
 el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-12 · E2E-CUARENTA-OMITIDAS convergida: las 40 omitidas, identificadas y resueltas una a una (dueña 054)
+
+La corrida global canónica terminaba en 236 / 0 / 40 omitidas. Las 40 eran cinco `test.skip` condicionales
+(`!USER || !PASSWORD`) en accesibilidad (21 rutas, 008, 011, 046) y documentos (8), y una sola causa real
+demostrada: el runner fijaba la contraseña y no `KONTROL_E2E_USER`, mientras los otros veinte ficheros
+escriben `?? "admin"`. Con la sola variable, 36 pasan; 4 fallan porque la carga exige un análisis `CLEAN` y
+en QA no hay `clamscan` (`SCAN_FAILED`, falso seguro FR-046-072). El runner exporta ahora el usuario (la
+misma identidad con la que comprueba el backend) y declara si hay analizador; las cuatro pruebas se omiten
+con nombre, causa y dueña 046 solo donde no lo hay. 36 CERTIFY · 4 DECLARE_DEBT (`ENTORNO-SIN-CLAMSCAN`,
+abierta) · 0 reescritas · 0 eliminadas · 0 bloqueadas · `UNKNOWN` 0. Dos globales consecutivas
+272 / 0 / 4, 17 mutaciones muertas, producto 0, Firefox/WebKit sin cambio (no estaban entre las 40).
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `E2E-CUARENTA-OMITIDAS` — **ejecutado y convergido** (`specs/012-auditoria-integral-e2e/spec054-e2e-cuarenta-omitidas-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendiente de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION`. Candidatas técnicas sin decisión
+pendiente: `E2E-SIN-TYPECHECK`, `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`, `TEST-PG-UN-SCHEMA-POR-PRUEBA`,
+`TEST-PG-CATALOGO-MARCA-DE-AGUA`, `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-CARRERA-SQLITE-HILOS`,
+`PICKLIST-DUPLICADA-500`, `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`. De entorno:
+`ENTORNO-SIN-CLAMSCAN` (ahora con 4 pruebas E2E nombradas esperándola). Fuera de ciclo: el 502 de
+`kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.

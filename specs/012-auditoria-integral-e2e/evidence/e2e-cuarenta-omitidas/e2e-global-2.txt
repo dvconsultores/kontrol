@@ -1,0 +1,10 @@
+# Corrida global canónica 2 · resources/backend/.venv/bin/python qa/e2e-run.py · tras el parche
+[e2e r20261012t053655p2420178n795912] analizador: ausente (las cargas con análisis se omiten con nombre)
+  -   75 [chromium] › e2e/documents-a11y.spec.ts:98:1 › la carga de archivo es operable solo con teclado
+  -   77 [chromium] › e2e/documents.spec.ts:118:1 › carga, versión y descarga por la interfaz real
+  -   82 [chromium] › e2e/documents.spec.ts:246:1 › una versión histórica no se reinterpreta al cargar otra
+  -   83 [chromium] › e2e/documents.spec.ts:286:1 › un reintento tras el fallo no deja el formulario sin salida
+  4 skipped
+  272 passed (3.4m)
+[e2e r20261012t053655p2420178n795912] suite: {'skipped': 4, 'passed': 272} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t053655p2420178n795912
+rc=0
