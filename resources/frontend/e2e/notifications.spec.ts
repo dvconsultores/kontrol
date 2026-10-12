@@ -94,7 +94,7 @@ test.describe.configure({ mode: "serial" });
 test.beforeAll(async ({ request }) => {
   const adminToken = await token(request, ADMIN, ADMIN_PASSWORD);
   const base = { Authorization: `Bearer ${adminToken}` };
-  const empresas = await pedir<{ id: string; code: string }[] | { items: { id: string; code: string }[] }>(
+  const empresas = await pedir<{ items: { id: string; code: string }[] }>(
     request, base, "get", "/organization/companies");
   const lista = empresas.items;
   const d1 = lista.find((e) => e.code === "D1");
@@ -115,7 +115,7 @@ test.beforeAll(async ({ request }) => {
   estado.usuario = { Authorization: `Bearer ${usuarioToken}`, "X-Kontrol-Company": d1!.id };
   // La segunda empresa se busca con el usuario de esta ejecución: la siembra de la
   // 047 limita al administrador a D1 para no alterar el resto de la cadena.
-  const suyas = await pedir<{ id: string; code: string }[] | { items: { id: string; code: string }[] }>(
+  const suyas = await pedir<{ items: { id: string; code: string }[] }>(
     request, { Authorization: `Bearer ${usuarioToken}` }, "get", "/organization/companies");
   const d2 = suyas.items.find((e) => e.code === "D2");
   estado.usuarioD2 = d2 ? { Authorization: `Bearer ${usuarioToken}`, "X-Kontrol-Company": d2.id } : null;

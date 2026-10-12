@@ -20,12 +20,20 @@
  *   - que la severidad que detectó el defecto siga encendida;
  *   - que las pruebas no queden fuera del grafo.
  *
- * `e2e/` está deliberadamente fuera de este grafo y sigue sin comprobarse: es la
- * deuda `E2E-SIN-TYPECHECK`, que este fichero **no** cierra.
+ * `e2e/` estuvo fuera de este grafo hasta `E2E-SIN-TYPECHECK`: cuarenta y ocho
+ * suites, sus ayudantes, el `global-setup` y `playwright.config.ts` se
+ * transpilaban sin que nadie los comprobara, y un error de tipos real vivió en
+ * `notifications.spec.ts` mientras el gate daba verde. Ahora son el tercer
+ * proyecto de la solución (`tsconfig.e2e.json`: Node + DOM + Playwright, misma
+ * severidad que `src`, sin emitir nada). La segunda mitad de este fichero
+ * vigila que siga siendo así: que la referencia exista, que el proyecto recorra
+ * **todos** los `.ts` de `e2e/` (una inclusión vacía también termina en 0), que
+ * no emita, que no se relaje y que nadie pague el verde con un supresor.
  */
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 
+import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
 const RAIZ = join(__dirname, "..", "..");
@@ -84,5 +92,75 @@ describe("el gate de tipos", () => {
     for (const regla of ["strict", "noUnusedLocals", "noUnusedParameters"] as const) {
       expect(opciones[regla], `${regla} no puede apagarse para pasar el gate`).toBe(true);
     }
+  });
+});
+
+/** Todos los `.ts` bajo un directorio, recursivo, en rutas relativas a la raíz del proyecto. */
+function tsBajo(directorio: string): string[] {
+  const salida: string[] = [];
+  for (const nombre of readdirSync(directorio)) {
+    const ruta = join(directorio, nombre);
+    if (statSync(ruta).isDirectory()) salida.push(...tsBajo(ruta));
+    else if (nombre.endsWith(".ts")) salida.push(relative(RAIZ, ruta));
+  }
+  return salida.sort();
+}
+
+/** Los ficheros que `tsc` recorrería con una configuración, resueltos como los resuelve él. */
+function recorridosPor(nombre: string): string[] {
+  const leido = ts.readConfigFile(join(RAIZ, nombre), ts.sys.readFile);
+  expect(leido.error, `${nombre} no se puede leer`).toBeUndefined();
+  const proyecto = ts.parseJsonConfigFileContent(leido.config, ts.sys, RAIZ);
+  expect(proyecto.errors.map((e) => e.messageText), `${nombre} tiene errores de configuración`).toEqual([]);
+  return proyecto.fileNames.map((f) => relative(RAIZ, f)).sort();
+}
+
+describe("el gate de tipos cubre e2e", () => {
+  const e2e = leer("tsconfig.e2e.json");
+  const opciones = (e2e.compilerOptions ?? {}) as Record<string, unknown>;
+
+  it("la solución referencia el proyecto de e2e", () => {
+    // Sin la referencia, `tsc -b` no lo visita y volvemos a un verde que no mira e2e.
+    const rutas = (solucion.references as Array<{ path: string }>).map((r) => r.path);
+    expect(rutas, "falta el proyecto de e2e en las referencias").toContain("./tsconfig.e2e.json");
+  });
+
+  it("recorre todos los TypeScript de e2e, el global-setup, los ayudantes y la configuración de Playwright", () => {
+    const enDisco = tsBajo(join(RAIZ, "e2e"));
+    const recorridos = recorridosPor("tsconfig.e2e.json");
+    // Una inclusión vacía o equivocada también termina en 0: se exige volumen real.
+    expect(enDisco.length, "e2e/ debería tener suites TypeScript").toBeGreaterThanOrEqual(40);
+    const fuera = enDisco.filter((f) => !recorridos.includes(f));
+    expect(fuera, "ficheros de e2e que el proyecto no recorre").toEqual([]);
+    expect(recorridos, "falta la configuración de Playwright").toContain("playwright.config.ts");
+    expect(recorridos, "falta el global-setup").toContain(join("e2e", "global-setup.ts"));
+  });
+
+  it("no emite nada ni se mezcla con el empaquetado del producto", () => {
+    expect(opciones.noEmit, "el proyecto de e2e solo comprueba").toBe(true);
+    expect(opciones.outDir, "el proyecto de e2e no tiene salida").toBeUndefined();
+    const app = leer("tsconfig.app.json");
+    expect(app.include, "el proyecto principal sigue cubriendo solo `src`").toEqual(["src"]);
+  });
+
+  it("tiene el entorno real de Playwright: Node y DOM", () => {
+    // `process`, `Buffer` y `node:child_process` en las suites; `document` dentro de `page.evaluate`.
+    expect(opciones.types, "las suites usan process, Buffer y node:*").toContain("node");
+    expect(opciones.lib, "los callbacks de page.evaluate corren en el navegador").toContain("DOM");
+  });
+
+  it("mantiene la misma severidad que el producto", () => {
+    const producto = (leer("tsconfig.app.json").compilerOptions ?? {}) as Record<string, unknown>;
+    for (const regla of ["strict", "noUnusedLocals", "noUnusedParameters", "noFallthroughCasesInSwitch"] as const) {
+      expect(producto[regla], `${regla} no puede apagarse en el producto`).toBe(true);
+      expect(opciones[regla], `${regla} no puede apagarse en e2e para pasar el gate`).toBe(true);
+    }
+    expect(e2e.exclude, "el proyecto de e2e no excluye nada").toBeUndefined();
+  });
+
+  it("nadie paga el verde con un supresor de tipos", () => {
+    const supresores = /@ts-ignore|@ts-expect-error|\bas any\b|:\s*any\b|as unknown as\b/;
+    const culpables = tsBajo(join(RAIZ, "e2e")).filter((f) => supresores.test(readFileSync(join(RAIZ, f), "utf8")));
+    expect(culpables, "ficheros de e2e con @ts-ignore, @ts-expect-error o any").toEqual([]);
   });
 });

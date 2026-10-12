@@ -1,0 +1,11 @@
+# E2E dirigida de la única suite tocada (solo tipos): qa/e2e-run.py -- --project=chromium e2e/notifications.spec.ts
+  ✓  1 [chromium] › e2e/notifications.spec.ts:142:1 › la campana cuenta en el servidor y leer una notificación la actualiza sin recargar
+  ✓  2 [chromium] › e2e/notifications.spec.ts:180:1 › completar la tarea no aprueba el documento de origen
+  ✓  3 [chromium] › e2e/notifications.spec.ts:203:1 › reasignar deja la asignación anterior en el historial
+  ✓  4 [chromium] › e2e/notifications.spec.ts:222:1 › repetir el planificador no duplica notificaciones ni tareas
+  ✓  5 [chromium] › e2e/notifications.spec.ts:233:1 › el enlace lleva al origen cuando el usuario puede verlo
+  ✓  6 [chromium] › e2e/notifications.spec.ts:243:1 › lo de una empresa no se ve ni se cuenta en otra
+  ✓  7 [chromium] › e2e/notifications.spec.ts:261:1 › la página 3 muestra lo que el servidor pone en la página 3
+  7 passed
+[e2e r20261012t133741p2486125n49e905] suite: {'passed': 7} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t133741p2486125n49e905
+rc=0

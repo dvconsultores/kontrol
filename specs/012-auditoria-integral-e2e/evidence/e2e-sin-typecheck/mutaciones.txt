@@ -1,0 +1,53 @@
+GOOD: typecheck (0, 'sin errores') · vitest (0, 'Tests  12 passed (12)')
+M-01 error de tipos sintético en una suite
+  gate: typecheck canónico
+  MUTATED → FAIL (muere) · e2e/smoke.spec.ts(22,7): error TS2322: Type 'string' is not assignable to type 'number'.
+  RESTORED → PASS · sin errores
+M-02 la inclusión deja fuera e2e/
+  gate: contrato del gate (Vitest)
+  MUTATED → FAIL (muere) · → ficheros de e2e que el proyecto no recorre: expected [ 'e2e/accessibility.spec.ts', …(51) ] to deeply equal [] · Tests  1 failed | 11 passed (12)
+  RESTORED → PASS · Tests  12 passed (12)
+M-03 la inclusión apunta a un directorio vacío
+  gate: contrato del gate (Vitest)
+  MUTATED → FAIL (muere) · → tsconfig.e2e.json tiene errores de configuración: expected [ Array(1) ] to deeply equal [] · Tests  1 failed | 11 passed (12)
+  RESTORED → PASS · Tests  12 passed (12)
+M-04 sin tipos de Node (process, Buffer, node:*)
+  gate: typecheck canónico
+  MUTATED → FAIL (muere) · e2e/accessibility.spec.ts(12,14): error TS2591: Cannot find name 'process'. Do you need to install type definitions for 
+  RESTORED → PASS · sin errores
+M-06 el ayudante cambia su contrato: activarEmpresa deja de aceptar la página
+  gate: typecheck canónico
+  MUTATED → FAIL (muere) · e2e/empresa-helper.spec.ts(30,26): error TS2345: Argument of type 'Page' is not assignable to parameter of type 'string'
+  RESTORED → PASS · sin errores
+M-07 el tipo del mundo de siembra (fixture) cambia: los consumidores leen un campo que ya no existe
+  gate: typecheck canónico
+  MUTATED → PASS (SOBREVIVE) · sin errores
+  RESTORED → PASS · sin errores
+M-08 la solución deja de referenciar el proyecto de e2e
+  gate: contrato del gate (Vitest)
+  MUTATED → FAIL (muere) · → falta el proyecto de e2e en las referencias: expected [ './tsconfig.app.json', …(1) ] to include './tsconfig.e2e.json' · Tests  1 failed | 11 passed (12)
+  RESTORED → PASS · Tests  12 passed (12)
+M-09 el proyecto de e2e emite dentro de dist
+  gate: contrato del gate (Vitest)
+  MUTATED → FAIL (muere) · → el proyecto de e2e solo comprueba: expected false to be true // Object.is equality · Tests  1 failed | 11 passed (12)
+  RESTORED → PASS · Tests  12 passed (12)
+M-10 se relaja la severidad de e2e (strict off)
+  gate: contrato del gate (Vitest)
+  MUTATED → FAIL (muere) · → strict no puede apagarse en e2e para pasar el gate: expected false to be true // Object.is equality · Tests  1 failed | 11 passed (12)
+  RESTORED → PASS · Tests  12 passed (12)
+M-11 un @ts-ignore en una suite
+  gate: contrato del gate (Vitest)
+  MUTATED → FAIL (muere) · → ficheros de e2e con @ts-ignore, @ts-expect-error o any: expected [ 'e2e/smoke.spec.ts' ] to deeply equal [] · Tests  1 failed | 11 passed (12)
+  RESTORED → PASS · Tests  12 passed (12)
+M-12 un `as any` para sortear un tipo
+  gate: contrato del gate (Vitest)
+  MUTATED → FAIL (muere) · → ficheros de e2e con @ts-ignore, @ts-expect-error o any: expected [ 'e2e/smoke.spec.ts' ] to deeply equal [] · Tests  1 failed | 11 passed (12)
+  RESTORED → PASS · Tests  12 passed (12)
+rc=0
+
+# M-07 rediseñado: el primer M-07 (campo obligatorio nuevo en la interfaz) era EQUIVALENTE —mundoN6() construye el mundo con `as Partial<MundoN6>` y los consumidores no leen el campo nuevo—, no una debilidad del gate. Se sustituye por un cambio de tipo de un campo que los consumidores sí usan:
+GOOD: typecheck (0, 'sin errores') · vitest (0, 'Tests  12 passed (12)')
+M-07b el tipo del mundo de siembra (fixture) cambia: nombre_a deja de ser texto y los consumidores lo pasan a un localizador
+  gate: typecheck canónico
+  MUTATED → FAIL (muere) · e2e/empresas-busqueda.spec.ts(50,29): error TS2345: Argument of type 'number' is not assignable to parameter of type 'st
+  RESTORED → PASS · sin errores

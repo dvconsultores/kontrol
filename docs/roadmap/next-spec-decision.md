@@ -3151,3 +3151,28 @@ pendiente: `E2E-SIN-TYPECHECK`, `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`, `TEST-
 `PICKLIST-DUPLICADA-500`, `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`. De entorno:
 `ENTORNO-SIN-CLAMSCAN` (ahora con 4 pruebas E2E nombradas esperándola). Fuera de ciclo: el 502 de
 `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-12 · E2E-SIN-TYPECHECK convergida: `e2e/` entra en el gate de tipos (dueña 054)
+
+`tsc -b` recorría `src` y `vite.config.ts`; las 52 suites y ayudantes de `e2e/` y `playwright.config.ts`
+se transpilaban sin comprobarse. Medido antes de tocar nada: un error sintético pasaba `npm run typecheck`,
+y un experimento con la severidad de `src` más los tipos de Node encontró 4 errores reales, todos de una
+raíz (una unión «array o sobre» del listado de empresas, obsoleta desde el sobre `{items}` de 2026-09-30).
+Diseño derivado del grafo existente: tercer proyecto `tsconfig.e2e.json` —el patrón ya ratificado para
+`tsconfig.node.json`—, Node + DOM + Playwright, misma severidad, `noEmit`, referenciado desde la solución,
+de modo que el gate canónico lo recorre sin guion nuevo y el build no emite nada de E2E (`dist` idéntico).
+El tipo obsoleto se corrigió sin tocar aserciones; seis pruebas de contrato vigilan referencia, cobertura
+real (resolución de `tsc` contra el disco), `noEmit`, entorno, severidad y supresores. 11/11 mutaciones
+muertas; typecheck 11,6 s (+1,9 s); Vitest 473/473; E2E dirigida 7/7 y dos globales 272 / 0 / 4; producto 0.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `E2E-SIN-TYPECHECK` — **ejecutado y convergido** (`specs/012-auditoria-integral-e2e/spec054-e2e-sin-typecheck-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendiente de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION`. Candidatas técnicas sin decisión
+pendiente: `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`, `TEST-PG-UN-SCHEMA-POR-PRUEBA`,
+`TEST-PG-CATALOGO-MARCA-DE-AGUA`, `OFFLINE-NAIVE-EN-SQLITE`, `ALMACENES-CARRERA-SQLITE-HILOS`,
+`PICKLIST-DUPLICADA-500`, `MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`. De entorno:
+`ENTORNO-SIN-CLAMSCAN`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+

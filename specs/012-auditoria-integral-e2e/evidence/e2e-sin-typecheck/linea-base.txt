@@ -1,0 +1,19 @@
+# Línea base ANTES de tocar el repositorio (HEAD eccaddd)
+## ETS-01 · el typecheck canónico ignora e2e/: error sintético añadido a e2e/smoke.spec.ts → `tsc -b --noEmit` exit=0 (no lo detecta); restaurado
+## Experimento: tsconfig temporal en el scratchpad (extiende tsconfig.app.json + types node + typeRoots), include e2e/**/*.ts y playwright.config.ts
+exit=2 · 2,79 s · 4 errores
+e2e/notifications.spec.ts(99,26): error TS2339: Property 'items' does not exist on type '{ items: { id: string; code: string; }[]; } | { id: string; code: string; }[]'.
+  Property 'items' does not exist on type '{ id: string; code: string; }[]'.
+e2e/notifications.spec.ts(100,26): error TS7006: Parameter 'e' implicitly has an 'any' type.
+e2e/notifications.spec.ts(120,20): error TS2339: Property 'items' does not exist on type '{ items: { id: string; code: string; }[]; } | { id: string; code: string; }[]'.
+  Property 'items' does not exist on type '{ id: string; code: string; }[]'.
+e2e/notifications.spec.ts(120,32): error TS7006: Parameter 'e' implicitly has an 'any' type.
+
+## Clasificación
+notifications.spec.ts:99,118 TS2339 → API_TYPE_DRIFT / REAL_TEST_TYPE_DEFECT: unión «array o sobre» del listado de empresas, obsoleta desde e813e6f (2026-09-30, el sobre {items} es el contrato y «la tolerancia array o sobre se retira»); el código ya desreferencia .items, así que la rama array estaba muerta. Dueñas: 047 (suite) / 001 (contrato).
+notifications.spec.ts:100,118 TS7006 → IMPLICIT_ANY derivado del anterior (el parámetro del find pierde el tipo cuando .items no resuelve). Mismo arreglo.
+UNKNOWN = 0 · REAL_TEST_TYPE_DEFECT/API_TYPE_DRIFT = 2 · IMPLICIT_ANY (derivado) = 2 · NODE/DOM/PLAYWRIGHT_TYPE = 0 (el experimento ya traía types node y lib DOM: sin ellos no se mide el código, se mide el entorno)
+## Inventario e2e/: ts=52 tsx=0 js=0 mjs=2 (audit-route-crawler.mjs, audit-responsive-crawler.mjs: herramientas manuales de la auditoría 012, `node e2e/*.mjs`, fuera de Playwright) · helpers=6 · global-setup.ts=1 · playwright.config.ts (fuera de e2e/)
+## Supresores preexistentes en e2e/: @ts-ignore 0 · @ts-expect-error 0 · as any 0 · : any 0 · as unknown as 0
+## Grafo TS: tsconfig.json (solución, files [], references app+node) · tsconfig.app.json include [src] · tsconfig.node.json include [vite.config.ts], types node · scripts: typecheck=tsc -b --noEmit · build=tsc -b && vite build · CI (.github/workflows/build-*.yml): solo docker build (Dockerfile.frontend: npm run build → tsc -b) · runner E2E: no invoca typecheck
+## Tiempo typecheck canónico antes: 9,71 s

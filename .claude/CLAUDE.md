@@ -175,8 +175,8 @@ mutaciones, regresiones y coste. Si Claude hizo la tarea entera, se dice.
 - Backend (desde `resources/backend/`): `.venv/bin/python -m pytest tests`; sobre PostgreSQL,
   `KONTROL_TEST_DB_URL=postgresql+psycopg2://postgres@localhost:55432/ktest`; `.venv/bin/ruff
   check`; `.venv/bin/mypy`.
-- Frontend (desde `resources/frontend/`): `npm run typecheck` · `npm run lint` · `npm test` ·
-  `npm run build` · `npm run test:e2e`.
+- Frontend (desde `resources/frontend/`): `npm run typecheck` (recorre `src`, las herramientas y
+  `e2e/` por referencias) · `npm run lint` · `npm test` · `npm run build` · `npm run test:e2e`.
 - PostgreSQL de QA: `bash qa/pg-provision.sh start`; siembra E2E: `bash qa/e2e-seed.sh <url>`.
 - **Certificación E2E completa**: `resources/backend/.venv/bin/python qa/e2e-run.py` (desde la
   raíz; `-- <args de Playwright>` para dirigirla). Cada corrida crea una base PostgreSQL efímera

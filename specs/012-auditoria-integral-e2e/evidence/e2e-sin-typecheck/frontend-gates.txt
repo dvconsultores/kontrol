@@ -1,0 +1,22 @@
+## typecheck canónico (npm run typecheck = tsc -b --noEmit), ahora con tsconfig.e2e.json
+PRODUCT+E2E TYPECHECK OK
+exit=0 segundos=11.609883154
+## typecheck solo e2e (tsc -b tsconfig.e2e.json --noEmit)
+E2E TYPECHECK OK
+exit=0 segundos=1.364972322
+## ficheros recorridos por tsconfig.e2e.json
+53
+e2e .ts en disco: 52 + playwright.config.ts
+## lint
+LINT_OK
+## vitest
+ Test Files  35 passed (35)
+      Tests  473 passed (473)
+   Duration  7.83s (transform 1.33s, setup 5.15s, collect 20.53s, tests 10.40s, environment 18.29s, prepare 3.41s)
+## build
+dist/assets/index-B0ThFj_T.js                     416.53 kB │ gzip: 126.95 kB
+✓ built in 2.84s
+## dist: comparación antes/después
+DIST_LISTADO_IGUAL (133 ficheros)
+DIST_SHA256_IGUAL
+artefactos e2e en dist: 0
