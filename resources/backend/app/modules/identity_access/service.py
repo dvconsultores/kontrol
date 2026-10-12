@@ -12,7 +12,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, overload
 
 import jwt as pyjwt
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.core import security
@@ -345,6 +345,85 @@ def list_roles(db: Session, *, company_id: str | None = None) -> list[dict]:
             }
         )
     return result
+
+
+#: Candado consultivo (PostgreSQL) que serializa «comprobar duplicado + insertar» en el alta de roles: `roles`
+#: no tiene restricción de unicidad en la base (`ix_roles_code` es un índice simple), así que sin él dos altas
+#: simultáneas del mismo código podrían entrar las dos. Sección crítica de milisegundos; SQLite serializa solo.
+_BLOQUEO_ALTA_ROL = 7_003_040
+
+
+def create_role(
+    db: Session,
+    *,
+    tenant_id: str,
+    code: str,
+    name: str,
+    company_id: str | None,
+    permissions: list[str],
+    actor: str | None,
+) -> dict:
+    """Alta de un rol **personalizado** con sus permisos, en una sola operación (FR-001-040/043/072;
+    `ROLES-SIN-API-DE-ALTA`).
+
+    Lo que decide el servidor y no el cuerpo: `protected = False` (los roles protegidos solo los crea el
+    arranque), `status = "ACTIVE"`, `created_by`. Los permisos se nombran como `recurso:accion`, igual que
+    los publica `list_roles`, y **todos** deben existir en el catálogo: uno desconocido rechaza el alta
+    entera (422) sin crear nada; el alta nunca crea permisos. El alcance sigue el modelo vigente del
+    catálogo de la instalación: `company_id` nulo = toda la instalación; si viene, la empresa debe ser del
+    tenant de quien pide (el mismo control que `assign_role_to_user`). La identidad es `(code, company_id)`:
+    un duplicado responde `409 ROLE_DUPLICATE`, también bajo concurrencia. Rol y permisos se confirman juntos
+    o no se confirma nada. No asigna el rol a nadie.
+    """
+    from app.modules.organization.models import Company
+
+    code, name = code.strip(), name.strip()
+    if company_id is not None:
+        empresa = db.get(Company, company_id)
+        if empresa is None or str(empresa.tenant_id) != str(tenant_id):
+            raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
+    solicitados = sorted(set(permissions))
+    catalogo = {f"{p.resource}:{p.action}": p for p in db.execute(select(Permission)).scalars().all()}
+    desconocidos = [c for c in solicitados if c not in catalogo]
+    if desconocidos:
+        raise KontrolError(
+            code="PERMISSION_UNKNOWN",
+            message="Uno o más permisos no existen en el catálogo",
+            field_errors={"permissions": desconocidos},
+            status_code=422,
+        )
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(text("SELECT pg_advisory_xact_lock(:clave)"), {"clave": _BLOQUEO_ALTA_ROL})
+    duplicado = db.execute(
+        select(Role).where(Role.code == code, Role.company_id.is_(None) if company_id is None else Role.company_id == company_id)
+    ).scalars().first()
+    if duplicado is not None:
+        raise ConflictError(code="ROLE_DUPLICATE", message="Ya existe un rol con ese código en ese alcance")
+    rol = Role(code=code, name=name, company_id=company_id, protected=False, status="ACTIVE", created_by=actor)
+    db.add(rol)
+    db.flush()
+    for clave in solicitados:
+        db.add(RolePermission(role_id=str(rol.id), permission_id=str(catalogo[clave].id)))
+    db.flush()
+    _audit(
+        db,
+        action="ROLE_CREATED",
+        entity_type="Role",
+        entity_id=str(rol.id),
+        tenant_id=tenant_id,
+        user_id=actor,
+        after={"code": code, "name": name, "company_id": company_id, "permissions": solicitados},
+    )
+    db.commit()
+    return {
+        "id": str(rol.id),
+        "code": rol.code,
+        "name": rol.name,
+        "protected": rol.protected,
+        "status": rol.status,
+        "company_id": rol.company_id,
+        "permissions": solicitados,
+    }
 
 
 def get_user_roles(db: Session, user_id: str) -> list[dict]:

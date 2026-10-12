@@ -3101,3 +3101,29 @@ Candidatas técnicas sin decisión pendiente: `ROLES-SIN-API-DE-ALTA`, `TEST-VOL
 `PICKLIST-DUPLICADA-500`, `E2E-CUARENTA-OMITIDAS`, `MIGRACIONES-URL-CON-PORCENTAJE`,
 `INSTALACION-KEY-REFERENCE-120`, `E2E-SIN-TYPECHECK`. Fuera de ciclo y pendiente de la dueña: el 502 de
 `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-12 · ROLES-SIN-API-DE-ALTA convergida: alta de roles personalizados por API (dueña 003)
+
+El catálogo declaraba `roles:create` y nadie lo exigía: la API listaba y asignaba roles, pero no creaba
+ninguno ni asociaba permisos a un rol; el E2E los escribía en la base con un guion. `POST /roles` cierra
+el hueco con lo que el modelo ya definía: sesión y `roles:create`; roles del catálogo de la instalación,
+opcionalmente acotados a una empresa del tenant del actor (404 si no lo es); permisos nombrados como
+`recurso:accion` y todos del catálogo (uno desconocido rechaza el alta entera); identidad `(code,
+company_id)` con 409 también bajo concurrencia, serializada con el candado consultivo que el repositorio
+ya usa (sin migración); `protected`, `status` y `created_by` del servidor; rol y permisos en una sola
+transacción; auditoría `ROLE_CREATED`; ningún usuario queda asignado. Hereda `BearerAccessToken` en el
+OpenAPI (544 operaciones, 533 protegidas, las 11 públicas iguales). Sin CRUD completo, sin permisos
+nuevos, sin esquema, sin frontend. Deuda nueva, abierta y de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION`
+(ningún punto del modelo fija si quien crea o asigna roles puede otorgar permisos que no posee; hoy
+no hay techo, y fijarlo es una política nueva).
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `ROLES-SIN-API-DE-ALTA` — **ejecutado y convergido** (`specs/001-fundacion/spec001-roles-alta-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendiente de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION`. Candidatas técnicas sin decisión
+pendiente: `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`, `OFFLINE-NAIVE-EN-SQLITE`, `E2E-PANTALLA-SIN-PINTAR`,
+`ALMACENES-CARRERA-SQLITE-HILOS`, `PICKLIST-DUPLICADA-500`, `E2E-CUARENTA-OMITIDAS`,
+`MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`, `E2E-SIN-TYPECHECK`. Fuera de ciclo:
+el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.

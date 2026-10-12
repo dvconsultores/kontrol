@@ -1,0 +1,17 @@
+[e2e r20261012t043417p2022023n593945] comprobar
+[e2e r20261012t043417p2022023n593945] crear base
+[e2e r20261012t043417p2022023n593945] migrar
+[e2e r20261012t043417p2022023n593945] sembrar
+[e2e r20261012t043417p2022023n593945] backend
+[e2e r20261012t043417p2022023n593945] comprobar la base del backend
+[e2e r20261012t043417p2022023n593945] autoridad central
+[e2e r20261012t043417p2022023n593945] frontend
+[e2e r20261012t043417p2022023n593945] suite
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › e2e/roles-alta.spec.ts:38:3 › roles · alta por API › E2E-ROLE-01..05 · sin sesión 401, sin permiso 403, alta 201 con permisos, duplicado 409, el listado lo trae (1.6s)
+
+  1 passed (2.1s)
+[e2e r20261012t043417p2022023n593945] limpiar
+[e2e r20261012t043417p2022023n593945] suite: {'passed': 1} · limpieza: LIMPIA · salida: 0 · evidencia: /home/maria/Projectos/Kontrol/qa/e2e-runs/r20261012t043417p2022023n593945

@@ -1,0 +1,54 @@
+GOOD: (0, '63 passed, 1 skipped in 8.44s') GOOD-PG: (0, '24 passed in 5.95s')
+M-01 el alta deja de exigir roles:create (basta la sesión) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 62 passed, 1 skipped in 8.49s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.59s
+M-02 el cuerpo puede fijar protected (mass assignment) [SQLite]
+  MUTATED → FAIL (muere) · 5 failed, 58 passed, 1 skipped in 8.55s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.51s
+M-03 el rol nace protegido si el cuerpo lo pide [SQLite]
+  MUTATED → PASS (SOBREVIVE) · 63 passed, 1 skipped in 8.47s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.49s
+M-04 un permiso desconocido se ignora en silencio [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 62 passed, 1 skipped in 8.60s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.36s
+M-05 la empresa del cuerpo no se comprueba contra el tenant [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 62 passed, 1 skipped in 8.39s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.44s
+M-06 el duplicado no se comprueba [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 62 passed, 1 skipped in 8.40s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.38s
+M-07 el duplicado se mira sin alcance (un código por empresa bloquea el global) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 62 passed, 1 skipped in 8.35s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.35s
+M-08 sin candado consultivo: dos altas simultáneas entran las dos [PostgreSQL] [PostgreSQL]
+  MUTATED → FAIL (muere) · 1 failed, 23 passed in 5.97s
+  RESTORED → PASS · 24 passed in 5.87s
+M-09 los permisos se confirman antes de asociarse (rol a medias si falla la asociación) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 62 passed, 1 skipped in 8.47s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.42s
+M-10 el alta no se audita [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 62 passed, 1 skipped in 8.39s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.42s
+M-11 el alta asigna el rol al actor [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 62 passed, 1 skipped in 8.43s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.55s
+Traceback (most recent call last):
+  File "/tmp/claude-1000/-home-maria-Projectos-Kontrol/31ae8f1b-7f0f-400f-aa41-00d508b7f488/scratchpad/mutar_roles.py", line 60, in <module>
+    s = f.read_text(); assert s.count(bueno) == 1, nombre
+                              ^^^^^^^^^^^^^^^^^^^
+AssertionError: M-12 el permiso del alta pasa a roles:edit (otro permiso del catálogo)
+== M-03 repetido con mutante efectivo
+M-03 el servicio deja de fijar protected=False (el rol nace protegido) [SQLite]
+  MUTATED → FAIL (muere) · 2 failed, 61 passed, 1 skipped in 8.30s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.20s
+== M-12 y M-13 (la pasada inicial abortó en M-12 por un anclaje mal escrito en el guion)
+M-12 el permiso del alta pasa a roles:edit (otro permiso del catálogo) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 62 passed, 1 skipped in 8.42s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.36s
+M-13 la ruta se publica sin la dependencia de seguridad (sesión leída a mano) [SQLite]
+  MUTATED → FAIL (muere) · 1 error in 1.24s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.44s
+== M-13 repetido con mutante válido (el anterior era un SyntaxError: parámetro sin valor tras uno con valor)
+M-13 la ruta se publica sin la dependencia de seguridad (sesión leída a mano) [SQLite]
+  MUTATED → FAIL (muere) · 1 failed, 62 passed, 1 skipped in 8.32s
+  RESTORED → PASS · 63 passed, 1 skipped in 8.56s

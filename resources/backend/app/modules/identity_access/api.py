@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Cookie, Depends, Request, Response
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy.orm import Session
 
 from app.core import security
@@ -271,3 +271,45 @@ roles_router = APIRouter(prefix="/roles", tags=["roles"])
 @roles_router.get("")
 def list_roles(db: Session = Depends(get_db), _: User = Depends(require_permission("roles", "view"))):
     return {"items": identity_service.list_roles(db)}
+
+
+class RoleCreate(BaseModel):
+    """Lo que el llamador posee del alta de un rol. `extra="forbid"`: `protected`, `status`, `created_by` o
+    cualquier campo interno en el cuerpo es un 422, no un campo ignorado en silencio."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(min_length=1, max_length=64, pattern=r"^\S+$")
+    name: str = Field(min_length=1, max_length=200)
+    company_id: str | None = None
+    permissions: list[str] = Field(default_factory=list)
+
+
+class RoleOut(BaseModel):
+    id: str
+    code: str
+    name: str
+    protected: bool
+    status: str
+    company_id: str | None
+    permissions: list[str]
+
+
+@roles_router.post("", status_code=201, response_model=RoleOut)
+def create_role(
+    body: RoleCreate,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission("roles", "create")),
+):
+    """Alta de un rol personalizado con sus permisos (FR-001-040; `ROLES-SIN-API-DE-ALTA`). El tenant es el
+    del actor; `company_id` opcional acota el rol a una empresa de ese tenant; los permisos se nombran como
+    `recurso:accion`. No asigna el rol a ningún usuario."""
+    return identity_service.create_role(
+        db,
+        tenant_id=actor.tenant_id,
+        code=body.code,
+        name=body.name,
+        company_id=body.company_id,
+        permissions=body.permissions,
+        actor=str(actor.id),
+    )

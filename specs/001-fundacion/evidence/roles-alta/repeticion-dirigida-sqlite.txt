@@ -1,0 +1,6 @@
+test_auth_session_rotation.py::test_dos_: 1 failed, 1 warning in 3.60s
+test_warehouse_structure.py::test_concur: 1 passed in 3.83s
+test_auth_session_rotation.py::test_dos_: 1 failed in 3.60s
+test_warehouse_structure.py::test_concur: 1 passed in 3.84s
+HEAD test_auth_session_rotation.py::test_dos_: 1 failed in 3.60s
+HEAD test_warehouse_structure.py::test_concur: 1 failed, 2 warnings in 3.97s
