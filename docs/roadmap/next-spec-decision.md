@@ -3378,3 +3378,37 @@ reloj saltado. Candidatas técnicas sin decisión pendiente: `LISTADOS-SIN-TOPE`
 `KONTROL_BACKUP_PATH` compartidos en el arnés; `csync_02` dependiente de `csync_01`; la hoja de ruta decía «trece»
 suites y «1 129» relaciones: son 12 suites + 5 fixtures de función y 841 relaciones + 811 restricciones. Fuera de
 ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-13 · LISTADOS-SIN-TOPE convergida (dueñas 008 y 031)
+
+Ciclo de contrato de producto, discovery-first. El inventario transversal de 177 `GET` de colección dio 17 listados
+canónicos (`page`/`page_size` ≤ 100), 8 con `limit/offset` sin máximo y 79 con sobre falso (sin paginar). La convención
+ratificada es la de la Spec 001 (`api-contracts.md:11`, transcrita como canon en las deltas de empresas y auditoría):
+sobre `{items, total, page, page_size}`, `page_size` 1..100 (20), 422 fuera de rango, `total` antes de cortar, orden
+con desempate por `id`. Reproducido con 1 100 listas y 300 almacenes sintéticos: pick-lists devolvía todo (203 KB) e
+ignoraba `page`; almacenes aceptaba `limit=100000` y los negativos eran un 500 en PostgreSQL. Corregido sin migración ni
+cambio de alcance: `limit` 1..100 y `offset` ≥ 0 en almacenes (defecto 50 y sobre WHL intactos), paginación canónica en
+pick-lists; frontend (`listAllWarehouses`, espejo de `listAllCompanies`), E2E (recorrer páginas) y QA adaptados sin
+relajar aserciones. 29 pruebas hostiles, 12/12 mutaciones, OpenAPI 544/533/11 con dos operaciones documentadas, suites
+completas y dos globales E2E en la evidencia. Los otros 7 listados `limit/offset` y los 78 sobres falsos se registran
+como `ADDITIONAL_UNBOUNDED_LISTING` (ver el delta §13) para que cada dueña decida.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `LISTADOS-SIN-TOPE` — **ejecutado y convergido** (`specs/008-almacenes-fisicos/spec008-listados-sin-tope-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION` y la política del arnés E2E ante red cambiada o
+reloj saltado. Candidatas técnicas sin decisión pendiente: `ALMACENES-CARRERA-SQLITE-HILOS`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`
+(observación, medida sin delta), `ADDITIONAL_UNBOUNDED_LISTING` (85 listados; por dueña). De entorno: `ENTORNO-SIN-CLAMSCAN`,
+`E2E-PANTALLA-SIN-PINTAR`. Observaciones sin absorber: `ALMACENES-PAGINACION-LIMIT-OFFSET` (estilo de nombres no canónico en 8
+listados), `KONTROL_STORAGE_PATH`/`BACKUP_PATH` compartidos en el arnés, `csync_02` dependiente de `csync_01`. Fuera de ciclo: el
+502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
+Observación añadida al cierre del ciclo `LISTADOS-SIN-TOPE`: en la primera global E2E del ciclo fallaron tres pruebas
+(`approvals.spec.ts:496`, `empresa-helper.spec.ts:28` y `:45`) con «estado de empresa no determinable: activar=0
+compuerta=0 activa=1 desactivar=1»: el ayudante `activarEmpresa` decide con `count()` instantáneos tras `networkidle` y
+la tabla se pintó entre la decisión y el diagnóstico (familia de `E2E-PANTALLA-SIN-PINTAR`, con túnel VPN presente);
+sin relación con almacenes ni pick-lists y con el backend limpio. Candidata `E2E-HELPER-EMPRESA-CARRERA-DE-PINTADO`
+(dueña 054): hacer que el ayudante espere a que el estado sea determinable (expectativas con auto-espera) en vez de
+contar en el acto. No se absorbió; las dos globales siguientes fueron limpias.

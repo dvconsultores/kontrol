@@ -55,7 +55,7 @@ cabeceras = {"Authorization": f"Bearer {token}", "X-Kontrol-Company": empresa}
 print("== en proceso: sentencias SQL por petición ==")
 total = 0
 for ruta in ("/organization/warehouses?limit=1", "/organization/warehouses?limit=50",
-             "/organization/warehouses?limit=200&offset=0", "/organization/warehouses?limit=500"):
+             "/organization/warehouses?limit=100&offset=0", "/organization/warehouses?limit=100&offset=100"):
     sentencias[0] = 0
     t0 = time.perf_counter()
     cuerpo = cliente.get(f"/api/v1{ruta}", headers=cabeceras).json()

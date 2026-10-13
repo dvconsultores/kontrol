@@ -479,15 +479,24 @@ def transition_order(order_id: str, body: TransitionBody, db: Session = Depends(
 # Picking y despacho
 # --------------------------------------------------------------------------- #
 @router.get("/pick-lists")
-def list_pick_lists(order_id: str | None = None, db: Session = Depends(get_db),
+def list_pick_lists(order_id: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
+                    db: Session = Depends(get_db),
                     user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+    """Listas de preparación de la empresa, con el sobre de listados del contrato (`{items, total, page, page_size}`).
+
+    Devolvía la colección entera con un sobre que solo lo parecía (`page` 1, `page_size` = cuántas había). Ahora
+    `total` cuenta dentro de la empresa y del filtro **antes** de cortar la página, y el orden es determinista: la
+    más reciente primero y, a igual instante, `id` como desempate (el precedente del listado de empresas).
+    """
     query = select(PickList).where(PickList.company_id == ctx.company_id)
     if order_id:
         query = query.where(PickList.order_id == order_id)
-    items = db.execute(query.order_by(PickList.created_at.desc())).scalars().all()
+    total = int(db.execute(select(func.count()).select_from(query.subquery())).scalar_one())
+    items = db.execute(query.order_by(PickList.created_at.desc(), PickList.id)
+                       .offset((page - 1) * page_size).limit(page_size)).scalars().all()
     return {"items": [{"id": p.id, "code": p.code, "order_id": p.order_id,
                         "warehouse_id": p.warehouse_id, "status": p.status} for p in items],
-            "total": len(items), "page": 1, "page_size": len(items) or 1}
+            "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("/pick-lists", dependencies=[Depends(require_write_allowed)])

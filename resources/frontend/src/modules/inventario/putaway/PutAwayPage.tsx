@@ -17,6 +17,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/api/client";
+import { listAllWarehouses } from "@/api/organization";
 import type { InventoryBalance, PutAwayLocation } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -25,13 +26,6 @@ import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { PageContent } from "@/layout/PageContent";
-
-/** Igual que en Movimientos: el listado de almacenes solo necesita esto. */
-interface WarehouseSummary {
-  id: string;
-  code: string;
-  name: string;
-}
 
 const columnas = createColumnHelper<InventoryBalance>();
 
@@ -45,10 +39,9 @@ export function PutAwayPage(): React.JSX.Element {
 
   const almacenes = useQuery({
     queryKey: ["putaway", "almacenes"],
-    // Límite explícito: el endpoint devuelve 50 por defecto y el selector
-    // truncaba en silencio. Con más de 500 almacenes haría falta un selector
-    // con búsqueda, que es de la Spec 008.
-    queryFn: () => apiFetch<{ items: WarehouseSummary[] }>("/organization/warehouses?limit=500"),
+    // El listado se pagina (`limit` ≤ 100): se recorren las páginas hasta
+    // reunir `total`, para que el selector no trunque en silencio.
+    queryFn: async () => ({ items: await listAllWarehouses() }),
   });
 
   const pendientes = useQuery({

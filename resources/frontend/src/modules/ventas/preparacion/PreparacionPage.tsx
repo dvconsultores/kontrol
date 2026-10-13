@@ -16,6 +16,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/api/client";
+import { listAllWarehouses } from "@/api/organization";
 import type {
   PickingCandidate,
   PickingPlan,
@@ -30,13 +31,6 @@ import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { PageContent } from "@/layout/PageContent";
-
-/** Igual que en el put-away: el selector de almacén solo necesita esto. */
-interface WarehouseSummary {
-  id: string;
-  code: string;
-  name: string;
-}
 
 const colaCols = createColumnHelper<PickingQueueItem>();
 
@@ -68,19 +62,8 @@ export function PreparacionPage(): React.JSX.Element {
     // anterior era 500 y el listado llegó a 564: los 64 últimos desaparecían
     // del desplegable sin que nada lo dijera, y con ellos el almacén recién
     // creado. Un selector que descarta opciones en silencio es peor que uno
-    // vacío, porque parece completo.
-    queryFn: async () => {
-      const tanda = 200;
-      const items: WarehouseSummary[] = [];
-      for (let offset = 0; ; offset += tanda) {
-        const p = await apiFetch<{ items: WarehouseSummary[]; total: number }>(
-          `/organization/warehouses?limit=${tanda}&offset=${offset}`,
-        );
-        items.push(...p.items);
-        if (items.length >= p.total || p.items.length === 0) break;
-      }
-      return { items };
-    },
+    // vacío, porque parece completo. El contrato admite `limit` ≤ 100.
+    queryFn: async () => ({ items: await listAllWarehouses() }),
   });
 
   const cola = useQuery({

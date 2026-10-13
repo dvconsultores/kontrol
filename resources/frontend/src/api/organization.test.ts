@@ -9,7 +9,7 @@ vi.mock("@/api/client", async (original) => ({
   ...(await original<typeof import("@/api/client")>()),
   apiFetch: (...args: unknown[]) => apiFetch(...args),
 }));
-const { listAllCompanies, listCompanies, TAMANO_MAXIMO_DE_PAGINA } = await import("./organization");
+const { listAllCompanies, listAllWarehouses, listCompanies, TAMANO_MAXIMO_DE_PAGINA } = await import("./organization");
 
 function servidor(total: number): void {
   apiFetch.mockImplementation(async (ruta: string) => {
@@ -58,5 +58,52 @@ describe("listAllCompanies", () => {
     expect(apiFetch).toHaveBeenCalledWith("/organization/companies?q=alfa+beta&page=2&page_size=25");
     await listCompanies();
     expect(apiFetch).toHaveBeenLastCalledWith("/organization/companies?page=1&page_size=20");
+  });
+});
+
+function almacenes(total: number): void {
+  apiFetch.mockImplementation(async (ruta: string) => {
+    const url = new URL(ruta, "http://k");
+    const limit = Number(url.searchParams.get("limit") ?? "50");
+    const offset = Number(url.searchParams.get("offset") ?? "0");
+    if (limit < 1 || limit > 100) throw new Error(`422: limit ${limit} fuera de contrato`);
+    const items = Array.from({ length: total }, (_, i) => ({ id: `w-${i + 1}`, code: `W${i + 1}`, name: `Almacén ${i + 1}` })).slice(offset, offset + limit);
+    return { items, total, limit, offset };
+  });
+}
+
+describe("listAllWarehouses", () => {
+  it("con más almacenes que una página, recorre todas las páginas con el máximo del contrato y devuelve el conjunto entero", async () => {
+    apiFetch.mockClear();
+    almacenes(230);
+    const todos = await listAllWarehouses();
+    expect(todos).toHaveLength(230);
+    expect(new Set(todos.map((w) => w.id)).size).toBe(230);
+    expect(apiFetch).toHaveBeenCalledTimes(3);
+    expect(apiFetch).toHaveBeenNthCalledWith(1, `/organization/warehouses?limit=${TAMANO_MAXIMO_DE_PAGINA}&offset=0`);
+    expect(apiFetch).toHaveBeenNthCalledWith(3, `/organization/warehouses?limit=${TAMANO_MAXIMO_DE_PAGINA}&offset=200`);
+  });
+
+  it("con pocos almacenes, una sola página basta", async () => {
+    apiFetch.mockClear();
+    almacenes(2);
+    expect(await listAllWarehouses()).toHaveLength(2);
+    expect(apiFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("sin almacenes, devuelve vacío sin pedir una segunda página", async () => {
+    apiFetch.mockClear();
+    almacenes(0);
+    expect(await listAllWarehouses()).toEqual([]);
+    expect(apiFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("nunca pide un limit fuera de contrato", async () => {
+    apiFetch.mockClear();
+    almacenes(230);
+    await listAllWarehouses();
+    for (const [ruta] of apiFetch.mock.calls) {
+      expect(ruta).toMatch(/limit=100&/);
+    }
   });
 });

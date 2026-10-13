@@ -46,6 +46,12 @@ export interface CompanySummary {
   status: string;
 }
 
+export interface WarehouseSummary {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface AuditEvent {
   id: string;
   action: string;

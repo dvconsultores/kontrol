@@ -276,7 +276,7 @@ def _de(tabla: str, vistas: list[tuple[str, list[Any]]]) -> list[list[Any]]:
 # ---------------------------------------------------------------- WHL-01
 def test_whl_01_cada_item_del_listado_es_igual_al_detalle_del_almacen():
     h = _admin()
-    listado = {item["id"]: item for item in _listar(h, "q=WHL-&limit=200")["items"]}
+    listado = {item["id"]: item for item in _listar(h, "q=WHL-&limit=100")["items"]}
     propios = {clave: almacen for clave, almacen in _MUNDO.items() if clave != "AJENO"}
     assert set(listado) == set(propios.values())
     for clave, almacen in propios.items():
@@ -286,7 +286,7 @@ def test_whl_01_cada_item_del_listado_es_igual_al_detalle_del_almacen():
 def test_whl_01_el_mundo_cubre_los_estados_que_cambian_la_respuesta():
     """La paridad no vale nada sobre almacenes iguales: aquí se fija, a mano, lo que el
     listado tiene que decir de cada estado."""
-    items = {item["code"]: item for item in _listar(_admin(), "q=WHL-&limit=200")["items"]}
+    items = {item["code"]: item for item in _listar(_admin(), "q=WHL-&limit=100")["items"]}
 
     def resumen(codigo: str) -> tuple[bool, dict[str, int] | None, str, list[str]]:
         item = items[f"WHL-{codigo}"]
@@ -336,14 +336,14 @@ def test_whl_01_la_paridad_se_mantiene_pagina_a_pagina():
 def test_whl_02_las_acciones_se_recortan_a_los_permisos_de_quien_pregunta(
         username, esperadas_en_vacio, esperadas_con_ubicacion):
     h = _login("DEMO", username)
-    listado = {item["id"]: item for item in _listar(h, "q=WHL-&limit=200")["items"]}
+    listado = {item["id"]: item for item in _listar(h, "q=WHL-&limit=100")["items"]}
     assert listado[_MUNDO["VACIO"]]["allowed_actions"] == esperadas_en_vacio
     assert listado[_MUNDO["UBICACION"]]["allowed_actions"] == esperadas_con_ubicacion
     for clave, almacen in _MUNDO.items():
         if clave != "AJENO":
             assert listado[almacen] == _detalle(h, almacen), clave
     # Lo demás no depende de quién pregunta.
-    del_admin = {item["id"]: item for item in _listar(_admin(), "q=WHL-&limit=200")["items"]}
+    del_admin = {item["id"]: item for item in _listar(_admin(), "q=WHL-&limit=100")["items"]}
     for almacen, item in listado.items():
         for campo in ("can_delete", "delete_blocked_by", "structure_regime"):
             assert item[campo] == del_admin[almacen][campo]
@@ -364,14 +364,14 @@ def test_whl_03_tampoco_cuesta_mas_cuando_los_almacenes_tienen_dependencias():
     with sentencias() as de_uno:
         assert len(_listar(h, "q=WHL-COMPLETO&limit=5")["items"]) == 1
     with sentencias() as de_todos:
-        assert len(_listar(h, "q=WHL-&limit=200")["items"]) == len(_MUNDO) - 1
+        assert len(_listar(h, "q=WHL-&limit=100")["items"]) == len(_MUNDO) - 1
     assert len(de_todos) == len(de_uno)
 
 
 # ---------------------------------------------------------------- WHL-04
 def test_whl_04_cada_tabla_de_dependencias_se_consulta_una_vez_por_pagina():
     with sentencias() as vistas:
-        pagina = _listar(_admin(), "q=WHL-&limit=200")["items"]
+        pagina = _listar(_admin(), "q=WHL-&limit=100")["items"]
     assert len(pagina) > 10
     for tabla in TABLAS_DE_DEPENDENCIAS:
         assert len(_de(tabla, vistas)) == 1, tabla
@@ -379,11 +379,11 @@ def test_whl_04_cada_tabla_de_dependencias_se_consulta_una_vez_por_pagina():
 
 # ---------------------------------------------------------------- WHL-05
 def test_whl_05_el_listado_no_trae_almacenes_de_otra_empresa():
-    propios = _listar(_admin(), "limit=500")
+    propios = _listar(_admin(), "limit=100")
     assert _MUNDO["AJENO"] not in {item["id"] for item in propios["items"]}
     assert propios["total"] == len(_MUNDO) - 1 + LOTE == len(propios["items"])
 
-    ajenos = _listar(_login("OTRA", "admin2"), "limit=500")
+    ajenos = _listar(_login("OTRA", "admin2"), "limit=100")
     assert [item["id"] for item in ajenos["items"]] == [_MUNDO["AJENO"]]
     assert ajenos["items"][0]["delete_blocked_by"] == {"locations": 1}
 
@@ -420,7 +420,7 @@ def test_whl_07_total_limite_desplazamiento_y_orden_no_cambian():
 
 
 def test_whl_07_los_filtros_del_listado_siguen_filtrando():
-    inactivos = _listar(_admin(), "status=INACTIVE&limit=200")
+    inactivos = _listar(_admin(), "status=INACTIVE&limit=100")
     assert [item["code"] for item in inactivos["items"]] == ["WHL-INACTIVO"]
     assert inactivos["total"] == 1
     assert inactivos["items"][0] == _detalle(_admin(), _MUNDO["INACTIVO"])

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -276,7 +276,7 @@ def _warehouse_dict(db: Session, w: Warehouse, permissions: set[str] | None = No
 @router.get("/warehouses")
 def search_warehouses(q: str | None = None, branch_id: str | None = None,
                       status: str | None = None, company_id: str | None = None,
-                      limit: int = 50, offset: int = 0,
+                      limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0),
                       db: Session = Depends(get_db),
                       user: User = Depends(require_permission("organization", "view")),
     ctx: CompanyContext = Depends(get_company_context)):

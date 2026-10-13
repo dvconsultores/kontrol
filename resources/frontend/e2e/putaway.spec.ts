@@ -49,6 +49,16 @@ async function get(request: APIRequestContext, c: Ctx, ruta: string) {
   return r.json();
 }
 
+/** Todas las listas de preparación de la empresa: el listado se pagina (`page_size` ≤ 100), así que se recorren las páginas hasta reunir `total`. */
+async function todasLasListasDePreparacion(request: APIRequestContext, c: Ctx): Promise<unknown[]> {
+  const todas: unknown[] = [];
+  for (let page = 1; ; page += 1) {
+    const pagina = (await get(request, c, `/sales/pick-lists?page=${page}&page_size=100`)) as { items: unknown[]; total: number };
+    todas.push(...pagina.items);
+    if (todas.length >= pagina.total || pagina.items.length === 0) return todas;
+  }
+}
+
 /** Un identificador distinto por caso: los navegadores comparten base. */
 const marca = (): string =>
   `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
@@ -84,7 +94,7 @@ async function escenario(
   const almacen = propio.id as string;
   // El «otro almacén» es el que ya existía: no hace falta crear un segundo por
   // caso, y crear de más ensucia la base que comparten los tres navegadores.
-  const existentes = await get(request, c, "/organization/warehouses?limit=500");
+  const existentes = await get(request, c, "/organization/warehouses?limit=100");
   const segundo = (existentes.items as Array<{ id: string }>).find((w) => w.id !== almacen)!;
   const producto = await post(request, c, "/maestros/catalogos/items", {
     code: `PA-${m}`, name: `Artículo ${m}`, item_type: "PRODUCT", status: "ACTIVE",
@@ -410,7 +420,7 @@ test.describe("Spec 022 — put-away", () => {
     // listas del almacén de este escenario y no las de toda la empresa: otras
     // suites crean las suyas a la vez, y contarlas es medir lo ajeno.
     const delAlmacen = async (): Promise<unknown[]> =>
-      ((await get(request, c, "/sales/pick-lists")).items as { warehouse_id: string }[])
+      ((await todasLasListasDePreparacion(request, c)) as { warehouse_id: string }[])
         .filter((x) => x.warehouse_id === e.almacen);
     expect(await delAlmacen(), "el almacén del escenario ya tenía listas de preparación").toEqual([]);
 

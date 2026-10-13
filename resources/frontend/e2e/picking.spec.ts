@@ -80,7 +80,7 @@ async function escenario(request: APIRequestContext, c: Ctx, m: string): Promise
     warehouse_type: "PHYSICAL", status: "ACTIVE",
   });
   const almacen = propio.id as string;
-  const existentes = await get(request, c, "/organization/warehouses?limit=500");
+  const existentes = await get(request, c, "/organization/warehouses?limit=100");
   const segundo = (existentes.items as Array<{ id: string }>).find((w) => w.id !== almacen)!;
 
   const producto = await post(request, c, "/maestros/catalogos/items", {
