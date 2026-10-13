@@ -1,0 +1,41 @@
+GOOD: SQLite (0, []) PG (0, []) acceso (0, [])
+M-01 sin normalización en verify_offline [SQLite]
+  MUTATED → FAIL (muere) · ['test_off_02_03_dentro_de_la_gracia_los_dos_endpoints_responden_200_con', 'test_off_09_en_la_frontera_exacta_de_la_gracia_sigue_dentro', 'test_off_10_fuera_de_la_ventana_la_gracia_esta_vencida_en_los_dos_moto']
+  RESTORED → PASS
+M-02 el valor sin zona se interpreta como America/Caracas [SQLite]
+  MUTATED → FAIL (muere) · ['test_off_02_03_dentro_de_la_gracia_los_dos_endpoints_responden_200_con', 'test_off_09_en_la_frontera_exacta_de_la_gracia_sigue_dentro', 'test_off_10_fuera_de_la_ventana_la_gracia_esta_vencida_en_los_dos_moto']
+  RESTORED → PASS
+M-03 el valor sin zona se interpreta con la zona local del proceso [SQLite]
+  MUTATED → FAIL (muere) · ['test_off_02_03_dentro_de_la_gracia_los_dos_endpoints_responden_200_con', 'test_off_09_en_la_frontera_exacta_de_la_gracia_sigue_dentro', 'test_off_10_fuera_de_la_ventana_la_gracia_esta_vencida_en_los_dos_moto']
+  RESTORED → PASS
+M-04 se desplaza la hora en vez de etiquetar la zona [SQLite]
+  MUTATED → FAIL (muere) · ['test_off_02_03_dentro_de_la_gracia_los_dos_endpoints_responden_200_con', 'test_off_09_en_la_frontera_exacta_de_la_gracia_sigue_dentro', 'test_off_10_fuera_de_la_ventana_la_gracia_esta_vencida_en_los_dos_moto']
+  RESTORED → PASS
+M-05 la prueba deja de recargar desde la base (objeto en memoria) [SQLite]
+  MUTATED → FAIL (muere) · ['test_off_01_la_base_devuelve_el_instante_con_o_sin_zona_segun_el_motor', 'test_off_12_sin_recargar_desde_la_base_el_valor_conserva_la_zona_y_no_']
+  RESTORED → PASS
+M-06 la frontera cambia (>= en vez de >) [PostgreSQL]
+  MUTATED → FAIL (muere) · ['test_off_09_en_la_frontera_exacta_de_la_gracia_sigue_dentro']
+  RESTORED → PASS
+M-07 /license/status deja de ser mínimo (expone license_id) [SQLite]
+  MUTATED → PASS (SOBREVIVE) · []
+  RESTORED → PASS
+M-08 offline-status deja de exigir license:view [SQLite]
+  MUTATED → FAIL (muere) · ['test_off_14_sin_permiso_sigue_siendo_403_antes_que_cualquier_decision_']
+  RESTORED → PASS
+M-09 la ventana de gracia cambia (un día más) [PostgreSQL]
+  MUTATED → FAIL (muere) · ['test_off_02_03_dentro_de_la_gracia_los_dos_endpoints_responden_200_con', 'test_off_09_en_la_frontera_exacta_de_la_gracia_sigue_dentro', 'test_off_10_fuera_de_la_ventana_la_gracia_esta_vencida_en_los_dos_moto']
+  RESTORED → PASS
+M-10 la vista consolidada esconde el fallo del offline [SQLite]
+  MUTATED → PASS (SOBREVIVE) · []
+  RESTORED → PASS
+rc=0
+
+# M-07 y M-10 rediseñados: el primer M-07 insertó el campo dentro del docstring del DTO (error del guion: equivalente por construcción) y el primer M-10 era equivalente al diseño (sin TypeError no hay nada que tragar)
+GOOD: SQLite (0, []) PG (0, []) acceso (0, [])
+M-07b /license/status deja de ser mínimo (el DTO público gana license_id) [SQLite]
+  MUTATED → FAIL (muere) · ['test_lic_01_sin_sesion_el_estado_publico_trae_exactamente_modo_y_enlac', 'test_lic_02_sin_licencia_el_modo_es_pending_con_las_mismas_dos_claves_', 'test_lic_03_el_estado_publico_no_lleva_identidad_licencia_fechas_ni_de']
+  RESTORED → PASS
+M-10b la vista consolidada deja de consultar verify_offline (inventa el estado) [SQLite]
+  MUTATED → FAIL (muere) · ['test_off_02_03_dentro_de_la_gracia_los_dos_endpoints_responden_200_con']
+  RESTORED → PASS

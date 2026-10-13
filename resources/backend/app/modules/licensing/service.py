@@ -345,7 +345,7 @@ def import_license(
     state.minimum_version = license_data.minimum_version
     state.kid = license_data.kid
     state.verified_at = _now()
-    state.last_reliable_date = last_reliable or _now()
+    state.last_reliable_date = _utc(last_reliable or _now())
 
     installation.state = "ACTIVE"
 
@@ -819,7 +819,9 @@ def sync_license(
         if server_time:
             recibido = _dt_from(server_time)
             actual = state.last_reliable_date
-            state.last_reliable_date = recibido if actual is None or license_contract._as_utc(actual) < license_contract._as_utc(recibido) else actual
+            # Se persiste en UTC, como los instantes del período: en SQLite solo sobrevive la hora de
+            # pared, y leerla como UTC devuelve el instante solo si se escribió en UTC.
+            state.last_reliable_date = _utc(recibido) if actual is None or license_contract._as_utc(actual) < license_contract._as_utc(recibido) else actual
         state.verified_at = _now()
         # La matriz de módulos sale del paquete FIRMADO: objeto módulo → bool, o lista de módulos habilitados.
         candidatos = (state.entitlements or {}).get("modules")
@@ -949,7 +951,11 @@ def verify_offline(db: Session) -> dict[str, Any]:
         return {"offline_valid": False, "reason": "NO_RELIABLE_DATE", "grace_days": grace_days, "grace_days_left": 0}
 
     now = _now()
-    last = state.last_reliable_date
+    # El instante confiable, leído como instante: SQLite devuelve `DateTime(timezone=True)` sin zona
+    # (hora de pared UTC, porque así se persiste) y compararlo con `now` aware rompía con `TypeError`
+    # en los dos endpoints; PostgreSQL conserva el instante. Mismo criterio que `compute_mode` y que
+    # el sync (OFFLINE-NAIVE-EN-SQLITE, FR-010-003).
+    last = license_contract._as_utc(state.last_reliable_date)
     grace_end = last + timedelta(days=grace_days)
     if now > grace_end:
         return {

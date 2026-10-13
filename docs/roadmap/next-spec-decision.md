@@ -3229,3 +3229,26 @@ el fallo como de producto). Candidatas técnicas sin decisión pendiente: `OFFLI
 `LISTADOS-SIN-TOPE`. De entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR` (OPEN, ahora con
 captura). Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-13 · OFFLINE-NAIVE-EN-SQLITE convergida: la tolerancia offline decide lo mismo en los dos motores (dueña 004)
+
+Reproducido por HTTP con reloj fijo antes de tocar nada: sobre SQLite `GET /licensing/offline-status` y
+`GET /licensing/overview` eran un 500 (`TypeError` naive/aware) con cualquier fecha confiable persistida;
+sobre PostgreSQL, 200. `last_reliable_date` es un instante y el módulo ya tenía el criterio y los helpers
+(`_as_utc` al leer, `_utc` al persistir, FR-010-323): `verify_offline` era el único lector que no los usaba.
+Tres líneas en el servicio, sin migración ni reinterpretación histórica; las dos pruebas antiguas releen de
+la base (por eso no lo veían). 12 pruebas con reloj fijo en ambos motores (frontera exacta: rechazo solo al
+superar la gracia; zona del proceso irrelevante), 10/10 mutaciones muertas, suites completas sin regresión,
+E2E canónica limpia, frontend 0.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `OFFLINE-NAIVE-EN-SQLITE` — **ejecutado y convergido** (`specs/010-licenciamiento-central/spec004-offline-naive-sqlite-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION` y la política del arnés E2E ante red
+cambiada o reloj saltado. Candidatas técnicas sin decisión pendiente: `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`,
+`TEST-PG-UN-SCHEMA-POR-PRUEBA`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`, `ALMACENES-CARRERA-SQLITE-HILOS`,
+`MIGRACIONES-URL-CON-PORCENTAJE`, `INSTALACION-KEY-REFERENCE-120`, `LISTADOS-SIN-TOPE`. De entorno:
+`ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`.
+MASTER57 y SPEC057 sin cambio.
+

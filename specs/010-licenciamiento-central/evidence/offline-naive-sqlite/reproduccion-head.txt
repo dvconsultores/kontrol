@@ -1,0 +1,29 @@
+# Reproducción sobre HEAD 3126ce2 · tests/test_licensing_offline_sqlite.py ANTES del arreglo (reloj fijo 2026-10-13T12:00Z, gracia 7)
+## SQLite
+      6     | TypeError: can't compare offset-naive and offset-aware datetimes
+      2 E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+      1 E       AssertionError: {"code":"INTERNAL_ERROR","message":"Ocurrió un error interno. Intente nuevamente.","field_errors":{},"request_id":"6a9cdb0e472e46b38adca5004ff59ad1","details":null}
+      1 E       AssertionError: {"code":"INTERNAL_ERROR","message":"Ocurrió un error interno. Intente nuevamente.","field_errors":{},"request_id":"e69b3fd77b4946a082058f7b844e11e2","details":null}
+      1 FAILED test_off_02_03_dentro_de_la_gracia_los_dos_endpoints_responden_200_con_la_misma_decision
+      1 FAILED test_off_09_en_la_frontera_exacta_de_la_gracia_sigue_dentro
+      1 FAILED test_off_10_fuera_de_la_ventana_la_gracia_esta_vencida_en_los_dos_motores
+      1 FAILED test_off_11_la_zona_horaria_del_proceso_no_cambia_la_decision[America/Caracas]
+      1 FAILED test_off_11_la_zona_horaria_del_proceso_no_cambia_la_decision[Asia/Tokyo]
+      1 FAILED test_off_11_la_zona_horaria_del_proceso_no_cambia_la_decision[UTC]
+      6 INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/v1/licensing/offline-status "HTTP/1.1 500 Internal Server Error"
+      1 PASSED test_off_01_la_base_devuelve_el_instante_con_o_sin_zona_segun_el_motor
+      1 PASSED test_off_07_sin_fecha_confiable_se_conserva_el_comportamiento
+      1 PASSED test_off_12_sin_recargar_desde_la_base_el_valor_conserva_la_zona_y_no_demuestra_nada
+      1 PASSED test_off_14_sin_permiso_sigue_siendo_403_antes_que_cualquier_decision_offline
+      6 TypeError: can't compare offset-naive and offset-aware datetimes
+## PostgreSQL
+PASSED test_off_01_la_base_devuelve_el_instante_con_o_sin_zona_segun_el_motor
+PASSED test_off_02_03_dentro_de_la_gracia_los_dos_endpoints_responden_200_con_la_misma_decision
+PASSED test_off_09_en_la_frontera_exacta_de_la_gracia_sigue_dentro
+PASSED test_off_10_fuera_de_la_ventana_la_gracia_esta_vencida_en_los_dos_motores
+PASSED test_off_07_sin_fecha_confiable_se_conserva_el_comportamiento
+PASSED test_off_11_la_zona_horaria_del_proceso_no_cambia_la_decision[UTC]
+PASSED test_off_11_la_zona_horaria_del_proceso_no_cambia_la_decision[America/Caracas]
+PASSED test_off_11_la_zona_horaria_del_proceso_no_cambia_la_decision[Asia/Tokyo]
+PASSED test_off_14_sin_permiso_sigue_siendo_403_antes_que_cualquier_decision_offline
+SKIPPED [1] tests/test_licensing_offline_sqlite.py:139: documenta la conducta de SQLite: en PostgreSQL la zona nunca se pierde

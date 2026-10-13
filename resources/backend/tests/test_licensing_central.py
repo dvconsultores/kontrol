@@ -258,6 +258,9 @@ class TestOffline:
         assert state is not None
         state.last_reliable_date = datetime.now(UTC) - timedelta(days=2)
         db_session.commit()
+        # Se vuelve a leer de la base: el objeto recién escrito conserva la zona en memoria y escondía
+        # que SQLite la devuelve sin ella (OFFLINE-NAIVE-EN-SQLITE).
+        db_session.expire_all()
 
         offline = licensing_service.verify_offline(db_session)
         assert offline["offline_valid"] is True
@@ -274,6 +277,9 @@ class TestOffline:
         assert state is not None
         state.last_reliable_date = datetime.now(UTC) - timedelta(days=30)
         db_session.commit()
+        # Se vuelve a leer de la base: el objeto recién escrito conserva la zona en memoria y escondía
+        # que SQLite la devuelve sin ella (OFFLINE-NAIVE-EN-SQLITE).
+        db_session.expire_all()
 
         offline = licensing_service.verify_offline(db_session)
         assert offline["offline_valid"] is False

@@ -1,0 +1,4 @@
+# Intermitente de tiempo conocido · test_sync_success_records_run_snapshot_and_event · dirigido ×3 sobre PostgreSQL
+PASSED tests/test_licensing_central.py::TestSincronizacion::test_sync_success_records_run_snapshot_and_event
+PASSED tests/test_licensing_central.py::TestSincronizacion::test_sync_success_records_run_snapshot_and_event
+PASSED tests/test_licensing_central.py::TestSincronizacion::test_sync_success_records_run_snapshot_and_event
