@@ -239,12 +239,38 @@ def test_e2ecorrida_08_con_el_puerto_ocupado_no_se_crea_nada(entorno, puerto_lib
     assert m["fases"] == ["comprobar", "limpiar"]
 
 
-def test_e2ecorrida_09_una_ruta_de_estado_demasiado_larga_se_dice_antes_de_crear_nada(entorno, puerto_libre):
+def test_e2ecorrida_09_una_ruta_de_estado_larga_ya_no_impide_la_corrida_y_la_referencia_es_relativa(entorno, puerto_libre):
+    """Antes el runner abortaba con más de 120 caracteres porque el producto persistía la ruta absoluta de la
+    clave (INSTALACION-KEY-REFERENCE-120). Ahora la referencia es relativa al volumen: la corrida sigue, y el
+    manifiesto deja constancia de la referencia persistida y del largo del volumen que no la condiciona."""
     entorno["KONTROL_E2E_STATE_DIR"] = "/tmp/" + "ruta-larga-" * 9
-    corrida, _ = _corrida(entorno, "raise SystemExit(0)")
+    corrida, _ = _corrida(entorno, "pass")
+    assert corrida.ejecutar() == 0
+    instalacion = _manifiesto(corrida)["instalacion"]
+    assert instalacion["key_reference"] == "installation_private_key.pem" and instalacion["relativa"] is True
+    assert instalacion["largo_del_volumen"] > 120
+
+
+def test_e2ecorrida_09b_si_el_producto_volviera_a_persistir_la_ruta_absoluta_la_corrida_lo_dice(entorno, puerto_libre, monkeypatch):
+    """El invariante que sustituye a la guarda: una referencia absoluta, con separadores o nula en la base de la
+    corrida no se tolera en silencio. Se simula el defecto escribiendo la ruta absoluta tras la siembra."""
+    from sqlalchemy import create_engine, text
+
+    original = k.Corrida.verificar_backend
+
+    def _con_ruta_absoluta(self):
+        motor = create_engine(self.url, future=True)
+        with motor.begin() as conn:
+            # Una ruta absoluta que SÍ cabe en la columna: lo que debe rechazarla es el invariante del runner, no PostgreSQL.
+            conn.execute(text("update installations set key_reference = :r"), {"r": "/data/license-state/installation_private_key.pem"})
+        motor.dispose()
+        return original(self)
+
+    monkeypatch.setattr(k.Corrida, "verificar_backend", _con_ruta_absoluta)
+    corrida, _ = _corrida(entorno, "pass")
     assert corrida.ejecutar() == k.SALIDA_PREPARACION
-    assert corrida.creada is False and not _existe(corrida.base)
-    assert "demasiado larga" in _manifiesto(corrida)["error"]
+    assert "INSTALACION-KEY-REFERENCE-120" in _manifiesto(corrida)["error"]
+    assert not _existe(corrida.base)
 
 
 def test_e2ecorrida_10_en_un_entorno_que_sirve_a_usuarios_no_se_crea_nada(entorno, puerto_libre):

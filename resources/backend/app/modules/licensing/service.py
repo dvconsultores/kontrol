@@ -47,9 +47,36 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
+#: Nombre canónico del fichero de la clave privada de la instalación dentro del volumen protegido. Es
+#: también lo que `Installation.key_reference` persiste para las altas nuevas (contrato ratificado el
+#: 2026-10-13, INSTALACION-KEY-REFERENCE-120): una referencia relativa al volumen, no la ruta absoluta
+#: del contenedor, que es configuración de despliegue y no cabía en `String(120)` con rutas largas.
+INSTALLATION_PRIVATE_KEY_FILENAME = "installation_private_key.pem"
+
+
 def _private_key_path() -> str:
     settings = get_settings()
-    return os.path.join(settings.installation_volume_path, "installation_private_key.pem")
+    return os.path.join(settings.installation_volume_path, INSTALLATION_PRIVATE_KEY_FILENAME)
+
+
+def resolve_key_reference(reference: str | None) -> str:
+    """La ruta efectiva de la clave privada a partir de `Installation.key_reference`.
+
+    - `None` → la ruta canónica derivada de la configuración (`_private_key_path`).
+    - Referencia absoluta → se usa tal cual: es el formato de las instalaciones persistidas antes del
+      contrato relativo y se conserva byte a byte (sin migración ni reescritura).
+    - Referencia relativa → se resuelve contra `installation_volume_path`. Solo se admite un nombre de
+      fichero simple: la referencia la genera el producto, nunca el usuario, y nada puede salir del
+      volumen («..», separadores, vacío → rechazo). Nunca se resuelve contra el directorio de trabajo.
+    """
+    if reference is None:
+        return _private_key_path()
+    if os.path.isabs(reference):
+        return reference
+    if not reference or reference in (".", "..") or "/" in reference or os.sep in reference or (os.altsep and os.altsep in reference):
+        raise KontrolError(code="INSTALLATION_KEY_REFERENCE_INVALID",
+                           message="La referencia de la clave de la instalación no es válida.", status_code=500)
+    return os.path.join(get_settings().installation_volume_path, reference)
 
 
 # --------------------------------------------------------------------------- #
@@ -125,7 +152,8 @@ def get_or_create_installation(db: Session) -> Installation:
         installation_uuid=installation_uuid,
         public_key=public_pem.decode("utf-8"),
         state="PENDING",
-        key_reference=key_path,
+        # Referencia relativa al volumen: idéntica sea cual sea la longitud de la ruta configurada.
+        key_reference=INSTALLATION_PRIVATE_KEY_FILENAME,
     )
     db.add(installation)
     db.commit()

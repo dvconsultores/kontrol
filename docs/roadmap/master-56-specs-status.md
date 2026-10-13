@@ -114,6 +114,7 @@ Recontado de nuevo el 2026-10-13 tras el ciclo `E2E-PANTALLA-SIN-PINTAR` (NOT RE
 Recontado de nuevo el 2026-10-13 tras converger `OFFLINE-NAIVE-EN-SQLITE` (dueña 004; apoyos 001, 054): **57 filas**, sin cambio; la 004 sigue en su estado —la tolerancia offline decide lo mismo en SQLite y PostgreSQL—.
 Recontado de nuevo el 2026-10-13 tras converger `MIGRACIONES-URL-CON-PORCENTAJE` (dueña 052; apoyos 001, 004, 054): **57 filas**, sin cambio; la 052 sigue `PARTIALLY_IMPLEMENTED` —las migraciones aceptan una URL con credenciales codificadas, en el cliente y en la Central—.
 Recontado de nuevo el 2026-10-13 tras el ciclo `INSTALACION-KEY-REFERENCE-120` (bloqueado por decisión de la dueña; dueña 004): **57 filas**, sin cambio; ninguna Spec cambia de estado —solo análisis, reproducción y opciones—.
+Recontado de nuevo el 2026-10-13 tras converger `INSTALACION-KEY-REFERENCE-120` con la decisión A3 (dueña 004; apoyos 001, 052, 054): **57 filas**, sin cambio; la 004 sigue en su estado —la referencia de la clave de instalación ya no depende de la ruta del volumen—.
 
 El grupo dominante —26 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el

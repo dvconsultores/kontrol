@@ -3301,3 +3301,25 @@ técnicas sin decisión pendiente: `LISTADOS-SIN-TOPE`, `TEST-VOLUMEN-DE-INSTALA
 entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de
 `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-13 · INSTALACION-KEY-REFERENCE-120 convergida con la decisión A3 de la dueña (dueña 004)
+
+La dueña ratificó A3: `Installation.key_reference` guarda para las altas nuevas una referencia relativa
+al volumen (`installation_private_key.pem`); las filas absolutas históricas se respetan tal cual; sin
+migración, sin backfill, sin reescritura; la referencia la genera el producto y nunca se persiste material
+de clave. Implementación mínima en el módulo de licenciamiento (constante, escritor, resolutor con rechazo
+de recorridos de ruta), cargadores sin cambio (siguen por configuración; 0 lectores nuevos), contrato en
+`data-model.md`, y el runner E2E sustituye su guarda de longitud por el invariante real comprobado contra la
+base de la corrida. Pruebas KR-01…25 en ambos motores (PostgreSQL es la autoridad del largo), mutaciones,
+suites completas y dos globales E2E en la evidencia.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `INSTALACION-KEY-REFERENCE-120` — **ejecutado y convergido** (`specs/010-licenciamiento-central/spec004-instalacion-key-reference-120-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION` y la política del arnés E2E ante red
+cambiada o reloj saltado. Candidatas técnicas sin decisión pendiente: `LISTADOS-SIN-TOPE`,
+`TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`, `TEST-PG-UN-SCHEMA-POR-PRUEBA`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`,
+`ALMACENES-CARRERA-SQLITE-HILOS`. De entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de
+ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+

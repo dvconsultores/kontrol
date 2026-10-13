@@ -67,8 +67,10 @@ TUNELES = ("proton", "tun", "wg", "tap", "ipv6leak", "ppp")
 #: Desvío entre el reloj de pared y el monotónico a partir del cual la corrida declara un salto de reloj.
 UMBRAL_SALTO_DE_RELOJ_S = 5.0
 
-#: `installations.key_reference` guarda la ruta de la clave de instalación en 120 caracteres.
-LARGO_MAXIMO_DE_RUTA = 120
+#: `installations.key_reference` es `String(120)` y, desde INSTALACION-KEY-REFERENCE-120, guarda una referencia
+#: RELATIVA al volumen (el nombre del fichero), no la ruta absoluta: la longitud del estado efímero ya no
+#: condiciona la corrida. Lo que sí se comprueba, contra la base, es ese invariante del producto.
+LARGO_MAXIMO_DE_REFERENCIA = 120
 #: Variables que apuntarían a otra base si se heredaran: la corrida las fija o las quita.
 VARIABLES_DE_BASE = ("KONTROL_DB_URL", "KONTROL_E2E_DB_URL", "KONTROL_TEST_DB_URL")
 #: Nada que parezca una URL con usuario y clave sale por la consola ni entra en el manifiesto.
@@ -294,11 +296,6 @@ class Corrida:
     def comprobar(self) -> None:
         """Lo que tiene que ser cierto antes de crear nada."""
         base.exigir_base_e2e(self.base, admin_url=self.servidor.admin_url, entorno=self.entorno)
-        ruta_de_clave = self.estado / "license" / "installation_private_key.pem"
-        if len(str(ruta_de_clave)) > LARGO_MAXIMO_DE_RUTA:
-            raise base.CicloDeBaseRoto(
-                f"la ruta de estado es demasiado larga ({len(str(ruta_de_clave))} > {LARGO_MAXIMO_DE_RUTA}): "
-                "acórtela con KONTROL_E2E_STATE_DIR")
         ocupados = [puerto for host, puerto in (("127.0.0.1", PUERTO_BACKEND), ("127.0.0.1", PUERTO_CENTRAL), ("localhost", PUERTO_FRONTEND))
                     if (puerto != PUERTO_FRONTEND or not self.sin_frontend) and _puerto_ocupado(host, puerto)]
         if ocupados:
@@ -413,6 +410,7 @@ class Corrida:
             raise base.CicloDeBaseRoto(
                 f"la sesión abierta por la API no está en la base de la corrida ({antes} → {despues}): "
                 "el backend escribe en otra base")
+        self.manifiesto["instalacion"] = self.comprobar_referencia_de_clave()
         admin = base.motor_administrativo(self.servidor)
         try:
             with admin.connect() as conn:
@@ -424,6 +422,29 @@ class Corrida:
         if donde != [self.base]:
             raise base.CicloDeBaseRoto(f"las conexiones de la corrida están en {donde}, no solo en {self.base}")
         self.manifiesto["backend"] = {"base": self.base, "sesiones": despues}
+
+    def comprobar_referencia_de_clave(self) -> dict[str, Any]:
+        """La instalación de la corrida persiste una referencia de clave relativa al volumen.
+
+        Antes el runner abortaba si la ruta del estado superaba 120 caracteres, porque el producto guardaba
+        la ruta absoluta en `String(120)`: la guarda escondía el defecto. Ahora se mira lo que de verdad hay en
+        la base: una referencia que no depende de la longitud del volumen (sin separadores, dentro del límite).
+        """
+        motor = create_engine(self.url or "", future=True, poolclass=NullPool)
+        try:
+            with motor.connect() as conn:
+                referencias = [r for (r,) in conn.execute(text("select key_reference from installations"))]
+        finally:
+            motor.dispose()
+        if len(referencias) != 1:
+            raise base.CicloDeBaseRoto(f"la base de la corrida tiene {len(referencias)} instalaciones; debe tener una")
+        referencia = referencias[0]
+        if referencia is None or os.path.isabs(referencia) or "/" in referencia or len(referencia) > LARGO_MAXIMO_DE_REFERENCIA:
+            raise base.CicloDeBaseRoto(
+                "la instalación persiste una referencia de clave que depende de la ruta del volumen "
+                f"({'nula' if referencia is None else f'{len(referencia)} caracteres, absoluta o con separadores'}): "
+                "el producto volvió a guardar la ruta absoluta (INSTALACION-KEY-REFERENCE-120)")
+        return {"key_reference": referencia, "relativa": True, "largo_del_volumen": len(str(self.estado / "license"))}
 
     def _sesiones(self) -> int:
         motor = create_engine(self.url or "", future=True, poolclass=NullPool)

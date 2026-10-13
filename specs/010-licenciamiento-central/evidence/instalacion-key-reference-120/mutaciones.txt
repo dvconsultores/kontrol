@@ -1,0 +1,44 @@
+GOOD: KR (0, []) · runner (0, [])
+M-01 el escritor vuelve a persistir la ruta absoluta
+  MUTATED → FAIL (muere) · ['test_kr_01_04_el_alta_persiste_la_referencia_canonica_sea_cual_sea_el_', 'test_kr_01_04_el_alta_persiste_la_referencia_canonica_sea_cual_sea_el_', 'test_kr_01_04_el_alta_persiste_la_referencia_canonica_sea_cual_sea_el_']
+  RESTORED → PASS
+M-02 la relativa se resuelve desde el directorio de trabajo
+  MUTATED → FAIL (muere) · ['test_kr_07_13_la_relativa_se_resuelve_contra_el_volumen_configurado_y_', 'test_kr_08_11_la_clave_sintetica_carga_y_firma_el_desafio_con_referenc']
+  RESTORED → PASS
+M-03 la absoluta histórica se trata como relativa
+  MUTATED → FAIL (muere) · ['test_kr_05_06_15_una_referencia_absoluta_historica_se_usa_tal_cual_y_n']
+  RESTORED → PASS
+M-04 el alta reescribe la fila histórica
+  MUTATED → PASS (SOBREVIVE) · []
+  RESTORED → PASS
+M-05 se trunca la referencia a 120
+  MUTATED → FAIL (muere) · ['test_kr_01_04_el_alta_persiste_la_referencia_canonica_sea_cual_sea_el_', 'test_kr_01_04_el_alta_persiste_la_referencia_canonica_sea_cual_sea_el_', 'test_kr_01_04_el_alta_persiste_la_referencia_canonica_sea_cual_sea_el_']
+  RESTORED → PASS
+M-06 nombre de fichero equivocado en la resolución
+  MUTATED → FAIL (muere) · ['test_kr_07_13_la_relativa_se_resuelve_contra_el_volumen_configurado_y_', 'test_kr_08_11_la_clave_sintetica_carga_y_firma_el_desafio_con_referenc']
+  RESTORED → PASS
+M-07 se permite el recorrido de rutas
+  MUTATED → FAIL (muere) · ['test_kr_16_una_referencia_relativa_fuera_del_contrato_se_rechaza[../in', 'test_kr_16_una_referencia_relativa_fuera_del_contrato_se_rechaza[..]', 'test_kr_16_una_referencia_relativa_fuera_del_contrato_se_rechaza[.]']
+  RESTORED → PASS
+M-08 el diagnóstico expone la referencia
+  MUTATED → FAIL (muere) · ['test_kr_21_el_diagnostico_con_permiso_no_expone_la_referencia_ni_la_ru']
+  RESTORED → PASS
+M-09 el runner deja de comprobar el invariante
+  MUTATED → FAIL (muere) · ['test_e2ecorrida_09b_si_el_producto_volviera_a_persistir_la_ruta_absolu']
+  RESTORED → PASS
+M-10 se rompe la carga de la clave del desafío
+  MUTATED → FAIL (muere) · ['test_kr_08_11_la_clave_sintetica_carga_y_firma_el_desafio_con_referenc', 'test_kr_08_11_la_clave_sintetica_carga_y_firma_el_desafio_con_referenc']
+  RESTORED → PASS
+M-11 la referencia nueva vuelve a llevar el prefijo del volumen
+  MUTATED → FAIL (muere) · ['test_kr_01_04_el_alta_persiste_la_referencia_canonica_sea_cual_sea_el_', 'test_kr_01_04_el_alta_persiste_la_referencia_canonica_sea_cual_sea_el_', 'test_kr_01_04_el_alta_persiste_la_referencia_canonica_sea_cual_sea_el_']
+  RESTORED → PASS
+M-12 cambia el tipo de la columna
+  MUTATED → FAIL (muere) · ['test_kr_18_19_la_columna_sigue_siendo_string_120_y_la_cabeza_de_alembi']
+  RESTORED → PASS
+rc=0
+
+# M-04 rediseñado: el primero mutaba la segunda comprobación de «instalación existente» (tras el candado), que nunca se alcanza porque la primera devuelve antes: EQUIVALENTE por anclaje del guion, declarado y sustituido
+GOOD: KR (0, []) · runner (0, [])
+M-04b el alta reescribe la fila histórica (en el retorno temprano, el que se ejecuta)
+  MUTATED → FAIL (muere) · ['test_kr_05_06_15_una_referencia_absoluta_historica_se_usa_tal_cual_y_n']
+  RESTORED → PASS

@@ -1,0 +1,11 @@
+## typecheck (src + herramientas + e2e)
+TYPECHECK_OK
+## lint
+LINT_OK
+## vitest
+ Test Files  36 passed (36)
+      Tests  477 passed (477)
+   Duration  8.59s (transform 1.63s, setup 5.70s, collect 24.29s, tests 10.96s, environment 20.81s, prepare 3.87s)
+## build
+dist/assets/index-B0ThFj_T.js                     416.53 kB │ gzip: 126.95 kB
+✓ built in 3.01s

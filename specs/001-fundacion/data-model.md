@@ -26,7 +26,7 @@
 
 | Entidad | Campos mínimos | Notas |
 |---|---|---|
-| `Installation` | id, installation_uuid (único), public_key, key_reference (volumen), state, created_at | Identidad persistente; par de claves local |
+| `Installation` | id, installation_uuid (único), public_key, key_reference (volumen), state, created_at | Identidad persistente; par de claves local. **`key_reference`** (contrato ratificado el 2026-10-13, `INSTALACION-KEY-REFERENCE-120` / A3): referencia de almacenamiento al material criptográfico local; para las altas nuevas es **relativa al volumen de instalación** (`installation_private_key.pem`), generada por el producto, nunca por el usuario; las filas históricas con ruta absoluta siguen siendo válidas tal cual (sin migración, sin backfill, sin reescritura); resolución: `None` → ruta canónica por configuración, absoluta → tal cual, relativa → `installation_volume_path/ref`; nunca contra el directorio de trabajo; nunca se persiste material de clave |
 | `Tenant` | id, installation_id, code, name, status, plan, created_at | 1:1 con Installation en 001 (CL-02) |
 | `Company` | id, tenant_id, code, legal_name, trade_name, rif, legal_type, activity, fiscal_address, functional_currency, status | Entidad legal |
 | `Branch` | id, company_id, code, name, address, manager, status | |
