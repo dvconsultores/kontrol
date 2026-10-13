@@ -7,7 +7,10 @@ Define variables de entorno controladas ANTES de que se instancie
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 
 import pytest
 
@@ -21,9 +24,10 @@ os.environ.setdefault("KONTROL_LOG_JSON", "false")
 os.environ.setdefault("KONTROL_COOKIE_SECURE", "false")
 os.environ.setdefault("KONTROL_DB_URL", "sqlite+pysqlite:///:memory:")
 
-# Rutas de volúmenes temporales escribibles (no /data en entornos de prueba).
+# Rutas de volúmenes temporales escribibles (no /data en entornos de prueba). El volumen de
+# instalación NO se fija aquí: lo recibe cada proceso de pytest en `pytest_configure` y cada
+# módulo en `volumen_de_instalacion` (más abajo).
 _tmp = tempfile.gettempdir()
-os.environ.setdefault("KONTROL_INSTALLATION_VOLUME_PATH", os.path.join(_tmp, "kontrol-test-license"))
 os.environ.setdefault("KONTROL_STORAGE_PATH", os.path.join(_tmp, "kontrol-test-storage"))
 os.environ.setdefault("KONTROL_BACKUP_PATH", os.path.join(_tmp, "kontrol-test-backups"))
 
@@ -31,6 +35,68 @@ os.environ.setdefault("KONTROL_BACKUP_PATH", os.path.join(_tmp, "kontrol-test-ba
 from app.core.config import get_settings  # noqa: E402
 
 get_settings.cache_clear()
+
+
+# --------------------------------------------------------------------------- #
+# Volumen de instalación aislado (SPEC054 · TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO)
+# --------------------------------------------------------------------------- #
+# El producto escribe `installation_private_key.pem` en `KONTROL_INSTALLATION_VOLUME_PATH` cada
+# vez que un mundo inicializa su instalación. Con una ruta fija por máquina, dos `pytest` se
+# reescribían la clave y la sincronización firmaba con la clave ajena (`SYNC_AUTH_INVALID`).
+# Ahora cada proceso recibe una raíz propia, cada módulo un volumen hijo vacío, y los dos se
+# eliminan al terminar. La raíz nace en un hook, no al importar: este fichero vive dos veces en
+# `sys.modules` (`conftest` y `tests.conftest`) y solo el plugin registrado ejecuta hooks.
+VARIABLE_DEL_VOLUMEN = "KONTROL_INSTALLATION_VOLUME_PATH"
+PREFIJO_DEL_VOLUMEN = "kontrol-test-license-"
+RAIZ_DEL_VOLUMEN = pytest.StashKey[str]()
+VOLUMEN_HEREDADO = pytest.StashKey[str | None]()
+
+
+def _fijar_volumen(ruta: str | None) -> None:
+    """Fija (o quita) la variable del volumen y descarta la `Settings` cacheada que apuntaba al anterior."""
+    if ruta is None:
+        os.environ.pop(VARIABLE_DEL_VOLUMEN, None)
+    else:
+        os.environ[VARIABLE_DEL_VOLUMEN] = ruta
+    get_settings.cache_clear()
+
+
+def pytest_configure(config):
+    """Raíz única de este proceso: nombre aleatorio de `mkdtemp`; nunca una ruta fija ni la heredada del entorno."""
+    config.stash[VOLUMEN_HEREDADO] = os.environ.get(VARIABLE_DEL_VOLUMEN)
+    raiz = tempfile.mkdtemp(prefix=PREFIJO_DEL_VOLUMEN)
+    config.stash[RAIZ_DEL_VOLUMEN] = raiz
+    _fijar_volumen(raiz)
+
+
+def pytest_unconfigure(config):
+    """Al cerrar el proceso la raíz desaparece con lo que quedara dentro, y la variable vuelve a su valor previo."""
+    raiz = config.stash.get(RAIZ_DEL_VOLUMEN, None)
+    if raiz is None:
+        return
+    shutil.rmtree(raiz)
+    _fijar_volumen(config.stash[VOLUMEN_HEREDADO])
+
+
+@contextmanager
+def volumen_de_instalacion_aislado(raiz: str, nombre: str) -> Iterator[str]:
+    """Un volumen hijo vacío dentro de `raiz`, visible para `get_settings()` mientras dura. Al salir se
+    elimina —pase o falle lo que corrió dentro— y la variable y la caché vuelven a como estaban."""
+    anterior = os.environ.get(VARIABLE_DEL_VOLUMEN)
+    volumen = tempfile.mkdtemp(prefix=f"{nombre}-", dir=raiz)
+    _fijar_volumen(volumen)
+    try:
+        yield volumen
+    finally:
+        shutil.rmtree(volumen)
+        _fijar_volumen(anterior)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def volumen_de_instalacion(request) -> Iterator[str]:
+    """Cada módulo escribe y lee su clave de instalación en un volumen que ningún otro módulo ni proceso ve."""
+    with volumen_de_instalacion_aislado(request.config.stash[RAIZ_DEL_VOLUMEN], request.module.__name__) as volumen:
+        yield volumen
 
 
 # --------------------------------------------------------------------------- #

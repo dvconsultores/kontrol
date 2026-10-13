@@ -1,0 +1,104 @@
+# E2E global canónica (W30) · `resources/backend/.venv/bin/python qa/e2e-run.py` · corrida `r20261013t053234p279422n43b474`
+
+El runner no cambia en este ciclo (una sola global, como exige el encargo). Base PostgreSQL efímera nueva, migrada, sembrada, backend 8000 + Autoridad 8010 + Vite 5173, Playwright, todo eliminado al terminar.
+
+```
+[e2e r20261013t053234p279422n43b474] comprobar
+[e2e r20261013t053234p279422n43b474] analizador: ausente (las cargas con análisis se omiten con nombre)
+[e2e r20261013t053234p279422n43b474] crear base
+[e2e r20261013t053234p279422n43b474] migrar
+[e2e r20261013t053234p279422n43b474] sembrar
+[e2e r20261013t053234p279422n43b474] backend
+[e2e r20261013t053234p279422n43b474] comprobar la base del backend
+[e2e r20261013t053234p279422n43b474] autoridad central
+[e2e r20261013t053234p279422n43b474] frontend
+[e2e r20261013t053234p279422n43b474] suite
+[e2e r20261013t053234p279422n43b474] limpiar
+[e2e r20261013t053234p279422n43b474] entorno: túnel (VPN) presente
+[e2e r20261013t053234p279422n43b474] suite: {'skipped': 4, 'passed': 273} · limpieza: LIMPIA · salida: 0 · evidencia: <repo>/qa/e2e-runs/r20261013t053234p279422n43b474
+  4 skipped
+  273 passed (3.9m)
+rc=0 · bases de corrida tras la corrida: 0 · puertos 8000/8010/5173 libres · raíces kontrol-test-license-* residuales: 0
+```
+
+**273 passed / 0 failed / 4 skipped** (3.9 min). Las 4 omitidas son las de `ENTORNO-SIN-CLAMSCAN`:
+
+```
+  -   75 [chromium] › e2e/documents-a11y.spec.ts:98:1 › la carga de archivo es operable solo con teclado
+  -   77 [chromium] › e2e/documents.spec.ts:118:1 › carga, versión y descarga por la interfaz real
+  -   82 [chromium] › e2e/documents.spec.ts:246:1 › una versión histórica no se reinterpreta al cargar otra
+  -   83 [chromium] › e2e/documents.spec.ts:286:1 › un reintento tras el fallo no deja el formulario sin salida
+```
+
+`E2E-PANTALLA-SIN-PINTAR` no se manifestó. Manifiesto de la corrida (sin direcciones; rutas enmascaradas):
+
+```json
+{
+ "run_id": "r20261013t053234p279422n43b474",
+ "base": "kontrol_e2e_test_r20261013t053234p279422n43b474",
+ "suite": {
+  "codigo": 0,
+  "resumen": {
+   "skipped": 4,
+   "passed": 273
+  },
+  "segundos": 234.8
+ },
+ "limpieza": {
+  "suite": "detenido",
+  "frontend": "detenido",
+  "autoridad": "detenido",
+  "backend": "detenido",
+  "base": {
+   "estado": "ELIMINADA",
+   "cortadas": 0
+  },
+  "estado": "eliminado",
+  "resultado": "LIMPIA"
+ },
+ "instalacion": {
+  "key_reference": "installation_private_key.pem",
+  "relativa": true,
+  "largo_del_volumen": 55
+ },
+ "analizador": {
+  "clamscan": null
+ },
+ "migracion": {
+  "esperada": "0057_spec047_notifications",
+  "actual": "0057_spec047_notifications",
+  "cabezas": 1
+ },
+ "entorno": {
+  "red_inicio": {
+   "disponible": true,
+   "interfaces": [
+    "enp2s0:DOWN",
+    "<vpn-leak-if>:UNKNOWN",
+    "lo:UNKNOWN",
+    "<vpn-if>:UNKNOWN",
+    "wlo1:UP"
+   ],
+   "tunel_presente": true,
+   "huella": "bac7befbbed5"
+  },
+  "red_fin": {
+   "disponible": true,
+   "interfaces": [
+    "enp2s0:DOWN",
+    "<vpn-leak-if>:UNKNOWN",
+    "lo:UNKNOWN",
+    "<vpn-if>:UNKNOWN",
+    "wlo1:UP"
+   ],
+   "tunel_presente": true,
+   "huella": "bac7befbbed5"
+  },
+  "red_cambio": false,
+  "reloj": {
+   "desvio_s": -0.0,
+   "salto": false
+  }
+ }
+}
+```

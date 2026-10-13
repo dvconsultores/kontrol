@@ -3323,3 +3323,30 @@ cambiada o reloj saltado. Candidatas técnicas sin decisión pendiente: `LISTADO
 `ALMACENES-CARRERA-SQLITE-HILOS`. De entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de
 ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
 
+
+## 2026-10-13 · TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO convergida (dueña 054)
+
+Ciclo de arnés, producto 0. El `conftest.py` del backend fijaba `KONTROL_INSTALLATION_VOLUME_PATH` en
+una ruta constante por máquina y cada mundo de prueba reescribía allí `installation_private_key.pem`:
+dos `pytest` a la vez se pisaban la clave y la sincronización firmaba con la clave ajena
+(`SYNC_AUTH_INVALID`; reproducido en concurrencia real y de forma determinista antes de tocar nada).
+Ahora cada proceso de `pytest` recibe una raíz `mkdtemp` única en `pytest_configure` (eliminada en
+`pytest_unconfigure`) y cada módulo un volumen hijo vacío por una fixture `autouse` de módulo, con la
+caché de `Settings` limpiada al fijar y al restaurar; la misma pareja de procesos que antes fallaba
+pasa entera a la vez. Pruebas TV-01…TV-23 (sondas en procesos aparte, en serie y en paralelo; gestor de
+contexto en proceso), 12/12 mutaciones, suites completas en ambos motores sin regresión y una global
+E2E en la evidencia. `TEST-PG-UN-SCHEMA-POR-PRUEBA` no se absorbe; el runner E2E no cambia.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO` — **ejecutado y convergido** (`specs/012-auditoria-integral-e2e/spec054-test-volumen-de-instalacion-compartido-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION` y la política del arnés E2E ante red
+cambiada o reloj saltado. Candidatas técnicas sin decisión pendiente: `TEST-PG-UN-SCHEMA-POR-PRUEBA`
+(hermana directa de este ciclo: aislamiento del esquema PostgreSQL con el mismo patrón de ciclo de vida),
+`LISTADOS-SIN-TOPE`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`, `ALMACENES-CARRERA-SQLITE-HILOS`. De entorno:
+`ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Observaciones anotadas sin absorber: `KONTROL_STORAGE_PATH`
+y `KONTROL_BACKUP_PATH` siguen fijos y compartidos en el arnés (el almacenamiento acumula exportaciones entre
+corridas), y en `test_license_sync_client` `csync_02` depende de que `csync_01` haya configurado la Autoridad
+en el mismo módulo. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
