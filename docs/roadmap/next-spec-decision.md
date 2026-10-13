@@ -3412,3 +3412,28 @@ la tabla se pintó entre la decisión y el diagnóstico (familia de `E2E-PANTALL
 sin relación con almacenes ni pick-lists y con el backend limpio. Candidata `E2E-HELPER-EMPRESA-CARRERA-DE-PINTADO`
 (dueña 054): hacer que el ayudante espere a que el estado sea determinable (expectativas con auto-espera) en vez de
 contar en el acto. No se absorbió; las dos globales siguientes fueron limpias.
+
+## 2026-10-13 · E2E-HELPER-EMPRESA-CARRERA-DE-PINTADO convergida (dueña 054)
+
+Ciclo de arnés E2E, producto 0. Las tres trazas de la global `r20261013t151632…` muestran `networkidle` resuelto antes de
+que la página emitiera la petición de la tabla de empresas (≈360 ms tras la ruta, bajo carga) y `desactivar.count()`
+pasando de 0 a 1 en 140 ms: el ayudante decidía con una fotografía instantánea. Retrasar la respuesta con `page.route`
+no lo reproduce (una petición en vuelo mantiene `networkidle` esperando); diferir la emisión del `fetch` en la propia
+página sí, de forma determinista: HE-02 falló con la firma exacta contra el ayudante antiguo. Ahora `activarEmpresa`
+(y la copia local de approvals, que comparte la primitiva) espera con `expect.poll` a que la pantalla muestre uno y
+solo uno de sus estados —ACTIVA, INACTIVA, COMPUERTA; NO_LISTA es transitorio y AMBIGUO falla al agotar el tiempo
+con el diagnóstico— y decide con esa misma lectura, en los 15 s de siempre, sin esperas fijas ni reintentos. HE-02…16,
+contrato estático del arnés ampliado, 12 mutaciones, gates de frontend y dos globales E2E limpias en la evidencia.
+`E2E-PANTALLA-SIN-PINTAR` (la familia general: página que no llega a pintarse) sigue OPEN.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `E2E-HELPER-EMPRESA-CARRERA-DE-PINTADO` — **ejecutado y convergido** (`specs/012-auditoria-integral-e2e/spec054-e2e-helper-empresa-carrera-de-pintado-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION` y la política del arnés E2E ante red cambiada o
+reloj saltado. Candidatas técnicas sin decisión pendiente: `ALMACENES-CARRERA-SQLITE-HILOS`, `ADDITIONAL_UNBOUNDED_LISTING`
+(85 listados, por dueña), `ALMACENES-PAGINACION-LIMIT-OFFSET`, `TEST-PG-CATALOGO-MARCA-DE-AGUA` (observación). De entorno:
+`ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Observación nueva: `documents.spec.ts` y `documents-a11y.spec.ts` activan la
+empresa con una copia reducida («si veo Activar, pulso») que no decide por estado; con la empresa ya activa no les afecta
+la carrera, pero no comparten la primitiva. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.

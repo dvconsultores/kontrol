@@ -1,0 +1,8 @@
+# Checkpoint · E2E-HELPER-EMPRESA-CARRERA-DE-PINTADO
+
+| Registro | Valor |
+|---|---|
+| `EXPECTED_HEAD` / `ACTUAL_HEAD` / `REMOTE_HEAD` | `0f4a5c3` / `0f4a5c3` / `0f4a5c3` — coinciden |
+| `ACTUAL_BRANCH` · `WORKTREE_STATE` · `COMMITS_AFTER_0F4A5C3` | `develop` · limpio · 0 |
+| `RUN_DATABASES` · `RESIDUAL_TEST_SCHEMAS` · `TEMP_TEST_DIRS` · puertos | 0 · 0 · 0 · libres |
+| MASTER57 / SPEC057 / NEXT MASTER SPEC | 57 · PLANNED / NOT STARTED · NOT YET PRIORITIZED |

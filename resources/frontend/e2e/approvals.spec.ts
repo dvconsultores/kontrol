@@ -8,6 +8,8 @@
  */
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
+import { diagnosticoDeEmpresa, emitirLaTablaTarde, esperarEstadoDeEmpresa } from "./helpers/empresa";
+
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
@@ -73,9 +75,17 @@ function controlesDeEmpresa(page: Page) {
 async function activarEmpresa(page: Page): Promise<void> {
   await page.locator('nav a[href="/organizacion/empresas"]').first().click();
   await page.waitForURL((u) => u.pathname === "/organizacion/empresas", { timeout: 15000 });
-  await page.waitForLoadState("networkidle");
 
   const { activar, desactivar, activa } = controlesDeEmpresa(page);
+
+  // Compuerta de selección: identificador canónico del propio producto, con el código
+  // de la empresa que resuelve el backend. No hay prefijos ni posiciones de por medio.
+  const { code } = await empresa(page.request, await apiLogin(page.request));
+  const eleccion = page.getByTestId(`elegir-empresa-${code}`);
+
+  // La decisión se toma sobre una lectura ya determinable (E2E-HELPER-EMPRESA-CARRERA-DE-
+  // PINTADO): ni `networkidle` ni un `count()` suelto sobre una pantalla aún sin pintar.
+  const lectura = await esperarEstadoDeEmpresa(page, eleccion);
 
   // Regresión permanente (FR-045-079): todo elemento que alcance el localizador de
   // decisión se llama literalmente «Activar». Si alguien retira `exact`, «Desactivar»
@@ -84,20 +94,11 @@ async function activarEmpresa(page: Page): Promise<void> {
   expect(alcanzados.filter((t) => t !== "Activar"), `el localizador de «Activar» alcanzó ${JSON.stringify(alcanzados)}`)
     .toEqual([]);
 
-  if ((await desactivar.count()) > 0 && (await activa.count()) > 0) return; // ya se cumple
+  if (lectura.estado === "ACTIVA") return; // ya se cumple
 
-  // Compuerta de selección: identificador canónico del propio producto, con el código
-  // de la empresa que resuelve el backend. No hay prefijos ni posiciones de por medio.
-  const { code } = await empresa(page.request, await apiLogin(page.request));
-  const eleccion = page.getByTestId(`elegir-empresa-${code}`);
-
-  const candidatas = await activar.count();
-  const puerta = await eleccion.count();
-  const diagnostico =
-    `estado de empresa no determinable: activar=${candidatas} compuerta=${puerta} ` +
-    `activa=${await activa.count()} desactivar=${await desactivar.count()} ` +
-    `botones=${JSON.stringify((await page.getByRole("button").allInnerTexts()).map((t) => t.trim()))}`;
-  expect(candidatas + puerta, diagnostico).toBe(1);
+  const candidatas = lectura.activar;
+  const puerta = lectura.compuerta;
+  expect(candidatas + puerta, `estado de empresa no determinable: ${diagnosticoDeEmpresa(lectura)}`).toBe(1);
 
   await (puerta === 1 ? eleccion : activar).click();
 
@@ -491,6 +492,15 @@ test.describe("Spec 045 · motor de aprobaciones sobre PostgreSQL real", () => {
     expect(detalleRes.status(), `la bandeja devolvió una solicitud ajena al contexto: ${requestId}`).toBe(200);
     const detalle = await detalleRes.json();
     expect(detalle.steps.map((st: { id: string }) => st.id)).toContain(propia.items[0].step_id);
+  });
+
+  test("E2E-045 · con la petición de la tabla emitida tarde, el ayudante espera a que se pinte", async ({ page }) => {
+    await emitirLaTablaTarde(page, 2000);
+    await uiLogin(page);
+    const { activar, desactivar, activa } = controlesDeEmpresa(page);
+    await expect(desactivar).toHaveCount(1);
+    await expect(activa).toHaveCount(1);
+    await expect(activar).toHaveCount(0);
   });
 
   test("E2E-045 · el localizador de «Activar» nunca alcanza «Desactivar»", async ({ page }) => {
