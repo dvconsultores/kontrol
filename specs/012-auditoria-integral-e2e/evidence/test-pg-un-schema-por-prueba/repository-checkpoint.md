@@ -1,0 +1,8 @@
+# Checkpoint · TEST-PG-UN-SCHEMA-POR-PRUEBA
+
+| Registro | Valor |
+|---|---|
+| `EXPECTED_HEAD` / `ACTUAL_HEAD` / `REMOTE_HEAD` | `805074c` / `805074c` / `805074c` — coinciden |
+| `ACTUAL_BRANCH` · `WORKTREE_STATE` · `COMMITS_AFTER_805074C` | `develop` · limpio · 0 |
+| `RUN_DATABASES` · puertos 8000/8010/5173 · `TEMP_TEST_DIRS` | 0 · libres · 0 |
+| MASTER57 / SPEC057 / NEXT MASTER SPEC | 57 · PLANNED / NOT STARTED · NOT YET PRIORITIZED |

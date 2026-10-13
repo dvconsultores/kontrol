@@ -13,10 +13,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from conftest import make_engine
-from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.database import Base, init_models
 from app.core.errors import ConflictError, KontrolError, PermissionDeniedError
 from app.modules.approvals import service as svc
 from app.modules.approvals.models import ApprovalDecision, ApprovalRequest, ApprovalStep
@@ -27,7 +24,7 @@ OTHER = "company-2"
 
 
 @pytest.fixture()
-def db_session():
+def db_session(sesion_de_prueba):
     """Sesión de prueba con la cadena organizacional mínima creada.
 
     PostgreSQL SÍ exige las claves foráneas y SQLite no: sin empresa real, las
@@ -37,11 +34,7 @@ def db_session():
     """
     from app.modules.organization.models import Company, Installation, Tenant
 
-    engine = make_engine()
-    init_models()
-    Base.metadata.create_all(engine)
-    session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
-    session = session_factory()
+    session = sesion_de_prueba
     inst = Installation(id="inst-1", installation_uuid="uuid-1", state="ACTIVE")
     session.add(inst)
     session.flush()
@@ -54,10 +47,7 @@ def db_session():
                             legal_name=f"Empresa {code}", rif=f"J-{code}", legal_type="CA",
                             functional_currency="VED", status="ACTIVE"))
     session.flush()
-    try:
-        yield session
-    finally:
-        session.close()
+    return session
 
 
 def _user(db, email: str) -> User:

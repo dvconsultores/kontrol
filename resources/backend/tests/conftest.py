@@ -133,6 +133,60 @@ def make_engine(**kwargs):
 
 
 # --------------------------------------------------------------------------- #
+# Una sesión con la base limpia por prueba, sin un schema por prueba (SPEC054 · TEST-PG-UN-SCHEMA-POR-PRUEBA)
+# --------------------------------------------------------------------------- #
+# Doce suites creaban en PostgreSQL un schema entero (203 tablas, 638 índices) por cada prueba:
+# ≈1,1 s de DDL por prueba y cientos de miles de relaciones por corrida. Ahora el schema se crea
+# una vez por módulo (PGLIFE lo apunta al módulo y lo suelta con él) y cada prueba trabaja en su
+# propia conexión dentro de una transacción externa: los `commit` del código —de la prueba o del
+# producto— solo sueltan un SAVEPOINT, y al terminar la prueba todo se deshace. Ninguna prueba ve
+# filas de otra. En SQLite no cambia nada: base en memoria nueva por prueba (`pysqlite` no sostiene
+# la transacción externa con `StaticPool`, y crearla cuesta milisegundos).
+@pytest.fixture(scope="module")
+def _esquema_del_modulo():
+    """PostgreSQL: un schema con todas las tablas, una vez por módulo. SQLite: nada (`None`)."""
+    if not os.environ.get("KONTROL_TEST_DB_URL"):
+        yield None
+        return
+    from app.core.database import Base, init_models
+
+    motor = make_engine()
+    init_models()
+    Base.metadata.create_all(motor)
+    yield motor
+    motor.dispose()
+
+
+@pytest.fixture
+def sesion_de_prueba(_esquema_del_modulo):
+    """Sesión ORM sobre una base limpia que solo esta prueba ve; lo que escriba desaparece al terminar."""
+    from sqlalchemy.orm import Session, sessionmaker
+
+    from app.core.database import Base, init_models
+
+    if _esquema_del_modulo is None:
+        motor = make_engine()
+        init_models()
+        Base.metadata.create_all(motor)
+        sesion = sessionmaker(bind=motor, class_=Session, expire_on_commit=False)()
+        try:
+            yield sesion
+        finally:
+            sesion.close()
+            motor.dispose()
+        return
+    conexion = _esquema_del_modulo.connect()
+    externa = conexion.begin()
+    sesion = Session(bind=conexion, join_transaction_mode="create_savepoint", expire_on_commit=False)
+    try:
+        yield sesion
+    finally:
+        sesion.close()
+        externa.rollback()
+        conexion.close()
+
+
+# --------------------------------------------------------------------------- #
 # Ciclo de vida de lo que la suite crea en PostgreSQL (SPEC054 · PGLIFE)
 # --------------------------------------------------------------------------- #
 # Lo que nace durante una prueba se suelta al acabar la prueba; lo que nace en

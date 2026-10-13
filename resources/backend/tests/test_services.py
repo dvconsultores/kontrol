@@ -7,10 +7,7 @@ requerir una base de datos externa.
 from __future__ import annotations
 
 import pytest
-from conftest import make_engine
-from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.database import Base, init_models
 from app.modules.audit.models import AuditEvent
 from app.modules.identity_access import service as identity_service
 from app.modules.licensing import service as licensing_service
@@ -19,16 +16,8 @@ from app.modules.setup.api import SetupRequest, initialize, setup_status
 
 
 @pytest.fixture()
-def db_session():
-    engine = make_engine()
-    init_models()
-    Base.metadata.create_all(engine)
-    session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
-    session = session_factory()
-    try:
-        yield session
-    finally:
-        session.close()
+def db_session(sesion_de_prueba):
+    return sesion_de_prueba
 
 
 class TestSetupInitialization:

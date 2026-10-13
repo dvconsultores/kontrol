@@ -11,10 +11,8 @@ import json
 import os
 
 import pytest
-from conftest import make_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
-from app.core.database import Base, init_models
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.homologation import service as homologation_service
 from app.modules.organization.models import Installation
@@ -22,16 +20,8 @@ from app.modules.setup.api import SetupRequest, initialize
 
 
 @pytest.fixture()
-def db_session():
-    engine = make_engine()
-    init_models()
-    Base.metadata.create_all(engine)
-    session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
-    session = session_factory()
-    try:
-        yield session
-    finally:
-        session.close()
+def db_session(sesion_de_prueba):
+    return sesion_de_prueba
 
 
 def _setup(db: Session) -> str:

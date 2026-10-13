@@ -3350,3 +3350,31 @@ cambiada o reloj saltado. Candidatas técnicas sin decisión pendiente: `TEST-PG
 y `KONTROL_BACKUP_PATH` siguen fijos y compartidos en el arnés (el almacenamiento acumula exportaciones entre
 corridas), y en `test_license_sync_client` `csync_02` depende de que `csync_01` haya configurado la Autoridad
 en el mismo módulo. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-13 · TEST-PG-UN-SCHEMA-POR-PRUEBA convergida (dueña 054)
+
+Ciclo de arnés, producto 0. Doce suites `db_session` creaban en PostgreSQL un schema entero (203 tablas, 638
+índices, ≈1,1 s de DDL) por cada prueba: 384 schemas y ≈323 000 relaciones por corrida. Tras medir ANTES, inventariar
+commits, sesiones secundarias, hilos y secuencias (ninguna; claves de cadena) y probar una POC medida, el conftest
+ofrece `sesion_de_prueba`: en PostgreSQL un schema por módulo (PGLIFE lo suelta con el módulo) y por prueba una
+conexión propia con transacción externa y `Session(join_transaction_mode="create_savepoint")` —los `commit` del
+código, de la prueba o del producto, solo sueltan un SAVEPOINT—; en SQLite, base en memoria nueva por prueba como
+siempre. Las 12 suites la consumen (reescritura mecánica delegada a DeepSeek y auditada); las fixtures con
+sesiones secundarias (`TestClient`) o hilos conservan su schema por prueba con razón explícita. Medido: 384 → 188
+schemas (−51 %), 929,8 → 810,0 s (−12,9 %); aislamiento probado con pruebas adversariales en proceso y sondas en
+procesos aparte (serie, paralelo, orden inverso, prueba sola, prueba que falla); 12/12 mutaciones; suites completas
+en ambos motores sin regresión; una global E2E. `TEST-PG-CATALOGO-MARCA-DE-AGUA` solo se midió (sin delta: la marca
+de agua ya está alcanzada) y sigue OPEN.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `TEST-PG-UN-SCHEMA-POR-PRUEBA` — **ejecutado y convergido** (`specs/012-auditoria-integral-e2e/spec054-test-pg-un-schema-por-prueba-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION` y la política del arnés E2E ante red cambiada o
+reloj saltado. Candidatas técnicas sin decisión pendiente: `LISTADOS-SIN-TOPE` (producto: listados sin tope, dueñas
+008/031), `ALMACENES-CARRERA-SQLITE-HILOS`, `TEST-PG-CATALOGO-MARCA-DE-AGUA` (observación). De entorno:
+`ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Observaciones anotadas sin absorber: `KONTROL_STORAGE_PATH` y
+`KONTROL_BACKUP_PATH` compartidos en el arnés; `csync_02` dependiente de `csync_01`; la hoja de ruta decía «trece»
+suites y «1 129» relaciones: son 12 suites + 5 fixtures de función y 841 relaciones + 811 restricciones. Fuera de
+ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.

@@ -9,10 +9,7 @@ from __future__ import annotations
 from datetime import UTC
 
 import pytest
-from conftest import make_engine
-from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.database import Base, init_models
 from app.core.errors import ConflictError, KontrolError
 from app.modules.master_data import service as master_service
 from app.modules.master_data.models import (
@@ -29,20 +26,12 @@ from tests.company_seed import EMPRESA_UNO, sembrar_empresas
 
 
 @pytest.fixture()
-def db_session():
-    engine = make_engine()
-    init_models()
-    Base.metadata.create_all(engine)
-    session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
-    session = session_factory()
+def db_session(sesion_de_prueba):
     # Las empresas se crean de verdad: con las claves foráneas de N7, guardar
     # bajo una cadena inventada ya no es posible, y tampoco debería haberlo sido.
-    sembrar_empresas(session)
-    session.commit()
-    try:
-        yield session
-    finally:
-        session.close()
+    sembrar_empresas(sesion_de_prueba)
+    sesion_de_prueba.commit()
+    return sesion_de_prueba
 
 
 #: Empresa **real**, sembrada por `db_session`.

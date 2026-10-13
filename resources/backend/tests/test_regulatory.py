@@ -11,11 +11,10 @@ from __future__ import annotations
 from datetime import timedelta
 
 import pytest
-from conftest import make_engine, seed_org_chain
+from conftest import seed_org_chain
 from sqlalchemy import select
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
-from app.core.database import Base, init_models
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.master_data.models import CatalogItem, Party
 from app.modules.organization.models import Warehouse
@@ -27,17 +26,9 @@ from tests.company_seed import EMPRESA_DOS, EMPRESA_UNO
 
 
 @pytest.fixture()
-def db_session():
-    engine = make_engine()
-    init_models()
-    Base.metadata.create_all(engine)
-    session_factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
-    session = session_factory()
-    seed_org_chain(session, COMPANY, OTHER)
-    try:
-        yield session
-    finally:
-        session.close()
+def db_session(sesion_de_prueba):
+    seed_org_chain(sesion_de_prueba, COMPANY, OTHER)
+    return sesion_de_prueba
 
 
 #: Empresas **reales**, sembradas por `db_session`. Antes eran la cadena
