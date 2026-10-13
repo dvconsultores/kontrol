@@ -6,7 +6,7 @@ import sys
 from logging.config import fileConfig
 from pathlib import Path
 
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import create_engine, pool
 
 from alembic import context
 
@@ -26,13 +26,15 @@ init_models()
 target_metadata = Base.metadata
 
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.db_url)
+# La URL va directa a SQLAlchemy, como en el runtime (`app/core/database.py`): pasarla por
+# `config.set_main_option` la metía en `configparser`, que interpreta «%» como interpolación y
+# rompía `alembic upgrade head` —lo primero que hace el contenedor— con cualquier credencial
+# codificada (`%40`, `%25`…) (MIGRACIONES-URL-CON-PORCENTAJE). `alembic.ini` no declara URL alguna.
 
 
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url,
+        url=settings.db_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -43,11 +45,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    connectable = create_engine(settings.db_url, poolclass=pool.NullPool)
     with connectable.connect() as connection:
         context.configure(
             connection=connection,

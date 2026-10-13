@@ -1,0 +1,42 @@
+# Reproducción sobre HEAD 2037ad6 (env.py originales) · tests/test_migraciones_url_porcentaje.py sobre PostgreSQL
+      7 >           raise ValueError("invalid interpolation syntax in %r at "
+      1         with pytest.raises(ValueError, match="invalid interpolation syntax"):
+      1 E             raise ValueError("invalid interpolation syntax in %r at "
+      1 E           ValueError: invalid interpolation syntax in 'postgresql+psycopg2://***@localhost:55432/kontrol_test_migpct_3633626_48036' at position 24
+      1 E           ValueError: invalid interpolation syntax in 'postgresql+psycopg2://***@localhost:55432/kontrol_test_migpct_3633626_13677' at position 32
+      1 E           ValueError: invalid interpolation syntax in 'postgresql+psycopg2://***@localhost:55432/kontrol_test_migpct_3633626_19270' at position 32
+      1 E           ValueError: invalid interpolation syntax in 'postgresql+psycopg2://***@localhost:55432/kontrol_test_migpct_3633626_49003' at position 32
+      1 E           ValueError: invalid interpolation syntax in 'postgresql+psycopg2://***@localhost:55432/kontrol_test_migpct_3633626_33167?application_name=mig%20pct&connect_timeout=5' a
+      1 E           ValueError: invalid interpolation syntax in 'postgresql+psycopg2://***@localhost:55432/kontrol_test_migpct_3633626_80487?application_name=mig%20pct&connect_timeout=5' a
+      1 E           ValueError: invalid interpolation syntax in 'postgresql+psycopg2://***@localhost:55432/kontrol_test_migpct_3633626_94961' at position 32
+      1 E         ValueError: invalid interpolation syntax in 'postgresql+psycopg2://***@localhost:55432/kontrol_test_migpct_3633626_86840?application_name=mig%20pct' at position 32
+      1 FAILED test_mig_01_configparser_rechaza_una_url_con_porcentaje_y_los_env_ya_no_pasan_por_ahi
+      1 FAILED test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U1_sin_porcentaje]
+      1 FAILED test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U2_arroba]
+      1 FAILED test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U3_almohadilla]
+      1 FAILED test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U4_porcentaje]
+      1 FAILED test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U5_query]
+      1 FAILED test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U6_usuario_codificado]
+      1 FAILED test_mig_08_13_el_camino_canonico_migra_con_porcentaje_y_no_imprime_la_url
+      1 FAILED test_mig_17_la_central_migra_con_porcentaje_y_la_url_llega_intacta[U1_sin_porcentaje]
+      1 FAILED test_mig_17_la_central_migra_con_porcentaje_y_la_url_llega_intacta[U4_porcentaje]
+      1 FAILED test_mig_17_la_central_migra_con_porcentaje_y_la_url_llega_intacta[U5_query]
+      7 /home/maria/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/configparser.py:403: ValueError
+      1 PASSED test_mig_07_la_misma_url_es_valida_para_sqlalchemy_y_el_runtime
+      1 PASSED test_mig_09_10_la_cabeza_del_arbol_es_la_declarada_en_ambos_entornos
+      1 PASSED test_mig_14_el_entrypoint_migra_antes_de_arrancar_y_no_reintenta[central_authority/entrypoint.sh]
+      1 PASSED test_mig_14_el_entrypoint_migra_antes_de_arrancar_y_no_reintenta[scripts/entrypoint.sh]
+
+## camino canónico por subproceso con URL sintética con % (salida sanitizada)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+secret_key
+  Field required [type=missing]
+    For further information visit https://errors.pydantic.dev/2.10/v/missing
+codigo_de_salida=1
+
+## (repetido con el entorno completo) camino canónico por subproceso sobre HEAD con URL sintética con % · salida sanitizada
+codigo_de_salida=1
+  File "/home/maria/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/configparser.py", line 403, in before_set
+    raise ValueError("invalid interpolation syntax in %r at "
+ValueError: invalid interpolation syntax in 'postgresql+psycopg2://***@localhost:55432/ktest?application_name=mig%20pct' at position 32
+## nota: U1 (sin %) falla sobre HEAD solo por el registrador de la prueba (no intercepta el motor de engine_from_config), no por el producto

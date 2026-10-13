@@ -1,0 +1,38 @@
+GOOD: (0, [])
+M-01 vuelve el camino por configparser (set_main_option + engine_from_config) en el cliente
+  MUTATED → FAIL (muere) · ['test_mig_01_configparser_rechaza_una_url_con_porcentaje_y_los_env_ya_no_pas', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U1_', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U2_']
+  RESTORED → PASS
+M-02 doble escape: la URL llega a SQLAlchemy con %%
+  MUTATED → FAIL (muere) · ['test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U2_', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U3_', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U4_']
+  RESTORED → PASS
+M-03 se pierde la query string
+  MUTATED → FAIL (muere) · ['test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U5_']
+  RESTORED → PASS
+M-04 se ignora la variable y se usa la URL por defecto de Settings
+  MUTATED → FAIL (muere) · ['test_mig_01_configparser_rechaza_una_url_con_porcentaje_y_los_env_ya_no_pas', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U1_', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U2_']
+  RESTORED → PASS
+M-05 el env imprime la URL completa
+  MUTATED → FAIL (muere) · ['test_mig_08_13_el_camino_canonico_migra_con_porcentaje_y_no_imprime_la_url']
+  RESTORED → PASS
+M-06 el entrypoint arranca antes de migrar
+  MUTATED → FAIL (muere) · ['test_mig_14_el_entrypoint_migra_antes_de_arrancar_y_no_reintenta[scripts/en']
+  RESTORED → PASS
+M-07 se rompe la URL normal (base cambiada)
+  MUTATED → FAIL (muere) · ['test_mig_01_configparser_rechaza_una_url_con_porcentaje_y_los_env_ya_no_pas', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U1_', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U2_']
+  RESTORED → PASS
+M-08 solo se arregla el cliente: la Central vuelve a configparser
+  MUTATED → FAIL (muere) · ['test_mig_01_configparser_rechaza_una_url_con_porcentaje_y_los_env_ya_no_pas', 'test_mig_17_la_central_migra_con_porcentaje_y_la_url_llega_intacta[U1_sin_p', 'test_mig_17_la_central_migra_con_porcentaje_y_la_url_llega_intacta[U4_porce']
+  RESTORED → PASS
+M-09 la URL lógica cambia de usuario
+  MUTATED → FAIL (muere) · ['test_mig_01_configparser_rechaza_una_url_con_porcentaje_y_los_env_ya_no_pas']
+  RESTORED → PASS
+M-10 aparece una revisión nueva sin declararla
+  MUTATED → FAIL (muere) · ['test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U1_', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U2_', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U3_']
+  RESTORED → PASS
+rc=0
+
+# M-09 rediseñado: el primero (.set(username='postgres', password=None)) era EQUIVALENTE —en SQLAlchemy URL.set(password=None) significa «sin cambio»— y solo lo mató el contrato estático de MIG-01; se sustituye por una alteración real de la credencial
+GOOD: (0, [])
+M-09b la credencial cambia en tránsito (otra clave llega a SQLAlchemy)
+  MUTATED → FAIL (muere) · ['test_mig_01_configparser_rechaza_una_url_con_porcentaje_y_los_env_ya_no_pas', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U1_', 'test_mig_02_06_la_url_logica_llega_intacta_y_la_base_queda_en_la_cabeza[U2_']
+  RESTORED → PASS

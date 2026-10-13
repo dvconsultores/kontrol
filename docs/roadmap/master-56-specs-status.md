@@ -112,6 +112,7 @@ Recontado de nuevo el 2026-10-12 tras converger `E2E-SIN-TYPECHECK` (dueña 054;
 Recontado de nuevo el 2026-10-12 tras converger `PICKLIST-DUPLICADA-500` (dueña 031; apoyos 001, 054, 013): **57 filas**, sin cambio; la 031 sigue en su estado —gana el 409 de dominio del segundo plan vivo, sin migración—.
 Recontado de nuevo el 2026-10-13 tras el ciclo `E2E-PANTALLA-SIN-PINTAR` (NOT REPRODUCED; dueña 054, apoyo 052): **57 filas**, sin cambio; ninguna Spec cambia de estado —solo captura diagnóstica en el arnés—.
 Recontado de nuevo el 2026-10-13 tras converger `OFFLINE-NAIVE-EN-SQLITE` (dueña 004; apoyos 001, 054): **57 filas**, sin cambio; la 004 sigue en su estado —la tolerancia offline decide lo mismo en SQLite y PostgreSQL—.
+Recontado de nuevo el 2026-10-13 tras converger `MIGRACIONES-URL-CON-PORCENTAJE` (dueña 052; apoyos 001, 004, 054): **57 filas**, sin cambio; la 052 sigue `PARTIALLY_IMPLEMENTED` —las migraciones aceptan una URL con credenciales codificadas, en el cliente y en la Central—.
 
 El grupo dominante —26 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el

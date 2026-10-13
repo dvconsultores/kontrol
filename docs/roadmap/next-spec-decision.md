@@ -3252,3 +3252,29 @@ cambiada o reloj saltado. Candidatas técnicas sin decisión pendiente: `TEST-VO
 `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`.
 MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-13 · MIGRACIONES-URL-CON-PORCENTAJE convergida: Alembic acepta una URL con «%» (dueña 052)
+
+Reproducido antes de tocar nada: `config.set_main_option("sqlalchemy.url", …)` es `configparser`, y revienta
+al asignar con cualquier credencial codificada (`ValueError: invalid interpolation syntax`); en PostgreSQL,
+bases nuevas con `%40`, `%23`, `%25`, query con `%20` y usuario codificado fallaban en el cliente y en la
+Autoridad Central (misma forma de `env.py`), y el camino canónico por subproceso salía con código 1: lo
+primero que hace el contenedor al arrancar. Diseño derivado de los dos *runtimes* (`create_engine(settings
+.db_url)` directo): la URL ya no entra en `configparser`; nada más cambia (revisiones 0, esquema 0,
+`alembic.ini` 0, entrypoints 0, dependencias 0, contrato de `KONTROL_DB_URL` 0). 15 pruebas (la URL que
+recibe SQLAlchemy es exactamente la lógica; cabezas declaradas; salida sin credenciales; entrypoints
+migran antes de arrancar), 10/10 mutaciones muertas, N10 y runner verdes, una global E2E limpia con bases
+migradas por `env.py`. Lo que QA no puede certificar con `trust` —la autenticación con una clave con `%`—
+se dice.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `MIGRACIONES-URL-CON-PORCENTAJE` — **ejecutado y convergido** (`specs/001-fundacion/spec052-migraciones-url-con-porcentaje-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION` y la política del arnés E2E ante red
+cambiada o reloj saltado. Candidatas técnicas sin decisión pendiente: `INSTALACION-KEY-REFERENCE-120`
+(la otra deuda que puede impedir un arranque: `key_reference` de 120 caracteres), `LISTADOS-SIN-TOPE`,
+`TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`, `TEST-PG-UN-SCHEMA-POR-PRUEBA`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`,
+`ALMACENES-CARRERA-SQLITE-HILOS`. De entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de
+ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
