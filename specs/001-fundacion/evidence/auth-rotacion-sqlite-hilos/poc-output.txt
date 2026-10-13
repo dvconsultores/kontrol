@@ -1,0 +1,23 @@
+# POC de topologías (guion same-datastore-poc-auth.py, de Claude, fuera del repositorio). N=20; entorno sintético. Solo las líneas de resumen: las trazas 500 que starlette escribe en stdout se resumen por tipo.
+### (a) StaticPool :memory: — la topología actual ###
+--- (a) natural: 20 rondas ---
+   19× resultados=[200, 401] vivas_delta=+0 error=-
+    1× resultados=[] vivas_delta=+0 error=StaleDataError: UPDATE statement on table 'sessions' expected to update 1 row(s); 0 we
+  conexiones DBAPI distintas vistas: 1
+--- (a) controlado: los dos leen antes de que ninguno escriba: 5 rondas ---
+    3× resultados=[200, 200] vivas_delta=+1 error=-
+    2× resultados=[200] vivas_delta=+1 error=OperationalError: (sqlite3.OperationalError) cannot commit transaction - SQL statements 
+### (b) fichero temporal — una conexión por hilo (lo que entrega motor_para_hilos) ###
+--- (b) natural: 20 rondas ---
+   18× resultados=[200, 200] vivas_delta=+1 error=-
+    2× resultados=[200, 401] vivas_delta=+0 error=-
+  conexiones DBAPI distintas vistas: 2
+--- (b) controlado: los dos leen antes de que ninguno escriba: 5 rondas ---
+    5× resultados=[200, 200] vivas_delta=+1 error=-
+### (c) EXPLORACIÓN, no corrección: (b) + BEGIN IMMEDIATE por transacción ###
+--- (c) natural: 20 rondas ---
+   20× resultados=[200, 401] vivas_delta=+0 error=-
+--- (c) controlado: 5 rondas ---
+    5× resultados=[200] vivas_delta=+0 error=OperationalError: (sqlite3.OperationalError) database is locked
+
+# trazas «Error no controlado» en stdout: 9 · errores en stderr por tipo:

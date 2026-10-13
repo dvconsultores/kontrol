@@ -3465,3 +3465,32 @@ compartida (`test_uom_conversion`, `test_documents_security`; OBS-02), `WAREHOUS
 008), `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LIMIT-OFFSET`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`. De entorno:
 `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057
 sin cambio.
+
+## 2026-10-14 · AUTH-ROTACION-SQLITE-HILOS — BLOCKED BY PRODUCT DECISION (dueña 002 · Seguridad / sesiones, en 001; apoyo 054)
+
+Ciclo de causa raíz, producto 0, arnés 0. Reproducida antes de tocar nada: sola ×20 en SQLite 15 fallos (`[200, 200]`
+×8; `cannot commit transaction - SQL statements in progress` ×5; `StaleDataError` ×2), módulo ×10 3 fallos, PostgreSQL
+×20 limpio. Sonda: una sola conexión pysqlite para los dos hilos (capa de ruido, la misma que cerró almacenes). Con
+`motor_para_hilos` (dos conexiones, mismo datastore) el ruido desaparece y la prueba real pasa 20/20 **por
+escalonamiento**; con las dos lecturas forzadas antes de la primera escritura, **ganan las dos renovaciones 5/5** (y 18/20
+en natural con barrera de arranque) y queda una sesión viva huérfana: la garantía de un solo ganador se apoya solo en
+`with_for_update()`, que PostgreSQL honra y SQLite ignora (pysqlite no retiene bloqueo entre leer y escribir). Caso H2 del
+encargo: STOP antes de implementar. Producción no expuesta (P21). Opciones en
+`specs/001-fundacion/evidence/auth-rotacion-sqlite-hilos/product-defect-report.md`: **A** UPDATE condicional + rowcount
+(recomendada, independiente del motor, sin migración), C `BEGIN IMMEDIATE` en producto (no recomendada), **D** contrato
+PostgreSQL-only con `skipif` (mínima, producto 0; precedente `test_license_import_race.py`), E2 arnés con `BEGIN IMMEDIATE`
+(descartada: confianza falsa). En cualquier caso, adoptar `motor_para_hilos` en el fixture para que la prueba mida el
+producto y no el arnés.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `AUTH-ROTACION-SQLITE-HILOS` — **BLOCKED BY PRODUCT DECISION**: el siguiente prompt continúa este bloqueo con la decisión de la dueña (A / C / D) |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: **`AUTH-ROTACION-SQLITE-HILOS` (A/C/D)**, `ROLES-SIN-TECHO-DE-DELEGACION`, la política
+del arnés E2E ante red cambiada o reloj saltado. Candidatas técnicas sin decisión pendiente: OBS-02 (módulos con hilos
+sobre la conexión compartida), `WAREHOUSE-INTEGRITY-TRADUCE-TODO`, `ADDITIONAL_UNBOUNDED_LISTING`,
+`ALMACENES-PAGINACION-LIMIT-OFFSET`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`. Observaciones nuevas: OBS-04 (la Spec 002 de
+seguridad del inventario no tiene carpeta), OBS-05 (comentario de `rotate_session` sobre SQLite). De entorno:
+`ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057
+sin cambio.

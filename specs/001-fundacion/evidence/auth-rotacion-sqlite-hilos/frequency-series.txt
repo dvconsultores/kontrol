@@ -1,0 +1,88 @@
+# Series de frecuencia (antes de cualquier cambio; HEAD 7c9c348). Orden base: .venv/bin/python -m pytest <objetivo> -q -o addopts= -p no:cacheprovider
+# A · sola ×20 SQLite sin sonda
+run 1: FAIL · 1 failed in 7.03s · AssertionError: dos re 
+run 2: PASS · 1 passed in 3.58s · 
+run 3: FAIL · 1 failed in 4.06s · AssertionError: dos re 
+run 4: FAIL · 1 failed in 3.91s · AssertionError: dos re 
+run 5: FAIL · 1 failed in 3.90s · AssertionError: dos re 
+run 6: FAIL · 1 failed in 3.95s · AssertionError: dos re 
+run 7: FAIL · 1 failed, 1 warning in 3.93s · assert 1 == 2 OperationalError: ca 
+run 8: FAIL · 1 failed in 3.91s · AssertionError: dos re 
+run 9: FAIL · 1 failed, 1 warning in 3.94s · assert 1 == 2 OperationalError: ca 
+run 10: FAIL · 1 failed, 1 warning in 3.92s · assert 1 == 2 StaleDataError: UPDATE stateme 
+run 11: PASS · 1 passed in 3.88s · 
+run 12: FAIL · 1 failed, 2 warnings in 3.96s · assert 0 == 2 StaleDataError: UPDATE stateme 
+run 13: PASS · 1 passed in 3.85s · 
+run 14: FAIL · 1 failed in 3.99s · AssertionError: dos re 
+run 15: FAIL · 1 failed, 1 warning in 3.70s · assert 1 == 2 OperationalError: ca 
+run 16: FAIL · 1 failed, 1 warning in 3.62s · assert 1 == 2 OperationalError: ca 
+run 17: PASS · 1 passed in 3.53s · 
+run 18: FAIL · 1 failed, 1 warning in 3.70s · assert 1 == 2 OperationalError: ca 
+run 19: FAIL · 1 failed in 3.66s · AssertionError: dos re 
+run 20: PASS · 1 passed in 3.57s · 
+# A' · sola ×10 SQLite con sonda
+run 1: FAIL · 1 failed in 3.69s · AssertionError: dos re  · conexiones=1
+run 2: FAIL · 1 failed, 1 warning in 3.63s · assert 1 == 2 OperationalError: ca  · conexiones=1
+run 3: FAIL · 1 failed in 3.61s · AssertionError: dos re  · conexiones=1
+run 4: FAIL · 1 failed, 1 warning in 3.65s · assert 1 == 2 OperationalError: ca  · conexiones=1
+run 5: PASS · 1 passed in 3.61s ·  · conexiones=1
+run 6: FAIL · 1 failed in 3.63s · AssertionError: dos re  · conexiones=1
+run 7: FAIL · 1 failed, 1 warning in 3.65s · assert 1 == 2 OperationalError: ca  · conexiones=1
+run 8: FAIL · 1 failed, 1 warning in 3.61s · assert 1 == 2 StaleDataError: UPDATE stateme  · conexiones=1
+run 9: FAIL · 1 failed, 1 warning in 3.63s · assert 1 == 2 OperationalError: ca  · conexiones=1
+run 10: FAIL · 1 failed in 3.64s · AssertionError: dos re  · conexiones=1
+# B · módulo ×10 SQLite
+run 1: FAIL · 1 failed, 7 passed, 1 warning in 3.90s · test_dos_renovaciones_simultaneas_no_pueden_ganar_las_dos 
+run 2: PASS · 8 passed in 3.84s · 
+run 3: FAIL · 1 failed, 7 passed, 1 warning in 3.89s · test_dos_renovaciones_simultaneas_no_pueden_ganar_las_dos 
+run 4: PASS · 8 passed in 3.84s · 
+run 5: PASS · 8 passed in 3.79s · 
+run 6: PASS · 8 passed in 3.76s · 
+run 7: PASS · 8 passed in 3.83s · 
+run 8: PASS · 8 passed in 3.91s · 
+run 9: PASS · 8 passed in 3.85s · 
+run 10: FAIL · 1 failed, 7 passed, 1 warning in 3.85s · test_dos_renovaciones_simultaneas_no_pueden_ganar_las_dos 
+# C · sola ×20 PostgreSQL
+run 1: PASS · 1 passed in 4.21s · 
+run 2: PASS · 1 passed in 4.10s · 
+run 3: PASS · 1 passed in 4.12s · 
+run 4: PASS · 1 passed in 4.13s · 
+run 5: PASS · 1 passed in 4.14s · 
+run 6: PASS · 1 passed in 4.20s · 
+run 7: PASS · 1 passed in 4.19s · 
+run 8: PASS · 1 passed in 4.24s · 
+run 9: PASS · 1 passed in 4.23s · 
+run 10: PASS · 1 passed in 4.19s · 
+run 11: PASS · 1 passed in 4.20s · 
+run 12: PASS · 1 passed in 4.15s · 
+run 13: PASS · 1 passed in 4.18s · 
+run 14: PASS · 1 passed in 4.19s · 
+run 15: PASS · 1 passed in 4.27s · 
+run 16: PASS · 1 passed in 4.15s · 
+run 17: PASS · 1 passed in 4.15s · 
+run 18: PASS · 1 passed in 4.23s · 
+run 19: PASS · 1 passed in 4.15s · 
+run 20: PASS · 1 passed in 4.19s · 
+FIN tmp=0
+
+# Experimento B · la prueba real con el fixture sobre motor_para_hilos (copia temporal tests/test_zz_exp_auth_motor.py, eliminada; no se confirma) ×20
+run 1: 1 passed in 6.70s · 
+run 2: 1 passed in 3.46s · 
+run 3: 1 passed in 3.40s · 
+run 4: 1 passed in 3.45s · 
+run 5: 1 passed in 3.49s · 
+run 6: 1 passed in 3.43s · 
+run 7: 1 passed in 3.44s · 
+run 8: 1 passed in 3.39s · 
+run 9: 1 passed in 3.47s · 
+run 10: 1 passed in 3.43s · 
+run 11: 1 passed in 3.41s · 
+run 12: 1 passed in 3.52s · 
+run 13: 1 passed in 3.46s · 
+run 14: 1 passed in 3.42s · 
+run 15: 1 passed in 3.42s · 
+run 16: 1 passed in 3.40s · 
+run 17: 1 passed in 3.48s · 
+run 18: 1 passed in 3.47s · 
+run 19: 1 passed in 3.45s · 
+run 20: 1 passed in 3.54s · 

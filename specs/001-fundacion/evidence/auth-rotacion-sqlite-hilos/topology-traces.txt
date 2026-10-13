@@ -1,0 +1,83 @@
+# Sonda de topología (ar_sonda.py: eventos checkout/SQL/commit/rollback/handle_error por hilo; ids sintéticos T/C; sin parámetros ni tokens)
+
+## corrida A'-1 · run 1: FAIL · 1 failed in 3.69s · AssertionError: dos re  · conexiones=1
+[COMMIT] hilo=MAIN conexion=C1
+[COMMIT] hilo=MAIN conexion=C1
+[COMMIT] hilo=T1 conexion=C1
+[SQL] hilo=T1 conexion=C1 INSERT INTO sessions
+[SQL] hilo=T1 conexion=C1 UPDATE sessions SET refresh_token_hash=?, updated_at=? WHERE sessions.
+[COMMIT] hilo=T1 conexion=C1
+[SQL] hilo=T1 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[ROLLBACK] hilo=T1 conexion=C1
+[SQL] hilo=T2 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[SQL] hilo=T3 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[SQL] hilo=T2 conexion=C1 UPDATE sessions SET revoked_at=?, updated_at=? WHERE sessions.id = ?
+[SQL] hilo=T3 conexion=C1 UPDATE sessions SET revoked_at=?, updated_at=? WHERE sessions.id = ?
+[SQL] hilo=T2 conexion=C1 INSERT INTO sessions
+[SQL] hilo=T3 conexion=C1 INSERT INTO sessions
+[SQL] hilo=T3 conexion=C1 UPDATE sessions SET refresh_token_hash=?, updated_at=? WHERE sessions.
+[SQL] hilo=T2 conexion=C1 UPDATE sessions SET refresh_token_hash=?, updated_at=? WHERE sessions.
+[COMMIT] hilo=T3 conexion=C1
+[COMMIT] hilo=T2 conexion=C1
+[SQL] hilo=T2 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[SQL] hilo=T3 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[COMMIT] hilo=T2 conexion=C1
+[COMMIT] hilo=T3 conexion=C1
+
+## corrida A'-2 · run 2: FAIL · 1 failed, 1 warning in 3.63s · assert 1 == 2 OperationalError: ca  · conexiones=1
+[COMMIT] hilo=MAIN conexion=C1
+[COMMIT] hilo=MAIN conexion=C1
+[COMMIT] hilo=MAIN conexion=C1
+[COMMIT] hilo=T1 conexion=C1
+[SQL] hilo=T1 conexion=C1 INSERT INTO sessions
+[SQL] hilo=T1 conexion=C1 UPDATE sessions SET refresh_token_hash=?, updated_at=? WHERE sessions.
+[COMMIT] hilo=T1 conexion=C1
+[SQL] hilo=T1 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[ROLLBACK] hilo=T1 conexion=C1
+[SQL] hilo=T2 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[SQL] hilo=T3 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[SQL] hilo=T3 conexion=C1 UPDATE sessions SET revoked_at=?, updated_at=? WHERE sessions.id = ?
+[SQL] hilo=T2 conexion=C1 UPDATE sessions SET revoked_at=?, updated_at=? WHERE sessions.id = ?
+[SQL] hilo=T3 conexion=C1 INSERT INTO sessions
+[SQL] hilo=T3 conexion=C1 UPDATE sessions SET refresh_token_hash=?, updated_at=? WHERE sessions.
+[SQL] hilo=T2 conexion=C1 INSERT INTO sessions
+[COMMIT] hilo=T3 conexion=C1
+[DBERR] hilo=T3 tipo=OperationalError msg=cannot commit transaction - SQL statements in progress stmt=None
+[SQL] hilo=T2 conexion=C1 UPDATE sessions SET refresh_token_hash=?, updated_at=? WHERE sessions.
+[COMMIT] hilo=T2 conexion=C1
+[SQL] hilo=T2 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[COMMIT] hilo=T2 conexion=C1
+
+## corrida A'-8 · run 8: FAIL · 1 failed, 1 warning in 3.61s · assert 1 == 2 StaleDataError: UPDATE stateme  · conexiones=1
+[COMMIT] hilo=MAIN conexion=C1
+[COMMIT] hilo=MAIN conexion=C1
+[COMMIT] hilo=MAIN conexion=C1
+[COMMIT] hilo=T1 conexion=C1
+[SQL] hilo=T1 conexion=C1 INSERT INTO sessions
+[SQL] hilo=T1 conexion=C1 UPDATE sessions SET refresh_token_hash=?, updated_at=? WHERE sessions.
+[COMMIT] hilo=T1 conexion=C1
+[SQL] hilo=T1 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[ROLLBACK] hilo=T1 conexion=C1
+[SQL] hilo=T2 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[SQL] hilo=T2 conexion=C1 UPDATE sessions SET revoked_at=?, updated_at=? WHERE sessions.id = ?
+[SQL] hilo=T3 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[SQL] hilo=T2 conexion=C1 INSERT INTO sessions
+[ROLLBACK] hilo=T3 conexion=C1
+[SQL] hilo=T2 conexion=C1 UPDATE sessions SET refresh_token_hash=?, updated_at=? WHERE sessions.
+[ROLLBACK] hilo=T2 conexion=C1
+
+## Experimento B (motor_para_hilos) · 1 passed
+[SQL] hilo=T1 conexion=C1 INSERT INTO sessions
+[SQL] hilo=T1 conexion=C1 UPDATE sessions SET refresh_token_hash=?, updated_at=? WHERE sessions.
+[COMMIT] hilo=T1 conexion=C1
+[SQL] hilo=T1 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[ROLLBACK] hilo=T1 conexion=C1
+[SQL] hilo=T2 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[SQL] hilo=T3 conexion=C2 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[SQL] hilo=T2 conexion=C1 UPDATE sessions SET revoked_at=?, updated_at=? WHERE sessions.id = ?
+[SQL] hilo=T2 conexion=C1 INSERT INTO sessions
+[SQL] hilo=T2 conexion=C1 UPDATE sessions SET refresh_token_hash=?, updated_at=? WHERE sessions.
+[COMMIT] hilo=T2 conexion=C1
+[SQL] hilo=T2 conexion=C1 SELECT sessions.user_id, sessions.refresh_token_hash, sessions.ip, ses
+[COMMIT] hilo=T2 conexion=C1
+[ROLLBACK] hilo=T3 conexion=C2
