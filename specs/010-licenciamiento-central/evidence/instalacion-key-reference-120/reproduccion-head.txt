@@ -1,0 +1,14 @@
+# ruta por defecto del despliegue (/data/license-state/installation_private_key.pem) → len = 48 · columna String(120) · margen = 72
+
+## PostgreSQL · volumen corto (control): len(volumen)=18 len(key_reference)=47 motor=postgresql
+RESULTADO: alta OK · key_reference persistida = <volumen>/installation_private_key.pem · len = 47 · absoluta = True
+
+## PostgreSQL · volumen largo: len(volumen)=126 len(key_reference)=155 motor=postgresql
+RESULTADO: FALLA · sqlalchemy.exc.DataError
+    psycopg2.errors.StringDataRightTruncation: value too long for type character varying(120)
+    sqlalchemy.exc.DataError: (psycopg2.errors.StringDataRightTruncation) value too long for type character varying(120)
+
+## SQLite · volumen largo (no hace cumplir VARCHAR(120)): len(volumen)=126 len(key_reference)=155 motor=sqlite
+RESULTADO: alta OK · key_reference persistida = <volumen>/installation_private_key.pem · len = 155 · absoluta = True
+
+# bases de reproducción eliminadas

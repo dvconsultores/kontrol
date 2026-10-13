@@ -1,0 +1,33 @@
+# Inventario de `installations.key_reference` (HEAD 7e8eb07)
+
+MODEL = Installation · MODEL_FILE = resources/backend/app/modules/organization/models.py:29
+COLUMN = key_reference · SQL_TYPE = String(120) · MAX_LENGTH = 120 · NULLABLE = True · CONSTRAINTS = ninguna · INDEX = ninguno
+MIGRATION_ORIGIN = alembic/versions/0001_fundacion.py:28 (sa.String(length=120), nullable=True)
+
+WRITER_01 = app/modules/licensing/service.py:119-128 (alta de la instalación): key_path = _private_key_path() = os.path.join(settings.installation_volume_path, "installation_private_key.pem") → Installation(key_reference=key_path)
+  INPUT = KONTROL_INSTALLATION_VOLUME_PATH (configurable; por defecto /data/license-state) · VALUE_PERSISTED = ruta ABSOLUTA del contenedor · ABSOLUTE_OR_RELATIVE = ABSOLUTE
+WRITERS_COMPLETE = YES (único escritor; las pruebas que copian una instalación reutilizan el valor existente)
+
+READERS (grep `key_reference` en app/, central_authority/, qa/, scripts/):
+  - producto: NINGUNO. La clave se carga SIEMPRE por `_private_key_path()` (settings), no por la columna:
+      app/modules/licensing/service.py:585-596 `_installation_private_key()` (firma del desafío del sync, l. 757)
+      reverificación de arranque, diagnóstico, rotación de confianza: no leen `key_reference`
+  - API/OpenAPI/diagnóstico: no la exponen (grep en system/api.py y licensing/api.py: 0)
+  - pruebas: test_license_state_reverification.py:353 copia el valor tal cual al «restaurar»; test_spec004_installation_race.py parchea `_private_key_path`
+  - QA: qa/e2e_corrida.py:70-71 LARGO_MAXIMO_DE_RUTA = 120 con el comentario «guarda la ruta de la clave de instalación en 120 caracteres»; l. 297-300 aborta antes de crear nada si len(estado/license/installation_private_key.pem) > 120
+READERS_COMPLETE = YES · EXPECTS_ABSOLUTE_PATH = n/a (nadie la lee) · EXPOSES_VALUE = NO
+
+CONTRACT (autoridad documental):
+  - specs/001-fundacion/data-model.md:29 — `Installation | id, installation_uuid (único), public_key, key_reference (volumen), state, created_at | Identidad persistente; par de claves local`
+  - specs/010-licenciamiento-central/spec.md — ningún FR nombra `key_reference` ni el formato del localizador de la clave
+  - spec004-central-sync-auth-delta.md:37 — ubicación de la clave: `installation_volume_path/installation_private_key.pem` (0600): describe la RESOLUCIÓN (settings), no la columna
+  - docs/governance (DOC-07, ADR): 0 menciones
+  CONTRACT_SEMANTICS = UNDEFINED (la única pista, «(volumen)», dice dónde vive la clave, no qué formato tiene la referencia ni si puede ser relativa)
+
+DEPLOYMENT: DEFAULT_CONTAINER_PATH = /data/license-state (config.py:75, compose.yaml:42) · COMPOSE_MOUNT = volumen nombrado montado en esa ruta · CONFIGURABLE = sí (variable) · HOST_PATH_USED_IN_REFERENCE = NO (la ruta persistida es la del contenedor)
+PATH LENGTH: KEY_FILENAME = installation_private_key.pem (28) · DEFAULT_VOLUME_LEN = 19 · TOTAL_DEFAULT_REF_LEN = 48 · MAX_COLUMN_LEN = 120 · SAFETY_MARGIN = 72 (cualquier volumen de más de 91 caracteres rompe el alta)
+EXISTING_ROWS_FORMAT = ABSOLUTE (toda instalación creada hasta hoy)
+E2E GUARD: mide la ruta absoluta del estado efímero; falla antes de crear la base; existe para que la corrida no herede el defecto; protege la corrida, no el producto
+
+ROOT_CAUSE = STORAGE_REFERENCE_COUPLED_TO_CONFIGURABLE_ABSOLUTE_PATH + FIXED_COLUMN_LENGTH (probado: 126 + 1 + 28 = 155 > 120)
+PATH_DECISION = A (contrato indefinido → ampliar la columna o ratificar un formato nuevo son decisiones de la dueña)

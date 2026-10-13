@@ -3278,3 +3278,26 @@ cambiada o reloj saltado. Candidatas técnicas sin decisión pendiente: `INSTALA
 `ALMACENES-CARRERA-SQLITE-HILOS`. De entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de
 ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-13 · INSTALACION-KEY-REFERENCE-120: bloqueada por decisión del contrato de almacenamiento (dueña 004)
+
+Reproducido por el flujo real de instalación: con un volumen de 126 caracteres la referencia persistida
+mide 155 y PostgreSQL rechaza el alta (`StringDataRightTruncation`); con ruta corta pasa; SQLite no hace
+cumplir el largo. Inventario: un escritor (persiste la ruta absoluta del contenedor) y ningún lector —la
+clave se carga siempre por configuración—, sin exposición. Contrato: solo «`key_reference (volumen)`» en el
+modelo de datos; la Spec 010, DOC-07 y los ADR no definen el formato. Por eso no se implementó: ampliar la
+columna es migración y ratificar una referencia relativa es un contrato nuevo de material criptográfico.
+Opciones entregadas con pros y contras; recomendación A3 (referencia relativa al volumen, filas absolutas
+respetadas, sin migración). Producto, esquema, filas y runner: sin cambio.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `INSTALACION-KEY-REFERENCE-120` — **ejecutado: BLOCKED BY LICENSE STORAGE CONTRACT DECISION** (`specs/010-licenciamiento-central/spec004-instalacion-key-reference-120-delta.md`); continúa con la decisión de la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `INSTALACION-KEY-REFERENCE-120` (A1/A2/A3/A4),
+`ROLES-SIN-TECHO-DE-DELEGACION`, y la política del arnés E2E ante red cambiada o reloj saltado. Candidatas
+técnicas sin decisión pendiente: `LISTADOS-SIN-TOPE`, `TEST-VOLUMEN-DE-INSTALACION-COMPARTIDO`,
+`TEST-PG-UN-SCHEMA-POR-PRUEBA`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`, `ALMACENES-CARRERA-SQLITE-HILOS`. De
+entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de
+`kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
