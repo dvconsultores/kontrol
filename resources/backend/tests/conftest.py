@@ -13,6 +13,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 import pytest
+from sqlalchemy.engine import Engine
 
 # Clave de prueba (>=32 caracteres). Nunca usar en producción.
 os.environ.setdefault(
@@ -130,6 +131,47 @@ def make_engine(**kwargs):
     import pg_harness
 
     return pg_harness.crear_motor_de_prueba(url, **kwargs)
+
+
+# --------------------------------------------------------------------------- #
+# Un motor para módulos que lanzan hilos contra la app (SPEC008 · ALMACENES-CARRERA-SQLITE-HILOS)
+# --------------------------------------------------------------------------- #
+# `make_engine()` en SQLite entrega la misma conexión pysqlite a todos los hilos (`:memory:` +
+# `StaticPool`): dos peticiones concurrentes comparten cursor y transacción, el `commit` de una
+# cierra el resultado de la otra (`ResourceClosedError`) o la violación única llega como
+# `sqlite3.DatabaseError` y no como `IntegrityError`, y el `rollback` del perdedor deshace la fila
+# del ganador. Aquí el datastore es un fichero temporal con el pool por defecto —una conexión
+# DBAPI por hilo concurrente, todas sobre la misma base— y el driver con sus valores por defecto.
+PREFIJO_DE_SQLITE = "kontrol-test-sqlite-"
+
+
+@contextmanager
+def motor_para_hilos(nombre: str) -> Iterator[Engine]:
+    """Motor para un módulo cuyas pruebas ejecutan hilos contra la app.
+
+    Sobre PostgreSQL es `make_engine()` tal cual: ya da una conexión por hilo y
+    su schema lo suelta PGLIFE con el ámbito. En SQLite crea un directorio
+    temporal propio con un fichero de base, lo sirve con el pool por defecto y
+    `check_same_thread=False` (el pool reparte conexiones entre hilos), y al
+    salir —pase o falle lo que corrió dentro— libera el motor y elimina el
+    directorio. No fija `timeout`, `isolation_level` ni `PRAGMA` alguno.
+    """
+    if os.environ.get("KONTROL_TEST_DB_URL"):
+        yield make_engine()
+        return
+    from sqlalchemy import create_engine
+
+    directorio = tempfile.mkdtemp(prefix=f"{PREFIJO_DE_SQLITE}{nombre}-")
+    motor = create_engine(
+        f"sqlite+pysqlite:///{os.path.join(directorio, 'base.db')}",
+        future=True,
+        connect_args={"check_same_thread": False},
+    )
+    try:
+        yield motor
+    finally:
+        motor.dispose()
+        shutil.rmtree(directorio)
 
 
 # --------------------------------------------------------------------------- #

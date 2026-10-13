@@ -3437,3 +3437,31 @@ reloj saltado. Candidatas técnicas sin decisión pendiente: `ALMACENES-CARRERA-
 `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Observación nueva: `documents.spec.ts` y `documents-a11y.spec.ts` activan la
 empresa con una copia reducida («si veo Activar, pulso») que no decide por estado; con la empresa ya activa no les afecta
 la carrera, pero no comparten la primitiva. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-13 · ALMACENES-CARRERA-SQLITE-HILOS convergida (dueña 008; apoyo 054)
+
+Ciclo de arnés de backend, producto 0. Reproducida antes de tocar nada: sola ×20 8 fallos, módulo ×10 4 fallos, nunca en
+PostgreSQL. Sonda de eventos de motor: una única conexión pysqlite para todos los hilos (`make_engine()` en SQLite es
+`:memory:` + `StaticPool` + `check_same_thread=False`); el `commit` de una petición cierra el cursor de la otra
+(`ResourceClosedError`) o la violación única llega como `sqlite3.DatabaseError`, el servicio solo traduce
+`IntegrityError`, el 500 mata el hilo y la prueba ve `[200]`; a veces el `rollback` del perdedor deshace la fila del
+ganador (`[409]`, total 0). Entrelazado controlado con barrera antes de los dos INSERT: 5/5 fallos deterministas; la
+misma carrera sobre un fichero SQLite temporal con una conexión por hilo: 35/35 limpias. Clasificación
+`HARNESS_SHARED_CONNECTION`; P21 no excluye SQLite y `skip` está prohibido. Corrección solo de arnés:
+`motor_para_hilos(nombre)` en `tests/conftest.py` (fichero temporal efímero, pool por defecto, sin tocar `busy_timeout`,
+limpieza en `finally`; PostgreSQL sin cambio), adoptada por el fixture de `test_warehouse_structure.py`; la prueba
+objetivo no cambia. ACS-01…12, 12/12 mutaciones, 50/50 corridas dirigidas, dos suites SQLite y una PostgreSQL sin
+regresión, una global E2E limpia (280/0/4).
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `ALMACENES-CARRERA-SQLITE-HILOS` — **ejecutado y convergido** (`specs/008-almacenes-fisicos/spec008-almacenes-carrera-sqlite-hilos-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION` y la política del arnés E2E ante red cambiada o
+reloj saltado. Candidatas técnicas sin decisión pendiente: `AUTH-ROTACION-SQLITE-HILOS` (misma causa raíz presumible,
+hoy 8–9 de 10 en solitario con firma `[200, 200]`; la primitiva ya existe), los otros módulos con hilos sobre la conexión
+compartida (`test_uom_conversion`, `test_documents_security`; OBS-02), `WAREHOUSE-INTEGRITY-TRADUCE-TODO` (OBS-01, dueña
+008), `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LIMIT-OFFSET`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`. De entorno:
+`ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057
+sin cambio.

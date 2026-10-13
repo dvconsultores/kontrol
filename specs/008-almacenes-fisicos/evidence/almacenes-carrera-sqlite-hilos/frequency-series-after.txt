@@ -1,0 +1,59 @@
+# Serie A (después) · prueba sola ×20 SQLite · orden: pytest tests/test_warehouse_structure.py::test_concurrencia_de_codigo_resuelta_por_constraint -q -o addopts= -p no:cacheprovider
+run 1: PASS · 1 passed in 3.58s
+run 2: PASS · 1 passed in 3.59s
+run 3: PASS · 1 passed in 3.59s
+run 4: PASS · 1 passed in 3.62s
+run 5: PASS · 1 passed in 3.58s
+run 6: PASS · 1 passed in 3.61s
+run 7: PASS · 1 passed in 3.61s
+run 8: PASS · 1 passed in 3.59s
+run 9: PASS · 1 passed in 3.62s
+run 10: PASS · 1 passed in 3.61s
+run 11: PASS · 1 passed in 3.60s
+run 12: PASS · 1 passed in 3.60s
+run 13: PASS · 1 passed in 3.63s
+run 14: PASS · 1 passed in 3.57s
+run 15: PASS · 1 passed in 4.09s
+run 16: PASS · 1 passed in 3.54s
+run 17: PASS · 1 passed in 3.65s
+run 18: PASS · 1 passed in 4.73s
+run 19: PASS · 1 passed in 4.82s
+run 20: PASS · 1 passed in 3.59s
+# Serie B (después) · módulo ×10 SQLite
+run 1: PASS · 33 passed, 1 skipped in 10.50s
+run 2: PASS · 33 passed, 1 skipped in 10.43s
+run 3: PASS · 33 passed, 1 skipped in 10.35s
+run 4: PASS · 33 passed, 1 skipped in 10.52s
+run 5: PASS · 33 passed, 1 skipped in 10.43s
+run 6: PASS · 33 passed, 1 skipped in 10.44s
+run 7: PASS · 33 passed, 1 skipped in 10.46s
+run 8: PASS · 33 passed, 1 skipped in 10.60s
+run 9: PASS · 33 passed, 1 skipped in 10.35s
+run 10: PASS · 33 passed, 1 skipped in 10.57s
+# Serie A-PG (después) · prueba sola ×20 PostgreSQL
+run 1: PASS · 1 passed in 4.15s
+run 2: PASS · 1 passed in 4.18s
+run 3: PASS · 1 passed in 4.62s
+run 4: PASS · 1 passed in 4.05s
+run 5: PASS · 1 passed in 4.19s
+run 6: PASS · 1 passed in 5.04s
+run 7: PASS · 1 passed in 4.18s
+run 8: PASS · 1 passed in 4.17s
+run 9: PASS · 1 passed in 4.15s
+run 10: PASS · 1 passed in 4.10s
+run 11: PASS · 1 passed in 4.19s
+run 12: PASS · 1 passed in 4.18s
+run 13: PASS · 1 passed in 4.19s
+run 14: PASS · 1 passed in 4.10s
+run 15: PASS · 1 passed in 4.19s
+run 16: PASS · 1 passed in 4.17s
+run 17: PASS · 1 passed in 4.10s
+run 18: PASS · 1 passed in 4.08s
+run 19: PASS · 1 passed in 4.16s
+run 20: PASS · 1 passed in 4.11s
+# Suites de almacenes + ACS en PostgreSQL ×1: tests/test_warehouse_list_cost.py tests/test_warehouse_migration_0018.py tests/test_warehouse_structure.py tests/test_warehouse_view_pure.py  tests/test_motor_para_hilos.py
+........................................................................ [ 62%]
+............................................                             [100%]
+116 passed in 42.00s
+# ficheros temporales kontrol-test-sqlite-* restantes: 0
+FIN

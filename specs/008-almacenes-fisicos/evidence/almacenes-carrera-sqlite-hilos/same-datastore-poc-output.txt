@@ -1,0 +1,26 @@
+# POC de mismo datastore — salida (guion de Claude fuera del repositorio; rutas enmascaradas)
+# orden: N=30 .venv/bin/python <tmp>/acs/poc.py ambas  (entorno sintético; volumen de instalación bajo <tmp>/acs/vol)
+
+### (a) StaticPool :memory: — la topología actual ###
+--- (a) natural: 30 rondas ---
+   15× resultados=[200] total=1 error=ResourceClosedError: This result object does not return rows. It has been closed automatically.
+   13× resultados=[200, 409] total=1 error=-
+    1× resultados=[200] total=1 error=DatabaseError: (sqlite3.DatabaseError) UNIQUE constraint failed: warehouse_locations.warehouse_id, wareho
+    1× resultados=[409] total=0 error=InvalidRequestError: Could not refresh instance '<WarehouseLocation at 0x7fa218684110>'
+  conexiones DBAPI distintas vistas: 1
+--- (a) entrelazado controlado: los dos INSERT a la vez: 5 rondas ---
+    5× resultados=[200] total=1 error=ResourceClosedError: This result object does not return rows. It has been closed automatically.
+### (b) fichero temporal — una conexión por hilo (QueuePool por defecto, check_same_thread=False) ###
+  timeout del driver (busy): <class 'sqlite3.Connection'> default sqlite3 timeout=5.0 s (no se toca)
+  conexiones A != B: True · B ve lo que confirmó A: True
+--- (b) natural: 30 rondas ---
+   30× resultados=[200, 409] total=1 error=-
+  conexiones DBAPI distintas vistas: 2 · 1.2s
+--- (b) entrelazado controlado: los dos INSERT a la vez: 5 rondas ---
+    5× resultados=[200, 409] total=1 error=-
+  0.2s
+  fichero temporal eliminado: True
+
+# trazas 500 escritas por starlette en stdout durante (a): 22 · durante (b): 0 (ninguna tras la cabecera de (b))
+# comprobación: posición de la última traza vs. cabecera (b)
+última 'Error no controlado' en línea 3332 · cabecera (b) en línea 3488

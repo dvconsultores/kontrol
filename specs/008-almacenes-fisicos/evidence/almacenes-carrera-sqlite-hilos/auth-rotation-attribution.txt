@@ -1,0 +1,22 @@
+# árbol actual (con el ciclo) ×10
+run 1: 1 failed in 3.58s
+run 2: 1 failed in 3.56s
+run 3: 1 failed in 3.52s
+run 4: 1 failed in 3.55s
+run 5: 1 failed in 3.49s
+run 6: 1 failed in 3.52s
+run 7: 1 failed in 3.54s
+run 8: 1 failed, 1 warning in 3.58s
+run 9: 1 failed in 3.52s
+run 10: 1 passed in 3.50s
+# archivo de HEAD ffdbaf6 (sin el ciclo) ×10
+run 1: 1 failed, 1 warning in 3.63s
+run 2: 1 failed, 1 warning in 3.75s
+run 3: 1 failed in 3.61s
+run 4: 1 failed in 3.63s
+run 5: 1 failed in 3.61s
+run 6: 1 failed in 3.55s
+run 7: 1 failed in 3.56s
+run 8: 1 passed in 3.53s
+run 9: 1 failed in 3.54s
+run 10: 1 passed in 3.52s

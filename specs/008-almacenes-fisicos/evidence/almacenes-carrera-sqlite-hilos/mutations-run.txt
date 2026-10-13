@@ -1,0 +1,102 @@
+=== GOOD → PASS ===
+  [GOOD] 9 passed in 3.87s
+  [objetivo x5] fallos=0
+=== M-01 · la primitiva devuelve make_engine() también en SQLite (StaticPool :memory:) ===
+  [MUTATED] 5 failed, 3 passed in 0.14s
+      FAILED tests/test_motor_para_hilos.py::test_acs_01_cada_hilo_concurrente_tiene_su_propia_conexion
+      FAILED tests/test_motor_para_hilos.py::test_acs_02_lo_confirmado_por_un_hilo_lo_ve_otro_por_otra_conexion
+      FAILED tests/test_motor_para_hilos.py::test_acs_03_lo_no_confirmado_no_lo_ve_otro_hilo_ni_antes_ni_despues_del_rollback
+      FAILED tests/test_motor_para_hilos.py::test_acs_06_el_datastore_temporal_existe_dentro_del_contexto_y_no_despues
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+            1 E       AssertionError: {'A': 140075857550912, 'B': 140075857550912}
+            1 E       AssertionError: [140075857498640, 140075857498640]
+            1 E       AssertionError: [1, 0]
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.92s
+=== M-02 · :memory: con el pool por defecto (un :memory: privado por conexión) ===
+  [MUTATED] 6 failed, 2 passed in 20.15s
+      FAILED tests/test_motor_para_hilos.py::test_acs_01_cada_hilo_concurrente_tiene_su_propia_conexion
+      FAILED tests/test_motor_para_hilos.py::test_acs_02_lo_confirmado_por_un_hilo_lo_ve_otro_por_otra_conexion
+      FAILED tests/test_motor_para_hilos.py::test_acs_03_lo_no_confirmado_no_lo_ve_otro_hilo_ni_antes_ni_despues_del_rollback
+      FAILED tests/test_motor_para_hilos.py::test_acs_04_dos_inserts_simultaneos_de_la_misma_clave_dan_un_exito_y_un_integrity_error
+      FAILED tests/test_motor_para_hilos.py::test_acs_06_el_datastore_temporal_existe_dentro_del_contexto_y_no_despues
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+            1 E       AssertionError: ["OperationalError: (sqlite3.OperationalError) no such table: acs_filas
+            1 E       AssertionError: assert ['Operational...e/e/20/e3q8)'] == []
+            1 E           AssertionError: :memory:
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.92s
+=== M-03 · StaticPool sobre el fichero ===
+  [MUTATED] 5 failed, 3 passed in 0.14s
+      FAILED tests/test_motor_para_hilos.py::test_acs_01_cada_hilo_concurrente_tiene_su_propia_conexion
+      FAILED tests/test_motor_para_hilos.py::test_acs_02_lo_confirmado_por_un_hilo_lo_ve_otro_por_otra_conexion
+      FAILED tests/test_motor_para_hilos.py::test_acs_03_lo_no_confirmado_no_lo_ve_otro_hilo_ni_antes_ni_despues_del_rollback
+      FAILED tests/test_motor_para_hilos.py::test_acs_06_el_datastore_temporal_existe_dentro_del_contexto_y_no_despues
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+            1 E       AssertionError: {'A': 140571774441872, 'B': 140571774441872}
+            1 E       AssertionError: [140571774406704, 140571774406704]
+            1 E       AssertionError: [1, 0]
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.86s
+=== M-04 · sin check_same_thread=False ===
+  [objetivo x20] fallos=0
+  [MUTATED] 1 failed, 7 passed in 0.13s
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.94s
+=== M-05 · sin rmtree al salir ===
+  [MUTATED] 3 failed, 5 passed in 0.14s
+      FAILED tests/test_motor_para_hilos.py::test_acs_06_el_datastore_temporal_existe_dentro_del_contexto_y_no_despues
+      FAILED tests/test_motor_para_hilos.py::test_acs_07_el_datastore_temporal_se_elimina_aunque_el_contexto_falle
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+            1 E       AssertionError: assert {PosixPath(<tmp>/kontrol-test-sqlite-…)} == set()
+            1 E       AssertionError: assert {PosixPath(<tmp>/kontrol-test-sqlite-…)} == set()
+  [tmp] 6 directorio(s) kontrol-test-sqlite-* dejados por la mutación: se eliminan
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.95s
+=== M-06 · sin dispose al salir ===
+  [MUTATED] 2 failed, 6 passed in 0.13s
+      FAILED tests/test_motor_para_hilos.py::test_acs_06_el_datastore_temporal_existe_dentro_del_contexto_y_no_despues
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.95s
+=== M-07 · busy timeout inflado a 60 s ===
+  [MUTATED] 1 failed, 7 passed in 0.13s
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+            1 E           AssertionError: timeout
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.90s
+=== M-08 · el fixture vuelve a make_engine() ===
+  [objetivo x20] fallos=12
+  [MUTATED] 1 failed, 7 passed in 0.13s
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.86s
+=== M-09 · limpieza fuera del finally (no limpia si falla) ===
+  [MUTATED] 1 failed, 7 passed in 0.13s
+      FAILED tests/test_motor_para_hilos.py::test_acs_07_el_datastore_temporal_se_elimina_aunque_el_contexto_falle
+            1 E       AssertionError: assert {PosixPath(<tmp>/kontrol-test-sqlite-…)} == set()
+  [tmp] 1 directorio(s) kontrol-test-sqlite-* dejados por la mutación: se eliminan
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.90s
+=== M-10 · ACS-03: rollback → commit (prueba vacía) ===
+  [MUTATED] 1 failed, 7 passed in 0.13s
+      FAILED tests/test_motor_para_hilos.py::test_acs_03_lo_no_confirmado_no_lo_ve_otro_hilo_ni_antes_ni_despues_del_rollback
+            1 E       AssertionError: [0, 1]
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.89s
+=== M-11 · ACS-04 sin barrera (los INSERT ya no coinciden) ===
+  [MUTATED] 1 failed, 7 passed in 0.13s
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.88s
+=== M-12 · aserción de la prueba objetivo debilitada ===
+  [MUTATED] 1 failed, 8 passed in 3.95s
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 9 passed in 3.91s
+=== FIN · tmp restantes: 0 · git status de tests: ===
+ M tests/conftest.py
+ M tests/test_warehouse_structure.py
+?? tests/test_motor_para_hilos.py
+rc=0

@@ -19,7 +19,7 @@ from app.core.database import Base, get_db, init_models
 from app.modules.organization import structure as st
 from app.modules.organization.models import Warehouse, WarehouseLocation
 from app.modules.setup.api import SetupRequest, initialize
-from tests.conftest import make_engine
+from tests.conftest import motor_para_hilos
 
 _CLIENT: TestClient
 _FACTORY: sessionmaker
@@ -27,39 +27,42 @@ _FACTORY: sessionmaker
 
 @pytest.fixture(scope="module", autouse=True)
 def _app_client():
+    # El módulo lanza hilos contra la app (`test_concurrencia_de_codigo_resuelta_por_constraint`):
+    # necesita una conexión por hilo sobre el mismo datastore, no la conexión compartida de
+    # `make_engine()` en SQLite (ALMACENES-CARRERA-SQLITE-HILOS).
     global _CLIENT, _FACTORY
-    engine = make_engine()
-    init_models()
-    Base.metadata.create_all(engine)
-    factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
-    import app.core.database as dm
+    with motor_para_hilos("warehouse-structure") as engine:
+        init_models()
+        Base.metadata.create_all(engine)
+        factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
+        import app.core.database as dm
 
-    dm._engine = engine  # type: ignore[attr-defined]
-    dm._SessionLocal = factory  # type: ignore[attr-defined]
+        dm._engine = engine  # type: ignore[attr-defined]
+        dm._SessionLocal = factory  # type: ignore[attr-defined]
 
-    db = factory()
-    initialize(db, SetupRequest(
-        tenant_code="DEMO", tenant_name="Empresa Demo", company_code="D1",
-        company_legal_name="Demo C.A.", company_rif="J-12345678-9",
-        admin_username="admin", admin_password="Kontrol2026Segura!",
-    ))
-    db.close()
+        db = factory()
+        initialize(db, SetupRequest(
+            tenant_code="DEMO", tenant_name="Empresa Demo", company_code="D1",
+            company_legal_name="Demo C.A.", company_rif="J-12345678-9",
+            admin_username="admin", admin_password="Kontrol2026Segura!",
+        ))
+        db.close()
 
-    from app.main import create_app
+        from app.main import create_app
 
-    app = create_app()
+        app = create_app()
 
-    def _override_get_db():
-        d = factory()
-        try:
-            yield d
-        finally:
-            d.close()
+        def _override_get_db():
+            d = factory()
+            try:
+                yield d
+            finally:
+                d.close()
 
-    app.dependency_overrides[get_db] = _override_get_db
-    _FACTORY = factory
-    _CLIENT = TestClient(app)
-    yield _CLIENT
+        app.dependency_overrides[get_db] = _override_get_db
+        _FACTORY = factory
+        _CLIENT = TestClient(app)
+        yield _CLIENT
 
 
 def _headers() -> dict:
