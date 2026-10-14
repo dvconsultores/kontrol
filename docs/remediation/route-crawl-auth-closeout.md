@@ -145,8 +145,17 @@ session = db.execute(
 Una línea. La segunda transacción espera y encuentra la sesión ya revocada, así
 que recibe 401. **Refuerza** la rotación en lugar de relajarla.
 
-`with_for_update` es inocuo en SQLite —serializa las escrituras por su cuenta— y
-efectivo sobre PostgreSQL, que es el motor de producción (`P21`).
+`with_for_update` es efectivo sobre PostgreSQL, que es el motor de producción
+(`P21`). **Corrección del 2026-10-14 (`AUTH-ROTACION-SQLITE-HILOS`)**: la frase
+original de este cierre —«inocuo en SQLite, que serializa las escrituras por su
+cuenta»— era falsa para esta carrera: SQLite ignora `FOR UPDATE` y no retiene
+ningún bloqueo entre leer y escribir, de modo que dos transacciones con
+conexiones propias leían la sesión sin revocar y confirmaban las dos (5/5 con
+las dos lecturas forzadas antes de la primera escritura). Desde entonces la
+propiedad de la rotación la decide además un `UPDATE … WHERE revoked_at IS NULL`
+cuyo `rowcount` distingue al ganador (1) del perdedor (0 → 401
+`SESSION_REVOKED`), igual en los dos motores; el bloqueo de fila se conserva.
+Delta: `specs/001-fundacion/spec001-auth-rotacion-sqlite-hilos-delta.md`.
 
 Verificado con tres ejecuciones consecutivas de la suite de seguridad completa:
 **28/28 estables**, sin intermitencia.

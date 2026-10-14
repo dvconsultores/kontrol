@@ -3494,3 +3494,30 @@ sobre la conexión compartida), `WAREHOUSE-INTEGRITY-TRADUCE-TODO`, `ADDITIONAL_
 seguridad del inventario no tiene carpeta), OBS-05 (comentario de `rotate_session` sobre SQLite). De entorno:
 `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057
 sin cambio.
+
+## 2026-10-14 · AUTH-ROTACION-SQLITE-HILOS convergida con la decisión A (dueña 002 · Seguridad / sesiones, en 001; apoyo 054)
+
+La dueña ratificó A (UPDATE condicional + rowcount). Diagnóstico antes de tocar producto: rowcount 1→0 en SQLite y
+PostgreSQL; POC I1 en SQLite con el UPDATE exacto y conexiones independientes: 10/10 un `rowcount 1` y un `rowcount 0`,
+sin `database is locked`, sin retry ni `BEGIN IMMEDIATE`. Implementación mínima en `rotate_session` (27 líneas): la
+revocación es `UPDATE … WHERE id = :sid AND revoked_at IS NULL`; una fila → sigue el flujo (sesión nueva, auditoría, 200);
+cero → 401 `SESSION_REVOKED` sin sesión nueva; `≠ 1` → invariante rota; `with_for_update()` se conserva; reloj canónico.
+Arnés: `motor_para_hilos` en el fixture del módulo objetivo y en el módulo nuevo `tests/test_auth_rotacion_atomica.py`
+(SA-01…16: I1 forzada en los dos motores → `[200, 401]` y un solo reemplazo; revocada, replay, expirada, hash, inactivo;
+ORM; `OperationalError` sin remapear; excepciones de hilo visibles; contrato estático). Prueba objetivo intacta y ahora
+20/20 sola, 10/10 módulo, 20/20 PostgreSQL. 14/14 mutaciones (M-11 sobrevivió a la primera pasada y se mató con una
+prueba comportamental). Suites: SQLite 1627/42/1040 ×2 (42 ClamAV), PostgreSQL 2644/37/28, OpenAPI 544/533/11 sin cambio,
+E2E 280/0/4. Comentario del servicio y cierre de REM-AUTH corregidos (OBS-05 cerrada en ese punto). Sin migración ni esquema.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `AUTH-ROTACION-SQLITE-HILOS` — **ejecutado y convergido** (`specs/001-fundacion/spec001-auth-rotacion-sqlite-hilos-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION` y la política del arnés E2E ante red cambiada o
+reloj saltado. Candidatas técnicas sin decisión pendiente: OBS-02 (`test_uom_conversion`, `test_documents_security`
+con hilos sobre la conexión compartida; la primitiva y el patrón SA ya existen), OBS-01 `WAREHOUSE-INTEGRITY-TRADUCE-TODO`,
+`ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LIMIT-OFFSET`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`, OBS-06
+(`KONTROL_STORAGE_PATH`/`KONTROL_BACKUP_PATH` compartidos), OBS-07 (`csync_02` → `csync_01`). OBS-04 (la Spec 002 del
+inventario sin carpeta) para la dueña del inventario. De entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`.
+Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.

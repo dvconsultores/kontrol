@@ -80,3 +80,88 @@ REM-AUTH se registra como OBS-05, no como contradicción de contrato: el contrat
 Producto 0 · arnés 0 · pruebas 0 · suites completas y E2E no ejecutadas (ninguna fuente cambió; no hay nada que certificar
 ni razón para repetir corridas) · evidencia enmascarada · roadmap: fila → **BLOCKED BY PRODUCT DECISION** · puntero y
 recuento actualizados · MASTER57 57 · SPEC057 sin cambio · NEXT MASTER SPEC sin cambio.
+
+---
+
+# Continuación · decisión A ratificada (2026-10-14)
+
+`[X] A — CONDITIONAL UPDATE + ROWCOUNT` (`evidence/.../owner-decision-a.md`). El bloqueo de producto queda resuelto por la
+dueña; el ciclo continúa dentro de esta delta con autorización en dos etapas (diagnóstico → compuerta material →
+implementación). HEAD de partida `123a190` = origin, limpio, 0/0/0, puertos libres.
+
+## 11. `/speckit.specify` — FR-AR-A-001…033
+
+Todos recogidos del encargo; los de contrato (001–009, 015–022, 024–028) se fijan en `conditional-update-contract.md`,
+`operation-order.md` y `clock-contract.md`; los de no-cambio (010–014, 023, 029–033) se verifican en §15.
+
+## 12. `/speckit.clarify` — congelado
+
+| Registro | Valor |
+|---|---|
+| Modelo / tabla / columnas | `identity_access.models.Session` (`AuthSession`) / `sessions` / `id`, `revoked_at`, `updated_at` |
+| `UPDATE_PRIMITIVE` | `db.execute(update(AuthSession).where(id == …, revoked_at.is_(None)).values(revoked_at=ahora, updated_at=ahora)).rowcount` — patrón ya existente en `notifications/service.py` |
+| `EXECUTION_SITE` · orden | `rotate_session`, tras decode/hash/expiración/usuario y antes de `create_session`; perdedor → 401 `SESSION_REVOKED`; `rowcount ≠ 1` → `RuntimeError` |
+| `SESSION_SYNCHRONIZE_OPTION` · ORM | por defecto (`evaluate`); la instancia cargada queda sincronizada y nadie reasigna `revoked_at` por atributo (SA-13) |
+| `CLOCK_SOURCE` | `_now()` del servicio (`datetime.now(UTC)`) |
+| `with_for_update()` | se conserva |
+| Arnés | `motor_para_hilos("auth-session-rotation")` en el fixture del módulo objetivo; `motor_para_hilos("auth-rotacion-atomica")` en el módulo SA |
+| OBS-05 | comentario del servicio y frase del cierre de REM-AUTH (`implementation.md`: antes/después) |
+| `MATERIAL OQ` | 0 |
+
+## 13. `/speckit.plan`, CONSTITUTION GATE (etapa 1) y `/speckit.tasks`
+
+Plan W01–W30 del encargo. Gate etapa 1 (diagnóstico): G01–G36 cumplidos, `BLOCKER = 0`, `MATERIAL OQ = 0`, `UNKNOWN = 0`,
+trazabilidad 100 % → **PASS para el diagnóstico**.
+
+| Tarea | Ficheros | EXECUTOR / MODEL | SECURITY_SENSITIVE / EGRESS_SAFE | TEST | DONE_WHEN |
+|---|---|---|---|---|---|
+| T01 decisión y contrato | evidencia | CLAUDE / n-a | sí / n-a | — | `owner-decision-a.md`, `conditional-update-contract.md` |
+| T02 diseño de la escritura condicional | evidencia | CLAUDE / n-a | sí / n-a | — | `operation-order.md`, `clock-contract.md` |
+| T03 diagnóstico rowcount + POC I1 | guion fuera del repo | CLAUDE / n-a | sí / n-a | `cas-poc.py` | 1→0 en los dos motores; I1 SQLite sin bloqueo |
+| T04 producto | `app/modules/identity_access/service.py` | CLAUDE / n-a | **sí** / n-a | SA-01…16 | FR-AR-A-001…009, 015–022 |
+| T05 arnés | `tests/test_auth_session_rotation.py` (solo el fixture) | CLAUDE / n-a | no / n-a | objetivo ×20, módulo ×10 | FR-AR-A-023/024 |
+| T06 pruebas de seguridad | `tests/test_auth_rotacion_atomica.py` (nuevo) | CLAUDE / n-a | sí / n-a | SA-01…16 | verdes en los dos motores |
+| T07 mutaciones | copias temporales | CLAUDE / n-a | — | M-01…M-14 | `mutation-campaign.md` |
+| T08 certificación y convergencia | docs, roadmap, puntero | CLAUDE / n-a | — | suites, OpenAPI, E2E | §15–§16 |
+
+`DEEPSEEK CALLS = 0` (todo es seguridad/concurrencia: CLAUDE_ONLY).
+
+## 14. Diagnóstico (etapa 1) y compuerta material
+
+| Registro | Valor | Evidencia |
+|---|---|---|
+| `SQLITE_ROWCOUNT_1 / _2` | 1 / 0 (fichero y `:memory:`) | `rowcount-sqlite.md` |
+| `POSTGRES_ROWCOUNT_1 / _2` | 1 / 0 | `rowcount-postgres.md` |
+| `SQLITE_I1_CAS_BEHAVIOR` | **PROVEN**: 10/10 un `rowcount 1` y un `rowcount 0` con las dos lecturas antes de la primera escritura; 0 excepciones; 0 `database is locked`; un reemplazo por ronda | `sqlite-i1-poc.md` |
+| PostgreSQL I1 | `FOR UPDATE` serializa: el segundo lee ya revocada (5/5) | ídem |
+| `SQLITE_LOCK_BLOCKER` · `NEW_MATERIAL_DECISION` | 0 · 0 | — |
+
+**Compuerta material: PASS** → autorización etapa 2 consumida → `/speckit.implement`.
+
+## 15. `/speckit.implement` y resultados
+
+Implementación en `implementation.md` (producto 27 líneas en un fichero; fixture; módulo SA nuevo; REM-AUTH acotado).
+
+| Gate | Resultado | Evidencia |
+|---|---|---|
+| SA-01 I1 SQLite ×10 · SA-02 PostgreSQL ×5 | 10/10 · 5/5 `[200, 401]`, un reemplazo, 0 excepciones | `controlled-i1-sqlite.md`, `controlled-i1-postgres.md` |
+| SA-03 natural SQLite ×20 · módulo ×10 · SA-04 PostgreSQL ×20 | 20/20 · 10/10 · 20/20 (antes: 15/20 fallos sola) | `directed-series-after.txt` |
+| SA-05…SA-16 | 17/17 en SQLite y PostgreSQL (módulo SA + módulo objetivo) | `security-directed-tests.md` |
+| SA-17/18/19 | ACS 8/8, almacenes PASS, OpenAPI 544/533/11 `BearerAccessToken` sin cambio | `openapi.md` |
+| SA-20 | migración 0, esquema 0, modelo 0 | `git diff --stat -- alembic/ models.py` vacío |
+| Mutaciones | 14/14 muertas (M-11 con SA-15 añadida tras sobrevivir) | `mutation-campaign.md` |
+| Suites completas y E2E | véase §16 | `sqlite-full-1.md`, `sqlite-full-2.md`, `postgres-full.md`, `global-e2e.md` |
+
+## 16. Suites completas, E2E, `/speckit.analyze` final y veredicto
+
+| Corrida | Resultado | Clasificación |
+|---|---|---|
+| SQLite completa #1 | 1627 / 42 / 1040 (289 s) | 42 = ClamAV (BASELINE); AUTH target 0; +11 pasadas; TARGET_REGRESSION 0; UNKNOWN 0 |
+| SQLite completa #2 | 1627 / 42 / 1040 (764 s, carga de máquina) | idéntica prueba por prueba |
+| PostgreSQL completa | 2644 / 37 / 28 (860 s) | 35 ClamAV + 2 n9 (BASELINE); +10; TARGET_REGRESSION 0; UNKNOWN 0 |
+| OpenAPI | 544 / 533 / 11 · `BearerAccessToken` | sin cambio |
+| E2E global | 280 / 0 / 4 (`r20261014t010119…`) | limpia; red y reloj estables |
+
+`final-analyze.md`: todas las métricas a 0, trazabilidad 100 %. **Veredicto: `AUTH-ROTACION-SQLITE-HILOS — CLOSED /
+CONVERGED`** (`convergence.md`). OBS-05 cerrada en su punto exacto; OBS-01/02/04/06/07 abiertas. MASTER57 57; SPEC057
+PLANNED / NOT STARTED; NEXT MASTER SPEC NOT YET PRIORITIZED; producción fuera de alcance.

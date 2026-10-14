@@ -12,7 +12,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, overload
 
 import jwt as pyjwt
-from sqlalchemy import select, text
+from sqlalchemy import select, text, update
 from sqlalchemy.orm import Session
 
 from app.core import security
@@ -197,9 +197,12 @@ def rotate_session(db: Session, *, refresh_token: str, request_id: str | None = 
     # un solo uso —que es justamente lo que permite detectar un token robado— y
     # dejaría una sesión viva que nadie volvería a usar.
     #
-    # `with_for_update` no hace nada en SQLite, que serializa las escrituras por
-    # su cuenta; sobre PostgreSQL, que es el motor de producción (P21), la
-    # segunda transacción espera y encuentra la sesión ya revocada.
+    # Sobre PostgreSQL, el motor de producción (P21), la segunda transacción
+    # espera aquí y encuentra la sesión ya revocada. SQLite ignora `FOR UPDATE`
+    # y no retiene ningún bloqueo entre leer y escribir: dos transacciones pueden
+    # leer la misma sesión sin revocar antes de que ninguna escriba (demostrado
+    # en AUTH-ROTACION-SQLITE-HILOS), así que la propiedad de la rotación la
+    # decide además la escritura condicional de más abajo, igual en los dos motores.
     session = db.execute(
         select(AuthSession).where(AuthSession.id == payload.get("sid")).with_for_update()
     ).scalars().first()
@@ -216,8 +219,20 @@ def rotate_session(db: Session, *, refresh_token: str, request_id: str | None = 
     if not user or user.status != "ACTIVE":
         raise KontrolError(code="AUTH_USER_INACTIVE", message="El usuario no está activo", status_code=403)
 
-    # Rotación: revocar la anterior y crear una nueva.
-    session.revoked_at = _now()
+    # Rotación: la revocación es un UPDATE condicional sobre `revoked_at IS NULL`
+    # y solo quien actualiza exactamente una fila es dueño de la rotación; la otra
+    # petición concurrente actualiza cero filas y recibe el mismo 401 que un token
+    # ya usado. Solo el dueño crea la sesión de reemplazo.
+    ahora = _now()
+    revocadas = db.execute(
+        update(AuthSession)
+        .where(AuthSession.id == session.id, AuthSession.revoked_at.is_(None))
+        .values(revoked_at=ahora, updated_at=ahora)
+    ).rowcount
+    if revocadas == 0:
+        raise KontrolError(code="SESSION_REVOKED", message="Sesión revocada", status_code=401)
+    if revocadas != 1:
+        raise RuntimeError(f"rotación de sesión {session.id}: {revocadas} filas revocadas, se esperaba exactamente una")
     new_session, new_refresh = create_session(db, user=user, ip=session.ip, user_agent=session.user_agent)
     _audit(db, action="SESSION_REFRESHED", entity_type="User", entity_id=str(user.id), tenant_id=user.tenant_id, request_id=request_id)
     db.commit()

@@ -1,0 +1,86 @@
+=== GOOD → PASS ===
+  [GOOD] 17 passed in 9.59s
+  [objetivo x5] fallos=0
+=== M-01 · sin «revoked_at IS NULL» ===
+  [objetivo x20] fallos=0
+  [MUTATED] 2 failed, 7 passed in 3.83s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_01_02_dos_lecturas_antes_de_la_primera_escritura_dan_un_200_y_un_401_y_una_sola_sesion_nueva
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_16_contrato_estatico_de_la_rotacion_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.05s
+=== M-02 · ignorar rowcount (0 también sigue) ===
+  [objetivo x20] fallos=0
+  [MUTATED] 2 failed, 7 passed in 3.85s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_01_02_dos_lecturas_antes_de_la_primera_escritura_dan_un_200_y_un_401_y_una_sola_sesion_nueva
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_16_contrato_estatico_de_la_rotacion_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.09s
+=== M-03 · rowcount 0 tratado como éxito ===
+  [objetivo x20] fallos=0
+  [MUTATED] 1 failed, 8 passed in 3.82s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_01_02_dos_lecturas_antes_de_la_primera_escritura_dan_un_200_y_un_401_y_una_sola_sesion_nueva
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.07s
+=== M-04 · crear la sesión de reemplazo antes de ganar ===
+  [MUTATED] 3 failed, 6 passed in 14.30s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_01_02_dos_lecturas_antes_de_la_primera_escritura_dan_un_200_y_un_401_y_una_sola_sesion_nueva
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_06_10_11_el_token_usado_recibe_401_y_el_perdedor_no_crea_sesion
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_16_contrato_estatico_de_la_rotacion_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 8.16s
+=== M-05 · sin with_for_update() ===
+  [MUTATED] 1 failed, 8 passed in 3.83s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_16_contrato_estatico_de_la_rotacion_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.08s
+=== M-06 · rowcount 0 → 200 con el token viejo ===
+  [MUTATED] 1 failed, 8 passed in 3.86s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_01_02_dos_lecturas_antes_de_la_primera_escritura_dan_un_200_y_un_401_y_una_sola_sesion_nueva
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.07s
+=== M-07 · rowcount 0 → código/status equivocados ===
+  [MUTATED] 1 failed, 8 passed in 3.81s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_01_02_dos_lecturas_antes_de_la_primera_escritura_dan_un_200_y_un_401_y_una_sola_sesion_nueva
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.08s
+=== M-08 · el fixture vuelve a make_engine() ===
+  [objetivo x20] fallos=2
+  [MUTATED] 1 failed, 8 passed in 3.83s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_16_contrato_estatico_de_la_rotacion_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.07s
+=== M-09 · «exactamente un ganador» → «al menos uno» ===
+  [MUTATED] 1 failed, 8 passed in 3.81s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_16_contrato_estatico_de_la_rotacion_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.10s
+=== M-10 · aceptar [200, 200] ===
+  [MUTATED] 1 failed, 8 passed in 3.84s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_16_contrato_estatico_de_la_rotacion_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.07s
+=== M-11 · ocultar la excepción del hilo ===
+  [MUTATED] 2 passed in 3.48s
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.06s
+=== M-12 · OperationalError → SESSION_REVOKED ===
+  [MUTATED] 1 failed, 8 passed in 3.85s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_14_un_operational_error_en_la_escritura_no_se_traduce_a_session_revoked
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.04s
+=== M-13 · sleep antes del 401 ===
+  [MUTATED] 1 failed, 8 passed in 3.82s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_16_contrato_estatico_de_la_rotacion_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.03s
+=== M-14 · reloj local sin zona en vez del canónico ===
+  [MUTATED] 1 failed, 8 passed in 3.84s
+      FAILED tests/test_auth_rotacion_atomica.py::test_sa_16_contrato_estatico_de_la_rotacion_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 17 passed in 5.05s
+=== FIN · tmp restantes: 0 ===
+rc=0
+
+=== M-11 repetida tras añadir SA-15 (comportamental) ===
+  [MUTATED] 1 failed, 9 passed · FAILED tests/test_auth_rotacion_atomica.py::test_sa_15_las_excepciones_de_los_hilos_son_visibles
+  [RESTORED] idéntico · 10 passed

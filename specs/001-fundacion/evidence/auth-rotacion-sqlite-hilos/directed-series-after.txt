@@ -1,0 +1,77 @@
+# SA-03 · sola ×20 SQLite (natural)
+run 1: PASS · 1 passed in 6.71s
+run 2: PASS · 1 passed in 3.53s
+run 3: PASS · 1 passed in 3.40s
+run 4: PASS · 1 passed in 3.35s
+run 5: PASS · 1 passed in 3.36s
+run 6: PASS · 1 passed in 3.37s
+run 7: PASS · 1 passed in 3.31s
+run 8: PASS · 1 passed in 3.37s
+run 9: PASS · 1 passed in 3.32s
+run 10: PASS · 1 passed in 3.29s
+run 11: PASS · 1 passed in 3.30s
+run 12: PASS · 1 passed in 3.30s
+run 13: PASS · 1 passed in 3.34s
+run 14: PASS · 1 passed in 3.32s
+run 15: PASS · 1 passed in 3.38s
+run 16: PASS · 1 passed in 3.35s
+run 17: PASS · 1 passed in 3.36s
+run 18: PASS · 1 passed in 3.36s
+run 19: PASS · 1 passed in 3.34s
+run 20: PASS · 1 passed in 3.36s
+# módulo ×10 SQLite
+run 1: PASS · 8 passed in 3.66s
+run 2: PASS · 8 passed in 3.64s
+run 3: PASS · 8 passed in 3.60s
+run 4: PASS · 8 passed in 3.61s
+run 5: PASS · 8 passed in 3.65s
+run 6: PASS · 8 passed in 3.63s
+run 7: PASS · 8 passed in 3.62s
+run 8: PASS · 8 passed in 3.59s
+run 9: PASS · 8 passed in 3.62s
+run 10: PASS · 8 passed in 3.60s
+# I1 controlada ×10 SQLite (SA-01)
+run 1: PASS · 1 passed in 3.32s
+run 2: PASS · 1 passed in 3.33s
+run 3: PASS · 1 passed in 3.35s
+run 4: PASS · 1 passed in 3.31s
+run 5: PASS · 1 passed in 3.32s
+run 6: PASS · 1 passed in 3.32s
+run 7: PASS · 1 passed in 3.34s
+run 8: PASS · 1 passed in 3.33s
+run 9: PASS · 1 passed in 3.32s
+run 10: PASS · 1 passed in 3.33s
+# SA-17/18 · ACS + almacenes + openapi (SQLite)
+..........                                                               [100%]
+81 passed, 1 skipped in 18.28s
+# SA-04 · sola ×20 PostgreSQL (natural)
+run 1: PASS · 1 passed in 3.86s
+run 2: PASS · 1 passed in 3.98s
+run 3: PASS · 1 passed in 3.87s
+run 4: PASS · 1 passed in 3.89s
+run 5: PASS · 1 passed in 4.04s
+run 6: PASS · 1 passed in 4.00s
+run 7: PASS · 1 passed in 4.01s
+run 8: PASS · 1 passed in 3.95s
+run 9: PASS · 1 passed in 4.01s
+run 10: PASS · 1 passed in 4.04s
+run 11: PASS · 1 passed in 4.06s
+run 12: PASS · 1 passed in 4.12s
+run 13: PASS · 1 passed in 4.05s
+run 14: PASS · 1 passed in 4.01s
+run 15: PASS · 1 passed in 3.98s
+run 16: PASS · 1 passed in 4.06s
+run 17: PASS · 1 passed in 4.06s
+run 18: PASS · 1 passed in 4.06s
+run 19: PASS · 1 passed in 4.01s
+run 20: PASS · 1 passed in 4.02s
+# I1 controlada ×5 PostgreSQL (SA-02)
+run 1: PASS · 1 passed in 4.06s
+run 2: PASS · 1 passed in 3.98s
+run 3: PASS · 1 passed in 4.08s
+run 4: PASS · 1 passed in 4.09s
+run 5: PASS · 1 passed in 4.07s
+# PostgreSQL · módulo auth + ACS + almacenes + openapi
+...........................                                              [100%]
+99 passed in 30.80s
+FIN tmp=0

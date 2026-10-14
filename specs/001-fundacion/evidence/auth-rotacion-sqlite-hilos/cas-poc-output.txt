@@ -1,0 +1,14 @@
+    1× hilos=["('leyó_libre', 0, True)", "('leyó_libre', 1, True)"] original_revocada=True nuevas_vivas_acumuladas≈2
+    1× hilos=["('leyó_libre', 0, True)", "('leyó_libre', 1, True)"] original_revocada=True nuevas_vivas_acumuladas≈3
+    1× hilos=["('leyó_libre', 0, True)", "('leyó_libre', 1, True)"] original_revocada=True nuevas_vivas_acumuladas≈4
+    1× hilos=["('leyó_libre', 0, True)", "('leyó_libre', 1, True)"] original_revocada=True nuevas_vivas_acumuladas≈5
+    1× hilos=["('leyó_libre', 0, True)", "('leyó_libre', 1, True)"] original_revocada=True nuevas_vivas_acumuladas≈6
+    1× hilos=["('leyó_libre', 0, True)", "('leyó_libre', 1, True)"] original_revocada=True nuevas_vivas_acumuladas≈7
+    1× hilos=["('leyó_libre', 0, True)", "('leyó_libre', 1, True)"] original_revocada=True nuevas_vivas_acumuladas≈8
+    1× hilos=["('leyó_libre', 0, True)", "('leyó_libre', 1, True)"] original_revocada=True nuevas_vivas_acumuladas≈9
+    1× hilos=["('leyó_libre', 0, True)", "('leyó_libre', 1, True)"] original_revocada=True nuevas_vivas_acumuladas≈10
+    1× hilos=["('leyó_libre', 0, True)", "('leyó_libre', 1, True)"] original_revocada=True nuevas_vivas_acumuladas≈11
+[SQLite :memory: StaticPool] rowcount primero=1 segundo=0 · revoked_at puesto=True
+[PostgreSQL] rowcount primero=1 segundo=0 · revoked_at puesto=True
+--- I1 PostgreSQL (FOR UPDATE serializa la lectura: la barrera se pone tras leer; el segundo lee ya revocada), 5 rondas ---
+    5× hilos=["('leyó_libre', 1)", "('leyó_revocada',)"]
