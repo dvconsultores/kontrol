@@ -1,0 +1,15 @@
+# full-sqlite-1 (con analizador real)
+FAILED tests/test_licensing_central.py::TestSincronizacion::test_sync_success_records_run_snapshot_and_event
+FAILED tests/test_licensing_central.py::TestSincronizacion::test_sync_success_records_run_snapshot_and_event
+rc=1 dur=587.198723066 s · tmp=0
+
+# full-sqlite-2 (con analizador real)
+FAILED tests/test_licensing_central.py::TestSincronizacion::test_sync_success_records_run_snapshot_and_event
+FAILED tests/test_licensing_central.py::TestSincronizacion::test_sync_success_records_run_snapshot_and_event
+rc=1 dur=2945.506350842 s · tmp=0
+
+# full-pg (con analizador real)
+FAILED tests/test_licensing_central.py::TestSincronizacion::test_sync_success_records_run_snapshot_and_event
+FAILED tests/test_licensing_central.py::TestSincronizacion::test_sync_success_records_run_snapshot_and_event
+rc=1 dur=1868.905937496 s
+

@@ -1,0 +1,16 @@
+== Control B (motor_para_hilos, ciclo de vida intacto) ==
+.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:941: sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked
+.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:941: sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked
+.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:941: sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked
+.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:941: sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked
+.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:941: sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked
+.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:941: sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked
+.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:941: sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked
+7 failed, 1 passed in 39.40s
+duración 41 s
+== Control C (motor_para_hilos + ayudantes antes de la sesión) ==
+8 passed in 3.92s
+8 passed in 3.85s
+8 passed in 3.93s
+== Control C en PostgreSQL ==
+8 passed in 4.40s

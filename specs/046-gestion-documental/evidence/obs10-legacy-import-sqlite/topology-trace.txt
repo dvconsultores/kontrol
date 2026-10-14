@@ -1,0 +1,42 @@
+# Sonda de topología (Control A) · test_un_hash_suelto_sigue_sin_ser_un_documento · ids sintéticos
+===== test_un_hash_suelto_sigue_sin_ser_un_documento =====
+[CHECKOUT] hilo=MAIN conexion=C1
+[SQL] hilo=MAIN conexion=C1 PRAGMA main.table_info("document_types")
+[SQL] hilo=MAIN conexion=C1 PRAGMA temp.table_info("document_types")
+[SQL] hilo=MAIN conexion=C1 PRAGMA main.table_info("legacy_document_references")
+[SQL] hilo=MAIN conexion=C1 PRAGMA temp.table_info("legacy_document_references")
+[SQL] hilo=MAIN conexion=C1 CREATE TABLE document_types
+[SQL] hilo=MAIN conexion=C1 CREATE INDEX ix_document_types_company_id ON document_types
+[SQL] hilo=MAIN conexion=C1 CREATE TABLE legacy_document_references
+[SQL] hilo=MAIN conexion=C1 CREATE INDEX ix_legacy_document_references_company_id ON legacy_docume
+[COMMIT] hilo=MAIN conexion=C1
+[CHECKOUT] hilo=MAIN conexion=C1
+[COMMIT] hilo=MAIN conexion=C1
+[CHECKOUT] hilo=MAIN conexion=C1
+[SQL] hilo=MAIN conexion=C1 INSERT INTO audit_events
+[COMMIT] hilo=MAIN conexion=C1
+[CHECKOUT] hilo=T1 conexion=C1
+[SQL] hilo=T1 conexion=C1 INSERT INTO audit_events
+[COMMIT] hilo=T1 conexion=C1
+[CHECKOUT] hilo=T1 conexion=C1
+[COMMIT] hilo=T1 conexion=C1
+[CHECKOUT] hilo=T1 conexion=C1
+[ROLLBACK] hilo=T1 conexion=C1
+[CHECKOUT] hilo=T1 conexion=C1
+[ROLLBACK] hilo=T1 conexion=C1
+[CHECKOUT] hilo=MAIN conexion=C1
+[SQL] hilo=MAIN conexion=C1 INSERT INTO document_types
+[CHECKOUT] hilo=T1 conexion=C1
+[SQL] hilo=T1 conexion=C1 INSERT INTO audit_events
+[COMMIT] hilo=T1 conexion=C1
+[CHECKOUT] hilo=T1 conexion=C1
+[COMMIT] hilo=T1 conexion=C1
+[CHECKOUT] hilo=T1 conexion=C1
+[ROLLBACK] hilo=T1 conexion=C1
+[CHECKOUT] hilo=T1 conexion=C1
+[ROLLBACK] hilo=T1 conexion=C1
+[SQL] hilo=MAIN conexion=C1 INSERT INTO legacy_document_references
+[CHECKOUT] hilo=MAIN conexion=C1
+[ROLLBACK] hilo=MAIN conexion=C1
+[SQL] hilo=MAIN conexion=C1 UPDATE legacy_document_references SET classification=?, notes=?, updat
+[ROLLBACK] hilo=MAIN conexion=C1

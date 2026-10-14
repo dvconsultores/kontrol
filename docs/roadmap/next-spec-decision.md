@@ -3603,3 +3603,28 @@ del módulo), OBS-01, OBS-06, OBS-07, `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES
 `TEST-PG-CATALOGO-MARCA-DE-AGUA`; OBS-09 (imagen de producción sin analizador) para 046; OBS-04 para la dueña del
 inventario; OBS-03 solo tocada localmente. De entorno: `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de
 `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-15 · OBS-10 · DOCUMENTS-LEGACY-IMPORT-SQLITE convergida (dueña 046; apoyo 054)
+
+Ratificada por la dueña. Siete nodos exactos con una sola causa demostrada: la conexión pysqlite compartida de
+`make_engine()` dejaba que el `ROLLBACK` de la sesión auxiliar de `_actor()` (y el commit/rollback de las peticiones HTTP
+de `_company_id()`) descartaran la referencia que la prueba tenía insertada sin confirmar, y el `UPDATE` del servicio no
+encontraba fila (`StaleDataError`). Con conexiones propias y el ciclo intacto aflora el bloqueo de toda la base (7×
+`database is locked`); con la empresa y el actor resueltos antes de abrir la sesión de escritura, 8/8 en SQLite y en
+PostgreSQL. Corrección solo de pruebas (fixture sobre `motor_para_hilos`, ayudantes con `company`, orden de los
+identificadores, contrato estático por AST), aserciones intactas, producto 0; 12/12 mutaciones; dirigidas 34/34; SQLite
+1692/1/1046 ×2; PostgreSQL 2712/1/26; E2E 284/0/0 con analizador. El único rojo de las suites es OBS-11.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `OBS-10` — **ejecutado y convergido** (`specs/046-gestion-documental/spec046-obs10-legacy-import-sqlite-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Líneas base: SQLite 1692/1/1046 (OBS-11) · PostgreSQL 2712/1/26 (OBS-11) · E2E 284/0/0 · OpenAPI 544/533/11. Pendientes de
+decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION`, política del arnés E2E ante red/reloj. Candidatas técnicas sin decisión
+pendiente: **OBS-11** (`test_sync_success_records_run_snapshot_and_event` compara con el instante de inicio del módulo; único
+rojo en los dos motores), OBS-12 nueva (una SQLite completa tardó 2946 s frente a 587 s con resultados idénticos: carga de la
+máquina; medir sensibilidad al tiempo), OBS-01, OBS-06, OBS-07, `ADDITIONAL_UNBOUNDED_LISTING`,
+`ALMACENES-PAGINACION-LIMIT-OFFSET`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`; OBS-09 para 046; OBS-04 para la dueña del inventario;
+OBS-03 solo tocada localmente. De entorno: `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`.
+MASTER57 y SPEC057 sin cambio.

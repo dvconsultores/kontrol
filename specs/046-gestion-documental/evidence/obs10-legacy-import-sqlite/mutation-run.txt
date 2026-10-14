@@ -1,0 +1,100 @@
+=== GOOD → PASS ===
+  [GOOD] 12 passed in 3.81s
+=== M-01 · volver a make_engine() (conexión compartida) ===
+  [MUTATED] 1 failed, 11 passed in 3.82s
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_el_modulo_corre_sobre_una_conexion_por_sesion
+  [RESTORED] copias idénticas
+  [RESTORED] 12 passed in 3.85s
+=== M-02 · HTTP con la sesión de escritura abierta (caso 5) ===
+  [MUTATED] 1 failed, 11 passed in 3.90s
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_la_empresa_y_el_actor_se_resuelven_antes_de_abrir_la_sesion_de_escritura
+  [RESTORED] copias idénticas
+  [RESTORED] 12 passed in 3.84s
+=== M-03 · omitir el commit antes del GET ===
+  [MUTATED] 2 failed, 10 passed in 3.86s
+      FAILED tests/test_documents_legacy_import.py::test_lo_importado_no_se_entrega_hasta_verificarse
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_las_aserciones_del_legado_no_cambian
+  [RESTORED] copias idénticas
+  [RESTORED] 12 passed in 3.85s
+=== M-04 · :memory: privado por conexión ===
+  [MUTATED] 13 failed, 3 passed in 26.85s
+      FAILED tests/test_documents_legacy_import.py::test_binario_localizable_y_verificable_se_importa
+      FAILED tests/test_documents_legacy_import.py::test_lo_importado_no_se_entrega_hasta_verificarse
+      FAILED tests/test_documents_legacy_import.py::test_una_url_externa_no_se_importa_como_archivo_propio
+      FAILED tests/test_documents_legacy_import.py::test_un_archivo_que_no_esta_se_reporta_no_se_inventa
+      FAILED tests/test_documents_legacy_import.py::test_una_huella_que_no_coincide_detiene_la_importacion
+      FAILED tests/test_documents_legacy_import.py::test_un_hash_suelto_sigue_sin_ser_un_documento
+      FAILED tests/test_documents_legacy_import.py::test_una_ruta_heredada_no_autoriza_a_salir_del_volumen
+      FAILED tests/test_motor_para_hilos.py::test_acs_01_cada_hilo_concurrente_tiene_su_propia_conexion
+      FAILED tests/test_motor_para_hilos.py::test_acs_02_lo_confirmado_por_un_hilo_lo_ve_otro_por_otra_conexion
+      FAILED tests/test_motor_para_hilos.py::test_acs_03_lo_no_confirmado_no_lo_ve_otro_hilo_ni_antes_ni_despues_del_rollback
+      FAILED tests/test_motor_para_hilos.py::test_acs_04_dos_inserts_simultaneos_de_la_misma_clave_dan_un_exito_y_un_integrity_error
+      FAILED tests/test_motor_para_hilos.py::test_acs_06_el_datastore_temporal_existe_dentro_del_contexto_y_no_despues
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 12 passed in 3.85s
+=== M-05 · la API comparte una sola sesión con las pruebas ===
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+AssertionError: SEARCH no encontrado en tests/test_documents_legacy_import.py
+  [MUTATION] mal formada
+  [RESTORED] copias idénticas
+=== M-06 · debilitar el HTTP esperado ===
+  [MUTATED] 1 failed, 3 passed in 0.05s
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_las_aserciones_del_legado_no_cambian
+  [RESTORED] copias idénticas
+  [RESTORED] 12 passed in 3.84s
+=== M-07 · debilitar la clasificación esperada ===
+  [MUTATED] 1 failed, 3 passed in 0.05s
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_las_aserciones_del_legado_no_cambian
+  [RESTORED] copias idénticas
+  [RESTORED] 12 passed in 3.83s
+=== M-10 · retry ===
+  [MUTATED] 4 passed in 0.03s
+  [RESTORED] copias idénticas
+  [RESTORED] 12 passed in 3.80s
+=== M-11 · sleep ===
+  [MUTATED] 1 failed, 3 passed in 0.05s
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_las_aserciones_del_legado_no_cambian
+  [RESTORED] copias idénticas
+  [RESTORED] 12 passed in 3.81s
+=== M-12 · skip de una importadora ===
+  [MUTATED] 1 failed, 3 passed in 0.05s
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_las_aserciones_del_legado_no_cambian
+  [RESTORED] copias idénticas
+  [RESTORED] 12 passed in 3.84s
+=== M-13 · apagar el analizador en el fixture ===
+  [MUTATED] 3 failed, 1 passed in 0.09s
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_la_empresa_y_el_actor_se_resuelven_antes_de_abrir_la_sesion_de_escritura
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_los_ayudantes_reciben_la_empresa_y_no_llaman_a_la_api
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_las_aserciones_del_legado_no_cambian
+  [RESTORED] copias idénticas
+  [RESTORED] 12 passed in 3.84s
+=== M-14 · el ayudante vuelve a llamar a la API ===
+  [MUTATED] 1 failed, 3 passed in 0.05s
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_los_ayudantes_reciben_la_empresa_y_no_llaman_a_la_api
+  [RESTORED] copias idénticas
+  [RESTORED] 12 passed in 3.87s
+=== FIN · tmp: 0 ===
+rc=0
+
+=== 2.ª pasada (M-05 con el SEARCH corregido; M-10 tras prohibir bucles de reintento) ===
+=== GOOD → PASS ===
+  [GOOD] 12 passed in 3.94s
+=== M-05 · la API comparte una sola sesión con las pruebas ===
+  [MUTATED] 12 passed in 3.87s
+  [RESTORED] copias idénticas
+=== M-10 · retry ===
+  [MUTATED] 1 failed, 3 passed in 0.05s
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_las_aserciones_del_legado_no_cambian
+  [RESTORED] copias idénticas
+=== FIN · tmp: 0 ===
+
+=== 3.ª pasada (M-05 tras exigir sesión por petición en el override) ===
+=== GOOD → PASS ===
+  [GOOD] 12 passed in 3.82s
+=== M-05 · la API comparte una sola sesión con las pruebas ===
+  [MUTATED] 1 failed, 11 passed in 3.89s
+      FAILED tests/test_documents_legacy_import_contrato.py::test_o10_el_modulo_corre_sobre_una_conexion_por_sesion
+  [RESTORED] copias idénticas
+=== FIN · tmp: 0 ===
