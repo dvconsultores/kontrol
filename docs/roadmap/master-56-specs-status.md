@@ -118,6 +118,7 @@ Recontado de nuevo el 2026-10-13 tras converger `INSTALACION-KEY-REFERENCE-120` 
 Recontado de nuevo el 2026-10-13 tras converger `ALMACENES-CARRERA-SQLITE-HILOS` (dueña 008; apoyo 054): **57 filas**, sin cambio; ninguna Spec cambia de estado —solo arnés de backend, producto 0—; SPEC057 sigue PLANNED / NOT STARTED y `NEXT MASTER SPEC` NOT YET PRIORITIZED.
 Recontado de nuevo el 2026-10-14 tras el ciclo `AUTH-ROTACION-SQLITE-HILOS` (bloqueado por decisión de producto de la dueña; dueña 002 · Seguridad / sesiones, alojada en 001; apoyo 054): **57 filas**, sin cambio; ninguna Spec cambia de estado —solo diagnóstico, producto 0—; SPEC057 sigue PLANNED / NOT STARTED y `NEXT MASTER SPEC` NOT YET PRIORITIZED.
 Recontado de nuevo el 2026-10-14 tras converger `AUTH-ROTACION-SQLITE-HILOS` con la decisión A de la dueña (dueña 002 · Seguridad / sesiones, alojada en 001; apoyo 054): **57 filas**, sin cambio; la 002 sigue `PARTIALLY_IMPLEMENTED` —la rotación de sesión es ahora atómica en los dos motores, pero MFA sigue sin construir—; SPEC057 sigue PLANNED / NOT STARTED y `NEXT MASTER SPEC` NOT YET PRIORITIZED.
+Recontado de nuevo el 2026-10-14 tras converger `OBS-02 · SQLITE-HILOS-REMANENTES` (dueña 054; funcionales 011 y 046): **57 filas**, sin cambio; ninguna Spec cambia de estado —solo arnés de pruebas, producto 0—; SPEC057 sigue PLANNED / NOT STARTED y `NEXT MASTER SPEC` NOT YET PRIORITIZED.
 
 El grupo dominante —26 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el

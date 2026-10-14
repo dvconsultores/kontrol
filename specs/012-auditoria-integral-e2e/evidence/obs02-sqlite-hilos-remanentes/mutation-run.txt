@@ -1,0 +1,98 @@
+=== GOOD → PASS ===
+  [GOOD] 4 passed in 5.36s
+=== M-01 · el fixture objetivo vuelve a make_engine() ===
+  [MUTATED] 1 failed, 2 passed in 4.00s
+      FAILED tests/test_uom_concurrencia_hilos.py::test_o2_04_contrato_estatico_del_modulo_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 5.42s
+=== M-02 · O2-02 sobre la conexión compartida ===
+  [MUTATED] 1 failed in 4.12s
+      FAILED tests/test_uom_concurrencia_hilos.py::test_o2_02_dos_lecturas_antes_de_la_primera_escritura_dan_un_200_un_409_y_una_sola_version_nueva
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 5.55s
+=== M-03 · motor_para_hilos con :memory: privado por conexión (datastores distintos) ===
+  [MUTATED] 7 failed, 2 passed in 24.88s
+      FAILED tests/test_uom_concurrencia_hilos.py::test_o2_02_dos_lecturas_antes_de_la_primera_escritura_dan_un_200_un_409_y_una_sola_version_nueva
+      FAILED tests/test_motor_para_hilos.py::test_acs_01_cada_hilo_concurrente_tiene_su_propia_conexion
+      FAILED tests/test_motor_para_hilos.py::test_acs_02_lo_confirmado_por_un_hilo_lo_ve_otro_por_otra_conexion
+      FAILED tests/test_motor_para_hilos.py::test_acs_03_lo_no_confirmado_no_lo_ve_otro_hilo_ni_antes_ni_despues_del_rollback
+      FAILED tests/test_motor_para_hilos.py::test_acs_04_dos_inserts_simultaneos_de_la_misma_clave_dan_un_exito_y_un_integrity_error
+      FAILED tests/test_motor_para_hilos.py::test_acs_06_el_datastore_temporal_existe_dentro_del_contexto_y_no_despues
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 5.15s
+=== M-04 · ocultar la excepción del hilo en la prueba objetivo ===
+  [MUTATED] 3 passed in 3.63s
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 4.96s
+=== M-05 · aceptar un vector de resultados incompleto ===
+  [MUTATED] 1 failed, 2 passed in 3.99s
+      FAILED tests/test_uom_concurrencia_hilos.py::test_o2_04_contrato_estatico_del_modulo_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 5.03s
+=== M-06 · debilitar la aserción funcional ===
+  [MUTATED] 1 failed, 2 passed in 4.05s
+      FAILED tests/test_uom_concurrencia_hilos.py::test_o2_04_contrato_estatico_del_modulo_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 5.08s
+=== M-07 · retry (limpiar errores y seguir) ===
+  [MUTATED] 3 passed in 3.76s
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 5.74s
+=== M-08 · sleep en el hilo ===
+  [MUTATED] 1 failed, 2 passed in 3.77s
+      FAILED tests/test_uom_concurrencia_hilos.py::test_o2_04_contrato_estatico_del_modulo_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 5.47s
+=== M-09 · cerrojo que serializa la carrera ===
+  [MUTATED] 1 failed, 2 passed in 3.82s
+      FAILED tests/test_uom_concurrencia_hilos.py::test_o2_04_contrato_estatico_del_modulo_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 4.93s
+=== M-10 · skip de la prueba objetivo ===
+  [MUTATED] 1 failed, 2 passed in 3.76s
+      FAILED tests/test_uom_concurrencia_hilos.py::test_o2_04_contrato_estatico_del_modulo_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 4.99s
+=== M-11 · O2-11 vacía (ya no prueba que la excepción se vea) ===
+  [MUTATED] 1 passed in 3.59s
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 4.93s
+=== M-12 · sin limpieza del datastore temporal ===
+  [MUTATED] 3 failed, 5 passed in 0.13s
+      FAILED tests/test_motor_para_hilos.py::test_acs_06_el_datastore_temporal_existe_dentro_del_contexto_y_no_despues
+      FAILED tests/test_motor_para_hilos.py::test_acs_07_el_datastore_temporal_se_elimina_aunque_el_contexto_falle
+      FAILED tests/test_motor_para_hilos.py::test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 4.91s
+=== FIN · tmp restantes: 0 ===
+rc=0
+
+=== 2.ª pasada tras reforzar O2-04 (registro del error de hilo, bucles de reintento, contenido de O2-11) ===
+=== GOOD → PASS ===
+  [GOOD] 4 passed in 4.87s
+=== M-04 · ocultar la excepción del hilo en la prueba objetivo ===
+  [MUTATED] 1 failed, 2 passed in 3.69s
+      FAILED tests/test_uom_concurrencia_hilos.py::test_o2_04_contrato_estatico_del_modulo_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 4.89s
+=== M-07 · retry (limpiar errores y seguir) ===
+  [MUTATED] 1 failed, 2 passed in 3.70s
+      FAILED tests/test_uom_concurrencia_hilos.py::test_o2_04_contrato_estatico_del_modulo_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 4.99s
+=== M-11 · O2-11 vacía (ya no prueba que la excepción se vea) ===
+  [MUTATED] 1 passed in 3.59s
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 4.92s
+=== FIN · tmp restantes: 0 ===
+
+=== 3.ª pasada: M-11 con el módulo O2 entero como detector ===
+=== GOOD → PASS ===
+  [GOOD] 4 passed in 4.95s
+=== M-11 · O2-11 vacía (ya no prueba que la excepción se vea) ===
+  [MUTATED] 1 failed, 2 passed in 3.74s
+      FAILED tests/test_uom_concurrencia_hilos.py::test_o2_04_contrato_estatico_del_modulo_objetivo
+  [RESTORED] copias idénticas
+  [RESTORED] 4 passed in 4.83s
+=== FIN · tmp restantes: 0 ===

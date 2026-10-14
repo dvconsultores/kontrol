@@ -1,0 +1,58 @@
+# Series de frecuencia UoM antes de cualquier cambio (HEAD 89d9dee). Orden: .venv/bin/python -m pytest <objetivo> -q -o addopts= -p no:cacheprovider
+# A · sola ×20 SQLite sin sonda
+run 1: PASS · 1 passed in 3.86s · 
+run 2: PASS · 1 passed in 3.80s · 
+run 3: PASS · 1 passed in 3.72s · 
+run 4: PASS · 1 passed, 1 warning in 3.85s · InvalidRequestError: Could  
+run 5: PASS · 1 passed in 3.77s · 
+run 6: PASS · 1 passed in 3.77s · 
+run 7: PASS · 1 passed in 3.75s · 
+run 8: PASS · 1 passed in 3.73s · 
+run 9: PASS · 1 passed in 3.73s · 
+run 10: PASS · 1 passed in 3.82s · 
+run 11: PASS · 1 passed in 3.83s · 
+run 12: PASS · 1 passed, 1 warning in 3.79s · InvalidRequestError: Could  
+run 13: PASS · 1 passed, 1 warning in 3.76s · InvalidRequestError: Could  
+run 14: PASS · 1 passed, 1 warning in 3.84s · InvalidRequestError: Could  
+run 15: PASS · 1 passed in 3.80s · 
+run 16: PASS · 1 passed in 3.85s · 
+run 17: PASS · 1 passed in 3.76s · 
+run 18: PASS · 1 passed in 3.76s · 
+run 19: PASS · 1 passed in 3.77s · 
+run 20: PASS · 1 passed in 3.76s · 
+# A' · sola ×10 SQLite con sonda
+run 1: PASS · 1 passed in 3.77s ·  · conexiones=1
+run 2: PASS · 1 passed in 3.77s ·  · conexiones=1
+run 3: PASS · 1 passed in 3.79s ·  · conexiones=1
+run 4: PASS · 1 passed in 3.74s ·  · conexiones=1
+run 5: PASS · 1 passed in 3.84s ·  · conexiones=1
+run 6: PASS · 1 passed in 3.80s ·  · conexiones=1
+run 7: PASS · 1 passed in 3.75s ·  · conexiones=1
+run 8: PASS · 1 passed, 1 warning in 3.79s · InvalidRequestError: Could   · conexiones=1
+run 9: PASS · 1 passed in 3.78s ·  · conexiones=1
+run 10: PASS · 1 passed in 3.85s ·  · conexiones=1
+# B · módulo ×10 SQLite
+run 1: PASS · 16 passed in 7.76s · 
+run 2: PASS · 16 passed in 7.80s · 
+run 3: PASS · 16 passed in 7.80s · 
+run 4: PASS · 16 passed in 7.70s · 
+run 5: PASS · 16 passed in 7.70s · 
+run 6: PASS · 16 passed in 7.68s · 
+run 7: PASS · 16 passed in 7.73s · 
+run 8: PASS · 16 passed in 7.76s · 
+run 9: PASS · 16 passed in 7.74s · 
+run 10: PASS · 16 passed in 7.74s · 
+# C · sola ×10 PostgreSQL
+run 1: PASS · 1 passed in 4.49s · 
+run 2: PASS · 1 passed in 4.52s · 
+run 3: PASS · 1 passed in 4.53s · 
+run 4: PASS · 1 passed in 4.50s · 
+run 5: PASS · 1 passed in 4.56s · 
+run 6: PASS · 1 passed in 4.56s · 
+run 7: PASS · 1 passed in 4.48s · 
+run 8: PASS · 1 passed in 4.49s · 
+run 9: PASS · 1 passed in 4.48s · 
+run 10: PASS · 1 passed in 4.53s · 
+FIN tmp=0
+
+# Corridas PASS con un hilo muerto (PytestUnhandledThreadExceptionWarning · InvalidRequestError: Could not refresh instance): A-4, A-12, A-13, A-14, A'-8

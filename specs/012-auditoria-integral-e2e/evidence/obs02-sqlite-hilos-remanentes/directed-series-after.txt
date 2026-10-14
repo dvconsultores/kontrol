@@ -1,0 +1,65 @@
+# objetivo sola ×20 SQLite
+run 1: PASS · 1 passed in 3.61s
+run 2: PASS · 1 passed in 3.63s
+run 3: PASS · 1 passed in 3.67s
+run 4: PASS · 1 passed in 3.68s
+run 5: PASS · 1 passed in 3.69s
+run 6: PASS · 1 passed in 3.79s
+run 7: PASS · 1 passed in 3.68s
+run 8: PASS · 1 passed in 3.75s
+run 9: PASS · 1 passed in 3.71s
+run 10: PASS · 1 passed in 3.77s
+run 11: PASS · 1 passed in 3.71s
+run 12: PASS · 1 passed in 3.74s
+run 13: PASS · 1 passed in 3.69s
+run 14: PASS · 1 passed in 3.67s
+run 15: PASS · 1 passed in 3.73s
+run 16: PASS · 1 passed in 4.19s
+run 17: PASS · 1 passed in 3.63s
+run 18: PASS · 1 passed in 3.70s
+run 19: PASS · 1 passed in 3.67s
+run 20: PASS · 1 passed in 3.70s
+# módulo ×10 SQLite
+run 1: PASS · 16 passed in 7.62s
+run 2: PASS · 16 passed in 7.67s
+run 3: PASS · 16 passed in 7.72s
+run 4: PASS · 16 passed in 7.69s
+run 5: PASS · 16 passed in 8.35s
+run 6: PASS · 16 passed in 9.56s
+run 7: PASS · 16 passed in 8.18s
+run 8: PASS · 16 passed in 7.92s
+run 9: PASS · 16 passed in 8.16s
+run 10: PASS · 16 passed in 7.85s
+# I1 controlada ×10 SQLite (O2-02)
+run 1: PASS · 1 passed in 3.78s
+run 2: PASS · 1 passed in 3.75s
+run 3: PASS · 1 passed in 3.72s
+run 4: PASS · 1 passed in 3.68s
+run 5: PASS · 1 passed in 3.72s
+run 6: PASS · 1 passed in 3.75s
+run 7: PASS · 1 passed in 4.06s
+run 8: PASS · 1 passed in 3.80s
+run 9: PASS · 1 passed in 3.66s
+run 10: PASS · 1 passed in 3.74s
+# O2-13/14/15 · ACS + almacenes + auth (SQLite)
+59 passed, 1 skipped in 13.77s
+# objetivo sola ×10 PostgreSQL
+run 1: PASS · 1 passed in 4.36s
+run 2: PASS · 1 passed in 4.64s
+run 3: PASS · 1 passed in 4.60s
+run 4: PASS · 1 passed in 4.63s
+run 5: PASS · 1 passed in 4.60s
+run 6: PASS · 1 passed in 4.61s
+run 7: PASS · 1 passed in 4.61s
+run 8: PASS · 1 passed in 4.44s
+run 9: PASS · 1 passed in 4.42s
+run 10: PASS · 1 passed in 4.54s
+# I1 controlada ×5 PostgreSQL
+run 1: PASS · 1 passed in 4.31s
+run 2: PASS · 1 passed in 4.19s
+run 3: PASS · 1 passed in 4.50s
+run 4: PASS · 1 passed in 4.41s
+run 5: PASS · 1 passed in 4.40s
+# PostgreSQL · módulos uom + ACS + almacenes + auth
+79 passed in 26.79s
+FIN tmp=0

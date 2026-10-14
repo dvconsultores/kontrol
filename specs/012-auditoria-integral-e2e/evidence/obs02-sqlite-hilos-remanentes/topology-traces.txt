@@ -1,0 +1,41 @@
+# Sonda de topología UoM (ids sintéticos T/C; sin parámetros)
+
+## corrida A'-1 · run 1: PASS · 1 passed in 3.77s ·  · conexiones=1
+[ROLLBACK] hilo=T1 conexion=C1
+[ROLLBACK] hilo=T3 conexion=C1
+[ROLLBACK] hilo=T4 conexion=C1
+[SQL] hilo=T5 conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[SQL] hilo=T6 conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[SQL] hilo=T5 conexion=C1 UPDATE product_presentation_versions SET valid_to=?, updated_at=? WHER
+[SQL] hilo=T6 conexion=C1 UPDATE product_presentation_versions SET valid_to=?, updated_at=? WHER
+[SQL] hilo=T5 conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[SQL] hilo=T6 conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[SQL] hilo=T5 conexion=C1 INSERT INTO product_presentation_versions
+[SQL] hilo=T6 conexion=C1 INSERT INTO product_presentation_versions
+[DBERR] hilo=T6 tipo=IntegrityError msg=UNIQUE constraint failed: product_presentation_versions.presentation_id stmt=INSERT INTO p
+[COMMIT] hilo=T5 conexion=C1
+[ROLLBACK] hilo=T6 conexion=C1
+[SQL] hilo=T5 conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[COMMIT] hilo=T5 conexion=C1
+[SQL] hilo=MAIN conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[ROLLBACK] hilo=MAIN conexion=C1
+
+## corrida A'-8 · run 8: PASS · 1 passed, 1 warning in 3.79s · InvalidRequestError: Could   · conexiones=1
+[SQL] hilo=T1 conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[ROLLBACK] hilo=T1 conexion=C1
+[ROLLBACK] hilo=T3 conexion=C1
+[ROLLBACK] hilo=T4 conexion=C1
+[SQL] hilo=T5 conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[SQL] hilo=T5 conexion=C1 UPDATE product_presentation_versions SET valid_to=?, updated_at=? WHER
+[SQL] hilo=T6 conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[SQL] hilo=T5 conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[SQL] hilo=T6 conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[SQL] hilo=T6 conexion=C1 INSERT INTO product_presentation_versions
+[SQL] hilo=T5 conexion=C1 INSERT INTO product_presentation_versions
+[DBERR] hilo=T5 tipo=IntegrityError msg=UNIQUE constraint failed: product_presentation_versions.presentation_id stmt=INSERT INTO p
+[ROLLBACK] hilo=T5 conexion=C1
+[COMMIT] hilo=T6 conexion=C1
+[SQL] hilo=T6 conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[ROLLBACK] hilo=T6 conexion=C1
+[SQL] hilo=MAIN conexion=C1 SELECT product_presentation_versions.presentation_id, product_presenta
+[ROLLBACK] hilo=MAIN conexion=C1

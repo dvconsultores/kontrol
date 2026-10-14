@@ -25,7 +25,7 @@ from app.modules.master_data.models import (
     UnitOfMeasure,
 )
 from app.modules.setup.api import SetupRequest, initialize
-from tests.conftest import make_engine
+from tests.conftest import motor_para_hilos
 
 _CLIENT: TestClient
 _FACTORY: sessionmaker
@@ -34,37 +34,40 @@ _FACTORY: sessionmaker
 @pytest.fixture(scope="module", autouse=True)
 def _app_client():
     global _CLIENT, _FACTORY
-    engine = make_engine()
-    init_models()
-    Base.metadata.create_all(engine)
-    factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
-    import app.core.database as dm
+    # El módulo lanza hilos contra la app (`test_concurrencia_una_sola_version_abierta`): cada
+    # petición necesita su propia conexión sobre el mismo datastore, no la conexión compartida de
+    # `make_engine()` en SQLite (OBS-02 · SQLITE-HILOS-REMANENTES).
+    with motor_para_hilos("uom-conversion") as engine:
+        init_models()
+        Base.metadata.create_all(engine)
+        factory = sessionmaker(bind=engine, class_=Session, expire_on_commit=False)
+        import app.core.database as dm
 
-    dm._engine = engine  # type: ignore[attr-defined]
-    dm._SessionLocal = factory  # type: ignore[attr-defined]
+        dm._engine = engine  # type: ignore[attr-defined]
+        dm._SessionLocal = factory  # type: ignore[attr-defined]
 
-    db = factory()
-    initialize(db, SetupRequest(
-        tenant_code="DEMO", tenant_name="Empresa Demo", company_code="D1",
-        company_legal_name="Demo C.A.", company_rif="J-12345678-9",
-        admin_username="admin", admin_password="Kontrol2026Segura!"))
-    db.close()
+        db = factory()
+        initialize(db, SetupRequest(
+            tenant_code="DEMO", tenant_name="Empresa Demo", company_code="D1",
+            company_legal_name="Demo C.A.", company_rif="J-12345678-9",
+            admin_username="admin", admin_password="Kontrol2026Segura!"))
+        db.close()
 
-    from app.main import create_app
+        from app.main import create_app
 
-    app = create_app()
+        app = create_app()
 
-    def _override_get_db():
-        d = factory()
-        try:
-            yield d
-        finally:
-            d.close()
+        def _override_get_db():
+            d = factory()
+            try:
+                yield d
+            finally:
+                d.close()
 
-    app.dependency_overrides[get_db] = _override_get_db
-    _FACTORY = factory
-    _CLIENT = TestClient(app)
-    yield _CLIENT
+        app.dependency_overrides[get_db] = _override_get_db
+        _FACTORY = factory
+        _CLIENT = TestClient(app)
+        yield _CLIENT
 
 
 def _headers() -> dict:
@@ -354,17 +357,21 @@ def test_el_historico_no_cambia_al_cambiar_el_factor():
     caja = _presentation(product, "CAJA", "100",
                          valid_from=datetime.now(UTC) - timedelta(days=60))
 
-    # Documento histórico: 10 cajas, congelado con el factor de entonces.
+    # Documento histórico: 10 cajas, congelado con el factor de entonces. La empresa
+    # se resuelve por la API **antes** de abrir la sesión de escritura: con una
+    # conexión por petición, una petición HTTP no puede esperar a que esta sesión
+    # suelte su transacción (en SQLite, el bloqueo de escritura es de toda la base).
+    company = _company_id()
     db = _FACTORY()
     try:
         from app.modules.master_data.models import Party
 
         # `purchase_orders.supplier_id` referencia `parties`, no `suppliers`.
-        party = Party(company_id=_company_id(), code="PROV-HIST", name="Proveedor",
+        party = Party(company_id=company, code="PROV-HIST", name="Proveedor",
                       legal_name="Proveedor C.A.", tax_id="J-9", status="ACTIVE")
         db.add(party)
         db.flush()
-        order = PurchaseOrder(company_id=_company_id(), code="OC-HIST", status="APPROVED",
+        order = PurchaseOrder(company_id=company, code="OC-HIST", status="APPROVED",
                               currency="VED", supplier_id=str(party.id))
         db.add(order)
         db.flush()
@@ -468,12 +475,17 @@ def test_concurrencia_una_sola_version_abierta():
     caja = _presentation(product, "CAJA", "100",
                          valid_from=datetime.now(UTC) - timedelta(days=10))
     results: list[int] = []
+    errores: list[str] = []
     barrier = threading.Barrier(2)
 
     def attempt(factor: str) -> None:
         barrier.wait()
-        r = _CLIENT.post(f"/api/v1/maestros/presentaciones/{caja['id']}/versiones",
-                         headers=h, json={"factor_to_base": factor})
+        try:
+            r = _CLIENT.post(f"/api/v1/maestros/presentaciones/{caja['id']}/versiones",
+                             headers=h, json={"factor_to_base": factor})
+        except Exception as exc:  # noqa: BLE001 — un hilo muerto no puede pasar por un resultado
+            errores.append(f"{type(exc).__name__}: {exc}"[:200])
+            return
         results.append(r.status_code)
 
     threads = [threading.Thread(target=attempt, args=(f,)) for f in ("120", "130")]
@@ -481,6 +493,12 @@ def test_concurrencia_una_sola_version_abierta():
         t.start()
     for t in threads:
         t.join()
+
+    # Las dos peticiones responden (ningún hilo muere en silencio) y cada una es un
+    # resultado del contrato: 200 (creó la versión) o 409 (solapamiento). Si se
+    # serializan, las dos pueden crear versión; si chocan, una recibe 409.
+    assert errores == [], errores
+    assert len(results) == 2 and set(results) <= {200, 409} and 200 in results, results
 
     db = _FACTORY()
     try:

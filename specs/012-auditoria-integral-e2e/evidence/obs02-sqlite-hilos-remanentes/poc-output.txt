@@ -1,0 +1,24 @@
+# POC de topologías UoM (same-datastore-poc-uom.py; N=30; entorno sintético). Solo resumen.
+### (a) StaticPool :memory: — la topología actual ###
+--- (a) natural: 30 rondas ---
+   18× resultados=[200, 200] abiertas=1 versiones=3 error=-
+    7× resultados=[200, 409] abiertas=1 versiones=2 error=-
+    1× resultados=[409] abiertas=1 versiones=1 error=InvalidRequestError: Could not refresh instance '<ProductPresentationVersion at 0x7f5957862
+    1× resultados=[409] abiertas=1 versiones=1 error=InvalidRequestError: Could not refresh instance '<ProductPresentationVersion at 0x7f5958a25
+    1× resultados=[200] abiertas=1 versiones=2 error=DatabaseError: (sqlite3.DatabaseError) UNIQUE constraint failed: product_presentation
+    1× resultados=[409] abiertas=1 versiones=1 error=InvalidRequestError: Could not refresh instance '<ProductPresentationVersion at 0x7f5956f97
+    1× resultados=[200] abiertas=1 versiones=3 error=OperationalError: (sqlite3.OperationalError) cannot commit transaction - SQL statements 
+  conexiones DBAPI distintas vistas: 1
+--- (a) controlado: los dos leen antes de que ninguno escriba: 5 rondas ---
+    3× resultados=[200, 409] abiertas=1 versiones=2 error=-
+    1× resultados=[409] abiertas=1 versiones=1 error=InvalidRequestError: Could not refresh instance '<ProductPresentationVersion at 0x7f5955da5
+    1× resultados=[409] abiertas=1 versiones=1 error=InvalidRequestError: Could not refresh instance '<ProductPresentationVersion at 0x7f5955dcc
+### (b) fichero temporal — una conexión por hilo (lo que entrega motor_para_hilos) ###
+--- (b) natural: 30 rondas ---
+   27× resultados=[200, 409] abiertas=1 versiones=2 error=-
+    3× resultados=[200, 200] abiertas=1 versiones=3 error=-
+  conexiones DBAPI distintas vistas: 2
+--- (b) controlado: los dos leen antes de que ninguno escriba: 5 rondas ---
+    5× resultados=[200, 409] abiertas=1 versiones=2 error=-
+
+# trazas «Error no controlado» en stdout: 7

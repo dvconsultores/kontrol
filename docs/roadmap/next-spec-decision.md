@@ -3521,3 +3521,32 @@ con hilos sobre la conexión compartida; la primitiva y el patrón SA ya existen
 (`KONTROL_STORAGE_PATH`/`KONTROL_BACKUP_PATH` compartidos), OBS-07 (`csync_02` → `csync_01`). OBS-04 (la Spec 002 del
 inventario sin carpeta) para la dueña del inventario. De entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`.
 Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-14 · OBS-02 · SQLITE-HILOS-REMANENTES convergida (dueña 054; funcionales 011 y 046)
+
+Ratificada por la dueña. Inventario completo de pruebas con hilos (26 ficheros; UNKNOWN 0): el único objetivo real en
+SQLite era `test_uom_conversion.py::test_concurrencia_una_sola_version_abierta`, que **no fallaba** pero pasaba en 5/30
+corridas con un hilo muerto y sin versión creada: sobre la conexión compartida el rollback del perdedor deshacía el
+trabajo del ganador y la aserción «una sola abierta» se cumplía con la versión original (falso verde). Con conexiones
+propias sobre el mismo datastore (`motor_para_hilos`): 0 excepciones en 35 rondas y `[200, 409]` 5/5 con las dos
+lecturas forzadas. Corrección solo de arnés: fixture sobre `motor_para_hilos("uom-conversion")`, la prueba exige el
+vector completo y ninguna excepción de hilo (aserción funcional intacta), `test_el_historico…` resuelve la empresa por
+la API antes de abrir su sesión de escritura (con conexiones propias se bloqueaba a sí misma: `database is locked`), y
+el módulo nuevo `tests/test_uom_concurrencia_hilos.py` (I1 forzada en los dos motores, dos conexiones medidas,
+excepciones visibles, contrato estático). Las seis carreras de `test_documents_security.py` quedan clasificadas
+ENVIRONMENT_BLOCKED (422 `SCAN_FAILED` sin `clamscan`, antes de la carrera) y PostgreSQL por construcción
+(`pg_backend_pid`): sin cambio; nueva OBS-08 (no declaran `skipif(not PG)`). 12/12 mutaciones; SQLite 1630/42/1040 ×2;
+PostgreSQL 2647/37/28; OpenAPI 544/533/11; E2E 280/0/4; producto 0.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `OBS-02 · SQLITE-HILOS-REMANENTES` — **ejecutado y convergido** (`specs/012-auditoria-integral-e2e/spec054-obs02-sqlite-hilos-remanentes-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION` y la política del arnés E2E ante red cambiada o
+reloj saltado. Candidatas técnicas sin decisión pendiente: OBS-01 `WAREHOUSE-INTEGRITY-TRADUCE-TODO`,
+`ADDITIONAL_UNBOUNDED_LISTING`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`, `ALMACENES-PAGINACION-LIMIT-OFFSET`, OBS-06
+(`KONTROL_STORAGE_PATH`/`KONTROL_BACKUP_PATH` compartidos), OBS-07 (`csync_02` → `csync_01`), OBS-08 (carreras de
+documentos sin `skipif(not PG)`). OBS-03 sigue (solo tocada localmente); OBS-04 para la dueña del inventario. De
+entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y
+SPEC057 sin cambio.
