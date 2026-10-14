@@ -178,6 +178,9 @@ mutaciones, regresiones y coste. Si Claude hizo la tarea entera, se dice.
 - Frontend (desde `resources/frontend/`): `npm run typecheck` (recorre `src`, las herramientas y
   `e2e/` por referencias) · `npm run lint` · `npm test` · `npm run build` · `npm run test:e2e`.
 - PostgreSQL de QA: `bash qa/pg-provision.sh start`; siembra E2E: `bash qa/e2e-seed.sh <url>`.
+- Analizador real (ClamAV, sin privilegios, Spec 046): `python qa/clamav_qa.py provisionar` una vez; antes de
+  certificar, `eval "$(python qa/clamav_qa.py entorno)"` (exporta `KONTROL_CLAMSCAN_PATH` y `KONTROL_CLAMAV_DB`); la
+  E2E canónica con analizador es `qa/e2e-run.py --con-analizador`. Sin él, las cargas documentales se rechazan (falso seguro).
 - **Certificación E2E completa**: `resources/backend/.venv/bin/python qa/e2e-run.py` (desde la
   raíz; `-- <args de Playwright>` para dirigirla). Cada corrida crea una base PostgreSQL efímera
   nueva, la migra a la cabeza, la siembra, levanta backend y Vite contra ella, corre Playwright y

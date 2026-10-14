@@ -1,0 +1,72 @@
+# A2-POC · 2026-10-14 16:32:48
+## apt-get download (sin root)
+Des:1 http://deb.debian.org/debian trixie/main amd64 clamav amd64 1.4.3+dfsg-1 [6.941 kB]
+Des:2 http://deb.debian.org/debian trixie/main amd64 clamav-base all 1.4.3+dfsg-1 [100 kB]
+Des:3 http://deb.debian.org/debian trixie/main amd64 clamav-freshclam amd64 1.4.3+dfsg-1 [161 kB]
+Des:4 http://deb.debian.org/debian trixie/main amd64 libclamav12 amd64 1.4.3+dfsg-1 [7.796 kB]
+Descargados 15,0 MB en 41s (367 kB/s)
+6940524 clamav_1.4.3+dfsg-1_amd64.deb
+100044 clamav-base_1.4.3+dfsg-1_all.deb
+160528 clamav-freshclam_1.4.3+dfsg-1_amd64.deb
+7795952 libclamav12_1.4.3+dfsg-1_amd64.deb
+## verificación de sumas frente a los metadatos firmados de apt
+clamav: OK (b547efa63e2fe99a98ee07dcbd51e99345230836704a3c9ae6d38061e1f16fd9)
+libclamav12: OK (1f5ef9b53f377e64b75810aec724d6257832ee22dc7508f86f31f7ea96c84efe)
+clamav-freshclam: OK (1693185fcfc3d87ccd72ee542b83c12162759cdd8b83492a0ea6946427205863)
+clamav-base: OK (a679a34abdb455424867a8f9ab505af27adc4bf74265ba2c56ff727fa9718367)
+## extracción a prefijo de usuario (dpkg-deb -x)
+clambc
+clamscan
+clamsubmit
+freshclam
+sigtool
+libclamav.so.12
+libclamav.so.12.0.3
+libfreshclam.so.3
+libfreshclam.so.3.0.2
+## ldd
+	libclamav.so.12 => <tmp>/a2-poc/prefix/usr/lib/x86_64-linux-gnu/libclamav.so.12 (0x00007f764fa78000)
+## --version
+ClamAV 1.4.3
+ERROR: Can't open/parse the config file /etc/clamav/freshclam.conf
+## freshclam a directorio de usuario
+daily database available for download (remote version: 28153)
+Testing database: '<tmp>/a2-poc/db/tmp.a2287a9c09/clamav-d539fc3386edfc49ed14fc14f81531af.tmp-daily.cvd' ...
+Database test passed.
+daily.cvd updated (version: 28153, sigs: 355765, f-level: 90, builder: svc.clamav-publisher)
+main database available for download (remote version: 63)
+Testing database: '<tmp>/a2-poc/db/tmp.a2287a9c09/clamav-3475f26697c483a590701e850a6f9ca1.tmp-main.cvd' ...
+Database test passed.
+main.cvd updated (version: 63, sigs: 3287027, f-level: 90, builder: tomjudge)
+bytecode database available for download (remote version: 339)
+Testing database: '<tmp>/a2-poc/db/tmp.a2287a9c09/clamav-0c27701b13a20862ec2fcf35e2fbeb2c.tmp-bytecode.cvd' ...
+Database test passed.
+bytecode.cvd updated (version: 339, sigs: 80, f-level: 90, builder: nrandolp)
+freshclam rc=0 · 172 s
+ 
+120 .
+140 ..
+281702 bytecode.cvd
+23442609 daily.cvd
+90 freshclam.dat
+89072577 main.cvd
+## versión/fecha de la base (sigtool --info)
+File: <tmp>/a2-poc/db/bytecode.cvd Build time: 11 Sep 2025 08:29 -0400 Version: 339 Signatures: 80 
+File: <tmp>/a2-poc/db/daily.cvd Build time: 14 Oct 2026 06:24 +0000 Version: 28153 Signatures: 355765 
+File: <tmp>/a2-poc/db/main.cvd Build time: 16 Dec 2025 23:18 +0000 Version: 63 Signatures: 3287027 
+## escaneos
+<tmp>/a2-poc/limpio.pdf: OK
+limpio rc=0 · 8.020905012 s
+<tmp>/a2-poc/eicar.txt: Eicar-Test-Signature FOUND
+eicar rc=1 · 6.672139167 s
+LibClamAV Error: cli_loaddbdir: No supported database files found in <tmp>/a2-poc/vacio
+ERROR: Can't open file or directory
+sin base rc=2
+## sin LD_LIBRARY_PATH (¿arranca?)
+<tmp>/a2-poc/prefix/usr/bin/clamscan: error while loading shared libraries: libclamav.so.12: cannot open shared object file: No such file or directory
+rc=0
+## tamaño del prefijo y de la base
+66M <tmp>/a2-poc/prefix
+108M <tmp>/a2-poc/db
+15M <tmp>/a2-poc/deb
+FIN

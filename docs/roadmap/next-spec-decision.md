@@ -3577,3 +3577,29 @@ compartida; `motor_para_hilos` y el patrón de ciclo de vida ya existen), OBS-01
 `ALMACENES-PAGINACION-LIMIT-OFFSET`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`. Observación nueva OBS-09 (la imagen de producción no
 instala el analizador que el producto usa por defecto; dueña 046). De entorno: `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo:
 el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-14 · ENTORNO-SIN-CLAMSCAN convergida con la decisión A + A2 (dueña 046; apoyo 054)
+
+ClamAV real en el QA canónico sin privilegios: A2-POC en prefijo temporal (paquetes oficiales sin root con sumas
+verificadas, 1.4.3, una sola biblioteca en el prefijo, firmas por `freshclam` en directorio de usuario, CLEAN rc 0, EICAR
+rc 1, sin firmas rc 2) → `qa/clamav_qa.py` (`provisionar` idempotente, `preflight` QAC-01…08, `entorno`), `--con-analizador`
+en el runner E2E (preflight antes de crear la base; rutas al backend; manifiesto con motor y firmas), `tests/test_clamav_qa.py`
+(dobles del aprovisionamiento, nunca del análisis; reales con el marcador de las pruebas EICAR). Provisión real: 3 min 54 s,
+caché 14 s. Con el analizador: PostgreSQL documentos + n9 + carreras 93 passed; SQLite completa 1679/8/1046 ×2 (quedan los 7
+de OBS-10 y el intermitente de reloj, ahora OBS-11 con firma); PostgreSQL completa 2706/1/26; E2E 284/0/0 ×2; OpenAPI sin
+cambio; 14/14 mutaciones; producto, `scanning.py` y producción intactos; nada en Git. Orden canónica: `python
+qa/clamav_qa.py provisionar` · `eval "$(python qa/clamav_qa.py entorno)"` · suite PostgreSQL · `qa/e2e-run.py --con-analizador`.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `ENTORNO-SIN-CLAMSCAN` — **ejecutado y convergido** (`specs/046-gestion-documental/spec046-document-security-clamav-pg-contract-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Líneas base nuevas **con analizador**: SQLite 1679/8/1046 (7 OBS-10 + 1 OBS-11), PostgreSQL 2706/1/26 (OBS-11), E2E 284/0/0,
+OpenAPI 544/533/11. Pendientes de decisión de la dueña: `ROLES-SIN-TECHO-DE-DELEGACION`, política del arnés E2E ante
+red/reloj. Candidatas técnicas sin decisión pendiente: **OBS-10** (`test_documents_legacy_import.py` sobre la conexión
+compartida: 7 rojos SQLite restantes), **OBS-11** (`test_sync_success_records_run_snapshot_and_event` dependiente del reloj
+del módulo), OBS-01, OBS-06, OBS-07, `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LIMIT-OFFSET`,
+`TEST-PG-CATALOGO-MARCA-DE-AGUA`; OBS-09 (imagen de producción sin analizador) para 046; OBS-04 para la dueña del
+inventario; OBS-03 solo tocada localmente. De entorno: `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de
+`kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.

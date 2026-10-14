@@ -35,6 +35,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import IO, Any
 
+import clamav_qa
 import e2e_base as base
 import e2e_nombres as nombres
 from sqlalchemy import create_engine, text
@@ -139,11 +140,16 @@ class Corrida:
 
     def __init__(self, servidor: base.Servidor, *, orden: list[str] | None = None,
                  argumentos: list[str] | None = None, sin_frontend: bool = False,
+                 con_analizador: bool = False,
                  entorno: Mapping[str, str] | None = None, salida: IO[str] | None = None) -> None:
         self.servidor = servidor
         self.orden = orden
         self.argumentos = list(argumentos or [])
         self.sin_frontend = sin_frontend
+        #: Certificación con analizador real: el preflight de `clamav_qa` tiene que pasar antes de crear nada
+        #: y sus rutas van al backend de la corrida; sin esta opción, el comportamiento local de siempre
+        #: (las cargas con análisis se omiten con nombre si no hay `clamscan`).
+        self.con_analizador = con_analizador
         self.entorno = dict(os.environ if entorno is None else entorno)
         self.salida = salida or sys.stdout
         self.run_id = nombres.nuevo_run_id(datetime.now(UTC), os.getpid(), secrets.token_hex(3))
@@ -302,12 +308,27 @@ class Corrida:
             raise base.CicloDeBaseRoto(
                 f"puertos ocupados {ocupados}: hay otra pila en marcha y en esta máquina cabe una corrida a la vez")
 
+    def exigir_analizador(self) -> dict[str, Any]:
+        """Con `--con-analizador`: ClamAV real provisionado sin privilegios y certificado (CLEAN, EICAR, falso
+        seguro) **antes** de la corrida; si no, la corrida no empieza. Las rutas que ve el backend son las suyas."""
+        try:
+            estado = clamav_qa.asegurar()
+        except clamav_qa.AnalizadorNoListo as exc:
+            raise base.CicloDeBaseRoto(f"analizador exigido y no listo: {exc}") from exc
+        self.entorno.update(clamav_qa.variables(estado))
+        return {"motor": estado.motor, "bases": estado.bases, "exigido": True}
+
     def preparar(self) -> None:
         self.fase("comprobar")
         self.comprobar()
         self.manifiesto["protegidas_antes"] = self.huella_de_protegidas()
-        self.manifiesto["analizador"] = {"clamscan": self.analizador()}
-        self.decir(f"[e2e {self.run_id}] analizador: {self.analizador() or 'ausente (las cargas con análisis se omiten con nombre)'}")
+        certificado = self.exigir_analizador() if self.con_analizador else {"exigido": False}
+        self.manifiesto["analizador"] = {"clamscan": self.analizador(), **certificado}
+        detalle = ""
+        if certificado["exigido"]:
+            firmas = ", ".join(f"{nombre} {info.get('version', '?')}" for nombre, info in certificado["bases"].items())
+            detalle = f" · motor {certificado['motor']} · firmas {firmas}"
+        self.decir(f"[e2e {self.run_id}] analizador: {self.analizador() or 'ausente (las cargas con análisis se omiten con nombre)'}{detalle}")
 
         self.fase("crear base")
         base.crear_base(self.servidor, self.run_id, entorno=self.entorno)
@@ -666,11 +687,13 @@ def main(argv: list[str] | None = None) -> int:
         description="Corre la suite E2E contra una base PostgreSQL nueva, que se elimina al terminar.",
         epilog="Lo que sigue a «--» se pasa a Playwright (o a la orden indicada con --orden).")
     parser.add_argument("--sin-frontend", action="store_true", help="no arranca Vite (suites que solo usan la API)")
+    parser.add_argument("--con-analizador", action="store_true",
+                        help="exige ClamAV real (qa/clamav_qa.py): preflight antes de la corrida y rutas al backend")
     parser.add_argument("--orden", metavar="PROGRAMA",
                         help="programa que se ejecuta en lugar de Playwright, desde la raíz del repositorio")
     args, resto = parser.parse_known_args(argv)
     if resto[:1] == ["--"]:
         resto = resto[1:]
     corrida = Corrida(base.Servidor.del_entorno(), orden=[args.orden] if args.orden else None,
-                      argumentos=resto, sin_frontend=args.sin_frontend)
+                      argumentos=resto, sin_frontend=args.sin_frontend, con_analizador=args.con_analizador)
     return corrida.ejecutar()

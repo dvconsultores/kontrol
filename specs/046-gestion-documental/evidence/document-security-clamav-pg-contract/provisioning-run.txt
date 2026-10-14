@@ -1,0 +1,31 @@
+# provisionar · 16:38:57
+{"motor": "1.4.3", "bases": {"main": {"fichero": "main.cvd", "version": "63", "fecha": "16 Dec 2025 23:18 +0000", "firmas": "3287027"}, "daily": {"fichero": "daily.cvd", "version": "28153", "fecha": "14 Oct 2026 06:24 +0000", "firmas": "355765"}, "bytecode": {"fichero": "bytecode.cvd", "version": "339", "fecha": "11 Sep 2025 08:29 -0400", "firmas": "80"}}, "KONTROL_CLAMSCAN_PATH": "<home>/.cache/kontrol-qa/clamav/1.4/bin/clamscan", "KONTROL_CLAMAV_DB": "<home>/.cache/kontrol-qa/clamav/1.4/db"}
+
+real	3m54,438s
+user	0m19,950s
+sys	0m3,064s
+rc=0
+# preflight (caché) · 16:42:52
+{"motor": "1.4.3", "bases": {"main": {"fichero": "main.cvd", "version": "63", "fecha": "16 Dec 2025 23:18 +0000", "firmas": "3287027"}, "daily": {"fichero": "daily.cvd", "version": "28153", "fecha": "14 Oct 2026 06:24 +0000", "firmas": "355765"}, "bytecode": {"fichero": "bytecode.cvd", "version": "339", "fecha": "11 Sep 2025 08:29 -0400", "firmas": "80"}}, "KONTROL_CLAMSCAN_PATH": "<home>/.cache/kontrol-qa/clamav/1.4/bin/clamscan", "KONTROL_CLAMAV_DB": "<home>/.cache/kontrol-qa/clamav/1.4/db"}
+
+real	0m14,582s
+user	0m13,374s
+sys	0m1,202s
+rc=0
+# entorno
+export KONTROL_CLAMSCAN_PATH="<home>/.cache/kontrol-qa/clamav/1.4/bin/clamscan"
+export KONTROL_CLAMAV_DB="<home>/.cache/kontrol-qa/clamav/1.4/db"
+rc=0
+# segundo provisionar (idempotente) · 16:43:21
+{"motor": "1.4.3", "bases": {"main": {"fichero": "main.cvd", "version": "63", "fecha": "16 Dec 2025 23:18 +0000", "firmas": "3287027"}, "daily": {"fichero": "daily.cvd", "version": "28153", "fecha": "14 Oct 2026 06:24 +0000", "firmas": "355765"}, "bytecode": {"fichero": "bytecode.cvd", "version": "339", "fecha": "11 Sep 2025 08:29 -0400", "firmas": "80"}}, "KONTROL_CLAMSCAN_PATH": "<home>/.cache/kontrol-qa/clamav/1.4/bin/clamscan", "KONTROL_CLAMAV_DB": "<home>/.cache/kontrol-qa/clamav/1.4/db"}
+
+real	0m14,442s
+user	0m13,150s
+sys	0m1,249s
+rc=0
+16K <home>/.cache/kontrol-qa/clamav/1.4/bin
+108M <home>/.cache/kontrol-qa/clamav/1.4/db
+15M <home>/.cache/kontrol-qa/clamav/1.4/deb
+4,0K <home>/.cache/kontrol-qa/clamav/1.4/freshclam.conf
+67M <home>/.cache/kontrol-qa/clamav/1.4/prefix
+FIN

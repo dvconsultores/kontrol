@@ -1,0 +1,96 @@
+=== GOOD → PASS (con analizador real: KONTROL_CLAMSCAN_PATH=<qa-cache>/kontrol-qa/clamav/1.4/bin/clamscan) ===
+  [GOOD] 15 passed in 26.64s
+=== M-01 · el preflight solo comprueba que el ejecutable existe (sin escanear) ===
+  [MUTATED] 2 failed, 12 passed in 1.37s
+      FAILED tests/test_clamav_qa.py::test_clam_10_un_analizador_que_falla_al_analizar_no_pasa_el_preflight
+      FAILED tests/test_clamav_qa.py::test_clam_10b_un_analizador_que_dice_limpio_a_todo_no_pasa_el_preflight
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 15.62s
+=== M-02 · quitar la verificación de EICAR ===
+  [MUTATED] 1 failed, 13 passed in 8.26s
+      FAILED tests/test_clamav_qa.py::test_clam_10b_un_analizador_que_dice_limpio_a_todo_no_pasa_el_preflight
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 15.13s
+=== M-03 · aceptar que falten firmas ===
+  [MUTATED] 14 passed in 15.26s
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 15.97s
+=== M-04 · marcar el analizador disponible sin preflight ===
+  [MUTATED] 1 failed, 13 passed in 14.98s
+      FAILED tests/test_clamav_qa.py::test_clam_e2e_el_runner_exige_el_analizador_con_la_opcion_y_no_arranca_sin_el
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 16.05s
+=== M-05 · no exportar KONTROL_CLAMAV_DB ===
+  [MUTATED] 1 failed, 13 passed in 15.31s
+      FAILED tests/test_clamav_qa.py::test_clam_11_las_variables_son_las_que_lee_el_producto
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 15.83s
+=== M-06 · no exportar KONTROL_CLAMSCAN_PATH ===
+  [MUTATED] 1 failed, 13 passed in 15.29s
+      FAILED tests/test_clamav_qa.py::test_clam_11_las_variables_son_las_que_lee_el_producto
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 15.89s
+=== M-07 · instalar con sudo ===
+  [MUTATED] 1 failed, 13 passed in 16.30s
+      FAILED tests/test_clamav_qa.py::test_clam_13_el_provisionador_no_usa_sudo_ni_instala_en_el_sistema
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 16.99s
+=== M-08 · no distinguir el error de proceso de CLEAN (QAC-06) ===
+  [MUTATED] 14 passed in 15.27s
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 16.34s
+=== M-09 · sin idempotencia: descarga siempre ===
+  [MUTATED] 1 failed, 13 passed in 15.14s
+      FAILED tests/test_clamav_qa.py::test_clam_02_con_cache_valida_no_se_descarga_de_nuevo
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 15.21s
+=== M-10 · prefijo dentro del repositorio (firmas rastreables) ===
+  [MUTATED] 3 failed, 11 passed in 0.14s
+      FAILED tests/test_clamav_qa.py::test_clam_12_el_prefijo_esta_fuera_del_repositorio_y_git_no_rastrea_artefactos
+      FAILED tests/test_clamav_qa.py::test_clam_04_05_06_el_preflight_real_pasa_y_registra_motor_y_firmas
+      FAILED tests/test_clamav_qa.py::test_clam_09_unas_firmas_rotas_no_dan_clean
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 22.05s
+=== M-11 · el modo canónico vuelve a omitir si falta el analizador ===
+  [MUTATED] 1 failed, 13 passed in 15.43s
+      FAILED tests/test_clamav_qa.py::test_clam_e2e_el_runner_exige_el_analizador_con_la_opcion_y_no_arranca_sin_el
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 16.10s
+=== M-12 · EICAR aceptado también como limpio (rc 0) ===
+  [MUTATED] 1 failed, 13 passed in 15.12s
+      FAILED tests/test_clamav_qa.py::test_clam_10b_un_analizador_que_dice_limpio_a_todo_no_pasa_el_preflight
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 15.14s
+=== M-13 · debilitar el rechazo de EICAR en la prueba documental ===
+  [MUTATED] 1 passed in 11.67s
+  [RESTORED] copias idénticas
+  [RESTORED] 14 passed in 16.46s
+=== M-14 · aceptar un motor que no arranca ===
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+AssertionError: SEARCH no único/no encontrado en ../../qa/clamav_qa.py: 0
+  [MUTATION] mal formada
+  [RESTORED] copias idénticas
+=== FIN ===
+rc=0
+
+=== 2.ª pasada tras reforzar las pruebas (CLAM-08 razón exacta; CLAM-10c QAC-06; DOCENV-03 estático; M-14 corregida) ===
+=== GOOD → PASS (con analizador real: KONTROL_CLAMSCAN_PATH=<qa-cache>/kontrol-qa/clamav/1.4/bin/clamscan) ===
+  [GOOD] 17 passed in 24.03s
+=== M-03 · aceptar que falten firmas ===
+  [MUTATED] 1 failed, 15 passed in 13.82s
+      FAILED tests/test_clamav_qa.py::test_clam_08_sin_firmas_el_preflight_falla
+  [RESTORED] copias idénticas
+=== M-08 · no distinguir el error de proceso de CLEAN (QAC-06) ===
+  [MUTATED] 1 failed, 15 passed in 13.82s
+      FAILED tests/test_clamav_qa.py::test_clam_10c_un_analizador_que_ignora_las_firmas_no_pasa_el_preflight
+  [RESTORED] copias idénticas
+=== M-13 · debilitar el rechazo de EICAR en la prueba documental ===
+  [MUTATED] 1 failed, 15 passed in 13.78s
+      FAILED tests/test_clamav_qa.py::test_docenv_03_la_prueba_de_malware_exige_file_infected_exacto
+  [RESTORED] copias idénticas
+=== M-14 · aceptar un motor que no arranca ===
+  [MUTATED] 1 failed, 15 passed in 13.70s
+      FAILED tests/test_clamav_qa.py::test_clam_07_sin_binario_el_preflight_falla
+  [RESTORED] copias idénticas
+=== FIN ===

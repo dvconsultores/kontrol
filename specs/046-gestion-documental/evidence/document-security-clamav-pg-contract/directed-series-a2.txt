@@ -1,0 +1,23 @@
+# variables: KONTROL_CLAMSCAN_PATH=definida KONTROL_CLAMAV_DB=definida
+# CLAM reales + documentos en SQLite (con analizador) · 16:44:27
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected t
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected t
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected t
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected t
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected t
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected t
+.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:948: sqlalchemy.orm.exc.StaleDataError: UPDATE statement on table 'legacy_document_references' expected t
+tests/test_documents_security.py:746: la carrera de versiones se certifica sobre PostgreSQL (FR-046-115, conc-046; P21)
+tests/test_documents_security.py:765: la carrera de versiones se certifica sobre PostgreSQL (FR-046-115, conc-046; P21)
+tests/test_documents_security.py:776: la carrera de versiones se certifica sobre PostgreSQL (FR-046-115, conc-046; P21)
+tests/test_documents_security.py:804: la carrera de versiones se certifica sobre PostgreSQL (FR-046-115, conc-046; P21)
+tests/test_documents_security.py:831: la carrera de versiones se certifica sobre PostgreSQL (FR-046-115, conc-046; P21)
+tests/test_documents_security.py:911: la carrera de versiones se certifica sobre PostgreSQL (FR-046-115, conc-046; P21)
+tests/test_documents_security.py:948: la carrera de versiones se certifica sobre PostgreSQL (FR-046-115, conc-046; P21)
+7 failed, 75 passed, 9 skipped in 374.05s (0:06:14)
+# regresiones SQLite · 16:50:44
+78 passed, 1 skipped in 21.02s
+# CLAM reales + documentos + n9 en PostgreSQL (con analizador; las siete carreras se ejecutan) · 16:51:09
+tests/test_documents_carreras_contrato.py:104: la omisión se comprueba en SQLite
+93 passed, 1 skipped in 662.53s (0:11:02)
+FIN · 17:02:16

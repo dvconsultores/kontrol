@@ -1,0 +1,13 @@
+# Implementación A2 (etapa 2) · producto 0 · `scanning.py` 0 · producción 0
+
+| Fichero | Cambio |
+|---|---|
+| `qa/clamav_qa.py` (nuevo) | provisionador y preflight sin privilegios. `provisionar`: si el envoltorio `bin/clamscan` no arranca o no es 1.4.x → `apt-get download` de los cuatro paquetes oficiales a `deb/`, SHA256 de cada `.deb` contrastada con `apt-cache show` (descarte si difiere), `dpkg-deb -x` a `prefix/`, envoltorios `bin/{clamscan,freshclam,sigtool}` que fijan `LD_LIBRARY_PATH` al prefijo; si faltan firmas (o `--refrescar`) → `freshclam --config-file --datadir db/`. Idempotente: con caché válida no descarga. `preflight` (QAC-01…08): arranque y versión, tres bases presentes, PDF sintético `OK`, EICAR `FOUND`, directorio sin firmas → rc 2 (nunca 0/1), versión/fecha/firmas de cada base por `sigtool --info`; devuelve `Estado` o lanza `AnalizadorNoListo` con la causa. `variables`: `KONTROL_CLAMSCAN_PATH`/`KONTROL_CLAMAV_DB` (las que lee `scanning.ClamAVScanner`). `asegurar` = provisionar + preflight. Órdenes `provisionar`, `preflight`, `entorno` (`export …` para la shell). Prefijo: `KONTROL_QA_CLAMAV_HOME` o `${XDG_CACHE_HOME:-~/.cache}/kontrol-qa/clamav/1.4`: fuera del repo, independiente del CWD, nunca en Git. Sin `sudo`, sin instalación en el sistema, sin compilar |
+| `qa/e2e_corrida.py` | opción `--con-analizador` → `Corrida(con_analizador=True)`: en `preparar`, antes de crear la base, `clamav_qa.asegurar()`; si no está listo, `CicloDeBaseRoto` («analizador exigido y no listo: …») y la corrida no empieza; las dos variables van al entorno del backend; el manifiesto registra motor y bases (`exigido: true`) y la consola lo dice. Sin la opción, el comportamiento local de siempre |
+| `tests/test_clamav_qa.py` (nuevo) | CLAM-01/02/03/07/08/10/10b/11/12/13/14/15 con dobles **del aprovisionamiento** (nunca del análisis); CLAM-04/05/06/09 con el analizador real (marcador `skipif(not KONTROL_CLAMSCAN_PATH)`, el mismo que ya usan las pruebas EICAR); contrato del runner |
+| Sin cambio | `app/`, `scanning.py`, `Dockerfile.backend`, `compose.yaml`, migraciones, esquema, aserciones de las pruebas documentales, siete carreras PostgreSQL-only |
+
+Orden canónica (una sola, documentada aquí y en el delta): `python qa/clamav_qa.py provisionar` (una vez; ≈ 4 min con red) ·
+`eval "$(python qa/clamav_qa.py entorno)"` · backend PostgreSQL: `KONTROL_TEST_DB_URL=… .venv/bin/python -m pytest tests` ·
+E2E: `resources/backend/.venv/bin/python qa/e2e-run.py --con-analizador`. Evidencia de cada certificación: motor y versión/fecha
+de las bases (`provisioning-run.txt`, manifiesto E2E).
