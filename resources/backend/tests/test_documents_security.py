@@ -11,6 +11,7 @@ provee: un mock no sirve como evidencia de que esto está cerrado (§159).
 from __future__ import annotations
 
 import io
+import os
 import threading
 from pathlib import Path
 
@@ -48,6 +49,14 @@ _ROOT: Path
 #: Cadena EICAR: fixture de prueba estándar, **no** malware real. Partida para
 #: que este propio archivo fuente no dispare el antivirus del desarrollador.
 EICAR = (b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE" b"!$H+H" b"*")
+
+#: Las siete carreras de versión se fuerzan con primitivas de PostgreSQL (`tests/concurrency.py`:
+#: `pg_backend_pid`, `pg_stat_activity`) y su contrato es que **PostgreSQL decide** (FR-046-115,
+#: `conc-046-concurrent-version-delta.md`, G-CONC-046-06; P21). En SQLite no existen esas
+#: funciones ni el bloqueo de fila: se omiten diciéndolo, como `test_license_import_race.py`.
+PG = os.environ.get("KONTROL_TEST_DB_URL", "").startswith("postgresql")
+solo_postgresql = pytest.mark.skipif(
+    not PG, reason="la carrera de versiones se certifica sobre PostgreSQL (FR-046-115, conc-046; P21)")
 
 PDF = b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n%%EOF\n"
 PNG = bytes.fromhex("89504e470d0a1a0a0000000d49484452") + b"\x00" * 64
@@ -734,6 +743,7 @@ def _pid(sesion: Session) -> int:
     return sesion.execute(text("SELECT pg_backend_pid()")).scalar()
 
 
+@solo_postgresql
 @pytest.mark.parametrize("vuelta", range(3))
 def test_dos_subidas_simultaneas_no_producen_dos_v2(vuelta):
     """La carrera ocurre de verdad, tres veces: una V2, una vigente y un conflicto de dominio."""
@@ -752,6 +762,7 @@ def test_dos_subidas_simultaneas_no_producen_dos_v2(vuelta):
     _un_efecto_mas(antes, despues)
 
 
+@solo_postgresql
 def test_la_primera_version_simultanea_tampoco_da_un_500():
     """Sin versión previa la segunda espera en el índice único, no en una fila: mismo resultado."""
     document = _document(_doc_type()["id"])["id"]
@@ -762,6 +773,7 @@ def test_la_primera_version_simultanea_tampoco_da_un_500():
     assert _huella(document)["vigente"] == str(primero.id)
 
 
+@solo_postgresql
 def test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500():
     document = _document(_doc_type()["id"])["id"]
     assert _upload(document, PDF, name="base.pdf").status_code == 200
@@ -789,6 +801,7 @@ def test_la_peticion_http_que_pierde_la_carrera_recibe_un_409_y_no_un_500():
     _un_efecto_mas(antes, despues)
 
 
+@solo_postgresql
 def test_tres_subidas_simultaneas_crean_una_sola_version():
     document = _document(_doc_type()["id"])["id"]
     assert _upload(document, PDF, name="base.pdf").status_code == 200
@@ -815,6 +828,7 @@ def test_tres_subidas_simultaneas_crean_una_sola_version():
     _un_efecto_mas(antes, despues)
 
 
+@solo_postgresql
 def test_la_misma_clave_en_carrera_devuelve_la_version_ganadora():
     document = _document(_doc_type()["id"])["id"]
     assert _upload(document, PDF, name="base.pdf").status_code == 200
@@ -894,6 +908,7 @@ def _documento_del_otro_tenant() -> str:
         db.close()
 
 
+@solo_postgresql
 def test_subidas_a_documentos_distintos_no_se_esperan():
     """Ni otro documento de la misma empresa ni el de otro tenant esperan a una carrera ajena."""
     tipo = _doc_type()["id"]
@@ -930,6 +945,7 @@ def carrera_libre(document_id: str, usuario: str) -> DocumentVersion:
         sesion.close()
 
 
+@solo_postgresql
 def test_otro_tenant_no_alcanza_un_documento_ajeno_durante_la_carrera():
     document = _document(_doc_type()["id"])["id"]
     assert _upload(document, PDF, name="base.pdf").status_code == 200

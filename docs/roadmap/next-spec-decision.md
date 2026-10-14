@@ -3550,3 +3550,30 @@ reloj saltado. Candidatas técnicas sin decisión pendiente: OBS-01 `WAREHOUSE-I
 documentos sin `skipif(not PG)`). OBS-03 sigue (solo tocada localmente); OBS-04 para la dueña del inventario. De
 entorno: `ENTORNO-SIN-CLAMSCAN`, `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y
 SPEC057 sin cambio.
+
+## 2026-10-14 · OBS-08 convergida · ENTORNO-SIN-CLAMSCAN bloqueada por decisión de la dueña (dueña 046; apoyo 054)
+
+Inicio ratificado por la dueña (solo investigar). Arquitectura: `FileSecurityScanner` con `ClamAVScanner` por `clamscan`,
+falso seguro (`SCAN_FAILED`, nunca `CLEAN`), `DisabledScanner` declarado, `set_scanner` solo para pruebas; CL-046-09/FR-046-072
+lo hacen capacidad configurable; la Spec 046 se certificó con ClamAV 1.4.3 real (ESC-046-01), sin guion en el repo; esta
+máquina no lo tiene y `apt` exige privilegios. Inventario exacto con `--tb=line` y precedencia de subida probada: SQLite 42 =
+35 del analizador + **7 de `test_documents_legacy_import.py` que no lo son** (OBS-10: `StaleDataError` por la conexión
+pysqlite compartida más una petición HTTP con la sesión abierta; PostgreSQL los pasa); PostgreSQL 37 = 35 + 2 n9; E2E 4
+cargas (runner `KONTROL_E2E_SCANNER_AVAILABLE=false`). Las carreras documentales son PostgreSQL-only por contrato
+(FR-046-115, conc-046 «PostgreSQL decide», `tests/concurrency.py`, P21) y por implementación (`pg_backend_pid`,
+`pg_stat_activity`, y dos que exigen bloqueo de fila, no de toda la base): **siete**, no seis. OBS-08 se cierra con el
+marcador canónico y un contrato estático; ENTORNO-SIN-CLAMSCAN queda bloqueada: proveer ClamAV real en el QA canónico
+(**A**, recomendada) o seguir declarando (B); C (doble `CLEAN`) y D (todo PostgreSQL-only) descartadas. SQLite 1637/33/1049
+×2, PostgreSQL 2653/37/29, OpenAPI 544/533/11, E2E 280/0/4; producto 0; 10/10 mutaciones.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `ENTORNO-SIN-CLAMSCAN` — **BLOCKED BY OWNER DECISION** (A/B): el siguiente prompt continúa este bloqueo con la decisión; OBS-08 ejecutada y convergida en la misma delta (`specs/046-gestion-documental/spec046-document-security-clamav-pg-contract-delta.md`) |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Pendientes de decisión de la dueña: **`ENTORNO-SIN-CLAMSCAN` (A/B)**, `ROLES-SIN-TECHO-DE-DELEGACION`, política del arnés E2E
+ante red/reloj. Candidatas técnicas sin decisión pendiente: OBS-10 (`test_documents_legacy_import.py` sobre la conexión
+compartida; `motor_para_hilos` y el patrón de ciclo de vida ya existen), OBS-01, OBS-06, OBS-07, `ADDITIONAL_UNBOUNDED_LISTING`,
+`ALMACENES-PAGINACION-LIMIT-OFFSET`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`. Observación nueva OBS-09 (la imagen de producción no
+instala el analizador que el producto usa por defecto; dueña 046). De entorno: `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo:
+el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.

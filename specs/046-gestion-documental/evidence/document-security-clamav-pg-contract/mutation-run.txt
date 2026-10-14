@@ -1,0 +1,115 @@
+=== GOOD → PASS ===
+  [GOOD] 7 passed in 1.44s
+=== M-01 · quitar el marcador a una carrera ===
+  [MUTATED] 2 failed, 5 passed in 1.44s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_05_exactamente_las_seis_carreras_llevan_el_marcador_postgresql
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_en_sqlite_las_carreras_se_omiten_con_su_razon
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 2.08s
+=== M-02 · quitar el marcador a la carrera parametrizada ===
+  [MUTATED] 2 failed, 5 passed in 1.47s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_05_exactamente_las_seis_carreras_llevan_el_marcador_postgresql
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_en_sqlite_las_carreras_se_omiten_con_su_razon
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.46s
+=== M-03 · marcar PostgreSQL-only una prueba que no es carrera ===
+  [MUTATED] 1 failed, 6 passed in 1.45s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_05_exactamente_las_seis_carreras_llevan_el_marcador_postgresql
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.43s
+=== M-04 · razón sin autoridad ===
+  [MUTATED] 7 passed in 1.47s
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.44s
+=== M-05 · PG fijo: el marcador nunca omite ===
+  [MUTATED] 2 failed, 5 passed in 1.46s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_el_marcador_depende_del_motor_y_cita_su_autoridad
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_en_sqlite_las_carreras_se_omiten_con_su_razon
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.47s
+=== M-06 · omitir siempre (también en PostgreSQL) ===
+  [MUTATED] 1 failed, 6 passed in 1.50s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_el_marcador_depende_del_motor_y_cita_su_autoridad
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.43s
+=== M-07 · primitiva PostgreSQL en una prueba sin marcador ===
+  [MUTATED] 7 passed in 1.43s
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.44s
+=== M-08 · apagar el analizador en el fixture ===
+  [MUTATED] 1 failed, 6 passed in 1.46s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_14_el_modulo_no_sustituye_ni_apaga_el_analizador
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.44s
+=== M-09 · aceptar el rechazo del analizador como subida ===
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+AssertionError: SEARCH no único/no encontrado en tests/test_documents_security.py: 4
+  [MUTATION] mal formada
+  [RESTORED] copias idénticas
+=== FIN ===
+rc=0
+
+=== pasadas 2–4: refuerzo del contrato (razón del marcador; nombres por AST; mecanismos de carrera) ===
+(M-04 y M-07 sobrevivieron a la primera pasada; se reforzó DOCENV-12 y se descubrió la séptima carrera)
+
+=== 5.ª pasada completa, con la séptima carrera marcada ===
+=== GOOD → PASS ===
+  [GOOD] 7 passed in 1.41s
+=== M-01 · quitar el marcador a una carrera ===
+  [MUTATED] 2 failed, 5 passed in 1.49s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_05_exactamente_las_carreras_llevan_el_marcador_postgresql
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_en_sqlite_las_carreras_se_omiten_con_su_razon
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.41s
+=== M-02 · quitar el marcador a la carrera parametrizada ===
+  [MUTATED] 2 failed, 5 passed in 1.44s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_05_exactamente_las_carreras_llevan_el_marcador_postgresql
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_en_sqlite_las_carreras_se_omiten_con_su_razon
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.40s
+=== M-03 · marcar PostgreSQL-only una prueba que no es carrera ===
+  [MUTATED] 1 failed, 6 passed in 1.44s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_05_exactamente_las_carreras_llevan_el_marcador_postgresql
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.41s
+=== M-04 · razón sin autoridad ===
+  [MUTATED] 1 failed, 6 passed in 1.41s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_el_marcador_depende_del_motor_y_cita_su_autoridad
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.41s
+=== M-05 · PG fijo: el marcador nunca omite ===
+  [MUTATED] 2 failed, 5 passed in 1.45s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_el_marcador_depende_del_motor_y_cita_su_autoridad
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_en_sqlite_las_carreras_se_omiten_con_su_razon
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.44s
+=== M-06 · omitir siempre (también en PostgreSQL) ===
+  [MUTATED] 1 failed, 6 passed in 1.45s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_el_marcador_depende_del_motor_y_cita_su_autoridad
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.46s
+=== M-07 · primitiva PostgreSQL en una prueba sin marcador ===
+  [MUTATED] 1 failed, 6 passed in 1.47s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_las_primitivas_de_postgresql_solo_viven_en_las_carreras_marcadas
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.45s
+=== M-08 · apagar el analizador en el fixture ===
+  [MUTATED] 1 failed, 6 passed in 1.48s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_14_el_modulo_no_sustituye_ni_apaga_el_analizador
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.47s
+=== M-09 · aceptar el rechazo del analizador como subida ===
+  [MUTATED] 1 failed, 6 passed in 1.46s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_15_ningun_rechazo_del_analizador_se_acepta_como_subida
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.46s
+=== M-10 · quitar el marcador a la séptima carrera (documentos distintos no se esperan) ===
+  [MUTATED] 2 failed, 5 passed in 1.47s
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_05_exactamente_las_carreras_llevan_el_marcador_postgresql
+      FAILED tests/test_documents_carreras_contrato.py::test_docenv_12_en_sqlite_las_carreras_se_omiten_con_su_razon
+  [RESTORED] copias idénticas
+  [RESTORED] 7 passed in 1.46s
+=== FIN ===
+ M tests/test_documents_security.py
+?? tests/test_documents_carreras_contrato.py

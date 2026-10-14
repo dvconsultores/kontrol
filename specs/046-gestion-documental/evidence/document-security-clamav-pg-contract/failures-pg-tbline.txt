@@ -1,0 +1,38 @@
+tests/test_documents.py:168: AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"6e1a0c76df1e446d99be389f0ebff5ec","details":{"scan_result":"SCAN_FAILED","signature":null}}
+tests/test_documents.py:200: AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"8a71458206724c448302f517f935193c","details":{"scan_result":"SCAN_FAILED","signature":null}}
+tests/test_documents.py:245: KeyError: 'version_number'
+tests/test_documents.py:268: assert 422 == 200
+tests/test_documents.py:426: assert 0 == 1
+tests/test_documents.py:453: assert 0 == 1
+tests/test_documents.py:499: assert 200 == 409
+tests/test_documents.py:510: assert 200 == 409
+tests/test_documents.py:643: AssertionError: assert 422 == 200
+tests/test_documents.py:693: IndexError: list index out of range
+tests/test_documents_security.py:213: AssertionError: ('../../../../etc/passwd.pdf', '{"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"af200c2debab408b911768506d63d531","details":{"scan_result":"SCAN_FAILED","signature":null}}')
+tests/test_documents_security.py:269: AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"a59ffb477f404d2ba4f1bd10e61a6622","details":{"scan_result":"SCAN_FAILED","signature":null}}
+tests/test_documents_security.py:194: AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+tests/test_documents_security.py:194: AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+tests/test_documents_security.py:421: KeyError: 'sha256'
+tests/test_documents_security.py:443: AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"0515b0d8b37a44c58c7c11cac2e6a241","details":{"scan_result":"SCAN_FAILED","signature":null}}
+tests/test_documents_security.py:495: AssertionError: {"deleted":true}
+tests/test_documents_security.py:524: AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"c5e986bb9fef482eb46b37fcecf947d2","details":{"scan_result":"SCAN_FAILED","signature":null}}
+tests/test_documents_security.py:194: AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+tests/test_documents_security.py:594: AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"edbb7b7d640746cc8228accaf8beebd6","details":{"scan_result":"SCAN_FAILED","signature":null}}
+tests/test_documents_security.py:194: AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+tests/test_documents_security.py:194: AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+tests/test_documents_security.py:194: AttributeError: 'NoneType' object has no attribute 'stored_file_id'
+tests/test_documents_security.py:741: AssertionError: assert 422 == 200
+tests/test_documents_security.py:741: AssertionError: assert 422 == 200
+tests/test_documents_security.py:741: AssertionError: assert 422 == 200
+app/modules/documents/service.py:211: app.core.errors.KontrolError: No se pudo verificar la seguridad del archivo
+tests/test_documents_security.py:767: AssertionError: assert 422 == 200
+tests/test_documents_security.py:794: AssertionError: assert 422 == 200
+tests/test_documents_security.py:820: AssertionError: assert 422 == 200
+tests/test_documents_security.py:856: AssertionError: {"code":"SCAN_FAILED","message":"No se pudo verificar la seguridad del archivo","field_errors":{},"request_id":"7d25d437cf0044f6b692279212bcab09","details":{"scan_result":"SCAN_FAILED","signature":null}}
+tests/test_documents_security.py:871: AssertionError: assert 422 == 200
+tests/test_documents_security.py:901: AssertionError: assert 422 == 200
+tests/test_documents_security.py:935: AssertionError: assert 422 == 200
+tests/test_documents_security.py:983: KeyError: 'file'
+tests/test_n9_integrity.py:52: AssertionError: no se pudo descargar el original: {"code":"FILE_NOT_SCANNED","message":"El archivo aún no superó la verificación de seguridad","field_errors":{},"request_id":"fc7fc703238c47678cddcc3b47921304","details":null}
+tests/test_n9_integrity.py:105: assert 409 == 500
+37 failed, 33 passed, 3 skipped, 6 warnings in 31.48s
