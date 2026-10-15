@@ -3628,3 +3628,28 @@ máquina; medir sensibilidad al tiempo), OBS-01, OBS-06, OBS-07, `ADDITIONAL_UNB
 `ALMACENES-PAGINACION-LIMIT-OFFSET`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`; OBS-09 para 046; OBS-04 para la dueña del inventario;
 OBS-03 solo tocada localmente. De entorno: `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`.
 MASTER57 y SPEC057 sin cambio.
+
+## 2026-10-15 · OBS-11 · LICENSING-CENTRAL-SYNC-TIME-ASSERTION convergida (dueña 010; apoyo 054)
+
+Ratificada por la dueña. Un solo nodo, única causa demostrada: la referencia de módulo `SERVER_TIME` (importación + 5 min)
+hacía de frontera de una operación posterior; con el módulo envejecido más de cinco minutos (toda suite completa) la
+activación quedaba por delante del reloj del servidor falso y el producto, monótono como exige FR-010-003, conservaba la
+activación. Matriz de envejecimiento determinista sin sleep (FAIL desde 5 min en SQLite y PostgreSQL), control de frontera
+de operación 8/8 y verdadero negativo PASS. Corrección solo de pruebas: el transporte falso captura su reloj al construirse y
+la prueba compara con él; seis regresiones nuevas (envejecida, monótona, contrato estático, centinela del reloj canónico);
+13/13 mutaciones; dirigidas verdes en los dos motores; SQLite 1699/0/1046 ×2; PostgreSQL 2719/0/26; E2E 284/0/0 con
+analizador; OpenAPI 544/533/11; producto 0. **Las suites completas quedan sin ningún rojo.** OBS-12 no se absorbe; las
+duraciones de este ciclo fueron normales (601 s, 610 s, 1459 s).
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `OBS-11` — **ejecutado y convergido** (`specs/010-licenciamiento-central/spec010-obs11-sync-time-anchor-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Líneas base: SQLite 1699/0/1046 · PostgreSQL 2719/0/26 · E2E 284/0/0 · OpenAPI 544/533/11. Pendientes de decisión de la
+dueña: `ROLES-SIN-TECHO-DE-DELEGACION`, política del arnés E2E ante red/reloj. Candidatas técnicas sin decisión pendiente:
+OBS-12 (duración anómala de una SQLite completa: 2946 s frente a ≈ 600 s; medir sensibilidad al tiempo y a la carga),
+OBS-01, OBS-06, OBS-07, `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LIMIT-OFFSET`,
+`TEST-PG-CATALOGO-MARCA-DE-AGUA`; OBS-09 para 046; OBS-04 para la dueña del inventario; OBS-03 solo tocada localmente. De
+entorno: `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+

@@ -122,6 +122,7 @@ Recontado de nuevo el 2026-10-14 tras converger `OBS-02 · SQLITE-HILOS-REMANENT
 Recontado de nuevo el 2026-10-14 tras converger OBS-08 y bloquear `ENTORNO-SIN-CLAMSCAN` por decisión de la dueña (dueña 046; apoyo 054): **57 filas**, sin cambio; la 046 sigue `RECONVERGED` —su camino principal no se certifica en este QA sin analizador, lo que es una decisión de entorno, no de la Spec—; SPEC057 sigue PLANNED / NOT STARTED y `NEXT MASTER SPEC` NOT YET PRIORITIZED.
 Recontado de nuevo el 2026-10-14 tras converger `ENTORNO-SIN-CLAMSCAN` con la decisión A + A2 (dueña 046; apoyo 054): **57 filas**, sin cambio; la 046 sigue `RECONVERGED` y vuelve a certificarse con analizador real en este QA (las siete carreras y las cargas E2E ejecutadas); SPEC057 sigue PLANNED / NOT STARTED y `NEXT MASTER SPEC` NOT YET PRIORITIZED.
 Recontado de nuevo el 2026-10-15 tras converger `OBS-10 · DOCUMENTS-LEGACY-IMPORT-SQLITE` (dueña 046; apoyo 054): **57 filas**, sin cambio; ninguna Spec cambia de estado —solo pruebas, producto 0—; SPEC057 sigue PLANNED / NOT STARTED y `NEXT MASTER SPEC` NOT YET PRIORITIZED.
+Recontado de nuevo el 2026-10-15 tras converger `OBS-11 · LICENSING-CENTRAL-SYNC-TIME-ASSERTION` (dueña 010; apoyo 054): **57 filas**, sin cambio; ninguna Spec cambia de estado —solo pruebas, producto 0—; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
 
 El grupo dominante —26 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el

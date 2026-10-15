@@ -103,21 +103,21 @@ def _configure_central(db: Session) -> dict:
     )
 
 
-SERVER_TIME = (datetime.now(UTC) + timedelta(minutes=5)).replace(microsecond=0)
-
-
 class _TransporteFalso:
     """Transporte del protocolo autenticado que responde como la autoridad: `NO_LICENSE` por defecto.
-    Registra las llamadas (desafío y sync) para afirmar que no hay retroceso a un sync anónimo."""
+    Registra las llamadas (desafío y sync) para afirmar que no hay retroceso a un sync anónimo.
+    Su reloj de servidor nace en la operación (al construirse, cinco minutos por delante del reloj local), nunca al
+    importar el módulo: una referencia de importación envejece y acaba detrás de la activación (OBS-11)."""
 
     def __init__(self, response: dict | None = None, error: Exception | None = None) -> None:
-        self.response = response if response is not None else {"version": "1", "status": "NO_LICENSE", "server_time": SERVER_TIME.isoformat(), "license": None}
+        self.server_time = (datetime.now(UTC) + timedelta(minutes=5)).replace(microsecond=0)
+        self.response = response if response is not None else {"version": "1", "status": "NO_LICENSE", "server_time": self.server_time.isoformat(), "license": None}
         self.error = error
         self.llamadas: list[tuple[str, object]] = []
 
     def challenge(self, server_url: str, installation_id: str) -> dict:
         self.llamadas.append(("challenge", installation_id))
-        return {"protocol_version": 1, "challenge_id": "11111111-1111-1111-1111-111111111111", "nonce": "ab" * 32, "expires_at": SERVER_TIME.isoformat()}
+        return {"protocol_version": 1, "challenge_id": "11111111-1111-1111-1111-111111111111", "nonce": "ab" * 32, "expires_at": self.server_time.isoformat()}
 
     def sync(self, server_url: str, body: bytes, headers: dict[str, str]) -> dict:
         self.llamadas.append(("sync", (body, headers)))
@@ -157,7 +157,8 @@ class TestSincronizacion:
         _activate_license(db_session)
         _configure_central(db_session)
 
-        result = licensing_service.sync_license(db_session, transport=_fake_sync_client(), actor="admin")
+        transporte = _fake_sync_client()
+        result = licensing_service.sync_license(db_session, transport=transporte, actor="admin")
 
         assert result["status"] == "SUCCESS"
         assert result["idempotent"] is False
@@ -172,7 +173,7 @@ class TestSincronizacion:
             select_state(installation.installation_uuid)
         ).scalars().first()
         assert state is not None
-        assert state.last_reliable_date.replace(tzinfo=UTC) == SERVER_TIME  # el reloj confiable viene del servidor autenticado
+        assert state.last_reliable_date.replace(tzinfo=UTC) == transporte.server_time  # el reloj confiable viene del servidor autenticado de esta operación
         assert state.mode == "FULL_ACCESS"
         assert "ventas" in (state.entitlements or {}).get("modules", [])  # los módulos vienen del paquete firmado, no del servidor
 
