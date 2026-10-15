@@ -82,3 +82,6 @@ resources/frontend/playwright-report/
 
 # Evidencia de cada corrida E2E sobre base efímera (qa/e2e-run.py): registros, manifiesto, trazas
 qa/e2e-runs/
+
+# Evidencia de cada certificación backend instrumentada (qa/suite_tiempos.py): manifiesto, salida de pytest, anfitrión
+qa/backend-runs/

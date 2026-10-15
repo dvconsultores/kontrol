@@ -3653,3 +3653,25 @@ OBS-01, OBS-06, OBS-07, `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LI
 `TEST-PG-CATALOGO-MARCA-DE-AGUA`; OBS-09 para 046; OBS-04 para la dueña del inventario; OBS-03 solo tocada localmente. De
 entorno: `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-15 · OBS-12 · SUITE-DURATION-VARIABILITY convergida (dueña 054)
+
+Ratificada por la dueña como ciclo de medición y observabilidad. Las corridas instrumentadas de hoy son normales (SQLite
+581,6 s; PostgreSQL 1356,5 s) y se descomponen sin resto: analizador real 6,4 s por proceso (55 % / 39 %, coste estable de
+seguridad), procesos reales ≈ 15 %, coste estructural del esquema por prueba en PostgreSQL, esperas legítimas < 2 %; ningún
+techo ni `busy_timeout` consumido; sin contención del anfitrión. El 2946 s histórico no se reprodujo y no tenía telemetría:
+queda como atípico con telemetría insuficiente, sin causa inventada. Desde ahora la certificación backend canónica con
+telemetría es `qa/suite_tiempos.py --motor sqlite|postgres --con-analizador` (duración monotónica, perfil, anfitrión
+saneado, anomalía no bloqueante; `qa/backend-runs/` fuera de Git); O12-01…20, 13/13 mutaciones; SQLite 1719/0/1046 ×2,
+PostgreSQL 2739/0/26, E2E 284/0/0, OpenAPI 544/533/11; producto 0.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `OBS-12` — **ejecutado y convergido** (`specs/012-auditoria-integral-e2e/spec054-obs12-suite-duration-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Líneas base: SQLite 1719/0/1046 · PostgreSQL 2739/0/26 · E2E 284/0/0 · OpenAPI 544/533/11. Pendientes de decisión de la
+dueña: `ROLES-SIN-TECHO-DE-DELEGACION`, política del arnés E2E ante red/reloj. Candidatas técnicas sin decisión pendiente:
+OBS-01, OBS-06, OBS-07, `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LIMIT-OFFSET`, `TEST-PG-CATALOGO-MARCA-DE-AGUA`;
+OBS-09 para 046; OBS-04 para la dueña del inventario; OBS-03 solo tocada localmente. De entorno: `E2E-PANTALLA-SIN-PINTAR`.
+Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+

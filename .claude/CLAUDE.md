@@ -181,6 +181,9 @@ mutaciones, regresiones y coste. Si Claude hizo la tarea entera, se dice.
 - Analizador real (ClamAV, sin privilegios, Spec 046): `python qa/clamav_qa.py provisionar` una vez; antes de
   certificar, `eval "$(python qa/clamav_qa.py entorno)"` (exporta `KONTROL_CLAMSCAN_PATH` y `KONTROL_CLAMAV_DB`); la
   E2E canónica con analizador es `qa/e2e-run.py --con-analizador`. Sin él, las cargas documentales se rechazan (falso seguro).
+- **Certificación backend con telemetría** (Spec 054, OBS-12): `python qa/suite_tiempos.py --motor sqlite|postgres
+  --con-analizador` (desde la raíz) corre la orden canónica con `--durations=0`, duración monotónica, telemetría del
+  anfitrión saneada y un indicador de anomalía no bloqueante; evidencia en `qa/backend-runs/<run_id>/` (fuera de Git).
 - **Certificación E2E completa**: `resources/backend/.venv/bin/python qa/e2e-run.py` (desde la
   raíz; `-- <args de Playwright>` para dirigirla). Cada corrida crea una base PostgreSQL efímera
   nueva, la migra a la cabeza, la siembra, levanta backend y Vite contra ella, corre Playwright y

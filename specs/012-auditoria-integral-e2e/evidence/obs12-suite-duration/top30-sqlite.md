@@ -1,0 +1,35 @@
+# Top 30 SQLite (duración por prueba = setup + call + teardown)
+| # | Prueba | s | Dominio | Analizador | Hilos | Espera conocida | Clase probable | Evidencia |
+|---|---|---|---|---|---|---|---|---|
+| 1 | `tests/test_documents_security.py::test_amz_01_recorrido_de_rutas` | 39.7 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 2 | `tests/test_clamav_qa.py::test_clam_04_05_06_el_preflight_real_pasa_y_registra_motor_y_firmas` | 13.8 | 046/054 preflight | sí (2 análisis + arranque sin firmas) | no | — | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 3 | `tests/test_documents.py::test_version_congelada_el_historico_no_se_reinterpreta` | 13.4 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 4 | `tests/test_documents_security.py::test_amz_12_clave_de_almacenamiento_opaca` | 13.3 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 5 | `tests/test_documents.py::test_una_version_referenciada_no_se_purga` | 13.3 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 6 | `tests/test_documents.py::test_el_mismo_archivo_dos_veces_no_se_deduplica_ni_se_bloquea` | 13.3 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 7 | `tests/test_documents_security.py::test_la_misma_clave_en_otro_documento_no_devuelve_una_version_ajena` | 13.2 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 8 | `tests/test_documents.py::test_versionado_sin_sobrescritura` | 13.2 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 9 | `tests/test_documents_security.py::test_un_reintento_devuelve_la_version_de_su_clave_aunque_haya_otra_despues` | 13.1 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 10 | `tests/test_documents_security.py::test_amz_13_sin_sobrescritura_del_historico` | 13.1 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 11 | `tests/test_backend_keepalive.py::test_ka_01_con_el_valor_por_defecto_de_uvicorn_una_conexion_ociosa_5_3_s_esta_cerrada` | 8.5 | 054 keepalive | no | no | sondeo 0,2 s + espera deliberada de 5,3 s de ociosidad (contrato) | PROCESS_STARTUP + HARNESS_WAIT legítima | duración ≈ n·6,4 s de análisis |
+| 12 | `tests/test_backend_keepalive.py::test_ka_02_con_la_orden_exacta_de_la_imagen_la_conexion_ociosa_se_reutiliza[Dockerfile.backend-app.main:app-/api/v1/health/live-_entorno_cliente]` | 8.3 | 054 keepalive | no | no | sondeo 0,2 s + espera deliberada de 5,3 s de ociosidad (contrato) | PROCESS_STARTUP + HARNESS_WAIT legítima | duración ≈ n·6,4 s de análisis |
+| 13 | `tests/test_documents.py::test_vinculo_congelado_no_se_desvincula` | 7.2 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 14 | `tests/test_documents.py::test_vinculacion_y_documento_compartido` | 7.0 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 15 | `tests/test_documents_security.py::test_amz_08_sin_urls_publicas` | 7.0 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 16 | `tests/test_documents_security.py::test_amz_07_fuga_entre_empresas` | 6.9 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 17 | `tests/test_documents.py::test_borrado_protegido_y_archivado_conserva_binario` | 6.9 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 18 | `tests/test_documents_security.py::test_amz_17_desvinculacion_no_autorizada` | 6.9 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 19 | `tests/test_documents_security.py::test_huella_distinta_no_se_entrega` | 6.9 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 20 | `tests/test_documents.py::test_archivo_infectado_se_rechaza_y_no_se_almacena` | 6.8 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 21 | `tests/test_documents_security.py::test_el_contrato_nunca_expone_almacenamiento` | 6.8 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 22 | `tests/test_documents_security.py::test_amz_05_xss_por_nombre_de_archivo` | 6.8 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 23 | `tests/test_documents_security.py::test_objeto_ausente_no_se_entrega_otra_cosa` | 6.8 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 24 | `tests/test_documents.py::test_subida_idempotente` | 6.8 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 25 | `tests/test_documents_security.py::test_amz_16_vinculacion_no_autorizada` | 6.8 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 26 | `tests/test_documents_security.py::test_amz_14_el_hash_no_autoriza` | 6.8 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 27 | `tests/test_documents_security.py::test_amz_04_contenido_activo_nunca_en_linea` | 6.8 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 28 | `tests/test_documents_security.py::test_amz_06_referencia_insegura_directa` | 6.8 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 29 | `tests/test_documents_security.py::test_amz_10_malware_no_se_almacena_ni_se_entrega` | 6.8 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+| 30 | `tests/test_documents_security.py::test_pendiente_de_analisis_no_se_entrega` | 6.7 | 046 documentos | sí | no | timeout 120 s del subproceso (no consumido) | SCANNER_COST | duración ≈ n·6,4 s de análisis |
+
+Cuotas: top 10 = 160 s (27 %) · top 30 = 300 s (52 %) · resto = 282 s. Ficheros: documents_security 216 s · documents 112 s · keepalive 23 s · volumen 21 s · clamav_qa 14 s · license_state_reverification 13 s · pg_sesion_aislada 13 s.
