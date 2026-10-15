@@ -15,7 +15,6 @@ from __future__ import annotations
 import importlib.util
 import os
 import subprocess
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -32,8 +31,6 @@ os.environ.setdefault("KONTROL_SECRET_KEY", "test-secret-key-0123456789abcdef012
 os.environ.setdefault("KONTROL_ENVIRONMENT", "local")
 os.environ.setdefault("KONTROL_LOG_JSON", "false")
 os.environ.setdefault("KONTROL_COOKIE_SECURE", "false")
-os.environ.setdefault("KONTROL_STORAGE_PATH", os.path.join(tempfile.gettempdir(), "kontrol-test-storage"))
-os.environ.setdefault("KONTROL_BACKUP_PATH", os.path.join(tempfile.gettempdir(), "kontrol-test-backups"))
 
 
 def _base_env(tmp: Path) -> dict:

@@ -3675,3 +3675,27 @@ OBS-01, OBS-06, OBS-07, `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LI
 OBS-09 para 046; OBS-04 para la dueña del inventario; OBS-03 solo tocada localmente. De entorno: `E2E-PANTALLA-SIN-PINTAR`.
 Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-15 · OBS-06 · HARNESS-SHARED-STORAGE-PATHS convergida (dueña 054)
+
+Ratificada por la dueña. Demostrado con sondas en procesos hijos: el almacén y los respaldos de las pruebas eran una ruta
+fija por máquina compartida entre procesos y corridas, con visibilidad cruzada, colisión real de nombres de exportación
+(marca de un segundo), persistencia no requerida y sin limpieza; la configuración se captura después de `pytest_configure`,
+así que la corrección es solo del arnés: una raíz por proceso (`kontrol-test-almacen-*`) con `storage/` y `backups/`,
+eliminada al cerrar, nunca heredada; sondas y O06-01…20; 14/14 mutaciones; OBS-12 ampliada con el modo de almacén, el
+residuo por proceso y el almacén legado (informativo). Certificación por `qa/suite_tiempos.py`: SQLite 1739/0/1046 ×2,
+PostgreSQL 2759/0/26, E2E 284/0/0, OpenAPI 544/533/11; producto 0. Durante la certificación el equipo se suspendió dos
+veces y el contrato de OBS-12 lo registró (`salto: true`, desvíos de 25 917 s y 1550 s) sin alterar ningún veredicto. El
+almacén fijo histórico `<tmp>/kontrol-test-storage` se conserva como legado; borrarlo es una acción manual aparte.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | `OBS-06` — **ejecutado y convergido** (`specs/012-auditoria-integral-e2e/spec054-obs06-shared-storage-paths-delta.md`); el siguiente ciclo técnico lo elige la dueña |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Líneas base: SQLite 1739/0/1046 · PostgreSQL 2759/0/26 · E2E 284/0/0 · OpenAPI 544/533/11. Pendientes de decisión de la
+dueña: `ROLES-SIN-TECHO-DE-DELEGACION`, política del arnés E2E ante red/reloj, retirada del almacén legado. Candidatas
+técnicas sin decisión pendiente: OBS-01, OBS-07, `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LIMIT-OFFSET`,
+`TEST-PG-CATALOGO-MARCA-DE-AGUA`; OBS-09 (imagen de producción sin analizador) para 046 con decisión de la dueña; OBS-04 para
+la dueña del inventario; OBS-03 solo tocada localmente. De entorno: `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de
+`kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+

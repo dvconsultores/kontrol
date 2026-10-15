@@ -124,6 +124,7 @@ Recontado de nuevo el 2026-10-14 tras converger `ENTORNO-SIN-CLAMSCAN` con la de
 Recontado de nuevo el 2026-10-15 tras converger `OBS-10 · DOCUMENTS-LEGACY-IMPORT-SQLITE` (dueña 046; apoyo 054): **57 filas**, sin cambio; ninguna Spec cambia de estado —solo pruebas, producto 0—; SPEC057 sigue PLANNED / NOT STARTED y `NEXT MASTER SPEC` NOT YET PRIORITIZED.
 Recontado de nuevo el 2026-10-15 tras converger `OBS-11 · LICENSING-CENTRAL-SYNC-TIME-ASSERTION` (dueña 010; apoyo 054): **57 filas**, sin cambio; ninguna Spec cambia de estado —solo pruebas, producto 0—; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
 Recontado de nuevo el 2026-10-15 tras converger `OBS-12 · SUITE-DURATION-VARIABILITY` (dueña 054): **57 filas**, sin cambio; ninguna Spec cambia de estado —solo QA y pruebas del QA, producto 0—; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
+Recontado de nuevo el 2026-10-15 tras converger `OBS-06 · HARNESS-SHARED-STORAGE-PATHS` (dueña 054): **57 filas**, sin cambio; ninguna Spec cambia de estado —solo arnés y QA, producto 0—; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
 
 El grupo dominante —26 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el

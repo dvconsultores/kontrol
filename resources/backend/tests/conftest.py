@@ -25,12 +25,9 @@ os.environ.setdefault("KONTROL_LOG_JSON", "false")
 os.environ.setdefault("KONTROL_COOKIE_SECURE", "false")
 os.environ.setdefault("KONTROL_DB_URL", "sqlite+pysqlite:///:memory:")
 
-# Rutas de volúmenes temporales escribibles (no /data en entornos de prueba). El volumen de
-# instalación NO se fija aquí: lo recibe cada proceso de pytest en `pytest_configure` y cada
-# módulo en `volumen_de_instalacion` (más abajo).
-_tmp = tempfile.gettempdir()
-os.environ.setdefault("KONTROL_STORAGE_PATH", os.path.join(_tmp, "kontrol-test-storage"))
-os.environ.setdefault("KONTROL_BACKUP_PATH", os.path.join(_tmp, "kontrol-test-backups"))
+# Ninguna ruta de volumen se fija aquí: el volumen de instalación, el almacén y los respaldos los
+# recibe cada proceso de pytest en `pytest_configure` (raíces propias, nunca `/data` ni una ruta
+# fija por máquina) y el volumen, además, cada módulo en `volumen_de_instalacion` (más abajo).
 
 # Limpieza de la caché de settings para entornos repetidos
 from app.core.config import get_settings  # noqa: E402
@@ -62,21 +59,62 @@ def _fijar_volumen(ruta: str | None) -> None:
     get_settings.cache_clear()
 
 
+# --------------------------------------------------------------------------- #
+# Almacén y respaldos aislados (SPEC054 · OBS-06 · HARNESS-SHARED-STORAGE-PATHS)
+# --------------------------------------------------------------------------- #
+# `KONTROL_STORAGE_PATH` y `KONTROL_BACKUP_PATH` se fijaban al importar este fichero a rutas constantes
+# por máquina (`<tmp>/kontrol-test-storage`, `<tmp>/kontrol-test-backups`): dos `pytest` compartían el
+# mismo almacén, un proceso veía los documentos y exportaciones del otro, dos exportaciones del mismo
+# informe en el mismo segundo se sobrescribían (`report-<clave>-<AAAAMMDDhhmmss>`) y nadie limpiaba
+# nunca (121 ficheros acumulados en dos días). Ahora cada proceso recibe en `pytest_configure` una raíz
+# propia con `storage/` y `backups/`, antes de que `Settings`, `app.main` o el proveedor documental la
+# lean, y la elimina entera en `pytest_unconfigure`. El almacén es por proceso, no por módulo: el
+# proveedor documental se fija en su primer uso y las exportaciones se descargan por `file_ref`.
+VARIABLE_DEL_ALMACEN = "KONTROL_STORAGE_PATH"
+VARIABLE_DE_RESPALDOS = "KONTROL_BACKUP_PATH"
+PREFIJO_DEL_ALMACEN = "kontrol-test-almacen-"
+RAIZ_DEL_ALMACEN = pytest.StashKey[str]()
+ALMACEN_HEREDADO = pytest.StashKey[dict[str, str | None]]()
+
+
+def _fijar_almacen(storage: str | None, backups: str | None) -> None:
+    """Fija (o quita) las dos variables y descarta la `Settings` cacheada que apuntaba a las anteriores."""
+    for variable, ruta in ((VARIABLE_DEL_ALMACEN, storage), (VARIABLE_DE_RESPALDOS, backups)):
+        if ruta is None:
+            os.environ.pop(variable, None)
+        else:
+            os.environ[variable] = ruta
+    get_settings.cache_clear()
+
+
 def pytest_configure(config):
-    """Raíz única de este proceso: nombre aleatorio de `mkdtemp`; nunca una ruta fija ni la heredada del entorno."""
+    """Raíces únicas de este proceso: nombres aleatorios de `mkdtemp`; nunca una ruta fija ni la heredada del entorno."""
     config.stash[VOLUMEN_HEREDADO] = os.environ.get(VARIABLE_DEL_VOLUMEN)
     raiz = tempfile.mkdtemp(prefix=PREFIJO_DEL_VOLUMEN)
     config.stash[RAIZ_DEL_VOLUMEN] = raiz
     _fijar_volumen(raiz)
 
+    config.stash[ALMACEN_HEREDADO] = {VARIABLE_DEL_ALMACEN: os.environ.get(VARIABLE_DEL_ALMACEN),
+                                      VARIABLE_DE_RESPALDOS: os.environ.get(VARIABLE_DE_RESPALDOS)}
+    almacen = tempfile.mkdtemp(prefix=PREFIJO_DEL_ALMACEN)
+    storage, backups = os.path.join(almacen, "storage"), os.path.join(almacen, "backups")
+    os.mkdir(storage)
+    os.mkdir(backups)
+    config.stash[RAIZ_DEL_ALMACEN] = almacen
+    _fijar_almacen(storage, backups)
+
 
 def pytest_unconfigure(config):
-    """Al cerrar el proceso la raíz desaparece con lo que quedara dentro, y la variable vuelve a su valor previo."""
+    """Al cerrar el proceso cada raíz desaparece con lo que quedara dentro, y las variables vuelven a su valor previo."""
     raiz = config.stash.get(RAIZ_DEL_VOLUMEN, None)
-    if raiz is None:
-        return
-    shutil.rmtree(raiz)
-    _fijar_volumen(config.stash[VOLUMEN_HEREDADO])
+    if raiz is not None:
+        shutil.rmtree(raiz)
+        _fijar_volumen(config.stash[VOLUMEN_HEREDADO])
+    almacen = config.stash.get(RAIZ_DEL_ALMACEN, None)
+    if almacen is not None:
+        shutil.rmtree(almacen)
+        heredado = config.stash[ALMACEN_HEREDADO]
+        _fijar_almacen(heredado[VARIABLE_DEL_ALMACEN], heredado[VARIABLE_DE_RESPALDOS])
 
 
 @contextmanager

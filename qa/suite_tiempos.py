@@ -12,8 +12,9 @@ falta para diagnosticar la siguiente anomalía:
   utilización de CPU y E/S de disco; nunca IP, interfaces, túneles, nombre del equipo, usuario ni rutas personales;
 - recursos del árbol de pytest (`getrusage`): CPU, RSS máximo, cambios de contexto;
 - metadatos del analizador real (motor y firmas) cuando se exige, como hace `qa/e2e-run.py --con-analizador`;
-- residuos efímeros del arnés (`kontrol-test-sqlite-*`, `kontrol-test-license-*`); `kontrol-test-storage` es el
-  almacén fijo del arnés documental y no cuenta como residuo;
+- residuos efímeros del arnés (`kontrol-test-almacen-*`, `kontrol-test-sqlite-*`, `kontrol-test-license-*`), que una
+  corrida limpia debe dejar a cero; el antiguo almacén fijo `kontrol-test-storage` (anterior a OBS-06) se anota como
+  legado y nunca falla la corrida;
 - un indicador de anomalía **no bloqueante**: la razón entre la duración y la mediana de las corridas anteriores del
   mismo motor; sin umbral duro (`HARD_THRESHOLD = NONE`), sin cambiar el veredicto.
 
@@ -58,9 +59,11 @@ ORDEN_PYTEST = ("-m", "pytest", "tests", "-o", "addopts=", "-q", "--durations=0"
 MOTORES: dict[str, str | None] = {"sqlite": None, "postgres": "postgresql+psycopg2://postgres@localhost:55432/ktest"}
 TOP_N = 30
 INTERVALO_S = 30.0
-#: Almacén fijo del arnés documental (desde 2026-10-13): no es residuo de corrida.
-ALMACEN_FIJO = "kontrol-test-storage"
-PREFIJOS_EFIMEROS = ("kontrol-test-sqlite-", "kontrol-test-license-")
+#: Almacén fijo del arnés anterior a OBS-06 (2026-10-13 … 2026-10-15): estado legado, ni residuo de esta corrida ni fallo.
+ALMACEN_FIJO_LEGADO = "kontrol-test-storage"
+#: Raíces que cada proceso de pytest crea y elimina (`tests/conftest.py`): si quedan tras la corrida, son residuo.
+PREFIJOS_EFIMEROS = ("kontrol-test-almacen-", "kontrol-test-sqlite-", "kontrol-test-license-")
+MODO_DE_ALMACEN = "PROCESS_ISOLATED"
 #: El indicador de anomalía necesita referencias; con menos no se pronuncia.
 MINIMO_DE_REFERENCIAS = 3
 #: Razón duración/mediana desde la que se anota anomalía. Evidencia: las corridas normales con analizador quedaron entre
@@ -291,10 +294,12 @@ def sanear(texto: str, raices: Mapping[str, str]) -> str:
 
 
 def residuos(tmp: Path) -> dict[str, Any]:
-    """Directorios efímeros del arnés que una corrida dejó atrás; el almacén fijo se anota aparte."""
+    """Directorios efímeros del arnés que una corrida dejó atrás (almacén, SQLite e instalación por proceso); el almacén
+    fijo anterior a OBS-06 se anota como legado, aparte."""
     nombres_tmp = sorted(p.name for p in tmp.iterdir()) if tmp.is_dir() else []
     efimeros = [n for n in nombres_tmp if n.startswith(PREFIJOS_EFIMEROS)]
-    return {"efimeros": efimeros, "almacen_fijo_presente": ALMACEN_FIJO in nombres_tmp}
+    return {"modo_almacen": MODO_DE_ALMACEN, "efimeros": efimeros, "almacen_por_proceso": [n for n in efimeros if n.startswith("kontrol-test-almacen-")],
+            "almacen_fijo_legado_presente": ALMACEN_FIJO_LEGADO in nombres_tmp}
 
 
 def anomalia(duracion_s: float, referencias: list[float]) -> dict[str, Any]:

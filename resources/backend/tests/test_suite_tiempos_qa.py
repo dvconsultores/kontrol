@@ -193,24 +193,28 @@ def test_o12_08_los_metadatos_del_analizador_estan_presentes_y_el_analizador_nun
     assert env["PYTHONDONTWRITEBYTECODE"] == "1" and anotacion == {"exigido": False, "habilitado": False}
 
 
-def test_o12_09_el_almacen_fijo_del_arnes_no_se_anota_como_residuo(tmp_path: Path) -> None:
+def test_o12_09_el_almacen_fijo_legado_se_anota_aparte_y_no_como_residuo(tmp_path: Path) -> None:
     tmp = tmp_path / "tmp"
     tmp.mkdir()
-    (tmp / st.ALMACEN_FIJO).mkdir()
+    (tmp / st.ALMACEN_FIJO_LEGADO).mkdir()
     (tmp / "kontrol-test-sqlite-almacenes-abc").mkdir()
-    assert st.residuos(tmp) == {"efimeros": ["kontrol-test-sqlite-almacenes-abc"], "almacen_fijo_presente": True}
-    _, m, _ = corrida(tmp_path, tmp=tmp)
-    assert m["residuos"]["efimeros"] == ["kontrol-test-sqlite-almacenes-abc"] and m["residuos"]["almacen_fijo_presente"] is True
+    assert st.residuos(tmp) == {"modo_almacen": "PROCESS_ISOLATED", "efimeros": ["kontrol-test-sqlite-almacenes-abc"], "almacen_por_proceso": [],
+                                "almacen_fijo_legado_presente": True}
+    rc, m, _ = corrida(tmp_path, tmp=tmp)
+    assert m["residuos"]["efimeros"] == ["kontrol-test-sqlite-almacenes-abc"] and m["residuos"]["almacen_fijo_legado_presente"] is True
+    assert rc == 1 and m["pytest"]["rc"] == 1  # el legado no cambia el veredicto (que aquí es el de la orden falsa)
 
 
-def test_o12_10_los_directorios_efimeros_siguen_detectandose(tmp_path: Path) -> None:
+def test_o12_10_los_directorios_efimeros_siguen_detectandose_incluido_el_almacen_por_proceso(tmp_path: Path) -> None:
     tmp = tmp_path / "tmp"
     tmp.mkdir()
-    assert st.residuos(tmp) == {"efimeros": [], "almacen_fijo_presente": False}
-    for nombre in ("kontrol-test-license-xyz", "kontrol-test-sqlite-uom-1", "otra-cosa"):
+    vacio = {"modo_almacen": "PROCESS_ISOLATED", "efimeros": [], "almacen_por_proceso": [], "almacen_fijo_legado_presente": False}
+    assert st.residuos(tmp) == vacio
+    for nombre in ("kontrol-test-license-xyz", "kontrol-test-sqlite-uom-1", "kontrol-test-almacen-ab12", "otra-cosa"):
         (tmp / nombre).mkdir()
-    assert st.residuos(tmp)["efimeros"] == ["kontrol-test-license-xyz", "kontrol-test-sqlite-uom-1"]
-    assert st.residuos(tmp_path / "no-existe") == {"efimeros": [], "almacen_fijo_presente": False}
+    assert st.residuos(tmp)["efimeros"] == ["kontrol-test-almacen-ab12", "kontrol-test-license-xyz", "kontrol-test-sqlite-uom-1"]
+    assert st.residuos(tmp)["almacen_por_proceso"] == ["kontrol-test-almacen-ab12"]
+    assert st.residuos(tmp_path / "no-existe") == vacio
 
 
 def _manifiesto_previo(carpeta: Path, motor: str, segundos: float, completo: bool = True) -> None:

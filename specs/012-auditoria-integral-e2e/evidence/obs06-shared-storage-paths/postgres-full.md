@@ -1,0 +1,2 @@
+# PostgreSQL completa — `qa/suite_tiempos.py --motor postgres --con-analizador` (15:00 → 15:53)
+**2759 passed · 0 failed · 26 skipped** (= 2739 + 20) · rc 0 · **1631,9 s monotónicos** · pared 3182,6 s · `desvio_reloj_s` 1550,7 s, `salto: true` (segunda suspensión del equipo, ≈ 26 min) · pytest 1600,3 s · residuos 0 · esquemas `t_` 0 y conexiones del arnés 0 al cierre · MemAvailable mín 1319 MB, paginación 296 k / 286 k páginas: el anfitrión paginó y la corrida tardó un 20 % más que la de OBS-12 (1349,9 s) **con la causa a la vista** en el manifiesto.
