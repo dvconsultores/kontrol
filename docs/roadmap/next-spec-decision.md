@@ -3761,3 +3761,25 @@ dueña: `ROLES-SIN-TECHO-DE-DELEGACION`, `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACE
 del arnés E2E ante red/reloj. Observaciones: OBS-03 (guía), `TEST-PG-CATALOGO-MARCA-DE-AGUA` (sin efecto demostrado),
 `branch_id` del alta de almacén sin validar contra la empresa (no medido). MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-19 · WAREHOUSE-BRANCH-CROSS-COMPANY implementada (dueña 008) · E2E bloqueada por el entorno · OBS-09 sigue esperando evidencia
+
+Ruta B: sin `OBS09_EXTERNAL_DOCKER_EVIDENCE`. La observación de `branch_id` se midió antes de tratarla como deuda. Un usuario
+de la empresa A podía colgar almacenes de A de sucursales de B o de otro tenant, en el alta y en la edición. Se corrigió con el
+contrato vigente: 404 `BRANCH_NOT_FOUND`, como en establecimientos. SQLite 1831/0/1046 ×2, PostgreSQL 2851/0/26 y OpenAPI
+544/533/11 están verdes.
+
+La E2E dio 275/5 dos veces. Las 5 fallidas son de carga documental, y el producto de `HEAD` falla igual. Se midió la vida de
+clamscan, hasta 33 s, con 311 MB de memoria disponible en el equipo. Orquestación: 4 llamadas a DeepSeek ($0,014). OBS-09 no
+cambia.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09 (cierre)** si llega `OBS09_EXTERNAL_DOCKER_EVIDENCE`; si no, **cerrar WAREHOUSE-BRANCH-CROSS-COMPANY** con la E2E en un equipo sin presión de memoria y, después, `WAREHOUSE-CATALOG-TYPE-CROSS-COMPANY` |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: SQLite 1831/0/1046 · PostgreSQL 2851/0/26 · E2E 284/0/0, la última verde, en `e8501f2` · OpenAPI 544/533/11.
+Decisiones pendientes de la dueña:
+- `ROLES-SIN-TECHO-DE-DELEGACION`, `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LIMIT-OFFSET` y OBS-04.
+- La política del arnés E2E ante red, reloj y ahora memoria del equipo.
+- La revisión de filas cruzadas existentes.
+

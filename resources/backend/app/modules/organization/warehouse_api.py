@@ -23,6 +23,7 @@ from app.core.integrity import es_violacion_unica_de, restriccion_unica
 from app.modules.identity_access.models import User
 from app.modules.organization import structure as st
 from app.modules.organization.models import (
+    Branch,
     LocationType,
     Warehouse,
     WarehouseLocation,
@@ -57,6 +58,17 @@ def _get_warehouse(db: Session, ctx: CompanyContext, warehouse_id: str) -> Wareh
         # existe ya sería una filtración (enumeración).
         raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
     return warehouse
+
+
+def _exige_sucursal_propia(db: Session, ctx: CompanyContext, branch_id: str | None) -> None:
+    """La sucursal del almacén es de la empresa activa (ADR-D0-014); ajena, de otro tenant o
+    inexistente se responde igual, como inexistente, para no revelar sucursales de otras empresas;
+    mismo contrato que `create_establishment`."""
+    if branch_id is None:
+        return
+    sucursal = db.get(Branch, branch_id)
+    if sucursal is None or sucursal.company_id != ctx.company_id:
+        raise NotFoundError(code="BRANCH_NOT_FOUND", message="Sucursal no encontrada")
 
 
 def _get_node(db: Session, ctx: CompanyContext, level: str, node_id: str) -> Any:
@@ -324,6 +336,7 @@ def create_warehouse_full(body: WarehouseIn, db: Session = Depends(get_db),
     if not body.code:
         raise KontrolError(code="WAREHOUSE_CODE_REQUIRED",
                            message="El código del almacén es obligatorio", status_code=422)
+    _exige_sucursal_propia(db, ctx, body.branch_id)
     warehouse = Warehouse(
         company_id=ctx.company_id, branch_id=body.branch_id, code=body.code, name=body.name,
         warehouse_type=body.warehouse_type, address=body.address, manager_id=body.manager_id,
@@ -364,6 +377,8 @@ def patch_warehouse(warehouse_id: str, body: WarehousePatch,
     ctx: CompanyContext = Depends(get_company_context)):
     warehouse = _get_warehouse(db, ctx, warehouse_id)
     _check_version(warehouse, if_match)
+    if "branch_id" in body.model_fields_set:
+        _exige_sucursal_propia(db, ctx, body.branch_id)
     before = {"name": warehouse.name, "location_managed": warehouse.location_managed}
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(warehouse, field, value)

@@ -219,13 +219,13 @@ def test_o01_05_bulk_repite_codigo_sin_marcador_es_409():
     assert _cuenta(WarehouseLocation, warehouse_id=wh["id"], code="O01-BULK") == 0
 
 
-def test_o01_06_almacen_branch_inexistente_es_500():
+def test_o01_06_almacen_branch_inexistente_es_404_sin_llegar_a_la_base():
     r = _CLIENT.post("/api/v1/organization/warehouses", headers=_login(), json={
         "company_id": _cid(), "code": "O01-006", "name": "FK rota",
         "branch_id": str(uuid.uuid4())})
-    assert r.status_code == 500, r.text
-    assert r.json()["code"] == "INTERNAL_ERROR"
-    assert r.json()["message"] == GENERICO
+    assert r.status_code == 404, r.text
+    assert r.json()["code"] == "BRANCH_NOT_FOUND"
+    assert r.json()["message"] == "Sucursal no encontrada"
     _sin_fuga(r)
     assert _cuenta(Warehouse, code="O01-006") == 0
 
