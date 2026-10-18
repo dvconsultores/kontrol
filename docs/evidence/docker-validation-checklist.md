@@ -65,3 +65,27 @@ docker compose -f compose.yaml down
 | Criterio | Resultado | Fecha | Responsable |
 |---|---|---|---|
 | (completar al ejecutar) | | | |
+
+## Analizador antimalware como servicio (Spec 046 · OBS-09, opción B) — ejecutar en el servidor con Docker
+
+```bash
+# 1. Construir la imagen del analizador (clamav/clamav:1.4.3 + deploy/clamd/clamd.conf) y la del backend
+docker build -f Dockerfile.clamd -t "${KONTROL_IMAGE_REGISTRY:-dvconsultores}/kontrol-clamd:${KONTROL_IMAGE_TAG:-latest}" .
+docker build -f Dockerfile.backend -t "${KONTROL_IMAGE_REGISTRY:-dvconsultores}/kontrol-backend:${KONTROL_IMAGE_TAG:-latest}" .
+docker image inspect "${KONTROL_IMAGE_REGISTRY:-dvconsultores}/kontrol-backend:${KONTROL_IMAGE_TAG:-latest}" --format '{{.Size}}'
+
+# 2. El backend NO lleva analizador ni firmas; clamd sí
+docker run --rm --entrypoint sh "${KONTROL_IMAGE_REGISTRY:-dvconsultores}/kontrol-backend:${KONTROL_IMAGE_TAG:-latest}" -c 'command -v clamscan || echo "sin clamscan"; ls /var/lib/clamav 2>/dev/null || echo "sin firmas"'
+docker compose up -d clamd && docker compose ps clamd            # esperar healthy (start_period 300 s: carga de firmas)
+docker compose exec clamd sh -c 'printf "zVERSION\0" | nc -w 5 127.0.0.1 3310'   # ClamAV 1.4.3/<daily>/<fecha>
+
+# 3. Puerto interno y sin almacén documental
+docker inspect kontrol-clamd --format '{{json .NetworkSettings.Ports}} {{json .Mounts}}'   # sin puertos publicados; solo /var/lib/clamav
+
+# 4. Contrato funcional desde el backend (tras `docker compose up -d`)
+#    subida limpia → 201 · EICAR → 422 FILE_INFECTED · `docker compose stop clamd` → 422 SCAN_FAILED (falso seguro) · `start clamd` → vuelve 201
+```
+
+Registrar: `CLAMD_VERSION`, `SIGNATURE_DATABASE_VERSION/DATE`, `BASE_BACKEND_IMAGE_SIZE`, `BUILD_TIME`, `CLAMD_HEALTHY_AFTER_S`,
+y los cuatro resultados del punto 4, en `specs/046-gestion-documental/evidence/obs09-production-image-scanner/compose-runtime-evidence.md`.
+

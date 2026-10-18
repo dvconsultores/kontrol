@@ -1,0 +1,161 @@
+{
+ "estatico": {
+  "CLAMD_SERVICE_PRESENT": true,
+  "CLAMD_IMAGE": "${KONTROL_IMAGE_REGISTRY:-dvconsultores}/kontrol-clamd:${KONTROL_IMAGE_TAG:-latest}",
+  "CLAMD_BASE_IMAGE_PINNED": true,
+  "CLAMD_HOST_PORT_PUBLISHED": false,
+  "CLAMD_INTERNAL_ONLY": true,
+  "DOCUMENT_STORAGE_MOUNTED_IN_CLAMD": false,
+  "CLAMD_VOLUMES": [
+   "kontrol-clamav-db:/var/lib/clamav"
+  ],
+  "CLAMD_HEALTHCHECK_PRESENT": true,
+  "CLAMD_HEALTHCHECK_MEANINGFUL": true,
+  "FRESHCLAM_IN_SCANNER_DOMAIN": true,
+  "BACKEND_SELECTS_CLAMD_EXPLICITLY": true,
+  "BACKEND_IMAGE_HAS_CLAMSCAN": false,
+  "BACKEND_IMAGE_HAS_SIGNATURE_DATABASE": false,
+  "BACKEND_MOUNTS_SIGNATURES": false,
+  "STREAM_MAX_LENGTH_BYTES": 62914560,
+  "MAX_FILE_SIZE_BYTES": 62914560,
+  "SIZE_CONTRACT_OK": true,
+  "ALERT_EXCEEDS_MAX": true,
+  "KONTROL_MAX_DECLARED": true,
+  "IMPLICIT_FALLBACK": false,
+  "SCANNER_CHOICE_VALIDATED": true
+ },
+ "runtime": {
+  "disponible": false,
+  "runtime": null,
+  "estado": "COMPOSE_RUNTIME_UNAVAILABLE"
+ },
+ "demonio": {
+  "arranque_s": 6.3,
+  "ping": "PONG",
+  "motor": "1.4.3",
+  "firmas_version": "28153",
+  "firmas_fecha": "Wed Oct 14 08:24:15 2026"
+ },
+ "sondas": {
+  "limpio": {
+   "result": "CLEAN",
+   "signature": null,
+   "details": null,
+   "bytes": 59,
+   "segundos": 0.004
+  },
+  "eicar": {
+   "result": "INFECTED",
+   "signature": "Eicar-Test-Signature",
+   "details": null,
+   "bytes": 68,
+   "segundos": 0.003
+  },
+  "varios_trozos": {
+   "result": "CLEAN",
+   "signature": null,
+   "details": null,
+   "bytes": 3145728,
+   "segundos": 0.192
+  },
+  "maximo_documental": {
+   "result": "CLEAN",
+   "signature": null,
+   "details": null,
+   "bytes": 52428800,
+   "segundos": 2.095
+  },
+  "maximo_mas_uno": {
+   "result": "CLEAN",
+   "signature": null,
+   "details": null,
+   "bytes": 52428801,
+   "segundos": 1.879
+  },
+  "por_encima_del_limite_del_demonio": {
+   "result": "SCAN_FAILED",
+   "signature": null,
+   "details": {
+    "reason": "scanner_error",
+    "response": "INSTREAM size limit exceeded. ERROR"
+   },
+   "bytes": 62914561,
+   "segundos": 0.087
+  },
+  "demonio_caido": {
+   "result": "SCAN_FAILED",
+   "signature": null,
+   "details": {
+    "reason": "connection_refused"
+   },
+   "bytes": 59,
+   "segundos": 0.0
+  },
+  "tiempo_agotado": {
+   "result": "SCAN_FAILED",
+   "signature": null,
+   "details": {
+    "reason": "timeout"
+   },
+   "bytes": 196608,
+   "segundos": 2.002,
+   "ruta_enviada_al_demonio": false
+  },
+  "error_de_protocolo": {
+   "result": "SCAN_FAILED",
+   "signature": null,
+   "details": {
+    "reason": "protocol_error",
+    "response": "<<<mensaje que no es del protocolo>>>"
+   },
+   "bytes": 196608,
+   "segundos": 0.0,
+   "ruta_enviada_al_demonio": false
+  },
+  "respuesta_truncada": {
+   "result": "SCAN_FAILED",
+   "signature": null,
+   "details": {
+    "reason": "truncated_response"
+   },
+   "bytes": 196608,
+   "segundos": 0.0,
+   "ruta_enviada_al_demonio": false
+  },
+  "flujo_interrumpido": {
+   "result": "SCAN_FAILED",
+   "signature": null,
+   "details": {
+    "reason": "truncated_response"
+   },
+   "bytes": 196608,
+   "segundos": 0.0,
+   "ruta_enviada_al_demonio": false
+  },
+  "error_del_demonio": {
+   "result": "SCAN_FAILED",
+   "signature": null,
+   "details": {
+    "reason": "scanner_error",
+    "response": "INSTREAM size limit exceeded. ERROR"
+   },
+   "bytes": 196608,
+   "segundos": 0.0,
+   "ruta_enviada_al_demonio": false
+  }
+ },
+ "veredicto": {
+  "CLEAN_RESULT": true,
+  "INFECTED_RESULT": true,
+  "MULTI_CHUNK_STREAM": true,
+  "MAX_DOCUMENT_SIZE_CONTRACT": true,
+  "DAEMON_LIMIT_FAIL_CLOSED": true,
+  "SCANNER_UNAVAILABLE_FAIL_CLOSED": true,
+  "SCANNER_TIMEOUT_FAIL_CLOSED": true,
+  "PROTOCOL_ERROR_FAIL_CLOSED": true,
+  "MALFORMED_RESPONSE_FAIL_CLOSED": true,
+  "STREAM_INTERRUPTED_FAIL_CLOSED": true,
+  "DAEMON_ERROR_FAIL_CLOSED": true,
+  "SHARED_FILE_PATH_REQUIRED": false
+ }
+}

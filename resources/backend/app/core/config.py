@@ -79,6 +79,14 @@ class Settings(BaseSettings):
     backup_path: str = "/data/backups"
     max_upload_bytes: int = 25 * 1024 * 1024
 
+    # Analizador antimalware documental (Spec 046; OBS-09, opción B de la dueña). La elección es EXPLÍCITA:
+    # `clamscan` lanza el binario local por proceso (QA y desarrollo); `clamd` transmite el contenido por INSTREAM
+    # al demonio del servicio `clamd` de la composición. Ninguna de las dos cae en la otra ni en «sin análisis»
+    # cuando falla: el resultado es `SCAN_FAILED` y la subida se rechaza (falso seguro).
+    document_scanner: str = Field(default="clamscan", pattern="^(clamscan|clamd)$")
+    clamd_host: str = Field(default="clamd", min_length=1)
+    clamd_port: int = Field(default=3310, ge=1, le=65535)
+
     # Observabilidad
     log_level: str = Field(default="INFO", pattern="^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
     log_json: bool = True

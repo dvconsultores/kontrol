@@ -1,0 +1,12 @@
+# syntax=docker/dockerfile:1
+# KONTROL - Analizador antimalware documental como servicio propio (Spec 046 · OBS-09, opción B de la dueña).
+# La imagen oficial trae el motor y una base de firmas inicial y ejecuta `freshclam` como demonio: las firmas se
+# actualizan en /var/lib/clamav (volumen `kontrol-clamav-db`) sin reconstruir KONTROL. El backend no contiene
+# clamscan ni firmas; le transmite el contenido por INSTREAM al puerto 3310, interno a la red de la composición.
+FROM clamav/clamav:1.4.3
+
+# Límites de tamaño ≥ 50 MiB documentales de KONTROL y AlertExceedsMax (ver deploy/clamd/clamd.conf).
+COPY deploy/clamd/clamd.conf /etc/clamav/clamd.conf
+
+# El puerto NO se publica en compose.yaml: solo lo alcanza el backend por el nombre de servicio `clamd`.
+EXPOSE 3310

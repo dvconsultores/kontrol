@@ -43,6 +43,13 @@ services:
       KONTROL_STORAGE_PATH: "/data/storage"
       KONTROL_BACKUP_PATH: "/data/backups"
       KONTROL_LOG_JSON: "true"
+      # Analizador antimalware documental (Spec 046 · OBS-09, opción B): el backend transmite cada archivo por
+      # INSTREAM al servicio `clamd` de esta misma composición (nombre DNS interno, puerto no publicado). La
+      # elección es explícita; si el demonio no responde, la subida se rechaza con SCAN_FAILED (falso seguro):
+      # no hay paso a `clamscan` ni a «sin análisis». El backend no lleva binario ni firmas.
+      KONTROL_DOCUMENT_SCANNER: "clamd"
+      KONTROL_CLAMD_HOST: "clamd"
+      KONTROL_CLAMD_PORT: "3310"
       # Cinturón de seguridad, no autoridad: el día de negocio lo decide
       # `app/shared/clock.py`, y el producto es correcto aunque el anfitrión
       # esté en otra zona (Spec 001 · POLICY-CLOCK-LOCAL).
@@ -55,6 +62,37 @@ services:
       test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live')"]
       interval: 30s
       timeout: 5s
+      retries: 3
+    # Solo orden de arranque: si clamd cae después, el backend sigue fallando cerrado (SCAN_FAILED), no se oculta.
+    depends_on:
+      - clamd
+    networks:
+      - kontrol-net
+
+  # Analizador antimalware (Spec 046 · OBS-09, opción B): un servicio propio, en la red interna, sin puerto
+  # publicado y sin acceso al almacén documental. El backend le transmite el contenido por INSTREAM; el demonio
+  # es dueño del motor y de las firmas, que `freshclam` (demonio de la imagen oficial) actualiza en el volumen
+  # sin reconstruir KONTROL. Imagen `Dockerfile.clamd` = `clamav/clamav:1.4.3` + `deploy/clamd/clamd.conf`
+  # (límites 60M ≥ 50 MiB documentales de KONTROL; `AlertExceedsMax`).
+  clamd:
+    image: ${KONTROL_IMAGE_REGISTRY:-dvconsultores}/kontrol-clamd:${KONTROL_IMAGE_TAG:-latest}
+    container_name: kontrol-clamd
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    environment:
+      # Las firmas se actualizan dentro del servicio (freshclam), nunca desde el backend.
+      CLAMAV_NO_FRESHCLAMD: "false"
+      TZ: "${KONTROL_TZ:-America/Caracas}"
+    volumes:
+      # Solo la base de firmas: ningún volumen documental ni de respaldos entra aquí.
+      - kontrol-clamav-db:/var/lib/clamav
+    healthcheck:
+      # Contrato real del demonio: PING → PONG por el puerto interno (no «el proceso existe»).
+      test: ["CMD-SHELL", "printf 'zPING\\0' | nc -w 5 127.0.0.1 3310 | grep -q PONG"]
+      interval: 30s
+      timeout: 10s
+      start_period: 300s
       retries: 3
     networks:
       - kontrol-net
@@ -86,6 +124,8 @@ volumes:
   kontrol-storage:
   kontrol-license-state:
   kontrol-backups:
+  # Firmas antivirus del servicio clamd (dominio operacional del analizador; persisten las actualizaciones).
+  kontrol-clamav-db:
 
 networks:
   # Red con nombre fijo para que Nginx Proxy Manager (u otro proxy) pueda

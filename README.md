@@ -21,7 +21,7 @@ venezolano separado, versionado e inalterable**.
 | Frontend | React 19 · TypeScript · Vite · Tailwind 4 · TanStack Query · React Router · RHF · Zod · Vitest · Playwright |
 | Backend | Python 3.13 · FastAPI · Pydantic 2 · SQLAlchemy 2 · Alembic · Pytest · Ruff · Mypy |
 | Base de datos | PostgreSQL 18 |
-| Infraestructura | Docker Compose · Nginx · ReportLab |
+| Infraestructura | Docker Compose · Nginx · ClamAV (`clamd` como servicio) · ReportLab |
 
 Detalle y versiones resueltas: `specs/001-fundacion/dependency-matrix.md`.
 

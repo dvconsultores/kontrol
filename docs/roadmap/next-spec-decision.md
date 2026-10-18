@@ -3699,3 +3699,25 @@ técnicas sin decisión pendiente: OBS-01, OBS-07, `ADDITIONAL_UNBOUNDED_LISTING
 la dueña del inventario; OBS-03 solo tocada localmente. De entorno: `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de
 `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-18 · OBS-09 · PRODUCTION-IMAGE-WITHOUT-SCANNER (dueña 046; apoyo 052, 054) — implementada, bloqueada por entorno
+
+Opción B ratificada: `clamd` como servicio separado y el backend transmite cada documento por INSTREAM. Implementado y
+certificado todo lo demostrable sin contenedores: adaptador con falso seguro en toda rama y sin alternativa implícita,
+selección explícita por configuración, servicio en `compose.yaml` con imagen propia y límites ≥ 50 MiB, QA con el demonio
+real (1.4.3, 50 MiB en 1,6 s frente a 6,4 s por proceso de `clamscan`), O09 y CLAMD-QA, 16/16 mutaciones, SQLite 1783/0/1046 ×2,
+PostgreSQL 2803/0/26, E2E 284/0/0, OpenAPI sin cambio. El equipo de QA no tiene `docker`/`podman` ni `sudo`: la
+construcción de la imagen y el `compose up` reales quedan para un equipo con Docker (lista exacta en
+`docs/evidence/docker-validation-checklist.md`). Regla de orquestación mandatoria desde hoy: Claude diseña y escribe el brief,
+DeepSeek escribe todo el código y las pruebas, Claude audita, aplica y certifica (T08-DOC fue la primera tarea así).
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09 (continuación)**: evidencia de composición en un equipo con Docker, o decisión de la dueña sobre dónde ejecutarla |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio (no se elige 018, 047, 048, 057 ni ninguna otra) |
+
+Líneas base: SQLite 1783/0/1046 · PostgreSQL 2803/0/26 · E2E 284/0/0 · OpenAPI 544/533/11. Pendientes de decisión de la
+dueña: dónde ejecutar la composición de OBS-09; `ROLES-SIN-TECHO-DE-DELEGACION`; política del arnés E2E ante red/reloj.
+Candidatas técnicas: OBS-01, OBS-07 (csync), `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LIMIT-OFFSET`,
+`TEST-PG-CATALOGO-MARCA-DE-AGUA`; OBS-04 para la dueña del inventario; OBS-03 solo tocada localmente. De entorno:
+`E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
+

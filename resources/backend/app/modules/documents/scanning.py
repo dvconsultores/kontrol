@@ -13,10 +13,15 @@ en ninguna regla de negocio.
 from __future__ import annotations
 
 import os
+import re
 import shutil
+import socket
+import struct
 import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+
+from app.core.config import get_settings
 
 #: Resultados posibles. Coinciden con `FILE_SECURITY_STATUSES` del modelo.
 PENDING_SCAN = "PENDING_SCAN"
@@ -103,6 +108,94 @@ class ClamAVScanner(FileSecurityScanner):
                           details={"reason": "scanner_error", "code": completed.returncode})
 
 
+#: Tamaño de cada trozo del flujo INSTREAM: un documento nunca cabe «en un solo envío».
+TROZO_INSTREAM = 64 * 1024
+#: Respuesta máxima que se acepta del demonio antes de declararla malformada (las reales miden decenas de bytes).
+RESPUESTA_MAXIMA = 4096
+_RESPUESTA_FOUND = re.compile(r"^stream: (.+) FOUND$")
+
+
+class _RespuestaTruncada(Exception):
+    """El demonio cerró la conexión sin terminar su respuesta."""
+
+
+class ClamdScanner(FileSecurityScanner):
+    """Adaptador del demonio `clamd` por el protocolo INSTREAM (OBS-09, opción B de la dueña).
+
+    El backend abre su propio temporal, lo **transmite** en trozos con longitud prefijada y termina con un trozo de
+    longitud cero; al demonio nunca le llega una ruta, no monta el almacén documental y no necesita ver el sistema de
+    archivos de KONTROL. La respuesta (`stream: OK`, `stream: <firma> FOUND` o un `ERROR`) se traduce aquí y en ningún
+    otro sitio: cualquier cosa que no sea exactamente `OK` o `FOUND` —rechazo de conexión, demonio caído, tiempo
+    agotado, conexión cortada a mitad del flujo, respuesta truncada o irreconocible, límite de tamaño del demonio— es
+    `SCAN_FAILED`, nunca `CLEAN`, y no existe paso alguno a `clamscan` ni a «sin análisis».
+    """
+
+    name = "clamd"
+
+    def __init__(self, host: str | None = None, port: int | None = None, timeout: int = 120) -> None:
+        if host is None or port is None:
+            configuracion = get_settings()
+            host = host or configuracion.clamd_host
+            port = port or configuracion.clamd_port
+        self.host = host
+        self.port = int(port)
+        self.timeout = timeout
+
+    def available(self) -> bool:
+        return bool(self.host) and 0 < int(self.port) < 65536
+
+    def scan(self, path: str) -> ScanResult:
+        if not self.available():
+            return ScanResult(SCAN_FAILED, self.name, details={"reason": "scanner_unavailable"})
+        try:
+            with open(path, "rb") as origen, \
+                    socket.create_connection((self.host, self.port), timeout=self.timeout) as conexion:
+                conexion.settimeout(self.timeout)
+                conexion.sendall(b"zINSTREAM\0")
+                while True:
+                    trozo = origen.read(TROZO_INSTREAM)
+                    if not trozo:
+                        break
+                    conexion.sendall(struct.pack("!I", len(trozo)) + trozo)
+                conexion.sendall(struct.pack("!I", 0))
+                respuesta = self._leer_respuesta(conexion)
+        except TimeoutError:
+            return ScanResult(SCAN_FAILED, self.name, details={"reason": "timeout"})
+        except ConnectionRefusedError:
+            return ScanResult(SCAN_FAILED, self.name, details={"reason": "connection_refused"})
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            return ScanResult(SCAN_FAILED, self.name, details={"reason": "stream_interrupted"})
+        except _RespuestaTruncada:
+            return ScanResult(SCAN_FAILED, self.name, details={"reason": "truncated_response"})
+        except OSError as exc:
+            return ScanResult(SCAN_FAILED, self.name, details={"reason": type(exc).__name__})
+        return self._traducir(respuesta)
+
+    @staticmethod
+    def _leer_respuesta(conexion: socket.socket) -> bytes:
+        """Lee hasta el terminador `\0` de la orden `z…`; sin terminador antes del cierre o del límite, está truncada."""
+        acumulado = b""
+        while b"\0" not in acumulado:
+            if len(acumulado) >= RESPUESTA_MAXIMA:
+                raise _RespuestaTruncada()
+            leido = conexion.recv(RESPUESTA_MAXIMA)
+            if not leido:
+                raise _RespuestaTruncada()
+            acumulado += leido
+        return acumulado.split(b"\0", 1)[0]
+
+    def _traducir(self, respuesta: bytes) -> ScanResult:
+        texto = respuesta.decode("utf-8", errors="replace").strip()
+        if texto == "stream: OK":
+            return ScanResult(CLEAN, self.name)
+        encontrado = _RESPUESTA_FOUND.match(texto)
+        if encontrado:
+            return ScanResult(INFECTED, self.name, signature=encontrado.group(1).strip())
+        if texto.endswith("ERROR"):
+            return ScanResult(SCAN_FAILED, self.name, details={"reason": "scanner_error", "response": texto[:200]})
+        return ScanResult(SCAN_FAILED, self.name, details={"reason": "protocol_error", "response": texto[:200]})
+
+
 class DisabledScanner(FileSecurityScanner):
     """Análisis desactivado **de forma explícita** por configuración.
 
@@ -129,11 +222,17 @@ def get_scanner() -> FileSecurityScanner:
 
     Por defecto ClamAV. `KONTROL_DOCUMENT_SCAN=off` lo desactiva de forma
     deliberada y auditable; no existe forma de desactivarlo por accidente.
+    Con análisis activo, `Settings.document_scanner` elige **explícitamente**
+    el adaptador: `clamd` (demonio del servicio de la composición) o
+    `clamscan` (binario local). No hay alternativa implícita: si el elegido
+    falla, el resultado es `SCAN_FAILED`.
     """
     global _scanner
     if _scanner is None:
         if os.environ.get("KONTROL_DOCUMENT_SCAN", "on").lower() in ("off", "false", "0"):
             _scanner = DisabledScanner()
+        elif get_settings().document_scanner == "clamd":
+            _scanner = ClamdScanner()
         else:
             _scanner = ClamAVScanner()
     return _scanner
