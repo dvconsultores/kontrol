@@ -3721,3 +3721,23 @@ Candidatas técnicas: OBS-01, OBS-07 (csync), `ADDITIONAL_UNBOUNDED_LISTING`, `A
 `TEST-PG-CATALOGO-MARCA-DE-AGUA`; OBS-04 para la dueña del inventario; OBS-03 solo tocada localmente. De entorno:
 `E2E-PANTALLA-SIN-PINTAR`. Fuera de ciclo: el 502 de `kontrol.globaldv.net`. MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-18 · OBS-07 · CSYNC-AISLAMIENTO convergida (dueña 004, carpeta 010; apoyo 054) · OBS-09 sigue esperando evidencia
+
+Seleccionada por evidencia entre nueve deudas abiertas: la única con causa demostrable, alcance acotado, sin decisión de la
+dueña y sin solape con OBS-09 (matriz en `evidence/obs07-csync-aislamiento/candidate-matrix.md`; OBS-01 es más grave pero su
+registro exige decidir qué contesta el servicio fuera de PostgreSQL). El módulo CSYNC compartía un mundo de módulo: 10/13
+pruebas fallaban solas y 11/13 en orden inverso. Ahora cada prueba parte de bases nuevas con precondiciones explícitas; una
+regresión lo demuestra. Orquestación: Claude diseñó, escribió los briefs, auditó (3 rechazos con hallazgos exactos), aplicó y
+certificó; DeepSeek escribió todo el código de prueba (5 llamadas, $0,026). SQLite 1800/0/1046 ×2, PostgreSQL 2820/0/26,
+E2E 284/0/0, OpenAPI 544/533/11. OBS-09: IMPLEMENTATION IN PROGRESS — BLOCKED BY ENVIRONMENT, sin cambio.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09 (cierre)** en cuanto llegue `OBS09_EXTERNAL_DOCKER_EVIDENCE`; si no llega, la siguiente deuda independiente por matriz |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: SQLite 1800/0/1046 · PostgreSQL 2820/0/26 · E2E 284/0/0 · OpenAPI 544/533/11. Pendientes de decisión de la
+dueña: OBS-01 (respuesta fuera de PostgreSQL), `ROLES-SIN-TECHO-DE-DELEGACION`, `ADDITIONAL_UNBOUNDED_LISTING`,
+`ALMACENES-PAGINACION-LIMIT-OFFSET`, OBS-04, política del arnés E2E ante red/reloj. Observaciones sin efecto demostrado:
+`TEST-PG-CATALOGO-MARCA-DE-AGUA`, OBS-03 (guía). MASTER57 y SPEC057 sin cambio.
+

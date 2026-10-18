@@ -6,6 +6,9 @@ transporte del cliente. La clave sintética del propietario firma licencias y es
 cliente; la clave de identidad de la instalación es la que el propio cliente generó al activarse
 (volumen de pruebas) y el vendor la vincula en la autoridad desde la base del cliente. Un transporte
 hostil, aparte, prueba la defensa en profundidad. Nada real.
+
+Cada prueba aísla sus datos: las aplicaciones y las claves se comparten a nivel de módulo, pero las
+bases de cliente y autoridad se crean nuevas en cada prueba.
 """
 
 from __future__ import annotations
@@ -85,12 +88,57 @@ class TransporteReal:
 
 
 @pytest.fixture(scope="module", autouse=True)
-def _mundo():
-    global _CLIENT, _FACTORY, _CENTRAL, _AJUSTES, _PROPIETARIO, _INSTALACION, _CENTRAL_APP
+def _aplicaciones():
+    global _CLIENT, _AJUSTES, _PROPIETARIO, _CENTRAL_APP
     _PROPIETARIO = Ed25519PrivateKey.generate()
     anterior = os.environ.get(ANCLA)
     os.environ[ANCLA] = pem_publica(_PROPIETARIO)
     get_settings.cache_clear()
+    _AJUSTES = CentralSettings(_env_file=None, environment="qa", db_url="sqlite+pysqlite:///:memory:",
+                               signing_private_key_pem=pem_privada(_PROPIETARIO), signing_kid="kontrol-lic-2026-01")
+    central_main.get_settings = lambda: _AJUSTES  # type: ignore[assignment]
+    app_central = central_main.create_app()
+
+    def _db_central():
+        d = _CENTRAL()
+        try:
+            yield d
+        finally:
+            d.close()
+
+    app_central.dependency_overrides[central_db.get_db] = _db_central
+    _CENTRAL_APP = TestClient(app_central)
+
+    from app.main import create_app
+
+    app = create_app()
+
+    def _db():
+        d = _FACTORY()
+        try:
+            yield d
+        finally:
+            d.close()
+
+    app.dependency_overrides[get_db] = _db
+    _CLIENT = TestClient(app, raise_server_exceptions=False)
+    # La ruta HTTP del cliente usa el transporte por defecto: aquí, la autoridad real en proceso.
+    transporte_original = svc.UrllibSyncTransport
+    svc.UrllibSyncTransport = lambda: TransporteReal(_CENTRAL_APP)  # type: ignore[assignment,misc]
+    try:
+        yield
+    finally:
+        svc.UrllibSyncTransport = transporte_original  # type: ignore[misc]
+        if anterior is None:
+            os.environ.pop(ANCLA, None)
+        else:
+            os.environ[ANCLA] = anterior
+        get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def _mundo(_aplicaciones):
+    global _FACTORY, _CENTRAL, _INSTALACION
     engine = make_engine()
     init_models()
     Base.metadata.create_all(engine)
@@ -110,49 +158,15 @@ def _mundo():
     motor_central = make_engine()
     CentralBase.metadata.create_all(motor_central)
     _CENTRAL = sessionmaker(bind=motor_central, class_=Session, expire_on_commit=False)
-    _AJUSTES = CentralSettings(_env_file=None, environment="qa", db_url="sqlite+pysqlite:///:memory:",
-                               signing_private_key_pem=pem_privada(_PROPIETARIO), signing_kid="kontrol-lic-2026-01")
     with _CENTRAL() as db:  # el vendor vincula la clave pública que el cliente guarda (enrolamiento fuera de banda)
         central.register_installation(db, installation_uuid=_INSTALACION, public_key_pem=clave_publica, customer_id="C-TEST", contract_id="K-TEST",
                                       company_tax_id="J-00000000-0", operator="qa")
-    central_main.get_settings = lambda: _AJUSTES  # type: ignore[assignment]
-    app_central = central_main.create_app()
-
-    def _db_central():
-        d = _CENTRAL()
-        try:
-            yield d
-        finally:
-            d.close()
-
-    app_central.dependency_overrides[central_db.get_db] = _db_central
-    _CENTRAL_APP = TestClient(app_central)
-
-    from app.main import create_app
-
-    app = create_app()
-
-    def _db():
-        d = factory()
-        try:
-            yield d
-        finally:
-            d.close()
-
-    app.dependency_overrides[get_db] = _db
-    _CLIENT, _FACTORY = TestClient(app, raise_server_exceptions=False), factory
-    # La ruta HTTP del cliente usa el transporte por defecto: aquí, la autoridad real en proceso.
-    transporte_original = svc.UrllibSyncTransport
-    svc.UrllibSyncTransport = lambda: TransporteReal(_CENTRAL_APP)  # type: ignore[assignment,misc]
+    _FACTORY = factory
     try:
         yield
     finally:
-        svc.UrllibSyncTransport = transporte_original  # type: ignore[misc]
-        if anterior is None:
-            os.environ.pop(ANCLA, None)
-        else:
-            os.environ[ANCLA] = anterior
-        get_settings.cache_clear()
+        engine.dispose()
+        motor_central.dispose()
 
 
 def _sesion(username: str) -> dict[str, str]:
@@ -197,6 +211,29 @@ def _olvida_idempotencia() -> None:
         db.commit()
 
 
+def _configura_autoridad() -> None:
+    """Guarda en el cliente la configuración MANUAL de la autoridad para las pruebas que la requieren."""
+    r = _CLIENT.put(CONFIG, json={"server_url": "http://127.0.0.1:8010", "public_key": None, "sync_policy": {"mode": "MANUAL"}, "grace_days": 7, "enabled": True},
+                    headers=_sesion("admin"))
+    assert r.status_code == 200, r.text
+
+
+def _importa_licencia(anio: int = ANIO) -> dict[str, Any]:
+    """Configura la autoridad, emite una licencia y la importa en el cliente vía SYNC como admin."""
+    _configura_autoridad()
+    licencia = _emite(anio)
+    r = _CLIENT.post(SYNC, headers=_sesion("admin"))
+    assert r.status_code == 200, r.text
+    assert r.json()["response"]["status"] == "LICENSE"
+    return licencia
+
+
+def _sincronizacion_previa() -> None:
+    """Precondición de idempotencia: la autoridad configurada y una sincronización con éxito hoy sobre el estado actual."""
+    _configura_autoridad()
+    assert _sincroniza(TransporteReal(_CENTRAL_APP))["status"] == "SUCCESS"
+
+
 # ---------------------------------------------------------------- CSYNC-01..04 · configuración y camino bueno
 def test_csync_01_configurar_la_autoridad_por_http_local_en_qa_y_sin_licencia_el_sync_responde_no_license():
     r = _CLIENT.put(CONFIG, json={"server_url": "http://127.0.0.1:8010", "public_key": None, "sync_policy": {"mode": "MANUAL"}, "grace_days": 7, "enabled": True},
@@ -210,6 +247,7 @@ def test_csync_01_configurar_la_autoridad_por_http_local_en_qa_y_sin_licencia_el
 
 
 def test_csync_02_la_licencia_emitida_por_la_autoridad_llega_autenticada_y_pasa_por_la_importacion():
+    _configura_autoridad()
     _olvida_idempotencia()
     r1 = _emite(ANIO)
     r = _CLIENT.post(SYNC, headers=_sesion("admin"))
@@ -224,6 +262,7 @@ def test_csync_02_la_licencia_emitida_por_la_autoridad_llega_autenticada_y_pasa_
 
 
 def test_csync_03_lo_que_viaja_son_los_bytes_hasheados_y_ninguna_clave_privada():
+    _configura_autoridad()
     _olvida_idempotencia()
     transporte = TransporteReal(_CENTRAL_APP)
     _sincroniza(transporte)
@@ -243,6 +282,7 @@ def test_csync_03_lo_que_viaja_son_los_bytes_hasheados_y_ninguna_clave_privada()
 
 
 def test_csync_04_la_sincronizacion_es_idempotente_por_dia_sin_contactar_de_nuevo():
+    _sincronizacion_previa()
     transporte = TransporteReal(_CENTRAL_APP)
     resultado = _sincroniza(transporte)
     assert resultado["idempotent"] is True and transporte.llamadas == []
@@ -250,6 +290,7 @@ def test_csync_04_la_sincronizacion_es_idempotente_por_dia_sin_contactar_de_nuev
 
 # ---------------------------------------------------------------- CSYNC-05..08 · fallos: sin retroceso, sin reintentos ocultos
 def test_csync_05_si_el_transporte_falla_no_hay_retroceso_a_un_sync_anonimo_y_el_siguiente_intento_pide_otro_desafio():
+    _configura_autoridad()
     _olvida_idempotencia()
 
     class Caido(TransporteReal):
@@ -270,6 +311,7 @@ def test_csync_05_si_el_transporte_falla_no_hay_retroceso_a_un_sync_anonimo_y_el
 
 
 def test_csync_06_si_la_autoridad_rechaza_la_prueba_el_cliente_lo_anota_y_no_toca_el_estado():
+    _importa_licencia()
     _olvida_idempotencia()
     antes = _estado().license_id
 
@@ -286,6 +328,7 @@ def test_csync_06_si_la_autoridad_rechaza_la_prueba_el_cliente_lo_anota_y_no_toc
 
 
 def test_csync_07_un_artefacto_de_otra_instalacion_o_manipulado_no_entra_aunque_llegue_autenticado():
+    _importa_licencia()
     _olvida_idempotencia()
     antes = _estado().license_id
     ajeno = contract.sign_license_payload  # firmado por el propietario, pero para otra instalación
@@ -315,6 +358,7 @@ def test_csync_07_un_artefacto_de_otra_instalacion_o_manipulado_no_entra_aunque_
 
 
 def test_csync_08_una_respuesta_fuera_de_contrato_se_rechaza():
+    _importa_licencia()
     _olvida_idempotencia()
 
     class Raro(TransporteReal):
@@ -335,6 +379,7 @@ def test_csync_09_la_ruta_local_sigue_exigiendo_sesion_y_license_create():
 
 
 def test_csync_10_en_solo_lectura_la_renovacion_por_sync_sigue_siendo_posible():
+    _importa_licencia()
     _olvida_idempotencia()
     with _FACTORY() as db:
         estado = db.execute(select(LicenseState)).scalars().one()
@@ -350,6 +395,7 @@ def test_csync_10_en_solo_lectura_la_renovacion_por_sync_sigue_siendo_posible():
 
 
 def test_csync_11_en_produccion_la_autoridad_debe_ir_por_https():
+    _configura_autoridad()
     produccion = get_settings().model_copy(update={"environment": "prod"})
     original = svc.get_settings
     svc.get_settings = lambda: produccion  # type: ignore[assignment]
@@ -370,6 +416,7 @@ def test_csync_11_en_produccion_la_autoridad_debe_ir_por_https():
 
 
 def test_csync_12_sin_clave_privada_de_instalacion_el_sync_falla_cerrado_antes_de_contactar():
+    _configura_autoridad()
     _olvida_idempotencia()
     ruta = svc._private_key_path()
     os.rename(ruta, ruta + ".fuera")
