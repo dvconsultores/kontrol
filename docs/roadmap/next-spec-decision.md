@@ -3741,3 +3741,23 @@ dueña: OBS-01 (respuesta fuera de PostgreSQL), `ROLES-SIN-TECHO-DE-DELEGACION`,
 `ALMACENES-PAGINACION-LIMIT-OFFSET`, OBS-04, política del arnés E2E ante red/reloj. Observaciones sin efecto demostrado:
 `TEST-PG-CATALOGO-MARCA-DE-AGUA`, OBS-03 (guía). MASTER57 y SPEC057 sin cambio.
 
+## 2026-10-18 · OBS-01 · WAREHOUSE-INTEGRITY-TRADUCE-TODO convergida (dueña 008; apoyo 001) · OBS-09 sigue esperando evidencia
+
+La dueña resolvió la decisión pendiente: solo la violación única reconocida de la restricción del código es 409 de dominio, y
+cualquier otro `IntegrityError` se relanza al 500 `INTERNAL_ERROR` saneado, en PostgreSQL y en SQLite. El defecto se reprodujo
+sin dobles: una clave foránea rota se contestaba como «ya existe». La corrección clasifica por restricción en los dos motores y
+conserva los códigos y mensajes del duplicado. Orquestación: Claude diseñó, escribió los briefs, auditó (2 rechazos y una
+reclasificación), aplicó y certificó; DeepSeek escribió todo el código y las pruebas (4 llamadas, $0,023). SQLite
+1814/0/1046 ×2, PostgreSQL 2834/0/26, E2E 284/0/0, OpenAPI 544/533/11. OBS-09: IMPLEMENTATION IN PROGRESS — BLOCKED BY
+ENVIRONMENT, sin cambio.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09 (cierre)** en cuanto llegue `OBS09_EXTERNAL_DOCKER_EVIDENCE`; si no llega, rederivar la matriz entre las deudas restantes |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: SQLite 1814/0/1046 · PostgreSQL 2834/0/26 · E2E 284/0/0 · OpenAPI 544/533/11. Pendientes de decisión de la
+dueña: `ROLES-SIN-TECHO-DE-DELEGACION`, `ADDITIONAL_UNBOUNDED_LISTING`, `ALMACENES-PAGINACION-LIMIT-OFFSET`, OBS-04, política
+del arnés E2E ante red/reloj. Observaciones: OBS-03 (guía), `TEST-PG-CATALOGO-MARCA-DE-AGUA` (sin efecto demostrado),
+`branch_id` del alta de almacén sin validar contra la empresa (no medido). MASTER57 y SPEC057 sin cambio.
+

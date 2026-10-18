@@ -19,6 +19,7 @@ from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
 from app.core.errors import ConflictError, KontrolError, NotFoundError
+from app.core.integrity import es_violacion_unica_de, restriccion_unica
 from app.modules.identity_access.models import User
 from app.modules.organization import structure as st
 from app.modules.organization.models import (
@@ -98,9 +99,21 @@ def _audit(db: Session, user: User, ctx: CompanyContext, action: str, entity_typ
                  user_id=str(user.id), before=before, after=after)
 
 
-def _integrity(exc: IntegrityError, code: str, message: str) -> KontrolError:
-    del exc
-    return ConflictError(code=code, message=message)
+# OBS-01: solo la violación única de la restricción del código se traduce al
+# 409 de dominio; cualquier otro IntegrityError se relanza y el manejador
+# genérico lo convierte en el 500 INTERNAL_ERROR saneado.
+_UQ_CATALOGO = {
+    ZoneType: restriccion_unica(ZoneType.__table__, "uq_zone_types_company_code"),
+    LocationType: restriccion_unica(LocationType.__table__, "uq_location_types_company_code"),
+}
+_UQ_ALMACEN = restriccion_unica(Warehouse.__table__, "uq_warehouses_company_code")
+_UQ_NODO = {
+    "zone": restriccion_unica(st.LEVEL_MODEL["zone"].__table__, "uq_warehouse_zones_wh_code"),
+    "aisle": restriccion_unica(st.LEVEL_MODEL["aisle"].__table__, "uq_warehouse_aisles_wh_code"),
+    "rack": restriccion_unica(st.LEVEL_MODEL["rack"].__table__, "uq_warehouse_racks_wh_code"),
+    "level": restriccion_unica(st.LEVEL_MODEL["level"].__table__, "uq_warehouse_levels_wh_code"),
+}
+_UQ_UBICACION = restriccion_unica(WarehouseLocation.__table__, "uq_warehouse_locations_wh_code")
 
 
 # --------------------------------------------------------------------------
@@ -143,8 +156,10 @@ def _catalog_create(db: Session, actor: User, ctx: CompanyContext, model: Any,
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise _integrity(exc, f"{entity.upper()}_CODE_DUPLICATE",
-                         "Ya existe un tipo con ese código en la empresa") from exc
+        if not es_violacion_unica_de(exc, _UQ_CATALOGO[model]):
+            raise
+        raise ConflictError(code=f"{entity.upper()}_CODE_DUPLICATE",
+                            message="Ya existe un tipo con ese código en la empresa") from exc
     db.refresh(row)
     _audit(db, actor, ctx, "CREATE", entity, str(row.id), after={"code": row.code})
     db.commit()
@@ -323,8 +338,10 @@ def create_warehouse_full(body: WarehouseIn, db: Session = Depends(get_db),
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise _integrity(exc, "WAREHOUSE_CODE_DUPLICATE",
-                         "Ya existe un almacén con ese código en la empresa") from exc
+        if not es_violacion_unica_de(exc, _UQ_ALMACEN):
+            raise
+        raise ConflictError(code="WAREHOUSE_CODE_DUPLICATE",
+                            message="Ya existe un almacén con ese código en la empresa") from exc
     db.refresh(warehouse)
     _audit(db, actor, ctx, "CREATE", "warehouse", str(warehouse.id), after={"code": warehouse.code})
     db.commit()
@@ -527,8 +544,10 @@ def _node_routes(level: str) -> None:
             db.commit()
         except IntegrityError as exc:
             db.rollback()
-            raise _integrity(exc, f"{level.upper()}_CODE_DUPLICATE",
-                             "Ya existe un nodo con ese código en el almacén") from exc
+            if not es_violacion_unica_de(exc, _UQ_NODO[level]):
+                raise
+            raise ConflictError(code=f"{level.upper()}_CODE_DUPLICATE",
+                                message="Ya existe un nodo con ese código en el almacén") from exc
         db.refresh(node)
         # Crear el primer nodo hace operativo el almacén: viaje de ida (R-008-6).
         st.promote_regime(db, warehouse)
@@ -802,8 +821,10 @@ def create_location_full(body: LocationIn, db: Session = Depends(get_db),
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise _integrity(exc, "LOCATION_CODE_DUPLICATE",
-                         "Ya existe una ubicación con ese código en el almacén") from exc
+        if not es_violacion_unica_de(exc, _UQ_UBICACION):
+            raise
+        raise ConflictError(code="LOCATION_CODE_DUPLICATE",
+                            message="Ya existe una ubicación con ese código en el almacén") from exc
     db.refresh(location)
     st.promote_regime(db, warehouse)
     _audit(db, actor, ctx, "CREATE", "warehouse_location", str(location.id), after={"code": location.code})
@@ -850,8 +871,10 @@ def bulk_locations(body: BulkLocationIn, db: Session = Depends(get_db),
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise _integrity(exc, "LOCATION_CODE_DUPLICATE",
-                         "Otra operación creó uno de los códigos") from exc
+        if not es_violacion_unica_de(exc, _UQ_UBICACION):
+            raise
+        raise ConflictError(code="LOCATION_CODE_DUPLICATE",
+                            message="Otra operación creó uno de los códigos") from exc
     st.promote_regime(db, warehouse)
     _audit(db, actor, ctx, "BULK_CREATE", "warehouse_location", str(warehouse.id),
            after={"count": len(created)})
