@@ -89,3 +89,5 @@ docker inspect kontrol-clamd --format '{{json .NetworkSettings.Ports}} {{json .M
 Registrar: `CLAMD_VERSION`, `SIGNATURE_DATABASE_VERSION/DATE`, `BASE_BACKEND_IMAGE_SIZE`, `BUILD_TIME`, `CLAMD_HEALTHY_AFTER_S`,
 y los cuatro resultados del punto 4, en `specs/046-gestion-documental/evidence/obs09-production-image-scanner/compose-runtime-evidence.md`.
 
+Automatizado: `resources/backend/.venv/bin/python qa/compose_qa.py` (o `python3 qa/compose_qa.py`) desde la raíz, en un equipo con Docker, ejecuta esta lista completa, limpia sus recursos y emite el bloque `OBS09_EXTERNAL_DOCKER_EVIDENCE` que audita Claude.
+

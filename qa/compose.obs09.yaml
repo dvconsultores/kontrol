@@ -1,0 +1,42 @@
+# Override de QA para Spec 046 · OBS-09.
+# La base PostgreSQL es efímera y ninguna de estas cadenas es un secreto real.
+# Uso exclusivo desde qa/compose_qa.py; no publica clamd al host.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: kontrol
+      POSTGRES_PASSWORD: kontrol-obs09-sintetica
+      POSTGRES_DB: kontrol
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kontrol -d kontrol"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - kontrol-net
+    container_name: kontrol-obs09-db-${OBS09_RUN:-local}
+
+  backend:
+    container_name: kontrol-obs09-api-${OBS09_RUN:-local}
+    environment:
+      KONTROL_ENVIRONMENT: qa
+      KONTROL_IMAGE_TAG: "${KONTROL_IMAGE_TAG:-obs09}"
+      KONTROL_DB_URL: postgresql+psycopg2://kontrol:kontrol-obs09-sintetica@db:5432/kontrol
+      KONTROL_SECRET_KEY: obs09-clave-sintetica-de-qa-0123456789abcdef0123456789
+      KONTROL_COOKIE_SECURE: "false"
+      KONTROL_CORS_ORIGINS: '["http://localhost"]'
+    ports:
+      - "127.0.0.1:${OBS09_BACKEND_PORT:-18000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      clamd:
+        condition: service_healthy
+
+  clamd:
+    container_name: kontrol-obs09-clamd-${OBS09_RUN:-local}
+
+networks:
+  kontrol-net:
+    name: kontrol-obs09-${OBS09_RUN:-local}

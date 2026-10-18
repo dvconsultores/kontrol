@@ -85,3 +85,6 @@ qa/e2e-runs/
 
 # Evidencia de cada certificación backend instrumentada (qa/suite_tiempos.py): manifiesto, salida de pytest, anfitrión
 qa/backend-runs/
+
+# Evidencia de cada corrida de qa/compose_qa.py (composición Docker aislada, OBS-09): evidencia.txt/json
+qa/compose-runs/
