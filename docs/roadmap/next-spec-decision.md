@@ -3923,3 +3923,39 @@ Con PostgreSQL en verde, B1 queda CLOSED / CONVERGED sin tocar su producto.
 | `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
 
 Líneas base nuevas: SQLite 1885/0/1056 · PostgreSQL 2915/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
+
+## 2026-10-19 · Matriz autoritativa de deudas técnicas rederivada (Ruta B, solo lectura) · OBS-09 sigue esperando evidencia
+
+La matriz se rederivó sobre `40b2277`, verificando cada deuda en el código de HEAD, y vive en
+`docs/roadmap/technical-debt-matrix.md`. No hubo cambios de producto, pruebas ni QA; DeepSeek 0.
+
+**Recuento: 65 candidatos.**
+
+| Categoría | Nº |
+|---|---|
+| A · corregibles | 10 |
+| B · por diagnosticar | 1 |
+| C · observaciones | 6 |
+| D · decisión de la dueña | 27 |
+| E · evidencia externa | 1 |
+| F · dependencia | 10 |
+| G · superadas o sin efecto | 10 |
+
+**Deudas que dejan de estar abiertas:**
+- LICENCIA-MIDDLEWARE-BD-EN-EL-BUCLE y AUDIT-TOTAL-MATERIALIZA: superadas.
+- TEST-PG-CATALOGO-MARCA-DE-AGUA: sin efecto.
+- DT-01, 02, 05, 08 y 09: superadas.
+
+**Dos deudas nuevas, medidas:**
+- **CERTIFICATION-ENVIRONMENT-DEPENDENCY-DRIFT:** se certifica con Python 3.11 y versiones anteriores a la corrección de
+  CVE, mientras producción fija Python 3.13, FastAPI 0.141.1 y Starlette 1.3.1.
+- **PRODUCTION-IMAGE-WITHOUT-LIBMAGIC:** la imagen no instala `python-magic`. Toda carga documental caería en 422 por
+  MIME, y la evidencia Docker de OBS-09 fallaría en F01, F03 y F04.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia Docker; antes conviene que la dueña decida el alcance de PRODUCTION-IMAGE-WITHOUT-LIBMAGIC, que la haría fallar. Si no llega: **CERTIFICATION-ENVIRONMENT-DEPENDENCY-DRIFT** (diagnóstico controlado, dueña 054). Segunda: ALMACENES-DESPLEGABLES-TRUNCADOS (008) |
+| Decisiones de la dueña visibles | DOCUMENT-ARCHIVE-LOST-UPDATE-DURING-UPLOAD (recomendada A: 409 con bloqueo de fila) · DOCUMENT-DELETE-DURING-UPLOAD-ORPHAN-500 (A: 404 + limpiar binario) · DOCUMENT-SCAN-REJECTION-AUDIT-NOT-PERSISTED (B: commit del audit antes del 422) · alcance de PRODUCTION-IMAGE-WITHOUT-LIBMAGIC |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Las líneas base no cambian: SQLite 1885/0/1056 · PostgreSQL 2915/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
