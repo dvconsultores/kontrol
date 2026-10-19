@@ -3868,3 +3868,29 @@ INFECTED sigue rechazado. Las sondas destaparon además tres defectos previos, r
 
 Líneas base sin cambio: SQLite 1876/0/1046 · PostgreSQL 2896/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
 
+
+## 2026-10-19 · DOCUMENT-UPLOAD-HOLDS-DB-CONNECTION-DURING-SCAN implementada (B1, dueña 046) · PostgreSQL con un fallo ajeno atribuido · OBS-09 sigue esperando evidencia
+
+La carga confirma su transacción de solo lectura antes del análisis, con una guarda que falla cerrada si hubiera
+escrituras pendientes. Durante clamscan quedan 0 conexiones prestadas: el analizador controlado y el real lo miden. El
+INFECTED sigue en 422, y la idempotencia y VERSION_CONFLICT siguen intactos.
+
+| Puerta | Resultado |
+|---|---|
+| Prueba nueva | 9 pruebas en los dos motores |
+| Mutaciones | 14/14 |
+| SQLite | 1885/0/1046 ×2 |
+| E2E | 284/0/0, 0 QueuePool bajo mayor presión |
+| OpenAPI | 544/533/11 |
+| PostgreSQL | 2904/1/26 |
+
+El fallo de PostgreSQL, `test_e2ecorrida_01`, es previo y ajeno. La huella de la base protegida cuenta las escrituras de
+catálogo de autovacuum: con la prueba nueva X1 pasa y sin ella X2 falla. Se registra como
+E2E-HARNESS-PROTECTED-FINGERPRINT-COUNTS-AUTOVACUUM (dueña 054). No se declara CONVERGED.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia. Si no, **E2E-HARNESS-PROTECTED-FINGERPRINT-COUNTS-AUTOVACUUM** (dueña 054, herramienta QA): su corrección más una PostgreSQL verde cierran B1 como CONVERGED. Alternativa: que la dueña acepte la atribución y cierre B1 sin ciclo. Las tres deudas documentales esperan decisión de contrato |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base nuevas: SQLite 1885/0/1046 · PostgreSQL 2905 previstas (2904/1/26 medidas) · E2E 284/0/0 · OpenAPI 544/533/11.

@@ -547,6 +547,12 @@ def upload_version(document_id: str,
         if acierto is not None:
             return acierto
 
+    # DOCUMENT-UPLOAD-HOLDS-DB-CONNECTION-DURING-SCAN: la fase previa solo lee;
+    # cerramos su transacción para que el análisis antivirus no retenga conexión.
+    if db.new or db.dirty or db.deleted:
+        raise RuntimeError("Escrituras pendientes antes del análisis documental")
+    db.commit()
+
     try:
         version = service.upload_version(
             db, document=document, doc_type=doc_type, stream=file.file,

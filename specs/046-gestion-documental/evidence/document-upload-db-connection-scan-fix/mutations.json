@@ -1,0 +1,189 @@
+{
+ "total": 14,
+ "killed": 14,
+ "survived": 0,
+ "nota_M12": "Las carreras VERSION_CONFLICT solo existen en PostgreSQL (en SQLite se omiten con su razón, contrato DOCENV-12); en SQLite el mutante es neutro y muere en PostgreSQL.",
+ "nota_M03": "La primera pasada no aplicó M03: el ancla de una línea no era única (11 coincidencias en api.py), un defecto del guion de Claude, que exige coincidencia única. Se reejecutó con el ancla única de dos líneas (documento + tipo).",
+ "mutantes": [
+  {
+   "id": "M01",
+   "mutacion": "quitar el commit de B1",
+   "fichero": "app/modules/documents/api.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M02",
+   "mutacion": "mover B1 después del servicio",
+   "fichero": "app/modules/documents/api.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M03",
+   "mutacion": "mover B1 antes de la búsqueda del documento",
+   "fichero": "app/modules/documents/api.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M04",
+   "mutacion": "mover B1 antes de la idempotencia",
+   "fichero": "app/modules/documents/api.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b09_contrato_ast_commit_antes_del_analisis"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b09_contrato_ast_commit_antes_del_analisis"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M05",
+   "mutacion": "eliminar la guarda de escrituras pendientes",
+   "fichero": "app/modules/documents/api.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b08_escritura_pendiente_rechaza_todo"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b08_escritura_pendiente_rechaza_todo"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M06",
+   "mutacion": "invertir la guarda",
+   "fichero": "app/modules/documents/api.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M07",
+   "mutacion": "rollback en vez de commit en la frontera",
+   "fichero": "app/modules/documents/api.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M08",
+   "mutacion": "forzar checkout antes del análisis",
+   "fichero": "app/modules/documents/api.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M09",
+   "mutacion": "saltar el analizador",
+   "fichero": "app/modules/documents/service.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M10",
+   "mutacion": "aceptar INFECTED",
+   "fichero": "app/modules/documents/service.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b05_infectado_sin_persistencia"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b05_infectado_sin_persistencia"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M11",
+   "mutacion": "romper la idempotencia",
+   "fichero": "app/modules/documents/api.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b07_idempotencia_llama_una_sola_vez"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b07_idempotencia_llama_una_sola_vez"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M12",
+   "mutacion": "romper VERSION_CONFLICT idempotente",
+   "fichero": "app/modules/documents/api.py",
+   "estado": "KILLED",
+   "sqlite_matan": [],
+   "postgres_matan": [
+    "FAILED test_documents_security.py::test_la_misma_clave_en_carrera_devuelve_la_version_ganadora"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M13",
+   "mutacion": "perder DOCUMENT_FILE_UPLOADED",
+   "fichero": "app/modules/documents/service.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b01_no_retiene_conexion_durante_analisis"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M14",
+   "mutacion": "cambiar el código de error del análisis",
+   "fichero": "app/modules/documents/service.py",
+   "estado": "KILLED",
+   "sqlite_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b05_infectado_sin_persistencia"
+   ],
+   "postgres_matan": [
+    "FAILED test_document_upload_connection_boundary.py::test_b05_infectado_sin_persistencia"
+   ],
+   "restaurado_identico": true
+  }
+ ]
+}

@@ -1,0 +1,47 @@
+{
+ "PREFIX_controlado": {
+  "status": 200,
+  "pg": [
+   {
+    "state": "idle in transaction",
+    "tiene_xid": false
+   }
+  ],
+  "checked_out": 1,
+  "frontera": {
+   "orm_new": 0,
+   "orm_dirty": 0,
+   "orm_deleted": 0,
+   "en_transaccion": true
+  },
+  "sql_antes_del_scan": [
+   "SELECT"
+  ],
+  "dml_antes_del_scan": 0,
+  "flush_con_escrituras_antes_del_scan": 0,
+  "checked_out_en_scan_start": 1,
+  "checkouts_entre_frontera_y_scan": 0,
+  "versiones": 1,
+  "auditoria_subida": 1
+ },
+ "PREFIX_real": {
+  "status": 200,
+  "frontera": {
+   "orm_new": 0,
+   "orm_dirty": 0,
+   "orm_deleted": 0,
+   "en_transaccion": true
+  },
+  "sql_antes_del_scan": [
+   "SELECT"
+  ],
+  "dml_antes_del_scan": 0,
+  "flush_con_escrituras_antes_del_scan": 0,
+  "checked_out_en_scan_start": 1,
+  "checkouts_entre_frontera_y_scan": 0,
+  "versiones": 1,
+  "auditoria_subida": 1
+ },
+ "scan_real_ms": null,
+ "checked_out_final": 0
+}
