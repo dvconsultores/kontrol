@@ -23,3 +23,12 @@
 - **Clasificación:** `EXTERNAL_ENVIRONMENT · HOST_MEMORY_PRESSURE`. No se tocó ninguna espera, timeout ni prueba. La
   corrida no se repitió para que «pasara»: la segunda corrida y el control son evidencia.
 Residuos: bases de corrida 0 · esquemas `t_` 0 · raíces efímeras 0 · puertos 8000/8010/5173 libres.
+
+## Cierre E2E conjunto (2026-10-19 05:01)
+| Campo | Valor |
+|---|---|
+| Precheck | MemAvailable 6 640 MB · swap 4 631 MB · carga 1,08 · clamscan previos 0 → apto |
+| E2E (`r20261019t030105p679326nda98b2`) | **284 / 0 / 0** · 4,6 min · limpieza LIMPIA · salida 0 |
+| Durante la corrida | MemAvailable mínima 886 MB · swap pico 6 827 MB · carga máxima 15,65 · clamscan simultáneos pico 5 · vida máxima 20 s |
+| Backend | 0 `QueuePool` · 0 errores no controlados · 0 respuestas `*_TYPE_NOT_FOUND` / `BRANCH_NOT_FOUND` |
+| Código | sin cambio desde `f93232b` (`CODE_UNCHANGED = 1`); certificación backend reutilizada |

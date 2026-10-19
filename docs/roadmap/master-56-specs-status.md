@@ -130,6 +130,7 @@ Recontado de nuevo el 2026-10-18 tras converger `OBS-07 · CSYNC-AISLAMIENTO` (d
 Recontado de nuevo el 2026-10-18 tras converger `OBS-01 · WAREHOUSE-INTEGRITY-TRADUCE-TODO` (dueña 008; apoyo 001): **57 filas**, sin cambio; contrato de error interno, esquema 0; OBS-09 sigue bloqueada por entorno; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
 Recontado de nuevo el 2026-10-19 tras implementar `WAREHOUSE-BRANCH-CROSS-COMPANY` (dueña 008; E2E bloqueada por el entorno): **57 filas**, sin cambio; esquema 0; OBS-09 sigue bloqueada por entorno; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
 Recontado de nuevo el 2026-10-19 tras implementar `WAREHOUSE-CATALOG-TYPE-CROSS-COMPANY` (dueña 008; E2E bloqueada por el entorno): **57 filas**, sin cambio; esquema 0; OBS-09 sigue bloqueada por entorno; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
+Recontado de nuevo el 2026-10-19 tras converger `WAREHOUSE-BRANCH-CROSS-COMPANY` y `WAREHOUSE-CATALOG-TYPE-CROSS-COMPANY` (dueña 008; E2E conjunta 284/0/0): **57 filas**, sin cambio; OBS-09 sigue bloqueada por entorno; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
 
 El grupo dominante —26 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el

@@ -69,3 +69,7 @@ Observaciones nuevas, no absorbidas:
 - **`CompanyContext.branch_ids`.** Es el límite de sucursales del usuario, y este cambio no lo aplica a la sucursal del
   almacén, igual que el precedente de establecimientos. No se midió si debe hacerlo.
 - **Restricción en base.** Una FK compuesta `(company_id, branch_id)` exigiría migración, que no está autorizada.
+
+## Convergencia final (2026-10-19)
+La E2E global dio 284/0/0 y limpieza LIMPIA (`r20261019t030105p679326nda98b2`), sin cambio de código y con la certificación backend reutilizada.
+**CLOSED / CONVERGED.**

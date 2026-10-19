@@ -3801,3 +3801,20 @@ middleware de licencia durante una ráfaga de paginación, sin traza en el códi
 Líneas base: SQLite 1859/0/1046 · PostgreSQL 2879/0/26 · E2E 284/0/0, la última verde, en `e8501f2` · OpenAPI 544/533/11.
 Observaciones nuevas: `E2E-POOL-EXHAUSTION-UNDER-HOST-PAGING`, no demostrada como defecto.
 
+## 2026-10-19 · WAREHOUSE-BRANCH-CROSS-COMPANY y WAREHOUSE-CATALOG-TYPE-CROSS-COMPANY convergidas (dueña 008) · OBS-09 sigue esperando evidencia
+
+La E2E global, ejecutada una vez con el equipo apto, dio **284/0/0** y limpieza LIMPIA (`r20261019t030105p679326nda98b2`). Cierra las dos deudas, que
+están en el mismo árbol, sin cambio de código. Se reutiliza la certificación backend de `f93232b`: SQLite 1859/0/1046 ×2,
+PostgreSQL 2879/0/26 y OpenAPI 544/533/11. Las fugas multiempresa y multitenant de sucursal y de tipos de catálogo quedan
+cerradas.
+
+El pool agotado del ciclo anterior **no se reprodujo**, pese a una presión de memoria comparable: 886 MB mínimos y 6,8 GB de
+swap. La observación `E2E-POOL-EXHAUSTION-UNDER-HOST-PAGING` sigue abierta, sin causa demostrada.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega `OBS09_EXTERNAL_DOCKER_EVIDENCE`; si no, rederivar la matriz entre las deudas restantes, sin implementar en el mismo ciclo |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: SQLite 1859/0/1046 · PostgreSQL 2879/0/26 · **E2E 284/0/0 en `f93232b`** · OpenAPI 544/533/11.
+

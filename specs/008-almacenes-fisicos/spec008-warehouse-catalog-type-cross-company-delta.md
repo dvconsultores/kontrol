@@ -85,3 +85,7 @@ UNKNOWN 0 → **implementación autorizada**.
 ## 10. Estado — `convergence.md`: **IMPLEMENTED — E2E CERTIFICATION BLOCKED BY ENVIRONMENT** (2026-10-19)
 Observación nueva, no absorbida: `E2E-POOL-EXHAUSTION-UNDER-HOST-PAGING`. El middleware de licencia agota el pool de 5+10
 cuando el equipo pagina. No está demostrada como defecto de producto.
+
+## Convergencia final (2026-10-19)
+La E2E global dio 284/0/0 y limpieza LIMPIA (`r20261019t030105p679326nda98b2`), sin cambio de código y con la certificación backend reutilizada.
+**CLOSED / CONVERGED.**
