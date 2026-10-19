@@ -3818,3 +3818,20 @@ swap. La observación `E2E-POOL-EXHAUSTION-UNDER-HOST-PAGING` sigue abierta, sin
 
 Líneas base: SQLite 1859/0/1046 · PostgreSQL 2879/0/26 · **E2E 284/0/0 en `f93232b`** · OpenAPI 544/533/11.
 
+## 2026-10-19 · E2E-POOL-EXHAUSTION-UNDER-HOST-PAGING: causa demostrada (diagnóstico 054; corrección 001) · OBS-09 sigue esperando evidencia
+
+Ciclo de diagnóstico, sin cambio de producto. El middleware de licencia es `async`, pero espera una conexión del pool de forma
+síncrona en el bucle de eventos. Con el pool saturado, el servidor entero se congela 30 s y termina en `TimeoutError`.
+
+La sonda, con uvicorn real y la configuración de producción, lo reproduce con el equipo en calma: un 500 a los 30,05 s, y
+peticiones de 3 s que tardan 30,28 s. Los controles y el contrafactual, que descarga la llamada al threadpool, lo eliminan.
+No hay fugas. Ni la memoria ni el tamaño del pool son la causa: la paginación y las cargas que retienen su conexión durante
+clamscan solo hacen más probable la saturación.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia; si no, **LICENSE-MIDDLEWARE-BLOCKS-EVENT-LOOP** (corrección mínima de la Spec 001: `await run_in_threadpool(self._get_mode)`, con material gate sobre la semántica de licencia) |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: SQLite 1859/0/1046 · PostgreSQL 2879/0/26 · E2E 284/0/0 (`f93232b`) · OpenAPI 544/533/11.
+
