@@ -1,0 +1,124 @@
+{
+ "A0_nada": [
+  {},
+  []
+ ],
+ "A1a_select_abierta": [
+  {
+   "sessions": 1.0,
+   "numbackends": 1.0,
+   "xact_commit": 1.0,
+   "session_time": 1.857,
+   "clientes": 1
+  },
+  []
+ ],
+ "A1b_select_cerrada": [
+  {
+   "sessions": 1.0,
+   "xact_commit": 3.0,
+   "xact_rollback": 1.0,
+   "active_time": 0.169,
+   "session_time": 4046.63
+  },
+  [
+   [
+    1.52,
+    {
+     "sessions": 1.0,
+     "xact_commit": 3.0,
+     "xact_rollback": 1.0,
+     "active_time": 0.169,
+     "session_time": 4046.63
+    }
+   ]
+  ]
+ ],
+ "A2_insert": [
+  {
+   "sessions": 1.0,
+   "xact_commit": 2.0,
+   "tup_inserted": 1.0,
+   "active_time": 0.389,
+   "session_time": 2.759
+  },
+  []
+ ],
+ "A3_update": [
+  {
+   "sessions": 1.0,
+   "xact_commit": 2.0,
+   "tup_updated": 1.0,
+   "active_time": 0.68,
+   "session_time": 3.246
+  },
+  []
+ ],
+ "A4_delete": [
+  {
+   "sessions": 1.0,
+   "xact_commit": 2.0,
+   "tup_deleted": 1.0,
+   "active_time": 0.612,
+   "session_time": 2.873
+  },
+  []
+ ],
+ "A5a_preexistente_escribe_abierta": [
+  {
+   "xact_commit": 2.0,
+   "tup_inserted": 1.0,
+   "active_time": 0.571,
+   "session_time": 4053.273
+  },
+  []
+ ],
+ "A5b_preexistente_cierra": [
+  {
+   "numbackends": -1.0,
+   "xact_commit": 2.0,
+   "tup_inserted": 1.0,
+   "active_time": 0.637,
+   "session_time": 18217.027,
+   "clientes": -1
+  },
+  []
+ ],
+ "A6_analyze_manual": [
+  {
+   "sessions": 1.0,
+   "xact_commit": 2.0,
+   "tup_inserted": 2.0,
+   "active_time": 0.787,
+   "session_time": 3.221
+  },
+  []
+ ],
+ "A7_vacuum_manual": [
+  {
+   "sessions": 1.0,
+   "xact_commit": 5.0,
+   "active_time": 0.582,
+   "session_time": 3.008
+  },
+  []
+ ],
+ "A8_autovacuum_natural": {
+  "final": {
+   "xact_commit": 5.0,
+   "tup_updated": 2.0
+  },
+  "serie": [
+   [
+    11.4,
+    {
+     "xact_commit": 5.0,
+     "tup_updated": 2.0
+    }
+   ]
+  ],
+  "autovacuum_visto": 0,
+  "segundos": 17.4
+ },
+ "residuo_bases_sonda": 0
+}

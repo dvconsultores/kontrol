@@ -28,6 +28,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import e2e_nombres as nombres
 from sqlalchemy import create_engine, text
@@ -496,16 +497,56 @@ def purgar(servidor: Servidor, *, confirmar: bool, solo: str | None = None,
 # --------------------------------------------------------------------------- #
 # Huella de las bases que no se tocan
 # --------------------------------------------------------------------------- #
-def huella(servidor: Servidor, bases: list[str]) -> dict[str, dict[str, int] | None]:
-    """Sesiones abiertas y tuplas escritas en cada base, leídas sin conectarse a ella."""
+def huella(servidor: Servidor, bases: list[str]) -> dict[str, dict[str, Any] | None]:
+    """Sesiones y clientes conectados a cada base, leídos sin conectarse a la base medida.
+
+    La huella prueba únicamente la actividad de clientes: ignora tup_*, xact_* y el
+    mantenimiento interno de PostgreSQL (autovacuum/autoanalyze), que no mueven sessions
+    ni generan filas en pg_stat_activity con backend_type 'client backend'.
+    """
+    nombre_admin = make_url(servidor.admin_url).database
+    for base in bases:
+        if base == nombre_admin:
+            raise CicloDeBaseRoto(f"la huella no puede medir la base desde la que observa: {nombre_admin}")
+
     admin = motor_administrativo(servidor)
     try:
         with admin.connect() as conn:
             conn.execute(text("select pg_stat_clear_snapshot()"))
-            filas = {fila.datname: fila for fila in conn.execute(text(
-                "select datname, sessions, tup_inserted + tup_updated + tup_deleted as escrituras "
-                "from pg_stat_database where datname = any(:bases)"), {"bases": bases})}
-            return {base: ({"sesiones": int(filas[base].sessions), "escrituras": int(filas[base].escrituras)}
-                           if base in filas else None) for base in bases}
+            vivas = {
+                fila.datname: (int(fila.oid), int(fila.sessions))
+                for fila in conn.execute(
+                    text(
+                        "select d.datname, d.oid, s.sessions "
+                        "from pg_database d "
+                        "join pg_stat_database s on s.datid = d.oid "
+                        "where d.datname = any(:bases)"
+                    ),
+                    {"bases": bases},
+                )
+            }
+            clientes: dict[str, list[list]] = {base: [] for base in bases}
+            for fila in conn.execute(
+                text(
+                    "select datname, pid, backend_start, state_change "
+                    "from pg_stat_activity "
+                    "where datname = any(:bases) "
+                    "and backend_type = 'client backend' "
+                    "and pid <> pg_backend_pid() "
+                    "order by datname, pid"
+                ),
+                {"bases": bases},
+            ):
+                clientes[fila.datname].append(
+                    [int(fila.pid), fila.backend_start.isoformat(),
+                     fila.state_change.isoformat() if fila.state_change is not None else None]
+                )
+            return {
+                base: (
+                    {"oid": vivas[base][0], "sesiones": vivas[base][1], "clientes": clientes[base]}
+                    if base in vivas else None
+                )
+                for base in bases
+            }
     finally:
         admin.dispose()

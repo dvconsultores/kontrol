@@ -13,6 +13,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -365,9 +367,181 @@ def test_e2eciclo_22_lo_que_una_corrida_muerta_dejo_en_marcha_se_detiene(servido
 
 
 # ---------------------------------------------------------------- DB-17/18 · huella
+def _esperar_sin_clientes(servidor: b.Servidor, nombre: str, plazo: float = 30.0) -> None:
+    """Sondea hasta que no queden conexiones de cliente contra la base."""
+    espera = threading.Event()
+    inicio = time.monotonic()
+    n = b.conexiones(servidor, nombre)
+    while n != 0:
+        if time.monotonic() - inicio >= plazo:
+            pytest.fail(f"la base {nombre} sigue con {n} conexiones tras {plazo} s")
+        espera.wait(0.1)
+        n = b.conexiones(servidor, nombre)
+
+
+def _tuplas(servidor: b.Servidor, nombre: str) -> int:
+    """Devuelve las tuplas insertadas, actualizadas y eliminadas registradas por pg_stat_database."""
+    admin = b.motor_administrativo(servidor)
+    try:
+        with admin.connect() as c:
+            c.execute(text("select pg_stat_clear_snapshot()"))
+            return int(c.execute(
+                text(
+                    "select tup_inserted + tup_updated + tup_deleted "
+                    "from pg_stat_database where datname = :n"
+                ),
+                {"n": nombre},
+            ).scalar_one())
+    finally:
+        admin.dispose()
+
+
+def _con_tabla(servidor: b.Servidor, nombre: str) -> None:
+    """Crea la tabla `negocio` con 5000 filas y espera a que no queden clientes."""
+    motor = create_engine(servidor.url_de(nombre), poolclass=NullPool)
+    try:
+        with motor.begin() as c:
+            c.execute(text("create table negocio (id int primary key, v text)"))
+            c.execute(text("insert into negocio select g, 'x' from generate_series(1, 5000) g"))
+    finally:
+        motor.dispose()
+    _esperar_sin_clientes(servidor, nombre)
+
+
 def test_e2eciclo_23_la_huella_se_lee_sin_conectarse_y_no_cambia_si_nadie_toca_la_base(servidor, entorno, bases):
     _, nombre = _crear(servidor, entorno, bases)
     antes = b.huella(servidor, [nombre, "no_existe_esta_base"])
-    assert antes["no_existe_esta_base"] is None and set(antes[nombre]) == {"sesiones", "escrituras"}
+    assert antes["no_existe_esta_base"] is None
+    assert set(antes[nombre]) == {"oid", "sesiones", "clientes"}
+    assert antes[nombre]["clientes"] == []
     assert b.huella(servidor, [nombre, "no_existe_esta_base"]) == antes
     assert b.conexiones(servidor, nombre) == 0
+
+
+def test_e2eciclo_24_el_mantenimiento_real_de_postgresql_no_cambia_la_huella(servidor, entorno, bases):
+    _, nombre = _crear(servidor, entorno, bases)
+    _con_tabla(servidor, nombre)
+    tuplas = _tuplas(servidor, nombre)
+    antes = b.huella(servidor, [nombre])
+
+    espera = threading.Event()
+    inicio = time.monotonic()
+    vistas = tuplas
+    while _tuplas(servidor, nombre) == tuplas:
+        if time.monotonic() - inicio >= 240:
+            pytest.fail(f"el autovacuum no movió las tuplas tras 240 s; último valor: {vistas}")
+        espera.wait(0.5)
+        vistas = _tuplas(servidor, nombre)
+
+    assert b.conexiones(servidor, nombre) == 0
+    assert b.huella(servidor, [nombre]) == antes
+
+
+def test_e2eciclo_25_una_conexion_abierta_cambia_la_huella(servidor, entorno, bases):
+    _, nombre = _crear(servidor, entorno, bases)
+    _esperar_sin_clientes(servidor, nombre)
+    antes = b.huella(servidor, [nombre])
+
+    motor = create_engine(servidor.url_de(nombre), poolclass=NullPool)
+    try:
+        with motor.connect() as c:
+            c.execute(text("select 1"))
+            despues = b.huella(servidor, [nombre])
+        assert despues != antes
+        assert despues[nombre]["clientes"] != []
+    finally:
+        motor.dispose()
+
+
+def test_e2eciclo_26_una_conexion_ya_cerrada_cambia_la_huella(servidor, entorno, bases):
+    _, nombre = _crear(servidor, entorno, bases)
+    _esperar_sin_clientes(servidor, nombre)
+    antes = b.huella(servidor, [nombre])
+
+    motor = create_engine(servidor.url_de(nombre), poolclass=NullPool)
+    try:
+        with motor.connect() as c:
+            c.execute(text("select 1"))
+    finally:
+        motor.dispose()
+
+    _esperar_sin_clientes(servidor, nombre)
+    despues = b.huella(servidor, [nombre])
+    assert despues[nombre]["clientes"] == []
+    assert despues[nombre]["sesiones"] > antes[nombre]["sesiones"]
+
+
+@pytest.mark.parametrize(
+    "sentencia",
+    [
+        "insert into negocio values (900001, 'n')",
+        "update negocio set v = 'u' where id = 1",
+        "delete from negocio where id = 2",
+    ],
+    ids=["insert", "update", "delete"],
+)
+def test_e2eciclo_27_una_escritura_desde_una_conexion_nueva_cambia_la_huella(servidor, entorno, bases, sentencia):
+    _, nombre = _crear(servidor, entorno, bases)
+    _con_tabla(servidor, nombre)
+    antes = b.huella(servidor, [nombre])
+
+    motor = create_engine(servidor.url_de(nombre), poolclass=NullPool)
+    try:
+        with motor.begin() as c:
+            c.execute(text(sentencia))
+    finally:
+        motor.dispose()
+
+    _esperar_sin_clientes(servidor, nombre)
+    despues = b.huella(servidor, [nombre])
+    assert despues != antes
+    assert despues[nombre]["sesiones"] > antes[nombre]["sesiones"]
+
+
+def test_e2eciclo_28_una_sesion_abierta_antes_que_escribe_cambia_la_huella(servidor, entorno, bases):
+    _, nombre = _crear(servidor, entorno, bases)
+    _con_tabla(servidor, nombre)
+
+    motor = create_engine(servidor.url_de(nombre), poolclass=NullPool)
+    pre = motor.connect()
+    try:
+        pre.execute(text("select 1"))
+        pre.commit()
+
+        antes = b.huella(servidor, [nombre])
+        assert b.huella(servidor, [nombre]) == antes
+        assert len(antes[nombre]["clientes"]) == 1
+
+        pre.execute(text("insert into negocio values (900002, 'p')"))
+        pre.commit()
+
+        despues = b.huella(servidor, [nombre])
+        assert despues != antes
+        assert despues[nombre]["sesiones"] == antes[nombre]["sesiones"]
+        assert despues[nombre]["clientes"][0][0] == antes[nombre]["clientes"][0][0]
+        assert despues[nombre]["clientes"][0][2] != antes[nombre]["clientes"][0][2]
+    finally:
+        pre.close()
+        motor.dispose()
+
+
+def test_e2eciclo_29_recrear_la_base_cambia_la_huella(servidor, entorno, bases):
+    _, nombre = _crear(servidor, entorno, bases)
+    _esperar_sin_clientes(servidor, nombre)
+    antes = b.huella(servidor, [nombre])
+
+    _sql(servidor, f'DROP DATABASE "{nombre}" WITH (FORCE)')
+    _sql(servidor, f'CREATE DATABASE "{nombre}"')
+
+    despues = b.huella(servidor, [nombre])
+    assert despues[nombre]["oid"] != antes[nombre]["oid"]
+
+
+def test_e2eciclo_30_la_huella_falla_cerrada_si_mide_la_base_del_observador(servidor):
+    with pytest.raises(b.CicloDeBaseRoto):
+        b.huella(servidor, [make_url(servidor.admin_url).database])
+
+
+def test_e2eciclo_31_una_base_que_no_existe_vale_none_antes_y_despues(servidor):
+    assert b.huella(servidor, ["no_existe_esta_base"]) == {"no_existe_esta_base": None}
+    assert b.huella(servidor, ["no_existe_esta_base"]) == {"no_existe_esta_base": None}

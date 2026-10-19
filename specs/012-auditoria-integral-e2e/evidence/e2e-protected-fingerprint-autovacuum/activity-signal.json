@@ -1,0 +1,27 @@
+{
+ "track_activities": "on",
+ "oid": 16406,
+ "P1_idle_estable_entre_lecturas": true,
+ "P2_tras_escribir_cambia_al_instante": true,
+ "P2_detalle": {
+  "antes": [
+   [
+    "11936",
+    "2026-10-19 18:38:31.233161+00:00",
+    "2026-10-19 18:38:31.234724+00:00",
+    "idle"
+   ]
+  ],
+  "despues": [
+   [
+    "11936",
+    "2026-10-19 18:38:31.233161+00:00",
+    "2026-10-19 18:38:31.241798+00:00",
+    "idle"
+   ]
+  ]
+ },
+ "P3_select_en_transaccion_cambia": true,
+ "P4_oid_tras_recrear_distinto": true,
+ "residuo": 0
+}

@@ -1,0 +1,111 @@
+{
+ "total": 11,
+ "killed": 11,
+ "survived": 0,
+ "equivalent": 0,
+ "no_aplicable": {
+  "M12": "omitir la espera de propagación: la huella no espera; la propagación se resuelve por construcción (sessions al primer reposo o al salir antes de desaparecer de pg_stat_activity; state_change inmediato)"
+ },
+ "ejecucion": "PostgreSQL de QA, pruebas eciclo_23..31, -x, PYTHONDONTWRITEBYTECODE=1 y __pycache__ purgado; restauración verificada con cmp",
+ "mutantes": [
+  {
+   "id": "M01",
+   "mutacion": "volver a tup_* de toda la base",
+   "estado": "KILLED",
+   "la_matan": [
+    "FAILED test_e2e_base_ciclo.py::test_e2eciclo_24_el_mantenimiento_real_de_postgresql_no_cambia_la_huella"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M02",
+   "mutacion": "ignorar la conexión cliente nueva (sesiones constantes)",
+   "estado": "KILLED",
+   "la_matan": [
+    "FAILED test_e2e_base_ciclo.py::test_e2eciclo_26_una_conexion_ya_cerrada_cambia_la_huella"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M03",
+   "mutacion": "ignorar la actividad de clientes (lista vacía)",
+   "estado": "KILLED",
+   "la_matan": [
+    "FAILED test_e2e_base_ciclo.py::test_e2eciclo_25_una_conexion_abierta_cambia_la_huella"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M04",
+   "mutacion": "aceptar la base del observador (sin fail-closed)",
+   "estado": "KILLED",
+   "la_matan": [
+    "FAILED test_e2e_base_ciclo.py::test_e2eciclo_30_la_huella_falla_cerrada_si_mide_la_base_del_observador"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M05",
+   "mutacion": "contar el mantenimiento como violación (xact_commit)",
+   "estado": "KILLED",
+   "la_matan": [
+    "FAILED test_e2e_base_ciclo.py::test_e2eciclo_24_el_mantenimiento_real_de_postgresql_no_cambia_la_huella"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M06",
+   "mutacion": "eliminar la señal de sesiones",
+   "estado": "KILLED",
+   "la_matan": [
+    "FAILED test_e2e_base_ciclo.py::test_e2eciclo_23_la_huella_se_lee_sin_conectarse_y_no_cambia_si_nadie_toca_la_base"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M07",
+   "mutacion": "eliminar state_change (la señal de la sesión preexistente)",
+   "estado": "KILLED",
+   "la_matan": [
+    "FAILED test_e2e_base_ciclo.py::test_e2eciclo_28_una_sesion_abierta_antes_que_escribe_cambia_la_huella"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M08",
+   "mutacion": "invertir el filtro del observador",
+   "estado": "KILLED",
+   "la_matan": [
+    "FAILED test_e2e_base_ciclo.py::test_e2eciclo_25_una_conexion_abierta_cambia_la_huella"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M09",
+   "mutacion": "ocultar la diferencia: contar clientes en vez de listarlos",
+   "estado": "KILLED",
+   "la_matan": [
+    "FAILED test_e2e_base_ciclo.py::test_e2eciclo_23_la_huella_se_lee_sin_conectarse_y_no_cambia_si_nadie_toca_la_base"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M10",
+   "mutacion": "fail-open: toda base vale None",
+   "estado": "KILLED",
+   "la_matan": [
+    "FAILED test_e2e_base_ciclo.py::test_e2eciclo_23_la_huella_se_lee_sin_conectarse_y_no_cambia_si_nadie_toca_la_base"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M11",
+   "mutacion": "perder la detección de recreación (oid)",
+   "estado": "KILLED",
+   "la_matan": [
+    "FAILED test_e2e_base_ciclo.py::test_e2eciclo_29_recrear_la_base_cambia_la_huella"
+   ],
+   "restaurado_identico": true
+  }
+ ]
+}

@@ -65,3 +65,29 @@ Todos los criterios se cumplen → **implementación autorizada**.
 - El cierre (CLOSED / CONVERGED) espera la decisión de la dueña sobre la atribución, o una corrida PostgreSQL verde
   tras corregir E2E-HARNESS-PROTECTED-FINGERPRINT-COUNTS-AUTOVACUUM.
 - Las tres deudas documentales siguen OPEN, sin absorber.
+
+## 11. Cierre final (2026-10-19, ciclo de la Spec 054)
+
+La dueña aceptó la atribución:
+- ATTRIBUTION_ACCEPTED = 1;
+- B1_PRODUCT_REGRESSION = 0;
+- B1_CLOSURE_GATE_WAIVED = 0.
+
+Se corrigió la huella de la herramienta QA (`spec054-e2e-protected-fingerprint-autovacuum-delta.md`) y la certificación
+PostgreSQL completa salió en verde sobre el producto de B1 sin cambios:
+- PostgreSQL: **2915/0/26**, con `test_e2ecorrida_01` PASS;
+- SQLite: 1885/0/1056 ×2;
+- E2E: **284/0/0**, 0 QueuePool, limpieza LIMPIA;
+- OpenAPI: 544/533/11.
+
+Se reutilizan:
+- las 9 pruebas dirigidas en los dos motores;
+- las 14/14 mutaciones;
+- la evidencia de ciclo de vida de conexiones de §7–§9.
+
+**DOCUMENT-UPLOAD-HOLDS-DB-CONNECTION-DURING-SCAN = CLOSED / CONVERGED.**
+- B1_POSTGRES_FINAL_CERTIFICATION = PASS.
+- El producto de B1 no se tocó.
+- Las tres deudas documentales siguen OPEN.
+
+Detalle: `evidence/document-upload-db-connection-scan-fix/final-closure.md`.

@@ -3894,3 +3894,32 @@ E2E-HARNESS-PROTECTED-FINGERPRINT-COUNTS-AUTOVACUUM (dueña 054). No se declara 
 | `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
 
 Líneas base nuevas: SQLite 1885/0/1046 · PostgreSQL 2905 previstas (2904/1/26 medidas) · E2E 284/0/0 · OpenAPI 544/533/11.
+
+## 2026-10-19 · E2E-HARNESS-PROTECTED-FINGERPRINT-COUNTS-AUTOVACUUM convergida (dueña 054) · DOCUMENT-UPLOAD-HOLDS-DB-CONNECTION-DURING-SCAN convergida (dueña 046) · OBS-09 sigue esperando evidencia
+
+La huella de las bases protegidas compara ahora tres señales por base:
+- `oid`;
+- las sesiones cliente (`pg_stat_database.sessions`, que autovacuum no mueve);
+- el `state_change` de cada sesión cliente abierta, que delata al instante una sesión preexistente.
+
+Deja de contar las tuplas y transacciones que mueve el mantenimiento interno, y falla cerrada si se mide la base del
+observador.
+
+| Puerta | Resultado |
+|---|---|
+| Pruebas nuevas | 9, entre ellas autovacuum real |
+| Rojo contra HEAD | sí, por la razón exacta |
+| Mutaciones | 11/11 |
+| PostgreSQL | **2915/0/26** |
+| SQLite | 1885/0/1056 ×2 |
+| E2E | 284/0/0 |
+| OpenAPI | 544/533/11 |
+
+Con PostgreSQL en verde, B1 queda CLOSED / CONVERGED sin tocar su producto.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia Docker externa. Si no, **no** se implementa por defecto ninguna de las tres deudas documentales: esperan decisión de contrato de la dueña (DOCUMENT-ARCHIVE-LOST-UPDATE-DURING-UPLOAD, DOCUMENT-DELETE-DURING-UPLOAD-ORPHAN-500, DOCUMENT-SCAN-REJECTION-AUDIT-NOT-PERSISTED). Siguiente paso técnico: rederivar la matriz de deudas independientes elegibles |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base nuevas: SQLite 1885/0/1056 · PostgreSQL 2915/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
