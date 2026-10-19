@@ -2174,3 +2174,18 @@ Hallazgo acoplado a OBS-09: **PRODUCTION-IMAGE-WITHOUT-LIBMAGIC** — la imagen 
 - **EXCLUSION_REASON:** NO_EFFECT: no crece entre corridas y autovacuum lo devuelve (medido en este mismo periodo)
 - **STILL_PRESENT:** 0 (sin efecto)
 - **MEASURED_NOW:** 0
+
+
+## Actualización 2026-10-19 — diagnóstico de CERTIFICATION-ENVIRONMENT-DEPENDENCY-DRIFT
+
+Fuente: `specs/012-auditoria-integral-e2e/spec054-certification-environment-drift-diagnosis-delta.md`.
+
+| Deuda | Cat. | Dueña | Elegible ahora | Estado |
+|---|---|---|---|---|
+| CERTIFICATION-ENVIRONMENT-DEPENDENCY-DRIFT | B → diagnosticada | 054 | — | DIAGNOSIS COMPLETE (MIXED); 0 incompatibilidades funcionales; RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0 |
+| **DEPLOYMENT-PARITY-TEST-INCOMPATIBILITIES** (nueva) | A | 054 | **1 — SELECCIONADA** | OAS-14, ACS-08 y U03/U04 fallan con las versiones de despliegue por causas de prueba demostradas |
+| FASTAPI-YIELD-TEARDOWN-AFTER-RESPONSE (nueva) | A | 001 (054) | 1 | impacto medido despreciable; se decide dentro de la seleccionada |
+| PRODUCTION-IMAGE-WITHOUT-LIBMAGIC | F → reproducida | 052 (001, 046) | 0 | 31 fallos en V1; independiente (OD-CERT-02); prerrequisito de OBS-09 |
+| PRODUCTION-IMAGE-BUILT-FROM-DEV-STAGE (nueva) | F | 052 | 0 | estructural; verificar exige Docker |
+| PRODUCTION-DEPENDENCIES-UNPINNED-TRANSITIVES (nueva) | A | 052 (001) | 1 | lock no consumido; Starlette 1.9.0 en un build de hoy |
+| E2E-HARNESS-INTERPRETER-FIXED (nueva) | A | 054 | 1 | parcial (alembic de la autoridad central) |

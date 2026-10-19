@@ -1,0 +1,26 @@
+{
+ "PRODUCTION_ENVIRONMENT_DEFINED": 1,
+ "fuentes": [
+  "Dockerfile.backend",
+  "resources/backend/requirements.txt",
+  "resources/backend/requirements.lock",
+  ".github/workflows/build-main.yml",
+  ".github/workflows/build-dev.yml",
+  "compose.yaml",
+  "qa/compose_qa.py",
+  "specs/001-fundacion/dependency-matrix.md:65",
+  "docs/evidence/cve-review.md:14",
+  "docs/governance/KONTROL_ARCHITECTURE_BASELINE.md (ADR-014)"
+ ],
+ "PRODUCTION_BASE_IMAGE": "python:3.13-slim (etiqueta flotante, sin digest: el parche de 3.13 depende de la fecha del build)",
+ "PRODUCTION_PYTHON_VERSION": "3.13.x (V1/V2 usan CPython 3.13.15, el último 3.13 disponible el 2026-10-19)",
+ "PRODUCTION_INSTALL_COMMAND": "pip install --no-cache-dir -r /tmp/requirements.txt (Dockerfile.backend:20); etapa dev añade pip install --no-cache-dir pytest httpx ruff mypy sin versión (Dockerfile.backend:51), ya satisfecho por requirements.txt",
+ "PRODUCTION_REQUIREMENTS_SOURCE": "resources/backend/requirements.txt (17 paquetes fijados de primer nivel; transitivas sin fijar)",
+ "PRODUCTION_LOCK_ACTUALLY_CONSUMED": 0,
+ "PRODUCTION_PIP_VERSION_POLICY": "el pip que trae la imagen base (sin fijar)",
+ "PRODUCTION_RESOLVER": "resolver de pip; transitivas resueltas en el momento del build",
+ "PRODUCTION_SYSTEM_PACKAGES": "solo curl (apt) sobre la imagen base; sin libmagic",
+ "PRODUCTION_PYTHON_PACKAGES": "ver environment-v1.txt (48 paquetes; build simulado el 2026-10-19)",
+ "PRODUCTION_BUILD_TARGET": "la última etapa del Dockerfile, `dev` (FROM base AS dev, Dockerfile.backend:47): build-main.yml y build-dev.yml no pasan target; compose.yaml usa la imagen del registro sin build ni command; qa/compose_qa.py construye sin --target. El contenedor arranca `uvicorn ... --reload` con las pruebas copiadas",
+ "PRODUCTION_INSTALL_SEMANTICS_REPRODUCED": "1 con aproximación documentada: mismo instalador (pip 26.2.1 de CPython 3.13.15), misma orden y mismo fichero; difiere el binario de CPython (python-build-standalone vía uv frente al de la imagen oficial) y la fecha de resolución de las transitivas (la de un build de hoy)"
+}

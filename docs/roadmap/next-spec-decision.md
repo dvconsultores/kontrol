@@ -3959,3 +3959,38 @@ La matriz se rederivó sobre `40b2277`, verificando cada deuda en el código de 
 | `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
 
 Las líneas base no cambian: SQLite 1885/0/1056 · PostgreSQL 2915/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
+
+## 2026-10-19 · CERTIFICATION-ENVIRONMENT-DEPENDENCY-DRIFT diagnosticada (dueña 054) · OBS-09 sigue esperando evidencia
+
+Se compararon tres entornos:
+- V0, el `.venv` histórico.
+- V1, CPython 3.13.15 con `pip install -r requirements.txt`, exactamente como la imagen.
+- V2, V1 más python-magic.
+
+| Puerta en V2 | Resultado |
+|---|---|
+| Humo | verde |
+| OpenAPI | sin deriva de contrato |
+| E2E | **284/0/0** |
+| SQLite | 1881/4/1056 |
+| PostgreSQL | 2913/2/26 |
+
+Los fallos de SQLite y PostgreSQL son **solo de prueba**: OAS-14, ACS-08 y U03/U04. Hay 0 incompatibilidades
+funcionales del producto.
+
+**Hallazgos de este diagnóstico:**
+- **Libmagic:** se reproduce con 31 fallos en V1. Es deuda independiente y prerrequisito de OBS-09 (OD-CERT-02).
+- **Imagen:** se publica la etapa `dev`.
+- **Dependencias:** el lock no se consume; un build de hoy instala Starlette 1.9.0.
+- **Arnés E2E:** migra la autoridad central con el alembic del `.venv`.
+- **`get_db`:** con FastAPI 0.141 se cierra después de la respuesta. El impacto medido es despreciable: un cliente lento
+  no retiene la conexión.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia (si falla por MIME: BLOCKED_BY_PREREQUISITE = PRODUCTION-IMAGE-WITHOUT-LIBMAGIC). Si no: **DEPLOYMENT-PARITY-TEST-INCOMPATIBILITIES** (dueña 054), para dejar V2 en verde antes de CANONICALIZE-CERTIFICATION-ENVIRONMENT. Después: ALMACENES-DESPLEGABLES-TRUNCADOS |
+| Decisiones de la dueña pendientes | las tres documentales |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+`RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`. La línea base histórica de V0 se mantiene: SQLite 1885/0/1056 · PostgreSQL
+2915/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
