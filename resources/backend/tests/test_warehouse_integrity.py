@@ -25,6 +25,7 @@ from app.core.database import Base, get_db, init_models
 from app.core.integrity import es_violacion_unica, es_violacion_unica_de, restriccion_unica
 from app.modules.identity_access import service as identity_service
 from app.modules.identity_access.models import UserScope
+from app.modules.organization import warehouse_api
 from app.modules.organization.models import (
     Company,
     Warehouse,
@@ -230,7 +231,13 @@ def test_o01_06_almacen_branch_inexistente_es_404_sin_llegar_a_la_base():
     assert _cuenta(Warehouse, code="O01-006") == 0
 
 
-def test_o01_07_ubicacion_tipo_inexistente_es_500():
+def _sin_validacion_previa(*_args: object, **_kwargs: object) -> None:
+    """Neutraliza `_exige_tipo_propio` solo en estas pruebas para que el tipo inexistente llegue a la
+    clave foránea real y siga probándose el 500 de OBS-01; la validación previa la prueba test_warehouse_catalog_scope.py."""
+
+
+def test_o01_07_ubicacion_tipo_inexistente_es_500(monkeypatch):
+    monkeypatch.setattr(warehouse_api, "_exige_tipo_propio", _sin_validacion_previa)
     wh = _almacen("O01-007")
     r = _CLIENT.post("/api/v1/organization/locations", headers=_login(), json={
         "warehouse_id": wh["id"], "code": "L-500",
@@ -242,7 +249,8 @@ def test_o01_07_ubicacion_tipo_inexistente_es_500():
     assert _cuenta(WarehouseLocation, warehouse_id=wh["id"], code="L-500") == 0
 
 
-def test_o01_08_zona_tipo_inexistente_es_500():
+def test_o01_08_zona_tipo_inexistente_es_500(monkeypatch):
+    monkeypatch.setattr(warehouse_api, "_exige_tipo_propio", _sin_validacion_previa)
     wh = _almacen("O01-008", {"zone": True})
     r = _CLIENT.post(f"/api/v1/organization/warehouses/{wh['id']}/zones",
                      headers=_login(), json={
@@ -255,7 +263,8 @@ def test_o01_08_zona_tipo_inexistente_es_500():
     assert _cuenta(WarehouseZone, warehouse_id=wh["id"], code="Z-500") == 0
 
 
-def test_o01_09_despues_de_409_y_500_alta_prospera():
+def test_o01_09_despues_de_409_y_500_alta_prospera(monkeypatch):
+    monkeypatch.setattr(warehouse_api, "_exige_tipo_propio", _sin_validacion_previa)
     wh = _almacen("O01-009")
     cuerpos = [
         {"warehouse_id": wh["id"], "code": "L-OK"},

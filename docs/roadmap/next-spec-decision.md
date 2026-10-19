@@ -3783,3 +3783,21 @@ Decisiones pendientes de la dueña:
 - La política del arnés E2E ante red, reloj y ahora memoria del equipo.
 - La revisión de filas cruzadas existentes.
 
+## 2026-10-19 · WAREHOUSE-CATALOG-TYPE-CROSS-COMPANY implementada (dueña 008) · E2E bloqueada por el entorno · OBS-09 sigue esperando evidencia
+
+Ruta C, el ciclo dedicado. Las ubicaciones y zonas de una empresa aceptaban tipos de catálogo de otra empresa o de otro tenant.
+Ahora los rechaza un 404 idéntico para ajeno, otro tenant e inexistente, en las cinco rutas de alta, alta masiva y edición.
+SQLite 1859/0/1046 ×2, PostgreSQL 2879/0/26, 28 dirigidas, 17/17 mutaciones y OpenAPI 544/533/11 están verdes.
+
+La E2E se ejecutó una vez, cuando el equipo pasó a ser apto, y dio 273/7. Las 7 fallidas venían de un pool agotado en el
+middleware de licencia durante una ráfaga de paginación, sin traza en el código cambiado. Orquestación: 4 llamadas a DeepSeek
+($0,036).
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega evidencia; si no, **una E2E con el equipo estable**, que cerraría WAREHOUSE-BRANCH-CROSS-COMPANY y WAREHOUSE-CATALOG-TYPE-CROSS-COMPANY a la vez (mismo árbol); después, rederivar |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: SQLite 1859/0/1046 · PostgreSQL 2879/0/26 · E2E 284/0/0, la última verde, en `e8501f2` · OpenAPI 544/533/11.
+Observaciones nuevas: `E2E-POOL-EXHAUSTION-UNDER-HOST-PAGING`, no demostrada como defecto.
+

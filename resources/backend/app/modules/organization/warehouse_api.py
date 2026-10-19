@@ -71,6 +71,17 @@ def _exige_sucursal_propia(db: Session, ctx: CompanyContext, branch_id: str | No
         raise NotFoundError(code="BRANCH_NOT_FOUND", message="Sucursal no encontrada")
 
 
+def _exige_tipo_propio(db: Session, ctx: CompanyContext, modelo: type[LocationType] | type[ZoneType],
+                       tipo_id: str | None, code: str, message: str) -> None:
+    """El tipo de catálogo es de la empresa activa (ADR-D0-014); ajeno, de otro tenant o
+    inexistente se responden igual, como inexistentes; mismo patrón que `_exige_sucursal_propia`."""
+    if tipo_id is None:
+        return
+    empresa = db.scalar(select(modelo.company_id).where(modelo.id == tipo_id))
+    if empresa != ctx.company_id:
+        raise NotFoundError(code=code, message=message)
+
+
 def _get_node(db: Session, ctx: CompanyContext, level: str, node_id: str) -> Any:
     node = db.get(st.LEVEL_MODEL[level], node_id)
     if node is None or node.company_id not in _alcance(ctx):
@@ -550,6 +561,8 @@ def _node_routes(level: str) -> None:
         if parent_fk:
             values[parent_fk] = parent_id
         if level == "zone":
+            _exige_tipo_propio(db, ctx, ZoneType, body.zone_type_id,
+                               "ZONE_TYPE_NOT_FOUND", "Tipo de zona no encontrado")
             values["zone_type_id"] = body.zone_type_id
         if level == "level":
             values["height_order"] = body.height_order
@@ -587,6 +600,9 @@ def _node_routes(level: str) -> None:
         node = _get_node(db, ctx, level, node_id)
         _check_version(node, if_match)
         warehouse = _get_warehouse(db, ctx, node.warehouse_id)
+        if level == "zone" and "zone_type_id" in body.model_fields_set:
+            _exige_tipo_propio(db, ctx, ZoneType, body.zone_type_id,
+                               "ZONE_TYPE_NOT_FOUND", "Tipo de zona no encontrado")
         data = body.model_dump(exclude_unset=True)
         before = {"name": node.name, "sequence": node.sequence, "status": node.status}
         # `parent_id` es cambio **estructural**; nombre, descripción y
@@ -822,6 +838,8 @@ def create_location_full(body: LocationIn, db: Session = Depends(get_db),
             raise KontrolError(code="LOCATION_CODE_REQUIRED",
                                message="El almacén exige código manual", status_code=422)
         code = st.generate_location_code(db, warehouse, chain)
+    _exige_tipo_propio(db, ctx, LocationType, body.location_type_id,
+                       "LOCATION_TYPE_NOT_FOUND", "Tipo de ubicación no encontrado")
     location = WarehouseLocation(
         company_id=warehouse.company_id, warehouse_id=warehouse.id, code=code, name=body.name,
         zone_id=chain["zone"], aisle_id=chain["aisle"], rack_id=chain["rack"],
@@ -870,6 +888,8 @@ def bulk_locations(body: BulkLocationIn, db: Session = Depends(get_db),
                                message="El patrón usa un marcador desconocido",
                                status_code=422) from exc
         (conflicts if code in existing else planned).append(code)
+    _exige_tipo_propio(db, ctx, LocationType, body.location_type_id,
+                       "LOCATION_TYPE_NOT_FOUND", "Tipo de ubicación no encontrado")
     if body.preview:
         return {"preview": True, "would_create": planned, "already_exists": conflicts,
                 "total_planned": len(planned), "total_conflicts": len(conflicts)}
@@ -914,6 +934,9 @@ def patch_location(location_id: str, body: LocationPatch,
     location = _get_location(db, ctx, location_id)
     _check_version(location, if_match)
     warehouse = _get_warehouse(db, ctx, location.warehouse_id)
+    if "location_type_id" in body.model_fields_set:
+        _exige_tipo_propio(db, ctx, LocationType, body.location_type_id,
+                           "LOCATION_TYPE_NOT_FOUND", "Tipo de ubicación no encontrado")
     data = body.model_dump(exclude_unset=True)
     structural = {field: data.pop(field) for field in
                   ("zone_id", "aisle_id", "rack_id", "level_id") if field in data}
