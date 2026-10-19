@@ -3835,3 +3835,17 @@ clamscan solo hacen más probable la saturación.
 
 Líneas base: SQLite 1859/0/1046 · PostgreSQL 2879/0/26 · E2E 284/0/0 (`f93232b`) · OpenAPI 544/533/11.
 
+## 2026-10-19 · LICENSE-MIDDLEWARE-BLOCKS-EVENT-LOOP convergida (dueña 001; apoyo 054) · E2E-POOL-EXHAUSTION-UNDER-HOST-PAGING cerrada · OBS-09 sigue esperando evidencia
+
+El middleware de licencia ya no espera la consulta del modo en el bucle de eventos: `await run_in_threadpool(self._get_mode)`,
+con la misma semántica. La sonda X3 pasó de un 500 a los 30 s a un 404 a los 3 s. La E2E dio 284/0/0 con 0 `QueuePool`, bajo
+mayor presión de memoria que la corrida que falló. SQLite 1876/0/1046 ×2, PostgreSQL 2896/0/26, 11/11 mutaciones y OpenAPI
+544/533/11. DeepSeek: 5 llamadas ($0,028).
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia; si no, rederivar la matriz (incluida `DOCUMENT-UPLOAD-HOLDS-DB-CONNECTION-DURING-SCAN`, dueña 046) sin implementar en el mismo ciclo |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: SQLite 1876/0/1046 · PostgreSQL 2896/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
+

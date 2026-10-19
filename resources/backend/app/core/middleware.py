@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import Request
+from starlette.concurrency import run_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
@@ -54,7 +55,7 @@ class LicenseMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Any) -> Any:
         path = request.url.path
         if request.method in WRITE_METHODS and not path.startswith(LICENSE_EXEMPT_PREFIXES):
-            mode = self._get_mode()
+            mode = await run_in_threadpool(self._get_mode)
             if mode in {license_engine.READ_ONLY, license_engine.SECURITY_SUSPENSION}:
                 return JSONResponse(
                     status_code=423,

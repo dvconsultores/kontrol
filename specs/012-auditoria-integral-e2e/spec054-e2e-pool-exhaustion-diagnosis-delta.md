@@ -41,3 +41,8 @@ saturado, el bucle no puede cerrar las sesiones que devolverían conexiones, y t
 ## 7. Siguiente
 La corrección mínima es descargar `_get_mode` al threadpool, con dueña la 001; está en `recommended-design.md`. Queda para un
 ciclo propio con material gate. El estado de la observación es **ROOT CAUSE PROVEN — FIX NOT IMPLEMENTED (OPEN)**.
+
+## 8. Corrección (añadido 2026-10-19; el diagnóstico anterior no se reescribe)
+La corrigió la Spec 001: `specs/001-fundacion/spec001-license-middleware-event-loop-delta.md` (LICENSE-MIDDLEWARE-BLOCKS-EVENT-LOOP).
+Tras la corrección, X3 se comporta como el contrafactual X4, y la E2E dio 284/0/0 con 0 `QueuePool` bajo mayor presión de
+memoria. Estado de la observación: **CLOSED / CONVERGED**.
