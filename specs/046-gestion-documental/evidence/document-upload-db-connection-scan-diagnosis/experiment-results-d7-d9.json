@@ -1,0 +1,202 @@
+{
+ "D8_aislamiento": "read committed",
+ "D7a_archivar_durante_scan": {
+  "subida": [
+   200,
+   null
+  ],
+  "accion_durante_scan": 200,
+  "accion_tardo_s": 0.02,
+  "estado_final_doc": "ACTIVE",
+  "versiones": 1,
+  "ficheros_nuevos_en_almacen": 1
+ },
+ "D7b_borrar_durante_scan": {
+  "subida": [
+   500,
+   "INTERNAL_ERROR"
+  ],
+  "accion_durante_scan": 200,
+  "accion_tardo_s": 0.01,
+  "estado_final_doc": null,
+  "versiones": 0,
+  "ficheros_nuevos_en_almacen": 1
+ },
+ "D9_contrafactual_commit_antes_del_servicio": {
+  "subida": [
+   200,
+   null
+  ],
+  "checked_out_durante_scan": 0,
+  "versiones": 1,
+  "auditoria_subida": 1,
+  "eventos": [
+   {
+    "t_ms": 3729.8,
+    "ev": "checkout",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3729.9,
+    "ev": "begin",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3730.7,
+    "ev": "rollback",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3730.8,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3732.5,
+    "ev": "checkout",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3732.5,
+    "ev": "begin",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3738.0,
+    "ev": "commit",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3738.2,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3738.2,
+    "ev": "frontera_commit",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 0
+   },
+   {
+    "t_ms": 3738.5,
+    "ev": "scan_start",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 0,
+    "fichero_temporal_existe": true
+   },
+   {
+    "t_ms": 3738.5,
+    "ev": "scan_end",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 0,
+    "resultado": "CLEAN"
+   },
+   {
+    "t_ms": 3738.6,
+    "ev": "storage_start",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3739.1,
+    "ev": "checkout",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3739.1,
+    "ev": "begin",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3743.8,
+    "ev": "commit",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3743.9,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3744.2,
+    "ev": "checkout",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3744.2,
+    "ev": "begin",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3745.5,
+    "ev": "rollback",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3745.6,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3747.0,
+    "ev": "checkout",
+    "hilo": "MainThread",
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3747.0,
+    "ev": "begin",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 3747.4,
+    "ev": "rollback",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 3747.5,
+    "ev": "checkin",
+    "hilo": "MainThread",
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3747.8,
+    "ev": "checkout",
+    "hilo": "MainThread",
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3747.8,
+    "ev": "begin",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 3748.7,
+    "ev": "rollback",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 3748.8,
+    "ev": "checkin",
+    "hilo": "MainThread",
+    "checked_out": 1
+   }
+  ]
+ },
+ "D9b_infectado_con_frontera": {
+  "subida": [
+   422,
+   "FILE_INFECTED"
+  ],
+  "versiones": 0,
+  "ficheros_nuevos": 0
+ },
+ "checked_out_final": 0
+}

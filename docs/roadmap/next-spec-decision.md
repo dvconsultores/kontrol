@@ -3849,3 +3849,22 @@ mayor presión de memoria que la corrida que falló. SQLite 1876/0/1046 ×2, Pos
 
 Líneas base: SQLite 1876/0/1046 · PostgreSQL 2896/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
 
+## 2026-10-19 · DOCUMENT-UPLOAD-HOLDS-DB-CONNECTION-DURING-SCAN: causa y frontera segura demostradas (dueña 046) · OBS-09 sigue esperando evidencia
+
+Diagnóstico sin cambio de producto. La sesión por petición abre una transacción de solo lectura en su primera sentencia, y
+la carga analiza dentro de ella con la conexión prestada de 6 a 21 s. La transacción no protege nada: no hay escrituras ni
+bloqueos de fila, y el aislamiento es READ COMMITTED.
+
+Confirmarla antes del análisis (B1) deja 0 conexiones prestadas con el mismo resultado: 200, versión y auditoría, y el
+INFECTED sigue rechazado. Las sondas destaparon además tres defectos previos, registrados aparte:
+- archivar durante una carga se pierde;
+- borrar durante una carga da 500 y deja un huérfano;
+- la auditoría de rechazo de malware no persiste.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia; si no, la **corrección B1** de DOCUMENT-UPLOAD-HOLDS-DB-CONNECTION-DURING-SCAN (sin decisión de la dueña); los tres defectos previos esperan decisiones de contrato |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base sin cambio: SQLite 1876/0/1046 · PostgreSQL 2896/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
+

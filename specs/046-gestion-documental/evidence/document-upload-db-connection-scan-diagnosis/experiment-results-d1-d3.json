@@ -1,0 +1,1044 @@
+{
+ "analizador_real_disponible": true,
+ "D1": {
+  "status": [
+   200,
+   6.29
+  ],
+  "eventos": [
+   {
+    "t_ms": 3375.6,
+    "ev": "checkout",
+    "hilo": "AnyIO worker thread",
+    "conn": 1,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3375.6,
+    "ev": "begin",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3375.7,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT installations"
+   },
+   {
+    "t_ms": 3376.2,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT license_states"
+   },
+   {
+    "t_ms": 3376.5,
+    "ev": "rollback",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3376.6,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "conn": 1,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3378.3,
+    "ev": "checkout",
+    "hilo": "AnyIO worker thread",
+    "conn": 1,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 3378.4,
+    "ev": "begin",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 3378.4,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT installations"
+   },
+   {
+    "t_ms": 3379.1,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT license_states"
+   },
+   {
+    "t_ms": 3379.9,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT users"
+   },
+   {
+    "t_ms": 3380.5,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT user_roles"
+   },
+   {
+    "t_ms": 3381.0,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT permissions"
+   },
+   {
+    "t_ms": 3381.8,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT companies"
+   },
+   {
+    "t_ms": 3382.1,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT user_scopes"
+   },
+   {
+    "t_ms": 3382.5,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT companies"
+   },
+   {
+    "t_ms": 3383.2,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT user_scopes"
+   },
+   {
+    "t_ms": 3384.4,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT documents"
+   },
+   {
+    "t_ms": 3384.9,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT document_types"
+   },
+   {
+    "t_ms": 3403.6,
+    "ev": "scan_start",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1,
+    "fichero_temporal_existe": true
+   },
+   {
+    "t_ms": 9652.8,
+    "ev": "scan_end",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1,
+    "resultado": "CLEAN"
+   },
+   {
+    "t_ms": 9652.9,
+    "ev": "storage_start",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9653.2,
+    "ev": "storage_end",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9654.5,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "INSERT stored_files"
+   },
+   {
+    "t_ms": 9656.6,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "INSERT file_security_scans"
+   },
+   {
+    "t_ms": 9657.8,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT stored_files"
+   },
+   {
+    "t_ms": 9658.8,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT document_versions"
+   },
+   {
+    "t_ms": 9659.7,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT document_versions"
+   },
+   {
+    "t_ms": 9660.3,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SAVEPOINT"
+   },
+   {
+    "t_ms": 9660.8,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "INSERT document_versions"
+   },
+   {
+    "t_ms": 9661.5,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "RELEASE"
+   },
+   {
+    "t_ms": 9661.9,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "UPDATE documents"
+   },
+   {
+    "t_ms": 9662.5,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "INSERT audit_events"
+   },
+   {
+    "t_ms": 9663.0,
+    "ev": "commit",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9663.2,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "conn": 1,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 9663.5,
+    "ev": "checkout",
+    "hilo": "AnyIO worker thread",
+    "conn": 1,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 9663.5,
+    "ev": "begin",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9663.8,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT document_versions"
+   },
+   {
+    "t_ms": 9665.0,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT stored_files"
+   },
+   {
+    "t_ms": 9665.6,
+    "ev": "rollback",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9665.7,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "conn": 1,
+    "checked_out": 1
+   }
+  ]
+ },
+ "D2_durante_scan": {
+  "checked_out": 1,
+  "pg_activity": [
+   {
+    "state": "idle in transaction",
+    "xact_abierta": true,
+    "tiene_xid": false,
+    "ultima": "SELECT document_types.company_id AS document_types_company_i"
+   }
+  ],
+  "pg_locks": [
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "companies"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "document_types"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "documents"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "installations"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_companies_rif"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_companies_tenant_id"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_document_types_company_id"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_documents_company_expiration"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_documents_company_id"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_documents_company_status"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_documents_company_type"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_installations_installation_uuid"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_license_states_installation_id"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_permissions_resource"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_role_permissions_permission_id"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_role_permissions_role_id"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_user_roles_role_id"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_user_roles_user_id"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_user_scopes_user_id"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_users_tenant_id"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "ix_users_username"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "license_states"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "permissions"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "pk_companies"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "pk_document_types"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "pk_documents"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "pk_installations"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "pk_license_states"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "pk_permissions"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "pk_role_permissions"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "pk_user_roles"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "pk_user_scopes"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "pk_users"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "role_permissions"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "uq_document_types_company_code"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "uq_documents_company_type_number"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "uq_license_states_license_id"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "user_roles"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "user_scopes"
+   },
+   {
+    "locktype": "relation",
+    "mode": "AccessShareLock",
+    "relname": "users"
+   }
+  ],
+  "stored_files": 1,
+  "versiones_doc": 0,
+  "auditoria_subida": 0,
+  "ficheros_en_almacen": 1
+ },
+ "D2": {
+  "status": [
+   200,
+   0.04
+  ],
+  "checked_out_final": 0,
+  "eventos": [
+   {
+    "t_ms": 9685.2,
+    "ev": "checkout",
+    "hilo": "AnyIO worker thread",
+    "conn": 1,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 9685.2,
+    "ev": "begin",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9685.3,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT installations"
+   },
+   {
+    "t_ms": 9686.3,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT license_states"
+   },
+   {
+    "t_ms": 9686.8,
+    "ev": "rollback",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9686.9,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "conn": 1,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 9688.8,
+    "ev": "checkout",
+    "hilo": "AnyIO worker thread",
+    "conn": 1,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 9688.8,
+    "ev": "begin",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9688.9,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT installations"
+   },
+   {
+    "t_ms": 9689.5,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT license_states"
+   },
+   {
+    "t_ms": 9690.3,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT users"
+   },
+   {
+    "t_ms": 9690.9,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT user_roles"
+   },
+   {
+    "t_ms": 9691.3,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT permissions"
+   },
+   {
+    "t_ms": 9692.1,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT companies"
+   },
+   {
+    "t_ms": 9692.5,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT user_scopes"
+   },
+   {
+    "t_ms": 9692.8,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT companies"
+   },
+   {
+    "t_ms": 9693.2,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT user_scopes"
+   },
+   {
+    "t_ms": 9693.8,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT documents"
+   },
+   {
+    "t_ms": 9694.2,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT document_types"
+   },
+   {
+    "t_ms": 9694.8,
+    "ev": "scan_start",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1,
+    "fichero_temporal_existe": true
+   },
+   {
+    "t_ms": 9712.5,
+    "ev": "checkout",
+    "hilo": "MainThread",
+    "conn": 2,
+    "checked_out": 2
+   },
+   {
+    "t_ms": 9712.5,
+    "ev": "begin",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 9712.9,
+    "ev": "sql",
+    "hilo": "MainThread",
+    "sql": "SELECT stored_files"
+   },
+   {
+    "t_ms": 9713.7,
+    "ev": "rollback",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 9713.8,
+    "ev": "checkin",
+    "hilo": "MainThread",
+    "conn": 2,
+    "checked_out": 2
+   },
+   {
+    "t_ms": 9714.1,
+    "ev": "checkout",
+    "hilo": "MainThread",
+    "conn": 2,
+    "checked_out": 2
+   },
+   {
+    "t_ms": 9714.1,
+    "ev": "begin",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 9714.2,
+    "ev": "sql",
+    "hilo": "MainThread",
+    "sql": "SELECT document_versions"
+   },
+   {
+    "t_ms": 9715.0,
+    "ev": "rollback",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 9715.1,
+    "ev": "checkin",
+    "hilo": "MainThread",
+    "conn": 2,
+    "checked_out": 2
+   },
+   {
+    "t_ms": 9715.4,
+    "ev": "checkout",
+    "hilo": "MainThread",
+    "conn": 2,
+    "checked_out": 2
+   },
+   {
+    "t_ms": 9715.5,
+    "ev": "begin",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 9715.9,
+    "ev": "sql",
+    "hilo": "MainThread",
+    "sql": "SELECT audit_events"
+   },
+   {
+    "t_ms": 9716.4,
+    "ev": "rollback",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 9716.5,
+    "ev": "checkin",
+    "hilo": "MainThread",
+    "conn": 2,
+    "checked_out": 2
+   },
+   {
+    "t_ms": 9716.8,
+    "ev": "scan_end",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1,
+    "resultado": "CLEAN"
+   },
+   {
+    "t_ms": 9716.9,
+    "ev": "storage_start",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9717.0,
+    "ev": "storage_end",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9717.6,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "INSERT stored_files"
+   },
+   {
+    "t_ms": 9718.4,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "INSERT file_security_scans"
+   },
+   {
+    "t_ms": 9719.1,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT stored_files"
+   },
+   {
+    "t_ms": 9719.6,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "INSERT audit_events"
+   },
+   {
+    "t_ms": 9720.0,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT document_versions"
+   },
+   {
+    "t_ms": 9720.4,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT document_versions"
+   },
+   {
+    "t_ms": 9720.8,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SAVEPOINT"
+   },
+   {
+    "t_ms": 9721.0,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "INSERT document_versions"
+   },
+   {
+    "t_ms": 9721.5,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "RELEASE"
+   },
+   {
+    "t_ms": 9721.8,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "UPDATE documents"
+   },
+   {
+    "t_ms": 9722.3,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "INSERT audit_events"
+   },
+   {
+    "t_ms": 9722.6,
+    "ev": "commit",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9722.9,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "conn": 1,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 9723.2,
+    "ev": "checkout",
+    "hilo": "AnyIO worker thread",
+    "conn": 2,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 9723.2,
+    "ev": "begin",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9723.3,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT document_versions"
+   },
+   {
+    "t_ms": 9723.8,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT stored_files"
+   },
+   {
+    "t_ms": 9724.4,
+    "ev": "rollback",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9724.6,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "conn": 2,
+    "checked_out": 1
+   }
+  ]
+ },
+ "D2b_infectado": {
+  "status": [
+   422,
+   0.01
+  ],
+  "auditoria_rechazo_persistida": 0,
+  "stored_files_del_doc": 0,
+  "eventos_sql": [
+   {
+    "t_ms": 9747.2,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT installations"
+   },
+   {
+    "t_ms": 9747.7,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT license_states"
+   },
+   {
+    "t_ms": 9747.9,
+    "ev": "rollback",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9748.0,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "conn": 1,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 9749.9,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT installations"
+   },
+   {
+    "t_ms": 9751.2,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT license_states"
+   },
+   {
+    "t_ms": 9752.0,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT users"
+   },
+   {
+    "t_ms": 9752.6,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT user_roles"
+   },
+   {
+    "t_ms": 9753.1,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT permissions"
+   },
+   {
+    "t_ms": 9753.9,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT companies"
+   },
+   {
+    "t_ms": 9754.3,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT user_scopes"
+   },
+   {
+    "t_ms": 9754.7,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT companies"
+   },
+   {
+    "t_ms": 9755.1,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT user_scopes"
+   },
+   {
+    "t_ms": 9755.8,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT documents"
+   },
+   {
+    "t_ms": 9756.3,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "SELECT document_types"
+   },
+   {
+    "t_ms": 9756.9,
+    "ev": "scan_start",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1,
+    "fichero_temporal_existe": true
+   },
+   {
+    "t_ms": 9756.9,
+    "ev": "scan_end",
+    "hilo": "AnyIO worker thread",
+    "checked_out": 1,
+    "resultado": "INFECTED"
+   },
+   {
+    "t_ms": 9757.1,
+    "ev": "sql",
+    "hilo": "AnyIO worker thread",
+    "sql": "INSERT audit_events"
+   },
+   {
+    "t_ms": 9757.9,
+    "ev": "rollback",
+    "hilo": "AnyIO worker thread"
+   },
+   {
+    "t_ms": 9758.1,
+    "ev": "checkin",
+    "hilo": "AnyIO worker thread",
+    "conn": 2,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 9759.7,
+    "ev": "sql",
+    "hilo": "MainThread",
+    "sql": "SELECT audit_events"
+   },
+   {
+    "t_ms": 9760.0,
+    "ev": "rollback",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 9760.2,
+    "ev": "checkin",
+    "hilo": "MainThread",
+    "conn": 1,
+    "checked_out": 1
+   },
+   {
+    "t_ms": 9760.6,
+    "ev": "sql",
+    "hilo": "MainThread",
+    "sql": "SELECT document_versions"
+   },
+   {
+    "t_ms": 9760.8,
+    "ev": "rollback",
+    "hilo": "MainThread"
+   },
+   {
+    "t_ms": 9760.9,
+    "ev": "checkin",
+    "hilo": "MainThread",
+    "conn": 2,
+    "checked_out": 1
+   }
+  ]
+ },
+ "D3": [
+  {
+   "k": 1,
+   "ok": 1,
+   "fallos": [],
+   "max_checked_out": 1,
+   "checked_out_en_scan_start_max": 1,
+   "scan_concurrentes_max": 1,
+   "p50": 6.26,
+   "p95": 6.26,
+   "pool_timeouts": 0,
+   "checked_out_final": 0
+  },
+  {
+   "k": 2,
+   "ok": 2,
+   "fallos": [],
+   "max_checked_out": 2,
+   "checked_out_en_scan_start_max": 2,
+   "scan_concurrentes_max": 2,
+   "p50": 6.77,
+   "p95": 6.77,
+   "pool_timeouts": 0,
+   "checked_out_final": 0
+  },
+  {
+   "k": 5,
+   "ok": 5,
+   "fallos": [],
+   "max_checked_out": 5,
+   "checked_out_en_scan_start_max": 5,
+   "scan_concurrentes_max": 5,
+   "p50": 8.43,
+   "p95": 8.45,
+   "pool_timeouts": 0,
+   "checked_out_final": 0
+  },
+  {
+   "k": 10,
+   "ok": 10,
+   "fallos": [],
+   "max_checked_out": 10,
+   "checked_out_en_scan_start_max": 10,
+   "scan_concurrentes_max": 10,
+   "p50": 18.64,
+   "p95": 18.85,
+   "pool_timeouts": 0,
+   "checked_out_final": 0
+  }
+ ],
+ "checked_out_final": 0
+}
