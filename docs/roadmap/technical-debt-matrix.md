@@ -2303,3 +2303,13 @@ Orden de ingeniería de release:
 **NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-BASE-IMAGE-FLOATING-TAG** (pendiente de la decisión OD-CERT-07).
 
 Si la dueña elige B, ese ciclo implementa el `FROM` y recertifica en V5. Después sigue TEST-MIGRACIONES-VENV-FIJO.
+
+## Actualización 2026-10-21 (2) — OD-CERT-07 = B: bloqueante de seguridad en el candidato
+
+| Deuda | Estado |
+|---|---|
+| PRODUCTION-BASE-IMAGE-FLOATING-TAG | **BLOCKED BY OWNER DECISION — OD-CERT-08**. B revalidado sin cambios, pero su almacén de CA contiene las raíces retiradas por DSA-6572-1. Recomendada R1: B + `ca-certificates=20250419+deb13u1` explícito |
+| BASE-IMAGE-CA-STORE-DSA-6572 (nueva) | **OPEN**, seguridad, aplicable al TLS de licencias; también afecta a lo que produce hoy la etiqueta flotante |
+| PRODUCTION-IMAGE-APT-PACKAGES-UNPINNED (nueva) | OPEN, menor, observación |
+
+**NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-BASE-IMAGE-FLOATING-TAG con OD-CERT-08.**

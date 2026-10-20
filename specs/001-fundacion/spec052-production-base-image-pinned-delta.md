@@ -103,3 +103,38 @@ certificación con lo que ya se ejecuta en producción.
 8. Solo entonces, commit.
 
 No se permiten actualizaciones flotantes automáticas. BASE_IMAGE_UPDATE_MECHANISM_DOCUMENTED = 1.
+
+## 8. Ciclo 2026-10-21 · OD-CERT-07 = B ratificada → revalidación y bloqueante nuevo
+Detalle en `oci-revalidation.json` y `base-security-recheck-and-v5-feasibility.md`.
+
+- **Revalidación OCI:** el índice, el manifiesto amd64 y la config del candidato B no cambiaron (`70729b46…`,
+  `8fb4cfa1…`, CPython 3.13.16, 2026-10-06). CANDIDATE_TAG_REBUILT = 0.
+- **Recheck de seguridad:** **DSA-6572-1** (`ca-certificates`, 2026-10-20 21:00 UTC). El almacén del candidato
+  (`ca-certificates 20250419`) **contiene, medido en el sistema de ficheros OCI**, las dos raíces que Debian retira por
+  compromiso de CA intermedias de eMudhra: «emSign ECC Root CA - G3» y «AAA Certificate Services» (Comodo).
+  - **Aplicable:** el cliente TLS de licencias usa el almacén del sistema. Mitigado en parte por las firmas Ed25519 y el
+    nonce.
+  - No existe todavía ninguna imagen oficial de CPython 3.13.16 con `20250419+deb13u1`.
+  - **NEW_BASE_SECURITY_BLOCKER = 1 → STOP (§5).** No se implementa. DEEPSEEK_CALLS = 0.
+- **Viabilidad de V5:** demostrada la clase **IMAGE_ROOTFS**. El CPython 3.13.16 de la imagen ejecuta con el cargador,
+  glibc 2.41 y OpenSSL 3.5.7 del rootfs: 25 bibliotecas, 0 del anfitrión. Salvedad: el bundle de CA debe redirigirse al
+  rootfs (`SSL_CERT_FILE`).
+- **Observación:** la capa apt de `base` instala `curl` y `libmagic1t64` sin versión: se resuelven el día del build.
+  Queda registrada como PRODUCTION-IMAGE-APT-PACKAGES-UNPINNED, sin absorber.
+
+### Decisión para la dueña — OD-CERT-08 (cómo fijar B sin heredar DSA-6572-1)
+
+| Opción | Qué es | Seguridad | Inmutabilidad | Coste |
+|---|---|---|---|---|
+| **R1 (recomendada)** | Fijar B (`3.13.16-slim-trixie@sha256:70729b46…`) **y** autorizar un cambio mínimo en la capa apt de `base`: añadir `ca-certificates=20250419+deb13u1` (versión exacta) a la orden `apt-get install` existente | DSA-6572-1 corregida desde el primer build; sin aceptación de riesgo | base inmutable y almacén de CA fijado por versión | ruta extra en el Dockerfile; si Debian sustituye esa versión, el build falla cerrado y obliga a revisar |
+| R2 | Fijar B tal cual con aceptación expresa y temporal de DSA-6572-1, y volver a fijar cuando se reconstruya la imagen oficial | riesgo aceptado temporalmente | sí | depende de la dueña |
+| R3 | No fijar todavía. Esperar la reconstrucción oficial de `3.13.16-slim-trixie` con `20250419+deb13u1` y entonces fijar ese nuevo digest (solo `FROM`, tal como se ratificó) | mientras tanto la etiqueta flotante recoge el arreglo sola | ninguna hasta entonces | plazo de reconstrucción desconocido |
+
+**Recomendación técnica: R1.** Es la única que da inmutabilidad y almacén de CA corregido **ya**, sin aceptar riesgo.
+
+**Detalles de R1:**
+- Cuando exista la imagen oficial reconstruida, la política de actualización la vuelve a fijar y puede retirar el pin
+  explícito de `ca-certificates`.
+- V5 = IMAGE_ROOTFS del candidato, con `ca-certificates 20250419+deb13u1` aplicado al rootfs: `apt-get download`
+  (sin root) y `dpkg-deb -x`, más `SSL_CERT_FILE` al bundle del rootfs.
+- Se instala con `pip install --no-deps -r requirements.lock && pip check` y se ejecutan las suites completas.

@@ -4161,3 +4161,21 @@ No se implementó nada (DEEPSEEK_CALLS = 0). Se registran la evidencia y el delt
 
 Líneas base sin cambio: V0 y V4 con SQLite 1921/0/1056 y PostgreSQL 2951/0/26 · E2E 284/0/0 · OpenAPI 544/533/11 ·
 pip-audit 0.
+
+## 2026-10-21 · OD-CERT-07 = B aplicada hasta el gate de seguridad · STOP por DSA-6572-1 · decisión OD-CERT-08
+
+- El candidato `python:3.13.16-slim-trixie@sha256:70729b46…` se revalidó sin cambios.
+- El recheck encontró **DSA-6572-1**: el almacén de CA del candidato, medido, conserva dos raíces retiradas por
+  compromiso de eMudhra. Aplica al TLS de licencias.
+- Ninguna imagen oficial de CPython 3.13.16 incluye el arreglo.
+- Se demostró la viabilidad de V5 de clase IMAGE_ROOTFS (CPython, glibc y OpenSSL de la imagen; 0 bibliotecas del
+  anfitrión).
+- No se implementó nada.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia. Si no: **PRODUCTION-BASE-IMAGE-FLOATING-TAG con OD-CERT-08** (recomendada R1: fijar B + `ca-certificates=20250419+deb13u1` explícito + V5 IMAGE_ROOTFS) |
+| Decisiones de la dueña pendientes | **OD-CERT-08** (R1/R2/R3); las tres documentales; FASTAPI-YIELD-TEARDOWN |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base sin cambio.
