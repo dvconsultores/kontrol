@@ -4138,3 +4138,26 @@ Deuda nueva menor: CRYPTO-KEY-LOADING-UNSUPPORTED-ALGORITHM-UNWRAPPED (previa).
 
 Líneas base: V0 y V4 con SQLite 1921/0/1056 y PostgreSQL 2951/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
 `RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.
+
+## 2026-10-21 · PRODUCTION-BASE-IMAGE-FLOATING-TAG bloqueada por decisión de la dueña (MATERIAL_OQ)
+
+Medido en el registro, sin Docker, con verificación sha256:
+- `python:3.13-slim` es hoy CPython **3.13.16** (desde el 2026-10-06), y la imagen publicada de KONTROL también ejecuta
+  3.13.16.
+- La certificación V4 usa **3.13.15**.
+
+| Candidato | Intérprete | Problema |
+|---|---|---|
+| `3.13.15-slim-trixie@sha256:7c61056e…` | coincide con V4 | congela el OpenSSL de Debian sin CVE-2026-35189 (aplicable al cliente TLS de licencias; baja) y baja el Python desplegado |
+| `3.13.16-slim-trixie@sha256:70729b46…` | no coincide con V4 | ninguno de seguridad conocido; obliga a recertificar con CPython 3.13.16 |
+
+No se implementó nada (DEEPSEEK_CALLS = 0). Se registran la evidencia y el delta.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia. Si no: **PRODUCTION-BASE-IMAGE-FLOATING-TAG con la decisión OD-CERT-07** (recomendada B: fijar 3.13.16 + digest y recertificar V5 con el intérprete extraído de la imagen) |
+| Decisiones de la dueña pendientes | **OD-CERT-07** (A/B/C); las tres documentales; cierre formal de FASTAPI-YIELD-TEARDOWN-AFTER-RESPONSE |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base sin cambio: V0 y V4 con SQLite 1921/0/1056 y PostgreSQL 2951/0/26 · E2E 284/0/0 · OpenAPI 544/533/11 ·
+pip-audit 0.

@@ -2292,3 +2292,14 @@ Orden de ingeniería de release:
 5. CANONICALIZE-CERTIFICATION-ENVIRONMENT.
 
 **NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-BASE-IMAGE-FLOATING-TAG.** OBS-09 tiene prioridad 1 si llega su evidencia.
+
+## Actualización 2026-10-21 — PRODUCTION-BASE-IMAGE-FLOATING-TAG: decisión de la dueña requerida
+
+| Deuda | Estado |
+|---|---|
+| PRODUCTION-BASE-IMAGE-FLOATING-TAG | **BLOCKED BY OWNER DECISION — MATERIAL_OQ**. Ningún candidato cumple a la vez CPYTHON_MATCH = 1 y no tener bloqueante de seguridad. Recomendada B: `python:3.13.16-slim-trixie@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f` más recertificación V5 con CPython 3.13.16 |
+| CERTIFICATION-ENVIRONMENT-DEPENDENCY-DRIFT | **hallazgo nuevo**: lo desplegado (3.13.16) ya no coincide con el intérprete certificado (3.13.15) |
+
+**NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-BASE-IMAGE-FLOATING-TAG** (pendiente de la decisión OD-CERT-07).
+
+Si la dueña elige B, ese ciclo implementa el `FROM` y recertifica en V5. Después sigue TEST-MIGRACIONES-VENV-FIJO.

@@ -1,0 +1,182 @@
+{
+ "fecha": "2026-10-21",
+ "registro": "registry-1.docker.io (token anónimo; solo lectura)",
+ "verificacion": "cada manifiesto, config y capa comprobados por sha256 del cuerpo",
+ "etiquetas": {
+  "3.13-slim": {
+   "index_digest": "sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f",
+   "mediaType": "application/vnd.oci.image.index.v1+json",
+   "linux_amd64_manifest": "sha256:8fb4cfa1a2616d7b8e0c2175cc6ad68f5729c34ea8488c0b360d2934b7be9024",
+   "linux_arm64_manifest": "sha256:cf97c3b79da1c706532c7042f851654d97d3b88c8ca6520acda9cf4479ea9b14",
+   "plataformas": [
+    "linux/386",
+    "linux/amd64",
+    "linux/arm/v5",
+    "linux/arm/v7",
+    "linux/arm64/v8",
+    "linux/ppc64le",
+    "linux/riscv64",
+    "linux/s390x"
+   ]
+  },
+  "3.13-slim-trixie": {
+   "index_digest": "sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f",
+   "mediaType": "application/vnd.oci.image.index.v1+json",
+   "linux_amd64_manifest": "sha256:8fb4cfa1a2616d7b8e0c2175cc6ad68f5729c34ea8488c0b360d2934b7be9024",
+   "linux_arm64_manifest": "sha256:cf97c3b79da1c706532c7042f851654d97d3b88c8ca6520acda9cf4479ea9b14",
+   "plataformas": [
+    "linux/386",
+    "linux/amd64",
+    "linux/arm/v5",
+    "linux/arm/v7",
+    "linux/arm64/v8",
+    "linux/ppc64le",
+    "linux/riscv64",
+    "linux/s390x"
+   ]
+  },
+  "3.13.15-slim": {
+   "index_digest": "sha256:7c61056e61ac89e852de05f3dc6fa51a6dd2181797bceed46aa725dd7cb2cd3b",
+   "mediaType": "application/vnd.oci.image.index.v1+json",
+   "linux_amd64_manifest": "sha256:37134a49d21d2120e4c4d73bb76f8a4ab9aef31f096f7ec2ead48c2feead4332",
+   "linux_arm64_manifest": "sha256:e2a5fce94bd761967528a12f16d707c2613e1522f3f2d77fa45766f45962547f",
+   "plataformas": [
+    "linux/386",
+    "linux/amd64",
+    "linux/arm/v5",
+    "linux/arm/v7",
+    "linux/arm64/v8",
+    "linux/ppc64le",
+    "linux/riscv64",
+    "linux/s390x"
+   ]
+  },
+  "3.13.15-slim-trixie": {
+   "index_digest": "sha256:7c61056e61ac89e852de05f3dc6fa51a6dd2181797bceed46aa725dd7cb2cd3b",
+   "mediaType": "application/vnd.oci.image.index.v1+json",
+   "linux_amd64_manifest": "sha256:37134a49d21d2120e4c4d73bb76f8a4ab9aef31f096f7ec2ead48c2feead4332",
+   "linux_arm64_manifest": "sha256:e2a5fce94bd761967528a12f16d707c2613e1522f3f2d77fa45766f45962547f",
+   "plataformas": [
+    "linux/386",
+    "linux/amd64",
+    "linux/arm/v5",
+    "linux/arm/v7",
+    "linux/arm64/v8",
+    "linux/ppc64le",
+    "linux/riscv64",
+    "linux/s390x"
+   ]
+  },
+  "3.13.15-slim-bookworm": {
+   "index_digest": "sha256:2325bb286ec344af3e5898cc224b5844e2707ac6e26b1632516fd3edc84a5e26",
+   "mediaType": "application/vnd.oci.image.index.v1+json",
+   "linux_amd64_manifest": "sha256:3e2de9c40ca4e3d73240059f9d48baff27908f10293e985a2f382a0378e6df4a",
+   "linux_arm64_manifest": "sha256:ad4c34ff79289506e235b40dce75d629e25f226b597a2455804220f037e07531",
+   "plataformas": [
+    "linux/386",
+    "linux/amd64",
+    "linux/arm/v7",
+    "linux/arm64/v8",
+    "linux/ppc64le"
+   ]
+  },
+  "3.13.16-slim-trixie": {
+   "index_digest": "sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f",
+   "mediaType": "application/vnd.oci.image.index.v1+json",
+   "linux_amd64_manifest": "sha256:8fb4cfa1a2616d7b8e0c2175cc6ad68f5729c34ea8488c0b360d2934b7be9024",
+   "linux_arm64_manifest": "sha256:cf97c3b79da1c706532c7042f851654d97d3b88c8ca6520acda9cf4479ea9b14",
+   "plataformas": [
+    "linux/386",
+    "linux/amd64",
+    "linux/arm/v5",
+    "linux/arm/v7",
+    "linux/arm64/v8",
+    "linux/ppc64le",
+    "linux/riscv64",
+    "linux/s390x"
+   ]
+  }
+ },
+ "config_amd64": {
+  "3.13-slim|amd64": {
+   "manifest": "sha256:8fb4cfa1a2616d7b8e0c2175cc6ad68f5729c34ea8488c0b360d2934b7be9024",
+   "config": "sha256:ce3ff9524414289fc922d9d5dc1de87abc77a39ff2ff5007435839f2af1d7569",
+   "created": "2026-10-06T02:05:24.190948597Z",
+   "os": "linux",
+   "architecture": "amd64",
+   "PYTHON_VERSION": "3.13.16"
+  },
+  "3.13-slim-trixie|amd64": {
+   "manifest": "sha256:8fb4cfa1a2616d7b8e0c2175cc6ad68f5729c34ea8488c0b360d2934b7be9024",
+   "config": "sha256:ce3ff9524414289fc922d9d5dc1de87abc77a39ff2ff5007435839f2af1d7569",
+   "created": "2026-10-06T02:05:24.190948597Z",
+   "os": "linux",
+   "architecture": "amd64",
+   "PYTHON_VERSION": "3.13.16"
+  },
+  "3.13.15-slim|amd64": {
+   "manifest": "sha256:37134a49d21d2120e4c4d73bb76f8a4ab9aef31f096f7ec2ead48c2feead4332",
+   "config": "sha256:b2bb53ac7b6fbe78a48c95b7c15130ea21de1674fc683fbc93158b0c23826823",
+   "created": "2026-09-19T01:07:46.303249376Z",
+   "os": "linux",
+   "architecture": "amd64",
+   "PYTHON_VERSION": "3.13.15"
+  },
+  "3.13.15-slim-trixie|amd64": {
+   "manifest": "sha256:37134a49d21d2120e4c4d73bb76f8a4ab9aef31f096f7ec2ead48c2feead4332",
+   "config": "sha256:b2bb53ac7b6fbe78a48c95b7c15130ea21de1674fc683fbc93158b0c23826823",
+   "created": "2026-09-19T01:07:46.303249376Z",
+   "os": "linux",
+   "architecture": "amd64",
+   "PYTHON_VERSION": "3.13.15"
+  },
+  "3.13.15-slim-bookworm|amd64": {
+   "manifest": "sha256:3e2de9c40ca4e3d73240059f9d48baff27908f10293e985a2f382a0378e6df4a",
+   "config": "sha256:915835de46a63f9598442159437904042f1c69a9b41c4965fba1db9ceab66578",
+   "created": "2026-09-19T01:08:28.4219164Z",
+   "os": "linux",
+   "architecture": "amd64",
+   "PYTHON_VERSION": "3.13.15"
+  }
+ },
+ "contenido_oci_amd64": {
+  "3.13.15-slim-trixie|amd64": {
+   "PY_VERSION_patchlevel_h": "3.13.15",
+   "libc6": "2.41-12+deb13u4",
+   "libssl3t64": "3.5.7-1~deb13u2",
+   "openssl": "3.5.7-1~deb13u2",
+   "libpcre2-8-0": "10.46-1~deb13u2",
+   "liblzma5": "5.8.1-1+deb13u1",
+   "ca-certificates": "20250419",
+   "paquetes_dpkg": 87
+  },
+  "3.13-slim|amd64": {
+   "PY_VERSION_patchlevel_h": "3.13.16",
+   "libc6": "2.41-12+deb13u4",
+   "libssl3t64": "3.5.7-1~deb13u3",
+   "openssl": "3.5.7-1~deb13u3",
+   "libpcre2-8-0": "10.46-1~deb13u3",
+   "liblzma5": "5.8.1-1+deb13u1",
+   "ca-certificates": "20250419",
+   "paquetes_dpkg": 87
+  }
+ },
+ "diferencias_dpkg_3.13.15_vs_3.13.16": {
+  "libpcre2-8-0": [
+   "10.46-1~deb13u2",
+   "10.46-1~deb13u3"
+  ],
+  "libssl3t64": [
+   "3.5.7-1~deb13u2",
+   "3.5.7-1~deb13u3"
+  ],
+  "openssl": [
+   "3.5.7-1~deb13u2",
+   "3.5.7-1~deb13u3"
+  ],
+  "openssl-provider-legacy": [
+   "3.5.7-1~deb13u2",
+   "3.5.7-1~deb13u3"
+  ]
+ }
+}
