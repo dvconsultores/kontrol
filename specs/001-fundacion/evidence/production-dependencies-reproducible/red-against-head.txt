@@ -1,0 +1,5 @@
+FAILED tests/test_dependencias_lock.py::test_idl_01_el_lock_contiene_cada_directa_con_su_pin_exacto
+FAILED tests/test_dependencias_lock.py::test_idl_02_el_lock_contiene_reportlab_python_magic_y_los_extras_de_uvicorn_standard
+FAILED tests/test_dependencias_lock.py::test_idl_04_la_cabecera_declara_el_comando_canonico
+FAILED tests/test_dependencias_lock.py::test_idl_06_la_imagen_instala_el_lock_sin_volver_a_resolver
+4 failed, 3 passed in 0.09s

@@ -2250,3 +2250,28 @@ absorberla.
 
 **NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-DEPENDENCIES-UNPINNED-TRANSITIVES + LOCK-SIN-REPORTLAB-MAGIC.** OBS-09 vuelve a
 prioridad 1 si llega su evidencia.
+
+## Actualización 2026-10-20 — conjunto de dependencias de despliegue reproducible
+
+| Deuda | Estado |
+|---|---|
+| LOCK-SIN-REPORTLAB-MAGIC | **CLOSED / CONVERGED**: el lock se regenera con un comando canónico y determinista, tiene 49 paquetes (con `reportlab` y `python-magic`) y lo protege IDL |
+| PRODUCTION-DEPENDENCIES-UNPINNED-TRANSITIVES | **CLOSED / CONVERGED**: la imagen instala el lock con `--no-deps` y `pip check`; V3 freeze = lock; V0 y V3 en verde (SQLite 1907/0/1056 · PostgreSQL 2937/0/26 · E2E 284/0/0) |
+| IMAGE-INSTALLED-DEPENDENCY-SET-NOT-RUNTIME-CERTIFIED (nueva) | **BLOCKED BY ENVIRONMENT**, puerta externa |
+| BACKEND-DIRECT-DEPENDENCIES-KNOWN-VULNERABILITIES (nueva) | **OPEN**, seguridad, dueña 001: PyJWT 2.13.0 y cryptography 46.0.6 con avisos publicados después de `cve-review.md` |
+| LOCK-WITHOUT-ARTIFACT-HASHES (nueva) | **OPEN**, menor, dueña 052 |
+| CERTIFICATION-ENVIRONMENT-DEPENDENCY-DRIFT | sigue OPEN hasta la canonicalización; V3 ya es el entorno de despliegue fijado por el lock |
+
+**ROOT_COUNT = 2** (lock sin mecanismo frente a imagen sin lock), con implementación común.
+
+Orden de ingeniería de release restante:
+1. PRODUCTION-BASE-IMAGE-FLOATING-TAG.
+2. TEST-MIGRACIONES-VENV-FIJO.
+3. E2E-HARNESS-INTERPRETER-FIXED.
+4. PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES.
+5. CANONICALIZE-CERTIFICATION-ENVIRONMENT.
+
+**BACKEND-DIRECT-DEPENDENCIES-KNOWN-VULNERABILITIES es una deuda de seguridad.** Se propone a la dueña adelantarla
+como siguiente ciclo técnico. Su decisión de prioridad es de la dueña; el ciclo no la reordena por su cuenta.
+
+**NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-BASE-IMAGE-FLOATING-TAG.** OBS-09 tiene prioridad 1 si llega su evidencia.

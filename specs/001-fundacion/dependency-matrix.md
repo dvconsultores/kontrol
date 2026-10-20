@@ -66,3 +66,19 @@
 | Lockfiles | `requirements.lock` (46 paq.) + `package-lock.json` regenerados |
 | CVE | **0 en npm audit**; backend en versiones ≥ fijadas por pip-audit — ver `docs/evidence/cve-review.md` |
 
+
+## Actualización 2026-10-20 — conjunto de despliegue reproducible (Spec 052, OD-CERT-05)
+
+La fila «Versiones backend finales» de arriba registra la resolución del 2026-08-04.
+- Desde el 2026-10-20 la autoridad de versiones del backend es `resources/backend/requirements.lock`.
+  - Lo genera el comando canónico declarado en su cabecera:
+    `uv pip compile requirements.txt --python-version 3.13 --python-platform x86_64-unknown-linux-gnu --exclude-newer 2026-10-20T00:00:00Z --upgrade -o requirements.lock`.
+  - Tiene 49 paquetes, directos y transitivos.
+  - La imagen lo instala con `--no-deps` y `pip check`.
+- Diferencia material con la fila histórica: **starlette 1.9.0**. Cumple el suelo de `cve-review.md` (≥ 1.3.1) y la
+  compatibilidad de FastAPI 0.141.1 (`>=0.46.0`), y es la versión certificada.
+- El lock histórico (46 paquetes, `pip freeze` sobre Python 3.11) queda sustituido.
+- La auditoría del 2026-10-20 encuentra avisos nuevos en los pines directos `PyJWT 2.13.0` y `cryptography 46.0.6`
+  (deuda BACKEND-DIRECT-DEPENDENCIES-KNOWN-VULNERABILITIES).
+- Evidencia: `evidence/production-dependencies-reproducible/` y
+  `spec052-production-dependencies-reproducible-delta.md`.

@@ -17,8 +17,10 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends curl libmagic1t64 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY resources/backend/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+# Dependencias Python: el conjunto completo y fijado de requirements.lock (OD-CERT-05). --no-deps impide volver a resolver transitivas en el build; pip check hace fallar el build si el conjunto no es completo y coherente.
+COPY resources/backend/requirements.lock /tmp/requirements.lock
+RUN pip install --no-cache-dir --no-deps -r /tmp/requirements.lock \
+    && pip check
 
 COPY resources/backend/app ./app
 COPY resources/backend/alembic ./alembic

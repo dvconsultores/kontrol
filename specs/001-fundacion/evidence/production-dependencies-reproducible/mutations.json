@@ -1,0 +1,181 @@
+{
+ "mutantes": [
+  {
+   "id": "M01",
+   "mutacion": "quitar reportlab del lock",
+   "fichero": "resources/backend/requirements.lock",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_01_el_lock_contiene_cada_directa_con_su_pin_exacto",
+    "test_dependencias_lock.py::test_idl_02_el_lock_contiene_reportlab_python_magic_y_los_extras_de_uvicorn_standard"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M02",
+   "mutacion": "quitar python-magic del lock",
+   "fichero": "resources/backend/requirements.lock",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_01_el_lock_contiene_cada_directa_con_su_pin_exacto",
+    "test_dependencias_lock.py::test_idl_02_el_lock_contiene_reportlab_python_magic_y_los_extras_de_uvicorn_standard"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M03",
+   "mutacion": "quitar PyYAML del lock",
+   "fichero": "resources/backend/requirements.lock",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_02_el_lock_contiene_reportlab_python_magic_y_los_extras_de_uvicorn_standard"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M04",
+   "mutacion": "pin directo contradictorio en el lock (fastapi 0.141.0)",
+   "fichero": "resources/backend/requirements.lock",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_01_el_lock_contiene_cada_directa_con_su_pin_exacto"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M05",
+   "mutacion": "volver la imagen a requirements.txt",
+   "fichero": "Dockerfile.backend",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_06_la_imagen_instala_el_lock_sin_volver_a_resolver",
+    "test_imagen_backend_mime.py::test_imb_03_la_etapa_efectiva_hereda_libmagic"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M06",
+   "mutacion": "instalar el lock solo en dev",
+   "fichero": "Dockerfile.backend",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_06_la_imagen_instala_el_lock_sin_volver_a_resolver",
+    "test_imagen_backend_mime.py::test_imb_03_la_etapa_efectiva_hereda_libmagic"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M07",
+   "mutacion": "dejar una transitiva sin pin (anyio)",
+   "fichero": "resources/backend/requirements.lock",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_03_cada_linea_del_lock_es_un_pin_exacto_y_unico"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M08",
+   "mutacion": "versión distinta en el manifiesto (pydantic 2.10.5)",
+   "fichero": "resources/backend/requirements.txt",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_01_el_lock_contiene_cada_directa_con_su_pin_exacto"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M09",
+   "mutacion": "aceptar lock no determinista: cabecera sin --exclude-newer",
+   "fichero": "resources/backend/requirements.lock",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_04_la_cabecera_declara_el_comando_canonico"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M09b",
+   "mutacion": "aceptar lock dependiente del fichero previo: cabecera sin --upgrade",
+   "fichero": "resources/backend/requirements.lock",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_04_la_cabecera_declara_el_comando_canonico"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M10",
+   "mutacion": "aceptar pip check rojo: quitar pip check",
+   "fichero": "Dockerfile.backend",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_06_la_imagen_instala_el_lock_sin_volver_a_resolver"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M10b",
+   "mutacion": "volver a resolver: quitar --no-deps",
+   "fichero": "Dockerfile.backend",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_06_la_imagen_instala_el_lock_sin_volver_a_resolver",
+    "test_imagen_backend_mime.py::test_imb_03_la_etapa_efectiva_hereda_libmagic"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M11",
+   "mutacion": "ignorar Python 3.13: lock para 3.11",
+   "fichero": "resources/backend/requirements.lock",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_04_la_cabecera_declara_el_comando_canonico"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M12",
+   "mutacion": "regresión CVE: starlette 1.2.0",
+   "fichero": "resources/backend/requirements.lock",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_05_el_lock_respeta_el_suelo_de_cve_review"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M13",
+   "mutacion": "el runtime deja de heredar la base (pierde lock y libmagic)",
+   "fichero": "Dockerfile.backend",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_06_la_imagen_instala_el_lock_sin_volver_a_resolver",
+    "test_imagen_backend_etapas.py::test_ibe_02_el_runtime_arranca_sin_reload_y_con_keep_alive_75",
+    "test_imagen_backend_etapas.py::test_ibe_04_el_runtime_no_corre_como_root",
+    "test_imagen_backend_etapas.py::test_ibe_05_el_runtime_conserva_healthcheck_y_entrypoint",
+    "test_imagen_backend_mime.py::test_imb_03_la_etapa_efectiva_hereda_libmagic"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M14",
+   "mutacion": "falta una directa (alembic) en el lock",
+   "fichero": "resources/backend/requirements.lock",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_01_el_lock_contiene_cada_directa_con_su_pin_exacto"
+   ],
+   "restaurado_identico": true
+  }
+ ],
+ "resumen": {
+  "significativas": 16,
+  "killed": 16,
+  "survived": 0,
+  "equivalent": 0,
+  "restored": "100 %",
+  "bateria": "test_dependencias_lock + test_imagen_backend_mime + test_imagen_backend_etapas (V0)"
+ }
+}

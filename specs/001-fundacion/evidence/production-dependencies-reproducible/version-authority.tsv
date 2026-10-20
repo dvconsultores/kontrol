@@ -1,0 +1,51 @@
+PACKAGE	DIRECT_OR_TRANSITIVE	REQUIREMENTS_VERSION	HISTORICAL_LOCK_VERSION	V1P_VERSION	DEPENDENCY_MATRIX_VERSION	CVE_REVIEW_VERSION	PARENT_REQUIREMENT	COMPATIBILITY_RANGE	PROPOSED_LOCK_VERSION	KNOWN_VULNS_TODAY	CLASSIFICATION
+alembic	DIRECT	1.14.0	1.14.0	1.14.0	1.14.0	-	-r requirements.txt	-	1.14.0	-	CONSISTENT
+annotated-doc	TRANSITIVE	-	0.0.5	0.0.5	-	-	fastapi	-	0.0.5	-	CONSISTENT + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+annotated-types	TRANSITIVE	-	0.8.0	0.8.0	-	-	pydantic	-	0.8.0	-	CONSISTENT + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+anyio	TRANSITIVE	-	4.14.2	4.15.1	-	-	httpx; starlette; watchfiles	starlette: anyio>=4.0.0,<5	4.15.1	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+argon2-cffi	DIRECT	23.1.0	23.1.0	23.1.0	23.1.0	-	-r requirements.txt	-	23.1.0	-	CONSISTENT
+argon2-cffi-bindings	TRANSITIVE	-	25.1.0	26.1.0	-	-	argon2-cffi	-	26.1.0	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+certifi	TRANSITIVE	-	2026.7.22	2026.10.18	-	-	httpcore; httpx	-	2026.10.18	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+cffi	TRANSITIVE	-	2.1.1	2.1.1	-	-	argon2-cffi-bindings; cryptography	-	2.1.1	-	CONSISTENT + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+charset-normalizer	TRANSITIVE	-	-	3.5.2	-	-	reportlab	reportlab: charset-normalizer	3.5.2	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+click	TRANSITIVE	-	8.4.2	8.5.0	-	-	uvicorn	-	8.5.0	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+cryptography	DIRECT	46.0.6	46.0.6	46.0.6	46.0.6	>=46.0.6	-r requirements.txt	-	46.0.6	GHSA-537c-gmf6-5ccf,PYSEC-2026-3552,PYSEC-2026-3553,PYSEC-2026-3554,PYSEC-2026-36	CONSISTENT + CVE_REVIEW_STALE
+dnspython	TRANSITIVE	-	2.8.0	2.9.0	-	-	email-validator	-	2.9.0	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+email-validator	DIRECT	2.2.0	2.2.0	2.2.0	-	-	-r requirements.txt	-	2.2.0	-	CONSISTENT
+fastapi	DIRECT	0.141.1	0.141.1	0.141.1	0.141.1	-	-r requirements.txt	-	0.141.1	-	CONSISTENT
+greenlet	ABSENT_ON_PY313	-	3.5.4	-	-	-	-	sqlalchemy 2.0.36: sólo python_version<3.13	-	-	HISTORICAL_LOCK_STALE
+h11	TRANSITIVE	-	0.16.0	0.16.0	-	-	httpcore; uvicorn	-	0.16.0	-	CONSISTENT + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+httpcore	TRANSITIVE	-	1.0.9	1.0.9	-	-	httpx	-	1.0.9	-	CONSISTENT + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+httptools	TRANSITIVE	-	0.8.0	0.9.0	-	-	uvicorn	-	0.9.0	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+httpx	DIRECT	0.28.1	0.28.1	0.28.1	-	-	-r requirements.txt	-	0.28.1	-	CONSISTENT
+idna	TRANSITIVE	-	3.18	3.20	-	-	anyio; email-validator; httpx	-	3.20	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+iniconfig	TRANSITIVE	-	2.3.0	2.3.1	-	-	pytest	-	2.3.1	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+mako	TRANSITIVE	-	1.3.12	1.4.3	-	-	alembic	-	1.4.3	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+markupsafe	TRANSITIVE	-	3.0.3	3.0.4	-	-	mako	-	3.0.4	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+mypy	DIRECT	1.13.0	1.13.0	1.13.0	-	-	-r requirements.txt	-	1.13.0	-	CONSISTENT
+mypy-extensions	TRANSITIVE	-	1.1.0	1.1.0	-	-	mypy	-	1.1.0	-	CONSISTENT + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+packaging	TRANSITIVE	-	26.2	26.3	-	-	pytest	-	26.3	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+pillow	TRANSITIVE	-	-	13.0.0	-	-	reportlab	reportlab: pillow>=9.0.0	13.0.0	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+pluggy	TRANSITIVE	-	1.6.0	1.7.0	-	-	pytest	-	1.7.0	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+psycopg2-binary	DIRECT	2.9.10	2.9.10	2.9.10	-	-	-r requirements.txt	-	2.9.10	-	CONSISTENT
+pycparser	TRANSITIVE	-	3.0	3.11	-	-	cffi	-	3.11	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+pydantic	DIRECT	2.10.4	2.10.4	2.10.4	2.10.4	-	-r requirements.txt; fastapi; pydantic-settings	-	2.10.4	-	CONSISTENT
+pydantic-core	TRANSITIVE	-	2.27.2	2.27.2	-	-	pydantic	-	2.27.2	-	CONSISTENT + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+pydantic-settings	DIRECT	2.7.0	2.7.0	2.7.0	-	-	-r requirements.txt	-	2.7.0	-	CONSISTENT
+pygments	TRANSITIVE	-	2.20.0	2.21.0	-	-	pytest	-	2.21.0	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+pyjwt	DIRECT	2.13.0	2.13.0	2.13.0	2.13.0	>=2.13.0	-r requirements.txt	-	2.13.0	PYSEC-2026-4140,PYSEC-2026-4141,PYSEC-2026-4142,PYSEC-2026-4143,PYSEC-2026-4144,PYSEC-2026-4145,PYSEC-2026-4146,PYSEC-2026-4147,PYSEC-2026-4148,PYSEC-2026-4149,PYSEC-2026-4150,PYSEC-2026-4151,PYSEC-2026-4152,PYSEC-2026-4183	CONSISTENT + CVE_REVIEW_STALE
+pytest	DIRECT	9.0.3	9.0.3	9.0.3	9.0.3	>=9.0.3	-r requirements.txt	-	9.0.3	-	CONSISTENT
+python-dotenv	TRANSITIVE	-	1.2.2	1.2.4	-	-	pydantic-settings; uvicorn	-	1.2.4	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+python-magic	DIRECT	0.4.27	-	0.4.27	-	-	-r requirements.txt	-	0.4.27	-	HISTORICAL_LOCK_STALE
+python-multipart	DIRECT	0.0.31	0.0.31	0.0.31	0.0.31	>=0.0.31	-r requirements.txt	-	0.0.31	-	CONSISTENT
+pyyaml	TRANSITIVE	-	6.0.3	6.0.3	-	-	uvicorn	uvicorn[standard]: pyyaml>=5.1	6.0.3	-	CONSISTENT + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+reportlab	DIRECT	5.0.0	-	5.0.0	-	-	-r requirements.txt	-	5.0.0	-	HISTORICAL_LOCK_STALE
+ruff	DIRECT	0.8.4	0.8.4	0.8.4	-	-	-r requirements.txt	-	0.8.4	-	CONSISTENT
+sqlalchemy	DIRECT	2.0.36	2.0.36	2.0.36	2.0.36	-	-r requirements.txt; alembic	-	2.0.36	-	CONSISTENT
+starlette	TRANSITIVE	-	1.3.1	1.9.0	1.3.1	>=1.3.1	fastapi	fastapi 0.141.1: starlette>=0.46.0	1.9.0	-	HISTORICAL_LOCK_STALE + MATRIX_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+typing-extensions	TRANSITIVE	-	4.16.0	4.16.0	-	-	alembic; anyio; fastapi; mypy; pydantic; pydantic-core; sqlalchemy; typing-inspection	-	4.16.0	-	CONSISTENT + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+typing-inspection	TRANSITIVE	-	0.4.2	0.4.4	-	-	fastapi	-	0.4.4	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+uvicorn	DIRECT	0.32.1	0.32.1	0.32.1	-	-	-r requirements.txt	-	0.32.1	-	CONSISTENT
+uvloop	TRANSITIVE	-	0.22.1	0.23.0	-	-	uvicorn	-	0.23.0	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+watchfiles	TRANSITIVE	-	1.2.0	1.3.0	-	-	uvicorn	-	1.3.0	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)
+websockets	TRANSITIVE	-	17.0.1	17.3	-	-	uvicorn	-	17.3	-	HISTORICAL_LOCK_STALE + CURRENT_RESOLUTION_UNCONTROLLED (pre-fix)

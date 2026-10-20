@@ -130,7 +130,7 @@ def test_imb_03_la_etapa_efectiva_hereda_libmagic() -> None:
     )
     assert "--no-install-recommends" in run_libmagic
 
-    assert any("pip install --no-cache-dir -r /tmp/requirements.txt" in run for run in runs)
+    assert any("pip install --no-cache-dir --no-deps -r /tmp/requirements.lock" in run for run in runs)
 
 
 def test_imb_04_la_biblioteca_nativa_carga() -> None:

@@ -4076,3 +4076,35 @@ Se registra, sin implementarla, PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENC
 
 Líneas base: V0 y V1' con SQLite 1900/0/1056 y PostgreSQL 2930/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
 `RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.
+
+## 2026-10-20 · Dependencias de despliegue reproducibles (dueña 052) · LOCK-SIN-REPORTLAB-MAGIC y PRODUCTION-DEPENDENCIES-UNPINNED-TRANSITIVES cerradas · hallazgo de seguridad en pines directos
+
+Aplica OD-CERT-05:
+- `requirements.lock` es el conjunto completo y fijado. Lo genera un comando canónico declarado en su cabecera (Python
+  3.13, linux x86_64, `--exclude-newer`, `--upgrade`), es determinista y tiene 49 paquetes.
+- La imagen lo instala sin volver a resolver (`--no-deps` y `pip check`), y la certificación de despliegue (V3) usa el
+  mismo mecanismo: freeze = lock.
+- ROOT_COUNT = 2, con implementación común.
+
+| Puerta | Resultado |
+|---|---|
+| Prueba nueva | IDL-01..07 |
+| Mutaciones | 16/16 KILLED |
+| V0 | SQLite 1907/0/1056 ×2 · PostgreSQL 2937/0/26 · E2E 284/0/0 |
+| V3 | SQLite 1907/0/1056 · PostgreSQL 2937/0/26 · E2E 284/0/0 |
+| OpenAPI | sin deriva de contrato |
+
+**Sin Docker, la imagen no se midió:** queda como puerta externa IMAGE-INSTALLED-DEPENDENCY-SET-NOT-RUNTIME-CERTIFIED.
+
+**Hallazgo de la puerta de CVE.** `PyJWT 2.13.0` y `cryptography 46.0.6`, pines directos, tienen vulnerabilidades
+publicadas después de la revisión del 2026-08-04. No es una regresión del lock. Se registra como
+BACKEND-DIRECT-DEPENDENCIES-KNOWN-VULNERABILITIES: seguridad, dueña 001, CLAUDE_ONLY.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia. Si no: **PRODUCTION-BASE-IMAGE-FLOATING-TAG** (orden ratificado), **salvo que la dueña adelante BACKEND-DIRECT-DEPENDENCIES-KNOWN-VULNERABILITIES (recomendado por ser de seguridad)** |
+| Decisiones de la dueña pendientes | prioridad de BACKEND-DIRECT-DEPENDENCIES-KNOWN-VULNERABILITIES; las tres documentales; cierre formal de FASTAPI-YIELD-TEARDOWN-AFTER-RESPONSE (recomendada NOT_A_DEFECT) |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: V0 y V3 con SQLite 1907/0/1056 y PostgreSQL 2937/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
+`RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`: falta la canonicalización y la medición de la imagen.
