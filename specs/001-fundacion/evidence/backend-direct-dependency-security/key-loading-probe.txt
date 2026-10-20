@@ -1,0 +1,8 @@
+Sonda conductual de carga de claves (PEM sintéticas generadas con openssl; no versionadas)
+Ejecutada el 2026-10-20 en V3 (cryptography 46.0.6) y V4 (50.0.2): resultados idénticos.
+ec-explicit.pub   trust_anchor=TrustAnchorError(invalid) | load_public_key=ValueError
+ed448.pub         trust_anchor=TrustAnchorError(invalid) | load_public_key=ValueError
+mldsa.pub         trust_anchor=TrustAnchorError(invalid) | load_public_key=ValueError
+rsa.pub           trust_anchor=TrustAnchorError(invalid) | load_public_key=ValueError
+sm2.pub           trust_anchor=ESCAPA:UnsupportedAlgorithm | load_public_key=ESCAPA:UnsupportedAlgorithm   (previo, ambas versiones)
+ec-explicit.key   trust_anchor=TrustAnchorError(invalid) | load_public_key=ValueError

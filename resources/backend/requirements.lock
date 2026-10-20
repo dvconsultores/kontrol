@@ -27,7 +27,7 @@ charset-normalizer==3.5.2
     # via reportlab
 click==8.5.0
     # via uvicorn
-cryptography==46.0.6
+cryptography==50.0.2
     # via -r requirements.txt
 dnspython==2.9.0
     # via email-validator
@@ -81,7 +81,7 @@ pydantic-settings==2.7.0
     # via -r requirements.txt
 pygments==2.21.0
     # via pytest
-pyjwt==2.13.0
+pyjwt==2.15.0
     # via -r requirements.txt
 pytest==9.0.3
     # via -r requirements.txt

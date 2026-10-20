@@ -1,0 +1,6 @@
+== pip-audit (pypi) sobre requirements.lock del repositorio
+No known vulnerabilities found
+== pip-audit (osv) sobre requirements.lock del repositorio
+No known vulnerabilities found
+== pip-audit sobre el entorno V4 instalado
+No known vulnerabilities found

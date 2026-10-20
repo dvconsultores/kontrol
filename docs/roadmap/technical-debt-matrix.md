@@ -2275,3 +2275,20 @@ Orden de ingeniería de release restante:
 como siguiente ciclo técnico. Su decisión de prioridad es de la dueña; el ciclo no la reordena por su cuenta.
 
 **NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-BASE-IMAGE-FLOATING-TAG.** OBS-09 tiene prioridad 1 si llega su evidencia.
+
+## Actualización 2026-10-20 — dependencias directas de autenticación y criptografía sin vulnerabilidades conocidas
+
+| Deuda | Estado |
+|---|---|
+| BACKEND-DIRECT-DEPENDENCIES-KNOWN-VULNERABILITIES | **CLOSED / CONVERGED**: PyJWT 2.15.0 y cryptography 50.0.2; pip-audit en 0; V0 y V4 en verde (SQLite 1921/0/1056 · PostgreSQL 2951/0/26 · E2E 284/0/0) |
+| CRYPTO-KEY-LOADING-UNSUPPORTED-ALGORITHM-UNWRAPPED (nueva) | **OPEN**, menor, previa, de entrada de operador, falla cerrado; dueña 010 |
+| PRODUCTION-BASE-IMAGE-FLOATING-TAG | OPEN; aplazada un ciclo por OD-SEC-01 y ahora siguiente |
+
+Orden de ingeniería de release:
+1. PRODUCTION-BASE-IMAGE-FLOATING-TAG.
+2. TEST-MIGRACIONES-VENV-FIJO.
+3. E2E-HARNESS-INTERPRETER-FIXED.
+4. PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES.
+5. CANONICALIZE-CERTIFICATION-ENVIRONMENT.
+
+**NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-BASE-IMAGE-FLOATING-TAG.** OBS-09 tiene prioridad 1 si llega su evidencia.

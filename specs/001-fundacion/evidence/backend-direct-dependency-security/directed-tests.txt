@@ -1,0 +1,7 @@
+v0 dirigidas: 998 passed, 45 skipped in 466.88s (0:07:46)
+v0 SDV+IDL solas: 21 passed in 4.27s
+v0 SDV+IDL inverso: 21 passed in 4.44s
+v4 dirigidas: 998 passed, 45 skipped, 2 warnings in 438.51s (0:07:18)
+v4 SDV+IDL solas: 21 passed, 2 warnings in 2.79s
+v4 SDV+IDL inverso: 21 passed, 2 warnings in 2.56s
+FIN_DIRIGIDAS

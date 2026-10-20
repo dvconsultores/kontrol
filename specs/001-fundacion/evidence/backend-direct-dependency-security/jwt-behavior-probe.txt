@@ -1,0 +1,39 @@
+Sonda desechable de la cadena real (security.decode_token y GET /api/v1/auth/me con TestClient), secretos sintéticos, 2026-10-20.
+Nota: la fila 'valido' da HTTP 500 solo porque la base de la sonda no tiene esquema (el token se ACEPTA y db.get falla); el criterio es decode_token.
+
+== v0
+PyJWT 2.10.1
+valido                       decode_token=ACEPTA                             HTTP=500 INTERNAL_ERROR
+firma_ajena                  decode_token=PyJWTError:InvalidSignatureError   HTTP=401 AUTH_INVALID_TOKEN
+alg_HS512_misma_clave        decode_token=PyJWTError:InvalidAlgorithmError   HTTP=401 AUTH_INVALID_TOKEN
+alg_none                     decode_token=PyJWTError:InvalidAlgorithmError   HTTP=401 AUTH_INVALID_TOKEN
+alg_NONE                     decode_token=PyJWTError:InvalidAlgorithmError   HTTP=401 AUTH_INVALID_TOKEN
+caducado                     decode_token=PyJWTError:ExpiredSignatureError   HTTP=401 AUTH_INVALID_TOKEN
+basura_en_firma_4147         decode_token=ACEPTA                             HTTP=500 INTERNAL_ERROR
+cabecera_no_objeto_4142      decode_token=PyJWTError:DecodeError             HTTP=401 AUTH_INVALID_TOKEN
+cabecera_anidada_recursion   decode_token=ESCAPA:RecursionError              HTTP=500 INTERNAL_ERROR
+malformado                   decode_token=PyJWTError:DecodeError             HTTP=401 AUTH_INVALID_TOKEN
+== v3
+PyJWT 2.13.0
+valido                       decode_token=ACEPTA                             HTTP=500 INTERNAL_ERROR
+firma_ajena                  decode_token=PyJWTError:InvalidSignatureError   HTTP=401 AUTH_INVALID_TOKEN
+alg_HS512_misma_clave        decode_token=PyJWTError:InvalidAlgorithmError   HTTP=401 AUTH_INVALID_TOKEN
+alg_none                     decode_token=PyJWTError:InvalidAlgorithmError   HTTP=401 AUTH_INVALID_TOKEN
+alg_NONE                     decode_token=PyJWTError:InvalidAlgorithmError   HTTP=401 AUTH_INVALID_TOKEN
+caducado                     decode_token=PyJWTError:ExpiredSignatureError   HTTP=401 AUTH_INVALID_TOKEN
+basura_en_firma_4147         decode_token=ACEPTA                             HTTP=500 INTERNAL_ERROR
+cabecera_no_objeto_4142      decode_token=PyJWTError:DecodeError             HTTP=401 AUTH_INVALID_TOKEN
+cabecera_anidada_recursion   decode_token=ESCAPA:RecursionError              HTTP=500 INTERNAL_ERROR
+malformado                   decode_token=PyJWTError:DecodeError             HTTP=401 AUTH_INVALID_TOKEN
+== v4
+PyJWT 2.15.0
+valido                       decode_token=ACEPTA                             HTTP=500 INTERNAL_ERROR
+firma_ajena                  decode_token=PyJWTError:InvalidSignatureError   HTTP=401 AUTH_INVALID_TOKEN
+alg_HS512_misma_clave        decode_token=PyJWTError:InvalidAlgorithmError   HTTP=401 AUTH_INVALID_TOKEN
+alg_none                     decode_token=PyJWTError:InvalidAlgorithmError   HTTP=401 AUTH_INVALID_TOKEN
+alg_NONE                     decode_token=PyJWTError:InvalidAlgorithmError   HTTP=401 AUTH_INVALID_TOKEN
+caducado                     decode_token=PyJWTError:ExpiredSignatureError   HTTP=401 AUTH_INVALID_TOKEN
+basura_en_firma_4147         decode_token=PyJWTError:DecodeError             HTTP=401 AUTH_INVALID_TOKEN
+cabecera_no_objeto_4142      decode_token=PyJWTError:DecodeError             HTTP=401 AUTH_INVALID_TOKEN
+cabecera_anidada_recursion   decode_token=PyJWTError:DecodeError             HTTP=401 AUTH_INVALID_TOKEN
+malformado                   decode_token=PyJWTError:DecodeError             HTTP=401 AUTH_INVALID_TOKEN

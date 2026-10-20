@@ -1,0 +1,2 @@
+v3 huella 64 | licencia firma/verifica/rechaza OK | ancla OK | sin avisos de obsolescencia
+v4 huella 64 | licencia firma/verifica/rechaza OK | ancla OK | sin avisos de obsolescencia

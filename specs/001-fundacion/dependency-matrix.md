@@ -82,3 +82,17 @@ La fila «Versiones backend finales» de arriba registra la resolución del 2026
   (deuda BACKEND-DIRECT-DEPENDENCIES-KNOWN-VULNERABILITIES).
 - Evidencia: `evidence/production-dependencies-reproducible/` y
   `spec052-production-dependencies-reproducible-delta.md`.
+
+## Actualización 2026-10-20 — pisos de seguridad de PyJWT y cryptography (Spec 001, OD-SEC-02)
+
+PyJWT pasa de 2.13.0 a **2.15.0** y cryptography de 46.0.6 a **50.0.2**. Son pines directos de `requirements.txt`, y el
+lock se regenera con el mismo corte; ningún otro paquete cambia.
+- **Motivo:** 19 avisos públicos corregibles (14 de PyJWT, 5 de cryptography), de los que 3 aplican a KONTROL. Además,
+  el OpenSSL 4.0.3 embebido en 50.0.2 corrige tres CVE de OpenSSL.
+- cryptography 46 → 50 es un salto mayor: este es su ciclo de seguridad explícito (ADR-014), con compatibilidad
+  verificada sobre los usos reales (Ed25519 y PEM).
+- **Pisos de seguridad vigentes** (protegidos por `test_seguridad_dependencias.py`):
+  - PyJWT ≥ 2.15.0;
+  - cryptography ≥ 50.0.2.
+- Registro: `docs/evidence/cve-review.md` §«Backend — revisión 2026-10-20».
+- Evidencia: `evidence/backend-direct-dependency-security/` y `spec001-backend-direct-dependency-security-delta.md`.

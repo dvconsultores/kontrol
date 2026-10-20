@@ -1,0 +1,24 @@
+== (a) eba1090 tal cual + pruebas nuevas
+E           AssertionError: pyjwt 2.13.0 baja del suelo 2.15.0
+E           assert <Version('2.13.0')> >= <Version('2.15.0')>
+E       AssertionError: No se encontró el título 'Piso de seguridad vigente'
+E       assert None is not None
+E       AssertionError: No se encontró el título 'Avisos backend revisados'
+E       assert None is not None
+E           AssertionError: cryptography: lock 46.0.6 < suelo 50.0.2
+E           assert <Version('46.0.6')> >= <Version('50.0.2')>
+FAILED tests/test_seguridad_dependencias.py::test_sdv_01_los_pines_de_seguridad_no_bajan_del_piso_y_coinciden_con_el_lock
+FAILED tests/test_seguridad_dependencias.py::test_sdv_02_el_piso_documentado_coincide_con_el_ratificado_y_con_el_pin
+FAILED tests/test_seguridad_dependencias.py::test_sdv_03_cada_aviso_revisado_esta_corregido_por_el_pin_o_no_tiene_parche_ni_aplica
+FAILED tests/test_dependencias_lock.py::test_idl_05_el_lock_respeta_el_suelo_de_cve_review
+4 failed, 17 passed in 4.28s
+== (b) pines de eba1090 + registro de seguridad nuevo
+E           AssertionError: pyjwt 2.13.0 baja del suelo 2.15.0
+E           AssertionError: pyjwt: versión fijada '2.15.0' no coincide con '2.13.0'
+E               AssertionError: PYSEC-2026-4140: pyjwt 2.13.0 no alcanza la corregida 2.14.0
+E           AssertionError: cryptography: lock 46.0.6 < suelo 50.0.2
+FAILED tests/test_seguridad_dependencias.py::test_sdv_01_los_pines_de_seguridad_no_bajan_del_piso_y_coinciden_con_el_lock
+FAILED tests/test_seguridad_dependencias.py::test_sdv_02_el_piso_documentado_coincide_con_el_ratificado_y_con_el_pin
+FAILED tests/test_seguridad_dependencias.py::test_sdv_03_cada_aviso_revisado_esta_corregido_por_el_pin_o_no_tiene_parche_ni_aplica
+FAILED tests/test_dependencias_lock.py::test_idl_05_el_lock_respeta_el_suelo_de_cve_review
+4 failed, 17 passed in 4.28s

@@ -1,0 +1,251 @@
+{
+ "mutantes": [
+  {
+   "id": "M01",
+   "mutacion": "volver PyJWT a 2.13.0 (manifiesto y lock)",
+   "ficheros": [
+    "resources/backend/requirements.lock",
+    "resources/backend/requirements.txt"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_05_el_lock_respeta_el_suelo_de_cve_review",
+    "test_seguridad_dependencias.py::test_sdv_01_los_pines_de_seguridad_no_bajan_del_piso_y_coinciden_con_el_lock",
+    "test_seguridad_dependencias.py::test_sdv_02_el_piso_documentado_coincide_con_el_ratificado_y_con_el_pin",
+    "test_seguridad_dependencias.py::test_sdv_03_cada_aviso_revisado_esta_corregido_por_el_pin_o_no_tiene_parche_ni_aplica"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M02",
+   "mutacion": "PyJWT por debajo del piso (2.14.0, manifiesto y lock)",
+   "ficheros": [
+    "resources/backend/requirements.lock",
+    "resources/backend/requirements.txt"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_05_el_lock_respeta_el_suelo_de_cve_review",
+    "test_seguridad_dependencias.py::test_sdv_01_los_pines_de_seguridad_no_bajan_del_piso_y_coinciden_con_el_lock",
+    "test_seguridad_dependencias.py::test_sdv_02_el_piso_documentado_coincide_con_el_ratificado_y_con_el_pin",
+    "test_seguridad_dependencias.py::test_sdv_03_cada_aviso_revisado_esta_corregido_por_el_pin_o_no_tiene_parche_ni_aplica"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M03",
+   "mutacion": "volver cryptography a 46.0.6 (manifiesto y lock)",
+   "ficheros": [
+    "resources/backend/requirements.lock",
+    "resources/backend/requirements.txt"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_05_el_lock_respeta_el_suelo_de_cve_review",
+    "test_seguridad_dependencias.py::test_sdv_01_los_pines_de_seguridad_no_bajan_del_piso_y_coinciden_con_el_lock",
+    "test_seguridad_dependencias.py::test_sdv_02_el_piso_documentado_coincide_con_el_ratificado_y_con_el_pin",
+    "test_seguridad_dependencias.py::test_sdv_03_cada_aviso_revisado_esta_corregido_por_el_pin_o_no_tiene_parche_ni_aplica"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M04",
+   "mutacion": "cryptography por debajo del piso (49.0.0, manifiesto y lock)",
+   "ficheros": [
+    "resources/backend/requirements.lock",
+    "resources/backend/requirements.txt"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_05_el_lock_respeta_el_suelo_de_cve_review",
+    "test_seguridad_dependencias.py::test_sdv_01_los_pines_de_seguridad_no_bajan_del_piso_y_coinciden_con_el_lock",
+    "test_seguridad_dependencias.py::test_sdv_02_el_piso_documentado_coincide_con_el_ratificado_y_con_el_pin",
+    "test_seguridad_dependencias.py::test_sdv_03_cada_aviso_revisado_esta_corregido_por_el_pin_o_no_tiene_parche_ni_aplica"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M05",
+   "mutacion": "manifiesto actualizado y lock antiguo",
+   "ficheros": [
+    "resources/backend/requirements.lock"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_01_el_lock_contiene_cada_directa_con_su_pin_exacto",
+    "test_dependencias_lock.py::test_idl_05_el_lock_respeta_el_suelo_de_cve_review",
+    "test_seguridad_dependencias.py::test_sdv_01_los_pines_de_seguridad_no_bajan_del_piso_y_coinciden_con_el_lock"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M06",
+   "mutacion": "lock actualizado y manifiesto antiguo",
+   "ficheros": [
+    "resources/backend/requirements.txt"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_01_el_lock_contiene_cada_directa_con_su_pin_exacto",
+    "test_seguridad_dependencias.py::test_sdv_01_los_pines_de_seguridad_no_bajan_del_piso_y_coinciden_con_el_lock",
+    "test_seguridad_dependencias.py::test_sdv_02_el_piso_documentado_coincide_con_el_ratificado_y_con_el_pin",
+    "test_seguridad_dependencias.py::test_sdv_03_cada_aviso_revisado_esta_corregido_por_el_pin_o_no_tiene_parche_ni_aplica"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M07",
+   "mutacion": "quitar PyJWT del piso de cve-review",
+   "ficheros": [
+    "docs/evidence/cve-review.md"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_02_el_piso_documentado_coincide_con_el_ratificado_y_con_el_pin"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M07b",
+   "mutacion": "quitar cryptography del piso de cve-review",
+   "ficheros": [
+    "docs/evidence/cve-review.md"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_02_el_piso_documentado_coincide_con_el_ratificado_y_con_el_pin"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M08",
+   "mutacion": "quitar cryptography de los avisos de cve-review",
+   "ficheros": [
+    "docs/evidence/cve-review.md"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_03_cada_aviso_revisado_esta_corregido_por_el_pin_o_no_tiene_parche_ni_aplica"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M09",
+   "mutacion": "aceptar alg none en la verificación",
+   "ficheros": [
+    "resources/backend/app/core/security.py"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_06_la_verificacion_jwt_usa_una_lista_explicita_de_un_algoritmo"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M10",
+   "mutacion": "debilitar la lista de algoritmos (sin algorithms)",
+   "ficheros": [
+    "resources/backend/app/core/security.py"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_06_la_verificacion_jwt_usa_una_lista_explicita_de_un_algoritmo"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M11",
+   "mutacion": "token malformado produce 500 (captura solo ExpiredSignatureError)",
+   "ficheros": [
+    "resources/backend/app/core/dependencies.py"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[alg-NONE]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[alg-none]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[algoritmo-distinto]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[cabecera-no-objeto]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[firma-ajena]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[malformado]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[refresh-como-access]"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M12",
+   "mutacion": "hallazgo corregible no resuelto tratado como PASS",
+   "ficheros": [
+    "docs/evidence/cve-review.md"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_03_cada_aviso_revisado_esta_corregido_por_el_pin_o_no_tiene_parche_ni_aplica"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M13",
+   "mutacion": "exclusión global de aviso en un workflow",
+   "ficheros": [
+    ".github/workflows/build-dev.yml"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_04_no_hay_exclusiones_de_avisos_en_el_repositorio"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M14",
+   "mutacion": "aviso sin parche y aplicable tratado como cerrado",
+   "ficheros": [
+    "docs/evidence/cve-review.md"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_03_cada_aviso_revisado_esta_corregido_por_el_pin_o_no_tiene_parche_ni_aplica"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M15",
+   "mutacion": "clave corta aceptada (validador a 16)",
+   "ficheros": [
+    "resources/backend/app/core/config.py"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_07_una_clave_vacia_o_corta_impide_arrancar"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M16",
+   "mutacion": "algoritmo por defecto distinto (HS512)",
+   "ficheros": [
+    "resources/backend/app/core/config.py"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[alg-NONE]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[alg-none]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[algoritmo-distinto]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[cabecera-no-objeto]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[caducado]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[firma-ajena]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[malformado]",
+    "test_seguridad_dependencias.py::test_sdv_05_el_contrato_jwt_responde_401_y_nunca_500[refresh-como-access]",
+    "test_seguridad_dependencias.py::test_sdv_06_la_verificacion_jwt_usa_una_lista_explicita_de_un_algoritmo"
+   ],
+   "restaurado_identico": true
+  }
+ ],
+ "resumen": {
+  "significativas": 17,
+  "killed": 17,
+  "survived": 0,
+  "equivalent": 0,
+  "restored": "100 %",
+  "bateria": "test_seguridad_dependencias + test_dependencias_lock (V0)"
+ }
+}

@@ -26,8 +26,8 @@ RAIZ = BACKEND.parents[1]
 # Versiones corregidas de docs/evidence/cve-review.md: el lock no puede bajar de ellas.
 SUELOS_CVE: dict[str, str] = {
     "starlette": "1.3.1",
-    "cryptography": "46.0.6",
-    "pyjwt": "2.13.0",
+    "cryptography": "50.0.2",
+    "pyjwt": "2.15.0",
     "python-multipart": "0.0.31",
     "pytest": "9.0.3",
 }

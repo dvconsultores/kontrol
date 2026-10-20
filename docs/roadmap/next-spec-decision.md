@@ -4108,3 +4108,33 @@ BACKEND-DIRECT-DEPENDENCIES-KNOWN-VULNERABILITIES: seguridad, dueña 001, CLAUDE
 
 Líneas base: V0 y V3 con SQLite 1907/0/1056 y PostgreSQL 2937/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
 `RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`: falta la canonicalización y la medición de la imagen.
+
+## 2026-10-20 · BACKEND-DIRECT-DEPENDENCIES-KNOWN-VULNERABILITIES cerrada (dueña 001, OD-SEC-01/02) · PyJWT 2.15.0 · cryptography 50.0.2
+
+**Avisos:**
+- Se refrescaron y se deduplicaron los alias: 19 avisos únicos.
+- 3 eran aplicables y se demostraron por sonda: con PyJWT 2.13.0 se aceptaba una firma con caracteres basura, y una
+  cabecera anidada daba HTTP 500 sin autenticar. El tercero es el OpenSSL embebido.
+- No hay avisos sin parche que apliquen. PYSEC-2026-4146 tiene un conflicto de metadatos y queda corregida por conducta.
+
+**Versiones:** se eligieron las mínimas sin avisos conocidas, más el OpenSSL 4.0.3 embebido. El lock se regeneró con el
+mismo corte y cambian solo esos dos paquetes. El producto no cambia.
+
+| Puerta | Resultado |
+|---|---|
+| Prueba nueva | SDV-01..07 |
+| Mutaciones | 17/17 KILLED |
+| V4 | pip-audit 0 · SQLite 1921/0/1056 · PostgreSQL 2951/0/26 · E2E 284/0/0 |
+| OpenAPI | sin deriva |
+| V0 | sin regresiones |
+
+Deuda nueva menor: CRYPTO-KEY-LOADING-UNSUPPORTED-ALGORITHM-UNWRAPPED (previa).
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia; si no, **PRODUCTION-BASE-IMAGE-FLOATING-TAG** (dueña 052) |
+| Decisiones de la dueña pendientes | las tres documentales; cierre formal de FASTAPI-YIELD-TEARDOWN-AFTER-RESPONSE (recomendada NOT_A_DEFECT) |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: V0 y V4 con SQLite 1921/0/1056 y PostgreSQL 2951/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
+`RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.
