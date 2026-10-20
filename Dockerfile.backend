@@ -2,7 +2,7 @@
 
 # ==========================================================================
 # KONTROL - Backend (multi-stage, no root, versionado)
-# Objetivo: Python 3.13 (producción); target "dev" para desarrollo con reload.
+# Objetivo: Python 3.13. La etapa final `runtime` es la de producción (la que produce un build sin --target); `dev` (hot reload, pruebas y herramientas) solo se obtiene con `--target dev`.
 # ==========================================================================
 FROM python:3.13-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -52,3 +52,6 @@ COPY resources/backend/pyproject.toml ./pyproject.toml
 RUN pip install --no-cache-dir pytest httpx ruff mypy
 USER kontrol
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--timeout-keep-alive", "75"]
+
+# --- Target de producción (por defecto, última etapa): hereda de `base` todo el runtime —usuario no root, HEALTHCHECK, ENTRYPOINT, CMD sin --reload con keep-alive 75, libmagic— sin `tests/` ni herramientas.
+FROM base AS runtime

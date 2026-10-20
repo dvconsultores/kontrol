@@ -2229,3 +2229,24 @@ si llega su evidencia.
 
 **NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-IMAGE-BUILT-FROM-DEV-STAGE.** OBS-09 vuelve a prioridad 1 si llega su
 evidencia.
+
+## Actualización 2026-10-20 — PRODUCTION-IMAGE-BUILT-FROM-DEV-STAGE implementada
+
+| Deuda | Estado |
+|---|---|
+| PRODUCTION-IMAGE-BUILT-FROM-DEV-STAGE | **IMPLEMENTED — IMAGE RUNTIME CERTIFICATION BLOCKED BY ENVIRONMENT**: etapa final `runtime`, `target: runtime` en la publicación, `dev` solo explícita; 14/14 mutaciones; V0 y V1' en verde (SQLite 1900/0/1056 · PostgreSQL 2930/0/26 · E2E 284/0/0) |
+| PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES (nueva) | **OPEN**, F, dueña 052 (apoyo 001): `requirements.txt` instala pytest, httpx, ruff y mypy en `base` y, por tanto, en `runtime` |
+| PRODUCTION-IMAGE-WITHOUT-LIBMAGIC | sin cambio (IMPLEMENTED, imagen pendiente); libmagic preservada en `runtime` (M08) |
+
+Orden de ingeniería de release restante:
+1. PRODUCTION-DEPENDENCIES-UNPINNED-TRANSITIVES + LOCK-SIN-REPORTLAB-MAGIC (determinar si son una raíz o dos).
+2. PRODUCTION-BASE-IMAGE-FLOATING-TAG.
+3. TEST-MIGRACIONES-VENV-FIJO.
+4. E2E-HARNESS-INTERPRETER-FIXED.
+5. CANONICALIZE-CERTIFICATION-ENVIRONMENT.
+
+PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES se valora con el reparto de requirements del primer paso, sin
+absorberla.
+
+**NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-DEPENDENCIES-UNPINNED-TRANSITIVES + LOCK-SIN-REPORTLAB-MAGIC.** OBS-09 vuelve a
+prioridad 1 si llega su evidencia.

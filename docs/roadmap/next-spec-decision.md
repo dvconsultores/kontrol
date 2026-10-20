@@ -4047,3 +4047,32 @@ La imagen ya declara la detección MIME por contenido:
 
 Líneas base: V0 y V1' con SQLite 1892/0/1056 y PostgreSQL 2922/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
 `RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.
+
+## 2026-10-20 · PRODUCTION-IMAGE-BUILT-FROM-DEV-STAGE implementada (dueña 052) · la imagen por defecto y la publicada son `runtime` · certificación de imagen bloqueada por el entorno
+
+Aplica OD-CERT-04:
+- un build sin `--target` produce la etapa final `runtime`, que hereda de `base` el runtime completo (libmagic incluida)
+  sin pruebas ni `--reload`;
+- los dos workflows publican con `target: runtime` explícito;
+- `dev` solo se obtiene con `--target dev`. No hay consumidores reales de `dev`.
+
+| Puerta | Resultado |
+|---|---|
+| Prueba nueva | `test_imagen_backend_etapas.py` (IBE-01..08), rojo contra HEAD por la razón exacta |
+| Mutaciones | 14/14 KILLED |
+| V0 | SQLite 1900/0/1056 ×2 · PostgreSQL 2930/0/26 · E2E 284/0/0 |
+| V1' | SQLite 1900/0/1056 · PostgreSQL 2930/0/26 · E2E 284/0/0 |
+| OpenAPI | sin cambio (544/533/11) |
+
+**Sin Docker, la imagen no se pudo medir.** Estado: IMPLEMENTED — IMAGE RUNTIME CERTIFICATION BLOCKED BY ENVIRONMENT.
+
+Se registra, sin implementarla, PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES (OPEN, dueña 052).
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia (también vale como evidencia de imagen de esta deuda y de la de libmagic si su trazabilidad basta). Si no: **PRODUCTION-DEPENDENCIES-UNPINNED-TRANSITIVES + LOCK-SIN-REPORTLAB-MAGIC** (dueña 052; determinar si son una raíz o dos) |
+| Decisiones de la dueña pendientes | las tres documentales; cierre formal de FASTAPI-YIELD-TEARDOWN-AFTER-RESPONSE (recomendada NOT_A_DEFECT) |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: V0 y V1' con SQLite 1900/0/1056 y PostgreSQL 2930/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
+`RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.

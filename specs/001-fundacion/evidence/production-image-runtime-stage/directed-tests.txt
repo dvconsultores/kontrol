@@ -1,0 +1,6 @@
+v0 módulos estructurales: 78 passed, 2 skipped in 35.52s
+v0 inverso (80): 78 passed, 2 skipped in 35.49s
+v0 IBE solas: 8/8
+v1p módulos estructurales: 78 passed, 2 skipped in 34.05s
+v1p inverso (80): 78 passed, 2 skipped in 33.50s
+v1p IBE solas: 8/8

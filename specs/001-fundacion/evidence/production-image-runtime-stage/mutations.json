@@ -1,0 +1,135 @@
+{
+ "mutantes": [
+  {
+   "id": "M01",
+   "mutacion": "dev vuelve a ser la última etapa",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_01_el_build_sin_target_es_el_runtime",
+    "test_imagen_backend_etapas.py::test_ibe_02_el_runtime_arranca_sin_reload_y_con_keep_alive_75",
+    "test_imagen_backend_etapas.py::test_ibe_03_el_runtime_no_copia_pruebas"
+   ]
+  },
+  {
+   "id": "M02",
+   "mutacion": "runtime hereda de dev",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_01_el_build_sin_target_es_el_runtime",
+    "test_imagen_backend_etapas.py::test_ibe_02_el_runtime_arranca_sin_reload_y_con_keep_alive_75",
+    "test_imagen_backend_etapas.py::test_ibe_03_el_runtime_no_copia_pruebas"
+   ]
+  },
+  {
+   "id": "M03",
+   "mutacion": "runtime incluye --reload",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_02_el_runtime_arranca_sin_reload_y_con_keep_alive_75"
+   ]
+  },
+  {
+   "id": "M04",
+   "mutacion": "runtime copia tests",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_03_el_runtime_no_copia_pruebas"
+   ]
+  },
+  {
+   "id": "M05",
+   "mutacion": "publicación con target dev",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_07_los_workflows_que_publican_el_backend_eligen_runtime"
+   ]
+  },
+  {
+   "id": "M06",
+   "mutacion": "quitar el target explícito de la publicación",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_07_los_workflows_que_publican_el_backend_eligen_runtime"
+   ]
+  },
+  {
+   "id": "M07",
+   "mutacion": "dev deja de ser seleccionable por su nombre",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_06_dev_solo_se_obtiene_explicitamente"
+   ]
+  },
+  {
+   "id": "M08",
+   "mutacion": "romper la herencia de libmagic",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_mime.py::test_imb_03_la_etapa_efectiva_hereda_libmagic"
+   ]
+  },
+  {
+   "id": "M09",
+   "mutacion": "perder el USER no root del runtime",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_04_el_runtime_no_corre_como_root"
+   ]
+  },
+  {
+   "id": "M10",
+   "mutacion": "perder el HEALTHCHECK",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_05_el_runtime_conserva_healthcheck_y_entrypoint"
+   ]
+  },
+  {
+   "id": "M11",
+   "mutacion": "perder el ENTRYPOINT",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_05_el_runtime_conserva_healthcheck_y_entrypoint"
+   ]
+  },
+  {
+   "id": "M12",
+   "mutacion": "cambiar el keep-alive del runtime",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_02_el_runtime_arranca_sin_reload_y_con_keep_alive_75",
+    "test_backend_keepalive.py::test_ka_01_con_el_valor_por_defecto_de_uvicorn_una_conexion_ociosa_5_3_s_esta_cerrada",
+    "test_backend_keepalive.py::test_ka_02_con_la_orden_exacta_de_la_imagen_la_conexion_ociosa_se_reutiliza[Dockerfile.backend-app.main:app-/api/v1/health/live-_entorno_cliente]"
+   ]
+  },
+  {
+   "id": "M13",
+   "mutacion": "el analizador trata una imagen externa como etapa",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_01_el_build_sin_target_es_el_runtime",
+    "test_imagen_backend_etapas.py::test_ibe_02_el_runtime_arranca_sin_reload_y_con_keep_alive_75",
+    "test_imagen_backend_etapas.py::test_ibe_03_el_runtime_no_copia_pruebas"
+   ]
+  },
+  {
+   "id": "M14",
+   "mutacion": "el analizador solo mira la etapa final",
+   "estado": "KILLED",
+   "la_matan": [
+    "test_imagen_backend_etapas.py::test_ibe_02_el_runtime_arranca_sin_reload_y_con_keep_alive_75",
+    "test_imagen_backend_etapas.py::test_ibe_04_el_runtime_no_corre_como_root",
+    "test_imagen_backend_etapas.py::test_ibe_05_el_runtime_conserva_healthcheck_y_entrypoint"
+   ]
+  }
+ ],
+ "restaurado_identico": true,
+ "resumen": {
+  "significativas": 14,
+  "killed": 14,
+  "survived": 0,
+  "equivalent": 0,
+  "restored": "100 %",
+  "bateria": "test_imagen_backend_etapas + test_imagen_backend_mime + test_backend_keepalive (V0)"
+ }
+}
