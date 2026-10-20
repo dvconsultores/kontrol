@@ -3994,3 +3994,29 @@ funcionales del producto.
 
 `RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`. La línea base histórica de V0 se mantiene: SQLite 1885/0/1056 · PostgreSQL
 2915/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
+
+## 2026-10-20 · DEPLOYMENT-PARITY-TEST-INCOMPATIBILITIES convergida (dueña 054) · OBS-09 sigue esperando evidencia
+
+Se normalizaron tres pruebas **sin tocar producto**:
+- **OAS-14:** usa la API pública `iter_route_contexts`.
+- **ACS-08:** excluye el docstring por AST.
+- **U01-U04:** esperan a que el pool converja por condición. U01 y U02 tenían la misma carrera latente y quedaron
+  autorizadas en el brief.
+
+| Entorno | SQLite | PostgreSQL | E2E |
+|---|---|---|---|
+| V0 | 1885/0/1056 ×2 | 2915/0/26 | 284/0/0 |
+| V2 (paridad de despliegue) | 1885/0/1056 | 2915/0/26 | 284/0/0 |
+
+- OpenAPI sin deriva de contrato.
+- Mutaciones: 12/13, con 1 equivalente justificada.
+- Se recomienda cerrar FASTAPI-YIELD-TEARDOWN-AFTER-RESPONSE como semántica aceptada del framework.
+- Deuda nueva registrada: PRODUCTION-BASE-IMAGE-FLOATING-TAG.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia (fallos por MIME = BLOCKED_BY_PREREQUISITE). Si no: **PRODUCTION-IMAGE-WITHOUT-LIBMAGIC** (dueña 052), primera del orden de ingeniería de release de `technical-debt-matrix.md`. Canonicalización solo al final |
+| Decisiones de la dueña pendientes | las tres documentales |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+`RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.

@@ -453,6 +453,31 @@ def _cliente_sync(url: str, method: str, timeout: float = 90.0) -> tuple[httpx.R
     return respuesta, duracion
 
 
+def _esperar_pool_en_reposo(engine: Engine, telemetria: _Telemetria, checkout_inicial: int, checkin_inicial: int,
+                            plazo: float = 10.0) -> None:
+    """Espera a que el pool converja tras la última respuesta.
+
+    FastAPI cierra get_db después de enviar la respuesta; SQLAlchemy descuenta el pool
+    después del evento checkin. El plazo es de SEGURIDAD, no define el comportamiento
+    aceptable.
+    """
+    espera = threading.Event()
+    inicio = time.monotonic()
+    while True:
+        d_co = telemetria.checkout - checkout_inicial
+        d_ci = telemetria.checkin - checkin_inicial
+        fuera = engine.pool.checkedout()
+        if d_co == d_ci and fuera == 0:
+            return
+        transcurrido = time.monotonic() - inicio
+        if transcurrido >= plazo:
+            pytest.fail(
+                f"pool no convergió: checkout={d_co}, checkin={d_ci}, checkedout={fuera}, "
+                f"overflow={cast(QueuePool, engine.pool).overflow()}, transcurrido={transcurrido:.3f}s"
+            )
+        espera.wait(0.005)
+
+
 def _resetea_escenario() -> None:
     _ESCENARIO.ocupadas = threading.Semaphore(0)
     _ESCENARIO.soltar = threading.Event()
@@ -499,6 +524,7 @@ def test_regresion_u01_x3(monkeypatch: pytest.MonkeyPatch, motor_mundo: _Mundo) 
         assert respuesta_escritura.status_code == 404
         assert duracion_escritura < engine.pool._timeout
         assert all(duracion < engine.pool._timeout for _, duracion in respuestas_retenedoras)
+        _esperar_pool_en_reposo(engine, motor_mundo.telemetria, checkout_inicial, checkin_inicial)
         assert motor_mundo.telemetria.checkout - checkout_inicial == motor_mundo.telemetria.checkin - checkin_inicial
         assert engine.pool.checkedout() == 0
     finally:
@@ -531,6 +557,7 @@ def test_regresion_u02_c1(motor_mundo: _Mundo) -> None:
 
         assert all(r.status_code == 200 for r, _ in respuestas)
         assert respuesta_get.status_code == 200
+        _esperar_pool_en_reposo(engine, motor_mundo.telemetria, checkout_inicial, checkin_inicial)
         assert motor_mundo.telemetria.checkout - checkout_inicial == motor_mundo.telemetria.checkin - checkin_inicial
         assert engine.pool.checkedout() == 0
     finally:
@@ -574,6 +601,7 @@ def test_regresion_u03_c2(monkeypatch: pytest.MonkeyPatch, motor_mundo: _Mundo) 
             respuestas = [f.result(timeout=30) for f in futuros]
 
         assert all(r.status_code == 200 for r, _ in respuestas)
+        _esperar_pool_en_reposo(engine, motor_mundo.telemetria, checkout_inicial, checkin_inicial)
         assert motor_mundo.telemetria.checkout - checkout_inicial == motor_mundo.telemetria.checkin - checkin_inicial
         assert engine.pool.checkedout() == 0
     finally:
@@ -601,6 +629,7 @@ def test_regresion_u04_x2(motor_mundo: _Mundo) -> None:
             respuestas = [f.result(timeout=30) for f in futuros]
 
         assert all(r.status_code == 200 for r, _ in respuestas)
+        _esperar_pool_en_reposo(engine, motor_mundo.telemetria, checkout_inicial, checkin_inicial)
         assert motor_mundo.telemetria.checkout - checkout_inicial == motor_mundo.telemetria.checkin - checkin_inicial
         assert engine.pool.checkedout() == 0
     finally:

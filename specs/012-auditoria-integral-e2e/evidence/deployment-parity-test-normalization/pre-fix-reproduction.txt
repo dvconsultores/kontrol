@@ -1,0 +1,26 @@
+== v0 sqlite
+PASSED tests/test_openapi_security.py::oas_14
+PASSED tests/test_motor_para_hilos.py::acs_08
+PASSED tests/test_license_middleware_event_loop.py::regresion_u03
+PASSED tests/test_license_middleware_event_loop.py::regresion_u04
+== v0 pg
+PASSED tests/test_openapi_security.py::oas_14
+PASSED tests/test_motor_para_hilos.py::acs_08
+PASSED tests/test_license_middleware_event_loop.py::regresion_u03
+PASSED tests/test_license_middleware_event_loop.py::regresion_u04
+== v2 sqlite
+FAILED tests/test_openapi_security.py::oas_14
+FAILED tests/test_motor_para_hilos.py::acs_08
+FAILED tests/test_license_middleware_event_loop.py::regresion_u03
+FAILED tests/test_license_middleware_event_loop.py::regresion_u04
+== v2 pg
+PASSED tests/test_license_middleware_event_loop.py::regresion_u03
+PASSED tests/test_license_middleware_event_loop.py::regresion_u04
+FAILED tests/test_openapi_security.py::oas_14
+FAILED tests/test_motor_para_hilos.py::acs_08
+E       AssertionError: el OpenAPI y las rutas no cuentan lo mismo
+E       assert {('GET', '/')} == {('DELETE', '...de_id}'), ...}
+E           AssertionError: timeout
+E           assert 'timeout' not in '@contextman...irectorio)\n'
+E           assert 4 == 0
+E           assert 4 == 0

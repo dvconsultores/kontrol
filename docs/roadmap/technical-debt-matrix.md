@@ -2189,3 +2189,31 @@ Fuente: `specs/012-auditoria-integral-e2e/spec054-certification-environment-drif
 | PRODUCTION-IMAGE-BUILT-FROM-DEV-STAGE (nueva) | F | 052 | 0 | estructural; verificar exige Docker |
 | PRODUCTION-DEPENDENCIES-UNPINNED-TRANSITIVES (nueva) | A | 052 (001) | 1 | lock no consumido; Starlette 1.9.0 en un build de hoy |
 | E2E-HARNESS-INTERPRETER-FIXED (nueva) | A | 054 | 1 | parcial (alembic de la autoridad central) |
+
+
+## Actualización 2026-10-20 — normalización de pruebas para la paridad de despliegue
+
+Fuente: `specs/012-auditoria-integral-e2e/spec054-deployment-parity-test-normalization-delta.md`.
+
+| Deuda | Cat. | Estado |
+|---|---|---|
+| DEPLOYMENT-PARITY-TEST-INCOMPATIBILITIES | — | **CLOSED / CONVERGED** (V0 y V2 en verde; producto sin cambio) |
+| FASTAPI-YIELD-TEARDOWN-AFTER-RESPONSE | G (recomendada) | recomendada NOT_A_DEFECT / ACCEPTED_FRAMEWORK_SEMANTIC; pendiente de cierre formal |
+| CERTIFICATION-ENVIRONMENT-DEPENDENCY-DRIFT | F | V2 verde; espera las deudas de artefacto y la canonicalización |
+| PRODUCTION-BASE-IMAGE-FLOATING-TAG (nueva) | A | `python:3.13-slim` sin parche ni digest |
+
+### Orden rederivado de la ingeniería de release (seguridad + reproducibilidad + despliegue + capacidad de certificación)
+
+| # | Deuda | Dueña | Por qué en este puesto | Certificable sin Docker |
+|---|---|---|---|---|
+| 1 | **PRODUCTION-IMAGE-WITHOUT-LIBMAGIC** | 052 (001, 046) | la imagen rechaza toda carga documental (31 fallos en V1) y es prerrequisito de la evidencia de OBS-09, la deuda de seguridad abierta | la capa Python sí (entorno V1 con el requirements corregido); el paquete de sistema de la imagen, no |
+| 2 | PRODUCTION-IMAGE-BUILT-FROM-DEV-STAGE | 052 | se publica la etapa `dev` (`--reload`, pruebas y herramientas dentro): superficie y estabilidad en producción | no (estático sí) |
+| 3 | PRODUCTION-DEPENDENCIES-UNPINNED-TRANSITIVES + LOCK-SIN-REPORTLAB-MAGIC | 052 (001) | reproducibilidad: un build de hoy instala Starlette 1.9.0 y no 1.3.1; el lock no se consume | sí (pip con el lock en un entorno V1) |
+| 4 | PRODUCTION-BASE-IMAGE-FLOATING-TAG | 052 | reproducibilidad del intérprete y del sistema | no |
+| 5 | TEST-MIGRACIONES-VENV-FIJO | 052/054 | las pruebas de migraciones corren con el alembic de V0 | sí |
+| 6 | E2E-HARNESS-INTERPRETER-FIXED | 054 | la autoridad central se migra con el alembic de V0 | sí |
+| 7 | CANONICALIZE-CERTIFICATION-ENVIRONMENT | 054 | solo cuando 1–6 dejen un artefacto estable y reproducible (OD-CERT-01) | — |
+
+**NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-IMAGE-WITHOUT-LIBMAGIC.** Es la única que deja **inservible** una función
+de producción en la imagen, y bloquea por sí sola la certificación de OBS-09 (OD-CERT-02). OBS-09 vuelve a prioridad 1
+si llega su evidencia.

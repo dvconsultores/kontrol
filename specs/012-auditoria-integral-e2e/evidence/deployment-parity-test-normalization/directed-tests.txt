@@ -1,0 +1,65 @@
+== v0 sqlite modulos
+65 passed in 9.77s
+== v0 sqlite inverso
+== v0 sqlite solo oas_14
+1 passed in 4.51s
+== v0 sqlite solo acs_08
+1 passed in 0.08s
+== v0 sqlite solo regresion_u01
+1 passed in 4.24s
+== v0 sqlite solo regresion_u02
+1 passed in 4.66s
+== v0 sqlite solo regresion_u03
+1 passed in 4.19s
+== v0 sqlite solo regresion_u04
+1 passed in 4.44s
+== v0 pg modulos
+65 passed in 10.66s
+== v0 pg inverso
+== v0 pg solo oas_14
+1 passed in 4.81s
+== v0 pg solo acs_08
+1 passed in 0.08s
+== v0 pg solo regresion_u01
+1 passed in 4.70s
+== v0 pg solo regresion_u02
+1 passed in 4.95s
+== v0 pg solo regresion_u03
+1 passed in 4.98s
+== v0 pg solo regresion_u04
+1 passed in 4.85s
+== v2 sqlite modulos
+65 passed, 1 warning in 8.72s
+== v2 sqlite inverso
+== v2 sqlite solo oas_14
+1 passed, 1 warning in 3.72s
+== v2 sqlite solo acs_08
+1 passed in 0.07s
+== v2 sqlite solo regresion_u01
+1 passed in 3.10s
+== v2 sqlite solo regresion_u02
+1 passed in 3.13s
+== v2 sqlite solo regresion_u03
+1 passed in 3.03s
+== v2 sqlite solo regresion_u04
+1 passed in 3.03s
+== v2 pg modulos
+65 passed, 1 warning in 8.91s
+== v2 pg inverso
+== v2 pg solo oas_14
+1 passed, 1 warning in 4.43s
+== v2 pg solo acs_08
+1 passed in 0.07s
+== v2 pg solo regresion_u01
+1 passed in 3.54s
+== v2 pg solo regresion_u02
+1 passed in 3.61s
+== v2 pg solo regresion_u03
+1 passed in 3.69s
+== v2 pg solo regresion_u04
+1 passed in 3.69s
+FIN
+== v0 sqlite inverso (65 ids) 65 passed in 11.29s
+== v0 pg inverso (65 ids) 65 passed in 12.69s
+== v2 sqlite inverso (65 ids) 65 passed, 1 warning in 8.27s
+== v2 pg inverso (65 ids) 65 passed, 1 warning in 9.45s

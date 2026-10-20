@@ -1,0 +1,131 @@
+{
+ "mutantes": [
+  {
+   "id": "M01",
+   "mutacion": "OAS: volver a recorrer solo el primer nivel",
+   "escenario": "S0",
+   "entorno": "V2",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M02",
+   "mutacion": "OAS: no descender en un contenedor (se pierde el router de auth)",
+   "escenario": "S0",
+   "entorno": "V2",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M03",
+   "mutacion": "OAS: procesar dos veces cada APIRoute",
+   "escenario": "S0",
+   "entorno": "V2",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M04",
+   "mutacion": "OAS: quitar la guarda de duplicados",
+   "escenario": "S_dup",
+   "entorno": "V2",
+   "correcta": "falla",
+   "mutante": "pasa",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M05",
+   "mutacion": "ACS: volver a replace(__doc__)",
+   "escenario": "S0",
+   "entorno": "V2",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M06",
+   "mutacion": "ACS: no excluir el docstring",
+   "escenario": "S0",
+   "entorno": "V0",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M07",
+   "mutacion": "ACS: eliminar el término prohibido «timeout»",
+   "escenario": "S_term",
+   "entorno": "V2",
+   "correcta": "falla",
+   "mutante": "pasa",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M08",
+   "mutacion": "ACS: debilitar la comprobación de connect_args",
+   "escenario": "S_ca",
+   "entorno": "V2",
+   "correcta": "falla",
+   "mutante": "pasa",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M09",
+   "mutacion": "U: eliminar la espera de convergencia",
+   "escenario": "S0",
+   "entorno": "V2",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M10",
+   "mutacion": "U: considerar solo checkedout sin balance",
+   "escenario": "S0",
+   "entorno": "V2",
+   "correcta": "pasa",
+   "mutante": "pasa",
+   "estado": "EQUIVALENT",
+   "justificacion": "SQLAlchemy 2.0.36 despacha el evento checkin antes de descontar el pool (pool/base.py:769-772; pool/impl.py:144-151): cuando checkedout() llega a 0 todos los checkin ya se contaron y el balance es exacto. Además la aserción explícita del balance sigue justo después del ayudante: no hay estado alcanzable de la suite en el que el veredicto difiera."
+  },
+  {
+   "id": "M11",
+   "mutacion": "U: considerar solo el balance sin checkedout",
+   "escenario": "S0",
+   "entorno": "V2",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M12",
+   "mutacion": "U: fail-open al vencer el plazo",
+   "escenario": "S_leak",
+   "entorno": "V2",
+   "correcta": "falla_con_diagnostico",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M13",
+   "mutacion": "U: esperar una duración fija en vez de la condición",
+   "escenario": "S_leak",
+   "entorno": "V2",
+   "correcta": "falla_con_diagnostico",
+   "mutante": "falla",
+   "estado": "KILLED"
+  }
+ ],
+ "restaurado_identico": true,
+ "resumen": {
+  "significativas": 13,
+  "killed": 12,
+  "survived": 0,
+  "equivalent": 1,
+  "restored": "100 %",
+  "criterio": "KILLED = el veredicto observable del mutante difiere del de la prueba correcta en un escenario donde la guarda importa (S0 real en V2/V0; S_dup router incluido dos veces; S_term término prohibido inyectado en el código de motor_para_hilos; S_ca connect_args cambiado; S_leak get_db que retiene las sesiones). Escenarios inyectados de forma temporal y restaurados (cmp)."
+ }
+}

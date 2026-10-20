@@ -1,0 +1,2 @@
+test_regresion_u01_x3 V2 SQLite: 5/15 fallos
+test_regresion_u02_c1 V2 SQLite: 1/15 fallos

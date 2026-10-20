@@ -10,10 +10,12 @@ la primitiva. Corren igual en SQLite (fichero temporal) y en PostgreSQL (motor d
 
 from __future__ import annotations
 
+import ast
 import inspect
 import os
 import sqlite3
 import tempfile
+import textwrap
 import threading
 from collections.abc import Iterator
 from pathlib import Path
@@ -247,10 +249,29 @@ def test_acs_07_el_datastore_temporal_se_elimina_aunque_el_contexto_falle():
     assert _directorios_temporales() - antes == set()
 
 
+def _codigo_sin_docstring(funcion) -> str:
+    fuente = textwrap.dedent(inspect.getsource(funcion))
+    arbol = ast.parse(fuente)
+    nodo = arbol.body[0]
+    if not isinstance(nodo, ast.FunctionDef):
+        raise AssertionError(f"{funcion!r} no es una función de módulo")
+    if (
+        nodo.body
+        and isinstance(nodo.body[0], ast.Expr)
+        and isinstance(nodo.body[0].value, ast.Constant)
+        and isinstance(nodo.body[0].value.value, str)
+    ):
+        primero = nodo.body[0]
+        lineas = fuente.splitlines(keepends=True)
+        del lineas[primero.lineno - 1 : primero.end_lineno]
+        fuente = "".join(lineas)
+    return fuente
+
+
 # ACS-08 · contrato estático: la primitiva no toca tiempos ni pool, `make_engine()` no cambia
 # y la prueba objetivo conserva sus aserciones sin reintentos, esperas ni cerrojos.
 def test_acs_08_contrato_estatico_de_la_primitiva_y_de_la_prueba_objetivo():
-    fuente = inspect.getsource(motor_para_hilos).replace(str(motor_para_hilos.__doc__), "")  # el código, no su docstring
+    fuente = _codigo_sin_docstring(motor_para_hilos)  # el código, no su docstring
     for prohibido in ("timeout", "StaticPool", ":memory:", "sleep", "PRAGMA", "isolation_level", "poolclass"):
         assert prohibido not in fuente, prohibido
     assert 'connect_args={"check_same_thread": False}' in fuente

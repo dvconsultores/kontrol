@@ -13,6 +13,7 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
+from fastapi import routing as fastapi_routing
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -50,12 +51,41 @@ def _llega_a(dependant, objetivo) -> bool:
 
 
 def _matriz_runtime(app) -> dict[tuple[str, str], bool]:
-    """(MÉTODO, ruta) → ¿protegida en runtime? Leída del árbol de dependencias real de cada ruta."""
-    matriz = {}
-    for r in app.routes:
-        if isinstance(r, APIRoute):
-            for m in r.methods - {"HEAD", "OPTIONS"}:
-                matriz[(m, r.path)] = _llega_a(r.dependant, dep.get_current_user)
+    """(MÉTODO, ruta) → ¿protegida en runtime? Leída del árbol de dependencias real de cada ruta.
+
+    Con FastAPI 0.115, `app.routes` contiene las APIRoute ya planas con su prefijo.
+    Con FastAPI 0.141, las inclusiones de routers aparecen como objetos internos; la API
+    pública `fastapi.routing.iter_route_contexts` permite recorrerlas y obtener la ruta
+    original, la ruta efectiva (con prefijo) y los métodos expuestos.
+    """
+    matriz: dict[tuple[str, str], bool] = {}
+
+    iterar = getattr(fastapi_routing, "iter_route_contexts", None)
+
+    if iterar is None:
+        fuentes = ((r, r.path, r.methods, None) for r in app.routes)
+    else:
+        fuentes = (
+            (rc.original_route, rc.path, rc.methods, rc)
+            for rc in iterar(app.routes)
+        )
+
+    for original, path, methods, rc in fuentes:
+        if not isinstance(original, APIRoute):
+            continue
+
+        if rc is not None:
+            dependencias_inclusion = list(getattr(rc, "dependencies", original.dependencies))
+            if dependencias_inclusion != list(original.dependencies):
+                raise AssertionError(
+                    f"la inclusión de {path} añade dependencias que esta matriz no mira"
+                )
+
+        for method in (methods or set()) - {"HEAD", "OPTIONS"}:
+            clave = (method, path)
+            assert clave not in matriz, f"operación duplicada en runtime: {clave}"
+            matriz[clave] = _llega_a(original.dependant, dep.get_current_user)
+
     return matriz
 
 
