@@ -1,0 +1,8 @@
+PYTHON_MAGIC_DECLARED=0 (requirements.txt)
+SYSTEM_LIBMAGIC_DECLARED=0 (Dockerfile.backend)
+V1 (HEAD 226e1c3, CPython 3.13.15 + pip -r requirements.txt): PYTHON_MAGIC_IMPORT_AVAILABLE=0 · PDF=application/octet-stream · TXT=application/octet-stream
+V1 · tests/test_documents.py::test_subida_idempotente (carga real de PDF):
+1 failed, 24 deselected, 1 warning in 2.75s
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+Firma MIME_MISMATCH de los 31 fallos de V1: specs/012-auditoria-integral-e2e/evidence/certification-environment-drift-diagnosis/failure-attribution.json

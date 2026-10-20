@@ -1,0 +1,14 @@
+v0 sqlite módulo: 7 passed in 0.58s
+v0 sqlite inverso: 7 passed in 0.59s
+v0 sqlite solas: 7/7
+v0 pg módulo: 7 passed in 0.59s
+v0 pg inverso: 7 passed in 0.59s
+v0 pg solas: 7/7
+v1p sqlite módulo: 7 passed in 0.48s
+v1p sqlite inverso: 7 passed in 0.46s
+v1p sqlite solas: 7/7
+v1p pg módulo: 7 passed in 0.44s
+v1p pg inverso: 7 passed in 0.44s
+v1p pg solas: 7/7
+v0 invariantes Dockerfile: 2 passed in 0.29s
+v1p invariantes Dockerfile: 2 passed in 0.30s

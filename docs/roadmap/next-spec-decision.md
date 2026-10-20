@@ -4020,3 +4020,30 @@ Se normalizaron tres pruebas **sin tocar producto**:
 | `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
 
 `RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.
+
+## 2026-10-20 · PRODUCTION-IMAGE-WITHOUT-LIBMAGIC implementada (dueña 052) · certificación de imagen bloqueada por el entorno · OBS-09 sigue esperando evidencia
+
+La imagen ya declara la detección MIME por contenido:
+- `python-magic==0.4.27` en `requirements.txt`;
+- `libmagic1t64` en la etapa `base` de `Dockerfile.backend`. Es el paquete real de Debian 13 trixie, la base actual de
+  `python:3.13-slim` según su digest, y arrastra `libmagic-mgc`. La etapa `dev`, que es la desplegada, hereda de `base`.
+
+| Puerta | Resultado |
+|---|---|
+| Prueba nueva | entiende la herencia de etapas y mide el runtime real |
+| Mutaciones | 11/12 KILLED (1 equivalente) |
+| V0 | SQLite 1892/0/1056 ×2 · PostgreSQL 2922/0/26 · E2E 284/0/0 |
+| V1' | documentales sin los 31 fallos · SQLite 1892/0/1056 · PostgreSQL 2922/0/26 · E2E 284/0/0 |
+| OpenAPI | sin cambio |
+| OBS-09 | F01-F04 superan la fase MIME |
+
+**Sin Docker, la imagen no se pudo medir.** Estado: IMPLEMENTED — IMAGE RUNTIME CERTIFICATION BLOCKED BY ENVIRONMENT.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia (también vale como evidencia de imagen de esta deuda si su trazabilidad basta). Si no: **PRODUCTION-IMAGE-BUILT-FROM-DEV-STAGE** (dueña 052) |
+| Decisiones de la dueña pendientes | las tres documentales |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: V0 y V1' con SQLite 1892/0/1056 y PostgreSQL 2922/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
+`RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.

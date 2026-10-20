@@ -2217,3 +2217,15 @@ Fuente: `specs/012-auditoria-integral-e2e/spec054-deployment-parity-test-normali
 **NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-IMAGE-WITHOUT-LIBMAGIC.** Es la única que deja **inservible** una función
 de producción en la imagen, y bloquea por sí sola la certificación de OBS-09 (OD-CERT-02). OBS-09 vuelve a prioridad 1
 si llega su evidencia.
+
+
+## Actualización 2026-10-20 — PRODUCTION-IMAGE-WITHOUT-LIBMAGIC implementada
+
+| Deuda | Estado |
+|---|---|
+| PRODUCTION-IMAGE-WITHOUT-LIBMAGIC | **IMPLEMENTED — IMAGE RUNTIME CERTIFICATION BLOCKED BY ENVIRONMENT** (sin Docker; todo lo demás verde en V0 y V1') |
+| OBS-09 · prerrequisito MIME | ya no la bloquea a nivel de dependencias: los ficheros de F01-F04 superan la fase MIME en V1'. La evidencia Docker de OBS-09 puede servir también de evidencia de imagen para cerrar esta deuda |
+| LOCK-SIN-REPORTLAB-MAGIC | +1 de deriva: `python-magic` ya está en `requirements.txt` y sigue fuera del lock |
+
+**NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-IMAGE-BUILT-FROM-DEV-STAGE.** OBS-09 vuelve a prioridad 1 si llega su
+evidencia.

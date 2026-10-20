@@ -1,0 +1,2 @@
+v1 {"PDF_LIMPIO (F01/F03/F04)": {"mime": "application/octet-stream", "supera_fase_mime": false}, "EICAR (F02)": {"mime": "application/octet-stream", "supera_fase_mime": false}}
+v1p {"PDF_LIMPIO (F01/F03/F04)": {"mime": "application/pdf", "supera_fase_mime": true}, "EICAR (F02)": {"mime": "text/plain", "supera_fase_mime": true}}

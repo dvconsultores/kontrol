@@ -1,0 +1,13 @@
+== HEAD con v0
+FAILED test_imb_01_python_magic_declarado_y_fijado
+FAILED test_imb_02_la_version_instalada_es_la_declarada
+FAILED test_imb_03_la_etapa_efectiva_hereda_libmagic
+3 failed, 4 passed in 0.61s
+== HEAD con v1
+FAILED test_imb_01_python_magic_declarado_y_fijado
+FAILED test_imb_02_la_version_instalada_es_la_declarada
+FAILED test_imb_03_la_etapa_efectiva_hereda_libmagic
+FAILED test_imb_04_la_biblioteca_nativa_carga
+FAILED test_imb_05_la_base_de_firmas_responde
+FAILED test_imb_06_detect_mime_usa_el_contenido_no_la_extension
+6 failed, 1 passed in 0.47s

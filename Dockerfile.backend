@@ -12,8 +12,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Dependencias del sistema mínimas (psycopg2-binary no requiere compilador).
+# libmagic (paquete `libmagic1t64` de trixie, con `libmagic-mgc`) es la detección MIME por contenido de la gestión documental (Spec 046 §19).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
+    && apt-get install -y --no-install-recommends curl libmagic1t64 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY resources/backend/requirements.txt /tmp/requirements.txt

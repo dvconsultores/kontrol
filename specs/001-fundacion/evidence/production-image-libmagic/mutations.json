@@ -1,0 +1,108 @@
+{
+ "significativas": 12,
+ "killed": 11,
+ "survived": 0,
+ "equivalent": 1,
+ "restored": "100 %",
+ "criterio": "KILLED = el veredicto del mutante difiere del de la versión correcta en un escenario donde la guarda importa (V1P = CPython 3.13.15 + requirements corregido; V1 = requirements de HEAD, sin python-magic; EXT = detect_mime por extensión inyectada temporalmente; ROTA = entorno con pip check roto).",
+ "mutantes": [
+  {
+   "id": "M01",
+   "mutacion": "quitar python-magic del requirements",
+   "escenario": "V1P",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M02",
+   "mutacion": "python-magic sin fijar",
+   "escenario": "V1P",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M03",
+   "mutacion": "versión distinta de la instalada",
+   "escenario": "V1P",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M04",
+   "mutacion": "quitar el paquete nativo",
+   "escenario": "V1P",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M05",
+   "mutacion": "instalarlo solo en una etapa descartada",
+   "escenario": "V1P",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M06",
+   "mutacion": "instalarlo en una etapa hija de base que dev no hereda",
+   "escenario": "V1P",
+   "correcta": "pasa",
+   "mutante": "falla",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M07",
+   "mutacion": "la prueba runtime acepta octet-stream",
+   "escenario": "V1",
+   "correcta": "falla",
+   "mutante": "pasa",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M08",
+   "mutacion": "la prueba runtime usa un doble de detect_mime",
+   "escenario": "V1",
+   "correcta": "falla",
+   "mutante": "pasa",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M09",
+   "mutacion": "la prueba depende de la extensión",
+   "escenario": "EXT",
+   "correcta": "falla",
+   "mutante": "pasa",
+   "estado": "KILLED",
+   "nota": "la primera pasada usó V1 (sin python-magic), donde detect_mime falla antes en `import magic`: escenario mal elegido por Claude; repetido en V1' con la detección por extensión inyectada."
+  },
+  {
+   "id": "M10",
+   "mutacion": "quitar la verificación de carga de la biblioteca nativa",
+   "escenario": "V1",
+   "correcta": "falla",
+   "mutante": "falla",
+   "estado": "EQUIVALENT",
+   "justificacion": "python-magic 0.4.27 ejecuta `libmagic = loader.load_lib()` al importarse (magic/__init__.py:209) y load_lib() lanza ImportError si no puede cargar la biblioteca nativa (magic/loader.py:37-48): `import magic` ya garantiza la biblioteca, y no existe estado alcanzable en el que la versión correcta y la mutada den veredictos distintos."
+  },
+  {
+   "id": "M11",
+   "mutacion": "quitar la verificación de la base de firmas",
+   "escenario": "V1",
+   "correcta": "falla",
+   "mutante": "pasa",
+   "estado": "KILLED"
+  },
+  {
+   "id": "M12",
+   "mutacion": "romper la expectativa de pip check",
+   "escenario": "ROTA",
+   "correcta": "falla",
+   "mutante": "pasa",
+   "estado": "KILLED"
+  }
+ ]
+}
