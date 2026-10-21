@@ -4179,3 +4179,29 @@ pip-audit 0.
 | `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
 
 Líneas base sin cambio.
+
+## 2026-10-21 · Base fijada a CPython 3.13.16 por digest y DSA-6572-1 corregido (OD-CERT-07 = B, OD-CERT-08 = R1)
+
+- **Dockerfile:**
+  - `FROM python:3.13.16-slim-trixie@sha256:70729b46… AS base` (digest de índice OCI);
+  - `ca-certificates=20250419+deb13u1` exacto;
+  - fuente versionada `specs/001-fundacion/certified-deployment-base.json`.
+- **Pruebas:** IBB-01..06 y 22/22 mutaciones.
+- **V5 IMAGE_ROOTFS:** CPython, glibc y OpenSSL de la imagen, con el bundle de CA corregido; 0 bibliotecas del
+  anfitrión.
+  - SQLite 1927/0/1056, PostgreSQL 2957/0/26 y E2E 284/0/0.
+  - V0 igual (una corrida PostgreSQL se repitió por una suspensión del equipo, atribuida).
+  - OpenAPI sin deriva; V4↔V5 0 diferencias funcionales.
+- **Estado de las deudas:**
+  - BASE-IMAGE-CA-STORE-DSA-6572 **CLOSED**.
+  - PRODUCTION-BASE-IMAGE-FLOATING-TAG **IMPLEMENTED**, con cierre pendiente de LOCK-CERTIFI-PYSEC-2026-4320. pip-audit
+    lista un aviso de certifi publicado ayer que, medido, no aplica.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia. Si no: **LOCK-CERTIFI-PYSEC-2026-4320** (mover el corte del lock lo mínimo para certifi 2026.10.19; cierra también PRODUCTION-BASE-IMAGE-FLOATING-TAG). Después, TEST-MIGRACIONES-VENV-FIJO |
+| Decisiones de la dueña pendientes | las tres documentales; FASTAPI-YIELD-TEARDOWN |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+Líneas base: V0 y V5 con SQLite 1927/0/1056 y PostgreSQL 2957/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
+pip-audit V5: 1 hallazgo, no aplicable. `RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.

@@ -2313,3 +2313,21 @@ Si la dueña elige B, ese ciclo implementa el `FROM` y recertifica en V5. Despu�
 | PRODUCTION-IMAGE-APT-PACKAGES-UNPINNED (nueva) | OPEN, menor, observación |
 
 **NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-BASE-IMAGE-FLOATING-TAG con OD-CERT-08.**
+
+## Actualización 2026-10-21 (3) — base fijada y almacén de CA corregido
+
+| Deuda | Estado |
+|---|---|
+| BASE-IMAGE-CA-STORE-DSA-6572 | **CLOSED / CONVERGED** (`ca-certificates=20250419+deb13u1`, verificado) |
+| PRODUCTION-BASE-IMAGE-FLOATING-TAG | **IMPLEMENTED**: fijada `python:3.13.16-slim-trixie@sha256:70729b46…`; V5 IMAGE_ROOTFS verde; cierre pendiente de LOCK-CERTIFI-PYSEC-2026-4320 |
+| LOCK-CERTIFI-PYSEC-2026-4320 (nueva) | OPEN; aplicabilidad 0 medida; requiere mover el corte del lock |
+| BASE-IMAGE-RUNTIME-CONTENTS-NOT-CERTIFIED | puerta externa (Docker) |
+
+**Línea base vigente de compatibilidad del intérprete de despliegue: V5** (CPython 3.13.16 de la imagen). V4 queda
+histórica.
+
+**NEXT_RELEASE_ENGINEERING_DEBT = LOCK-CERTIFI-PYSEC-2026-4320.** Es un ciclo corto y cierra a la vez la base. Después:
+1. TEST-MIGRACIONES-VENV-FIJO.
+2. E2E-HARNESS-INTERPRETER-FIXED.
+3. PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES.
+4. CANONICALIZE-CERTIFICATION-ENVIRONMENT.

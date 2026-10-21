@@ -1,0 +1,1 @@
+huella 64 | licencia firma/verifica/rechaza OK | ancla OK | sin avisos de obsolescencia

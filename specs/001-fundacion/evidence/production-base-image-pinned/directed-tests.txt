@@ -1,0 +1,8 @@
+v0 dirigidas: 62 passed in 37.35s
+v0 IBB solas: 6 passed in 0.14s
+v0 dirigidas inverso: 62 passed in 37.39s
+v5 dirigidas: 62 passed, 2 warnings in 33.09s
+v5 IBB solas: 6 passed in 0.19s
+v5 dirigidas inverso: 62 passed, 2 warnings in 35.23s
+FIN_DIRIGIDAS
+FIN_CADENA

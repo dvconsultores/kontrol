@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "descripcion": "Base de despliegue certificada del backend (Spec 052, OD-CERT-06/07/08). Fuente única que leen las pruebas estructurales de Dockerfile.backend. Cambiarla exige la política de actualización: re-resolver en el registro, medir, revisar seguridad, recertificar.",
+  "base_image": {
+    "repository": "python",
+    "tag": "3.13.16-slim-trixie",
+    "index_digest": "sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f",
+    "digest_semantics": "oci-image-index",
+    "platform": "linux/amd64",
+    "platform_manifest_digest": "sha256:8fb4cfa1a2616d7b8e0c2175cc6ad68f5729c34ea8488c0b360d2934b7be9024",
+    "config_digest": "sha256:ce3ff9524414289fc922d9d5dc1de87abc77a39ff2ff5007435839f2af1d7569",
+    "cpython": "3.13.16",
+    "distro": "debian-13-trixie",
+    "glibc": "2.41"
+  },
+  "deployment_interpreter_baseline": {
+    "cpython": "3.13.16",
+    "environment": "V5",
+    "source": "IMAGE_ROOTFS"
+  },
+  "ca_certificates": {
+    "pinned_version": "20250419+deb13u1",
+    "fixed_floor": "20250419+deb13u1",
+    "vulnerable_version": "20250419",
+    "advisory": "DSA-6572-1",
+    "source": "trixie-security",
+    "deb_sha256": "c10585ac22c7f617a73d394eea29ba71d0356f350ae973b19043d1b017f80f54",
+    "removed_roots": ["emSign ECC Root CA - G3", "AAA Certificate Services"],
+    "temporary": true,
+    "retirar_cuando": "una base oficial re-fijada incluya ya ca-certificates >= fixed_floor, verificada y recertificada"
+  },
+  "evidence": {
+    "date": "2026-10-21",
+    "path": "specs/001-fundacion/evidence/production-base-image-pinned/"
+  }
+}

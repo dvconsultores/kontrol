@@ -96,3 +96,18 @@ lock se regenera con el mismo corte; ningún otro paquete cambia.
   - cryptography ≥ 50.0.2.
 - Registro: `docs/evidence/cve-review.md` §«Backend — revisión 2026-10-20».
 - Evidencia: `evidence/backend-direct-dependency-security/` y `spec001-backend-direct-dependency-security-delta.md`.
+
+## Actualización 2026-10-21 — base de despliegue fijada (Spec 052, OD-CERT-07/08)
+
+**Base del backend:**
+- `python:3.13.16-slim-trixie@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f`: patch tag,
+  distro trixie y digest del **índice** OCI (manifiesto `linux/amd64` `8fb4cfa1…`).
+- CPython 3.13.16, glibc 2.41, OpenSSL 3.5.7-1~deb13u3.
+- `ca-certificates` fijado a `20250419+deb13u1` por DSA-6572-1.
+
+**Fuente versionada:** `specs/001-fundacion/certified-deployment-base.json`, que leen las pruebas IBB.
+
+**Línea base de compatibilidad del intérprete de despliegue:** **V5** (IMAGE_ROOTFS, CPython 3.13.16 de la imagen con
+su glibc y su OpenSSL, y bundle de CA corregido). **V4** (CPython 3.13.15) queda como histórica.
+
+Esto no es canonicalización: RELEASE_DEPLOYMENT_PARITY_CERTIFIED sigue en 0.

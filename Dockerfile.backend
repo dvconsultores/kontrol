@@ -4,7 +4,8 @@
 # KONTROL - Backend (multi-stage, no root, versionado)
 # Objetivo: Python 3.13. La etapa final `runtime` es la de producción (la que produce un build sin --target); `dev` (hot reload, pruebas y herramientas) solo se obtiene con `--target dev`.
 # ==========================================================================
-FROM python:3.13-slim AS base
+# Base fijada (Spec 052, OD-CERT-06/07): patch tag + distro explícita + digest del ÍNDICE OCI multi-arquitectura (buildx elige linux/amd64). Actualización controlada: re-resolver en el registro, medir, revisar seguridad y recertificar antes de cambiarla; fuente: specs/001-fundacion/certified-deployment-base.json.
+FROM python:3.13.16-slim-trixie@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
@@ -13,8 +14,9 @@ WORKDIR /app
 
 # Dependencias del sistema mínimas (psycopg2-binary no requiere compilador).
 # libmagic (paquete `libmagic1t64` de trixie, con `libmagic-mgc`) es la detección MIME por contenido de la gestión documental (Spec 046 §19).
+# ca-certificates fijado a la versión corregida de DSA-6572-1 (pin temporal y exacto, OD-CERT-08); retirarlo sólo al re-fijar una base oficial que ya lo incluya, verificada y recertificada.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl libmagic1t64 \
+    && apt-get install -y --no-install-recommends curl libmagic1t64 ca-certificates=20250419+deb13u1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Dependencias Python: el conjunto completo y fijado de requirements.lock (OD-CERT-05). --no-deps impide volver a resolver transitivas en el build; pip check hace fallar el build si el conjunto no es completo y coherente.

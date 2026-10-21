@@ -138,3 +138,42 @@ Detalle en `oci-revalidation.json` y `base-security-recheck-and-v5-feasibility.m
 - V5 = IMAGE_ROOTFS del candidato, con `ca-certificates 20250419+deb13u1` aplicado al rootfs: `apt-get download`
   (sin root) y `dpkg-deb -x`, más `SSL_CERT_FILE` al bundle del rootfs.
 - Se instala con `pip install --no-deps -r requirements.lock && pip check` y se ejecutan las suites completas.
+
+## 9. Ciclo 2026-10-21 (2) · OD-CERT-07 = B y OD-CERT-08 = R1-DYNAMIC-EXACT-PIN — implementación
+- **Revalidación OCI:** índice `70729b46…`, amd64 `8fb4cfa1…` y config `ce3ff952…` sin cambios.
+  UPSTREAM_REBUILD_WITH_DSA6572_FIX = 0 (`oci-revalidation-2.json`).
+- **ca-certificates:**
+  - `InRelease` de trixie-security con firma correcta y `Packages.xz` verificado;
+  - versión disponible: `20250419+deb13u1`, que es la seleccionada (VERSION_ADVANCED = 0);
+  - `.deb` verificado por sha256;
+  - el contenido no incluye las dos raíces retiradas (FIXED_CA_PACKAGE_CONTENTS_VERIFIED = 1);
+  - bundle reconstruido con el `update-ca-certificates` del propio paquete, 148 CA y sin las raíces
+    (FIXED_CA_BUNDLE_RECONSTRUCTED = 1; método en `ca-trust-store-dsa-6572.md`).
+- **Recheck de seguridad de la base:** solo difieren `ca-certificates` (corregido con R1) y `liblzma5` (no aplica).
+  NEW_BASE_SECURITY_BLOCKER = 0.
+- **Material gate en verde. Implementación:**
+  - T1 Dockerfile: `FROM python:3.13.16-slim-trixie@sha256:70729b46… AS base` y
+    `ca-certificates=20250419+deb13u1` en la orden apt existente, con sus comentarios;
+  - T2 prueba `test_imagen_backend_base.py` (IBB-01..06, comparación de versiones de dpkg), con 2 reintentos;
+  - T3 fuente versionada `specs/001-fundacion/certified-deployment-base.json`, escrita por Claude como registro de
+    hechos medidos y decisiones.
+- **Rojo contra `9a215e4`:** IBB-01..05 fallan solo por `python:3.13-slim` y por la ausencia del pin.
+- **Mutaciones:** 22/22 KILLED, todas restauradas.
+- **Certificación** (`certification.md`):
+  - V0: SQLite 1927/0/1056 ×2 y PostgreSQL 2957/0/26; la corrida 1 se interrumpió por la suspensión del equipo, ver
+    la atribución.
+  - **V5 (IMAGE_ROOTFS):** SQLite 1927/0/1056, PostgreSQL 2957/0/26, E2E 284/0/0.
+  - E2E de V0: 284/0/0.
+  - OpenAPI: deriva de contrato 0. V4↔V5: diferencia funcional 0.
+- **V5 es la línea base vigente de compatibilidad del intérprete de despliegue**
+  (CURRENT_DEPLOYMENT_INTERPRETER_COMPATIBILITY_BASELINE). V4 pasa a histórica. No hay canonicalización:
+  RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0.
+
+## 10. Convergencia
+| Deuda / puerta | Estado |
+|---|---|
+| **BASE-IMAGE-CA-STORE-DSA-6572** | **CLOSED / CONVERGED**: versión corregida oficial identificada, fijada exacta, fuente autoritativa y firmada, contenido del paquete verificado, bundle de V5 sin las raíces, pruebas que protegen el suelo y la versión, sin aceptación de riesgo |
+| **PRODUCTION-BASE-IMAGE-FLOATING-TAG** | **IMPLEMENTED — CIERRE PENDIENTE DE LOCK-CERTIFI-PYSEC-2026-4320**: se cumplen todos los criterios del gate salvo «V5 pip-audit 0». pip-audit lista PYSEC-2026-4320 (certifi 2026.10.18 del lock), que no aplica por contenido ni por uso. Quitarlo exige mover el corte del lock, ruta prohibida en este ciclo |
+| LOCK-CERTIFI-PYSEC-2026-4320 (nueva) | OPEN, dueña 052 (apoyo 001) |
+| EXACT_IMAGE_CA_RUNTIME_CERTIFIED · BASE_IMAGE_RUNTIME_CONTENTS_CERTIFIED | 0 · 0 (puerta externa BASE-IMAGE-RUNTIME-CONTENTS-NOT-CERTIFIED, sin Docker) |
+| PRODUCTION-IMAGE-APT-PACKAGES-UNPINNED | sigue OPEN, no absorbida (solo se fijó ca-certificates) |
