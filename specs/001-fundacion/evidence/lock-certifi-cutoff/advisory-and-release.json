@@ -1,0 +1,59 @@
+{
+ "fecha": "2026-10-21",
+ "aviso": {
+  "id": "PYSEC-2026-4320",
+  "aliases": [
+   "GHSA-6q48-6c7w-9gw2"
+  ],
+  "osv_modified": "2026-10-20T22:00:02.600723204Z",
+  "rango_osv": [
+   {
+    "introduced": "2019.03.09"
+   },
+   {
+    "fixed": "2026.10.19"
+   }
+  ],
+  "ghsa_severity": "critical",
+  "ghsa_rango": [
+   ">= 2019.03.09, < 2026.10.19"
+  ],
+  "ghsa_first_patched": [
+   "2026.10.19"
+  ],
+  "withdrawn": null
+ },
+ "certifi_2026_10_19_artefactos": [
+  {
+   "filename": "certifi-2026.10.19-py3-none-any.whl",
+   "packagetype": "bdist_wheel",
+   "python_version": "py3",
+   "upload_time_iso_8601": "2026-10-20T02:24:15.072385Z",
+   "sha256": "42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b"
+  },
+  {
+   "filename": "certifi-2026.10.19.tar.gz",
+   "packagetype": "sdist",
+   "python_version": "source",
+   "upload_time_iso_8601": "2026-10-20T02:24:16.604828Z",
+   "sha256": "035c1e85572b141bf1c3a3eff0e33a8eb74917522f2559075ff8d2fea780a1ae"
+  }
+ ],
+ "certifi_ultima": "2026.10.19",
+ "ventana_(2026-10-20T00:00:00Z,2026-10-20T02:24:16Z]": [
+  [
+   "certifi",
+   "2026.10.18",
+   "2026.10.19",
+   "certifi-2026.10.19-py3-none-any.whl",
+   "2026-10-20T02:24:15.072385Z"
+  ],
+  [
+   "certifi",
+   "2026.10.18",
+   "2026.10.19",
+   "certifi-2026.10.19.tar.gz",
+   "2026-10-20T02:24:16.604828Z"
+  ]
+ ]
+}

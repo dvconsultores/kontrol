@@ -165,7 +165,7 @@ def test_idl_04_la_cabecera_declara_el_comando_canonico() -> None:
     assert version is not None
     assert version.group(1) == _python_de_la_base(_dockerfile_texto())
     assert "--python-platform x86_64-unknown-linux-gnu" in comando
-    assert re.search(r"--exclude-newer \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", comando)
+    assert re.search(r"--exclude-newer \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?Z", comando)
     assert re.search(r"(^|\s)--upgrade(\s|$)", comando)
     assert comando.endswith("-o requirements.lock")
 

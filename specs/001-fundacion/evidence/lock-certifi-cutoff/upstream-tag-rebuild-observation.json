@@ -1,0 +1,12 @@
+{
+ "tag": "3.13.16-slim-trixie",
+ "index_now": "sha256:cf50a4f6ac4f026458b08d5222023d700ac806410dff5e9ca8728fa44f2b850f",
+ "amd64_now": "sha256:08b493e9c2f92a0f84e45062338a1503d0f585d63ba8783baad5a24cdf200894",
+ "config": "sha256:1be4eb165f7f86db2f8daadef8aada18637b5da6781c7191f4d359021ee7076a",
+ "created": "2026-10-21T01:11:16.699340075Z",
+ "PYTHON_VERSION": "3.13.16",
+ "ca-certificates": "20250419+deb13u1",
+ "libssl3t64": "3.5.7-1~deb13u3",
+ "libc6": "2.41-12+deb13u4",
+ "liblzma5": "5.8.1-1+deb13u2"
+}

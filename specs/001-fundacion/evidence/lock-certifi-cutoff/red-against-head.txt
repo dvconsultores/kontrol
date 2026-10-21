@@ -1,0 +1,3 @@
+E           AssertionError: certifi: lock 2026.10.18 < suelo 2026.10.19
+FAILED tests/test_seguridad_dependencias.py::test_sdv_08_los_suelos_de_transitivas_se_cumplen_sin_volverlas_directas
+1 failed, 21 passed in 4.21s

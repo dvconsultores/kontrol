@@ -1,0 +1,156 @@
+{
+ "mutantes": [
+  {
+   "id": "M01",
+   "mutacion": "volver certifi a 2026.10.18",
+   "ficheros": [
+    "resources/backend/requirements.lock"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_08_los_suelos_de_transitivas_se_cumplen_sin_volverlas_directas"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M02",
+   "mutacion": "certifi por debajo del suelo (2026.7.22)",
+   "ficheros": [
+    "resources/backend/requirements.lock"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_08_los_suelos_de_transitivas_se_cumplen_sin_volverlas_directas"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M03",
+   "mutacion": "quitar certifi del lock",
+   "ficheros": [
+    "resources/backend/requirements.lock"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_08_los_suelos_de_transitivas_se_cumplen_sin_volverlas_directas"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M04",
+   "mutacion": "certifi como pin directo en requirements.txt",
+   "ficheros": [
+    "resources/backend/requirements.txt"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_08_los_suelos_de_transitivas_se_cumplen_sin_volverlas_directas"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M05",
+   "mutacion": "volver el corte anterior en la cabecera",
+   "ficheros": [
+    "resources/backend/requirements.lock"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_08_los_suelos_de_transitivas_se_cumplen_sin_volverlas_directas"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M06",
+   "mutacion": "quitar --upgrade de la cabecera",
+   "ficheros": [
+    "resources/backend/requirements.lock"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_04_la_cabecera_declara_el_comando_canonico"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M07",
+   "mutacion": "cabecera que no refleja el comando real (otra plataforma)",
+   "ficheros": [
+    "resources/backend/requirements.lock"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_04_la_cabecera_declara_el_comando_canonico"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M08",
+   "mutacion": "transitiva sin pin",
+   "ficheros": [
+    "resources/backend/requirements.lock"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_03_cada_linea_del_lock_es_un_pin_exacto_y_unico"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M09",
+   "mutacion": "pin directo del manifiesto distinto del lock",
+   "ficheros": [
+    "resources/backend/requirements.txt"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_dependencias_lock.py::test_idl_01_el_lock_contiene_cada_directa_con_su_pin_exacto"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M10",
+   "mutacion": "suelo documental menor que la versión segura",
+   "ficheros": [
+    "docs/evidence/cve-review.md"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_08_los_suelos_de_transitivas_se_cumplen_sin_volverlas_directas"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M11",
+   "mutacion": "registro sin fila de certifi (la prueba aceptaría cualquier certifi)",
+   "ficheros": [
+    "docs/evidence/cve-review.md"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_08_los_suelos_de_transitivas_se_cumplen_sin_volverlas_directas"
+   ],
+   "restaurado_identico": true
+  },
+  {
+   "id": "M12",
+   "mutacion": "corte incoherente: publicación posterior al corte",
+   "ficheros": [
+    "docs/evidence/cve-review.md"
+   ],
+   "estado": "KILLED",
+   "la_matan": [
+    "test_seguridad_dependencias.py::test_sdv_08_los_suelos_de_transitivas_se_cumplen_sin_volverlas_directas"
+   ],
+   "restaurado_identico": true
+  }
+ ],
+ "resumen": {
+  "significativas": 12,
+  "killed": 12,
+  "survived": 0,
+  "equivalent": 0,
+  "restored": "100 %",
+  "bateria": "SDV + IDL + IBB (V0)"
+ }
+}

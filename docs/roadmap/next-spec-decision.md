@@ -4205,3 +4205,28 @@ Líneas base sin cambio.
 
 Líneas base: V0 y V5 con SQLite 1927/0/1056 y PostgreSQL 2957/0/26 · E2E 284/0/0 · OpenAPI 544/533/11.
 pip-audit V5: 1 hallazgo, no aplicable. `RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.
+
+## 2026-10-21 · certifi corregido en el lock · PRODUCTION-BASE-IMAGE-FLOATING-TAG cerrada
+
+**Lock:**
+- Corte movido lo mínimo: `2026-10-20T02:24:15.073Z`, +8655,073 s, según la frontera de uv medida a milisegundo.
+- Solo cambia certifi (2026.10.18 → 2026.10.19). Determinista.
+- pip-audit 0 en PyPI y OSV, sin exclusiones.
+- Suelo de transitivas en `cve-review`, protegido por SDV-08.
+
+**Certificación:** V0 y V5 (IMAGE_ROOTFS) en verde, con SQLite 1928/0/1056, PostgreSQL 2958/0/26 y E2E 284/0/0. Un
+reinicio del equipo obligó a reconstruir V5 y el PostgreSQL de QA y a repetir la cadena completa, sin suspensiones.
+
+**Estado de las deudas:**
+- LOCK-CERTIFI-PYSEC-2026-4320 **CLOSED**.
+- PRODUCTION-BASE-IMAGE-FLOATING-TAG **CLOSED**.
+- Nuevas: TEST-DOCUMENTS-CATALOG-ORDER-DEPENDENT (previa y menor) y BASE-IMAGE-UPSTREAM-REBUILD-REPIN (la etiqueta
+  upstream ya incluye el CA corregido).
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` | **OBS-09** si llega su evidencia. Si no: **TEST-MIGRACIONES-VENV-FIJO** (dueña 054). Alternativa a decidir por la dueña: BASE-IMAGE-UPSTREAM-REBUILD-REPIN |
+| Decisiones de la dueña pendientes | las tres documentales; FASTAPI-YIELD-TEARDOWN; prioridad de BASE-IMAGE-UPSTREAM-REBUILD-REPIN |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
+
+`RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.

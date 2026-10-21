@@ -111,3 +111,11 @@ lock se regenera con el mismo corte; ningún otro paquete cambia.
 su glibc y su OpenSSL, y bundle de CA corregido). **V4** (CPython 3.13.15) queda como histórica.
 
 Esto no es canonicalización: RELEASE_DEPLOYMENT_PARITY_CERTIFIED sigue en 0.
+
+## Actualización 2026-10-21 — corte del lock por seguridad (certifi)
+
+`requirements.lock` se regeneró con `--exclude-newer 2026-10-20T02:24:15.073Z` (antes `2026-10-20T00:00:00Z`).
+- Único cambio: `certifi 2026.10.19` (PYSEC-2026-4320 / GHSA-6q48-6c7w-9gw2).
+- El suelo de transitivas está en `docs/evidence/cve-review.md` §«Avisos de dependencias transitivas» y lo protege
+  SDV-08.
+- Evidencia: `evidence/lock-certifi-cutoff/`.

@@ -1,0 +1,7 @@
+PDF MIME application/pdf
+JWT HS256 OK | PyJWT 2.15.0
+JWT basura en firma: rechazada DecodeError
+Ed25519/licencias/ancla OK | cryptography 50.0.2
+TLS por defecto: 148 CA | raíces DSA-6572-1: NINGUNA
+certifi 2026.10.19 | 120 certs | emSign ECC Root CA - G3 presente: False
+bibliotecas: 82 | anfitrión: 0 | python 3.13.16 | OpenSSL 3.5.7 9 Jun 2026

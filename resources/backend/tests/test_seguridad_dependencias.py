@@ -6,7 +6,8 @@
 - SDV-04 no hay exclusiones de avisos en el repositorio;
 - SDV-05 el contrato JWT responde 401 y nunca 500;
 - SDV-06 la verificación JWT usa una lista explícita de un algoritmo;
-- SDV-07 una clave vacía o corta impide arrancar.
+- SDV-07 una clave vacía o corta impide arrancar;
+- SDV-08 los suelos de seguridad de dependencias transitivas se cumplen sin convertirlas en directas.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from __future__ import annotations
 import ast
 import base64
 import json
+import re
 from collections.abc import Callable, Iterator
 from datetime import UTC, datetime, timedelta
 
@@ -25,7 +27,7 @@ from pydantic import ValidationError
 
 from app.core.config import Settings, get_settings
 from app.main import create_app
-from tests.test_dependencias_lock import BACKEND, RAIZ, SUELOS_CVE, _canonico, _pines
+from tests.test_dependencias_lock import BACKEND, RAIZ, SUELOS_CVE, _canonico, _comando_de_cabecera, _pines
 
 PAQUETES_SEGURIDAD = ("pyjwt", "cryptography")
 CVE_REVIEW = RAIZ / "docs" / "evidence" / "cve-review.md"
@@ -227,3 +229,30 @@ def test_sdv_07_una_clave_vacia_o_corta_impide_arrancar() -> None:
     with pytest.raises(ValidationError):
         Settings(secret_key="k" * 31)
     assert Settings(secret_key="k" * 32).secret_key == "k" * 32
+
+
+def _instante(texto: str) -> datetime:
+    """Instante ISO 8601 con sufijo Z como datetime con zona UTC."""
+    return datetime.fromisoformat(texto.replace("Z", "+00:00"))
+
+
+def test_sdv_08_los_suelos_de_transitivas_se_cumplen_sin_volverlas_directas() -> None:
+    """SDV-08 los suelos de seguridad de dependencias transitivas se cumplen sin convertirlas en directas."""
+    filas = _tabla(CVE_REVIEW.read_text(encoding="utf-8"), "Avisos de dependencias transitivas")
+    assert filas
+    lock = _pines_lock()
+    manifiesto = _pines_manifiesto()
+    comando = _comando_de_cabecera((BACKEND / "requirements.lock").read_text(encoding="utf-8"))
+    corte = re.search(r"--exclude-newer (\S+)", comando)
+    assert corte is not None
+    instante_corte = _instante(corte.group(1))
+    for fila in filas:
+        paquete = _canonico(fila["Paquete"])
+        assert paquete in lock, f"{fila['Aviso']}: {paquete} no está en el lock"
+        assert paquete not in manifiesto, f"{paquete} es transitiva con suelo: no debe ser dependencia directa"
+        limite = re.search(r"<\s*([0-9][^\s,]*)", fila["Afectadas"])
+        assert limite is not None
+        corregida = fila["Corregida en"]
+        assert Version(corregida) >= Version(limite.group(1)), "la corregida debe quedar fuera del rango afectado"
+        assert Version(lock[paquete]) >= Version(corregida), f"{paquete}: lock {lock[paquete]} < suelo {corregida}"
+        assert instante_corte > _instante(fila["Publicación de la corregida (UTC)"]), "el corte del lock es anterior a la publicación de la corregida"

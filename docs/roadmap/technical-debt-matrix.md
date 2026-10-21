@@ -2331,3 +2331,23 @@ histórica.
 2. E2E-HARNESS-INTERPRETER-FIXED.
 3. PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES.
 4. CANONICALIZE-CERTIFICATION-ENVIRONMENT.
+
+## Actualización 2026-10-21 (4) — certifi corregido en el lock; base de imagen cerrada
+
+| Deuda | Estado |
+|---|---|
+| LOCK-CERTIFI-PYSEC-2026-4320 | **CLOSED / CONVERGED** (corte +8655,073 s; solo certifi; pip-audit 0) |
+| PRODUCTION-BASE-IMAGE-FLOATING-TAG | **CLOSED / CONVERGED** |
+| BASE-IMAGE-CA-STORE-DSA-6572 | CLOSED / CONVERGED |
+| TEST-DOCUMENTS-CATALOG-ORDER-DEPENDENT (nueva) | OPEN, menor, previa |
+| BASE-IMAGE-UPSTREAM-REBUILD-REPIN (nueva) | OPEN, oportunidad: volver a fijar en `cf50a4f6…` y retirar el pin de CA |
+
+**Línea base vigente:** V0 y V5 con SQLite 1928/0/1056, PostgreSQL 2958/0/26, E2E 284/0/0 y pip-audit 0.
+
+**NEXT_RELEASE_ENGINEERING_DEBT = TEST-MIGRACIONES-VENV-FIJO.** Orden posterior:
+1. E2E-HARNESS-INTERPRETER-FIXED.
+2. PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES.
+3. CANONICALIZE-CERTIFICATION-ENVIRONMENT.
+
+BASE-IMAGE-UPSTREAM-REBUILD-REPIN se puede intercalar cuando la dueña lo decida. OBS-09 tiene prioridad 1 si llega su
+evidencia.

@@ -1,0 +1,6 @@
+v0 dirigidas: 104 passed in 172.86s (0:02:52)
+v0 SDV+IDL solas: 22 passed in 5.77s
+v0 dirigidas inverso: 1 failed, 103 passed in 172.04s (0:02:52)
+v5 dirigidas: 104 passed, 2 warnings in 185.06s (0:03:05)
+v5 SDV+IDL solas: 22 passed, 2 warnings in 4.39s
+v5 dirigidas inverso: 1 failed, 103 passed, 2 warnings in 170.44s (0:02:50)

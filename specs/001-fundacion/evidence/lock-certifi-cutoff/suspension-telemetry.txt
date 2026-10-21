@@ -1,0 +1,9 @@
+[16:56:24] suspendido acumulado -0 s
+[17:09:01] suspendido acumulado -0 s
+[17:22:10] suspendido acumulado -0 s
+[17:36:37] suspendido acumulado -0 s
+[18:03:06] suspendido acumulado -0 s
+[18:13:47] suspendido acumulado -0 s
+[18:37:25] suspendido acumulado -0 s
+[18:42:22] suspendido acumulado -0 s
+[18:47:22] suspendido acumulado -0 s
