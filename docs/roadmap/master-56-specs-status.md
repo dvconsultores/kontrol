@@ -5,6 +5,12 @@
 > El fichero conserva su nombre histórico (`master-56-…`) para no romper las referencias de los ciclos
 > anteriores; el inventario es de **57**. Reconciliación: `master-57-reconciliation.md`.
 
+> **Línea KONTROL Gobierno (2026-10-22), fuera de MASTER57.** La dueña incorporó al inventario de fuentes la
+> Ingeniería de Requerimientos y la Biblioteca Normativa Oficial de KONTROL Gobierno v1.0
+> (`requerimientos/gobierno/`, `SPONSOR REVIEW — NO AUTORIZA DESARROLLO`). Las propias fuentes la declaran separada:
+> no añade filas ni Specs aquí (GOV-0..7 son ciclos de planificación; la numeración GOV-SPEC nace tras el freeze del
+> sponsor). Registro: `kontrol-gobierno-source-register.md`.
+
 > Medido el 2026-09-02 contra el repositorio en `3027da6`. Ningún estado procede
 > de un informe anterior: los informes son entrada, el repositorio es la
 > evidencia.
@@ -132,6 +138,7 @@ Recontado de nuevo el 2026-10-19 tras implementar `WAREHOUSE-BRANCH-CROSS-COMPAN
 Recontado de nuevo el 2026-10-19 tras implementar `WAREHOUSE-CATALOG-TYPE-CROSS-COMPANY` (dueña 008; E2E bloqueada por el entorno): **57 filas**, sin cambio; esquema 0; OBS-09 sigue bloqueada por entorno; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
 Recontado de nuevo el 2026-10-19 tras converger `WAREHOUSE-BRANCH-CROSS-COMPANY` y `WAREHOUSE-CATALOG-TYPE-CROSS-COMPANY` (dueña 008; E2E conjunta 284/0/0): **57 filas**, sin cambio; OBS-09 sigue bloqueada por entorno; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
 Recontado de nuevo el 2026-10-19 tras converger `LICENSE-MIDDLEWARE-BLOCKS-EVENT-LOOP` (dueña 001; apoyo 054): **57 filas**, sin cambio; OBS-09 sigue bloqueada por entorno; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
+Recontado de nuevo el 2026-10-22 tras incorporar las fuentes de la línea KONTROL Gobierno (solo inventario documental): **57 filas**, sin cambio; ninguna Spec cambia de estado; la línea Gobierno queda fuera de MASTER57, sin Specs y sin autorización de desarrollo; la 057 sigue `PLANNED / NOT STARTED` y `NEXT MASTER SPEC` sigue `NOT YET PRIORITIZED`.
 
 El grupo dominante —26 de 56— es `PARTIALLY_IMPLEMENTED`, y conviene no leerlo
 como una queja. KONTROL se construyó por módulos anchos antes de tener el

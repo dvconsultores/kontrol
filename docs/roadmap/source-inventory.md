@@ -1,6 +1,6 @@
 # INVENTARIO DOCUMENTAL FUENTE
 
-18 archivos en `requerimientos/` (no renombrar — README y Constitución lo prohíben).
+21 entradas en `requerimientos/` (las 20 y 21 en `requerimientos/gobierno/`) (no renombrar — README y Constitución lo prohíben).
 
 | # | Documento | Tipo | Autoridad | Uso en esta auditoría |
 |---|---|---|---|---|
@@ -23,6 +23,8 @@
 | 17 | **`Pedido - Organizar Pedido - Confirmar - Facturar - Despachar.docx`** | **Proceso** | Nivel 3 | **Sin track (2026-08-25).** Autoridad de las Specs 029-035 |
 | 18 | `procesos.png` | Diagrama | Nivel 3 | Sin track. Diagrama de procesos (no interpretado en esta pasada) |
 | 19 | **`KONTROL_SPEC057_Ingenieria_Requerimientos_Activos_Fijos.pdf`** | **Requerimientos** | Nivel 3 | **Con track desde el 2026-10-07.** Ingeniería de Requerimientos v1.0 de la Spec **057 — Gestión Integral de Activos Fijos** (24 páginas; RF-AF-001..202, RN-AF-001..006, AF-INV-01..24, RNF-AF-001..018; dependencias §33; exclusiones §31). Entrada de su futuro `/speckit.specify` |
+| 20 | **`gobierno/Ingenieria_de_Requerimientos_KONTROL_Gobierno_v1.0.pdf`** | **Requerimientos (línea Gobierno)** | Nivel 3 | **Con track desde el 2026-10-22.** KONTROL Gobierno v1.0 (26 páginas; corte normativo 16-10-2026; `SPONSOR REVIEW — NO AUTORIZA DESARROLLO`). Línea de producto **separada de MASTER57**: no añade Specs. Registro: `kontrol-gobierno-source-register.md` |
+| 21 | **`gobierno/Biblioteca_Normativa_Oficial_KONTROL_Gobierno_v1.0.pdf`** | **Inventario normativo (línea Gobierno)** | Nivel 3 (compila fuentes de Nivel 1) | **Con track desde el 2026-10-22.** Corpus N01..N40 (26 A · 2 B · 12 C) para KONTROL Gobierno. Las fuentes C no sustentan reglas hasta tener una copia oficial pinneada. Registro: `kontrol-gobierno-source-register.md` |
 
 ## Documentación interna del proyecto
 
