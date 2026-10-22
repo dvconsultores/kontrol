@@ -408,3 +408,79 @@ def test_e2ecorrida_18_una_corrida_anota_el_entorno_sin_direcciones_y_lo_dice(en
 
     assert not re.search(r"\b\d{1,3}(\.\d{1,3}){3}\b", json.dumps(observado)), "el entorno observado no lleva direcciones"
     assert "] entorno: " in salida.getvalue()
+
+
+def test_e2ecorrida_19_la_corrida_anota_el_interprete_del_arnes_y_el_de_la_migracion_de_la_autoridad(entorno, puerto_libre):
+    import sqlalchemy
+
+    import alembic
+
+    corrida, salida = _corrida(entorno, "pass")
+    assert corrida.ejecutar() == 0
+    m = _manifiesto(corrida)
+    raices = k.raices_a_sanear(entorno)
+    assert m["interpretes"]["paridad"] == 1
+    arnes = m["interpretes"]["arnes"]
+    assert arnes["ejecutable"] == k.sanear(sys.executable, raices)
+    assert arnes["python"] == ".".join(str(parte) for parte in sys.version_info[:3])
+    hijo = m["interpretes"]["migracion_autoridad"]
+    assert hijo["ejecutable"] == arnes["ejecutable"]
+    assert hijo["exe_real"] == arnes["exe_real"]
+    assert hijo["python"] == arnes["python"]
+    assert hijo["alembic"] == alembic.__version__
+    assert hijo["sqlalchemy"] == sqlalchemy.__version__
+    assert hijo["orden"] == [arnes["ejecutable"], "-m", "alembic", "-c", "central_authority/alembic.ini", "upgrade", "head"]
+    assert str(k.base.RAIZ) not in json.dumps(m["interpretes"])
+    assert tempfile.gettempdir() not in json.dumps(m["interpretes"])
+    assert "] intérprete: arnés " in salida.getvalue()
+    linea = next(x for x in salida.getvalue().splitlines() if "] intérprete: arnés " in x)
+    assert linea.endswith("paridad 1")
+    assert m["fases"] == ["comprobar", "crear base", "migrar", "sembrar", "backend", "comprobar la base del backend", "autoridad central", "suite", "limpiar"]
+
+
+def test_e2ecorrida_20_la_paridad_falla_si_cambia_el_ejecutable_el_real_o_la_version():
+    base = {"ejecutable": "a", "exe_real": "b", "python": "3.13.16"}
+    assert k.paridad_de_interpretes(base, dict(base)) == 1
+    for clave in ("ejecutable", "exe_real", "python"):
+        hijo = dict(base)
+        hijo[clave] = "distinto"
+        assert k.paridad_de_interpretes(base, hijo) == 0
+
+
+def test_e2ecorrida_21_el_saneado_quita_repo_tmp_y_home():
+    raices = k.raices_a_sanear({"HOME": "/h/u"})
+    assert k.sanear(str(k.base.RAIZ) + "/x", raices) == "<repo>/x"
+    assert k.sanear(tempfile.gettempdir() + "/y", raices) == "<tmp>/y"
+    assert k.sanear("/h/u/z", raices) == "<home>/z"
+    assert k.sanear("/a/b/c", {"/a/b": "<largo>", "/a": "<corto>"}) == "<largo>/c"
+    largos = list(raices.keys())
+    assert all(len(largos[i]) >= len(largos[i + 1]) for i in range(len(largos) - 1))
+
+
+def test_e2ecorrida_22_si_la_sonda_del_interprete_falla_la_corrida_no_sigue_y_limpia(entorno, puerto_libre, monkeypatch):
+    monkeypatch.setattr(k, "SONDA_DEL_INTERPRETE", "import sys; sys.exit(3)")
+    corrida = _corrida(entorno, "pass")[0]
+    assert corrida.ejecutar() == k.SALIDA_PREPARACION
+    _sin_rastro(corrida)
+    assert "sonda del intérprete" in _manifiesto(corrida)["error"]
+    assert "suite" not in _manifiesto(corrida)
+
+
+def test_e2ecorrida_23_una_sonda_con_claves_de_mas_o_de_menos_tambien_falla_la_corrida(entorno, puerto_libre, monkeypatch):
+    monkeypatch.setattr(k, "SONDA_DEL_INTERPRETE", 'import json; print(json.dumps({"x": "y"}))')
+    corrida = _corrida(entorno, "pass")[0]
+    assert corrida.ejecutar() == k.SALIDA_PREPARACION
+    _sin_rastro(corrida)
+    assert "sonda del intérprete" in _manifiesto(corrida)["error"]
+    assert "suite" not in _manifiesto(corrida)
+
+
+def test_e2ecorrida_24_una_sonda_que_termina_mal_aunque_imprima_un_json_valido_falla_la_corrida(entorno, puerto_libre, monkeypatch):
+    monkeypatch.setattr(k, "SONDA_DEL_INTERPRETE", k.SONDA_DEL_INTERPRETE + "; sys.exit(3)")
+    corrida = _corrida(entorno, "pass")[0]
+    assert corrida.ejecutar() == k.SALIDA_PREPARACION
+    _sin_rastro(corrida)
+    m = _manifiesto(corrida)
+    assert "sonda del intérprete" in m["error"]
+    assert "suite" not in m
+    assert "interpretes" not in m

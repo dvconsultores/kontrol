@@ -1,0 +1,56 @@
+{
+ "traza": "licencia-revision-Licencia-421d6-s-otro-",
+ "acciones": 176,
+ "total_ms": 17510,
+ "en_api_ms": 766,
+ "huecos_ms": 16745,
+ "api_mas_lenta_ms": 59,
+ "login_ms": [
+  59,
+  59,
+  50,
+  50
+ ],
+ "huecos_mayores": [
+  [
+   1363,
+   "",
+   "/auth/login"
+  ],
+  [
+   1201,
+   "",
+   ""
+  ],
+  [
+   1196,
+   "",
+   ""
+  ],
+  [
+   1195,
+   "",
+   ""
+  ],
+  [
+   1189,
+   "",
+   ""
+  ],
+  [
+   1187,
+   "",
+   ""
+  ],
+  [
+   1120,
+   "",
+   ""
+  ],
+  [
+   1091,
+   "",
+   "/license/import"
+  ]
+ ]
+}

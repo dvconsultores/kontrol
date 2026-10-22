@@ -16,6 +16,8 @@ import uuid
 
 import pytest
 
+from tests.alembic_orden import orden_alembic
+
 PG_URL = os.environ.get("KONTROL_TEST_DB_URL", "")
 pytestmark = pytest.mark.skipif("postgresql" not in PG_URL,
                                 reason="La migración de datos solo se verifica sobre PostgreSQL (P21)")
@@ -30,7 +32,7 @@ def _db_url(name: str) -> str:
 def _alembic(db_name: str, target: str) -> subprocess.CompletedProcess:
     env = {**os.environ, "KONTROL_DB_URL": _db_url(db_name)}
     env.pop("KONTROL_TEST_DB_URL", None)
-    return subprocess.run([os.path.join(BACKEND, ".venv", "bin", "alembic"), "upgrade", target],
+    return subprocess.run(orden_alembic("upgrade", target),
                           cwd=BACKEND, env=env, capture_output=True, text=True, timeout=900)
 
 

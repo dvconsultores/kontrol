@@ -26,6 +26,7 @@ import signal
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.error
@@ -67,6 +68,24 @@ SALIDA_INTERRUMPIDA = 130
 TUNELES = ("proton", "tun", "wg", "tap", "ipv6leak", "ppp")
 #: Desvío entre el reloj de pared y el monotónico a partir del cual la corrida declara un salto de reloj.
 UMBRAL_SALTO_DE_RELOJ_S = 5.0
+# La sonda se ejecuta con el mismo ejecutable, cwd y entorno que la migración de la autoridad.
+#: Programa que mide qué intérprete ejecuta la migración de la Autoridad Central.
+SONDA_DEL_INTERPRETE: str = (
+    "import json, os, sys, alembic, sqlalchemy; print(json.dumps({"
+    "'ejecutable': sys.executable, "
+    "'exe_real': os.path.realpath('/proc/self/exe'), "
+    "'python': '%d.%d.%d' % sys.version_info[:3], "
+    "'implementacion': sys.implementation.name, "
+    "'alembic': alembic.__version__, "
+    "'alembic_origen': alembic.__file__, "
+    "'sqlalchemy': sqlalchemy.__version__, "
+    "'sqlalchemy_origen': sqlalchemy.__file__"
+    "}))"
+)
+#: Claves exactas que devuelve la sonda.
+CLAVES_DE_LA_SONDA: frozenset[str] = frozenset(
+    {"ejecutable", "exe_real", "python", "implementacion", "alembic", "alembic_origen", "sqlalchemy", "sqlalchemy_origen"}
+)
 
 #: `installations.key_reference` es `String(120)` y, desde INSTALACION-KEY-REFERENCE-120, guarda una referencia
 #: RELATIVA al volumen (el nombre del fichero), no la ruta absoluta: la longitud del estado efímero ya no
@@ -133,6 +152,41 @@ def desvio_de_reloj(pared_inicio: datetime, mono_inicio: float, pared_fin: datet
     """
     desvio = (pared_fin - pared_inicio).total_seconds() - (mono_fin - mono_inicio)
     return {"desvio_s": round(desvio, 1), "salto": abs(desvio) > UMBRAL_SALTO_DE_RELOJ_S}
+
+
+def raices_a_sanear(entorno: Mapping[str, str]) -> dict[str, str]:
+    """Raíces que se reemplazan en el manifiesto, de la más larga a la más corta."""
+    raices = {str(base.RAIZ): "<repo>", tempfile.gettempdir(): "<tmp>"}
+    if "HOME" in entorno:
+        raices[entorno["HOME"]] = "<home>"
+    return dict(sorted(raices.items(), key=lambda raiz: len(raiz[0]), reverse=True))
+
+
+def sanear(texto: str, raices: Mapping[str, str]) -> str:
+    """Reemplaza las raíces conocidas en el texto dado."""
+    for raiz, marca in raices.items():
+        texto = texto.replace(raiz, marca)
+    return texto
+
+
+def paridad_de_interpretes(arnes: Mapping[str, Any], hijo: Mapping[str, Any]) -> int:
+    """1 si coinciden ejecutable, exe_real y python; 0 en caso contrario."""
+    coinciden = (
+        arnes.get("ejecutable") == hijo.get("ejecutable")
+        and arnes.get("exe_real") == hijo.get("exe_real")
+        and arnes.get("python") == hijo.get("python")
+    )
+    return 1 if coinciden else 0
+
+
+def interprete_del_arnes() -> dict[str, str]:
+    """Datos del intérprete que ejecuta el arnés."""
+    return {
+        "ejecutable": sys.executable,
+        "exe_real": os.path.realpath("/proc/self/exe"),
+        "python": ".".join(str(parte) for parte in sys.version_info[:3]),
+        "implementacion": sys.implementation.name,
+    }
 
 
 class Corrida:
@@ -384,13 +438,44 @@ class Corrida:
                                   "--port", str(PUERTO_BACKEND)], base.BACKEND)
         self.esperar_salud("backend", f"{API}/health/ready")
 
+    def anotar_interpretes(self, entorno: dict[str, str]) -> None:
+        """Anota en el manifiesto qué intérprete ejecuta el arnés y cuál la migración de la autoridad."""
+        arnes_crudo = interprete_del_arnes()
+        resultado = subprocess.run([sys.executable, "-c", SONDA_DEL_INTERPRETE], cwd=base.BACKEND, env=entorno,
+                                   capture_output=True, text=True, check=False)
+        if resultado.returncode != 0:
+            raise base.CicloDeBaseRoto("la sonda del intérprete de la Autoridad Central falló")
+        try:
+            hijo_crudo = json.loads(resultado.stdout)
+        except (json.JSONDecodeError, ValueError) as error:
+            raise base.CicloDeBaseRoto("la sonda del intérprete de la Autoridad Central falló") from error
+        if not isinstance(hijo_crudo, dict) or set(hijo_crudo) != set(CLAVES_DE_LA_SONDA) or not all(
+            isinstance(valor, str) for valor in hijo_crudo.values()
+        ):
+            raise base.CicloDeBaseRoto("la sonda del intérprete de la Autoridad Central falló")
+        raices = raices_a_sanear(self.entorno)
+        arnes_saneado = {clave: sanear(valor, raices) for clave, valor in arnes_crudo.items()}
+        hijo_saneado = {clave: sanear(valor, raices) for clave, valor in hijo_crudo.items()}
+        paridad = paridad_de_interpretes(arnes_crudo, hijo_crudo)
+        self.manifiesto["interpretes"] = {
+            "arnes": arnes_saneado,
+            "migracion_autoridad": {
+                "orden": [sanear(sys.executable, raices), "-m", "alembic", "-c", "central_authority/alembic.ini", "upgrade", "head"],
+                **hijo_saneado,
+            },
+            "paridad": paridad,
+        }
+        self.anotar()
+        self.decir(f"[e2e {self.run_id}] intérprete: arnés {arnes_crudo['python']} · migración de la autoridad {hijo_crudo['python']} · paridad {paridad}")
+
     def arrancar_autoridad(self) -> None:
         """La Autoridad Central real: migra su base efímera y levanta su API en el puerto propio."""
         self.fase("autoridad central")
         entorno = self.entorno_de_la_autoridad()
+        self.anotar_interpretes(entorno)
         registro = open(self.evidencia / "autoridad-migraciones.log", "ab")  # noqa: SIM115 - vive lo que la orden
         try:
-            resultado = subprocess.run([str(base.BACKEND / ".venv/bin/alembic"), "-c", "central_authority/alembic.ini", "upgrade", "head"],
+            resultado = subprocess.run([sys.executable, "-m", "alembic", "-c", "central_authority/alembic.ini", "upgrade", "head"],
                                        cwd=base.BACKEND, env=entorno, stdout=registro, stderr=subprocess.STDOUT, check=False)
         finally:
             registro.close()

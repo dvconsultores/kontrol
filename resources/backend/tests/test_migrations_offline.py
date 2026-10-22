@@ -17,12 +17,12 @@ import os
 import subprocess
 from pathlib import Path
 
-import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.pool import StaticPool
 
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
+from tests.alembic_orden import orden_alembic
 
 BACKEND = Path(__file__).resolve().parents[1]
 
@@ -49,13 +49,10 @@ def _base_env(tmp: Path) -> dict:
 
 
 def test_schema_chain_compiles_offline_postgres(tmp_path):
-    alembic_bin = BACKEND / ".venv" / "bin" / "alembic"
-    if not alembic_bin.exists():
-        pytest.skip("alembic no está disponible en el entorno")
     # Hasta 0012: última migración de ESQUEMA antes de la de datos 0013
     # (las migraciones de datos no son válidas en modo offline --sql).
     proc = subprocess.run(
-        [str(alembic_bin), "upgrade", "0012_numeric_money", "--sql"],
+        orden_alembic("upgrade", "0012_numeric_money", "--sql"),
         cwd=str(BACKEND), env=_base_env(tmp_path), capture_output=True, text=True, timeout=240,
     )
     assert proc.returncode == 0, proc.stderr[-3000:]
@@ -70,9 +67,6 @@ def test_migration_0014_numeric_money_2_upgrade_sql_compiles(tmp_path):
     """T-201/KAUD-011: la migración 0014 (segunda ola Float→Numeric) compila su
     SQL offline sobre dialecto PostgreSQL, aplicada a partir del head de esquema
     0012 (saltando la migración de datos 0013, que no es válida en --sql)."""
-    alembic_bin = BACKEND / ".venv" / "bin" / "alembic"
-    if not alembic_bin.exists():
-        pytest.skip("alembic no está disponible en el entorno")
     # 0014 es esquema puro (ALTER ... ::numeric); validamos estáticamente que
     # altera todas las tablas de la segunda ola y que la cadena ORM coincide
     # (el upgrade real a head en PostgreSQL queda en pending-validations).
@@ -159,11 +153,8 @@ def test_approvals_migrations_compile_offline_postgres(tmp_path):
     P21): sólo verifica que el SQL generado es válido para el dialecto de
     producción. La migración de datos 0016 no es válida en modo offline.
     """
-    alembic_bin = BACKEND / ".venv" / "bin" / "alembic"
-    if not alembic_bin.exists():
-        pytest.skip("alembic no está disponible en el entorno")
     result = subprocess.run(
-        [str(alembic_bin), "upgrade", "0014_numeric_money_2:0015_approvals", "--sql"],
+        orden_alembic("upgrade", "0014_numeric_money_2:0015_approvals", "--sql"),
         cwd=str(BACKEND), env=_base_env(tmp_path), capture_output=True, text=True, timeout=180,
     )
     assert result.returncode == 0, result.stderr[-2000:]

@@ -26,6 +26,7 @@ from app.core import sync_auth_contract as sa
 from central_authority import database, main, service
 from central_authority.config import Settings
 from central_authority.models import Base
+from tests.alembic_orden import orden_alembic
 from tests.central.conftest import pem_privada, pem_publica
 from tests.conftest import make_engine
 
@@ -98,7 +99,7 @@ def test_syncpg_01_peticiones_identicas_concurrentes_con_el_mismo_desafio_autent
 
 def _alembic(url: str, *args: str) -> subprocess.CompletedProcess[str]:
     env = {**os.environ, "KONTROL_CENTRAL_DB_URL": url, "KONTROL_CENTRAL_ENVIRONMENT": "qa"}
-    return subprocess.run([str(BACKEND / ".venv/bin/alembic"), "-c", "central_authority/alembic.ini", *args], cwd=BACKEND, env=env,
+    return subprocess.run(orden_alembic("-c", "central_authority/alembic.ini", *args), cwd=BACKEND, env=env,
                           capture_output=True, text=True)
 
 

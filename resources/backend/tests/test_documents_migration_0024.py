@@ -19,6 +19,8 @@ import subprocess
 
 import pytest
 
+from tests.alembic_orden import orden_alembic
+
 PG_URL = os.environ.get("KONTROL_TEST_DB_URL", "")
 pytestmark = pytest.mark.skipif(
     "postgresql" not in PG_URL,
@@ -42,7 +44,7 @@ def _alembic(db_name: str, target: str) -> subprocess.CompletedProcess:
     env = {**os.environ, "KONTROL_DB_URL": _db_url(db_name)}
     env.pop("KONTROL_TEST_DB_URL", None)
     return subprocess.run(
-        [os.path.join(BACKEND, ".venv", "bin", "alembic"), "upgrade", target],
+        orden_alembic("upgrade", target),
         cwd=BACKEND, env=env, capture_output=True, text=True, timeout=900,
     )
 
@@ -248,7 +250,7 @@ def test_la_reversion_borra_solo_las_anotaciones(seeded_db):
     env = {**os.environ, "KONTROL_DB_URL": _db_url(seeded_db)}
     env.pop("KONTROL_TEST_DB_URL", None)
     result = subprocess.run(
-        [os.path.join(BACKEND, ".venv", "bin", "alembic"), "downgrade", "0023_document_model"],
+        orden_alembic("downgrade", "0023_document_model"),
         cwd=BACKEND, env=env, capture_output=True, text=True, timeout=600)
     assert result.returncode == 0, result.stderr[-3000:]
 

@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from central_authority import service
 from central_authority.config import Settings
 from central_authority.models import Base, Issuance, PeriodLineage
+from tests.alembic_orden import orden_alembic
 from tests.central.conftest import pem_privada, pem_publica
 from tests.conftest import make_engine
 
@@ -124,7 +125,7 @@ def base_central_limpia():
 def _alembic(url: str, *args: str) -> subprocess.CompletedProcess:
     env = {**os.environ, "KONTROL_CENTRAL_DB_URL": url, "KONTROL_CENTRAL_ENVIRONMENT": "qa"}
     env.pop("KONTROL_CENTRAL_SIGNING_PRIVATE_KEY_PEM", None)
-    return subprocess.run([str(BACKEND / ".venv" / "bin" / "alembic"), "-c", "central_authority/alembic.ini", *args],
+    return subprocess.run(orden_alembic("-c", "central_authority/alembic.ini", *args),
                           cwd=BACKEND, env=env, capture_output=True, text=True, timeout=300)
 
 

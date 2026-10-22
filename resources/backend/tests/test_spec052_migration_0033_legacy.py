@@ -21,6 +21,8 @@ import subprocess
 
 import pytest
 
+from tests.alembic_orden import orden_alembic
+
 PG_URL = os.environ.get("KONTROL_TEST_DB_URL", "")
 pytestmark = pytest.mark.skipif(
     "postgresql" not in PG_URL,
@@ -52,7 +54,7 @@ def _alembic(db_name: str, target: str) -> subprocess.CompletedProcess:
     env = {**os.environ, "KONTROL_DB_URL": _db_url(db_name)}
     env.pop("KONTROL_TEST_DB_URL", None)
     return subprocess.run(
-        [os.path.join(BACKEND, ".venv", "bin", "alembic"), "upgrade", target],
+        orden_alembic("upgrade", target),
         cwd=BACKEND, env=env, capture_output=True, text=True, timeout=900,
     )
 
@@ -181,7 +183,7 @@ def test_una_instalacion_con_historico_huerfano_llega_a_la_cabeza(base_legada_mi
     """Antes fallaba en `0033`; la instalación entera se quedaba sin actualizar."""
     revision = _query(base_legada_migrada, "SELECT version_num FROM alembic_version")[0][0]
     cabeza = subprocess.run(
-        [os.path.join(BACKEND, ".venv", "bin", "alembic"), "heads"],
+        orden_alembic("heads"),
         cwd=BACKEND, env={**os.environ, "KONTROL_DB_URL": _db_url(base_legada_migrada)},
         capture_output=True, text=True, timeout=120,
     ).stdout

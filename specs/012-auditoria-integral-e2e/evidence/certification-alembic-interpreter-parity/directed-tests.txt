@@ -1,0 +1,25 @@
+# Dirigidas (PostgreSQL de QA) — conjunto: 15 ficheros de migración + test_alembic_interprete_certificado.py
+# + test_migraciones_url_porcentaje.py + test_e2e_base_ciclo/test_e2e_base_identidad/test_e2e_corrida/test_e2e_nombres
+v0 normal: 322 passed
+v5 normal: 322 passed (1 aviso de deprecación de Starlette, del framework)
+v0 inverso: 3 failed, 319 passed
+v5 inverso: 3 failed, 319 passed
+# Solo AIC: 27 passed en V0 y V5 (FAIL 0, SKIP 0)
+# Tras T1 (15 ficheros, con sonda): V0 98 passed · V5 98 passed
+
+# Atribución de los 3 fallos en orden inverso (idénticos en V0 y V5):
+#   test_spec020_migration_0045.py::test_no_se_fabrica_ninguna_incidencia_retroactiva  (AssertionError: la migración inventó incidencias)
+#   test_spec021_migration_0047.py::test_la_aplicacion_puede_insertar_en_la_tabla_que_crea_la_migracion  (ForeignKeyViolation receipt_confirmations -> goods_receipt_lines)
+#   test_spec022_migration_0048.py::test_dos_colocaciones_simultaneas_no_ubican_la_misma_existencia  (UniqueViolation uq_inventory_balances_key)
+# Mismo orden inverso de esos 3 módulos en git archive d20da5b (con el .venv real): las MISMAS 3 fallan (3 failed, 19 passed).
+# Cada módulo solo e invertido falla también en d20da5b y en el árbol actual (1 failed por módulo).
+# => PREEXISTING / ATTRIBUTED: dependencia de orden dentro de cada módulo (base de módulo sembrada por pruebas previas).
+#    No la causa este ciclo; nueva deuda TEST-MIGRATION-MODULES-ORDER-DEPENDENT (no absorbida).
+# TEST-DOCUMENTS-CATALOG-ORDER-DEPENDENT no está en este conjunto (test_documents.py no se toca): preservada, no observada aquí.
+
+# Cierre 2026-10-22 (T4 + T5; tras el reinicio, PostgreSQL de QA reaprovisionado)
+# test_e2e_corrida.py 01..24 + test_alembic_interprete_certificado.py (AIC-01..08), V0, PostgreSQL ktest:
+53 passed in 137.81s (0:02:17)   FAIL 0  SKIP 0
+# ruff check (backend completo + qa/e2e_corrida.py): All checks passed
+# mypy por fichero tocado (qa/e2e_corrida.py, test_e2e_corrida.py, test_alembic_interprete_certificado.py, alembic_orden.py): Success
+# mypy app: 154 errores en 18 ficheros, idénticos en git archive d20da5b (app sin tocar): PREEXISTING, atribuidos

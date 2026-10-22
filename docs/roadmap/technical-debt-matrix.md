@@ -2351,3 +2351,26 @@ histórica.
 
 BASE-IMAGE-UPSTREAM-REBUILD-REPIN se puede intercalar cuando la dueña lo decida. OBS-09 tiene prioridad 1 si llega su
 evidencia.
+
+## Actualización 2026-10-22 — alembic y arnés E2E con el intérprete que certifica
+
+| Deuda | Estado |
+|---|---|
+| TEST-MIGRACIONES-VENV-FIJO | **CLOSED / CONVERGED** (0 rutas `.venv` en `tests/**`; sin `.venv` 140/0/0; migración hija en V5 = 3.13.16) |
+| E2E-HARNESS-INTERPRETER-FIXED | **CLOSED / CONVERGED** (procedencia medida en el manifiesto; paridad 1 en V0 y en V5) |
+| E2E-LICENSE-REVISION-ENVIRONMENT-LATENCY (nueva) | OPEN, menor: margen de ≈ 1,7× ante degradación del anfitrión; ENVIRONMENT, sin cambio de timeout |
+| E2E-SPECS-PYTHON-HELPERS-VENV-FIXED (nueva) | OPEN, menor: 12 sitios `.venv/bin/python` en `e2e/*.ts` |
+| TEST-MIGRATION-MODULES-ORDER-DEPENDENT · TEST-DOCUMENTS-CATALOG-ORDER-DEPENDENT | OPEN, previas, no tocadas |
+
+**Línea base vigente:**
+- V0: SQLite 1956/0/1062;
+- V5: SQLite 1956/0/1062 y PostgreSQL 2992/0/26;
+- E2E 284/0/0 en V0 y en V5, con paridad de intérprete medida;
+- pip-audit 0/0; OpenAPI 544/533/11.
+
+**NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES.** Después:
+1. CANONICALIZE-CERTIFICATION-ENVIRONMENT.
+
+Quedan aparte:
+- OBS-09: prioridad 1 automática si llega la evidencia Docker externa;
+- BASE-IMAGE-UPSTREAM-REBUILD-REPIN: DEFERRED / NON-BLOCKING.

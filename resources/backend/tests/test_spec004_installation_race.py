@@ -30,6 +30,7 @@ from app.core.errors import KontrolError
 from app.modules.licensing import service as svc
 from app.modules.licensing.models import LicenseEvent, LicenseState
 from app.modules.organization.models import Installation
+from tests.alembic_orden import orden_alembic
 
 PG_URL = os.environ.get("KONTROL_TEST_DB_URL", "")
 pytestmark = pytest.mark.skipif(
@@ -53,7 +54,7 @@ def base_limpia():
         c.execute(text(f"CREATE DATABASE {BASE}"))
     env = {**os.environ, "KONTROL_DB_URL": _url(BASE)}
     env.pop("KONTROL_TEST_DB_URL", None)
-    migra = subprocess.run([str(BACKEND / ".venv" / "bin" / "alembic"), "upgrade", "head"],
+    migra = subprocess.run(orden_alembic("upgrade", "head"),
                            cwd=BACKEND, env=env, capture_output=True, text=True, timeout=900)
     assert migra.returncode == 0, migra.stderr[-2000:]
     engine = create_engine(_url(BASE), future=True)

@@ -1,0 +1,491 @@
+{
+ "head": "d20da5b + T1..T5",
+ "metodo": "un SEARCH único -> REPLACE; purga de __pycache__ y PYTHONDONTWRITEBYTECODE=1; prueba asesina con -x; restauración verificada por sha256",
+ "nota": "M10 se reformuló: la primera versión (cwd=BACKEND / 'app') moría por TypeError, porque BACKEND es str en ese fichero, y no por el cwd. Se descartó y se sustituyó por cwd=os.path.join(BACKEND, 'app'). M13 se evalúa con M11 activo y M15 con M06 activo (mutantes compuestos: la prueba debilitada no deja pasar el defecto).",
+ "MUTATIONS_MEANINGFUL": 26,
+ "MUTATIONS_KILLED": 26,
+ "MUTATIONS_SURVIVED": 0,
+ "MUTATIONS_EQUIVALENT": 0,
+ "RESTORED": "26/26",
+ "mutantes": [
+  {
+   "id": "M01",
+   "mutacion": "reintroducir .venv en una prueba de migración",
+   "fichero": "resources/backend/tests/test_spec030_migration_0043.py",
+   "compuesto_con": null,
+   "interprete": "V0",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed in 1.17s",
+   "primer_fallo": [
+    "test_aic_01_ningun_codigo_de_certificacion_usa_una_ruta_venv"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M02",
+   "mutacion": "reintroducir .venv en otra familia (autoridad central)",
+   "fichero": "resources/backend/tests/central/test_central_authority_pg.py",
+   "compuesto_con": null,
+   "interprete": "V0",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed in 1.11s",
+   "primer_fallo": [
+    "test_aic_01_ningun_codigo_de_certificacion_usa_una_ruta_venv"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M03",
+   "mutacion": "alembic sin ruta",
+   "fichero": "resources/backend/tests/test_uom_backfill.py",
+   "compuesto_con": null,
+   "interprete": "V0",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed, 1 passed in 2.13s",
+   "primer_fallo": [
+    "test_aic_02_ninguna_orden_usa_alembic_ni_python_del_path"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M04",
+   "mutacion": "python del PATH",
+   "fichero": "resources/backend/tests/test_spec019_migration_0044.py",
+   "compuesto_con": null,
+   "interprete": "V0",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed, 1 passed in 2.17s",
+   "primer_fallo": [
+    "test_aic_02_ninguna_orden_usa_alembic_ni_python_del_path"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M05",
+   "mutacion": "python3 del PATH",
+   "fichero": "resources/backend/tests/test_spec047_schema.py",
+   "compuesto_con": null,
+   "interprete": "V0",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed, 1 passed in 2.08s",
+   "primer_fallo": [
+    "test_aic_02_ninguna_orden_usa_alembic_ni_python_del_path"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M06",
+   "mutacion": "el helper ignora sys.executable",
+   "fichero": "resources/backend/tests/alembic_orden.py",
+   "compuesto_con": null,
+   "interprete": "V0",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed, 1 passed in 2.21s",
+   "primer_fallo": [
+    "test_aic_02_ninguna_orden_usa_alembic_ni_python_del_path"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M07",
+   "mutacion": "el helper usa el intérprete de V0",
+   "fichero": "resources/backend/tests/alembic_orden.py",
+   "compuesto_con": null,
+   "interprete": "V5",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed in 1.30s",
+   "primer_fallo": [
+    "test_aic_01_ningun_codigo_de_certificacion_usa_una_ruta_venv"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M08",
+   "mutacion": "cambiar los argumentos de la migración (ignorar downgrade)",
+   "fichero": "resources/backend/tests/test_spec021_migration_0047.py",
+   "compuesto_con": null,
+   "interprete": "V5",
+   "pruebas": [
+    "tests/test_spec021_migration_0047.py"
+   ],
+   "postgres": true,
+   "rc": 1,
+   "resumen": "1 failed, 5 passed in 8.16s",
+   "primer_fallo": [
+    "test_bajar_y_subir_deja_la_base_igual"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M09",
+   "mutacion": "no propagar KONTROL_DB_URL",
+   "fichero": "resources/backend/tests/test_spec030_migration_0043.py",
+   "compuesto_con": null,
+   "interprete": "V5",
+   "pruebas": [
+    "tests/test_spec030_migration_0043.py"
+   ],
+   "postgres": true,
+   "rc": 1,
+   "resumen": "1 error in 1.36s",
+   "causa": [
+    "alembic migra contra el SQLite por defecto: NotImplementedError: No support for ALTER of constraints in SQLite dialect"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M10",
+   "mutacion": "cambiar el cwd",
+   "fichero": "resources/backend/tests/test_spec030_migration_0043.py",
+   "compuesto_con": null,
+   "interprete": "V5",
+   "pruebas": [
+    "tests/test_spec030_migration_0043.py"
+   ],
+   "postgres": true,
+   "rc": 1,
+   "resumen": "1 error in 0.39s",
+   "causa": [
+    "FAILED: No config file 'alembic.ini' (rc 255)"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M11",
+   "mutacion": "la autoridad del E2E vuelve al .venv",
+   "fichero": "qa/e2e_corrida.py",
+   "compuesto_con": null,
+   "interprete": "V0",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed in 1.15s",
+   "primer_fallo": [
+    "test_aic_01_ningun_codigo_de_certificacion_usa_una_ruta_venv"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M12",
+   "mutacion": "la autoridad del E2E usa alembic sin ruta",
+   "fichero": "qa/e2e_corrida.py",
+   "compuesto_con": null,
+   "interprete": "V0",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed, 1 passed in 2.15s",
+   "primer_fallo": [
+    "test_aic_02_ninguna_orden_usa_alembic_ni_python_del_path"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M13",
+   "mutacion": "el escaneo ignora qa/e2e_corrida.py (con M11 aplicado)",
+   "fichero": "resources/backend/tests/test_alembic_interprete_certificado.py",
+   "compuesto_con": "M11",
+   "interprete": "V0",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed in 0.13s",
+   "primer_fallo": [
+    "test_aic_01_ningun_codigo_de_certificacion_usa_una_ruta_venv"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M14",
+   "mutacion": "el detector acepta una variante (.venv solo como literal completo)",
+   "fichero": "resources/backend/tests/test_alembic_interprete_certificado.py",
+   "compuesto_con": null,
+   "interprete": "V0",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed, 2 passed in 2.11s",
+   "primer_fallo": [
+    "test_aic_03_el_detector_reconoce_cada_variante[os.path.join]"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M15",
+   "mutacion": "AIC-07 deja de comparar padre e hijo (con el helper desviado a python3)",
+   "fichero": "resources/backend/tests/test_alembic_interprete_certificado.py",
+   "compuesto_con": "M06",
+   "interprete": "V5",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed, 1 passed in 2.51s",
+   "primer_fallo": [
+    "test_aic_02_ninguna_orden_usa_alembic_ni_python_del_path"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M16",
+   "mutacion": "omisión silenciosa sin .venv reintroducida",
+   "fichero": "resources/backend/tests/test_migrations_offline.py",
+   "compuesto_con": null,
+   "interprete": "V0",
+   "pruebas": [
+    "tests/test_alembic_interprete_certificado.py"
+   ],
+   "postgres": false,
+   "rc": 1,
+   "resumen": "1 failed in 1.12s",
+   "primer_fallo": [
+    "test_aic_01_ningun_codigo_de_certificacion_usa_una_ruta_venv"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M17",
+   "mutacion": "la paridad siempre vale 1",
+   "fichero": "qa/e2e_corrida.py",
+   "rc": 1,
+   "resumen": "1 failed, 1 passed, 19 deselected in 10.08s",
+   "primer_fallo": [
+    "test_e2ecorrida_20_la_paridad_falla_si_cambia_el_ejecutable_el_real_o_la_version"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "compuesto_con": null,
+   "interprete": "V0",
+   "postgres": true,
+   "pruebas": [
+    "tests/test_e2e_corrida.py (19..24)",
+    "tests/test_alembic_interprete_certificado.py"
+   ]
+  },
+  {
+   "id": "M18",
+   "mutacion": "la paridad ignora exe_real",
+   "fichero": "qa/e2e_corrida.py",
+   "rc": 1,
+   "resumen": "1 failed, 1 passed, 19 deselected in 9.97s",
+   "primer_fallo": [
+    "test_e2ecorrida_20_la_paridad_falla_si_cambia_el_ejecutable_el_real_o_la_version"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "compuesto_con": null,
+   "interprete": "V0",
+   "postgres": true,
+   "pruebas": [
+    "tests/test_e2e_corrida.py (19..24)",
+    "tests/test_alembic_interprete_certificado.py"
+   ]
+  },
+  {
+   "id": "M19",
+   "mutacion": "la sonda usa python3 del PATH",
+   "fichero": "qa/e2e_corrida.py",
+   "rc": 1,
+   "resumen": "1 failed, 19 deselected in 8.71s",
+   "primer_fallo": [
+    "test_e2ecorrida_19_la_corrida_anota_el_interprete_del_arnes_y_el_de_la_migracion_de_la_autoridad"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "compuesto_con": null,
+   "interprete": "V0",
+   "postgres": true,
+   "pruebas": [
+    "tests/test_e2e_corrida.py (19..24)",
+    "tests/test_alembic_interprete_certificado.py"
+   ]
+  },
+  {
+   "id": "M20",
+   "mutacion": "sin saneado",
+   "fichero": "qa/e2e_corrida.py",
+   "rc": 1,
+   "resumen": "1 failed, 19 deselected in 10.01s",
+   "primer_fallo": [
+    "test_e2ecorrida_19_la_corrida_anota_el_interprete_del_arnes_y_el_de_la_migracion_de_la_autoridad"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "compuesto_con": null,
+   "interprete": "V0",
+   "postgres": true,
+   "pruebas": [
+    "tests/test_e2e_corrida.py (19..24)",
+    "tests/test_alembic_interprete_certificado.py"
+   ]
+  },
+  {
+   "id": "M21",
+   "mutacion": "sin validar las claves exactas",
+   "fichero": "qa/e2e_corrida.py",
+   "rc": 1,
+   "resumen": "1 failed, 4 passed, 19 deselected in 27.22s",
+   "primer_fallo": [
+    "test_e2ecorrida_23_una_sonda_con_claves_de_mas_o_de_menos_tambien_falla_la_corrida"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "compuesto_con": null,
+   "interprete": "V0",
+   "postgres": true,
+   "pruebas": [
+    "tests/test_e2e_corrida.py (19..24)",
+    "tests/test_alembic_interprete_certificado.py"
+   ]
+  },
+  {
+   "id": "M22",
+   "mutacion": "sin comprobar el código de salida de la sonda",
+   "fichero": "qa/e2e_corrida.py",
+   "rc": 1,
+   "resumen": "1 failed, 5 passed, 19 deselected in 36.88s",
+   "primer_fallo": [
+    "test_e2ecorrida_24_una_sonda_que_termina_mal_aunque_imprima_un_json_valido_falla_la_corrida"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "compuesto_con": null,
+   "interprete": "V0",
+   "postgres": true,
+   "pruebas": [
+    "tests/test_e2e_corrida.py (19..24)",
+    "tests/test_alembic_interprete_certificado.py"
+   ]
+  },
+  {
+   "id": "M23",
+   "mutacion": "la sonda no se llama",
+   "fichero": "qa/e2e_corrida.py",
+   "rc": 1,
+   "resumen": "1 failed, 19 deselected in 9.78s",
+   "primer_fallo": [
+    "test_e2ecorrida_19_la_corrida_anota_el_interprete_del_arnes_y_el_de_la_migracion_de_la_autoridad"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "compuesto_con": null,
+   "interprete": "V0",
+   "postgres": true,
+   "pruebas": [
+    "tests/test_e2e_corrida.py (19..24)",
+    "tests/test_alembic_interprete_certificado.py"
+   ]
+  },
+  {
+   "id": "M24",
+   "mutacion": "la sonda sin el entorno de la autoridad",
+   "fichero": "qa/e2e_corrida.py",
+   "rc": 1,
+   "resumen": "1 failed, 33 passed, 19 deselected in 38.85s",
+   "primer_fallo": [
+    "test_aic_08_la_sonda_del_interprete_corre_con_el_cwd_y_el_entorno_de_la_migracion_y_antes_que_ella"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "compuesto_con": null,
+   "interprete": "V0",
+   "postgres": true,
+   "pruebas": [
+    "tests/test_e2e_corrida.py (19..24)",
+    "tests/test_alembic_interprete_certificado.py"
+   ]
+  },
+  {
+   "id": "M25",
+   "mutacion": "la sonda sin el cwd de la migración",
+   "fichero": "qa/e2e_corrida.py",
+   "rc": 1,
+   "resumen": "1 failed, 33 passed, 19 deselected in 38.68s",
+   "primer_fallo": [
+    "test_aic_08_la_sonda_del_interprete_corre_con_el_cwd_y_el_entorno_de_la_migracion_y_antes_que_ella"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "compuesto_con": null,
+   "interprete": "V0",
+   "postgres": true,
+   "pruebas": [
+    "tests/test_e2e_corrida.py (19..24)",
+    "tests/test_alembic_interprete_certificado.py"
+   ]
+  },
+  {
+   "id": "M26",
+   "mutacion": "la orden anotada no es la de la migración",
+   "fichero": "qa/e2e_corrida.py",
+   "rc": 1,
+   "resumen": "1 failed, 19 deselected in 10.11s",
+   "primer_fallo": [
+    "test_e2ecorrida_19_la_corrida_anota_el_interprete_del_arnes_y_el_de_la_migracion_de_la_autoridad"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "compuesto_con": null,
+   "interprete": "V0",
+   "postgres": true,
+   "pruebas": [
+    "tests/test_e2e_corrida.py (19..24)",
+    "tests/test_alembic_interprete_certificado.py"
+   ]
+  }
+ ],
+ "nota_cierre": "M17..M26 (T4) en el cierre del 2026-10-22. Primera pasada: 7/10 (M22, M24 y M25 sobrevivieron, huecos reales); con T5 (AIC-08, e2ecorrida_24): 10/10. M27 descartado por ser idéntico a M23."
+}

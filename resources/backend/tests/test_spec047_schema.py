@@ -19,6 +19,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.database import Base, init_models
 from app.core.integrity import es_violacion_unica
+from tests.alembic_orden import orden_alembic
 
 PG_URL = os.environ.get("KONTROL_TEST_DB_URL", "")
 pytestmark = pytest.mark.skipif(not PG_URL.startswith("postgresql"),
@@ -41,7 +42,7 @@ def _url(nombre: str) -> str:
 def _alembic(*argumentos: str) -> None:
     env = {**os.environ, "KONTROL_DB_URL": _url(BASE)}
     env.pop("KONTROL_TEST_DB_URL", None)
-    r = subprocess.run([str(BACKEND / ".venv" / "bin" / "alembic"), *argumentos], cwd=BACKEND, env=env,
+    r = subprocess.run(orden_alembic(*argumentos), cwd=BACKEND, env=env,
                        capture_output=True, text=True, timeout=900)
     assert r.returncode == 0, r.stderr[-3000:]
 

@@ -1,0 +1,38 @@
+# Rojo contra d20da5b (2026-10-21)
+# Árbol: git archive d20da5b + SOLO tests/alembic_orden.py y tests/test_alembic_interprete_certificado.py añadidos.
+# Orden: <intérprete> -m pytest -o addopts= -q -p no:cacheprovider -rf tests/test_alembic_interprete_certificado.py
+
+V0 (.venv, CPython 3.11.16):
+FAILED tests/test_alembic_interprete_certificado.py::test_aic_01_ningun_codigo_de_certificacion_usa_una_ruta_venv
+FAILED tests/test_alembic_interprete_certificado.py::test_aic_05_cada_subproceso_de_alembic_de_las_pruebas_usa_el_contrato
+FAILED tests/test_alembic_interprete_certificado.py::test_aic_06_la_autoridad_central_del_e2e_migra_con_el_interprete_de_la_corrida
+3 failed, 24 passed
+
+V5 (IMAGE_ROOTFS, CPython 3.13.16):
+FAILED (las mismas 3) · 3 failed, 24 passed
+
+Infracciones que AIC-01 informa en d20da5b (20 = FIXED_VENV_PATHS_PRE):
+resources/backend/tests/central/test_central_authority_pg.py:127: ruta .venv
+resources/backend/tests/central/test_central_sync_auth_pg.py:101: ruta .venv
+resources/backend/tests/test_documents_migration_0024.py:45: ruta .venv
+resources/backend/tests/test_documents_migration_0024.py:251: ruta .venv
+resources/backend/tests/test_migrations_offline.py:52: ruta .venv
+resources/backend/tests/test_migrations_offline.py:73: ruta .venv
+resources/backend/tests/test_migrations_offline.py:162: ruta .venv
+resources/backend/tests/test_spec004_installation_race.py:56: ruta .venv
+resources/backend/tests/test_spec019_migration_0044.py:31: ruta .venv
+resources/backend/tests/test_spec020_migration_0045.py:33: ruta .venv
+resources/backend/tests/test_spec021_migration_0047.py:35: ruta .venv
+resources/backend/tests/test_spec022_migration_0048.py:33: ruta .venv
+resources/backend/tests/test_spec023_migration_0046.py:35: ruta .venv
+resources/backend/tests/test_spec030_migration_0043.py:33: ruta .venv
+resources/backend/tests/test_spec047_schema.py:44: ruta .venv
+resources/backend/tests/test_spec052_migration_0033_legacy.py:55: ruta .venv
+resources/backend/tests/test_spec052_migration_0033_legacy.py:184: ruta .venv
+resources/backend/tests/test_uom_backfill.py:35: ruta .venv
+resources/backend/tests/test_warehouse_migration_0018.py:41: ruta .venv
+qa/e2e_corrida.py:393: ruta .venv
+
+Causa de cada fallo: solo las rutas fijas a .venv (AIC-01), los 18 subprocesos no conformes (AIC-05) y la orden de la autoridad (AIC-06). Ningún fallo por otra deuda.
+
+Tras T1+T3 (árbol de trabajo): 27 passed en V0 y 27 passed en V5; FIXED_VENV_PATHS_POST = 0.
