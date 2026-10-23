@@ -1,0 +1,12 @@
+# Rojo contra 225fff0. Árbol aislado `git archive 225fff0`, con solo e2e/helpers/python.ts y las pruebas nuevas añadidas.
+# Specs sin migrar y arnés sin exportar la autoridad.
+## vitest src/tests/e2e-python-helpers.test.ts → 4 failed | 4 passed (8)
+× contrato estructural > ningún literal de cadena que no sea especificador de módulo contiene .venv en e2e/
+× contrato estructural > ningún literal de cadena que no sea especificador de módulo es python/python3 del PATH
+× contrato estructural > las llamadas a mecanismos de ejecución de procesos son exactamente las esperadas
+× contrato estructural > inventario positivo exacto de llamadas a ejecutarPython
+✓ (los 4 casos del lanzador: prueban el código nuevo, no el de HEAD)
+## pytest tests/test_e2e_corrida.py -k "e2ecorrida_25 or e2ecorrida_26" (PostgreSQL de QA) → 2 failed
+FAILED test_e2ecorrida_25_la_suite_recibe_el_interprete_de_la_certificacion_y_no_el_heredado   (la suite no recibe KONTROL_E2E_PYTHON)
+FAILED test_e2ecorrida_26_la_autoridad_exportada_es_exactamente_sys_executable                 (0 entradas KONTROL_E2E_PYTHON en entorno_de_procesos)
+# Los fallos se deben solo a los 12 sitios fijos y a la autoridad sin exportar; ninguna deuda ajena interviene.

@@ -1,0 +1,4 @@
+V0 mediana 1.128 s min 0.605 max 2.098
+V5 mediana 1.222 s min 0.811 max 1.691
+razon_V5/V0 (mediana) 1.08
+load ['14.88', '14.48', '10.77']

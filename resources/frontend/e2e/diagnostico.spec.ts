@@ -7,10 +7,11 @@
  * públicos siguen públicos y mínimos. El usuario sin permiso lo fabrica `qa/rol_sin_permiso.py`
  * en la base de la corrida: no hay API de alta de roles con permisos.
  */
-import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+
+import { ejecutarPython } from "./helpers/python";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
@@ -27,8 +28,7 @@ function usuarioSinPermiso(): string {
     throw new Error("KONTROL_E2E_DB_URL es obligatoria: el usuario sin permiso se escribe en la base de la corrida");
   }
   const usuario = `sindiag${marca()}`;
-  execFileSync(
-    resolve(BACKEND, ".venv", "bin", "python"),
+  ejecutarPython(
     [resolve(BACKEND, "..", "..", "qa", "rol_sin_permiso.py"), "DEMO", usuario, "D1", "license:view"],
     { cwd: BACKEND, env: { ...process.env, KONTROL_DB_URL: url, PYTHONPATH: BACKEND }, encoding: "utf8", timeout: 60_000 },
   );

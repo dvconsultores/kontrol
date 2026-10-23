@@ -21,10 +21,11 @@
  *
  * Este módulo no contiene pruebas; Playwright solo recoge `*.spec.ts`.
  */
-import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
 import { expect, type APIRequestContext } from "@playwright/test";
+
+import { ejecutarPython } from "./python";
 
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
@@ -58,8 +59,7 @@ export function declararAlcance(usuario: string, empresas: string[], tenant = TE
       "ni interfaz, así que se escribe con la orden canónica contra la base del E2E",
     );
   }
-  const salida = execFileSync(
-    resolve(BACKEND, ".venv", "bin", "python"),
+  const salida = ejecutarPython(
     [resolve(BACKEND, "..", "..", "qa", "alcance_de_usuario.py"), tenant, usuario, ...empresas],
     { cwd: BACKEND, env: { ...process.env, KONTROL_DB_URL: url, PYTHONPATH: BACKEND },
       encoding: "utf8", timeout: 60_000 },

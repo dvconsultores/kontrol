@@ -10,17 +10,17 @@
  * licencia que llega pasa por la importación con todas sus compuertas. Dirigida, se corre SOLA con
  * `--no-deps`.
  */
-import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
 import { expect, test, type APIRequestContext } from "@playwright/test";
+
+import { ejecutarPython } from "./helpers/python";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const CENTRAL = process.env.KONTROL_E2E_CENTRAL_URL ?? "http://127.0.0.1:8010";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const QA = resolve(BACKEND, "..", "..", "qa");
-const PYTHON = resolve(BACKEND, ".venv", "bin", "python");
 const SENSIBLE = /BEGIN (PUBLIC|PRIVATE) KEY|signature_hex|nonce_sha256|sqlite|postgres|\/tmp|\/home|customer_id|contract_id/i;
 /** La corrida guarda el cuerpo v1 (lleva la licencia vigente, legible para `license:view`); lo que nunca puede llevar es material. */
 const MATERIAL = /BEGIN (PUBLIC|PRIVATE) KEY|X-Kontrol-Signature|signature_hex|nonce|sqlite|postgres|\/tmp|\/home/i;
@@ -56,7 +56,7 @@ function entornoDeQA(): NodeJS.ProcessEnv {
 }
 
 function ayudante(guion: string, argumentos: string[]): string {
-  return execFileSync(PYTHON, [resolve(QA, guion), ...argumentos], { cwd: BACKEND, env: entornoDeQA(), encoding: "utf8", timeout: 120_000 });
+  return ejecutarPython([resolve(QA, guion), ...argumentos], { cwd: BACKEND, env: entornoDeQA(), encoding: "utf8", timeout: 120_000 });
 }
 
 function emite(...argumentos: string[]): Emision {

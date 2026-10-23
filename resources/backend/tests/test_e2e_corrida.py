@@ -484,3 +484,43 @@ def test_e2ecorrida_24_una_sonda_que_termina_mal_aunque_imprima_un_json_valido_f
     assert "sonda del intérprete" in m["error"]
     assert "suite" not in m
     assert "interpretes" not in m
+
+
+def test_e2ecorrida_25_la_suite_recibe_el_interprete_de_la_certificacion_y_no_el_heredado(
+    entorno, puerto_libre
+):
+    entorno["KONTROL_E2E_PYTHON"] = "/opt/heredado/bin/python3"
+    programa = (
+        "import os, sys\n"
+        "assert os.environ['KONTROL_E2E_PYTHON'] == sys.executable, "
+        "(os.environ['KONTROL_E2E_PYTHON'], sys.executable)\n"
+    )
+    corrida, _ = _corrida(entorno, programa)
+    assert corrida.ejecutar() == 0
+    _sin_rastro(corrida)
+    m = _manifiesto(corrida)
+    assert m["suite"]["codigo"] == 0
+
+
+def test_e2ecorrida_26_la_autoridad_exportada_es_exactamente_sys_executable():
+    import ast
+
+    fuente = Path(k.__file__).read_text(encoding="utf-8")
+    arbol = ast.parse(fuente)
+    funcion = next(
+        nodo
+        for nodo in ast.walk(arbol)
+        if isinstance(nodo, ast.FunctionDef) and nodo.name == "entorno_de_procesos"
+    )
+    valores = []
+    for nodo in ast.walk(funcion):
+        if not isinstance(nodo, ast.Dict):
+            continue
+        for clave, valor in zip(nodo.keys, nodo.values, strict=True):
+            if (
+                isinstance(clave, ast.Constant)
+                and clave.value == "KONTROL_E2E_PYTHON"
+            ):
+                valores.append(valor)
+    assert len(valores) == 1
+    assert ast.unparse(valores[0]) == "sys.executable"

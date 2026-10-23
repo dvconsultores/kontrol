@@ -6,8 +6,9 @@
  *
  * Este módulo no contiene pruebas; Playwright solo recoge `*.spec.ts`.
  */
-import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
+
+import { ejecutarPython } from "./python";
 
 const BACKEND = resolve(process.cwd(), "..", "backend");
 
@@ -16,7 +17,7 @@ export function tick(): void {
   if (!url) {
     throw new Error("KONTROL_E2E_DB_URL es obligatoria: el planificador corre contra la base del E2E");
   }
-  execFileSync(resolve(BACKEND, ".venv", "bin", "python"), ["-m", "app.modules.scheduler", "tick"], {
+  ejecutarPython(["-m", "app.modules.scheduler", "tick"], {
     cwd: BACKEND,
     env: { ...process.env, KONTROL_DB_URL: url },
     encoding: "utf8",

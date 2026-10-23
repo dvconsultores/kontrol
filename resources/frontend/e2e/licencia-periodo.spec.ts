@@ -11,10 +11,11 @@
  * nunca retrocede, y conserva el identificador `LIC-E2E` que otras pruebas afirman. `READ_ONLY` y
  * la carrera se prueban en el backend sobre PostgreSQL (ROLLA-08/09, RACE-01..05).
  */
-import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
 import { expect, test, type APIRequestContext } from "@playwright/test";
+
+import { ejecutarPython } from "./helpers/python";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
@@ -46,7 +47,7 @@ function entornoDeQA(): NodeJS.ProcessEnv {
 
 /** Una licencia sintética firmada por el firmante de la corrida (`--anio` = período anual del contrato). */
 function licenciaFirmada(licenseId: string, ...opciones: string[]): Artefacto {
-  const salida = execFileSync(resolve(BACKEND, ".venv", "bin", "python"), [resolve(QA, "licencia_firmada.py"), licenseId, ...opciones], {
+  const salida = ejecutarPython([resolve(QA, "licencia_firmada.py"), licenseId, ...opciones], {
     cwd: BACKEND, env: entornoDeQA(), encoding: "utf8", timeout: 60_000,
   });
   return JSON.parse(salida) as Artefacto;

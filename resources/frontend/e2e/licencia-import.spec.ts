@@ -11,10 +11,11 @@
  * se prueban en backend sobre PostgreSQL (LICIMP-11/12): la siembra siempre activa y mover
  * fechas rompería a los demás trabajadores.
  */
-import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
 import { expect, test, type APIRequestContext } from "@playwright/test";
+
+import { ejecutarPython } from "./helpers/python";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
@@ -38,7 +39,7 @@ function entornoDeQA(): NodeJS.ProcessEnv {
 /** Un usuario de DEMO/D1 con todo el catálogo menos `sin`, escrito en la base de la corrida. */
 function usuarioSin(...sin: string[]): string {
   const usuario = `sinimp${marca()}`;
-  execFileSync(resolve(BACKEND, ".venv", "bin", "python"), [resolve(QA, "rol_sin_permiso.py"), "DEMO", usuario, "D1", ...sin], {
+  ejecutarPython([resolve(QA, "rol_sin_permiso.py"), "DEMO", usuario, "D1", ...sin], {
     cwd: BACKEND, env: entornoDeQA(), encoding: "utf8", timeout: 60_000,
   });
   return usuario;
@@ -51,7 +52,7 @@ interface Artefacto {
 
 /** Una licencia sintética firmada para la instalación de la corrida (o adulterada, según las opciones). */
 function licenciaFirmada(licenseId: string, ...opciones: string[]): Artefacto {
-  const salida = execFileSync(resolve(BACKEND, ".venv", "bin", "python"), [resolve(QA, "licencia_firmada.py"), licenseId, ...opciones], {
+  const salida = ejecutarPython([resolve(QA, "licencia_firmada.py"), licenseId, ...opciones], {
     cwd: BACKEND, env: entornoDeQA(), encoding: "utf8", timeout: 60_000,
   });
   return JSON.parse(salida) as Artefacto;

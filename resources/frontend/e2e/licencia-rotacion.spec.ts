@@ -6,10 +6,11 @@
  * R1 (pre-stage) del runbook. Proyecto `licencia-rotacion`, tras `licencia-sync`. Dirigida, se corre
  * SOLA con `--no-deps`.
  */
-import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
 import { expect, test, type APIRequestContext } from "@playwright/test";
+
+import { ejecutarPython } from "./helpers/python";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
@@ -17,7 +18,6 @@ const KID_A = process.env.KONTROL_E2E_LICENSE_KID_A ?? "kontrol-lic-2026-01";
 const KID_B = process.env.KONTROL_E2E_LICENSE_KID_B ?? "kontrol-lic-2027-01";
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const QA = resolve(BACKEND, "..", "..", "qa");
-const PYTHON = resolve(BACKEND, ".venv", "bin", "python");
 const IMPORT = `${API}/license/import`;
 const SENSIBLE = /BEGIN (PUBLIC|PRIVATE) KEY|signature_hex|KTL-|\/tmp|\/home|postgres|TRUST_KEYS/i;
 
@@ -43,7 +43,7 @@ function entornoDeQA(): NodeJS.ProcessEnv {
 }
 
 function sintetica(...argumentos: string[]): Artefacto {
-  const salida = execFileSync(PYTHON, [resolve(QA, "licencia_firmada.py"), ...argumentos], { cwd: BACKEND, env: entornoDeQA(), encoding: "utf8", timeout: 60_000 });
+  const salida = ejecutarPython([resolve(QA, "licencia_firmada.py"), ...argumentos], { cwd: BACKEND, env: entornoDeQA(), encoding: "utf8", timeout: 60_000 });
   return JSON.parse(salida) as Artefacto;
 }
 

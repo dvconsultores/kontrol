@@ -279,6 +279,9 @@ class Corrida:
             # La autoridad de la corrida, para que el cliente sincronice contra ella por HTTP local (solo QA).
             "KONTROL_E2E_CENTRAL_URL": f"http://127.0.0.1:{PUERTO_CENTRAL}",
             "KONTROL_E2E_CENTRAL_RATE_CAPACITY": str(CAPACIDAD_DE_DESAFIOS_E2E),
+            # El intérprete de ESTA certificación; los ayudantes Python de las specs lo usan
+            # (E2E-SPECS-PYTHON-HELPERS-VENV-FIXED): nunca el heredado, un `.venv` fijo ni el PATH.
+            "KONTROL_E2E_PYTHON": sys.executable,
         })
         return env
 

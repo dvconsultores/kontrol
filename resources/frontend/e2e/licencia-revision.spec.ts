@@ -12,16 +12,16 @@
  * se corre SOLA (`qa/e2e-run.py -- e2e/licencia-revision.spec.ts --no-deps`): con `--no-deps` nada
  * impide que otra suite mueva el período a la vez.
  */
-import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
 import { expect, test, type APIRequestContext } from "@playwright/test";
+
+import { ejecutarPython } from "./helpers/python";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const QA = resolve(BACKEND, "..", "..", "qa");
-const PYTHON = resolve(BACKEND, ".venv", "bin", "python");
 const IMPORT = `${API}/license/import`;
 const SENSIBLE = /installation_id|KTL-|signature_hex|ed25519|public_key|private|\/tmp|\/home|postgres|sqlite|tenant_id|company_id/i;
 
@@ -57,7 +57,7 @@ function entornoDeQA(): NodeJS.ProcessEnv {
 }
 
 function ayudante(guion: string, argumentos: string[]): string {
-  return execFileSync(PYTHON, [resolve(QA, guion), ...argumentos], { cwd: BACKEND, env: entornoDeQA(), encoding: "utf8", timeout: 120_000 });
+  return ejecutarPython([resolve(QA, guion), ...argumentos], { cwd: BACKEND, env: entornoDeQA(), encoding: "utf8", timeout: 120_000 });
 }
 
 /** Una legacy sintética firmada por el firmante de la corrida; con `--revision`, una revisionada hostil. */

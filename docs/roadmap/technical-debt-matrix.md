@@ -2374,3 +2374,24 @@ evidencia.
 Quedan aparte:
 - OBS-09: prioridad 1 automática si llega la evidencia Docker externa;
 - BASE-IMAGE-UPSTREAM-REBUILD-REPIN: DEFERRED / NON-BLOCKING.
+
+## Actualización 2026-10-23 — los ayudantes Python de las E2E corren con el intérprete que se certifica
+
+| Deuda | Estado |
+|---|---|
+| E2E-SPECS-PYTHON-HELPERS-VENV-FIXED | **CLOSED / CONVERGED** (12 sitios → 0; lanzador central `e2e/helpers/python.ts` con `KONTROL_E2E_PYTHON` exportado por el arnés; ayudantes en V5 = 3.13.16, 113 de 113, medido) |
+| E2E-LICENSE-REVISION-ENVIRONMENT-LATENCY | OPEN, menor, sin absorber. Recurrió con contención del anfitrión y alcanzó a las cargas con `clamscan`; candidata a ampliarse a una deuda de margen E2E ante contención del anfitrión |
+
+**Línea base vigente:**
+- SQLite V0 y V5: 1956/0/1064;
+- PostgreSQL V5: 2994/0/26;
+- E2E 284/0/0 en V0 y en V5, con paridad de arnés, migración y ayudantes = 1;
+- pip-audit 0/0; OpenAPI 544/533/11.
+
+**NEXT_RELEASE_ENGINEERING_DEBT = PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES.** Después:
+1. CANONICALIZE-CERTIFICATION-ENVIRONMENT.
+2. Reevaluar la puerta de inicio de Gobierno.
+
+Quedan aparte:
+- OBS-09: prioridad 1 si llega la evidencia Docker;
+- BASE-IMAGE-UPSTREAM-REBUILD-REPIN: DEFERRED / NON-BLOCKING.

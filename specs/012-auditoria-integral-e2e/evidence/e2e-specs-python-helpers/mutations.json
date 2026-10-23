@@ -1,0 +1,299 @@
+[
+ {
+  "id": "M01",
+  "mutacion": "V0 .venv de nuevo en una spec (licencia.spec.ts)",
+  "ficheros": [
+   "resources/frontend/e2e/licencia.spec.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× contrato estructural > ningún literal de cadena que no sea especificador de módulo contiene .venv en e2e/ 85ms",
+   "× contrato estructural > ningún literal de cadena que no sea especificador de módulo es python/python3 del PATH 66ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M02",
+  "mutacion": "V0 .venv de nuevo en otra familia (helpers/planificador.ts)",
+  "ficheros": [
+   "resources/frontend/e2e/helpers/planificador.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× contrato estructural > ningún literal de cadena que no sea especificador de módulo contiene .venv en e2e/ 87ms",
+   "× contrato estructural > ningún literal de cadena que no sea especificador de módulo es python/python3 del PATH 69ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M03",
+  "mutacion": "python del PATH (licencia-sync.spec.ts)",
+  "ficheros": [
+   "resources/frontend/e2e/licencia-sync.spec.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× contrato estructural > ningún literal de cadena que no sea especificador de módulo es python/python3 del PATH 75ms",
+   "× contrato estructural > las llamadas a mecanismos de ejecución de procesos son exactamente las esperadas 34ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M04",
+  "mutacion": "python3 del PATH (licencia-rotacion.spec.ts)",
+  "ficheros": [
+   "resources/frontend/e2e/licencia-rotacion.spec.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× contrato estructural > ningún literal de cadena que no sea especificador de módulo es python/python3 del PATH 73ms",
+   "× contrato estructural > las llamadas a mecanismos de ejecución de procesos son exactamente las esperadas 32ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M05",
+  "mutacion": "respaldo al PATH si falta la autoridad",
+  "ficheros": [
+   "resources/frontend/e2e/helpers/python.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× contrato estructural > ningún literal de cadena que no sea especificador de módulo es python/python3 del PATH 78ms",
+   "× el lanzador usa la autoridad y no la cambia > sin KONTROL_E2E_PYTHON pythonDeLaCertificacion lanza y ejecutarPython no ejecuta 2ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M06",
+  "mutacion": "respaldo al V0 histórico si falta la autoridad",
+  "ficheros": [
+   "resources/frontend/e2e/helpers/python.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× contrato estructural > ningún literal de cadena que no sea especificador de módulo contiene .venv en e2e/ 118ms",
+   "× contrato estructural > ningún literal de cadena que no sea especificador de módulo es python/python3 del PATH 108ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M07",
+  "mutacion": "el lanzador ignora la autoridad",
+  "ficheros": [
+   "resources/frontend/e2e/helpers/python.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "Error: Command failed: /usr/bin/python3 /tmp/kontrol-python-70drCZ/ayudante.cjs uno dos tres",
+  "primer_fallo": [
+   "× contrato estructural > ningún literal de cadena que no sea especificador de módulo es python/python3 del PATH 72ms",
+   "× contrato estructural > las llamadas a mecanismos de ejecución de procesos son exactamente las esperadas 34ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M08",
+  "mutacion": "el lanzador cambia el cwd",
+  "ficheros": [
+   "resources/frontend/e2e/helpers/python.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× el lanzador usa la autoridad y no la cambia > usa exactamente el intérprete indicado y preserva argumentos, cwd y env 31ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M09",
+  "mutacion": "el lanzador pierde el entorno",
+  "ficheros": [
+   "resources/frontend/e2e/helpers/python.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× el lanzador usa la autoridad y no la cambia > usa exactamente el intérprete indicado y preserva argumentos, cwd y env 31ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M10",
+  "mutacion": "el lanzador pierde un argumento",
+  "ficheros": [
+   "resources/frontend/e2e/helpers/python.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× el lanzador usa la autoridad y no la cambia > usa exactamente el intérprete indicado y preserva argumentos, cwd y env 32ms",
+   "× el lanzador usa la autoridad y no la cambia > propaga el status de salida del ayudante 27ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M11",
+  "mutacion": "el lanzador se traga el código de salida",
+  "ficheros": [
+   "resources/frontend/e2e/helpers/python.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× el lanzador usa la autoridad y no la cambia > sin KONTROL_E2E_PYTHON pythonDeLaCertificacion lanza y ejecutarPython no ejecuta 6ms",
+   "× el lanzador usa la autoridad y no la cambia > con KONTROL_E2E_PYTHON relativa lanza y no ejecuta 1ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M12",
+  "mutacion": "la prueba estructural ignora e2e/helpers (compuesto con M02)",
+  "ficheros": [
+   "resources/frontend/e2e/helpers/planificador.ts",
+   "resources/frontend/src/tests/e2e-python-helpers.test.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× contrato estructural > las llamadas a mecanismos de ejecución de procesos son exactamente las esperadas 43ms",
+   "× contrato estructural > inventario positivo exacto de llamadas a ejecutarPython 36ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M13",
+  "mutacion": "la prueba de procedencia compara solo la versión (compuesto: el arnés exporta otro ejecutable de la misma versión)",
+  "ficheros": [
+   "qa/e2e_corrida.py",
+   "resources/backend/tests/test_e2e_corrida.py"
+  ],
+  "orden": "pytest",
+  "rc": 1,
+  "resumen": "1 failed, 1 passed, 25 deselected in 10.90s",
+  "primer_fallo": [
+   "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_26_la_autoridad_exportada_es_exactamente_sys_executable"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M14",
+  "mutacion": "el arnés exporta el V0 histórico (en V5 el ayudante correría en 3.11)",
+  "ficheros": [
+   "qa/e2e_corrida.py"
+  ],
+  "orden": "pytest",
+  "rc": 1,
+  "resumen": "1 failed, 1 passed, 25 deselected in 10.64s",
+  "primer_fallo": [
+   "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_26_la_autoridad_exportada_es_exactamente_sys_executable"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M15",
+  "mutacion": "el arnés exporta otro intérprete distinto del de la certificación",
+  "ficheros": [
+   "qa/e2e_corrida.py"
+  ],
+  "orden": "pytest",
+  "rc": 1,
+  "resumen": "1 failed, 25 deselected in 10.48s",
+  "primer_fallo": [
+   "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_25_la_suite_recibe_el_interprete_de_la_certificacion_y_no_el_heredado"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M16",
+  "mutacion": "sin autoridad el lanzador sigue en silencio",
+  "ficheros": [
+   "resources/frontend/e2e/helpers/python.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× el lanzador usa la autoridad y no la cambia > sin KONTROL_E2E_PYTHON pythonDeLaCertificacion lanza y ejecutarPython no ejecuta 6ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M17",
+  "mutacion": "el arnés respeta el valor heredado",
+  "ficheros": [
+   "qa/e2e_corrida.py"
+  ],
+  "orden": "pytest",
+  "rc": 1,
+  "resumen": "1 failed, 25 deselected in 10.43s",
+  "primer_fallo": [
+   "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_25_la_suite_recibe_el_interprete_de_la_certificacion_y_no_el_heredado"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M18",
+  "mutacion": "el arnés no exporta la autoridad",
+  "ficheros": [
+   "qa/e2e_corrida.py"
+  ],
+  "orden": "pytest",
+  "rc": 1,
+  "resumen": "1 failed, 25 deselected in 10.19s",
+  "primer_fallo": [
+   "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_25_la_suite_recibe_el_interprete_de_la_certificacion_y_no_el_heredado"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ },
+ {
+  "id": "M19",
+  "mutacion": "se acepta una autoridad relativa",
+  "ficheros": [
+   "resources/frontend/e2e/helpers/python.ts"
+  ],
+  "orden": "vitest",
+  "rc": 1,
+  "resumen": "⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯",
+  "primer_fallo": [
+   "× el lanzador usa la autoridad y no la cambia > con KONTROL_E2E_PYTHON relativa lanza y no ejecuta 5ms"
+  ],
+  "estado": "KILLED",
+  "restaurado": true
+ }
+]
