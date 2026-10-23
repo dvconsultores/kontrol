@@ -4,7 +4,7 @@
 - IDL-02 el lock contiene reportlab, python-magic y los extras de uvicorn[standard];
 - IDL-03 cada línea del lock es un pin exacto y único;
 - IDL-04 la cabecera declara el comando canónico uv pip compile;
-- IDL-05 el lock respeta el suelo de cve-review;
+- IDL-05 el lock que corresponde (runtime o certificación) respeta los suelos de cve-review;
 - IDL-06 la imagen instala el lock sin volver a resolver dependencias;
 - IDL-07 los analizadores detectan desviaciones.
 """
@@ -29,8 +29,10 @@ SUELOS_CVE: dict[str, str] = {
     "cryptography": "50.0.2",
     "pyjwt": "2.15.0",
     "python-multipart": "0.0.31",
-    "pytest": "9.0.3",
 }
+
+# Suelo de cve-review que aplica al grafo de certificación, no al runtime.
+SUELOS_CVE_CERTIFICACION: dict[str, str] = {"pytest": "9.0.3"}
 
 EXTRAS_UVICORN_STANDARD = frozenset({"httptools", "uvloop", "watchfiles", "websockets", "python-dotenv", "pyyaml"})
 
@@ -128,6 +130,11 @@ def _lock_texto() -> str:
     return (BACKEND / "requirements.lock").read_text()
 
 
+def _lock_certificacion_texto() -> str:
+    """Lee requirements-test.lock."""
+    return (BACKEND / "requirements-test.lock").read_text(encoding="utf-8")
+
+
 def _requirements_texto() -> str:
     """Lee requirements.txt."""
     return (BACKEND / "requirements.txt").read_text()
@@ -171,10 +178,20 @@ def test_idl_04_la_cabecera_declara_el_comando_canonico() -> None:
 
 
 def test_idl_05_el_lock_respeta_el_suelo_de_cve_review() -> None:
-    lock = _pines(_lock_texto())
+    lock_runtime = _pines(_lock_texto())
     for paquete, suelo in SUELOS_CVE.items():
-        assert paquete in lock, f"{paquete} no está en el lock"
-        assert Version(lock[paquete]) >= Version(suelo), f"{paquete}: lock {lock[paquete]} < suelo {suelo}"
+        assert paquete in lock_runtime, f"{paquete} no está en el lock"
+        assert Version(lock_runtime[paquete]) >= Version(suelo), f"{paquete}: lock {lock_runtime[paquete]} < suelo {suelo}"
+
+    lock_certificacion = _pines(_lock_certificacion_texto())
+    for paquete, suelo in SUELOS_CVE_CERTIFICACION.items():
+        assert paquete in lock_certificacion, f"{paquete} no está en el lock de certificación"
+        assert Version(lock_certificacion[paquete]) >= Version(
+            suelo
+        ), f"{paquete}: lock certificación {lock_certificacion[paquete]} < suelo {suelo}"
+
+    for paquete in SUELOS_CVE_CERTIFICACION:
+        assert paquete not in lock_runtime, f"{paquete} es de certificación y no debe estar en el lock runtime"
 
 
 def test_idl_06_la_imagen_instala_el_lock_sin_volver_a_resolver() -> None:

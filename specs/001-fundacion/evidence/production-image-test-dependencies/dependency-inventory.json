@@ -1,0 +1,606 @@
+{
+ "head": "31297a1",
+ "metodo": "lock previo (49) recompilado como runtime (requirements.txt sin herramientas) y certificación (--constraint requirements.lock, mismo corte); clasificación por raíces '# via' + AST de imports de app/, central_authority/, alembic/, scripts/ (0 imports de las 11) + humo V6R sin herramientas (119 módulos)",
+ "RUNTIME_DIRECT_PACKAGES_PRE": 18,
+ "RUNTIME_DIRECT_PACKAGES_POST": 14,
+ "RUNTIME_GRAPH_PACKAGES_PRE": 49,
+ "RUNTIME_GRAPH_PACKAGES_POST": 38,
+ "CERTIFICATION_DIRECT_PACKAGES": 4,
+ "CERTIFICATION_GRAPH_PACKAGES": 49,
+ "REMOVED_FROM_RUNTIME": [
+  "certifi",
+  "httpcore",
+  "httpx",
+  "iniconfig",
+  "mypy",
+  "mypy-extensions",
+  "packaging",
+  "pluggy",
+  "pygments",
+  "pytest",
+  "ruff"
+ ],
+ "RETAINED_IN_RUNTIME": 38,
+ "VERSION_CHANGES_IN_RUNTIME": 0,
+ "CERTIFICATION_GRAPH_EQUALS_PREVIOUS_LOCK": 1,
+ "HTTPX_RUNTIME_REQUIRED": 0,
+ "UNDECLARED_RUNTIME_DEPENDENCIES": 0,
+ "UNKNOWN_PACKAGES": 0,
+ "OPCIONAL_PREVIO_FUERA_DE_ALCANCE": {
+  "boto3": "import perezoso protegido por ImportError en app/modules/documents/storage.py (proveedor S3 opcional); nunca estuvo en el lock; deuda PRODUCT-OPTIONAL-S3-PROVIDER-DEPENDENCY-UNDECLARED"
+ },
+ "filas": [
+  {
+   "PACKAGE": "alembic",
+   "VERSION": "1.14.0",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "annotated-doc",
+   "VERSION": "0.0.5",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "fastapi"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "annotated-types",
+   "VERSION": "0.8.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "pydantic"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "anyio",
+   "VERSION": "4.15.1",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "httpx",
+    "starlette",
+    "watchfiles"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "argon2-cffi",
+   "VERSION": "23.1.0",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "argon2-cffi-bindings",
+   "VERSION": "26.1.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "argon2-cffi"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "certifi",
+   "VERSION": "2026.10.19",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "httpcore",
+    "httpx"
+   ],
+   "IN_RUNTIME_LOCK": 0,
+   "PRODUCT_IMPORT_COUNT": 0,
+   "CLASSIFICATION": "TRANSITIVE_TEST (solo vía httpx/httpcore; el producto no usa certifi ni ssl)"
+  },
+  {
+   "PACKAGE": "cffi",
+   "VERSION": "2.1.1",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "argon2-cffi-bindings",
+    "cryptography"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "charset-normalizer",
+   "VERSION": "3.5.2",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "reportlab"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "click",
+   "VERSION": "8.5.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "uvicorn"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "cryptography",
+   "VERSION": "50.0.2",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "dnspython",
+   "VERSION": "2.9.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "email-validator"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "email-validator",
+   "VERSION": "2.2.0",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "fastapi",
+   "VERSION": "0.141.1",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "h11",
+   "VERSION": "0.16.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "httpcore",
+    "uvicorn"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "httpcore",
+   "VERSION": "1.0.9",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "httpx"
+   ],
+   "IN_RUNTIME_LOCK": 0,
+   "PRODUCT_IMPORT_COUNT": 0,
+   "CLASSIFICATION": "TRANSITIVE_TEST (solo vía httpx)"
+  },
+  {
+   "PACKAGE": "httptools",
+   "VERSION": "0.9.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "uvicorn"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "httpx",
+   "VERSION": "0.28.1",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements-test.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 0,
+   "PRODUCT_IMPORT_COUNT": 0,
+   "CLASSIFICATION": "CERTIFICATION_ONLY (cliente de TestClient en pruebas; el producto no lo importa)"
+  },
+  {
+   "PACKAGE": "idna",
+   "VERSION": "3.20",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "anyio",
+    "email-validator",
+    "httpx"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "iniconfig",
+   "VERSION": "2.3.1",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "pytest"
+   ],
+   "IN_RUNTIME_LOCK": 0,
+   "PRODUCT_IMPORT_COUNT": 0,
+   "CLASSIFICATION": "TRANSITIVE_TEST (solo vía pytest)"
+  },
+  {
+   "PACKAGE": "mako",
+   "VERSION": "1.4.3",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "alembic"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "markupsafe",
+   "VERSION": "3.0.4",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "mako"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "mypy",
+   "VERSION": "1.13.0",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements-test.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 0,
+   "PRODUCT_IMPORT_COUNT": 0,
+   "CLASSIFICATION": "QUALITY_ONLY"
+  },
+  {
+   "PACKAGE": "mypy-extensions",
+   "VERSION": "1.1.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "mypy"
+   ],
+   "IN_RUNTIME_LOCK": 0,
+   "PRODUCT_IMPORT_COUNT": 0,
+   "CLASSIFICATION": "TRANSITIVE_TEST (solo vía mypy)"
+  },
+  {
+   "PACKAGE": "packaging",
+   "VERSION": "26.3",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "pytest"
+   ],
+   "IN_RUNTIME_LOCK": 0,
+   "PRODUCT_IMPORT_COUNT": 0,
+   "CLASSIFICATION": "TRANSITIVE_TEST (solo vía pytest)"
+  },
+  {
+   "PACKAGE": "pillow",
+   "VERSION": "13.0.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "reportlab"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "pluggy",
+   "VERSION": "1.7.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "pytest"
+   ],
+   "IN_RUNTIME_LOCK": 0,
+   "PRODUCT_IMPORT_COUNT": 0,
+   "CLASSIFICATION": "TRANSITIVE_TEST (solo vía pytest)"
+  },
+  {
+   "PACKAGE": "psycopg2-binary",
+   "VERSION": "2.9.10",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "pycparser",
+   "VERSION": "3.11",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "cffi"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "pydantic",
+   "VERSION": "2.10.4",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [
+    "fastapi",
+    "pydantic-settings"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "pydantic-core",
+   "VERSION": "2.27.2",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "pydantic"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "pydantic-settings",
+   "VERSION": "2.7.0",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "pygments",
+   "VERSION": "2.21.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "pytest"
+   ],
+   "IN_RUNTIME_LOCK": 0,
+   "PRODUCT_IMPORT_COUNT": 0,
+   "CLASSIFICATION": "TRANSITIVE_TEST (solo vía pytest)"
+  },
+  {
+   "PACKAGE": "pyjwt",
+   "VERSION": "2.15.0",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "pytest",
+   "VERSION": "9.0.3",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements-test.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 0,
+   "PRODUCT_IMPORT_COUNT": 0,
+   "CLASSIFICATION": "CERTIFICATION_ONLY"
+  },
+  {
+   "PACKAGE": "python-dotenv",
+   "VERSION": "1.2.4",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "pydantic-settings",
+    "uvicorn"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "python-magic",
+   "VERSION": "0.4.27",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "python-multipart",
+   "VERSION": "0.0.31",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "pyyaml",
+   "VERSION": "6.0.3",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "uvicorn"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "reportlab",
+   "VERSION": "5.0.0",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "ruff",
+   "VERSION": "0.8.4",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements-test.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 0,
+   "PRODUCT_IMPORT_COUNT": 0,
+   "CLASSIFICATION": "QUALITY_ONLY"
+  },
+  {
+   "PACKAGE": "sqlalchemy",
+   "VERSION": "2.0.36",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [
+    "alembic"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "starlette",
+   "VERSION": "1.9.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "fastapi"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "typing-extensions",
+   "VERSION": "4.16.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "alembic",
+    "anyio",
+    "fastapi",
+    "mypy",
+    "pydantic",
+    "pydantic-core",
+    "sqlalchemy",
+    "typing-inspection"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "typing-inspection",
+   "VERSION": "0.4.4",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "fastapi"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "uvicorn",
+   "VERSION": "0.32.1",
+   "DIRECT_OR_TRANSITIVE": "DIRECT",
+   "DECLARED_IN": "requirements.txt",
+   "PARENTS": [],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "RUNTIME_REQUIRED"
+  },
+  {
+   "PACKAGE": "uvloop",
+   "VERSION": "0.23.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "uvicorn"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "watchfiles",
+   "VERSION": "1.3.0",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "uvicorn"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  },
+  {
+   "PACKAGE": "websockets",
+   "VERSION": "17.3",
+   "DIRECT_OR_TRANSITIVE": "TRANSITIVE",
+   "DECLARED_IN": "—",
+   "PARENTS": [
+    "uvicorn"
+   ],
+   "IN_RUNTIME_LOCK": 1,
+   "PRODUCT_IMPORT_COUNT": null,
+   "CLASSIFICATION": "TRANSITIVE_RUNTIME"
+  }
+ ]
+}

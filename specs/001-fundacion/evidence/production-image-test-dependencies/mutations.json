@@ -1,0 +1,395 @@
+{
+ "MUTATIONS_MEANINGFUL": 25,
+ "MUTATIONS_KILLED": 25,
+ "MUTATIONS_SURVIVED": 0,
+ "RESTORED": "25/25",
+ "PRIMERA_PASADA": "23/25 (M23 y M25 sobrevivieron: huecos reales)",
+ "mutantes": [
+  {
+   "id": "M01",
+   "mutacion": "pytest de nuevo en el manifiesto runtime",
+   "ficheros": [
+    "resources/backend/requirements.txt"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed in 5.03s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_01_el_manifiesto_runtime_no_declara_herramientas"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M02",
+   "mutacion": "ruff de nuevo en el manifiesto runtime",
+   "ficheros": [
+    "resources/backend/requirements.txt"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed in 3.01s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_01_el_manifiesto_runtime_no_declara_herramientas"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M03",
+   "mutacion": "mypy de nuevo en el manifiesto runtime",
+   "ficheros": [
+    "resources/backend/requirements.txt"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed in 2.63s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_01_el_manifiesto_runtime_no_declara_herramientas"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M04",
+   "mutacion": "una transitiva solo de pruebas (packaging) de nuevo en el lock runtime",
+   "ficheros": [
+    "resources/backend/requirements.lock"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 2 passed in 2.62s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_03_el_lock_runtime_no_contiene_nada_exclusivo_de_certificacion_y_el_de_certificacion_lo"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M05",
+   "mutacion": "se quita del lock runtime una dependencia real (python-magic)",
+   "ficheros": [
+    "resources/backend/requirements.lock"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 2 passed in 2.55s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_03_el_lock_runtime_no_contiene_nada_exclusivo_de_certificacion_y_el_de_certificacion_lo"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M06",
+   "mutacion": "el runtime instala el lock de certificación",
+   "ficheros": [
+    "Dockerfile.backend"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 5 passed in 2.62s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_06_la_imagen_instala_cada_lock_en_su_etapa_y_nunca_paquetes_sueltos"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M07",
+   "mutacion": "la etapa por defecto pasa a heredar de dev",
+   "ficheros": [
+    "Dockerfile.backend"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 5 passed in 2.70s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_06_la_imagen_instala_cada_lock_en_su_etapa_y_nunca_paquetes_sueltos"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M08",
+   "mutacion": "el runtime copia tests/",
+   "ficheros": [
+    "Dockerfile.backend"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 6 passed in 2.59s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_07_la_cadena_runtime_no_copia_pruebas_qa_ni_pyproject_toml"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M09",
+   "mutacion": "el runtime copia qa/",
+   "ficheros": [
+    "Dockerfile.backend"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 6 passed in 2.61s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_07_la_cadena_runtime_no_copia_pruebas_qa_ni_pyproject_toml"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M10",
+   "mutacion": "el resolutor de certificación ya no se restringe al runtime (sin --constraint)",
+   "ficheros": [
+    "resources/backend/requirements-test.lock"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 4 passed in 2.64s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_05_la_cabecera_del_lock_de_certificacion_hereda_la_configuracion_del_runtime"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M11",
+   "mutacion": "SQLAlchemy distinto entre runtime y certificación",
+   "ficheros": [
+    "resources/backend/requirements-test.lock"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 3 passed in 2.59s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_04_las_versiones_del_subconjunto_runtime_coinciden_en_ambos_locks"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M12",
+   "mutacion": "cryptography distinto entre runtime y certificación",
+   "ficheros": [
+    "resources/backend/requirements-test.lock"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 3 passed in 2.66s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_04_las_versiones_del_subconjunto_runtime_coinciden_en_ambos_locks"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M13",
+   "mutacion": "el grafo de certificación usa otro corte (no determinista frente al runtime)",
+   "ficheros": [
+    "resources/backend/requirements-test.lock"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 4 passed in 2.62s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_05_la_cabecera_del_lock_de_certificacion_hereda_la_configuracion_del_runtime"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M14",
+   "mutacion": "el lock runtime baja de un suelo de seguridad (starlette)",
+   "ficheros": [
+    "resources/backend/requirements.lock"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 3 passed in 2.62s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_04_las_versiones_del_subconjunto_runtime_coinciden_en_ambos_locks"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M15",
+   "mutacion": "el runtime pierde libmagic",
+   "ficheros": [
+    "Dockerfile.backend"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 35 passed in 5.51s",
+   "primer_fallo": [
+    "FAILED tests/test_imagen_backend_base.py::test_ibb_05_ca_certificates_fijado_a_la_version_corregida"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M16",
+   "mutacion": "el runtime pierde el pin de CA",
+   "ficheros": [
+    "Dockerfile.backend"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 35 passed in 5.50s",
+   "primer_fallo": [
+    "FAILED tests/test_imagen_backend_base.py::test_ibb_05_ca_certificates_fijado_a_la_version_corregida"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M17",
+   "mutacion": "el runtime arranca con --reload",
+   "ficheros": [
+    "Dockerfile.backend"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed, 38 passed in 5.52s",
+   "primer_fallo": [
+    "FAILED tests/test_imagen_backend_etapas.py::test_ibe_02_el_runtime_arranca_sin_reload_y_con_keep_alive_75"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M18",
+   "mutacion": "la prueba de ausencia solo mira pytest (compuesto: ruff vuelve al runtime)",
+   "ficheros": [
+    "resources/backend/requirements.txt",
+    "resources/backend/tests/test_dependencias_frontera.py"
+   ],
+   "orden": "deps",
+   "rc": 1,
+   "resumen": "1 failed in 2.64s",
+   "primer_fallo": [
+    "FAILED tests/test_dependencias_frontera.py::test_idf_01_el_manifiesto_runtime_no_declara_herramientas"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M19",
+   "mutacion": "el backend de la corrida vuelve a sys.executable",
+   "ficheros": [
+    "qa/e2e_corrida.py"
+   ],
+   "orden": "arnes",
+   "rc": 1,
+   "resumen": "1 failed, 4 passed, 27 deselected in 27.03s",
+   "primer_fallo": [
+    "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_31_los_procesos_de_producto_usan_el_interprete_de_producto"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M20",
+   "mutacion": "la autoridad de la corrida vuelve a sys.executable",
+   "ficheros": [
+    "qa/e2e_corrida.py"
+   ],
+   "orden": "arnes",
+   "rc": 1,
+   "resumen": "1 failed, 4 passed, 27 deselected in 28.29s",
+   "primer_fallo": [
+    "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_31_los_procesos_de_producto_usan_el_interprete_de_producto"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M21",
+   "mutacion": "no se valida el intérprete de producto",
+   "ficheros": [
+    "qa/e2e_corrida.py"
+   ],
+   "orden": "arnes",
+   "rc": 1,
+   "resumen": "1 failed, 2 passed, 27 deselected in 42.01s",
+   "primer_fallo": [
+    "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_29_un_interprete_de_producto_que_no_es_ruta_absoluta_ejecutable_no_crea_nada"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M22",
+   "mutacion": "la paridad de runtime siempre vale 1",
+   "ficheros": [
+    "qa/e2e_corrida.py"
+   ],
+   "orden": "arnes",
+   "rc": 1,
+   "resumen": "1 failed, 3 passed, 27 deselected in 31.94s",
+   "primer_fallo": [
+    "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_30_la_paridad_de_runtime_exige_misma_version_de_todo_paquete_del_producto"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M23",
+   "mutacion": "la sonda nunca ve herramientas de prueba",
+   "ficheros": [
+    "qa/e2e_corrida.py"
+   ],
+   "orden": "arnes",
+   "rc": 1,
+   "resumen": "1 failed, 27 deselected in 16.35s",
+   "primer_fallo": [
+    "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_27_sin_opcion_el_producto_corre_con_el_interprete_del_arnes"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "primera_pasada": {
+    "estado": "SURVIVED",
+    "resumen": "33 passed, 27 deselected in 37.10s"
+   },
+   "nota": "sobrevivió en la primera pasada; muere con T4 (e2ecorrida_27 exige pytest en las herramientas vistas en un solo entorno; e2ecorrida_32 prueba que main pasa --python-de-producto)"
+  },
+  {
+   "id": "M24",
+   "mutacion": "con opción el modo sigue siendo UN_SOLO_ENTORNO",
+   "ficheros": [
+    "qa/e2e_corrida.py"
+   ],
+   "orden": "arnes",
+   "rc": 1,
+   "resumen": "1 failed, 1 passed, 27 deselected in 25.78s",
+   "primer_fallo": [
+    "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_28_con_opcion_el_producto_corre_con_el_interprete_indicado"
+   ],
+   "estado": "KILLED",
+   "restaurado": true
+  },
+  {
+   "id": "M25",
+   "mutacion": "main no pasa --python-de-producto a la corrida",
+   "ficheros": [
+    "qa/e2e_corrida.py"
+   ],
+   "orden": "arnes",
+   "rc": 1,
+   "resumen": "1 failed, 5 passed, 27 deselected in 32.15s",
+   "primer_fallo": [
+    "FAILED tests/test_e2e_corrida.py::test_e2ecorrida_32_main_pasa_el_interprete_de_producto_a_la_corrida"
+   ],
+   "estado": "KILLED",
+   "restaurado": true,
+   "primera_pasada": {
+    "estado": "SURVIVED",
+    "resumen": "33 passed, 27 deselected in 36.76s"
+   },
+   "nota": "sobrevivió en la primera pasada; muere con T4 (e2ecorrida_27 exige pytest en las herramientas vistas en un solo entorno; e2ecorrida_32 prueba que main pasa --python-de-producto)"
+  }
+ ]
+}

@@ -119,3 +119,27 @@ Esto no es canonicalización: RELEASE_DEPLOYMENT_PARITY_CERTIFIED sigue en 0.
 - El suelo de transitivas está en `docs/evidence/cve-review.md` §«Avisos de dependencias transitivas» y lo protege
   SDV-08.
 - Evidencia: `evidence/lock-certifi-cutoff/`.
+
+## Actualización 2026-10-23 — runtime y certificación separados (PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES)
+
+| Grafo | Manifiesto directo | Lock | Paquetes | Lo instala |
+|---|---|---|---|---|
+| **Runtime (V6R)** | `requirements.txt` (14 directas) | `requirements.lock` | **38** | etapa `base` → `runtime` (imagen publicada) |
+| **Certificación (V6C)** | `requirements-test.txt` = `-r requirements.txt` + pytest, httpx, ruff, mypy | `requirements-test.lock` | **49** = runtime exacto + 11 | etapa `dev`, venvs de QA |
+
+**Salen del runtime** (sin ningún import del producto; el humo V6R importa los 119 módulos sin ellos):
+- certifi, httpcore, httpx;
+- iniconfig, packaging, pluggy, pygments, pytest;
+- mypy, mypy-extensions, ruff.
+
+**Órdenes canónicas** (desde `resources/backend/`, uv 0.12.17):
+
+    uv pip compile requirements.txt --python-version 3.13 --python-platform x86_64-unknown-linux-gnu --exclude-newer 2026-10-20T02:24:15.073Z --upgrade -o requirements.lock
+    uv pip compile requirements-test.txt --constraint requirements.lock --python-version 3.13 --python-platform x86_64-unknown-linux-gnu --exclude-newer 2026-10-20T02:24:15.073Z --upgrade -o requirements-test.lock
+
+Con `--custom-compile-command "<la misma orden>"`, para que la cabecera quede completa.
+
+**Invariantes protegidos por IDF:**
+- El lock de certificación se resuelve **con el runtime como restricción** y **el mismo corte**: no puede sustituir la versión de ningún paquete del runtime (IDF-04/05).
+- Regenerar sobre sí mismos da ficheros byte a byte iguales.
+- El grafo de certificación es idéntico al lock de 49 paquetes certificado hasta `31297a1`: las herramientas no cambian de versión.

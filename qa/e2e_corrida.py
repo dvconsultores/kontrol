@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 import os
 import re
@@ -68,6 +69,15 @@ SALIDA_INTERRUMPIDA = 130
 TUNELES = ("proton", "tun", "wg", "tap", "ipv6leak", "ppp")
 #: Desvío entre el reloj de pared y el monotónico a partir del cual la corrida declara un salto de reloj.
 UMBRAL_SALTO_DE_RELOJ_S = 5.0
+HERRAMIENTAS_DE_PRUEBA: tuple[str, ...] = ("pytest", "_pytest", "httpx", "httpcore", "certifi", "ruff", "mypy", "mypy_extensions", "packaging", "pygments", "pluggy", "iniconfig")
+SONDA_DEL_PRODUCTO: str = (
+    "import importlib.metadata, importlib.util, json, os, re, sys; "
+    f"h = {json.dumps(list(HERRAMIENTAS_DE_PRUEBA))}; "
+    "print(json.dumps({'ejecutable': sys.executable, 'exe_real': os.path.realpath('/proc/self/exe'), "
+    "'python': '%d.%d.%d' % sys.version_info[:3], "
+    "'herramientas': sorted(n for n in h if importlib.util.find_spec(n) is not None), "
+    "'distribuciones': {re.sub(r'[-_.]+', '-', d.metadata['Name']).lower(): d.version for d in importlib.metadata.distributions()}}))"
+)
 # La sonda se ejecuta con el mismo ejecutable, cwd y entorno que la migración de la autoridad.
 #: Programa que mide qué intérprete ejecuta la migración de la Autoridad Central.
 SONDA_DEL_INTERPRETE: str = (
@@ -169,6 +179,21 @@ def sanear(texto: str, raices: Mapping[str, str]) -> str:
     return texto
 
 
+def paridad_de_runtime(producto: Mapping[str, str], arnes: Mapping[str, str]) -> int:
+    """1 si todo paquete del producto está en el arnés con la misma versión (excluyendo pip), 0 si no."""
+    for nombre, version in producto.items():
+        if nombre == "pip":
+            continue
+        if arnes.get(nombre) != version:
+            return 0
+    return 1
+
+
+def _canonico_pep503(nombre: str) -> str:
+    """Canoniza un nombre de distribución según PEP 503."""
+    return re.sub(r"[-_.]+", "-", nombre).lower()
+
+
 def paridad_de_interpretes(arnes: Mapping[str, Any], hijo: Mapping[str, Any]) -> int:
     """1 si coinciden ejecutable, exe_real y python; 0 en caso contrario."""
     coinciden = (
@@ -195,7 +220,8 @@ class Corrida:
     def __init__(self, servidor: base.Servidor, *, orden: list[str] | None = None,
                  argumentos: list[str] | None = None, sin_frontend: bool = False,
                  con_analizador: bool = False,
-                 entorno: Mapping[str, str] | None = None, salida: IO[str] | None = None) -> None:
+                 entorno: Mapping[str, str] | None = None, salida: IO[str] | None = None,
+                 python_de_producto: str | None = None) -> None:
         self.servidor = servidor
         self.orden = orden
         self.argumentos = list(argumentos or [])
@@ -206,6 +232,9 @@ class Corrida:
         self.con_analizador = con_analizador
         self.entorno = dict(os.environ if entorno is None else entorno)
         self.salida = salida or sys.stdout
+        self.python_de_producto = python_de_producto or sys.executable
+        # Sin opción, la corrida es de un solo entorno, como V0; con la opción, el producto corre en el runtime puro.
+        self.modo_de_producto = "RUNTIME_SEPARADO" if python_de_producto else "UN_SOLO_ENTORNO"
         self.run_id = nombres.nuevo_run_id(datetime.now(UTC), os.getpid(), secrets.token_hex(3))
         self.base = nombres.nombre_de_base(self.run_id)
         self.estado = Path(self.entorno.get("KONTROL_E2E_STATE_DIR", "/tmp/kontrol-e2e")) / self.run_id
@@ -359,6 +388,8 @@ class Corrida:
     def comprobar(self) -> None:
         """Lo que tiene que ser cierto antes de crear nada."""
         base.exigir_base_e2e(self.base, admin_url=self.servidor.admin_url, entorno=self.entorno)
+        if self.modo_de_producto == "RUNTIME_SEPARADO" and (not os.path.isabs(self.python_de_producto) or not os.path.exists(self.python_de_producto) or not os.access(self.python_de_producto, os.X_OK)):
+            raise base.CicloDeBaseRoto("el intérprete de producto no es una ruta absoluta ejecutable")
         ocupados = [puerto for host, puerto in (("127.0.0.1", PUERTO_BACKEND), ("127.0.0.1", PUERTO_CENTRAL), ("localhost", PUERTO_FRONTEND))
                     if (puerto != PUERTO_FRONTEND or not self.sin_frontend) and _puerto_ocupado(host, puerto)]
         if ocupados:
@@ -437,9 +468,49 @@ class Corrida:
 
     def arrancar_backend(self) -> None:
         self.fase("backend")
-        self.arrancar("backend", [sys.executable, "-m", "uvicorn", "app.main:app", "--timeout-keep-alive", str(KEEP_ALIVE_SEGUNDOS), "--host", "127.0.0.1",
+        self.anotar_interprete_de_producto()
+        self.arrancar("backend", [self.python_de_producto, "-m", "uvicorn", "app.main:app", "--timeout-keep-alive", str(KEEP_ALIVE_SEGUNDOS), "--host", "127.0.0.1",
                                   "--port", str(PUERTO_BACKEND)], base.BACKEND)
         self.esperar_salud("backend", f"{API}/health/ready")
+
+    def anotar_interprete_de_producto(self) -> None:
+        raices = raices_a_sanear(self.entorno)
+        resultado = subprocess.run([self.python_de_producto, "-c", SONDA_DEL_PRODUCTO], cwd=base.BACKEND,
+                                   env=self.entorno_de_procesos(), capture_output=True, text=True, check=False)
+        if resultado.returncode != 0:
+            raise base.CicloDeBaseRoto("la sonda del intérprete de producto falló")
+        try:
+            sonda = json.loads(resultado.stdout)
+        except (json.JSONDecodeError, ValueError) as error:
+            raise base.CicloDeBaseRoto("la sonda del intérprete de producto falló") from error
+        if not isinstance(sonda, dict) or set(sonda) != {"ejecutable", "exe_real", "python", "herramientas", "distribuciones"}:
+            raise base.CicloDeBaseRoto("la sonda del intérprete de producto falló")
+        ejecutable = sonda["ejecutable"]
+        exe_real = sonda["exe_real"]
+        python = sonda["python"]
+        herramientas = sonda["herramientas"]
+        distribuciones = sonda["distribuciones"]
+        if not isinstance(ejecutable, str) or not isinstance(exe_real, str) or not isinstance(python, str):
+            raise base.CicloDeBaseRoto("la sonda del intérprete de producto falló")
+        if not isinstance(herramientas, list) or not all(isinstance(item, str) for item in herramientas):
+            raise base.CicloDeBaseRoto("la sonda del intérprete de producto falló")
+        if not isinstance(distribuciones, dict) or not all(isinstance(clave, str) and isinstance(valor, str) for clave, valor in distribuciones.items()):
+            raise base.CicloDeBaseRoto("la sonda del intérprete de producto falló")
+        arnes = {_canonico_pep503(d.metadata["Name"]): d.version for d in importlib.metadata.distributions()}
+        paridad = paridad_de_runtime(distribuciones, arnes)
+        self.manifiesto["interprete_de_producto"] = {
+            "modo": self.modo_de_producto,
+            "autoridad": sanear(self.python_de_producto, raices),
+            "ejecutable": sanear(ejecutable, raices),
+            "exe_real": sanear(exe_real, raices),
+            "python": python,
+            "herramientas_de_prueba": herramientas,
+            "paquetes": len(distribuciones),
+            "paridad_runtime": paridad,
+        }
+        self.anotar()
+        self.decir(f"[e2e {self.run_id}] producto: {python} · {self.modo_de_producto} · herramientas de prueba: {', '.join(herramientas) or 'ninguna'} · runtime = arnés: {paridad}")
+
 
     def anotar_interpretes(self, entorno: dict[str, str]) -> None:
         """Anota en el manifiesto qué intérprete ejecuta el arnés y cuál la migración de la autoridad."""
@@ -485,7 +556,7 @@ class Corrida:
         if resultado.returncode != 0:
             raise base.CicloDeBaseRoto("las migraciones de la Autoridad Central fallaron (ver autoridad-migraciones.log)")
         registro = open(self.evidencia / "autoridad.log", "ab")  # noqa: SIM115 - vive lo que el proceso
-        proceso = subprocess.Popen([sys.executable, "-m", "uvicorn", "central_authority.main:app", "--timeout-keep-alive", str(KEEP_ALIVE_SEGUNDOS), "--host", "127.0.0.1",
+        proceso = subprocess.Popen([self.python_de_producto, "-m", "uvicorn", "central_authority.main:app", "--timeout-keep-alive", str(KEEP_ALIVE_SEGUNDOS), "--host", "127.0.0.1",
                                     "--port", str(PUERTO_CENTRAL)], cwd=base.BACKEND, env=entorno, stdout=registro,
                                    stderr=subprocess.STDOUT, start_new_session=True)
         registro.close()
@@ -779,9 +850,12 @@ def main(argv: list[str] | None = None) -> int:
                         help="exige ClamAV real (qa/clamav_qa.py): preflight antes de la corrida y rutas al backend")
     parser.add_argument("--orden", metavar="PROGRAMA",
                         help="programa que se ejecuta en lugar de Playwright, desde la raíz del repositorio")
+    parser.add_argument("--python-de-producto", metavar="RUTA",
+                        help="intérprete del runtime puro para el backend y la autoridad; sin ella, el del arnés")
     args, resto = parser.parse_known_args(argv)
     if resto[:1] == ["--"]:
         resto = resto[1:]
     corrida = Corrida(base.Servidor.del_entorno(), orden=[args.orden] if args.orden else None,
-                      argumentos=resto, sin_frontend=args.sin_frontend, con_analizador=args.con_analizador)
+                      argumentos=resto, sin_frontend=args.sin_frontend, con_analizador=args.con_analizador,
+                      python_de_producto=args.python_de_producto)
     return corrida.ejecutar()

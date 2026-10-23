@@ -1,6 +1,7 @@
 # KONTROL - Backend dependencies
 # Regla: versiones fijadas (ADR-014). No usar rangos abiertos en producción.
 # Se generará un lockfile (requirements.lock / uv.lock) durante el build.
+# Solo dependencias de ejecución del producto; pruebas y calidad en requirements-test.txt (nunca en la imagen de producción).
 
 fastapi==0.141.1
 uvicorn[standard]==0.32.1
@@ -16,9 +17,3 @@ email-validator==2.2.0
 python-multipart==0.0.31
 reportlab==5.0.0
 python-magic==0.4.27
-
-# Tests / calidad
-pytest==9.0.3
-httpx==0.28.1
-ruff==0.8.4
-mypy==1.13.0

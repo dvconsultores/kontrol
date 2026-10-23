@@ -2395,3 +2395,29 @@ Quedan aparte:
 Quedan aparte:
 - OBS-09: prioridad 1 si llega la evidencia Docker;
 - BASE-IMAGE-UPSTREAM-REBUILD-REPIN: DEFERRED / NON-BLOCKING.
+
+## Actualización 2026-10-24 — la imagen de producción ya no lleva herramientas de prueba ni de calidad
+
+| Deuda | Estado |
+|---|---|
+| PRODUCTION-IMAGE-CONTAINS-TEST-QUALITY-DEPENDENCIES | **CLOSED / CONVERGED**: runtime 38 paquetes (sin pytest, httpx, ruff, mypy ni sus 7 transitivas exclusivas); certificación 49 = runtime exacto + herramientas (`--constraint requirements.lock`, mismo corte); `dev` instala el lock de certificación fijado |
+| PRODUCT-OPTIONAL-S3-PROVIDER-DEPENDENCY-UNDECLARED (nueva) | OPEN, dueña 046: el proveedor S3 opcional depende de `boto3`, que no está en ningún lock; decisión de producto |
+| E2E-FLAKY-BAJO-CARGA | recurrió en `route-crawl.spec.ts:28` (4 rutas de menú) en una E2E V0 que se invalidó por el entorno (1,12 M páginas escritas en swap durante la corrida) |
+
+**Modelo vigente de certificación:**
+- **V6R:** runtime puro, el de producción;
+- **V6C:** V6R exacto + herramientas;
+- las E2E V6 arrancan el producto en V6R (`--python-de-producto`) y el arnés y los ayudantes en V6C.
+
+**Línea base:**
+- SQLite V0 y V6C: 1965/0/1070;
+- PostgreSQL V6C: 3009/0/26;
+- E2E 284/0/0 en V0 y en V6;
+- OpenAPI 544/533/11;
+- pip-audit 0/0 en los dos locks.
+
+**NEXT_RELEASE_ENGINEERING_DEBT = CANONICALIZE-CERTIFICATION-ENVIRONMENT.** Después, la GOVERNMENT-START-READINESS GATE.
+
+Quedan aparte:
+- OBS-09: prioridad 1 si llega la evidencia Docker (que además certificaría el contenido exacto de la imagen);
+- BASE-IMAGE-UPSTREAM-REBUILD-REPIN: DEFERRED / NON-BLOCKING.

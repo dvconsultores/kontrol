@@ -1,0 +1,26 @@
+{
+ "config_digest": "sha256:ce3ff9524414289fc922d9d5dc1de87abc77a39ff2ff5007435839f2af1d7569",
+ "python_version_env": [
+  "PYTHON_VERSION=3.13.16"
+ ],
+ "layers": [
+  "sha256:ecc510c1e359bdc007b39802570bb7e4dec7d6ebccf357c3201a74299113e05e",
+  "sha256:65a67aec859c5fafe6ca38c2ed07825c97acf3febdcf62b79441a1bfca4f3a4a",
+  "sha256:3a5db7051419a594a866378c5d2c422e3d282d69e6792b3213772cb1349da446",
+  "sha256:2f5b06adfd9138ef928aaf8b34f3fecf122b137a537133dfe421509dd57b4a47"
+ ],
+ "debs": {
+  "libmagic1t64_1%3a5.46-5_amd64.deb": "53f653873216b135570b42c423ea93825c008ac464780b4578e80ee424237a4e",
+  "ca-certificates_20250419+deb13u1_all.deb": "c10585ac22c7f617a73d394eea29ba71d0356f350ae973b19043d1b017f80f54",
+  "libmagic-mgc_1%3a5.46-5_amd64.deb": "1368da7c4c7dd10fb2f9ee3ed8a70801650c0c1d249a4076af15e2ddfbb14b46"
+ },
+ "ca_retirados": [
+  "Comodo_AAA_Services_root.crt",
+  "emSign_ECC_Root_CA_-_G3.crt"
+ ],
+ "ca_bundle_certs": 148,
+ "sys": "<scratch>/v6r/v5/bin/python 3.13.16 OpenSSL 3.5.7 9 Jun 2026 ('glibc', '2.41')",
+ "pip_check": "No broken requirements found.",
+ "freeze_equals_lock": 1,
+ "freeze_diff": []
+}

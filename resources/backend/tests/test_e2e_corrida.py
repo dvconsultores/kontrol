@@ -524,3 +524,88 @@ def test_e2ecorrida_26_la_autoridad_exportada_es_exactamente_sys_executable():
                 valores.append(valor)
     assert len(valores) == 1
     assert ast.unparse(valores[0]) == "sys.executable"
+
+
+def test_e2ecorrida_27_sin_opcion_el_producto_corre_con_el_interprete_del_arnes(entorno, puerto_libre):
+    corrida, salida = _corrida(entorno, "pass")
+    assert corrida.ejecutar() == 0
+    m = _manifiesto(corrida)
+    _sin_rastro(corrida)
+    assert m["interprete_de_producto"]["modo"] == "UN_SOLO_ENTORNO"
+    assert m["interprete_de_producto"]["autoridad"] == k.sanear(sys.executable, k.raices_a_sanear(entorno))
+    assert m["interprete_de_producto"]["python"] == ".".join(str(p) for p in sys.version_info[:3])
+    assert m["interprete_de_producto"]["paridad_runtime"] == 1
+    assert m["interprete_de_producto"]["paquetes"] > 0
+    assert "] producto: " in salida.getvalue()
+    # En un solo entorno el intérprete del producto es el del arnés (tiene pytest); en V6R la lista sale vacía.
+    assert "pytest" in m["interprete_de_producto"]["herramientas_de_prueba"]
+
+
+def test_e2ecorrida_28_con_opcion_el_producto_corre_con_el_interprete_indicado(entorno, puerto_libre, tmp_path):
+    envoltorio = tmp_path / "python-producto"
+    envoltorio.write_text(f'#!/bin/sh\nexec "{sys.executable}" "$@"\n')
+    envoltorio.chmod(0o755)
+    corrida, salida = _corrida(entorno, "pass", python_de_producto=str(envoltorio))
+    assert corrida.ejecutar() == 0
+    m = _manifiesto(corrida)
+    _sin_rastro(corrida)
+    assert m["interprete_de_producto"]["modo"] == "RUNTIME_SEPARADO"
+    assert m["interprete_de_producto"]["autoridad"] == k.sanear(str(envoltorio), k.raices_a_sanear(entorno))
+    assert m["interprete_de_producto"]["paridad_runtime"] == 1
+
+
+def test_e2ecorrida_29_un_interprete_de_producto_que_no_es_ruta_absoluta_ejecutable_no_crea_nada(entorno, puerto_libre, tmp_path):
+    for valor in ("python3", str(tmp_path / "no-existe")):
+        corrida = _corrida(entorno, "pass", python_de_producto=valor)[0]
+        assert corrida.ejecutar() == k.SALIDA_PREPARACION
+        m = _manifiesto(corrida)
+        _sin_rastro(corrida)
+        assert "intérprete de producto" in m["error"]
+        assert "suite" not in m
+
+
+def test_e2ecorrida_30_la_paridad_de_runtime_exige_misma_version_de_todo_paquete_del_producto():
+    assert k.paridad_de_runtime({"a": "1", "b": "2"}, {"a": "1", "b": "2", "pytest": "9"}) == 1
+    assert k.paridad_de_runtime({"a": "1"}, {"a": "2"}) == 0
+    assert k.paridad_de_runtime({"a": "1"}, {}) == 0
+    assert k.paridad_de_runtime({"pip": "1"}, {"pip": "2"}) == 1
+
+
+def test_e2ecorrida_31_los_procesos_de_producto_usan_el_interprete_de_producto():
+    import ast
+
+    fuente = Path(k.__file__).read_text(encoding="utf-8")
+    arbol = ast.parse(fuente)
+    listas_uvicorn = []
+    for nodo in ast.walk(arbol):
+        if not isinstance(nodo, ast.Call):
+            continue
+        for argumento in nodo.args:
+            if isinstance(argumento, ast.List) and any(
+                isinstance(elemento, ast.Constant) and elemento.value == "uvicorn"
+                for elemento in argumento.elts
+            ):
+                listas_uvicorn.append(argumento)
+    assert len(listas_uvicorn) == 2
+    for lista in listas_uvicorn:
+        assert ast.unparse(lista.elts[0]) == "self.python_de_producto"
+        assert ast.unparse(lista.elts[0]) != "sys.executable"
+
+
+def test_e2ecorrida_32_main_pasa_el_interprete_de_producto_a_la_corrida(monkeypatch):
+    vistas = []
+
+    class Falsa:
+        def __init__(self, servidor, **kwargs):
+            vistas.append(kwargs)
+
+        def ejecutar(self) -> int:
+            return 0
+
+    monkeypatch.setattr(k, "Corrida", Falsa)
+    monkeypatch.setattr(k.base.Servidor, "del_entorno", staticmethod(lambda: object()))
+    assert k.main(["--sin-frontend", "--python-de-producto", "/opt/v6r/bin/python"]) == 0
+    assert k.main(["--sin-frontend"]) == 0
+    assert vistas[0]["python_de_producto"] == "/opt/v6r/bin/python"
+    assert vistas[1]["python_de_producto"] is None
+    assert vistas[0]["sin_frontend"] is True

@@ -1,0 +1,13 @@
+# KONTROL - Dependencias de certificación (pruebas, QA y calidad)
+# NUNCA en la imagen de producción: se instalan solo en la etapa dev.
+# Se compilan con requirements.lock como restricción (--constraint) para que el
+# runtime conserve exactamente sus versiones; el lock resultante es requirements-test.lock
+# (runtime exacto + herramientas).
+
+-r requirements.txt
+
+# Tests / calidad
+pytest==9.0.3
+httpx==0.28.1
+ruff==0.8.4
+mypy==1.13.0

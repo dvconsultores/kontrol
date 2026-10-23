@@ -48,12 +48,16 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "75"]
 
-# --- Target de desarrollo: hot reload con dependencias de prueba ----------
+# --- Target de desarrollo: hot reload con requirements-test.lock -----------
 FROM base AS dev
 USER root
 COPY resources/backend/tests ./tests
 COPY resources/backend/pyproject.toml ./pyproject.toml
-RUN pip install --no-cache-dir pytest httpx ruff mypy
+# Grafo de certificación fijado (runtime exacto + herramientas), sin volver a resolver;
+# nunca en runtime.
+COPY resources/backend/requirements-test.lock /tmp/requirements-test.lock
+RUN pip install --no-cache-dir --no-deps -r /tmp/requirements-test.lock \
+    && pip check
 USER kontrol
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--timeout-keep-alive", "75"]
 

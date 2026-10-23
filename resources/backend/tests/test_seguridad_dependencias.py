@@ -240,19 +240,38 @@ def test_sdv_08_los_suelos_de_transitivas_se_cumplen_sin_volverlas_directas() ->
     """SDV-08 los suelos de seguridad de dependencias transitivas se cumplen sin convertirlas en directas."""
     filas = _tabla(CVE_REVIEW.read_text(encoding="utf-8"), "Avisos de dependencias transitivas")
     assert filas
-    lock = _pines_lock()
-    manifiesto = _pines_manifiesto()
-    comando = _comando_de_cabecera((BACKEND / "requirements.lock").read_text(encoding="utf-8"))
-    corte = re.search(r"--exclude-newer (\S+)", comando)
-    assert corte is not None
-    instante_corte = _instante(corte.group(1))
+    lock_runtime = _pines_lock()
+    lock_certificacion = _pines((BACKEND / "requirements-test.lock").read_text(encoding="utf-8"))
+    manifiesto_runtime = _pines_manifiesto()
+    manifiesto_certificacion = _pines((BACKEND / "requirements-test.txt").read_text(encoding="utf-8"))
+    comando_runtime = _comando_de_cabecera((BACKEND / "requirements.lock").read_text(encoding="utf-8"))
+    comando_certificacion = _comando_de_cabecera((BACKEND / "requirements-test.lock").read_text(encoding="utf-8"))
+    corte_runtime = re.search(r"--exclude-newer (\S+)", comando_runtime)
+    corte_certificacion = re.search(r"--exclude-newer (\S+)", comando_certificacion)
+    assert corte_runtime is not None
+    assert corte_certificacion is not None
+    instante_corte_runtime = _instante(corte_runtime.group(1))
+    instante_corte_certificacion = _instante(corte_certificacion.group(1))
     for fila in filas:
         paquete = _canonico(fila["Paquete"])
-        assert paquete in lock, f"{fila['Aviso']}: {paquete} no está en el lock"
-        assert paquete not in manifiesto, f"{paquete} es transitiva con suelo: no debe ser dependencia directa"
+        esta_en_runtime = paquete in lock_runtime
+        esta_en_certificacion = paquete in lock_certificacion
+        assert esta_en_runtime or esta_en_certificacion, f"{fila['Aviso']}: {paquete} no está en ningún lock"
+        assert paquete not in manifiesto_runtime, f"{paquete} es transitiva con suelo: no debe ser dependencia directa runtime"
+        assert paquete not in manifiesto_certificacion, f"{paquete} es transitiva con suelo: no debe ser dependencia directa de certificación"
         limite = re.search(r"<\s*([0-9][^\s,]*)", fila["Afectadas"])
         assert limite is not None
         corregida = fila["Corregida en"]
         assert Version(corregida) >= Version(limite.group(1)), "la corregida debe quedar fuera del rango afectado"
-        assert Version(lock[paquete]) >= Version(corregida), f"{paquete}: lock {lock[paquete]} < suelo {corregida}"
-        assert instante_corte > _instante(fila["Publicación de la corregida (UTC)"]), "el corte del lock es anterior a la publicación de la corregida"
+        if esta_en_runtime:
+            assert Version(lock_runtime[paquete]) >= Version(corregida), f"{paquete}: lock runtime {lock_runtime[paquete]} < suelo {corregida}"
+            assert instante_corte_runtime > _instante(
+                fila["Publicación de la corregida (UTC)"]
+            ), "el corte del lock runtime es anterior a la publicación de la corregida"
+        if esta_en_certificacion:
+            assert Version(lock_certificacion[paquete]) >= Version(
+                corregida
+            ), f"{paquete}: lock certificación {lock_certificacion[paquete]} < suelo {corregida}"
+            assert instante_corte_certificacion > _instante(
+                fila["Publicación de la corregida (UTC)"]
+            ), "el corte del lock de certificación es anterior a la publicación de la corregida"

@@ -31,7 +31,8 @@ Detalle y versiones resueltas: `specs/001-fundacion/dependency-matrix.md`.
 # Backend
 cd resources/backend
 python -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
+# runtime + pruebas y calidad (la imagen de producción instala solo requirements.lock)
+pip install -r requirements-test.txt
 KONTROL_SECRET_KEY=<clave-segura> uvicorn app.main:app --reload --timeout-keep-alive 75
 
 # Frontend
