@@ -2439,3 +2439,15 @@ todo lo que haya en ese momento).
 
 **NEXT TECHNICAL CYCLE = SPEC046 S3-UNSUPPORTED-CONFIGURATION-FAIL-CLOSED** (implementación y pruebas en la estación; la
 certificación oficial queda pendiente del anfitrión). Después, GOVERNMENT-START-READINESS.
+
+## Actualización 2026-10-25 — SPEC046 S3-UNSUPPORTED-CONFIGURATION-FAIL-CLOSED
+
+| Deuda | Estado |
+|---|---|
+| PRODUCT-OPTIONAL-S3-PROVIDER-DEPENDENCY-UNDECLARED | **CLOSED — NOT_SUPPORTED_BY_PRODUCT_BASELINE / CONFIGURATION_GUARDED**: el adaptador S3 se retiró (OD-S3-01); el producto ya no importa `boto3`; `OPCIONALES_DEL_PRODUCTO` está vacío |
+| DEUDA-046-1 | **CLOSED por retirada** |
+
+S3_PROVIDER_SUPPORTED = 0; S3_CONFIGURATION_GUARDED = 1. La certificación oficial queda pendiente del anfitrión dedicado
+(OD-CERT-30), junto con la de SPEC054.
+
+**NEXT TECHNICAL CYCLE = GOVERNMENT-START-READINESS.**

@@ -1,0 +1,188 @@
+FFFFFFF.FF                                                               [100%]
+=================================== FAILURES ===================================
+____ test_s3n_01_variable_s3_individual_impide_arranque[KONTROL_S3_BUCKET] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0cbe84ee50>
+entorno_limpio = None, nombre_variable = 'KONTROL_S3_BUCKET'
+
+    @pytest.mark.parametrize(
+        "nombre_variable",
+        [
+            "KONTROL_S3_BUCKET",
+            "KONTROL_S3_ENDPOINT",
+            "KONTROL_S3_REGION",
+            "KONTROL_S3_PREFIX",
+            "kontrol_s3_bucket",
+        ],
+    )
+    def test_s3n_01_variable_s3_individual_impide_arranque(monkeypatch, entorno_limpio, nombre_variable):
+        """S3N-01: una sola variable KONTROL_S3_* provoca ValidationError sin filtrar su valor."""
+        monkeypatch.setenv(nombre_variable, "valor-sintetico-s3")
+        get_settings.cache_clear()
+    
+>       with pytest.raises(ValidationError) as error:
+E       Failed: DID NOT RAISE <class 'pydantic_core._pydantic_core.ValidationError'>
+
+tests/test_documents_storage_s3_no_soportado.py:53: Failed
+___ test_s3n_01_variable_s3_individual_impide_arranque[KONTROL_S3_ENDPOINT] ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0cbe610c10>
+entorno_limpio = None, nombre_variable = 'KONTROL_S3_ENDPOINT'
+
+    @pytest.mark.parametrize(
+        "nombre_variable",
+        [
+            "KONTROL_S3_BUCKET",
+            "KONTROL_S3_ENDPOINT",
+            "KONTROL_S3_REGION",
+            "KONTROL_S3_PREFIX",
+            "kontrol_s3_bucket",
+        ],
+    )
+    def test_s3n_01_variable_s3_individual_impide_arranque(monkeypatch, entorno_limpio, nombre_variable):
+        """S3N-01: una sola variable KONTROL_S3_* provoca ValidationError sin filtrar su valor."""
+        monkeypatch.setenv(nombre_variable, "valor-sintetico-s3")
+        get_settings.cache_clear()
+    
+>       with pytest.raises(ValidationError) as error:
+E       Failed: DID NOT RAISE <class 'pydantic_core._pydantic_core.ValidationError'>
+
+tests/test_documents_storage_s3_no_soportado.py:53: Failed
+____ test_s3n_01_variable_s3_individual_impide_arranque[KONTROL_S3_REGION] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0cbe46a010>
+entorno_limpio = None, nombre_variable = 'KONTROL_S3_REGION'
+
+    @pytest.mark.parametrize(
+        "nombre_variable",
+        [
+            "KONTROL_S3_BUCKET",
+            "KONTROL_S3_ENDPOINT",
+            "KONTROL_S3_REGION",
+            "KONTROL_S3_PREFIX",
+            "kontrol_s3_bucket",
+        ],
+    )
+    def test_s3n_01_variable_s3_individual_impide_arranque(monkeypatch, entorno_limpio, nombre_variable):
+        """S3N-01: una sola variable KONTROL_S3_* provoca ValidationError sin filtrar su valor."""
+        monkeypatch.setenv(nombre_variable, "valor-sintetico-s3")
+        get_settings.cache_clear()
+    
+>       with pytest.raises(ValidationError) as error:
+E       Failed: DID NOT RAISE <class 'pydantic_core._pydantic_core.ValidationError'>
+
+tests/test_documents_storage_s3_no_soportado.py:53: Failed
+____ test_s3n_01_variable_s3_individual_impide_arranque[KONTROL_S3_PREFIX] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0cbe607510>
+entorno_limpio = None, nombre_variable = 'KONTROL_S3_PREFIX'
+
+    @pytest.mark.parametrize(
+        "nombre_variable",
+        [
+            "KONTROL_S3_BUCKET",
+            "KONTROL_S3_ENDPOINT",
+            "KONTROL_S3_REGION",
+            "KONTROL_S3_PREFIX",
+            "kontrol_s3_bucket",
+        ],
+    )
+    def test_s3n_01_variable_s3_individual_impide_arranque(monkeypatch, entorno_limpio, nombre_variable):
+        """S3N-01: una sola variable KONTROL_S3_* provoca ValidationError sin filtrar su valor."""
+        monkeypatch.setenv(nombre_variable, "valor-sintetico-s3")
+        get_settings.cache_clear()
+    
+>       with pytest.raises(ValidationError) as error:
+E       Failed: DID NOT RAISE <class 'pydantic_core._pydantic_core.ValidationError'>
+
+tests/test_documents_storage_s3_no_soportado.py:53: Failed
+____ test_s3n_01_variable_s3_individual_impide_arranque[kontrol_s3_bucket] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0cbe4c6c10>
+entorno_limpio = None, nombre_variable = 'kontrol_s3_bucket'
+
+    @pytest.mark.parametrize(
+        "nombre_variable",
+        [
+            "KONTROL_S3_BUCKET",
+            "KONTROL_S3_ENDPOINT",
+            "KONTROL_S3_REGION",
+            "KONTROL_S3_PREFIX",
+            "kontrol_s3_bucket",
+        ],
+    )
+    def test_s3n_01_variable_s3_individual_impide_arranque(monkeypatch, entorno_limpio, nombre_variable):
+        """S3N-01: una sola variable KONTROL_S3_* provoca ValidationError sin filtrar su valor."""
+        monkeypatch.setenv(nombre_variable, "valor-sintetico-s3")
+        get_settings.cache_clear()
+    
+>       with pytest.raises(ValidationError) as error:
+E       Failed: DID NOT RAISE <class 'pydantic_core._pydantic_core.ValidationError'>
+
+tests/test_documents_storage_s3_no_soportado.py:53: Failed
+_____________ test_s3n_02_configuracion_completa_s3_falla_cerrada ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0cbe84c6d0>
+entorno_limpio = None
+
+    def test_s3n_02_configuracion_completa_s3_falla_cerrada(monkeypatch, entorno_limpio):
+        """S3N-02: la antigua configuración completa de S3 también falla cerrada sin filtrar valores."""
+        monkeypatch.setenv("KONTROL_S3_BUCKET", "bucket-sintetico")
+        monkeypatch.setenv("KONTROL_S3_ENDPOINT", "https://minio.invalid")
+        get_settings.cache_clear()
+    
+>       with pytest.raises(ValidationError) as error:
+E       Failed: DID NOT RAISE <class 'pydantic_core._pydantic_core.ValidationError'>
+
+tests/test_documents_storage_s3_no_soportado.py:68: Failed
+_____________ test_s3n_03_variable_s3_en_fichero_env_tambien_falla _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0cbe4d3190>
+tmp_path = PosixPath('<tmp>/test_s3n_03_variable_s3_en_fic0')
+entorno_limpio = None
+
+    def test_s3n_03_variable_s3_en_fichero_env_tambien_falla(monkeypatch, tmp_path, entorno_limpio):
+        """S3N-03: la variable en .env también impide arrancar y su valor no aparece en el error."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / ".env").write_text("KONTROL_S3_BUCKET=bucket-en-fichero\n", encoding="utf-8")
+        get_settings.cache_clear()
+    
+>       with pytest.raises(ValidationError) as error:
+E       Failed: DID NOT RAISE <class 'pydantic_core._pydantic_core.ValidationError'>
+
+<home>/Projectos/Kontrol/resources/backend/tests/test_documents_storage_s3_no_soportado.py:84: Failed
+______________ test_s3n_05_get_storage_no_tiene_caida_silenciosa _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0cbe4deb90>
+entorno_limpio = None
+
+    def test_s3n_05_get_storage_no_tiene_caida_silenciosa(monkeypatch, entorno_limpio):
+        """S3N-05: con una variable S3 presente, get_storage() falla cerrado en lugar de usar filesystem."""
+        monkeypatch.setenv("KONTROL_S3_BUCKET", "bucket-sintetico")
+        get_settings.cache_clear()
+        storage_module._provider = None
+    
+>       with pytest.raises(ValidationError):
+E       Failed: DID NOT RAISE <class 'pydantic_core._pydantic_core.ValidationError'>
+
+tests/test_documents_storage_s3_no_soportado.py:108: Failed
+___ test_s3n_06_adaptador_s3_jubilado_sin_boto3_ni_os_environ_en_get_storage ___
+
+    def test_s3n_06_adaptador_s3_jubilado_sin_boto3_ni_os_environ_en_get_storage():
+        """S3N-06: la clase S3 ya no existe y el módulo no menciona boto3 ni KONTROL_S3."""
+>       assert not hasattr(storage_module, "S3CompatibleStorageProvider")
+E       AssertionError: assert not True
+E        +  where True = hasattr(storage_module, 'S3CompatibleStorageProvider')
+
+tests/test_documents_storage_s3_no_soportado.py:114: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_documents_storage_s3_no_soportado.py::test_s3n_01_variable_s3_individual_impide_arranque[KONTROL_S3_BUCKET]
+FAILED tests/test_documents_storage_s3_no_soportado.py::test_s3n_01_variable_s3_individual_impide_arranque[KONTROL_S3_ENDPOINT]
+FAILED tests/test_documents_storage_s3_no_soportado.py::test_s3n_01_variable_s3_individual_impide_arranque[KONTROL_S3_REGION]
+FAILED tests/test_documents_storage_s3_no_soportado.py::test_s3n_01_variable_s3_individual_impide_arranque[KONTROL_S3_PREFIX]
+FAILED tests/test_documents_storage_s3_no_soportado.py::test_s3n_01_variable_s3_individual_impide_arranque[kontrol_s3_bucket]
+FAILED tests/test_documents_storage_s3_no_soportado.py::test_s3n_02_configuracion_completa_s3_falla_cerrada
+FAILED tests/test_documents_storage_s3_no_soportado.py::test_s3n_03_variable_s3_en_fichero_env_tambien_falla
+FAILED tests/test_documents_storage_s3_no_soportado.py::test_s3n_05_get_storage_no_tiene_caida_silenciosa
+FAILED tests/test_documents_storage_s3_no_soportado.py::test_s3n_06_adaptador_s3_jubilado_sin_boto3_ni_os_environ_en_get_storage
+9 failed, 1 passed in 0.34s

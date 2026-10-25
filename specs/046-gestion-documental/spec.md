@@ -161,7 +161,7 @@ Document ── DocumentVersion ── StoredFile ── FileSecurityScan?
 |---|---|---|
 | FR-046-030 | Abstracción `DocumentStorageProvider` con proveedor **intercambiable por configuración** | P0 |
 | FR-046-031 | Proveedor de sistema de archivos como implementación por defecto, sobre el volumen ya existente | P0 |
-| FR-046-032 | Proveedor compatible con S3 como segunda implementación, **sin acoplar a ningún fabricante** (§7) | P1 |
+| FR-046-032 | Proveedor compatible con S3 como segunda implementación, **sin acoplar a ningún fabricante** (§7) | P1 — **NOT_SUPPORTED_BY_PRODUCT_BASELINE** (OD-S3-01, 2026-10-25) |
 | FR-046-033 | Ningún binario en PostgreSQL (R-D0-08-3) | P0 |
 | FR-046-034 | Aislamiento por instalación: sin depender de un depósito compartido entre clientes (§8) | P0 |
 | FR-046-035 | Las credenciales del almacenamiento son secretos: nunca en base de datos, frontend ni registros (§80) | P0 |

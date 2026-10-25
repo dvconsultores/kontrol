@@ -12,7 +12,6 @@ recorrido de rutas: el nombre del usuario nunca toca el sistema de archivos.
 from __future__ import annotations
 
 import hashlib
-import io
 import os
 import re
 import secrets
@@ -218,147 +217,22 @@ class FilesystemStorageProvider(DocumentStorageProvider):
             return {"provider": self.name, "writable": False, "error": exc.strerror}
 
 
-class S3CompatibleStorageProvider(DocumentStorageProvider):
-    """Proveedor para cualquier servicio con API compatible con S3.
-
-    Se habla el protocolo, no un fabricante: el `endpoint_url` es obligatorio y
-    configurable, de modo que sirve igual para MinIO, Ceph o el propio S3
-    (FR-046-032). Las credenciales llegan por entorno y **nunca** se guardan en
-    base, ni en el frontend, ni se escriben en un registro (FR-046-035).
-
-    El cliente se construye de forma perezosa: una instalación que use el
-    sistema de archivos no necesita tener instalado `boto3`.
-    """
-
-    name = "S3_COMPATIBLE"
-
-    def __init__(self, *, bucket: str, endpoint_url: str, region: str | None = None,
-                 prefix: str = "", client: object | None = None) -> None:
-        if not bucket or not endpoint_url:
-            raise StorageError(code="STORAGE_MISCONFIGURED",
-                               message="El almacenamiento compatible con S3 exige bucket y endpoint",
-                               status_code=500)
-        self.bucket = bucket
-        self.endpoint_url = endpoint_url
-        self.region = region
-        self.prefix = prefix.strip("/")
-        self._client = client
-
-    # -- cliente -----------------------------------------------------------
-    @property
-    def client(self):  # noqa: ANN201 — el tipo lo aporta boto3, opcional
-        if self._client is None:
-            try:
-                import boto3
-            except ImportError as exc:  # pragma: no cover — depende del entorno
-                raise StorageError(
-                    code="STORAGE_MISCONFIGURED",
-                    message="El proveedor compatible con S3 requiere el paquete boto3",
-                    status_code=500) from exc
-            self._client = boto3.client(
-                "s3", endpoint_url=self.endpoint_url, region_name=self.region)
-        return self._client
-
-    def _object_key(self, key: str) -> str:
-        if not key or key.startswith("/") or ".." in key.split("/"):
-            raise StorageError(code="STORAGE_INVALID_KEY",
-                               message="Clave de almacenamiento inválida", status_code=422)
-        return f"{self.prefix}/{key}" if self.prefix else key
-
-    # -- contrato ----------------------------------------------------------
-    def put(self, key: str, stream: BinaryIO) -> tuple[int, str]:
-        """Sube el objeto calculando tamaño y hash **al escribir**.
-
-        Se lee a memoria por trozos hasta el búfer y se envía en una sola
-        operación: el objeto aparece completo o no aparece, nunca a medias.
-        """
-        digest = hashlib.sha256()
-        size = 0
-        buffer = io.BytesIO()
-        for chunk in iter(lambda: stream.read(CHUNK), b""):
-            digest.update(chunk)
-            size += len(chunk)
-            buffer.write(chunk)
-        buffer.seek(0)
-        try:
-            self.client.put_object(Bucket=self.bucket, Key=self._object_key(key),
-                                   Body=buffer)
-        except Exception as exc:  # noqa: BLE001 — la familia de errores la define boto3
-            raise StorageError(f"No se pudo escribir en el almacenamiento: {exc}") from exc
-        return size, digest.hexdigest()
-
-    def open(self, key: str) -> BinaryIO:
-        try:
-            response = self.client.get_object(Bucket=self.bucket,
-                                              Key=self._object_key(key))
-        except Exception as exc:  # noqa: BLE001
-            raise StorageError(code="STORAGE_OBJECT_MISSING",
-                               message="El archivo no está en el almacenamiento",
-                               status_code=500) from exc
-        return response["Body"]
-
-    def exists(self, key: str) -> bool:
-        try:
-            self.client.head_object(Bucket=self.bucket, Key=self._object_key(key))
-            return True
-        except StorageError:
-            return False
-        except Exception:  # noqa: BLE001
-            return False
-
-    def delete(self, key: str) -> None:
-        try:
-            self.client.delete_object(Bucket=self.bucket, Key=self._object_key(key))
-        except Exception as exc:  # noqa: BLE001
-            raise StorageError(f"No se pudo borrar: {exc}") from exc
-
-    def size(self, key: str) -> int:
-        try:
-            head = self.client.head_object(Bucket=self.bucket, Key=self._object_key(key))
-        except Exception as exc:  # noqa: BLE001
-            raise StorageError(code="STORAGE_OBJECT_MISSING",
-                               message="El archivo no está en el almacenamiento",
-                               status_code=500) from exc
-        return int(head["ContentLength"])
-
-    def health(self) -> dict[str, object]:
-        """Estado del depósito. **No expone endpoint, bucket ni credenciales.**"""
-        probe = f".health-{secrets.token_hex(4)}"
-        try:
-            self.put(probe, io.BytesIO(b"ok"))
-            readable = self.open(probe).read() == b"ok"
-            self.delete(probe)
-            return {"provider": self.name, "writable": True, "readable": readable}
-        except StorageError as exc:
-            return {"provider": self.name, "writable": False, "error": exc.message}
-
-
 _provider: DocumentStorageProvider | None = None
 
 
 def get_storage() -> DocumentStorageProvider:
-    """Proveedor activo, según configuración.
+    """Proveedor activo de la instalación: el sistema de archivos.
 
-    El dominio nunca elige: pregunta aquí. Cambiar de sistema de archivos a un
-    servicio compatible con S3 no exige tocar un solo servicio de negocio
-    (FR-046-030), solo la configuración de la instalación.
+    El dominio nunca elige: pregunta aquí (FR-046-030). La línea base de KONTROL no admite almacenamiento compatible con S3
+    (OD-S3-01): una configuración de S3 hace fallar `Settings` al arrancar, nunca vuelve en silencio al disco.
     """
     global _provider
     if _provider is None:
-        bucket = os.environ.get("KONTROL_S3_BUCKET")
-        endpoint = os.environ.get("KONTROL_S3_ENDPOINT")
-        if bucket and endpoint:
-            _provider = S3CompatibleStorageProvider(
-                bucket=bucket, endpoint_url=endpoint,
-                region=os.environ.get("KONTROL_S3_REGION"),
-                prefix=os.environ.get("KONTROL_S3_PREFIX", ""))
-        else:
-            from app.core.config import get_settings
+        from app.core.config import get_settings
 
-            root = Path(get_settings().storage_path) / "documents"
-            _provider = FilesystemStorageProvider(root)
+        root = Path(get_settings().storage_path) / "documents"
+        _provider = FilesystemStorageProvider(root)
     return _provider
-
 
 def set_storage(provider: DocumentStorageProvider | None) -> None:
     """Sustituye el proveedor. Para pruebas de fallo, no para producción."""

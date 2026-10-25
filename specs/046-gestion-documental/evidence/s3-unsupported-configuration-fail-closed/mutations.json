@@ -1,0 +1,57 @@
+{
+ "mutantes": [
+  {
+   "id": "S01",
+   "mutante": "guarda eliminada",
+   "estado": "KILLED",
+   "resumen": "1 failed in 0.44s",
+   "primera_prueba_que_falla": "tests/test_documents_storage_s3_no_soportado.py::test_s3n_01_variable_s3_individual_impide_arranque[KONTROL_S3_BUCKET]"
+  },
+  {
+   "id": "S02",
+   "mutante": "guarda solo con bucket y endpoint",
+   "estado": "KILLED",
+   "resumen": "1 failed in 0.44s",
+   "primera_prueba_que_falla": "tests/test_documents_storage_s3_no_soportado.py::test_s3n_01_variable_s3_individual_impide_arranque[KONTROL_S3_BUCKET]"
+  },
+  {
+   "id": "S03",
+   "mutante": ".env sin revisar",
+   "estado": "KILLED",
+   "resumen": "1 failed, 6 passed in 0.46s",
+   "primera_prueba_que_falla": "tests/test_documents_storage_s3_no_soportado.py::test_s3n_03_variable_s3_en_fichero_env_tambien_falla"
+  },
+  {
+   "id": "S04",
+   "mutante": "prefijo sensible a mayúsculas",
+   "estado": "KILLED",
+   "resumen": "1 failed, 4 passed in 0.44s",
+   "primera_prueba_que_falla": "tests/test_documents_storage_s3_no_soportado.py::test_s3n_01_variable_s3_individual_impide_arranque[kontrol_s3_bucket]"
+  },
+  {
+   "id": "S05",
+   "mutante": "valores en el mensaje",
+   "estado": "KILLED",
+   "resumen": "1 failed in 0.45s",
+   "primera_prueba_que_falla": "tests/test_documents_storage_s3_no_soportado.py::test_s3n_01_variable_s3_individual_impide_arranque[KONTROL_S3_BUCKET]"
+  },
+  {
+   "id": "S06",
+   "mutante": "get_storage lee S3 otra vez",
+   "estado": "KILLED",
+   "resumen": "1 failed, 8 passed in 0.56s",
+   "primera_prueba_que_falla": "tests/test_documents_storage_s3_no_soportado.py::test_s3n_05_get_storage_no_tiene_caida_silenciosa"
+  },
+  {
+   "id": "S07",
+   "mutante": "boto3 admitido de nuevo como opcional",
+   "estado": "KILLED",
+   "resumen": "1 failed, 25 passed in 1.10s",
+   "primera_prueba_que_falla": "tests/test_dependencias_frontera.py::test_idf_08_cada_import_de_terceros_del_producto_esta_en_el_grafo_runtime"
+  }
+ ],
+ "total": 7,
+ "killed": 7,
+ "survived": 0,
+ "restaurado": true
+}

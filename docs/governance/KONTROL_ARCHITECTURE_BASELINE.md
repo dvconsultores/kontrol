@@ -236,6 +236,8 @@ sustituyen. Descarga autorizada por permiso sobre la **entidad vinculada**.
 > —existe `S3CompatibleStorageProvider`— pero permanece
 > **`IMPLEMENTED_NOT_VERIFIED`**: el proveedor validado de producción es el
 > sistema de archivos. Detalle en `docs/roadmap/046-dependency-closeout.md`.
+>
+> **Actualización 2026-10-25 (OD-S3-01):** S3 queda **NOT_SUPPORTED_BY_PRODUCT_BASELINE**: el adaptador `S3CompatibleStorageProvider` se retiró, `get_storage()` es solo de sistema de archivos y cualquier `KONTROL_S3_*` (entorno o `.env`) hace fallar el arranque (`Settings._s3_no_soportado`). Delta: `specs/046-gestion-documental/spec046-s3-unsupported-configuration-fail-closed-delta.md`.
 
 ---
 

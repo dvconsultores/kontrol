@@ -7,9 +7,11 @@ validan al inicio y el servicio falla de forma segura si falta alguna
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from typing import Literal
 
+from dotenv import dotenv_values
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -113,6 +115,21 @@ class Settings(BaseSettings):
                 f"KONTROL_LICENSE_PUBLIC_KEY_PEM (con KONTROL_LICENSE_PUBLIC_KEY_KID) o KONTROL_LICENSE_TRUST_KEYS es obligatoria "
                 f"en prod y debe contener claves públicas Ed25519 del propietario en PEM, una por kid (ancla {exc.reason})"
             ) from None
+        return self
+
+    @model_validator(mode="after")
+    def _s3_no_soportado(self) -> Settings:
+        """S3 no forma parte de la línea base (OD-S3-01): cualquier `KONTROL_S3_*`, en el entorno o en el `.env`, hace fallar el
+        arranque. Solo se nombran las variables, nunca sus valores."""
+        nombres = {nombre for nombre in os.environ if nombre.upper().startswith("KONTROL_S3_")}
+        fichero = self.model_config.get("env_file")
+        if isinstance(fichero, str) and os.path.isfile(fichero):
+            nombres |= {nombre for nombre in dotenv_values(fichero) if nombre.upper().startswith("KONTROL_S3_")}
+        if nombres:
+            raise ValueError(
+                "El almacenamiento compatible con S3 no está soportado en la línea base de KONTROL (OD-S3-01); el almacenamiento "
+                f"documental es solo de sistema de archivos. Quita: {', '.join(sorted(nombres))}"
+            )
         return self
 
 

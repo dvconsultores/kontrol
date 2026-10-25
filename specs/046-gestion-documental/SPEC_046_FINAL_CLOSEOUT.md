@@ -417,3 +417,7 @@ comprueba en `pg_stat_activity` y se cuentan los efectos.
 De paso se corrigió el `uiLogin` del E2E documental, que desactivaba la empresa
 por casar «Activar» con «Desactivar». Se registran sin absorber E2E-046-TIPOS,
 ORPHAN-046-SINGLE e IDEM-046-TRUNC. La 046 sigue `RECONVERGED`.
+
+## Actualización 2026-10-25 — S3 no soportado (OD-S3-01)
+
+**DEUDA-046-1 = CLOSED por retirada**. **Actualización 2026-10-25 (OD-S3-01):** S3 queda **NOT_SUPPORTED_BY_PRODUCT_BASELINE**: el adaptador `S3CompatibleStorageProvider` se retiró, `get_storage()` es solo de sistema de archivos y cualquier `KONTROL_S3_*` (entorno o `.env`) hace fallar el arranque (`Settings._s3_no_soportado`). Delta: `specs/046-gestion-documental/spec046-s3-unsupported-configuration-fail-closed-delta.md`. La conformidad documental queda sobre el proveedor de sistema de archivos (VERIFIED). Reintroducir S3 exigirá una Spec nueva con `boto3` en los locks y un servicio real que verificar.

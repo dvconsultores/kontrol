@@ -50,8 +50,8 @@ EXCLUSIVOS_DE_CERTIFICACION = frozenset(
 )
 INSTALACION_LOCK_CERTIFICACION = "pip install --no-cache-dir --no-deps -r /tmp/requirements-test.lock"
 
-# Proveedor S3 opcional de documents/storage.py (import perezoso protegido por ImportError); deuda PRODUCT-OPTIONAL-S3-PROVIDER-DEPENDENCY-UNDECLARED.
-OPCIONALES_DEL_PRODUCTO: frozenset[str] = frozenset({"boto3"})
+# El producto no tiene dependencias opcionales: el adaptador S3 (boto3) se retiró (OD-S3-01).
+OPCIONALES_DEL_PRODUCTO: frozenset[str] = frozenset()
 DIRECTORIOS_DEL_PRODUCTO = (BACKEND / "app", BACKEND / "central_authority", BACKEND / "alembic")
 
 
