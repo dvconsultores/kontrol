@@ -1,0 +1,12 @@
+2026-10-24T17:49:50Z
+Mem:           15390        8543        3666         136        3647        6847
+Inter:         27986           0       27986
+pswpin 0
+pswpout 0
+11.54 3.88 1.47 19/1620 16050
+boot-mono -0.0
+node 2339 MB
+claude 1024 MB
+npm 296 MB
+MainThread 1385 MB
+code 5358 MB

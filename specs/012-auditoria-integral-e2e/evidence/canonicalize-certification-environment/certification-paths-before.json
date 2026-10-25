@@ -1,0 +1,160 @@
+{
+ "head": "3300183",
+ "CERTIFICATION_ENTRY_POINTS_PRE": 16,
+ "MANUAL_STEPS_PRE": 10,
+ "mutaciones": "fuera del inventario de release: son del ciclo de desarrollo (cada delta las mide)",
+ "reproducibilidad_medida": "V6R reconstruido el 2026-10-23 y el 2026-10-24 desde el mismo digest y el mismo lock: freeze idéntico (38), CA 148, pip check PASS (evidence/production-image-test-dependencies/v6r-build.json y v6r-rebuild-2026-10-24.json)",
+ "ROOT_CAUSE": "CERTIFICATION_IS_REPRODUCIBLE_IN_COMPONENTS_BUT_NOT_YET_CANONICALIZED_AS_ONE_WORKFLOW",
+ "ROOT_CAUSE_PROVEN": 1,
+ "fallos_de_entorno_observados": [
+  "2026-10-22: PostgreSQL completa invalidada por ktest inexistente tras reinicio",
+  "2026-10-23/24: descarga OCI colgada 10 h sin timeout; 401 por token caducado y por Bearer reenviado al CDN",
+  "2026-10-22/23: E2E sin condición de salud medida = timeouts atribuidos a ENVIRONMENT"
+ ],
+ "filas": [
+  {
+   "ENTRY_POINT": "reconstrucción V6R (herramienta de scratchpad, fuera del repo)",
+   "PURPOSE": "IMAGE_ROOTFS por digest + requirements.lock",
+   "INTERPRETER": "python3 del anfitrión (solo stdlib)",
+   "MANUAL_STEPS": 1,
+   "EVIDENCE_OUTPUT": "build.json en el scratchpad",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "conocimiento de sesión (memoria oci-sin-docker)"
+  },
+  {
+   "ENTRY_POINT": "construcción V6C (cp + sed + pip install --no-deps)",
+   "PURPOSE": "V6R + requirements-test.lock",
+   "INTERPRETER": "V6C",
+   "MANUAL_STEPS": 1,
+   "EVIDENCE_OUTPUT": "ninguna",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "conocimiento de sesión"
+  },
+  {
+   "ENTRY_POINT": "qa/suite_tiempos.py --motor sqlite|postgres --con-analizador",
+   "PURPOSE": "suite backend con telemetría",
+   "INTERPRETER": "sys.executable (V6C)",
+   "MANUAL_STEPS": 0,
+   "EVIDENCE_OUTPUT": "qa/backend-runs/<run>/",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "CLAUDE.md"
+  },
+  {
+   "ENTRY_POINT": "qa/e2e-run.py --con-analizador [--python-de-producto]",
+   "PURPOSE": "E2E con base efímera, producto V6R / arnés V6C",
+   "INTERPRETER": "sys.executable (V6C) + --python-de-producto (V6R)",
+   "MANUAL_STEPS": 0,
+   "EVIDENCE_OUTPUT": "qa/e2e-runs/<run>/manifest.json",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "CLAUDE.md"
+  },
+  {
+   "ENTRY_POINT": "qa/clamav_qa.py provisionar|entorno|preflight",
+   "PURPOSE": "ClamAV real sin privilegios",
+   "INTERPRETER": "python del arnés",
+   "MANUAL_STEPS": 0,
+   "EVIDENCE_OUTPUT": "salida de consola",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "CLAUDE.md"
+  },
+  {
+   "ENTRY_POINT": "bash qa/pg-provision.sh start",
+   "PURPOSE": "PostgreSQL de QA",
+   "INTERPRETER": "bash + pgserver",
+   "MANUAL_STEPS": 0,
+   "EVIDENCE_OUTPUT": "consola",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "CLAUDE.md"
+  },
+  {
+   "ENTRY_POINT": "bash qa/pg-provision.sh mkdb ktest",
+   "PURPOSE": "base de pruebas tras reinicio (start no la crea)",
+   "INTERPRETER": "bash",
+   "MANUAL_STEPS": 1,
+   "EVIDENCE_OUTPUT": "consola",
+   "SECRET_EXPOSURE_RISK": "medio (DROP DATABASE IF EXISTS)",
+   "CURRENT_AUTHORITY": "memoria postgres-qa-pgserver"
+  },
+  {
+   "ENTRY_POINT": "pip check / freeze = lock (V6R, V6C)",
+   "PURPOSE": "integridad del entorno",
+   "INTERPRETER": "V6R, V6C",
+   "MANUAL_STEPS": 1,
+   "EVIDENCE_OUTPUT": "ninguna",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "conocimiento de sesión"
+  },
+  {
+   "ENTRY_POINT": "pip-audit PyPI y OSV sobre los dos locks",
+   "PURPOSE": "seguridad de dependencias",
+   "INTERPRETER": "V6C con pip-audit en --target",
+   "MANUAL_STEPS": 1,
+   "EVIDENCE_OUTPUT": "consola",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "conocimiento de sesión"
+  },
+  {
+   "ENTRY_POINT": "firma OpenAPI (recuento + huella)",
+   "PURPOSE": "deriva de contrato",
+   "INTERPRETER": "V6R, V6C",
+   "MANUAL_STEPS": 1,
+   "EVIDENCE_OUTPUT": "consola",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "conocimiento de sesión"
+  },
+  {
+   "ENTRY_POINT": "pruebas estructurales IDF/IDL/IBB/IBE/IMB/AIC/e2ecorrida",
+   "PURPOSE": "contratos de imagen, dependencias e intérpretes",
+   "INTERPRETER": "dentro de pytest (V6C)",
+   "MANUAL_STEPS": 0,
+   "EVIDENCE_OUTPUT": "qa/backend-runs",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "suites"
+  },
+  {
+   "ENTRY_POINT": "qa/e2e-bases.py listar | purgar --confirmar",
+   "PURPOSE": "bases E2E huérfanas",
+   "INTERPRETER": "python del arnés",
+   "MANUAL_STEPS": 0,
+   "EVIDENCE_OUTPUT": "consola",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "CLAUDE.md"
+  },
+  {
+   "ENTRY_POINT": "auditoría de residuos (esquemas t_, puertos, procesos)",
+   "PURPOSE": "limpieza",
+   "INTERPRETER": "consultas a mano",
+   "MANUAL_STEPS": 1,
+   "EVIDENCE_OUTPUT": "ninguna",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "conocimiento de sesión"
+  },
+  {
+   "ENTRY_POINT": "condición de salud del anfitrión",
+   "PURPOSE": "validez del entorno (OD-IMG-06)",
+   "INTERPRETER": "herramienta de scratchpad",
+   "MANUAL_STEPS": 1,
+   "EVIDENCE_OUTPUT": "salud.jsonl en el scratchpad",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "conocimiento de sesión"
+  },
+  {
+   "ENTRY_POINT": "muestreo /proc de procesos de producto y ayudantes",
+   "PURPOSE": "paridad de ayudantes medida",
+   "INTERPRETER": "herramienta de scratchpad",
+   "MANUAL_STEPS": 1,
+   "EVIDENCE_OUTPUT": "jsonl en el scratchpad",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "conocimiento de sesión"
+  },
+  {
+   "ENTRY_POINT": "humo de runtime V6R",
+   "PURPOSE": "producto sin herramientas",
+   "INTERPRETER": "herramienta de scratchpad",
+   "MANUAL_STEPS": 1,
+   "EVIDENCE_OUTPUT": "json en el scratchpad",
+   "SECRET_EXPOSURE_RISK": "bajo",
+   "CURRENT_AUTHORITY": "conocimiento de sesión"
+  }
+ ]
+}

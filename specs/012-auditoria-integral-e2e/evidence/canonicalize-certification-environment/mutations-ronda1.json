@@ -1,0 +1,150 @@
+{
+ "ronda": 1,
+ "restaurado": true,
+ "resultados": [
+  {
+   "mutacion": "M01",
+   "que": "omitir pip-audit de V6R (requirements.lock)",
+   "estado": "MATADO",
+   "pytest": "1 failed, 70 passed in 0.62s"
+  },
+  {
+   "mutacion": "M02",
+   "que": "omitir la igualdad del subconjunto en V6C",
+   "estado": "SOBREVIVE",
+   "pytest": "73 passed in 0.63s"
+  },
+  {
+   "mutacion": "M03",
+   "que": "permitir descarga por etiqueta flotante",
+   "estado": "MATADO",
+   "pytest": "1 failed, 15 passed in 0.47s"
+  },
+  {
+   "mutacion": "M04",
+   "que": "aceptar otra versión runtime en V6C",
+   "estado": "MATADO",
+   "pytest": "1 failed, 10 passed in 0.46s"
+  },
+  {
+   "mutacion": "M05",
+   "que": "omitir la comprobación de existencia de ktest",
+   "estado": "MATADO",
+   "pytest": "1 failed, 71 passed in 0.63s"
+  },
+  {
+   "mutacion": "M06",
+   "que": "contar INVALID_ENVIRONMENT como fallo de producto",
+   "estado": "MATADO",
+   "pytest": "1 failed, 3 passed in 0.17s"
+  },
+  {
+   "mutacion": "M07",
+   "que": "quitar la puerta de validez del entorno",
+   "estado": "MATADO",
+   "pytest": "1 failed, 72 passed in 0.64s"
+  },
+  {
+   "mutacion": "M08",
+   "que": "volver a V0 en la E2E",
+   "estado": "MATADO",
+   "pytest": "1 failed, 27 passed in 0.51s"
+  },
+  {
+   "mutacion": "M09",
+   "que": "V0 obligatorio por defecto",
+   "estado": "MATADO",
+   "pytest": "1 failed, 2 passed in 0.18s"
+  },
+  {
+   "mutacion": "M10",
+   "que": "admitir un Python del PATH",
+   "estado": "SOBREVIVE",
+   "pytest": "73 passed in 0.71s"
+  },
+  {
+   "mutacion": "M11",
+   "que": "omitir la paridad de alembic",
+   "estado": "MATADO",
+   "pytest": "1 failed, 42 passed in 0.64s"
+  },
+  {
+   "mutacion": "M12",
+   "que": "omitir la paridad de la autoridad",
+   "estado": "SOBREVIVE",
+   "pytest": "73 passed in 0.71s"
+  },
+  {
+   "mutacion": "M13",
+   "que": "omitir la paridad de los ayudantes",
+   "estado": "MATADO",
+   "pytest": "1 failed, 58 passed in 0.66s"
+  },
+  {
+   "mutacion": "M14",
+   "que": "omitir OpenAPI",
+   "estado": "MATADO",
+   "pytest": "1 failed, 1 passed in 0.16s"
+  },
+  {
+   "mutacion": "M15",
+   "que": "omitir la auditoría de residuos",
+   "estado": "MATADO",
+   "pytest": "1 failed, 1 passed in 0.15s"
+  },
+  {
+   "mutacion": "M16",
+   "que": "devolver 0 tras un subcomando fallido",
+   "estado": "MATADO",
+   "pytest": "1 failed, 4 passed in 0.15s"
+  },
+  {
+   "mutacion": "M17",
+   "que": "registrar el entorno sensible",
+   "estado": "MATADO",
+   "pytest": "1 failed, 5 passed in 0.45s"
+  },
+  {
+   "mutacion": "M18",
+   "que": "reutilizar un espacio incompleto",
+   "estado": "MATADO",
+   "pytest": "1 failed, 7 passed in 0.47s"
+  },
+  {
+   "mutacion": "M19",
+   "que": "omitir la exigencia del manifiesto final",
+   "estado": "MATADO",
+   "pytest": "1 failed, 21 passed in 0.54s"
+  },
+  {
+   "mutacion": "M20",
+   "que": "permitir un hallazgo de pip-audit",
+   "estado": "MATADO",
+   "pytest": "1 failed, 70 passed in 0.66s"
+  },
+  {
+   "mutacion": "M21",
+   "que": "permitir freeze distinto del lock",
+   "estado": "MATADO",
+   "pytest": "1 failed, 10 passed in 0.48s"
+  },
+  {
+   "mutacion": "M22",
+   "que": "usar el lock de certificación en V6R",
+   "estado": "MATADO",
+   "pytest": "1 failed, 28 passed in 0.52s"
+  },
+  {
+   "mutacion": "M23",
+   "que": "dejar evidencia sucia sin clasificar",
+   "estado": "MATADO",
+   "pytest": "1 failed, 11 passed in 0.49s"
+  },
+  {
+   "mutacion": "M24",
+   "que": "omitir la procedencia del digest base",
+   "estado": "MATADO",
+   "pytest": "1 failed, 9 passed in 0.49s"
+  }
+ ]
+}

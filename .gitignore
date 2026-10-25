@@ -88,3 +88,5 @@ qa/backend-runs/
 
 # Evidencia de cada corrida de qa/compose_qa.py (composición Docker aislada, OBS-09): evidencia.txt/json
 qa/compose-runs/
+# Evidencia de cada certificación de release canónica (qa/certificar-release.py): manifiesto y registros saneados
+qa/certificaciones/

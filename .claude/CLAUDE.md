@@ -190,6 +190,19 @@ mutaciones, regresiones y coste. Si Claude hizo la tarea entera, se dice.
   lo elimina todo al terminar; `kaud` es solo QA manual. Huérfanas tras una muerte a la fuerza:
   `qa/e2e-bases.py listar | purgar --confirmar`.
 
+- **Certificación de release (canónica, Spec 054)**: `python3 qa/certificar-release.py` (desde la raíz,
+  con el `python3` del sistema) es la única orden de certificación: reconstruye V6R (rootfs de
+  `python:3.13.16-slim-trixie` por digest más `requirements.lock`) y V6C (V6R más `requirements-test.lock`)
+  y ejecuta en etapas preflight, entorno, locks, V6R, V6C, subconjunto runtime, PostgreSQL/SQLite, E2E,
+  OpenAPI, pip-audit, residuos, manifiesto y veredicto. Opciones: `--incluir-v0-historico` (control V0,
+  nunca por defecto), `--espera-salud-min N`, `--conservar-espacio`, `--solo-preflight` (diagnóstico, no
+  certifica). RC: 0 pasa, 1 fallo, 3 INVALID_ENVIRONMENT, 4 preflight correcto, 70 preflight/interno;
+  nunca a través de tubería. Evidencia en `qa/certificaciones/<run_id>/manifest.json` (fuera de Git).
+  E2E canónica con 6 workers y 0 reintentos fijos (`--workers=6 --retries=0`), sin importar CPU ni `CI`.
+  Política de entorno v1: preflight RC 70 ante variables heredadas prohibidas; el manifiesto solo registra nombres.
+  PostgreSQL de QA fijado en `qa/postgres_qa.json` (sin `.venv` ni compilador); árbol certificado en `CANONICAL_RUN_INPUT_HASH` v2.
+  Certificación oficial en anfitrión dedicado (OD-CERT-27), requisitos en la evidencia de specs/012.
+
 Delegar no rebaja ningún gate: backend, frontend, build, E2E, mutaciones y regresiones de
 seguridad se ejecutan cuando el ciclo los exige.
 

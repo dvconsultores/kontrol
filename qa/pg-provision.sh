@@ -2,19 +2,22 @@
 # Aprovisiona una instancia PostgreSQL real de QA (Spec 045 · CVG-045-01/02).
 #
 # Usa los binarios de PostgreSQL empaquetados en `pgserver` (dependencia SOLO de
-# QA, no de producción: no está en requirements.txt). En un entorno con Docker,
-# el equivalente es `compose.dev` con el servicio de PostgreSQL.
+# QA, no de producción: no está en requirements.txt). Cuando KONTROL_PGBIN está
+# definido, los binarios se toman de esa ruta (la certificación canónica lo fija
+# a la instalación de qa/postgres_qa.json); solo en el desarrollo no canónico se
+# usa pgserver dentro de resources/backend/.venv. En un entorno con Docker, el
+# equivalente es `compose.dev` con el servicio de PostgreSQL.
 #
 # Uso:  bash qa/pg-provision.sh [start|stop|status|reset]
 set -euo pipefail
 
 BACKEND="$(cd "$(dirname "${BASH_SOURCE[0]}")/../resources/backend" && pwd)"
-PGBIN="$BACKEND/.venv/lib/python3.11/site-packages/pgserver/pginstall/bin"
+PGBIN="${KONTROL_PGBIN:-$BACKEND/.venv/lib/python3.11/site-packages/pgserver/pginstall/bin}"
 PGDATA="${KONTROL_PGDATA:-/tmp/kontrol-pgdata-045}"
 PGPORT="${KONTROL_PGPORT:-55432}"
 LOG="${KONTROL_PGLOG:-/tmp/kontrol-pg.log}"
 
-[ -x "$PGBIN/pg_ctl" ] || { echo "pgserver no instalado: pip install pgserver"; exit 1; }
+[ -x "$PGBIN/pg_ctl" ] || { echo "PostgreSQL de QA no disponible en $PGBIN (pgserver no instalado o KONTROL_PGBIN inválido)"; exit 1; }
 
 # `btree_gist` no viene en el paquete `pgserver`: su instalación trae `plpgsql` y
 # `vector` y nada más. El esquema lo necesita —hay un `CREATE EXTENSION IF NOT
@@ -24,6 +27,7 @@ LOG="${KONTROL_PGLOG:-/tmp/kontrol-pg.log}"
 ext_btree_gist() {
   local dir="$($PGBIN/pg_config --sharedir)/extension"
   [ -f "$dir/btree_gist.control" ] && return 0
+  if [ "${KONTROL_PG_SIN_COMPILAR:-0}" = "1" ]; then echo "btree_gist no está instalado en $PGBIN y KONTROL_PG_SIN_COMPILAR=1 prohíbe compilarlo" >&2; return 1; fi
   local ver="$($PGBIN/pg_config --version | awk '{print $2}')"
   local tmp="${KONTROL_PGSRC:-/tmp/kontrol-pgsrc}"
   echo "compilando btree_gist para PostgreSQL $ver…"

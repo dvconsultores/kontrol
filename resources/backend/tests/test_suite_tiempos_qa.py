@@ -136,7 +136,12 @@ def test_o12_03_la_telemetria_de_carga_esta_saneada_y_es_numerica(tmp_path: Path
     assert m["anfitrion"]["cpu"]["util_max_pct"] == 69.2  # Δtotal 1300, Δocioso 400 → 69,2 % ocupado
 
 
-def test_o12_04_la_telemetria_de_memoria_esta_saneada_sin_identidad_del_equipo(tmp_path: Path) -> None:
+def test_o12_04_la_telemetria_de_memoria_esta_saneada_sin_identidad_del_equipo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # El intérprete se invoca por un enlace bajo tmp_path: la prueba no depende de si vive bajo el HOME real.
+    interprete = tmp_path / "interprete" / "python"
+    interprete.parent.mkdir()
+    interprete.symlink_to(sys.executable)
+    monkeypatch.setattr(st.sys, "executable", str(interprete))
     _, m, evidencia = corrida(tmp_path)
     assert m["anfitrion"]["memoria"] == {"disponible_min_mb": 3000.0, "swap_usada_max_mb": 4883.0, "paginacion_entrante": 30.0, "paginacion_saliente": 0.0}
     texto = (evidencia / "manifest.json").read_text(encoding="utf-8") + (evidencia / "host.csv").read_text(encoding="utf-8")

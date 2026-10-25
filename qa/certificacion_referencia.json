@@ -1,0 +1,13 @@
+{
+  "esquema": 1,
+  "descripcion": "Firma versionada de la OpenAPI del backend que la certificación canónica (qa/certificar-release.py, etapa 100) exige a V6R y V6C. Un cambio intencionado del contrato HTTP actualiza esta referencia en el mismo commit.",
+  "openapi": {
+    "version_openapi": "3.1.0",
+    "rutas": 411,
+    "operaciones": 544,
+    "protegidas": 533,
+    "publicas": 11,
+    "huella_paths": "sha256:444c820edc7e7d6382448554c414494007db50d183bb8032c0bfc055afa80c90"
+  },
+  "pip_audit": "pip-audit==2.10.1"
+}

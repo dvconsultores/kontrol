@@ -2421,3 +2421,21 @@ Quedan aparte:
 Quedan aparte:
 - OBS-09: prioridad 1 si llega la evidencia Docker (que además certificaría el contenido exacto de la imagen);
 - BASE-IMAGE-UPSTREAM-REBUILD-REPIN: DEFERRED / NON-BLOCKING.
+
+## Actualización 2026-10-25 — orden canónica de certificación implementada; corrida oficial pendiente de anfitrión
+
+Decisión de la dueña **OD-CERT-30**: se confirma en develop la implementación de SPEC054 como **IMPLEMENTED —
+CERTIFICATION PENDING (dedicated host)**, sin marcarla como cerrada, y se abre SPEC046 S3. El cierre de SPEC054 llegará con la
+primera corrida oficial con RC 0 en un anfitrión dedicado, que certificará también el trabajo posterior (el hash del árbol cubre
+todo lo que haya en ese momento).
+
+| Deuda | Estado |
+|---|---|
+| CANONICALIZE-CERTIFICATION-ENVIRONMENT | **IMPLEMENTED — CERTIFICATION PENDING**: `python3 qa/certificar-release.py` (V6R/V6C, 15 etapas, RC 0/1/3/4/70); 8 corridas en la estación multiproyecto: el producto en verde, pero la validez posterior (memoria) las invalida → OD-CERT-27 = A (entorno dedicado) |
+| CERTIFICATION-HOST-PORTABILITY (G1–G4) | **CLOSED / CONVERGED**: workers 6 y retries 0 fijos; política de entorno v1; PostgreSQL de QA fijado (`qa/postgres_qa.json`, sin `.venv`); árbol certificado ligado al hash v2 |
+| CERTIFICATION-HOST-INFRASTRUCTURE (nueva) | **BLOCKED_BY_PROVIDER_ACCESS**: no hay anfitrión dedicado ni cuenta cloud. Requisitos: Debian 13 amd64, 12 CPU lógicas o más, 16–24 GB, 25–50 GB SSD, swap ≥ 4 GiB |
+| E2E-RESULT-MANIFEST-POST-VALIDITY-SEMANTICS (nueva) | OPEN, no bloqueante: si la validez posterior invalida la etapa 90, el manifiesto deja `E2E_RESULT = NOT_RUN` aunque la suite pase |
+| PG-MIGRATION-VALIDATION-VENV (nueva) | OPEN, no canónica: `qa/pg-migration-validation.sh` sigue tomando PostgreSQL del `.venv` |
+
+**NEXT TECHNICAL CYCLE = SPEC046 S3-UNSUPPORTED-CONFIGURATION-FAIL-CLOSED** (implementación y pruebas en la estación; la
+certificación oficial queda pendiente del anfitrión). Después, GOVERNMENT-START-READINESS.

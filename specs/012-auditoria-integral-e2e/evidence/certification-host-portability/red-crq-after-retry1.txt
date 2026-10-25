@@ -1,0 +1,812 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF                                         [100%]
+=================================== FAILURES ===================================
+___________________ TestPinPostgresQa.test_constantes_y_pin ____________________
+
+self = <test_certificacion_postgres_qa.TestPinPostgresQa object at 0x7f237e737a10>
+
+    def test_constantes_y_pin(self) -> None:
+>       assert not hasattr(cr, "PG_BIN")
+E       AssertionError: assert not True
+E        +  where True = hasattr(cr, 'PG_BIN')
+
+tests/test_certificacion_postgres_qa.py:188: AssertionError
+______________ TestPinPostgresQa.test_sin_venv_en_rutas_criticas _______________
+
+self = <test_certificacion_postgres_qa.TestPinPostgresQa object at 0x7f237e741190>
+
+    def test_sin_venv_en_rutas_criticas(self) -> None:
+        for funcion in (
+            cr.etapa_preflight,
+            cr.etapa_postgres,
+            cr._pg_provision,
+>           cr.aprovisionar_postgres_qa,
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ):
+E       AttributeError: module 'certificacion_release' has no attribute 'aprovisionar_postgres_qa'
+
+tests/test_certificacion_postgres_qa.py:209: AttributeError
+________________ TestDescargarVerificado.test_descarga_exitosa _________________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f237e741150>
+tmp_path = PosixPath('<tmp>/test_descarga_exitosa0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e8d8350>
+
+    def test_descarga_exitosa(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        contenido = b"contenido cierto"
+        destino = tmp_path / "salida.bin"
+        abrir, llamadas = _abrir_url_falsa(contenido)
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:221: AttributeError
+__________ TestDescargarVerificado.test_sha256_incorrecto_sin_restos ___________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f237e742a50>
+tmp_path = PosixPath('<tmp>/test_sha256_incorrecto_sin_res0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237ebf42d0>
+
+    def test_sha256_incorrecto_sin_restos(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        abrir, _ = _abrir_url_falsa(b"otro contenido")
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:229: AttributeError
+____________ TestDescargarVerificado.test_http_rechazado_sin_abrir _____________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f237e743550>
+tmp_path = PosixPath('<tmp>/test_http_rechazado_sin_abrir0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e80ca50>
+
+    def test_http_rechazado_sin_abrir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        abrir, llamadas = _abrir_url_falsa(b"")
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:238: AttributeError
+__________ TestDescargarVerificado.test_redireccion_a_http_rechazada ___________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f237e741b50>
+tmp_path = PosixPath('<tmp>/test_redireccion_a_http_rechaz0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e864690>
+
+    def test_redireccion_a_http_rechazada(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        contenido = b"contenido"
+        abrir, _ = _abrir_url_falsa(contenido, "http://origen.invalido/final")
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:247: AttributeError
+___________ TestDescargarVerificado.test_reutiliza_fichero_correcto ____________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f237e742290>
+tmp_path = PosixPath('<tmp>/test_reutiliza_fichero_correct0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237ea5ee50>
+
+    def test_reutiliza_fichero_correcto(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        contenido = b"ya descargado"
+        destino = tmp_path / "salida.bin"
+        destino.write_bytes(contenido)
+        abrir, llamadas = _abrir_url_falsa(contenido)
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:257: AttributeError
+__________ TestDescargarVerificado.test_reemplaza_fichero_incorrecto ___________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f237e7438d0>
+tmp_path = PosixPath('<tmp>/test_reemplaza_fichero_incorre0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e8d8310>
+
+    def test_reemplaza_fichero_incorrecto(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        contenido = b"nuevo correcto"
+        destino = tmp_path / "salida.bin"
+        destino.write_bytes(b"viejo incorrecto")
+        abrir, llamadas = _abrir_url_falsa(contenido)
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:266: AttributeError
+______________ TestExtraerPostgres.test_extraccion_y_verificacion ______________
+
+self = <test_certificacion_postgres_qa.TestExtraerPostgres object at 0x7f237e743c10>
+tmp_path = PosixPath('<tmp>/test_extraccion_y_verificacion0')
+
+    def test_extraccion_y_verificacion(self, tmp_path: Path) -> None:
+        rueda = _rueda_falsa(tmp_path)
+        destino = tmp_path / "instalacion"
+        destino.mkdir()
+>       assert cr.extraer_postgres_de_la_rueda(rueda, destino) == 3
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'extraer_postgres_de_la_rueda'
+
+tests/test_certificacion_postgres_qa.py:280: AttributeError
+___________ TestExtraerPostgres.test_detecta_modificacion_y_borrado ____________
+
+self = <test_certificacion_postgres_qa.TestExtraerPostgres object at 0x7f237eb24050>
+tmp_path = PosixPath('<tmp>/test_detecta_modificacion_y_bo0')
+
+    def test_detecta_modificacion_y_borrado(self, tmp_path: Path) -> None:
+        rueda = _rueda_falsa(tmp_path)
+        destino = tmp_path / "instalacion"
+        destino.mkdir()
+>       cr.extraer_postgres_de_la_rueda(rueda, destino)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'extraer_postgres_de_la_rueda'
+
+tests/test_certificacion_postgres_qa.py:292: AttributeError
+__________________ TestExtraerPostgres.test_record_incorrecto __________________
+
+self = <test_certificacion_postgres_qa.TestExtraerPostgres object at 0x7f237e71dd90>
+tmp_path = PosixPath('<tmp>/test_record_incorrecto0')
+
+    def test_record_incorrecto(self, tmp_path: Path) -> None:
+        ruta = tmp_path / "mala.whl"
+        with zipfile.ZipFile(ruta, "w") as rueda:
+            info = zipfile.ZipInfo("pgserver/pginstall/bin/pg_ctl")
+            info.external_attr = (0o100000 | 0o755) << 16
+            info.compress_type = zipfile.ZIP_DEFLATED
+            rueda.writestr(info, b"#!/bin/sh\n")
+            registro = f"pgserver/pginstall/bin/pg_ctl,sha256={base64.urlsafe_b64encode(b'X' * 32).rstrip(b'=').decode()},10\n"
+            rueda.writestr("pgserver-0.1.4.dist-info/RECORD", registro)
+        destino = tmp_path / "instalacion"
+        destino.mkdir()
+        with pytest.raises(cr.FalloDeCertificacion):
+>           cr.extraer_postgres_de_la_rueda(ruta, destino)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'certificacion_release' has no attribute 'extraer_postgres_de_la_rueda'
+
+tests/test_certificacion_postgres_qa.py:313: AttributeError
+______________ TestExtraerPostgres.test_miembro_fuera_de_destino _______________
+
+self = <test_certificacion_postgres_qa.TestExtraerPostgres object at 0x7f237e71c510>
+tmp_path = PosixPath('<tmp>/test_miembro_fuera_de_destino0')
+
+    def test_miembro_fuera_de_destino(self, tmp_path: Path) -> None:
+        ruta = tmp_path / "mala.whl"
+        miembros = [
+            ("pgserver/pginstall/../../evil", b"maligno", 0o755),
+            ("pgserver/pginstall/bin/pg_ctl", b"#!/bin/sh\n", 0o755),
+            ("pgserver.libs/libpq-x.so.5", b"so\n", 0o755),
+        ]
+        with zipfile.ZipFile(ruta, "w") as rueda:
+            _escribir_record(rueda, miembros)
+        destino = tmp_path / "instalacion"
+        destino.mkdir()
+        with pytest.raises(cr.FalloDeCertificacion):
+>           cr.extraer_postgres_de_la_rueda(ruta, destino)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'certificacion_release' has no attribute 'extraer_postgres_de_la_rueda'
+
+tests/test_certificacion_postgres_qa.py:327: AttributeError
+_______________ TestFicherosDeBtreeGist.test_ficheros_esperados ________________
+
+self = <test_certificacion_postgres_qa.TestFicherosDeBtreeGist object at 0x7f237e71ce10>
+tmp_path = PosixPath('<tmp>/test_ficheros_esperados0')
+
+    def test_ficheros_esperados(self, tmp_path: Path) -> None:
+        deb = _paquete_deb_falso(tmp_path)
+>       ficheros = cr.ficheros_de_btree_gist(deb)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'ficheros_de_btree_gist'
+
+tests/test_certificacion_postgres_qa.py:337: AttributeError
+____________________ TestFicherosDeBtreeGist.test_no_es_ar _____________________
+
+self = <test_certificacion_postgres_qa.TestFicherosDeBtreeGist object at 0x7f237e743a90>
+tmp_path = PosixPath('<tmp>/test_no_es_ar0')
+
+    def test_no_es_ar(self, tmp_path: Path) -> None:
+        fichero = tmp_path / "sucio.deb"
+        fichero.write_bytes(b"esto no es un archivo ar")
+        with pytest.raises(cr.FalloDeCertificacion):
+>           cr.ficheros_de_btree_gist(fichero)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'certificacion_release' has no attribute 'ficheros_de_btree_gist'
+
+tests/test_certificacion_postgres_qa.py:351: AttributeError
+_________________ TestFicherosDeBtreeGist.test_sin_btree_gist __________________
+
+self = <test_certificacion_postgres_qa.TestFicherosDeBtreeGist object at 0x7f237e71e450>
+tmp_path = PosixPath('<tmp>/test_sin_btree_gist0')
+
+    def test_sin_btree_gist(self, tmp_path: Path) -> None:
+        deb = _paquete_deb_falso(tmp_path, incluir_btree_gist=False)
+        with pytest.raises(cr.FalloDeCertificacion):
+>           cr.ficheros_de_btree_gist(deb)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'certificacion_release' has no attribute 'ficheros_de_btree_gist'
+
+tests/test_certificacion_postgres_qa.py:356: AttributeError
+______________ TestAprovisionarPostgresQa.test_instalacion_fresca ______________
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f237e71d990>
+tmp_path = PosixPath('<tmp>/test_instalacion_fresca0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e8725d0>
+
+    def test_instalacion_fresca(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+>       pin, _, _, _ = self._preparar_dobles(tmp_path, monkeypatch, ctx)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:400: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f237e71d990>
+tmp_path = PosixPath('<tmp>/test_instalacion_fresca0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e8725d0>
+ctx = Contexto(run_id='RUN1', opciones=Namespace(incluir_v0_historico=False, espera_salud_min=30, conservar_espacio=True, so...OS': [], 'etapas': [], 'sujetos': []}, datos={}, vivos={}, fallo_previo=False, rc=0, inicio_monotonico=13478.649320811)
+
+    def _preparar_dobles(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, ctx: cr.Contexto
+    ) -> tuple[dict, Path, Path, list]:
+        artefactos = tmp_path / "artefactos"
+        artefactos.mkdir(exist_ok=True)
+        rueda = _rueda_falsa(artefactos)
+        deb = _paquete_deb_falso(artefactos)
+        pin = {
+            "esquema": 1,
+            "postgres": "16.2",
+            "rueda": {
+                "fichero": rueda.name,
+                "url": "https://origen.invalido/rueda.whl",
+                "sha256": _sha256(rueda.read_bytes()),
+            },
+            "btree_gist": {
+                "fichero": deb.name,
+                "url": "https://origen.invalido/paquete.deb",
+                "sha256": _sha256(deb.read_bytes()),
+            },
+        }
+        pin_ruta = tmp_path / "postgres_qa.json"
+        pin_ruta.write_text(json.dumps(pin))
+>       monkeypatch.setattr(cr, "POSTGRES_QA", pin_ruta)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'POSTGRES_QA'
+
+tests/test_certificacion_postgres_qa.py:385: AttributeError
+______ TestAprovisionarPostgresQa.test_reutilizacion_y_descargas_siempre _______
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f237e71e9d0>
+tmp_path = PosixPath('<tmp>/test_reutilizacion_y_descargas0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e89c250>
+
+    def test_reutilizacion_y_descargas_siempre(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+>       _, _, _, llamadas = self._preparar_dobles(tmp_path, monkeypatch, ctx)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:422: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f237e71e9d0>
+tmp_path = PosixPath('<tmp>/test_reutilizacion_y_descargas0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e89c250>
+ctx = Contexto(run_id='RUN1', opciones=Namespace(incluir_v0_historico=False, espera_salud_min=30, conservar_espacio=True, so...OS': [], 'etapas': [], 'sujetos': []}, datos={}, vivos={}, fallo_previo=False, rc=0, inicio_monotonico=13478.665978009)
+
+    def _preparar_dobles(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, ctx: cr.Contexto
+    ) -> tuple[dict, Path, Path, list]:
+        artefactos = tmp_path / "artefactos"
+        artefactos.mkdir(exist_ok=True)
+        rueda = _rueda_falsa(artefactos)
+        deb = _paquete_deb_falso(artefactos)
+        pin = {
+            "esquema": 1,
+            "postgres": "16.2",
+            "rueda": {
+                "fichero": rueda.name,
+                "url": "https://origen.invalido/rueda.whl",
+                "sha256": _sha256(rueda.read_bytes()),
+            },
+            "btree_gist": {
+                "fichero": deb.name,
+                "url": "https://origen.invalido/paquete.deb",
+                "sha256": _sha256(deb.read_bytes()),
+            },
+        }
+        pin_ruta = tmp_path / "postgres_qa.json"
+        pin_ruta.write_text(json.dumps(pin))
+>       monkeypatch.setattr(cr, "POSTGRES_QA", pin_ruta)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'POSTGRES_QA'
+
+tests/test_certificacion_postgres_qa.py:385: AttributeError
+_______ TestAprovisionarPostgresQa.test_instalacion_manipulada_invalida ________
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f237e71e290>
+tmp_path = PosixPath('<tmp>/test_instalacion_manipulada_in0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e95a650>
+
+    def test_instalacion_manipulada_invalida(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+>       self._preparar_dobles(tmp_path, monkeypatch, ctx)
+
+tests/test_certificacion_postgres_qa.py:431: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f237e71e290>
+tmp_path = PosixPath('<tmp>/test_instalacion_manipulada_in0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e95a650>
+ctx = Contexto(run_id='RUN1', opciones=Namespace(incluir_v0_historico=False, espera_salud_min=30, conservar_espacio=True, so...OS': [], 'etapas': [], 'sujetos': []}, datos={}, vivos={}, fallo_previo=False, rc=0, inicio_monotonico=13478.682493717)
+
+    def _preparar_dobles(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, ctx: cr.Contexto
+    ) -> tuple[dict, Path, Path, list]:
+        artefactos = tmp_path / "artefactos"
+        artefactos.mkdir(exist_ok=True)
+        rueda = _rueda_falsa(artefactos)
+        deb = _paquete_deb_falso(artefactos)
+        pin = {
+            "esquema": 1,
+            "postgres": "16.2",
+            "rueda": {
+                "fichero": rueda.name,
+                "url": "https://origen.invalido/rueda.whl",
+                "sha256": _sha256(rueda.read_bytes()),
+            },
+            "btree_gist": {
+                "fichero": deb.name,
+                "url": "https://origen.invalido/paquete.deb",
+                "sha256": _sha256(deb.read_bytes()),
+            },
+        }
+        pin_ruta = tmp_path / "postgres_qa.json"
+        pin_ruta.write_text(json.dumps(pin))
+>       monkeypatch.setattr(cr, "POSTGRES_QA", pin_ruta)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'POSTGRES_QA'
+
+tests/test_certificacion_postgres_qa.py:385: AttributeError
+_____ TestAprovisionarPostgresQa.test_instalacion_incompleta_se_reinstala ______
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f237e71ccd0>
+tmp_path = PosixPath('<tmp>/test_instalacion_incompleta_se0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e8c5950>
+
+    def test_instalacion_incompleta_se_reinstala(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+>       self._preparar_dobles(tmp_path, monkeypatch, ctx)
+
+tests/test_certificacion_postgres_qa.py:440: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f237e71ccd0>
+tmp_path = PosixPath('<tmp>/test_instalacion_incompleta_se0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e8c5950>
+ctx = Contexto(run_id='RUN1', opciones=Namespace(incluir_v0_historico=False, espera_salud_min=30, conservar_espacio=True, so...OS': [], 'etapas': [], 'sujetos': []}, datos={}, vivos={}, fallo_previo=False, rc=0, inicio_monotonico=13478.698744238)
+
+    def _preparar_dobles(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, ctx: cr.Contexto
+    ) -> tuple[dict, Path, Path, list]:
+        artefactos = tmp_path / "artefactos"
+        artefactos.mkdir(exist_ok=True)
+        rueda = _rueda_falsa(artefactos)
+        deb = _paquete_deb_falso(artefactos)
+        pin = {
+            "esquema": 1,
+            "postgres": "16.2",
+            "rueda": {
+                "fichero": rueda.name,
+                "url": "https://origen.invalido/rueda.whl",
+                "sha256": _sha256(rueda.read_bytes()),
+            },
+            "btree_gist": {
+                "fichero": deb.name,
+                "url": "https://origen.invalido/paquete.deb",
+                "sha256": _sha256(deb.read_bytes()),
+            },
+        }
+        pin_ruta = tmp_path / "postgres_qa.json"
+        pin_ruta.write_text(json.dumps(pin))
+>       monkeypatch.setattr(cr, "POSTGRES_QA", pin_ruta)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'POSTGRES_QA'
+
+tests/test_certificacion_postgres_qa.py:385: AttributeError
+_____ TestAprovisionarPostgresQa.test_espacios_previos_ignora_postgres_qa ______
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f237e71edd0>
+tmp_path = PosixPath('<tmp>/test_espacios_previos_ignora_p0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e9623d0>
+
+    def test_espacios_previos_ignora_postgres_qa(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+>       self._preparar_dobles(tmp_path, monkeypatch, ctx)
+
+tests/test_certificacion_postgres_qa.py:452: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f237e71edd0>
+tmp_path = PosixPath('<tmp>/test_espacios_previos_ignora_p0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e9623d0>
+ctx = Contexto(run_id='RUN1', opciones=Namespace(incluir_v0_historico=False, espera_salud_min=30, conservar_espacio=True, so...OS': [], 'etapas': [], 'sujetos': []}, datos={}, vivos={}, fallo_previo=False, rc=0, inicio_monotonico=13478.715225364)
+
+    def _preparar_dobles(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, ctx: cr.Contexto
+    ) -> tuple[dict, Path, Path, list]:
+        artefactos = tmp_path / "artefactos"
+        artefactos.mkdir(exist_ok=True)
+        rueda = _rueda_falsa(artefactos)
+        deb = _paquete_deb_falso(artefactos)
+        pin = {
+            "esquema": 1,
+            "postgres": "16.2",
+            "rueda": {
+                "fichero": rueda.name,
+                "url": "https://origen.invalido/rueda.whl",
+                "sha256": _sha256(rueda.read_bytes()),
+            },
+            "btree_gist": {
+                "fichero": deb.name,
+                "url": "https://origen.invalido/paquete.deb",
+                "sha256": _sha256(deb.read_bytes()),
+            },
+        }
+        pin_ruta = tmp_path / "postgres_qa.json"
+        pin_ruta.write_text(json.dumps(pin))
+>       monkeypatch.setattr(cr, "POSTGRES_QA", pin_ruta)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'POSTGRES_QA'
+
+tests/test_certificacion_postgres_qa.py:385: AttributeError
+________________ TestEjecutableDelPostmaster.test_proceso_vivo _________________
+
+self = <test_certificacion_postgres_qa.TestEjecutableDelPostmaster object at 0x7f237e71f6d0>
+tmp_path = PosixPath('<tmp>/test_proceso_vivo0')
+
+    def test_proceso_vivo(self, tmp_path: Path) -> None:
+        pgdata = tmp_path / "pgdata"
+        pgdata.mkdir()
+        (pgdata / "postmaster.pid").write_text(f"{os.getpid()}\n")
+>       assert cr.ejecutable_del_postmaster(pgdata) == Path("/proc/self/exe").resolve()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'ejecutable_del_postmaster'
+
+tests/test_certificacion_postgres_qa.py:467: AttributeError
+_______________ TestEjecutableDelPostmaster.test_fichero_ausente _______________
+
+self = <test_certificacion_postgres_qa.TestEjecutableDelPostmaster object at 0x7f237e71fd10>
+tmp_path = PosixPath('<tmp>/test_fichero_ausente0')
+
+    def test_fichero_ausente(self, tmp_path: Path) -> None:
+>       assert cr.ejecutable_del_postmaster(tmp_path / "no_existe") is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'ejecutable_del_postmaster'
+
+tests/test_certificacion_postgres_qa.py:470: AttributeError
+_______________ TestEjecutableDelPostmaster.test_pid_no_numerico _______________
+
+self = <test_certificacion_postgres_qa.TestEjecutableDelPostmaster object at 0x7f237e72a190>
+tmp_path = PosixPath('<tmp>/test_pid_no_numerico0')
+
+    def test_pid_no_numerico(self, tmp_path: Path) -> None:
+        pgdata = tmp_path / "pgdata"
+        pgdata.mkdir()
+        (pgdata / "postmaster.pid").write_text("abc\n")
+>       assert cr.ejecutable_del_postmaster(pgdata) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'ejecutable_del_postmaster'
+
+tests/test_certificacion_postgres_qa.py:476: AttributeError
+_________________ TestEjecutableDelPostmaster.test_pid_muerto __________________
+
+self = <test_certificacion_postgres_qa.TestEjecutableDelPostmaster object at 0x7f237e72b510>
+tmp_path = PosixPath('<tmp>/test_pid_muerto0')
+
+    def test_pid_muerto(self, tmp_path: Path) -> None:
+        pgdata = tmp_path / "pgdata"
+        pgdata.mkdir()
+        (pgdata / "postmaster.pid").write_text("999999999\n")
+>       assert cr.ejecutable_del_postmaster(pgdata) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'ejecutable_del_postmaster'
+
+tests/test_certificacion_postgres_qa.py:482: AttributeError
+__________________ TestPgProvision.test_argumentos_y_entorno ___________________
+
+self = <test_certificacion_postgres_qa.TestPgProvision object at 0x7f237e729c90>
+tmp_path = PosixPath('<tmp>/test_argumentos_y_entorno0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e71e990>
+
+    def test_argumentos_y_entorno(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+        bash = shutil.which("bash")
+        assert bash is not None
+        ctx.datos["herramientas"] = {"bash": bash}
+        ctx.datos["postgres_qa"] = {"bin": "/x/bin"}
+        capturas: dict = {}
+    
+        def ejecutar_sujeto(ctx_local: cr.Contexto, etapa: str, argv: list[str], **kwargs: object) -> cr.ResultadoSujeto:
+            capturas["argv"] = argv
+            capturas["entorno"] = kwargs["entorno"]
+            capturas["cwd"] = kwargs.get("cwd")
+            capturas["etapa"] = etapa
+            return cr.ResultadoSujeto(rc=0, salida="")
+    
+        monkeypatch.setattr(cr, "ejecutar_sujeto", ejecutar_sujeto)
+        assert cr._pg_provision(ctx, "status", nombre="estado") == 0
+        assert capturas["etapa"] == "70"
+        assert capturas["argv"] == [bash, str(cr.PG_PROVISION), "status"]
+        entorno = capturas["entorno"]
+        assert entorno["KONTROL_PGPORT"] == "55432"
+>       assert entorno["KONTROL_PGBIN"] == "/x/bin"
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'KONTROL_PGBIN'
+
+tests/test_certificacion_postgres_qa.py:509: KeyError
+____________ TestEtapaPostgresProcedencia.test_postmaster_qa_valido ____________
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f237e72b290>
+tmp_path = PosixPath('<tmp>/test_postmaster_qa_valido0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237ecd5550>
+
+    def test_postmaster_qa_valido(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       preparado = self._preparar(tmp_path, monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:561: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f237e72b290>
+tmp_path = PosixPath('<tmp>/test_postmaster_qa_valido0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237ecd5550>
+
+    def _preparar(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
+        ctx = _contexto(tmp_path)
+        binario = tmp_path / "bin"
+        binario.mkdir()
+        postgres = binario / "postgres"
+        postgres.write_text("#!/bin/sh\necho postgres\n")
+        postgres.chmod(0o755)
+        llamadas: list[str] = []
+        provision = {"bin": str(binario), "postgres": "16.2", "reutilizada": True}
+    
+        def aprovisionar(ctx_local: cr.Contexto) -> dict:
+            llamadas.append("aprovisionar")
+            ctx_local.datos["postgres_qa"] = provision
+            (ctx_local.home / cr.DIRECTORIO_POSTGRES_QA).mkdir(parents=True, exist_ok=True)
+            return provision
+    
+        def ejecutable_doble(pgdata: Path) -> Path | None:
+            return postgres.resolve()
+    
+        def pg_provision(ctx_local: cr.Contexto, *argumentos: str, nombre: str) -> int:
+            llamadas.append("pg_provision")
+            return 0
+    
+>       monkeypatch.setattr(cr, "aprovisionar_postgres_qa", aprovisionar)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'aprovisionar_postgres_qa'
+
+tests/test_certificacion_postgres_qa.py:541: AttributeError
+________ TestEtapaPostgresProcedencia.test_postmaster_fuera_del_bin_qa _________
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f237e72b710>
+tmp_path = PosixPath('<tmp>/test_postmaster_fuera_del_bin_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e729150>
+
+    def test_postmaster_fuera_del_bin_qa(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       preparado = self._preparar(tmp_path, monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:569: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f237e72b710>
+tmp_path = PosixPath('<tmp>/test_postmaster_fuera_del_bin_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e729150>
+
+    def _preparar(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
+        ctx = _contexto(tmp_path)
+        binario = tmp_path / "bin"
+        binario.mkdir()
+        postgres = binario / "postgres"
+        postgres.write_text("#!/bin/sh\necho postgres\n")
+        postgres.chmod(0o755)
+        llamadas: list[str] = []
+        provision = {"bin": str(binario), "postgres": "16.2", "reutilizada": True}
+    
+        def aprovisionar(ctx_local: cr.Contexto) -> dict:
+            llamadas.append("aprovisionar")
+            ctx_local.datos["postgres_qa"] = provision
+            (ctx_local.home / cr.DIRECTORIO_POSTGRES_QA).mkdir(parents=True, exist_ok=True)
+            return provision
+    
+        def ejecutable_doble(pgdata: Path) -> Path | None:
+            return postgres.resolve()
+    
+        def pg_provision(ctx_local: cr.Contexto, *argumentos: str, nombre: str) -> int:
+            llamadas.append("pg_provision")
+            return 0
+    
+>       monkeypatch.setattr(cr, "aprovisionar_postgres_qa", aprovisionar)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'aprovisionar_postgres_qa'
+
+tests/test_certificacion_postgres_qa.py:541: AttributeError
+______________ TestEtapaPostgresProcedencia.test_postmaster_none _______________
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f237e72bd50>
+tmp_path = PosixPath('<tmp>/test_postmaster_none0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237ece9b90>
+
+    def test_postmaster_none(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       preparado = self._preparar(tmp_path, monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:581: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f237e72bd50>
+tmp_path = PosixPath('<tmp>/test_postmaster_none0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237ece9b90>
+
+    def _preparar(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
+        ctx = _contexto(tmp_path)
+        binario = tmp_path / "bin"
+        binario.mkdir()
+        postgres = binario / "postgres"
+        postgres.write_text("#!/bin/sh\necho postgres\n")
+        postgres.chmod(0o755)
+        llamadas: list[str] = []
+        provision = {"bin": str(binario), "postgres": "16.2", "reutilizada": True}
+    
+        def aprovisionar(ctx_local: cr.Contexto) -> dict:
+            llamadas.append("aprovisionar")
+            ctx_local.datos["postgres_qa"] = provision
+            (ctx_local.home / cr.DIRECTORIO_POSTGRES_QA).mkdir(parents=True, exist_ok=True)
+            return provision
+    
+        def ejecutable_doble(pgdata: Path) -> Path | None:
+            return postgres.resolve()
+    
+        def pg_provision(ctx_local: cr.Contexto, *argumentos: str, nombre: str) -> int:
+            llamadas.append("pg_provision")
+            return 0
+    
+>       monkeypatch.setattr(cr, "aprovisionar_postgres_qa", aprovisionar)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'aprovisionar_postgres_qa'
+
+tests/test_certificacion_postgres_qa.py:541: AttributeError
+______________ TestEtapaPostgresProcedencia.test_version_distinta ______________
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f237e71ea90>
+tmp_path = PosixPath('<tmp>/test_version_distinta0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e9141d0>
+
+    def test_version_distinta(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       preparado = self._preparar(tmp_path, monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:588: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f237e71ea90>
+tmp_path = PosixPath('<tmp>/test_version_distinta0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237e9141d0>
+
+    def _preparar(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
+        ctx = _contexto(tmp_path)
+        binario = tmp_path / "bin"
+        binario.mkdir()
+        postgres = binario / "postgres"
+        postgres.write_text("#!/bin/sh\necho postgres\n")
+        postgres.chmod(0o755)
+        llamadas: list[str] = []
+        provision = {"bin": str(binario), "postgres": "16.2", "reutilizada": True}
+    
+        def aprovisionar(ctx_local: cr.Contexto) -> dict:
+            llamadas.append("aprovisionar")
+            ctx_local.datos["postgres_qa"] = provision
+            (ctx_local.home / cr.DIRECTORIO_POSTGRES_QA).mkdir(parents=True, exist_ok=True)
+            return provision
+    
+        def ejecutable_doble(pgdata: Path) -> Path | None:
+            return postgres.resolve()
+    
+        def pg_provision(ctx_local: cr.Contexto, *argumentos: str, nombre: str) -> int:
+            llamadas.append("pg_provision")
+            return 0
+    
+>       monkeypatch.setattr(cr, "aprovisionar_postgres_qa", aprovisionar)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'aprovisionar_postgres_qa'
+
+tests/test_certificacion_postgres_qa.py:541: AttributeError
+_________________ TestScriptPgProvision.test_status_con_bin_qa _________________
+
+self = <test_certificacion_postgres_qa.TestScriptPgProvision object at 0x7f237e72b890>
+tmp_path = PosixPath('<tmp>/test_status_con_bin_qa0')
+
+    def test_status_con_bin_qa(self, tmp_path: Path) -> None:
+        script, bin_falso, _, _, _, _ = self._preparar_script(tmp_path)
+        entorno = self._entorno_minimo(bin_falso, tmp_path / "bin-herramientas")
+        entorno.update(
+            {
+                "KONTROL_PGBIN": str(bin_falso),
+                "KONTROL_PGDATA": str(tmp_path / "data"),
+                "KONTROL_PGPORT": "55497",
+                "KONTROL_PGLOG": str(tmp_path / "pg.log"),
+            }
+        )
+        resultado = self._ejecutar(script, entorno, tmp_path, "status")
+        assert resultado.returncode == 0
+>       assert "FAKE pg_ctl -D" in resultado.stdout
+E       AssertionError: assert 'FAKE pg_ctl -D' in 'VENV pg_ctl -D <tmp>/test_status_con_bin_qa0/data status\n'
+E        +  where 'VENV pg_ctl -D <tmp>/test_status_con_bin_qa0/data status\n' = CompletedProcess(args=['/usr/bin/bash', '<tmp>/test_status_con_bin_qa0/repo/qa/pg-provision.s... returncode=0, stdout='VENV pg_ctl -D <tmp>/test_status_con_bin_qa0/data status\n', stderr='').stdout
+
+tests/test_certificacion_postgres_qa.py:669: AssertionError
+_______________ TestScriptPgProvision.test_bin_inexistente_falla _______________
+
+self = <test_certificacion_postgres_qa.TestScriptPgProvision object at 0x7f237e728050>
+tmp_path = PosixPath('<tmp>/test_bin_inexistente_falla0')
+
+    def test_bin_inexistente_falla(self, tmp_path: Path) -> None:
+        script, bin_falso, _, _, _, _ = self._preparar_script(tmp_path)
+        entorno = self._entorno_minimo(bin_falso, tmp_path / "bin-herramientas")
+        entorno.update(
+            {
+                "KONTROL_PGBIN": str(tmp_path / "no-existe"),
+                "KONTROL_PGDATA": str(tmp_path / "data"),
+                "KONTROL_PGPORT": "55497",
+                "KONTROL_PGLOG": str(tmp_path / "pg.log"),
+            }
+        )
+        resultado = self._ejecutar(script, entorno, tmp_path, "status")
+>       assert resultado.returncode != 0
+E       AssertionError: assert 0 != 0
+E        +  where 0 = CompletedProcess(args=['/usr/bin/bash', '<tmp>/test_bin_inexistente_falla0/repo/qa/pg-provisi...urncode=0, stdout='VENV pg_ctl -D <tmp>/test_bin_inexistente_falla0/data status\n', stderr='').returncode
+
+tests/test_certificacion_postgres_qa.py:684: AssertionError
+____________ TestScriptPgProvision.test_sin_compilar_sin_extension _____________
+
+self = <test_certificacion_postgres_qa.TestScriptPgProvision object at 0x7f237e728710>
+tmp_path = PosixPath('<tmp>/test_sin_compilar_sin_extensio0')
+
+    def test_sin_compilar_sin_extension(self, tmp_path: Path) -> None:
+        script, bin_falso, _, marcador, _, _ = self._preparar_script(tmp_path)
+        herramientas = tmp_path / "bin-herramientas"
+        entorno = self._entorno_minimo(bin_falso, herramientas)
+        entorno.update(
+            {
+                "KONTROL_PGBIN": str(bin_falso),
+                "KONTROL_PGDATA": str(tmp_path / "data"),
+                "KONTROL_PGPORT": "55497",
+                "KONTROL_PGLOG": str(tmp_path / "pg.log"),
+                "KONTROL_PG_SIN_COMPILAR": "1",
+            }
+        )
+        resultado = self._ejecutar(script, entorno, tmp_path, "start")
+        assert resultado.returncode != 0
+>       assert "KONTROL_PG_SIN_COMPILAR" in (resultado.stdout + resultado.stderr)
+E       AssertionError: assert 'KONTROL_PG_SIN_COMPILAR' in ('' + '<tmp>/test_sin_compilar_sin_extensio0/repo/qa/pg-provision.sh: línea 42: /tmp/pytest-of-mari...urces/backend/.venv/lib/python3.11/site-packages/pgserver/pginstall/bin/initdb: No existe el fichero o el directorio\n')
+E        +  where '' = CompletedProcess(args=['/usr/bin/bash', '<tmp>/test_sin_compilar_sin_extensio0/repo/qa/pg-pro...rces/backend/.venv/lib/python3.11/site-packages/pgserver/pginstall/bin/initdb: No existe el fichero o el directorio\n').stdout
+E        +  and   '<tmp>/test_sin_compilar_sin_extensio0/repo/qa/pg-provision.sh: línea 42: /tmp/pytest-of-mari...urces/backend/.venv/lib/python3.11/site-packages/pgserver/pginstall/bin/initdb: No existe el fichero o el directorio\n' = CompletedProcess(args=['/usr/bin/bash', '<tmp>/test_sin_compilar_sin_extensio0/repo/qa/pg-pro...rces/backend/.venv/lib/python3.11/site-packages/pgserver/pginstall/bin/initdb: No existe el fichero o el directorio\n').stderr
+
+tests/test_certificacion_postgres_qa.py:703: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_certificacion_postgres_qa.py::TestPinPostgresQa::test_constantes_y_pin
+FAILED tests/test_certificacion_postgres_qa.py::TestPinPostgresQa::test_sin_venv_en_rutas_criticas
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_descarga_exitosa
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_sha256_incorrecto_sin_restos
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_http_rechazado_sin_abrir
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_redireccion_a_http_rechazada
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_reutiliza_fichero_correcto
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_reemplaza_fichero_incorrecto
+FAILED tests/test_certificacion_postgres_qa.py::TestExtraerPostgres::test_extraccion_y_verificacion
+FAILED tests/test_certificacion_postgres_qa.py::TestExtraerPostgres::test_detecta_modificacion_y_borrado
+FAILED tests/test_certificacion_postgres_qa.py::TestExtraerPostgres::test_record_incorrecto
+FAILED tests/test_certificacion_postgres_qa.py::TestExtraerPostgres::test_miembro_fuera_de_destino
+FAILED tests/test_certificacion_postgres_qa.py::TestFicherosDeBtreeGist::test_ficheros_esperados
+FAILED tests/test_certificacion_postgres_qa.py::TestFicherosDeBtreeGist::test_no_es_ar
+FAILED tests/test_certificacion_postgres_qa.py::TestFicherosDeBtreeGist::test_sin_btree_gist
+FAILED tests/test_certificacion_postgres_qa.py::TestAprovisionarPostgresQa::test_instalacion_fresca
+FAILED tests/test_certificacion_postgres_qa.py::TestAprovisionarPostgresQa::test_reutilizacion_y_descargas_siempre
+FAILED tests/test_certificacion_postgres_qa.py::TestAprovisionarPostgresQa::test_instalacion_manipulada_invalida
+FAILED tests/test_certificacion_postgres_qa.py::TestAprovisionarPostgresQa::test_instalacion_incompleta_se_reinstala
+FAILED tests/test_certificacion_postgres_qa.py::TestAprovisionarPostgresQa::test_espacios_previos_ignora_postgres_qa
+FAILED tests/test_certificacion_postgres_qa.py::TestEjecutableDelPostmaster::test_proceso_vivo
+FAILED tests/test_certificacion_postgres_qa.py::TestEjecutableDelPostmaster::test_fichero_ausente
+FAILED tests/test_certificacion_postgres_qa.py::TestEjecutableDelPostmaster::test_pid_no_numerico
+FAILED tests/test_certificacion_postgres_qa.py::TestEjecutableDelPostmaster::test_pid_muerto
+FAILED tests/test_certificacion_postgres_qa.py::TestPgProvision::test_argumentos_y_entorno
+FAILED tests/test_certificacion_postgres_qa.py::TestEtapaPostgresProcedencia::test_postmaster_qa_valido
+FAILED tests/test_certificacion_postgres_qa.py::TestEtapaPostgresProcedencia::test_postmaster_fuera_del_bin_qa
+FAILED tests/test_certificacion_postgres_qa.py::TestEtapaPostgresProcedencia::test_postmaster_none
+FAILED tests/test_certificacion_postgres_qa.py::TestEtapaPostgresProcedencia::test_version_distinta
+FAILED tests/test_certificacion_postgres_qa.py::TestScriptPgProvision::test_status_con_bin_qa
+FAILED tests/test_certificacion_postgres_qa.py::TestScriptPgProvision::test_bin_inexistente_falla
+FAILED tests/test_certificacion_postgres_qa.py::TestScriptPgProvision::test_sin_compilar_sin_extension
+32 failed in 0.53s

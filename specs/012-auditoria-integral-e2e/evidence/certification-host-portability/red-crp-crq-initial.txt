@@ -1,0 +1,2849 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF [ 94%]
+FF.F                                                                     [100%]
+=================================== FAILURES ===================================
+______________ test_crp_01_orden_de_e2e_pin_workers_y_reintentos _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb323810>
+
+    def test_crp_01_orden_de_e2e_pin_workers_y_reintentos(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """CRP-01: la orden de E2E fija 6 workers y 0 reintentos sin depender de la CPU."""
+>       assert cr.E2E_WORKERS_CANONICOS == 6
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'E2E_WORKERS_CANONICOS'
+
+tests/test_certificacion_portabilidad.py:84: AttributeError
+_________ test_crp_02_verificar_perfil_e2e_acepta_6_workers_solamente __________
+
+    def test_crp_02_verificar_perfil_e2e_acepta_6_workers_solamente() -> None:
+        """CRP-02: solo un perfil de 6 workers se acepta; otros perfiles fallan."""
+        log_valido = (
+            "inicio de suite\n"
+            "Running 284 tests using 6 workers\n"
+            "[chromium] › especificacion.spec.ts:42:3 › paso (12ms)\n"
+            "final de suite\n"
+        )
+>       assert cr.verificar_perfil_e2e(log_valido) == {"workers": 6, "retries": 0}
+               ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'verificar_perfil_e2e'
+
+tests/test_certificacion_portabilidad.py:128: AttributeError
+_________________ test_crp_03_estructura_etapas_usa_politicas __________________
+
+    def test_crp_03_estructura_etapas_usa_politicas() -> None:
+        """CRP-03: las etapas invocan la política de entorno, el árbol y el perfil E2E."""
+        fuente_preflight = inspect.getsource(cr.etapa_preflight)
+>       assert "comprobar_politica_de_entorno(" in fuente_preflight
+E       assert 'comprobar_politica_de_entorno(' in 'def etapa_preflight(ctx: Contexto) -> dict[str, Any]:\n    """Comprueba herramientas, ficheros, git, base Docker, loc... corte_runtime,\n        "espacios_previos_incompletos": len(ctx.manifiesto["ESPACIOS_PREVIOS_INCOMPLETOS"]),\n    }\n'
+
+tests/test_certificacion_portabilidad.py:146: AssertionError
+_______________ test_crp_04_entorno_de_sujeto_limpia_y_conserva ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb02c110>
+
+    def test_crp_04_entorno_de_sujeto_limpia_y_conserva(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """CRP-04: el entorno del sujeto elimina CI, secretos y Python; conserva lo permitido."""
+        base = {
+            "CI": "true",
+            "PATH": "/usr/bin",
+            "GITHUB_TOKEN": "t0k3n-sintetico",
+            "PYTHONPATH": "/x",
+            "LANG": "C.UTF-8",
+            "EDITOR": "vi",
+        }
+        resultado = cr.entorno_de_sujeto(base, extra={"PATH": "/otro"})
+>       assert "CI" not in resultado
+E       AssertionError: assert 'CI' not in {'CI': 'true', 'EDITOR': 'vi', 'GITHUB_TOKEN': 't0k3n-sintetico', 'LANG': 'C.UTF-8', ...}
+
+tests/test_certificacion_portabilidad.py:170: AssertionError
+____ test_crp_05_clasificar_entorno_clasifica_cada_nombre[CI-CANONICALIZED] ____
+
+nombre = 'CI', clase_esperada = 'CANONICALIZED'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PYTHONPATH-CANONICALIZED] _
+
+nombre = 'PYTHONPATH', clase_esperada = 'CANONICALIZED'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[VIRTUAL_ENV-CANONICALIZED] _
+
+nombre = 'VIRTUAL_ENV', clase_esperada = 'CANONICALIZED'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PATH-ALLOWED_INHERITED] _
+
+nombre = 'PATH', clase_esperada = 'ALLOWED_INHERITED'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[HOME-ALLOWED_INHERITED] _
+
+nombre = 'HOME', clase_esperada = 'ALLOWED_INHERITED'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[LC_ALL-ALLOWED_INHERITED] _
+
+nombre = 'LC_ALL', clase_esperada = 'ALLOWED_INHERITED'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PLAYWRIGHT_BROWSERS_PATH-ALLOWED_INHERITED] _
+
+nombre = 'PLAYWRIGHT_BROWSERS_PATH', clase_esperada = 'ALLOWED_INHERITED'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PYTHONIOENCODING-ALLOWED_INHERITED] _
+
+nombre = 'PYTHONIOENCODING', clase_esperada = 'ALLOWED_INHERITED'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[KONTROL_CLAMSCAN_PATH-ALLOWED_INHERITED] _
+
+nombre = 'KONTROL_CLAMSCAN_PATH', clase_esperada = 'ALLOWED_INHERITED'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[KONTROL_QA_CERT_HOME-ALLOWED_INHERITED] _
+
+nombre = 'KONTROL_QA_CERT_HOME', clase_esperada = 'ALLOWED_INHERITED'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PYTEST_ADDOPTS-FORBIDDEN] _
+
+nombre = 'PYTEST_ADDOPTS', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+___ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PWDEBUG-FORBIDDEN] ____
+
+nombre = 'PWDEBUG', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+___ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PWTEST_X-FORBIDDEN] ___
+
+nombre = 'PWTEST_X', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS-FORBIDDEN] _
+
+nombre = 'PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS'
+clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PYTHONWARNINGS-FORBIDDEN] _
+
+nombre = 'PYTHONWARNINGS', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[NODE_OPTIONS-FORBIDDEN] _
+
+nombre = 'NODE_OPTIONS', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+___ test_crp_05_clasificar_entorno_clasifica_cada_nombre[NODE_ENV-FORBIDDEN] ___
+
+nombre = 'NODE_ENV', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+__ test_crp_05_clasificar_entorno_clasifica_cada_nombre[LD_PRELOAD-FORBIDDEN] __
+
+nombre = 'LD_PRELOAD', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[UV_INDEX_URL-FORBIDDEN] _
+
+nombre = 'UV_INDEX_URL', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PIP_INDEX_URL-FORBIDDEN] _
+
+nombre = 'PIP_INDEX_URL', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[npm_config_registry-FORBIDDEN] _
+
+nombre = 'npm_config_registry', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[COVERAGE_PROCESS_START-FORBIDDEN] _
+
+nombre = 'COVERAGE_PROCESS_START', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+__ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PGPASSWORD-FORBIDDEN] __
+
+nombre = 'PGPASSWORD', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[KONTROL_PGDATA-FORBIDDEN] _
+
+nombre = 'KONTROL_PGDATA', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[KONTROL_SECRET_KEY-FORBIDDEN] _
+
+nombre = 'KONTROL_SECRET_KEY', clase_esperada = 'FORBIDDEN'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+__ test_crp_05_clasificar_entorno_clasifica_cada_nombre[GITHUB_TOKEN-SECRET] ___
+
+nombre = 'GITHUB_TOKEN', clase_esperada = 'SECRET'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+___ test_crp_05_clasificar_entorno_clasifica_cada_nombre[MY_API_KEY-SECRET] ____
+
+nombre = 'MY_API_KEY', clase_esperada = 'SECRET'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[aws_access_key_id-SECRET] _
+
+nombre = 'aws_access_key_id', clase_esperada = 'SECRET'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_____ test_crp_05_clasificar_entorno_clasifica_cada_nombre[PWD-IRRELEVANT] _____
+
+nombre = 'PWD', clase_esperada = 'IRRELEVANT'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+___ test_crp_05_clasificar_entorno_clasifica_cada_nombre[EDITOR-IRRELEVANT] ____
+
+nombre = 'EDITOR', clase_esperada = 'IRRELEVANT'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_ test_crp_05_clasificar_entorno_clasifica_cada_nombre[SSH_AUTH_SOCK-IRRELEVANT] _
+
+nombre = 'SSH_AUTH_SOCK', clase_esperada = 'IRRELEVANT'
+
+    @pytest.mark.parametrize(
+        ("nombre", "clase_esperada"),
+        [
+            ("CI", "CANONICALIZED"),
+            ("PYTHONPATH", "CANONICALIZED"),
+            ("VIRTUAL_ENV", "CANONICALIZED"),
+            ("PATH", "ALLOWED_INHERITED"),
+            ("HOME", "ALLOWED_INHERITED"),
+            ("LC_ALL", "ALLOWED_INHERITED"),
+            ("PLAYWRIGHT_BROWSERS_PATH", "ALLOWED_INHERITED"),
+            ("PYTHONIOENCODING", "ALLOWED_INHERITED"),
+            ("KONTROL_CLAMSCAN_PATH", "ALLOWED_INHERITED"),
+            ("KONTROL_QA_CERT_HOME", "ALLOWED_INHERITED"),
+            ("PYTEST_ADDOPTS", "FORBIDDEN"),
+            ("PWDEBUG", "FORBIDDEN"),
+            ("PWTEST_X", "FORBIDDEN"),
+            ("PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS", "FORBIDDEN"),
+            ("PYTHONWARNINGS", "FORBIDDEN"),
+            ("NODE_OPTIONS", "FORBIDDEN"),
+            ("NODE_ENV", "FORBIDDEN"),
+            ("LD_PRELOAD", "FORBIDDEN"),
+            ("UV_INDEX_URL", "FORBIDDEN"),
+            ("PIP_INDEX_URL", "FORBIDDEN"),
+            ("npm_config_registry", "FORBIDDEN"),
+            ("COVERAGE_PROCESS_START", "FORBIDDEN"),
+            ("PGPASSWORD", "FORBIDDEN"),
+            ("KONTROL_PGDATA", "FORBIDDEN"),
+            ("KONTROL_SECRET_KEY", "FORBIDDEN"),
+            ("GITHUB_TOKEN", "SECRET"),
+            ("MY_API_KEY", "SECRET"),
+            ("aws_access_key_id", "SECRET"),
+            ("PWD", "IRRELEVANT"),
+            ("EDITOR", "IRRELEVANT"),
+            ("SSH_AUTH_SOCK", "IRRELEVANT"),
+        ],
+    )
+    def test_crp_05_clasificar_entorno_clasifica_cada_nombre(
+        nombre: str, clase_esperada: str
+    ) -> None:
+        """CRP-05: cada variable se clasifica con la precedencia especificada."""
+>       resultado = cr.clasificar_entorno({nombre: "valor-sintetico"})
+                    ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'clasificar_entorno'
+
+tests/test_certificacion_portabilidad.py:219: AttributeError
+_________ test_crp_06_comprobar_politica_de_entorno_rechaza_prohibidas _________
+
+    def test_crp_06_comprobar_politica_de_entorno_rechaza_prohibidas() -> None:
+        """CRP-06: las variables prohibidas fallan con el detalle adecuado y sin valores."""
+        entorno = {
+            "PATH": "/usr/bin",
+            "PYTEST_ADDOPTS": "-x",
+            "NODE_OPTIONS": "--require x",
+            "GITHUB_TOKEN": "s3cr3t-valor",
+        }
+        with pytest.raises(cr.FalloDePreflight) as excinfo:
+>           cr.comprobar_politica_de_entorno(entorno)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'certificacion_release' has no attribute 'comprobar_politica_de_entorno'
+
+tests/test_certificacion_portabilidad.py:242: AttributeError
+______ test_crp_06_comprobar_politica_de_entorno_describe_entorno_valido _______
+
+    def test_crp_06_comprobar_politica_de_entorno_describe_entorno_valido() -> None:
+        """CRP-06: la política describe el entorno canónico sin incluir valores."""
+        entorno = {
+            "PATH": "/usr/bin",
+            "CI": "true",
+            "GITHUB_TOKEN": "s3cr3t-valor",
+            "EDITOR": "vi",
+        }
+>       resultado = cr.comprobar_politica_de_entorno(entorno)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'comprobar_politica_de_entorno'
+
+tests/test_certificacion_portabilidad.py:259: AttributeError
+_____________ test_crp_07_arbol_certificado_no_toca_el_repositorio _____________
+
+tmp_path = PosixPath('<tmp>/test_crp_07_arbol_certificado_0')
+
+    def test_crp_07_arbol_certificado_no_toca_el_repositorio(tmp_path: Path) -> None:
+        """CRP-07: el árbol certificado aísla el índice real y aplica las exclusiones."""
+        repo = _repo_de_prueba(tmp_path)
+        ctx = _ctx_con_git(tmp_path)
+    
+        def arbol_limpio_esperado() -> str:
+            return _git(tmp_path, repo, "rev-parse", "HEAD^{tree}")
+    
+        def trabajo_fresco() -> Path:
+            trabajo = tmp_path / f"trabajo-{hashlib.sha256(os.urandom(8)).hexdigest()}"
+            trabajo.mkdir(parents=True)
+            return trabajo
+    
+        indice_antes, objetos_antes = _snapshot_repo(repo)
+    
+        # (a) árbol limpio
+>       resultado = cr.arbol_certificado(ctx, repo, trabajo_fresco())
+                    ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'arbol_certificado'
+
+tests/test_certificacion_portabilidad.py:331: AttributeError
+____________ test_crp_08_hash_de_entrada_v2_determinista_y_sensible ____________
+
+tmp_path = PosixPath('<tmp>/test_crp_08_hash_de_entrada_v20')
+
+    def test_crp_08_hash_de_entrada_v2_determinista_y_sensible(
+        tmp_path: Path,
+    ) -> None:
+        """CRP-08: el hash v2 usa la serialización exacta y cambia con cada componente."""
+>       assert cr.VERSION_HASH_DE_ENTRADA == 2
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'VERSION_HASH_DE_ENTRADA'
+
+tests/test_certificacion_portabilidad.py:393: AttributeError
+______________ test_crp_09_etapa_manifiesto_omite_arbol_si_falta _______________
+
+tmp_path = PosixPath('<tmp>/test_crp_09_etapa_manifiesto_o0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb040a90>
+
+    def test_crp_09_etapa_manifiesto_omite_arbol_si_falta(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """CRP-09: sin árbol en el manifiesto no se recalcula ni se vincula."""
+        ctx = _contexto(tmp_path)
+        ctx.fallo_previo = True
+        ctx.manifiesto["GIT_HEAD"] = "a" * 40
+        ctx.manifiesto["CERTIFICATION_INPUT_TREE_HASH"] = "NOT_RUN"
+        llamadas: list[Path] = []
+    
+        def doble(ctx_interno: cr.Contexto, raiz: Path, trabajo: Path) -> dict[str, object]:
+            llamadas.append(raiz)
+            return {"arbol": "b" * 40, "excluidos_con_cambios": []}
+    
+>       monkeypatch.setattr(cr, "arbol_certificado", doble)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'arbol_certificado'
+
+tests/test_certificacion_portabilidad.py:463: AttributeError
+_______________ test_crp_09_etapa_manifiesto_recalcula_y_vincula _______________
+
+tmp_path = PosixPath('<tmp>/test_crp_09_etapa_manifiesto_r0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb0154d0>
+
+    def test_crp_09_etapa_manifiesto_recalcula_y_vincula(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """CRP-09: el árbol coincidente se recalcula y vincula al hash canónico."""
+        ctx = _ctx_etapa_manifiesto(tmp_path, "b" * 40)
+        llamadas: list[tuple[Path, Path]] = []
+        postgres_qa_temporal = tmp_path / "postgres_qa.json"
+        postgres_qa_temporal.write_text("{}")
+>       monkeypatch.setattr(cr, "POSTGRES_QA", postgres_qa_temporal)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'POSTGRES_QA'
+
+tests/test_certificacion_portabilidad.py:478: AttributeError
+____________ test_crp_09_etapa_manifiesto_cambia_con_arbol_distinto ____________
+
+tmp_path = PosixPath('<tmp>/test_crp_09_etapa_manifiesto_c0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb1c86d0>
+
+    def test_crp_09_etapa_manifiesto_cambia_con_arbol_distinto(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """CRP-09: árboles distintos producen hashes canónicos distintos."""
+        postgres_qa_temporal = tmp_path / "postgres_qa.json"
+        postgres_qa_temporal.write_text("{}")
+>       monkeypatch.setattr(cr, "POSTGRES_QA", postgres_qa_temporal)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'POSTGRES_QA'
+
+tests/test_certificacion_portabilidad.py:500: AttributeError
+____________ test_crp_09_etapa_manifiesto_falla_si_el_arbol_cambia _____________
+
+tmp_path = PosixPath('<tmp>/test_crp_09_etapa_manifiesto_f0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb06f0d0>
+
+    def test_crp_09_etapa_manifiesto_falla_si_el_arbol_cambia(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """CRP-09: un árbol divergente al cierre interrumpe la certificación."""
+        ctx = _ctx_etapa_manifiesto(tmp_path, "b" * 40)
+        postgres_qa_temporal = tmp_path / "postgres_qa.json"
+        postgres_qa_temporal.write_text("{}")
+>       monkeypatch.setattr(cr, "POSTGRES_QA", postgres_qa_temporal)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'POSTGRES_QA'
+
+tests/test_certificacion_portabilidad.py:535: AttributeError
+_______________ test_crp_10_campos_y_exclusiones_del_manifiesto ________________
+
+tmp_path = PosixPath('<tmp>/test_crp_10_campos_y_exclusion0')
+
+    def test_crp_10_campos_y_exclusiones_del_manifiesto(tmp_path: Path) -> None:
+        """CRP-10: los campos nuevos existen, inician en NOT_RUN y hay 12 exclusiones."""
+        campos_nuevos = {
+            "CERTIFICATION_INPUT_TREE_HASH",
+            "ENVIRONMENT_POLICY",
+            "POSTGRES_QA_SOURCE",
+            "CANONICAL_E2E_WORKERS",
+            "CANONICAL_E2E_RETRIES",
+        }
+>       assert campos_nuevos <= set(cr.CAMPOS_DEL_MANIFIESTO)
+E       AssertionError: assert {'CANONICAL_E...ES_QA_SOURCE'} <= {'ALEMBIC_PAR..._PARITY', ...}
+E         
+E         Extra items in the left set:
+E         'CERTIFICATION_INPUT_TREE_HASH'
+E         'POSTGRES_QA_SOURCE'
+E         'CANONICAL_E2E_RETRIES'
+E         'ENVIRONMENT_POLICY'
+E         'CANONICAL_E2E_WORKERS'
+
+tests/test_certificacion_portabilidad.py:558: AssertionError
+___________________ TestPinPostgresQa.test_constantes_y_pin ____________________
+
+self = <test_certificacion_postgres_qa.TestPinPostgresQa object at 0x7f11cb30b8d0>
+
+    def test_constantes_y_pin(self) -> None:
+>       assert not hasattr(cr, "PG_BIN")
+E       AssertionError: assert not True
+E        +  where True = hasattr(cr, 'PG_BIN')
+
+tests/test_certificacion_postgres_qa.py:185: AssertionError
+______________ TestPinPostgresQa.test_sin_venv_en_rutas_criticas _______________
+
+self = <test_certificacion_postgres_qa.TestPinPostgresQa object at 0x7f11cb3438d0>
+
+    def test_sin_venv_en_rutas_criticas(self) -> None:
+        for funcion in (
+            cr.etapa_preflight,
+            cr.etapa_postgres,
+            cr._pg_provision,
+>           cr.aprovisionar_postgres_qa,
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ):
+E       AttributeError: module 'certificacion_release' has no attribute 'aprovisionar_postgres_qa'
+
+tests/test_certificacion_postgres_qa.py:206: AttributeError
+________________ TestDescargarVerificado.test_descarga_exitosa _________________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f11cb32c190>
+tmp_path = PosixPath('<tmp>/test_descarga_exitosa0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb08bdd0>
+
+    def test_descarga_exitosa(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        contenido = b"contenido cierto"
+        destino = tmp_path / "salida.bin"
+        abrir, llamadas = _abrir_url_falsa(contenido)
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:218: AttributeError
+__________ TestDescargarVerificado.test_sha256_incorrecto_sin_restos ___________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f11cb381b50>
+tmp_path = PosixPath('<tmp>/test_sha256_incorrecto_sin_res0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11caf40a90>
+
+    def test_sha256_incorrecto_sin_restos(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        abrir, _ = _abrir_url_falsa(b"otro contenido")
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:226: AttributeError
+____________ TestDescargarVerificado.test_http_rechazado_sin_abrir _____________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f11cb32c890>
+tmp_path = PosixPath('<tmp>/test_http_rechazado_sin_abrir0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb039750>
+
+    def test_http_rechazado_sin_abrir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        abrir, llamadas = _abrir_url_falsa(b"")
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:235: AttributeError
+__________ TestDescargarVerificado.test_redireccion_a_http_rechazada ___________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f11cb32cd10>
+tmp_path = PosixPath('<tmp>/test_redireccion_a_http_rechaz0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb030210>
+
+    def test_redireccion_a_http_rechazada(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        contenido = b"contenido"
+        abrir, _ = _abrir_url_falsa(contenido, "http://origen.invalido/final")
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:244: AttributeError
+___________ TestDescargarVerificado.test_reutiliza_fichero_correcto ____________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f11cb32d390>
+tmp_path = PosixPath('<tmp>/test_reutiliza_fichero_correct0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb0211d0>
+
+    def test_reutiliza_fichero_correcto(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        contenido = b"ya descargado"
+        destino = tmp_path / "salida.bin"
+        destino.write_bytes(contenido)
+        abrir, llamadas = _abrir_url_falsa(contenido)
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:254: AttributeError
+__________ TestDescargarVerificado.test_reemplaza_fichero_incorrecto ___________
+
+self = <test_certificacion_postgres_qa.TestDescargarVerificado object at 0x7f11cb32da10>
+tmp_path = PosixPath('<tmp>/test_reemplaza_fichero_incorre0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11caf2c0d0>
+
+    def test_reemplaza_fichero_incorrecto(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        contenido = b"nuevo correcto"
+        destino = tmp_path / "salida.bin"
+        destino.write_bytes(b"viejo incorrecto")
+        abrir, llamadas = _abrir_url_falsa(contenido)
+>       monkeypatch.setattr(cr, "_abrir_url", abrir)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute '_abrir_url'
+
+tests/test_certificacion_postgres_qa.py:263: AttributeError
+______________ TestExtraerPostgres.test_extraccion_y_verificacion ______________
+
+self = <test_certificacion_postgres_qa.TestExtraerPostgres object at 0x7f11cb32e350>
+tmp_path = PosixPath('<tmp>/test_extraccion_y_verificacion0')
+
+    def test_extraccion_y_verificacion(self, tmp_path: Path) -> None:
+>       rueda = _rueda_falsa(tmp_path)
+                ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:274: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_certificacion_postgres_qa.py:116: in _rueda_falsa
+    _escribir_record(rueda, miembros)
+tests/test_certificacion_postgres_qa.py:102: in _escribir_record
+    rueda.writestr(nombre, contenido, modo_final)
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1877: in writestr
+    with self.open(zinfo, mode='w') as dest:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1581: in open
+    return self._open_to_write(zinfo, force_zip64=force_zip64)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1680: in _open_to_write
+    self._writecheck(zinfo)
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1793: in _writecheck
+    _check_compression(zinfo.compress_type)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+compression = 493
+
+    def _check_compression(compression):
+        if compression == ZIP_STORED:
+            pass
+        elif compression == ZIP_DEFLATED:
+            if not zlib:
+                raise RuntimeError(
+                    "Compression requires the (missing) zlib module")
+        elif compression == ZIP_BZIP2:
+            if not bz2:
+                raise RuntimeError(
+                    "Compression requires the (missing) bz2 module")
+        elif compression == ZIP_LZMA:
+            if not lzma:
+                raise RuntimeError(
+                    "Compression requires the (missing) lzma module")
+        else:
+>           raise NotImplementedError("That compression method is not supported")
+E           NotImplementedError: That compression method is not supported
+
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:736: NotImplementedError
+___________ TestExtraerPostgres.test_detecta_modificacion_y_borrado ____________
+
+self = <test_certificacion_postgres_qa.TestExtraerPostgres object at 0x7f11cb32ea90>
+tmp_path = PosixPath('<tmp>/test_detecta_modificacion_y_bo0')
+
+    def test_detecta_modificacion_y_borrado(self, tmp_path: Path) -> None:
+>       rueda = _rueda_falsa(tmp_path)
+                ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:286: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_certificacion_postgres_qa.py:116: in _rueda_falsa
+    _escribir_record(rueda, miembros)
+tests/test_certificacion_postgres_qa.py:102: in _escribir_record
+    rueda.writestr(nombre, contenido, modo_final)
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1877: in writestr
+    with self.open(zinfo, mode='w') as dest:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1581: in open
+    return self._open_to_write(zinfo, force_zip64=force_zip64)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1680: in _open_to_write
+    self._writecheck(zinfo)
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1793: in _writecheck
+    _check_compression(zinfo.compress_type)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+compression = 493
+
+    def _check_compression(compression):
+        if compression == ZIP_STORED:
+            pass
+        elif compression == ZIP_DEFLATED:
+            if not zlib:
+                raise RuntimeError(
+                    "Compression requires the (missing) zlib module")
+        elif compression == ZIP_BZIP2:
+            if not bz2:
+                raise RuntimeError(
+                    "Compression requires the (missing) bz2 module")
+        elif compression == ZIP_LZMA:
+            if not lzma:
+                raise RuntimeError(
+                    "Compression requires the (missing) lzma module")
+        else:
+>           raise NotImplementedError("That compression method is not supported")
+E           NotImplementedError: That compression method is not supported
+
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:736: NotImplementedError
+__________________ TestExtraerPostgres.test_record_incorrecto __________________
+
+self = <test_certificacion_postgres_qa.TestExtraerPostgres object at 0x7f11cb32f210>
+tmp_path = PosixPath('<tmp>/test_record_incorrecto0')
+
+    def test_record_incorrecto(self, tmp_path: Path) -> None:
+        ruta = tmp_path / "mala.whl"
+        with zipfile.ZipFile(ruta, "w") as rueda:
+>           rueda.writestr("pgserver/pginstall/bin/pg_ctl", b"#!/bin/sh\n", 0o755)
+
+tests/test_certificacion_postgres_qa.py:301: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1877: in writestr
+    with self.open(zinfo, mode='w') as dest:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1581: in open
+    return self._open_to_write(zinfo, force_zip64=force_zip64)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1680: in _open_to_write
+    self._writecheck(zinfo)
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1793: in _writecheck
+    _check_compression(zinfo.compress_type)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+compression = 493
+
+    def _check_compression(compression):
+        if compression == ZIP_STORED:
+            pass
+        elif compression == ZIP_DEFLATED:
+            if not zlib:
+                raise RuntimeError(
+                    "Compression requires the (missing) zlib module")
+        elif compression == ZIP_BZIP2:
+            if not bz2:
+                raise RuntimeError(
+                    "Compression requires the (missing) bz2 module")
+        elif compression == ZIP_LZMA:
+            if not lzma:
+                raise RuntimeError(
+                    "Compression requires the (missing) lzma module")
+        else:
+>           raise NotImplementedError("That compression method is not supported")
+E           NotImplementedError: That compression method is not supported
+
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:736: NotImplementedError
+______________ TestExtraerPostgres.test_miembro_fuera_de_destino _______________
+
+self = <test_certificacion_postgres_qa.TestExtraerPostgres object at 0x7f11cb32f9d0>
+tmp_path = PosixPath('<tmp>/test_miembro_fuera_de_destino0')
+
+    def test_miembro_fuera_de_destino(self, tmp_path: Path) -> None:
+        ruta = tmp_path / "mala.whl"
+        miembros = [
+            ("pgserver/pginstall/../../evil", b"maligno", 0o755),
+            ("pgserver/pginstall/bin/pg_ctl", b"#!/bin/sh\n", 0o755),
+            ("pgserver.libs/libpq-x.so.5", b"so\n", 0o755),
+        ]
+        with zipfile.ZipFile(ruta, "w") as rueda:
+>           _escribir_record(rueda, miembros)
+
+tests/test_certificacion_postgres_qa.py:317: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_certificacion_postgres_qa.py:102: in _escribir_record
+    rueda.writestr(nombre, contenido, modo_final)
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1877: in writestr
+    with self.open(zinfo, mode='w') as dest:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1581: in open
+    return self._open_to_write(zinfo, force_zip64=force_zip64)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1680: in _open_to_write
+    self._writecheck(zinfo)
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1793: in _writecheck
+    _check_compression(zinfo.compress_type)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+compression = 493
+
+    def _check_compression(compression):
+        if compression == ZIP_STORED:
+            pass
+        elif compression == ZIP_DEFLATED:
+            if not zlib:
+                raise RuntimeError(
+                    "Compression requires the (missing) zlib module")
+        elif compression == ZIP_BZIP2:
+            if not bz2:
+                raise RuntimeError(
+                    "Compression requires the (missing) bz2 module")
+        elif compression == ZIP_LZMA:
+            if not lzma:
+                raise RuntimeError(
+                    "Compression requires the (missing) lzma module")
+        else:
+>           raise NotImplementedError("That compression method is not supported")
+E           NotImplementedError: That compression method is not supported
+
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:736: NotImplementedError
+_______________ TestFicherosDeBtreeGist.test_ficheros_esperados ________________
+
+self = <test_certificacion_postgres_qa.TestFicherosDeBtreeGist object at 0x7f11cb320310>
+tmp_path = PosixPath('<tmp>/test_ficheros_esperados0')
+
+    def test_ficheros_esperados(self, tmp_path: Path) -> None:
+>       deb = _paquete_deb_falso(tmp_path)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:330: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_certificacion_postgres_qa.py:157: in _paquete_deb_falso
+    + _miembro_ar("debian-binary", debian_binary)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+nombre = 'debian-binary', contenido = b'2.0\n'
+
+    def _miembro_ar(nombre: str, contenido: bytes) -> bytes:
+        nombre_codificado = nombre.encode("ascii")
+        if len(nombre_codificado) > 16:
+            raise ValueError("nombre ar demasiado largo")
+        cabecera = f"{nombre_codificado.decode('ascii'):<16}{len(contenido):<12}0     0     100644  ".encode("ascii")
+>       assert len(cabecera) == 60
+E       AssertionError: assert 48 == 60
+E        +  where 48 = len(b'debian-binary   4           0     0     100644  ')
+
+tests/test_certificacion_postgres_qa.py:125: AssertionError
+____________________ TestFicherosDeBtreeGist.test_no_es_ar _____________________
+
+self = <test_certificacion_postgres_qa.TestFicherosDeBtreeGist object at 0x7f11cb320a50>
+tmp_path = PosixPath('<tmp>/test_no_es_ar0')
+
+    def test_no_es_ar(self, tmp_path: Path) -> None:
+        fichero = tmp_path / "sucio.deb"
+        fichero.write_bytes(b"esto no es un archivo ar")
+        with pytest.raises(cr.FalloDeCertificacion):
+>           cr.ficheros_de_btree_gist(fichero)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'certificacion_release' has no attribute 'ficheros_de_btree_gist'
+
+tests/test_certificacion_postgres_qa.py:345: AttributeError
+_________________ TestFicherosDeBtreeGist.test_sin_btree_gist __________________
+
+self = <test_certificacion_postgres_qa.TestFicherosDeBtreeGist object at 0x7f11cb3211d0>
+tmp_path = PosixPath('<tmp>/test_sin_btree_gist0')
+
+    def test_sin_btree_gist(self, tmp_path: Path) -> None:
+>       deb = _paquete_deb_falso(tmp_path, incluir_btree_gist=False)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:348: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_certificacion_postgres_qa.py:157: in _paquete_deb_falso
+    + _miembro_ar("debian-binary", debian_binary)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+nombre = 'debian-binary', contenido = b'2.0\n'
+
+    def _miembro_ar(nombre: str, contenido: bytes) -> bytes:
+        nombre_codificado = nombre.encode("ascii")
+        if len(nombre_codificado) > 16:
+            raise ValueError("nombre ar demasiado largo")
+        cabecera = f"{nombre_codificado.decode('ascii'):<16}{len(contenido):<12}0     0     100644  ".encode("ascii")
+>       assert len(cabecera) == 60
+E       AssertionError: assert 48 == 60
+E        +  where 48 = len(b'debian-binary   4           0     0     100644  ')
+
+tests/test_certificacion_postgres_qa.py:125: AssertionError
+______________ TestAprovisionarPostgresQa.test_instalacion_fresca ______________
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f11cb321a50>
+tmp_path = PosixPath('<tmp>/test_instalacion_fresca0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb207ed0>
+
+    def test_instalacion_fresca(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+>       pin, _, _, _ = self._preparar_dobles(tmp_path, monkeypatch, ctx)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:394: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_certificacion_postgres_qa.py:359: in _preparar_dobles
+    rueda = _rueda_falsa(tmp_path / "artefactos")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_certificacion_postgres_qa.py:115: in _rueda_falsa
+    with zipfile.ZipFile(ruta, "w") as rueda:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <zipfile.ZipFile [closed]>
+file = '<tmp>/test_instalacion_fresca0/artefactos/pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
+mode = 'w', compression = 0, allowZip64 = True, compresslevel = None
+
+    def __init__(self, file, mode="r", compression=ZIP_STORED, allowZip64=True,
+                 compresslevel=None, *, strict_timestamps=True, metadata_encoding=None):
+        """Open the ZIP file with mode read 'r', write 'w', exclusive create 'x',
+        or append 'a'."""
+        if mode not in ('r', 'w', 'x', 'a'):
+            raise ValueError("ZipFile requires mode 'r', 'w', 'x', or 'a'")
+    
+        _check_compression(compression)
+    
+        self._allowZip64 = allowZip64
+        self._didModify = False
+        self.debug = 0  # Level of printing: 0 through 3
+        self.NameToInfo = {}    # Find file info given name
+        self.filelist = []      # List of ZipInfo instances for archive
+        self.compression = compression  # Method of compression
+        self.compresslevel = compresslevel
+        self.mode = mode
+        self.pwd = None
+        self._comment = b''
+        self._strict_timestamps = strict_timestamps
+        self.metadata_encoding = metadata_encoding
+    
+        # Check that we don't try to write with nonconforming codecs
+        if self.metadata_encoding and mode != 'r':
+            raise ValueError(
+                "metadata_encoding is only supported for reading files")
+    
+        # Check if we were passed a file-like object
+        if isinstance(file, os.PathLike):
+            file = os.fspath(file)
+        if isinstance(file, str):
+            # No, it's a filename
+            self._filePassed = 0
+            self.filename = file
+            modeDict = {'r' : 'rb', 'w': 'w+b', 'x': 'x+b', 'a' : 'r+b',
+                        'r+b': 'w+b', 'w+b': 'wb', 'x+b': 'xb'}
+            filemode = modeDict[mode]
+            while True:
+                try:
+>                   self.fp = io.open(file, filemode)
+                              ^^^^^^^^^^^^^^^^^^^^^^^
+E                   FileNotFoundError: [Errno 2] No such file or directory: '<tmp>/test_instalacion_fresca0/artefactos/pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
+
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1312: FileNotFoundError
+______ TestAprovisionarPostgresQa.test_reutilizacion_y_descargas_siempre _______
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f11cb322150>
+tmp_path = PosixPath('<tmp>/test_reutilizacion_y_descargas0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb0424d0>
+
+    def test_reutilizacion_y_descargas_siempre(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+>       _, _, _, llamadas = self._preparar_dobles(tmp_path, monkeypatch, ctx)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:416: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_certificacion_postgres_qa.py:359: in _preparar_dobles
+    rueda = _rueda_falsa(tmp_path / "artefactos")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_certificacion_postgres_qa.py:115: in _rueda_falsa
+    with zipfile.ZipFile(ruta, "w") as rueda:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <zipfile.ZipFile [closed]>
+file = '<tmp>/test_reutilizacion_y_descargas0/artefactos/pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
+mode = 'w', compression = 0, allowZip64 = True, compresslevel = None
+
+    def __init__(self, file, mode="r", compression=ZIP_STORED, allowZip64=True,
+                 compresslevel=None, *, strict_timestamps=True, metadata_encoding=None):
+        """Open the ZIP file with mode read 'r', write 'w', exclusive create 'x',
+        or append 'a'."""
+        if mode not in ('r', 'w', 'x', 'a'):
+            raise ValueError("ZipFile requires mode 'r', 'w', 'x', or 'a'")
+    
+        _check_compression(compression)
+    
+        self._allowZip64 = allowZip64
+        self._didModify = False
+        self.debug = 0  # Level of printing: 0 through 3
+        self.NameToInfo = {}    # Find file info given name
+        self.filelist = []      # List of ZipInfo instances for archive
+        self.compression = compression  # Method of compression
+        self.compresslevel = compresslevel
+        self.mode = mode
+        self.pwd = None
+        self._comment = b''
+        self._strict_timestamps = strict_timestamps
+        self.metadata_encoding = metadata_encoding
+    
+        # Check that we don't try to write with nonconforming codecs
+        if self.metadata_encoding and mode != 'r':
+            raise ValueError(
+                "metadata_encoding is only supported for reading files")
+    
+        # Check if we were passed a file-like object
+        if isinstance(file, os.PathLike):
+            file = os.fspath(file)
+        if isinstance(file, str):
+            # No, it's a filename
+            self._filePassed = 0
+            self.filename = file
+            modeDict = {'r' : 'rb', 'w': 'w+b', 'x': 'x+b', 'a' : 'r+b',
+                        'r+b': 'w+b', 'w+b': 'wb', 'x+b': 'xb'}
+            filemode = modeDict[mode]
+            while True:
+                try:
+>                   self.fp = io.open(file, filemode)
+                              ^^^^^^^^^^^^^^^^^^^^^^^
+E                   FileNotFoundError: [Errno 2] No such file or directory: '<tmp>/test_reutilizacion_y_descargas0/artefactos/pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
+
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1312: FileNotFoundError
+_______ TestAprovisionarPostgresQa.test_instalacion_manipulada_invalida ________
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f11cb32de10>
+tmp_path = PosixPath('<tmp>/test_instalacion_manipulada_in0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11caf0e6d0>
+
+    def test_instalacion_manipulada_invalida(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+>       self._preparar_dobles(tmp_path, monkeypatch, ctx)
+
+tests/test_certificacion_postgres_qa.py:425: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_certificacion_postgres_qa.py:359: in _preparar_dobles
+    rueda = _rueda_falsa(tmp_path / "artefactos")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_certificacion_postgres_qa.py:115: in _rueda_falsa
+    with zipfile.ZipFile(ruta, "w") as rueda:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <zipfile.ZipFile [closed]>
+file = '<tmp>/test_instalacion_manipulada_in0/artefactos/pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
+mode = 'w', compression = 0, allowZip64 = True, compresslevel = None
+
+    def __init__(self, file, mode="r", compression=ZIP_STORED, allowZip64=True,
+                 compresslevel=None, *, strict_timestamps=True, metadata_encoding=None):
+        """Open the ZIP file with mode read 'r', write 'w', exclusive create 'x',
+        or append 'a'."""
+        if mode not in ('r', 'w', 'x', 'a'):
+            raise ValueError("ZipFile requires mode 'r', 'w', 'x', or 'a'")
+    
+        _check_compression(compression)
+    
+        self._allowZip64 = allowZip64
+        self._didModify = False
+        self.debug = 0  # Level of printing: 0 through 3
+        self.NameToInfo = {}    # Find file info given name
+        self.filelist = []      # List of ZipInfo instances for archive
+        self.compression = compression  # Method of compression
+        self.compresslevel = compresslevel
+        self.mode = mode
+        self.pwd = None
+        self._comment = b''
+        self._strict_timestamps = strict_timestamps
+        self.metadata_encoding = metadata_encoding
+    
+        # Check that we don't try to write with nonconforming codecs
+        if self.metadata_encoding and mode != 'r':
+            raise ValueError(
+                "metadata_encoding is only supported for reading files")
+    
+        # Check if we were passed a file-like object
+        if isinstance(file, os.PathLike):
+            file = os.fspath(file)
+        if isinstance(file, str):
+            # No, it's a filename
+            self._filePassed = 0
+            self.filename = file
+            modeDict = {'r' : 'rb', 'w': 'w+b', 'x': 'x+b', 'a' : 'r+b',
+                        'r+b': 'w+b', 'w+b': 'wb', 'x+b': 'xb'}
+            filemode = modeDict[mode]
+            while True:
+                try:
+>                   self.fp = io.open(file, filemode)
+                              ^^^^^^^^^^^^^^^^^^^^^^^
+E                   FileNotFoundError: [Errno 2] No such file or directory: '<tmp>/test_instalacion_manipulada_in0/artefactos/pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
+
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1312: FileNotFoundError
+_____ TestAprovisionarPostgresQa.test_instalacion_incompleta_se_reinstala ______
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f11cb321790>
+tmp_path = PosixPath('<tmp>/test_instalacion_incompleta_se0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11caf40350>
+
+    def test_instalacion_incompleta_se_reinstala(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+>       self._preparar_dobles(tmp_path, monkeypatch, ctx)
+
+tests/test_certificacion_postgres_qa.py:434: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_certificacion_postgres_qa.py:359: in _preparar_dobles
+    rueda = _rueda_falsa(tmp_path / "artefactos")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_certificacion_postgres_qa.py:115: in _rueda_falsa
+    with zipfile.ZipFile(ruta, "w") as rueda:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <zipfile.ZipFile [closed]>
+file = '<tmp>/test_instalacion_incompleta_se0/artefactos/pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
+mode = 'w', compression = 0, allowZip64 = True, compresslevel = None
+
+    def __init__(self, file, mode="r", compression=ZIP_STORED, allowZip64=True,
+                 compresslevel=None, *, strict_timestamps=True, metadata_encoding=None):
+        """Open the ZIP file with mode read 'r', write 'w', exclusive create 'x',
+        or append 'a'."""
+        if mode not in ('r', 'w', 'x', 'a'):
+            raise ValueError("ZipFile requires mode 'r', 'w', 'x', or 'a'")
+    
+        _check_compression(compression)
+    
+        self._allowZip64 = allowZip64
+        self._didModify = False
+        self.debug = 0  # Level of printing: 0 through 3
+        self.NameToInfo = {}    # Find file info given name
+        self.filelist = []      # List of ZipInfo instances for archive
+        self.compression = compression  # Method of compression
+        self.compresslevel = compresslevel
+        self.mode = mode
+        self.pwd = None
+        self._comment = b''
+        self._strict_timestamps = strict_timestamps
+        self.metadata_encoding = metadata_encoding
+    
+        # Check that we don't try to write with nonconforming codecs
+        if self.metadata_encoding and mode != 'r':
+            raise ValueError(
+                "metadata_encoding is only supported for reading files")
+    
+        # Check if we were passed a file-like object
+        if isinstance(file, os.PathLike):
+            file = os.fspath(file)
+        if isinstance(file, str):
+            # No, it's a filename
+            self._filePassed = 0
+            self.filename = file
+            modeDict = {'r' : 'rb', 'w': 'w+b', 'x': 'x+b', 'a' : 'r+b',
+                        'r+b': 'w+b', 'w+b': 'wb', 'x+b': 'xb'}
+            filemode = modeDict[mode]
+            while True:
+                try:
+>                   self.fp = io.open(file, filemode)
+                              ^^^^^^^^^^^^^^^^^^^^^^^
+E                   FileNotFoundError: [Errno 2] No such file or directory: '<tmp>/test_instalacion_incompleta_se0/artefactos/pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
+
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1312: FileNotFoundError
+_____ TestAprovisionarPostgresQa.test_espacios_previos_ignora_postgres_qa ______
+
+self = <test_certificacion_postgres_qa.TestAprovisionarPostgresQa object at 0x7f11cb322710>
+tmp_path = PosixPath('<tmp>/test_espacios_previos_ignora_p0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11caf9e050>
+
+    def test_espacios_previos_ignora_postgres_qa(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+>       self._preparar_dobles(tmp_path, monkeypatch, ctx)
+
+tests/test_certificacion_postgres_qa.py:446: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_certificacion_postgres_qa.py:359: in _preparar_dobles
+    rueda = _rueda_falsa(tmp_path / "artefactos")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_certificacion_postgres_qa.py:115: in _rueda_falsa
+    with zipfile.ZipFile(ruta, "w") as rueda:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <zipfile.ZipFile [closed]>
+file = '<tmp>/test_espacios_previos_ignora_p0/artefactos/pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
+mode = 'w', compression = 0, allowZip64 = True, compresslevel = None
+
+    def __init__(self, file, mode="r", compression=ZIP_STORED, allowZip64=True,
+                 compresslevel=None, *, strict_timestamps=True, metadata_encoding=None):
+        """Open the ZIP file with mode read 'r', write 'w', exclusive create 'x',
+        or append 'a'."""
+        if mode not in ('r', 'w', 'x', 'a'):
+            raise ValueError("ZipFile requires mode 'r', 'w', 'x', or 'a'")
+    
+        _check_compression(compression)
+    
+        self._allowZip64 = allowZip64
+        self._didModify = False
+        self.debug = 0  # Level of printing: 0 through 3
+        self.NameToInfo = {}    # Find file info given name
+        self.filelist = []      # List of ZipInfo instances for archive
+        self.compression = compression  # Method of compression
+        self.compresslevel = compresslevel
+        self.mode = mode
+        self.pwd = None
+        self._comment = b''
+        self._strict_timestamps = strict_timestamps
+        self.metadata_encoding = metadata_encoding
+    
+        # Check that we don't try to write with nonconforming codecs
+        if self.metadata_encoding and mode != 'r':
+            raise ValueError(
+                "metadata_encoding is only supported for reading files")
+    
+        # Check if we were passed a file-like object
+        if isinstance(file, os.PathLike):
+            file = os.fspath(file)
+        if isinstance(file, str):
+            # No, it's a filename
+            self._filePassed = 0
+            self.filename = file
+            modeDict = {'r' : 'rb', 'w': 'w+b', 'x': 'x+b', 'a' : 'r+b',
+                        'r+b': 'w+b', 'w+b': 'wb', 'x+b': 'xb'}
+            filemode = modeDict[mode]
+            while True:
+                try:
+>                   self.fp = io.open(file, filemode)
+                              ^^^^^^^^^^^^^^^^^^^^^^^
+E                   FileNotFoundError: [Errno 2] No such file or directory: '<tmp>/test_espacios_previos_ignora_p0/artefactos/pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
+
+<home>/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu/lib/python3.11/zipfile.py:1312: FileNotFoundError
+________________ TestEjecutableDelPostmaster.test_proceso_vivo _________________
+
+self = <test_certificacion_postgres_qa.TestEjecutableDelPostmaster object at 0x7f11cb322d10>
+tmp_path = PosixPath('<tmp>/test_proceso_vivo0')
+
+    def test_proceso_vivo(self, tmp_path: Path) -> None:
+        pgdata = tmp_path / "pgdata"
+        pgdata.mkdir()
+        (pgdata / "postmaster.pid").write_text(f"{os.getpid()}\n")
+>       assert cr.ejecutable_del_postmaster(pgdata) == Path("/proc/self/exe").resolve()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'ejecutable_del_postmaster'
+
+tests/test_certificacion_postgres_qa.py:461: AttributeError
+_______________ TestEjecutableDelPostmaster.test_fichero_ausente _______________
+
+self = <test_certificacion_postgres_qa.TestEjecutableDelPostmaster object at 0x7f11cb323110>
+tmp_path = PosixPath('<tmp>/test_fichero_ausente0')
+
+    def test_fichero_ausente(self, tmp_path: Path) -> None:
+>       assert cr.ejecutable_del_postmaster(tmp_path / "no_existe") is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'ejecutable_del_postmaster'
+
+tests/test_certificacion_postgres_qa.py:464: AttributeError
+_______________ TestEjecutableDelPostmaster.test_pid_no_numerico _______________
+
+self = <test_certificacion_postgres_qa.TestEjecutableDelPostmaster object at 0x7f11cb323510>
+tmp_path = PosixPath('<tmp>/test_pid_no_numerico0')
+
+    def test_pid_no_numerico(self, tmp_path: Path) -> None:
+        pgdata = tmp_path / "pgdata"
+        pgdata.mkdir()
+        (pgdata / "postmaster.pid").write_text("abc\n")
+>       assert cr.ejecutable_del_postmaster(pgdata) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'ejecutable_del_postmaster'
+
+tests/test_certificacion_postgres_qa.py:470: AttributeError
+_________________ TestEjecutableDelPostmaster.test_pid_muerto __________________
+
+self = <test_certificacion_postgres_qa.TestEjecutableDelPostmaster object at 0x7f11cb323950>
+tmp_path = PosixPath('<tmp>/test_pid_muerto0')
+
+    def test_pid_muerto(self, tmp_path: Path) -> None:
+        pgdata = tmp_path / "pgdata"
+        pgdata.mkdir()
+        (pgdata / "postmaster.pid").write_text("999999999\n")
+>       assert cr.ejecutable_del_postmaster(pgdata) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'certificacion_release' has no attribute 'ejecutable_del_postmaster'
+
+tests/test_certificacion_postgres_qa.py:476: AttributeError
+__________________ TestPgProvision.test_argumentos_y_entorno ___________________
+
+self = <test_certificacion_postgres_qa.TestPgProvision object at 0x7f11cb31c150>
+tmp_path = PosixPath('<tmp>/test_argumentos_y_entorno0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb03ffd0>
+
+    def test_argumentos_y_entorno(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ctx = _contexto(tmp_path)
+        bash = shutil.which("bash")
+        assert bash is not None
+        ctx.datos["herramientas"] = {"bash": bash}
+        ctx.datos["postgres_qa"] = {"bin": "/x/bin"}
+        capturas: dict = {}
+    
+        def ejecutar_sujeto(ctx_local: cr.Contexto, argv: list[str], **kwargs: object) -> cr.ResultadoSujeto:
+            capturas["argv"] = argv
+            capturas["entorno"] = kwargs["entorno"]
+            capturas["cwd"] = kwargs.get("cwd")
+            return cr.ResultadoSujeto(rc=0, salida="")
+    
+        monkeypatch.setattr(cr, "ejecutar_sujeto", ejecutar_sujeto)
+>       assert cr._pg_provision(ctx, "status", nombre="estado") == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:497: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+ctx = Contexto(run_id='RUN1', opciones=Namespace(incluir_v0_historico=False, espera_salud_min=30, conservar_espacio=True, so...r/bin/bash'}, 'postgres_qa': {'bin': '/x/bin'}}, vivos={}, fallo_previo=False, rc=0, inicio_monotonico=13227.273278655)
+nombre = 'estado', argumentos = ('status',)
+argv = ['/usr/bin/bash', '<repo>/qa/pg-provision.sh', 'status']
+
+    def _pg_provision(ctx: Contexto, *argumentos: str, nombre: str) -> int:
+        """Ejecuta pg-provision.sh con el puerto de QA."""
+        argv = [_herramienta(ctx, "bash"), str(PG_PROVISION), *argumentos]
+>       resultado = ejecutar_sujeto(ctx, "70", argv, cwd=RAIZ, entorno=entorno_de_sujeto(os.environ, {"KONTROL_PGPORT": str(PUERTO_PG_QA)}), timeout_s=TIMEOUT_PG_S, nombre=nombre)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: TestPgProvision.test_argumentos_y_entorno.<locals>.ejecutar_sujeto() takes 2 positional arguments but 3 were given
+
+../../qa/certificacion_release.py:1480: TypeError
+____________ TestEtapaPostgresProcedencia.test_postmaster_qa_valido ____________
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f11cb31c9d0>
+tmp_path = PosixPath('<tmp>/test_postmaster_qa_valido0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11caf2dfd0>
+
+    def test_postmaster_qa_valido(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       preparado = self._preparar(tmp_path, monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:552: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f11cb31c9d0>
+tmp_path = PosixPath('<tmp>/test_postmaster_qa_valido0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11caf2dfd0>
+
+    def _preparar(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
+        ctx = _contexto(tmp_path)
+        binario = tmp_path / "bin"
+        binario.mkdir()
+        postgres = binario / "postgres"
+        postgres.write_text("#!/bin/sh\necho postgres\n")
+        postgres.chmod(0o755)
+        llamadas: list[str] = []
+        provision = {"bin": str(binario), "postgres": "16.2", "reutilizada": True}
+    
+        def aprovisionar(ctx_local: cr.Contexto) -> dict:
+            llamadas.append("aprovisionar")
+            ctx_local.datos["postgres_qa"] = provision
+            (ctx_local.home / cr.DIRECTORIO_POSTGRES_QA).mkdir(parents=True, exist_ok=True)
+            return provision
+    
+        def ejecutable_doble(pgdata: Path) -> Path | None:
+            return postgres.resolve()
+    
+        def pg_provision(ctx_local: cr.Contexto, *argumentos: str, nombre: str) -> int:
+            return 0
+    
+>       monkeypatch.setattr(cr, "aprovisionar_postgres_qa", aprovisionar)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'aprovisionar_postgres_qa'
+
+tests/test_certificacion_postgres_qa.py:532: AttributeError
+________ TestEtapaPostgresProcedencia.test_postmaster_fuera_del_bin_qa _________
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f11cb31d050>
+tmp_path = PosixPath('<tmp>/test_postmaster_fuera_del_bin_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb062510>
+
+    def test_postmaster_fuera_del_bin_qa(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       preparado = self._preparar(tmp_path, monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:559: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f11cb31d050>
+tmp_path = PosixPath('<tmp>/test_postmaster_fuera_del_bin_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb062510>
+
+    def _preparar(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
+        ctx = _contexto(tmp_path)
+        binario = tmp_path / "bin"
+        binario.mkdir()
+        postgres = binario / "postgres"
+        postgres.write_text("#!/bin/sh\necho postgres\n")
+        postgres.chmod(0o755)
+        llamadas: list[str] = []
+        provision = {"bin": str(binario), "postgres": "16.2", "reutilizada": True}
+    
+        def aprovisionar(ctx_local: cr.Contexto) -> dict:
+            llamadas.append("aprovisionar")
+            ctx_local.datos["postgres_qa"] = provision
+            (ctx_local.home / cr.DIRECTORIO_POSTGRES_QA).mkdir(parents=True, exist_ok=True)
+            return provision
+    
+        def ejecutable_doble(pgdata: Path) -> Path | None:
+            return postgres.resolve()
+    
+        def pg_provision(ctx_local: cr.Contexto, *argumentos: str, nombre: str) -> int:
+            return 0
+    
+>       monkeypatch.setattr(cr, "aprovisionar_postgres_qa", aprovisionar)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'aprovisionar_postgres_qa'
+
+tests/test_certificacion_postgres_qa.py:532: AttributeError
+______________ TestEtapaPostgresProcedencia.test_postmaster_none _______________
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f11cb31d6d0>
+tmp_path = PosixPath('<tmp>/test_postmaster_none0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb205810>
+
+    def test_postmaster_none(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       preparado = self._preparar(tmp_path, monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:571: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f11cb31d6d0>
+tmp_path = PosixPath('<tmp>/test_postmaster_none0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11cb205810>
+
+    def _preparar(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
+        ctx = _contexto(tmp_path)
+        binario = tmp_path / "bin"
+        binario.mkdir()
+        postgres = binario / "postgres"
+        postgres.write_text("#!/bin/sh\necho postgres\n")
+        postgres.chmod(0o755)
+        llamadas: list[str] = []
+        provision = {"bin": str(binario), "postgres": "16.2", "reutilizada": True}
+    
+        def aprovisionar(ctx_local: cr.Contexto) -> dict:
+            llamadas.append("aprovisionar")
+            ctx_local.datos["postgres_qa"] = provision
+            (ctx_local.home / cr.DIRECTORIO_POSTGRES_QA).mkdir(parents=True, exist_ok=True)
+            return provision
+    
+        def ejecutable_doble(pgdata: Path) -> Path | None:
+            return postgres.resolve()
+    
+        def pg_provision(ctx_local: cr.Contexto, *argumentos: str, nombre: str) -> int:
+            return 0
+    
+>       monkeypatch.setattr(cr, "aprovisionar_postgres_qa", aprovisionar)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'aprovisionar_postgres_qa'
+
+tests/test_certificacion_postgres_qa.py:532: AttributeError
+______________ TestEtapaPostgresProcedencia.test_version_distinta ______________
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f11cb31dd90>
+tmp_path = PosixPath('<tmp>/test_version_distinta0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11caf9d0d0>
+
+    def test_version_distinta(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       preparado = self._preparar(tmp_path, monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_certificacion_postgres_qa.py:578: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_certificacion_postgres_qa.TestEtapaPostgresProcedencia object at 0x7f11cb31dd90>
+tmp_path = PosixPath('<tmp>/test_version_distinta0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f11caf9d0d0>
+
+    def _preparar(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
+        ctx = _contexto(tmp_path)
+        binario = tmp_path / "bin"
+        binario.mkdir()
+        postgres = binario / "postgres"
+        postgres.write_text("#!/bin/sh\necho postgres\n")
+        postgres.chmod(0o755)
+        llamadas: list[str] = []
+        provision = {"bin": str(binario), "postgres": "16.2", "reutilizada": True}
+    
+        def aprovisionar(ctx_local: cr.Contexto) -> dict:
+            llamadas.append("aprovisionar")
+            ctx_local.datos["postgres_qa"] = provision
+            (ctx_local.home / cr.DIRECTORIO_POSTGRES_QA).mkdir(parents=True, exist_ok=True)
+            return provision
+    
+        def ejecutable_doble(pgdata: Path) -> Path | None:
+            return postgres.resolve()
+    
+        def pg_provision(ctx_local: cr.Contexto, *argumentos: str, nombre: str) -> int:
+            return 0
+    
+>       monkeypatch.setattr(cr, "aprovisionar_postgres_qa", aprovisionar)
+E       AttributeError: <module 'certificacion_release' from '<repo>/qa/certificacion_release.py'> has no attribute 'aprovisionar_postgres_qa'
+
+tests/test_certificacion_postgres_qa.py:532: AttributeError
+_________________ TestScriptPgProvision.test_status_con_bin_qa _________________
+
+self = <test_certificacion_postgres_qa.TestScriptPgProvision object at 0x7f11cb31e690>
+tmp_path = PosixPath('<tmp>/test_status_con_bin_qa0')
+
+    def test_status_con_bin_qa(self, tmp_path: Path) -> None:
+        script, bin_falso, _, _ = self._preparar_script(tmp_path)
+        entorno = self._entorno_minimo(bin_falso, tmp_path / "bin-herramientas")
+        entorno.update(
+            {
+                "KONTROL_PGBIN": str(bin_falso),
+                "KONTROL_PGDATA": str(tmp_path / "data"),
+                "KONTROL_PGPORT": "55497",
+                "KONTROL_PGLOG": str(tmp_path / "pg.log"),
+            }
+        )
+        resultado = self._ejecutar(script, entorno, tmp_path, "status")
+>       assert resultado.returncode == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/bash', '<tmp>/test_status_con_bin_qa0/repo/qa/pg-provision.s...ytest-of-<usuario>/pytest-13/test_status_con_bin_qa0/repo/qa/../resources/backend: No existe el fichero o el directorio\n').returncode
+
+tests/test_certificacion_postgres_qa.py:643: AssertionError
+____________ TestScriptPgProvision.test_sin_compilar_sin_extension _____________
+
+self = <test_certificacion_postgres_qa.TestScriptPgProvision object at 0x7f11cb31f410>
+tmp_path = PosixPath('<tmp>/test_sin_compilar_sin_extensio0')
+
+    def test_sin_compilar_sin_extension(self, tmp_path: Path) -> None:
+        script, bin_falso, _, marcador = self._preparar_script(tmp_path)
+        herramientas = tmp_path / "bin-herramientas"
+        entorno = self._entorno_minimo(bin_falso, herramientas)
+        entorno.update(
+            {
+                "KONTROL_PGBIN": str(bin_falso),
+                "KONTROL_PGDATA": str(tmp_path / "data"),
+                "KONTROL_PGPORT": "55497",
+                "KONTROL_PGLOG": str(tmp_path / "pg.log"),
+                "KONTROL_PG_SIN_COMPILAR": "1",
+            }
+        )
+        resultado = self._ejecutar(script, entorno, tmp_path, "start")
+        assert resultado.returncode != 0
+>       assert "KONTROL_PG_SIN_COMPILAR" in (resultado.stdout + resultado.stderr)
+E       AssertionError: assert 'KONTROL_PG_SIN_COMPILAR' in ('' + '<tmp>/test_sin_compilar_sin_extensio0/repo/qa/pg-provision.sh: línea 11: cd: <tmp>/test_sin_compilar_sin_extensio0/repo/qa/../resources/backend: No existe el fichero o el directorio\n')
+E        +  where '' = CompletedProcess(args=['/usr/bin/bash', '<tmp>/test_sin_compilar_sin_extensio0/repo/qa/pg-pro...-<usuario>/pytest-13/test_sin_compilar_sin_extensio0/repo/qa/../resources/backend: No existe el fichero o el directorio\n').stdout
+E        +  and   '<tmp>/test_sin_compilar_sin_extensio0/repo/qa/pg-provision.sh: línea 11: cd: <tmp>/test_sin_compilar_sin_extensio0/repo/qa/../resources/backend: No existe el fichero o el directorio\n' = CompletedProcess(args=['/usr/bin/bash', '<tmp>/test_sin_compilar_sin_extensio0/repo/qa/pg-pro...-<usuario>/pytest-13/test_sin_compilar_sin_extensio0/repo/qa/../resources/backend: No existe el fichero o el directorio\n').stderr
+
+tests/test_certificacion_postgres_qa.py:676: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_certificacion_portabilidad.py::test_crp_01_orden_de_e2e_pin_workers_y_reintentos
+FAILED tests/test_certificacion_portabilidad.py::test_crp_02_verificar_perfil_e2e_acepta_6_workers_solamente
+FAILED tests/test_certificacion_portabilidad.py::test_crp_03_estructura_etapas_usa_politicas
+FAILED tests/test_certificacion_portabilidad.py::test_crp_04_entorno_de_sujeto_limpia_y_conserva
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[CI-CANONICALIZED]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PYTHONPATH-CANONICALIZED]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[VIRTUAL_ENV-CANONICALIZED]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PATH-ALLOWED_INHERITED]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[HOME-ALLOWED_INHERITED]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[LC_ALL-ALLOWED_INHERITED]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PLAYWRIGHT_BROWSERS_PATH-ALLOWED_INHERITED]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PYTHONIOENCODING-ALLOWED_INHERITED]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[KONTROL_CLAMSCAN_PATH-ALLOWED_INHERITED]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[KONTROL_QA_CERT_HOME-ALLOWED_INHERITED]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PYTEST_ADDOPTS-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PWDEBUG-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PWTEST_X-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PYTHONWARNINGS-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[NODE_OPTIONS-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[NODE_ENV-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[LD_PRELOAD-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[UV_INDEX_URL-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PIP_INDEX_URL-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[npm_config_registry-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[COVERAGE_PROCESS_START-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PGPASSWORD-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[KONTROL_PGDATA-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[KONTROL_SECRET_KEY-FORBIDDEN]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[GITHUB_TOKEN-SECRET]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[MY_API_KEY-SECRET]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[aws_access_key_id-SECRET]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[PWD-IRRELEVANT]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[EDITOR-IRRELEVANT]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_05_clasificar_entorno_clasifica_cada_nombre[SSH_AUTH_SOCK-IRRELEVANT]
+FAILED tests/test_certificacion_portabilidad.py::test_crp_06_comprobar_politica_de_entorno_rechaza_prohibidas
+FAILED tests/test_certificacion_portabilidad.py::test_crp_06_comprobar_politica_de_entorno_describe_entorno_valido
+FAILED tests/test_certificacion_portabilidad.py::test_crp_07_arbol_certificado_no_toca_el_repositorio
+FAILED tests/test_certificacion_portabilidad.py::test_crp_08_hash_de_entrada_v2_determinista_y_sensible
+FAILED tests/test_certificacion_portabilidad.py::test_crp_09_etapa_manifiesto_omite_arbol_si_falta
+FAILED tests/test_certificacion_portabilidad.py::test_crp_09_etapa_manifiesto_recalcula_y_vincula
+FAILED tests/test_certificacion_portabilidad.py::test_crp_09_etapa_manifiesto_cambia_con_arbol_distinto
+FAILED tests/test_certificacion_portabilidad.py::test_crp_09_etapa_manifiesto_falla_si_el_arbol_cambia
+FAILED tests/test_certificacion_portabilidad.py::test_crp_10_campos_y_exclusiones_del_manifiesto
+FAILED tests/test_certificacion_postgres_qa.py::TestPinPostgresQa::test_constantes_y_pin
+FAILED tests/test_certificacion_postgres_qa.py::TestPinPostgresQa::test_sin_venv_en_rutas_criticas
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_descarga_exitosa
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_sha256_incorrecto_sin_restos
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_http_rechazado_sin_abrir
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_redireccion_a_http_rechazada
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_reutiliza_fichero_correcto
+FAILED tests/test_certificacion_postgres_qa.py::TestDescargarVerificado::test_reemplaza_fichero_incorrecto
+FAILED tests/test_certificacion_postgres_qa.py::TestExtraerPostgres::test_extraccion_y_verificacion
+FAILED tests/test_certificacion_postgres_qa.py::TestExtraerPostgres::test_detecta_modificacion_y_borrado
+FAILED tests/test_certificacion_postgres_qa.py::TestExtraerPostgres::test_record_incorrecto
+FAILED tests/test_certificacion_postgres_qa.py::TestExtraerPostgres::test_miembro_fuera_de_destino
+FAILED tests/test_certificacion_postgres_qa.py::TestFicherosDeBtreeGist::test_ficheros_esperados
+FAILED tests/test_certificacion_postgres_qa.py::TestFicherosDeBtreeGist::test_no_es_ar
+FAILED tests/test_certificacion_postgres_qa.py::TestFicherosDeBtreeGist::test_sin_btree_gist
+FAILED tests/test_certificacion_postgres_qa.py::TestAprovisionarPostgresQa::test_instalacion_fresca
+FAILED tests/test_certificacion_postgres_qa.py::TestAprovisionarPostgresQa::test_reutilizacion_y_descargas_siempre
+FAILED tests/test_certificacion_postgres_qa.py::TestAprovisionarPostgresQa::test_instalacion_manipulada_invalida
+FAILED tests/test_certificacion_postgres_qa.py::TestAprovisionarPostgresQa::test_instalacion_incompleta_se_reinstala
+FAILED tests/test_certificacion_postgres_qa.py::TestAprovisionarPostgresQa::test_espacios_previos_ignora_postgres_qa
+FAILED tests/test_certificacion_postgres_qa.py::TestEjecutableDelPostmaster::test_proceso_vivo
+FAILED tests/test_certificacion_postgres_qa.py::TestEjecutableDelPostmaster::test_fichero_ausente
+FAILED tests/test_certificacion_postgres_qa.py::TestEjecutableDelPostmaster::test_pid_no_numerico
+FAILED tests/test_certificacion_postgres_qa.py::TestEjecutableDelPostmaster::test_pid_muerto
+FAILED tests/test_certificacion_postgres_qa.py::TestPgProvision::test_argumentos_y_entorno
+FAILED tests/test_certificacion_postgres_qa.py::TestEtapaPostgresProcedencia::test_postmaster_qa_valido
+FAILED tests/test_certificacion_postgres_qa.py::TestEtapaPostgresProcedencia::test_postmaster_fuera_del_bin_qa
+FAILED tests/test_certificacion_postgres_qa.py::TestEtapaPostgresProcedencia::test_postmaster_none
+FAILED tests/test_certificacion_postgres_qa.py::TestEtapaPostgresProcedencia::test_version_distinta
+FAILED tests/test_certificacion_postgres_qa.py::TestScriptPgProvision::test_status_con_bin_qa
+FAILED tests/test_certificacion_postgres_qa.py::TestScriptPgProvision::test_sin_compilar_sin_extension
+75 failed, 1 passed in 1.20s

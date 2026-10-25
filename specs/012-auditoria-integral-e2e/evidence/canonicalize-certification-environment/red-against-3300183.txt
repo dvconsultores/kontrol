@@ -1,0 +1,3 @@
+ImportError while importing test module '<S>/rojo/resources/backend/tests/test_certificacion_release.py'.
+E   ModuleNotFoundError: No module named 'certificacion_release'
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!

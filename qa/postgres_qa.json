@@ -1,0 +1,16 @@
+{
+  "esquema": 1,
+  "postgres": "16.2",
+  "rueda": {
+    "fichero": "pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+    "url": "https://files.pythonhosted.org/packages/91/3f/3d628b09d379c368a589ca2f417e318bed7615e5df175c17d570e623b2f3/pgserver-0.1.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+    "sha256": "d595789b47624a3d963aa9aa6359da9be31beb7e61f1a45541953242068b8813"
+  },
+  "btree_gist": {
+    "paquete": "postgresql-16",
+    "version": "16.2-1.pgdg120+2",
+    "fichero": "postgresql-16_16.2-1.pgdg120+2_amd64.deb",
+    "url": "https://apt-archive.postgresql.org/pub/repos/apt/pool/main/p/postgresql-16/postgresql-16_16.2-1.pgdg120%2B2_amd64.deb",
+    "sha256": "c9de1cc65e89c24e36b5ce1101396372cd4bee7d635e1debc1a0a25b19bbd699"
+  }
+}
