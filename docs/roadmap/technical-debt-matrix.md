@@ -2460,3 +2460,5 @@ Informe: `docs/roadmap/government-start-readiness.md`. **GOVERNMENT_START_READIN
 - hay 7 gaps P0 del núcleo compartido frente a los RNF de Gobierno (MFA, techo de delegación, zona America/Caracas, catálogo de auditoría, errores deterministas, verificación de restauración y aislamiento por ente).
 
 Paquete de preguntas a la dueña: OQ-GSR-1..3. No se crea ninguna Spec de Gobierno.
+
+Decisiones 2026-10-25: OD-GSR-1 = B (ARCHITECTURE-BASELINE solo como planificación) y OD-GSR-2 = A (endurecer el núcleo antes de GOV-0). Valores D aprobados: delegación «solo permisos que el actor posee», zona America/Caracas, 422 ante parámetros no declarados, catálogo de eventos 006/051 y rechazo de análisis auditado en sesión independiente. Detalle en `government-start-readiness.md`.

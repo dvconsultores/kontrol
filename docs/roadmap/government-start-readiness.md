@@ -216,3 +216,13 @@ BLOCKED por el RC 0 oficial de SPEC054, por el freeze del sponsor con D-GOV-01..
 - Con OQ-GSR-1 = B: GOVERNMENT-ARCHITECTURE-BASELINE (planificación).
 - En paralelo, con OQ-GSR-2 = A: el paquete de decisiones D del núcleo y las deltas de endurecimiento en sus Specs dueñas.
 - La certificación oficial, cuando haya anfitrión, cerrará SPEC054 y la delta S3.
+
+## Decisiones de la dueña (2026-10-25)
+- **OD-GSR-1 = B:** se autoriza GOVERNMENT-ARCHITECTURE-BASELINE solo como planificación y documentación. La implementación de Gobierno sigue bloqueada hasta el RC 0 oficial de SPEC054.
+- **OD-GSR-2 = A:** los gaps P0 del núcleo compartido se cierran **antes** de GOV-0, con deltas en sus Specs dueñas (002/003, 001, 006/051, 053). El paquete de decisiones D toma los valores de la opción aprobada:
+  - ROLES-SIN-TECHO-DE-DELEGACION: «solo permisos que el actor posee»;
+  - FECHAS-ZONA-DE-PRESENTACION: America/Caracas;
+  - API-QUERY-SILENCIOSA: 422 ante parámetros no declarados (impacto conocido: rompe 27 de 224 E2E, que se adaptan en la delta);
+  - DT-06: catálogo de eventos de 006/051;
+  - DOCUMENT-SCAN-REJECTION-AUDIT-NOT-PERSISTED: sesión independiente.
+- OQ-GSR-3 sigue en manos del sponsor.
