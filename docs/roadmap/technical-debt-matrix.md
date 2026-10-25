@@ -2451,3 +2451,12 @@ S3_PROVIDER_SUPPORTED = 0; S3_CONFIGURATION_GUARDED = 1. La certificación ofici
 (OD-CERT-30), junto con la de SPEC054.
 
 **NEXT TECHNICAL CYCLE = GOVERNMENT-START-READINESS.**
+
+## Actualización 2026-10-25 — GOVERNMENT-START-READINESS
+
+Informe: `docs/roadmap/government-start-readiness.md`. **GOVERNMENT_START_READINESS = BLOCKED**:
+- falta el RC 0 oficial de SPEC054;
+- las fuentes siguen en SPONSOR REVIEW, con D-GOV-01..08 abiertas y el freeze en 0/10;
+- hay 7 gaps P0 del núcleo compartido frente a los RNF de Gobierno (MFA, techo de delegación, zona America/Caracas, catálogo de auditoría, errores deterministas, verificación de restauración y aislamiento por ente).
+
+Paquete de preguntas a la dueña: OQ-GSR-1..3. No se crea ninguna Spec de Gobierno.
