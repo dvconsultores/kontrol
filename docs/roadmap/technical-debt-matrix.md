@@ -2462,3 +2462,17 @@ Informe: `docs/roadmap/government-start-readiness.md`. **GOVERNMENT_START_READIN
 Paquete de preguntas a la dueña: OQ-GSR-1..3. No se crea ninguna Spec de Gobierno.
 
 Decisiones 2026-10-25: OD-GSR-1 = B (ARCHITECTURE-BASELINE solo como planificación) y OD-GSR-2 = A (endurecer el núcleo antes de GOV-0). Valores D aprobados: delegación «solo permisos que el actor posee», zona America/Caracas, 422 ante parámetros no declarados, catálogo de eventos 006/051 y rechazo de análisis auditado en sesión independiente. Detalle en `government-start-readiness.md`.
+
+## Actualización 2026-10-25 — GOVERNMENT-ARCHITECTURE-BASELINE
+
+`docs/roadmap/government-architecture-baseline.md` queda **CLOSED / PLANNING_BASELINE**, con GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0.
+
+Contiene:
+- mapa de contextos, modelo organizativo y contratos de alcance (tenant, organización y autoridad);
+- contratos de auditoría y políticas de flujo, campos, concurrencia, numeración, tiempo y dinero;
+- **SHARED_CORE_HARDENING_DEPENDENCY_MAP** con los 7 gaps;
+- paquete D-GOV para el sponsor y checklist de freeze (0/10).
+
+Preguntas a la dueña: OQ-GAB-1..3 (forma de entrega, MFA y sesión, inmutabilidad de la auditoría).
+
+**NEXT TECHNICAL CYCLE = SHARED-CORE-GOVERNMENT-P0-HARDENING**, que empieza por MFA (002/003).
