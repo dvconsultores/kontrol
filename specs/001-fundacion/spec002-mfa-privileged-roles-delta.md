@@ -8,7 +8,7 @@
 | HEAD de entrada | `37bc083` |
 | Evidencia | `evidence/mfa-privileged-roles/` (se crea al implementar) |
 | GOVERNMENT_IMPLEMENTATION_AUTHORIZED | 0 |
-| Estado | **DESIGN COMPLETE — BLOCKED_BY_OWNER_DECISION** (OQ-MFA-1..3). DEEPSEEK CALLS = 0 |
+| Estado | **DESIGN COMPLETE — OQ RESUELTAS (2026-10-25)**: OQ-MFA-1 = A, OQ-MFA-2 = A, OQ-MFA-3 = A (§18). IMPLEMENTATION AUTHORIZED por el encargo «SHARED-CORE-P0-HARDENING-01 … IMPLEMENTATION AUTHORIZED» |
 
 ## 1. Discover (medido en `37bc083`)
 
@@ -171,6 +171,30 @@
 | STANDARD | el resto | voluntario |
 
 La regla es una constante versionada en el módulo `identity_access`, con pruebas por permiso. No es configuración: un interruptor así sería un vector de degradación (T08). La lista solo crece por Spec.
+
+### 4.1 Clasificación ratificada (OQ-MFA-1 = A; sustituye a la tabla anterior)
+
+PRIVILEGED y SENSITIVE exigen MFA; STANDARD lo tiene voluntario. La clase sale del **conjunto efectivo de permisos** de los roles vigentes del usuario, sea cual sea su alcance (un rol de una sola empresa no rebaja la clase), y **nunca del nombre del rol**. La excepción es el rol protegido `ADMIN`, que siempre es PRIVILEGED. Si un usuario cumple varias clases, gana la más alta.
+
+| Clase | Capacidad (criterio de la dueña) | Permisos (catálogo medido en `405ae16`) |
+|---|---|---|
+| PRIVILEGED | modificar la seguridad; administrar usuarios o roles; resetear MFA | `users:create`, `users:mfa_reset` (nuevo), `roles:create`, `roles:edit` |
+| PRIVILEGED | autoridad sobre la licencia y la estructura de la instalación | `license:create`, `license:edit`, `license:approve`, `organization:create`, `organization:activate`, `organization:deactivate`, `organization:delete`, `organization:manage_structure` |
+| PRIVILEGED | cambiar la política de autorización | `aprobaciones:configure`, `aprobaciones:delegate` |
+| SENSITIVE | aprobar o ejecutar operaciones fiscales | `fiscal:create` (emisión, notas de crédito y débito, impresión fiscal, lotes de control), `fiscal:approve` |
+| SENSITIVE | autorizar pagos y comprometer recursos | `tesoreria:create` (bancos, cuentas, movimientos bancarios, cajas), `tesoreria:approve`, `compras:approve` (transiciones de órdenes, pagos y requisiciones; asiento de notas de crédito), `compras:apply`, `ventas:approve` (emisión de facturas, cobros, devoluciones, asiento de notas de crédito), `ventas:apply` |
+| SENSITIVE | operaciones definitivas sobre activos | `inventario:approve` (transición de ajustes de inventario) |
+| SENSITIVE | aprobar o anular decisiones de flujo o regulatorias | `aprobaciones:approve`, `regulatorio:approve` (incluye anular evaluaciones), `homologacion:approve` |
+| SENSITIVE | información sensible de auditoría y exportación de datos | `audit:view`, `reportes:export` |
+| SENSITIVE | borrados irreversibles | `documentos:delete`, `maestros:delete` |
+| SENSITIVE | cambiar configuración | `comercial:manage_policies` (políticas de crédito y descuento y su precedencia), `notificaciones:configure`, `tareas:configure`, `documentos:manage_types`, `organization:edit` |
+| STANDARD | el resto: consultar, crear y editar operativo, flujos operativos | los demás permisos del catálogo |
+
+**Completitud (prueba MFA-G00):** cada `resource:action` que exige alguna ruta (`require_permission`) o siembra `setup` debe estar **explícitamente** en una de las tres listas, STANDARD incluida. Un permiso nuevo sin clasificar hace fallar la suite: no hereda STANDARD en silencio.
+
+**Gobierno:** cuando se autorice su implementación, sus roles privilegiados heredan este contrato (GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0).
+
+**Límite medido:** `inventario:transition` (conteos, lotes, traslados) queda STANDARD, porque son pasos operativos de flujo y no cambian la valoración. El cambio definitivo de existencias ocurre en la transición del ajuste (`inventario:approve`).
 
 ## 5. Modelo de datos (migración `0058_spec002_mfa`)
 
@@ -336,7 +360,7 @@ No se pregunta lo que el contrato ya fija: TOTP, códigos de recuperación, reau
 | P26 Paridad de modelos y migraciones | PASS: está en §11 |
 | P27 Mutación observable | PASS: está en §11 |
 
-BLOCKER = 0 · CRITICAL = 0 · CONTRADICTIONS = 0 · OWNER CONFLICT = 0 · **MATERIAL OQ = 3** → `DEEPSEEK CALLS = 0`.
+BLOCKER = 0 · CRITICAL = 0 · CONTRADICTIONS = 0 · OWNER CONFLICT = 0 · ~~MATERIAL OQ = 3~~ → **MATERIAL OQ = 0** (2026-10-25, §18). P2 pasa a PASS.
 
 ## 15. Plan y tareas
 
@@ -380,4 +404,18 @@ Requisitos 13/13 trazados · amenazas 24/24 con control y prueba · tareas sin r
 
 ## 17. Autorización
 
-`implement` queda **BLOCKED_BY_OWNER_DECISION** hasta que la dueña resuelva OQ-MFA-1, OQ-MFA-2 y OQ-MFA-3. Con las tres resueltas, el gate pasa a `MATERIAL OQ = 0` y el encargo SHARED-CORE-P0-HARDENING-01 autoriza `implement` (P2). MFA_BYPASS = BLOCKED por diseño.
+~~`implement` queda BLOCKED_BY_OWNER_DECISION~~. Las OQ se resolvieron el 2026-10-25 (§18): el gate queda en `MATERIAL OQ = 0` y el encargo SHARED-CORE-P0-HARDENING-01 «IMPLEMENTATION AUTHORIZED» autoriza `implement` (P2). MFA_BYPASS = BLOCKED por diseño.
+
+## 18. Decisiones de la dueña (2026-10-25)
+
+| Id | Decisión | Efecto en el diseño |
+|---|---|---|
+| OQ-MFA-1 = A | MFA obligatorio para PRIVILEGED y SENSITIVE; voluntario para STANDARD; clasificación por capacidades | §4.1 + MFA-G00 |
+| OQ-MFA-2 = A | QR con **`segno`** en el backend: versión fijada, lock reproducible, licencia registrada, auditoría de dependencias, sin instalación flotante ni respaldo oculto | `segno==1.6.6` (BSD-3-Clause, sin dependencias) entra en `requirements.txt` y `requirements.lock` con el mismo `uv pip compile` de cabecera. El QR codifica **solo** la URI `otpauth://` generada internamente. **Contrato de pintado:** el backend devuelve el SVG como `data:image/svg+xml;base64,…` y el frontend lo pinta **solo** con `<img src>`, que no ejecuta scripts; la URI de datos se valida con un prefijo exacto y prohíbe `dangerouslySetInnerHTML` y cualquier inyección de marcado (prueba de vitest más una prueba estructural). La clave manual sigue disponible. El QR nunca es fuente de verdad |
+| OQ-MFA-3 = A | Una identidad o sesión privilegiada **por worker** para las suites amplias ajenas a MFA: aislada por worker, secreto TOTP sintético generado en ejecución, nada compartido, commiteado ni en la evidencia | §11. Reloj inyectable **solo** como parámetro de las funciones TOTP del servicio (p. ej. `now: Callable[[], datetime]` con un valor por defecto real), sin variable de entorno. Prueba estructural MFA-NOBYPASS: el código de `app/` no contiene `DISABLE_MFA`, `SKIP_MFA`, `TEST_MFA_MODE`, `ACCEPT_ANY_OTP`, `FIXED_OTP` ni ningún ajuste de `Settings` que desactive o relaje MFA. Sin `sleep`, reintentos ni omisiones |
+| §4 del encargo | El arnés no sustituye a la E2E de MFA | E2E-MFA cubre el ciclo real: login con contraseña, `MFA_REQUIRED`, alta, desafío, OTP válido e inválido, antirrepetición, código de recuperación y su reutilización rechazada, regeneración, reautenticación, operación privilegiada irreversible, reset administrativo y seguridad de la sesión tras el reset o el cambio. No se certifica MFA con fixtures ya autenticados |
+| F1 | IN_SCOPE | R-MFA-H2: una sesión revocada deja de autorizar en la petición siguiente, aunque el JWT no haya caducado |
+| F2 | IN_SCOPE, con semántica exacta | cambio propio de contraseña: se revocan las **demás** sesiones y se conserva la actual (la persona acaba de demostrar la credencial nueva). Restablecimiento por token (credencial olvidada o comprometida): se revocan **todas**. Reset de MFA (administrativo o rotura de cristal): todas las del objetivo. Reemplazo propio del factor: las demás. Desactivación propia (STANDARD): las demás |
+| F3 | `users.mfa_enabled` = vista derivada de compatibilidad | la escribe solo el servicio MFA en la misma transacción que el factor. Invariante probado: `mfa_enabled ⇔ existe factor ACTIVE`, en todos los flujos, incluidos el reset, la rotura de cristal y la desactivación |
+| F4 | GENERIC_LOGIN_RATE_LIMIT_DEBT = PRESERVED (DT-16 / Spec 055) · MFA_ABUSE_PROTECTION = IN_SCOPE | R-MFA-I1..I5 en verificación TOTP, códigos de recuperación, reautenticación, confirmación del alta y reset |
+| F5 | Auditoría con carga segura | R-MFA-J2 (texto del encargo recibido truncado en este punto; ver el informe) |
