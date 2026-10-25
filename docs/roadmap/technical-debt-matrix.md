@@ -2476,3 +2476,28 @@ Contiene:
 Preguntas a la dueña: OQ-GAB-1..3 (forma de entrega, MFA y sesión, inmutabilidad de la auditoría).
 
 **NEXT TECHNICAL CYCLE = SHARED-CORE-GOVERNMENT-P0-HARDENING**, que empieza por MFA (002/003).
+
+### Actualización 2026-10-25 — SHARED-CORE-P0-HARDENING-01 (MFA, gap n.º 1): diseño cerrado, bloqueado por decisión
+
+`specs/001-fundacion/spec002-mfa-privileged-roles-delta.md` (dueñas 002 y 003; alojada en 001 porque OBS-04 sigue abierta) queda
+**DESIGN COMPLETE — BLOCKED_BY_OWNER_DECISION**. Contiene:
+- descubrimiento medido;
+- requisitos A–M;
+- 24 amenazas, cada una con su control y su prueba;
+- política por capacidades;
+- modelo de datos (`0058`), cifrado con anillo `KONTROL_MFA_KEYS`, API, auditoría, UX con los 15 estados y accesibilidad;
+- gate y trazabilidad.
+
+Hallazgos nuevos en el alcance:
+- F1: el access token no se liga a la sesión;
+- F2: cambiar o restablecer la contraseña no revoca las sesiones;
+- F3: `mfa_enabled` no tiene dueño.
+
+Hallazgo registrado fuera del alcance: F4, `login_rate_limit_per_minute` es configuración muerta (DT-16 / Spec 055).
+
+Preguntas a la dueña:
+- OQ-MFA-1: alcance obligatorio de la política;
+- OQ-MFA-2: QR (dependencia nueva);
+- OQ-MFA-3: arnés de pruebas frente a la antirrepetición.
+
+DEEPSEEK CALLS = 0.
