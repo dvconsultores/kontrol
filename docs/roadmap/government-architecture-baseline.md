@@ -665,3 +665,15 @@ La línea base queda **CLOSED como documento de planificación**. La implementac
 2. En paralelo: la certificación oficial de SPEC054 espera al anfitrión dedicado.
 3. Vía del sponsor: freeze, D-GOV-01..08 y validación jurídica.
 4. No se inicia GOV-0 ni ninguna GOV-SPEC.
+
+## Ratificaciones de la dueña (2026-10-25, Master Governance Prompt)
+- **OQ-GAB-1 = A** (§85): el perfil de instalación de Gobierno queda separado del perfil funcional privado. El núcleo compartido está permitido; la semántica de negocio compartida exige clasificación explícita. Sin comportamiento mixto automático.
+- **OQ-GAB-2 = A** (§34): TOTP obligatorio para roles privilegiados, con:
+  - códigos de recuperación de un solo uso, nunca guardados en claro;
+  - reautenticación para acciones irreversibles;
+  - ningún OTP, código de recuperación ni secreto TOTP en logs ni en la auditoría.
+
+  WebAuthn queda como evolución futura.
+- **OQ-GAB-3 = A** (§36): la auditoría crítica es append-only, con inmutabilidad en la base de datos; el encadenado por hash queda como evolución de GOV-5, salvo que una Spec anterior lo exija.
+
+Con esto **MATERIAL_OQ de esta línea base = 0**. La implementación de Gobierno sigue **no autorizada** (puerta de entrada sin cumplir).
