@@ -18,14 +18,15 @@ de cada suite y una base de QA acumula el trabajo de muchas ejecuciones.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import alcance_de_usuario
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-#: Contraseña de QA. No es una credencial real ni abre nada fuera de este mundo.
-PASS = "Kontrol2026Segura!"
+#: Contraseña de QA: la de la corrida (KONTROL_E2E_PASSWORD); el valor por defecto solo sirve a usos manuales fuera de la corrida.
+PASS = os.environ.get("KONTROL_E2E_PASSWORD", "Kontrol2026Segura!")
 
 #: Tenant de QA, el que siembra `qa/pg-e2e-seed.py`.
 TENANT_1 = "DEMO"

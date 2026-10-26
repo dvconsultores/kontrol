@@ -26,6 +26,8 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
 
+from app.core.security import validate_password_policy
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "qa"))
 
 import e2e_base as b  # noqa: E402
@@ -653,3 +655,17 @@ def test_e2ecorrida_33b_material_mfa_fuera_de_test_results_se_cuenta_y_no_se_bor
     informe = corrida.retirar_material_mfa()
     assert informe == {"retirados": [], "quedan": 1}
     assert registro.exists()
+
+
+def test_e2ecorrida_34_la_contrasena_e2e_es_de_la_corrida_y_no_se_hereda(entorno):
+    """La contraseña sembrada la genera cada corrida y una heredada se ignora."""
+    entorno["KONTROL_E2E_PASSWORD"] = "HeredadaNoUsar1"
+    a, _ = _corrida(entorno, "pass")
+    b, _ = _corrida(entorno, "pass")
+    a.url = a.servidor.url_de(a.base)
+    assert a.clave_e2e != b.clave_e2e
+    assert a.entorno_de_procesos()["KONTROL_E2E_PASSWORD"] == a.clave_e2e
+    assert a.clave_e2e != "HeredadaNoUsar1"
+    assert validate_password_policy(a.clave_e2e) == []
+    a.anotar()
+    assert a.clave_e2e not in (a.evidencia / "manifest.json").read_text()

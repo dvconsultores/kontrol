@@ -75,7 +75,7 @@ Incidencias del transporte (puente Sonnet → DeepSeek), todas registradas en lo
 
 ## Coste (todas las llamadas a `deepseek_chat` del ciclo, leídas de las trazas de los puentes)
 
-186 llamadas · 1 027 480 tokens de entrada · 570 038 de salida · **0,8397 USD**. El coste del puente (Sonnet) no se incluye: lo
+193 llamadas · 1 052 108 tokens de entrada · 577 174 de salida · **0,8506 USD** (incluida la Fase A). El coste del puente (Sonnet) no se incluye: lo
 factura la sesión de Claude Code.
 
 ## Purga de evidencia con material MFA sintético (Claude, 2026-10-26)
@@ -83,3 +83,13 @@ factura la sesión de Claude Code.
 Antes de TM-9f, las trazas `trace.zip`, capturas y `error-context.md` de las pruebas FALLIDAS de las corridas E2E de este ciclo (`qa/e2e-runs/`, fuera de Git) contenían respuestas del alta de usuarios efímeros, sobre bases ya eliminadas y con la clave de anillo de cada corrida generada en memoria. Claude eliminó las carpetas `test-results/mfa-*` de tres corridas, los `.playwright-artifacts-*` de la corrida interrumpida y 10 `trace.zip` más con esas marcas; un nuevo barrido de `qa/e2e-runs/` da 0 ficheros. Desde TM-9f la propia corrida las retira y lo anota en el manifiesto (`limpieza.material_mfa`).
 
 Formato al cierre (Claude, OD-ORCH-01): `ruff --select I --fix` sobre 9 pruebas cuyo `from sesion_mfa import login_completo` (TM-7b) había quedado fuera de orden; solo cambia la posición del import; los 9 ficheros se repitieron en SQLite y PostgreSQL.
+
+## Fase A · cierre de gobernanza (2026-10-26)
+
+| Tarea | Modelo | Resultado de la auditoría | Reintentos |
+|---|---|---|---|
+| TM-EG1 contraseña E2E propia de cada corrida (incidente EGR-MFA-01) | v4-flash | Encargo con el valor histórico enmascarado (`<SEMILLA_HISTORICA>`) y comprobación por programa de que no viajaba. Intento 0: bloques de `e2e_corrida.py` con un espacio de sangría de más → rechazados; se aplicaron los 4 auditados → c1 PASS. La variable local `b` de la prueba 34 oculta el alias de módulo `b` sin efecto (anotado); `test_e2e_corrida` 36/36 | 1 |
+| TM-SF1a `mfa_enabled` en el listado de usuarios (MFA-SF-01) | v4-flash | PASS; primero se aplicó solo la prueba y dio rojo (`KeyError: 'mfa_enabled'`), luego el cambio → verde 19/19 | 0 |
+| TM-SF1b UI de Usuarios, ayuda del login y aserciones E2E (MFA-SF-01/02) | v4-pro | Primero las pruebas: rojo de 2 (vitest); producto aplicado. Rechazados: espía fuera de ámbito, `setup()` pisaba el mock, dos SEARCH E2E no únicos → c1: formato `<ruta>` y un localizador no acotado (modo estricto) → c2 PASS | 2 |
+| TM-DOC1 presupuesto de la carga con analizador real en `documents-a11y` (DOCS-A11Y-UPLOAD-TIMEOUT, preexistente) | v4-flash | PASS (patrón de `documents.spec.ts`) | 0 |
+| TM-AUD1 fila de auditoría acotada a `LOGIN_SUCCESS` (dos eventos por `request_id` desde el MFA) | v4-flash | PASS | 0 |

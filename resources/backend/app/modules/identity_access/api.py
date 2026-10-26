@@ -449,6 +449,7 @@ def list_users(db: Session = Depends(get_db), actor: User = Depends(require_perm
             "email": u.email,
             "status": u.status,
             "must_change_password": u.must_change_password,
+            "mfa_enabled": u.mfa_enabled,
             "last_login": u.last_login.isoformat() if u.last_login else None,
             "roles": identity_service.get_user_roles(db, str(u.id)),
             "allowed_actions": {"view": True, "edit": True, "deactivate": True, "delete": False},

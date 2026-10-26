@@ -188,6 +188,20 @@ def test_mfa_d01_estado(mundo, reloj_mfa):
     }
 
 
+def test_mfa_d01b_listado_de_usuarios_muestra_si_la_verificacion_esta_activa(mundo, reloj_mfa):
+    """MFA-D01b: el listado de usuarios expone mfa_enabled (derivado) y nada del factor."""
+    admin_usuario, admin_id, alta = _crear_privilegiado_con_factor(mundo, reloj_mfa, admin=True)
+    std = _usuario(mundo)
+    std_id = crear_usuario(mundo, std, rol="R_CONSULTA")
+    r = mundo.client.get(f"{API}/users", headers=alta.cabeceras)
+    assert r.status_code == 200, r.text
+    por_id = {u["id"]: u for u in r.json()}
+    assert por_id[str(admin_id)]["mfa_enabled"] is True
+    assert por_id[str(std_id)]["mfa_enabled"] is False
+    for u in r.json():
+        assert not ({"manual_key", "secret", "recovery_codes", "activated_at"} & set(u))
+
+
 def test_mfa_f01_reauth_ok_y_fallos(mundo, reloj_mfa):
     """MFA-F01: reautenticación con éxito y fallos."""
     usuario, _, alta = _crear_privilegiado_con_factor(mundo, reloj_mfa)

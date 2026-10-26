@@ -66,6 +66,7 @@ describe("LoginPage MFA", () => {
     expect(codeInput).toHaveFocus();
     expect(codeInput).toHaveAttribute("autocomplete", "one-time-code");
     expect(screen.getByRole("heading", { name: "Verificación en dos pasos" })).toBeInTheDocument();
+    expect(screen.getByText(/pida a un administrador que restablezca su verificación/)).toBeInTheDocument();
   });
 
   it("código mal formado no llama a verifyMfa y muestra el error", async () => {

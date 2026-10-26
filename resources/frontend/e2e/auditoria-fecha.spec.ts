@@ -67,7 +67,9 @@ test.describe("AUDITORIA-CREATED-AT · la columna Fecha muestra event_time", () 
     // Y la del evento controlado, si cayó en esta página, dice exactamente su instante.
     if (primeros.some((i) => i.request_id === rastro)) {
       const esperado = await page.evaluate((iso) => new Date(iso).toLocaleString("es-VE"), evento.event_time);
-      await expect(page.getByRole("row", { name: new RegExp(rastro) })).toContainText(esperado);
+      await expect(
+        page.getByRole("row", { name: new RegExp(rastro) }).filter({ hasText: "LOGIN_SUCCESS" }),
+      ).toContainText(esperado);
     }
   });
 });

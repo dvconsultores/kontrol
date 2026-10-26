@@ -26,6 +26,7 @@ interface UserSummary {
   email: string | null;
   status: string;
   must_change_password: boolean;
+  mfa_enabled: boolean;
   last_login: string | null;
   roles: UserRole[];
 }
@@ -88,6 +89,7 @@ export function UsuariosPage(): React.JSX.Element {
         description: `${objetivo.username} tendrá que volver a configurarla en su próximo inicio de sesión.`,
       });
       setObjetivo(null);
+      void queryClient.invalidateQueries({ queryKey: ["security", "users"] });
     } catch (err) {
       if (err instanceof TypeError) {
         notify({ type: "error", title: "No fue posible restablecer la verificación", description: "Sin conexión. Inténtelo de nuevo." });
@@ -146,9 +148,9 @@ export function UsuariosPage(): React.JSX.Element {
           {(query.data ?? []).map((u) =>
             row(
               u.id,
-              `${u.username} · ${u.email ?? "sin correo"} · Roles: ${u.roles.map((r) => r.code).join(", ") || "—"}`,
+              `${u.username} · ${u.email ?? "sin correo"} · Roles: ${u.roles.map((r) => r.code).join(", ") || "—"} · Verificación en dos pasos: ${u.mfa_enabled ? "activa" : "no configurada"}`,
               u.status,
-              hasPermission("users:mfa_reset") && u.id !== user?.id ? (
+              hasPermission("users:mfa_reset") && u.id !== user?.id && u.mfa_enabled ? (
                 <Button variant="secondary" size="sm" onClick={() => setObjetivo({ id: u.id, username: u.username })}>
                   Restablecer verificación
                 </Button>

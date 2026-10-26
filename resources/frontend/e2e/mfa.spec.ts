@@ -339,10 +339,12 @@ test.describe("E2E-MFA · segundo factor por la interfaz", () => {
       .filter({ has: page.getByRole("button", { name: "Restablecer verificación", exact: true }) })
       .last();
     await expect(fila).toBeVisible();
+    await expect(fila).toContainText("Verificación en dos pasos: activa");
     await fila.getByRole("button", { name: "Restablecer verificación", exact: true }).click();
     await expect(page.getByText("Restablecer la verificación en dos pasos")).toBeVisible();
     await page.getByRole("button", { name: "Restablecer", exact: true }).click();
     await expect(page.getByText("Verificación restablecida")).toBeVisible();
+    await expect(page.locator("div").filter({ hasText: usuario.username }).filter({ hasText: "Verificación en dos pasos: no configurada" }).last()).toBeVisible();
 
     const { page: page2 } = await contextoLimpio(browser);
     await formularioLogin(page2, usuario.username);

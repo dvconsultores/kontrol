@@ -271,6 +271,8 @@ class Corrida:
         # Clave AES de la corrida (Spec 002), generada en ejecución, solo en
         # memoria y en el entorno de los procesos hijos; el manifiesto no la registra.
         self.claves_mfa = f"e2e{secrets.token_hex(3)}:{base64.urlsafe_b64encode(secrets.token_bytes(32)).decode().rstrip('=')}"
+        # Contraseña de las identidades sembradas (Spec 002), propia de cada corrida; nunca se hereda.
+        self.clave_e2e = f"E2e-{secrets.token_urlsafe(24)}-9q"
         self.base = nombres.nombre_de_base(self.run_id)
         self.estado = Path(self.entorno.get("KONTROL_E2E_STATE_DIR", "/tmp/kontrol-e2e")) / self.run_id
         self.evidencia = Path(self.entorno.get("KONTROL_E2E_EVIDENCE_DIR",
@@ -334,7 +336,7 @@ class Corrida:
             # La identidad con la que la propia corrida comprueba el backend y con la que las suites inician
             # sesión: sin este valor cuarenta pruebas se omitían en toda corrida (E2E-CUARENTA-OMITIDAS).
             "KONTROL_E2E_USER": self.entorno.get("KONTROL_E2E_USER", "admin"),
-            "KONTROL_E2E_PASSWORD": self.entorno.get("KONTROL_E2E_PASSWORD", "Kontrol2026Segura!"),
+            "KONTROL_E2E_PASSWORD": self.clave_e2e,
             # Si el backend de la corrida tiene analizador. Sin `clamscan` toda carga con análisis
             # obligatorio termina en SCAN_FAILED (falso seguro, FR-046-072): las pruebas que necesitan
             # una versión cargada se omiten con nombre y causa (ENTORNO-SIN-CLAMSCAN), no fallan a ciegas.

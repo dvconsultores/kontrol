@@ -93,6 +93,8 @@ test("detalle documental: sin violaciones serias de WCAG 2.2 AA", async ({ page,
 test("la carga de archivo es operable solo con teclado", async ({ page, request }) => {
   test.skip(!SCANNER, "ENTORNO-SIN-CLAMSCAN: la carga por teclado termina en una versión cargada, y sin clamscan " +
     "ninguna carga con análisis obligatorio crea versión (SCAN_FAILED, FR-046-072); dueña 046");
+  // La carga se analiza con un antivirus real y tarda de verdad (23–32 s medidos): mismo presupuesto que documents.spec.ts.
+  test.setTimeout(120_000);
   const token = (await sesionApi(USER as string, { tenant: TENANT })).token;
   const headers = { Authorization: `Bearer ${token}` };
   const companies = await (await request.get(`${API}/organization/companies`, { headers })).json();

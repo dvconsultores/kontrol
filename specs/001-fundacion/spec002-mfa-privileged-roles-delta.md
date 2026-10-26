@@ -600,6 +600,10 @@ ENGINEERING_REQUIREMENTS_DOCUMENT_REVIEWED = 1 · ENGINEERING_REQUIREMENTS_RECON
 | ALEMBIC-CHECK-DRIFT-PREEXISTING | 001 | esquema | MEDIUM | `alembic check` sobre una base en `0058` informa diferencias modelo↔migración AJENAS al MFA (presentes en `HEAD` antes de este ciclo; las tablas y columnas de `0058` no aparecen) | P26 (paridad modelo↔migración) no está verificada por máquina para todo el esquema | no | delta de la Spec 001 que convierta `alembic check` en compuerta y cierre las diferencias |
 | QA-CRAWLERS-SIN-MFA | 012 | QA | LOW | `resources/frontend/e2e/audit-route-crawler.mjs` y `audit-responsive-crawler.mjs` (herramientas manuales, fuera de la corrida canónica) siguen entrando por formulario con contraseña | con MFA no pasan del segundo factor para `admin` | no | migrarlos al helper `e2e/helpers/sesion.ts` cuando se vuelvan a usar |
 | SHELL-SIDEBAR-NOT-RESPONSIVE | 001 | responsive | MEDIUM | `resources/frontend/src/layout/Sidebar.tsx` (`collapsed` empieza en `false`, ancho fijo `w-64`, sin consulta de medios); a 320 px el menú ocupa 256 px y comprime el `main` de TODAS las pantallas (captura de la E2E MFA 14, corrida `r20261026t024651…`); las comprobaciones de «sin scroll horizontal» pasan porque el contenido se recorta, no porque se adapte; axe a 320 px da `target-size` (serious) en la cabecera (`campana` y enlace de licencia, corrida `r20261026t030343…`) | en móvil pequeño el contenido es ilegible hasta plegar el menú a mano | no (la E2E MFA pasa axe de página completa a 1280 px, axe de `main` y scroll a 320 px) | delta de la Spec 001 (shell): menú plegado o en cajón por debajo de `md` |
+| TEST-FIXTURE-PASSWORD-LITERAL | 012 | QA | LOW | la contraseña sintética de QA (EGR-MFA-01) sigue como literal en 64 pruebas y guiones y en 22 registros de evidencia de ciclos anteriores; no autentica en ningún entorno persistente y la E2E canónica ya no la usa (TM-EG1) | ninguno de seguridad; incumple el objetivo «EXPOSED_CREDENTIAL_IN_GIT = 0» | no | ciclo de QA: generar el valor en `conftest` y en los guiones manuales; la historia no se reescribe |
+| E2E-TRACE-PURGE-REDUCES-DIAGNOSIS | 012 | QA | LOW | TM-9f retira la carpeta entera de una prueba fallida si su traza lleva la respuesta del alta MFA del worker (la primera prueba de cada worker la lleva); en la corrida `r20261026t110824…` se perdió así la traza de `documents-a11y` y solo quedó el error en `suite.log` | menos diagnóstico de los fallos; ningún secreto | no | redactar las respuestas del alta dentro del `trace.zip` en lugar de borrar la carpeta, o hacer el alta del worker en la siembra |
+| DOCS-A11Y-UPLOAD-TIMEOUT | 046 | pruebas | MEDIUM | `e2e/documents-a11y.spec.ts` «carga operable solo con teclado» sube con analizador real con el presupuesto por defecto de 30 s y espera 30 s dentro (23,4 s y 31,7 s medidos); sus hermanas de `documents.spec.ts` declaran 120 s | falla por tiempo con el equipo cargado | **sí** (E2E canónica) | **FIXED** en este ciclo (TM-DOC1) |
+| E2E-AUDIT-ROW-TWO-EVENTS-PER-REQUEST | 012 | pruebas | MEDIUM | desde `d39f820` un login completo deja `LOGIN_SUCCESS` y `MFA_CHALLENGE_SUCCEEDED` con el mismo `request_id`; `e2e/auditoria-fecha.spec.ts` localizaba la fila por `request_id` y fallaba en modo estricto cuando ambas caían en la primera página (corrida `r20261026t111632…`) | fallo intermitente por orden de eventos | **sí** (E2E canónica) | **FIXED** (TM-AUD1: fila acotada a `LOGIN_SUCCESS`); `auditoria-sobre.spec.ts` ya usaba `.first()` con `toBeVisible` |
 | E2E-REAUTH-DIALOG | 002 | pruebas | LOW | la reautenticación vale 5 min desde el login y la E2E no inyecta reloj (OQ-MFA-3 prohíbe atajos): el diálogo «Confirme su identidad» no aparece en E2E | su comportamiento lo cubren `ReauthContext.test.tsx` (6 pruebas) y las de backend (`require_recent_reauth`, MFA-D*) | no | aceptado; revisar si la plataforma de E2E gana un reloj del servidor controlable |
 
 ### 21.1 Decisión tomada durante la implementación (BLOCKING_CURRENT_SCOPE)
@@ -656,4 +660,94 @@ formato de Claude: `ruff --select I --fix` (OD-ORCH-01) y la regeneración mecá
 Trazabilidad: cada requisito de §2 (A–M) tiene su diseño (§4–§10, §19), sus pruebas (MFA-A..M en backend, vitest de cada pantalla,
 `e2e/mfa.spec.ts` 01–14) y su evidencia en esta tabla; las decisiones (§18, §21.1) y las deudas (§21) tienen dueño y siguiente acción;
 Gobierno queda reconciliado en §22. TRACEABILITY_COMPLETE = 1 · MFA_BYPASS = BLOCKED · NEGATIVE_AUTHORIZATION verificada (MFA-D, MFA-H,
-`test_mfa_no_bypass.py`) · SECRET_EXPOSURE = 0 · PRODUCTION_TOUCHED = 0.
+`test_mfa_no_bypass.py`) · CURRENT_SECRET_EXPOSURE = 0 · HISTORICAL_EGRESS_INCIDENT = 1 (EGR-MFA-01, §24.1; corregido el 2026-10-26: la versión anterior decía «SECRET_EXPOSURE = 0» sin distinguir el incidente histórico) · PRODUCTION_TOUCHED = 0.
+
+## 24. Cierre de gobernanza del MFA (Fase A, 2026-10-26)
+
+El código de `d39f820` no se reescribe. Esta fase repara el contrato de cierre:
+- el incidente de EGRESS;
+- la revisión de pantallas y formularios;
+- la reconciliación de Gobierno releída;
+- la convergencia;
+- las métricas.
+
+### 24.1 Incidente EGR-MFA-01
+
+Reconciliado en `evidence/mfa-privileged-roles/egress-incident.md`. El valor es una contraseña SINTÉTICA de QA, ya presente en el
+repositorio; no autentica en ningún entorno persistente.
+
+Medidas tomadas:
+- **Rotación:** la E2E canónica genera una contraseña por corrida (TM-EG1, `test_e2ecorrida_34`).
+- **Purga:** se eliminaron 623 artefactos locales en `qa/e2e-runs` y 159 copias en el scratchpad (quedan 0).
+
+Métricas: EGRESS_INCIDENT_COUNT = 1 · EGRESS_INCIDENT_SYNTHETIC = 1 · EXPOSED_CREDENTIAL_STILL_VALID = 0 ·
+EXPOSED_CREDENTIAL_ROTATED_OR_DESTROYED = 1 · EXPOSED_CREDENTIAL_IN_EVIDENCE = 0 · CURRENT_SECRET_EXPOSURE = 0 · EGRESS_INCIDENT_CLOSED = 1.
+
+La métrica EXPOSED_CREDENTIAL_IN_GIT = 1 contradice el objetivo, y la contradicción queda explicada: es un dato de prueba anterior al
+incidente, que el incidente no añadió. Queda la deuda TEST-FIXTURE-PASSWORD-LITERAL (LOW).
+
+### 24.2 Screen / Form Completeness
+
+Revisión completa en `evidence/mfa-privileged-roles/screen-form-completeness.md`: 8 pantallas, 8 campos, estados y recorrido por actor.
+
+Huecos corregidos, con rojo atribuido y luego verde:
+- **MFA-SF-01:** estado del factor en Usuarios, botón solo con factor y refresco tras el reset (TM-SF1a/b). Rojo: `KeyError: 'mfa_enabled'`
+  en el backend y la prueba de la fila en vitest.
+- **MFA-SF-02:** ayuda para quien no tiene ni la aplicación ni códigos (TM-SF1b). Rojo en vitest.
+
+El resto de huecos queda clasificado (FUTURE_SPEC / DEPENDENCY / OUT_OF_SCOPE con motivo).
+
+Métricas: MFA_SCREEN_PROCESS_COMPLETENESS = PASS · UNEXPLAINED_UI_FUNCTIONAL_GAPS = 0.
+
+### 24.3 Ingeniería de Requerimientos de Gobierno (releída)
+
+Se releyó el PDF desde su texto extraído (SHA-256 `8f86615f63ecfa0b…`), sin apoyarse en el resumen de §22. Se ratifica §22 y se añaden
+los requisitos que aplican al MFA y no estaban:
+
+| Requisito | Estado | Evidencia |
+|---|---|---|
+| RNF-GOV-018 retención y legal hold | **DEPENDENCY** | La retención configurable de eventos de auditoría y desafíos MFA es transversal: catálogo de auditoría (P0 n.º 3) y Gobierno |
+| RNF-GOV-019 migraciones de una cabeza, instalación limpia y actualización en PostgreSQL | **COVERED** | `0058_spec002_mfa`, cabeza única; `test_spec002_migration_0058.py` (limpia, actualización, bajada y subida) en PostgreSQL |
+| RNF-GOV-020 QA (unitarias, contrato, integración PostgreSQL, E2E principal y hostil, regresión, mutación) | **COVERED** | §23 y §24.5 |
+| E2E-06 hostil multi-ente (aplicado al MFA) | **COVERED** | MFA-D06: reset de otro tenant → denegado; listado acotado al tenant |
+
+Métricas: ENGINEERING_REQUIREMENTS_DOCUMENT_REVIEWED = 1 · ENGINEERING_REQUIREMENTS_RECONCILED = 1 · APPLICABLE_REQUIREMENTS_COVERAGE = 100 %
+(COVERED, PARTIAL por diseño, DEPENDENCY o FUTURE_GOV_SPEC, todos con motivo) · UNEXPLAINED_REQUIREMENT_OMISSIONS = 0 ·
+FUNCTIONALITY_ACCIDENTALLY_OMITTED = 0 · GOVERNMENT_REQUIREMENT_LINKAGE_RECONCILED = 1.
+
+### 24.4 Convergencia
+
+`/speckit-converge` no se puede aplicar a un delta. Su paso 1 (`check-prerequisites.sh --require-spec --require-tasks`) resuelve siempre
+`specs/012-auditoria-integral-e2e` (`.specify/feature.json`), que no tiene `spec.md` ni `plan.md`, así que la orden se detiene antes de
+evaluar; además no lee ficheros `specNNN-*-delta.md`. Se aplica la convergencia equivalente sobre este delta, por dimensión:
+
+| Dimensión | Resultado |
+|---|---|
+| Requisitos (§2 A–M) | Todos con diseño, prueba y evidencia (§16, §23) |
+| Tareas (§15) | TM-A…TM-11 hechas. **Hallazgo:** TM-9 pedía una «siembra con secreto de corrida» y solo la clave MFA era de corrida → `partial`, cerrado con TM-EG1. TM-8 nombraba `ReauthDialog.tsx`; el diálogo vive en `ReauthContext.tsx` (misma función; se reconcilia el nombre) |
+| Código | Sin código no pedido; TM-SF1 añade solo lo que exigen MFA-SF-01/02 |
+| Pruebas | Backend, vitest, E2E y mutaciones (§23); rojos atribuidos de TM-SF1 |
+| Evidencia | `evidence/mfa-privileged-roles/` (orquestación, incidente, revisión de pantallas, mutaciones, dependencias) |
+| Hoja de ruta | Secuencia OD-SEC-PRIORITY-01: siguiente, AUTH-PASSWORD-RESET-TOKEN-DISCLOSED |
+| Deuda técnica | §21, más TEST-FIXTURE-PASSWORD-LITERAL (LOW) |
+| Trazabilidad | Completa |
+| Pantallas y formularios | PASS (§24.2) |
+| Residuos | Ver §24.5 |
+| Git | Solo ficheros del ciclo; material de la dueña intacto |
+
+MFA_CONVERGENCE = PASS.
+
+### 24.5 Verificación de la Fase A
+
+| Verificación | Resultado |
+|---|---|
+| `test_e2e_corrida` (PostgreSQL) | 36/36, incluida la 34 (contraseña por corrida) |
+| `test_mfa_management` | 19/19 (rojo `KeyError: 'mfa_enabled'` → verde) |
+| Pruebas backend que tocan el listado de usuarios | 84 pasan, 6 omitidas (solo PostgreSQL) |
+| Frontend | vitest 546/546 · tsc 0 · eslint 0 |
+| E2E canónica con analizador (corrida `r20261026t112502…`) | **306 pasan · 0 fallan · 0 omitidas**; limpieza LIMPIA; `material_mfa` 0; bases protegidas sin cambios; valor histórico en la evidencia: 0 |
+| Corridas intermedias | `r20261026t110824…`: DOCS-A11Y-UPLOAD-TIMEOUT (preexistente) → TM-DOC1. `r20261026t111632…`: E2E-AUDIT-ROW-TWO-EVENTS-PER-REQUEST → TM-AUD1. Las dos causas están medidas; no se reintentó para ver verde |
+| Multinavegador MFA (`mfa.spec.ts` + vectores TOTP) | **66/66** en chromium, firefox y webkit (`r20261026t113201…`); REAL_SAFARI_NOT_MEASURED |
+| Residuos | 0 bases de corrida; puertos libres; scratchpad sin el valor histórico |
+
+**MFA_STATUS = CLOSED / CONVERGED** (Fase A: A1–A5 PASS).

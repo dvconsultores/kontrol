@@ -313,6 +313,8 @@ export function LoginPage(): React.JSX.Element {
               </Button>
             </div>
 
+            <p className="mt-3 text-center text-xs text-text-500">Si no tiene la aplicación ni códigos de recuperación, pida a un administrador que restablezca su verificación en dos pasos.</p>
+
             <div className="mt-2 text-center">
               <Button variant="ghost" size="sm" onClick={handleBackToCredentials} className="font-medium text-text-600">
                 Volver
