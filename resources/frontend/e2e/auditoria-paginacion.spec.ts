@@ -8,7 +8,8 @@
  * total fijo ni de la posición de un evento concreto: todo se compara contra la
  * respuesta que la propia pantalla recibió, y entre páginas solo se afirma el orden.
  */
-import { expect, test, type APIRequestContext, type Page, type Response } from "@playwright/test";
+import { type APIRequestContext, type Page, type Response } from "@playwright/test";
+import { entrar as entrarConSesion, expect, iniciarSesion, sesionApi, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
@@ -28,21 +29,15 @@ interface Sobre {
   page_size: number;
 }
 
-async function token(request: APIRequestContext, tenant: string, usuario: string): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: tenant, username: usuario, password: PASSWORD },
-  });
-  expect(r.ok(), `login ${usuario}/${tenant}: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+async function token(usuario: string): Promise<string> {
+  // El usuario base usa la sesión del worker; los creados en la prueba inician sesión de verdad (Spec 002, OQ-MFA-3).
+  return usuario === "admin"
+    ? (await sesionApi("admin", { tenant: "DEMO" })).token
+    : (await iniciarSesion(usuario, { tenant: "DEMO" })).token;
 }
 
 async function entrar(page: Page, tenant: string, usuario: string): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(tenant);
-  await page.getByLabel(/Usuario/).fill(usuario);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
+  await entrarConSesion(page, usuario, { tenant });
   await page.waitForLoadState("networkidle");
   const compuerta = page.getByTestId(/^elegir-empresa-/);
   if (await compuerta.count()) {
@@ -67,13 +62,27 @@ async function asegurarEventos(request: APIRequestContext, tok: string, minimo: 
     expect(r.ok(), `total de auditoría: ${r.status()}`).toBeTruthy();
     return ((await r.json()) as Sobre).total;
   };
+  // Con MFA ya no se puede rellenar con logins de admin sin pasos TOTP: un usuario
+  // STANDARD creado una vez sí puede iniciar sesión solo con contraseña (Spec 002).
+  const username = `relleno-${Date.now().toString(36)}`;
+  const creado = await request.post(`${API}/users`, {
+    headers: { Authorization: `Bearer ${tok}` },
+    data: {
+      username,
+      email: `${username}@kontrol-qa.com`,
+      password: PASSWORD,
+      must_change_password: false,
+    },
+  });
+  expect(creado.ok(), `alta del usuario de relleno: ${creado.status()}`).toBeTruthy();
+
   let total = await leerTotal();
   let intentos = 0;
   while (total < minimo && intentos < minimo + 5) {
     const r = await request.post(`${API}/auth/login`, {
-      data: { tenant_code: "DEMO", username: "admin", password: PASSWORD },
+      data: { tenant_code: "DEMO", username, password: PASSWORD },
     });
-    expect(r.ok(), `login de relleno: ${r.status()}`).toBeTruthy();
+    expect((await r.json()).status).toBe("AUTHENTICATED");
     total = await leerTotal();
     intentos += 1;
   }
@@ -99,7 +108,7 @@ async function abrirAuditoria(page: Page): Promise<Sobre> {
 
 test.describe("AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el servidor", () => {
   test.beforeEach(async ({ request }) => {
-    await asegurarEventos(request, await token(request, "DEMO", "admin"), 30);
+    await asegurarEventos(request, await token("admin"), 30);
   });
 
   test("PAG-E2E-01 · siguiente pide la página 2 al servidor, y la tabla pinta la página que recibe", async ({ page }) => {
@@ -173,7 +182,7 @@ test.describe("AUDITORIA-PAGINACION-CLIENTE · la bitácora se pagina en el serv
   });
 
   test("PAG-E2E-04 · por API: el final de la bitácora y los límites del contrato", async ({ request }) => {
-    const tok = await token(request, "DEMO", "admin");
+    const tok = await token("admin");
 
     async function auditoria(qs: string): Promise<{ status: number; body: Sobre }> {
       const r = await request.get(`${API}/audit/events${qs}`, { headers: { Authorization: `Bearer ${tok}` } });

@@ -9,18 +9,11 @@
  * credenciales QA. Variables: KONTROL_E2E_TENANT / KONTROL_E2E_USERNAME /
  * KONTROL_E2E_PASSWORD (valores por defecto para dev).
  */
-import { expect, test, type Page } from "@playwright/test";
-
-const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
-const USER = process.env.KONTROL_E2E_USERNAME ?? "admin";
-const PASS = process.env.KONTROL_E2E_PASSWORD ?? "Kontrol2026Segura!";
+import { type Page } from "@playwright/test";
+import { entrar as entrarConSesion, expect, test } from "./helpers/sesion";
 
 async function login(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USER);
-  await page.getByLabel(/Contraseña/).fill(PASS);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await entrarConSesion(page, "admin", { tenant: "DEMO" });
   await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
 }
 

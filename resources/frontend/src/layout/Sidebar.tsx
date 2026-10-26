@@ -14,6 +14,7 @@ import {
   FileText,
   Hash,
   Home,
+  KeyRound,
   Landmark,
   LayoutDashboard,
   ListChecks,
@@ -248,6 +249,7 @@ const navSections = [
   {
     title: "Sistema",
     items: [
+      { to: "/seguridad/mfa", label: "Verificación en dos pasos", icon: KeyRound },
       { to: "/auditoria", label: "Auditoría", icon: FileText },
       // El diagnóstico de la instalación lo gobierna el mismo permiso que la sección «Licenciamiento».
       { to: "/diagnostico", label: "Diagnóstico", icon: Settings, permission: "license:view" },

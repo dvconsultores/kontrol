@@ -14,7 +14,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission, require_write_allowed
+from app.core.dependencies import (
+    get_current_user,
+    require_permission,
+    require_recent_reauth,
+    require_write_allowed,
+)
 from app.modules.identity_access.models import User
 from app.modules.licensing import service as licensing_service
 
@@ -61,7 +66,7 @@ def installation_request(
 # (US-003) con la autoridad de activar que ya existe, `license:create` —la misma de
 # `POST /licensing/sync`—; la firma del propietario es la otra compuerta, no esta (FR-010-125..127).
 # Sin `require_write_allowed`: renovar en READ_ONLY debe poder entrar (FR-010-131/132).
-@router.post("/activate")
+@router.post("/activate", dependencies=[Depends(require_recent_reauth)])
 def activate(
     payload: LicenseImportRequest,
     db: Session = Depends(get_db),
@@ -78,7 +83,7 @@ def activate(
     return {"ok": True, "license_id": state.license_id, "mode": state.mode}
 
 
-@router.post("/import")
+@router.post("/import", dependencies=[Depends(require_recent_reauth)])
 def import_offline(
     payload: LicenseImportRequest,
     db: Session = Depends(get_db),
@@ -162,7 +167,10 @@ def get_central_config(db: Session = Depends(get_db), _: User = Depends(require_
     return licensing_service.get_central_config(db)
 
 
-@central_router.put("/central-config", dependencies=[Depends(require_write_allowed)])
+@central_router.put(
+    "/central-config",
+    dependencies=[Depends(require_write_allowed), Depends(require_recent_reauth)],
+)
 def upsert_central_config(
     body: CentralConfigUpdate,
     db: Session = Depends(get_db),
@@ -180,7 +188,7 @@ def upsert_central_config(
     )
 
 
-@central_router.post("/sync")
+@central_router.post("/sync", dependencies=[Depends(require_recent_reauth)])
 def sync_license(
     db: Session = Depends(get_db),
     actor: User = Depends(require_permission("license", "create")),
@@ -222,7 +230,10 @@ def list_renewal_requests(db: Session = Depends(get_db), _: User = Depends(requi
     return {"items": licensing_service.list_renewal_requests(db), "total": len(licensing_service.list_renewal_requests(db))}
 
 
-@central_router.post("/renewal-requests", dependencies=[Depends(require_write_allowed)])
+@central_router.post(
+    "/renewal-requests",
+    dependencies=[Depends(require_write_allowed), Depends(require_recent_reauth)],
+)
 def create_renewal_request(
     body: RenewalCreate,
     db: Session = Depends(get_db),
@@ -235,7 +246,10 @@ def create_renewal_request(
     return {"ok": True, "id": str(req.id), "status": req.status}
 
 
-@central_router.post("/renewal-requests/{request_id}/transition", dependencies=[Depends(require_write_allowed)])
+@central_router.post(
+    "/renewal-requests/{request_id}/transition",
+    dependencies=[Depends(require_write_allowed), Depends(require_recent_reauth)],
+)
 def transition_renewal(
     request_id: str,
     body: RenewalTransitionBody,
@@ -246,7 +260,10 @@ def transition_renewal(
     return licensing_service.transition_renewal(db, request_id=request_id, target=body.target, actor=str(actor.id))
 
 
-@central_router.post("/mode-transition", dependencies=[Depends(require_write_allowed)])
+@central_router.post(
+    "/mode-transition",
+    dependencies=[Depends(require_write_allowed), Depends(require_recent_reauth)],
+)
 def transition_mode(
     body: ModeTransitionBody,
     db: Session = Depends(get_db),

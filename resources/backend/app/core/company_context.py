@@ -172,9 +172,9 @@ def get_company_context(
     El valor viene del parámetro declarado, no de `request.headers`. Tener dos
     lecturas del mismo dato dejaría dos autoridades sobre la misma decisión.
     """
-    from app.core.dependencies import get_current_user, read_bearer_credentials
+    from app.core.dependencies import get_current_auth, read_bearer_credentials
 
-    user = get_current_user(read_bearer_credentials(request), db)
+    user = get_current_auth(read_bearer_credentials(request), db).user
     return resolve_company(db, user, x_kontrol_company)
 
 

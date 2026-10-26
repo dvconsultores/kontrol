@@ -11,9 +11,9 @@ import { resolve } from "node:path";
 import { expect, test, type APIRequestContext } from "@playwright/test";
 
 import { ejecutarPython } from "./helpers/python";
+import { sesionApi } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const KID_A = process.env.KONTROL_E2E_LICENSE_KID_A ?? "kontrol-lic-2026-01";
 const KID_B = process.env.KONTROL_E2E_LICENSE_KID_B ?? "kontrol-lic-2027-01";
 const BACKEND = resolve(process.cwd(), "..", "backend");
@@ -47,10 +47,8 @@ function sintetica(...argumentos: string[]): Artefacto {
   return JSON.parse(salida) as Artefacto;
 }
 
-async function token(request: APIRequestContext, usuario: string): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: "DEMO", username: usuario, password: PASSWORD } });
-  expect(r.ok(), `login de ${usuario}: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+async function token(baseUsuario: string): Promise<string> {
+  return (await sesionApi(baseUsuario, { tenant: "DEMO" })).token;
 }
 
 async function detalle(request: APIRequestContext, bearer: string): Promise<Detalle> {
@@ -74,7 +72,7 @@ async function rechazada(request: APIRequestContext, cabecera: Record<string, st
 
 test.describe("Licencia · rotación de la clave del propietario con solapamiento", () => {
   test("E2E-KEYROT-01..08 · A y B entran cada una por su kid; kid desconocido, ausente o cruzado se rechaza; el orden no cambia", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     const cabecera = { Authorization: `Bearer ${admin}` };
     const antes = await detalle(request, admin);
     expect(antes.kid).toBe(KID_A); // lo vigente lo firmó la autoridad de la corrida (A)

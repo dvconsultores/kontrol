@@ -9,19 +9,13 @@
  * de DEMO; `uc`, en la única de DEMO2. Los nombres se leen del mundo sembrado,
  * no se escriben a mano.
  */
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
 
 import { mundoN6 } from "./helpers/n6-mundo";
-
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
+import { entrar as entrarConSesion, expect, test } from "./helpers/sesion";
 
 async function entrar(page: Page, tenant: string, usuario: string): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(tenant);
-  await page.getByLabel(/Usuario/).fill(usuario);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
+  await entrarConSesion(page, usuario, { tenant });
   await page.waitForLoadState("networkidle");
   // Con varias empresas el producto pide elegir una antes de operar.
   const compuerta = page.getByTestId(/^elegir-empresa-/);

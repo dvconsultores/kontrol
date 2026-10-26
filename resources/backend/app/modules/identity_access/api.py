@@ -3,15 +3,24 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Cookie, Depends, Request, Response
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 from sqlalchemy.orm import Session
 
 from app.core import security
 from app.core.config import get_settings
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission
+from app.core.dependencies import (
+    AuthContext,
+    get_current_auth,
+    get_current_user,
+    read_bearer_credentials,
+    require_permission,
+    require_recent_reauth,
+)
 from app.core.errors import KontrolError
+from app.modules.identity_access import mfa_service
 from app.modules.identity_access import service as identity_service
+from app.modules.identity_access.models import Session as AuthSession
 from app.modules.identity_access.models import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -72,25 +81,94 @@ def _resolve_tenant_id(db: Session, tenant_code: str) -> str:
     return str(tenant.id)
 
 
+class MfaVerifyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    challenge_token: str = Field(min_length=1)
+    code: str | None = None
+    recovery_code: str | None = None
+
+    @model_validator(mode="after")
+    def _exactamente_uno(self) -> MfaVerifyRequest:
+        if (self.code is None) == (self.recovery_code is None):
+            raise ValueError("Debe enviar exactamente uno de code o recovery_code")
+        return self
+
+
+class MfaEnrollmentRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    challenge_token: str | None = None
+
+
+class MfaEnrollmentConfirmRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    challenge_token: str | None = None
+    code: str = Field(min_length=1)
+
+
+class ReauthRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    password: str = Field(min_length=1)
+    code: str | None = None
+    recovery_code: str | None = None
+
+
+def _authenticated_payload(user: User, session: AuthSession, extra: dict | None = None) -> dict:
+    payload = {
+        "status": "AUTHENTICATED",
+        "access_token": identity_service.issue_access_token(user, session),
+        "token_type": "bearer",
+        "expires_in": get_settings().access_token_minutes * 60,
+        "must_change_password": user.must_change_password,
+        "user": {"id": str(user.id), "username": user.username},
+    }
+    if extra:
+        payload.update(extra)
+    return payload
+
+
+def _sesion_emitida(res: mfa_service.LoginResult) -> tuple[AuthSession, str]:
+    """La sesión y el refresh de un login completado; su ausencia sería un fallo interno, nunca un acceso sin sesión."""
+    if res.session is None or res.refresh_token is None:
+        raise RuntimeError("login completado sin sesión emitida")
+    return res.session, res.refresh_token
+
+
 @router.post("/login")
 def login(body: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
     tenant_id = _resolve_tenant_id(db, body.tenant_code)
-    user = identity_service.authenticate(
+    user = identity_service.verify_password_stage(
         db,
         tenant_id=tenant_id,
         username=body.username,
         password=body.password,
         request_id=getattr(request.state, "request_id", None),
     )
-    access = security.create_access_token(str(user.id), extra={"tenant_id": tenant_id})
-    session, refresh = identity_service.create_session(db, user=user, ip=request.client.host if request.client else None, user_agent=request.headers.get("user-agent"))
-    _set_refresh_cookie(response, refresh)
+    res = mfa_service.start_login(
+        db,
+        user=user,
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        request_id=getattr(request.state, "request_id", None),
+    )
+    if res.status == "AUTHENTICATED":
+        session, refresh = _sesion_emitida(res)
+        _set_refresh_cookie(response, refresh)
+        return _authenticated_payload(res.user, session)
+    if res.status == "MFA_REQUIRED":
+        return {
+            "status": "MFA_REQUIRED",
+            "challenge_token": res.challenge_token,
+            "expires_in": 300,
+            "methods": ["TOTP", "RECOVERY_CODE"],
+        }
     return {
-        "access_token": access,
-        "token_type": "bearer",
-        "expires_in": get_settings().access_token_minutes * 60,
-        "must_change_password": user.must_change_password,
-        "user": {"id": str(user.id), "username": user.username},
+        "status": "MFA_ENROLLMENT_REQUIRED",
+        "challenge_token": res.challenge_token,
+        "expires_in": 300,
     }
 
 
@@ -105,7 +183,7 @@ def refresh(
         raise KontrolError(code="AUTH_REQUIRED", message="Debe iniciar sesión", status_code=401)
     session, new_refresh, user = identity_service.rotate_session(db, refresh_token=kontrol_refresh, request_id=getattr(request.state, "request_id", None))
     _set_refresh_cookie(response, new_refresh)
-    access = security.create_access_token(str(user.id), extra={"tenant_id": user.tenant_id})
+    access = identity_service.issue_access_token(user, session)
     return {"access_token": access, "token_type": "bearer", "expires_in": get_settings().access_token_minutes * 60}
 
 
@@ -139,14 +217,16 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
 def change_password(
     body: ChangePasswordRequest,
     request: Request,
-    user: User = Depends(get_current_user),
+    auth: AuthContext = Depends(get_current_auth),
     db: Session = Depends(get_db),
 ):
+    user, session = auth.user, auth.session
     identity_service.change_password(
         db,
         user=user,
         current_password=body.current_password,
         new_password=body.new_password,
+        current_family_id=session.family_id,
         request_id=getattr(request.state, "request_id", None),
     )
     return {"ok": True}
@@ -189,6 +269,162 @@ def revoke_session(session_id: str, request: Request, user: User = Depends(get_c
     return {"ok": True}
 
 
+@router.post("/mfa/verify")
+def mfa_verify(body: MfaVerifyRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    res = mfa_service.verify_login(
+        db,
+        challenge_token=body.challenge_token,
+        code=body.code,
+        recovery_code=body.recovery_code,
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        request_id=getattr(request.state, "request_id", None),
+    )
+    session, refresh = _sesion_emitida(res)
+    _set_refresh_cookie(response, refresh)
+    return _authenticated_payload(
+        res.user,
+        session,
+        extra={"recovery_codes_remaining": res.recovery_codes_remaining},
+    )
+
+
+@router.post("/mfa/enrollment")
+def mfa_enrollment(
+    body: MfaEnrollmentRequest,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Con `challenge_token` (alta forzada desde el login) no requiere sesión: el desafío es la credencial.
+    Sin él, alta voluntaria o reemplazo: exige `Authorization: Bearer`."""
+    if body.challenge_token:
+        res = mfa_service.start_enrollment(
+            db,
+            challenge_token=body.challenge_token,
+            user=None,
+            session=None,
+            request_id=getattr(request.state, "request_id", None),
+        )
+    else:
+        auth = get_current_auth(read_bearer_credentials(request), db)
+        res = mfa_service.start_enrollment(
+            db,
+            challenge_token=None,
+            user=auth.user,
+            session=auth.session,
+            request_id=getattr(request.state, "request_id", None),
+        )
+    response.headers["Cache-Control"] = "no-store"
+    return res
+
+
+@router.post("/mfa/enrollment/confirm")
+def mfa_enrollment_confirm(
+    body: MfaEnrollmentConfirmRequest,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Con `challenge_token` (alta forzada desde el login) no requiere sesión: el desafío es la credencial.
+    Sin él, alta voluntaria o reemplazo: exige `Authorization: Bearer`."""
+    if body.challenge_token:
+        res = mfa_service.confirm_enrollment(
+            db,
+            challenge_token=body.challenge_token,
+            user=None,
+            session=None,
+            code=body.code,
+            ip=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            request_id=getattr(request.state, "request_id", None),
+        )
+    else:
+        auth = get_current_auth(read_bearer_credentials(request), db)
+        res = mfa_service.confirm_enrollment(
+            db,
+            challenge_token=None,
+            user=auth.user,
+            session=auth.session,
+            code=body.code,
+            ip=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            request_id=getattr(request.state, "request_id", None),
+        )
+    response.headers["Cache-Control"] = "no-store"
+    if res.login:
+        session, refresh = _sesion_emitida(res.login)
+        _set_refresh_cookie(response, refresh)
+        return _authenticated_payload(
+            res.login.user,
+            session,
+            extra={"recovery_codes": res.recovery_codes},
+        )
+    return {"recovery_codes": res.recovery_codes}
+
+
+@router.get("/mfa")
+def mfa(auth: AuthContext = Depends(get_current_auth), db: Session = Depends(get_db)):
+    user = auth.user
+    return mfa_service.mfa_status(db, user=user)
+
+
+@router.post("/mfa/recovery-codes", dependencies=[Depends(require_recent_reauth)])
+def mfa_recovery_codes(
+    request: Request,
+    response: Response,
+    auth: AuthContext = Depends(get_current_auth),
+    db: Session = Depends(get_db),
+):
+    user, session = auth.user, auth.session
+    response.headers["Cache-Control"] = "no-store"
+    return {
+        "recovery_codes": mfa_service.regenerate_recovery_codes(
+            db,
+            user=user,
+            session=session,
+            request_id=getattr(request.state, "request_id", None),
+        )
+    }
+
+
+@router.delete("/mfa", status_code=204, dependencies=[Depends(require_recent_reauth)])
+def mfa_disable(
+    request: Request,
+    auth: AuthContext = Depends(get_current_auth),
+    db: Session = Depends(get_db),
+):
+    user, session = auth.user, auth.session
+    mfa_service.remove_own_factor(
+        db,
+        user=user,
+        session=session,
+        request_id=getattr(request.state, "request_id", None),
+    )
+    return Response(status_code=204)
+
+
+@router.post("/reauth")
+def reauth(
+    body: ReauthRequest,
+    request: Request,
+    auth: AuthContext = Depends(get_current_auth),
+    db: Session = Depends(get_db),
+):
+    user, session = auth.user, auth.session
+    return {
+        "reauth_valid_until": mfa_service.reauthenticate(
+            db,
+            user=user,
+            session=session,
+            password=body.password,
+            code=body.code,
+            recovery_code=body.recovery_code,
+            request_id=getattr(request.state, "request_id", None),
+        ).isoformat()
+    }
+
+
 # Usuarios (administración)
 users_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -221,7 +457,7 @@ def list_users(db: Session = Depends(get_db), actor: User = Depends(require_perm
     ]
 
 
-@users_router.post("")
+@users_router.post("", dependencies=[Depends(require_recent_reauth)])
 def create_user(
     body: UserCreate,
     db: Session = Depends(get_db),
@@ -249,7 +485,7 @@ class UserRoleAssign(BaseModel):
     company_id: str | None = None
 
 
-@users_router.post("/{user_id}/roles", dependencies=[Depends(require_permission("roles", "edit"))])
+@users_router.post("/{user_id}/roles", dependencies=[Depends(require_permission("roles", "edit")), Depends(require_recent_reauth)])
 def assign_role(user_id: str, body: UserRoleAssign, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     identity_service.assign_role_to_user(db, tenant_id=actor.tenant_id, user_id=user_id,
                                          role_id=body.role_id, company_id=body.company_id,
@@ -257,11 +493,30 @@ def assign_role(user_id: str, body: UserRoleAssign, db: Session = Depends(get_db
     return {"ok": True}
 
 
-@users_router.delete("/{user_id}/roles/{role_id}", dependencies=[Depends(require_permission("roles", "edit"))])
+@users_router.delete("/{user_id}/roles/{role_id}", dependencies=[Depends(require_permission("roles", "edit")), Depends(require_recent_reauth)])
 def remove_role(user_id: str, role_id: str, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     identity_service.remove_role_from_user(db, tenant_id=actor.tenant_id, user_id=user_id,
                                            role_id=role_id, actor=str(actor.id))
     return {"ok": True}
+
+
+@users_router.post("/{user_id}/mfa/reset", status_code=204, dependencies=[Depends(require_recent_reauth)])
+def mfa_reset(
+    user_id: str,
+    request: Request,
+    actor: User = Depends(require_permission("users", "mfa_reset")),
+    auth: AuthContext = Depends(get_current_auth),
+    db: Session = Depends(get_db),
+):
+    session = auth.session
+    mfa_service.admin_reset(
+        db,
+        actor=actor,
+        target_user_id=user_id,
+        session=session,
+        request_id=getattr(request.state, "request_id", None),
+    )
+    return Response(status_code=204)
 
 
 # Roles / permisos (administración)
@@ -295,7 +550,7 @@ class RoleOut(BaseModel):
     permissions: list[str]
 
 
-@roles_router.post("", status_code=201, response_model=RoleOut)
+@roles_router.post("", status_code=201, response_model=RoleOut, dependencies=[Depends(require_recent_reauth)])
 def create_role(
     body: RoleCreate,
     db: Session = Depends(get_db),

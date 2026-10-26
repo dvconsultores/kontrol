@@ -35,14 +35,23 @@
 
 | Método | Ruta | Uso |
 |---|---|---|
-| POST | `/api/v1/auth/login` | Iniciar sesión |
+| POST | `/api/v1/auth/login` | Iniciar sesión: `AUTHENTICATED`, o `MFA_REQUIRED`/`MFA_ENROLLMENT_REQUIRED` con `challenge_token` (Spec 002) |
 | POST | `/api/v1/auth/logout` | Cerrar sesión (revoca) |
 | POST | `/api/v1/auth/refresh` | Renovar access token |
 | POST | `/api/v1/auth/change-password` | Cambiar contraseña (incluye obligatorio) |
+| POST | `/api/v1/auth/mfa/verify` | Completar el login con TOTP o código de recuperación (`challenge_token`); público |
+| POST | `/api/v1/auth/mfa/enrollment` | Iniciar el alta del factor: forzada (con `challenge_token`, pública) o voluntaria/reemplazo (con sesión) |
+| POST | `/api/v1/auth/mfa/enrollment/confirm` | Confirmar el alta con el primer código; devuelve los 10 códigos de recuperación |
+| GET | `/api/v1/auth/mfa` | Estado del segundo factor del usuario (exigido, clase de política, activo, códigos restantes) |
+| POST | `/api/v1/auth/mfa/recovery-codes` | Generar códigos de recuperación nuevos (invalida los anteriores; exige reautenticación) |
+| DELETE | `/api/v1/auth/mfa` | Quitar el factor propio (solo usuarios STANDARD; exige reautenticación) |
+| POST | `/api/v1/auth/reauth` | Reautenticación (contraseña + código) válida 5 min para operaciones críticas |
 | POST | `/api/v1/auth/password-reset/request` | Solicitar recuperación |
 | POST | `/api/v1/auth/password-reset/confirm` | Confirmar recuperación |
 | GET | `/api/v1/auth/sessions` | Listar sesiones propias |
 | DELETE | `/api/v1/auth/sessions/{id}` | Revocar sesión |
+
+Cualquier operación crítica puede responder 403 `REAUTH_REQUIRED`; el cliente pide la reautenticación y repite la petición una vez (Spec 002, ADR-004).
 
 ### Organización
 
@@ -61,6 +70,7 @@
 |---|---|---|
 | GET/POST | `/api/v1/security/users` | Usuarios |
 | GET/PATCH | `/api/v1/security/users/{id}` | Usuario (rol, alcance) |
+| POST | `/api/v1/users/{id}/mfa/reset` | Restablecer el MFA de otro usuario (`users:mfa_reset`, nunca uno mismo, techo de privilegios, cierra sus sesiones; exige reautenticación) |
 | GET/POST | `/api/v1/security/roles` | Roles |
 | GET/POST | `/api/v1/security/permissions` | Permisos |
 | GET/POST | `/api/v1/security/roles/{id}/permissions` | RolePermission |

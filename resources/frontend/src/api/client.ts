@@ -136,7 +136,38 @@ const isAuthRoute = (path: string): boolean =>
   path === "/auth/login" ||
   path === "/auth/logout" ||
   path.startsWith("/auth/refresh") ||
-  path.startsWith("/auth/password-reset");
+  path.startsWith("/auth/password-reset") ||
+  path.startsWith("/auth/mfa/verify") ||
+  path.startsWith("/auth/mfa/enrollment") ||
+  path === "/auth/reauth";
+
+/**
+ * Reautenticación transversal (Spec 002, ADR-004).
+ *
+ * Cuando el backend responde 403 `REAUTH_REQUIRED`, la UI debe pedir la
+ * contraseña (y segundo factor si procede) antes de reintentar. El cliente no
+ * muestra el diálogo: la UI registra aquí un manejador y `apiFetch` reintenta
+ * la petición original una sola vez.
+ */
+type ReauthHandler = () => Promise<boolean>;
+let reauthHandler: ReauthHandler | null = null;
+let reauthInFlight: Promise<boolean> | null = null;
+
+export function setReauthHandler(handler: ReauthHandler | null): void {
+  reauthHandler = handler;
+}
+
+function reauthOnce(): Promise<boolean> {
+  if (!reauthHandler) {
+    return Promise.resolve(false);
+  }
+  if (!reauthInFlight) {
+    reauthInFlight = reauthHandler().finally(() => {
+      reauthInFlight = null;
+    });
+  }
+  return reauthInFlight;
+}
 
 export interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -243,6 +274,19 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     // Access token expirado (401): renovar la sesión una vez y reintentar la
     // petición original con el nuevo token. Si la renovación falla, la sesión
     // se limpia y el router redirige a /login.
+    // Reautenticación (Spec 002): si el backend exige repetir la
+    // identificación (`REAUTH_REQUIRED`), se pide a la UI una sola vez y, si
+    // tiene éxito, se reintenta la petición original.
+    if (
+      error instanceof ApiError &&
+      error.status === 403 &&
+      error.code === "REAUTH_REQUIRED" &&
+      reauthHandler &&
+      !isAuthRoute(path) &&
+      (await reauthOnce())
+    ) {
+      return rawFetch<T>(path, fijada);
+    }
     if (
       error instanceof ApiError &&
       error.status === 401 &&

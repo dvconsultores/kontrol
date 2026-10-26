@@ -16,6 +16,7 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy import String, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -168,7 +169,7 @@ def test_kr_18_19_la_columna_sigue_siendo_string_120_y_la_cabeza_de_alembic_no_c
     raiz = Path(__file__).resolve().parents[1]
     cfg = Config(str(raiz / "alembic.ini"))
     cfg.set_main_option("script_location", str(raiz / "alembic"))
-    assert ScriptDirectory.from_config(cfg).get_heads() == ["0057_spec047_notifications"]
+    assert ScriptDirectory.from_config(cfg).get_heads() == ["0058_spec002_mfa"]
 
 
 # ----------------------------------------------------------------------------- KR-21 · el diagnóstico no expone la referencia
@@ -198,7 +199,7 @@ def test_kr_21_el_diagnostico_con_permiso_no_expone_la_referencia_ni_la_ruta(tmp
 
     app.dependency_overrides[get_db] = _db
     cliente = TestClient(app)
-    token = cliente.post("/api/v1/auth/login", json={"tenant_code": "DEMO", "username": "admin", "password": PASSWORD}).json()["access_token"]
+    token = login_completo(cliente, "/api/v1/auth/login", json={"tenant_code": "DEMO", "username": "admin", "password": PASSWORD}).json()["access_token"]
     r = cliente.get("/api/v1/system/diagnostics", headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 200, r.text
     assert "key_reference" not in r.text and CANONICA not in r.text and str(tmp_path) not in r.text

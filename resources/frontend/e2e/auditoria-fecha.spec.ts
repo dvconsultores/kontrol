@@ -8,19 +8,16 @@
  * convención del producto (`toLocaleString("es-VE")` en la zona del navegador),
  * y que ninguna fila de la primera página dice «Invalid Date».
  */
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
+import { entrar as entrarConSesion, expect, identidad, iniciarSesion, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 
 interface Evento { request_id: string | null; event_time: string; action: string }
 
-async function loginConRastro(request: APIRequestContext, tenant: string, usuario: string) {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: tenant, username: usuario, password: PASSWORD } });
-  expect(r.ok(), `login ${usuario}/${tenant}: ${r.status()}`).toBeTruthy();
-  const rastro = r.headers()["x-request-id"];
-  expect(rastro).toBeTruthy();
-  return { rastro, token: (await r.json()).access_token as string };
+async function loginConRastro(_request: APIRequestContext, tenant: string, usuario: string) {
+  const s = await iniciarSesion(identidad(usuario), { tenant });
+  return { rastro: s.rastro, token: s.token };
 }
 
 async function eventoDelRastro(request: APIRequestContext, token: string, rastro: string): Promise<Evento> {
@@ -33,12 +30,7 @@ async function eventoDelRastro(request: APIRequestContext, token: string, rastro
 }
 
 async function entrar(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill("DEMO");
-  await page.getByLabel(/Usuario/).fill("admin");
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
+  await entrarConSesion(page, "admin", { tenant: "DEMO" });
   await page.waitForLoadState("networkidle");
   const compuerta = page.getByTestId(/^elegir-empresa-/);
   if (await compuerta.count()) {

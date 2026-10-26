@@ -6,8 +6,10 @@
 # que no son conmutables. Antes ese orden vivía repartido entre tres docstrings
 # y la memoria de quien levantaba la pila; ahora está escrito una vez.
 #
-# Las tres siembras son idempotentes y no borran nada: esto puede ejecutarse
+# Las cuatro siembras son idempotentes y no borran nada: esto puede ejecutarse
 # antes de cada suite, que es justo lo que hace `e2e/global-setup.ts`.
+# La última (`qa/mfa-e2e-identidades.py`) clona los usuarios de N6 para los
+# workers de la corrida MFA.
 #
 # Uso:  bash qa/e2e-seed.sh postgresql+psycopg2://postgres@localhost:55432/ke2e
 set -euo pipefail
@@ -21,7 +23,7 @@ PY="${KONTROL_E2E_PYTHON:-$RAIZ/resources/backend/.venv/bin/python}"
 
 export PYTHONPATH="$RAIZ/resources/backend"
 cd "$RAIZ"
-for guion in qa/pg-e2e-seed.py qa/spec047-e2e-seed.py qa/n6-e2e-seed.py; do
+for guion in qa/pg-e2e-seed.py qa/spec047-e2e-seed.py qa/n6-e2e-seed.py qa/mfa-e2e-identidades.py; do
   echo "· $guion"
   "$PY" "$guion"
 done

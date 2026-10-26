@@ -9,9 +9,10 @@
  * Requiere el arranque `qa/n6-multicompany-bootstrap.py`: dos empresas en el
  * tenant DEMO y los usuarios ua / ub / uab.
  */
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
 
 import { mundoN6 } from "./helpers/n6-mundo";
+import { entrar as entrarConSesion, expect, sesionApi, test } from "./helpers/sesion";
 
 /**
  * Identificadores del mundo sembrado.
@@ -23,15 +24,10 @@ import { mundoN6 } from "./helpers/n6-mundo";
 const IDS = mundoN6();
 
 const TENANT = "DEMO";
-const PASS = "Kontrol2026Segura!";
 const CABECERA = "x-kontrol-company";
 
 async function entrar(page: Page, usuario: string, tenant = TENANT): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(tenant);
-  await page.getByLabel(/Usuario/).fill(usuario);
-  await page.getByLabel(/Contraseña/).fill(PASS);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await entrarConSesion(page, usuario, { tenant });
   await expect(page).toHaveURL(/\/$/, { timeout: 20_000 });
 }
 
@@ -268,16 +264,12 @@ test.describe("manipulación del cliente", () => {
    * el mismo endpoint que usa la aplicación y se manda la cabecera a mano, que
    * es exactamente lo que haría alguien con las herramientas del navegador.
    */
-  async function sesionCruda(request: APIRequestContext, usuario: string, tenant = TENANT) {
-    const r = await request.post("/api/v1/auth/login", {
-      data: { tenant_code: tenant, username: usuario, password: PASS },
-    });
-    expect(r.status(), "no se pudo iniciar sesión").toBe(200);
-    return (await r.json()).access_token as string;
+  async function sesionCruda(usuario: string, tenant = TENANT) {
+    return (await sesionApi(usuario, { tenant })).token;
   }
 
   test("la empresa de otro tenant se rechaza en el servidor", async ({ request }) => {
-    const token = await sesionCruda(request, "ua");
+    const token = await sesionCruda("ua");
     const r = await request.get("/api/v1/maestros/terceros", {
       headers: { Authorization: `Bearer ${token}`, "X-Kontrol-Company": IDS.empresa_c },
     });
@@ -286,7 +278,7 @@ test.describe("manipulación del cliente", () => {
 
   test("una empresa a la que no se tiene acceso se rechaza", async ({ request }) => {
     // `ua` opera solo en A; B pertenece a su mismo tenant y aun así se niega.
-    const token = await sesionCruda(request, "ua");
+    const token = await sesionCruda("ua");
     const r = await request.get("/api/v1/maestros/terceros", {
       headers: { Authorization: `Bearer ${token}`, "X-Kontrol-Company": IDS.empresa_b },
     });
@@ -296,7 +288,7 @@ test.describe("manipulación del cliente", () => {
   test("el contexto propio sí funciona", async ({ request }) => {
     // Sin esto, los dos bloqueos anteriores podrían deberse a que la ruta
     // rechaza cualquier cosa.
-    const token = await sesionCruda(request, "ua");
+    const token = await sesionCruda("ua");
     // Se pregunta por el tercero, no por la primera página: la lista pagina y
     // la base del E2E acumula los terceros de todas las suites.
     const r = await request.get(`/api/v1/maestros/terceros?q=${IDS.tercero_a}`, {
@@ -308,7 +300,7 @@ test.describe("manipulación del cliente", () => {
 
   test("la escritura tampoco cruza: el cuerpo no impone la empresa", async ({ request }) => {
     // Regresión de la vulnerabilidad de la Spec 045, desde el cliente.
-    const token = await sesionCruda(request, "ua");
+    const token = await sesionCruda("ua");
     const r = await request.post("/api/v1/approvals/policies", {
       headers: { Authorization: `Bearer ${token}`, "X-Kontrol-Company": IDS.empresa_a },
       data: {

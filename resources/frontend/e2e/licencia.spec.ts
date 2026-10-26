@@ -11,12 +11,12 @@
  */
 import { resolve } from "node:path";
 
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
 
 import { ejecutarPython } from "./helpers/python";
+import { entrarComoUsuario, entrar as entrarConSesion, expect, sesionApi, sesionDeUsuario, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const STATUS = `${API}/license/status`;
 const DETAIL = `${API}/license/detail`;
@@ -48,18 +48,21 @@ function usuarioSinPermiso(): string {
   return usuario;
 }
 
-async function token(request: APIRequestContext, usuario: string): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: "DEMO", username: usuario, password: PASSWORD } });
-  expect(r.ok(), `login de ${usuario}: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+async function token(usuario: string): Promise<string> {
+  // El usuario base usa la sesión del worker; los creados reutilizan la sesión creada para la interfaz (Spec 002, OQ-MFA-3).
+  return usuario === "admin"
+    ? (await sesionApi("admin", { tenant: "DEMO" })).token
+    : (await sesionDeUsuario(usuario, { tenant: "DEMO" })).token;
 }
 
 async function entrar(page: Page, usuario: string): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill("DEMO");
-  await page.getByLabel(/Usuario/).fill(usuario);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  if (usuario === "admin") {
+    await entrarConSesion(page, "admin", { tenant: "DEMO" });
+    await expect(page.locator("nav a[href^='/']").first()).toBeVisible({ timeout: 15_000 });
+    return;
+  }
+
+  await entrarComoUsuario(page, usuario, { tenant: "DEMO" });
   await expect(page).toHaveURL(/\/$/, { timeout: 20_000 });
   await expect(page.locator("nav a[href^='/']").first()).toBeVisible({ timeout: 15_000 });
 }
@@ -96,7 +99,7 @@ test.describe("Licencia · frontera de lectura", () => {
   });
 
   test("E2E-LIC-03 · con sesión pero sin permiso, el detalle y toda lectura de licenciamiento son 403", async ({ request }) => {
-    const cabecera = { Authorization: `Bearer ${await token(request, usuarioSinPermiso())}` };
+    const cabecera = { Authorization: `Bearer ${await token(usuarioSinPermiso())}` };
     const detalle = await request.get(DETAIL, { headers: cabecera });
     expect(detalle.status()).toBe(403);
     expect((await detalle.json()).code).toBe("PERMISSION_DENIED");
@@ -148,7 +151,7 @@ test.describe("Licencia · frontera de lectura", () => {
   });
 
   test("E2E-LIC-07 · el administrador lee el historial y el detalle por la API, con el mismo modo que el público", async ({ request }) => {
-    const cabecera = { Authorization: `Bearer ${await token(request, "admin")}` };
+    const cabecera = { Authorization: `Bearer ${await token("admin")}` };
     const detalle = await request.get(DETAIL, { headers: cabecera });
     expect(detalle.status()).toBe(200);
     const cuerpo = await detalle.json();

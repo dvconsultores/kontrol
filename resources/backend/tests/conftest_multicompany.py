@@ -20,6 +20,7 @@ from dataclasses import dataclass
 
 import pytest
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.company_context import COMPANY_HEADER
@@ -51,7 +52,7 @@ class Mundo:
 
     # -- sesiones -----------------------------------------------------------
     def token(self, usuario: str, tenant: str = "T1") -> str:
-        r = self.client.post("/api/v1/auth/login", json={
+        r = login_completo(self.client, "/api/v1/auth/login", json={
             "tenant_code": tenant, "username": usuario, "password": PASSWORD})
         assert r.status_code == 200, r.text
         return r.json()["access_token"]
@@ -211,7 +212,7 @@ def mundo():
     # Los almacenes se crean por la API, que es como los crearía un usuario.
     def _almacen(empresa: str, code: str, tenant: str = "T1",
                  usuario: str = "admin") -> str:
-        h = {"Authorization": f"Bearer {client.post('/api/v1/auth/login', json={'tenant_code':tenant,'username':usuario,'password':PASSWORD}).json()['access_token']}",
+        h = {"Authorization": f"Bearer {login_completo(client, '/api/v1/auth/login', json={'tenant_code':tenant,'username':usuario,'password':PASSWORD}).json()['access_token']}",
              COMPANY_HEADER: empresa}
         r = client.post("/api/v1/organization/warehouses", headers=h, json={
             "company_id": empresa, "branch_id": None, "code": code,

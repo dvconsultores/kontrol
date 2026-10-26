@@ -47,19 +47,24 @@ PROTEGIDAS_POR_DEFECTO = "kaud,ktest"
 #: Servidores sobre los que se puede actuar (`KONTROL_E2E_PG_HOSTS`).
 SERVIDORES_POR_DEFECTO = "localhost"
 
+#: Usuarios que siembra la base de QA y, por cada uno, sus clones por worker (qa/mfa-e2e-identidades.py).
+BASES_DE_USUARIOS = ("DEMO/admin", "DEMO/ua", "DEMO/uab", "DEMO/ub", "DEMO2/uc")
+#: La corrida canónica fija `--workers=6`.
+WORKERS_E2E = 6
+
 #: Lo que deja la siembra canónica (`qa/e2e-seed.sh`) en una base recién migrada.
 LINEA_BASE: dict[str, object] = {
     "installations": 1,
     "tenants": ["DEMO", "DEMO2"],
     "companies": ["DEMO/D1", "DEMO/D2", "DEMO2/E1"],
-    "users": ["DEMO/admin", "DEMO/ua", "DEMO/uab", "DEMO/ub", "DEMO2/uc"],
+    "users": sorted([*BASES_DE_USUARIOS, *(f"{u}_w{k}" for u in BASES_DE_USUARIOS for k in range(WORKERS_E2E))]),
     "license": ["FULL_ACCESS"],
     "warehouses": 0,
     "notification_rules": 0,
 }
 #: Los guiones de los que sale la siembra: su huella es la versión de la siembra.
 GUIONES_DE_SIEMBRA = ("e2e-seed.sh", "pg-e2e-seed.py", "spec047-e2e-seed.py", "n6-e2e-seed.py",
-                      "n6_world.py", "alcance_de_usuario.py")
+                      "mfa-e2e-identidades.py", "n6_world.py", "alcance_de_usuario.py")
 
 
 class BaseNoEsE2E(RuntimeError):

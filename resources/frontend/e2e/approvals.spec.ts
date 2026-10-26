@@ -6,13 +6,13 @@
  *
  * Requiere el stack levantado y credenciales E2E.
  */
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
+import { entrar, expect, sesionApi, test } from "./helpers/sesion";
 
 import { diagnosticoDeEmpresa, emitirLaTablaTarde, esperarEstadoDeEmpresa } from "./helpers/empresa";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 
 /** Sufijo único: el estado persiste entre navegadores en la misma base. */
@@ -20,12 +20,8 @@ const RUN = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}
 /** El formulario de políticas normaliza el tipo de proceso a mayúsculas. */
 const RUNU = RUN.toUpperCase();
 
-async function apiLogin(request: APIRequestContext): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: USER, password: PASSWORD },
-  });
-  expect(r.ok(), `login: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+async function apiLogin(): Promise<string> {
+  return (await sesionApi(USER, { tenant: TENANT })).token;
 }
 
 type Empresa = { id: string; code: string };
@@ -80,7 +76,7 @@ async function activarEmpresa(page: Page): Promise<void> {
 
   // Compuerta de selección: identificador canónico del propio producto, con el código
   // de la empresa que resuelve el backend. No hay prefijos ni posiciones de por medio.
-  const { code } = await empresa(page.request, await apiLogin(page.request));
+  const { code } = await empresa(page.request, await apiLogin());
   const eleccion = page.getByTestId(`elegir-empresa-${code}`);
 
   // La decisión se toma sobre una lectura ya determinable (E2E-HELPER-EMPRESA-CARRERA-DE-
@@ -110,12 +106,7 @@ async function activarEmpresa(page: Page): Promise<void> {
 }
 
 async function uiLogin(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USER);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
+  await entrar(page, USER, { tenant: TENANT });
 
   // La operación exige empresa activa: se selecciona como lo haría un usuario.
   await activarEmpresa(page);
@@ -141,7 +132,7 @@ async function goto(page: Page, href: string): Promise<void> {
 type Ctx = { token: string; company: string; headers: Record<string, string> };
 
 async function ctx(request: APIRequestContext): Promise<Ctx> {
-  const token = await apiLogin(request);
+  const token = await apiLogin();
   const company = await companyId(request, token);
   return { token, company, headers: { Authorization: `Bearer ${token}` } };
 }

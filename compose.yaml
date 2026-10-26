@@ -36,6 +36,7 @@ services:
       KONTROL_IMAGE_TAG: "${KONTROL_IMAGE_TAG:-latest}"
       KONTROL_DB_URL: "${KONTROL_DB_URL:?KONTROL_DB_URL es obligatoria (base de datos externa)}"
       KONTROL_SECRET_KEY: "${KONTROL_SECRET_KEY:?KONTROL_SECRET_KEY es obligatoria}"
+      KONTROL_MFA_KEYS: "${KONTROL_MFA_KEYS:?KONTROL_MFA_KEYS es obligatoria (anillo de claves del segundo factor, Spec 002)}"
       KONTROL_COOKIE_SECURE: "true"
       KONTROL_CORS_ORIGINS: "${KONTROL_CORS_ORIGINS:-[\"https://localhost\"]}"
       KONTROL_LICENSE_PUBLIC_KEY_PEM: "${KONTROL_LICENSE_PUBLIC_KEY_PEM:-}"

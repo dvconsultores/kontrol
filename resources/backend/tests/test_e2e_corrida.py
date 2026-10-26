@@ -19,6 +19,7 @@ import socket
 import sys
 import tempfile
 import threading
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -48,7 +49,8 @@ MIRA_SU_BASE = (
     "assert (os.stat(os.environ['KONTROL_E2E_LICENSE_SIGNING_KEY']).st_mode & 0o777) == 0o600\n"
     "with create_engine(os.environ['KONTROL_E2E_DB_URL']).connect() as c:\n"
     "    assert c.execute(text('select current_database()')).scalar_one() == 'kontrol_e2e_test_' + run\n"
-    "    assert c.execute(text('select count(*) from users')).scalar_one() == 5\n"
+    # 5 usuarios base + 6 clones por worker de cada uno (Spec 002, OQ-MFA-3).
+    "    assert c.execute(text('select count(*) from users')).scalar_one() == 35\n"
     "    {extra}\n"
     "assert urllib.request.urlopen(os.environ['KONTROL_E2E_API'] + '/health/ready', timeout=10).status == 200\n"
     "print('postgresql://usuario:secreto@host:5432/test_db')\n"
@@ -123,12 +125,13 @@ def test_e2ecorrida_01_una_corrida_verde_usa_su_base_y_no_deja_nada(entorno, pue
 
     m = _manifiesto(corrida)
     assert m["base"] == corrida.base == "kontrol_e2e_test_" + corrida.run_id
-    assert m["backend"] == {"base": corrida.base, "sesiones": 1}
+    assert m["backend"] == {"base": corrida.base, "desafios": 1}
     assert m["migracion"]["actual"] == m["migracion"]["esperada"] and m["migracion"]["cabezas"] == 1
     assert m["siembra"]["linea_base"] == b.LINEA_BASE and len(m["siembra"]["version"]) == 16
     assert m["suite"]["codigo"] == 0 and m["codigo_de_salida"] == 0
     assert m["limpieza"]["base"] == {"estado": "ELIMINADA", "cortadas": 0} and m["limpieza"]["resultado"] == "LIMPIA"
-    assert m["medidas"]["usuarios"] == 5 and m["medidas"]["almacenes"] == 0
+    assert m["limpieza"]["material_mfa"] == {"retirados": [], "quedan": 0}
+    assert m["medidas"]["usuarios"] == 35 and m["medidas"]["almacenes"] == 0
     assert m["fases"] == ["comprobar", "crear base", "migrar", "sembrar", "backend",
                           "comprobar la base del backend", "autoridad central", "suite", "limpiar"]
     assert "autoridad" in m["procesos"] and m["limpieza"]["autoridad"] == "detenido"  # la autoridad real de la corrida, y se detiene
@@ -200,7 +203,7 @@ def test_e2ecorrida_05_si_el_backend_no_arranca_se_detiene_y_la_base_desaparece(
 
 
 def test_e2ecorrida_06_si_el_backend_escribe_en_otra_base_la_corrida_se_aborta(entorno, puerto_libre, monkeypatch):
-    monkeypatch.setattr(k.Corrida, "_sesiones", lambda self: 0)  # la sesión de la API «no aparece» en la base
+    monkeypatch.setattr(k.Corrida, "_desafios", lambda self: 0)  # el desafío MFA de la API «no aparece» en la base
     corrida, _ = _corrida(entorno, "raise SystemExit(0)")
     assert corrida.ejecutar() == k.SALIDA_PREPARACION
     _sin_rastro(corrida)
@@ -609,3 +612,44 @@ def test_e2ecorrida_32_main_pasa_el_interprete_de_producto_a_la_corrida(monkeypa
     assert vistas[0]["python_de_producto"] == "/opt/v6r/bin/python"
     assert vistas[1]["python_de_producto"] is None
     assert vistas[0]["sin_frontend"] is True
+
+
+def test_e2ecorrida_33_la_evidencia_no_conserva_material_mfa_de_las_pruebas_fallidas(entorno):
+    """Las trazas de las pruebas fallidas no dejan material MFA en la evidencia."""
+    corrida, _ = _corrida(entorno, "pass")
+    resultados = corrida.evidencia / "test-results"
+
+    alta = resultados / "mfa-alta-chromium"
+    alta.mkdir(parents=True)
+    with zipfile.ZipFile(alta / "trace.zip", "w") as archivo:
+        archivo.writestr("resources/a.json", '{"manual_key": "SINTETICA"}')
+    (alta / "test-failed-1.png").write_bytes(b"\x89PNG")
+    (alta / "error-context.md").write_text("falló")
+
+    oculta = resultados / ".playwright-artifacts-1" / "traces" / "resources"
+    oculta.mkdir(parents=True)
+    (oculta / "b.json").write_text('{"recovery_codes": []}')
+
+    limpia = resultados / "ventas-chromium"
+    limpia.mkdir(parents=True)
+    with zipfile.ZipFile(limpia / "trace.zip", "w") as archivo:
+        archivo.writestr("resources/c.json", '{"ok": true}')
+
+    (corrida.evidencia / "suite.log").write_text("1 failed")
+
+    informe = corrida.retirar_material_mfa()
+    assert informe == {"retirados": [".playwright-artifacts-1", "mfa-alta-chromium"], "quedan": 0}
+    assert not alta.exists() and not (resultados / ".playwright-artifacts-1").exists()
+    assert (limpia / "trace.zip").exists() and (corrida.evidencia / "suite.log").exists()
+
+
+def test_e2ecorrida_33b_material_mfa_fuera_de_test_results_se_cuenta_y_no_se_borra(entorno):
+    """El material MFA fuera de test-results se cuenta como residuo y no se borra."""
+    corrida, _ = _corrida(entorno, "pass")
+    corrida.evidencia.mkdir(parents=True)
+    registro = corrida.evidencia / "backend.log"
+    registro.write_text("otpauth://totp/x")
+
+    informe = corrida.retirar_material_mfa()
+    assert informe == {"retirados": [], "quedan": 1}
+    assert registro.exists()

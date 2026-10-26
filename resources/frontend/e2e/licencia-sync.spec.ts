@@ -12,13 +12,13 @@
  */
 import { resolve } from "node:path";
 
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import { type APIRequestContext } from "@playwright/test";
 
 import { ejecutarPython } from "./helpers/python";
+import { expect, iniciarSesion, sesionApi, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const CENTRAL = process.env.KONTROL_E2E_CENTRAL_URL ?? "http://127.0.0.1:8010";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const QA = resolve(BACKEND, "..", "..", "qa");
 const SENSIBLE = /BEGIN (PUBLIC|PRIVATE) KEY|signature_hex|nonce_sha256|sqlite|postgres|\/tmp|\/home|customer_id|contract_id/i;
@@ -69,10 +69,11 @@ function usuarioSin(...sin: string[]): string {
   return usuario;
 }
 
-async function token(request: APIRequestContext, usuario: string): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: "DEMO", username: usuario, password: PASSWORD } });
-  expect(r.ok(), `login de ${usuario}: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+async function token(usuario: string): Promise<string> {
+  // El usuario base usa la sesión del worker; los creados en la prueba inician sesión de verdad (Spec 002, OQ-MFA-3).
+  return usuario === "admin"
+    ? (await sesionApi("admin", { tenant: "DEMO" })).token
+    : (await iniciarSesion(usuario, { tenant: "DEMO" })).token;
 }
 
 async function detalle(request: APIRequestContext, bearer: string): Promise<Detalle> {
@@ -89,7 +90,7 @@ function anioContractual(iso: string): number {
 
 test.describe("Licencia · sincronización autenticada con la Autoridad Central real", () => {
   test("E2E-SYNC-01..08 · configurar, sincronizar, importar, idempotencia, compuertas locales y la autoridad no habla sin prueba", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     const cabecera = { Authorization: `Bearer ${admin}` };
     const antes = await detalle(request, admin);
 
@@ -142,7 +143,7 @@ test.describe("Licencia · sincronización autenticada con la Autoridad Central 
 
     // 6) Compuertas locales: sin sesión y sin `license:create`, no.
     expect((await request.post(`${API}/licensing/sync`)).status()).toBe(401);
-    const lector = await token(request, usuarioSin("license:create"));
+    const lector = await token(usuarioSin("license:create"));
     expect((await request.post(`${API}/licensing/sync`, { headers: { Authorization: `Bearer ${lector}` } })).status()).toBe(403);
 
     // 7) La autoridad no habla sin prueba: el desafío solo da lo necesario, el sync sin credenciales es 401 y nada se filtra.

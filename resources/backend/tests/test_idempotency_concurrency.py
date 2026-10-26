@@ -17,6 +17,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from conftest import make_engine
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -94,7 +95,7 @@ def _app_client():
 
 
 def _auth() -> dict:
-    r = _CLIENT.post("/api/v1/auth/login", json={
+    r = login_completo(_CLIENT, "/api/v1/auth/login", json={
         "tenant_code": "DEMO", "username": "admin", "password": "Kontrol2026Segura!",
     })
     assert r.status_code == 200, r.text

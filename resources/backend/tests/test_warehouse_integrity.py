@@ -17,6 +17,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy import event, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
@@ -108,7 +109,7 @@ def _app_client():
 
 
 def _login(usuario: str = "admin") -> dict:
-    r = _CLIENT.post("/api/v1/auth/login", json={
+    r = login_completo(_CLIENT, "/api/v1/auth/login", json={
         "tenant_code": "DEMO", "username": usuario, "password": PASSWORD})
     assert r.status_code == 200, r.text
     return {"Authorization": f"Bearer {r.json()['access_token']}"}

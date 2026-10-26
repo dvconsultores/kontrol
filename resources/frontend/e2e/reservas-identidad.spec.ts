@@ -11,14 +11,14 @@
  * reservas que antes», que depende de lo que hagan los demás, y «mi reserva
  * sigue siendo la que era», que es lo que un escenario quiere comprobar.
  */
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import { type APIRequestContext } from "@playwright/test";
 
 import { laReservaDe, reservasDePedido, reservasDeProducto } from "./helpers/reservas";
+import { expect, sesionApi, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 
 async function post(request: APIRequestContext, c: Ctx, ruta: string, data: unknown) {
   const r = await request.post(`${API}${ruta}`, { headers: c.headers, data });
@@ -38,11 +38,7 @@ const marca = (): string =>
 interface Ctx { company: string; headers: Record<string, string> }
 
 async function ctx(request: APIRequestContext): Promise<Ctx> {
-  const login = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: USER, password: PASSWORD },
-  });
-  expect(login.ok(), `login: ${login.status()}`).toBeTruthy();
-  const token = (await login.json()).access_token as string;
+  const token = (await sesionApi(USER, { tenant: TENANT })).token;
   const empresas = await request.get(`${API}/organization/companies`, {
     headers: { Authorization: `Bearer ${token}` },
   });

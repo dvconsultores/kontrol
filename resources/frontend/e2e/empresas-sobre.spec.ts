@@ -7,19 +7,17 @@
  * usuario, y en el navegador que la pantalla pinta los items y que el selector de
  * contexto sigue ofreciendo todas las empresas del usuario.
  */
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
 
 import { mundoN6 } from "./helpers/n6-mundo";
+import { entrar as entrarConSesion, expect, sesionApi, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 
 interface Sobre { items: Array<{ id: string; code: string; legal_name: string }>; total: number; page: number; page_size: number }
 
-async function token(request: APIRequestContext, tenant: string, usuario: string): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: tenant, username: usuario, password: PASSWORD } });
-  expect(r.ok(), `login ${usuario}/${tenant}: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+async function token(tenant: string, usuario: string): Promise<string> {
+  return (await sesionApi(usuario, { tenant })).token;
 }
 
 async function empresas(request: APIRequestContext, tok: string, qs = ""): Promise<{ status: number; body: Sobre }> {
@@ -28,12 +26,7 @@ async function empresas(request: APIRequestContext, tok: string, qs = ""): Promi
 }
 
 async function entrar(page: Page, tenant: string, usuario: string): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(tenant);
-  await page.getByLabel(/Usuario/).fill(usuario);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
+  await entrarConSesion(page, usuario, { tenant });
   await page.waitForLoadState("networkidle");
 }
 
@@ -41,7 +34,7 @@ test.describe("EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas", ()
   const mundo = mundoN6();
 
   test("LIST-E2E-01 · la API responde el sobre del contrato, con total acotado al usuario", async ({ request }) => {
-    const uab = await token(request, "DEMO", "uab");
+    const uab = await token("DEMO", "uab");
     const { status, body } = await empresas(request, uab);
     expect(status).toBe(200);
     expect(Array.isArray(body)).toBe(false);
@@ -52,14 +45,14 @@ test.describe("EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas", ()
     expect(body.items.map((c) => c.id).sort()).toEqual([mundo.empresa_a, mundo.empresa_b].sort());
 
     // `ua` solo opera en A: total 1, no 2.
-    const ua = await token(request, "DEMO", "ua");
+    const ua = await token("DEMO", "ua");
     const deUa = (await empresas(request, ua)).body;
     expect(deUa.total).toBe(1);
     expect(deUa.items.map((c) => c.id)).toEqual([mundo.empresa_a]);
   });
 
   test("LIST-E2E-02 · la paginación corta el conjunto y una página más allá del final viene vacía", async ({ request }) => {
-    const uab = await token(request, "DEMO", "uab");
+    const uab = await token("DEMO", "uab");
     const p1 = (await empresas(request, uab, "?page=1&page_size=1")).body;
     const p2 = (await empresas(request, uab, "?page=2&page_size=1")).body;
     const p3 = (await empresas(request, uab, "?page=3&page_size=1")).body;
@@ -73,7 +66,7 @@ test.describe("EMPRESAS-SIN-SOBRE · sobre paginado del listado de Empresas", ()
   });
 
   test("LIST-E2E-03 · q sigue buscando y el total es el del conjunto filtrado", async ({ request }) => {
-    const uab = await token(request, "DEMO", "uab");
+    const uab = await token("DEMO", "uab");
     const con = (await empresas(request, uab, `?q=${encodeURIComponent(mundo.nombre_b)}`)).body;
     expect(con.total).toBe(1);
     expect(con.items.map((c) => c.id)).toEqual([mundo.empresa_b]);

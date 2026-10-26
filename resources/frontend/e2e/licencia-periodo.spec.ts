@@ -13,12 +13,12 @@
  */
 import { resolve } from "node:path";
 
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import { type APIRequestContext } from "@playwright/test";
 
 import { ejecutarPython } from "./helpers/python";
+import { expect, iniciarSesion, sesionApi, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const QA = resolve(BACKEND, "..", "..", "qa");
 const IMPORT = `${API}/license/import`;
@@ -53,10 +53,11 @@ function licenciaFirmada(licenseId: string, ...opciones: string[]): Artefacto {
   return JSON.parse(salida) as Artefacto;
 }
 
-async function token(request: APIRequestContext, usuario: string): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: "DEMO", username: usuario, password: PASSWORD } });
-  expect(r.ok(), `login de ${usuario}: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+async function token(usuario: string): Promise<string> {
+  // El usuario base usa la sesión del worker; los creados en la prueba inician sesión de verdad (Spec 002, OQ-MFA-3).
+  return usuario === "admin"
+    ? (await sesionApi("admin", { tenant: "DEMO" })).token
+    : (await iniciarSesion(usuario, { tenant: "DEMO" })).token;
 }
 
 async function detalle(request: APIRequestContext, bearer: string): Promise<Detalle> {
@@ -74,7 +75,7 @@ function anioContractual(iso: string): number {
 
 test.describe("Licencia · el período no retrocede", () => {
   test("E2E-ROLLA-01..08 · anterior rechazada sin mover nada; reemisión del mismo período aceptada; posterior aceptada; y después la anterior sigue rechazada", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     const cabecera = { Authorization: `Bearer ${admin}` };
     const antes = await detalle(request, admin);
     const anioVigente = anioContractual(antes.period_start);
@@ -123,7 +124,7 @@ test.describe("Licencia · el período no retrocede", () => {
   });
 
   test("E2E-ROLLA-09 · sin license:create ni una licencia posterior entra, y el período vigente no cambia", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     const antes = await detalle(request, admin);
     const futura = licenciaFirmada("LIC-E2E-FUTURA", "--anio", String(anioContractual(antes.period_end) + 9));
     expect((await request.post(IMPORT, { data: futura })).status()).toBe(401);
@@ -132,7 +133,7 @@ test.describe("Licencia · el período no retrocede", () => {
   });
 
   test("E2E-ROLLA-10 · firma inválida u otra instalación se rechazan antes de comparar períodos", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     const cabecera = { Authorization: `Bearer ${admin}` };
     const antes = await detalle(request, admin);
     const anio = String(anioContractual(antes.period_end) + 9);

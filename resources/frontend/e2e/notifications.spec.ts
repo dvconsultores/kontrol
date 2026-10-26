@@ -11,13 +11,13 @@
  * Requiere `KONTROL_E2E_DB_URL` (la base del E2E) y el arranque
  * `qa/n6-multicompany-bootstrap.py` para la prueba de aislamiento entre empresas.
  */
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
 
 import { hastaQue, tick } from "./helpers/planificador";
+import { entrarComoUsuario, expect, sesionApi, sesionDeUsuario, test } from "./helpers/sesion";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const ADMIN = process.env.KONTROL_E2E_USER ?? "admin";
-const ADMIN_PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 
 const RUN = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -34,10 +34,9 @@ const estado: {
   adminId: string; usuarioId: string; solicitudes: string[];
 } = { admin: {}, usuario: {}, usuarioD2: null, adminId: "", usuarioId: "", solicitudes: [] };
 
-async function token(request: APIRequestContext, username: string, password: string): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: TENANT, username, password } });
-  expect(r.ok(), `login ${username}: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+async function token(username: string, password?: string): Promise<string> {
+  if (username === ADMIN) return (await sesionApi(ADMIN, { tenant: TENANT })).token;
+  return (await sesionDeUsuario(username, { tenant: TENANT, password })).token;
 }
 
 async function pedir<T>(request: APIRequestContext, h: Cabeceras, metodo: "get" | "post", ruta: string, data?: unknown): Promise<T> {
@@ -66,12 +65,7 @@ async function crearSolicitud(request: APIRequestContext, indice: number): Promi
 }
 
 async function entrar(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USUARIO);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20_000 });
+  await entrarComoUsuario(page, USUARIO, { tenant: TENANT, password: PASSWORD });
   const elegir = page.getByTestId("elegir-empresa-D1");
   await expect(elegir.or(page.getByTestId("campana"))).toBeVisible({ timeout: 20_000 });
   if (await elegir.isVisible()) {
@@ -92,7 +86,7 @@ const sinLeer = (n: number): string => `Notificaciones sin leer: ${n}`;
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async ({ request }) => {
-  const adminToken = await token(request, ADMIN, ADMIN_PASSWORD);
+  const adminToken = await token(ADMIN);
   const base = { Authorization: `Bearer ${adminToken}` };
   const empresas = await pedir<{ items: { id: string; code: string }[] }>(
     request, base, "get", "/organization/companies");
@@ -111,7 +105,7 @@ test.beforeAll(async ({ request }) => {
   estado.usuarioId = creado.id;
   await pedir(request, base, "post", `/users/${creado.id}/roles`, { role_id: adminRol.id, company_id: null });
 
-  const usuarioToken = await token(request, USUARIO, PASSWORD);
+  const usuarioToken = await token(USUARIO, PASSWORD);
   estado.usuario = { Authorization: `Bearer ${usuarioToken}`, "X-Kontrol-Company": d1!.id };
   // La segunda empresa se busca con el usuario de esta ejecución: la siembra de la
   // 047 limita al administrador a D1 para no alterar el resto de la cadena.

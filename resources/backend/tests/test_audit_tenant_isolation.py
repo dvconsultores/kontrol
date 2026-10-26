@@ -22,6 +22,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from conftest import make_engine
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -151,7 +152,7 @@ def _mundo():
 # Ayudantes
 # --------------------------------------------------------------------------- #
 def _login(tenant: str, username: str) -> dict:
-    r = _CLIENT.post("/api/v1/auth/login", json={
+    r = login_completo(_CLIENT, "/api/v1/auth/login", json={
         "tenant_code": tenant, "username": username, "password": PASSWORD})
     assert r.status_code == 200, r.text
     return {"Authorization": f"Bearer {r.json()['access_token']}"}

@@ -18,6 +18,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -131,7 +132,7 @@ def _app_client():
 
 
 def _login(tenant: str, username: str, password: str = "Kontrol2026Segura!") -> dict:
-    r = _CLIENT.post("/api/v1/auth/login", json={
+    r = login_completo(_CLIENT, "/api/v1/auth/login", json={
         "tenant_code": tenant, "username": username, "password": password,
     })
     assert r.status_code == 200, r.text
@@ -291,7 +292,7 @@ def test_session_refresh_rotates_token():
     """Login → refresh 200 (nuevo access token y cookie rotada); el token
     anterior queda invalidado (401 al reutilizarlo). Evita regresión de
     `TypeError: can't compare offset-naive and offset-aware datetimes`."""
-    login = _CLIENT.post("/api/v1/auth/login", json={
+    login = login_completo(_CLIENT, "/api/v1/auth/login", json={
         "tenant_code": "DEMO", "username": "admin", "password": "Kontrol2026Segura!",
     })
     assert login.status_code == 200, login.text
@@ -319,7 +320,7 @@ def test_session_refresh_rotates_token():
 def test_session_refresh_returns_200_never_500():
     """El refresh nunca debe devolver 500 (KAUD-013): con cookie válida → 200,
     sin cookie → 401."""
-    login = _CLIENT.post("/api/v1/auth/login", json={
+    login = login_completo(_CLIENT, "/api/v1/auth/login", json={
         "tenant_code": "DEMO", "username": "admin", "password": "Kontrol2026Segura!",
     })
     refresh_cookie = login.cookies.get("kontrol_refresh")

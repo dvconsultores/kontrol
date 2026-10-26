@@ -14,12 +14,12 @@
  */
 import { resolve } from "node:path";
 
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import { type APIRequestContext } from "@playwright/test";
 
 import { ejecutarPython } from "./helpers/python";
+import { expect, iniciarSesion, sesionApi, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const QA = resolve(BACKEND, "..", "..", "qa");
 const IMPORT = `${API}/license/import`;
@@ -77,10 +77,11 @@ function emite(...argumentos: string[]): Emision {
   return JSON.parse(ayudante("autoridad_central.py", ["emitir", ...argumentos])) as Emision;
 }
 
-async function token(request: APIRequestContext, usuario: string): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: "DEMO", username: usuario, password: PASSWORD } });
-  expect(r.ok(), `login de ${usuario}: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+async function token(usuario: string): Promise<string> {
+  // El usuario base usa la sesión del worker; los creados en la prueba inician sesión de verdad (Spec 002, OQ-MFA-3).
+  return usuario === "admin"
+    ? (await sesionApi("admin", { tenant: "DEMO" })).token
+    : (await iniciarSesion(usuario, { tenant: "DEMO" })).token;
 }
 
 async function detalle(request: APIRequestContext, bearer: string): Promise<Detalle> {
@@ -113,7 +114,7 @@ async function rechazada(request: APIRequestContext, cabecera: Record<string, st
 
 test.describe("Licencia · la revisión del emisor ordena dentro del período", () => {
   test("E2E-REV-01..14 · puente legacy, linaje r1→r2→r3 del emisor real, hostiles, otro período y compuertas", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     const cabecera = { Authorization: `Bearer ${admin}` };
     const antes = await detalle(request, admin);
     const periodo = ["--periodo", antes.period_start, antes.period_end];
@@ -176,7 +177,7 @@ test.describe("Licencia · la revisión del emisor ordena dentro del período", 
     const siguienteR2 = emite("--anio", String(anioSiguiente));
     expect(siguienteR2.revision).toBe(2);
     expect((await request.post(IMPORT, { data: siguienteR2 })).status()).toBe(401);
-    const lector = await token(request, usuarioSin("license:create"));
+    const lector = await token(usuarioSin("license:create"));
     expect((await importa(request, { Authorization: `Bearer ${lector}` }, siguienteR2)).status()).toBe(403);
     expect(await detalle(request, admin)).toEqual(trasSiguiente);
     await aceptada(request, cabecera, siguienteR2);

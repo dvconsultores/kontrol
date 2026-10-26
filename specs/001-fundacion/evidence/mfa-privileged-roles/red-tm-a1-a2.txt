@@ -1,0 +1,8 @@
+E   ImportError: cannot import name 'totp' from 'app.modules.identity_access' (<repo>/resources/backend/app/modules/identity_access/__init__.py)
+E   ModuleNotFoundError: No module named 'app.modules.identity_access.mfa_crypto'
+E   ModuleNotFoundError: No module named 'app.modules.identity_access.mfa_policy'
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!
+3 errors in 0.95s
+5 failed, 1 passed in 0.16s
+E                   AttributeError: 'Settings' object has no attribute 'mfa_keys'
+E       Failed: DID NOT RAISE <class 'pydantic_core._pydantic_core.ValidationError'>

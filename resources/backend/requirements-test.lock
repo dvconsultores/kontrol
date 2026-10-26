@@ -153,6 +153,10 @@ reportlab==5.0.0
     #   -r requirements.txt
 ruff==0.8.4
     # via -r requirements-test.txt
+segno==1.6.6
+    # via
+    #   -c requirements.lock
+    #   -r requirements.txt
 sqlalchemy==2.0.36
     # via
     #   -c requirements.lock

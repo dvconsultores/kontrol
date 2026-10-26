@@ -14,6 +14,7 @@ import { AuthProvider } from "./app/contexts/AuthContext";
 import { CompanyProvider } from "./app/contexts/CompanyContext";
 import { LicenseProvider } from "./app/contexts/LicenseContext";
 import { NotificationProvider } from "./app/contexts/NotificationContext";
+import { ReauthProvider } from "./app/contexts/ReauthContext";
 import { router } from "./app/router";
 import { NotificationViewport } from "./components/NotificationViewport";
 import "./index.css";
@@ -38,12 +39,14 @@ createRoot(document.getElementById("root") as HTMLElement).render(
     <QueryClientProvider client={queryClient}>
       <NotificationProvider>
         <AuthProvider>
-          <LicenseProvider>
-            <CompanyProvider>
-              <RouterProvider router={router} />
-              <NotificationViewport />
-            </CompanyProvider>
-          </LicenseProvider>
+          <ReauthProvider>
+            <LicenseProvider>
+              <CompanyProvider>
+                <RouterProvider router={router} />
+                <NotificationViewport />
+              </CompanyProvider>
+            </LicenseProvider>
+          </ReauthProvider>
         </AuthProvider>
       </NotificationProvider>
     </QueryClientProvider>

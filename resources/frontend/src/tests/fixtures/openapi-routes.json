@@ -117,12 +117,40 @@
       "path": "/auth/me"
     },
     {
+      "method": "DELETE",
+      "path": "/auth/mfa"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/mfa"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/mfa/enrollment"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/mfa/enrollment/confirm"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/mfa/recovery-codes"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/mfa/verify"
+    },
+    {
       "method": "POST",
       "path": "/auth/password-reset/confirm"
     },
     {
       "method": "POST",
       "path": "/auth/password-reset/request"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/reauth"
     },
     {
       "method": "POST",
@@ -1505,6 +1533,10 @@
       "path": "/roles"
     },
     {
+      "method": "POST",
+      "path": "/roles"
+    },
+    {
       "method": "GET",
       "path": "/sales/aging"
     },
@@ -2163,6 +2195,10 @@
     {
       "method": "POST",
       "path": "/users"
+    },
+    {
+      "method": "POST",
+      "path": "/users/{user_id}/mfa/reset"
     },
     {
       "method": "POST",

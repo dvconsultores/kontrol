@@ -16,7 +16,11 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
-from app.core.dependencies import require_permission, require_write_allowed
+from app.core.dependencies import (
+    require_permission,
+    require_recent_reauth,
+    require_write_allowed,
+)
 from app.core.errors import NotFoundError
 from app.modules.approvals import service as approvals_service
 from app.modules.approvals.models import (
@@ -184,7 +188,7 @@ def list_policies(process_type: str | None = None,
     return {"items": [_policy_out(db, p) for p in rows]}
 
 
-@router.post("/policies", status_code=201)
+@router.post("/policies", status_code=201, dependencies=[Depends(require_recent_reauth)])
 def create_policy(body: PolicyCreate, db: Session = Depends(get_db),
                   user: User = Depends(require_permission("aprobaciones", "configure")),
                   _: None = Depends(require_write_allowed),
@@ -207,7 +211,7 @@ def get_policy(policy_id: str, db: Session = Depends(get_db),
     return _policy_out(db, _get_policy(db, ctx, policy_id))
 
 
-@router.patch("/policies/{policy_id}")
+@router.patch("/policies/{policy_id}", dependencies=[Depends(require_recent_reauth)])
 def update_policy(policy_id: str, body: PolicyUpdate, db: Session = Depends(get_db),
                   user: User = Depends(require_permission("aprobaciones", "configure")),
                   _: None = Depends(require_write_allowed),
@@ -220,7 +224,7 @@ def update_policy(policy_id: str, body: PolicyUpdate, db: Session = Depends(get_
     return _policy_out(db, policy)
 
 
-@router.post("/policies/{policy_id}/activate")
+@router.post("/policies/{policy_id}/activate", dependencies=[Depends(require_recent_reauth)])
 def activate_policy(policy_id: str, db: Session = Depends(get_db),
                     user: User = Depends(require_permission("aprobaciones", "configure")),
                     _: None = Depends(require_write_allowed),
@@ -231,7 +235,7 @@ def activate_policy(policy_id: str, db: Session = Depends(get_db),
     return _policy_out(db, policy)
 
 
-@router.post("/policies/{policy_id}/close")
+@router.post("/policies/{policy_id}/close", dependencies=[Depends(require_recent_reauth)])
 def close_policy(policy_id: str, db: Session = Depends(get_db),
                  user: User = Depends(require_permission("aprobaciones", "configure")),
                  _: None = Depends(require_write_allowed),
@@ -242,7 +246,7 @@ def close_policy(policy_id: str, db: Session = Depends(get_db),
     return _policy_out(db, policy)
 
 
-@router.post("/policies/{policy_id}/rules", status_code=201)
+@router.post("/policies/{policy_id}/rules", status_code=201, dependencies=[Depends(require_recent_reauth)])
 def add_rule(policy_id: str, body: RuleCreate, db: Session = Depends(get_db),
              user: User = Depends(require_permission("aprobaciones", "configure")),
              _: None = Depends(require_write_allowed),
@@ -256,7 +260,11 @@ def add_rule(policy_id: str, body: RuleCreate, db: Session = Depends(get_db),
     return {"id": str(rule.id), "name": rule.name, "condition_fields": rule.condition_fields}
 
 
-@router.post("/policies/{policy_id}/rules/{rule_id}/levels", status_code=201)
+@router.post(
+    "/policies/{policy_id}/rules/{rule_id}/levels",
+    status_code=201,
+    dependencies=[Depends(require_recent_reauth)],
+)
 def add_level(policy_id: str, rule_id: str, body: LevelCreate, db: Session = Depends(get_db),
               user: User = Depends(require_permission("aprobaciones", "configure")),
               _: None = Depends(require_write_allowed),

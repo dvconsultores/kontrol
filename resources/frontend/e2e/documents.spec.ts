@@ -5,7 +5,9 @@
  * real → analizador real. Ni el analizador ni el almacenamiento se simulan:
  * un mock aquí no probaría nada de lo que la Spec declara no negociable.
  */
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
+
+import { entrar, expect, sesionApi, test } from "./helpers/sesion";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER;
@@ -32,11 +34,7 @@ test.skip(!USER || !PASSWORD, "KONTROL_E2E_USER / KONTROL_E2E_PASSWORD no config
 type Ctx = { token: string; company: string; headers: Record<string, string> };
 
 async function ctx(request: APIRequestContext): Promise<Ctx> {
-  const login = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: USER, password: PASSWORD },
-  });
-  expect(login.ok(), `login: ${login.status()}`).toBeTruthy();
-  const token = (await login.json()).access_token as string;
+  const token = (await sesionApi(USER as string, { tenant: TENANT })).token;
   const headers = { Authorization: `Bearer ${token}` };
   const body = await (await request.get(`${API}/organization/companies`, { headers })).json();
   const company = body.items[0].id as string;
@@ -61,11 +59,7 @@ async function createType(request: APIRequestContext, c: Ctx,
 }
 
 async function uiLogin(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USER as string);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD as string);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await entrar(page, USER as string, { tenant: TENANT });
   await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
 
   await page.locator('nav a[href="/organizacion/empresas"]').first().click();

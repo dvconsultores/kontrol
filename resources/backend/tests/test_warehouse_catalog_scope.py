@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.company_context import COMPANY_HEADER
@@ -139,7 +140,7 @@ def _mundo():
 
 
 def _login(usuario: str) -> str:
-    r = CLIENT.post("/api/v1/auth/login", json={
+    r = login_completo(CLIENT, "/api/v1/auth/login", json={
         "tenant_code": "T1", "username": usuario, "password": PASSWORD})
     assert r.status_code == 200, r.text
     return r.json()["access_token"]

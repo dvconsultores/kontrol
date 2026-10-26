@@ -7,7 +7,9 @@
  *
  * Lo que aquí se fija es que eso no pueda volver sin que alguien se entere.
  */
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
+
+import { entrar as entrarConSesion, expect, test } from "./helpers/sesion";
 
 import {
   activarEmpresa,
@@ -19,15 +21,9 @@ import {
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 
 async function entrar(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USER);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
+  await entrarConSesion(page, USER, { tenant: TENANT });
 }
 
 test.describe("Spec 054 · el ayudante de empresa", () => {

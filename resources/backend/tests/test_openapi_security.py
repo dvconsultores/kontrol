@@ -1,6 +1,6 @@
 """OAS · El OpenAPI describe la autenticación REAL de KONTROL y nada más (OPENAPI-SIN-ESQUEMA-DE-SEGURIDAD;
 FR-001-020/021; FR-001-042). La autoridad es el runtime: la matriz compara, operación por operación, si el
-árbol de dependencias llega a `get_current_user` (protegida) con lo que el contrato declara, sin lista manual
+árbol de dependencias llega a `get_current_auth` (protegida) con lo que el contrato declara, sin lista manual
 de rutas. La seguridad documentada no cambia el runtime: los 401/403, el permiso y el contexto de empresa se
 prueban aparte con peticiones reales. Mundo sintético (SQLite); nada real.
 """
@@ -16,6 +16,7 @@ import pytest
 from fastapi import routing as fastapi_routing
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -30,15 +31,18 @@ from tests.test_system_access import PASSWORD, _usuario
 
 ESQUEMA = dep.BEARER_SCHEME_NAME
 METODOS = ("get", "post", "put", "patch", "delete")
-#: Las operaciones que el runtime deja sin sesión (ninguna llega a `get_current_user`): health, bootstrap,
-#: estado público de licencia, login/refresh/logout/recuperación y la raíz. Es una AFIRMACIÓN de contrato, no
-#: la fuente del contrato: OAS-14 la deriva del árbol de dependencias y OAS-13 exige que coincidan.
+#: Las operaciones que el runtime deja sin sesión (ninguna llega a `get_current_auth`): health, bootstrap,
+#: estado público de licencia, login/refresh/logout/recuperación, raíz y el segundo factor del login
+#: (verificación y alta con desafío, Spec 002). Es una AFIRMACIÓN de contrato, no la fuente del contrato:
+#: OAS-14 la deriva del árbol de dependencias y OAS-13 exige que coincidan.
 PUBLICAS_POR_CONTRATO = {
     ("GET", "/api/v1/health/live"), ("GET", "/api/v1/health/ready"),
     ("GET", "/api/v1/setup/status"), ("POST", "/api/v1/setup/initialize"),
     ("GET", "/api/v1/license/status"),
     ("POST", "/api/v1/auth/login"), ("POST", "/api/v1/auth/refresh"), ("POST", "/api/v1/auth/logout"),
     ("POST", "/api/v1/auth/password-reset/request"), ("POST", "/api/v1/auth/password-reset/confirm"),
+    ("POST", "/api/v1/auth/mfa/verify"), ("POST", "/api/v1/auth/mfa/enrollment"),
+    ("POST", "/api/v1/auth/mfa/enrollment/confirm"),
     ("GET", "/"),
 }
 
@@ -84,7 +88,7 @@ def _matriz_runtime(app) -> dict[tuple[str, str], bool]:
         for method in (methods or set()) - {"HEAD", "OPTIONS"}:
             clave = (method, path)
             assert clave not in matriz, f"operación duplicada en runtime: {clave}"
-            matriz[clave] = _llega_a(original.dependant, dep.get_current_user)
+            matriz[clave] = _llega_a(original.dependant, dep.get_current_auth)
 
     return matriz
 
@@ -125,7 +129,7 @@ def _mundo() -> Iterator[None]:
 
 
 def _sesion(username: str = "admin") -> dict[str, str]:
-    r = _CLIENT.post("/api/v1/auth/login", json={"tenant_code": "DEMO", "username": username, "password": PASSWORD})
+    r = login_completo(_CLIENT, "/api/v1/auth/login", json={"tenant_code": "DEMO", "username": username, "password": PASSWORD})
     assert r.status_code == 200, r.text
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 

@@ -203,6 +203,9 @@ def test_l06_exenciones_y_metodos_contrato() -> None:
         "/api/v1/auth/logout",
         "/api/v1/auth/change-password",
         "/api/v1/auth/password-reset/",
+        "/api/v1/auth/mfa/verify",
+        "/api/v1/auth/mfa/enrollment",
+        "/api/v1/auth/reauth",
         "/api/v1/health/",
     )
     assert mw.WRITE_METHODS == {"POST", "PUT", "PATCH", "DELETE"}
@@ -213,6 +216,9 @@ def test_l06_exenciones_y_metodos_contrato() -> None:
 
     login = _peticion(app, "POST", "/api/v1/auth/login")
     assert login.status_code == 200
+    for ruta in ("/api/v1/auth/mfa/verify", "/api/v1/auth/mfa/enrollment", "/api/v1/auth/mfa/enrollment/confirm",
+                 "/api/v1/auth/reauth"):
+        assert _peticion(app, "POST", ruta).status_code == 200, ruta
     health = _peticion(app, "POST", "/api/v1/health/ready")
     assert health.status_code == 200
     assert captura.llamadas == []

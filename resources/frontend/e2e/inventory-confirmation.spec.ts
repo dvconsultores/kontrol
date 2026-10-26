@@ -6,22 +6,19 @@
  * la venta, y que solo la confirmación la libere. Y el límite: confirmar no
  * ubica nada.
  */
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
+
+import { entrar, expect, sesionApi, test } from "./helpers/sesion";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const RUN = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 type Ctx = { token: string; company: string; headers: Record<string, string> };
 
 async function ctx(request: APIRequestContext): Promise<Ctx> {
-  const login = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: USER, password: PASSWORD },
-  });
-  expect(login.ok(), `login: ${login.status()}`).toBeTruthy();
-  const token = (await login.json()).access_token as string;
+  const token = (await sesionApi(USER, { tenant: TENANT })).token;
   const r = await request.get(`${API}/organization/companies`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -77,11 +74,7 @@ async function recepcionAceptada(request: APIRequestContext, c: Ctx, marca: stri
 }
 
 async function uiLogin(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USER);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await entrar(page, USER, { tenant: TENANT });
   await expect(page).toHaveURL(/\/$/, { timeout: 20_000 });
 }
 

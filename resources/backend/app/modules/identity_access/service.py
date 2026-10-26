@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any, overload
 
@@ -15,9 +16,10 @@ import jwt as pyjwt
 from sqlalchemy import select, text, update
 from sqlalchemy.orm import Session
 
-from app.core import security
+from app.core import clock, security
 from app.core.config import get_settings
 from app.core.errors import ConflictError, KontrolError, NotFoundError, PermissionDeniedError
+from app.modules.identity_access import mfa_policy
 from app.modules.identity_access.models import (
     PasswordReset,
     Permission,
@@ -33,7 +35,8 @@ from app.shared import audit as audit_service
 
 
 def _now() -> datetime:
-    return datetime.now(UTC)
+    """Reloj único de las decisiones de seguridad."""
+    return clock.now()
 
 
 @overload
@@ -128,23 +131,33 @@ def get_user_in_tenant(db: Session, user_id: str, tenant_id: str) -> User:
 # --------------------------------------------------------------------------- #
 # Autenticación
 # --------------------------------------------------------------------------- #
-def authenticate(db: Session, *, tenant_id: str, username: str, password: str, request_id: str | None = None) -> User:
+def register_auth_failure(db: Session, user: User) -> None:
     settings = get_settings()
+    user.failed_attempts += 1
+    if user.failed_attempts >= settings.lockout_after_failures:
+        user.lockout_until = _now() + timedelta(minutes=settings.lockout_minutes)
+        user.failed_attempts = 0
+
+
+def is_locked(user: User) -> bool:
+    return user.lockout_until is not None and _as_utc(user.lockout_until) > _now()
+
+
+def verify_password_stage(
+    db: Session, *, tenant_id: str, username: str, password: str, request_id: str | None = None
+) -> User:
     user = get_user_by_username(db, tenant_id, username)
     if not user:
         raise KontrolError(code="AUTH_INVALID_CREDENTIALS", message="Credenciales inválidas", status_code=401)
 
     # Bloqueo por fuerza bruta
-    if user.lockout_until is not None and _as_utc(user.lockout_until) > _now():
+    if is_locked(user):
         _audit(db, action="LOGIN_BLOCKED", entity_type="User", entity_id=str(user.id), tenant_id=tenant_id, request_id=request_id)
         db.commit()
         raise KontrolError(code="AUTH_ACCOUNT_LOCKED", message="Cuenta temporalmente bloqueada por intentos fallidos", status_code=423)
 
     if not security.verify_password(password, user.password_hash):
-        user.failed_attempts += 1
-        if user.failed_attempts >= settings.lockout_after_failures:
-            user.lockout_until = _now() + timedelta(minutes=settings.lockout_minutes)
-            user.failed_attempts = 0
+        register_auth_failure(db, user)
         _audit(db, action="LOGIN_FAILED", entity_type="User", entity_id=str(user.id), tenant_id=tenant_id, request_id=request_id)
         db.commit()
         raise KontrolError(code="AUTH_INVALID_CREDENTIALS", message="Credenciales inválidas", status_code=401)
@@ -154,24 +167,49 @@ def authenticate(db: Session, *, tenant_id: str, username: str, password: str, r
         db.commit()
         raise KontrolError(code="AUTH_USER_INACTIVE", message="El usuario está desactivado", status_code=403)
 
+    return user
+
+
+def complete_login_bookkeeping(db: Session, user: User, *, request_id: str | None = None) -> None:
     user.failed_attempts = 0
     user.lockout_until = None
     user.last_login = _now()
-    _audit(db, action="LOGIN_SUCCESS", entity_type="User", entity_id=str(user.id), tenant_id=tenant_id, request_id=request_id)
+    _audit(db, action="LOGIN_SUCCESS", entity_type="User", entity_id=str(user.id), tenant_id=user.tenant_id, request_id=request_id)
+
+
+def authenticate(db: Session, *, tenant_id: str, username: str, password: str, request_id: str | None = None) -> User:
+    user = verify_password_stage(db, tenant_id=tenant_id, username=username, password=password, request_id=request_id)
+    complete_login_bookkeeping(db, user, request_id=request_id)
     db.commit()
     return user
 
 
-def create_session(db: Session, *, user: User, ip: str | None, user_agent: str | None) -> tuple[AuthSession, str]:
+def create_session(
+    db: Session,
+    *,
+    user: User,
+    ip: str | None,
+    user_agent: str | None,
+    auth_method: str = "PASSWORD",
+    mfa_verified_at: datetime | None = None,
+    reauth_at: datetime | None = None,
+    family_id: str | None = None,
+) -> tuple[AuthSession, str]:
     settings = get_settings()
     jti = security.sha256_hex(security.generate_secret_token())
+    session_id = str(uuid.uuid4())
     refresh_token = security.create_refresh_token(str(user.id), session_id="pending", jti=jti)
     # El session_id se fija tras crear la sesión; se regenera para evitar circularidad.
     session = AuthSession(
+        id=session_id,
+        family_id=family_id or session_id,
         user_id=str(user.id),
         refresh_token_hash=security.sha256_hex(refresh_token),
         ip=ip,
         user_agent=user_agent,
+        auth_method=auth_method,
+        mfa_verified_at=mfa_verified_at,
+        reauth_at=reauth_at,
         expires_at=_now() + timedelta(days=settings.refresh_token_days),
     )
     db.add(session)
@@ -182,6 +220,13 @@ def create_session(db: Session, *, user: User, ip: str | None, user_agent: str |
     db.commit()
     db.refresh(session)
     return session, new_token
+
+
+def issue_access_token(user: User, session: AuthSession) -> str:
+    return security.create_access_token(
+        str(user.id),
+        extra={"tenant_id": user.tenant_id, "sid": session.family_id},
+    )
 
 
 def rotate_session(db: Session, *, refresh_token: str, request_id: str | None = None) -> tuple[AuthSession, str, User]:
@@ -219,6 +264,11 @@ def rotate_session(db: Session, *, refresh_token: str, request_id: str | None = 
     if not user or user.status != "ACTIVE":
         raise KontrolError(code="AUTH_USER_INACTIVE", message="El usuario no está activo", status_code=403)
 
+    if session.mfa_verified_at is None and mfa_policy.requires_mfa(mfa_policy.user_policy_class(db, user)):
+        _revoke_family(db, session.family_id)
+        db.commit()
+        raise KontrolError(code="MFA_REQUIRED", message="Debe completar el segundo factor", status_code=401)
+
     # Rotación: la revocación es un UPDATE condicional sobre `revoked_at IS NULL`
     # y solo quien actualiza exactamente una fila es dueño de la rotación; la otra
     # petición concurrente actualiza cero filas y recibe el mismo 401 que un token
@@ -233,10 +283,20 @@ def rotate_session(db: Session, *, refresh_token: str, request_id: str | None = 
         raise KontrolError(code="SESSION_REVOKED", message="Sesión revocada", status_code=401)
     if revocadas != 1:
         raise RuntimeError(f"rotación de sesión {session.id}: {revocadas} filas revocadas, se esperaba exactamente una")
-    new_session, new_refresh = create_session(db, user=user, ip=session.ip, user_agent=session.user_agent)
+    new_session, new_refresh = create_session(db, user=user, ip=session.ip, user_agent=session.user_agent,
+        auth_method=session.auth_method, mfa_verified_at=session.mfa_verified_at, reauth_at=session.reauth_at,
+        family_id=session.family_id)
     _audit(db, action="SESSION_REFRESHED", entity_type="User", entity_id=str(user.id), tenant_id=user.tenant_id, request_id=request_id)
     db.commit()
     return new_session, new_refresh, user
+
+
+def _revoke_family(db: Session, family_id: str) -> int:
+    return db.execute(
+        update(AuthSession)
+        .where(AuthSession.family_id == family_id, AuthSession.revoked_at.is_(None))
+        .values(revoked_at=_now(), updated_at=_now())
+    ).rowcount
 
 
 def revoke_session(db: Session, *, session_id: str, user_id: str | None = None, request_id: str | None = None) -> None:
@@ -245,10 +305,51 @@ def revoke_session(db: Session, *, session_id: str, user_id: str | None = None, 
         raise NotFoundError(code="SESSION_NOT_FOUND", message="Sesión no encontrada")
     if user_id and session.user_id != user_id:
         raise PermissionDeniedError()
-    session.revoked_at = _now()
+    _revoke_family(db, session.family_id)
     user = db.get(User, session.user_id)
     _audit(db, action="SESSION_REVOKED", entity_type="Session", entity_id=str(session.id), tenant_id=user.tenant_id if user else None, request_id=request_id)
     db.commit()
+
+
+def revoke_user_sessions(
+    db: Session,
+    *,
+    user_id: str,
+    except_family_id: str | None = None,
+    reason: str,
+    actor_id: str | None = None,
+    request_id: str | None = None,
+) -> int:
+    query = update(AuthSession).where(AuthSession.user_id == user_id, AuthSession.revoked_at.is_(None))
+    if except_family_id is not None:
+        query = query.where(AuthSession.family_id != except_family_id)
+    revoked = db.execute(query.values(revoked_at=_now(), updated_at=_now())).rowcount
+    if revoked > 0:
+        user = db.get(User, user_id)
+        _audit(
+            db,
+            action="SESSIONS_REVOKED_SECURITY_CHANGE",
+            entity_type="User",
+            entity_id=user_id,
+            tenant_id=user.tenant_id if user else None,
+            user_id=actor_id or user_id,
+            request_id=request_id,
+            reason=reason,
+            evidence={"reason": reason, "sessions_revoked": revoked},
+        )
+    return revoked
+
+
+def current_session_row(db: Session, family_id: str) -> AuthSession | None:
+    return db.execute(
+        select(AuthSession)
+        .where(
+            AuthSession.family_id == family_id,
+            AuthSession.revoked_at.is_(None),
+            AuthSession.expires_at > _now(),
+        )
+        .order_by(AuthSession.created_at.desc())
+    ).scalars().first()
 
 
 def list_sessions(db: Session, *, user_id: str) -> list[AuthSession]:
@@ -265,6 +366,7 @@ def change_password(
     current_password: str,
     new_password: str,
     request_id: str | None = None,
+    current_family_id: str | None = None,
 ) -> None:
     if not security.verify_password(current_password, user.password_hash):
         raise KontrolError(code="AUTH_CURRENT_PASSWORD_INVALID", message="La contraseña actual es incorrecta", status_code=401)
@@ -274,6 +376,13 @@ def change_password(
     user.password_hash = security.hash_password(new_password)
     user.must_change_password = False
     _audit(db, action="PASSWORD_CHANGED", entity_type="User", entity_id=str(user.id), tenant_id=user.tenant_id, request_id=request_id, reason="CAMBIO")
+    revoke_user_sessions(
+        db,
+        user_id=str(user.id),
+        except_family_id=current_family_id,
+        reason="PASSWORD_CHANGED",
+        request_id=request_id,
+    )
     db.commit()
 
 
@@ -312,6 +421,7 @@ def confirm_password_reset(db: Session, *, token: str, new_password: str, reques
     user.must_change_password = False
     reset.used_at = _now()
     _audit(db, action="PASSWORD_RESET_CONFIRMED", entity_type="User", entity_id=str(user.id), tenant_id=user.tenant_id, request_id=request_id)
+    revoke_user_sessions(db, user_id=str(user.id), reason="PASSWORD_RESET", request_id=request_id)
     db.commit()
 
 
@@ -464,6 +574,7 @@ def assign_role_to_user(
     from app.modules.organization.models import Company
 
     user = get_user_in_tenant(db, user_id, tenant_id)
+    antes = mfa_policy.user_policy_class(db, user)
     if company_id is not None:
         # La empresa llegaba del cuerpo sin comprobarse. Acotar un rol a una
         # empresa de otro tenant no es un alcance: es una fila sin sentido en la
@@ -482,6 +593,10 @@ def assign_role_to_user(
     asignacion = UserRole(user_id=user_id, role_id=role_id, company_id=company_id)
     db.add(asignacion)
     db.flush()
+    db.expire(user)
+    despues = mfa_policy.user_policy_class(db, user)
+    if antes != despues:
+        revoke_user_sessions(db, user_id=user_id, reason="POLICY_CLASS_CHANGED", actor_id=actor)
     _audit(
         db,
         action="ROLE_ASSIGNED",
@@ -507,12 +622,18 @@ def remove_role_from_user(
 ) -> None:
     """Quita un rol de un usuario (FR-001-040)."""
     user = get_user_in_tenant(db, user_id, tenant_id)
+    antes = mfa_policy.user_policy_class(db, user)
     row = db.execute(
         select(UserRole).where(UserRole.user_id == user_id, UserRole.role_id == role_id)
     ).scalars().first()
     if not row:
         raise NotFoundError(code="ROLE_NOT_ASSIGNED", message="El usuario no tiene este rol")
     db.delete(row)
+    db.flush()
+    db.expire(user)
+    despues = mfa_policy.user_policy_class(db, user)
+    if antes != despues:
+        revoke_user_sessions(db, user_id=user_id, reason="POLICY_CLASS_CHANGED", actor_id=actor)
     _audit(
         db,
         action="ROLE_REMOVED",

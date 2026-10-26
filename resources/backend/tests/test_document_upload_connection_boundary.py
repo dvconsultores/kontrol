@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy import event, func, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -152,7 +153,8 @@ def _mundo(tmp_path_factory) -> Iterator[None]:
 
 def _headers() -> dict:
     assert _CLIENT is not None
-    r = _CLIENT.post(
+    r = login_completo(
+        _CLIENT,
         "/api/v1/auth/login",
         json={"tenant_code": "DEMO", "username": "admin", "password": _PASSWORD},
     )

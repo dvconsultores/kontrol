@@ -32,6 +32,10 @@ LICENSE_EXEMPT_PREFIXES = (
     "/api/v1/auth/logout",
     "/api/v1/auth/change-password",
     "/api/v1/auth/password-reset/",
+    # Segundo factor (Spec 002): sin él no se completa el login ni la reautenticación que exige la licencia.
+    "/api/v1/auth/mfa/verify",
+    "/api/v1/auth/mfa/enrollment",  # cubre también /confirm
+    "/api/v1/auth/reauth",
     "/api/v1/health/",
 )
 

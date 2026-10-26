@@ -6,9 +6,9 @@
 | Clase | SHARED_CORE HARDENING (gap P0 n.º 1 de OD-GSR-2). No es GOV-0 ni GOV-SPEC |
 | Decisiones | OQ-GAB-2 = A (TOTP + códigos de recuperación + reautenticación; WebAuthn futuro) · OD-GSR-2 = A · contrato de seguridad de la dueña (Master Prompt §88–91) |
 | HEAD de entrada | `37bc083` |
-| Evidencia | `evidence/mfa-privileged-roles/` (se crea al implementar) |
+| Evidencia | `evidence/mfa-privileged-roles/` (orquestación, mutaciones, dependencias, rojos medidos) |
 | GOVERNMENT_IMPLEMENTATION_AUTHORIZED | 0 |
-| Estado | **DESIGN COMPLETE — OQ RESUELTAS (2026-10-25)**: OQ-MFA-1 = A, OQ-MFA-2 = A, OQ-MFA-3 = A (§18). IMPLEMENTATION AUTHORIZED por el encargo «SHARED-CORE-P0-HARDENING-01 … IMPLEMENTATION AUTHORIZED» |
+| Estado | **IMPLEMENTED — CONVERGED (2026-10-26)**: DoD verificada en §23 (backend SQLite y PostgreSQL, E2E completa y multinavegador, mutaciones, fugas y residuos); deudas en §21; Gobierno en §22. Antes: **DESIGN COMPLETE — OQ RESUELTAS (2026-10-25)**: OQ-MFA-1 = A, OQ-MFA-2 = A, OQ-MFA-3 = A (§18). IMPLEMENTATION AUTHORIZED por el encargo «SHARED-CORE-P0-HARDENING-01 … IMPLEMENTATION AUTHORIZED» |
 
 ## 1. Discover (medido en `37bc083`)
 
@@ -172,29 +172,50 @@
 
 La regla es una constante versionada en el módulo `identity_access`, con pruebas por permiso. No es configuración: un interruptor así sería un vector de degradación (T08). La lista solo crece por Spec.
 
-### 4.1 Clasificación ratificada (OQ-MFA-1 = A; sustituye a la tabla anterior)
+### 4.1 Clasificación ratificada y medida (OQ-MFA-1 = A; sustituye a la tabla anterior)
 
-PRIVILEGED y SENSITIVE exigen MFA; STANDARD lo tiene voluntario. La clase sale del **conjunto efectivo de permisos** de los roles vigentes del usuario, sea cual sea su alcance (un rol de una sola empresa no rebaja la clase), y **nunca del nombre del rol**. La excepción es el rol protegido `ADMIN`, que siempre es PRIVILEGED. Si un usuario cumple varias clases, gana la más alta.
+PRIVILEGED y SENSITIVE exigen MFA; STANDARD lo tiene voluntario.
 
-| Clase | Capacidad (criterio de la dueña) | Permisos (catálogo medido en `405ae16`) |
+**Cómo se calcula la clase.**
+- Se calcula sobre el **conjunto efectivo de permisos** de los roles vigentes del usuario, sea cual sea su alcance (un rol de una sola empresa no rebaja la clase).
+- **Nunca** depende del nombre visible del rol. La excepción es el rol protegido `ADMIN`, que siempre es PRIVILEGED.
+- Si varias clases aplican, gana la más alta.
+
+**Universo clasificado.** Cada `resource:action` que exige alguna ruta (`require_permission`), que siembra `setup` o que añade alguna migración. Medido en `2636bfa` sobre las rutas: el efecto de cada permiso se revisó sobre el código (barrido de solo lectura con evidencia `fichero:línea`, verificado por muestreo).
+
+| Clase | Permisos | Criterio y evidencia |
 |---|---|---|
-| PRIVILEGED | modificar la seguridad; administrar usuarios o roles; resetear MFA | `users:create`, `users:mfa_reset` (nuevo), `roles:create`, `roles:edit` |
-| PRIVILEGED | autoridad sobre la licencia y la estructura de la instalación | `license:create`, `license:edit`, `license:approve`, `organization:create`, `organization:activate`, `organization:deactivate`, `organization:delete`, `organization:manage_structure` |
-| PRIVILEGED | cambiar la política de autorización | `aprobaciones:configure`, `aprobaciones:delegate` |
-| SENSITIVE | aprobar o ejecutar operaciones fiscales | `fiscal:create` (emisión, notas de crédito y débito, impresión fiscal, lotes de control), `fiscal:approve` |
-| SENSITIVE | autorizar pagos y comprometer recursos | `tesoreria:create` (bancos, cuentas, movimientos bancarios, cajas), `tesoreria:approve`, `compras:approve` (transiciones de órdenes, pagos y requisiciones; asiento de notas de crédito), `compras:apply`, `ventas:approve` (emisión de facturas, cobros, devoluciones, asiento de notas de crédito), `ventas:apply` |
-| SENSITIVE | operaciones definitivas sobre activos | `inventario:approve` (transición de ajustes de inventario) |
-| SENSITIVE | aprobar o anular decisiones de flujo o regulatorias | `aprobaciones:approve`, `regulatorio:approve` (incluye anular evaluaciones), `homologacion:approve` |
-| SENSITIVE | información sensible de auditoría y exportación de datos | `audit:view`, `reportes:export` |
-| SENSITIVE | borrados irreversibles | `documentos:delete`, `maestros:delete` |
-| SENSITIVE | cambiar configuración | `comercial:manage_policies` (políticas de crédito y descuento y su precedencia), `notificaciones:configure`, `tareas:configure`, `documentos:manage_types`, `organization:edit` |
-| STANDARD | el resto: consultar, crear y editar operativo, flujos operativos | los demás permisos del catálogo |
+| **PRIVILEGED** (18) | `users:create`, `users:edit`, `users:deactivate`, `users:activate`, `users:mfa_reset` (nuevo), `roles:create`, `roles:edit`, `license:create`, `license:edit`, `license:approve`, `organization:create`, `organization:activate`, `organization:deactivate`, `organization:delete`, `organization:manage_structure`, `aprobaciones:configure`, `aprobaciones:delegate`, `aprobaciones:edit` | administración de seguridad, usuarios y roles; reset de MFA; autoridad de licencia y estructura; política de aprobación. La lista de 15 del diseño crece con 4 permisos **sembrados** (`users:edit`, `users:deactivate`, `users:activate`, `aprobaciones:edit`) que el primer barrido, hecho solo sobre las rutas, no veía |
+| **SENSITIVE** (34) | `fiscal:create`, `fiscal:approve`, `tesoreria:create`, `tesoreria:approve`, `compras:approve`, `compras:apply`, `compras:create`, `compras:quality`, `ventas:approve`, `ventas:apply`, `ventas:create`, `ventas:quality`, `ventas:submit`, `inventario:approve`, `inventario:transition`, `inventario:create`, `inventario:confirm`, `inventario:reserve`, `aprobaciones:approve`, `aprobaciones:create`, `regulatorio:approve`, `regulatorio:create`, `homologacion:approve`, `audit:view`, `reportes:export`, `documentos:delete`, `documentos:manage_types`, `maestros:delete`, `maestros:create`, `comercial:manage_policies`, `comercial:publish`, `notificaciones:configure`, `tareas:configure`, `organization:edit` | ver la tabla 4.2 |
+| **STANDARD** (34) | `dashboard:view`, `organization:view`, `users:view`, `roles:view`, `license:view`, `homologacion:view`, `homologacion:create`, `homologacion:edit`, `maestros:view`, `maestros:edit`, `maestros:deactivate`, `compras:view`, `ventas:view`, `inventario:view`, `tesoreria:view`, `fiscal:view`, `regulatorio:view`, `reportes:view`, `aprobaciones:view`, `documentos:view`, `documentos:create`, `documentos:edit`, `documentos:upload`, `documentos:download`, `documentos:link`, `documentos:deactivate`, `comercial:view`, `comercial:create`, `comercial:edit`, `comercial:archive`, `tareas:view`, `tareas:assign`, `tareas:complete`, `alertas:view` | analizados y sin efecto definitivo propio (ver 4.2) |
 
-**Completitud (prueba MFA-G00):** cada `resource:action` que exige alguna ruta (`require_permission`) o siembra `setup` debe estar **explícitamente** en una de las tres listas, STANDARD incluida. Un permiso nuevo sin clasificar hace fallar la suite: no hereda STANDARD en silencio.
+### 4.2 Evidencia de las reclasificaciones respecto al diseño
+
+| Permiso | Efecto definitivo (1/0) | Evidencia (`app/modules/…`) |
+|---|---|---|
+| `inventario:transition` | **1** | `inventory/service.py` `approve_count` (registra movimientos de CONTEO), `confirm_transfer_ship` y `confirm_transfer_receipt` (`record_movement`). **INVENTORY_TRANSITION_DEFINITIVE_EFFECT = 1 → INVENTORY_TRANSITION_MFA_CLASS = SENSITIVE** (regla de §7, sin pregunta nueva) |
+| `inventario:create` | 1 | `POST /movements` y `/movements/reverse` → `record_movement` (`inventory/api.py:357,372`); `/operations/ship` |
+| `inventario:confirm` | 1 | `POST /receipts/{id}/confirmacion-inventario` → `reclassify` (`inventory/service.py:855-868`, `qty_on_hand`) |
+| `inventario:reserve` | 1 | `POST /reservations` → `qty_reserved +=` (`inventory/service.py:1239,1247`) |
+| `compras:create` | 1 | `POST /advances` → `Advance(status="ACTIVE", available=amount)` (`purchasing/service.py:1609`), aplicable sin aprobación |
+| `compras:quality` | 1 | `POST /receipts/{id}/accept` → `record_movement` (`purchasing/service.py:674`); cancelar una incidencia evita la resolución `compras:approve` |
+| `ventas:create` | 1 | picking `recoger` → `reclassify` y `consume_on_pick` (`sales/service.py:1532,1541`); devolución `recibir`; `/customer-advances` ACTIVE |
+| `ventas:quality` | 1 | `POST /shipments/{id}/confirm` → DESPACHADO (`sales/service.py:2458`); `reingresar` |
+| `ventas:submit` | 1 | `POST /orders/{id}/submit` → `inv_service.reserve` (`sales/service.py:707`) |
+| `comercial:publish` | 1 | la versión de la lista de precios pasa a ACTIVE, publicación irreversible (`commercial/service.py:269-271`) |
+| `maestros:create` | 1 (límite) | `POST /presentaciones/{id}/versiones` cierra la versión vigente y activa la nueva sin edición posterior (`master_data/uom_api.py:604-616`) |
+| `regulatorio:create` | 1 | `POST /official-documents` crea el documento como `VALID` y levanta bloqueos de despacho (`regulatory/service.py:216-218,266-268`) |
+| `aprobaciones:create` | 1 | `POST /requests/{id}/cancel` cancela cualquier solicitud abierta y deja sin efecto la puerta `ensure_approved` (`approvals/service.py:780-797`) |
+| `documentos:manage_types`, `organization:edit` | — (configuración) | cambio de configuración (criterio de la dueña) |
+| `comercial:create` / `comercial:edit` | 0 | borradores (DRAFT) y asignación de condiciones (`commercial/service.py:257,317-342`) |
+| `documentos:create/edit/upload/download/link` | 0 | metadatos, versiones con historial, archivo lógico; un vínculo congelado está protegido |
+| `maestros:edit/deactivate`, `homologacion:create/edit` | 0 | ediciones de maestro, baja lógica, DRAFT/CANDIDATE (la liberación exige `homologacion:approve`) |
+| `*:view`, `alertas:view` | 0 | lecturas; los únicos POST son previsualizaciones que no crean nada |
+| `documentos:deactivate`, `comercial:archive`, `tareas:view/assign/complete`, `users:view`, `roles:view` | 0 | ninguna ruta los consume con efecto definitivo (los cuatro primeros solo están sembrados). Si una ruta futura los consume, la Spec de esa ruta reabre su clase |
+
+**MFA-G00:** todo permiso del universo debe estar en exactamente una lista. El que no esté, en ejecución cuenta como SENSITIVE (nunca STANDARD en silencio) y la suite falla.
 
 **Gobierno:** cuando se autorice su implementación, sus roles privilegiados heredan este contrato (GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0).
-
-**Límite medido:** `inventario:transition` (conteos, lotes, traslados) queda STANDARD, porque son pasos operativos de flujo y no cambian la valoración. El cambio definitivo de existencias ocurre en la transición del ajuste (`inventario:approve`).
 
 ## 5. Modelo de datos (migración `0058_spec002_mfa`)
 
@@ -419,3 +440,220 @@ Requisitos 13/13 trazados · amenazas 24/24 con control y prueba · tareas sin r
 | F3 | `users.mfa_enabled` = vista derivada de compatibilidad | la escribe solo el servicio MFA en la misma transacción que el factor. Invariante probado: `mfa_enabled ⇔ existe factor ACTIVE`, en todos los flujos, incluidos el reset, la rotura de cristal y la desactivación |
 | F4 | GENERIC_LOGIN_RATE_LIMIT_DEBT = PRESERVED (DT-16 / Spec 055) · MFA_ABUSE_PROTECTION = IN_SCOPE | R-MFA-I1..I5 en verificación TOTP, códigos de recuperación, reautenticación, confirmación del alta y reset |
 | F5 | Auditoría con carga segura | R-MFA-J2 (texto del encargo recibido truncado en este punto; ver el informe) |
+
+## 19. Contrato de implementación (2026-10-26; precisa §5–§9 sin cambiarles el sentido)
+
+### 19.1 Reconciliaciones con el código medido en `2636bfa`
+
+| Id | Hecho medido | Decisión |
+|---|---|---|
+| RC-1 | `rotate_session` revoca la fila y crea otra; `test_auth_rotacion_atomica.py` y `test_auth_session_rotation.py` fijan esa semántica | Se **conserva**. Para que F1 no invalide cada access token en cada rotación, la sesión gana **`family_id`**: el id de la primera fila del login, copiado en cada rotación junto con `auth_method`, `mfa_verified_at` y `reauth_at`. El access token lleva `sid = family_id`. Autoriza solo si existe una fila de la familia con `revoked_at IS NULL` y `expires_at > ahora` |
+| RC-2 | Revocar una sesión (logout, `DELETE /auth/sessions/{id}`, revocaciones de seguridad) | Revoca **toda la familia** de esa fila |
+| RC-3 | `authenticate` pone `failed_attempts = 0` cuando la contraseña es correcta | Para un usuario con factor activo o que lo requiere, eso borraría los fallos de OTP (cinco fallos, login de nuevo, otros cinco). Por eso el contador **solo** se pone a cero tras el login **completo**. `LOGIN_SUCCESS` pasa a significar «login completo»; con el factor pendiente se audita `MFA_CHALLENGE_ISSUED` |
+| RC-4 | `POST /auth/password-reset/request` devuelve el `reset_token` al cliente anónimo («flujo demo», `api.py`) y responde 401 si el usuario no existe | **Fuera del alcance** (NO SILENT SCOPE EXPANSION): deuda nueva **AUTH-PASSWORD-RESET-TOKEN-DISCLOSED** (§21). El MFA limita el daño: restablecer la contraseña no toca el factor (T22), así que PRIVILEGED y SENSITIVE siguen necesitando el factor después |
+| RC-5 | `KONTROL_*` heredadas = FORBIDDEN en la orden canónica; la E2E y la certificación generan su propio `KONTROL_SECRET_KEY` | `KONTROL_MFA_KEYS` **obligatoria en `prod`** (sin ella no arranca). En otros entornos es opcional, pero si está se valida y, si falta, cualquier operación MFA falla cerrado con 503 `MFA_UNAVAILABLE`: no hay vuelta a contraseña sola ni clave por defecto. pytest y la corrida E2E generan una clave aleatoria en ejecución |
+| RC-6 | `inventario:transition` llama a `approve_count`, `confirm_transfer_ship` y `confirm_transfer_receipt`, que registran movimientos (`record_movement`) | INVENTORY_TRANSITION_DEFINITIVE_EFFECT = **1** → **SENSITIVE** (regla de §7 del encargo) |
+| RC-7 | El nombre de los eventos | Prevalecen los nombres mínimos de la dueña (§40 del encargo) sobre los de R-MFA-J1 |
+
+### 19.2 Módulos y firmas (backend)
+
+- `app/core/clock.py` — `def now() -> datetime` (UTC, aware). Es el **único** reloj de las decisiones MFA y de seguridad de la sesión: paso TOTP, caducidad del desafío, frescura de la reautenticación y `mfa_verified_at`. Las pruebas lo sustituyen con `monkeypatch`. No existe ninguna variable de entorno ni ajuste que lo cambie.
+- `app/modules/identity_access/totp.py` (funciones puras, stdlib):
+  - constantes `PERIOD = 30`, `DIGITS = 6`, `ALGORITHM = "SHA1"`, `SKEW_STEPS = 1`;
+  - `generate_secret() -> bytes`: 20 bytes de `secrets`;
+  - `encode_secret(raw) -> str`: Base32 sin `=`;
+  - `format_manual_key(b32) -> str`: grupos de 4 separados por espacio;
+  - `time_step(at) -> int`: `floor(unix / 30)`;
+  - `code_at(raw, step) -> str`: HOTP de RFC 4226 con truncamiento dinámico y 6 dígitos con ceros a la izquierda;
+  - `match_step(raw, code, at) -> int | None`:
+    - `code` debe ser `^[0-9]{6}$` tras quitar los espacios; si no, `None`;
+    - compara los 3 pasos `s-1, s, s+1`, **siempre los tres**, con `hmac.compare_digest`;
+    - devuelve el paso que coincide;
+  - `provisioning_uri(raw, *, account, issuer="KONTROL") -> str`: `otpauth://totp/{issuer}:{account}?secret=…&issuer=…&algorithm=SHA1&digits=6&period=30`, con `urllib.parse.quote`.
+- `app/modules/identity_access/mfa_crypto.py`:
+  - **Anillo:** `parse_key_ring(value) -> list[tuple[str, bytes]]`.
+    - Formato `kid:clave[,kid:clave]`: `kid` con `^[A-Za-z0-9_-]{1,32}$` y clave en Base64url que descodifica a 32 bytes exactos.
+    - Rechaza `kid` duplicados y el anillo vacío.
+    - `ValueError` con mensajes que **nunca** incluyen la clave.
+  - **Excepciones:** `MfaUnavailable(Exception)` y `MfaDecryptError(Exception)`.
+  - **`encrypt_secret(raw, *, aad) -> tuple[str, bytes]`:** AES-256-GCM con la primera clave; nonce de 12 bytes; devuelve `(kid, nonce + texto_cifrado)`.
+  - **`decrypt_secret(kid, blob, *, aad) -> bytes`:**
+    - `kid` ausente del anillo → `MfaUnavailable`;
+    - etiqueta inválida → `MfaDecryptError`.
+  - **AAD:** `f"{tenant_id}|{user_id}|{factor_id}".encode()`.
+- `app/core/config.py` — `mfa_keys: str | None = None` (`KONTROL_MFA_KEYS`), con un validador:
+  - si la variable está, se pasa por `parse_key_ring` (error sin el valor);
+  - si `environment == "prod"` y no está → `ValueError("KONTROL_MFA_KEYS es obligatoria en prod …")`.
+- `app/modules/identity_access/mfa_policy.py`:
+  - constantes `PRIVILEGED_PERMISSIONS`, `SENSITIVE_PERMISSIONS` y `STANDARD_PERMISSIONS` (frozensets **disjuntos**, §4.1) y `PRIVILEGED_ROLE_CODES = frozenset({"ADMIN"})`;
+  - `classify(permissions, *, protected_role_codes) -> Literal["PRIVILEGED","SENSITIVE","STANDARD"]`:
+    - un permiso que no esté en ninguna lista cuenta como SENSITIVE (fallo seguro en ejecución; MFA-G00 hace fallar la suite);
+    - un rol protegido cuyo código esté en `PRIVILEGED_ROLE_CODES` → PRIVILEGED;
+  - `requires_mfa(policy_class) -> bool`: PRIVILEGED o SENSITIVE;
+  - `user_policy_class(db, user) -> str`: usa `get_user_permissions` y los códigos de rol protegidos del usuario.
+- `app/modules/identity_access/mfa_service.py`: toda la lógica de §2 (alta, desafío, verificación, códigos, estado, regenerar, reemplazar, desactivar, reset administrativo, reautenticación, revocación por cambio de seguridad, rotura de cristal y recifrado). Su única puerta de auditoría es `_audit_mfa(db, action, *, user, actor_id=None, session_id=None, request_id=None, ip=None, **evidence)`:
+  - acepta solo las claves `method`, `policy_class`, `recovery_codes_remaining`, `reason`, `sessions_revoked`, `target_user_id` y `attempts_remaining`, con valores `str | int | bool | None`;
+  - cualquier otra clave o tipo → `ValueError`;
+  - nunca usa `before`/`after`.
+- `app/modules/identity_access/mfa_breakglass.py` y `mfa_rekey.py`: órdenes `python -m`, sin ruta HTTP.
+
+### 19.3 Esquema (migración `0058_spec002_mfa`, `down_revision = "0057_spec047_notifications"`)
+
+| Tabla | Columnas y restricciones |
+|---|---|
+| `mfa_factors` | `id` (UUID str 36 PK), `created_at`/`updated_at`, `created_by`, `tenant_id` FK `tenants` NOT NULL, `user_id` FK `users` NOT NULL indexado, `status` String(16) CHECK IN (`PENDING`,`ACTIVE`,`REVOKED`), `secret_ciphertext` LargeBinary NOT NULL (vacío en `REVOKED`), `key_id` String(32) NULL (NULL solo en `REVOKED`), `digits` int 6, `period` int 30, `algorithm` String(8) `SHA1`, `last_used_step` BigInteger NULL, `failed_confirmations` int 0 NOT NULL, `pending_expires_at`, `activated_at` y `revoked_at` DateTime(tz) NULL. Únicos parciales `uq_mfa_factor_active (user_id) WHERE status='ACTIVE'` y `uq_mfa_factor_pending (user_id) WHERE status='PENDING'` (en PostgreSQL y SQLite). `__scope__ = Scope.TENANT` |
+| `mfa_recovery_codes` | `id`, `created_at`/`updated_at`, `user_id` FK `users` NOT NULL indexado, `factor_id` FK `mfa_factors` NOT NULL, `code_hash` String(64) UNIQUE NOT NULL, `used_at` NULL. `__scope_authority__ = "user_id → users"` |
+| `mfa_challenges` | `id`, `created_at`/`updated_at`, `tenant_id` FK NOT NULL, `user_id` FK NOT NULL indexado, `purpose` CHECK IN (`LOGIN`,`ENROLL`), `token_hash` String(64) UNIQUE NOT NULL, `expires_at` NOT NULL, `attempts` int 0, `consumed_at` NULL, `ip` String(45), `user_agent` String(255). `__scope__ = Scope.TENANT` |
+| `sessions` + | `family_id` String(36) NOT NULL indexado (en la migración se rellena `family_id = id` en las filas existentes); `auth_method` String(24) NOT NULL, `server_default 'PASSWORD'`, CHECK IN (`PASSWORD`,`PASSWORD_TOTP`,`PASSWORD_RECOVERY`); `mfa_verified_at` y `reauth_at` DateTime(tz) NULL |
+| `permissions` / `role_permissions` | `users:mfa_reset` creado y concedido al rol `ADMIN` con el patrón idempotente de `0024`/`0057`; `setup` lo añade a `resources_actions["users"]` |
+
+`users.mfa_enabled` se conserva como vista derivada (§18 F3). Se pone a `False` en las filas existentes y la escribe solo `mfa_service`.
+
+### 19.4 Contrato HTTP (8 rutas nuevas + 4 cambiadas)
+
+| Ruta | Entrada | Autorización | Éxito | Errores |
+|---|---|---|---|---|
+| `POST /auth/login` (cambia) | igual que hoy | — | 200: `AUTHENTICATED` (los campos de hoy + `status`, `sid` en el token, cookie) · `MFA_REQUIRED` `{status, challenge_token, expires_in: 300, methods:["TOTP","RECOVERY_CODE"]}` · `MFA_ENROLLMENT_REQUIRED` `{status, challenge_token, expires_in: 300}`. Los dos últimos **sin** cookie ni access token | los de hoy |
+| `POST /auth/mfa/verify` | `{challenge_token, code?, recovery_code?}`, exactamente uno de los dos (`extra="forbid"`) | desafío `LOGIN` | `AUTHENTICATED` + `recovery_codes_remaining` + cookie | 401 `MFA_CHALLENGE_INVALID` · 401 `MFA_INVALID_CODE` (`details.attempts_remaining`) · 401 `MFA_CODE_ALREADY_USED` · 423 `AUTH_ACCOUNT_LOCKED` · 503 `MFA_UNAVAILABLE` · 422 |
+| `POST /auth/mfa/enrollment` | `{challenge_token?}` | desafío `ENROLL` **o** Bearer + reautenticación reciente | `{otpauth_uri, manual_key, qr_svg_data_uri, expires_in: 600}` + `Cache-Control: no-store` | 401 `MFA_CHALLENGE_INVALID` · 403 `REAUTH_REQUIRED` · 503 |
+| `POST /auth/mfa/enrollment/confirm` | `{challenge_token?, code}` | ídem | `{recovery_codes:[10]}`; por la vía del desafío además `AUTHENTICATED` + cookie; por la vía Bearer con factor previo: reemplazo atómico y revocación de las **otras** familias | 401 `MFA_INVALID_CODE` · 409 `MFA_NO_PENDING_ENROLLMENT` · 423 · 503 |
+| `GET /auth/mfa` | — | Bearer | `{required, policy_class, enabled, activated_at, recovery_codes_remaining}` | 401 |
+| `POST /auth/mfa/recovery-codes` | — | Bearer + reautenticación | `{recovery_codes:[10]}`, `no-store` | 403 `REAUTH_REQUIRED` · 409 `MFA_NOT_CONFIGURED` |
+| `DELETE /auth/mfa` | — | Bearer + reautenticación | 204; revoca las **otras** familias | 403 `MFA_REQUIRED_BY_POLICY` · 409 `MFA_NOT_CONFIGURED` |
+| `POST /auth/reauth` | `{password, code?, recovery_code?}` | Bearer | `{reauth_valid_until}` | 401 `REAUTH_FAILED` · 423 · 503 |
+| `POST /users/{user_id}/mfa/reset` | — | `users:mfa_reset` + reautenticación | 204; revoca **todas** las familias del objetivo | 404 `USER_NOT_FOUND` (otro tenant) · 403 `MFA_RESET_SELF_FORBIDDEN` · 403 `MFA_RESET_CEILING` (el objetivo tiene algún permiso que el actor no tiene) · 409 `MFA_NOT_CONFIGURED` |
+| `POST /auth/refresh` (cambia) | igual | cookie | igual; el token lleva `sid = family_id` | 401 `MFA_REQUIRED` (revoca la familia) si la política exige MFA y la familia no tiene `mfa_verified_at` |
+| `POST /auth/change-password` (cambia) | igual | Bearer | igual; revoca las **otras** familias | los de hoy |
+| `POST /auth/password-reset/confirm` (cambia) | igual | token | igual; revoca **todas** las familias | los de hoy |
+
+**`get_current_user`** (y la nueva `get_current_session`):
+- falta `sid` → 401 `AUTH_INVALID_TOKEN`;
+- familia sin fila activa → 401 `SESSION_REVOKED`;
+- `mfa_verified_at` nulo y política que exige MFA → 401 `MFA_REQUIRED`.
+
+`require_recent_reauth()`: 403 `REAUTH_REQUIRED` si `reauth_at` es nulo o tiene más de 300 s según `clock.now()`. El login completo fija `reauth_at = mfa_verified_at = clock.now()` (en STANDARD sin factor, solo `reauth_at`).
+
+**Registro cerrado de operaciones con reautenticación** (constante `REAUTH_PROTECTED_OPERATIONS`, con prueba de que cada ruta listada lleva la dependencia):
+- `POST /users` y `POST|DELETE /users/{id}/roles…`;
+- las rutas de `roles:create` y `roles:edit`;
+- las de `organization:delete` y `organization:deactivate`;
+- las de `license:create`, `license:edit` y `license:approve`;
+- las de `aprobaciones:configure`;
+- las 4 de gestión MFA.
+
+Al asignar o retirar un rol, si cambia la clase de política del objetivo, se revocan todas sus familias (R-MFA-H4).
+
+### 19.5 Límites (MFA_ABUSE_PROTECTION; en BD)
+
+- Desafío: 5 intentos y queda consumido.
+- Alta `PENDING`: 5 `failed_confirmations` y pasa a `REVOKED`.
+- Cada fallo de OTP, de código de recuperación o de reautenticación suma en `users.failed_attempts`; con 5 se bloquea 15 min. Durante el bloqueo, 423 sin evaluar el código.
+- El código de recuperación se consume con `UPDATE … WHERE used_at IS NULL` y `rowcount == 1`. La antirrepetición TOTP se hace con `UPDATE mfa_factors SET last_used_step = :s WHERE id = :id AND (last_used_step IS NULL OR last_used_step < :s)` y `rowcount == 1`.
+- Los límites por origen o IP son la deuda genérica DT-16 (GENERIC_LOGIN_RATE_LIMIT_DEBT = PRESERVED). El límite por cuenta deja como mucho 5 intentos por cada 15 min, venga de donde venga el intento.
+
+### 19.6 Arnés de pruebas (OQ-MFA-3 = A)
+
+- **Backend:** `tests/mfa_apoyo.py` contiene:
+  - `codigo_totp(clave_manual, instante)`: implementación **independiente** de RFC 4226/6238, el oráculo;
+  - `RelojMfa`: fixture que sustituye `app.core.clock.now`;
+  - `iniciar_sesion(client, tenant, usuario, contraseña) -> dict[str, str]` (cabeceras), que recorre las tres respuestas reales del login, da de alta el factor por API cuando hace falta y guarda la clave en memoria por prueba. Si el paso actual ya se usó con ese usuario, adelanta el reloj al paso siguiente: no hay espera ni reintento.
+
+  Los `_login` de cada fichero pasan a usar ese helper.
+- **E2E:**
+  - la corrida genera `KONTROL_MFA_KEYS` en ejecución;
+  - la siembra crea identidades por `parallelIndex` (`admin_w0`…`admin_w5` y las equivalentes de N6), sin factor;
+  - un fixture de worker:
+    - hace un solo alta y login por API con TOTP calculado en Node (`node:crypto`);
+    - guarda la clave y la cookie de refresh en un directorio temporal de la corrida con modo 0600, fuera del repositorio y de la evidencia, que se borra al terminar;
+    - encadena la cookie entre pruebas;
+    - renueva la reautenticación por API cuando tiene más de 120 s.
+
+  La E2E de MFA (TM-10) usa identidades propias y el flujo real por UI.
+
+## 20. Requisitos de Gobierno (revisión de la fuente, §46 del encargo)
+
+Fuente revisada: `requerimientos/gobierno/Ingenieria_de_Requerimientos_KONTROL_Gobierno_v1.0.pdf` (texto extraído y leído: tabla 10 de RNF y tabla 7.11 de control interno). Clasificación: PROJECT_REQUIREMENT.
+
+| Requisito | Texto (resumen literal) | Requisito núcleo | Diseño | Pruebas | Estado |
+|---|---|---|---|---|---|
+| RNF-GOV-011 | «Cifrado en tránsito, secretos fuera de código, MFA para roles privilegiados y rotación de credenciales» | A–F, G, §6 | §4.1, §6, §19.2 | MFA-A..G, MFA-K | MFA de roles privilegiados → **cubierto**. Secretos fuera de código → **cubierto** para la clave MFA (`KONTROL_MFA_KEYS`). Rotación → **cubierta** para la clave MFA (`mfa_rekey`); la rotación de contraseñas y otras credenciales queda **FUTURE_GOV_SPEC / DEPENDENCY** (fuera del MFA). Cifrado en tránsito → despliegue (TLS), fuera de este delta |
+| RNF-GOV-006 | «Toda autorización crítica se valida en backend; no confiar en UI ni claims sin verificación contextual» | B5, F2, H2 | §19.4 (`sid` contra la BD, política en cada petición, reautenticación en el backend) | MFA-B09, MFA-H01..02, MFA-F | **cubierto**: el JWT ya no basta, se verifica contra la familia de sesión viva |
+| RNF-GOV-012 | «Roles predefinidos no conceden autoridad transversal; permisos por capacidades y alcance» | G1, D4 (techo) | §4.1 (clase por capacidad y no por nombre) | MFA-G00..G, MFA-D | **cubierto** en lo que toca al MFA. El techo de delegación es el gap n.º 2 (**DEPENDENCY**) |
+| RNF-GOV-005 | «100 % de transacciones P0 con actor, autoridad, fuente, soporte, timestamp y correlación» | J | §19.2 `_audit_mfa` (actor, `session_id`, `request_id`, IP, fuente `API`/`CLI`) | MFA-J | **cubierto** para los eventos MFA; el catálogo formal es el gap n.º 4 (**DEPENDENCY**) |
+| GOV-CTL-002 | «Bitácora append-only de autenticación…» | J | eventos MFA y de sesión en `audit_events` | MFA-J | **cubierto** el registro de la autenticación; append-only con inmutabilidad en BD → OQ-GAB-3 / GOV-5 (**FUTURE_GOV_SPEC**) |
+| GOV-CTL-003 | «Autor, actor efectivo, rol, unidad, IP/sesión técnica, timestamp y correlación» | J | `user_id` = actor, `entity_id` = objetivo, `session_id`, `ip`, `request_id` | MFA-J | **cubierto** salvo rol y unidad de Gobierno (**FUTURE_GOV_SPEC**) |
+| GOV-CTL-004 | «No permitir al administrador técnico fabricar autoridad funcional para comprometer, pagar o aprobar» | D4 | techo de privilegio del reset; el reset **no** toca la contraseña y obliga a un alta nueva del objetivo | MFA-D08..10 | **cubierto parcialmente**: el reset de MFA no da acceso a la cuenta del objetivo. La separación general entre administrador técnico y autoridad funcional es el gap n.º 2 y Gobierno (**DEPENDENCY / FUTURE_GOV_SPEC**) |
+| RNF-GOV-017 | «Logs… sin filtrar secretos» | J2 | lista blanca y sin secretos en registros | MFA-J01..03 | **cubierto** para MFA |
+
+ENGINEERING_REQUIREMENTS_DOCUMENT_REVIEWED = 1 · ENGINEERING_REQUIREMENTS_RECONCILED = 1 (de diseño; se reabre en la reconciliación final) · UNEXPLAINED_REQUIREMENT_OMISSIONS = 0.
+
+## 21. Deudas nuevas detectadas (no absorbidas; NO SILENT SCOPE EXPANSION)
+
+| DEBT_ID | Spec dueña | Categoría | Severidad | Evidencia | Impacto | Bloqueo | Siguiente acción |
+|---|---|---|---|---|---|---|---|
+| AUTH-PASSWORD-RESET-TOKEN-DISCLOSED | 002 | seguridad | **CRITICAL** | `identity_access/api.py` `reset_request` devuelve `reset_token` al cliente anónimo («flujo demo»); `request_password_reset` da 401 si el usuario no existe | cualquiera que conozca el tenant y el usuario restablece la contraseña de una cuenta STANDARD; enumeración de usuarios. Las cuentas con MFA siguen protegidas por el factor (T22) | no bloquea MFA | ciclo propio de la Spec 002 (canal de entrega del token); escalado a la dueña en el informe |
+| INVENTORY-RECOMPUTE-UNGUARDED | 003-inventario | autorización | HIGH | `inventory/api.py:235` `POST /balances/recompute` solo exige sesión | cualquier usuario autenticado reconstruye los saldos de la empresa del contexto | no | delta de la Spec dueña de inventario |
+| APPROVAL-CANCEL-WITHOUT-REQUESTER-CHECK | 045 | SoD | HIGH | `approvals/service.py:780-797` | `aprobaciones:create` cancela cualquier solicitud abierta y levanta la puerta | no (mitigado: el permiso pasa a SENSITIVE) | gap n.º 2 (delegación / SoD) |
+| APPLY-SOURCE-STATUS-UNCHECKED | 013/038 | integridad financiera | HIGH | `purchasing/service.py:1513-1527` `apply_source` no comprueba el estado de la fuente | se aplican pagos y notas en DRAFT | no | delta de la Spec dueña |
+| REGULATORY-DOCUMENT-SELF-VALID | regulatoria | control | MEDIUM | `regulatory/service.py:216-218` crea el documento como `VALID` | un documento autodeclarado levanta bloqueos de despacho | no (mitigado: SENSITIVE) | delta de la Spec dueña |
+| GENERIC_LOGIN_RATE_LIMIT_DEBT | 055 | seguridad | — | `login_rate_limit_per_minute` sin uso | — | — | **PRESERVED** (DT-16) |
+| ALEMBIC-CHECK-DRIFT-PREEXISTING | 001 | esquema | MEDIUM | `alembic check` sobre una base en `0058` informa diferencias modelo↔migración AJENAS al MFA (presentes en `HEAD` antes de este ciclo; las tablas y columnas de `0058` no aparecen) | P26 (paridad modelo↔migración) no está verificada por máquina para todo el esquema | no | delta de la Spec 001 que convierta `alembic check` en compuerta y cierre las diferencias |
+| QA-CRAWLERS-SIN-MFA | 012 | QA | LOW | `resources/frontend/e2e/audit-route-crawler.mjs` y `audit-responsive-crawler.mjs` (herramientas manuales, fuera de la corrida canónica) siguen entrando por formulario con contraseña | con MFA no pasan del segundo factor para `admin` | no | migrarlos al helper `e2e/helpers/sesion.ts` cuando se vuelvan a usar |
+| SHELL-SIDEBAR-NOT-RESPONSIVE | 001 | responsive | MEDIUM | `resources/frontend/src/layout/Sidebar.tsx` (`collapsed` empieza en `false`, ancho fijo `w-64`, sin consulta de medios); a 320 px el menú ocupa 256 px y comprime el `main` de TODAS las pantallas (captura de la E2E MFA 14, corrida `r20261026t024651…`); las comprobaciones de «sin scroll horizontal» pasan porque el contenido se recorta, no porque se adapte; axe a 320 px da `target-size` (serious) en la cabecera (`campana` y enlace de licencia, corrida `r20261026t030343…`) | en móvil pequeño el contenido es ilegible hasta plegar el menú a mano | no (la E2E MFA pasa axe de página completa a 1280 px, axe de `main` y scroll a 320 px) | delta de la Spec 001 (shell): menú plegado o en cajón por debajo de `md` |
+| E2E-REAUTH-DIALOG | 002 | pruebas | LOW | la reautenticación vale 5 min desde el login y la E2E no inyecta reloj (OQ-MFA-3 prohíbe atajos): el diálogo «Confirme su identidad» no aparece en E2E | su comportamiento lo cubren `ReauthContext.test.tsx` (6 pruebas) y las de backend (`require_recent_reauth`, MFA-D*) | no | aceptado; revisar si la plataforma de E2E gana un reloj del servidor controlable |
+
+### 21.1 Decisión tomada durante la implementación (BLOCKING_CURRENT_SCOPE)
+
+| ID | Hallazgo | Decisión | Evidencia |
+|---|---|---|---|
+| LIC-READONLY-MFA-ROUTES | con la licencia en `READ_ONLY`, el middleware bloqueaba `POST /auth/mfa/verify`, `/auth/mfa/enrollment(/confirm)` y `/auth/reauth`, así que nadie con MFA podía iniciar sesión ni reautenticarse para reparar la licencia | se añaden a `LICENSE_EXEMPT_PREFIXES` junto a `login`/`refresh`, que ya lo estaban: completan la autenticación, no escriben datos de negocio | `evidence/mfa-privileged-roles/red-tm-5c.txt` (rojo → verde, 17 pruebas) |
+
+## 22. Reconciliación final de Gobierno (fuente releída al cierre, 2026-10-26)
+
+Fuente: `requerimientos/gobierno/Ingenieria_de_Requerimientos_KONTROL_Gobierno_v1.0.pdf` (texto extraído de nuevo; tablas de RNF, 7.11 de
+control interno y de servicios digitales). Clasificación: PROJECT_REQUIREMENT. Este delta es SHARED_CORE: deja la base que Gobierno heredará;
+no implementa Gobierno (GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0; sin módulos `gov_*`, sin GOV-0, sin GOV-SPEC, sin Spec 057; la línea base
+`9a41503` sigue en la historia y `requerimientos/` no tiene cambios rastreados).
+
+| Requisito | Estado al cierre | Evidencia de implementación |
+|---|---|---|
+| RNF-GOV-011 seguridad | **COVERED** en MFA de roles privilegiados, secretos fuera del código (`KONTROL_MFA_KEYS`, nunca en el repositorio ni en la evidencia) y rotación de la clave MFA (`mfa_rekey`); **FUTURE_GOV_SPEC / DEPENDENCY** la rotación de contraseñas y demás credenciales; TLS es despliegue | `test_mfa_*` (backend), mutantes M01–M11 muertos (`mutaciones.md`), runbook de rotación en `backup-restore-plan.md` §7 |
+| RNF-GOV-006 autorización en backend | **COVERED**: `sid` contra la familia de sesión viva, política y reautenticación en el servidor | `test_mfa_session_authority.py`, `test_mfa_no_bypass.py`, M02/M03/M10 muertos |
+| RNF-GOV-012 mínimo privilegio | **COVERED** para el MFA (clase por capacidad, no por nombre de rol); el techo general de delegación sigue como gap n.º 2 (**DEPENDENCY**) | `test_mfa_policy.py`, M01 muerto, §4.1 |
+| RNF-GOV-005 / GOV-CTL-002 / GOV-CTL-003 trazabilidad | **COVERED** para los eventos MFA (actor, objetivo, sesión, IP, `request_id`, fuente); append-only con inmutabilidad en BD, y rol y unidad de Gobierno → **FUTURE_GOV_SPEC** (OQ-GAB-3 / GOV-5) | `test_mfa_audit_no_leak.py`; E2E `mfa.spec.ts` y suites con rastro de auditoría |
+| GOV-CTL-004 el administrador técnico no fabrica autoridad | **PARTIAL (por diseño)**: el reset de MFA tiene techo de privilegio, no puede hacerse sobre uno mismo, no toca la contraseña y obliga a un alta nueva; la separación general administrador técnico ↔ autoridad funcional es gap n.º 2 / Gobierno | M06/M07 muertos; E2E 08–09 (reset y revocación) |
+| RNF-GOV-017 observabilidad sin secretos | **COVERED**: lista blanca de auditoría, registros sin secretos; la evidencia E2E retira por sí misma el material MFA de las trazas de pruebas fallidas (TM-9f) | `test_mfa_audit_no_leak.py`, `test_e2ecorrida_33/33b`, barrido de `qa/e2e-runs/` = 0 |
+| RNF-GOV-010 copias y restauración | **COVERED en documentación**: el anillo de claves MFA es parte de lo que se respalda y custodia (sin él, los factores no se descifran) y tiene runbook de rotura de cristal; **DEPENDENCY** el simulacro de restauración con validación antes de producción (no se ejecutó en este ciclo) | `backup-restore-plan.md` §2 y §7, ADR-004 (extensión) |
+| RNF-GOV-014 / GOV-DIG-007 accesibilidad | **COVERED** en las pantallas MFA (axe WCAG 2.0/2.1/2.2 AA sin violaciones serias, teclado, 320 px sin scroll horizontal); la cabecera del shell a 320 px es la deuda SHELL-SIDEBAR-NOT-RESPONSIVE (§21) | E2E `mfa.spec.ts` 14; vitest de las pantallas MFA |
+| RNF-GOV-015 interoperabilidad | **COVERED** para las rutas MFA: contrato OpenAPI, códigos de error deterministas (`MFA_*`, `REAUTH_REQUIRED`) | `test_openapi_security.py`, `openapi-routes.json`, `contracts/api-contracts.md` |
+| RNF-GOV-016 portabilidad | **COVERED**: `segno==1.6.6` (BSD, Python puro) y criptografía ya presente; ninguna dependencia propietaria | `dependencias.md` (pip-audit limpio) |
+| GOV-DIG-004 intercambio entre organismos | **FUTURE_GOV_SPEC**: el MFA protege a personas; la autenticación máquina-a-máquina entre organismos no es de este delta | — |
+
+ENGINEERING_REQUIREMENTS_DOCUMENT_REVIEWED = 1 · ENGINEERING_REQUIREMENTS_RECONCILED = 1 (final) · UNEXPLAINED_REQUIREMENT_OMISSIONS = 0 ·
+GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 · GOVERNMENT_MODULES_CREATED = 0.
+
+## 23. Resumen de ejecución y evidencia (cierre, 2026-10-26)
+
+Todo el código, las pruebas, el código de QA y la documentación de producto los escribió DeepSeek; Claude diseñó, auditó, aplicó tal
+cual y verificó (detalle por tarea, reintentos, rechazos y coste en `evidence/mfa-privileged-roles/orchestration.md`). Excepciones de
+formato de Claude: `ruff --select I --fix` (OD-ORCH-01) y la regeneración mecánica de `openapi-routes.json`.
+
+| Verificación | Orden | Resultado |
+|---|---|---|
+| Backend PostgreSQL con analizador real y telemetría | `qa/suite_tiempos.py --motor postgres --con-analizador` | 3386 pasan · 0 fallan · 18 omitidas · anomalía NORMAL (`qa/backend-runs/r20261026t033649…`) |
+| Backend SQLite con analizador real y telemetría | `qa/suite_tiempos.py --motor sqlite --con-analizador` | 2336 pasan · 0 fallan · 1068 omitidas (solo PostgreSQL) · NORMAL (`r20261026t041014…`); los 9 ficheros reordenados por `ruff` se repitieron después en ambos motores (100+4 / 104) |
+| Migración `0058` | `test_spec002_migration_0058.py` (instalación limpia, actualización, bajada y subida) en PostgreSQL | verde |
+| `ruff` / `mypy` | `ruff check` · `mypy app` | ruff limpio; mypy sin errores en código del ciclo (los 154 restantes están en líneas confirmadas antes de este ciclo) |
+| Frontend | `tsc -b` · `eslint --max-warnings 0` · `vitest` · `vite build` | 0 · 0 · 545/545 · build correcto |
+| E2E canónica completa con analizador | `qa/e2e-run.py --con-analizador` | **306 pasan · 0 fallan · 0 omitidas**, proyectos de licencia incluidos; limpieza LIMPIA; `material_mfa` 0; bases protegidas sin cambios (`qa/e2e-runs/r20261026t033040…`) |
+| E2E MFA multinavegador | `qa/e2e-run.py --con-analizador -- --project=firefox --project=webkit e2e/mfa.spec.ts e2e/sesion-totp.spec.ts` | 66/66 (22 por motor: chromium, firefox, webkit) |
+| Base tras la E2E | `qa/e2e-bases.py listar` · manifiesto | 0 bases de corrida · `protegidas_sin_cambios = true` · puertos 8000/5173/8010 libres |
+| Mutaciones | `mutaciones.md` | 11/11 muertas (MUTATION_SURVIVORS = 0); más la mutación de la invalidación de TM-10c (muere) |
+| Dependencias | `dependencias.md` | `segno==1.6.6` (BSD), pip-audit limpio, `pip check` correcto |
+| Fugas | barrido de los ficheros del ciclo y de `qa/e2e-runs/` | 0 claves, códigos u `otpauth://` reales; solo marcadores, alfabeto base32 y el vector público RFC 6238 |
+| Residuos | `.mutbak`/`.orig`/`.rej`/`.bak`, bases, puertos, estado E2E | 0; el único no rastreado ajeno al ciclo es material de la dueña (`requerimientos/KONTROL_SNAT_2026_00093.docx`), intacto y fuera del commit |
+
+Trazabilidad: cada requisito de §2 (A–M) tiene su diseño (§4–§10, §19), sus pruebas (MFA-A..M en backend, vitest de cada pantalla,
+`e2e/mfa.spec.ts` 01–14) y su evidencia en esta tabla; las decisiones (§18, §21.1) y las deudas (§21) tienen dueño y siguiente acción;
+Gobierno queda reconciliado en §22. TRACEABILITY_COMPLETE = 1 · MFA_BYPASS = BLOCKED · NEGATIVE_AUTHORIZATION verificada (MFA-D, MFA-H,
+`test_mfa_no_bypass.py`) · SECRET_EXPOSURE = 0 · PRODUCTION_TOUCHED = 0.

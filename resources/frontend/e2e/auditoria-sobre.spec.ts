@@ -8,20 +8,16 @@
  * entrar por el menú. No se usa la columna «Fecha» (deuda `AUDITORIA-CREATED-AT`)
  * ni la caja de búsqueda (`UI-BUSQUEDA-MUERTA`, decisión pendiente).
  */
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
+
+import { entrar as entrarConSesion, expect, iniciarSesion, identidad, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 
-/** Inicia sesión por API y devuelve el `request_id` que el servidor asignó a ese login. */
-async function loginConRastro(request: APIRequestContext, tenant: string, usuario: string): Promise<{ rastro: string; token: string }> {
-  const r = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: tenant, username: usuario, password: PASSWORD },
-  });
-  expect(r.ok(), `login ${usuario}/${tenant}: ${r.status()}`).toBeTruthy();
-  const rastro = r.headers()["x-request-id"];
-  expect(rastro, "el servidor devuelve X-Request-ID").toBeTruthy();
-  return { rastro, token: (await r.json()).access_token as string };
+/** Inicia sesión por el flujo real y devuelve el `request_id` que el servidor asignó a ese login. */
+async function loginConRastro(tenant: string, usuario: string): Promise<{ rastro: string; token: string }> {
+  const s = await iniciarSesion(identidad(usuario), { tenant });
+  return { rastro: s.rastro, token: s.token };
 }
 
 /** ¿Está el rastro en la bitácora del tenant de `token`? Por API, con página amplia:
@@ -36,11 +32,7 @@ async function rastroEnLaBitacora(request: APIRequestContext, token: string, ras
 }
 
 async function entrar(page: Page, tenant: string, usuario: string): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(tenant);
-  await page.getByLabel(/Usuario/).fill(usuario);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await entrarConSesion(page, usuario, { tenant });
   await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
   await page.waitForLoadState("networkidle");
   const compuerta = page.getByTestId(/^elegir-empresa-/);
@@ -58,8 +50,8 @@ async function irAAuditoria(page: Page): Promise<void> {
 
 test.describe("AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan", () => {
   test("ENV-01/02 · dos eventos controlados del tenant aparecen como filas, y son los del sobre", async ({ page, request }) => {
-    const { rastro: rastroA, token } = await loginConRastro(request, "DEMO", "admin");
-    const { rastro: rastroB } = await loginConRastro(request, "DEMO", "uab");
+    const { rastro: rastroA, token } = await loginConRastro("DEMO", "admin");
+    const { rastro: rastroB } = await loginConRastro("DEMO", "uab");
 
     let sobre: { items: Array<{ action: string; entity_type: string; request_id: string | null }>; total: number } | null = null;
     page.on("response", async (r) => {
@@ -93,15 +85,16 @@ test.describe("AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan", () =>
     }
     for (const rastro of [rastroA, rastroB]) {
       if (esperadas.some((i) => i.request_id === rastro)) {
-        await expect(page.getByRole("row", { name: new RegExp(rastro) })).toBeVisible();
+        await expect(page.getByRole("row", { name: new RegExp(rastro) }).first()).toBeVisible();
       }
     }
     await expect(page.getByText("Sin eventos")).toHaveCount(0);
   });
 
   test("ENV-04 · el rastro de otro tenant no está en el sobre ni en la tabla", async ({ page, request }) => {
-    const { rastro: ajeno } = await loginConRastro(request, "DEMO2", "uc");
-    const { rastro: propio, token } = await loginConRastro(request, "DEMO", "admin");
+    const { rastro: ajeno } = await loginConRastro("DEMO2", "uc");
+    // Cada identidad del worker admite como mucho dos inicios TOTP por paso de 30 s sin esperar.
+    const { rastro: propio, token } = await loginConRastro("DEMO", "ub");
 
     let sobre: { items: Array<{ request_id: string | null }> } | null = null;
     page.on("response", async (r) => {
@@ -116,7 +109,7 @@ test.describe("AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan", () =>
     expect(sobre!.items.map((i) => i.request_id)).not.toContain(ajeno);
     await expect(page.getByRole("row", { name: new RegExp(ajeno) })).toHaveCount(0);
     if (sobre!.items.some((i) => i.request_id === propio)) {
-      await expect(page.getByRole("row", { name: new RegExp(propio) })).toBeVisible();
+      await expect(page.getByRole("row", { name: new RegExp(propio) }).first()).toBeVisible();
     }
   });
 });

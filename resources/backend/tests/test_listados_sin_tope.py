@@ -16,6 +16,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy import event, select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -105,7 +106,7 @@ def _mundo() -> Iterator[None]:
 
 
 def _sesion(usuario: str = "admin", tenant: str = "DEMO", empresa: str | None = None) -> dict[str, str]:
-    r = _CLIENT.post(f"{API}/auth/login", json={"tenant_code": tenant, "username": usuario, "password": PASSWORD})
+    r = login_completo(_CLIENT, f"{API}/auth/login", json={"tenant_code": tenant, "username": usuario, "password": PASSWORD})
     assert r.status_code == 200, r.text
     return {"Authorization": f"Bearer {r.json()['access_token']}", COMPANY_HEADER: empresa or _D1}
 

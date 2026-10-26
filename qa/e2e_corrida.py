@@ -16,6 +16,7 @@ ocupados no se empieza.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import importlib.metadata
 import json
@@ -32,6 +33,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+import zipfile
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
@@ -105,6 +107,36 @@ LARGO_MAXIMO_DE_REFERENCIA = 120
 VARIABLES_DE_BASE = ("KONTROL_DB_URL", "KONTROL_E2E_DB_URL", "KONTROL_TEST_DB_URL")
 #: Nada que parezca una URL con usuario y clave sale por la consola ni entra en el manifiesto.
 URL_CON_CREDENCIALES = re.compile(r"://[^/\s:@]+:[^@\s]+@")
+#: Material MFA sintético: jamás puede quedar en la evidencia (OQ-MFA-3).
+MARCAS_MFA = (b"manual_key", b"recovery_codes", b"otpauth://")
+
+
+def lleva_material_mfa(ruta: Path) -> bool:
+    """Indica si `ruta` (fichero o carpeta) conserva material MFA sintético."""
+    if ruta.is_file():
+        ficheros = [ruta]
+    else:
+        ficheros = [p for p in ruta.rglob("*") if p.is_file()]
+    for fichero in ficheros:
+        try:
+            if fichero.suffix == ".zip":
+                try:
+                    with zipfile.ZipFile(fichero) as archivo:
+                        for miembro in archivo.namelist():
+                            contenido = archivo.read(miembro)
+                            if any(marca in contenido for marca in MARCAS_MFA):
+                                return True
+                except zipfile.BadZipFile:
+                    contenido = fichero.read_bytes()
+                    if any(marca in contenido for marca in MARCAS_MFA):
+                        return True
+            else:
+                contenido = fichero.read_bytes()
+                if any(marca in contenido for marca in MARCAS_MFA):
+                    return True
+        except OSError:
+            return True
+    return False
 
 
 class Interrumpida(BaseException):
@@ -236,6 +268,9 @@ class Corrida:
         # Sin opción, la corrida es de un solo entorno, como V0; con la opción, el producto corre en el runtime puro.
         self.modo_de_producto = "RUNTIME_SEPARADO" if python_de_producto else "UN_SOLO_ENTORNO"
         self.run_id = nombres.nuevo_run_id(datetime.now(UTC), os.getpid(), secrets.token_hex(3))
+        # Clave AES de la corrida (Spec 002), generada en ejecución, solo en
+        # memoria y en el entorno de los procesos hijos; el manifiesto no la registra.
+        self.claves_mfa = f"e2e{secrets.token_hex(3)}:{base64.urlsafe_b64encode(secrets.token_bytes(32)).decode().rstrip('=')}"
         self.base = nombres.nombre_de_base(self.run_id)
         self.estado = Path(self.entorno.get("KONTROL_E2E_STATE_DIR", "/tmp/kontrol-e2e")) / self.run_id
         self.evidencia = Path(self.entorno.get("KONTROL_E2E_EVIDENCE_DIR",
@@ -272,6 +307,8 @@ class Corrida:
             "KONTROL_DB_URL": self.url,
             "KONTROL_E2E_DB_URL": self.url,
             "KONTROL_E2E_RUN_ID": self.run_id,
+            "KONTROL_MFA_KEYS": self.claves_mfa,
+            "KONTROL_E2E_MFA_DIR": str(self.estado / "mfa"),
             "KONTROL_ENVIRONMENT": self.entorno.get("KONTROL_ENVIRONMENT", "local"),
             "KONTROL_SECRET_KEY": self.entorno.get(
                 "KONTROL_SECRET_KEY", "qa-secret-key-0123456789abcdef0123456789abcdef"),
@@ -423,6 +460,9 @@ class Corrida:
         self.creada = True
         self.url = self.servidor.url_de(self.base)
         self.estado.mkdir(parents=True, exist_ok=True)
+        # Estado del arnés MFA de los workers, fuera de la evidencia; se borra
+        # con el estado al terminar.
+        (self.estado / "mfa").mkdir(mode=0o700, exist_ok=True)
         self.generar_firmante()
 
         self.fase("migrar")
@@ -568,13 +608,16 @@ class Corrida:
     def verificar_backend(self) -> None:
         """El backend que responde es el de esta corrida y escribe en la base de esta corrida.
 
-        Inicia sesión por la API y mira dos cosas: que la sesión aparece en la base de la
-        corrida, y que todas las conexiones que llevan el nombre de esta corrida están en ella.
+        Con MFA obligatorio el login no abre sesión: responde 200 con
+        `status` `MFA_ENROLLMENT_REQUIRED` o `MFA_REQUIRED` y crea un desafío
+        en `mfa_challenges`. Este método comprueba precisamente eso: que el
+        desafío aparece en la base y que todas las conexiones de la corrida
+        están en ella.
         """
         self.fase("comprobar la base del backend")
         if self.url is None:
             raise base.CicloDeBaseRoto("la base de la corrida todavía no existe")
-        antes = self._sesiones()
+        antes = self._desafios()
         entorno = self.entorno_de_procesos()
         cuerpo = json.dumps({"tenant_code": "DEMO", "username": entorno["KONTROL_E2E_USER"],
                              "password": entorno["KONTROL_E2E_PASSWORD"]}).encode()
@@ -582,13 +625,18 @@ class Corrida:
                                           headers={"Content-Type": "application/json"})
         try:
             with urllib.request.urlopen(peticion, timeout=30) as respuesta:
-                respuesta.read()
+                body = json.loads(respuesta.read().decode())
         except urllib.error.URLError as error:
             raise base.CicloDeBaseRoto(f"el backend no deja iniciar sesión al usuario de la siembra: {error}") from error
-        despues = self._sesiones()
+        except json.JSONDecodeError as error:
+            raise base.CicloDeBaseRoto(f"la respuesta del login no es JSON: {error}") from error
+        status = body.get("status")
+        if status not in ("MFA_ENROLLMENT_REQUIRED", "MFA_REQUIRED"):
+            raise base.CicloDeBaseRoto(f"login no requirió MFA: {status}")
+        despues = self._desafios()
         if despues != antes + 1:
             raise base.CicloDeBaseRoto(
-                f"la sesión abierta por la API no está en la base de la corrida ({antes} → {despues}): "
+                f"el desafío MFA creado por la API no está en la base de la corrida ({antes} → {despues}): "
                 "el backend escribe en otra base")
         self.manifiesto["instalacion"] = self.comprobar_referencia_de_clave()
         admin = base.motor_administrativo(self.servidor)
@@ -601,7 +649,7 @@ class Corrida:
             admin.dispose()
         if donde != [self.base]:
             raise base.CicloDeBaseRoto(f"las conexiones de la corrida están en {donde}, no solo en {self.base}")
-        self.manifiesto["backend"] = {"base": self.base, "sesiones": despues}
+        self.manifiesto["backend"] = {"base": self.base, "desafios": despues}
 
     def comprobar_referencia_de_clave(self) -> dict[str, Any]:
         """La instalación de la corrida persiste una referencia de clave relativa al volumen.
@@ -626,11 +674,11 @@ class Corrida:
                 "el producto volvió a guardar la ruta absoluta (INSTALACION-KEY-REFERENCE-120)")
         return {"key_reference": referencia, "relativa": True, "largo_del_volumen": len(str(self.estado / "license"))}
 
-    def _sesiones(self) -> int:
+    def _desafios(self) -> int:
         motor = create_engine(self.url or "", future=True, poolclass=NullPool)
         try:
             with motor.connect() as conn:
-                return int(conn.execute(text("select count(*) from sessions")).scalar_one())
+                return int(conn.execute(text("select count(*) from mfa_challenges")).scalar_one())
         finally:
             motor.dispose()
 
@@ -762,6 +810,21 @@ class Corrida:
             if limpio != texto_:
                 registro.write_text(limpio)
 
+    def retirar_material_mfa(self) -> dict[str, Any]:
+        """Retira de la evidencia las carpetas con material MFA sintético (OQ-MFA-3)."""
+        resultados = self.evidencia / "test-results"
+        retirados: list[str] = []
+        if resultados.is_dir():
+            for hijo in sorted(resultados.iterdir()):
+                if hijo.is_dir() and lleva_material_mfa(hijo):
+                    shutil.rmtree(hijo, ignore_errors=True)
+                    retirados.append(hijo.name)
+        quedan = 0
+        for fichero in self.evidencia.rglob("*"):
+            if fichero.is_file() and fichero.name != "manifest.json" and lleva_material_mfa(fichero):
+                quedan += 1
+        return {"retirados": retirados, "quedan": quedan}
+
     def limpiar(self) -> bool:
         """Para lo que se arrancó y elimina lo que se creó. Devuelve si todo quedó limpio."""
         limpieza: dict[str, Any] = {}
@@ -788,6 +851,12 @@ class Corrida:
         except Exception as error:  # noqa: BLE001
             self.manifiesto["protegidas_despues"] = f"ERROR {type(error).__name__}: {error}"
         self.tachar_credenciales()
+        # OQ-MFA-3: las trazas de las pruebas fallidas llevan respuestas del alta.
+        try:
+            limpieza["material_mfa"] = self.retirar_material_mfa()
+        except Exception as error:  # noqa: BLE001
+            limpieza["material_mfa"] = {"estado": f"ERROR {type(error).__name__}: {error}"}
+        correcto = correcto and limpieza["material_mfa"].get("quedan") == 0
         # El estado efímero lleva la clave de instalación de una base que ya no existe.
         shutil.rmtree(self.estado, ignore_errors=True)
         limpieza["estado"] = "eliminado" if not self.estado.exists() else "QUEDA"

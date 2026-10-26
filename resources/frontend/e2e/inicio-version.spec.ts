@@ -6,12 +6,12 @@
  */
 import { resolve } from "node:path";
 
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
 
 import { ejecutarPython } from "./helpers/python";
+import { entrarComoUsuario, entrar as entrarConSesion, expect, sesionApi, sesionDeUsuario, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const SEMVER = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/;
 
@@ -31,18 +31,20 @@ function usuarioSinPermiso(): string {
   return usuario;
 }
 
-async function token(request: APIRequestContext, usuario: string): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: "DEMO", username: usuario, password: PASSWORD } });
-  expect(r.ok(), `login de ${usuario}: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+async function token(usuario: string): Promise<string> {
+  return usuario === "admin"
+    ? (await sesionApi("admin", { tenant: "DEMO" })).token
+    : (await sesionDeUsuario(usuario, { tenant: "DEMO" })).token;
 }
 
 async function entrar(page: Page, usuario: string): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill("DEMO");
-  await page.getByLabel(/Usuario/).fill(usuario);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  if (usuario === "admin") {
+    await entrarConSesion(page, "admin", { tenant: "DEMO" });
+    await expect(page).toHaveURL(/\/$/, { timeout: 20_000 });
+    await expect(page.getByRole("heading", { level: 1, name: "Inicio" })).toBeVisible({ timeout: 15_000 });
+    return;
+  }
+  await entrarComoUsuario(page, usuario, { tenant: "DEMO" });
   await expect(page).toHaveURL(/\/$/, { timeout: 20_000 });
   await expect(page.getByRole("heading", { level: 1, name: "Inicio" })).toBeVisible({ timeout: 15_000 });
 }
@@ -54,7 +56,7 @@ function tarjeta(page: Page, etiqueta: string) {
 
 test.describe("inicio · tarjeta «Versión»", () => {
   test("E2E-VER-01 · con permiso la tarjeta pinta la versión del diagnóstico, no un hueco", async ({ page, request }) => {
-    const bearer = await token(request, "admin");
+    const bearer = await token("admin");
     const diagnostico = await request.get(`${API}/system/diagnostics`, { headers: { Authorization: `Bearer ${bearer}` } });
     expect(diagnostico.status()).toBe(200);
     const version = ((await diagnostico.json()) as { version: string }).version;

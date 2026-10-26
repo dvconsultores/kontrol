@@ -6,13 +6,13 @@
  * multiempresa queda inaccesible por la puerta de entrada.
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
 
 import { mundoN6 } from "./helpers/n6-mundo";
+import { entrar as entrarConSesion, expect, test } from "./helpers/sesion";
 
 const IDS = mundoN6();
 const TENANT = "DEMO";
-const PASS = "Kontrol2026Segura!";
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 /** Cierra las notificaciones: al ancho de un móvil tapan la cabecera. */
@@ -23,11 +23,7 @@ async function cerrarAvisos(page: Page): Promise<void> {
 }
 
 async function entrar(page: Page, usuario: string): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(usuario);
-  await page.getByLabel(/Contraseña/).fill(PASS);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await entrarConSesion(page, usuario, { tenant: TENANT });
   await expect(page).toHaveURL(/\/$/, { timeout: 20_000 });
 }
 

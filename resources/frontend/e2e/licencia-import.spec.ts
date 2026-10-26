@@ -13,12 +13,12 @@
  */
 import { resolve } from "node:path";
 
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import { expect, type APIRequestContext } from "@playwright/test";
 
 import { ejecutarPython } from "./helpers/python";
+import { iniciarSesion, sesionApi, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const QA = resolve(BACKEND, "..", "..", "qa");
 const ACTIVATE = `${API}/license/activate`;
@@ -58,10 +58,12 @@ function licenciaFirmada(licenseId: string, ...opciones: string[]): Artefacto {
   return JSON.parse(salida) as Artefacto;
 }
 
-async function token(request: APIRequestContext, usuario: string): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: "DEMO", username: usuario, password: PASSWORD } });
-  expect(r.ok(), `login de ${usuario}: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+async function token(usuario: string): Promise<string> {
+  // Los usuarios de `usuarioSin` se crean en la prueba; el base usa la sesión del worker.
+  if (usuario === "admin") {
+    return (await sesionApi("admin", { tenant: "DEMO" })).token;
+  }
+  return (await iniciarSesion(usuario, { tenant: "DEMO" })).token;
 }
 
 /** Lo observable de la licencia vigente: identificador y modo (E2E-LICIMP-04 reimporta el artefacto
@@ -75,7 +77,7 @@ async function detalle(request: APIRequestContext, bearer: string): Promise<{ li
 
 test.describe("Licencia · importar exige autoridad", () => {
   test("E2E-LICIMP-01 · anónimo con un artefacto válido: 401, sin fuga, y la licencia sigue igual", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     const antes = await detalle(request, admin);
     const artefacto = licenciaFirmada("LIC-E2E-ANONIMA");
     for (const ruta of [ACTIVATE, IMPORT]) {
@@ -90,9 +92,9 @@ test.describe("Licencia · importar exige autoridad", () => {
   });
 
   test("E2E-LICIMP-02 · un usuario sin permisos de licencia: 403 y nada cambia", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     const antes = await detalle(request, admin);
-    const comun = await token(request, usuarioSin("license:view", "license:create", "license:edit", "license:approve"));
+    const comun = await token(usuarioSin("license:view", "license:create", "license:edit", "license:approve"));
     const r = await request.post(ACTIVATE, { data: licenciaFirmada("LIC-E2E-COMUN"), headers: { Authorization: `Bearer ${comun}` } });
     expect(r.status()).toBe(403);
     expect((await r.json()).code).toBe("PERMISSION_DENIED");
@@ -101,9 +103,9 @@ test.describe("Licencia · importar exige autoridad", () => {
   });
 
   test("E2E-LICIMP-03 · license:view sin license:create lee pero no importa: 403 y nada cambia", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     const antes = await detalle(request, admin);
-    const lector = await token(request, usuarioSin("license:create"));
+    const lector = await token(usuarioSin("license:create"));
     expect(await detalle(request, lector)).toEqual(antes);
     const r = await request.post(IMPORT, { data: licenciaFirmada("LIC-E2E-LECTOR"), headers: { Authorization: `Bearer ${lector}` } });
     expect(r.status()).toBe(403);
@@ -112,7 +114,7 @@ test.describe("Licencia · importar exige autoridad", () => {
   });
 
   test("E2E-LICIMP-04 · el administrador importa un artefacto válido y el detalle lo refleja", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     // El artefacto VIGENTE exacto (reimportación idempotente): el estado observable no cambia para los
     // demás trabajadores y la prueba no depende de qué período haya quedado antes. Otra legacy distinta del
     // mismo período ya no entra (FR-010-330; `licencia-periodo.spec.ts`).
@@ -128,7 +130,7 @@ test.describe("Licencia · importar exige autoridad", () => {
   });
 
   test("E2E-LICIMP-05 · el administrador con firma inválida: 423 y la licencia sigue igual", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     const antes = await detalle(request, admin);
     const r = await request.post(ACTIVATE, { data: licenciaFirmada("LIC-E2E-FALSA", "--firma-invalida"), headers: { Authorization: `Bearer ${admin}` } });
     expect(r.status()).toBe(423);
@@ -137,7 +139,7 @@ test.describe("Licencia · importar exige autoridad", () => {
   });
 
   test("E2E-LICIMP-06 · el administrador con una licencia de otra instalación: 423 y la licencia sigue igual", async ({ request }) => {
-    const admin = await token(request, "admin");
+    const admin = await token("admin");
     const antes = await detalle(request, admin);
     const r = await request.post(IMPORT, { data: licenciaFirmada("LIC-E2E-AJENA", "--otra-instalacion"), headers: { Authorization: `Bearer ${admin}` } });
     expect(r.status()).toBe(423);
@@ -154,7 +156,7 @@ test.describe("Licencia · importar exige autoridad", () => {
 
   test("E2E-LICIMP-10 · el diagnóstico sigue con sesión y license:view; los health, públicos y mínimos", async ({ request }) => {
     expect((await request.get(`${API}/system/diagnostics`)).status()).toBe(401);
-    const lector = await token(request, usuarioSin("license:create"));
+    const lector = await token(usuarioSin("license:create"));
     expect((await request.get(`${API}/system/diagnostics`, { headers: { Authorization: `Bearer ${lector}` } })).status()).toBe(200);
     expect(await (await request.get(`${API}/health/live`)).json()).toEqual({ status: "ok", service: "kontrol-backend" });
     expect(await (await request.get(`${API}/health/ready`)).json()).toEqual({ status: "ok", service: "kontrol-backend", database: "ok" });

@@ -1,5 +1,7 @@
 """Dependencias FastAPI: usuario actual, permisos y licencia (P6/P8)."""
 
+from dataclasses import dataclass
+
 import jwt as pyjwt
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -9,7 +11,9 @@ from app.core import license as license_engine
 from app.core import security
 from app.core.database import get_db
 from app.core.errors import PermissionDeniedError
+from app.modules.identity_access import mfa_policy
 from app.modules.identity_access import service as identity_service
+from app.modules.identity_access.models import Session as AuthSession
 from app.modules.identity_access.models import User
 
 #: Nombre del esquema de seguridad en el OpenAPI (`components.securitySchemes`): estable y técnico.
@@ -60,13 +64,19 @@ def read_bearer_credentials(request: Request) -> HTTPAuthorizationCredentials | 
 bearer_access_token = BearerAccessToken()
 
 
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_access_token), db: Session = Depends(get_db)
-) -> User:
-    """Resuelve el usuario desde el access token (en memoria / header).
+@dataclass(frozen=True)
+class AuthContext:
+    user: User
+    session: AuthSession
 
-    ADR-004: el access token es de corta duración y NO se guarda en
-    localStorage; el refresh va en cookie HttpOnly.
+
+def get_current_auth(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_access_token), db: Session = Depends(get_db)
+) -> AuthContext:
+    """Resuelve usuario y fila de sesión viva desde el access token.
+
+    El token es solo una credencial transportable; la autoridad es la fila de
+    sesión vigente (`sid = family_id`), conforme a ADR-004 y Spec 002 F1.
     """
     if credentials is None:
         raise PermissionDeniedError(code="AUTH_REQUIRED", message="Debe iniciar sesión", status_code=401)
@@ -76,10 +86,41 @@ def get_current_user(
     except pyjwt.PyJWTError:
         raise PermissionDeniedError(code="AUTH_INVALID_TOKEN", message="Sesión inválida o expirada", status_code=401) from None
 
+    sid = payload.get("sid")
+    if not sid:
+        raise PermissionDeniedError(code="AUTH_INVALID_TOKEN", message="Sesión inválida o expirada", status_code=401)
+
     user = db.get(User, payload.get("sub"))
     if not user or user.status != "ACTIVE":
         raise PermissionDeniedError(code="AUTH_USER_INACTIVE", message="El usuario no está activo", status_code=403)
-    return user
+
+    row = identity_service.current_session_row(db, sid)
+    if row is None:
+        raise PermissionDeniedError(code="SESSION_REVOKED", message="La sesión fue revocada o expiró", status_code=401)
+    if str(row.user_id) != str(user.id):
+        raise PermissionDeniedError(code="AUTH_INVALID_TOKEN", message="Sesión inválida o expirada", status_code=401)
+    if row.mfa_verified_at is None and mfa_policy.requires_mfa(mfa_policy.user_policy_class(db, user)):
+        raise PermissionDeniedError(code="MFA_REQUIRED", message="Debe completar el segundo factor", status_code=401)
+
+    return AuthContext(user=user, session=row)
+
+
+def get_current_user(auth: AuthContext = Depends(get_current_auth)) -> User:
+    """Resuelve el usuario desde el acceso autorizado por su sesión viva.
+
+    ADR-004: el access token es de corta duración y NO se guarda en
+    localStorage; el refresh va en cookie HttpOnly. La sesión es la autoridad:
+    un token sin `sid` o una familia revocada no autoriza (Spec 002 F1).
+    """
+    return auth.user
+
+
+def require_recent_reauth(auth: AuthContext = Depends(get_current_auth)) -> None:
+    """Exige reautenticación reciente para operaciones sensibles."""
+    from app.modules.identity_access import mfa_service
+
+    if not mfa_service.is_reauth_recent(auth.session):
+        raise PermissionDeniedError(code="REAUTH_REQUIRED", message="Confirma tu identidad para continuar", status_code=403)
 
 
 def current_user_permissions(user: User = Depends(get_current_user)) -> list[str]:
@@ -96,6 +137,7 @@ def require_permission(resource: str, action: str):
             raise PermissionDeniedError()
         return user
 
+    checker.kontrol_permission = f"{resource}:{action}"  # type: ignore[attr-defined]
     return checker
 
 

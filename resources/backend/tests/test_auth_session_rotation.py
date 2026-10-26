@@ -16,6 +16,7 @@ import threading
 
 import pytest
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -72,7 +73,7 @@ def _app_client():
 
 
 def _login_cookie() -> str:
-    r = _CLIENT.post("/api/v1/auth/login", json={
+    r = login_completo(_CLIENT, "/api/v1/auth/login", json={
         "tenant_code": "DEMO", "username": "admin", "password": PASSWORD})
     assert r.status_code == 200, r.text
     cookie = r.cookies.get("kontrol_refresh")
@@ -143,7 +144,7 @@ def test_un_token_manipulado_no_renueva():
 
 
 def test_tras_cerrar_sesion_el_token_deja_de_servir():
-    login = _CLIENT.post("/api/v1/auth/login", json={
+    login = login_completo(_CLIENT, "/api/v1/auth/login", json={
         "tenant_code": "DEMO", "username": "admin", "password": PASSWORD})
     cookie = login.cookies.get("kontrol_refresh")
     token = login.json()["access_token"]

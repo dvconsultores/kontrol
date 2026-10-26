@@ -26,6 +26,7 @@ import { resolve } from "node:path";
 import { expect, type APIRequestContext } from "@playwright/test";
 
 import { ejecutarPython } from "./python";
+import { iniciarSesion } from "./sesion";
 
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
@@ -109,11 +110,7 @@ export async function verificadorDeEscenario(
   const alcance = declararAlcance(usuario, empresas);
   expect([...alcance].sort(), `alcance de ${usuario}`).toEqual([...new Set(empresas)].sort());
 
-  const login = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: usuario, password: PASSWORD },
-  });
-  expect(login.ok(), `login del verificador: ${login.status()} ${await login.text()}`).toBeTruthy();
-  const token = (await login.json()).access_token as string;
+  const token = (await iniciarSesion(usuario, { tenant: TENANT })).token;
   return {
     token,
     company: empresas[0],

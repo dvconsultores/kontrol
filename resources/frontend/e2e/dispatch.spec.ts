@@ -9,23 +9,20 @@
  * consumida. Hasta este ciclo `validate_shipment` aprobaba siempre, así que
  * cada negativa de aquí es una que antes no existía.
  */
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
+
+import { entrar, expect, sesionApi, test } from "./helpers/sesion";
 
 import { verificadorDeEscenario } from "./helpers/usuario";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 
 type Ctx = { token: string; company: string; headers: Record<string, string> };
 
 async function ctx(request: APIRequestContext): Promise<Ctx> {
-  const login = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: USER, password: PASSWORD },
-  });
-  expect(login.ok(), `login: ${login.status()}`).toBeTruthy();
-  const token = (await login.json()).access_token as string;
+  const token = (await sesionApi(USER, { tenant: TENANT })).token;
   const r = await request.get(`${API}/organization/companies`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -210,11 +207,7 @@ async function saldos(request: APIRequestContext, c: Ctx, producto: string) {
 }
 
 async function uiLogin(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USER);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await entrar(page, USER, { tenant: TENANT });
   await expect(page).toHaveURL(/\/$/, { timeout: 20_000 });
 }
 

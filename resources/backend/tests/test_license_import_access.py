@@ -29,6 +29,7 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -166,7 +167,7 @@ def _app_client():
 
 def _sesion(username: str, cliente: TestClient | None = None) -> dict[str, str]:
     cliente = cliente or _CLIENT
-    r = cliente.post("/api/v1/auth/login", json={"tenant_code": "DEMO", "username": username, "password": PASSWORD})
+    r = login_completo(cliente, "/api/v1/auth/login", json={"tenant_code": "DEMO", "username": username, "password": PASSWORD})
     assert r.status_code == 200, r.text
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 

@@ -6,7 +6,8 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { activarEmpresa } from "./helpers/empresa";
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { entrar, expect, test } from "./helpers/sesion";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER;
@@ -17,11 +18,7 @@ const VIEWPORTS = [320, 375, 768, 1024, 1280, 1440, 1920];
 test.skip(!USER || !PASSWORD, "credenciales E2E no configuradas");
 
 async function uiLogin(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USER as string);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD as string);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await entrar(page, "admin", { tenant: TENANT });
   await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
   await page.locator('nav a[href="/organizacion/empresas"]').first().click();
   await page.waitForURL((u) => u.pathname === "/organizacion/empresas", { timeout: 15000 });

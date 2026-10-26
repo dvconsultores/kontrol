@@ -1,4 +1,5 @@
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
+import { entrar, expect, test } from "./helpers/sesion";
 
 import {
   creditoAFavor,
@@ -20,8 +21,6 @@ const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
  * de modo que `marca().slice(0, 2)` daba la misma moneda a todo el mundo.
  */
 const codigoMoneda = (prefijo: string, m: string): string => `${prefijo}${m.slice(-3)}`;
-const USER = process.env.KONTROL_E2E_USER ?? "admin";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 
 /**
  * Una política permisiva y vigente.
@@ -84,11 +83,7 @@ async function irA(page: Page, ruta: string): Promise<void> {
 }
 
 async function uiLogin(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USER);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await entrar(page, "admin", { tenant: TENANT });
   await expect(page).toHaveURL(/\/$/, { timeout: 20_000 });
 }
 

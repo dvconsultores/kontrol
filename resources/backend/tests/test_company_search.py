@@ -17,6 +17,7 @@ import uuid
 import pytest
 from conftest import make_engine
 from fastapi.testclient import TestClient
+from sesion_mfa import login_completo
 from sqlalchemy import inspect, select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -117,7 +118,7 @@ def _mundo():
 
 
 def _login(tenant: str, user: str) -> dict:
-    r = _CLIENT.post("/api/v1/auth/login", json={"tenant_code": tenant, "username": user, "password": PASSWORD})
+    r = login_completo(_CLIENT, "/api/v1/auth/login", json={"tenant_code": tenant, "username": user, "password": PASSWORD})
     assert r.status_code == 200, r.text
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 

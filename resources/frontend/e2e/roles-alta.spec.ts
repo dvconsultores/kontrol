@@ -6,11 +6,11 @@
 import { resolve } from "node:path";
 
 import { expect, test, type APIRequestContext } from "@playwright/test";
+import { iniciarSesion, sesionApi } from "./helpers/sesion";
 
 import { ejecutarPython } from "./helpers/python";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const BACKEND = resolve(process.cwd(), "..", "backend");
 
 const marca = (): string => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -28,10 +28,11 @@ function usuarioSinPermiso(): string {
   return usuario;
 }
 
-async function bearer(request: APIRequestContext, usuario: string): Promise<Record<string, string>> {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: "DEMO", username: usuario, password: PASSWORD } });
-  expect(r.ok(), `login de ${usuario}: ${r.status()}`).toBeTruthy();
-  return { Authorization: `Bearer ${((await r.json()) as { access_token: string }).access_token}` };
+async function bearer(_request: APIRequestContext, usuario: string): Promise<Record<string, string>> {
+  const token = usuario === "admin"
+    ? (await sesionApi("admin", { tenant: "DEMO" })).token
+    : (await iniciarSesion(usuario, { tenant: "DEMO" })).token;
+  return { Authorization: `Bearer ${token}` };
 }
 
 test.describe("roles · alta por API", () => {

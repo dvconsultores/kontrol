@@ -2,9 +2,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { apiFetch } from "@/api/client";
+import { apiFetch, ApiError } from "@/api/client";
+import { resetUserMfa } from "@/api/mfa";
+import { useAuth } from "@/app/contexts/AuthContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Button } from "@/components/Button";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
@@ -29,10 +33,12 @@ interface UserSummary {
 export function UsuariosPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { user, hasPermission } = useAuth();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [objetivo, setObjetivo] = useState<{ id: string; username: string } | null>(null);
 
   const query = useQuery({
     queryKey: ["security", "users"],
@@ -57,15 +63,50 @@ export function UsuariosPage(): React.JSX.Element {
     }
   };
 
-  const row = (key: string, label: string, value: string): React.JSX.Element => (
+  const row = (key: string, label: string, value: string, action?: React.ReactNode): React.JSX.Element => (
     <div
       key={key}
       className="flex items-center justify-between border-b border-border-default px-4 py-2 text-sm last:border-b-0"
     >
       <span className="text-text-700">{label}</span>
-      <span className="text-text-500">{value}</span>
+      <span className="flex items-center gap-2">
+        <span className="text-text-500">{value}</span>
+        {action}
+      </span>
     </div>
   );
+
+  const handleResetMfa = async (): Promise<void> => {
+    if (!objetivo) {
+      return;
+    }
+    try {
+      await resetUserMfa(objetivo.id);
+      notify({
+        type: "success",
+        title: "Verificación restablecida",
+        description: `${objetivo.username} tendrá que volver a configurarla en su próximo inicio de sesión.`,
+      });
+      setObjetivo(null);
+    } catch (err) {
+      if (err instanceof TypeError) {
+        notify({ type: "error", title: "No fue posible restablecer la verificación", description: "Sin conexión. Inténtelo de nuevo." });
+        return;
+      }
+      const { code, message } = err instanceof ApiError
+        ? { code: err.code, message: err.message }
+        : { code: "", message: err instanceof Error ? err.message : "No fue posible restablecer la verificación" };
+      const mensaje =
+        code === "MFA_NOT_CONFIGURED"
+          ? "Este usuario no tiene la verificación configurada."
+          : code === "MFA_RESET_CEILING"
+            ? "No puede restablecer a un usuario con más permisos que usted."
+            : code === "PERMISSION_DENIED"
+              ? "No tiene permiso para esta acción."
+              : message;
+      notify({ type: "error", title: "No fue posible restablecer la verificación", description: mensaje });
+    }
+  };
 
   return (
     <PageContent maxWidth="full">
@@ -103,13 +144,32 @@ export function UsuariosPage(): React.JSX.Element {
             </p>
           ) : null}
           {(query.data ?? []).map((u) =>
-            row(u.id, `${u.username} · ${u.email ?? "sin correo"} · Roles: ${u.roles.map((r) => r.code).join(", ") || "—"}`, u.status),
+            row(
+              u.id,
+              `${u.username} · ${u.email ?? "sin correo"} · Roles: ${u.roles.map((r) => r.code).join(", ") || "—"}`,
+              u.status,
+              hasPermission("users:mfa_reset") && u.id !== user?.id ? (
+                <Button variant="secondary" size="sm" onClick={() => setObjetivo({ id: u.id, username: u.username })}>
+                  Restablecer verificación
+                </Button>
+              ) : null,
+            ),
           )}
           {query.isSuccess && (query.data ?? []).length === 0 ? (
             <p className="text-sm text-text-500">Sin usuarios registrados.</p>
           ) : null}
         </div>
       </section>
+
+      <ConfirmationDialog
+        open={objetivo !== null}
+        title="Restablecer la verificación en dos pasos"
+        description={`${objetivo?.username ?? ""} tendrá que volver a configurarla en su próximo inicio de sesión. Se cerrarán sus sesiones.`}
+        confirmLabel="Restablecer"
+        danger
+        onConfirm={handleResetMfa}
+        onCancel={() => setObjetivo(null)}
+      />
     </PageContent>
   );
 }

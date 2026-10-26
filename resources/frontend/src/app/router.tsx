@@ -17,6 +17,11 @@ export const router = createBrowserRouter([
     errorElement: <ErrorBoundary />,
   },
   {
+    path: "/acceso/mfa/alta",
+    lazy: () => import("@/pages/MfaAltaPage").then((m) => ({ Component: m.MfaAltaPage })),
+    errorElement: <ErrorBoundary />,
+  },
+  {
     path: "/reset-password",
     lazy: () => import("@/pages/ResetPasswordPage").then((m) => ({ Component: m.ResetPasswordPage })),
     errorElement: <ErrorBoundary />,
@@ -45,6 +50,8 @@ export const router = createBrowserRouter([
           { path: "seguridad/usuarios", lazy: () => import("@/modules/seguridad/usuarios/UsuariosPage").then((m) => ({ Component: m.UsuariosPage })) },
           { path: "seguridad/roles", lazy: () => import("@/modules/seguridad/roles/RolesPage").then((m) => ({ Component: m.RolesPage })) },
           { path: "seguridad/sesiones", lazy: () => import("@/modules/seguridad/sesiones/SesionesPage").then((m) => ({ Component: m.SesionesPage })) },
+          { path: "seguridad/mfa", lazy: () => import("@/modules/seguridad/mfa/MiMfaPage").then((m) => ({ Component: m.MiMfaPage })) },
+          { path: "seguridad/mfa/alta", lazy: () => import("@/pages/MfaAltaPage").then((m) => ({ Component: m.MfaAltaPage })) },
           { path: "maestros/terceros", lazy: () => import("@/modules/maestros/terceros/TercerosPage").then((m) => ({ Component: m.TercerosPage })) },
           { path: "maestros/unidades", lazy: () => import("@/modules/maestros/unidades/UnidadesPage").then((m) => ({ Component: m.UnidadesPage })) },
           { path: "maestros/productos/:productId/presentaciones", lazy: () => import("@/modules/maestros/presentaciones/PresentacionesPage").then((m) => ({ Component: m.PresentacionesPage })) },

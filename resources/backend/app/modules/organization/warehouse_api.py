@@ -17,7 +17,11 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
-from app.core.dependencies import require_permission, require_write_allowed
+from app.core.dependencies import (
+    require_permission,
+    require_recent_reauth,
+    require_write_allowed,
+)
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.core.integrity import es_violacion_unica_de, restriccion_unica
 from app.modules.identity_access.models import User
@@ -443,7 +447,10 @@ def activate_warehouse(warehouse_id: str, db: Session = Depends(get_db),
     return {"id": str(warehouse.id), "status": warehouse.status}
 
 
-@router.post("/warehouses/{warehouse_id}/deactivate", dependencies=[Depends(require_write_allowed)])
+@router.post(
+    "/warehouses/{warehouse_id}/deactivate",
+    dependencies=[Depends(require_write_allowed), Depends(require_recent_reauth)],
+)
 def deactivate_warehouse(warehouse_id: str, db: Session = Depends(get_db),
                          actor: User = Depends(require_permission("organization", "deactivate")),
     ctx: CompanyContext = Depends(get_company_context)):
@@ -455,7 +462,10 @@ def deactivate_warehouse(warehouse_id: str, db: Session = Depends(get_db),
     return {"id": str(warehouse.id), "status": warehouse.status}
 
 
-@router.delete("/warehouses/{warehouse_id}", dependencies=[Depends(require_write_allowed)])
+@router.delete(
+    "/warehouses/{warehouse_id}",
+    dependencies=[Depends(require_write_allowed), Depends(require_recent_reauth)],
+)
 def delete_warehouse(warehouse_id: str, db: Session = Depends(get_db),
                      actor: User = Depends(require_permission("organization", "delete")),
     ctx: CompanyContext = Depends(get_company_context)):
@@ -636,7 +646,9 @@ def _node_routes(level: str) -> None:
         db.commit()
         return {"id": str(node.id), "status": node.status}
 
-    @router.post(f"/{plural}/{{node_id}}/deactivate", dependencies=[Depends(require_write_allowed)],
+    @router.post(
+        f"/{plural}/{{node_id}}/deactivate",
+        dependencies=[Depends(require_write_allowed), Depends(require_recent_reauth)],
                  name=f"deactivate_{level}")
     def _deactivate(node_id: str, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("organization", "deactivate")),
@@ -655,7 +667,9 @@ def _node_routes(level: str) -> None:
         db.commit()
         return {"id": str(node.id), "status": node.status}
 
-    @router.delete(f"/{plural}/{{node_id}}", dependencies=[Depends(require_write_allowed)],
+    @router.delete(
+        f"/{plural}/{{node_id}}",
+        dependencies=[Depends(require_write_allowed), Depends(require_recent_reauth)],
                    name=f"delete_{level}")
     def _delete(node_id: str, db: Session = Depends(get_db),
                 actor: User = Depends(require_permission("organization", "delete")),
@@ -990,7 +1004,10 @@ def activate_location(location_id: str, db: Session = Depends(get_db),
     return _set_location_status(db, actor, ctx, location_id, "ACTIVE", "ACTIVATE")
 
 
-@router.post("/locations/{location_id}/deactivate", dependencies=[Depends(require_write_allowed)])
+@router.post(
+    "/locations/{location_id}/deactivate",
+    dependencies=[Depends(require_write_allowed), Depends(require_recent_reauth)],
+)
 def deactivate_location(location_id: str, db: Session = Depends(get_db),
                         actor: User = Depends(require_permission("organization", "deactivate")),
                       ctx: CompanyContext = Depends(get_company_context)):
@@ -1004,7 +1021,10 @@ def block_location(location_id: str, db: Session = Depends(get_db),
     return _set_location_status(db, actor, ctx, location_id, "BLOCKED", "BLOCK")
 
 
-@router.delete("/locations/{location_id}", dependencies=[Depends(require_write_allowed)])
+@router.delete(
+    "/locations/{location_id}",
+    dependencies=[Depends(require_write_allowed), Depends(require_recent_reauth)],
+)
 def delete_location(location_id: str, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("organization", "delete")),
     ctx: CompanyContext = Depends(get_company_context)):

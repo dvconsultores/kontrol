@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     login_rate_limit_per_minute: int = 5
     lockout_after_failures: int = 5
     lockout_minutes: int = 15
+    #: Anillo `kid:clave_base64url[,kid:clave]` de AES-256-GCM para cifrar el secreto
+    #: TOTP; la primera clave cifra, el resto permite rotar. Obligatorio en prod; sin
+    #: valor por defecto (ver Spec 002 MFA).
+    mfa_keys: str | None = None
 
     #: Zona del **calendario de negocio** (Spec 001 · POLICY-CLOCK-LOCAL). Decide qué
     #: día es «hoy» para vigencias, vencimientos y selección de reglas. No confundir
@@ -115,6 +119,24 @@ class Settings(BaseSettings):
                 f"KONTROL_LICENSE_PUBLIC_KEY_PEM (con KONTROL_LICENSE_PUBLIC_KEY_KID) o KONTROL_LICENSE_TRUST_KEYS es obligatoria "
                 f"en prod y debe contener claves públicas Ed25519 del propietario en PEM, una por kid (ancla {exc.reason})"
             ) from None
+        return self
+
+    @model_validator(mode="after")
+    def _mfa_keys_validas(self) -> Settings:
+        """Valida el anillo MFA cuando está presente y exige su presencia en producción."""
+        if self.mfa_keys is not None:
+            from app.modules.identity_access.mfa_crypto import parse_key_ring
+
+            try:
+                parse_key_ring(self.mfa_keys)
+            except ValueError as exc:
+                raise ValueError(f"KONTROL_MFA_KEYS no es válida: {exc}") from None
+
+        if self.environment == "prod" and self.mfa_keys is None:
+            raise ValueError(
+                "KONTROL_MFA_KEYS es obligatoria en prod: el secreto TOTP se cifra con "
+                "una clave fuera del código y sin ella no hay MFA (fallo cerrado)"
+            )
         return self
 
     @model_validator(mode="after")

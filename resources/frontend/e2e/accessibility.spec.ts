@@ -7,7 +7,7 @@
  * Uso: npm run test:e2e -- --project=chromium e2e/accessibility.spec.ts
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { entrar, expect, test } from "./helpers/sesion";
 
 const USER = process.env.KONTROL_E2E_USER;
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD;
@@ -58,12 +58,7 @@ test.describe("páginas autenticadas (requiere credenciales E2E)", () => {
 
   for (const path of pages) {
     test(`accesibilidad: ${path}`, async ({ page }) => {
-      await page.goto("/login");
-      await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-      await page.getByLabel(/Usuario/).fill(USER!);
-      await page.getByLabel(/Contraseña/).fill(PASSWORD!);
-      await page.getByRole("button", { name: "Iniciar sesión" }).click();
-      await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
+      await entrar(page, USER!, { tenant: TENANT });
 
       // Navegación SPA por el menú, NO `page.goto`. Una carga completa pierde
       // el access token, que vive en memoria (ADR-004), y el guard redirige a

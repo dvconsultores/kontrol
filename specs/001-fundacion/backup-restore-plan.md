@@ -22,6 +22,7 @@
 | Configuración | Archivo de configuración versionado por ambiente |
 | Identidad de instalación | Volumen `kontrol-license-state` (identidad, claves locales, licencia) |
 | Licencia firmada | Volumen persistente + copia cifrada |
+| Anillo `KONTROL_MFA_KEYS` | No viaja en la copia: se custodia aparte; sin él ningún factor TOTP se puede descifrar y los usuarios afectados deben volver a darse de alta |
 
 ## 3. Frecuencia
 
@@ -65,6 +66,15 @@
 - Almacenamiento.
 - Integración.
 - Seguridad (incidente).
+- Rotación de la clave MFA:
+  1. Generar la clave nueva con `python3 -c "import base64, secrets; print('k2:' + base64.urlsafe_b64encode(secrets.token_bytes(32)).decode().rstrip('='))"`.
+  2. Anteponerla al anillo de `KONTROL_MFA_KEYS`, por ejemplo `k2:…,k1:…`.
+  3. Reiniciar el backend.
+  4. Ejecutar dentro del backend `python -m app.modules.identity_access.mfa_rekey`; imprime `recifrados=<n>`.
+  5. Cuando no queden factores con la clave antigua, retirarla del anillo y reiniciar.
+- Rotura de cristal MFA (último administrador sin factor ni códigos): solo en el servidor, nunca por HTTP:
+  `python -m app.modules.identity_access.mfa_breakglass --tenant <CODIGO> --username <USUARIO> --confirm <USUARIO>`
+  Deja auditoría `MFA_RESET_BREAKGLASS`, revoca todas las sesiones del usuario y le obliga a darse de alta en su siguiente inicio de sesión.
 
 ## 8. Estado
 

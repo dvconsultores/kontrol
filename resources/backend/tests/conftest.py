@@ -6,7 +6,9 @@ Define variables de entorno controladas ANTES de que se instancie
 
 from __future__ import annotations
 
+import base64
 import os
+import secrets
 import shutil
 import tempfile
 from collections.abc import Iterator
@@ -24,6 +26,12 @@ os.environ.setdefault("KONTROL_ENVIRONMENT", "local")
 os.environ.setdefault("KONTROL_LOG_JSON", "false")
 os.environ.setdefault("KONTROL_COOKIE_SECURE", "false")
 os.environ.setdefault("KONTROL_DB_URL", "sqlite+pysqlite:///:memory:")
+# Clave AES de pruebas generada en cada sesión de pytest; nunca constante ni versionada.
+# Spec 002 · OQ-MFA-3
+os.environ.setdefault(
+    "KONTROL_MFA_KEYS",
+    f"tsesion{secrets.token_hex(4)}:{base64.urlsafe_b64encode(os.urandom(32)).decode()}",
+)
 
 # Ninguna ruta de volumen se fija aquí: el volumen de instalación, el almacén y los respaldos los
 # recibe cada proceso de pytest en `pytest_configure` (raíces propias, nunca `/data` ni una ruta
@@ -294,11 +302,16 @@ def _recursos_pg_de_la_prueba(request):
 
 def pytest_sessionfinish(session, exitstatus):
     """Red de seguridad: lo que quedara sin soltar se suelta aquí, y la corrida dice qué fue."""
+    global _PARCHE_RELOJ
     import pg_harness
 
     pg_harness.cerrar_sesion()
     if pg_harness.INFORME.residuos and session.exitstatus == 0:
         session.exitstatus = 1
+    # Deshace el reloj de suite (Spec 002).
+    if _PARCHE_RELOJ is not None:
+        _PARCHE_RELOJ.undo()
+        _PARCHE_RELOJ = None
 
 
 def pytest_terminal_summary(terminalreporter):
@@ -315,6 +328,25 @@ def pytest_terminal_summary(terminalreporter):
         terminalreporter.write_line(f"conexiones que quedaron abiertas y se cortaron: {n} · {ambito} · {schema}")
     for residuo in informe.residuos:
         terminalreporter.write_line(f"NO SE PUDO SOLTAR: {residuo}")
+
+
+_PARCHE_RELOJ: pytest.MonkeyPatch | None = None
+
+
+def pytest_sessionstart(session) -> None:
+    """Instala el reloj de suite (Spec 002 · OQ-MFA-3) al inicio de la sesión."""
+    import sesion_mfa
+
+    global _PARCHE_RELOJ
+    # El reloj de suite se instala con los ganchos de sesión y no como fixture:
+    # no es un schema compartido y PGS-28 reserva la prohibición de fixtures de
+    # sesión para eso.
+    reloj = sesion_mfa.RelojDeSuite()
+    mp = pytest.MonkeyPatch()
+    mp.setattr("app.core.clock.now", reloj.ahora)
+    _PARCHE_RELOJ = mp
+
+
 
 
 def seed_org_chain(session, *company_ids: str) -> None:

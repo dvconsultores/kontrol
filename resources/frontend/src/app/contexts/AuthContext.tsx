@@ -15,7 +15,7 @@ import {
 } from "react";
 
 import { apiFetch, requestSessionRefresh, setAccessToken, setRefreshHandler } from "@/api/client";
-import type { LoginResponse, UserInfo } from "@/api/types";
+import type { AuthenticatedLogin, LoginResponse, UserInfo } from "@/api/types";
 
 interface AuthContextValue {
   user: UserInfo | null;
@@ -24,6 +24,8 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isReady: boolean;
   login: (tenantCode: string, username: string, password: string) => Promise<LoginResponse>;
+  /** Completa un login pendiente de MFA una vez verificado/confirmado el segundo factor. */
+  completeLogin: (data: AuthenticatedLogin) => void;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
   hasPermission: (permission: string) => boolean;
@@ -55,11 +57,20 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       method: "POST",
       body: { tenant_code: tenantCode, username, password },
     });
+    if (data.status === "AUTHENTICATED") {
+      setAccessToken(data.access_token);
+      setToken(data.access_token);
+      setUser(data.user);
+      void loadMe();
+    }
+    return data;
+  }, [loadMe]);
+
+  const completeLogin = useCallback((data: AuthenticatedLogin): void => {
     setAccessToken(data.access_token);
     setToken(data.access_token);
     setUser(data.user);
     void loadMe();
-    return data;
   }, [loadMe]);
 
   const logout = useCallback(async () => {
@@ -132,11 +143,22 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       isAuthenticated: Boolean(user && accessToken),
       isReady,
       login,
+      completeLogin,
       logout,
       refreshSession,
       hasPermission,
     }),
-    [user, accessToken, permissions, isReady, login, logout, refreshSession, hasPermission],
+    [
+      user,
+      accessToken,
+      permissions,
+      isReady,
+      login,
+      completeLogin,
+      logout,
+      refreshSession,
+      hasPermission,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -6,11 +6,12 @@
  * al inventario como veinticuatro unidades y no como dos, y que lo que se
  * observa en el muelle quede escrito.
  */
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
+
+import { entrar, expect, sesionApi, test } from "./helpers/sesion";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 
 const RUN = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -18,11 +19,7 @@ const RUN = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}
 type Ctx = { token: string; company: string; headers: Record<string, string> };
 
 async function ctx(request: APIRequestContext): Promise<Ctx> {
-  const login = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: USER, password: PASSWORD },
-  });
-  expect(login.ok(), `login: ${login.status()}`).toBeTruthy();
-  const token = (await login.json()).access_token as string;
+  const token = (await sesionApi(USER, { tenant: TENANT })).token;
   const r = await request.get(`${API}/organization/companies`, { headers: { Authorization: `Bearer ${token}` } });
   expect(r.ok(), `companies: ${r.status()}`).toBeTruthy();
   const body = await r.json();
@@ -78,11 +75,7 @@ async function mundo(request: APIRequestContext, c: Ctx, marca: string) {
 }
 
 async function uiLogin(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USER);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await entrar(page, USER, { tenant: TENANT });
   await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
 }
 

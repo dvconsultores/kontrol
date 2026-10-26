@@ -9,13 +9,13 @@
  * dos monedas con el mismo código convivían, y que la resolución derivaba
  * cotizaciones —invertía y triangulaba— sin permiso y sin decirlo.
  */
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type APIRequestContext, type Page } from "@playwright/test";
+import { expect, test, entrar } from "./helpers/sesion";
 
 import { ctx, get, hoy, marca, post, postCrudo, type Ctx } from "./helpers/ventas";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 
 /** Una moneda que no choca con la de otra prueba. */
 const codigoMoneda = (m: string): string => `X${m.slice(-3)}`;
@@ -83,11 +83,7 @@ async function resolver(request: APIRequestContext, c: Ctx, base: string, quote:
 }
 
 async function uiLogin(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USER);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await entrar(page, USER, { tenant: TENANT });
   await expect(page).toHaveURL(/\/$/, { timeout: 20_000 });
 }
 

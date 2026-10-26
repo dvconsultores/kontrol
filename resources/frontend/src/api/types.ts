@@ -30,12 +30,63 @@ export interface UserInfo {
   username: string;
 }
 
-export interface LoginResponse {
+/** Login completado: el backend devolvió un access token utilizable. */
+export interface AuthenticatedLogin {
+  status: "AUTHENTICATED";
   access_token: string;
   token_type: "bearer";
   expires_in: number;
   must_change_password: boolean;
   user: UserInfo;
+  /** Presente al verificar un segundo factor o confirmar una alta. */
+  recovery_codes_remaining?: number | null;
+  /** Presente al confirmar un alta con códigos de recuperación recién creados. */
+  recovery_codes?: string[];
+}
+
+/** El backend exige un segundo factor: aún no hay access token. */
+export interface MfaChallengeLogin {
+  status: "MFA_REQUIRED";
+  challenge_token: string;
+  expires_in: number;
+  methods: Array<"TOTP" | "RECOVERY_CODE">;
+}
+
+/** El backend exige dar de alta un segundo factor antes de continuar. */
+export interface MfaEnrollmentLogin {
+  status: "MFA_ENROLLMENT_REQUIRED";
+  challenge_token: string;
+  expires_in: number;
+}
+
+/** Respuesta de `POST /auth/login`: autenticado o pendiente de MFA. */
+export type LoginResponse = AuthenticatedLogin | MfaChallengeLogin | MfaEnrollmentLogin;
+
+/** Inicio de alta de MFA: URI OTP, clave manual y QR para mostrarlos al usuario. */
+export interface MfaEnrollmentStart {
+  otpauth_uri: string;
+  manual_key: string;
+  qr_svg_data_uri: string;
+  expires_in: number;
+}
+
+/** Estado del MFA del usuario autenticado. */
+export interface MfaStatus {
+  required: boolean;
+  policy_class: "PRIVILEGED" | "SENSITIVE" | "STANDARD";
+  enabled: boolean;
+  activated_at: string | null;
+  recovery_codes_remaining: number;
+}
+
+/** Códigos de recuperación generados por el backend. */
+export interface MfaRecoveryCodes {
+  recovery_codes: string[];
+}
+
+/** Resultado de una reautenticación exitosa. */
+export interface ReauthResult {
+  reauth_valid_until: string;
 }
 
 export interface CompanySummary {

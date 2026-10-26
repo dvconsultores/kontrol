@@ -9,12 +9,12 @@
  */
 import { resolve } from "node:path";
 
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
 
+import { entrarComoUsuario, entrar as entrarConSesion, expect, sesionApi, sesionDeUsuario, test } from "./helpers/sesion";
 import { ejecutarPython } from "./helpers/python";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
-const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 const BACKEND = resolve(process.cwd(), "..", "backend");
 const DIAGNOSTICO = `${API}/system/diagnostics`;
 const FILAS = ["Entorno", "Base de datos", "Instalación", "Identificador", "Licencia"];
@@ -35,18 +35,21 @@ function usuarioSinPermiso(): string {
   return usuario;
 }
 
-async function token(request: APIRequestContext, usuario: string): Promise<string> {
-  const r = await request.post(`${API}/auth/login`, { data: { tenant_code: "DEMO", username: usuario, password: PASSWORD } });
-  expect(r.ok(), `login de ${usuario}: ${r.status()}`).toBeTruthy();
-  return (await r.json()).access_token as string;
+// El usuario base usa la sesión del worker; los creados en la prueba inician sesión de verdad (Spec 002, OQ-MFA-3).
+async function token(usuario: string): Promise<string> {
+  return usuario === "admin"
+    ? (await sesionApi("admin", { tenant: "DEMO" })).token
+    : (await sesionDeUsuario(usuario, { tenant: "DEMO" })).token;
 }
 
 async function entrar(page: Page, usuario: string): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill("DEMO");
-  await page.getByLabel(/Usuario/).fill(usuario);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  if (usuario === "admin") {
+    await entrarConSesion(page, "admin", { tenant: "DEMO" });
+    await expect(page).toHaveURL(/\/$/, { timeout: 20_000 });
+    await expect(page.locator("nav a[href^='/']").first()).toBeVisible({ timeout: 15_000 });
+    return;
+  }
+  await entrarComoUsuario(page, usuario, { tenant: "DEMO" });
   await expect(page).toHaveURL(/\/$/, { timeout: 20_000 });
   await expect(page.locator("nav a[href^='/']").first()).toBeVisible({ timeout: 15_000 });
 }
@@ -83,7 +86,7 @@ test.describe("Diagnóstico · acceso", () => {
 
   test("E2E-DIAG-02 · con sesión pero sin permiso: sin entrada de menú, acceso prohibido, sin petición y 403 en la API", async ({ page, request }) => {
     const usuario = usuarioSinPermiso();
-    const directa = await request.get(DIAGNOSTICO, { headers: { Authorization: `Bearer ${await token(request, usuario)}` } });
+    const directa = await request.get(DIAGNOSTICO, { headers: { Authorization: `Bearer ${await token(usuario)}` } });
     expect(directa.status()).toBe(403);
     expect((await directa.json()).code).toBe("PERMISSION_DENIED");
     expect(await directa.text()).not.toContain("installation");

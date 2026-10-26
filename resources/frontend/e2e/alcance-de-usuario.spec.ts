@@ -12,6 +12,7 @@
  */
 import { expect, test, type APIRequestContext } from "@playwright/test";
 
+import { iniciarSesion, sesionApi } from "./helpers/sesion";
 import { mundoN6 } from "./helpers/n6-mundo";
 import { declararAlcance, verificadorDeEscenario, type Contexto } from "./helpers/usuario";
 
@@ -27,13 +28,9 @@ const D2 = MUNDO.empresa_b;
 const marca = (): string =>
   `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.toLowerCase();
 
-async function admin(request: APIRequestContext): Promise<Contexto> {
-  const login = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: ADMIN, password: PASSWORD },
-  });
-  expect(login.ok(), `login del administrador: ${login.status()}`).toBeTruthy();
-  const token = (await login.json()).access_token as string;
-  return { token, company: D1, headers: { Authorization: `Bearer ${token}`, "X-Kontrol-Company": D1 } };
+async function admin(): Promise<Contexto> {
+  const { token, headers } = await sesionApi(ADMIN, { tenant: TENANT, empresa: D1 });
+  return { token, company: D1, headers };
 }
 
 /** Las empresas que el servidor reconoce a este usuario. Es la autoridad. */
@@ -49,7 +46,7 @@ async function suyas(request: APIRequestContext, c: Contexto): Promise<string[]>
 test.beforeAll(async ({ request }) => {
   // Si la base no tiene las dos empresas activas, estas pruebas no probarían
   // nada: pasarían por no haber ambigüedad que resolver.
-  const c = await admin(request);
+  const c = await admin();
   const r = await request.get(`${API}/organization/companies`, { headers: c.headers });
   expect(r.ok()).toBeTruthy();
   void r;
@@ -60,13 +57,13 @@ test.beforeAll(async ({ request }) => {
 
 // ------------------------------------------------------------------------ U1
 test("U1 · quien se declara de una empresa alcanza solo esa", async ({ request }) => {
-  const a = await admin(request);
+  const a = await admin();
   const v = await verificadorDeEscenario(request, a, { usuario: `u1-${marca()}`, empresas: [D1] });
   expect(await suyas(request, v)).toEqual([D1]);
 });
 
 test("U1b · y opera sin que nadie le pregunte en cuál", async ({ request }) => {
-  const a = await admin(request);
+  const a = await admin();
   const v = await verificadorDeEscenario(request, a, { usuario: `u1b-${marca()}`, empresas: [D1] });
   // Sin cabecera de empresa: con una sola alcanzable el servidor la resuelve, y
   // es justo lo que hace que la interfaz no plante la compuerta de selección.
@@ -78,14 +75,14 @@ test("U1b · y opera sin que nadie le pregunte en cuál", async ({ request }) =>
 
 // ------------------------------------------------------------------------ U2
 test("U2 · la empresa es la que pide el escenario, no la primera", async ({ request }) => {
-  const a = await admin(request);
+  const a = await admin();
   const v = await verificadorDeEscenario(request, a, { usuario: `u2-${marca()}`, empresas: [D2] });
   expect(await suyas(request, v)).toEqual([D2]);
 });
 
 // ------------------------------------------------------------------------ U3
 test("U3 · quien se declara de dos alcanza las dos", async ({ request }) => {
-  const a = await admin(request);
+  const a = await admin();
   const v = await verificadorDeEscenario(request, a, { usuario: `u3-${marca()}`, empresas: [D1, D2] });
   expect(await suyas(request, v)).toEqual([D1, D2].sort());
 });
@@ -96,7 +93,7 @@ test("U4 · sin alcance declarado se sigue alcanzando todo el tenant", async ({ 
   // las empresas del tenant (`app/core/company_context.py:82`). Es deliberado y
   // hay una suite que lo necesita —`notifications`—, así que se comprueba aquí
   // que esta delta no lo ha cambiado por el camino.
-  const a = await admin(request);
+  const a = await admin();
   const usuario = `u4-${marca()}`;
   const creado = await request.post(`${API}/users`, {
     headers: a.headers,
@@ -104,10 +101,7 @@ test("U4 · sin alcance declarado se sigue alcanzando todo el tenant", async ({ 
             must_change_password: false },
   });
   expect(creado.ok(), `alta: ${creado.status()}`).toBeTruthy();
-  const login = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: usuario, password: PASSWORD },
-  });
-  const token = (await login.json()).access_token as string;
+  const { token } = await iniciarSesion(usuario, { tenant: TENANT });
   const vistas = await suyas(request, { token, company: D1, headers: {} });
   expect(vistas, "sin alcance declarado debería alcanzar las dos").toContain(D1);
   expect(vistas, "sin alcance declarado debería alcanzar las dos").toContain(D2);
@@ -115,7 +109,7 @@ test("U4 · sin alcance declarado se sigue alcanzando todo el tenant", async ({ 
 
 // ----------------------------------------------------------------- contrato
 test("declarar dos veces lo mismo no acumula alcance", async ({ request }) => {
-  const a = await admin(request);
+  const a = await admin();
   const usuario = `idem-${marca()}`;
   await verificadorDeEscenario(request, a, { usuario, empresas: [D1] });
   expect(declararAlcance(usuario, [D1])).toEqual([D1]);
@@ -123,7 +117,7 @@ test("declarar dos veces lo mismo no acumula alcance", async ({ request }) => {
 });
 
 test("pedir un usuario sin decir su empresa falla al instante", async ({ request }) => {
-  const a = await admin(request);
+  const a = await admin();
   await expect(
     verificadorDeEscenario(request, a, { usuario: `vacio-${marca()}`, empresas: [] }),
   ).rejects.toThrow(/falta declarar su empresa/);
@@ -131,7 +125,7 @@ test("pedir un usuario sin decir su empresa falla al instante", async ({ request
 });
 
 test("pedir un alcance que contradice el ya declarado falla, no se acumula", async ({ request }) => {
-  const a = await admin(request);
+  const a = await admin();
   const usuario = `choque-${marca()}`;
   await verificadorDeEscenario(request, a, { usuario, empresas: [D1] });
   // Un fixture que pide una empresa para alguien que ya opera en otra está

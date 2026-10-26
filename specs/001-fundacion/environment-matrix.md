@@ -26,6 +26,7 @@
 | `KONTROL_ENV` | Ambiente (local/dev/qa/uat/staging/prod) | Sí | No |
 | `KONTROL_DB_URL` | Conexión PostgreSQL (usuario restringido) | Sí | Sí |
 | `KONTROL_SECRET_KEY` | Clave para firma de tokens/sesiones | Sí | Sí |
+| `KONTROL_MFA_KEYS` | Anillo de claves AES-256-GCM para cifrar secretos TOTP | Sí en `prod` | Sí |
 | `KONTROL_COOKIE_SECURE` | Flag Secure para cookies | Sí | No |
 | `KONTROL_CORS_ORIGINS` | Orígenes permitidos | Sí | No |
 | `KONTROL_LICENSE_PUBLIC_KEY_KID` | kid de clave pública de licencia | Sí | No |

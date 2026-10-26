@@ -1,0 +1,3 @@
+E   ImportError: cannot import name 'mfa_qr' from 'app.modules.identity_access' (<repo>/resources/backend/app/modules/identity_access/__init__.py)
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.21s

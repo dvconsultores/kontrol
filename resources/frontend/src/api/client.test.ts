@@ -8,7 +8,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  ApiError, apiFetch, requestSessionRefresh, setAccessToken, setRefreshHandler,
+  ApiError,
+  apiFetch,
+  requestSessionRefresh,
+  setAccessToken,
+  setReauthHandler,
+  setRefreshHandler,
 } from "./client";
 
 const originalFetch = globalThis.fetch;
@@ -22,11 +27,13 @@ function jsonResponse(body: unknown, status = 200): Response {
 beforeEach(() => {
   setAccessToken(null);
   setRefreshHandler(null);
+  setReauthHandler(null);
 });
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
   setRefreshHandler(null);
+  setReauthHandler(null);
   setAccessToken(null);
   vi.restoreAllMocks();
 });
@@ -151,6 +158,92 @@ describe("reintento y bucles", () => {
       jsonResponse({ code: "PERMISSION_DENIED", message: "no" }, 403)) as unknown as typeof fetch;
 
     await expect(apiFetch("/documentos")).rejects.toBeInstanceOf(ApiError);
+    expect(llamadas).toBe(0);
+  });
+});
+
+describe("reautenticación", () => {
+  it("un 403 REAUTH_REQUIRED con manejador que devuelve true reautentica y reintenta una vez", async () => {
+    let llamadas = 0;
+    setReauthHandler(() => {
+      llamadas += 1;
+      return Promise.resolve(true);
+    });
+    let intentos = 0;
+    globalThis.fetch = vi.fn(async () => {
+      intentos += 1;
+      return intentos === 1
+        ? jsonResponse({ code: "REAUTH_REQUIRED", message: "reautentique" }, 403)
+        : jsonResponse({ ok: true });
+    }) as unknown as typeof fetch;
+
+    await expect(apiFetch("/documentos")).resolves.toEqual({ ok: true });
+    expect(llamadas).toBe(1);
+    expect(intentos).toBe(2);
+  });
+
+  it("un 403 REAUTH_REQUIRED con manejador que devuelve false se propaga sin reintentar", async () => {
+    let llamadas = 0;
+    setReauthHandler(() => {
+      llamadas += 1;
+      return Promise.resolve(false);
+    });
+    let intentos = 0;
+    globalThis.fetch = vi.fn(async () => {
+      intentos += 1;
+      return jsonResponse({ code: "REAUTH_REQUIRED", message: "reautentique" }, 403);
+    }) as unknown as typeof fetch;
+
+    await expect(apiFetch("/documentos")).rejects.toMatchObject({ code: "REAUTH_REQUIRED" });
+    expect(llamadas).toBe(1);
+    expect(intentos).toBe(1);
+  });
+
+  it("varias peticiones simultáneas con 403 comparten una única reautenticación", async () => {
+    let llamadas = 0;
+    let resolver: ((v: boolean) => void) | undefined;
+    const enVuelo = new Promise<boolean>((r) => { resolver = r; });
+    setReauthHandler(() => {
+      llamadas += 1;
+      return enVuelo;
+    });
+
+    let intentos = 0;
+    globalThis.fetch = vi.fn(async () => {
+      intentos += 1;
+      return intentos <= 2
+        ? jsonResponse({ code: "REAUTH_REQUIRED", message: "reautentique" }, 403)
+        : jsonResponse({ ok: true });
+    }) as unknown as typeof fetch;
+
+    const primera = apiFetch("/documentos/a");
+    const segunda = apiFetch("/documentos/b");
+    setTimeout(() => resolver?.(true), 20);
+
+    await expect(primera).resolves.toEqual({ ok: true });
+    await expect(segunda).resolves.toEqual({ ok: true });
+    expect(llamadas).toBe(1);
+  });
+
+  it("un 401 de /auth/mfa/verify no dispara la renovación", async () => {
+    let llamadas = 0;
+    setRefreshHandler(() => { llamadas += 1; return Promise.resolve(true); });
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse({ code: "MFA_INVALID_CODE", message: "no" }, 401)) as unknown as typeof fetch;
+
+    await expect(apiFetch("/auth/mfa/verify", { method: "POST", body: {} }))
+      .rejects.toBeInstanceOf(ApiError);
+    expect(llamadas).toBe(0);
+  });
+
+  it("un 401 de /auth/reauth no dispara la renovación", async () => {
+    let llamadas = 0;
+    setRefreshHandler(() => { llamadas += 1; return Promise.resolve(true); });
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse({ code: "REAUTH_FAILED", message: "no" }, 401)) as unknown as typeof fetch;
+
+    await expect(apiFetch("/auth/reauth", { method: "POST", body: {} }))
+      .rejects.toBeInstanceOf(ApiError);
     expect(llamadas).toBe(0);
   });
 });

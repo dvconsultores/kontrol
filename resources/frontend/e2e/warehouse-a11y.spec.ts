@@ -6,7 +6,8 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { activarEmpresa } from "./helpers/empresa";
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { entrar, expect, sesionApi, test } from "./helpers/sesion";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER;
@@ -19,12 +20,7 @@ const VIEWPORTS = [320, 375, 768, 1024, 1280, 1440];
 test.skip(!USER || !PASSWORD, "KONTROL_E2E_USER / KONTROL_E2E_PASSWORD no configurados");
 
 async function uiLogin(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel(/Empresa \(código\)/).fill(TENANT);
-  await page.getByLabel(/Usuario/).fill(USER as string);
-  await page.getByLabel(/Contraseña/).fill(PASSWORD as string);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await page.waitForURL((u) => !u.pathname.includes("login"), { timeout: 20000 });
+  await entrar(page, USER as string, { tenant: TENANT });
   await page.locator('nav a[href="/organizacion/empresas"]').first().click();
   await page.waitForURL((u) => u.pathname === "/organizacion/empresas", { timeout: 15000 });
   await page.waitForLoadState("networkidle");
@@ -55,10 +51,7 @@ test("almacenes y ubicaciones: sin violaciones serias de WCAG 2.2 AA", async ({ 
 });
 
 test("detalle de almacén: sin violaciones serias de WCAG 2.2 AA", async ({ page, request }) => {
-  const login = await request.post(`${API}/auth/login`, {
-    data: { tenant_code: TENANT, username: USER, password: PASSWORD },
-  });
-  const token = (await login.json()).access_token as string;
+  const token = (await sesionApi(USER as string, { tenant: TENANT })).token;
   const headers = { Authorization: `Bearer ${token}` };
   const companies = await (await request.get(`${API}/organization/companies`, { headers })).json();
   const company = companies.items[0].id;
