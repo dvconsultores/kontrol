@@ -4,6 +4,7 @@ y MfaChallenge (data-model.md §2.2)."""
 
 from __future__ import annotations
 
+import secrets
 from datetime import datetime
 from typing import Any
 
@@ -25,6 +26,11 @@ from app.core.scope import Scope
 from app.shared.mixins import CreatedByMixin, TimestampMixin, UUIDMixin
 
 
+def _nuevo_sello() -> str:
+    """Devuelve un sello de credencial aleatorio de 32 caracteres hexadecimales."""
+    return secrets.token_hex(16)
+
+
 class User(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "users"
     __scope__ = Scope.TENANT
@@ -41,6 +47,8 @@ class User(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     #: Vista derivada del estado del factor; solo la escribe `mfa_service` en la
     #: misma transacción que el factor (Spec 002 · F3).
     mfa_enabled: Mapped[bool] = mapped_column(default=False, nullable=False)
+    #: cambia con cada cambio de contraseña; una sesión con otro sello no vale.
+    credential_stamp: Mapped[str] = mapped_column(String(32), nullable=False, default=_nuevo_sello)
 
     user_roles: Mapped[list[UserRole]] = relationship(back_populates="user", cascade="all, delete-orphan")
     user_scopes: Mapped[list[UserScope]] = relationship(back_populates="user", cascade="all, delete-orphan")
@@ -157,6 +165,8 @@ class Session(UUIDMixin, TimestampMixin, Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     mfa_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     reauth_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    #: Sello del usuario al crear la sesión; si cambia, la sesión no vale.
+    credential_stamp: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
     __table_args__ = (
         CheckConstraint(
@@ -176,9 +186,13 @@ class PasswordReset(UUIDMixin, TimestampMixin, Base):
     __scope_authority__ = "user_id → users"
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
-    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    invalidated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    source: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="SELF", server_default="SELF"
+    )
     created_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
 
@@ -257,6 +271,8 @@ class MfaChallenge(UUIDMixin, TimestampMixin, Base):
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ip: Mapped[str | None] = mapped_column(String(45), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    #: Sello del usuario al iniciar el desafío; si cambia, el desafío no vale.
+    credential_stamp: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
     __table_args__ = (
         CheckConstraint("purpose IN ('LOGIN','ENROLL')", name="purpose"),

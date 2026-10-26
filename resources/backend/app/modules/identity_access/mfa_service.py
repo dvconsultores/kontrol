@@ -288,6 +288,7 @@ def _issue_challenge(
         expires_at=now + CHALLENGE_TTL,
         ip=ip,
         user_agent=user_agent,
+        credential_stamp=user.credential_stamp,
     )
     db.add(challenge)
     policy_class = mfa_policy.user_policy_class(db, user)
@@ -341,6 +342,7 @@ def _complete(
     user_agent: str | None,
     request_id: str | None,
     mfa: bool,
+    credential_stamp: str | None,
 ) -> LoginResult:
     identity_service.complete_login_bookkeeping(db, user, request_id=request_id)
     session, refresh = identity_service.create_session(
@@ -351,6 +353,7 @@ def _complete(
         auth_method=auth_method,
         mfa_verified_at=clock_now() if mfa else None,
         reauth_at=clock_now(),
+        credential_stamp=credential_stamp,
     )
     return LoginResult("AUTHENTICATED", user, session, refresh)
 
@@ -437,6 +440,7 @@ def start_login(
         user_agent=user_agent,
         request_id=request_id,
         mfa=False,
+        credential_stamp=user.credential_stamp,
     )
 
 
@@ -549,6 +553,7 @@ def verify_login(
         user_agent=user_agent,
         request_id=request_id,
         mfa=True,
+        credential_stamp=challenge.credential_stamp,
     )
     login.recovery_codes_remaining = recovery_codes_remaining
     return login
@@ -751,6 +756,7 @@ def confirm_enrollment(
             user_agent=user_agent,
             request_id=request_id,
             mfa=True,
+            credential_stamp=challenge.credential_stamp,
         )
     else:
         if narrowed_session is None:

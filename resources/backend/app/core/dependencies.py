@@ -99,6 +99,8 @@ def get_current_auth(
         raise PermissionDeniedError(code="SESSION_REVOKED", message="La sesión fue revocada o expiró", status_code=401)
     if str(row.user_id) != str(user.id):
         raise PermissionDeniedError(code="AUTH_INVALID_TOKEN", message="Sesión inválida o expirada", status_code=401)
+    if row.credential_stamp is None or row.credential_stamp != user.credential_stamp:
+        raise PermissionDeniedError(code="SESSION_REVOKED", message="La sesión fue revocada o expiró", status_code=401)
     if row.mfa_verified_at is None and mfa_policy.requires_mfa(mfa_policy.user_policy_class(db, user)):
         raise PermissionDeniedError(code="MFA_REQUIRED", message="Debe completar el segundo factor", status_code=401)
 

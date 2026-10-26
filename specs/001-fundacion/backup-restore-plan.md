@@ -75,6 +75,9 @@
 - Rotura de cristal MFA (último administrador sin factor ni códigos): solo en el servidor, nunca por HTTP:
   `python -m app.modules.identity_access.mfa_breakglass --tenant <CODIGO> --username <USUARIO> --confirm <USUARIO>`
   Deja auditoría `MFA_RESET_BREAKGLASS`, revoca todas las sesiones del usuario y le obliga a darse de alta en su siguiente inicio de sesión.
+- Rotura de cristal de contraseña (persona que no puede entrar; no hay canal de correo): solo en el servidor, nunca por HTTP:
+  `python -m app.modules.identity_access.password_breakglass --tenant <CODIGO> --username <USUARIO> --confirm <USUARIO> --salida <RUTA>`
+  Antes de emitirlo, el operador verifica la identidad de la persona por un canal de confianza. La orden escribe un código de un solo uso (caduca a los 15 minutos) solo en `<RUTA>` (permisos 0600; no sobrescribe un fichero existente) y nunca lo imprime. El operador lo entrega por ese canal y borra el fichero; la persona elige su contraseña en `/reset-password` («Tengo un código»). Deja auditoría `PASSWORD_RESET_ADMIN_INITIATED` (fuente CLI); un código nuevo invalida el anterior; el MFA de la persona no cambia.
 
 ## 8. Estado
 

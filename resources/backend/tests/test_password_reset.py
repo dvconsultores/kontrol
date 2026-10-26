@@ -19,6 +19,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import get_settings
 from app.core.database import Base, get_db, init_models
+from app.modules.identity_access import service as identity_service
+from app.modules.identity_access.models import User
 from app.modules.licensing import service as licensing_service
 from app.modules.organization.models import Installation
 from app.modules.setup.api import SetupRequest, initialize
@@ -91,15 +93,18 @@ def _app_client():
 
 
 def test_reset_password_flow_full_cycle():
-    """Solicitud → token → confirmación → login con la nueva contraseña."""
+    """Solicitud genérica → código emitido por el servicio → confirmación → login con la nueva contraseña."""
     r = _CLIENT.post("/api/v1/auth/password-reset/request", json={
         "tenant_code": "DEMO", "username": "admin",
     })
-    assert r.status_code == 200, r.text
-    data = r.json()
-    assert data["ok"] is True
-    token = data["reset_token"]
-    assert token, "el token debe entregarse en modo fundación"
+    assert r.status_code == 202, r.text
+    assert r.json() == {"ok": True}
+    assert "reset_token" not in r.text
+
+    db = _FACTORY()
+    user = db.execute(select(User).where(User.username == "admin")).scalars().first()
+    token = identity_service.issue_password_reset_token(db, user=user, source="CLI")
+    db.close()
 
     # Un token no puede usarse dos veces y la confirmación cambia la credencial.
     new_password = "NuevaClave2026!"
@@ -122,10 +127,10 @@ def test_reset_password_flow_full_cycle():
 
 
 def test_reset_password_unknown_user_is_safe():
-    """No revela si el usuario existe (responde 401 uniforme)."""
+    """No revela si el usuario existe (202 con el mismo cuerpo)."""
     r = _CLIENT.post("/api/v1/auth/password-reset/request", json={
         "tenant_code": "DEMO", "username": "usuario_que_no_existe_xyz",
     })
-    assert r.status_code == 401, r.text
-    assert r.json()["code"] == "AUTH_INVALID_CREDENTIALS"
+    assert r.status_code == 202, r.text
+    assert r.json() == {"ok": True}
     assert "reset_token" not in r.json()

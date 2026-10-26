@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.security import create_access_token, decode_token
+from app.modules.identity_access import service as identity_service
 from app.modules.identity_access.models import MfaFactor, Role, User, UserRole
 from app.modules.identity_access.models import Session as AuthSession
 
@@ -438,8 +439,12 @@ def test_mfa_h05_restablecimiento_por_token(mundo: MundoMfa, reloj_mfa):
         f"{API}/auth/password-reset/request",
         json={"tenant_code": "DEMO", "username": usuario},
     )
-    assert r.status_code == 200, r.text
-    reset_token = r.json()["reset_token"]
+    assert r.status_code == 202, r.text
+
+    db = mundo.factory()
+    user = db.execute(select(User).where(User.username == usuario)).scalars().first()
+    reset_token = identity_service.issue_password_reset_token(db, user=user, source="CLI")
+    db.close()
 
     r = mundo.client.post(
         f"{API}/auth/password-reset/confirm",

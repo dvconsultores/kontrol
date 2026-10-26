@@ -1,0 +1,17 @@
+# TR-A1 · rojo atribuido (SQLite), árbol 14485bd + pruebas nuevas, 2026-10-26
+# 27 rojas, 1 verde (A05: los nombres de cabecera ya coinciden; guarda de regresión), 1 omitida (B06, solo PostgreSQL)
+27 failed, 1 passed, 1 skipped, 1 warning in 8.04s
+# causas:
+A01/A04: assert 200 == 202 (la solicitud devuelve 200 con reset_token)
+A02/A03: assert 401 == 202 (enumeración: usuario o tenant inexistente → 401)
+A06: el recuento de password_resets crece tras la solicitud (p. ej. «assert 2 == 0»; los números dependen del orden): la solicitud crea filas
+B*, S*, M*, L01: AttributeError: service has no attribute 'issue_password_reset_token' (capacidad ausente)
+L02, CLI*: ModuleNotFoundError app.modules.identity_access.password_breakglass (capacidad ausente)
+OAS01: la respuesta 200 sigue declarada
+
+# TR-A2 · rojo atribuido de la migración 0059 (PostgreSQL)
+3 failed, 1 passed
+R01: assert 0 == 1 (users.credential_stamp no existe)
+R02: UndefinedColumn credential_stamp
+R03: DID NOT RAISE DBAPIError (token_hash no es único)
+R04: verde (hoy el downgrade a 0058 no hace nada; guarda del downgrade)

@@ -46,12 +46,14 @@
 | POST | `/api/v1/auth/mfa/recovery-codes` | Generar códigos de recuperación nuevos (invalida los anteriores; exige reautenticación) |
 | DELETE | `/api/v1/auth/mfa` | Quitar el factor propio (solo usuarios STANDARD; exige reautenticación) |
 | POST | `/api/v1/auth/reauth` | Reautenticación (contraseña + código) válida 5 min para operaciones críticas |
-| POST | `/api/v1/auth/password-reset/request` | Solicitar recuperación |
-| POST | `/api/v1/auth/password-reset/confirm` | Confirmar recuperación |
+| POST | `/api/v1/auth/password-reset/request` | Solicitar recuperación: responde siempre 202 `{ok: true}`; no revela si la cuenta existe ni devuelve código (sin canal fuera de banda no se emite; público) |
+| POST | `/api/v1/auth/password-reset/confirm` | Fijar la contraseña con el código que entrega el soporte (`password_breakglass`): 200, o 400 `RESET_TOKEN_INVALID` / `RESET_TOKEN_EXPIRED` / `RESET_TOKEN_USED`, 422 `PASSWORD_POLICY`; revoca todas las sesiones y no toca el MFA (público) |
 | GET | `/api/v1/auth/sessions` | Listar sesiones propias |
 | DELETE | `/api/v1/auth/sessions/{id}` | Revocar sesión |
 
 Cualquier operación crítica puede responder 403 `REAUTH_REQUIRED`; el cliente pide la reautenticación y repite la petición una vez (Spec 002, ADR-004).
+
+Toda sesión lleva el sello de credencial del usuario: cambia con cada cambio o recuperación de contraseña, y una sesión con otro sello responde 401 `SESSION_REVOKED`, también al renovar (Spec 002, ADR-004).
 
 ### Organización
 

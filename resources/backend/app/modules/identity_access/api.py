@@ -40,13 +40,23 @@ class ChangePasswordRequest(BaseModel):
 
 
 class ResetRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     tenant_code: str
     username: str
 
 
 class ResetConfirmRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     token: str
     new_password: str
+
+
+class ResetAcknowledged(BaseModel):
+    """Respuesta fija: no revela si la cuenta existe ni contiene el código."""
+
+    ok: bool = True
 
 
 class UserCreate(BaseModel):
@@ -232,19 +242,24 @@ def change_password(
     return {"ok": True}
 
 
-@router.post("/password-reset/request")
+@router.post("/password-reset/request", status_code=202, response_model=ResetAcknowledged)
 def reset_request(body: ResetRequest, request: Request, db: Session = Depends(get_db)):
-    tenant_id = _resolve_tenant_id(db, body.tenant_code)
-    token = identity_service.request_password_reset(db, tenant_id=tenant_id, username=body.username, request_id=getattr(request.state, "request_id", None))
-    # En la fundación el token se devuelve al cliente para el flujo demo;
-    # en producción se envía por correo seguro (SMTP diferido).
-    return {"ok": True, "reset_token": token}
+    """Respuesta idéntica exista o no la cuenta (R-RST-02); sin canal fuera de
+    banda no se emite código; la recuperación soportada es la rotura de cristal
+    local."""
+    identity_service.request_password_reset(
+        db,
+        tenant_code=body.tenant_code,
+        username=body.username,
+        request_id=getattr(request.state, "request_id", None),
+    )
+    return ResetAcknowledged()
 
 
-@router.post("/password-reset/confirm")
+@router.post("/password-reset/confirm", response_model=ResetAcknowledged)
 def reset_confirm(body: ResetConfirmRequest, request: Request, db: Session = Depends(get_db)):
     identity_service.confirm_password_reset(db, token=body.token, new_password=body.new_password, request_id=getattr(request.state, "request_id", None))
-    return {"ok": True}
+    return ResetAcknowledged()
 
 
 @router.get("/sessions")

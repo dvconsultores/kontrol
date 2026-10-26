@@ -250,8 +250,9 @@ def test_mfa_m03_restricciones_unicas_y_check(base_migrada_0058):
         ),
         (
             "INSERT INTO users (id, tenant_id, username, email, password_hash, status, "
-            "must_change_password, failed_attempts, mfa_enabled, created_at, updated_at) "
-            "VALUES (:u, :t, 'u058c', 'u@example.com', 'x', 'ACTIVE', false, 0, false, now(), now())",
+            "must_change_password, failed_attempts, mfa_enabled, credential_stamp, created_at, updated_at) "
+            "VALUES (:u, :t, 'u058c', 'u@example.com', 'x', 'ACTIVE', false, 0, false, "
+            "'00000000000000000000000000000000', now(), now())",
             {"u": ids["usr"], "t": ids["ten"]},
         ),
     ])

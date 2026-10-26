@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any, overload
@@ -57,6 +58,10 @@ def _as_utc(dt: datetime | None) -> datetime | None:
     if dt is None or dt.tzinfo is not None:
         return dt
     return dt.replace(tzinfo=UTC)
+
+
+PASSWORD_RESET_TTL = timedelta(minutes=15)
+RESET_REQUEST_AUDIT_WINDOW = timedelta(minutes=15)
 
 
 def _audit(db: Session, **kwargs: Any) -> None:
@@ -194,6 +199,7 @@ def create_session(
     mfa_verified_at: datetime | None = None,
     reauth_at: datetime | None = None,
     family_id: str | None = None,
+    credential_stamp: str | None,
 ) -> tuple[AuthSession, str]:
     settings = get_settings()
     jti = security.sha256_hex(security.generate_secret_token())
@@ -210,6 +216,7 @@ def create_session(
         auth_method=auth_method,
         mfa_verified_at=mfa_verified_at,
         reauth_at=reauth_at,
+        credential_stamp=credential_stamp,
         expires_at=_now() + timedelta(days=settings.refresh_token_days),
     )
     db.add(session)
@@ -264,6 +271,11 @@ def rotate_session(db: Session, *, refresh_token: str, request_id: str | None = 
     if not user or user.status != "ACTIVE":
         raise KontrolError(code="AUTH_USER_INACTIVE", message="El usuario no está activo", status_code=403)
 
+    if session.credential_stamp is None or session.credential_stamp != user.credential_stamp:
+        _revoke_family(db, session.family_id)
+        db.commit()
+        raise KontrolError(code="SESSION_REVOKED", message="Sesión revocada", status_code=401)
+
     if session.mfa_verified_at is None and mfa_policy.requires_mfa(mfa_policy.user_policy_class(db, user)):
         _revoke_family(db, session.family_id)
         db.commit()
@@ -285,10 +297,29 @@ def rotate_session(db: Session, *, refresh_token: str, request_id: str | None = 
         raise RuntimeError(f"rotación de sesión {session.id}: {revocadas} filas revocadas, se esperaba exactamente una")
     new_session, new_refresh = create_session(db, user=user, ip=session.ip, user_agent=session.user_agent,
         auth_method=session.auth_method, mfa_verified_at=session.mfa_verified_at, reauth_at=session.reauth_at,
-        family_id=session.family_id)
+        family_id=session.family_id, credential_stamp=session.credential_stamp)
     _audit(db, action="SESSION_REFRESHED", entity_type="User", entity_id=str(user.id), tenant_id=user.tenant_id, request_id=request_id)
     db.commit()
     return new_session, new_refresh, user
+
+
+def _rotar_sello(user: User) -> None:
+    user.credential_stamp = secrets.token_hex(16)
+
+
+def _invalidar_tokens_de_reset(db: Session, *, user_id: str, excepto_id: str | None = None) -> int:
+    query = (
+        update(PasswordReset)
+        .where(
+            PasswordReset.user_id == user_id,
+            PasswordReset.used_at.is_(None),
+            PasswordReset.invalidated_at.is_(None),
+        )
+        .values(invalidated_at=_now(), updated_at=_now())
+    )
+    if excepto_id is not None:
+        query = query.where(PasswordReset.id != excepto_id)
+    return db.execute(query).rowcount
 
 
 def _revoke_family(db: Session, family_id: str) -> int:
@@ -375,6 +406,28 @@ def change_password(
         raise KontrolError(code="PASSWORD_POLICY", message="La contraseña no cumple la política", field_errors={"new_password": errors}, status_code=422)
     user.password_hash = security.hash_password(new_password)
     user.must_change_password = False
+    _rotar_sello(user)
+    if current_family_id:
+        db.execute(
+            update(AuthSession)
+            .where(
+                AuthSession.family_id == current_family_id,
+                AuthSession.revoked_at.is_(None),
+            )
+            .values(credential_stamp=user.credential_stamp, updated_at=_now())
+        )
+    n = _invalidar_tokens_de_reset(db, user_id=str(user.id))
+    if n:
+        _audit(
+            db,
+            action="PASSWORD_RESET_TOKEN_INVALIDATED",
+            entity_type="User",
+            entity_id=str(user.id),
+            tenant_id=user.tenant_id,
+            request_id=request_id,
+            reason="PASSWORD_CHANGED",
+            evidence={"invalidated_tokens": n},
+        )
     _audit(db, action="PASSWORD_CHANGED", entity_type="User", entity_id=str(user.id), tenant_id=user.tenant_id, request_id=request_id, reason="CAMBIO")
     revoke_user_sessions(
         db,
@@ -389,39 +442,173 @@ def change_password(
 # --------------------------------------------------------------------------- #
 # Recuperación de contraseña
 # --------------------------------------------------------------------------- #
-def request_password_reset(db: Session, *, tenant_id: str, username: str, request_id: str | None = None) -> str:
-    """Crea un token de un solo uso (devuelve el token en claro para el demo/setup)."""
-    user = get_user_by_username(db, tenant_id, username)
-    if not user:
-        # No revelar existencia
-        raise KontrolError(code="AUTH_INVALID_CREDENTIALS", message="Credenciales inválidas", status_code=401)
+def issue_password_reset_token(db: Session, *, user: User, source: str, request_id: str | None = None) -> str:
+    """Emite un token de recuperación de un solo uso.
+
+    El token en claro solo lo recibe quien llama (la CLI de rotura de cristal);
+    nunca se registra.
+    """
+    if source not in {"SELF", "CLI"}:
+        raise ValueError(f"source inválido: {source}")
+    n = _invalidar_tokens_de_reset(db, user_id=str(user.id))
     token = security.generate_secret_token(32)
-    reset = PasswordReset(
-        user_id=str(user.id),
-        token_hash=security.sha256_hex(token),
-        expires_at=_now() + timedelta(minutes=30),
+    db.add(
+        PasswordReset(
+            user_id=str(user.id),
+            token_hash=security.sha256_hex(token),
+            expires_at=_now() + PASSWORD_RESET_TTL,
+            source=source,
+        )
     )
-    db.add(reset)
-    _audit(db, action="PASSWORD_RESET_REQUESTED", entity_type="User", entity_id=str(user.id), tenant_id=tenant_id, request_id=request_id)
+    if n:
+        _audit(
+            db,
+            action="PASSWORD_RESET_TOKEN_INVALIDATED",
+            entity_type="User",
+            entity_id=str(user.id),
+            tenant_id=user.tenant_id,
+            request_id=request_id,
+            reason="REISSUED",
+            evidence={"invalidated_tokens": n},
+        )
+    if source == "CLI":
+        _audit(
+            db,
+            action="PASSWORD_RESET_ADMIN_INITIATED",
+            entity_type="User",
+            entity_id=str(user.id),
+            tenant_id=user.tenant_id,
+            request_id=request_id,
+            source="CLI",
+        )
     db.commit()
     return token
+
+
+def request_password_reset(db: Session, *, tenant_code: str, username: str, request_id: str | None = None) -> None:
+    """Registra la petición de recuperación sin emitir token.
+
+    Sin canal fuera de banda no hay token (D-01); nunca se revela si el
+    tenant o el usuario existen.
+    """
+    from app.modules.audit.models import AuditEvent
+    from app.modules.organization.models import Tenant
+
+    tenant_id: str | None = None
+    user: User | None = None
+    tenant_row = db.execute(select(Tenant.id).where(Tenant.code == tenant_code)).scalars().first()
+    if tenant_row:
+        tenant_id = str(tenant_row)
+        user = get_user_by_username(db, tenant_id, username)
+    existing_event = db.execute(
+        select(AuditEvent.id)
+        .where(
+            AuditEvent.action == "PASSWORD_RESET_REQUESTED",
+            AuditEvent.entity_id == (str(user.id) if user else None),
+            # created_at lo escribe la BD con el reloj real: la ventana se mide con ese mismo reloj, no con el inyectado.
+            AuditEvent.created_at >= datetime.now(UTC) - RESET_REQUEST_AUDIT_WINDOW,
+        )
+        .limit(1)
+    ).scalars().first()
+    if user is not None and existing_event is None:
+        _audit(
+            db,
+            action="PASSWORD_RESET_REQUESTED",
+            entity_type="User",
+            entity_id=str(user.id),
+            tenant_id=tenant_id,
+            request_id=request_id,
+            reason="NOT_DELIVERABLE",
+        )
+        db.commit()
 
 
 def confirm_password_reset(db: Session, *, token: str, new_password: str, request_id: str | None = None) -> None:
     errors = security.validate_password_policy(new_password)
     if errors:
         raise KontrolError(code="PASSWORD_POLICY", message="La contraseña no cumple la política", field_errors={"new_password": errors}, status_code=422)
-    reset = db.execute(select(PasswordReset).where(PasswordReset.token_hash == security.sha256_hex(token))).scalars().first()
-    if not reset or reset.used_at is not None or _as_utc(reset.expires_at) < _now():
-        raise KontrolError(code="RESET_TOKEN_INVALID", message="El enlace de recuperación no es válido o expiró", status_code=401)
+
+    token_hash = security.sha256_hex(token)
+    reset = db.execute(select(PasswordReset).where(PasswordReset.token_hash == token_hash)).scalars().first()
+    if reset is None:
+        _audit(
+            db,
+            action="PASSWORD_RESET_FAILED",
+            entity_type="User",
+            entity_id=None,
+            request_id=request_id,
+            reason="INVALID",
+        )
+        db.commit()
+        raise KontrolError(code="RESET_TOKEN_INVALID", message="El código de recuperación no es válido", status_code=400)
+
+    if reset.used_at is not None or reset.invalidated_at is not None:
+        _audit(
+            db,
+            action="PASSWORD_RESET_FAILED",
+            entity_type="User",
+            entity_id=reset.user_id,
+            request_id=request_id,
+            reason="USED",
+        )
+        db.commit()
+        raise KontrolError(code="RESET_TOKEN_USED", message="El código de recuperación ya se usó o fue reemplazado", status_code=400)
+
+    if _as_utc(reset.expires_at) <= _now():
+        _audit(
+            db,
+            action="PASSWORD_RESET_FAILED",
+            entity_type="User",
+            entity_id=reset.user_id,
+            request_id=request_id,
+            reason="EXPIRED",
+        )
+        db.commit()
+        raise KontrolError(code="RESET_TOKEN_EXPIRED", message="El código de recuperación caducó", status_code=400)
+
     user = db.get(User, reset.user_id)
-    if not user:
-        raise KontrolError(code="RESET_USER_NOT_FOUND", message="El usuario no existe", status_code=401)
+    if user is None or user.status != "ACTIVE":
+        reset.invalidated_at = _now()
+        _audit(
+            db,
+            action="PASSWORD_RESET_FAILED",
+            entity_type="User",
+            entity_id=reset.user_id,
+            request_id=request_id,
+            reason="INVALID",
+        )
+        db.commit()
+        raise KontrolError(code="RESET_TOKEN_INVALID", message="El código de recuperación no es válido", status_code=400)
+
+    ahora = _now()
+    consumido = db.execute(
+        update(PasswordReset)
+        .where(
+            PasswordReset.id == reset.id,
+            PasswordReset.used_at.is_(None),
+            PasswordReset.invalidated_at.is_(None),
+        )
+        .values(used_at=ahora, updated_at=ahora)
+    ).rowcount
+    if consumido != 1:
+        db.rollback()
+        raise KontrolError(code="RESET_TOKEN_USED", message="El código de recuperación ya se usó o fue reemplazado", status_code=400)
+
     user.password_hash = security.hash_password(new_password)
     user.must_change_password = False
-    reset.used_at = _now()
-    _audit(db, action="PASSWORD_RESET_CONFIRMED", entity_type="User", entity_id=str(user.id), tenant_id=user.tenant_id, request_id=request_id)
-    revoke_user_sessions(db, user_id=str(user.id), reason="PASSWORD_RESET", request_id=request_id)
+    _rotar_sello(user)
+    m = _invalidar_tokens_de_reset(db, user_id=str(user.id), excepto_id=str(reset.id))
+    k = revoke_user_sessions(db, user_id=str(user.id), reason="PASSWORD_RESET", request_id=request_id)
+    _audit(
+        db,
+        action="PASSWORD_RESET_COMPLETED",
+        entity_type="User",
+        entity_id=str(user.id),
+        tenant_id=user.tenant_id,
+        request_id=request_id,
+        reason=reset.source,
+        evidence={"revoked_sessions": k, "invalidated_tokens": m},
+    )
     db.commit()
 
 

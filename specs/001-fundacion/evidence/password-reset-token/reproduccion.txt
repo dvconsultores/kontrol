@@ -1,0 +1,6 @@
+# B1 · reproducción en el árbol de entrada (d39f820 + Fase A), sonda en proceso con identidades sintéticas; solo formas, nunca valores
+# fecha: 2026-10-26
+EXISTE {'status': 200, 'claves': ['ok', 'reset_token'], 'codigo': None, 'token_presente': True} mediana_ms=11.0
+NO_EXISTE {'status': 401, 'claves': ['code', 'details', 'field_errors', 'message', 'request_id'], 'codigo': 'AUTH_INVALID_CREDENTIALS', 'token_presente': False} mediana_ms=9.5
+TENANT_NO_EXISTE {'status': 401, 'claves': ['code', 'details', 'field_errors', 'message', 'request_id'], 'codigo': 'AUTH_INVALID_CREDENTIALS', 'token_presente': False} mediana_ms=7.8
+CONFIRMAR 200 REUSO 401 RESET_TOKEN_INVALID
