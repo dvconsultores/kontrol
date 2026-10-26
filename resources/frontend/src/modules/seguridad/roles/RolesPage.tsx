@@ -5,6 +5,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
@@ -13,15 +14,57 @@ interface RoleSummary {
   id: string;
   code: string;
   name: string;
+  company_id: string | null;
   protected: boolean;
   status: string;
   permissions: string[];
+  delegable: boolean;
+  motivo: string | null;
+}
+
+interface UserRole {
+  id: string;
+  code: string;
+  name: string;
+  company_id: string | null;
 }
 
 interface UserSummary {
   id: string;
   username: string;
-  roles: { id: string; code: string; name: string }[];
+  roles: UserRole[];
+}
+
+interface CompanySummary {
+  id: string;
+  code: string;
+  legal_name: string;
+}
+
+interface RemoveTarget {
+  uid: string;
+  rid: string;
+  label: string;
+}
+
+const MENSAJES_DE_AUTORIDAD: Record<string, string> = {
+  AUTHORITY_CEILING_EXCEEDED: "No puede conceder ni gestionar una autoridad que usted no tiene.",
+  SELF_ESCALATION_FORBIDDEN: "No puede ampliar su propia autoridad.",
+  CROSS_SCOPE_DELEGATION_FORBIDDEN:
+    "No puede conceder autoridad fuera de las empresas en las que la tiene.",
+  TARGET_OUT_OF_SCOPE: "Esa asignación está fuera de las empresas en las que usted tiene autoridad.",
+  LAST_SECURITY_ADMIN_REQUIRED:
+    "La empresa debe conservar al menos un administrador de seguridad. Asigne antes ese rol a otra persona.",
+  ROLE_ALREADY_ASSIGNED: "El usuario ya tiene ese rol.",
+  ROLE_INACTIVE: "El rol no está activo.",
+};
+
+function mensajeDeError(err: unknown, porDefecto: string): string {
+  if (err instanceof Error && "code" in err && typeof err.code === "string") {
+    const code = err.code;
+    if (Object.hasOwn(MENSAJES_DE_AUTORIDAD, code)) return MENSAJES_DE_AUTORIDAD[code];
+  }
+  return err instanceof Error ? err.message : porDefecto;
 }
 
 export function RolesPage(): React.JSX.Element {
@@ -29,6 +72,8 @@ export function RolesPage(): React.JSX.Element {
   const { notify } = useNotifications();
   const [userId, setUserId] = useState("");
   const [roleId, setRoleId] = useState("");
+  const [companyId, setCompanyId] = useState("");
+  const [toRemove, setToRemove] = useState<RemoveTarget | null>(null);
 
   const roles = useQuery({
     queryKey: ["security", "roles"],
@@ -40,6 +85,14 @@ export function RolesPage(): React.JSX.Element {
     queryFn: () => apiFetch<UserSummary[]>("/users"),
     retry: false,
   });
+  const companies = useQuery({
+    queryKey: ["security", "companies"],
+    queryFn: () =>
+      apiFetch<{ items: CompanySummary[]; total: number; page: number; page_size: number }>(
+        "/organization/companies?page=1&page_size=100",
+      ),
+    retry: false,
+  });
 
   const refresh = (): void => {
     void queryClient.invalidateQueries({ queryKey: ["security"] });
@@ -48,25 +101,43 @@ export function RolesPage(): React.JSX.Element {
   const assign = async (): Promise<void> => {
     if (!userId || !roleId) return;
     try {
-      await apiFetch(`/users/${userId}/roles`, { method: "POST", body: { role_id: roleId } });
+      const body: { role_id: string; company_id?: string } = { role_id: roleId };
+      if (companyId) body.company_id = companyId;
+      await apiFetch(`/users/${userId}/roles`, { method: "POST", body });
       notify({ type: "success", title: "Rol asignado", description: "La asignación fue registrada." });
       setRoleId("");
+      setCompanyId("");
       refresh();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "No fue posible asignar el rol";
-      notify({ type: "error", title: "No fue posible asignar el rol", description: message });
+      notify({
+        type: "error",
+        title: "No fue posible asignar el rol",
+        description: mensajeDeError(err, "No fue posible asignar el rol"),
+      });
     }
   };
 
-  const remove = async (uid: string, rid: string, label: string): Promise<void> => {
+  const confirmRemove = async (): Promise<void> => {
+    if (!toRemove) return;
     try {
-      await apiFetch(`/users/${uid}/roles/${rid}`, { method: "DELETE" });
-      notify({ type: "success", title: "Rol quitado", description: label });
+      await apiFetch(`/users/${toRemove.uid}/roles/${toRemove.rid}`, { method: "DELETE" });
+      notify({ type: "success", title: "Rol quitado", description: toRemove.label });
       refresh();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "No fue posible quitar el rol";
-      notify({ type: "error", title: "No fue posible quitar el rol", description: message });
+      notify({
+        type: "error",
+        title: "No fue posible quitar el rol",
+        description: mensajeDeError(err, "No fue posible quitar el rol"),
+      });
+    } finally {
+      setToRemove(null);
     }
+  };
+
+  const companyName = (id: string | null): string => {
+    if (!id) return "";
+    const found = (companies.data?.items ?? []).find((c) => c.id === id);
+    return found ? found.legal_name : id;
   };
 
   return (
@@ -80,8 +151,9 @@ export function RolesPage(): React.JSX.Element {
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Asignar rol a usuario</h2>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Usuario" required>
+          <FormField label="Usuario" htmlFor="rol-usuario" required>
             <select
+              id="rol-usuario"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
@@ -94,16 +166,36 @@ export function RolesPage(): React.JSX.Element {
               ))}
             </select>
           </FormField>
-          <FormField label="Rol" required>
+          <FormField label="Rol" htmlFor="rol-rol" required>
             <select
+              id="rol-rol"
               value={roleId}
               onChange={(e) => setRoleId(e.target.value)}
               className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
             >
               <option value="">Seleccionar…</option>
               {(roles.data?.items ?? []).map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name} ({r.code})
+                <option key={r.id} value={r.id} disabled={!r.delegable}>
+                  {r.name} ({r.code}){!r.delegable ? " — fuera de su autoridad" : ""}
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <FormField
+            label="Empresa"
+            htmlFor="rol-empresa"
+            help="El rol solo valdrá en la empresa elegida. Solo puede conceder autoridad en las empresas donde usted la tiene."
+          >
+            <select
+              id="rol-empresa"
+              value={companyId}
+              onChange={(e) => setCompanyId(e.target.value)}
+              className="h-10 w-64 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+            >
+              <option value="">Todas las empresas en las que opera</option>
+              {(companies.data?.items ?? []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.legal_name}
                 </option>
               ))}
             </select>
@@ -123,9 +215,16 @@ export function RolesPage(): React.JSX.Element {
               <li key={r.id} className="py-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-text-900">
-                    {r.name} <span className="text-text-400">({r.code})</span>
+                    {r.name} <span className="text-text-500">({r.code})</span>
                   </span>
-                  {r.protected ? <span className="text-xs text-text-400">protegido</span> : null}
+                  <span className="flex items-center gap-2">
+                    {r.delegable ? (
+                      <span className="text-xs text-text-500">Puede delegarlo</span>
+                    ) : (
+                      <span className="text-xs text-text-500">Fuera de su autoridad</span>
+                    )}
+                    {r.protected ? <span className="text-xs text-text-500">protegido</span> : null}
+                  </span>
                 </div>
                 <p className="mt-1 text-xs text-text-500">{r.permissions.join(" · ") || "sin permisos"}</p>
               </li>
@@ -141,24 +240,48 @@ export function RolesPage(): React.JSX.Element {
               <span className="font-medium text-text-900">{u.username}</span>
               <div className="mt-1 flex flex-wrap gap-2">
                 {(u.roles ?? []).map((r) => (
-                  <span key={r.id} className="inline-flex items-center gap-1 rounded border border-border-default px-2 py-0.5 text-xs text-text-600">
+                  <span
+                    key={r.id}
+                    className="inline-flex items-center gap-1 rounded border border-border-default px-2 py-0.5 text-xs text-text-600"
+                  >
                     {r.name}
+                    {r.company_id ? ` · ${companyName(r.company_id)}` : ""}
                     <button
                       type="button"
-                      onClick={() => void remove(u.id, r.id, `${u.username} · ${r.name}`)}
-                      className="text-text-400 hover:text-danger-600"
+                      onClick={() =>
+                        setToRemove({
+                          uid: u.id,
+                          rid: r.id,
+                          label: `${u.username} · ${r.name}`,
+                        })
+                      }
+                      className="text-text-500 hover:text-danger-600"
                       aria-label={`Quitar rol ${r.name} a ${u.username}`}
                     >
                       ×
                     </button>
                   </span>
                 ))}
-                {(u.roles ?? []).length === 0 ? <span className="text-xs text-text-400">sin roles</span> : null}
+                {(u.roles ?? []).length === 0 ? <span className="text-xs text-text-500">sin roles</span> : null}
               </div>
             </div>
           ))}
         </section>
       </div>
+
+      <ConfirmationDialog
+        open={toRemove !== null}
+        title="Quitar rol"
+        description={
+          toRemove
+            ? `${toRemove.label}: el usuario dejará de tener ese rol. Si es su propio rol, perderá esa autoridad.`
+            : ""
+        }
+        confirmLabel="Quitar"
+        danger
+        onConfirm={confirmRemove}
+        onCancel={() => setToRemove(null)}
+      />
     </PageContent>
   );
 }

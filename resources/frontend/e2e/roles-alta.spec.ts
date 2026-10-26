@@ -29,8 +29,8 @@ function usuarioSinPermiso(): string {
 }
 
 async function bearer(_request: APIRequestContext, usuario: string): Promise<Record<string, string>> {
-  const token = usuario === "admin"
-    ? (await sesionApi("admin", { tenant: "DEMO" })).token
+  const token = usuario === "admintenant"
+    ? (await sesionApi("admintenant", { tenant: "DEMO" })).token
     : (await iniciarSesion(usuario, { tenant: "DEMO" })).token;
   return { Authorization: `Bearer ${token}` };
 }
@@ -46,7 +46,7 @@ test.describe("roles · alta por API", () => {
     expect(denegado.status()).toBe(403);
     expect(((await denegado.json()) as { code: string }).code).toBe("PERMISSION_DENIED");
 
-    const admin = await bearer(request, "admin");
+    const admin = await bearer(request, "admintenant");
     const alta = await request.post(`${API}/roles`, { data: { code, name: "Rol E2E", permissions: ["roles:view", "users:view"] }, headers: admin });
     expect(alta.status(), await alta.text()).toBe(201);
     const creado = (await alta.json()) as { id: string; code: string; protected: boolean; status: string; company_id: string | null; permissions: string[] };

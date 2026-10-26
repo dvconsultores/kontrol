@@ -73,6 +73,10 @@ Toda sesión lleva el sello de credencial del usuario: cambia con cada cambio o 
 | GET/POST | `/api/v1/security/users` | Usuarios |
 | GET/PATCH | `/api/v1/security/users/{id}` | Usuario (rol, alcance) |
 | POST | `/api/v1/users/{id}/mfa/reset` | Restablecer el MFA de otro usuario (`users:mfa_reset`, nunca uno mismo, techo de privilegios, cierra sus sesiones; exige reautenticación) |
+| GET | `/api/v1/roles` | Roles visibles para el tenant del actor (los de empresa de otro tenant no se listan); cada uno con `delegable` y `motivo` (`AUTHORITY_CEILING_EXCEEDED`) calculados para quien pregunta (`roles:view`) |
+| POST | `/api/v1/roles` | Alta de un rol personalizado (`roles:create`, reautenticación). Techo: los permisos ⊆ los del actor y el alcance de empresa dentro del suyo; si no, 403 `AUTHORITY_CEILING_EXCEEDED` / `CROSS_SCOPE_DELEGATION_FORBIDDEN` (auditado como `AUTHORITY_DELEGATION_DENIED`) |
+| POST | `/api/v1/users/{id}/roles` | Asignar `{role_id, company_id?}` (`roles:edit`, reautenticación; campos no declarados → 422). Techo: capacidades del rol ⊆ las del actor (403 `AUTHORITY_CEILING_EXCEEDED`, o `SELF_ESCALATION_FORBIDDEN` a uno mismo); rol protegido (ADMIN, FUNCIONAL_COMPLETO) solo si el actor lo tiene con ese alcance; alcance concedido ⊆ el del actor (403 `CROSS_SCOPE_DELEGATION_FORBIDDEN`); rol de otro tenant 404 `ROLE_NOT_FOUND`; inactivo 409 `ROLE_INACTIVE` |
+| DELETE | `/api/v1/users/{id}/roles/{role_id}` | Quitar (`roles:edit`, reautenticación), también renunciar a un rol propio. Solo roles dentro del techo del actor (403 `AUTHORITY_CEILING_EXCEEDED` / `TARGET_OUT_OF_SCOPE`); nunca deja al tenant sin administrador de seguridad (`users:create` + `roles:edit` + `users:mfa_reset`): 409 `LAST_SECURITY_ADMIN_REQUIRED` (auditado como `LAST_ADMIN_OPERATION_DENIED`) |
 | GET/POST | `/api/v1/security/roles` | Roles |
 | GET/POST | `/api/v1/security/permissions` | Permisos |
 | GET/POST | `/api/v1/security/roles/{id}/permissions` | RolePermission |

@@ -1,0 +1,19 @@
+# Reproducción del techo de delegación en HEAD 464c913 (2026-10-26); identidades sintéticas del arnés de pruebas; actor con R_GESTOR_ROLES = roles:edit, roles:create, users:view, entrado con MFA real
+roles conocidos: ['ADMIN', 'R_ALMACEN', 'R_CONSULTA', 'R_GESTOR_MFA', 'R_GESTOR_ROLES']
+R1 autoasignarse ADMIN: 200 None
+R3 asignar a otro un rol con users:mfa_reset (que el actor no tiene): 200 None
+R2 autoasignarse users:mfa_reset: 200 None
+R4 crear rol con users:mfa_reset: 201 R_SOMBRA_MFA
+R9 crear rol sombra con los 85 permisos de ADMIN: 201 R_SOMBRA_ADMIN
+R7 asignar con company_id de otro tenant: 404 COMPANY_NOT_FOUND
+R11 quitar ADMIN al administrador inicial: 200 None
+
+# Después de la corrección (árbol del ciclo, misma sonda; create_role exige ahora un actor real) — 2026-10-26T20:11:55Z
+R1 autoasignarse ADMIN: 403 SELF_ESCALATION_FORBIDDEN
+R3 asignar a otro un rol con users:mfa_reset (que el actor no tiene): 403 AUTHORITY_CEILING_EXCEEDED
+R2 autoasignarse users:mfa_reset: 403 SELF_ESCALATION_FORBIDDEN
+R4 crear rol con users:mfa_reset: 403 AUTHORITY_CEILING_EXCEEDED
+R9 crear rol sombra con los 25 permisos de ADMIN: 403 AUTHORITY_CEILING_EXCEEDED
+R7 asignar con company_id de otro tenant: 404 COMPANY_NOT_FOUND
+R11 quitar ADMIN al administrador inicial: 403 AUTHORITY_CEILING_EXCEEDED
+# R11 se bloquea ahora por techo: el gestor no gestiona ADMIN. La protección del último administrador se prueba aparte (DLA-L01..L06, también en carrera sobre PostgreSQL).

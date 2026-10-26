@@ -36,7 +36,7 @@ from app.modules.documents.storage import (
     set_storage,
 )
 from app.modules.identity_access import service as identity_service
-from app.modules.identity_access.models import User, UserRole
+from app.modules.identity_access.models import Role, User, UserRole
 from app.modules.organization.models import Company, Installation, Tenant
 from app.modules.setup.api import SetupRequest, _bootstrap_roles, initialize
 from app.modules.system.models import IdempotencyRecord
@@ -108,6 +108,9 @@ def _app_client(tmp_path_factory):
         password="Kontrol2026Segura!", created_by=None)
     role_b = _bootstrap_roles(db, str(tenant_b.id), str(user_b.id))
     db.add(UserRole(user_id=str(user_b.id), role_id=str(role_b.id), company_id=None))
+    # OD-DEL-10: la autoridad de negocio vive en FUNCIONAL_COMPLETO; el atacante la tiene completa, como el administrador de setup.
+    funcional_b = db.execute(select(Role).where(Role.code == "FUNCIONAL_COMPLETO", Role.company_id.is_(None), Role.protected.is_(True))).scalars().one()
+    db.add(UserRole(user_id=str(user_b.id), role_id=str(funcional_b.id), company_id=None))
     db.commit()
     db.close()
 

@@ -174,7 +174,9 @@ def test_el_indice_parcial_y_los_checks_existen_con_el_nombre_del_orm(base_migra
 def test_el_permiso_submit_existe_y_admin_lo_tiene(base_migrada):
     name, ids = base_migrada
     rows = _rows(name, "SELECT 1 FROM permissions p JOIN role_permissions rp ON rp.permission_id = p.id "
-                       "WHERE p.resource = 'ventas' AND p.action = 'submit' AND rp.role_id = :r", r=ids["role"])
+                       "JOIN roles r ON r.id = rp.role_id "
+                       "WHERE p.resource = 'ventas' AND p.action = 'submit' "
+                       "AND r.code IN ('ADMIN', 'FUNCIONAL_COMPLETO') AND r.protected = true")
     assert len(rows) == 1
 
 

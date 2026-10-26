@@ -18,7 +18,6 @@ import { declararAlcance, verificadorDeEscenario, type Contexto } from "./helper
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
-const ADMIN = process.env.KONTROL_E2E_USER ?? "admin";
 const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 
 const MUNDO = mundoN6();
@@ -29,7 +28,8 @@ const marca = (): string =>
   `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.toLowerCase();
 
 async function admin(): Promise<Contexto> {
-  const { token, headers } = await sesionApi(ADMIN, { tenant: TENANT, empresa: D1 });
+  // Prepara verificadores en D1, D2 o ambas: hace falta autoridad de todo el tenant (techo de delegación, Spec 003).
+  const { token, headers } = await sesionApi("admintenant", { tenant: TENANT, empresa: D1 });
   return { token, company: D1, headers };
 }
 

@@ -27,7 +27,8 @@ import n6_world  # noqa: E402
 from sqlalchemy import select  # noqa: E402
 
 from app.core.database import get_session_factory, init_models  # noqa: E402
-from app.modules.identity_access.models import User, UserScope  # noqa: E402
+from app.modules.identity_access import service as identity_service  # noqa: E402
+from app.modules.identity_access.models import Role, User, UserRole, UserScope  # noqa: E402
 from app.modules.organization.models import Company, Tenant  # noqa: E402
 
 
@@ -50,6 +51,27 @@ def main() -> None:
             # maneras de concederlo mal.
             alcance_de_usuario.declarar(db, tenant_code="DEMO", username="admin",
                                         empresas=[str(d1.id)])
+        # Un administrador de QA de todo el tenant para preparar autoridad que abarca D1 y D2: con el techo de delegación, `admin` (solo D1) ya no
+        # puede concederla (Spec 003).
+        clave = n6_world.PASS  # La misma fuente que el resto de la siembra N6 (deuda TEST-FIXTURE-PASSWORD-LITERAL aparte).
+        admintenant = db.execute(
+            select(User).where(User.tenant_id == tenant.id, User.username == "admintenant")
+        ).scalar_one_or_none()
+        if admintenant is None:
+            admintenant = identity_service.create_user(
+                db, tenant_id=str(tenant.id), username="admintenant",
+                email="admintenant@kontrol-qa.com", password=clave,
+                must_change_password=False, created_by=None)
+            db.flush()
+        for code in ("ADMIN", "FUNCIONAL_COMPLETO"):
+            rol = db.execute(
+                select(Role).where(Role.code == code, Role.company_id.is_(None), Role.protected.is_(True))
+            ).scalars().one()
+            tiene = db.execute(
+                select(UserRole).where(UserRole.user_id == str(admintenant.id), UserRole.role_id == str(rol.id))
+            ).scalar_one_or_none()
+            if tiene is None:
+                db.add(UserRole(user_id=str(admintenant.id), role_id=str(rol.id), company_id=None))
         db.commit()
         print({"tenant": str(tenant.id), "d1": str(d1.id), "d2": str(d2.id), "admin_scoped_to": "D1"})
     finally:

@@ -51,8 +51,8 @@ MIRA_SU_BASE = (
     "assert (os.stat(os.environ['KONTROL_E2E_LICENSE_SIGNING_KEY']).st_mode & 0o777) == 0o600\n"
     "with create_engine(os.environ['KONTROL_E2E_DB_URL']).connect() as c:\n"
     "    assert c.execute(text('select current_database()')).scalar_one() == 'kontrol_e2e_test_' + run\n"
-    # 5 usuarios base + 6 clones por worker de cada uno (Spec 002, OQ-MFA-3).
-    "    assert c.execute(text('select count(*) from users')).scalar_one() == 35\n"
+    # 6 usuarios base + 6 clones por worker de cada uno (Spec 002, OQ-MFA-3; `admintenant` desde la Spec 003).
+    "    assert c.execute(text('select count(*) from users')).scalar_one() == 42\n"
     "    {extra}\n"
     "assert urllib.request.urlopen(os.environ['KONTROL_E2E_API'] + '/health/ready', timeout=10).status == 200\n"
     "print('postgresql://usuario:secreto@host:5432/test_db')\n"
@@ -133,7 +133,7 @@ def test_e2ecorrida_01_una_corrida_verde_usa_su_base_y_no_deja_nada(entorno, pue
     assert m["suite"]["codigo"] == 0 and m["codigo_de_salida"] == 0
     assert m["limpieza"]["base"] == {"estado": "ELIMINADA", "cortadas": 0} and m["limpieza"]["resultado"] == "LIMPIA"
     assert m["limpieza"]["material_mfa"] == {"retirados": [], "quedan": 0}
-    assert m["medidas"]["usuarios"] == 35 and m["medidas"]["almacenes"] == 0
+    assert m["medidas"]["usuarios"] == 42 and m["medidas"]["almacenes"] == 0
     assert m["fases"] == ["comprobar", "crear base", "migrar", "sembrar", "backend",
                           "comprobar la base del backend", "autoridad central", "suite", "limpiar"]
     assert "autoridad" in m["procesos"] and m["limpieza"]["autoridad"] == "detenido"  # la autoridad real de la corrida, y se detiene

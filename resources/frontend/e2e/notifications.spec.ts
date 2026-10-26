@@ -97,13 +97,17 @@ test.beforeAll(async ({ request }) => {
 
   const roles = await pedir<{ items: { id: string; code: string }[] }>(request, base, "get", "/roles");
   const adminRol = roles.items.find((r) => r.code === "ADMIN")!;
+  const funcionalRol = roles.items.find((r) => r.code === "FUNCIONAL_COMPLETO")!;
   const usuarios = await pedir<{ id: string; username: string }[]>(request, base, "get", "/users");
   estado.adminId = usuarios.find((u) => u.username === ADMIN)!.id;
   const creado = await pedir<{ id: string }>(request, base, "post", "/users", {
     username: USUARIO, password: PASSWORD, must_change_password: false,
   });
   estado.usuarioId = creado.id;
-  await pedir(request, base, "post", `/users/${creado.id}/roles`, { role_id: adminRol.id, company_id: null });
+  // Asigna rol ADMIN de todo el tenant: hace falta autoridad de todo el tenant (techo de delegación, Spec 003).
+  const tenantToken = (await sesionApi("admintenant", { tenant: TENANT })).token;
+  await pedir(request, { Authorization: `Bearer ${tenantToken}` }, "post", `/users/${creado.id}/roles`, { role_id: adminRol.id, company_id: null });
+  await pedir(request, { Authorization: `Bearer ${tenantToken}` }, "post", `/users/${creado.id}/roles`, { role_id: funcionalRol.id, company_id: null });
 
   const usuarioToken = await token(USUARIO, PASSWORD);
   estado.usuario = { Authorization: `Bearer ${usuarioToken}`, "X-Kontrol-Company": d1!.id };

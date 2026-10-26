@@ -1,0 +1,20 @@
+# TD-A1a rojo en HEAD 464c913 (SQLite) — 2026-10-26T17:04:25Z
+PASSED tests/test_delegation_ceiling.py::test_dc_s03_gestor_se_autoasigna_r_del_sub
+PASSED tests/test_delegation_ceiling.py::test_dc_p02_admin_delega_admin
+PASSED tests/test_delegation_ceiling.py::test_dc_x01_rol_de_otro_tenant_no_se_puede_asignar
+PASSED tests/test_delegation_ceiling.py::test_dc_m02_quitar_rol_dentro_del_techo
+FAILED tests/test_delegation_ceiling.py::test_dc_a01_gestor_delega_sub_dentro_del_techo
+FAILED tests/test_delegation_ceiling.py::test_dc_a02_gestor_no_delega_r_gestor_mfa
+FAILED tests/test_delegation_ceiling.py::test_dc_a03_gestor_no_delega_r_almacen
+FAILED tests/test_delegation_ceiling.py::test_dc_s01_gestor_se_autoasigna_admin
+FAILED tests/test_delegation_ceiling.py::test_dc_s02_gestor_se_autoasigna_r_gestor_mfa
+FAILED tests/test_delegation_ceiling.py::test_dc_p01_tecnico_sin_rol_admin_no_delega_admin
+FAILED tests/test_delegation_ceiling.py::test_dc_p03_admin_no_delega_funcional_completo
+FAILED tests/test_delegation_ceiling.py::test_dc_t01_catalogo_y_admin_inicial
+FAILED tests/test_delegation_ceiling.py::test_dc_t02_admin_no_delega_roles_funcionales
+FAILED tests/test_delegation_ceiling.py::test_dc_h01_cadena_de_autoridad - As...
+FAILED tests/test_delegation_ceiling.py::test_dc_x02_rol_de_empresa_del_tenant_b_no_encontrado
+FAILED tests/test_delegation_ceiling.py::test_dc_v01_campo_extra_invalido - A...
+FAILED tests/test_delegation_ceiling.py::test_dc_i01_rol_inactivo_no_se_puede_asignar
+FAILED tests/test_delegation_ceiling.py::test_dc_m01_quitar_rol_fuera_del_techo_se_deniega
+14 failed, 4 passed, 1 warning in 7.04s

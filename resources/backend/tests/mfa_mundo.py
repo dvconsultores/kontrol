@@ -261,6 +261,7 @@ def crear_usuario(
     *,
     rol: str | None = None,
     admin: bool = False,
+    funcional: bool = False,
     tenant: str = "DEMO",
     must_change_password: bool = False,
 ) -> str:
@@ -299,6 +300,18 @@ def crear_usuario(
             ).scalars().first()
             if role is None:
                 raise AssertionError(f"Rol ADMIN no existe en {tenant}")
+            db.add(UserRole(user_id=str(user.id), role_id=str(role.id), company_id=None))
+        if funcional:
+            role = (
+                db.query(Role)
+                .filter(
+                    Role.code == "FUNCIONAL_COMPLETO",
+                    Role.protected.is_(True),
+                    Role.company_id.is_(None),
+                )
+                .one_or_none()
+            )
+            assert role is not None, "Rol FUNCIONAL_COMPLETO no encontrado"
             db.add(UserRole(user_id=str(user.id), role_id=str(role.id), company_id=None))
         db.commit()
         return str(user.id)

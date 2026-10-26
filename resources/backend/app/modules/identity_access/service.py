@@ -14,13 +14,13 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, overload
 
 import jwt as pyjwt
-from sqlalchemy import select, text, update
+from sqlalchemy import or_, select, text, update
 from sqlalchemy.orm import Session
 
 from app.core import clock, security
 from app.core.config import get_settings
 from app.core.errors import ConflictError, KontrolError, NotFoundError, PermissionDeniedError
-from app.modules.identity_access import mfa_policy
+from app.modules.identity_access import authority, mfa_policy
 from app.modules.identity_access.models import (
     PasswordReset,
     Permission,
@@ -633,11 +633,16 @@ def user_has_permission(user: User, permissions: list[str], resource: str, actio
     return f"{resource}:{action}" in permissions
 
 
-def list_roles(db: Session, *, company_id: str | None = None) -> list[dict]:
-    """Roles activos con sus permisos (FR-001-040)."""
+def list_roles(db: Session, *, company_id: str | None = None, tenant_id: str | None = None) -> list[dict]:
+    """Roles activos con sus permisos (FR-001-040). Con tenant_id, solo los visibles para ese tenant."""
+    from app.modules.organization.models import Company
+
     q = select(Role).where(Role.status == "ACTIVE")
     if company_id:
         q = q.where(Role.company_id == company_id)
+    if tenant_id:
+        # Un rol acotado a una empresa de otro tenant no es visible ni asignable desde este (deuda ROLE-CATALOG-INSTALLATION-WIDE).
+        q = q.where(or_(Role.company_id.is_(None), Role.company_id.in_(select(Company.id).where(Company.tenant_id == tenant_id))))
     roles = db.execute(q.order_by(Role.name)).scalars().all()
     result: list[dict] = []
     for r in roles:
@@ -651,12 +656,24 @@ def list_roles(db: Session, *, company_id: str | None = None) -> list[dict]:
                 "id": str(r.id),
                 "code": r.code,
                 "name": r.name,
+                "company_id": r.company_id,
                 "protected": r.protected,
                 "status": r.status,
                 "permissions": sorted(f"{res}:{act}" for res, act in perms),
             }
         )
     return result
+
+
+def list_roles_for_actor(db: Session, actor: User) -> list[dict]:
+    """Roles visibles para el tenant del actor con su delegabilidad para él (Spec 003): `delegable` y `motivo`."""
+    items = list_roles(db, tenant_id=actor.tenant_id)
+    for item in items:
+        role = db.get(Role, item["id"])
+        motivo = authority.delegability(db, actor, role) if role is not None else "ROLE_NOT_FOUND"
+        item["delegable"] = motivo is None
+        item["motivo"] = motivo
+    return items
 
 
 #: Candado consultivo (PostgreSQL) que serializa «comprobar duplicado + insertar» en el alta de roles: `roles`
@@ -673,7 +690,7 @@ def create_role(
     name: str,
     company_id: str | None,
     permissions: list[str],
-    actor: str | None,
+    actor: str,
 ) -> dict:
     """Alta de un rol **personalizado** con sus permisos, en una sola operación (FR-001-040/043/072;
     `ROLES-SIN-API-DE-ALTA`).
@@ -704,6 +721,10 @@ def create_role(
             field_errors={"permissions": desconocidos},
             status_code=422,
         )
+    # Techo de delegación (OD-DEL-04): nadie crea un rol con capacidades o alcance que no tiene.
+    authority.lock_tenant_authority(db, tenant_id)
+    actor_user = get_user_in_tenant(db, actor, tenant_id)
+    authority.check_can_create_role(db, actor=actor_user, code=code, permissions=solicitados, company_id=company_id)
     if db.get_bind().dialect.name == "postgresql":
         db.execute(text("SELECT pg_advisory_xact_lock(:clave)"), {"clave": _BLOQUEO_ALTA_ROL})
     duplicado = db.execute(
@@ -755,12 +776,14 @@ def assign_role_to_user(
     user_id: str,
     role_id: str,
     company_id: str | None = None,
-    actor: str | None = None,
+    actor: str,
 ) -> None:
-    """Asigna un rol a un usuario (FR-001-040); idempotente por par."""
+    """Asigna un rol a un usuario (FR-001-040) dentro del techo de delegación del actor (Spec 003)."""
     from app.modules.organization.models import Company
 
+    authority.lock_tenant_authority(db, tenant_id)
     user = get_user_in_tenant(db, user_id, tenant_id)
+    actor_user = get_user_in_tenant(db, actor, tenant_id)
     antes = mfa_policy.user_policy_class(db, user)
     if company_id is not None:
         # La empresa llegaba del cuerpo sin comprobarse. Acotar un rol a una
@@ -772,6 +795,8 @@ def assign_role_to_user(
     role = db.get(Role, role_id)
     if not role:
         raise NotFoundError(code="ROLE_NOT_FOUND", message="Rol no encontrado")
+    # Techo de delegación (OD-DEL-01..05/08): se evalúa con la autoridad que el actor tiene AHORA.
+    authority.check_can_assign(db, actor=actor_user, target=user, role=role, company_id=company_id)
     existing = db.execute(
         select(UserRole).where(UserRole.user_id == user_id, UserRole.role_id == role_id)
     ).scalars().first()
@@ -794,7 +819,7 @@ def assign_role_to_user(
         entity_id=str(asignacion.id),
         tenant_id=user.tenant_id,
         user_id=actor,
-        after={"role_id": role_id, "user_id": user_id},
+        after={"role_id": role_id, "user_id": user_id, "company_id": company_id},
     )
     db.commit()
 
@@ -805,16 +830,26 @@ def remove_role_from_user(
     tenant_id: str,
     user_id: str,
     role_id: str,
-    actor: str | None = None,
+    actor: str,
 ) -> None:
-    """Quita un rol de un usuario (FR-001-040)."""
+    """Quita un rol a un usuario (FR-001-040): dentro del techo del actor y sin dejar al tenant sin administrador de seguridad (Spec 003)."""
+    authority.lock_tenant_authority(db, tenant_id)
     user = get_user_in_tenant(db, user_id, tenant_id)
+    actor_user = get_user_in_tenant(db, actor, tenant_id)
     antes = mfa_policy.user_policy_class(db, user)
     row = db.execute(
         select(UserRole).where(UserRole.user_id == user_id, UserRole.role_id == role_id)
     ).scalars().first()
     if not row:
         raise NotFoundError(code="ROLE_NOT_ASSIGNED", message="El usuario no tiene este rol")
+    role = db.get(Role, role_id)
+    if role is None:
+        raise NotFoundError(code="ROLE_NOT_FOUND", message="Rol no encontrado")
+    authority.check_can_manage_assignment(db, actor=actor_user, target=user, role=role, company_id=row.company_id)
+    authority.check_last_security_admin(db, actor=actor_user, tenant_id=tenant_id, user_id=user_id, role=role, company_id=row.company_id)
+    # Se leen ANTES de borrar: tras delete + expire(user) la fila expira en cascada y leerla daba ObjectDeletedError (500 al renunciar).
+    asignacion_id = str(row.id)
+    empresa = row.company_id
     db.delete(row)
     db.flush()
     db.expire(user)
@@ -825,9 +860,9 @@ def remove_role_from_user(
         db,
         action="ROLE_REMOVED",
         entity_type="UserRole",
-        entity_id=str(row.id),
+        entity_id=asignacion_id,
         tenant_id=user.tenant_id,
         user_id=actor,
-        after={"role_id": role_id, "user_id": user_id},
+        after={"role_id": role_id, "user_id": user_id, "company_id": empresa},
     )
     db.commit()

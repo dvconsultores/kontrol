@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.core.database import Base, get_db, init_models
 from app.modules.audit.models import AuditEvent
 from app.modules.identity_access import service as identity_service
-from app.modules.identity_access.models import Permission, Role, RolePermission, UserRole
+from app.modules.identity_access.models import Permission, Role, RolePermission, User, UserRole
 from app.modules.organization.models import Company, Installation, Tenant
 from app.modules.setup.api import SetupRequest, initialize
 from tests.conftest import make_engine
@@ -223,7 +223,8 @@ def test_role_16_si_falla_la_asociacion_de_permisos_no_queda_rol_a_medias(monkey
 
     monkeypatch.setattr(identity_service, "RolePermission", explota)
     with _FACTORY() as db, pytest.raises(Rota):
-        identity_service.create_role(db, tenant_id="t", code="MEDIAS", name="A medias", company_id=None, permissions=["roles:view"], actor=None)
+        admin = db.execute(select(User).where(User.username == "admin")).scalars().one()
+        identity_service.create_role(db, tenant_id=str(admin.tenant_id), code="MEDIAS", name="A medias", company_id=None, permissions=["roles:view"], actor=str(admin.id))
     assert _roles("MEDIAS") == []
     with _FACTORY() as db:  # tampoco queda auditoría de un alta que no ocurrió
         eventos = db.execute(select(AuditEvent).where(AuditEvent.action == "ROLE_CREATED")).scalars().all()

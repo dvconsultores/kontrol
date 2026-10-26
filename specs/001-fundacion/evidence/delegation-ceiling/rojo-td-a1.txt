@@ -1,0 +1,43 @@
+# Rojo TD-A1a..d tras TD-1a (división de ADMIN aplicada; techo aún no), SQLite — 2026-10-26T17:10:31Z
+# T01 en verde por TD-1a. DLA-L01..L03 además destapan un 500 previo (ObjectDeletedError al renunciar a un rol propio: row.id tras delete + expire en cascada).
+PASSED tests/test_delegation_ceiling.py::test_dc_s03_gestor_se_autoasigna_r_del_sub
+PASSED tests/test_delegation_ceiling.py::test_dc_p02_admin_delega_admin
+PASSED tests/test_delegation_ceiling.py::test_dc_t01_catalogo_y_admin_inicial
+PASSED tests/test_delegation_ceiling.py::test_dc_x01_rol_de_otro_tenant_no_se_puede_asignar
+PASSED tests/test_delegation_ceiling.py::test_dc_m02_quitar_rol_dentro_del_techo
+PASSED tests/test_delegation_ceiling_roles.py::test_dcr_C03_gestor_puede_crear_rol_dentro_de_su_techo
+PASSED tests/test_delegation_ceiling_roles.py::test_dcr_C04_gestor_puede_crear_rol_con_company_id_de_su_tenant
+PASSED tests/test_delegation_ceiling_roles.py::test_dcr_C07_gestor_no_puede_crear_rol_con_company_id_de_otro_tenant
+PASSED tests/test_delegation_scope.py::test_dsc_e02_ok_company_id_d1
+PASSED tests/test_delegation_scope.py::test_dsc_e04_sin_company_scope_destino_d1
+PASSED tests/test_delegation_scope.py::test_dsc_e06_gestor_tenant_scope
+PASSED tests/test_delegation_scope.py::test_dsc_m02_quitar_dentro_de_alcance
+SKIPPED [1] tests/test_delegation_last_admin.py:201: la carrera del último administrador se certifica sobre PostgreSQL (INV-DEL-12; P21)
+FAILED tests/test_delegation_ceiling.py::test_dc_a01_gestor_delega_sub_dentro_del_techo
+FAILED tests/test_delegation_ceiling.py::test_dc_a02_gestor_no_delega_r_gestor_mfa
+FAILED tests/test_delegation_ceiling.py::test_dc_a03_gestor_no_delega_r_almacen
+FAILED tests/test_delegation_ceiling.py::test_dc_s01_gestor_se_autoasigna_admin
+FAILED tests/test_delegation_ceiling.py::test_dc_s02_gestor_se_autoasigna_r_gestor_mfa
+FAILED tests/test_delegation_ceiling.py::test_dc_p01_tecnico_sin_rol_admin_no_delega_admin
+FAILED tests/test_delegation_ceiling.py::test_dc_p03_admin_no_delega_funcional_completo
+FAILED tests/test_delegation_ceiling.py::test_dc_t02_admin_no_delega_roles_funcionales
+FAILED tests/test_delegation_ceiling.py::test_dc_h01_cadena_de_autoridad - As...
+FAILED tests/test_delegation_ceiling.py::test_dc_x02_rol_de_empresa_del_tenant_b_no_encontrado
+FAILED tests/test_delegation_ceiling.py::test_dc_v01_campo_extra_invalido - A...
+FAILED tests/test_delegation_ceiling.py::test_dc_i01_rol_inactivo_no_se_puede_asignar
+FAILED tests/test_delegation_ceiling.py::test_dc_m01_quitar_rol_fuera_del_techo_se_deniega
+FAILED tests/test_delegation_ceiling_roles.py::test_dcr_C01_gestor_no_puede_crear_rol_con_permiso_fuera_de_su_techo
+FAILED tests/test_delegation_ceiling_roles.py::test_dcr_C02_gestor_no_puede_crear_rol_sombra_con_permisos_de_admin
+FAILED tests/test_delegation_ceiling_roles.py::test_dcr_C05_gestor_no_puede_crear_rol_con_permiso_parcialmente_fuera_de_su_techo
+FAILED tests/test_delegation_ceiling_roles.py::test_dcr_C06_admin_solo_tecnico_no_puede_crear_rol_con_compras_approve
+FAILED tests/test_delegation_ceiling_roles.py::test_dcr_G01_gestor_ve_delegabilidad_en_listado
+FAILED tests/test_delegation_ceiling_roles.py::test_dcr_G02_admin_ve_su_propio_rol_delegable_y_funcional_completo_no
+FAILED tests/test_delegation_ceiling_roles.py::test_dcr_G03_rol_de_empresa_del_tenant_b_no_aparece_en_listado_del_gestor
+FAILED tests/test_delegation_scope.py::test_dsc_e01_cross_scope_company_id_d2
+FAILED tests/test_delegation_scope.py::test_dsc_e03_sin_company_scope_mixto
+FAILED tests/test_delegation_scope.py::test_dsc_e05_autoescalamiento - Assert...
+FAILED tests/test_delegation_scope.py::test_dsc_m01_quitar_fuera_de_alcance
+FAILED tests/test_delegation_last_admin.py::test_dla_l01_se_queda_sin_administradores_de_seguridad
+FAILED tests/test_delegation_last_admin.py::test_dla_l02_rol_no_protegido_con_capacidades_cuenta_como_admin
+FAILED tests/test_delegation_last_admin.py::test_dla_l03_quitar_rol_que_no_hace_perder_condicion_es_200
+27 failed, 12 passed, 1 skipped, 1 warning in 15.62s

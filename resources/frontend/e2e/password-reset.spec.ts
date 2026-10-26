@@ -56,7 +56,8 @@ async function crearUsuario(
   caso: string,
   { privilegiado }: { privilegiado: boolean },
 ): Promise<UsuarioCreado> {
-  const admin = await sesionApi("admin", { tenant: TENANT });
+  // Crea usuarios privilegiados de todo el tenant: hace falta autoridad de todo el tenant (techo de delegación, Spec 003).
+  const admin = await sesionApi("admintenant", { tenant: TENANT });
   const username = `reset-${caso}-${marcaUnica()}`;
 
   const createResp = await request.post(`${API}/users`, {

@@ -497,6 +497,8 @@ def create_user(
 
 
 class UserRoleAssign(BaseModel):
+    # Campos ocultos (protected, status…) en el cuerpo son un 422, no algo ignorado en silencio (Spec 003).
+    model_config = ConfigDict(extra="forbid")
     role_id: str = Field(min_length=1)
     company_id: str | None = None
 
@@ -540,8 +542,8 @@ roles_router = APIRouter(prefix="/roles", tags=["roles"])
 
 
 @roles_router.get("")
-def list_roles(db: Session = Depends(get_db), _: User = Depends(require_permission("roles", "view"))):
-    return {"items": identity_service.list_roles(db)}
+def list_roles(db: Session = Depends(get_db), actor: User = Depends(require_permission("roles", "view"))):
+    return {"items": identity_service.list_roles_for_actor(db, actor)}
 
 
 class RoleCreate(BaseModel):

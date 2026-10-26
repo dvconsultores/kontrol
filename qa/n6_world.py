@@ -127,7 +127,7 @@ def _usuario(db: Session, tenant, username: str, empresas: list[str]):
     algo pase.
     """
     from app.modules.identity_access import service as identity_service
-    from app.modules.identity_access.models import User, UserRole
+    from app.modules.identity_access.models import Role, User, UserRole
     from app.modules.setup.api import _bootstrap_roles
 
     u = db.execute(select(User).where(
@@ -143,6 +143,13 @@ def _usuario(db: Session, tenant, username: str, empresas: list[str]):
         UserRole.user_id == str(u.id), UserRole.role_id == str(rol.id))).scalars().first()
     if tiene_rol is None:
         db.add(UserRole(user_id=str(u.id), role_id=str(rol.id), company_id=None))
+    # OD-DEL-10: la autoridad de negocio vive en FUNCIONAL_COMPLETO; ADMIN solo trae la técnica.
+    funcional = db.execute(select(Role).where(Role.code == "FUNCIONAL_COMPLETO", Role.company_id.is_(None), Role.protected.is_(True))).scalars().one()
+    tiene_funcional = db.execute(
+        select(UserRole).where(UserRole.user_id == str(u.id), UserRole.role_id == str(funcional.id))
+    ).scalar_one_or_none()
+    if tiene_funcional is None:
+        db.add(UserRole(user_id=str(u.id), role_id=str(funcional.id), company_id=None))
 
     db.flush()
     alcance_de_usuario.declarar(db, tenant_code=tenant.code, username=username, empresas=empresas)

@@ -26,7 +26,7 @@ from sqlalchemy.pool import StaticPool
 from app.core.config import get_settings
 from app.core.database import Base, get_db, init_models
 from app.modules.identity_access import service as identity_service
-from app.modules.identity_access.models import UserRole
+from app.modules.identity_access.models import Role, UserRole
 from app.modules.licensing import service as licensing_service
 from app.modules.organization.models import Installation, Tenant
 from app.modules.setup.api import SetupRequest, _bootstrap_roles, initialize
@@ -111,6 +111,9 @@ def _app_client():
                                           created_by=None)
     admin_role = _bootstrap_roles(db, str(tenant_b.id), str(user_b.id))
     db.add(UserRole(user_id=str(user_b.id), role_id=str(admin_role.id), company_id=None))
+    # OD-DEL-10: la autoridad de negocio vive en FUNCIONAL_COMPLETO; el atacante la tiene completa, como el administrador de setup.
+    funcional_b = db.execute(select(Role).where(Role.code == "FUNCIONAL_COMPLETO", Role.company_id.is_(None), Role.protected.is_(True))).scalars().one()
+    db.add(UserRole(user_id=str(user_b.id), role_id=str(funcional_b.id), company_id=None))
     db.commit()
     db.close()
 

@@ -118,14 +118,19 @@ class Mundo:
 def _crear_usuario(db: Session, tenant_id: str, username: str,
                    empresas: list[str] | None) -> str:
     """Usuario con alcance explícito. `empresas=None` significa todas."""
+    from sqlalchemy import select
+
     from app.modules.identity_access import service as identity_service
-    from app.modules.identity_access.models import UserRole, UserScope
+    from app.modules.identity_access.models import Role, UserRole, UserScope
 
     user = identity_service.create_user(
         db, tenant_id=tenant_id, username=username,
         email=f"{username}@demo.test", password=PASSWORD, created_by=None)
     rol = _bootstrap_roles(db, tenant_id, str(user.id))
     db.add(UserRole(user_id=str(user.id), role_id=str(rol.id), company_id=None))
+    # OD-DEL-10: «con todo» es ADMIN más FUNCIONAL_COMPLETO, como el administrador del arranque.
+    funcional = db.execute(select(Role).where(Role.code == "FUNCIONAL_COMPLETO", Role.company_id.is_(None), Role.protected.is_(True))).scalars().one()
+    db.add(UserRole(user_id=str(user.id), role_id=str(funcional.id), company_id=None))
     if empresas is not None:
         for c in empresas:
             db.add(UserScope(user_id=str(user.id), company_id=c))

@@ -12,9 +12,11 @@ from app.core import security
 from app.core.database import get_db
 from app.core.errors import ConflictError, KontrolError
 from app.modules.identity_access import service as identity_service
+from app.modules.identity_access.authority import ADMIN_ROLE_CODE, FUNCTIONAL_ROLE_CODE, TECHNICAL_CAPABILITIES
 from app.modules.identity_access.models import Permission, Role, RolePermission, UserRole
 from app.modules.licensing import service as licensing_service
 from app.modules.organization.models import Company, Installation, Tenant
+from app.shared.audit import record_audit
 
 router = APIRouter(prefix="/setup", tags=["setup"])
 
@@ -51,11 +53,12 @@ def setup_status(db: Session) -> SetupStatus:
 
 
 def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
-    """Crea (o completa) el rol administrador con los permisos de negocio base.
+    """Crea o completa los dos roles protegidos de toda la instalación.
 
-    Aditivo: si el rol ADMIN ya existe, agrega únicamente los permisos faltantes
-    (idempotente, sin duplicar RolePermission). El catálogo cubre TODOS los
-    recursos que los módulos usan en `require_permission`.
+    ADMIN recibe EXACTAMENTE las capacidades técnicas y FUNCIONAL_COMPLETO recibe
+    exactamente el resto del catálogo (OD-DEL-10). Es idempotente: los permisos
+    faltantes se añaden y, si ADMIN ya existía con capacidades funcionales, se le
+    quitan. Devuelve ADMIN.
     """
     resources_actions = {
         "dashboard": ["view"],
@@ -93,13 +96,17 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
         "tareas": ["view", "assign", "complete", "configure"],
         "alertas": ["view"],
     }
-    existing = db.execute(select(Role).where(Role.code == "ADMIN", Role.company_id.is_(None))).scalars().first()
-    if existing:
-        admin_role = existing
-    else:
-        admin_role = Role(code="ADMIN", name="Administrador", protected=True, status="ACTIVE", created_by=actor_user_id)
-        db.add(admin_role)
+    def _rol_protegido(db: Session, code: str, name: str, actor_user_id: str) -> Role:
+        existing = db.execute(select(Role).where(Role.code == code, Role.company_id.is_(None), Role.protected.is_(True))).scalars().first()
+        if existing:
+            return existing
+        role = Role(code=code, name=name, protected=True, status="ACTIVE", created_by=actor_user_id)
+        db.add(role)
         db.flush()
+        return role
+
+    admin_role = _rol_protegido(db, ADMIN_ROLE_CODE, "Administrador", actor_user_id)
+    funcional_role = _rol_protegido(db, FUNCTIONAL_ROLE_CODE, "Funcional completo", actor_user_id)
 
     for resource, actions in resources_actions.items():
         for action in actions:
@@ -108,12 +115,21 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
                 perm = Permission(resource=resource, action=action, scope_type="COMPANY")
                 db.add(perm)
                 db.flush()
+            clave = f"{resource}:{action}"
+            destino = admin_role if clave in TECHNICAL_CAPABILITIES else funcional_role
+            otro = funcional_role if destino is admin_role else admin_role
             already = db.execute(select(RolePermission).where(
-                RolePermission.role_id == str(admin_role.id),
+                RolePermission.role_id == str(destino.id),
                 RolePermission.permission_id == str(perm.id),
             )).scalars().first()
             if not already:
-                db.add(RolePermission(role_id=str(admin_role.id), permission_id=str(perm.id)))
+                db.add(RolePermission(role_id=str(destino.id), permission_id=str(perm.id)))
+            duplicado = db.execute(select(RolePermission).where(
+                RolePermission.role_id == str(otro.id),
+                RolePermission.permission_id == str(perm.id),
+            )).scalars().first()
+            if duplicado:
+                db.delete(duplicado)
     db.flush()
     return admin_role
 
@@ -170,7 +186,15 @@ def initialize(db: Session, body: SetupRequest) -> dict:
         created_by="setup",
     )
     admin_role = _bootstrap_roles(db, str(tenant.id), str(admin.id))
-    db.add(UserRole(user_id=str(admin.id), role_id=str(admin_role.id), company_id=str(company.id)))
+    # OD-DEL-10/12: la autoridad funcional se concede de forma explícita y con alcance de tenant.
+    funcional_role = db.execute(select(Role).where(Role.code == FUNCTIONAL_ROLE_CODE, Role.company_id.is_(None), Role.protected.is_(True))).scalars().one()
+    asignacion_admin = UserRole(user_id=str(admin.id), role_id=str(admin_role.id), company_id=None)
+    asignacion_funcional = UserRole(user_id=str(admin.id), role_id=str(funcional_role.id), company_id=None)
+    db.add(asignacion_admin)
+    db.add(asignacion_funcional)
+    db.flush()
+    record_audit(db, action="ROLE_ASSIGNED", entity_type="UserRole", entity_id=str(asignacion_admin.id), tenant_id=str(tenant.id), user_id=None, after={"role_id": str(admin_role.id), "user_id": str(admin.id), "company_id": None}, source="SETUP", reason="OD-DEL-10")
+    record_audit(db, action="ROLE_ASSIGNED", entity_type="UserRole", entity_id=str(asignacion_funcional.id), tenant_id=str(tenant.id), user_id=None, after={"role_id": str(funcional_role.id), "user_id": str(admin.id), "company_id": None}, source="SETUP", reason="OD-DEL-10")
 
     db.commit()
     return {

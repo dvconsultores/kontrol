@@ -30,7 +30,7 @@ from app.core.config import get_settings
 from app.core.database import Base, get_db, init_models
 from app.modules.audit.models import AuditEvent
 from app.modules.identity_access import service as identity_service
-from app.modules.identity_access.models import UserRole
+from app.modules.identity_access.models import Role, UserRole
 from app.modules.licensing import service as licensing_service
 from app.modules.organization.models import Company, Installation, Tenant
 from app.modules.setup.api import SetupRequest, _bootstrap_roles, initialize
@@ -106,6 +106,9 @@ def montar() -> None:
         password=PASSWORD, created_by=None)
     rol = _bootstrap_roles(db, str(t_b.id), str(admin_b.id))
     db.add(UserRole(user_id=str(admin_b.id), role_id=str(rol.id), company_id=None))
+    # OD-DEL-10: «con todo» es ADMIN más FUNCIONAL_COMPLETO, como el administrador del arranque.
+    funcional_b = db.execute(select(Role).where(Role.code == "FUNCIONAL_COMPLETO", Role.company_id.is_(None), Role.protected.is_(True))).scalars().one()
+    db.add(UserRole(user_id=str(admin_b.id), role_id=str(funcional_b.id), company_id=None))
     db.commit()
     W.clear()
     W.update(tenant_a=str(t_a.id), tenant_b=str(t_b.id))

@@ -48,7 +48,7 @@ PROTEGIDAS_POR_DEFECTO = "kaud,ktest"
 SERVIDORES_POR_DEFECTO = "localhost"
 
 #: Usuarios que siembra la base de QA y, por cada uno, sus clones por worker (qa/mfa-e2e-identidades.py).
-BASES_DE_USUARIOS = ("DEMO/admin", "DEMO/ua", "DEMO/uab", "DEMO/ub", "DEMO2/uc")
+BASES_DE_USUARIOS = ("DEMO/admin", "DEMO/admintenant", "DEMO/ua", "DEMO/uab", "DEMO/ub", "DEMO2/uc")
 #: La corrida canónica fija `--workers=6`.
 WORKERS_E2E = 6
 

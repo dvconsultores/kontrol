@@ -300,7 +300,7 @@ def test_mfa_h03_elevacion_con_revocacion(mundo: MundoMfa, reloj_mfa):
     user_id = crear_usuario(mundo, usuario, rol="R_CONSULTA")
 
     admin_user = f"u_{uuid.uuid4().hex[:10]}"
-    crear_usuario(mundo, admin_user, admin=True)
+    crear_usuario(mundo, admin_user, admin=True, funcional=True)
     admin_headers = alta_por_desafio(mundo.client, reloj_mfa, admin_user).cabeceras
 
     r = login(mundo.client, usuario)
@@ -372,7 +372,7 @@ def test_mfa_h06_degradacion(mundo: MundoMfa, reloj_mfa):
     _limpiar_cookies(mundo)
 
     admin_user = f"u_{uuid.uuid4().hex[:10]}"
-    crear_usuario(mundo, admin_user, admin=True)
+    crear_usuario(mundo, admin_user, admin=True, funcional=True)
     admin_headers = alta_por_desafio(mundo.client, reloj_mfa, admin_user).cabeceras
 
     role_id = _role_id(mundo, "R_ALMACEN")

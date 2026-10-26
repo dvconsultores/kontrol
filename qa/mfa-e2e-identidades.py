@@ -37,7 +37,7 @@ import alcance_de_usuario  # noqa: E402
 WORKERS = 6
 
 #: Usuarios base de los que clonar identidades por worker.
-BASES = (("DEMO", "admin"), ("DEMO", "ua"), ("DEMO", "ub"),
+BASES = (("DEMO", "admin"), ("DEMO", "admintenant"), ("DEMO", "ua"), ("DEMO", "ub"),
          ("DEMO", "uab"), ("DEMO2", "uc"))
 
 PASSWORD = os.environ.get("KONTROL_E2E_PASSWORD", "Kontrol2026Segura!")

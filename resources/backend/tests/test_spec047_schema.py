@@ -51,7 +51,7 @@ def _permisos_del_admin(motor) -> set[tuple[str, str]]:
     with motor.connect() as c:
         return {tuple(f) for f in c.execute(text(
             "SELECT p.resource, p.action FROM permissions p JOIN role_permissions rp ON rp.permission_id = p.id "
-            "JOIN roles r ON r.id = rp.role_id WHERE r.code = 'ADMIN' "
+            "JOIN roles r ON r.id = rp.role_id WHERE r.code IN ('ADMIN', 'FUNCIONAL_COMPLETO') AND r.protected = true "
             "AND p.resource IN ('notificaciones', 'tareas', 'alertas')")).all()}
 
 

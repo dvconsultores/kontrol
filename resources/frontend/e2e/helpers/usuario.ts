@@ -88,7 +88,9 @@ export async function verificadorDeEscenario(
   const roles = await request.get(`${API}/roles`, { headers: admin.headers });
   expect(roles.ok(), `roles: ${roles.status()}`).toBeTruthy();
   const items = (await roles.json()).items as Array<{ id: string; code?: string; name?: string }>;
-  const rol = items.find((r) => (r.code ?? r.name ?? "").toUpperCase().includes("ADMIN")) ?? items[0];
+  // «Con todo» es ADMIN más FUNCIONAL_COMPLETO desde la división de ADMIN (Spec 003, OD-DEL-10).
+  const conTodo = ["ADMIN", "FUNCIONAL_COMPLETO"].map((codigo) => items.find((r) => r.code === codigo));
+  expect(conTodo.every(Boolean), "la base del E2E no tiene ADMIN y FUNCIONAL_COMPLETO").toBeTruthy();
 
   const creado = await request.post(`${API}/users`, {
     headers: admin.headers,
@@ -100,11 +102,14 @@ export async function verificadorDeEscenario(
 
   // El rol lleva la empresa cuando hay una sola: es el alcance del permiso, y
   // con varias no hay una a la que atarlo.
-  const asignado = await request.post(`${API}/users/${id}/roles`, {
-    headers: admin.headers,
-    data: { role_id: rol.id, company_id: empresas.length === 1 ? empresas[0] : null },
-  });
-  expect(asignado.ok(), `rol de ${usuario}: ${asignado.status()}`).toBeTruthy();
+  // «Con todo» es ADMIN más FUNCIONAL_COMPLETO desde la división de ADMIN (Spec 003, OD-DEL-10).
+  for (const rol of conTodo) {
+    const asignado = await request.post(`${API}/users/${id}/roles`, {
+      headers: admin.headers,
+      data: { role_id: rol!.id, company_id: empresas.length === 1 ? empresas[0] : null },
+    });
+    expect(asignado.ok(), `rol ${rol!.code} de ${usuario}: ${asignado.status()} ${await asignado.text()}`).toBeTruthy();
+  }
 
   // Y el acceso, que es lo que decide qué empresas ve.
   const alcance = declararAlcance(usuario, empresas);

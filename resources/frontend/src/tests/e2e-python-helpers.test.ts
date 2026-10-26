@@ -154,6 +154,7 @@ describe("contrato estructural", () => {
 
   it("inventario positivo exacto de llamadas a ejecutarPython", () => {
     const esperado: Record<string, number> = {
+      "e2e/delegation-ceiling.spec.ts": 1,
       "e2e/diagnostico.spec.ts": 1,
       "e2e/helpers/planificador.ts": 1,
       "e2e/helpers/usuario.ts": 1,
@@ -164,6 +165,7 @@ describe("contrato estructural", () => {
       "e2e/licencia-rotacion.spec.ts": 1,
       "e2e/licencia-sync.spec.ts": 1,
       "e2e/licencia.spec.ts": 1,
+      "e2e/password-reset.spec.ts": 1,
       "e2e/roles-alta.spec.ts": 1,
     };
     const real: Record<string, number> = {};

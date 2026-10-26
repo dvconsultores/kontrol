@@ -241,8 +241,8 @@ def test_los_permisos_documentales_quedan_concedidos(seeded_db):
         "SELECT p.action FROM role_permissions rp "
         "JOIN permissions p ON p.id = rp.permission_id "
         "JOIN roles r ON r.id = rp.role_id "
-        "WHERE p.resource = 'documentos' AND r.code = 'ADMIN'")}
-    assert granted == actions, "el rol ADMIN debe recibir los nueve permisos"
+        "WHERE p.resource = 'documentos' AND r.code IN ('ADMIN', 'FUNCIONAL_COMPLETO')")}
+    assert granted == actions, "los nueve permisos documentales siguen concedidos (ADMIN o FUNCIONAL_COMPLETO tras la 0060)"
 
 
 def test_la_reversion_borra_solo_las_anotaciones(seeded_db):
