@@ -1,0 +1,32 @@
+# Rojo definitivo TC-A1/TC-A2 (pruebas corregidas), producto sin cambiar (SQLite) — 2026-10-26T21:59:23Z
+E   AssertionError: {"total":0,"limit":100,"offset":0,"items":[]}
+E   AssertionError: {"id":"779ed035-def3-42c8-ba32-1b6c89ac5cb0","code":"VAB48D070A6","name":"VAB48D070A6","symbol":"v","dimension":"CANTIDAD","decimals":0,"rounding_mode":"HALF_UP","status":"ACTIVE",
+E   AssertionError: {"id":"ea897fa3-9fc1-45f8-be50-d2e5b648633d","status":"INACTIVE"}
+E   AssertionError: {"items":[],"total":0,"page":1,"page_size":1,"order_by":"released_at ASC, id ASC"}
+E   AssertionError: {"code":"REPORT_NOT_FOUND","message":"Reporte no encontrado","field_errors":{},"request_id":"b97ef64bf8654c91b61767745b258e22","details":null}
+E   AssertionError: {"total":2,"limit":100,"offset":0,"items":[{"id":"779ed035-def3-42c8-ba32-1b6c89ac5cb0","code":"VAB48D070A6","name":"VAB48D070A6","symbol":"v","dimension":"CANTIDAD","decimals":0,"
+E   AssertionError: {"total":2,"limit":100,"offset":0,"items":[{"id":"779ed035-def3-42c8-ba32-1b6c89ac5cb0","code":"VAB48D070A6","name":"VAB48D070A6","symbol":"v","dimension":"CANTIDAD","decimals":0,"
+E   AssertionError: {"page":1,"page_size":20,"total":3,"items":[{"id":"a09159c5-6f6a-45e2-9ab5-6156b1bd73ef","action":"qa.css.created","entity_type":"QA_CSS","entity_id":"css31caf1a7f6b4-t","user_id":
+E   AssertionError: {"id":"9d6a9bcf-7981-4eef-92a9-b3854f9d1644","authority":"SENIAT","source_type":"PROVIDENCIA","status":"LEGAL_VALIDATION_REQUIRED"}
+E   AssertionError: {"id":"00ea9547-e8a1-4d57-a049-9ab4f1d56637","code":"CSS-CSSE931568B4F23","legal_name":"Company Scope Test"}
+E   AssertionError: ['7e3e445c-38e0-42c1-9d33-39bec88d5f69', '755e016d-8705-45e7-9bdd-c1793b65852b']
+E   Failed: DID NOT RAISE <class 'app.core.errors.PermissionDeniedError'>
+PASSED tests/test_company_scope_authorization.py::test_csa_07_admin_no_trae_permisos_de_negocio
+PASSED tests/test_company_scope_authorization.py::test_csa_08_rol_nulo_vale_en_todas_las_empresas
+PASSED tests/test_company_scope_authorization.py::test_csa_10_acceso_manda_antes_que_capacidad
+PASSED tests/test_company_scope_authorization.py::test_csa_11_empresa_de_otro_tenant_no_encontrada
+PASSED tests/test_company_scope_authorization.py::test_csa_12_admin_de_arranque_con_asignaciones_nulas
+PASSED tests/test_company_scope_surfaces.py::test_css_a02_auditoria_todo_tenant_ve_tres
+FAILED tests/test_company_scope_authorization.py::test_csa_01_permiso_de_d1_no_vale_en_d2
+FAILED tests/test_company_scope_authorization.py::test_csa_02_creacion_solo_en_empresa_con_autoridad
+FAILED tests/test_company_scope_authorization.py::test_csa_03_desactivacion_rechazada_no_cambia_estado
+FAILED tests/test_company_scope_authorization.py::test_csa_04_picking_y_tesoreria_respetan_empresa
+FAILED tests/test_company_scope_authorization.py::test_csa_05_reporting_pasa_autoridad_antes_de_recurso
+FAILED tests/test_company_scope_authorization.py::test_csa_06_funcional_completo_en_d1_solo_vale_en_d1
+FAILED tests/test_company_scope_authorization.py::test_csa_09_revocacion_efectiva_sin_volver_a_entrar
+FAILED tests/test_company_scope_surfaces.py::test_css_a01_auditoria_solo_empresa_d1
+FAILED tests/test_company_scope_surfaces.py::test_css_t01_legal_sources_exige_todo_tenant
+FAILED tests/test_company_scope_surfaces.py::test_css_t02_organizacion_companies_exige_todo_tenant
+FAILED tests/test_company_scope_surfaces.py::test_css_p01_resolve_actors_por_empresa
+FAILED tests/test_company_scope_surfaces.py::test_css_p02_assert_can_decide_por_empresa
+12 failed, 6 passed, 1 warning in 6.59s

@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission, require_write_allowed
+from app.core.dependencies import get_current_user, require_permission, require_tenant_permission, require_write_allowed
 from app.core.errors import NotFoundError
 from app.modules.fiscal import service as fiscal_service
 from app.modules.fiscal.models import (
@@ -174,7 +174,7 @@ def list_legal_sources(db: Session = Depends(get_db), _: User = Depends(get_curr
 
 @router.post("/legal-sources", dependencies=[Depends(require_write_allowed)])
 def create_legal_source(body: LegalSourceCreate, db: Session = Depends(get_db),
-                        actor: User = Depends(require_permission("fiscal", "create"))):
+                        actor: User = Depends(require_tenant_permission("fiscal", "create"))):
     src = fiscal_service.create_legal_source(db, authority=body.authority, source_type=body.source_type,
                                              number=body.number, gazette=body.gazette,
                                              publication_date=body.publication_date,
@@ -187,7 +187,7 @@ def create_legal_source(body: LegalSourceCreate, db: Session = Depends(get_db),
 
 @router.post("/legal-sources/{source_id}/activate", dependencies=[Depends(require_write_allowed)])
 def activate_legal_source(source_id: str, db: Session = Depends(get_db),
-                          actor: User = Depends(require_permission("fiscal", "approve"))):
+                          actor: User = Depends(require_tenant_permission("fiscal", "approve"))):
     src = fiscal_service.activate_legal_source(db, source_id=source_id, actor=str(actor.id))
     db.commit()
     db.refresh(src)
@@ -210,7 +210,7 @@ def list_tax_rules(tax_code: str | None = None, db: Session = Depends(get_db),
 
 @router.post("/tax-rule-versions", dependencies=[Depends(require_write_allowed)])
 def create_tax_rule(body: TaxRuleCreate, db: Session = Depends(get_db),
-                    actor: User = Depends(require_permission("fiscal", "create"))):
+                    actor: User = Depends(require_tenant_permission("fiscal", "create"))):
     rule = fiscal_service.create_tax_rule(db, tax_code=body.tax_code, legal_source_id=body.legal_source_id,
                                           effective_from=body.effective_from, effective_to=body.effective_to,
                                           rate=body.rate, conditions=body.conditions,
@@ -222,7 +222,7 @@ def create_tax_rule(body: TaxRuleCreate, db: Session = Depends(get_db),
 
 @router.post("/tax-rule-versions/{rule_id}/approve", dependencies=[Depends(require_write_allowed)])
 def approve_tax_rule(rule_id: str, db: Session = Depends(get_db),
-                     actor: User = Depends(require_permission("fiscal", "approve"))):
+                     actor: User = Depends(require_tenant_permission("fiscal", "approve"))):
     rule = fiscal_service.approve_tax_rule(db, rule_id=rule_id, approver=str(actor.id))
     db.commit()
     db.refresh(rule)

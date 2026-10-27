@@ -9,7 +9,7 @@
  * y que ninguna fila de la primera página dice «Invalid Date».
  */
 import { type APIRequestContext, type Page } from "@playwright/test";
-import { entrar as entrarConSesion, expect, identidad, iniciarSesion, test } from "./helpers/sesion";
+import { entrar as entrarConSesion, expect, identidad, iniciarSesion, sesionApi, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 
@@ -30,7 +30,7 @@ async function eventoDelRastro(request: APIRequestContext, token: string, rastro
 }
 
 async function entrar(page: Page): Promise<void> {
-  await entrarConSesion(page, "admin", { tenant: "DEMO" });
+  await entrarConSesion(page, "admintenant", { tenant: "DEMO" });
   await page.waitForLoadState("networkidle");
   const compuerta = page.getByTestId(/^elegir-empresa-/);
   if (await compuerta.count()) {
@@ -44,7 +44,8 @@ async function entrar(page: Page): Promise<void> {
 
 test.describe("AUDITORIA-CREATED-AT · la columna Fecha muestra event_time", () => {
   test("DATE-01/02/03 · la fila del evento controlado enseña su event_time con la convención del producto", async ({ page, request }) => {
-    const { rastro, token } = await loginConRastro(request, "DEMO", "admin");
+    const { rastro } = await loginConRastro(request, "DEMO", "admin");
+    const { token } = await sesionApi("admintenant", { tenant: "DEMO" });
     const evento = await eventoDelRastro(request, token, rastro);
     expect(evento.event_time).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?[+-]\d{2}:\d{2}$/);
 

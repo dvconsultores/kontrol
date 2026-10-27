@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import NoReturn
 
-from sqlalchemy import select, text
+from sqlalchemy import exists, or_, select, text
 from sqlalchemy.orm import Session
 
 from app.core.company_context import accessible_company_ids
@@ -376,3 +376,88 @@ def delegability(db: Session, actor: User, role: Role) -> str | None:
         if str(role.id) not in asignaciones_rol:
             return "AUTHORITY_CEILING_EXCEEDED"
     return None
+
+
+def has_capability_in_company(db: Session, user: User, capability: str, company_id: str) -> bool:
+    """La capacidad vale en esa empresa: está en un rol activo asignado con company_id nulo
+    (todas las empresas a las que accede) o igual a ella (Spec 003, capacidad × empresa)."""
+    return str(company_id) in effective_scope(db, user, capability)
+
+
+def capabilities_in_company(db: Session, user: User, company_id: str) -> set[str]:
+    """Capacidades que valen en esa empresa: las de los roles activos asignados con company_id nulo o igual a
+    ella; vacío si el usuario no está activo o no accede a la empresa (Spec 003). Una sola consulta: el acceso va en la misma
+    sentencia que `accessible_company_ids` (presupuesto de consultas de los listados)."""
+    if user.status != "ACTIVE":
+        return set()
+    from app.modules.identity_access.models import UserScope
+
+    company_access_exists = exists(
+        select(Company.id).where(
+            Company.id == str(company_id),
+            Company.tenant_id == user.tenant_id,
+        )
+    )
+    tiene_ambitos = exists(
+        select(UserScope.id).where(
+            UserScope.user_id == str(user.id),
+            UserScope.company_id.is_not(None),
+        )
+    )
+    company_in_scope = exists(
+        select(UserScope.id).where(
+            UserScope.user_id == str(user.id),
+            UserScope.company_id == str(company_id),
+        )
+    )
+
+    filas = db.execute(
+        select(Permission.resource, Permission.action)
+        .distinct()
+        .select_from(UserRole)
+        .join(Role, Role.id == UserRole.role_id)
+        .join(RolePermission, RolePermission.role_id == Role.id)
+        .join(Permission, Permission.id == RolePermission.permission_id)
+        .where(
+            UserRole.user_id == str(user.id),
+            Role.status == "ACTIVE",
+            or_(
+                UserRole.company_id.is_(None),
+                UserRole.company_id == str(company_id),
+            ),
+            company_access_exists,
+            or_(~tiene_ambitos, company_in_scope),
+        )
+    ).all()
+    return {f"{recurso}:{accion}" for recurso, accion in filas}
+
+
+def companies_with_capability(db: Session, user: User, capability: str) -> set[str]:
+    """Empresas donde la capacidad vale; para acotar consultas (listas, bitácora)."""
+    return effective_scope(db, user, capability)
+
+
+def has_tenant_wide_capability(db: Session, user: User, capability: str) -> bool:
+    """Autoridad de todo el tenant, la que exigen los catálogos que afectan a todas las empresas."""
+    tenant_company_ids = {str(c) for c in db.execute(select(Company.id).where(Company.tenant_id == user.tenant_id)).scalars()}
+    return bool(tenant_company_ids) and tenant_company_ids.issubset(effective_scope(db, user, capability))
+
+
+def require_capability_in_company(db: Session, *, user: User, capability: str, company_id: str) -> None:
+    """Exige la capacidad en una empresa concreta o lanza PermissionDeniedError."""
+    if has_capability_in_company(db, user, capability, company_id):
+        return
+    db.rollback()
+    audit_service.record_audit(db, action="COMPANY_SCOPE_DENIED", entity_type="Company", entity_id=str(company_id), tenant_id=str(user.tenant_id), company_id=str(company_id), user_id=str(user.id), reason="COMPANY_SCOPE_FORBIDDEN", evidence={"capability": capability, "company_id": str(company_id)})
+    db.commit()
+    raise PermissionDeniedError("COMPANY_SCOPE_FORBIDDEN", "No tiene esa autoridad en esta empresa.")
+
+
+def require_tenant_wide_capability(db: Session, *, user: User, capability: str) -> None:
+    """Exige la capacidad en todas las empresas del tenant o lanza PermissionDeniedError."""
+    if has_tenant_wide_capability(db, user, capability):
+        return
+    db.rollback()
+    audit_service.record_audit(db, action="COMPANY_SCOPE_DENIED", entity_type="Tenant", entity_id=str(user.tenant_id), tenant_id=str(user.tenant_id), company_id=None, user_id=str(user.id), reason="COMPANY_SCOPE_FORBIDDEN", evidence={"capability": capability, "company_id": None})
+    db.commit()
+    raise PermissionDeniedError("COMPANY_SCOPE_FORBIDDEN", "No tiene esa autoridad en todas las empresas del tenant.")

@@ -346,19 +346,19 @@ def test_aud_tenant_08_los_escritores_persisten_el_tenant_del_contexto_autentica
 # --------------------------------------------------------------------------- #
 # AUD-TENANT-09 · empresa dentro del tenant: contrato ARCH-MC-001
 # --------------------------------------------------------------------------- #
-def test_aud_tenant_09_el_listado_es_de_tenant_y_la_vista_por_empresa_es_la_de_reportes():
-    """`/audit/events` es `TENANT/INSTALLATION` (matriz de alcance, guarda N10):
-    un usuario del tenant con `audit:view` ve la bitácora del tenant entero,
-    incluidas las empresas en las que no opera. La vista acotada por empresa
-    es `/reporting/audit/timeline`, y esa sí valida la empresa contra el
-    acceso del usuario: ajena o de otro tenant, 404 sin revelar que existe."""
+def test_aud_tenant_09_la_bitacora_se_acota_por_empresa_y_la_vista_por_empresa_es_la_de_reportes():
+    """`/audit/events` se acota por la capacidad `audit:view` EN cada empresa
+    (Spec 003, capacidad × empresa; sustituye la clasificación TENANT de la
+    matriz N10): quien solo opera en D1 no ve los eventos de D2. La vista por
+    empresa es `/reporting/audit/timeline`, que valida la empresa contra el
+    acceso: ajena o de otro tenant, 404 sin revelar que existe."""
     m = _marca()
     en_d2 = _evento(W["tenant_a"], entity_id=m, company_id=W["d2"])
     en_e1 = _evento(W["tenant_b"], entity_id=m, company_id=W["e1"])
 
     h_ua = _login("DEMO", "ua")                      # solo opera en D1
     body = _listar(h_ua, entity_id=m)
-    assert _ids(body) == {en_d2}, "la bitácora del tenant incluye sus otras empresas"
+    assert en_d2 not in _ids(body), "la bitácora no muestra empresas donde no se tiene audit:view"
     assert en_e1 not in _ids(body)
 
     linea = _CLIENT.get("/api/v1/reporting/audit/timeline", headers={**h_ua, COMPANY_HEADER: W["d2"]})

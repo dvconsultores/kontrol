@@ -1,0 +1,9 @@
+E       assert 200 == 403
+E       assert 200 == 403
+E       assert 'edit' not in ['edit', 'deactivate']
+E       assert 'edit' not in ['edit']
+FAILED tests/test_company_scope_derived.py::test_csd_01_tasks_scope_permission_denied_en_otra_empresa
+FAILED tests/test_company_scope_derived.py::test_csd_02_documentos_por_recurso_res_denied_en_otra_empresa
+FAILED tests/test_company_scope_derived.py::test_csd_03_unidades_allowed_actions_no_edit_en_otra_empresa
+FAILED tests/test_company_scope_derived.py::test_csd_04_warehouses_allowed_actions_no_edit_en_otra_empresa
+4 failed, 1 warning in 4.60s

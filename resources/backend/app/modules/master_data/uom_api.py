@@ -98,10 +98,11 @@ def _audit(db: Session, user: User, action: str, entity_type: str, entity_id: st
                  tenant_id=user.tenant_id, user_id=str(user.id), before=before, after=after)
 
 
-def _permissions(db: Session, user: User) -> set[str]:
-    from app.modules.identity_access import service as identity_service
+# Permisos EN la empresa de la petición (Spec 003, capacidad × empresa).
+def _permissions(db: Session, user: User, company_id: str) -> set[str]:
+    from app.modules.identity_access import authority
 
-    return set(identity_service.get_user_permissions(db, user))
+    return authority.capabilities_in_company(db, user, company_id)
 
 
 def _filter_actions(actions: list[str], permissions: set[str]) -> list[str]:
@@ -203,7 +204,7 @@ def list_units(q: str | None = None, dimension: str | None = None, status: str |
         query = query.where(UnitOfMeasure.code.ilike(pattern) | UnitOfMeasure.name.ilike(pattern))
     total = int(db.execute(select(func.count()).select_from(query.subquery())).scalar_one())
     rows = db.execute(query.order_by(UnitOfMeasure.code).limit(limit).offset(offset)).scalars().all()
-    permissions = _permissions(db, user)
+    permissions = _permissions(db, user, ctx.company_id)
     return {"total": total, "limit": limit, "offset": offset,
             "items": [_unit_dict(db, u, permissions) for u in rows]}
 
@@ -223,13 +224,13 @@ def create_unit(body: UnitIn, db: Session = Depends(get_db),
     db.refresh(unit)
     _audit(db, actor, "CREATE", "unit_of_measure", str(unit.id), after={"code": unit.code})
     db.commit()
-    return _unit_dict(db, unit, _permissions(db, actor))
+    return _unit_dict(db, unit, _permissions(db, actor, ctx.company_id))
 
 
 @router.get("/unidades/{unit_id}")
 def get_unit(unit_id: str, db: Session = Depends(get_db),
              user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
-    return _unit_dict(db, _get_unit(db, ctx, unit_id), _permissions(db, user))
+    return _unit_dict(db, _get_unit(db, ctx, unit_id), _permissions(db, user, ctx.company_id))
 
 
 @router.patch("/unidades/{unit_id}", dependencies=[Depends(require_write_allowed)])
@@ -248,7 +249,7 @@ def patch_unit(unit_id: str, body: UnitPatch,
            after={"name": unit.name, "decimals": unit.decimals})
     db.commit()
     db.refresh(unit)
-    return _unit_dict(db, unit, _permissions(db, actor))
+    return _unit_dict(db, unit, _permissions(db, actor, ctx.company_id))
 
 
 def _set_unit_status(db: Session, ctx: CompanyContext, actor: User, unit_id: str, status: str) -> dict[str, Any]:
@@ -435,7 +436,7 @@ def list_presentations(product_id: str, status: str | None = None,
     query = select(Presentation).where(Presentation.product_id == product_id)
     if status:
         query = query.where(Presentation.status == status)
-    permissions = _permissions(db, user)
+    permissions = _permissions(db, user, ctx.company_id)
     return [_presentation_dict(db, p, permissions)
             for p in db.execute(query.order_by(Presentation.code)).scalars().all()]
 
@@ -473,14 +474,14 @@ def create_presentation(product_id: str, body: PresentationIn, db: Session = Dep
     _audit(db, actor, "CREATE", "presentation", str(presentation.id),
            after={"code": presentation.code})
     db.commit()
-    return _presentation_dict(db, presentation, _permissions(db, actor))
+    return _presentation_dict(db, presentation, _permissions(db, actor, ctx.company_id))
 
 
 @router.get("/presentaciones/{presentation_id}")
 def get_presentation(presentation_id: str, db: Session = Depends(get_db),
                      user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
     return _presentation_dict(db, _get_presentation(db, ctx, presentation_id),
-                              _permissions(db, user))
+                              _permissions(db, user, ctx.company_id))
 
 
 @router.patch("/presentaciones/{presentation_id}", dependencies=[Depends(require_write_allowed)])
@@ -499,7 +500,7 @@ def patch_presentation(presentation_id: str, body: PresentationPatch,
            after={"name": presentation.name})
     db.commit()
     db.refresh(presentation)
-    return _presentation_dict(db, presentation, _permissions(db, actor))
+    return _presentation_dict(db, presentation, _permissions(db, actor, ctx.company_id))
 
 
 def _set_presentation_status(db: Session, ctx: CompanyContext, actor: User,
@@ -561,7 +562,7 @@ def list_versions(presentation_id: str, db: Session = Depends(get_db),
         .where(ProductPresentationVersion.presentation_id == presentation_id)
         .order_by(ProductPresentationVersion.valid_from.desc())
     ).scalars().all()
-    permissions = _permissions(db, user)
+    permissions = _permissions(db, user, ctx.company_id)
     result = []
     for version in rows:
         in_use = db.execute(select(ProductPresentationVersion.id).where(

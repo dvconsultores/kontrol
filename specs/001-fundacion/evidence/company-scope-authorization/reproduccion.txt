@@ -1,0 +1,16 @@
+# ROLE-COMPANY-SCOPE-NOT-ENFORCED · reproducción en HEAD 021c1c6 (SQLite, MFA real) — 2026-10-26T21:49:42Z
+# Actor: rol R_SOLO_D1 (maestros:view|create|deactivate, reportes:export) asignado con company_id = D1; sin user_scopes (alcanza D1 y D2).
+S01 crear unidad en D1 (autorizado): 200 KG
+S02 listar unidades de D2 (maestros:view solo en D1): 200 None
+S03 crear unidad en D2: 200 LB
+S04 desactivar unidad de D2: 200 None
+S05 exportar en D2: 404 REPORT_NOT_FOUND
+S06 empresas alcanzables: 200 2
+
+# DESPUÉS (árbol del ciclo, misma sonda, SQLite, MFA real) — 2026-10-27
+S01 crear unidad en D1 (autorizado): 200 KG
+S02 listar unidades de D2 (maestros:view solo en D1): 403 COMPANY_SCOPE_FORBIDDEN
+S03 crear unidad en D2: 403 COMPANY_SCOPE_FORBIDDEN
+S04 desactivar unidad de D2: no aplica (S03 ya no crea la unidad)
+S05 exportar en D2: 403 COMPANY_SCOPE_FORBIDDEN
+S06 empresas alcanzables: 200 2   (el acceso no cambia: alcanza D1 y D2, pero la capacidad solo vale en D1)

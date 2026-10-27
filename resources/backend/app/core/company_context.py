@@ -150,9 +150,37 @@ DESCRIPCION_CABECERA = (
     "cabecera es obligatoria y su ausencia responde `400 "
     "COMPANY_CONTEXT_REQUIRED`. Una empresa a la que el usuario no tiene "
     "acceso, de otro tenant o inexistente responde `404 COMPANY_NOT_FOUND` sin "
-    "revelar si existe; una inactiva, `409 COMPANY_INACTIVE`. La cabecera "
+    "revelar si existe; una inactiva, `409 COMPANY_INACTIVE`. Si el usuario "
+    "accede a la empresa pero no tiene en ella la autoridad que pide la "
+    "operación, responde `403 COMPANY_SCOPE_FORBIDDEN`. La cabecera "
     "**selecciona**, no concede: el servidor valida el acceso en cada petición."
 )
+
+#: Cache de permisos declarados por ruta, con clave id(route) para rutas vivas.
+_PERMISOS_POR_RUTA: dict[int, tuple[str, ...]] = {}
+
+
+def _permisos_declarados(request: Request) -> tuple[str, ...]:
+    route = request.scope.get("route")
+    if route is None:
+        return ()
+    route_id = id(route)
+    if route_id not in _PERMISOS_POR_RUTA:
+        permisos: set[str] = set()
+
+        def _recorrer(dependant) -> None:
+            if dependant is None:
+                return
+            permiso = getattr(dependant.call, "kontrol_permission", None)
+            if permiso is not None:
+                permisos.add(permiso)
+            for dep in getattr(dependant, "dependencies", []) or []:
+                _recorrer(dep)
+
+        _recorrer(route.dependant)
+        _PERMISOS_POR_RUTA[route_id] = tuple(sorted(permisos))
+
+    return _PERMISOS_POR_RUTA[route_id]
 
 
 def get_company_context(
@@ -175,7 +203,14 @@ def get_company_context(
     from app.core.dependencies import get_current_auth, read_bearer_credentials
 
     user = get_current_auth(read_bearer_credentials(request), db).user
-    return resolve_company(db, user, x_kontrol_company)
+    # La cabecera selecciona la empresa; la capacidad se exige EN esa empresa
+    # (capacidad × empresa, Spec 003); el acceso (404) se resuelve antes que la capacidad (403).
+    ctx = resolve_company(db, user, x_kontrol_company)
+    from app.modules.identity_access import authority
+
+    for permiso in _permisos_declarados(request):
+        authority.require_capability_in_company(db, user=user, capability=permiso, company_id=ctx.company_id)
+    return ctx
 
 
 def company_context_for(db: Session, user: User, company_id: str) -> CompanyContext:

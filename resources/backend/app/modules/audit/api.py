@@ -11,7 +11,7 @@ pregunta. Ni la consulta ni el cuerpo pueden ampliarlo, y `admin` no significa
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -39,6 +39,14 @@ def list_events(
     # nadie y aquí no lo lee nadie; la Spec no define eventos globales de
     # auditoría (los de instalación viven en sus propias tablas).
     query = select(AuditEvent).where(AuditEvent.tenant_id == user.tenant_id)
+    from app.modules.identity_access import authority
+    # La capacidad también es por empresa (Spec 003):
+    # solo se leen eventos de las empresas donde se tiene audit:view; los del tenant sin empresa, solo con esa autoridad en todas.
+    empresas = authority.companies_with_capability(db, user, "audit:view")
+    condicion: ColumnElement[bool] = AuditEvent.company_id.in_(sorted(empresas))
+    if authority.has_tenant_wide_capability(db, user, "audit:view"):
+        condicion = or_(condicion, AuditEvent.company_id.is_(None))
+    query = query.where(condicion)
     if entity_type:
         query = query.where(AuditEvent.entity_type == entity_type)
     if entity_id:

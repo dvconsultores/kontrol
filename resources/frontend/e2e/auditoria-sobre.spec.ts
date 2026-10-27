@@ -10,7 +10,7 @@
  */
 import { type APIRequestContext, type Page } from "@playwright/test";
 
-import { entrar as entrarConSesion, expect, iniciarSesion, identidad, test } from "./helpers/sesion";
+import { entrar as entrarConSesion, expect, iniciarSesion, identidad, sesionApi, test } from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 
@@ -50,15 +50,16 @@ async function irAAuditoria(page: Page): Promise<void> {
 
 test.describe("AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan", () => {
   test("ENV-01/02 · dos eventos controlados del tenant aparecen como filas, y son los del sobre", async ({ page, request }) => {
-    const { rastro: rastroA, token } = await loginConRastro("DEMO", "admin");
+    const { rastro: rastroA } = await loginConRastro("DEMO", "admin");
     const { rastro: rastroB } = await loginConRastro("DEMO", "uab");
+    const { token } = await sesionApi("admintenant", { tenant: "DEMO" });
 
     let sobre: { items: Array<{ action: string; entity_type: string; request_id: string | null }>; total: number } | null = null;
     page.on("response", async (r) => {
       if (r.url().includes("/api/v1/audit/events")) sobre = await r.json();
     });
 
-    await entrar(page, "DEMO", "admin");
+    await entrar(page, "DEMO", "admintenant");
     await irAAuditoria(page);
 
     // Los dos eventos existen en la bitácora del tenant (verdad del servidor), y lo
@@ -94,13 +95,14 @@ test.describe("AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan", () =>
   test("ENV-04 · el rastro de otro tenant no está en el sobre ni en la tabla", async ({ page, request }) => {
     const { rastro: ajeno } = await loginConRastro("DEMO2", "uc");
     // Cada identidad del worker admite como mucho dos inicios TOTP por paso de 30 s sin esperar.
-    const { rastro: propio, token } = await loginConRastro("DEMO", "ub");
+    const { rastro: propio } = await loginConRastro("DEMO", "ub");
+    const { token } = await sesionApi("admintenant", { tenant: "DEMO" });
 
     let sobre: { items: Array<{ request_id: string | null }> } | null = null;
     page.on("response", async (r) => {
       if (r.url().includes("/api/v1/audit/events")) sobre = await r.json();
     });
-    await entrar(page, "DEMO", "admin");
+    await entrar(page, "DEMO", "admintenant");
     await irAAuditoria(page);
     await expect.poll(() => sobre !== null).toBeTruthy();
 

@@ -143,6 +143,22 @@ def require_permission(resource: str, action: str):
     return checker
 
 
+def require_tenant_permission(resource: str, action: str):
+    """Dependencia: requiere resource:action en TODAS las empresas del tenant (catálogos que afectan a todas; Spec 003)."""
+
+    def checker(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> User:
+        from app.modules.identity_access import authority
+
+        permissions = identity_service.get_user_permissions(db, user)
+        if not identity_service.user_has_permission(user, permissions, resource, action):
+            raise PermissionDeniedError()
+        authority.require_tenant_wide_capability(db, user=user, capability=f"{resource}:{action}")
+        return user
+
+    checker.kontrol_permission = f"{resource}:{action}"  # type: ignore[attr-defined]
+    return checker
+
+
 def get_license_mode(db: Session = Depends(get_db)) -> str:
     """Modo actual de licencia (FR-001-052)."""
     from app.modules.licensing import service as licensing_service

@@ -77,10 +77,13 @@ async function verificador(request: APIRequestContext, c: Ctx, m: string): Promi
 }
 
 async function fiscalListo(request: APIRequestContext, c: Ctx, m: string) {
-  const fuente = await post(request, c, "/fiscal/legal-sources", {
+  // Los catálogos fiscales valen en todas las empresas: los prepara el administrador de QA de todo el tenant (ADR-017, C4).
+  const admin = await sesionApi("admintenant", { tenant: TENANT });
+  const tenantCtx: Ctx = { ...c, token: admin.token, headers: { ...c.headers, Authorization: `Bearer ${admin.token}` } };
+  const fuente = await post(request, tenantCtx, "/fiscal/legal-sources", {
     authority: "SENIAT", source_type: "LEY", number: `LT-${m}`, effective_from: "2020-01-01",
   });
-  await post(request, c, `/fiscal/legal-sources/${fuente.id}/activate`, {});
+  await post(request, tenantCtx, `/fiscal/legal-sources/${fuente.id}/activate`, {});
   const series: Record<string, string> = {};
   for (const [tipo, prefijo] of [["INVOICE", "F"], ["CREDIT_NOTE", "NC"]]) {
     const s = await post(request, c, "/fiscal/number-series", {

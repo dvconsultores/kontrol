@@ -334,7 +334,7 @@ def search_warehouses(q: str | None = None, branch_id: str | None = None,
         query = query.where(Warehouse.code.ilike(pattern) | Warehouse.name.ilike(pattern))
     total = int(db.execute(select(func.count()).select_from(query.subquery())).scalar_one())
     rows = db.execute(query.order_by(Warehouse.code).limit(limit).offset(offset)).scalars().all()
-    permissions = st.user_permission_set(db, user)
+    permissions = st.user_permission_set(db, user, ctx.company_id)
     dependencies = st.warehouses_dependencies(db, [str(w.id) for w in rows])
     return {"total": total, "limit": limit, "offset": offset,
             "items": [_warehouse_dict(db, w, permissions, dependencies=dependencies[str(w.id)])
@@ -373,7 +373,7 @@ def create_warehouse_full(body: WarehouseIn, db: Session = Depends(get_db),
     db.refresh(warehouse)
     _audit(db, actor, ctx, "CREATE", "warehouse", str(warehouse.id), after={"code": warehouse.code})
     db.commit()
-    return _warehouse_dict(db, warehouse, st.user_permission_set(db, actor))
+    return _warehouse_dict(db, warehouse, st.user_permission_set(db, actor, ctx.company_id))
 
 
 @router.get("/warehouses/{warehouse_id}")
@@ -381,7 +381,7 @@ def get_warehouse(warehouse_id: str, db: Session = Depends(get_db),
                   user: User = Depends(require_permission("organization", "view")),
     ctx: CompanyContext = Depends(get_company_context)):
     warehouse = _get_warehouse(db, ctx, warehouse_id)
-    return _warehouse_dict(db, warehouse, st.user_permission_set(db, user))
+    return _warehouse_dict(db, warehouse, st.user_permission_set(db, user, ctx.company_id))
 
 
 @router.patch("/warehouses/{warehouse_id}", dependencies=[Depends(require_write_allowed)])
@@ -402,7 +402,7 @@ def patch_warehouse(warehouse_id: str, body: WarehousePatch,
            after={"name": warehouse.name, "location_managed": warehouse.location_managed})
     db.commit()
     db.refresh(warehouse)
-    return _warehouse_dict(db, warehouse, st.user_permission_set(db, actor))
+    return _warehouse_dict(db, warehouse, st.user_permission_set(db, actor, ctx.company_id))
 
 
 @router.patch("/warehouses/{warehouse_id}/structure-levels",
@@ -432,7 +432,7 @@ def patch_structure_levels(warehouse_id: str, body: StructureLevelsPatch,
            before=before, after=warehouse.structure_levels)
     db.commit()
     db.refresh(warehouse)
-    return _warehouse_dict(db, warehouse, st.user_permission_set(db, actor))
+    return _warehouse_dict(db, warehouse, st.user_permission_set(db, actor, ctx.company_id))
 
 
 @router.post("/warehouses/{warehouse_id}/activate", dependencies=[Depends(require_write_allowed)])
@@ -546,7 +546,7 @@ def _node_routes(level: str) -> None:
         if parent_id and parent_fk:
             query = query.where(getattr(model, parent_fk) == parent_id)
         rows = db.execute(query.order_by(model.sequence, model.code)).scalars().all()
-        permissions = st.user_permission_set(db, user)
+        permissions = st.user_permission_set(db, user, ctx.company_id)
         return [_node_dict(db, level, node, permissions) for node in rows]
 
     @router.post(f"/warehouses/{{warehouse_id}}/{plural}",
@@ -591,14 +591,14 @@ def _node_routes(level: str) -> None:
         st.promote_regime(db, warehouse)
         _audit(db, actor, ctx, "CREATE", f"warehouse_{level}", str(node.id), after={"code": node.code})
         db.commit()
-        return _node_dict(db, level, node, st.user_permission_set(db, actor))
+        return _node_dict(db, level, node, st.user_permission_set(db, actor, ctx.company_id))
 
     @router.get(f"/{plural}/{{node_id}}", name=f"get_{level}")
     def _get(node_id: str, db: Session = Depends(get_db),
              user: User = Depends(require_permission("organization", "view")),
         ctx: CompanyContext = Depends(get_company_context)):
         node = _get_node(db, ctx, level, node_id)
-        return _node_dict(db, level, node, st.user_permission_set(db, user))
+        return _node_dict(db, level, node, st.user_permission_set(db, user, ctx.company_id))
 
     @router.patch(f"/{plural}/{{node_id}}", dependencies=[Depends(require_write_allowed)],
                   name=f"patch_{level}")
@@ -632,7 +632,7 @@ def _node_routes(level: str) -> None:
                after={"name": node.name, "sequence": node.sequence, "status": node.status})
         db.commit()
         db.refresh(node)
-        return _node_dict(db, level, node, st.user_permission_set(db, actor))
+        return _node_dict(db, level, node, st.user_permission_set(db, actor, ctx.company_id))
 
     @router.post(f"/{plural}/{{node_id}}/activate", dependencies=[Depends(require_write_allowed)],
                  name=f"activate_{level}")
@@ -801,7 +801,7 @@ def search_locations(warehouse_id: str | None = None, q: str | None = None,
     total = int(db.execute(select(func.count()).select_from(query.subquery())).scalar_one())
     rows = db.execute(
         query.order_by(WarehouseLocation.code).limit(limit).offset(offset)).scalars().all()
-    permissions = st.user_permission_set(db, user)
+    permissions = st.user_permission_set(db, user, ctx.company_id)
     return {"total": total, "limit": limit, "offset": offset,
             "items": [_location_dict(db, loc, permissions) for loc in rows]}
 
@@ -876,7 +876,7 @@ def create_location_full(body: LocationIn, db: Session = Depends(get_db),
     st.promote_regime(db, warehouse)
     _audit(db, actor, ctx, "CREATE", "warehouse_location", str(location.id), after={"code": location.code})
     db.commit()
-    return _location_dict(db, location, st.user_permission_set(db, actor), full=True)
+    return _location_dict(db, location, st.user_permission_set(db, actor, ctx.company_id), full=True)
 
 
 @router.post("/locations/bulk", dependencies=[Depends(require_write_allowed)])
@@ -936,7 +936,7 @@ def get_location(location_id: str, db: Session = Depends(get_db),
                  user: User = Depends(require_permission("organization", "view")),
     ctx: CompanyContext = Depends(get_company_context)):
     location = _get_location(db, ctx, location_id)
-    return _location_dict(db, location, st.user_permission_set(db, user), full=True)
+    return _location_dict(db, location, st.user_permission_set(db, user, ctx.company_id), full=True)
 
 
 @router.patch("/locations/{location_id}", dependencies=[Depends(require_write_allowed)])
@@ -982,7 +982,7 @@ def patch_location(location_id: str, body: LocationPatch,
            after={"name": location.name, "sequence": location.sequence})
     db.commit()
     db.refresh(location)
-    return _location_dict(db, location, st.user_permission_set(db, actor), full=True)
+    return _location_dict(db, location, st.user_permission_set(db, actor, ctx.company_id), full=True)
 
 
 def _set_location_status(db: Session, actor: User, ctx: CompanyContext, location_id: str,
@@ -1067,7 +1067,7 @@ def warehouse_structure(warehouse_id: str, depth: str = "level", status: str | N
                            details={"allowed": [*st.LEVEL_ORDER, "locations"]})
     warehouse = _get_warehouse(db, ctx, warehouse_id)
     declared = st.declared_levels(warehouse)
-    permissions = st.user_permission_set(db, user)
+    permissions = st.user_permission_set(db, user, ctx.company_id)
     wanted = st.LEVEL_ORDER[:st.LEVEL_ORDER.index(depth) + 1] if depth != "locations" else st.LEVEL_ORDER
 
     def nodes(level: str, parent_id: str | None) -> list[dict[str, Any]]:

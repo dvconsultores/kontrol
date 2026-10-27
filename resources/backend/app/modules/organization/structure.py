@@ -663,8 +663,8 @@ def location_allowed_actions(
     return _filter_by_permission(actions, permissions)
 
 
-def user_permission_set(db: Session, user: Any) -> set[str]:
-    """Permisos efectivos del usuario, como `recurso:acción`."""
-    from app.modules.identity_access import service as identity_service
+def user_permission_set(db: Session, user: Any, company_id: str) -> set[str]:
+    """Permisos del usuario EN esa empresa, como `recurso:acción` (Spec 003, capacidad × empresa)."""
+    from app.modules.identity_access import authority
 
-    return set(identity_service.get_user_permissions(db, user))
+    return authority.capabilities_in_company(db, user, company_id)

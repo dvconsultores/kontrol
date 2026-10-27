@@ -10,6 +10,7 @@
 - REST/JSON versionada (`/api/v1`); IDs opacos; timestamps ISO 8601 con zona.
 - Listados con `q`, `status`, `sort`, `page`, `page_size`.
 - Respuestas de entidad incluyen `allowed_actions` calculadas en backend.
+- Autoridad por empresa (ADR-017): las rutas de empresa que declaran un permiso y los catálogos de todo el tenant en todas las empresas exigen la capacidad en la empresa de la petición, con el alcance de `user_scopes` (sin filas, todo el tenant); las lecturas de empresa sin permiso declarado siguen gobernadas por el acceso (ARCH-MC-001). Precedencia: tenant ajeno o empresa inaccesible/inexistente → 404 `COMPANY_NOT_FOUND`; sin la capacidad en ninguna empresa → 403 `PERMISSION_DENIED`; con ella pero no en la empresa de la petición → 403 `COMPANY_SCOPE_FORBIDDEN`, sin efecto y auditado como `COMPANY_SCOPE_DENIED`; después, las reglas de dominio; nunca un 500, y `X-Kontrol-Company` elige la empresa, no la autoriza.
 - POST críticos aceptan `Idempotency-Key`.
 - PATCH usa `version`/ETag.
 - Transiciones usan endpoints explícitos: `/submit`, `/approve`, `/cancel`, `/revoke`.
@@ -85,7 +86,7 @@ Toda sesión lleva el sello de credencial del usuario: cambia con cada cambio o 
 
 | Método | Ruta | Uso |
 |---|---|---|
-| GET | `/api/v1/audit/events` | Timeline con filtros y paginación |
+| GET | `/api/v1/audit/events` | Timeline con filtros y paginación; solo eventos de empresas donde el actor tiene `audit:view` (los sin empresa, solo con `audit:view` en todo el tenant) (ADR-017) |
 | GET | `/api/v1/audit/events/{id}` | Detalle de evento |
 
 ### Diagnóstico

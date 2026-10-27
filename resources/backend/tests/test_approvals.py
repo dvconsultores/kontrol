@@ -65,6 +65,20 @@ def _role_with(db, code: str, users: list[User]) -> Role:
     role = Role(code=code, name=code, protected=False, status="ACTIVE")
     db.add(role)
     db.flush()
+    # El rol de aprobadores trae la capacidad de aprobar: decidir la exige en la empresa (Spec 003).
+    from sqlalchemy import select
+
+    from app.modules.identity_access.models import Permission, RolePermission
+    perm = db.execute(
+        select(Permission).where(
+            Permission.resource == "aprobaciones", Permission.action == "approve"
+        )
+    ).scalars().first()
+    if perm is None:
+        perm = Permission(resource="aprobaciones", action="approve", scope_type="COMPANY")
+        db.add(perm)
+        db.flush()
+    db.add(RolePermission(role_id=str(role.id), permission_id=str(perm.id)))
     for u in users:
         db.add(UserRole(user_id=str(u.id), role_id=str(role.id)))
     db.flush()
@@ -341,6 +355,8 @@ def test_self_approval_denied_by_policy(db_session):
 def test_delegation_allows_acting_for_eligible(db_session):
     approver, deputy = _user(db_session, "ap@x.com"), _user(db_session, "dep@x.com")
     _role_with(db_session, "APR1", [approver])
+    # El suplente decide con aprobaciones:approve (lo exige la ruta y, desde Spec 003, el servicio); no es aprobador del nivel.
+    _role_with(db_session, "DEP1", [deputy])
     _policy(db_session)
     svc.create_delegation(db_session, company_id=COMPANY, grantor_id=str(approver.id),
                           grantee_id=str(deputy.id), valid_to=datetime.now(UTC) + timedelta(days=5),
@@ -374,6 +390,8 @@ def test_revoked_delegation_does_not_invalidate_past_decisions(db_session):
     """AC-18: revocar afecta al futuro, no reescribe la historia."""
     approver, deputy = _user(db_session, "a3@x.com"), _user(db_session, "d3@x.com")
     _role_with(db_session, "APR1", [approver])
+    # El suplente decide con aprobaciones:approve (lo exige la ruta y, desde Spec 003, el servicio); no es aprobador del nivel.
+    _role_with(db_session, "DEP1", [deputy])
     _policy(db_session)
     dele = svc.create_delegation(db_session, company_id=COMPANY, grantor_id=str(approver.id),
                                  grantee_id=str(deputy.id), actor="admin")

@@ -19,7 +19,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -265,7 +265,12 @@ def resolve_actors(db: Session, *, company_id: str, level: dict[str, Any],
     elif resolver_type == "ROLE":
         role = db.execute(select(Role).where(Role.code == ref)).scalars().first()
         if role:
-            rows = db.execute(select(UserRole.user_id).where(UserRole.role_id == role.id)).all()
+            rows = db.execute(
+                select(UserRole.user_id).where(
+                    UserRole.role_id == role.id,
+                    or_(UserRole.company_id.is_(None), UserRole.company_id == company_id),
+                )
+            ).all()
             actors = [r[0] for r in rows]
     elif resolver_type == "SCOPE_OWNER":
         scope_rows = db.execute(select(User.id).where(User.status == "ACTIVE")).all()
@@ -278,8 +283,8 @@ def resolve_actors(db: Session, *, company_id: str, level: dict[str, Any],
     # quien no debía aprobar podía hacerlo.
     #
     # La autoridad no se reinventa aquí: es `accessible_company_ids`, la misma
-    # que decide a qué empresa entra una petición (ADR-D0-014). `UserRole` dice
-    # qué puede hacer alguien; nunca dónde.
+    # que decide a qué empresa entra una petición (ADR-D0-014). El rol dice qué
+    # y, con su `company_id`, dónde: una asignación de otra empresa no hace elegible (capacidad × empresa, Spec 003).
     actors = _solo_quien_alcanza_la_empresa(db, company_id, actors)
 
     if policy.requires_segregation and requested_by:
@@ -650,6 +655,24 @@ def _assert_can_decide(db: Session, *, request: ApprovalRequest, step: ApprovalS
     if already:
         raise ConflictError(code="APPROVAL_DUPLICATE_DECISION",
                             message="Ya registró una decisión sobre este paso.")
+
+    # Decidir exige aprobaciones:approve EN la empresa de la solicitud, también al delegado (Spec 003).
+    from app.modules.identity_access import authority
+    from app.modules.identity_access.models import User
+
+    actor = db.get(User, str(actor_id))
+    if actor is None:
+        raise PermissionDeniedError(
+            code="APPROVAL_NOT_ELIGIBLE",
+            message="No figura entre los aprobadores de este nivel.",
+            status_code=403,
+        )
+    authority.require_capability_in_company(
+        db,
+        user=actor,
+        capability="aprobaciones:approve",
+        company_id=str(request.company_id),
+    )
     return delegation
 
 

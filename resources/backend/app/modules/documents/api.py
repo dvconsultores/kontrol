@@ -58,10 +58,11 @@ def _alcance(ctx: CompanyContext) -> list[str]:
     return [ctx.company_id]
 
 
-def _permissions(db: Session, user: User) -> set[str]:
-    from app.modules.identity_access import service as identity_service
+# Permisos EN la empresa de la petición (Spec 003, capacidad × empresa).
+def _permissions(db: Session, user: User, company_id: str) -> set[str]:
+    from app.modules.identity_access import authority
 
-    return set(identity_service.get_user_permissions(db, user))
+    return authority.capabilities_in_company(db, user, company_id)
 
 
 def _get_document(db: Session, ctx: CompanyContext, document_id: str) -> Document:
@@ -87,7 +88,7 @@ def _assert_resource_access(db: Session, user: User, ctx: CompanyContext,
         # No se confirma que exista.
         raise NotFoundError(code="RESOURCE_NOT_FOUND", message="Recurso no encontrado")
     needed = resource_registry.required_permission(resource_type)
-    if needed not in _permissions(db, user):
+    if needed not in _permissions(db, user, ctx.company_id):
         raise KontrolError(code="RESOURCE_ACCESS_DENIED",
                            message="No tiene permiso sobre el recurso vinculado",
                            status_code=403,
@@ -106,7 +107,7 @@ def _assert_can_read_file(db: Session, user: User, ctx: CompanyContext,
     if not links:
         return
     companies = _alcance(ctx)
-    permissions = _permissions(db, user)
+    permissions = _permissions(db, user, ctx.company_id)
     for link in links:
         try:
             _entity, company = resource_registry.resolve_resource(
@@ -369,7 +370,7 @@ def list_documents(q: str | None = None, document_type_id: str | None = None,
     total = int(db.execute(select(func.count()).select_from(query.subquery())).scalar_one())
     rows = db.execute(query.order_by(Document.created_at.desc())
                       .limit(limit).offset(offset)).scalars().all()
-    permissions = _permissions(db, user)
+    permissions = _permissions(db, user, ctx.company_id)
     return {"total": total, "limit": limit, "offset": offset,
             "items": [_document_dict(db, d, permissions) for d in rows]}
 
@@ -402,7 +403,7 @@ def create_document(body: DocumentIn, db: Session = Depends(get_db),
     db.refresh(document)
     _audit(db, actor, "DOCUMENT_CREATED", str(document.id), after={"title": document.title})
     db.commit()
-    return _document_dict(db, document, _permissions(db, actor), full=True)
+    return _document_dict(db, document, _permissions(db, actor, ctx.company_id), full=True)
 
 
 @router.get("/{document_id}")
@@ -410,7 +411,7 @@ def get_document(document_id: str, db: Session = Depends(get_db),
                  user: User = Depends(require_permission("documentos", "view")),
     ctx: CompanyContext = Depends(get_company_context)):
     document = _get_document(db, ctx, document_id)
-    return _document_dict(db, document, _permissions(db, user), full=True)
+    return _document_dict(db, document, _permissions(db, user, ctx.company_id), full=True)
 
 
 @router.patch("/{document_id}", dependencies=[Depends(require_write_allowed)])
@@ -436,7 +437,7 @@ def update_document(document_id: str, body: DocumentPatch,
            after={"title": document.title})
     db.commit()
     db.refresh(document)
-    return _document_dict(db, document, _permissions(db, actor), full=True)
+    return _document_dict(db, document, _permissions(db, actor, ctx.company_id), full=True)
 
 
 @router.post("/{document_id}/archive", dependencies=[Depends(require_write_allowed)])
@@ -727,7 +728,7 @@ def documents_by_resource(resource_type: str, resource_id: str, db: Session = De
     ctx: CompanyContext = Depends(get_company_context)):
     """La consulta que usan todos los consumidores."""
     _assert_resource_access(db, user, ctx, resource_type, resource_id)
-    permissions = _permissions(db, user)
+    permissions = _permissions(db, user, ctx.company_id)
     pairs = service.documents_for(db, resource_type=resource_type, resource_id=resource_id,
                                   company_ids=_alcance(ctx))
     return [{**_document_dict(db, document, permissions),

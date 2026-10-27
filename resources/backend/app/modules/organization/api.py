@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission, require_write_allowed
+from app.core.dependencies import get_current_user, require_permission, require_tenant_permission, require_write_allowed
 from app.core.errors import NotFoundError
 from app.modules.identity_access.models import User
 from app.modules.organization.models import (
@@ -126,7 +126,7 @@ def list_companies(
 def create_company(
     body: CompanyCreate,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_permission("organization", "create")),
+    actor: User = Depends(require_tenant_permission("organization", "create")),
 ):
     company = Company(
         tenant_id=actor.tenant_id,

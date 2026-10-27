@@ -22,7 +22,7 @@ from app.core.company_context import CompanyContext, accessible_company_ids
 from app.core.errors import ConflictError, KontrolError, NotFoundError, PermissionDeniedError
 from app.core.integrity import es_violacion_unica
 from app.core.logging import get_logger
-from app.modules.identity_access import service as identity_service
+from app.modules.identity_access import authority
 from app.modules.identity_access.models import Role, User, UserRole, UserScope
 from app.modules.notifications import catalogo, delivery
 from app.modules.notifications.messages import MensajeInvalido, renderizar, texto, validar
@@ -353,8 +353,9 @@ def resolver_por_origen(db: Session, *, company_id: str, source_type: str, sourc
 # --------------------------------------------------------------------------- #
 # Visibilidad (FR-047-014, FR-047-032)
 # --------------------------------------------------------------------------- #
-def _permisos(db: Session, user: User) -> set[str]:
-    return set(identity_service.get_user_permissions(db, user))
+# Permisos EN la empresa de la petición (Spec 003, capacidad × empresa).
+def _permisos(db: Session, user: User, company_id: str) -> set[str]:
+    return authority.capabilities_in_company(db, user, company_id)
 
 
 def _mensaje(clave: str, parametros: dict[str, Any]) -> dict[str, Any]:
@@ -398,7 +399,7 @@ def listar_notificaciones(db: Session, *, ctx: CompanyContext, user: User, state
                           category: str | None, severity: str | None, source_type: str | None,
                           created_from: datetime | None, created_to: datetime | None,
                           page: int, page_size: int) -> dict[str, Any]:
-    q = _consulta_notificaciones(ctx, catalogo.tipos_prohibidos(_permisos(db, user)))
+    q = _consulta_notificaciones(ctx, catalogo.tipos_prohibidos(_permisos(db, user, ctx.company_id)))
     if state == "active":
         q = q.where(NotificationRecipient.archived_at.is_(None))
     elif state == "unread":
@@ -423,7 +424,7 @@ def listar_notificaciones(db: Session, *, ctx: CompanyContext, user: User, state
 
 
 def _notificacion_visible(db: Session, ctx: CompanyContext, user: User, notification_id: str):
-    fila = db.execute(_consulta_notificaciones(ctx, catalogo.tipos_prohibidos(_permisos(db, user)))
+    fila = db.execute(_consulta_notificaciones(ctx, catalogo.tipos_prohibidos(_permisos(db, user, ctx.company_id)))
                       .where(Notification.id == notification_id)).first()
     if fila is None:
         raise NotFoundError(code="NOTIFICATION_NOT_FOUND", message=texto("error.notification_not_found"))
@@ -520,7 +521,7 @@ def listar_tareas(db: Session, *, ctx: CompanyContext, user: User, scope: str, s
                   due_from: datetime | None, due_to: datetime | None,
                   page: int, page_size: int) -> dict[str, Any]:
     ahora = _ahora()
-    q = _consulta_tareas(ctx, _permisos(db, user), scope)
+    q = _consulta_tareas(ctx, _permisos(db, user, ctx.company_id), scope)
     if status:
         q = q.where(Task.status == status)
     if overdue is True:
@@ -540,7 +541,7 @@ def listar_tareas(db: Session, *, ctx: CompanyContext, user: User, scope: str, s
 
 def _tarea_visible(db: Session, ctx: CompanyContext, user: User, task_id: str, *,
                    bloquear: bool = False) -> tuple[Task, set[str]]:
-    permisos = _permisos(db, user)
+    permisos = _permisos(db, user, ctx.company_id)
     scope = "all" if "tareas:view" in permisos else "involved"
     q = _consulta_tareas(ctx, permisos, scope).where(Task.id == task_id)
     if bloquear:
@@ -680,7 +681,7 @@ def reasignar_tarea(db: Session, *, ctx: CompanyContext, user: User, task_id: st
 def listar_alertas(db: Session, *, ctx: CompanyContext, user: User, status: str | None,
                    severity: str | None, source_type: str | None, page: int, page_size: int) -> dict:
     q = select(Alert).where(Alert.company_id == ctx.company_id)
-    prohibidos = catalogo.tipos_prohibidos(_permisos(db, user))
+    prohibidos = catalogo.tipos_prohibidos(_permisos(db, user, ctx.company_id))
     if prohibidos:
         q = q.where(Alert.source_type.not_in(prohibidos))
     if status:
@@ -700,7 +701,7 @@ def listar_alertas(db: Session, *, ctx: CompanyContext, user: User, status: str 
 
 def contadores(db: Session, *, ctx: CompanyContext, user: User) -> dict[str, int]:
     """Agregados del servidor para la campana y para la 049. Nunca se cuenta en el cliente."""
-    permisos = _permisos(db, user)
+    permisos = _permisos(db, user, ctx.company_id)
     prohibidos = catalogo.tipos_prohibidos(permisos)
     ahora = _ahora()
     no_leidas = (select(func.count()).select_from(NotificationRecipient)

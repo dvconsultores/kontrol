@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission, require_write_allowed
+from app.core.dependencies import get_current_user, require_tenant_permission, require_write_allowed
 from app.modules.homologation import service as homologation_service
 from app.modules.identity_access.models import User
 
@@ -62,7 +62,7 @@ def list_records(db: Session = Depends(get_db), user: User = Depends(get_current
 def create_record(
     body: HomologationCreate,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_permission("homologacion", "create")),
+    actor: User = Depends(require_tenant_permission("homologacion", "create")),
 ):
     return homologation_service.create_record(
         db,
@@ -84,7 +84,7 @@ def get_record(record_id: str, db: Session = Depends(get_db), user: User = Depen
 def submit_record(
     record_id: str,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_permission("homologacion", "edit")),
+    actor: User = Depends(require_tenant_permission("homologacion", "edit")),
 ):
     return homologation_service.submit_record(db, record_id=record_id, actor=str(actor.id))
 
@@ -94,7 +94,7 @@ def evaluate_record(
     record_id: str,
     body: EvaluateBody,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_permission("homologacion", "approve")),
+    actor: User = Depends(require_tenant_permission("homologacion", "approve")),
 ):
     return homologation_service.evaluate_record(
         db,
@@ -119,7 +119,7 @@ def list_releases(db: Session = Depends(get_db), user: User = Depends(get_curren
 def create_release(
     body: ReleaseCreate,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_permission("homologacion", "create")),
+    actor: User = Depends(require_tenant_permission("homologacion", "create")),
 ):
     return homologation_service.create_release(
         db,
@@ -135,7 +135,7 @@ def create_release(
 def promote_release(
     release_id: str,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_permission("homologacion", "edit")),
+    actor: User = Depends(require_tenant_permission("homologacion", "edit")),
 ):
     return homologation_service.promote_release(db, release_id=release_id, actor=str(actor.id))
 
@@ -145,7 +145,7 @@ def release_version(
     release_id: str,
     body: ReleaseBody,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_permission("homologacion", "approve")),
+    actor: User = Depends(require_tenant_permission("homologacion", "approve")),
 ):
     return homologation_service.release_version(
         db,
