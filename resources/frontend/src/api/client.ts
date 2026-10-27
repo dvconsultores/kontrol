@@ -12,6 +12,11 @@ export interface ApiErrorBody {
   details?: unknown;
 }
 
+export interface ArchivoDescargado {
+  blob: Blob;
+  contentDisposition: string | null;
+}
+
 export class ApiError extends Error {
   code: string;
   status: number;
@@ -190,8 +195,9 @@ export interface RequestOptions {
   /** Versión esperada del recurso para control optimista; 409 en conflicto (ADR-013). */
   ifMatch?: string;
   signal?: AbortSignal;
-  /** `blob` para descargas binarias (Spec 046): el cuerpo no se interpreta como JSON. */
-  responseType?: "json" | "blob";
+  /** `blob` para descargas binarias (Spec 046): el cuerpo no se interpreta como JSON.
+   *  `archivo` devuelve `{ blob, contentDisposition }` para descargas con nombre del servidor. */
+  responseType?: "json" | "blob" | "archivo";
   /**
    * Empresa de esta petición, fijada por quien la crea.
    *
@@ -203,7 +209,8 @@ export interface RequestOptions {
 }
 
 async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
-  const wantsBlob = options.responseType === "blob";
+  const wantsBlob = options.responseType === "blob" || options.responseType === "archivo";
+  const wantsArchivo = options.responseType === "archivo";
   // Multipart: el navegador debe poner el Content-Type con su propio boundary.
   const isMultipart = typeof FormData !== "undefined" && options.body instanceof FormData;
 
@@ -251,6 +258,13 @@ async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
 
   // Una descarga correcta se devuelve como binario; un fallo sigue siendo JSON
   // y debe pasar por el contrato de errores como cualquier otra respuesta.
+  if (wantsArchivo && response.ok) {
+    return {
+      blob: await response.blob(),
+      contentDisposition: response.headers.get("content-disposition"),
+    } as T;
+  }
+
   if (wantsBlob && response.ok) {
     return (await response.blob()) as T;
   }

@@ -1,0 +1,34 @@
+# Rojo de la E2E de descarga (36f076c + primitiva y Centro; Exportaciones SIN corregir; rutas saneadas)
+
+Primera corrida (r20261027t205236): DOWNLOAD-E2E-09 sin evento download en los 3 navegadores (el Centro no entregaba el archivo); el resto de fallos de esa corrida eran de la propia prueba (fila en otra página y nombres repetidos por la colisión), corregidos en D-T05/D-T06.
+
+```
+  ✓   2 [chromium] › e2e/report-download.spec.ts:221:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-05 · URL directa sin autenticar devuelve 401 AUTH_REQUIRED 
+  ✓   5 [chromium] › e2e/report-download.spec.ts:195:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-04 · otra empresa devuelve COMPANY_SCOPE_FORBIDDEN o EXPORT_NOT_FOUND 
+  ✓   6 [chromium] › e2e/report-download.spec.ts:170:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-03 · sin reportes:export no aparece el botón y la API devuelve 403 
+  ✓   9 [chromium] › e2e/report-download.spec.ts:331:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-09 · el Centro completa el proceso con el nombre del CSV auditado 
+  ✘   4 [chromium] › e2e/report-download.spec.ts:232:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-06 · sin capacidad de origen muestra permiso denegado y no descarga 
+  ✘   7 [chromium] › e2e/report-download.spec.ts:262:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-07 · fallo de generación y de red muestran alertas y no descargan 
+  ✓  12 [firefox] › e2e/report-download.spec.ts:170:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-03 · sin reportes:export no aparece el botón y la API devuelve 403 
+  ✓  13 [firefox] › e2e/report-download.spec.ts:195:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-04 · otra empresa devuelve COMPANY_SCOPE_FORBIDDEN o EXPORT_NOT_FOUND 
+  ✓  14 [firefox] › e2e/report-download.spec.ts:221:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-05 · URL directa sin autenticar devuelve 401 AUTH_REQUIRED 
+  ✘  15 [firefox] › e2e/report-download.spec.ts:232:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-06 · sin capacidad de origen muestra permiso denegado y no descarga 
+  ✘  16 [firefox] › e2e/report-download.spec.ts:262:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-07 · fallo de generación y de red muestran alertas y no descargan 
+  ✘   1 [chromium] › e2e/report-download.spec.ts:141:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-02 · la descarga devuelve PDF, usa blob y no expone el token 
+  ✘   3 [chromium] › e2e/report-download.spec.ts:120:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-01 · el usuario autorizado recibe el nombre sugerido y el aviso de éxito 
+  ✘   8 [chromium] › e2e/report-download.spec.ts:302:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-08 · dos descargas sucesivas conservan el nombre y mantienen el botón habilitado 
+  ✓  18 [firefox] › e2e/report-download.spec.ts:331:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-09 · el Centro completa el proceso con el nombre del CSV auditado 
+  ✓  21 [webkit] › e2e/report-download.spec.ts:170:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-03 · sin reportes:export no aparece el botón y la API devuelve 403 
+  ✓  22 [webkit] › e2e/report-download.spec.ts:195:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-04 · otra empresa devuelve COMPANY_SCOPE_FORBIDDEN o EXPORT_NOT_FOUND 
+  ✓  23 [webkit] › e2e/report-download.spec.ts:221:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-05 · URL directa sin autenticar devuelve 401 AUTH_REQUIRED 
+  ✘  10 [firefox] › e2e/report-download.spec.ts:120:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-01 · el usuario autorizado recibe el nombre sugerido y el aviso de éxito 
+  ✘  11 [firefox] › e2e/report-download.spec.ts:141:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-02 · la descarga devuelve PDF, usa blob y no expone el token 
+  ✘  24 [webkit] › e2e/report-download.spec.ts:232:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-06 · sin capacidad de origen muestra permiso denegado y no descarga 
+  ✘  25 [webkit] › e2e/report-download.spec.ts:262:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-07 · fallo de generación y de red muestran alertas y no descargan 
+  ✓  27 [webkit] › e2e/report-download.spec.ts:331:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-09 · el Centro completa el proceso con el nombre del CSV auditado 
+  ✘  17 [firefox] › e2e/report-download.spec.ts:302:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-08 · dos descargas sucesivas conservan el nombre y mantienen el botón habilitado 
+  ✘  19 [webkit] › e2e/report-download.spec.ts:120:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-01 · el usuario autorizado recibe el nombre sugerido y el aviso de éxito 
+  ✘  20 [webkit] › e2e/report-download.spec.ts:141:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-02 · la descarga devuelve PDF, usa blob y no expone el token 
+  ✘  26 [webkit] › e2e/report-download.spec.ts:302:3 › descarga autenticada de exportaciones · Spec 009 (02E) › DOWNLOAD-E2E-08 · dos descargas sucesivas conservan el nombre y mantienen el botón habilitado 
+[e2e r20261027t205941p889840n234a25] suite: {'failed': 15, 'passed': 12} · limpieza: LIMPIA · salida: 1 · evidencia: <home>/Projectos/Kontrol/qa/e2e-runs/r20261027t205941p889840n234a25
+```

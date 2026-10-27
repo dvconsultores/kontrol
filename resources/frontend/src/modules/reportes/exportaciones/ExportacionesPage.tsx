@@ -1,8 +1,10 @@
 /** Exportaciones auditadas y trabajos asíncronos (FR-009-020/023). */
+import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 
 import { apiFetch } from "@/api/client";
+import { descargarArchivo, mensajeDeDescarga } from "@/api/descargas";
 import type { ReportExportSummary, ReportJobSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
@@ -17,13 +19,29 @@ import { PageHeader } from "@/components/PageHeader";
 const exportHelper = createColumnHelper<ReportExportSummary>();
 const jobHelper = createColumnHelper<ReportJobSummary>();
 
-function downloadExport(id: string): void {
-  // El backend sirve el archivo real (KAUD-002): GET /reporting/exports/{id}/download
-  const url = `/api/v1/reporting/exports/${id}/download`;
-  const a = document.createElement("a");
-  a.href = url;
-  a.rel = "noopener";
-  a.click();
+function BotonDescarga({ etiqueta, alDescargar }: { etiqueta: string; alDescargar: () => Promise<void> }): React.JSX.Element {
+  const [ocupado, setOcupado] = useState(false);
+
+  const pulsar = async (): Promise<void> => {
+    if (ocupado) return;
+    setOcupado(true);
+    try {
+      await alDescargar();
+    } finally {
+      setOcupado(false);
+    }
+  };
+
+  return (
+    <IconButton
+      label={etiqueta}
+      title="Descargar archivo"
+      icon={Download}
+      onClick={() => void pulsar()}
+      disabled={ocupado}
+      aria-busy={ocupado}
+    />
+  );
 }
 
 export function ExportacionesPage(): React.JSX.Element {
@@ -53,7 +71,16 @@ export function ExportacionesPage(): React.JSX.Element {
     void queryClient.invalidateQueries({ queryKey: ["reporting", "jobs"] });
   };
 
-  const exportColumns = [
+  const descargar = useCallback(async (id: string): Promise<void> => {
+    try {
+      const nombre = await descargarArchivo(`/reporting/exports/${id}/download`, `exportacion-${id}`);
+      notify({ type: "success", title: "Archivo descargado", description: nombre });
+    } catch (error) {
+      notify({ type: "error", title: "No fue posible descargar", description: mensajeDeDescarga(error) });
+    }
+  }, [notify]);
+
+  const exportColumns = useMemo(() => [
     exportHelper.accessor("report_key", { header: "Reporte" }),
     exportHelper.accessor("format", { header: "Formato" }),
     exportHelper.accessor("file_ref", { header: "Archivo" }),
@@ -65,13 +92,13 @@ export function ExportacionesPage(): React.JSX.Element {
       header: "Acción",
       cell: ({ row }) =>
         puede("GET", "/reporting/exports/_/download") ? (
-          <IconButton label={`Descargar ${row.original.file_ref ?? "exportación"}`}
-                      title="Descargar archivo"
-                      icon={Download}
-                      onClick={() => downloadExport(row.original.id)} />
+          <BotonDescarga
+            etiqueta={`Descargar ${row.original.file_ref ?? "exportación"}`}
+            alDescargar={() => descargar(row.original.id)}
+          />
         ) : null,
     }),
-  ];
+  ], [puede, descargar]);
 
   const jobColumns = [
     jobHelper.accessor("report_key", { header: "Reporte" }),

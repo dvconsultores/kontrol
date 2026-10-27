@@ -2,7 +2,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { apiFetch } from "@/api/client";
+import { ApiError, apiFetch } from "@/api/client";
+import { descargarArchivo, mensajeDeDescarga } from "@/api/descargas";
 import type { ReportResult } from "@/api/types";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { Autorizado } from "@/components/Autorizado";
@@ -50,12 +51,33 @@ export function CentroReportesPage(): React.JSX.Element {
     if (current === undefined) {
       return;
     }
-    const res = await apiFetch<{ id: string; file_ref: string | null; status: string }>("/reporting/exports", {
-      method: "POST",
-      body: { report_key: current.key, format: "CSV", filters: { period } },
-    });
-    notify({ type: "success", title: "Exportación auditada", description: `Archivo ${res.file_ref} · ${res.status}` });
+    let creada: { id: string; file_ref: string | null; status: string };
+    try {
+      creada = await apiFetch<{ id: string; file_ref: string | null; status: string }>("/reporting/exports", {
+        method: "POST",
+        body: { report_key: current.key, format: "CSV", filters: { period } },
+      });
+    } catch (error) {
+      notify({
+        type: "error",
+        title: "No fue posible exportar",
+        description: error instanceof ApiError ? error.message : "No fue posible crear la exportación.",
+      });
+      return;
+    }
+
     void queryClient.invalidateQueries({ queryKey: ["reporting", "exports"] });
+
+    try {
+      const nombre = await descargarArchivo(`/reporting/exports/${creada.id}/download`, `exportacion-${creada.id}`);
+      notify({ type: "success", title: "Archivo descargado", description: nombre });
+    } catch (error) {
+      notify({
+        type: "error",
+        title: "No fue posible descargar",
+        description: `${mensajeDeDescarga(error)} La exportación quedó creada; puede descargarla desde Exportaciones.`,
+      });
+    }
   };
 
   const reportRows = report.data?.rows ?? [];

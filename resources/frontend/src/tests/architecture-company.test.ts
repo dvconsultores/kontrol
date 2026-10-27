@@ -119,8 +119,10 @@ describe("arquitectura del contexto de empresa", () => {
     const descargan = ARCHIVOS.filter(({ texto }) => texto.includes("createObjectURL"));
     expect(descargan.length).toBeGreaterThan(0);
     for (const { ruta, texto } of descargan) {
-      expect(texto, `${ruta} construye la descarga sin pasar por el cliente`).toContain(
-        'responseType: "blob"');
+      const tipoBlob = texto.includes('responseType: "blob"');
+      const tipoArchivo = texto.includes('responseType: "archivo"');
+      expect(tipoBlob || tipoArchivo, `${ruta} construye la descarga sin pasar por el cliente`).toBe(
+        true);
       expect(texto, `${ruta} no usa el cliente central`).toContain("apiFetch");
     }
   });
@@ -132,5 +134,14 @@ describe("arquitectura del contexto de empresa", () => {
       /href\s*=\s*[{"'`]\s*[`"']?\/api\//.test(texto) ||
       /window\.location[^=]*=\s*[`"']\/api\//.test(texto)).map((a) => a.ruta);
     expect(culpables, `enlaces directos a la API: ${culpables.join(", ")}`).toEqual([]);
+  });
+
+  it("ningún fichero fuera del cliente central escribe una URL /api/v1/ propia", () => {
+    // Una URL a la API construida a mano sale sin cabecera de empresa ni token,
+    // aunque se asigne a un `href` mediante una variable.
+    const culpables = ARCHIVOS.filter(({ ruta, texto }) =>
+      ruta !== CLIENTE_CENTRAL && texto.includes("/api/v1/")).map(({ ruta }) => ruta);
+    expect(culpables, `URLs /api/v1/ fuera del cliente central: ${culpables.join(", ")}`).toEqual(
+      []);
   });
 });

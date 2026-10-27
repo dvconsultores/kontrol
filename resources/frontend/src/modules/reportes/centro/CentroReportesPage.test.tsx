@@ -1,15 +1,22 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const apiFetch = vi.fn();
+const notify = vi.fn();
+const descargarArchivo = vi.fn();
 
 vi.mock("@/api/client", async (original) => ({
   ...(await original<typeof import("@/api/client")>()),
   apiFetch: (...args: unknown[]) => apiFetch(...args),
+}));
+
+vi.mock("@/api/descargas", async (original) => ({
+  ...(await original<typeof import("@/api/descargas")>()),
+  descargarArchivo: (...args: unknown[]) => descargarArchivo(...args),
 }));
 
 let permisos = new Set<string>();
@@ -25,10 +32,11 @@ vi.mock("@/app/autoridad/AutoridadContext", () => ({
 }));
 
 vi.mock("@/app/contexts/NotificationContext", () => ({
-  useNotifications: () => ({ notify: vi.fn() }),
+  useNotifications: () => ({ notify }),
 }));
 
 const { CentroReportesPage, REPORTS } = await import("./CentroReportesPage");
+import { ApiError } from "@/api/client";
 
 function montar(): void {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -47,8 +55,12 @@ beforeEach(() => {
     if (typeof ruta === "string" && ruta.startsWith("/reporting/reports/")) {
       return Promise.resolve({ report_key: "x", count: 0, total: 0, rows: [] });
     }
+    if (typeof ruta === "string" && ruta === "/reporting/exports") {
+      return Promise.resolve({ id: "e9", file_ref: "report-executive_ventas-20261027120000.csv", status: "DONE" });
+    }
     return Promise.reject(new Error(`ruta inesperada ${ruta}`));
   });
+  descargarArchivo.mockResolvedValue("report-executive_ventas-20261027120000.csv");
 });
 
 describe("CentroReportesPage", () => {
@@ -85,6 +97,76 @@ describe("CentroReportesPage", () => {
 
     expect(screen.getByRole("button", { name: "Ejecutivos" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Financieros" })).toBeNull();
+  });
+
+  it("CR-05 descarga el archivo tras crear la exportación", async () => {
+    permisos = new Set(["reportes:view", "ventas:view"]);
+    montar();
+
+    await screen.findByRole("button", { name: "Exportar CSV (auditado)" });
+    fireEvent.click(screen.getByRole("button", { name: "Exportar CSV (auditado)" }));
+
+    await waitFor(() => {
+      expect(descargarArchivo).toHaveBeenCalledWith("/reporting/exports/e9/download", "exportacion-e9");
+    });
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith({
+        type: "success",
+        title: "Archivo descargado",
+        description: "report-executive_ventas-20261027120000.csv",
+      });
+    });
+  });
+
+  it("CR-06 notifica el error cuando falla la creación y no intenta descargar", async () => {
+    permisos = new Set(["reportes:view", "ventas:view"]);
+    apiFetch.mockImplementation((ruta: string) => {
+      if (typeof ruta === "string" && ruta.startsWith("/reporting/reports/")) {
+        return Promise.resolve({ report_key: "x", count: 0, total: 0, rows: [] });
+      }
+      if (typeof ruta === "string" && ruta === "/reporting/exports") {
+        return Promise.reject(new ApiError(403, {
+          code: "PERMISSION_DENIED",
+          message: "No tiene permiso para esta acción",
+        }));
+      }
+      return Promise.reject(new Error(`ruta inesperada ${ruta}`));
+    });
+    montar();
+
+    await screen.findByRole("button", { name: "Exportar CSV (auditado)" });
+    fireEvent.click(screen.getByRole("button", { name: "Exportar CSV (auditado)" }));
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith({
+        type: "error",
+        title: "No fue posible exportar",
+        description: "No tiene permiso para esta acción",
+      });
+    });
+    expect(descargarArchivo).not.toHaveBeenCalled();
+  });
+
+  it("CR-07 notifica el error cuando falla la descarga y nunca muestra éxito", async () => {
+    permisos = new Set(["reportes:view", "ventas:view"]);
+    descargarArchivo.mockRejectedValue(new TypeError("Failed to fetch"));
+    montar();
+
+    await screen.findByRole("button", { name: "Exportar CSV (auditado)" });
+    fireEvent.click(screen.getByRole("button", { name: "Exportar CSV (auditado)" }));
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith({
+        type: "error",
+        title: "No fue posible descargar",
+        description:
+          "No hay conexión con el servidor. Inténtelo de nuevo. La exportación quedó creada; puede descargarla desde Exportaciones.",
+      });
+    });
+    expect(notify).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: "success", title: "Archivo descargado" }),
+    );
   });
 
   it("CR-04 mantiene paridad con report_capabilities del backend", () => {

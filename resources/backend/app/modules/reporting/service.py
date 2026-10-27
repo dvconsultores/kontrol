@@ -14,6 +14,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -278,7 +279,7 @@ def create_export(db: Session, *, company_id: str, report_key: str, fmt: str = "
     data = report(db, company_id=company_id, key=report_key, period=(filters or {}).get("period", ""))
     rows = [dict(r) for r in (data.get("rows") or [])]
     stamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
-    file_ref = f"report-{report_key}-{stamp}.{fmt.lower()}"
+    file_ref = f"report-{report_key}-{stamp}-{uuid.uuid4().hex[:12]}.{fmt.lower()}"
 
     content = _to_csv(rows).encode("utf-8") if fmt == "CSV" else _render_pdf(report_key, (filters or {}).get("period", ""), rows)
     target = _exports_dir() / file_ref

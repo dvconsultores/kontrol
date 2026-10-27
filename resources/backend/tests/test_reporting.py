@@ -143,6 +143,46 @@ class TestReportes:
 
 
 class TestExportacionYJobs:
+    def test_exportaciones_del_mismo_segundo_no_comparten_archivo(self, db_session, monkeypatch) -> None:
+        """EXPORT-FILE-NAME-COLLISION: dos exportaciones del mismo segundo, de dos empresas, no comparten archivo."""
+        class _Fija(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return datetime(2026, 10, 27, 12, 0, 0, tzinfo=tz)
+
+        monkeypatch.setattr(reporting_service, "datetime", _Fija)
+        _make_sales_invoice(db_session, total=1111.0, company=COMPANY)
+        _make_sales_invoice(db_session, total=2222.0, company=OTHER)
+
+        a = reporting_service.create_export(
+            db_session,
+            company_id=COMPANY,
+            report_key="executive_ventas",
+            fmt="CSV",
+            filters={},
+            actor="user-1",
+        )
+        b = reporting_service.create_export(
+            db_session,
+            company_id=OTHER,
+            report_key="executive_ventas",
+            fmt="CSV",
+            filters={},
+            actor="user-1",
+        )
+
+        assert a.file_ref != b.file_ref
+
+        _, contenido_a = reporting_service.get_export_file(
+            db_session, export_id=str(a.id), company_id=COMPANY
+        )
+        assert b"1111.0" in contenido_a and b"2222.0" not in contenido_a
+
+        _, contenido_b = reporting_service.get_export_file(
+            db_session, export_id=str(b.id), company_id=OTHER
+        )
+        assert b"2222.0" in contenido_b and b"1111.0" not in contenido_b
+
     def test_export_auditada(self, db_session) -> None:
         _make_sales_invoice(db_session, total=1000.0)
         export = reporting_service.create_export(db_session, company_id=COMPANY, report_key="executive_ventas",

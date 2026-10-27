@@ -23,6 +23,7 @@
 
 - `POST /reporting/exports` — `{report_key, format: CSV|PDF, filters?}` → genera el archivo y registra `report_exports` (quién/cuándo/qué/filtros). **Idempotente**.
 - `GET /reporting/exports` — histórico de exportaciones auditadas.
+- `GET /reporting/exports/{export_id}/download` — archivo real de la exportación (`text/csv; charset=utf-8` o `application/pdf`) con `Content-Disposition: attachment; filename="report-<clave>-<AAAAMMDDhhmmss>-<12 hex>.<csv|pdf>"` (sufijo único: dos exportaciones nunca comparten archivo). Exige sesión (`Authorization: Bearer`; nunca en la URL), `reportes:export` y la capacidad de origen del reporte en la empresa activa (ADR-019). Errores en JSON: 401 `AUTH_REQUIRED`, 403 `PERMISSION_DENIED` / `COMPANY_SCOPE_FORBIDDEN`, 404 `EXPORT_NOT_FOUND` / `EXPORT_FILE_MISSING`. La interfaz la pide con el cliente autenticado y la entrega como `blob:` temporal (02E).
 
 ## 4. Trabajos asíncronos
 

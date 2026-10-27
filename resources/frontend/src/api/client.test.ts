@@ -15,6 +15,7 @@ import {
   setAuthorityDenialHandler,
   setReauthHandler,
   setRefreshHandler,
+  type ArchivoDescargado,
 } from "./client";
 
 const originalFetch = globalThis.fetch;
@@ -315,6 +316,71 @@ describe("aviso de denegación de autoridad (Spec 003)", () => {
 
     const p = apiFetch("/maestros/unidades");
     await expect(p).rejects.toMatchObject({ status: 403 });
+    await expect(p).rejects.toBeInstanceOf(ApiError);
+  });
+});
+
+describe("descarga autenticada (responseType archivo)", () => {
+  it("ARCH-01 devuelve el blob y el content-disposition en un 2xx", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response("%PDF", {
+        status: 200,
+        headers: {
+          "content-type": "application/pdf",
+          "content-disposition": 'attachment; filename="r.pdf"',
+        },
+      }),
+    );
+    setAccessToken("tok-prueba");
+
+    const resultado = await apiFetch<ArchivoDescargado>(
+      "/reporting/exports/e1/download",
+      {
+        responseType: "archivo",
+      },
+    );
+
+    expect(resultado.contentDisposition).toBe('attachment; filename="r.pdf"');
+    expect(resultado.blob.size).toBe(4);
+  });
+
+  it("ARCH-02 lleva la credencial en la cabecera y no en la URL", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response("ok", {
+        status: 200,
+        headers: { "content-type": "application/octet-stream" },
+      }),
+    );
+    setAccessToken("tok-prueba");
+
+    await apiFetch<ArchivoDescargado>("/reporting/exports/e1/download", {
+      responseType: "archivo",
+    });
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    const [url, init] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
+      .calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/v1/reporting/exports/e1/download");
+    expect(url).not.toContain("tok-prueba");
+    expect((init.headers as Record<string, string>).Authorization).toBe(
+      "Bearer tok-prueba",
+    );
+  });
+
+  it("ARCH-03 lanza ApiError en lugar de devolver el error como archivo", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      jsonResponse({ code: "EXPORT_FILE_MISSING", message: "x" }, 404),
+    );
+    setAccessToken("tok-prueba");
+
+    const p = apiFetch<ArchivoDescargado>("/reporting/exports/e1/download", {
+      responseType: "archivo",
+    });
+
+    await expect(p).rejects.toMatchObject({
+      code: "EXPORT_FILE_MISSING",
+      status: 404,
+    });
     await expect(p).rejects.toBeInstanceOf(ApiError);
   });
 });
