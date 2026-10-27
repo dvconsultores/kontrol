@@ -86,7 +86,7 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "regulatorio/aprobaciones": { capacidad: "regulatorio:view", alcance: "empresa" },
   "reportes/centro": { capacidad: "reportes:view", alcance: "empresa" },
   "reportes/exportaciones": { capacidad: "reportes:view", alcance: "empresa" },
-  "reportes/auditoria": { capacidad: "reportes:view", alcance: "empresa" },
+  "reportes/auditoria": { capacidad: "audit:view", alcance: "empresa" },
   "licenciamiento/configuracion": { capacidad: "license:view", alcance: "global" },
   "licenciamiento/entitlements": { capacidad: "license:view", alcance: "global" },
   "licenciamiento/renovacion": { capacidad: "license:view", alcance: "global" },

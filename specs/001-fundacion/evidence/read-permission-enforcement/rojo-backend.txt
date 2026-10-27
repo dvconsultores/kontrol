@@ -1,0 +1,35 @@
+# Rojo del backend (fb8ead1 + solo las pruebas T01/T02; PostgreSQL de QA; rutas y tokens saneados)
+
+```
+E       assert 200 == 403
+E       assert 200 == 403
+E       assert 200 == 403
+E       assert 200 == 403
+E       assert 200 == 403
+E       AssertionError: assert {'compras', '...a_banco', ...} == {'cxc', 'ventas'}
+E       AssertionError: assert {'compras': 0...ados': 0, ...} == {}
+E       assert 200 == 403
+E       assert 200 == 403
+E       assert 200 == 403
+E       assert 200 == 403
+E       assert 200 == 403
+E       assert 200 == 403
+E       assert ['/api/v1/fis...ent_id}', ...] == []
+E       assert {'/api/v1/fis...w'], []), ...} == {}
+FAILED tests/test_read_permission_enforcement.py::test_rpe_01_lista_sin_capacidad_maestros_es_403
+FAILED tests/test_read_permission_enforcement.py::test_rpe_02_detalle_sin_capacidad_maestros_es_403
+FAILED tests/test_read_permission_enforcement.py::test_rpe_03_busqueda_sin_capacidad_maestros_es_403
+FAILED tests/test_read_permission_enforcement.py::test_rpe_04_agregados_sin_capacidad_son_403
+FAILED tests/test_read_permission_enforcement.py::test_rpe_05_empresa_cruzada_maestros_scope_forbidden
+FAILED tests/test_read_permission_enforcement.py::test_rpe_08_tablero_filtra_indicadores_por_capacidad
+FAILED tests/test_read_permission_enforcement.py::test_rpe_09_tablero_admin_tecnico_sin_indicadores_y_lector_denegado
+FAILED tests/test_read_permission_enforcement.py::test_rpe_10_vista_previa_reporte_exige_capacidad_del_reporte
+FAILED tests/test_read_permission_enforcement.py::test_rpe_11_exportacion_y_descarga_exigen_capacidad_del_reporte
+FAILED tests/test_read_permission_enforcement.py::test_rpe_12_linea_auditoria_exige_capacidad
+FAILED tests/test_read_permission_enforcement.py::test_rpe_13_catalogos_globales_exigen_capacidad_propia
+FAILED tests/test_read_permission_enforcement.py::test_rpe_14_funcional_completo_no_es_todas_las_empresas
+FAILED tests/test_read_permission_enforcement.py::test_rpe_15_admin_tecnico_no_lee_negocio
+FAILED tests/test_read_catalog_completeness.py::test_toda_lectura_declara_capacidad_o_esta_clasificada
+FAILED tests/test_read_catalog_completeness.py::test_las_capacidades_fijadas_por_el_diseno
+15 failed, 5 passed, 1 warning in 10.45s
+```

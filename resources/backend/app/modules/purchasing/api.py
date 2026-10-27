@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission, require_write_allowed
+from app.core.dependencies import require_permission, require_write_allowed
 from app.core.errors import NotFoundError
 from app.modules.identity_access.models import User
 from app.modules.purchasing import service as ap_service
@@ -278,7 +278,7 @@ class ScheduleCreate(BaseModel):
 # --------------------------------------------------------------------------- #
 @router.get("/requisitions")
 def list_requisitions(status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-                      db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                      db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(PurchaseRequisition).where(PurchaseRequisition.company_id == ctx.company_id)
     if status:
         query = query.where(PurchaseRequisition.status == status)
@@ -324,7 +324,7 @@ def transition_requisition(req_id: str, body: TransitionBody, db: Session = Depe
 # Cotizaciones
 # --------------------------------------------------------------------------- #
 @router.get("/quotes")
-def list_quotes(supplier_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_quotes(supplier_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(SupplierQuote).where(SupplierQuote.company_id == ctx.company_id)
     if supplier_id:
         query = query.where(SupplierQuote.supplier_id == supplier_id)
@@ -362,7 +362,7 @@ def add_quote_line(quote_id: str, body: QuoteLineCreate, db: Session = Depends(g
 # --------------------------------------------------------------------------- #
 @router.get("/orders")
 def list_orders(status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-                db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(PurchaseOrder).where(PurchaseOrder.company_id == ctx.company_id)
     if status:
         query = query.where(PurchaseOrder.status == status)
@@ -383,7 +383,7 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db),
 
 
 @router.get("/orders/{order_id}")
-def get_order(order_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def get_order(order_id: str, db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     order = _owned(db, PurchaseOrder, order_id, ctx.company_id, "ORDER_NOT_FOUND", "Orden no encontrada")
     return ap_service.order_dict(db, order)
 
@@ -473,7 +473,7 @@ def _receipt_dict(db: Session, receipt) -> dict:
 
 
 @router.get("/receipts")
-def list_receipts(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_receipts(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(GoodsReceipt).where(GoodsReceipt.company_id == ctx.company_id)
     if status:
         query = query.where(GoodsReceipt.status == status)
@@ -505,7 +505,7 @@ def create_receipt(body: ReceiptCreate, db: Session = Depends(get_db),
 
 
 @router.get("/receipts/{receipt_id}")
-def get_receipt(receipt_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user),
+def get_receipt(receipt_id: str, db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")),
                 ctx: CompanyContext = Depends(get_company_context)):
     receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
     return _receipt_dict(db, receipt)
@@ -527,7 +527,7 @@ def _incident_dict(x) -> dict:
 
 @router.get("/incidencias")
 def list_incidents(status: str | None = None, incident_type: str | None = None,
-                   db: Session = Depends(get_db), user: User = Depends(get_current_user),
+                   db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")),
                    ctx: CompanyContext = Depends(get_company_context)):
     """Bandeja de incidencias de la empresa, para verlas sin ir recepción a recepción."""
     query = select(ReceiptIncident).where(ReceiptIncident.company_id == ctx.company_id)
@@ -591,7 +591,7 @@ def count_receipt_line(receipt_id: str, line_id: str, body: CountBody,
 
 @router.get("/receipts/{receipt_id}/conciliacion")
 def receipt_reconciliation(receipt_id: str, db: Session = Depends(get_db),
-                           user: User = Depends(get_current_user),
+                           user: User = Depends(require_permission("inventario", "view")),
                            ctx: CompanyContext = Depends(get_company_context)):
     """Etapas 2 a 4 y 9: la comparación por línea y qué falta para confirmar."""
     receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id,
@@ -617,7 +617,7 @@ def confirm_receipt_inventory(receipt_id: str, body: ConfirmationBody,
 
 @router.get("/receipts/{receipt_id}/confirmacion-inventario")
 def list_receipt_confirmations(receipt_id: str, db: Session = Depends(get_db),
-                               user: User = Depends(get_current_user),
+                               user: User = Depends(require_permission("inventario", "view")),
                                ctx: CompanyContext = Depends(get_company_context)):
     _owned(db, GoodsReceipt, receipt_id, ctx.company_id,
            "RECEIPT_NOT_FOUND", "Recepción no encontrada")
@@ -630,7 +630,7 @@ def list_receipt_confirmations(receipt_id: str, db: Session = Depends(get_db),
 
 @router.get("/receipts/{receipt_id}/incidencias")
 def list_receipt_incidents(receipt_id: str, db: Session = Depends(get_db),
-                           user: User = Depends(get_current_user),
+                           user: User = Depends(require_permission("compras", "view")),
                            ctx: CompanyContext = Depends(get_company_context)):
     _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
     items = ap_service.incidencias_de_recepcion(db, company_id=ctx.company_id, receipt_id=receipt_id)
@@ -640,7 +640,7 @@ def list_receipt_incidents(receipt_id: str, db: Session = Depends(get_db),
 
 @router.get("/receipts/{receipt_id}/incidencias/resultado")
 def receipt_incident_outcome(receipt_id: str, db: Session = Depends(get_db),
-                             user: User = Depends(get_current_user),
+                             user: User = Depends(require_permission("compras", "view")),
                              ctx: CompanyContext = Depends(get_company_context)):
     """Contrato de salida para la Spec 021: qué se decidió, por línea y tipo."""
     _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
@@ -677,7 +677,7 @@ def _owned_incident(db: Session, receipt_id: str, incident_id: str, company_id: 
 
 @router.get("/receipts/{receipt_id}/incidencias/{incident_id}")
 def get_receipt_incident(receipt_id: str, incident_id: str, db: Session = Depends(get_db),
-                         user: User = Depends(get_current_user),
+                         user: User = Depends(require_permission("compras", "view")),
                          ctx: CompanyContext = Depends(get_company_context)):
     return _incident_dict(_owned_incident(db, receipt_id, incident_id, ctx.company_id))
 
@@ -812,7 +812,7 @@ def accept_receipt(receipt_id: str, db: Session = Depends(get_db),
 # --------------------------------------------------------------------------- #
 @router.get("/supplier-invoices")
 def list_invoices(status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-                  db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                  db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(SupplierInvoice).where(SupplierInvoice.company_id == ctx.company_id)
     if status:
         query = query.where(SupplierInvoice.status == status)
@@ -834,7 +834,7 @@ def create_invoice(body: InvoiceCreate, db: Session = Depends(get_db),
 
 
 @router.get("/supplier-invoices/{invoice_id}")
-def get_invoice(invoice_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def get_invoice(invoice_id: str, db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     invoice = _owned(db, SupplierInvoice, invoice_id, ctx.company_id, "INVOICE_NOT_FOUND", "Factura no encontrada")
     return ap_service.invoice_dict(invoice)
 
@@ -871,7 +871,7 @@ def transition_invoice(invoice_id: str, body: TransitionBody, db: Session = Depe
 
 
 @router.get("/triple-match")
-def list_triple_match(invoice_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_triple_match(invoice_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(TripleMatch).where(TripleMatch.company_id == ctx.company_id)
     if invoice_id:
         query = query.where(TripleMatch.invoice_id == invoice_id)
@@ -887,7 +887,7 @@ def list_triple_match(invoice_id: str | None = None, db: Session = Depends(get_d
 # Devoluciones y notas de crédito
 # --------------------------------------------------------------------------- #
 @router.get("/returns")
-def list_returns(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_returns(db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(PurchaseReturn).where(PurchaseReturn.company_id == ctx.company_id)
                        .order_by(PurchaseReturn.created_at.desc())).scalars().all()
     return {"items": [{"id": r.id, "code": r.code, "source_document": r.source_document,
@@ -919,7 +919,7 @@ def add_return_line(return_id: str, body: ReturnLineCreate, db: Session = Depend
 
 
 @router.get("/credit-notes")
-def list_credit_notes(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_credit_notes(db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(SupplierCreditNote).where(SupplierCreditNote.company_id == ctx.company_id)
                        .order_by(SupplierCreditNote.created_at.desc())).scalars().all()
     return {"items": [{"id": n.id, "number": n.number, "party_id": n.supplier_id,
@@ -954,7 +954,7 @@ def post_credit_note(note_id: str, db: Session = Depends(get_db),
 # --------------------------------------------------------------------------- #
 @router.get("/open-items")
 def list_open_items(party_id: str | None = None, status: str | None = None,
-                    db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                    db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(OpenItem).where(OpenItem.company_id == ctx.company_id)
     if party_id:
         query = query.where(OpenItem.party_id == party_id)
@@ -965,7 +965,7 @@ def list_open_items(party_id: str | None = None, status: str | None = None,
 
 
 @router.get("/payments")
-def list_payments(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_payments(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(Payment).where(Payment.company_id == ctx.company_id)
     if status:
         query = query.where(Payment.status == status)
@@ -1039,7 +1039,7 @@ def transition_withholding(withholding_id: str, body: TransitionBody, db: Sessio
 
 
 @router.get("/aging")
-def get_aging(party_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def get_aging(party_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     return ap_service.aging(db, company_id=ctx.company_id, party_id=party_id)
 
 

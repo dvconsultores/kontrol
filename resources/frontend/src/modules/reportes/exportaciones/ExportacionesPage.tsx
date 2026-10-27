@@ -63,12 +63,13 @@ export function ExportacionesPage(): React.JSX.Element {
     exportHelper.display({
       id: "download",
       header: "Acción",
-      cell: ({ row }) => (
-        <IconButton label={`Descargar ${row.original.file_ref ?? "exportación"}`}
-                    title="Descargar archivo"
-                    icon={Download}
-                    onClick={() => downloadExport(row.original.id)} />
-      ),
+      cell: ({ row }) =>
+        puede("GET", "/reporting/exports/_/download") ? (
+          <IconButton label={`Descargar ${row.original.file_ref ?? "exportación"}`}
+                      title="Descargar archivo"
+                      icon={Download}
+                      onClick={() => downloadExport(row.original.id)} />
+        ) : null,
     }),
   ];
 

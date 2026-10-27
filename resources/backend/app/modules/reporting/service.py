@@ -44,8 +44,12 @@ def _exports_dir() -> Path:
 # --------------------------------------------------------------------------- #
 # Dashboard
 # --------------------------------------------------------------------------- #
-def dashboard(db: Session, *, company_id: str) -> dict:
-    """Indicadores agregados y vencimientos por módulo (FR-009-001/002)."""
+def dashboard(db: Session, *, company_id: str, capacidades: set[str]) -> dict:
+    """Indicadores agregados y vencimientos por módulo (FR-009-001/002).
+
+    Solo calcula y devuelve los indicadores cuya capacidad de origen está en
+    `capacidades` (las del usuario en esta empresa, AD-4); el que falta no aparece.
+    """
     from app.modules.fiscal.models import FiscalDocument, FiscalPeriod
     from app.modules.purchasing.models import SupplierInvoice
     from app.modules.regulatory.models import PermitInstance, RegulatoryEvaluation
@@ -60,51 +64,92 @@ def dashboard(db: Session, *, company_id: str) -> dict:
             q = q.where(model.status.in_(statuses))
         return float(db.execute(q).scalar() or 0.0)
 
-    sales_total = _sum(SalesInvoice, "EMITTED", "DELIVERED", "PARTIALLY_PAID", "PAID")
-    purchases_total = _sum(SupplierInvoice, "POSTED", "PARTIALLY_PAID", "PAID")
-    bank_total = float(db.execute(select(func.coalesce(func.sum(BankTransaction.amount), 0.0)).where(
-        BankTransaction.company_id == company_id)).scalar() or 0.0)
-    emitted = db.execute(select(func.count()).select_from(FiscalDocument).where(
-        FiscalDocument.company_id == company_id)).scalar() or 0
-    blocked = db.execute(select(func.count()).select_from(RegulatoryEvaluation).where(
-        RegulatoryEvaluation.company_id == company_id, RegulatoryEvaluation.status == "BLOCKED")).scalar() or 0
-    cxc = ap_service.aging(db, company_id=company_id, item_type="RECEIVABLE")
-    cxp = ap_service.aging(db, company_id=company_id, item_type="PAYABLE")
+    indicators: dict[str, float | int] = {}
+    vencimientos: dict[str, int] = {}
+
+    if "ventas:view" in capacidades:
+        indicators["ventas"] = round(
+            _sum(SalesInvoice, "EMITTED", "DELIVERED", "PARTIALLY_PAID", "PAID"), 2
+        )
+    if "compras:view" in capacidades:
+        indicators["compras"] = round(
+            _sum(SupplierInvoice, "POSTED", "PARTIALLY_PAID", "PAID"), 2
+        )
+    if "tesoreria:view" in capacidades:
+        indicators["tesoreria_banco"] = round(
+            float(db.execute(select(func.coalesce(func.sum(BankTransaction.amount), 0.0)).where(
+                BankTransaction.company_id == company_id)).scalar() or 0.0),
+            2,
+        )
+    if "ventas:view" in capacidades:
+        indicators["cxc"] = round(
+            ap_service.aging(db, company_id=company_id, item_type="RECEIVABLE")["total"], 2
+        )
+    if "compras:view" in capacidades:
+        indicators["cxp"] = round(
+            ap_service.aging(db, company_id=company_id, item_type="PAYABLE")["total"], 2
+        )
+    if "fiscal:view" in capacidades:
+        indicators["documentos_fiscales"] = db.execute(
+            select(func.count()).select_from(FiscalDocument).where(
+                FiscalDocument.company_id == company_id
+            )
+        ).scalar() or 0
+    if "regulatorio:view" in capacidades:
+        indicators["despachos_bloqueados"] = db.execute(
+            select(func.count()).select_from(RegulatoryEvaluation).where(
+                RegulatoryEvaluation.company_id == company_id,
+                RegulatoryEvaluation.status == "BLOCKED",
+            )
+        ).scalar() or 0
 
     # Vencimientos
-    from app.modules.purchasing.models import OpenItem
+    if "ventas:view" in capacidades and "compras:view" in capacidades:
+        from app.modules.purchasing.models import OpenItem
 
-    today = hoy_de_negocio()
-    due_items = db.execute(select(func.count()).select_from(OpenItem).where(
-        OpenItem.company_id == company_id, OpenItem.status == "OPEN",
-        OpenItem.due_date.isnot(None), OpenItem.due_date < today)).scalar() or 0
-    open_periods = db.execute(select(func.count()).select_from(FiscalPeriod).where(
-        FiscalPeriod.company_id == company_id, FiscalPeriod.status == "OPEN")).scalar() or 0
-    active_permits = db.execute(select(func.count()).select_from(PermitInstance).where(
-        PermitInstance.company_id == company_id,
-        PermitInstance.status.in_(["APPROVED_FOR_USE", "USED"]))).scalar() or 0
+        today = hoy_de_negocio()
+        vencimientos["open_items_vencidos"] = db.execute(
+            select(func.count()).select_from(OpenItem).where(
+                OpenItem.company_id == company_id,
+                OpenItem.status == "OPEN",
+                OpenItem.due_date.isnot(None),
+                OpenItem.due_date < today,
+            )
+        ).scalar() or 0
+    if "fiscal:view" in capacidades:
+        vencimientos["periodos_fiscales_abiertos"] = db.execute(
+            select(func.count()).select_from(FiscalPeriod).where(
+                FiscalPeriod.company_id == company_id, FiscalPeriod.status == "OPEN"
+            )
+        ).scalar() or 0
+    if "regulatorio:view" in capacidades:
+        vencimientos["permisos_activos"] = db.execute(
+            select(func.count()).select_from(PermitInstance).where(
+                PermitInstance.company_id == company_id,
+                PermitInstance.status.in_(["APPROVED_FOR_USE", "USED"]),
+            )
+        ).scalar() or 0
 
-    return {
-        "indicators": {
-            "ventas": round(sales_total, 2),
-            "compras": round(purchases_total, 2),
-            "tesoreria_banco": round(bank_total, 2),
-            "cxc": round(cxc["total"], 2),
-            "cxp": round(cxp["total"], 2),
-            "documentos_fiscales": emitted,
-            "despachos_bloqueados": blocked,
-        },
-        "vencimientos": {
-            "open_items_vencidos": due_items,
-            "periodos_fiscales_abiertos": open_periods,
-            "permisos_activos": active_permits,
-        },
-    }
+    return {"indicators": indicators, "vencimientos": vencimientos}
 
 
 # --------------------------------------------------------------------------- #
 # Reportes (solo lectura sobre 003-008)
 # --------------------------------------------------------------------------- #
+# Capacidades de origen de cada reporte (AD-5): la vista previa, la exportación, los trabajos y la descarga las exigen además de las de reportes.
+# Las funciones del servicio asumen que la ruta ya autorizó.
+CAPACIDADES_DE_REPORTE: dict[str, tuple[str, ...]] = {"executive_ventas": ("ventas:view",), "operational_inventario": ("inventario:view",), "financial_aging": ("ventas:view", "compras:view"), "regulatory_evaluaciones": ("regulatorio:view",)}
+
+
+def capacidades_de_reporte(key: str) -> tuple[str, ...]:
+    """Capacidades de origen del reporte identificado por `key`."""
+    if key.startswith("fiscal_libros_"):
+        return ("fiscal:view",)
+    if key in CAPACIDADES_DE_REPORTE:
+        return CAPACIDADES_DE_REPORTE[key]
+    raise NotFoundError(code="REPORT_NOT_FOUND", message="Reporte no encontrado")
+
+
 def report(db: Session, *, company_id: str, key: str, period: str = "") -> dict:
     company_id = _company(company_id, obj="reporte")
     if key == "executive_ventas":

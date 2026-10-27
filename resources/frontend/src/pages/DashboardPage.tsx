@@ -1,5 +1,6 @@
 /** Dashboard — inicio (WF-07). Indicadores por módulo y vencimientos (FR-009-001/002). */
 import { useQuery } from "@tanstack/react-query";
+import { Fragment } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { DashboardResult, DiagnosticsResponse, HealthResponse } from "@/api/types";
@@ -20,11 +21,28 @@ export function versionMostrada(diagnostico: { version?: unknown } | undefined):
   return typeof version === "string" && version.trim() !== "" ? version : VERSION_NO_DISPONIBLE;
 }
 
+const INDICADORES = [
+  { clave: "ventas", etiqueta: "Ventas", formato: (v: number) => v.toFixed(2) },
+  { clave: "compras", etiqueta: "Compras", formato: (v: number) => v.toFixed(2) },
+  { clave: "tesoreria_banco", etiqueta: "Tesorería (banco)", formato: (v: number) => v.toFixed(2) },
+  { clave: "cxc", etiqueta: "CxC", formato: (v: number) => v.toFixed(2) },
+  { clave: "cxp", etiqueta: "CxP", formato: (v: number) => v.toFixed(2) },
+  { clave: "documentos_fiscales", etiqueta: "Documentos fiscales", formato: (v: number) => String(v) },
+  { clave: "despachos_bloqueados", etiqueta: "Despachos bloqueados", formato: (v: number) => String(v) },
+] as const;
+
+const VENCIMIENTOS = [
+  { clave: "open_items_vencidos", etiqueta: "Open items vencidos", formato: (v: number) => String(v) },
+  { clave: "periodos_fiscales_abiertos", etiqueta: "Períodos fiscales abiertos", formato: (v: number) => String(v) },
+  { clave: "permisos_activos", etiqueta: "Permisos activos", formato: (v: number) => String(v) },
+] as const;
+
 export function DashboardPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
   const { mode } = useLicense();
   const { tiene } = useAutoridad();
   const puedeVerVersion = tiene(PERMISO_DE_VERSION, "global");
+  const puedeVerTablero = tiene("dashboard:view", "empresa");
 
   const health = useQuery({
     queryKey: ["health"],
@@ -34,6 +52,7 @@ export function DashboardPage(): React.JSX.Element {
   const dash = useQuery({
     queryKey: ["reporting", "dashboard"],
     queryFn: () => apiFetch<DashboardResult>("/reporting/dashboard"),
+    enabled: puedeVerTablero,
     retry: false,
   });
   // La versión la publica el diagnóstico (con sesión y `license:view`), no el health: se pide solo a quien
@@ -75,23 +94,29 @@ export function DashboardPage(): React.JSX.Element {
           : null}
       </div>
 
-      <h2 className="mt-6 mb-2 text-base font-semibold text-text-900">Indicadores</h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {indicatorCard("Ventas", ind ? ind.ventas.toFixed(2) : "—")}
-        {indicatorCard("Compras", ind ? ind.compras.toFixed(2) : "—")}
-        {indicatorCard("Tesorería (banco)", ind ? ind.tesoreria_banco.toFixed(2) : "—")}
-        {indicatorCard("CxC", ind ? ind.cxc.toFixed(2) : "—")}
-        {indicatorCard("CxP", ind ? ind.cxp.toFixed(2) : "—")}
-        {indicatorCard("Documentos fiscales", ind ? String(ind.documentos_fiscales) : "—")}
-        {indicatorCard("Despachos bloqueados", ind ? String(ind.despachos_bloqueados) : "—")}
-      </div>
-
-      <h2 className="mt-6 mb-2 text-base font-semibold text-text-900">Vencimientos y alertas</h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {indicatorCard("Open items vencidos", ven ? String(ven.open_items_vencidos) : "—")}
-        {indicatorCard("Períodos fiscales abiertos", ven ? String(ven.periodos_fiscales_abiertos) : "—")}
-        {indicatorCard("Permisos activos", ven ? String(ven.permisos_activos) : "—")}
-      </div>
+      {puedeVerTablero && dash.isError ? (
+        <p role="alert" className="mt-6 text-sm text-text-500">No se pudieron cargar los indicadores.</p>
+      ) : null}
+      {puedeVerTablero && dash.isSuccess && ind && INDICADORES.some(({ clave }) => ind[clave] !== undefined) ? (
+        <>
+          <h2 className="mt-6 mb-2 text-base font-semibold text-text-900">Indicadores</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {INDICADORES.map(({ clave, etiqueta, formato }) =>
+              ind[clave] !== undefined ? <Fragment key={clave}>{indicatorCard(etiqueta, formato(ind[clave]))}</Fragment> : null,
+            )}
+          </div>
+        </>
+      ) : null}
+      {puedeVerTablero && dash.isSuccess && ven && VENCIMIENTOS.some(({ clave }) => ven[clave] !== undefined) ? (
+        <>
+          <h2 className="mt-6 mb-2 text-base font-semibold text-text-900">Vencimientos y alertas</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {VENCIMIENTOS.map(({ clave, etiqueta, formato }) =>
+              ven[clave] !== undefined ? <Fragment key={clave}>{indicatorCard(etiqueta, formato(ven[clave]))}</Fragment> : null,
+            )}
+          </div>
+        </>
+      ) : null}
     </PageContent>
   );
 }

@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission, require_write_allowed
+from app.core.dependencies import require_permission, require_write_allowed
 from app.core.errors import NotFoundError
 from app.modules.identity_access.models import User
 from app.modules.regulatory import service as regulatory_service
@@ -140,7 +140,7 @@ class TransitionBody(BaseModel):
 # Maestros regulatorios
 # --------------------------------------------------------------------------- #
 @router.get("/authorities")
-def list_authorities(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_authorities(db: Session = Depends(get_db), user: User = Depends(require_permission("regulatorio", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(RegulatoryAuthority).where(RegulatoryAuthority.company_id == ctx.company_id)
                        .order_by(RegulatoryAuthority.name)).scalars().all()
     return {"items": [{"id": a.id, "code": a.code, "name": a.name, "validation_method": a.validation_method,
@@ -158,7 +158,7 @@ def create_authority(body: AuthorityCreate, db: Session = Depends(get_db),
 
 
 @router.get("/permit-types")
-def list_permit_types(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_permit_types(db: Session = Depends(get_db), user: User = Depends(require_permission("regulatorio", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(PermitType).where(PermitType.company_id == ctx.company_id)
                        .order_by(PermitType.name)).scalars().all()
     return {"items": [{"id": t.id, "authority_id": t.authority_id, "code": t.code, "name": t.name,
@@ -178,7 +178,7 @@ def create_permit_type(body: PermitTypeCreate, db: Session = Depends(get_db),
 
 
 @router.get("/official-registrations")
-def list_registrations(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_registrations(db: Session = Depends(get_db), user: User = Depends(require_permission("regulatorio", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(OfficialRegistration).where(OfficialRegistration.company_id == ctx.company_id)
                        .order_by(OfficialRegistration.created_at.desc())).scalars().all()
     return {"items": [{"id": r.id, "authority_id": r.authority_id, "scope": r.scope, "ref_number": r.ref_number,
@@ -199,7 +199,7 @@ def create_registration(body: RegistrationCreate, db: Session = Depends(get_db),
 
 
 @router.get("/profiles")
-def list_profiles(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_profiles(db: Session = Depends(get_db), user: User = Depends(require_permission("regulatorio", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(RegulatoryProfile).where(RegulatoryProfile.company_id == ctx.company_id)
                        .order_by(RegulatoryProfile.operation)).scalars().all()
     return {"items": [{"id": p.id, "operation": p.operation, "product_id": p.product_id, "rubric_id": p.rubric_id,
@@ -221,7 +221,7 @@ def create_profile(body: ProfileCreate, db: Session = Depends(get_db),
 
 
 @router.get("/vehicles")
-def list_vehicles(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_vehicles(db: Session = Depends(get_db), user: User = Depends(require_permission("regulatorio", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(TransportVehicle).where(TransportVehicle.company_id == ctx.company_id)
                        .order_by(TransportVehicle.plate)).scalars().all()
     return {"items": [{"id": v.id, "plate": v.plate, "vehicle_type": v.vehicle_type, "capacity": v.capacity,
@@ -241,7 +241,7 @@ def create_vehicle(body: VehicleCreate, db: Session = Depends(get_db),
 
 
 @router.get("/drivers")
-def list_drivers(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_drivers(db: Session = Depends(get_db), user: User = Depends(require_permission("regulatorio", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(TransportDriver).where(TransportDriver.company_id == ctx.company_id)
                        .order_by(TransportDriver.created_at.desc())).scalars().all()
     return {"items": [{"id": d.id, "party_id": d.party_id, "license": d.license, "status": d.status} for d in items],
@@ -262,7 +262,7 @@ def create_driver(body: DriverCreate, db: Session = Depends(get_db),
 # Permisos y guías
 # --------------------------------------------------------------------------- #
 @router.get("/permits")
-def list_permits(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_permits(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("regulatorio", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(PermitInstance).where(PermitInstance.company_id == ctx.company_id)
     if status:
         query = query.where(PermitInstance.status == status)
@@ -299,7 +299,7 @@ def transition_permit(permit_id: str, body: TransitionBody, db: Session = Depend
 
 @router.get("/official-documents")
 def list_official_documents(kind: str | None = None, db: Session = Depends(get_db),
-                            user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                            user: User = Depends(require_permission("regulatorio", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(OfficialDocument).where(OfficialDocument.company_id == ctx.company_id)
     if kind:
         query = query.where(OfficialDocument.kind == kind)
@@ -337,7 +337,7 @@ def evaluate_shipment(body: EvaluationCreate, db: Session = Depends(get_db),
 
 @router.get("/evaluations")
 def list_evaluations(shipment_id: str | None = None, db: Session = Depends(get_db),
-                     user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                     user: User = Depends(require_permission("regulatorio", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(RegulatoryEvaluation).where(RegulatoryEvaluation.company_id == ctx.company_id)
     if shipment_id:
         query = query.where(RegulatoryEvaluation.shipment_id == shipment_id)
@@ -362,7 +362,7 @@ def override_evaluation(evaluation_id: str, body: OverrideBody, db: Session = De
 # Contingencias y aprobaciones
 # --------------------------------------------------------------------------- #
 @router.get("/contingencies")
-def list_contingencies(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_contingencies(db: Session = Depends(get_db), user: User = Depends(require_permission("regulatorio", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(RegulatoryContingency).where(RegulatoryContingency.company_id == ctx.company_id)
                        .order_by(RegulatoryContingency.created_at.desc())).scalars().all()
     return {"items": [{"id": c.id, "rule_ref": c.rule_ref, "reason": c.reason, "allowed_by": c.allowed_by,
@@ -412,7 +412,7 @@ def transition_approval_request(request_id: str, body: TransitionBody, db: Sessi
 
 
 @router.get("/approval-requests")
-def list_approval_requests(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_approval_requests(db: Session = Depends(get_db), user: User = Depends(require_permission("regulatorio", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(RegulatoryApprovalRequest).where(RegulatoryApprovalRequest.company_id == ctx.company_id)
                        .order_by(RegulatoryApprovalRequest.created_at.desc())).scalars().all()
     return {"items": [{"id": r.id, "object_ref": r.object_ref, "rule_ref": r.rule_ref, "risk": r.risk,

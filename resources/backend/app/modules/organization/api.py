@@ -148,7 +148,7 @@ def create_company(
 
 
 @router.get("/branches")
-def list_branches(db: Session = Depends(get_db), user: User = Depends(get_current_user),
+def list_branches(db: Session = Depends(get_db), user: User = Depends(require_permission("organization", "view")),
                   ctx: CompanyContext = Depends(get_company_context)):
     # Antes listaba las sucursales de todas las empresas del tenant, y el
     # filtro por empresa era una preferencia del cliente en vez de un límite.
@@ -181,7 +181,7 @@ def create_branch(body: BranchCreate, db: Session = Depends(get_db),
 
 @router.get("/establishments")
 def list_establishments(branch_id: str | None = None, db: Session = Depends(get_db),
-                        user: User = Depends(get_current_user),
+                        user: User = Depends(require_permission("organization", "view")),
                         ctx: CompanyContext = Depends(get_company_context)):
     """Establecimientos de la empresa activa.
 

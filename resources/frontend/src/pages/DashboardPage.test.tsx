@@ -146,3 +146,61 @@ describe("DashboardPage · tarjeta «Versión»", () => {
     expect(await screen.findByText("12.0.0-rc.1")).toBeTruthy();
   });
 });
+
+describe("DashboardPage · tablero por capacidad (AD-4)", () => {
+  beforeEach(() => {
+    apiFetch.mockReset();
+    permisos = new Set(["license:view"]);
+  });
+
+  it("DSH-01 · sin `dashboard:view` no se pide el tablero y no existe la sección Indicadores", async () => {
+    permisos = new Set(["license:view"]);
+    respuestas(DIAGNOSTICO);
+    montar();
+    expect(await screen.findByText("3.4.5")).toBeTruthy();
+    expect(apiFetch).not.toHaveBeenCalledWith("/reporting/dashboard");
+    expect(screen.queryByRole("heading", { name: "Indicadores" })).toBeNull();
+  });
+
+  it("DSH-02 · con `dashboard:view` pinta solo los indicadores devueltos y omite la sección vacía", async () => {
+    permisos = new Set(["dashboard:view"]);
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/health/ready") return Promise.resolve(READY);
+      if (ruta === "/reporting/dashboard") {
+        return Promise.resolve({ indicators: { ventas: 10, cxc: 5 }, vencimientos: {} });
+      }
+      return Promise.reject(new Error(`ruta inesperada ${ruta}`));
+    });
+    montar();
+    expect(await screen.findByRole("heading", { name: "Indicadores" })).toBeTruthy();
+    expect(valorDeTarjeta("Ventas")).toBe("10.00");
+    expect(valorDeTarjeta("CxC")).toBe("5.00");
+    expect(screen.queryByText("Compras")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Vencimientos y alertas" })).toBeNull();
+  });
+
+  it("DSH-03 · una sección sin ninguna de sus claves no se pinta aunque la otra sí", async () => {
+    permisos = new Set(["dashboard:view"]);
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/health/ready") return Promise.resolve(READY);
+      if (ruta === "/reporting/dashboard")
+        return Promise.resolve({ indicators: {}, vencimientos: { permisos_activos: 2 } });
+      return Promise.reject(new Error(`ruta inesperada ${ruta}`));
+    });
+    montar();
+    await screen.findByRole("heading", { name: "Vencimientos y alertas" });
+    expect(valorDeTarjeta("Permisos activos")).toBe("2");
+    expect(screen.queryByRole("heading", { name: "Indicadores" })).toBeNull();
+  });
+
+  it("DSH-04 · con `dashboard:view` y tablero fallido muestra el aviso de error", async () => {
+    permisos = new Set(["dashboard:view"]);
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/health/ready") return Promise.resolve(READY);
+      if (ruta === "/reporting/dashboard") return Promise.reject(new Error("caída"));
+      return Promise.reject(new Error(`ruta inesperada ${ruta}`));
+    });
+    montar();
+    expect(await screen.findByText("No se pudieron cargar los indicadores.")).toBeTruthy();
+  });
+});

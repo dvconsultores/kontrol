@@ -22,6 +22,10 @@ from fastapi.routing import APIRoute  # noqa: E402
 
 from app.core.operaciones import catalogo_de_operaciones  # noqa: E402
 from app.main import create_app  # noqa: E402
+from app.modules.reporting.service import (  # noqa: E402
+    CAPACIDADES_DE_REPORTE,
+    capacidades_de_reporte,
+)
 from app.modules.setup.api import CATALOGO_DE_PERMISOS  # noqa: E402
 
 RAIZ_REPOSITORIO = Path(__file__).resolve().parents[1]
@@ -51,6 +55,12 @@ def _rutas_openapi(app) -> dict[str, list[dict[str, str]]]:
 
 
 def _operaciones(app) -> dict[str, list]:
+    capacidades: dict[str, list[str]] = {
+        clave: list(valor) for clave, valor in CAPACIDADES_DE_REPORTE.items()
+    }
+    capacidades["fiscal_libros_*"] = list(
+        capacidades_de_reporte("fiscal_libros_VENTAS")
+    )
     return {
         "operations": list(catalogo_de_operaciones(app)),
         "permissions": [
@@ -58,6 +68,7 @@ def _operaciones(app) -> dict[str, list]:
             for recurso, acciones in CATALOGO_DE_PERMISOS.items()
             for accion in acciones
         ],
+        "report_capabilities": dict(sorted(capacidades.items())),
     }
 
 

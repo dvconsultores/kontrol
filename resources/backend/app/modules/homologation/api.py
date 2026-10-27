@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_tenant_permission, require_write_allowed
+from app.core.dependencies import require_permission, require_tenant_permission, require_write_allowed
 from app.modules.homologation import service as homologation_service
 from app.modules.identity_access.models import User
 
@@ -53,7 +53,7 @@ class ReleaseBody(BaseModel):
 # Homologación
 # --------------------------------------------------------------------------- #
 @router.get("/records")
-def list_records(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def list_records(db: Session = Depends(get_db), user: User = Depends(require_permission("homologacion", "view"))):
     items = homologation_service.get_records(db)
     return {"items": items, "total": len(items), "page": 1, "page_size": len(items) or 1}
 
@@ -76,7 +76,7 @@ def create_record(
 
 
 @router.get("/records/{record_id}")
-def get_record(record_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def get_record(record_id: str, db: Session = Depends(get_db), user: User = Depends(require_permission("homologacion", "view"))):
     return homologation_service.get_record(db, record_id)
 
 
@@ -110,7 +110,7 @@ def evaluate_record(
 # Liberación de versión
 # --------------------------------------------------------------------------- #
 @router.get("/releases")
-def list_releases(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def list_releases(db: Session = Depends(get_db), user: User = Depends(require_permission("homologacion", "view"))):
     items = homologation_service.list_releases(db)
     return {"items": items, "total": len(items), "page": 1, "page_size": len(items) or 1}
 
@@ -160,5 +160,5 @@ def release_version(
 # Timeline
 # --------------------------------------------------------------------------- #
 @router.get("/timeline")
-def timeline(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def timeline(db: Session = Depends(get_db), user: User = Depends(require_permission("homologacion", "view"))):
     return {"items": homologation_service.timeline(db), "total": len(homologation_service.timeline(db))}

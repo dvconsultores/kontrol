@@ -83,11 +83,15 @@ def _make_fiscal(db: Session, company: str = COMPANY) -> None:
                                  series_id=str(series.id), batch_id=str(batch.id))
 
 
+# El tablero solo devuelve los indicadores cuya capacidad de origen tiene el usuario (AD-4); estas pruebas de servicio las conceden todas.
+TODAS_LAS_CAPACIDADES_DE_ORIGEN = {"ventas:view", "compras:view", "tesoreria:view", "fiscal:view", "regulatorio:view"}
+
+
 class TestDashboard:
     def test_dashboard_indicators(self, db_session) -> None:
         _make_sales_invoice(db_session, total=1000.0)
         _make_supplier_invoice(db_session, total=500.0)
-        dash = reporting_service.dashboard(db_session, company_id=COMPANY)
+        dash = reporting_service.dashboard(db_session, company_id=COMPANY, capacidades=TODAS_LAS_CAPACIDADES_DE_ORIGEN)
         assert dash["indicators"]["ventas"] == 1000.0
         assert dash["indicators"]["compras"] == 500.0
 
@@ -99,7 +103,7 @@ class TestDashboard:
                                 item_type="PAYABLE", currency="VED", original=100.0,
                                 due_date=hoy_de_negocio() - timedelta(days=5), status="OPEN"))
         db_session.flush()
-        dash = reporting_service.dashboard(db_session, company_id=COMPANY)
+        dash = reporting_service.dashboard(db_session, company_id=COMPANY, capacidades=TODAS_LAS_CAPACIDADES_DE_ORIGEN)
         assert dash["vencimientos"]["open_items_vencidos"] == 1
 
 
@@ -203,5 +207,5 @@ class TestAuditoriaYMultiempresa:
 
     def test_tenant_isolation(self, db_session) -> None:
         _make_sales_invoice(db_session, company=COMPANY)
-        dash_other = reporting_service.dashboard(db_session, company_id=OTHER)
+        dash_other = reporting_service.dashboard(db_session, company_id=OTHER, capacidades=TODAS_LAS_CAPACIDADES_DE_ORIGEN)
         assert dash_other["indicators"]["ventas"] == 0.0

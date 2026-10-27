@@ -1735,18 +1735,18 @@ export interface EvaluationResult {
 // ---------------------------------------------------------------------------
 export interface DashboardResult {
   indicators: {
-    ventas: number;
-    compras: number;
-    tesoreria_banco: number;
-    cxc: number;
-    cxp: number;
-    documentos_fiscales: number;
-    despachos_bloqueados: number;
+    ventas?: number;
+    compras?: number;
+    tesoreria_banco?: number;
+    cxc?: number;
+    cxp?: number;
+    documentos_fiscales?: number;
+    despachos_bloqueados?: number;
   };
   vencimientos: {
-    open_items_vencidos: number;
-    periodos_fiscales_abiertos: number;
-    permisos_activos: number;
+    open_items_vencidos?: number;
+    periodos_fiscales_abiertos?: number;
+    permisos_activos?: number;
   };
 }
 

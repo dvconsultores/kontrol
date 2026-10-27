@@ -178,7 +178,7 @@ class CostingProfileCreate(BaseModel):
 # Tipos de movimiento
 # --------------------------------------------------------------------------- #
 @router.get("/movement-types")
-def list_movement_types(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_movement_types(db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(
         select(MovementType).where((MovementType.company_id == ctx.company_id) | (MovementType.company_id.is_(None)))
     ).scalars().all()
@@ -207,7 +207,7 @@ def create_movement_type(body: MovementTypeCreate, db: Session = Depends(get_db)
 def list_balances(product_id: str | None = None, warehouse_id: str | None = None,
                   location_id: str | None = None, lot_id: str | None = None, serial_id: str | None = None,
                   state: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-                  db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                  db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(InventoryBalance).where(InventoryBalance.company_id == ctx.company_id)
     if product_id:
         query = query.where(InventoryBalance.product_id == product_id)
@@ -227,7 +227,7 @@ def list_balances(product_id: str | None = None, warehouse_id: str | None = None
 
 
 @router.get("/balances/{balance_id}")
-def get_balance(balance_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def get_balance(balance_id: str, db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     b = _get_owned(db, InventoryBalance, balance_id, ctx.company_id, "BALANCE_NOT_FOUND", "Balance no encontrado")
     return inv_service.balance_dict(b)
 
@@ -243,7 +243,7 @@ def recompute_balances_endpoint(warehouse_id: str | None = None, db: Session = D
 @router.get("/movements")
 def list_movements(product_id: str | None = None, warehouse_id: str | None = None,
                    q: str = "", page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-                   db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                   db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     """Kardex: historial de movimientos con paginación (FR-003-090)."""
     query = select(InventoryMovement).where(InventoryMovement.company_id == ctx.company_id)
     if product_id:
@@ -259,7 +259,7 @@ def list_movements(product_id: str | None = None, warehouse_id: str | None = Non
 
 
 @router.get("/movements/{movement_id}")
-def get_movement(movement_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def get_movement(movement_id: str, db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     m = _get_owned(db, InventoryMovement, movement_id, ctx.company_id, "MOVEMENT_NOT_FOUND", "Movimiento no encontrado")
     return inv_service.movement_dict(m)
 
@@ -296,7 +296,7 @@ def _location_dict(loc) -> dict:
 
 @router.get("/putaway/pendientes")
 def list_pending_putaway(warehouse_id: str | None = None, db: Session = Depends(get_db),
-                         user: User = Depends(get_current_user),
+                         user: User = Depends(require_permission("inventario", "view")),
                          ctx: CompanyContext = Depends(get_company_context)):
     """Lo confirmado que todavía no está en una ubicación física.
 
@@ -318,7 +318,7 @@ def list_pending_putaway(warehouse_id: str | None = None, db: Session = Depends(
 
 @router.get("/putaway/ubicaciones")
 def list_putaway_candidates(warehouse_id: str, db: Session = Depends(get_db),
-                            user: User = Depends(get_current_user),
+                            user: User = Depends(require_permission("inventario", "view")),
                             ctx: CompanyContext = Depends(get_company_context)):
     """Las ubicaciones donde se puede colocar, filtradas por el backend.
 
@@ -381,7 +381,7 @@ def reverse_movement_endpoint(body: ReverseBody, db: Session = Depends(get_db),
 @router.get("/lots")
 def list_lots(product_id: str | None = None, status: str | None = None, expiry_before: date | None = None,
               page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-              db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+              db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(InventoryLot).where(InventoryLot.company_id == ctx.company_id)
     if product_id:
         query = query.where(InventoryLot.product_id == product_id)
@@ -417,7 +417,7 @@ def transition_lot(lot_id: str, body: TransitionBody, db: Session = Depends(get_
 
 @router.get("/serials")
 def list_serials(product_id: str | None = None, status: str | None = None, q: str = "",
-                 db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                 db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(ProductSerial).where(ProductSerial.company_id == ctx.company_id)
     if product_id:
         query = query.where(ProductSerial.product_id == product_id)
@@ -458,7 +458,7 @@ def create_reservation(body: ReserveBody, db: Session = Depends(get_db),
 
 @router.get("/reservations")
 def list_reservations(status: str | None = None, product_id: str | None = None,
-                      db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                      db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(Reservation).where(Reservation.company_id == ctx.company_id)
     if status:
         query = query.where(Reservation.status == status)
@@ -518,7 +518,7 @@ def create_transfer(body: TransferCreate, db: Session = Depends(get_db),
 
 @router.get("/transfers")
 def list_transfers(status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-                   db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                   db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(Transfer).where(Transfer.company_id == ctx.company_id)
     if status:
         query = query.where(Transfer.status == status)
@@ -559,7 +559,7 @@ def create_count(body: CountCreate, db: Session = Depends(get_db),
 
 
 @router.get("/counts")
-def list_counts(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_counts(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(StockCount).where(StockCount.company_id == ctx.company_id)
     if status:
         query = query.where(StockCount.status == status)
@@ -608,7 +608,7 @@ def create_adjustment(body: AdjustmentCreate, db: Session = Depends(get_db),
 
 
 @router.get("/adjustments")
-def list_adjustments(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_adjustments(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(InventoryAdjustment).where(InventoryAdjustment.company_id == ctx.company_id)
     if status:
         query = query.where(InventoryAdjustment.status == status)
@@ -634,7 +634,7 @@ def transition_adjustment(adjustment_id: str, body: TransitionBody, db: Session 
 # --------------------------------------------------------------------------- #
 @router.get("/cost-layers")
 def list_cost_layers(product_id: str | None = None, warehouse_id: str | None = None,
-                     db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                     db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(CostLayer).where(CostLayer.company_id == ctx.company_id)
     if product_id:
         query = query.where(CostLayer.product_id == product_id)
@@ -646,13 +646,13 @@ def list_cost_layers(product_id: str | None = None, warehouse_id: str | None = N
 
 @router.get("/valuation")
 def get_valuation(product_id: str | None = None, warehouse_id: str | None = None,
-                  db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                  db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     value = inv_service.valuation(db, company_id=ctx.company_id, product_id=product_id, warehouse_id=warehouse_id)
     return {"valuation": value, "currency": "VED"}
 
 
 @router.get("/costing-profiles")
-def list_costing_profiles(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_costing_profiles(db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(
         select(CostingProfile).where((CostingProfile.company_id == ctx.company_id) | (CostingProfile.company_id.is_(None)))
     ).scalars().all()

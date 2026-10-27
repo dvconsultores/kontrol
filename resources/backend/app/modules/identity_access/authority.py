@@ -461,6 +461,16 @@ def require_capability_in_company(db: Session, *, user: User, capability: str, c
     raise PermissionDeniedError("COMPANY_SCOPE_FORBIDDEN", "No tiene esa autoridad en esta empresa.")
 
 
+def require_capability(db: Session, *, user: User, capability: str, company_id: str) -> None:
+    """Exige la capacidad en cualquier empresa y, después, en la empresa dada."""
+    from app.modules.identity_access import service as identity_service
+
+    permisos = identity_service.get_user_permissions(db, user)
+    if capability not in permisos:
+        raise PermissionDeniedError()
+    require_capability_in_company(db, user=user, capability=capability, company_id=company_id)
+
+
 def require_tenant_wide_capability(db: Session, *, user: User, capability: str) -> None:
     """Exige la capacidad en todas las empresas del tenant o lanza PermissionDeniedError."""
     if has_tenant_wide_capability(db, user, capability):

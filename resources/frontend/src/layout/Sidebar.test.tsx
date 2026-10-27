@@ -87,11 +87,13 @@ describe("Sidebar · Diagnóstico", () => {
     expect(enlace("Inicio")).not.toBeNull();
   });
 
-  it("NAV-07 · con audit:view la entrada Auditoría está, y apunta a su ruta", () => {
+  it("NAV-07 · con audit:view están las dos entradas Auditoría (Sistema y Reportes), cada una con su ruta", () => {
     permisos = new Set(["audit:view"]);
     montar();
-    const a = enlace("Auditoría");
-    expect(a).not.toBeNull();
-    expect(a?.getAttribute("href")).toBe("/auditoria");
+    const hrefs = screen
+      .getAllByRole("link", { name: "Auditoría" })
+      .map((a) => a.getAttribute("href"))
+      .sort();
+    expect(hrefs).toEqual(["/auditoria", "/reportes/auditoria"]);
   });
 });

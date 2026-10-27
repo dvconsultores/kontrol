@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission, require_write_allowed
+from app.core.dependencies import require_permission, require_write_allowed
 from app.core.errors import NotFoundError
 from app.modules.identity_access.models import User
 from app.modules.master_data import service as master_service
@@ -192,7 +192,7 @@ def list_parties(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission("maestros", "view")),
     ctx: CompanyContext = Depends(get_company_context),
 ):
     query = select(Party).where(Party.company_id == ctx.company_id)
@@ -236,7 +236,7 @@ def create_party(
 
 
 @router.get("/terceros/{party_id}")
-def get_party(party_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def get_party(party_id: str, db: Session = Depends(get_db), user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
     party = db.get(Party, party_id)
     if not party or party.company_id != ctx.company_id:
         raise NotFoundError(code="PARTY_NOT_FOUND", message="Tercero no encontrado")
@@ -286,7 +286,7 @@ def list_items(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission("maestros", "view")),
     ctx: CompanyContext = Depends(get_company_context),
 ):
     query = select(CatalogItem).where(CatalogItem.company_id == ctx.company_id)
@@ -322,7 +322,7 @@ def search_items(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission("maestros", "view")),
     ctx: CompanyContext = Depends(get_company_context),
 ):
     """Búsqueda asíncrona backend para AsyncCombobox (FR-002-043)."""
@@ -386,7 +386,7 @@ def create_item(
 
 
 @router.get("/catalogos/items/{item_id}")
-def get_item(item_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def get_item(item_id: str, db: Session = Depends(get_db), user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
     item = db.get(CatalogItem, item_id)
     if not item or item.company_id != ctx.company_id:
         raise NotFoundError(code="ITEM_NOT_FOUND", message="Ítem no encontrado")
@@ -402,7 +402,7 @@ def get_item(item_id: str, db: Session = Depends(get_db), user: User = Depends(g
 
 
 @router.get("/catalogos/taxonomia")
-def list_taxonomy(parent_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_taxonomy(parent_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(TaxonomyNode).where((TaxonomyNode.company_id == ctx.company_id) | (TaxonomyNode.company_id.is_(None)))
     if parent_id:
         query = query.where(TaxonomyNode.parent_id == parent_id)
@@ -428,7 +428,7 @@ def create_taxonomy(body: TaxonomyCreate, db: Session = Depends(get_db), actor: 
 
 
 @router.get("/catalogos/atributos")
-def list_attributes(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_attributes(db: Session = Depends(get_db), user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(AttributeDefinition).where((AttributeDefinition.company_id == ctx.company_id) | (AttributeDefinition.company_id.is_(None)))
     return [{"id": str(a.id), "code": a.code, "name": a.name, "data_type": a.data_type, "searchable": a.searchable} for a in db.execute(query.order_by(AttributeDefinition.name)).scalars().all()]
 
@@ -455,7 +455,7 @@ def create_attribute(body: AttributeCreate, db: Session = Depends(get_db), actor
 
 
 @router.get("/catalogos/unidades")
-def list_units(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_units(db: Session = Depends(get_db), user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(UnitOfMeasure).where((UnitOfMeasure.company_id == ctx.company_id) | (UnitOfMeasure.company_id.is_(None)))
     return [{"id": str(u.id), "code": u.code, "name": u.name, "symbol": u.symbol, "dimension": u.dimension} for u in db.execute(query.order_by(UnitOfMeasure.name)).scalars().all()]
 
@@ -506,7 +506,7 @@ def create_conversion(unit_id: str, body: ConversionCreate, db: Session = Depend
 # Perfiles
 # --------------------------------------------------------------------------- #
 @router.get("/perfiles")
-def list_profiles(profile_type: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_profiles(profile_type: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(ProfileVersion).where((ProfileVersion.company_id == ctx.company_id) | (ProfileVersion.company_id.is_(None)))
     if profile_type:
         query = query.where(ProfileVersion.profile_type == profile_type)

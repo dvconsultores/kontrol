@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission, require_write_allowed
+from app.core.dependencies import require_permission, require_write_allowed
 from app.core.errors import NotFoundError
 from app.modules.identity_access.models import User
 from app.modules.purchasing import service as ap_service
@@ -213,7 +213,7 @@ class WithholdingCreate(BaseModel):
 # Cotizaciones y pedidos
 # --------------------------------------------------------------------------- #
 @router.get("/quotes")
-def list_quotes(customer_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_quotes(customer_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(SalesQuote).where(SalesQuote.company_id == ctx.company_id)
     if customer_id:
         query = query.where(SalesQuote.customer_id == customer_id)
@@ -274,7 +274,7 @@ class QuoteConvertIn(BaseModel):
 
 @router.get("/quotes/{quote_id}")
 def get_quote(quote_id: str, db: Session = Depends(get_db),
-              user: User = Depends(get_current_user),
+              user: User = Depends(require_permission("ventas", "view")),
               ctx: CompanyContext = Depends(get_company_context)):
     """La cotización con sus líneas y el origen de cada precio."""
     quote = _owned(db, SalesQuote, quote_id, ctx.company_id,
@@ -326,7 +326,7 @@ def convert_quote(quote_id: str, body: QuoteConvertIn, db: Session = Depends(get
 
 @router.get("/orders")
 def list_orders(status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-                db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(SalesOrder).where(SalesOrder.company_id == ctx.company_id)
     if status:
         query = query.where(SalesOrder.status == status)
@@ -347,7 +347,7 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db),
 
 
 @router.get("/orders/{order_id}")
-def get_order(order_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def get_order(order_id: str, db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     order = _owned(db, SalesOrder, order_id, ctx.company_id, "SALES_ORDER_NOT_FOUND", "Orden no encontrada")
     return sales_service.order_dict(db, order)
 
@@ -387,7 +387,7 @@ def expire_order_reservations(db: Session = Depends(get_db),
 
 
 @router.get("/settings/reservation")
-def get_reservation_policy(db: Session = Depends(get_db), user: User = Depends(get_current_user),
+def get_reservation_policy(db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")),
                            ctx: CompanyContext = Depends(get_company_context)):
     return sales_service.politica_de_reserva(db, company_id=ctx.company_id)
 
@@ -481,7 +481,7 @@ def transition_order(order_id: str, body: TransitionBody, db: Session = Depends(
 @router.get("/pick-lists")
 def list_pick_lists(order_id: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
                     db: Session = Depends(get_db),
-                    user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                    user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     """Listas de preparación de la empresa, con el sobre de listados del contrato (`{items, total, page, page_size}`).
 
     Devolvía la colección entera con un sobre que solo lo parecía (`page` 1, `page_size` = cuántas había). Ahora
@@ -863,7 +863,7 @@ def confirm_shipment(shipment_id: str, db: Session = Depends(get_db),
 
 
 @router.get("/shipments")
-def list_shipments(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_shipments(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     """Lista despachos (consumido por 008-regulacion-traslados)."""
     query = select(Shipment).where(Shipment.company_id == ctx.company_id)
     if status:
@@ -880,7 +880,7 @@ def list_shipments(status: str | None = None, db: Session = Depends(get_db), use
 # --------------------------------------------------------------------------- #
 @router.get("/invoices")
 def list_invoices(status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
-                  db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                  db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(SalesInvoice).where(SalesInvoice.company_id == ctx.company_id)
     if status:
         query = query.where(SalesInvoice.status == status)
@@ -927,7 +927,7 @@ def transition_invoice(invoice_id: str, body: TransitionBody, db: Session = Depe
 
 
 @router.get("/credit-notes")
-def list_credit_notes(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_credit_notes(db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(SalesCreditNote).where(SalesCreditNote.company_id == ctx.company_id)
                        .order_by(SalesCreditNote.created_at.desc())).scalars().all()
     return {"items": [{"id": n.id, "number": n.number, "party_id": n.customer_id,
@@ -969,7 +969,7 @@ def apply_credit_note(note_id: str, body: ApplicationCreate, db: Session = Depen
 
 
 @router.get("/debit-notes")
-def list_debit_notes(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_debit_notes(db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(SalesDebitNote).where(SalesDebitNote.company_id == ctx.company_id)
                        .order_by(SalesDebitNote.created_at.desc())).scalars().all()
     return {"items": [{"id": n.id, "number": n.number, "customer_id": n.customer_id,
@@ -990,7 +990,7 @@ def create_debit_note(body: DebitNoteCreate, db: Session = Depends(get_db),
 
 
 @router.get("/returns")
-def list_returns(db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_returns(db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     items = db.execute(select(SalesReturn).where(SalesReturn.company_id == ctx.company_id)
                        .order_by(SalesReturn.created_at.desc())).scalars().all()
     return {"items": [{"id": r.id, "code": r.code, "source_document": r.source_document,
@@ -1265,7 +1265,7 @@ def get_sales_debit_note(note_id: str, db: Session = Depends(get_db),
 # --------------------------------------------------------------------------- #
 @router.get("/open-items")
 def list_open_items(party_id: str | None = None, status: str | None = None,
-                    db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                    db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(OpenItem).where(OpenItem.company_id == ctx.company_id, OpenItem.item_type == "RECEIVABLE")
     if party_id:
         query = query.where(OpenItem.party_id == party_id)
@@ -1276,7 +1276,7 @@ def list_open_items(party_id: str | None = None, status: str | None = None,
 
 
 @router.get("/collections")
-def list_collections(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def list_collections(status: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(Payment).where(Payment.company_id == ctx.company_id, Payment.direction == "IN")
     if status:
         query = query.where(Payment.status == status)
@@ -1440,7 +1440,7 @@ def reverse_application(application_id: str, body: ApplicationReversalBody,
 
 
 @router.get("/aging")
-def get_aging(party_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+def get_aging(party_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("ventas", "view")), ctx: CompanyContext = Depends(get_company_context)):
     return ap_service.aging(db, company_id=ctx.company_id, party_id=party_id, item_type="RECEIVABLE")
 
 

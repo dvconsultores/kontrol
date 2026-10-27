@@ -645,13 +645,17 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/books/{tax_type}",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/fiscal/control-batches",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -665,13 +669,17 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/control-numbers",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/fiscal/credit-debit-notes",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -685,7 +693,9 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/documents",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -699,7 +709,9 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/documents/{document_id}",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -713,7 +725,9 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/legal-sources",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "GLOBAL"
     },
     {
@@ -735,7 +749,9 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/number-series",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -749,7 +765,9 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/periods",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -771,7 +789,9 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/tax-calculations",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -793,7 +813,9 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/tax-return-batches",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -807,7 +829,9 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/tax-rule-versions",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "GLOBAL"
     },
     {
@@ -829,7 +853,9 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/withholding-rules",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -843,7 +869,9 @@
     {
       "method": "GET",
       "path": "/api/v1/fiscal/withholdings",
-      "capabilities": [],
+      "capabilities": [
+        "fiscal:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -885,7 +913,9 @@
     {
       "method": "GET",
       "path": "/api/v1/homologation/records",
-      "capabilities": [],
+      "capabilities": [
+        "homologacion:view"
+      ],
       "scope": "GLOBAL"
     },
     {
@@ -899,7 +929,9 @@
     {
       "method": "GET",
       "path": "/api/v1/homologation/records/{record_id}",
-      "capabilities": [],
+      "capabilities": [
+        "homologacion:view"
+      ],
       "scope": "GLOBAL"
     },
     {
@@ -921,7 +953,9 @@
     {
       "method": "GET",
       "path": "/api/v1/homologation/releases",
-      "capabilities": [],
+      "capabilities": [
+        "homologacion:view"
+      ],
       "scope": "GLOBAL"
     },
     {
@@ -951,13 +985,17 @@
     {
       "method": "GET",
       "path": "/api/v1/homologation/timeline",
-      "capabilities": [],
+      "capabilities": [
+        "homologacion:view"
+      ],
       "scope": "GLOBAL"
     },
     {
       "method": "GET",
       "path": "/api/v1/inventory/adjustments",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -979,7 +1017,9 @@
     {
       "method": "GET",
       "path": "/api/v1/inventory/balances",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -991,19 +1031,25 @@
     {
       "method": "GET",
       "path": "/api/v1/inventory/balances/{balance_id}",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/inventory/cost-layers",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/inventory/costing-profiles",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1017,7 +1063,9 @@
     {
       "method": "GET",
       "path": "/api/v1/inventory/counts",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1047,7 +1095,9 @@
     {
       "method": "GET",
       "path": "/api/v1/inventory/lots",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1069,7 +1119,9 @@
     {
       "method": "GET",
       "path": "/api/v1/inventory/movement-types",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1083,7 +1135,9 @@
     {
       "method": "GET",
       "path": "/api/v1/inventory/movements",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1105,7 +1159,9 @@
     {
       "method": "GET",
       "path": "/api/v1/inventory/movements/{movement_id}",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1135,19 +1191,25 @@
     {
       "method": "GET",
       "path": "/api/v1/inventory/putaway/pendientes",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/inventory/putaway/ubicaciones",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/inventory/reservations",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1177,7 +1239,9 @@
     {
       "method": "GET",
       "path": "/api/v1/inventory/serials",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1191,7 +1255,9 @@
     {
       "method": "GET",
       "path": "/api/v1/inventory/transfers",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1213,7 +1279,9 @@
     {
       "method": "GET",
       "path": "/api/v1/inventory/valuation",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1367,7 +1435,9 @@
     {
       "method": "GET",
       "path": "/api/v1/maestros/catalogos/atributos",
-      "capabilities": [],
+      "capabilities": [
+        "maestros:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1381,7 +1451,9 @@
     {
       "method": "GET",
       "path": "/api/v1/maestros/catalogos/items",
-      "capabilities": [],
+      "capabilities": [
+        "maestros:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1395,19 +1467,25 @@
     {
       "method": "GET",
       "path": "/api/v1/maestros/catalogos/items/search",
-      "capabilities": [],
+      "capabilities": [
+        "maestros:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/maestros/catalogos/items/{item_id}",
-      "capabilities": [],
+      "capabilities": [
+        "maestros:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/maestros/catalogos/taxonomia",
-      "capabilities": [],
+      "capabilities": [
+        "maestros:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1421,7 +1499,9 @@
     {
       "method": "GET",
       "path": "/api/v1/maestros/catalogos/unidades",
-      "capabilities": [],
+      "capabilities": [
+        "maestros:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1451,7 +1531,9 @@
     {
       "method": "GET",
       "path": "/api/v1/maestros/perfiles",
-      "capabilities": [],
+      "capabilities": [
+        "maestros:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1545,7 +1627,9 @@
     {
       "method": "GET",
       "path": "/api/v1/maestros/terceros",
-      "capabilities": [],
+      "capabilities": [
+        "maestros:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1559,7 +1643,9 @@
     {
       "method": "GET",
       "path": "/api/v1/maestros/terceros/{party_id}",
-      "capabilities": [],
+      "capabilities": [
+        "maestros:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1767,7 +1853,9 @@
     {
       "method": "GET",
       "path": "/api/v1/organization/branches",
-      "capabilities": [],
+      "capabilities": [
+        "organization:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -1795,7 +1883,9 @@
     {
       "method": "GET",
       "path": "/api/v1/organization/establishments",
-      "capabilities": [],
+      "capabilities": [
+        "organization:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2201,7 +2291,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/aging",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2215,7 +2307,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/credit-notes",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2237,19 +2331,25 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/incidencias",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/purchasing/open-items",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/purchasing/orders",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2263,7 +2363,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/orders/{order_id}",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2293,7 +2395,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/payments",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2315,7 +2419,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/quotes",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2337,7 +2443,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/receipts",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2351,7 +2459,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/receipts/{receipt_id}",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2373,7 +2483,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/receipts/{receipt_id}/conciliacion",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2387,7 +2499,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/receipts/{receipt_id}/confirmacion-inventario",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2401,7 +2515,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/receipts/{receipt_id}/incidencias",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2415,13 +2531,17 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/receipts/{receipt_id}/incidencias/resultado",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/purchasing/receipts/{receipt_id}/incidencias/{incident_id}",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2483,7 +2603,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/requisitions",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2513,7 +2635,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/returns",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2535,7 +2659,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/supplier-invoices",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2549,7 +2675,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/supplier-invoices/{invoice_id}",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2571,7 +2699,9 @@
     {
       "method": "GET",
       "path": "/api/v1/purchasing/triple-match",
-      "capabilities": [],
+      "capabilities": [
+        "compras:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2593,7 +2723,9 @@
     {
       "method": "GET",
       "path": "/api/v1/regulatory/approval-requests",
-      "capabilities": [],
+      "capabilities": [
+        "regulatorio:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2615,7 +2747,9 @@
     {
       "method": "GET",
       "path": "/api/v1/regulatory/authorities",
-      "capabilities": [],
+      "capabilities": [
+        "regulatorio:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2629,7 +2763,9 @@
     {
       "method": "GET",
       "path": "/api/v1/regulatory/contingencies",
-      "capabilities": [],
+      "capabilities": [
+        "regulatorio:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2651,7 +2787,9 @@
     {
       "method": "GET",
       "path": "/api/v1/regulatory/drivers",
-      "capabilities": [],
+      "capabilities": [
+        "regulatorio:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2665,7 +2803,9 @@
     {
       "method": "GET",
       "path": "/api/v1/regulatory/evaluations",
-      "capabilities": [],
+      "capabilities": [
+        "regulatorio:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2687,7 +2827,9 @@
     {
       "method": "GET",
       "path": "/api/v1/regulatory/official-documents",
-      "capabilities": [],
+      "capabilities": [
+        "regulatorio:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2701,7 +2843,9 @@
     {
       "method": "GET",
       "path": "/api/v1/regulatory/official-registrations",
-      "capabilities": [],
+      "capabilities": [
+        "regulatorio:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2715,7 +2859,9 @@
     {
       "method": "GET",
       "path": "/api/v1/regulatory/permit-types",
-      "capabilities": [],
+      "capabilities": [
+        "regulatorio:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2729,7 +2875,9 @@
     {
       "method": "GET",
       "path": "/api/v1/regulatory/permits",
-      "capabilities": [],
+      "capabilities": [
+        "regulatorio:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2751,7 +2899,9 @@
     {
       "method": "GET",
       "path": "/api/v1/regulatory/profiles",
-      "capabilities": [],
+      "capabilities": [
+        "regulatorio:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2765,7 +2915,9 @@
     {
       "method": "GET",
       "path": "/api/v1/regulatory/vehicles",
-      "capabilities": [],
+      "capabilities": [
+        "regulatorio:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2779,19 +2931,25 @@
     {
       "method": "GET",
       "path": "/api/v1/reporting/audit/timeline",
-      "capabilities": [],
+      "capabilities": [
+        "audit:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/reporting/dashboard",
-      "capabilities": [],
+      "capabilities": [
+        "dashboard:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/reporting/exports",
-      "capabilities": [],
+      "capabilities": [
+        "reportes:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2805,13 +2963,17 @@
     {
       "method": "GET",
       "path": "/api/v1/reporting/exports/{export_id}/download",
-      "capabilities": [],
+      "capabilities": [
+        "reportes:export"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/reporting/jobs",
-      "capabilities": [],
+      "capabilities": [
+        "reportes:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2825,7 +2987,9 @@
     {
       "method": "GET",
       "path": "/api/v1/reporting/jobs/{job_id}",
-      "capabilities": [],
+      "capabilities": [
+        "reportes:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2839,7 +3003,9 @@
     {
       "method": "GET",
       "path": "/api/v1/reporting/reports/{key}",
-      "capabilities": [],
+      "capabilities": [
+        "reportes:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2861,7 +3027,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/aging",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2875,7 +3043,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/collections",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -2929,7 +3099,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/credit-notes",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3015,7 +3187,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/debit-notes",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3149,7 +3323,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/invoices",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3235,13 +3411,17 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/open-items",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
       "method": "GET",
       "path": "/api/v1/sales/orders",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3263,7 +3443,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/orders/{order_id}",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3325,7 +3507,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/pick-lists",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3419,7 +3603,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/quotes",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3433,7 +3619,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/quotes/{quote_id}",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3463,7 +3651,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/returns",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3485,7 +3675,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/settings/reservation",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3499,7 +3691,9 @@
     {
       "method": "GET",
       "path": "/api/v1/sales/shipments",
-      "capabilities": [],
+      "capabilities": [
+        "ventas:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3615,7 +3809,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/accounts",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3637,7 +3833,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/bank-transactions",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3651,7 +3849,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/banks",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3673,7 +3873,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/cash-sessions",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3687,7 +3889,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/cash-sessions/{session_id}",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3733,7 +3937,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/cashboxes",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3747,7 +3953,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/currencies",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3841,7 +4049,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/fiscal-rules",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3895,7 +4105,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/igft-events",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3909,7 +4121,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/instruments",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3923,7 +4137,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/payment-methods",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -3993,7 +4209,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/reconciliations",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -4007,7 +4225,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/reconciliations/{reconciliation_id}",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -4077,7 +4297,9 @@
     {
       "method": "GET",
       "path": "/api/v1/treasury/transfers",
-      "capabilities": [],
+      "capabilities": [
+        "tesoreria:view"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -4215,5 +4437,23 @@
     "tareas:complete",
     "tareas:configure",
     "alertas:view"
-  ]
+  ],
+  "report_capabilities": {
+    "executive_ventas": [
+      "ventas:view"
+    ],
+    "financial_aging": [
+      "ventas:view",
+      "compras:view"
+    ],
+    "fiscal_libros_*": [
+      "fiscal:view"
+    ],
+    "operational_inventario": [
+      "inventario:view"
+    ],
+    "regulatory_evaluaciones": [
+      "regulatorio:view"
+    ]
+  }
 }
