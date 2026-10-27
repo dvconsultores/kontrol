@@ -5,9 +5,11 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, PagedResult, Reservation } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -27,6 +29,7 @@ export function ReservasPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [newProduct, setNewProduct] = useState("");
   const [newWarehouse, setNewWarehouse] = useState("");
@@ -127,7 +130,7 @@ export function ReservasPage(): React.JSX.Element {
         <div className="flex justify-end gap-1">
           {/* Las reservas de pedido viven lo que vive el pedido: se cancela o se
               revierte el pedido, nunca se sueltan por debajo (R-D0-03-6). */}
-          {row.original.status === "ACTIVE" && row.original.source_type !== "SALES_ORDER" ? (
+          {row.original.status === "ACTIVE" && row.original.source_type !== "SALES_ORDER" && puede("POST", `/inventory/reservations/${row.original.id}/release`) ? (
             <AsyncButton size="sm" variant="secondary" onClick={async () => setALiberar(row.original.id)}>Liberar</AsyncButton>
           ) : null}
         </div>
@@ -142,37 +145,39 @@ export function ReservasPage(): React.JSX.Element {
         description="Reservas manuales y de pedidos. Las de pedido nacen al confirmarlo (ORDER_CONFIRMATION) y se liberan desde el pedido; las manuales se liberan aquí con motivo."
         crumbs={[{ label: "Inventario" }, { label: "Reservas" }]}
       />
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva reserva</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Producto" required>
-            <select value={newProduct} onChange={(e) => setNewProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(products.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Almacén" required>
-            <select value={newWarehouse} onChange={(e) => setNewWarehouse(e.target.value)} className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(warehouses.data?.items ?? []).map((w) => (
-                <option key={w.id} value={w.id}>{w.code} · {w.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Cantidad" required>
-            <TextInput type="number" min="0" value={newQty} onChange={(e) => setNewQty(e.target.value)} required />
-          </FormField>
-          <FormField label="Documento origen">
-            <TextInput value={newDoc} onChange={(e) => setNewDoc(e.target.value)} placeholder="ORD-0001" />
-          </FormField>
-          <FormField label="Vence en (días)">
-            <TextInput type="number" min="1" value={newExpiry} onChange={(e) => setNewExpiry(e.target.value)} placeholder="Opcional" />
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createReservation}>Reservar</AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/inventory/reservations"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nueva reserva</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Producto" required>
+              <select value={newProduct} onChange={(e) => setNewProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(products.data?.items ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Almacén" required>
+              <select value={newWarehouse} onChange={(e) => setNewWarehouse(e.target.value)} className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(warehouses.data?.items ?? []).map((w) => (
+                  <option key={w.id} value={w.id}>{w.code} · {w.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Cantidad" required>
+              <TextInput type="number" min="0" value={newQty} onChange={(e) => setNewQty(e.target.value)} required />
+            </FormField>
+            <FormField label="Documento origen">
+              <TextInput value={newDoc} onChange={(e) => setNewDoc(e.target.value)} placeholder="ORD-0001" />
+            </FormField>
+            <FormField label="Vence en (días)">
+              <TextInput type="number" min="1" value={newExpiry} onChange={(e) => setNewExpiry(e.target.value)} placeholder="Opcional" />
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createReservation}>Reservar</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <div className="mb-4 flex items-center gap-2">
         <select aria-label="Filtrar por estado" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
@@ -182,7 +187,9 @@ export function ReservasPage(): React.JSX.Element {
           <option value="EXPIRED">Vencida</option>
           <option value="FULFILLED">Consumida</option>
         </select>
-        <AsyncButton variant="secondary" onClick={expireAll}>Expirar manuales vencidas</AsyncButton>
+        <Autorizado operacion={["POST", "/inventory/reservations/expire"]}>
+          <AsyncButton variant="secondary" onClick={expireAll}>Expirar manuales vencidas</AsyncButton>
+        </Autorizado>
       </div>
 
       <DataTable

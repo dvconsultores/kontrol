@@ -5,9 +5,11 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, PagedResult, TransferSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -26,6 +28,7 @@ export function TransferenciasPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [newCode, setNewCode] = useState("");
   const [newOrigin, setNewOrigin] = useState("");
@@ -98,10 +101,11 @@ export function TransferenciasPage(): React.JSX.Element {
           ["confirm_receipt", "RECEIVED"],
           ["close", "CLOSED"],
         ];
+        const canTransition = puede("POST", `/inventory/transfers/${row.original.id}/transition`);
         return (
           <div className="flex justify-end gap-1">
             {transitions
-              .filter(([key]) => a[key])
+              .filter(([key]) => a[key] && canTransition)
               .map(([key, target]) => (
                 <AsyncButton key={key} size="sm" variant="secondary" onClick={() => runTransition(row.original.id, target)}>
                   {key.replace("_", " ")}
@@ -120,6 +124,7 @@ export function TransferenciasPage(): React.JSX.Element {
         description="Movimiento de mercancía entre almacenes con máquina de estados."
         crumbs={[{ label: "Inventario" }, { label: "Transferencias" }]}
       />
+      <Autorizado operacion={["POST", "/inventory/transfers"]}>
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Nueva transferencia</h2>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
@@ -156,6 +161,7 @@ export function TransferenciasPage(): React.JSX.Element {
           <AsyncButton type="submit" variant="primary" onClick={createTransfer}>Crear</AsyncButton>
         </form>
       </section>
+      </Autorizado>
 
       <DataTable
         columns={columns}

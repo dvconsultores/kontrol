@@ -11,6 +11,7 @@
 - Listados con `q`, `status`, `sort`, `page`, `page_size`.
 - Respuestas de entidad incluyen `allowed_actions` calculadas en backend.
 - Autoridad por empresa (ADR-017): las rutas de empresa que declaran un permiso y los catálogos de todo el tenant en todas las empresas exigen la capacidad en la empresa de la petición, con el alcance de `user_scopes` (sin filas, todo el tenant); las lecturas de empresa sin permiso declarado siguen gobernadas por el acceso (ARCH-MC-001). Precedencia: tenant ajeno o empresa inaccesible/inexistente → 404 `COMPANY_NOT_FOUND`; sin la capacidad en ninguna empresa → 403 `PERMISSION_DENIED`; con ella pero no en la empresa de la petición → 403 `COMPANY_SCOPE_FORBIDDEN`, sin efecto y auditado como `COMPANY_SCOPE_DENIED`; después, las reglas de dominio; nunca un 500, y `X-Kontrol-Company` elige la empresa, no la autoriza.
+- Autoridad en la interfaz (ADR-018): la UI no tiene modelo de permisos propio; decide menú, rutas y acciones con tres proyecciones de solo lectura del backend (`/auth/operations`, `/authority/company` y `tenant_permissions` de `/auth/me`). Es orientación de uso: el backend autoriza cada petición.
 - POST críticos aceptan `Idempotency-Key`.
 - PATCH usa `version`/ETag.
 - Transiciones usan endpoints explícitos: `/submit`, `/approve`, `/cancel`, `/revoke`.
@@ -40,6 +41,8 @@
 | POST | `/api/v1/auth/logout` | Cerrar sesión (revoca) |
 | POST | `/api/v1/auth/refresh` | Renovar access token |
 | POST | `/api/v1/auth/change-password` | Cambiar contraseña (incluye obligatorio) |
+| GET | `/api/v1/auth/me` | Usuario actual con `permissions` (lo que usa `require_permission`) y `tenant_permissions` (capacidades que valen en todas las empresas del tenant; vacío si no hay empresas) (ADR-018) |
+| GET | `/api/v1/auth/operations` | Catálogo de operaciones de la API `{operations: [{method, path, capabilities, scope}]}`, `scope` ∈ COMPANY / TENANT / GLOBAL; igual para todo usuario, sin datos de usuario (ADR-018) |
 | POST | `/api/v1/auth/mfa/verify` | Completar el login con TOTP o código de recuperación (`challenge_token`); público |
 | POST | `/api/v1/auth/mfa/enrollment` | Iniciar el alta del factor: forzada (con `challenge_token`, pública) o voluntaria/reemplazo (con sesión) |
 | POST | `/api/v1/auth/mfa/enrollment/confirm` | Confirmar el alta con el primer código; devuelve los 10 códigos de recuperación |
@@ -66,6 +69,7 @@ Toda sesión lleva el sello de credencial del usuario: cambia con cada cambio o 
 | GET/POST | `/api/v1/organization/establishments` | Establecimientos |
 | GET/POST | `/api/v1/organization/warehouses` | Almacenes |
 | GET/POST | `/api/v1/organization/locations` | Ubicaciones |
+| GET | `/api/v1/authority/company` | Capacidades efectivas del usuario en la empresa de `X-Kontrol-Company`: `{company_id, permissions}`; empresa inaccesible, de otro tenant o inexistente → 404 `COMPANY_NOT_FOUND` (ADR-018) |
 
 ### Seguridad
 

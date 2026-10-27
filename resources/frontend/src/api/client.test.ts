@@ -12,6 +12,7 @@ import {
   apiFetch,
   requestSessionRefresh,
   setAccessToken,
+  setAuthorityDenialHandler,
   setReauthHandler,
   setRefreshHandler,
 } from "./client";
@@ -245,5 +246,75 @@ describe("reautenticación", () => {
     await expect(apiFetch("/auth/reauth", { method: "POST", body: {} }))
       .rejects.toBeInstanceOf(ApiError);
     expect(llamadas).toBe(0);
+  });
+});
+
+describe("aviso de denegación de autoridad (Spec 003)", () => {
+  afterEach(() => setAuthorityDenialHandler(null));
+
+  it("avisa con COMPANY_SCOPE_FORBIDDEN y rechaza con ApiError 403", async () => {
+    const manejador = vi.fn();
+    setAuthorityDenialHandler(manejador);
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve(
+        jsonResponse({ code: "COMPANY_SCOPE_FORBIDDEN", message: "forbidden" }, 403),
+      ),
+    );
+
+    const p = apiFetch("/maestros/unidades");
+    await expect(p).rejects.toBeInstanceOf(ApiError);
+    await expect(p).rejects.toMatchObject({ status: 403 });
+    expect(manejador).toHaveBeenCalledTimes(1);
+    expect(manejador).toHaveBeenCalledWith("COMPANY_SCOPE_FORBIDDEN");
+  });
+
+  it("avisa con PERMISSION_DENIED", async () => {
+    const manejador = vi.fn();
+    setAuthorityDenialHandler(manejador);
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve(
+        jsonResponse({ code: "PERMISSION_DENIED", message: "forbidden" }, 403),
+      ),
+    );
+
+    await expect(apiFetch("/maestros/unidades")).rejects.toBeInstanceOf(ApiError);
+    expect(manejador).toHaveBeenCalledTimes(1);
+    expect(manejador).toHaveBeenCalledWith("PERMISSION_DENIED");
+  });
+
+  it("no avisa para otros códigos de error", async () => {
+    const manejador = vi.fn();
+    setAuthorityDenialHandler(manejador);
+
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve(
+        jsonResponse({ code: "REAUTH_REQUIRED", message: "reauth" }, 403),
+      ),
+    );
+    await expect(apiFetch("/maestros/unidades")).rejects.toBeInstanceOf(ApiError);
+
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve(
+        jsonResponse({ code: "COMPANY_NOT_FOUND", message: "not found" }, 404),
+      ),
+    );
+    await expect(apiFetch("/maestros/unidades")).rejects.toBeInstanceOf(ApiError);
+
+    expect(manejador).not.toHaveBeenCalled();
+  });
+
+  it("un manejador que lanza no cambia el error", async () => {
+    setAuthorityDenialHandler(() => {
+      throw new Error("fallo del aviso");
+    });
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve(
+        jsonResponse({ code: "PERMISSION_DENIED", message: "forbidden" }, 403),
+      ),
+    );
+
+    const p = apiFetch("/maestros/unidades");
+    await expect(p).rejects.toMatchObject({ status: 403 });
+    await expect(p).rejects.toBeInstanceOf(ApiError);
   });
 });

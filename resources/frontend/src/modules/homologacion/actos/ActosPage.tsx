@@ -5,8 +5,10 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { HomologationRecordSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { ErrorState } from "@/components/ErrorState";
 import { FormField } from "@/components/FormField";
@@ -20,6 +22,7 @@ const columnHelper = createColumnHelper<HomologationRecordSummary>();
 export function ActosPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [fiscalVersion, setFiscalVersion] = useState("");
   const [modality, setModality] = useState("E_FACTURA");
@@ -103,12 +106,12 @@ export function ActosPage(): React.JSX.Element {
         const row = info.row.original;
         return (
           <div className="flex flex-wrap gap-2">
-            {row.status === "DRAFT" ? (
+            {row.status === "DRAFT" && puede("POST", `/homologation/records/${row.id}/submit`) ? (
               <AsyncButton onClick={() => submit(row.id)} variant="secondary" loadingText="…">
                 Someter
               </AsyncButton>
             ) : null}
-            {row.status === "SUBMITTED" ? (
+            {row.status === "SUBMITTED" && puede("POST", `/homologation/records/${row.id}/evaluate`) ? (
               <>
                 <AsyncButton onClick={() => evaluate(row.id, "APPROVED")} variant="primary" loadingText="…">
                   Aprobar
@@ -132,44 +135,48 @@ export function ActosPage(): React.JSX.Element {
         crumbs={[{ label: "Homologación" }, { label: "Actos" }]}
       />
 
-      <section className="rounded-lg border border-border-default bg-surface-0 p-6">
-        <h2 className="text-base font-semibold text-text-900">Registrar acto de homologación</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <FormField label="Versión fiscal">
-            <TextInput value={fiscalVersion} onChange={(e) => setFiscalVersion(e.target.value)} placeholder="2026-1.0" />
-          </FormField>
-          <FormField label="Modalidad">
-            <TextInput value={modality} onChange={(e) => setModality(e.target.value)} placeholder="E_FACTURA" />
-          </FormField>
-          <FormField label="Acto formal (ref.)">
-            <TextInput value={formalActRef} onChange={(e) => setFormalActRef(e.target.value)} placeholder="ACT-2026-001" />
-          </FormField>
-          <FormField label="Evidencia SHA-256">
-            <TextInput value={evidenceSha} onChange={(e) => setEvidenceSha(e.target.value)} placeholder="hash de 64 caracteres" />
-          </FormField>
-          <FormField label="Notas" className="sm:col-span-2">
-            <TextInput value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observaciones (opcional)" />
-          </FormField>
-        </div>
-        <div className="mt-4">
-          <AsyncButton onClick={createRecord} loadingText="Registrando…">
-            Registrar acto
-          </AsyncButton>
-        </div>
-      </section>
+      <Autorizado operacion={["POST", "/homologation/records"]}>
+        <section className="rounded-lg border border-border-default bg-surface-0 p-6">
+          <h2 className="text-base font-semibold text-text-900">Registrar acto de homologación</h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <FormField label="Versión fiscal">
+              <TextInput value={fiscalVersion} onChange={(e) => setFiscalVersion(e.target.value)} placeholder="2026-1.0" />
+            </FormField>
+            <FormField label="Modalidad">
+              <TextInput value={modality} onChange={(e) => setModality(e.target.value)} placeholder="E_FACTURA" />
+            </FormField>
+            <FormField label="Acto formal (ref.)">
+              <TextInput value={formalActRef} onChange={(e) => setFormalActRef(e.target.value)} placeholder="ACT-2026-001" />
+            </FormField>
+            <FormField label="Evidencia SHA-256">
+              <TextInput value={evidenceSha} onChange={(e) => setEvidenceSha(e.target.value)} placeholder="hash de 64 caracteres" />
+            </FormField>
+            <FormField label="Notas" className="sm:col-span-2">
+              <TextInput value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observaciones (opcional)" />
+            </FormField>
+          </div>
+          <div className="mt-4">
+            <AsyncButton onClick={createRecord} loadingText="Registrando…">
+              Registrar acto
+            </AsyncButton>
+          </div>
+        </section>
+      </Autorizado>
 
-      <section className="mt-6 rounded-lg border border-border-default bg-surface-0 p-6">
-        <h2 className="text-base font-semibold text-text-900">Evaluación</h2>
-        <p className="mt-1 text-sm text-text-500">Quien creó la homologación no puede evaluarla (segregación).</p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <FormField label="Evaluador (id de usuario)">
-            <TextInput value={evaluatorAct} onChange={(e) => setEvaluatorAct(e.target.value)} placeholder="fiscal-1" />
-          </FormField>
-          <FormField label="Acto formal al aprobar">
-            <TextInput value={evaluateFormalAct} onChange={(e) => setEvaluateFormalAct(e.target.value)} placeholder="ACT-2026-001" />
-          </FormField>
-        </div>
-      </section>
+      {puede("POST", "/homologation/records/_/evaluate") ? (
+        <section className="mt-6 rounded-lg border border-border-default bg-surface-0 p-6">
+          <h2 className="text-base font-semibold text-text-900">Evaluación</h2>
+          <p className="mt-1 text-sm text-text-500">Quien creó la homologación no puede evaluarla (segregación).</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <FormField label="Evaluador (id de usuario)">
+              <TextInput value={evaluatorAct} onChange={(e) => setEvaluatorAct(e.target.value)} placeholder="fiscal-1" />
+            </FormField>
+            <FormField label="Acto formal al aprobar">
+              <TextInput value={evaluateFormalAct} onChange={(e) => setEvaluateFormalAct(e.target.value)} placeholder="ACT-2026-001" />
+            </FormField>
+          </div>
+        </section>
+      ) : null}
 
       <div className="mt-6">
         <DataTable

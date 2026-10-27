@@ -28,6 +28,8 @@ import type {
   RateSource,
 } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
@@ -65,6 +67,7 @@ function ahoraLocal(): string {
 export function TasasPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [base, setBase] = useState("");
   const [quote, setQuote] = useState("");
@@ -293,6 +296,7 @@ export function TasasPage(): React.JSX.Element {
         )}
       </section>
 
+      <Autorizado operacion={["POST", "/treasury/exchange-rates/observations"]}>
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Registrar una tasa</h2>
         <div className="mb-3 flex flex-wrap items-end gap-3">
@@ -372,6 +376,7 @@ export function TasasPage(): React.JSX.Element {
             : "1 unidad de la base equivale a la tasa en unidades de la cotizada."}
         </p>
       </section>
+      </Autorizado>
 
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Consultar</h2>
@@ -431,6 +436,7 @@ export function TasasPage(): React.JSX.Element {
         )}
       </section>
 
+      <Autorizado operacion={["POST", "/treasury/exchange-rates/import"]}>
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Importar</h2>
         <p className="mb-2 text-sm text-text-500">
@@ -496,6 +502,7 @@ export function TasasPage(): React.JSX.Element {
           </div>
         ) : null}
       </section>
+      </Autorizado>
 
       <section>
         <h2 className="mb-2 text-base font-semibold text-text-900">Histórico</h2>
@@ -527,12 +534,12 @@ export function TasasPage(): React.JSX.Element {
                   <td>v{o.version}</td>
                   <td>{ESTADO[o.status] ?? o.status}</td>
                   <td className="flex flex-wrap gap-2 py-1">
-                    {o.status === "ACTIVE" ? (
+                    {o.status === "ACTIVE" && puede("POST", `/treasury/exchange-rates/observations/${o.id}/correct`) ? (
                       <AsyncButton size="sm" variant="secondary" onClick={() => corregir(o)}>
                         Corregir
                       </AsyncButton>
                     ) : null}
-                    {o.status === "PENDING_APPROVAL" ? (
+                    {o.status === "PENDING_APPROVAL" && puede("POST", `/treasury/exchange-rates/observations/${o.id}/approve`) ? (
                       <AsyncButton size="sm" onClick={() => aprobar(o)}>
                         Aprobar
                       </AsyncButton>

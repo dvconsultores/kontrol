@@ -252,7 +252,7 @@ test.describe("autoridad por empresa · Spec 003", () => {
     expect(await codigo(rInexistente)).toBe("COMPANY_NOT_FOUND");
   });
 
-  test("E2E-SCOPE-10 · UI: actor [maestros:view, organization:view] en D1 ve error acotado en D2 y contenido en D1", async ({ page }) => {
+  test("E2E-SCOPE-10 · UI: actor [maestros:view, organization:view] en D1 ve la denegación de la empresa en D2 sin pedirla y el contenido en D1", async ({ page }) => {
     const MUNDO = mundoN6();
     const actor = await crearActor(page.request, ["maestros:view", "organization:view"], MUNDO.empresa_a);
 
@@ -261,19 +261,20 @@ test.describe("autoridad por empresa · Spec 003", () => {
     await page.getByTestId("elegir-empresa-D2").click();
     await expect(page.getByTestId("selector-empresa")).toContainText(MUNDO.nombre_b);
 
-    const responseD2Promise = page.waitForResponse(
-      (response) =>
-        response.url().includes("/maestros/unidades") &&
-        response.request().method() === "GET" &&
-        response.status() === 403,
-    );
-    await page.goto("/maestros/unidades");
-    const responseD2 = await responseD2Promise;
-    const bodyD2 = await responseD2.json();
-    expect(bodyD2.code, `Respuesta inesperada: ${JSON.stringify(bodyD2)}`).toBe("COMPANY_SCOPE_FORBIDDEN");
+    const pedidas: string[] = [];
+    page.on("request", (r) => {
+      if (r.url().includes("/api/v1/maestros/unidades") && r.method() === "GET") pedidas.push(r.url());
+    });
 
-    await expect(page.getByText("No fue posible cargar las unidades.")).toBeVisible();
-    await expect(page.getByRole("heading", { level: 1, name: "Unidades de medida" })).toBeVisible();
+    await page.goto("/maestros/unidades");
+    await expect(page.getByRole("heading", { level: 1, name: "Sin autoridad en esta empresa" })).toBeVisible();
+    await expect(page.getByRole("alert"), "debe mencionar la empresa activa").toContainText(MUNDO.nombre_b);
+    await expect(page.getByText("No fue posible cargar las unidades.")).toHaveCount(0);
+    expect(pedidas, "la UI no debe pedir lo que el backend negará en esta empresa").toEqual([]);
+
+    const r = await page.request.get(`${API}/maestros/unidades`, { headers: await cabeceras(actor.username, MUNDO.empresa_b) });
+    expect(r.status()).toBe(403);
+    expect(await codigo(r)).toBe("COMPANY_SCOPE_FORBIDDEN");
 
     const axeResults = await new AxeBuilder({ page })
       .include("main")
@@ -300,6 +301,7 @@ test.describe("autoridad por empresa · Spec 003", () => {
     const responseD1 = await responseD1Promise;
     expect(responseD1.status(), `Respuesta inesperada: ${JSON.stringify(await responseD1.text())}`).toBe(200);
 
-    await expect(page.getByText("No fue posible cargar las unidades.")).not.toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Unidades de medida" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Sin autoridad en esta empresa" })).toHaveCount(0);
   });
 });

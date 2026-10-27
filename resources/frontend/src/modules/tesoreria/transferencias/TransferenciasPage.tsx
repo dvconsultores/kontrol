@@ -6,6 +6,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import type { CashboxSummary, FinancialAccountSummary, TreasuryTransferSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -149,22 +150,24 @@ export function TransferenciasPage(): React.JSX.Element {
         crumbs={[{ label: "Tesorería" }, { label: "Transferencias" }]}
       />
 
-      <form
-        className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-surface-0 p-4"
-        onSubmit={(e) => e.preventDefault()}
-      >
-        {legSelect(from, setFrom, "Origen")}
-        {legSelect(to, setTo, "Destino")}
-        <FormField label="Monto">
-          <MoneyInput value={amount} onChange={(e) => setAmount(e.target.value)} />
-        </FormField>
-        <FormField label="Referencia">
-          <TextInput value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Opcional" />
-        </FormField>
-        <AsyncButton type="submit" variant="secondary" onClick={submit}>
-          Transferir
-        </AsyncButton>
-      </form>
+      <Autorizado operacion={["POST", "/treasury/transfers"]}>
+        <form
+          className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-surface-0 p-4"
+          onSubmit={(e) => e.preventDefault()}
+        >
+          {legSelect(from, setFrom, "Origen")}
+          {legSelect(to, setTo, "Destino")}
+          <FormField label="Monto">
+            <MoneyInput value={amount} onChange={(e) => setAmount(e.target.value)} />
+          </FormField>
+          <FormField label="Referencia">
+            <TextInput value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Opcional" />
+          </FormField>
+          <AsyncButton type="submit" variant="secondary" onClick={submit}>
+            Transferir
+          </AsyncButton>
+        </form>
+      </Autorizado>
 
       <DataTable
         columns={columns}

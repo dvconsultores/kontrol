@@ -6,6 +6,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, PagedResult, Party, SupplierQuoteSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -100,29 +101,31 @@ export function CotizacionesComprasPage(): React.JSX.Element {
         description="Solicitud de oferta a proveedores y carga de líneas de producto."
         crumbs={[{ label: "Compras" }, { label: "Cotizaciones" }]}
       />
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva cotización</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Código" required>
-            <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="COT-0001" required />
-          </FormField>
-          <FormField label="Proveedor" required>
-            <select value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(suppliers.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Válida hasta">
-            <TextInput type="date" value={newValidity} onChange={(e) => setNewValidity(e.target.value)} />
-          </FormField>
-          <FormField label="Términos">
-            <TextInput value={newTerms} onChange={(e) => setNewTerms(e.target.value)} placeholder="Crédito 30 días" />
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createQuote}>Crear</AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/purchasing/quotes"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nueva cotización</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Código" required>
+              <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="COT-0001" required />
+            </FormField>
+            <FormField label="Proveedor" required>
+              <select value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(suppliers.data?.items ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Válida hasta">
+              <TextInput type="date" value={newValidity} onChange={(e) => setNewValidity(e.target.value)} />
+            </FormField>
+            <FormField label="Términos">
+              <TextInput value={newTerms} onChange={(e) => setNewTerms(e.target.value)} placeholder="Crédito 30 días" />
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createQuote}>Crear</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
@@ -135,21 +138,23 @@ export function CotizacionesComprasPage(): React.JSX.Element {
               ))}
             </select>
           </FormField>
-          <FormField label="Producto" required>
-            <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(products.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Cantidad" required>
-            <TextInput type="number" min="0" value={lineQty} onChange={(e) => setLineQty(e.target.value)} required />
-          </FormField>
-          <FormField label="Precio unitario" required>
-            <TextInput type="number" min="0" value={linePrice} onChange={(e) => setLinePrice(e.target.value)} required />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={addLine}>Agregar línea</AsyncButton>
+          <Autorizado operacion={["POST", "/purchasing/quotes/_/lines"]}>
+            <FormField label="Producto" required>
+              <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(products.data?.items ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Cantidad" required>
+              <TextInput type="number" min="0" value={lineQty} onChange={(e) => setLineQty(e.target.value)} required />
+            </FormField>
+            <FormField label="Precio unitario" required>
+              <TextInput type="number" min="0" value={linePrice} onChange={(e) => setLinePrice(e.target.value)} required />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={addLine}>Agregar línea</AsyncButton>
+          </Autorizado>
         </form>
       </section>
 

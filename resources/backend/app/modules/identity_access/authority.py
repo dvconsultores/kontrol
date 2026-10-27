@@ -432,6 +432,14 @@ def capabilities_in_company(db: Session, user: User, company_id: str) -> set[str
     return {f"{recurso}:{accion}" for recurso, accion in filas}
 
 
+def tenant_wide_capabilities(db: Session, user: User) -> set[str]:
+    """Capacidades que valen en TODAS las empresas del tenant (catálogos de todo el tenant, C4); vacío si el tenant no tiene empresas."""
+    ids = db.execute(select(Company.id).where(Company.tenant_id == user.tenant_id)).scalars().all()
+    if not ids:
+        return set()
+    return set.intersection(*(capabilities_in_company(db, user, str(cid)) for cid in ids))
+
+
 def companies_with_capability(db: Session, user: User, capability: str) -> set[str]:
     """Empresas donde la capacidad vale; para acotar consultas (listas, bitácora)."""
     return effective_scope(db, user, capability)

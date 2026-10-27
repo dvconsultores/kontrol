@@ -20,7 +20,9 @@ import { ApiError, apiFetch } from "@/api/client";
 import { listAllWarehouses } from "@/api/organization";
 import type { InventoryBalance, PutAwayLocation } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
@@ -32,6 +34,7 @@ const columnas = createColumnHelper<InventoryBalance>();
 export function PutAwayPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [warehouseId, setWarehouseId] = useState("");
   const [seleccion, setSeleccion] = useState<InventoryBalance | null>(null);
   const [destino, setDestino] = useState("");
@@ -107,18 +110,19 @@ export function PutAwayPage(): React.JSX.Element {
     columnas.display({
       id: "accion",
       header: "Acción",
-      cell: (c) => (
-        <button
-          type="button"
-          onClick={() => {
-            setSeleccion(c.row.original);
-            setCantidad(String(c.row.original.qty_on_hand));
-          }}
-          className="text-sm font-medium text-primary-700 underline"
-        >
-          Elegir ubicación
-        </button>
-      ),
+      cell: (c) =>
+        puede("POST", "/inventory/putaway") ? (
+          <button
+            type="button"
+            onClick={() => {
+              setSeleccion(c.row.original);
+              setCantidad(String(c.row.original.qty_on_hand));
+            }}
+            className="text-sm font-medium text-primary-700 underline"
+          >
+            Elegir ubicación
+          </button>
+        ) : null,
     }),
   ];
 
@@ -162,6 +166,7 @@ export function PutAwayPage(): React.JSX.Element {
       />
 
       {seleccion ? (
+        <Autorizado operacion={["POST", "/inventory/putaway"]}>
         <section className="mt-4 rounded-lg border border-border-default bg-surface-0 p-4">
           <h2 className="mb-3 text-base font-semibold text-text-900">Colocar la mercancía</h2>
           <p className="mb-3 text-sm text-text-700">
@@ -205,6 +210,7 @@ export function PutAwayPage(): React.JSX.Element {
             no tiene.
           </p>
         </section>
+        </Autorizado>
       ) : null}
     </PageContent>
   );

@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { FormField } from "@/components/FormField";
@@ -70,6 +71,7 @@ function mensajeDeError(err: unknown, porDefecto: string): string {
 export function RolesPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [userId, setUserId] = useState("");
   const [roleId, setRoleId] = useState("");
   const [companyId, setCompanyId] = useState("");
@@ -200,9 +202,11 @@ export function RolesPage(): React.JSX.Element {
               ))}
             </select>
           </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={assign}>
-            Asignar
-          </AsyncButton>
+          {puede("POST", `/users/${userId || "_"}/roles`) ? (
+            <AsyncButton type="submit" variant="primary" onClick={assign}>
+              Asignar
+            </AsyncButton>
+          ) : null}
         </form>
       </section>
 
@@ -246,20 +250,22 @@ export function RolesPage(): React.JSX.Element {
                   >
                     {r.name}
                     {r.company_id ? ` · ${companyName(r.company_id)}` : ""}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setToRemove({
-                          uid: u.id,
-                          rid: r.id,
-                          label: `${u.username} · ${r.name}`,
-                        })
-                      }
-                      className="text-text-500 hover:text-danger-600"
-                      aria-label={`Quitar rol ${r.name} a ${u.username}`}
-                    >
-                      ×
-                    </button>
+                    {puede("DELETE", `/users/${u.id}/roles/${r.id}`) ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setToRemove({
+                            uid: u.id,
+                            rid: r.id,
+                            label: `${u.username} · ${r.name}`,
+                          })
+                        }
+                        className="text-text-500 hover:text-danger-600"
+                        aria-label={`Quitar rol ${r.name} a ${u.username}`}
+                      >
+                        ×
+                      </button>
+                    ) : null}
                   </span>
                 ))}
                 {(u.roles ?? []).length === 0 ? <span className="text-xs text-text-500">sin roles</span> : null}

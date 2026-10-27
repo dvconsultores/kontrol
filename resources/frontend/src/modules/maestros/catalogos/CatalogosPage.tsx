@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { TaxonomyNode, UnitOfMeasure } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
@@ -14,6 +15,7 @@ import { TextInput } from "@/components/TextInput";
 export function CatalogosPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [convFrom, setConvFrom] = useState("");
   const [convTo, setConvTo] = useState("");
@@ -69,6 +71,7 @@ export function CatalogosPage(): React.JSX.Element {
             ))}
           </ul>
 
+          {puede("POST", "/maestros/catalogos/unidades/_/conversiones") ? (
           <form className="mt-4 flex flex-wrap items-end gap-2 border-t border-border-default pt-4" onSubmit={(e) => e.preventDefault()}>
             <FormField label="De">
               <select value={convFrom} onChange={(e) => setConvFrom(e.target.value)} className="h-10 w-36 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
@@ -91,6 +94,7 @@ export function CatalogosPage(): React.JSX.Element {
             </FormField>
             <AsyncButton type="submit" variant="secondary" onClick={createConversion}>Añadir conversión</AsyncButton>
           </form>
+          ) : null}
         </section>
 
         <section className="rounded-lg border border-border-default bg-surface-0 p-5">

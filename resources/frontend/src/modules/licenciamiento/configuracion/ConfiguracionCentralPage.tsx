@@ -5,6 +5,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import type { CentralConfig, LicensingOverview } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { ErrorState } from "@/components/ErrorState";
 import { FormField } from "@/components/FormField";
@@ -104,12 +105,16 @@ export function ConfiguracionCentralPage(): React.JSX.Element {
           </FormField>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <AsyncButton onClick={saveConfig} loadingText="Guardando…" disabled={saving}>
-            Guardar configuración
-          </AsyncButton>
-          <AsyncButton onClick={runSync} variant="primary" loadingText="Sincronizando…">
-            Sincronizar ahora
-          </AsyncButton>
+          <Autorizado operacion={["PUT", "/licensing/central-config"]}>
+            <AsyncButton onClick={saveConfig} loadingText="Guardando…" disabled={saving}>
+              Guardar configuración
+            </AsyncButton>
+          </Autorizado>
+          <Autorizado operacion={["POST", "/licensing/sync"]}>
+            <AsyncButton onClick={runSync} variant="primary" loadingText="Sincronizando…">
+              Sincronizar ahora
+            </AsyncButton>
+          </Autorizado>
         </div>
       </section>
 

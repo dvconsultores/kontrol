@@ -12,6 +12,7 @@ import { NavLink } from "react-router";
 import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, PagedResult, Party, SalesQuoteSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -123,69 +124,73 @@ export function CotizacionesPage(): React.JSX.Element {
         description="Cotizaciones de venta sin reservar inventario."
         crumbs={[{ label: "Ventas" }, { label: "Cotizaciones" }]}
       />
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva cotización</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Código" required>
-            <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="COT-0001" required />
-          </FormField>
-          <FormField label="Cliente" required>
-            <select value={newCustomer} onChange={(e) => setNewCustomer(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(customers.data?.items ?? []).map((c) => (
-                <option key={c.id} value={c.id}>{c.code} · {c.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createQuote}>Crear</AsyncButton>
-        </form>
-      </section>
-
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Cotización" required>
-            <select value={lineQuote} onChange={(e) => setLineQuote(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(query.data?.items ?? []).map((o) => (
-                <option key={o.id} value={o.id}>{o.code}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Producto" required>
-            <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(products.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Cantidad" required>
-            <TextInput type="number" value={lineQty} onChange={(e) => setLineQty(e.target.value)} placeholder="0" required />
-          </FormField>
-          <FormField label="Precio" help="Vacío: lo resuelve la lista de precios vigente">
-            <TextInput type="number" value={linePrice} onChange={(e) => setLinePrice(e.target.value)} placeholder="Automático" />
-          </FormField>
-          {linePrice !== "" ? (
-            <FormField label="Motivo del precio manual" required>
-              <TextInput
-                value={lineReason}
-                onChange={(e) => setLineReason(e.target.value)}
-                placeholder="Por qué difiere del precio de lista"
-                required
-              />
+      <Autorizado operacion={["POST", "/sales/quotes"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nueva cotización</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Código" required>
+              <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="COT-0001" required />
             </FormField>
-          ) : null}
-          <AsyncButton
-            type="submit"
-            variant="secondary"
-            disabled={!lineQuote || !lineProduct || !lineQty || (linePrice !== "" && !lineReason)}
-            onClick={addLine}
-          >
-            Agregar
-          </AsyncButton>
-        </form>
-      </section>
+            <FormField label="Cliente" required>
+              <select value={newCustomer} onChange={(e) => setNewCustomer(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(customers.data?.items ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>{c.code} · {c.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createQuote}>Crear</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
+
+      <Autorizado operacion={["POST", "/sales/quotes/_/lines"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Cotización" required>
+              <select value={lineQuote} onChange={(e) => setLineQuote(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(query.data?.items ?? []).map((o) => (
+                  <option key={o.id} value={o.id}>{o.code}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Producto" required>
+              <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(products.data?.items ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Cantidad" required>
+              <TextInput type="number" value={lineQty} onChange={(e) => setLineQty(e.target.value)} placeholder="0" required />
+            </FormField>
+            <FormField label="Precio" help="Vacío: lo resuelve la lista de precios vigente">
+              <TextInput type="number" value={linePrice} onChange={(e) => setLinePrice(e.target.value)} placeholder="Automático" />
+            </FormField>
+            {linePrice !== "" ? (
+              <FormField label="Motivo del precio manual" required>
+                <TextInput
+                  value={lineReason}
+                  onChange={(e) => setLineReason(e.target.value)}
+                  placeholder="Por qué difiere del precio de lista"
+                  required
+                />
+              </FormField>
+            ) : null}
+            <AsyncButton
+              type="submit"
+              variant="secondary"
+              disabled={!lineQuote || !lineProduct || !lineQty || (linePrice !== "" && !lineReason)}
+              onClick={addLine}
+            >
+              Agregar
+            </AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <DataTable
         columns={columns}

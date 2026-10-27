@@ -6,6 +6,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import type { CreditDebitNoteSummary, SalesInvoiceSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -67,6 +68,7 @@ export function NotasPage(): React.JSX.Element {
         crumbs={[{ label: "Fiscal" }, { label: "Notas" }]}
       />
 
+      <Autorizado operacion={["POST", "/fiscal/credit-debit-notes"]}>
       <form
         className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-surface-0 p-4"
         onSubmit={(e) => e.preventDefault()}
@@ -95,6 +97,7 @@ export function NotasPage(): React.JSX.Element {
           Emitir nota
         </AsyncButton>
       </form>
+      </Autorizado>
 
       <DataTable
         columns={columns}

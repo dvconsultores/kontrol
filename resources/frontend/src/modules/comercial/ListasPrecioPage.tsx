@@ -12,6 +12,7 @@ import { apiFetch } from "@/api/client";
 import { hoyDeNegocio } from "@/lib/fecha-de-negocio";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -29,6 +30,7 @@ export function ListasPrecioPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const companyId = activeCompany?.id ?? null;
 
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
@@ -170,41 +172,43 @@ export function ListasPrecioPage(): React.JSX.Element {
         crumbs={[{ label: "Comercial" }, { label: "Listas de precios" }]}
       />
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva lista</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Código" required>
-            <TextInput value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ej. GENERAL" required />
-          </FormField>
-          <FormField label="Nombre" required>
-            <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Lista general" required />
-          </FormField>
-          <FormField label="Moneda" required>
-            <select
-              value={currencyId}
-              onChange={(e) => setCurrencyId(e.target.value)}
-              className="h-10 w-40 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+      {puede("POST", "/comercial/listas-precio") ? (
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nueva lista</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Código" required>
+              <TextInput value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ej. GENERAL" required />
+            </FormField>
+            <FormField label="Nombre" required>
+              <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Lista general" required />
+            </FormField>
+            <FormField label="Moneda" required>
+              <select
+                value={currencyId}
+                onChange={(e) => setCurrencyId(e.target.value)}
+                className="h-10 w-40 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+              >
+                <option value="">Seleccionar…</option>
+                {(monedas.data ?? []).map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.code}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <AsyncButton
+              type="submit"
+              variant="primary"
+              disabled={!code || !name || !currencyId}
+              onClick={async () => {
+                await crearLista.mutateAsync();
+              }}
             >
-              <option value="">Seleccionar…</option>
-              {(monedas.data ?? []).map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.code}
-                </option>
-              ))}
-            </select>
-          </FormField>
-          <AsyncButton
-            type="submit"
-            variant="primary"
-            disabled={!code || !name || !currencyId}
-            onClick={async () => {
-              await crearLista.mutateAsync();
-            }}
-          >
-            Crear lista
-          </AsyncButton>
-        </form>
-      </section>
+              Crear lista
+            </AsyncButton>
+          </form>
+        </section>
+      ) : null}
 
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <DataTable
@@ -243,14 +247,16 @@ export function ListasPrecioPage(): React.JSX.Element {
             <h2 className="text-base font-semibold text-text-900">
               Versiones de {detalle.data.code} · {detalle.data.name}
             </h2>
-            <AsyncButton
-              variant="secondary"
-              onClick={async () => {
-                await crearVersion.mutateAsync(seleccionada);
-              }}
-            >
-              Nueva versión
-            </AsyncButton>
+            {puede("POST", `/comercial/listas-precio/${seleccionada}/versiones`) ? (
+              <AsyncButton
+                variant="secondary"
+                onClick={async () => {
+                  await crearVersion.mutateAsync(seleccionada);
+                }}
+              >
+                Nueva versión
+              </AsyncButton>
+            ) : null}
           </div>
           <DataTable
             columns={[
@@ -275,7 +281,11 @@ export function ListasPrecioPage(): React.JSX.Element {
                     >
                       Ítems
                     </AsyncButton>
-                    {row.original.status === "DRAFT" ? (
+                    {row.original.status === "DRAFT" &&
+                    puede(
+                      "POST",
+                      `/comercial/listas-precio/${row.original.price_list_id}/versiones/${row.original.id}/transicion`,
+                    ) ? (
                       <AsyncButton
                         variant="primary"
                         onClick={async () => {
@@ -302,7 +312,11 @@ export function ListasPrecioPage(): React.JSX.Element {
           <h2 className="mb-2 text-base font-semibold text-text-900">
             Ítems de la versión {versionAbierta.version_number}
           </h2>
-          {versionAbierta.status === "DRAFT" ? (
+          {versionAbierta.status === "DRAFT" &&
+          puede(
+            "POST",
+            `/comercial/listas-precio/${versionAbierta.price_list_id}/versiones/${versionAbierta.id}/items`,
+          ) ? (
             <form className="mb-3 flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
               <FormField label="Artículo" required>
                 <TextInput value={itemId} onChange={(e) => setItemId(e.target.value)} placeholder="Id del artículo" required />

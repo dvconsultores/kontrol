@@ -5,8 +5,10 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { Party, WithholdingRuleSummary, WithholdingSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { MoneyInput } from "@/components/MoneyInput";
@@ -19,6 +21,7 @@ const columnHelper = createColumnHelper<WithholdingSummary>();
 export function RetencionesPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [taxType, setTaxType] = useState<"IVA" | "ISLR">("IVA");
   const [code, setCode] = useState("RT-IVA");
@@ -99,11 +102,11 @@ export function RetencionesPage(): React.JSX.Element {
         const s = row.original.status;
         return (
           <div className="flex justify-end gap-1">
-            {s === "CALCULADA" ? <AsyncButton size="sm" variant="secondary" onClick={() => transition(row.original.id, "PRACTICADA")}>practicar</AsyncButton> : null}
-            {s === "PRACTICADA" ? <AsyncButton size="sm" variant="secondary" onClick={() => certificate(row.original.id)}>comprobante</AsyncButton> : null}
-            {s === "EMITIDA" ? <AsyncButton size="sm" variant="secondary" onClick={() => transition(row.original.id, "DECLARADA")}>declarar</AsyncButton> : null}
-            {s === "DECLARADA" ? <AsyncButton size="sm" variant="secondary" onClick={() => transition(row.original.id, "PAGADA")}>pagar</AsyncButton> : null}
-            {s === "PAGADA" ? <AsyncButton size="sm" variant="secondary" onClick={() => transition(row.original.id, "CONCILIADA")}>conciliar</AsyncButton> : null}
+            {s === "CALCULADA" && puede("POST", `/fiscal/withholdings/${row.original.id}/transition`) ? <AsyncButton size="sm" variant="secondary" onClick={() => transition(row.original.id, "PRACTICADA")}>practicar</AsyncButton> : null}
+            {s === "PRACTICADA" && puede("POST", `/fiscal/withholdings/${row.original.id}/certificate`) ? <AsyncButton size="sm" variant="secondary" onClick={() => certificate(row.original.id)}>comprobante</AsyncButton> : null}
+            {s === "EMITIDA" && puede("POST", `/fiscal/withholdings/${row.original.id}/transition`) ? <AsyncButton size="sm" variant="secondary" onClick={() => transition(row.original.id, "DECLARADA")}>declarar</AsyncButton> : null}
+            {s === "DECLARADA" && puede("POST", `/fiscal/withholdings/${row.original.id}/transition`) ? <AsyncButton size="sm" variant="secondary" onClick={() => transition(row.original.id, "PAGADA")}>pagar</AsyncButton> : null}
+            {s === "PAGADA" && puede("POST", `/fiscal/withholdings/${row.original.id}/transition`) ? <AsyncButton size="sm" variant="secondary" onClick={() => transition(row.original.id, "CONCILIADA")}>conciliar</AsyncButton> : null}
           </div>
         );
       },
@@ -134,9 +137,11 @@ export function RetencionesPage(): React.JSX.Element {
             <FormField label="Tasa (%)">
               <MoneyInput value={rate} onChange={(e) => setRate(e.target.value)} />
             </FormField>
-            <AsyncButton type="submit" variant="secondary" onClick={createRule}>
-              Crear regla
-            </AsyncButton>
+            <Autorizado operacion={["POST", "/fiscal/withholding-rules"]}>
+              <AsyncButton type="submit" variant="secondary" onClick={createRule}>
+                Crear regla
+              </AsyncButton>
+            </Autorizado>
           </div>
           <div className="mt-3 rounded-md border border-border-default p-3 text-sm">
             <p className="font-medium text-text-700">Reglas</p>
@@ -161,9 +166,11 @@ export function RetencionesPage(): React.JSX.Element {
             <FormField label="Base">
               <MoneyInput value={base} onChange={(e) => setBase(e.target.value)} />
             </FormField>
-            <AsyncButton type="submit" variant="secondary" onClick={calculate}>
-              Calcular con regla {code}
-            </AsyncButton>
+            <Autorizado operacion={["POST", "/fiscal/withholdings/calculate"]}>
+              <AsyncButton type="submit" variant="secondary" onClick={calculate}>
+                Calcular con regla {code}
+              </AsyncButton>
+            </Autorizado>
           </div>
         </form>
       </div>

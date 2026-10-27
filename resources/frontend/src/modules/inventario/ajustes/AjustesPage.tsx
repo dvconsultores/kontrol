@@ -5,9 +5,11 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, InventoryAdjustment, PagedResult } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -26,6 +28,7 @@ export function AjustesPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [newWarehouse, setNewWarehouse] = useState("");
   const [newProduct, setNewProduct] = useState("");
@@ -89,6 +92,9 @@ export function AjustesPage(): React.JSX.Element {
       header: "Acciones",
       cell: ({ row }) => {
         const a = row.original.allowed_actions;
+        if (!puede("POST", `/inventory/adjustments/${row.original.id}/transition`)) {
+          return null;
+        }
         const transitions: Array<[string, string]> = [
           ["submit", "SUBMITTED"],
           ["approve", "APPROVED"],
@@ -117,6 +123,7 @@ export function AjustesPage(): React.JSX.Element {
         description="Ajustes con motivo, evidencia y aprobación. Nunca editan el saldo: generan movimientos."
         crumbs={[{ label: "Inventario" }, { label: "Ajustes" }]}
       />
+      <Autorizado operacion={["POST", "/inventory/adjustments"]}>
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo ajuste</h2>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
@@ -151,6 +158,7 @@ export function AjustesPage(): React.JSX.Element {
           <AsyncButton type="submit" variant="primary" onClick={createAdjustment}>Crear</AsyncButton>
         </form>
       </section>
+      </Autorizado>
 
       <DataTable
         columns={columns}

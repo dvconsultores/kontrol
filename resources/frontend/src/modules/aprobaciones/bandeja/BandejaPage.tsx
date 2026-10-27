@@ -11,6 +11,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { ApprovalInboxItem } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -38,6 +39,7 @@ const REQUIRES_REASON = new Set(["reject", "return"]);
 export function BandejaPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const queryClient = useQueryClient();
 
   const [processType, setProcessType] = useState("");
@@ -134,20 +136,24 @@ export function BandejaPage(): React.JSX.Element {
       header: "Acciones",
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">
-          {row.original.allowed_actions.map((action) => (
-            <AsyncButton
-              key={action}
-              size="sm"
-              variant={action === "approve" ? "primary" : "secondary"}
-              aria-label={`${ACTION_LABEL[action]} ${row.original.document_id}`}
-              onClick={async () => {
-                setReason("");
-                setPending({ item: row.original, action: action as "approve" | "reject" | "return" });
-              }}
-            >
-              {ACTION_LABEL[action]}
-            </AsyncButton>
-          ))}
+          {row.original.allowed_actions
+            .filter((action) =>
+              puede("POST", `/approvals/steps/${row.original.step_id}/${action}`),
+            )
+            .map((action) => (
+              <AsyncButton
+                key={action}
+                size="sm"
+                variant={action === "approve" ? "primary" : "secondary"}
+                aria-label={`${ACTION_LABEL[action]} ${row.original.document_id}`}
+                onClick={async () => {
+                  setReason("");
+                  setPending({ item: row.original, action: action as "approve" | "reject" | "return" });
+                }}
+              >
+                {ACTION_LABEL[action]}
+              </AsyncButton>
+            ))}
         </div>
       ),
     }),

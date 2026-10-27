@@ -5,7 +5,9 @@ import { useState } from "react";
 import { apiFetch, ApiError } from "@/api/client";
 import { resetUserMfa } from "@/api/mfa";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { Button } from "@/components/Button";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
@@ -34,7 +36,8 @@ interface UserSummary {
 export function UsuariosPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
+  const { puede } = useAutoridad();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -118,23 +121,25 @@ export function UsuariosPage(): React.JSX.Element {
         crumbs={[{ label: "Seguridad" }, { label: "Usuarios" }]}
       />
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Registrar usuario</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Usuario" required>
-            <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Nombre de usuario" required />
-          </FormField>
-          <FormField label="Correo">
-            <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Opcional" />
-          </FormField>
-          <FormField label="Contraseña" required help="Mínimo 10 caracteres; mayúscula, minúscula y número.">
-            <TextInput type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Temporal" required />
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createUser}>
-            Registrar
-          </AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/users"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Registrar usuario</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Usuario" required>
+              <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Nombre de usuario" required />
+            </FormField>
+            <FormField label="Correo">
+              <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Opcional" />
+            </FormField>
+            <FormField label="Contraseña" required help="Mínimo 10 caracteres; mayúscula, minúscula y número.">
+              <TextInput type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Temporal" required />
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createUser}>
+              Registrar
+            </AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <section className="rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Usuarios</h2>
@@ -150,7 +155,7 @@ export function UsuariosPage(): React.JSX.Element {
               u.id,
               `${u.username} · ${u.email ?? "sin correo"} · Roles: ${u.roles.map((r) => r.code).join(", ") || "—"} · Verificación en dos pasos: ${u.mfa_enabled ? "activa" : "no configurada"}`,
               u.status,
-              hasPermission("users:mfa_reset") && u.id !== user?.id && u.mfa_enabled ? (
+              puede("POST", `/users/${u.id}/mfa/reset`) && u.id !== user?.id && u.mfa_enabled ? (
                 <Button variant="secondary" size="sm" onClick={() => setObjetivo({ id: u.id, username: u.username })}>
                   Restablecer verificación
                 </Button>

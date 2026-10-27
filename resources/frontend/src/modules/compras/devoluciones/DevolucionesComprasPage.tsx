@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, PagedResult, ReturnSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
@@ -31,6 +32,7 @@ const DESTINATIONS = [
 export function DevolucionesComprasPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [newCode, setNewCode] = useState("");
   const [newDoc, setNewDoc] = useState("");
@@ -106,62 +108,66 @@ export function DevolucionesComprasPage(): React.JSX.Element {
         description="Devoluciones a proveedores y destino del inventario."
         crumbs={[{ label: "Compras" }, { label: "Devoluciones" }]}
       />
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva devolución</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Código" required>
-            <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="DEV-0001" required />
-          </FormField>
-          <FormField label="Documento origen">
-            <TextInput value={newDoc} onChange={(e) => setNewDoc(e.target.value)} placeholder="FAC-0001" />
-          </FormField>
-          <FormField label="Motivo" required>
-            <TextInput value={newReason} onChange={(e) => setNewReason(e.target.value)} placeholder="Producto dañado al recibir" required />
-          </FormField>
-          <FormField label="Condición">
-            <select value={newCondition} onChange={(e) => setNewCondition(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              {CONDITIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Destino">
-            <select value={newDestination} onChange={(e) => setNewDestination(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              {DESTINATIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
-            </select>
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createReturn}>Registrar</AsyncButton>
-        </form>
-      </section>
+      {puede("POST", "/purchasing/returns") ? (
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nueva devolución</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Código" required>
+              <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="DEV-0001" required />
+            </FormField>
+            <FormField label="Documento origen">
+              <TextInput value={newDoc} onChange={(e) => setNewDoc(e.target.value)} placeholder="FAC-0001" />
+            </FormField>
+            <FormField label="Motivo" required>
+              <TextInput value={newReason} onChange={(e) => setNewReason(e.target.value)} placeholder="Producto dañado al recibir" required />
+            </FormField>
+            <FormField label="Condición">
+              <select value={newCondition} onChange={(e) => setNewCondition(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                {CONDITIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Destino">
+              <select value={newDestination} onChange={(e) => setNewDestination(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                {DESTINATIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+              </select>
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createReturn}>Registrar</AsyncButton>
+          </form>
+        </section>
+      ) : null}
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Devolución" required>
-            <select value={lineReturn} onChange={(e) => setLineReturn(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(query.data?.items ?? []).map((o) => (
-                <option key={o.id} value={o.id}>{o.code}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Producto" required>
-            <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(products.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Cantidad" required>
-            <TextInput type="number" value={lineQty} onChange={(e) => setLineQty(e.target.value)} placeholder="0" required />
-          </FormField>
-          <FormField label="Condición">
-            <select value={lineCondition} onChange={(e) => setLineCondition(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              {CONDITIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={addLine}>Agregar</AsyncButton>
-        </form>
-      </section>
+      {puede("POST", "/purchasing/returns/_/lines") ? (
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Devolución" required>
+              <select value={lineReturn} onChange={(e) => setLineReturn(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(query.data?.items ?? []).map((o) => (
+                  <option key={o.id} value={o.id}>{o.code}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Producto" required>
+              <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(products.data?.items ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Cantidad" required>
+              <TextInput type="number" value={lineQty} onChange={(e) => setLineQty(e.target.value)} placeholder="0" required />
+            </FormField>
+            <FormField label="Condición">
+              <select value={lineCondition} onChange={(e) => setLineCondition(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                {CONDITIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={addLine}>Agregar</AsyncButton>
+          </form>
+        </section>
+      ) : null}
 
       <DataTable
         columns={columns}

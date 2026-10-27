@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, InventoryMovement, MovementType, PagedResult } from "@/api/types";
+import { Autorizado } from "@/components/Autorizado";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -122,63 +123,67 @@ export function MovimientosPage(): React.JSX.Element {
         description="Registro manual de movimientos y reversos (el kardex es inmutable)."
         crumbs={[{ label: "Inventario" }, { label: "Movimientos" }]}
       />
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Registrar movimiento</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Almacén" required>
-            <select value={wh} onChange={(e) => setWh(e.target.value)} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(warehouses.data?.items ?? []).map((w) => (
-                <option key={w.id} value={w.id}>{w.code} · {w.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Producto" required>
-            <select value={product} onChange={(e) => setProduct(e.target.value)} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(products.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Tipo" required>
-            <select value={mtype} onChange={(e) => setMtype(e.target.value)} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(movementTypes.data?.items ?? []).map((t) => (
-                <option key={t.id} value={t.id}>{t.code} · {t.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Cantidad (+/−)" required>
-            <TextInput type="number" value={qty} onChange={(e) => setQty(e.target.value)} placeholder="0" required />
-          </FormField>
-          <FormField label="Costo unit.">
-            <TextInput type="number" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="0,00" />
-          </FormField>
-          <FormField label="Documento">
-            <TextInput value={docRef} onChange={(e) => setDocRef(e.target.value)} placeholder="REF-0001" />
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createMovement}>Registrar</AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/inventory/movements"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Registrar movimiento</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Almacén" required>
+              <select value={wh} onChange={(e) => setWh(e.target.value)} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(warehouses.data?.items ?? []).map((w) => (
+                  <option key={w.id} value={w.id}>{w.code} · {w.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Producto" required>
+              <select value={product} onChange={(e) => setProduct(e.target.value)} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(products.data?.items ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Tipo" required>
+              <select value={mtype} onChange={(e) => setMtype(e.target.value)} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(movementTypes.data?.items ?? []).map((t) => (
+                  <option key={t.id} value={t.id}>{t.code} · {t.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Cantidad (+/−)" required>
+              <TextInput type="number" value={qty} onChange={(e) => setQty(e.target.value)} placeholder="0" required />
+            </FormField>
+            <FormField label="Costo unit.">
+              <TextInput type="number" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="0,00" />
+            </FormField>
+            <FormField label="Documento">
+              <TextInput value={docRef} onChange={(e) => setDocRef(e.target.value)} placeholder="REF-0001" />
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createMovement}>Registrar</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Reversar movimiento</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Movimiento" required>
-            <select value={revId} onChange={(e) => setRevId(e.target.value)} className="h-10 w-72 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(query.data?.items ?? []).map((m) => (
-                <option key={m.id} value={m.id}>{m.document_ref ?? m.id} · {m.quantity} · {m.status}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Motivo">
-            <TextInput value={revReason} onChange={(e) => setRevReason(e.target.value)} placeholder="Registro erróneo" />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={reverseMovement}>Reversar</AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/inventory/movements/reverse"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Reversar movimiento</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Movimiento" required>
+              <select value={revId} onChange={(e) => setRevId(e.target.value)} className="h-10 w-72 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(query.data?.items ?? []).map((m) => (
+                  <option key={m.id} value={m.id}>{m.document_ref ?? m.id} · {m.quantity} · {m.status}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Motivo">
+              <TextInput value={revReason} onChange={(e) => setRevReason(e.target.value)} placeholder="Registro erróneo" />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={reverseMovement}>Reversar</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <DataTable
         columns={columns}

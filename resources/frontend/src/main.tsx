@@ -12,6 +12,7 @@ import { debeReintentar } from "./app/company/errores";
 import { crearHashDeClave } from "./app/company/queryScope";
 import { AuthProvider } from "./app/contexts/AuthContext";
 import { CompanyProvider } from "./app/contexts/CompanyContext";
+import { AutoridadProvider } from "@/app/autoridad/AutoridadContext";
 import { LicenseProvider } from "./app/contexts/LicenseContext";
 import { NotificationProvider } from "./app/contexts/NotificationContext";
 import { ReauthProvider } from "./app/contexts/ReauthContext";
@@ -42,7 +43,9 @@ createRoot(document.getElementById("root") as HTMLElement).render(
           <ReauthProvider>
             <LicenseProvider>
               <CompanyProvider>
-                <RouterProvider router={router} />
+                <AutoridadProvider>
+                  <RouterProvider router={router} />
+                </AutoridadProvider>
                 <NotificationViewport />
               </CompanyProvider>
             </LicenseProvider>

@@ -12,6 +12,8 @@ import { Link } from "react-router";
 
 import { apiFetch } from "@/api/client";
 import { useCompany } from "@/app/contexts/CompanyContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { Autorizado } from "@/components/Autorizado";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
@@ -32,6 +34,7 @@ const columnHelper = createColumnHelper<DocumentSummary>();
 
 export function BibliotecaPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
+  const { puede } = useAutoridad();
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
 
@@ -224,45 +227,48 @@ export function BibliotecaPage(): React.JSX.Element {
         ) : undefined}
       />
 
-      <section className="mt-6 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-3 text-base font-semibold text-text-900">Nuevo documento</h2>
-        <p className="mb-3 text-sm text-text-500">
-          El documento se crea primero y el archivo se carga después, como una versión.
-        </p>
-        <div className="flex flex-wrap items-end gap-3">
-          <FormField label="Título" required>
-            <TextInput value={newTitle} onChange={(e) => setNewTitle(e.target.value)}
-                       aria-label="Título del documento" className="sm:w-64" />
-          </FormField>
-          <FormField label="Tipo documental" required>
-            <select value={newType} onChange={(e) => setNewType(e.target.value)}
-                    aria-label="Tipo documental del nuevo documento"
-                    className="h-10 w-full cursor-pointer rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900 sm:w-56">
-              <option value="">Seleccione…</option>
-              {selectableTypes.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Número">
-            <TextInput value={newNumber} onChange={(e) => setNewNumber(e.target.value)}
-                       aria-label="Número del documento" className="sm:w-40" />
-          </FormField>
-          <FormField label="Vencimiento"
-                     required={Boolean(selectedType?.requires_expiration)}>
-            <TextInput type="date" value={newExpiration} className="sm:w-44"
-                       aria-label="Fecha de vencimiento"
-                       onChange={(e) => setNewExpiration(e.target.value)} />
-          </FormField>
-          <AsyncButton
-            variant="primary" onClick={createDocument}
-            disabled={!activeCompany || !newTitle || !newType
-              || (Boolean(selectedType?.requires_expiration) && !newExpiration)}
-          >
-            Crear documento
-          </AsyncButton>
-        </div>
-      </section>
+      <Autorizado operacion={["POST", "/documentos"]}>
+        <section className="mt-6 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-3 text-base font-semibold text-text-900">Nuevo documento</h2>
+          <p className="mb-3 text-sm text-text-500">
+            El documento se crea primero y el archivo se carga después, como una versión.
+          </p>
+          <div className="flex flex-wrap items-end gap-3">
+            <FormField label="Título" required>
+              <TextInput value={newTitle} onChange={(e) => setNewTitle(e.target.value)}
+                         aria-label="Título del documento" className="sm:w-64" />
+            </FormField>
+            <FormField label="Tipo documental" required>
+              <select value={newType} onChange={(e) => setNewType(e.target.value)}
+                      aria-label="Tipo documental del nuevo documento"
+                      className="h-10 w-full cursor-pointer rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900 sm:w-56">
+                <option value="">Seleccione…</option>
+                {selectableTypes.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Número">
+              <TextInput value={newNumber} onChange={(e) => setNewNumber(e.target.value)}
+                         aria-label="Número del documento" className="sm:w-40" />
+            </FormField>
+            <FormField label="Vencimiento"
+                       required={Boolean(selectedType?.requires_expiration)}>
+              <TextInput type="date" value={newExpiration} className="sm:w-44"
+                         aria-label="Fecha de vencimiento"
+                         onChange={(e) => setNewExpiration(e.target.value)} />
+            </FormField>
+            <AsyncButton
+              variant="primary" onClick={createDocument}
+              disabled={!activeCompany || !newTitle || !newType
+                || (Boolean(selectedType?.requires_expiration) && !newExpiration)
+                || !puede("POST", "/documentos")}
+            >
+              Crear documento
+            </AsyncButton>
+          </div>
+        </section>
+      </Autorizado>
     </PageContent>
   );
 }

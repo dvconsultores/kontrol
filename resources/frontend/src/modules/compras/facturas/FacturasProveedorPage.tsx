@@ -5,8 +5,10 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, PagedResult, Party, SupplierInvoiceSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -18,6 +20,7 @@ const columnHelper = createColumnHelper<SupplierInvoiceSummary>();
 export function FacturasProveedorPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [newSupplier, setNewSupplier] = useState("");
   const [newNumber, setNewNumber] = useState("");
@@ -99,6 +102,7 @@ export function FacturasProveedorPage(): React.JSX.Element {
       header: "Acciones",
       cell: ({ row }) => {
         const a = row.original.allowed_actions;
+        const mayTransition = puede("POST", `/purchasing/supplier-invoices/${row.original.id}/transition`);
         const transitions: Array<[string, string]> = [
           ["validate", "VALIDATED"],
           ["match", "MATCHED"],
@@ -108,7 +112,7 @@ export function FacturasProveedorPage(): React.JSX.Element {
         return (
           <div className="flex justify-end gap-1">
             {transitions
-              .filter(([key]) => a[key])
+              .filter(([key]) => a[key] && mayTransition)
               .map(([key, target]) => (
                 <AsyncButton key={key} size="sm" variant="secondary" onClick={() => runTransition(row.original.id, target)}>
                   {key}
@@ -128,55 +132,59 @@ export function FacturasProveedorPage(): React.JSX.Element {
         crumbs={[{ label: "Compras" }, { label: "Facturas" }]}
       />
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva factura</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Proveedor" required>
-            <select value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(suppliers.data?.items ?? []).filter((c) => (c.roles ?? []).includes("PROVEEDOR")).map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="N.º de factura" required>
-            <TextInput value={newNumber} onChange={(e) => setNewNumber(e.target.value)} placeholder="Ej. F-0001" required />
-          </FormField>
-          <FormField label="N.º de control">
-            <TextInput value={newControl} onChange={(e) => setNewControl(e.target.value)} placeholder="Opcional" />
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createInvoice}>Crear</AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/purchasing/supplier-invoices"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nueva factura</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Proveedor" required>
+              <select value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(suppliers.data?.items ?? []).filter((c) => (c.roles ?? []).includes("PROVEEDOR")).map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="N.º de factura" required>
+              <TextInput value={newNumber} onChange={(e) => setNewNumber(e.target.value)} placeholder="Ej. F-0001" required />
+            </FormField>
+            <FormField label="N.º de control">
+              <TextInput value={newControl} onChange={(e) => setNewControl(e.target.value)} placeholder="Opcional" />
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createInvoice}>Crear</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Factura" required>
-            <select value={lineInvoice} onChange={(e) => setLineInvoice(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(query.data?.items ?? []).map((f) => (
-                <option key={f.id} value={f.id}>{f.invoice_number || f.id.slice(0, 8)}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Producto" required>
-            <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(products.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Cantidad" required>
-            <TextInput type="number" value={lineQty} onChange={(e) => setLineQty(e.target.value)} placeholder="0" required />
-          </FormField>
-          <FormField label="Precio" required>
-            <TextInput type="number" value={linePrice} onChange={(e) => setLinePrice(e.target.value)} placeholder="0,00" required />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={addLine}>Agregar</AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/purchasing/supplier-invoices/_/lines"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Factura" required>
+              <select value={lineInvoice} onChange={(e) => setLineInvoice(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(query.data?.items ?? []).map((f) => (
+                  <option key={f.id} value={f.id}>{f.invoice_number || f.id.slice(0, 8)}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Producto" required>
+              <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(products.data?.items ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Cantidad" required>
+              <TextInput type="number" value={lineQty} onChange={(e) => setLineQty(e.target.value)} placeholder="0" required />
+            </FormField>
+            <FormField label="Precio" required>
+              <TextInput type="number" value={linePrice} onChange={(e) => setLinePrice(e.target.value)} placeholder="0,00" required />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={addLine}>Agregar</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <DataTable
         columns={columns}

@@ -12,6 +12,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, FileText, Link2Off, Lock, ShieldAlert, ShieldCheck, Upload, X } from "lucide-react";
 import { useId, useRef, useState } from "react";
 
+import { Autorizado } from "@/components/Autorizado";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { apiFetch } from "@/api/client";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
@@ -40,6 +42,7 @@ export function AdjuntosPanel({
   const queryClient = useQueryClient();
   const { activeCompany } = useCompany();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -190,7 +193,8 @@ export function AdjuntosPanel({
                   <Download className="h-4 w-4" aria-hidden="true" />
                 </AsyncButton>
               ) : null}
-              {item.link && !item.link.is_frozen && can(item, "link") ? (
+              {item.link && !item.link.is_frozen && can(item, "link")
+                && puede("DELETE", `/documentos/vinculos/${item.link.id}`) ? (
                 <AsyncButton
                   variant="ghost" size="sm"
                   aria-label={`Desvincular ${item.title}`}
@@ -208,42 +212,46 @@ export function AdjuntosPanel({
         ) : null}
       </ul>
 
-      <div className="border-t border-border-default pt-3">
-        <div className="flex flex-wrap items-end gap-3">
-          <FormField label="Tipo documental" required>
-            <select
-              value={typeId} onChange={(e) => setTypeId(e.target.value)}
-              aria-label="Tipo documental del archivo"
-              className="h-10 w-full cursor-pointer rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900 sm:w-56"
+      <Autorizado
+        operacion={["POST", "/documentos"]}
+        fallback={<p className="py-2 text-sm text-text-500">No tiene permiso para adjuntar documentos.</p>}
+      >
+        <div className="border-t border-border-default pt-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <FormField label="Tipo documental" required>
+              <select
+                value={typeId} onChange={(e) => setTypeId(e.target.value)}
+                aria-label="Tipo documental del archivo"
+                className="h-10 w-full cursor-pointer rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900 sm:w-56"
+              >
+                <option value="">Seleccione…</option>
+                {availableTypes.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </FormField>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={inputId} className="text-sm font-medium text-text-700">
+                Archivo <span aria-hidden="true" className="text-danger-600">*</span>
+                <span className="sr-only"> (obligatorio)</span>
+              </label>
+              {/* El control nativo recibe foco y funciona con teclado. */}
+              <input
+                id={inputId} ref={inputRef} type="file"
+                onChange={(e) => { setFile(e.target.files?.[0] ?? null); setPhase("idle"); }}
+                className="block w-full cursor-pointer text-sm text-text-700 file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border-default file:bg-surface-50 file:px-3 file:py-1.5 file:text-sm"
+              />
+            </div>
+
+            <AsyncButton
+              type="button" variant="primary" onClick={upload}
+              disabled={!file || !typeId || phase === "uploading" || phase === "processing"}
             >
-              <option value="">Seleccione…</option>
-              {availableTypes.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </FormField>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={inputId} className="text-sm font-medium text-text-700">
-              Archivo <span aria-hidden="true" className="text-danger-600">*</span>
-              <span className="sr-only"> (obligatorio)</span>
-            </label>
-            {/* El control nativo recibe foco y funciona con teclado. */}
-            <input
-              id={inputId} ref={inputRef} type="file"
-              onChange={(e) => { setFile(e.target.files?.[0] ?? null); setPhase("idle"); }}
-              className="block w-full cursor-pointer text-sm text-text-700 file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border-default file:bg-surface-50 file:px-3 file:py-1.5 file:text-sm"
-            />
+              <Upload className="mr-1 h-4 w-4" aria-hidden="true" />
+              Adjuntar
+            </AsyncButton>
           </div>
-
-          <AsyncButton
-            type="button" variant="primary" onClick={upload}
-            disabled={!file || !typeId || phase === "uploading" || phase === "processing"}
-          >
-            <Upload className="mr-1 h-4 w-4" aria-hidden="true" />
-            Adjuntar
-          </AsyncButton>
-        </div>
 
         {selectedType ? (
           <p className="mt-2 text-xs text-text-500">
@@ -279,7 +287,8 @@ export function AdjuntosPanel({
             {errorMessage}
           </p>
         ) : null}
-      </div>
+        </div>
+      </Autorizado>
     </section>
   );
 }

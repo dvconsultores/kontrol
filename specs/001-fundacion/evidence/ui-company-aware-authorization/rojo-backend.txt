@@ -1,0 +1,15 @@
+E       KeyError: 'tenant_permissions'
+E       assert 404 == 200
+E       assert 'NOT_FOUND' == 'COMPANY_NOT_FOUND'
+E       assert 404 == 200
+E       assert 404 == 200
+E       assert 404 == 200
+E       assert 404 == 200
+FAILED tests/test_ui_authority_api.py::test_uia_b01_tenant_permissions_solo_rol_nulo
+FAILED tests/test_ui_authority_api.py::test_uia_b02_authority_company_por_empresa
+FAILED tests/test_ui_authority_api.py::test_uia_b03_authority_company_empresa_otro_tenant
+FAILED tests/test_ui_authority_api.py::test_uia_b04_admin_sin_permisos_funcionales
+FAILED tests/test_ui_authority_api.py::test_uia_b05_funcional_completo_solo_en_empresa_asignada
+FAILED tests/test_ui_authority_api.py::test_uia_b06_operations_contrato_exacto
+FAILED tests/test_ui_authority_api.py::test_uia_b07_authority_company_relee_asignaciones
+7 failed, 1 warning in 8.98s

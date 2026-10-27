@@ -5,6 +5,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -89,26 +90,28 @@ export function SucursalesPage(): React.JSX.Element {
         </div>
       ) : (
         <>
-          <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-            <h2 className="mb-2 text-base font-semibold text-text-900">Registrar sucursal</h2>
-            <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-              <FormField label="Código" required>
-                <TextInput value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ej. SUC-01" required />
-              </FormField>
-              <FormField label="Nombre" required>
-                <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre de la sucursal" required />
-              </FormField>
-              <FormField label="Dirección">
-                <TextInput value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Opcional" />
-              </FormField>
-              <FormField label="Encargado">
-                <TextInput value={manager} onChange={(e) => setManager(e.target.value)} placeholder="Opcional" />
-              </FormField>
-              <AsyncButton type="submit" variant="primary" onClick={createBranch}>
-                Registrar
-              </AsyncButton>
-            </form>
-          </section>
+          <Autorizado operacion={["POST", "/organization/branches"]}>
+            <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+              <h2 className="mb-2 text-base font-semibold text-text-900">Registrar sucursal</h2>
+              <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+                <FormField label="Código" required>
+                  <TextInput value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ej. SUC-01" required />
+                </FormField>
+                <FormField label="Nombre" required>
+                  <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre de la sucursal" required />
+                </FormField>
+                <FormField label="Dirección">
+                  <TextInput value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Opcional" />
+                </FormField>
+                <FormField label="Encargado">
+                  <TextInput value={manager} onChange={(e) => setManager(e.target.value)} placeholder="Opcional" />
+                </FormField>
+                <AsyncButton type="submit" variant="primary" onClick={createBranch}>
+                  Registrar
+                </AsyncButton>
+              </form>
+            </section>
+          </Autorizado>
 
           <section className="rounded-lg border border-border-default bg-surface-0 p-4">
             <h2 className="mb-2 text-base font-semibold text-text-900">

@@ -24,6 +24,16 @@ vi.mock("@/api/client", async (original) => ({
   apiFetch: (...args: unknown[]) => apiFetch(...args),
 }));
 
+vi.mock("@/app/autoridad/AutoridadContext", () => ({
+  useAutoridad: () => ({
+    estado: "LISTA",
+    puede: () => true,
+    tiene: () => true,
+    motivo: () => null,
+    motivoDeCapacidad: () => null,
+  }),
+}));
+
 const { AuditoriaPage } = await import("./AuditoriaPage");
 const { listAuditEvents } = await import("@/api/audit");
 

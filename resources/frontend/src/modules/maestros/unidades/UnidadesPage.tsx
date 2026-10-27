@@ -12,6 +12,7 @@ import { useMemo, useState } from "react";
 import { apiFetch } from "@/api/client";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -175,6 +176,7 @@ export function UnidadesPage(): React.JSX.Element {
         </div>
       ) : (
         <>
+          <Autorizado operacion={["POST", "/maestros/unidades"]}>
           <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
             <h2 className="mb-2 text-base font-semibold text-text-900">Nueva unidad</h2>
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
@@ -235,6 +237,7 @@ export function UnidadesPage(): React.JSX.Element {
               </AsyncButton>
             </form>
           </section>
+          </Autorizado>
 
           <section className="rounded-lg border border-border-default bg-surface-0 p-4">
             <div className="mb-3 flex flex-wrap items-end gap-3">

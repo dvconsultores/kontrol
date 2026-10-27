@@ -52,6 +52,46 @@ def setup_status(db: Session) -> SetupStatus:
     )
 
 
+# Catálogo de capacidades del arranque (recurso → acciones). Fuente única también para la
+# instantánea de la UI (Spec 003, ADR-018).
+CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
+    "dashboard": ["view"],
+    # `delete` y `manage_structure` los añade la Spec 008 al recurso
+    # existente: se extiende el modelo de la Spec 003, no se crea otro.
+    "organization": ["view", "create", "edit", "deactivate", "activate", "delete", "manage_structure"],
+    "users": ["view", "create", "edit", "deactivate", "activate", "mfa_reset"],
+    "roles": ["view", "create", "edit"],
+    "audit": ["view"],
+    "license": ["view", "create", "edit", "approve"],
+    "homologacion": ["view", "create", "edit", "approve"],
+    "maestros": ["view", "create", "edit", "deactivate"],
+    "compras": ["view", "create", "approve", "quality", "apply"],
+    # `submit` lo añade la Spec 030: emitir un pedido no es aprobarlo.
+    "ventas": ["view", "create", "submit", "approve", "quality", "apply"],
+    # `confirm` lo añade la Spec 021: confirmar el inventario recibido no es
+    # aprobarlo ni moverlo; es la liberación formal que `R-D0-10-4` exige.
+    "inventario": ["view", "create", "approve", "transition", "reserve", "confirm"],
+    "tesoreria": ["view", "create", "approve"],
+    "fiscal": ["view", "create", "approve"],
+    "regulatorio": ["view", "create", "approve"],
+    "reportes": ["view", "export"],
+    "aprobaciones": ["view", "create", "edit", "approve", "delegate", "configure"],
+    # Recurso nuevo de la Spec 046. Extiende el modelo de la Spec 003.
+    "documentos": ["view", "create", "edit", "upload", "download", "link",
+                   "deactivate", "delete", "manage_types"],
+    # Recurso nuevo de la Spec 012. Tener el permiso **no** es tener acceso
+    # a una empresa: `comercial:create` dice que el usuario puede crear
+    # maestros comerciales, no en cuál. Eso lo decide `CompanyContext`.
+    "comercial": ["view", "create", "edit", "manage_policies", "publish", "archive"],
+    # Recursos nuevos de la Spec 047. Ver lo propio —notificaciones recibidas,
+    # tareas donde se es candidato— no pide permiso de recurso: lo autoriza la
+    # fila de destinatario y el contexto de empresa (CL-047-05).
+    "notificaciones": ["configure"],
+    "tareas": ["view", "assign", "complete", "configure"],
+    "alertas": ["view"],
+}
+
+
 def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
     """Crea o completa los dos roles protegidos de toda la instalación.
 
@@ -60,42 +100,7 @@ def _bootstrap_roles(db: Session, tenant_id: str, actor_user_id: str) -> Role:
     faltantes se añaden y, si ADMIN ya existía con capacidades funcionales, se le
     quitan. Devuelve ADMIN.
     """
-    resources_actions = {
-        "dashboard": ["view"],
-        # `delete` y `manage_structure` los añade la Spec 008 al recurso
-        # existente: se extiende el modelo de la Spec 003, no se crea otro.
-        "organization": ["view", "create", "edit", "deactivate", "activate", "delete", "manage_structure"],
-        "users": ["view", "create", "edit", "deactivate", "activate", "mfa_reset"],
-        "roles": ["view", "create", "edit"],
-        "audit": ["view"],
-        "license": ["view", "create", "edit", "approve"],
-        "homologacion": ["view", "create", "edit", "approve"],
-        "maestros": ["view", "create", "edit", "deactivate"],
-        "compras": ["view", "create", "approve", "quality", "apply"],
-        # `submit` lo añade la Spec 030: emitir un pedido no es aprobarlo.
-        "ventas": ["view", "create", "submit", "approve", "quality", "apply"],
-        # `confirm` lo añade la Spec 021: confirmar el inventario recibido no es
-        # aprobarlo ni moverlo; es la liberación formal que `R-D0-10-4` exige.
-        "inventario": ["view", "create", "approve", "transition", "reserve", "confirm"],
-        "tesoreria": ["view", "create", "approve"],
-        "fiscal": ["view", "create", "approve"],
-        "regulatorio": ["view", "create", "approve"],
-        "reportes": ["view", "export"],
-        "aprobaciones": ["view", "create", "edit", "approve", "delegate", "configure"],
-        # Recurso nuevo de la Spec 046. Extiende el modelo de la Spec 003.
-        "documentos": ["view", "create", "edit", "upload", "download", "link",
-                       "deactivate", "delete", "manage_types"],
-        # Recurso nuevo de la Spec 012. Tener el permiso **no** es tener acceso
-        # a una empresa: `comercial:create` dice que el usuario puede crear
-        # maestros comerciales, no en cuál. Eso lo decide `CompanyContext`.
-        "comercial": ["view", "create", "edit", "manage_policies", "publish", "archive"],
-        # Recursos nuevos de la Spec 047. Ver lo propio —notificaciones recibidas,
-        # tareas donde se es candidato— no pide permiso de recurso: lo autoriza la
-        # fila de destinatario y el contexto de empresa (CL-047-05).
-        "notificaciones": ["configure"],
-        "tareas": ["view", "assign", "complete", "configure"],
-        "alertas": ["view"],
-    }
+    resources_actions = CATALOGO_DE_PERMISOS
     def _rol_protegido(db: Session, code: str, name: str, actor_user_id: str) -> Role:
         existing = db.execute(select(Role).where(Role.code == code, Role.company_id.is_(None), Role.protected.is_(True))).scalars().first()
         if existing:

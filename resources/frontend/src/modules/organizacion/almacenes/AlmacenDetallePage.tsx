@@ -14,6 +14,7 @@ import { useParams } from "react-router";
 import { apiFetch } from "@/api/client";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
@@ -140,32 +141,36 @@ export function AlmacenDetallePage(): React.JSX.Element {
         return (
           <div className="flex justify-end gap-1">
             {can(node, "deactivate") || can(node, "activate") ? (
-              <AsyncButton
-                variant="ghost" size="sm"
-                aria-label={`${can(node, "deactivate") ? "Desactivar" : "Activar"} ${node.code}`}
-                title={can(node, "deactivate") ? "Desactivar" : "Activar"}
-                onClick={() => runAction(
-                  can(node, "deactivate") ? "Nodo desactivado" : "Nodo activado",
-                  () => apiFetch(
-                    `/organization/${LEVEL_LABEL[level].path}/${node.id}/` +
-                    (can(node, "deactivate") ? "deactivate" : "activate"), { method: "POST" }))}
-              >
-                <Power className="h-4 w-4" aria-hidden="true" />
-              </AsyncButton>
+              <Autorizado operacion={["POST", `/organization/${LEVEL_LABEL[level].path}/${node.id}/${can(node, "deactivate") ? "deactivate" : "activate"}`]}>
+                <AsyncButton
+                  variant="ghost" size="sm"
+                  aria-label={`${can(node, "deactivate") ? "Desactivar" : "Activar"} ${node.code}`}
+                  title={can(node, "deactivate") ? "Desactivar" : "Activar"}
+                  onClick={() => runAction(
+                    can(node, "deactivate") ? "Nodo desactivado" : "Nodo activado",
+                    () => apiFetch(
+                      `/organization/${LEVEL_LABEL[level].path}/${node.id}/` +
+                      (can(node, "deactivate") ? "deactivate" : "activate"), { method: "POST" }))}
+                >
+                  <Power className="h-4 w-4" aria-hidden="true" />
+                </AsyncButton>
+              </Autorizado>
             ) : null}
-            <AsyncButton
-              variant="ghost" size="sm" disabled={!can(node, "delete")}
-              aria-label={can(node, "delete")
-                ? `Eliminar ${node.code}`
-                : `${node.code} no puede eliminarse: tiene descendientes o histórico`}
-              title={can(node, "delete") ? "Eliminar" : "No puede eliminarse: desactívelo"}
-              onClick={() => runAction("Nodo eliminado", () => apiFetch(
-                `/organization/${LEVEL_LABEL[level].path}/${node.id}`, { method: "DELETE" }))}
-            >
-              {can(node, "delete")
-                ? <Trash2 className="h-4 w-4" aria-hidden="true" />
-                : <Ban className="h-4 w-4" aria-hidden="true" />}
-            </AsyncButton>
+            <Autorizado operacion={["DELETE", `/organization/${LEVEL_LABEL[level].path}/${node.id}`]}>
+              <AsyncButton
+                variant="ghost" size="sm" disabled={!can(node, "delete")}
+                aria-label={can(node, "delete")
+                  ? `Eliminar ${node.code}`
+                  : `${node.code} no puede eliminarse: tiene descendientes o histórico`}
+                title={can(node, "delete") ? "Eliminar" : "No puede eliminarse: desactívelo"}
+                onClick={() => runAction("Nodo eliminado", () => apiFetch(
+                  `/organization/${LEVEL_LABEL[level].path}/${node.id}`, { method: "DELETE" }))}
+              >
+                {can(node, "delete")
+                  ? <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  : <Ban className="h-4 w-4" aria-hidden="true" />}
+              </AsyncButton>
+            </Autorizado>
           </div>
         );
       },
@@ -182,30 +187,34 @@ export function AlmacenDetallePage(): React.JSX.Element {
         const loc = row.original;
         return (
           <div className="flex justify-end gap-1">
-            <AsyncButton
-              variant="ghost" size="sm"
-              aria-label={`${can(loc, "deactivate") ? "Desactivar" : "Activar"} la ubicación ${loc.code}`}
-              title={can(loc, "deactivate") ? "Desactivar" : "Activar"}
-              onClick={() => runAction(
-                can(loc, "deactivate") ? "Ubicación desactivada" : "Ubicación activada",
-                () => apiFetch(`/organization/locations/${loc.id}/` +
-                  (can(loc, "deactivate") ? "deactivate" : "activate"), { method: "POST" }))}
-            >
-              <Power className="h-4 w-4" aria-hidden="true" />
-            </AsyncButton>
-            <AsyncButton
-              variant="ghost" size="sm" disabled={!loc.can_delete}
-              aria-label={loc.can_delete
-                ? `Eliminar la ubicación ${loc.code}`
-                : `${loc.code} no puede eliminarse: tiene historial de inventario`}
-              title={loc.can_delete ? "Eliminar" : "No puede eliminarse: tiene historial. Desactívela."}
-              onClick={() => runAction("Ubicación eliminada", () => apiFetch(
-                `/organization/locations/${loc.id}`, { method: "DELETE" }))}
-            >
-              {loc.can_delete
-                ? <Trash2 className="h-4 w-4" aria-hidden="true" />
-                : <Ban className="h-4 w-4" aria-hidden="true" />}
-            </AsyncButton>
+            <Autorizado operacion={["POST", `/organization/locations/${loc.id}/${can(loc, "deactivate") ? "deactivate" : "activate"}`]}>
+              <AsyncButton
+                variant="ghost" size="sm"
+                aria-label={`${can(loc, "deactivate") ? "Desactivar" : "Activar"} la ubicación ${loc.code}`}
+                title={can(loc, "deactivate") ? "Desactivar" : "Activar"}
+                onClick={() => runAction(
+                  can(loc, "deactivate") ? "Ubicación desactivada" : "Ubicación activada",
+                  () => apiFetch(`/organization/locations/${loc.id}/` +
+                    (can(loc, "deactivate") ? "deactivate" : "activate"), { method: "POST" }))}
+              >
+                <Power className="h-4 w-4" aria-hidden="true" />
+              </AsyncButton>
+            </Autorizado>
+            <Autorizado operacion={["DELETE", `/organization/locations/${loc.id}`]}>
+              <AsyncButton
+                variant="ghost" size="sm" disabled={!loc.can_delete}
+                aria-label={loc.can_delete
+                  ? `Eliminar la ubicación ${loc.code}`
+                  : `${loc.code} no puede eliminarse: tiene historial de inventario`}
+                title={loc.can_delete ? "Eliminar" : "No puede eliminarse: tiene historial. Desactívela."}
+                onClick={() => runAction("Ubicación eliminada", () => apiFetch(
+                  `/organization/locations/${loc.id}`, { method: "DELETE" }))}
+              >
+                {loc.can_delete
+                  ? <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  : <Ban className="h-4 w-4" aria-hidden="true" />}
+              </AsyncButton>
+            </Autorizado>
           </div>
         );
       },
@@ -274,37 +283,39 @@ export function AlmacenDetallePage(): React.JSX.Element {
               <h2 className="mb-3 text-base font-semibold text-text-900">
                 {LEVEL_LABEL[nodeLevel].plural}
               </h2>
-              <form className="mb-4 flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-                <FormField label="Código" required>
-                  <TextInput value={nodeCode} onChange={(e) => setNodeCode(e.target.value)} required />
-                </FormField>
-                <FormField label="Nombre" required>
-                  <TextInput value={nodeName} onChange={(e) => setNodeName(e.target.value)} required />
-                </FormField>
-                {parentLevel ? (
-                  <FormField
-                    label={LEVEL_LABEL[parentLevel].singular}
-                    required={parentRequired}
-                    help={parentRequired
-                      ? undefined
-                      : `Todavía no hay ${LEVEL_LABEL[parentLevel].plural.toLowerCase()}: el nodo se creará sin asignar.`}
-                  >
-                    <select
-                      value={parentId} onChange={(e) => setParentId(e.target.value)}
-                      aria-label={`${LEVEL_LABEL[parentLevel].singular} al que pertenece`}
-                      className="h-10 w-56 cursor-pointer rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-                    >
-                      <option value="">{parentRequired ? "Seleccione…" : "Sin asignar"}</option>
-                      {(parents.data ?? []).map((p) => (
-                        <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-                      ))}
-                    </select>
+              <Autorizado operacion={["POST", `/organization/warehouses/${warehouseId}/${LEVEL_LABEL[nodeLevel].path}`]}>
+                <form className="mb-4 flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+                  <FormField label="Código" required>
+                    <TextInput value={nodeCode} onChange={(e) => setNodeCode(e.target.value)} required />
                   </FormField>
-                ) : null}
-                <AsyncButton type="submit" variant="primary" onClick={createNode} disabled={parentMissing}>
-                  Añadir {LEVEL_LABEL[nodeLevel].singular.toLowerCase()}
-                </AsyncButton>
-              </form>
+                  <FormField label="Nombre" required>
+                    <TextInput value={nodeName} onChange={(e) => setNodeName(e.target.value)} required />
+                  </FormField>
+                  {parentLevel ? (
+                    <FormField
+                      label={LEVEL_LABEL[parentLevel].singular}
+                      required={parentRequired}
+                      help={parentRequired
+                        ? undefined
+                        : `Todavía no hay ${LEVEL_LABEL[parentLevel].plural.toLowerCase()}: el nodo se creará sin asignar.`}
+                    >
+                      <select
+                        value={parentId} onChange={(e) => setParentId(e.target.value)}
+                        aria-label={`${LEVEL_LABEL[parentLevel].singular} al que pertenece`}
+                        className="h-10 w-56 cursor-pointer rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                      >
+                        <option value="">{parentRequired ? "Seleccione…" : "Sin asignar"}</option>
+                        {(parents.data ?? []).map((p) => (
+                          <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                        ))}
+                      </select>
+                    </FormField>
+                  ) : null}
+                  <AsyncButton type="submit" variant="primary" onClick={createNode} disabled={parentMissing}>
+                    Añadir {LEVEL_LABEL[nodeLevel].singular.toLowerCase()}
+                  </AsyncButton>
+                </form>
+              </Autorizado>
               <DataTable
                 columns={nodeColumns} data={nodes.data ?? []} loading={nodes.isLoading}
                 error={nodes.isError ? "No fue posible cargar los nodos." : null}
@@ -316,21 +327,23 @@ export function AlmacenDetallePage(): React.JSX.Element {
           ) : (
             <section className="rounded-lg border border-border-default bg-surface-0 p-4">
               <h2 className="mb-3 text-base font-semibold text-text-900">Ubicaciones</h2>
-              <form className="mb-4 flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-                <FormField
-                  label="Código"
-                  help={data.code_policy === "GENERATED" ? "Vacío = se genera con el patrón del almacén" : undefined}
-                  required={data.code_policy === "MANUAL"}
-                >
-                  <TextInput
-                    value={locationCode} onChange={(e) => setLocationCode(e.target.value)}
-                    placeholder={data.code_policy === "GENERATED" ? "Automático" : "Ej. A-0001"}
-                  />
-                </FormField>
-                <AsyncButton type="submit" variant="primary" onClick={createLocation}>
-                  Añadir ubicación
-                </AsyncButton>
-              </form>
+              <Autorizado operacion={["POST", "/organization/locations"]}>
+                <form className="mb-4 flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+                  <FormField
+                    label="Código"
+                    help={data.code_policy === "GENERATED" ? "Vacío = se genera con el patrón del almacén" : undefined}
+                    required={data.code_policy === "MANUAL"}
+                  >
+                    <TextInput
+                      value={locationCode} onChange={(e) => setLocationCode(e.target.value)}
+                      placeholder={data.code_policy === "GENERATED" ? "Automático" : "Ej. A-0001"}
+                    />
+                  </FormField>
+                  <AsyncButton type="submit" variant="primary" onClick={createLocation}>
+                    Añadir ubicación
+                  </AsyncButton>
+                </form>
+              </Autorizado>
               <DataTable
                 columns={locationColumns} data={locations.data?.items ?? []}
                 loading={locations.isLoading}

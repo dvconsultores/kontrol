@@ -153,6 +153,19 @@ type ReauthHandler = () => Promise<boolean>;
 let reauthHandler: ReauthHandler | null = null;
 let reauthInFlight: Promise<boolean> | null = null;
 
+/**
+ * La autoridad que la UI muestra puede caducar con la sesión abierta (rol o
+ * alcance revocados). El proveedor de autoridad se registra aquí para poder
+ * recargarla cuando el backend la niega.
+ */
+export type CodigoDeDenegacion = "PERMISSION_DENIED" | "COMPANY_SCOPE_FORBIDDEN";
+type DenegacionHandler = (codigo: CodigoDeDenegacion) => void;
+let denegacionHandler: DenegacionHandler | null = null;
+
+export function setAuthorityDenialHandler(handler: DenegacionHandler | null): void {
+  denegacionHandler = handler;
+}
+
 export function setReauthHandler(handler: ReauthHandler | null): void {
   reauthHandler = handler;
 }
@@ -254,7 +267,18 @@ async function rawFetch<T>(path: string, options: RequestOptions): Promise<T> {
 
   if (!response.ok) {
     const body = isApiErrorBody(payload) ? payload : {};
-    throw new ApiError(response.status, body);
+    const error = new ApiError(response.status, body);
+    if (
+      response.status === 403 &&
+      (error.code === "PERMISSION_DENIED" || error.code === "COMPANY_SCOPE_FORBIDDEN")
+    ) {
+      try {
+        denegacionHandler?.(error.code);
+      } catch {
+        /* un fallo del aviso no cambia el error */
+      }
+    }
+    throw error;
   }
 
   return payload as T;

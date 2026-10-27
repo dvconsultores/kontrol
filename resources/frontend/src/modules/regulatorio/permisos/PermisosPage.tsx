@@ -5,7 +5,9 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { OfficialDocumentSummary, PermitInstanceSummary, PermitTypeSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -18,6 +20,7 @@ const columnHelper = createColumnHelper<PermitInstanceSummary>();
 export function PermisosPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [permitTypeId, setPermitTypeId] = useState("");
   const [number, setNumber] = useState("");
@@ -84,7 +87,7 @@ export function PermisosPage(): React.JSX.Element {
         };
         return (
           <div className="flex justify-end gap-1">
-            {next[s] ? <AsyncButton size="sm" variant="secondary" onClick={() => transition(row.original.id, next[s])}>{next[s]}</AsyncButton> : null}
+            {next[s] && puede("POST", `/regulatory/permits/${row.original.id}/transition`) ? <AsyncButton size="sm" variant="secondary" onClick={() => transition(row.original.id, next[s])}>{next[s]}</AsyncButton> : null}
           </div>
         );
       },
@@ -106,20 +109,22 @@ export function PermisosPage(): React.JSX.Element {
         crumbs={[{ label: "Regulatorio" }, { label: "Permisos y guías" }]}
       />
 
-      {section("Crear permiso", (
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Tipo">
-            <select value={permitTypeId} onChange={(e) => setPermitTypeId(e.target.value)} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(permitTypes.data?.items ?? []).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Número">
-            <TextInput value={number} onChange={(e) => setNumber(e.target.value)} placeholder="Ej. PER-001" />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={createPermit}>Crear</AsyncButton>
-        </form>
-      ))}
+      <Autorizado operacion={["POST", "/regulatory/permits"]}>
+        {section("Crear permiso", (
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Tipo">
+              <select value={permitTypeId} onChange={(e) => setPermitTypeId(e.target.value)} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(permitTypes.data?.items ?? []).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Número">
+              <TextInput value={number} onChange={(e) => setNumber(e.target.value)} placeholder="Ej. PER-001" />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={createPermit}>Crear</AsyncButton>
+          </form>
+        ))}
+      </Autorizado>
 
       <DataTable
         columns={columns}
@@ -131,22 +136,24 @@ export function PermisosPage(): React.JSX.Element {
         emptyDescription="Cree un permiso a partir de un tipo configurado."
       />
 
-      {section("Registrar guía oficial", (
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Tipo de guía">
-            <select value={docKind} onChange={(e) => setDocKind(e.target.value as typeof docKind)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="SICA">SICA</option>
-              <option value="SIGESAI">SIGESAI</option>
-              <option value="SACS">SACS</option>
-              <option value="GUIA_FISCAL">Guía fiscal</option>
-            </select>
-          </FormField>
-          <FormField label="Número">
-            <TextInput value={docNumber} onChange={(e) => setDocNumber(e.target.value)} placeholder="Ej. G-2026-001" />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={registerDoc}>Registrar</AsyncButton>
-        </form>
-      ))}
+      <Autorizado operacion={["POST", "/regulatory/official-documents"]}>
+        {section("Registrar guía oficial", (
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Tipo de guía">
+              <select value={docKind} onChange={(e) => setDocKind(e.target.value as typeof docKind)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="SICA">SICA</option>
+                <option value="SIGESAI">SIGESAI</option>
+                <option value="SACS">SACS</option>
+                <option value="GUIA_FISCAL">Guía fiscal</option>
+              </select>
+            </FormField>
+            <FormField label="Número">
+              <TextInput value={docNumber} onChange={(e) => setDocNumber(e.target.value)} placeholder="Ej. G-2026-001" />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={registerDoc}>Registrar</AsyncButton>
+          </form>
+        ))}
+      </Autorizado>
 
       {section("Guías y documentos oficiales", (
         <div>

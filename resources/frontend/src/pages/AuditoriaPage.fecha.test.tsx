@@ -22,6 +22,15 @@ vi.mock("@/api/client", async (original) => ({
   ...(await original<typeof import("@/api/client")>()),
   apiFetch: (...args: unknown[]) => apiFetch(...args),
 }));
+vi.mock("@/app/autoridad/AutoridadContext", () => ({
+  useAutoridad: () => ({
+    estado: "LISTA",
+    puede: () => true,
+    tiene: () => true,
+    motivo: () => null,
+    motivoDeCapacidad: () => null,
+  }),
+}));
 const { AuditoriaPage } = await import("./AuditoriaPage");
 
 //: Dos instantes con zona explícita: uno a media tarde y otro que cruza la medianoche

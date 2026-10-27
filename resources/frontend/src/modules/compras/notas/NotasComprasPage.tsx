@@ -5,7 +5,9 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { CreditNoteSummary, PagedResult, Party } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -18,6 +20,7 @@ const columnHelper = createColumnHelper<CreditNoteSummary>();
 export function NotasComprasPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [newSupplier, setNewSupplier] = useState("");
   const [newNumber, setNewNumber] = useState("");
@@ -72,7 +75,7 @@ export function NotasComprasPage(): React.JSX.Element {
       header: "Acciones",
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">
-          {row.original.status === "DRAFT" ? (
+          {row.original.status === "DRAFT" && puede("POST", `/purchasing/credit-notes/${row.original.id}/post`) ? (
             <AsyncButton size="sm" variant="secondary" onClick={() => postNote(row.original.id)}>postear</AsyncButton>
           ) : null}
         </div>
@@ -87,6 +90,7 @@ export function NotasComprasPage(): React.JSX.Element {
         description="Emisión y posteo de notas de crédito de compras."
         crumbs={[{ label: "Compras" }, { label: "Notas de crédito" }]}
       />
+      <Autorizado operacion={["POST", "/purchasing/credit-notes"]}>
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Emitir nota</h2>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
@@ -110,6 +114,7 @@ export function NotasComprasPage(): React.JSX.Element {
           <AsyncButton type="submit" variant="primary" onClick={createNote}>Emitir</AsyncButton>
         </form>
       </section>
+      </Autorizado>
 
       <DataTable
         columns={columns}

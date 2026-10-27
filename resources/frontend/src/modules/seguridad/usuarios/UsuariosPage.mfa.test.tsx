@@ -14,6 +14,17 @@ vi.mock("@/app/contexts/AuthContext", () => ({
   useAuth: () => useAuthMock(),
 }));
 
+const puedeMock = vi.fn();
+vi.mock("@/app/autoridad/AutoridadContext", () => ({
+  useAutoridad: () => ({
+    estado: "LISTA",
+    puede: (m: string, r: string) => puedeMock(m, r),
+    tiene: () => false,
+    motivo: () => null,
+    motivoDeCapacidad: () => null,
+  }),
+}));
+
 const resetUserMfa = vi.fn();
 vi.mock("@/api/mfa", () => ({
   resetUserMfa: (...args: unknown[]) => resetUserMfa(...args),
@@ -59,11 +70,13 @@ describe("UsuariosPage MFA reset", () => {
     notify.mockClear();
     resetUserMfa.mockClear();
     apiFetch.mockClear();
-    useAuthMock.mockReturnValue({ user: { id: "u1" }, hasPermission: (p: string) => p === "users:mfa_reset" });
+    useAuthMock.mockReturnValue({ user: { id: "u1" } });
+    puedeMock.mockImplementation((m: string, r: string) => m === "POST" && r.endsWith("/mfa/reset"));
   });
 
   it("sin permiso no hay botón", async () => {
-    useAuthMock.mockReturnValue({ user: { id: "u1" }, hasPermission: () => false });
+    useAuthMock.mockReturnValue({ user: { id: "u1" } });
+    puedeMock.mockReturnValue(false);
     setup();
     await screen.findByText(/admin/);
     expect(screen.queryByRole("button", { name: "Restablecer verificación" })).not.toBeInTheDocument();

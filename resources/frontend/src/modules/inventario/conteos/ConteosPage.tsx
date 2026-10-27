@@ -5,9 +5,11 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, PagedResult, StockCount } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -24,6 +26,7 @@ const columnHelper = createColumnHelper<StockCount>();
 
 export function ConteosPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
+  const { puede } = useAutoridad();
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
 
@@ -111,10 +114,12 @@ export function ConteosPage(): React.JSX.Element {
           ["approve", "APPROVED"],
           ["close", "CLOSED"],
         ];
+        const canTransition = puede("POST", `/inventory/counts/${row.original.id}/transition`);
         return (
           <div className="flex justify-end gap-1">
             {transitions
               .filter(([key]) => a[key])
+              .filter(() => canTransition)
               .map(([key, target]) => (
                 <AsyncButton key={key} size="sm" variant="secondary" onClick={() => runTransition(row.original.id, target)}>
                   {key}
@@ -133,59 +138,63 @@ export function ConteosPage(): React.JSX.Element {
         description="Planes de conteo: congelamiento, diferencias y aprobación."
         crumbs={[{ label: "Inventario" }, { label: "Conteos" }]}
       />
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo conteo</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Código" required>
-            <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="CT-0001" required />
-          </FormField>
-          <FormField label="Almacén" required>
-            <select value={newWarehouse} onChange={(e) => setNewWarehouse(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(warehouses.data?.items ?? []).map((w) => (
-                <option key={w.id} value={w.id}>{w.code} · {w.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Congelamiento">
-            <select value={newPolicy} onChange={(e) => setNewPolicy(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="PER_PRODUCT">Por producto</option>
-              <option value="FULL">Total</option>
-              <option value="NONE">Ninguno</option>
-            </select>
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createCount}>Crear</AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/inventory/counts"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo conteo</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Código" required>
+              <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="CT-0001" required />
+            </FormField>
+            <FormField label="Almacén" required>
+              <select value={newWarehouse} onChange={(e) => setNewWarehouse(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(warehouses.data?.items ?? []).map((w) => (
+                  <option key={w.id} value={w.id}>{w.code} · {w.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Congelamiento">
+              <select value={newPolicy} onChange={(e) => setNewPolicy(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="PER_PRODUCT">Por producto</option>
+                <option value="FULL">Total</option>
+                <option value="NONE">Ninguno</option>
+              </select>
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createCount}>Crear</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Conteo" required>
-            <select value={lineCount} onChange={(e) => setLineCount(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(query.data?.items ?? []).map((o) => (
-                <option key={o.id} value={o.id}>{o.code}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Producto" required>
-            <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(products.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Esperado" required>
-            <TextInput type="number" value={lineExpected} onChange={(e) => setLineExpected(e.target.value)} placeholder="0" required />
-          </FormField>
-          <FormField label="Contado">
-            <TextInput type="number" value={lineCounted} onChange={(e) => setLineCounted(e.target.value)} placeholder="0" />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={addLine}>Agregar</AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", `/inventory/counts/${lineCount || "_"}/lines`]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Conteo" required>
+              <select value={lineCount} onChange={(e) => setLineCount(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(query.data?.items ?? []).map((o) => (
+                  <option key={o.id} value={o.id}>{o.code}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Producto" required>
+              <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(products.data?.items ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Esperado" required>
+              <TextInput type="number" value={lineExpected} onChange={(e) => setLineExpected(e.target.value)} placeholder="0" required />
+            </FormField>
+            <FormField label="Contado">
+              <TextInput type="number" value={lineCounted} onChange={(e) => setLineCounted(e.target.value)} placeholder="0" />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={addLine}>Agregar</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <DataTable
         columns={columns}

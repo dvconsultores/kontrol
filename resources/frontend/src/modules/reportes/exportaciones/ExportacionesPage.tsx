@@ -5,7 +5,9 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { apiFetch } from "@/api/client";
 import type { ReportExportSummary, ReportJobSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { IconButton } from "@/components/IconButton";
 import { Download } from "lucide-react";
@@ -38,6 +40,8 @@ export function ExportacionesPage(): React.JSX.Element {
     queryFn: () => apiFetch<{ items: ReportJobSummary[] }>("/reporting/jobs"),
     retry: false,
   });
+
+  const { puede } = useAutoridad();
 
   const runJob = async (): Promise<void> => {
     const created = await apiFetch<{ id: string }>("/reporting/jobs", {
@@ -83,13 +87,15 @@ export function ExportacionesPage(): React.JSX.Element {
         crumbs={[{ label: "Reportes" }, { label: "Exportaciones" }]}
       />
 
-      <div className="mb-4 flex items-end justify-between rounded-lg border border-border-default bg-surface-0 p-4">
-        <div>
-          <p className="text-sm font-semibold text-text-700">Trabajo asíncrono de prueba</p>
-          <p className="text-sm text-text-500">Ejecuta el reporte ejecutivo de ventas como job.</p>
+      <Autorizado operacion={["POST", "/reporting/jobs"]}>
+        <div className="mb-4 flex items-end justify-between rounded-lg border border-border-default bg-surface-0 p-4">
+          <div>
+            <p className="text-sm font-semibold text-text-700">Trabajo asíncrono de prueba</p>
+            <p className="text-sm text-text-500">Ejecuta el reporte ejecutivo de ventas como job.</p>
+          </div>
+          {puede("POST", "/reporting/jobs/_/run") ? <AsyncButton variant="secondary" onClick={runJob}>Ejecutar job</AsyncButton> : null}
         </div>
-        <AsyncButton variant="secondary" onClick={runJob}>Ejecutar job</AsyncButton>
-      </div>
+      </Autorizado>
 
       <h2 className="mb-2 text-base font-semibold text-text-900">Jobs</h2>
       <div className="mb-6">

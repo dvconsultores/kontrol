@@ -2,16 +2,16 @@
 import { clsx } from "clsx";
 import { Link } from "react-router";
 
-import { useAuth } from "@/app/contexts/AuthContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { t, tValor } from "@/i18n";
 
 import { destinoDeEnlace, type Enlace, type Severidad } from "./api";
 
 /** El origen solo se enlaza si el usuario puede verlo; si no, no se revela nada. */
 export function EnlaceOrigen({ enlace }: { enlace: Enlace }): React.JSX.Element {
-  const { hasPermission } = useAuth();
+  const { tiene } = useAutoridad();
   const destino = destinoDeEnlace(enlace);
-  if (!destino || !hasPermission(destino.permiso)) {
+  if (!destino || !tiene(destino.permiso, "empresa")) {
     return <span className="text-sm text-text-500">{t("comun.sin_acceso_origen")}</span>;
   }
   return (

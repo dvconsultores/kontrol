@@ -9,8 +9,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 let permisos = new Set<string>();
 let licencia: { mode: string | null; status: { mode: string; license_url: string } | null } = { mode: null, status: null };
 
-vi.mock("@/app/contexts/AuthContext", () => ({
-  useAuth: () => ({ hasPermission: (permiso: string) => permisos.has(permiso) }),
+vi.mock("@/app/autoridad/AutoridadContext", () => ({
+  useAutoridad: () => ({
+    estado: "LISTA",
+    tiene: (c: string) => permisos.has(c),
+    puede: () => true,
+    motivo: () => null,
+    motivoDeCapacidad: () => null,
+  }),
 }));
 
 vi.mock("@/app/contexts/LicenseContext", async (original) => ({

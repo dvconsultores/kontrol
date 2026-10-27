@@ -17,8 +17,10 @@ import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/api/client";
 import type { FinancialAccountSummary, FxConversion, FxPolicy } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
@@ -35,6 +37,7 @@ const ORIGEN: Record<string, string> = {
 export function CambioPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [codigo, setCodigo] = useState("");
   const [funcional, setFuncional] = useState("VED");
@@ -205,48 +208,50 @@ export function CambioPage(): React.JSX.Element {
         )}
       </section>
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva versión de política</h2>
-        <div className="mb-3 flex flex-wrap items-end gap-3">
-          <FormField label="Código" required>
-            <TextInput value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="FX-GENERAL" />
-          </FormField>
-          <FormField label="Moneda funcional" required>
-            <TextInput value={funcional} onChange={(e) => setFuncional(e.target.value)} />
-          </FormField>
-          <FormField label="Vigente desde" required>
-            <TextInput type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
-          </FormField>
-          <FormField label="Fuente de tasa">
-            <TextInput value={fuente} onChange={(e) => setFuente(e.target.value)} placeholder="BCV" />
-          </FormField>
-          <FormField label="Autoridad que la respalda">
-            <TextInput
-              value={autoridad}
-              onChange={(e) => setAutoridad(e.target.value)}
-              placeholder="De dónde sale esta regla"
-            />
-          </FormField>
-        </div>
-        <div className="mb-3 flex flex-wrap gap-4 text-sm">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={cruzada} onChange={(e) => setCruzada(e.target.checked)} />
-            Permitir conversión entre monedas
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={manual} onChange={(e) => setManual(e.target.checked)} />
-            Permitir tasa manual (exige motivo)
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={reembolso} onChange={(e) => setReembolso(e.target.checked)} />
-            Permitir reembolso en efectivo
-          </label>
-        </div>
-        <AsyncButton onClick={crearPolitica}>Crear en borrador</AsyncButton>
-        <p className="mt-2 text-sm text-text-500">
-          Nace en borrador. Activarla es un acto aparte, con permiso de aprobación.
-        </p>
-      </section>
+      <Autorizado operacion={["POST", "/treasury/fx-policies"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nueva versión de política</h2>
+          <div className="mb-3 flex flex-wrap items-end gap-3">
+            <FormField label="Código" required>
+              <TextInput value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="FX-GENERAL" />
+            </FormField>
+            <FormField label="Moneda funcional" required>
+              <TextInput value={funcional} onChange={(e) => setFuncional(e.target.value)} />
+            </FormField>
+            <FormField label="Vigente desde" required>
+              <TextInput type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+            </FormField>
+            <FormField label="Fuente de tasa">
+              <TextInput value={fuente} onChange={(e) => setFuente(e.target.value)} placeholder="BCV" />
+            </FormField>
+            <FormField label="Autoridad que la respalda">
+              <TextInput
+                value={autoridad}
+                onChange={(e) => setAutoridad(e.target.value)}
+                placeholder="De dónde sale esta regla"
+              />
+            </FormField>
+          </div>
+          <div className="mb-3 flex flex-wrap gap-4 text-sm">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={cruzada} onChange={(e) => setCruzada(e.target.checked)} />
+              Permitir conversión entre monedas
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={manual} onChange={(e) => setManual(e.target.checked)} />
+              Permitir tasa manual (exige motivo)
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={reembolso} onChange={(e) => setReembolso(e.target.checked)} />
+              Permitir reembolso en efectivo
+            </label>
+          </div>
+          <AsyncButton onClick={crearPolitica}>Crear en borrador</AsyncButton>
+          <p className="mt-2 text-sm text-text-500">
+            Nace en borrador. Activarla es un acto aparte, con permiso de aprobación.
+          </p>
+        </section>
+      </Autorizado>
 
       <section className="mb-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Versiones</h2>
@@ -274,7 +279,7 @@ export function CambioPage(): React.JSX.Element {
                   <td>{p.effective_to ?? "—"}</td>
                   <td>{p.status}</td>
                   <td>
-                    {p.status === "DRAFT" ? (
+                    {p.status === "DRAFT" && puede("POST", `/treasury/fx-policies/${p.id}/activate`) ? (
                       <AsyncButton size="sm" variant="secondary" onClick={() => activar(p)}>
                         Activar
                       </AsyncButton>
@@ -339,9 +344,11 @@ export function CambioPage(): React.JSX.Element {
               </FormField>
             </>
           ) : null}
-          <AsyncButton onClick={convertir} disabled={mismaMoneda}>
-            Convertir
-          </AsyncButton>
+          {puede("POST", "/treasury/fx-conversions") ? (
+            <AsyncButton onClick={convertir} disabled={mismaMoneda}>
+              Convertir
+            </AsyncButton>
+          ) : null}
         </div>
         {mismaMoneda ? (
           <p className="text-sm text-text-700" role="status">

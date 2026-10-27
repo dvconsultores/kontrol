@@ -10,9 +10,11 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { ApprovalDelegationSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -24,6 +26,7 @@ const columnHelper = createColumnHelper<ApprovalDelegationSummary>();
 
 export function DelegacionesPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
+  const { puede } = useAutoridad();
   const { notify } = useNotifications();
   const queryClient = useQueryClient();
 
@@ -113,7 +116,8 @@ export function DelegacionesPage(): React.JSX.Element {
       id: "actions",
       header: "Acciones",
       cell: ({ row }) =>
-        row.original.status === "ACTIVE" ? (
+        row.original.status === "ACTIVE" &&
+        puede("POST", `/approvals/delegations/${row.original.id}/revoke`) ? (
           <div className="flex justify-end">
             <AsyncButton
               size="sm"
@@ -136,33 +140,35 @@ export function DelegacionesPage(): React.JSX.Element {
         crumbs={[{ label: "Aprobaciones" }, { label: "Delegaciones" }]}
       />
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva delegación</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Delega (usuario)" required>
-            <TextInput value={grantor} onChange={(e) => setGrantor(e.target.value)} required />
-          </FormField>
-          <FormField label="En (usuario)" required>
-            <TextInput value={grantee} onChange={(e) => setGrantee(e.target.value)} required />
-          </FormField>
-          <FormField label="Ámbito (proceso)">
-            <TextInput
-              value={scope}
-              onChange={(e) => setScope(e.target.value.toUpperCase())}
-              placeholder="Todos"
-            />
-          </FormField>
-          <FormField label="Hasta">
-            <TextInput type="date" value={validTo} onChange={(e) => setValidTo(e.target.value)} />
-          </FormField>
-          <FormField label="Motivo">
-            <TextInput value={reason} onChange={(e) => setReason(e.target.value)} />
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={create}>
-            Crear delegación
-          </AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/approvals/delegations"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nueva delegación</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Delega (usuario)" required>
+              <TextInput value={grantor} onChange={(e) => setGrantor(e.target.value)} required />
+            </FormField>
+            <FormField label="En (usuario)" required>
+              <TextInput value={grantee} onChange={(e) => setGrantee(e.target.value)} required />
+            </FormField>
+            <FormField label="Ámbito (proceso)">
+              <TextInput
+                value={scope}
+                onChange={(e) => setScope(e.target.value.toUpperCase())}
+                placeholder="Todos"
+              />
+            </FormField>
+            <FormField label="Hasta">
+              <TextInput type="date" value={validTo} onChange={(e) => setValidTo(e.target.value)} />
+            </FormField>
+            <FormField label="Motivo">
+              <TextInput value={reason} onChange={(e) => setReason(e.target.value)} />
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={create}>
+              Crear delegación
+            </AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <DataTable
         data={query.data?.items ?? []}

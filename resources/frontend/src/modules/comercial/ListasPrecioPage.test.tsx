@@ -23,6 +23,15 @@ vi.mock("@/app/contexts/CompanyContext", () => ({
 vi.mock("@/app/contexts/NotificationContext", () => ({
   useNotifications: () => ({ notify: vi.fn() }),
 }));
+vi.mock("@/app/autoridad/AutoridadContext", () => ({
+  useAutoridad: () => ({
+    estado: "LISTA",
+    puede: () => true,
+    tiene: () => true,
+    motivo: () => null,
+    motivoDeCapacidad: () => null,
+  }),
+}));
 
 const { ListasPrecioPage } = await import("./ListasPrecioPage");
 

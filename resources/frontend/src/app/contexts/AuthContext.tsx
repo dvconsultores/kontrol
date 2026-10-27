@@ -21,6 +21,7 @@ interface AuthContextValue {
   user: UserInfo | null;
   accessToken: string | null;
   permissions: string[];
+  tenantPermissions: string[];
   isAuthenticated: boolean;
   isReady: boolean;
   login: (tenantCode: string, username: string, password: string) => Promise<LoginResponse>;
@@ -28,7 +29,7 @@ interface AuthContextValue {
   completeLogin: (data: AuthenticatedLogin) => void;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
-  hasPermission: (permission: string) => boolean;
+  reloadMe: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   const [user, setUser] = useState<UserInfo | null>(null);
   const [accessToken, setToken] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
+  const [tenantPermissions, setTenantPermissions] = useState<string[]>([]);
   // true una vez completado el intento inicial de restaurar sesión.
   const [isReady, setReady] = useState(false);
 
@@ -44,9 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   // sigue siendo la autoridad).
   const loadMe = useCallback(async (): Promise<void> => {
     try {
-      const data = await apiFetch<{ user: UserInfo & { permissions?: string[] }; permissions: string[] }>("/auth/me");
+      const data = await apiFetch<{ user: UserInfo & { permissions?: string[] }; permissions: string[]; tenant_permissions?: string[] }>("/auth/me");
       setUser(data.user);
       setPermissions(data.permissions ?? []);
+      setTenantPermissions(data.tenant_permissions ?? []);
     } catch {
       // sin sesión válida: se limpia vía refreshSession
     }
@@ -81,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       setToken(null);
       setUser(null);
       setPermissions([]);
+      setTenantPermissions([]);
     }
   }, []);
 
@@ -99,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       setToken(null);
       setUser(null);
       setPermissions([]);
+      setTenantPermissions([]);
       return false;
     }
   }, [loadMe]);
@@ -130,34 +135,31 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       .finally(() => setReady(true));
   }, [refreshSession]);
 
-  const hasPermission = useCallback(
-    (permission: string) => permissions.includes(permission),
-    [permissions],
-  );
-
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       accessToken,
       permissions,
+      tenantPermissions,
       isAuthenticated: Boolean(user && accessToken),
       isReady,
       login,
       completeLogin,
       logout,
       refreshSession,
-      hasPermission,
+      reloadMe: loadMe,
     }),
     [
       user,
       accessToken,
       permissions,
+      tenantPermissions,
       isReady,
       login,
       completeLogin,
       logout,
       refreshSession,
-      hasPermission,
+      loadMe,
     ],
   );
 

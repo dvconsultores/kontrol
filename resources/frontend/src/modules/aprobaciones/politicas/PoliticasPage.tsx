@@ -9,6 +9,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
+import { Autorizado } from "@/components/Autorizado";
 import { apiFetch } from "@/api/client";
 import type { ApprovalPolicySummary } from "@/api/types";
 import { useCompany } from "@/app/contexts/CompanyContext";
@@ -131,28 +132,30 @@ export function PoliticasPage(): React.JSX.Element {
         crumbs={[{ label: "Aprobaciones" }, { label: "Políticas" }]}
       />
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva política</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Tipo de proceso" required>
-            <TextInput
-              value={processType}
-              onChange={(e) => setProcessType(e.target.value.toUpperCase())}
-              placeholder="Ej. PURCHASE_ORDER"
-              required
-            />
-          </FormField>
-          <FormField label="Código" required>
-            <TextInput value={code} onChange={(e) => setCode(e.target.value)} required />
-          </FormField>
-          <FormField label="Nombre" required>
-            <TextInput value={name} onChange={(e) => setName(e.target.value)} required />
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createPolicy}>
-            Crear borrador
-          </AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/approvals/policies"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nueva política</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Tipo de proceso" required>
+              <TextInput
+                value={processType}
+                onChange={(e) => setProcessType(e.target.value.toUpperCase())}
+                placeholder="Ej. PURCHASE_ORDER"
+                required
+              />
+            </FormField>
+            <FormField label="Código" required>
+              <TextInput value={code} onChange={(e) => setCode(e.target.value)} required />
+            </FormField>
+            <FormField label="Nombre" required>
+              <TextInput value={name} onChange={(e) => setName(e.target.value)} required />
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createPolicy}>
+              Crear borrador
+            </AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <DataTable
         data={query.data?.items ?? []}

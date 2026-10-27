@@ -10,7 +10,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 
 import { apiFetch } from "@/api/client";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
@@ -29,7 +29,7 @@ const ESTADOS: EstadoTarea[] = ["OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED",
 
 export function TareasPage(): React.JSX.Element {
   const { activeCompanyId } = useCompany();
-  const { hasPermission } = useAuth();
+  const { tiene } = useAutoridad();
   const [ambito, setAmbito] = useState<(typeof AMBITOS)[number]>("involved");
   const [estado, setEstado] = useState<EstadoTarea | "">("OPEN");
   const [soloVencidas, setSoloVencidas] = useState(false);
@@ -70,7 +70,7 @@ export function TareasPage(): React.JSX.Element {
               reiniciar();
             }}
           >
-            {AMBITOS.filter((a) => a !== "all" || hasPermission("tareas:view")).map((a) => (
+            {AMBITOS.filter((a) => a !== "all" || tiene("tareas:view", "empresa")).map((a) => (
               <option key={a} value={a}>
                 {tValor("tareas.ambito", a) ?? a}
               </option>

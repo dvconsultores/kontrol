@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { LegalSourceSummary, TaxRuleSummary } from "@/api/types";
+import { Autorizado } from "@/components/Autorizado";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
@@ -15,6 +17,7 @@ import { TextInput } from "@/components/TextInput";
 export function ConfiguracionPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [authority, setAuthority] = useState("SENIAT");
   const [sourceType, setSourceType] = useState("GACETA");
@@ -91,42 +94,46 @@ export function ConfiguracionPage(): React.JSX.Element {
       />
 
       <div className="mb-4 grid gap-4 lg:grid-cols-2">
-        <form className="rounded-lg border border-border-default bg-surface-0 p-4" onSubmit={(e) => e.preventDefault()}>
-          <h2 className="mb-2 text-base font-semibold text-text-900">Fuente legal</h2>
-          <div className="grid gap-3">
-            <FormField label="Autoridad">
-              <TextInput value={authority} onChange={(e) => setAuthority(e.target.value)} />
-            </FormField>
-            <FormField label="Tipo">
-              <select value={sourceType} onChange={(e) => setSourceType(e.target.value)} className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-                <option value="GACETA">Gaceta</option>
-                <option value="DECRETO">Decreto</option>
-                <option value="LEY">Ley</option>
-                <option value="PROVIDENCIA">Providencia</option>
-              </select>
-            </FormField>
-            <FormField label="Número">
-              <TextInput value={number} onChange={(e) => setNumber(e.target.value)} placeholder="Ej. 42.000" />
-            </FormField>
-            <AsyncButton type="submit" variant="secondary" onClick={createSource}>
-              Crear fuente
-            </AsyncButton>
-          </div>
-        </form>
+        <Autorizado operacion={["POST", "/fiscal/legal-sources"]}>
+          <form className="rounded-lg border border-border-default bg-surface-0 p-4" onSubmit={(e) => e.preventDefault()}>
+            <h2 className="mb-2 text-base font-semibold text-text-900">Fuente legal</h2>
+            <div className="grid gap-3">
+              <FormField label="Autoridad">
+                <TextInput value={authority} onChange={(e) => setAuthority(e.target.value)} />
+              </FormField>
+              <FormField label="Tipo">
+                <select value={sourceType} onChange={(e) => setSourceType(e.target.value)} className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                  <option value="GACETA">Gaceta</option>
+                  <option value="DECRETO">Decreto</option>
+                  <option value="LEY">Ley</option>
+                  <option value="PROVIDENCIA">Providencia</option>
+                </select>
+              </FormField>
+              <FormField label="Número">
+                <TextInput value={number} onChange={(e) => setNumber(e.target.value)} placeholder="Ej. 42.000" />
+              </FormField>
+              <AsyncButton type="submit" variant="secondary" onClick={createSource}>
+                Crear fuente
+              </AsyncButton>
+            </div>
+          </form>
+        </Autorizado>
 
         <form className="rounded-lg border border-border-default bg-surface-0 p-4" onSubmit={(e) => e.preventDefault()}>
           <h2 className="mb-2 text-base font-semibold text-text-900">Regla versionada</h2>
-          <div className="grid gap-3">
-            <FormField label="Código fiscal">
-              <TextInput value={taxCode} onChange={(e) => setTaxCode(e.target.value)} placeholder="Ej. IVA_GENERAL" />
-            </FormField>
-            <FormField label="Tasa (%)">
-              <MoneyInput value={rate} onChange={(e) => setRate(e.target.value)} />
-            </FormField>
-            <AsyncButton type="submit" variant="secondary" onClick={createRule}>
-              Crear regla (borrador)
-            </AsyncButton>
-          </div>
+          <Autorizado operacion={["POST", "/fiscal/tax-rule-versions"]}>
+            <div className="grid gap-3">
+              <FormField label="Código fiscal">
+                <TextInput value={taxCode} onChange={(e) => setTaxCode(e.target.value)} placeholder="Ej. IVA_GENERAL" />
+              </FormField>
+              <FormField label="Tasa (%)">
+                <MoneyInput value={rate} onChange={(e) => setRate(e.target.value)} />
+              </FormField>
+              <AsyncButton type="submit" variant="secondary" onClick={createRule}>
+                Crear regla (borrador)
+              </AsyncButton>
+            </div>
+          </Autorizado>
           <div className="mt-3 rounded-md border border-border-default p-3 text-sm">
             <p className="font-medium text-text-700">Reglas</p>
             {(rules.data?.items ?? []).map((r) => (
@@ -134,7 +141,7 @@ export function ConfiguracionPage(): React.JSX.Element {
                 <span className="text-text-700">
                   {r.tax_code} · v{r.version} · {r.status}
                 </span>
-                {r.status === "DRAFT" ? (
+                {r.status === "DRAFT" && puede("POST", `/fiscal/tax-rule-versions/${r.id}/approve`) ? (
                   <AsyncButton size="sm" variant="secondary" onClick={() => approveRule(r.id)}>aprobar</AsyncButton>
                 ) : null}
               </div>
@@ -146,21 +153,23 @@ export function ConfiguracionPage(): React.JSX.Element {
 
       <div className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Cálculo de prueba</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Base">
-            <MoneyInput value={base} onChange={(e) => setBase(e.target.value)} />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={calculate}>
-            Calcular con regla activa
-          </AsyncButton>
-        </form>
+        <Autorizado operacion={["POST", "/fiscal/tax-calculations"]}>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Base">
+              <MoneyInput value={base} onChange={(e) => setBase(e.target.value)} />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={calculate}>
+              Calcular con regla activa
+            </AsyncButton>
+          </form>
+        </Autorizado>
       </div>
 
       <div className="rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Fuentes legales</h2>
         {(sources.data?.items ?? []).map((s) =>
           row(`${s.authority} · ${s.source_type}${s.number ? ` · ${s.number}` : ""}`, s.status, s.id,
-            s.status !== "ACTIVE" ? { onClick: () => activateSource(s.id), label: "activar" } : undefined),
+            s.status !== "ACTIVE" && puede("POST", `/fiscal/legal-sources/${s.id}/activate`) ? { onClick: () => activateSource(s.id), label: "activar" } : undefined),
         )}
         {(sources.data?.items ?? []).length === 0 ? <p className="text-sm text-text-500">Sin fuentes legales.</p> : null}
       </div>

@@ -11,7 +11,7 @@ import { useState } from "react";
 import { useParams } from "react-router";
 
 import { ApiError, apiFetch } from "@/api/client";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -37,7 +37,7 @@ type Accion = "start" | "complete" | "cancel" | "reassign";
 export function TareaDetallePage(): React.JSX.Element {
   const { taskId = "" } = useParams();
   const { activeCompanyId } = useCompany();
-  const { hasPermission } = useAuth();
+  const { puede, tiene } = useAutoridad();
   const { notify } = useNotifications();
   const qc = useQueryClient();
   const [motivo, setMotivo] = useState("");
@@ -52,7 +52,7 @@ export function TareaDetallePage(): React.JSX.Element {
   const usuarios = useQuery({
     queryKey: [...CONSULTAS, "usuarios"],
     queryFn: () => apiFetch<UsuarioResumen[]>("/users"),
-    enabled: hasPermission("users:view") && hasPermission("tareas:assign"),
+    enabled: puede("GET", "/users") && tiene("tareas:assign", "empresa"),
     retry: false,
   });
 

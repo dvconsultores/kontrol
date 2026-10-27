@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { CostLayer, CostingProfile, ValuationResult } from "@/api/types";
+import { Autorizado } from "@/components/Autorizado";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
@@ -92,30 +93,32 @@ export function ValorizacionPage(): React.JSX.Element {
         </p>
       </div>
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo perfil de costeo</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Código" required>
-            <TextInput value={profileCode} onChange={(e) => setProfileCode(e.target.value)} placeholder="PERFIL-FIFO-1" required />
-          </FormField>
-          <FormField label="Método">
-            <select value={profileMethod} onChange={(e) => setProfileMethod(e.target.value as "AVERAGE" | "FIFO")} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="AVERAGE">Promedio</option>
-              <option value="FIFO">FIFO</option>
-            </select>
-          </FormField>
-          <FormField label="Moneda">
-            <select value={profileCurrency} onChange={(e) => setProfileCurrency(e.target.value)} className="h-10 w-36 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="VED">VED</option>
-              <option value="USD">USD</option>
-            </select>
-          </FormField>
-          <FormField label="Producto (global si vacío)">
-            <TextInput value={profileProduct} onChange={(e) => setProfileProduct(e.target.value)} placeholder="ID producto" />
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createProfile}>Crear perfil</AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/inventory/costing-profiles"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo perfil de costeo</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Código" required>
+              <TextInput value={profileCode} onChange={(e) => setProfileCode(e.target.value)} placeholder="PERFIL-FIFO-1" required />
+            </FormField>
+            <FormField label="Método">
+              <select value={profileMethod} onChange={(e) => setProfileMethod(e.target.value as "AVERAGE" | "FIFO")} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="AVERAGE">Promedio</option>
+                <option value="FIFO">FIFO</option>
+              </select>
+            </FormField>
+            <FormField label="Moneda">
+              <select value={profileCurrency} onChange={(e) => setProfileCurrency(e.target.value)} className="h-10 w-36 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="VED">VED</option>
+                <option value="USD">USD</option>
+              </select>
+            </FormField>
+            <FormField label="Producto (global si vacío)">
+              <TextInput value={profileProduct} onChange={(e) => setProfileProduct(e.target.value)} placeholder="ID producto" />
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createProfile}>Crear perfil</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <h2 className="mb-2 text-base font-semibold text-text-900">Capas de costo</h2>
       <div className="mb-6">

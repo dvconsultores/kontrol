@@ -5,6 +5,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import type { Party, TransportDriverSummary, TransportVehicleSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -77,22 +78,24 @@ export function VehiculosPage(): React.JSX.Element {
         crumbs={[{ label: "Regulatorio" }, { label: "Vehículos" }]}
       />
 
-      {section("Registrar vehículo", (
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Placa">
-            <TextInput value={plate} onChange={(e) => setPlate(e.target.value)} placeholder="Ej. ABC123" />
-          </FormField>
-          <FormField label="Tipo">
-            <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} className="h-10 w-40 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="CAMION">Camión</option>
-              <option value="CAMIONETA">Camioneta</option>
-              <option value="FURGON">Furgón</option>
-              <option value="MOTO">Moto</option>
-            </select>
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={createVehicle}>Registrar</AsyncButton>
-        </form>
-      ))}
+      <Autorizado operacion={["POST", "/regulatory/vehicles"]}>
+        {section("Registrar vehículo", (
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Placa">
+              <TextInput value={plate} onChange={(e) => setPlate(e.target.value)} placeholder="Ej. ABC123" />
+            </FormField>
+            <FormField label="Tipo">
+              <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} className="h-10 w-40 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="CAMION">Camión</option>
+                <option value="CAMIONETA">Camioneta</option>
+                <option value="FURGON">Furgón</option>
+                <option value="MOTO">Moto</option>
+              </select>
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={createVehicle}>Registrar</AsyncButton>
+          </form>
+        ))}
+      </Autorizado>
 
       {section("Vehículos", (
         <div>
@@ -101,20 +104,22 @@ export function VehiculosPage(): React.JSX.Element {
         </div>
       ))}
 
-      {section("Registrar conductor", (
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Conductor">
-            <select value={partyId} onChange={(e) => setPartyId(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(parties.data?.items ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Licencia">
-            <TextInput value={license} onChange={(e) => setLicense(e.target.value)} placeholder="Opcional" />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={createDriver}>Registrar</AsyncButton>
-        </form>
-      ))}
+      <Autorizado operacion={["POST", "/regulatory/drivers"]}>
+        {section("Registrar conductor", (
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Conductor">
+              <select value={partyId} onChange={(e) => setPartyId(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(parties.data?.items ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Licencia">
+              <TextInput value={license} onChange={(e) => setLicense(e.target.value)} placeholder="Opcional" />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={createDriver}>Registrar</AsyncButton>
+          </form>
+        ))}
+      </Autorizado>
 
       {section("Conductores", (
         <div>

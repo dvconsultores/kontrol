@@ -23,7 +23,7 @@ from app.modules.commercial.api import router as commercial_router
 from app.modules.documents.api import router as documents_router
 from app.modules.fiscal.api import router as fiscal_router
 from app.modules.homologation.api import router as homologation_router
-from app.modules.identity_access.api import roles_router, users_router
+from app.modules.identity_access.api import authority_router, roles_router, users_router
 from app.modules.identity_access.api import router as auth_router
 from app.modules.inventory.api import router as inventory_router
 from app.modules.licensing import reverification as license_reverification
@@ -99,6 +99,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, prefix=prefix)
     app.include_router(users_router, prefix=prefix)
     app.include_router(roles_router, prefix=prefix)
+    app.include_router(authority_router, prefix=prefix)
     app.include_router(organization_router, prefix=prefix)
     app.include_router(warehouse_structure_router, prefix=prefix)
     app.include_router(master_data_router, prefix=prefix)

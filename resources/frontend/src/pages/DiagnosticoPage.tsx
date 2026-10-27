@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
 import type { DiagnosticsResponse } from "@/api/types";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { ErrorState } from "@/components/ErrorState";
 import { ForbiddenState } from "@/components/ForbiddenState";
 import { LoadingState } from "@/components/LoadingState";
@@ -31,10 +31,10 @@ export function filasDeDiagnostico(d: DiagnosticsResponse): Fila[] {
 export const PERMISO_DE_DIAGNOSTICO = "license:view";
 
 export function DiagnosticoPage(): React.JSX.Element {
-  const { hasPermission } = useAuth();
+  const { tiene } = useAutoridad();
   // El backend es la autoridad (401/403); aquí se decide antes de pedir nada, para no
   // pintar ni solicitar el diagnóstico a quien no puede verlo (FR-001-042).
-  const permitido = hasPermission(PERMISO_DE_DIAGNOSTICO);
+  const permitido = tiene(PERMISO_DE_DIAGNOSTICO, "global");
   const query = useQuery({
     queryKey: ["diagnostics"],
     queryFn: () => apiFetch<DiagnosticsResponse>("/system/diagnostics"),

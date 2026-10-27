@@ -7,6 +7,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { Autorizado } from "@/components/Autorizado";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -85,45 +86,47 @@ export function CondicionesPagoPage(): React.JSX.Element {
         crumbs={[{ label: "Comercial" }, { label: "Condiciones de pago" }]}
       />
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva condición</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Código" required>
-            <TextInput value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ej. 30D" required />
-          </FormField>
-          <FormField label="Nombre" required>
-            <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="30 días" required />
-          </FormField>
-          <FormField label="Tipo" required>
-            <select
-              value={kind}
-              onChange={(e) => setKind(e.target.value)}
-              className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-            >
-              {TIPOS.map((t) => (
-                <option key={t.valor} value={t.valor}>
-                  {t.etiqueta}
-                </option>
-              ))}
-            </select>
-          </FormField>
-          {kind === "DAYS" ? (
-            <FormField label="Días" required>
-              <TextInput value={days} onChange={(e) => setDays(e.target.value)} placeholder="30" required />
+      <Autorizado operacion={["POST", "/comercial/condiciones-pago"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nueva condición</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Código" required>
+              <TextInput value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ej. 30D" required />
             </FormField>
-          ) : null}
-          <AsyncButton
-            type="submit"
-            variant="primary"
-            disabled={!code || !name || (kind === "DAYS" && !days)}
-            onClick={async () => {
-              await crear.mutateAsync();
-            }}
-          >
-            Registrar
-          </AsyncButton>
-        </form>
-      </section>
+            <FormField label="Nombre" required>
+              <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="30 días" required />
+            </FormField>
+            <FormField label="Tipo" required>
+              <select
+                value={kind}
+                onChange={(e) => setKind(e.target.value)}
+                className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+              >
+                {TIPOS.map((t) => (
+                  <option key={t.valor} value={t.valor}>
+                    {t.etiqueta}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            {kind === "DAYS" ? (
+              <FormField label="Días" required>
+                <TextInput value={days} onChange={(e) => setDays(e.target.value)} placeholder="30" required />
+              </FormField>
+            ) : null}
+            <AsyncButton
+              type="submit"
+              variant="primary"
+              disabled={!code || !name || (kind === "DAYS" && !days)}
+              onClick={async () => {
+                await crear.mutateAsync();
+              }}
+            >
+              Registrar
+            </AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <section className="rounded-lg border border-border-default bg-surface-0 p-4">
         <DataTable

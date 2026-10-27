@@ -6,6 +6,8 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import type { BankTransactionSummary, FinancialAccountSummary, ReconciliationSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { Button } from "@/components/Button";
 import { DataTable } from "@/components/DataTable";
@@ -23,6 +25,7 @@ const columnHelper = createColumnHelper<ReconciliationSummary>();
 export function ConciliacionPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [accountId, setAccountId] = useState("");
   const [statementRef, setStatementRef] = useState("");
@@ -130,11 +133,17 @@ export function ConciliacionPage(): React.JSX.Element {
             </Button>
             {actions
               .filter(([key]) => a[key])
-              .map(([key, label]) => (
-                <AsyncButton key={key} size="sm" variant={key === "reject" ? "danger" : "secondary"} onClick={() => runAction(row.original.id, key)}>
-                  {label}
-                </AsyncButton>
-              ))}
+              .map(([key, label]) => {
+                const ruta = key === "match"
+                  ? `/treasury/reconciliations/${row.original.id}/match`
+                  : `/treasury/reconciliations/${row.original.id}/transition`;
+                if (!puede("POST", ruta)) return null;
+                return (
+                  <AsyncButton key={key} size="sm" variant={key === "reject" ? "danger" : "secondary"} onClick={() => runAction(row.original.id, key)}>
+                    {label}
+                  </AsyncButton>
+                );
+              })}
           </div>
         );
       },
@@ -151,31 +160,33 @@ export function ConciliacionPage(): React.JSX.Element {
         crumbs={[{ label: "Tesorería" }, { label: "Conciliación" }]}
       />
 
-      <form
-        className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-surface-0 p-4"
-        onSubmit={(e) => e.preventDefault()}
-      >
-        <FormField label="Cuenta" className="min-w-56">
-          <select
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-            className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-          >
-            <option value="">Seleccionar cuenta…</option>
-            {(accounts.data?.items ?? []).map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name} ({a.code})
-              </option>
-            ))}
-          </select>
-        </FormField>
-        <FormField label="Referencia del estado">
-          <TextInput value={statementRef} onChange={(e) => setStatementRef(e.target.value)} placeholder="Ej. EXT-2026-08" />
-        </FormField>
-        <AsyncButton type="submit" variant="secondary" onClick={create}>
-          Crear conciliación
-        </AsyncButton>
-      </form>
+      <Autorizado operacion={["POST", "/treasury/reconciliations"]}>
+        <form
+          className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-surface-0 p-4"
+          onSubmit={(e) => e.preventDefault()}
+        >
+          <FormField label="Cuenta" className="min-w-56">
+            <select
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+            >
+              <option value="">Seleccionar cuenta…</option>
+              {(accounts.data?.items ?? []).map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name} ({a.code})
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Referencia del estado">
+            <TextInput value={statementRef} onChange={(e) => setStatementRef(e.target.value)} placeholder="Ej. EXT-2026-08" />
+          </FormField>
+          <AsyncButton type="submit" variant="secondary" onClick={create}>
+            Crear conciliación
+          </AsyncButton>
+        </form>
+      </Autorizado>
 
       <DataTable
         columns={columns}
@@ -198,28 +209,30 @@ export function ConciliacionPage(): React.JSX.Element {
             </Button>
           </div>
 
-          <form
-            className="mb-3 flex flex-wrap items-end gap-3"
-            onSubmit={(e) => e.preventDefault()}
-          >
-            <FormField label="Movimiento del estado de cuenta">
-              <select
-                value={newTxId}
-                onChange={(e) => setNewTxId(e.target.value)}
-                className="h-10 w-80 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-              >
-                <option value="">Seleccionar transacción…</option>
-                {(txs.data?.items ?? []).map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.txn_date ?? ""} · {formatMoney(t.amount)} · {t.reference ?? t.source}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <AsyncButton type="submit" variant="secondary" size="sm" onClick={addLine}>
-              Agregar línea
-            </AsyncButton>
-          </form>
+          <Autorizado operacion={["POST", `/treasury/reconciliations/${selected.id}/lines`]}>
+            <form
+              className="mb-3 flex flex-wrap items-end gap-3"
+              onSubmit={(e) => e.preventDefault()}
+            >
+              <FormField label="Movimiento del estado de cuenta">
+                <select
+                  value={newTxId}
+                  onChange={(e) => setNewTxId(e.target.value)}
+                  className="h-10 w-80 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                >
+                  <option value="">Seleccionar transacción…</option>
+                  {(txs.data?.items ?? []).map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.txn_date ?? ""} · {formatMoney(t.amount)} · {t.reference ?? t.source}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <AsyncButton type="submit" variant="secondary" size="sm" onClick={addLine}>
+                Agregar línea
+              </AsyncButton>
+            </form>
+          </Autorizado>
 
           <div className="mb-2 grid gap-1 text-sm">
             {selected.lines.length === 0 ? (
@@ -237,40 +250,42 @@ export function ConciliacionPage(): React.JSX.Element {
           </div>
 
           {unmatched.length > 0 ? (
-            <form
-              className="flex flex-wrap items-end gap-3"
-              onSubmit={(e) => e.preventDefault()}
-            >
-              <FormField label="Línea sin emparejar">
-                <select
-                  value={resolveLineId}
-                  onChange={(e) => setResolveLineId(e.target.value)}
-                  className="h-10 w-72 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-                >
-                  <option value="">Seleccionar línea…</option>
-                  {unmatched.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {txRef(l.bank_transaction_id)}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-              <FormField label="Tipo de resolución">
-                <select
-                  value={resolveType}
-                  onChange={(e) => setResolveType(e.target.value as typeof resolveType)}
-                  className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-                >
-                  <option value="MATCHED">Conciliado</option>
-                  <option value="DIFFERENCE">Diferencia</option>
-                  <option value="COMMISSION">Comisión</option>
-                  <option value="FX">Diferencia cambiaria</option>
-                </select>
-              </FormField>
-              <AsyncButton type="submit" variant="secondary" size="sm" onClick={resolveLine}>
-                Resolver manualmente
-              </AsyncButton>
-            </form>
+            <Autorizado operacion={["POST", `/treasury/reconciliation-lines/${resolveLineId || "_"}/resolve`]}>
+              <form
+                className="flex flex-wrap items-end gap-3"
+                onSubmit={(e) => e.preventDefault()}
+              >
+                <FormField label="Línea sin emparejar">
+                  <select
+                    value={resolveLineId}
+                    onChange={(e) => setResolveLineId(e.target.value)}
+                    className="h-10 w-72 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                  >
+                    <option value="">Seleccionar línea…</option>
+                    {unmatched.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {txRef(l.bank_transaction_id)}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label="Tipo de resolución">
+                  <select
+                    value={resolveType}
+                    onChange={(e) => setResolveType(e.target.value as typeof resolveType)}
+                    className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                  >
+                    <option value="MATCHED">Conciliado</option>
+                    <option value="DIFFERENCE">Diferencia</option>
+                    <option value="COMMISSION">Comisión</option>
+                    <option value="FX">Diferencia cambiaria</option>
+                  </select>
+                </FormField>
+                <AsyncButton type="submit" variant="secondary" size="sm" onClick={resolveLine}>
+                  Resolver manualmente
+                </AsyncButton>
+              </form>
+            </Autorizado>
           ) : null}
         </div>
       ) : null}

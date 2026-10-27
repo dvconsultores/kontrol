@@ -25,7 +25,9 @@ import type {
   TreasuryRefund,
 } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
@@ -49,6 +51,7 @@ function corto(id: string): string {
 export function ReembolsosPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [clienteId, setClienteId] = useState("");
   const [creditoId, setCreditoId] = useState("");
   const [importe, setImporte] = useState("");
@@ -211,6 +214,7 @@ export function ReembolsosPage(): React.JSX.Element {
         </p>
       ) : null}
 
+      <Autorizado operacion={["POST", "/treasury/refunds"]}>
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Solicitar</h2>
         <div className="mb-3 flex flex-wrap items-end gap-3">
@@ -289,7 +293,9 @@ export function ReembolsosPage(): React.JSX.Element {
           </p>
         )}
       </section>
+      </Autorizado>
 
+      {puede("POST", "/treasury/refunds/_/decide") ? (
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <FormField label="Motivo de la decisión">
           <TextInput
@@ -299,6 +305,7 @@ export function ReembolsosPage(): React.JSX.Element {
           />
         </FormField>
       </section>
+      ) : null}
 
       <section>
         <h2 className="mb-2 text-base font-semibold text-text-900">Reembolsos</h2>
@@ -331,7 +338,7 @@ export function ReembolsosPage(): React.JSX.Element {
                     {r.movement_id ? corto(r.movement_id) : "—"}
                   </td>
                   <td className="flex flex-wrap gap-2 py-1">
-                    {r.status === "REQUESTED" ? (
+                    {r.status === "REQUESTED" && puede("POST", `/treasury/refunds/${r.id}/decide`) ? (
                       <>
                         <AsyncButton size="sm" onClick={() => decidir(r, true)}>
                           Aprobar
@@ -341,7 +348,7 @@ export function ReembolsosPage(): React.JSX.Element {
                         </AsyncButton>
                       </>
                     ) : null}
-                    {r.status === "APPROVED" ? (
+                    {r.status === "APPROVED" && puede("POST", `/treasury/refunds/${r.id}/settle`) ? (
                       <AsyncButton size="sm" onClick={() => ejecutar(r)}>
                         Ejecutar pago
                       </AsyncButton>

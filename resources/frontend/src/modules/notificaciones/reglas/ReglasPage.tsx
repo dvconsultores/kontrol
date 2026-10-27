@@ -9,7 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/api/client";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -38,10 +38,10 @@ const minutos = (valor: string): number | null => (valor.trim() === "" ? null : 
 
 export function ReglasPage(): React.JSX.Element {
   const { activeCompanyId } = useCompany();
-  const { hasPermission } = useAuth();
+  const { tiene, puede } = useAutoridad();
   const { notify } = useNotifications();
   const qc = useQueryClient();
-  const permitido = hasPermission("notificaciones:configure");
+  const permitido = tiene("notificaciones:configure", "empresa");
 
   const [codigo, setCodigo] = useState("");
   const [evento, setEvento] = useState("");
@@ -74,7 +74,7 @@ export function ReglasPage(): React.JSX.Element {
   const roles = useQuery({
     queryKey: [...CONSULTAS, "roles"],
     queryFn: () => apiFetch<{ items: RolResumen[] }>("/roles"),
-    enabled: permitido && hasPermission("roles:view"),
+    enabled: permitido && puede("GET", "/roles"),
   });
 
   if (!permitido || (reglas.error instanceof ApiError && reglas.error.status === 403)) {
@@ -131,6 +131,7 @@ export function ReglasPage(): React.JSX.Element {
     <PageContent>
       <PageHeader title={t("reglas.titulo")} description={t("reglas.descripcion")} />
 
+      {puede("POST", "/notifications/rules") ? (
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-3 text-base font-semibold text-text-900">{t("reglas.nueva")}</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -224,6 +225,7 @@ export function ReglasPage(): React.JSX.Element {
           </AsyncButton>
         </div>
       </section>
+      ) : null}
 
       <section>
         <h2 className="mb-2 text-base font-semibold text-text-900">{t("reglas.lista")}</h2>
@@ -247,7 +249,7 @@ export function ReglasPage(): React.JSX.Element {
                   <span className="text-text-500">{tValor("severidad", r.severity) ?? r.severity}</span>
                   <span className="text-text-500">{r.active ? t("reglas.activa") : t("reglas.inactiva")}</span>
                 </div>
-                {r.active ? (
+                {r.active && puede("POST", `/notifications/rules/${r.id}/deactivate`) ? (
                   <AsyncButton size="sm" variant="secondary" loadingText={t("comun.procesando")} onClick={() => desactivar(r)}>
                     {t("reglas.desactivar")}
                   </AsyncButton>

@@ -6,6 +6,7 @@ import { apiFetch } from "@/api/client";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
@@ -96,6 +97,7 @@ export function EstablecimientosPage(): React.JSX.Element {
         </div>
       ) : (
         <>
+          <Autorizado operacion={["POST", "/organization/establishments"]}>
           <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
             <h2 className="mb-2 text-base font-semibold text-text-900">Registrar establecimiento</h2>
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
@@ -127,6 +129,7 @@ export function EstablecimientosPage(): React.JSX.Element {
               </AsyncButton>
             </form>
           </section>
+          </Autorizado>
 
           <section className="rounded-lg border border-border-default bg-surface-0 p-4">
             <h2 className="mb-2 text-base font-semibold text-text-900">Establecimientos de {activeCompany?.legal_name}</h2>

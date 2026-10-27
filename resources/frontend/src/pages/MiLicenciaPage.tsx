@@ -9,7 +9,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { LicenseStatus } from "@/api/types";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { PERMISO_DE_LICENCIA } from "@/app/contexts/LicenseContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -23,10 +23,10 @@ import { TextInput } from "@/components/TextInput";
 
 export function MiLicenciaPage(): React.JSX.Element {
   const { notify } = useNotifications();
-  const { hasPermission } = useAuth();
+  const { tiene } = useAutoridad();
   const [proofRef, setProofRef] = useState("");
 
-  const permitido = hasPermission(PERMISO_DE_LICENCIA);
+  const permitido = tiene(PERMISO_DE_LICENCIA, "global");
   const query = useQuery({
     queryKey: ["license", "detail"],
     queryFn: () => apiFetch<LicenseStatus>("/license/detail"),

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import type { FiscalRuleSummary, IgftEventSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -110,9 +111,11 @@ export function IgftPage(): React.JSX.Element {
             <FormField label="Tasa IGTF (%)">
               <MoneyInput value={rate} onChange={(e) => setRate(e.target.value)} />
             </FormField>
-            <AsyncButton type="submit" variant="secondary" onClick={createRule}>
-              Crear regla
-            </AsyncButton>
+            <Autorizado operacion={["POST", "/treasury/fiscal-rules"]}>
+              <AsyncButton type="submit" variant="secondary" onClick={createRule}>
+                Crear regla
+              </AsyncButton>
+            </Autorizado>
           </div>
           <div className="mt-3 rounded-md border border-border-default p-3 text-sm text-text-500">
             <p className="font-medium text-text-700">Reglas vigentes</p>
@@ -148,9 +151,11 @@ export function IgftPage(): React.JSX.Element {
             <FormField label="Documento">
               <TextInput value={sourceDoc} onChange={(e) => setSourceDoc(e.target.value)} placeholder="Opcional" />
             </FormField>
-            <AsyncButton type="submit" variant="secondary" onClick={evaluate}>
-              Evaluar IGTF
-            </AsyncButton>
+            <Autorizado operacion={["POST", "/treasury/igft-events/evaluate"]}>
+              <AsyncButton type="submit" variant="secondary" onClick={evaluate}>
+                Evaluar IGTF
+              </AsyncButton>
+            </Autorizado>
           </div>
         </form>
       </div>

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
 import type { DashboardResult, DiagnosticsResponse, HealthResponse } from "@/api/types";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useLicense } from "@/app/contexts/LicenseContext";
 import { PageContent } from "@/layout/PageContent";
@@ -23,8 +23,8 @@ export function versionMostrada(diagnostico: { version?: unknown } | undefined):
 export function DashboardPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
   const { mode } = useLicense();
-  const { hasPermission } = useAuth();
-  const puedeVerVersion = hasPermission(PERMISO_DE_VERSION);
+  const { tiene } = useAutoridad();
+  const puedeVerVersion = tiene(PERMISO_DE_VERSION, "global");
 
   const health = useQuery({
     queryKey: ["health"],

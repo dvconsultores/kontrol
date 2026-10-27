@@ -5,8 +5,10 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { RenewalRequestSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { ErrorState } from "@/components/ErrorState";
 import { FormField } from "@/components/FormField";
@@ -19,6 +21,7 @@ const columnHelper = createColumnHelper<RenewalRequestSummary>();
 
 export function RenovacionPage(): React.JSX.Element {
   const queryClient = useQueryClient();
+  const { puede } = useAutoridad();
   const { notify } = useNotifications();
   const [proofRef, setProofRef] = useState("");
   const [notes, setNotes] = useState("");
@@ -74,8 +77,9 @@ export function RenovacionPage(): React.JSX.Element {
       header: "Acciones",
       cell: (info) => {
         const row = info.row.original;
-        const canVerify = row.status === "REPORTED";
-        const canIssue = row.status === "VERIFIED";
+        const canTransition = puede("POST", `/licensing/renewal-requests/${row.id}/transition`);
+        const canVerify = row.status === "REPORTED" && canTransition;
+        const canIssue = row.status === "VERIFIED" && canTransition;
         return (
           <div className="flex flex-wrap gap-2">
             {canVerify ? (
@@ -88,7 +92,7 @@ export function RenovacionPage(): React.JSX.Element {
                 Emitir
               </AsyncButton>
             ) : null}
-            {row.status === "REPORTED" || row.status === "VERIFIED" ? (
+            {(row.status === "REPORTED" || row.status === "VERIFIED") && canTransition ? (
               <AsyncButton onClick={() => transition(row.id, "REJECTED")} variant="danger" loadingText="…">
                 Rechazar
               </AsyncButton>
@@ -107,22 +111,24 @@ export function RenovacionPage(): React.JSX.Element {
         crumbs={[{ label: "Licenciamiento" }, { label: "Renovación" }]}
       />
 
-      <section className="rounded-lg border border-border-default bg-surface-0 p-6">
-        <h2 className="text-base font-semibold text-text-900">Nueva solicitud de renovación</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <FormField label="Referencia del comprobante">
-            <TextInput value={proofRef} onChange={(e) => setProofRef(e.target.value)} placeholder="Banco, fecha y referencia" />
-          </FormField>
-          <FormField label="Notas">
-            <TextInput value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observaciones (opcional)" />
-          </FormField>
-        </div>
-        <div className="mt-4">
-          <AsyncButton onClick={createRequest} loadingText="Registrando…">
-            Solicitar renovación
-          </AsyncButton>
-        </div>
-      </section>
+      <Autorizado operacion={["POST", "/licensing/renewal-requests"]}>
+        <section className="rounded-lg border border-border-default bg-surface-0 p-6">
+          <h2 className="text-base font-semibold text-text-900">Nueva solicitud de renovación</h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <FormField label="Referencia del comprobante">
+              <TextInput value={proofRef} onChange={(e) => setProofRef(e.target.value)} placeholder="Banco, fecha y referencia" />
+            </FormField>
+            <FormField label="Notas">
+              <TextInput value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observaciones (opcional)" />
+            </FormField>
+          </div>
+          <div className="mt-4">
+            <AsyncButton onClick={createRequest} loadingText="Registrando…">
+              Solicitar renovación
+            </AsyncButton>
+          </div>
+        </section>
+      </Autorizado>
 
       <div className="mt-6">
         <DataTable

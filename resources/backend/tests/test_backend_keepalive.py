@@ -136,12 +136,16 @@ def test_ka_03_todos_los_arranques_de_uvicorn_del_repositorio_fijan_el_mismo_kee
 
 
 def test_ka_04_el_repositorio_no_tiene_ningun_sondeo_periodico_de_5_segundos():
-    """La deuda se llamaba «keepalive» pero no hay latido: el único sondeo del frontend es la campana de
-    notificaciones (60 s, Spec 047) y no se toca aquí."""
+    """La deuda se llamaba «keepalive» pero no hay latido: los únicos sondeos del frontend son la campana de
+    notificaciones (60 s, Spec 047) y la renovación de la autoridad de la empresa activa (60 s, Spec 003 · ADR-018);
+    ninguno se toca aquí (el orden de `rglob` no está garantizado, por eso se compara ordenado)."""
     frontend = RAIZ / "resources" / "frontend" / "src"
     sondeos = [(f.relative_to(RAIZ).as_posix(), m.group(0)) for f in frontend.rglob("*.ts*") if ".test." not in f.name and "tests" not in f.parts
                for m in re.finditer(r"refetchInterval:\s*[A-Za-z_0-9]+|setInterval\(", f.read_text())]
-    assert sondeos == [("resources/frontend/src/modules/notificaciones/NotificationBell.tsx", "refetchInterval: INTERVALO_SONDEO_MS")], sondeos
+    assert sorted(sondeos) == sorted([
+        ("resources/frontend/src/modules/notificaciones/NotificationBell.tsx", "refetchInterval: INTERVALO_SONDEO_MS"),
+        ("resources/frontend/src/app/autoridad/AutoridadContext.tsx", "refetchInterval: 60_000"),
+    ]), sondeos
     assert "INTERVALO_SONDEO_MS = 60_000" in (frontend / "modules" / "notificaciones" / "api.ts").read_text()
 
 

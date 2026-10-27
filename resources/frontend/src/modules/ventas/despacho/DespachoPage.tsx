@@ -23,7 +23,9 @@ import type {
   TransportVehicleSummary,
 } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
@@ -42,6 +44,7 @@ function corto(id: string): string {
 export function DespachoPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [orderId, setOrderId] = useState<string | null>(null);
   const [codigo, setCodigo] = useState("");
   const [destino, setDestino] = useState("");
@@ -209,7 +212,7 @@ export function DespachoPage(): React.JSX.Element {
           </h2>
 
           {!sh ? (
-            <>
+            <Autorizado operacion={["POST", "/sales/shipments"]}>
               <p className="mb-3 text-sm text-text-700">
                 La salida lleva lo que la factura dice. Indique a dónde va y quién la lleva:
                 puede ser un transportista, el propio cliente o el responsable del traslado.
@@ -273,7 +276,7 @@ export function DespachoPage(): React.JSX.Element {
                 </FormField>
                 <AsyncButton onClick={registrar}>Registrar despacho</AsyncButton>
               </form>
-            </>
+            </Autorizado>
           ) : (
             <>
               <p className="mb-3 text-sm text-text-700">
@@ -313,7 +316,7 @@ export function DespachoPage(): React.JSX.Element {
                 </p>
               ) : null}
 
-              {sh.status === "DRAFT" ? (
+              {sh.status === "DRAFT" && puede("POST", `/sales/shipments/${sh.id}/validate`) ? (
                 <>
                   <p className="mb-3 text-sm text-text-700">
                     Validar comprueba las cuatro cosas de una vez: que hay preparación consolidada,
@@ -324,7 +327,7 @@ export function DespachoPage(): React.JSX.Element {
                 </>
               ) : null}
 
-              {sh.status === "READY" ? (
+              {sh.status === "READY" && puede("POST", `/sales/shipments/${sh.id}/confirm`) ? (
                 <>
                   <p className="mb-3 text-sm text-text-700">
                     Confirmar registra la salida física: la mercancía deja de estar preparada y la

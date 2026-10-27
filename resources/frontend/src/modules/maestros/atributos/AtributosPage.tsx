@@ -6,6 +6,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import type { CatalogAttribute } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -71,31 +72,33 @@ export function AtributosPage(): React.JSX.Element {
         description="Defina atributos personalizados para productos, servicios y terceros."
         crumbs={[{ label: "Maestros" }, { label: "Atributos" }]}
       />
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo atributo</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Código" required>
-            <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="COLOR" required />
-          </FormField>
-          <FormField label="Nombre" required>
-            <TextInput value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Color" required />
-          </FormField>
-          <FormField label="Tipo" required>
-            <select value={newType} onChange={(e) => setNewType(e.target.value)} className="h-10 w-36 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              {DATA_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Unidad">
-            <TextInput value={newUnit} onChange={(e) => setNewUnit(e.target.value)} placeholder="cm, kg…" />
-          </FormField>
-          <FormField label="Opciones (ENUM, separadas por coma)">
-            <TextInput value={newOptions} onChange={(e) => setNewOptions(e.target.value)} placeholder="Rojo, Verde, Azul" />
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createAttribute}>Crear</AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/maestros/catalogos/atributos"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo atributo</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Código" required>
+              <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="COLOR" required />
+            </FormField>
+            <FormField label="Nombre" required>
+              <TextInput value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Color" required />
+            </FormField>
+            <FormField label="Tipo" required>
+              <select value={newType} onChange={(e) => setNewType(e.target.value)} className="h-10 w-36 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                {DATA_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Unidad">
+              <TextInput value={newUnit} onChange={(e) => setNewUnit(e.target.value)} placeholder="cm, kg…" />
+            </FormField>
+            <FormField label="Opciones (ENUM, separadas por coma)">
+              <TextInput value={newOptions} onChange={(e) => setNewOptions(e.target.value)} placeholder="Rojo, Verde, Azul" />
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createAttribute}>Crear</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <DataTable
         columns={columns}

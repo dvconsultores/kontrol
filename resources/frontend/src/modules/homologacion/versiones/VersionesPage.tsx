@@ -5,7 +5,9 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { HomologationRecordSummary, ReleaseVersionSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { ErrorState } from "@/components/ErrorState";
@@ -26,6 +28,7 @@ const GATE_LABELS: Record<string, string> = {
 export function VersionesPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [version, setVersion] = useState("");
   const [changelog, setChangelog] = useState("");
@@ -129,12 +132,12 @@ export function VersionesPage(): React.JSX.Element {
         const row = info.row.original;
         return (
           <div className="flex flex-wrap gap-2">
-            {row.status === "DRAFT" ? (
+            {row.status === "DRAFT" && puede("POST", `/homologation/releases/${row.id}/promote`) ? (
               <AsyncButton onClick={() => promote(row.id)} variant="secondary" loadingText="…">
                 Promover
               </AsyncButton>
             ) : null}
-            {row.status === "CANDIDATE" ? (
+            {row.status === "CANDIDATE" && puede("POST", `/homologation/releases/${row.id}/release`) ? (
               <AsyncButton onClick={() => releaseIt(row.id)} variant="primary" loadingText="…">
                 Liberar
               </AsyncButton>
@@ -153,6 +156,7 @@ export function VersionesPage(): React.JSX.Element {
         crumbs={[{ label: "Homologación" }, { label: "Versiones" }]}
       />
 
+      <Autorizado operacion={["POST", "/homologation/releases"]}>
       <section className="rounded-lg border border-border-default bg-surface-0 p-6">
         <h2 className="text-base font-semibold text-text-900">Nueva versión</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -181,7 +185,9 @@ export function VersionesPage(): React.JSX.Element {
           </AsyncButton>
         </div>
       </section>
+      </Autorizado>
 
+      <Autorizado operacion={["POST", "/homologation/releases/_/release"]}>
       <section className="mt-6 rounded-lg border border-border-default bg-surface-0 p-6">
         <h2 className="text-base font-semibold text-text-900">Liberar versión</h2>
         <p className="mt-1 text-sm text-text-500">Seleccione la homologación aprobada que documenta esta versión.</p>
@@ -205,6 +211,7 @@ export function VersionesPage(): React.JSX.Element {
           </FormField>
         </div>
       </section>
+      </Autorizado>
 
       <div className="mt-6">
         <DataTable

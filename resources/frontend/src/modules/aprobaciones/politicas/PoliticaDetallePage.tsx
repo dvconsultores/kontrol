@@ -12,6 +12,8 @@ import { useParams } from "react-router";
 import { apiFetch } from "@/api/client";
 import type { ApprovalPolicySummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { ErrorState } from "@/components/ErrorState";
 import { FormField } from "@/components/FormField";
@@ -50,6 +52,7 @@ export function PoliticaDetallePage(): React.JSX.Element {
   const { policyId = "" } = useParams();
   const { notify } = useNotifications();
   const queryClient = useQueryClient();
+  const { puede } = useAutoridad();
 
   const [ruleName, setRuleName] = useState("");
   const [field, setField] = useState("amount_base");
@@ -180,27 +183,31 @@ export function PoliticaDetallePage(): React.JSX.Element {
         ]}
         actions={
           editable ? (
-            <AsyncButton
-              variant="primary"
-              onClick={() =>
-                run("Política activada", () =>
-                  apiFetch(`/approvals/policies/${policyId}/activate`, { method: "POST" }),
-                )
-              }
-            >
-              Activar
-            </AsyncButton>
+            <Autorizado operacion={["POST", `/approvals/policies/${policyId}/activate`]}>
+              <AsyncButton
+                variant="primary"
+                onClick={() =>
+                  run("Política activada", () =>
+                    apiFetch(`/approvals/policies/${policyId}/activate`, { method: "POST" }),
+                  )
+                }
+              >
+                Activar
+              </AsyncButton>
+            </Autorizado>
           ) : policy.status === "ACTIVE" ? (
-            <AsyncButton
-              variant="secondary"
-              onClick={() =>
-                run("Política cerrada", () =>
-                  apiFetch(`/approvals/policies/${policyId}/close`, { method: "POST" }),
-                )
-              }
-            >
-              Cerrar vigencia
-            </AsyncButton>
+            <Autorizado operacion={["POST", `/approvals/policies/${policyId}/close`]}>
+              <AsyncButton
+                variant="secondary"
+                onClick={() =>
+                  run("Política cerrada", () =>
+                    apiFetch(`/approvals/policies/${policyId}/close`, { method: "POST" }),
+                  )
+                }
+              >
+                Cerrar vigencia
+              </AsyncButton>
+            </Autorizado>
           ) : null
         }
       />
@@ -212,7 +219,7 @@ export function PoliticaDetallePage(): React.JSX.Element {
             <input
               type="checkbox"
               className="h-4 w-4"
-              disabled={!editable}
+              disabled={!editable || !puede("PATCH", `/approvals/policies/${policyId}`)}
               checked={policy.requires_segregation}
               onChange={(e) => void toggleFlag("requires_segregation", e.target.checked)}
             />
@@ -222,7 +229,7 @@ export function PoliticaDetallePage(): React.JSX.Element {
             <input
               type="checkbox"
               className="h-4 w-4"
-              disabled={!editable}
+              disabled={!editable || !puede("PATCH", `/approvals/policies/${policyId}`)}
               checked={policy.allow_self_approval}
               onChange={(e) => void toggleFlag("allow_self_approval", e.target.checked)}
             />
@@ -232,7 +239,7 @@ export function PoliticaDetallePage(): React.JSX.Element {
             <input
               type="checkbox"
               className="h-4 w-4"
-              disabled={!editable}
+              disabled={!editable || !puede("PATCH", `/approvals/policies/${policyId}`)}
               checked={policy.distinct_actors_across_levels}
               onChange={(e) => void toggleFlag("distinct_actors_across_levels", e.target.checked)}
             />
@@ -286,7 +293,7 @@ export function PoliticaDetallePage(): React.JSX.Element {
           </ul>
         )}
 
-        {editable ? (
+        {editable && puede("POST", `/approvals/policies/${policyId}/rules`) ? (
           <>
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
               <FormField label="Nombre de la regla" required>
@@ -389,9 +396,11 @@ export function PoliticaDetallePage(): React.JSX.Element {
               <FormField label="SLA (horas)">
                 <TextInput type="number" value={slaHours} onChange={(e) => setSlaHours(e.target.value)} />
               </FormField>
-              <AsyncButton type="submit" variant="secondary" onClick={addLevel}>
-                Añadir nivel
-              </AsyncButton>
+              <Autorizado operacion={["POST", `/approvals/policies/${policyId}/rules/${levelRule}/levels`]}>
+                <AsyncButton type="submit" variant="secondary" onClick={addLevel}>
+                  Añadir nivel
+                </AsyncButton>
+              </Autorizado>
             </form>
           </>
         ) : null}

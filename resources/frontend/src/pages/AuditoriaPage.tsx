@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { listAuditEvents } from "@/api/audit";
 import type { AuditEvent } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { DataTable } from "@/components/DataTable";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
@@ -26,6 +27,7 @@ const columns = [
 ];
 
 export function AuditoriaPage(): React.JSX.Element {
+  const { tiene } = useAutoridad();
   const [search, setSearch] = useState("");
   // Paginación de servidor (contrato de listados), como en Empresas: la
   // página es cero-based en la interfaz y uno-based en la petición, y
@@ -44,7 +46,7 @@ export function AuditoriaPage(): React.JSX.Element {
     <PageContent maxWidth="full">
       <PageHeader
         title="Auditoría"
-        description="Eventos de acceso y operaciones relevantes de la instalación."
+        description={tiene("audit:view", "tenant") ? "Eventos de acceso y operaciones de todas las empresas del tenant, incluidos los que no pertenecen a ninguna empresa (como los inicios de sesión)." : "Eventos de las empresas en las que usted tiene autoridad de auditoría. Los eventos sin empresa (como los inicios de sesión) solo los ve quien audita todas las empresas del tenant."}
         crumbs={[{ label: "Auditoría" }]}
       />
       <div className="mb-4">

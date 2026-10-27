@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { ControlBatchSummary, FiscalDocumentSummary, NumberSeriesSummary, SalesInvoiceSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
@@ -18,6 +19,7 @@ const columnHelper = createColumnHelper<FiscalDocumentSummary>();
 export function EmisionPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [invoiceId, setInvoiceId] = useState("");
   const [seriesId, setSeriesId] = useState("");
@@ -90,9 +92,11 @@ export function EmisionPage(): React.JSX.Element {
       header: "Acciones",
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">
-          <AsyncButton size="sm" variant="secondary" onClick={() => print(row.original.id)}>
-            imprimir
-          </AsyncButton>
+          {puede("POST", `/fiscal/documents/${row.original.id}/print`) && (
+            <AsyncButton size="sm" variant="secondary" onClick={() => print(row.original.id)}>
+              imprimir
+            </AsyncButton>
+          )}
         </div>
       ),
     }),
@@ -106,6 +110,7 @@ export function EmisionPage(): React.JSX.Element {
         crumbs={[{ label: "Fiscal" }, { label: "Emisión" }]}
       />
 
+      {puede("POST", "/fiscal/documents/emit") && (
       <form
         className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-surface-0 p-4"
         onSubmit={(e) => e.preventDefault()}
@@ -140,6 +145,7 @@ export function EmisionPage(): React.JSX.Element {
           Emitir
         </AsyncButton>
       </form>
+      )}
 
       <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-surface-0 p-4">
         <FormField label="Motivo de reimpresión" className="min-w-64">

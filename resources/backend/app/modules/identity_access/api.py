@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 from sqlalchemy.orm import Session
 
 from app.core import security
+from app.core.company_context import CompanyContext, get_company_context
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.dependencies import (
@@ -200,13 +201,29 @@ def refresh(
 @router.get("/me")
 def me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Usuario actual + permisos efectivos (resource:action) para el guard de UI
-    (FR-001-042; KAUD-004). El backend sigue siendo la autoridad."""
+    (FR-001-042; KAUD-004). El backend sigue siendo la autoridad.
+
+    `tenant_permissions`: capacidades que valen en todas las empresas del tenant
+    (catálogos de todo el tenant, Spec 003)."""
+    from app.modules.identity_access import authority
+
     permissions = identity_service.get_user_permissions(db, user)
     return {
         "user": {"id": str(user.id), "username": user.username, "tenant_id": user.tenant_id,
                  "must_change_password": user.must_change_password},
         "permissions": permissions,
+        "tenant_permissions": sorted(authority.tenant_wide_capabilities(db, user)),
     }
+
+
+@router.get("/operations")
+def operations(request: Request, _: User = Depends(get_current_user)):
+    """Catálogo de operaciones de la API (método, ruta, capacidades declaradas y
+    alcance) para que la UI proyecte la autoridad sin copiar el modelo de permisos
+    (Spec 003, ADR-018). Metadato de la API, igual para todos."""
+    from app.core.operaciones import catalogo_de_operaciones
+
+    return {"operations": catalogo_de_operaciones(request.app)}
 
 
 @router.post("/logout")
@@ -441,6 +458,21 @@ def reauth(
 
 
 # Usuarios (administración)
+authority_router = APIRouter(prefix="/authority", tags=["authority"])
+
+
+@authority_router.get("/company")
+def company_authority(user: User = Depends(get_current_user), db: Session = Depends(get_db),
+                      ctx: CompanyContext = Depends(get_company_context)):
+    """Capacidades del usuario que valen EN la empresa de la petición (cabecera
+    `X-Kontrol-Company`). La gobierna el acceso: una empresa inaccesible, de otro
+    tenant o inexistente responde 404 COMPANY_NOT_FOUND (Spec 003, ADR-018)."""
+    from app.modules.identity_access import authority
+
+    return {"company_id": ctx.company_id,
+            "permissions": sorted(authority.capabilities_in_company(db, user, ctx.company_id))}
+
+
 users_router = APIRouter(prefix="/users", tags=["users"])
 
 

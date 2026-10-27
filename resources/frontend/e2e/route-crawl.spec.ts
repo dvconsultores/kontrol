@@ -49,9 +49,10 @@ test.describe("Crawler de rutas", () => {
       }
     });
 
-    // esperar el render del Sidebar antes de recolectar enlaces (evita el race
-    // KAUD-010: el nav puede tardar tras el login)
-    await expect(page.locator("nav a[href^='/']").first()).toBeVisible({ timeout: 15_000 });
+    // esperar a que el menú esté completo antes de recolectar enlaces (evita el
+    // race KAUD-010: la autoridad de la empresa activa llega después del login y
+    // hasta entonces solo se pintan los enlaces que no exigen nada)
+    await expect.poll(() => page.locator('nav a[href^="/"]').count(), { timeout: 15_000 }).toBeGreaterThan(20);
 
     // extraer rutas del menú lateral (nav) — únicas, internas
     const links = await page.locator('nav a[href^="/"]').evaluateAll((els) =>

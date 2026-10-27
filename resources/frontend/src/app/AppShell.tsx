@@ -8,6 +8,7 @@ import { esClaveDeEmpresa } from "@/app/company/queryScope";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { PageLayout } from "@/layout/PageLayout";
 import { EstadoDeEmpresa } from "@/components/company/EstadoDeEmpresa";
+import { RutaAutorizada } from "@/components/RutaAutorizada";
 
 export function AppShell(): React.JSX.Element {
   const { activeCompanyId, estado, onCompanyRejected } = useCompany();
@@ -59,7 +60,9 @@ export function AppShell(): React.JSX.Element {
           la empresa A seguiría en pantalla bajo la B, y las selecciones locales
           —sucursal, almacén, cuenta bancaria, filas marcadas— sobrevivirían al
           cambio apuntando a entidades de otra empresa. */}
-      <Outlet key={activeCompanyId ?? "sin-empresa"} />
+      <RutaAutorizada>
+        <Outlet key={activeCompanyId ?? "sin-empresa"} />
+      </RutaAutorizada>
     </PageLayout>
   );
 }

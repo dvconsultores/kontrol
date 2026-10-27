@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { apiFetch } from "@/api/client";
 import type {
   BankTransactionSummary,
@@ -15,6 +16,7 @@ import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { MoneyInput } from "@/components/MoneyInput";
+import { Autorizado } from "@/components/Autorizado";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
@@ -26,6 +28,7 @@ const columnHelper = createColumnHelper<BankTransactionSummary>();
 export function IngresosEgresosPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [egresoPayment, setEgresoPayment] = useState("");
   const [ingresoPayment, setIngresoPayment] = useState("");
@@ -142,151 +145,157 @@ export function IngresosEgresosPage(): React.JSX.Element {
       />
 
       <div className="mb-4 grid gap-4 lg:grid-cols-2">
-        <form
-          className="rounded-lg border border-border-default bg-surface-0 p-4"
-          onSubmit={(e) => e.preventDefault()}
-        >
-          <h2 className="mb-2 text-base font-semibold text-text-900">Egreso (pago de 004)</h2>
-          <div className="grid gap-3">
-            <FormField label="Pago aprobado">
-              <select
-                value={egresoPayment}
-                onChange={(e) => setEgresoPayment(e.target.value)}
-                className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-              >
-                <option value="">Seleccionar pago…</option>
-                {(pagos.data?.items ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.currency} {p.amount.toFixed(2)} · {p.status}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <FormField label="Destino">
-              <select
-                value={targetType}
-                onChange={(e) => {
-                  setTargetType(e.target.value as "CASHBOX" | "ACCOUNT");
-                  setTargetId("");
-                }}
-                className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-              >
-                <option value="ACCOUNT">Cuenta bancaria</option>
-                <option value="CASHBOX">Caja</option>
-              </select>
-            </FormField>
-            <FormField label={targetType === "CASHBOX" ? "Caja" : "Cuenta"}>
-              <select
-                value={targetId}
-                onChange={(e) => setTargetId(e.target.value)}
-                className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-              >
-                <option value="">Seleccionar…</option>
-                {targets.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.code})
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <AsyncButton type="submit" variant="secondary" onClick={() => execute("egresos", egresoPayment)}>
-              Ejecutar egreso
-            </AsyncButton>
-          </div>
-        </form>
+        <Autorizado operacion={["POST", "/treasury/executions/egresos"]}>
+          <form
+            className="rounded-lg border border-border-default bg-surface-0 p-4"
+            onSubmit={(e) => e.preventDefault()}
+          >
+            <h2 className="mb-2 text-base font-semibold text-text-900">Egreso (pago de 004)</h2>
+            <div className="grid gap-3">
+              <FormField label="Pago aprobado">
+                <select
+                  value={egresoPayment}
+                  onChange={(e) => setEgresoPayment(e.target.value)}
+                  className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                >
+                  <option value="">Seleccionar pago…</option>
+                  {(pagos.data?.items ?? []).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.currency} {p.amount.toFixed(2)} · {p.status}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField label="Destino">
+                <select
+                  value={targetType}
+                  onChange={(e) => {
+                    setTargetType(e.target.value as "CASHBOX" | "ACCOUNT");
+                    setTargetId("");
+                  }}
+                  className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                >
+                  <option value="ACCOUNT">Cuenta bancaria</option>
+                  <option value="CASHBOX">Caja</option>
+                </select>
+              </FormField>
+              <FormField label={targetType === "CASHBOX" ? "Caja" : "Cuenta"}>
+                <select
+                  value={targetId}
+                  onChange={(e) => setTargetId(e.target.value)}
+                  className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                >
+                  <option value="">Seleccionar…</option>
+                  {targets.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.code})
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <AsyncButton type="submit" variant="secondary" onClick={() => execute("egresos", egresoPayment)}>
+                Ejecutar egreso
+              </AsyncButton>
+            </div>
+          </form>
+        </Autorizado>
 
-        <form
-          className="rounded-lg border border-border-default bg-surface-0 p-4"
-          onSubmit={(e) => e.preventDefault()}
-        >
-          <h2 className="mb-2 text-base font-semibold text-text-900">Ingreso (cobro de 005)</h2>
-          <div className="grid gap-3">
-            <FormField label="Cobro aprobado">
-              <select
-                value={ingresoPayment}
-                onChange={(e) => setIngresoPayment(e.target.value)}
-                className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-              >
-                <option value="">Seleccionar cobro…</option>
-                {(cobros.data?.items ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.currency} {p.amount.toFixed(2)} · {p.status}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <FormField label="Destino">
-              <select
-                value={targetType}
-                onChange={(e) => {
-                  setTargetType(e.target.value as "CASHBOX" | "ACCOUNT");
-                  setTargetId("");
-                }}
-                className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-              >
-                <option value="ACCOUNT">Cuenta bancaria</option>
-                <option value="CASHBOX">Caja</option>
-              </select>
-            </FormField>
-            <FormField label={targetType === "CASHBOX" ? "Caja" : "Cuenta"}>
-              <select
-                value={targetId}
-                onChange={(e) => setTargetId(e.target.value)}
-                className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-              >
-                <option value="">Seleccionar…</option>
-                {targets.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.code})
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <AsyncButton type="submit" variant="secondary" onClick={() => execute("ingresos", ingresoPayment)}>
-              Ejecutar ingreso
-            </AsyncButton>
-          </div>
-        </form>
+        <Autorizado operacion={["POST", "/treasury/executions/ingresos"]}>
+          <form
+            className="rounded-lg border border-border-default bg-surface-0 p-4"
+            onSubmit={(e) => e.preventDefault()}
+          >
+            <h2 className="mb-2 text-base font-semibold text-text-900">Ingreso (cobro de 005)</h2>
+            <div className="grid gap-3">
+              <FormField label="Cobro aprobado">
+                <select
+                  value={ingresoPayment}
+                  onChange={(e) => setIngresoPayment(e.target.value)}
+                  className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                >
+                  <option value="">Seleccionar cobro…</option>
+                  {(cobros.data?.items ?? []).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.currency} {p.amount.toFixed(2)} · {p.status}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField label="Destino">
+                <select
+                  value={targetType}
+                  onChange={(e) => {
+                    setTargetType(e.target.value as "CASHBOX" | "ACCOUNT");
+                    setTargetId("");
+                  }}
+                  className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                >
+                  <option value="ACCOUNT">Cuenta bancaria</option>
+                  <option value="CASHBOX">Caja</option>
+                </select>
+              </FormField>
+              <FormField label={targetType === "CASHBOX" ? "Caja" : "Cuenta"}>
+                <select
+                  value={targetId}
+                  onChange={(e) => setTargetId(e.target.value)}
+                  className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                >
+                  <option value="">Seleccionar…</option>
+                  {targets.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.code})
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <AsyncButton type="submit" variant="secondary" onClick={() => execute("ingresos", ingresoPayment)}>
+                Ejecutar ingreso
+              </AsyncButton>
+            </div>
+          </form>
+        </Autorizado>
       </div>
 
-      <form
-        className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-surface-0 p-4"
-        onSubmit={(e) => e.preventDefault()}
-      >
-        <FormField label="Cuenta" className="min-w-52">
-          <select
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-            className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-          >
-            <option value="">Seleccionar cuenta…</option>
-            {(accounts.data?.items ?? []).map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name} ({a.code})
-              </option>
-            ))}
-          </select>
-        </FormField>
-        <FormField label="Tipo">
-          <select
-            value={direction}
-            onChange={(e) => setDirection(e.target.value as "IN" | "OUT")}
-            className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-          >
-            <option value="OUT">Egreso</option>
-            <option value="IN">Ingreso</option>
-          </select>
-        </FormField>
-        <FormField label="Monto">
-          <MoneyInput value={amount} onChange={(e) => setAmount(e.target.value)} />
-        </FormField>
-        <FormField label="Referencia">
-          <TextInput value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Opcional" />
-        </FormField>
-        <AsyncButton type="submit" variant="secondary" onClick={createTransaction}>
-          Registrar ajuste
-        </AsyncButton>
-      </form>
+      {puede("POST", "/treasury/bank-transactions") && (
+        <form
+          className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-surface-0 p-4"
+          onSubmit={(e) => e.preventDefault()}
+        >
+          <FormField label="Cuenta" className="min-w-52">
+            <select
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+            >
+              <option value="">Seleccionar cuenta…</option>
+              {(accounts.data?.items ?? []).map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name} ({a.code})
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Tipo">
+            <select
+              value={direction}
+              onChange={(e) => setDirection(e.target.value as "IN" | "OUT")}
+              className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+            >
+              <option value="OUT">Egreso</option>
+              <option value="IN">Ingreso</option>
+            </select>
+          </FormField>
+          <FormField label="Monto">
+            <MoneyInput value={amount} onChange={(e) => setAmount(e.target.value)} />
+          </FormField>
+          <FormField label="Referencia">
+            <TextInput value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Opcional" />
+          </FormField>
+          <AsyncButton type="submit" variant="secondary" onClick={createTransaction}>
+            Registrar ajuste
+          </AsyncButton>
+        </form>
+      )}
 
       <DataTable
         columns={columns}

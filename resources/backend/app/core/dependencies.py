@@ -156,6 +156,8 @@ def require_tenant_permission(resource: str, action: str):
         return user
 
     checker.kontrol_permission = f"{resource}:{action}"  # type: ignore[attr-defined]
+    # El catálogo de operaciones (UI) distingue los catálogos de todo el tenant (Spec 003, ADR-018).
+    checker.kontrol_scope = "TENANT"  # type: ignore[attr-defined]
     return checker
 
 

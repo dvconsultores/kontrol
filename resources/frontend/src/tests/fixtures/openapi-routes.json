@@ -141,6 +141,10 @@
       "path": "/auth/mfa/verify"
     },
     {
+      "method": "GET",
+      "path": "/auth/operations"
+    },
+    {
       "method": "POST",
       "path": "/auth/password-reset/confirm"
     },
@@ -163,6 +167,10 @@
     {
       "method": "DELETE",
       "path": "/auth/sessions/{session_id}"
+    },
+    {
+      "method": "GET",
+      "path": "/authority/company"
     },
     {
       "method": "GET",

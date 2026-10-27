@@ -17,7 +17,9 @@ import { useState } from "react";
 import { ApiError, apiFetch } from "@/api/client";
 import type { PutAwayLocation, ReturnEligibility, SalesReturnDetail } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
@@ -53,6 +55,7 @@ function corto(id: string): string {
 export function DevolucionesVentasPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [facturaId, setFacturaId] = useState("");
   const [codigo, setCodigo] = useState("");
   const [motivo, setMotivo] = useState("");
@@ -245,81 +248,83 @@ export function DevolucionesVentasPage(): React.JSX.Element {
         crumbs={[{ label: "Ventas" }, { label: "Devoluciones" }]}
       />
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Solicitar una devolución</h2>
-        <div className="mb-3 flex flex-wrap items-end gap-3">
-          <FormField label="Factura" required>
-            <TextInput
-              value={facturaId}
-              onChange={(e) => setFacturaId(e.target.value)}
-              placeholder="Identificador de la factura"
-            />
-          </FormField>
-          <FormField label="Código" required>
-            <TextInput value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="DEV-0001" />
-          </FormField>
-          <FormField label="Motivo" required>
-            <TextInput
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Por qué la devuelve el cliente"
-            />
-          </FormField>
-        </div>
+      <Autorizado operacion={["POST", "/sales/devoluciones"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Solicitar una devolución</h2>
+          <div className="mb-3 flex flex-wrap items-end gap-3">
+            <FormField label="Factura" required>
+              <TextInput
+                value={facturaId}
+                onChange={(e) => setFacturaId(e.target.value)}
+                placeholder="Identificador de la factura"
+              />
+            </FormField>
+            <FormField label="Código" required>
+              <TextInput value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="DEV-0001" />
+            </FormField>
+            <FormField label="Motivo" required>
+              <TextInput
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder="Por qué la devuelve el cliente"
+              />
+            </FormField>
+          </div>
 
-        {elegible.isError ? (
-          <p className="text-sm text-text-700" role="status">
-            No se encontró esa factura en esta empresa.
-          </p>
-        ) : null}
-
-        {elegible.data && !elegible.data.dispatched ? (
-          <p className="text-sm text-text-700" role="status">
-            Ese pedido no salió del almacén. No se devuelve lo que nunca salió.
-          </p>
-        ) : null}
-
-        {elegible.data?.dispatched ? (
-          <>
-            <table className="mb-3 w-full text-sm">
-              <caption className="sr-only">Líneas devolvibles</caption>
-              <thead>
-                <tr className="border-b border-border-default text-left text-text-700">
-                  <th scope="col" className="py-1">Producto</th>
-                  <th scope="col">Despachado</th>
-                  <th scope="col">Ya devuelto</th>
-                  <th scope="col">Se puede devolver</th>
-                  <th scope="col">Devolver ahora</th>
-                </tr>
-              </thead>
-              <tbody>
-                {elegible.data.lines.map((l) => (
-                  <tr key={l.invoice_line_id} className="border-b border-border-subtle">
-                    <td className="py-1 font-mono text-xs">{corto(l.product_id)}</td>
-                    <td>{l.dispatched_base_quantity}</td>
-                    <td>{l.returned_base_quantity}</td>
-                    <td>{l.returnable_base_quantity}</td>
-                    <td>
-                      <TextInput
-                        aria-label={`Devolver de ${corto(l.product_id)}`}
-                        value={cantidades[l.invoice_line_id] ?? ""}
-                        onChange={(e) =>
-                          setCantidades((c) => ({ ...c, [l.invoice_line_id]: e.target.value }))
-                        }
-                        placeholder="0"
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="mb-3 text-sm text-text-500">
-              Las cantidades son en unidad base: devolver una caja de doce devuelve doce unidades.
+          {elegible.isError ? (
+            <p className="text-sm text-text-700" role="status">
+              No se encontró esa factura en esta empresa.
             </p>
-            <AsyncButton onClick={solicitar}>Solicitar devolución</AsyncButton>
-          </>
-        ) : null}
-      </section>
+          ) : null}
+
+          {elegible.data && !elegible.data.dispatched ? (
+            <p className="text-sm text-text-700" role="status">
+              Ese pedido no salió del almacén. No se devuelve lo que nunca salió.
+            </p>
+          ) : null}
+
+          {elegible.data?.dispatched ? (
+            <>
+              <table className="mb-3 w-full text-sm">
+                <caption className="sr-only">Líneas devolvibles</caption>
+                <thead>
+                  <tr className="border-b border-border-default text-left text-text-700">
+                    <th scope="col" className="py-1">Producto</th>
+                    <th scope="col">Despachado</th>
+                    <th scope="col">Ya devuelto</th>
+                    <th scope="col">Se puede devolver</th>
+                    <th scope="col">Devolver ahora</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {elegible.data.lines.map((l) => (
+                    <tr key={l.invoice_line_id} className="border-b border-border-subtle">
+                      <td className="py-1 font-mono text-xs">{corto(l.product_id)}</td>
+                      <td>{l.dispatched_base_quantity}</td>
+                      <td>{l.returned_base_quantity}</td>
+                      <td>{l.returnable_base_quantity}</td>
+                      <td>
+                        <TextInput
+                          aria-label={`Devolver de ${corto(l.product_id)}`}
+                          value={cantidades[l.invoice_line_id] ?? ""}
+                          onChange={(e) =>
+                            setCantidades((c) => ({ ...c, [l.invoice_line_id]: e.target.value }))
+                          }
+                          placeholder="0"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="mb-3 text-sm text-text-500">
+                Las cantidades son en unidad base: devolver una caja de doce devuelve doce unidades.
+              </p>
+              <AsyncButton onClick={solicitar}>Solicitar devolución</AsyncButton>
+            </>
+          ) : null}
+        </section>
+      </Autorizado>
 
       <section className="mb-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Devoluciones</h2>
@@ -407,7 +412,9 @@ export function DevolucionesVentasPage(): React.JSX.Element {
                   ))}
                 </select>
               </FormField>
-              <AsyncButton onClick={() => recibir(d)}>Registrar recepción</AsyncButton>
+              {puede("POST", `/sales/devoluciones/${d.id}/recibir`) ? (
+                <AsyncButton onClick={() => recibir(d)}>Registrar recepción</AsyncButton>
+              ) : null}
             </div>
           ) : null}
 
@@ -417,23 +424,29 @@ export function DevolucionesVentasPage(): React.JSX.Element {
                 La mercancía está en custodia de la empresa y todavía no es vendible. La
                 verificación decide qué vuelve a existencia y qué no.
               </p>
-              <AsyncButton onClick={() => verificar(d)}>Registrar verificación</AsyncButton>
+              {puede("POST", `/sales/devoluciones/${d.id}/verificar`) ? (
+                <AsyncButton onClick={() => verificar(d)}>Registrar verificación</AsyncButton>
+              ) : null}
             </>
           ) : null}
 
           {d.status === "INSPECTED" ? (
             <div className="flex flex-wrap items-end gap-3">
-              <AsyncButton onClick={() => decidir(d, true)}>Aprobar</AsyncButton>
-              <FormField label="Motivo para denegar">
-                <TextInput
-                  value={motivoDenegar}
-                  onChange={(e) => setMotivoDenegar(e.target.value)}
-                  placeholder="Por qué no procede"
-                />
-              </FormField>
-              <AsyncButton variant="secondary" onClick={() => decidir(d, false)}>
-                Denegar
-              </AsyncButton>
+              {puede("POST", `/sales/devoluciones/${d.id}/decidir`) ? (
+                <>
+                  <AsyncButton onClick={() => decidir(d, true)}>Aprobar</AsyncButton>
+                  <FormField label="Motivo para denegar">
+                    <TextInput
+                      value={motivoDenegar}
+                      onChange={(e) => setMotivoDenegar(e.target.value)}
+                      placeholder="Por qué no procede"
+                    />
+                  </FormField>
+                  <AsyncButton variant="secondary" onClick={() => decidir(d, false)}>
+                    Denegar
+                  </AsyncButton>
+                </>
+              ) : null}
             </div>
           ) : null}
 
@@ -443,7 +456,9 @@ export function DevolucionesVentasPage(): React.JSX.Element {
                 Es el cuarto acto y el único que crea existencia. Lo aceptado va a su destino; lo
                 que no se aceptó se queda en custodia.
               </p>
-              <AsyncButton onClick={() => reingresar(d)}>Registrar entrada de inventario</AsyncButton>
+              {puede("POST", `/sales/devoluciones/${d.id}/reingresar`) ? (
+                <AsyncButton onClick={() => reingresar(d)}>Registrar entrada de inventario</AsyncButton>
+              ) : null}
             </>
           ) : null}
 

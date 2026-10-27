@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -98,41 +99,43 @@ export function PerfilesFiscalesPage(): React.JSX.Element {
         crumbs={[{ label: "Maestros" }, { label: "Perfiles fiscales" }]}
       />
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Crear perfil</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Código" required>
-            <TextInput value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ej. PERF-01" required />
-          </FormField>
-          <FormField label="Nombre" required>
-            <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del perfil" required />
-          </FormField>
-          <FormField label="Tipo">
-            <select value={profileType} onChange={(e) => setProfileType(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              {PROFILE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Clasificación fiscal">
-            <select value={taxClassification} onChange={(e) => setTaxClassification(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              {TAX_CLASSIFICATIONS.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Trazabilidad">
-            <select value={traceLevel} onChange={(e) => setTraceLevel(e.target.value)} className="h-10 w-36 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              {TRACE_LEVELS.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </FormField>
-          <div className="flex flex-wrap gap-4 pb-2">
-            {checkbox("Inventariable", stockable, setStockable)}
-            {checkbox("Requiere SICA", requiresSica, setRequiresSica)}
-            {checkbox("Requiere SIGESAI", requiresSigesai, setRequiresSigesai)}
-            {checkbox("Requiere SACS", requiresSacs, setRequiresSacs)}
-          </div>
-          <AsyncButton type="submit" variant="primary" onClick={createProfile}>
-            Crear
-          </AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/maestros/perfiles"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Crear perfil</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Código" required>
+              <TextInput value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ej. PERF-01" required />
+            </FormField>
+            <FormField label="Nombre" required>
+              <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del perfil" required />
+            </FormField>
+            <FormField label="Tipo">
+              <select value={profileType} onChange={(e) => setProfileType(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                {PROFILE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Clasificación fiscal">
+              <select value={taxClassification} onChange={(e) => setTaxClassification(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                {TAX_CLASSIFICATIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Trazabilidad">
+              <select value={traceLevel} onChange={(e) => setTraceLevel(e.target.value)} className="h-10 w-36 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                {TRACE_LEVELS.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </FormField>
+            <div className="flex flex-wrap gap-4 pb-2">
+              {checkbox("Inventariable", stockable, setStockable)}
+              {checkbox("Requiere SICA", requiresSica, setRequiresSica)}
+              {checkbox("Requiere SIGESAI", requiresSigesai, setRequiresSigesai)}
+              {checkbox("Requiere SACS", requiresSacs, setRequiresSacs)}
+            </div>
+            <AsyncButton type="submit" variant="primary" onClick={createProfile}>
+              Crear
+            </AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <section className="rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Perfiles</h2>

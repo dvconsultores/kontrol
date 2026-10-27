@@ -21,6 +21,8 @@ import type {
   ReservationPolicy,
   SalesOrderSummary,
 } from "@/api/types";
+import { Autorizado } from "@/components/Autorizado";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -85,6 +87,7 @@ function reservadoDe(pedido: SalesOrderSummary): string {
 
 export function OrdenesVentasPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
+  const { puede } = useAutoridad();
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
   const companyId = activeCompany?.id ?? null;
@@ -258,24 +261,25 @@ export function OrdenesVentasPage(): React.JSX.Element {
       cell: ({ row }) => {
         const a = row.original.allowed_actions;
         const id = row.original.id;
+        const puedeTransicionar = puede("POST", `/sales/orders/${id}/transition`);
         return (
           <div className="flex justify-end gap-1">
-            {a.confirm ? (
+            {a.confirm && puede("POST", `/sales/orders/${id}/submit`) ? (
               <AsyncButton size="sm" variant="primary" onClick={() => ejecutar(id, "submit")}>Confirmar</AsyncButton>
             ) : null}
-            {a.release ? (
+            {a.release && puede("POST", `/sales/orders/${id}/release`) ? (
               <AsyncButton size="sm" variant="secondary" onClick={() => ejecutar(id, "release")}>Liberar</AsyncButton>
             ) : null}
-            {a.reject ? (
+            {a.reject && puede("POST", `/sales/orders/${id}/reject`) ? (
               <AsyncButton size="sm" variant="secondary" onClick={async () => setPendiente({ id, accion: "reject" })}>Rechazar</AsyncButton>
             ) : null}
-            {a.revert ? (
+            {a.revert && puede("POST", `/sales/orders/${id}/revert`) ? (
               <AsyncButton size="sm" variant="secondary" onClick={async () => setPendiente({ id, accion: "revert" })}>Revertir</AsyncButton>
             ) : null}
-            {a.cancel ? (
+            {a.cancel && puede("POST", `/sales/orders/${id}/cancel`) ? (
               <AsyncButton size="sm" variant="secondary" onClick={async () => setPendiente({ id, accion: "cancel" })}>Cancelar</AsyncButton>
             ) : null}
-            {a.close ? (
+            {a.close && puedeTransicionar ? (
               <AsyncButton size="sm" variant="secondary" onClick={() => ejecutar(id, "transition", { target: "CLOSED" })}>Cerrar</AsyncButton>
             ) : null}
           </div>
@@ -294,6 +298,7 @@ export function OrdenesVentasPage(): React.JSX.Element {
 
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo pedido</h2>
+        <Autorizado operacion={["POST", "/sales/orders"]}>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
           <FormField label="Código" required>
             <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="Ej. ORD-001" required />
@@ -316,10 +321,12 @@ export function OrdenesVentasPage(): React.JSX.Element {
           </FormField>
           <AsyncButton type="submit" variant="primary" onClick={createOrder}>Crear</AsyncButton>
         </form>
+        </Autorizado>
       </section>
 
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Agregar línea</h2>
+        <Autorizado operacion={["POST", "/sales/orders/_/lines"]}>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
           <FormField label="Pedido" required>
             <select value={lineOrder} onChange={(e) => setLineOrder(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
@@ -392,6 +399,7 @@ export function OrdenesVentasPage(): React.JSX.Element {
             </table>
           </div>
         ) : null}
+        </Autorizado>
       </section>
 
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
@@ -399,13 +407,17 @@ export function OrdenesVentasPage(): React.JSX.Element {
         <p className="mb-2 text-sm text-text-500">
           Disparador: {policy.data?.reservation_trigger ?? "ORDER_CONFIRMATION"} (fijo). La vigencia solo aplica mientras el pedido espera crédito.
         </p>
+        <Autorizado operacion={["PUT", "/sales/settings/reservation"]}>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
           <FormField label="Vigencia (días)" help={policy.data?.reservation_ttl_days ? `Actual: ${policy.data.reservation_ttl_days}` : "Actual: sin vencimiento"}>
             <TextInput type="number" min="1" value={ttl} onChange={(e) => setTtl(e.target.value)} placeholder="Sin vencimiento" />
           </FormField>
           <AsyncButton type="submit" variant="secondary" onClick={guardarPolitica}>Guardar</AsyncButton>
-          <AsyncButton variant="secondary" onClick={expirar}>Procesar vencimientos</AsyncButton>
         </form>
+        </Autorizado>
+        <Autorizado operacion={["POST", "/sales/orders/expire-reservations"]}>
+          <AsyncButton variant="secondary" onClick={expirar}>Procesar vencimientos</AsyncButton>
+        </Autorizado>
       </section>
 
       <DataTable

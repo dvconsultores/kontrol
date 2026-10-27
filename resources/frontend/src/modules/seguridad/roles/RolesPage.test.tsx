@@ -8,6 +8,15 @@ const notify = vi.fn();
 vi.mock("@/app/contexts/NotificationContext", () => ({
   useNotifications: () => ({ notify }),
 }));
+vi.mock("@/app/autoridad/AutoridadContext", () => ({
+  useAutoridad: () => ({
+    estado: "LISTA",
+    puede: () => true,
+    tiene: () => true,
+    motivo: () => null,
+    motivoDeCapacidad: () => null,
+  }),
+}));
 
 const apiFetch = vi.fn();
 vi.mock("@/api/client", async (importOriginal) => {

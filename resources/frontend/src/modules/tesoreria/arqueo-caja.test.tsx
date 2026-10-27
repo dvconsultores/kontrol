@@ -17,6 +17,15 @@ vi.mock("@/api/client", async (original) => ({
 vi.mock("@/app/contexts/NotificationContext", () => ({
   useNotifications: () => ({ notify }),
 }));
+vi.mock("@/app/autoridad/AutoridadContext", () => ({
+  useAutoridad: () => ({
+    estado: "LISTA",
+    puede: () => true,
+    tiene: () => true,
+    motivo: () => null,
+    motivoDeCapacidad: () => null,
+  }),
+}));
 
 const { CajasPage } = await import("./cajas/CajasPage");
 

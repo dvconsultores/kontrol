@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { CashSessionSummary, CashboxSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { Button } from "@/components/Button";
@@ -25,6 +26,7 @@ const importe = (valor: string | null): string => (valor === null ? "—" : form
 export function CajasPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   // Apertura de caja
   const [cashboxId, setCashboxId] = useState("");
@@ -129,7 +131,7 @@ export function CajasPage(): React.JSX.Element {
         const a = row.original.allowed_actions;
         return (
           <div className="flex justify-end gap-1">
-            {a.arqueo ? (
+            {a.arqueo && puede("POST", `/treasury/cash-sessions/${row.original.id}/arqueo`) ? (
               <Button
                 size="sm"
                 variant="secondary"
@@ -141,12 +143,12 @@ export function CajasPage(): React.JSX.Element {
                 arqueo
               </Button>
             ) : null}
-            {a.pre_close ? (
+            {a.pre_close && puede("POST", `/treasury/cash-sessions/${row.original.id}/pre-close`) ? (
               <AsyncButton size="sm" variant="secondary" onClick={() => runTransition(row.original.id, "pre-close", "PRE_CLOSED")}>
                 pre-cierre
               </AsyncButton>
             ) : null}
-            {a.close ? (
+            {a.close && puede("POST", `/treasury/cash-sessions/${row.original.id}/close`) ? (
               <Button
                 size="sm"
                 variant="secondary"
@@ -158,7 +160,7 @@ export function CajasPage(): React.JSX.Element {
                 cerrar
               </Button>
             ) : null}
-            {a.reject ? (
+            {a.reject && puede("POST", `/treasury/cash-sessions/${row.original.id}/reject`) ? (
               <AsyncButton size="sm" variant="danger" onClick={() => runTransition(row.original.id, "reject", "REJECTED")}>
                 rechazar
               </AsyncButton>
@@ -183,6 +185,7 @@ export function CajasPage(): React.JSX.Element {
       <form
         className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-border-default bg-surface-0 p-4"
         onSubmit={(e) => e.preventDefault()}
+        hidden={!puede("POST", "/treasury/cash-sessions")}
       >
         <FormField label="Caja" className="min-w-56">
           <select
@@ -226,7 +229,7 @@ export function CajasPage(): React.JSX.Element {
             Diferencia: {importe(selected.difference)}
           </p>
           {/* El arqueo se hace sobre una sesión abierta: es la única que lo permite. */}
-          {selected.status === "OPEN" ? (
+          {selected.status === "OPEN" && puede("POST", `/treasury/cash-sessions/${selected.id}/arqueo`) ? (
             <form
               className="flex flex-wrap items-end gap-3"
               onSubmit={(e) => e.preventDefault()}
@@ -242,7 +245,7 @@ export function CajasPage(): React.JSX.Element {
               </AsyncButton>
             </form>
           ) : null}
-          {selected.status === "PRE_CLOSED" ? (
+          {selected.status === "PRE_CLOSED" && puede("POST", `/treasury/cash-sessions/${selected.id}/close`) ? (
             <form
               className="flex flex-wrap items-end gap-3"
               onSubmit={(e) => e.preventDefault()}

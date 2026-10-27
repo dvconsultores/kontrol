@@ -1,0 +1,41 @@
+# Rojo E2E (Chromium) antes de implementar — 2026-10-27, HEAD 56f0f5e + pruebas del ciclo
+  ✓  4 [chromium] › e2e/ui-company-scope.spec.ts:188:3 › autoridad por empresa en la interfaz · Spec 003 › E2E-UI-SCOPE-04 · la API rechaza lecturas de maestros sin autoridad en la empresa de la cabecera
+  ✓  2 [chromium] › e2e/ui-company-scope.spec.ts:110:3 › autoridad por empresa en la interfaz · Spec 003 › E2E-UI-SCOPE-01 · actor con maestros:view y maestros:create en D1 ve menú y alta en su empresa
+  ✘  1 [chromium] › e2e/ui-company-scope.spec.ts:148:3 › autoridad por empresa en la interfaz · Spec 003 › E2E-UI-SCOPE-03 · URL directa sin autoridad en la empresa activa muestra mensaje de alcance y no monta la pantalla
+  ✘  3 [chromium] › e2e/ui-company-scope.spec.ts:202:3 › autoridad por empresa en la interfaz · Spec 003 › E2E-UI-SCOPE-05 · FUNCIONAL_COMPLETO asignado en D1 no vale en D2
+  ✘  6 [chromium] › e2e/ui-company-scope.spec.ts:216:3 › autoridad por empresa en la interfaz · Spec 003 › E2E-UI-SCOPE-06 · rol técnico ADMIN no ve pantallas de negocio y URL directa muestra Acceso prohibido
+  ✘  5 [chromium] › e2e/ui-company-scope.spec.ts:131:3 › autoridad por empresa en la interfaz · Spec 003 › E2E-UI-SCOPE-02 · el enlace a /maestros/unidades desaparece al cambiar a D2
+  ✘  8 [chromium] › e2e/ui-company-scope.spec.ts:267:3 › autoridad por empresa en la interfaz · Spec 003 › E2E-UI-SCOPE-08 · permisos de distintos roles por empresa se reflejan en el menú
+  ✘  7 [chromium] › e2e/ui-company-scope.spec.ts:236:3 › autoridad por empresa en la interfaz · Spec 003 › E2E-UI-SCOPE-07 · el botón Crear fuente solo aparece con fiscal:create en todas las empresas
+  ✘  9 [chromium] › e2e/ui-company-scope.spec.ts:286:3 › autoridad por empresa en la interfaz · Spec 003 › E2E-UI-SCOPE-09 · al cambiar la asignación del rol de empresa se pierde la autoridad en la empresa activa
+[e2e r20261027t120835p3091434n448617] suite: {'failed': 7, 'passed': 2} · limpieza: LIMPIA · salida: 1 · evidencia: <repo>/qa/e2e-runs/r20261027t120835p3091434n448617
+
+## Motivo de cada rojo (primera aserción)
+    Error: menú no debe mostrar /maestros/unidades en D2
+    Locator:  locator('nav a[href="/maestros/unidades"]')
+    Expected: 0
+    Received: 1
+    Error: debe mostrar encabezado de alcance de empresa
+    Locator: getByRole('heading', { name: 'Sin autoridad en esta empresa', level: 1 })
+    Expected: visible
+    Error: element(s) not found
+    Error: maestros no en D2
+    Locator:  locator('nav a[href="/maestros/unidades"]')
+    Expected: 0
+    Received: 1
+    Error: ADMIN sin permiso de negocio debe ver Acceso prohibido
+    Locator: getByRole('heading', { name: 'Acceso prohibido', level: 1 })
+    Expected: visible
+    Error: element(s) not found
+    Error: actor B sin fiscal:create en todas las empresas no ve Crear fuente
+    Locator:  getByRole('button', { name: 'Crear fuente' })
+    Expected: 0
+    Received: 1
+    Error: ventas oculto en D1
+    Locator:  locator('nav a[href="/ventas/ordenes"]')
+    Expected: 0
+    Received: 1
+    Error: tras reasignar a D2 la empresa activa D1 pierde maestros
+    Locator: getByRole('heading', { name: 'Sin autoridad en esta empresa', level: 1 })
+    Expected: visible
+    Error: element(s) not found

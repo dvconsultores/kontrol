@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { ControlBatchSummary, ControlNumberSummary, NumberSeriesSummary } from "@/api/types";
+import { Autorizado } from "@/components/Autorizado";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
@@ -67,23 +68,25 @@ export function NumeracionPage(): React.JSX.Element {
         crumbs={[{ label: "Fiscal" }, { label: "Numeración" }]}
       />
 
-      {section("Crear serie", (
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Tipo de documento">
-            <select value={docType} onChange={(e) => setDocType(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="INVOICE">Factura</option>
-              <option value="CREDIT_NOTE">Nota de crédito</option>
-              <option value="DEBIT_NOTE">Nota de débito</option>
-            </select>
-          </FormField>
-          <FormField label="Prefijo">
-            <TextInput value={prefix} onChange={(e) => setPrefix(e.target.value)} />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={createSeries}>
-            Crear serie
-          </AsyncButton>
-        </form>
-      ))}
+      <Autorizado operacion={["POST", "/fiscal/number-series"]}>
+        {section("Crear serie", (
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Tipo de documento">
+              <select value={docType} onChange={(e) => setDocType(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="INVOICE">Factura</option>
+                <option value="CREDIT_NOTE">Nota de crédito</option>
+                <option value="DEBIT_NOTE">Nota de débito</option>
+              </select>
+            </FormField>
+            <FormField label="Prefijo">
+              <TextInput value={prefix} onChange={(e) => setPrefix(e.target.value)} />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={createSeries}>
+              Crear serie
+            </AsyncButton>
+          </form>
+        ))}
+      </Autorizado>
 
       {section("Series", (
         <div>
@@ -97,19 +100,21 @@ export function NumeracionPage(): React.JSX.Element {
         </div>
       ))}
 
-      {section("Crear lote de control", (
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Desde">
-            <TextInput value={rangeFrom} onChange={(e) => setRangeFrom(e.target.value)} />
-          </FormField>
-          <FormField label="Hasta">
-            <TextInput value={rangeTo} onChange={(e) => setRangeTo(e.target.value)} />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={createBatch}>
-            Cargar lote
-          </AsyncButton>
-        </form>
-      ))}
+      <Autorizado operacion={["POST", "/fiscal/control-batches"]}>
+        {section("Crear lote de control", (
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Desde">
+              <TextInput value={rangeFrom} onChange={(e) => setRangeFrom(e.target.value)} />
+            </FormField>
+            <FormField label="Hasta">
+              <TextInput value={rangeTo} onChange={(e) => setRangeTo(e.target.value)} />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={createBatch}>
+              Cargar lote
+            </AsyncButton>
+          </form>
+        ))}
+      </Autorizado>
 
       {section("Lotes de control", (
         <div>

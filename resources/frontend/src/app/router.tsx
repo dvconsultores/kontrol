@@ -2,13 +2,19 @@
  * Code-splitting por ruta (T-219): cada página se carga con `lazy` del router,
  * reduciendo el bundle inicial y el tiempo de carga (LCP/TTI).
  */
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, type RouteObject } from "react-router";
 
 import { AppShell } from "./AppShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ForbiddenState } from "@/components/ForbiddenState";
 import { NotFoundState } from "@/components/NotFoundState";
 import { RouteGuard } from "@/components/RouteGuard";
+import { requisitoDe } from "@/app/autoridad/pantallas";
+
+/** Añade a cada hija de AppShell el requisito de su pantalla (registro único, `pantallas.ts`). */
+function conRequisitos(hijas: RouteObject[]): RouteObject[] {
+  return hijas.map((h) => ({ ...h, handle: { requisito: requisitoDe(h.index ? "" : (h.path ?? "")) } }) as RouteObject);
+}
 
 export const router = createBrowserRouter([
   {
@@ -37,7 +43,7 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <AppShell />,
-        children: [
+        children: conRequisitos([
           { index: true, lazy: () => import("@/pages/DashboardPage").then((m) => ({ Component: m.DashboardPage })) },
           { path: "mi-licencia", lazy: () => import("@/pages/MiLicenciaPage").then((m) => ({ Component: m.MiLicenciaPage })) },
           { path: "cambiar-contrasena", lazy: () => import("@/pages/CambiarContrasenaPage").then((m) => ({ Component: m.CambiarContrasenaPage })) },
@@ -147,7 +153,7 @@ export const router = createBrowserRouter([
           { path: "diagnostico", lazy: () => import("@/pages/DiagnosticoPage").then((m) => ({ Component: m.DiagnosticoPage })) },
           { path: "forbidden", element: <ForbiddenState /> },
           { path: "*", element: <NotFoundState /> },
-        ],
+        ]),
       },
     ],
   },

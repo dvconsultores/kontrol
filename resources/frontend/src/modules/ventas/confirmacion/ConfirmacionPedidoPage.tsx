@@ -21,6 +21,7 @@ import type {
   ConfirmationWorksheet,
   PendingConfirmation,
 } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
@@ -45,6 +46,7 @@ interface Verificacion {
 export function ConfirmacionPedidoPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [orderId, setOrderId] = useState<string | null>(null);
   const [verificado, setVerificado] = useState<Record<string, Verificacion>>({});
   const [notas, setNotas] = useState("");
@@ -231,7 +233,9 @@ export function ConfirmacionPedidoPage(): React.JSX.Element {
             <FormField label="Observaciones">
               <TextInput value={notas} onChange={(e) => setNotas(e.target.value)} />
             </FormField>
-            <AsyncButton onClick={confirmar}>Registrar control</AsyncButton>
+            {puede("POST", "/sales/confirmacion/_") ? (
+              <AsyncButton onClick={confirmar}>Registrar control</AsyncButton>
+            ) : null}
           </div>
 
           {h.attempts.length ? (

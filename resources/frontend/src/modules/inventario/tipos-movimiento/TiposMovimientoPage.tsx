@@ -7,6 +7,7 @@ import { apiFetch } from "@/api/client";
 import type { MovementType, PagedResult } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -69,6 +70,7 @@ export function TiposMovimientoPage(): React.JSX.Element {
         description="Configure los tipos de movimiento que determinan el efecto sobre existencias."
         crumbs={[{ label: "Inventario" }, { label: "Tipos de movimiento" }]}
       />
+      <Autorizado operacion={["POST", "/inventory/movement-types"]}>
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo tipo</h2>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
@@ -94,6 +96,7 @@ export function TiposMovimientoPage(): React.JSX.Element {
           <AsyncButton type="submit" variant="primary" onClick={createType}>Crear</AsyncButton>
         </form>
       </section>
+      </Autorizado>
 
       <DataTable
         columns={columns}

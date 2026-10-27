@@ -10,6 +10,7 @@ import type {
   RegulatoryProfileSummary,
 } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -94,14 +95,16 @@ export function OrganismosPage(): React.JSX.Element {
         crumbs={[{ label: "Regulatorio" }, { label: "Organismos" }]}
       />
 
-      {section("Registrar autoridad", (
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Nombre">
-            <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. SICA" />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={createAuthority}>Crear</AsyncButton>
-        </form>
-      ))}
+      <Autorizado operacion={["POST", "/regulatory/authorities"]}>
+        {section("Registrar autoridad", (
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Nombre">
+              <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. SICA" />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={createAuthority}>Crear</AsyncButton>
+          </form>
+        ))}
+      </Autorizado>
 
       {section("Autoridades", (
         <div>
@@ -110,20 +113,22 @@ export function OrganismosPage(): React.JSX.Element {
         </div>
       ))}
 
-      {section("Tipo de permiso", (
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Autoridad">
-            <select value={authorityId} onChange={(e) => setAuthorityId(e.target.value)} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(authorities.data?.items ?? []).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Nombre">
-            <TextInput value={permitName} onChange={(e) => setPermitName(e.target.value)} />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={createPermitType}>Crear</AsyncButton>
-        </form>
-      ))}
+      <Autorizado operacion={["POST", "/regulatory/permit-types"]}>
+        {section("Tipo de permiso", (
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Autoridad">
+              <select value={authorityId} onChange={(e) => setAuthorityId(e.target.value)} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(authorities.data?.items ?? []).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+            </FormField>
+            <FormField label="Nombre">
+              <TextInput value={permitName} onChange={(e) => setPermitName(e.target.value)} />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={createPermitType}>Crear</AsyncButton>
+          </form>
+        ))}
+      </Autorizado>
 
       {section("Tipos de permiso", (
         <div>
@@ -132,14 +137,16 @@ export function OrganismosPage(): React.JSX.Element {
         </div>
       ))}
 
-      {section("Perfil regulatorio (DESPACHO)", (
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Documentos requeridos" className="min-w-72">
-            <TextInput value={profileDocs} onChange={(e) => setProfileDocs(e.target.value)} placeholder="Ej. SICA, SIGESAI, SACS" />
-          </FormField>
-          <AsyncButton type="submit" variant="secondary" onClick={createProfile}>Crear perfil</AsyncButton>
-        </form>
-      ))}
+      <Autorizado operacion={["POST", "/regulatory/profiles"]}>
+        {section("Perfil regulatorio (DESPACHO)", (
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Documentos requeridos" className="min-w-72">
+              <TextInput value={profileDocs} onChange={(e) => setProfileDocs(e.target.value)} placeholder="Ej. SICA, SIGESAI, SACS" />
+            </FormField>
+            <AsyncButton type="submit" variant="secondary" onClick={createProfile}>Crear perfil</AsyncButton>
+          </form>
+        ))}
+      </Autorizado>
 
       {section("Perfiles", (
         <div>

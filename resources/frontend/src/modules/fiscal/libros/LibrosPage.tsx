@@ -4,7 +4,9 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { BookResult, FiscalPeriodSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -16,6 +18,7 @@ const BOOK_TYPES = ["VENTAS", "COMPRAS", "RETENCIONES", "IGTF"] as const;
 export function LibrosPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [bookType, setBookType] = useState<(typeof BOOK_TYPES)[number]>("VENTAS");
   const [period, setPeriod] = useState("");
@@ -97,17 +100,19 @@ export function LibrosPage(): React.JSX.Element {
             <FormField label="Período">
               <TextInput value={periodKey} onChange={(e) => setPeriodKey(e.target.value)} placeholder="2026-01" />
             </FormField>
-            <AsyncButton type="submit" variant="secondary" onClick={createPeriod}>
-              Crear
-            </AsyncButton>
+            <Autorizado operacion={["POST", "/fiscal/periods"]}>
+              <AsyncButton type="submit" variant="secondary" onClick={createPeriod}>
+                Crear
+              </AsyncButton>
+            </Autorizado>
           </div>
           <div className="mt-3 rounded-md border border-border-default p-3 text-sm">
             {(periods.data?.items ?? []).map((p) => (
               <div key={p.id} className="flex items-center justify-between py-0.5">
                 <span className="text-text-700">{p.tax_type} · {p.period_key} · {p.status}</span>
                 <span className="flex gap-1">
-                  {p.status === "OPEN" ? <AsyncButton size="sm" variant="secondary" onClick={() => transitionPeriod(p.id, "CLOSED")}>cerrar</AsyncButton> : null}
-                  {p.status === "CLOSED" ? <AsyncButton size="sm" variant="secondary" onClick={() => transitionPeriod(p.id, "REOPENED")}>reabrir</AsyncButton> : null}
+                  {p.status === "OPEN" && puede("POST", "/fiscal/periods/_/transition") ? <AsyncButton size="sm" variant="secondary" onClick={() => transitionPeriod(p.id, "CLOSED")}>cerrar</AsyncButton> : null}
+                  {p.status === "CLOSED" && puede("POST", "/fiscal/periods/_/transition") ? <AsyncButton size="sm" variant="secondary" onClick={() => transitionPeriod(p.id, "REOPENED")}>reabrir</AsyncButton> : null}
                 </span>
               </div>
             ))}

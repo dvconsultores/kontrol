@@ -83,9 +83,8 @@ def test_la_migracion_concede_los_permisos_nuevos_al_administrador(migrada):
 
 def test_el_catalogo_del_setup_y_la_migracion_dicen_lo_mismo():
     setup = ast.parse((BACKEND / "app/modules/setup/api.py").read_text())
-    catalogo = next(ast.literal_eval(n.value) for n in ast.walk(setup)
-                    if isinstance(n, ast.Assign) and any(getattr(t, "id", None) == "resources_actions"
-                                                         for t in n.targets))
+    catalogo = next(ast.literal_eval(n.value) for n in setup.body
+                    if isinstance(n, ast.AnnAssign) and getattr(n.target, "id", None) == "CATALOGO_DE_PERMISOS")
     migracion = ast.parse((BACKEND / "alembic/versions/0057_spec047_notifications.py").read_text())
     permisos = next(ast.literal_eval(n.value) for n in migracion.body
                     if isinstance(n, ast.Assign) and any(getattr(t, "id", None) == "PERMISOS" for t in n.targets))

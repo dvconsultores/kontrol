@@ -4,6 +4,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 
 import { apiFetch } from "@/api/client";
 import type { PagedResult, RequisitionSummary } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
@@ -15,6 +16,7 @@ const columnHelper = createColumnHelper<RequisitionSummary>();
 export function RequisicionesPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const query = useQuery({
     queryKey: ["compras", "requisiciones"],
@@ -39,6 +41,10 @@ export function RequisicionesPage(): React.JSX.Element {
       header: "Acciones",
       cell: ({ row }) => {
         const s = row.original.status;
+        const autorizado = puede("POST", "/purchasing/requisitions/_/transition");
+        if (!autorizado) {
+          return null;
+        }
         return (
           <div className="flex justify-end gap-1">
             {s === "DRAFT" ? (

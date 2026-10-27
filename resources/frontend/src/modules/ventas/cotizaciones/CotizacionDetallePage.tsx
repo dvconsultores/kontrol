@@ -8,9 +8,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router";
 
 import { apiFetch } from "@/api/client";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { PageHeader } from "@/components/PageHeader";
 import { PageContent } from "@/layout/PageContent";
@@ -51,6 +53,7 @@ export function CotizacionDetallePage(): React.JSX.Element {
   const { activeCompany } = useCompany();
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const companyId = activeCompany?.id ?? null;
 
   const detalle = useQuery({
@@ -154,12 +157,12 @@ export function CotizacionDetallePage(): React.JSX.Element {
               <span className="text-sm text-success-600">Convertida en pedido</span>
             ) : null}
             <div className="ml-auto flex gap-2">
-              {c.status === "DRAFT" ? (
+              {c.status === "DRAFT" && puede("POST", `/sales/quotes/${encodeURIComponent(quoteId)}/transition`) ? (
                 <AsyncButton variant="secondary" onClick={async () => { await transicionar.mutateAsync("SENT"); }}>
                   Enviar al cliente
                 </AsyncButton>
               ) : null}
-              {c.status === "SENT" ? (
+              {c.status === "SENT" && puede("POST", `/sales/quotes/${encodeURIComponent(quoteId)}/transition`) ? (
                 <>
                   <AsyncButton variant="primary" onClick={async () => { await transicionar.mutateAsync("ACCEPTED"); }}>
                     Marcar aceptada
@@ -170,9 +173,11 @@ export function CotizacionDetallePage(): React.JSX.Element {
                 </>
               ) : null}
               {c.status === "ACCEPTED" ? (
-                <AsyncButton variant="primary" onClick={async () => { await convertir.mutateAsync(); }}>
-                  Convertir en pedido
-                </AsyncButton>
+                <Autorizado operacion={["POST", `/sales/quotes/${encodeURIComponent(quoteId)}/convertir`]}>
+                  <AsyncButton variant="primary" onClick={async () => { await convertir.mutateAsync(); }}>
+                    Convertir en pedido
+                  </AsyncButton>
+                </Autorizado>
               ) : null}
             </div>
           </section>

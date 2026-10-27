@@ -44,7 +44,9 @@ import {
 import { NavLink } from "react-router";
 import { useState } from "react";
 
-import { useAuth } from "@/app/contexts/AuthContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { requisitoDe } from "@/app/autoridad/pantallas";
+import { evaluarPantalla } from "@/app/autoridad/requisitos";
 import { t } from "@/i18n";
 import { clsx } from "clsx";
 
@@ -54,7 +56,7 @@ const navSections = [
     items: [
       { to: "/", label: "Inicio", icon: LayoutDashboard },
       // El detalle de la licencia lo gobierna el mismo permiso que la sección «Licenciamiento» (FR-010-114).
-      { to: "/mi-licencia", label: "Mi licencia", icon: Lock, permission: "license:view" },
+      { to: "/mi-licencia", label: "Mi licencia", icon: Lock },
     ],
   },
   {
@@ -63,14 +65,13 @@ const navSections = [
     items: [
       { to: "/notificaciones", label: t("nav.notificaciones"), icon: Bell },
       { to: "/tareas", label: t("nav.tareas"), icon: ListChecks },
-      { to: "/alertas", label: t("nav.alertas"), icon: ShieldAlert, permission: "alertas:view" },
-      { to: "/notificaciones/reglas", label: t("nav.reglas"), icon: SlidersHorizontal, permission: "notificaciones:configure" },
+      { to: "/alertas", label: t("nav.alertas"), icon: ShieldAlert },
+      { to: "/notificaciones/reglas", label: t("nav.reglas"), icon: SlidersHorizontal },
       { to: "/notificaciones/preferencias", label: t("nav.preferencias"), icon: Settings },
     ],
   },
   {
     title: "Organización",
-    permission: "organization:view",
     items: [
       { to: "/organizacion/empresas", label: "Empresas", icon: Home },
       { to: "/organizacion/sucursales", label: "Sucursales", icon: Boxes },
@@ -81,7 +82,6 @@ const navSections = [
   },
   {
     title: "Maestros",
-    permission: "maestros:view",
     items: [
       { to: "/maestros/terceros", label: "Terceros", icon: Users },
       { to: "/maestros/productos", label: "Productos", icon: Package },
@@ -94,7 +94,6 @@ const navSections = [
   },
   {
     title: "Inventario",
-    permission: "inventario:view",
     items: [
       { to: "/inventario/existencias", label: "Existencias", icon: Warehouse },
       { to: "/inventario/confirmacion", label: "Confirmación", icon: ClipboardList },
@@ -113,7 +112,6 @@ const navSections = [
   },
   {
     title: "Compras",
-    permission: "compras:view",
     items: [
       { to: "/compras/requisiciones", label: "Requisiciones", icon: ClipboardList },
       { to: "/compras/cotizaciones", label: "Cotizaciones", icon: FileText },
@@ -128,7 +126,6 @@ const navSections = [
   },
   {
     title: "Ventas",
-    permission: "ventas:view",
     items: [
       { to: "/ventas/cotizaciones", label: "Cotizaciones", icon: ClipboardList },
       { to: "/ventas/ordenes", label: "Órdenes", icon: ShoppingBag },
@@ -145,7 +142,6 @@ const navSections = [
   },
   {
     title: "Tesorería",
-    permission: "tesoreria:view",
     items: [
       { to: "/tesoreria/cajas", label: "Cajas y arqueo", icon: Wallet },
       { to: "/tesoreria/ingresos-egresos", label: "Ingresos y egresos", icon: ArrowLeftRight },
@@ -162,7 +158,6 @@ const navSections = [
   },
   {
     title: "Fiscal",
-    permission: "fiscal:view",
     items: [
       { to: "/fiscal/configuracion", label: "Configuración", icon: Settings },
       { to: "/fiscal/numeracion", label: "Numeración", icon: Hash },
@@ -175,7 +170,6 @@ const navSections = [
   },
   {
     title: "Regulatorio",
-    permission: "regulatorio:view",
     items: [
       { to: "/regulatorio/organismos", label: "Organismos", icon: Landmark },
       { to: "/regulatorio/vehiculos", label: "Vehículos", icon: Truck },
@@ -186,7 +180,6 @@ const navSections = [
   },
   {
     title: "Aprobaciones",
-    permission: "aprobaciones:view",
     items: [
       { to: "/aprobaciones/bandeja", label: "Mis aprobaciones", icon: ClipboardCheck },
       { to: "/aprobaciones/politicas", label: "Políticas", icon: Scale },
@@ -195,7 +188,6 @@ const navSections = [
   },
   {
     title: "Documentos",
-    permission: "documentos:view",
     items: [
       { to: "/documentos", label: "Biblioteca", icon: FileText },
       { to: "/documentos/tipos", label: "Tipos documentales", icon: Settings },
@@ -203,7 +195,6 @@ const navSections = [
   },
   {
     title: "Comercial",
-    permission: "comercial:view",
     items: [
       { to: "/comercial/listas-precio", label: "Listas de precios", icon: Tags },
       { to: "/comercial/condiciones-pago", label: "Condiciones de pago", icon: CalendarClock },
@@ -211,7 +202,6 @@ const navSections = [
   },
   {
     title: "Reportes",
-    permission: "reportes:view",
     items: [
       { to: "/reportes/centro", label: "Centro de reportes", icon: BarChart3 },
       { to: "/reportes/exportaciones", label: "Exportaciones", icon: FileDown },
@@ -220,7 +210,6 @@ const navSections = [
   },
   {
     title: "Licenciamiento",
-    permission: "license:view",
     items: [
       { to: "/licenciamiento/configuracion", label: "Configuración central", icon: Settings },
       { to: "/licenciamiento/entitlements", label: "Entitlements", icon: ShieldCheck },
@@ -230,7 +219,6 @@ const navSections = [
   },
   {
     title: "Homologación",
-    permission: "homologacion:view",
     items: [
       { to: "/homologacion/actos", label: "Actos", icon: FileCheck },
       { to: "/homologacion/versiones", label: "Versiones", icon: Hash },
@@ -239,7 +227,6 @@ const navSections = [
   },
   {
     title: "Seguridad",
-    permission: "users:view",
     items: [
       { to: "/seguridad/usuarios", label: "Usuarios", icon: Users },
       { to: "/seguridad/roles", label: "Roles", icon: ShieldCheck },
@@ -252,22 +239,21 @@ const navSections = [
       { to: "/seguridad/mfa", label: "Verificación en dos pasos", icon: KeyRound },
       { to: "/auditoria", label: "Auditoría", icon: FileText },
       // El diagnóstico de la instalación lo gobierna el mismo permiso que la sección «Licenciamiento».
-      { to: "/diagnostico", label: "Diagnóstico", icon: Settings, permission: "license:view" },
+      { to: "/diagnostico", label: "Diagnóstico", icon: Settings },
     ],
   },
 ];
 
 export function Sidebar(): React.JSX.Element {
   const [collapsed, setCollapsed] = useState(false);
-  const { hasPermission } = useAuth();
-
-  // El permiso puede exigirse por sección o por entrada (Spec 047): una sección
-  // de uso general puede tener una entrada que no todos deben ver.
+  const autoridad = useAutoridad();
+  // Una entrada se ve si su pantalla está permitida (registro único `pantallas.ts`, Spec 003). Mientras la autoridad carga, las entradas
+  // con requisito no se muestran: nunca se ofrece autoridad desconocida o de otra empresa.
   const visibleSections = navSections
     .map((section) => ({
       ...section,
-      items: (section.permission && !hasPermission(section.permission) ? [] : section.items).filter(
-        (item) => !("permission" in item) || hasPermission(String(item.permission)),
+      items: section.items.filter(
+        (item) => evaluarPantalla(autoridad, requisitoDe(item.to.replace(/^\//, ""))).estado === "PERMITIDA",
       ),
     }))
     .filter((section) => section.items.length > 0);

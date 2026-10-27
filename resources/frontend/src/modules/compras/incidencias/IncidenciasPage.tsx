@@ -22,6 +22,8 @@ import type {
   ReceiptIncident,
 } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { DataTable } from "@/components/DataTable";
@@ -63,6 +65,7 @@ const columnHelper = createColumnHelper<ReceiptIncident>();
 export function IncidenciasPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [receiptId, setReceiptId] = useState("");
   const [newCode, setNewCode] = useState("");
@@ -178,18 +181,18 @@ export function IncidenciasPage(): React.JSX.Element {
         const viva = inc.status !== "RESUELTA" && inc.status !== "ANULADA";
         return (
           <div className="flex justify-end gap-1">
-            {inc.status === "REGISTRADA" ? (
+            {inc.status === "REGISTRADA" && puede("POST", `/purchasing/receipts/${inc.receipt_id}/incidencias/${inc.id}/escalate`) ? (
               <AsyncButton size="sm" variant="secondary"
                 onClick={() => accion(inc, "escalate", { notes: null })}>
                 escalar
               </AsyncButton>
             ) : null}
-            {viva ? (
+            {viva && puede("POST", `/purchasing/receipts/${inc.receipt_id}/incidencias/${inc.id}/resolve`) ? (
               <AsyncButton size="sm" variant="primary" onClick={async () => setSelected(inc)}>
                 tratar
               </AsyncButton>
             ) : null}
-            {viva ? (
+            {viva && puede("POST", `/purchasing/receipts/${inc.receipt_id}/incidencias/${inc.id}/cancel`) ? (
               <AsyncButton size="sm" variant="secondary" onClick={async () => setAAnular(inc)}>
                 anular
               </AsyncButton>
@@ -212,6 +215,7 @@ export function IncidenciasPage(): React.JSX.Element {
 
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Registrar una diferencia</h2>
+        <Autorizado operacion={["POST", `/purchasing/receipts/${receiptId || "_"}/incidencias`]}>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
           <FormField label="Recepción" required>
             <select value={receiptId} onChange={(e) => { setReceiptId(e.target.value); setNewLine(""); }} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
@@ -254,6 +258,7 @@ export function IncidenciasPage(): React.JSX.Element {
           </FormField>
           <AsyncButton type="submit" variant="primary" onClick={registrar}>Registrar</AsyncButton>
         </form>
+        </Autorizado>
         {outcome.data ? (
           <p className="mt-3 text-sm text-text-500">
             {outcome.data.total === 0

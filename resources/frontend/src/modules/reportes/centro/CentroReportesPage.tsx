@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { ReportResult } from "@/api/types";
+import { Autorizado } from "@/components/Autorizado";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { PageContent } from "@/layout/PageContent";
@@ -77,9 +78,11 @@ export function CentroReportesPage(): React.JSX.Element {
           <p className="text-2xl font-semibold text-text-900">{report.data?.total?.toFixed(2) ?? "—"}</p>
         </div>
         <FormFieldPeriod value={period} onChange={setPeriod} />
-        <AsyncButton variant="secondary" onClick={exportCsv}>
-          Exportar CSV (auditado)
-        </AsyncButton>
+        <Autorizado operacion={["POST", "/reporting/exports"]}>
+          <AsyncButton variant="secondary" onClick={exportCsv}>
+            Exportar CSV (auditado)
+          </AsyncButton>
+        </Autorizado>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-border-default">

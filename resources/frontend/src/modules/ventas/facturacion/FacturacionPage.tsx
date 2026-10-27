@@ -18,8 +18,10 @@ import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/api/client";
 import type { BillableOrder, BillingInvoice, OrderBillingStatus } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
@@ -35,6 +37,7 @@ function corto(id: string): string {
 export function FacturacionPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [orderId, setOrderId] = useState<string | null>(null);
   const [serie, setSerie] = useState("");
   const [lote, setLote] = useState("");
@@ -117,19 +120,28 @@ export function FacturacionPage(): React.JSX.Element {
     cols.display({
       id: "accion",
       header: "Acción",
-      cell: (c) => (
-        <button
-          type="button"
-          onClick={() =>
-            c.row.original.status === "CONFIRMED"
-              ? void solicitar(c.row.original.order_id)
-              : setOrderId(c.row.original.order_id)
-          }
-          className="text-sm font-medium text-primary-700 underline"
-        >
-          {c.row.original.status === "CONFIRMED" ? "Solicitar facturación" : "Facturar"}
-        </button>
-      ),
+      cell: (c) => {
+        if (c.row.original.status === "CONFIRMED") {
+          return puede("POST", `/sales/facturacion/${c.row.original.order_id}/solicitar`) ? (
+            <button
+              type="button"
+              onClick={() => void solicitar(c.row.original.order_id)}
+              className="text-sm font-medium text-primary-700 underline"
+            >
+              Solicitar facturación
+            </button>
+          ) : null;
+        }
+        return (
+          <button
+            type="button"
+            onClick={() => setOrderId(c.row.original.order_id)}
+            className="text-sm font-medium text-primary-700 underline"
+          >
+            Facturar
+          </button>
+        );
+      },
     }),
   ];
 
@@ -169,7 +181,9 @@ export function FacturacionPage(): React.JSX.Element {
                 La factura se construye con el precio, el descuento y la presentación congelados en
                 el pedido. El maestro de hoy no participa.
               </p>
-              <AsyncButton onClick={generar}>Generar factura</AsyncButton>
+              <Autorizado operacion={["POST", `/sales/facturacion/${e.order_id}/generar`]}>
+                <AsyncButton onClick={generar}>Generar factura</AsyncButton>
+              </Autorizado>
             </>
           ) : (
             <>
@@ -222,7 +236,9 @@ export function FacturacionPage(): React.JSX.Element {
                   <FormField label="Lote de control" required>
                     <TextInput value={lote} onChange={(ev) => setLote(ev.target.value)} />
                   </FormField>
-                  <AsyncButton onClick={emitir}>Emitir documento fiscal</AsyncButton>
+                  <Autorizado operacion={["POST", `/sales/facturacion/${factura.id}/emitir`]}>
+                    <AsyncButton onClick={emitir}>Emitir documento fiscal</AsyncButton>
+                  </Autorizado>
                 </div>
               )}
             </>

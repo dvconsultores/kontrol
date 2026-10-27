@@ -17,6 +17,8 @@ import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/api/client";
 import { listAllWarehouses } from "@/api/organization";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { Autorizado } from "@/components/Autorizado";
 import type {
   PickingCandidate,
   PickingPlan,
@@ -41,6 +43,7 @@ function corto(id: string): string {
 export function PreparacionPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [almacen, setAlmacen] = useState("");
   const [pedido, setPedido] = useState<PickingQueueItem | null>(null);
   const [planId, setPlanId] = useState<string | null>(null);
@@ -218,13 +221,15 @@ export function PreparacionPage(): React.JSX.Element {
       id: "accion",
       header: "Acción",
       cell: (c) => (
-        <button
-          type="button"
-          onClick={() => abrirPlan.mutate(c.row.original)}
-          className="text-sm font-medium text-primary-700 underline"
-        >
-          Planificar
-        </button>
+        <Autorizado operacion={["POST", "/sales/pick-lists"]}>
+          <button
+            type="button"
+            onClick={() => abrirPlan.mutate(c.row.original)}
+            className="text-sm font-medium text-primary-700 underline"
+          >
+            Planificar
+          </button>
+        </Autorizado>
       ),
     }),
   ];
@@ -340,7 +345,9 @@ export function PreparacionPage(): React.JSX.Element {
               <FormField label="Cantidad" help="En unidad base">
                 <TextInput value={cantidad} onChange={(e) => setCantidad(e.target.value)} />
               </FormField>
-              <AsyncButton onClick={asignar}>Asignar desde la ubicación</AsyncButton>
+              {puede("POST", `/sales/picking/${planId}/asignaciones`) ? (
+                <AsyncButton onClick={asignar}>Asignar desde la ubicación</AsyncButton>
+              ) : null}
             </div>
           ) : null}
 
@@ -358,7 +365,7 @@ export function PreparacionPage(): React.JSX.Element {
           )}
 
           <div className="flex flex-wrap items-end gap-3">
-            {editable ? (
+            {editable && puede("POST", `/sales/picking/${planId}/confirmar`) ? (
               <AsyncButton
                 onClick={() => accion("confirmar", "Plan confirmado")}
                 disabled={!p.confirmable}
@@ -367,17 +374,19 @@ export function PreparacionPage(): React.JSX.Element {
               </AsyncButton>
             ) : null}
             {p.status === "DRAFT" || p.status === "CONFIRMED" ? (
-              <>
-                <FormField label="Motivo" required help="Obligatorio para cancelar">
-                  <TextInput value={motivo} onChange={(e) => setMotivo(e.target.value)} />
-                </FormField>
-                <AsyncButton
-                  onClick={() => accion("cancelar", "Plan cancelado", { reason: motivo })}
-                  variant="secondary"
-                >
-                  Cancelar plan
-                </AsyncButton>
-              </>
+              puede("POST", `/sales/picking/${planId}/cancelar`) ? (
+                <>
+                  <FormField label="Motivo" required help="Obligatorio para cancelar">
+                    <TextInput value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+                  </FormField>
+                  <AsyncButton
+                    onClick={() => accion("cancelar", "Plan cancelado", { reason: motivo })}
+                    variant="secondary"
+                  >
+                    Cancelar plan
+                  </AsyncButton>
+                </>
+              ) : null
             ) : null}
           </div>
           {p.status === "CONFIRMED" && p.picking ? (
@@ -452,7 +461,9 @@ export function PreparacionPage(): React.JSX.Element {
                   <FormField label="Observación">
                     <TextInput value={nota} onChange={(e) => setNota(e.target.value)} />
                   </FormField>
-                  <AsyncButton onClick={recogerParada}>Confirmar recogida</AsyncButton>
+                  {puede("POST", `/sales/picking/${planId}/recoger`) ? (
+                    <AsyncButton onClick={recogerParada}>Confirmar recogida</AsyncButton>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -472,9 +483,11 @@ export function PreparacionPage(): React.JSX.Element {
                     ))}
                   </select>
                 </FormField>
-                <AsyncButton onClick={consolidar} disabled={!p.route_complete}>
-                  Consolidar y trasladar
-                </AsyncButton>
+                {puede("POST", `/sales/picking/${planId}/consolidar`) ? (
+                  <AsyncButton onClick={consolidar} disabled={!p.route_complete}>
+                    Consolidar y trasladar
+                  </AsyncButton>
+                ) : null}
               </div>
               {!p.route_complete ? (
                 <p className="mt-3 text-sm text-text-500" role="status">

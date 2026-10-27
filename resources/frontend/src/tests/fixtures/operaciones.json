@@ -1,0 +1,4219 @@
+{
+  "operations": [
+    {
+      "method": "GET",
+      "path": "/",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/alerts",
+      "capabilities": [
+        "alertas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/approvals/delegations",
+      "capabilities": [
+        "aprobaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/delegations",
+      "capabilities": [
+        "aprobaciones:delegate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/delegations/{delegation_id}/revoke",
+      "capabilities": [
+        "aprobaciones:delegate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/evaluate",
+      "capabilities": [
+        "aprobaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/approvals/inbox",
+      "capabilities": [
+        "aprobaciones:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/approvals/policies",
+      "capabilities": [
+        "aprobaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/policies",
+      "capabilities": [
+        "aprobaciones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/approvals/policies/{policy_id}",
+      "capabilities": [
+        "aprobaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/approvals/policies/{policy_id}",
+      "capabilities": [
+        "aprobaciones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/policies/{policy_id}/activate",
+      "capabilities": [
+        "aprobaciones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/policies/{policy_id}/close",
+      "capabilities": [
+        "aprobaciones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/policies/{policy_id}/rules",
+      "capabilities": [
+        "aprobaciones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/policies/{policy_id}/rules/{rule_id}/levels",
+      "capabilities": [
+        "aprobaciones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/approvals/process-types",
+      "capabilities": [
+        "aprobaciones:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/approvals/requests",
+      "capabilities": [
+        "aprobaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/requests",
+      "capabilities": [
+        "aprobaciones:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/approvals/requests/by-document",
+      "capabilities": [
+        "aprobaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/approvals/requests/{request_id}",
+      "capabilities": [
+        "aprobaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/requests/{request_id}/cancel",
+      "capabilities": [
+        "aprobaciones:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/steps/{step_id}/approve",
+      "capabilities": [
+        "aprobaciones:approve"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/steps/{step_id}/reject",
+      "capabilities": [
+        "aprobaciones:approve"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/steps/{step_id}/return",
+      "capabilities": [
+        "aprobaciones:approve"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/audit/events",
+      "capabilities": [
+        "audit:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/change-password",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/logout",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/auth/mfa",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/mfa",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/mfa/enrollment",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/mfa/enrollment/confirm",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/mfa/recovery-codes",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/mfa/verify",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/operations",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/password-reset/confirm",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/password-reset/request",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/reauth",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/sessions",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/auth/sessions/{session_id}",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/authority/company",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/comercial/canales",
+      "capabilities": [
+        "comercial:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/comercial/canales",
+      "capabilities": [
+        "comercial:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/comercial/clientes/{customer_id}/condiciones",
+      "capabilities": [
+        "comercial:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/comercial/condiciones-pago",
+      "capabilities": [
+        "comercial:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/comercial/condiciones-pago",
+      "capabilities": [
+        "comercial:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/comercial/descuento/validar",
+      "capabilities": [
+        "comercial:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/comercial/listas-precio",
+      "capabilities": [
+        "comercial:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/comercial/listas-precio",
+      "capabilities": [
+        "comercial:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/comercial/listas-precio/{price_list_id}",
+      "capabilities": [
+        "comercial:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/comercial/listas-precio/{price_list_id}/versiones",
+      "capabilities": [
+        "comercial:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/comercial/listas-precio/{price_list_id}/versiones/{version_id}/items",
+      "capabilities": [
+        "comercial:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/comercial/listas-precio/{price_list_id}/versiones/{version_id}/items",
+      "capabilities": [
+        "comercial:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/comercial/listas-precio/{price_list_id}/versiones/{version_id}/transicion",
+      "capabilities": [
+        "comercial:publish"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/comercial/politicas-credito",
+      "capabilities": [
+        "comercial:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/comercial/politicas-credito",
+      "capabilities": [
+        "comercial:manage_policies"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/comercial/politicas-descuento",
+      "capabilities": [
+        "comercial:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/comercial/politicas-descuento",
+      "capabilities": [
+        "comercial:manage_policies"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/comercial/precedencia",
+      "capabilities": [
+        "comercial:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/comercial/precedencia",
+      "capabilities": [
+        "comercial:manage_policies"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/comercial/precio/resolver",
+      "capabilities": [
+        "comercial:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/comercial/zonas",
+      "capabilities": [
+        "comercial:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/comercial/zonas",
+      "capabilities": [
+        "comercial:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documentos",
+      "capabilities": [
+        "documentos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/documentos",
+      "capabilities": [
+        "documentos:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documentos/categorias",
+      "capabilities": [
+        "documentos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/documentos/categorias",
+      "capabilities": [
+        "documentos:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documentos/por-recurso/{resource_type}/{resource_id}",
+      "capabilities": [
+        "documentos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documentos/salud/almacenamiento",
+      "capabilities": [
+        "documentos:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documentos/tipos",
+      "capabilities": [
+        "documentos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/documentos/tipos",
+      "capabilities": [
+        "documentos:manage_types"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/documentos/tipos/{type_id}",
+      "capabilities": [
+        "documentos:manage_types"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/documentos/vinculos/{link_id}",
+      "capabilities": [
+        "documentos:link"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/documentos/{document_id}",
+      "capabilities": [
+        "documentos:delete"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documentos/{document_id}",
+      "capabilities": [
+        "documentos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/documentos/{document_id}",
+      "capabilities": [
+        "documentos:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/documentos/{document_id}/archive",
+      "capabilities": [
+        "documentos:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documentos/{document_id}/descargar",
+      "capabilities": [
+        "documentos:download"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documentos/{document_id}/preview",
+      "capabilities": [
+        "documentos:download"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documentos/{document_id}/versiones",
+      "capabilities": [
+        "documentos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/documentos/{document_id}/versiones",
+      "capabilities": [
+        "documentos:upload"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documentos/{document_id}/versiones/{version_id}/descargar",
+      "capabilities": [
+        "documentos:download"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/documentos/{document_id}/vinculos",
+      "capabilities": [
+        "documentos:link"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/books/{tax_type}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/control-batches",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/control-batches",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/control-numbers",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/credit-debit-notes",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/credit-debit-notes",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/documents",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/documents/emit",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/documents/{document_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/documents/{document_id}/print",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/legal-sources",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/legal-sources",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "TENANT"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/legal-sources/{source_id}/activate",
+      "capabilities": [
+        "fiscal:approve"
+      ],
+      "scope": "TENANT"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/number-series",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/number-series",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/periods",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/periods",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/periods/{period_id}/transition",
+      "capabilities": [
+        "fiscal:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/tax-calculations",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/tax-calculations",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/tax-profiles",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/tax-return-batches",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/tax-return-batches",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/tax-rule-versions",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/tax-rule-versions",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "TENANT"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/tax-rule-versions/{rule_id}/approve",
+      "capabilities": [
+        "fiscal:approve"
+      ],
+      "scope": "TENANT"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/withholding-rules",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/withholding-rules",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/fiscal/withholdings",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/withholdings/calculate",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/withholdings/{withholding_id}/certificate",
+      "capabilities": [
+        "fiscal:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/fiscal/withholdings/{withholding_id}/transition",
+      "capabilities": [
+        "fiscal:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/health/live",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/health/ready",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/homologation/records",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/homologation/records",
+      "capabilities": [
+        "homologacion:create"
+      ],
+      "scope": "TENANT"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/homologation/records/{record_id}",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/homologation/records/{record_id}/evaluate",
+      "capabilities": [
+        "homologacion:approve"
+      ],
+      "scope": "TENANT"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/homologation/records/{record_id}/submit",
+      "capabilities": [
+        "homologacion:edit"
+      ],
+      "scope": "TENANT"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/homologation/releases",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/homologation/releases",
+      "capabilities": [
+        "homologacion:create"
+      ],
+      "scope": "TENANT"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/homologation/releases/{release_id}/promote",
+      "capabilities": [
+        "homologacion:edit"
+      ],
+      "scope": "TENANT"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/homologation/releases/{release_id}/release",
+      "capabilities": [
+        "homologacion:approve"
+      ],
+      "scope": "TENANT"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/homologation/timeline",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/adjustments",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/adjustments",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/adjustments/{adjustment_id}/transition",
+      "capabilities": [
+        "inventario:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/balances",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/balances/recompute",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/balances/{balance_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/cost-layers",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/costing-profiles",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/costing-profiles",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/counts",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/counts",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/counts/{count_id}/lines",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/counts/{count_id}/transition",
+      "capabilities": [
+        "inventario:transition"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/lots",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/lots",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/lots/{lot_id}/transition",
+      "capabilities": [
+        "inventario:transition"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/movement-types",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/movement-types",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/movements",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/movements",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/movements/reverse",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/movements/{movement_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/operations/receive",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/operations/ship",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/putaway",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/putaway/pendientes",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/putaway/ubicaciones",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/reservations",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/reservations",
+      "capabilities": [
+        "inventario:reserve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/reservations/expire",
+      "capabilities": [
+        "inventario:reserve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/reservations/{reservation_id}/release",
+      "capabilities": [
+        "inventario:reserve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/serials",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/serials",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/transfers",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/transfers",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/transfers/{transfer_id}/transition",
+      "capabilities": [
+        "inventario:transition"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/valuation",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/license/activate",
+      "capabilities": [
+        "license:create"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/license/detail",
+      "capabilities": [
+        "license:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/license/history",
+      "capabilities": [
+        "license:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/license/import",
+      "capabilities": [
+        "license:create"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/license/installation-request",
+      "capabilities": [
+        "license:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/license/renewal-request",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/license/status",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/licensing/central-config",
+      "capabilities": [
+        "license:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/licensing/central-config",
+      "capabilities": [
+        "license:edit"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/licensing/entitlement-snapshots",
+      "capabilities": [
+        "license:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/licensing/entitlements",
+      "capabilities": [
+        "license:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/licensing/mode-transition",
+      "capabilities": [
+        "license:approve"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/licensing/offline-status",
+      "capabilities": [
+        "license:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/licensing/overview",
+      "capabilities": [
+        "license:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/licensing/renewal-requests",
+      "capabilities": [
+        "license:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/licensing/renewal-requests",
+      "capabilities": [
+        "license:create"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/licensing/renewal-requests/{request_id}/transition",
+      "capabilities": [
+        "license:approve"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/licensing/sync",
+      "capabilities": [
+        "license:create"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/licensing/sync-runs",
+      "capabilities": [
+        "license:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/catalogos/atributos",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/catalogos/atributos",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/catalogos/items",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/catalogos/items",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/catalogos/items/search",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/catalogos/items/{item_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/catalogos/taxonomia",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/catalogos/taxonomia",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/catalogos/unidades",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/catalogos/unidades",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/catalogos/unidades/{unit_id}/conversiones",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/conversion/preview",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/perfiles",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/perfiles",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/maestros/presentaciones/{presentation_id}",
+      "capabilities": [
+        "maestros:delete"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/presentaciones/{presentation_id}",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/maestros/presentaciones/{presentation_id}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/presentaciones/{presentation_id}/activate",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/presentaciones/{presentation_id}/deactivate",
+      "capabilities": [
+        "maestros:deactivate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/presentaciones/{presentation_id}/versiones",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/presentaciones/{presentation_id}/versiones",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/productos/{product_id}/presentaciones",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/productos/{product_id}/presentaciones",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/maestros/productos/{product_id}/unidad-base",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/terceros",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/terceros/{party_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/deactivate",
+      "capabilities": [
+        "maestros:deactivate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/roles/{role}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/unidades",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/unidades",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/maestros/unidades/{unit_id}",
+      "capabilities": [
+        "maestros:delete"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/unidades/{unit_id}",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/maestros/unidades/{unit_id}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/unidades/{unit_id}/activate",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/unidades/{unit_id}/conversiones",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/unidades/{unit_id}/conversiones-fisicas",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/unidades/{unit_id}/deactivate",
+      "capabilities": [
+        "maestros:deactivate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notifications",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notifications/counts",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notifications/preferences",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/notifications/preferences",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notifications/rules",
+      "capabilities": [
+        "notificaciones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/notifications/rules",
+      "capabilities": [
+        "notificaciones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/notifications/rules/{rule_id}/deactivate",
+      "capabilities": [
+        "notificaciones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notifications/sources",
+      "capabilities": [
+        "notificaciones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notifications/{notification_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/notifications/{notification_id}/archive",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/notifications/{notification_id}/read",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/organization/aisles/{node_id}",
+      "capabilities": [
+        "organization:delete"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/aisles/{node_id}",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/organization/aisles/{node_id}",
+      "capabilities": [
+        "organization:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/aisles/{node_id}/activate",
+      "capabilities": [
+        "organization:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/aisles/{node_id}/deactivate",
+      "capabilities": [
+        "organization:deactivate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/branches",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/branches",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/companies",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/companies",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "TENANT"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/establishments",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/establishments",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/organization/levels/{node_id}",
+      "capabilities": [
+        "organization:delete"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/levels/{node_id}",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/organization/levels/{node_id}",
+      "capabilities": [
+        "organization:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/levels/{node_id}/activate",
+      "capabilities": [
+        "organization:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/levels/{node_id}/deactivate",
+      "capabilities": [
+        "organization:deactivate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/location-types",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/location-types",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/organization/location-types/{item_id}",
+      "capabilities": [
+        "organization:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/locations",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/locations",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/locations/bulk",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/locations/ordered",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/organization/locations/{location_id}",
+      "capabilities": [
+        "organization:delete"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/locations/{location_id}",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/organization/locations/{location_id}",
+      "capabilities": [
+        "organization:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/locations/{location_id}/activate",
+      "capabilities": [
+        "organization:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/locations/{location_id}/block",
+      "capabilities": [
+        "organization:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/locations/{location_id}/deactivate",
+      "capabilities": [
+        "organization:deactivate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/organization/racks/{node_id}",
+      "capabilities": [
+        "organization:delete"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/racks/{node_id}",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/organization/racks/{node_id}",
+      "capabilities": [
+        "organization:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/racks/{node_id}/activate",
+      "capabilities": [
+        "organization:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/racks/{node_id}/deactivate",
+      "capabilities": [
+        "organization:deactivate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/warehouses",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/warehouses",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}",
+      "capabilities": [
+        "organization:delete"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}",
+      "capabilities": [
+        "organization:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/activate",
+      "capabilities": [
+        "organization:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/aisles",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/aisles",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/deactivate",
+      "capabilities": [
+        "organization:deactivate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/levels",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/levels",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/racks",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/racks",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/structure",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/structure-levels",
+      "capabilities": [
+        "organization:manage_structure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/zones",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/warehouses/{warehouse_id}/zones",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/zone-types",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/zone-types",
+      "capabilities": [
+        "organization:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/organization/zone-types/{item_id}",
+      "capabilities": [
+        "organization:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/organization/zones/{node_id}",
+      "capabilities": [
+        "organization:delete"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/zones/{node_id}",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/organization/zones/{node_id}",
+      "capabilities": [
+        "organization:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/zones/{node_id}/activate",
+      "capabilities": [
+        "organization:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/organization/zones/{node_id}/deactivate",
+      "capabilities": [
+        "organization:deactivate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/advances",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/aging",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/applications",
+      "capabilities": [
+        "compras:apply"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/credit-notes",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/credit-notes",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/credit-notes/{note_id}/post",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/incidencias",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/open-items",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/orders",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/orders",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/orders/{order_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/orders/{order_id}/lines",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/orders/{order_id}/transition",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/payment-schedules",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/payments",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/payments",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/payments/{payment_id}/transition",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/quotes",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/quotes",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/quotes/{quote_id}/lines",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/receipts",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/accept",
+      "capabilities": [
+        "compras:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/arrival",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/conciliacion",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/confirm",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/confirmacion-inventario",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/confirmacion-inventario",
+      "capabilities": [
+        "inventario:confirm"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/incidencias",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/incidencias",
+      "capabilities": [
+        "compras:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/incidencias/resultado",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/incidencias/{incident_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/incidencias/{incident_id}/cancel",
+      "capabilities": [
+        "compras:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/incidencias/{incident_id}/escalate",
+      "capabilities": [
+        "compras:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/incidencias/{incident_id}/resolve",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/inspection",
+      "capabilities": [
+        "compras:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/lines",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/lines/{line_id}/conteo",
+      "capabilities": [
+        "inventario:confirm"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/quality",
+      "capabilities": [
+        "compras:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/requisitions",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/requisitions",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/requisitions/{req_id}/lines",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/requisitions/{req_id}/transition",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/returns",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/returns",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/returns/{return_id}/lines",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/supplier-invoices",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/supplier-invoices",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/supplier-invoices/{invoice_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/supplier-invoices/{invoice_id}/lines",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/supplier-invoices/{invoice_id}/transition",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/purchasing/triple-match",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/withholdings",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/withholdings/{withholding_id}/transition",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/regulatory/approval-requests",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/approval-requests",
+      "capabilities": [
+        "regulatorio:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/approval-requests/{request_id}/transition",
+      "capabilities": [
+        "regulatorio:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/regulatory/authorities",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/authorities",
+      "capabilities": [
+        "regulatorio:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/regulatory/contingencies",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/contingencies",
+      "capabilities": [
+        "regulatorio:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/contingencies/{contingency_id}/end",
+      "capabilities": [
+        "regulatorio:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/regulatory/drivers",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/drivers",
+      "capabilities": [
+        "regulatorio:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/regulatory/evaluations",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/evaluations",
+      "capabilities": [
+        "regulatorio:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/evaluations/{evaluation_id}/override",
+      "capabilities": [
+        "regulatorio:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/regulatory/official-documents",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/official-documents",
+      "capabilities": [
+        "regulatorio:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/regulatory/official-registrations",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/official-registrations",
+      "capabilities": [
+        "regulatorio:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/regulatory/permit-types",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/permit-types",
+      "capabilities": [
+        "regulatorio:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/regulatory/permits",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/permits",
+      "capabilities": [
+        "regulatorio:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/permits/{permit_id}/transition",
+      "capabilities": [
+        "regulatorio:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/regulatory/profiles",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/profiles",
+      "capabilities": [
+        "regulatorio:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/regulatory/vehicles",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/regulatory/vehicles",
+      "capabilities": [
+        "regulatorio:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reporting/audit/timeline",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reporting/dashboard",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reporting/exports",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/reporting/exports",
+      "capabilities": [
+        "reportes:export"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reporting/exports/{export_id}/download",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reporting/jobs",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/reporting/jobs",
+      "capabilities": [
+        "reportes:export"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reporting/jobs/{job_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/reporting/jobs/{job_id}/run",
+      "capabilities": [
+        "reportes:export"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reporting/reports/{key}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/roles",
+      "capabilities": [
+        "roles:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/roles",
+      "capabilities": [
+        "roles:create"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/aging",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/applications",
+      "capabilities": [
+        "ventas:apply"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/collections",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/collections",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/collections/{collection_id}/transition",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/confirmacion/pendientes",
+      "capabilities": [
+        "ventas:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/confirmacion/{order_id}",
+      "capabilities": [
+        "ventas:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/confirmacion/{order_id}",
+      "capabilities": [
+        "ventas:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/confirmacion/{order_id}/facturable",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/credit-notes",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/credit-notes",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/credit-notes/{note_id}/apply",
+      "capabilities": [
+        "ventas:apply"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/credit-notes/{note_id}/post",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/customer-advances",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/cxc/aplicaciones/{application_id}/revertir",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/cxc/clientes/{customer_id}/creditos",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/cxc/clientes/{customer_id}/estado-de-cuenta",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/cxc/clientes/{customer_id}/saldo",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/cxc/creditos/{note_id}/aplicar",
+      "capabilities": [
+        "ventas:apply"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/cxc/documentos/{open_item_id}/aplicaciones",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/debit-notes",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/debit-notes",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/despacho/pendientes",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/despacho/{order_id}/despacho",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/devoluciones",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/devoluciones",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/devoluciones/elegibles/{invoice_id}",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/devoluciones/{return_id}",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/devoluciones/{return_id}/decidir",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/devoluciones/{return_id}/recibir",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/devoluciones/{return_id}/reingresar",
+      "capabilities": [
+        "ventas:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/devoluciones/{return_id}/verificar",
+      "capabilities": [
+        "ventas:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/facturacion/pendientes",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/facturacion/{invoice_id}/emitir",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/facturacion/{order_id}/factura",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/facturacion/{order_id}/generar",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/facturacion/{order_id}/solicitar",
+      "capabilities": [
+        "ventas:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/invoices",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/invoices",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/invoices/{invoice_id}/lines",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/invoices/{invoice_id}/transition",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/notas/acreditable/{invoice_id}",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/notas/credito/{invoice_id}/generar",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/notas/credito/{note_id}",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/notas/credito/{note_id}/emitir",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/notas/debito/{invoice_id}/generar",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/notas/debito/{note_id}",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/notas/debito/{note_id}/emitir",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/open-items",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/orders",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/orders",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/orders/expire-reservations",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/orders/{order_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/orders/{order_id}/cancel",
+      "capabilities": [
+        "ventas:submit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/orders/{order_id}/lines",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/orders/{order_id}/reject",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/orders/{order_id}/release",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/orders/{order_id}/revert",
+      "capabilities": [
+        "ventas:submit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/orders/{order_id}/submit",
+      "capabilities": [
+        "ventas:submit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/orders/{order_id}/transition",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/pick-lists",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/pick-lists",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/picking/cola",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/picking/{plan_id}",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/picking/{plan_id}/asignaciones",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/picking/{plan_id}/cancelar",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/picking/{plan_id}/candidatas",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/picking/{plan_id}/confirmar",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/picking/{plan_id}/consolidar",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/picking/{plan_id}/invalidar",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/picking/{plan_id}/preparacion",
+      "capabilities": [
+        "ventas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/picking/{plan_id}/recoger",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/quotes",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/quotes",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/quotes/{quote_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/quotes/{quote_id}/convertir",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/quotes/{quote_id}/lines",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/quotes/{quote_id}/transition",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/returns",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/returns",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/returns/{return_id}/lines",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/settings/reservation",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/sales/settings/reservation",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/shipments",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/shipments",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/shipments/{shipment_id}/confirm",
+      "capabilities": [
+        "ventas:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/shipments/{shipment_id}/validate",
+      "capabilities": [
+        "ventas:quality"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/withholdings-suffered",
+      "capabilities": [
+        "ventas:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/withholdings-suffered/{withholding_id}/transition",
+      "capabilities": [
+        "ventas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/setup/initialize",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/setup/status",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system/diagnostics",
+      "capabilities": [
+        "license:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tasks",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tasks/priorities",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tasks/priorities",
+      "capabilities": [
+        "tareas:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tasks/{task_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tasks/{task_id}/cancel",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tasks/{task_id}/complete",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tasks/{task_id}/reassign",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tasks/{task_id}/start",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/accounts",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/accounts",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/accounts/{account_id}/balance",
+      "capabilities": [
+        "tesoreria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/bank-transactions",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/bank-transactions",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/banks",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/banks",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/cash-position",
+      "capabilities": [
+        "tesoreria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/cash-sessions",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/cash-sessions",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/cash-sessions/{session_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/cash-sessions/{session_id}/arqueo",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/cash-sessions/{session_id}/close",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/cash-sessions/{session_id}/movements",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/cash-sessions/{session_id}/pre-close",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/cash-sessions/{session_id}/reject",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/cashboxes",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/cashboxes",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/currencies",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/currencies",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/exchange-rates",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/exchange-rates/import",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/exchange-rates/import-batches",
+      "capabilities": [
+        "tesoreria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/exchange-rates/observations",
+      "capabilities": [
+        "tesoreria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/exchange-rates/observations",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/exchange-rates/observations/{observation_id}/approve",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/exchange-rates/observations/{observation_id}/correct",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/exchange-rates/resolve",
+      "capabilities": [
+        "tesoreria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/executions/egresos",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/executions/ingresos",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/fiscal-rules",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/fiscal-rules",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/fx-conversions",
+      "capabilities": [
+        "tesoreria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/fx-conversions",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/fx-policies",
+      "capabilities": [
+        "tesoreria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/fx-policies",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/fx-policies/{policy_id}/activate",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/igft-events",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/igft-events/evaluate",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/instruments",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/instruments",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/payment-methods",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/payment-methods",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/rate-policies",
+      "capabilities": [
+        "tesoreria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/rate-policies",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/rate-policies/{policy_id}/activate",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/rate-sources",
+      "capabilities": [
+        "tesoreria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/rate-sources",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/rate-sources/{source_id}/status",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/reconciliation-lines/{line_id}/resolve",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/reconciliations",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/reconciliations",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/reconciliations/{reconciliation_id}",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/reconciliations/{reconciliation_id}/lines",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/reconciliations/{reconciliation_id}/match",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/reconciliations/{reconciliation_id}/transition",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/refunds",
+      "capabilities": [
+        "tesoreria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/refunds",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/refunds/{refund_id}",
+      "capabilities": [
+        "tesoreria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/refunds/{refund_id}/decide",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/refunds/{refund_id}/settle",
+      "capabilities": [
+        "tesoreria:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/treasury/transfers",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/treasury/transfers",
+      "capabilities": [
+        "tesoreria:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/users",
+      "capabilities": [
+        "users:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users",
+      "capabilities": [
+        "users:create"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/{user_id}/mfa/reset",
+      "capabilities": [
+        "users:mfa_reset"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/{user_id}/roles",
+      "capabilities": [
+        "roles:edit"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/users/{user_id}/roles/{role_id}",
+      "capabilities": [
+        "roles:edit"
+      ],
+      "scope": "GLOBAL"
+    }
+  ],
+  "permissions": [
+    "dashboard:view",
+    "organization:view",
+    "organization:create",
+    "organization:edit",
+    "organization:deactivate",
+    "organization:activate",
+    "organization:delete",
+    "organization:manage_structure",
+    "users:view",
+    "users:create",
+    "users:edit",
+    "users:deactivate",
+    "users:activate",
+    "users:mfa_reset",
+    "roles:view",
+    "roles:create",
+    "roles:edit",
+    "audit:view",
+    "license:view",
+    "license:create",
+    "license:edit",
+    "license:approve",
+    "homologacion:view",
+    "homologacion:create",
+    "homologacion:edit",
+    "homologacion:approve",
+    "maestros:view",
+    "maestros:create",
+    "maestros:edit",
+    "maestros:deactivate",
+    "compras:view",
+    "compras:create",
+    "compras:approve",
+    "compras:quality",
+    "compras:apply",
+    "ventas:view",
+    "ventas:create",
+    "ventas:submit",
+    "ventas:approve",
+    "ventas:quality",
+    "ventas:apply",
+    "inventario:view",
+    "inventario:create",
+    "inventario:approve",
+    "inventario:transition",
+    "inventario:reserve",
+    "inventario:confirm",
+    "tesoreria:view",
+    "tesoreria:create",
+    "tesoreria:approve",
+    "fiscal:view",
+    "fiscal:create",
+    "fiscal:approve",
+    "regulatorio:view",
+    "regulatorio:create",
+    "regulatorio:approve",
+    "reportes:view",
+    "reportes:export",
+    "aprobaciones:view",
+    "aprobaciones:create",
+    "aprobaciones:edit",
+    "aprobaciones:approve",
+    "aprobaciones:delegate",
+    "aprobaciones:configure",
+    "documentos:view",
+    "documentos:create",
+    "documentos:edit",
+    "documentos:upload",
+    "documentos:download",
+    "documentos:link",
+    "documentos:deactivate",
+    "documentos:delete",
+    "documentos:manage_types",
+    "comercial:view",
+    "comercial:create",
+    "comercial:edit",
+    "comercial:manage_policies",
+    "comercial:publish",
+    "comercial:archive",
+    "notificaciones:configure",
+    "tareas:view",
+    "tareas:assign",
+    "tareas:complete",
+    "tareas:configure",
+    "alertas:view"
+  ]
+}

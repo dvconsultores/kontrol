@@ -5,8 +5,10 @@ import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, InventoryLot, PagedResult } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
@@ -27,6 +29,7 @@ const LOT_TRANSITIONS: Record<string, string[]> = {
 export function LotesPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [newProduct, setNewProduct] = useState("");
   const [newNumber, setNewNumber] = useState("");
@@ -84,13 +87,15 @@ export function LotesPage(): React.JSX.Element {
       header: "Acciones",
       cell: ({ row }) => {
         const targets = LOT_TRANSITIONS[row.original.status] ?? [];
+        const puedeTransicionar = puede("POST", `/inventory/lots/${row.original.id}/transition`);
         return (
           <div className="flex justify-end gap-1">
-            {targets.map((target) => (
-              <AsyncButton key={target} size="sm" variant="secondary" onClick={() => runTransition(row.original.id, target)}>
-                {target.toLowerCase()}
-              </AsyncButton>
-            ))}
+            {puedeTransicionar &&
+              targets.map((target) => (
+                <AsyncButton key={target} size="sm" variant="secondary" onClick={() => runTransition(row.original.id, target)}>
+                  {target.toLowerCase()}
+                </AsyncButton>
+              ))}
           </div>
         );
       },
@@ -104,29 +109,31 @@ export function LotesPage(): React.JSX.Element {
         description="Trazabilidad por lote: vencimiento, proveedor y transiciones de estado."
         crumbs={[{ label: "Inventario" }, { label: "Lotes" }]}
       />
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo lote</h2>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
-          <FormField label="Producto" required>
-            <select value={newProduct} onChange={(e) => setNewProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(products.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Número de lote" required>
-            <TextInput value={newNumber} onChange={(e) => setNewNumber(e.target.value)} placeholder="LOT-0001" required />
-          </FormField>
-          <FormField label="Vencimiento">
-            <TextInput type="date" value={newExpiry} onChange={(e) => setNewExpiry(e.target.value)} />
-          </FormField>
-          <FormField label="Proveedor">
-            <TextInput value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} placeholder="ID proveedor" />
-          </FormField>
-          <AsyncButton type="submit" variant="primary" onClick={createLot}>Crear</AsyncButton>
-        </form>
-      </section>
+      <Autorizado operacion={["POST", "/inventory/lots"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo lote</h2>
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+            <FormField label="Producto" required>
+              <select value={newProduct} onChange={(e) => setNewProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {(products.data?.items ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Número de lote" required>
+              <TextInput value={newNumber} onChange={(e) => setNewNumber(e.target.value)} placeholder="LOT-0001" required />
+            </FormField>
+            <FormField label="Vencimiento">
+              <TextInput type="date" value={newExpiry} onChange={(e) => setNewExpiry(e.target.value)} />
+            </FormField>
+            <FormField label="Proveedor">
+              <TextInput value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} placeholder="ID proveedor" />
+            </FormField>
+            <AsyncButton type="submit" variant="primary" onClick={createLot}>Crear</AsyncButton>
+          </form>
+        </section>
+      </Autorizado>
 
       <DataTable
         columns={columns}

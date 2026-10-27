@@ -4,7 +4,7 @@
  */
 import { Link } from "react-router";
 
-import { useAuth } from "@/app/contexts/AuthContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { PERMISO_DE_LICENCIA, useLicense } from "@/app/contexts/LicenseContext";
 
 const messages: Record<string, { title: string; detail: string; tone: "warning" | "danger" }> = {
@@ -27,12 +27,12 @@ const messages: Record<string, { title: string; detail: string; tone: "warning" 
 
 export function LicenseBanner(): React.JSX.Element | null {
   const { mode, status } = useLicense();
-  const { hasPermission } = useAuth();
+  const { tiene } = useAutoridad();
   if (!mode || !(mode in messages)) {
     return null;
   }
   const info = messages[mode];
-  const puedeVerLaLicencia = hasPermission(PERMISO_DE_LICENCIA);
+  const puedeVerLaLicencia = tiene(PERMISO_DE_LICENCIA, "global");
   return (
     <div
       role="status"

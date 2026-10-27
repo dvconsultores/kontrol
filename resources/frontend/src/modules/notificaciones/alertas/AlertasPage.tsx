@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/api/client";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
@@ -26,11 +26,11 @@ const ESTADOS = ["ACTIVE", "RESOLVED"] as const;
 
 export function AlertasPage(): React.JSX.Element {
   const { activeCompanyId } = useCompany();
-  const { hasPermission } = useAuth();
+  const { tiene } = useAutoridad();
   const [estado, setEstado] = useState<(typeof ESTADOS)[number] | "">("ACTIVE");
   const [pagina, setPagina] = useState(0);
   const [tamano, setTamano] = useState(10);
-  const permitido = hasPermission("alertas:view");
+  const permitido = tiene("alertas:view", "empresa");
 
   const lista = useQuery({
     queryKey: [...CONSULTAS, "alertas", activeCompanyId, estado, pagina, tamano],

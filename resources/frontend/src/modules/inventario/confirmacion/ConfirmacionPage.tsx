@@ -22,8 +22,10 @@ import type {
   ReceiptReconciliation,
   ReconciliationItem,
 } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
@@ -59,6 +61,7 @@ function Veredicto({ valor }: { valor: boolean | null }): React.JSX.Element {
 export function ConfirmacionPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [receiptId, setReceiptId] = useState("");
   const [conteos, setConteos] = useState<Record<string, string>>({});
   const [diferencias, setDiferencias] = useState<Record<string, string[]>>({});
@@ -274,9 +277,14 @@ export function ConfirmacionPage(): React.JSX.Element {
                       ))}
                     </select>
                   </FormField>
-                  <AsyncButton onClick={() => contar(x.receipt_line_id)} variant="secondary">
-                    Registrar conteo
-                  </AsyncButton>
+                  {puede(
+                    "POST",
+                    `/purchasing/receipts/${receiptId}/lines/${x.receipt_line_id}/conteo`,
+                  ) ? (
+                    <AsyncButton onClick={() => contar(x.receipt_line_id)} variant="secondary">
+                      Registrar conteo
+                    </AsyncButton>
+                  ) : null}
 
                   <FormField label="Destino">
                     <select
@@ -314,9 +322,16 @@ export function ConfirmacionPage(): React.JSX.Element {
                   ) : null}
                 </div>
               ))}
-              <AsyncButton onClick={confirmar} disabled={!listo}>
-                Confirmar inventario
-              </AsyncButton>
+              <Autorizado
+                operacion={[
+                  "POST",
+                  `/purchasing/receipts/${receiptId}/confirmacion-inventario`,
+                ]}
+              >
+                <AsyncButton onClick={confirmar} disabled={!listo}>
+                  Confirmar inventario
+                </AsyncButton>
+              </Autorizado>
             </section>
           ) : null}
 

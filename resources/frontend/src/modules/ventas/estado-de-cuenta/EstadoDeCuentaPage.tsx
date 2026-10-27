@@ -25,6 +25,8 @@ import type {
   Party,
 } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
@@ -48,6 +50,7 @@ function corto(id: string): string {
 export function EstadoDeCuentaPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [clienteId, setClienteId] = useState("");
   const [creditoId, setCreditoId] = useState("");
   const [documentoId, setDocumentoId] = useState("");
@@ -233,75 +236,77 @@ export function EstadoDeCuentaPage(): React.JSX.Element {
             ) : null}
           </section>
 
-          <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-            <h2 className="mb-2 text-base font-semibold text-text-900">Aplicar un crédito</h2>
-            {(creditos.data?.items ?? []).length === 0 ? (
-              <p className="text-sm text-text-700">Este cliente no tiene créditos sin aplicar.</p>
-            ) : (
-              <>
-                <div className="mb-3 flex flex-wrap items-end gap-3">
-                  <FormField label="Crédito" required>
-                    <select
-                      value={creditoId}
-                      onChange={(ev) => setCreditoId(ev.target.value)}
-                      className={SELECT}
-                      aria-label="Crédito"
-                    >
-                      <option value="">Seleccionar…</option>
-                      {(creditos.data?.items ?? []).map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.number} · quedan {c.available} {c.currency}
-                          {Number(c.refund_reserved) > 0
-                            ? ` · ${c.refund_reserved} reservado para devolver`
-                            : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </FormField>
-                  <FormField label="Documento del mismo cliente" required>
-                    <select
-                      value={documentoId}
-                      onChange={(ev) => setDocumentoId(ev.target.value)}
-                      className={SELECT}
-                      aria-label="Documento del mismo cliente"
-                    >
-                      <option value="">Seleccionar…</option>
-                      {(documentos.data?.items ?? []).map((d) => (
-                        <option
-                          key={d.id}
-                          value={d.id}
-                          disabled={Boolean(credito) && d.currency !== credito?.currency}
-                        >
-                          {corto(d.id)} · pendiente {d.balance} {d.currency}
-                          {credito && d.currency !== credito.currency ? " · otra moneda" : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </FormField>
-                  <FormField label="Importe" required>
-                    <TextInput
-                      value={importe}
-                      onChange={(ev) => setImporte(ev.target.value)}
-                      placeholder="0.00"
-                    />
-                  </FormField>
-                  <AsyncButton onClick={aplicar} disabled={!monedasCoinciden}>
-                    Aplicar crédito
-                  </AsyncButton>
-                </div>
-                {!monedasCoinciden ? (
-                  <p className="text-sm text-text-700" role="status">
-                    El crédito y el documento están en monedas distintas. No se aplica: falta la
-                    política de diferencia cambiaria.
-                  </p>
-                ) : (
-                  <p className="text-sm text-text-500">
-                    Aplicar un crédito no es cobrar: no entra dinero ni se mueve tesorería.
-                  </p>
-                )}
-              </>
-            )}
-          </section>
+          <Autorizado operacion={["POST", "/sales/cxc/creditos/_/aplicar"]}>
+            <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+              <h2 className="mb-2 text-base font-semibold text-text-900">Aplicar un crédito</h2>
+              {(creditos.data?.items ?? []).length === 0 ? (
+                <p className="text-sm text-text-700">Este cliente no tiene créditos sin aplicar.</p>
+              ) : (
+                <>
+                  <div className="mb-3 flex flex-wrap items-end gap-3">
+                    <FormField label="Crédito" required>
+                      <select
+                        value={creditoId}
+                        onChange={(ev) => setCreditoId(ev.target.value)}
+                        className={SELECT}
+                        aria-label="Crédito"
+                      >
+                        <option value="">Seleccionar…</option>
+                        {(creditos.data?.items ?? []).map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.number} · quedan {c.available} {c.currency}
+                            {Number(c.refund_reserved) > 0
+                              ? ` · ${c.refund_reserved} reservado para devolver`
+                              : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+                    <FormField label="Documento del mismo cliente" required>
+                      <select
+                        value={documentoId}
+                        onChange={(ev) => setDocumentoId(ev.target.value)}
+                        className={SELECT}
+                        aria-label="Documento del mismo cliente"
+                      >
+                        <option value="">Seleccionar…</option>
+                        {(documentos.data?.items ?? []).map((d) => (
+                          <option
+                            key={d.id}
+                            value={d.id}
+                            disabled={Boolean(credito) && d.currency !== credito?.currency}
+                          >
+                            {corto(d.id)} · pendiente {d.balance} {d.currency}
+                            {credito && d.currency !== credito.currency ? " · otra moneda" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+                    <FormField label="Importe" required>
+                      <TextInput
+                        value={importe}
+                        onChange={(ev) => setImporte(ev.target.value)}
+                        placeholder="0.00"
+                      />
+                    </FormField>
+                    <AsyncButton onClick={aplicar} disabled={!monedasCoinciden}>
+                      Aplicar crédito
+                    </AsyncButton>
+                  </div>
+                  {!monedasCoinciden ? (
+                    <p className="text-sm text-text-700" role="status">
+                      El crédito y el documento están en monedas distintas. No se aplica: falta la
+                      política de diferencia cambiaria.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-text-500">
+                      Aplicar un crédito no es cobrar: no entra dinero ni se mueve tesorería.
+                    </p>
+                  )}
+                </>
+              )}
+            </section>
+          </Autorizado>
 
           <section className="mb-4">
             <h2 className="mb-2 text-base font-semibold text-text-900">Cronología</h2>
@@ -364,7 +369,8 @@ export function EstadoDeCuentaPage(): React.JSX.Element {
                           </td>
                           <td>{a.status}</td>
                           <td>
-                            {a.status === "APPLIED" ? (
+                            {a.status === "APPLIED" &&
+                            puede("POST", `/sales/cxc/aplicaciones/${a.id}/revertir`) ? (
                               <AsyncButton size="sm" variant="secondary" onClick={() => revertir(a)}>
                                 Revertir aplicación
                               </AsyncButton>

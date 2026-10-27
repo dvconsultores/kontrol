@@ -22,6 +22,16 @@ vi.mock("@/api/client", async (original) => ({
   ...(await original<typeof import("@/api/client")>()),
   apiFetch: (...args: unknown[]) => apiFetch(...args),
 }));
+const tieneMock = vi.fn<(capacidad: string, alcance: string) => boolean>(() => false);
+vi.mock("@/app/autoridad/AutoridadContext", () => ({
+  useAutoridad: () => ({
+    estado: "LISTA",
+    puede: () => true,
+    tiene: (capacidad: string, alcance: string) => tieneMock(capacidad, alcance),
+    motivo: () => null,
+    motivoDeCapacidad: () => null,
+  }),
+}));
 
 const { AuditoriaPage } = await import("./AuditoriaPage");
 const { listAuditEvents } = await import("@/api/audit");
@@ -110,5 +120,28 @@ describe("AuditoriaPage · consumo del sobre paginado", () => {
     apiFetch.mockClear();
     expectTypeOf(listAuditEvents).returns.resolves.toEqualTypeOf<PagedResult<AuditEvent>>();
     expectTypeOf(listAuditEvents).returns.resolves.not.toEqualTypeOf<AuditEvent[]>();
+  });
+});
+
+describe("AuditoriaPage · alcance de la bitácora (GOV-CTL-005)", () => {
+  const TEXTO_TENANT = "Eventos de acceso y operaciones de todas las empresas del tenant, incluidos los que no pertenecen a ninguna empresa (como los inicios de sesión).";
+  const TEXTO_PARCIAL = "Eventos de las empresas en las que usted tiene autoridad de auditoría. Los eventos sin empresa (como los inicios de sesión) solo los ve quien audita todas las empresas del tenant.";
+
+  it("ALC-01 · quien audita todas las empresas lee que ve todo el tenant, también lo que no tiene empresa", async () => {
+    apiFetch.mockClear();
+    apiFetch.mockResolvedValue(sobre([]));
+    tieneMock.mockImplementation((c, a) => c === "audit:view" && a === "tenant");
+    montar();
+    expect(await screen.findByText(TEXTO_TENANT)).toBeInTheDocument();
+    expect(screen.queryByText(TEXTO_PARCIAL)).not.toBeInTheDocument();
+  });
+
+  it("ALC-02 · quien audita solo algunas lee que la lista se limita a sus empresas", async () => {
+    apiFetch.mockClear();
+    apiFetch.mockResolvedValue(sobre([]));
+    tieneMock.mockReturnValue(false);
+    montar();
+    expect(await screen.findByText(TEXTO_PARCIAL)).toBeInTheDocument();
+    expect(screen.queryByText(TEXTO_TENANT)).not.toBeInTheDocument();
   });
 });

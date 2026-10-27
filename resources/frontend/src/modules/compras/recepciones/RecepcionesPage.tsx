@@ -15,6 +15,8 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/api/client";
+import { Autorizado } from "@/components/Autorizado";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import type {
   CatalogItemSummary,
   GoodsReceiptDetail,
@@ -63,6 +65,7 @@ function marca(valor: boolean | null | undefined): string {
 export function RecepcionesPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [newCode, setNewCode] = useState("");
   const [newOrder, setNewOrder] = useState("");
@@ -227,27 +230,28 @@ export function RecepcionesPage(): React.JSX.Element {
       cell: ({ row }) => {
         const r = row.original;
         const abierta = r.status === "DRAFT" || r.status === "CONFIRMED";
+        const puedeReceiptId = (accion: string) => puede("POST", `/purchasing/receipts/${r.id}/${accion}`);
         return (
           <div className="flex justify-end gap-1">
             <AsyncButton size="sm" variant="secondary" onClick={async () => setSelected(r.id)}>
               detalle
             </AsyncButton>
-            {abierta && !r.arrival_at ? (
+            {abierta && !r.arrival_at && puedeReceiptId("arrival") ? (
               <AsyncButton size="sm" variant="secondary" onClick={() => runAction(r.id, "arrival")}>
                 confirmar arribo
               </AsyncButton>
             ) : null}
-            {r.status === "DRAFT" ? (
+            {r.status === "DRAFT" && puedeReceiptId("confirm") ? (
               <AsyncButton size="sm" variant="secondary" onClick={() => runAction(r.id, "confirm")}>
                 confirmar
               </AsyncButton>
             ) : null}
-            {r.status === "CONFIRMED" && r.quality_status !== "APPROVED" ? (
+            {r.status === "CONFIRMED" && r.quality_status !== "APPROVED" && puedeReceiptId("quality") ? (
               <AsyncButton size="sm" variant="secondary" onClick={() => runAction(r.id, "quality", { quality_status: "APPROVED" })}>
                 conforme
               </AsyncButton>
             ) : null}
-            {r.status === "CONFIRMED" && r.quality_status === "APPROVED" ? (
+            {r.status === "CONFIRMED" && r.quality_status === "APPROVED" && puedeReceiptId("accept") ? (
               <AsyncButton size="sm" variant="primary" onClick={() => runAction(r.id, "accept")}>
                 aceptar
               </AsyncButton>
@@ -268,6 +272,7 @@ export function RecepcionesPage(): React.JSX.Element {
         crumbs={[{ label: "Compras" }, { label: "Recepciones" }]}
       />
 
+      <Autorizado operacion={["POST", "/purchasing/receipts"]}>
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Nueva recepción</h2>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
@@ -300,6 +305,7 @@ export function RecepcionesPage(): React.JSX.Element {
           <AsyncButton type="submit" variant="primary" onClick={createReceipt}>Crear</AsyncButton>
         </form>
       </section>
+      </Autorizado>
 
       <DataTable
         columns={columns}
@@ -326,39 +332,44 @@ export function RecepcionesPage(): React.JSX.Element {
               <FormField label="Observaciones">
                 <TextInput value={inspectionNotes} onChange={(e) => setInspectionNotes(e.target.value)} placeholder="Lo que se vio al abrir" />
               </FormField>
-              <AsyncButton
-                variant="secondary"
-                onClick={() =>
-                  runAction(d.id, "inspection", {
-                    packing_list_match: true,
-                    supplier_invoice_match: true,
-                    order_match: true,
-                    documentation_match: true,
-                    packages_received: packagesReceived === "" ? null : Number(packagesReceived),
-                    notes: inspectionNotes || null,
-                  })
-                }
-              >
-                Registrar inspección conforme
-              </AsyncButton>
-              <AsyncButton
-                variant="secondary"
-                onClick={() =>
-                  runAction(d.id, "inspection", {
-                    packing_list_match: false,
-                    supplier_invoice_match: false,
-                    order_match: false,
-                    documentation_match: false,
-                    packages_received: packagesReceived === "" ? null : Number(packagesReceived),
-                    notes: inspectionNotes || null,
-                  })
-                }
-              >
-                Registrar diferencias
-              </AsyncButton>
+              {puede("POST", `/purchasing/receipts/${d.id}/inspection`) ? (
+                <AsyncButton
+                  variant="secondary"
+                  onClick={() =>
+                    runAction(d.id, "inspection", {
+                      packing_list_match: true,
+                      supplier_invoice_match: true,
+                      order_match: true,
+                      documentation_match: true,
+                      packages_received: packagesReceived === "" ? null : Number(packagesReceived),
+                      notes: inspectionNotes || null,
+                    })
+                  }
+                >
+                  Registrar inspección conforme
+                </AsyncButton>
+              ) : null}
+              {puede("POST", `/purchasing/receipts/${d.id}/inspection`) ? (
+                <AsyncButton
+                  variant="secondary"
+                  onClick={() =>
+                    runAction(d.id, "inspection", {
+                      packing_list_match: false,
+                      supplier_invoice_match: false,
+                      order_match: false,
+                      documentation_match: false,
+                      packages_received: packagesReceived === "" ? null : Number(packagesReceived),
+                      notes: inspectionNotes || null,
+                    })
+                  }
+                >
+                  Registrar diferencias
+                </AsyncButton>
+              ) : null}
             </form>
           </section>
 
+          <Autorizado operacion={["POST", `/purchasing/receipts/${d.id}/lines`]}>
           <section className="mt-4 rounded-lg border border-border-default bg-surface-0 p-4">
             <h2 className="mb-2 text-base font-semibold text-text-900">Recibir una línea</h2>
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
@@ -444,6 +455,7 @@ export function RecepcionesPage(): React.JSX.Element {
               </table>
             </div>
           </section>
+          </Autorizado>
         </>
       ) : null}
     </PageContent>

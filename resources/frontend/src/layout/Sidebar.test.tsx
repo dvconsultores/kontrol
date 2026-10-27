@@ -10,8 +10,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 let permisos = new Set<string>();
 
-vi.mock("@/app/contexts/AuthContext", () => ({
-  useAuth: () => ({ hasPermission: (permiso: string) => permisos.has(permiso) }),
+vi.mock("@/app/autoridad/AutoridadContext", () => ({
+  useAutoridad: () => ({
+    estado: "LISTA",
+    tiene: (capacidad: string) => permisos.has(capacidad),
+    puede: () => true,
+    motivo: () => null,
+    motivoDeCapacidad: () => "PERMISSION_DENIED",
+  }),
 }));
 
 const { Sidebar } = await import("./Sidebar");
@@ -39,14 +45,14 @@ describe("Sidebar · Diagnóstico", () => {
     const d = enlace("Diagnóstico");
     expect(d).not.toBeNull();
     expect(d?.getAttribute("href")).toBe("/diagnostico");
-    expect(enlace("Auditoría")).not.toBeNull();
+    expect(enlace("Auditoría")).toBeNull(); // la pantalla exige audit:view
   });
 
   it("NAV-02 · sin license:view no hay Diagnóstico, y el resto de Sistema sigue", () => {
     permisos = new Set(["organization:view", "dashboard:view"]);
     montar();
     expect(enlace("Diagnóstico")).toBeNull();
-    expect(enlace("Auditoría")).not.toBeNull();
+    expect(enlace("Auditoría")).toBeNull(); // la pantalla exige audit:view
     expect(enlace("Empresas")).not.toBeNull();
   });
 
@@ -57,7 +63,7 @@ describe("Sidebar · Diagnóstico", () => {
     expect(enlace("Empresas")).toBeNull();
     expect(enlace("Inicio")).not.toBeNull();
     expect(enlace("Mi licencia")).toBeNull(); // el detalle de la licencia exige license:view (FR-010-114)
-    expect(enlace("Auditoría")).not.toBeNull();
+    expect(enlace("Auditoría")).toBeNull(); // la pantalla exige audit:view
   });
 
   it("NAV-04 · el permiso de Diagnóstico es el de la sección Licenciamiento", () => {
@@ -79,5 +85,13 @@ describe("Sidebar · Diagnóstico", () => {
     montar();
     expect(enlace("Mi licencia")).toBeNull();
     expect(enlace("Inicio")).not.toBeNull();
+  });
+
+  it("NAV-07 · con audit:view la entrada Auditoría está, y apunta a su ruta", () => {
+    permisos = new Set(["audit:view"]);
+    montar();
+    const a = enlace("Auditoría");
+    expect(a).not.toBeNull();
+    expect(a?.getAttribute("href")).toBe("/auditoria");
   });
 });

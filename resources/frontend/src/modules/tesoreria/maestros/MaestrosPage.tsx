@@ -13,6 +13,8 @@ import type {
   TreasuryInstrumentSummary,
 } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
 import { MoneyInput } from "@/components/MoneyInput";
@@ -26,6 +28,7 @@ type Tab = (typeof TABS)[number];
 export function MaestrosPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [tab, setTab] = useState<Tab>("Bancos");
 
   const banks = useQuery({
@@ -163,6 +166,7 @@ export function MaestrosPage(): React.JSX.Element {
 
       {tab === "Bancos" ? (
         <>
+          <Autorizado operacion={["POST", "/treasury/banks"]}>
           {item("Registrar banco", (
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
               <FormField label="Nombre">
@@ -171,6 +175,7 @@ export function MaestrosPage(): React.JSX.Element {
               <AsyncButton type="submit" variant="secondary" onClick={createBank}>Crear</AsyncButton>
             </form>
           ))}
+          </Autorizado>
           {item("Bancos", (
             <div>{(banks.data?.items ?? []).map((b) => row(b.name, `${b.code} · ${b.status}`))}</div>
           ))}
@@ -179,6 +184,7 @@ export function MaestrosPage(): React.JSX.Element {
 
       {tab === "Cuentas" ? (
         <>
+          <Autorizado operacion={["POST", "/treasury/accounts"]}>
           {item("Registrar cuenta", (
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
               <FormField label="Banco">
@@ -193,6 +199,7 @@ export function MaestrosPage(): React.JSX.Element {
               <AsyncButton type="submit" variant="secondary" onClick={createAccount}>Crear</AsyncButton>
             </form>
           ))}
+          </Autorizado>
           {item("Cuentas", (
             <div>{(accounts.data?.items ?? []).map((a) => row(`${a.name} · ${a.currency}`, `${a.code} · ${a.status}`))}</div>
           ))}
@@ -201,6 +208,7 @@ export function MaestrosPage(): React.JSX.Element {
 
       {tab === "Cajas" ? (
         <>
+          <Autorizado operacion={["POST", "/treasury/cashboxes"]}>
           {item("Registrar caja", (
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
               <FormField label="Nombre">
@@ -209,6 +217,7 @@ export function MaestrosPage(): React.JSX.Element {
               <AsyncButton type="submit" variant="secondary" onClick={createCashbox}>Crear</AsyncButton>
             </form>
           ))}
+          </Autorizado>
           {item("Cajas", (
             <div>{(cashboxes.data?.items ?? []).map((c) => row(`${c.name} · ${c.currency}`, `${c.code} · ${c.status}`))}</div>
           ))}
@@ -217,6 +226,7 @@ export function MaestrosPage(): React.JSX.Element {
 
       {tab === "Métodos" ? (
         <>
+          <Autorizado operacion={["POST", "/treasury/payment-methods"]}>
           {item("Registrar método de pago", (
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
               <FormField label="Nombre">
@@ -225,6 +235,7 @@ export function MaestrosPage(): React.JSX.Element {
               <AsyncButton type="submit" variant="secondary" onClick={createMethod}>Crear</AsyncButton>
             </form>
           ))}
+          </Autorizado>
           {item("Métodos", (
             <div>{(methods.data?.items ?? []).map((m) => row(`${m.name} · ${m.kind}`, `${m.code} · ${m.status}`))}</div>
           ))}
@@ -233,6 +244,7 @@ export function MaestrosPage(): React.JSX.Element {
 
       {tab === "Instrumentos" ? (
         <>
+          <Autorizado operacion={["POST", "/treasury/instruments"]}>
           {item("Registrar instrumento", (
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
               <FormField label="Método">
@@ -247,6 +259,7 @@ export function MaestrosPage(): React.JSX.Element {
               <AsyncButton type="submit" variant="secondary" onClick={createInstrument}>Crear</AsyncButton>
             </form>
           ))}
+          </Autorizado>
           {item("Instrumentos", (
             <div>{(instruments.data?.items ?? []).map((i) => row(i.name, `${i.code} · ${i.status}`))}</div>
           ))}
@@ -255,6 +268,7 @@ export function MaestrosPage(): React.JSX.Element {
 
       {tab === "Monedas" ? (
         <>
+          <Autorizado operacion={["POST", "/treasury/currencies"]}>
           {item("Registrar moneda", (
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
               <FormField label="Código ISO">
@@ -263,6 +277,7 @@ export function MaestrosPage(): React.JSX.Element {
               <AsyncButton type="submit" variant="secondary" onClick={createCurrency}>Crear</AsyncButton>
             </form>
           ))}
+          </Autorizado>
           {item("Monedas y tasas", (
             <div>
               {(currencies.data?.items ?? []).map((c) => (
@@ -270,7 +285,7 @@ export function MaestrosPage(): React.JSX.Element {
                   <span className="text-text-700">{c.code} · {c.name ?? ""}</span>
                   <span className="flex items-center gap-2">
                     <MoneyInput className="w-28" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="Tasa" />
-                    <AsyncButton size="sm" variant="secondary" onClick={() => loadRate(c.id)}>cargar tasa</AsyncButton>
+                    {puede("POST", "/treasury/exchange-rates") ? <AsyncButton size="sm" variant="secondary" onClick={() => loadRate(c.id)}>cargar tasa</AsyncButton> : null}
                   </span>
                 </div>
               ))}

@@ -13,6 +13,7 @@ import { apiFetch } from "@/api/client";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
@@ -136,6 +137,7 @@ export function AlmacenesPage(): React.JSX.Element {
         </div>
       ) : (
         <>
+          <Autorizado operacion={["POST", "/organization/warehouses"]}>
           <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
             <h2 className="mb-2 text-base font-semibold text-text-900">Registrar almacén</h2>
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
@@ -195,6 +197,7 @@ export function AlmacenesPage(): React.JSX.Element {
               </div>
             </fieldset>
           </section>
+          </Autorizado>
 
           <section className="rounded-lg border border-border-default bg-surface-0 p-4">
             <div className="mb-3 flex flex-wrap items-end justify-between gap-3">

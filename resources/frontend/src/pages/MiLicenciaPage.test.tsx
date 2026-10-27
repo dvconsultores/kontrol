@@ -19,8 +19,14 @@ vi.mock("@/api/client", async (original) => ({
 
 let permisos = new Set(["license:view"]);
 
-vi.mock("@/app/contexts/AuthContext", () => ({
-  useAuth: () => ({ hasPermission: (permiso: string) => permisos.has(permiso) }),
+vi.mock("@/app/autoridad/AutoridadContext", () => ({
+  useAutoridad: () => ({
+    estado: "LISTA",
+    tiene: (c: string) => permisos.has(c),
+    puede: () => true,
+    motivo: () => null,
+    motivoDeCapacidad: () => null,
+  }),
 }));
 
 vi.mock("@/app/contexts/NotificationContext", () => ({

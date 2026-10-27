@@ -19,7 +19,9 @@ import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/api/client";
 import type { RateImportBatch, RatePolicy, RateSource } from "@/api/types";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
@@ -29,6 +31,7 @@ import { PageContent } from "@/layout/PageContent";
 export function FuentesPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
@@ -169,39 +172,41 @@ export function FuentesPage(): React.JSX.Element {
         crumbs={[{ label: "Tesorería" }, { label: "Fuentes de tasa" }]}
       />
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">Nueva fuente</h2>
-        <div className="flex flex-wrap items-end gap-3">
-          <FormField label="Código" required>
-            <TextInput value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="BCV" />
-          </FormField>
-          <FormField label="Nombre" required>
-            <TextInput
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Banco Central"
-            />
-          </FormField>
-          <FormField label="Tipo">
-            <TextInput value={tipo} onChange={(e) => setTipo(e.target.value)} />
-          </FormField>
-          <FormField label="Autoridad que la respalda">
-            <TextInput
-              value={autoridad}
-              onChange={(e) => setAutoridad(e.target.value)}
-              placeholder="De dónde sale esta fuente"
-            />
-          </FormField>
-          <FormField label="Prioridad">
-            <TextInput value={prioridad} onChange={(e) => setPrioridad(e.target.value)} />
-          </FormField>
-          <AsyncButton onClick={crearFuente}>Crear fuente</AsyncButton>
-        </div>
-        <p className="mt-2 text-sm text-text-500">
-          La prioridad decide qué fuente gana cuando dos cotizan lo mismo el mismo día. Menor
-          número, antes.
-        </p>
-      </section>
+      <Autorizado operacion={["POST", "/treasury/rate-sources"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">Nueva fuente</h2>
+          <div className="flex flex-wrap items-end gap-3">
+            <FormField label="Código" required>
+              <TextInput value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="BCV" />
+            </FormField>
+            <FormField label="Nombre" required>
+              <TextInput
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Banco Central"
+              />
+            </FormField>
+            <FormField label="Tipo">
+              <TextInput value={tipo} onChange={(e) => setTipo(e.target.value)} />
+            </FormField>
+            <FormField label="Autoridad que la respalda">
+              <TextInput
+                value={autoridad}
+                onChange={(e) => setAutoridad(e.target.value)}
+                placeholder="De dónde sale esta fuente"
+              />
+            </FormField>
+            <FormField label="Prioridad">
+              <TextInput value={prioridad} onChange={(e) => setPrioridad(e.target.value)} />
+            </FormField>
+            <AsyncButton onClick={crearFuente}>Crear fuente</AsyncButton>
+          </div>
+          <p className="mt-2 text-sm text-text-500">
+            La prioridad decide qué fuente gana cuando dos cotizan lo mismo el mismo día. Menor
+            número, antes.
+          </p>
+        </section>
+      </Autorizado>
 
       <section className="mb-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Fuentes</h2>
@@ -236,9 +241,11 @@ export function FuentesPage(): React.JSX.Element {
                   </td>
                   <td>{f.status === "ACTIVE" ? "Activa" : "Desactivada"}</td>
                   <td>
-                    <AsyncButton size="sm" variant="secondary" onClick={() => cambiarEstado(f)}>
-                      {f.status === "ACTIVE" ? "Desactivar" : "Activar"}
-                    </AsyncButton>
+                    {puede("POST", "/treasury/rate-sources/_/status") && (
+                      <AsyncButton size="sm" variant="secondary" onClick={() => cambiarEstado(f)}>
+                        {f.status === "ACTIVE" ? "Desactivar" : "Activar"}
+                      </AsyncButton>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -247,61 +254,63 @@ export function FuentesPage(): React.JSX.Element {
         </div>
       </section>
 
-      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
-        <h2 className="mb-2 text-base font-semibold text-text-900">
-          Nueva política de resolución
-        </h2>
-        <div className="mb-3 flex flex-wrap items-end gap-3">
-          <FormField label="Código" required>
-            <TextInput
-              value={politicaCodigo}
-              onChange={(e) => setPoliticaCodigo(e.target.value)}
-              placeholder="RES-GENERAL"
-            />
-          </FormField>
-          <FormField label="Vigente desde" required>
-            <TextInput type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
-          </FormField>
-          <FormField label="Antigüedad máxima (días)">
-            <TextInput
-              value={antiguedad}
-              onChange={(e) => setAntiguedad(e.target.value)}
-              placeholder="Vacío = sin tope"
-            />
-          </FormField>
-        </div>
-        <div className="mb-3 flex flex-wrap gap-4 text-sm">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={inversion}
-              onChange={(e) => setInversion(e.target.checked)}
-            />
-            Permitir invertir el par
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={triangulacion}
-              onChange={(e) => setTriangulacion(e.target.checked)}
-            />
-            Permitir triangular
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={aprobacion}
-              onChange={(e) => setAprobacion(e.target.checked)}
-            />
-            Exigir aprobación de cada tasa
-          </label>
-        </div>
-        <AsyncButton onClick={crearPolitica}>Crear en borrador</AsyncButton>
-        <p className="mt-2 text-sm text-text-500">
-          Invertir y triangular vienen denegados. Derivar una tasa de otra es una decisión
-          económica, y queda marcada como derivada allí donde se use.
-        </p>
-      </section>
+      <Autorizado operacion={["POST", "/treasury/rate-policies"]}>
+        <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+          <h2 className="mb-2 text-base font-semibold text-text-900">
+            Nueva política de resolución
+          </h2>
+          <div className="mb-3 flex flex-wrap items-end gap-3">
+            <FormField label="Código" required>
+              <TextInput
+                value={politicaCodigo}
+                onChange={(e) => setPoliticaCodigo(e.target.value)}
+                placeholder="RES-GENERAL"
+              />
+            </FormField>
+            <FormField label="Vigente desde" required>
+              <TextInput type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+            </FormField>
+            <FormField label="Antigüedad máxima (días)">
+              <TextInput
+                value={antiguedad}
+                onChange={(e) => setAntiguedad(e.target.value)}
+                placeholder="Vacío = sin tope"
+              />
+            </FormField>
+          </div>
+          <div className="mb-3 flex flex-wrap gap-4 text-sm">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={inversion}
+                onChange={(e) => setInversion(e.target.checked)}
+              />
+              Permitir invertir el par
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={triangulacion}
+                onChange={(e) => setTriangulacion(e.target.checked)}
+              />
+              Permitir triangular
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={aprobacion}
+                onChange={(e) => setAprobacion(e.target.checked)}
+              />
+              Exigir aprobación de cada tasa
+            </label>
+          </div>
+          <AsyncButton onClick={crearPolitica}>Crear en borrador</AsyncButton>
+          <p className="mt-2 text-sm text-text-500">
+            Invertir y triangular vienen denegados. Derivar una tasa de otra es una decisión
+            económica, y queda marcada como derivada allí donde se use.
+          </p>
+        </section>
+      </Autorizado>
 
       <section className="mb-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Políticas</h2>
@@ -333,7 +342,7 @@ export function FuentesPage(): React.JSX.Element {
                   <td>{p.effective_from}</td>
                   <td>{p.status}</td>
                   <td>
-                    {p.status === "DRAFT" ? (
+                    {p.status === "DRAFT" && puede("POST", "/treasury/rate-policies/_/activate") ? (
                       <AsyncButton
                         size="sm"
                         variant="secondary"

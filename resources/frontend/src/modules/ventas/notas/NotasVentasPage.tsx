@@ -18,7 +18,9 @@ import { useState } from "react";
 import { ApiError, apiFetch } from "@/api/client";
 import type { CreditEligibility, SalesNote } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
@@ -55,6 +57,7 @@ function corto(id: string): string {
 export function NotasVentasPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const [facturaId, setFacturaId] = useState("");
   const [tipo, setTipo] = useState<"CREDITO" | "DEBITO">("CREDITO");
   const [causa, setCausa] = useState(CAUSAS_CREDITO[0]);
@@ -216,7 +219,7 @@ export function NotasVentasPage(): React.JSX.Element {
           </p>
         ) : null}
 
-        {e?.creditable && tipo === "CREDITO" ? (
+        {e?.creditable && tipo === "CREDITO" && puede("POST", `/sales/notas/credito/${facturaId}/generar`) ? (
           <>
             <p className="mb-2 text-sm text-text-700">
               Factura {e.invoice_number} · control {e.control_number}. El impuesto de la nota sale
@@ -259,7 +262,7 @@ export function NotasVentasPage(): React.JSX.Element {
           </>
         ) : null}
 
-        {e?.creditable && tipo === "DEBITO" ? (
+        {e?.creditable && tipo === "DEBITO" && puede("POST", `/sales/notas/debito/${facturaId}/generar`) ? (
           <>
             <p className="mb-2 text-sm text-text-700">
               Un cargo posterior no mueve inventario: su flujo no tiene ninguna etapa física.
@@ -302,15 +305,19 @@ export function NotasVentasPage(): React.JSX.Element {
                 : " El cargo tiene su propio documento por cobrar."}
             </p>
           ) : (
-            <div className="flex flex-wrap items-end gap-3">
-              <FormField label="Serie de numeración" required>
-                <TextInput value={serie} onChange={(ev) => setSerie(ev.target.value)} />
-              </FormField>
-              <FormField label="Lote de control" required>
-                <TextInput value={lote} onChange={(ev) => setLote(ev.target.value)} />
-              </FormField>
-              <AsyncButton onClick={emitir}>Emitir documento fiscal</AsyncButton>
-            </div>
+            <Autorizado
+              operacion={["POST", `/sales/notas/${tipo === "CREDITO" ? "credito" : "debito"}/${nota.id}/emitir`]}
+            >
+              <div className="flex flex-wrap items-end gap-3">
+                <FormField label="Serie de numeración" required>
+                  <TextInput value={serie} onChange={(ev) => setSerie(ev.target.value)} />
+                </FormField>
+                <FormField label="Lote de control" required>
+                  <TextInput value={lote} onChange={(ev) => setLote(ev.target.value)} />
+                </FormField>
+                <AsyncButton onClick={emitir}>Emitir documento fiscal</AsyncButton>
+              </div>
+            </Autorizado>
           )}
         </section>
       ) : null}

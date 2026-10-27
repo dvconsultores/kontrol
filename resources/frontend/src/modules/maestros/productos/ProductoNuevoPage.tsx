@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 
 import { apiFetch } from "@/api/client";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncCombobox } from "@/components/AsyncCombobox";
 import { AsyncButton } from "@/components/AsyncButton";
 import { Button } from "@/components/Button";
@@ -149,9 +150,11 @@ export function ProductoNuevoPage(): React.JSX.Element {
               Siguiente
             </Button>
           ) : (
-            <AsyncButton type="submit" onClick={handleSubmit} loadingText="Guardando producto…">
-              Guardar producto
-            </AsyncButton>
+            <Autorizado operacion={["POST", "/maestros/catalogos/items"]}>
+              <AsyncButton type="submit" onClick={handleSubmit} loadingText="Guardando producto…">
+                Guardar producto
+              </AsyncButton>
+            </Autorizado>
           )}
         </div>
       </form>

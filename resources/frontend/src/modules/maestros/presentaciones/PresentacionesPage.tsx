@@ -12,6 +12,8 @@ import { useParams } from "react-router";
 
 import { apiFetch } from "@/api/client";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -33,6 +35,7 @@ export function PresentacionesPage(): React.JSX.Element {
   const { productId = "" } = useParams();
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
 
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
@@ -235,6 +238,7 @@ export function PresentacionesPage(): React.JSX.Element {
 
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-3 text-base font-semibold text-text-900">Nueva presentación</h2>
+        <Autorizado operacion={["POST", `/maestros/productos/${productId || "_"}/presentaciones`]}>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
           <FormField label="Código" required>
             <TextInput value={code} onChange={(e) => setCode(e.target.value)}
@@ -287,6 +291,7 @@ export function PresentacionesPage(): React.JSX.Element {
             </label>
           </div>
         </fieldset>
+        </Autorizado>
       </section>
 
       <section className="rounded-lg border border-border-default bg-surface-0 p-4">
@@ -326,6 +331,7 @@ export function PresentacionesPage(): React.JSX.Element {
             Las equivalencias cerradas no se editan ni se borran: los documentos emitidos con
             ellas siguen significando lo mismo. Para corregir, registre una nueva.
           </p>
+          {puede("POST", `/maestros/presentaciones/${historyFor || "_"}/versiones`) ? (
           <form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
             <FormField label={`Nueva equivalencia (${baseCode})`} required>
               <TextInput type="number" step="0.000001" min="0" value={newFactor}
@@ -335,6 +341,7 @@ export function PresentacionesPage(): React.JSX.Element {
               Registrar equivalencia
             </AsyncButton>
           </form>
+          ) : null}
         </section>
       ) : null}
     </PageContent>

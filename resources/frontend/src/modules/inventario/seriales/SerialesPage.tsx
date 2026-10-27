@@ -7,6 +7,7 @@ import { apiFetch } from "@/api/client";
 import type { CatalogItemSummary, PagedResult, ProductSerial } from "@/api/types";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -96,6 +97,7 @@ export function SerialesPage(): React.JSX.Element {
         description="Trazabilidad por número de serie, IMEI y MAC para productos con seguimiento individual."
         crumbs={[{ label: "Inventario" }, { label: "Seriales" }]}
       />
+      <Autorizado operacion={["POST", "/inventory/serials"]}>
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Registrar serial</h2>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
@@ -130,6 +132,7 @@ export function SerialesPage(): React.JSX.Element {
           <AsyncButton type="submit" variant="primary" onClick={createSerial}>Registrar</AsyncButton>
         </form>
       </section>
+      </Autorizado>
 
       <div className="mb-4 flex items-center gap-2">
         <TextInput

@@ -13,6 +13,7 @@ import { Link, useNavigate, useParams } from "react-router";
 
 import { apiFetch } from "@/api/client";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { ErrorState } from "@/components/ErrorState";
@@ -31,6 +32,7 @@ export function DocumentoDetallePage(): React.JSX.Element {
   const { documentId = "" } = useParams();
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  const { puede } = useAutoridad();
   const navigate = useNavigate();
 
   const fileInputId = useId();
@@ -179,14 +181,14 @@ export function DocumentoDetallePage(): React.JSX.Element {
         }
         actions={
           <>
-            {can(doc, "archive") ? (
+            {can(doc, "archive") && puede("POST", "/documentos/_/archive") ? (
               <AsyncButton variant="secondary"
                            onClick={async () => { setConfirmArchive(true); }}>
                 <Archive className="mr-1 h-4 w-4" aria-hidden="true" />
                 Archivar
               </AsyncButton>
             ) : null}
-            {can(doc, "delete") ? (
+            {can(doc, "delete") && puede("DELETE", "/documentos/_") ? (
               <AsyncButton variant="danger"
                            onClick={async () => { setConfirmDelete(true); }}>
                 Eliminar
@@ -292,7 +294,7 @@ export function DocumentoDetallePage(): React.JSX.Element {
           </table>
         </div>
 
-        {can(doc, "upload") ? (
+        {can(doc, "upload") && puede("POST", "/documentos/_/versiones") ? (
           <div className="mt-4 border-t border-border-default pt-4">
             <h3 className="mb-2 text-sm font-semibold text-text-900">
               {isReplacement ? "Cargar una versión nueva" : "Cargar el archivo"}
