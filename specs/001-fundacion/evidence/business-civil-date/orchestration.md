@@ -34,15 +34,16 @@ Retoques de formato automáticos, permitidos por OD-ORCH-01:
 | C03-T15 | Guarda de arquitectura temporal | flash | c0: la segunda prueba nunca encontraba el módulo y la lista blanca no casaba → r1 PASS | 1 |
 | C03-T16 | BUSINESS-DATE-E2E + adaptación de `auditoria-fecha` | pro, pro, flash | c0: no compilaba y comparaba con una consulta filtrada (**en parte, el encargo de Claude**) → r1: 2 símbolos sin uso → r2 PASS | 2 |
 | C03-T17 | Contratos de API de 009, 007 y 006 | flash | PASS | 0 |
+| C03-T16c | Reclasificación de T16 tras agotar 2 reintentos: la primera E2E real dio 33/42 por la prueba (compuerta comprobada antes de `networkidle` y un `iniciarSesion(admin)` que agotaba el TOTP) | flash | PASS → BUSINESS-DATE-E2E 39/39 | 0 |
 
 **Coste del ciclo:**
-- 28 llamadas facturadas (15 pro, 13 flash);
-- 146 050 tokens de entrada y 68 071 de salida;
-- **0,0920 USD**.
+- 29 llamadas facturadas (15 pro, 14 flash);
+- 148 438 tokens de entrada y 69 122 de salida;
+- **0,0926 USD**.
 
 Una llamada adicional (T02, la primera del puente relanzado) falló en la validación de entrada antes de llegar al modelo y no se facturó.
 
-**Reintentos semánticos: 10. Rechazos: 10. Fallos de transporte: 1. Tareas que agotaron 2 reintentos: T01, T08 y T16, todas en verde al final.**
+**Reintentos semánticos: 10. Rechazos: 10. Fallos de transporte: 1. Tareas que agotaron 2 reintentos: T01, T08 y T16; T01 y T08 en verde al final, T16 reclasificada en T16c (verde).**
 
 Atribuibles a Claude, 3:
 - T08 c0: el encargo pedía «—» para valores inválidos, contra la decisión DATE-13;
