@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -27,6 +26,7 @@ from app.modules.master_data.models import (
     UnitConversion,
     UnitOfMeasure,
 )
+from app.shared.clock import InstanteDeEntrada
 
 router = APIRouter(prefix="/maestros", tags=["maestros"])
 
@@ -153,8 +153,8 @@ class ProfileCreate(BaseModel):
     code: str = Field(min_length=1, max_length=64)
     name: str = Field(min_length=1, max_length=200)
     profile_type: str = "INVENTORY"
-    effective_from: datetime | None = None
-    effective_to: datetime | None = None
+    effective_from: InstanteDeEntrada | None = None
+    effective_to: InstanteDeEntrada | None = None
     stockable: bool = False
     lot: bool = False
     serial: bool = False
@@ -407,6 +407,38 @@ def list_taxonomy(parent_id: str | None = None, db: Session = Depends(get_db), u
     if parent_id:
         query = query.where(TaxonomyNode.parent_id == parent_id)
     return [{"id": str(n.id), "code": n.code, "name": n.name, "level": n.level, "status": n.status} for n in db.execute(query.order_by(TaxonomyNode.level, TaxonomyNode.name)).scalars().all()]
+
+
+@router.get("/catalogos/taxonomia/search")
+def search_taxonomy(
+    q: str = "",
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("maestros", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    """Búsqueda asíncrona de nodos de taxonomía para AsyncCombobox (FR-002-043, PDD-API-12)."""
+    query = select(TaxonomyNode).where(
+        ((TaxonomyNode.company_id == ctx.company_id) | (TaxonomyNode.company_id.is_(None)))
+        & (TaxonomyNode.status == "ACTIVE")
+    )
+    if q:
+        query = query.where(
+            TaxonomyNode.name.ilike(f"%{q}%") | TaxonomyNode.code.ilike(f"%{q}%")
+        )
+    total = db.execute(select(func.count()).select_from(query.subquery())).scalar_one()
+    items = db.execute(
+        query.order_by(TaxonomyNode.name, TaxonomyNode.id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).scalars().all()
+    return {
+        "items": [{"id": str(n.id), "code": n.code, "name": n.name, "level": n.level} for n in items],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 
 @router.post("/catalogos/taxonomia", dependencies=[Depends(require_write_allowed)])

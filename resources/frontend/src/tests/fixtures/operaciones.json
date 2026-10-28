@@ -1506,6 +1506,14 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/maestros/catalogos/taxonomia/search",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/maestros/catalogos/unidades",
       "capabilities": [
         "maestros:view"

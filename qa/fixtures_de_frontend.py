@@ -21,6 +21,7 @@ os.environ.setdefault("KONTROL_DB_URL", "sqlite+pysqlite:///:memory:")
 from fastapi.routing import APIRoute  # noqa: E402
 
 from app.core.operaciones import catalogo_de_operaciones  # noqa: E402
+from app.core.query_contract import parametros_de_consulta_declarados  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.modules.reporting.service import (  # noqa: E402
     CAPACIDADES_DE_REPORTE,
@@ -35,12 +36,13 @@ DIRECTORIO_FIXTURES = (
 PREFIJO_API = "/api/v1"
 
 
-def _rutas_openapi(app) -> dict[str, list[dict[str, str]]]:
-    rutas: list[dict[str, str]] = []
+def _rutas_openapi(app) -> dict[str, list[dict[str, object]]]:
+    rutas: list[dict[str, object]] = []
     for ruta in app.routes:
         if not isinstance(ruta, APIRoute):
             continue
         metodos = getattr(ruta, "methods", None) or set()
+        consulta = sorted(parametros_de_consulta_declarados(ruta))
         for metodo in metodos:
             if metodo in {"HEAD", "OPTIONS"}:
                 continue
@@ -49,7 +51,7 @@ def _rutas_openapi(app) -> dict[str, list[dict[str, str]]]:
                 camino = "/"
             elif camino.startswith(PREFIJO_API + "/"):
                 camino = camino[len(PREFIJO_API):]
-            rutas.append({"method": metodo, "path": camino})
+            rutas.append({"method": metodo, "path": camino, "query": consulta})
     rutas.sort(key=lambda item: (item["path"], item["method"]))
     return {"routes": rutas}
 

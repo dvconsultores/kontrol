@@ -231,9 +231,10 @@ def test_list_11_el_total_nunca_cuenta_empresas_de_otro_tenant():
     assert (a["total"], _ids(a)) == (1, [W["alfa_a"]])
     assert (b["total"], _ids(b)) == (1, [W["alfa_b"]])
     assert _sobre(_login("DEMO2", "admin2"))["total"] == 31   # ALFA + 30 lote B
-    # ni la consulta amplía el conjunto
-    forzado = _sobre(_login("DEMO", "admin"), tenant_id=W["tenant_b"], page_size=100)
-    assert forzado["total"] == 30 and W["alfa_b"] not in _ids(forzado)
+    # ni la consulta amplía el conjunto: `tenant_id` no está declarado y se rechaza (FR-001-268)
+    forzado = _get(_login("DEMO", "admin"), tenant_id=W["tenant_b"], page_size=100)
+    assert forzado.status_code == 422, forzado.text
+    assert forzado.json()["details"] == {"unknown_query_parameters": ["tenant_id"]}
 
 
 # --------------------------------------------------------------------------- #

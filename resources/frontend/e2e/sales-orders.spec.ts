@@ -46,7 +46,7 @@ async function warehouse(request: APIRequestContext, c: Ctx): Promise<string> {
   const lista = await get(request, c, `/organization/warehouses?company_id=${c.company}`);
   const items = (lista.items as Array<{ id: string }>) ?? [];
   if (items.length > 0) return items[0].id;
-  const ramas = await get(request, c, `/organization/branches?company_id=${c.company}`);
+  const ramas = await get(request, c, `/organization/branches`);
   const rama = ((ramas.items as Array<{ id: string }>) ?? [])[0];
   let branchId = rama?.id;
   if (!branchId) {

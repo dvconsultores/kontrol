@@ -30,11 +30,25 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, date, datetime, timedelta
+from typing import Annotated
 from zoneinfo import ZoneInfo
+
+from pydantic import AfterValidator, AwareDatetime
 
 from app.core.errors import KontrolError
 
 ZONA_DE_NEGOCIO = ZoneInfo("America/Caracas")
+
+
+def _a_utc(valor: datetime) -> datetime:
+    """Normaliza un instante consciente de zona a UTC."""
+    return valor.astimezone(UTC)
+
+
+# Entrada INSTANT de la API (ADR-020 (e)). Exige `Z` o `±HH:MM`; un valor sin zona
+# o una fecha suelta es ambiguo y Pydantic lo rechaza con el tipo `timezone_aware`.
+# Lo aceptado se normaliza a UTC.
+InstanteDeEntrada = Annotated[AwareDatetime, AfterValidator(_a_utc)]
 
 
 def zona_de_negocio() -> ZoneInfo:

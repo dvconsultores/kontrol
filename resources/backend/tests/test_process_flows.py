@@ -163,7 +163,7 @@ def test_org_chain_complete():
     assert loc.status_code == 200, loc.text
 
     # verificación: cada lista los contiene
-    assert any(b["code"] == "SUC-01" for b in _CLIENT.get(f"/api/v1/organization/branches?company_id={company_id}", headers=H).json())
+    assert any(b["code"] == "SUC-01" for b in _CLIENT.get("/api/v1/organization/branches", headers=H).json())
     assert any(e["code"] == "EST-01" for e in _CLIENT.get(f"/api/v1/organization/establishments?branch_id={branch_id}", headers=H).json())
     # Desde la Spec 008 ambas listas son paginadas: {total, limit, offset, items}.
     assert any(w["code"] == "ALM-01" for w in _CLIENT.get(f"/api/v1/organization/warehouses?company_id={company_id}", headers=H).json()["items"])

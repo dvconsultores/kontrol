@@ -218,11 +218,12 @@ def test_aud_tenant_01_el_administrador_de_a_no_recibe_eventos_de_b():
     assert eb not in _ids(body), "un evento de otro tenant se devolvió a un administrador"
     assert body["total"] == 1
 
-    # Ni la consulta ni el rol amplían el tenant: son datos del cliente.
-    # `company_id` es un filtro declarado que solo estrecha (FR-001-264).
-    forzado = _listar(_como_a(), entity_id=m, tenant_id=W["tenant_b"])
-    assert _ids(forzado) == {ea}
-    assert forzado["total"] == 1
+    # Ni la consulta ni el rol amplían el tenant: un selector de tenant en la consulta
+    # no está declarado y se rechaza (FR-001-268). `company_id` es un filtro declarado
+    # que solo estrecha (FR-001-264).
+    forzado = _CLIENT.get("/api/v1/audit/events", headers=_como_a(), params={"entity_id": m, "tenant_id": W["tenant_b"]})
+    assert forzado.status_code == 422, forzado.text
+    assert forzado.json()["details"] == {"unknown_query_parameters": ["tenant_id"]}
 
     estrechado = _listar(_como_a(), entity_id=m, company_id=W["e1"])
     assert _ids(estrechado) == set()

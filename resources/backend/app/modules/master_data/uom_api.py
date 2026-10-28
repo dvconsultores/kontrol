@@ -34,6 +34,7 @@ from app.modules.master_data.models import (
     UnitOfMeasure,
 )
 from app.shared.audit import record_audit
+from app.shared.clock import InstanteDeEntrada
 
 router = APIRouter(prefix="/maestros", tags=["maestros-uom"])
 
@@ -367,7 +368,7 @@ class PresentationIn(BaseModel):
     factor_to_base: Decimal | None = Field(default=None, gt=0)
     factor_uom_id: str | None = None
     exact_in_base: bool = True
-    valid_from: datetime | None = None
+    valid_from: InstanteDeEntrada | None = None
 
 
 class PresentationPatch(BaseModel):
@@ -383,7 +384,7 @@ class VersionIn(BaseModel):
     factor_to_base: Decimal = Field(gt=0)
     factor_uom_id: str | None = None
     exact_in_base: bool = True
-    valid_from: datetime | None = None
+    valid_from: InstanteDeEntrada | None = None
 
 
 def _presentation_in_use(db: Session, presentation_id: str) -> bool:
@@ -648,7 +649,7 @@ class PreviewIn(BaseModel):
     product_id: str
     presentation_id: str | None = None
     quantity: Decimal
-    date: datetime | None = None
+    date: InstanteDeEntrada | None = None
 
 
 @router.post("/conversion/preview")

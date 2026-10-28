@@ -51,12 +51,14 @@ export function BandejaPage(): React.JSX.Element {
   const companyId = activeCompany?.id ?? "";
   const query = useQuery({
     queryKey: ["aprobaciones", "inbox", companyId, processType, onlyOverdue],
-    queryFn: () =>
-      apiFetch<{ total: number; items: ApprovalInboxItem[] }>(
-        `/approvals/inbox?company_id=${encodeURIComponent(companyId)}` +
-          (processType ? `&process_type=${encodeURIComponent(processType)}` : "") +
-          (onlyOverdue ? "&only_overdue=true" : ""),
-      ),
+    queryFn: () => {
+      const parametros = new URLSearchParams();
+      if (processType) parametros.set("process_type", processType);
+      if (onlyOverdue) parametros.set("only_overdue", "true");
+      return apiFetch<{ total: number; items: ApprovalInboxItem[] }>(
+        `/approvals/inbox?${parametros.toString()}`,
+      );
+    },
     enabled: Boolean(companyId),
     retry: false,
   });

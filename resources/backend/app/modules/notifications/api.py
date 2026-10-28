@@ -21,6 +21,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
 from app.modules.identity_access.models import User
 from app.modules.notifications import service
+from app.shared.clock import InstanteDeEntrada
 
 router = APIRouter(tags=["notifications"])
 
@@ -269,7 +270,7 @@ def save_preference(body: PreferenciaIn, db: Session = Depends(get_db),
 def list_notifications(
         state: Literal["active", "unread", "read", "archived", "all"] = "active",
         category: str | None = None, severity: str | None = None, source_type: str | None = None,
-        created_from: datetime | None = None, created_to: datetime | None = None,
+        created_from: InstanteDeEntrada | None = None, created_to: InstanteDeEntrada | None = None,
         page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
         db: Session = Depends(get_db), user: User = Depends(get_current_user),
         ctx: CompanyContext = Depends(get_company_context)):
@@ -330,7 +331,7 @@ def list_tasks(
         scope: Literal["involved", "mine", "pool", "all"] = "involved",
         status: Literal["OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED", "RESOLVED_BY_SOURCE"] | None = None,
         overdue: bool | None = None, priority: str | None = None, source_type: str | None = None,
-        due_from: datetime | None = None, due_to: datetime | None = None,
+        due_from: InstanteDeEntrada | None = None, due_to: InstanteDeEntrada | None = None,
         page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
         db: Session = Depends(get_db), user: User = Depends(get_current_user),
         ctx: CompanyContext = Depends(get_company_context)):

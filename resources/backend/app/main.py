@@ -17,6 +17,7 @@ from app.core.database import get_session_factory
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import LicenseMiddleware, RequestIDMiddleware
+from app.core.query_contract import instalar_contrato_de_consulta
 from app.modules.approvals.api import router as approvals_router
 from app.modules.audit.api import router as audit_router
 from app.modules.commercial.api import router as commercial_router
@@ -117,6 +118,9 @@ def create_app() -> FastAPI:
     app.include_router(documents_router, prefix=prefix)
     app.include_router(commercial_router, prefix=prefix)
     app.include_router(notifications_router, prefix=prefix)
+
+    # Contrato estricto de consulta (FR-001-268): después del último router, para que cubra todas las rutas.
+    instalar_contrato_de_consulta(app, prefix)
 
     @app.get("/")
     def root():

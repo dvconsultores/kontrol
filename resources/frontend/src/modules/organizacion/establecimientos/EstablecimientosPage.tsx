@@ -41,7 +41,7 @@ export function EstablecimientosPage(): React.JSX.Element {
 
   const branches = useQuery({
     queryKey: ["organization", "branches", companyId],
-    queryFn: () => apiFetch<BranchOption[]>(`/organization/branches?company_id=${encodeURIComponent(companyId ?? "")}`),
+    queryFn: () => apiFetch<BranchOption[]>("/organization/branches"),
     enabled: Boolean(companyId),
     retry: false,
   });

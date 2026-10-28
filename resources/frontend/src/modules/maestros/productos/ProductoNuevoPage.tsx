@@ -105,7 +105,7 @@ export function ProductoNuevoPage(): React.JSX.Element {
                   setCategoryId(v);
                   setDirty(true);
                 }}
-                searchUrl="/maestros/catalogos/taxonomia"
+                searchUrl="/maestros/catalogos/taxonomia/search"
                 label="Buscar rubro"
                 placeholder="Buscar rubro…"
               />

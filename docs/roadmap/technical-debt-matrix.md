@@ -65,7 +65,7 @@ Hallazgo acoplado a OBS-09: **PRODUCTION-IMAGE-WITHOUT-LIBMAGIC** — la imagen 
 | POLITICA-E2E-RED-RELOJ-MEMORIA | D | 054 | 0 | ¿aborta, invalida o solo anota el arnés ante cambio de red, salto de reloj o presión de memoria? |
 | ROLES-SIN-TECHO-DE-DELEGACION | D | 003 | 0 | ¿techo de delegación «solo permisos que el actor posee»? |
 | EMISOR-DE-LICENCIAS-SIN-IMPLEMENTAR | D | 004 | 0 | ¿alcance y calendario de las fases 2+ (activación, pago, revocación)? |
-| AUDITORIA-PANTALLA-DUPLICADA | D | 012 | 0 | ¿unificar o renombrar las dos pantallas? |
+| AUDITORIA-PANTALLA-DUPLICADA | D → UX_PRODUCT_DECISION (2026-10-28) | 012 | 0 | ¿unificar o renombrar las dos pantallas? Decisión de producto aún no tomada; LOW; no bloqueante |
 | MOVTYPE-GLOBAL-SIN-UNICIDAD | D | 023 | 0 | ¿pueden dos tipos globales compartir código? |
 | SEED-EMPRESA-CODIGO-NO-UNICO | D | 007 | 0 | ¿el código de empresa identifica o etiqueta? |
 | DOCUMENT-ARCHIVE-LOST-UPDATE-DURING-UPLOAD | D | 046 | 0 | ¿qué ocurre si se archiva un documento mientras su carga está en análisis? A) 409 al persistir con revalidación/bloqueo de fila (recomendada) · B) permitir versión sin reactivar · C) bloquear el archivado durante la carga |
@@ -1120,6 +1120,7 @@ Hallazgo acoplado a OBS-09: **PRODUCTION-IMAGE-WITHOUT-LIBMAGIC** — la imagen 
 - **MEASURED_NOW:** 0
 
 ### AUDITORIA-PANTALLA-DUPLICADA — BLOCKED_BY_OWNER_DECISION
+- **RECLASIFICACIÓN 2026-10-28 (SHARED-CORE-P0-HARDENING-05 §6):** no existe decisión de la dueña. Estado: OPEN · CATEGORY = UX_PRODUCT_DECISION · SEVERITY = LOW · BLOCKING = 0. No se fusiona, renombra ni retira ninguna pantalla hasta una decisión de producto expresa.
 - **TITLE:** dos entradas «Auditoría» en el menú
 - **OWNER_SPEC:** 012
 - **SUPPORTING_SPECS:** —

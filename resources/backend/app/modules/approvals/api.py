@@ -6,7 +6,6 @@ Convenciones heredadas: errores uniformes, permisos deny-by-default,
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header
@@ -30,6 +29,7 @@ from app.modules.approvals.models import (
     ApprovalRule,
 )
 from app.modules.identity_access.models import User
+from app.shared.clock import InstanteDeEntrada
 
 router = APIRouter(prefix="/approvals", tags=["aprobaciones"])
 
@@ -106,8 +106,8 @@ class DelegationCreate(BaseModel):
     grantee_id: str
     scope_process_type: str | None = None
     scope_branch_id: str | None = None
-    valid_from: datetime | None = None
-    valid_to: datetime | None = None
+    valid_from: InstanteDeEntrada | None = None
+    valid_to: InstanteDeEntrada | None = None
     reason: str | None = None
     is_temporary_substitution: bool = False
 

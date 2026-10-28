@@ -70,7 +70,7 @@ def main() -> None:
             "company_id": company_id, "code": "CCS-QA", "name": "SUCURSAL CARACAS"})
         ids["branch_val"] = b1["id"]
         ids["branch_ccs"] = b2["id"]
-        bs = _request("GET", f"/organization/branches?company_id={company_id}", h)
+        bs = _request("GET", "/organization/branches", h)
         assert len(bs) == 2
     step("sucursales VAL-QA / CCS-QA", _sucursales)
 

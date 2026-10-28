@@ -281,7 +281,7 @@ test.describe("Spec 045 · motor de aprobaciones sobre PostgreSQL real", () => {
 
     // El documento origen puede continuar y el historial persiste
     const st = await request.get(
-      `${API}/approvals/requests/by-document?company_id=${c.company}&document_type=E2EDoc&document_id=${doc}`,
+      `${API}/approvals/requests/by-document?document_type=E2EDoc&document_id=${doc}`,
       { headers: c.headers });
     const body = await st.json();
     expect(body.is_approved).toBe(true);
@@ -289,7 +289,7 @@ test.describe("Spec 045 · motor de aprobaciones sobre PostgreSQL real", () => {
     expect(body.requests[0].steps).toHaveLength(2);
 
     // Auditoría registrada
-    const audit = await request.get(`${API}/audit/events?limit=200`, { headers: c.headers });
+    const audit = await request.get(`${API}/audit/events?page_size=100`, { headers: c.headers });
     const actions = (await audit.json()).items.map((e: { action: string }) => e.action);
     expect(actions).toContain("APPROVAL_REQUESTED");
     expect(actions).toContain("APPROVAL_APPROVE");
@@ -334,7 +334,7 @@ test.describe("Spec 045 · motor de aprobaciones sobre PostgreSQL real", () => {
     expect((await ok.json()).status).toBe("APPROVED");
 
     const hist = await request.get(
-      `${API}/approvals/requests/by-document?company_id=${c.company}&document_type=E2EDoc&document_id=${doc}`,
+      `${API}/approvals/requests/by-document?document_type=E2EDoc&document_id=${doc}`,
       { headers: c.headers });
     expect((await hist.json()).requests.length).toBeGreaterThanOrEqual(2);
   });
@@ -359,8 +359,7 @@ test.describe("Spec 045 · motor de aprobaciones sobre PostgreSQL real", () => {
   });
 
   test("usuario sin sesión: el backend deniega, no la UI", async ({ request }) => {
-    const c = await ctx(request);
-    for (const path of ["/approvals/policies?company_id=" + c.company, "/approvals/inbox?company_id=" + c.company]) {
+    for (const path of ["/approvals/policies", "/approvals/inbox"]) {
       const r = await request.get(`${API}${path}`);
       expect(r.status()).toBe(401);
     }
@@ -416,7 +415,7 @@ test.describe("Spec 045 · motor de aprobaciones sobre PostgreSQL real", () => {
     expect(b1.request_id).toBe(b2.request_id);
 
     const hist = await (await request.get(
-      `${API}/approvals/requests/by-document?company_id=${c.company}&document_type=E2EDoc&document_id=${doc}`,
+      `${API}/approvals/requests/by-document?document_type=E2EDoc&document_id=${doc}`,
       { headers: c.headers })).json();
     expect(hist.requests).toHaveLength(1);
   });
@@ -457,22 +456,20 @@ test.describe("Spec 045 · motor de aprobaciones sobre PostgreSQL real", () => {
     await createPolicy(request, c, process);
     const requestId = await createRequest(request, c, process, `mc-${RUN}`);
 
-    // `GET /approvals/inbox` NO declara `company_id`: FastAPI descarta el parámetro y el
-    // servicio delimita por `ctx.company_id`. La versión anterior de esta prueba pedía la
-    // bandeja de «empresa-inexistente» y exigía `total === 0`: atribuía al parámetro una
-    // autoridad que el contrato no le da, y pasaba —cuando pasaba— por casualidad.
+    // `GET /approvals/inbox` NO declara `company_id`. Con el contrato estricto de consulta (FR-001-268) un selector
+    // de empresa en la consulta ya no se ignora: se rechaza con 422 y la empresa la sigue decidiendo el contexto.
     const url = `${API}/approvals/inbox?process_type=${process}`;
     const propia = await (await request.get(url, { headers: c.headers })).json();
-    const conParametroAjeno = await (await request.get(
-      `${url}&company_id=empresa-inexistente`, { headers: c.headers })).json();
+    const conParametroAjeno = await request.get(`${url}&company_id=empresa-inexistente`, { headers: c.headers });
 
-    // La solicitud recién creada está ahí, y el parámetro ajeno no la hace desaparecer:
-    // misma respuesta, ítem por ítem, en las dos direcciones.
+    // La solicitud recién creada está en la bandeja del contexto, y el parámetro ajeno se rechaza sin eco del valor.
     expect(propia.total).toBe(1);
     expect(propia.items[0].request_id).toBe(requestId);
-    expect(conParametroAjeno.total).toBe(propia.total);
-    expect(conParametroAjeno.items.map((i: { step_id: string }) => i.step_id))
-      .toEqual(propia.items.map((i: { step_id: string }) => i.step_id));
+    expect(conParametroAjeno.status()).toBe(422);
+    const error = await conParametroAjeno.json();
+    expect(error.code).toBe("UNKNOWN_QUERY_PARAMETER");
+    expect(error.details.unknown_query_parameters).toEqual(["company_id"]);
+    expect(JSON.stringify(error)).not.toContain("empresa-inexistente");
 
     // Y lo que la bandeja devuelve pertenece a la empresa del contexto. Ni la bandeja ni el
     // detalle publican `company_id`, así que se comprueba contra la única ruta que sí

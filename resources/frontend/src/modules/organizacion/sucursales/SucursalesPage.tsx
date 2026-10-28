@@ -34,7 +34,7 @@ export function SucursalesPage(): React.JSX.Element {
 
   const query = useQuery({
     queryKey: ["organization", "branches", companyId],
-    queryFn: () => apiFetch<BranchSummary[]>(`/organization/branches?company_id=${encodeURIComponent(companyId ?? "")}`),
+    queryFn: () => apiFetch<BranchSummary[]>("/organization/branches"),
     enabled: Boolean(companyId),
     retry: false,
   });

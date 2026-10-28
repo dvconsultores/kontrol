@@ -83,6 +83,10 @@ class LicenseBlockedError(KontrolError):
         super().__init__(code=code, message=message, status_code=423, details=details)
 
 
+MENSAJE_CAMPO_SIN_ZONA = "Indique la zona horaria (Z o ±HH:MM)."
+MENSAJE_SIN_ZONA = "La fecha y hora debe indicar su zona horaria."
+
+
 def error_payload(
     *,
     code: str,
@@ -121,15 +125,26 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def _validation_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
         field_errors: dict[str, list[str]] = {}
+        all_timezone_aware = True
         for err in exc.errors():
             loc = [str(x) for x in err.get("loc", []) if x != "body"]
             key = ".".join(loc) or "_"
-            field_errors.setdefault(key, []).append(err.get("msg", "Valor inválido"))
+            if err.get("type") == "timezone_aware":
+                field_errors.setdefault(key, []).append(MENSAJE_CAMPO_SIN_ZONA)
+            else:
+                all_timezone_aware = False
+                field_errors.setdefault(key, []).append(err.get("msg", "Valor inválido"))
+        if field_errors and all_timezone_aware:
+            code = "NAIVE_DATETIME"
+            message = MENSAJE_SIN_ZONA
+        else:
+            code = "VALIDATION_ERROR"
+            message = "Revise la información enviada"
         return JSONResponse(
             status_code=422,
             content=error_payload(
-                code="VALIDATION_ERROR",
-                message="Revise la información enviada",
+                code=code,
+                message=message,
                 request_id=_request_id(request),
                 field_errors=field_errors,
             ),

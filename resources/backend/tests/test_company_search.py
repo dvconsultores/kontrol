@@ -218,9 +218,11 @@ def test_emp_q_10_la_misma_empresa_en_dos_tenants_solo_aparece_en_el_suyo():
     assert _ids(_buscar(_login("DEMO", "admin"), "ALFA-OBJETIVO")) == [W["alfa_a"]]
     assert _ids(_buscar(_login("DEMO2", "admin2"), "ALFA-OBJETIVO")) == [W["alfa_b"]]
     assert _ids(_buscar(_login("DEMO2", "admin2"), "alfa objetivo")) == [W["alfa_b"]]
-    # Ni el término ni la consulta amplían el tenant.
-    forzado = _buscar(_login("DEMO", "admin"), "ALFA-OBJETIVO", tenant_id=W["tenant_b"])
-    assert _ids(forzado) == [W["alfa_a"]]
+    # Ni el término ni la consulta amplían el tenant: `tenant_id` no está declarado y se rechaza (FR-001-268).
+    forzado = _CLIENT.get("/api/v1/organization/companies", headers=_login("DEMO", "admin"),
+                          params={"q": "ALFA-OBJETIVO", "tenant_id": W["tenant_b"]})
+    assert forzado.status_code == 422, forzado.text
+    assert forzado.json()["details"] == {"unknown_query_parameters": ["tenant_id"]}
 
 
 def test_emp_q_11_la_busqueda_actua_dentro_del_alcance_del_usuario_no_lo_sustituye():
@@ -267,15 +269,17 @@ def test_emp_q_15_openapi_declara_q_opcional_y_ninguna_autoridad_nueva():
     assert "tenant_id" not in params and "company_id" not in params
 
 
-def test_emp_q_16_un_parametro_desconocido_se_sigue_ignorando_como_antes():
-    """`API-QUERY-SILENCIOSA` sigue abierta: declarar `q` no convierte al endpoint en estricto."""
+def test_emp_q_16_un_parametro_desconocido_se_rechaza_con_422():
+    """API-QUERY-SILENCIOSA cerrada (FR-001-268): un parámetro no declarado ya no se ignora: 422 sin eco del valor."""
     h = _login("DEMO", "admin")
-    base = _ids(_buscar(h))
-    r = _CLIENT.get("/api/v1/organization/companies", headers=h, params={"__kontrol_unknown_query_probe__": "1", "page_size": 100})
-    assert r.status_code == 200 and _ids(r.json()["items"]) == base
+    r = _CLIENT.get("/api/v1/organization/companies", headers=h, params={"__kontrol_unknown_query_probe__": "VALOR-SONDA", "page_size": 100})
+    assert r.status_code == 422, r.text
+    assert r.json()["code"] == "UNKNOWN_QUERY_PARAMETER"
+    assert r.json()["details"] == {"unknown_query_parameters": ["__kontrol_unknown_query_probe__"]}
+    assert "VALOR-SONDA" not in r.text
     r = _CLIENT.get("/api/v1/organization/companies", headers=h,
                     params={"q": "ALFA-OBJETIVO", "__kontrol_unknown_query_probe__": "1", "page_size": 100})
-    assert r.status_code == 200 and _ids(r.json()["items"]) == [W["alfa_a"]]
+    assert r.status_code == 422, r.text
 
 
 # --------------------------------------------------------------------------- #

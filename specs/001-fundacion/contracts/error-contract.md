@@ -26,6 +26,15 @@
 - 422 se mapea a campos; 409 = conflicto/concurrencia; 423 = modo solo consulta o bloqueo funcional.
 - 401 intenta refresh una sola vez; si falla, cierre de sesión seguro.
 - Nunca mostrar `details` técnico directamente al usuario.
+- Un parámetro de consulta que la operación no declara responde 422 `UNKNOWN_QUERY_PARAMETER` en cualquier método
+  (FR-001-268): `field_errors` con una clave `query.<nombre>` por nombre desconocido, y `details.unknown_query_parameters`
+  con los nombres únicos en orden lexicográfico. La comparación es exacta y distingue mayúsculas; un valor vacío
+  también cuenta; nunca se devuelve el valor. Lo comprueba un mecanismo central después de la autenticación, los
+  permisos y el contexto de empresa, y antes de validar valores. No hay excepciones en `/api/v1/**`.
+- Un instante (INSTANT, ADR-020) sin zona o una fecha suelta en un campo de instante responde 422 `NAIVE_DATETIME`
+  cuando todos los errores de la petición son de zona; si hay otros, `VALIDATION_ERROR`. En los dos casos el campo
+  lleva «Indique la zona horaria (Z o ±HH:MM).». Las fechas de negocio (AAAA-MM-DD) y los períodos (AAAA-MM) no
+  cambian.
 
 ## Códigos fundacionales propuestos
 
@@ -41,6 +50,8 @@
 | `PERMISSION_DENIED` | Sin permiso (HTTP 403) |
 | `SCOPE_DENIED` | Fuera de alcance organizacional (HTTP 403) |
 | `VALIDATION_ERROR` | Errores de campo (HTTP 422) |
+| `UNKNOWN_QUERY_PARAMETER` | Parámetro de consulta no declarado por la operación (HTTP 422) |
+| `NAIVE_DATETIME` | Instante sin zona horaria explícita (HTTP 422) |
 | `CONFLICT_VERSION` | Versión obsoleta / concurrencia (HTTP 409) |
 | `DUPLICATE_ENTITY` | Entidad duplicada (HTTP 409) |
 | `NOT_FOUND` | Recurso no encontrado (HTTP 404) |

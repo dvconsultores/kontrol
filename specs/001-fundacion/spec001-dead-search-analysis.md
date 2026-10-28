@@ -1,5 +1,8 @@
 # SPEC 001 · Delta dirigida — UI-BUSQUEDA-MUERTA · **SE DETIENE EN CLARIFY**
 
+> **Estado posterior (2026-10-28, SHARED-CORE-P0-HARDENING-05):** OQ-2 (Existencias) se resolvió como PDD-API-11. `q` busca por código o nombre del producto (hoy la FK es `catalog_items.id`, un solo salto) y cada fila publica la identidad del producto. UI-BUSQUEDA-MUERTA queda **cerrada**. Ver `spec001-strict-api-input-contract-delta.md`.
+
+
 **Fecha** 2026-09-24 · **Dueña** SPEC001 — Fundación (`specs/001-fundacion`, dueña de
 `FR-001-065` y del contrato transversal de listados) · **Coduelas** SPEC007 (empresas),
 SPEC012 (auditoría), SPEC023 (existencias) · **Base** `eaa93fe` · **Rama** `develop`

@@ -46,8 +46,7 @@ export function HistorialAprobaciones({
     queryKey: ["aprobaciones", "by-document", companyId, documentType, documentId],
     queryFn: () =>
       apiFetch<ApprovalDocumentStatus>(
-        `/approvals/requests/by-document?company_id=${encodeURIComponent(companyId)}` +
-          `&document_type=${encodeURIComponent(documentType)}` +
+        `/approvals/requests/by-document?document_type=${encodeURIComponent(documentType)}` +
           `&document_id=${encodeURIComponent(documentId)}`,
       ),
     enabled: Boolean(companyId && documentId),

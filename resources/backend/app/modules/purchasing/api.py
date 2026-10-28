@@ -7,7 +7,7 @@ idempotencia en POST críticos.
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query
@@ -37,6 +37,7 @@ from app.modules.purchasing.models import (
     TripleMatch,
     Withholding,
 )
+from app.shared.clock import InstanteDeEntrada
 
 router = APIRouter(prefix="/purchasing", tags=["compras"])
 
@@ -98,7 +99,7 @@ class ReceiptCreate(BaseModel):
     order_id: str
     warehouse_id: str
     #: Etapa 2 del proceso: programar descarga y recepción.
-    unloading_scheduled_at: datetime | None = None
+    unloading_scheduled_at: InstanteDeEntrada | None = None
     #: Etapa 4: referencias contra las que se comparará lo recibido.
     packing_list_ref: str | None = Field(default=None, max_length=120)
     supplier_invoice_ref: str | None = Field(default=None, max_length=120)
@@ -110,7 +111,7 @@ class ArrivalBody(BaseModel):
     """Etapa 1: confirmar arribo. Sin momento, se usa el de la confirmación."""
     model_config = ConfigDict(extra="forbid")
 
-    arrival_at: datetime | None = None
+    arrival_at: InstanteDeEntrada | None = None
     packages_received: int | None = Field(default=None, ge=0)
 
 

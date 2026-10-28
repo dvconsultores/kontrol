@@ -12,7 +12,7 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
@@ -36,6 +36,7 @@ from app.modules.inventory.models import (
     Transfer,
     TransferLine,
 )
+from app.modules.master_data.models import CatalogItem
 
 router = APIRouter(prefix="/inventory", tags=["inventario"])
 
@@ -206,9 +207,12 @@ def create_movement_type(body: MovementTypeCreate, db: Session = Depends(get_db)
 @router.get("/balances")
 def list_balances(product_id: str | None = None, warehouse_id: str | None = None,
                   location_id: str | None = None, lot_id: str | None = None, serial_id: str | None = None,
-                  state: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
+                  state: str | None = None, q: str = "", page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
                   db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
-    query = select(InventoryBalance).where(InventoryBalance.company_id == ctx.company_id)
+    query = select(InventoryBalance, CatalogItem).outerjoin(
+        CatalogItem,
+        and_(CatalogItem.id == InventoryBalance.product_id, CatalogItem.company_id == ctx.company_id)
+    ).where(InventoryBalance.company_id == ctx.company_id)
     if product_id:
         query = query.where(InventoryBalance.product_id == product_id)
     if warehouse_id:
@@ -221,9 +225,17 @@ def list_balances(product_id: str | None = None, warehouse_id: str | None = None
         query = query.where(InventoryBalance.serial_id == serial_id)
     if state:
         query = query.where(InventoryBalance.state == state)
+    if q:
+        query = query.where(CatalogItem.name.ilike(f"%{q}%") | CatalogItem.code.ilike(f"%{q}%"))
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
-    items = db.execute(query.order_by(InventoryBalance.product_id).offset((page - 1) * page_size).limit(page_size)).scalars().all()
-    return {"items": [inv_service.balance_dict(b) for b in items], "total": total, "page": page, "page_size": page_size}
+    rows = db.execute(query.order_by(InventoryBalance.product_id, InventoryBalance.id).offset((page - 1) * page_size).limit(page_size)).all()
+    items = []
+    for balance, catalog_item in rows:
+        item = inv_service.balance_dict(balance)
+        item["product_code"] = catalog_item.code if catalog_item else None
+        item["product_name"] = catalog_item.name if catalog_item else None
+        items.append(item)
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 
 @router.get("/balances/{balance_id}")

@@ -42,9 +42,7 @@ export function DelegacionesPage(): React.JSX.Element {
   const query = useQuery({
     queryKey: ["aprobaciones", "delegations", companyId],
     queryFn: () =>
-      apiFetch<{ items: ApprovalDelegationSummary[] }>(
-        `/approvals/delegations?company_id=${encodeURIComponent(companyId)}`,
-      ),
+      apiFetch<{ items: ApprovalDelegationSummary[] }>("/approvals/delegations"),
     enabled: Boolean(companyId),
     retry: false,
   });

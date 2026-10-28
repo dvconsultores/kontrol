@@ -44,9 +44,7 @@ export function PoliticasPage(): React.JSX.Element {
   const query = useQuery({
     queryKey: ["aprobaciones", "policies", companyId],
     queryFn: () =>
-      apiFetch<{ items: ApprovalPolicySummary[] }>(
-        `/approvals/policies?company_id=${encodeURIComponent(companyId)}`,
-      ),
+      apiFetch<{ items: ApprovalPolicySummary[] }>("/approvals/policies"),
     enabled: Boolean(companyId),
     retry: false,
   });

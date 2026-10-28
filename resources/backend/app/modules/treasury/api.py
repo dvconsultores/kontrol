@@ -7,7 +7,7 @@ idempotencia en POST críticos (ejecución de ingresos/egresos).
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends
@@ -44,6 +44,7 @@ from app.modules.treasury.models import (
     TreasuryRefund,
     TreasuryTransfer,
 )
+from app.shared.clock import InstanteDeEntrada
 from app.shared.money import texto_de_salida, texto_decimal
 
 router = APIRouter(prefix="/treasury", tags=["tesoreria"])
@@ -983,10 +984,10 @@ class RateObservationBody(BaseModel):
     quote_currency: str = Field(min_length=1, max_length=8)
     #: `Decimal`, no `float`. La tasa es dinero y el borde también cuenta.
     rate: Decimal = Field(gt=0)
-    effective_at: datetime
+    effective_at: InstanteDeEntrada
     source_id: str | None = None
     rate_type: str = "REFERENCE"
-    published_at: datetime | None = None
+    published_at: InstanteDeEntrada | None = None
     reason: str | None = None
     source_reference: str | None = None
     authority_reference: str | None = None
@@ -1208,7 +1209,7 @@ def approve_rate_observation(observation_id: str, db: Session = Depends(get_db),
 
 @router.get("/exchange-rates/resolve")
 def resolve_exchange_rate(base_currency: str, quote_currency: str,
-                          effective_at: datetime | None = None, rate_type: str | None = None,
+                          effective_at: InstanteDeEntrada | None = None, rate_type: str | None = None,
                           source_code: str | None = None, db: Session = Depends(get_db),
                           user: User = Depends(require_permission("tesoreria", "view")),
                           ctx: CompanyContext = Depends(get_company_context)):

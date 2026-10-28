@@ -1,5 +1,8 @@
 # SPEC 001 · Delta dirigida — API-QUERY-SILENCIOSA · **SE DETIENE EN CLARIFY**
 
+> **Estado posterior (2026-10-28, SHARED-CORE-P0-HARDENING-05):** la OQ de este análisis la resolvieron OD-API-01..07 (rechazar con 422, sin ventana de compatibilidad). API-QUERY-SILENCIOSA y API-COMPANY-ID-EN-CONSULTA están **cerradas**. Ver `spec001-strict-api-input-contract-delta.md`. El texto de abajo se conserva tal como se escribió.
+
+
 **Fecha** 2026-09-20 · **Dueña** SPEC001 — Fundación (`specs/001-fundacion`, dueña del
 contrato transversal de API) · **Apoyo** SPEC023 (donde se detectó) y SPEC054 (QA) ·
 **Base** `2128878` · **Rama** `develop`

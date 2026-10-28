@@ -248,6 +248,8 @@ export interface InventoryBalance {
   warehouse_id: string;
   location_id: string | null;
   product_id: string;
+  product_code?: string | null;
+  product_name?: string | null;
   lot_id: string | null;
   serial_id: string | null;
   state: string;

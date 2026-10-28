@@ -142,7 +142,7 @@ def _make_policy(h: dict, process_type: str, *, segregation: bool = False,
 
 
 def test_requires_authentication():
-    r = _CLIENT.get(f"/api/v1/approvals/policies?company_id={COMPANY_ID}")
+    r = _CLIENT.get("/api/v1/approvals/policies")
     assert r.status_code == 401
 
 
@@ -172,7 +172,7 @@ def test_evaluate_does_not_create_request():
         "company_id": COMPANY_ID, "process_type": "API_PROCESS_3",
         "context": {"amount": 5000, "currency": "VED"}})
     assert r.status_code == 200 and r.json()["requires_approval"] is True
-    lst = _CLIENT.get(f"/api/v1/approvals/requests?company_id={COMPANY_ID}"
+    lst = _CLIENT.get("/api/v1/approvals/requests?"
                       "&process_type=API_PROCESS_3", headers=h)
     assert lst.json()["items"] == []
 
@@ -195,7 +195,7 @@ def test_full_cycle_and_allowed_actions():
     assert again.json()["idempotent_hit"] is True
     assert again.json()["request_id"] == created.json()["request_id"]
 
-    inbox = _CLIENT.get(f"/api/v1/approvals/inbox?company_id={COMPANY_ID}", headers=h)
+    inbox = _CLIENT.get("/api/v1/approvals/inbox", headers=h)
     assert inbox.status_code == 200
     item = next(i for i in inbox.json()["items"] if i["document_id"] == "d-4")
     assert item["allowed_actions"] == ["approve", "reject", "return"]
@@ -205,7 +205,7 @@ def test_full_cycle_and_allowed_actions():
     assert ok.status_code == 200, ok.text
     assert ok.json()["status"] == "APPROVED"
 
-    doc = _CLIENT.get(f"/api/v1/approvals/requests/by-document?company_id={COMPANY_ID}"
+    doc = _CLIENT.get("/api/v1/approvals/requests/by-document?"
                       "&document_type=Doc&document_id=d-4", headers=h)
     assert doc.json()["is_approved"] is True and doc.json()["blocks_advance"] is False
 
@@ -217,7 +217,7 @@ def test_reason_required_returns_422():
         "company_id": COMPANY_ID, "process_type": "API_PROCESS_5",
         "document_type": "Doc", "document_id": "d-5",
         "context": {"amount": 5000, "currency": "VED"}})
-    inbox = _CLIENT.get(f"/api/v1/approvals/inbox?company_id={COMPANY_ID}", headers=h)
+    inbox = _CLIENT.get("/api/v1/approvals/inbox", headers=h)
     item = next(i for i in inbox.json()["items"] if i["document_id"] == "d-5")
     r = _CLIENT.post(f"/api/v1/approvals/steps/{item['step_id']}/reject", headers=h,
                      json={"reason": "  "})
@@ -232,7 +232,7 @@ def test_if_match_version_conflict_returns_409():
         "company_id": COMPANY_ID, "process_type": "API_PROCESS_6",
         "document_type": "Doc", "document_id": "d-6",
         "context": {"amount": 5000, "currency": "VED"}})
-    inbox = _CLIENT.get(f"/api/v1/approvals/inbox?company_id={COMPANY_ID}", headers=h)
+    inbox = _CLIENT.get("/api/v1/approvals/inbox", headers=h)
     item = next(i for i in inbox.json()["items"] if i["document_id"] == "d-6")
     r = _CLIENT.post(f"/api/v1/approvals/steps/{item['step_id']}/approve",
                      headers={**h, "If-Match": "999"}, json={"reason": None})
@@ -265,7 +265,7 @@ def test_delegation_lifecycle_by_api():
         "scope_process_type": "API_PROCESS_1", "reason": "vacaciones"})
     assert r.status_code == 201
     did = r.json()["id"]
-    lst = _CLIENT.get(f"/api/v1/approvals/delegations?company_id={COMPANY_ID}", headers=h)
+    lst = _CLIENT.get("/api/v1/approvals/delegations", headers=h)
     assert any(d["id"] == did and d["status"] == "ACTIVE" for d in lst.json()["items"])
     rev = _CLIENT.post(f"/api/v1/approvals/delegations/{did}/revoke", headers=h)
     assert rev.status_code == 200 and rev.json()["status"] == "REVOKED"
@@ -285,18 +285,18 @@ def test_inbox_isolated_by_company():
     Antes esta prueba pedía la bandeja de «otra-empresa» por parámetro y
     comprobaba que viniera vacía. Eso demostraba poco: el aislamiento dependía
     de que el cliente pidiera bien. Ahora la empresa la fija el contexto
-    validado, así que se comprueba lo que de verdad importa —que declarar otra
-    empresa no cambie nada— y además que una empresa inexistente se rechace en
-    vez de devolver una bandeja vacía y tranquilizadora.
+    validado, y declarar otra empresa en la consulta se rechaza con 422
+    `UNKNOWN_QUERY_PARAMETER` (FR-001-268); además, una empresa inexistente en la
+    cabecera se rechaza en vez de devolver una bandeja vacía y tranquilizadora.
     """
     h = _auth()
     propia = _CLIENT.get("/api/v1/approvals/inbox", headers=h)
     assert propia.status_code == 200
 
     declarando_otra = _CLIENT.get("/api/v1/approvals/inbox?company_id=otra-empresa", headers=h)
-    assert declarando_otra.status_code == 200
-    assert declarando_otra.json() == propia.json(), (
-        "el parámetro del cliente cambió la bandeja que devuelve el servidor")
+    assert declarando_otra.status_code == 422, declarando_otra.text
+    assert declarando_otra.json()["code"] == "UNKNOWN_QUERY_PARAMETER"
+    assert declarando_otra.json()["details"] == {"unknown_query_parameters": ["company_id"]}
 
     ajena = _CLIENT.get("/api/v1/approvals/inbox", headers={
         **h, "X-Kontrol-Company": "otra-empresa"})

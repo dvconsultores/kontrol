@@ -323,7 +323,7 @@ La versión solo se pide en el camino del rechazo, no en cada análisis.
 y `LEGACY`, para poder interpretar la historia), `companies` (`id`, `code` y `name` de las empresas con
 `audit:view`) y `tenant_wide`. **No** expone `detail_keys`. Es la única ruta nueva (420 → 421).
 
-**`/reporting/audit/timeline`.** No cambia. Es la decisión pendiente AUDITORIA-PANTALLA-DUPLICADA.
+**`/reporting/audit/timeline`.** No cambia. AUDITORIA-PANTALLA-DUPLICADA queda OPEN como decisión de producto pendiente (UX_PRODUCT_DECISION, LOW, no bloqueante; corregido en 05).
 
 ### AD-8 · Pantalla Auditoría (`/auditoria`)
 
@@ -438,7 +438,7 @@ Se marcan como históricos en la evidencia y no se tocan.
 | MATERIAL_OQ en el alcance | **0** |
 | BLOCKER, CRITICAL, CONTRADICTIONS y OWNER CONFLICT | **0** |
 
-Una sola cuestión sigue abierta y fuera del alcance: AUDITORIA-PANTALLA-DUPLICADA, que la dueña decide.
+Una sola cuestión sigue abierta y fuera del alcance: AUDITORIA-PANTALLA-DUPLICADA. Es una decisión de producto aún no tomada (OPEN · UX_PRODUCT_DECISION · LOW · BLOCKING = 0); no existe decisión de la dueña. Corregido en el ciclo 05.
 No bloquea porque la línea de tiempo no cambia de contrato.
 
 **Gate: PASS.**
@@ -503,7 +503,7 @@ Transcripción a `app/shared/audit_catalog_entries.py`, verificada por comparaci
 | IP y sesión en pantalla | EXPLICITLY_OUT_OF_SCOPE_WITH_RATIONALE: minimización; se conservan en la base para GOV-CTL-003 |
 | Rol y unidad del actor | DEPENDENCY (Gobierno, GOV-CTL-003) |
 | Paquete exportable | FUTURE_SPEC (GOV-DOC-010) |
-| Pantalla duplicada | AUDITORIA-PANTALLA-DUPLICADA: decisión de la dueña pendiente |
+| Pantalla duplicada | AUDITORIA-PANTALLA-DUPLICADA: OPEN · UX_PRODUCT_DECISION · LOW · no bloqueante (corregido en 05) |
 | Estados CANCELLED y RETRYING de la carga | NOT_APPLICABLE: carga síncrona y sin reintento automático |
 | OFFLINE | Cubierto por el estado de error de red con «Reintentar» |
 
@@ -658,7 +658,7 @@ Gobierno no se implementa: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0.
 | Deuda | Severidad | Estado |
 |---|---|---|
 | DT-06 | MEDIUM | Maestros y organización sin auditoría (empresas, artículos, categorías documentales); GOV-CTL-010 |
-| AUDITORIA-PANTALLA-DUPLICADA | — | Decisión de la dueña |
+| AUDITORIA-PANTALLA-DUPLICADA | LOW | OPEN · UX_PRODUCT_DECISION · BLOCKING = 0 (sin decisión de la dueña; corregido en 05) |
 | AUDIT-OPENAPI-SIN-RESPONSE-MODEL | LOW | Abierta |
 | FISCAL-BOOK-PERIOD-RULE | HIGH | Legal |
 | Resto de §13 del encargo 03 | — | Sin cambio |
