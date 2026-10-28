@@ -27,3 +27,7 @@ Generar `KONTROL_MFA_KEYS` antes del primer arranque:
 
 Custodiar esta clave aparte de la base de datos y de sus copias. Mantener el reloj del servidor sincronizado por NTP. Los runbooks de rotación de clave y rotura de cristal están en `specs/001-fundacion/backup-restore-plan.md` §7.
 El intervalo es operacional: ningún trabajo depende de él.
+
+## Copias de seguridad
+
+Generar y custodiar `KONTROL_BACKUP_KEY` aparte, igual que `KONTROL_MFA_KEYS`; sin esta clave la copia es irrecuperable. Crear, verificar y restaurar con `python3 kontrol.py backup`, `python3 kontrol.py backup-verify <paquete>` y `python3 kontrol.py restore <paquete> --expected-installation-id <ID>`. Procedimiento y códigos de salida en `specs/001-fundacion/backup-restore-plan.md` §4 y §8.

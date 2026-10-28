@@ -90,3 +90,5 @@ qa/backend-runs/
 qa/compose-runs/
 # Evidencia de cada certificación de release canónica (qa/certificar-release.py): manifiesto y registros saneados
 qa/certificaciones/
+# Evidencia de cada certificación real de copia y restauración (qa/backup_restore_cert.py, Spec 001 · AD-B11)
+qa/backup-runs/

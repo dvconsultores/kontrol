@@ -44,7 +44,7 @@ Hallazgo acoplado a OBS-09: **PRODUCTION-IMAGE-WITHOUT-LIBMAGIC** — la imagen 
 | LOCK-SIN-REPORTLAB-MAGIC | F | 001/052 | 0 | se resuelve con la deriva (CERTIFICATION-ENVIRONMENT-DEPENDENCY-DRIFT) y la imagen (PRODUCTION-IMAGE-WITHOUT-LIBMAGIC) |
 | FECHAS-FORMATO-A-MANO | F | 001 | 0 | depende de FECHAS-ZONA-DE-PRESENTACION |
 | DT-10 | F | registro original | 0 | compose.yaml:13,29,36,78; el fichero está en vuelo con OBS-09 y el defecto de desarrollo es deliberado (cabecera :3) |
-| DT-11 | F | registro original | 0 | Spec 053 sin iniciar; exige entorno de despliegue (Docker) |
+| DT-11 | CERRADA (núcleo) | 001 (delta backup-restore-verification) | 0 | 2026-10-28, ciclo 06: copia y restauración verificadas y certificación real PASS; quedan BACKUP-SCHEDULE-RPO, BACKUP-PG-TOOLS-IN-OPS-IMAGE y BACKUP-RTO-DATOS-REALES |
 | DT-13 | F | registro original | 0 | programa de cobertura (8 de 108 páginas): alcance de ola |
 | DT-14 | F | registro original | 0 | programa de rendimiento con volumen: alcance de ola |
 | DT-15 | F | registro original | 0 | alcance de la Spec 055 |
@@ -543,7 +543,8 @@ Hallazgo acoplado a OBS-09: **PRODUCTION-IMAGE-WITHOUT-LIBMAGIC** — la imagen 
 - **STILL_PRESENT:** 1
 - **MEASURED_NOW:** 1
 
-### DT-11 — BLOCKED_BY_DEPENDENCY
+### DT-11 — CLOSED_SHARED_CORE (2026-10-28, ciclo 06)
+- **CIERRE:** `specs/001-fundacion/spec001-backup-restore-verification-delta.md` · `evidence/backup-restore/certificacion.md` (corrida 20261028T194821Z-a8fdf8 PASS). Deudas derivadas: BACKUP-SCHEDULE-RPO, BACKUP-PG-TOOLS-IN-OPS-IMAGE, BACKUP-RTO-DATOS-REALES, BACKUP-RESTORED-UI-SMOKE. El registro original se conserva debajo.
 - **TITLE:** backup/restore nunca ejecutado
 - **OWNER_SPEC:** registro original
 - **SUPPORTING_SPECS:** —

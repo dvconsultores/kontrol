@@ -237,3 +237,24 @@ Detalle en `specs/001-fundacion/spec001-strict-api-input-contract-delta.md`.
 **Sin absorber:** BUSQUEDA-Q-SIN-ESCAPE (D, decisión transversal): los `q` nuevos se comportan como sus hermanos.
 
 **Observación:** E2E-TOTP-PASO-COMPARTIDO se repitió 2 veces en este ciclo (regresiones y canónica 2) y 1 en el 04, siempre en auditoria-sobre. Se propone revisar su severidad (LOW → MEDIUM). Es una decisión de prioridad; no se absorbe.
+
+### Actualización SHARED-CORE-P0-HARDENING-06 (2026-10-28): copia y restauración verificadas
+
+Detalle en `specs/001-fundacion/spec001-backup-restore-verification-delta.md` y `evidence/backup-restore/`.
+
+**Cerrada en lo que exige el núcleo compartido:** DT-11 (BLOCKER).
+- `python -m app.ops.backup {create|verify|restore}` crea paquetes `.kbk` cifrados y autenticados (AES-256-GCM STREAM) con la base y los objetos de la misma instantánea. Los verifica antes de restaurar y solo restaura en un destino vacío, con identidad, Alembic y secretos externos comprobados.
+- Si falla, limpia el destino. Al terminar revoca las sesiones y deja auditoría.
+- La certificación real `qa/backup_restore_cert.py` da PASS: fuente destruida, destino nuevo en otro proceso y 11 comprobaciones funcionales. RTO medido de 5,1 s sobre el conjunto sintético.
+- LICENCIA-ESTADO-SIN-REVERIFICAR queda cubierta en lo que toca a la restauración: la licencia se reverifica al arrancar el destino (C-10, M06-21).
+
+**Reclasificada (§4 del encargo):** E2E-TOTP-PASO-COMPARTIDO pasa a **MEDIUM** · QA_RELIABILITY · BLOCKING_CURRENT_CYCLE = 0 · BLOCKING_FINAL_GOV_RELEASE_CERTIFICATION = 1.
+
+**Nuevas:**
+
+| Deuda | Severidad |
+|---|---|
+| BACKUP-SCHEDULE-RPO: no hay planificación automática ni WAL/PITR. El RPO es el intervalo entre copias, así que el objetivo de ≤15 min (FR-001-083) no se cumple con copias manuales. RNF-GOV-010 exige definirlo por instalación | HIGH · BLOCKING_FINAL_GOV_RELEASE_CERTIFICATION = 1 |
+| BACKUP-PG-TOOLS-IN-OPS-IMAGE: la imagen `backend` no incluye `pg_dump`/`pg_restore`. `kontrol.py backup` en la composición falla con `PG_TOOLS_MISSING` hasta que se añadan; mientras tanto, la orden se ejecuta en un anfitrión con los clientes | MEDIUM |
+| BACKUP-RESTORED-UI-SMOKE: la continuidad del destino se prueba por HTTP con la misma API del SPA, no en el navegador (§84 «donde sea práctico») | LOW |
+| BACKUP-RTO-DATOS-REALES: el RTO de 5 s es de un conjunto sintético pequeño. Falta el ejercicio con el volumen real en el anfitrión de destino | MEDIUM |

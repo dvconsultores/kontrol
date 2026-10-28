@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """CLI de KONTROL (FR-001-083/084, DOC-08 §19).
 
-Comandos: install, preflight, backup, restore, update, diagnose, scheduler-tick.
+Comandos: install, preflight, backup, restore, backup-verify, update, diagnose, scheduler-tick.
 Uso: python kontrol.py <comando> [--help]
 """
 
@@ -15,7 +15,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent
 COMPOSE = REPO_ROOT / "compose.yaml"
-BACKUP_DIR = REPO_ROOT / "backups"
 
 
 def _run(cmd: list[str]) -> int:
@@ -52,24 +51,28 @@ def cmd_install(args: argparse.Namespace) -> int:
     return _run(["docker", "compose", "-f", str(COMPOSE), "up", "-d"])
 
 
-def cmd_backup(_args: argparse.Namespace) -> int:
-    """Respaldo: pg_dump + storage + license-state, cifrado opcional."""
-    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-    stamp = subprocess.run(
-        ["date", "+%Y%m%d-%H%M%S"], capture_output=True, text=True
-    ).stdout.strip()
-    target = BACKUP_DIR / f"kontrol-backup-{stamp}"
-    target.mkdir(parents=True, exist_ok=True)
-    print(f"Backup en {target}")
-    return 0
+def cmd_backup(args: argparse.Namespace) -> int:
+    """Crea una copia de seguridad verificable dentro del contenedor backend."""
+    cmd = ["docker", "compose", "-f", str(COMPOSE), "exec", "-T", "-e", "KONTROL_BACKUP_KEY", "backend", "python", "-m", "app.ops.backup", "create"]
+    if not any(a == "--dest" or a.startswith("--dest=") for a in args.args):
+        cmd.append("--dest")
+        cmd.append("/data/backups")
+    cmd.extend(args.args)
+    return _run(cmd)
 
 
-def cmd_restore(_args: argparse.Namespace) -> int:
-    """Restauración verificada (requiere procedimiento formal, DOC-07 §16)."""
-    print("Restauración: siga el runbook de `backup-restore-plan.md`.")
-    print("1. Restaurar volúmenes. 2. Modo mantenimiento. 3. Validar identidad/licencia.")
-    print("4. Sincronizar licencia. 5. Migraciones autorizadas. 6. Abrir operación.")
-    return 0
+def cmd_restore(args: argparse.Namespace) -> int:
+    """Restaura una copia de seguridad verificada dentro del contenedor backend."""
+    return _run(
+        ["docker", "compose", "-f", str(COMPOSE), "exec", "-T", "-e", "KONTROL_BACKUP_KEY", "backend", "python", "-m", "app.ops.backup", "restore", *args.args]
+    )
+
+
+def cmd_backup_verify(args: argparse.Namespace) -> int:
+    """Verifica un paquete de copia de seguridad dentro del contenedor backend."""
+    return _run(
+        ["docker", "compose", "-f", str(COMPOSE), "exec", "-T", "-e", "KONTROL_BACKUP_KEY", "backend", "python", "-m", "app.ops.backup", "verify", *args.args]
+    )
 
 
 def cmd_update(_args: argparse.Namespace) -> int:
@@ -104,8 +107,12 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("install", help="Levanta la pila Docker")
     sub.add_parser("preflight", help="Verifica prerequisitos")
-    sub.add_parser("backup", help="Ejecuta respaldo")
-    sub.add_parser("restore", help="Restauración (procedimiento formal)")
+    p = sub.add_parser("backup", help="Crea una copia de seguridad")
+    p.add_argument("args", nargs=argparse.REMAINDER)
+    p = sub.add_parser("restore", help="Restaura una copia de seguridad")
+    p.add_argument("args", nargs=argparse.REMAINDER)
+    p = sub.add_parser("backup-verify", help="Verifica un paquete de copia")
+    p.add_argument("args", nargs=argparse.REMAINDER)
     sub.add_parser("update", help="Actualización controlada")
     sub.add_parser("diagnose", help="Diagnóstico de servicios")
     sub.add_parser("scheduler-tick", help="Un tick del planificador de plataforma")
@@ -115,6 +122,7 @@ def main() -> int:
         "preflight": cmd_preflight,
         "backup": cmd_backup,
         "restore": cmd_restore,
+        "backup-verify": cmd_backup_verify,
         "update": cmd_update,
         "diagnose": cmd_diagnose,
         "scheduler-tick": cmd_scheduler_tick,
