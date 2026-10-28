@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
@@ -5,10 +6,10 @@ from mfa_mundo import API, alta_por_desafio, crear_usuario, mundo_mfa
 
 from app.core.errors import PermissionDeniedError
 from app.modules.approvals import service as approvals_service
+from app.modules.audit.models import AuditEvent
 from app.modules.identity_access import service as identity_service
 from app.modules.identity_access.models import UserRole
 from app.modules.organization.models import Company
-from app.shared.audit import record_audit
 
 pytest_plugins = ("mfa_apoyo",)
 
@@ -93,34 +94,42 @@ def _actor(mundo, reloj, role_id, company_id):
 
 
 def _audit_events(mundo, escenario, marca):
+    # Filas insertadas directamente: la prueba es de lectura sobre historia simulada;
+    # `record_audit` solo admite pares del catálogo cerrado (OD-AUD-04).
     db = mundo.factory()
     try:
-        record_audit(
-            db,
-            action="qa.css.created",
-            entity_type="QA_CSS",
-            entity_id=f"{marca}-d1",
-            tenant_id=mundo.tenant_id,
-            company_id=escenario.d1,
-            user_id=mundo.admin_id,
+        db.add(
+            AuditEvent(
+                action="qa.css.created",
+                entity_type="QA_CSS",
+                entity_id=f"{marca}-d1",
+                tenant_id=mundo.tenant_id,
+                company_id=escenario.d1,
+                user_id=mundo.admin_id,
+                event_time=datetime.now(UTC),
+            )
         )
-        record_audit(
-            db,
-            action="qa.css.created",
-            entity_type="QA_CSS",
-            entity_id=f"{marca}-d2",
-            tenant_id=mundo.tenant_id,
-            company_id=escenario.d2,
-            user_id=mundo.admin_id,
+        db.add(
+            AuditEvent(
+                action="qa.css.created",
+                entity_type="QA_CSS",
+                entity_id=f"{marca}-d2",
+                tenant_id=mundo.tenant_id,
+                company_id=escenario.d2,
+                user_id=mundo.admin_id,
+                event_time=datetime.now(UTC),
+            )
         )
-        record_audit(
-            db,
-            action="qa.css.created",
-            entity_type="QA_CSS",
-            entity_id=f"{marca}-t",
-            tenant_id=mundo.tenant_id,
-            company_id=None,
-            user_id=mundo.admin_id,
+        db.add(
+            AuditEvent(
+                action="qa.css.created",
+                entity_type="QA_CSS",
+                entity_id=f"{marca}-t",
+                tenant_id=mundo.tenant_id,
+                company_id=None,
+                user_id=mundo.admin_id,
+                event_time=datetime.now(UTC),
+            )
         )
         db.commit()
     finally:

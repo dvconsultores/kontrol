@@ -300,7 +300,8 @@ def test_archivo_infectado_se_rechaza_y_no_se_almacena():
     assert r.status_code == 422, r.text
     assert r.json()["code"] == "FILE_INFECTED"
     assert r.json()["details"]["scan_result"] == "INFECTED"
-    assert "Eicar" in (r.json()["details"].get("signature") or "")
+    assert "signature" not in r.json()["details"]  # OD-AUD-09: la firma de la amenaza no se expone
+    assert r.json()["details"]["category"] == "MALWARE_DETECTED"
 
     after = len([p for p in _ROOT.rglob("*") if p.is_file()])
     assert after == before, "un archivo infectado quedó almacenado"

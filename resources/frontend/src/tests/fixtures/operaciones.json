@@ -199,6 +199,14 @@
       "scope": "GLOBAL"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/audit/filters",
+      "capabilities": [
+        "audit:view"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/auth/change-password",
       "capabilities": [],

@@ -154,6 +154,7 @@ describe("contrato estructural", () => {
 
   it("inventario positivo exacto de llamadas a ejecutarPython", () => {
     const esperado: Record<string, number> = {
+      "e2e/audit-catalog.spec.ts": 1, // la muestra EICAR_TEST_FIXTURE se lee de qa/clamav_qa.py (ciclo 04)
       "e2e/delegation-ceiling.spec.ts": 1,
       "e2e/diagnostico.spec.ts": 1,
       "e2e/helpers/planificador.ts": 1,

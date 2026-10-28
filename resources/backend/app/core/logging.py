@@ -10,6 +10,7 @@ import json
 import logging
 import sys
 import uuid
+from contextvars import ContextVar
 from typing import Any
 
 from app.core.config import get_settings
@@ -56,6 +57,12 @@ def configure_logging() -> None:
 
 def new_request_id() -> str:
     return uuid.uuid4().hex
+
+
+# Correlación de la petición en curso; GOV-CTL-003
+request_id_actual: ContextVar[str | None] = ContextVar(
+    "kontrol_request_id", default=None
+)
 
 
 def get_logger(name: str) -> logging.Logger:

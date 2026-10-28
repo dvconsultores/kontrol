@@ -57,6 +57,10 @@ class FileSecurityScanner(ABC):
     @abstractmethod
     def available(self) -> bool: ...
 
+    def engine_version(self) -> str | None:
+        """La versión solo se pide al rechazar, no en cada análisis."""
+        return None
+
 
 class ClamAVScanner(FileSecurityScanner):
     """Adaptador de ClamAV por línea de órdenes.
@@ -77,6 +81,22 @@ class ClamAVScanner(FileSecurityScanner):
 
     def available(self) -> bool:
         return bool(self.binary) and os.path.exists(self.binary)
+
+    def engine_version(self) -> str | None:
+        binario = self.binary
+        if not self.available() or binario is None:
+            return None
+        command: list[str] = [binario, "--version"]
+        if self.database:
+            command.append(f"--database={self.database}")
+        try:
+            completed = subprocess.run(command, capture_output=True, text=True,
+                                       timeout=10, check=False)
+        except (subprocess.TimeoutExpired, OSError):
+            return None
+        if completed.returncode != 0 or not completed.stdout.strip():
+            return None
+        return completed.stdout.splitlines()[0].strip()[:120]
 
     def scan(self, path: str) -> ScanResult:
         if not self.available():
@@ -144,6 +164,20 @@ class ClamdScanner(FileSecurityScanner):
     def available(self) -> bool:
         return bool(self.host) and 0 < int(self.port) < 65536
 
+    def engine_version(self) -> str | None:
+        if not self.available():
+            return None
+        try:
+            with socket.create_connection((self.host, self.port),
+                                          timeout=min(self.timeout, 10)) as conexion:
+                conexion.settimeout(min(self.timeout, 10))
+                conexion.sendall(b"zVERSION\0")
+                respuesta = self._leer_respuesta(conexion)
+        except (OSError, _RespuestaTruncada):
+            return None
+        texto = respuesta.decode("utf-8", errors="replace").strip()
+        return texto[:120] if texto else None
+
     def scan(self, path: str) -> ScanResult:
         if not self.available():
             return ScanResult(SCAN_FAILED, self.name, details={"reason": "scanner_unavailable"})
@@ -209,9 +243,42 @@ class DisabledScanner(FileSecurityScanner):
     def available(self) -> bool:
         return True
 
+    def engine_version(self) -> str | None:
+        return "disabled"
+
     def scan(self, path: str) -> ScanResult:
         del path
         return ScanResult(SKIPPED, self.name, details={"reason": "scanning_disabled"})
+
+
+#: Categorías normalizadas para el rechazo del análisis documental (OD-AUD-09).
+MALWARE_DETECTED = "MALWARE_DETECTED"
+SCANNER_UNAVAILABLE = "SCANNER_UNAVAILABLE"
+SCAN_TIMEOUT = "SCAN_TIMEOUT"
+SCAN_ERROR = "SCAN_ERROR"
+
+
+def clasificar_rechazo(scan: ScanResult) -> tuple[str, str]:
+    """Devuelve `(category, reason_code)` normalizados, sin la firma
+    (OD-AUD-09)."""
+    if scan.result == INFECTED:
+        return (MALWARE_DETECTED, "threat_detected")
+    if scan.result == SKIPPED:
+        return (SCANNER_UNAVAILABLE, "scanning_disabled")
+    if scan.result == SCAN_FAILED:
+        details = scan.details or {}
+        reason = str(details.get("reason", ""))
+        if reason in ("scanner_unavailable", "connection_refused"):
+            return (SCANNER_UNAVAILABLE, reason)
+        if reason in ("timeout", "TimeoutExpired"):
+            return (SCAN_TIMEOUT, "timeout")
+        if reason in ("stream_interrupted", "truncated_response",
+                      "scanner_error", "protocol_error"):
+            return (SCAN_ERROR, reason)
+        if reason:
+            return (SCAN_ERROR, "os_error")
+        return (SCAN_ERROR, "scanner_error")
+    return (SCAN_ERROR, "scanner_error")
 
 
 _scanner: FileSecurityScanner | None = None

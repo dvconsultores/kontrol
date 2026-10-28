@@ -7,7 +7,7 @@
 | Delta anterior que se endurece | `spec001-business-timezone-delta.md` (POLICY-CLOCK-LOCAL, CLOSED). Este delta no lo reabre: cubre lo que aquel no midió |
 | HEAD de entrada | `4c94906` (develop = origin/develop) |
 | Evidencia | `evidence/business-civil-date/` |
-| Decisiones de la dueña | OD-TIME-01..10 (encargo 03, ratificadas) · **OD-TIME-11** (2026-10-28, en este ciclo): el período se aplica al reporte gerencial y los libros fiscales quedan bloqueados por norma |
+| Decisiones de la dueña | OD-TIME-01..10 (encargo 03, ratificadas). **PDD-TIME-11** no es una decisión de la dueña: es una decisión de diseño del proyecto que implementa FR-009-015 con el bloqueo legal de los libros (reclasificada el 2026-10-28 por el encargo 04, §6, porque el repositorio no contiene ratificación explícita). Fija que el período se aplica al reporte gerencial y que los libros fiscales quedan bloqueados por norma |
 | GOVERNMENT_IMPLEMENTATION_AUTHORIZED | 0 |
 | NORMATIVE_RESEARCH | REQUIRED · COMPLETE (§4) |
 | Estado | **IMPLEMENTED — VERIFIED — CONVERGED** (autorizado por el encargo «SHARED-CORE-P0-HARDENING-03»; §13–§18) |
@@ -82,7 +82,7 @@ El inventario completo de campos (FIELD_ID, módulo, tabla.columna, tipos, clase
 | **B4** | `core/config.py` `business_timezone` | Configurable por `KONTROL_BUSINESS_TIMEZONE`, contra OD-TIME-01; `license_timezone` es una constante muerta | Contradice OD-TIME-01 | Una instalación podía cambiar el calendario en silencio | **FIX** (T01): cualquier valor distinto de `America/Caracas` impide arrancar. `license_timezone` queda registrada como deuda (Spec 004) |
 | **B5** | `sales/service.py:2894` y `:2907` (estado de cuenta) | `date` mezcla `Date` (aplicaciones) e instantes ISO (`created_at`, `issued_at`); la UI corta `slice(0,10)` y muestra el día UTC | Contrato ambiguo | Día UTC | **FIX** (T04): `date` es siempre la fecha de negocio |
 | **B6** | `core/database.py` | Sin zona de sesión: con un servidor en `Asia/Tokyo`, los instantes llegan con `+09:00` y los `slice(0,10)` de la UI dan el día de Tokio | DB_SESSION_TZ_DEPENDENCE | Día de otra zona | **FIX** (T05): sesión fijada en UTC solo para PostgreSQL, más una prueba de invariancia con la sesión en otras zonas |
-| **B7** | `reporting/service.py` y `fiscal/service.py:books` | **`period` se recibe y se ignora**: todo reporte devuelve todas las filas. Contradice FR-009-015 (P0) | Requisito incumplido | — | **FIX parcial** (T06, OD-TIME-11): contrato PERIOD; `executive_ventas` filtra; libros fiscales `period_applied=false` |
+| **B7** | `reporting/service.py` y `fiscal/service.py:books` | **`period` se recibe y se ignora**: todo reporte devuelve todas las filas. Contradice FR-009-015 (P0) | Requisito incumplido | — | **FIX parcial** (T06, PDD-TIME-11): contrato PERIOD; `executive_ventas` filtra; libros fiscales `period_applied=false` |
 | B8 | Entradas `datetime` sin zona en la API (`_momento`, `uom`, `approvals`, `identity`) | Un `datetime` sin zona se lee como UTC | Contrato implícito | Solo si un cliente envía hora local sin zona; el frontend siempre envía Z | **DOCUMENTADO** en ADR-020; el 422 se difiere al ciclo UNDECLARED QUERY PARAMETERS → 422 (deuda API-NAIVE-DATETIME-INPUT) |
 | **F1** | Unas 20 pantallas: `toLocaleString`, `toLocaleDateString("es-VE")` e `i18n.formatearFecha` sin `timeZone` | Instantes en la zona del navegador | BROWSER_TZ_DEPENDENCE | Hora y día del navegador | **FIX** (T08–T12) |
 | **F2** | 10 `slice(0,10)` sobre instantes | Día UTC (o de la sesión de la base) | UTC_DATE_USED_AS_BUSINESS_DATE | Muestra mañana | **FIX** (T09–T12) |
@@ -113,7 +113,7 @@ Registro completo en `evidence/business-civil-date/normativa.md`.
 | HL-2 | Reforma de la Ley de Metrología 2007 (UTC−4:30 desde 09-12-2007) | — | **no** → NORMATIVE_SOURCE_MISSING | Sin efecto: el producto no reinterpreta datos históricos y `ZoneInfo` modela la transición (HISTORICAL_DATA_IMPACT = NONE_MEASURED) |
 | FA-1 | SNAT/2011/00071, G.O. 39.795, art. 13.6 | Factura de formato libre: fecha de emisión de 8 dígitos | parcial | La fecha de emisión es fecha civil legal (Caracas) |
 | FA-2 | SNAT/2024/000102, G.O. 43.032 (19-12-2024), arts. 7.6, 8 y 10.2 | Digital: fecha y hora de emisión | sí | INSTANT, mostrado en hora legal (Caracas) |
-| IVA-1 | Ley del IVA, G.O. 6.507 Ext. (29-01-2020), arts. 13, 32 y 56 | Período = mes calendario del **perfeccionamiento del hecho imponible** | sí | **No se filtra un libro por fecha de emisión** → OD-TIME-11 |
+| IVA-1 | Ley del IVA, G.O. 6.507 Ext. (29-01-2020), arts. 13, 32 y 56 | Período = mes calendario del **perfeccionamiento del hecho imponible** | sí | **No se filtra un libro por fecha de emisión** → PDD-TIME-11 |
 | IVA-2 | Reglamento de la Ley del IVA, G.O. 5.363 Ext., arts. 70–78 | — | no → NORMATIVE_SOURCE_MISSING | LEGAL_VALIDATION_REQUIRED para libros |
 | RET-1 | SNAT/2025/000054, G.O. 43.171 (16-07-2025), arts. 7, 13, 14, 16, 20 y 21 | La retención se practica al pago o abono; enteramiento quincenal; el comprobante se registra en el período de su emisión o entrega; **deroga la SNAT/2015/0049** | sí | Sin implementar; deuda FISCAL-RETENCION-NORMA-2025 |
 | TC-1 | Ley del IVA, art. 25 | Tipo de cambio del día del hecho imponible; en día no hábil financiero, el del día hábil **siguiente** | sí | Sin cambio en 03; contrastar con el «arrastre» de tasas → LEGAL_VALIDATION_REQUIRED (deuda RATE-NON-BUSINESS-DAY-RULE) |
@@ -150,7 +150,7 @@ Hashes sin cambios en `9a41503`:
 | FR-001-249 | Importación de tasas: «AAAA-MM-DD» rige desde las 00:00 de Caracas; hora sin zona = hora de Caracas; con desfase, tal cual (B2) |
 | FR-001-250 | El estado de cuenta emite `date` como fecha de negocio «AAAA-MM-DD» en todas sus líneas (B5) |
 | FR-001-251 | El resultado de negocio no depende de la zona de sesión de PostgreSQL; la sesión de la aplicación es UTC (B6) |
-| FR-009-015 (cumplimiento parcial, OD-TIME-11) | El período «AAAA-MM» se valida (si es inválido, 422 `INVALID_PERIOD`); «»/«0» = sin filtro. `executive_ventas` filtra `issued_at ∈ [inicio, fin)` del mes de Caracas; todo reporte con período devuelve `period_applied` |
+| FR-009-015 (cumplimiento parcial, PDD-TIME-11) | El período «AAAA-MM» se valida (si es inválido, 422 `INVALID_PERIOD`); «»/«0» = sin filtro. `executive_ventas` filtra `issued_at ∈ [inicio, fin)` del mes de Caracas; todo reporte con período devuelve `period_applied` |
 | FR-001-252 | Libros fiscales: `period_applied=false` y `period_rule="LEGAL_VALIDATION_REQUIRED"`; la UI lo avisa |
 | FR-001-253 | Todo instante se muestra en Caracas, con zona explícita y desde el módulo central; nunca en la zona del navegador ni cortando el ISO |
 | FR-001-254 | Una fecha civil elegida en un `type="date"` no pasa por `Date`; una hora elegida en `datetime-local` es hora de Caracas, convertida con la base de zonas |
@@ -184,7 +184,7 @@ Las líneas cuya `date` era un instante emiten `hoy_de_negocio(instante).isoform
 ### AD-5 · Sesión de PostgreSQL (B6)
 `create_engine(..., connect_args={"options": "-c timezone=UTC"})` solo cuando la URL es PostgreSQL. Una prueba solo-PG abre un motor con la sesión en `Asia/Tokyo` y otro en `America/Caracas` y comprueba que la lógica de negocio da el mismo resultado.
 
-### AD-6 · PERIOD y reportes (B7, OD-TIME-11)
+### AD-6 · PERIOD y reportes (B7, PDD-TIME-11)
 - `report(…, period)`: «» o «0» → sin filtro, `period_applied=false`; si no, `periodo_valido` y luego el filtro.
 - `executive_ventas`: `SalesInvoice.issued_at >= inicio AND < fin`, en UTC del mes de Caracas.
 - Libros fiscales: no filtran; `period_applied=false` y `period_rule="LEGAL_VALIDATION_REQUIRED"`.
@@ -258,7 +258,7 @@ La línea de resumen de `qa/suite_tiempos.py` añade `salto de reloj: SÍ|NO`. C
 | Migración | NOT_APPLICABLE: ningún cambio de tipo; los datos históricos no se reinterpretan (OD-TIME-09) |
 | Pantallas | PASS (§11) |
 | Plan de pruebas | PASS (§10) |
-| MATERIAL_OQ en el alcance | 0: OD-TIME-11 resuelta |
+| MATERIAL_OQ en el alcance | 0: PDD-TIME-11 (decisión de diseño del proyecto; ver §0) |
 
 P1/P2 PASS · P6 PASS · P7 PASS · P10 PASS (rojo primero) · P12: **ADR-020** · P13 PASS · P21 PASS · P27 PASS.
 
@@ -386,7 +386,7 @@ Hashes sin cambios respecto de 9a41503 (`8f86615f…` y `4a980bb9…`).
 | ID | Severidad | Estado |
 |---|---|---|
 | POLICY-CLOCK-LOCAL, endurecido (presentación, entradas, período, motores) | — | **CERRADA** en este delta |
-| REPORT-PERIOD-NOT-APPLIED (FR-009-015) | HIGH | **PARCIAL**: el gerencial filtra; libros bloqueados por norma (OD-TIME-11) |
+| REPORT-PERIOD-NOT-APPLIED (FR-009-015) | — | **CERRADA en 04** (conciliación del encargo 04, §7): el único reporte no fiscal con período aplicable (`executive_ventas`) filtra; `operational_inventario`, `financial_aging` y `regulatory_evaluaciones` son fotos «a hoy» donde un mes no aplica y lo declaran con `period_applied=false`. Lo único pendiente es fiscal y vive solo en FISCAL-BOOK-PERIOD-RULE; el aviso de UI para esos tres queda como REPORT-PERIOD-INPUT-ON-SNAPSHOT-REPORTS (LOW) |
 | FISCAL-BOOK-PERIOD-RULE | HIGH | **Abierta, LEGAL_VALIDATION_REQUIRED** (Ley del IVA, arts. 13 y 56; Reglamento, arts. 70–78 sin fuente primaria) |
 | FISCAL-RETENCION-NORMA-2025 | MEDIUM | **Abierta**: la SNAT/2025/000054 deroga la 2015/0049; verificar qué cita el producto (D0-07) |
 | RATE-NON-BUSINESS-DAY-RULE | MEDIUM | **Abierta, LEGAL_VALIDATION_REQUIRED**: Ley del IVA, art. 25 (día hábil siguiente) frente al arrastre de tasas y al Convenio Cambiario N.º 1, art. 84 |
@@ -410,7 +410,7 @@ La skill formal resuelve la Spec por la rama (`develop`), no por el delta. Aplic
 | FR-001-249 | rates e/f/g, B09, B10 | — |
 | FR-001-250 | statement ×3, B12, B19 | — |
 | FR-001-251 | pg ×8, B16 | — |
-| FR-009-015 (parcial) | reports ×5, B04, B05, B18, CR-08/09, BD-E2E-04 | Libros: deuda legal registrada (OD-TIME-11) |
+| FR-009-015 (parcial) | reports ×5, B04, B05, B18, CR-08/09, BD-E2E-04 | Libros: deuda legal registrada (PDD-TIME-11) |
 | FR-001-252 | reports, B17, LIB-01/02, CR-10, F08, F09 | — |
 | FR-001-253 | fecha-de-negocio.test (4 zonas), AuditoriaPage.fecha, guarda, BD-E2E-01, F01–F06, F10, F11, F14, F15 | — |
 | FR-001-254/255 | BD-E2E-02/03, guarda, F12, F13 | — |

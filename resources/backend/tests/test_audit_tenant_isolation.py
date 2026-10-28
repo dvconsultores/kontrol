@@ -35,7 +35,6 @@ from app.modules.identity_access.models import UserRole, UserScope
 from app.modules.licensing import service as licensing_service
 from app.modules.organization.models import Company, Installation, Tenant
 from app.modules.setup.api import SetupRequest, _bootstrap_roles, initialize
-from app.shared.audit import record_audit
 
 PASSWORD = "Kontrol2026Segura!"
 _FACTORY: sessionmaker | None = None
@@ -183,11 +182,15 @@ def _marca() -> str:
 def _evento(tenant_id: str | None, *, entity_id: str, action: str = "AUDTEN_PROBE",
             entity_type: str = "Probe", company_id: str | None = None) -> str:
     """Un evento de contenido fijo; lo único que cambia entre llamadas es el dueño."""
+    # Filas insertadas directamente: la prueba es de lectura sobre historia simulada;
+    # `record_audit` solo admite pares del catálogo cerrado (OD-AUD-04).
     db = _FACTORY()
     try:
-        ev = record_audit(db, action=action, entity_type=entity_type, entity_id=entity_id,
-                          tenant_id=tenant_id, company_id=company_id, source="QA",
-                          request_id="mismo-request", after={"marca": entity_id})
+        ev = AuditEvent(action=action, entity_type=entity_type, entity_id=entity_id,
+                        tenant_id=tenant_id, company_id=company_id, user_id=None,
+                        request_id="mismo-request", source="QA",
+                        after={"marca": entity_id}, event_time=datetime.now(UTC))
+        db.add(ev)
         db.commit()
         return str(ev.id)
     finally:
@@ -216,9 +219,14 @@ def test_aud_tenant_01_el_administrador_de_a_no_recibe_eventos_de_b():
     assert body["total"] == 1
 
     # Ni la consulta ni el rol amplían el tenant: son datos del cliente.
-    forzado = _listar(_como_a(), entity_id=m, tenant_id=W["tenant_b"], company_id=W["e1"])
+    # `company_id` es un filtro declarado que solo estrecha (FR-001-264).
+    forzado = _listar(_como_a(), entity_id=m, tenant_id=W["tenant_b"])
     assert _ids(forzado) == {ea}
     assert forzado["total"] == 1
+
+    estrechado = _listar(_como_a(), entity_id=m, company_id=W["e1"])
+    assert _ids(estrechado) == set()
+    assert estrechado["total"] == 0
 
 
 def test_aud_tenant_02_inverso_el_administrador_de_b_no_recibe_eventos_de_a():
@@ -391,13 +399,13 @@ def test_aud_tenant_10_un_evento_sin_tenant_no_lo_lee_ningun_tenant():
 # --------------------------------------------------------------------------- #
 def test_aud_tenant_11_la_superficie_publica_de_auditoria_y_su_contrato_no_cambian():
     """El aislamiento es una regla de contexto, no un parámetro: el contrato no
-    gana `tenant_id` ni cabecera de empresa. Y hoy la única superficie bajo
-    `/audit` es el listado: si alguien añade detalle o exportación, esta prueba
-    le recuerda que nacen con el mismo alcance."""
+    gana `tenant_id` ni cabecera de empresa. La ruta de filtros nace con
+    `audit:view` y el mismo alcance; si alguien añade detalle o exportación,
+    esta prueba le recuerda que nacen con el mismo alcance."""
     spec = _CLIENT.app.openapi()
     rutas = {r for r in spec["paths"] if r.startswith("/api/v1/audit")}
-    assert rutas == {"/api/v1/audit/events"}
+    assert rutas == {"/api/v1/audit/events", "/api/v1/audit/filters"}
     op = spec["paths"]["/api/v1/audit/events"]["get"]
     nombres = {p["name"] for p in op.get("parameters", [])}
-    assert nombres == {"page", "page_size", "entity_type", "entity_id", "action"}
+    assert nombres == {"page", "page_size", "entity_type", "entity_id", "action", "desde", "hasta", "username", "company_id", "scope", "request_id"}
     assert COMPANY_HEADER.lower() not in {n.lower() for n in nombres}

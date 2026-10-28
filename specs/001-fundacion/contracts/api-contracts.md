@@ -91,8 +91,10 @@ Toda sesión lleva el sello de credencial del usuario: cambia con cada cambio o 
 
 | Método | Ruta | Uso |
 |---|---|---|
-| GET | `/api/v1/audit/events` | Timeline con filtros y paginación; solo eventos de empresas donde el actor tiene `audit:view` (los sin empresa, solo con `audit:view` en todo el tenant) (ADR-017) |
-| GET | `/api/v1/audit/events/{id}` | Detalle de evento |
+| GET | `/api/v1/audit/events` | Listado paginado (`page` ≥ 1, `page_size` 1–100) con alcance de tenant y de empresa: solo eventos de empresas donde el actor tiene `audit:view`; los de tenant (sin empresa) solo con `audit:view` en todo el tenant (OD-AUD-01, ADR-017). Filtros declarados: `entity_type`, `entity_id`, `action`, `desde`/`hasta` (fecha de negocio de Caracas AAAA-MM-DD, inclusivas; límites UTC semiabiertos, ADR-020; `desde > hasta` → 422 `INVALID_DATE_RANGE`), `username`, `company_id` (solo estrecha), `scope` (`TENANT`\|`COMPANY`), `request_id`. Orden `event_time DESC, id DESC`. Cada item: `id, action, action_label, entity_type, entity_id, user_id, username, request_id, source, reason, event_time, company_id, company_name, scope` (`TENANT`, `COMPANY` o `UNCATALOGUED`) y `details` (proyección segura de `before`/`after`/`evidence` limitada a las claves del catálogo; nunca `ip`, `session_id` ni secretos) (FR-001-264/265). |
+| GET | `/api/v1/audit/filters` | (`audit:view`) `catalog_version`, `tenant_wide`, `actions` (`code`, `entity_type`, `label`, `scope`, `lifecycle`) y `companies` (`id`, `code`, `name`) donde el actor audita (FR-001-266). |
+
+No existe `GET /audit/events/{id}`: el detalle seguro viaja en cada item. Toda emisión se valida contra el catálogo cerrado (FR-001-257/258, OD-AUD-04) y la base rechaza `UPDATE`, `DELETE` y `TRUNCATE` sobre `audit_events` (FR-001-262, OD-AUD-05).
 
 ### Diagnóstico
 

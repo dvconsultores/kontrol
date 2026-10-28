@@ -53,10 +53,11 @@ describe("el arnés E2E no se relaja", () => {
   });
 
   it("el inventario de omisiones de e2e/ es el declarado", () => {
-    // Cinco guardas de credenciales (que el runner ya satisface) y cuatro omisiones nombradas de
+    // Seis guardas de credenciales (que el runner ya satisface) y cinco omisiones nombradas de
     // ENTORNO-SIN-CLAMSCAN. Una omisión nueva se declara aquí, con su deuda; no entra en silencio.
     expect(sitios(/\btest\.skip\(/g)).toEqual({
       "e2e/accessibility.spec.ts": 1,
+      "e2e/audit-catalog.spec.ts": 2,
       "e2e/documents-a11y.spec.ts": 2,
       "e2e/documents.spec.ts": 4,
       "e2e/uom-a11y.spec.ts": 1,

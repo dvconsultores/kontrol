@@ -131,9 +131,11 @@ def _check_version(entity: Any, if_match: str | None) -> None:
 
 
 def _audit(db: Session, user: User, action: str, entity_id: str,
-           before: dict | None = None, after: dict | None = None) -> None:
-    record_audit(db, action=action, entity_type="Document", entity_id=entity_id,
-                 tenant_id=user.tenant_id, user_id=str(user.id), before=before, after=after)
+           before: dict | None = None, after: dict | None = None, *,
+           company_id: str, entity_type: str = "Document") -> None:
+    record_audit(db, action=action, entity_type=entity_type, entity_id=entity_id,
+                 tenant_id=user.tenant_id, user_id=str(user.id), before=before,
+                 after=after, company_id=company_id)
 
 
 # --------------------------------------------------------------------------
@@ -240,7 +242,8 @@ def create_type(body: TypeIn, db: Session = Depends(get_db),
         raise ConflictError(code="DOCUMENT_TYPE_CODE_DUPLICATE",
                             message="Ya existe un tipo con ese código") from exc
     db.refresh(doc_type)
-    _audit(db, actor, "DOCUMENT_TYPE_CREATED", str(doc_type.id), after={"code": doc_type.code})
+    _audit(db, actor, "DOCUMENT_TYPE_CREATED", str(doc_type.id), after={"code": doc_type.code},
+           company_id=doc_type.company_id, entity_type="DocumentType")
     db.commit()
     return _type_dict(doc_type)
 
@@ -257,7 +260,8 @@ def update_type(type_id: str, body: dict[str, Any], db: Session = Depends(get_db
         if field in body:
             setattr(doc_type, field, body[field])
     doc_type.version = int(doc_type.version) + 1
-    _audit(db, actor, "DOCUMENT_TYPE_UPDATED", str(doc_type.id))
+    _audit(db, actor, "DOCUMENT_TYPE_UPDATED", str(doc_type.id),
+           company_id=doc_type.company_id, entity_type="DocumentType")
     db.commit()
     db.refresh(doc_type)
     return _type_dict(doc_type)
@@ -401,7 +405,8 @@ def create_document(body: DocumentIn, db: Session = Depends(get_db),
         raise ConflictError(code="DOCUMENT_NUMBER_DUPLICATE",
                             message="Ya existe un documento con ese número para este tipo") from exc
     db.refresh(document)
-    _audit(db, actor, "DOCUMENT_CREATED", str(document.id), after={"title": document.title})
+    _audit(db, actor, "DOCUMENT_CREATED", str(document.id), after={"title": document.title},
+           company_id=document.company_id)
     db.commit()
     return _document_dict(db, document, _permissions(db, actor, ctx.company_id), full=True)
 
@@ -434,7 +439,7 @@ def update_document(document_id: str, body: DocumentPatch,
         setattr(document, field, value)
     document.version = int(document.version) + 1
     _audit(db, actor, "DOCUMENT_METADATA_UPDATED", str(document.id), before=before,
-           after={"title": document.title})
+           after={"title": document.title}, company_id=document.company_id)
     db.commit()
     db.refresh(document)
     return _document_dict(db, document, _permissions(db, actor, ctx.company_id), full=True)
@@ -448,7 +453,8 @@ def archive_document(document_id: str, db: Session = Depends(get_db),
     document = _get_document(db, ctx, document_id)
     document.status = "ARCHIVED"
     document.version = int(document.version) + 1
-    _audit(db, actor, "DOCUMENT_ARCHIVED", str(document.id))
+    _audit(db, actor, "DOCUMENT_ARCHIVED", str(document.id),
+           company_id=document.company_id)
     db.commit()
     return {"id": str(document.id), "status": document.status}
 
@@ -460,14 +466,16 @@ def delete_document(document_id: str, db: Session = Depends(get_db),
     document = _get_document(db, ctx, document_id)
     deletable, blocking = service.can_delete(db, document)
     if not deletable:
-        _audit(db, actor, "DOCUMENT_DELETE_BLOCKED", str(document.id), after=blocking)
+        _audit(db, actor, "DOCUMENT_DELETE_BLOCKED", str(document.id), after=blocking,
+               company_id=document.company_id)
         db.commit()
         raise KontrolError(
             code="DOCUMENT_IN_USE",
             message="El documento tiene dependencias y no puede borrarse", status_code=409,
             details={"reason": "Existen vínculos o versiones asociados",
                      "dependencies": blocking, "allowed_actions": ["archive"]})
-    _audit(db, actor, "DOCUMENT_DELETED", str(document.id), before={"title": document.title})
+    _audit(db, actor, "DOCUMENT_DELETED", str(document.id), before={"title": document.title},
+           company_id=document.company_id)
     db.delete(document)
     db.commit()
     return {"deleted": True}
@@ -621,7 +629,8 @@ def _deliver(db: Session, user: User, document: Document, version: DocumentVersi
     if doc_type is not None and doc_type.audit_downloads:
         # Según política del tipo, no siempre (§80).
         _audit(db, user, "DOCUMENT_DOWNLOADED", str(document.id),
-               after={"version": version.version_number})
+               after={"version": version.version_number},
+               company_id=document.company_id)
         db.commit()
 
     return StreamingResponse(

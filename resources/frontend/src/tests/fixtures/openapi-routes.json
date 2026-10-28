@@ -101,6 +101,10 @@
       "path": "/audit/events"
     },
     {
+      "method": "GET",
+      "path": "/audit/filters"
+    },
+    {
       "method": "POST",
       "path": "/auth/change-password"
     },

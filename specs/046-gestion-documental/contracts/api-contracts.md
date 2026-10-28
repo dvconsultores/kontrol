@@ -129,7 +129,8 @@ Ninguna firma expone almacenamiento.
 | `MIME_NOT_ALLOWED` | 422 | Fuera de la lista blanca del tipo |
 | `MIME_MISMATCH` | 422 | Declarado y detectado difieren |
 | `FILENAME_UNSAFE` | 422 | Recorrido de rutas o nombre reservado |
-| `FILE_INFECTED` | 422 | El análisis lo marcó |
+| `FILE_INFECTED` | 422 | El análisis detectó una amenaza. `details = {scan_result: "INFECTED", category: "MALWARE_DETECTED"}`; nunca la firma (OD-AUD-09). El rechazo queda auditado como `DOCUMENT_SCAN_REJECTED` aunque la carga se deshaga (OD-AUD-07). |
+| `SCAN_FAILED` | 422 | El análisis no pudo completarse o está desactivado con análisis obligatorio; `details.category` ∈ `SCANNER_UNAVAILABLE`, `SCAN_TIMEOUT`, `SCAN_ERROR`; nunca se afirma malware. Auditado igual que `FILE_INFECTED`. |
 | `FILE_NOT_SCANNED` | 409 | Descarga con análisis pendiente |
 | `STORAGE_FAILURE` | 503 | El almacenamiento no responde |
 | `STORAGE_OBJECT_MISSING` | 500 | Metadata sin binario (§74) |

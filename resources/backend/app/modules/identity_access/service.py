@@ -543,11 +543,13 @@ def confirm_password_reset(db: Session, *, token: str, new_password: str, reques
         raise KontrolError(code="RESET_TOKEN_INVALID", message="El código de recuperación no es válido", status_code=400)
 
     if reset.used_at is not None or reset.invalidated_at is not None:
+        usuario = db.get(User, reset.user_id)
         _audit(
             db,
             action="PASSWORD_RESET_FAILED",
             entity_type="User",
             entity_id=reset.user_id,
+            tenant_id=usuario.tenant_id if usuario is not None else None,
             request_id=request_id,
             reason="USED",
         )
@@ -555,11 +557,13 @@ def confirm_password_reset(db: Session, *, token: str, new_password: str, reques
         raise KontrolError(code="RESET_TOKEN_USED", message="El código de recuperación ya se usó o fue reemplazado", status_code=400)
 
     if _as_utc(reset.expires_at) <= _now():
+        usuario = db.get(User, reset.user_id)
         _audit(
             db,
             action="PASSWORD_RESET_FAILED",
             entity_type="User",
             entity_id=reset.user_id,
+            tenant_id=usuario.tenant_id if usuario is not None else None,
             request_id=request_id,
             reason="EXPIRED",
         )
@@ -574,6 +578,7 @@ def confirm_password_reset(db: Session, *, token: str, new_password: str, reques
             action="PASSWORD_RESET_FAILED",
             entity_type="User",
             entity_id=reset.user_id,
+            tenant_id=user.tenant_id if user is not None else None,
             request_id=request_id,
             reason="INVALID",
         )

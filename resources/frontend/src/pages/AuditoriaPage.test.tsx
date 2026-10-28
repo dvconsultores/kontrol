@@ -40,6 +40,7 @@ function evento(n: number, action: string): AuditEvent {
   return {
     id: `ev-${n}`, action, entity_type: "Probe", entity_id: `probe-${n}`, user_id: `usuario-${n}`,
     request_id: `req-${n}-${action.toLowerCase()}`, source: "QA", reason: null, event_time: "2026-09-30T18:30:00+00:00",
+    company_id: null, company_name: null, scope: "TENANT", action_label: `Etiqueta ${action}`, username: null, details: {},
   };
 }
 
@@ -61,7 +62,12 @@ function montar(): void {
 describe("AuditoriaPage · consumo del sobre paginado", () => {
   it("ENV-01 · las filas de la tabla son exactamente los `items` del sobre", async () => {
     apiFetch.mockClear();
-    apiFetch.mockResolvedValue(sobre([evento(1, "LOGIN_SUCCESS"), evento(2, "ROLE_ASSIGNED")], 108));
+    apiFetch.mockImplementation(async (ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return { catalog_version: "x", tenant_wide: false, actions: [], companies: [] };
+      }
+      return sobre([evento(1, "LOGIN_SUCCESS"), evento(2, "ROLE_ASSIGNED")], 108);
+    });
     montar();
     expect(await screen.findByText("req-1-login_success")).toBeInTheDocument();
     expect(screen.getByText("req-2-role_assigned")).toBeInTheDocument();
@@ -73,7 +79,12 @@ describe("AuditoriaPage · consumo del sobre paginado", () => {
 
   it("ENV-02 · un sobre vacío es el estado vacío, no una tabla muda", async () => {
     apiFetch.mockClear();
-    apiFetch.mockResolvedValue(sobre([], 0));
+    apiFetch.mockImplementation(async (ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return { catalog_version: "x", tenant_wide: false, actions: [], companies: [] };
+      }
+      return sobre([], 0);
+    });
     montar();
     expect(await screen.findByText("Sin eventos")).toBeInTheDocument();
     expect(screen.queryByRole("row")).not.toBeInTheDocument();
@@ -82,7 +93,12 @@ describe("AuditoriaPage · consumo del sobre paginado", () => {
   it("ENV-03 · mientras no hay respuesta se muestra el estado de carga", async () => {
     apiFetch.mockClear();
     let responder: (v: PagedResult<AuditEvent>) => void = () => undefined;
-    apiFetch.mockReturnValue(new Promise<PagedResult<AuditEvent>>((resolve) => { responder = resolve; }));
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return Promise.resolve({ catalog_version: "x", tenant_wide: false, actions: [], companies: [] });
+      }
+      return new Promise<PagedResult<AuditEvent>>((resolve) => { responder = resolve; });
+    });
     montar();
     expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.queryByRole("row")).not.toBeInTheDocument();
@@ -99,7 +115,12 @@ describe("AuditoriaPage · consumo del sobre paginado", () => {
     // ningún observador secundario (desmontaje al limpiar) la deja sin manejar.
     const fallo = Promise.reject(new Error("boom"));
     fallo.catch(() => undefined);
-    apiFetch.mockImplementation(() => fallo);
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return Promise.resolve({ catalog_version: "x", tenant_wide: false, actions: [], companies: [] });
+      }
+      return fallo;
+    });
     montar();
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("No fue posible cargar la auditoría."));
     expect(screen.queryByText("Sin eventos")).not.toBeInTheDocument();
@@ -108,7 +129,12 @@ describe("AuditoriaPage · consumo del sobre paginado", () => {
   it("ENV-08 · una respuesta que no es el sobre no se pinta por una puerta de atrás", async () => {
     apiFetch.mockClear();
     // Violación del contrato: un array crudo. No hay soporte dual.
-    apiFetch.mockResolvedValue([evento(1, "LOGIN_SUCCESS"), evento(2, "ROLE_ASSIGNED")]);
+    apiFetch.mockImplementation(async (ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return { catalog_version: "x", tenant_wide: false, actions: [], companies: [] };
+      }
+      return [evento(1, "LOGIN_SUCCESS"), evento(2, "ROLE_ASSIGNED")];
+    });
     montar();
     await waitFor(() => expect(apiFetch).toHaveBeenCalled());
     await waitFor(() => expect(screen.queryByRole("status")).not.toBeInTheDocument());
@@ -129,7 +155,12 @@ describe("AuditoriaPage · alcance de la bitácora (GOV-CTL-005)", () => {
 
   it("ALC-01 · quien audita todas las empresas lee que ve todo el tenant, también lo que no tiene empresa", async () => {
     apiFetch.mockClear();
-    apiFetch.mockResolvedValue(sobre([]));
+    apiFetch.mockImplementation(async (ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return { catalog_version: "x", tenant_wide: false, actions: [], companies: [] };
+      }
+      return sobre([]);
+    });
     tieneMock.mockImplementation((c, a) => c === "audit:view" && a === "tenant");
     montar();
     expect(await screen.findByText(TEXTO_TENANT)).toBeInTheDocument();
@@ -138,7 +169,12 @@ describe("AuditoriaPage · alcance de la bitácora (GOV-CTL-005)", () => {
 
   it("ALC-02 · quien audita solo algunas lee que la lista se limita a sus empresas", async () => {
     apiFetch.mockClear();
-    apiFetch.mockResolvedValue(sobre([]));
+    apiFetch.mockImplementation(async (ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return { catalog_version: "x", tenant_wide: false, actions: [], companies: [] };
+      }
+      return sobre([]);
+    });
     tieneMock.mockReturnValue(false);
     montar();
     expect(await screen.findByText(TEXTO_PARCIAL)).toBeInTheDocument();

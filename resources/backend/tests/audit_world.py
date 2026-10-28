@@ -34,7 +34,6 @@ from app.modules.identity_access.models import Role, UserRole
 from app.modules.licensing import service as licensing_service
 from app.modules.organization.models import Company, Installation, Tenant
 from app.modules.setup.api import SetupRequest, _bootstrap_roles, initialize
-from app.shared.audit import record_audit
 
 PASSWORD = "Kontrol2026Segura!"
 _ENGINE: Engine | None = None
@@ -159,11 +158,18 @@ def marca() -> str:
 def crear_eventos(tenant_id: str, cuantos: int, *, entity_id: str, action: str = "AUDCOUNT_PROBE",
                   entity_type: str = "Probe") -> list[str]:
     """Crea `cuantos` eventos iguales salvo por el dueño; devuelve sus ids en orden de creación."""
+    # Filas insertadas directamente: la prueba es de lectura sobre historia simulada;
+    # `record_audit` solo admite pares del catálogo cerrado (OD-AUD-04).
     db = _FACTORY()
     try:
-        eventos = [record_audit(db, action=action, entity_type=entity_type, entity_id=entity_id,
-                                tenant_id=tenant_id, source="QA", request_id="mismo-request")
-                   for _ in range(cuantos)]
+        eventos = []
+        for _ in range(cuantos):
+            ev = AuditEvent(action=action, entity_type=entity_type, entity_id=entity_id,
+                            tenant_id=tenant_id, company_id=None, user_id=None,
+                            request_id="mismo-request", source="QA", after=None,
+                            event_time=datetime.now(UTC))
+            db.add(ev)
+            eventos.append(ev)
         db.commit()
         return [str(e.id) for e in eventos]
     finally:

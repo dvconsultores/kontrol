@@ -93,9 +93,10 @@ def _check_version(entity: Any, if_match: str | None) -> None:
 
 
 def _audit(db: Session, user: User, action: str, entity_type: str, entity_id: str,
-           before: dict | None = None, after: dict | None = None) -> None:
+           before: dict | None = None, after: dict | None = None, *, company_id: str) -> None:
     record_audit(db, action=action, entity_type=entity_type, entity_id=entity_id,
-                 tenant_id=user.tenant_id, user_id=str(user.id), before=before, after=after)
+                 tenant_id=user.tenant_id, user_id=str(user.id), before=before, after=after,
+                 company_id=company_id)
 
 
 # Permisos EN la empresa de la petición (Spec 003, capacidad × empresa).
@@ -222,7 +223,8 @@ def create_unit(body: UnitIn, db: Session = Depends(get_db),
         raise ConflictError(code="UOM_CODE_DUPLICATE",
                             message="Ya existe una unidad con ese código") from exc
     db.refresh(unit)
-    _audit(db, actor, "CREATE", "unit_of_measure", str(unit.id), after={"code": unit.code})
+    _audit(db, actor, "CREATE", "unit_of_measure", str(unit.id), after={"code": unit.code},
+           company_id=ctx.company_id)
     db.commit()
     return _unit_dict(db, unit, _permissions(db, actor, ctx.company_id))
 
@@ -246,7 +248,7 @@ def patch_unit(unit_id: str, body: UnitPatch,
         setattr(unit, field, value)
     unit.version = int(unit.version) + 1
     _audit(db, actor, "UPDATE", "unit_of_measure", str(unit.id), before=before,
-           after={"name": unit.name, "decimals": unit.decimals})
+           after={"name": unit.name, "decimals": unit.decimals}, company_id=ctx.company_id)
     db.commit()
     db.refresh(unit)
     return _unit_dict(db, unit, _permissions(db, actor, ctx.company_id))
@@ -257,7 +259,8 @@ def _set_unit_status(db: Session, ctx: CompanyContext, actor: User, unit_id: str
     _assert_editable(unit)
     unit.status = status
     unit.version = int(unit.version) + 1
-    _audit(db, actor, status, "unit_of_measure", str(unit.id), after={"status": status})
+    _audit(db, actor, status, "unit_of_measure", str(unit.id), after={"status": status},
+           company_id=ctx.company_id)
     db.commit()
     return {"id": str(unit.id), "status": unit.status}
 
@@ -280,14 +283,16 @@ def delete_unit(unit_id: str, db: Session = Depends(get_db),
     unit = _get_unit(db, ctx, unit_id)
     _assert_editable(unit)
     if _unit_in_use(db, unit_id):
-        _audit(db, actor, "DELETE_BLOCKED", "unit_of_measure", str(unit.id))
+        _audit(db, actor, "DELETE_BLOCKED", "unit_of_measure", str(unit.id),
+               company_id=ctx.company_id)
         db.commit()
         raise KontrolError(
             code="UOM_IN_USE", message="La unidad está en uso y no puede borrarse",
             status_code=409,
             details={"reason": "Existen líneas, productos o conversiones que la referencian",
                      "allowed_actions": ["deactivate"]})
-    _audit(db, actor, "DELETE", "unit_of_measure", str(unit.id), before={"code": unit.code})
+    _audit(db, actor, "DELETE", "unit_of_measure", str(unit.id), before={"code": unit.code},
+           company_id=ctx.company_id)
     db.delete(unit)
     db.commit()
     return {"deleted": True}
@@ -338,7 +343,7 @@ def create_physical_conversion(unit_id: str, body: PhysicalConversionIn,
                             message="Ya existe esa conversión") from exc
     db.refresh(conversion)
     _audit(db, actor, "CREATE", "unit_conversion", str(conversion.id),
-           after={"factor": str(conversion.factor)})
+           after={"factor": str(conversion.factor)}, company_id=ctx.company_id)
     db.commit()
     return {"id": str(conversion.id), "from_unit_id": unit_id,
             "to_unit_id": body.to_unit_id, "factor": str(conversion.factor)}
@@ -472,7 +477,7 @@ def create_presentation(product_id: str, body: PresentationIn, db: Session = Dep
     db.commit()
     db.refresh(presentation)
     _audit(db, actor, "CREATE", "presentation", str(presentation.id),
-           after={"code": presentation.code})
+           after={"code": presentation.code}, company_id=ctx.company_id)
     db.commit()
     return _presentation_dict(db, presentation, _permissions(db, actor, ctx.company_id))
 
@@ -497,7 +502,7 @@ def patch_presentation(presentation_id: str, body: PresentationPatch,
         setattr(presentation, field, value)
     presentation.version = int(presentation.version) + 1
     _audit(db, actor, "UPDATE", "presentation", str(presentation.id), before=before,
-           after={"name": presentation.name})
+           after={"name": presentation.name}, company_id=ctx.company_id)
     db.commit()
     db.refresh(presentation)
     return _presentation_dict(db, presentation, _permissions(db, actor, ctx.company_id))
@@ -508,7 +513,8 @@ def _set_presentation_status(db: Session, ctx: CompanyContext, actor: User,
     presentation = _get_presentation(db, ctx, presentation_id)
     presentation.status = status
     presentation.version = int(presentation.version) + 1
-    _audit(db, actor, status, "presentation", str(presentation.id), after={"status": status})
+    _audit(db, actor, status, "presentation", str(presentation.id), after={"status": status},
+           company_id=ctx.company_id)
     db.commit()
     return {"id": str(presentation.id), "status": presentation.status}
 
@@ -532,7 +538,8 @@ def delete_presentation(presentation_id: str, db: Session = Depends(get_db),
                         actor: User = Depends(require_permission("maestros", "delete")), ctx: CompanyContext = Depends(get_company_context)):
     presentation = _get_presentation(db, ctx, presentation_id)
     if _presentation_in_use(db, presentation_id):
-        _audit(db, actor, "DELETE_BLOCKED", "presentation", str(presentation.id))
+        _audit(db, actor, "DELETE_BLOCKED", "presentation", str(presentation.id),
+               company_id=ctx.company_id)
         db.commit()
         raise KontrolError(
             code="PRESENTATION_IN_USE",
@@ -543,7 +550,7 @@ def delete_presentation(presentation_id: str, db: Session = Depends(get_db),
             ProductPresentationVersion.presentation_id == presentation_id)).scalars().all():
         db.delete(version)
     _audit(db, actor, "DELETE", "presentation", str(presentation.id),
-           before={"code": presentation.code})
+           before={"code": presentation.code}, company_id=ctx.company_id)
     db.delete(presentation)
     db.commit()
     return {"deleted": True}
@@ -627,7 +634,7 @@ def create_version(presentation_id: str, body: VersionIn, db: Session = Depends(
     db.refresh(version)
     _audit(db, actor, "CREATE_VERSION", "product_presentation_version", str(version.id),
            after={"factor": str(version.factor_to_base),
-                  "valid_from": start.isoformat()})
+                  "valid_from": start.isoformat()}, company_id=ctx.company_id)
     db.commit()
     return {"id": str(version.id), "factor_to_base": str(version.factor_to_base),
             "valid_from": start.isoformat(), "valid_to": None}
@@ -692,13 +699,14 @@ def set_base_unit(product_id: str, body: BaseUnitIn, db: Session = Depends(get_d
     try:
         uom.assert_base_unit_changeable(db, product_id)
     except KontrolError:
-        _audit(db, actor, "BASE_UNIT_CHANGE_BLOCKED", "catalog_item", str(item.id))
+        _audit(db, actor, "BASE_UNIT_CHANGE_BLOCKED", "catalog_item", str(item.id),
+               company_id=ctx.company_id)
         db.commit()
         raise
     before = {"base_unit_id": item.base_unit_id}
     item.base_unit_id = body.base_unit_id
     _audit(db, actor, "BASE_UNIT_CHANGED", "catalog_item", str(item.id), before=before,
-           after={"base_unit_id": item.base_unit_id})
+           after={"base_unit_id": item.base_unit_id}, company_id=ctx.company_id)
     db.commit()
     return {"id": str(item.id), "base_unit_id": item.base_unit_id,
             "base_unit_locked": item.base_unit_locked}

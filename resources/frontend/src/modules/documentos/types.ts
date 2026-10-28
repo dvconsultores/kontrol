@@ -156,9 +156,16 @@ export function uploadErrorMessage(err: unknown): string {
     case "MIME_MISMATCH":
       return "El contenido del archivo no corresponde con el formato que declara.";
     case "FILE_INFECTED":
-      return "El archivo fue identificado como malicioso y no se guardó.";
+      return "El archivo fue rechazado por seguridad: el análisis lo identificó como malicioso. No se guardó.";
     case "SCAN_FAILED":
-      return "No se pudo verificar la seguridad del archivo. Inténtelo de nuevo más tarde.";
+      switch (details?.category) {
+        case "SCANNER_UNAVAILABLE":
+          return "El servicio de análisis no está disponible. El archivo no se guardó; inténtelo más tarde.";
+        case "SCAN_TIMEOUT":
+          return "El análisis tardó demasiado. El archivo no se guardó; inténtelo de nuevo.";
+        default:
+          return "No se pudo verificar la seguridad del archivo. Inténtelo de nuevo más tarde.";
+      }
     case "FILE_EMPTY":
       return "El archivo está vacío.";
     case "STORAGE_FAILURE":

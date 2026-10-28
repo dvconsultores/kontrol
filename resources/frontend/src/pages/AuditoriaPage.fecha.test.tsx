@@ -54,6 +54,7 @@ function evento(n: number, event_time: string): AuditEvent {
   return {
     id: `ev-${n}`, action: "LOGIN_SUCCESS", entity_type: "User", entity_id: `u-${n}`, user_id: null,
     request_id: `rastro-${n}`, source: "API", reason: null, event_time,
+    company_id: null, company_name: null, scope: "TENANT", action_label: "Inicio de sesión", username: null, details: {},
   };
 }
 
@@ -82,7 +83,12 @@ async function fecha(rastro: string): Promise<string> {
 describe("AuditoriaPage · columna Fecha", () => {
   it("DATE-01/02 · la fecha sale de event_time y nunca es «Invalid Date» para un instante válido", async () => {
     apiFetch.mockClear();
-    apiFetch.mockResolvedValue(sobre([evento(1, TARDE)]));
+    apiFetch.mockImplementation(async (ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return { catalog_version: "x", tenant_wide: false, actions: [], companies: [] };
+      }
+      return sobre([evento(1, TARDE)]);
+    });
     montar();
     const texto = await fecha("rastro-1");
     expect(texto).not.toBe("Invalid Date");
@@ -91,7 +97,12 @@ describe("AuditoriaPage · columna Fecha", () => {
 
   it(`DATE-03/04/05/06/07 · texto exacto de Caracas bajo la zona del proceso (${ZONA})`, async () => {
     apiFetch.mockClear();
-    apiFetch.mockResolvedValue(sobre([evento(1, TARDE), evento(2, MEDIANOCHE)]));
+    apiFetch.mockImplementation(async (ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return { catalog_version: "x", tenant_wide: false, actions: [], companies: [] };
+      }
+      return sobre([evento(1, TARDE), evento(2, MEDIANOCHE)]);
+    });
     montar();
     const tarde = await fecha("rastro-1");
     const medianoche = await fecha("rastro-2");
@@ -109,7 +120,12 @@ describe("AuditoriaPage · columna Fecha", () => {
 
   it("DATE-08 · cada fila muestra su propio instante", async () => {
     apiFetch.mockClear();
-    apiFetch.mockResolvedValue(sobre([evento(1, TARDE), evento(2, MEDIANOCHE)]));
+    apiFetch.mockImplementation(async (ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return { catalog_version: "x", tenant_wide: false, actions: [], companies: [] };
+      }
+      return sobre([evento(1, TARDE), evento(2, MEDIANOCHE)]);
+    });
     montar();
     const uno = await fecha("rastro-1");
     const dos = await fecha("rastro-2");
@@ -119,7 +135,12 @@ describe("AuditoriaPage · columna Fecha", () => {
 
   it("DATE-13 · un valor que no es un instante no se disfraza de «ahora» ni de «—»", async () => {
     apiFetch.mockClear();
-    apiFetch.mockResolvedValue(sobre([evento(1, "no-es-una-fecha")]));
+    apiFetch.mockImplementation(async (ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return { catalog_version: "x", tenant_wide: false, actions: [], companies: [] };
+      }
+      return sobre([evento(1, "no-es-una-fecha")]);
+    });
     montar();
     const texto = await fecha("rastro-1");
     expect(texto).toBe("Invalid Date"); // lo que la convención devuelve; no se normaliza

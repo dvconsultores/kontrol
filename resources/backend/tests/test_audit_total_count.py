@@ -14,7 +14,24 @@ from __future__ import annotations
 import audit_world as mundo
 import pytest
 
-CLAVES_DE_ITEM = {"id", "action", "entity_type", "entity_id", "user_id", "request_id", "source", "event_time"}
+# Ciclo 04 (FR-001-265): contexto legible y detalle seguro; nunca `ip`, `session_id`, `before`, `after` ni `evidence` crudos.
+CLAVES_DE_ITEM = {
+    "id",
+    "action",
+    "entity_type",
+    "entity_id",
+    "user_id",
+    "request_id",
+    "source",
+    "event_time",
+    "company_id",
+    "company_name",
+    "scope",
+    "action_label",
+    "username",
+    "reason",
+    "details",
+}
 
 
 @pytest.fixture(scope="module", autouse=True)

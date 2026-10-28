@@ -114,6 +114,19 @@ export interface AuditEvent {
   reason: string | null;
   /** Sello del servidor (ISO 8601 con zona, nunca nulo). El servidor no publica `created_at`. */
   event_time: string;
+  company_id: string | null;
+  company_name: string | null;
+  scope: "TENANT" | "COMPANY" | "UNCATALOGUED";
+  action_label: string;
+  username: string | null;
+  details: Record<string, Record<string, unknown>>;
+}
+
+export interface AuditFilters {
+  catalog_version: string;
+  tenant_wide: boolean;
+  actions: { code: string; entity_type: string; label: string; scope: string; lifecycle: string }[];
+  companies: { id: string; code: string; name: string }[];
 }
 
 export interface SetupStatus {

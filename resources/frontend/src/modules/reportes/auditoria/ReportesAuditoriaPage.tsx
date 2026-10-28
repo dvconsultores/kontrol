@@ -6,6 +6,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import type { AuditTimelineItem } from "@/api/types";
 import { DataTable } from "@/components/DataTable";
+import { formatearFecha } from "@/i18n";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
@@ -28,7 +29,10 @@ export function ReportesAuditoriaPage(): React.JSX.Element {
   });
 
   const columns = [
-    columnHelper.accessor("event_time", { header: "Fecha" }),
+    columnHelper.accessor("event_time", {
+      header: "Fecha",
+      cell: (info) => formatearFecha(info.getValue()),
+    }),
     columnHelper.accessor("action", { header: "Acción" }),
     columnHelper.accessor("entity_type", { header: "Entidad" }),
     columnHelper.accessor("entity_id", { header: "ID" }),

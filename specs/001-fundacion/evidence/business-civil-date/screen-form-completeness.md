@@ -41,7 +41,7 @@
 |---|---|
 | MISSING_TIMEZONE_EXPLANATION | FIXED: los campos de entrada dicen «hora de Caracas» |
 | MISSING_VALIDATIONS (período) | FIXED (Centro); Libros: EXPLICITLY_OUT_OF_SCOPE, porque no filtra |
-| MISSING_PERIOD_RULES (libros fiscales) | LEGAL_VALIDATION_REQUIRED (OD-TIME-11) |
+| MISSING_PERIOD_RULES (libros fiscales) | LEGAL_VALIDATION_REQUIRED (PDD-TIME-11) |
 | MISSING_REPORT_FILTERS (bitácora por día) | FUTURE_SPEC: no existe filtro de fecha en la bitácora y ningún requisito aprobado lo pide; con ADR-020, cuando exista, usará `limites_del_dia_utc` |
 | MISSING_DEFAULTS (inputs `date` sin «hoy») | EXPLICITLY_OUT_OF_SCOPE: ningún requisito pide «hoy» por defecto; si se añade, `hoyDeNegocio()` |
 | MISSING_ERROR_STATES (INVALID_DATE, INVALID_RANGE, OUT_OF_PERIOD, PERIOD_CLOSED) | Período: FIXED (INVALID_PERIOD). Rangos y período cerrado no existen en estas pantallas → NOT_APPLICABLE |

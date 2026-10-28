@@ -177,3 +177,32 @@ que es una puntuación de coincidencia y no dinero.
 | **INV-MOVTYPE-CARRERA** | `create_movement_type` consultaba y luego insertaba sin nada entre medias: dos altas simultáneas del mismo código pasaban ambas la consulta y la segunda subía como **500** en vez del `409 MOVEMENT_TYPE_DUPLICATE` que el camino secuencial ya contestaba. Medido con carrera forzada sobre PostgreSQL: `IntegrityError` crudo, `pgcode=23505`, restricción `uq_movement_types_company_code`. La creación baja al servicio con el patrón que el propio módulo ya usaba —savepoint, captura de esa restricción, conflicto de dominio—; la ruta se queda con confirmar | **CLOSED / CONVERGED** (2026-09-18) | `specs/003-inventario-logistica/spec023-movement-type-create-race-delta.md` · `evidence/movement-type-race/` |
 | **MOVTYPE-GLOBAL-SIN-UNICIDAD** | Un tipo de movimiento de toda la instalación lleva `company_id` nulo, y en PostgreSQL los nulos no colisionan entre sí: `UNIQUE (company_id, code)` no garantiza nada ahí. Medido: dos altas concurrentes dejan **dos filas**. Protegerlo exige un índice único parcial y, por tanto, migración; pero la Spec **no declara** unicidad del código —su modelo de datos solo dice «company_id/global»—, así que decidir si dos tipos globales pueden compartir código es una decisión de identidad de negocio | **OPEN** — `MATERIAL_DECISION_REQUIRED`, dueña 023 | `spec023-movement-type-create-race-delta.md` §7 |
 | **SEED-EMPRESA-CODIGO-NO-UNICO** | `companies` no tiene índice único sobre `(tenant_id, code)`. **Premisa corregida el 2026-09-19**: el registro daba por hecho que esa identidad existía, y no existe en ninguna parte. Ninguna Spec la declara, el ORM no la declara, la migración `0001` nunca la creó, `create_company` **no comprueba duplicados** —medido: dos altas con el mismo código responden 200 y 200— y el producto **nunca** resuelve una empresa por código (cero `Company.code ==` en `app/`); además no normaliza: `sonda` y ` SONDA ` se guardan tal cual. Duplicados existentes: **0 grupos**. Crear la restricción cambiaría una conducta hoy legítima sin que ninguna Spec lo pida, así que **no se implementa**: decidir si el código identifica o etiqueta es una decisión de negocio | **OPEN** — `MATERIAL_DECISION_REQUIRED`, dueña **SPEC007** | `specs/001-fundacion/spec007-company-code-identity-analysis.md` |
+
+### Actualización SHARED-CORE-P0-HARDENING-04 (2026-10-28): catálogo de auditoría
+
+Detalle en `specs/001-fundacion/spec001-audit-catalog-delta.md` §15.
+
+**Cerradas:**
+- DOCUMENT-SCAN-REJECTION-AUDIT-NOT-PERSISTED: OD-AUD-07, frontera de rechazo;
+- AUDIT-DETAIL-NO-IMPLEMENTADO;
+- AUDIT-DATE-FILTER-MISSING;
+- UI-BUSQUEDA-MUERTA en Auditoría (Existencias sigue abierta);
+- AUDIT-ORDEN-SIN-DESEMPATE;
+- AUDIT-PAGINA-SIN-INDICE-DE-ORDEN: índice (tenant_id, event_time), migración 0061;
+- REPORT-PERIOD-NOT-APPLIED: solo queda FISCAL-BOOK-PERIOD-RULE.
+
+**Parcial:** DT-06. Los eventos de UoM y almacenes llevan empresa y están catalogados; empresas, artículos y categorías documentales siguen sin auditoría.
+
+**Nuevas:**
+
+| Deuda | Severidad |
+|---|---|
+| DOCUMENT-UPLOAD-VALIDATION-REJECTION-NOT-AUDITED | MEDIUM |
+| E2E-TOTP-PASO-COMPARTIDO | LOW |
+| E2E-PAGINACION-RELLENO-INEFICAZ | LOW |
+| AUDIT-TIMELINE-TOTAL-LIMITADO | LOW |
+| AUDIT-DYNAMIC-VALUES-NOT-STATIC | LOW |
+| AUDIT-ROLE-UNIT-CONTEXT | Dependencia de Gobierno |
+| AUDIT-RETENTION-POLICY | LEGAL_VALIDATION_REQUIRED |
+| QA-REPRO-AUDIT-PROBES | LOW |
+| REPORT-PERIOD-INPUT-ON-SNAPSHOT-REPORTS | LOW |

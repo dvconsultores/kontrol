@@ -62,6 +62,32 @@ describe("uploadErrorMessage", () => {
     expect(message).not.toMatch(/limpio|verificado/i);
   });
 
+  it("SCAN_FAILED con SCANNER_UNAVAILABLE dice que el servicio no está disponible, sin afirmar malware", () => {
+    const err = new ApiError(422, {
+      code: "SCAN_FAILED", message: "x",
+      details: { category: "SCANNER_UNAVAILABLE" },
+    });
+    const message = uploadErrorMessage(err);
+    expect(message).toContain("no está disponible");
+    expect(message).not.toContain("malicioso");
+  });
+
+  it("SCAN_FAILED con SCAN_TIMEOUT dice que el análisis tardó demasiado", () => {
+    const err = new ApiError(422, {
+      code: "SCAN_FAILED", message: "x",
+      details: { category: "SCAN_TIMEOUT" },
+    });
+    expect(uploadErrorMessage(err)).toContain("tardó demasiado");
+  });
+
+  it("FILE_INFECTED no interpola la firma del analizador", () => {
+    const err = new ApiError(422, {
+      code: "FILE_INFECTED", message: "x",
+      details: { category: "MALWARE_DETECTED", signature: "Firma-Sintetica" },
+    });
+    expect(uploadErrorMessage(err)).not.toContain("Firma-Sintetica");
+  });
+
   it("explica que un vínculo congelado no se retira", () => {
     const err = new ApiError(409, { code: "LINK_FROZEN", message: "x" });
     expect(uploadErrorMessage(err)).toMatch(/congelado/i);

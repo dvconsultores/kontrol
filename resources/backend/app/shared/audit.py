@@ -2,6 +2,11 @@
 
 Registra eventos append-only con contexto, antes/después, request_id y
 evidencia. Los eventos de auditoría no se modifican ni eliminan.
+
+Validación contra el catálogo cerrado antes de crear el evento
+(FR-001-257/258, OD-AUD-04), correlación automática del request_id de la
+petición en curso (FR-001-261) y frontera explícita para auditar rechazos
+(OD-AUD-07).
 """
 
 from __future__ import annotations
@@ -11,7 +16,9 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.core.logging import request_id_actual
 from app.modules.audit.models import AuditEvent
+from app.shared.audit_catalog import validate_event
 
 
 def _now() -> datetime:
@@ -36,6 +43,7 @@ def record_audit(
     evidence: dict[str, Any] | None = None,
     ip: str | None = None,
 ) -> AuditEvent:
+    request_id = request_id or request_id_actual.get()
     if company_id and not tenant_id:
         # El tenant se deduce de la empresa en vez de pedirlo dos veces: así el
         # rastro no puede acabar diciendo una empresa de un tenant y un tenant
@@ -45,6 +53,18 @@ def record_audit(
         empresa = db.get(Company, company_id)
         if empresa is not None:
             tenant_id = empresa.tenant_id
+
+    # El catálogo es cerrado y falla cerrado: un evento no catalogado o
+    # incompatible con su alcance no llega a añadirse a la sesión.
+    validate_event(
+        action=action,
+        entity_type=entity_type,
+        tenant_id=tenant_id,
+        company_id=company_id,
+        before=before,
+        after=after,
+        evidence=evidence,
+    )
 
     event = AuditEvent(
         action=action,
@@ -66,3 +86,16 @@ def record_audit(
     db.add(event)
     # No se hace commit aquí: la operación padre define la transacción.
     return event
+
+
+def record_audit_after_rollback(db: Session, **campos: Any) -> AuditEvent:
+    """Frontera de las clases REJECTION y SECURITY_DENIAL (OD-AUD-07).
+
+    La transacción de la operación rechazada se deshace y el evento se
+    confirma en una transacción propia, así sobrevive al rechazo; es el mismo
+    patrón que `authority._denegar`.
+    """
+    db.rollback()
+    evento = record_audit(db, **campos)
+    db.commit()
+    return evento

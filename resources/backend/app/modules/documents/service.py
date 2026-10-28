@@ -42,7 +42,7 @@ from app.modules.documents.storage import (
     safe_extension,
     sanitize_filename,
 )
-from app.shared.audit import record_audit
+from app.shared.audit import record_audit, record_audit_after_rollback
 from app.shared.clock import hoy_de_negocio
 
 #: Tamaño máximo global. Un tipo puede bajarlo, nunca subirlo por encima.
@@ -72,11 +72,12 @@ def _now() -> datetime:
 
 
 def _audit(db: Session, actor: Any, action: str, entity_id: str,
-           before: dict | None = None, after: dict | None = None) -> None:
+           before: dict | None = None, after: dict | None = None, *,
+           company_id: str) -> None:
     record_audit(db, action=action, entity_type="Document", entity_id=entity_id,
                  tenant_id=getattr(actor, "tenant_id", None),
                  user_id=str(getattr(actor, "id", "")) or None,
-                 before=before, after=after)
+                 before=before, after=after, company_id=company_id)
 
 
 # --------------------------------------------------------------------------
@@ -202,16 +203,35 @@ def upload_version(
         scanner = scanning.get_scanner()
         scan = scanner.scan(str(temp_path))
         if doc_type.scan_required and scan.result != scanning.CLEAN:
+            category, reason_code = scanning.clasificar_rechazo(scan)
             code = "FILE_INFECTED" if scan.result == scanning.INFECTED else "SCAN_FAILED"
-            message = ("El archivo fue identificado como malicioso"
+            message = ("El archivo fue rechazado por seguridad: el análisis lo identificó como malicioso"
                        if scan.result == scanning.INFECTED
                        else "No se pudo verificar la seguridad del archivo")
-            _audit(db, actor, "DOCUMENT_SCAN_REJECTED", str(document.id),
-                   after={"result": scan.result, "signature": scan.signature})
-            db.flush()
+            # OD-AUD-07: la carga rechazada se deshace y el rechazo se confirma
+            # aparte, así sobrevive. OD-AUD-08/09: evidencia mínima, sin firma
+            # ni contenido ni nombre original.
+            evidencia = {
+                "category": category,
+                "reason_code": reason_code,
+                "engine": scan.scanner,
+                "engine_version": scanner.engine_version() or "unknown",
+                "sha256": digest.hexdigest(),
+                "size_bytes": size,
+                "detected_mime": detected,
+                "document_type_id": str(doc_type.id),
+            }
+            document_id = str(document.id)
+            company_id = document.company_id
+            tenant_id = getattr(actor, "tenant_id", None)
+            user_id = str(getattr(actor, "id", "")) or None
+            record_audit_after_rollback(
+                db, action="DOCUMENT_SCAN_REJECTED", entity_type="Document",
+                entity_id=document_id, company_id=company_id, tenant_id=tenant_id,
+                user_id=user_id, reason=category, evidence=evidencia)
             raise KontrolError(code=code, message=message, status_code=422,
                                details={"scan_result": scan.result,
-                                        "signature": scan.signature})
+                                        "category": category})
 
         checksum = digest.hexdigest()
 
@@ -261,7 +281,8 @@ def upload_version(
         StoredFile.id != str(stored.id))).scalar_one()
     if twins:
         _audit(db, actor, "DOCUMENT_HASH_COINCIDENCE", str(document.id),
-               after={"sha256": checksum, "existing_files": int(twins)})
+               after={"sha256": checksum, "existing_files": int(twins)},
+               company_id=document.company_id)
 
     try:
         version = _create_version(db, document, doc_type, stored, replacement_reason, actor)
@@ -274,7 +295,8 @@ def upload_version(
         raise
     _audit(db, actor, "DOCUMENT_FILE_UPLOADED", str(document.id),
            after={"version": version.version_number, "sha256": checksum,
-                  "scan": scan.result})
+                  "scan": scan.result},
+           company_id=document.company_id)
     return version
 
 
@@ -372,7 +394,8 @@ def attach(db: Session, *, document: Document, resource_type: str, resource_id: 
     db.add(link)
     db.flush()
     _audit(db, actor, "DOCUMENT_LINKED", str(document.id),
-           after={"resource_type": resource_type, "resource_id": resource_id, "role": role})
+           after={"resource_type": resource_type, "resource_id": resource_id, "role": role},
+           company_id=document.company_id)
     return link
 
 
@@ -383,7 +406,8 @@ def detach(db: Session, *, link: DocumentLink, actor: Any) -> None:
             code="LINK_FROZEN",
             message="El vínculo está congelado: el proceso que lo usó no se reinterpreta")
     _audit(db, actor, "DOCUMENT_UNLINKED", link.document_id,
-           before={"resource_type": link.resource_type, "resource_id": link.resource_id})
+           before={"resource_type": link.resource_type, "resource_id": link.resource_id},
+           company_id=link.company_id)
     db.delete(link)
     db.flush()
 
@@ -411,7 +435,8 @@ def freeze_links(db: Session, *, resource_type: str, resource_id: str,
         frozen.append(link)
         if actor is not None:
             _audit(db, actor, "DOCUMENT_LINK_FROZEN", link.document_id,
-                   after={"frozen_version_id": link.frozen_version_id})
+                   after={"frozen_version_id": link.frozen_version_id},
+                   company_id=link.company_id)
     db.flush()
     return frozen
 
@@ -607,7 +632,8 @@ def purge_version(db: Session, *, version: DocumentVersion, actor: Any) -> bool:
     stored.status = "PURGED"
     db.flush()
     _audit(db, actor, "DOCUMENT_FILE_PURGED", str(version.document_id),
-           after={"version": version.version_number, "sha256": stored.sha256})
+           after={"version": version.version_number, "sha256": stored.sha256},
+           company_id=version.company_id)
     return True
 
 
@@ -707,7 +733,8 @@ def import_legacy_reference(
     _audit(db, actor, "LEGACY_DOCUMENT_IMPORTED", str(document.id),
            after={"source_table": reference.source_table,
                   "source_column": reference.source_column,
-                  "source_row_id": reference.source_row_id, "sha256": checksum})
+                  "source_row_id": reference.source_row_id, "sha256": checksum},
+           company_id=reference.company_id)
     return document
 
 

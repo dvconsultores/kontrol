@@ -48,11 +48,20 @@ function evento(n: number): AuditEvent {
     source: "API",
     reason: null,
     event_time: "2026-09-30T18:30:00+00:00",
+    company_id: null,
+    company_name: null,
+    scope: "TENANT",
+    action_label: "Inicio de sesión",
+    username: null,
+    details: {},
   };
 }
 
 function servidor(cuantos: number): void {
   apiFetch.mockImplementation(async (ruta: string) => {
+    if (ruta === "/audit/filters") {
+      return { catalog_version: "x", tenant_wide: false, actions: [], companies: [] };
+    }
     const url = new URL(ruta, "http://k");
     const page = Number(url.searchParams.get("page") ?? "1");
     const page_size = Number(url.searchParams.get("page_size") ?? "20");
@@ -94,7 +103,10 @@ describe("AuditoriaPage · paginación de servidor", () => {
     montar();
     await screen.findByText("rastro-001");
     await userEvent.selectOptions(screen.getByLabelText("Registros por página"), "25");
-    await waitFor(() => expect(apiFetch).toHaveBeenLastCalledWith("/audit/events?page=1&page_size=25"));
+    await waitFor(() => {
+      const eventos = apiFetch.mock.calls.map(([ruta]) => String(ruta)).filter((ruta) => ruta.startsWith("/audit/events"));
+      expect(eventos[eventos.length - 1]).toBe("/audit/events?page=1&page_size=25");
+    });
     expect(await screen.findByText("rastro-025")).toBeInTheDocument();
     expect(screen.getAllByRole("row")).toHaveLength(26);
     expect(paginadores()).toHaveLength(1);
@@ -119,12 +131,14 @@ describe("AuditoriaPage · paginación de servidor", () => {
     servidor(108);
     montar();
     await screen.findByText("rastro-001");
-    expect(apiFetch).toHaveBeenNthCalledWith(1, "/audit/events?page=1&page_size=10");
-    expect(apiFetch.mock.calls.every(([ruta]) => !String(ruta).includes("page=0"))).toBe(true);
+    const llamadasEventos = (): string[] =>
+      apiFetch.mock.calls.map(([ruta]) => String(ruta)).filter((ruta) => ruta.startsWith("/audit/events"));
+    expect(llamadasEventos()[0]).toBe("/audit/events?page=1&page_size=10");
+    expect(llamadasEventos().every((ruta) => !ruta.includes("page=0"))).toBe(true);
     await userEvent.click(screen.getByRole("button", { name: "Página siguiente" }));
     expect(await screen.findByText("rastro-011")).toBeInTheDocument();
-    expect(apiFetch).toHaveBeenNthCalledWith(2, "/audit/events?page=2&page_size=10");
-    expect(apiFetch).toHaveBeenCalledTimes(2);
+    expect(llamadasEventos()[1]).toBe("/audit/events?page=2&page_size=10");
+    expect(llamadasEventos()).toHaveLength(2);
   });
 
   it("PAG-05 · elegir otro tamaño pide ese page_size", async () => {
@@ -133,7 +147,10 @@ describe("AuditoriaPage · paginación de servidor", () => {
     montar();
     await screen.findByText("rastro-001");
     await userEvent.selectOptions(screen.getByLabelText("Registros por página"), "50");
-    await waitFor(() => expect(apiFetch).toHaveBeenLastCalledWith("/audit/events?page=1&page_size=50"));
+    await waitFor(() => {
+      const eventos = apiFetch.mock.calls.map(([ruta]) => String(ruta)).filter((ruta) => ruta.startsWith("/audit/events"));
+      expect(eventos[eventos.length - 1]).toBe("/audit/events?page=1&page_size=50");
+    });
     expect(await screen.findByText("rastro-050")).toBeInTheDocument();
     expect(screen.getAllByRole("row")).toHaveLength(51);
   });
@@ -148,7 +165,10 @@ describe("AuditoriaPage · paginación de servidor", () => {
     await userEvent.click(screen.getByRole("button", { name: "Página siguiente" }));
     await screen.findByText("rastro-021");
     await userEvent.selectOptions(screen.getByLabelText("Registros por página"), "25");
-    await waitFor(() => expect(apiFetch).toHaveBeenLastCalledWith("/audit/events?page=1&page_size=25"));
+    await waitFor(() => {
+      const eventos = apiFetch.mock.calls.map(([ruta]) => String(ruta)).filter((ruta) => ruta.startsWith("/audit/events"));
+      expect(eventos[eventos.length - 1]).toBe("/audit/events?page=1&page_size=25");
+    });
     expect(await screen.findByText("rastro-001")).toBeInTheDocument();
     expect(screen.getByText("Página 1 de 5")).toBeInTheDocument();
   });
@@ -178,7 +198,8 @@ describe("AuditoriaPage · paginación de servidor", () => {
     expect(screen.getAllByRole("row")).toHaveLength(4);
     expect(screen.getByText("Página 3 de 3")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Página siguiente" })).toBeDisabled();
-    expect(apiFetch).toHaveBeenLastCalledWith("/audit/events?page=3&page_size=10");
+    const eventos = apiFetch.mock.calls.map(([ruta]) => String(ruta)).filter((ruta) => ruta.startsWith("/audit/events"));
+    expect(eventos[eventos.length - 1]).toBe("/audit/events?page=3&page_size=10");
   });
 
   it("PAG-11 · un sobre vacío es el estado vacío, sin paginador", async () => {
@@ -193,7 +214,12 @@ describe("AuditoriaPage · paginación de servidor", () => {
   it("PAG-12 · mientras no hay respuesta hay carga y no hay paginador", async () => {
     apiFetch.mockClear();
     let responder: (v: PagedResult<AuditEvent>) => void = () => undefined;
-    apiFetch.mockReturnValue(new Promise<PagedResult<AuditEvent>>((resolve) => { responder = resolve; }));
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return Promise.resolve({ catalog_version: "x", tenant_wide: false, actions: [], companies: [] });
+      }
+      return new Promise<PagedResult<AuditEvent>>((resolve) => { responder = resolve; });
+    });
     montar();
     expect(screen.getByRole("status")).toBeInTheDocument();
     expect(paginadores()).toHaveLength(0);
@@ -205,7 +231,12 @@ describe("AuditoriaPage · paginación de servidor", () => {
     apiFetch.mockClear();
     const fallo = Promise.reject(new Error("boom"));
     fallo.catch(() => undefined);
-    apiFetch.mockImplementation(() => fallo);
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/audit/filters") {
+        return Promise.resolve({ catalog_version: "x", tenant_wide: false, actions: [], companies: [] });
+      }
+      return fallo;
+    });
     montar();
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("No fue posible cargar la auditoría."));
     expect(screen.queryByText("Sin eventos")).not.toBeInTheDocument();
