@@ -32,6 +32,7 @@ import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { PageContent } from "@/layout/PageContent";
+import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
 
 const SELECT =
   "h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900";
@@ -325,7 +326,7 @@ export function ReembolsosPage(): React.JSX.Element {
             <tbody>
               {(reembolsos.data?.items ?? []).map((r) => (
                 <tr key={r.id} className="border-b border-border-subtle">
-                  <td className="py-1">{r.requested_at?.slice(0, 10) ?? "—"}</td>
+                  <td className="py-1">{fechaDeNegocioDeInstante(r.requested_at)}</td>
                   <td className="font-mono text-xs">{corto(r.credit_note_id)}</td>
                   <td className="font-mono">
                     {r.amount} {r.currency}

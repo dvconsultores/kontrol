@@ -9,6 +9,7 @@ import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 
 const columnHelper = createColumnHelper<LicenseEventItem>();
 
@@ -33,7 +34,7 @@ export function EventosPage(): React.JSX.Element {
   const columns = [
     columnHelper.accessor("created_at", {
       header: "Fecha",
-      cell: (info) => new Date(info.getValue()).toLocaleString("es-VE"),
+      cell: (info) => formatearInstante(info.getValue()),
     }),
     columnHelper.accessor("event_type", { header: "Evento" }),
     columnHelper.accessor("source", { header: "Origen" }),

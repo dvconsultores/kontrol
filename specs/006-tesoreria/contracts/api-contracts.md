@@ -31,6 +31,7 @@
 ### Monedas y tasas
 - `GET/POST /treasury/currencies` · `GET/POST /treasury/exchange-rates`.
 - Body rate: `{currency_id, rate_date, rate, source?}`.
+- Fechas de tasas (ADR-020): `effective_at` es un instante; si llega una fecha «AAAA-MM-DD», rige desde las 00:00 de **Caracas**; un instante sin zona en la API se lee como UTC; todo instante se guarda normalizado a UTC. `rate_date` es la fecha de negocio de Caracas de `effective_at`, y la política vigente de una consulta es la del día de negocio de Caracas del instante consultado. En la importación CSV, una fecha suelta rige desde las 00:00 de Caracas y una hora sin zona es hora de Caracas; con desfase explícito se respeta.
 
 ## 2. Cajas — sesiones y movimientos
 

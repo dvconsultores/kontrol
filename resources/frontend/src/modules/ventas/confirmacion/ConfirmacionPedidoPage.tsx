@@ -28,6 +28,7 @@ import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 import { PageContent } from "@/layout/PageContent";
 
 const cols = createColumnHelper<PendingConfirmation>();
@@ -133,7 +134,7 @@ export function ConfirmacionPedidoPage(): React.JSX.Element {
     cols.accessor("code", { header: "Pedido" }),
     cols.accessor("updated_at", {
       header: "Preparado",
-      cell: (c) => c.getValue()?.replace("T", " ").slice(0, 19) ?? "—",
+      cell: (c) => formatearInstante(c.getValue()),
     }),
     cols.display({
       id: "accion",
@@ -244,7 +245,7 @@ export function ConfirmacionPedidoPage(): React.JSX.Element {
               <ul className="text-sm text-text-700">
                 {h.attempts.map((a) => (
                   <li key={a.id}>
-                    #{a.attempt} · {a.status} · {a.checked_at?.replace("T", " ").slice(0, 19)}
+                    #{a.attempt} · {a.status} · {formatearInstante(a.checked_at)}
                     {a.notes ? ` · ${a.notes}` : ""}
                   </li>
                 ))}

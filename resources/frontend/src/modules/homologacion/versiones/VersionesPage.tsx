@@ -16,6 +16,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 
 const columnHelper = createColumnHelper<ReleaseVersionSummary>();
 
@@ -116,7 +117,7 @@ export function VersionesPage(): React.JSX.Element {
     columnHelper.accessor("released_by", { header: "Liberado por" }),
     columnHelper.accessor("released_at", {
       header: "Fecha",
-      cell: (info) => (info.getValue() ? new Date(info.getValue() as string).toLocaleString("es-VE") : "—"),
+      cell: (info) => (info.getValue() ? formatearInstante(info.getValue() as string) : "—"),
     }),
     columnHelper.accessor("blocked_reasons", {
       header: "Bloqueos",

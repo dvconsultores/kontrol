@@ -27,9 +27,11 @@ import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
+import { formatearInstante, instanteDesdeHoraDeCaracas } from "@/lib/fecha-de-negocio";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
 
 interface PurchaseOrderSummary {
   id: string;
@@ -139,7 +141,7 @@ export function RecepcionesPage(): React.JSX.Element {
         supplier_invoice_ref: newInvoice || null,
         packages_declared: newPackages === "" ? null : Number(newPackages),
       };
-      if (newScheduled) body.unloading_scheduled_at = new Date(newScheduled).toISOString();
+      if (newScheduled) body.unloading_scheduled_at = instanteDesdeHoraDeCaracas(newScheduled) ?? undefined;
       const rec = await apiFetch<GoodsReceiptDetail>("/purchasing/receipts", { method: "POST", body });
       notify({ type: "success", title: "Recepción creada", description: newCode });
       setSelected(rec.id);
@@ -209,7 +211,7 @@ export function RecepcionesPage(): React.JSX.Element {
     columnHelper.accessor("quality_status", { header: "Conformidad" }),
     columnHelper.accessor("arrival_at", {
       header: "Arribo",
-      cell: ({ getValue }) => getValue()?.slice(0, 16).replace("T", " ") ?? "sin confirmar",
+      cell: ({ getValue }) => (getValue() ? formatearInstante(getValue()) : "sin confirmar"),
     }),
     columnHelper.display({
       id: "bultos",
@@ -222,7 +224,7 @@ export function RecepcionesPage(): React.JSX.Element {
     }),
     columnHelper.accessor("record_issued_at", {
       header: "Acta",
-      cell: ({ getValue }) => (getValue() ? getValue()!.slice(0, 10) : "—"),
+      cell: ({ getValue }) => fechaDeNegocioDeInstante(getValue()),
     }),
     columnHelper.display({
       id: "actions",
@@ -290,7 +292,7 @@ export function RecepcionesPage(): React.JSX.Element {
           <FormField label="Almacén" required>
             <TextInput value={newWarehouse} onChange={(e) => setNewWarehouse(e.target.value)} placeholder="Identificador del almacén" required />
           </FormField>
-          <FormField label="Descarga programada" help="Etapa 2 del proceso">
+          <FormField label="Descarga programada" help="Etapa 2 del proceso · hora de Caracas">
             <TextInput type="datetime-local" value={newScheduled} onChange={(e) => setNewScheduled(e.target.value)} />
           </FormField>
           <FormField label="Packing list" help="Contra qué se comparará">
@@ -323,7 +325,7 @@ export function RecepcionesPage(): React.JSX.Element {
             <h2 className="mb-2 text-base font-semibold text-text-900">Inspección de {d.code}</h2>
             <p className="mb-3 text-sm text-text-500">
               Packing list {d.packing_list_ref ?? "—"}: {marca(d.packing_list_match)} · Factura {d.supplier_invoice_ref ?? "—"}: {marca(d.supplier_invoice_match)} · Orden: {marca(d.order_match)} · Documentación: {marca(d.documentation_match)}
-              {d.inspected_at ? ` · inspeccionada el ${d.inspected_at.slice(0, 16).replace("T", " ")}` : " · sin inspeccionar"}
+              {d.inspected_at ? ` · inspeccionada el ${formatearInstante(d.inspected_at)}` : " · sin inspeccionar"}
             </p>
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
               <FormField label="Bultos contados" help={`Declarados: ${d.packages_declared ?? "—"}`}>

@@ -20,6 +20,7 @@ import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { PageContent } from "@/layout/PageContent";
+import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
 
 import {
   can, formatDecimal,
@@ -208,11 +209,11 @@ export function PresentacionesPage(): React.JSX.Element {
   const versionColumns = useMemo<ColumnDef<PresentationVersion, unknown>[]>(() => [
     {
       id: "from", header: "Vigente desde",
-      cell: ({ row }) => row.original.valid_from?.slice(0, 10) ?? "—",
+      cell: ({ row }) => fechaDeNegocioDeInstante(row.original.valid_from),
     },
     {
       id: "to", header: "Hasta",
-      cell: ({ row }) => row.original.valid_to?.slice(0, 10) ?? "—",
+      cell: ({ row }) => fechaDeNegocioDeInstante(row.original.valid_to),
     },
     {
       id: "factor", header: "Equivale a",

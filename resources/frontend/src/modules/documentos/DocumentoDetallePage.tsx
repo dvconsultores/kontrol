@@ -22,6 +22,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { PageContent } from "@/layout/PageContent";
+import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
 
 import {
   SECURITY_LABEL, STATUS_LABEL, can, formatSize, truncateName, uploadErrorMessage,
@@ -268,7 +269,7 @@ export function DocumentoDetallePage(): React.JSX.Element {
                   </td>
                   <td className="py-2 pr-3">{version.replacement_reason ?? "—"}</td>
                   <td className="py-2 pr-3 whitespace-nowrap">
-                    {version.created_at ? version.created_at.slice(0, 10) : "—"}
+                    {fechaDeNegocioDeInstante(version.created_at)}
                   </td>
                   <td className="py-2">
                     {can(doc, "download") && version.file ? (

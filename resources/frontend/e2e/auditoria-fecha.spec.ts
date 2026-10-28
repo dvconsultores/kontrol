@@ -5,8 +5,9 @@
  * «Invalid Date» en todas las filas. Aquí se genera un evento controlado —un
  * inicio de sesión por API, cuyo `X-Request-ID` devuelve el servidor— se lee
  * su `event_time` por API, y se comprueba que la fila lo muestra con la
- * convención del producto (`toLocaleString("es-VE")` en la zona del navegador),
- * y que ninguna fila de la primera página dice «Invalid Date».
+ * convención del producto (`toLocaleString("es-VE")` en America/Caracas, sea
+ * cual sea la zona del navegador, ADR-020), y que ninguna fila de la primera
+ * página dice «Invalid Date».
  */
 import { type APIRequestContext, type Page } from "@playwright/test";
 import { entrar as entrarConSesion, expect, identidad, iniciarSesion, sesionApi, test } from "./helpers/sesion";
@@ -60,14 +61,14 @@ test.describe("AUDITORIA-CREATED-AT · la columna Fecha muestra event_time", () 
     const primeros = sobre!.items.slice(0, 10);
     await expect(filas).toHaveCount(primeros.length);
     for (const [i, item] of primeros.entries()) {
-      const esperado = await page.evaluate((iso) => new Date(iso).toLocaleString("es-VE"), item.event_time);
+      const esperado = await page.evaluate((iso) => new Date(iso).toLocaleString("es-VE", { timeZone: "America/Caracas" }), item.event_time);
       const celda = (await filas.nth(i).innerText()).split("\t")[0];
       expect(celda, `fila ${i}`).not.toBe("Invalid Date");
       expect(celda, `fila ${i}`).toBe(esperado);
     }
     // Y la del evento controlado, si cayó en esta página, dice exactamente su instante.
     if (primeros.some((i) => i.request_id === rastro)) {
-      const esperado = await page.evaluate((iso) => new Date(iso).toLocaleString("es-VE"), evento.event_time);
+      const esperado = await page.evaluate((iso) => new Date(iso).toLocaleString("es-VE", { timeZone: "America/Caracas" }), evento.event_time);
       await expect(
         page.getByRole("row", { name: new RegExp(rastro) }).filter({ hasText: "LOGIN_SUCCESS" }),
       ).toContainText(esperado);

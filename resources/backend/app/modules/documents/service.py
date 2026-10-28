@@ -43,6 +43,7 @@ from app.modules.documents.storage import (
     sanitize_filename,
 )
 from app.shared.audit import record_audit
+from app.shared.clock import hoy_de_negocio
 
 #: Tamaño máximo global. Un tipo puede bajarlo, nunca subirlo por encima.
 GLOBAL_MAX_SIZE = 50 * 1024 * 1024
@@ -434,10 +435,13 @@ def documents_for(db: Session, *, resource_type: str, resource_id: str,
 # --------------------------------------------------------------------------
 
 def is_expired(document: Document, today: date | None = None) -> bool:
-    """`EXPIRED` es **derivado**, no un estado persistido (FR-046-061)."""
+    """`EXPIRED` es **derivado**, no un estado persistido (FR-046-061).
+
+    El «hoy» es el día de negocio de Caracas (FR-001-248).
+    """
     if document.expiration_date is None:
         return False
-    return document.expiration_date < (today or datetime.now(UTC).date())
+    return document.expiration_date < (today or hoy_de_negocio())
 
 
 def dependencies_of(db: Session, document: Document) -> dict[str, Any]:

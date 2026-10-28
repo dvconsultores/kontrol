@@ -326,7 +326,7 @@ export function EstadoDeCuentaPage(): React.JSX.Element {
                 <tbody>
                   {e.entries.map((x) => (
                     <tr key={`${x.type}-${x.id}`} className="border-b border-border-subtle">
-                      <td className="py-1">{x.date?.slice(0, 10) ?? "—"}</td>
+                      <td className="py-1">{x.date ?? "—"}</td>
                       <td>{TIPO[x.type] ?? x.type}</td>
                       <td className="font-mono text-xs">{x.reference ? corto(x.reference) : "—"}</td>
                       <td className="font-mono">{x.debit}</td>

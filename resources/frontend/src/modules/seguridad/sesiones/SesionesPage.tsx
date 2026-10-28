@@ -6,6 +6,7 @@ import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 
 interface SessionSummary {
   id: string;
@@ -64,7 +65,7 @@ export function SesionesPage(): React.JSX.Element {
             row(
               s.id,
               s.revoked ? "Revocada" : "Activa",
-              `${s.ip ?? "—"} · ${s.user_agent ?? ""} · vence ${new Date(s.expires_at).toLocaleString("es-VE")}`.trim(),
+              `${s.ip ?? "—"} · ${s.user_agent ?? ""} · vence ${formatearInstante(s.expires_at)}`.trim(),
               s.revoked ? undefined : (
                 <AsyncButton variant="ghost" size="sm" onClick={() => revoke(s.id)}>
                   Revocar

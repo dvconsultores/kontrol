@@ -21,19 +21,30 @@ La autoridad vive **aquí, en el código**. Fijar `TZ` en el contenedor es un
 cinturón de seguridad útil, pero no es la autoridad: las pruebas, los guiones
 sueltos y cualquier servidor futuro pueden correr en otra zona, y el resultado
 tiene que ser el mismo.
+
+La zona de negocio es constante (OD-TIME-01, ADR-020) y no se lee de la
+configuración. Los límites de día y de período son semiabiertos: [inicio, fin).
 """
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+import re
+from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from app.core.config import get_settings
+from app.core.errors import KontrolError
+
+ZONA_DE_NEGOCIO = ZoneInfo("America/Caracas")
 
 
 def zona_de_negocio() -> ZoneInfo:
-    """La zona del calendario de negocio. Una sola, y declarada en la configuración."""
-    return ZoneInfo(get_settings().business_timezone)
+    """La zona del calendario de negocio. Constante: America/Caracas (OD-TIME-01)."""
+    return ZONA_DE_NEGOCIO
+
+
+def instante_actual() -> datetime:
+    """El instante técnico actual, en UTC. Es la única costura del reloj: las pruebas la sustituyen."""
+    return datetime.now(UTC)
 
 
 def ahora_de_negocio(instante: datetime | None = None) -> datetime:
@@ -44,7 +55,7 @@ def ahora_de_negocio(instante: datetime | None = None) -> datetime:
     Un `datetime` sin zona se interpreta como UTC, que es como los guarda la base.
     """
     if instante is None:
-        instante = datetime.now(UTC)
+        instante = instante_actual()
     elif instante.tzinfo is None:
         instante = instante.replace(tzinfo=UTC)
     return instante.astimezone(zona_de_negocio())
@@ -53,3 +64,40 @@ def ahora_de_negocio(instante: datetime | None = None) -> datetime:
 def hoy_de_negocio(instante: datetime | None = None) -> date:
     """El día del calendario de negocio. Lo que antes se pedía a `date.today()`."""
     return ahora_de_negocio(instante).date()
+
+
+def inicio_del_dia_de_negocio(dia: date) -> datetime:
+    """El inicio civil (medianoche) del día dado en la zona de negocio."""
+    return datetime(dia.year, dia.month, dia.day, tzinfo=ZONA_DE_NEGOCIO)
+
+
+def limites_del_dia_utc(dia: date) -> tuple[datetime, datetime]:
+    """Límites semiabiertos UTC del día civil dado: [inicio, inicio_del_siguiente)."""
+    inicio = inicio_del_dia_de_negocio(dia)
+    fin = inicio_del_dia_de_negocio(dia + timedelta(days=1))
+    return inicio.astimezone(UTC), fin.astimezone(UTC)
+
+
+_PATRON_PERIODO = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+
+
+def periodo_valido(texto: str) -> tuple[int, int]:
+    """Valida y descompone un período «AAAA-MM»; lanza `KontrolError` si no es válido."""
+    if not _PATRON_PERIODO.fullmatch(texto):
+        raise KontrolError(
+            code="INVALID_PERIOD",
+            message="El período debe tener el formato AAAA-MM.",
+            field_errors={"period": ["Formato AAAA-MM, mes 01 a 12."]},
+            status_code=422,
+        )
+    return int(texto[:4]), int(texto[5:7])
+
+
+def limites_del_periodo_utc(periodo: str) -> tuple[datetime, datetime]:
+    """Límites semiabiertos UTC del mes dado: [1.º a las 00:00, 1.º del mes siguiente)."""
+    año, mes = periodo_valido(periodo)
+    inicio = datetime(año, mes, 1, tzinfo=ZONA_DE_NEGOCIO)
+    fin_mes = 1 if mes == 12 else mes + 1
+    fin_año = año + 1 if mes == 12 else año
+    fin = datetime(fin_año, fin_mes, 1, tzinfo=ZONA_DE_NEGOCIO)
+    return inicio.astimezone(UTC), fin.astimezone(UTC)

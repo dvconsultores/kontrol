@@ -571,4 +571,6 @@ def books(db: Session, *, company_id: str, tax_type: str, period: str) -> dict:
                          "evaluated_at": e.evaluated_at.isoformat() if e.evaluated_at else None})
     else:
         raise NotFoundError(code="UNKNOWN_BOOK", message="Tipo de libro fiscal no soportado")
-    return {"tax_type": tax_type, "period": period, "count": len(rows), "total": round(total_amount, 6), "rows": rows}
+    # El período de los libros depende del perfeccionamiento del hecho imponible (Ley del IVA arts. 13 y 56) y no se filtra hasta la validación legal (OD-TIME-11).
+    return {"tax_type": tax_type, "period": period, "count": len(rows), "total": round(total_amount, 6), "rows": rows,
+            "period_applied": False, "period_rule": "LEGAL_VALIDATION_REQUIRED"}

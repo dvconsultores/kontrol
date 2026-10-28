@@ -45,7 +45,7 @@
 
 - `GET/POST /fiscal/periods` — body: `{tax_type, start, end, deadlines?}`; `POST /fiscal/periods/{id}/transition` (OPEN→CLOSED→REOPENED con aprobación).
 - `GET/POST /fiscal/tax-return-batches` — body: `{tax_type, period, files?, totals?}`.
-- `GET /fiscal/books/{tax_type}?period={mes-año}` — libro reconstruible (ventas/compras/retenciones) con equivalentes en Bs.
+- `GET /fiscal/books/{tax_type}?period={mes-año}` — libro reconstruible (ventas/compras/retenciones) con equivalentes en Bs. **No filtra por período** hasta la validación legal: el período del libro lo fija el perfeccionamiento del hecho imponible (Ley del IVA, G.O. 6.507 Ext., arts. 13 y 56), no solo la fecha de emisión; la respuesta lo declara con `period_applied: false` y `period_rule: "LEGAL_VALIDATION_REQUIRED"` (OD-TIME-11).
 
 ## 7. Contratos de integración (consumidos de 004/005/006 — v1)
 

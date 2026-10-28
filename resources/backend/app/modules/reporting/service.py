@@ -26,7 +26,7 @@ from app.core.errors import KontrolError, NotFoundError
 from app.modules.purchasing import service as ap_service
 from app.modules.reporting.models import ReportExport, ReportJob
 from app.shared import audit as audit_service
-from app.shared.clock import hoy_de_negocio
+from app.shared.clock import hoy_de_negocio, limites_del_periodo_utc
 
 
 def _company(company_id: str | None, *, obj: str) -> str:
@@ -154,32 +154,51 @@ def capacidades_de_reporte(key: str) -> tuple[str, ...]:
 def report(db: Session, *, company_id: str, key: str, period: str = "") -> dict:
     company_id = _company(company_id, obj="reporte")
     if key == "executive_ventas":
-        return _executive_ventas(db, company_id, period)
+        limites = None if period in ("", "0") else limites_del_periodo_utc(period)
+        resultado = _executive_ventas(db, company_id, period, limites)
+        resultado.setdefault("period_applied", limites is not None)
+        return resultado
     if key == "operational_inventario":
-        return _operational_inventario(db, company_id)
+        resultado = _operational_inventario(db, company_id)
+        resultado.setdefault("period_applied", False)
+        return resultado
     if key == "financial_aging":
-        return _financial_aging(db, company_id)
+        resultado = _financial_aging(db, company_id)
+        resultado.setdefault("period_applied", False)
+        return resultado
     if key.startswith("fiscal_libros_"):
+        if period not in ("", "0"):
+            limites_del_periodo_utc(period)
         tax_type = key.split("_", 2)[2].upper()
         from app.modules.fiscal import service as fiscal_service
 
-        return fiscal_service.books(db, company_id=company_id, tax_type=tax_type, period=period or "0")
+        resultado = fiscal_service.books(db, company_id=company_id, tax_type=tax_type, period=period or "0")
+        resultado.setdefault("period_applied", False)
+        return resultado
     if key == "regulatory_evaluaciones":
-        return _regulatory(db, company_id)
+        resultado = _regulatory(db, company_id)
+        resultado.setdefault("period_applied", False)
+        return resultado
     raise NotFoundError(code="REPORT_NOT_FOUND", message="Reporte no encontrado")
 
 
-def _executive_ventas(db: Session, company_id: str, period: str) -> dict:
+def _executive_ventas(db: Session, company_id: str, period: str, limites=None) -> dict:
     from app.modules.sales.models import SalesInvoice
 
-    rows = db.execute(select(SalesInvoice).where(
+    query = select(SalesInvoice).where(
         SalesInvoice.company_id == company_id,
-        SalesInvoice.status.in_(["EMITTED", "DELIVERED", "PARTIALLY_PAID", "PAID"]))).scalars().all()
+        SalesInvoice.status.in_(["EMITTED", "DELIVERED", "PARTIALLY_PAID", "PAID"]))
+    if limites is not None:
+        query = query.where(
+            SalesInvoice.issued_at >= limites[0],
+            SalesInvoice.issued_at < limites[1])
+    rows = db.execute(query).scalars().all()
     total = sum(float(i.total or 0.0) for i in rows)
     base = sum(float(i.base_fiscal or 0.0) for i in rows)
     tax = sum(float(i.tax_total or 0.0) for i in rows)
     return {"report_key": "executive_ventas", "period": period, "count": len(rows),
             "total": round(total, 2), "base": round(base, 2), "tax": round(tax, 2),
+            "period_applied": limites is not None,
             "rows": [{"id": str(i.id), "invoice_number": i.invoice_number, "customer_id": i.customer_id,
                       "base_fiscal": i.base_fiscal, "tax_total": i.tax_total, "total": i.total, "status": i.status}
                      for i in rows]}

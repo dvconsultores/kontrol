@@ -30,6 +30,7 @@ import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 import { PageContent } from "@/layout/PageContent";
 
 const cols = createColumnHelper<DispatchableOrder>();
@@ -339,7 +340,7 @@ export function DespachoPage(): React.JSX.Element {
 
               {sh.status === "SHIPPED" ? (
                 <p className="text-sm text-text-700" role="status">
-                  Mercancía despachada el {sh.dispatched_at?.slice(0, 16).replace("T", " ")}. El
+                  Mercancía despachada el {formatearInstante(sh.dispatched_at)}. El
                   pedido queda en poder del transporte hasta su entrega.
                 </p>
               ) : null}

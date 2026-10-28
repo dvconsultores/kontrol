@@ -319,3 +319,25 @@ def test_o12_20_la_certificacion_e2e_no_depende_de_la_telemetria() -> None:
     assert "qa/backend-runs/" in (RAIZ / ".gitignore").read_text(encoding="utf-8")
     assert "qa/suite_tiempos.py --motor sqlite|postgres" in (RAIZ / ".claude" / "CLAUDE.md").read_text(encoding="utf-8")
     assert time.monotonic.__name__ == "monotonic" and "time.monotonic" in FUENTE and "time.time()" not in FUENTE
+
+
+def test_o12_21_el_resumen_dice_si_hubo_salto_de_reloj(tmp_path: Path) -> None:
+    inicio = datetime(2026, 10, 15, 2, 0, tzinfo=UTC)
+    llamadas = {"n": 0}
+
+    def pared() -> datetime:  # el reloj de pared salta una hora en mitad de la corrida
+        llamadas["n"] += 1
+        return inicio if llamadas["n"] <= 2 else inicio + timedelta(hours=1)  # run_id y pared_inicio; luego salta
+
+    mensajes: list[str] = []
+    corrida(tmp_path, pared=pared, decir=mensajes.append)
+    assert "salto de reloj: SÍ" in mensajes[-1]
+    assert "la duración monotónica sigue siendo válida" in mensajes[-1]
+    assert "anomalía:" in mensajes[-1]
+
+
+def test_o12_22_sin_salto_el_resumen_lo_dice_tambien(tmp_path: Path) -> None:
+    mensajes: list[str] = []
+    corrida(tmp_path, pared=lambda: datetime(2026, 10, 15, 2, 0, tzinfo=UTC), decir=mensajes.append)
+    assert "salto de reloj: NO" in mensajes[-1]
+    assert "suspensión" not in mensajes[-1]

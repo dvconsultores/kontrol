@@ -14,6 +14,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 
 interface WarehouseSummary {
   id: string;
@@ -103,7 +104,7 @@ export function MovimientosPage(): React.JSX.Element {
   const columns = [
     columnHelper.accessor("occurred_at", {
       header: "Fecha",
-      cell: (info) => new Date(info.getValue()).toLocaleString("es-VE"),
+      cell: (info) => formatearInstante(info.getValue()),
     }),
     columnHelper.accessor("product_id", { header: "Producto" }),
     columnHelper.accessor("movement_type_id", { header: "Tipo" }),

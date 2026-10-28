@@ -66,24 +66,31 @@ def _company(company_id: str | None, *, obj: str) -> str:
 
 
 def _momento(valor: date | datetime | None) -> datetime:
-    """Un instante con zona. Una fecha suelta **empieza** a regir a las cero.
+    """Un instante **siempre en UTC**.
 
-    Es la vigencia: «esta tasa rige el día D» quiere decir desde el comienzo de
-    D. Para consultar hace falta lo contrario —ver el día entero—, y de eso se
-    encarga `_momento_consulta`.
+    Una fecha suelta empieza a regir a las cero del día de negocio en Caracas.
+    SQLite guarda la hora de pared y descarta el desfase; por eso el contrato
+    del módulo normaliza a UTC todo instante que persiste, para que PostgreSQL
+    y SQLite guarden lo mismo.
+
+    - `None` → ahora en UTC.
+    - `datetime` con zona → el mismo instante en UTC.
+    - `datetime` sin zona → la API lo interpreta como UTC.
+    - `date` → las 00:00 de Caracas de ese día, normalizado a UTC.
     """
     if valor is None:
         return datetime.now(UTC)
     if isinstance(valor, datetime):
-        return valor if valor.tzinfo else valor.replace(tzinfo=UTC)
+        return valor.astimezone(UTC) if valor.tzinfo else valor.replace(tzinfo=UTC)
     # El día es el del calendario de negocio, no el de UTC: sus cero horas son las
     # cero de Caracas (POLICY-CLOCK-LOCAL). Interpretarlo en UTC dejaba la tasa de
     # hoy fuera del día de hoy durante las cuatro horas de diferencia.
-    return datetime(valor.year, valor.month, valor.day, tzinfo=zona_de_negocio())
+    return datetime(valor.year, valor.month, valor.day,
+                    tzinfo=zona_de_negocio()).astimezone(UTC)
 
 
 def _momento_consulta(valor: date | datetime | None) -> datetime:
-    """El instante hasta el que mirar cuando se pregunta por un día.
+    """El instante **siempre en UTC** hasta el que mirar cuando se pregunta por un día.
 
     Preguntar «qué tasa rige el día D» no es preguntar «qué regía a las cero de
     D»: la del día se publica a media mañana. Si la consulta se quedara en el
@@ -91,14 +98,16 @@ def _momento_consulta(valor: date | datetime | None) -> datetime:
     hoy —que es exactamente lo que pasaba— y el sistema diría que falta una
     tasa que está delante.
 
-    Una fecha se mira hasta el final de su día; un instante concreto, tal cual.
+    Una fecha se mira hasta el final de su día en Caracas; un instante concreto,
+    tal cual. SQLite guarda la hora de pared y descarta el desfase; por eso todo
+    resultado se normaliza a UTC.
     """
     if valor is None:
         return datetime.now(UTC)
     if isinstance(valor, datetime):
-        return valor if valor.tzinfo else valor.replace(tzinfo=UTC)
+        return valor.astimezone(UTC) if valor.tzinfo else valor.replace(tzinfo=UTC)
     return datetime(valor.year, valor.month, valor.day, 23, 59, 59, 999999,
-                    tzinfo=zona_de_negocio())
+                    tzinfo=zona_de_negocio()).astimezone(UTC)
 
 
 # --------------------------------------------------------------------------- #
@@ -409,7 +418,7 @@ def register_rate(db: Session, *, company_id: str, base_code: str, quote_code: s
         company_id=company_id,
         # Compatibilidad con la 038: su instantánea apunta a esta fila y su
         # lectura antigua usa `currency_id`/`rate_date`.
-        currency_id=str(base.id), rate_date=momento.date(),
+        currency_id=str(base.id), rate_date=hoy_de_negocio(momento),
         rate=valor, source=source_reference or fuente.code,
         base_currency_id=str(base.id), quote_currency_id=str(quote.id),
         source_id=str(fuente.id), rate_type=rate_type,
@@ -609,7 +618,7 @@ def resolve_rate(db: Session, *, company_id: str, base_code: str, quote_code: st
 
     base = _exigir_moneda(db, company_id, base_code)
     quote = _exigir_moneda(db, company_id, quote_code)
-    politica = active_policy(db, company_id, momento.date())
+    politica = active_policy(db, company_id, hoy_de_negocio(momento))
 
     directa = _observacion(db, company_id, base, quote, momento, rate_type, source_code)
     if directa is not None:
@@ -772,14 +781,22 @@ def import_rates(db: Session, *, company_id: str, contenido: bytes | str,
             "rejected": len(errores), "status": lote.status, "errors": errores}
 
 
-def _fecha(texto: str) -> datetime:
+def _fecha(texto: str) -> date | datetime:
+    """Interpreta una fecha del CSV en el calendario de negocio.
+
+    El CSV lo escribe una persona en Venezuela: una hora sin zona es hora de
+    Caracas (FR-001-249). Una fecha suelta se deja como `date`; `_momento` la
+    llevará a las 00:00 de Caracas.
+    """
     limpio = (texto or "").strip()
     if not limpio:
         raise ValueError("La fecha de vigencia es obligatoria.")
-    try:
-        return datetime.fromisoformat(limpio)
-    except ValueError:
-        return datetime.combine(date.fromisoformat(limpio), datetime.min.time())
+    if "T" not in limpio and " " not in limpio:
+        return date.fromisoformat(limpio)
+    valor = datetime.fromisoformat(limpio)
+    if valor.tzinfo is None:
+        return valor.replace(tzinfo=zona_de_negocio())
+    return valor
 
 
 # --------------------------------------------------------------------------- #

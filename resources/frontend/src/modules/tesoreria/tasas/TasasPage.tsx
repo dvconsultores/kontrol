@@ -34,6 +34,7 @@ import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatearInstante, horaDeCaracasParaInput, instanteDesdeHoraDeCaracas } from "@/lib/fecha-de-negocio";
 import { PageContent } from "@/layout/PageContent";
 
 const SELECT =
@@ -51,19 +52,6 @@ const DERIVACION: Record<string, string> = {
   TRIANGULATION: "triangulada",
 };
 
-/**
- * Ahora, en hora local, con el formato que espera `datetime-local`.
- *
- * `toISOString()` da UTC, y el control lo lee como local: en Caracas o en
- * Madrid el campo aparecía desplazado horas respecto a la hora a la que la
- * persona está registrando la tasa, y esa hora es la vigencia.
- */
-function ahoraLocal(): string {
-  const d = new Date();
-  const p = (n: number): string => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
-}
-
 export function TasasPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
@@ -73,7 +61,7 @@ export function TasasPage(): React.JSX.Element {
   const [quote, setQuote] = useState("");
   const [tasa, setTasa] = useState("");
   const [fuenteId, setFuenteId] = useState("");
-  const [vigencia, setVigencia] = useState(ahoraLocal);
+  const [vigencia, setVigencia] = useState(() => horaDeCaracasParaInput());
   const [motivo, setMotivo] = useState("");
 
   const [consultaBase, setConsultaBase] = useState("");
@@ -149,7 +137,7 @@ export function TasasPage(): React.JSX.Element {
           base_currency: base,
           quote_currency: quote,
           rate: tasa,
-          effective_at: new Date(vigencia).toISOString(),
+          effective_at: instanteDesdeHoraDeCaracas(vigencia),
           source_id: fuenteId || null,
           reason: motivo || null,
         },
@@ -337,7 +325,7 @@ export function TasasPage(): React.JSX.Element {
               placeholder="0.000000"
             />
           </FormField>
-          <FormField label="Vigente desde" required>
+          <FormField label="Vigente desde" required help="Hora de Caracas">
             <TextInput
               type="datetime-local"
               value={vigencia}
@@ -427,7 +415,7 @@ export function TasasPage(): React.JSX.Element {
               {resuelta.derived ? ` · tasa ${DERIVACION[resuelta.derived] ?? resuelta.derived}` : ""}
             </dd>
             <dt className="text-text-700">Vigente desde</dt>
-            <dd>{resuelta.effective_at?.slice(0, 16).replace("T", " ") ?? "—"}</dd>
+            <dd>{formatearInstante(resuelta.effective_at)}</dd>
           </dl>
         ) : (
           <p className="text-sm text-text-500">
@@ -441,7 +429,7 @@ export function TasasPage(): React.JSX.Element {
         <h2 className="mb-2 text-base font-semibold text-text-900">Importar</h2>
         <p className="mb-2 text-sm text-text-500">
           Columnas: <code>base_currency, quote_currency, rate, effective_at</code>. Reimportar el
-          mismo fichero no duplica nada, y ninguna fila inválida se descarta en silencio.
+          mismo fichero no duplica nada, y ninguna fila inválida se descarta en silencio. En <code>effective_at</code>, una fecha AAAA-MM-DD rige desde las 00:00 de Caracas y una hora sin zona es hora de Caracas.
         </p>
         <div className="mb-3 flex flex-wrap items-end gap-3">
           <FormField label="Fuente" required>
@@ -524,7 +512,7 @@ export function TasasPage(): React.JSX.Element {
               {(observaciones.data?.items ?? []).map((o) => (
                 <tr key={o.id} className="border-b border-border-subtle">
                   <td className="py-1">
-                    {o.effective_at?.slice(0, 16).replace("T", " ") ?? "—"}
+                    {formatearInstante(o.effective_at)}
                   </td>
                   <td>
                     {o.base_currency ?? "—"} → {o.quote_currency ?? "—"}

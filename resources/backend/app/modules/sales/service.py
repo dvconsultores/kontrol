@@ -2875,15 +2875,24 @@ def open_item_applications(db: Session, *, company_id: str, open_item_id: str) -
             for a in filas]
 
 
+def _instante_de_orden(valor: datetime | None) -> datetime:
+    """Un instante comparable entre motores: sin zona es UTC (SQLite); None va al principio."""
+    if valor is None:
+        return datetime.min.replace(tzinfo=UTC)
+    return valor if valor.tzinfo else valor.replace(tzinfo=UTC)
+
+
 def customer_statement(db: Session, *, company_id: str, customer_id: str) -> dict:
     """El estado de cuenta: la cronología que lo explica.
 
     No es aritmética de pantalla. Cada línea es un hecho económico con su
     documento detrás, y el saldo final es el mismo que devuelve
-    `customer_balance`.
+    `customer_balance`. `date` es siempre la fecha de negocio de Caracas
+    (FR-001-250).
     """
     company_id = _company(company_id, obj="estado de cuenta")
     entradas: list[dict] = []
+    claves: list[datetime | None] = []
     for item in db.execute(
             select(OpenItem).where(OpenItem.company_id == company_id,
                                    OpenItem.party_id == str(customer_id),
@@ -2891,11 +2900,12 @@ def customer_statement(db: Session, *, company_id: str, customer_id: str) -> dic
             .order_by(OpenItem.created_at)).scalars().all():
         entradas.append({
             "type": "DOCUMENT", "id": str(item.id), "reference": item.source_document,
-            "date": item.created_at.isoformat() if item.created_at else None,
+            "date": hoy_de_negocio(item.created_at).isoformat() if item.created_at else None,
             "currency": item.currency, "debit": str(_dec(item.original)),
             "credit": "0", "outstanding": str(ap_service.open_item_balance(item)),
             "status": item.status,
         })
+        claves.append(item.created_at)
     for nota in db.execute(
             select(SalesCreditNote).where(SalesCreditNote.company_id == company_id,
                                           SalesCreditNote.customer_id == str(customer_id),
@@ -2904,10 +2914,11 @@ def customer_statement(db: Session, *, company_id: str, customer_id: str) -> dic
         entradas.append({
             "type": "CREDIT_NOTE", "id": str(nota.id),
             "reference": nota.invoice_number or nota.number,
-            "date": nota.issued_at.isoformat() if nota.issued_at else None,
+            "date": hoy_de_negocio(nota.issued_at).isoformat() if nota.issued_at else None,
             "currency": nota.currency, "debit": "0", "credit": str(_dec(nota.amount)),
             "available": str(_dec(nota.amount) - _dec(nota.applied)), "status": nota.status,
         })
+        claves.append(nota.issued_at)
         for app in db.execute(
                 select(Application).where(Application.company_id == company_id,
                                           Application.source_type == "CREDIT",
@@ -2920,7 +2931,9 @@ def customer_statement(db: Session, *, company_id: str, customer_id: str) -> dic
                 "currency": app.currency, "debit": "0", "credit": str(_dec(app.amount)),
                 "status": app.status,
             })
-    entradas.sort(key=lambda x: (x["date"] or ""))
+            claves.append(app.created_at)
+    orden = sorted(range(len(entradas)), key=lambda i: (entradas[i]["date"] or "", _instante_de_orden(claves[i])))
+    entradas = [entradas[i] for i in orden]
     saldo = customer_balance(db, company_id=company_id, customer_id=customer_id)
     return {"customer_id": str(customer_id), "entries": entradas, **saldo}
 

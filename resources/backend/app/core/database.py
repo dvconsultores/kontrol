@@ -33,12 +33,25 @@ _SessionLocal: sessionmaker[Session] | None = None
 def get_engine():
     global _engine
     if _engine is None:
-        _engine = create_engine(
-            get_settings().db_url,
-            pool_pre_ping=True,
-            pool_recycle=1800,
-            future=True,
-        )
+        url = get_settings().db_url
+        # La sesión es UTC para que la serialización de los instantes no dependa
+        # de la configuración del servidor (FR-001-251, ADR-020); la fecha de
+        # negocio la deriva la aplicación en Caracas.
+        if url.startswith("postgresql"):
+            _engine = create_engine(
+                url,
+                connect_args={"options": "-c timezone=UTC"},
+                pool_pre_ping=True,
+                pool_recycle=1800,
+                future=True,
+            )
+        else:
+            _engine = create_engine(
+                url,
+                pool_pre_ping=True,
+                pool_recycle=1800,
+                future=True,
+            )
     return _engine
 
 

@@ -9,6 +9,7 @@ import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { Autorizado } from "@/components/Autorizado";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
@@ -23,6 +24,8 @@ export const REPORTS: Array<{ category: string; key: string; label: string; capa
 
 const CATEGORIES = ["Ejecutivos", "Operativos", "Financieros", "Fiscales", "Regulatorios"];
 
+const PERIODO = /^\d{4}-(0[1-9]|1[0-2])$/;
+
 export function CentroReportesPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
@@ -33,6 +36,7 @@ export function CentroReportesPage(): React.JSX.Element {
   const disponibles = REPORTS.filter((r) => r.capacidades.every((c) => tiene(c, "empresa")));
   const current = disponibles.find((r) => r.category === category) ?? disponibles[0];
   const reportKey = current?.key;
+  const periodoValido = period === "" || PERIODO.test(period);
 
   const report = useQuery({
     queryKey: ["reporting", "report", reportKey, period],
@@ -43,11 +47,14 @@ export function CentroReportesPage(): React.JSX.Element {
       }
       return apiFetch<ReportResult>(`/reporting/reports/${clave}?period=${period || "0"}`);
     },
-    enabled: current !== undefined,
+    enabled: current !== undefined && periodoValido,
     retry: false,
   });
 
   const exportCsv = async (): Promise<void> => {
+    if (!periodoValido) {
+      return;
+    }
     if (current === undefined) {
       return;
     }
@@ -116,9 +123,20 @@ export function CentroReportesPage(): React.JSX.Element {
               <p className="text-sm text-text-700">{current?.label}</p>
               <p className="text-2xl font-semibold text-text-900">{report.data?.total?.toFixed(2) ?? "—"}</p>
             </div>
-            <FormFieldPeriod value={period} onChange={setPeriod} />
+            <FormField
+              label="Período"
+              help="Mes de Caracas, AAAA-MM. Vacío: todos los períodos."
+              error={periodoValido ? undefined : "Formato AAAA-MM, mes 01 a 12."}
+            >
+              <TextInput value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="2026-01" />
+            </FormField>
+            {report.data?.period_rule === "LEGAL_VALIDATION_REQUIRED" && period !== "" ? (
+              <p role="status" className="mb-4 text-sm text-text-700">
+                El libro fiscal no se filtra por período: la regla legal está pendiente de validación (Ley del IVA, arts. 13 y 56). Se muestran todos los registros.
+              </p>
+            ) : null}
             <Autorizado operacion={["POST", "/reporting/exports"]}>
-              <AsyncButton variant="secondary" onClick={exportCsv}>
+              <AsyncButton variant="secondary" onClick={exportCsv} disabled={!periodoValido}>
                 Exportar CSV (auditado)
               </AsyncButton>
             </Autorizado>
@@ -155,11 +173,4 @@ export function CentroReportesPage(): React.JSX.Element {
   );
 }
 
-function FormFieldPeriod({ value, onChange }: { value: string; onChange: (v: string) => void }): React.JSX.Element {
-  return (
-    <label className="flex flex-col gap-1 text-sm text-text-500">
-      Período
-      <TextInput value={value} onChange={(e) => onChange(e.target.value)} placeholder="2026-01" />
-    </label>
-  );
-}
+

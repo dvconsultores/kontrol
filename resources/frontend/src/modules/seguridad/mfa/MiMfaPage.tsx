@@ -14,6 +14,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { RecoveryCodesPanel } from "@/components/RecoveryCodesPanel";
+import { formatearFechaDeInstante } from "@/lib/fecha-de-negocio";
 
 export function MiMfaPage(): React.JSX.Element {
   const navigate = useNavigate();
@@ -162,7 +163,7 @@ export function MiMfaPage(): React.JSX.Element {
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-text-900">
-              Activa desde <span className="font-medium">{data.activated_at ? new Date(data.activated_at).toLocaleDateString("es-VE") : "—"}</span>
+              Activa desde <span className="font-medium">{data.activated_at ? formatearFechaDeInstante(data.activated_at) : "—"}</span>
             </p>
             <p className="text-sm text-text-900">
               Códigos de recuperación disponibles: <span className="font-medium">{data.recovery_codes_remaining}</span>

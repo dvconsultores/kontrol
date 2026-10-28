@@ -13,6 +13,7 @@ import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { IconButton } from "@/components/IconButton";
 import { Download } from "lucide-react";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 
@@ -85,7 +86,7 @@ export function ExportacionesPage(): React.JSX.Element {
     exportHelper.accessor("format", { header: "Formato" }),
     exportHelper.accessor("file_ref", { header: "Archivo" }),
     exportHelper.accessor("exported_by", { header: "Exportado por" }),
-    exportHelper.accessor("exported_at", { header: "Fecha" }),
+    exportHelper.accessor("exported_at", { header: "Fecha", cell: (info) => formatearInstante(info.getValue()) }),
     exportHelper.accessor("status", { header: "Estado" }),
     exportHelper.display({
       id: "download",

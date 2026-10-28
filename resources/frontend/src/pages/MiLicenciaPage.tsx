@@ -20,6 +20,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatearFechaDeInstante } from "@/lib/fecha-de-negocio";
 
 export function MiLicenciaPage(): React.JSX.Element {
   const { notify } = useNotifications();
@@ -85,15 +86,15 @@ export function MiLicenciaPage(): React.JSX.Element {
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-text-400">Período pagado</p>
           <p className="mt-1 text-sm text-text-900">
-            {license.period_start ? new Date(license.period_start).toLocaleDateString("es-VE") : "—"}
+            {license.period_start ? formatearFechaDeInstante(license.period_start) : "—"}
             {" a "}
-            {license.period_end ? new Date(license.period_end).toLocaleDateString("es-VE") : "—"}
+            {license.period_end ? formatearFechaDeInstante(license.period_end) : "—"}
           </p>
         </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-text-400">Modo solo consulta desde</p>
           <p className="mt-1 text-sm text-text-900">
-            {license.read_only_start ? new Date(license.read_only_start).toLocaleDateString("es-VE") : "—"}
+            {license.read_only_start ? formatearFechaDeInstante(license.read_only_start) : "—"}
           </p>
         </div>
       </div>

@@ -20,6 +20,7 @@ import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { PageContent } from "@/layout/PageContent";
+import { formatearFechaDeInstante } from "@/lib/fecha-de-negocio";
 
 const columnHelper = createColumnHelper<ApprovalPolicySummary>();
 
@@ -88,9 +89,9 @@ export function PoliticasPage(): React.JSX.Element {
       header: "Vigente",
       cell: ({ row }) =>
         row.original.valid_from
-          ? `${new Date(row.original.valid_from).toLocaleDateString("es-VE")}${
+          ? `${formatearFechaDeInstante(row.original.valid_from)}${
               row.original.valid_to
-                ? ` – ${new Date(row.original.valid_to).toLocaleDateString("es-VE")}`
+                ? ` – ${formatearFechaDeInstante(row.original.valid_to)}`
                 : ""
             }`
           : "—",

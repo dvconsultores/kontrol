@@ -169,6 +169,71 @@ describe("CentroReportesPage", () => {
     );
   });
 
+  it("CR-08 un período inválido muestra el error y no pide el reporte", async () => {
+    permisos = new Set(["reportes:view", "ventas:view"]);
+    montar();
+
+    await waitFor(() => {
+      expect(
+        apiFetch.mock.calls.some(
+          ([ruta]) => typeof ruta === "string" && ruta.startsWith("/reporting/reports/"),
+        ),
+      ).toBe(true);
+    });
+    apiFetch.mockClear();
+
+    fireEvent.change(screen.getByPlaceholderText("2026-01"), { target: { value: "2026-13" } });
+
+    expect(await screen.findByText("Formato AAAA-MM, mes 01 a 12.")).toBeTruthy();
+    expect(screen.getByPlaceholderText("2026-01").getAttribute("aria-invalid")).toBe("true");
+    expect(
+      apiFetch.mock.calls.some(
+        ([ruta]) => typeof ruta === "string" && ruta.includes("period=2026-13"),
+      ),
+    ).toBe(false);
+  });
+
+  it("CR-09 un período válido viaja al servidor", async () => {
+    permisos = new Set(["reportes:view", "ventas:view"]);
+    montar();
+
+    fireEvent.change(screen.getByPlaceholderText("2026-01"), { target: { value: "2026-10" } });
+
+    await waitFor(() => {
+      expect(
+        apiFetch.mock.calls.some(
+          ([ruta]) => typeof ruta === "string" && ruta.includes("period=2026-10"),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("CR-10 avisa cuando el libro fiscal no filtra por período", async () => {
+    permisos = new Set(["reportes:view", "fiscal:view"]);
+    apiFetch.mockImplementation((ruta: string) => {
+      if (typeof ruta === "string" && ruta.startsWith("/reporting/reports/")) {
+        return Promise.resolve({
+          report_key: "fiscal_libros_VENTAS",
+          count: 1,
+          total: 10,
+          rows: [],
+          period_applied: false,
+          period_rule: "LEGAL_VALIDATION_REQUIRED",
+        });
+      }
+      if (typeof ruta === "string" && ruta === "/reporting/exports") {
+        return Promise.resolve({ id: "e9", file_ref: "report-fiscal_libros_VENTAS-20261027120000.csv", status: "DONE" });
+      }
+      return Promise.reject(new Error(`ruta inesperada ${ruta}`));
+    });
+    montar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Fiscales" }));
+    fireEvent.change(screen.getByPlaceholderText("2026-01"), { target: { value: "2026-10" } });
+
+    expect((await screen.findByRole("status")).textContent).toContain("no se filtra por período");
+  });
+
   it("CR-04 mantiene paridad con report_capabilities del backend", () => {
     const operaciones = JSON.parse(
       readFileSync(resolve(__dirname, "../../../tests/fixtures/operaciones.json"), "utf8"),

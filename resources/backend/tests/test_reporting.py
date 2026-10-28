@@ -7,7 +7,7 @@ timeline de auditoría y aislamiento multiempresa.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from conftest import seed_org_chain
@@ -184,7 +184,9 @@ class TestExportacionYJobs:
         assert b"2222.0" in contenido_b and b"1111.0" not in contenido_b
 
     def test_export_auditada(self, db_session) -> None:
-        _make_sales_invoice(db_session, total=1000.0)
+        factura = _make_sales_invoice(db_session, total=1000.0)
+        factura.issued_at = datetime(2026, 1, 15, 15, 0, tzinfo=UTC)  # emitida dentro del período exportado (2026-01, Caracas)
+        db_session.flush()
         export = reporting_service.create_export(db_session, company_id=COMPANY, report_key="executive_ventas",
                                                  fmt="CSV", filters={"period": "2026-01"}, actor="user-1")
         assert export.status == "DONE" and export.exported_by == "user-1"

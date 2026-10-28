@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     #: Zona del **calendario de negocio** (Spec 001 · POLICY-CLOCK-LOCAL). Decide qué
     #: día es «hoy» para vigencias, vencimientos y selección de reglas. No confundir
     #: con los instantes técnicos, que son UTC por `ADR-D0-001` y no se convierten.
+    #: No es configurable: cualquier valor distinto de America/Caracas impide arrancar.
     business_timezone: str = "America/Caracas"
 
     # Licencia · conjunto de confianza del propietario (FR-010-148..151, 437..444). Dos formas, que se suman:
@@ -102,6 +103,16 @@ class Settings(BaseSettings):
     def _secret_key_not_default(cls, v: str) -> str:
         if not v or len(v) < 32:
             raise ValueError("KONTROL_SECRET_KEY debe tener al menos 32 caracteres")
+        return v
+
+    @field_validator("business_timezone")
+    @classmethod
+    def _business_timezone_fixed(cls, v: str) -> str:
+        if v != "America/Caracas":
+            raise ValueError(
+                "KONTROL_BUSINESS_TIMEZONE solo admite America/Caracas: la zona de negocio "
+                "de KONTROL no es configurable (OD-TIME-01)"
+            )
         return v
 
     @model_validator(mode="after")

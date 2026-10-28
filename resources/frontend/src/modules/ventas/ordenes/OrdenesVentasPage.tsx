@@ -32,6 +32,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
 
 interface WarehouseSummary {
   id: string;
@@ -385,7 +386,7 @@ export function OrdenesVentasPage(): React.JSX.Element {
                       <td className="pr-4">{String(l.unit_price)}</td>
                       <td className="pr-4">
                         {activa
-                          ? `Activa · ${activa.base_quantity ?? activa.quantity}${activa.oversell ? " · sobreventa" : ""}${activa.expires_at ? ` · vence ${activa.expires_at.slice(0, 10)}` : ""}`
+                          ? `Activa · ${activa.base_quantity ?? activa.quantity}${activa.oversell ? " · sobreventa" : ""}${activa.expires_at ? ` · vence ${fechaDeNegocioDeInstante(activa.expires_at)}` : ""}`
                           : ultima
                             ? `${ultima.status}${ultima.release_reason ? ` · ${ultima.release_reason}` : ""}`
                             : l.needs_inventory

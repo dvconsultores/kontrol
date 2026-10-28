@@ -9,6 +9,7 @@ import { DataTable } from "@/components/DataTable";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { SearchInput } from "@/components/SearchInput";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 
 const columnHelper = createColumnHelper<InventoryMovement>();
 
@@ -24,7 +25,7 @@ export function KardexPage(): React.JSX.Element {
   const columns = [
     columnHelper.accessor("occurred_at", {
       header: "Fecha",
-      cell: (info) => new Date(info.getValue()).toLocaleString("es-VE"),
+      cell: (info) => formatearInstante(info.getValue()),
     }),
     columnHelper.accessor("product_id", { header: "Producto" }),
     columnHelper.accessor("movement_type_id", { header: "Tipo" }),

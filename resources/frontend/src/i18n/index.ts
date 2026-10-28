@@ -8,6 +8,7 @@
  * los compone el servidor desde `message_key` y sus parámetros.
  */
 import { es } from "./es";
+import { formatearInstante } from "../lib/fecha-de-negocio";
 
 export const IDIOMA = "es";
 
@@ -33,7 +34,7 @@ export function tValor(prefijo: string, valor: string): string | null {
 }
 
 export function formatearFecha(iso: string | null | undefined): string {
-  return iso ? new Date(iso).toLocaleString(LOCALES[IDIOMA]) : t("comun.sin_valor");
+  return iso ? formatearInstante(iso, LOCALES[IDIOMA]) : t("comun.sin_valor");
 }
 
 export const IDIOMAS_DISPONIBLES = Object.keys(CATALOGOS);

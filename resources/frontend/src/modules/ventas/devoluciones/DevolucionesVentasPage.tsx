@@ -24,6 +24,7 @@ import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 import { PageContent } from "@/layout/PageContent";
 
 const cols = createColumnHelper<SalesReturnDetail>();
@@ -464,7 +465,7 @@ export function DevolucionesVentasPage(): React.JSX.Element {
 
           {d.status === "CLOSED" ? (
             <p className="text-sm text-text-700" role="status">
-              Mercancía reingresada el {d.reentered_at?.slice(0, 16).replace("T", " ")}. La nota de
+              Mercancía reingresada el {formatearInstante(d.reentered_at)}. La nota de
               crédito, si corresponde, se emite en la pantalla de notas: la devolución física no la
               sustituye.
             </p>

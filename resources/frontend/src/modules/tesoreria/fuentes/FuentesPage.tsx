@@ -26,7 +26,9 @@ import { AsyncButton } from "@/components/AsyncButton";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 import { PageContent } from "@/layout/PageContent";
+import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
 
 export function FuentesPage(): React.JSX.Element {
   const qc = useQueryClient();
@@ -235,7 +237,7 @@ export function FuentesPage(): React.JSX.Element {
                   <td>{f.authority_reference ?? "Sin declarar"}</td>
                   <td>
                     {f.provider_code
-                      ? (f.last_success_at?.slice(0, 16).replace("T", " ") ?? "Nunca")
+                      ? (f.last_success_at ? formatearInstante(f.last_success_at) : "Nunca")
                       : "Sin proveedor"}
                     {f.last_error ? ` · ${f.last_error.slice(0, 40)}` : ""}
                   </td>
@@ -382,7 +384,7 @@ export function FuentesPage(): React.JSX.Element {
               <tbody>
                 {(lotes.data?.items ?? []).map((b) => (
                   <tr key={b.id} className="border-b border-border-subtle">
-                    <td className="py-1">{b.created_at?.slice(0, 10) ?? "—"}</td>
+                    <td className="py-1">{fechaDeNegocioDeInstante(b.created_at)}</td>
                     <td>{b.filename ?? "—"}</td>
                     <td>{b.rows}</td>
                     <td>{b.imported}</td>

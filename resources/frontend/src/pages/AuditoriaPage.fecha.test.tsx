@@ -4,10 +4,10 @@
  * La columna leía `created_at`, un campo que el servidor no publica: cada fila
  * decía «Invalid Date». El contrato es `event_time` (ISO 8601 con zona, nunca
  * nulo) y la presentación es la convención del producto: `formatearFecha`, que
- * es `toLocaleString("es-VE")` en la zona del navegador, igual que las otras
- * ocho pantallas que enseñan un instante. Por eso el texto exacto depende de la
- * zona del proceso, y aquí se fija por zona: la suite se ejecuta bajo UTC,
- * America/Caracas y Europe/Amsterdam.
+ * muestra el instante en America/Caracas aunque el navegador o el proceso estén
+ * en otra zona (ADR-020). Por eso el texto exacto es el mismo bajo cualquier
+ * zona del proceso; la suite fija el mismo literal bajo UTC, America/Caracas y
+ * Europe/Amsterdam.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
@@ -38,11 +38,15 @@ const { AuditoriaPage } = await import("./AuditoriaPage");
 const TARDE = "2026-09-30T18:30:00+00:00";
 const MEDIANOCHE = "2026-10-01T02:30:00+00:00";
 
-//: Lo que la convención produce bajo cada zona del proceso, medido con Node 24 / ICU 78.
+//: Lo que la convención produce: el mismo literal en toda zona, medido con Node 24 / ICU 78.
+const EN_CARACAS = {
+  [TARDE]: "30/9/2026, 2:30:00 p. m.",
+  [MEDIANOCHE]: "30/9/2026, 10:30:00 p. m.",
+};
 const ESPERADO: Record<string, Record<string, string>> = {
-  UTC: { [TARDE]: "30/9/2026, 6:30:00 p. m.", [MEDIANOCHE]: "1/10/2026, 2:30:00 a. m." },
-  "America/Caracas": { [TARDE]: "30/9/2026, 2:30:00 p. m.", [MEDIANOCHE]: "30/9/2026, 10:30:00 p. m." },
-  "Europe/Amsterdam": { [TARDE]: "30/9/2026, 8:30:00 p. m.", [MEDIANOCHE]: "1/10/2026, 4:30:00 a. m." },
+  UTC: EN_CARACAS,
+  "America/Caracas": EN_CARACAS,
+  "Europe/Amsterdam": EN_CARACAS,
 };
 const ZONA = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -85,7 +89,7 @@ describe("AuditoriaPage · columna Fecha", () => {
     expect(texto).toBe(formatearFecha(TARDE));
   });
 
-  it(`DATE-03/04/05/06/07 · texto exacto bajo la zona del proceso (${ZONA})`, async () => {
+  it(`DATE-03/04/05/06/07 · texto exacto de Caracas bajo la zona del proceso (${ZONA})`, async () => {
     apiFetch.mockClear();
     apiFetch.mockResolvedValue(sobre([evento(1, TARDE), evento(2, MEDIANOCHE)]));
     montar();

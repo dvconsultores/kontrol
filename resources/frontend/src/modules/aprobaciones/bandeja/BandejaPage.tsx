@@ -22,6 +22,7 @@ import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { PageContent } from "@/layout/PageContent";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 
 const columnHelper = createColumnHelper<ApprovalInboxItem>();
 
@@ -125,7 +126,7 @@ export function BandejaPage(): React.JSX.Element {
       cell: ({ row }) =>
         row.original.due_at ? (
           <span className={row.original.overdue ? "font-semibold text-danger-600" : undefined}>
-            {row.original.overdue ? "Vencido" : new Date(row.original.due_at).toLocaleString("es-VE")}
+            {row.original.overdue ? "Vencido" : formatearInstante(row.original.due_at)}
           </span>
         ) : (
           "—"

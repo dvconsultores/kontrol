@@ -16,6 +16,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 
 const columnHelper = createColumnHelper<RenewalRequestSummary>();
 
@@ -67,7 +68,7 @@ export function RenovacionPage(): React.JSX.Element {
   const columns = [
     columnHelper.accessor("created_at", {
       header: "Fecha",
-      cell: (info) => new Date(info.getValue()).toLocaleString("es-VE"),
+      cell: (info) => formatearInstante(info.getValue()),
     }),
     columnHelper.accessor("payment_proof_ref", { header: "Comprobante" }),
     columnHelper.accessor("status", { header: "Estado" }),

@@ -1617,6 +1617,9 @@ export interface BookResult {
   count: number;
   total: number;
   rows: BookRow[];
+  /** El backend declara si filtró por período; `LEGAL_VALIDATION_REQUIRED` en libros fiscales (OD-TIME-11). */
+  period_applied?: boolean;
+  period_rule?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -1758,6 +1761,9 @@ export interface ReportResult {
   base?: number;
   tax?: number;
   rows: Array<Record<string, unknown>>;
+  /** El backend declara si filtró por período; `LEGAL_VALIDATION_REQUIRED` en libros fiscales (OD-TIME-11). */
+  period_applied?: boolean;
+  period_rule?: string;
   [key: string]: unknown;
 }
 

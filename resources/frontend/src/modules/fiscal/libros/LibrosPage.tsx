@@ -73,7 +73,7 @@ export function LibrosPage(): React.JSX.Element {
                 {BOOK_TYPES.map((b) => <option key={b} value={b}>{b}</option>)}
               </select>
             </FormField>
-            <FormField label="Período">
+            <FormField label="Período" help="Mes de Caracas, AAAA-MM.">
               <TextInput value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="2026-01" />
             </FormField>
             <AsyncButton type="submit" variant="secondary" onClick={() => queryClient.invalidateQueries({ queryKey: ["fiscal", "books"] })}>
@@ -84,6 +84,11 @@ export function LibrosPage(): React.JSX.Element {
             <span className="text-text-700">Registros: <b>{book.data?.count ?? 0}</b></span>
             <span className="text-text-700">Total: <b>{book.data?.total.toFixed(2) ?? "0.00"}</b></span>
           </div>
+          {book.data?.period_rule === "LEGAL_VALIDATION_REQUIRED" && period !== "" ? (
+            <p role="status" className="text-sm text-text-700">
+              El libro fiscal no se filtra por período: la regla legal está pendiente de validación (Ley del IVA, arts. 13 y 56). Se muestran todos los registros.
+            </p>
+          ) : null}
         </form>
 
         <form className="rounded-lg border border-border-default bg-surface-0 p-4" onSubmit={(e) => e.preventDefault()}>

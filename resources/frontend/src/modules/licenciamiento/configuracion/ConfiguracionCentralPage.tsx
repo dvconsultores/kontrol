@@ -13,6 +13,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 
 export function ConfiguracionCentralPage(): React.JSX.Element {
   const queryClient = useQueryClient();
@@ -126,7 +127,7 @@ export function ConfiguracionCentralPage(): React.JSX.Element {
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-text-400">Última sincronización</p>
           <p className="mt-1 text-sm text-text-900">
-            {data.last_sync ? new Date(data.last_sync.ran_at).toLocaleString("es-VE") : "Nunca"}
+            {data.last_sync ? formatearInstante(data.last_sync.ran_at) : "Nunca"}
           </p>
         </div>
         <div>

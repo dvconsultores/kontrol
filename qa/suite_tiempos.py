@@ -403,8 +403,11 @@ def ejecutar(motor: str, *, con_analizador: bool = False, carpeta: Path = CORRID
     (evidencia / "manifest.json").write_text(sanear(json.dumps(manifiesto, ensure_ascii=False, indent=2), raices) + "\n",
                                              encoding="utf-8")
     resumen = manifiesto["pytest"]
+    # el salto de reloj se dice explícitamente para que un desvío grande no se lea como normal
+    salto = " · salto de reloj: SÍ (suspensión o ajuste del reloj del anfitrión; la duración monotónica sigue siendo válida)" \
+        if duracion["salto"] else " · salto de reloj: NO"
     decir(f"[suite {run_id}] pytest rc {rc} · {resumen['passed']}/{resumen['failed']}/{resumen['skipped']} · "
-          f"{duracion['monotonica_s']} s monotónicos (desvío de reloj {duracion['desvio_s']} s) · "
+          f"{duracion['monotonica_s']} s monotónicos (desvío de reloj {duracion['desvio_s']} s){salto} · "
           f"anomalía: {manifiesto['anomalia']['indicador']} · evidencia: {sanear(str(evidencia), raices)}")
     return rc
 

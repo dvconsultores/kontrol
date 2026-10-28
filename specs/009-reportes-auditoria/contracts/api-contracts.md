@@ -17,6 +17,7 @@
 
 - `GET /reporting/reports/{key}` — `key` ∈ ejecutivos/operativos/financieros/fiscales/regulatorios.
 - Parámetros comunes: `period`, `company_id`, `currency`, `status`, `category`, `page`, `page_size`.
+- `period` — mes civil de **America/Caracas** con formato «AAAA-MM» (mes 01–12); «» o «0» = sin filtro. Un valor con otro formato responde 422 `INVALID_PERIOD`. Sobre instantes se filtra con límites semiabiertos `[00:00 del día 1 en Caracas, 00:00 del día 1 del mes siguiente)` convertidos a UTC (ADR-020). Toda respuesta incluye `period_applied` (booleano): `executive_ventas` filtra por `issued_at` y devuelve `true` cuando hay período; los libros fiscales (`fiscal_libros_*`) **no** filtran: `period_applied: false` y `period_rule: "LEGAL_VALIDATION_REQUIRED"` (OD-TIME-11). Los reportes de foto (inventario, aging, regulatorio) devuelven `period_applied: false`.
 - `GET /reporting/reports/executive/ventas` · `.../operativos/inventario` · `.../financieros/aging` · `.../fiscales/libros/{tax_type}` (reutiliza 007) · `.../regulatorios/evaluaciones`.
 
 ## 3. Exportación auditada

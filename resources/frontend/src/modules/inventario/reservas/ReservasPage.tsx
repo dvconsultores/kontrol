@@ -16,6 +16,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
 
 interface WarehouseSummary {
   id: string;
@@ -121,7 +122,7 @@ export function ReservasPage(): React.JSX.Element {
       header: "Estado",
       cell: ({ getValue, row }) => `${getValue()}${row.original.oversell ? " · sobreventa" : ""}`,
     }),
-    columnHelper.accessor("expires_at", { header: "Vence", cell: ({ getValue }) => getValue()?.slice(0, 10) ?? "—" }),
+    columnHelper.accessor("expires_at", { header: "Vence", cell: ({ getValue }) => fechaDeNegocioDeInstante(getValue()) }),
     columnHelper.accessor("release_reason", { header: "Motivo", cell: ({ getValue }) => getValue() ?? "" }),
     columnHelper.display({
       id: "actions",

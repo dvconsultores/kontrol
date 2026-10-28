@@ -21,6 +21,7 @@ import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { PageContent } from "@/layout/PageContent";
+import { finDelDiaDeNegocio, formatearFechaDeInstante } from "@/lib/fecha-de-negocio";
 
 const columnHelper = createColumnHelper<ApprovalDelegationSummary>();
 
@@ -61,7 +62,7 @@ export function DelegacionesPage(): React.JSX.Element {
           grantor_id: grantor,
           grantee_id: grantee,
           scope_process_type: scope || null,
-          valid_to: validTo ? new Date(validTo).toISOString() : null,
+          valid_to: validTo ? finDelDiaDeNegocio(validTo) : null,
           reason: reason || null,
           is_temporary_substitution: Boolean(validTo),
         },
@@ -106,7 +107,7 @@ export function DelegacionesPage(): React.JSX.Element {
     columnHelper.accessor("valid_to", {
       header: "Hasta",
       cell: (info) =>
-        info.getValue() ? new Date(info.getValue() as string).toLocaleDateString("es-VE") : "Sin límite",
+        info.getValue() ? formatearFechaDeInstante(info.getValue() as string) : "Sin límite",
     }),
     columnHelper.accessor("status", {
       header: "Estado",
@@ -157,7 +158,7 @@ export function DelegacionesPage(): React.JSX.Element {
                 placeholder="Todos"
               />
             </FormField>
-            <FormField label="Hasta">
+            <FormField label="Hasta" help="Incluido: vence al final de ese día, hora de Caracas">
               <TextInput type="date" value={validTo} onChange={(e) => setValidTo(e.target.value)} />
             </FormField>
             <FormField label="Motivo">

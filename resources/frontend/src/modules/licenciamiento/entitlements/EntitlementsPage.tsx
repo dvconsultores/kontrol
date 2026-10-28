@@ -9,6 +9,7 @@ import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 
 const MODULE_LABELS: Record<string, string> = {
   ventas: "Ventas",
@@ -72,7 +73,7 @@ export function EntitlementsPage(): React.JSX.Element {
     snapshotHelper.accessor("version", { header: "Versión" }),
     snapshotHelper.accessor("taken_at", {
       header: "Tomado",
-      cell: (info) => new Date(info.getValue()).toLocaleString("es-VE"),
+      cell: (info) => formatearInstante(info.getValue()),
     }),
     snapshotHelper.accessor("modules", {
       header: "Módulos",

@@ -32,6 +32,7 @@ import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 import { PageContent } from "@/layout/PageContent";
 
 const colaCols = createColumnHelper<PickingQueueItem>();
@@ -215,7 +216,7 @@ export function PreparacionPage(): React.JSX.Element {
     colaCols.accessor("code", { header: "Pedido" }),
     colaCols.accessor("released_at", {
       header: "Liberado",
-      cell: (c) => c.getValue()?.replace("T", " ").slice(0, 19) ?? "—",
+      cell: (c) => formatearInstante(c.getValue()),
     }),
     colaCols.display({
       id: "accion",
