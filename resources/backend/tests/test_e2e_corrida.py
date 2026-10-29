@@ -95,9 +95,24 @@ def entorno(tmp_path):
 
 
 @pytest.fixture
-def puerto_libre():
-    if k._puerto_ocupado("127.0.0.1", k.PUERTO_BACKEND):
-        pytest.skip(f"el puerto {k.PUERTO_BACKEND} está ocupado: hay otra pila en marcha")
+def puerto_libre(entorno):
+    # Elige tres puertos libres distintos y los publica en el entorno.
+    sockets = []
+    puertos = []
+    try:
+        for _ in range(3):
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind(("127.0.0.1", 0))
+            sockets.append(s)
+            puertos.append(s.getsockname()[1])
+    finally:
+        for s in sockets:
+            s.close()
+    backend, frontend, central = puertos
+    entorno["KONTROL_E2E_PUERTO_BACKEND"] = str(backend)
+    entorno["KONTROL_E2E_PUERTO_FRONTEND"] = str(frontend)
+    entorno["KONTROL_E2E_PUERTO_CENTRAL"] = str(central)
+    return k.Puertos(backend=backend, frontend=frontend, central=central, origen="entorno")
 
 
 def _corrida(entorno, codigo_python: str, **kwargs) -> tuple[k.Corrida, io.StringIO]:
@@ -115,7 +130,7 @@ def _sin_rastro(corrida: k.Corrida) -> None:
     assert not _existe(corrida.base), "la base de la corrida sigue existiendo"
     assert not corrida.estado.exists(), "el estado efímero de la corrida sigue en disco"
     assert all(p.poll() is not None for p in corrida.procesos.values()), "queda un proceso de la corrida en marcha"
-    assert not k._puerto_ocupado("127.0.0.1", k.PUERTO_BACKEND), "el backend de la corrida sigue escuchando"
+    assert not k._puerto_ocupado("127.0.0.1", corrida.puertos.backend), "el backend de la corrida sigue escuchando"
     assert b.procesos_de(corrida.run_id) == []
 
 
@@ -234,13 +249,15 @@ def test_e2ecorrida_07_la_segunda_corrida_no_ve_lo_que_dejo_la_primera(entorno, 
 def test_e2ecorrida_08_con_el_puerto_ocupado_no_se_crea_nada(entorno, puerto_libre):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as ocupante:
         ocupante.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        ocupante.bind(("127.0.0.1", k.PUERTO_BACKEND))
+        ocupante.bind(("127.0.0.1", puerto_libre.backend))
         ocupante.listen(1)
         corrida, _ = _corrida(entorno, "raise SystemExit(0)")
         assert corrida.ejecutar() == k.SALIDA_PREPARACION
+        assert k._puerto_ocupado("127.0.0.1", puerto_libre.backend)
     assert corrida.creada is False and not _existe(corrida.base)
     m = _manifiesto(corrida)
-    assert "puertos ocupados" in m["error"] and m["limpieza"]["base"] == {"estado": "NO_CREADA"}
+    assert "puertos ocupados" in m["error"] and str(puerto_libre.backend) in m["error"]
+    assert m["limpieza"]["base"] == {"estado": "NO_CREADA"}
     assert m["fases"] == ["comprobar", "limpiar"]
 
 
@@ -614,6 +631,102 @@ def test_e2ecorrida_32_main_pasa_el_interprete_de_producto_a_la_corrida(monkeypa
     assert vistas[0]["python_de_producto"] == "/opt/v6r/bin/python"
     assert vistas[1]["python_de_producto"] is None
     assert vistas[0]["sin_frontend"] is True
+
+
+def test_e2ecorrida_35_sin_configuracion_los_puertos_son_los_canonicos(entorno):
+    # Id 35: sin variables de entorno, los puertos canónicos y sus URL derivadas.
+    for var in ("KONTROL_E2E_PUERTO_BACKEND", "KONTROL_E2E_PUERTO_FRONTEND", "KONTROL_E2E_PUERTO_CENTRAL"):
+        entorno.pop(var, None)
+    assert k.resolver_puertos({}) == k.Puertos()
+    assert k.resolver_puertos({}).origen == "por_defecto"
+    assert k.resolver_puertos({}).api == "http://127.0.0.1:8000/api/v1"
+    assert k.resolver_puertos({}).web == "http://localhost:5173"
+    assert k.resolver_puertos({}).central_url == "http://127.0.0.1:8010"
+    corrida, _ = _corrida(entorno, "raise SystemExit(0)")
+    assert corrida.puertos == k.Puertos()
+    c = corrida
+    c.url = c.servidor.url_de(c.base)
+    proc_env = c.entorno_de_procesos()
+    assert proc_env["KONTROL_E2E_API"] == "http://127.0.0.1:8000/api/v1"
+    assert proc_env["KONTROL_E2E_BASE_URL"] == "http://localhost:5173"
+    assert proc_env["KONTROL_API_URL"] == "http://127.0.0.1:8000"
+    assert proc_env["KONTROL_E2E_CENTRAL_URL"] == "http://127.0.0.1:8010"
+    assert proc_env["KONTROL_CORS_ORIGINS"] == json.dumps(["http://localhost:5173"])
+
+
+def test_e2ecorrida_36_los_puertos_configurados_llegan_a_todo_el_entorno(entorno, puerto_libre):
+    # Id 36: los puertos del fixture se propagan al entorno de procesos y al manifiesto.
+    corrida, _ = _corrida(entorno, "raise SystemExit(0)")
+    assert corrida.puertos == puerto_libre
+    c = corrida
+    c.url = c.servidor.url_de(c.base)
+    proc_env = c.entorno_de_procesos()
+    assert proc_env["KONTROL_E2E_API"] == puerto_libre.api
+    assert proc_env["KONTROL_E2E_BASE_URL"] == puerto_libre.web
+    assert proc_env["KONTROL_API_URL"] == f"http://127.0.0.1:{puerto_libre.backend}"
+    assert proc_env["KONTROL_E2E_CENTRAL_URL"] == puerto_libre.central_url
+    assert proc_env["KONTROL_CORS_ORIGINS"] == json.dumps([puerto_libre.web])
+    assert corrida.manifiesto["puertos"] == {
+        "backend": puerto_libre.backend,
+        "frontend": puerto_libre.frontend,
+        "central": puerto_libre.central,
+        "origen": "entorno",
+    }
+
+
+def test_e2ecorrida_37_precedencia_y_validacion():
+    # Id 37: la opción gana al entorno y los valores inválidos lanzan ValueError con «puerto».
+    entorno = {
+        "KONTROL_E2E_PUERTO_BACKEND": "18001",
+        "KONTROL_E2E_PUERTO_FRONTEND": "18002",
+        "KONTROL_E2E_PUERTO_CENTRAL": "18003",
+    }
+    assert k.resolver_puertos(entorno, backend=18101, frontend=18102, central=18103) == k.Puertos(
+        18101, 18102, 18103, "opcion"
+    )
+    for invalido in ("abc", "80", "70000"):
+        with pytest.raises(ValueError, match="puerto"):
+            k.resolver_puertos({"KONTROL_E2E_PUERTO_BACKEND": invalido})
+    with pytest.raises(ValueError, match="puerto"):
+        k.resolver_puertos({}, backend=80)
+    with pytest.raises(ValueError, match="puerto"):
+        k.resolver_puertos({}, backend=70000)
+    with pytest.raises(ValueError, match="puerto"):
+        k.resolver_puertos({}, backend=18101, frontend=18101, central=18101)
+
+
+def test_e2ecorrida_38_un_puerto_invalido_no_crea_nada(entorno):
+    # Id 38: un puerto no numérico aborta en preparación sin crear la base.
+    entorno["KONTROL_E2E_PUERTO_BACKEND"] = "abc"
+    corrida, _ = _corrida(entorno, "raise SystemExit(0)")
+    assert corrida.ejecutar() == k.SALIDA_PREPARACION
+    assert corrida.creada is False
+    assert not _existe(corrida.base)
+    assert "puerto" in _manifiesto(corrida)["error"]
+
+
+def test_e2ecorrida_39_main_pasa_los_puertos_y_rechaza_los_invalidos(monkeypatch):
+    # Id 39: main propaga las opciones de puerto y rechaza las inválidas sin construir la corrida.
+    vistas = []
+
+    class Falsa:
+        def __init__(self, *args, **kwargs):
+            vistas.append(kwargs)
+            self.manifiesto = {"puertos": kwargs.get("puertos")}
+
+        def ejecutar(self):
+            return 0
+
+    monkeypatch.setattr(k, "Corrida", Falsa)
+    for var in ("KONTROL_E2E_PUERTO_BACKEND", "KONTROL_E2E_PUERTO_FRONTEND", "KONTROL_E2E_PUERTO_CENTRAL"):
+        monkeypatch.delenv(var, raising=False)
+    assert k.main(["--sin-frontend", "--puerto-backend", "18101", "--puerto-frontend", "18102", "--puerto-central", "18103"]) == 0
+    assert vistas[-1]["puertos"] == k.Puertos(18101, 18102, 18103, "opcion")
+    assert k.main(["--sin-frontend"]) == 0
+    assert vistas[-1]["puertos"] == k.Puertos()
+    num_vistas = len(vistas)
+    assert k.main(["--sin-frontend", "--puerto-backend", "80"]) == k.SALIDA_PREPARACION
+    assert len(vistas) == num_vistas
 
 
 def test_e2ecorrida_33_la_evidencia_no_conserva_material_mfa_de_las_pruebas_fallidas(entorno):

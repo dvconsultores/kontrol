@@ -533,7 +533,10 @@ def get_books(tax_type: str, period: str = "0", db: Session = Depends(get_db),
 # Helpers
 # --------------------------------------------------------------------------- #
 def _owned(db: Session, model, obj_id: str, tenant: str, code: str, message: str):
+    # Falla cerrado: el modelo debe tener company_id
+    if "company_id" not in model.__table__.c:
+        raise TypeError(f"{model.__name__} no tiene company_id: su propiedad se comprueba por su ruta de autoridad")
     obj = db.get(model, obj_id)
-    if not obj or getattr(obj, "company_id", tenant) != tenant:
+    if obj is None or obj.company_id != tenant:
         raise NotFoundError(code=code, message=message)
     return obj

@@ -824,3 +824,45 @@ def test_denegar_una_devolucion_exige_motivo_y_deja_la_mercancia_en_custodia(mun
         assert _por_estado(db, mundo.company_a, e["prod"]).get("DEVUELTO") == Decimal("5")
     finally:
         db.close()
+
+
+def test_iso_ven_03_la_devolucion_no_admite_lote_ni_serie_ajenos(mundo):
+    """ISO-VEN-03: La devolución no admite lote ni serie ajenos a la empresa."""
+    from app.modules.inventory.models import InventoryLot, ProductSerial
+
+    db = mundo.factory()
+    try:
+        e = _despachado(db, mundo, cantidad=10)
+        lf = _linea_factura(db, e)
+
+        pb = _producto(db, mundo.company_b, uuid4().hex[:8])
+        lote = InventoryLot(company_id=mundo.company_b, product_id=pb,
+                            lot_number="ISO-L-" + uuid4().hex[:6])
+        serie = ProductSerial(company_id=mundo.company_b, product_id=pb,
+                              serial="ISO-S-" + uuid4().hex[:6])
+        db.add_all([lote, serie])
+        db.flush()
+
+        casos = [
+            ("lot_id", str(lote.id), "LOT_NOT_FOUND"),
+            ("lot_id", str(uuid4()), "LOT_NOT_FOUND"),
+            ("serial_id", str(serie.id), "SERIAL_NOT_FOUND"),
+            ("serial_id", str(uuid4()), "SERIAL_NOT_FOUND"),
+        ]
+        for campo, valor, codigo in casos:
+            with pytest.raises(NotFoundError) as exc:
+                sales.request_return(
+                    db,
+                    company_id=mundo.company_a,
+                    code=f"DEV-{uuid4().hex[:8]}",
+                    invoice_id=str(e["factura"].id),
+                    reason="Devolución con referencia ajena",
+                    lines=[{"invoice_line_id": str(lf.id),
+                            "base_quantity": e["cantidad"],
+                            "quantity": float(lf.quantity),
+                            campo: valor}],
+                    actor="vendedor",
+                )
+            assert exc.value.code == codigo
+    finally:
+        db.close()

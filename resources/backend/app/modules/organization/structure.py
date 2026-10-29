@@ -207,6 +207,9 @@ def validate_chain(
                 details={"level": level.upper(), "declared": declared},
             )
         node = _load_node(db, level, node_id)
+        # Un nodo de otra empresa es inexistente para este almacén
+        if node.company_id != warehouse.company_id:
+            raise NotFoundError(code=f"{level.upper()}_NOT_FOUND", message=f"{level.capitalize()} no encontrado")
         if node.warehouse_id != warehouse.id:
             raise KontrolError(
                 code="HIERARCHY_CROSS_WAREHOUSE",

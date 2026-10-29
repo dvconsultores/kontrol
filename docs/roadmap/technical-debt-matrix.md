@@ -73,8 +73,8 @@ Hallazgo acoplado a OBS-09: **PRODUCTION-IMAGE-WITHOUT-LIBMAGIC** — la imagen 
 | DOCUMENT-SCAN-REJECTION-AUDIT-NOT-PERSISTED | D | 046 (con 001) | 0 | ¿debe persistir DOCUMENT_SCAN_REJECTED aunque la carga termine en 422? A) sesión independiente · B) commit explícito antes del 422 (recomendada) · C) aceptar que no persista |
 | ALMACENES-PAGINACION-LIMIT-OFFSET | D | 008 | 0 | ¿renombrar al canon page/page_size (rompe 12 pantallas y 10 suites)? |
 | OBS-04 · SPEC-SEGURIDAD-SIN-CARPETA | D | inventario | 0 | ¿se crea la carpeta o se reasigna en el inventario? |
-| WAREHOUSE-CROSS-COMPANY-FILAS-EXISTENTES | D | 008 | 0 | ¿se autoriza una consulta de solo lectura por instalación (y, si aparecen, una reparación)? |
-| WAREHOUSE-BRANCH-ALCANCE-DE-USUARIO (branch_ids) | D | 008 | 0 | ¿debe el alcance de sucursales del usuario limitar las sucursales de almacén? |
+| WAREHOUSE-CROSS-COMPANY-FILAS-EXISTENTES | D | 008 | 0 | ciclo 07: MEDIBLE con `python -m app.ops.scope_scan` (solo lectura), 0 filas en las bases de QA; la ejecución en una instalación real y cualquier reparación siguen pendientes de OD |
+| WAREHOUSE-BRANCH-ALCANCE-DE-USUARIO (branch_ids) | D | 008 | 0 | ciclo 07: LATENT (sin escritor ni consumidor en el producto); ¿debe el alcance de sucursales del usuario limitar las sucursales de almacén cuando exista un escritor? |
 | WAREHOUSE-BRANCH-FK-COMPUESTA | D | 008 | 0 | ¿se autoriza la migración de defensa en profundidad? |
 | WAREHOUSE-CATALOG-TIPOS-INACTIVOS | D | 008 | 0 | ¿puede una ubicación o zona usar un tipo inactivo? |
 | DT-04 | D | registro original | 0 | necesita tabla, FK, migración y backfill: alcance de Spec 007 sin priorizar |

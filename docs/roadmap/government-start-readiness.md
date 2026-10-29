@@ -33,7 +33,7 @@ Requisitos no funcionales de Gobierno (Ingeniería de Requerimientos §10, OFFIC
 
 | RNF-GOV | Prio. | Núcleo compartido hoy | Estado | Bloquea el inicio |
 |---|---|---|---|---|
-| 001 Aislamiento tenant/ente con pruebas hostiles | P0 | multiempresa con pruebas de cruce (25 ficheros de prueba); N10 corrigió tres cruces. El concepto «ente» no existe (GOVERNMENT_ONLY). Abiertas: WAREHOUSE-CROSS-COMPANY-FILAS-EXISTENTES, WAREHOUSE-BRANCH-* (D) y API-COMPANY-ID-EN-CONSULTA (F) | READY_WITH_GAPS | no para planificar; sí para implementar GOV-0 |
+| 001 Aislamiento tenant/ente con pruebas hostiles | P0 | **Ciclo 07 (2026-10-29, CERTIFIED tras la reanudación):** prerrequisitos del núcleo certificados con ISOLATION-E2E en tres navegadores y la canónica 388/388: inventarios de alcance (206 modelos y 556 operaciones clasificados), arnés hostil reutilizable, BARRIDO-IDS (228 rutas) y BARRIDO-LISTAS sin fugas, 24 GAP corregidos, guardas de modelos, rutas y frontend, escáner de invariantes `scope_scan` y contrato de extensión (`FUTURE_EXTENSION_CONTRACT.md`). El concepto «ente» sigue sin existir (GOVERNMENT_ONLY). Pendientes de Gobierno: llaves y configuración por ente, auditoría de la denegación entre entes (E2E-06) y autoridad de instalación separada (INSTALLATION-AUTHORITY-FROM-ANY-TENANT) | PREREQUISITES_CERTIFIED (núcleo) | no para planificar; sí para implementar GOV-0 |
 | 002 Decimal para dinero | P0 | NUMERIC en dinero; DT-09: quedan 4 columnas Float aceptadas por ADR-012 (una de cantidad) | READY (verificar las 4 columnas al diseñar GOV-1) | no |
 | 003 Fecha civil America/Caracas | P0 | POLICY-CLOCK-LOCAL (C) y **FECHAS-ZONA-DE-PRESENTACION (D, abierta)** | **GAP** | sí (decisión transversal pendiente) |
 | 004 Inmutabilidad (reverso, no edición) | P0 | patrón presente en módulos convergidos; sin política transversal verificada | NOT_MEASURED | se evalúa en ARCHITECTURE-BASELINE |
@@ -84,7 +84,7 @@ Clasificación preliminar, a fijar en GOVERNMENT-ARCHITECTURE-BASELINE (CLAUDE_R
 La cadena ORGANISMO → … → RENDICIÓN es una hipótesis que hay que contrastar con las fuentes, no un requisito.
 
 ## Tenant / Organization Isolation
-- **READY_WITH_GAPS.** El aislamiento por instalación y empresa está probado.
+- **PREREQUISITES_CERTIFIED (núcleo, ciclo 07; fundamento F05).** El aislamiento por tenant y empresa está certificado con pruebas hostiles medidas en 505 de 556 operaciones, barridos de ids, listas y cabecera, mutaciones sin supervivientes y la ISOLATION-E2E en tres navegadores; ver `specs/001-fundacion/spec001-isolation-prerequisites-delta.md`.
 - Gobierno exige aislar también **llaves y configuración** por ente, y pruebas hostiles E2E-06 (OFFICIAL/PROJECT). Eso es un modelo propio (GOVERNMENT_ONLY), no se puede copiar la multiempresa.
 - Las deudas D de almacenes (cruces de empresa y sucursal) tienen que resolverse antes de reutilizar esos patrones.
 
@@ -233,7 +233,7 @@ Esta readiness mide la **entrada técnica** a Gobierno, no el producto. Con la n
 
 | Métrica | Valor |
 |---|---|
-| Technical Foundation Readiness | 34,2 % (13/38) |
+| Technical Foundation Readiness | 36,8 % (14/38; 34,2 % en la retrospectiva, +F05 al cerrar el ciclo 07) |
 | Functional Product Completeness | 0,0 % (0/1 280) |
 | Owner UAT Ready | 0,0 % (0/122) |
 | Owner Accepted | 0,0 % (0/122) |

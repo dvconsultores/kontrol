@@ -10,8 +10,9 @@ suite. El código de salida es el de la suite; limpiar bien no convierte un fall
 acierto. Lo único que no cubre un `finally` es una muerte a la fuerza: para eso está
 `qa/e2e-bases.py`.
 
-Los puertos son fijos (8000 y 5173): en una máquina cabe una corrida a la vez, y si están
-ocupados no se empieza.
+Los puertos por defecto son 8000 (backend), 5173 (Vite) y 8010 (Autoridad Central), configurables
+(PDD-QA-PORTS-01). En una máquina cabe una corrida por juego de puertos, y si están ocupados no se
+empieza ni se toca al ocupante.
 """
 from __future__ import annotations
 
@@ -35,6 +36,7 @@ import urllib.error
 import urllib.request
 import zipfile
 from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import IO, Any
@@ -57,8 +59,55 @@ CAPACIDAD_DE_DESAFIOS_E2E = 40
 #: Identificadores de las dos claves sintéticas del propietario de la corrida (A firma; B solo es de confianza).
 KID_A = "kontrol-lic-2026-01"
 KID_B = "kontrol-lic-2027-01"
-API = f"http://127.0.0.1:{PUERTO_BACKEND}/api/v1"
-WEB = f"http://localhost:{PUERTO_FRONTEND}"
+@dataclass(frozen=True)
+class Puertos:
+    backend: int = PUERTO_BACKEND
+    frontend: int = PUERTO_FRONTEND
+    central: int = PUERTO_CENTRAL
+    origen: str = "por_defecto"
+
+    @property
+    def api(self) -> str:
+        return f"http://127.0.0.1:{self.backend}/api/v1"
+
+    @property
+    def web(self) -> str:
+        return f"http://localhost:{self.frontend}"
+
+    @property
+    def central_url(self) -> str:
+        return f"http://127.0.0.1:{self.central}"
+
+    @property
+    def api_raiz(self) -> str:
+        return f"http://127.0.0.1:{self.backend}"
+
+
+def resolver_puertos(entorno: Mapping[str, str], *, backend: int | None = None,
+                     frontend: int | None = None, central: int | None = None) -> Puertos:
+    """Aplica la precedencia opción > entorno > defecto y valida los tres puertos."""
+    valores = {
+        "backend": backend if backend is not None else _entero_de_entorno(entorno, "KONTROL_E2E_PUERTO_BACKEND", PUERTO_BACKEND),
+        "frontend": frontend if frontend is not None else _entero_de_entorno(entorno, "KONTROL_E2E_PUERTO_FRONTEND", PUERTO_FRONTEND),
+        "central": central if central is not None else _entero_de_entorno(entorno, "KONTROL_E2E_PUERTO_CENTRAL", PUERTO_CENTRAL),
+    }
+    origen = "opcion" if any(v is not None for v in (backend, frontend, central)) else (
+        "entorno" if any(k in entorno for k in ("KONTROL_E2E_PUERTO_BACKEND", "KONTROL_E2E_PUERTO_FRONTEND", "KONTROL_E2E_PUERTO_CENTRAL")) else "por_defecto")
+    for nombre, valor in valores.items():
+        if not isinstance(valor, int) or not (1024 <= valor <= 65535):
+            raise ValueError(f"puerto {nombre} inválido: {valor!r} (debe ser un entero entre 1024 y 65535)")
+    if len({valores["backend"], valores["frontend"], valores["central"]}) != 3:
+        raise ValueError("puertos inválidos: backend, frontend y central deben ser distintos")
+    return Puertos(backend=valores["backend"], frontend=valores["frontend"], central=valores["central"], origen=origen)
+
+
+def _entero_de_entorno(entorno: Mapping[str, str], clave: str, defecto: int) -> int:
+    if clave not in entorno:
+        return defecto
+    try:
+        return int(entorno[clave])
+    except (TypeError, ValueError):
+        raise ValueError(f"puerto {clave} inválido: {entorno[clave]!r} (debe ser un entero)") from None
 
 #: La preparación falló: la suite no llegó a correr.
 SALIDA_PREPARACION = 70
@@ -253,9 +302,10 @@ class Corrida:
                  argumentos: list[str] | None = None, sin_frontend: bool = False,
                  con_analizador: bool = False,
                  entorno: Mapping[str, str] | None = None, salida: IO[str] | None = None,
-                 python_de_producto: str | None = None) -> None:
+                 python_de_producto: str | None = None, puertos: Puertos | None = None) -> None:
         self.servidor = servidor
         self.orden = orden
+        self._puertos_pedidos = puertos
         self.argumentos = list(argumentos or [])
         self.sin_frontend = sin_frontend
         #: Certificación con analizador real: el preflight de `clamav_qa` tiene que pasar antes de crear nada
@@ -263,6 +313,15 @@ class Corrida:
         #: (las cargas con análisis se omiten con nombre si no hay `clamscan`).
         self.con_analizador = con_analizador
         self.entorno = dict(os.environ if entorno is None else entorno)
+        self.error_de_puertos: str | None = None
+        if self._puertos_pedidos is not None:
+            self.puertos = self._puertos_pedidos
+        else:
+            try:
+                self.puertos = resolver_puertos(self.entorno)
+            except ValueError as error:
+                self.puertos = Puertos()
+                self.error_de_puertos = str(error)
         self.salida = salida or sys.stdout
         self.python_de_producto = python_de_producto or sys.executable
         # Sin opción, la corrida es de un solo entorno, como V0; con la opción, el producto corre en el runtime puro.
@@ -283,6 +342,8 @@ class Corrida:
         self.manifiesto: dict[str, Any] = {
             "run_id": self.run_id, "base": self.base, "servidor": servidor.destino(),
             "inicio": datetime.now(UTC).isoformat(timespec="seconds"), "fases": [],
+            "puertos": {"backend": self.puertos.backend, "frontend": self.puertos.frontend,
+                        "central": self.puertos.central, "origen": self.puertos.origen},
         }
 
     # ------------------------------------------------------------------ salida
@@ -341,11 +402,12 @@ class Corrida:
             # obligatorio termina en SCAN_FAILED (falso seguro, FR-046-072): las pruebas que necesitan
             # una versión cargada se omiten con nombre y causa (ENTORNO-SIN-CLAMSCAN), no fallan a ciegas.
             "KONTROL_E2E_SCANNER_AVAILABLE": "true" if self.analizador() else "false",
-            "KONTROL_E2E_API": API,
-            "KONTROL_E2E_BASE_URL": WEB,
-            "KONTROL_API_URL": f"http://127.0.0.1:{PUERTO_BACKEND}",
+            "KONTROL_E2E_API": self.puertos.api,
+            "KONTROL_E2E_BASE_URL": self.puertos.web,
+            "KONTROL_API_URL": self.puertos.api_raiz,
             # La autoridad de la corrida, para que el cliente sincronice contra ella por HTTP local (solo QA).
-            "KONTROL_E2E_CENTRAL_URL": f"http://127.0.0.1:{PUERTO_CENTRAL}",
+            "KONTROL_E2E_CENTRAL_URL": self.puertos.central_url,
+            "KONTROL_CORS_ORIGINS": json.dumps([self.puertos.web]),
             "KONTROL_E2E_CENTRAL_RATE_CAPACITY": str(CAPACIDAD_DE_DESAFIOS_E2E),
             # El intérprete de ESTA certificación; los ayudantes Python de las specs lo usan
             # (E2E-SPECS-PYTHON-HELPERS-VENV-FIXED): nunca el heredado, un `.venv` fijo ni el PATH.
@@ -426,11 +488,13 @@ class Corrida:
 
     def comprobar(self) -> None:
         """Lo que tiene que ser cierto antes de crear nada."""
+        if self.error_de_puertos is not None:
+            raise base.CicloDeBaseRoto(self.error_de_puertos)
         base.exigir_base_e2e(self.base, admin_url=self.servidor.admin_url, entorno=self.entorno)
         if self.modo_de_producto == "RUNTIME_SEPARADO" and (not os.path.isabs(self.python_de_producto) or not os.path.exists(self.python_de_producto) or not os.access(self.python_de_producto, os.X_OK)):
             raise base.CicloDeBaseRoto("el intérprete de producto no es una ruta absoluta ejecutable")
-        ocupados = [puerto for host, puerto in (("127.0.0.1", PUERTO_BACKEND), ("127.0.0.1", PUERTO_CENTRAL), ("localhost", PUERTO_FRONTEND))
-                    if (puerto != PUERTO_FRONTEND or not self.sin_frontend) and _puerto_ocupado(host, puerto)]
+        ocupados = [puerto for host, puerto in (("127.0.0.1", self.puertos.backend), ("127.0.0.1", self.puertos.central), ("localhost", self.puertos.frontend))
+                    if (puerto != self.puertos.frontend or not self.sin_frontend) and _puerto_ocupado(host, puerto)]
         if ocupados:
             raise base.CicloDeBaseRoto(
                 f"puertos ocupados {ocupados}: hay otra pila en marcha y en esta máquina cabe una corrida a la vez")
@@ -512,8 +576,8 @@ class Corrida:
         self.fase("backend")
         self.anotar_interprete_de_producto()
         self.arrancar("backend", [self.python_de_producto, "-m", "uvicorn", "app.main:app", "--timeout-keep-alive", str(KEEP_ALIVE_SEGUNDOS), "--host", "127.0.0.1",
-                                  "--port", str(PUERTO_BACKEND)], base.BACKEND)
-        self.esperar_salud("backend", f"{API}/health/ready")
+                                  "--port", str(self.puertos.backend)], base.BACKEND)
+        self.esperar_salud("backend", f"{self.puertos.api}/health/ready")
 
     def anotar_interprete_de_producto(self) -> None:
         raices = raices_a_sanear(self.entorno)
@@ -599,13 +663,13 @@ class Corrida:
             raise base.CicloDeBaseRoto("las migraciones de la Autoridad Central fallaron (ver autoridad-migraciones.log)")
         registro = open(self.evidencia / "autoridad.log", "ab")  # noqa: SIM115 - vive lo que el proceso
         proceso = subprocess.Popen([self.python_de_producto, "-m", "uvicorn", "central_authority.main:app", "--timeout-keep-alive", str(KEEP_ALIVE_SEGUNDOS), "--host", "127.0.0.1",
-                                    "--port", str(PUERTO_CENTRAL)], cwd=base.BACKEND, env=entorno, stdout=registro,
+                                    "--port", str(self.puertos.central)], cwd=base.BACKEND, env=entorno, stdout=registro,
                                    stderr=subprocess.STDOUT, start_new_session=True)
         registro.close()
         self.procesos["autoridad"] = proceso
         self.manifiesto.setdefault("procesos", {})["autoridad"] = proceso.pid
         self.anotar()
-        self.esperar_salud("autoridad", f"http://127.0.0.1:{PUERTO_CENTRAL}/health/ready")
+        self.esperar_salud("autoridad", f"{self.puertos.central_url}/health/ready")
 
     def verificar_backend(self) -> None:
         """El backend que responde es el de esta corrida y escribe en la base de esta corrida.
@@ -623,7 +687,7 @@ class Corrida:
         entorno = self.entorno_de_procesos()
         cuerpo = json.dumps({"tenant_code": "DEMO", "username": entorno["KONTROL_E2E_USER"],
                              "password": entorno["KONTROL_E2E_PASSWORD"]}).encode()
-        peticion = urllib.request.Request(f"{API}/auth/login", data=cuerpo,
+        peticion = urllib.request.Request(f"{self.puertos.api}/auth/login", data=cuerpo,
                                           headers={"Content-Type": "application/json"})
         try:
             with urllib.request.urlopen(peticion, timeout=30) as respuesta:
@@ -687,8 +751,8 @@ class Corrida:
     def arrancar_frontend(self) -> None:
         self.fase("frontend")
         self.arrancar("frontend", ["node", "node_modules/vite/bin/vite.js", "--host", "localhost", "--port",
-                                   str(PUERTO_FRONTEND), "--strictPort"], FRONTEND)
-        self.esperar_salud("frontend", f"{WEB}/")
+                                   str(self.puertos.frontend), "--strictPort"], FRONTEND)
+        self.esperar_salud("frontend", f"{self.puertos.web}/")
 
     # ----------------------------------------------------------------- entorno observado
     def anotar_entorno(self, pared_inicio: datetime, mono_inicio: float) -> None:
@@ -923,10 +987,22 @@ def main(argv: list[str] | None = None) -> int:
                         help="programa que se ejecuta en lugar de Playwright, desde la raíz del repositorio")
     parser.add_argument("--python-de-producto", metavar="RUTA",
                         help="intérprete del runtime puro para el backend y la autoridad; sin ella, el del arnés")
+    parser.add_argument("--puerto-backend", type=int, default=None, metavar="N",
+                        help="puerto del backend (por defecto 8000 o KONTROL_E2E_PUERTO_BACKEND)")
+    parser.add_argument("--puerto-frontend", type=int, default=None, metavar="N",
+                        help="puerto de Vite (por defecto 5173 o KONTROL_E2E_PUERTO_FRONTEND)")
+    parser.add_argument("--puerto-central", type=int, default=None, metavar="N",
+                        help="puerto de la Autoridad Central (por defecto 8010 o KONTROL_E2E_PUERTO_CENTRAL)")
     args, resto = parser.parse_known_args(argv)
     if resto[:1] == ["--"]:
         resto = resto[1:]
+    try:
+        puertos = resolver_puertos(os.environ, backend=args.puerto_backend,
+                                   frontend=args.puerto_frontend, central=args.puerto_central)
+    except ValueError as error:
+        print(error, file=sys.stderr)
+        return SALIDA_PREPARACION
     corrida = Corrida(base.Servidor.del_entorno(), orden=[args.orden] if args.orden else None,
                       argumentos=resto, sin_frontend=args.sin_frontend, con_analizador=args.con_analizador,
-                      python_de_producto=args.python_de_producto)
+                      python_de_producto=args.python_de_producto, puertos=puertos)
     return corrida.ejecutar()

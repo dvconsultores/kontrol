@@ -415,6 +415,15 @@ def add_session_movement(db: Session, *, session_id: str, movement_type: str, am
         raise KontrolError(code="INVALID_AMOUNT", message="El monto del movimiento debe ser positivo", status_code=422)
     if movement_type not in ("IN", "OUT", "ADJUST"):
         raise KontrolError(code="INVALID_MOVEMENT_TYPE", message="Tipo de movimiento inválido", status_code=422)
+    # Aislamiento (G-TES-01): los ids relacionados deben pertenecer a la empresa de la sesión.
+    if instrument_id:
+        instr = db.get(TreasuryInstrument, instrument_id)
+        if instr is None or instr.company_id != session.company_id:
+            raise NotFoundError(code="INSTRUMENT_NOT_FOUND", message="Instrumento no encontrado")
+    if payment_id:
+        pago = db.get(Payment, payment_id)
+        if pago is None or pago.company_id != session.company_id:
+            raise NotFoundError(code="PAYMENT_NOT_FOUND", message="Pago no encontrado")
     m = CashSessionMovement(session_id=str(session.id), movement_type=movement_type, amount=amount,
                             instrument_id=instrument_id, payment_id=payment_id, source=source,
                             reference=reference, note=note)
@@ -542,12 +551,31 @@ def create_bank_transaction(db: Session, *, company_id: str, account_id: str, di
     return bt
 
 
-def _find_execution(db: Session, payment_id: str) -> dict | None:
-    """Busca una ejecución previa (caja o banco) para idempotencia."""
-    bt = db.execute(select(BankTransaction).where(BankTransaction.payment_id == payment_id)).scalars().first()
+def _find_execution(db: Session, payment_id: str, company_id: str) -> dict | None:
+    """Busca una ejecución previa (caja o banco) para idempotencia.
+
+    Una ejecución de OTRA empresa no puede marcar un pago como ya ejecutado (G-TES-01).
+    """
+    bt = db.execute(
+        select(BankTransaction).where(
+            BankTransaction.payment_id == payment_id,
+            BankTransaction.company_id == company_id,
+        )
+    ).scalars().first()
     if bt:
         return {"kind": "bank", "id": str(bt.id)}
-    mv = db.execute(select(CashSessionMovement).where(CashSessionMovement.payment_id == payment_id)).scalars().first()
+    mv = (
+        db.execute(
+            select(CashSessionMovement)
+            .join(CashSession, CashSession.id == CashSessionMovement.session_id)
+            .where(
+                CashSessionMovement.payment_id == payment_id,
+                CashSession.company_id == company_id,
+            )
+        )
+        .scalars()
+        .first()
+    )
     if mv:
         return {"kind": "cash", "id": str(mv.id)}
     return None
@@ -564,7 +592,7 @@ def execute_payment(db: Session, *, company_id: str, payment_id: str, target_typ
     if not payment or payment.company_id != company_id or payment.direction != "OUT":
         raise NotFoundError(code="PAYMENT_NOT_FOUND", message="Pago de egreso no encontrado")
     if idempotency_key:
-        existing = _find_execution(db, str(payment.id))
+        existing = _find_execution(db, str(payment.id), company_id=str(payment.company_id))
         if existing:
             return {"id": existing["id"], "kind": existing["kind"], "idempotent": True,
                     "amount": payment.amount, "currency": payment.currency}
@@ -605,7 +633,7 @@ def execute_collection(db: Session, *, company_id: str, payment_id: str, target_
     if not payment or payment.company_id != company_id or payment.direction != "IN":
         raise NotFoundError(code="COLLECTION_NOT_FOUND", message="Cobro de ingreso no encontrado")
     if idempotency_key:
-        existing = _find_execution(db, str(payment.id))
+        existing = _find_execution(db, str(payment.id), company_id=str(payment.company_id))
         if existing:
             return {"id": existing["id"], "kind": existing["kind"], "idempotent": True,
                     "amount": payment.amount, "currency": payment.currency}
@@ -734,7 +762,7 @@ def add_reconciliation_line(db: Session, *, reconciliation_id: str, bank_transac
     if rec.status not in ("DRAFT", "IN_PROGRESS"):
         raise ConflictError(code="RECONCILIATION_LOCKED", message="La conciliación no admite nuevas líneas.")
     bt = db.get(BankTransaction, bank_transaction_id)
-    if not bt:
+    if not bt or bt.company_id != rec.company_id:
         raise NotFoundError(code="BANK_TRANSACTION_NOT_FOUND", message="Transacción bancaria no encontrada")
     line = ReconciliationLine(reconciliation_id=str(rec.id), bank_transaction_id=str(bt.id), status="UNMATCHED")
     db.add(line)

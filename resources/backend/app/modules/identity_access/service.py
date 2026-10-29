@@ -14,12 +14,12 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, overload
 
 import jwt as pyjwt
-from sqlalchemy import or_, select, text, update
+from sqlalchemy import and_, or_, select, text, update
 from sqlalchemy.orm import Session
 
 from app.core import clock, security
 from app.core.config import get_settings
-from app.core.errors import ConflictError, KontrolError, NotFoundError, PermissionDeniedError
+from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.identity_access import authority, mfa_policy
 from app.modules.identity_access.models import (
     PasswordReset,
@@ -335,7 +335,9 @@ def revoke_session(db: Session, *, session_id: str, user_id: str | None = None, 
     if not session:
         raise NotFoundError(code="SESSION_NOT_FOUND", message="Sesión no encontrada")
     if user_id and session.user_id != user_id:
-        raise PermissionDeniedError()
+        # G-SES-01: una sesión de otro usuario es inexistente para quien pide
+        # (sin oráculo de existencia).
+        raise NotFoundError(code="SESSION_NOT_FOUND", message="Sesión no encontrada")
     _revoke_family(db, session.family_id)
     user = db.get(User, session.user_id)
     _audit(db, action="SESSION_REVOKED", entity_type="Session", entity_id=str(session.id), tenant_id=user.tenant_id if user else None, request_id=request_id)
@@ -638,16 +640,32 @@ def user_has_permission(user: User, permissions: list[str], resource: str, actio
     return f"{resource}:{action}" in permissions
 
 
+def _roles_visibles(tenant_id: str):
+    """Condición de visibilidad de roles por tenant (OD-ISO-11).
+
+    Un rol es visible para un tenant si le pertenece, o si es heredado/protegido
+    (`tenant_id` nulo) y su `company_id` es nulo o pertenece al tenant.
+    """
+    from app.modules.organization.models import Company
+
+    return or_(
+        Role.tenant_id == tenant_id,
+        and_(
+            Role.tenant_id.is_(None),
+            or_(Role.company_id.is_(None), Role.company_id.in_(select(Company.id).where(Company.tenant_id == tenant_id))),
+        ),
+    )
+
+
 def list_roles(db: Session, *, company_id: str | None = None, tenant_id: str | None = None) -> list[dict]:
     """Roles activos con sus permisos (FR-001-040). Con tenant_id, solo los visibles para ese tenant."""
-    from app.modules.organization.models import Company
 
     q = select(Role).where(Role.status == "ACTIVE")
     if company_id:
         q = q.where(Role.company_id == company_id)
     if tenant_id:
         # Un rol acotado a una empresa de otro tenant no es visible ni asignable desde este (deuda ROLE-CATALOG-INSTALLATION-WIDE).
-        q = q.where(or_(Role.company_id.is_(None), Role.company_id.in_(select(Company.id).where(Company.tenant_id == tenant_id))))
+        q = q.where(_roles_visibles(tenant_id))
     roles = db.execute(q.order_by(Role.name)).scalars().all()
     result: list[dict] = []
     for r in roles:
@@ -733,11 +751,15 @@ def create_role(
     if db.get_bind().dialect.name == "postgresql":
         db.execute(text("SELECT pg_advisory_xact_lock(:clave)"), {"clave": _BLOQUEO_ALTA_ROL})
     duplicado = db.execute(
-        select(Role).where(Role.code == code, Role.company_id.is_(None) if company_id is None else Role.company_id == company_id)
+        select(Role).where(
+            Role.code == code,
+            Role.company_id.is_(None) if company_id is None else Role.company_id == company_id,
+            _roles_visibles(tenant_id),
+        )
     ).scalars().first()
     if duplicado is not None:
         raise ConflictError(code="ROLE_DUPLICATE", message="Ya existe un rol con ese código en ese alcance")
-    rol = Role(code=code, name=name, company_id=company_id, protected=False, status="ACTIVE", created_by=actor)
+    rol = Role(code=code, name=name, tenant_id=tenant_id, company_id=company_id, protected=False, status="ACTIVE", created_by=actor)
     db.add(rol)
     db.flush()
     for clave in solicitados:
@@ -797,7 +819,7 @@ def assign_role_to_user(
         empresa = db.get(Company, company_id)
         if empresa is None or str(empresa.tenant_id) != str(tenant_id):
             raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
-    role = db.get(Role, role_id)
+    role = db.execute(select(Role).where(Role.id == role_id, _roles_visibles(tenant_id))).scalars().first()
     if not role:
         raise NotFoundError(code="ROLE_NOT_FOUND", message="Rol no encontrado")
     # Techo de delegación (OD-DEL-01..05/08): se evalúa con la autoridad que el actor tiene AHORA.

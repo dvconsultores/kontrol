@@ -238,6 +238,17 @@ def test_un_paso_de_aprobacion_ajeno_no_se_decide_desde_otra_empresa(mundo):
                    {"reason": "Aprobado desde otra empresa"})
     assert r.status_code in BLOQUEO, (
         f"B decidió un paso de aprobación de A: {r.status_code} {r.text}")
+    for decision in ("reject", "return"):
+        r = mundo.post(f"/approvals/steps/{abiertos[0]['id']}/{decision}", "ub", mundo.company_b,
+                       {"reason": "Decisión desde otra empresa"})
+        assert r.status_code in BLOQUEO, (
+            f"B ejecutó {decision} sobre un paso de aprobación de A: {r.status_code} {r.text}")
+    r = mundo.get(f"/approvals/requests/{solicitud}", "ua", mundo.company_a)
+    assert r.status_code == 200, (
+        f"A no pudo leer su propia solicitud: {r.status_code} {r.text}")
+    paso = next(p for p in r.json()["steps"] if p["id"] == abiertos[0]["id"])
+    assert paso["status"] == "IN_REVIEW", (
+        f"El paso de A dejó de estar abierto tras los intentos de B: {paso['status']}")
 
 
 # ---------------------------------------------------------------- organización

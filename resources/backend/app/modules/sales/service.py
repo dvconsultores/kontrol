@@ -26,7 +26,7 @@ from app.modules.approvals import integration as approvals_integration
 from app.modules.approvals import service as approvals_service
 from app.modules.fiscal import service as fiscal_service
 from app.modules.inventory import service as inv_service
-from app.modules.inventory.models import InventoryBalance, Reservation
+from app.modules.inventory.models import InventoryBalance, InventoryLot, ProductSerial, Reservation
 from app.modules.master_data import uom as uom_engine
 from app.modules.organization.models import Company, Warehouse
 from app.modules.organization.service import warehouse_belongs_to
@@ -197,6 +197,15 @@ def _require_party(db: Session, company_id: str, party_id: str) -> None:
     party = db.get(Party, party_id)
     if not party or party.company_id != company_id:
         raise NotFoundError(code="PARTY_NOT_FOUND", message="Tercero no encontrado")
+
+
+def _require_item(db: Session, company_id: str, item_id: str) -> None:
+    """Valida que el artículo pertenezca a la empresa antes de persistir."""
+    from app.modules.master_data.models import CatalogItem
+
+    item = db.get(CatalogItem, item_id)
+    if item is None or item.company_id != company_id:
+        raise NotFoundError(code="ITEM_NOT_FOUND", message="Artículo no encontrado")
 
 
 def _require_warehouse(db: Session, company_id: str, warehouse_id: str) -> Warehouse:
@@ -1887,6 +1896,8 @@ def confirm_order(db: Session, *, company_id: str, order_id: str, lines: list[di
             note=(item.get("note") or None)))
     for clave in sorted(sobrantes):
         item = enviadas[clave]
+        if item.get("product_id"):
+            _require_item(db, company_id, str(item["product_id"]))
         conforme = False
         db.add(OrderConfirmationLine(
             confirmation_id=str(confirmacion.id), order_line_id=None,
@@ -2572,6 +2583,10 @@ def create_invoice(db: Session, *, company_id: str, customer_id: str, base_fisca
 
 def add_invoice_line(db: Session, *, invoice_id: str, product_id: str, quantity: float, unit_price: float,
                      tax_amount: float = 0.0, snapshot: str | None = None) -> SalesInvoiceLine:
+    invoice = db.get(SalesInvoice, invoice_id)
+    if invoice is None:
+        raise NotFoundError(code="INVOICE_NOT_FOUND", message="Factura no encontrada")
+    _require_item(db, invoice.company_id, product_id)
     base = round(quantity * unit_price, 6)
     line = SalesInvoiceLine(invoice_id=invoice_id, product_id=product_id, quantity=quantity, unit_price=unit_price,
                             tax_amount=tax_amount, base_fiscal=base, total=round(base + tax_amount, 6), snapshot=snapshot)
@@ -3382,6 +3397,14 @@ def request_return(db: Session, *, company_id: str, code: str, invoice_id: str, 
                          "returnable_base_quantity": str(disponible[invoice_line_id]),
                          "requested_base_quantity": str(pedida)})
         disponible[invoice_line_id] -= pedida
+        if item.get("lot_id"):
+            lote = db.get(InventoryLot, item["lot_id"])
+            if lote is None or lote.company_id != company_id:
+                raise NotFoundError(code="LOT_NOT_FOUND", message="Lote no encontrado")
+        if item.get("serial_id"):
+            serie = db.get(ProductSerial, item["serial_id"])
+            if serie is None or serie.company_id != company_id:
+                raise NotFoundError(code="SERIAL_NOT_FOUND", message="Serie no encontrada")
         # La presentación y el factor se copian de la factura, no del maestro de
         # hoy: devolver una caja de doce devuelve las doce que se facturaron,
         # aunque la caja pase a ser de veinte mañana.

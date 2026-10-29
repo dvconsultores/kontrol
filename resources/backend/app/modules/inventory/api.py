@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
-from app.core.errors import NotFoundError
+from app.core.errors import NotFoundError, PermissionDeniedError
 from app.modules.identity_access.models import User
 from app.modules.inventory import service as inv_service
 from app.modules.inventory.models import (
@@ -193,8 +193,12 @@ def create_movement_type(body: MovementTypeCreate, db: Session = Depends(get_db)
     # luego insertar no es atómico, y dos altas simultáneas del mismo código
     # pasaban ambas la consulta y la segunda subía como 500. La ruta se queda
     # con lo suyo, que es confirmar.
+    if body.global_scope:
+        # OD-ISO-10: las filas globales no se crean desde una empresa
+        raise PermissionDeniedError(code="GLOBAL_SCOPE_FORBIDDEN",
+                                    message="Las filas globales no se crean desde una empresa")
     mtype = inv_service.crear_tipo_de_movimiento(
-        db, company_id=None if body.global_scope else ctx.company_id,
+        db, company_id=ctx.company_id,
         code=body.code, name=body.name, direction=body.direction, actor=str(actor.id))
     db.commit()
     db.refresh(mtype)
@@ -515,6 +519,13 @@ def create_transfer(body: TransferCreate, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
     inv_service._require_warehouse(db, ctx.company_id, body.origin_warehouse_id)
     inv_service._require_warehouse(db, ctx.company_id, body.destination_warehouse_id)
+    # ADR-D0-014: validar todas las líneas antes de persistir la transferencia
+    for line in body.lines:
+        inv_service._require_product(db, ctx.company_id, line.product_id)
+        if line.lot_id:
+            inv_service._require_lot(db, ctx.company_id, line.lot_id)
+        if line.serial_id:
+            inv_service._require_serial(db, ctx.company_id, line.serial_id)
     transfer = Transfer(company_id=ctx.company_id, code=body.code, origin_warehouse_id=body.origin_warehouse_id,
                         destination_warehouse_id=body.destination_warehouse_id, request_ref=body.request_ref,
                         status="DRAFT", created_by=str(actor.id))
@@ -674,7 +685,13 @@ def list_costing_profiles(db: Session = Depends(get_db), user: User = Depends(re
 @router.post("/costing-profiles", dependencies=[Depends(require_write_allowed)])
 def create_costing_profile(body: CostingProfileCreate, db: Session = Depends(get_db),
                            actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
-    profile = CostingProfile(company_id=None if body.global_scope else ctx.company_id, code=body.code, method=body.method,
+    if body.global_scope:
+        # OD-ISO-10: las filas globales no se crean desde una empresa
+        raise PermissionDeniedError(code="GLOBAL_SCOPE_FORBIDDEN",
+                                    message="Las filas globales no se crean desde una empresa")
+    if body.product_id:
+        inv_service._require_product(db, ctx.company_id, body.product_id)
+    profile = CostingProfile(company_id=ctx.company_id, code=body.code, method=body.method,
                              currency=body.currency, product_id=body.product_id, effective_from=body.effective_from,
                              effective_to=body.effective_to, status="ACTIVE", created_by=str(actor.id))
     db.add(profile)
@@ -748,8 +765,11 @@ def operation_ship(body: OperationShip, db: Session = Depends(get_db),
 # Helpers
 # --------------------------------------------------------------------------- #
 def _get_owned(db: Session, model, obj_id: str, tenant: str, code: str, message: str):
+    # ADR-D0-014: falla cerrado si el modelo no define company_id
+    if "company_id" not in model.__table__.c:
+        raise TypeError(f"{model.__name__} no tiene company_id: su propiedad se comprueba por su ruta de autoridad")
     obj = db.get(model, obj_id)
-    if not obj or getattr(obj, "company_id", tenant) != tenant:
+    if obj is None or obj.company_id != tenant:
         raise NotFoundError(code=code, message=message)
     return obj
 

@@ -27,6 +27,15 @@ export interface MundoN6 {
   nombre_c: string;
   tercero_a: string;
   tercero_b: string;
+  tercero_c: string;
+  documento_b: string;
+  documento_c: string;
+  producto_b: string;
+  producto_c: string;
+  doc_b: string;
+  doc_c: string;
+  prod_b: string;
+  prod_c: string;
 }
 
 const RUTA = process.env.KONTROL_QA_IDS_FILE ?? join(tmpdir(), "kontrol-n6-ids.json");

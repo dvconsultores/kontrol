@@ -1373,6 +1373,7 @@ def customer_balance(customer_id: str, db: Session = Depends(get_db),
                      user: User = Depends(require_permission("ventas", "view")),
                      ctx: CompanyContext = Depends(get_company_context)):
     """El saldo del cliente, con sus sumandos a la vista."""
+    sales_service._require_party(db, ctx.company_id, customer_id)
     return sales_service.customer_balance(db, company_id=ctx.company_id, customer_id=customer_id)
 
 
@@ -1381,6 +1382,7 @@ def customer_statement(customer_id: str, db: Session = Depends(get_db),
                        user: User = Depends(require_permission("ventas", "view")),
                        ctx: CompanyContext = Depends(get_company_context)):
     """La cronología que explica el saldo. Cada línea es un hecho con documento."""
+    sales_service._require_party(db, ctx.company_id, customer_id)
     return sales_service.customer_statement(db, company_id=ctx.company_id, customer_id=customer_id)
 
 
@@ -1389,6 +1391,7 @@ def customer_credits(customer_id: str, db: Session = Depends(get_db),
                      user: User = Depends(require_permission("ventas", "view")),
                      ctx: CompanyContext = Depends(get_company_context)):
     """Los créditos del cliente que todavía tienen importe sin aplicar."""
+    sales_service._require_party(db, ctx.company_id, customer_id)
     return {"items": sales_service.customer_credits(db, company_id=ctx.company_id,
                                                     customer_id=customer_id)}
 
@@ -1448,7 +1451,12 @@ def get_aging(party_id: str | None = None, db: Session = Depends(get_db), user: 
 # Helpers
 # --------------------------------------------------------------------------- #
 def _owned(db: Session, model, obj_id: str, tenant: str, code: str, message: str):
+    # Falla cerrado: si el modelo no tiene company_id, su propiedad se valida por otra ruta.
+    if "company_id" not in model.__table__.c:
+        raise TypeError(
+            f"{model.__name__} no tiene company_id: su propiedad se comprueba por su ruta de autoridad"
+        )
     obj = db.get(model, obj_id)
-    if not obj or getattr(obj, "company_id", tenant) != tenant:
+    if obj is None or obj.company_id != tenant:
         raise NotFoundError(code=code, message=message)
     return obj

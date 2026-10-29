@@ -457,6 +457,11 @@ def create_presentation(product_id: str, body: PresentationIn, db: Session = Dep
                            message="El producto no declara unidad base", status_code=422)
     data = body.model_dump(exclude={"factor_to_base", "factor_uom_id",
                                     "exact_in_base", "valid_from"})
+    # Validar unidades relacionadas antes de persistir
+    if body.unit_id:
+        _get_unit(db, ctx, body.unit_id)
+    if body.factor_uom_id:
+        _get_unit(db, ctx, body.factor_uom_id)
     presentation = Presentation(product_id=product_id, company_id=item.company_id,
                                 status="ACTIVE", created_by=str(actor.id), **data)
     db.add(presentation)
@@ -603,6 +608,9 @@ def create_version(presentation_id: str, body: VersionIn, db: Session = Depends(
     """
     presentation = _get_presentation(db, ctx, presentation_id)
     item = _get_product(db, ctx, presentation.product_id)
+    # Validar unidad del factor antes de persistir
+    if body.factor_uom_id:
+        _get_unit(db, ctx, body.factor_uom_id)
     start = body.valid_from or datetime.now(UTC)
 
     current = _open_version(db, presentation_id)

@@ -259,13 +259,60 @@ Detalle en `specs/001-fundacion/spec001-backup-restore-verification-delta.md` y 
 | BACKUP-RESTORED-UI-SMOKE: la continuidad del destino se prueba por HTTP con la misma API del SPA, no en el navegador (§84 «donde sea práctico») | LOW |
 | BACKUP-RTO-DATOS-REALES: el RTO de 5 s es de un conjunto sintético pequeño. Falta el ejercicio con el volumen real en el anfitrión de destino | MEDIUM |
 
+### Actualización SHARED-CORE-P0-HARDENING-07 (2026-10-29): prerrequisitos de aislamiento tenant/empresa
+
+Detalle en `specs/001-fundacion/spec001-isolation-prerequisites-delta.md` y `evidence/isolation-prerequisites/`.
+
+**Corregidos** con rojo atribuible previo. Son 24 GAP; los 22 de partida de §1.1 del delta y los 2 que encontró el BARRIDO-IDS:
+- **Altas que aceptaban ids de otra empresa u otro tenant:** inventario, maestros, documentos, compras, ventas y tesorería. Ahora responden 404 del objeto relacionado, igual que si no existiera.
+- **Idempotencia de tesorería:** atada a la empresa. Un pago ajeno ya no inutiliza la ejecución de otra empresa (G-TES-01).
+- **`global_scope`:** prohibido desde una empresa con 403 `GLOBAL_SCOPE_FORBIDDEN` (OD-ISO-10).
+- **Roles por tenant:** migración `0062`, sin relleno de datos (OD-ISO-11).
+- **Oráculos de existencia:** cerrados en las sesiones, la cadena de almacén, los saldos de cuentas por cobrar y el saldo de cuenta.
+- **Exportaciones:** escritura exclusiva.
+- **Ayudantes de propiedad:** fallan cerrado.
+
+**Deudas afectadas:**
+
+| Deuda | Estado tras el ciclo 07 |
+|---|---|
+| ROLE-CATALOG-INSTALLATION-WIDE | **CLOSED** para los roles nuevos (OD-ISO-11). Los roles personalizados heredados con tenant nulo se miden con `python -m app.ops.scope_scan`: 0 en las bases de QA. Su relleno en instalaciones reales necesita OD (deuda ROLES-HEREDADOS-SIN-TENANT) |
+| WAREHOUSE-CROSS-COMPANY-FILAS-EXISTENTES | **MEDIBLE**: `scope_scan` (solo lectura, 301 aristas de empresa y las de tenant) da 0 filas cruzadas en las bases sintéticas (mundo hostil y base tras la E2E). En instalaciones reales lo ejecuta la operadora; sin reparación (`DATA_REPAIR_EXECUTED = 0`, OD-ISO-08) |
+| WAREHOUSE-CATALOG-TYPE-CROSS-COMPANY | **CLOSED** (2026-10-19). El BARRIDO-IDS no encuentra regresión |
+| WAREHOUSE-BRANCH-ALCANCE-DE-USUARIO (`branch_ids`) | **LATENT**: `UserScope` no tiene escritor en el producto y `CompanyContext.branch_ids` no lo consume nadie, así que no hay camino que cree estado inválido. La decisión sigue siendo de la dueña cuando exista un escritor |
+| WAREHOUSE-BRANCH-FK-COMPUESTA | Sin cambio (D). FK compuestas descartadas en el núcleo en este ciclo (§4.2 del delta): validación en el backend, más escáner, más pruebas hostiles |
+
+**Nuevas:**
+
+| Deuda | Severidad |
+|---|---|
+| INSTALLATION-AUTHORITY-FROM-ANY-TENANT: la configuración de instalación (licencia, homologación, fuentes legales) la muta un administrador con autoridad de todo el tenant de **cualquier** tenant. El producto crea un solo tenant, así que es latente; Gobierno necesita un rol de plataforma separado (GOV-CTL-004) | MEDIUM · BLOCKING_FINAL_GOV = 1 |
+| ROLES-HEREDADOS-SIN-TENANT: plan de reparación de los roles personalizados anteriores a 0062 (rellenar desde `created_by` o retirarlos), con OD y por instalación | LOW |
+| SCOPE-DENIAL-AUDIT (E2E-06): el núcleo audita `COMPANY_SCOPE_DENIED`, pero no el 404 de no enumeración. «Auditado» en un intento entre entes exige un evento de Gobierno con política anti-tormenta | MEDIUM · Gobierno |
+| CAMPOS-IGNORADOS-EN-ESQUEMA: `traceability_profile_id`/`regulatory_profile_id` (alta de ítem), `lot_ids` (despacho), `from_unit_id` (conversión) y `source_id` (aplicación de nota de crédito) se aceptan y no se usan | LOW |
+| SALES-CONFIRMATION-EXTRA-WITHOUT-PRODUCT-500: una línea sobrante sin `product_id` se guarda como "" y da 500 por FK | LOW |
+
+**Reanudación y cierre del ciclo 07 (2026-10-29, encargo «reanudación controlada»):**
+- El trabajo sin confirmar se reconcilió fichero a fichero contra las respuestas crudas de DeepSeek: 0 líneas de procedencia desconocida (`UNCOMMITTED_C07_RECONCILIATION_MATRIX.md`).
+- La cobertura hostil se midió con un trazador: el inventario de SALIDA previo sobredeclaraba `ENFORCED_TESTED`. Hoy hay 505 de 556 operaciones con petición hostil y 51 de instalación.
+- Nuevos: barrido de cabecera ISO-CAB-01 (no enumeración en 482 rutas) y pruebas de rutas de tenant y propias.
+- La mutación encontró 2 defensas sin prueba (`_owned` de ventas y la descarga de exportaciones), ya cubiertas.
+
+| Deuda | Estado |
+|---|---|
+| E2E-PUERTOS-FIJOS-ESTACION-MULTIPROYECTO: el arnés E2E exigía 8000/5173/8010 y no corría si otro proyecto los ocupaba; además `test_e2e_corrida.py` **omitía en silencio** 21 de 36 pruebas | **CLOSED** en el mismo ciclo por PDD-QA-PORTS-01 (decisión de diseño, no de la dueña): puertos configurables (`--puerto-*` o `KONTROL_E2E_PUERTO_*`) con los canónicos por defecto; el ocupante nunca se toca; 41/41 sin omitidas |
+| TIPOS-MOVIMIENTO-SIN-INDICADOR-GLOBAL: la tabla de Tipos de movimiento no distingue las filas globales heredadas de las propias (preexistente) | LOW (nueva) |
+| E2E-N6-ENTRAR-UAB-INTERMITENTE | Sin cambio de causa. Observación: con los tres navegadores a la vez (conjunto de aislamiento) aparece en 2–4 pruebas por corrida, en pruebas distintas cada vez; en la canónica, 0. Se propone revisar su severidad en el ciclo 09 (QA_RELIABILITY) |
+
+La medición de filas cruzadas con `scope_scan` sobre la base tras la E2E dio 0 en las tres corridas del cierre (`CROSS_SCOPE_ROWS_CREATED_BY_E2E = 0`).
+
 ## Retrospectiva GOV-PRODUCT-COMPLETENESS-RETRO-01 (2026-10-29)
 
 Norma permanente nueva: `docs/governance/product-completeness-and-owner-uat-policy.md`. Desde ahora, un cierre técnico (delta CONVERGED, deuda pagada) **no** equivale a producto terminado. Cada ciclo de producto responde las tres preguntas (menú, qué hace el usuario, ¿lo puede probar la dueña?) y publica tres métricas separadas.
 
 Retrospectiva de Gobierno (`docs/roadmap/government-product-completeness/`):
 
-- Technical Foundation Readiness: **34,2 %** (13/38);
+- Technical Foundation Readiness: **34,2 %** (13/38) en la retrospectiva; **36,8 %** (14/38) tras cerrar el ciclo 07 (F05);
 - Functional Product Completeness: **0,0 %** (0/1 280 compuertas);
 - Owner UAT Ready y Owner Accepted: **0,0 %** (0/122 procesos).
 

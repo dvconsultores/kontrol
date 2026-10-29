@@ -56,28 +56,18 @@ class User(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
 
 
 class Role(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
-    """Catálogo de roles de la **instalación**, no del tenant.
+    """Catálogo de roles por tenant (OD-ISO-11, ciclo 07).
 
-    Se declaraba `TENANT` y no hay por dónde llegar a un tenant: la tabla no
-    tiene `tenant_id` ni ninguna relación que lleve a uno. Y el comportamiento
-    coincide con la estructura, no con la etiqueta: los roles los crea el
-    arranque —`ADMIN`, con `company_id` nulo—, no existe ruta para crear otros,
-    y `setup` reutiliza el existente cuando se da de alta un segundo tenant. Hay
-    un catálogo, no uno por tenant.
-
-    `company_id` anulable **estrecha** el alcance: un rol puede valer en toda la
-    instalación o solo en una empresa.
-
-    Que hoy sea así no significa que deba serlo siempre. Roles propios por
-    tenant es una capacidad futura, registrada con responsable en el registro de
-    deuda de N10; el día que se implemente, `list_roles` y `assign_role_to_user`
-    tendrán que filtrar, y esa es exactamente la razón de escribir aquí lo que
-    hoy es cierto en vez de dejar puesta una etiqueta que no lo era.
+    `tenant_id` nulo = roles protegidos del sistema creados por el arranque y
+    roles heredados anteriores a 0062 (no se rellenan; se miden con
+    `app.ops.scope_scan`). `company_id` anulable estrecha el rol a una empresa
+    del tenant.
     """
 
     __tablename__ = "roles"
-    __scope__ = Scope.INSTALLATION
+    __scope__ = Scope.TENANT
 
+    tenant_id: Mapped[str | None] = mapped_column(ForeignKey("tenants.id"), nullable=True, index=True)
     company_id: Mapped[str | None] = mapped_column(ForeignKey("companies.id"), nullable=True, index=True)
     code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)

@@ -362,6 +362,29 @@ def _require_product(db: Session, company_id: str, product_id: str) -> None:
         raise NotFoundError(code="PRODUCT_NOT_FOUND", message="Producto no encontrado")
 
 
+def _require_lot(db: Session, company_id: str, lot_id: str) -> InventoryLot:
+    lot = db.get(InventoryLot, lot_id)
+    if not lot or lot.company_id != company_id:
+        raise NotFoundError(code="LOT_NOT_FOUND", message="Lote no encontrado")
+    return lot
+
+
+def _require_serial(db: Session, company_id: str, serial_id: str) -> ProductSerial:
+    serial = db.get(ProductSerial, serial_id)
+    if not serial or serial.company_id != company_id:
+        raise NotFoundError(code="SERIAL_NOT_FOUND", message="Serie no encontrada")
+    return serial
+
+
+def _require_location(db: Session, company_id: str, location_id: str):
+    from app.modules.organization.models import WarehouseLocation
+
+    location = db.get(WarehouseLocation, location_id)
+    if not location or location.company_id != company_id:
+        raise NotFoundError(code="LOCATION_NOT_FOUND", message="Ubicación no encontrada")
+    return location
+
+
 def _allow_negative(warehouse: Warehouse) -> bool:
     """Política del almacén (JSON gobernado, P8): permitir existencias negativas."""
     return bool((warehouse.policies or {}).get("allow_negative", False))
@@ -1522,6 +1545,15 @@ def transition_count(db: Session, *, count: StockCount, target: str, actor: str 
 def record_count_line(db: Session, *, count_id: str, product_id: str, expected_qty: float,
                       counted_qty: float | None = None, location_id: str | None = None,
                       lot_id: str | None = None) -> StockCountLine:
+    # ADR-D0-014: el servicio aplica el alcance por sí mismo usando la empresa del conteo
+    count = db.get(StockCount, count_id)
+    if not count:
+        raise NotFoundError(code="COUNT_NOT_FOUND", message="Conteo no encontrado")
+    _require_product(db, count.company_id, product_id)
+    if lot_id:
+        _require_lot(db, count.company_id, lot_id)
+    if location_id:
+        _require_location(db, count.company_id, location_id)
     line = StockCountLine(count_id=count_id, product_id=product_id, location_id=location_id, lot_id=lot_id,
                           expected_qty=expected_qty, counted_qty=counted_qty,
                           variance=round((counted_qty or 0.0) - expected_qty, 6))

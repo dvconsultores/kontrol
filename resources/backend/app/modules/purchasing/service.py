@@ -245,6 +245,15 @@ def create_requisition(db: Session, *, company_id: str, code: str, requester_id:
 
 def add_requisition_line(db: Session, *, requisition_id: str, product_id: str, quantity: float,
                          unit_id: str | None = None, notes: str | None = None) -> RequisitionLine:
+    req = db.get(PurchaseRequisition, requisition_id)
+    if req is None:
+        raise NotFoundError(code="REQUISITION_NOT_FOUND", message="Requisición no encontrada")
+    _require_product(db, req.company_id, product_id)
+    if unit_id:
+        from app.modules.master_data.models import UnitOfMeasure
+        unidad = db.get(UnitOfMeasure, unit_id)
+        if unidad is None or (unidad.company_id is not None and unidad.company_id != req.company_id):
+            raise NotFoundError(code="UOM_NOT_FOUND", message="Unidad no encontrada")
     line = RequisitionLine(requisition_id=requisition_id, product_id=product_id, quantity=quantity,
                            unit_id=unit_id, notes=notes)
     db.add(line)
@@ -328,6 +337,7 @@ def add_quote_line(db: Session, *, company_id: str, quote_id: str, product_id: s
                    unit_price: float, discount: float = 0.0, delivery_days: int | None = None,
                    tax_ref: str | None = None) -> QuoteLine:
     _require_quote(db, company_id, quote_id)
+    _require_product(db, company_id, product_id)
     line = QuoteLine(quote_id=quote_id, product_id=product_id, quantity=quantity, unit_price=unit_price,
                      discount=discount, delivery_days=delivery_days, tax_ref=tax_ref)
     db.add(line)
@@ -354,6 +364,10 @@ def add_order_line(db: Session, *, order_id: str, product_id: str, quantity_orde
                    snapshot: str | None = None) -> PurchaseOrderLine:
     if quantity_ordered <= 0:
         raise KontrolError(code="INVALID_QUANTITY", message="La cantidad ordenada debe ser positiva", status_code=422)
+    order = db.get(PurchaseOrder, order_id)
+    if order is None:
+        raise NotFoundError(code="ORDER_NOT_FOUND", message="Orden no encontrada")
+    _require_product(db, order.company_id, product_id)
     line = PurchaseOrderLine(order_id=order_id, product_id=product_id, quantity_ordered=quantity_ordered,
                              quantity_received=0.0, unit_price=unit_price, discount=discount, tax_ref=tax_ref,
                              needs_inventory=needs_inventory, snapshot=snapshot)
@@ -1191,6 +1205,10 @@ def confirmar_inventario(db: Session, *, receipt: GoodsReceipt, decisiones: list
 
     for decision in decisiones:
         line = _requiere_linea(db, receipt, str(decision.get("receipt_line_id") or ""))
+        if decision.get("incident_id"):
+            incidencia = _require_incident(db, receipt.company_id, str(decision["incident_id"]))
+            if str(incidencia.receipt_id) != str(receipt.id):
+                raise NotFoundError(code="RECEIPT_INCIDENT_NOT_FOUND", message="Incidencia no encontrada")
         origen = str(decision.get("source_state") or inv_states.RECEIVED_STATE)
         destino = str(decision.get("target_state") or "")
         cantidad = _dec(decision.get("base_quantity") or 0)
@@ -1284,6 +1302,20 @@ def create_invoice(db: Session, *, company_id: str, supplier_id: str, invoice_nu
 def add_invoice_line(db: Session, *, invoice_id: str, product_id: str, quantity: float, unit_price: float,
                      tax_amount: float = 0.0, order_line_id: str | None = None, receipt_line_id: str | None = None,
                      snapshot: str | None = None) -> SupplierInvoiceLine:
+    invoice = db.get(SupplierInvoice, invoice_id)
+    if invoice is None:
+        raise NotFoundError(code="INVOICE_NOT_FOUND", message="Factura no encontrada")
+    _require_product(db, invoice.company_id, product_id)
+    if order_line_id:
+        ol = db.get(PurchaseOrderLine, order_line_id)
+        orden = db.get(PurchaseOrder, ol.order_id) if ol else None
+        if orden is None or orden.company_id != invoice.company_id:
+            raise NotFoundError(code="ORDER_LINE_NOT_FOUND", message="Línea de orden no encontrada")
+    if receipt_line_id:
+        rl = db.get(GoodsReceiptLine, receipt_line_id)
+        receipt = db.get(GoodsReceipt, rl.receipt_id) if rl else None
+        if receipt is None or receipt.company_id != invoice.company_id:
+            raise NotFoundError(code="RECEIPT_LINE_NOT_FOUND", message="Línea de recepción no encontrada")
     line = SupplierInvoiceLine(invoice_id=invoice_id, order_line_id=order_line_id, receipt_line_id=receipt_line_id,
                                product_id=product_id, quantity=quantity, unit_price=unit_price,
                                tax_amount=tax_amount, total=round(quantity * unit_price + tax_amount, 6), snapshot=snapshot)

@@ -13,7 +13,7 @@ Esto no contradice informes anteriores: ninguno afirmó que Gobierno estuviera l
 
 | Indicador | Valor | Fórmula y denominador |
 |---|---|---|
-| **Technical Foundation Readiness** | **34,2 %** | 13 fundamentos COMPLETE ÷ 38 fundamentos aplicables |
+| **Technical Foundation Readiness** | **36,8 %** | 14 fundamentos COMPLETE ÷ 38 fundamentos aplicables (34,2 % = 13/38 en la retrospectiva; +F05 al cerrar el ciclo 07) |
 | **Functional Product Completeness** | **0,0 %** | 0 compuertas en PASS ÷ 1 280 compuertas aplicables |
 | **Owner UAT Ready** | **0,0 %** | 0 procesos listos para probar ÷ 122 procesos requeridos |
 | **Owner Accepted** | **0,0 %** | 0 procesos aceptados por la dueña ÷ 122 |
@@ -70,7 +70,6 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 
 | Bloqueo | Siguiente paso |
 |---|---|
-| Aislamiento tenant/empresa (F05) | cierre del ciclo 07, que está pausado |
 | RTO/RPO (F12) | ciclo 08 |
 | Fiabilidad del arnés E2E/TOTP (F25) | ciclo 09 |
 | Certificación oficial de release (F30) | anfitrión dedicado |
@@ -78,13 +77,12 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 
 ## Cómo se calculó cada cifra
 
-**A · Technical Foundation Readiness = 13 ÷ 38 = 34,2 %.**
+**A · Technical Foundation Readiness = 14 ÷ 38 = 36,8 %** (13/38 en la retrospectiva; F05 pasó a COMPLETE con el cierre del ciclo 07, 2026-10-29).
 - Hay 38 fundamentos (`GOVERNMENT_TECHNICAL_FOUNDATION_MATRIX.md`): los 25 RNF-GOV de la IR §10 desglosados por mecanismo, más los motores del núcleo que Gobierno reutiliza (045, 046, 047, 004, 050, shell, certificación, tres navegadores) y los fundamentos propios de Gobierno (ente, auditoría institucional, versión normativa, numeración).
-- Cuenta como COMPLETE solo lo que tiene delta convergido con evidencia en `HEAD`: F01–F04, F07, F09–F11, F24, F29, F31, F33 y F37.
+- Cuenta como COMPLETE solo lo que tiene delta convergido con evidencia en `HEAD`: F01–F05, F07, F09–F11, F24, F29, F31, F33 y F37.
 - No cuentan:
-  - el aislamiento del ciclo 07 (F05), porque está implementado pero sin commit ni E2E;
   - los NOT_MEASURED.
-- Recuento: COMPLETE 13 · PARTIAL 13 · NOT_STARTED 7 · NOT_MEASURED 4 · BLOCKED 1.
+- Recuento: COMPLETE 14 · PARTIAL 12 · NOT_STARTED 7 · NOT_MEASURED 4 · BLOCKED 1.
 
 **B · Functional Product Completeness = 0 ÷ 1 280 = 0,0 %.**
 - Hay 122 procesos × 11 compuertas funcionales: backend, frontend, menú, proceso, campos, roles, documentos, reportes, auditoría, E2E y ficha de pantalla. Eso da 1 342.
@@ -128,7 +126,7 @@ Ningún informe anterior queda desmentido. Lo que cambia es la interpretación: 
 - **Resultado C:** ningún módulo de Gobierno está listo para UAT, y se dice así.
 - **Resultado A:** ningún módulo reclamado tiene comportamiento parcial peligroso, porque no hay ninguno construido. **No** hace falta una remediación inmediata de producto.
 - Se mantiene la secuencia técnica:
-  1. cerrar **P0-HARDENING-07** (aislamiento, pausado con todo verde salvo la E2E);
+  1. ~~cerrar **P0-HARDENING-07**~~ (cerrado el 2026-10-29: F05 COMPLETE);
   2. **08** BACKUP SCHEDULE / RPO;
   3. **09** E2E TOTP / AUTH HARNESS RELIABILITY;
   4. **GOVERNMENT READINESS RECONCILIATION**, que hereda esta norma y este backlog.

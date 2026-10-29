@@ -141,6 +141,13 @@ def _unidad_visible(db: Session, ctx: CompanyContext, unit_id: str) -> UnitOfMea
         raise NotFoundError(code="UOM_NOT_FOUND", message="Unidad no encontrada")
     return unit
 
+def _visible_en_empresa(db: Session, ctx: CompanyContext, modelo: Any, obj_id: str, code: str, message: str) -> Any:
+    """Un objeto es visible si es de la plataforma o de la empresa activa."""
+    obj = db.get(modelo, obj_id)
+    if obj is None or (obj.company_id is not None and obj.company_id != ctx.company_id):
+        raise NotFoundError(code=code, message=message)
+    return obj
+
 
 class ConversionCreate(BaseModel):
     from_unit_id: str
@@ -353,6 +360,17 @@ def create_item(
         from app.core.errors import KontrolError
 
         raise KontrolError(code="INVALID_ITEM_TYPE", message="El tipo de ítem debe ser PRODUCT o SERVICE", status_code=422)
+    # Validar relaciones antes de persistir (contrato de aislamiento)
+    if body.category_id:
+        _visible_en_empresa(db, ctx, TaxonomyNode, body.category_id, "CATEGORY_NOT_FOUND", "Categoría no encontrada")
+    if body.base_unit_id:
+        _unidad_visible(db, ctx, body.base_unit_id)
+    if body.tax_profile_id:
+        _visible_en_empresa(db, ctx, ProfileVersion, body.tax_profile_id, "PROFILE_NOT_FOUND", "Perfil no encontrado")
+    if body.item_type == "PRODUCT" and body.inventory_profile_id:
+        _visible_en_empresa(db, ctx, ProfileVersion, body.inventory_profile_id, "PROFILE_NOT_FOUND", "Perfil no encontrado")
+    if body.item_type == "SERVICE" and body.billing_unit_id:
+        _unidad_visible(db, ctx, body.billing_unit_id)
     item = CatalogItem(
         company_id=ctx.company_id,
         code=body.code,
@@ -443,6 +461,8 @@ def search_taxonomy(
 
 @router.post("/catalogos/taxonomia", dependencies=[Depends(require_write_allowed)])
 def create_taxonomy(body: TaxonomyCreate, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    if body.parent_id:
+        _visible_en_empresa(db, ctx, TaxonomyNode, body.parent_id, "TAXONOMY_NODE_NOT_FOUND", "Nodo de taxonomía no encontrado")
     node = TaxonomyNode(
         company_id=ctx.company_id,
         code=body.code,

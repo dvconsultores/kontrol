@@ -302,7 +302,9 @@ def create_export(db: Session, *, company_id: str, report_key: str, fmt: str = "
 
     content = _to_csv(rows).encode("utf-8") if fmt == "CSV" else _render_pdf(report_key, (filters or {}).get("period", ""), rows)
     target = _exports_dir() / file_ref
-    target.write_bytes(content)
+    # El directorio es compartido por todas las empresas: una colisión de file_ref debe fallar, no sobrescribir
+    with open(target, "xb") as salida:
+        salida.write(content)
 
     export = ReportExport(company_id=company_id, report_key=report_key, format=fmt,
                           filters=json.dumps(filters or {}), file_ref=file_ref, exported_by=actor,

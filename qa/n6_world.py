@@ -59,6 +59,11 @@ EMPRESA_C: dict[str, Any] = {
 #: haber nada que ver.
 TERCERO_A = "SOLO-DE-A"
 TERCERO_B = "SOLO-DE-B"
+TERCERO_C = "SOLO-DE-C"
+DOC_B = "DOC-SOLO-DE-B"
+DOC_C = "DOC-SOLO-DE-C"
+PROD_B = "PROD-SOLO-DE-B"
+PROD_C = "PROD-SOLO-DE-C"
 
 
 def _tenant(db: Session, code: str):
@@ -90,6 +95,85 @@ def empresa(db: Session, tenant, *, code: str, legal_name: str, rif: str):
     db.add(c)
     db.flush()
     return c
+
+
+def _documento(db: Session, company, marca: str) -> str:
+    from app.modules.documents.models import Document, DocumentType
+
+    tipo = (
+        db.query(DocumentType)
+        .filter(
+            DocumentType.company_id == str(company.id),
+            DocumentType.code == marca[:32],
+        )
+        .first()
+    )
+    if tipo is None:
+        tipo = DocumentType(
+            company_id=str(company.id),
+            code=marca[:32],
+            name=f"Tipo {marca}",
+            status="ACTIVE",
+        )
+        db.add(tipo)
+        db.flush()
+
+    doc = (
+        db.query(Document)
+        .filter(
+            Document.company_id == str(company.id),
+            Document.title == marca,
+        )
+        .first()
+    )
+    if doc is None:
+        doc = Document(
+            company_id=str(company.id),
+            document_type_id=tipo.id,
+            title=marca,
+            status="ACTIVE",
+        )
+        db.add(doc)
+        db.flush()
+
+    return str(doc.id)
+
+
+def _producto(db: Session, company, marca: str) -> str:
+    from app.modules.master_data.models import CatalogItem, Product
+
+    item = (
+        db.query(CatalogItem)
+        .filter(
+            CatalogItem.company_id == str(company.id),
+            CatalogItem.code == marca,
+        )
+        .first()
+    )
+    if item is None:
+        item = CatalogItem(
+            company_id=str(company.id),
+            code=marca,
+            name=marca,
+            item_type="PRODUCT",
+            status="ACTIVE",
+        )
+        db.add(item)
+        db.flush()
+
+        producto = Product(item_id=item.id)
+        db.add(producto)
+        db.flush()
+    else:
+        producto = (
+            db.query(Product).filter(Product.item_id == item.id).first()
+        )
+        if producto is None:
+            producto = Product(item_id=item.id)
+            db.add(producto)
+            db.flush()
+
+    return str(item.id)
 
 
 def _tercero(db: Session, company, marca: str) -> None:
@@ -191,6 +275,11 @@ def sembrar(db: Session, *, tenant_code: str = TENANT_1) -> dict[str, str]:
 
     _tercero(db, ca, TERCERO_A)
     _tercero(db, cb, TERCERO_B)
+    _tercero(db, cc, TERCERO_C)
+    documento_b = _documento(db, cb, DOC_B)
+    documento_c = _documento(db, cc, DOC_C)
+    producto_b = _producto(db, cb, PROD_B)
+    producto_c = _producto(db, cc, PROD_C)
 
     _usuario(db, t1, "ua", [str(ca.id)])
     _usuario(db, t1, "ub", [str(cb.id)])
@@ -206,4 +295,15 @@ def sembrar(db: Session, *, tenant_code: str = TENANT_1) -> dict[str, str]:
     return {"empresa_a": str(ca.id), "empresa_b": str(cb.id), "empresa_c": str(cc.id),
             "tenant_1": str(t1.id), "tenant_2": str(t2.id),
             "nombre_a": ca.legal_name, "nombre_b": cb.legal_name, "nombre_c": cc.legal_name,
-            "tercero_a": TERCERO_A, "tercero_b": TERCERO_B}
+            "tercero_a": TERCERO_A,
+            "tercero_b": TERCERO_B,
+            "tercero_c": TERCERO_C,
+            "documento_b": documento_b,
+            "documento_c": documento_c,
+            "producto_b": producto_b,
+            "producto_c": producto_c,
+            "doc_b": DOC_B,
+            "doc_c": DOC_C,
+            "prod_b": PROD_B,
+            "prod_c": PROD_C,
+        }

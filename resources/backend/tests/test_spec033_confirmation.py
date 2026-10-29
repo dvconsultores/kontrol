@@ -499,3 +499,30 @@ def test_dos_verificadores_no_dejan_dos_veredictos(mundo):
         assert (estado == "CONFIRMED") == (confirmaciones[0].status == "CONFIRMED")
     finally:
         db.close()
+
+
+def test_iso_ven_02_la_linea_sobrante_no_admite_un_producto_ajeno(mundo):
+    """ISO-VEN-02: La línea sobrante no admite un producto ajeno a la empresa."""
+    db = mundo.factory()
+    try:
+        e = _preparado(db, mundo)
+        ajenos = [
+            _producto(db, mundo.company_b, uuid4().hex[:8]),
+            _producto(db, mundo.company_c, uuid4().hex[:8]),
+            str(uuid4()),
+        ]
+        for ajeno in ajenos:
+            with pytest.raises(NotFoundError) as exc:
+                sales.confirm_order(
+                    db,
+                    company_id=mundo.company_a,
+                    order_id=str(e["pedido"].id),
+                    lines=_conforme(e) + [{"order_line_id": str(uuid4()),
+                                           "checked_base_quantity": 5,
+                                           "product_id": ajeno}],
+                    actor="verificador",
+                )
+            assert exc.value.code == "ITEM_NOT_FOUND"
+            db.rollback()
+    finally:
+        db.close()

@@ -727,8 +727,10 @@ def evaluate_igft(body: IgftEvaluateBody, db: Session = Depends(get_db),
 # Helpers
 # --------------------------------------------------------------------------- #
 def _owned(db: Session, model, obj_id: str, tenant: str, code: str, message: str):
+    if "company_id" not in model.__table__.c:
+        raise TypeError(f"{model.__name__} no tiene company_id: su propiedad se comprueba por su ruta de autoridad")
     obj = db.get(model, obj_id)
-    if not obj or getattr(obj, "company_id", tenant) != tenant:
+    if obj is None or obj.company_id != tenant:
         raise NotFoundError(code=code, message=message)
     return obj
 
@@ -938,6 +940,7 @@ def account_balance(account_id: str, db: Session = Depends(get_db),
                     user: User = Depends(require_permission("tesoreria", "view")),
                     ctx: CompanyContext = Depends(get_company_context)):
     """El saldo calculado desde los movimientos, no un campo guardado."""
+    treasury_service._require_account(db, ctx.company_id, account_id)
     saldo = treasury_service.account_balance(db, company_id=ctx.company_id, account_id=account_id)
     return {"account_id": account_id, "balance": str(saldo)}
 

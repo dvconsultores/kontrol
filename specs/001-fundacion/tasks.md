@@ -79,3 +79,10 @@
 - [ ] T053 Incluir `pg_dump`/`pg_restore` en la imagen de operaciones para que `kontrol.py backup` funcione en la composición (BACKUP-PG-TOOLS-IN-OPS-IMAGE) per T-010 · Principio 14 (partial)
 - [ ] T054 Medir el RTO con el volumen real en el anfitrión de destino (BACKUP-RTO-DATOS-REALES) per NFR-001-008 (partial)
 - [ ] T055 Humo de navegador sobre el destino restaurado (BACKUP-RESTORED-UI-SMOKE) per §84 del encargo 06 (partial)
+
+## Phase 2: Convergence
+
+- [ ] T056 Separar la autoridad de instalación (licencia, homologación, fuentes legales) de la del tenant, para que un administrador de un tenant no mute la configuración de la instalación (INSTALLATION-AUTHORITY-FROM-ANY-TENANT, BLOCKING_FINAL_GOV) per FR-001-040 (partial)
+- [ ] T057 Implementar el alcance de usuario por sucursal/establecimiento/almacén (escritor de `UserScope.branch_id` y consumo de `CompanyContext.branch_ids`) o registrar la decisión de la dueña que lo descarte (WAREHOUSE-BRANCH-ALCANCE-DE-USUARIO) per FR-001-040 (partial)
+- [ ] T058 Plan de reparación, con OD y por instalación, de los roles personalizados heredados con `tenant_id` nulo; sin relleno sin autorización (ROLES-HEREDADOS-SIN-TENANT) per FR-001-040 / OD-ISO-11 (partial)
+- [ ] T059 Rechazar con 422 o aplicar los campos declarados que hoy se ignoran (`traceability_profile_id`, `regulatory_profile_id`, `lot_ids`, `from_unit_id`, `source_id`) con prueba (CAMPOS-IGNORADOS-EN-ESQUEMA) per FR-001-032 (partial)

@@ -175,9 +175,10 @@ def test_las_columnas_de_transicion_no_estan_en_la_base(mundo):
 def test_el_alcance_global_sigue_siendo_posible(mundo):
     """N7 endureció por error estas dos columnas y hubo que revertirlo.
 
-    Su API expone `global_scope`: un interruptor que crea el tipo o el perfil
-    para toda la instalación. El nulo **es** ese interruptor, y confundirlo con
-    deuda de la transición lo habría eliminado.
+    Las filas globales existentes se conservan (OD-ISO-10), por eso las
+    columnas siguen admitiendo nulo; crearlas desde una empresa ya no se
+    permite y da 403 `GLOBAL_SCOPE_FORBIDDEN`. Confundir el nulo con deuda de
+    la transición habría eliminado esas filas.
     """
     from app.core.database import Base, init_models
 

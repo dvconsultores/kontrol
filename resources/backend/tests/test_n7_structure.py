@@ -171,8 +171,9 @@ def test_la_empresa_solo_es_opcional_donde_esta_justificado(mundo):
 
     Cada excepción tiene su razón escrita: Spec 011 distinguió unidades del
     sistema de las de negocio; un archivo existe antes de saber a qué documento
-    pertenecerá; y los tipos de movimiento y perfiles de costo exponen
-    `global_scope` en su API, un interruptor cuyo valor **es** el nulo.
+    pertenecerá; y los tipos de movimiento y perfiles de costo conservan sus
+    filas globales existentes (OD-ISO-10), aunque la API ya no las crea desde
+    una empresa: seguir admitiendo el nulo **es** conservarlas.
 
     La lista es corta y explícita a propósito: si crece sin justificación, esta
     prueba deja de significar nada.
@@ -182,7 +183,7 @@ def test_la_empresa_solo_es_opcional_donde_esta_justificado(mundo):
     permitidas = {
         "units_of_measure",   # Spec 011: las del sistema son globales
         "stored_files",       # el archivo existe antes que su documento
-        "movement_types",     # su API expone `global_scope`
+        "movement_types",     # conserva filas globales existentes (OD-ISO-10)
         "costing_profiles",   # ídem
         "audit_events", "outbox_events",
     }

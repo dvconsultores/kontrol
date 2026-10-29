@@ -343,3 +343,36 @@ def test_el_otro_tenant_no_alcanza_la_recepcion(mundo):
     r = mundo.get(f"/purchasing/receipts/{m['receipt']}/conciliacion", "uc", mundo.company_c,
                   tenant="T2")
     assert r.status_code == 404, r.text
+
+
+def test_iso_com_05_la_incidencia_ajena_no_se_enlaza(mundo):
+    """ISO-COM-05: La incidencia de otra recepción/empresa no puede enlazarse."""
+    import uuid
+
+    m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "ISOCOM5")
+    mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo", "ua",
+               mundo.company_a, {"counted_base_quantity": "100"})
+
+    mb = _recepcion_aceptada(mundo, "ub", mundo.company_b, mundo.warehouse_b, "ISOCOM5B")
+    ib = mundo.post(f"/purchasing/receipts/{mb['receipt']}/incidencias", "ub", mundo.company_b,
+                    {"code": "INC-ISO-B", "incident_type": "DIFERENCIA_DOCUMENTAL",
+                     "description": "Ajena"})
+    assert ib.status_code in (200, 201), ib.text
+    incidente_b = ib.json()["id"]
+
+    m2 = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "ISOCOM5X")
+    ia = mundo.post(f"/purchasing/receipts/{m2['receipt']}/incidencias", "ua", mundo.company_a,
+                    {"code": "INC-ISO-A2", "incident_type": "DIFERENCIA_DOCUMENTAL",
+                     "description": "Ajena"})
+    assert ia.status_code in (200, 201), ia.text
+    incidente_a2 = ia.json()["id"]
+
+    for incident_id in (incidente_b, incidente_a2, str(uuid.uuid4())):
+        r = mundo.post(f"/purchasing/receipts/{m['receipt']}/confirmacion-inventario", "ua",
+                       mundo.company_a, {
+                           "decisions": [{"receipt_line_id": m["line"], "target_state": "DISPONIBLE",
+                                          "base_quantity": "100", "incident_id": incident_id}]
+                       })
+        assert r.status_code == 404, r.text
+        assert r.json()["code"] == "RECEIPT_INCIDENT_NOT_FOUND"
+        assert _saldos(mundo, mundo.company_a, m["product"]) == {"RECIBIDO": Decimal("100")}

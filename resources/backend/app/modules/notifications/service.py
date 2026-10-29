@@ -770,7 +770,12 @@ def crear_regla(db: Session, *, ctx: CompanyContext, datos: dict[str, Any]) -> d
                           ("escalation_after_minutes", 1)):
         if datos.get(campo) is not None and datos[campo] < minimo:
             raise _regla_invalida("MINUTES_OUT_OF_RANGE")
-    if datos.get("escalation_role_id") and db.get(Role, datos["escalation_role_id"]) is None:
+    rol = db.get(Role, datos["escalation_role_id"]) if datos.get("escalation_role_id") else None
+    if datos.get("escalation_role_id") and (
+        rol is None
+        or (rol.tenant_id is not None and rol.tenant_id != ctx.tenant_id)
+        or (rol.company_id is not None and rol.company_id != ctx.company_id)
+    ):
         raise _regla_invalida("ROLE_NOT_FOUND")
     if datos.get("priority_code") and _rango_prioridad(db, ctx.company_id, datos["priority_code"]) is None:
         raise KontrolError(code="TASK_PRIORITY_NOT_FOUND", message=texto("error.task_priority_not_found"),

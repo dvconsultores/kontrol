@@ -29,7 +29,7 @@ export function TiposMovimientoPage(): React.JSX.Element {
   const [newCode, setNewCode] = useState("");
   const [newName, setNewName] = useState("");
   const [newDirection, setNewDirection] = useState("IN");
-  const [newGlobal, setNewGlobal] = useState(false);
+
 
   const query = useQuery({
     queryKey: ["inventario", "movement-types"],
@@ -45,10 +45,10 @@ export function TiposMovimientoPage(): React.JSX.Element {
     try {
       await apiFetch("/inventory/movement-types", {
         method: "POST",
-        body: { code: newCode, name: newName, direction: newDirection, global_scope: newGlobal },
+        body: { code: newCode, name: newName, direction: newDirection },
       });
       notify({ type: "success", title: "Tipo creado", description: newCode });
-      setNewCode(""); setNewName(""); setNewDirection("IN"); setNewGlobal(false);
+      setNewCode(""); setNewName(""); setNewDirection("IN");
       void refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : "No fue posible crear el tipo";
@@ -87,12 +87,7 @@ export function TiposMovimientoPage(): React.JSX.Element {
               ))}
             </select>
           </FormField>
-          <FormField label="Global (todas las empresas)">
-            <select value={newGlobal ? "yes" : "no"} onChange={(e) => setNewGlobal(e.target.value === "yes")} className="h-10 w-32 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="no">No</option>
-              <option value="yes">Sí</option>
-            </select>
-          </FormField>
+
           <AsyncButton type="submit" variant="primary" onClick={createType}>Crear</AsyncButton>
         </form>
       </section>

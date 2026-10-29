@@ -232,6 +232,11 @@ def create_type(body: TypeIn, db: Session = Depends(get_db),
     ctx: CompanyContext = Depends(get_company_context)):
     if body.company_id is not None and body.company_id != ctx.company_id:
         raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
+    # Validar categoría documental de la empresa antes de persistir
+    if body.category_id:
+        categoria = db.get(DocumentCategory, body.category_id)
+        if categoria is None or categoria.company_id != ctx.company_id:
+            raise NotFoundError(code="DOCUMENT_CATEGORY_NOT_FOUND", message="Categoría documental no encontrada")
     doc_type = DocumentType(**{**body.model_dump(), "company_id": ctx.company_id},
                             status="ACTIVE", created_by=str(actor.id))
     db.add(doc_type)

@@ -527,8 +527,9 @@ def test_referencia_a_tramo_de_otra_empresa_rechazada():
         "structure_levels": {"zone": True}}).json()
     r = _CLIENT.post("/api/v1/organization/locations", headers=h_b, json={
         "warehouse_id": wh_b["id"], "code": "ID-1", "zone_id": zone_a["id"]})
-    assert r.status_code == 422
-    assert r.json()["code"] == "HIERARCHY_CROSS_WAREHOUSE"
+    # G-WH-01: un nodo de otra empresa (ajeno) es inexistente para el almacén.
+    assert r.status_code == 404
+    assert r.json()["code"] == "ZONE_NOT_FOUND"
 
 
 # ---------------------------------------------------------------- AC-008-21

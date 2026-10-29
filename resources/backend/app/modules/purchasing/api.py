@@ -843,11 +843,11 @@ def get_invoice(invoice_id: str, db: Session = Depends(get_db), user: User = Dep
 @router.post("/supplier-invoices/{invoice_id}/lines", dependencies=[Depends(require_write_allowed)])
 def add_invoice_line(invoice_id: str, body: InvoiceLineCreate, db: Session = Depends(get_db),
                      actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
+    invoice = _owned(db, SupplierInvoice, invoice_id, ctx.company_id, "INVOICE_NOT_FOUND", "Factura no encontrada")
     line = ap_service.add_invoice_line(db, invoice_id=invoice_id, product_id=body.product_id, quantity=body.quantity,
                                        unit_price=body.unit_price, tax_amount=body.tax_amount,
                                        order_line_id=body.order_line_id, receipt_line_id=body.receipt_line_id,
                                        snapshot=body.snapshot)
-    invoice = _owned(db, SupplierInvoice, invoice_id, ctx.company_id, "INVOICE_NOT_FOUND", "Factura no encontrada")
     ap_service.recompute_invoice_total(db, invoice=invoice)
     db.commit()
     db.refresh(line)
@@ -1059,7 +1059,9 @@ def create_schedule(body: ScheduleCreate, db: Session = Depends(get_db),
 # Helpers
 # --------------------------------------------------------------------------- #
 def _owned(db: Session, model, obj_id: str, tenant: str, code: str, message: str):
+    if "company_id" not in model.__table__.c:
+        raise TypeError(f"{model.__name__} no tiene company_id: su propiedad se comprueba por su ruta de autoridad")
     obj = db.get(model, obj_id)
-    if not obj or getattr(obj, "company_id", tenant) != tenant:
+    if obj is None or obj.company_id != tenant:
         raise NotFoundError(code=code, message=message)
     return obj
