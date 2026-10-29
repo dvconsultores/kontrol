@@ -170,6 +170,27 @@ Por delta, al cierre: tareas totales, `CLAUDE_ONLY`, `DEEPSEEK_ELIGIBLE`, ejecut
 DeepSeek, reintentos, parches rechazados y aceptados, implementadas por Claude, pruebas,
 mutaciones, regresiones y coste. Si Claude hizo la tarea entera, se dice.
 
+## Completitud de producto (norma permanente, 2026-10-29)
+
+`docs/governance/product-completeness-and-owner-uat-policy.md` es vinculante para todo ciclo de
+producto. Un delta `CONVERGED` o una deuda pagada no es producto terminado: lo es solo con
+backend, frontend, menú, proceso, campos, roles, documentos, reportes, auditoría, E2E de
+usuario, ficha de pantalla y tarjeta de prueba de la dueña, todas en PASS.
+
+- Todo informe de cierre **empieza** con `PRODUCT COMPLETENESS GATE`:
+  - `WHERE_IS_IT_IN_MENU`;
+  - `WHAT_CAN_USER_DO`;
+  - `OWNER_UAT_READY` (YES / NO / NOT_APPLICABLE);
+  - `PRODUCT_STATUS`;
+  - `MISSING_GATES`;
+  - en un fundamento técnico, además `WHY_UI_NOT_APPLICABLE`.
+
+  Solo después van las pruebas, las mutaciones y los commits.
+- El avance se publica en tres métricas separadas: fundamento técnico, producto funcional y
+  listo para la dueña. Nunca en un solo porcentaje.
+- `OWNER_ACCEPTED` lo concede solo la dueña. Todo prompt de siguiente ciclo incluye la
+  NORMA DE COMPLETITUD.
+
 ## Comandos canónicos
 
 - Backend (desde `resources/backend/`): `.venv/bin/python -m pytest tests`; sobre PostgreSQL,

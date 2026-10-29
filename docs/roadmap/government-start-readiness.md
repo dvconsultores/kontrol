@@ -226,3 +226,16 @@ BLOCKED por el RC 0 oficial de SPEC054, por el freeze del sponsor con D-GOV-01..
   - DT-06: catálogo de eventos de 006/051;
   - DOCUMENT-SCAN-REJECTION-AUDIT-NOT-PERSISTED: sesión independiente.
 - OQ-GSR-3 sigue en manos del sponsor.
+
+## Completitud de producto (GOV-PRODUCT-COMPLETENESS-RETRO-01, 2026-10-29)
+
+Esta readiness mide la **entrada técnica** a Gobierno, no el producto. Con la norma permanente `docs/governance/product-completeness-and-owner-uat-policy.md`, el estado de producto de Gobierno es:
+
+| Métrica | Valor |
+|---|---|
+| Technical Foundation Readiness | 34,2 % (13/38) |
+| Functional Product Completeness | 0,0 % (0/1 280) |
+| Owner UAT Ready | 0,0 % (0/122) |
+| Owner Accepted | 0,0 % (0/122) |
+
+No hay menú, pantallas, API, tablas ni migraciones de Gobierno. Detalle: `docs/roadmap/government-product-completeness/`. **GOVERNMENT_START_READINESS sigue en BLOCKED.**

@@ -1,0 +1,46 @@
+# GOVERNMENT_TECHNICAL_FOUNDATION_MATRIX
+
+> Generado desde el CSV homónimo (fuente de verdad legible por máquina). Medición: `develop` `0dbe632`; IR de Gobierno v1.0 SHA `8f86615f…`.
+
+Fundamentos técnicos: **no** son módulos de negocio de Gobierno y no cuentan como funcionalidad terminada. En todos, `FUNCTIONAL_UI_APPLICABLE = NO` y `OWNER_UAT_APPLICABLE = NO`: son motores o garantías sin un actor de negocio de Gobierno que los use directamente. Las pantallas del núcleo que existen (p. ej. `/seguridad/mfa`, `/auditoria`) son de la línea Empresarial y se revalidarán con la retrospectiva privada (MOQ-RETRO-01). `BLOCKS_GOVERNMENT = YES` en todos los que no están COMPLETE.
+
+| Id | Fundamento | Propósito | Estado técnico | Evidencia | Deudas abiertas | RNF |
+|---|---|---|---|---|---|---|
+| F01 | Autenticación, sesiones, MFA de roles privilegiados y restablecimiento seguro | acceso fuerte (RNF-011) | COMPLETE | deltas 002 MFA `d39f820` y reset `464c913`: IMPLEMENTED — CONVERGED | E2E TOTP del arnés (ciclo 09) | RNF-GOV-011 |
+| F02 | RBAC con techo de delegación y ADMIN dividido | mínimo privilegio (RNF-012) | COMPLETE | delta 003 `021c1c6`: CONVERGED | INSTALLATION-AUTHORITY-FROM-ANY-TENANT (rol de plataforma) | RNF-GOV-012 |
+| F03 | Autorización por empresa en el backend y permisos de lectura declarados | autorización en backend (RNF-006) | COMPLETE | deltas 003 `56f0f5e`, `36f076c`: CONVERGED | — | RNF-GOV-006 |
+| F04 | Proyección de la autorización en la UI | el frontend no decide (ORG-007) | COMPLETE | delta 003 `fb8ead1`: CONVERGED | — | RNF-GOV-006 |
+| F05 | Aislamiento tenant/empresa certificado con pruebas hostiles | RNF-001 en el núcleo | PARTIAL | ciclo 07 implementado y verde en suites, mutaciones, OpenAPI y backup; SIN COMMIT y con la E2E de aislamiento pendiente (pausado por esta retrospectiva) | cierre del ciclo 07 | RNF-GOV-001 |
+| F06 | Dimensión de ente y aislamiento entre entes | RNF-001 en Gobierno, E2E-06 | NOT_STARTED | solo contrato de extensión de arquitectura, redactado en el ciclo 07 (en el árbol, sin commit; ciclo pausado) | GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | RNF-GOV-001 |
+| F07 | Auditoría: catálogo, rechazos de análisis e inmutabilidad | bitácora del núcleo (RNF-005) | COMPLETE | delta catálogo `49540a6` (CONVERGED) e inmutabilidad 0061 | — | RNF-GOV-005 |
+| F08 | Auditoría institucional: autoridad, versión normativa, estado de flujo; auditar el 404 entre entes | RNF-005, CTL-003, E2E-06 | NOT_STARTED | — | SCOPE-DENIAL-AUDIT | RNF-GOV-005 |
+| F09 | Fecha civil y presentación America/Caracas | RNF-003 | COMPLETE | deltas zona horaria y fecha civil `b24b121`: CONVERGED | período fiscal (PDD-TIME-11) | RNF-GOV-003 |
+| F10 | Contrato estricto de entrada de la API | errores deterministas (RNF-015) | COMPLETE | delta `f24e74e`: CONVERGED | LISTADOS-SIN-RESPONSE-MODEL (A) | RNF-GOV-015 |
+| F11 | Copia cifrada y restauración verificada en destino limpio | RNF-010 (backup/restore), E2E-08 en el núcleo | COMPLETE | delta `0dbe632`: CERTIFIED (QA) — CONVERGED; regresión del 2026-10-29 PASS | — | RNF-GOV-010 |
+| F12 | RTO/RPO y programación de copias | RNF-010 (RTO/RPO) | NOT_STARTED | T052..T055 abiertas | ciclo 08 | RNF-GOV-010 |
+| F13 | Exactitud monetaria NUMERIC | RNF-002 | PARTIAL | dinero en NUMERIC; 4 columnas Float aceptadas por ADR-012 sin reverificar | DT-09 | RNF-GOV-002 |
+| F14 | Inmutabilidad transversal (corrección por reverso) | RNF-004 | NOT_MEASURED | patrón presente en módulos convergidos; sin política transversal medida | — | RNF-GOV-004 |
+| F15 | Idempotencia transversal | RNF-007 | PARTIAL | pagos y lotes con clave; exportaciones sin `Idempotency-Key` | EXPORT-CREATE-IDEMPOTENCY-CONTRACT-GAP | RNF-GOV-007 |
+| F16 | Versionado normativo (fuente, versión, vigencia, regla) | RNF-008, RNF-023 | NOT_STARTED | la homologación privada no es NormativeSource de Gobierno | freeze 0/10 | RNF-GOV-008 RNF-GOV-023 |
+| F17 | Trazabilidad de cada cifra de reporte hasta su fuente | RNF-009 | NOT_MEASURED | — | — | RNF-GOV-009 |
+| F18 | Seguridad de despliegue: cifrado en tránsito, secretos y rotación | RNF-011 | PARTIAL | secretos fuera del código; rotación de credenciales no medida | — | RNF-GOV-011 |
+| F19 | Listados server-side paginados | RNF-013 | PARTIAL | canon 1..100 | ADDITIONAL_UNBOUNDED_LISTING | RNF-GOV-013 |
+| F20 | Infraestructura de accesibilidad | RNF-014 | PARTIAL | axe en la E2E canónica | DATATABLE-CAPTION | RNF-GOV-014 |
+| F21 | Portabilidad y estándares de Infogobierno | RNF-016, DIG-010 | NOT_MEASURED | — | — | RNF-GOV-016 |
+| F22 | Observabilidad | RNF-017 | PARTIAL | logs estructurados; 006 parcial | — | RNF-GOV-017 |
+| F23 | Retención y legal hold | RNF-018 | NOT_STARTED | — | — | RNF-GOV-018 |
+| F24 | Migraciones: una cabeza, instalación limpia y actualización en PostgreSQL | RNF-019 | COMPLETE | guardas MIG-09/10 y KR-18/19; certificación canónica migra a cabeza | — | RNF-GOV-019 |
+| F25 | QA: unitarias, contrato, PostgreSQL, E2E principal/hostil, regresión y mutación | RNF-020 | PARTIAL | suites y campañas de mutación por ciclo | fiabilidad del arnés E2E/TOTP (ciclo 09) | RNF-GOV-020 |
+| F26 | Privacidad operativa por rol y finalidad | RNF-021 | NOT_MEASURED | — | — | RNF-GOV-021 |
+| F27 | No repudio operativo | RNF-022 | PARTIAL | aprobaciones con identidad; sin firma electrónica | D-GOV-08 | RNF-GOV-022 |
+| F28 | Contingencia offline reconciliable | RNF-024 | NOT_STARTED | — | — | RNF-GOV-024 |
+| F29 | Convergencia Spec Kit sin OQ material ni deuda P0 | RNF-025 | COMPLETE | metodología vigente (`/speckit-converge` por ciclo) | — | RNF-GOV-025 |
+| F30 | Certificación oficial de release (Spec 054) | entrada a producción | BLOCKED | IMPLEMENTED — CERTIFICATION PENDING | anfitrión dedicado (OD-CERT-27) |  |
+| F31 | Motor de aprobaciones y SoD (045) | motor de SoD (CTL-001) | COMPLETE | 045 COMPLETE / CONVERGED; suites verdes 2026-10-29 | — |  |
+| F32 | Gestión documental y análisis (046) | almacén del expediente | PARTIAL | 046 RECONVERGED | S3 (OD-CERT-21), OBS-09 |  |
+| F33 | Notificaciones y tareas (047) | alertas y bandejas | COMPLETE | 047 COMPLETE / CONVERGED | — |  |
+| F34 | Licenciamiento por instalación y perfil de instalación Gobierno | distinguir la línea (OQ-GAB-1) | PARTIAL | 004 BLOCKED_BY_BUSINESS_DECISION; perfil Gobierno sin construir | — |  |
+| F35 | Motor de reportes y PDF (050) | reportes institucionales | PARTIAL | 050 PARTIALLY_IMPLEMENTED | — |  |
+| F36 | Shell de frontend: estados de pantalla y cambios sin guardar | UX institucional | PARTIAL | 005 PARTIALLY_IMPLEMENTED | DT-17 |  |
+| F37 | E2E en tres navegadores | cruzado de navegadores | COMPLETE | `playwright.config.ts`: chromium, firefox, webkit en la canónica | — |  |
+| F38 | Numeración institucional | series de actos y documentos | NOT_STARTED | — | D-GOV-01 |  |

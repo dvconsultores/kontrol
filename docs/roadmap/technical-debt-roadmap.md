@@ -258,3 +258,26 @@ Detalle en `specs/001-fundacion/spec001-backup-restore-verification-delta.md` y 
 | BACKUP-PG-TOOLS-IN-OPS-IMAGE: la imagen `backend` no incluye `pg_dump`/`pg_restore`. `kontrol.py backup` en la composición falla con `PG_TOOLS_MISSING` hasta que se añadan; mientras tanto, la orden se ejecuta en un anfitrión con los clientes | MEDIUM |
 | BACKUP-RESTORED-UI-SMOKE: la continuidad del destino se prueba por HTTP con la misma API del SPA, no en el navegador (§84 «donde sea práctico») | LOW |
 | BACKUP-RTO-DATOS-REALES: el RTO de 5 s es de un conjunto sintético pequeño. Falta el ejercicio con el volumen real en el anfitrión de destino | MEDIUM |
+
+## Retrospectiva GOV-PRODUCT-COMPLETENESS-RETRO-01 (2026-10-29)
+
+Norma permanente nueva: `docs/governance/product-completeness-and-owner-uat-policy.md`. Desde ahora, un cierre técnico (delta CONVERGED, deuda pagada) **no** equivale a producto terminado. Cada ciclo de producto responde las tres preguntas (menú, qué hace el usuario, ¿lo puede probar la dueña?) y publica tres métricas separadas.
+
+Retrospectiva de Gobierno (`docs/roadmap/government-product-completeness/`):
+
+- Technical Foundation Readiness: **34,2 %** (13/38);
+- Functional Product Completeness: **0,0 %** (0/1 280 compuertas);
+- Owner UAT Ready y Owner Accepted: **0,0 %** (0/122 procesos).
+
+Hay 122 procesos en 15 módulos: 69 NOT_STARTED y 53 BLOCKED (35 por D-GOV, 18 por fuentes de clase C). El backlog de completitud tiene 200 ítems: 42 P0, 108 HIGH, 50 MEDIUM.
+
+Reconciliación con esta hoja de ruta:
+- **Ninguna deuda se cierra ni se reabre.** Las deudas pagadas por los deltas 002, 003, 001-auditoría, 001-tiempo, 001-API y 001-copia siguen pagadas. Se reclasifican como `TECHNICAL_FOUNDATION` (F01–F04, F07, F09–F11): no son avance de producto de Gobierno.
+- **Brechas técnicas abiertas, todas con ítem en el backlog nuevo:**
+  - F05: aislamiento del ciclo 07, pausado;
+  - F12: RTO/RPO, ciclo 08;
+  - F25: fiabilidad del arnés E2E/TOTP, ciclo 09;
+  - F30: certificación oficial de release (anfitrión dedicado);
+  - F13–F23 y F26–F28: no funcionales parciales, sin medir o sin iniciar.
+- **Deuda nueva PRODUCT-COMPLETENESS-PRIVATE-LINE-UNVERIFIED** (MEDIUM, gobernanza): la línea Empresarial no se ha medido con la norma nueva, y sus `COMPLETE` y `CONVERGED` son técnicos hasta que se mida. Depende de MOQ-RETRO-01.
+- **Orden de pago recomendado: sin cambios** (07 → 08 → 09 → Government Readiness Reconciliation). Desde ahora cada encargo de producto lleva la NORMA DE COMPLETITUD.
