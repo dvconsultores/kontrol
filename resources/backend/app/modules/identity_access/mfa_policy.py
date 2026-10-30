@@ -113,6 +113,10 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "tareas:configure",
         # organization · edición de la organización
         "organization:edit",
+        # gobierno_ente · identidad, naturaleza y acto de creación del ente (GOV-0-01, PDD-GOV0-04)
+        "gobierno_ente:create",
+        "gobierno_ente:edit",
+        "gobierno_ente:activate",
     }
 )
 
@@ -173,6 +177,8 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "tareas:complete",
         # alertas · consulta de alertas
         "alertas:view",
+        # gobierno_ente · consulta del ente (GOV-0-01)
+        "gobierno_ente:view",
     }
 )
 

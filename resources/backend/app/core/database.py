@@ -88,6 +88,7 @@ def init_models() -> None:
     import app.modules.commercial.models  # noqa: F401
     import app.modules.documents.models  # noqa: F401
     import app.modules.fiscal.models  # noqa: F401
+    import app.modules.government.models  # noqa: F401
     import app.modules.homologation.models  # noqa: F401
     import app.modules.identity_access.models  # noqa: F401
     import app.modules.inventory.models  # noqa: F401

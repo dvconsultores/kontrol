@@ -1,25 +1,17 @@
 # OWNER_UAT_READY_CATALOG — KONTROL Gobierno
 
-> Retrospectiva GOV-PRODUCT-COMPLETENESS-RETRO-01 · `develop` `0dbe632` · 2026-10-29.
+> Retrospectiva GOV-PRODUCT-COMPLETENESS-RETRO-01 · `develop` `0dbe632` · 2026-10-29. Actualizado por GOV-0-01 (2026-10-30).
 
-## Estado: VACÍO
+## Estado: 1 proceso listo para probar (2026-10-30)
 
-Hoy **no hay ningún proceso de KONTROL Gobierno que la dueña pueda probar**:
+- `OWNER_UAT_READY` = 1 de 122 procesos (0,82 %);
+- `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
-- `OWNER_UAT_READY` = 0 de 122 procesos;
-- `OWNER_ACCEPTED` = 0 de 122.
+| Proceso | Dónde entrar | Tarjeta | Ciclo |
+|---|---|---|---|
+| **ORG-01 Configurar el ente** (GOV-ORG-001) | Menú › Gobierno › Configuración del ente | [`specs/gov-0-01-configurar-ente/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-0-01-configurar-ente/evidence/OWNER_UAT_CARD.md) | GOV-0-01 |
 
-**Motivo.** Gobierno no tiene ninguna entrada de menú, pantalla, ruta de API, tabla ni migración (`GOVERNMENT_PRODUCT_INVENTORY.md` §1). La línea está en planificación: `GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0`, las fuentes siguen en SPONSOR REVIEW, el freeze normativo va en 0/10 y D-GOV-01..08 siguen abiertas.
-
-No se ha subido ningún proceso parcial para que el catálogo no quede vacío (política §7).
-
-## Qué tendría que pasar para la primera tarjeta
-
-1. Freeze del sponsor y autorización expresa de implementar.
-2. Que un ciclo GOV-n entregue un proceso con las doce compuertas de la política en PASS.
-3. Que Claude escriba aquí su tarjeta: dónde entrar, rol, precondiciones, datos sintéticos, pasos, resultado, documentos, reportes, auditoría, prueba negativa, limpieza y deudas conocidas.
-
-Según la IR §14, el primer candidato natural es GOV-0, por ejemplo ORG-01 «Configurar el ente» u ORG-03 «Cargos con competencias».
+Los otros 121 procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
 
 ## Fundamentos técnicos
 

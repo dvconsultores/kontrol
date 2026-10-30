@@ -46,11 +46,14 @@ def _licencia_vigente(db) -> bool:
     instalación— pero añadiría un artefacto y un evento de auditoría por
     ejecución: una historia de importaciones que nunca ocurrieron, sobre una
     base de QA que dura semanas. Se importa cuando hace falta, no siempre.
+    Desde GOV-0-01 una licencia sin el módulo `gobierno` no sirve:
+    se reimporta.
     """
     estado = db.execute(select(LicenseState).limit(1)).scalars().first()
     return (estado is not None
             and estado.mode in {"FULL_ACCESS", "GRACE"}
-            and estado.period_end > datetime.now(UTC))
+            and estado.period_end > datetime.now(UTC)
+            and "gobierno" in ((estado.entitlements or {}).get("modules") or []))
 
 
 ADMIN_PASSWORD = os.environ.get("KONTROL_E2E_PASSWORD", "Kontrol2026Segura!")
@@ -98,6 +101,7 @@ try:
         "read_only_start": (now + timedelta(days=330)).isoformat(),
         "critical_warning_start": (now + timedelta(days=320)).isoformat(),
         "plan": "MULTI_COMPANY", "minimum_version": "1.0.0", "kid": "kontrol-lic-2026-01",
+        "entitlements": {"modules": ["gobierno"]},  # GOV-0-01: la instalación de QA habilita la línea de Gobierno
     }
     signature = key.sign(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hex()
     os.environ["KONTROL_LICENSE_PUBLIC_KEY_PEM"] = pub

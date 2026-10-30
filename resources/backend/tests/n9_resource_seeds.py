@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     """Crea una entidad del tipo pedido en esa empresa. Devuelve su id."""
     from app.modules.approvals.models import ApprovalRequest
+    from app.modules.government.models import GovernmentEntity
     from app.modules.homologation.models import HomologationRecord
     from app.modules.inventory.models import InventoryAdjustment, StockCount
     from app.modules.master_data.models import CatalogItem, Party
@@ -181,6 +182,8 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
             company_id=empresa, plate=f"{marca[:6]}-{sufijo[:3]}", status="ACTIVE"),
         "TransportDriver": lambda: TransportDriver(
             company_id=empresa, party_id=_party("CONDUCTOR"), status="ACTIVE"),
+        "GovernmentEntity": lambda: GovernmentEntity(
+            company_id=empresa, denominacion=f"Ente {marca}", status="BORRADOR", version=1),
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",
             warehouse_type="PHYSICAL", status="ACTIVE"),

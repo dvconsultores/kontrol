@@ -908,6 +908,52 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/ente",
+      "capabilities": [
+        "gobierno_ente:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/ente",
+      "capabilities": [
+        "gobierno_ente:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ente",
+      "capabilities": [
+        "gobierno_ente:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ente/activar",
+      "capabilities": [
+        "gobierno_ente:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ente/versiones",
+      "capabilities": [
+        "gobierno_ente:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/modulo",
+      "capabilities": [],
+      "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/health/live",
       "capabilities": [],
       "scope": "GLOBAL"
@@ -4452,7 +4498,11 @@
     "tareas:assign",
     "tareas:complete",
     "tareas:configure",
-    "alertas:view"
+    "alertas:view",
+    "gobierno_ente:view",
+    "gobierno_ente:create",
+    "gobierno_ente:edit",
+    "gobierno_ente:activate"
   ],
   "report_capabilities": {
     "executive_ventas": [

@@ -4,13 +4,13 @@
 
 Compuertas en orden: backend · frontend · menú · proceso · campos · roles · documentos · reportes · auditoría · E2E · ficha de pantalla. `✗` = aplicable y en FAIL; `·` = no aplica (justificado: el proceso no produce ni exige documento/reporte).
 
-En **todos** los procesos: `OWNER_UAT_READY = NO`, `OWNER_ACCEPTED = NO`, evidencia = HEAD 0dbe632: 0 rutas, 0 modelos, 0 migraciones, 0 entradas de menú y 0 pantallas de Gobierno.
+En **todos** los procesos salvo ORG-01: `OWNER_UAT_READY = NO`, `OWNER_ACCEPTED = NO`, evidencia = HEAD 0dbe632: 0 rutas, 0 modelos, 0 migraciones, 0 entradas de menú y 0 pantallas de Gobierno. **ORG-01** (GOV-0-01, 2026-10-30): 10/10 compuertas en PASS, `OWNER_UAT_READY = YES`, `OWNER_ACCEPTED = NO` (solo lo concede la dueña); evidencia en `specs/gov-0-01-configurar-ente/evidence/`.
 
 ## Government Core: ente, estructura y autoridad
 
 | Id | Proceso | Prio. | Actor principal | Requisitos | Compuertas | PASS | Estado real | Bloqueos | E2E | Equivalente privado (no cuenta) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ORG-01 | Configurar el ente y su tipo | P0 | Administración institucional | GOV-ORG-001 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-01 | — | — |
+| ORG-01 | Configurar el ente y su tipo | P0 | Administración institucional | GOV-ORG-001 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | GOV-E2E-01..05 | — |
 | ORG-02 | Estructura organizativa por ejercicio (órgano, unidad ejecutora, dependencia, sede, centro gestor) | P0 | Administración institucional | GOV-ORG-002 GOV-ORG-008 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Organización privada (empresas, sucursales): otro contrato |
 | ORG-03 | Cargos con competencias y límites de firma/aprobación | P0 | Máxima autoridad | GOV-ORG-003 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 | ORG-04 | Delegaciones, suplencias, encargadurías y designaciones con acto | P0 | Máxima autoridad | GOV-ORG-004 GOV-ORG-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | Delegaciones del motor 045 (sin acto administrativo) |

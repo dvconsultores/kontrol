@@ -8,7 +8,7 @@
 
 | Proceso | Estado | Qué funciona | Qué no funciona | Compuerta que falta | Severidad | Dependencias | Siguiente remediación |
 |---|---|---|---|---|---|---|---|
-| ORG-01 Configurar el ente y su tipo | BLOCKED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (10 de 10) | HIGH | D-GOV-01 | GOV-0, con DoD de producto completa (política §4) |
+| ORG-01 Configurar el ente y su tipo | **SALIÓ DE ESTE CATÁLOGO** (GOV-0-01, 2026-10-30) | Todo el proceso: ver `OWNER_UAT_READY_CATALOG.md` | — | ninguna (10 de 10 en PASS) | — | — | prueba de la dueña |
 | ORG-02 Estructura organizativa por ejercicio (órgano, unidad ejecutora, dependencia, sede, centro gestor) | NOT_STARTED | Nada en Gobierno. Existe un equivalente privado que **no** sirve tal cual: Organización privada (empresas, sucursales): otro contrato. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-0, con DoD de producto completa (política §4) |
 | ORG-03 Cargos con competencias y límites de firma/aprobación | NOT_STARTED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-0, con DoD de producto completa (política §4) |
 | ORG-04 Delegaciones, suplencias, encargadurías y designaciones con acto | BLOCKED | Nada en Gobierno. Existe un equivalente privado que **no** sirve tal cual: Delegaciones del motor 045 (sin acto administrativo). | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | LEGAL_VALIDATION_REQUIRED N37 (clase C) | GOV-0, con DoD de producto completa (política §4) |

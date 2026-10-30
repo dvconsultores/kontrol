@@ -4,7 +4,9 @@
 
 ## Resumen para la dueña
 
-**Hoy no hay ninguna parte de KONTROL Gobierno que puedas probar como usuaria.** No hay menú, pantallas, API ni datos de Gobierno. Lo que existe es:
+**Actualización GOV-0-01 (2026-10-30): ya hay un proceso de Gobierno que puedes probar como usuaria: «Configurar el ente» (menú Gobierno › Configuración del ente).** Su tarjeta de prueba está en `OWNER_UAT_READY_CATALOG.md`. El resto de Gobierno sigue sin menú, pantallas ni API. La retrospectiva del 2026-10-29 decía:
+
+> Hoy no hay ninguna parte de KONTROL Gobierno que puedas probar como usuaria. No hay menú, pantallas, API ni datos de Gobierno. Lo que existe es:
 
 - la planificación completa: requisitos, biblioteca normativa, arquitectura y readiness;
 - un núcleo compartido técnico cada vez más sólido (MFA, permisos, auditoría, hora de Caracas, copia y restauración, aislamiento), sobre el que Gobierno se construirá.
@@ -14,8 +16,8 @@ Esto no contradice informes anteriores: ninguno afirmó que Gobierno estuviera l
 | Indicador | Valor | Fórmula y denominador |
 |---|---|---|
 | **Technical Foundation Readiness** | **36,8 %** | 14 fundamentos COMPLETE ÷ 38 fundamentos aplicables (34,2 % = 13/38 en la retrospectiva; +F05 al cerrar el ciclo 07) |
-| **Functional Product Completeness** | **0,0 %** | 0 compuertas en PASS ÷ 1 280 compuertas aplicables |
-| **Owner UAT Ready** | **0,0 %** | 0 procesos listos para probar ÷ 122 procesos requeridos |
+| **Functional Product Completeness** | **0,8 %** (0,78 %) | 10 compuertas en PASS ÷ 1 280 compuertas aplicables (ORG-01: 10/10; 0 en la retrospectiva) |
+| **Owner UAT Ready** | **0,8 %** (0,82 %) | 1 proceso listo para probar (ORG-01) ÷ 122 procesos requeridos |
 | **Owner Accepted** | **0,0 %** | 0 procesos aceptados por la dueña ÷ 122 |
 
 No hay redondeo al alza. Las cuatro cifras no se combinan.
@@ -24,7 +26,7 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 
 | Módulo | Procesos | Aceptados | Listos para probar | Parciales | No iniciados | Bloqueados | ¿Completo? |
 |---|---|---|---|---|---|---|---|
-| Government Core: ente, estructura y autoridad | 7 | 0 | 0 | 0 | 4 | 3 | NO |
+| Government Core: ente, estructura y autoridad | 7 | 0 | 1 | 0 | 4 | 2 | NO |
 | Presupuesto público | 13 | 0 | 0 | 0 | 4 | 9 | NO |
 | Requisiciones públicas | 5 | 0 | 0 | 0 | 4 | 1 | NO |
 | Contrataciones públicas / Licitaciones | 12 | 0 | 0 | 0 | 9 | 3 | NO |
@@ -84,13 +86,13 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
   - los NOT_MEASURED.
 - Recuento: COMPLETE 14 · PARTIAL 12 · NOT_STARTED 7 · NOT_MEASURED 4 · BLOCKED 1.
 
-**B · Functional Product Completeness = 0 ÷ 1 280 = 0,0 %.**
+**B · Functional Product Completeness = 10 ÷ 1 280 = 0,78 %** (0 en la retrospectiva; +10 de ORG-01 con GOV-0-01, 2026-10-30).
 - Hay 122 procesos × 11 compuertas funcionales: backend, frontend, menú, proceso, campos, roles, documentos, reportes, auditoría, E2E y ficha de pantalla. Eso da 1 342.
 - Se restan 44 compuertas de documentos y 18 de reportes que no aplican: quedan 1 280.
-- Ninguna está en PASS.
+- En PASS: las 10 compuertas aplicables de ORG-01 (reportes no aplica, justificado en su Spec). Ninguna otra.
 - Aunque fuese mayor que 0, este porcentaje **no** dice que un módulo esté terminado: eso solo lo dice la tabla de módulos.
 
-**C · Owner UAT Ready = 0 ÷ 122 = 0,0 %**, y **Owner Accepted = 0 ÷ 122 = 0,0 %**.
+**C · Owner UAT Ready = 1 ÷ 122 = 0,82 %** (ORG-01), y **Owner Accepted = 0 ÷ 122 = 0,0 %** (solo la dueña lo concede).
 
 ## Requisitos de Ingeniería (§38, §70)
 

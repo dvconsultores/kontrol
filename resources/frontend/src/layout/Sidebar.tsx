@@ -41,16 +41,20 @@ import {
   Wallet,
   Warehouse,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { NavLink } from "react-router";
 import { useState } from "react";
 
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { useModuloGobierno } from "@/modules/gobierno/api";
 import { requisitoDe } from "@/app/autoridad/pantallas";
 import { evaluarPantalla } from "@/app/autoridad/requisitos";
 import { t } from "@/i18n";
 import { clsx } from "clsx";
 
-const navSections = [
+interface NavItem { to: string; label: string; icon: LucideIcon; /** Módulo de licencia que exige la entrada. */ modulo?: "gobierno" }
+interface NavSection { title: string; items: NavItem[] }
+const navSections: NavSection[] = [
   {
     title: "Principal",
     items: [
@@ -59,6 +63,8 @@ const navSections = [
       { to: "/mi-licencia", label: "Mi licencia", icon: Lock },
     ],
   },
+  // Línea de Gobierno (GOV-0-01): solo si la licencia habilita el módulo `gobierno`.
+  { title: "Gobierno", items: [{ to: "/gobierno/ente", label: "Configuración del ente", icon: Landmark, modulo: "gobierno" }] },
   {
     // Spec 047: textos desde el catálogo; cada entrada con su propio permiso.
     title: t("nav.seccion"),
@@ -247,13 +253,16 @@ const navSections = [
 export function Sidebar(): React.JSX.Element {
   const [collapsed, setCollapsed] = useState(false);
   const autoridad = useAutoridad();
+  const moduloGobierno = useModuloGobierno();
   // Una entrada se ve si su pantalla está permitida (registro único `pantallas.ts`, Spec 003). Mientras la autoridad carga, las entradas
   // con requisito no se muestran: nunca se ofrece autoridad desconocida o de otra empresa.
   const visibleSections = navSections
     .map((section) => ({
       ...section,
       items: section.items.filter(
-        (item) => evaluarPantalla(autoridad, requisitoDe(item.to.replace(/^\//, ""))).estado === "PERMITIDA",
+        (item) =>
+          (item.modulo !== "gobierno" || moduloGobierno) &&
+          evaluarPantalla(autoridad, requisitoDe(item.to.replace(/^\//, ""))).estado === "PERMITIDA",
       ),
     }))
     .filter((section) => section.items.length > 0);

@@ -217,6 +217,7 @@ def test_ninguna_operacion_de_la_api_queda_sin_alcance(mundo):
         ("/api/v1/approvals/steps/{step_id}/reject", "post"),
         ("/api/v1/approvals/steps/{step_id}/return", "post"),
         ("/api/v1/documentos/salud/almacenamiento", "get"),
+        ("/api/v1/gobierno/modulo", "get"),  # instalación: ¿la licencia habilita Gobierno? (GOV-0-01)
         ("/", "get"),
     }
     spec = mundo.client.app.openapi()

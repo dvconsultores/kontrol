@@ -34,10 +34,12 @@ export interface AdjuntosPanelProps {
   /** Tipo documental por defecto para lo que se cargue desde aquí. */
   documentTypeId?: string;
   title?: string;
+  /** Avisa al consumidor de que cambió el conjunto de documentos del recurso (p. ej., para recalcular requisitos). */
+  onChange?: () => void;
 }
 
 export function AdjuntosPanel({
-  resourceType, resourceId, documentTypeId, title = "Documentos",
+  resourceType, resourceId, documentTypeId, title = "Documentos", onChange,
 }: AdjuntosPanelProps): React.JSX.Element {
   const queryClient = useQueryClient();
   const { activeCompany } = useCompany();
@@ -104,6 +106,7 @@ export function AdjuntosPanel({
       notify({ type: "success", title: "Documento adjuntado", description: file.name });
       reset();
       void queryClient.invalidateQueries({ queryKey: ["documentos"] });
+      onChange?.();
     } catch (err) {
       setPhase("error");
       const message = uploadErrorMessage(err);
@@ -136,6 +139,7 @@ export function AdjuntosPanel({
       await apiFetch(`/documentos/vinculos/${item.link.id}`, { method: "DELETE" });
       notify({ type: "success", title: "Documento desvinculado", description: item.title });
       void queryClient.invalidateQueries({ queryKey: ["documentos"] });
+      onChange?.();
     } catch (err) {
       notify({ type: "error", title: "No fue posible desvincular",
                description: uploadErrorMessage(err) });

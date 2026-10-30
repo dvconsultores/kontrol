@@ -650,6 +650,36 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/ente",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/ente",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ente",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ente/activar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ente/versiones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/modulo",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/health/live",
       "query": []
     },

@@ -20,6 +20,10 @@ vi.mock("@/app/autoridad/AutoridadContext", () => ({
   }),
 }));
 
+let moduloGobierno = false;
+
+vi.mock("@/modules/gobierno/api", () => ({ useModuloGobierno: () => moduloGobierno }));
+
 const { Sidebar } = await import("./Sidebar");
 
 function montar(): void {
@@ -37,6 +41,7 @@ function enlace(nombre: string): HTMLElement | null {
 describe("Sidebar · Diagnóstico", () => {
   beforeEach(() => {
     permisos = new Set<string>();
+    moduloGobierno = false;
   });
 
   it("NAV-01 · con license:view la entrada Diagnóstico está, y apunta a su ruta", () => {
@@ -95,5 +100,32 @@ describe("Sidebar · Diagnóstico", () => {
       .map((a) => a.getAttribute("href"))
       .sort();
     expect(hrefs).toEqual(["/auditoria", "/reportes/auditoria"]);
+  });
+});
+
+describe("Sidebar · Gobierno (GOV-0-01)", () => {
+  beforeEach(() => {
+    permisos = new Set<string>();
+    moduloGobierno = false;
+  });
+
+  it("GSB-01 · módulo habilitado y gobierno_ente:view muestra el enlace y el grupo", () => {
+    moduloGobierno = true;
+    permisos = new Set(["gobierno_ente:view"]);
+    montar();
+    expect(enlace("Configuración del ente")).not.toBeNull();
+    expect(screen.getByText("Gobierno")).toBeInTheDocument();
+  });
+
+  it("GSB-02 · capacidad sin módulo no muestra el enlace", () => {
+    permisos = new Set(["gobierno_ente:view"]);
+    montar();
+    expect(enlace("Configuración del ente")).toBeNull();
+  });
+
+  it("GSB-03 · módulo sin capacidad no muestra el enlace", () => {
+    moduloGobierno = true;
+    montar();
+    expect(enlace("Configuración del ente")).toBeNull();
   });
 });

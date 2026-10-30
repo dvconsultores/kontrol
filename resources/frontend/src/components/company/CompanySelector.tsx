@@ -9,9 +9,26 @@ import { Building2, Check, ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { useCompany } from "@/app/contexts/CompanyContext";
+import { useModuloGobierno } from "@/modules/gobierno/api";
 
 export function CompanySelector(): React.JSX.Element | null {
   const { companies, activeCompany, estado, selectCompany } = useCompany();
+  const moduloGobierno = useModuloGobierno();
+  const textos = moduloGobierno
+    ? {
+        activa: "Ente activo",
+        cambiar: "Cambiar de ente",
+        seleccionar: "Seleccionar ente",
+        vacio: "Seleccione un ente",
+        lista: "Entes disponibles",
+      }
+    : {
+        activa: "Empresa activa",
+        cambiar: "Cambiar de empresa",
+        seleccionar: "Seleccionar empresa",
+        vacio: "Seleccione una empresa",
+        lista: "Empresas disponibles",
+      };
   const [abierto, setAbierto] = useState(false);
   const [enfocado, setEnfocado] = useState(0);
   const contenedor = useRef<HTMLDivElement>(null);
@@ -106,8 +123,8 @@ export function CompanySelector(): React.JSX.Element | null {
         aria-controls={abierto ? idLista : undefined}
         aria-label={
           activeCompany
-            ? `Empresa activa: ${activeCompany.legal_name}. Cambiar de empresa`
-            : "Seleccionar empresa"
+            ? `${textos.activa}: ${activeCompany.legal_name}. ${textos.cambiar}`
+            : textos.seleccionar
         }
         onClick={() => {
           setEnfocado(Math.max(0, operables.findIndex((c) => c.id === activeCompany?.id)));
@@ -124,7 +141,7 @@ export function CompanySelector(): React.JSX.Element | null {
       >
         <Building2 className="size-4 shrink-0 text-text-400" aria-hidden="true" />
         <span className="truncate font-medium text-text-900" title={activeCompany?.legal_name}>
-          {activeCompany?.legal_name ?? "Seleccione una empresa"}
+          {activeCompany?.legal_name ?? textos.vacio}
         </span>
         <ChevronDown className="size-4 shrink-0 text-text-400" aria-hidden="true" />
       </button>
@@ -137,7 +154,7 @@ export function CompanySelector(): React.JSX.Element | null {
           id={idLista}
           role="listbox"
           tabIndex={-1}
-          aria-label="Empresas disponibles"
+          aria-label={textos.lista}
           aria-activedescendant={`${idLista}-${enfocado}`}
           onKeyDown={enTeclado}
           ref={(el) => el?.focus()}

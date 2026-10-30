@@ -1,0 +1,139 @@
+/**
+ * Contrato de la API del ente de Gobierno (GOV-0-01). El servidor es la autoridad:
+ * estado, versión, faltantes y documento vinculado vienen de él.
+ */
+import { useQuery } from "@tanstack/react-query";
+
+import { apiFetch } from "@/api/client";
+
+export type EstadoEnte = "BORRADOR" | "ACTIVO";
+export type NivelTerritorial = "NACIONAL" | "ESTADAL" | "MUNICIPAL";
+export type FormaOrganizativa =
+  | "ADMINISTRACION_CENTRAL"
+  | "INSTITUTO_PUBLICO"
+  | "SERVICIO_DESCONCENTRADO"
+  | "ENTE_DESCENTRALIZADO";
+export type TipoDeActo = "LEY" | "DECRETO" | "ORDENANZA" | "RESOLUCION" | "OTRO";
+
+export interface EnteDatos {
+  denominacion: string;
+  siglas: string | null;
+  rif: string | null;
+  nivel_territorial: NivelTerritorial | null;
+  forma_organizativa: FormaOrganizativa | null;
+  organo_adscripcion: string | null;
+  entidad_federal: string | null;
+  municipio: string | null;
+  acto_tipo: TipoDeActo | null;
+  acto_numero: string | null;
+  acto_fecha: string | null;
+  acto_publicacion: string | null;
+}
+
+export interface Ente extends EnteDatos {
+  id: string;
+  estado: EstadoEnte;
+  version: number;
+  faltantes_para_activar: string[];
+  documento_vinculado: boolean;
+  activado_en: string | null;
+  activado_por: string | null;
+  creado_en: string;
+  actualizado_en: string;
+}
+
+export interface VersionEnte {
+  version: number;
+  estado: EstadoEnte;
+  motivo: string | null;
+  actor_id: string | null;
+  creado_en: string;
+  datos: Partial<EnteDatos>;
+}
+
+export interface VersionesEnte {
+  items: VersionEnte[];
+  total: number;
+}
+
+export const CAMPOS_ENTE: readonly (keyof EnteDatos)[] = [
+  "denominacion",
+  "siglas",
+  "rif",
+  "nivel_territorial",
+  "forma_organizativa",
+  "organo_adscripcion",
+  "entidad_federal",
+  "municipio",
+  "acto_tipo",
+  "acto_numero",
+  "acto_fecha",
+  "acto_publicacion",
+] as const;
+
+export const ETIQUETA_ESTADO: Record<EstadoEnte, string> = {
+  BORRADOR: "Borrador",
+  ACTIVO: "Activo",
+};
+
+export const ETIQUETA_NIVEL: Record<NivelTerritorial, string> = {
+  NACIONAL: "Nacional",
+  ESTADAL: "Estadal",
+  MUNICIPAL: "Municipal",
+};
+
+export const ETIQUETA_FORMA: Record<FormaOrganizativa, string> = {
+  ADMINISTRACION_CENTRAL: "Administración central",
+  INSTITUTO_PUBLICO: "Instituto público",
+  SERVICIO_DESCONCENTRADO: "Servicio desconcentrado",
+  ENTE_DESCENTRALIZADO: "Ente descentralizado",
+};
+
+export const ETIQUETA_ACTO: Record<TipoDeActo, string> = {
+  LEY: "Ley",
+  DECRETO: "Decreto",
+  ORDENANZA: "Ordenanza",
+  RESOLUCION: "Resolución",
+  OTRO: "Otro",
+};
+
+export const ETIQUETA_CAMPO: Record<keyof EnteDatos, string> = {
+  denominacion: "Denominación oficial",
+  siglas: "Siglas",
+  rif: "RIF",
+  nivel_territorial: "Nivel político-territorial",
+  forma_organizativa: "Forma organizativa",
+  organo_adscripcion: "Órgano de adscripción",
+  entidad_federal: "Entidad federal",
+  municipio: "Municipio",
+  acto_tipo: "Tipo de acto de creación",
+  acto_numero: "Número del acto",
+  acto_fecha: "Fecha del acto",
+  acto_publicacion: "Publicación oficial",
+};
+
+export const ETIQUETA_FALTANTE: Readonly<Record<string, string>> = {
+  DENOMINACION: "Denominación oficial",
+  NIVEL_TERRITORIAL: "Nivel político-territorial",
+  FORMA_ORGANIZATIVA: "Forma organizativa",
+  ORGANO_ADSCRIPCION: "Órgano de adscripción",
+  ENTIDAD_FEDERAL: "Entidad federal",
+  MUNICIPIO: "Municipio",
+  ACTO_TIPO: "Tipo de acto de creación",
+  ACTO_NUMERO: "Número del acto",
+  ACTO_FECHA: "Fecha del acto",
+  ACTO_PUBLICACION: "Publicación oficial",
+  DOCUMENTO_ACTO: "Documento del acto de creación",
+};
+
+export const CONSULTA_GOBIERNO = ["gobierno"] as const;
+
+export function useModuloGobierno(): boolean {
+  const { data } = useQuery({
+    queryKey: [...CONSULTA_GOBIERNO, "modulo"],
+    queryFn: () => apiFetch<{ habilitado: boolean }>("/gobierno/modulo"),
+    staleTime: 300_000,
+    retry: false,
+  });
+  return data?.habilitado === true;
+}

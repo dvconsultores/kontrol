@@ -61,6 +61,7 @@ RUTAS_SIN_EMPRESA_CLASIFICADAS: dict[tuple[str, str], tuple[str, str]] = {
     ("GET", "/api/v1/documentos/salud/almacenamiento"): ("INSTALLATION", "salud del almacén de la instalación"),
     ("GET", "/api/v1/fiscal/legal-sources"): ("INSTALLATION", "núcleo fiscal versionado por instalación (P4); exige autoridad de todo el tenant"),
     ("GET", "/api/v1/fiscal/tax-rule-versions"): ("INSTALLATION", "núcleo fiscal versionado por instalación (P4); exige autoridad de todo el tenant"),
+    ("GET", "/api/v1/gobierno/modulo"): ("INSTALLATION", "habilitación del módulo Gobierno por la licencia de la instalación (GOV-0-01)"),
     ("GET", "/api/v1/health/live"): ("PUBLIC", "sonda de vida sin datos"),
     ("GET", "/api/v1/health/ready"): ("PUBLIC", "sonda de disponibilidad sin datos de negocio"),
     ("GET", "/api/v1/homologation/records"): ("INSTALLATION", "homologación y liberación de la instalación (Spec 011)"),

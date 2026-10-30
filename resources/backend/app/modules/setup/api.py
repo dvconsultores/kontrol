@@ -89,6 +89,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "notificaciones": ["configure"],
     "tareas": ["view", "assign", "complete", "configure"],
     "alertas": ["view"],
+    # Línea de Gobierno (GOV-0-01): capacidades funcionales del ente (PDD-GOV0-01).
+    "gobierno_ente": ["view", "create", "edit", "activate"],
 }
 
 

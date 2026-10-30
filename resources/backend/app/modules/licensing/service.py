@@ -527,6 +527,7 @@ ENTITLED_MODULES: list[str] = [
     "fiscal",
     "regulatorio",
     "reportes",
+    "gobierno",  # Línea de Gobierno (OQ-GAB-1 = A): perfil separado, denegado por defecto
 ]
 
 # Máquina de estados de modos para transición manual (FR-010-030).

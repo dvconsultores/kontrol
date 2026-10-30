@@ -161,6 +161,16 @@ def require_tenant_permission(resource: str, action: str):
     return checker
 
 
+def require_module(module: str):
+    '''Dependencia: exige que el módulo esté habilitado por la licencia de la instalación (denegación por defecto).'''
+    def checker(db: Session = Depends(get_db)) -> None:
+        from app.modules.licensing import service as licensing_service
+        if not licensing_service.module_entitled(db, module):
+            raise PermissionDeniedError("MODULE_NOT_ENTITLED", "El módulo no está habilitado en la licencia de esta instalación")
+    checker.kontrol_module = module  # type: ignore[attr-defined]
+    return checker
+
+
 def get_license_mode(db: Session = Depends(get_db)) -> str:
     """Modo actual de licencia (FR-001-052)."""
     from app.modules.licensing import service as licensing_service
