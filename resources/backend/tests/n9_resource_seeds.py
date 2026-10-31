@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     """Crea una entidad del tipo pedido en esa empresa. Devuelve su id."""
     from app.modules.approvals.models import ApprovalRequest
-    from app.modules.government.models import GovernmentEntity
+    from app.modules.government.models import GovernmentEntity, GovernmentStructure
     from app.modules.homologation.models import HomologationRecord
     from app.modules.inventory.models import InventoryAdjustment, StockCount
     from app.modules.master_data.models import CatalogItem, Party
@@ -52,6 +52,15 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
 
     marca = f"N9-{sufijo}"
     ahora = datetime.now(UTC)
+
+    def _ente_de_empresa() -> str:
+        existente = db.query(GovernmentEntity).filter(GovernmentEntity.company_id == empresa).first()
+        if existente is not None:
+            return str(existente.id)
+        ente = GovernmentEntity(company_id=empresa, denominacion=f"Ente {marca}", status="BORRADOR", version=1)
+        db.add(ente)
+        db.flush()
+        return str(ente.id)
 
     def _party(rol: str) -> str:
         p = Party(company_id=empresa, code=f"{marca}-{rol}", name=f"Tercero {marca}",
@@ -184,6 +193,8 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
             company_id=empresa, party_id=_party("CONDUCTOR"), status="ACTIVE"),
         "GovernmentEntity": lambda: GovernmentEntity(
             company_id=empresa, denominacion=f"Ente {marca}", status="BORRADOR", version=1),
+        "GovernmentStructure": lambda: GovernmentStructure(
+            company_id=empresa, entity_id=_ente_de_empresa(), exercise=2030, status="BORRADOR", version=1),
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",
             warehouse_type="PHYSICAL", status="ACTIVE"),

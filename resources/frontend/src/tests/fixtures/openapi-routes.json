@@ -675,6 +675,61 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/estructuras",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/estructuras",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/estructuras/{ejercicio}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/estructuras/{ejercicio}/cerrar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/estructuras/{ejercicio}/exportar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/estructuras/{ejercicio}/publicar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/estructuras/{ejercicio}/unidades",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/estructuras/{ejercicio}/unidades/{unidad_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/estructuras/{ejercicio}/unidades/{unidad_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/estructuras/{ejercicio}/unidades/{unidad_id}/desactivar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/estructuras/{ejercicio}/unidades/{unidad_id}/versiones",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/modulo",
       "query": []
     },

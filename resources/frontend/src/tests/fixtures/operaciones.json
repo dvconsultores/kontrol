@@ -948,6 +948,94 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/estructuras",
+      "capabilities": [
+        "gobierno_estructura:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/estructuras",
+      "capabilities": [
+        "gobierno_estructura:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}",
+      "capabilities": [
+        "gobierno_estructura:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cerrar",
+      "capabilities": [
+        "gobierno_estructura:close"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/exportar",
+      "capabilities": [
+        "gobierno_estructura:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/publicar",
+      "capabilities": [
+        "gobierno_estructura:publish"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/unidades",
+      "capabilities": [
+        "gobierno_estructura:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/unidades/{unidad_id}",
+      "capabilities": [
+        "gobierno_estructura:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/unidades/{unidad_id}",
+      "capabilities": [
+        "gobierno_estructura:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/unidades/{unidad_id}/desactivar",
+      "capabilities": [
+        "gobierno_estructura:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/unidades/{unidad_id}/versiones",
+      "capabilities": [
+        "gobierno_estructura:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/modulo",
       "capabilities": [],
       "scope": "GLOBAL"
@@ -4502,7 +4590,11 @@
     "gobierno_ente:view",
     "gobierno_ente:create",
     "gobierno_ente:edit",
-    "gobierno_ente:activate"
+    "gobierno_ente:activate",
+    "gobierno_estructura:view",
+    "gobierno_estructura:edit",
+    "gobierno_estructura:publish",
+    "gobierno_estructura:close"
   ],
   "report_capabilities": {
     "executive_ventas": [

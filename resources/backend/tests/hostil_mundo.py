@@ -32,6 +32,7 @@ from sesion_mfa import login_completo
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.core import clock
 from app.core.company_context import COMPANY_HEADER
 from app.core.database import Base, get_db, init_models
 from app.core.scope import Scope, declared_scope
@@ -117,6 +118,19 @@ class MundoHostil:
             json=json,
             params=params,
         )
+
+    def refrescar_reautenticacion(self, actor: str) -> None:
+        """Renueva la reautenticación de las sesiones del actor (REAUTH_MAX_AGE = 300 s).
+
+        Un barrido largo supera la ventana; el usuario real la renovaría confirmando su identidad.
+        Se sella con el reloj de la aplicación, el mismo que usa el servidor.
+        """
+        with self.factory() as db:
+            db.execute(
+                text("UPDATE sessions SET reauth_at = :ahora WHERE user_id = :usuario"),
+                {"ahora": clock.now(), "usuario": self.actores[actor].user_id},
+            )
+            db.commit()
 
     def empresas_visibles(self, actor: str) -> set[str]:
         actor_datos = self.actores[actor]

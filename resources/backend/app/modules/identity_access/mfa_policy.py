@@ -117,6 +117,10 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_ente:create",
         "gobierno_ente:edit",
         "gobierno_ente:activate",
+        # gobierno_estructura · unidades, puesta en vigor y cierre de la estructura (GOV-0-02, PDD-ORG02-02)
+        "gobierno_estructura:edit",
+        "gobierno_estructura:publish",
+        "gobierno_estructura:close",
     }
 )
 
@@ -179,6 +183,8 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "alertas:view",
         # gobierno_ente · consulta del ente (GOV-0-01)
         "gobierno_ente:view",
+        # gobierno_estructura · consulta y exportación de la estructura (GOV-0-02)
+        "gobierno_estructura:view",
     }
 )
 

@@ -8,14 +8,14 @@ Traza requisito → módulo → proceso → backend → pantalla → campo → r
 
 | Requisito | Prio. | Normas | Proceso/fundamento | BACKEND | FRONTEND | DOCUMENT | REPORT | E2E | UAT | Estado | Texto (IR, abreviado) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| GOV-ORG-001 | P0 | N01,N02,N03,N24 | ORG-01 | FAIL | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | BLOCKED | Configurar tipo de ente: nacional, estadal, municipal, instituto publico, servicio desconcentrado o ente descentralizado, sin compartir reglas entre tenants por |
-| GOV-ORG-002 | P0 | N02,N03,N04,N24 | ORG-02 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Modelar organo, ente, unidad administrativa, unidad ejecutora local, dependencia, sede y centro gestor con vigencia temporal. |
+| GOV-ORG-001 | P0 | N01,N02,N03,N24 | ORG-01 | PASS | PASS | PASS | NOT_APPLICABLE | PASS | READY | OWNER_UAT_READY | Configurar tipo de ente: nacional, estadal, municipal, instituto publico, servicio desconcentrado o ente descentralizado, sin compartir reglas entre tenants por |
+| GOV-ORG-002 | P0 | N02,N03,N04,N24 | ORG-02 | PASS | PASS | PASS | PASS | PASS | READY | OWNER_UAT_READY | Modelar organo, ente, unidad administrativa, unidad ejecutora local, dependencia, sede y centro gestor con vigencia temporal. |
 | GOV-ORG-003 | P0 | N02,N20,N23 | ORG-03 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Asignar competencias y limites de firma/aprobacion por cargo y no solo por usuario nominal. |
 | GOV-ORG-004 | P0 | N02,N25,N23 | ORG-04 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Versionar delegaciones, suplencias, encargadurias y designaciones con acto soporte, vigencia y autoridad emisora. |
 | GOV-ORG-005 | P0 | N18,N20,N23 | ORG-06 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | BLOCKED | Separar roles operativos, aprobadores, control interno, auditoria y administracion tecnica mediante SoD configurable. |
 | GOV-ORG-006 | P0 | N03,N18,N20,N21 | ORG-05 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Mantener responsables por unidad, programa, proyecto, cuenta, almacen, caja, banco, contrato y bienes, conservando historia. |
 | GOV-ORG-007 | P0 | N20,N27,N40 | ORG-06 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | BLOCKED | Relacionar cada usuario con identidad, cargo, unidad y alcance institucional; el frontend nunca decide company/ente scope. |
-| GOV-ORG-008 | P1 | N02,N03,N21 | ORG-02 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Permitir estructuras organizativas por ejercicio sin reescribir expedientes cerrados. |
+| GOV-ORG-008 | P1 | N02,N03,N21 | ORG-02 | PASS | PASS | PASS | PASS | PASS | READY | OWNER_UAT_READY | Permitir estructuras organizativas por ejercicio sin reescribir expedientes cerrados. |
 | GOV-ORG-009 | P1 | N02,N25,N37 | ORG-04 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Mantener catalogo de actos administrativos que habilitan autoridad: resolucion, decreto, ordenanza, punto de cuenta u otro. |
 | GOV-ORG-010 | P0 | N03,N18,N20,N23 | ORG-07 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | NOT_STARTED | Producir matriz auditable de quien puede solicitar, comprometer, causar, ordenar, pagar, registrar, custodiar, aprobar y auditar. |
 | GOV-BUD-001 | P0 | N01,N03,N04,N07,N08,N10 | BUD-01 | FAIL | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | BLOCKED | Crear ejercicios economico- financieros con estado, calendario, moneda funcional, clasificadores y version normativa aplicable. |

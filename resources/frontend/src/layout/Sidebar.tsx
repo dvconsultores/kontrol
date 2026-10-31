@@ -19,6 +19,7 @@ import {
   LayoutDashboard,
   ListChecks,
   Lock,
+  Network,
   Package,
   Percent,
   Ruler,
@@ -64,7 +65,13 @@ const navSections: NavSection[] = [
     ],
   },
   // Línea de Gobierno (GOV-0-01): solo si la licencia habilita el módulo `gobierno`.
-  { title: "Gobierno", items: [{ to: "/gobierno/ente", label: "Configuración del ente", icon: Landmark, modulo: "gobierno" }] },
+  {
+    title: "Gobierno",
+    items: [
+      { to: "/gobierno/ente", label: "Configuración del ente", icon: Landmark, modulo: "gobierno" },
+      { to: "/gobierno/estructura", label: "Estructura organizativa", icon: Network, modulo: "gobierno" },
+    ],
+  },
   {
     // Spec 047: textos desde el catálogo; cada entrada con su propio permiso.
     title: t("nav.seccion"),

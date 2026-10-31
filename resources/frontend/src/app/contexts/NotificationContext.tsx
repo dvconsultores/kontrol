@@ -35,11 +35,13 @@ let counter = 0;
 
 export function NotificationProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  // Regla FR-001-063: no puede haber dos avisos iguales A LA VEZ.
+  // La clave se calcula del propio aviso y se libera al descartarlo,
+  // de modo que un aviso idéntico puede volver a mostrarse más tarde.
   const seen = useRef<Set<string>>(new Set());
 
   const notify = useCallback((n: Omit<Notification, "id">) => {
     setNotifications((prev) => {
-      // Evitar duplicados por clave (título + descripción).
       const key = `${n.type}:${n.title}:${n.description ?? ""}`;
       if (seen.current.has(key)) {
         return prev;
@@ -51,7 +53,14 @@ export function NotificationProvider({ children }: { children: ReactNode }): Rea
   }, []);
 
   const dismiss = useCallback((id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    setNotifications((prev) => {
+      const notification = prev.find((n) => n.id === id);
+      if (notification) {
+        const key = `${notification.type}:${notification.title}:${notification.description ?? ""}`;
+        seen.current.delete(key);
+      }
+      return prev.filter((n) => n.id !== id);
+    });
   }, []);
 
   const value = useMemo(() => ({ notifications, notify, dismiss }), [notifications, notify, dismiss]);

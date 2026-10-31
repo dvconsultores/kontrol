@@ -108,6 +108,8 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "tareas/:taskId": null,
   "alertas": { capacidad: "alertas:view", alcance: "empresa" },
   "gobierno/ente": { capacidad: "gobierno_ente:view", alcance: "empresa" },
+  "gobierno/estructura": { capacidad: "gobierno_estructura:view", alcance: "empresa" },
+  "gobierno/estructura/:ejercicio": { capacidad: "gobierno_estructura:view", alcance: "empresa" },
   "comercial/condiciones-pago": { capacidad: "comercial:view", alcance: "empresa" },
   "comercial/listas-precio": { capacidad: "comercial:view", alcance: "empresa" },
   "auditoria": { capacidad: "audit:view", alcance: "global" },

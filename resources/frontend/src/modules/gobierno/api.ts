@@ -130,10 +130,105 @@ export const CONSULTA_GOBIERNO = ["gobierno"] as const;
 
 export function useModuloGobierno(): boolean {
   const { data } = useQuery({
-    queryKey: [...CONSULTA_GOBIERNO, "modulo"],
+    queryKey: ["licencia", "modulo", "gobierno"],
     queryFn: () => apiFetch<{ habilitado: boolean }>("/gobierno/modulo"),
     staleTime: 300_000,
     retry: false,
   });
   return data?.habilitado === true;
 }
+
+export type EstadoEstructura = "BORRADOR" | "VIGENTE" | "CERRADA";
+export type EstadoUnidad = "ACTIVA" | "INACTIVA";
+export type TipoDeUnidad =
+  | "ORGANO"
+  | "UNIDAD_ADMINISTRATIVA"
+  | "UNIDAD_EJECUTORA_LOCAL"
+  | "DEPENDENCIA"
+  | "SEDE"
+  | "CENTRO_GESTOR";
+
+export interface Unidad {
+  id: string;
+  codigo: string;
+  denominacion: string;
+  tipo: TipoDeUnidad;
+  unidad_superior_id: string | null;
+  nivel: number;
+  estado: EstadoUnidad;
+  vigente_desde: string;
+  vigente_hasta: string | null;
+  version: number;
+}
+
+export interface Estructura {
+  id: string;
+  ejercicio: number;
+  estado: EstadoEstructura;
+  version: number;
+  copiada_de: number | null;
+  publicada_en: string | null;
+  publicada_por: string | null;
+  cerrada_en: string | null;
+  cerrada_por: string | null;
+  documento_vinculado: boolean;
+  faltantes_para_publicar: string[];
+  unidades: Unidad[];
+  creado_en: string;
+}
+
+export interface EstructuraResumen {
+  ejercicio: number;
+  estado: EstadoEstructura;
+  version: number;
+  unidades_activas: number;
+  publicada_en: string | null;
+  cerrada_en: string | null;
+}
+
+export interface ListaEstructuras {
+  items: EstructuraResumen[];
+  total: number;
+}
+
+export interface VersionUnidad {
+  version: number;
+  estado: EstadoUnidad;
+  motivo: string | null;
+  actor_id: string | null;
+  creado_en: string;
+  datos: Record<string, unknown>;
+}
+
+export interface VersionesUnidad {
+  items: VersionUnidad[];
+  total: number;
+}
+
+export const ETIQUETA_ESTADO_ESTRUCTURA: Record<EstadoEstructura, string> = {
+  BORRADOR: "Borrador",
+  VIGENTE: "Vigente",
+  CERRADA: "Cerrada",
+};
+
+export const ETIQUETA_ESTADO_UNIDAD: Record<EstadoUnidad, string> = {
+  ACTIVA: "Activa",
+  INACTIVA: "Inactiva",
+};
+
+export const ETIQUETA_TIPO_UNIDAD: Record<TipoDeUnidad, string> = {
+  ORGANO: "Órgano",
+  UNIDAD_ADMINISTRATIVA: "Unidad administrativa",
+  UNIDAD_EJECUTORA_LOCAL: "Unidad ejecutora local",
+  DEPENDENCIA: "Dependencia",
+  SEDE: "Sede",
+  CENTRO_GESTOR: "Centro gestor",
+};
+
+export const ETIQUETA_FALTANTE_ESTRUCTURA: Readonly<Record<string, string>> = {
+  UNIDADES: "Al menos una unidad activa",
+  DOCUMENTO_ACTO: "Acto que aprueba la estructura",
+  ENTE_ACTIVO: "El ente debe estar activo (Gobierno › Configuración del ente)",
+};
+
+export const CONSULTA_ESTRUCTURAS = [...CONSULTA_GOBIERNO, "estructuras"] as const;

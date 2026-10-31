@@ -129,3 +129,23 @@ describe("Sidebar · Gobierno (GOV-0-01)", () => {
     expect(enlace("Configuración del ente")).toBeNull();
   });
 });
+
+describe("Sidebar · Gobierno · estructura (GOV-0-02)", () => {
+  beforeEach(() => {
+    permisos = new Set<string>();
+    moduloGobierno = false;
+  });
+
+  it("GSB-04 · módulo habilitado y gobierno_estructura:view muestra el enlace", () => {
+    moduloGobierno = true;
+    permisos = new Set(["gobierno_estructura:view"]);
+    montar();
+    expect(enlace("Estructura organizativa")).not.toBeNull();
+  });
+
+  it("GSB-05 · capacidad sin módulo no muestra el enlace", () => {
+    permisos = new Set(["gobierno_estructura:view"]);
+    montar();
+    expect(enlace("Estructura organizativa")).toBeNull();
+  });
+});

@@ -159,7 +159,7 @@ def test_kr_12_la_identidad_de_la_instalacion_no_depende_del_formato_de_la_refer
         assert carga["installation_id"] == "KTL-VE-IDENTIDA-0002" and "key_reference" not in carga
 
 
-# ----------------------------------------------------------------------------- KR-18/19 · la columna intacta; cabeza declarada (0063, GOV-0-01)
+# ----------------------------------------------------------------------------- KR-18/19 · la columna intacta; cabeza declarada (0064, GOV-0-02)
 def test_kr_18_19_la_columna_sigue_siendo_string_120_y_la_cabeza_de_alembic_no_cambia():
     columna = Installation.__table__.c.key_reference
     assert isinstance(columna.type, String) and columna.type.length == 120 and columna.nullable is True
@@ -169,7 +169,7 @@ def test_kr_18_19_la_columna_sigue_siendo_string_120_y_la_cabeza_de_alembic_no_c
     raiz = Path(__file__).resolve().parents[1]
     cfg = Config(str(raiz / "alembic.ini"))
     cfg.set_main_option("script_location", str(raiz / "alembic"))
-    assert ScriptDirectory.from_config(cfg).get_heads() == ["0063_gov0_entes"]
+    assert ScriptDirectory.from_config(cfg).get_heads() == ["0064_gov0_estructuras"]
 
 
 # ----------------------------------------------------------------------------- KR-21 · el diagnóstico no expone la referencia

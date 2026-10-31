@@ -212,6 +212,7 @@ def test_barrido_cabecera_manipulada(mundo_hostil: Any) -> None:
 
     for actor, empresa_caso in casos:
         for ruta in rutas:
+            mundo_hostil.refrescar_reautenticacion(actor)
             for metodo in sorted(ruta.methods or []):
                 # Rellenar parámetros de ruta con UUID cero para ids y "x" para el resto.
                 params_ruta: dict[str, str] = {}

@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, CheckConstraint, Date, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import JSON, BigInteger, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -85,6 +85,99 @@ class GovernmentEntityVersion(UUIDMixin, TimestampMixin, Base):
     )
 
     entity_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_entities.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    version: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+ESTADOS_ESTRUCTURA = ("BORRADOR", "VIGENTE", "CERRADA")
+TIPOS_DE_UNIDAD = (
+    "ORGANO",
+    "UNIDAD_ADMINISTRATIVA",
+    "UNIDAD_EJECUTORA_LOCAL",
+    "DEPENDENCIA",
+    "SEDE",
+    "CENTRO_GESTOR",
+)
+ESTADOS_UNIDAD = ("ACTIVA", "INACTIVA")
+
+
+class GovernmentStructure(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Estructura organizativa del ente para un ejercicio (año calendario, OD-ORG02-01)."""
+
+    __tablename__ = "gov_structures"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("company_id", "exercise", name="uq_gov_structures_company_id_exercise"),
+        CheckConstraint(f"status IN ({en(ESTADOS_ESTRUCTURA)})", name="status"),
+        CheckConstraint("exercise BETWEEN 2000 AND 2100", name="exercise"),
+        CheckConstraint("version >= 1", name="version"),
+        CheckConstraint("status = 'BORRADOR' OR published_at IS NOT NULL", name="publicada_fechada"),
+        CheckConstraint("status <> 'CERRADA' OR closed_at IS NOT NULL", name="cerrada_fechada"),
+    )
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False)
+    entity_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_entities.id"), nullable=False)
+    exercise: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    copied_from_exercise: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    published_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    closed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class GovernmentUnit(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Unidad de la estructura (GOV-ORG-002); sin superior depende directamente del ente."""
+
+    __tablename__ = "gov_units"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("structure_id", "code", name="uq_gov_units_structure_id_code"),
+        UniqueConstraint("structure_id", "id", name="uq_gov_units_structure_id_id"),
+        ForeignKeyConstraint(
+            ["structure_id", "parent_id"],
+            ["gov_units.structure_id", "gov_units.id"],
+            name="fk_gov_units_parent_misma_estructura",
+        ),
+        CheckConstraint(f"unit_type IN ({en(TIPOS_DE_UNIDAD)})", name="unit_type"),
+        CheckConstraint(f"status IN ({en(ESTADOS_UNIDAD)})", name="status"),
+        CheckConstraint("parent_id IS NULL OR parent_id <> id", name="sin_autorreferencia"),
+        CheckConstraint("valid_to IS NULL OR valid_to >= valid_from", name="vigencia"),
+        CheckConstraint(
+            "(status = 'ACTIVA' AND valid_to IS NULL) OR (status = 'INACTIVA' AND valid_to IS NOT NULL)",
+            name="inactiva_fechada",
+        ),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+    structure_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_structures.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    code: Mapped[str] = mapped_column(String(30), nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    unit_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    parent_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="ACTIVA", server_default="ACTIVA")
+    valid_from: Mapped[date] = mapped_column(Date, nullable=False)
+    valid_to: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+
+class GovernmentUnitVersion(UUIDMixin, TimestampMixin, Base):
+    """Instantánea de cada cambio de una unidad (solo inserción)."""
+
+    __tablename__ = "gov_unit_versions"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("unit_id", "version", name="uq_gov_unit_versions_unit_id_version"),
+        CheckConstraint(f"status IN ({en(ESTADOS_UNIDAD)})", name="status"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+    unit_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_units.id"), nullable=False, index=True)
+    structure_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_structures.id"), nullable=False, index=True)
     company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
     version: Mapped[int] = mapped_column(BigInteger, nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False)
