@@ -4,6 +4,8 @@
 
 ## Resumen para la dueña
 
+**Actualización GOV-0-04 (2026-11-01): «Responsables por unidad, programa, proyecto, cuenta, almacén, caja, banco, contrato y bien» (ORG-05) queda BLOQUEADO: de los nueve objetos sobre los que hay que nombrar responsables, Gobierno solo tiene hoy las unidades; programas, proyectos, cuentas, almacenes, cajas, cuentas bancarias, contratos y bienes llegan con sus propios procesos. Además hacen falta tres decisiones tuyas (`specs/gov-0-04-responsables/evidence/ORG05_BLOCKER_REPORT.md`). Tu entorno de prueba ya tiene ORG-03.** Las cifras de avance no cambian.
+
 **Actualización GOV-0-03 (2026-11-01): ya hay tres procesos de Gobierno que puedes probar como usuaria: «Configurar el ente», «Estructura organizativa por ejercicio» y «Cargos con competencias y límites de firma/aprobación» (menú Gobierno › Cargos y competencias, GOV-0-03).** Sus tarjetas de prueba están en `OWNER_UAT_READY_CATALOG.md`. Ninguno está aceptado: eso lo decides tú al probarlos.
 
 **Actualización GOV-0-02 (2026-10-31): ya hay dos procesos de Gobierno que puedes probar como usuaria: «Configurar el ente» (menú Gobierno › Configuración del ente, GOV-0-01) y «Estructura organizativa por ejercicio» (menú Gobierno › Estructura organizativa, GOV-0-02).** Sus tarjetas de prueba están en `OWNER_UAT_READY_CATALOG.md`. Ninguno está aceptado: eso lo decides tú al probarlos. El resto de Gobierno sigue sin menú, pantallas ni API. La retrospectiva del 2026-10-29 decía:
@@ -102,7 +104,7 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 
 | Tipo | N | Estado |
 |---|---|---|
-| Funcionales GOV-* | 153 | 152 en 122 procesos: 80 BLOCKED, 68 NOT_STARTED, 4 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -008). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
+| Funcionales GOV-* | 153 | 152 en 122 procesos: 81 BLOCKED, 67 NOT_STARTED, 4 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -008). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
 | No funcionales RNF-GOV | 25 | 6 PASS en el núcleo (003, 006, 012, 015, 019, 025) · 11 PARTIAL · 4 NOT_MEASURED · 4 NOT_STARTED |
 | Aceptación E2E-01..08 | 8 | 6 FAIL. E2E-06 (hostil multi-ente) y E2E-08 (restauración) PARTIAL: solo el núcleo; el ente y los ledgers de Gobierno no existen |
 | Puertas del sponsor D-GOV-01..08 | 8 | las 8 OPEN |
