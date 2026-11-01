@@ -77,6 +77,8 @@ RESOURCE_KINDS: dict[str, ResourceKind] = {
                      "company_id", "gobierno_estructura:view", ("gov-0-02",)),
         ResourceKind("GovernmentPosition", "app.modules.government.models", "GovernmentPosition",
                      "company_id", "gobierno_cargos:view", ("gov-0-03",)),
+        ResourceKind("GovernmentAct", "app.modules.government.models", "GovernmentAct",
+                     "company_id", "gobierno_actos:view", ("gov-doc-02",)),
         # Sin `company_id`: el acto de homologación es de la instalación, no de
         # una empresa. El control se apoya entonces solo en el permiso.
         ResourceKind("HomologationRecord", "app.modules.homologation.models",

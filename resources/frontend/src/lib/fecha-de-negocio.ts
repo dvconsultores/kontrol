@@ -211,3 +211,28 @@ export function finDelDiaDeNegocio(fecha: string): string | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return null;
   return instanteDesdeHoraDeCaracas(`${fecha}T23:59:59.999`);
 }
+
+/** Suma `dias` días de calendario a la fecha civil `AAAA-MM-DD` (sin zona horaria: es aritmética de calendario). */
+export function sumarDiasDeNegocio(fecha: string, dias: number): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return null;
+  if (!Number.isInteger(dias)) return null;
+
+  const anio = Number(fecha.slice(0, 4));
+  const mes = Number(fecha.slice(5, 7));
+  const dia = Number(fecha.slice(8, 10));
+
+  const validacion = new Date(Date.UTC(anio, mes - 1, dia));
+  if (
+    validacion.getUTCFullYear() !== anio ||
+    validacion.getUTCMonth() !== mes - 1 ||
+    validacion.getUTCDate() !== dia
+  ) {
+    return null;
+  }
+
+  const resultado = new Date(Date.UTC(anio, mes - 1, dia + dias));
+  const anioResultado = String(resultado.getUTCFullYear()).padStart(4, "0");
+  const mesResultado = String(resultado.getUTCMonth() + 1).padStart(2, "0");
+  const diaResultado = String(resultado.getUTCDate()).padStart(2, "0");
+  return `${anioResultado}-${mesResultado}-${diaResultado}`;
+}

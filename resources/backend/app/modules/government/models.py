@@ -12,7 +12,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import JSON, BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -192,6 +192,11 @@ ACCIONES_COMPETENCIA = ("SOLICITAR", "COMPROMETER", "CAUSAR", "ORDENAR_PAGO", "P
 MATERIAS_COMPETENCIA = ("PRESUPUESTO", "CONTRATACIONES", "TESORERIA", "CONTABILIDAD", "BIENES", "EXPEDIENTE")
 TIPOS_DE_LIMITE = ("SIN_LIMITE", "MONTO")
 MONEDAS_LIMITE = ("VES", "USD", "EUR")
+TIPOS_ACTO_ADMINISTRATIVO = ("DECRETO", "RESOLUCION", "ORDEN", "PROVIDENCIA", "INSTRUCCION", "CIRCULAR", "OTRA_DECISION")
+TITULARIDADES = ("TITULAR", "DELEGACION", "ENCARGADURIA", "SUPLENCIA")
+CARACTERES_ACTO = ("GENERAL", "PARTICULAR", "INTERNO")
+MEDIOS_EFICACIA = ("GACETA", "PERSONAL", "PRENSA")
+ESTADOS_ACTO = ("BORRADOR", "EMITIDO", "EFICAZ", "REVOCADO", "NULO")
 
 
 class GovernmentPosition(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
@@ -270,6 +275,97 @@ class GovernmentPositionVersion(UUIDMixin, TimestampMixin, Base):
 
     position_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False, index=True)
     structure_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_structures.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    version: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class GovernmentAct(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Acto administrativo registrado del ente (GOV-DOC-003, OD-DOC02-01): el PDF es su evidencia; no es un expediente, una delegación ni una firma."""
+
+    __tablename__ = "gov_acts"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("cargo_id", "tipo", "denominacion_clave", "numero_clave", name="uq_gov_acts_numero"),
+        Index("ix_gov_acts_company_fecha", "company_id", "fecha"),
+        Index("ix_gov_acts_company_status", "company_id", "status"),
+        CheckConstraint(f"tipo IN ({en(TIPOS_ACTO_ADMINISTRATIVO)})", name="tipo"),
+        CheckConstraint(f"titularidad IN ({en(TITULARIDADES)})", name="titularidad"),
+        CheckConstraint(f"caracter IN ({en(CARACTERES_ACTO)})", name="caracter"),
+        CheckConstraint(f"medio IS NULL OR medio IN ({en(MEDIOS_EFICACIA)})", name="medio"),
+        CheckConstraint(f"status IN ({en(ESTADOS_ACTO)})", name="status"),
+        CheckConstraint(f"competencia_accion IN ({en(ACCIONES_COMPETENCIA)})", name="competencia_accion"),
+        CheckConstraint(f"competencia_materia IN ({en(MATERIAS_COMPETENCIA)})", name="competencia_materia"),
+        CheckConstraint(
+            "(tipo = 'OTRA_DECISION' AND denominacion_tipo <> '') OR (tipo <> 'OTRA_DECISION' AND denominacion_tipo = '')",
+            name="denominacion",
+        ),
+        CheckConstraint(
+            "(titularidad = 'DELEGACION' AND delegacion_numero IS NOT NULL AND delegacion_fecha IS NOT NULL) OR "
+            "(titularidad <> 'DELEGACION' AND delegacion_numero IS NULL AND delegacion_fecha IS NULL)",
+            name="delegacion",
+        ),
+        CheckConstraint("simple_tramite = false OR caracter = 'PARTICULAR'", name="simple_tramite"),
+        CheckConstraint("delegacion_fecha IS NULL OR delegacion_fecha <= fecha", name="delegacion_fecha"),
+        CheckConstraint("status = 'BORRADOR' OR (documento_acto_id IS NOT NULL AND emitido_en IS NOT NULL)", name="emitido_documentado"),
+        CheckConstraint("status <> 'EFICAZ' OR fecha_eficacia IS NOT NULL", name="eficaz_fechado"),
+        CheckConstraint("fecha_eficacia IS NULL OR fecha_eficacia >= fecha", name="eficacia_no_retroactiva"),
+        CheckConstraint("(status = 'REVOCADO') = (revocado_por_id IS NOT NULL)", name="revocado_referenciado"),
+        CheckConstraint("(status = 'NULO') = (anulado_por_id IS NOT NULL)", name="nulo_referenciado"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(16), nullable=False)
+    denominacion_tipo: Mapped[str] = mapped_column(String(80), nullable=False, default="", server_default="")
+    denominacion_clave: Mapped[str] = mapped_column(String(80), nullable=False, default="", server_default="")
+    numero: Mapped[str] = mapped_column(String(60), nullable=False)
+    numero_clave: Mapped[str] = mapped_column(String(60), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    lugar: Mapped[str] = mapped_column(String(120), nullable=False)
+    cargo_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False, index=True)
+    competencia_accion: Mapped[str] = mapped_column(String(16), nullable=False)
+    competencia_materia: Mapped[str] = mapped_column(String(16), nullable=False)
+    fundamento_competencia: Mapped[str] = mapped_column(String(500), nullable=False)
+    funcionario: Mapped[str] = mapped_column(String(200), nullable=False)
+    titularidad: Mapped[str] = mapped_column(String(16), nullable=False)
+    delegacion_numero: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    delegacion_fecha: Mapped[date | None] = mapped_column(Date, nullable=True)
+    caracter: Mapped[str] = mapped_column(String(16), nullable=False)
+    simple_tramite: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    destinatario: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    asunto: Mapped[str] = mapped_column(String(200), nullable=False)
+    hechos: Mapped[str | None] = mapped_column(Text, nullable=True)
+    fundamentos: Mapped[str | None] = mapped_column(Text, nullable=True)
+    decision: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    documento_acto_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True)
+    medio: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    referencia_publicacion: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    fecha_publicacion_notificacion: Mapped[date | None] = mapped_column(Date, nullable=True)
+    documento_eficacia_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True)
+    fecha_eficacia: Mapped[date | None] = mapped_column(Date, nullable=True)
+    revocado_por_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    anulado_por_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    emitido_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    emitido_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class GovernmentActVersion(UUIDMixin, TimestampMixin, Base):
+    """Instantánea de cada cambio de un acto administrativo (solo inserción)."""
+
+    __tablename__ = "gov_act_versions"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("act_id", "version", name="uq_gov_act_versions_act_id_version"),
+        CheckConstraint(f"status IN ({en(ESTADOS_ACTO)})", name="status"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+    act_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=False, index=True)
     company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
     version: Mapped[int] = mapped_column(BigInteger, nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False)

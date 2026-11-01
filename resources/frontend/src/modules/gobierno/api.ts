@@ -356,3 +356,200 @@ export function describirLimite(
 }
 
 export const CONSULTA_CARGOS = [...CONSULTA_GOBIERNO, "cargos"] as const;
+
+export type TipoActo =
+  | "DECRETO"
+  | "RESOLUCION"
+  | "ORDEN"
+  | "PROVIDENCIA"
+  | "INSTRUCCION"
+  | "CIRCULAR"
+  | "OTRA_DECISION";
+export type Titularidad = "TITULAR" | "DELEGACION" | "ENCARGADURIA" | "SUPLENCIA";
+export type CaracterActo = "GENERAL" | "PARTICULAR" | "INTERNO";
+export type MedioEficacia = "GACETA" | "PERSONAL" | "PRENSA";
+export type EstadoActo = "BORRADOR" | "EMITIDO" | "EFICAZ" | "REVOCADO" | "NULO";
+export type FaltanteActo =
+  | "DOCUMENTO_ACTO"
+  | "HECHOS"
+  | "FUNDAMENTOS"
+  | "DECISION"
+  | "DESTINATARIO"
+  | "AUTORIDAD";
+
+export interface ActoReferido {
+  id: string;
+  tipo: TipoActo;
+  numero: string;
+  fecha: string;
+}
+
+export interface ActoReferidoCorto {
+  id: string;
+  tipo: TipoActo;
+  numero: string;
+}
+
+export interface Acto {
+  id: string;
+  tipo: TipoActo;
+  denominacion_tipo: string | null;
+  numero: string;
+  fecha: string;
+  lugar: string;
+  cargo: {
+    id: string;
+    codigo: string;
+    denominacion: string;
+    unidad_codigo: string;
+    unidad_denominacion: string;
+  };
+  competencia: {
+    accion: AccionCompetencia;
+    materia: MateriaCompetencia;
+  };
+  fundamento_competencia: string;
+  funcionario: string;
+  titularidad: Titularidad;
+  delegacion_numero: string | null;
+  delegacion_fecha: string | null;
+  caracter: CaracterActo;
+  simple_tramite: boolean;
+  destinatario: string | null;
+  asunto: string;
+  hechos: string | null;
+  fundamentos: string | null;
+  decision: string | null;
+  estado: EstadoActo;
+  faltantes_para_emitir: FaltanteActo[];
+  documento_acto_id: string | null;
+  medio: MedioEficacia | null;
+  referencia_publicacion: string | null;
+  fecha_publicacion_notificacion: string | null;
+  documento_eficacia_id: string | null;
+  fecha_eficacia: string | null;
+  revocado_por: ActoReferido | null;
+  anulado_por: ActoReferido | null;
+  revoca_a: ActoReferidoCorto[];
+  anula_a: ActoReferidoCorto[];
+  version: number;
+  emitido_en: string | null;
+  emitido_por: string | null;
+  creado_en: string;
+}
+
+export interface ActoResumen {
+  id: string;
+  tipo: TipoActo;
+  denominacion_tipo: string | null;
+  numero: string;
+  fecha: string;
+  cargo_codigo: string;
+  cargo_denominacion: string;
+  unidad_codigo: string;
+  caracter: CaracterActo;
+  asunto: string;
+  estado: EstadoActo;
+  fecha_eficacia: string | null;
+}
+
+export interface ListaActos {
+  anio: number;
+  items: ActoResumen[];
+  total: number;
+}
+
+export interface Autoridad {
+  cargo_id: string;
+  codigo: string;
+  denominacion: string;
+  unidad_codigo: string;
+  unidad_denominacion: string;
+  estado: EstadoCargo;
+  competencias: {
+    accion: AccionCompetencia;
+    materia: MateriaCompetencia;
+  }[];
+}
+
+export interface ListaAutoridades {
+  fecha: string;
+  items: Autoridad[];
+}
+
+export interface VersionActo {
+  version: number;
+  estado: EstadoActo;
+  motivo: string | null;
+  actor: string | null;
+  creado_en: string;
+  instantanea: Record<string, unknown>;
+}
+
+export interface VersionesActo {
+  items: VersionActo[];
+  total: number;
+}
+
+export const ETIQUETA_TIPO_ACTO: Record<TipoActo, string> = {
+  DECRETO: "Decreto",
+  RESOLUCION: "Resolución",
+  ORDEN: "Orden",
+  PROVIDENCIA: "Providencia",
+  INSTRUCCION: "Instrucción",
+  CIRCULAR: "Circular",
+  OTRA_DECISION: "Otra decisión",
+};
+
+export const ETIQUETA_TITULARIDAD: Record<Titularidad, string> = {
+  TITULAR: "Titular",
+  DELEGACION: "Por delegación",
+  ENCARGADURIA: "Encargado",
+  SUPLENCIA: "Suplente",
+};
+
+export const ETIQUETA_CARACTER: Record<CaracterActo, string> = {
+  GENERAL: "General (se publica)",
+  PARTICULAR: "Particular (se notifica)",
+  INTERNO: "Interno",
+};
+
+export const ETIQUETA_MEDIO: Record<MedioEficacia, string> = {
+  GACETA: "Gaceta Oficial",
+  PERSONAL: "Notificación personal",
+  PRENSA: "Publicación en prensa",
+};
+
+export const ETIQUETA_ESTADO_ACTO: Record<EstadoActo, string> = {
+  BORRADOR: "Borrador",
+  EMITIDO: "Emitido",
+  EFICAZ: "Eficaz",
+  REVOCADO: "Revocado",
+  NULO: "Nulo",
+};
+
+export const ETIQUETA_FALTANTE_ACTO: Readonly<Record<FaltanteActo, string>> = {
+  DOCUMENTO_ACTO: "El PDF firmado del acto",
+  HECHOS: "Los hechos",
+  FUNDAMENTOS: "Los fundamentos legales",
+  DECISION: "La decisión",
+  DESTINATARIO: "El destinatario",
+  AUTORIDAD: "Un cargo vigente con esa competencia en la fecha del acto",
+};
+
+export const MEDIOS_POR_CARACTER: Readonly<Record<CaracterActo, readonly MedioEficacia[]>> = {
+  GENERAL: ["GACETA"],
+  PARTICULAR: ["PERSONAL", "PRENSA"],
+  INTERNO: [],
+};
+
+/** Nombre del acto en lenguaje de negocio: «Decreto Nº 12» u «Otra decisión: <denominación> Nº 12». */
+export function nombreDeActo(a: {
+  tipo: TipoActo;
+  denominacion_tipo?: string | null;
+  numero: string;
+}): string {
+  return `${a.denominacion_tipo ?? ETIQUETA_TIPO_ACTO[a.tipo]} Nº ${a.numero}`;
+}
+
+export const CONSULTA_ACTOS = [...CONSULTA_GOBIERNO, "actos"] as const;

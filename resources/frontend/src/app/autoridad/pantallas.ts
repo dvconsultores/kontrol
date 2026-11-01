@@ -113,6 +113,8 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "gobierno/cargos": { capacidad: "gobierno_cargos:view", alcance: "empresa" },
   "gobierno/cargos/:ejercicio": { capacidad: "gobierno_cargos:view", alcance: "empresa" },
   "gobierno/cargos/:ejercicio/:cargoId": { capacidad: "gobierno_cargos:view", alcance: "empresa" },
+  "gobierno/actos": { capacidad: "gobierno_actos:view", alcance: "empresa" },
+  "gobierno/actos/:actoId": { capacidad: "gobierno_actos:view", alcance: "empresa" },
   "comercial/condiciones-pago": { capacidad: "comercial:view", alcance: "empresa" },
   "comercial/listas-precio": { capacidad: "comercial:view", alcance: "empresa" },
   "auditoria": { capacidad: "audit:view", alcance: "global" },

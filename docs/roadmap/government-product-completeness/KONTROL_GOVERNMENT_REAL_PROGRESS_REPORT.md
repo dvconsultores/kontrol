@@ -4,6 +4,8 @@
 
 ## Resumen para la dueña
 
+**Actualización GOV-DOC-02 (2026-11-01): ya hay cuatro procesos de Gobierno que puedes probar como usuaria; el nuevo es «Actos administrativos con autoridad, competencia, motivación, eficacia y notificación» (menú Gobierno › Actos administrativos): registras el acto ya firmado con el cargo que lo dicta y su competencia, lo emites sobre su PDF, registras su publicación o notificación (con la regla de 15 días de la prensa) y, si hace falta, su corrección, revocación o nulidad.** Su tarjeta está en `OWNER_UAT_READY_CATALOG.md`. Ninguno está aceptado: eso lo decides tú al probarlos.
+
 **Actualización GOV-0-04 (2026-11-01): «Responsables por unidad, programa, proyecto, cuenta, almacén, caja, banco, contrato y bien» (ORG-05) queda BLOQUEADO: de los nueve objetos sobre los que hay que nombrar responsables, Gobierno solo tiene hoy las unidades; programas, proyectos, cuentas, almacenes, cajas, cuentas bancarias, contratos y bienes llegan con sus propios procesos. Además hacen falta tres decisiones tuyas (`specs/gov-0-04-responsables/evidence/ORG05_BLOCKER_REPORT.md`). Tu entorno de prueba ya tiene ORG-03.** Las cifras de avance no cambian.
 
 **Actualización GOV-0-03 (2026-11-01): ya hay tres procesos de Gobierno que puedes probar como usuaria: «Configurar el ente», «Estructura organizativa por ejercicio» y «Cargos con competencias y límites de firma/aprobación» (menú Gobierno › Cargos y competencias, GOV-0-03).** Sus tarjetas de prueba están en `OWNER_UAT_READY_CATALOG.md`. Ninguno está aceptado: eso lo decides tú al probarlos.
@@ -20,8 +22,8 @@ Esto no contradice informes anteriores: ninguno afirmó que Gobierno estuviera l
 | Indicador | Valor | Fórmula y denominador |
 |---|---|---|
 | **Technical Foundation Readiness** | **36,8 %** | 14 fundamentos COMPLETE ÷ 38 fundamentos aplicables (34,2 % = 13/38 en la retrospectiva; +F05 al cerrar el ciclo 07) |
-| **Functional Product Completeness** | **2,5 %** (2,50 %) | 32 compuertas en PASS ÷ 1 280 compuertas aplicables (ORG-01: 10/10; ORG-02: 11/11; ORG-03: 11/11; 0 en la retrospectiva) |
-| **Owner UAT Ready** | **2,5 %** (2,46 %) | 3 procesos listos para probar (ORG-01, ORG-02, ORG-03) ÷ 122 procesos requeridos |
+| **Functional Product Completeness** | **3,4 %** (3,36 %) | 43 compuertas en PASS ÷ 1 280 compuertas aplicables (ORG-01: 10/10; ORG-02: 11/11; ORG-03: 11/11; DOC-02: 11/11; 0 en la retrospectiva) |
+| **Owner UAT Ready** | **3,3 %** (3,28 %) | 4 procesos listos para probar (ORG-01, ORG-02, ORG-03, DOC-02) ÷ 122 procesos requeridos |
 | **Owner Accepted** | **0,0 %** | 0 procesos aceptados por la dueña ÷ 122 |
 
 No hay redondeo al alza. Las cuatro cifras no se combinan.
@@ -50,9 +52,9 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 - **Prefecturas:** no está en los requisitos ni en el repositorio (MOQ-RETRO-02).
 - **Activos fijos privados (Spec 057):** PLANNED / NOT_STARTED; es otra línea de producto.
 
-**Listos para probar:** ninguno (`OWNER_UAT_READY_CATALOG.md`, vacío).
+**Listos para probar:** 4 (ORG-01, ORG-02, ORG-03, DOC-02; `OWNER_UAT_READY_CATALOG.md`).
 **Parciales:** ninguno. No hay nada de Gobierno construido a medias.
-**No iniciados:** 69 procesos sin otro impedimento que la puerta general de entrada (freeze del sponsor y autorización).
+**No iniciados:** 65 procesos sin otro impedimento que la puerta general de entrada (freeze del sponsor y autorización); 122 = 4 listos + 65 no iniciados + 53 bloqueados (errata: hasta GOV-0-03 decía 69 sin descontar los listos).
 **Bloqueados por norma o decisión:** 53 procesos.
 - 35 dependen de una decisión del sponsor D-GOV-01..08:
   - la jurisdicción piloto;
@@ -90,13 +92,13 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
   - los NOT_MEASURED.
 - Recuento: COMPLETE 14 · PARTIAL 12 · NOT_STARTED 7 · NOT_MEASURED 4 · BLOCKED 1.
 
-**B · Functional Product Completeness = 32 ÷ 1 280 = 2,50 %** (0 en la retrospectiva; +10 de ORG-01 con GOV-0-01, 2026-10-30; +11 de ORG-02 con GOV-0-02, 2026-10-31; +11 de ORG-03 con GOV-0-03, 2026-11-01).
+**B · Functional Product Completeness = 43 ÷ 1 280 = 3,36 %** (0 en la retrospectiva; +10 de ORG-01 con GOV-0-01, 2026-10-30; +11 de ORG-02 con GOV-0-02, 2026-10-31; +11 de ORG-03 con GOV-0-03 y +11 de DOC-02 con GOV-DOC-02, 2026-11-01).
 - Hay 122 procesos × 11 compuertas funcionales: backend, frontend, menú, proceso, campos, roles, documentos, reportes, auditoría, E2E y ficha de pantalla. Eso da 1 342.
 - Se restan 44 compuertas de documentos y 18 de reportes que no aplican: quedan 1 280.
-- En PASS: las 10 compuertas aplicables de ORG-01 (reportes no aplica, justificado en su Spec) y las 11 de ORG-02 (listado + CSV, acto obligatorio). Ninguna otra.
+- En PASS: las 10 compuertas aplicables de ORG-01 (reportes no aplica, justificado en su Spec) y las 11 de ORG-02, ORG-03 y DOC-02 (listado + CSV, documento obligatorio). Ninguna otra.
 - Aunque fuese mayor que 0, este porcentaje **no** dice que un módulo esté terminado: eso solo lo dice la tabla de módulos.
 
-**C · Owner UAT Ready = 3 ÷ 122 = 2,46 %** (ORG-01, ORG-02, ORG-03), y **Owner Accepted = 0 ÷ 122 = 0,0 %** (solo la dueña lo concede).
+**C · Owner UAT Ready = 4 ÷ 122 = 3,28 %** (ORG-01, ORG-02, ORG-03, DOC-02), y **Owner Accepted = 0 ÷ 122 = 0,0 %** (solo la dueña lo concede).
 
 ## Requisitos de Ingeniería (§38, §70)
 
@@ -104,7 +106,7 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 
 | Tipo | N | Estado |
 |---|---|---|
-| Funcionales GOV-* | 153 | 152 en 122 procesos: 81 BLOCKED, 67 NOT_STARTED, 4 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -008). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
+| Funcionales GOV-* | 153 | 152 en 122 procesos: 81 BLOCKED, 66 NOT_STARTED, 5 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -008, GOV-DOC-003). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
 | No funcionales RNF-GOV | 25 | 6 PASS en el núcleo (003, 006, 012, 015, 019, 025) · 11 PARTIAL · 4 NOT_MEASURED · 4 NOT_STARTED |
 | Aceptación E2E-01..08 | 8 | 6 FAIL. E2E-06 (hostil multi-ente) y E2E-08 (restauración) PARTIAL: solo el núcleo; el ente y los ledgers de Gobierno no existen |
 | Puertas del sponsor D-GOV-01..08 | 8 | las 8 OPEN |

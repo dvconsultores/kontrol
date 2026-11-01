@@ -171,3 +171,25 @@ describe("Sidebar · Gobierno · cargos (GOV-0-03)", () => {
     expect(enlace("Cargos y competencias")).toBeNull();
   });
 });
+
+describe("Sidebar · Gobierno › Actos administrativos", () => {
+  beforeEach(() => {
+    permisos = new Set<string>();
+    moduloGobierno = false;
+  });
+
+  it("GSB-08 · módulo habilitado y gobierno_actos:view muestra el enlace", () => {
+    moduloGobierno = true;
+    permisos = new Set(["gobierno_actos:view"]);
+    montar();
+    const d = enlace("Actos administrativos");
+    expect(d).not.toBeNull();
+    expect(d?.getAttribute("href")).toBe("/gobierno/actos");
+  });
+
+  it("GSB-09 · capacidad sin módulo no muestra el enlace", () => {
+    permisos = new Set(["gobierno_actos:view"]);
+    montar();
+    expect(enlace("Actos administrativos")).toBeNull();
+  });
+});

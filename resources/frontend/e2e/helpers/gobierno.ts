@@ -221,3 +221,117 @@ export async function entrarEnGobierno(
   await page.locator(`nav a[href="${enlace}"]`).first().click();
   await page.waitForURL((u) => u.pathname === (ruta ?? enlace));
 }
+
+export async function estructuraVigenteApi(
+  request: APIRequestContext,
+  headers: Record<string, string>,
+  companyId: string,
+  tipoId: string,
+  ejercicio: number,
+): Promise<{ estructuraId: string; despId: string; da01Id: string }> {
+  const estructuraResp = await request.post(`${API}/gobierno/estructuras`, {
+    headers,
+    data: { ejercicio },
+  });
+  expect(es2xx(estructuraResp.status()), await estructuraResp.text()).toBe(true);
+  const estructura = await estructuraResp.json();
+
+  const crearUnidad = async (
+    data: Record<string, unknown>,
+  ): Promise<{ id: string; version: number }> => {
+    const resp = await request.post(`${API}/gobierno/estructuras/${ejercicio}/unidades`, {
+      headers,
+      data,
+    });
+    expect(es2xx(resp.status()), await resp.text()).toBe(true);
+    const body = await resp.json();
+    return { id: body.id, version: body.version };
+  };
+
+  const desp = await crearUnidad({
+    codigo: "DESP",
+    denominacion: "Despacho del Alcalde",
+    tipo: "ORGANO",
+    unidad_superior_id: null,
+    vigente_desde: `${ejercicio}-01-01`,
+  });
+  const da01 = await crearUnidad({
+    codigo: "DA-01",
+    denominacion: "Dirección de Administración",
+    tipo: "UNIDAD_ADMINISTRATIVA",
+    unidad_superior_id: desp.id,
+    vigente_desde: `${ejercicio}-01-01`,
+  });
+
+  await adjuntarDocumentoApi(
+    request,
+    headers,
+    companyId,
+    tipoId,
+    "GovernmentStructure",
+    estructura.id,
+  );
+
+  const publicarResp = await request.post(`${API}/gobierno/estructuras/${ejercicio}/publicar`, {
+    headers: { ...headers, "If-Match": '"1"' },
+  });
+  expect(publicarResp.status(), await publicarResp.text()).toBe(200);
+
+  return { estructuraId: estructura.id, despId: desp.id, da01Id: da01.id };
+}
+
+export async function cargoVigenteApi(
+  request: APIRequestContext,
+  headers: Record<string, string>,
+  companyId: string,
+  tipoId: string,
+  ejercicio: number,
+  unidadId: string,
+  codigo: string,
+): Promise<{ id: string; version: number }> {
+  const cargoResp = await request.post(`${API}/gobierno/estructuras/${ejercicio}/cargos`, {
+    headers,
+    data: {
+      codigo,
+      denominacion: `Cargo ${codigo}`,
+      unidad_id: unidadId,
+      vigente_desde: `${ejercicio}-01-01`,
+    },
+  });
+  expect(cargoResp.status(), await cargoResp.text()).toBe(201);
+  const cargo = await cargoResp.json();
+
+  const competenciaResp = await request.post(
+    `${API}/gobierno/estructuras/${ejercicio}/cargos/${cargo.id}/competencias`,
+    {
+      headers: { ...headers, "If-Match": '"1"' },
+      data: {
+        accion: "APROBAR",
+        materia: "CONTRATACIONES",
+        tipo_limite: "MONTO",
+        monto: "50000.00",
+        moneda: "USD",
+      },
+    },
+  );
+  expect(competenciaResp.status(), await competenciaResp.text()).toBe(201);
+
+  await adjuntarDocumentoApi(
+    request,
+    headers,
+    companyId,
+    tipoId,
+    "GovernmentPosition",
+    cargo.id,
+  );
+
+  const activarResp = await request.post(
+    `${API}/gobierno/estructuras/${ejercicio}/cargos/${cargo.id}/activar`,
+    {
+      headers: { ...headers, "If-Match": '"2"' },
+    },
+  );
+  expect(activarResp.status(), await activarResp.text()).toBe(200);
+
+  return { id: cargo.id, version: 3 };
+}

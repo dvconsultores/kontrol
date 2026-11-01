@@ -650,6 +650,77 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/actos",
+      "query": [
+        "anio"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actos",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actos/autoridades",
+      "query": [
+        "fecha"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actos/exportar",
+      "query": [
+        "anio"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/actos/{acto_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actos/{acto_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/actos/{acto_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actos/{acto_id}/anular",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actos/{acto_id}/corregir",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actos/{acto_id}/eficacia",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actos/{acto_id}/emitir",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actos/{acto_id}/revocar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actos/{acto_id}/versiones",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/ente",
       "query": []
     },

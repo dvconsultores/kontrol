@@ -11,6 +11,8 @@ const TRAS_LA_REVISION = /licencia-sync\.spec\.ts/;
 const TRAS_EL_SYNC = /licencia-rotacion\.spec\.ts/;
 const TRAS_LA_ROTACION = /licencia-tasa\.spec\.ts/;
 const DEPENDIENTES = /licencia-(revision|sync|rotacion|tasa)\.spec\.ts/;
+/** Humo del entorno de prueba de la dueña: solo bajo pedido (`--project=humo-uat`), no en la canónica (QA-LIC-GOB-01). */
+const HUMO_UAT = /uat-humo-gobierno\.spec\.ts/;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -27,9 +29,9 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [
-    { name: "chromium", testIgnore: DEPENDIENTES, use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", testIgnore: DEPENDIENTES, use: { ...devices["Desktop Firefox"] } },
-    { name: "webkit", testIgnore: DEPENDIENTES, use: { ...devices["Desktop Safari"] } },
+    { name: "chromium", testIgnore: [DEPENDIENTES, HUMO_UAT], use: { ...devices["Desktop Chrome"] } },
+    { name: "firefox", testIgnore: [DEPENDIENTES, HUMO_UAT], use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit", testIgnore: [DEPENDIENTES, HUMO_UAT], use: { ...devices["Desktop Safari"] } },
     // El linaje revisionado de la licencia cambia el identificador vigente y deja el estado revisionado:
     // corre después de todo lo demás (depende de `chromium`), sobre la misma base de la corrida.
     { name: "licencia-revision", testMatch: TRAS_LA_SUITE, dependencies: ["chromium"], use: { ...devices["Desktop Chrome"] } },
@@ -39,5 +41,7 @@ export default defineConfig({
     { name: "licencia-rotacion", testMatch: TRAS_EL_SYNC, dependencies: ["licencia-sync"], use: { ...devices["Desktop Chrome"] } },
     // El límite de tasa del desafío de la autoridad real: inunda la ventana, así que va el último de todos.
     { name: "licencia-tasa", testMatch: TRAS_LA_ROTACION, dependencies: ["licencia-rotacion"], use: { ...devices["Desktop Chrome"] } },
+    // El humo autenticado del entorno de prueba de la dueña: solo con `--project=humo-uat`.
+    { name: "humo-uat", testMatch: HUMO_UAT, use: { ...devices["Desktop Chrome"] } },
   ],
 });

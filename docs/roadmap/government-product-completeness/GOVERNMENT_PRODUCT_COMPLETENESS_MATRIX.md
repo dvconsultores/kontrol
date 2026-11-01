@@ -4,7 +4,7 @@
 
 Compuertas en orden: backend · frontend · menú · proceso · campos · roles · documentos · reportes · auditoría · E2E · ficha de pantalla. `✗` = aplicable y en FAIL; `·` = no aplica (justificado: el proceso no produce ni exige documento/reporte).
 
-En **todos** los procesos salvo ORG-01, ORG-02 y ORG-03: `OWNER_UAT_READY = NO`, `OWNER_ACCEPTED = NO`, evidencia = HEAD 0dbe632: 0 rutas, 0 modelos, 0 migraciones, 0 entradas de menú y 0 pantallas de Gobierno. **ORG-01** (GOV-0-01, 2026-10-30): 10/10 compuertas en PASS, `OWNER_UAT_READY = YES`, `OWNER_ACCEPTED = NO` (solo lo concede la dueña); evidencia en `specs/gov-0-01-configurar-ente/evidence/`. **ORG-02** (GOV-0-02, 2026-10-31): 11/11 compuertas en PASS, `OWNER_UAT_READY = YES`, `OWNER_ACCEPTED = NO`; evidencia en `specs/gov-0-02-estructura-organizativa/evidence/`.
+En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READY = NO`, `OWNER_ACCEPTED = NO`, evidencia = HEAD 0dbe632: 0 rutas, 0 modelos, 0 migraciones, 0 entradas de menú y 0 pantallas de Gobierno. **ORG-01** (GOV-0-01, 2026-10-30): 10/10 compuertas en PASS, `OWNER_UAT_READY = YES`, `OWNER_ACCEPTED = NO` (solo lo concede la dueña); evidencia en `specs/gov-0-01-configurar-ente/evidence/`. **ORG-02** (GOV-0-02, 2026-10-31): 11/11 compuertas en PASS, `OWNER_UAT_READY = YES`, `OWNER_ACCEPTED = NO`; evidencia en `specs/gov-0-02-estructura-organizativa/evidence/`.
 
 ## Government Core: ente, estructura y autoridad
 
@@ -136,7 +136,7 @@ En **todos** los procesos salvo ORG-01, ORG-02 y ORG-03: `OWNER_UAT_READY = NO`,
 | Id | Proceso | Prio. | Actor principal | Requisitos | Compuertas | PASS | Estado real | Bloqueos | E2E | Equivalente privado (no cuenta) |
 |---|---|---|---|---|---|---|---|---|---|---|
 | DOC-01 | Expediente electrónico único con índice, foliado y versiones | P0 | Unidad tramitadora | GOV-DOC-001 GOV-DOC-002 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | Gestión documental 046 (almacén y versiones; sin expediente) |
-| DOC-02 | Actos administrativos con autoridad, motivación y eficacia | P0 | Máxima autoridad | GOV-DOC-003 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
+| DOC-02 | Actos administrativos con autoridad, motivación y eficacia | P0 | Máxima autoridad | GOV-DOC-003 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | DOC2-E2E-01..07 (×3 navegadores) + HUMO-UAT-01 | — |
 | DOC-03 | Lapsos, suspensiones, subsanaciones y prórrogas | P0 | Unidad tramitadora | GOV-DOC-004 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | E2E-05 | — |
 | DOC-04 | Notificaciones administrativas con constancia de recepción | P0 | Unidad tramitadora | GOV-DOC-005 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | E2E-05 | Notificaciones 047 (sin constancia administrativa) |
 | DOC-05 | Firma electrónica | P1 | Máxima autoridad | GOV-DOC-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-08; LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | — |

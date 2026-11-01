@@ -124,6 +124,10 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_cargos · cargos, competencias y límites de firma/aprobación (GOV-0-03, PDD-ORG03-02)
         "gobierno_cargos:edit",
         "gobierno_cargos:publish",
+        # gobierno_actos · registro, emisión, eficacia, corrección, revocación y nulidad de actos administrativos (DOC-02, PDD-DOC02-02)
+        "gobierno_actos:edit",
+        "gobierno_actos:issue",
+        "gobierno_actos:annul",
     }
 )
 
@@ -190,6 +194,8 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_estructura:view",
         # gobierno_cargos · consulta y exportación de cargos (GOV-0-03)
         "gobierno_cargos:view",
+        # gobierno_actos · consulta y exportación de actos (DOC-02)
+        "gobierno_actos:view",
     }
 )
 

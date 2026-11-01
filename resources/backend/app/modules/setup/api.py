@@ -95,6 +95,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_estructura": ["view", "edit", "publish", "close"],
     # GOV-0-03: cargos con competencias y límites de firma/aprobación (PDD-ORG03-01).
     "gobierno_cargos": ["view", "edit", "publish"],
+    # DOC-02: actos administrativos con autoridad, motivación y eficacia (PDD-DOC02-01).
+    "gobierno_actos": ["view", "edit", "issue", "annul"],
 }
 
 

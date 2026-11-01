@@ -13,6 +13,7 @@ import {
   horaDeCaracasParaInput,
   hoyDeNegocio,
   instanteDesdeHoraDeCaracas,
+  sumarDiasDeNegocio,
 } from "./fecha-de-negocio";
 
 /** El instante de la auditoría: en UTC es el 17; en Caracas, todavía el 16. */
@@ -151,5 +152,35 @@ describe("instanteDesdeHoraDeCaracas", () => {
     expect(instanteDesdeHoraDeCaracas("2007-12-01T12:00")).toBe(
       "2007-12-01T16:00:00.000Z",
     );
+  });
+});
+
+describe("sumarDiasDeNegocio", () => {
+  it("suma días dentro del mes", () => {
+    expect(sumarDiasDeNegocio("2026-01-20", 15)).toBe("2026-02-04");
+  });
+
+  it("respeta el año bisiesto", () => {
+    expect(sumarDiasDeNegocio("2028-02-20", 15)).toBe("2028-03-06");
+  });
+
+  it("cruza el fin de año", () => {
+    expect(sumarDiasDeNegocio("2026-12-25", 15)).toBe("2027-01-09");
+  });
+
+  it("con cero días devuelve la misma fecha", () => {
+    expect(sumarDiasDeNegocio("2026-10-31", 0)).toBe("2026-10-31");
+  });
+
+  it("rechaza un formato que no es AAAA-MM-DD", () => {
+    expect(sumarDiasDeNegocio("20/01/2026", 15)).toBeNull();
+  });
+
+  it("rechaza una fecha inexistente", () => {
+    expect(sumarDiasDeNegocio("2026-02-30", 1)).toBeNull();
+  });
+
+  it("rechaza un número de días no entero", () => {
+    expect(sumarDiasDeNegocio("2026-01-20", 1.5)).toBeNull();
   });
 });

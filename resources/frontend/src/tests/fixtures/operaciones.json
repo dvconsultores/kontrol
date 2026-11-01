@@ -908,6 +908,110 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/actos",
+      "capabilities": [
+        "gobierno_actos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actos",
+      "capabilities": [
+        "gobierno_actos:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actos/autoridades",
+      "capabilities": [
+        "gobierno_actos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actos/exportar",
+      "capabilities": [
+        "gobierno_actos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/actos/{acto_id}",
+      "capabilities": [
+        "gobierno_actos:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actos/{acto_id}",
+      "capabilities": [
+        "gobierno_actos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/actos/{acto_id}",
+      "capabilities": [
+        "gobierno_actos:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actos/{acto_id}/anular",
+      "capabilities": [
+        "gobierno_actos:annul"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actos/{acto_id}/corregir",
+      "capabilities": [
+        "gobierno_actos:issue"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actos/{acto_id}/eficacia",
+      "capabilities": [
+        "gobierno_actos:issue"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actos/{acto_id}/emitir",
+      "capabilities": [
+        "gobierno_actos:issue"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actos/{acto_id}/revocar",
+      "capabilities": [
+        "gobierno_actos:annul"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actos/{acto_id}/versiones",
+      "capabilities": [
+        "gobierno_actos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/ente",
       "capabilities": [
         "gobierno_ente:view"
@@ -4693,7 +4797,11 @@
     "gobierno_estructura:close",
     "gobierno_cargos:view",
     "gobierno_cargos:edit",
-    "gobierno_cargos:publish"
+    "gobierno_cargos:publish",
+    "gobierno_actos:view",
+    "gobierno_actos:edit",
+    "gobierno_actos:issue",
+    "gobierno_actos:annul"
   ],
   "report_capabilities": {
     "executive_ventas": [

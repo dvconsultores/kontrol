@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     """Crea una entidad del tipo pedido en esa empresa. Devuelve su id."""
     from app.modules.approvals.models import ApprovalRequest
-    from app.modules.government.models import GovernmentEntity, GovernmentPosition, GovernmentStructure, GovernmentUnit
+    from app.modules.government.models import GovernmentAct, GovernmentEntity, GovernmentPosition, GovernmentStructure, GovernmentUnit
     from app.modules.homologation.models import HomologationRecord
     from app.modules.inventory.models import InventoryAdjustment, StockCount
     from app.modules.master_data.models import CatalogItem, Party
@@ -62,7 +62,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         db.flush()
         return str(ente.id)
 
-    def _cargo_de_empresa() -> GovernmentPosition:
+    def _cargo_de_empresa(prefijo: str = "") -> GovernmentPosition:
         estructura = db.query(GovernmentStructure).filter(
             GovernmentStructure.company_id == empresa, GovernmentStructure.exercise == 2031).first()
         if estructura is None:
@@ -71,13 +71,26 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
             db.add(estructura)
             db.flush()
         inicio = datetime(2031, 1, 1, tzinfo=UTC).date()
-        unidad = GovernmentUnit(structure_id=str(estructura.id), company_id=empresa, code=f"U-{sufijo[:20]}",
+        unidad = GovernmentUnit(structure_id=str(estructura.id), company_id=empresa, code=f"U{prefijo}-{sufijo[:20]}",
                                 name=f"Unidad {marca}", unit_type="ORGANO", status="ACTIVA", valid_from=inicio, version=1)
         db.add(unidad)
         db.flush()
         return GovernmentPosition(structure_id=str(estructura.id), company_id=empresa, unit_id=str(unidad.id),
-                                  code=f"C-{sufijo[:20]}", name=f"Cargo {marca}", status="BORRADOR",
+                                  code=f"C{prefijo}-{sufijo[:20]}", name=f"Cargo {marca}", status="BORRADOR",
                                   valid_from=inicio, version=1)
+
+    def _acto_de_empresa() -> GovernmentAct:
+        cargo = _cargo_de_empresa("A")
+        db.add(cargo)
+        db.flush()
+        return GovernmentAct(company_id=empresa, tipo="RESOLUCION", numero=f"A-{sufijo[:20]}",
+                             numero_clave=f"A-{sufijo[:20]}".upper(),
+                             fecha=datetime(2031, 1, 1, tzinfo=UTC).date(), lugar="Caracas",
+                             cargo_id=str(cargo.id), competencia_accion="APROBAR",
+                             competencia_materia="CONTRATACIONES",
+                             fundamento_competencia="Reglamento interno de prueba",
+                             funcionario="Funcionario de prueba", titularidad="TITULAR",
+                             caracter="INTERNO", asunto=f"Acto {marca}", status="BORRADOR", version=1)
 
     def _party(rol: str) -> str:
         p = Party(company_id=empresa, code=f"{marca}-{rol}", name=f"Tercero {marca}",
@@ -208,11 +221,13 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
             company_id=empresa, plate=f"{marca[:6]}-{sufijo[:3]}", status="ACTIVE"),
         "TransportDriver": lambda: TransportDriver(
             company_id=empresa, party_id=_party("CONDUCTOR"), status="ACTIVE"),
-        "GovernmentEntity": lambda: GovernmentEntity(
+        "GovernmentEntity": lambda: db.query(GovernmentEntity).filter(
+            GovernmentEntity.company_id == empresa).first() or GovernmentEntity(
             company_id=empresa, denominacion=f"Ente {marca}", status="BORRADOR", version=1),
         "GovernmentStructure": lambda: GovernmentStructure(
             company_id=empresa, entity_id=_ente_de_empresa(), exercise=2030, status="BORRADOR", version=1),
         "GovernmentPosition": _cargo_de_empresa,
+        "GovernmentAct": _acto_de_empresa,
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",
             warehouse_type="PHYSICAL", status="ACTIVE"),
