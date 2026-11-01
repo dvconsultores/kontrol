@@ -971,6 +971,102 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos",
+      "capabilities": [
+        "gobierno_cargos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos",
+      "capabilities": [
+        "gobierno_cargos:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos/exportar",
+      "capabilities": [
+        "gobierno_cargos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}",
+      "capabilities": [
+        "gobierno_cargos:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}",
+      "capabilities": [
+        "gobierno_cargos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}",
+      "capabilities": [
+        "gobierno_cargos:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/activar",
+      "capabilities": [
+        "gobierno_cargos:publish"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/competencias",
+      "capabilities": [
+        "gobierno_cargos:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/competencias/{competencia_id}",
+      "capabilities": [
+        "gobierno_cargos:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/competencias/{competencia_id}/retirar",
+      "capabilities": [
+        "gobierno_cargos:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/desactivar",
+      "capabilities": [
+        "gobierno_cargos:publish"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/versiones",
+      "capabilities": [
+        "gobierno_cargos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/gobierno/estructuras/{ejercicio}/cerrar",
       "capabilities": [
@@ -4594,7 +4690,10 @@
     "gobierno_estructura:view",
     "gobierno_estructura:edit",
     "gobierno_estructura:publish",
-    "gobierno_estructura:close"
+    "gobierno_estructura:close",
+    "gobierno_cargos:view",
+    "gobierno_cargos:edit",
+    "gobierno_cargos:publish"
   ],
   "report_capabilities": {
     "executive_ventas": [

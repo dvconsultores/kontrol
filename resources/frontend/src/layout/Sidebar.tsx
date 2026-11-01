@@ -20,6 +20,7 @@ import {
   ListChecks,
   Lock,
   Network,
+  BadgeCheck,
   Package,
   Percent,
   Ruler,
@@ -70,6 +71,7 @@ const navSections: NavSection[] = [
     items: [
       { to: "/gobierno/ente", label: "Configuración del ente", icon: Landmark, modulo: "gobierno" },
       { to: "/gobierno/estructura", label: "Estructura organizativa", icon: Network, modulo: "gobierno" },
+      { to: "/gobierno/cargos", label: "Cargos y competencias", icon: BadgeCheck, modulo: "gobierno" },
     ],
   },
   {

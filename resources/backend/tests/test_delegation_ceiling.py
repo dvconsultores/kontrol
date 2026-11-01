@@ -313,7 +313,7 @@ def test_dc_t01_catalogo_y_admin_inicial(mundo):
             f"{p.resource}:{p.action}"
             for p in db.execute(select(Permission)).scalars()
         }
-        assert len(catalogo) == 93, len(catalogo)
+        assert len(catalogo) == 96, len(catalogo)
         assert permisos_funcional | TECNICAS == catalogo, catalogo - (permisos_funcional | TECNICAS)
 
         admin_id = mundo.admin_id

@@ -16,6 +16,8 @@ from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.documents.models import Document, DocumentLink
 from app.modules.government.models import (
     GovernmentEntity,
+    GovernmentPosition,
+    GovernmentPositionCompetency,
     GovernmentStructure,
     GovernmentUnit,
     GovernmentUnitVersion,
@@ -340,6 +342,7 @@ def abrir(db: Session, ctx: CompanyContext, datos: EstructuraIn) -> dict[str, An
         db.rollback()
         raise ConflictError("GOV_STRUCTURE_ALREADY_EXISTS", "Ya existe la estructura de ese ejercicio") from None
 
+    cargos_copiados = 0
     unidades_copiadas = 0
     if origen is not None:
         origen_unidades = _unidades(db, origen)
@@ -368,6 +371,69 @@ def abrir(db: Session, ctx: CompanyContext, datos: EstructuraIn) -> dict[str, An
             _versionar_unidad(db, nueva, ctx, motivo=f"Copia del ejercicio {datos.copiar_de}")
             unidades_copiadas += 1
 
+        from app.modules.government import service_cargos
+
+        cargos_origen = db.execute(
+            select(GovernmentPosition)
+            .where(
+                GovernmentPosition.structure_id == origen.id,
+                GovernmentPosition.company_id == ctx.company_id,
+                GovernmentPosition.status == "VIGENTE",
+            )
+            .order_by(GovernmentPosition.code.asc())
+        ).scalars().all()
+        for cargo in cargos_origen:
+            if str(cargo.unit_id) not in nuevos:
+                continue
+            nuevo = GovernmentPosition(
+                structure_id=est.id,
+                company_id=ctx.company_id,
+                unit_id=nuevos[str(cargo.unit_id)].id,
+                code=cargo.code,
+                name=cargo.name,
+                status="BORRADOR",
+                valid_from=date(datos.ejercicio, 1, 1),
+                valid_to=None,
+                version=1,
+                created_by=ctx.user_id,
+            )
+            db.add(nuevo)
+            db.flush()
+            competencias = db.execute(
+                select(GovernmentPositionCompetency)
+                .where(
+                    GovernmentPositionCompetency.position_id == cargo.id,
+                    GovernmentPositionCompetency.company_id == ctx.company_id,
+                )
+                .order_by(
+                    GovernmentPositionCompetency.action.asc(),
+                    GovernmentPositionCompetency.subject.asc(),
+                )
+            ).scalars().all()
+            for competencia in competencias:
+                db.add(
+                    GovernmentPositionCompetency(
+                        position_id=nuevo.id,
+                        company_id=ctx.company_id,
+                        action=competencia.action,
+                        subject=competencia.subject,
+                        limit_type=competencia.limit_type,
+                        limit_amount=competencia.limit_amount,
+                        limit_currency=competencia.limit_currency,
+                        basis=competencia.basis,
+                        created_by=ctx.user_id,
+                    )
+                )
+            db.flush()
+            service_cargos._versionar_cargo(
+                db,
+                est,
+                nuevo,
+                ctx,
+                f"Copia del ejercicio {datos.copiar_de}",
+            )
+            cargos_copiados += 1
+
     record_audit(
         db,
         action="GOV_STRUCTURE_CREATED",
@@ -383,6 +449,7 @@ def abrir(db: Session, ctx: CompanyContext, datos: EstructuraIn) -> dict[str, An
             "version": est.version,
             "copiada_de": est.copied_from_exercise,
             "unidades_copiadas": unidades_copiadas,
+            "cargos_copiados": cargos_copiados,
         },
     )
     return a_salida(db, est)
@@ -655,6 +722,20 @@ def desactivar_unidad(
             "Desactive o mueva antes sus unidades subordinadas",
         )
 
+    cargo_en_unidad = db.execute(
+        select(GovernmentPosition.id).where(
+            GovernmentPosition.structure_id == est.id,
+            GovernmentPosition.company_id == est.company_id,
+            GovernmentPosition.unit_id == u.id,
+            GovernmentPosition.status.in_(("BORRADOR", "VIGENTE")),
+        )
+    ).first()
+    if cargo_en_unidad is not None:
+        raise ConflictError(
+            "GOV_UNIT_HAS_POSITIONS",
+            "Desactive o traslade antes los cargos de la unidad",
+        )
+
     inicio, fin = _rango(ejercicio)
     if datos.fecha < inicio or datos.fecha > fin or datos.fecha < u.valid_from:
         raise _error_campo("fecha", "La fecha debe estar dentro del ejercicio y no antes del inicio de vigencia")
@@ -727,6 +808,19 @@ def eliminar_unidad(
         raise ConflictError(
             "GOV_UNIT_HAS_CHILDREN",
             "Elimine o mueva antes sus unidades subordinadas",
+        )
+
+    cargo_en_unidad = db.execute(
+        select(GovernmentPosition.id).where(
+            GovernmentPosition.structure_id == est.id,
+            GovernmentPosition.company_id == est.company_id,
+            GovernmentPosition.unit_id == u.id,
+        )
+    ).first()
+    if cargo_en_unidad is not None:
+        raise ConflictError(
+            "GOV_UNIT_HAS_POSITIONS",
+            "Elimine o traslade antes los cargos de la unidad",
         )
 
     record_audit(

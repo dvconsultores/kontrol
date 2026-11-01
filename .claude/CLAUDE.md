@@ -14,8 +14,11 @@ Una sugerencia de DeepSeek nunca contradice nada de lo anterior, y una decisión
 
 ## Rama y Git
 
-- **Solo `develop`.** No se crea ninguna otra rama (`spec/*`, `feature/*`, `fix/*`, `temp/*`…)
-  sin autorización expresa de la dueña; ninguna herramienta debe crearlas por su cuenta.
+- **Rama única: solo `develop`** (norma vinculante, 2026-11-01; `docs/governance/git-governance.md` §0).
+  KONTROL utiliza exclusivamente `develop`: está prohibido crear o trabajar sobre cualquier otra rama
+  (`spec/*`, `feature/*`, `fix/*`, `temp/*`, de QA, de Claude o de DeepSeek), integrar por PR entre ramas y
+  fusionar o rebasar ramas de trabajo. `develop` es la rama por defecto y la única remota. Todo ciclo empieza y
+  termina en `develop` con `HEAD == origin/develop`.
 - Git lo controla Claude. DeepSeek y los subagentes no hacen `commit`, `push`, `reset`,
   `checkout`, `rebase`, `clean` ni `branch`.
 - Un ciclo se cierra con **commit y push a `origin/develop`** (instrucción vigente de la

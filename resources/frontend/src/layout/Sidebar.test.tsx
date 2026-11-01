@@ -149,3 +149,25 @@ describe("Sidebar · Gobierno · estructura (GOV-0-02)", () => {
     expect(enlace("Estructura organizativa")).toBeNull();
   });
 });
+
+describe("Sidebar · Gobierno · cargos (GOV-0-03)", () => {
+  beforeEach(() => {
+    permisos = new Set<string>();
+    moduloGobierno = false;
+  });
+
+  it("GSB-06 · módulo habilitado y gobierno_cargos:view muestra el enlace", () => {
+    moduloGobierno = true;
+    permisos = new Set(["gobierno_cargos:view"]);
+    montar();
+    const d = enlace("Cargos y competencias");
+    expect(d).not.toBeNull();
+    expect(d?.getAttribute("href")).toBe("/gobierno/cargos");
+  });
+
+  it("GSB-07 · capacidad sin módulo no muestra el enlace", () => {
+    permisos = new Set(["gobierno_cargos:view"]);
+    montar();
+    expect(enlace("Cargos y competencias")).toBeNull();
+  });
+});

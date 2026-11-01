@@ -4,7 +4,7 @@
 
 Compuertas en orden: backend · frontend · menú · proceso · campos · roles · documentos · reportes · auditoría · E2E · ficha de pantalla. `✗` = aplicable y en FAIL; `·` = no aplica (justificado: el proceso no produce ni exige documento/reporte).
 
-En **todos** los procesos salvo ORG-01 y ORG-02: `OWNER_UAT_READY = NO`, `OWNER_ACCEPTED = NO`, evidencia = HEAD 0dbe632: 0 rutas, 0 modelos, 0 migraciones, 0 entradas de menú y 0 pantallas de Gobierno. **ORG-01** (GOV-0-01, 2026-10-30): 10/10 compuertas en PASS, `OWNER_UAT_READY = YES`, `OWNER_ACCEPTED = NO` (solo lo concede la dueña); evidencia en `specs/gov-0-01-configurar-ente/evidence/`. **ORG-02** (GOV-0-02, 2026-10-31): 11/11 compuertas en PASS, `OWNER_UAT_READY = YES`, `OWNER_ACCEPTED = NO`; evidencia en `specs/gov-0-02-estructura-organizativa/evidence/`.
+En **todos** los procesos salvo ORG-01, ORG-02 y ORG-03: `OWNER_UAT_READY = NO`, `OWNER_ACCEPTED = NO`, evidencia = HEAD 0dbe632: 0 rutas, 0 modelos, 0 migraciones, 0 entradas de menú y 0 pantallas de Gobierno. **ORG-01** (GOV-0-01, 2026-10-30): 10/10 compuertas en PASS, `OWNER_UAT_READY = YES`, `OWNER_ACCEPTED = NO` (solo lo concede la dueña); evidencia en `specs/gov-0-01-configurar-ente/evidence/`. **ORG-02** (GOV-0-02, 2026-10-31): 11/11 compuertas en PASS, `OWNER_UAT_READY = YES`, `OWNER_ACCEPTED = NO`; evidencia en `specs/gov-0-02-estructura-organizativa/evidence/`.
 
 ## Government Core: ente, estructura y autoridad
 
@@ -12,7 +12,7 @@ En **todos** los procesos salvo ORG-01 y ORG-02: `OWNER_UAT_READY = NO`, `OWNER_
 |---|---|---|---|---|---|---|---|---|---|---|
 | ORG-01 | Configurar el ente y su tipo | P0 | Administración institucional | GOV-ORG-001 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | GOV-E2E-01..05 | — |
 | ORG-02 | Estructura organizativa por ejercicio (órgano, unidad ejecutora, dependencia, sede, centro gestor) | P0 | Administración institucional | GOV-ORG-002 GOV-ORG-008 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | GOV2-E2E-01..07 | Organización privada (empresas, sucursales): otro contrato |
-| ORG-03 | Cargos con competencias y límites de firma/aprobación | P0 | Máxima autoridad | GOV-ORG-003 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
+| ORG-03 | Cargos con competencias y límites de firma/aprobación | P0 | Máxima autoridad | GOV-ORG-003 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | GOV3-E2E-01..08 (×3 navegadores ×3 corridas) | — |
 | ORG-04 | Delegaciones, suplencias, encargadurías y designaciones con acto | P0 | Máxima autoridad | GOV-ORG-004 GOV-ORG-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | Delegaciones del motor 045 (sin acto administrativo) |
 | ORG-05 | Responsables por unidad, programa, cuenta, almacén, caja, contrato y bien, con historia | P0 | Administración institucional | GOV-ORG-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 | ORG-06 | Vincular usuario con identidad, cargo, unidad y alcance; separación de roles | P0 | Administración institucional | GOV-ORG-007 GOV-ORG-005 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | Usuarios, roles y alcance por empresa (003): otro contrato |

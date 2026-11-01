@@ -8,7 +8,7 @@ Creado antes de la implementación semántica (2026-10-30); el resultado se rell
 | 2 | Regresión de ORG-01 | `tests/test_gov0_ente.py` + `e2e/gobierno-ente.spec.ts` ×3 navegadores | PASS · backend 18/18; E2E GOV-E2E-01..05 ×3 navegadores en las 3 corridas (36/36 con ORG-02) y en la canónica |
 | 3 | GOV0-UI-01 | vitest de la compuerta + E2E en `/gobierno/*` | PASS · GUI-01..03 (vitest) + GOV2-E2E-06 ×3 navegadores; mutante GF10 KILLED |
 | 4 | Requisitos de Gobierno | GOV-ORG-002/008 → spec §2–§11 | PASS (spec) |
-| 5 | Revisión normativa | N02, N03, N04, N21, N24 (A); LOAFSP ejercicio 1 ene–31 dic | PASS (artículo pendiente de verificación textual) |
+| 5 | Revisión normativa | N02, N03, N04, N21, N24 (A); ejercicio 1 ene–31 dic por OD-ORG02-01 | PASS (sin cita de artículo: no verificado textualmente; corrección del 2026-11-01) |
 | 6 | Modelo de proceso / ejercicio / jerarquía | spec §3–§5 | PASS (diseño) |
 | 7 | BD dirigida | migración 0064 upgrade → downgrade → upgrade; restricciones | PASS · PostgreSQL: upgrade → downgrade `0063_gov0_entes` → upgrade (5 → 2 → 5 tablas `gov_`) sobre una base propia, borrada después; cabeza única `0064_gov0_estructuras`. SQLite no se migra con Alembic (la suite crea el esquema desde los modelos) |
 | 8 | API dirigida | `tests/test_gov0_estructura.py` | PASS · 32/32 (GS-01..29; GS-28/29 añadidas por la convergencia) en PostgreSQL; primero en rojo antes del servicio |
@@ -34,3 +34,5 @@ Creado antes de la implementación semántica (2026-10-30); el resultado se rell
 | 28 | Tarjeta UAT | `OWNER_UAT_CARD.md` | PASS · `OWNER_UAT_CARD.md` (10 pasos, negativas, documentos, reportes, auditoría) |
 | 29 | Secretos | escaneo del diff confirmado | PASS · escaneo del diff: 0 secretos, 0 claves, 0 URLs con credenciales, 0 PII |
 | 30 | Residuos | bases efímeras, ficheros temporales, puertos | PASS · CLEAN: 0 bases de corrida ajenas, 0 ficheros temporales en el árbol, puertos de E2E libres. Única base viva y puertos 18100/15273/18110: el entorno de prueba de la dueña, levantado a propósito |
+
+Errata registrada el 2026-11-01: el mensaje del commit `e993792` dice «vitest +43»; el delta medido es **+36** (727 en `HEAD~1`, medido con un worktree, → 763). La historia publicada no se reescribe; esta nota es la corrección.

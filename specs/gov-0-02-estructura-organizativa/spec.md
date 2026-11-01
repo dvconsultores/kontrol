@@ -22,7 +22,7 @@ Nadie de otro ente u otro tenant ve ni toca esa estructura.
 | Requisito | GOV-ORG-002 | «Modelar órgano, ente, unidad administrativa, unidad ejecutora local, dependencia, sede y centro gestor con vigencia temporal» (IR §7.1) |
 | Requisito | GOV-ORG-008 | «Permitir estructuras organizativas por ejercicio sin reescribir expedientes cerrados» (IR §7.1) |
 | Modelo lógico | IR §9 | `GovernmentEntity`, `GovernmentUnit` en «Organización y autoridad»; `FiscalYear` en «Contexto presupuestario» (BUD-01) |
-| Norma | N03 LOAFSP (G.O. 6.210 Extr., 30-12-2015) | El ejercicio económico-financiero va del 1 de enero al 31 de diciembre (artículo 7 u 8 según la reforma: número **pendiente de verificación textual** en la Gaceta; la regla coincide en todas las fuentes) |
+| Norma | N03 LOAFSP (G.O. 6.210 Extr., 30-12-2015) | Dominio de finanzas públicas (Biblioteca Normativa, clase A). **No se cita artículo:** la regla «ejercicio = 1 de enero a 31 de diciembre» no está verificada textualmente contra la Gaceta y no se presenta como norma; se aplica por decisión de la dueña OD-ORG02-01 (corrección documental del 2026-11-01, ciclo GOV-0-FUNCTIONAL-03) |
 | Norma | N04 | «Versionar ejercicio… no hardcodear una edición anual» |
 | OWNER | OD-ORG02-01 | Ejercicio = **clave de año calendario**; no se construye el `FiscalYear` presupuestario (BUD-01, bloqueado por D-GOV-02), que se enganchará al mismo año |
 | OWNER | OD-ORG02-02 | **BORRADOR → VIGENTE → CERRADA**; en VIGENTE, cambios con motivo y versión fechada, desactivar en lugar de borrar; CERRADA solo lectura; copia del ejercicio anterior |
@@ -74,7 +74,7 @@ Nadie de otro ente u otro tenant ve ni toca esa estructura.
 ## 4. Contrato del ejercicio (EXERCISE_CONTRACT)
 
 - Identidad: entero **AAAA** (2000 ≤ AAAA ≤ año civil de Caracas + 1): se puede preparar la del año siguiente.
-- Período: 1 de enero – 31 de diciembre de AAAA (N03). Sin calendario, moneda, clasificadores ni estado presupuestario (son de BUD-01).
+- Período: 1 de enero – 31 de diciembre de AAAA (OD-ORG02-01; sin artículo de N03 verificado). Sin calendario, moneda, clasificadores ni estado presupuestario (son de BUD-01).
 - Una estructura por ente y ejercicio (único). Puede haber estructuras de varios ejercicios a la vez (p. ej., la vigente del año y el borrador del siguiente).
 - «Terminado» = AAAA < año civil de Caracas (`hoy_de_negocio().year`).
 - Copia: al abrir el ejercicio B se puede copiar el A (A ≠ B, de la misma estructura del mismo ente, VIGENTE o CERRADA): se copian las unidades ACTIVAS con el mismo código, nombre, tipo y jerarquía; `vigente_desde` = 1 de enero de B.

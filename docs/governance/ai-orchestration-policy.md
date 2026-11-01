@@ -169,8 +169,8 @@ tareas totales, `CLAUDE_ONLY`, `DEEPSEEK_ELIGIBLE`, ejecutadas por DeepSeek, rei
 parches rechazados y aceptados, implementadas por Claude, pruebas, mutaciones, regresiones y
 coste. Siempre se dice quién hizo qué.
 
-Git lo controla Claude: **solo `develop`**, sin ramas nuevas sin autorización expresa, sin
-commits de DeepSeek. Un ciclo se cierra, tras converger, con commit y push a
+Git lo controla Claude: **rama única `develop`** (norma vinculante 2026-11-01, `git-governance.md` §0): ninguna
+otra rama local ni remota, sin PR entre ramas, sin commits de DeepSeek. Un ciclo se cierra, tras converger, con commit y push a
 `origin/develop` y el árbol limpio: es la autorización permanente que la dueña dio el
 2026-09-30 para los cierres, y satisface la regla de no subir sin autorización expresa.
 

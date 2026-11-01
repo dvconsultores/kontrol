@@ -121,6 +121,9 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_estructura:edit",
         "gobierno_estructura:publish",
         "gobierno_estructura:close",
+        # gobierno_cargos · cargos, competencias y límites de firma/aprobación (GOV-0-03, PDD-ORG03-02)
+        "gobierno_cargos:edit",
+        "gobierno_cargos:publish",
     }
 )
 
@@ -185,6 +188,8 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_ente:view",
         # gobierno_estructura · consulta y exportación de la estructura (GOV-0-02)
         "gobierno_estructura:view",
+        # gobierno_cargos · consulta y exportación de cargos (GOV-0-03)
+        "gobierno_cargos:view",
     }
 )
 

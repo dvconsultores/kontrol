@@ -93,6 +93,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_ente": ["view", "create", "edit", "activate"],
     # GOV-0-02: estructura organizativa por ejercicio (PDD-ORG02-01).
     "gobierno_estructura": ["view", "edit", "publish", "close"],
+    # GOV-0-03: cargos con competencias y límites de firma/aprobación (PDD-ORG03-01).
+    "gobierno_cargos": ["view", "edit", "publish"],
 }
 
 

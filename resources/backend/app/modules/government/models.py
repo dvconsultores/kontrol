@@ -9,9 +9,10 @@ queda registrado en una instantánea inmutable (`gov_entity_versions`).
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Integer, String, UniqueConstraint
+from sqlalchemy import JSON, BigInteger, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -177,6 +178,97 @@ class GovernmentUnitVersion(UUIDMixin, TimestampMixin, Base):
     )
 
     unit_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_units.id"), nullable=False, index=True)
+    structure_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_structures.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    version: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+ESTADOS_CARGO = ("BORRADOR", "VIGENTE", "INACTIVO")
+ACCIONES_COMPETENCIA = ("SOLICITAR", "COMPROMETER", "CAUSAR", "ORDENAR_PAGO", "PAGAR", "REGISTRAR", "CUSTODIAR", "APROBAR", "AUDITAR", "FIRMAR")
+MATERIAS_COMPETENCIA = ("PRESUPUESTO", "CONTRATACIONES", "TESORERIA", "CONTABILIDAD", "BIENES", "EXPEDIENTE")
+TIPOS_DE_LIMITE = ("SIN_LIMITE", "MONTO")
+MONEDAS_LIMITE = ("VES", "USD", "EUR")
+
+
+class GovernmentPosition(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Cargo de la estructura de un ejercicio (GOV-ORG-003, OD-ORG03-01): porta competencias y límites; no es una persona ni un rol de software."""
+
+    __tablename__ = "gov_positions"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("structure_id", "code", name="uq_gov_positions_structure_id_code"),
+
+        ForeignKeyConstraint(
+            ["structure_id", "unit_id"],
+            ["gov_units.structure_id", "gov_units.id"],
+            name="fk_gov_positions_unidad_misma_estructura",
+        ),
+        CheckConstraint(f"status IN ({en(ESTADOS_CARGO)})", name="status"),
+        CheckConstraint("valid_to IS NULL OR valid_to >= valid_from", name="vigencia"),
+        CheckConstraint(
+            "(status = 'INACTIVO' AND valid_to IS NOT NULL) OR (status <> 'INACTIVO' AND valid_to IS NULL)",
+            name="inactivo_fechado",
+        ),
+        CheckConstraint("status = 'BORRADOR' OR activated_at IS NOT NULL", name="activado_fechado"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+    structure_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_structures.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    unit_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    code: Mapped[str] = mapped_column(String(30), nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    valid_from: Mapped[date] = mapped_column(Date, nullable=False)
+    valid_to: Mapped[date | None] = mapped_column(Date, nullable=True)
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    activated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class GovernmentPositionCompetency(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Competencia de un cargo: acción × materia con su límite de firma/aprobación (OD-ORG03-02/03). El monto es Decimal, nunca float."""
+
+    __tablename__ = "gov_position_competencies"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("position_id", "action", "subject", name="uq_gov_position_competencies_position_id_action_subject"),
+
+        CheckConstraint(f"action IN ({en(ACCIONES_COMPETENCIA)})", name="action"),
+        CheckConstraint(f"subject IN ({en(MATERIAS_COMPETENCIA)})", name="subject"),
+        CheckConstraint(f"limit_type IN ({en(TIPOS_DE_LIMITE)})", name="limit_type"),
+        CheckConstraint(f"limit_currency IS NULL OR limit_currency IN ({en(MONEDAS_LIMITE)})", name="limit_currency"),
+        CheckConstraint(
+            "(limit_type = 'SIN_LIMITE' AND limit_amount IS NULL AND limit_currency IS NULL) OR (limit_type = 'MONTO' AND limit_amount IS NOT NULL AND limit_amount > 0 AND limit_currency IS NOT NULL)",
+            name="limite_coherente",
+        ),
+    )
+
+    position_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(16), nullable=False)
+    subject: Mapped[str] = mapped_column(String(16), nullable=False)
+    limit_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    limit_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    limit_currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    basis: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+
+class GovernmentPositionVersion(UUIDMixin, TimestampMixin, Base):
+    """Instantánea de cada cambio de un cargo, con todas sus competencias (solo inserción)."""
+
+    __tablename__ = "gov_position_versions"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("position_id", "version", name="uq_gov_position_versions_position_id_version"),
+        CheckConstraint(f"status IN ({en(ESTADOS_CARGO)})", name="status"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+    position_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False, index=True)
     structure_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_structures.id"), nullable=False, index=True)
     company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
     version: Mapped[int] = mapped_column(BigInteger, nullable=False)

@@ -689,6 +689,66 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos/exportar",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/competencias",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/competencias/{competencia_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/competencias/{competencia_id}/retirar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/desactivar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/estructuras/{ejercicio}/cargos/{cargo_id}/versiones",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/gobierno/estructuras/{ejercicio}/cerrar",
       "query": []

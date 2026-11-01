@@ -4,15 +4,16 @@
 
 ## Estado: 2 procesos listos para probar (2026-10-31)
 
-- `OWNER_UAT_READY` = 2 de 122 procesos (1,64 %);
+- `OWNER_UAT_READY` = 3 de 122 procesos (2,46 %);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
 |---|---|---|---|
 | **ORG-01 Configurar el ente** (GOV-ORG-001) | Menú › Gobierno › Configuración del ente | [`specs/gov-0-01-configurar-ente/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-0-01-configurar-ente/evidence/OWNER_UAT_CARD.md) | GOV-0-01 |
 | **ORG-02 Estructura organizativa por ejercicio** (GOV-ORG-002, GOV-ORG-008) | Menú › Gobierno › Estructura organizativa | [`specs/gov-0-02-estructura-organizativa/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-0-02-estructura-organizativa/evidence/OWNER_UAT_CARD.md) | GOV-0-02 |
+| **ORG-03 Cargos con competencias y límites de firma/aprobación** (GOV-ORG-003) | Menú › Gobierno › Cargos y competencias | [`specs/gov-0-03-cargos-competencias/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-0-03-cargos-competencias/evidence/OWNER_UAT_CARD.md) | GOV-0-02 |
 
-Los otros 120 procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
+Los otros 119 procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
 
 ## Fundamentos técnicos
 

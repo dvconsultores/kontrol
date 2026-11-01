@@ -4,6 +4,8 @@
  */
 import { useQuery } from "@tanstack/react-query";
 
+import { formatMoney } from "@/lib/format";
+
 import { apiFetch } from "@/api/client";
 
 export type EstadoEnte = "BORRADOR" | "ACTIVO";
@@ -232,3 +234,125 @@ export const ETIQUETA_FALTANTE_ESTRUCTURA: Readonly<Record<string, string>> = {
 };
 
 export const CONSULTA_ESTRUCTURAS = [...CONSULTA_GOBIERNO, "estructuras"] as const;
+
+export type EstadoCargo = "BORRADOR" | "VIGENTE" | "INACTIVO";
+export type AccionCompetencia =
+  | "SOLICITAR"
+  | "COMPROMETER"
+  | "CAUSAR"
+  | "ORDENAR_PAGO"
+  | "PAGAR"
+  | "REGISTRAR"
+  | "CUSTODIAR"
+  | "APROBAR"
+  | "AUDITAR"
+  | "FIRMAR";
+export type MateriaCompetencia =
+  | "PRESUPUESTO"
+  | "CONTRATACIONES"
+  | "TESORERIA"
+  | "CONTABILIDAD"
+  | "BIENES"
+  | "EXPEDIENTE";
+export type TipoDeLimite = "SIN_LIMITE" | "MONTO";
+export type MonedaDeLimite = "VES" | "USD" | "EUR";
+
+export interface Competencia {
+  id: string;
+  accion: AccionCompetencia;
+  materia: MateriaCompetencia;
+  tipo_limite: TipoDeLimite;
+  monto: string | null;
+  moneda: MonedaDeLimite | null;
+  fundamento: string | null;
+}
+
+export interface Cargo {
+  id: string;
+  codigo: string;
+  denominacion: string;
+  unidad_id: string;
+  unidad_codigo: string;
+  unidad_denominacion: string;
+  estado: EstadoCargo;
+  vigente_desde: string;
+  vigente_hasta: string | null;
+  version: number;
+  competencias: Competencia[];
+  faltantes_para_activar: string[];
+  documento_vinculado: boolean;
+  activado_en: string | null;
+  activado_por: string | null;
+  creado_en: string;
+}
+
+export interface ListaCargos {
+  estructura: { ejercicio: number; estado: EstadoEstructura; version: number };
+  items: Cargo[];
+  total: number;
+}
+
+export interface VersionCargo {
+  version: number;
+  estado: EstadoCargo;
+  motivo: string | null;
+  actor_id: string | null;
+  creado_en: string;
+  datos: Record<string, unknown>;
+}
+
+export interface VersionesCargo {
+  items: VersionCargo[];
+  total: number;
+}
+
+export const ETIQUETA_ESTADO_CARGO: Record<EstadoCargo, string> = {
+  BORRADOR: "Borrador",
+  VIGENTE: "Vigente",
+  INACTIVO: "Inactivo",
+};
+
+export const ETIQUETA_ACCION: Record<AccionCompetencia, string> = {
+  SOLICITAR: "Solicitar",
+  COMPROMETER: "Comprometer",
+  CAUSAR: "Causar",
+  ORDENAR_PAGO: "Ordenar el pago",
+  PAGAR: "Pagar",
+  REGISTRAR: "Registrar",
+  CUSTODIAR: "Custodiar",
+  APROBAR: "Aprobar",
+  AUDITAR: "Auditar",
+  FIRMAR: "Firmar",
+};
+
+export const ETIQUETA_MATERIA: Record<MateriaCompetencia, string> = {
+  PRESUPUESTO: "Presupuesto",
+  CONTRATACIONES: "Contrataciones",
+  TESORERIA: "Tesorería",
+  CONTABILIDAD: "Contabilidad",
+  BIENES: "Bienes públicos",
+  EXPEDIENTE: "Expediente y documentos",
+};
+
+export const ETIQUETA_MONEDA: Record<MonedaDeLimite, string> = {
+  VES: "Bolívares (VES)",
+  USD: "Dólares (USD)",
+  EUR: "Euros (EUR)",
+};
+
+export const ETIQUETA_FALTANTE_CARGO: Readonly<Record<string, string>> = {
+  ESTRUCTURA_VIGENTE:
+    "La estructura del ejercicio debe estar vigente (Gobierno › Estructura organizativa)",
+  COMPETENCIAS: "Al menos una competencia",
+  DOCUMENTO_ACTO: "Acto del cargo",
+};
+
+/** Límite en lenguaje de negocio: «Sin límite» o «Hasta 50.000,00 USD por operación» (PDD-ORG03-07). */
+export function describirLimite(
+  c: Pick<Competencia, "tipo_limite" | "monto" | "moneda">,
+): string {
+  if (c.tipo_limite === "SIN_LIMITE" || c.monto === null) return "Sin límite";
+  return `Hasta ${formatMoney(c.monto)} ${c.moneda ?? ""} por operación`;
+}
+
+export const CONSULTA_CARGOS = [...CONSULTA_GOBIERNO, "cargos"] as const;

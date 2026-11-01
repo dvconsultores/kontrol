@@ -953,7 +953,8 @@ def test_gs25_sin_put(mundo, gobierno):
     """GS-25: no hay PUT en estructuras; DELETE solo en unidades."""
     rutas = {}
     for ruta in mundo.client.app.routes:
-        if ruta.path.startswith("/api/v1/gobierno/estructuras"):
+        # Las rutas de cargos (ORG-03) las fija GC-24 en test_gov0_cargos.py.
+        if ruta.path.startswith("/api/v1/gobierno/estructuras") and "/cargos" not in ruta.path:
             metodos = set(ruta.methods) - {"HEAD", "OPTIONS"}
             rutas.setdefault(ruta.path, set()).update(metodos)
     esperado = {

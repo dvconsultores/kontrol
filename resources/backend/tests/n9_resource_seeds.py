@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     """Crea una entidad del tipo pedido en esa empresa. Devuelve su id."""
     from app.modules.approvals.models import ApprovalRequest
-    from app.modules.government.models import GovernmentEntity, GovernmentStructure
+    from app.modules.government.models import GovernmentEntity, GovernmentPosition, GovernmentStructure, GovernmentUnit
     from app.modules.homologation.models import HomologationRecord
     from app.modules.inventory.models import InventoryAdjustment, StockCount
     from app.modules.master_data.models import CatalogItem, Party
@@ -61,6 +61,23 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         db.add(ente)
         db.flush()
         return str(ente.id)
+
+    def _cargo_de_empresa() -> GovernmentPosition:
+        estructura = db.query(GovernmentStructure).filter(
+            GovernmentStructure.company_id == empresa, GovernmentStructure.exercise == 2031).first()
+        if estructura is None:
+            estructura = GovernmentStructure(company_id=empresa, entity_id=_ente_de_empresa(), exercise=2031,
+                                             status="BORRADOR", version=1)
+            db.add(estructura)
+            db.flush()
+        inicio = datetime(2031, 1, 1, tzinfo=UTC).date()
+        unidad = GovernmentUnit(structure_id=str(estructura.id), company_id=empresa, code=f"U-{sufijo[:20]}",
+                                name=f"Unidad {marca}", unit_type="ORGANO", status="ACTIVA", valid_from=inicio, version=1)
+        db.add(unidad)
+        db.flush()
+        return GovernmentPosition(structure_id=str(estructura.id), company_id=empresa, unit_id=str(unidad.id),
+                                  code=f"C-{sufijo[:20]}", name=f"Cargo {marca}", status="BORRADOR",
+                                  valid_from=inicio, version=1)
 
     def _party(rol: str) -> str:
         p = Party(company_id=empresa, code=f"{marca}-{rol}", name=f"Tercero {marca}",
@@ -195,6 +212,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
             company_id=empresa, denominacion=f"Ente {marca}", status="BORRADOR", version=1),
         "GovernmentStructure": lambda: GovernmentStructure(
             company_id=empresa, entity_id=_ente_de_empresa(), exercise=2030, status="BORRADOR", version=1),
+        "GovernmentPosition": _cargo_de_empresa,
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",
             warehouse_type="PHYSICAL", status="ACTIVE"),
