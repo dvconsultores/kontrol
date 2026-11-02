@@ -5,7 +5,7 @@ Creado al certificar (2026-11-02). Ejecución: Claude; código y pruebas: DeepSe
 | # | Suite | Orden / método | Resultado |
 |---|---|---|---|
 | 1 | Rama única y reconciliación | `git fetch`; ramas remotas; HEAD == origin == `932f7d2` | PASS · solo `develop` (1 rama remota); HEAD == origin/develop al empezar y antes del commit |
-| 2 | Humo UAT autenticado (entorno de la dueña) | `e2e/uat-humo-gobierno.spec.ts` (HUMO-UAT-01), proyecto `humo-uat` (OD-QA-UAT-01) | PASS en la corrida de Gobierno; ahora abre también «Notificaciones administrativas» (T009f/T009g). En la pila UAT relanzada: ver `UAT_SMOKE.md` |
+| 2 | Humo UAT autenticado (entorno de la dueña) | `e2e/uat-humo-gobierno.spec.ts` (HUMO-UAT-01), proyecto `humo-uat` (OD-QA-UAT-01) | PASS en la corrida de Gobierno; ahora abre también «Notificaciones administrativas» (T009f/T009g). En la pila UAT relanzada (`ab24924`): PASS, ver `UAT_SMOKE.md` |
 | 3 | Requisitos de Gobierno | GOV-DOC-005 → spec §1–§10 | PASS (spec); OD-DOC04-01..04 de la dueña; MATERIAL_BLOCKER = 0 |
 | 4 | Normativa | LOPA arts. 72–77 (texto íntegro y recursos, domicilio y recibo, prensa + 15 días); Ley N29 arts. 1–17 (para el canal electrónico, fuera de alcance) | PASS (diseño) |
 | 5 | BD dirigida | migración 0067 upgrade → downgrade → upgrade | PASS · PostgreSQL 10 → 13 → 10 → 13 tablas `gov_`; cabeza única `0067_gov_doc04_notificaciones` |
