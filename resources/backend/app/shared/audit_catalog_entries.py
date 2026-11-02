@@ -48,6 +48,27 @@ DETALLE_ACTO: tuple[str, ...] = (
     "version",
 )
 
+DETALLE_NOTIFICACION: tuple[str, ...] = (
+    "acto_id",
+    "apoderado_identificacion",
+    "apoderado_nombre",
+    "documento_id",
+    "documento_oficio_id",
+    "domicilio",
+    "fecha",
+    "fecha_notificacion",
+    "identificacion",
+    "medio",
+    "motivo_anulacion",
+    "nombre",
+    "numero",
+    "recursos",
+    "resultado",
+    "status",
+    "tipo_persona",
+    "version",
+)
+
 _PARTE_A: tuple[AuditActionSpec, ...] = (
     _e("ALERT_CREATED", "Alert", "notifications", "047", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("category",), "Alerta creada"),
     _e("APPROVAL_APPROVE", "ApprovalStep", "approvals", "045", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("decision", "level_order", "on_behalf_of", "step_status"), "Paso de aprobación aprobado", emission="DYNAMIC", emitted_by="approvals/service.py:decide"),
@@ -105,6 +126,13 @@ _PARTE_A: tuple[AuditActionSpec, ...] = (
     _e("GOV_ENTITY_ACTIVATED", "GovernmentEntity", "government", "gov-0-01", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("estado", "version"), "Ente de Gobierno activado"),
     _e("GOV_ENTITY_CREATED", "GovernmentEntity", "government", "gov-0-01", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("acto_fecha", "acto_numero", "acto_publicacion", "acto_tipo", "denominacion", "entidad_federal", "estado", "forma_organizativa", "municipio", "nivel_territorial", "organo_adscripcion", "rif", "siglas", "version"), "Ente de Gobierno creado"),
     _e("GOV_ENTITY_UPDATED", "GovernmentEntity", "government", "gov-0-01", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("acto_fecha", "acto_numero", "acto_publicacion", "acto_tipo", "denominacion", "entidad_federal", "estado", "forma_organizativa", "municipio", "nivel_territorial", "organo_adscripcion", "rif", "siglas", "version"), "Ente de Gobierno modificado"),
+    _e("GOV_NOTIFICATIONS_EXPORTED", "GovernmentEntity", "government", "gov-doc-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("anio", "filas"), "Notificaciones administrativas exportadas"),
+    _e("GOV_NOTIFICATION_ATTEMPT_FAILED", "GovernmentNotification", "government", "gov-doc-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_NOTIFICACION, "Intento de notificación fallido registrado"),
+    _e("GOV_NOTIFICATION_CANCELLED", "GovernmentNotification", "government", "gov-doc-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_NOTIFICACION, "Notificación anulada"),
+    _e("GOV_NOTIFICATION_CREATED", "GovernmentNotification", "government", "gov-doc-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_NOTIFICACION, "Destinatario de notificación registrado"),
+    _e("GOV_NOTIFICATION_DELIVERED", "GovernmentNotification", "government", "gov-doc-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_NOTIFICACION, "Notificación personal entregada"),
+    _e("GOV_NOTIFICATION_PUBLISHED", "GovernmentNotification", "government", "gov-doc-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_NOTIFICACION, "Notificación publicada en prensa"),
+    _e("GOV_NOTIFICATION_UPDATED", "GovernmentNotification", "government", "gov-doc-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_NOTIFICACION, "Datos del destinatario corregidos"),
     _e("GOV_POSITIONS_EXPORTED", "GovernmentStructure", "government", "gov-0-03", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("ejercicio", "filas"), "Cargos y competencias exportados"),
     _e("GOV_POSITION_ACTIVATED", "GovernmentPosition", "government", "gov-0-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "ejercicio", "estado", "version"), "Cargo puesto en vigor"),
     _e("GOV_POSITION_CREATED", "GovernmentPosition", "government", "gov-0-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "competencias", "denominacion", "ejercicio", "estado", "unidad_codigo", "unidad_id", "version", "vigente_desde", "vigente_hasta"), "Cargo creado"),

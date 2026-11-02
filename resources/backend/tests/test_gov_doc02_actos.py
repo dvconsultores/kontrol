@@ -150,7 +150,13 @@ def _doc_activo(mundo, company_id, *, resource_id=None, status="ACTIVE") -> str:
         return str(doc.id)
 
 
-def _doc_con_version(mundo, company_id, *, resource_id) -> str:
+def _doc_con_version(
+    mundo,
+    company_id,
+    *,
+    resource_id,
+    resource_type: str = "GovernmentAct",
+) -> str:
     """Crea StoredFile + DocumentVersion ACTIVE + Document ACTIVE vinculado."""
     with mundo.factory() as db:
         tipo = db.scalar(
@@ -205,7 +211,7 @@ def _doc_con_version(mundo, company_id, *, resource_id) -> str:
                 document_id=doc.id,
                 company_id=company_id,
                 document_type_id=tipo.id,
-                resource_type="GovernmentAct",
+                resource_type=resource_type,
                 resource_id=resource_id,
             )
         )
@@ -874,6 +880,7 @@ def test_ga09_obtener_acto(mundo, gobierno):
         "emitido_en",
         "emitido_por",
         "creado_en",
+        "notificaciones",
     }
     assert set(acto.keys()) == claves_out
 
@@ -1180,68 +1187,14 @@ def _assert_acto_error(resp, expected_status, expected_code):
 
 
 def test_ga16_eficacia_particular_personal(mundo, gobierno):
-    """GA-16: eficacia PARTICULAR personal (acto EMITIDO de GA-14)."""
+    """GA-16: un acto PARTICULAR se vuelve eficaz por DOC-04 (acto EMITIDO de GA-14)."""
     acto_id = ESTADO["particular"]
     version = ESTADO["particular_version"]
-    doc_acto = ESTADO["doc_particular"]
-
-    # soporte = el mismo documento del acto → 422 GOV_ACT_INVALID_DOCUMENT
-    resp = mundo.client.post(
-        f"/api/v1{A}/{acto_id}/eficacia",
-        headers={**mundo.como("ua", mundo.company_a), "If-Match": str(version)},
-        json={
-            "medio": "PERSONAL",
-            "fecha": HOY.isoformat(),
-            "documento_eficacia_id": doc_acto,
-        },
-    )
-    _assert_acto_error(resp, 422, "GOV_ACT_INVALID_DOCUMENT")
-
-    # medio GACETA → 422 GOV_ACT_INVALID_MEDIUM (carácter PARTICULAR)
-    resp = mundo.client.post(
-        f"/api/v1{A}/{acto_id}/eficacia",
-        headers={**mundo.como("ua", mundo.company_a), "If-Match": str(version)},
-        json={
-            "medio": "GACETA",
-            "referencia": "Gaceta Oficial Nº 2.345",
-            "fecha": HOY.isoformat(),
-            "documento_eficacia_id": ESTADO["doc_particular"],
-        },
-    )
-    _assert_acto_error(resp, 422, "GOV_ACT_INVALID_MEDIUM")
-
-    # fecha = día anterior a la fecha del acto → 422
-    resp = mundo.client.post(
-        f"/api/v1{A}/{acto_id}/eficacia",
-        headers={**mundo.como("ua", mundo.company_a), "If-Match": str(version)},
-        json={
-            "medio": "PERSONAL",
-            "fecha": (HOY - timedelta(days=1)).isoformat(),
-            "documento_eficacia_id": _doc_con_version(
-                mundo, mundo.company_a, resource_id=acto_id
-            ),
-        },
-    )
-    assert resp.status_code == 422, resp.text
-
-    # fecha = HOY+1 → 422
-    resp = mundo.client.post(
-        f"/api/v1{A}/{acto_id}/eficacia",
-        headers={**mundo.como("ua", mundo.company_a), "If-Match": str(version)},
-        json={
-            "medio": "PERSONAL",
-            "fecha": (HOY + timedelta(days=1)).isoformat(),
-            "documento_eficacia_id": _doc_con_version(
-                mundo, mundo.company_a, resource_id=acto_id
-            ),
-        },
-    )
-    assert resp.status_code == 422, resp.text
 
     # con un segundo documento ACTIVE vinculado al acto (con DocumentVersion real)
     doc_eficacia = _doc_con_version(mundo, mundo.company_a, resource_id=acto_id)
 
-    # medio PERSONAL, fecha HOY → 200, EFICAZ
+    # 1) POST /eficacia medio PERSONAL sin notificación → 422 GOV_ACT_NOTIFICATION_REQUIRED
     resp = mundo.client.post(
         f"/api/v1{A}/{acto_id}/eficacia",
         headers={**mundo.como("ua", mundo.company_a), "If-Match": str(version)},
@@ -1251,40 +1204,97 @@ def test_ga16_eficacia_particular_personal(mundo, gobierno):
             "documento_eficacia_id": doc_eficacia,
         },
     )
+    _assert_acto_error(resp, 422, "GOV_ACT_NOTIFICATION_REQUIRED")
+
+    # 2) crear la notificación del acto en DOC-04
+    resp = mundo.post(
+        "/gobierno/notificaciones",
+        "ua",
+        mundo.company_a,
+        {
+            "acto_id": acto_id,
+            "tipo_persona": "NATURAL",
+            "nombre": "Proveedor Ejemplo",
+            "identificacion": "V-12345678",
+            "domicilio": "Av. Principal, Caracas",
+            "recursos": "Recurso de reconsideración en 15 días hábiles",
+        },
+    )
+    assert resp.status_code == 201, resp.text
+    notificacion_id = resp.json()["id"]
+    notificacion_version = resp.json()["version"]
+
+    # 3) oficio y recibo vinculados a la notificación
+    oficio = _doc_con_version(
+        mundo,
+        mundo.company_a,
+        resource_id=notificacion_id,
+        resource_type="GovernmentNotification",
+    )
+    recibo = _doc_con_version(
+        mundo,
+        mundo.company_a,
+        resource_id=notificacion_id,
+        resource_type="GovernmentNotification",
+    )
+
+    # 4) intento de notificación ENTREGADA
+    resp = mundo.client.post(
+        f"/api/v1/gobierno/notificaciones/{notificacion_id}/intentos",
+        headers={
+            **mundo.como("ua", mundo.company_a),
+            "If-Match": str(notificacion_version),
+        },
+        json={
+            "medio": "PERSONAL",
+            "resultado": "ENTREGADA",
+            "fecha": HOY.isoformat(),
+            "documento_oficio_id": oficio,
+            "documento_id": recibo,
+            "receptor_nombre": "Ana Gil",
+            "receptor_identificacion": "V-7654321",
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["estado"] == "NOTIFICADA"
+
+    # 5) GET del acto → EFICAZ por la notificación registrada en DOC-04
+    resp = mundo.client.get(
+        f"/api/v1{A}/{acto_id}",
+        headers=mundo.como("ua", mundo.company_a),
+    )
     assert resp.status_code == 200, resp.text
     acto = resp.json()
     assert acto["estado"] == "EFICAZ"
     assert acto["fecha_eficacia"] == HOY.isoformat()
     assert acto["medio"] == "PERSONAL"
-    assert acto["documento_eficacia_id"] == doc_eficacia
+    assert acto["documento_eficacia_id"] == recibo
     assert acto["version"] == version + 1
     ESTADO["particular_version"] = acto["version"]
     ESTADO["particular_eficaz"] = acto
     ESTADO["particular_eficaz_version"] = acto["version"]
-    ESTADO["particular_eficaz_doc"] = doc_eficacia
+    ESTADO["particular_eficaz_doc"] = recibo
 
-    # en BD solo los DocumentLink con versión quedan congelados
+    # 6) en BD los DocumentLink del oficio y el recibo quedan congelados
     with mundo.factory() as db:
         link_states = list(
             db.scalars(
                 select(DocumentLink.is_frozen).where(
                     DocumentLink.company_id == mundo.company_a,
-                    DocumentLink.resource_type == "GovernmentAct",
-                    DocumentLink.resource_id == acto_id,
-                    DocumentLink.document_id.in_(
-                        [ESTADO["doc_particular"], doc_eficacia]
-                    ),
+                    DocumentLink.resource_type == "GovernmentNotification",
+                    DocumentLink.resource_id == notificacion_id,
+                    DocumentLink.document_id.in_([oficio, recibo]),
                 )
             )
         )
         assert len(link_states) == 2
         assert all(link_states)
 
-    # evento GOV_ACT_EFFECTIVENESS_RECORDED
+    # 7) evento GOV_ACT_EFFECTIVENESS_RECORDED
     antes = len(_eventos(mundo, "GOV_ACT_EFFECTIVENESS_RECORDED", mundo.company_a))
     assert antes == 1, antes
 
-    # repetir → 409 GOV_ACT_INVALID_STATE
+    # 8) repetir → 409 GOV_ACT_INVALID_STATE
     resp = mundo.client.post(
         f"/api/v1{A}/{acto_id}/eficacia",
         headers={**mundo.como("ua", mundo.company_a), "If-Match": str(acto["version"])},
@@ -1298,7 +1308,7 @@ def test_ga16_eficacia_particular_personal(mundo, gobierno):
 
 
 def test_ga17_eficacia_particular_prensa(mundo, gobierno):
-    """GA-17: eficacia PARTICULAR por prensa (actos nuevos, emitidos en la prueba)."""
+    """GA-17: la prensa de un acto PARTICULAR también se registra en DOC-04."""
     # acto particular 1: PRENSA sin referencia → 422
     resp = mundo.post(
         A,
@@ -1320,6 +1330,7 @@ def test_ga17_eficacia_particular_prensa(mundo, gobierno):
     assert resp.status_code == 200, resp.text
     version1 = resp.json()["version"]
 
+    # PRENSA de un acto PARTICULAR → 422 GOV_ACT_NOTIFICATION_REQUIRED
     resp = mundo.client.post(
         f"/api/v1{A}/{acto1['id']}/eficacia",
         headers={**mundo.como("ua", mundo.company_a), "If-Match": str(version1)},
@@ -1329,12 +1340,12 @@ def test_ga17_eficacia_particular_prensa(mundo, gobierno):
             "documento_eficacia_id": doc1,
         },
     )
-    assert resp.status_code == 422, resp.text
+    _assert_acto_error(resp, 422, "GOV_ACT_NOTIFICATION_REQUIRED")
 
     # soporte válido distinto del documento del acto
     doc_soporte1 = _doc_con_version(mundo, mundo.company_a, resource_id=acto1["id"])
 
-    # con referencia y fecha HOY → 200, fecha_eficacia == HOY + 15 días
+    # con referencia y fecha HOY → 422 GOV_ACT_NOTIFICATION_REQUIRED
     resp = mundo.client.post(
         f"/api/v1{A}/{acto1['id']}/eficacia",
         headers={**mundo.como("ua", mundo.company_a), "If-Match": str(version1)},
@@ -1345,15 +1356,9 @@ def test_ga17_eficacia_particular_prensa(mundo, gobierno):
             "documento_eficacia_id": doc_soporte1,
         },
     )
-    assert resp.status_code == 200, resp.text
-    acto1_eficaz = resp.json()
-    assert acto1_eficaz["estado"] == "EFICAZ"
-    assert acto1_eficaz["fecha_eficacia"] == (
-        HOY + timedelta(days=15)
-    ).isoformat()
-    version1 = acto1_eficaz["version"]
+    _assert_acto_error(resp, 422, "GOV_ACT_NOTIFICATION_REQUIRED")
 
-    # tercer acto: PRENSA con fecha_eficacia explícita = HOY + 10 → 422
+    # tercer acto: PRENSA también 422 GOV_ACT_NOTIFICATION_REQUIRED
     resp = mundo.post(
         A,
         "ua",
@@ -1373,11 +1378,7 @@ def test_ga17_eficacia_particular_prensa(mundo, gobierno):
     assert resp.status_code == 200, resp.text
     version3 = resp.json()["version"]
     doc_soporte3 = _doc_con_version(mundo, mundo.company_a, resource_id=acto3["id"])
-    fechas = [
-        (HOY + timedelta(days=10), 422),
-        (HOY + timedelta(days=20), 200),
-    ]
-    for fecha_eficacia, expected in fechas:
+    for fecha_eficacia in (HOY + timedelta(days=10), HOY + timedelta(days=20)):
         resp = mundo.client.post(
             f"/api/v1{A}/{acto3['id']}/eficacia",
             headers={**mundo.como("ua", mundo.company_a), "If-Match": str(version3)},
@@ -1389,12 +1390,7 @@ def test_ga17_eficacia_particular_prensa(mundo, gobierno):
                 "fecha_eficacia": fecha_eficacia.isoformat(),
             },
         )
-        if expected == 200:
-            assert resp.status_code == 200, resp.text
-            assert resp.json()["fecha_eficacia"] == fecha_eficacia.isoformat()
-            version3 = resp.json()["version"]
-        else:
-            assert resp.status_code == 422, resp.text
+        _assert_acto_error(resp, 422, "GOV_ACT_NOTIFICATION_REQUIRED")
 
 
 def test_ga18_eficacia_general(mundo, gobierno):

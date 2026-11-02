@@ -30,11 +30,6 @@ const RESPONSABLE_ACTOS = [
   "gobierno_actos:annul",
 ];
 
-function ddmmaaaa(iso: string): string {
-  const [year, month, day] = iso.split("-");
-  return `${day}/${month}/${year}`;
-}
-
 async function mundoConCargo(request: APIRequestContext) {
   const mundo = await prepararMundo(request, RESPONSABLE_ACTOS);
   const tipo = await crearTipoDocumental(request, mundo.headers, mundo.companyId);
@@ -166,7 +161,7 @@ async function sinViolacionesSerias(page: Page, contexto: string): Promise<void>
 }
 
 test.describe("Gobierno · Actos administrativos (DOC-02)", () => {
-  test("DOC2-E2E-01: el responsable registra un acto particular, adjunta el PDF firmado, lo emite, registra la notificación personal y exporta", async ({
+  test("DOC2-E2E-01: el responsable registra un acto particular, adjunta el PDF firmado, lo emite (la notificación se registra en DOC-04) y exporta", async ({
     page,
     request,
   }) => {
@@ -188,7 +183,7 @@ test.describe("Gobierno · Actos administrativos (DOC-02)", () => {
     const formulario = page.getByRole("form", { name: "Registrar acto" });
     await formulario.getByLabel(/^Tipo de acto/).selectOption({ label: "Resolución" });
     await formulario.getByLabel(/^Número/).fill(`DA-001-${ANIO}`);
-    const hoy = await formulario.getByLabel(/^Fecha del acto \*/).inputValue();
+    await expect(formulario.getByLabel(/^Fecha del acto \*/)).toHaveValue(hoyCaracas());
     await formulario.getByLabel(/^Lugar/).fill("Caracas");
     await formulario
       .getByLabel(/^Cargo que lo dicta/)
@@ -265,41 +260,15 @@ test.describe("Gobierno · Actos administrativos (DOC-02)", () => {
 
     await adjuntarPdfDesdeUi(page, documentosActo, tipo.name);
 
-    await page.getByRole("button", { name: "Registrar la notificación" }).click();
-
-    const formularioNotificacion = page.getByRole("form", {
-      name: `Registrar la notificación de Resolución Nº DA-001-${ANIO}`,
-    });
-    await formularioNotificacion.getByRole("radio", { name: "Notificación personal" }).check();
-    await formularioNotificacion.getByLabel(/^Fecha de la notificación/).fill(hoy);
-    const selectSoporte = formularioNotificacion.getByLabel(/^Soporte/);
-    await expect(selectSoporte.locator("option")).toHaveCount(2);
-    await selectSoporte.selectOption({ index: 1 });
-
-    const [eficaciaResp] = await Promise.all([
-      page.waitForResponse(
-        (r) =>
-          new URL(r.url()).pathname.endsWith("/eficacia") &&
-          r.request().method() === "POST",
-        { timeout: 30_000 },
-      ),
-      formularioNotificacion.getByRole("button", { name: "Registrar" }).click(),
-    ]);
-    expect(eficaciaResp.status()).toBe(200);
-
-    await expect(page.getByText("Eficacia registrada")).toBeVisible();
-    await cerrarNotificaciones(page);
-    await expect(
-      page.locator("main").getByRole("status").filter({ hasText: `Eficaz desde ${ddmmaaaa(hoy)}.` }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Registrar la notificación" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Notificaciones", level: 2 })).toBeVisible();
 
     const historial = page.getByRole("region", {
       name: `Historial del acto Resolución Nº DA-001-${ANIO}`,
     });
-    await expect(historial.getByRole("row").filter({ has: page.getByRole("cell") })).toHaveCount(3);
+    await expect(historial.getByRole("row").filter({ has: page.getByRole("cell") })).toHaveCount(2);
     await expect(historial.getByRole("cell", { name: "Borrador", exact: true })).toBeVisible();
     await expect(historial.getByRole("cell", { name: "Emitido", exact: true })).toBeVisible();
-    await expect(historial.getByRole("cell", { name: "Eficaz", exact: true })).toBeVisible();
 
     await page
       .getByRole("navigation", { name: "Ruta de navegación" })
@@ -310,7 +279,7 @@ test.describe("Gobierno · Actos administrativos (DOC-02)", () => {
     const filaActo = page
       .getByRole("row")
       .filter({ has: page.getByRole("link", { name: `Abrir el acto Resolución Nº DA-001-${ANIO}` }) });
-    await expect(filaActo.getByRole("cell", { name: "Eficaz", exact: true })).toBeVisible();
+    await expect(filaActo.getByRole("cell", { name: "Emitido", exact: true })).toBeVisible();
 
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: "Exportar CSV" }).click();

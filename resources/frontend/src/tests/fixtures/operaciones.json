@@ -1242,6 +1242,70 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/notificaciones",
+      "capabilities": [
+        "gobierno_notificaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/notificaciones",
+      "capabilities": [
+        "gobierno_notificaciones:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/notificaciones/exportar",
+      "capabilities": [
+        "gobierno_notificaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/notificaciones/{notificacion_id}",
+      "capabilities": [
+        "gobierno_notificaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/notificaciones/{notificacion_id}",
+      "capabilities": [
+        "gobierno_notificaciones:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/notificaciones/{notificacion_id}/anular",
+      "capabilities": [
+        "gobierno_notificaciones:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/notificaciones/{notificacion_id}/intentos",
+      "capabilities": [
+        "gobierno_notificaciones:record"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/notificaciones/{notificacion_id}/versiones",
+      "capabilities": [
+        "gobierno_notificaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/health/live",
       "capabilities": [],
       "scope": "GLOBAL"
@@ -4801,7 +4865,10 @@
     "gobierno_actos:view",
     "gobierno_actos:edit",
     "gobierno_actos:issue",
-    "gobierno_actos:annul"
+    "gobierno_actos:annul",
+    "gobierno_notificaciones:view",
+    "gobierno_notificaciones:edit",
+    "gobierno_notificaciones:record"
   ],
   "report_capabilities": {
     "executive_ventas": [

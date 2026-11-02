@@ -45,6 +45,12 @@ vi.mock("@/modules/documentos/AdjuntosPanel", () => ({
   ),
 }));
 
+vi.mock("@/modules/gobierno/notificaciones/NotificacionesDelActo", () => ({
+  NotificacionesDelActo: (p: { acto: { id: string } }) => (
+    <div data-testid="notificaciones-del-acto">{p.acto.id}</div>
+  ),
+}));
+
 vi.mock("@/lib/fecha-de-negocio", async (original) => ({
   ...(await original<typeof import("@/lib/fecha-de-negocio")>()),
   hoyDeNegocio: () => "2026-10-30",
@@ -215,6 +221,7 @@ const ACTO_BASE: Acto = {
   documento_eficacia_id: null,
   fecha_eficacia: null,
   revocado_por: null,
+  notificaciones: null,
   anulado_por: null,
   revoca_a: [],
   anula_a: [],
@@ -678,6 +685,55 @@ describe("ActoPage", () => {
           },
         }),
       );
+    });
+  });
+
+  describe("DOC-04 en la página del acto", () => {
+    it("ACP-40 · PARTICULAR EMITIDO muestra Notificaciones y no ofrece registrar notificación/publicación", async () => {
+      capacidades = new Set(["gobierno_actos:view", "gobierno_actos:issue", "gobierno_actos:annul"]);
+      montar({
+        ...ACTO_BASE,
+        caracter: "PARTICULAR",
+        estado: "EMITIDO",
+        documento_acto_id: "d1",
+        notificaciones: { total: 1, notificadas: 0, pendientes: 1 },
+      });
+
+      expect(
+        await screen.findByRole("heading", { level: 2, name: "Notificaciones" }),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("notificaciones-del-acto")).toHaveTextContent("acto-1");
+      expect(screen.queryByRole("button", { name: "Registrar la notificación" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Registrar la publicación" })).not.toBeInTheDocument();
+    });
+
+    it("ACP-41 · GENERAL EMITIDO ofrece Registrar la publicación y no muestra Notificaciones", async () => {
+      capacidades = new Set(["gobierno_actos:view", "gobierno_actos:issue", "gobierno_actos:annul"]);
+      montar({
+        ...ACTO_BASE,
+        caracter: "GENERAL",
+        estado: "EMITIDO",
+        documento_acto_id: "d1",
+        notificaciones: null,
+      });
+
+      await screen.findByText("Asunto del acto");
+      expect(screen.getByRole("button", { name: "Registrar la publicación" })).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { level: 2, name: "Notificaciones" })).not.toBeInTheDocument();
+    });
+
+    it("ACP-42 · PARTICULAR BORRADOR no muestra Notificaciones", async () => {
+      capacidades = new Set(["gobierno_actos:view", "gobierno_actos:issue", "gobierno_actos:annul"]);
+      montar({
+        ...ACTO_BASE,
+        caracter: "PARTICULAR",
+        estado: "BORRADOR",
+        documento_acto_id: null,
+        notificaciones: null,
+      });
+
+      await screen.findByText("Asunto del acto");
+      expect(screen.queryByRole("heading", { level: 2, name: "Notificaciones" })).not.toBeInTheDocument();
     });
   });
 });

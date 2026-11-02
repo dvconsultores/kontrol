@@ -73,6 +73,7 @@ const navSections: NavSection[] = [
       { to: "/gobierno/estructura", label: "Estructura organizativa", icon: Network, modulo: "gobierno" },
       { to: "/gobierno/cargos", label: "Cargos y competencias", icon: BadgeCheck, modulo: "gobierno" },
       { to: "/gobierno/actos", label: "Actos administrativos", icon: ScrollText, modulo: "gobierno" },
+      { to: "/gobierno/notificaciones", label: "Notificaciones administrativas", icon: Send, modulo: "gobierno" },
     ],
   },
   {

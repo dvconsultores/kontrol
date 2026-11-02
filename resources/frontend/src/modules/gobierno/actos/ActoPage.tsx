@@ -36,6 +36,7 @@ import {
 import { ActoFormulario, DatosActo } from "./ActoFormulario";
 import { EmitirActo } from "./EmitirActo";
 import { RegistrarEficacia } from "./RegistrarEficacia";
+import { NotificacionesDelActo } from "@/modules/gobierno/notificaciones/NotificacionesDelActo";
 import { CorregirActo, CorreccionActo } from "./CorregirActo";
 import { ReferenciarActo } from "./ReferenciarActo";
 
@@ -254,9 +255,9 @@ export function ActoPage(): React.JSX.Element {
           Emitir
         </Button>
       )}
-      {acto.estado === "EMITIDO" && puedeEmitir && (
+      {acto.estado === "EMITIDO" && acto.caracter === "GENERAL" && puedeEmitir && (
         <Button variant="primary" onClick={() => setPanel({ tipo: "registrarEficacia" })}>
-          Registrar {acto.caracter === "GENERAL" ? "la publicación" : "la notificación"}
+          Registrar la publicación
         </Button>
       )}
       {(acto.estado === "EMITIDO" || acto.estado === "EFICAZ") && puedeEmitir && (
@@ -608,6 +609,15 @@ export function ActoPage(): React.JSX.Element {
               </div>
             </dl>
           </section>
+
+          {acto.caracter === "PARTICULAR" && acto.estado !== "BORRADOR" && (
+            <section aria-labelledby="notificaciones-acto-titulo" className="mb-8">
+              <h2 id="notificaciones-acto-titulo" className="mb-4 text-lg font-semibold text-text-900">
+                Notificaciones
+              </h2>
+              <NotificacionesDelActo acto={acto} />
+            </section>
+          )}
 
           <section aria-labelledby="relaciones-titulo" className="mb-8">
             <h2 id="relaciones-titulo" className="mb-4 text-lg font-semibold text-text-900">

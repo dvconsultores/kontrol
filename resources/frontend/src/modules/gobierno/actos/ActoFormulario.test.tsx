@@ -139,6 +139,7 @@ function crearActo(): Acto {
     documento_eficacia_id: null,
     fecha_eficacia: null,
     revocado_por: null,
+    notificaciones: null,
     anulado_por: null,
     revoca_a: [],
     anula_a: [],

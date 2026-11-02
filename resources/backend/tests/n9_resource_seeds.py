@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     """Crea una entidad del tipo pedido en esa empresa. Devuelve su id."""
     from app.modules.approvals.models import ApprovalRequest
-    from app.modules.government.models import GovernmentAct, GovernmentEntity, GovernmentPosition, GovernmentStructure, GovernmentUnit
+    from app.modules.government.models import GovernmentAct, GovernmentEntity, GovernmentNotification, GovernmentPosition, GovernmentStructure, GovernmentUnit
     from app.modules.homologation.models import HomologationRecord
     from app.modules.inventory.models import InventoryAdjustment, StockCount
     from app.modules.master_data.models import CatalogItem, Party
@@ -79,8 +79,8 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
                                   code=f"C{prefijo}-{sufijo[:20]}", name=f"Cargo {marca}", status="BORRADOR",
                                   valid_from=inicio, version=1)
 
-    def _acto_de_empresa() -> GovernmentAct:
-        cargo = _cargo_de_empresa("A")
+    def _acto_de_empresa(prefijo: str = "A") -> GovernmentAct:
+        cargo = _cargo_de_empresa(prefijo)
         db.add(cargo)
         db.flush()
         return GovernmentAct(company_id=empresa, tipo="RESOLUCION", numero=f"A-{sufijo[:20]}",
@@ -91,6 +91,15 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
                              fundamento_competencia="Reglamento interno de prueba",
                              funcionario="Funcionario de prueba", titularidad="TITULAR",
                              caracter="INTERNO", asunto=f"Acto {marca}", status="BORRADOR", version=1)
+
+    def _notificacion_de_empresa() -> GovernmentNotification:
+        acto = _acto_de_empresa("N")
+        db.add(acto)
+        db.flush()
+        return GovernmentNotification(company_id=empresa, act_id=str(acto.id), tipo_persona="NATURAL",
+                                      nombre=f"Destinatario {marca}", identificacion="V-1234567",
+                                      identificacion_clave="V1234567", domicilio="Domicilio de prueba",
+                                      recursos="No proceden recursos", status="PENDIENTE", version=1)
 
     def _party(rol: str) -> str:
         p = Party(company_id=empresa, code=f"{marca}-{rol}", name=f"Tercero {marca}",
@@ -228,6 +237,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
             company_id=empresa, entity_id=_ente_de_empresa(), exercise=2030, status="BORRADOR", version=1),
         "GovernmentPosition": _cargo_de_empresa,
         "GovernmentAct": _acto_de_empresa,
+        "GovernmentNotification": _notificacion_de_empresa,
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",
             warehouse_type="PHYSICAL", status="ACTIVE"),

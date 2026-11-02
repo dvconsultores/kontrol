@@ -192,4 +192,18 @@ describe("Sidebar · Gobierno › Actos administrativos", () => {
     montar();
     expect(enlace("Actos administrativos")).toBeNull();
   });
+
+  it("GSB-10 · módulo habilitado y gobierno_notificaciones:view muestra «Notificaciones administrativas»", () => {
+    moduloGobierno = true;
+    permisos = new Set(["gobierno_notificaciones:view"]);
+    montar();
+    expect(enlace("Notificaciones administrativas")).toBeTruthy();
+    expect(enlace("Notificaciones administrativas")).toHaveAttribute("href", "/gobierno/notificaciones");
+  });
+
+  it("GSB-11 · capacidad sin módulo no muestra el enlace de notificaciones", () => {
+    permisos = new Set(["gobierno_notificaciones:view"]);
+    montar();
+    expect(enlace("Notificaciones administrativas")).toBeNull();
+  });
 });

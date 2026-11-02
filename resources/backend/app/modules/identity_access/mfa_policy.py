@@ -128,6 +128,9 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_actos:edit",
         "gobierno_actos:issue",
         "gobierno_actos:annul",
+        # gobierno_notificaciones · destinatarios, intentos y constancias de notificación (DOC-04, PDD-DOC04-04)
+        "gobierno_notificaciones:edit",
+        "gobierno_notificaciones:record",
     }
 )
 
@@ -196,6 +199,8 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_cargos:view",
         # gobierno_actos · consulta y exportación de actos (DOC-02)
         "gobierno_actos:view",
+        # gobierno_notificaciones · consulta y exportación de notificaciones (DOC-04)
+        "gobierno_notificaciones:view",
     }
 )
 

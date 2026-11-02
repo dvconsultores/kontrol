@@ -866,6 +866,52 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/notificaciones",
+      "query": [
+        "acto_id",
+        "anio",
+        "estado"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/notificaciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/notificaciones/exportar",
+      "query": [
+        "anio"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/notificaciones/{notificacion_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/notificaciones/{notificacion_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/notificaciones/{notificacion_id}/anular",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/notificaciones/{notificacion_id}/intentos",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/notificaciones/{notificacion_id}/versiones",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/health/live",
       "query": []
     },

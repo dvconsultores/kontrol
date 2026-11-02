@@ -12,7 +12,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import JSON, BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -197,6 +197,10 @@ TITULARIDADES = ("TITULAR", "DELEGACION", "ENCARGADURIA", "SUPLENCIA")
 CARACTERES_ACTO = ("GENERAL", "PARTICULAR", "INTERNO")
 MEDIOS_EFICACIA = ("GACETA", "PERSONAL", "PRENSA")
 ESTADOS_ACTO = ("BORRADOR", "EMITIDO", "EFICAZ", "REVOCADO", "NULO")
+TIPOS_PERSONA = ("NATURAL", "JURIDICA")
+ESTADOS_NOTIFICACION = ("PENDIENTE", "NOTIFICADA", "ANULADA")
+MEDIOS_NOTIFICACION = ("PERSONAL", "PRENSA")
+RESULTADOS_INTENTO = ("ENTREGADA", "FALLIDA", "PUBLICADA")
 
 
 class GovernmentPosition(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
@@ -366,6 +370,112 @@ class GovernmentActVersion(UUIDMixin, TimestampMixin, Base):
     )
 
     act_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    version: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class GovernmentNotification(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Notificación administrativa de un acto (GOV-DOC-005, DOC-04)."""
+
+    __tablename__ = "gov_notifications"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        Index("ix_gov_notifications_company_status", "company_id", "status"),
+        CheckConstraint(f"tipo_persona IN ({en(TIPOS_PERSONA)})", name="tipo_persona"),
+        CheckConstraint(f"status IN ({en(ESTADOS_NOTIFICACION)})", name="status"),
+        CheckConstraint(f"medio_notificacion IS NULL OR medio_notificacion IN ({en(MEDIOS_NOTIFICACION)})", name="medio"),
+        CheckConstraint(
+            "(status = 'NOTIFICADA') = (fecha_notificacion IS NOT NULL AND medio_notificacion IS NOT NULL)",
+            name="notificada_fechada",
+        ),
+        CheckConstraint("(status = 'ANULADA') = (motivo_anulacion IS NOT NULL)", name="anulada_motivada"),
+        CheckConstraint(
+            "(apoderado_nombre IS NULL) = (apoderado_identificacion IS NULL)",
+            name="apoderado_completo",
+        ),
+        Index(
+            "uq_gov_notifications_act_destinatario",
+            "act_id",
+            "identificacion_clave",
+            unique=True,
+            postgresql_where=text("status <> 'ANULADA'"),
+        ).ddl_if(dialect="postgresql"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    act_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=False, index=True)
+    tipo_persona: Mapped[str] = mapped_column(String(8), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    identificacion: Mapped[str] = mapped_column(String(20), nullable=False)
+    identificacion_clave: Mapped[str] = mapped_column(String(20), nullable=False)
+    domicilio: Mapped[str] = mapped_column(String(500), nullable=False)
+    apoderado_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    apoderado_identificacion: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    recursos: Mapped[str] = mapped_column(Text, nullable=False)
+    documento_oficio_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="PENDIENTE", server_default="PENDIENTE")
+    fecha_notificacion: Mapped[date | None] = mapped_column(Date, nullable=True)
+    medio_notificacion: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+
+class GovernmentNotificationAttempt(UUIDMixin, TimestampMixin, Base):
+    """Intento de notificación administrativa (GOV-DOC-005, DOC-04)."""
+
+    __tablename__ = "gov_notification_attempts"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("notification_id", "numero", name="uq_gov_notification_attempts_numero"),
+        CheckConstraint(f"medio IN ({en(MEDIOS_NOTIFICACION)})", name="medio"),
+        CheckConstraint(f"resultado IN ({en(RESULTADOS_INTENTO)})", name="resultado"),
+        CheckConstraint("numero >= 1", name="numero"),
+        CheckConstraint(
+            "(medio = 'PERSONAL' AND resultado IN ('ENTREGADA', 'FALLIDA')) OR (medio = 'PRENSA' AND resultado = 'PUBLICADA')",
+            name="medio_resultado",
+        ),
+        CheckConstraint(
+            "(resultado = 'ENTREGADA') = (receptor_nombre IS NOT NULL AND receptor_identificacion IS NOT NULL)",
+            name="entregada_receptor",
+        ),
+        CheckConstraint("(resultado = 'FALLIDA') = (motivo_fallo IS NOT NULL)", name="fallida_motivo"),
+        CheckConstraint(
+            "(resultado = 'PUBLICADA') = (diario IS NOT NULL AND referencia IS NOT NULL)",
+            name="publicada_diario",
+        ),
+    )
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    notification_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_notifications.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    medio: Mapped[str] = mapped_column(String(8), nullable=False)
+    resultado: Mapped[str] = mapped_column(String(10), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    receptor_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    receptor_identificacion: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    motivo_fallo: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    diario: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    referencia: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    documento_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False)
+    registrado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class GovernmentNotificationVersion(UUIDMixin, TimestampMixin, Base):
+    """Instantánea de cada cambio de una notificación administrativa (solo inserción)."""
+
+    __tablename__ = "gov_notification_versions"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("notification_id", "version", name="uq_gov_notification_versions_notification_id_version"),
+        CheckConstraint(f"status IN ({en(ESTADOS_NOTIFICACION)})", name="status"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+    notification_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_notifications.id"), nullable=False, index=True)
     company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
     version: Mapped[int] = mapped_column(BigInteger, nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False)

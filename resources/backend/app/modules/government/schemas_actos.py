@@ -541,6 +541,14 @@ class ActoReferidoCorto(BaseModel):
     numero: str
 
 
+class NotificacionesDelActo(BaseModel):
+    """Resumen de las notificaciones administrativas de un acto particular."""
+
+    total: int
+    notificadas: int
+    pendientes: int
+
+
 class ActoOut(BaseModel):
     """Representación completa de un acto administrativo para la API."""
 
@@ -580,6 +588,7 @@ class ActoOut(BaseModel):
     emitido_en: datetime | None
     emitido_por: str | None
     creado_en: datetime
+    notificaciones: NotificacionesDelActo | None = None
 
 
 class ActoResumen(BaseModel):

@@ -125,7 +125,7 @@ Traza requisito → módulo → proceso → backend → pantalla → campo → r
 | GOV-DOC-002 | P0 | N27,N29,N40 | DOC-01 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Mantener documentos originales, versiones, anexos, autor, fecha, firma y hash/integridad cuando tecnicamente aplique. |
 | GOV-DOC-003 | P0 | N02,N25 | DOC-02 | PASS | PASS | PASS | PASS | PASS | READY | OWNER_UAT_READY | Registrar actos administrativos con tipo, autoridad, competencia, motivacion, fecha de eficacia y notificacion. |
 | GOV-DOC-004 | P0 | N25,N26 | DOC-03 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Controlar lapsos, suspensiones, subsanaciones, prorrogas y vencimientos conforme regla versionada. |
-| GOV-DOC-005 | P0 | N25,N29 | DOC-04 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Registrar notificaciones y constancia de recepcion por canal autorizado. |
+| GOV-DOC-005 | P0 | N25,N29 | DOC-04 | PASS | PASS | PASS | PASS | PASS | READY | OWNER_UAT_READY | Registrar notificaciones y constancia de recepcion por canal autorizado. |
 | GOV-DOC-006 | P1 | N29,N40 | DOC-05 | FAIL | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | BLOCKED | Permitir firma electronica cuando sea juridica y tecnicamente procedente, sin asumir que sustituye formalidades especiales. |
 | GOV-DOC-007 | P0 | N18,N21,N22,N37 | DOC-06 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Preservar documentos que soportan cuentas, pagos, bienes y contrataciones conforme politica de retencion definida por el ente. |
 | GOV-DOC-008 | P1 | N27,N40 | DOC-07 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | BLOCKED | Implementar busqueda por expediente, acto, tercero, contrato, presupuesto, bien y fecha con control de acceso. |

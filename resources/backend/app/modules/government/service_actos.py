@@ -7,7 +7,7 @@ import io
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -18,6 +18,7 @@ from app.modules.documents.service import freeze_links
 from app.modules.government.models import (
     GovernmentAct,
     GovernmentActVersion,
+    GovernmentNotification,
     GovernmentPosition,
     GovernmentPositionCompetency,
     GovernmentStructure,
@@ -881,6 +882,29 @@ def salida_acto(db: Session, acto: GovernmentAct) -> dict[str, Any]:
         )
     ).scalars().all()
 
+    notificaciones: dict[str, int] | None = None
+    if acto.caracter == "PARTICULAR":
+        fila = db.execute(
+            select(
+                func.count(GovernmentNotification.id),
+                func.count(GovernmentNotification.id).filter(
+                    GovernmentNotification.status == "NOTIFICADA"
+                ),
+                func.count(GovernmentNotification.id).filter(
+                    GovernmentNotification.status == "PENDIENTE"
+                ),
+            ).where(
+                GovernmentNotification.act_id == acto.id,
+                GovernmentNotification.company_id == acto.company_id,
+                GovernmentNotification.status != "ANULADA",
+            )
+        ).one()
+        notificaciones = {
+            "total": fila[0],
+            "notificadas": fila[1],
+            "pendientes": fila[2],
+        }
+
     return {
         "id": str(acto.id),
         "tipo": acto.tipo,
@@ -931,6 +955,7 @@ def salida_acto(db: Session, acto: GovernmentAct) -> dict[str, Any]:
         "emitido_en": _utc(acto.emitido_en),
         "emitido_por": acto.emitido_por,
         "creado_en": _utc(acto.created_at),
+        "notificaciones": notificaciones,
     }
 
 
@@ -1073,6 +1098,18 @@ def registrar_eficacia(
             "Solo se registra la eficacia de un acto emitido",
         )
 
+    if acto.caracter == "PARTICULAR":
+        raise KontrolError(
+            code="GOV_ACT_NOTIFICATION_REQUIRED",
+            message="La notificación de un acto particular se registra en Notificaciones administrativas",
+            field_errors={
+                "medio": [
+                    "Registre la notificación de cada interesado en Notificaciones administrativas"
+                ]
+            },
+            status_code=422,
+        )
+
     if acto.caracter == "GENERAL" and datos.medio != "GACETA":
         raise KontrolError(
             code="GOV_ACT_INVALID_MEDIUM",
@@ -1080,18 +1117,6 @@ def registrar_eficacia(
             field_errors={"medio": ["Los actos generales se publican en gaceta"]},
             status_code=422,
         )
-    if acto.caracter == "PARTICULAR" and datos.medio not in ("PERSONAL", "PRENSA"):
-        raise KontrolError(
-            code="GOV_ACT_INVALID_MEDIUM",
-            message="El medio no es válido para este acto",
-            field_errors={
-                "medio": [
-                    "Los actos particulares se notifican personalmente o por prensa"
-                ]
-            },
-            status_code=422,
-        )
-
     if datos.medio in ("GACETA", "PRENSA") and not datos.referencia:
         raise _error_campo("referencia", "El medio exige una referencia")
 

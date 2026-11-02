@@ -428,6 +428,7 @@ export interface Acto {
   fecha_publicacion_notificacion: string | null;
   documento_eficacia_id: string | null;
   fecha_eficacia: string | null;
+  notificaciones: NotificacionesDelActo | null;
   revocado_por: ActoReferido | null;
   anulado_por: ActoReferido | null;
   revoca_a: ActoReferidoCorto[];
@@ -553,3 +554,148 @@ export function nombreDeActo(a: {
 }
 
 export const CONSULTA_ACTOS = [...CONSULTA_GOBIERNO, "actos"] as const;
+
+// ---------------------------------------------------------------------------
+// Notificaciones administrativas (DOC-04)
+// ---------------------------------------------------------------------------
+
+export type TipoPersona = "NATURAL" | "JURIDICA";
+export type EstadoNotificacion = "PENDIENTE" | "NOTIFICADA" | "ANULADA";
+export type MedioIntento = "PERSONAL" | "PRENSA";
+export type ResultadoIntento = "ENTREGADA" | "FALLIDA" | "PUBLICADA";
+
+export interface ActoDeNotificacion {
+  id: string;
+  tipo: TipoActo;
+  denominacion_tipo: string | null;
+  numero: string;
+  fecha: string;
+  estado: EstadoActo;
+}
+
+export interface NotificacionEntrada {
+  acto_id: string;
+  tipo_persona: TipoPersona;
+  nombre: string;
+  identificacion: string;
+  domicilio: string;
+  apoderado_nombre: string | null;
+  apoderado_identificacion: string | null;
+  recursos: string;
+}
+
+export type NotificacionCambio = Partial<Omit<NotificacionEntrada, "acto_id">>;
+
+export interface IntentoEntrada {
+  medio: MedioIntento;
+  resultado: ResultadoIntento;
+  fecha: string;
+  documento_oficio_id: string;
+  documento_id: string;
+  receptor_nombre: string | null;
+  receptor_identificacion: string | null;
+  motivo_fallo: string | null;
+  diario: string | null;
+  referencia: string | null;
+}
+
+export interface Intento {
+  numero: number;
+  medio: MedioIntento;
+  resultado: ResultadoIntento;
+  fecha: string;
+  receptor_nombre: string | null;
+  receptor_identificacion: string | null;
+  motivo_fallo: string | null;
+  diario: string | null;
+  referencia: string | null;
+  documento_id: string;
+  registrado_por: string | null;
+  creado_en: string;
+}
+
+export interface Notificacion {
+  id: string;
+  acto: ActoDeNotificacion;
+  tipo_persona: TipoPersona;
+  nombre: string;
+  identificacion: string;
+  domicilio: string;
+  apoderado_nombre: string | null;
+  apoderado_identificacion: string | null;
+  recursos: string;
+  documento_oficio_id: string | null;
+  estado: EstadoNotificacion;
+  fecha_notificacion: string | null;
+  medio_notificacion: MedioIntento | null;
+  motivo_anulacion: string | null;
+  intentos: Intento[];
+  puede_publicar_en_prensa: boolean;
+  version: number;
+  creado_en: string;
+}
+
+export interface NotificacionResumen {
+  id: string;
+  acto: ActoDeNotificacion;
+  tipo_persona: TipoPersona;
+  nombre: string;
+  identificacion: string;
+  estado: EstadoNotificacion;
+  intentos: number;
+  fecha_notificacion: string | null;
+  medio_notificacion: MedioIntento | null;
+}
+
+export interface ListaNotificaciones {
+  anio: number;
+  items: NotificacionResumen[];
+  total: number;
+}
+
+export interface VersionNotificacion {
+  version: number;
+  estado: EstadoNotificacion;
+  motivo: string | null;
+  actor: string | null;
+  creado_en: string;
+  instantanea: Record<string, unknown>;
+}
+
+export interface VersionesNotificacion {
+  items: VersionNotificacion[];
+  total: number;
+}
+
+export interface NotificacionesDelActo {
+  total: number;
+  notificadas: number;
+  pendientes: number;
+}
+
+export const ETIQUETA_TIPO_PERSONA: Record<TipoPersona, string> = {
+  NATURAL: "Persona natural",
+  JURIDICA: "Persona jurídica",
+};
+
+export const ETIQUETA_ESTADO_NOTIFICACION: Record<EstadoNotificacion, string> = {
+  PENDIENTE: "Pendiente",
+  NOTIFICADA: "Notificada",
+  ANULADA: "Anulada",
+};
+
+export const ETIQUETA_MEDIO_INTENTO: Record<MedioIntento, string> = {
+  PERSONAL: "Notificación personal",
+  PRENSA: "Publicación en prensa",
+};
+
+export const ETIQUETA_RESULTADO_INTENTO: Record<ResultadoIntento, string> = {
+  ENTREGADA: "Entregada",
+  FALLIDA: "Intento fallido",
+  PUBLICADA: "Publicada",
+};
+
+// LOPA art. 76: se entiende notificado 15 días después de la publicación.
+export const DIAS_PRENSA = 15;
+
+export const CONSULTA_NOTIFICACIONES = [...CONSULTA_GOBIERNO, "notificaciones"] as const;

@@ -4,6 +4,8 @@
 
 ## Resumen para la dueña
 
+**Actualización GOV-DOC-04 (2026-11-02): ya hay cinco procesos de Gobierno que puedes probar como usuaria; el nuevo es «Notificaciones administrativas con constancia de recepción por canal autorizado» (menú Gobierno › Notificaciones administrativas; los destinatarios se agregan desde el acto particular): a cada interesado se le entrega el acto en persona con recibo firmado o, si no se pudo, se publica en prensa y queda notificado a los 15 días (LOPA arts. 75–76); cuando todos están notificados, el acto pasa a «Eficaz» con la fecha más tardía. El panel «Registrar la notificación» de DOC-02 ya no existe para los actos particulares: la Gaceta de los actos generales sigue en DOC-02.** Su tarjeta está en `OWNER_UAT_READY_CATALOG.md`. Ninguno está aceptado: eso lo decides tú al probarlos.
+
 **Actualización GOV-DOC-02 (2026-11-01): ya hay cuatro procesos de Gobierno que puedes probar como usuaria; el nuevo es «Actos administrativos con autoridad, competencia, motivación, eficacia y notificación» (menú Gobierno › Actos administrativos): registras el acto ya firmado con el cargo que lo dicta y su competencia, lo emites sobre su PDF, registras su publicación o notificación (con la regla de 15 días de la prensa) y, si hace falta, su corrección, revocación o nulidad.** Su tarjeta está en `OWNER_UAT_READY_CATALOG.md`. Ninguno está aceptado: eso lo decides tú al probarlos.
 
 **Actualización GOV-0-04 (2026-11-01): «Responsables por unidad, programa, proyecto, cuenta, almacén, caja, banco, contrato y bien» (ORG-05) queda BLOQUEADO: de los nueve objetos sobre los que hay que nombrar responsables, Gobierno solo tiene hoy las unidades; programas, proyectos, cuentas, almacenes, cajas, cuentas bancarias, contratos y bienes llegan con sus propios procesos. Además hacen falta tres decisiones tuyas (`specs/gov-0-04-responsables/evidence/ORG05_BLOCKER_REPORT.md`). Tu entorno de prueba ya tiene ORG-03.** Las cifras de avance no cambian.
@@ -22,8 +24,8 @@ Esto no contradice informes anteriores: ninguno afirmó que Gobierno estuviera l
 | Indicador | Valor | Fórmula y denominador |
 |---|---|---|
 | **Technical Foundation Readiness** | **36,8 %** | 14 fundamentos COMPLETE ÷ 38 fundamentos aplicables (34,2 % = 13/38 en la retrospectiva; +F05 al cerrar el ciclo 07) |
-| **Functional Product Completeness** | **3,4 %** (3,36 %) | 43 compuertas en PASS ÷ 1 280 compuertas aplicables (ORG-01: 10/10; ORG-02: 11/11; ORG-03: 11/11; DOC-02: 11/11; 0 en la retrospectiva) |
-| **Owner UAT Ready** | **3,3 %** (3,28 %) | 4 procesos listos para probar (ORG-01, ORG-02, ORG-03, DOC-02) ÷ 122 procesos requeridos |
+| **Functional Product Completeness** | **4,2 %** (4,22 %) | 54 compuertas en PASS ÷ 1 280 compuertas aplicables (ORG-01: 10/10; ORG-02: 11/11; ORG-03: 11/11; DOC-02: 11/11; DOC-04: 11/11; 0 en la retrospectiva) |
+| **Owner UAT Ready** | **4,1 %** (4,10 %) | 5 procesos listos para probar (ORG-01, ORG-02, ORG-03, DOC-02, DOC-04) ÷ 122 procesos requeridos |
 | **Owner Accepted** | **0,0 %** | 0 procesos aceptados por la dueña ÷ 122 |
 
 No hay redondeo al alza. Las cuatro cifras no se combinan.
@@ -41,20 +43,22 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 | Tesorería pública | 10 | 0 | 0 | 0 | 8 | 2 | NO |
 | Contabilidad pública | 8 | 0 | 0 | 0 | 3 | 5 | NO |
 | Bienes públicos / Activo fijo patrimonial | 11 | 0 | 0 | 0 | 5 | 6 | NO |
-| Expedientes y actos administrativos | 8 | 0 | 0 | 0 | 4 | 4 | NO |
+| Expedientes y actos administrativos | 8 | 0 | 2 | 0 | 2 | 4 | NO |
 | Control interno, auditoría y rendición | 10 | 0 | 0 | 0 | 8 | 2 | NO |
 | Gobierno Digital: trámites e interoperabilidad | 3 | 0 | 0 | 0 | 0 | 3 | NO |
 | Gasto de personal e interfaz Atenea | 3 | 0 | 0 | 0 | 1 | 2 | NO |
 | Integraciones institucionales | 7 | 0 | 0 | 0 | 1 | 6 | NO |
 | Reportes y tableros institucionales | 11 | 0 | 0 | 0 | 6 | 5 | NO |
-| **Total** | **122** | **0** | **3** | **0** | **66** | **53** | **0 de 15** |
+| **Total** | **122** | **0** | **5** | **0** | **64** | **53** | **0 de 15** |
+
+(Errata corregida en GOV-DOC-04: la fila de Expedientes y el total no se habían actualizado con DOC-02.)
 
 - **Prefecturas:** no está en los requisitos ni en el repositorio (MOQ-RETRO-02).
 - **Activos fijos privados (Spec 057):** PLANNED / NOT_STARTED; es otra línea de producto.
 
-**Listos para probar:** 4 (ORG-01, ORG-02, ORG-03, DOC-02; `OWNER_UAT_READY_CATALOG.md`).
+**Listos para probar:** 5 (ORG-01, ORG-02, ORG-03, DOC-02, DOC-04; `OWNER_UAT_READY_CATALOG.md`).
 **Parciales:** ninguno. No hay nada de Gobierno construido a medias.
-**No iniciados:** 65 procesos sin otro impedimento que la puerta general de entrada (freeze del sponsor y autorización); 122 = 4 listos + 65 no iniciados + 53 bloqueados (errata: hasta GOV-0-03 decía 69 sin descontar los listos).
+**No iniciados:** 64 procesos sin otro impedimento que la puerta general de entrada (freeze del sponsor y autorización); 122 = 5 listos + 64 no iniciados + 53 bloqueados (errata: hasta GOV-0-03 decía 69 sin descontar los listos).
 **Bloqueados por norma o decisión:** 53 procesos.
 - 35 dependen de una decisión del sponsor D-GOV-01..08:
   - la jurisdicción piloto;
@@ -92,13 +96,13 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
   - los NOT_MEASURED.
 - Recuento: COMPLETE 14 · PARTIAL 12 · NOT_STARTED 7 · NOT_MEASURED 4 · BLOCKED 1.
 
-**B · Functional Product Completeness = 43 ÷ 1 280 = 3,36 %** (0 en la retrospectiva; +10 de ORG-01 con GOV-0-01, 2026-10-30; +11 de ORG-02 con GOV-0-02, 2026-10-31; +11 de ORG-03 con GOV-0-03 y +11 de DOC-02 con GOV-DOC-02, 2026-11-01).
+**B · Functional Product Completeness = 54 ÷ 1 280 = 4,22 %** (0 en la retrospectiva; +10 de ORG-01 con GOV-0-01, 2026-10-30; +11 de ORG-02 con GOV-0-02, 2026-10-31; +11 de ORG-03 con GOV-0-03 y +11 de DOC-02 con GOV-DOC-02, 2026-11-01; +11 de DOC-04 con GOV-DOC-04, 2026-11-02).
 - Hay 122 procesos × 11 compuertas funcionales: backend, frontend, menú, proceso, campos, roles, documentos, reportes, auditoría, E2E y ficha de pantalla. Eso da 1 342.
 - Se restan 44 compuertas de documentos y 18 de reportes que no aplican: quedan 1 280.
-- En PASS: las 10 compuertas aplicables de ORG-01 (reportes no aplica, justificado en su Spec) y las 11 de ORG-02, ORG-03 y DOC-02 (listado + CSV, documento obligatorio). Ninguna otra.
+- En PASS: las 10 compuertas aplicables de ORG-01 (reportes no aplica, justificado en su Spec) y las 11 de ORG-02, ORG-03, DOC-02 y DOC-04 (listado + CSV, documento obligatorio). Ninguna otra.
 - Aunque fuese mayor que 0, este porcentaje **no** dice que un módulo esté terminado: eso solo lo dice la tabla de módulos.
 
-**C · Owner UAT Ready = 4 ÷ 122 = 3,28 %** (ORG-01, ORG-02, ORG-03, DOC-02), y **Owner Accepted = 0 ÷ 122 = 0,0 %** (solo la dueña lo concede).
+**C · Owner UAT Ready = 5 ÷ 122 = 4,10 %** (ORG-01, ORG-02, ORG-03, DOC-02, DOC-04), y **Owner Accepted = 0 ÷ 122 = 0,0 %** (solo la dueña lo concede).
 
 ## Requisitos de Ingeniería (§38, §70)
 

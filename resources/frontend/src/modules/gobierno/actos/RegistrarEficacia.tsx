@@ -9,7 +9,6 @@ import { apiFetch } from "@/api/client";
 import {
   formatearFechaDeNegocio,
   hoyDeNegocio,
-  sumarDiasDeNegocio,
 } from "@/lib/fecha-de-negocio";
 import {
   Acto,
@@ -33,8 +32,6 @@ export interface RegistrarEficaciaProps {
   erroresServidor: Record<string, string[]>;
 }
 
-
-
 export function RegistrarEficacia(props: RegistrarEficaciaProps) {
   const { acto, onConfirmar, onCancelar, erroresServidor } = props;
 
@@ -45,7 +42,7 @@ export function RegistrarEficacia(props: RegistrarEficaciaProps) {
   const idSoporte = useId();
   const idFechaEficacia = useId();
 
-  const medios = MEDIOS_POR_CARACTER[acto.caracter];
+  const medios = MEDIOS_POR_CARACTER.GENERAL;
   const [medio, setMedio] = useState<MedioEficacia | "">(
     medios.length === 1 ? medios[0] : "",
   );
@@ -89,19 +86,14 @@ export function RegistrarEficacia(props: RegistrarEficaciaProps) {
     });
   };
 
-  const fechaBaseEficacia =
-    medio && fecha
-      ? medio === "PRENSA"
-        ? sumarDiasDeNegocio(fecha, 15)
-        : fecha
-      : null;
+  const fechaBaseEficacia = fecha;
 
   const confirmar = async () => {
     const errores: Record<string, string> = {};
     if (!medio) {
       errores.medio = "Seleccione el medio";
     }
-    if (medio === "GACETA" || medio === "PRENSA") {
+    if (medio === "GACETA") {
       if (referencia.trim().length < 3 || referencia.trim().length > 120) {
         errores.referencia = "Indique la referencia (de 3 a 120 caracteres)";
       }
@@ -131,23 +123,15 @@ export function RegistrarEficacia(props: RegistrarEficaciaProps) {
 
     await onConfirmar({
       medio: medio as MedioEficacia,
-      referencia:
-        medio === "GACETA" || medio === "PRENSA" ? referencia.trim() : null,
+      referencia: medio === "GACETA" ? referencia.trim() : null,
       fecha,
       documento_eficacia_id: documentoEficaciaId,
       fecha_eficacia: fechaEficacia || null,
     });
   };
 
-  const titulo =
-    acto.caracter === "GENERAL"
-      ? "Registrar la publicación"
-      : "Registrar la notificación";
-
-  const tituloFecha =
-    medio === "PERSONAL"
-      ? "Fecha de la notificación"
-      : "Fecha de la publicación";
+  const titulo = "Registrar la publicación";
+  const tituloFecha = "Fecha de la publicación";
 
   const fechaEficaciaMostrada = fechaEficacia || fechaBaseEficacia;
   const textoEficacia = fechaEficaciaMostrada
@@ -195,13 +179,13 @@ export function RegistrarEficacia(props: RegistrarEficaciaProps) {
         )}
       </fieldset>
 
-      {(medio === "GACETA" || medio === "PRENSA") && (
+      {medio === "GACETA" && (
         <FormField
           label="Referencia de la publicación"
           htmlFor={idReferencia}
           required
           error={errorDe("referencia")}
-          help="Gaceta Oficial Nº… o nombre del diario"
+          help="Gaceta Oficial Nº…"
         >
           <TextInput
             id={idReferencia}
@@ -241,7 +225,7 @@ export function RegistrarEficacia(props: RegistrarEficaciaProps) {
         htmlFor={idSoporte}
         required
         error={errorDe("documento_eficacia_id")}
-        help="Gaceta, recibo firmado o ejemplar del diario"
+        help="Gaceta Oficial en la que se publicó el acto"
       >
         <select
           id={idSoporte}
