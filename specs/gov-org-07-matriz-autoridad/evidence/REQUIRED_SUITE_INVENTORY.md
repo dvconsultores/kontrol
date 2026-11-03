@@ -31,7 +31,7 @@ Creado al certificar (2026-11-02/03). Ejecución: Claude; código y pruebas: Dee
 | 25 | Accesibilidad y responsive | axe 1280/768/320 en ORG7-E2E-05 | PASS tras T007c (regiones desplazables enfocables); sin desbordamiento a 320 px |
 | 26 | Ficha de pantallas | `ORG07_SCREEN_FORM_MATRIX.md` | PASS · 1 pantalla + 1 panel; formularios de escritura N/A; 0 faltantes |
 | 27 | Tarjeta UAT | `OWNER_UAT_CARD.md` | PASS · 8 pasos, negativas a–d, filtros, exportación, historia |
-| 28 | Humo UAT en la pila relanzada | HUMO-UAT-01 en 18100/15273/18110 | ver `UAT_SMOKE.md` |
+| 28 | Humo UAT en la pila relanzada | HUMO-UAT-01 en 18100/15273/18110 | PASS · `r20261103t210328p49911nc44a49` en `396710b`: 1/1, seis pantallas por el menú (`UAT_SMOKE.md`) |
 | 29 | Convergencia | revisión de spec/plan/tasks contra el código | PASS · 0 hallazgos abiertos; hallazgos ya resueltos en el ciclo: validación de filtros sin cargos (T004b), plural, accesibilidad de la tabla, contrato de consulta (QC-02) |
 | 30 | Secretos | escaneo del diff | PASS · sin claves, tokens, contraseñas ni URLs con credenciales; el `.docx` protegido no entra; los encargos con una línea de QA sensible se enmascararon antes de salir |
 | 31 | Residuos | corridas, puertos, bases efímeras | PASS · todas las corridas con limpieza LIMPIA; 18000/15173/18010 libres |
