@@ -699,3 +699,74 @@ export const ETIQUETA_RESULTADO_INTENTO: Record<ResultadoIntento, string> = {
 export const DIAS_PRENSA = 15;
 
 export const CONSULTA_NOTIFICACIONES = [...CONSULTA_GOBIERNO, "notificaciones"] as const;
+
+// ORG-07: matriz auditable de autoridad (GOV-ORG-010), proyección de lectura de los cargos de ORG-03.
+export interface MatrizEjercicio { ejercicio: number; estado: EstadoEstructura; }
+export interface MatrizEjercicios { items: MatrizEjercicio[]; }
+export interface MatrizUnidadFiltro { id: string; codigo: string; denominacion: string; ruta: string; }
+export interface MatrizCargoFiltro { id: string; codigo: string; denominacion: string; }
+export interface MatrizFiltros { unidades: MatrizUnidadFiltro[]; cargos: MatrizCargoFiltro[]; }
+export interface MatrizVersionDeFila { version: number; registrada_en: string; motivo: string | null; }
+export interface MatrizFila {
+  id: string; cargo_id: string; cargo_codigo: string; cargo_denominacion: string; unidad_id: string;
+  unidad_codigo: string | null; unidad_denominacion: string | null; ruta_unidad: string;
+  accion: AccionCompetencia; materia: MateriaCompetencia; tipo_limite: TipoDeLimite; monto: string | null;
+  moneda: MonedaDeLimite | null; fundamento: string | null; vigente_desde: string; vigente_hasta: string | null;
+  estado_cargo: EstadoCargo; acto_soporte: string[]; version: MatrizVersionDeFila; origen: "CARGO";
+}
+export interface MatrizAutoridad {
+  ejercicio: number; fecha: string; estructura: { estado: EstadoEstructura }; items: MatrizFila[];
+  total: number; cargos: number; pagina: number; por_pagina: number;
+}
+export interface MatrizDocumento { documento_id: string; titulo: string; }
+export interface MatrizCargo {
+  id: string; codigo: string; denominacion: string; unidad_codigo: string | null; unidad_denominacion: string | null;
+  ruta_unidad: string; estado: EstadoCargo; vigente_desde: string; vigente_hasta: string | null;
+}
+export interface MatrizCompetenciaDeVersion {
+  accion: AccionCompetencia; materia: MateriaCompetencia; tipo_limite: TipoDeLimite; monto: string | null;
+  moneda: MonedaDeLimite | null; fundamento: string | null;
+}
+export interface MatrizVersion {
+  version: number; estado: EstadoCargo; motivo: string | null; creado_en: string; competencias: MatrizCompetenciaDeVersion[];
+}
+export interface MatrizDetalleCargo { cargo: MatrizCargo; acto_soporte: MatrizDocumento[]; versiones: MatrizVersion[]; }
+/** Filtros de la matriz; los vacíos no viajan. */
+export interface FiltrosMatriz {
+  fecha?: string; unidad_id?: string; cargo_id?: string; accion?: AccionCompetencia | ""; materia?: MateriaCompetencia | ""; texto?: string;
+}
+/** Cadena de consulta («?a=1&b=2» o «») con los filtros no vacíos, en el orden fecha, unidad_id, cargo_id, accion, materia, texto, y
+ *  después los extra (p. ej. pagina y por_pagina) en el orden recibido. `texto` viaja recortado. */
+function valorDeConsulta(valor: string | number | undefined): string | undefined {
+  if (valor === undefined) return undefined;
+  const texto = typeof valor === "number" ? String(valor) : valor;
+  if (texto.trim() === "") return undefined;
+  return texto;
+}
+
+export function consultaDeMatriz(
+  filtros: FiltrosMatriz,
+  paginacion: { pagina?: number; por_pagina?: number } = {},
+): string {
+  const params = new URLSearchParams();
+  const fecha = valorDeConsulta(filtros.fecha);
+  if (fecha !== undefined) params.append("fecha", fecha);
+  const unidadId = valorDeConsulta(filtros.unidad_id);
+  if (unidadId !== undefined) params.append("unidad_id", unidadId);
+  const cargoId = valorDeConsulta(filtros.cargo_id);
+  if (cargoId !== undefined) params.append("cargo_id", cargoId);
+  const accion = valorDeConsulta(filtros.accion);
+  if (accion !== undefined) params.append("accion", accion);
+  const materia = valorDeConsulta(filtros.materia);
+  if (materia !== undefined) params.append("materia", materia);
+  const texto = valorDeConsulta(filtros.texto?.trim());
+  if (texto !== undefined) params.append("texto", texto);
+  const pagina = valorDeConsulta(paginacion.pagina);
+  if (pagina !== undefined) params.append("pagina", pagina);
+  const porPagina = valorDeConsulta(paginacion.por_pagina);
+  if (porPagina !== undefined) params.append("por_pagina", porPagina);
+  const cadena = params.toString();
+  return cadena === "" ? "" : `?${cadena}`;
+}
+export const POR_PAGINA_MATRIZ = 50;
+export const CONSULTA_AUTORIDAD = [...CONSULTA_GOBIERNO, "autoridad"] as const;

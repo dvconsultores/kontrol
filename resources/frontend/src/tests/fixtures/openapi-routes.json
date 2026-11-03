@@ -721,6 +721,47 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/autoridad/ejercicios",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/autoridad/{ejercicio}",
+      "query": [
+        "accion",
+        "cargo_id",
+        "fecha",
+        "materia",
+        "pagina",
+        "por_pagina",
+        "texto",
+        "unidad_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/autoridad/{ejercicio}/cargos/{cargo_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/autoridad/{ejercicio}/exportar",
+      "query": [
+        "accion",
+        "cargo_id",
+        "fecha",
+        "materia",
+        "texto",
+        "unidad_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/autoridad/{ejercicio}/filtros",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/ente",
       "query": []
     },

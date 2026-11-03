@@ -16,7 +16,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | ORG-04 | Delegaciones, suplencias, encargadurías y designaciones con acto | P0 | Máxima autoridad | GOV-ORG-004 GOV-ORG-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | Delegaciones del motor 045 (sin acto administrativo) |
 | ORG-05 | Responsables por unidad, programa, cuenta, almacén, caja, contrato y bien, con historia | P0 | Administración institucional | GOV-ORG-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | DOMAIN_DEPENDENCY: 8 de 9 objetos sin modelo en Gobierno (BUD-03, ACC-01, WH-02, TRE-08, TRE-01, CNT-01, AST-01); MATERIAL_OQ OQ-ORG05-01..03 (specs/gov-0-04-responsables) | — | — |
 | ORG-06 | Vincular usuario con identidad, cargo, unidad y alcance; separación de roles | P0 | Administración institucional | GOV-ORG-007 GOV-ORG-005 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | Usuarios, roles y alcance por empresa (003): otro contrato |
-| ORG-07 | Matriz auditable de quién puede solicitar, comprometer, causar, pagar, custodiar, aprobar y auditar | P0 | Control Interno | GOV-ORG-010 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
+| ORG-07 | Matriz auditable de quién puede solicitar, comprometer, causar, pagar, custodiar, aprobar y auditar | P0 | Control Interno | GOV-ORG-010 | ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | ORG7-E2E-01..05 (×3 navegadores) + HUMO-UAT-01 | — |
 
 ## Presupuesto público (Budget Ledger)
 

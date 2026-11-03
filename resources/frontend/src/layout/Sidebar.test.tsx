@@ -206,4 +206,21 @@ describe("Sidebar · Gobierno › Actos administrativos", () => {
     montar();
     expect(enlace("Notificaciones administrativas")).toBeNull();
   });
+
+  it("GSB-12 · módulo habilitado y gobierno_autoridad:view muestra «Matriz de autoridad»", () => {
+    moduloGobierno = true;
+    permisos = new Set(["gobierno_autoridad:view"]);
+    montar();
+    const item = enlace("Matriz de autoridad");
+    expect(item).not.toBeNull();
+    expect(item?.getAttribute("href")).toBe("/gobierno/autoridad");
+  });
+
+  it("GSB-13 · gobierno_cargos:view sin gobierno_autoridad:view no muestra la matriz", () => {
+    moduloGobierno = true;
+    permisos = new Set(["gobierno_cargos:view"]);
+    montar();
+    expect(enlace("Matriz de autoridad")).toBeNull();
+    expect(enlace("Cargos y competencias")).not.toBeNull();
+  });
 });

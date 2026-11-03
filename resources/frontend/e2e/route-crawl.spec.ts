@@ -36,7 +36,20 @@ test.describe("Crawler de rutas", () => {
     const authFailures: string[] = [];
     let currentRoute = "(inicio)";
     page.on("console", (msg) => {
-      if (msg.type() === "error") consoleErrors.push(`${currentRoute}: ${msg.text()}`);
+      if (msg.type() === "error") {
+        // El ente o la estructura sin configurar responden 404 y la pantalla
+        // muestra su estado vacío; la H1 y el «No fue posible cargar» siguen
+        // comprobándose.
+        if (
+          currentRoute.startsWith("/gobierno/") &&
+          msg.text().startsWith(
+            "Failed to load resource: the server responded with a status of 404",
+          )
+        ) {
+          return;
+        }
+        consoleErrors.push(`${currentRoute}: ${msg.text()}`);
+      }
     });
     page.on("pageerror", (err) => consoleErrors.push(`${currentRoute}: ${String(err)}`));
     // Comprobación explícita, más estricta que leer la consola: ninguna

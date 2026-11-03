@@ -79,12 +79,15 @@ test.describe("accesibilidad del contexto de empresa", () => {
   });
 
   test("el botón anuncia la empresa activa y su función", async ({ page }) => {
+    const respuesta = page.waitForResponse((r) =>
+      r.url().includes("/api/v1/gobierno/modulo"));
     await entrar(page, "uab");
+    const gobierno = (await (await respuesta).json()).habilitado === true;
     await page.getByTestId("elegir-empresa-D1").click();
     const boton = page.getByTestId("selector-empresa");
     const etiqueta = await boton.getAttribute("aria-label");
     expect(etiqueta).toContain(IDS.nombre_a);
-    expect(etiqueta).toContain("Cambiar de empresa");
+    expect(etiqueta).toContain(gobierno ? "Cambiar de ente" : "Cambiar de empresa");
     expect(await boton.getAttribute("aria-haspopup")).toBe("listbox");
     expect(await boton.getAttribute("aria-expanded")).toBe("false");
   });

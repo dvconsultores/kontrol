@@ -10,7 +10,9 @@ const TRAS_LA_SUITE = /licencia-revision\.spec\.ts/;
 const TRAS_LA_REVISION = /licencia-sync\.spec\.ts/;
 const TRAS_EL_SYNC = /licencia-rotacion\.spec\.ts/;
 const TRAS_LA_ROTACION = /licencia-tasa\.spec\.ts/;
-const DEPENDIENTES = /licencia-(revision|sync|rotacion|tasa)\.spec\.ts/;
+/** Importan licencias aceptadas: cambian el estado de toda la instalación y no pueden correr junto a la suite de producto. */
+const ESTADO_DE_LICENCIA = /licencia-(import|periodo)\.spec\.ts/;
+const DEPENDIENTES = /licencia-(import|periodo|revision|sync|rotacion|tasa)\.spec\.ts/;
 /** Humo del entorno de prueba de la dueña: solo bajo pedido (`--project=humo-uat`), no en la canónica (QA-LIC-GOB-01). */
 const HUMO_UAT = /uat-humo-gobierno\.spec\.ts/;
 
@@ -32,9 +34,11 @@ export default defineConfig({
     { name: "chromium", testIgnore: [DEPENDIENTES, HUMO_UAT], use: { ...devices["Desktop Chrome"] } },
     { name: "firefox", testIgnore: [DEPENDIENTES, HUMO_UAT], use: { ...devices["Desktop Firefox"] } },
     { name: "webkit", testIgnore: [DEPENDIENTES, HUMO_UAT], use: { ...devices["Desktop Safari"] } },
+    // Después de la suite de producto (chromium, la de la canónica) y en un solo proyecto: las importaciones de licencia ya no se cruzan con ella.
+    { name: "licencia-estado", testMatch: ESTADO_DE_LICENCIA, dependencies: ["chromium"], use: { ...devices["Desktop Chrome"] } },
     // El linaje revisionado de la licencia cambia el identificador vigente y deja el estado revisionado:
     // corre después de todo lo demás (depende de `chromium`), sobre la misma base de la corrida.
-    { name: "licencia-revision", testMatch: TRAS_LA_SUITE, dependencies: ["chromium"], use: { ...devices["Desktop Chrome"] } },
+    { name: "licencia-revision", testMatch: TRAS_LA_SUITE, dependencies: ["licencia-estado"], use: { ...devices["Desktop Chrome"] } },
     // El sync autenticado contra la Autoridad Central real de la corrida: después del linaje, sobre el estado que deja.
     { name: "licencia-sync", testMatch: TRAS_LA_REVISION, dependencies: ["licencia-revision"], use: { ...devices["Desktop Chrome"] } },
     // La rotación de la clave del propietario (confianza A+B, kid firmado): al final, sobre el estado que deja el sync.

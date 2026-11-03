@@ -12,6 +12,7 @@ import {
   FileCheck,
   FileDown,
   FileText,
+  Grid3x3,
   Hash,
   Home,
   KeyRound,
@@ -74,6 +75,7 @@ const navSections: NavSection[] = [
       { to: "/gobierno/cargos", label: "Cargos y competencias", icon: BadgeCheck, modulo: "gobierno" },
       { to: "/gobierno/actos", label: "Actos administrativos", icon: ScrollText, modulo: "gobierno" },
       { to: "/gobierno/notificaciones", label: "Notificaciones administrativas", icon: Send, modulo: "gobierno" },
+      { to: "/gobierno/autoridad", label: "Matriz de autoridad", icon: Grid3x3, modulo: "gobierno" },
     ],
   },
   {

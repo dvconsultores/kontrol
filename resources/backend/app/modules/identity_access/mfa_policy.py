@@ -201,6 +201,8 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_actos:view",
         # gobierno_notificaciones · consulta y exportación de notificaciones (DOC-04)
         "gobierno_notificaciones:view",
+        # gobierno_autoridad · consulta y exportación de la matriz de autoridad (ORG-07)
+        "gobierno_autoridad:view",
     }
 )
 

@@ -157,6 +157,7 @@ export const router = createBrowserRouter([
           { path: "gobierno/actos/:actoId", lazy: () => import("@/modules/gobierno/actos/ActoPage").then((m) => ({ Component: m.ActoPage })) },
           { path: "gobierno/notificaciones", lazy: () => import("@/modules/gobierno/notificaciones/NotificacionesPage").then((m) => ({ Component: m.NotificacionesPage })) },
           { path: "gobierno/notificaciones/:notificacionId", lazy: () => import("@/modules/gobierno/notificaciones/NotificacionPage").then((m) => ({ Component: m.NotificacionPage })) },
+          { path: "gobierno/autoridad", lazy: () => import("@/modules/gobierno/autoridad/MatrizAutoridadPage").then((m) => ({ Component: m.MatrizAutoridadPage })) },
           { path: "comercial/condiciones-pago", lazy: () => import("@/modules/comercial/CondicionesPagoPage").then((m) => ({ Component: m.CondicionesPagoPage })) },
           { path: "comercial/listas-precio", lazy: () => import("@/modules/comercial/ListasPrecioPage").then((m) => ({ Component: m.ListasPrecioPage })) },
           { path: "auditoria", lazy: () => import("@/pages/AuditoriaPage").then((m) => ({ Component: m.AuditoriaPage })) },

@@ -1012,6 +1012,46 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/autoridad/ejercicios",
+      "capabilities": [
+        "gobierno_autoridad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/autoridad/{ejercicio}",
+      "capabilities": [
+        "gobierno_autoridad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/autoridad/{ejercicio}/cargos/{cargo_id}",
+      "capabilities": [
+        "gobierno_autoridad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/autoridad/{ejercicio}/exportar",
+      "capabilities": [
+        "gobierno_autoridad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/autoridad/{ejercicio}/filtros",
+      "capabilities": [
+        "gobierno_autoridad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/ente",
       "capabilities": [
         "gobierno_ente:view"
@@ -4868,7 +4908,8 @@
     "gobierno_actos:annul",
     "gobierno_notificaciones:view",
     "gobierno_notificaciones:edit",
-    "gobierno_notificaciones:record"
+    "gobierno_notificaciones:record",
+    "gobierno_autoridad:view"
   ],
   "report_capabilities": {
     "executive_ventas": [

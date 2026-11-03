@@ -4,7 +4,7 @@ Uso (la URL de la base viaja en el entorno, nunca en la línea de órdenes):
     KONTROL_DB_URL=postgresql+psycopg2://... KONTROL_E2E_LICENSE_SIGNING_KEY=<estado>/license/qa_license_signing_key.pem \\
     PYTHONPATH=resources/backend python qa/licencia_firmada.py <license_id> [--otra-instalacion] [--firma-invalida]
         [--anio <AAAA>] [--periodo <inicio ISO> <fin ISO>] [--revision <json>]
-        [--kid <kid>] [--sin-kid] [--firmante-b]
+        [--modulos <a,b>] [--kid <kid>] [--sin-kid] [--firmante-b]
     PYTHONPATH=resources/backend python qa/licencia_firmada.py --vigente
 
 `--anio` firma el período anual del contrato (1 abr <AAAA> → 31 mar <AAAA+1>, America/Caracas);
@@ -16,7 +16,9 @@ conflicto, manipulación y valores inválidos; las revisionadas legítimas las e
 (carga y firma): la reimportación idempotente. Rotación de clave: `--firmante-b` firma con la segunda
 clave sintética de la corrida (`KONTROL_E2E_LICENSE_SIGNING_KEY_B`); `--kid` fija el `kid` del paquete
 (por defecto el de A) y `--sin-kid` lo omite: los tres sirven para probar que el cliente elige la clave
-exactamente por el `kid` firmado.
+exactamente por el `kid` firmado. `--modulos` fija los entitlements firmados; sin la
+opción, los de la siembra (Gobierno incluido); `--modulos ""` firma una licencia sin módulos,
+solo para pruebas que lo declaren.
 
 Imprime en la salida estándar el JSON `{"payload": {...}, "signature_hex": "..."}` que espera
 `POST /api/v1/license/activate`. Firma con el **firmante sintético de la corrida** —el par que
@@ -30,6 +32,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -45,13 +48,18 @@ from app.core.database import get_session_factory, init_models  # noqa: E402
 from app.modules.licensing.models import LicenseArtifact, LicenseState  # noqa: E402
 from app.modules.organization.models import Installation  # noqa: E402
 
+MODULOS_DE_LA_SIEMBRA: tuple[str, ...] = ("gobierno",)  # los de `qa/pg-e2e-seed.py`
+
 
 def payload_sintetico(license_id: str, installation_id: str, *, anio: int | None = None,
-                      periodo: tuple[str, str] | None = None) -> dict[str, object]:
+                      periodo: tuple[str, str] | None = None,
+                      modulos: Sequence[str] = MODULOS_DE_LA_SIEMBRA) -> dict[str, object]:
     """Una licencia como la de la siembra E2E (`qa/pg-e2e-seed.py`): mismo `kid`, mismos campos.
 
     Por defecto, el período relativo a hoy de la siembra. Con `anio`, el período anual del
     contrato (DOC-07 §5.1). Con `periodo`, exactamente ese inicio y fin (reemisión del vigente).
+    Conserva los entitlements de la siembra (`modulos` = `MODULOS_DE_LA_SIEMBRA`) salvo que se
+    pidan otros explícitamente.
     """
     if periodo is not None:
         inicio, fin = datetime.fromisoformat(periodo[0]), datetime.fromisoformat(periodo[1])
@@ -71,6 +79,7 @@ def payload_sintetico(license_id: str, installation_id: str, *, anio: int | None
         "period_start": inicio.isoformat(), "period_end": fin.isoformat(),
         "critical_warning_start": critico.isoformat(), "read_only_start": solo_lectura.isoformat(),
         "plan": "MULTI_COMPANY", "minimum_version": "1.0.0", "kid": "kontrol-lic-2026-01",
+        "entitlements": {"modules": list(modulos)},
     }
 
 
@@ -128,7 +137,12 @@ def main(argv: list[str]) -> int:
     destino = "KTL-QA-OTRA-INSTALACION" if "--otra-instalacion" in argv else instalacion.installation_uuid
     anio = int(argv[argv.index("--anio") + 1]) if "--anio" in argv else None
     periodo = (argv[argv.index("--periodo") + 1], argv[argv.index("--periodo") + 2]) if "--periodo" in argv else None
-    payload = payload_sintetico(argv[0], destino, anio=anio, periodo=periodo)
+    if "--modulos" in argv:
+        crudo = argv[argv.index("--modulos") + 1]
+        modulos: tuple[str, ...] = tuple(m.strip() for m in crudo.split(",") if m.strip())
+    else:
+        modulos = MODULOS_DE_LA_SIEMBRA
+    payload = payload_sintetico(argv[0], destino, anio=anio, periodo=periodo, modulos=modulos)
     if "--revision" in argv:
         payload["revision"] = json.loads(argv[argv.index("--revision") + 1])  # tal cual: también valores inválidos, a propósito
     if "--kid" in argv:

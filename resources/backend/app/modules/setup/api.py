@@ -99,6 +99,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_actos": ["view", "edit", "issue", "annul"],
     # DOC-04: notificaciones administrativas con constancia de recepción (PDD-DOC04-04).
     "gobierno_notificaciones": ["view", "edit", "record"],
+    # ORG-07: matriz auditable de autoridad, solo lectura (OD-ORG07-03).
+    "gobierno_autoridad": ["view"],
 }
 
 
