@@ -142,7 +142,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | DOC-05 | Firma electrónica | P1 | Máxima autoridad | GOV-DOC-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-08; LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | — |
 | DOC-06 | Preservación y retención de evidencia sin borrado | P0 | Unidad tramitadora | GOV-DOC-007 GOV-DOC-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | — |
 | DOC-07 | Búsqueda por expediente, acto, tercero, contrato, presupuesto, bien y fecha | P1 | Usuarios autorizados | GOV-DOC-008 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | Búsqueda documental 046 |
-| DOC-08 | Paquete de auditoría exportable | P1 | Control Interno | GOV-DOC-010 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
+| DOC-08 | Paquete de auditoría exportable | P1 | Control Interno | GOV-DOC-010 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | DOC8-E2E-01..03 (×3 navegadores) + HUMO-UAT-01 | — |
 
 ## Control interno, auditoría y rendición
 

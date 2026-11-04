@@ -105,6 +105,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_auditoria": ["view", "sample"],
     # CTL-06: hallazgos, recomendaciones y planes de acción correctiva (OD-CTL06-02).
     "gobierno_hallazgos": ["view", "manage", "verify"],
+    # DOC-08: paquetes de auditoría exportables con índice, huellas y referencias cruzadas (OD-DOC08-04).
+    "gobierno_paquetes": ["view", "generate"],
 }
 
 

@@ -158,7 +158,7 @@
 | DOC-05 Firma electrónica | BLOCKED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (10 de 10) | MEDIUM | D-GOV-08; LEGAL_VALIDATION_REQUIRED N40 (clase C) | GOV-5, con DoD de producto completa (política §4) |
 | DOC-06 Preservación y retención de evidencia sin borrado | BLOCKED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | LEGAL_VALIDATION_REQUIRED N37 (clase C) | GOV-5, con DoD de producto completa (política §4) |
 | DOC-07 Búsqueda por expediente, acto, tercero, contrato, presupuesto, bien y fecha | BLOCKED | Nada en Gobierno. Existe un equivalente privado que **no** sirve tal cual: Búsqueda documental 046. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (10 de 10) | MEDIUM | LEGAL_VALIDATION_REQUIRED N40 (clase C) | GOV-5, con DoD de producto completa (política §4) |
-| DOC-08 Paquete de auditoría exportable | NOT_STARTED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | MEDIUM | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-5, con DoD de producto completa (política §4) |
+| DOC-08 Paquete de auditoría exportable | **SALIÓ DE ESTE CATÁLOGO** (GOV-DOC-08, 2026-11-04) | Todo el proceso: ver `OWNER_UAT_READY_CATALOG.md` | — | — | — | — |
 
 ## Control interno, auditoría y rendición
 

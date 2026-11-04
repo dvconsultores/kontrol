@@ -455,6 +455,34 @@ def documents_for(db: Session, *, resource_type: str, resource_id: str,
     return [(d, link) for d, link in rows]
 
 
+def puede_leer_archivo(db: Session, document: Document, company_id: str, permissions: set[str]) -> bool:
+    """Para leer un archivo hay que poder ver **alguna** entidad vinculada (R-D0-08-6).
+
+    Un documento sin vínculos solo lo lee quien tiene permiso documental: es el
+    caso del documento suelto, todavía no adjuntado a nada; ese permiso lo exige
+    el llamador. Un documento de otra empresa nunca es legible desde esta. Es la
+    regla única que usan la descarga de documentos y el paquete de auditoría
+    (DOC-08), para que exportar no sea un atajo alrededor del control documental.
+    """
+    if document.company_id != company_id:
+        return False
+    links = db.execute(select(DocumentLink).where(
+        DocumentLink.document_id == document.id)).scalars().all()
+    if not links:
+        return True
+    for link in links:
+        try:
+            _entity, company = resource_registry.resolve_resource(
+                db, link.resource_type, link.resource_id)
+        except KontrolError:
+            continue
+        if company is not None and company != company_id:
+            continue
+        if resource_registry.required_permission(link.resource_type) in permissions:
+            return True
+    return False
+
+
 # --------------------------------------------------------------------------
 # Estados, borrado y entrega
 # --------------------------------------------------------------------------

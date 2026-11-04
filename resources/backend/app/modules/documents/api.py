@@ -102,23 +102,8 @@ def _assert_can_read_file(db: Session, user: User, ctx: CompanyContext,
     Un documento sin vínculos solo lo lee quien tiene permiso documental: es el
     caso del documento suelto, todavía no adjuntado a nada.
     """
-    links = db.execute(select(DocumentLink).where(
-        DocumentLink.document_id == document.id)).scalars().all()
-    if not links:
-        return
-    companies = _alcance(ctx)
-    permissions = _permissions(db, user, ctx.company_id)
-    for link in links:
-        try:
-            _entity, company = resource_registry.resolve_resource(
-                db, link.resource_type, link.resource_id)
-        except KontrolError:
-            continue
-        if company is not None and company not in companies:
-            continue
-        if resource_registry.required_permission(link.resource_type) in permissions:
-            return
-    raise NotFoundError(code="DOCUMENT_NOT_FOUND", message="Documento no encontrado")
+    if not service.puede_leer_archivo(db, document, ctx.company_id, _permissions(db, user, ctx.company_id)):
+        raise NotFoundError(code="DOCUMENT_NOT_FOUND", message="Documento no encontrado")
 
 
 def _check_version(entity: Any, if_match: str | None) -> None:

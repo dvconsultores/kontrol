@@ -133,6 +133,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_notificaciones:record",
         # gobierno_hallazgos · verificación y cierre de hallazgos por Control Interno (CTL-06, OD-CTL06-02)
         "gobierno_hallazgos:verify",
+        # gobierno_paquetes · generación de paquetes de auditoría exportables (DOC-08, OD-DOC08-04)
+        "gobierno_paquetes:generate",
     }
 )
 
@@ -212,6 +214,8 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_hallazgos · consulta y gestión del plan de acción correctiva (CTL-06)
         "gobierno_hallazgos:view",
         "gobierno_hallazgos:manage",
+        # gobierno_paquetes · consulta, descarga y verificación de paquetes de auditoría (DOC-08)
+        "gobierno_paquetes:view",
     }
 )
 

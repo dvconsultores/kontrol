@@ -751,3 +751,89 @@ for _sentencia in GOV_CORRECTIVE_ACTION_PROGRESS_IMMUTABLE_PG:
     event.listen(GovernmentCorrectiveActionProgress.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
 for _sentencia in GOV_FINDING_HISTORY_IMMUTABLE_PG:
     event.listen(GovernmentFindingHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+RESULTADOS_VERIFICACION_PAQUETE = ("VALIDO", "INVALIDO", "INCOMPLETO", "VERSION_NO_SOPORTADA")
+
+
+GOV_AUDIT_PACKAGES_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_audit_package_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_AUDIT_PACKAGE_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_audit_packages_no_update BEFORE UPDATE ON gov_audit_packages FOR EACH ROW EXECUTE FUNCTION kontrol_gov_audit_package_inmutable()",
+    "CREATE TRIGGER trg_gov_audit_packages_no_delete BEFORE DELETE ON gov_audit_packages FOR EACH ROW EXECUTE FUNCTION kontrol_gov_audit_package_inmutable()",
+    "CREATE TRIGGER trg_gov_audit_packages_no_truncate BEFORE TRUNCATE ON gov_audit_packages FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_audit_package_inmutable()",
+)
+
+GOV_AUDIT_PACKAGE_VERIFICATIONS_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_audit_package_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_AUDIT_PACKAGE_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_audit_package_verifications_no_update BEFORE UPDATE ON gov_audit_package_verifications FOR EACH ROW EXECUTE FUNCTION kontrol_gov_audit_package_inmutable()",
+    "CREATE TRIGGER trg_gov_audit_package_verifications_no_delete BEFORE DELETE ON gov_audit_package_verifications FOR EACH ROW EXECUTE FUNCTION kontrol_gov_audit_package_inmutable()",
+    "CREATE TRIGGER trg_gov_audit_package_verifications_no_truncate BEFORE TRUNCATE ON gov_audit_package_verifications FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_audit_package_inmutable()",
+)
+
+
+class GovernmentAuditPackage(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Paquete de auditoría exportable generado desde una muestra (DOC-08, GOV-DOC-010); inmutable."""
+
+    __tablename__ = "gov_audit_packages"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    sample_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_audit_samples.id"), nullable=False, index=True)
+    numero_generacion: Mapped[int] = mapped_column(Integer, nullable=False)
+    titulo: Mapped[str] = mapped_column(String(200), nullable=False)
+    proposito: Mapped[str] = mapped_column(Text, nullable=False)
+    version_manifiesto: Mapped[int] = mapped_column(Integer, nullable=False)
+    huella_manifiesto: Mapped[str] = mapped_column(String(64), nullable=False)
+    huella_paquete: Mapped[str] = mapped_column(String(64), nullable=False)
+    bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    clave_almacenamiento: Mapped[str] = mapped_column(String(255), nullable=False)
+    nombre_archivo: Mapped[str] = mapped_column(String(80), nullable=False)
+    eventos: Mapped[int] = mapped_column(Integer, nullable=False)
+    documentos_incluidos: Mapped[int] = mapped_column(Integer, nullable=False)
+    documentos_excluidos: Mapped[int] = mapped_column(Integer, nullable=False)
+    hallazgos: Mapped[int] = mapped_column(Integer, nullable=False)
+    archivos: Mapped[int] = mapped_column(Integer, nullable=False)
+    manifiesto: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    idempotency_key: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_audit_packages_company_id_codigo"),
+        UniqueConstraint("sample_id", "numero_generacion", name="uq_gov_audit_packages_sample_id_numero_generacion"),
+        UniqueConstraint("company_id", "idempotency_key", name="uq_gov_audit_packages_company_id_idempotency_key"),
+        UniqueConstraint("clave_almacenamiento", name="uq_gov_audit_packages_clave_almacenamiento"),
+        CheckConstraint("length(huella_manifiesto) = 64 AND length(huella_paquete) = 64", name="huellas"),
+        CheckConstraint("bytes > 0", name="bytes"),
+        CheckConstraint("eventos >= 0 AND documentos_incluidos >= 0 AND documentos_excluidos >= 0 AND hallazgos >= 0 AND archivos >= 0", name="contadores"),
+        CheckConstraint("numero_generacion >= 1", name="numero_generacion"),
+        CheckConstraint("version_manifiesto = 1", name="version_manifiesto"),
+    )
+
+
+class GovernmentAuditPackageVerification(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Verificación de integridad de una copia de un paquete de auditoría (DOC-08); inmutable."""
+
+    __tablename__ = "gov_audit_package_verifications"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    package_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_audit_packages.id"), nullable=False, index=True)
+    resultado: Mapped[str] = mapped_column(String(20), nullable=False)
+    motivos: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False)
+    huella_archivo: Mapped[str] = mapped_column(String(64), nullable=False)
+    bytes_archivo: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    identico: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(f"resultado IN ({en(RESULTADOS_VERIFICACION_PAQUETE)})", name="resultado"),
+        CheckConstraint("length(huella_archivo) = 64", name="huella_archivo"),
+        CheckConstraint("bytes_archivo >= 0", name="bytes_archivo"),
+    )
+
+
+for _sentencia in GOV_AUDIT_PACKAGES_IMMUTABLE_PG:
+    event.listen(GovernmentAuditPackage.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_AUDIT_PACKAGE_VERIFICATIONS_IMMUTABLE_PG:
+    event.listen(GovernmentAuditPackageVerification.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

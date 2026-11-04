@@ -1149,3 +1149,99 @@ export function consultaDeHallazgos(
 export const POR_PAGINA_HALLAZGOS = 50;
 export const CONSULTA_HALLAZGOS = [...CONSULTA_GOBIERNO, "hallazgos"] as const;
 export const RESOURCE_TYPE_ACCION_CORRECTIVA = "GovernmentCorrectiveAction";
+
+// ---------------------------------------------------------------------------
+// DOC-08 · paquete de auditoría exportable (GOV-DOC-010)
+// ---------------------------------------------------------------------------
+
+export type EstadoDocumentoPaquete = "INCLUIDO" | "EXCLUIDO";
+export type MotivoExclusionPaquete = "SIN_PERMISO" | "NO_DISPONIBLE";
+export type ResultadoVerificacionPaquete = "VALIDO" | "INVALIDO" | "INCOMPLETO" | "VERSION_NO_SOPORTADA";
+export type TipoReferenciaPaquete = "evento" | "objeto" | "accion_correctiva" | "avance";
+
+export interface ReferenciaPaquete { tipo: TipoReferenciaPaquete; id: string; }
+export interface DocumentoDelPaquete {
+  id: string; estado: EstadoDocumentoPaquete; motivo: MotivoExclusionPaquete | null; version: number | null;
+  bytes: number | null; sha256: string | null; referencias: ReferenciaPaquete[];
+}
+export interface MuestraDelPaquete {
+  id: string; codigo: string; titulo: string; metodo: string; semilla: number | null; poblacion: number; tamano: number;
+  creada_en: string; creada_por: string | null;
+}
+export interface LimitesPaquete { eventos: number; documentos: number; bytes: number; }
+export interface VistaPreviaPaquete {
+  muestra: MuestraDelPaquete; eventos: number; documentos_incluidos: number; documentos_excluidos: number; hallazgos: number;
+  bytes_estimados: number; documentos: DocumentoDelPaquete[]; limites: LimitesPaquete; excede_limite: boolean;
+  motivo_limite: string | null; paquetes_previos: number;
+}
+export interface EventoDelPaquete {
+  orden: number; id: string; fecha: string; proceso: string; accion: string; entidad: string; entidad_id: string | null;
+  usuario: string | null; objeto: { tipo: string; id: string } | null; documentos: string[];
+}
+export interface HallazgoDelPaquete {
+  id: string; codigo: string; titulo: string; riesgo: string; estado: string; partidas: string[]; acciones: string[]; documentos: string[];
+}
+export interface MotivoVerificacionPaquete { codigo: string; ruta: string | null; }
+export interface VerificacionPaquete {
+  id: string; resultado: ResultadoVerificacionPaquete; motivos: MotivoVerificacionPaquete[]; huella_archivo: string;
+  bytes_archivo: number; identico: boolean; verificado_por: string | null; verificado_en: string;
+}
+export interface PaqueteResumen {
+  id: string; codigo: string; muestra_id: string; muestra_codigo: string; numero_generacion: number; titulo: string;
+  generado_por: string | null; generado_en: string; bytes: number; huella_paquete: string; eventos: number;
+  documentos_incluidos: number; documentos_excluidos: number; hallazgos: number;
+}
+export interface PaqueteDetalle extends PaqueteResumen {
+  muestra_titulo: string; proposito: string; version_manifiesto: number; huella_manifiesto: string; archivos: number;
+  nombre_archivo: string;
+  contenido: { eventos: EventoDelPaquete[]; documentos: DocumentoDelPaquete[]; hallazgos: HallazgoDelPaquete[] };
+  verificaciones: VerificacionPaquete[];
+}
+export interface PaquetesListado { items: PaqueteResumen[]; total: number; pagina: number; por_pagina: number; }
+export interface ResultadoDeVerificacionPaquete {
+  resultado: ResultadoVerificacionPaquete; motivos: MotivoVerificacionPaquete[]; paquete: { id: string; codigo: string } | null;
+  huella_archivo: string; bytes_archivo: number; identico: boolean; verificacion_id: string | null;
+}
+
+export const ETIQUETAS_MOTIVO_EXCLUSION: Record<MotivoExclusionPaquete, string> = {
+  SIN_PERMISO: "Sin permiso para el documento",
+  NO_DISPONIBLE: "No disponible (sin analizar, alterado o ausente)",
+};
+export const ETIQUETAS_RESULTADO_VERIFICACION: Record<ResultadoVerificacionPaquete, string> = {
+  VALIDO: "Válido", INVALIDO: "Inválido", INCOMPLETO: "Incompleto", VERSION_NO_SOPORTADA: "Versión no soportada",
+};
+export const ETIQUETAS_MOTIVO_VERIFICACION: Record<string, string> = {
+  MANIFIESTO_AUSENTE: "Falta el manifiesto", MANIFIESTO_ILEGIBLE: "El manifiesto no se puede leer",
+  PAQUETE_NO_REGISTRADO: "El paquete no está registrado en este ente", MANIFIESTO_ALTERADO: "El manifiesto fue alterado",
+  ARCHIVO_ALTERADO: "Archivo alterado", ARCHIVO_INESPERADO: "Archivo no declarado en el manifiesto", ARCHIVO_AUSENTE: "Falta un archivo",
+};
+export const ETIQUETAS_REFERENCIA_PAQUETE: Record<TipoReferenciaPaquete, string> = {
+  evento: "Evento", objeto: "Objeto de negocio", accion_correctiva: "Acción correctiva", avance: "Avance",
+};
+export const AVISO_HUELLA_PAQUETE = "La huella SHA-256 prueba la integridad del paquete; no es una firma electrónica.";
+export const POR_PAGINA_PAQUETES = 20;
+export const CONSULTA_PAQUETES = [...CONSULTA_GOBIERNO, "paquetes"] as const;
+
+export function consultaDePaquetes(
+  filtros: { muestra_id?: string },
+  paginacion: { pagina?: number; por_pagina?: number } = {},
+): string {
+  const params = new URLSearchParams();
+  const muestraId = valorDeConsulta(filtros.muestra_id);
+  if (muestraId !== undefined) params.append("muestra_id", muestraId);
+  const pagina = valorDeConsulta(paginacion.pagina);
+  if (pagina !== undefined) params.append("pagina", pagina);
+  const porPagina = valorDeConsulta(paginacion.por_pagina);
+  if (porPagina !== undefined) params.append("por_pagina", porPagina);
+  const cadena = params.toString();
+  return cadena === "" ? "" : `?${cadena}`;
+}
+
+export function formatearBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const valor = bytes < 1024 * 1024 ? bytes / 1024 : bytes / (1024 * 1024);
+  const sufijo = bytes < 1024 * 1024 ? " KB" : " MB";
+  return `${valor.toLocaleString("es-VE", { maximumFractionDigits: 1 })}${sufijo}`;
+}
+
+export function abreviarHuella(huella: string): string { return huella.length > 16 ? `${huella.slice(0, 12)}…` : huella; }

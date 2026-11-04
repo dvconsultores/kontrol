@@ -1,10 +1,10 @@
 # OWNER_UAT_READY_CATALOG — KONTROL Gobierno
 
-> Retrospectiva GOV-PRODUCT-COMPLETENESS-RETRO-01 · `develop` `0dbe632` · 2026-10-29. Actualizado por GOV-0-01 (2026-10-30), GOV-0-02 (2026-10-31), GOV-0-03 y GOV-DOC-02 (2026-11-01) GOV-DOC-04 y GOV-ORG-07 (2026-11-02) GOV-CTL-04 (2026-11-03) y GOV-CTL-06 (2026-11-04).
+> Retrospectiva GOV-PRODUCT-COMPLETENESS-RETRO-01 · `develop` `0dbe632` · 2026-10-29. Actualizado por GOV-0-01 (2026-10-30), GOV-0-02 (2026-10-31), GOV-0-03 y GOV-DOC-02 (2026-11-01) GOV-DOC-04 y GOV-ORG-07 (2026-11-02) GOV-CTL-04 (2026-11-03), GOV-CTL-06 y GOV-DOC-08 (2026-11-04).
 
-## Estado: 8 procesos listos para probar (2026-11-04)
+## Estado: 9 procesos listos para probar (2026-11-04)
 
-- `OWNER_UAT_READY` = 8 de 122 procesos (6,56 %);
+- `OWNER_UAT_READY` = 9 de 122 procesos (7,38 %);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
@@ -17,8 +17,9 @@
 | **DOC-04 Notificaciones administrativas con constancia de recepción por canal autorizado** (GOV-DOC-005) | Menú › Gobierno › Notificaciones administrativas (y la sección «Notificaciones» del acto particular) | [`specs/gov-doc-04-notificaciones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-doc-04-notificaciones/evidence/OWNER_UAT_CARD.md) | GOV-DOC-04 |
 | **CTL-04 Consulta y muestreo read-only del auditor interno/externo** (GOV-CTL-005) | Menú › Gobierno › Auditoría institucional | [`specs/gov-ctl-04-auditoria/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-ctl-04-auditoria/evidence/OWNER_UAT_CARD.md) | GOV-CTL-04 |
 | **CTL-06 Hallazgos, recomendaciones y planes de acción correctiva** (GOV-CTL-008) | Menú › Gobierno › Hallazgos y acciones correctivas (y «Registrar hallazgo» en la muestra de CTL-04) | [`specs/gov-ctl-06-hallazgos/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-ctl-06-hallazgos/evidence/OWNER_UAT_CARD.md) | GOV-CTL-06 |
+| **DOC-08 Paquete de auditoría exportable con índice, huellas y referencias cruzadas** (GOV-DOC-010) | Menú › Gobierno › Paquetes de auditoría (y «Generar paquete de auditoría» en la muestra de CTL-04) | [`specs/gov-doc-08-paquete-auditoria/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-doc-08-paquete-auditoria/evidence/OWNER_UAT_CARD.md) | GOV-DOC-08 |
 
-Los otros 114 procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
+Los otros 113 procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
 
 ## Fundamentos técnicos
 

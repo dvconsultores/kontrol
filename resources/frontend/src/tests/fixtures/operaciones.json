@@ -1068,6 +1068,22 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/auditoria/muestras/{muestra_id}/paquete/vista-previa",
+      "capabilities": [
+        "gobierno_paquetes:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/auditoria/muestras/{muestra_id}/paquetes",
+      "capabilities": [
+        "gobierno_paquetes:generate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/autoridad/ejercicios",
       "capabilities": [
         "gobierno_autoridad:view"
@@ -1501,6 +1517,46 @@
       "path": "/api/v1/gobierno/notificaciones/{notificacion_id}/versiones",
       "capabilities": [
         "gobierno_notificaciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/paquetes",
+      "capabilities": [
+        "gobierno_paquetes:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/paquetes/verificar",
+      "capabilities": [
+        "gobierno_paquetes:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/paquetes/{paquete_id}",
+      "capabilities": [
+        "gobierno_paquetes:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/paquetes/{paquete_id}/descargar",
+      "capabilities": [
+        "gobierno_paquetes:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/paquetes/{paquete_id}/manifiesto",
+      "capabilities": [
+        "gobierno_paquetes:view"
       ],
       "scope": "COMPANY"
     },
@@ -5074,7 +5130,9 @@
     "gobierno_auditoria:sample",
     "gobierno_hallazgos:view",
     "gobierno_hallazgos:manage",
-    "gobierno_hallazgos:verify"
+    "gobierno_hallazgos:verify",
+    "gobierno_paquetes:view",
+    "gobierno_paquetes:generate"
   ],
   "report_capabilities": {
     "executive_ventas": [

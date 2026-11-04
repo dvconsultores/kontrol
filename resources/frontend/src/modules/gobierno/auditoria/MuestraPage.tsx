@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ClipboardCheck, Download } from "lucide-react";
+import { Archive, ClipboardCheck, Download } from "lucide-react";
 
 import { apiFetch, ApiError } from "@/api/client";
 import { descargarArchivo } from "@/api/descargas";
@@ -17,6 +17,7 @@ import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { formatearFecha } from "@/i18n";
 import { formatearFechaDeNegocio } from "@/lib/fecha-de-negocio";
+import { PaquetesDeLaMuestra } from "@/modules/gobierno/paquetes/PaquetesDeLaMuestra";
 import {
   CONSULTA_AUDITORIA,
   ETIQUETA_METODO_MUESTREO,
@@ -185,6 +186,15 @@ export function MuestraPage(): React.JSX.Element {
             >
               <ClipboardCheck className="mr-2 h-4 w-4" aria-hidden="true" />
               Registrar hallazgo
+            </Button>
+          )}
+          {tiene("gobierno_paquetes:generate", "empresa") && (
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/gobierno/auditoria/muestras/${muestra.id}/paquete`)}
+            >
+              <Archive className="mr-2 h-4 w-4" aria-hidden="true" />
+              Generar paquete de auditoría
             </Button>
           )}
         </div>
@@ -397,6 +407,7 @@ export function MuestraPage(): React.JSX.Element {
           </div>
         )}
       </section>
+      {tiene("gobierno_paquetes:view", "empresa") && <PaquetesDeLaMuestra muestraId={muestra.id} />}
     </PageContent>
   );
 }
