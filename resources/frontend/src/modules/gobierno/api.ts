@@ -1245,3 +1245,102 @@ export function formatearBytes(bytes: number): string {
 }
 
 export function abreviarHuella(huella: string): string { return huella.length > 16 ? `${huella.slice(0, 12)}…` : huella; }
+
+// ---------------------------------------------------------------------------
+// CTL-01 · matriz de segregación de funciones (GOV-CTL-001)
+// ---------------------------------------------------------------------------
+
+export type ProcesoSod = "DOC-02" | "CTL-06";
+export type EstadoReglaSod = "BORRADOR" | "VIGENTE" | "CERRADA";
+
+export interface AccionSod { codigo: string; etiqueta: string; crea_objeto: boolean; }
+export interface ProcesoAccionesSod { proceso: ProcesoSod; nombre: string; objeto: string; acciones: AccionSod[]; }
+export interface CatalogoSod { procesos: ProcesoAccionesSod[]; }
+export interface HistoriaSod { tipo: string; detalle: Record<string, unknown> | null; registrado_por: string | null; registrado_en: string; }
+
+export interface ReglaSodResumen {
+  id: string; codigo: string; nombre: string; proceso: ProcesoSod; accion_a: string; accion_a_etiqueta: string; accion_b: string; accion_b_etiqueta: string;
+  bidireccional: boolean; alcance: string; modo: string; vigente_desde: string; vigente_hasta: string | null; estado: EstadoReglaSod; en_vigor: boolean; version: number;
+}
+
+export interface ReglaSodDetalle extends ReglaSodResumen {
+  descripcion: string; creada_por: string | null; creada_en: string; activada_por: string | null; activada_en: string | null;
+  cerrada_por: string | null; cerrada_en: string | null; motivo_cierre: string | null; conflictos: number; historia: HistoriaSod[];
+}
+
+export interface ResumenSod { borradores: number; vigentes: number; cerradas: number; conflictos_30_dias: number; }
+export interface ReglasSodListado { items: ReglaSodResumen[]; resumen: ResumenSod; }
+
+export interface ReglaSodEntrada {
+  nombre: string; descripcion: string; proceso: ProcesoSod; accion_a: string; accion_b: string; bidireccional: boolean; vigente_desde: string; vigente_hasta: string | null;
+}
+
+export type ReglaSodCambios = Partial<Omit<ReglaSodEntrada, "proceso">>;
+
+export interface ConflictoSod {
+  id: string; fecha: string; usuario: string | null; regla_id: string | null; regla_codigo: string | null; regla_nombre: string | null; proceso: string | null;
+  accion: string | null; accion_etiqueta: string | null; accion_previa: string | null; accion_previa_etiqueta: string | null; objeto_tipo: string | null; objeto_id: string | null;
+}
+
+export interface ConflictosSodListado { items: ConflictoSod[]; total: number; pagina: number; por_pagina: number; }
+
+/** `details` del 409 GOV_SOD_CONFLICT que devuelven DOC-02 y CTL-06. */
+export interface DetalleConflictoSod {
+  regla_codigo: string; regla_nombre: string; accion: string; accion_etiqueta: string; accion_previa: string; accion_previa_etiqueta: string;
+  objeto_tipo: string; objeto_id: string; previa_en: string;
+}
+
+export const ETIQUETAS_ESTADO_REGLA_SOD: Record<EstadoReglaSod, string> = { BORRADOR: "Borrador", VIGENTE: "Vigente", CERRADA: "Cerrada" };
+export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas" };
+export const ETIQUETAS_HISTORIA_SOD: Record<string, string> = { CREADA: "Registrada", EDITADA: "Modificada", ACTIVADA: "Activada", CERRADA: "Cerrada" };
+
+export const POR_PAGINA_CONFLICTOS_SOD = 20;
+export const CONSULTA_SOD = [...CONSULTA_GOBIERNO, "sod"] as const;
+
+/** Ruta de la ficha del objeto bloqueado: acto → /gobierno/actos/{id}; hallazgo → /gobierno/hallazgos/{id}; otro → null. */
+export function rutaDeObjetoSod(tipo: string | null, id: string | null): string | null {
+  if (!tipo || !id) return null;
+  if (tipo === "GovernmentAct") return `/gobierno/actos/${id}`;
+  if (tipo === "GovernmentFinding") return `/gobierno/hallazgos/${id}`;
+  return null;
+}
+
+/** Flecha de la regla: "⇄" si es bidireccional, "→" si no. */
+export function flechaSod(bidireccional: boolean): string {
+  return bidireccional ? "⇄" : "→";
+}
+
+/** Cadena de consulta de /gobierno/sod/reglas (estado, proceso; omite vacíos). */
+export function consultaDeReglasSod(filtros: { estado?: string; proceso?: string }): string {
+  const qs = new URLSearchParams();
+  const estado = valorDeConsulta(filtros.estado);
+  const proceso = valorDeConsulta(filtros.proceso);
+  if (estado) qs.set("estado", estado);
+  if (proceso) qs.set("proceso", proceso);
+  const s = qs.toString();
+  return s ? `?${s}` : "";
+}
+
+/** Cadena de consulta de /gobierno/sod/conflictos. */
+export function consultaDeConflictosSod(
+  filtros: { regla_id?: string; proceso?: string; accion?: string; usuario?: string; desde?: string; hasta?: string },
+  paginacion: { pagina?: number; por_pagina?: number } = {},
+): string {
+  const qs = new URLSearchParams();
+  const reglaId = valorDeConsulta(filtros.regla_id);
+  const proceso = valorDeConsulta(filtros.proceso);
+  const accion = valorDeConsulta(filtros.accion);
+  const usuario = valorDeConsulta(filtros.usuario);
+  const desde = valorDeConsulta(filtros.desde);
+  const hasta = valorDeConsulta(filtros.hasta);
+  if (reglaId) qs.set("regla_id", reglaId);
+  if (proceso) qs.set("proceso", proceso);
+  if (accion) qs.set("accion", accion);
+  if (usuario) qs.set("usuario", usuario);
+  if (desde) qs.set("desde", desde);
+  if (hasta) qs.set("hasta", hasta);
+  if (paginacion.pagina !== undefined) qs.set("pagina", String(paginacion.pagina));
+  if (paginacion.por_pagina !== undefined) qs.set("por_pagina", String(paginacion.por_pagina));
+  const s = qs.toString();
+  return s ? `?${s}` : "";
+}

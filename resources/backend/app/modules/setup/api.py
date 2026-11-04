@@ -107,6 +107,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_hallazgos": ["view", "manage", "verify"],
     # DOC-08: paquetes de auditoría exportables con índice, huellas y referencias cruzadas (OD-DOC08-04).
     "gobierno_paquetes": ["view", "generate"],
+    # CTL-01: matriz de segregación de funciones con detección previa (OD-CTL01-04).
+    "gobierno_sod": ["view", "manage", "activate"],
 }
 
 

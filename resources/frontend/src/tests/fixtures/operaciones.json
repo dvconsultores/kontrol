@@ -1562,6 +1562,70 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/sod/acciones",
+      "capabilities": [
+        "gobierno_sod:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/sod/conflictos",
+      "capabilities": [
+        "gobierno_sod:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/sod/reglas",
+      "capabilities": [
+        "gobierno_sod:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/sod/reglas",
+      "capabilities": [
+        "gobierno_sod:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/sod/reglas/{regla_id}",
+      "capabilities": [
+        "gobierno_sod:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/sod/reglas/{regla_id}",
+      "capabilities": [
+        "gobierno_sod:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/sod/reglas/{regla_id}/activar",
+      "capabilities": [
+        "gobierno_sod:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/sod/reglas/{regla_id}/cerrar",
+      "capabilities": [
+        "gobierno_sod:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/health/live",
       "capabilities": [],
       "scope": "GLOBAL"
@@ -5132,7 +5196,10 @@
     "gobierno_hallazgos:manage",
     "gobierno_hallazgos:verify",
     "gobierno_paquetes:view",
-    "gobierno_paquetes:generate"
+    "gobierno_paquetes:generate",
+    "gobierno_sod:view",
+    "gobierno_sod:manage",
+    "gobierno_sod:activate"
   ],
   "report_capabilities": {
     "executive_ventas": [

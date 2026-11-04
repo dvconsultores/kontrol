@@ -117,13 +117,12 @@ class TestGovDoc08Alcance:
         def _modulo(activo: bool) -> None:
             with mundo.factory() as db:
                 inst = licensing_service.get_installation(db)
-                snapshot = db.scalar(
+                for snapshot in db.scalars(
                     select(LicenseEntitlementSnapshot).where(
                         LicenseEntitlementSnapshot.installation_id == inst.installation_uuid,
-                        LicenseEntitlementSnapshot.version == "ctl06-test",
                     )
-                )
-                snapshot.modules = {"gobierno": activo}
+                ):
+                    snapshot.modules = {**(snapshot.modules or {}), "gobierno": activo}
                 db.commit()
 
         _modulo(False)
@@ -132,6 +131,7 @@ class TestGovDoc08Alcance:
             assert respuesta.status_code == 403
             assert respuesta.json()["code"] == "MODULE_NOT_ENTITLED"
         finally:
+            _modulo(True)
             _activar_gobierno(mundo)
 
     def test_da09_catalogo_y_mfa(self):

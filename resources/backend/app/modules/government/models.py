@@ -837,3 +837,84 @@ for _sentencia in GOV_AUDIT_PACKAGES_IMMUTABLE_PG:
 
 for _sentencia in GOV_AUDIT_PACKAGE_VERIFICATIONS_IMMUTABLE_PG:
     event.listen(GovernmentAuditPackageVerification.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+ESTADOS_REGLA_SOD = ("BORRADOR", "VIGENTE", "CERRADA")
+ALCANCES_REGLA_SOD = ("MISMO_OBJETO",)
+MODOS_REGLA_SOD = ("BLOQUEAR",)
+PROCESOS_SOD = ("DOC-02", "CTL-06")
+TIPOS_HISTORIA_SOD = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA")
+
+
+GOV_SOD_RULES_NOT_DELETABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_sod_no_borrable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_SOD_RULE_NOT_DELETABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_sod_rules_no_delete BEFORE DELETE ON gov_sod_rules FOR EACH ROW EXECUTE FUNCTION kontrol_gov_sod_no_borrable()",
+    "CREATE TRIGGER trg_gov_sod_rules_no_truncate BEFORE TRUNCATE ON gov_sod_rules FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_sod_no_borrable()",
+)
+
+GOV_SOD_RULE_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_sod_historia_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_SOD_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_sod_rule_history_no_update BEFORE UPDATE ON gov_sod_rule_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_sod_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_sod_rule_history_no_delete BEFORE DELETE ON gov_sod_rule_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_sod_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_sod_rule_history_no_truncate BEFORE TRUNCATE ON gov_sod_rule_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_sod_historia_inmutable()",
+)
+
+
+class GovernmentSoDRule(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Regla de segregación de funciones de Control Interno (CTL-01, GOV-CTL-001)."""
+
+    __tablename__ = "gov_sod_rules"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    descripcion: Mapped[str] = mapped_column(Text, nullable=False)
+    proceso: Mapped[str] = mapped_column(String(10), nullable=False)
+    accion_a: Mapped[str] = mapped_column(String(32), nullable=False)
+    accion_b: Mapped[str] = mapped_column(String(32), nullable=False)
+    bidireccional: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    alcance: Mapped[str] = mapped_column(String(16), nullable=False, default="MISMO_OBJETO", server_default="MISMO_OBJETO")
+    modo: Mapped[str] = mapped_column(String(10), nullable=False, default="BLOQUEAR", server_default="BLOQUEAR")
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    activada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    activada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cerrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cerrada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_sod_rules_company_id_codigo"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_REGLA_SOD)})", name="estado"),
+        CheckConstraint(f"alcance IN ({en(ALCANCES_REGLA_SOD)})", name="alcance"),
+        CheckConstraint(f"modo IN ({en(MODOS_REGLA_SOD)})", name="modo"),
+        CheckConstraint(f"proceso IN ({en(PROCESOS_SOD)})", name="proceso"),
+        CheckConstraint("accion_a <> accion_b", name="acciones_distintas"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+    )
+
+
+class GovernmentSoDRuleHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de una regla de segregación de funciones (CTL-01)."""
+
+    __tablename__ = "gov_sod_rule_history"
+    __scope__ = Scope.COMPANY
+
+    rule_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_sod_rules.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(10), nullable=False)
+    detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_SOD)})", name="tipo"),
+    )
+
+
+for _sentencia in GOV_SOD_RULES_NOT_DELETABLE_PG:
+    event.listen(GovernmentSoDRule.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_SOD_RULE_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentSoDRuleHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

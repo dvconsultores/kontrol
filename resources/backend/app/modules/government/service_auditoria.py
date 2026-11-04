@@ -27,6 +27,7 @@ from app.modules.government.models import (
     GovernmentFinding,
     GovernmentNotification,
     GovernmentPosition,
+    GovernmentSoDRule,
     GovernmentStructure,
     GovernmentUnit,
 )
@@ -51,6 +52,7 @@ PROCESOS: list[tuple[str, str, str]] = [
     ("CTL-04", "Auditoría institucional", "gov-ctl-04"),
     ("CTL-06", "Hallazgos y acciones correctivas", "gov-ctl-06"),
     ("DOC-08", "Paquetes de auditoría", "gov-doc-08"),
+    ("CTL-01", "Segregación de funciones", "gov-ctl-01"),
 ]
 _PROCESO_POR_OWNER_SPEC = {owner_spec: (codigo, nombre) for codigo, nombre, owner_spec in PROCESOS}
 _PROCESO_NOMBRE = {codigo: nombre for codigo, nombre, _ in PROCESOS}
@@ -316,6 +318,16 @@ def _objeto_desde_evento(db: Session, event: AuditEvent, ctx: CompanyContext) ->
         )
         return None if paquete is None else AuditoriaObjeto(
             tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/paquetes/{objeto_id}", capacidad="gobierno_paquetes:view"
+        )
+    if event.entity_type == "GovernmentSoDRule":
+        regla = db.scalar(
+            select(GovernmentSoDRule).where(
+                GovernmentSoDRule.id == objeto_id,
+                GovernmentSoDRule.company_id == empresa,
+            )
+        )
+        return None if regla is None else AuditoriaObjeto(
+            tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/sod/{objeto_id}", capacidad="gobierno_sod:view"
         )
     return None
 

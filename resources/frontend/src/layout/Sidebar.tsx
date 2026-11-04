@@ -34,6 +34,7 @@ import {
   Send,
   Settings,
   ShieldAlert,
+  ShieldBan,
   ShieldCheck,
   ShoppingCart,
   ShoppingBag,
@@ -81,6 +82,7 @@ const navSections: NavSection[] = [
       { to: "/gobierno/auditoria", label: "Auditoría institucional", icon: FileSearch, modulo: "gobierno" },
       { to: "/gobierno/hallazgos", label: "Hallazgos y acciones correctivas", icon: ClipboardCheck, modulo: "gobierno" },
       { to: "/gobierno/paquetes", label: "Paquetes de auditoría", icon: Archive, modulo: "gobierno" },
+      { to: "/gobierno/sod", label: "Segregación de funciones", icon: ShieldBan, modulo: "gobierno" },
     ],
   },
   {

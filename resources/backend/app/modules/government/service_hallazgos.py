@@ -34,6 +34,7 @@ from app.modules.government.schemas_hallazgos import (
     RecomendacionIn,
     VerificacionIn,
 )
+from app.modules.government.service_sod import evaluar_antes_de_actuar
 from app.modules.identity_access.models import User
 from app.shared.audit import record_audit
 from app.shared.clock import hoy_de_negocio
@@ -666,6 +667,8 @@ def agregar_recomendacion(
         texto=datos.texto,
         created_by=ctx.user_id,
     )
+    evaluar_antes_de_actuar(db, ctx, "CTL06_RECOMENDAR", "GovernmentFinding", str(hallazgo.id))
+
     db.add(recomendacion)
     db.flush()
 
@@ -758,6 +761,8 @@ def agregar_accion(
         estado="PENDIENTE",
         created_by=ctx.user_id,
     )
+    evaluar_antes_de_actuar(db, ctx, "CTL06_ACCION", "GovernmentFinding", str(hallazgo.id))
+
     db.add(accion)
     db.flush()
 
@@ -814,6 +819,8 @@ def registrar_plan(db: Session, ctx: CompanyContext, hallazgo_id: str, version: 
                 "Cada recomendación necesita al menos una acción correctiva",
             )
 
+    evaluar_antes_de_actuar(db, ctx, "CTL06_PLAN", "GovernmentFinding", str(hallazgo.id))
+
     estado_anterior = hallazgo.estado
     hallazgo.estado = ESTADO_PLAN
 
@@ -834,6 +841,8 @@ def iniciar_ejecucion(db: Session, ctx: CompanyContext, hallazgo_id: str, versio
     """Inicia la ejecución de un hallazgo con plan de acción."""
     hallazgo = _para_escribir(db, ctx, hallazgo_id, version)
     _exigir_estado(hallazgo, ESTADO_PLAN)
+
+    evaluar_antes_de_actuar(db, ctx, "CTL06_EJECUCION", "GovernmentFinding", str(hallazgo.id))
 
     estado_anterior = hallazgo.estado
     hallazgo.estado = ESTADO_REMEDIACION
@@ -911,6 +920,8 @@ def registrar_avance(
         document_id=documento_id,
         created_by=ctx.user_id,
     )
+    evaluar_antes_de_actuar(db, ctx, "CTL06_AVANCE", "GovernmentFinding", str(hallazgo.id))
+
     db.add(avance)
 
     accion.porcentaje = datos.porcentaje
@@ -959,6 +970,8 @@ def presentar(db: Session, ctx: CompanyContext, hallazgo_id: str, version: int |
             "Todas las acciones correctivas deben estar completadas antes de presentar el hallazgo",
         )
 
+    evaluar_antes_de_actuar(db, ctx, "CTL06_PRESENTAR", "GovernmentFinding", str(hallazgo.id))
+
     estado_anterior = hallazgo.estado
     hallazgo.estado = ESTADO_EVIDENCIA
     hallazgo.presentado_por = ctx.user_id
@@ -989,6 +1002,8 @@ def verificar(
     hallazgo = _para_escribir(db, ctx, hallazgo_id, version)
     _exigir_estado(hallazgo, ESTADO_EVIDENCIA)
     _exigir_otro_verificador(db, hallazgo, ctx)
+
+    evaluar_antes_de_actuar(db, ctx, "CTL06_VERIFICAR", "GovernmentFinding", str(hallazgo.id))
 
     estado_anterior = hallazgo.estado
     hallazgo.estado = ESTADO_CERRADO
@@ -1032,6 +1047,8 @@ def devolver(
     hallazgo = _para_escribir(db, ctx, hallazgo_id, version)
     _exigir_estado(hallazgo, ESTADO_EVIDENCIA)
     _exigir_otro_verificador(db, hallazgo, ctx)
+
+    evaluar_antes_de_actuar(db, ctx, "CTL06_DEVOLVER", "GovernmentFinding", str(hallazgo.id))
 
     estado_anterior = hallazgo.estado
     hallazgo.estado = ESTADO_REMEDIACION

@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { ConflictState } from "@/components/ConflictState";
+import { ConflictoSoD, detalleDeConflictoSod } from "@/modules/gobierno/sod/ConflictoSoD";
 import { formatearFecha } from "@/i18n";
 import {
   CONSULTA_HALLAZGOS,
@@ -22,6 +23,7 @@ import {
   ETIQUETA_RIESGO_HALLAZGO,
   ETIQUETA_ORIGEN_HALLAZGO,
   ETIQUETA_HISTORIA_HALLAZGO,
+  type DetalleConflictoSod,
   EstadoHallazgo,
   HistoriaHallazgo,
 } from "@/modules/gobierno/api";
@@ -59,6 +61,7 @@ export function HallazgoPage(): React.JSX.Element {
   const [erroresServidor, setErroresServidor] = useState<Record<string, string[]>>({});
   const [conflicto, setConflicto] = useState(false);
   const [alertaAutoVerificacion, setAlertaAutoVerificacion] = useState<string | null>(null);
+  const [conflictoSod, setConflictoSod] = useState<DetalleConflictoSod | null>(null);
 
   const claveDetalle = [...CONSULTA_HALLAZGOS, activeCompanyId, "detalle", hallazgoId];
 
@@ -78,6 +81,12 @@ export function HallazgoPage(): React.JSX.Element {
   };
 
   const manejarError = (e: unknown) => {
+    const sod = detalleDeConflictoSod(e);
+    if (sod) {
+      setConflictoSod(sod);
+      recargar();
+      return;
+    }
     if (e instanceof ApiError) {
       if (e.status === 409 && e.code === "GOV_FINDING_STALE") {
         setConflicto(true);
@@ -486,6 +495,8 @@ export function HallazgoPage(): React.JSX.Element {
         description={detalle.titulo}
         actions={accionesCabecera}
       />
+
+      {conflictoSod && <ConflictoSoD detalle={conflictoSod} onCerrar={() => setConflictoSod(null)} />}
 
       {alertaAutoVerificacion && (
         <div role="alert" className="mb-4 rounded-md border border-error-300 bg-error-50 p-3 text-error-800">

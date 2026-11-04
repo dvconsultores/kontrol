@@ -135,6 +135,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_hallazgos:verify",
         # gobierno_paquetes · generación de paquetes de auditoría exportables (DOC-08, OD-DOC08-04)
         "gobierno_paquetes:generate",
+        # gobierno_sod · activación y cierre de reglas de segregación de funciones (CTL-01, OD-CTL01-04)
+        "gobierno_sod:activate",
     }
 )
 
@@ -216,6 +218,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_hallazgos:manage",
         # gobierno_paquetes · consulta, descarga y verificación de paquetes de auditoría (DOC-08)
         "gobierno_paquetes:view",
+        # gobierno_sod · consulta de reglas y conflictos y gestión de borradores (CTL-01)
+        "gobierno_sod:view",
+        "gobierno_sod:manage",
     }
 )
 

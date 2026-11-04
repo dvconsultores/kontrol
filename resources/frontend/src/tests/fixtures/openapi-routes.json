@@ -1115,6 +1115,58 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/sod/acciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/sod/conflictos",
+      "query": [
+        "accion",
+        "desde",
+        "hasta",
+        "pagina",
+        "por_pagina",
+        "proceso",
+        "regla_id",
+        "usuario"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/sod/reglas",
+      "query": [
+        "estado",
+        "proceso"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/sod/reglas",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/sod/reglas/{regla_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/sod/reglas/{regla_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/sod/reglas/{regla_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/sod/reglas/{regla_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/health/live",
       "query": []
     },

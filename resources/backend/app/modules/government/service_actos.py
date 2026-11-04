@@ -34,6 +34,7 @@ from app.modules.government.schemas_actos import (
 )
 from app.modules.government.service_autoridad import competencias_en_vigor
 from app.modules.government.service_estructura import _ente, _error_campo, _utc
+from app.modules.government.service_sod import evaluar_antes_de_actuar
 from app.modules.identity_access.models import User
 from app.shared.audit import record_audit
 from app.shared.mixins import utcnow
@@ -532,6 +533,8 @@ def modificar_acto(
     if not campos_cambiados:
         raise KontrolError(code="GOV_ACT_NO_CHANGES", message="No hay cambios que guardar", status_code=422)
 
+    evaluar_antes_de_actuar(db, ctx, "DOC02_EDITAR", "GovernmentAct", str(acto.id))
+
     antes = {campo: _serializar_valor(getattr(acto, campo)) for campo in campos_cambiados}
 
     for campo, valor in campos_cambiados.items():
@@ -1020,6 +1023,8 @@ def emitir_acto(
         acto.competencia_materia,
     )
 
+    evaluar_antes_de_actuar(db, ctx, "DOC02_EMITIR", "GovernmentAct", str(acto.id))
+
     if acto.caracter == "INTERNO":
         fecha_eficacia = (
             datos.fecha_eficacia if datos.fecha_eficacia is not None else acto.fecha
@@ -1136,6 +1141,8 @@ def registrar_eficacia(
     else:
         fecha_eficacia = base
 
+    evaluar_antes_de_actuar(db, ctx, "DOC02_EFICACIA", "GovernmentAct", str(acto.id))
+
     acto.medio = datos.medio
     acto.referencia_publicacion = datos.referencia
     acto.fecha_publicacion_notificacion = datos.fecha
@@ -1205,6 +1212,8 @@ def corregir_acto(
             message="No hay cambios que guardar",
             status_code=422,
         )
+
+    evaluar_antes_de_actuar(db, ctx, "DOC02_CORREGIR", "GovernmentAct", str(acto.id))
 
     antes: dict[str, Any] = {}
     despues: dict[str, Any] = {}
@@ -1296,6 +1305,8 @@ def _revocar_o_anular(
         )
 
     referencia = _validar_referencia(db, ctx, acto, datos.acto_id_referencia)
+
+    evaluar_antes_de_actuar(db, ctx, "DOC02_REVOCAR" if evento == "GOV_ACT_REVOKED" else "DOC02_ANULAR", "GovernmentAct", str(acto.id))
 
     before = {"status": acto.status, "version": acto.version}
     setattr(acto, campo, referencia.id)

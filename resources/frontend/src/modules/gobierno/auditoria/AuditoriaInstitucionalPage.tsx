@@ -588,7 +588,7 @@ export function AuditoriaInstitucionalPage(): React.JSX.Element {
           />
         </FormField>
 
-        <FormField label="Proceso" htmlFor="filtro-proceso" className="min-w-44">
+        <FormField label="Proceso" htmlFor="filtro-proceso" className="min-w-44 max-w-xs">
           <select
             id="filtro-proceso"
             className={CLASE_SELECT}
@@ -606,7 +606,7 @@ export function AuditoriaInstitucionalPage(): React.JSX.Element {
           </select>
         </FormField>
 
-        <FormField label="Acción" htmlFor="filtro-accion" className="min-w-44">
+        <FormField label="Acción" htmlFor="filtro-accion" className="min-w-44 max-w-xs">
           <select
             id="filtro-accion"
             className={CLASE_SELECT}

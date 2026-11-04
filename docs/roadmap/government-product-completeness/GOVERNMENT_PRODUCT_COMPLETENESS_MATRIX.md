@@ -148,7 +148,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 
 | Id | Proceso | Prio. | Actor principal | Requisitos | Compuertas | PASS | Estado real | Bloqueos | E2E | Equivalente privado (no cuenta) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| CTL-01 | Matriz SoD por proceso y detección previa | P0 | Control Interno | GOV-CTL-001 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | E2E-07 | Motor SoD 045 (reglas por proceso de Gobierno) |
+| CTL-01 | Matriz SoD por proceso y detección previa | P0 | Control Interno | GOV-CTL-001 | ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | SOD-E2E-01..03 (×3 navegadores) + HUMO-UAT-01 | Motor SoD 045 reutilizado solo como patrón |
 | CTL-02 | Bitácora institucional append-only con actor, autoridad, unidad y correlación | P0 | Control Interno | GOV-CTL-002 GOV-CTL-003 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | E2E-06 | Bitácora 006/051 (sin autoridad ni unidad) |
 | CTL-03 | Administrador técnico sin autoridad funcional | P0 | Control Interno | GOV-CTL-004 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | Separación ADMIN de 003 (sin rol de plataforma) |
 | CTL-04 | Consulta y muestreo read-only del auditor | P0 | Auditor interno/externo | GOV-CTL-005 | ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | CTL4-E2E-01..06 (×3 navegadores) + HUMO-UAT-01 | Pantalla de auditoría privada (no cuenta) |

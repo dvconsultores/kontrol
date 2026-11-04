@@ -6,10 +6,10 @@ import { entrarComoUsuario, expect, sesionApi, test } from "./helpers/sesion";
  * Humo autenticado de solo lectura del módulo Gobierno (DOC02-T000 / HUMO-UAT-01).
  *
  * Existe para demostrar que un usuario sintético de consulta puede iniciar sesión, ver el menú
- * Gobierno y abrir por el menú las nueve pantallas del módulo (Configuración del ente, Estructura
+ * Gobierno y abrir por el menú las diez pantallas del módulo (Configuración del ente, Estructura
  * organizativa, Cargos y competencias, Actos administrativos, Notificaciones administrativas,
- * Matriz de autoridad, Auditoría institucional, Hallazgos y acciones correctivas y Paquetes de
- * auditoría) sin tropezar con los estados de falta de acceso o de módulo deshabilitado. Al
+ * Matriz de autoridad, Auditoría institucional, Hallazgos y acciones correctivas, Paquetes de
+ * auditoría y Segregación de funciones) sin tropezar con los estados de falta de acceso o de módulo deshabilitado. Al
  * terminar se le retira su rol en un
  * `finally` para dejarlo sin permisos.
  *
@@ -27,6 +27,7 @@ const CAPACIDADES = [
   "gobierno_auditoria:view",
   "gobierno_hallazgos:view",
   "gobierno_paquetes:view",
+  "gobierno_sod:view",
   "documentos:view",
 ];
 
@@ -40,6 +41,7 @@ const PANTALLAS: ReadonlyArray<readonly [href: string, titulo: string]> = [
   ["/gobierno/auditoria", "Auditoría institucional"],
   ["/gobierno/hallazgos", "Hallazgos y acciones correctivas"],
   ["/gobierno/paquetes", "Paquetes de auditoría"],
+  ["/gobierno/sod", "Segregación de funciones"],
 ];
 
 interface EmpresaApi {
@@ -65,7 +67,7 @@ interface UsuarioApi {
 }
 
 test.describe("Humo UAT · Gobierno (HUMO-UAT-01)", () => {
-  test("HUMO-UAT-01 · el usuario de consulta abre las nueve pantallas por el menú y se le retira el rol", async ({
+  test("HUMO-UAT-01 · el usuario de consulta abre las diez pantallas por el menú y se le retira el rol", async ({
     page,
     request,
   }) => {

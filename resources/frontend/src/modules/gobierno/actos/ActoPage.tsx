@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { ConflictState } from "@/components/ConflictState";
+import { ConflictoSoD, detalleDeConflictoSod } from "@/modules/gobierno/sod/ConflictoSoD";
 import { AdjuntosPanel } from "@/modules/documentos/AdjuntosPanel";
 import { formatearFecha } from "@/i18n";
 import { formatearFechaDeNegocio, hoyDeNegocio } from "@/lib/fecha-de-negocio";
@@ -31,6 +32,7 @@ import {
   VersionesActo,
   nombreDeActo,
   type MedioEficacia,
+  type DetalleConflictoSod,
 } from "@/modules/gobierno/api";
 
 import { ActoFormulario, DatosActo } from "./ActoFormulario";
@@ -62,6 +64,7 @@ export function ActoPage(): React.JSX.Element {
   const [erroresServidor, setErroresServidor] = useState<Record<string, string[]>>({});
   const [confirmar, setConfirmar] = useState<Confirmacion>(null);
   const [conflicto, setConflicto] = useState(false);
+  const [conflictoSod, setConflictoSod] = useState<DetalleConflictoSod | null>(null);
 
   const recargar = () => {
     void queryClient.invalidateQueries({ queryKey: [...CONSULTA_ACTOS] });
@@ -86,6 +89,12 @@ export function ActoPage(): React.JSX.Element {
   }, [consultaVersiones.data]);
 
   const manejarError = (e: unknown) => {
+    const sod = detalleDeConflictoSod(e);
+    if (sod) {
+      setConflictoSod(sod);
+      recargar();
+      return;
+    }
     if (e instanceof ApiError) {
       if (e.status === 409 && e.code === "GOV_ACT_STALE") {
         setConflicto(true);
@@ -443,6 +452,8 @@ export function ActoPage(): React.JSX.Element {
         }
         actions={accionesCabecera}
       />
+
+      {conflictoSod && <ConflictoSoD detalle={conflictoSod} onCerrar={() => setConflictoSod(null)} />}
 
       {conflicto ? (
         <ConflictState
