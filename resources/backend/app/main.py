@@ -25,6 +25,7 @@ from app.modules.documents.api import router as documents_router
 from app.modules.fiscal.api import router as fiscal_router
 from app.modules.government.api import router as government_router
 from app.modules.government.api_actos import router as government_acts_router
+from app.modules.government.api_auditoria import router as government_audit_router
 from app.modules.government.api_autoridad import router as government_authority_router
 from app.modules.government.api_cargos import router as government_positions_router
 from app.modules.government.api_estructura import router as government_structure_router
@@ -129,6 +130,7 @@ def create_app() -> FastAPI:
     app.include_router(government_positions_router, prefix=prefix)
     app.include_router(government_acts_router, prefix=prefix)
     app.include_router(government_authority_router, prefix=prefix)
+    app.include_router(government_audit_router, prefix=prefix)
     app.include_router(government_notifications_router, prefix=prefix)
 
     # Contrato estricto de consulta (FR-001-268): después del último router, para que cubra todas las rutas.

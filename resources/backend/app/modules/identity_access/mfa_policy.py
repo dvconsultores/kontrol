@@ -203,6 +203,10 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_notificaciones:view",
         # gobierno_autoridad · consulta y exportación de la matriz de autoridad (ORG-07)
         "gobierno_autoridad:view",
+        # gobierno_auditoria · consulta y muestreo del auditor de Gobierno
+        # (CTL-04); la muestra es papel de trabajo y no toca la evidencia
+        "gobierno_auditoria:view",
+        "gobierno_auditoria:sample",
     }
 )
 

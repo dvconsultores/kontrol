@@ -12,7 +12,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, String, Text, UniqueConstraint, text
+from sqlalchemy import DDL, JSON, BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, String, Text, UniqueConstraint, event, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -201,6 +201,7 @@ TIPOS_PERSONA = ("NATURAL", "JURIDICA")
 ESTADOS_NOTIFICACION = ("PENDIENTE", "NOTIFICADA", "ANULADA")
 MEDIOS_NOTIFICACION = ("PERSONAL", "PRENSA")
 RESULTADOS_INTENTO = ("ENTREGADA", "FALLIDA", "PUBLICADA")
+METODOS_MUESTREO = ("TODAS", "ESPECIFICA", "ALEATORIA")
 
 
 class GovernmentPosition(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
@@ -482,3 +483,70 @@ class GovernmentNotificationVersion(UUIDMixin, TimestampMixin, Base):
     snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+GOV_AUDIT_SAMPLES_IMMUTABLE_PG: tuple[str, ...] = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_audit_samples_inmutable() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'GOV_AUDIT_SAMPLE_IMMUTABLE' USING ERRCODE = 'P0001', DETAIL = TG_OP; END; $$",
+    "CREATE TRIGGER trg_gov_audit_samples_no_update BEFORE UPDATE ON gov_audit_samples FOR EACH ROW EXECUTE FUNCTION kontrol_gov_audit_samples_inmutable()",
+    "CREATE TRIGGER trg_gov_audit_samples_no_delete BEFORE DELETE ON gov_audit_samples FOR EACH ROW EXECUTE FUNCTION kontrol_gov_audit_samples_inmutable()",
+    "CREATE TRIGGER trg_gov_audit_samples_no_truncate BEFORE TRUNCATE ON gov_audit_samples FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_audit_samples_inmutable()",
+)
+
+
+GOV_AUDIT_SAMPLE_ITEMS_IMMUTABLE_PG: tuple[str, ...] = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_audit_sample_items_inmutable() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'GOV_AUDIT_SAMPLE_ITEM_IMMUTABLE' USING ERRCODE = 'P0001', DETAIL = TG_OP; END; $$",
+    "CREATE TRIGGER trg_gov_audit_sample_items_no_update BEFORE UPDATE ON gov_audit_sample_items FOR EACH ROW EXECUTE FUNCTION kontrol_gov_audit_sample_items_inmutable()",
+    "CREATE TRIGGER trg_gov_audit_sample_items_no_delete BEFORE DELETE ON gov_audit_sample_items FOR EACH ROW EXECUTE FUNCTION kontrol_gov_audit_sample_items_inmutable()",
+    "CREATE TRIGGER trg_gov_audit_sample_items_no_truncate BEFORE TRUNCATE ON gov_audit_sample_items FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_audit_sample_items_inmutable()",
+)
+
+
+class GovernmentAuditSample(UUIDMixin, TimestampMixin, Base):
+    """Muestra de auditoría registrada por el auditor (CTL-04); inmutable."""
+
+    __tablename__ = "gov_audit_samples"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    titulo: Mapped[str] = mapped_column(String(200), nullable=False)
+    criterio: Mapped[str] = mapped_column(Text, nullable=False)
+    justificacion: Mapped[str] = mapped_column(Text, nullable=False)
+    metodo: Mapped[str] = mapped_column(String(12), nullable=False)
+    semilla: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    tamano: Mapped[int] = mapped_column(Integer, nullable=False)
+    poblacion: Mapped[int] = mapped_column(Integer, nullable=False)
+    filtros: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    created_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_audit_samples_company_id_codigo"),
+        CheckConstraint(f"metodo IN ({en(METODOS_MUESTREO)})", name="metodo"),
+        CheckConstraint("(metodo = 'ALEATORIA') = (semilla IS NOT NULL)", name="semilla_solo_aleatoria"),
+        CheckConstraint("tamano >= 1 AND tamano <= poblacion", name="tamano"),
+    )
+
+
+class GovernmentAuditSampleItem(UUIDMixin, TimestampMixin, Base):
+    """Partida de una muestra: referencia a un evento de auditoría inmutable."""
+
+    __tablename__ = "gov_audit_sample_items"
+    __scope__ = Scope.COMPANY
+
+    sample_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_audit_samples.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    audit_event_id: Mapped[str] = mapped_column(String(36), ForeignKey("audit_events.id"), nullable=False, index=True)
+    orden: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("sample_id", "audit_event_id", name="uq_gov_audit_sample_items_sample_id_audit_event_id"),
+        UniqueConstraint("sample_id", "orden", name="uq_gov_audit_sample_items_sample_id_orden"),
+        CheckConstraint("orden >= 1", name="orden"),
+    )
+
+
+for _sentencia in GOV_AUDIT_SAMPLES_IMMUTABLE_PG:
+    event.listen(GovernmentAuditSample.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+for _sentencia in GOV_AUDIT_SAMPLE_ITEMS_IMMUTABLE_PG:
+    event.listen(GovernmentAuditSampleItem.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

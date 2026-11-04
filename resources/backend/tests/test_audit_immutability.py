@@ -82,12 +82,19 @@ def test_imm_03_orm_rechazado(sesion_de_prueba):
 
 @pytest.mark.skipif(not PG_URL.startswith("postgresql"), reason="TRUNCATE solo existe en PostgreSQL")
 def test_imm_04_truncate_rechazado(sesion_de_prueba):
-    """IMM-04: TRUNCATE falla con AUDIT_EVENT_IMMUTABLE en PostgreSQL."""
-    _insertar(sesion_de_prueba)
-    with pytest.raises(sqlalchemy.exc.DBAPIError) as exc:
+    """IMM-04: TRUNCATE no vacía audit_events en PostgreSQL; con CASCADE (que salta la clave foránea de las partidas de muestra) falla con AUDIT_EVENT_IMMUTABLE."""
+    evento = _insertar(sesion_de_prueba)
+    with pytest.raises(sqlalchemy.exc.DBAPIError):
         sesion_de_prueba.execute(text("TRUNCATE audit_events"))
+    sesion_de_prueba.rollback()
+    sesion_de_prueba.expire_all()
+    assert sesion_de_prueba.get(AuditEvent, evento.id) is not None
+    with pytest.raises(sqlalchemy.exc.DBAPIError) as exc:
+        sesion_de_prueba.execute(text("TRUNCATE audit_events CASCADE"))
     assert "AUDIT_EVENT_IMMUTABLE" in str(exc.value)
     sesion_de_prueba.rollback()
+    sesion_de_prueba.expire_all()
+    assert sesion_de_prueba.get(AuditEvent, evento.id) is not None
 
 
 def test_imm_05_segundo_insert_funciona(sesion_de_prueba):

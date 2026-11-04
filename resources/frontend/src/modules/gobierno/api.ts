@@ -770,3 +770,151 @@ export function consultaDeMatriz(
 }
 export const POR_PAGINA_MATRIZ = 50;
 export const CONSULTA_AUTORIDAD = [...CONSULTA_GOBIERNO, "autoridad"] as const;
+
+// CTL-04: consulta y muestreo read-only del auditor (GOV-CTL-005), proyección de la bitácora de Gobierno.
+export type MetodoMuestreo = "TODAS" | "ESPECIFICA" | "ALEATORIA";
+
+export const ETIQUETA_METODO_MUESTREO: Record<MetodoMuestreo, string> = {
+  TODAS: "Todas las partidas",
+  ESPECIFICA: "Partidas específicas",
+  ALEATORIA: "Selección aleatoria",
+};
+
+export interface FiltrosAuditoria {
+  desde?: string;
+  hasta?: string;
+  proceso?: string;
+  accion?: string;
+  usuario?: string;
+  texto?: string;
+}
+
+export interface AuditoriaProceso {
+  codigo: string;
+  nombre: string;
+}
+
+export interface AuditoriaAccion {
+  codigo: string;
+  entidad: string;
+  etiqueta: string;
+  proceso: string;
+}
+
+export interface AuditoriaFiltros {
+  procesos: AuditoriaProceso[];
+  acciones: AuditoriaAccion[];
+}
+
+export interface AuditoriaEvento {
+  id: string;
+  fecha: string;
+  proceso: string;
+  proceso_nombre: string;
+  accion: string;
+  accion_etiqueta: string;
+  entidad: string;
+  entidad_id: string | null;
+  usuario: string | null;
+  motivo: string | null;
+  request_id: string | null;
+}
+
+export interface AuditoriaObjeto {
+  tipo: string;
+  id: string;
+  ruta: string;
+  capacidad: string;
+}
+
+export interface AuditoriaEventoDetalle extends AuditoriaEvento {
+  detalle: Record<string, unknown>;
+  documentos: string[];
+  objeto: AuditoriaObjeto | null;
+}
+
+export interface AuditoriaEventos {
+  items: AuditoriaEvento[];
+  total: number;
+  pagina: number;
+  por_pagina: number;
+}
+
+export interface AuditoriaMuestra {
+  id: string;
+  codigo: string;
+  titulo: string;
+  criterio: string;
+  justificacion: string;
+  metodo: MetodoMuestreo;
+  semilla: number | null;
+  tamano: number;
+  poblacion: number;
+  filtros: FiltrosAuditoria;
+  registrada_por: string | null;
+  registrada_en: string;
+}
+
+export interface AuditoriaMuestraDetalle extends AuditoriaMuestra {
+  eventos: AuditoriaEvento[];
+}
+
+export interface AuditoriaMuestras {
+  items: AuditoriaMuestra[];
+}
+
+export interface AuditoriaMuestraNueva {
+  titulo: string;
+  criterio: string;
+  justificacion: string;
+  metodo: MetodoMuestreo;
+  filtros: FiltrosAuditoria;
+  semilla?: number;
+  tamano?: number;
+  eventos?: string[];
+}
+
+export function consultaDeAuditoria(
+  filtros: FiltrosAuditoria,
+  paginacion: { pagina?: number; por_pagina?: number } = {},
+): string {
+  const params = new URLSearchParams();
+  const desde = valorDeConsulta(filtros.desde);
+  if (desde !== undefined) params.append("desde", desde);
+  const hasta = valorDeConsulta(filtros.hasta);
+  if (hasta !== undefined) params.append("hasta", hasta);
+  const proceso = valorDeConsulta(filtros.proceso);
+  if (proceso !== undefined) params.append("proceso", proceso);
+  const accion = valorDeConsulta(filtros.accion);
+  if (accion !== undefined) params.append("accion", accion);
+  const usuario = valorDeConsulta(filtros.usuario?.trim());
+  if (usuario !== undefined) params.append("usuario", usuario);
+  const texto = valorDeConsulta(filtros.texto?.trim());
+  if (texto !== undefined) params.append("texto", texto);
+  const pagina = valorDeConsulta(paginacion.pagina);
+  if (pagina !== undefined) params.append("pagina", pagina);
+  const porPagina = valorDeConsulta(paginacion.por_pagina);
+  if (porPagina !== undefined) params.append("por_pagina", porPagina);
+  const cadena = params.toString();
+  return cadena === "" ? "" : `?${cadena}`;
+}
+
+export function filtrosLimpios(filtros: FiltrosAuditoria): FiltrosAuditoria {
+  const limpios: FiltrosAuditoria = {};
+  const desde = valorDeConsulta(filtros.desde);
+  if (desde !== undefined) limpios.desde = desde;
+  const hasta = valorDeConsulta(filtros.hasta);
+  if (hasta !== undefined) limpios.hasta = hasta;
+  const proceso = valorDeConsulta(filtros.proceso);
+  if (proceso !== undefined) limpios.proceso = proceso;
+  const accion = valorDeConsulta(filtros.accion);
+  if (accion !== undefined) limpios.accion = accion;
+  const usuario = valorDeConsulta(filtros.usuario?.trim());
+  if (usuario !== undefined) limpios.usuario = usuario;
+  const texto = valorDeConsulta(filtros.texto?.trim());
+  if (texto !== undefined) limpios.texto = texto;
+  return limpios;
+}
+
+export const POR_PAGINA_AUDITORIA = 50;
+export const CONSULTA_AUDITORIA = [...CONSULTA_GOBIERNO, "auditoria"] as const;

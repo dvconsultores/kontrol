@@ -1012,6 +1012,62 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/auditoria/eventos",
+      "capabilities": [
+        "gobierno_auditoria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/auditoria/eventos/{evento_id}",
+      "capabilities": [
+        "gobierno_auditoria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/auditoria/filtros",
+      "capabilities": [
+        "gobierno_auditoria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/auditoria/muestras",
+      "capabilities": [
+        "gobierno_auditoria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/auditoria/muestras",
+      "capabilities": [
+        "gobierno_auditoria:sample"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/auditoria/muestras/{muestra_id}",
+      "capabilities": [
+        "gobierno_auditoria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/auditoria/muestras/{muestra_id}/exportar",
+      "capabilities": [
+        "gobierno_auditoria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/autoridad/ejercicios",
       "capabilities": [
         "gobierno_autoridad:view"
@@ -4909,7 +4965,9 @@
     "gobierno_notificaciones:view",
     "gobierno_notificaciones:edit",
     "gobierno_notificaciones:record",
-    "gobierno_autoridad:view"
+    "gobierno_autoridad:view",
+    "gobierno_auditoria:view",
+    "gobierno_auditoria:sample"
   ],
   "report_capabilities": {
     "executive_ventas": [

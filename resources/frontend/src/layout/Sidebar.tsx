@@ -11,6 +11,7 @@ import {
   CreditCard,
   FileCheck,
   FileDown,
+  FileSearch,
   FileText,
   Grid3x3,
   Hash,
@@ -76,6 +77,7 @@ const navSections: NavSection[] = [
       { to: "/gobierno/actos", label: "Actos administrativos", icon: ScrollText, modulo: "gobierno" },
       { to: "/gobierno/notificaciones", label: "Notificaciones administrativas", icon: Send, modulo: "gobierno" },
       { to: "/gobierno/autoridad", label: "Matriz de autoridad", icon: Grid3x3, modulo: "gobierno" },
+      { to: "/gobierno/auditoria", label: "Auditoría institucional", icon: FileSearch, modulo: "gobierno" },
     ],
   },
   {

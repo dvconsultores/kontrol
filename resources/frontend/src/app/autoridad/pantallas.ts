@@ -118,6 +118,8 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "gobierno/notificaciones": { capacidad: "gobierno_notificaciones:view", alcance: "empresa" },
   "gobierno/notificaciones/:notificacionId": { capacidad: "gobierno_notificaciones:view", alcance: "empresa" },
   "gobierno/autoridad": { capacidad: "gobierno_autoridad:view", alcance: "empresa" },
+  "gobierno/auditoria": { capacidad: "gobierno_auditoria:view", alcance: "empresa" },
+  "gobierno/auditoria/muestras/:muestraId": { capacidad: "gobierno_auditoria:view", alcance: "empresa" },
   "comercial/condiciones-pago": { capacidad: "comercial:view", alcance: "empresa" },
   "comercial/listas-precio": { capacidad: "comercial:view", alcance: "empresa" },
   "auditoria": { capacidad: "audit:view", alcance: "global" },

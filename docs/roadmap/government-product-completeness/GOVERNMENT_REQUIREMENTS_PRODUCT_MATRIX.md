@@ -135,7 +135,7 @@ Traza requisito → módulo → proceso → backend → pantalla → campo → r
 | GOV-CTL-002 | P0 | N18,N20,N27,N40 | CTL-02 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | BLOCKED | Registrar bitacora append-only de autenticacion, consultas sensibles, cambios, aprobaciones, rechazos y acciones financieras. |
 | GOV-CTL-003 | P0 | N20,N27,N40 | CTL-02 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | BLOCKED | Mantener autor, actor efectivo, rol, unidad, IP/sesion tecnica, timestamp y correlacion de cada evento auditable. |
 | GOV-CTL-004 | P0 | N20,N23,N40 | CTL-03 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | BLOCKED | No permitir al administrador tecnico fabricar autoridad funcional para comprometer/pagar/aprobar. |
-| GOV-CTL-005 | P0 | N18,N22 | CTL-04 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | NOT_STARTED | Soportar muestreo y consulta read-only para auditor interno/externo sin alterar evidencia. |
+| GOV-CTL-005 | P0 | N18,N22 | CTL-04 | PASS | PASS | NOT_APPLICABLE | PASS | PASS | READY | OWNER_UAT_READY | Soportar muestreo y consulta read-only para auditor interno/externo sin alterar evidencia. |
 | GOV-CTL-006 | P0 | N21,N18 | CTL-05 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Formar expediente de cuenta con indice y piezas justificativas vinculadas a operaciones del periodo. |
 | GOV-CTL-007 | P0 | N21,N22 | CTL-05 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Generar reportes de rendicion y calificacion con trazabilidad a fuente, sin consolidaciones no reproducibles. |
 | GOV-CTL-008 | P1 | N18,N20,N22 | CTL-06 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Gestionar hallazgos, recomendaciones, plan de acciones correctivas, responsable, fecha objetivo y evidencia de cierre. |

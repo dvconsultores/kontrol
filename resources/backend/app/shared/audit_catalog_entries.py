@@ -119,6 +119,8 @@ _PARTE_A: tuple[AuditActionSpec, ...] = (
     _e("GOV_ACT_ISSUED", "GovernmentAct", "government", "gov-doc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_ACTO, "Acto administrativo emitido"),
     _e("GOV_ACT_NULLIFIED", "GovernmentAct", "government", "gov-doc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_ACTO, "Nulidad del acto registrada"),
     _e("GOV_ACT_REVOKED", "GovernmentAct", "government", "gov-doc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_ACTO, "Revocación del acto registrada"),
+    _e("GOV_AUDIT_SAMPLE_CREATED", "GovernmentAuditSample", "government", "gov-ctl-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "filtros", "metodo", "poblacion", "semilla", "tamano"), "Muestra de auditoría registrada"),
+    _e("GOV_AUDIT_SAMPLE_EXPORTED", "GovernmentAuditSample", "government", "gov-ctl-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "tamano"), "Muestra de auditoría exportada"),
     _e("GOV_AUTHORITY_MATRIX_EXPORTED", "GovernmentStructure", "government", "gov-org-07", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("ejercicio", "fecha", "filas", "filtros"), "Matriz de autoridad exportada"),
     _e("GOV_ACT_UPDATED", "GovernmentAct", "government", "gov-doc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_ACTO, "Acto administrativo modificado (borrador)"),
     _e("GOV_COMPETENCY_CHANGED", "GovernmentPosition", "government", "gov-0-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("accion", "cargo", "fundamento", "materia", "moneda", "monto", "tipo_limite", "version"), "Competencia de cargo modificada"),

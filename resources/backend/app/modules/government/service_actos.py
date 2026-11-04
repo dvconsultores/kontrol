@@ -20,7 +20,6 @@ from app.modules.government.models import (
     GovernmentActVersion,
     GovernmentNotification,
     GovernmentPosition,
-    GovernmentPositionCompetency,
     GovernmentStructure,
     GovernmentUnit,
 )
@@ -33,6 +32,7 @@ from app.modules.government.schemas_actos import (
     ReferenciaIn,
     validar_coherencia,
 )
+from app.modules.government.service_autoridad import competencias_en_vigor
 from app.modules.government.service_estructura import _ente, _error_campo, _utc
 from app.modules.identity_access.models import User
 from app.shared.audit import record_audit
@@ -132,20 +132,15 @@ def _validar_autoridad(
             status_code=422,
         )
 
-    competencia = db.execute(
-        select(GovernmentPositionCompetency.id).where(
-            GovernmentPositionCompetency.position_id == cargo.id,
-            GovernmentPositionCompetency.company_id == company_id,
-            GovernmentPositionCompetency.action == accion,
-            GovernmentPositionCompetency.subject == materia,
-        )
-    ).first()
-
-    if competencia is None:
+    competencias = competencias_en_vigor(db, cargo, fecha)
+    if not any(
+        competencia.get("accion") == accion and competencia.get("materia") == materia
+        for competencia in competencias
+    ):
         raise KontrolError(
             code="GOV_ACT_INVALID_COMPETENCY",
             message="El cargo no tiene la competencia indicada para dictar este acto",
-            field_errors={"competencia": ["La competencia indicada no es actual del cargo"]},
+            field_errors={"competencia": ["La competencia indicada no estaba vigente en el cargo en la fecha del acto"]},
             status_code=422,
         )
 
@@ -673,17 +668,7 @@ def autoridades(db: Session, ctx: CompanyContext, fecha: date) -> dict[str, Any]
             )
         ).scalar_one_or_none()
 
-        competencias = db.execute(
-            select(GovernmentPositionCompetency)
-            .where(
-                GovernmentPositionCompetency.position_id == cargo.id,
-                GovernmentPositionCompetency.company_id == ctx.company_id,
-            )
-            .order_by(
-                GovernmentPositionCompetency.action.asc(),
-                GovernmentPositionCompetency.subject.asc(),
-            )
-        ).scalars().all()
+        competencias = competencias_en_vigor(db, cargo, fecha)
 
         items.append(
             {
@@ -694,7 +679,8 @@ def autoridades(db: Session, ctx: CompanyContext, fecha: date) -> dict[str, Any]
                 "unidad_denominacion": unidad.name if unidad else "",
                 "estado": cargo.status,
                 "competencias": [
-                    {"accion": k.action, "materia": k.subject} for k in competencias
+                    {"accion": k.get("accion"), "materia": k.get("materia")}
+                    for k in competencias
                 ],
             }
         )

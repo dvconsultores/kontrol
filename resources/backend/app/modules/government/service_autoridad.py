@@ -59,6 +59,22 @@ def _version_en_vigor(versiones: list[GovernmentPositionVersion], fin_utc: Any) 
     return None
 
 
+def competencias_en_vigor(db: Session, cargo: GovernmentPosition, fecha: date) -> list[dict[str, Any]]:
+    """Competencias del cargo en vigor en la fecha (la misma regla de versión que la matriz de autoridad)."""
+    versiones = list(
+        db.scalars(
+            select(GovernmentPositionVersion).where(
+                GovernmentPositionVersion.position_id == str(cargo.id),
+                GovernmentPositionVersion.company_id == cargo.company_id,
+            )
+        )
+    )
+    version = _version_en_vigor(versiones, limites_del_dia_utc(fecha)[1])
+    if version is None:
+        return []
+    return list(version.snapshot.get("competencias") or [])
+
+
 def _ruta(unidades: list[GovernmentUnit], unidad_id: str) -> str:
     """Calcula la ruta de códigos desde la raíz hasta la unidad."""
     por_id = {str(u.id): u for u in unidades}

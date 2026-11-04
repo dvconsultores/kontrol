@@ -223,4 +223,20 @@ describe("Sidebar · Gobierno › Actos administrativos", () => {
     expect(enlace("Matriz de autoridad")).toBeNull();
     expect(enlace("Cargos y competencias")).not.toBeNull();
   });
+
+  it("GSB-14 · módulo habilitado y gobierno_auditoria:view muestra «Auditoría institucional»", () => {
+    moduloGobierno = true;
+    permisos = new Set(["gobierno_auditoria:view"]);
+    montar();
+    const item = enlace("Auditoría institucional");
+    expect(item).not.toBeNull();
+    expect(item?.getAttribute("href")).toBe("/gobierno/auditoria");
+  });
+
+  it("GSB-15 · audit:view sin gobierno_auditoria:view no muestra «Auditoría institucional»", () => {
+    moduloGobierno = true;
+    permisos = new Set(["audit:view"]);
+    montar();
+    expect(enlace("Auditoría institucional")).toBeNull();
+  });
 });

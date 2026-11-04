@@ -2,28 +2,53 @@
  * AUDITORIA-SOBRE-VS-ARRAY · la pantalla de Auditoría pinta lo que el servidor devuelve.
  *
  * El servidor responde un sobre paginado; la pantalla lo trataba como un array y
- * no pintaba ninguna fila. Aquí se generan eventos controlados —inicios de sesión
- * por API, cuyo `request_id` devuelve el propio servidor en `X-Request-ID` y queda
- * escrito en el evento `LOGIN_SUCCESS`— y se comprueba que aparecen como filas al
- * entrar por el menú. No se usa la columna «Fecha» (deuda `AUDITORIA-CREATED-AT`)
- * ni la caja de búsqueda (`UI-BUSQUEDA-MUERTA`, decisión pendiente).
+ * no pintaba ninguna fila. Aquí se generan eventos controlados —el paso de
+ * contraseña del login por API (`MFA_CHALLENGE_ISSUED`, o `LOGIN_SUCCESS` si el
+ * usuario no exige segundo factor), cuyo `request_id` devuelve el propio servidor
+ * en `X-Request-ID` y queda escrito en el evento— y se comprueba que aparecen como
+ * filas al entrar por el menú. No consumen pasos TOTP. No se usa la columna «Fecha»
+ * (deuda `AUDITORIA-CREATED-AT`) ni la caja de búsqueda (`UI-BUSQUEDA-MUERTA`,
+ * decisión pendiente).
  */
 import { type APIRequestContext, type Page } from "@playwright/test";
 
-import { entrar as entrarConSesion, expect, iniciarSesion, identidad, sesionApi, test } from "./helpers/sesion";
+import { entrar as entrarConSesion, expect, identidad, sesionApi, test } from "./helpers/sesion";
+
+const PASSWORD = process.env.KONTROL_E2E_PASSWORD ?? "";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 
-/** Inicia sesión por el flujo real y devuelve el `request_id` que el servidor asignó a ese login. */
-async function loginConRastro(tenant: string, usuario: string): Promise<{ rastro: string; token: string }> {
-  const s = await iniciarSesion(identidad(usuario), { tenant });
-  return { rastro: s.rastro, token: s.token };
+/** Hace el paso de contraseña del login por API y devuelve el `request_id` que el servidor
+ * asignó a esa petición y la acción del evento registrado. No consume pasos TOTP: no verifica
+ * el segundo factor, solo dispara el evento controlado con el `request_id` de `X-Request-ID`. */
+async function eventoControlado(
+  request: APIRequestContext,
+  tenant: string,
+  usuario: string,
+): Promise<{ rastro: string; accion: string }> {
+  const r = await request.post(`${API}/auth/login`, {
+    data: { tenant_code: tenant, username: identidad(usuario), password: PASSWORD },
+  });
+  expect(r.ok(), `login de ${usuario}`).toBeTruthy();
+  const rastro = r.headers()["x-request-id"];
+  if (!rastro) throw new Error(`login de ${usuario}: sin cabecera X-Request-ID`);
+  const { status } = (await r.json()) as { status: string };
+  if (status === "MFA_REQUIRED" || status === "MFA_ENROLLMENT_REQUIRED") {
+    return { rastro, accion: "MFA_CHALLENGE_ISSUED" };
+  }
+  if (status === "AUTHENTICATED") return { rastro, accion: "LOGIN_SUCCESS" };
+  throw new Error(`login de ${usuario}: estado inesperado ${status}`);
 }
 
 /** ¿Está el rastro en la bitácora del tenant de `token`? Por API, con página amplia:
  * con muchas pruebas en paralelo la página 1 de 10 que pide la pantalla puede no bastar. */
-async function rastroEnLaBitacora(request: APIRequestContext, token: string, rastro: string): Promise<boolean> {
-  const r = await request.get(`${API}/audit/events?page_size=100&action=LOGIN_SUCCESS`, {
+async function rastroEnLaBitacora(
+  request: APIRequestContext,
+  token: string,
+  rastro: string,
+  accion: string,
+): Promise<boolean> {
+  const r = await request.get(`${API}/audit/events?page_size=100&action=${accion}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   expect(r.ok()).toBeTruthy();
@@ -50,8 +75,10 @@ async function irAAuditoria(page: Page): Promise<void> {
 
 test.describe("AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan", () => {
   test("ENV-01/02 · dos eventos controlados del tenant aparecen como filas, y son los del sobre", async ({ page, request }) => {
-    const { rastro: rastroA } = await loginConRastro("DEMO", "admin");
-    const { rastro: rastroB } = await loginConRastro("DEMO", "uab");
+    const a = await eventoControlado(request, "DEMO", "admin");
+    const b = await eventoControlado(request, "DEMO", "uab");
+    const rastroA = a.rastro;
+    const rastroB = b.rastro;
     const { token } = await sesionApi("admintenant", { tenant: "DEMO" });
 
     let sobre: { items: Array<{ action: string; entity_type: string; request_id: string | null }>; total: number } | null = null;
@@ -64,8 +91,8 @@ test.describe("AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan", () =>
 
     // Los dos eventos existen en la bitácora del tenant (verdad del servidor), y lo
     // que la pantalla recibió es un sobre, no un array.
-    expect(await rastroEnLaBitacora(request, token, rastroA)).toBe(true);
-    expect(await rastroEnLaBitacora(request, token, rastroB)).toBe(true);
+    expect(await rastroEnLaBitacora(request, token, rastroA, a.accion)).toBe(true);
+    expect(await rastroEnLaBitacora(request, token, rastroB, b.accion)).toBe(true);
     await expect.poll(() => sobre !== null).toBeTruthy();
     expect(Array.isArray(sobre)).toBe(false);
     expect(sobre!.items.length).toBeGreaterThan(0);
@@ -93,9 +120,10 @@ test.describe("AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan", () =>
   });
 
   test("ENV-04 · el rastro de otro tenant no está en el sobre ni en la tabla", async ({ page, request }) => {
-    const { rastro: ajeno } = await loginConRastro("DEMO2", "uc");
-    // Cada identidad del worker admite como mucho dos inicios TOTP por paso de 30 s sin esperar.
-    const { rastro: propio } = await loginConRastro("DEMO", "ub");
+    const ajenoEvento = await eventoControlado(request, "DEMO2", "uc");
+    const propioEvento = await eventoControlado(request, "DEMO", "ub");
+    const ajeno = ajenoEvento.rastro;
+    const propio = propioEvento.rastro;
     const { token } = await sesionApi("admintenant", { tenant: "DEMO" });
 
     let sobre: { items: Array<{ request_id: string | null }> } | null = null;
@@ -106,8 +134,8 @@ test.describe("AUDITORIA-SOBRE-VS-ARRAY · las filas del sobre se pintan", () =>
     await irAAuditoria(page);
     await expect.poll(() => sobre !== null).toBeTruthy();
 
-    expect(await rastroEnLaBitacora(request, token, propio)).toBe(true);
-    expect(await rastroEnLaBitacora(request, token, ajeno)).toBe(false);
+    expect(await rastroEnLaBitacora(request, token, propio, propioEvento.accion)).toBe(true);
+    expect(await rastroEnLaBitacora(request, token, ajeno, ajenoEvento.accion)).toBe(false);
     expect(sobre!.items.map((i) => i.request_id)).not.toContain(ajeno);
     await expect(page.getByRole("row", { name: new RegExp(ajeno) })).toHaveCount(0);
     if (sobre!.items.some((i) => i.request_id === propio)) {

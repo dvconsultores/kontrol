@@ -721,6 +721,50 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/auditoria/eventos",
+      "query": [
+        "accion",
+        "desde",
+        "hasta",
+        "pagina",
+        "por_pagina",
+        "proceso",
+        "texto",
+        "usuario"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/auditoria/eventos/{evento_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/auditoria/filtros",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/auditoria/muestras",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/auditoria/muestras",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/auditoria/muestras/{muestra_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/auditoria/muestras/{muestra_id}/exportar",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/autoridad/ejercicios",
       "query": []
     },

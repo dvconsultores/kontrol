@@ -158,6 +158,8 @@ export const router = createBrowserRouter([
           { path: "gobierno/notificaciones", lazy: () => import("@/modules/gobierno/notificaciones/NotificacionesPage").then((m) => ({ Component: m.NotificacionesPage })) },
           { path: "gobierno/notificaciones/:notificacionId", lazy: () => import("@/modules/gobierno/notificaciones/NotificacionPage").then((m) => ({ Component: m.NotificacionPage })) },
           { path: "gobierno/autoridad", lazy: () => import("@/modules/gobierno/autoridad/MatrizAutoridadPage").then((m) => ({ Component: m.MatrizAutoridadPage })) },
+          { path: "gobierno/auditoria", lazy: () => import("@/modules/gobierno/auditoria/AuditoriaInstitucionalPage").then((m) => ({ Component: m.AuditoriaInstitucionalPage })) },
+          { path: "gobierno/auditoria/muestras/:muestraId", lazy: () => import("@/modules/gobierno/auditoria/MuestraPage").then((m) => ({ Component: m.MuestraPage })) },
           { path: "comercial/condiciones-pago", lazy: () => import("@/modules/comercial/CondicionesPagoPage").then((m) => ({ Component: m.CondicionesPagoPage })) },
           { path: "comercial/listas-precio", lazy: () => import("@/modules/comercial/ListasPrecioPage").then((m) => ({ Component: m.ListasPrecioPage })) },
           { path: "auditoria", lazy: () => import("@/pages/AuditoriaPage").then((m) => ({ Component: m.AuditoriaPage })) },
