@@ -946,6 +946,85 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/hallazgos",
+      "query": [
+        "estado",
+        "origen",
+        "pagina",
+        "por_pagina",
+        "riesgo",
+        "texto",
+        "vencidas"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/hallazgos",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/hallazgos/cargos-responsables",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/hallazgos/exportar",
+      "query": [
+        "estado",
+        "origen",
+        "riesgo",
+        "texto",
+        "vencidas"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/hallazgos/{hallazgo_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/hallazgos/{hallazgo_id}/acciones",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/hallazgos/{hallazgo_id}/acciones/{accion_id}/avances",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/hallazgos/{hallazgo_id}/devolver",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/hallazgos/{hallazgo_id}/ejecucion",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/hallazgos/{hallazgo_id}/plan",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/hallazgos/{hallazgo_id}/presentar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/hallazgos/{hallazgo_id}/recomendaciones",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/hallazgos/{hallazgo_id}/verificar",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/modulo",
       "query": []
     },

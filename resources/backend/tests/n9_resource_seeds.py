@@ -22,11 +22,11 @@ from sqlalchemy.orm import Session
 def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     """Crea una entidad del tipo pedido en esa empresa. Devuelve su id."""
     from app.modules.approvals.models import ApprovalRequest
-    from app.modules.government.models import GovernmentAct, GovernmentEntity, GovernmentNotification, GovernmentPosition, GovernmentStructure, GovernmentUnit
+    from app.modules.government.models import GovernmentAct, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentNotification, GovernmentPosition, GovernmentStructure, GovernmentUnit
     from app.modules.homologation.models import HomologationRecord
     from app.modules.inventory.models import InventoryAdjustment, StockCount
     from app.modules.master_data.models import CatalogItem, Party
-    from app.modules.organization.models import Installation, Warehouse
+    from app.modules.organization.models import Company, Installation, Warehouse
     from app.modules.purchasing.models import (
         GoodsReceipt,
         Payment,
@@ -100,6 +100,29 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
                                       nombre=f"Destinatario {marca}", identificacion="V-1234567",
                                       identificacion_clave="V1234567", domicilio="Domicilio de prueba",
                                       recursos="No proceden recursos", status="PENDIENTE", version=1)
+
+    def _accion_correctiva_de_empresa() -> GovernmentCorrectiveAction:
+        cargo = _cargo_de_empresa("H")
+        db.add(cargo)
+        db.flush()
+        hallazgo = GovernmentFinding(
+            tenant_id=db.get(Company, empresa).tenant_id, company_id=empresa, codigo=f"HA-{sufijo[:16]}",
+            titulo=f"Hallazgo {marca}", condicion="Condición de prueba", criterio="Criterio de prueba",
+            causa="Causa de prueba", efecto="Efecto de prueba", riesgo="MEDIO", origen="INDEPENDIENTE",
+            origen_descripcion="Origen de prueba", estado="ABIERTO", version=1)
+        db.add(hallazgo)
+        db.flush()
+        recomendacion = GovernmentFindingRecommendation(
+            finding_id=str(hallazgo.id), company_id=empresa, orden=1, texto=f"Recomendación {marca}")
+        db.add(recomendacion)
+        db.flush()
+        unidad = db.get(GovernmentUnit, cargo.unit_id)
+        return GovernmentCorrectiveAction(
+            finding_id=str(hallazgo.id), recommendation_id=str(recomendacion.id), company_id=empresa, orden=1,
+            descripcion=f"Acción {marca}", position_id=str(cargo.id), cargo_codigo=cargo.code,
+            cargo_denominacion=cargo.name, unidad_id=str(cargo.unit_id), unidad_nombre=unidad.name,
+            ejercicio=2031, fecha_objetivo=datetime(2031, 12, 31, tzinfo=UTC).date(), porcentaje=0,
+            estado="PENDIENTE")
 
     def _party(rol: str) -> str:
         p = Party(company_id=empresa, code=f"{marca}-{rol}", name=f"Tercero {marca}",
@@ -238,6 +261,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         "GovernmentPosition": _cargo_de_empresa,
         "GovernmentAct": _acto_de_empresa,
         "GovernmentNotification": _notificacion_de_empresa,
+        "GovernmentCorrectiveAction": _accion_correctiva_de_empresa,
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",
             warehouse_type="PHYSICAL", status="ACTIVE"),

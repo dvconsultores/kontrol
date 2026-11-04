@@ -1332,6 +1332,110 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/hallazgos",
+      "capabilities": [
+        "gobierno_hallazgos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/hallazgos",
+      "capabilities": [
+        "gobierno_hallazgos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/hallazgos/cargos-responsables",
+      "capabilities": [
+        "gobierno_hallazgos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/hallazgos/exportar",
+      "capabilities": [
+        "gobierno_hallazgos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/hallazgos/{hallazgo_id}",
+      "capabilities": [
+        "gobierno_hallazgos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/hallazgos/{hallazgo_id}/acciones",
+      "capabilities": [
+        "gobierno_hallazgos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/hallazgos/{hallazgo_id}/acciones/{accion_id}/avances",
+      "capabilities": [
+        "gobierno_hallazgos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/hallazgos/{hallazgo_id}/devolver",
+      "capabilities": [
+        "gobierno_hallazgos:verify"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/hallazgos/{hallazgo_id}/ejecucion",
+      "capabilities": [
+        "gobierno_hallazgos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/hallazgos/{hallazgo_id}/plan",
+      "capabilities": [
+        "gobierno_hallazgos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/hallazgos/{hallazgo_id}/presentar",
+      "capabilities": [
+        "gobierno_hallazgos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/hallazgos/{hallazgo_id}/recomendaciones",
+      "capabilities": [
+        "gobierno_hallazgos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/hallazgos/{hallazgo_id}/verificar",
+      "capabilities": [
+        "gobierno_hallazgos:verify"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/modulo",
       "capabilities": [],
       "scope": "GLOBAL"
@@ -4967,7 +5071,10 @@
     "gobierno_notificaciones:record",
     "gobierno_autoridad:view",
     "gobierno_auditoria:view",
-    "gobierno_auditoria:sample"
+    "gobierno_auditoria:sample",
+    "gobierno_hallazgos:view",
+    "gobierno_hallazgos:manage",
+    "gobierno_hallazgos:verify"
   ],
   "report_capabilities": {
     "executive_ventas": [

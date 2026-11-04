@@ -918,3 +918,234 @@ export function filtrosLimpios(filtros: FiltrosAuditoria): FiltrosAuditoria {
 
 export const POR_PAGINA_AUDITORIA = 50;
 export const CONSULTA_AUDITORIA = [...CONSULTA_GOBIERNO, "auditoria"] as const;
+
+// CTL-06: hallazgos, recomendaciones y planes de acción correctiva (GOV-CTL-008).
+export type EstadoHallazgo = "ABIERTO" | "PLAN_DE_ACCION" | "EN_REMEDIACION" | "EVIDENCIA_PRESENTADA" | "CERRADO";
+export type RiesgoHallazgo = "ALTO" | "MEDIO" | "BAJO";
+export type OrigenHallazgo = "MUESTRA" | "INDEPENDIENTE";
+export type EstadoAccionCorrectiva = "PENDIENTE" | "EN_CURSO" | "COMPLETADA";
+export type TipoHistoriaHallazgo =
+  | "CREADO"
+  | "RECOMENDACION"
+  | "ACCION"
+  | "PLAN"
+  | "EJECUCION"
+  | "AVANCE"
+  | "PRESENTADO"
+  | "VERIFICADO"
+  | "DEVUELTO";
+
+export const ETIQUETA_ESTADO_HALLAZGO: Record<EstadoHallazgo, string> = {
+  ABIERTO: "Abierto",
+  PLAN_DE_ACCION: "Plan de acción",
+  EN_REMEDIACION: "En remediación",
+  EVIDENCIA_PRESENTADA: "Pendiente de verificación",
+  CERRADO: "Cerrado",
+};
+
+export const ETIQUETA_RIESGO_HALLAZGO: Record<RiesgoHallazgo, string> = {
+  ALTO: "Alto",
+  MEDIO: "Medio",
+  BAJO: "Bajo",
+};
+
+export const ETIQUETA_ORIGEN_HALLAZGO: Record<OrigenHallazgo, string> = {
+  MUESTRA: "Muestra de auditoría",
+  INDEPENDIENTE: "Independiente",
+};
+
+export const ETIQUETA_ESTADO_ACCION: Record<EstadoAccionCorrectiva, string> = {
+  PENDIENTE: "Pendiente",
+  EN_CURSO: "En curso",
+  COMPLETADA: "Completada",
+};
+
+export const ETIQUETA_HISTORIA_HALLAZGO: Record<TipoHistoriaHallazgo, string> = {
+  CREADO: "Hallazgo registrado",
+  RECOMENDACION: "Recomendación añadida",
+  ACCION: "Acción correctiva añadida",
+  PLAN: "Plan de acción registrado",
+  EJECUCION: "Ejecución iniciada",
+  AVANCE: "Avance registrado",
+  PRESENTADO: "Presentado a verificación",
+  VERIFICADO: "Verificado y cerrado",
+  DEVUELTO: "Devuelto a remediación",
+};
+
+export interface RecomendacionHallazgo {
+  id: string;
+  orden: number;
+  texto: string;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface AvanceAccion {
+  id: string;
+  nota: string;
+  porcentaje: number;
+  documento_id: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface AccionCorrectiva {
+  id: string;
+  recomendacion_id: string;
+  orden: number;
+  descripcion: string;
+  cargo_id: string;
+  cargo_codigo: string;
+  cargo_denominacion: string;
+  unidad_id: string;
+  unidad_nombre: string;
+  ejercicio: number;
+  fecha_objetivo: string;
+  porcentaje: number;
+  estado: EstadoAccionCorrectiva;
+  vencida: boolean;
+  documentos: string[];
+  avances: AvanceAccion[];
+}
+
+export interface HistoriaHallazgo {
+  id: string;
+  tipo: TipoHistoriaHallazgo;
+  estado_desde: EstadoHallazgo | null;
+  estado_hasta: EstadoHallazgo | null;
+  detalle: Record<string, unknown> | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface MuestraDeHallazgo {
+  id: string;
+  codigo: string;
+  titulo: string;
+}
+
+export interface HallazgoDetalle {
+  id: string;
+  codigo: string;
+  titulo: string;
+  condicion: string;
+  criterio: string;
+  causa: string;
+  efecto: string;
+  riesgo: RiesgoHallazgo;
+  origen: OrigenHallazgo;
+  origen_descripcion: string | null;
+  muestra: MuestraDeHallazgo | null;
+  partidas: string[];
+  estado: EstadoHallazgo;
+  version: number;
+  presentado_por: string | null;
+  presentado_en: string | null;
+  verificado_por: string | null;
+  verificado_en: string | null;
+  nota_verificacion: string | null;
+  created_by: string | null;
+  created_at: string;
+  recomendaciones: RecomendacionHallazgo[];
+  acciones: AccionCorrectiva[];
+  historia: HistoriaHallazgo[];
+}
+
+export interface HallazgoResumen {
+  id: string;
+  codigo: string;
+  titulo: string;
+  riesgo: RiesgoHallazgo;
+  estado: EstadoHallazgo;
+  origen: OrigenHallazgo;
+  acciones_total: number;
+  acciones_vencidas: number;
+  created_at: string;
+}
+
+export interface ResumenHallazgos {
+  abiertos: number;
+  pendientes_verificacion: number;
+  acciones_vencidas: number;
+  cerrados: number;
+}
+
+export interface HallazgosListado {
+  items: HallazgoResumen[];
+  total: number;
+  pagina: number;
+  por_pagina: number;
+  resumen: ResumenHallazgos;
+}
+
+export interface CargoResponsable {
+  id: string;
+  codigo: string;
+  denominacion: string;
+  unidad_nombre: string;
+  ejercicio: number;
+}
+
+export interface CargosResponsables {
+  items: CargoResponsable[];
+}
+
+export interface FiltrosHallazgos {
+  estado?: EstadoHallazgo | "";
+  riesgo?: RiesgoHallazgo | "";
+  origen?: OrigenHallazgo | "";
+  vencidas?: boolean;
+  texto?: string;
+}
+
+export interface HallazgoNuevo {
+  titulo: string;
+  condicion: string;
+  criterio: string;
+  causa: string;
+  efecto: string;
+  riesgo: RiesgoHallazgo;
+  origen: OrigenHallazgo;
+  muestra_id?: string;
+  partidas?: string[];
+  origen_descripcion?: string;
+}
+
+export interface AccionNueva {
+  recomendacion_id: string;
+  descripcion: string;
+  cargo_id: string;
+  fecha_objetivo: string;
+}
+
+export interface AvanceNuevo {
+  nota: string;
+  porcentaje: number;
+  documento_id?: string;
+}
+
+export function consultaDeHallazgos(
+  filtros: FiltrosHallazgos,
+  paginacion: { pagina?: number; por_pagina?: number } = {},
+): string {
+  const params = new URLSearchParams();
+  const estado = valorDeConsulta(filtros.estado);
+  if (estado !== undefined) params.append("estado", estado);
+  const riesgo = valorDeConsulta(filtros.riesgo);
+  if (riesgo !== undefined) params.append("riesgo", riesgo);
+  const origen = valorDeConsulta(filtros.origen);
+  if (origen !== undefined) params.append("origen", origen);
+  const texto = valorDeConsulta(filtros.texto?.trim());
+  if (texto !== undefined) params.append("texto", texto);
+  if (filtros.vencidas === true) params.append("vencidas", "true");
+  const pagina = valorDeConsulta(paginacion.pagina);
+  if (pagina !== undefined) params.append("pagina", pagina);
+  const porPagina = valorDeConsulta(paginacion.por_pagina);
+  if (porPagina !== undefined) params.append("por_pagina", porPagina);
+  const cadena = params.toString();
+  return cadena === "" ? "" : `?${cadena}`;
+}
+
+export const POR_PAGINA_HALLAZGOS = 50;
+export const CONSULTA_HALLAZGOS = [...CONSULTA_GOBIERNO, "hallazgos"] as const;
+export const RESOURCE_TYPE_ACCION_CORRECTIVA = "GovernmentCorrectiveAction";

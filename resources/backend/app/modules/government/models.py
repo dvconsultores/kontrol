@@ -550,3 +550,204 @@ for _sentencia in GOV_AUDIT_SAMPLES_IMMUTABLE_PG:
     event.listen(GovernmentAuditSample.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
 for _sentencia in GOV_AUDIT_SAMPLE_ITEMS_IMMUTABLE_PG:
     event.listen(GovernmentAuditSampleItem.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+RIESGOS_HALLAZGO = ("ALTO", "MEDIO", "BAJO")
+ORIGENES_HALLAZGO = ("MUESTRA", "INDEPENDIENTE")
+ESTADOS_HALLAZGO = ("ABIERTO", "PLAN_DE_ACCION", "EN_REMEDIACION", "EVIDENCIA_PRESENTADA", "CERRADO")
+ESTADOS_ACCION_CORRECTIVA = ("PENDIENTE", "EN_CURSO", "COMPLETADA")
+TIPOS_HISTORIA_HALLAZGO = ("CREADO", "RECOMENDACION", "ACCION", "PLAN", "EJECUCION", "AVANCE", "PRESENTADO", "VERIFICADO", "DEVUELTO")
+
+
+GOV_FINDING_NOT_DELETABLE_PG: tuple[str, ...] = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_finding_no_borrable() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'GOV_FINDING_NOT_DELETABLE' USING ERRCODE = 'P0001', DETAIL = TG_OP; END; $$",
+    "CREATE TRIGGER trg_gov_findings_no_delete BEFORE DELETE ON gov_findings FOR EACH ROW EXECUTE FUNCTION kontrol_gov_finding_no_borrable()",
+    "CREATE TRIGGER trg_gov_findings_no_truncate BEFORE TRUNCATE ON gov_findings FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_finding_no_borrable()",
+)
+
+
+GOV_FINDING_RECORDS_IMMUTABLE_PG: tuple[str, ...] = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_finding_registros_inmutables() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'GOV_FINDING_RECORD_IMMUTABLE' USING ERRCODE = 'P0001', DETAIL = TG_OP; END; $$",
+    "CREATE TRIGGER trg_gov_finding_events_no_update BEFORE UPDATE ON gov_finding_events FOR EACH ROW EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+    "CREATE TRIGGER trg_gov_finding_events_no_delete BEFORE DELETE ON gov_finding_events FOR EACH ROW EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+    "CREATE TRIGGER trg_gov_finding_events_no_truncate BEFORE TRUNCATE ON gov_finding_events FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+)
+
+
+GOV_FINDING_RECOMMENDATIONS_IMMUTABLE_PG: tuple[str, ...] = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_finding_registros_inmutables() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'GOV_FINDING_RECORD_IMMUTABLE' USING ERRCODE = 'P0001', DETAIL = TG_OP; END; $$",
+    "CREATE TRIGGER trg_gov_finding_recommendations_no_update BEFORE UPDATE ON gov_finding_recommendations FOR EACH ROW EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+    "CREATE TRIGGER trg_gov_finding_recommendations_no_delete BEFORE DELETE ON gov_finding_recommendations FOR EACH ROW EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+    "CREATE TRIGGER trg_gov_finding_recommendations_no_truncate BEFORE TRUNCATE ON gov_finding_recommendations FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+)
+
+
+GOV_CORRECTIVE_ACTIONS_NOT_DELETABLE_PG: tuple[str, ...] = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_finding_no_borrable() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'GOV_FINDING_NOT_DELETABLE' USING ERRCODE = 'P0001', DETAIL = TG_OP; END; $$",
+    "CREATE TRIGGER trg_gov_corrective_actions_no_delete BEFORE DELETE ON gov_corrective_actions FOR EACH ROW EXECUTE FUNCTION kontrol_gov_finding_no_borrable()",
+    "CREATE TRIGGER trg_gov_corrective_actions_no_truncate BEFORE TRUNCATE ON gov_corrective_actions FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_finding_no_borrable()",
+)
+
+
+GOV_CORRECTIVE_ACTION_PROGRESS_IMMUTABLE_PG: tuple[str, ...] = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_finding_registros_inmutables() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'GOV_FINDING_RECORD_IMMUTABLE' USING ERRCODE = 'P0001', DETAIL = TG_OP; END; $$",
+    "CREATE TRIGGER trg_gov_corrective_action_progress_no_update BEFORE UPDATE ON gov_corrective_action_progress FOR EACH ROW EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+    "CREATE TRIGGER trg_gov_corrective_action_progress_no_delete BEFORE DELETE ON gov_corrective_action_progress FOR EACH ROW EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+    "CREATE TRIGGER trg_gov_corrective_action_progress_no_truncate BEFORE TRUNCATE ON gov_corrective_action_progress FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+)
+
+
+GOV_FINDING_HISTORY_IMMUTABLE_PG: tuple[str, ...] = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_finding_registros_inmutables() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'GOV_FINDING_RECORD_IMMUTABLE' USING ERRCODE = 'P0001', DETAIL = TG_OP; END; $$",
+    "CREATE TRIGGER trg_gov_finding_history_no_update BEFORE UPDATE ON gov_finding_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+    "CREATE TRIGGER trg_gov_finding_history_no_delete BEFORE DELETE ON gov_finding_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+    "CREATE TRIGGER trg_gov_finding_history_no_truncate BEFORE TRUNCATE ON gov_finding_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_finding_registros_inmutables()",
+)
+
+
+class GovernmentFinding(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Hallazgo de Control Interno (CTL-06) con su plan de acción correctiva."""
+
+    __tablename__ = "gov_findings"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    titulo: Mapped[str] = mapped_column(String(200), nullable=False)
+    condicion: Mapped[str] = mapped_column(Text, nullable=False)
+    criterio: Mapped[str] = mapped_column(Text, nullable=False)
+    causa: Mapped[str] = mapped_column(Text, nullable=False)
+    efecto: Mapped[str] = mapped_column(Text, nullable=False)
+    riesgo: Mapped[str] = mapped_column(String(5), nullable=False)
+    origen: Mapped[str] = mapped_column(String(13), nullable=False)
+    sample_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_audit_samples.id"), nullable=True, index=True)
+    origen_descripcion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    estado: Mapped[str] = mapped_column(String(24), nullable=False, default="ABIERTO", server_default="ABIERTO")
+    presentado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    presentado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    verificado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    verificado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    nota_verificacion: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_findings_company_id_codigo"),
+        CheckConstraint(f"riesgo IN ({en(RIESGOS_HALLAZGO)})", name="riesgo"),
+        CheckConstraint(f"origen IN ({en(ORIGENES_HALLAZGO)})", name="origen"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_HALLAZGO)})", name="estado"),
+        CheckConstraint(
+            "(origen = 'MUESTRA' AND sample_id IS NOT NULL AND origen_descripcion IS NULL) OR "
+            "(origen = 'INDEPENDIENTE' AND sample_id IS NULL AND origen_descripcion IS NOT NULL)",
+            name="origen_coherente",
+        ),
+    )
+
+
+class GovernmentFindingEvent(UUIDMixin, TimestampMixin, Base):
+    """Evidencia de un hallazgo de Control Interno; inmutable."""
+
+    __tablename__ = "gov_finding_events"
+    __scope__ = Scope.COMPANY
+
+    finding_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_findings.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    audit_event_id: Mapped[str] = mapped_column(String(36), ForeignKey("audit_events.id"), nullable=False, index=True)
+
+    __table_args__ = (
+        UniqueConstraint("finding_id", "audit_event_id", name="uq_gov_finding_events_finding_id_audit_event_id"),
+    )
+
+
+class GovernmentFindingRecommendation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Recomendación asociada a un hallazgo; inmutable."""
+
+    __tablename__ = "gov_finding_recommendations"
+    __scope__ = Scope.COMPANY
+
+    finding_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_findings.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    orden: Mapped[int] = mapped_column(Integer, nullable=False)
+    texto: Mapped[str] = mapped_column(Text, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("finding_id", "orden", name="uq_gov_finding_recommendations_finding_id_orden"),
+        CheckConstraint("orden >= 1", name="orden"),
+    )
+
+
+class GovernmentCorrectiveAction(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Acción correctiva del plan de un hallazgo; avanza su porcentaje y estado, nunca se borra."""
+
+    __tablename__ = "gov_corrective_actions"
+    __scope__ = Scope.COMPANY
+
+    finding_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_findings.id"), nullable=False, index=True)
+    recommendation_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_finding_recommendations.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    orden: Mapped[int] = mapped_column(Integer, nullable=False)
+    descripcion: Mapped[str] = mapped_column(Text, nullable=False)
+    position_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False, index=True)
+    cargo_codigo: Mapped[str] = mapped_column(String(30), nullable=False)
+    cargo_denominacion: Mapped[str] = mapped_column(String(200), nullable=False)
+    unidad_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    unidad_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    ejercicio: Mapped[int] = mapped_column(Integer, nullable=False)
+    fecha_objetivo: Mapped[date] = mapped_column(Date, nullable=False)
+    porcentaje: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    estado: Mapped[str] = mapped_column(String(12), nullable=False, default="PENDIENTE", server_default="PENDIENTE")
+
+    __table_args__ = (
+        UniqueConstraint("finding_id", "orden", name="uq_gov_corrective_actions_finding_id_orden"),
+        CheckConstraint("orden >= 1", name="orden"),
+        CheckConstraint("porcentaje >= 0 AND porcentaje <= 100", name="porcentaje"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_ACCION_CORRECTIVA)})", name="estado"),
+    )
+
+
+class GovernmentCorrectiveActionProgress(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Avance registrado en una acción correctiva; inmutable."""
+
+    __tablename__ = "gov_corrective_action_progress"
+    __scope__ = Scope.COMPANY
+
+    action_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_corrective_actions.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    nota: Mapped[str] = mapped_column(Text, nullable=False)
+    porcentaje: Mapped[int] = mapped_column(Integer, nullable=False)
+    document_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True, index=True)
+
+    __table_args__ = (
+        CheckConstraint("porcentaje >= 0 AND porcentaje <= 100", name="porcentaje"),
+    )
+
+
+class GovernmentFindingHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia de cambios de estado y eventos de un hallazgo; inmutable."""
+
+    __tablename__ = "gov_finding_history"
+    __scope__ = Scope.COMPANY
+
+    finding_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_findings.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(16), nullable=False)
+    estado_desde: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    estado_hasta: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_HALLAZGO)})", name="tipo"),
+    )
+
+
+for _sentencia in GOV_FINDING_NOT_DELETABLE_PG:
+    event.listen(GovernmentFinding.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+for _sentencia in GOV_FINDING_RECORDS_IMMUTABLE_PG:
+    event.listen(GovernmentFindingEvent.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+for _sentencia in GOV_FINDING_RECOMMENDATIONS_IMMUTABLE_PG:
+    event.listen(GovernmentFindingRecommendation.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+for _sentencia in GOV_CORRECTIVE_ACTIONS_NOT_DELETABLE_PG:
+    event.listen(GovernmentCorrectiveAction.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+for _sentencia in GOV_CORRECTIVE_ACTION_PROGRESS_IMMUTABLE_PG:
+    event.listen(GovernmentCorrectiveActionProgress.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+for _sentencia in GOV_FINDING_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentFindingHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

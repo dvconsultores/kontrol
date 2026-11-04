@@ -103,6 +103,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_autoridad": ["view"],
     # CTL-04: consulta y muestreo read-only del auditor (OD-CTL04-03).
     "gobierno_auditoria": ["view", "sample"],
+    # CTL-06: hallazgos, recomendaciones y planes de acción correctiva (OD-CTL06-02).
+    "gobierno_hallazgos": ["view", "manage", "verify"],
 }
 
 

@@ -1,6 +1,6 @@
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Download } from "lucide-react";
+import { ClipboardCheck, Download } from "lucide-react";
 
 import { apiFetch, ApiError } from "@/api/client";
 import { descargarArchivo } from "@/api/descargas";
@@ -10,6 +10,7 @@ import { useNotifications } from "@/app/contexts/NotificationContext";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Button } from "@/components/Button";
 
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
@@ -26,6 +27,7 @@ export function MuestraPage(): React.JSX.Element {
   const { muestraId } = useParams();
   const { activeCompanyId } = useCompany();
   const { tiene } = useAutoridad();
+  const navigate = useNavigate();
   const { notify } = useNotifications();
   const puedeVer = tiene("gobierno_auditoria:view", "empresa");
 
@@ -171,10 +173,21 @@ export function MuestraPage(): React.JSX.Element {
       title={`Muestra ${muestra.codigo}`}
       description={muestra.titulo}
       actions={
-        <AsyncButton onClick={exportarCsv} variant="secondary">
-          <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-          Exportar CSV
-        </AsyncButton>
+        <div className="flex flex-wrap gap-2">
+          <AsyncButton onClick={exportarCsv} variant="secondary">
+            <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+            Exportar CSV
+          </AsyncButton>
+          {tiene("gobierno_hallazgos:manage", "empresa") && (
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/gobierno/hallazgos/nuevo?muestra=${muestra.id}`)}
+            >
+              <ClipboardCheck className="mr-2 h-4 w-4" aria-hidden="true" />
+              Registrar hallazgo
+            </Button>
+          )}
+        </div>
       }
     />
   );

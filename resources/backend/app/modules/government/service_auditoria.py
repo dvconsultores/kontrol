@@ -23,6 +23,7 @@ from app.modules.government.models import (
     GovernmentAuditSample,
     GovernmentAuditSampleItem,
     GovernmentEntity,
+    GovernmentFinding,
     GovernmentNotification,
     GovernmentPosition,
     GovernmentStructure,
@@ -47,6 +48,7 @@ PROCESOS: list[tuple[str, str, str]] = [
     ("DOC-02", "Actos administrativos", "gov-doc-02"),
     ("DOC-04", "Notificaciones administrativas", "gov-doc-04"),
     ("CTL-04", "Auditoría institucional", "gov-ctl-04"),
+    ("CTL-06", "Hallazgos y acciones correctivas", "gov-ctl-06"),
 ]
 _PROCESO_POR_OWNER_SPEC = {owner_spec: (codigo, nombre) for codigo, nombre, owner_spec in PROCESOS}
 _PROCESO_NOMBRE = {codigo: nombre for codigo, nombre, _ in PROCESOS}
@@ -292,6 +294,16 @@ def _objeto_desde_evento(db: Session, event: AuditEvent, ctx: CompanyContext) ->
         )
         return None if muestra is None else AuditoriaObjeto(
             tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/auditoria/muestras/{objeto_id}", capacidad="gobierno_auditoria:view"
+        )
+    if event.entity_type == "GovernmentFinding":
+        hallazgo = db.scalar(
+            select(GovernmentFinding).where(
+                GovernmentFinding.id == objeto_id,
+                GovernmentFinding.company_id == empresa,
+            )
+        )
+        return None if hallazgo is None else AuditoriaObjeto(
+            tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/hallazgos/{objeto_id}", capacidad="gobierno_hallazgos:view"
         )
     return None
 

@@ -131,6 +131,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_notificaciones · destinatarios, intentos y constancias de notificación (DOC-04, PDD-DOC04-04)
         "gobierno_notificaciones:edit",
         "gobierno_notificaciones:record",
+        # gobierno_hallazgos · verificación y cierre de hallazgos por Control Interno (CTL-06, OD-CTL06-02)
+        "gobierno_hallazgos:verify",
     }
 )
 
@@ -207,6 +209,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # (CTL-04); la muestra es papel de trabajo y no toca la evidencia
         "gobierno_auditoria:view",
         "gobierno_auditoria:sample",
+        # gobierno_hallazgos · consulta y gestión del plan de acción correctiva (CTL-06)
+        "gobierno_hallazgos:view",
+        "gobierno_hallazgos:manage",
     }
 )
 

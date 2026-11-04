@@ -78,6 +78,7 @@ const navSections: NavSection[] = [
       { to: "/gobierno/notificaciones", label: "Notificaciones administrativas", icon: Send, modulo: "gobierno" },
       { to: "/gobierno/autoridad", label: "Matriz de autoridad", icon: Grid3x3, modulo: "gobierno" },
       { to: "/gobierno/auditoria", label: "Auditoría institucional", icon: FileSearch, modulo: "gobierno" },
+      { to: "/gobierno/hallazgos", label: "Hallazgos y acciones correctivas", icon: ClipboardCheck, modulo: "gobierno" },
     ],
   },
   {
