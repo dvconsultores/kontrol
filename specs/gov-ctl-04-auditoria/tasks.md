@@ -15,7 +15,7 @@ Todo el código lo escribe DeepSeek con un encargo de Claude; Claude audita, apl
 - [x] T008 Pruebas de frontend (vitest) · DEEPSEEK · pro
 - [x] T009 E2E `e2e/gobierno-auditoria.spec.ts` + humo UAT con 7 pantallas · DEEPSEEK · pro
 - [x] T010 Mutaciones de negocio · CLAUDE · n-a
-- [ ] T011 Certificación (suites, E2E ×3 y canónica, base tras la E2E, OpenAPI, residuos, ficha, tarjeta UAT, métricas, relevo UAT + humo-uat) · CLAUDE · n-a
+- [x] T011 Certificación (suites, E2E ×3 y canónica, base tras la E2E, OpenAPI, residuos, ficha, tarjeta UAT, métricas, relevo UAT + humo-uat) · CLAUDE · n-a
 
 ## Phase 2: Convergence
 

@@ -30,7 +30,7 @@ Creado al certificar (2026-11-03/04). Ejecución: Claude; código y pruebas: Dee
 | 23 | Accesibilidad y responsive | axe 1280/768/320 en CTL4-E2E-06 | PASS · regiones con nombre único; sin desbordamiento a 320 px |
 | 24 | Ficha de pantallas | `CTL04_SCREEN_FORM_MATRIX.md` | PASS · 2 pantallas, 1 panel y 1 formulario de escritura (F1); 0 faltantes |
 | 25 | Tarjeta UAT | `OWNER_UAT_CARD.md` | PASS · 9 pasos, negativas a–e |
-| 26 | Humo UAT en la pila relanzada | HUMO-UAT-01 en 18100/15273/18110 | ver `UAT_SMOKE.md` (commit de documentación posterior al relevo de la pila) |
+| 26 | Humo UAT en la pila relanzada | HUMO-UAT-01 en 18100/15273/18110 | PASS · `r20261104t025631p1126940n521000` en `0984ede`: 1/1, siete pantallas por el menú (`UAT_SMOKE.md`) |
 | 27 | Convergencia | spec, plan y tasks contra el código | PASS tras T012 · 1 hallazgo (`partial`, MEDIUM, spec §4.3: los documentos citados no enlazaban a `/documentos/{id}` con `documentos:view`), añadido como Phase 2 y resuelto en T012 (EVI-06/07; mutante CTL-M15 KILLED); 0 abiertos |
 | 28 | Secretos | escaneo del diff | PASS · sin claves, tokens, contraseñas, URLs con credenciales ni rutas del equipo; el `.docx` protegido no entra; en T013 se omitió del encargo una línea de configuración local (falso positivo de egress) |
 | 29 | Residuos | corridas, puertos, bases efímeras | PASS · todas las corridas con limpieza LIMPIA; base efímera de la migración eliminada; worktree de atribución retirado; 18000/15173/18010 libres; solo queda viva la base de la pila UAT |
