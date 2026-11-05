@@ -7,7 +7,7 @@ Creado al certificar (2026-11-05). Ejecución: Claude. Código y pruebas: DeepSe
 | 1 | Preflight OBS-CERT-GOV-01 | runner versionado sobre base real de regresión | PASS · commit `2b1dc6f`: 58 controles, 0 violaciones |
 | 2 | Rama única y reconciliación | ramas remotas; HEAD == origin | PASS · solo `develop` |
 | 3 | Requisito de Gobierno | GOV-TRE-001 → spec §1–§10; prueba de bloqueo material | PASS · OD-TRE01-01..07 de la dueña; ORG-05 y ORG-06 no son necesarios; MATERIAL_BLOCKER = 0 |
-| 4 | RED primero | suites `tests/test_gov_tre01_*.py` sobre un worktree de `2b1dc6f` | PASS (RED) · fallan al recolectar (`ImportError: GovernmentBankAccountHistory`) |
+| 4 | RED primero | `test_gov_tre01_cuentas.py` y `test_gov_tre01_concurrencia.py` sobre un worktree de `2b1dc6f` | PASS (RED) · fallan al recolectar (`ImportError: GovernmentBankAccountHistory`). Las suites de autorizados y estados llegaron después y no se ejecutaron sobre la base: importan de `test_gov_tre01_cuentas`, así que fallarían igual |
 | 5 | BD dirigida | migración 0073 subir / bajar / subir en base efímera PostgreSQL | PASS · cabeza única; 7 disparadores, índice parcial, 3 permisos, proceso SoD ampliado |
 | 6 | API y dominio dirigidos | 4 suites `test_gov_tre01_{cuentas,autorizados,estados,concurrencia}` | PASS · 48/48 en PostgreSQL |
 | 7 | Hostiles | CB-05, CB-07, CB-09..12, CB-15, AC-02, AU-02..04 | PASS · otra empresa 404; banco, acto y cargo ajenos 422 con el mismo mensaje; `company_id` del cliente 422; número nunca en errores, auditoría ni historia |
@@ -19,7 +19,7 @@ Creado al certificar (2026-11-05). Ejecución: Claude. Código y pruebas: DeepSe
 | 13 | vitest · tsc · eslint · build | `node …` | PASS · vitest 1180/1180 (115 ficheros; +59) · tsc 0 · eslint 0 · build correcto |
 | 14 | ruff · mypy | `.venv/bin/ruff check .` · `.venv/bin/mypy app` | PASS · ruff limpio; mypy 154 = línea base |
 | 15 | OpenAPI | contraste con `2b1dc6f` | PASS · 13 rutas nuevas, 0 retiradas. Cambio aditivo: el enum de proceso SoD gana `TRE-01` (2 operaciones y 4 esquemas) |
-| 16 | E2E de TRE-01 ×3 + humo | `gobierno-tesoreria.spec.ts` en la regresión | PASS · dentro de #17, en chromium, firefox y webkit |
+| 16 | E2E de TRE-01 ×3 + humo | `gobierno-tesoreria.spec.ts` en la regresión | PASS · dentro de #17, en chromium, firefox y webkit. La revocación del acto se prueba en backend (ST-04) y vitest (CF-10), no en la E2E |
 | 17 | Regresión de Gobierno ×3 + humo + base | `--orden qa/e2e-gobierno-regresion.sh` | PASS · `r20261105t131134p506047n118d47`: 168/168 + humo 1/1, 0 reintentos, limpieza LIMPIA |
 | 18 | Base tras la E2E | `scope_scan` + `qa/gobierno_integridad.py` | PASS · sin violaciones de alcance; 75 controles, 0 violaciones (9 bancos, 9 cuentas, 6 autorizaciones) |
 | 19 | E2E canónica | `qa/e2e-run.py --con-analizador` | PASS · `r20261105t133417p605230n2f4095`: 444/444 (441 + 3), limpieza LIMPIA |
