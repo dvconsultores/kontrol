@@ -237,33 +237,53 @@ export function HallazgoPage(): React.JSX.Element {
   };
 
   const registrarPlan = async () => {
-    await escribirDetalle(`/gobierno/hallazgos/${detalle.id}/plan`, {}, "Plan de acción registrado");
+    try {
+      await escribirDetalle(`/gobierno/hallazgos/${detalle.id}/plan`, {}, "Plan de acción registrado");
+    } catch {
+      return;
+    }
   };
 
   const iniciarEjecucion = async () => {
-    await escribirDetalle(`/gobierno/hallazgos/${detalle.id}/ejecucion`, {}, "Ejecución iniciada");
+    try {
+      await escribirDetalle(`/gobierno/hallazgos/${detalle.id}/ejecucion`, {}, "Ejecución iniciada");
+    } catch {
+      return;
+    }
   };
 
   const presentarVerificacion = async () => {
-    await escribirDetalle(`/gobierno/hallazgos/${detalle.id}/presentar`, {}, "Hallazgo presentado a verificación");
+    try {
+      await escribirDetalle(`/gobierno/hallazgos/${detalle.id}/presentar`, {}, "Hallazgo presentado a verificación");
+    } catch {
+      return;
+    }
   };
 
   const verificarHallazgo = async () => {
-    await escribirDetalle(
-      `/gobierno/hallazgos/${detalle.id}/verificar`,
-      { nota: verificacionNota },
-      "Hallazgo verificado y cerrado",
-    );
+    try {
+      await escribirDetalle(
+        `/gobierno/hallazgos/${detalle.id}/verificar`,
+        { nota: verificacionNota },
+        "Hallazgo verificado y cerrado",
+      );
+    } catch {
+      return;
+    }
     setPanelVerificacion(null);
     setVerificacionNota("");
   };
 
   const devolverHallazgo = async () => {
-    await escribirDetalle(
-      `/gobierno/hallazgos/${detalle.id}/devolver`,
-      { motivo: devolucionMotivo },
-      "Hallazgo devuelto",
-    );
+    try {
+      await escribirDetalle(
+        `/gobierno/hallazgos/${detalle.id}/devolver`,
+        { motivo: devolucionMotivo },
+        "Hallazgo devuelto",
+      );
+    } catch {
+      return;
+    }
     setPanelVerificacion(null);
     setDevolucionMotivo("");
   };

@@ -111,6 +111,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_sod": ["view", "manage", "activate"],
     # TRE-01: cuentas bancarias públicas (OD-TRE01-07).
     "gobierno_cuentas": ["view", "manage", "activate"],
+    # TRE-02: programación financiera (OD-TRE02-04).
+    "gobierno_caja": ["view", "manage", "activate"],
 }
 
 

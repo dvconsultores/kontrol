@@ -26,6 +26,7 @@ IDS_ESPERADOS = {
     *[f"P{i}" for i in range(1, 9)],
     *[f"S{i}" for i in range(1, 10)],
     *[f"T{i}" for i in range(1, 18)],
+    *[f"K{i}" for i in range(1, 13)],
 }
 
 
@@ -33,7 +34,7 @@ def test_controles_tienen_ids_unicos_y_grupos_exactos():
     controles = mod.controles()
 
     ids = [control[1] for control in controles]
-    assert len(ids) == 75
+    assert len(ids) == 87
     assert len(ids) == len(set(ids))
     assert set(ids) == IDS_ESPERADOS
 
@@ -42,6 +43,7 @@ def test_controles_tienen_ids_unicos_y_grupos_exactos():
         "ORG-02/ORG-03/ORG-07",
         "CTL-04/CTL-06/DOC-08/CTL-01",
         "TRE-01",
+        "TRE-02",
     }
 
 
@@ -54,7 +56,7 @@ def test_ejecutar_controles_sin_errores_contra_esquema_real(mundo):
 
         assert resultado["info"], "sin recuentos informativos"
         assert all(isinstance(valor, int) for valor in resultado["info"].values())
-        assert len(controles) == 75
+        assert len(controles) == 87
         for control in controles:
             assert control["error"] is None, f"{control['id']}: {control['error']}"
             assert isinstance(control["violaciones"], int)

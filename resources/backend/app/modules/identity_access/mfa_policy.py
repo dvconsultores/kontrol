@@ -139,6 +139,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_sod:activate",
         # gobierno_cuentas · activación, inactivación, reactivación y cierre de cuentas bancarias (TRE-01, OD-TRE01-07)
         "gobierno_cuentas:activate",
+        # gobierno_caja · activación y cierre de programas de programación financiera (TRE-02)
+        "gobierno_caja:activate",
     }
 )
 
@@ -226,6 +228,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_cuentas · consulta y gestión de cuentas bancarias y autorizados (TRE-01)
         "gobierno_cuentas:view",
         "gobierno_cuentas:manage",
+        # gobierno_caja · consulta y gestión de rubros y programas de programación financiera (TRE-02)
+        "gobierno_caja:view",
+        "gobierno_caja:manage",
     }
 )
 

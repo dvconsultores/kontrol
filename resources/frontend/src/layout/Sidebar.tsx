@@ -48,6 +48,7 @@ import {
   Users,
   Wallet,
   Warehouse,
+  CalendarRange,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NavLink } from "react-router";
@@ -93,6 +94,8 @@ const navSections: NavSection[] = [
     items: [
       { to: "/gobierno/tesoreria/cuentas", label: "Cuentas bancarias", icon: WalletCards, modulo: "gobierno" },
       { to: "/gobierno/tesoreria/bancos", label: "Bancos", icon: Building2, modulo: "gobierno" },
+      { to: "/gobierno/tesoreria/programacion", label: "Programación financiera", icon: CalendarRange, modulo: "gobierno" },
+      { to: "/gobierno/tesoreria/rubros", label: "Rubros de caja", icon: Tags, modulo: "gobierno" },
     ],
   },
   {

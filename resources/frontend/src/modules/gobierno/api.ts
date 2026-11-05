@@ -1250,7 +1250,7 @@ export function abreviarHuella(huella: string): string { return huella.length > 
 // CTL-01 · matriz de segregación de funciones (GOV-CTL-001)
 // ---------------------------------------------------------------------------
 
-export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01";
+export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01" | "TRE-02";
 export type EstadoReglaSod = "BORRADOR" | "VIGENTE" | "CERRADA";
 
 export interface AccionSod { codigo: string; etiqueta: string; crea_objeto: boolean; }
@@ -1291,7 +1291,7 @@ export interface DetalleConflictoSod {
 }
 
 export const ETIQUETAS_ESTADO_REGLA_SOD: Record<EstadoReglaSod, string> = { BORRADOR: "Borrador", VIGENTE: "Vigente", CERRADA: "Cerrada" };
-export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas" };
+export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas", "TRE-02": "Programación financiera" };
 export const ETIQUETAS_HISTORIA_SOD: Record<string, string> = { CREADA: "Registrada", EDITADA: "Modificada", ACTIVADA: "Activada", CERRADA: "Cerrada" };
 
 export const POR_PAGINA_CONFLICTOS_SOD = 20;
@@ -1303,6 +1303,7 @@ export function rutaDeObjetoSod(tipo: string | null, id: string | null): string 
   if (tipo === "GovernmentAct") return `/gobierno/actos/${id}`;
   if (tipo === "GovernmentFinding") return `/gobierno/hallazgos/${id}`;
   if (tipo === "GovernmentBankAccount") return `/gobierno/tesoreria/cuentas/${id}`;
+  if (tipo === "GovernmentCashProgram") return `/gobierno/tesoreria/programacion/${id}`;
   return null;
 }
 
@@ -1373,6 +1374,180 @@ export const ETIQUETAS_HISTORIA_CUENTA: Record<string, string> = {
 };
 export const MONEDAS_CUENTA: MonedaCuenta[] = ["VES", "USD", "EUR"];
 export const CONSULTA_CUENTAS = [...CONSULTA_GOBIERNO, "tesoreria"] as const;
+
+// TRE-02 · Programación financiera y disponibilidad de caja (GOV-TRE-002)
+export type TipoRubro = "INGRESO" | "DESEMBOLSO";
+export type EstadoRubro = "ACTIVO" | "INACTIVO";
+export type MonedaPrograma = MonedaCuenta;
+export type EstadoPrograma = "BORRADOR" | "VIGENTE" | "CERRADO" | "DESCARTADO";
+export type EstadoVersion = "BORRADOR" | "VIGENTE" | "SUPERADA" | "DESCARTADA" | "CERRADA";
+
+export interface Rubro {
+  id: string;
+  codigo: string;
+  nombre: string;
+  tipo: TipoRubro;
+  estado: EstadoRubro;
+  version: number;
+}
+
+export interface RubrosListado {
+  items: Rubro[];
+}
+
+export interface RubroEntrada {
+  codigo: string;
+  nombre: string;
+  tipo: TipoRubro;
+}
+
+export interface RubroCambios {
+  nombre?: string;
+  estado?: EstadoRubro;
+}
+
+export interface ProgramaEntrada {
+  ejercicio: number;
+  moneda: MonedaPrograma;
+  mes_inicial: number;
+}
+
+export interface DeclaracionPrograma {
+  id: string;
+  cuenta_id: string;
+  cuenta_codigo: string;
+  cuenta_denominacion: string;
+  banco_nombre: string;
+  monto: string;
+  fecha_corte: string;
+  fundamento: string;
+  declarado_por: string | null;
+  declarado_en: string;
+}
+
+export interface DeclaracionEntrada {
+  cuenta_id: string;
+  monto: string;
+  fecha_corte: string;
+  fundamento: string;
+}
+
+export interface LineaPrograma {
+  id: string;
+  rubro_id: string;
+  rubro_codigo: string;
+  rubro_nombre: string;
+  tipo: TipoRubro;
+  mes: number;
+  monto: string;
+}
+
+export interface LineaEntrada {
+  rubro_id: string;
+  mes: number;
+  monto: string;
+}
+
+export interface MesDisponibilidad {
+  mes: number;
+  inicial: string;
+  ingresos: string;
+  desembolsos: string;
+  final: string;
+  deficit: boolean;
+}
+
+export interface VersionPrograma {
+  numero: number;
+  estado: EstadoVersion;
+  motivo: string | null;
+  activada_por: string | null;
+  activada_en: string | null;
+  registrado_por: string | null;
+  registrado_en: string;
+}
+
+export interface HistoriaPrograma {
+  version_numero: number;
+  tipo: string;
+  detalle: Record<string, unknown> | null;
+  registrado_por: string | null;
+  registrado_en: string;
+}
+
+export interface ProgramaResumen {
+  id: string;
+  codigo: string;
+  ejercicio: number;
+  moneda: MonedaPrograma;
+  mes_inicial: number;
+  estado: EstadoPrograma;
+  version: number;
+  version_vigente: number | null;
+  disponibilidad_inicial: string;
+}
+
+export interface ResumenProgramas {
+  borradores: number;
+  vigentes: number;
+  cerrados: number;
+}
+
+export interface ProgramasListado {
+  items: ProgramaResumen[];
+  resumen: ResumenProgramas;
+}
+
+export interface ProgramaDetalle extends ProgramaResumen {
+  version_vista: number;
+  borrador_numero: number | null;
+  cerrado_por: string | null;
+  cerrado_en: string | null;
+  motivo_cierre: string | null;
+  registrado_por: string | null;
+  registrado_en: string;
+  declaraciones: DeclaracionPrograma[];
+  lineas: LineaPrograma[];
+  meses: MesDisponibilidad[];
+  hay_deficit: boolean;
+  versiones: VersionPrograma[];
+  historia: HistoriaPrograma[];
+}
+
+export interface OpcionesPrograma {
+  cuentas: { id: string; codigo: string; denominacion: string; banco_nombre: string }[];
+  rubros: { id: string; codigo: string; nombre: string; tipo: TipoRubro }[];
+}
+
+export const ETIQUETAS_TIPO_RUBRO: Record<TipoRubro, string> = { INGRESO: "Ingreso", DESEMBOLSO: "Desembolso" };
+export const ETIQUETAS_ESTADO_RUBRO: Record<EstadoRubro, string> = { ACTIVO: "Activo", INACTIVO: "Inactivo" };
+export const ETIQUETAS_ESTADO_PROGRAMA: Record<EstadoPrograma, string> = { BORRADOR: "Borrador", VIGENTE: "Vigente", CERRADO: "Cerrado", DESCARTADO: "Descartado" };
+export const ETIQUETAS_ESTADO_VERSION: Record<EstadoVersion, string> = { BORRADOR: "Borrador", VIGENTE: "Vigente", SUPERADA: "Superada", DESCARTADA: "Descartada", CERRADA: "Cerrada" };
+export const ETIQUETAS_HISTORIA_PROGRAMA: Record<string, string> = { CREADO: "Programa registrado", DECLARACION: "Disponibilidad declarada", LINEA: "Línea programada", ACTIVADO: "Versión activada", REPROGRAMADO: "Reprogramación abierta", DESCARTADO: "Borrador descartado", CERRADO: "Programa cerrado" };
+export const NOMBRES_DE_MES: string[] = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+export const CONSULTA_CAJA = [...CONSULTA_GOBIERNO, "caja"] as const;
+
+export function consultaDeProgramas(filtros: { ejercicio?: string; moneda?: string; estado?: string }): string {
+  const qs = new URLSearchParams();
+  const ejercicio = valorDeConsulta(filtros.ejercicio);
+  const moneda = valorDeConsulta(filtros.moneda);
+  const estado = valorDeConsulta(filtros.estado);
+  if (ejercicio) qs.set("ejercicio", ejercicio);
+  if (moneda) qs.set("moneda", moneda);
+  if (estado) qs.set("estado", estado);
+  const s = qs.toString();
+  return s ? `?${s}` : "";
+}
+
+export function consultaDeRubros(filtros: { estado?: string; tipo?: string }): string {
+  const qs = new URLSearchParams();
+  const estado = valorDeConsulta(filtros.estado);
+  const tipo = valorDeConsulta(filtros.tipo);
+  if (estado) qs.set("estado", estado);
+  if (tipo) qs.set("tipo", tipo);
+  const s = qs.toString();
+  return s ? `?${s}` : "";
+}
 
 /** Cadena de consulta de /gobierno/tesoreria/cuentas (estado, banco, moneda y cargo; omite vacíos). */
 export function consultaDeCuentas(filtros: { estado?: string; banco_id?: string; moneda?: string; cargo_id?: string }): string {

@@ -12,7 +12,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import DDL, JSON, BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, String, Text, UniqueConstraint, event, text
+from sqlalchemy import DDL, JSON, BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, SmallInteger, String, Text, UniqueConstraint, event, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -842,7 +842,7 @@ for _sentencia in GOV_AUDIT_PACKAGE_VERIFICATIONS_IMMUTABLE_PG:
 ESTADOS_REGLA_SOD = ("BORRADOR", "VIGENTE", "CERRADA")
 ALCANCES_REGLA_SOD = ("MISMO_OBJETO",)
 MODOS_REGLA_SOD = ("BLOQUEAR",)
-PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01")
+PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02")
 TIPOS_HISTORIA_SOD = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA")
 
 
@@ -1063,3 +1063,213 @@ for _sentencia in GOV_BANK_ACCOUNT_AUTHORIZATIONS_NOT_DELETABLE_PG:
 
 for _sentencia in GOV_BANK_ACCOUNT_HISTORY_IMMUTABLE_PG:
     event.listen(GovernmentBankAccountHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+ESTADOS_RUBRO_CAJA = ("ACTIVO", "INACTIVO")
+TIPOS_RUBRO_CAJA = ("INGRESO", "DESEMBOLSO")
+
+ESTADOS_PROGRAMA_CAJA = ("BORRADOR", "VIGENTE", "CERRADO", "DESCARTADO")
+ESTADOS_VERSION_PROGRAMA_CAJA = ("BORRADOR", "VIGENTE", "SUPERADA", "DESCARTADA", "CERRADA")
+TIPOS_HISTORIA_PROGRAMA_CAJA = (
+    "CREADO",
+    "DECLARACION",
+    "LINEA",
+    "ACTIVADO",
+    "REPROGRAMADO",
+    "DESCARTADO",
+    "CERRADO",
+)
+
+GOV_CASH_PROGRAMS_NOT_DELETABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_cash_program_no_borrable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CASH_PROGRAM_NOT_DELETABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_cash_programs_no_delete BEFORE DELETE ON gov_cash_programs FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cash_program_no_borrable()",
+    "CREATE TRIGGER trg_gov_cash_programs_no_truncate BEFORE TRUNCATE ON gov_cash_programs FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_cash_program_no_borrable()",
+)
+
+GOV_CASH_PROGRAM_VERSIONS_NOT_DELETABLE_PG = (
+    "CREATE TRIGGER trg_gov_cash_program_versions_no_delete BEFORE DELETE ON gov_cash_program_versions FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cash_program_no_borrable()",
+    "CREATE TRIGGER trg_gov_cash_program_versions_no_truncate BEFORE TRUNCATE ON gov_cash_program_versions FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_cash_program_no_borrable()",
+)
+
+GOV_CASH_PROGRAM_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_cash_program_historia_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CASH_PROGRAM_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_cash_program_history_no_update BEFORE UPDATE ON gov_cash_program_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cash_program_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_cash_program_history_no_delete BEFORE DELETE ON gov_cash_program_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cash_program_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_cash_program_history_no_truncate BEFORE TRUNCATE ON gov_cash_program_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_cash_program_historia_inmutable()",
+)
+
+GOV_CASH_PROGRAM_LINES_IMMUTABLE_EXCEPT_BORRADOR_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_cash_line_solo_borrador() RETURNS TRIGGER AS $$ DECLARE version_estado TEXT; BEGIN IF TG_OP = 'DELETE' THEN SELECT estado INTO version_estado FROM gov_cash_program_versions WHERE id = OLD.version_id; ELSE SELECT estado INTO version_estado FROM gov_cash_program_versions WHERE id = NEW.version_id; END IF; IF version_estado IS DISTINCT FROM 'BORRADOR' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CASH_LINE_VERSION_NOT_BORRADOR', DETAIL = TG_OP; END IF; IF TG_OP = 'DELETE' THEN RETURN OLD; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_cash_program_lines_only_borrador BEFORE INSERT OR UPDATE OR DELETE ON gov_cash_program_lines FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cash_line_solo_borrador()",
+)
+
+GOV_CASH_PROGRAM_DECLARATIONS_IMMUTABLE_EXCEPT_BORRADOR_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_cash_declaracion_solo_borrador() RETURNS TRIGGER AS $$ DECLARE programa_estado TEXT; BEGIN IF TG_OP = 'DELETE' THEN SELECT p.estado INTO programa_estado FROM gov_cash_programs p WHERE p.id = OLD.program_id; ELSE SELECT p.estado INTO programa_estado FROM gov_cash_programs p WHERE p.id = NEW.program_id; END IF; IF programa_estado IS DISTINCT FROM 'BORRADOR' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CASH_DECLARATION_PROGRAM_NOT_BORRADOR', DETAIL = TG_OP; END IF; IF TG_OP = 'DELETE' THEN RETURN OLD; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_cash_program_declarations_only_borrador BEFORE INSERT OR UPDATE OR DELETE ON gov_cash_program_declarations FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cash_declaracion_solo_borrador()",
+)
+
+
+class GovernmentCashItem(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Rubro de caja de Tesorería de Gobierno (TRE-02): único por empresa y código; el tipo no cambia."""
+
+    __tablename__ = "gov_cash_items"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(120), nullable=False)
+    tipo: Mapped[str] = mapped_column(String(11), nullable=False)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="ACTIVO", server_default="ACTIVO")
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_cash_items_company_id_codigo"),
+        CheckConstraint(f"tipo IN ({en(TIPOS_RUBRO_CAJA)})", name="tipo"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_RUBRO_CAJA)})", name="estado"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+
+class GovernmentCashProgram(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Programa de caja de Tesorería de Gobierno (TRE-02)."""
+
+    __tablename__ = "gov_cash_programs"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    ejercicio: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    mes_inicial: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    estado: Mapped[str] = mapped_column(String(11), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    cerrado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cerrado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+
+        Index(
+            "uq_gov_cash_programs_company_ejercicio_moneda_activos",
+            "company_id",
+            "ejercicio",
+            "moneda",
+            unique=True,
+            postgresql_where=text("estado <> 'DESCARTADO'"),
+            sqlite_where=text("estado <> 'DESCARTADO'"),
+        ),
+        Index("ix_gov_cash_programs_company_estado", "company_id", "estado"),
+        CheckConstraint(f"moneda IN ({en(MONEDAS_LIMITE)})", name="moneda"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_PROGRAMA_CAJA)})", name="estado"),
+        CheckConstraint("mes_inicial BETWEEN 1 AND 12", name="mes_inicial"),
+        CheckConstraint("(estado = 'CERRADO') = (cerrado_en IS NOT NULL AND motivo_cierre IS NOT NULL)", name="cierre_completo"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+
+class GovernmentCashProgramVersion(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Versión de un programa de caja (TRE-02)."""
+
+    __tablename__ = "gov_cash_program_versions"
+    __scope__ = Scope.COMPANY
+
+    program_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_cash_programs.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    estado: Mapped[str] = mapped_column(String(11), nullable=False)
+    motivo: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    activada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    activada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("program_id", "numero", name="uq_gov_cash_program_versions_program_id_numero"),
+        Index(
+            "uq_gov_cash_program_versions_borrador_por_programa",
+            "program_id",
+            unique=True,
+            postgresql_where=text("estado = 'BORRADOR'"),
+            sqlite_where=text("estado = 'BORRADOR'"),
+        ),
+        Index(
+            "uq_gov_cash_program_versions_vigente_por_programa",
+            "program_id",
+            unique=True,
+            postgresql_where=text("estado = 'VIGENTE'"),
+            sqlite_where=text("estado = 'VIGENTE'"),
+        ),
+        CheckConstraint(f"estado IN ({en(ESTADOS_VERSION_PROGRAMA_CAJA)})", name="estado"),
+        CheckConstraint("numero >= 1", name="numero"),
+        CheckConstraint("(estado IN ('BORRADOR', 'DESCARTADA')) = (activada_por IS NULL AND activada_en IS NULL) AND (estado IN ('VIGENTE', 'SUPERADA', 'CERRADA')) = (activada_por IS NOT NULL AND activada_en IS NOT NULL)", name="activacion_completa"),
+    )
+
+
+class GovernmentCashProgramDeclaration(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Declaración de disponibilidad inicial por cuenta vigente de TRE-01 (TRE-02)."""
+
+    __tablename__ = "gov_cash_program_declarations"
+    __scope__ = Scope.COMPANY
+
+    program_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_cash_programs.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_bank_accounts.id"), nullable=False, index=True)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    fecha_corte: Mapped[date] = mapped_column(Date, nullable=False)
+    fundamento: Mapped[str] = mapped_column(String(500), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("program_id", "account_id", name="uq_gov_cash_program_declarations_programa_cuenta"),
+        CheckConstraint("monto >= 0", name="monto"),
+        CheckConstraint("length(fundamento) BETWEEN 10 AND 500", name="fundamento"),
+    )
+
+
+class GovernmentCashProgramLine(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Línea de un programa de caja por versión, rubro y mes (TRE-02)."""
+
+    __tablename__ = "gov_cash_program_lines"
+    __scope__ = Scope.COMPANY
+
+    version_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_cash_program_versions.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    item_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_cash_items.id"), nullable=False, index=True)
+    mes: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("version_id", "item_id", "mes", name="uq_gov_cash_program_lines_version_rubro_mes"),
+        CheckConstraint("mes BETWEEN 1 AND 12", name="mes"),
+        CheckConstraint("monto > 0", name="monto"),
+    )
+
+
+class GovernmentCashProgramHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de las versiones de un programa de caja (TRE-02)."""
+
+    __tablename__ = "gov_cash_program_history"
+    __scope__ = Scope.COMPANY
+
+    program_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_cash_programs.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    version_numero: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    tipo: Mapped[str] = mapped_column(String(14), nullable=False)
+    detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_PROGRAMA_CAJA)})", name="tipo"),
+    )
+
+
+for _sentencia in GOV_CASH_PROGRAMS_NOT_DELETABLE_PG:
+    event.listen(GovernmentCashProgram.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_CASH_PROGRAM_VERSIONS_NOT_DELETABLE_PG:
+    event.listen(GovernmentCashProgramVersion.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_CASH_PROGRAM_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentCashProgramHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_CASH_PROGRAM_LINES_IMMUTABLE_EXCEPT_BORRADOR_PG:
+    event.listen(GovernmentCashProgramLine.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_CASH_PROGRAM_DECLARATIONS_IMMUTABLE_EXCEPT_BORRADOR_PG:
+    event.listen(GovernmentCashProgramDeclaration.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

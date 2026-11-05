@@ -1254,6 +1254,95 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/tesoreria/programas",
+      "query": [
+        "ejercicio",
+        "estado",
+        "moneda"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/programas",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/programas/{programa_id}",
+      "query": [
+        "version"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/programas/{programa_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/programas/{programa_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/programas/{programa_id}/declaraciones",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/tesoreria/programas/{programa_id}/declaraciones/{declaracion_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/programas/{programa_id}/descartar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/programas/{programa_id}/lineas",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/tesoreria/programas/{programa_id}/lineas/{linea_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/tesoreria/programas/{programa_id}/lineas/{linea_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/programas/{programa_id}/opciones",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/programas/{programa_id}/reprogramar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/rubros",
+      "query": [
+        "estado",
+        "tipo"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/rubros",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/tesoreria/rubros/{rubro_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/health/live",
       "query": []
     },

@@ -278,6 +278,58 @@ describe("HallazgoPage", () => {
     );
   });
 
+  it("HLP-03b · tras el 409 de auto-verificación sigue visible «Confirmar verificación» y se conserva la nota", async () => {
+    capacidades = new Set(["gobierno_hallazgos:verify"]);
+
+    const detalleEvidencia: HallazgoDetalle = {
+      ...DETALLE_BASE,
+      estado: "EVIDENCIA_PRESENTADA",
+      presentado_por: "usuario-presentador",
+      presentado_en: "2026-02-20T10:00:00Z",
+    };
+
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === "/gobierno/hallazgos/h1") {
+        return Promise.resolve(detalleEvidencia);
+      }
+      if (url === "/gobierno/hallazgos/h1/verificar") {
+        return Promise.reject(
+          new ApiError(409, {
+            code: "GOV_FINDING_SELF_VERIFICATION",
+            message: "Conflicto de auto-verificación",
+          }),
+        );
+      }
+      return Promise.reject(
+        new ApiError(500, { code: "INTERNAL", message: "Error" }),
+      );
+    });
+
+    renderHallazgo();
+
+    const botonVerificar = await screen.findByRole("button", {
+      name: /Verificar y cerrar/,
+    });
+    await userEvent.click(botonVerificar);
+
+    const textarea = await screen.findByLabelText(/^Nota de verificación/);
+    await userEvent.type(textarea, "Nota de verificación válida");
+
+    const botonConfirmar = screen.getByRole("button", {
+      name: /Confirmar verificación/,
+    });
+    await userEvent.click(botonConfirmar);
+
+    await screen.findByRole("alert");
+
+    expect(
+      screen.getByRole("button", { name: /Confirmar verificación/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/^Nota de verificación/),
+    ).toHaveValue("Nota de verificación válida");
+  });
+
   it("HLP-04 · sin gobierno_auditoria:view el origen MUESTRA se muestra como texto, sin enlace", async () => {
     capacidades = new Set(["gobierno_hallazgos:manage"]);
 

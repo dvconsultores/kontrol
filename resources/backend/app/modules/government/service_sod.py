@@ -65,6 +65,17 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "TRE01_CERRAR": ("Cerrar la cuenta", "GOV_BANK_ACCOUNT_CLOSED", False),
         },
     },
+    "TRE-02": {
+        "nombre": "Programación financiera",
+        "objeto": "GovernmentCashProgram",
+        "objeto_nombre": "programa",
+        "acciones": {
+            "TRE02_REGISTRAR": ("Registrar el programa", "GOV_CASH_PROGRAM_CREATED", True),
+            "TRE02_ACTIVAR": ("Activar el programa", "GOV_CASH_PROGRAM_ACTIVATED", False),
+            "TRE02_REPROGRAMAR": ("Reprogramar", "GOV_CASH_PROGRAM_REVISED", False),
+            "TRE02_CERRAR": ("Cerrar el programa", "GOV_CASH_PROGRAM_CLOSED", False),
+        },
+    },
 }
 
 

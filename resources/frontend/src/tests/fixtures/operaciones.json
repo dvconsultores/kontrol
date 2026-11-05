@@ -1754,6 +1754,134 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/programas",
+      "capabilities": [
+        "gobierno_caja:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/programas",
+      "capabilities": [
+        "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/programas/{programa_id}",
+      "capabilities": [
+        "gobierno_caja:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/programas/{programa_id}/activar",
+      "capabilities": [
+        "gobierno_caja:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/programas/{programa_id}/cerrar",
+      "capabilities": [
+        "gobierno_caja:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/programas/{programa_id}/declaraciones",
+      "capabilities": [
+        "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/tesoreria/programas/{programa_id}/declaraciones/{declaracion_id}",
+      "capabilities": [
+        "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/programas/{programa_id}/descartar",
+      "capabilities": [
+        "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/programas/{programa_id}/lineas",
+      "capabilities": [
+        "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/tesoreria/programas/{programa_id}/lineas/{linea_id}",
+      "capabilities": [
+        "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/tesoreria/programas/{programa_id}/lineas/{linea_id}",
+      "capabilities": [
+        "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/programas/{programa_id}/opciones",
+      "capabilities": [
+        "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/programas/{programa_id}/reprogramar",
+      "capabilities": [
+        "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/rubros",
+      "capabilities": [
+        "gobierno_caja:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/rubros",
+      "capabilities": [
+        "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/tesoreria/rubros/{rubro_id}",
+      "capabilities": [
+        "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/health/live",
       "capabilities": [],
       "scope": "GLOBAL"
@@ -5330,7 +5458,10 @@
     "gobierno_sod:activate",
     "gobierno_cuentas:view",
     "gobierno_cuentas:manage",
-    "gobierno_cuentas:activate"
+    "gobierno_cuentas:activate",
+    "gobierno_caja:view",
+    "gobierno_caja:manage",
+    "gobierno_caja:activate"
   ],
   "report_capabilities": {
     "executive_ventas": [
