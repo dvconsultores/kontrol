@@ -68,7 +68,7 @@
 - [X] T030 Certificación completa: PostgreSQL, SQLite, vitest, tsc, eslint, build, ruff, mypy, OpenAPI, regresión ×3, canónica, integridad · EXECUTOR CLAUDE · MODEL n-a
 - [X] T031 Reclasificar TRE-01 y TRE-02 y recalcular métricas en `docs/roadmap/government-product-completeness/` · EXECUTOR CLAUDE · MODEL n-a
 - [X] T032 `evidence/OWNER_UAT_CARD.md`, `REQUIRED_SUITE_INVENTORY.md`, `UAT_SMOKE.md` · EXECUTOR CLAUDE · MODEL n-a
-- [ ] T033 `/speckit-converge`, commit, push, relevo UAT y humo · EXECUTOR CLAUDE · MODEL n-a
+- [X] T033 `/speckit-converge`, commit, push, relevo UAT y humo · EXECUTOR CLAUDE · MODEL n-a
 
 ## Dependencies
 
