@@ -91,7 +91,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 
 | Id | Proceso | Prio. | Actor principal | Requisitos | Compuertas | PASS | Estado real | Bloqueos | E2E | Equivalente privado (no cuenta) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| TRE-01 | Cuentas bancarias públicas con autorizados y acto habilitante | P0 | Tesorería | GOV-TRE-001 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Cuentas financieras privadas (006): otro contrato |
+| TRE-01 | Cuentas bancarias públicas con autorizados y acto habilitante | P0 | Tesorería | GOV-TRE-001 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | TRE-E2E-01..03 (×3 navegadores) + HUMO-UAT-01 | Cuentas financieras privadas (006): solo como patrón |
 | TRE-02 | Programación financiera y disponibilidad de caja | P0 | Tesorería | GOV-TRE-002 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 | TRE-03 | Orden de pago desde obligación causada | P0 | Tesorería | GOV-TRE-003 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 | TRE-04 | Pago con maker-checker, medios autorizados y bloqueo de duplicados | P0 | Tesorería | GOV-TRE-004 GOV-TRE-005 GOV-TRE-010 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C) | E2E-01 | Pagos privados (006): otro contrato |

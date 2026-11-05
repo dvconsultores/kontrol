@@ -109,6 +109,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_paquetes": ["view", "generate"],
     # CTL-01: matriz de segregación de funciones con detección previa (OD-CTL01-04).
     "gobierno_sod": ["view", "manage", "activate"],
+    # TRE-01: cuentas bancarias públicas (OD-TRE01-07).
+    "gobierno_cuentas": ["view", "manage", "activate"],
 }
 
 

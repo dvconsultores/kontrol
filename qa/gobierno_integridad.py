@@ -1,12 +1,13 @@
 """OBS-CERT-GOV-01: runner canónico de integridad de Gobierno.
 
 Ejecuta los controles de integridad versionados en los módulos hermanos
-``qa/gobierno_integridad_org.py`` y ``qa/gobierno_integridad_ctl.py``.
+``qa/gobierno_integridad_org.py``, ``qa/gobierno_integridad_ctl.py`` y
+``qa/gobierno_integridad_tre.py``.
 Los controles ya no viven en el scratchpad; este runner es la vía oficial
 para listarlos y ejecutarlos contra una base PostgreSQL.
 
 Uso:
-    python qa/gobierno_integridad.py [--db-url URL] [--grupo ORG|CTL] [--listar] [--json]
+    python qa/gobierno_integridad.py [--db-url URL] [--grupo ORG|CTL|TRE] [--listar] [--json]
 
 Códigos de salida:
     0 — lista mostrada correctamente, o ejecución sin violaciones.
@@ -32,15 +33,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import gobierno_integridad_ctl as ctl  # noqa: E402
 import gobierno_integridad_org as org  # noqa: E402
-
+import gobierno_integridad_tre as tre  # noqa: E402
 
 GRUPO_ORG = org.GRUPO
 GRUPO_CTL = ctl.GRUPO
+GRUPO_TRE = tre.GRUPO
 
 CLAVE_ORG = "ORG"
 CLAVE_CTL = "CTL"
+CLAVE_TRE = "TRE"
 
-MODULOS_POR_CLAVE = {CLAVE_ORG: org, CLAVE_CTL: ctl}
+MODULOS_POR_CLAVE = {CLAVE_ORG: org, CLAVE_CTL: ctl, CLAVE_TRE: tre}
 
 
 def controles() -> list[tuple[str, str, str, str]]:
@@ -51,7 +54,7 @@ def controles() -> list[tuple[str, str, str, str]]:
     """
 
     resultado: list[tuple[str, str, str, str]] = []
-    for grupo, modulo in ((GRUPO_ORG, org), (GRUPO_CTL, ctl)):
+    for grupo, modulo in ((GRUPO_ORG, org), (GRUPO_CTL, ctl), (GRUPO_TRE, tre)):
         for identificador, descripcion, sql in modulo.CHECKS:
             resultado.append((grupo, identificador, descripcion, sql))
     return resultado
@@ -65,7 +68,7 @@ def _crear_conexion(db_url: str) -> Connection:
 def ejecutar(conn: Connection, grupo: str | None = None) -> dict[str, Any]:
     """Ejecuta todos los controles usando la conexión dada.
 
-    ``grupo`` es la clave corta ``"ORG"`` o ``"CTL"`` (o ``None`` para todos).
+    ``grupo`` es la clave corta ``"ORG"``, ``"CTL"`` o ``"TRE"`` (o ``None`` para todos).
 
     Devuelve un diccionario con la misma estructura que la salida JSON:
     ``{"info": {...}, "controles": [...], "total": int}``.
@@ -159,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--db-url", help="URL de conexión a PostgreSQL.")
     parser.add_argument(
         "--grupo",
-        choices=(CLAVE_ORG, CLAVE_CTL),
+        choices=(CLAVE_ORG, CLAVE_CTL, CLAVE_TRE),
         help="Ejecutar únicamente los controles del grupo indicado.",
     )
     parser.add_argument(

@@ -1626,6 +1626,134 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/bancos",
+      "capabilities": [
+        "gobierno_cuentas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/bancos",
+      "capabilities": [
+        "gobierno_cuentas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/tesoreria/bancos/{banco_id}",
+      "capabilities": [
+        "gobierno_cuentas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/cuentas",
+      "capabilities": [
+        "gobierno_cuentas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/cuentas",
+      "capabilities": [
+        "gobierno_cuentas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/cuentas/{cuenta_id}",
+      "capabilities": [
+        "gobierno_cuentas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/tesoreria/cuentas/{cuenta_id}",
+      "capabilities": [
+        "gobierno_cuentas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/cuentas/{cuenta_id}/activar",
+      "capabilities": [
+        "gobierno_cuentas:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/cuentas/{cuenta_id}/acto",
+      "capabilities": [
+        "gobierno_cuentas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/cuentas/{cuenta_id}/autorizados",
+      "capabilities": [
+        "gobierno_cuentas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/cuentas/{cuenta_id}/autorizados/{autorizacion_id}/fin",
+      "capabilities": [
+        "gobierno_cuentas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/cuentas/{cuenta_id}/cerrar",
+      "capabilities": [
+        "gobierno_cuentas:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/cuentas/{cuenta_id}/inactivar",
+      "capabilities": [
+        "gobierno_cuentas:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/cuentas/{cuenta_id}/numero",
+      "capabilities": [
+        "gobierno_cuentas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/cuentas/{cuenta_id}/reactivar",
+      "capabilities": [
+        "gobierno_cuentas:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/opciones",
+      "capabilities": [
+        "gobierno_cuentas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/health/live",
       "capabilities": [],
       "scope": "GLOBAL"
@@ -5199,7 +5327,10 @@
     "gobierno_paquetes:generate",
     "gobierno_sod:view",
     "gobierno_sod:manage",
-    "gobierno_sod:activate"
+    "gobierno_sod:activate",
+    "gobierno_cuentas:view",
+    "gobierno_cuentas:manage",
+    "gobierno_cuentas:activate"
   ],
   "report_capabilities": {
     "executive_ventas": [

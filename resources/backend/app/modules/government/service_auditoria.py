@@ -23,6 +23,7 @@ from app.modules.government.models import (
     GovernmentAuditPackage,
     GovernmentAuditSample,
     GovernmentAuditSampleItem,
+    GovernmentBankAccount,
     GovernmentEntity,
     GovernmentFinding,
     GovernmentNotification,
@@ -53,6 +54,7 @@ PROCESOS: list[tuple[str, str, str]] = [
     ("CTL-06", "Hallazgos y acciones correctivas", "gov-ctl-06"),
     ("DOC-08", "Paquetes de auditoría", "gov-doc-08"),
     ("CTL-01", "Segregación de funciones", "gov-ctl-01"),
+    ("TRE-01", "Cuentas bancarias públicas", "gov-tre-01"),
 ]
 _PROCESO_POR_OWNER_SPEC = {owner_spec: (codigo, nombre) for codigo, nombre, owner_spec in PROCESOS}
 _PROCESO_NOMBRE = {codigo: nombre for codigo, nombre, _ in PROCESOS}
@@ -328,6 +330,16 @@ def _objeto_desde_evento(db: Session, event: AuditEvent, ctx: CompanyContext) ->
         )
         return None if regla is None else AuditoriaObjeto(
             tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/sod/{objeto_id}", capacidad="gobierno_sod:view"
+        )
+    if event.entity_type == "GovernmentBankAccount":
+        cuenta = db.scalar(
+            select(GovernmentBankAccount).where(
+                GovernmentBankAccount.id == objeto_id,
+                GovernmentBankAccount.company_id == empresa,
+            )
+        )
+        return None if cuenta is None else AuditoriaObjeto(
+            tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/tesoreria/cuentas/{objeto_id}", capacidad="gobierno_cuentas:view"
         )
     return None
 

@@ -101,7 +101,7 @@
 
 | Proceso | Estado | Qué funciona | Qué no funciona | Compuerta que falta | Severidad | Dependencias | Siguiente remediación |
 |---|---|---|---|---|---|---|---|
-| TRE-01 Cuentas bancarias públicas con autorizados y acto habilitante | NOT_STARTED | Nada en Gobierno. Existe un equivalente privado que **no** sirve tal cual: Cuentas financieras privadas (006): otro contrato. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-3, con DoD de producto completa (política §4) |
+| TRE-01 Cuentas bancarias públicas con autorizados y acto habilitante | **SALIÓ DE ESTE CATÁLOGO** (GOV-TRE-01, 2026-11-05) | Todo el proceso: ver `OWNER_UAT_READY_CATALOG.md` | — | — | — | — |
 | TRE-02 Programación financiera y disponibilidad de caja | NOT_STARTED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (10 de 10) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-3, con DoD de producto completa (política §4) |
 | TRE-03 Orden de pago desde obligación causada | NOT_STARTED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-3, con DoD de producto completa (política §4) |
 | TRE-04 Pago con maker-checker, medios autorizados y bloqueo de duplicados | BLOCKED | Nada en Gobierno. Existe un equivalente privado que **no** sirve tal cual: Pagos privados (006): otro contrato. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | LEGAL_VALIDATION_REQUIRED N37 (clase C) | GOV-3, con DoD de producto completa (política §4) |

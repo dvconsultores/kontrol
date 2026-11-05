@@ -1250,7 +1250,7 @@ export function abreviarHuella(huella: string): string { return huella.length > 
 // CTL-01 · matriz de segregación de funciones (GOV-CTL-001)
 // ---------------------------------------------------------------------------
 
-export type ProcesoSod = "DOC-02" | "CTL-06";
+export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01";
 export type EstadoReglaSod = "BORRADOR" | "VIGENTE" | "CERRADA";
 
 export interface AccionSod { codigo: string; etiqueta: string; crea_objeto: boolean; }
@@ -1291,7 +1291,7 @@ export interface DetalleConflictoSod {
 }
 
 export const ETIQUETAS_ESTADO_REGLA_SOD: Record<EstadoReglaSod, string> = { BORRADOR: "Borrador", VIGENTE: "Vigente", CERRADA: "Cerrada" };
-export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas" };
+export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas" };
 export const ETIQUETAS_HISTORIA_SOD: Record<string, string> = { CREADA: "Registrada", EDITADA: "Modificada", ACTIVADA: "Activada", CERRADA: "Cerrada" };
 
 export const POR_PAGINA_CONFLICTOS_SOD = 20;
@@ -1302,6 +1302,7 @@ export function rutaDeObjetoSod(tipo: string | null, id: string | null): string 
   if (!tipo || !id) return null;
   if (tipo === "GovernmentAct") return `/gobierno/actos/${id}`;
   if (tipo === "GovernmentFinding") return `/gobierno/hallazgos/${id}`;
+  if (tipo === "GovernmentBankAccount") return `/gobierno/tesoreria/cuentas/${id}`;
   return null;
 }
 
@@ -1319,6 +1320,78 @@ export function consultaDeReglasSod(filtros: { estado?: string; proceso?: string
   if (proceso) qs.set("proceso", proceso);
   const s = qs.toString();
   return s ? `?${s}` : "";
+}
+
+// TRE-01 · Cuentas bancarias públicas (GOV-TRE-001)
+export type EstadoBanco = "ACTIVO" | "INACTIVO";
+export type EstadoCuenta = "BORRADOR" | "VIGENTE" | "INACTIVA" | "CERRADA";
+export type TipoCuenta = "CORRIENTE" | "AHORRO";
+export type MonedaCuenta = "VES" | "USD" | "EUR";
+
+export interface Banco { id: string; codigo: string; nombre: string; estado: EstadoBanco; version: number; }
+export interface BancosListado { items: Banco[]; }
+export interface BancoEntrada { codigo: string; nombre: string; }
+export interface BancoCambios { nombre?: string; estado?: EstadoBanco; }
+
+export interface ActoReferencia { id: string; tipo: string; numero: string; fecha: string; estado: string; asunto: string; }
+
+export interface CuentaResumen {
+  id: string; codigo: string; denominacion: string; banco_id: string; banco_codigo: string; banco_nombre: string; tipo: TipoCuenta; moneda: MonedaCuenta;
+  numero_enmascarado: string; vigente_desde: string; vigente_hasta: string | null; estado: EstadoCuenta; en_vigor: boolean; acto_sin_efecto: boolean;
+  autorizados_en_vigor: number; version: number;
+}
+export interface AutorizadoCuenta {
+  id: string; cargo_id: string; cargo_codigo: string; cargo_denominacion: string; cargo_unidad: string; cargo_vigente: boolean; acto_alta: ActoReferencia;
+  vigente_desde: string; vigente_hasta: string | null; acto_fin: ActoReferencia | null; motivo_fin: string | null; en_vigor: boolean;
+  registrada_por: string | null; registrada_en: string; terminada_por: string | null; terminada_en: string | null;
+}
+export interface HistoriaCuenta { tipo: string; detalle: Record<string, unknown> | null; registrado_por: string | null; registrado_en: string; }
+export interface CuentaDetalle extends CuentaResumen {
+  acto: ActoReferencia | null; registrada_por: string | null; registrada_en: string; activada_por: string | null; activada_en: string | null;
+  cerrada_por: string | null; cerrada_en: string | null; fecha_cierre: string | null; motivo_cierre: string | null;
+  autorizados: AutorizadoCuenta[]; historia: HistoriaCuenta[];
+}
+export interface ResumenCuentas { borradores: number; vigentes: number; inactivas: number; cerradas: number; }
+export interface CuentasListado { items: CuentaResumen[]; resumen: ResumenCuentas; }
+export interface CuentaEntrada {
+  denominacion: string; banco_id: string; tipo: TipoCuenta; numero: string; moneda: MonedaCuenta; vigente_desde: string; vigente_hasta: string | null;
+}
+export type CuentaCambios = Partial<CuentaEntrada>;
+export interface NumeroCuenta { numero: string; }
+export interface CuentasOpciones {
+  bancos: { id: string; codigo: string; nombre: string }[];
+  cargos: { id: string; codigo: string; denominacion: string; unidad: string }[];
+  actos: ActoReferencia[];
+}
+
+export const ETIQUETAS_ESTADO_CUENTA: Record<EstadoCuenta, string> = { BORRADOR: "Borrador", VIGENTE: "Vigente", INACTIVA: "Inactiva", CERRADA: "Cerrada" };
+export const ETIQUETAS_TIPO_CUENTA: Record<TipoCuenta, string> = { CORRIENTE: "Corriente", AHORRO: "Ahorro" };
+export const ETIQUETAS_ESTADO_BANCO: Record<EstadoBanco, string> = { ACTIVO: "Activo", INACTIVO: "Inactivo" };
+export const ETIQUETAS_HISTORIA_CUENTA: Record<string, string> = {
+  CREADA: "Registrada", EDITADA: "Modificada", ACTO_VINCULADO: "Acto vinculado", ACTIVADA: "Activada", INACTIVADA: "Inactivada", REACTIVADA: "Reactivada",
+  CERRADA: "Cerrada", AUTORIZADO_ALTA: "Cargo autorizado", AUTORIZADO_FIN: "Autorización terminada",
+};
+export const MONEDAS_CUENTA: MonedaCuenta[] = ["VES", "USD", "EUR"];
+export const CONSULTA_CUENTAS = [...CONSULTA_GOBIERNO, "tesoreria"] as const;
+
+/** Cadena de consulta de /gobierno/tesoreria/cuentas (estado, banco, moneda y cargo; omite vacíos). */
+export function consultaDeCuentas(filtros: { estado?: string; banco_id?: string; moneda?: string; cargo_id?: string }): string {
+  const qs = new URLSearchParams();
+  const estado = valorDeConsulta(filtros.estado);
+  const bancoId = valorDeConsulta(filtros.banco_id);
+  const moneda = valorDeConsulta(filtros.moneda);
+  const cargoId = valorDeConsulta(filtros.cargo_id);
+  if (estado) qs.set("estado", estado);
+  if (bancoId) qs.set("banco_id", bancoId);
+  if (moneda) qs.set("moneda", moneda);
+  if (cargoId) qs.set("cargo_id", cargoId);
+  const s = qs.toString();
+  return s ? `?${s}` : "";
+}
+
+/** Texto corto de un acto para selectores y fichas. */
+export function textoDeActo(acto: ActoReferencia): string {
+  return `${acto.tipo} ${acto.numero} · ${acto.asunto}`;
 }
 
 /** Cadena de consulta de /gobierno/sod/conflictos. */

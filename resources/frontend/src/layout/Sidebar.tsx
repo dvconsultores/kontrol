@@ -36,6 +36,8 @@ import {
   ShieldAlert,
   ShieldBan,
   ShieldCheck,
+  WalletCards,
+  Building2,
   ShoppingCart,
   ShoppingBag,
   SlidersHorizontal,
@@ -83,6 +85,14 @@ const navSections: NavSection[] = [
       { to: "/gobierno/hallazgos", label: "Hallazgos y acciones correctivas", icon: ClipboardCheck, modulo: "gobierno" },
       { to: "/gobierno/paquetes", label: "Paquetes de auditoría", icon: Archive, modulo: "gobierno" },
       { to: "/gobierno/sod", label: "Segregación de funciones", icon: ShieldBan, modulo: "gobierno" },
+    ],
+  },
+  // Tesorería de Gobierno (TRE-01): sección propia, también sujeta al módulo `gobierno`.
+  {
+    title: "Gobierno · Tesorería",
+    items: [
+      { to: "/gobierno/tesoreria/cuentas", label: "Cuentas bancarias", icon: WalletCards, modulo: "gobierno" },
+      { to: "/gobierno/tesoreria/bancos", label: "Bancos", icon: Building2, modulo: "gobierno" },
     ],
   },
   {

@@ -52,6 +52,19 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "CTL06_DEVOLVER": ("Devolver a remediación", "GOV_FINDING_RETURNED", False),
         },
     },
+    "TRE-01": {
+        "nombre": "Cuentas bancarias públicas",
+        "objeto": "GovernmentBankAccount",
+        "objeto_nombre": "cuenta",
+        "acciones": {
+            "TRE01_REGISTRAR": ("Registrar la cuenta", "GOV_BANK_ACCOUNT_CREATED", True),
+            "TRE01_ACTIVAR": ("Activar la cuenta", "GOV_BANK_ACCOUNT_ACTIVATED", False),
+            "TRE01_AUTORIZAR": ("Autorizar un cargo", "GOV_BANK_AUTHORIZATION_ADDED", False),
+            "TRE01_FIN_AUTORIZACION": ("Terminar una autorización", "GOV_BANK_AUTHORIZATION_ENDED", False),
+            "TRE01_INACTIVAR": ("Inactivar la cuenta", "GOV_BANK_ACCOUNT_DEACTIVATED", False),
+            "TRE01_CERRAR": ("Cerrar la cuenta", "GOV_BANK_ACCOUNT_CLOSED", False),
+        },
+    },
 }
 
 

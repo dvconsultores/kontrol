@@ -137,6 +137,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_paquetes:generate",
         # gobierno_sod · activación y cierre de reglas de segregación de funciones (CTL-01, OD-CTL01-04)
         "gobierno_sod:activate",
+        # gobierno_cuentas · activación, inactivación, reactivación y cierre de cuentas bancarias (TRE-01, OD-TRE01-07)
+        "gobierno_cuentas:activate",
     }
 )
 
@@ -221,6 +223,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_sod · consulta de reglas y conflictos y gestión de borradores (CTL-01)
         "gobierno_sod:view",
         "gobierno_sod:manage",
+        # gobierno_cuentas · consulta y gestión de cuentas bancarias y autorizados (TRE-01)
+        "gobierno_cuentas:view",
+        "gobierno_cuentas:manage",
     }
 )
 

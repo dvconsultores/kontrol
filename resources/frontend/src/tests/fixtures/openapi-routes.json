@@ -1167,6 +1167,93 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/tesoreria/bancos",
+      "query": [
+        "estado"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/bancos",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/tesoreria/bancos/{banco_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/cuentas",
+      "query": [
+        "banco_id",
+        "cargo_id",
+        "estado",
+        "moneda"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/cuentas",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/cuentas/{cuenta_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/tesoreria/cuentas/{cuenta_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/cuentas/{cuenta_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/cuentas/{cuenta_id}/acto",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/cuentas/{cuenta_id}/autorizados",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/cuentas/{cuenta_id}/autorizados/{autorizacion_id}/fin",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/cuentas/{cuenta_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/cuentas/{cuenta_id}/inactivar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/cuentas/{cuenta_id}/numero",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/cuentas/{cuenta_id}/reactivar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/health/live",
       "query": []
     },

@@ -842,7 +842,7 @@ for _sentencia in GOV_AUDIT_PACKAGE_VERIFICATIONS_IMMUTABLE_PG:
 ESTADOS_REGLA_SOD = ("BORRADOR", "VIGENTE", "CERRADA")
 ALCANCES_REGLA_SOD = ("MISMO_OBJETO",)
 MODOS_REGLA_SOD = ("BLOQUEAR",)
-PROCESOS_SOD = ("DOC-02", "CTL-06")
+PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01")
 TIPOS_HISTORIA_SOD = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA")
 
 
@@ -918,3 +918,148 @@ for _sentencia in GOV_SOD_RULES_NOT_DELETABLE_PG:
 
 for _sentencia in GOV_SOD_RULE_HISTORY_IMMUTABLE_PG:
     event.listen(GovernmentSoDRuleHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+ESTADOS_BANCO = ("ACTIVO", "INACTIVO")
+ESTADOS_CUENTA_BANCARIA = ("BORRADOR", "VIGENTE", "INACTIVA", "CERRADA")
+TIPOS_CUENTA_BANCARIA = ("CORRIENTE", "AHORRO")
+TIPOS_HISTORIA_CUENTA = ("CREADA", "EDITADA", "ACTO_VINCULADO", "ACTIVADA", "INACTIVADA", "REACTIVADA", "CERRADA", "AUTORIZADO_ALTA", "AUTORIZADO_FIN")
+
+
+GOV_BANK_ACCOUNTS_NOT_DELETABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_cuenta_no_borrable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BANK_ACCOUNT_NOT_DELETABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_bank_accounts_no_delete BEFORE DELETE ON gov_bank_accounts FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cuenta_no_borrable()",
+    "CREATE TRIGGER trg_gov_bank_accounts_no_truncate BEFORE TRUNCATE ON gov_bank_accounts FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_cuenta_no_borrable()",
+)
+
+GOV_BANK_ACCOUNT_AUTHORIZATIONS_NOT_DELETABLE_PG = (
+    "CREATE TRIGGER trg_gov_bank_account_authorizations_no_delete BEFORE DELETE ON gov_bank_account_authorizations FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cuenta_no_borrable()",
+    "CREATE TRIGGER trg_gov_bank_account_authorizations_no_truncate BEFORE TRUNCATE ON gov_bank_account_authorizations FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_cuenta_no_borrable()",
+)
+
+GOV_BANK_ACCOUNT_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_cuenta_historia_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BANK_ACCOUNT_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_bank_account_history_no_update BEFORE UPDATE ON gov_bank_account_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cuenta_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_bank_account_history_no_delete BEFORE DELETE ON gov_bank_account_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cuenta_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_bank_account_history_no_truncate BEFORE TRUNCATE ON gov_bank_account_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_cuenta_historia_inmutable()",
+)
+
+
+class GovernmentBank(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Banco del catálogo de Tesorería de Gobierno (TRE-01, OD-TRE01-04): no precarga códigos oficiales."""
+
+    __tablename__ = "gov_banks"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(4), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(120), nullable=False)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="ACTIVO", server_default="ACTIVO")
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_banks_company_id_codigo"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_BANCO)})", name="estado"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+
+class GovernmentBankAccount(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Cuenta bancaria pública del ente (TRE-01, GOV-TRE-001): nunca se borra; el número completo no sale por la API de consulta."""
+
+    __tablename__ = "gov_bank_accounts"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    denominacion: Mapped[str] = mapped_column(String(200), nullable=False)
+    bank_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_banks.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(10), nullable=False)
+    numero: Mapped[str] = mapped_column(String(20), nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    acto_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True, index=True)
+    activada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    activada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cerrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cerrada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    fecha_cierre: Mapped[date | None] = mapped_column(Date, nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_bank_accounts_company_id_codigo"),
+        UniqueConstraint("company_id", "bank_id", "numero", name="uq_gov_bank_accounts_numero"),
+        Index("ix_gov_bank_accounts_company_estado", "company_id", "estado"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_CUENTA_BANCARIA)})", name="estado"),
+        CheckConstraint(f"tipo IN ({en(TIPOS_CUENTA_BANCARIA)})", name="tipo"),
+        CheckConstraint(f"moneda IN ({en(MONEDAS_LIMITE)})", name="moneda"),
+        CheckConstraint("length(numero) = 20", name="numero_largo"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+        CheckConstraint("estado = 'BORRADOR' OR (acto_id IS NOT NULL AND activada_en IS NOT NULL)", name="activada_con_acto"),
+        CheckConstraint("(estado = 'CERRADA') = (cerrada_en IS NOT NULL AND fecha_cierre IS NOT NULL AND motivo_cierre IS NOT NULL)", name="cierre_completo"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+
+class GovernmentBankAccountAuthorization(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Autorización de un cargo sobre una cuenta (TRE-01, OD-TRE01-01): no es una persona; nunca se sobrescribe."""
+
+    __tablename__ = "gov_bank_account_authorizations"
+    __scope__ = Scope.COMPANY
+
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_bank_accounts.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    position_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False, index=True)
+    cargo_codigo: Mapped[str] = mapped_column(String(30), nullable=False)
+    cargo_denominacion: Mapped[str] = mapped_column(String(200), nullable=False)
+    cargo_unidad: Mapped[str] = mapped_column(String(200), nullable=False)
+    acto_alta_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=False, index=True)
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    acto_fin_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    motivo_fin: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    terminada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    terminada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index(
+            "uq_gov_bank_account_authorizations_en_vigor",
+            "account_id",
+            "position_id",
+            unique=True,
+            postgresql_where=text("vigente_hasta IS NULL"),
+            sqlite_where=text("vigente_hasta IS NULL"),
+        ),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+        CheckConstraint("(vigente_hasta IS NULL) = (motivo_fin IS NULL AND terminada_en IS NULL)", name="fin_completo"),
+        CheckConstraint("acto_fin_id IS NULL OR vigente_hasta IS NOT NULL", name="acto_fin_terminada"),
+    )
+
+
+class GovernmentBankAccountHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de una cuenta bancaria (TRE-01): nunca guarda el número completo."""
+
+    __tablename__ = "gov_bank_account_history"
+    __scope__ = Scope.COMPANY
+
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_bank_accounts.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(16), nullable=False)
+    detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_CUENTA)})", name="tipo"),
+    )
+
+
+for _sentencia in GOV_BANK_ACCOUNTS_NOT_DELETABLE_PG:
+    event.listen(GovernmentBankAccount.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_BANK_ACCOUNT_AUTHORIZATIONS_NOT_DELETABLE_PG:
+    event.listen(GovernmentBankAccountAuthorization.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_BANK_ACCOUNT_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentBankAccountHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

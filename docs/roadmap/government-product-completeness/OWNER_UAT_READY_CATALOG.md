@@ -1,10 +1,10 @@
 # OWNER_UAT_READY_CATALOG — KONTROL Gobierno
 
-> Retrospectiva GOV-PRODUCT-COMPLETENESS-RETRO-01 · `develop` `0dbe632` · 2026-10-29. Actualizado por GOV-0-01 (2026-10-30), GOV-0-02 (2026-10-31), GOV-0-03 y GOV-DOC-02 (2026-11-01) GOV-DOC-04 y GOV-ORG-07 (2026-11-02) GOV-CTL-04 (2026-11-03), GOV-CTL-06, GOV-DOC-08 y GOV-CTL-01 (2026-11-04).
+> Retrospectiva GOV-PRODUCT-COMPLETENESS-RETRO-01 · `develop` `0dbe632` · 2026-10-29. Actualizado por GOV-0-01 (2026-10-30), GOV-0-02 (2026-10-31), GOV-0-03 y GOV-DOC-02 (2026-11-01) GOV-DOC-04 y GOV-ORG-07 (2026-11-02) GOV-CTL-04 (2026-11-03), GOV-CTL-06, GOV-DOC-08 y GOV-CTL-01 (2026-11-04) y GOV-TRE-01 (2026-11-05).
 
-## Estado: 10 procesos listos para probar (2026-11-04)
+## Estado: 11 procesos listos para probar (2026-11-05)
 
-- `OWNER_UAT_READY` = 10 de 122 procesos (8,20 %);
+- `OWNER_UAT_READY` = 11 de 122 procesos (9,02 %);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
@@ -19,8 +19,9 @@
 | **CTL-06 Hallazgos, recomendaciones y planes de acción correctiva** (GOV-CTL-008) | Menú › Gobierno › Hallazgos y acciones correctivas (y «Registrar hallazgo» en la muestra de CTL-04) | [`specs/gov-ctl-06-hallazgos/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-ctl-06-hallazgos/evidence/OWNER_UAT_CARD.md) | GOV-CTL-06 |
 | **DOC-08 Paquete de auditoría exportable con índice, huellas y referencias cruzadas** (GOV-DOC-010) | Menú › Gobierno › Paquetes de auditoría (y «Generar paquete de auditoría» en la muestra de CTL-04) | [`specs/gov-doc-08-paquete-auditoria/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-doc-08-paquete-auditoria/evidence/OWNER_UAT_CARD.md) | GOV-DOC-08 |
 | **CTL-01 Matriz de segregación de funciones con detección previa** (GOV-CTL-001) | Menú › Gobierno › Segregación de funciones (y la alerta de bloqueo en las fichas de acto y de hallazgo) | [`specs/gov-ctl-01-sod/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-ctl-01-sod/evidence/OWNER_UAT_CARD.md) | GOV-CTL-01 |
+| **TRE-01 Cuentas bancarias públicas** (GOV-TRE-001) | Menú › Gobierno · Tesorería › Cuentas bancarias y Bancos | [`specs/gov-tre-01-cuentas-bancarias/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-tre-01-cuentas-bancarias/evidence/OWNER_UAT_CARD.md) |
 
-Los otros 112 procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
+Los otros 111 procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
 
 ## Fundamentos técnicos
 
