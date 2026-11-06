@@ -83,7 +83,7 @@ Traza requisito → módulo → proceso → backend → pantalla → campo → r
 | GOV-WH-007 | P1 | N03,N06,N31 | WH-02 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Vincular consumos a unidad/programa/proyecto cuando el control presupuestario/contable lo requiera. |
 | GOV-WH-008 | P0 | N20,N21,N35 | WH-05 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | NOT_STARTED | Generar kardex/ledger reproducible por articulo, almacen y periodo con trazabilidad al documento fuente. |
 | GOV-TRE-001 | P0 | N03,N05,N20 | TRE-01 | PASS | PASS | PASS | NOT_APPLICABLE | PASS | READY | OWNER_UAT_READY | Mantener cuentas bancarias publicas con banco, tipo, moneda, autorizados, vigencia y acto habilitante. |
-| GOV-TRE-002 | P0 | N03,N05 | TRE-02 | PASS | PASS | NOT_APPLICABLE | NOT_APPLICABLE | PASS | READY | OWNER_UAT_READY | Registrar programacion financiera y disponibilidad de caja separada de la disponibilidad presupuestaria. |
+| GOV-TRE-002 | P0 | N03,N05 | TRE-02 | PASS | PASS | NOT_APPLICABLE | NOT_APPLICABLE | FAIL | FAIL | IMPLEMENTED_NOT_CERTIFIED | Registrar programacion financiera y disponibilidad de caja separada de la disponibilidad presupuestaria. |
 | GOV-TRE-003 | P0 | N03,N05,N06,N24 | TRE-03 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Generar orden de pago solo desde obligaciones causadas/devengadas aprobadas y con expediente completo. |
 | GOV-TRE-004 | P0 | N05,N20,N23 | TRE-04 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Aplicar maker-checker para preparacion, autorizacion y ejecucion de pagos. |
 | GOV-TRE-005 | P0 | N05,N37 | TRE-04 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Gestionar transferencias, cheques u otros medios autorizados con referencia bancaria y fecha valor. |

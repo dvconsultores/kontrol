@@ -2,7 +2,7 @@
 
 ```
 MÓDULO: Gobierno · PROCESO: TRE-02 Programación financiera
-ESTADO: OWNER_UAT_READY (pendiente de su prueba; OWNER_ACCEPTED solo lo da usted)
+ESTADO: IMPLEMENTED_NOT_CERTIFIED (accesible en UAT; OWNER_UAT_READY = NO hasta cerrar OBS-TRE02-REG-01)
 
 DÓNDE ENTRAR:
   - Gobierno · Tesorería › Programación financiera (/gobierno/tesoreria/programacion): lista, nuevo programa y ficha.
