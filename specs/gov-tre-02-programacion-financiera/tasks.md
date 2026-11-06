@@ -91,3 +91,7 @@ Corte vertical: US1 llega a pantalla y prueba antes de US2. Cada tarea se prueba
 ## Phase 11: Corrección preexistente hallada al certificar
 
 - [X] T037 Evitar los rechazos no capturados de `resources/frontend/src/modules/gobierno/hallazgos/HallazgoPage.tsx`, con la prueba HLP-03b en `HallazgoPage.test.tsx`; preexistente en `5e3d214`, necesaria para vitest rc=0 · EXECUTOR DEEPSEEK · MODEL deepseek-v4-flash
+
+## Phase 12: Corrección del cierre
+
+- [ ] T038 Resolver OBS-TRE02-REG-01 hasta tener la regresión de Gobierno ×3 en verde sobre el árbol final; alcance pendiente de decisión de la dueña · EXECUTOR CLAUDE · MODEL n-a
