@@ -10,3 +10,5 @@
 OWNER_UAT_ACCESSIBLE = YES · OWNER_UAT_READY = YES tras cerrar T038 · OWNER_ACCEPTED = pendiente (solo la dueña).
 
 **Tras T038:** la pila sigue en `ed1bf87`. El código de producto no cambió después de ese commit: T038 solo toca una prueba E2E y la configuración de Playwright. El humo se repitió en la regresión final, 1/1, y la pila responde.
+
+**Relevo tras reinicio (2026-11-06):** pila relevada a `b20e7b7`, corrida `r20261106t125518p9414n40a25f`, sin conexiones vivas que respetar. HUMO-UAT-01 1/1 sobre esta pila; `/login` → 200; `GET /api/v1/gobierno/tesoreria/programas` sin sesión → 401.
