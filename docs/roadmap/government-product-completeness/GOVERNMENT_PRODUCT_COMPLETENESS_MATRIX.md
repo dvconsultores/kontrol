@@ -98,7 +98,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | TRE-05 | Retenciones tributarias/contractuales y comprobantes | P0 | Tesorería | GOV-TRE-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C); LEGAL_VALIDATION_REQUIRED N38 (clase C) | — | Retenciones fiscales privadas (007): otro contrato |
 | TRE-06 | Conciliación bancaria | P0 | Tesorería | GOV-TRE-007 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Conciliación privada (006): otro contrato |
 | TRE-07 | Anulación y reverso de pago | P0 | Tesorería | GOV-TRE-008 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
-| TRE-08 | Fondos y cajas autorizadas: reposición, rendición y arqueo | P0 | Tesorería | GOV-TRE-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Cajas privadas (006): otro contrato |
+| TRE-08 | Fondos y cajas autorizadas: reposición, rendición y arqueo | P0 | Tesorería | GOV-TRE-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | DOMAIN_DEPENDENCY: TRE-03/TRE-04 (orden de pago), BUD (compromiso y causado), ORG-06 (funcionario responsable) | — | Cajas privadas (006): otro contrato |
 | TRE-09 | Provenance de tasas BCV | P1 | Tesorería | GOV-TRE-011 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Tasas privadas (038/048) |
 | TRE-10 | Trazabilidad del pago hasta presupuesto y contrato | P0 | Control Interno | GOV-TRE-012 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 

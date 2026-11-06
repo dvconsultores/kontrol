@@ -46,7 +46,7 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 | Contrataciones públicas / Licitaciones | 12 | 0 | 0 | 0 | 9 | 3 | NO |
 | Contratos públicos | 9 | 0 | 0 | 0 | 8 | 1 | NO |
 | Almacén de consumo público | 5 | 0 | 0 | 0 | 4 | 1 | NO |
-| Tesorería pública | 10 | 0 | 2 | 0 | 6 | 2 | NO |
+| Tesorería pública | 10 | 0 | 2 | 0 | 5 | 3 | NO |
 | Contabilidad pública | 8 | 0 | 0 | 0 | 3 | 5 | NO |
 | Bienes públicos / Activo fijo patrimonial | 11 | 0 | 0 | 0 | 5 | 6 | NO |
 | Expedientes y actos administrativos | 8 | 0 | 3 | 0 | 1 | 4 | NO |
@@ -55,7 +55,7 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 | Gasto de personal e interfaz Atenea | 3 | 0 | 0 | 0 | 1 | 2 | NO |
 | Integraciones institucionales | 7 | 0 | 0 | 0 | 1 | 6 | NO |
 | Reportes y tableros institucionales | 11 | 0 | 0 | 0 | 6 | 5 | NO |
-| **Total** | **122** | **0** | **12** | **0** | **57** | **53** | **0 de 15** |
+| **Total** | **122** | **0** | **12** | **0** | **56** | **54** | **0 de 15** |
 
 (Errata corregida en GOV-DOC-04: la fila de Expedientes y el total no se habían actualizado con DOC-02.)
 
@@ -116,7 +116,7 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 
 | Tipo | N | Estado |
 |---|---|---|
-| Funcionales GOV-* | 153 | 152 en 122 procesos: 81 BLOCKED, 58 NOT_STARTED, 13 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -008, -010, GOV-DOC-003, -005, -010, GOV-CTL-001, -005, -008, GOV-TRE-001, -002). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
+| Funcionales GOV-* | 153 | 152 en 122 procesos: 82 BLOCKED, 57 NOT_STARTED, 13 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -008, -010, GOV-DOC-003, -005, -010, GOV-CTL-001, -005, -008, GOV-TRE-001, -002). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
 | No funcionales RNF-GOV | 25 | 6 PASS en el núcleo (003, 006, 012, 015, 019, 025) · 11 PARTIAL · 4 NOT_MEASURED · 4 NOT_STARTED |
 | Aceptación E2E-01..08 | 8 | 6 FAIL. E2E-06 (hostil multi-ente) y E2E-08 (restauración) PARTIAL: solo el núcleo; el ente y los ledgers de Gobierno no existen |
 | Puertas del sponsor D-GOV-01..08 | 8 | las 8 OPEN |
