@@ -6,7 +6,7 @@ Requisito: GOV-TRE-009, «Controlar fondos/cajas autorizadas, responsables, repo
 
 ## Fuentes leídas
 
-- **N04, Reglamento N.º 1 LOAFSP**, G.O. 5.781 Extraordinario, 12-08-2005, arts. 64 a 78 y 94 a 99. Es la norma que regula la materia; la matriz cita N05, N20 y N23, y no N04.
+- **N04, Reglamento N.º 1 LOAFSP**, G.O. 5.781 Extraordinario, 12-08-2005, arts. 64 a 78 y 94 a 99. Es la norma que regula la materia: fondos, responsables, entrega por orden de pago, reposición y caja chica. La trazabilidad de GOV-TRE-009 la incluye desde 2026-11-06 (N04, N05, N20, N23).
 - **Manual Funcional de Fondos en Anticipo**, ONCOP/SIGECOF, §4.1 a §4.11. Es un manual del sistema nacional: se usa como procedimiento, no como norma.
 - N05, ficha de la Biblioteca y texto consultado en TRE-02. Sin regla propia de fondos o cajas en lo revisado.
 - `requerimientos/gobierno/`: IR y Biblioteca. El SNAT protegido no se abrió.
