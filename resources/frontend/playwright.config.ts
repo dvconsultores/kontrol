@@ -32,7 +32,15 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", testIgnore: [DEPENDIENTES, HUMO_UAT], use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", testIgnore: [DEPENDIENTES, HUMO_UAT], use: { ...devices["Desktop Firefox"] } },
+    // Aisla del ruido de red del anfitrion (abortos NS_ERROR_ABORT), no es una condicion del producto bajo prueba. Ver OBS-TRE02-REG-01.
+    {
+      name: "firefox",
+      testIgnore: [DEPENDIENTES, HUMO_UAT],
+      use: {
+        ...devices["Desktop Firefox"],
+        launchOptions: { firefoxUserPrefs: { "network.notify.changed": false } },
+      },
+    },
     { name: "webkit", testIgnore: [DEPENDIENTES, HUMO_UAT], use: { ...devices["Desktop Safari"] } },
     // Después de la suite de producto (chromium, la de la canónica) y en un solo proyecto: las importaciones de licencia ya no se cruzan con ella.
     { name: "licencia-estado", testMatch: ESTADO_DE_LICENCIA, dependencies: ["chromium"], use: { ...devices["Desktop Chrome"] } },

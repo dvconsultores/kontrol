@@ -94,4 +94,4 @@ Corte vertical: US1 llega a pantalla y prueba antes de US2. Cada tarea se prueba
 
 ## Phase 12: Corrección del cierre
 
-- [ ] T038 Resolver OBS-TRE02-REG-01 hasta tener la regresión de Gobierno ×3 en verde sobre el árbol final; alcance pendiente de decisión de la dueña · EXECUTOR CLAUDE · MODEL n-a
+- [X] T038 Resolver OBS-TRE02-REG-01 hasta tener la regresión de Gobierno ×3 en verde sobre el árbol final; alcance pendiente de decisión de la dueña · EXECUTOR CLAUDE · MODEL n-a

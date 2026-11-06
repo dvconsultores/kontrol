@@ -7,4 +7,6 @@
 - **Acceso de la dueña:** UAT_CREDENTIAL_HANDOFF = LOCAL_SECURE_FILE, permisos 600; no se imprime ni entra en Git, y se borra al detener la pila.
 - **Incidencia:** un segundo lanzamiento mío salió con rc 70 por los puertos ocupados y truncó el log de la pila; no afectó a la pila, y el resultado del humo se leyó de su propio log.
 
-OWNER_UAT_ACCESSIBLE = YES · OWNER_UAT_READY = NO por OBS-TRE02-REG-01 (decisión de la dueña, T038) · OWNER_ACCEPTED = pendiente (solo la dueña).
+OWNER_UAT_ACCESSIBLE = YES · OWNER_UAT_READY = YES tras cerrar T038 · OWNER_ACCEPTED = pendiente (solo la dueña).
+
+**Tras T038:** la pila sigue en `ed1bf87`. El código de producto no cambió después de ese commit: T038 solo toca una prueba E2E y la configuración de Playwright. El humo se repitió en la regresión final, 1/1, y la pila responde.

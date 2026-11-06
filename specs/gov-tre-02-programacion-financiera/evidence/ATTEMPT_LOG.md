@@ -67,6 +67,16 @@ Cada una con su propio límite de dos intentos. `—` = no hizo falta segundo in
 | T034 | pruebas SG-15, SG-16 | aceptado | — |
 | T035 | «—» en versión vigente | aceptado | — |
 | T037 | HallazgoPage y HLP-03b | producto aceptado, prueba rechazada | prueba aceptada (T037T) |
+| T038a | diagnóstico de E2E | rechazado (escritura no síncrona, enmascarado incompleto) | aceptado; firma de fixture errónea, por encargo ambiguo |
+| T038b | marcas y aserción exacta en PF-E2E-02 | aceptado | — |
+| T038c | SPLIT de T038a: firma de la fixture | aceptado | — |
+| T038d | registro del proxy | rechazado (sin correlación, objeto equivocado) | aceptado; retirado por enmascarar el fallo |
+| T038e | sincronización de PF-E2E-02 | aceptado | — |
+| T038f | laboratorio | fallo al arrancar | aceptado |
+| T038g | proxy keep-alive | aceptado; hipótesis refutada y revertido | — |
+| T038h | preferencia en el laboratorio | rechazado (formato) | aceptado |
+| T038i | preferencia de Firefox en la E2E | aceptado | — |
+| T038j | retirada de marcas | aceptado | — |
 
 Ningún identificador de tarea o subtarea tuvo tercer intento. MAX_SEMANTIC_RETRIES_PER_SUBTASK_OBSERVED = 2.
 
@@ -78,3 +88,6 @@ Ningún identificador de tarea o subtarea tuvo tercer intento. MAX_SEMANTIC_RETR
 - Mi herramienta de sustitución quitó un decorador de ruta y, en otro paso, dejó dos líneas desplazadas; se restauraron con el texto exacto previo o la propuesta de DeepSeek.
 - Retirada mecánica de `_delete_con_version` y `_patch_con_version` en la suite de programa, que T007R pedía quitar.
 - `aplicar.py --omitir` numera desde 1: en T037 se aplicó por error el bloque de prueba rechazado; se restauró el fichero desde HEAD, que no tenía cambios del ciclo, y se aplicó el bloque correcto.
+- T038: `T038a2` y `T038d2` salieron con `ENV_FILES` distinto de 0. Eran `process.env.*`, sin valores. El de `T038a2` lo leí después de lanzar la llamada: orden incorrecto, sin exposición. Los demás se leyeron antes.
+- T038: la retirada de `helpers/sesion.ts` y `diagnostico.ts`, y las reversiones de `vite.config.ts`, se hicieron restaurando desde Git, sin autoría.
+- El laboratorio y las sondas viven fuera del repositorio. Los registros `MOZ_LOG` se borraron sin imprimirlos.

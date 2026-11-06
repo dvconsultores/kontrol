@@ -17,9 +17,9 @@ Certificado el 2026-11-05/06. Ejecución: Claude. Código y pruebas: DeepSeek, a
 | 11 | ruff · mypy | `ruff check .` · `mypy app` | PASS · ruff limpio; mypy 154 = línea base |
 | 12 | OpenAPI | contraste con `5e3d214` | PASS · 13 rutas nuevas (16 operaciones), 0 retiradas. Solo cambian 4 esquemas de SoD y 2 GET de `/gobierno/sod`: el catálogo de procesos admite «Programación financiera» |
 | 13 | E2E de TRE-02 ×3 y delta OBS-TRE01-E2E-01 | dentro de la regresión de Gobierno | PASS · PF-E2E-01..03 y TRE-E2E-04 en chromium, firefox y webkit |
-| 14 | Regresión de Gobierno ×3, humo, base | `--orden qa/e2e-gobierno-regresion.sh` | **FAIL intermitente sobre el árbol final** · ver la corrección abajo. `r20261105t200116p3284205n4d596a` (antes de T037): 180/180, humo 1/1, `scope_scan` 0, integridad 87 controles 0 |
+| 14 | Regresión de Gobierno ×3, humo, base | `--orden qa/e2e-gobierno-regresion.sh` | PASS · `r20261106t105947p765315nc5a9de`: 180/180, humo 1/1, `scope_scan` 0, integridad 87 controles 0, sobre el árbol final |
 | 15 | E2E tras T037 | `e2e/gobierno-hallazgos.spec.ts` ×3 navegadores | PASS · `r20261105t224220p26906nf9f2e1`: 3/3 |
-| 16 | E2E canónica | `qa/e2e-run.py --con-analizador` | PASS · `r20261105t225831p71421n216586`: 448/448, 0 reintentos, limpieza LIMPIA. Ver OBS-TRE02-FLAKE-02 |
+| 16 | E2E canónica | `qa/e2e-run.py --con-analizador` | PASS · `r20261106t112314p822280n711463`: 448/448, 0 reintentos, limpieza LIMPIA. Ver OBS-TRE02-FLAKE-02 y T038 |
 | 17 | Ficha de pantallas y campos | `TRE02_SCREEN_FORM_MATRIX.md`, `TRE02_FIELD_CONTRACT.md` | PASS |
 | 18 | Tarjeta UAT | `OWNER_UAT_CARD.md` | PASS |
 | 19 | Humo UAT | HUMO-UAT-01 en la pila relanzada | ver `UAT_SMOKE.md` |
@@ -28,26 +28,39 @@ Certificado el 2026-11-05/06. Ejecución: Claude. Código y pruebas: DeepSeek, a
 
 **T037.** `vitest` terminaba con rc=1 por 2 rechazos no capturados en `HallazgoPage` (CTL-06). Ya ocurría en `5e3d214`: la línea base «vitest 1180» de los ciclos anteriores no era verde en rc. Causa: `escribirDetalle` relanza y los botones descartan la promesa con `void`. Efecto para la usuaria: ninguno visible, el error ya se mostraba. Corrección de DeepSeek: los cinco manejadores capturan el relanzamiento, y tras un fallo el panel sigue abierto con su texto. La prueba HLP-03b da rechazo no capturado sobre el código anterior y pasa con el nuevo.
 
-## Corrección del cierre (2026-11-06): la regresión no está verde sobre el árbol final
+## T038 · cierre de OBS-TRE02-REG-01 (2026-11-06)
 
-El primer cierre dio la regresión por buena con una corrida anterior a T037. Repetida sobre `d5cfec1`:
+El primer cierre dio la regresión por buena con una corrida anterior a T037. Repetida sobre el árbol final dio 178, 179 y 179 de 180. La dueña retiró TRE-02 a IMPLEMENTED_NOT_CERTIFIED hasta certificar.
 
-| Corrida | Alcance | Resultado | Fallos |
-|---|---|---|---|
-| `r20261105t233825p130457n6dfde6` | regresión ×3 | 178/180 | DOC2-E2E-01 y GOV-E2E-01, firefox |
-| `r20261106t000351p187642neab7f9` | regresión ×3 | 179/180 | GOV-E2E-01, firefox |
-| `r20261106t002803p244878nf55bb5` | chromium y firefox | 120/120 | ninguno |
-| `r20261106t004354p280943n33acc0` | regresión ×3 | 179/180 | PF-E2E-02, chromium |
+**Firma B, PF-E2E-02. Causa demostrada: defecto de sincronización de la prueba.** Cronología capturada: clic en «Nuevo programa» a 44995 ms, `fill` a 45020 ms sobre el campo Ejercicio del filtro de la lista, GET del filtro a 45025 ms, y la lista sustituida por el formulario a 45036 ms, con su valor inicial. La prueba no esperaba el formulario, y `/^Programa PF-/` no veía el año equivocado. Corrección: espera del encabezado, `toHaveValue` antes de enviar, encabezado exacto y programa único en la lista. PF-E2E-01 ya esperaba el encabezado. Mi hipótesis previa de un remontaje que borra datos del usuario era falsa, y no se tocó código de producto ni contexto compartido.
 
-En las tres regresiones: humo 1/1, `scope_scan` 0, integridad 0 violaciones.
+**Firma A, adjuntar en Firefox. Causa demostrada: cambios de red del anfitrión.** No era el vínculo: la petición que moría era `POST /documentos/{id}/versiones`, con `NS_ERROR_ABORT`.
 
-**OBS-TRE02-REG-01 (abierta, bloquea el criterio §48).** Dos firmas:
-- Adjuntar PDF en firefox: timeout de 60 s esperando `POST /documentos/{id}/vinculos`. No es el analizador: tarda 6 s, y 7 s con cuatro en paralelo.
-- PF-E2E-02: el segundo registro, que debía rechazarse por duplicado, abrió la ficha PF-2028-VES.
+| Experimento, Firefox | Muestras | Abortos |
+|---|---|---|
+| E2E sin registro en el proxy | 60 | 7 |
+| E2E con registro síncrono en el proxy | 75 | 0 |
+| E2E con `MOZ_LOG` | 30 | 0 |
+| E2E con proxy keep-alive | 60 | 2 |
+| Laboratorio normal | 1500 | **18** |
+| Laboratorio simultáneo con `network.notify.changed=false` | 1500 | **0** |
 
-**Hipótesis no demostrada:** en PF-E2E-02 el primer `fill` del ejercicio se pierde, el primer programa nace con el año por defecto (la prueba solo comprueba `/^Programa PF-/`) y el segundo no es duplicado. Una pérdida del estado del formulario explicaría también el adjunto, pero no se ha encontrado qué la causa. La renovación de token no pone `isAuthenticated` a falso. El índice único de la base impide dos programas iguales, así que no hay indicio de duplicado real.
+Los dos laboratorios corrieron a la vez, bajo los mismos eventos de red. Los abortos caen en ráfagas simultáneas entre navegadores independientes, y el más rápido llegó a los 5009 ms: solo mueren peticiones que llevan más de 5 s esperando. Las direcciones IPv6 del Wi-Fi, con vigencia de 30 s, cambian continuamente; el arnés y `ip monitor` lo registran. Refutado: contención de suites, analizador y cierre de conexión del proxy. El registro en el proxy y `MOZ_LOG` parecían corregirlo por azar o por sincronización, sin explicación demostrada.
 
-**Mutaciones:** no se repitieron tras T037, que no toca reglas de TRE-02.
+Corrección en el arnés: preferencia `network.notify.changed=false` en el proyecto Firefox. No se tocó producto ni aserción alguna.
+
+**Certificación sobre el árbol final, sin reintentos ni instrumentación:**
+
+| Suite | Corrida | Resultado |
+|---|---|---|
+| PF-E2E y documentos ×3 navegadores | `r20261106t104921p739961nef19fe` | 69/69 |
+| Regresión de Gobierno ×3, humo, base | `r20261106t105947p765315nc5a9de` | 180/180, humo 1/1, `scope_scan` 0, integridad 87 controles 0 |
+| Canónica | `r20261106t112314p822280n711463` | 448/448 |
+| vitest · tsc · eslint · build | árbol final | 1235/1235 rc=0 · 0 · 0 · correcto |
+
+PostgreSQL y SQLite no se repitieron: `resources/backend` y `resources/frontend/src` no cambian desde `ed1bf87`. Mutaciones no repetidas: T038 no cambia reglas de negocio, duplicados, máquina de estados, base ni dominio.
+
+**Dos canónicas rojas sin causa separada.** `r20261106t100842p633076n747108` y `r20261106t102612p680474n3c59d1` dieron 430 aprobadas, 2 fallos y 16 sin correr, con timeouts de 30 s en pruebas que tardan de 3 a 12 s. Coincidieron con la carga media hasta 17, una suite ajena de otro proyecto y mi fixture de diagnóstico, que abría una página en cada prueba. Con el fixture retirado y sin suite ajena, la canónica pasó. No se separó cuánto aportó cada factor.
 
 ## Observaciones abiertas, sin causa demostrada
 
@@ -56,6 +69,10 @@ En las tres regresiones: humo 1/1, `scope_scan` 0, integridad 0 violaciones.
 **OBS-TRE02-FLAKE-02.** La canónica `r20261105t224351p31008n5420ef` dio 431 aprobadas, 1 fallo y 16 sin correr: `n6-multicompany.spec.ts:104`, timeout de 20 s esperando `/organization/companies`. Sin relación aparente con T037 y la spec no cambia desde `d39f820`, pero eso no demuestra la causa. La corrida retiró sus trazas. La canónica siguiente fue 448/448. `--repeat-each` no sirve para medir esta spec: la primera pasada fue 13/13 y desde la segunda el arnés falla con `SESSION_REVOKED` para `uab`, así que los resultados de `r20261105t231246p112269n8bf7bf` y `r20261105t231434p117153nb3eba1` no prueban nada sobre el fallo. **Causa desconocida.**
 
 **Corrida en paralelo, atribución retirada.** `r20261105t172333p1922596n680a6a` (PostgreSQL junto con la regresión) dio 4 fallos en `test_documents_security` y 1 en GOV3-E2E-01 firefox. Los 4 de documentos no se repitieron. El de firefox tiene la misma firma que OBS-TRE02-REG-01, que sí se repite sin suites en paralelo: la contención no lo explica.
+
+**OBS-DOC-RED-01 (decisión de la dueña).** Un usuario real de Firefox con red inestable puede recibir «No fue posible adjuntar el documento» en una subida de 5 s o más. No es un defecto de KONTROL y el error es visible, pero la prueba ya no lo cubre, porque el arnés se aísla de esa condición.
+
+**Chromium.** `ERR_NETWORK_CHANGED` se capturó una vez, al cargar un módulo. Chromium no ofrece preferencia equivalente, así que ese riesgo sigue en esta red.
 
 ## Limitaciones
 

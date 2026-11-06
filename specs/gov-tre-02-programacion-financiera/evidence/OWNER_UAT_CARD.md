@@ -2,7 +2,7 @@
 
 ```
 MÓDULO: Gobierno · PROCESO: TRE-02 Programación financiera
-ESTADO: IMPLEMENTED_NOT_CERTIFIED (accesible en UAT; OWNER_UAT_READY = NO hasta cerrar OBS-TRE02-REG-01)
+ESTADO: OWNER_UAT_READY (pendiente de su prueba; OWNER_ACCEPTED solo lo da usted)
 
 DÓNDE ENTRAR:
   - Gobierno · Tesorería › Programación financiera (/gobierno/tesoreria/programacion): lista, nuevo programa y ficha.
@@ -61,6 +61,7 @@ AUDITORÍA:
 LIMPIEZA: no hace falta. Un borrador se descarta; un programa activado no se borra y su historia es permanente.
 
 DEUDAS CONOCIDAS NO BLOQUEANTES:
+  - En Firefox, con una red inestable, una subida de documento de 5 s o más puede fallar con un aviso de error de red: vuelva a pulsar Adjuntar (OBS-DOC-RED-01).
   - Rubros y subperíodos de la ONT (Reglamento N.º 3, art. 63): el catálogo es del ente; no se precargan rubros.
   - Las cuotas y reprogramaciones que exige el art. 64 se registran aquí como decisión del ente: no hay aprobador
     externo ni envío a la ONT.

@@ -4,6 +4,7 @@ import {
   ANIO, API, RESPONSABLE_ESTRUCTURA, TENANT, adjuntarDocumentoApi, cargoVigenteApi, cerrarNotificaciones, crearTipoDocumental,
   crearUsuario, enteActivo, entrarEnGobierno, es2xx, estructuraVigenteApi, prepararMundo,
 } from "./helpers/gobierno";
+
 import type { APIRequestContext, Locator, Page } from "@playwright/test";
 
 const RESPONSABLE_TESORERIA = [
@@ -238,11 +239,14 @@ test.describe("Gobierno · Tesorería · Programación financiera (TRE-02)", () 
 
     await entrarEnGobierno(page, mundo.username, mundo.codigo, "/gobierno/tesoreria/programacion");
     await page.getByRole("link", { name: "Nuevo programa" }).first().click();
+    await expect(page.getByRole("heading", { level: 1, name: "Nuevo programa" })).toBeVisible();
     await page.getByLabel("Ejercicio").fill(String(ejercicio));
     await page.getByLabel("Moneda").selectOption("VES");
     await page.getByLabel("Mes inicial").selectOption({ label: "Enero" });
+    await expect(page.getByLabel("Ejercicio")).toHaveValue(String(ejercicio));
+    await expect(page.getByLabel("Moneda")).toHaveValue("VES");
     await pulsarYEsperar(page, page.getByRole("button", { name: "Registrar programa" }), "POST", /\/api\/v1\/gobierno\/tesoreria\/programas$/);
-    await expect(page.getByRole("heading", { level: 1, name: /^Programa PF-/ })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: `Programa PF-${ejercicio}-VES` })).toBeVisible();
     const primerProgramaUrl = page.url();
     const primerProgramaId = primerProgramaUrl.split("/").pop() as string;
 
@@ -253,11 +257,17 @@ test.describe("Gobierno · Tesorería · Programación financiera (TRE-02)", () 
 
     await page.locator('nav[aria-label="Menú principal"] a[href="/gobierno/tesoreria/programacion"]').click();
     await page.getByRole("link", { name: "Nuevo programa" }).first().click();
+    await expect(page.getByRole("heading", { level: 1, name: "Nuevo programa" })).toBeVisible();
     await page.getByLabel("Ejercicio").fill(String(ejercicio));
     await page.getByLabel("Moneda").selectOption("VES");
     await page.getByLabel("Mes inicial").selectOption({ label: "Enero" });
+    await expect(page.getByLabel("Ejercicio")).toHaveValue(String(ejercicio));
+    await expect(page.getByLabel("Moneda")).toHaveValue("VES");
     await page.getByRole("button", { name: "Registrar programa" }).click();
     await expect(page.getByText("Ya hay un programa de ese ejercicio y moneda.")).toBeVisible();
+
+    await page.locator('nav[aria-label="Menú principal"] a[href="/gobierno/tesoreria/programacion"]').click();
+    await expect(page.getByText(`PF-${ejercicio}-VES`)).toHaveCount(1);
 
     await page.goto(primerProgramaUrl);
     await page.getByRole("button", { name: "Activar versión" }).click();
