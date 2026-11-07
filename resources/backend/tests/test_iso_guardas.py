@@ -22,6 +22,8 @@ RAIZ = pathlib.Path(__file__).resolve().parent.parent / "app"
 
 ALCANCE_DE_INSTALACION_JUSTIFICADO: dict[str, tuple[str, str]] = {
     "feature_flags": ("interruptores de funcionalidad de la instalación", "001"),
+    "backup_runs": ("ledger de copias de la instalación", "001"),
+    "backup_settings": ("política de copias de la instalación", "001"),
     "homologation_events": ("bitácora de homologación de la instalación", "011"),
     "homologation_records": ("expedientes de homologación de la instalación", "011"),
     "idempotency_records": ("registro técnico de idempotencia; la clave lleva el recurso acotado", "001"),

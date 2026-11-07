@@ -18,7 +18,8 @@ from pathlib import Path
 from time import monotonic
 
 import psycopg2
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app import __version__
@@ -91,6 +92,46 @@ def _resolve_export(storage_root: Path, ref: str) -> Path:
             "La exportación escapa de su raíz",
         )
     return candidate
+
+
+def audit_backup_event(db_url: str, *, action: str, after: dict[str, object]) -> bool:
+    """Registra un evento de auditoría de copia en todos los tenants de la instalación.
+
+    Devuelve True si se registró al menos un evento de auditoría. Si no hay
+    instalación o tenants, o si falla la base de datos, devuelve False.
+    """
+    engine = create_engine(db_url)
+    try:
+        with Session(engine) as session:
+            installation_row = session.execute(
+                text("SELECT id FROM installations ORDER BY created_at, id LIMIT 1")
+            ).first()
+            if installation_row is None:
+                return False
+
+            installation_id_value = str(installation_row[0])
+
+            tenant_rows = session.execute(text("SELECT id FROM tenants ORDER BY id")).all()
+            if not tenant_rows:
+                return False
+
+            for tenant_row in tenant_rows:
+                record_audit(
+                    session,
+                    action=action,
+                    entity_type="Installation",
+                    entity_id=installation_id_value,
+                    tenant_id=str(tenant_row[0]),
+                    company_id=None,
+                    source="CLI",
+                    after=after,
+                )
+            session.commit()
+            return True
+    except SQLAlchemyError:
+        return False
+    finally:
+        engine.dispose()
 
 
 def create_backup(

@@ -1,4 +1,4 @@
-"""Pruebas del catálogo de auditoría para copia y restauración verificadas."""
+"""Pruebas del catálogo de auditoría para copia, restauración y RPO."""
 
 import pytest
 
@@ -7,7 +7,7 @@ from app.shared.audit_catalog import CATALOG_VERSION, catalog
 
 def test_catb_01_catalog_version() -> None:
     """CATB-01: la versión del catálogo es la esperada."""
-    assert CATALOG_VERSION == "2026-10-28.2"
+    assert CATALOG_VERSION == "2026-11-07.2"
 
 
 @pytest.mark.parametrize(
@@ -22,6 +22,49 @@ def test_catb_01_catalog_version() -> None:
             "INSTALLATION_RESTORED",
             "Installation",
             frozenset({"backup_created_at", "backup_id", "sessions_revoked"}),
+        ),
+        (
+            "INSTALLATION_BACKUP_VERIFIED",
+            "Installation",
+            frozenset({"backup_id", "objects"}),
+        ),
+        (
+            "INSTALLATION_BACKUP_VERIFY_FAILED",
+            "Installation",
+            frozenset({"backup_id", "error_code"}),
+        ),
+        (
+            "INSTALLATION_BACKUP_FAILED",
+            "Installation",
+            frozenset({"backup_id", "error_code", "origin"}),
+        ),
+        (
+            "INSTALLATION_BACKUP_PURGED",
+            "Installation",
+            frozenset({"backup_id"}),
+        ),
+        (
+            "INSTALLATION_BACKUP_DESTINATION_UNAVAILABLE",
+            "Installation",
+            frozenset({"destination_label", "error_code"}),
+        ),
+        (
+            "INSTALLATION_BACKUP_CONFIG_CHANGED",
+            "Installation",
+            frozenset({
+                "configured_rpo_minutes",
+                "destination_label",
+                "retention_days",
+                "retention_min_copies",
+                "safety_margin_minutes",
+                "schedule_interval_minutes",
+                "scheduler_enabled",
+            }),
+        ),
+        (
+            "INSTALLATION_RPO_STATE_CHANGED",
+            "Installation",
+            frozenset({"from_state", "to_state"}),
         ),
     ],
 )
@@ -49,5 +92,5 @@ def test_catb_02_entries(
 
 
 def test_catb_03_catalog_size() -> None:
-    """CATB-03: el catálogo tiene exactamente 319 entradas."""
-    assert len(catalog()) == 319
+    """CATB-03: el catálogo tiene exactamente 326 entradas."""
+    assert len(catalog()) == 326

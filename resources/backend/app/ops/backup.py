@@ -2,7 +2,7 @@
 
 Uso:
     python -m app.ops.backup create --dest DIR [--key-file PATH] [--pg-bin-dir DIR] [--no-audit]
-    python -m app.ops.backup verify BUNDLE [--key-file PATH]
+    python -m app.ops.backup verify BUNDLE [--key-file PATH] [--no-audit]
     python -m app.ops.backup restore BUNDLE --expected-installation-id ID [--key-file PATH] [--pg-bin-dir DIR] [--storage-root DIR] [--installation-volume DIR]
 
 La clave de copia se obtiene exclusivamente de la variable de entorno
@@ -34,7 +34,7 @@ from typing import NoReturn
 
 from app.core.config import get_settings
 from app.ops.backup_bundle import BundleError, BundleReader
-from app.ops.backup_create import create_backup
+from app.ops.backup_create import audit_backup_event, create_backup
 from app.ops.backup_crypto import BackupCryptoError, load_key
 from app.ops.backup_pg import BackupError
 from app.ops.backup_restore import RestoreError, restore_backup
@@ -114,6 +114,7 @@ def _build_parser() -> _Parser:
     verify_p = sub.add_parser("verify", help="Verifica un paquete de copia", allow_abbrev=False)
     verify_p.add_argument("bundle", help="Ruta del paquete de copia")
     verify_p.add_argument("--key-file", help="Fichero con la clave de copia")
+    verify_p.add_argument("--no-audit", action="store_true", help="No registra evento de auditoría")
 
     restore_p = sub.add_parser("restore", help="Restaura una copia de seguridad", allow_abbrev=False)
     restore_p.add_argument("bundle", help="Ruta del paquete de copia")
@@ -189,6 +190,13 @@ def main(argv: list[str] | None = None) -> int:
                     alembic_revision = str(manifest.get("alembic_revision", ""))
                     objetos = manifest.get("objects", [])
                     objects = len(objetos) if isinstance(objetos, list) else 0
+                    audited = False
+                    if not getattr(args, "no_audit", False):
+                        audited = audit_backup_event(
+                            settings.db_url,
+                            action="INSTALLATION_BACKUP_VERIFIED",
+                            after={"backup_id": backup_id, "objects": objects},
+                        )
                     _print_line(f"Paquete verificado: {backup_id}")
                     _print_result(
                         {
@@ -198,6 +206,7 @@ def main(argv: list[str] | None = None) -> int:
                             "installation_id": installation_id,
                             "alembic_revision": alembic_revision,
                             "objects": objects,
+                            "audited": audited,
                         }
                     )
             return EXIT_OK
@@ -235,6 +244,12 @@ def main(argv: list[str] | None = None) -> int:
     except (BackupCryptoError, BundleError, RestoreError, BackupError) as exc:
         code = getattr(exc, "code", "UNKNOWN")
         exit_code = exit_code_for(exc)
+        if command == "verify" and not getattr(args, "no_audit", False):
+            audit_backup_event(
+                settings.db_url,
+                action="INSTALLATION_BACKUP_VERIFY_FAILED",
+                after={"backup_id": Path(args.bundle).stem, "error_code": str(code)},
+            )
         _print_result(
             {
                 "command": command,
