@@ -22,3 +22,12 @@ Certificado el 2026-11-07 sobre el árbol final. Ejecución: Claude. Código y p
 | 16 | Accesibilidad | axe WCAG 2.2 AA, 1280, 768 y 320, `OCU-E2E-03` | PASS · 0 violaciones serias; `ErrorState` compartido sustituido en ORG-04 |
 
 PostgreSQL y SQLite corrieron antes del último cambio (`T011e`), que solo toca una pantalla y su prueba Vitest; ninguna de las dos suites la recorre. Tras ese cambio se repitieron vitest, tsc, eslint, build, E2E ×3, regresión y canónica.
+
+## Convergencia
+
+`/speckit-converge` sobre `d1656a7`: 11 FR, 4 SC, 14 decisiones de diseño y 5 gates. 0 `missing`, 0 `partial`, 0 `contradicts`; `FuncionarioPage` y `ErrorDeCarga` son añadidos justificados. El hueco de FR-005 (emisor en la consulta por cargo) se halló en la revisión previa y quedó corregido en T011e.
+
+## Observaciones abiertas
+
+- **OBS-A11Y-ERRORSTATE-01 (MEDIUM):** `ErrorState` compartido no alcanza contraste AA sobre fondo de peligro; lo usan 64 módulos. No absorbida: es núcleo compartido.
+- **OBS-ORG04-COMISION-01 (LOW):** el tope de un año de la comisión de servicio está implementado y sin prueba propia.
