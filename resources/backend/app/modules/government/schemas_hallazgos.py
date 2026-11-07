@@ -100,6 +100,8 @@ class HallazgosFiltros(BaseModel):
     origen: Literal["MUESTRA", "INDEPENDIENTE"] | None = None
     vencidas: bool = False
     texto: str | None = Field(default=None, min_length=1, max_length=100)
+    abiertos: bool = False
+    riesgo_minimo: Literal["ALTO", "MEDIO", "BAJO"] | None = None
 
 
 class RecomendacionOut(BaseModel):

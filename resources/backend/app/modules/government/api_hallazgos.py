@@ -56,6 +56,8 @@ def listar(
     origen: OrigenHallazgo | None = Query(None),
     vencidas: bool = False,
     texto: str | None = Query(None, min_length=1, max_length=100),
+    abiertos: bool = False,
+    riesgo_minimo: RiesgoHallazgo | None = Query(None),
     pagina: int = Query(1, ge=1),
     por_pagina: int = Query(50, ge=10, le=200),
     db: Session = Depends(get_db),
@@ -66,7 +68,15 @@ def listar(
     return service_hallazgos.listar(
         db,
         ctx,
-        HallazgosFiltros(estado=estado, riesgo=riesgo, origen=origen, vencidas=vencidas, texto=texto),
+        HallazgosFiltros(
+            estado=estado,
+            riesgo=riesgo,
+            origen=origen,
+            vencidas=vencidas,
+            texto=texto,
+            abiertos=abiertos,
+            riesgo_minimo=riesgo_minimo,
+        ),
         pagina=pagina,
         por_pagina=por_pagina,
     )
@@ -89,6 +99,8 @@ def exportar(
     origen: OrigenHallazgo | None = Query(None),
     vencidas: bool = False,
     texto: str | None = Query(None, min_length=1, max_length=100),
+    abiertos: bool = False,
+    riesgo_minimo: RiesgoHallazgo | None = Query(None),
     db: Session = Depends(get_db),
     _user: User = Depends(require_permission("gobierno_hallazgos", "view")),
     ctx: CompanyContext = Depends(get_company_context),
@@ -97,7 +109,15 @@ def exportar(
     nombre, contenido = service_hallazgos.exportar_csv(
         db,
         ctx,
-        HallazgosFiltros(estado=estado, riesgo=riesgo, origen=origen, vencidas=vencidas, texto=texto),
+        HallazgosFiltros(
+            estado=estado,
+            riesgo=riesgo,
+            origen=origen,
+            vencidas=vencidas,
+            texto=texto,
+            abiertos=abiertos,
+            riesgo_minimo=riesgo_minimo,
+        ),
     )
     db.commit()
     return StreamingResponse(

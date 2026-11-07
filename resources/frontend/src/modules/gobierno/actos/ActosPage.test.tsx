@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { Link, MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/api/client";
@@ -585,6 +585,120 @@ describe("ActosPage", () => {
         type: "success",
         title: "Actos exportados",
       });
+    });
+  });
+
+  describe("contexto de la URL", () => {
+    // ACTX-01: parámetros válidos anio y estado
+    it("ACTX-01 aplica anio y estado de la URL", async () => {
+      capacidades = new Set(["gobierno_actos:view"]);
+      responderActos();
+      montar("/gobierno/actos?anio=2025&estado=EMITIDO");
+      await screen.findByLabelText(/^Año/);
+      expect(apiFetch).toHaveBeenCalledWith("/gobierno/actos?anio=2025");
+      expect(screen.getByLabelText(/^Año/)).toHaveValue("2025");
+      expect(screen.getByLabelText(/^Estado/)).toHaveValue("EMITIDO");
+    });
+
+    // ACTX-02: año y estado inválidos
+    it("ACTX-02 usa valores por defecto con URL inválida", async () => {
+      capacidades = new Set(["gobierno_actos:view"]);
+      responderActos();
+      montar("/gobierno/actos?anio=abc&estado=OTRO");
+      await screen.findByLabelText(/^Año/);
+      expect(apiFetch).toHaveBeenCalledWith("/gobierno/actos?anio=2026");
+      expect(screen.getByLabelText(/^Año/)).toHaveValue("2026");
+      expect(screen.getByLabelText(/^Estado/)).toHaveValue("");
+    });
+
+    // ACTX-03: sin parámetros usa valores por defecto
+    it("ACTX-03 usa valores por defecto sin URL", async () => {
+      capacidades = new Set(["gobierno_actos:view"]);
+      responderActos();
+      montar("/gobierno/actos");
+      await screen.findByLabelText(/^Año/);
+      expect(screen.getByLabelText(/^Año/)).toHaveValue("2026");
+      expect(screen.getByLabelText(/^Estado/)).toHaveValue("");
+    });
+
+    // ACTX-04: año válido fuera de opciones y selección de estado vacío
+    it("ACTX-04 valida año 2040 y permite limpiar estado", async () => {
+      capacidades = new Set(["gobierno_actos:view"]);
+      apiFetch.mockResolvedValue({ anio: 2040, items: [], total: 0 });
+      montar("/gobierno/actos?anio=2040&estado=EMITIDO");
+      await screen.findByLabelText(/^Año/);
+      expect(screen.getByLabelText(/^Año/)).toHaveValue("2040");
+      const anioSelect = screen.getByLabelText(/^Año/);
+      expect(
+        within(anioSelect).getByRole("option", { name: "2040" })
+      ).toBeInTheDocument();
+      await userEvent.selectOptions(screen.getByLabelText(/^Estado/), "");
+      expect(screen.getByLabelText(/^Estado/)).toHaveValue("");
+    });
+
+    // ACTX-05: sin capacidad muestra pantalla de sin acceso
+    it("ACTX-05 sin capacidad muestra sin acceso", async () => {
+      capacidades = new Set();
+      responderActos();
+      montar("/gobierno/actos?anio=2040&estado=EMITIDO");
+      expect(
+        await screen.findByText(
+          "No tiene permiso para ver los actos administrativos."
+        )
+      ).toBeInTheDocument();
+      expect(apiFetch).not.toHaveBeenCalled();
+    });
+
+    // ACTX-06: estado heredado no válido debe quedar vacío
+    it("ACTX-07 ignora un anio decimal", async () => {
+      capacidades = new Set(["gobierno_actos:view"]);
+      responderActos();
+      montar("/gobierno/actos?anio=2024.5");
+      await screen.findByLabelText(/^Año/);
+      expect(apiFetch).toHaveBeenCalledWith("/gobierno/actos?anio=2026");
+      expect(apiFetch).not.toHaveBeenCalledWith("/gobierno/actos?anio=2024.5");
+    });
+
+    it("ACTX-08 un estado no valido no filtra la lista", async () => {
+      capacidades = new Set(["gobierno_actos:view"]);
+      responderActos();
+      montar("/gobierno/actos?estado=OTRO");
+      await screen.findByLabelText(/^Año/);
+      const enlace = await screen.findByRole("link", { name: `Abrir el acto ${nombreDeActo(ACTOS[0])}` });
+      expect(enlace).toBeInTheDocument();
+    });
+
+    it("ACTX-09 volver por el menu limpia los filtros de la URL", async () => {
+      capacidades = new Set(["gobierno_actos:view"]);
+      responderActos();
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      render(
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter initialEntries={["/gobierno/actos?anio=2025&estado=EMITIDO"]}>
+            <Link to="/gobierno/actos">Menu</Link>
+            <ActosPage />
+          </MemoryRouter>
+        </QueryClientProvider>
+      );
+      await screen.findByLabelText(/^Año/);
+      expect(screen.getByLabelText(/^Estado/)).toHaveValue("EMITIDO");
+
+      await userEvent.click(screen.getByRole("link", { name: "Menu" }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/^Año/)).toHaveValue("2026");
+        expect(screen.getByLabelText(/^Estado/)).toHaveValue("");
+      });
+    });
+
+    it("ACTX-06 ignora estado heredado", async () => {
+      capacidades = new Set(["gobierno_actos:view"]);
+      responderActos();
+      montar("/gobierno/actos?estado=constructor");
+      await screen.findByLabelText(/^Año/);
+      expect(screen.getByLabelText(/^Estado/)).toHaveValue("");
+      const enlace = await screen.findByRole("link", { name: `Abrir el acto ${nombreDeActo(ACTOS[0])}` });
+      expect(enlace).toBeInTheDocument();
     });
   });
 });
