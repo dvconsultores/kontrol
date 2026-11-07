@@ -2486,6 +2486,8 @@
       "query": [
         "page",
         "page_size",
+        "q",
+        "receivable",
         "status"
       ]
     },

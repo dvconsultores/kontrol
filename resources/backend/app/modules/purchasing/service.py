@@ -13,6 +13,7 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
@@ -130,6 +131,11 @@ ORDER_TRANSITIONS: dict[str, set[str]] = {
     "REJECTED": set(),
 }
 
+#: una orden recibida aún admite recepción porque un sobrante se registra, no se impide (FR-019-012)
+RECEIVABLE_ORDER_STATUSES = ("APPROVED", "PARTIALLY_RECEIVED", "RECEIVED")
+#: como en las ubicaciones, lo que no está activo no recibe mercancía nueva
+RECEIPT_WAREHOUSE_ALLOWED_STATUSES = ("ACTIVE",)
+
 RECEIPT_TRANSITIONS: dict[str, set[str]] = {
     "DRAFT": {"CONFIRMED", "CANCELLED"},
     "CONFIRMED": {"QUALITY_PENDING", "ACCEPTED", "PARTIALLY_ACCEPTED", "REJECTED"},
@@ -215,7 +221,7 @@ def _require_order(db: Session, company_id: str, order_id: str) -> PurchaseOrder
 def order_allowed_actions(order: PurchaseOrder) -> dict[str, bool]:
     s = order.status
     return {"view": True, "submit": s == "DRAFT", "approve": s == "SUBMITTED", "reject": s == "SUBMITTED",
-            "cancel": s in ("DRAFT", "APPROVED"), "receive": s in ("APPROVED", "PARTIALLY_RECEIVED"), "close": s == "RECEIVED"}
+            "cancel": s in ("DRAFT", "APPROVED"), "receive": s in RECEIVABLE_ORDER_STATUSES, "close": s == "RECEIVED"}
 
 
 def invoice_allowed_actions(invoice: SupplierInvoice) -> dict[str, bool]:
@@ -413,17 +419,24 @@ def _order_context(db: Session, order: PurchaseOrder) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 # Recepción (invoca el motor de inventario de 003)
 # --------------------------------------------------------------------------- #
+def _requiere_almacen_operable(warehouse: Warehouse | None) -> None:
+    if warehouse is None or warehouse.status not in RECEIPT_WAREHOUSE_ALLOWED_STATUSES:
+        raise ConflictError(code="WAREHOUSE_NOT_ELIGIBLE",
+                            message="El almacén no está activo y no puede recibir mercancía.")
+
+
 def create_receipt(db: Session, *, company_id: str, code: str, order_id: str, warehouse_id: str,
                    actor: str | None = None, unloading_scheduled_at: datetime | None = None,
                    packing_list_ref: str | None = None, supplier_invoice_ref: str | None = None,
                    packages_declared: int | None = None) -> GoodsReceipt:
     company_id = _company(company_id, obj="recepción")
     order = _require_order(db, company_id, order_id)
-    if order.status not in ("APPROVED", "PARTIALLY_RECEIVED", "RECEIVED"):
+    if order.status not in RECEIVABLE_ORDER_STATUSES:
         raise ConflictError(code="ORDER_NOT_RECEIVABLE", message="La orden no está en estado para recibirse.")
     warehouse = db.get(Warehouse, warehouse_id)
     if not warehouse or not warehouse_belongs_to(company_id, warehouse):
         raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
+    _requiere_almacen_operable(warehouse)
     if packages_declared is not None and packages_declared < 0:
         raise KontrolError(code="INVALID_PACKAGES", message="Los bultos declarados no pueden ser negativos.",
                            status_code=422)
@@ -652,6 +665,17 @@ def confirm_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = N
     return receipt
 
 
+def _requiere_lineas_integras(db: Session, receipt: GoodsReceipt, lines: Sequence[GoodsReceiptLine]) -> None:
+    """Revalida las filas anteriores al invariante; nada se corrige adivinando."""
+    for line in lines:
+        order_line = db.get(PurchaseOrderLine, line.order_line_id)
+        if (order_line is None or str(order_line.order_id) != str(receipt.order_id)
+                or str(order_line.product_id) != str(line.product_id)):
+            raise ConflictError(code="RECEIPT_LINE_INTEGRITY",
+                                message="Una línea de la recepción no corresponde a su línea de orden.",
+                                details={"line_id": str(line.id)})
+
+
 def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = None) -> GoodsReceipt:
     """Acepta la recepción y registra entradas en el motor de 003 (FR-004-033).
 
@@ -665,6 +689,8 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
     lines = db.execute(select(GoodsReceiptLine).where(GoodsReceiptLine.receipt_id == receipt.id)).scalars().all()
     if not lines:
         raise ConflictError(code="RECEIPT_EMPTY", message="Una recepción sin líneas no se acepta.")
+    _requiere_almacen_operable(db.get(Warehouse, receipt.warehouse_id))
+    _requiere_lineas_integras(db, receipt, lines)
     for line in lines:
         if line.quantity_accepted > 0:
             # La línea de orden se bloquea antes de acumular: dos recepciones
@@ -736,9 +762,25 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
     return receipt
 
 
+def registrar_conformidad(db: Session, *, receipt: GoodsReceipt, quality_status: str,
+                          actor: str | None = None) -> GoodsReceipt:
+    """Registra la conformidad de la etapa 7."""
+    if quality_status == "REJECTED":
+        reject_receipt(db, receipt=receipt, actor=actor)
+    else:
+        receipt.quality_status = quality_status
+        receipt.updated_at = datetime.now(UTC)
+        db.flush()
+    _audit(db, action="RECEIPT_QUALITY_RECORDED", entity_type="GoodsReceipt", entity_id=str(receipt.id),
+           company_id=receipt.company_id, actor=actor,
+           after={"quality_status": receipt.quality_status, "status": receipt.status})
+    return receipt
+
+
 def reject_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = None) -> GoodsReceipt:
     _assert_transition(receipt.status, "REJECTED", RECEIPT_TRANSITIONS, "la recepción")
     receipt.status = "REJECTED"
+    receipt.quality_status = "REJECTED"
     receipt.updated_at = datetime.now(UTC)
     db.flush()
     return receipt

@@ -362,13 +362,19 @@ def add_quote_line(quote_id: str, body: QuoteLineCreate, db: Session = Depends(g
 # Órdenes de compra
 # --------------------------------------------------------------------------- #
 @router.get("/orders")
-def list_orders(status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
+def list_orders(status: str | None = None, q: str = "", receivable: bool = False,
+                page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
                 db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(PurchaseOrder).where(PurchaseOrder.company_id == ctx.company_id)
     if status:
         query = query.where(PurchaseOrder.status == status)
+    if q:
+        query = query.where(PurchaseOrder.code.ilike(f"%{q}%"))
+    if receivable:
+        query = query.where(PurchaseOrder.status.in_(ap_service.RECEIVABLE_ORDER_STATUSES))
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
-    items = db.execute(query.order_by(PurchaseOrder.created_at.desc()).offset((page - 1) * page_size).limit(page_size)).scalars().all()
+    items = db.execute(query.order_by(PurchaseOrder.created_at.desc(), PurchaseOrder.id)
+                       .offset((page - 1) * page_size).limit(page_size)).scalars().all()
     return {"items": [ap_service.order_dict(db, o) for o in items], "total": total, "page": page, "page_size": page_size}
 
 
@@ -479,7 +485,12 @@ def list_receipts(status: str | None = None, db: Session = Depends(get_db), user
     if status:
         query = query.where(GoodsReceipt.status == status)
     items = db.execute(query.order_by(GoodsReceipt.created_at.desc())).scalars().all()
-    return {"items": [{"id": r.id, "code": r.code, "order_id": r.order_id, "warehouse_id": r.warehouse_id,
+    filas = db.execute(select(PurchaseOrder.id, PurchaseOrder.code).where(
+        PurchaseOrder.company_id == ctx.company_id,
+        PurchaseOrder.id.in_([r.order_id for r in items]))).all()
+    codigos = {str(fila.id): fila.code for fila in filas}
+    return {"items": [{"id": r.id, "code": r.code, "order_id": r.order_id,
+                       "order_code": codigos.get(str(r.order_id)), "warehouse_id": r.warehouse_id,
                        "status": r.status, "quality_status": r.quality_status,
                        "arrival_at": r.arrival_at.isoformat() if r.arrival_at else None,
                        "unloading_scheduled_at": r.unloading_scheduled_at.isoformat()
@@ -788,11 +799,7 @@ def confirm_receipt(receipt_id: str, db: Session = Depends(get_db),
 def set_receipt_quality(receipt_id: str, body: QualityBody, db: Session = Depends(get_db),
                         actor: User = Depends(require_permission("compras", "quality")), ctx: CompanyContext = Depends(get_company_context)):
     receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
-    if body.quality_status == "REJECTED":
-        ap_service.reject_receipt(db, receipt=receipt, actor=str(actor.id))
-    else:
-        receipt.quality_status = "APPROVED"
-        db.flush()
+    ap_service.registrar_conformidad(db, receipt=receipt, quality_status=body.quality_status, actor=str(actor.id))
     db.commit()
     db.refresh(receipt)
     return {"id": receipt.id, "status": receipt.status, "quality_status": receipt.quality_status}

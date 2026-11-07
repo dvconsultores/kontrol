@@ -428,6 +428,28 @@ def test_no_se_recibe_otro_producto_contra_la_linea_de_orden(mundo):
     assert detalle.json()["lines"] == []
 
 
+def test_ordenes_recibibles_no_cruzan_empresas(mundo):
+    """Las órdenes recibibles de una empresa no aparecen para otra empresa."""
+    prod = _producto(mundo, "ua", mundo.company_a, "P019-BUSCA")
+    _orden_aprobada(mundo, "ua", mundo.company_a, "BUSCA", prod)
+    propia = mundo.get("/purchasing/orders?receivable=true&q=OC-BUSCA", "ua", mundo.company_a)
+    assert propia.status_code == 200 and propia.json()["total"] == 1, propia.text
+    ajena = mundo.get("/purchasing/orders?receivable=true&q=OC-BUSCA", "uc", mundo.company_c, tenant="T2")
+    assert ajena.status_code == 200 and ajena.json()["total"] == 0, ajena.text
+
+
+def test_rechazar_la_recepcion_deja_el_veredicto_guardado(mundo):
+    """Rechazar la recepción persiste el veredicto REJECTED en la respuesta."""
+    prod = _producto(mundo, "ua", mundo.company_a, "P019-RECHAZO")
+    oc = _orden_aprobada(mundo, "ua", mundo.company_a, "RECHAZO", prod)
+    rec = _recepcion(mundo, "ua", mundo.company_a, "RECHAZO", oc["orden"], mundo.warehouse_a)
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/confirm", "ua", mundo.company_a, {})
+    assert r.status_code == 200, r.text
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/quality", "ua", mundo.company_a, {"quality_status": "REJECTED"})
+    assert r.status_code == 200 and r.json()["status"] == "REJECTED", r.text
+    assert r.json()["quality_status"] == "REJECTED"
+
+
 def test_el_almacen_de_otra_empresa_no_sirve(mundo):
     prod = _producto(mundo, "ua", mundo.company_a, "P019-WB")
     oc = _orden_aprobada(mundo, "ua", mundo.company_a, "WB", prod)
