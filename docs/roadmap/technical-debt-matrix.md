@@ -2509,3 +2509,11 @@ DEEPSEEK CALLS = 0.
 Vista por línea de producto en `enterprise-baseline/`. Esta matriz sigue siendo la autoridad de cada deuda. Ninguna deuda se cierra ni se reabre.
 
 Hallazgos nuevos, sin corregir: KONTROL-PY-UPDATE-NO-OP (MEDIUM propuesta), DOC-ESTADO-OBSOLETO-TRAS-HARDENING (LOW), ORCH-READINESS-FALSO-NEGATIVO (LOW) y ESTACION-SIN-CREDENCIAL-GIT (operativo). Detalle en `enterprise-baseline/ENTERPRISE_BASELINE_CURRENT.md` §9.
+
+## Actualización 2026-11-06 (2) — prerrequisitos de T052
+
+| Deuda | Estado |
+|---|---|
+| T052_PREREQUISITE_AUDIT_TRUTHFULNESS (BACKUP-MANUAL-AUDIT-ANTES-DE-VERIFY) | OPEN, prerrequisito de T052 por decisión de la dueña: `create` registra semántica de copia verificada antes de `verify` |
+| BACKUP-PG-TOOLS-IN-OPS-IMAGE (T053) | OPEN, prerrequisito de T052: `T053_REQUIRED_FOR_T052 = 1` |
+| RESTORE-DRILL-PERIODIC (nueva, propuesta) | OPEN: DOC-05 §11 pide prueba mensual y ejercicio trimestral de restauración |

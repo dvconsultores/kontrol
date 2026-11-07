@@ -4239,3 +4239,7 @@ Detalle: `enterprise-baseline/ENTERPRISE_BASELINE_CURRENT.md` y `enterprise-base
 |---|---|
 | `NEXT TECHNICAL CYCLE` de la línea Enterprise (P2) | **T052-RPO-DESIGN-AND-OWNER-DECISION-GATE**: diseño y decisiones de la dueña, sin implementación |
 | `NEXT MASTER SPEC` | **NOT YET PRIORITIZED**, sin cambio. `SPEC057_READY_TO_START = 0` |
+
+## 2026-11-06 · T052: diseño local completo, gate no superado
+
+`specs/001-fundacion/spec001-backup-rpo-delta.md`. OD-RPO-01..03 ratificadas por la dueña (`OWNER_DECISIONS_PENDING = 0`). Pendiente: autenticación e identidad Git, reconciliación con `origin` y revalidación sobre el HEAD real (`REPOSITORY_RECONCILED = 0`). `NEXT_CYCLE_IMPLEMENTATION_ALLOWED = 0`.

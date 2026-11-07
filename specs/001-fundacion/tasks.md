@@ -75,8 +75,8 @@
 
 - [x] T050 Leer el estado de licencia del manifiesto por `installation_uuid` (no por `installations.id`) y probarlo con un estado de licencia sembrado per AD-B4 · NFR-001-008 (contradicts)
 - [x] T051 Certificar EDGE-21 en el destino restaurado: estado de licencia idéntico al del punto de copia (C-12) y rechazo `LICENSE_PERIOD_DOWNGRADE` de una licencia de período anterior (C-13) per AD-B9 · EDGE-21 (partial)
-- [ ] T052 Cumplir el RPO objetivo ≤15 min con planificación de copias o archivado continuo (BACKUP-SCHEDULE-RPO) per FR-001-083 (partial)
-- [ ] T053 Incluir `pg_dump`/`pg_restore` en la imagen de operaciones para que `kontrol.py backup` funcione en la composición (BACKUP-PG-TOOLS-IN-OPS-IMAGE) per T-010 · Principio 14 (partial)
+- [ ] T052 Cumplir el RPO objetivo ≤15 min con planificación de copias o archivado continuo (BACKUP-SCHEDULE-RPO) per FR-001-083 (partial). Diseño: `spec001-backup-rpo-delta.md`; prerrequisitos: T053 y `T052_PREREQUISITE_AUDIT_TRUTHFULNESS`
+- [ ] T053 Incluir `pg_dump`/`pg_restore` en la imagen de operaciones para que `kontrol.py backup` funcione en la composición (BACKUP-PG-TOOLS-IN-OPS-IMAGE) per T-010 · Principio 14 (partial). `T053_REQUIRED_FOR_T052 = 1`
 - [ ] T054 Medir el RTO con el volumen real en el anfitrión de destino (BACKUP-RTO-DATOS-REALES) per NFR-001-008 (partial)
 - [ ] T055 Humo de navegador sobre el destino restaurado (BACKUP-RESTORED-UI-SMOKE) per §84 del encargo 06 (partial)
 
