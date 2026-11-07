@@ -30,6 +30,7 @@ RUTAS_PROTEGIDAS = {
     ("POST", "/api/v1/license/activate"),
     ("POST", "/api/v1/license/import"),
     ("PUT", "/api/v1/licensing/central-config"),
+    ("PUT", "/api/v1/system/backup-config"),
     ("POST", "/api/v1/licensing/sync"),
     ("POST", "/api/v1/licensing/renewal-requests"),
     ("POST", "/api/v1/licensing/renewal-requests/{request_id}/transition"),

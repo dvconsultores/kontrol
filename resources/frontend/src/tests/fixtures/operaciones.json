@@ -4819,6 +4819,14 @@
       "scope": "GLOBAL"
     },
     {
+      "method": "PUT",
+      "path": "/api/v1/system/backup-config",
+      "capabilities": [
+        "license:edit"
+      ],
+      "scope": "GLOBAL"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/system/diagnostics",
       "capabilities": [

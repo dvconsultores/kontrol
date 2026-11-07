@@ -3426,6 +3426,11 @@
       "query": []
     },
     {
+      "method": "PUT",
+      "path": "/system/backup-config",
+      "query": []
+    },
+    {
       "method": "GET",
       "path": "/system/diagnostics",
       "query": []

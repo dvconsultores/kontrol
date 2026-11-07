@@ -53,6 +53,7 @@ RUTAS_SIN_EMPRESA_CLASIFICADAS: dict[tuple[str, str], tuple[str, str]] = {
     ("DELETE", "/api/v1/auth/sessions/{session_id}"): ("SELF", "solo sesiones propias; ajena = inexistente (G-SES-01)"),
     ("DELETE", "/api/v1/users/{user_id}/roles/{role_id}"): ("TENANT", "usuario del tenant del actor"),
     ("GET", "/"): ("PUBLIC", "raíz informativa"),
+    ("PUT", "/api/v1/system/backup-config"): ("INSTALLATION", "política de copias de la instalación"),
     ("GET", "/api/v1/approvals/process-types"): ("INSTALLATION", "catálogo estático de tipos de proceso"),
     ("GET", "/api/v1/audit/events"): ("TENANT", "bitácora del tenant del actor, acotada por empresa auditable (ciclo 04)"),
     ("GET", "/api/v1/audit/filters"): ("TENANT", "filtros del alcance de auditoría del actor (ciclo 04)"),

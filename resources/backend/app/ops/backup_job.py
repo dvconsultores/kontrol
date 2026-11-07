@@ -20,6 +20,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import get_settings
+from app.core.errors import ConflictError, KontrolError
 from app.modules.organization.models import Installation, Tenant
 from app.modules.scheduler.service import Contexto, Resultado
 from app.modules.system.models import BackupRun, BackupSettings
@@ -762,3 +763,78 @@ def identificador_de_paquete(ruta: Path) -> str:
     if nombre.startswith(prefijo):
         return nombre[len(prefijo) :]
     return nombre
+
+
+ERRORES_SIEMPRE_RECHAZADOS = frozenset({
+    "RPO_ABOVE_MAXIMUM", "RPO_INVALID", "INTERVAL_INVALID", "MARGIN_INVALID", "INTERVAL_EXCEEDS_RPO",
+    "RETENTION_INVALID", "DESTINATION_UNSUPPORTED", "DESTINATION_LABEL_INVALID",
+})
+CAMPOS_DE_POLITICA = (
+    "configured_rpo_minutes", "schedule_interval_minutes", "safety_margin_minutes",
+    "retention_days", "retention_min_copies", "destination_type", "destination_label", "scheduler_enabled",
+)
+
+
+def _entero(valor: object) -> int | None:
+    """Devuelve el valor si es entero; None en caso contrario."""
+    return valor if isinstance(valor, int) else None
+
+
+def _texto(valor: object) -> str | None:
+    """Devuelve el valor si es texto; None en caso contrario."""
+    return valor if isinstance(valor, str) else None
+
+
+def guardar_configuracion(db: Session, datos: dict[str, object], *, version: int, usuario_id: str, tenant_id: str, ahora: datetime) -> dict[str, object]:
+    """Guarda la política de copias de la instalación y devuelve el estado resultante."""
+    cfg = db.scalar(select(BackupSettings))
+    actual = cfg.version if cfg is not None else 0
+    if version != actual:
+        raise ConflictError(code="VERSION_CONFLICT", message="La configuración fue modificada por otra operación")
+
+    p = Politica(
+        _entero(datos["configured_rpo_minutes"]),
+        _entero(datos["schedule_interval_minutes"]),
+        _entero(datos["safety_margin_minutes"]),
+        _entero(datos["retention_days"]),
+        _entero(datos["retention_min_copies"]),
+        _texto(datos["destination_type"]),
+        _texto(datos["destination_label"]),
+        bool(datos["scheduler_enabled"]),
+    )
+
+    errores = errores_de_politica(p)
+    rechazados = errores if p.habilitada else tuple(e for e in errores if e in ERRORES_SIEMPRE_RECHAZADOS)
+    if rechazados:
+        raise KontrolError(
+            "BACKUP_POLICY_INVALID",
+            "La política de copias no es válida.",
+            details={"errors": list(rechazados)},
+            status_code=422,
+        )
+
+    if cfg is None:
+        cfg = BackupSettings(version=1)
+        db.add(cfg)
+    else:
+        cfg.version = actual + 1
+
+    for campo in CAMPOS_DE_POLITICA:
+        setattr(cfg, campo, datos[campo])
+    cfg.updated_by = usuario_id
+
+    instalacion = db.scalar(select(Installation).order_by(Installation.created_at, Installation.id))
+    record_audit(
+        db,
+        action="INSTALLATION_BACKUP_CONFIG_CHANGED",
+        entity_type="Installation",
+        entity_id=str(instalacion.id) if instalacion is not None else None,
+        tenant_id=tenant_id,
+        company_id=None,
+        user_id=usuario_id,
+        source="API",
+        after={c: datos[c] for c in CAMPOS_DE_POLITICA if c != "destination_type"},
+    )
+
+    db.commit()
+    return estado_de_copias(db, ahora)
