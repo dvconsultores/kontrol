@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { Link, MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/api/client";
@@ -36,6 +36,11 @@ vi.mock("@/app/contexts/NotificationContext", () => ({
   useNotifications: () => ({ notify: vi.fn() }),
 }));
 
+const descargarArchivo = vi.fn().mockResolvedValue("x.csv");
+vi.mock("@/api/descargas", () => ({
+  descargarArchivo: (...args: unknown[]) => descargarArchivo(...args),
+}));
+
 const { HallazgosPage } = await import("./HallazgosPage");
 
 const LISTADO_BASE = {
@@ -63,14 +68,14 @@ const LISTADO_BASE = {
   ],
 };
 
-function renderHallazgos() {
+function renderHallazgos(ruta = "/gobierno/hallazgos") {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/gobierno/hallazgos"]}>
+      <MemoryRouter initialEntries={[ruta]}>
         <HallazgosPage />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -186,5 +191,133 @@ describe("HallazgosPage", () => {
     expect(
       await screen.findByText("Aún no hay hallazgos registrados"),
     ).toBeInTheDocument();
+  });
+
+  it("HCTX-01 renderiza filtros de cierre y riesgo desde la ruta", async () => {
+    renderHallazgos("/gobierno/hallazgos?abiertos=true&riesgo_minimo=MEDIO");
+
+    await screen.findByRole("button", { name: "Quitar filtro" });
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Filtro de cierre: hallazgos pendientes · riesgo Medio o superior",
+    );
+    const url = apiFetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("abiertos=true");
+    expect(url).toContain("riesgo_minimo=MEDIO");
+  });
+
+  it("HCTX-02 ignora riesgos no permitidos y muestra listado base", async () => {
+    renderHallazgos("/gobierno/hallazgos?riesgo_minimo=OTRO");
+
+    expect(await screen.findByText("HLL-001")).toBeInTheDocument();
+    const url = apiFetchMock.mock.calls[0][0] as string;
+    expect(url).not.toContain("riesgo_minimo");
+    expect(
+      screen.queryByRole("button", { name: "Quitar filtro" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("HCTX-03 renderiza sin filtros si no hay parámetros de ruta", async () => {
+    renderHallazgos();
+
+    expect(await screen.findByText("HLL-001")).toBeInTheDocument();
+    const url = apiFetchMock.mock.calls[0][0] as string;
+    expect(url).not.toContain("abiertos");
+    expect(url).not.toContain("riesgo_minimo");
+    expect(
+      screen.queryByRole("button", { name: "Quitar filtro" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("HCTX-04 quita el filtro de cierre desde el botón de contexto", async () => {
+    renderHallazgos("/gobierno/hallazgos?abiertos=true&riesgo_minimo=MEDIO");
+
+    await screen.findByRole("button", { name: "Quitar filtro" });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Quitar filtro" }),
+    );
+    await waitFor(() => {
+      const url = apiFetchMock.mock.calls.at(-1)?.[0] as string;
+      expect(url).not.toContain("abiertos");
+    });
+    expect(
+      screen.queryByRole("button", { name: "Quitar filtro" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("HCTX-05 quita todos los filtros desde el botón de contexto", async () => {
+    renderHallazgos("/gobierno/hallazgos?abiertos=true&riesgo_minimo=MEDIO");
+
+    await screen.findByRole("button", { name: "Quitar filtro" });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Limpiar filtros" }),
+    );
+    await waitFor(() => {
+      const url = apiFetchMock.mock.calls.at(-1)?.[0] as string;
+      expect(url).not.toContain("abiertos");
+      expect(url).not.toContain("riesgo_minimo");
+    });
+    expect(
+      screen.queryByRole("button", { name: "Quitar filtro" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("HCTX-06 muestra Sin acceso sin permisos de vista", async () => {
+    capacidades = new Set();
+    renderHallazgos("/gobierno/hallazgos?abiertos=true&riesgo_minimo=MEDIO");
+
+    expect(await screen.findByText("Sin acceso")).toBeInTheDocument();
+    expect(apiFetchMock).not.toHaveBeenCalled();
+  });
+
+  it("HCTX-08 exporta aplicando el contexto seleccionado", async () => {
+    renderHallazgos("/gobierno/hallazgos?abiertos=true&riesgo_minimo=MEDIO");
+    await screen.findByRole("button", { name: "Quitar filtro" });
+
+    await userEvent.click(screen.getByRole("button", { name: /Exportar plan/ }));
+
+    await waitFor(() => {
+      const url = descargarArchivo.mock.calls.at(-1)?.[0] as string;
+      expect(url).toContain("/gobierno/hallazgos/exportar");
+      expect(url).toContain("abiertos=true");
+      expect(url).toContain("riesgo_minimo=MEDIO");
+    });
+  });
+
+  it("HCTX-09 volver por el menu limpia los filtros de la URL", async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/gobierno/hallazgos?abiertos=true&riesgo_minimo=MEDIO"]}>
+          <Link to="/gobierno/hallazgos">Menu</Link>
+          <HallazgosPage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Quitar filtro");
+    await userEvent.selectOptions(screen.getByLabelText(/^Riesgo/), "ALTO");
+    await userEvent.click(screen.getByRole("button", { name: /^Buscar/ }));
+
+    await waitFor(() => {
+      const url = apiFetchMock.mock.calls.at(-1)?.[0] as string;
+      expect(url).toContain("riesgo=ALTO");
+    });
+
+    await userEvent.click(screen.getByRole("link", { name: "Menu" }));
+
+    await waitFor(() => {
+      const url = apiFetchMock.mock.calls.at(-1)?.[0] as string;
+      expect(url).not.toContain("riesgo");
+      expect(url).not.toContain("abiertos");
+      expect(screen.queryByText("Quitar filtro")).not.toBeInTheDocument();
+    });
+  });
+
+  it("HCTX-07 ignora riesgos heredados de Object.prototype", async () => {
+    renderHallazgos("/gobierno/hallazgos?riesgo_minimo=constructor");
+
+    expect(await screen.findByText("HLL-001")).toBeInTheDocument();
+    const url = apiFetchMock.mock.calls[0][0] as string;
+    expect(url).not.toContain("riesgo_minimo");
   });
 });

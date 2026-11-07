@@ -529,6 +529,22 @@ export const ETIQUETA_ESTADO_ACTO: Record<EstadoActo, string> = {
   NULO: "Nulo",
 };
 
+export function contextoDeActos(params: URLSearchParams): { anio?: number; estado?: EstadoActo } {
+  const resultado: { anio?: number; estado?: EstadoActo } = {};
+  const anio = params.get("anio");
+  if (anio !== null && /^\d+$/.test(anio)) {
+    const valor = Number(anio);
+    if (valor >= 1900 && valor <= 2100) {
+      resultado.anio = valor;
+    }
+  }
+  const estado = params.get("estado");
+  if (estado !== null && Object.hasOwn(ETIQUETA_ESTADO_ACTO, estado)) {
+    resultado.estado = estado as EstadoActo;
+  }
+  return resultado;
+}
+
 export const ETIQUETA_FALTANTE_ACTO: Readonly<Record<FaltanteActo, string>> = {
   DOCUMENTO_ACTO: "El PDF firmado del acto",
   HECHOS: "Los hechos",
@@ -1096,6 +1112,8 @@ export interface FiltrosHallazgos {
   origen?: OrigenHallazgo | "";
   vencidas?: boolean;
   texto?: string;
+  abiertos?: boolean;
+  riesgo_minimo?: RiesgoHallazgo;
 }
 
 export interface HallazgoNuevo {
@@ -1124,6 +1142,16 @@ export interface AvanceNuevo {
   documento_id?: string;
 }
 
+export function contextoDeHallazgos(params: URLSearchParams): Pick<FiltrosHallazgos, "abiertos" | "riesgo_minimo"> {
+  const contexto: Pick<FiltrosHallazgos, "abiertos" | "riesgo_minimo"> = {};
+  if (params.get("abiertos") === "true") contexto.abiertos = true;
+  const riesgo = params.get("riesgo_minimo");
+  if (riesgo !== null && Object.hasOwn(ETIQUETA_RIESGO_HALLAZGO, riesgo)) {
+    contexto.riesgo_minimo = riesgo as RiesgoHallazgo;
+  }
+  return contexto;
+}
+
 export function consultaDeHallazgos(
   filtros: FiltrosHallazgos,
   paginacion: { pagina?: number; por_pagina?: number } = {},
@@ -1138,6 +1166,8 @@ export function consultaDeHallazgos(
   const texto = valorDeConsulta(filtros.texto?.trim());
   if (texto !== undefined) params.append("texto", texto);
   if (filtros.vencidas === true) params.append("vencidas", "true");
+  if (filtros.abiertos === true) params.append("abiertos", "true");
+  if (filtros.riesgo_minimo !== undefined) params.append("riesgo_minimo", filtros.riesgo_minimo);
   const pagina = valorDeConsulta(paginacion.pagina);
   if (pagina !== undefined) params.append("pagina", pagina);
   const porPagina = valorDeConsulta(paginacion.por_pagina);

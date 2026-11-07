@@ -35,6 +35,7 @@ PASOS Y RESULTADO ESPERADO (flujo A, estructura):
   4. BLOQUEO: con un hallazgo de riesgo ALTO abierto, abra la estructura del ejercicio pasado y pulse «Cerrar ejercicio».
      Aparece «Cierre bloqueado por control material» con la política, por qué es material, el hallazgo con su enlace,
      «Ir a la lista» y «Quién es dueño: Control Interno». La estructura sigue Vigente.
+     «Ir a la lista» abre los hallazgos pendientes de ese control, con el aviso «Filtro de cierre» y su botón «Quitar filtro».
   5. REGISTRO: en Cierres bloqueados aparece el intento con fecha, política, objeto y usuario.
   6. RESOLVER: complete y verifique el hallazgo en Hallazgos (lo verifica otra persona) y repita «Cerrar ejercicio».
      Esta vez cierra.

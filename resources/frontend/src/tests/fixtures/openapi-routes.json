@@ -1019,11 +1019,13 @@
       "method": "GET",
       "path": "/gobierno/hallazgos",
       "query": [
+        "abiertos",
         "estado",
         "origen",
         "pagina",
         "por_pagina",
         "riesgo",
+        "riesgo_minimo",
         "texto",
         "vencidas"
       ]
@@ -1042,9 +1044,11 @@
       "method": "GET",
       "path": "/gobierno/hallazgos/exportar",
       "query": [
+        "abiertos",
         "estado",
         "origen",
         "riesgo",
+        "riesgo_minimo",
         "texto",
         "vencidas"
       ]

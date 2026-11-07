@@ -231,6 +231,7 @@ async function crearHallazgoApi(
   request: APIRequestContext,
   headers: Record<string, string>,
   titulo: string,
+  riesgo = "ALTO",
 ): Promise<{ id: string; version: number }> {
   const resp = await request.post(`${API}/gobierno/hallazgos`, {
     headers,
@@ -240,7 +241,7 @@ async function crearHallazgoApi(
       criterio: "Criterio normativo aplicable",
       causa: "Causa raíz identificada",
       efecto: "Efecto material del hallazgo",
-      riesgo: "ALTO",
+      riesgo,
       origen: "INDEPENDIENTE",
       origen_descripcion: "Prueba de controles de cierre",
     },
@@ -397,6 +398,7 @@ test.describe("Gobierno · Controles de cierre (CTL-10)", () => {
     await activarPoliticaUi(page);
 
     const hallazgo = await crearHallazgoApi(request, mundo.headers, "Hallazgo CTL-10");
+    await crearHallazgoApi(request, mundo.headers, "Hallazgo menor", "BAJO");
     const hallazgoId = hallazgo.id;
 
     await page.goto(`/gobierno/estructura/${ANIO - 1}`);
@@ -414,6 +416,14 @@ test.describe("Gobierno · Controles de cierre (CTL-10)", () => {
     await expect(alert).toContainText("Control Interno");
     await expect(page.getByRole("link", { name: /Hallazgo CTL-10/ })).toHaveAttribute("href", `/gobierno/hallazgos/${hallazgoId}`);
 
+    await alert.getByRole("link", { name: "Ir a la lista" }).click();
+    await expect(page).toHaveURL(/\/gobierno\/hallazgos\?abiertos=true&riesgo_minimo=MEDIO$/);
+    await expect(page.getByRole("status")).toContainText("Filtro de cierre: hallazgos pendientes · riesgo Medio o superior");
+    await expect(page.getByRole("main")).toContainText("Hallazgo CTL-10");
+    await expect(page.getByRole("main")).not.toContainText("Hallazgo menor");
+    await page.getByRole("button", { name: "Quitar filtro" }).click();
+    await expect(page).toHaveURL(/\/gobierno\/hallazgos$/);
+    await expect(page.getByRole("main")).toContainText("Hallazgo menor");
     await page.goto("/gobierno/cierres/bloqueos");
     await expect(page.getByRole("heading", { level: 1, name: "Cierres bloqueados" })).toBeVisible();
     await expect(page.getByRole("region", { name: /Tabla/ })).toContainText(`EST-${ANIO - 1}`);
@@ -509,6 +519,11 @@ test.describe("Gobierno · Controles de cierre (CTL-10)", () => {
     expect(resp409.status()).toBe(409);
     const alert = page.getByRole("alert");
     await expect(alert).toContainText("Actos sin eficacia");
+    await alert.getByRole("link", { name: "Ir a la lista" }).click();
+    await expect(page).toHaveURL(new RegExp(`/gobierno/actos\\?anio=${ANIO}&estado=EMITIDO$`));
+    await expect(page.getByRole("heading", { level: 1, name: "Actos administrativos" })).toBeVisible();
+    await expect(page.getByLabel(/^Año/)).toHaveValue(String(ANIO));
+    await expect(page.getByLabel(/^Estado/)).toHaveValue("EMITIDO");
 
     await page.goto(`/gobierno/cierres/${politica.id}`);
     await expect(page.getByRole("heading", { level: 1, name: /^Política PC-\d+$/ })).toBeVisible();

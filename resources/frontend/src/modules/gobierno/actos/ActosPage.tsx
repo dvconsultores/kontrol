@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Plus } from "lucide-react";
 
@@ -22,8 +22,10 @@ import {
   ETIQUETA_CARACTER,
   ETIQUETA_ESTADO_ACTO,
   ETIQUETA_TIPO_ACTO,
+  contextoDeActos,
   nombreDeActo,
   type Acto,
+  type EstadoActo,
   type ListaActos,
 } from "@/modules/gobierno/api";
 
@@ -39,6 +41,12 @@ const CLASE_SELECT =
   "h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900 focus:border-brand-600 focus:outline-brand-600";
 
 export function ActosPage(): React.JSX.Element {
+  const [params] = useSearchParams();
+  const contexto = contextoDeActos(params);
+  return <ListaDeActos key={params.toString()} anioInicial={contexto.anio} estadoInicial={contexto.estado} />;
+}
+
+function ListaDeActos({ anioInicial, estadoInicial }: { anioInicial?: number; estadoInicial?: EstadoActo }): React.JSX.Element {
   const { tiene } = useAutoridad();
   const { notify } = useNotifications();
   const queryClient = useQueryClient();
@@ -46,17 +54,23 @@ export function ActosPage(): React.JSX.Element {
 
   const anioActual = Number(hoyDeNegocio().slice(0, 4));
   const anios = useMemo(
-    () => Array.from({ length: 6 }, (_, i) => anioActual - i),
-    [anioActual],
+    () => {
+      const anios = Array.from({ length: 6 }, (_, i) => anioActual - i);
+      if (anioInicial !== undefined && !anios.includes(anioInicial)) {
+        anios.push(anioInicial);
+      }
+      return anios.sort((a, b) => b - a);
+    },
+    [anioActual, anioInicial],
   );
 
-  const [anio, setAnio] = useState(anioActual);
+  const [anio, setAnio] = useState(anioInicial ?? anioActual);
   const [panel, setPanel] = useState<Panel>({ tipo: "ninguno" });
   const [erroresServidor, setErroresServidor] = useState<Record<string, string[]>>({});
   const [busqueda, setBusqueda] = useState("");
   const [tipo, setTipo] = useState("");
   const [caracter, setCaracter] = useState("");
-  const [estado, setEstado] = useState("");
+  const [estado, setEstado] = useState<string>(estadoInicial ?? "");
   const [cargoCodigo, setCargoCodigo] = useState("");
 
   const puedeVer = tiene("gobierno_actos:view", "empresa");

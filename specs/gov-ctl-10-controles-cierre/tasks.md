@@ -263,5 +263,5 @@ Corte vertical: US1 y US2 forman el MVP (política activa que bloquea un cierre 
 
 ## Phase 10: Convergence
 
-- [ ] T042 Decidir y resolver que el enlace `ruta_lista` lleve a la lista filtrada, que hoy abre la lista completa sin filtro, per spec Edge Cases «más de 5 pendientes» (partial). OBS-CTL10-LISTA-01, LOW: exige leer filtros de la URL en las listas de CTL-06 y DOC-02, o ajustar la spec; decisión de la dueña
-- [ ] T043 Añadir a `resources/backend/tests/test_gov_ctl10_guarda.py` una prueba con más de 5 hallazgos pendientes: la muestra trae 5 y `pendientes` el recuento real, per FR-013 (partial)
+- [X] T042 Decidir y resolver que el enlace `ruta_lista` lleve a la lista filtrada, que hoy abre la lista completa sin filtro, per spec Edge Cases «más de 5 pendientes» (partial). OBS-CTL10-LISTA-01, LOW: exige leer filtros de la URL en las listas de CTL-06 y DOC-02, o ajustar la spec; decisión de la dueña
+- [X] T043 Añadir a `resources/backend/tests/test_gov_ctl10_guarda.py` una prueba con más de 5 hallazgos pendientes: la muestra trae 5 y `pendientes` el recuento real, per FR-013 (partial)

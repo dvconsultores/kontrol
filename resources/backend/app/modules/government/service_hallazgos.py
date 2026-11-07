@@ -13,6 +13,7 @@ from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.documents.models import Document, DocumentLink
 from app.modules.documents.service import freeze_links
 from app.modules.government.models import (
+    RIESGOS_HALLAZGO,
     GovernmentAuditSample,
     GovernmentAuditSampleItem,
     GovernmentCorrectiveAction,
@@ -393,12 +394,27 @@ def _finalizar_escritura(
     return _serializar_detalle(db, ctx, hallazgo)
 
 
+def riesgos_desde(riesgo_minimo: str) -> list[str]:
+    """Devuelve los riesgos iguales o superiores al indicado."""
+    return list(RIESGOS_HALLAZGO[: RIESGOS_HALLAZGO.index(riesgo_minimo) + 1])
+
+
+def _condiciones_de_contexto(filtros: HallazgosFiltros) -> list[Any]:
+    condiciones: list[Any] = []
+    if filtros.abiertos:
+        condiciones.append(GovernmentFinding.estado != "CERRADO")
+    if filtros.riesgo_minimo:
+        condiciones.append(GovernmentFinding.riesgo.in_(riesgos_desde(filtros.riesgo_minimo)))
+    return condiciones
+
+
 def listar(db: Session, ctx: CompanyContext, filtros: HallazgosFiltros, pagina: int, por_pagina: int) -> dict[str, Any]:
     """Lista hallazgos paginados con filtros y resumen global."""
     condicion = [
         GovernmentFinding.tenant_id == ctx.tenant_id,
         GovernmentFinding.company_id == ctx.company_id,
     ]
+    condicion.extend(_condiciones_de_contexto(filtros))
 
     if filtros.estado:
         condicion.append(GovernmentFinding.estado == filtros.estado)
@@ -1074,6 +1090,7 @@ def exportar_csv(db: Session, ctx: CompanyContext, filtros: HallazgosFiltros) ->
         GovernmentFinding.tenant_id == ctx.tenant_id,
         GovernmentFinding.company_id == ctx.company_id,
     ]
+    condicion.extend(_condiciones_de_contexto(filtros))
     if filtros.estado:
         condicion.append(GovernmentFinding.estado == filtros.estado)
     if filtros.riesgo:

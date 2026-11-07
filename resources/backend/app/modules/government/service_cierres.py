@@ -13,6 +13,7 @@ from app.core.company_context import CompanyContext
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.audit.models import AuditEvent
 from app.modules.government.models import (
+    RIESGOS_HALLAZGO,
     GovernmentAct,
     GovernmentClosureControl,
     GovernmentClosurePolicy,
@@ -20,6 +21,7 @@ from app.modules.government.models import (
     GovernmentFinding,
 )
 from app.modules.government.service_auditoria import _instante, _usuarios_por_ids
+from app.modules.government.service_hallazgos import riesgos_desde
 from app.modules.government.service_sod import evaluar_antes_de_actuar
 from app.shared.audit import record_audit, record_audit_after_rollback
 from app.shared.clock import hoy_de_negocio, limites_del_dia_utc
@@ -43,9 +45,6 @@ TIPOS_CONTROL = {
         "requiere_riesgo": False,
     },
 }
-
-RIESGOS = ["ALTO", "MEDIO", "BAJO"]
-ORDEN_RIESGO = {"ALTO": 3, "MEDIO": 2, "BAJO": 1}
 
 
 def _invalida(mensaje: str) -> KontrolError:
@@ -193,8 +192,7 @@ def _auditar(
 
 
 def _contar_hallazgos_abiertos(db: Session, ctx: CompanyContext, riesgo_minimo: str) -> int:
-    minimo = ORDEN_RIESGO[riesgo_minimo]
-    riesgos_incluidos = [riesgo for riesgo in RIESGOS if ORDEN_RIESGO[riesgo] >= minimo]
+    riesgos_incluidos = riesgos_desde(riesgo_minimo)
     return (
         db.execute(
             select(func.count())
@@ -229,8 +227,7 @@ def _contar_actos_sin_eficacia(db: Session, ctx: CompanyContext, ejercicio: int)
 
 
 def _muestra_hallazgos(db: Session, ctx: CompanyContext, riesgo_minimo: str, limite: int) -> list[dict]:
-    minimo = ORDEN_RIESGO[riesgo_minimo]
-    riesgos_incluidos = [riesgo for riesgo in RIESGOS if ORDEN_RIESGO[riesgo] >= minimo]
+    riesgos_incluidos = riesgos_desde(riesgo_minimo)
     hallazgos = db.execute(
         select(GovernmentFinding)
         .where(
@@ -295,12 +292,12 @@ def _resultados_controles(
             pendientes = _contar_hallazgos_abiertos(db, ctx, cast(str, control.riesgo_minimo))
             if pendientes > 0:
                 muestra = _muestra_hallazgos(db, ctx, cast(str, control.riesgo_minimo), 5)
-                ruta_lista = "/gobierno/hallazgos"
+                ruta_lista = f"/gobierno/hallazgos?abiertos=true&riesgo_minimo={control.riesgo_minimo}"
         elif control.tipo == "ACTOS_SIN_EFICACIA":
             pendientes = _contar_actos_sin_eficacia(db, ctx, ejercicio)
             if pendientes > 0:
                 muestra = _muestra_actos(db, ctx, ejercicio, 5)
-                ruta_lista = "/gobierno/actos"
+                ruta_lista = f"/gobierno/actos?anio={ejercicio}&estado=EMITIDO"
         if pendientes > 0:
             total_pendientes += pendientes
             resultados.append(
@@ -621,7 +618,7 @@ def editar(
 def _validar_control(control: GovernmentClosureControl) -> None:
     if control.tipo not in TIPOS_CONTROL:
         raise _invalida("El tipo de control no pertenece al catálogo")
-    if TIPOS_CONTROL[control.tipo]["requiere_riesgo"] and control.riesgo_minimo not in RIESGOS:
+    if TIPOS_CONTROL[control.tipo]["requiere_riesgo"] and control.riesgo_minimo not in RIESGOS_HALLAZGO:
         raise _invalida("Debe indicar un riesgo mínimo para hallazgos abiertos")
     if not TIPOS_CONTROL[control.tipo]["requiere_riesgo"] and control.riesgo_minimo is not None:
         raise _invalida("Este tipo de control no admite riesgo mínimo")

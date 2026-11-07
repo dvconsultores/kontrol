@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 
@@ -22,7 +22,9 @@ import {
   CONSULTA_HALLAZGOS,
   POR_PAGINA_HALLAZGOS,
   consultaDeHallazgos,
+  contextoDeHallazgos,
   ETIQUETA_ESTADO_HALLAZGO,
+  ETIQUETAS_RIESGO_CIERRE,
   ETIQUETA_RIESGO_HALLAZGO,
   ETIQUETA_ORIGEN_HALLAZGO,
   type EstadoHallazgo,
@@ -49,6 +51,23 @@ const OPCIONES_ORIGEN = Object.entries(ETIQUETA_ORIGEN_HALLAZGO) as [
 ][];
 
 export function HallazgosPage(): React.JSX.Element {
+  const [params, setParams] = useSearchParams();
+  return (
+    <ListaDeHallazgos
+      key={params.toString()}
+      contexto={contextoDeHallazgos(params)}
+      alQuitarContexto={() => setParams({})}
+    />
+  );
+}
+
+function ListaDeHallazgos({
+  contexto,
+  alQuitarContexto,
+}: {
+  contexto: Pick<FiltrosHallazgos, "abiertos" | "riesgo_minimo">;
+  alQuitarContexto: () => void;
+}): React.JSX.Element {
   const { tiene } = useAutoridad();
   const { activeCompanyId } = useCompany();
   const { notify } = useNotifications();
@@ -63,6 +82,8 @@ export function HallazgosPage(): React.JSX.Element {
     {},
   );
   const [pagina, setPagina] = useState(1);
+  const filtrosEfectivos: FiltrosHallazgos = { ...filtrosAplicados, ...contexto };
+  const hayContexto = contexto.abiertos === true || contexto.riesgo_minimo !== undefined;
 
   const puedeVer = tiene("gobierno_hallazgos:view", "empresa");
   const puedeGestionar = tiene("gobierno_hallazgos:manage", "empresa");
@@ -71,12 +92,12 @@ export function HallazgosPage(): React.JSX.Element {
     queryKey: [
       ...CONSULTA_HALLAZGOS,
       activeCompanyId,
-      filtrosAplicados,
+      filtrosEfectivos,
       pagina,
     ],
     queryFn: () =>
       apiFetch<HallazgosListado>(
-        `/gobierno/hallazgos${consultaDeHallazgos(filtrosAplicados, {
+        `/gobierno/hallazgos${consultaDeHallazgos(filtrosEfectivos, {
           pagina,
           por_pagina: POR_PAGINA_HALLAZGOS,
         })}`,
@@ -88,7 +109,7 @@ export function HallazgosPage(): React.JSX.Element {
   const exportarCsv = async () => {
     try {
       await descargarArchivo(
-        `/gobierno/hallazgos/exportar${consultaDeHallazgos(filtrosAplicados)}`,
+        `/gobierno/hallazgos/exportar${consultaDeHallazgos(filtrosEfectivos)}`,
         `plan-acciones-${hoyDeNegocio()}.csv`,
       );
       notify({ type: "success", title: "Plan de acción exportado" });
@@ -117,6 +138,7 @@ export function HallazgosPage(): React.JSX.Element {
     setSoloVencidas(false);
     setFiltrosAplicados({});
     setPagina(1);
+    if (hayContexto) alQuitarContexto();
   };
 
   const aplicarIndicador = (nuevosFiltros: FiltrosHallazgos) => {
@@ -225,6 +247,7 @@ export function HallazgosPage(): React.JSX.Element {
   );
 
   const tieneFiltrosActivos =
+    hayContexto ||
     filtrosAplicados.estado !== undefined ||
     filtrosAplicados.riesgo !== undefined ||
     filtrosAplicados.origen !== undefined ||
@@ -304,6 +327,22 @@ export function HallazgosPage(): React.JSX.Element {
         <h2 id="filtros-hallazgos-titulo" className="sr-only">
           Filtros
         </h2>
+        {hayContexto && (
+          <div role="status" className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-border-subtle p-3 text-sm text-text-700">
+            <span>
+              Filtro de cierre: hallazgos pendientes
+              {contexto.riesgo_minimo !== undefined &&
+                ` · riesgo ${ETIQUETAS_RIESGO_CIERRE[contexto.riesgo_minimo]}`}
+            </span>
+            <button
+              type="button"
+              onClick={alQuitarContexto}
+              className="font-medium text-brand-700 underline"
+            >
+              Quitar filtro
+            </button>
+          </div>
+        )}
         <form onSubmit={aplicarFiltros} className="mb-4">
           <div className="flex flex-wrap items-end gap-3">
             <FormField
