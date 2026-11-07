@@ -1151,6 +1151,127 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/ocupacion/asignaciones",
+      "query": [
+        "cargo_id",
+        "estado",
+        "fecha",
+        "figura",
+        "funcionario_id",
+        "pagina",
+        "por_pagina"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ocupacion/asignaciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/asignaciones.csv",
+      "query": [
+        "cargo_id",
+        "estado",
+        "fecha",
+        "figura",
+        "funcionario_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/asignaciones/{asignacion_id}",
+      "query": [
+        "fecha"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/ocupacion/asignaciones/{asignacion_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ocupacion/asignaciones/{asignacion_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ocupacion/asignaciones/{asignacion_id}/avocar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ocupacion/asignaciones/{asignacion_id}/descartar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ocupacion/asignaciones/{asignacion_id}/finalizar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ocupacion/asignaciones/{asignacion_id}/revocar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/cargos",
+      "query": [
+        "ejercicio",
+        "fecha",
+        "pagina",
+        "por_pagina",
+        "texto"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/cargos/{cargo_id}",
+      "query": [
+        "fecha"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/catalogo",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/funcionarios",
+      "query": [
+        "estado",
+        "pagina",
+        "por_pagina",
+        "texto"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ocupacion/funcionarios",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/funcionarios/{funcionario_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/ocupacion/funcionarios/{funcionario_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/opciones",
+      "query": [
+        "ejercicio"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/paquetes",
       "query": [
         "muestra_id",

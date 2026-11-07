@@ -20,6 +20,7 @@ from app.core.errors import KontrolError, NotFoundError
 from app.modules.audit.models import AuditEvent
 from app.modules.government.models import (
     GovernmentAct,
+    GovernmentAssignment,
     GovernmentAuditPackage,
     GovernmentAuditSample,
     GovernmentAuditSampleItem,
@@ -29,6 +30,7 @@ from app.modules.government.models import (
     GovernmentEntity,
     GovernmentFinding,
     GovernmentNotification,
+    GovernmentOfficial,
     GovernmentPosition,
     GovernmentSoDRule,
     GovernmentStructure,
@@ -59,6 +61,7 @@ PROCESOS: list[tuple[str, str, str]] = [
     ("TRE-01", "Cuentas bancarias públicas", "gov-tre-01"),
     ("TRE-02", "Programación financiera", "gov-tre-02"),
     ("CTL-10", "Controles de cierre", "gov-ctl-10"),
+    ("ORG-04", "Ocupación de cargos", "gov-org-04"),
 ]
 _PROCESO_POR_OWNER_SPEC = {owner_spec: (codigo, nombre) for codigo, nombre, owner_spec in PROCESOS}
 _PROCESO_NOMBRE = {codigo: nombre for codigo, nombre, _ in PROCESOS}
@@ -355,6 +358,12 @@ def _objeto_desde_evento(db: Session, event: AuditEvent, ctx: CompanyContext) ->
         return None if programa is None else AuditoriaObjeto(
             tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/tesoreria/programacion/{objeto_id}", capacidad="gobierno_caja:view"
         )
+    if event.entity_type == "GovernmentAssignment":
+        asignacion = db.scalar(select(GovernmentAssignment).where(GovernmentAssignment.id == objeto_id, GovernmentAssignment.company_id == empresa))
+        return None if asignacion is None else AuditoriaObjeto(tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/ocupacion/asignaciones/{objeto_id}", capacidad="gobierno_ocupacion:view")
+    if event.entity_type == "GovernmentOfficial":
+        funcionario = db.scalar(select(GovernmentOfficial).where(GovernmentOfficial.id == objeto_id, GovernmentOfficial.company_id == empresa))
+        return None if funcionario is None else AuditoriaObjeto(tipo=event.entity_type, id=objeto_id, ruta="/gobierno/ocupacion/funcionarios", capacidad="gobierno_ocupacion:view")
     if event.entity_type == "GovernmentClosurePolicy":
         politica = db.scalar(
             select(GovernmentClosurePolicy).where(

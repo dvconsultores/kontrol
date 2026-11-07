@@ -30,14 +30,12 @@ ACTOS = "ACTOS_SIN_EFICACIA"
 
 
 def test_pm01_cabeza_migracion():
-    """pm01: la cabeza de Alembic contiene la migración 0075_gov_ctl10_cierres."""
+    """pm01: el historial de Alembic contiene la migración 0075_gov_ctl10_cierres."""
     raiz = Path(__file__).resolve().parents[1]
     configuracion = Config(str(raiz / "alembic.ini"))
     configuracion.set_main_option("script_location", str(raiz / "alembic"))
     script = ScriptDirectory.from_config(configuracion)
-    cabeza = script.get_current_head()
-    assert cabeza is not None
-    assert "0075_gov_ctl10_cierres" in cabeza
+    assert script.get_revision("0075_gov_ctl10_cierres") is not None
 
 
 def test_pm02_catalogo_permisos():

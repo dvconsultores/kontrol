@@ -143,6 +143,9 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_caja:activate",
         # gobierno_cierre · activación y retiro de políticas de cierre (CTL-10)
         "gobierno_cierre:activate",
+        # gobierno_ocupacion · activación y revocación de asignaciones de cargos (ORG-04)
+        "gobierno_ocupacion:activate",
+        "gobierno_ocupacion:revoke",
     }
 )
 
@@ -236,6 +239,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_cierre · consulta y gestión de políticas de cierre (CTL-10)
         "gobierno_cierre:view",
         "gobierno_cierre:manage",
+        # gobierno_ocupacion · consulta y registro de ocupación de cargos (ORG-04)
+        "gobierno_ocupacion:view",
+        "gobierno_ocupacion:manage",
     }
 )
 

@@ -842,7 +842,7 @@ for _sentencia in GOV_AUDIT_PACKAGE_VERIFICATIONS_IMMUTABLE_PG:
 ESTADOS_REGLA_SOD = ("BORRADOR", "VIGENTE", "CERRADA")
 ALCANCES_REGLA_SOD = ("MISMO_OBJETO",)
 MODOS_REGLA_SOD = ("BLOQUEAR",)
-PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10")
+PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04")
 TIPOS_HISTORIA_SOD = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA")
 
 
@@ -1445,3 +1445,211 @@ for _sentencia in GOV_CLOSURE_CONTROLS_IMMUTABLE_PG:
 
 for _sentencia in GOV_CLOSURE_POLICY_HISTORY_IMMUTABLE_PG:
     event.listen(GovernmentClosurePolicyHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+ESTADOS_FUNCIONARIO = ("ACTIVO", "INACTIVO")
+TIPOS_DOCUMENTO_FUNCIONARIO = ("V", "E", "P")
+TIPOS_HISTORIA_FUNCIONARIO = ("CREADO", "EDITADO")
+FIGURAS_ASIGNACION = ("TITULAR", "ENCARGADURIA", "SUPLENCIA", "COMISION_SERVICIO", "DELEGACION_ATRIBUCIONES", "DELEGACION_FIRMA")
+GRUPOS_ASIGNACION = ("TITULARIDAD", "TEMPORAL", "DELEGACION")
+ESTADOS_ASIGNACION = ("BORRADOR", "ACTIVO", "REVOCADO", "FINALIZADO", "DESCARTADO")
+TIPOS_HISTORIA_ASIGNACION = ("CREADA", "EDITADA", "ACTIVADA", "DESCARTADA", "REVOCADA", "FINALIZADA", "AVOCADA")
+
+
+class GovernmentOfficial(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Identidad institucional de la persona que ejerce un cargo (OD-ORG04-02); no es usuario ni ficha de empleado."""
+    __tablename__ = "gov_officials"
+    __scope__ = Scope.COMPANY
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_officials_company_id_codigo"),
+        UniqueConstraint("company_id", "tipo_documento", "numero_documento", name="uq_gov_officials_documento"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_FUNCIONARIO)})", name="estado"),
+        CheckConstraint(f"tipo_documento IN ({en(TIPOS_DOCUMENTO_FUNCIONARIO)})", name="tipo_documento"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    tipo_documento: Mapped[str] = mapped_column(String(1), nullable=False)
+    numero_documento: Mapped[str] = mapped_column(String(20), nullable=False)
+    estado: Mapped[str] = mapped_column(String(16), nullable=False, default="ACTIVO", server_default="ACTIVO")
+
+
+class GovernmentOfficialHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de un funcionario (ORG-04)."""
+    __tablename__ = "gov_official_history"
+    __scope__ = Scope.COMPANY
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_FUNCIONARIO)})", name="tipo"),
+    )
+
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(16), nullable=False)
+    detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+
+class GovernmentAssignment(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Quién ejerce un cargo, bajo qué figura, por qué acto y durante qué vigencia (ORG-04, GOV-ORG-004)."""
+    __tablename__ = "gov_assignments"
+    __scope__ = Scope.COMPANY
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_assignments_company_id_codigo"),
+        CheckConstraint(f"figura IN ({en(FIGURAS_ASIGNACION)})", name="figura"),
+        CheckConstraint(f"grupo IN ({en(GRUPOS_ASIGNACION)})", name="grupo"),
+        CheckConstraint(f"status IN ({en(ESTADOS_ASIGNACION)})", name="status"),
+        CheckConstraint("version >= 1", name="version"),
+        CheckConstraint(
+            "(figura = 'TITULAR' AND grupo = 'TITULARIDAD') OR "
+            "(figura IN ('ENCARGADURIA','SUPLENCIA','COMISION_SERVICIO') AND grupo = 'TEMPORAL') OR "
+            "(figura IN ('DELEGACION_ATRIBUCIONES','DELEGACION_FIRMA') AND grupo = 'DELEGACION')",
+            name="grupo_de_figura",
+        ),
+        CheckConstraint("hasta IS NULL OR hasta >= desde", name="vigencia"),
+        CheckConstraint("fin_efectivo IS NULL OR fin_efectivo >= desde", name="fin_tras_inicio"),
+        CheckConstraint("figura NOT IN ('SUPLENCIA','COMISION_SERVICIO') OR hasta IS NOT NULL", name="temporal_con_fin"),
+        CheckConstraint("grupo = 'TITULARIDAD' OR figura = 'ENCARGADURIA' OR cargo_origen_id IS NOT NULL", name="origen_requerido"),
+        CheckConstraint("grupo <> 'DELEGACION' OR (rendicion IS NOT NULL AND declara_delegable = true)", name="delegacion_completa"),
+        CheckConstraint("status NOT IN ('REVOCADO') OR (revocation_act_id IS NOT NULL AND fin_efectivo IS NOT NULL)", name="revocada_con_acto"),
+        CheckConstraint("status <> 'FINALIZADO' OR (fin_efectivo IS NOT NULL AND motivo_fin IS NOT NULL)", name="finalizada_con_motivo"),
+        CheckConstraint("status IN ('BORRADOR','DESCARTADO') OR activated_at IS NOT NULL", name="activada_fechada"),
+    )
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
+    position_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False, index=True)
+    figura: Mapped[str] = mapped_column(String(24), nullable=False)
+    grupo: Mapped[str] = mapped_column(String(16), nullable=False)
+    cargo_origen_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=True)
+    act_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=False, index=True)
+    desde: Mapped[date] = mapped_column(Date, nullable=False)
+    hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fin_efectivo: Mapped[date | None] = mapped_column(Date, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    fundamento: Mapped[str] = mapped_column(String(500), nullable=False)
+    rendicion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    maxima_autoridad: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    autorizacion_concejo: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    declara_delegable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    revocation_act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    motivo_fin: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    activated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ended_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class GovernmentAssignmentCompetency(UUIDMixin, TimestampMixin, Base):
+    """Competencia delegada con copia del límite del cargo."""
+    __tablename__ = "gov_assignment_competencies"
+    __scope__ = Scope.COMPANY
+
+    __table_args__ = (
+        UniqueConstraint("assignment_id", "action", "subject", name="uq_gov_assignment_competencies_assignment_id_action_subject"),
+        CheckConstraint(f"action IN ({en(ACCIONES_COMPETENCIA)})", name="action"),
+        CheckConstraint(f"subject IN ({en(MATERIAS_COMPETENCIA)})", name="subject"),
+        CheckConstraint(f"limit_type IN ({en(TIPOS_DE_LIMITE)})", name="limit_type"),
+    )
+
+    assignment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_assignments.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(16), nullable=False)
+    subject: Mapped[str] = mapped_column(String(16), nullable=False)
+    limit_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    limit_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    limit_currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
+
+
+class GovernmentAssignmentHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de una asignación de cargo (ORG-04)."""
+    __tablename__ = "gov_assignment_history"
+    __scope__ = Scope.COMPANY
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_ASIGNACION)})", name="tipo"),
+    )
+
+    assignment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_assignments.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(16), nullable=False)
+    detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+
+GOV_OFFICIAL_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_funcionario_historia_inmutable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_OFFICIAL_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_official_history_no_update BEFORE UPDATE ON gov_official_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_funcionario_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_official_history_no_delete BEFORE DELETE ON gov_official_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_funcionario_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_official_history_no_truncate BEFORE TRUNCATE ON gov_official_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_funcionario_historia_inmutable()",
+)
+
+GOV_OFFICIALS_NOT_DELETABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_funcionario_no_borrable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_OFFICIAL_NOT_DELETABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_officials_no_delete BEFORE DELETE ON gov_officials FOR EACH ROW EXECUTE FUNCTION kontrol_gov_funcionario_no_borrable()",
+    "CREATE TRIGGER trg_gov_officials_no_truncate BEFORE TRUNCATE ON gov_officials FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_funcionario_no_borrable()",
+)
+
+GOV_ASSIGNMENT_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_asignacion_historia_inmutable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_ASSIGNMENT_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_assignment_history_no_update BEFORE UPDATE ON gov_assignment_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_asignacion_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_assignment_history_no_delete BEFORE DELETE ON gov_assignment_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_asignacion_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_assignment_history_no_truncate BEFORE TRUNCATE ON gov_assignment_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_asignacion_historia_inmutable()",
+)
+
+GOV_ASSIGNMENTS_NOT_DELETABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_asignacion_no_borrable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_ASSIGNMENT_NOT_DELETABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_assignments_no_delete BEFORE DELETE ON gov_assignments FOR EACH ROW EXECUTE FUNCTION kontrol_gov_asignacion_no_borrable()",
+    "CREATE TRIGGER trg_gov_assignments_no_truncate BEFORE TRUNCATE ON gov_assignments FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_asignacion_no_borrable()",
+)
+
+GOV_ASSIGNMENTS_NOT_EDITABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_asignacion_no_editable() RETURNS TRIGGER AS $$ "
+    "BEGIN IF OLD.status <> 'BORRADOR' AND (NEW.official_id IS DISTINCT FROM OLD.official_id OR NEW.position_id IS DISTINCT FROM OLD.position_id OR NEW.figura IS DISTINCT FROM OLD.figura OR NEW.grupo IS DISTINCT FROM OLD.grupo OR NEW.cargo_origen_id IS DISTINCT FROM OLD.cargo_origen_id OR NEW.act_id IS DISTINCT FROM OLD.act_id OR NEW.desde IS DISTINCT FROM OLD.desde OR NEW.hasta IS DISTINCT FROM OLD.hasta OR NEW.fundamento IS DISTINCT FROM OLD.fundamento OR NEW.rendicion IS DISTINCT FROM OLD.rendicion OR NEW.company_id IS DISTINCT FROM OLD.company_id) THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_ASSIGNMENT_NOT_EDITABLE'; END IF; IF OLD.status IN ('REVOCADO','FINALIZADO','DESCARTADO') AND (NEW.status IS DISTINCT FROM OLD.status OR NEW.fin_efectivo IS DISTINCT FROM OLD.fin_efectivo) THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_ASSIGNMENT_NOT_EDITABLE'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_assignments_no_editable BEFORE UPDATE ON gov_assignments FOR EACH ROW EXECUTE FUNCTION kontrol_gov_asignacion_no_editable()",
+)
+
+GOV_ASSIGNMENT_COMPETENCIES_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_asignacion_competencia_inmutable() RETURNS TRIGGER AS $$ "
+    "DECLARE v_status VARCHAR(16); "
+    "BEGIN IF TG_OP = 'INSERT' THEN SELECT status INTO v_status FROM gov_assignments WHERE id = NEW.assignment_id; "
+    "ELSIF TG_OP = 'UPDATE' THEN SELECT status INTO v_status FROM gov_assignments WHERE id = OLD.assignment_id; "
+    "ELSE SELECT status INTO v_status FROM gov_assignments WHERE id = OLD.assignment_id; END IF; "
+    "IF v_status IS DISTINCT FROM 'BORRADOR' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_ASSIGNMENT_COMPETENCY_IMMUTABLE'; END IF; "
+    "IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_assignment_competencies_immutable BEFORE INSERT OR UPDATE OR DELETE ON gov_assignment_competencies FOR EACH ROW EXECUTE FUNCTION kontrol_gov_asignacion_competencia_inmutable()",
+)
+
+GOV_ASSIGNMENTS_EXCLUSION_PG = (
+    "CREATE EXTENSION IF NOT EXISTS btree_gist",
+    "ALTER TABLE gov_assignments ADD CONSTRAINT ex_gov_assignments_ocupacion EXCLUDE USING gist (position_id WITH =, grupo WITH =, daterange(desde, COALESCE(fin_efectivo, hasta), '[]') WITH &&) WHERE (status = 'ACTIVO' AND grupo IN ('TITULARIDAD', 'TEMPORAL'))",
+    "ALTER TABLE gov_assignments ADD CONSTRAINT ex_gov_assignments_delegacion EXCLUDE USING gist (position_id WITH =, official_id WITH =, daterange(desde, COALESCE(fin_efectivo, hasta), '[]') WITH &&) WHERE (status = 'ACTIVO' AND grupo = 'DELEGACION')",
+)
+
+for _sentencia in GOV_OFFICIAL_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentOfficialHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_OFFICIALS_NOT_DELETABLE_PG:
+    event.listen(GovernmentOfficial.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_ASSIGNMENT_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentAssignmentHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_ASSIGNMENTS_NOT_DELETABLE_PG:
+    event.listen(GovernmentAssignment.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_ASSIGNMENTS_NOT_EDITABLE_PG:
+    event.listen(GovernmentAssignment.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_ASSIGNMENT_COMPETENCIES_IMMUTABLE_PG:
+    event.listen(GovernmentAssignmentCompetency.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_ASSIGNMENTS_EXCLUSION_PG:
+    event.listen(GovernmentAssignment.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
