@@ -19,6 +19,8 @@ vi.mock("@/api/client", async (original) => ({
   apiFetch: (...args: unknown[]) => apiFetch(...args),
 }));
 
+vi.mock("@/app/contexts/NotificationContext", () => ({ useNotifications: () => ({ notify: vi.fn() }) }));
+
 let permisos = new Set(["license:view"]);
 
 vi.mock("@/app/autoridad/AutoridadContext", () => ({
@@ -33,12 +35,36 @@ vi.mock("@/app/autoridad/AutoridadContext", () => ({
 
 const { DiagnosticoPage, PERMISO_DE_DIAGNOSTICO, filasDeDiagnostico } = await import("./DiagnosticoPage");
 
+const COPIAS: DiagnosticsResponse["backup"] = {
+  configured_rpo_minutes: null,
+  schedule_interval_minutes: null,
+  safety_margin_minutes: null,
+  retention_days: null,
+  retention_min_copies: null,
+  destination_type: null,
+  destination_label: null,
+  scheduler_enabled: false,
+  version: 0,
+  rpo_state: "DISABLED",
+  last_successful_backup_at: null,
+  last_valid_backup_at: null,
+  last_valid_durable_off_host_backup_at: null,
+  backup_age_seconds: null,
+  backup_duration_seconds: null,
+  package_size_bytes: null,
+  next_schedule_at: null,
+  last_sanitized_error: null,
+  retention_degraded: false,
+  running: false,
+};
+
 const SANO: DiagnosticsResponse = {
   environment: "qa",
   version: "1.0.0",
   database: { ok: true },
   installation: { id: "KTL-VE-0001", state: "ACTIVE" },
   license: { activated: true, mode: "FULL_ACCESS", period_end: "2027-01-01T00:00:00+00:00" },
+  backup: COPIAS,
 };
 
 function montar(): void {
@@ -88,12 +114,13 @@ describe("DiagnosticoPage", () => {
       database: { ok: false },
       installation: { id: null, state: null },
       license: { activated: false, mode: null, period_end: null },
+      backup: COPIAS,
     });
     montar();
     expect(await screen.findByText("sin conexión")).toBeTruthy();
     expect(screen.getByText("sin identidad")).toBeTruthy();
     expect(screen.getByText("sin licencia")).toBeTruthy();
-    expect(screen.getByText("—")).toBeTruthy();
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
 
   it("DIAG-03 · si el diagnóstico no responde, se dice", async () => {

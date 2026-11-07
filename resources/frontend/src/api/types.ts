@@ -231,10 +231,34 @@ export interface HealthResponse {
 }
 
 /** Lo que responde `GET /system/diagnostics` (FR-001-084). */
+export interface BackupStatus {
+  configured_rpo_minutes: number | null;
+  schedule_interval_minutes: number | null;
+  safety_margin_minutes: number | null;
+  retention_days: number | null;
+  retention_min_copies: number | null;
+  destination_type: string | null;
+  destination_label: string | null;
+  scheduler_enabled: boolean;
+  version: number;
+  rpo_state: string;
+  last_successful_backup_at: string | null;
+  last_valid_backup_at: string | null;
+  last_valid_durable_off_host_backup_at: string | null;
+  backup_age_seconds: number | null;
+  backup_duration_seconds: number | null;
+  package_size_bytes: number | null;
+  next_schedule_at: string | null;
+  last_sanitized_error: string | null;
+  retention_degraded: boolean;
+  running: boolean;
+}
+
 export interface DiagnosticsResponse {
   environment: string;
   version: string;
   database: { ok: boolean };
+  backup: BackupStatus;
   installation: { id: string | null; state: string | null };
   license: { activated: boolean; mode: string | null; period_end: string | null };
 }

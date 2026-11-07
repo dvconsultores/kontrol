@@ -9,6 +9,7 @@ import { ForbiddenState } from "@/components/ForbiddenState";
 import { LoadingState } from "@/components/LoadingState";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
+import { CopiasDeDiagnostico } from "@/pages/CopiasDeDiagnostico";
 
 interface Fila {
   nombre: string;
@@ -77,6 +78,7 @@ export function DiagnosticoPage(): React.JSX.Element {
           </ul>
         </div>
       ) : null}
+      {query.data ? <CopiasDeDiagnostico estado={query.data.backup} /> : null}
     </PageContent>
   );
 }
