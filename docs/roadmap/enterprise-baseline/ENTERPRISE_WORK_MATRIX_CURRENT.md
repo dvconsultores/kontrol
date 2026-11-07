@@ -126,3 +126,5 @@ Sustituye a la sección 9: el sponsor pospuso CATALOGO-SELECTORES-PRIMERA-PAGINA
 | T052-A1-CLI-AUDIT-TEST | 6 | 001 | T052 | Sí | No | No | Sí | Bajo | No | Política de reintentos |
 | RESTORE-LEDGER-RESET | 6 | 001 | Restauración | Sí | No | PostgreSQL | Sí | Medio | No | Mismo bloqueo |
 | T061 y certificación T052 | — | 001 | PostgreSQL | — | No | PostgreSQL | — | Alto | No | Sin entorno |
+
+Base de la línea pública tras la fusión: `fba4a31`. Migraciones: cabeza única `0077_fusion_backup_org04`. OpenAPI: 707 operaciones.
