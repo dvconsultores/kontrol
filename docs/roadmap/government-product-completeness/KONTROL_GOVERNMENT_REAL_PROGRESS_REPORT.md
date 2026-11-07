@@ -4,6 +4,8 @@
 
 ## Resumen para la dueña
 
+**Actualización GOV-DOC-03 (2026-11-07): «Lapsos, suspensiones, subsanaciones y prórrogas» queda BLOQUEADO. Los lapsos de la LOPA corren sobre una solicitud o un expediente, y DOC-01 sigue bloqueado; además, el art. 42 exige el calendario de la Administración Pública, sin fuente ni responsable en KONTROL. Siguiente vertical: CTL-08.**
+
 **Actualización GOV-CTL-10 (2026-11-07): ya hay trece procesos de Gobierno que puedes probar como usuaria; el nuevo es «Controles materiales que impiden cerrar ejercicio o proceso» (menú Gobierno › Controles de cierre). Una política de Control Interno impide cerrar la estructura de un ejercicio o un programa financiero mientras haya hallazgos abiertos o actos sin eficacia, y el cierre explica qué falta. Dos cierres y dos controles, sin motor de reglas. Abiertas, ambas LOW: OBS-CTL10-LISTA-01 y T043.**
 
 **Actualización GOV-CTL-06 (2026-11-04): ya hay ocho procesos de Gobierno que puedes probar como usuaria; el nuevo es «Hallazgos, recomendaciones y planes de acción correctiva» (menú Gobierno › Hallazgos y acciones correctivas, o «Registrar hallazgo» desde una muestra de la auditoría institucional): Control Interno registra el hallazgo con su condición, criterio, causa, efecto y riesgo, emite recomendaciones y un plan de acción con cargo responsable y fecha objetivo, registra los avances con su evidencia y lo presenta; otro usuario de Control Interno lo verifica y cierra (o lo devuelve), con historia completa y el plan exportable.** Su tarjeta está en `OWNER_UAT_READY_CATALOG.md`. Ninguno está aceptado: eso lo decides tú al probarlos.
@@ -51,13 +53,13 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 | Tesorería pública | 10 | 0 | 2 | 0 | 5 | 3 | NO |
 | Contabilidad pública | 8 | 0 | 0 | 0 | 3 | 5 | NO |
 | Bienes públicos / Activo fijo patrimonial | 11 | 0 | 0 | 0 | 5 | 6 | NO |
-| Expedientes y actos administrativos | 8 | 0 | 3 | 0 | 1 | 4 | NO |
+| Expedientes y actos administrativos | 8 | 0 | 3 | 0 | 0 | 5 | NO |
 | Control interno, auditoría y rendición | 10 | 0 | 4 | 0 | 4 | 2 | NO |
 | Gobierno Digital: trámites e interoperabilidad | 3 | 0 | 0 | 0 | 0 | 3 | NO |
 | Gasto de personal e interfaz Atenea | 3 | 0 | 0 | 0 | 1 | 2 | NO |
 | Integraciones institucionales | 7 | 0 | 0 | 0 | 1 | 6 | NO |
 | Reportes y tableros institucionales | 11 | 0 | 0 | 0 | 6 | 5 | NO |
-| **Total** | **122** | **0** | **13** | **0** | **55** | **54** | **0 de 15** |
+| **Total** | **122** | **0** | **13** | **0** | **54** | **55** | **0 de 15** |
 
 (Errata corregida en GOV-DOC-04: la fila de Expedientes y el total no se habían actualizado con DOC-02.)
 
@@ -118,7 +120,7 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 
 | Tipo | N | Estado |
 |---|---|---|
-| Funcionales GOV-* | 153 | 152 en 122 procesos: 82 BLOCKED, 56 NOT_STARTED, 14 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -008, -010, GOV-DOC-003, -005, -010, GOV-CTL-001, -005, -008, -012, GOV-TRE-001, -002). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
+| Funcionales GOV-* | 153 | 152 en 122 procesos: 83 BLOCKED, 55 NOT_STARTED, 14 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -008, -010, GOV-DOC-003, -005, -010, GOV-CTL-001, -005, -008, -012, GOV-TRE-001, -002). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
 | No funcionales RNF-GOV | 25 | 6 PASS en el núcleo (003, 006, 012, 015, 019, 025) · 11 PARTIAL · 4 NOT_MEASURED · 4 NOT_STARTED |
 | Aceptación E2E-01..08 | 8 | 6 FAIL. E2E-06 (hostil multi-ente) y E2E-08 (restauración) PARTIAL: solo el núcleo; el ente y los ledgers de Gobierno no existen |
 | Puertas del sponsor D-GOV-01..08 | 8 | las 8 OPEN |

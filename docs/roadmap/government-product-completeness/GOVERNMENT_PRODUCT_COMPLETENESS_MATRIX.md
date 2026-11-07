@@ -137,7 +137,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 |---|---|---|---|---|---|---|---|---|---|---|
 | DOC-01 | Expediente electrónico único con índice, foliado y versiones | P0 | Unidad tramitadora | GOV-DOC-001 GOV-DOC-002 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | Gestión documental 046 (almacén y versiones; sin expediente) |
 | DOC-02 | Actos administrativos con autoridad, motivación y eficacia | P0 | Máxima autoridad | GOV-DOC-003 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | DOC2-E2E-01..07 (×3 navegadores) + HUMO-UAT-01 | — |
-| DOC-03 | Lapsos, suspensiones, subsanaciones y prórrogas | P0 | Unidad tramitadora | GOV-DOC-004 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | E2E-05 | — |
+| DOC-03 | Lapsos, suspensiones, subsanaciones y prórrogas | P0 | Unidad tramitadora | GOV-DOC-004 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | DOC-01 (expediente, LEGAL_VALIDATION_REQUIRED N40); calendario oficial sin fuente ni responsable | E2E-05 | — |
 | DOC-04 | Notificaciones administrativas con constancia de recepción | P0 | Unidad tramitadora | GOV-DOC-005 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | DOC4-E2E-01..05 (×3 navegadores) + HUMO-UAT-01 | — |
 | DOC-05 | Firma electrónica | P1 | Máxima autoridad | GOV-DOC-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-08; LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | — |
 | DOC-06 | Preservación y retención de evidencia sin borrado | P0 | Unidad tramitadora | GOV-DOC-007 GOV-DOC-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | — |

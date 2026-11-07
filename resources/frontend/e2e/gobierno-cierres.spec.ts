@@ -73,6 +73,19 @@ async function sinViolacionesSerias(page: Page, contexto: string): Promise<void>
   }
 }
 
+async function contextoAccesible(page: Page, indicador: Locator, nombre: string): Promise<void> {
+  for (const ancho of [1280, 768, 320]) {
+    await page.setViewportSize({ width: ancho, height: 768 });
+    await expect(indicador).toBeVisible();
+    await sinViolacionesSerias(page, `${nombre} ${ancho}x768`);
+    const sinDesbordamiento = await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    );
+    expect(sinDesbordamiento, `${nombre} ${ancho}`).toBe(true);
+  }
+  await page.setViewportSize({ width: 1280, height: 768 });
+}
+
 async function mundoConCargo(request: APIRequestContext) {
   const mundo = await prepararMundo(request, RESPONSABLE_CIERRE);
   const tipo = await crearTipoDocumental(request, mundo.headers, mundo.companyId);
@@ -421,6 +434,7 @@ test.describe("Gobierno · Controles de cierre (CTL-10)", () => {
     await expect(page.getByRole("status")).toContainText("Filtro de cierre: hallazgos pendientes · riesgo Medio o superior");
     await expect(page.getByRole("main")).toContainText("Hallazgo CTL-10");
     await expect(page.getByRole("main")).not.toContainText("Hallazgo menor");
+    await contextoAccesible(page, page.getByRole("button", { name: "Quitar filtro" }), "Hallazgos con filtro de cierre");
     await page.getByRole("button", { name: "Quitar filtro" }).click();
     await expect(page).toHaveURL(/\/gobierno\/hallazgos$/);
     await expect(page.getByRole("main")).toContainText("Hallazgo menor");
@@ -524,6 +538,7 @@ test.describe("Gobierno · Controles de cierre (CTL-10)", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Actos administrativos" })).toBeVisible();
     await expect(page.getByLabel(/^Año/)).toHaveValue(String(ANIO));
     await expect(page.getByLabel(/^Estado/)).toHaveValue("EMITIDO");
+    await contextoAccesible(page, page.getByLabel(/^Estado/), "Actos con filtro de cierre");
 
     await page.goto(`/gobierno/cierres/${politica.id}`);
     await expect(page.getByRole("heading", { level: 1, name: /^Política PC-\d+$/ })).toBeVisible();
