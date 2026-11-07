@@ -23,6 +23,7 @@ from app.modules.government.models import (
     GovernmentUnitVersion,
 )
 from app.modules.government.schemas_estructura import DesactivacionIn, EstructuraIn, UnidadCambio, UnidadIn
+from app.modules.government.service_cierres import evaluar_cierre
 from app.shared.audit import record_audit
 from app.shared.clock import hoy_de_negocio
 from app.shared.mixins import utcnow
@@ -948,6 +949,7 @@ def cerrar(db: Session, ctx: CompanyContext, ejercicio: int, expected_version: i
             status_code=422,
         )
 
+    evaluar_cierre(db, ctx, "ORG02_CERRAR_ESTRUCTURA", "GovernmentStructure", str(est.id), f"EST-{ejercicio}", ejercicio)
     version_anterior = est.version
     est.status = "CERRADA"
     est.closed_at = utcnow()

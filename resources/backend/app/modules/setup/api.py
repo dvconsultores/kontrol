@@ -113,6 +113,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_cuentas": ["view", "manage", "activate"],
     # TRE-02: programación financiera (OD-TRE02-04).
     "gobierno_caja": ["view", "manage", "activate"],
+    # CTL-10: controles materiales de cierre (OD-CTL10-04).
+    "gobierno_cierre": ["view", "manage", "activate"],
 }
 
 

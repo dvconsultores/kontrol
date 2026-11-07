@@ -1250,7 +1250,7 @@ export function abreviarHuella(huella: string): string { return huella.length > 
 // CTL-01 · matriz de segregación de funciones (GOV-CTL-001)
 // ---------------------------------------------------------------------------
 
-export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01" | "TRE-02";
+export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01" | "TRE-02" | "CTL-10";
 export type EstadoReglaSod = "BORRADOR" | "VIGENTE" | "CERRADA";
 
 export interface AccionSod { codigo: string; etiqueta: string; crea_objeto: boolean; }
@@ -1291,7 +1291,7 @@ export interface DetalleConflictoSod {
 }
 
 export const ETIQUETAS_ESTADO_REGLA_SOD: Record<EstadoReglaSod, string> = { BORRADOR: "Borrador", VIGENTE: "Vigente", CERRADA: "Cerrada" };
-export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas", "TRE-02": "Programación financiera" };
+export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas", "TRE-02": "Programación financiera", "CTL-10": "Controles de cierre" };
 export const ETIQUETAS_HISTORIA_SOD: Record<string, string> = { CREADA: "Registrada", EDITADA: "Modificada", ACTIVADA: "Activada", CERRADA: "Cerrada" };
 
 export const POR_PAGINA_CONFLICTOS_SOD = 20;
@@ -1304,6 +1304,7 @@ export function rutaDeObjetoSod(tipo: string | null, id: string | null): string 
   if (tipo === "GovernmentFinding") return `/gobierno/hallazgos/${id}`;
   if (tipo === "GovernmentBankAccount") return `/gobierno/tesoreria/cuentas/${id}`;
   if (tipo === "GovernmentCashProgram") return `/gobierno/tesoreria/programacion/${id}`;
+  if (tipo === "GovernmentClosurePolicy") return `/gobierno/cierres/${id}`;
   return null;
 }
 
@@ -1321,6 +1322,208 @@ export function consultaDeReglasSod(filtros: { estado?: string; proceso?: string
   if (proceso) qs.set("proceso", proceso);
   const s = qs.toString();
   return s ? `?${s}` : "";
+}
+
+// CTL-10 · Controles materiales de cierre (GOV-CTL-012)
+export type AccionCierre = "ORG02_CERRAR_ESTRUCTURA" | "TRE02_CERRAR_PROGRAMA";
+export type EstadoPoliticaCierre = "BORRADOR" | "VIGENTE" | "RETIRADA";
+export type TipoControlCierre = "HALLAZGOS_ABIERTOS" | "ACTOS_SIN_EFICACIA";
+export type RiesgoMinimoCierre = "ALTO" | "MEDIO" | "BAJO";
+
+export interface ControlCierre {
+  id: string;
+  tipo: TipoControlCierre;
+  riesgo_minimo: RiesgoMinimoCierre | null;
+  materialidad: string;
+}
+
+export interface HistoriaCierre {
+  evento: string;
+  detalle: Record<string, unknown> | null;
+  usuario: string | null;
+  instante: string;
+}
+
+export interface PoliticaCierreResumen {
+  id: string;
+  codigo: string;
+  nombre: string;
+  accion_cierre: AccionCierre;
+  fundamento: string;
+  estado: EstadoPoliticaCierre;
+  vigente_desde: string;
+  vigente_hasta: string | null;
+  efectiva_hoy: boolean;
+  version: number;
+}
+
+export interface PoliticaCierreDetalle extends PoliticaCierreResumen {
+  activada_por: string | null;
+  activada_en: string | null;
+  retirada_por: string | null;
+  retirada_en: string | null;
+  motivo_retiro: string | null;
+  controles: ControlCierre[];
+  historia: HistoriaCierre[];
+}
+
+export interface ResumenCierres {
+  borradores: number;
+  vigentes: number;
+  retiradas: number;
+}
+
+export interface PoliticasCierreListado {
+  items: PoliticaCierreResumen[];
+  total: number;
+  resumen: ResumenCierres;
+}
+
+export interface ItemCatalogoCierre {
+  codigo: string;
+  etiqueta: string;
+}
+
+export interface TipoCatalogoCierre extends ItemCatalogoCierre {
+  requiere_riesgo: boolean;
+}
+
+export interface CatalogoCierres {
+  acciones: ItemCatalogoCierre[];
+  tipos: TipoCatalogoCierre[];
+}
+
+export interface PoliticaCierreEntrada {
+  nombre: string;
+  accion_cierre: AccionCierre;
+  fundamento: string;
+  vigente_desde: string;
+  vigente_hasta: string | null;
+}
+
+export type PoliticaCierreCambios = Partial<Omit<PoliticaCierreEntrada, "accion_cierre">>;
+
+export interface ControlCierreEntrada {
+  tipo: TipoControlCierre;
+  riesgo_minimo: RiesgoMinimoCierre | null;
+  materialidad: string;
+}
+
+export interface PendienteDeCierre {
+  codigo: string | null;
+  numero: string | null;
+  titulo: string | null;
+  asunto: string | null;
+  ruta: string;
+}
+
+export interface ControlBloqueante {
+  tipo: TipoControlCierre;
+  etiqueta: string;
+  materialidad: string;
+  pendientes: number;
+  muestra: PendienteDeCierre[];
+  ruta_lista: string;
+}
+
+export interface DetalleBloqueoCierre {
+  politica_codigo: string;
+  politica_nombre: string;
+  proceso: string;
+  objeto_codigo: string;
+  total: number;
+  dueno: string;
+  controles: ControlBloqueante[];
+}
+
+export interface BloqueoCierre {
+  id: string;
+  instante: string;
+  politica_id: string | null;
+  politica_codigo: string | null;
+  accion_cierre: string | null;
+  objeto_tipo: string | null;
+  objeto_id: string | null;
+  objeto_codigo: string | null;
+  total: number | null;
+  usuario: string | null;
+}
+
+export interface BloqueosCierreListado {
+  items: BloqueoCierre[];
+  total: number;
+  pagina: number;
+  tamano: number;
+}
+
+export const CONSULTA_CIERRES = [...CONSULTA_GOBIERNO, "cierres"] as const;
+export const POR_PAGINA_BLOQUEOS = 20;
+
+export const ETIQUETAS_ESTADO_POLITICA_CIERRE: Record<EstadoPoliticaCierre, string> = {
+  BORRADOR: "Borrador",
+  VIGENTE: "Vigente",
+  RETIRADA: "Retirada",
+};
+
+export const ETIQUETAS_ACCION_CIERRE: Record<AccionCierre, string> = {
+  ORG02_CERRAR_ESTRUCTURA: "Cerrar estructura del ejercicio",
+  TRE02_CERRAR_PROGRAMA: "Cerrar programa financiero",
+};
+
+export const ETIQUETAS_TIPO_CONTROL_CIERRE: Record<TipoControlCierre, string> = {
+  HALLAZGOS_ABIERTOS: "Hallazgos abiertos",
+  ACTOS_SIN_EFICACIA: "Actos sin eficacia",
+};
+
+export const ETIQUETAS_RIESGO_CIERRE: Record<RiesgoMinimoCierre, string> = {
+  ALTO: "Alto",
+  MEDIO: "Medio o superior",
+  BAJO: "Cualquier riesgo",
+};
+
+export const ETIQUETAS_HISTORIA_CIERRE: Record<string, string> = {
+  CREADA: "Registrada",
+  ACTUALIZADA: "Modificada",
+  CONTROL_ANADIDO: "Control añadido",
+  CONTROL_RETIRADO: "Control quitado",
+  ACTIVADA: "Activada",
+  RETIRADA: "Retirada",
+};
+
+export function consultaDePoliticasCierre(filtros: { estado?: string; accion_cierre?: string }): string {
+  const busqueda = new URLSearchParams();
+  const estado = valorDeConsulta(filtros.estado);
+  if (estado) busqueda.set("estado", estado);
+  const accion = valorDeConsulta(filtros.accion_cierre);
+  if (accion) busqueda.set("accion_cierre", accion);
+  const cadena = busqueda.toString();
+  return cadena ? `?${cadena}` : "";
+}
+
+export function consultaDeBloqueosCierre(
+  filtros: { accion_cierre?: string; desde?: string; hasta?: string },
+  paginacion: { pagina?: number; tamano?: number } = {},
+): string {
+  const busqueda = new URLSearchParams();
+  const accion = valorDeConsulta(filtros.accion_cierre);
+  if (accion) busqueda.set("accion_cierre", accion);
+  const desde = valorDeConsulta(filtros.desde);
+  if (desde) busqueda.set("desde", desde);
+  const hasta = valorDeConsulta(filtros.hasta);
+  if (hasta) busqueda.set("hasta", hasta);
+  if (paginacion.pagina !== undefined) busqueda.set("pagina", String(paginacion.pagina));
+  if (paginacion.tamano !== undefined) busqueda.set("tamano", String(paginacion.tamano));
+  const cadena = busqueda.toString();
+  return cadena ? `?${cadena}` : "";
+}
+
+export function rutaDeObjetoCierre(tipo: string | null, id: string | null, codigo: string | null): string | null {
+  if (tipo === "GovernmentCashProgram" && id) return `/gobierno/tesoreria/programacion/${id}`;
+  if (tipo === "GovernmentStructure" && codigo) {
+    const coincidencia = /^EST-(\d{4})$/.exec(codigo);
+    if (coincidencia) return `/gobierno/estructura/${coincidencia[1]}`;
+  }
+  return null;
 }
 
 // TRE-01 · Cuentas bancarias públicas (GOV-TRE-001)

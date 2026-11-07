@@ -15,6 +15,8 @@ import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { formatearFecha } from "@/i18n";
 import { ConflictoSoD, detalleDeConflictoSod } from "@/modules/gobierno/sod/ConflictoSoD";
+import { BloqueoDeCierre, detalleDeBloqueoDeCierre } from "@/modules/gobierno/cierres/BloqueoDeCierre";
+import type { DetalleBloqueoCierre } from "@/modules/gobierno/api";
 import { formatMoney } from "@/lib/format";
 import {
   CONSULTA_CAJA,
@@ -72,6 +74,7 @@ export function ProgramaPage(): React.JSX.Element {
   const [motivo, setMotivo] = useState("");
   const [conflictoSod, setConflictoSod] = useState<ReturnType<typeof detalleDeConflictoSod>>(null);
   const [alerta, setAlerta] = useState<string | null>(null);
+  const [bloqueoCierre, setBloqueoCierre] = useState<DetalleBloqueoCierre | null>(null);
 
   const recargar = () => {
     void queryClient.invalidateQueries({ queryKey: [...CONSULTA_CAJA] });
@@ -84,6 +87,11 @@ export function ProgramaPage(): React.JSX.Element {
   };
 
   const alFallar = (e: unknown) => {
+    const detalleBloqueo = detalleDeBloqueoDeCierre(e);
+    if (detalleBloqueo) {
+      setBloqueoCierre(detalleBloqueo);
+      return;
+    }
     const detalleConflicto = detalleDeConflictoSod(e);
     if (detalleConflicto) {
       setConflictoSod(detalleConflicto);
@@ -296,6 +304,7 @@ export function ProgramaPage(): React.JSX.Element {
       );
       cerrarPanel();
       notify({ type: "success", title: "Programa cerrado" });
+      setBloqueoCierre(null);
     } catch {
       // el error ya fue manejado
     } finally {
@@ -376,6 +385,9 @@ export function ProgramaPage(): React.JSX.Element {
 
       {conflictoSod ? (
         <ConflictoSoD detalle={conflictoSod} onCerrar={() => setConflictoSod(null)} />
+      ) : null}
+      {bloqueoCierre ? (
+        <BloqueoDeCierre detalle={bloqueoCierre} onCerrar={() => setBloqueoCierre(null)} />
       ) : null}
 
       <section aria-labelledby="datos-programa-titulo" className="mb-8">

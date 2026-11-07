@@ -25,6 +25,7 @@ from app.modules.government.models import (
     GovernmentAuditSampleItem,
     GovernmentBankAccount,
     GovernmentCashProgram,
+    GovernmentClosurePolicy,
     GovernmentEntity,
     GovernmentFinding,
     GovernmentNotification,
@@ -57,6 +58,7 @@ PROCESOS: list[tuple[str, str, str]] = [
     ("CTL-01", "Segregación de funciones", "gov-ctl-01"),
     ("TRE-01", "Cuentas bancarias públicas", "gov-tre-01"),
     ("TRE-02", "Programación financiera", "gov-tre-02"),
+    ("CTL-10", "Controles de cierre", "gov-ctl-10"),
 ]
 _PROCESO_POR_OWNER_SPEC = {owner_spec: (codigo, nombre) for codigo, nombre, owner_spec in PROCESOS}
 _PROCESO_NOMBRE = {codigo: nombre for codigo, nombre, _ in PROCESOS}
@@ -352,6 +354,16 @@ def _objeto_desde_evento(db: Session, event: AuditEvent, ctx: CompanyContext) ->
         )
         return None if programa is None else AuditoriaObjeto(
             tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/tesoreria/programacion/{objeto_id}", capacidad="gobierno_caja:view"
+        )
+    if event.entity_type == "GovernmentClosurePolicy":
+        politica = db.scalar(
+            select(GovernmentClosurePolicy).where(
+                GovernmentClosurePolicy.id == objeto_id,
+                GovernmentClosurePolicy.company_id == empresa,
+            )
+        )
+        return None if politica is None else AuditoriaObjeto(
+            tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/cierres/{objeto_id}", capacidad="gobierno_cierre:view"
         )
     return None
 

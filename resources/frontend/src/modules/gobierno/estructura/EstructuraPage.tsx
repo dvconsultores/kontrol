@@ -20,6 +20,8 @@ import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { ConflictState } from "@/components/ConflictState";
 import { AdjuntosPanel } from "@/modules/documentos/AdjuntosPanel";
+import { BloqueoDeCierre, detalleDeBloqueoDeCierre } from "@/modules/gobierno/cierres/BloqueoDeCierre";
+import type { DetalleBloqueoCierre } from "@/modules/gobierno/api";
 import { formatearFecha } from "@/i18n";
 import { formatearFechaDeNegocio, hoyDeNegocio } from "@/lib/fecha-de-negocio";
 import {
@@ -82,6 +84,7 @@ export function EstructuraPage(): React.JSX.Element {
   const [erroresServidor, setErroresServidor] = useState<Record<string, string[]>>({});
   const [confirmar, setConfirmar] = useState<Confirmacion>(null);
   const [conflicto, setConflicto] = useState(false);
+  const [bloqueoCierre, setBloqueoCierre] = useState<DetalleBloqueoCierre | null>(null);
   const [busqueda, setBusqueda] = useState("");
   const [tipo, setTipo] = useState("");
   const [estado, setEstado] = useState("");
@@ -262,11 +265,17 @@ export function EstructuraPage(): React.JSX.Element {
         ifMatch: String(estructura.version),
       });
       notify({ type: "success", title: "Ejercicio cerrado" });
+      setBloqueoCierre(null);
       setPanel({ tipo: "ninguno" });
       setErroresServidor({});
       recargar();
     } catch (e) {
-      manejarError(e);
+      const detalleBloqueo = detalleDeBloqueoDeCierre(e);
+      if (detalleBloqueo) {
+        setBloqueoCierre(detalleBloqueo);
+      } else {
+        manejarError(e);
+      }
     } finally {
       setConfirmar(null);
     }
@@ -401,6 +410,9 @@ export function EstructuraPage(): React.JSX.Element {
         }
         actions={accionesCabecera}
       />
+      {bloqueoCierre ? (
+        <BloqueoDeCierre detalle={bloqueoCierre} onCerrar={() => setBloqueoCierre(null)} />
+      ) : null}
 
       {estructura.estado === "VIGENTE" && puedeCerrar && cierreDeshabilitado && (
         <p id="nota-cierre" className="mb-4 text-sm text-text-600">

@@ -271,6 +271,39 @@ describe("EstructuraPage", () => {
     expect(await screen.findByText(/Otra persona cambió la estructura/)).toBeInTheDocument();
   });
 
+  it("GES-CIE · bloqueo material muestra el panel", async () => {
+    capacidades = new Set(["gobierno_estructura:edit", "gobierno_estructura:close"]);
+    responderEstructura(ESTRUCTURA("VIGENTE", [], 2025), (ruta, opciones) => {
+      if (ruta === "/gobierno/estructuras/2025/cerrar" && opciones?.method === "POST") {
+        return Promise.reject(
+          new ApiError(409, {
+            code: "GOV_MATERIAL_CLOSE_BLOCKED",
+            message: "x",
+            details: {
+              politica_codigo: "PC-001",
+              politica_nombre: "Política de prueba",
+              proceso: "ORG02_CERRAR_ESTRUCTURA",
+              objeto_codigo: "EST-2025",
+              total: 1,
+              dueno: "Control Interno",
+              controles: [],
+            },
+          }),
+        );
+      }
+      return undefined;
+    });
+    montar("/gobierno/estructura/2025");
+    const cerrar = await screen.findByRole("button", { name: "Cerrar ejercicio" });
+    expect(cerrar).toBeEnabled();
+    await userEvent.click(cerrar);
+    expect(await screen.findByText("¿Cerrar la estructura de 2025?")).toBeInTheDocument();
+    const dialogo = await screen.findByRole("dialog");
+    await userEvent.click(within(dialogo).getByRole("button", { name: "Cerrar ejercicio" }));
+    expect(await screen.findByText("Cierre bloqueado por control material")).toBeInTheDocument();
+    expect(screen.getByText(/PC-001/)).toBeInTheDocument();
+  });
+
   it("GES-09 · cierre no disponible para el ejercicio en curso", async () => {
     capacidades = new Set(["gobierno_estructura:edit", "gobierno_estructura:close"]);
     responderEstructura(ESTRUCTURA("VIGENTE", []));

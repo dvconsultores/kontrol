@@ -23,6 +23,7 @@ from app.modules.government.models import (
     GovernmentCashProgramVersion,
 )
 from app.modules.government.service_auditoria import _instante, _usuarios_por_ids
+from app.modules.government.service_cierres import evaluar_cierre
 from app.modules.government.service_sod import evaluar_antes_de_actuar
 from app.shared.audit import record_audit
 from app.shared.clock import hoy_de_negocio
@@ -1094,6 +1095,7 @@ def cerrar(
             "Ya hay una reprogramación abierta",
         )
     evaluar_antes_de_actuar(db, ctx, "TRE02_CERRAR", ENTIDAD_PROGRAMA, str(programa.id))
+    evaluar_cierre(db, ctx, "TRE02_CERRAR_PROGRAMA", ENTIDAD_PROGRAMA, str(programa.id), programa.codigo, programa.ejercicio)
     version_vigente = _vigente_o_error(versiones)
     version_vigente.estado = "CERRADA"
     programa.estado = "CERRADO"

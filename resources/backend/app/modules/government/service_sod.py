@@ -76,6 +76,16 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "TRE02_CERRAR": ("Cerrar el programa", "GOV_CASH_PROGRAM_CLOSED", False),
         },
     },
+    "CTL-10": {
+        "nombre": "Controles de cierre",
+        "objeto": "GovernmentClosurePolicy",
+        "objeto_nombre": "política",
+        "acciones": {
+            "CTL10_REGISTRAR": ("Registrar la política", "GOV_CLOSURE_POLICY_CREATED", True),
+            "CTL10_ACTIVAR": ("Activar la política", "GOV_CLOSURE_POLICY_ACTIVATED", False),
+            "CTL10_RETIRAR": ("Retirar la política", "GOV_CLOSURE_POLICY_RETIRED", False),
+        },
+    },
 }
 
 

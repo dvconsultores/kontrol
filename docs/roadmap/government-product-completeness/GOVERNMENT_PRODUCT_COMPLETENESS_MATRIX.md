@@ -157,7 +157,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | CTL-07 | Alertas de operaciones atípicas | P1 | Control Interno | GOV-CTL-009 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 | CTL-08 | Historial de cambios de maestros sensibles | P0 | Control Interno | GOV-CTL-010 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Auditoría de cambios privada |
 | CTL-09 | Actas de entrega por cambio de responsable o autoridad | P0 | Máxima autoridad | GOV-CTL-011 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
-| CTL-10 | Controles materiales que impiden cerrar ejercicio o proceso | P0 | Control Interno | GOV-CTL-012 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
+| CTL-10 | Controles materiales que impiden cerrar ejercicio o proceso | P0 | Control Interno | GOV-CTL-012 | ✓ ✓ ✓ ✓ ✓ ✓ · · ✓ ✓ ✓ | 9/9 | OWNER_UAT_READY | — | CIE-E2E-01..03 (×3 navegadores) + HUMO-UAT-01 | — |
 
 ## Gobierno Digital: trámites e interoperabilidad
 
