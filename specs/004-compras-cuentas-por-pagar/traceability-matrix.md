@@ -249,3 +249,9 @@ encontró lo que las suites aisladas no podían ver.
 | FR-019-021 | Sin cambio | `hechoDeclarado`, `SelectorDeHecho` | `RecepcionesProceso.test.tsx` |
 | FR-019-022, FR-019-023 | `_requiere_lineas_integras`, `_requiere_almacen_operable` | Selector de almacén | `test_recepcion_proceso_completo.py` |
 | FR-019-024 | `registrar_conformidad` | Botón «no conforme» | `test_recepcion_proceso_completo.py`, `RecepcionesProceso.test.tsx` |
+
+## Delta RECEPCION-FUNCTIONAL-CLOSURE (2026-11-07)
+
+| Requisito | Servicio | API | Frontend | Pruebas |
+|---|---|---|---|---|
+| FR-019-025 a FR-019-030 | `_transicionar_recepcion`, `enviar_a_calidad`, `accept_receipt`, `cerrar_recepcion`, `anular_recepcion`, `receipt_allowed_actions` | `/quality`, `/close`, `/cancel` | `RecepcionesPage.tsx` | `test_recepcion_maquina_estados.py`, `test_spec019_receipt.py`, `RecepcionesMaquina.test.tsx`, `e2e/receipts.spec.ts` |

@@ -102,6 +102,12 @@ Se reconcilian los FR-004-030..035 vigentes de la recepción y se añaden los pr
 | FR-019-022 | Aceptar revalida todas las líneas antes de cualquier efecto | delta |
 | FR-019-023 | Solo un almacén activo recibe | delta |
 | FR-019-024 | El veredicto de conformidad se da por pantalla, se guarda y se audita | 7 |
+| FR-019-025 | La recepción recorre FR-004-031 entera | delta |
+| FR-019-026 | Calidad toma la recepción confirmada y el veredicto solo se da ahí | delta |
+| FR-019-027 | Aceptar distingue aceptación total y parcial | delta |
+| FR-019-028 | Cierre tras confirmar inventario o sin incidencias vivas | delta |
+| FR-019-029 | Un borrador se anula con motivo | delta |
+| FR-019-030 | Toda transición queda auditada y la pantalla sigue al backend | delta |
 
 ---
 
@@ -257,3 +263,7 @@ La línea se elige de la orden de la recepción, el producto se deriva de ella y
 ## Delta RECEPCION-FUNCTIONAL-COMPLETION (2026-11-07)
 
 Orden completa, hechos declarados, aceptación revalidada, almacén activo y veredicto auditado. Requisitos FR-019-019 a FR-019-024. Detalle: `spec019-functional-completion-delta.md`, `evidence/recepcion-functional-completion/`.
+
+## Delta RECEPCION-FUNCTIONAL-CLOSURE (2026-11-07)
+
+Máquina de FR-004-031 completa y auditada. Requisitos FR-019-025 a FR-019-030. Detalle: `spec019-functional-closure-delta.md`, `evidence/recepcion-functional-closure/`.

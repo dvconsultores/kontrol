@@ -4275,3 +4275,9 @@ El sponsor pospuso **CATALOGO-SELECTORES-PRIMERA-PAGINA-01** y ordenó **RECEPCI
 ## 2026-11-07 · Recepciones completa en local, E2E pendiente
 
 `NEXT TECHNICAL CYCLE` de P2 = **RECEPCION-ANULACION-Y-TRAZA-03**: el sponsor no abre otra vertical con huecos internos de Recepciones. Cuando exista PostgreSQL, T061 va primero.
+
+## 2026-11-07 · Máquina de estados de la recepción completa en local
+
+El sponsor corrigió la clasificación anterior (`OVERSTATED`) y ordenó **RECEPCION-FUNCTIONAL-CLOSURE-03**. Queda sin huecos internos de producto conocidos. Las puertas pendientes son externas: E2E real y escaneo de filas contradictorias ya aceptadas, ambas con PostgreSQL.
+
+`NEXT TECHNICAL CYCLE` de P2 = **CATALOGO-SELECTORES-PRIMERA-PAGINA-01**, con Recepciones primero en cuanto exista PostgreSQL. Cuando exista PostgreSQL, T061 va antes que todo.

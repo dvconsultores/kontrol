@@ -128,3 +128,20 @@ Sustituye a la sección 9: el sponsor pospuso CATALOGO-SELECTORES-PRIMERA-PAGINA
 | T061 y certificación T052 | — | 001 | PostgreSQL | — | No | PostgreSQL | — | Alto | No | Sin entorno |
 
 Base de la línea pública tras la fusión: `fba4a31`. Migraciones: cabeza única `0077_fusion_backup_org04`. OpenAPI: 707 operaciones.
+
+## 11. Matriz de candidatos tras cerrar la máquina de la recepción (2026-11-07)
+
+| DEBT | PRIORITY | OWNER_SPEC | DEPENDENCIES | ROOT_CAUSE_PROVEN | OWNER_DECISION_REQUIRED | EXTERNAL_GATE | OVERLAP | PRODUCT_IMPACT | ELIGIBLE | WHY |
+|---|---|---|---|---|---|---|---|---|---|---|
+| CATALOGO-SELECTORES-PRIMERA-PAGINA | 1 | 002 | Patrón de búsqueda de órdenes | Por demostrar | No | Solo E2E | Medio | Alto: 14 pantallas | **Sí** | **SELECTED_NEXT_ENTERPRISE_TARGET**: Recepciones sin huecos internos de producto |
+| Certificación runtime de Recepciones | — | 004/019 | PostgreSQL | — | No | PostgreSQL | — | Alto | No | Primera en cuanto haya entorno, tras T061 |
+| TERCEROS-SELECTORES-PRIMERA-PAGINA | 2 | 002 | Patrón común | Sin medir | No | Solo E2E | Medio | Medio | No todavía | Después del catálogo |
+| TRASLADOS-REQUIRES-LOT-NO-EXIGIDO | 3 | 008-regulación | Requisito | Parcial | Posible | No | Bajo | A medir | No todavía | Hay que leer FR-008-022 |
+| IDENTIFICADORES-EN-TEXTO-LIBRE | 3 | Varias | Por campo | Parcial | No | Solo E2E | Medio | Medio | No todavía | Falta clasificar |
+| KONTROL-PY-UPDATE-NO-OP | 4 | 052 | Ninguna | Sí | No | Docker | Bajo | Medio | Sí | No bloquea el día a día |
+| ALMACENES-LISTADO-PRIMERA-PAGINA | 5 | 008 | Paginación | Sí | Sí | No | Medio | Bajo | No | Exige decisión |
+| T052-A1-CLI-AUDIT-TEST | 6 | 001 | T052 | Sí | No | No | Sí | Bajo | No | Política de reintentos |
+| RESTORE-LEDGER-RESET | 6 | 001 | Restauración | Sí | No | PostgreSQL | Sí | Medio | No | Mismo bloqueo |
+| T061 y T052 | — | 001 | PostgreSQL | — | No | PostgreSQL | — | Alto | No | Sin entorno |
+
+OpenAPI: 709 operaciones. Catálogo de auditoría: 338 entradas.

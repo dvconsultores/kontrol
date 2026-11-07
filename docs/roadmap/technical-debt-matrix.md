@@ -2597,3 +2597,18 @@ Hallazgos nuevos, sin corregir: KONTROL-PY-UPDATE-NO-OP (MEDIUM propuesta), DOC-
 | RECEPCION-LOTE-REGULATORIO (nueva) | OPEN · POSSIBLE_DEFECT: `requires_lot` no se exige en ningún punto |
 
 Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/recepcion-functional-completion/`.
+
+## Actualización 2026-11-07 (9) — máquina de estados de la recepción
+
+| Deuda | Estado |
+|---|---|
+| RECEPCION-ANULAR-BORRADOR | **`TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`**: anulación de borrador con motivo |
+| RECEPCION-CIERRE-SIN-OPERACION | **`TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`**: cierre manual con las condiciones de las Specs 020 y 021 |
+| RECEPCION-CONFIRMAR-SIN-AUDITORIA | **`TECHNICAL_FIX_COMPLETE_LOCAL`**: `RECEIPT_TRANSITIONED` en toda transición |
+| RECEPCION-QUALITY-PENDING-INALCANZABLE (nueva y cerrada) | **`TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`** |
+| RECEPCION-ACEPTACION-PARCIAL-INALCANZABLE (nueva y cerrada) | **`TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`** |
+| RECEPCION-LOTE-REGULATORIO | **NOT_IN_SCOPE** de Recepciones: `requires_lot` es de la Spec 008 de traslados y solo se evalúa en DESPACHO |
+| TRASLADOS-REQUIRES-LOT-NO-EXIGIDO (nueva) | OPEN · POSSIBLE_DEFECT · 008-regulación: el perfil declara `requires_lot` y la evaluación del despacho no lo usa |
+| RECEPCION-LINEAS-CONTRADICTORIAS-ACEPTADAS | OPEN · EXTERNAL_GATE: escaneo de solo lectura preparado, sin base disponible |
+
+Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/recepcion-functional-closure/`.
