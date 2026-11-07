@@ -1,8 +1,10 @@
 """CLI operativa de copias de seguridad y restauración.
 
 Uso:
-    python -m app.ops.backup create --dest DIR [--key-file PATH] [--pg-bin-dir DIR] [--no-audit]
-    python -m app.ops.backup verify BUNDLE [--key-file PATH] [--no-audit]
+    python -m app.ops.backup create --dest DIR [--key-file PATH] [--pg-bin-dir DIR] [--no-audit] [--no-ledger]
+    python -m app.ops.backup verify BUNDLE [--key-file PATH] [--no-audit] [--no-ledger]
+    python -m app.ops.backup hold BACKUP_ID
+    python -m app.ops.backup release BACKUP_ID
     python -m app.ops.backup restore BUNDLE --expected-installation-id ID [--key-file PATH] [--pg-bin-dir DIR] [--storage-root DIR] [--installation-volume DIR]
 
 La clave de copia se obtiene exclusivamente de la variable de entorno
@@ -34,8 +36,9 @@ from typing import NoReturn
 
 from app.core.config import get_settings
 from app.ops.backup_bundle import BundleError, BundleReader
-from app.ops.backup_create import audit_backup_event, create_backup
+from app.ops.backup_create import BackupResult, audit_backup_event, create_backup
 from app.ops.backup_crypto import BackupCryptoError, load_key
+from app.ops.backup_job import copia_manual, identificador_de_paquete, registrar_verificacion, retener_copia
 from app.ops.backup_pg import BackupError
 from app.ops.backup_restore import RestoreError, restore_backup
 
@@ -110,11 +113,19 @@ def _build_parser() -> _Parser:
     create_p.add_argument("--key-file", help="Fichero con la clave de copia")
     create_p.add_argument("--pg-bin-dir", help="Directorio de binarios de PostgreSQL")
     create_p.add_argument("--no-audit", action="store_true", help="No registrar auditoría")
+    create_p.add_argument("--no-ledger", action="store_true", help="No registrar en el ledger (uso interno del planificador)")
 
     verify_p = sub.add_parser("verify", help="Verifica un paquete de copia", allow_abbrev=False)
     verify_p.add_argument("bundle", help="Ruta del paquete de copia")
     verify_p.add_argument("--key-file", help="Fichero con la clave de copia")
     verify_p.add_argument("--no-audit", action="store_true", help="No registra evento de auditoría")
+    verify_p.add_argument("--no-ledger", action="store_true", help="No registrar en el ledger (uso interno del planificador)")
+
+    hold_p = sub.add_parser("hold", help="Retiene una copia", allow_abbrev=False)
+    hold_p.add_argument("backup_id", help="Identificador de la copia")
+
+    release_p = sub.add_parser("release", help="Suelta la retención de una copia", allow_abbrev=False)
+    release_p.add_argument("backup_id", help="Identificador de la copia")
 
     restore_p = sub.add_parser("restore", help="Restaura una copia de seguridad", allow_abbrev=False)
     restore_p.add_argument("bundle", help="Ruta del paquete de copia")
@@ -149,18 +160,32 @@ def main(argv: list[str] | None = None) -> int:
     command = args.command
 
     try:
+        if command in {"hold", "release"}:
+            encontrada = retener_copia(settings.db_url, args.backup_id, command == "hold")
+            _print_result({"command": command, "status": "OK" if encontrada else "NOT_FOUND", "backup_id": args.backup_id})
+            return EXIT_OK if encontrada else EXIT_OPERATIONAL
+
         key = load_key(key_file=args.key_file)
 
         if command == "create":
             _print_line(f"Creando copia en {args.dest}...")
-            creado = create_backup(
-                db_url=settings.db_url,
-                storage_root=Path(settings.storage_path),
-                destination_dir=Path(args.dest),
-                key=key,
-                pg_bin_dir=_pg_bin_dir(args),
-                audit=not args.no_audit,
-            )
+
+            def _crear() -> BackupResult:
+                return create_backup(
+                    db_url=settings.db_url,
+                    storage_root=Path(settings.storage_path),
+                    destination_dir=Path(args.dest),
+                    key=key,
+                    pg_bin_dir=_pg_bin_dir(args),
+                    audit=not args.no_audit,
+                )
+
+            if args.no_ledger:
+                creado = _crear()
+            else:
+                with copia_manual(settings.db_url) as registro:
+                    creado = _crear()
+                    registro.creada(creado.backup_id, creado.snapshot_at_utc, creado.path, creado.duration_s)
             _print_line(f"Copia creada: {creado.path}")
             _print_result(
                 {
@@ -190,6 +215,8 @@ def main(argv: list[str] | None = None) -> int:
                     alembic_revision = str(manifest.get("alembic_revision", ""))
                     objetos = manifest.get("objects", [])
                     objects = len(objetos) if isinstance(objetos, list) else 0
+                    if not args.no_ledger:
+                        registrar_verificacion(settings.db_url, backup_id, True, None)
                     audited = False
                     if not getattr(args, "no_audit", False):
                         audited = audit_backup_event(
@@ -244,6 +271,8 @@ def main(argv: list[str] | None = None) -> int:
     except (BackupCryptoError, BundleError, RestoreError, BackupError) as exc:
         code = getattr(exc, "code", "UNKNOWN")
         exit_code = exit_code_for(exc)
+        if command == "verify" and not getattr(args, "no_ledger", False):
+            registrar_verificacion(settings.db_url, identificador_de_paquete(Path(args.bundle)), False, str(code))
         if command == "verify" and not getattr(args, "no_audit", False):
             audit_backup_event(
                 settings.db_url,

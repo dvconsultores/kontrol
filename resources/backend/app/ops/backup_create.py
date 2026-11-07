@@ -359,7 +359,10 @@ def create_backup(
                     ],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.DEVNULL,
-                    env={**os.environ, **libpq_env(db_url)},
+                    env={
+                        **{k: v for k, v in os.environ.items() if k != "KONTROL_BACKUP_KEY"},
+                        **libpq_env(db_url),
+                    },
                 )
                 try:
                     assert proc.stdout is not None

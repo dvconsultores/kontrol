@@ -99,7 +99,9 @@ def cmd_scheduler_tick(_args: argparse.Namespace) -> int:
     lo decide la orden dentro del backend de esta instalación. Devuelve su código
     de salida (0 completado u omitido, 2 con errores, 1 fallo operacional).
     """
-    return _run(["docker", "compose", "-f", str(COMPOSE), "exec", "-T", "backend", *SCHEDULER_TICK])
+    return _run(
+        ["docker", "compose", "-f", str(COMPOSE), "exec", "-T", "-e", "KONTROL_BACKUP_KEY", "backend", *SCHEDULER_TICK]
+    )
 
 
 def main() -> int:

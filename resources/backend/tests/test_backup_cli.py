@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -16,6 +19,17 @@ from app.ops.backup_restore import RestoreError
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 BACKEND = REPO_ROOT / "resources" / "backend"
+
+
+@pytest.fixture(autouse=True)
+def _sin_ledger(monkeypatch: pytest.MonkeyPatch) -> None:
+    """La CLI registra en el ledger; aquí se prueba la orden, no la base."""
+
+    @contextmanager
+    def nulo(_db_url: str) -> Iterator[SimpleNamespace]:
+        yield SimpleNamespace(creada=lambda *a: None)
+
+    monkeypatch.setattr(backup_cli, "copia_manual", nulo)
 
 
 @pytest.mark.parametrize(

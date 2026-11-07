@@ -74,7 +74,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("slot", name="uq_backup_runs_slot"),
         sa.UniqueConstraint("backup_id", name="uq_backup_runs_backup_id"),
-        sa.CheckConstraint("status IN ('RUNNING', 'VERIFIED_LOCAL', 'VERIFIED_DESTINATION', 'VERIFIED_DURABLE', 'FAILED', 'ABANDONED', 'PURGED')", name="status"),
+        sa.CheckConstraint("status IN ('RUNNING', 'CREATED', 'VERIFIED_LOCAL', 'VERIFIED_DESTINATION', 'VERIFIED_DURABLE', 'FAILED', 'ABANDONED', 'PURGED')", name="status"),
         sa.CheckConstraint("origin IN ('MANUAL', 'SCHEDULED')", name="origin"),
         sa.CheckConstraint("create_state IN ('PENDING', 'STARTED', 'COMPLETED', 'FAILED')", name="create_state"),
         sa.CheckConstraint("verify_state IN ('PENDING', 'STARTED', 'SUCCEEDED', 'FAILED')", name="verify_state"),

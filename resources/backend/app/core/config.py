@@ -84,6 +84,7 @@ class Settings(BaseSettings):
     # Almacenamiento
     storage_path: str = "/data/storage"
     backup_path: str = "/data/backups"
+    backup_destinations_path: str = "/data/backup-destinations"
     max_upload_bytes: int = 25 * 1024 * 1024
 
     # Analizador antimalware documental (Spec 046; OBS-09, opción B de la dueña). La elección es EXPLÍCITA:

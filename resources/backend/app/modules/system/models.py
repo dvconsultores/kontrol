@@ -97,7 +97,7 @@ class OutboxEvent(UUIDMixin, TimestampMixin, Base):
 # La tabla `file_metadata` pasó a llamarse `stored_files` en la migración 0023;
 # el modelo vive ahora donde vive su comportamiento, no aquí.
 
-ESTADOS_COPIA = ("RUNNING", "VERIFIED_LOCAL", "VERIFIED_DESTINATION", "VERIFIED_DURABLE", "FAILED", "ABANDONED", "PURGED")
+ESTADOS_COPIA = ("RUNNING", "CREATED", "VERIFIED_LOCAL", "VERIFIED_DESTINATION", "VERIFIED_DURABLE", "FAILED", "ABANDONED", "PURGED")
 ORIGENES_COPIA = ("MANUAL", "SCHEDULED")
 ETAPAS_CREACION = ("PENDING", "STARTED", "COMPLETED", "FAILED")
 ETAPAS_VERIFICACION = ("PENDING", "STARTED", "SUCCEEDED", "FAILED")

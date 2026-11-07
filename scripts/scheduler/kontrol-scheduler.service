@@ -12,6 +12,8 @@ Requires=docker.service
 # instantes UTC, pero si algún día uno pregunta por el día de negocio, que no lo
 # herede del anfitrión (Spec 001 · POLICY-CLOCK-LOCAL).
 Environment=TZ=America/Caracas
+# La clave de copia solo llega al tick (T052): fichero root:root 0600, fuera del repositorio.
+EnvironmentFile=-@KONTROL_DIR@/backup.env
 Type=oneshot
 WorkingDirectory=@KONTROL_DIR@
 ExecStart=/usr/bin/env python3 @KONTROL_DIR@/kontrol.py scheduler-tick
