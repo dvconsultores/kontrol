@@ -26,3 +26,16 @@ T043: `test_lc10_mas_de_cinco_pendientes`, con seis pendientes: muestra de 5, `p
 ## Pila de prueba de la dueña
 
 Relevada a `6fa6d4f`, puertos 18100 / 15273 / 18110, corrida `r20261107t030704p1043956nbac55d`, sin conexiones vivas que respetar. HUMO-UAT-01: 1/1. `/login` → 200; API sin sesión → 401. UAT_CREDENTIAL_HANDOFF = LOCAL_SECURE_FILE, permisos 600. OWNER_UAT_ACCESSIBLE = YES. OWNER_ACCEPTED = pendiente.
+
+## Axe y responsive con el filtro contextual (fase A de CTL10-EVIDENCE-FINAL)
+
+Medido dentro de CIE-E2E-01 y CIE-E2E-02, tras llegar por el flujo real al panel de bloqueo y pulsar «Ir a la lista», con el filtro activo: hallazgos con `abiertos=true&riesgo_minimo=MEDIO` y actos con `anio` y `estado=EMITIDO`. Sin cambio de producto.
+
+| Medida | Resultado |
+|---|---|
+| CTL10_CONTEXT_FILTER_AXE_CHROMIUM · FIREFOX · WEBKIT | PASS · PASS · PASS |
+| CTL10_CONTEXT_FILTER_RESPONSIVE_1280 · 768 · 320 | PASS · PASS · PASS, sin desbordamiento horizontal |
+
+CTL10_CONTEXT_FILTER_AXE = PASS. CTL10_STRICT_EVIDENCE_CONVERGENCE = YES.
+
+E2E completa de CTL-10 repetida sobre el árbol final tras cambiar la especificación: `r20261107t040356p1058219nfd7793`, 9/9 en tres navegadores, `--retries=0`. La regresión de Gobierno y la canónica no se repitieron: solo cambió esa prueba, no el producto.
