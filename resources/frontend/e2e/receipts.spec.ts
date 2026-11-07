@@ -110,6 +110,91 @@ test.describe("Spec 019 — recepción física", () => {
     }).toBe(ultimo.id);
   });
 
+  test("la operadora elige la línea y el producto sale de ella", async ({ page, request }) => {
+    const c = await ctx(request);
+    const m = await mundo(request, c, `${RUN}L`);
+
+    const segundo = await post(request, c, "/maestros/catalogos/items", {
+      code: `P2-${RUN}L`,
+      name: `Segundo ${RUN}L`,
+      item_type: "PRODUCT",
+    });
+    const proveedor = await post(request, c, "/maestros/terceros", {
+      code: `PRV2-${RUN}L`,
+      name: "Proveedor E2E",
+      roles: ["PROVEEDOR"],
+    });
+    const orden = await post(request, c, "/purchasing/orders", {
+      code: `OC2-${RUN}L`,
+      supplier_id: proveedor.id,
+      currency: "VED",
+    });
+    const lineaA = await post(request, c, `/purchasing/orders/${orden.id}/lines`, {
+      product_id: m.prod,
+      quantity_ordered: 100,
+      unit_price: 5,
+    });
+    const lineaB = await post(request, c, `/purchasing/orders/${orden.id}/lines`, {
+      product_id: segundo.id,
+      quantity_ordered: 40,
+      unit_price: 7,
+    });
+    for (const target of ["SUBMITTED", "APPROVED"]) {
+      await post(request, c, `/purchasing/orders/${orden.id}/transition`, { target });
+    }
+    const recepcion = await post(request, c, "/purchasing/receipts", {
+      code: `REC-${RUN}L`,
+      order_id: orden.id,
+      warehouse_id: m.alm,
+    });
+
+    await uiLogin(page);
+    await irARecepciones(page);
+    const fila = page.getByRole("row").filter({ hasText: `REC-${RUN}L` });
+    await fila.getByRole("button", { name: "detalle" }).click();
+    await expect(page.getByRole("heading", { name: `Inspección de REC-${RUN}L` })).toBeVisible({ timeout: 15000 });
+
+    const linea = page.getByLabel(/^Línea de la orden/);
+    await expect(linea.locator("option", { hasText: `P-${RUN}L` })).toHaveCount(1, { timeout: 15000 });
+    await expect(linea.locator("option", { hasText: `P2-${RUN}L` })).toHaveCount(1);
+    await linea.selectOption(lineaA.id as string);
+    await expect(page.getByLabel(/^Producto/)).toHaveValue(new RegExp(`^P-${RUN}L`));
+    await page.getByLabel(/^Presentación/).selectOption(m.caja);
+    await page.getByLabel(/^Recibido/).fill("2");
+    await page.getByRole("button", { name: "Registrar", exact: true }).click();
+    await expect
+      .poll(async () => {
+        const detalle = await get(request, c, `/purchasing/receipts/${recepcion.id}`);
+        return (detalle.lines as Array<unknown>).length;
+      })
+      .toBe(1);
+
+    await linea.selectOption(lineaB.id as string);
+    await expect(page.getByLabel(/^Producto/)).toHaveValue(new RegExp(`^P2-${RUN}L`));
+    await expect(page.getByLabel(/^Presentación/).locator(`option[value="${m.caja}"]`)).toHaveCount(0);
+    await page.getByLabel(/^Recibido/).fill("3");
+    await page.getByRole("button", { name: "Registrar", exact: true }).click();
+    await expect
+      .poll(async () => {
+        const detalle = await get(request, c, `/purchasing/receipts/${recepcion.id}`);
+        return (detalle.lines as Array<unknown>).length;
+      })
+      .toBe(2);
+
+    const detalle = await get(request, c, `/purchasing/receipts/${recepcion.id}`);
+    const lines = detalle.lines as Array<{
+      order_line_id: string;
+      product_id: string;
+      presentation_id: string | null;
+    }>;
+    const registradaA = lines.find((l) => l.order_line_id === lineaA.id);
+    const registradaB = lines.find((l) => l.order_line_id === lineaB.id);
+    expect(registradaA?.product_id).toBe(m.prod);
+    expect(registradaA?.presentation_id).toBe(m.caja);
+    expect(registradaB?.product_id).toBe(segundo.id);
+    expect(registradaB?.presentation_id).toBeNull();
+  });
+
   test("dos cajas de doce entran al inventario como veinticuatro unidades", async ({ page, request }) => {
     const c = await ctx(request);
     const m = await mundo(request, c, `${RUN}A`);

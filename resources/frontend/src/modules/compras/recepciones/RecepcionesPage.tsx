@@ -10,7 +10,7 @@
  * presentación con la que llegó la mercancía, los bultos que bajaron y lo que
  * se vio al abrirlos solo existen si alguien los anotó.
  */
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
@@ -22,6 +22,8 @@ import type {
   GoodsReceiptDetail,
   GoodsReceiptSummary,
   PagedResult,
+  PurchaseOrderLine,
+  PurchaseOrderSummary,
 } from "@/api/types";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
@@ -35,12 +37,6 @@ import { TextInput } from "@/components/TextInput";
 import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
 import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
 import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
-
-interface PurchaseOrderSummary {
-  id: string;
-  code: string;
-  status: string;
-}
 
 interface PresentationSummary {
   id: string;
@@ -60,6 +56,11 @@ const ESTADOS: Record<string, string> = {
 };
 
 const columnHelper = createColumnHelper<GoodsReceiptSummary>();
+
+// Lo que falta por recibir, sin negativos: un sobrante no deja saldo pendiente.
+function pendienteDeLinea(linea: PurchaseOrderLine): number {
+  return Math.max(0, Number((Number(linea.quantity_ordered) - Number(linea.quantity_received)).toFixed(6)));
+}
 
 /** Sí / no / sin comprobar, para las cuatro comparaciones de la etapa 4. */
 function marca(valor: boolean | null | undefined): string {
@@ -83,7 +84,6 @@ export function RecepcionesPage(): React.JSX.Element {
 
   const [selected, setSelected] = useState<string>("");
   const [lineOrderLine, setLineOrderLine] = useState("");
-  const [lineProduct, setLineProduct] = useState("");
   const [linePresentation, setLinePresentation] = useState("");
   const [lineReceived, setLineReceived] = useState("");
   const [lineAccepted, setLineAccepted] = useState("");
@@ -107,23 +107,46 @@ export function RecepcionesPage(): React.JSX.Element {
     queryFn: () => apiFetch<PagedResult<PurchaseOrderSummary>>("/purchasing/orders"),
     retry: false,
   });
-  const products = useQuery({
-    queryKey: ["maestros", "productos"],
-    queryFn: () => apiFetch<PagedResult<CatalogItemSummary>>("/maestros/catalogos/items?status=ACTIVE"),
-    retry: false,
-  });
-  const presentations = useQuery({
-    queryKey: ["maestros", "presentaciones", lineProduct],
-    queryFn: () => apiFetch<PresentationSummary[]>(`/maestros/productos/${lineProduct}/presentaciones`),
-    enabled: Boolean(lineProduct),
-    retry: false,
-  });
   const detail = useQuery({
     queryKey: ["compras", "recepcion", selected],
     queryFn: () => apiFetch<GoodsReceiptDetail>(`/purchasing/receipts/${selected}`),
     enabled: Boolean(selected),
     retry: false,
   });
+  const d = detail.data;
+  // Las líneas salen del detalle de la orden de la recepción: el listado está paginado.
+  const orden = useQuery({
+    queryKey: ["compras", "orden", d?.order_id],
+    queryFn: () => apiFetch<PurchaseOrderSummary>(`/purchasing/orders/${d?.order_id}`),
+    enabled: Boolean(d?.order_id),
+    retry: false,
+  });
+  const lineasDeOrden = orden.data?.lines ?? [];
+  const lineaElegida = lineasDeOrden.find((l) => l.id === lineOrderLine);
+  const productoDeLinea = lineaElegida?.product_id ?? "";
+  const presentations = useQuery({
+    queryKey: ["maestros", "presentaciones", productoDeLinea],
+    queryFn: () => apiFetch<PresentationSummary[]>(`/maestros/productos/${productoDeLinea}/presentaciones`),
+    enabled: Boolean(productoDeLinea),
+    retry: false,
+  });
+  // Una presentación de otra línea no se envía.
+  const presentacionElegida = (presentations.data ?? []).some((p) => p.id === linePresentation) ? linePresentation : "";
+  // Por identificador: el producto puede estar inactivo o fuera de la primera página del catálogo.
+  const idsDeProducto = [...new Set([...lineasDeOrden, ...(d?.lines ?? [])].map((l) => l.product_id))];
+  const productos = useQueries({
+    queries: idsDeProducto.map((id) => ({
+      queryKey: ["maestros", "producto", id],
+      queryFn: () => apiFetch<CatalogItemSummary>(`/maestros/catalogos/items/${id}`),
+      retry: false,
+    })),
+  });
+  const nombreDeProducto = (id: string): string => {
+    const producto = productos[idsDeProducto.indexOf(id)]?.data;
+    return producto ? `${producto.code} · ${producto.name}` : "Producto sin identificar";
+  };
+  const etiquetaDeLinea = (linea: PurchaseOrderLine): string =>
+    `${nombreDeProducto(linea.product_id)} — pedido ${Number(linea.quantity_ordered)}, recibido ${Number(linea.quantity_received)}, pendiente ${pendienteDeLinea(linea)}`;
 
   const warehouses = useAlmacenesDeEmpresa(activeCompany?.id ?? null);
   // Una selección que ya no está en la lista, por ejemplo de otra empresa, no se envía.
@@ -132,11 +155,31 @@ export function RecepcionesPage(): React.JSX.Element {
   const refresh = async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: ["compras", "recepciones"] });
     await queryClient.invalidateQueries({ queryKey: ["compras", "recepcion"] });
+    await queryClient.invalidateQueries({ queryKey: ["compras", "orden"] });
   };
 
   const fallo = (titulo: string, err: unknown): void => {
     const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : titulo;
     notify({ type: "error", title: titulo, description: message });
+  };
+
+  const limpiarLinea = (): void => {
+    setLineOrderLine("");
+    setLinePresentation("");
+    setLineReceived("");
+    setLineAccepted("");
+    setLineCondition("BUENO");
+    setLineDamaged("");
+    setLineDamageNotes("");
+    setLineLot("");
+    setLineExpiry("");
+    setLineSerials("");
+  };
+
+  // Lo capturado para una línea no pasa a otra recepción, aunque sea de la misma orden.
+  const elegirRecepcion = (id: string): void => {
+    setSelected(id);
+    limpiarLinea();
   };
 
   const createReceipt = async (): Promise<void> => {
@@ -156,7 +199,7 @@ export function RecepcionesPage(): React.JSX.Element {
       if (newScheduled) body.unloading_scheduled_at = instanteDesdeHoraDeCaracas(newScheduled) ?? undefined;
       const rec = await apiFetch<GoodsReceiptDetail>("/purchasing/receipts", { method: "POST", body });
       notify({ type: "success", title: "Recepción creada", description: newCode });
-      setSelected(rec.id);
+      elegirRecepcion(rec.id);
       setNewCode("");
       setNewPackingList("");
       setNewInvoice("");
@@ -179,19 +222,23 @@ export function RecepcionesPage(): React.JSX.Element {
   };
 
   const addLine = async (): Promise<void> => {
-    if (!selected || !lineOrderLine || !lineProduct) return;
+    if (!selected) return;
+    if (!lineaElegida) {
+      notify({ type: "error", title: "No fue posible registrar la línea", description: "Seleccione la línea de la orden." });
+      return;
+    }
     try {
       const recibido = Number(lineReceived) || 0;
       const aceptado = lineAccepted === "" ? recibido : Number(lineAccepted);
       await apiFetch(`/purchasing/receipts/${selected}/lines`, {
         method: "POST",
         body: {
-          order_line_id: lineOrderLine,
-          product_id: lineProduct,
+          order_line_id: lineaElegida.id,
+          product_id: lineaElegida.product_id,
           quantity_received: recibido,
           quantity_accepted: aceptado,
           quantity_rejected: recibido - aceptado,
-          presentation_id: linePresentation || null,
+          presentation_id: presentacionElegida || null,
           physical_condition: lineCondition || null,
           damaged_quantity: lineDamaged === "" ? null : Number(lineDamaged),
           damage_notes: lineDamageNotes || null,
@@ -203,13 +250,7 @@ export function RecepcionesPage(): React.JSX.Element {
         },
       });
       notify({ type: "success", title: "Línea recibida", description: `${recibido} registrado` });
-      setLineReceived("");
-      setLineAccepted("");
-      setLineDamaged("");
-      setLineDamageNotes("");
-      setLineLot("");
-      setLineExpiry("");
-      setLineSerials("");
+      limpiarLinea();
       await refresh();
     } catch (err) {
       fallo("No fue posible registrar la línea", err);
@@ -247,7 +288,7 @@ export function RecepcionesPage(): React.JSX.Element {
         const puedeReceiptId = (accion: string) => puede("POST", `/purchasing/receipts/${r.id}/${accion}`);
         return (
           <div className="flex justify-end gap-1">
-            <AsyncButton size="sm" variant="secondary" onClick={async () => setSelected(r.id)}>
+            <AsyncButton size="sm" variant="secondary" onClick={async () => elegirRecepcion(r.id)}>
               detalle
             </AsyncButton>
             {abierta && !r.arrival_at && puedeReceiptId("arrival") ? (
@@ -275,8 +316,6 @@ export function RecepcionesPage(): React.JSX.Element {
       },
     }),
   ];
-
-  const d = detail.data;
 
   return (
     <PageContent maxWidth="full">
@@ -393,19 +432,23 @@ export function RecepcionesPage(): React.JSX.Element {
           <section className="mt-4 rounded-lg border border-border-default bg-surface-0 p-4">
             <h2 className="mb-2 text-base font-semibold text-text-900">Recibir una línea</h2>
             <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+              {orden.isError ? <p role="alert" className="w-full text-sm text-danger-600">No fue posible cargar las líneas de la orden.</p> : null}
+              {orden.isLoading ? <p role="status" className="w-full text-sm text-text-500">Cargando líneas de la orden…</p> : null}
+              {orden.data && lineasDeOrden.length === 0 ? <p role="status" className="w-full text-sm text-text-500">La orden no tiene líneas.</p> : null}
+              {productos.some((p) => p.isError) ? <p role="alert" className="w-full text-sm text-danger-600">No fue posible identificar algunos productos de la orden.</p> : null}
               <FormField label="Línea de la orden" required>
-                <TextInput value={lineOrderLine} onChange={(e) => setLineOrderLine(e.target.value)} placeholder="Identificador de la línea" required />
-              </FormField>
-              <FormField label="Producto" required>
-                <select value={lineProduct} onChange={(e) => { setLineProduct(e.target.value); setLinePresentation(""); }} className="h-10 w-52 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <select value={lineaElegida?.id ?? ""} onChange={(e) => { setLineOrderLine(e.target.value); setLinePresentation(""); }} required className="h-10 w-96 max-w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
                   <option value="">Seleccionar…</option>
-                  {(products.data?.items ?? []).map((p) => (
-                    <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                  {lineasDeOrden.map((l) => (
+                    <option key={l.id} value={l.id}>{etiquetaDeLinea(l)}</option>
                   ))}
                 </select>
               </FormField>
+              <FormField label="Producto" help="Lo define la línea de la orden">
+                <TextInput value={lineaElegida ? nombreDeProducto(lineaElegida.product_id) : ""} readOnly />
+              </FormField>
               <FormField label="Presentación" help="Con la que llegó; el inventario entra en unidad base">
-                <select value={linePresentation} onChange={(e) => setLinePresentation(e.target.value)} className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900" disabled={!lineProduct}>
+                <select value={presentacionElegida} onChange={(e) => setLinePresentation(e.target.value)} className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900" disabled={!lineaElegida}>
                   <option value="">Unidad base</option>
                   {(presentations.data ?? []).map((p) => (
                     <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
@@ -461,7 +504,7 @@ export function RecepcionesPage(): React.JSX.Element {
                 <tbody>
                   {d.lines.map((l) => (
                     <tr key={l.id}>
-                      <td className="pr-4">{l.product_id.slice(0, 8)}…</td>
+                      <td className="pr-4">{nombreDeProducto(l.product_id)}</td>
                       <td className="pr-4">{l.quantity_received}</td>
                       <td className="pr-4">{l.base_quantity_received ?? "—"}</td>
                       <td className="pr-4">{l.conversion_factor_snapshot ?? "—"}</td>
