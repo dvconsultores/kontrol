@@ -32,6 +32,7 @@ from sqlalchemy.engine import Connection
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import gobierno_integridad_caja as caja  # noqa: E402
+import gobierno_integridad_cierres as cierres  # noqa: E402
 import gobierno_integridad_ctl as ctl  # noqa: E402
 import gobierno_integridad_org as org  # noqa: E402
 import gobierno_integridad_tre as tre  # noqa: E402
@@ -40,17 +41,20 @@ GRUPO_ORG = org.GRUPO
 GRUPO_CTL = ctl.GRUPO
 GRUPO_TRE = tre.GRUPO
 GRUPO_CAJA = caja.GRUPO
+GRUPO_CIERRES = cierres.GRUPO
 
 CLAVE_ORG = "ORG"
 CLAVE_CTL = "CTL"
 CLAVE_TRE = "TRE"
 CLAVE_CAJA = "CAJA"
+CLAVE_CIERRES = "CIERRES"
 
 MODULOS_POR_CLAVE = {
     CLAVE_ORG: org,
     CLAVE_CTL: ctl,
     CLAVE_TRE: tre,
     CLAVE_CAJA: caja,
+    CLAVE_CIERRES: cierres,
 }
 
 
@@ -67,6 +71,7 @@ def controles() -> list[tuple[str, str, str, str]]:
         (GRUPO_CTL, ctl),
         (GRUPO_TRE, tre),
         (GRUPO_CAJA, caja),
+        (GRUPO_CIERRES, cierres),
     ):
         for identificador, descripcion, sql in modulo.CHECKS:
             resultado.append((grupo, identificador, descripcion, sql))
@@ -176,7 +181,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--db-url", help="URL de conexión a PostgreSQL.")
     parser.add_argument(
         "--grupo",
-        choices=(CLAVE_ORG, CLAVE_CTL, CLAVE_TRE, CLAVE_CAJA),
+        choices=(CLAVE_ORG, CLAVE_CTL, CLAVE_TRE, CLAVE_CAJA, CLAVE_CIERRES),
         help="Ejecutar únicamente los controles del grupo indicado.",
     )
     parser.add_argument(

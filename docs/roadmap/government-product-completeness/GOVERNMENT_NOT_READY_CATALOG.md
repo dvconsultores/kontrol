@@ -175,7 +175,7 @@
 | CTL-07 Alertas de operaciones atípicas | NOT_STARTED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (10 de 10) | MEDIUM | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-5, con DoD de producto completa (política §4) |
 | CTL-08 Historial de cambios de maestros sensibles | NOT_STARTED | Nada en Gobierno. Existe un equivalente privado que **no** sirve tal cual: Auditoría de cambios privada. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (10 de 10) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-5, con DoD de producto completa (política §4) |
 | CTL-09 Actas de entrega por cambio de responsable o autoridad | NOT_STARTED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-5, con DoD de producto completa (política §4) |
-| CTL-10 Controles materiales que impiden cerrar ejercicio o proceso | NOT_STARTED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (10 de 10) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-5, con DoD de producto completa (política §4) |
+| CTL-10 Controles materiales que impiden cerrar ejercicio o proceso | **SALIÓ DE ESTE CATÁLOGO** (GOV-CTL-10, 2026-11-07) | Todo el proceso: ver `OWNER_UAT_READY_CATALOG.md` | — | — | — | — |
 
 ## Gobierno Digital: trámites e interoperabilidad
 

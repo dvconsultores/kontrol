@@ -141,6 +141,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_cuentas:activate",
         # gobierno_caja · activación y cierre de programas de programación financiera (TRE-02)
         "gobierno_caja:activate",
+        # gobierno_cierre · activación y retiro de políticas de cierre (CTL-10)
+        "gobierno_cierre:activate",
     }
 )
 
@@ -231,6 +233,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_caja · consulta y gestión de rubros y programas de programación financiera (TRE-02)
         "gobierno_caja:view",
         "gobierno_caja:manage",
+        # gobierno_cierre · consulta y gestión de políticas de cierre (CTL-10)
+        "gobierno_cierre:view",
+        "gobierno_cierre:manage",
     }
 )
 

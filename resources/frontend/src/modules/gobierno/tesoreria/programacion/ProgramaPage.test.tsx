@@ -476,6 +476,43 @@ describe("ProgramaPage", () => {
     );
   });
 
+  it("muestra el panel de bloqueo material al cerrar", async () => {
+    const programaVigente: ProgramaDetalle = {
+      ...programaFixture,
+      estado: "VIGENTE",
+      version: 2,
+      version_vigente: 1,
+      borrador_numero: null,
+      version_vista: 1,
+    };
+    detalleActual = programaVigente;
+
+    respuestaEscritura = () =>
+      Promise.reject(
+        new ApiError(409, {
+          code: "GOV_MATERIAL_CLOSE_BLOCKED",
+          message: "x",
+          details: {
+            politica_codigo: "PC-001",
+            politica_nombre: "Política de prueba",
+            proceso: "TRE02_CERRAR_PROGRAMA",
+            objeto_codigo: "PF-2026-VES",
+            total: 1,
+            dueno: "Control Interno",
+            controles: [],
+          },
+        }),
+      );
+
+    renderPage();
+    const cerrar = await screen.findByRole("button", { name: "Cerrar programa" });
+    await userEvent.click(cerrar);
+    await userEvent.type(screen.getByLabelText(/^Motivo/), "Motivo de cierre válido");
+    await userEvent.click(screen.getByRole("button", { name: "Confirmar cierre" }));
+    expect(await screen.findByText("Cierre bloqueado por control material")).toBeInTheDocument();
+    expect(screen.getByText(/PC-001/)).toBeInTheDocument();
+  });
+
   it("muestra programa cerrado sin acciones y con datos del cierre", async () => {
     detalleActual = {
       ...programaFixture,

@@ -1124,6 +1124,86 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/cierres/bloqueos",
+      "capabilities": [
+        "gobierno_cierre:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/cierres/catalogo",
+      "capabilities": [
+        "gobierno_cierre:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/cierres/politicas",
+      "capabilities": [
+        "gobierno_cierre:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/cierres/politicas",
+      "capabilities": [
+        "gobierno_cierre:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/cierres/politicas/{politica_id}",
+      "capabilities": [
+        "gobierno_cierre:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/cierres/politicas/{politica_id}",
+      "capabilities": [
+        "gobierno_cierre:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/cierres/politicas/{politica_id}/activar",
+      "capabilities": [
+        "gobierno_cierre:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/cierres/politicas/{politica_id}/controles",
+      "capabilities": [
+        "gobierno_cierre:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/cierres/politicas/{politica_id}/controles/{control_id}",
+      "capabilities": [
+        "gobierno_cierre:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/cierres/politicas/{politica_id}/retirar",
+      "capabilities": [
+        "gobierno_cierre:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/ente",
       "capabilities": [
         "gobierno_ente:view"
@@ -5461,7 +5541,10 @@
     "gobierno_cuentas:activate",
     "gobierno_caja:view",
     "gobierno_caja:manage",
-    "gobierno_caja:activate"
+    "gobierno_caja:activate",
+    "gobierno_cierre:view",
+    "gobierno_cierre:manage",
+    "gobierno_cierre:activate"
   ],
   "report_capabilities": {
     "executive_ventas": [

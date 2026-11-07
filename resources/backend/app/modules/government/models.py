@@ -12,12 +12,12 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import DDL, JSON, BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, SmallInteger, String, Text, UniqueConstraint, event, text
+from sqlalchemy import DDL, JSON, BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, SmallInteger, String, Text, UniqueConstraint, event, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
 from app.core.scope import Scope
-from app.shared.mixins import CreatedByMixin, TimestampMixin, UUIDMixin, VersionMixin
+from app.shared.mixins import CreatedByMixin, TimestampMixin, UUIDMixin, VersionMixin, utcnow
 
 ESTADOS_ENTE = ("BORRADOR", "ACTIVO")
 NIVELES_TERRITORIALES = ("NACIONAL", "ESTADAL", "MUNICIPAL")
@@ -842,7 +842,7 @@ for _sentencia in GOV_AUDIT_PACKAGE_VERIFICATIONS_IMMUTABLE_PG:
 ESTADOS_REGLA_SOD = ("BORRADOR", "VIGENTE", "CERRADA")
 ALCANCES_REGLA_SOD = ("MISMO_OBJETO",)
 MODOS_REGLA_SOD = ("BLOQUEAR",)
-PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02")
+PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10")
 TIPOS_HISTORIA_SOD = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA")
 
 
@@ -1273,3 +1273,175 @@ for _sentencia in GOV_CASH_PROGRAM_LINES_IMMUTABLE_EXCEPT_BORRADOR_PG:
 
 for _sentencia in GOV_CASH_PROGRAM_DECLARATIONS_IMMUTABLE_EXCEPT_BORRADOR_PG:
     event.listen(GovernmentCashProgramDeclaration.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+ESTADOS_POLITICA_CIERRE = ("BORRADOR", "VIGENTE", "RETIRADA")
+ACCIONES_CIERRE = ("ORG02_CERRAR_ESTRUCTURA", "TRE02_CERRAR_PROGRAMA")
+TIPOS_CONTROL_CIERRE = ("HALLAZGOS_ABIERTOS", "ACTOS_SIN_EFICACIA")
+RIESGOS_MINIMOS_CIERRE = ("ALTO", "MEDIO", "BAJO")
+EVENTOS_POLITICA_CIERRE = ("CREADA", "ACTUALIZADA", "CONTROL_ANADIDO", "CONTROL_RETIRADO", "ACTIVADA", "RETIRADA")
+
+
+GOV_CLOSURE_POLICIES_NOT_EDITABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_cierre_politica_no_editable() RETURNS TRIGGER AS $$ "
+    "BEGIN "
+    "IF OLD.estado IN ('VIGENTE', 'RETIRADA') THEN "
+    "IF NEW.estado <> 'RETIRADA' OR OLD.estado = 'RETIRADA' OR "
+    "NEW.nombre IS DISTINCT FROM OLD.nombre OR "
+    "NEW.fundamento IS DISTINCT FROM OLD.fundamento OR "
+    "NEW.accion_cierre IS DISTINCT FROM OLD.accion_cierre OR "
+    "NEW.vigente_desde IS DISTINCT FROM OLD.vigente_desde OR "
+    "NEW.vigente_hasta IS DISTINCT FROM OLD.vigente_hasta THEN "
+    "RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CLOSURE_POLICY_NOT_EDITABLE', DETAIL = TG_OP; "
+    "END IF; "
+    "END IF; "
+    "RETURN NEW; "
+    "END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_closure_policies_no_editar BEFORE UPDATE ON gov_closure_policies FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cierre_politica_no_editable()",
+)
+
+GOV_CLOSURE_POLICIES_NOT_DELETABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_cierre_politica_no_borrable() RETURNS TRIGGER AS $$ "
+    "BEGIN "
+    "IF OLD.estado <> 'BORRADOR' THEN "
+    "RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CLOSURE_POLICY_NOT_DELETABLE', DETAIL = TG_OP; "
+    "END IF; "
+    "RETURN OLD; "
+    "END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_closure_policies_no_delete BEFORE DELETE ON gov_closure_policies FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cierre_politica_no_borrable()",
+    "CREATE TRIGGER trg_gov_closure_policies_no_truncate BEFORE TRUNCATE ON gov_closure_policies FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_cierre_politica_no_borrable()",
+)
+
+GOV_CLOSURE_CONTROLS_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_cierre_control_inmutable() RETURNS TRIGGER AS $$ "
+    "DECLARE politica_estado TEXT; "
+    "BEGIN "
+    "IF TG_OP = 'UPDATE' OR TG_OP = 'DELETE' THEN "
+    "SELECT estado INTO politica_estado FROM gov_closure_policies WHERE id = OLD.policy_id; "
+    "ELSE "
+    "SELECT estado INTO politica_estado FROM gov_closure_policies WHERE id = NEW.policy_id; "
+    "END IF; "
+    "IF politica_estado IS DISTINCT FROM 'BORRADOR' THEN "
+    "RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CLOSURE_CONTROL_IMMUTABLE', DETAIL = TG_OP; "
+    "END IF; "
+    "IF TG_OP = 'DELETE' THEN RETURN OLD; END IF; "
+    "RETURN NEW; "
+    "END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_closure_controls_no_insert BEFORE INSERT ON gov_closure_controls FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cierre_control_inmutable()",
+    "CREATE TRIGGER trg_gov_closure_controls_no_update BEFORE UPDATE ON gov_closure_controls FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cierre_control_inmutable()",
+    "CREATE TRIGGER trg_gov_closure_controls_no_delete BEFORE DELETE ON gov_closure_controls FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cierre_control_inmutable()",
+)
+
+GOV_CLOSURE_POLICY_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_cierre_historia_inmutable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CLOSURE_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_closure_policy_history_no_update BEFORE UPDATE ON gov_closure_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cierre_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_closure_policy_history_no_delete BEFORE DELETE ON gov_closure_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_cierre_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_closure_policy_history_no_truncate BEFORE TRUNCATE ON gov_closure_policy_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_cierre_historia_inmutable()",
+)
+
+
+class GovernmentClosurePolicy(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Política de controles de cierre de Control Interno (CTL-10, GOV-CTL-012)."""
+
+    __tablename__ = "gov_closure_policies"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(10), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    accion_cierre: Mapped[str] = mapped_column(String(32), nullable=False)
+    fundamento: Mapped[str] = mapped_column(Text, nullable=False)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    activada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    activada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    retirada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    retirada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_retiro: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_closure_policies_company_id_codigo"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_POLITICA_CIERRE)})", name="estado"),
+        CheckConstraint(f"accion_cierre IN ({en(ACCIONES_CIERRE)})", name="accion_cierre"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+        CheckConstraint(
+            "(estado <> 'VIGENTE' OR (activada_por IS NOT NULL AND activada_en IS NOT NULL))",
+            name="vigente_exige_activacion",
+        ),
+        CheckConstraint(
+            "(estado <> 'RETIRADA' OR "
+            "(retirada_por IS NOT NULL AND retirada_en IS NOT NULL AND motivo_retiro IS NOT NULL))",
+            name="retirada_exige_retiro",
+        ),
+        Index(
+            "uq_gov_closure_policies_company_accion_vigente",
+            "company_id",
+            "accion_cierre",
+            unique=True,
+            postgresql_where=text("estado = 'VIGENTE'"),
+            sqlite_where=text("estado = 'VIGENTE'"),
+        ),
+    )
+
+
+class GovernmentClosureControl(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Control material de cierre vinculado a una política (CTL-10, GOV-CTL-012)."""
+
+    __tablename__ = "gov_closure_controls"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_closure_policies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(24), nullable=False)
+    riesgo_minimo: Mapped[str | None] = mapped_column(String(6), nullable=True)
+    materialidad: Mapped[str] = mapped_column(Text, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "tipo", name="uq_gov_closure_controls_policy_id_tipo"),
+        CheckConstraint(f"tipo IN ({en(TIPOS_CONTROL_CIERRE)})", name="tipo"),
+        CheckConstraint(
+            "(tipo = 'ACTOS_SIN_EFICACIA' OR (riesgo_minimo IS NOT NULL "
+            "AND riesgo_minimo IN ('ALTO', 'MEDIO', 'BAJO')))",
+            name="riesgo_minimo_hallazgos",
+        ),
+        CheckConstraint(
+            "(tipo <> 'ACTOS_SIN_EFICACIA' OR riesgo_minimo IS NULL)",
+            name="riesgo_minimo_nulo_actos",
+        ),
+    )
+
+
+class GovernmentClosurePolicyHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de una política de controles de cierre (CTL-10, GOV-CTL-012)."""
+
+    __tablename__ = "gov_closure_policy_history"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_closure_policies.id"), nullable=False, index=True)
+    evento: Mapped[str] = mapped_column(String(24), nullable=False)
+    detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    usuario: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    instante: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow, server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint(f"evento IN ({en(EVENTOS_POLITICA_CIERRE)})", name="evento"),
+    )
+
+
+for _sentencia in GOV_CLOSURE_POLICIES_NOT_EDITABLE_PG:
+    event.listen(GovernmentClosurePolicy.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_CLOSURE_POLICIES_NOT_DELETABLE_PG:
+    event.listen(GovernmentClosurePolicy.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_CLOSURE_CONTROLS_IMMUTABLE_PG:
+    event.listen(GovernmentClosureControl.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_CLOSURE_POLICY_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentClosurePolicyHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

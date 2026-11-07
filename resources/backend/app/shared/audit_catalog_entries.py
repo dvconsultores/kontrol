@@ -14,6 +14,28 @@ def _e(code: str, entity_type: str, owner_module: str, owner_spec: str, scope: s
                            emitted_by=emitted_by, tenant_required=tenant_required)
 
 
+DETALLE_CIERRE: tuple[str, ...] = (
+    "accion_cierre",
+    "campos",
+    "codigo",
+    "controles",
+    "ejercicio",
+    "motivo",
+    "nombre",
+    "objeto_codigo",
+    "objeto_id",
+    "objeto_tipo",
+    "pendientes",
+    "politica_codigo",
+    "politica_version",
+    "riesgo_minimo",
+    "tipo",
+    "total",
+    "vigente_desde",
+    "vigente_hasta",
+)
+
+
 DETALLE_ACTO: tuple[str, ...] = (
     "acto_referencia",
     "asunto",
@@ -143,6 +165,14 @@ _PARTE_A: tuple[AuditActionSpec, ...] = (
     _e("GOV_CASH_PROGRAM_REVISED", "GovernmentCashProgram", "government", "gov-tre-02", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("codigo", "motivo", "version_numero"), "Programa de programación financiera reprogramado en Tesorería de Gobierno"),
     _e("GOV_CASH_PROGRAM_DISCARDED", "GovernmentCashProgram", "government", "gov-tre-02", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("codigo", "version_numero"), "Borrador de programación financiera descartado en Tesorería de Gobierno"),
     _e("GOV_CASH_PROGRAM_CLOSED", "GovernmentCashProgram", "government", "gov-tre-02", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("codigo", "motivo"), "Programa de programación financiera cerrado en Tesorería de Gobierno"),
+    _e("GOV_CLOSURE_POLICY_CREATED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Política de controles de cierre registrada"),
+    _e("GOV_CLOSURE_POLICY_UPDATED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Política de controles de cierre actualizada"),
+    _e("GOV_CLOSURE_POLICY_CONTROL_ADDED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Control material añadido a la política de cierre"),
+    _e("GOV_CLOSURE_POLICY_CONTROL_REMOVED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Control material retirado de la política de cierre"),
+    _e("GOV_CLOSURE_POLICY_ACTIVATED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Política de controles de cierre activada"),
+    _e("GOV_CLOSURE_POLICY_RETIRED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Política de controles de cierre retirada"),
+    _e("GOV_MATERIAL_CLOSE_ALLOWED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Cierre material autorizado por política de controles"),
+    _e("GOV_MATERIAL_CLOSE_BLOCKED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "REJECTION", DETALLE_CIERRE, "Operación bloqueada por controles materiales de cierre"),
     _e("GOV_BANK_CREATED", "GovernmentBank", "government", "gov-tre-01", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("codigo", "nombre"), "Banco registrado en Tesorería de Gobierno"),
     _e("GOV_BANK_UPDATED", "GovernmentBank", "government", "gov-tre-01", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("campos", "codigo"), "Banco de Tesorería de Gobierno modificado"),
     _e("GOV_BANK_ACCOUNT_CREATED", "GovernmentBankAccount", "government", "gov-tre-01", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("banco_codigo", "codigo", "moneda", "numero_enmascarado", "tipo"), "Cuenta bancaria pública registrada"),

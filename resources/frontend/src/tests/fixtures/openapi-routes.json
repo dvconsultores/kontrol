@@ -816,6 +816,67 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/cierres/bloqueos",
+      "query": [
+        "accion_cierre",
+        "desde",
+        "hasta",
+        "pagina",
+        "tamano"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/cierres/catalogo",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/cierres/politicas",
+      "query": [
+        "accion_cierre",
+        "estado",
+        "pagina",
+        "tamano"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/cierres/politicas",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/cierres/politicas/{politica_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/cierres/politicas/{politica_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/cierres/politicas/{politica_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/cierres/politicas/{politica_id}/controles",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/cierres/politicas/{politica_id}/controles/{control_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/cierres/politicas/{politica_id}/retirar",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/ente",
       "query": []
     },
