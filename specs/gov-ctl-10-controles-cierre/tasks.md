@@ -243,7 +243,7 @@
   - FILES: `specs/gov-ctl-10-controles-cierre/evidence/OWNER_UAT_CARD.md`, `specs/gov-ctl-10-controles-cierre/evidence/UAT_SMOKE.md`
   - TEST: humo contra la pila UAT
   - DONE_WHEN: OWNER_UAT_READY solo con READY y ACCESSIBLE
-- [ ] T041 `/speckit-converge`, commit y push a `origin/develop` con `git status` vacío; relevo UAT
+- [X] T041 `/speckit-converge`, commit y push a `origin/develop` con `git status` vacío; relevo UAT
   - EXECUTOR: CLAUDE · MODEL: n-a · SECURITY_SENSITIVE: NO · EGRESS_SAFE: YES · RETRY_MAX: 2
   - FILES: `specs/gov-ctl-10-controles-cierre/`
   - TEST: `git status` y `git log origin/develop`

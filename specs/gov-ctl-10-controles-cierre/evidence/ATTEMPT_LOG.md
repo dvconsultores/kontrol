@@ -31,12 +31,23 @@ Defectos reales de producto hallados por las pruebas: CHECK `riesgo_minimo` admi
 | T032s1 (retirar la vigente) | sin texto en el encargo | parcial, solape de bloques | SPLIT de un bloque | T032s1c |
 | T032s2 (CIE-E2E-03) | parcial | parcial; un bloque descartado sin reintento | n/a | T032s2b, L1 |
 
+## Tras la E2E y las mutaciones
+
+| Tarea | Intento 1 | Intento 2 | Decisión | Subtareas |
+|---|---|---|---|---|
+| L1, L2 | aceptados | n/a | n/a | L2 corrige dos fallos medidos: recurso de evidencia y `level: 1` |
+| M2 (8 supervivientes y 3 muertes falsas) | aceptado, con formato irregular y dos `F841` retirados por `ruff` | n/a | n/a | M2 |
+| F4 | PC-13 rechazada: permiso inventado | aceptado | n/a | F4b |
+| G1, F5 | aceptados | n/a | n/a | — |
+| T043 | no enviada: MCP de DeepSeek sin conexión tras el reinicio | — | ABIERTA | — |
+
 ## Errores de Claude en la orquestación, declarados
 
 - Egress de T038a2 leído después de lanzar (falso positivo).
 - Uso indebido de Workflow para 8 encargos sin orden de la dueña. No se repitió.
 - Encargos con datos erróneos: `count(1980)` contra el CHECK, `exact` de Playwright en Testing Library, ids `K*` duplicados, permiso `gobierno_actos:emit`, rótulo «Tipo de control», T032s1 sin texto.
 - S4b aplicado y medido en el mismo comando sin leerlo antes; desde entonces cada respuesta se extrae y audita antes de aplicar.
+- Bloque 6 de T032s2b descartado por «inocuo»: la corrida demostró lo contrario y lo corrigió L2.
 - Excepciones mecánicas sobre código de DeepSeek: `ruff --fix` de imports, inserción de importaciones y de la fixture indicadas por su respuesta, retirada de `scope="module"` conservando el decorador, y adaptación de bloques con SEARCH vacío a su lugar real. Ninguna añadió lógica.
 - Regeneración por script, no escrita a mano: fixtures de frontend y espejo del catálogo.
 
