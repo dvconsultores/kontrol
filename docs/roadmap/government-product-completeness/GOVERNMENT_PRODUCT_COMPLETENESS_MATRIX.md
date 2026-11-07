@@ -13,9 +13,9 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | ORG-01 | Configurar el ente y su tipo | P0 | Administración institucional | GOV-ORG-001 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | GOV-E2E-01..05 | — |
 | ORG-02 | Estructura organizativa por ejercicio (órgano, unidad ejecutora, dependencia, sede, centro gestor) | P0 | Administración institucional | GOV-ORG-002 GOV-ORG-008 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | GOV2-E2E-01..07 | Organización privada (empresas, sucursales): otro contrato |
 | ORG-03 | Cargos con competencias y límites de firma/aprobación | P0 | Máxima autoridad | GOV-ORG-003 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | GOV3-E2E-01..08 (×3 navegadores ×3 corridas) | — |
-| ORG-04 | Delegaciones, suplencias, encargadurías y designaciones con acto | P0 | Máxima autoridad | GOV-ORG-004 GOV-ORG-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | Delegaciones del motor 045 (sin acto administrativo) |
+| ORG-04 | Delegaciones, suplencias, encargadurías y designaciones con acto | P0 | Máxima autoridad | GOV-ORG-004 GOV-ORG-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Delegaciones del motor 045 (sin acto administrativo) |
 | ORG-05 | Responsables por unidad, programa, cuenta, almacén, caja, contrato y bien, con historia | P0 | Administración institucional | GOV-ORG-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | DOMAIN_DEPENDENCY: 8 de 9 objetos sin modelo en Gobierno (BUD-03, ACC-01, WH-02, TRE-08, TRE-01, CNT-01, AST-01); MATERIAL_OQ OQ-ORG05-01..03 (specs/gov-0-04-responsables) | — | — |
-| ORG-06 | Vincular usuario con identidad, cargo, unidad y alcance; separación de roles | P0 | Administración institucional | GOV-ORG-007 GOV-ORG-005 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Usuarios, roles y alcance por empresa (003): otro contrato |
+| ORG-06 | Vincular usuario con identidad, cargo, unidad y alcance; separación de roles | P0 | Administración institucional | GOV-ORG-007 GOV-ORG-005 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | DOMAIN_DEPENDENCY: ORG-04 prerrequisito; ocupantes por designación, delegación, suplencia y encargaduría | — | Usuarios, roles y alcance por empresa (003): otro contrato |
 | ORG-07 | Matriz auditable de quién puede solicitar, comprometer, causar, pagar, custodiar, aprobar y auditar | P0 | Control Interno | GOV-ORG-010 | ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | ORG7-E2E-01..05 (×3 navegadores) + HUMO-UAT-01 | — |
 
 ## Presupuesto público (Budget Ledger)
@@ -26,7 +26,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | BUD-02 | Clasificador presupuestario versionado | P0 | Planificación/Presupuesto | GOV-BUD-002 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-02; LEGAL_VALIDATION_REQUIRED N10 (clase C) | — | — |
 | BUD-03 | Plan, programas, proyectos, metas físicas e indicadores | P0 | Planificación/Presupuesto | GOV-BUD-003 GOV-BUD-004 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-02; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C) | — | — |
 | BUD-04 | Fuentes de financiamiento y restricciones | P0 | Planificación/Presupuesto | GOV-BUD-005 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-02; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C) | — | — |
-| BUD-05 | Formulación: anteproyecto, proyecto y presupuesto aprobado con su acto | P0 | Planificación/Presupuesto | GOV-BUD-006 GOV-BUD-007 GOV-BUD-008 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-01; D-GOV-02; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C); LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | — |
+| BUD-05 | Formulación: anteproyecto, proyecto y presupuesto aprobado con su acto | P0 | Planificación/Presupuesto | GOV-BUD-006 GOV-BUD-007 GOV-BUD-008 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-02; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C); LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | — |
 | BUD-06 | Disponibilidad y certificación de disponibilidad | P0 | Planificación/Presupuesto | GOV-BUD-009 GOV-BUD-010 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 | BUD-07 | Precompromiso / reserva | P0 | Planificación/Presupuesto | GOV-BUD-011 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | — |
 | BUD-08 | Compromiso presupuestario | P0 | Planificación/Presupuesto | GOV-BUD-012 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
@@ -171,15 +171,15 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 
 | Id | Proceso | Prio. | Actor principal | Requisitos | Compuertas | PASS | Estado real | Bloqueos | E2E | Equivalente privado (no cuenta) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| HR-01 | Estructura de cargos y plantillas presupuestarias de personal | P0 | Planificación/Presupuesto | GOV-HR-001 GOV-HR-003 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-07; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C) | — | — |
-| HR-02 | Interfaz de nómina Atenea con maker-checker y sin duplicados (E2E-04) | P0 | Contabilidad | GOV-HR-002 GOV-HR-004 GOV-HR-005 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-07; N40 acotada: clasificación de datos de personal, solo APN (N40-01); transporte sin norma localizada | E2E-04 | — |
+| HR-01 | Estructura de cargos y plantillas presupuestarias de personal | P0 | Planificación/Presupuesto | GOV-HR-001 GOV-HR-003 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-07_TECHNICAL_CONTRACT (ENGINEERING_PENDING); LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C) | — | — |
+| HR-02 | Interfaz de nómina Atenea con maker-checker y sin duplicados (E2E-04) | P0 | Contabilidad | GOV-HR-002 GOV-HR-004 GOV-HR-005 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-07_TECHNICAL_CONTRACT (ENGINEERING_PENDING); N40 acotada: clasificación de datos de personal, solo APN (N40-01); transporte sin norma localizada | E2E-04 | — |
 | HR-03 | Reportes SISROE y de altos funcionarios | P1 | Recursos humanos | GOV-HR-006 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 
 ## Integraciones institucionales
 
 | Id | Proceso | Prio. | Actor principal | Requisitos | Compuertas | PASS | Estado real | Bloqueos | E2E | Equivalente privado (no cuenta) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| INT-01 | Atenea: lotes de nómina idempotentes | P0 | Integración | IR §11/§12 | ✗ ✗ ✗ ✗ ✗ ✗ · · ✗ ✗ ✗ | 0/9 | BLOCKED | D-GOV-07 | E2E-04 | — |
+| INT-01 | Atenea: lotes de nómina idempotentes | P0 | Integración | IR §11/§12 | ✗ ✗ ✗ ✗ ✗ ✗ · · ✗ ✗ ✗ | 0/9 | BLOCKED | D-GOV-07_TECHNICAL_CONTRACT (ENGINEERING_PENDING) | E2E-04 | — |
 | INT-02 | Bancos: archivos/APIs con contrato del banco | P0 | Integración | IR §11/§12 | ✗ ✗ ✗ ✗ ✗ ✗ · · ✗ ✗ ✗ | 0/9 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 | INT-03 | SNC/RNC: consulta de contratistas con provenance | P1 | Integración | IR §11/§12 | ✗ ✗ ✗ ✗ ✗ ✗ · · ✗ ✗ ✗ | 0/9 | BLOCKED | D-GOV-03 | — | — |
 | INT-04 | SUDEBIP: reportes y codificación por mecanismo oficial | P1 | Integración | IR §11/§12 | ✗ ✗ ✗ ✗ ✗ ✗ · · ✗ ✗ ✗ | 0/9 | BLOCKED | D-GOV-05 | — | — |

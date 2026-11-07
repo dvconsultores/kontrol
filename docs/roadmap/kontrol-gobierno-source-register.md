@@ -58,17 +58,17 @@ carpeta canónica de fuentes.
   | GOV-6 | Trámites e interoperabilidad |
   | GOV-7 | Integraciones, UAT y homologación |
 
-- **§15:** decisiones del sponsor, todas abiertas:
+- **§15:** decisiones del sponsor (D-GOV-01 y D-GOV-07 cerradas en su alcance el 2026-11-07; las demás abiertas):
 
   | Decisión | Tema |
   |---|---|
-  | D-GOV-01 | Jurisdicción piloto |
+  | D-GOV-01 | Jurisdicción piloto: **CLOSED**, Alcaldía del Municipio Naguanagua, Estado Carabobo, Venezuela |
   | D-GOV-02 | Profundidad presupuestaria |
   | D-GOV-03 | Alcance de SNC |
   | D-GOV-04 | Plan de cuentas ONCOP del piloto |
   | D-GOV-05 | Copias oficiales SUDEBIP 43.077 |
   | D-GOV-06 | Catálogo de trámites tras G.O. 7.018/2026 |
-  | D-GOV-07 | Contrato con Atenea |
+  | D-GOV-07 | Contrato con Atenea: **SPONSOR_SCOPE_CLOSED**, integrar con Atenea; contrato técnico ENGINEERING_PENDING |
   | D-GOV-08 | Firma e interoperabilidad |
 
 - **§16:** definición de convergencia. **§17:** referencias oficiales. La URL no sustituye la copia local con SHA-256.
@@ -116,3 +116,7 @@ carpeta canónica de fuentes.
 ## Copias oficiales incorporadas (GOV-NORM-N40-01, 2026-11-07)
 
 `requerimientos/gobierno/normativa-n40/` custodia, sin alterar, siete copias de instrumentos del corpus N40. La Biblioteca v1.0 no se modifica y **N40 sigue en clase C**: fijar una copia no equivale a validarla. Inventario, URL, fecha de obtención y SHA-256 en `specs/gov-norm-n40/evidence/`.
+
+## Copias de normativa del piloto (GOV-ORG-FUNCTIONAL-06, 2026-11-07)
+
+`requerimientos/gobierno/normativa-n37-naguanagua/` custodia, sin alterar, cuatro copias: LOPPM, LOAP, LEFP y la Gaceta Municipal 512 Ext. **N37 sigue en clase C.** Inventario en `specs/gov-0-06-identidad-usuarios/evidence/`.
