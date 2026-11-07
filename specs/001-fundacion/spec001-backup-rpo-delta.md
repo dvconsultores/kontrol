@@ -4,9 +4,9 @@
 |---|---|
 | Deudas | BACKUP-SCHEDULE-RPO (T052, HIGH) · BACKUP-PG-TOOLS-IN-OPS-IMAGE (T053, MEDIUM) |
 | Dueña | 001 / 053. Línea: `SHARED_CORE`, por razón Enterprise (FR-001-083) |
-| Estado | **DISEÑO RECONCILIADO CON `public-upstream` `56f1237`; IMPLEMENTACIÓN BLOQUEADA** por `RUNTIME-LOCK-API-BOOT-FAILURE` y T052-A1. `OWNER_DECISIONS_PENDING = 0` |
+| Estado | **IMPLEMENTADO EN LOCAL, SIN PUBLICAR; `T052_STATUS = BLOCKED_BY_EXTERNAL_CERTIFICATION_GATES`** (§22) |
 | Alcance futuro | T052 + T053 (prerrequisito) + `T052_PREREQUISITE_AUDIT_TRUTHFULNESS`. No T054 ni T055 |
-| Autorización de implement | OD_GIT_P2_04: la publicación no bloquea. Bloquea el P0 de arranque |
+| Autorización de implement | Encargo T052-RPO-IMPLEMENTATION-02 |
 | Evidencia | `evidence/backup-rpo/` |
 
 Marcas: **MEASURED** (visto en el árbol en este ciclo), **RECORDED** (evidencia versionada), **DERIVED** (deducción), **NOT_MEASURED**.
@@ -377,3 +377,27 @@ Requisitos sin diseño: 0. Tareas sin requisito: 0. `TRACEABILITY = 100 %`.
 `PRODUCT_BEFORE_TESTS = 1` · `TESTS_VALIDATE_PRODUCT = 1` · `TESTS_ARE_NOT_PRODUCT = 1` · `QA_ARTIFACTS_ARE_NOT_PRODUCT = 1` · `MOCKS_ARE_NOT_PRODUCT = 1` · `FIXTURES_ARE_NOT_PRODUCT = 1` · `FUNCTIONAL_PRODUCT_COMPLETENESS_REQUIRED = 1`.
 
 Una persona autorizada debe poder, desde el producto real: consultar y configurar el RPO (≤15 min), la retención y el destino soportado; habilitar o deshabilitar la planificación; y observar `CONFIGURED_RPO`, `LAST_SUCCESSFUL_BACKUP`, `LAST_VALID_BACKUP`, `LAST_VALID_DURABLE_OFF_HOST_BACKUP`, `BACKUP_AGE`, `BACKUP_DURATION`, `PACKAGE_SIZE`, `DESTINATION`, `NEXT_SCHEDULE`, `RPO_STATE` y `LAST_SANITIZED_ERROR`. Test, fixture, mock, fila de base, guion QA, API aislada o E2E que inyecte el resultado no sustituyen esa superficie.
+
+## 22. Implementación local (T052-RPO-IMPLEMENTATION-02, 2026-11-07)
+
+Diferencias con el diseño, todas de proyecto:
+
+- **Estados.** El orden de §4 se sustituye por `DISABLED`, `MISCONFIGURED`, `NO_VALID_BACKUP`, `LOCAL_ONLY`, `RPO_BREACHED`, `DEGRADED`, `RPO_AT_RISK`, `RPO_CERTIFIED` y `RPO_MET`, en `app/ops/backup_rpo.py`, conforme al encargo.
+- **Exclusión.** Además del bloqueo consultivo, un índice único parcial impide dos filas `RUNNING`, también con PgBouncer.
+- **`CREATED`.** Estado nuevo de copia manual creada y sin verificar: nunca cuenta como válida.
+- **Eventos.** `INSTALLATION_BACKUP_CREATED` significa «creada, pendiente de verificación». Se añaden `VERIFIED`, `VERIFY_FAILED`, `FAILED`, `PURGED`, `DESTINATION_UNAVAILABLE`, `CONFIG_CHANGED` y `RPO_STATE_CHANGED`.
+- **Retención en recuperación.** `python -m app.ops.backup hold BACKUP_ID` retiene una copia antes de restaurar; `release` la suelta. La operadora debe usarlo: no hay marca automática de recuperación activa.
+
+| Frontera | Estado |
+|---|---|
+| `T052_TECHNICAL_FOUNDATION` | LOCAL_COMPLETE |
+| `T052_LOCAL_PRODUCT_IMPLEMENTATION` | LOCAL_COMPLETE |
+| `T052_LOCAL_NON_PG_CERTIFICATION` | PASS |
+| `T052_POSTGRES_CERTIFICATION` | NOT_EXECUTED_ENVIRONMENT_UNAVAILABLE. T061 va primero |
+| `T052_OFF_HOST_CERTIFICATION` | NOT_MEASURED |
+| `T052_CAPACITY_CERTIFICATION` | NOT_MEASURED |
+| `T052_E2E_CERTIFICATION` | NOT_EXECUTED_ENVIRONMENT_UNAVAILABLE |
+| `T052_PUBLICATION` | Bloqueada: `GIT_AUTH_ONLY` |
+| `T052_OWNER_UAT` | NO |
+
+Sin resolver, por rutas prohibidas: tras un `restore` el ledger no se reinicia (§3.2), porque `backup_restore.py` no se toca. Una fila `RUNNING` restaurada se abandona sola, pero las copias anteriores siguen listadas: RESTORE-LEDGER-RESET.

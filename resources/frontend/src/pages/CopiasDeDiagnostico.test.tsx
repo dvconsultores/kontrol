@@ -17,7 +17,7 @@ vi.mock("@/app/autoridad/AutoridadContext", () => ({
   useAutoridad: () => ({
     estado: "LISTA",
     tiene: () => true,
-    puede: () => puede,
+    puede: (metodo: string, ruta: string) => puede && metodo === "PUT" && ruta === "/system/backup-config",
     motivo: () => null,
     motivoDeCapacidad: () => null,
   }),
@@ -133,6 +133,17 @@ describe("CopiasDeDiagnostico", () => {
     renderConProveedores(<CopiasDeDiagnostico estado={ESTADO} />);
     expect(screen.queryByLabelText("RPO (minutos)")).toBeNull();
     expect(screen.getByText(etiquetaDeEstadoRpo(ESTADO.rpo_state))).toBeTruthy();
+  });
+
+  it("muestra el último error saneado", () => {
+    renderConProveedores(<CopiasDeDiagnostico estado={{ ...ESTADO, last_sanitized_error: "PG_DUMP_FAILED" }} />);
+    expect(screen.getByText("PG_DUMP_FAILED")).toBeTruthy();
+    expect(screen.queryByText("Ninguno")).toBeNull();
+  });
+
+  it("con permiso sobre esa operación aparece el formulario", () => {
+    renderConProveedores(<CopiasDeDiagnostico estado={ESTADO} />);
+    expect(screen.getByLabelText("RPO (minutos)")).toBeTruthy();
   });
 
   it("no pinta ninguna ruta", () => {

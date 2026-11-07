@@ -4251,3 +4251,7 @@ Detalle: `enterprise-baseline/ENTERPRISE_BASELINE_CURRENT.md` y `enterprise-base
 ## 2026-11-07 · P0 de runtime certificados, T052 reanudada
 
 `RUNTIME-LOCK-API-BOOT-FAILURE` y `RUNTIME-LOCK-OPERATIONS-CATALOG-EMPTY` corregidas en local. `NEXT TECHNICAL CYCLE` de P2 = **T052-RPO-IMPLEMENTATION-02**. La primera corrida PostgreSQL disponible debe incluir `test_iso_barridos.py` (ISO-BARRIDOS-SIN-EJECUTAR-EN-RUNTIME).
+
+## 2026-11-07 · T052 a la espera de puertas externas
+
+`T052_STATUS = BLOCKED_BY_EXTERNAL_CERTIFICATION_GATES`. `NEXT TECHNICAL CYCLE` de P2 = **ALMACENES-DESPLEGABLES-TRUNCADOS-01**. Cuando exista PostgreSQL, T061 va primero.

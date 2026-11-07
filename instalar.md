@@ -31,3 +31,11 @@ El intervalo es operacional: ningún trabajo depende de él.
 ## Copias de seguridad
 
 Generar y custodiar `KONTROL_BACKUP_KEY` aparte, igual que `KONTROL_MFA_KEYS`; sin esta clave la copia es irrecuperable. Crear, verificar y restaurar con `python3 kontrol.py backup`, `python3 kontrol.py backup-verify <paquete>` y `python3 kontrol.py restore <paquete> --expected-installation-id <ID>`. Procedimiento y códigos de salida en `specs/001-fundacion/backup-restore-plan.md` §4 y §8.
+
+### Copias programadas (RPO)
+
+La planificación se configura en **Diagnóstico**: RPO (máximo 15 minutos), intervalo, margen, retención y etiqueta del destino. Antes de habilitarla:
+
+1. Crear `backup.env` en la carpeta de la instalación, con `root:root` y permisos `0600`, con `KONTROL_BACKUP_KEY`. Solo lo lee el tick; la API residente no recibe la clave.
+2. Respaldar el volumen `kontrol-backup-destinations` con NFS o SMB y crear dentro una carpeta con la etiqueta. Un volumen local funciona, pero nunca alcanza el estado «RPO certificado».
+3. Antes de restaurar desde una copia programada, retenerla con `python -m app.ops.backup hold BACKUP_ID`; soltarla con `release`.

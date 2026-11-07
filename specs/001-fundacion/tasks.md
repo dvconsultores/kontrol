@@ -87,4 +87,4 @@
 - [ ] T058 Plan de reparación, con OD y por instalación, de los roles personalizados heredados con `tenant_id` nulo; sin relleno sin autorización (ROLES-HEREDADOS-SIN-TENANT) per FR-001-040 / OD-ISO-11 (partial)
 - [ ] T059 Rechazar con 422 o aplicar los campos declarados que hoy se ignoran (`traceability_profile_id`, `regulatory_profile_id`, `lot_ids`, `from_unit_id`, `source_id`) con prueba (CAMPOS-IGNORADOS-EN-ESQUEMA) per FR-001-032 (partial)
 - [x] T060 Restaurar el contrato estricto y el catálogo de operaciones con FastAPI 0.141.1 mediante `app/core/route_contexts.py` (RUNTIME-LOCK-API-BOOT-FAILURE, RUNTIME-LOCK-OPERATIONS-CATALOG-EMPTY) per FR-001-268, FR-001-269. Delta: `spec001-strict-api-input-contract-delta.md` §17
-- [ ] T061 Ejecutar en PostgreSQL los barridos de `test_iso_barridos.py` sobre las rutas efectivas (ISO-BARRIDOS-SIN-EJECUTAR-EN-RUNTIME)
+- [ ] T061 Ejecutar en PostgreSQL, antes de certificar T052, `test_iso_barridos.py` y GS-25, GC-24, GA-27 y GE-11 sobre las rutas efectivas (brecha de certificación, no defecto demostrado)

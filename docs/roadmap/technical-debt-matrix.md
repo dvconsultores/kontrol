@@ -2542,3 +2542,13 @@ Hallazgos nuevos, sin corregir: KONTROL-PY-UPDATE-NO-OP (MEDIUM propuesta), DOC-
 | ENTORNO-SIN-ANALIZADOR-P2 | **CLOSED**: `qa/clamav_qa.py provisionar` RC 0; suite SQLite con analizador real sin fallos |
 | ISO-BARRIDOS-SIN-EJECUTAR-EN-RUNTIME (nueva) | OPEN · HIGH propuesta · SHARED_CORE · T061: los barridos de aislamiento de `test_iso_barridos.py` corrían en vacío con este runtime. Ya recorren las 613 rutas de empresa, pero solo se ejecutan en PostgreSQL, que este puesto no tiene. Sin ejecutar **no hay evidencia de aislamiento vigente en este runtime** |
 | CATALOGO-CACHE-POR-ID (nueva) | OPEN · LOW: `_CATALOGOS` se indexa con `id(app)`; una app destruida puede ceder su `id`. Solo afecta a procesos con varias apps, como las pruebas |
+
+## Actualización 2026-11-07 (4) — T052 implementada en local
+
+| Deuda | Estado |
+|---|---|
+| BACKUP-SCHEDULE-RPO | **BLOCKED_BY_EXTERNAL_CERTIFICATION_GATES**: implementación local completa, certificación no PostgreSQL en verde. Faltan PostgreSQL, copia real, destino fuera del anfitrión, capacidad, E2E y publicación |
+| BACKUP-PG-TOOLS-IN-OPS-IMAGE | Implementada; `T053_RUNTIME_CERTIFIED = NO`, sin Docker |
+| ISO-BARRIDOS-SIN-EJECUTAR-EN-RUNTIME | **Reclasificada: `CERTIFICATION_GAP_NOT_YET_PROVEN_DEFECT`, T061**. No es un defecto demostrado. Debe correr primero cuando exista PostgreSQL |
+| T052-A1-CLI-AUDIT-TEST (nueva) | OPEN · LOW propuesta: `audit_backup_event` por CLI sin prueba dirigida; `BLOCKED_BY_RETRY_POLICY` |
+| RESTORE-LEDGER-RESET (nueva) | OPEN · MEDIUM propuesta: el ledger no se reinicia tras `restore`; exige tocar `backup_restore.py` |
