@@ -2552,3 +2552,11 @@ Hallazgos nuevos, sin corregir: KONTROL-PY-UPDATE-NO-OP (MEDIUM propuesta), DOC-
 | ISO-BARRIDOS-SIN-EJECUTAR-EN-RUNTIME | **Reclasificada: `CERTIFICATION_GAP_NOT_YET_PROVEN_DEFECT`, T061**. No es un defecto demostrado. Debe correr primero cuando exista PostgreSQL |
 | T052-A1-CLI-AUDIT-TEST (nueva) | OPEN · LOW propuesta: `audit_backup_event` por CLI sin prueba dirigida; `BLOCKED_BY_RETRY_POLICY` |
 | RESTORE-LEDGER-RESET (nueva) | OPEN · MEDIUM propuesta: el ledger no se reinicia tras `restore`; exige tocar `backup_restore.py` |
+
+## Actualización 2026-11-07 (5) — selectores de almacén
+
+| Deuda | Estado |
+|---|---|
+| ALMACENES-DESPLEGABLES-TRUNCADOS | **CLOSED / CONVERGED** en local, sin publicar. `TECHNICAL_FIX_COMPLETE`; `FULL_RUNTIME_E2E_CERTIFICATION` pendiente de PostgreSQL. Evidencia: `specs/008-almacenes-fisicos/evidence/almacenes-desplegables/` |
+| RECEPCION-ALMACEN-TEXTO-LIBRE (nueva) | OPEN · MEDIUM propuesta · dueña compras: `RecepcionesPage` pide el almacén como identificador escrito a mano |
+| ALMACENES-LISTADO-PRIMERA-PAGINA (nueva) | OPEN · LOW propuesta · 008: la tabla de Almacenes muestra los 50 primeros; se alcanzan por búsqueda. Relacionada con ALMACENES-PAGINACION-LIMIT-OFFSET |

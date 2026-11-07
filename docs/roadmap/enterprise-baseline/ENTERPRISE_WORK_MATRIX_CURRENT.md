@@ -68,3 +68,14 @@ rol de plataforma (GOV-CTL-004) es de Gobierno.
 | RESTORE-LEDGER-RESET | 3 | `backup_restore.py` | Ruta certificada | Sí, T052 | No | Toca la restauración certificada |
 | DT-04, DT-06, MOQ-RETRO-01 | — | Decisión | Decisión de la dueña | — | No | Sin decisión |
 | T054, T055, SPEC054, OBS-09 | — | Entorno | Excluidas | Sí | No | Fuera de alcance |
+
+## 7. Matriz de candidatos tras los selectores de almacén (2026-11-07)
+
+| DEBT | PRIORITY | OWNER_SPEC | DEPENDENCIES | ROOT_CAUSE_PROVEN | OWNER_DECISION_REQUIRED | EXTERNAL_GATE | OVERLAP | PRODUCT_IMPACT | ELIGIBLE | WHY |
+|---|---|---|---|---|---|---|---|---|---|---|
+| RECEPCION-ALMACEN-TEXTO-LIBRE | 1 | Compras | `useAlmacenesDeEmpresa` | Sí | No | Solo E2E | Bajo | Alto: recibir mercancía exige pegar un identificador | **Sí** | **SELECTED_NEXT_ENTERPRISE_TARGET** |
+| KONTROL-PY-UPDATE-NO-OP | 2 | 052 | Ninguna | Sí | No | Docker para certificar | Bajo | Medio: falso éxito operativo | Sí | Por debajo: afecta a operación, no al flujo diario |
+| ALMACENES-LISTADO-PRIMERA-PAGINA | 3 | 008 | ALMACENES-PAGINACION-LIMIT-OFFSET | Sí | Sí, estilo de contrato | No | Medio | Bajo: hay búsqueda | No | Decisión previa |
+| T052-A1-CLI-AUDIT-TEST | 3 | 001 | T052 | Sí | No | No | Sí | Bajo | No | Política de reintentos |
+| RESTORE-LEDGER-RESET | 3 | 001 | Restauración | Sí | No | PostgreSQL | Sí | Medio | No | Mismo bloqueo PostgreSQL |
+| T061 y certificación T052 | — | 001 | PostgreSQL | No aplica | No | PostgreSQL | — | Alto | No | Sin entorno |
