@@ -185,7 +185,15 @@ class IncidentCancelBody(BaseModel):
 
 
 class QualityBody(BaseModel):
-    quality_status: str = Field(pattern="^(APPROVED|REJECTED)$")
+    #: Sin veredicto, la recepción confirmada pasa a calidad (QUALITY_PENDING).
+    quality_status: str | None = Field(default=None, pattern="^(APPROVED|REJECTED)$")
+
+
+class ReceiptCancelBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    #: Queda en la auditoría, cuyo campo de motivo admite 255 caracteres.
+    reason: str = Field(min_length=1, max_length=255)
 
 
 class InvoiceCreate(BaseModel):
@@ -476,6 +484,7 @@ def _receipt_dict(db: Session, receipt) -> dict:
             # Etapa 11: acta emitida.
             "record_issued_at": receipt.record_issued_at.isoformat() if receipt.record_issued_at else None,
             "record_issued_by": receipt.record_issued_by,
+            "allowed_actions": ap_service.receipt_allowed_actions(receipt),
             "lines": [_receipt_line_dict(x) for x in lines]}
 
 
@@ -497,7 +506,8 @@ def list_receipts(status: str | None = None, db: Session = Depends(get_db), user
                        if r.unloading_scheduled_at else None,
                        "packages_declared": r.packages_declared, "packages_received": r.packages_received,
                        "inspected_at": r.inspected_at.isoformat() if r.inspected_at else None,
-                       "record_issued_at": r.record_issued_at.isoformat() if r.record_issued_at else None}
+                       "record_issued_at": r.record_issued_at.isoformat() if r.record_issued_at else None,
+                       "allowed_actions": ap_service.receipt_allowed_actions(r)}
                       for r in items],
             "total": len(items), "page": 1, "page_size": len(items) or 1}
 
@@ -799,7 +809,11 @@ def confirm_receipt(receipt_id: str, db: Session = Depends(get_db),
 def set_receipt_quality(receipt_id: str, body: QualityBody, db: Session = Depends(get_db),
                         actor: User = Depends(require_permission("compras", "quality")), ctx: CompanyContext = Depends(get_company_context)):
     receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
-    ap_service.registrar_conformidad(db, receipt=receipt, quality_status=body.quality_status, actor=str(actor.id))
+    if body.quality_status is None:
+        ap_service.enviar_a_calidad(db, receipt=receipt, actor=str(actor.id))
+    else:
+        ap_service.registrar_conformidad(db, receipt=receipt, quality_status=body.quality_status,
+                                         actor=str(actor.id))
     db.commit()
     db.refresh(receipt)
     return {"id": receipt.id, "status": receipt.status, "quality_status": receipt.quality_status}
@@ -810,6 +824,28 @@ def accept_receipt(receipt_id: str, db: Session = Depends(get_db),
                    actor: User = Depends(require_permission("compras", "quality")), ctx: CompanyContext = Depends(get_company_context)):
     receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
     ap_service.accept_receipt(db, receipt=receipt, actor=str(actor.id))
+    db.commit()
+    db.refresh(receipt)
+    return {"id": receipt.id, "status": receipt.status}
+
+
+@router.post("/receipts/{receipt_id}/close", dependencies=[Depends(require_write_allowed)])
+def close_receipt(receipt_id: str, db: Session = Depends(get_db),
+                  actor: User = Depends(require_permission("compras", "approve")),
+                  ctx: CompanyContext = Depends(get_company_context)):
+    receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    ap_service.cerrar_recepcion(db, receipt=receipt, actor=str(actor.id))
+    db.commit()
+    db.refresh(receipt)
+    return {"id": receipt.id, "status": receipt.status}
+
+
+@router.post("/receipts/{receipt_id}/cancel", dependencies=[Depends(require_write_allowed)])
+def cancel_receipt(receipt_id: str, body: ReceiptCancelBody, db: Session = Depends(get_db),
+                   actor: User = Depends(require_permission("compras", "approve")),
+                   ctx: CompanyContext = Depends(get_company_context)):
+    receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    ap_service.anular_recepcion(db, receipt=receipt, reason=body.reason, actor=str(actor.id))
     db.commit()
     db.refresh(receipt)
     return {"id": receipt.id, "status": receipt.status}

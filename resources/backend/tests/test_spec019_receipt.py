@@ -95,7 +95,7 @@ def _sql(mundo, sentencia, **params):
 
 
 def _aceptar(mundo, usuario, empresa, recepcion):
-    for accion, cuerpo in (("confirm", {}), ("quality", {"quality_status": "APPROVED"}), ("accept", {})):
+    for accion, cuerpo in (("confirm", {}), ("quality", {}), ("quality", {"quality_status": "APPROVED"}), ("accept", {})):
         r = mundo.post(f"/purchasing/receipts/{recepcion}/{accion}", usuario, empresa, cuerpo)
         assert r.status_code == 200, f"{accion}: {r.text}"
     return r.json()
@@ -365,7 +365,7 @@ def test_una_recepcion_sin_lineas_no_se_acepta(mundo):
     prod = _producto(mundo, "ua", mundo.company_a, "P019-VACIA")
     oc = _orden_aprobada(mundo, "ua", mundo.company_a, "VACIA", prod)
     rec = _recepcion(mundo, "ua", mundo.company_a, "VACIA", oc["orden"], mundo.warehouse_a)
-    for accion, cuerpo in (("confirm", {}), ("quality", {"quality_status": "APPROVED"})):
+    for accion, cuerpo in (("confirm", {}), ("quality", {}), ("quality", {"quality_status": "APPROVED"})):
         assert mundo.post(f"/purchasing/receipts/{rec['id']}/{accion}", "ua", mundo.company_a,
                           cuerpo).status_code == 200
     r = mundo.post(f"/purchasing/receipts/{rec['id']}/accept", "ua", mundo.company_a, {})
@@ -390,7 +390,7 @@ def test_usuario_ab_bajo_contexto_a_no_opera_la_recepcion_de_b(mundo):
     oc = _orden_aprobada(mundo, "ub", mundo.company_b, "AB", prod)
     rec = _recepcion(mundo, "ub", mundo.company_b, "AB", oc["orden"], mundo.warehouse_b)
     for accion, cuerpo in (("arrival", {}), ("inspection", {"order_match": True}),
-                           ("confirm", {}), ("quality", {"quality_status": "APPROVED"}), ("accept", {})):
+                           ("confirm", {}), ("quality", {}), ("quality", {"quality_status": "APPROVED"}), ("accept", {})):
         r = mundo.post(f"/purchasing/receipts/{rec['id']}/{accion}", "uab", mundo.company_a, cuerpo)
         assert r.status_code == 404, f"{accion}: {r.status_code} {r.text}"
     assert mundo.get(f"/purchasing/receipts/{rec['id']}", "uab", mundo.company_a).status_code == 404
@@ -445,9 +445,59 @@ def test_rechazar_la_recepcion_deja_el_veredicto_guardado(mundo):
     rec = _recepcion(mundo, "ua", mundo.company_a, "RECHAZO", oc["orden"], mundo.warehouse_a)
     r = mundo.post(f"/purchasing/receipts/{rec['id']}/confirm", "ua", mundo.company_a, {})
     assert r.status_code == 200, r.text
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/quality", "ua", mundo.company_a, {})
+    assert r.status_code == 200 and r.json()["status"] == "QUALITY_PENDING", r.text
     r = mundo.post(f"/purchasing/receipts/{rec['id']}/quality", "ua", mundo.company_a, {"quality_status": "REJECTED"})
     assert r.status_code == 200 and r.json()["status"] == "REJECTED", r.text
     assert r.json()["quality_status"] == "REJECTED"
+
+
+def test_la_maquina_http_pasa_por_calidad_y_no_cierra_sin_conciliar(mundo):
+    """Recorrido HTTP completo hasta calidad y bloqueo de cierre sin conciliación."""
+    prod = _producto(mundo, "ua", mundo.company_a, "MAQP")
+    oc = _orden_aprobada(mundo, "ua", mundo.company_a, "MAQ", prod)
+    rec = _recepcion(mundo, "ua", mundo.company_a, "MAQ", oc["orden"], mundo.warehouse_a)
+    _linea(mundo, "ua", mundo.company_a, rec["id"], oc["linea"], prod, 10)
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/confirm", "ua", mundo.company_a, {})
+    assert r.status_code == 200
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/quality", "ua", mundo.company_a, {})
+    assert r.status_code == 200
+    assert r.json()["status"] == "QUALITY_PENDING"
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/quality", "ua", mundo.company_a, {"quality_status": "APPROVED"})
+    assert r.status_code == 200
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/accept", "ua", mundo.company_a, {})
+    assert r.status_code == 200
+    assert r.json()["status"] == "ACCEPTED"
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/close", "ua", mundo.company_a, {})
+    assert r.status_code == 409
+    assert r.json()["code"] == "RECEIPT_NOT_RECONCILED"
+    r = mundo.get(f"/purchasing/receipts/{rec['id']}", "ua", mundo.company_a)
+    assert r.status_code == 200
+    assert r.json()["allowed_actions"]["close"] is False
+
+
+def test_otra_empresa_no_cierra_ni_anula(mundo):
+    prod = _producto(mundo, "ua", mundo.company_a, "AJENAP")
+    oc = _orden_aprobada(mundo, "ua", mundo.company_a, "AJENA", prod)
+    rec = _recepcion(mundo, "ua", mundo.company_a, "AJENA", oc["orden"], mundo.warehouse_a)
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/close", "uc", mundo.company_c, {}, tenant="T2")
+    assert r.status_code == 404
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/cancel", "uc", mundo.company_c, {"reason": "x"}, tenant="T2")
+    assert r.status_code == 404
+
+
+def test_anular_borrador_http(mundo):
+    prod = _producto(mundo, "ua", mundo.company_a, "ANULAP")
+    oc = _orden_aprobada(mundo, "ua", mundo.company_a, "ANULA", prod)
+    rec = _recepcion(mundo, "ua", mundo.company_a, "ANULA", oc["orden"], mundo.warehouse_a)
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/cancel", "ua", mundo.company_a, {"reason": ""})
+    assert r.status_code == 422
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/cancel", "ua", mundo.company_a, {"reason": "Creada por error"})
+    assert r.status_code == 200
+    assert r.json()["status"] == "CANCELLED"
+    r = mundo.post(f"/purchasing/receipts/{rec['id']}/cancel", "ua", mundo.company_a, {"reason": "Otra vez"})
+    assert r.status_code == 409
+    assert r.json()["code"] == "INVALID_STATE_TRANSITION"
 
 
 def test_el_almacen_de_otra_empresa_no_sirve(mundo):

@@ -2699,6 +2699,16 @@
       "query": []
     },
     {
+      "method": "POST",
+      "path": "/purchasing/receipts/{receipt_id}/cancel",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/purchasing/receipts/{receipt_id}/close",
+      "query": []
+    },
+    {
       "method": "GET",
       "path": "/purchasing/receipts/{receipt_id}/conciliacion",
       "query": []

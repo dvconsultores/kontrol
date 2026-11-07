@@ -288,6 +288,7 @@ def test_bt10_rechazo_no_acumula_recibido(db_session, mundo):
         presentation_id=None,
     )
     ap_service.confirm_receipt(db, receipt=receipt)
+    ap_service.enviar_a_calidad(db, receipt=receipt)
     receipt.quality_status = "APPROVED"
     db.flush()
     ap_service.accept_receipt(db, receipt=receipt)
@@ -314,6 +315,7 @@ def test_bt11_flujo_correcto_mete_inventario_del_producto_de_la_linea(db_session
         presentation_id=None,
     )
     ap_service.confirm_receipt(db, receipt=receipt)
+    ap_service.enviar_a_calidad(db, receipt=receipt)
     receipt.quality_status = "APPROVED"
     db.flush()
     ap_service.accept_receipt(db, receipt=receipt)

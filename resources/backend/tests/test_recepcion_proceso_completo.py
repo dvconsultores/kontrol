@@ -44,6 +44,7 @@ def _historica(db, m, *, order_line, producto):
 
 def _preparar_aceptacion(db, recepcion):
     ap_service.confirm_receipt(db, receipt=recepcion)
+    ap_service.enviar_a_calidad(db, receipt=recepcion)
     recepcion.quality_status = "APPROVED"
     db.flush()
 
@@ -277,7 +278,7 @@ def test_w_almacen_desactivado_no_acepta(db_session, mundo):  # noqa: F811
     assert excinfo.value.code == "WAREHOUSE_NOT_ELIGIBLE"
     assert db_session.query(InventoryMovement).count() == 0
     db_session.refresh(mundo.recepcion)
-    assert mundo.recepcion.status == "CONFIRMED"
+    assert mundo.recepcion.status == "QUALITY_PENDING"
 
 
 def test_h01_h08_fila_historica_no_se_acepta(db_session, mundo):  # noqa: F811
@@ -307,7 +308,7 @@ def test_h01_h08_fila_historica_no_se_acepta(db_session, mundo):  # noqa: F811
     db_session.refresh(mundo.linea_a)
     assert mundo.linea_a.quantity_received == 0
     db_session.refresh(mundo.recepcion)
-    assert mundo.recepcion.status == "CONFIRMED"
+    assert mundo.recepcion.status == "QUALITY_PENDING"
     assert mundo.recepcion.record_issued_at is None
     assert (
         db_session.query(AuditEvent).filter(AuditEvent.action == "RECEIPT_ACCEPTED").count()
@@ -390,7 +391,20 @@ def test_h09_flujo_correcto_sigue_aceptando(db_session, mundo):  # noqa: F811
 
 @pytest.mark.parametrize("veredicto", ("APPROVED", "REJECTED"))
 def test_conformidad_se_registra_y_audita(db_session, mundo, veredicto):  # noqa: F811
+    ap_service.add_receipt_line(
+        db_session,
+        company_id=COMPANY,
+        receipt_id=str(mundo.recepcion.id),
+        order_line_id=str(mundo.linea_a.id),
+        product_id=str(mundo.producto_a.id),
+        quantity_received=10.0,
+        quantity_accepted=10.0,
+        quantity_rejected=0.0,
+        identification_ok=None,
+        reference_ok=None,
+    )
     ap_service.confirm_receipt(db_session, receipt=mundo.recepcion)
+    ap_service.enviar_a_calidad(db_session, receipt=mundo.recepcion)
     ap_service.registrar_conformidad(
         db_session, receipt=mundo.recepcion, quality_status=veredicto, actor=None
     )
@@ -406,7 +420,20 @@ def test_conformidad_se_registra_y_audita(db_session, mundo, veredicto):  # noqa
 
 
 def test_rechazada_cierra_la_recepcion(db_session, mundo):  # noqa: F811
+    ap_service.add_receipt_line(
+        db_session,
+        company_id=COMPANY,
+        receipt_id=str(mundo.recepcion.id),
+        order_line_id=str(mundo.linea_a.id),
+        product_id=str(mundo.producto_a.id),
+        quantity_received=10.0,
+        quantity_accepted=10.0,
+        quantity_rejected=0.0,
+        identification_ok=None,
+        reference_ok=None,
+    )
     ap_service.confirm_receipt(db_session, receipt=mundo.recepcion)
+    ap_service.enviar_a_calidad(db_session, receipt=mundo.recepcion)
     ap_service.registrar_conformidad(
         db_session, receipt=mundo.recepcion, quality_status="REJECTED", actor=None
     )

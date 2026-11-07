@@ -144,6 +144,7 @@ def main() -> None:
                 "quantity_received": qty, "quantity_accepted": qty, "quantity_rejected": 0,
                 "lot_number": None, "expiry_date": None, "serials": None})
         _request("POST", f"/purchasing/receipts/{rc_id}/confirm", h, {})
+        _request("POST", f"/purchasing/receipts/{rc_id}/quality", h, {})
         _request("POST", f"/purchasing/receipts/{rc_id}/quality", h, {"quality_status": "APPROVED"})
         _request("POST", f"/purchasing/receipts/{rc_id}/accept", h, {})
         ids["receipt_id"] = rc_id

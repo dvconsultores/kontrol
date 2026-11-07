@@ -103,6 +103,7 @@ class TestRecepcionIntegra003:
                                     product_id=str(product.id), quantity_received=30.0, quantity_accepted=30.0,
                                     quantity_rejected=0.0, lot_number="L-1")
         ap_service.confirm_receipt(db_session, receipt=receipt)
+        ap_service.enviar_a_calidad(db_session, receipt=receipt)
         receipt.quality_status = "APPROVED"
         db_session.flush()
         ap_service.accept_receipt(db_session, receipt=receipt)
@@ -181,6 +182,7 @@ class TestFacturaProveedor:
                                                    product_id=str(product.id), quantity_received=10.0, quantity_accepted=10.0,
                                                    quantity_rejected=0.0)
         ap_service.confirm_receipt(db_session, receipt=receipt)
+        ap_service.enviar_a_calidad(db_session, receipt=receipt)
         receipt.quality_status = "APPROVED"
         db_session.flush()
         ap_service.accept_receipt(db_session, receipt=receipt)

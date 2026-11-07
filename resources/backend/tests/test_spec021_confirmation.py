@@ -61,7 +61,7 @@ def _recepcion_aceptada(mundo, usuario, empresa, almacen, marca, *, cantidad=100
     if presentacion:
         cuerpo["presentation_id"] = presentacion
     rl = mundo.crear(f"/purchasing/receipts/{rec}/lines", usuario, empresa, cuerpo)
-    for accion, cuerpo in (("confirm", {}), ("quality", {"quality_status": "APPROVED"}), ("accept", {})):
+    for accion, cuerpo in (("confirm", {}), ("quality", {}), ("quality", {"quality_status": "APPROVED"}), ("accept", {})):
         r = mundo.post(f"/purchasing/receipts/{rec}/{accion}", usuario, empresa, cuerpo)
         assert r.status_code == 200, f"{accion}: {r.text}"
     return {"receipt": rec, "line": rl, "product": prod, "order": orden, "order_line": linea}

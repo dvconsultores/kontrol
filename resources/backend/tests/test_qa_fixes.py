@@ -241,7 +241,7 @@ def test_receipt_accept_autoseeds_movement_type_and_updates_stock():
         "quantity_accepted": 10, "quantity_rejected": 0, "lot_number": None,
         "expiry_date": None, "serials": None})
     assert r.status_code == 200, r.text
-    for action, body in [("confirm", {}), ("quality", {"quality_status": "APPROVED"}), ("accept", {})]:
+    for action, body in [("confirm", {}), ("quality", {}), ("quality", {"quality_status": "APPROVED"}), ("accept", {})]:
         r = _CLIENT.post(f"/api/v1/purchasing/receipts/{rc_id}/{action}", headers=h, json=body)
         assert r.status_code == 200, f"{action}: {r.text}"
 

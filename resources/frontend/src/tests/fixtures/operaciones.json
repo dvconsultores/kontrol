@@ -3695,6 +3695,22 @@
       "scope": "COMPANY"
     },
     {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/cancel",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/close",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/purchasing/receipts/{receipt_id}/conciliacion",
       "capabilities": [

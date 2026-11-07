@@ -389,7 +389,7 @@ def test_una_recepcion_sin_diferencias_no_crea_ninguna_incidencia(mundo):
     """§16: el camino feliz no pasa por la Spec 020."""
     antes = len(mundo.filas("receipt_incidents", "id"))
     m = _recepcion_con_linea(mundo, "ua", mundo.company_a, mundo.warehouse_a, "FELIZ", recibido=8)
-    for accion, cuerpo in (("confirm", {}), ("quality", {"quality_status": "APPROVED"}), ("accept", {})):
+    for accion, cuerpo in (("confirm", {}), ("quality", {}), ("quality", {"quality_status": "APPROVED"}), ("accept", {})):
         assert mundo.post(f"/purchasing/receipts/{m['recepcion']}/{accion}", "ua", mundo.company_a,
                           cuerpo).status_code == 200
     assert len(mundo.filas("receipt_incidents", "id")) == antes, "se creó una incidencia vacía"

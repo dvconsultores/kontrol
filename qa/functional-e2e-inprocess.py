@@ -204,6 +204,7 @@ def main() -> None:
                 "quantity_received": qty, "quantity_accepted": qty, "quantity_rejected": 0,
                 "lot_number": None, "expiry_date": None, "serials": None})
         call("POST", f"/purchasing/receipts/{rc_id}/confirm", {})
+        call("POST", f"/purchasing/receipts/{rc_id}/quality", {})
         call("POST", f"/purchasing/receipts/{rc_id}/quality", {"quality_status": "APPROVED"})
         call("POST", f"/purchasing/receipts/{rc_id}/accept", {})
         ids["receipt_id"] = rc_id

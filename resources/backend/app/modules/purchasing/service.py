@@ -138,7 +138,7 @@ RECEIPT_WAREHOUSE_ALLOWED_STATUSES = ("ACTIVE",)
 
 RECEIPT_TRANSITIONS: dict[str, set[str]] = {
     "DRAFT": {"CONFIRMED", "CANCELLED"},
-    "CONFIRMED": {"QUALITY_PENDING", "ACCEPTED", "PARTIALLY_ACCEPTED", "REJECTED"},
+    "CONFIRMED": {"QUALITY_PENDING"},
     "QUALITY_PENDING": {"ACCEPTED", "PARTIALLY_ACCEPTED", "REJECTED"},
     "ACCEPTED": {"CLOSED"},
     "PARTIALLY_ACCEPTED": {"CLOSED"},
@@ -222,6 +222,16 @@ def order_allowed_actions(order: PurchaseOrder) -> dict[str, bool]:
     s = order.status
     return {"view": True, "submit": s == "DRAFT", "approve": s == "SUBMITTED", "reject": s == "SUBMITTED",
             "cancel": s in ("DRAFT", "APPROVED"), "receive": s in RECEIVABLE_ORDER_STATUSES, "close": s == "RECEIVED"}
+
+
+def receipt_allowed_actions(receipt: GoodsReceipt) -> dict[str, bool]:
+    """Acciones permitidas por la máquina de FR-004-031; el backend las revalida en cada operación."""
+    s = receipt.status
+    return {"confirm": s == "DRAFT", "cancel": s == "DRAFT", "send_to_quality": s == "CONFIRMED",
+            "record_quality": s == "QUALITY_PENDING" and receipt.quality_status != "APPROVED",
+            "accept": s == "QUALITY_PENDING" and receipt.quality_status == "APPROVED",
+            "close": (s in ("ACCEPTED", "PARTIALLY_ACCEPTED") and receipt.confirmation_status == CONFIRMATION_DONE)
+            or s == "REJECTED"}
 
 
 def invoice_allowed_actions(invoice: SupplierInvoice) -> dict[str, bool]:
@@ -657,11 +667,30 @@ def add_receipt_line(db: Session, *, company_id: str, receipt_id: str, order_lin
     return line
 
 
-def confirm_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = None) -> GoodsReceipt:
-    _assert_transition(receipt.status, "CONFIRMED", RECEIPT_TRANSITIONS, "la recepción")
-    receipt.status = "CONFIRMED"
+def _transicionar_recepcion(db: Session, receipt: GoodsReceipt, target: str, *, actor: str | None,
+                            reason: str | None = None) -> None:
+    """Todo cambio de estado de la recepción pasa por aquí y queda auditado."""
+    origen = receipt.status
+    _assert_transition(origen, target, RECEIPT_TRANSITIONS, "la recepción")
+    receipt.status = target
     receipt.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="RECEIPT_TRANSITIONED", entity_type="GoodsReceipt", entity_id=str(receipt.id),
+           company_id=receipt.company_id, actor=actor, reason=reason,
+           after={"source": origen, "target": target, "reason": reason})
+
+
+def confirm_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = None) -> GoodsReceipt:
+    _transicionar_recepcion(db, receipt, "CONFIRMED", actor=actor)
+    return receipt
+
+
+def enviar_a_calidad(db: Session, *, receipt: GoodsReceipt, actor: str | None = None) -> GoodsReceipt:
+    """Etapa 5: la calidad toma la recepción confirmada y ya no se añaden líneas."""
+    if receipt.status == "CONFIRMED" and db.execute(
+            select(GoodsReceiptLine.id).where(GoodsReceiptLine.receipt_id == receipt.id)).first() is None:
+        raise ConflictError(code="RECEIPT_EMPTY", message="Una recepción sin líneas no pasa a calidad.")
+    _transicionar_recepcion(db, receipt, "QUALITY_PENDING", actor=actor)
     return receipt
 
 
@@ -691,6 +720,12 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
         raise ConflictError(code="RECEIPT_EMPTY", message="Una recepción sin líneas no se acepta.")
     _requiere_almacen_operable(db.get(Warehouse, receipt.warehouse_id))
     _requiere_lineas_integras(db, receipt, lines)
+    if sum(_dec(x.quantity_accepted) for x in lines) <= 0:
+        raise ConflictError(code="RECEIPT_NOTHING_ACCEPTED",
+                            message="No hay cantidad aceptada: la recepción se rechaza con el veredicto de calidad.")
+    # Se compara contra lo recibido, no contra lo pedido: la orden ya tiene su PARTIALLY_RECEIVED.
+    destino = ("ACCEPTED" if all(_dec(x.quantity_accepted) == _dec(x.quantity_received) for x in lines)
+               else "PARTIALLY_ACCEPTED")
     for line in lines:
         if line.quantity_accepted > 0:
             # La línea de orden se bloquea antes de acumular: dos recepciones
@@ -736,7 +771,7 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
                 aceptado = (line.base_quantity_accepted
                             if line.base_quantity_accepted is not None else line.quantity_accepted)
                 order_line.quantity_received = _dec(order_line.quantity_received) + _dec(aceptado)
-    receipt.status = "ACCEPTED"
+    receipt.status = destino
     # Etapa 11: recepción conforme, acta emitida. El acta no es un documento
     # nuevo: es el registro de recepción, fechado y con responsable.
     receipt.record_issued_at = datetime.now(UTC)
@@ -746,7 +781,7 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
     _sync_order_status(db, receipt.order_id)
     _audit(db, action="RECEIPT_ACCEPTED", entity_type="GoodsReceipt", entity_id=str(receipt.id),
            company_id=receipt.company_id, actor=actor,
-           after={"order_id": str(receipt.order_id), "warehouse_id": receipt.warehouse_id,
+           after={"status": receipt.status, "order_id": str(receipt.order_id), "warehouse_id": receipt.warehouse_id,
                   "record_issued_at": receipt.record_issued_at.isoformat(),
                   "arrival_at": receipt.arrival_at.isoformat() if receipt.arrival_at else None,
                   "packages_declared": receipt.packages_declared,
@@ -765,6 +800,9 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
 def registrar_conformidad(db: Session, *, receipt: GoodsReceipt, quality_status: str,
                           actor: str | None = None) -> GoodsReceipt:
     """Registra la conformidad de la etapa 7."""
+    if receipt.status != "QUALITY_PENDING":
+        raise ConflictError(code="QUALITY_NOT_PENDING",
+                            message="El veredicto se registra con la recepción en calidad.")
     if quality_status == "REJECTED":
         reject_receipt(db, receipt=receipt, actor=actor)
     else:
@@ -783,6 +821,39 @@ def reject_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
     receipt.quality_status = "REJECTED"
     receipt.updated_at = datetime.now(UTC)
     db.flush()
+    return receipt
+
+
+def cerrar_recepcion(db: Session, *, receipt: GoodsReceipt, actor: str | None = None) -> GoodsReceipt:
+    """Fin del ciclo de vida de la recepción.
+
+    Reutiliza el estado de las Specs 020 y 021; no mueve inventario ni toca
+    cantidades, incidencias, lotes ni la orden.
+    """
+    _assert_transition(receipt.status, "CLOSED", RECEIPT_TRANSITIONS, "la recepción")
+    if receipt.status in ("ACCEPTED", "PARTIALLY_ACCEPTED") and receipt.confirmation_status != CONFIRMATION_DONE:
+        raise ConflictError(code="RECEIPT_NOT_RECONCILED",
+                            message="Una recepción aceptada se cierra después de confirmar su inventario.")
+    if receipt.status == "REJECTED" and resultado_de_incidencias(
+            db, company_id=receipt.company_id, receipt_id=str(receipt.id))["unresolved"]:
+        raise ConflictError(code="RECEIPT_INCIDENTS_OPEN",
+                            message="La recepción tiene incidencias sin resolver.")
+    _transicionar_recepcion(db, receipt, "CLOSED", actor=actor)
+    return receipt
+
+
+def anular_recepcion(db: Session, *, receipt: GoodsReceipt, reason: str | None,
+                     actor: str | None = None) -> GoodsReceipt:
+    """Anula un borrador creado por error; sin efectos definitivos porque el inventario solo entra al aceptar."""
+    motivo = (reason or "").strip()
+    if not motivo:
+        raise KontrolError(code="REASON_REQUIRED", message="Anular una recepción exige un motivo.",
+                           status_code=422)
+    _assert_transition(receipt.status, "CANCELLED", RECEIPT_TRANSITIONS, "la recepción")
+    if resultado_de_incidencias(db, company_id=receipt.company_id, receipt_id=str(receipt.id))["unresolved"]:
+        raise ConflictError(code="RECEIPT_INCIDENTS_OPEN",
+                            message="La recepción tiene incidencias sin resolver.")
+    _transicionar_recepcion(db, receipt, "CANCELLED", actor=actor, reason=motivo)
     return receipt
 
 
@@ -859,6 +930,9 @@ def registrar_incidencia(db: Session, *, company_id: str, receipt_id: str, code:
     if receipt.status == "CANCELLED":
         raise ConflictError(code="RECEIPT_CANCELLED",
                             message="Una recepción anulada no admite incidencias.")
+    if receipt.status == "CLOSED":
+        raise ConflictError(code="RECEIPT_CLOSED",
+                            message="Una recepción cerrada no admite incidencias.")
     if incident_type not in INCIDENT_TYPES:
         raise KontrolError(code="INVALID_INCIDENT_TYPE",
                            message=f"Tipo de incidencia no reconocido: {incident_type}.",
