@@ -2503,3 +2503,9 @@ Preguntas a la dueña:
 - OQ-MFA-3: arnés de pruebas frente a la antirrepetición.
 
 DEEPSEEK CALLS = 0.
+
+## Actualización 2026-11-06 — reconciliación Enterprise (P2, solo lectura)
+
+Vista por línea de producto en `enterprise-baseline/`. Esta matriz sigue siendo la autoridad de cada deuda. Ninguna deuda se cierra ni se reabre.
+
+Hallazgos nuevos, sin corregir: KONTROL-PY-UPDATE-NO-OP (MEDIUM propuesta), DOC-ESTADO-OBSOLETO-TRAS-HARDENING (LOW), ORCH-READINESS-FALSO-NEGATIVO (LOW) y ESTACION-SIN-CREDENCIAL-GIT (operativo). Detalle en `enterprise-baseline/ENTERPRISE_BASELINE_CURRENT.md` §9.

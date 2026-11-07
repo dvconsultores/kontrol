@@ -4230,3 +4230,12 @@ reinicio del equipo obligó a reconstruir V5 y el PostgreSQL de QA y a repetir l
 | `NEXT MASTER SPEC` | **NOT YET PRIORITIZED** — sin cambio |
 
 `RELEASE_DEPLOYMENT_PARITY_CERTIFIED = 0`.
+
+## 2026-11-06 · Reconciliación Enterprise de P2 (solo lectura)
+
+Detalle: `enterprise-baseline/ENTERPRISE_BASELINE_CURRENT.md` y `enterprise-baseline/ENTERPRISE_WORK_MATRIX_CURRENT.md`.
+
+| Puntero | Valor |
+|---|---|
+| `NEXT TECHNICAL CYCLE` de la línea Enterprise (P2) | **T052-RPO-DESIGN-AND-OWNER-DECISION-GATE**: diseño y decisiones de la dueña, sin implementación |
+| `NEXT MASTER SPEC` | **NOT YET PRIORITIZED**, sin cambio. `SPEC057_READY_TO_START = 0` |
