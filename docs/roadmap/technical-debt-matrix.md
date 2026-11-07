@@ -2517,3 +2517,10 @@ Hallazgos nuevos, sin corregir: KONTROL-PY-UPDATE-NO-OP (MEDIUM propuesta), DOC-
 | T052_PREREQUISITE_AUDIT_TRUTHFULNESS (BACKUP-MANUAL-AUDIT-ANTES-DE-VERIFY) | OPEN, prerrequisito de T052 por decisión de la dueña: `create` registra semántica de copia verificada antes de `verify` |
 | BACKUP-PG-TOOLS-IN-OPS-IMAGE (T053) | OPEN, prerrequisito de T052: `T053_REQUIRED_FOR_T052 = 1` |
 | RESTORE-DRILL-PERIODIC (nueva, propuesta) | OPEN: DOC-05 §11 pide prueba mensual y ejercicio trimestral de restauración |
+
+## Actualización 2026-11-07 — defecto de arranque con el lock de producción
+
+| Deuda | Estado |
+|---|---|
+| RUNTIME-LOCK-API-BOOT-FAILURE (nueva) | OPEN · P0 · SHARED_CORE · dueña 001/052: con `requirements.lock`, `import app.main` falla por `get_flat_dependant` en `app/core/query_contract.py`. Evidencia: `specs/001-fundacion/evidence/backup-rpo/RUNTIME_BOOT_DEFECT.md` |
+| T052-A1 | BLOCKED: 2 reintentos semánticos agotados, nada aplicado. `specs/001-fundacion/evidence/backup-rpo/ATTEMPT_LOG.md` |

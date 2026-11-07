@@ -4,9 +4,9 @@
 |---|---|
 | Deudas | BACKUP-SCHEDULE-RPO (T052, HIGH) · BACKUP-PG-TOOLS-IN-OPS-IMAGE (T053, MEDIUM) |
 | Dueña | 001 / 053. Línea: `SHARED_CORE`, por razón Enterprise (FR-001-083) |
-| Estado | **DISEÑO LOCAL CON DECISIONES RATIFICADAS, NO REVALIDADO CONTRA `origin`.** `REPOSITORY_RECONCILED = 0`; `OWNER_DECISIONS_PENDING = 0` |
+| Estado | **DISEÑO RECONCILIADO CON `public-upstream` `56f1237`; IMPLEMENTACIÓN BLOQUEADA** por `RUNTIME-LOCK-API-BOOT-FAILURE` y T052-A1. `OWNER_DECISIONS_PENDING = 0` |
 | Alcance futuro | T052 + T053 (prerrequisito) + `T052_PREREQUISITE_AUDIT_TRUTHFULNESS`. No T054 ni T055 |
-| Autorización de implement | **Ninguna.** `NEXT_CYCLE_IMPLEMENTATION_ALLOWED = 0` hasta publicar sobre el `origin/develop` real |
+| Autorización de implement | OD_GIT_P2_04: la publicación no bloquea. Bloquea el P0 de arranque |
 | Evidencia | `evidence/backup-rpo/` |
 
 Marcas: **MEASURED** (visto en el árbol en este ciclo), **RECORDED** (evidencia versionada), **DERIVED** (deducción), **NOT_MEASURED**.

@@ -140,3 +140,7 @@ posterior.
 `.claude/CLAUDE.md` y la política de orquestación reservan a Claude migraciones, seguridad, aislamiento de tenant y reglas fiscales
 (`CLAUDE_ONLY`). La regla mandatoria de 2026-10-18, los ciclos de Gobierno y este encargo piden que DeepSeek escriba **todo** el
 código, incluidas migraciones. No bloquea este ciclo, pero debe resolverse antes de implementar: es decisión de la dueña.
+
+## 11. Corrección 2026-11-07
+
+La §1 y la §4 se apoyaron en suites registradas de P1, ejecutadas fuera del lock de producción. Medido después: con `requirements.lock` la aplicación no arranca (`RUNTIME-LOCK-API-BOOT-FAILURE`, P0). El contrato estricto de API de `f24e74e` queda **REGRESSED en el runtime del lock**. `ENTERPRISE_OPEN_P0 = 1`.
