@@ -23,6 +23,7 @@ import type {
   GoodsReceiptSummary,
   PagedResult,
 } from "@/api/types";
+import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
@@ -32,6 +33,8 @@ import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
+import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
+import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 
 interface PurchaseOrderSummary {
   id: string;
@@ -68,6 +71,7 @@ export function RecepcionesPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
   const { puede } = useAutoridad();
+  const { activeCompany } = useCompany();
 
   const [newCode, setNewCode] = useState("");
   const [newOrder, setNewOrder] = useState("");
@@ -121,6 +125,10 @@ export function RecepcionesPage(): React.JSX.Element {
     retry: false,
   });
 
+  const warehouses = useAlmacenesDeEmpresa(activeCompany?.id ?? null);
+  // Una selección que ya no está en la lista, por ejemplo de otra empresa, no se envía.
+  const almacenElegido = (warehouses.data?.items ?? []).some((w) => w.id === newWarehouse) ? newWarehouse : "";
+
   const refresh = async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: ["compras", "recepciones"] });
     await queryClient.invalidateQueries({ queryKey: ["compras", "recepcion"] });
@@ -132,11 +140,15 @@ export function RecepcionesPage(): React.JSX.Element {
   };
 
   const createReceipt = async (): Promise<void> => {
+    if (!almacenElegido) {
+      notify({ type: "error", title: "No fue posible crear la recepción", description: "Seleccione un almacén." });
+      return;
+    }
     try {
       const body: Record<string, unknown> = {
         code: newCode,
         order_id: newOrder,
-        warehouse_id: newWarehouse,
+        warehouse_id: almacenElegido,
         packing_list_ref: newPackingList || null,
         supplier_invoice_ref: newInvoice || null,
         packages_declared: newPackages === "" ? null : Number(newPackages),
@@ -289,8 +301,14 @@ export function RecepcionesPage(): React.JSX.Element {
               ))}
             </select>
           </FormField>
+          <AvisoDeAlmacenes consulta={warehouses} />
           <FormField label="Almacén" required>
-            <TextInput value={newWarehouse} onChange={(e) => setNewWarehouse(e.target.value)} placeholder="Identificador del almacén" required />
+            <select value={almacenElegido} onChange={(e) => setNewWarehouse(e.target.value)} required className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+              <option value="">Seleccionar…</option>
+              {(warehouses.data?.items ?? []).map((w) => (
+                <option key={w.id} value={w.id}>{w.code} · {w.name}</option>
+              ))}
+            </select>
           </FormField>
           <FormField label="Descarga programada" help="Etapa 2 del proceso · hora de Caracas">
             <TextInput type="datetime-local" value={newScheduled} onChange={(e) => setNewScheduled(e.target.value)} />
