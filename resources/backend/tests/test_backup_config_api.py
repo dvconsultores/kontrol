@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import pytest
 from backup_job_apoyo import AHORA, crear_mundo
-from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.core.database import get_db
 from app.core.errors import ConflictError, KontrolError
 from app.core.operaciones import catalogo_de_operaciones
 from app.main import create_app
@@ -129,32 +127,6 @@ def test_cambio_queda_auditado(factory):
         )
         assert evento is not None
         assert evento.source == "API"
-
-
-def test_sin_sesion_responde_401(factory):
-    app = create_app()
-
-    def base_de_prueba():
-        with factory() as db:
-            yield db
-
-    app.dependency_overrides[get_db] = base_de_prueba
-    client = TestClient(app)
-    respuesta = client.put(
-        "/api/v1/system/backup-config",
-        json={
-            "configured_rpo_minutes": 15,
-            "schedule_interval_minutes": 5,
-            "safety_margin_minutes": 2,
-            "retention_days": 7,
-            "retention_min_copies": 1,
-            "destination_type": TIPO_DESTINO_MONTADO,
-            "destination_label": "nas-1",
-            "scheduler_enabled": True,
-            "version": 0,
-        },
-    )
-    assert respuesta.status_code == 401
 
 
 def test_operacion_exige_reautenticacion():

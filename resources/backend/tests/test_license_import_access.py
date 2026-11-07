@@ -384,6 +384,52 @@ def test_licimp_15_el_diagnostico_sigue_con_sesion_y_license_view():
     assert _CLIENT.get("/api/v1/system/diagnostics", headers=_sesion("lector")).status_code == 200
 
 
+_POLITICA_COPIAS = {
+    "configured_rpo_minutes": 15, "schedule_interval_minutes": 5, "safety_margin_minutes": 2,
+    "retention_days": 7, "retention_min_copies": 1, "destination_type": "MOUNTED_FILESYSTEM",
+    "destination_label": "nas-1", "scheduler_enabled": True, "version": 0,
+}
+_RUTA_COPIAS = "/api/v1/system/backup-config"
+
+
+def test_copias_diagnostico_informa_estado_con_license_view():
+    r = _CLIENT.get("/api/v1/system/diagnostics", headers=_sesion("lector"))
+    assert r.status_code == 200, r.text
+    assert r.json()["backup"]["rpo_state"] == "DISABLED"
+    assert "backup_path" not in r.text and "KONTROL_BACKUP_KEY" not in r.text
+
+
+def test_copias_configurar_sin_sesion_responde_401():
+    assert _CLIENT.put(_RUTA_COPIAS, json=_POLITICA_COPIAS).status_code == 401
+
+
+def test_copias_configurar_sin_permiso_responde_403():
+    r = _CLIENT.put(_RUTA_COPIAS, json=_POLITICA_COPIAS, headers=_sesion("comun"))
+    assert r.status_code == 403, r.text
+
+
+def test_copias_campo_desconocido_se_rechaza():
+    r = _CLIENT.put(_RUTA_COPIAS, json={**_POLITICA_COPIAS, "ruta": "/x"}, headers=_sesion("admin"))
+    assert r.status_code == 422, r.text
+
+
+def test_copias_rpo_mayor_de_15_se_rechaza_por_api():
+    cuerpo = {**_POLITICA_COPIAS, "configured_rpo_minutes": 16}
+    r = _CLIENT.put(_RUTA_COPIAS, json=cuerpo, headers=_sesion("admin"))
+    assert r.status_code == 422, r.text
+    assert r.json()["code"] == "BACKUP_POLICY_INVALID"
+
+
+def test_copias_sesion_autorizada_guarda_y_diagnostico_lo_refleja():
+    cabeceras = _sesion("admin")
+    r = _CLIENT.put(_RUTA_COPIAS, json=_POLITICA_COPIAS, headers=cabeceras)
+    assert r.status_code == 200, r.text
+    assert r.json()["version"] == 1
+    copias = _CLIENT.get("/api/v1/system/diagnostics", headers=cabeceras).json()["backup"]
+    assert copias["scheduler_enabled"] is True
+    assert copias["rpo_state"] == "NO_VALID_BACKUP"
+
+
 def test_licimp_16_los_health_siguen_publicos_y_minimos():
     assert _CLIENT.get("/api/v1/health/live").json() == {"status": "ok", "service": "kontrol-backend"}
     assert _CLIENT.get("/api/v1/health/ready").json() == {"status": "ok", "service": "kontrol-backend", "database": "ok"}
