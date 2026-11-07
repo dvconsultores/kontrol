@@ -18,10 +18,9 @@ os.environ.setdefault("KONTROL_LOG_JSON", "false")
 os.environ.setdefault("KONTROL_SECRET_KEY", "0" * 64)
 os.environ.setdefault("KONTROL_DB_URL", "sqlite+pysqlite:///:memory:")
 
-from fastapi.routing import APIRoute  # noqa: E402
-
 from app.core.operaciones import catalogo_de_operaciones  # noqa: E402
 from app.core.query_contract import parametros_de_consulta_declarados  # noqa: E402
+from app.core.route_contexts import contextos_de_api  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.modules.reporting.service import (  # noqa: E402
     CAPACIDADES_DE_REPORTE,
@@ -38,15 +37,13 @@ PREFIJO_API = "/api/v1"
 
 def _rutas_openapi(app) -> dict[str, list[dict[str, object]]]:
     rutas: list[dict[str, object]] = []
-    for ruta in app.routes:
-        if not isinstance(ruta, APIRoute):
-            continue
-        metodos = getattr(ruta, "methods", None) or set()
-        consulta = sorted(parametros_de_consulta_declarados(ruta))
+    for contexto in contextos_de_api(app):
+        metodos = contexto.methods or set()
+        consulta = sorted(parametros_de_consulta_declarados(contexto))
         for metodo in metodos:
             if metodo in {"HEAD", "OPTIONS"}:
                 continue
-            camino = ruta.path
+            camino = contexto.path or ""
             if camino == PREFIJO_API:
                 camino = "/"
             elif camino.startswith(PREFIJO_API + "/"):

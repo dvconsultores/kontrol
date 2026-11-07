@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy import func, select
 
+from app.core.route_contexts import contextos_de_api
 from app.modules.audit.models import AuditEvent
 from app.modules.documents.models import Document, DocumentLink, DocumentType
 from app.modules.identity_access import service as identity_service
@@ -429,9 +430,9 @@ def test_ge11_historial(mundo, gobierno):
     assert ultimo["datos"]["siglas"] == "AMDEMO"
 
     rutas_prohibidas = {"PUT", "PATCH", "DELETE"}
-    for ruta in mundo.client.app.routes:
-        if ruta.path.startswith("/api/v1/gobierno/ente/versiones"):
-            assert ruta.methods.isdisjoint(rutas_prohibidas)
+    for ruta in contextos_de_api(mundo.client.app):
+        if (ruta.path or "").startswith("/api/v1/gobierno/ente/versiones"):
+            assert (ruta.methods or set()).isdisjoint(rutas_prohibidas)
 
 
 def test_ge12_permisos(mundo, gobierno):

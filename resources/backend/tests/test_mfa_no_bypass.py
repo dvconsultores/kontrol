@@ -8,6 +8,7 @@ from pathlib import Path
 
 import app.core.clock as reloj
 from app.core.config import Settings
+from app.core.route_contexts import contextos_de_api
 from app.main import create_app
 
 BACKEND = Path(__file__).resolve().parents[1]
@@ -58,8 +59,8 @@ def test_mfa_nb03_ninguna_ruta_contiene_breakglass_bypass_skip():
     """MFA-NB03: ninguna ruta de la app contiene breakglass, bypass o skip."""
     app = create_app()
     rutas = []
-    for ruta in app.routes:
-        path = getattr(ruta, "path", "")
+    for contexto in contextos_de_api(app):
+        path = contexto.path or ""
         for token in ("breakglass", "break-glass", "bypass", "skip"):
             if token in path.lower():
                 rutas.append((path, token))

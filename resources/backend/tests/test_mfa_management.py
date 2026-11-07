@@ -6,7 +6,6 @@ import uuid
 
 import pytest
 from fastapi import FastAPI
-from fastapi.routing import APIRoute
 from mfa_apoyo import codigo_totp
 from mfa_mundo import (
     API,
@@ -21,6 +20,7 @@ from mfa_mundo import (
 from sqlalchemy import select
 
 from app.core.dependencies import require_recent_reauth
+from app.core.route_contexts import contextos_de_api
 from app.modules.identity_access.mfa_policy import REAUTH_PROTECTED_OPERATIONS
 from app.modules.identity_access.models import MfaRecoveryCode, User
 
@@ -292,12 +292,10 @@ def test_mfa_f03_registro(mundo, reloj_mfa):
             return True
         return any(_tiene(d, predicado) for d in getattr(dep, "dependencies", []))
 
-    for route in app.routes:
-        if isinstance(route, APIRoute):
-            dependant = route.dependant
-            if _tiene(dependant, lambda d: getattr(d, "call", None) is require_recent_reauth):
-                for metodo in route.methods or set():
-                    rutas_dependencia.add((metodo, route.path))
+    for contexto in contextos_de_api(app):
+        if _tiene(contexto.dependant, lambda d: getattr(d, "call", None) is require_recent_reauth):
+            for metodo in contexto.methods or set():
+                rutas_dependencia.add((metodo, contexto.path))
 
     assert rutas_dependencia == set(RUTAS_PROTEGIDAS)
 
@@ -306,12 +304,10 @@ def test_mfa_f03_registro(mundo, reloj_mfa):
         return getattr(call, "kontrol_permission", None) in PERMISOS_SENSIBLES
 
     rutas_sensibles = set()
-    for route in app.routes:
-        if isinstance(route, APIRoute):
-            dependant = route.dependant
-            if _tiene(dependant, _tiene_permiso_sensible):
-                for metodo in route.methods or set():
-                    rutas_sensibles.add((metodo, route.path))
+    for contexto in contextos_de_api(app):
+        if _tiene(contexto.dependant, _tiene_permiso_sensible):
+            for metodo in contexto.methods or set():
+                rutas_sensibles.add((metodo, contexto.path))
 
     assert rutas_sensibles <= set(RUTAS_PROTEGIDAS)
 

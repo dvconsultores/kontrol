@@ -2524,3 +2524,21 @@ Hallazgos nuevos, sin corregir: KONTROL-PY-UPDATE-NO-OP (MEDIUM propuesta), DOC-
 |---|---|
 | RUNTIME-LOCK-API-BOOT-FAILURE (nueva) | OPEN · P0 · SHARED_CORE · dueña 001/052: con `requirements.lock`, `import app.main` falla por `get_flat_dependant` en `app/core/query_contract.py`. Evidencia: `specs/001-fundacion/evidence/backup-rpo/RUNTIME_BOOT_DEFECT.md` |
 | T052-A1 | BLOCKED: 2 reintentos semánticos agotados, nada aplicado. `specs/001-fundacion/evidence/backup-rpo/ATTEMPT_LOG.md` |
+
+## Actualización 2026-11-07 (2) — arranque corregido en local, catálogo de operaciones abierto
+
+| Deuda | Estado |
+|---|---|
+| RUNTIME-LOCK-API-BOOT-FAILURE | Contrato de consulta corregido en el árbol local, sin commit: arranque y 422 verificados con el lock |
+| RUNTIME-LOCK-OPERATIONS-CATALOG-EMPTY (nueva) | OPEN · P0 · SHARED_CORE: `app/core/operaciones.py` recorre `app.routes` y con el lock devuelve 1 operación. Misma causa de inclusión perezosa, fuera de las rutas del ciclo. Afecta además a `qa/fixtures_de_frontend.py` y a guardas de pruebas |
+| ENTORNO-SIN-ANALIZADOR-P2 (nueva) | Este puesto no tiene ClamAV: las pruebas documentales fallan con `SCAN_FAILED` |
+
+## Actualización 2026-11-07 (3) — P0 de runtime certificados en local
+
+| Deuda | Estado |
+|---|---|
+| RUNTIME-LOCK-API-BOOT-FAILURE | **FIXED** en local, sin publicar. Arranque y contrato estricto verificados con el lock |
+| RUNTIME-LOCK-OPERATIONS-CATALOG-EMPTY | **FIXED** en local, sin publicar. Catálogo de 688 operaciones, una sola visión de rutas en `app/core/route_contexts.py` |
+| ENTORNO-SIN-ANALIZADOR-P2 | **CLOSED**: `qa/clamav_qa.py provisionar` RC 0; suite SQLite con analizador real sin fallos |
+| ISO-BARRIDOS-SIN-EJECUTAR-EN-RUNTIME (nueva) | OPEN · HIGH propuesta · SHARED_CORE · T061: los barridos de aislamiento de `test_iso_barridos.py` corrían en vacío con este runtime. Ya recorren las 613 rutas de empresa, pero solo se ejecutan en PostgreSQL, que este puesto no tiene. Sin ejecutar **no hay evidencia de aislamiento vigente en este runtime** |
+| CATALOGO-CACHE-POR-ID (nueva) | OPEN · LOW: `_CATALOGOS` se indexa con `id(app)`; una app destruida puede ceder su `id`. Solo afecta a procesos con varias apps, como las pruebas |

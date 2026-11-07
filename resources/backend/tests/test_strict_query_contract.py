@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 from fastapi import Depends, FastAPI
-from fastapi.routing import APIRoute
+from fastapi.routing import APIRoute, iter_route_contexts
 from fastapi.testclient import TestClient
 from mfa_mundo import API, alta_por_desafio, crear_usuario, login, mundo_mfa
 
@@ -358,10 +358,10 @@ def test_guard_q01_estructural():
     app = create_app()
     violaciones = []
     contadas = 0
-    for ruta in app.routes:
-        if not isinstance(ruta, APIRoute):
+    for ruta in iter_route_contexts(app.routes):
+        if not isinstance(ruta.original_route, APIRoute):
             continue
-        if not ruta.path.startswith("/api/v1"):
+        if not (ruta.path or "").startswith("/api/v1"):
             continue
         contadas += 1
         verificadores = [
@@ -389,10 +389,10 @@ def test_guard_q02_barrido(mundo, reloj_mfa):
 
     violaciones = []
     rechazadas = 0
-    for ruta in mundo.client.app.routes:
-        if not isinstance(ruta, APIRoute):
+    for ruta in iter_route_contexts(mundo.client.app.routes):
+        if not isinstance(ruta.original_route, APIRoute):
             continue
-        if not ruta.path.startswith("/api/v1"):
+        if not (ruta.path or "").startswith("/api/v1"):
             continue
         metodos = set(ruta.methods or set())
         for metodo in metodos - {"HEAD", "OPTIONS"}:

@@ -317,10 +317,9 @@ def test_guard_d01_ningun_datetime_desnudo():
     import types
     import typing
 
-    from fastapi.dependencies.utils import get_flat_dependant
-    from fastapi.routing import APIRoute
     from pydantic import AwareDatetime
 
+    from app.core.route_contexts import contextos_de_api
     from app.main import create_app
 
     app = create_app()
@@ -373,22 +372,25 @@ def test_guard_d01_ningun_datetime_desnudo():
                 _recorrer(campo.annotation, f"{lugar}.{nombre}")
             return
 
-    for ruta in app.routes:
-        if not isinstance(ruta, APIRoute) or not ruta.path.startswith("/api/v1"):
+    for ruta in contextos_de_api(app):
+        if not (ruta.path or "").startswith("/api/v1"):
             continue
 
-        dependant = get_flat_dependant(ruta.dependant, skip_repeats=True)
+        pendientes = [ruta.dependant]
+        while pendientes:
+            dependant = pendientes.pop()
+            pendientes.extend(dependant.dependencies)
 
-        for p in (
-            *dependant.query_params,
-            *dependant.path_params,
-            *dependant.header_params,
-            *dependant.cookie_params,
-        ):
-            _recorrer(p.field_info.annotation, f"{ruta.path}:{p.name}")
+            for p in (
+                *dependant.query_params,
+                *dependant.path_params,
+                *dependant.header_params,
+                *dependant.cookie_params,
+            ):
+                _recorrer(p.field_info.annotation, f"{ruta.path}:{p.name}")
 
-        for p in dependant.body_params:
-            _recorrer(p.field_info.annotation, f"{ruta.path}:body")
+            for p in dependant.body_params:
+                _recorrer(p.field_info.annotation, f"{ruta.path}:body")
 
     assert not violaciones, violaciones
     assert instantes >= 16, instantes

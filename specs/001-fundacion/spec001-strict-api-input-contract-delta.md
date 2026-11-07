@@ -337,3 +337,26 @@ La guarda de frontend (AD-7) encontró una deriva que el inventario manual no ve
 - Los 6 FR y las 2 PDD tienen control, prueba en rojo y en verde, mutante muerto y evidencia.
 - Ninguna tarea sin cumplir, ninguna contradicción con la Constitución y ningún trabajo no pedido sin justificar: la ruta de taxonomía queda justificada en §13.
 - **CONVERGED.**
+
+## 17. Compatibilidad con el runtime del lock (2026-11-07)
+
+Ciclos P0-RUNTIME-LOCK-API-BOOT-FAILURE-16 y P0-RUNTIME-LOCK-OPERATIONS-CATALOG-17. FastAPI 0.141.1, Starlette 1.9.0, Pydantic 2.10.4. Evidencia: `evidence/strict-api-runtime-compatibility/`.
+
+| Fase | P0-A `REMOVED_FASTAPI_INTERNAL_DEPENDENCY_API` | P0-B `LAZY_INCLUDED_ROUTER_CONSUMERS` |
+|---|---|---|
+| DISCOVER | `query_contract.py` importaba `get_flat_dependant` | 1 consumidor de producto, 1 de QA y 10 ficheros de prueba recorrían `app.routes` |
+| REQUIREMENTS | FR-001-268 y FR-001-269: 422 ante parámetros no declarados en toda ruta | Catálogo de operaciones completo: capacidades, alcance y métodos reales (Spec 003, ADR-018) |
+| REPRODUCTION | `import app.main`: RC 1, `ImportError` | `catalogo_de_operaciones(app)` = 1 operación; 688 esperadas |
+| ROOT_CAUSE | FastAPI eliminó el ayudante interno | `app.routes` = 38 `_IncludedRouter`, 4 `Route`, 1 `APIRoute`; cada ruta incluida se sirve desde su contexto efectivo |
+| DESIGN | Recorrer el árbol `Dependant` y añadir el verificador a `contexto.dependant` | `app/core/route_contexts.py::contextos_de_api`: una sola visión de las rutas efectivas |
+| CONSTITUTION GATE | Sin cambio de contrato, esquema ni dependencias | Igual: sin migración, sin cambio de OpenAPI |
+| CHECKLIST | Arranque, 422, autorización antes del verificador, sin eco | Catálogo, capacidades, alcances, métodos, anidados, Government, fixtures |
+| TASKS | P0_ATTEMPT_1, P0_RETRY_1 | P0-B1, P0-B2, P0-B3 |
+| ANALYZE | Sin contradicciones | Sin contradicciones. `MATERIAL OQ = 0` |
+| TRACEABILITY | `test_strict_query_runtime_lock.py`, GUARD-Q-01/02 | `test_operations_catalog_runtime_lock.py`, `test_frontend_fixtures.py`, `test_ui_authority_api.py` |
+| AUTHORIZATION | Encargo 16 | Encargo 17 |
+| IMPLEMENT | Aplicado | Aplicado |
+
+**`ROUTE_CONTEXT_HELPER_OWNER = app/core/route_contexts.py` (opción B).** Hay dos consumidores de producto (`query_contract`, `operaciones`) y uno de QA. `operaciones` no debe depender del contrato de consulta para recorrer rutas. Una guarda estática impide volver a recorrer `app.routes` en `app/` o `qa/`.
+
+**Excepción declarada:** `get_parameterless_sub_dependant` sigue siendo API interna de FastAPI. Se usa para construir el Dependant del verificador; la versión está fijada por el lock.

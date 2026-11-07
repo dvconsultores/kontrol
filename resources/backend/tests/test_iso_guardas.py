@@ -11,10 +11,10 @@ import pathlib
 from typing import Any
 
 import pytest
-from fastapi.routing import APIRoute
 
 from app.core.company_context import get_company_context
 from app.core.database import Base, init_models
+from app.core.route_contexts import contextos_de_api
 from app.core.scope import Scope, declared_scope
 from app.main import create_app
 
@@ -170,13 +170,11 @@ def _depende_de_empresa(depend: Any) -> bool:
 def _rutas_sin_empresa() -> set[tuple[str, str]]:
     app = create_app()
     resultado: set[tuple[str, str]] = set()
-    for route in app.routes:
-        if not isinstance(route, APIRoute):
+    for contexto in contextos_de_api(app):
+        if _depende_de_empresa(contexto.dependant):
             continue
-        if _depende_de_empresa(route.dependant):
-            continue
-        for metodo in route.methods:
-            resultado.add((metodo.upper(), route.path))
+        for metodo in contexto.methods or set():
+            resultado.add((metodo.upper(), contexto.path))
     return resultado
 
 

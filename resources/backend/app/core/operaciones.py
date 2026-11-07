@@ -7,9 +7,9 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import FastAPI
-from fastapi.routing import APIRoute
 
 from app.core.company_context import get_company_context
+from app.core.route_contexts import contextos_de_api
 
 _CATALOGOS: dict[int, list[dict[str, Any]]] = {}
 
@@ -35,23 +35,20 @@ def catalogo_de_operaciones(app: FastAPI) -> list[dict[str, Any]]:
 
     operaciones: list[dict[str, Any]] = []
 
-    for route in app.routes:
-        if not isinstance(route, APIRoute):
-            continue
-
+    for contexto in contextos_de_api(app):
         permisos: set[str] = set()
         marcas: set[str] = set()
-        _recorrer(route.dependant, permisos, marcas)
+        _recorrer(contexto.dependant, permisos, marcas)
         tenant = "TENANT" in marcas
         empresa = "COMPANY" in marcas
 
-        metodos = sorted(set(route.methods) - {"HEAD", "OPTIONS"})
+        metodos = sorted(set(contexto.methods or ()) - {"HEAD", "OPTIONS"})
         scope = "TENANT" if tenant else ("COMPANY" if empresa else "GLOBAL")
         for m in metodos:
             operaciones.append(
                 {
                     "method": m,
-                    "path": route.path,
+                    "path": contexto.path,
                     "capabilities": sorted(permisos),
                     "scope": scope,
                 }

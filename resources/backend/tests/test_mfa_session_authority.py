@@ -26,6 +26,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.route_contexts import contextos_de_api
 from app.core.security import create_access_token, decode_token
 from app.modules.identity_access import service as identity_service
 from app.modules.identity_access.models import MfaFactor, Role, User, UserRole
@@ -617,7 +618,7 @@ def test_mfa_e03_usuario_inexistente(mundo: MundoMfa):
 
 def test_mfa_e04_no_hay_ruta_http_breakglass(mundo: MundoMfa):
     """MFA-E04: no existe ruta HTTP de rotura de cristal."""
-    rutas = " ".join(route.path for route in mundo.client.app.routes)
+    rutas = " ".join(contexto.path or "" for contexto in contextos_de_api(mundo.client.app))
     assert "breakglass" not in rutas
     assert "break-glass" not in rutas
 

@@ -10,6 +10,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import select
 
+from app.core.route_contexts import contextos_de_api
 from app.modules.audit.models import AuditEvent
 from app.modules.documents.models import Document, DocumentLink, DocumentType
 from app.modules.government.models import GovernmentEntity
@@ -952,11 +953,12 @@ def test_gs24_aislamiento(mundo, gobierno):
 def test_gs25_sin_put(mundo, gobierno):
     """GS-25: no hay PUT en estructuras; DELETE solo en unidades."""
     rutas = {}
-    for ruta in mundo.client.app.routes:
+    for contexto in contextos_de_api(mundo.client.app):
+        path = contexto.path or ""
         # Las rutas de cargos (ORG-03) las fija GC-24 en test_gov0_cargos.py.
-        if ruta.path.startswith("/api/v1/gobierno/estructuras") and "/cargos" not in ruta.path:
-            metodos = set(ruta.methods) - {"HEAD", "OPTIONS"}
-            rutas.setdefault(ruta.path, set()).update(metodos)
+        if path.startswith("/api/v1/gobierno/estructuras") and "/cargos" not in path:
+            metodos = set(contexto.methods or set()) - {"HEAD", "OPTIONS"}
+            rutas.setdefault(path, set()).update(metodos)
     esperado = {
         "/api/v1/gobierno/estructuras": {"GET", "POST"},
         "/api/v1/gobierno/estructuras/{ejercicio}": {"GET"},

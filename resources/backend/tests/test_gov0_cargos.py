@@ -12,6 +12,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
+from app.core.route_contexts import contextos_de_api
 from app.modules.audit.models import AuditEvent
 from app.modules.documents.models import Document, DocumentLink, DocumentType
 from app.modules.government.models import (
@@ -1794,10 +1795,10 @@ def test_gc24_rutas(mundo, gobierno):
     """GC-24: expone exactamente el conjunto esperado de rutas de cargos."""
     rutas = {}
     orden = []
-    for ruta in mundo.client.app.routes:
-        path = getattr(ruta, "path", "")
+    for ruta in contextos_de_api(mundo.client.app):
+        path = ruta.path or ""
         if path.startswith("/api/v1/gobierno/estructuras/{ejercicio}/cargos"):
-            metodos = set(getattr(ruta, "methods", None) or set()) - {
+            metodos = set(ruta.methods or set()) - {
                 "HEAD",
                 "OPTIONS",
             }

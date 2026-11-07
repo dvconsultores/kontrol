@@ -21,9 +21,10 @@ from collections.abc import Iterable, Sequence
 from itertools import product
 from typing import Any
 
-from fastapi.routing import APIRoute
+from fastapi.routing import RouteContext
 
 from app.core.company_context import get_company_context
+from app.core.route_contexts import contextos_de_api
 
 pytest_plugins = ("tests.hostil_mundo",)
 
@@ -32,7 +33,7 @@ ORIGENES: tuple[str, ...] = ("A2", "B1")
 PERMITIDAS_2XX: dict[tuple[str, str], str] = {}
 
 
-def _depende_de_company_context(route: APIRoute) -> bool:
+def _depende_de_company_context(route: RouteContext) -> bool:
     """True si `route.dependant` depende (directa o indirectamente) de get_company_context."""
 
     def hay_contexto(dep: Any, vistos: set[int] | None = None) -> bool:
@@ -48,12 +49,12 @@ def _depende_de_company_context(route: APIRoute) -> bool:
     return hay_contexto(route.dependant)
 
 
-def _rutas_empresa(app: Any) -> list[APIRoute]:
+def _rutas_empresa(app: Any) -> list[RouteContext]:
     """Todas las rutas de la app que dependen del contexto de empresa."""
     return [
         r
-        for r in app.routes
-        if isinstance(r, APIRoute) and _depende_de_company_context(r)
+        for r in contextos_de_api(app)
+        if _depende_de_company_context(r)
     ]
 
 
@@ -72,12 +73,12 @@ def _ids_para_parametro(nombre: str, recursos: dict[str, dict[str, str]], origen
     return tuple(recursos[origen].values())
 
 
-def _rutas_ids_ajenos(rutas_empresa: list[APIRoute]) -> tuple[list[APIRoute], list[tuple[str, str]]]:
+def _rutas_ids_ajenos(rutas_empresa: list[RouteContext]) -> tuple[list[RouteContext], list[tuple[str, str]]]:
     """Rutas de empresa cuyos parámetros de ruta son todos *_id/id.
 
     Devuelve (rutas_candidatas, omitidas) con omitidas como (método, ruta).
     """
-    candidatas: list[APIRoute] = []
+    candidatas: list[RouteContext] = []
     omitidas: list[tuple[str, str]] = []
     for ruta in rutas_empresa:
         nombres = [p.name for p in ruta.dependant.path_params]
