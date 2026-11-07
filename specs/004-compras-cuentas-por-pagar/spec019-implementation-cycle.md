@@ -96,6 +96,12 @@ Se reconcilian los FR-004-030..035 vigentes de la recepción y se añaden los pr
 | FR-019-016 | La línea se elige de la orden de la recepción con etiqueta humana y el producto se deriva | delta |
 | FR-019-017 | Una línea recibida del todo sigue siendo elegible | delta |
 | FR-019-018 | Cambiar de línea o de recepción vacía lo que deja de ser válido | delta |
+| FR-019-019 | Toda orden recibible se alcanza desde la pantalla, sin truncado silencioso | delta |
+| FR-019-020 | Los estados recibibles tienen una sola autoridad | delta |
+| FR-019-021 | Las observaciones y comparaciones se envían tal como se declaran; lo no declarado va nulo | 4, 6 |
+| FR-019-022 | Aceptar revalida todas las líneas antes de cualquier efecto | delta |
+| FR-019-023 | Solo un almacén activo recibe | delta |
+| FR-019-024 | El veredicto de conformidad se da por pantalla, se guarda y se audita | 7 |
 
 ---
 
@@ -247,3 +253,7 @@ El almacén de la recepción pasa de identificador escrito a selector de la empr
 ## Delta RECEPCION-LINEA-ORDEN-INTEGRIDAD (2026-11-07)
 
 La línea se elige de la orden de la recepción, el producto se deriva de ella y el backend rechaza la contradicción. Requisitos FR-019-015 a FR-019-018. Detalle: `spec019-receipt-line-integrity-delta.md`. Estado: `TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`; integridad `TECHNICAL_FIX_COMPLETE_LOCAL / POSTGRES_HTTP_E2E_PENDING`.
+
+## Delta RECEPCION-FUNCTIONAL-COMPLETION (2026-11-07)
+
+Orden completa, hechos declarados, aceptación revalidada, almacén activo y veredicto auditado. Requisitos FR-019-019 a FR-019-024. Detalle: `spec019-functional-completion-delta.md`, `evidence/recepcion-functional-completion/`.

@@ -240,3 +240,12 @@ encontró lo que las suites aisladas no podían ver.
 |---|---|---|---|
 | FR-019-015 | `add_receipt_line` | `RecepcionesPage.tsx` | `test_recepcion_linea_integridad.py`, `test_spec019_receipt.py` |
 | FR-019-016 a FR-019-018 | Sin cambio | `RecepcionesPage.tsx` | `RecepcionesLinea.test.tsx`, `e2e/receipts.spec.ts` |
+
+## Delta RECEPCION-FUNCTIONAL-COMPLETION (2026-11-07)
+
+| Requisito | Servicio | Frontend | Pruebas |
+|---|---|---|---|
+| FR-019-019, FR-019-020 | `RECEIVABLE_ORDER_STATUSES`, `list_orders` | `useOrdenesRecibibles` | `test_recepcion_proceso_completo.py`, `RecepcionesProceso.test.tsx` |
+| FR-019-021 | Sin cambio | `hechoDeclarado`, `SelectorDeHecho` | `RecepcionesProceso.test.tsx` |
+| FR-019-022, FR-019-023 | `_requiere_lineas_integras`, `_requiere_almacen_operable` | Selector de almacén | `test_recepcion_proceso_completo.py` |
+| FR-019-024 | `registrar_conformidad` | Botón «no conforme» | `test_recepcion_proceso_completo.py`, `RecepcionesProceso.test.tsx` |

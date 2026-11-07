@@ -2582,3 +2582,18 @@ Hallazgos nuevos, sin corregir: KONTROL-PY-UPDATE-NO-OP (MEDIUM propuesta), DOC-
 | RECEPCION-OBSERVACION-FIJA (nueva) | OPEN · POSSIBLE_DEFECT · 019: la pantalla envía `identification_ok` y `reference_ok` en `true` sin que nadie lo declare, y deja ese valor persistido y auditado |
 | RECEPCION-LINEA-PRODUCTO-HISTORICO (nueva) | OPEN · POSSIBLE_DEFECT: una línea contradictoria anterior al arreglo, en recepción abierta, aún se puede aceptar. Sin medir en datos reales; requiere autorización de la dueña |
 | RECEPCION-ETIQUETA-LINEAS-GEMELAS (nueva) | OPEN · LOW: dos líneas con el mismo producto y las mismas cantidades muestran la misma etiqueta |
+
+## Actualización 2026-11-07 (8) — Recepciones como proceso completo
+
+| Deuda | Estado |
+|---|---|
+| ORDENES-SELECTOR-RECEPCION-PRIMERA-PAGINA | **`TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`**, sin publicar: búsqueda y carga en servidor |
+| RECEPCION-OBSERVACION-FIJA | **`TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`**: identificación, referencia, estado físico y comparaciones se declaran |
+| RECEPCION-LINEA-PRODUCTO-HISTORICO | **`TECHNICAL_FIX_COMPLETE_LOCAL / POSTGRES_HTTP_E2E_PENDING`**: aceptar revalida antes de cualquier efecto. Las filas ya aceptadas no se tocan |
+| RECEPCION-ALMACEN-INACTIVO-ACEPTADO | **`TECHNICAL_FIX_COMPLETE_LOCAL / POSTGRES_HTTP_E2E_PENDING`**: solo `ACTIVE`, al crear y al aceptar. Sin decisión pendiente |
+| RECEPCION-ANULAR-BORRADOR (nueva) | OPEN · MEDIUM propuesta · 019: una recepción creada por error no se puede anular |
+| RECEPCION-CIERRE-SIN-OPERACION (nueva) | OPEN · LOW propuesta · 019: `CLOSED` no tiene operación |
+| RECEPCION-CONFIRMAR-SIN-AUDITORIA (nueva) | OPEN · MEDIUM propuesta · 019: `confirm_receipt` no deja evento |
+| RECEPCION-LOTE-REGULATORIO (nueva) | OPEN · POSSIBLE_DEFECT: `requires_lot` no se exige en ningún punto |
+
+Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/recepcion-functional-completion/`.

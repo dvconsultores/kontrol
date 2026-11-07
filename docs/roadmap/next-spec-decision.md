@@ -4267,3 +4267,11 @@ Detalle: `enterprise-baseline/ENTERPRISE_BASELINE_CURRENT.md` y `enterprise-base
 ## 2026-11-07 · Línea de la orden e integridad línea-producto corregidas en local
 
 `NEXT TECHNICAL CYCLE` de P2 = **CATALOGO-SELECTORES-PRIMERA-PAGINA-01**. Cuando exista PostgreSQL, T061 va primero.
+
+## 2026-11-07 · Orden del sponsor: primero terminar Recepciones
+
+El sponsor pospuso **CATALOGO-SELECTORES-PRIMERA-PAGINA-01** y ordenó **RECEPCION-FUNCTIONAL-COMPLETION-02**: no se abre otra vertical con Recepciones en PARTIAL.
+
+## 2026-11-07 · Recepciones completa en local, E2E pendiente
+
+`NEXT TECHNICAL CYCLE` de P2 = **RECEPCION-ANULACION-Y-TRAZA-03**: el sponsor no abre otra vertical con huecos internos de Recepciones. Cuando exista PostgreSQL, T061 va primero.

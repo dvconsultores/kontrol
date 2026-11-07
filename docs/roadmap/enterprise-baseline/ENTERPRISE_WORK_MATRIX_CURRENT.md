@@ -109,3 +109,20 @@ rol de plataforma (GOV-CTL-004) es de Gobierno.
 | T052-A1-CLI-AUDIT-TEST | 6 | 001 | T052 | Sí | No | No | Sí | Bajo | No | Política de reintentos |
 | RESTORE-LEDGER-RESET | 6 | 001 | Restauración | Sí | No | PostgreSQL | Sí | Medio | No | Mismo bloqueo |
 | T061 y certificación T052 | — | 001 | PostgreSQL | — | No | PostgreSQL | — | Alto | No | Sin entorno |
+
+## 10. Matriz de candidatos tras Recepciones (2026-11-07)
+
+Sustituye a la sección 9: el sponsor pospuso CATALOGO-SELECTORES-PRIMERA-PAGINA hasta terminar Recepciones.
+
+| DEBT | PRIORITY | OWNER_SPEC | DEPENDENCIES | ROOT_CAUSE_PROVEN | OWNER_DECISION_REQUIRED | EXTERNAL_GATE | OVERLAP | PRODUCT_IMPACT | ELIGIBLE | WHY |
+|---|---|---|---|---|---|---|---|---|---|---|
+| RECEPCION-ANULACION-Y-TRAZA (anular borrador, cierre, auditoría al confirmar) | 1 | 004/019 | Operación nueva | Por lectura | No | Solo E2E | Bajo | Medio | **Sí** | **SELECTED_NEXT_ENTERPRISE_TARGET**: últimos huecos internos de la vertical |
+| CATALOGO-SELECTORES-PRIMERA-PAGINA | 2 | 002 | Patrón de búsqueda | Por demostrar | No | Solo E2E | Medio | Alto | Sí | Compite cuando Recepciones no tenga huecos |
+| RECEPCION-LOTE-REGULATORIO | 3 | 002/004 | Requisito | No | Posible | No | Bajo | A medir | No todavía | Sin requisito que lo vincule |
+| TERCEROS-SELECTORES-PRIMERA-PAGINA | 3 | 002 | Patrón común | Sin medir | No | Solo E2E | Medio | Medio | No todavía | Depende del catálogo |
+| IDENTIFICADORES-EN-TEXTO-LIBRE | 4 | Varias | Una por campo | Parcial | No | Solo E2E | Medio | Medio | No todavía | Falta clasificar |
+| KONTROL-PY-UPDATE-NO-OP | 4 | 052 | Ninguna | Sí | No | Docker | Bajo | Medio | Sí | No bloquea el día a día |
+| ALMACENES-LISTADO-PRIMERA-PAGINA | 5 | 008 | Paginación | Sí | Sí | No | Medio | Bajo | No | Exige decisión |
+| T052-A1-CLI-AUDIT-TEST | 6 | 001 | T052 | Sí | No | No | Sí | Bajo | No | Política de reintentos |
+| RESTORE-LEDGER-RESET | 6 | 001 | Restauración | Sí | No | PostgreSQL | Sí | Medio | No | Mismo bloqueo |
+| T061 y certificación T052 | — | 001 | PostgreSQL | — | No | PostgreSQL | — | Alto | No | Sin entorno |
