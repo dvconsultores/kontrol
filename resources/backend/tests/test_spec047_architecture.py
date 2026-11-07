@@ -82,8 +82,9 @@ def test_el_temporizador_solo_invoca_la_orden_canonica():
     lista = next(n for n in ast.walk(funcion) if isinstance(n, ast.List))
     constantes = [e.value for e in lista.elts if isinstance(e, ast.Constant)]
     estrellas = [e.value.id for e in lista.elts if isinstance(e, ast.Starred)]
-    assert constantes[:2] == ["docker", "compose"] and ["exec", "-T", "backend"] == constantes[-3:]
-    assert estrellas == ["SCHEDULER_TICK"] and len(lista.elts) == 8
+    assert constantes[:2] == ["docker", "compose"]
+    assert ["exec", "-T", "-e", "KONTROL_BACKUP_KEY", "backend"] == constantes[-5:]
+    assert estrellas == ["SCHEDULER_TICK"] and len(lista.elts) == 10
 
 
 def test_la_orden_no_acepta_argumentos_que_elijan_trabajo():

@@ -19,6 +19,19 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends curl libmagic1t64 ca-certificates=20250419+deb13u1 \
     && rm -rf /var/lib/apt/lists/*
 
+# Cliente PostgreSQL 18 (T053): la copia corre en este contenedor y `check_tool_compatible` exige cliente >= servidor; trixie solo trae 17.
+# Sin servidor PostgreSQL. Clave PGDG fijada por sha256 (huella B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8) y repositorio con prioridad 100: solo aporta lo que se pide con versión exacta. Actualizar: re-resolver, medir y recertificar.
+RUN install -d /etc/apt/keyrings \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /etc/apt/keyrings/pgdg.asc \
+    && echo "0144068502a1eddd2a0280ede10ef607d1ec592ce819940991203941564e8e76  /etc/apt/keyrings/pgdg.asc" | sha256sum -c - \
+    && echo "deb [signed-by=/etc/apt/keyrings/pgdg.asc] https://apt.postgresql.org/pub/repos/apt trixie-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && printf 'Package: *\nPin: origin apt.postgresql.org\nPin-Priority: 100\n' > /etc/apt/preferences.d/pgdg \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-18=18.6-1.pgdg13+2 libpq5=18.6-1.pgdg13+2 \
+    && rm -rf /var/lib/apt/lists/* \
+    && pg_dump --version | grep -q ' 18\.' \
+    && pg_restore --version | grep -q ' 18\.'
+
 # Dependencias Python: el conjunto completo y fijado de requirements.lock (OD-CERT-05). --no-deps impide volver a resolver transitivas en el build; pip check hace fallar el build si el conjunto no es completo y coherente.
 COPY resources/backend/requirements.lock /tmp/requirements.lock
 RUN pip install --no-cache-dir --no-deps -r /tmp/requirements.lock \
@@ -30,7 +43,7 @@ COPY resources/backend/alembic.ini ./alembic.ini
 COPY resources/backend/scripts/entrypoint.sh ./entrypoint.sh
 
 # Usuario no root (seguridad de imagen, DOC-08 §19).
-RUN useradd --system --uid 10001 kontrol && mkdir -p /data/license-state /data/storage /data/backups \
+RUN useradd --system --uid 10001 kontrol && mkdir -p /data/license-state /data/storage /data/backups /data/backup-destinations \
     && chown -R kontrol:kontrol /data /app \
     && chmod +x /app/entrypoint.sh
 USER kontrol

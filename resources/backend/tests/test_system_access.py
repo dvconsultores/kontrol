@@ -31,7 +31,7 @@ from tests.conftest import make_engine
 
 PASSWORD = "Kontrol2026Segura!"
 DIAGNOSTICO = "/api/v1/system/diagnostics"
-CLAVES_DEL_DIAGNOSTICO = {"environment", "version", "database", "installation", "license"}
+CLAVES_DEL_DIAGNOSTICO = {"environment", "version", "database", "installation", "license", "backup"}
 #: Lo que nunca puede salir por un health público ni por un rechazo.
 SENSIBLE = re.compile(
     r"postgres|sqlite|psycopg|dsn|password|contrase|secret_key|traceback|tenant_id|company_id|user_id|/tmp|/data|/home|\\\\",
@@ -161,6 +161,8 @@ def test_sys_05_con_el_permiso_el_diagnostico_sale_entero_y_sin_rutas():
     assert set(cuerpo["license"]) == {"activated", "mode", "period_end", "verification"}
     assert cuerpo["license"]["verification"] in {"VALID", "NO_CURRENT_LICENSE"} or cuerpo["license"]["verification"].isupper()
     assert isinstance(cuerpo["version"], str) and isinstance(cuerpo["environment"], str)
+    assert cuerpo["backup"]["rpo_state"] == "DISABLED"
+    assert "sha256" not in cuerpo["backup"]
     assert "storage" not in r.text
     # Ningún valor con aspecto de ruta del servidor.
     for valor in (cuerpo["environment"], cuerpo["version"], *cuerpo["installation"].values(), *cuerpo["license"].values()):

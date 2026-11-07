@@ -43,6 +43,7 @@ services:
       KONTROL_INSTALLATION_VOLUME_PATH: "/data/license-state"
       KONTROL_STORAGE_PATH: "/data/storage"
       KONTROL_BACKUP_PATH: "/data/backups"
+      KONTROL_BACKUP_DESTINATIONS_PATH: "/data/backup-destinations"
       KONTROL_LOG_JSON: "true"
       # Analizador antimalware documental (Spec 046 · OBS-09, opción B): el backend transmite cada archivo por
       # INSTREAM al servicio `clamd` de esta misma composición (nombre DNS interno, puerto no publicado). La
@@ -59,6 +60,7 @@ services:
       - kontrol-license-state:/data/license-state
       - kontrol-storage:/data/storage
       - kontrol-backups:/data/backups
+      - kontrol-backup-destinations:/data/backup-destinations
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live')"]
       interval: 30s
@@ -125,6 +127,8 @@ volumes:
   kontrol-storage:
   kontrol-license-state:
   kontrol-backups:
+  # Raíz de destinos de copia (T052). Este volumen local no prueba estar fuera del anfitrión: la instalación debe respaldarlo con NFS o SMB.
+  kontrol-backup-destinations:
   # Firmas antivirus del servicio clamd (dominio operacional del analizador; persisten las actualizaciones).
   kontrol-clamav-db:
 
