@@ -415,6 +415,19 @@ def test_no_se_recibe_contra_la_linea_de_orden_de_otra_recepcion(mundo):
     assert r.status_code == 404 and r.json()["code"] == "PURCHASE_ORDER_LINE_NOT_FOUND", r.text
 
 
+def test_no_se_recibe_otro_producto_contra_la_linea_de_orden(mundo):
+    "Recibir un producto distinto al de la línea de orden se rechaza sin crear la línea."
+    prod_a = _producto(mundo, "ua", mundo.company_a, "P019-MIX-A")
+    prod_b = _producto(mundo, "ua", mundo.company_a, "P019-MIX-B")
+    oc = _orden_aprobada(mundo, "ua", mundo.company_a, "MIX", prod_a)
+    rec = _recepcion(mundo, "ua", mundo.company_a, "MIX", oc["orden"], mundo.warehouse_a)
+    r = _linea(mundo, "ua", mundo.company_a, rec["id"], oc["linea"], prod_b, 1)
+    assert r.status_code == 422 and r.json()["code"] == "RECEIPT_LINE_PRODUCT_MISMATCH", r.text
+    detalle = mundo.get(f"/purchasing/receipts/{rec['id']}", "ua", mundo.company_a)
+    assert detalle.status_code == 200, detalle.text
+    assert detalle.json()["lines"] == []
+
+
 def test_el_almacen_de_otra_empresa_no_sirve(mundo):
     prod = _producto(mundo, "ua", mundo.company_a, "P019-WB")
     oc = _orden_aprobada(mundo, "ua", mundo.company_a, "WB", prod)

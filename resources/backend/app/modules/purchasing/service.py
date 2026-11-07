@@ -603,6 +603,12 @@ def add_receipt_line(db: Session, *, company_id: str, receipt_id: str, order_lin
         raise NotFoundError(code="PURCHASE_ORDER_LINE_NOT_FOUND", message="Línea de orden no encontrada")
     inv_service._require_product(db, company_id, product_id)
 
+    if str(order_line.product_id) != str(product_id):
+        # Lo recibido contra una línea de orden debe ser el producto de esa línea.
+        # Aceptar toma el costo de la línea y mete inventario del producto; si difieren, el costo y la cantidad recibida quedan sobre otro producto.
+        raise KontrolError(code="RECEIPT_LINE_PRODUCT_MISMATCH",
+                           message="El producto no corresponde a la línea de la orden.", status_code=422)
+
     unidad = _unidad_recibida(db, product_id=product_id, presentation_id=presentation_id,
                               cantidades={"received": quantity_received, "accepted": quantity_accepted,
                                           "rejected": quantity_rejected})
