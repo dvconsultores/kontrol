@@ -2557,6 +2557,15 @@ Hallazgos nuevos, sin corregir: KONTROL-PY-UPDATE-NO-OP (MEDIUM propuesta), DOC-
 
 | Deuda | Estado |
 |---|---|
-| ALMACENES-DESPLEGABLES-TRUNCADOS | **CLOSED / CONVERGED** en local, sin publicar. `TECHNICAL_FIX_COMPLETE`; `FULL_RUNTIME_E2E_CERTIFICATION` pendiente de PostgreSQL. Evidencia: `specs/008-almacenes-fisicos/evidence/almacenes-desplegables/` |
+| ALMACENES-DESPLEGABLES-TRUNCADOS | **`TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`**, sin publicar: E2E pendiente de PostgreSQL. Evidencia: `specs/008-almacenes-fisicos/evidence/almacenes-desplegables/` |
 | RECEPCION-ALMACEN-TEXTO-LIBRE (nueva) | OPEN · MEDIUM propuesta · dueña compras: `RecepcionesPage` pide el almacén como identificador escrito a mano |
 | ALMACENES-LISTADO-PRIMERA-PAGINA (nueva) | OPEN · LOW propuesta · 008: la tabla de Almacenes muestra los 50 primeros; se alcanzan por búsqueda. Relacionada con ALMACENES-PAGINACION-LIMIT-OFFSET |
+
+## Actualización 2026-11-07 (6) — almacén de la recepción
+
+| Deuda | Estado |
+|---|---|
+| RECEPCION-ALMACEN-TEXTO-LIBRE | **`TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`**, sin publicar. Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/recepcion-almacen/` |
+| RECEPCION-LINEA-ORDEN-TEXTO-LIBRE (nueva) | OPEN · HIGH propuesta · 004/019: recibir una línea exige escribir su identificador; **bloquea la recepción por interfaz** |
+| IDENTIFICADORES-EN-TEXTO-LIBRE (nueva) | OPEN · POSSIBLE_DEFECT: Facturas en Devoluciones y Notas, Artículo en Listas de precio, Proveedor en Lotes, Producto en Valorización. Inventario en `FREE_TEXT_INTERNAL_ID_INVENTORY.md` |
+| RECEPCION-ALMACEN-INACTIVO-ACEPTADO (nueva) | OPEN · POSSIBLE_DEFECT: `create_receipt` no comprueba el estado del almacén; decide la Spec 008 |

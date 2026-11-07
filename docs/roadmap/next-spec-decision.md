@@ -4256,6 +4256,10 @@ Detalle: `enterprise-baseline/ENTERPRISE_BASELINE_CURRENT.md` y `enterprise-base
 
 `T052_STATUS = BLOCKED_BY_EXTERNAL_CERTIFICATION_GATES`. `NEXT TECHNICAL CYCLE` de P2 = **ALMACENES-DESPLEGABLES-TRUNCADOS-01**. Cuando exista PostgreSQL, T061 va primero.
 
-## 2026-11-07 · Selectores de almacén cerrados en local
+## 2026-11-07 · Selectores de almacén corregidos en local, E2E pendiente
 
 `NEXT TECHNICAL CYCLE` de P2 = **RECEPCION-ALMACEN-TEXTO-LIBRE-01**. Cuando exista PostgreSQL, T061 va primero.
+
+## 2026-11-07 · Almacén de la recepción corregido en local
+
+`NEXT TECHNICAL CYCLE` de P2 = **RECEPCION-LINEA-ORDEN-TEXTO-LIBRE-01**. Cuando exista PostgreSQL, T061 va primero.

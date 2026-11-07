@@ -79,3 +79,16 @@ rol de plataforma (GOV-CTL-004) es de Gobierno.
 | T052-A1-CLI-AUDIT-TEST | 3 | 001 | T052 | Sí | No | No | Sí | Bajo | No | Política de reintentos |
 | RESTORE-LEDGER-RESET | 3 | 001 | Restauración | Sí | No | PostgreSQL | Sí | Medio | No | Mismo bloqueo PostgreSQL |
 | T061 y certificación T052 | — | 001 | PostgreSQL | No aplica | No | PostgreSQL | — | Alto | No | Sin entorno |
+
+## 8. Matriz de candidatos tras el almacén de la recepción (2026-11-07)
+
+| DEBT | PRIORITY | OWNER_SPEC | DEPENDENCIES | ROOT_CAUSE_PROVEN | OWNER_DECISION_REQUIRED | EXTERNAL_GATE | OVERLAP | PRODUCT_IMPACT | ELIGIBLE | WHY |
+|---|---|---|---|---|---|---|---|---|---|---|
+| RECEPCION-LINEA-ORDEN-TEXTO-LIBRE | 1 | 004/019 | `PurchaseOrderSummary.lines` | Por demostrar en rojo | No | Solo E2E | Bajo | Alto: bloquea recibir por interfaz | **Sí** | **SELECTED_NEXT_ENTERPRISE_TARGET** |
+| IDENTIFICADORES-EN-TEXTO-LIBRE | 2 | Varias | Una por campo | Parcial | No | Solo E2E | Medio | Medio | No todavía | Hay que clasificar cada campo |
+| KONTROL-PY-UPDATE-NO-OP | 3 | 052 | Ninguna | Sí | No | Docker para certificar | Bajo | Medio | Sí | No bloquea un proceso diario |
+| ALMACENES-LISTADO-PRIMERA-PAGINA | 4 | 008 | Paginación | Sí | Sí | No | Medio | Bajo | No | Exige decisión de contrato |
+| RECEPCION-ALMACEN-INACTIVO-ACEPTADO | 4 | 008/004 | Regla de negocio | Parcial | Sí | No | Bajo | Medio | No | Exige decisión |
+| T052-A1-CLI-AUDIT-TEST | 5 | 001 | T052 | Sí | No | No | Sí | Bajo | No | Política de reintentos |
+| RESTORE-LEDGER-RESET | 5 | 001 | Restauración | Sí | No | PostgreSQL | Sí | Medio | No | Mismo bloqueo |
+| T061 y certificación T052 | — | 001 | PostgreSQL | — | No | PostgreSQL | — | Alto | No | Sin entorno |

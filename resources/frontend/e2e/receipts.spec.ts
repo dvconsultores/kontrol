@@ -87,6 +87,29 @@ async function irARecepciones(page: Page): Promise<void> {
 }
 
 test.describe("Spec 019 — recepción física", () => {
+  test("la operadora elige el almacén al crear la recepción", async ({ page, request }) => {
+    const c = await ctx(request);
+    const m = await mundo(request, c, `${RUN}S`);
+    const ultimo = await post(request, c, "/organization/warehouses", {
+      company_id: c.company, code: `ZZZ-${RUN}`, name: "Último E2E",
+      warehouse_type: "PHYSICAL", status: "ACTIVE",
+    });
+
+    await uiLogin(page);
+    await irARecepciones(page);
+    await page.getByLabel(/^Código/).first().fill(`REC-${RUN}S`);
+    await page.getByLabel(/^Orden de compra/).selectOption(m.orden);
+    await page.getByLabel(/^Almacén/).selectOption(ultimo.id as string);
+    await page.getByRole("button", { name: "Crear" }).first().click();
+
+    await expect.poll(async () => {
+      const lista = await get(request, c, "/purchasing/receipts");
+      const recepcion = (lista.items as Array<{ code: string; warehouse_id: string }>)
+        .find((r) => r.code === `REC-${RUN}S`);
+      return recepcion?.warehouse_id;
+    }).toBe(ultimo.id);
+  });
+
   test("dos cajas de doce entran al inventario como veinticuatro unidades", async ({ page, request }) => {
     const c = await ctx(request);
     const m = await mundo(request, c, `${RUN}A`);

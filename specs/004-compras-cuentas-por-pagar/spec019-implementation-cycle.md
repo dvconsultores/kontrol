@@ -235,3 +235,7 @@ resuelve midiendo primero, y la 030 (aprobaciones) queda **no aplicable** porque
 BLOCKER 0 · CRITICAL 0 · CONTRADICTIONS 0 · ORPHAN REQUIREMENTS 0 · ORPHAN TASKS 0 · MATERIAL OQ 0.
 
 **Autorización expresa satisfecha: se procede a `/speckit.implement`.**
+
+## Delta RECEPCION-ALMACEN-TEXTO-LIBRE (2026-11-07)
+
+El almacén de la recepción pasa de identificador escrito a selector de la empresa activa, sin cambio de API. Requisito FR-004-030, US-004-005. Autoridad: quien crea la recepción. Evidencia: `evidence/recepcion-almacen/`. Estado: `TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`.
