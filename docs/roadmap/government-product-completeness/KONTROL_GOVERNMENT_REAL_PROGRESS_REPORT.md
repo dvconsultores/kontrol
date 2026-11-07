@@ -4,6 +4,8 @@
 
 ## Resumen para la dueña
 
+**Actualización GOV-NORM-N40-01 (2026-11-07): N40 es un corpus, no una norma. De 21 requisitos que la citan, 1 la necesita por completo. Se retira de ORG-06, CTL-02, CTL-03 y DOC-07, se acota en DOC-01, DIG-02 y HR-02, y se mantiene en DOC-05 y DIG-03. La reclasificación no suma producto. Siguiente vertical: ORG-06.**
+
 **Actualización GOV-CTL-FUNCTIONAL-05 (2026-11-07): «Historial de cambios de maestros sensibles» queda BLOQUEADO. GOV-CTL-010 nombra proveedores y clasificadores, que no existen como maestros de Gobierno, y no fija qué significa «cuentas». Ningún otro vertical de Gobierno es elegible hoy; el bloqueo de mayor desbloqueo resoluble por ingeniería es N40.**
 
 **Actualización GOV-DOC-03 (2026-11-07): «Lapsos, suspensiones, subsanaciones y prórrogas» queda BLOQUEADO. Los lapsos de la LOPA corren sobre una solicitud o un expediente, y DOC-01 sigue bloqueado; además, el art. 42 exige el calendario de la Administración Pública, sin fuente ni responsable en KONTROL. Siguiente vertical: CTL-08.**
@@ -56,12 +58,12 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 | Contabilidad pública | 8 | 0 | 0 | 0 | 3 | 5 | NO |
 | Bienes públicos / Activo fijo patrimonial | 11 | 0 | 0 | 0 | 5 | 6 | NO |
 | Expedientes y actos administrativos | 8 | 0 | 3 | 0 | 0 | 5 | NO |
-| Control interno, auditoría y rendición | 10 | 0 | 4 | 0 | 3 | 3 | NO |
+| Control interno, auditoría y rendición | 10 | 0 | 4 | 0 | 5 | 1 | NO |
 | Gobierno Digital: trámites e interoperabilidad | 3 | 0 | 0 | 0 | 0 | 3 | NO |
 | Gasto de personal e interfaz Atenea | 3 | 0 | 0 | 0 | 1 | 2 | NO |
 | Integraciones institucionales | 7 | 0 | 0 | 0 | 1 | 6 | NO |
 | Reportes y tableros institucionales | 11 | 0 | 0 | 0 | 6 | 5 | NO |
-| **Total** | **122** | **0** | **13** | **0** | **53** | **56** | **0 de 15** |
+| **Total** | **122** | **0** | **13** | **0** | **56** | **53** | **0 de 15** |
 
 (Errata corregida en GOV-DOC-04: la fila de Expedientes y el total no se habían actualizado con DOC-02.)
 
@@ -122,7 +124,7 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 
 | Tipo | N | Estado |
 |---|---|---|
-| Funcionales GOV-* | 153 | 152 en 122 procesos: 84 BLOCKED, 54 NOT_STARTED, 14 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -008, -010, GOV-DOC-003, -005, -010, GOV-CTL-001, -005, -008, -012, GOV-TRE-001, -002). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
+| Funcionales GOV-* | 153 | 152 en 122 procesos: 79 BLOCKED, 59 NOT_STARTED, 14 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -008, -010, GOV-DOC-003, -005, -010, GOV-CTL-001, -005, -008, -012, GOV-TRE-001, -002). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
 | No funcionales RNF-GOV | 25 | 6 PASS en el núcleo (003, 006, 012, 015, 019, 025) · 11 PARTIAL · 4 NOT_MEASURED · 4 NOT_STARTED |
 | Aceptación E2E-01..08 | 8 | 6 FAIL. E2E-06 (hostil multi-ente) y E2E-08 (restauración) PARTIAL: solo el núcleo; el ente y los ledgers de Gobierno no existen |
 | Puertas del sponsor D-GOV-01..08 | 8 | las 8 OPEN |

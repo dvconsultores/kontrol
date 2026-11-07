@@ -112,3 +112,7 @@ carpeta canónica de fuentes.
 
    Ninguno se resuelve sin decisión.
 4. **Las fuentes de clase C** no sustentan reglas P0 hasta que exista una copia oficial pinneada.
+
+## Copias oficiales incorporadas (GOV-NORM-N40-01, 2026-11-07)
+
+`requerimientos/gobierno/normativa-n40/` custodia, sin alterar, siete copias de instrumentos del corpus N40. La Biblioteca v1.0 no se modifica y **N40 sigue en clase C**: fijar una copia no equivale a validarla. Inventario, URL, fecha de obtención y SHA-256 en `specs/gov-norm-n40/evidence/`.

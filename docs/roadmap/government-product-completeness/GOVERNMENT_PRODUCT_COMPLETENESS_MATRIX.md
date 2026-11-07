@@ -15,7 +15,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | ORG-03 | Cargos con competencias y límites de firma/aprobación | P0 | Máxima autoridad | GOV-ORG-003 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | GOV3-E2E-01..08 (×3 navegadores ×3 corridas) | — |
 | ORG-04 | Delegaciones, suplencias, encargadurías y designaciones con acto | P0 | Máxima autoridad | GOV-ORG-004 GOV-ORG-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | Delegaciones del motor 045 (sin acto administrativo) |
 | ORG-05 | Responsables por unidad, programa, cuenta, almacén, caja, contrato y bien, con historia | P0 | Administración institucional | GOV-ORG-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | DOMAIN_DEPENDENCY: 8 de 9 objetos sin modelo en Gobierno (BUD-03, ACC-01, WH-02, TRE-08, TRE-01, CNT-01, AST-01); MATERIAL_OQ OQ-ORG05-01..03 (specs/gov-0-04-responsables) | — | — |
-| ORG-06 | Vincular usuario con identidad, cargo, unidad y alcance; separación de roles | P0 | Administración institucional | GOV-ORG-007 GOV-ORG-005 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | Usuarios, roles y alcance por empresa (003): otro contrato |
+| ORG-06 | Vincular usuario con identidad, cargo, unidad y alcance; separación de roles | P0 | Administración institucional | GOV-ORG-007 GOV-ORG-005 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Usuarios, roles y alcance por empresa (003): otro contrato |
 | ORG-07 | Matriz auditable de quién puede solicitar, comprometer, causar, pagar, custodiar, aprobar y auditar | P0 | Control Interno | GOV-ORG-010 | ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | ORG7-E2E-01..05 (×3 navegadores) + HUMO-UAT-01 | — |
 
 ## Presupuesto público (Budget Ledger)
@@ -135,13 +135,13 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 
 | Id | Proceso | Prio. | Actor principal | Requisitos | Compuertas | PASS | Estado real | Bloqueos | E2E | Equivalente privado (no cuenta) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| DOC-01 | Expediente electrónico único con índice, foliado y versiones | P0 | Unidad tramitadora | GOV-DOC-001 GOV-DOC-002 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | Gestión documental 046 (almacén y versiones; sin expediente) |
+| DOC-01 | Expediente electrónico único con índice, foliado y versiones | P0 | Unidad tramitadora | GOV-DOC-001 GOV-DOC-002 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | N40 acotada: verificación de firma (N40-02, N40-03) y clasificación solo APN (N40-01), en revisión profesional; el expediente base no depende de N40 | — | Gestión documental 046 (almacén y versiones; sin expediente) |
 | DOC-02 | Actos administrativos con autoridad, motivación y eficacia | P0 | Máxima autoridad | GOV-DOC-003 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | DOC2-E2E-01..07 (×3 navegadores) + HUMO-UAT-01 | — |
-| DOC-03 | Lapsos, suspensiones, subsanaciones y prórrogas | P0 | Unidad tramitadora | GOV-DOC-004 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | DOC-01 (expediente, LEGAL_VALIDATION_REQUIRED N40); calendario oficial sin fuente ni responsable | E2E-05 | — |
+| DOC-03 | Lapsos, suspensiones, subsanaciones y prórrogas | P0 | Unidad tramitadora | GOV-DOC-004 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | DOC-01 (expediente, N40 acotada); calendario oficial sin fuente ni responsable | E2E-05 | — |
 | DOC-04 | Notificaciones administrativas con constancia de recepción | P0 | Unidad tramitadora | GOV-DOC-005 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | DOC4-E2E-01..05 (×3 navegadores) + HUMO-UAT-01 | — |
 | DOC-05 | Firma electrónica | P1 | Máxima autoridad | GOV-DOC-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-08; LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | — |
 | DOC-06 | Preservación y retención de evidencia sin borrado | P0 | Unidad tramitadora | GOV-DOC-007 GOV-DOC-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | — |
-| DOC-07 | Búsqueda por expediente, acto, tercero, contrato, presupuesto, bien y fecha | P1 | Usuarios autorizados | GOV-DOC-008 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | Búsqueda documental 046 |
+| DOC-07 | Búsqueda por expediente, acto, tercero, contrato, presupuesto, bien y fecha | P1 | Usuarios autorizados | GOV-DOC-008 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | DOMAIN_DEPENDENCY: objetos de búsqueda inexistentes en Gobierno (DOC-01, CNT-01, BUD-03, AST-01, terceros) | — | Búsqueda documental 046 |
 | DOC-08 | Paquete de auditoría exportable | P1 | Control Interno | GOV-DOC-010 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | DOC8-E2E-01..03 (×3 navegadores) + HUMO-UAT-01 | — |
 
 ## Control interno, auditoría y rendición
@@ -149,8 +149,8 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | Id | Proceso | Prio. | Actor principal | Requisitos | Compuertas | PASS | Estado real | Bloqueos | E2E | Equivalente privado (no cuenta) |
 |---|---|---|---|---|---|---|---|---|---|---|
 | CTL-01 | Matriz SoD por proceso y detección previa | P0 | Control Interno | GOV-CTL-001 | ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | SOD-E2E-01..03 (×3 navegadores) + HUMO-UAT-01 | Motor SoD 045 reutilizado solo como patrón |
-| CTL-02 | Bitácora institucional append-only con actor, autoridad, unidad y correlación | P0 | Control Interno | GOV-CTL-002 GOV-CTL-003 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | E2E-06 | Bitácora 006/051 (sin autoridad ni unidad) |
-| CTL-03 | Administrador técnico sin autoridad funcional | P0 | Control Interno | GOV-CTL-004 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | LEGAL_VALIDATION_REQUIRED N40 (clase C) | — | Separación ADMIN de 003 (sin rol de plataforma) |
+| CTL-02 | Bitácora institucional append-only con actor, autoridad, unidad y correlación | P0 | Control Interno | GOV-CTL-002 GOV-CTL-003 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | E2E-06 | Bitácora 006/051 (sin autoridad ni unidad) |
+| CTL-03 | Administrador técnico sin autoridad funcional | P0 | Control Interno | GOV-CTL-004 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Separación ADMIN de 003 (sin rol de plataforma) |
 | CTL-04 | Consulta y muestreo read-only del auditor | P0 | Auditor interno/externo | GOV-CTL-005 | ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | CTL4-E2E-01..06 (×3 navegadores) + HUMO-UAT-01 | Pantalla de auditoría privada (no cuenta) |
 | CTL-05 | Expediente de cuenta y reportes de rendición | P0 | Control Interno | GOV-CTL-006 GOV-CTL-007 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | E2E-01 | — |
 | CTL-06 | Hallazgos y planes de acción correctiva | P1 | Control Interno | GOV-CTL-008 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | CTL6-E2E-01..04 (×3 navegadores) + HUMO-UAT-01 | — |
@@ -164,7 +164,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | Id | Proceso | Prio. | Actor principal | Requisitos | Compuertas | PASS | Estado real | Bloqueos | E2E | Equivalente privado (no cuenta) |
 |---|---|---|---|---|---|---|---|---|---|---|
 | DIG-01 | Catálogo de trámites con requisitos versionados y captura única | P0 | Unidad de trámites | GOV-DIG-001 GOV-DIG-002 GOV-DIG-008 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-06 | — | — |
-| DIG-02 | Solicitud, subsanación y seguimiento del trámite con estado visible (E2E-05) | P0 | Ciudadano / Unidad de trámites | GOV-DIG-006 GOV-DIG-007 GOV-DIG-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-06; LEGAL_VALIDATION_REQUIRED N40 (clase C) | E2E-05 | — |
+| DIG-02 | Solicitud, subsanación y seguimiento del trámite con estado visible (E2E-05) | P0 | Ciudadano / Unidad de trámites | GOV-DIG-006 GOV-DIG-007 GOV-DIG-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-06; N40 acotada: clasificación previa a publicar, solo APN (N40-01) | E2E-05 | — |
 | DIG-03 | Interoperabilidad: datos del Estado, API, provenance, base de intercambio e inventario | P0 | Integración | GOV-DIG-003 GOV-DIG-004 GOV-DIG-005 GOV-DIG-011 GOV-DIG-012 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-08; LEGAL_VALIDATION_REQUIRED N40 (clase C) | E2E-05 | — |
 
 ## Gasto de personal e interfaz Atenea
@@ -172,7 +172,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | Id | Proceso | Prio. | Actor principal | Requisitos | Compuertas | PASS | Estado real | Bloqueos | E2E | Equivalente privado (no cuenta) |
 |---|---|---|---|---|---|---|---|---|---|---|
 | HR-01 | Estructura de cargos y plantillas presupuestarias de personal | P0 | Planificación/Presupuesto | GOV-HR-001 GOV-HR-003 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-07; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C) | — | — |
-| HR-02 | Interfaz de nómina Atenea con maker-checker y sin duplicados (E2E-04) | P0 | Contabilidad | GOV-HR-002 GOV-HR-004 GOV-HR-005 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-07; LEGAL_VALIDATION_REQUIRED N40 (clase C) | E2E-04 | — |
+| HR-02 | Interfaz de nómina Atenea con maker-checker y sin duplicados (E2E-04) | P0 | Contabilidad | GOV-HR-002 GOV-HR-004 GOV-HR-005 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-07; N40 acotada: clasificación de datos de personal, solo APN (N40-01); transporte sin norma localizada | E2E-04 | — |
 | HR-03 | Reportes SISROE y de altos funcionarios | P1 | Recursos humanos | GOV-HR-006 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 
 ## Integraciones institucionales
