@@ -43,4 +43,4 @@ Fundamentos técnicos: **no** son módulos de negocio de Gobierno y no cuentan c
 | F35 | Motor de reportes y PDF (050) | reportes institucionales | PARTIAL | 050 PARTIALLY_IMPLEMENTED | — |  |
 | F36 | Shell de frontend: estados de pantalla y cambios sin guardar | UX institucional | PARTIAL | 005 PARTIALLY_IMPLEMENTED | DT-17 |  |
 | F37 | E2E en tres navegadores | cruzado de navegadores | COMPLETE | `playwright.config.ts`: chromium, firefox, webkit en la canónica | — |  |
-| F38 | Numeración institucional | series de actos y documentos | NOT_STARTED | — | D-GOV-01 |  |
+| F38 | Numeración institucional | series de actos y documentos | NOT_STARTED | — | N37 Naguanagua |  |

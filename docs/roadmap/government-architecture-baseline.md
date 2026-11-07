@@ -551,13 +551,13 @@ Depende del gap #6 (053).
 
 | Decisión | Dependencia arquitectónica | Se puede decidir antes del sponsor | Queda bloqueado | Artefacto o evidencia para cerrarla |
 |---|---|---|---|---|
-| D-GOV-01 Jurisdicción piloto | tipo de ente, normativa local (N37), numeración, formatos | contratos de aislamiento y de autoridad, modelo de ente genérico | perfil normativo del piloto, series, ordenanzas | acta del sponsor con el ente piloto y las ordenanzas en copia custodiada |
+| D-GOV-01 Jurisdicción piloto (**CLOSED**: Alcaldía del Municipio Naguanagua, Carabobo; lo local es parametrizable por ente) | tipo de ente, normativa local (N37), numeración, formatos | contratos de aislamiento y de autoridad, modelo de ente genérico | perfil normativo del piloto, series, ordenanzas | acta del sponsor con el ente piloto y las ordenanzas en copia custodiada |
 | D-GOV-02 Profundidad presupuestaria | alcance de Budget Ledger (formulación frente a ejecución) | ledger de ejecución y eventos (compromiso, causado, pagado) | formulación, anteproyecto y formatos ONAPRE (N07–N10) | decisión del sponsor e instructivos ONAPRE del ejercicio en copia oficial |
 | D-GOV-03 Alcance SNC | transiciones de contratación, integración SNC/RNC | expediente interno de contratación y máquina base | publicación e integración SNC | alcance confirmado y servicio autorizado documentado |
 | D-GOV-04 Plan de cuentas ONCOP | Treasury & Public Accounting | ledger contable genérico e inmutabilidad | plan de cuentas y formatos (N36) | manual ONCOP del piloto en copia oficial |
 | D-GOV-05 SUDEBIP 43.077 | Public Assets | ciclo de vida base del bien (IR §8) | codificación, etiquetado, actas y notificaciones (N14–N17) | copias oficiales completas de la G.O. 43.077 |
 | D-GOV-06 Trámites tras G.O. 7.018/2026 | Digital Government | modelo de trámite y subsanación (E2E-05) | catálogo de trámites y reglas | catálogo del organismo revisado frente a N26 |
-| D-GOV-07 Contrato con Atenea | Integration Layer, Budget Ledger | frontera e idempotencia (sección Atenea) | formato de lote, eventos y responsabilidades | contrato de integración congelado |
+| D-GOV-07 Contrato con Atenea (**SPONSOR_SCOPE_CLOSED**: integrar; Atenea es nómina, no identidad; contrato técnico ENGINEERING_PENDING) | Integration Layer, Budget Ledger | frontera e idempotencia (sección Atenea) | formato de lote, eventos y responsabilidades | contrato de integración congelado |
 | D-GOV-08 Firma e interoperabilidad | Records & Audit, Integration Layer | evidencia de aprobación sin firma (RNF-GOV-022) | firma electrónica y servicios externos | infraestructura de certificados y operadores confirmada (N29) |
 
 ## Normative Freeze Requirements

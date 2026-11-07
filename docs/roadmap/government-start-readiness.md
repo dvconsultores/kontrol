@@ -61,7 +61,7 @@ Requisitos no funcionales de Gobierno (Ingeniería de Requerimientos §10, OFFIC
 | Copia custodiada y SHA-256 de cada fuente P0 | **FAIL**: solo las dos fuentes del proyecto; ninguna Gaceta ni instructivo custodiado en el repositorio |
 | Vigencia verificada (G.O. 7.018/2026, 6.699/2022, Decreto 2.174, SUDEBIP 43.077) | NOT_STARTED |
 | Clase C (N07–N10, N14–N17, N36, N37, N38, N40) con pin oficial | **FAIL** (12 de 40) |
-| Normativa del piloto (D-GOV-01) | BLOCKED (sponsor) |
+| Normativa del piloto (D-GOV-01 CLOSED: Naguanagua) | PARTIAL: investigación N37 en curso |
 | Edición ONAPRE/ONCOP del ejercicio (D-GOV-02/04) | BLOCKED (sponsor) |
 | SNC / SUDEBIP (D-GOV-03/05) | BLOCKED (sponsor) |
 | Retenciones del pagador público (N38) | BLOCKED: clase C, cruce con 039–043 (BLOCKED_BY_LEGAL_VALIDATION) |
@@ -195,7 +195,7 @@ Bloquean el inicio de la **implementación** de Gobierno; no bloquean la planifi
 | CANONICAL_RUN_RC (último oficial) | NOT EXECUTED (sin anfitrión) |
 | S3_PROVIDER_SUPPORTED / S3_CONFIGURATION_GUARDED | 0 / 1 |
 | GOVERNMENT_SOURCES_STATUS | SPONSOR REVIEW — NO AUTORIZA DESARROLLO |
-| D-GOV-01..08 | 8 OPEN |
+| D-GOV-01..08 | 6 OPEN; D-GOV-01 CLOSED; D-GOV-07 SPONSOR_SCOPE_CLOSED |
 | NORMATIVE_FREEZE_CHECKLIST | 0 / 10 |
 | NORMATIVE_CLASS_C | 12 / 40 (LEGAL_VALIDATION_REQUIRED = 1) |
 | SHARED_CORE_P0_GAPS | 7 (RNF-GOV-003, 005, 010, 011, 012, 015 y RNF-GOV-001 parcial) |
