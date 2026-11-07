@@ -21,7 +21,6 @@ import type {
   CatalogItemSummary,
   GoodsReceiptDetail,
   GoodsReceiptSummary,
-  PagedResult,
   PurchaseOrderLine,
   PurchaseOrderSummary,
 } from "@/api/types";
@@ -37,6 +36,8 @@ import { TextInput } from "@/components/TextInput";
 import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
 import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
 import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
+
+import { useOrdenesRecibibles } from "./useOrdenesRecibibles";
 
 interface PresentationSummary {
   id: string;
@@ -60,6 +61,32 @@ const columnHelper = createColumnHelper<GoodsReceiptSummary>();
 // Lo que falta por recibir, sin negativos: un sobrante no deja saldo pendiente.
 function pendienteDeLinea(linea: PurchaseOrderLine): number {
   return Math.max(0, Number((Number(linea.quantity_ordered) - Number(linea.quantity_received)).toFixed(6)));
+}
+
+// Vacío es «no declarado»: se envía nulo, nunca un sí por omisión.
+function hechoDeclarado(valor: string): boolean | null {
+  return valor === "" ? null : valor === "true";
+}
+
+interface SelectorDeHechoProps {
+  etiqueta: string;
+  vacio: string;
+  si: string;
+  no: string;
+  valor: string;
+  alCambiar: (valor: string) => void;
+}
+
+function SelectorDeHecho({ etiqueta, vacio, si, no, valor, alCambiar }: SelectorDeHechoProps): React.JSX.Element {
+  return (
+    <FormField label={etiqueta}>
+      <select value={valor} onChange={(e) => alCambiar(e.target.value)} className="h-10 w-44 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+        <option value="">{vacio}</option>
+        <option value="true">{si}</option>
+        <option value="false">{no}</option>
+      </select>
+    </FormField>
+  );
 }
 
 /** Sí / no / sin comprobar, para las cuatro comparaciones de la etapa 4. */
@@ -87,7 +114,9 @@ export function RecepcionesPage(): React.JSX.Element {
   const [linePresentation, setLinePresentation] = useState("");
   const [lineReceived, setLineReceived] = useState("");
   const [lineAccepted, setLineAccepted] = useState("");
-  const [lineCondition, setLineCondition] = useState("BUENO");
+  const [lineCondition, setLineCondition] = useState("");
+  const [lineIdentification, setLineIdentification] = useState("");
+  const [lineReference, setLineReference] = useState("");
   const [lineDamaged, setLineDamaged] = useState("");
   const [lineDamageNotes, setLineDamageNotes] = useState("");
   const [lineLot, setLineLot] = useState("");
@@ -96,17 +125,19 @@ export function RecepcionesPage(): React.JSX.Element {
 
   const [packagesReceived, setPackagesReceived] = useState("");
   const [inspectionNotes, setInspectionNotes] = useState("");
+  const [packingListMatch, setPackingListMatch] = useState("");
+  const [invoiceMatch, setInvoiceMatch] = useState("");
+  const [orderMatch, setOrderMatch] = useState("");
+  const [documentationMatch, setDocumentationMatch] = useState("");
 
   const query = useQuery({
     queryKey: ["compras", "recepciones"],
     queryFn: () => apiFetch<{ items: GoodsReceiptSummary[] }>("/purchasing/receipts"),
     retry: false,
   });
-  const orders = useQuery({
-    queryKey: ["compras", "ordenes"],
-    queryFn: () => apiFetch<PagedResult<PurchaseOrderSummary>>("/purchasing/orders"),
-    retry: false,
-  });
+  const ordenesRecibibles = useOrdenesRecibibles(activeCompany?.id ?? null);
+  // Una orden que sale de la lista, por búsqueda o por cambio de empresa, no se envía.
+  const ordenElegida = ordenesRecibibles.ordenes.some((o) => o.id === newOrder) ? newOrder : "";
   const detail = useQuery({
     queryKey: ["compras", "recepcion", selected],
     queryFn: () => apiFetch<GoodsReceiptDetail>(`/purchasing/receipts/${selected}`),
@@ -150,12 +181,15 @@ export function RecepcionesPage(): React.JSX.Element {
 
   const warehouses = useAlmacenesDeEmpresa(activeCompany?.id ?? null);
   // Una selección que ya no está en la lista, por ejemplo de otra empresa, no se envía.
-  const almacenElegido = (warehouses.data?.items ?? []).some((w) => w.id === newWarehouse) ? newWarehouse : "";
+  // Solo un almacén activo recibe mercancía; el backend lo exige también.
+  const almacenesActivos = (warehouses.data?.items ?? []).filter((w) => w.status === "ACTIVE");
+  const almacenElegido = almacenesActivos.some((w) => w.id === newWarehouse) ? newWarehouse : "";
 
   const refresh = async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: ["compras", "recepciones"] });
     await queryClient.invalidateQueries({ queryKey: ["compras", "recepcion"] });
     await queryClient.invalidateQueries({ queryKey: ["compras", "orden"] });
+    await queryClient.invalidateQueries({ queryKey: ["compras", "ordenes-recibibles"] });
   };
 
   const fallo = (titulo: string, err: unknown): void => {
@@ -168,7 +202,9 @@ export function RecepcionesPage(): React.JSX.Element {
     setLinePresentation("");
     setLineReceived("");
     setLineAccepted("");
-    setLineCondition("BUENO");
+    setLineCondition("");
+    setLineIdentification("");
+    setLineReference("");
     setLineDamaged("");
     setLineDamageNotes("");
     setLineLot("");
@@ -180,9 +216,19 @@ export function RecepcionesPage(): React.JSX.Element {
   const elegirRecepcion = (id: string): void => {
     setSelected(id);
     limpiarLinea();
+    setPackagesReceived("");
+    setInspectionNotes("");
+    setPackingListMatch("");
+    setInvoiceMatch("");
+    setOrderMatch("");
+    setDocumentationMatch("");
   };
 
   const createReceipt = async (): Promise<void> => {
+    if (!ordenElegida) {
+      notify({ type: "error", title: "No fue posible crear la recepción", description: "Seleccione una orden de compra." });
+      return;
+    }
     if (!almacenElegido) {
       notify({ type: "error", title: "No fue posible crear la recepción", description: "Seleccione un almacén." });
       return;
@@ -190,7 +236,7 @@ export function RecepcionesPage(): React.JSX.Element {
     try {
       const body: Record<string, unknown> = {
         code: newCode,
-        order_id: newOrder,
+        order_id: ordenElegida,
         warehouse_id: almacenElegido,
         packing_list_ref: newPackingList || null,
         supplier_invoice_ref: newInvoice || null,
@@ -242,8 +288,8 @@ export function RecepcionesPage(): React.JSX.Element {
           physical_condition: lineCondition || null,
           damaged_quantity: lineDamaged === "" ? null : Number(lineDamaged),
           damage_notes: lineDamageNotes || null,
-          identification_ok: true,
-          reference_ok: true,
+          identification_ok: hechoDeclarado(lineIdentification),
+          reference_ok: hechoDeclarado(lineReference),
           lot_number: lineLot || null,
           expiry_date: lineExpiry || null,
           serials: lineSerials ? lineSerials.split(",").map((x) => x.trim()).filter(Boolean) : null,
@@ -259,7 +305,7 @@ export function RecepcionesPage(): React.JSX.Element {
 
   const columns = [
     columnHelper.accessor("code", { header: "Código" }),
-    columnHelper.accessor("order_id", { header: "Orden", cell: ({ getValue }) => getValue().slice(0, 8) + "…" }),
+    columnHelper.accessor("order_code", { header: "Orden", cell: ({ getValue }) => getValue() ?? "—" }),
     columnHelper.accessor("status", { header: "Estado", cell: ({ getValue }) => ESTADOS[getValue()] ?? getValue() }),
     columnHelper.accessor("quality_status", { header: "Conformidad" }),
     columnHelper.accessor("arrival_at", {
@@ -306,6 +352,11 @@ export function RecepcionesPage(): React.JSX.Element {
                 conforme
               </AsyncButton>
             ) : null}
+            {r.status === "CONFIRMED" && r.quality_status !== "APPROVED" && puedeReceiptId("quality") ? (
+              <AsyncButton size="sm" variant="secondary" onClick={() => runAction(r.id, "quality", { quality_status: "REJECTED" })}>
+                no conforme
+              </AsyncButton>
+            ) : null}
             {r.status === "CONFIRMED" && r.quality_status === "APPROVED" && puedeReceiptId("accept") ? (
               <AsyncButton size="sm" variant="primary" onClick={() => runAction(r.id, "accept")}>
                 aceptar
@@ -332,19 +383,33 @@ export function RecepcionesPage(): React.JSX.Element {
           <FormField label="Código" required>
             <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="REC-0001" required />
           </FormField>
+          {ordenesRecibibles.consulta.isFetchNextPageError ? <p role="alert" className="w-full text-sm text-danger-600">No fue posible cargar más órdenes.</p> : null}
+          {ordenesRecibibles.consulta.isError && !ordenesRecibibles.consulta.isFetchNextPageError ? <p role="alert" className="w-full text-sm text-danger-600">No fue posible cargar las órdenes.</p> : null}
+          {ordenesRecibibles.consulta.isLoading ? <p role="status" className="w-full text-sm text-text-500">Cargando órdenes…</p> : null}
+          {ordenesRecibibles.consulta.data && ordenesRecibibles.ordenes.length === 0 ? <p role="status" className="w-full text-sm text-text-500">No hay órdenes por recibir.</p> : null}
+          {ordenesRecibibles.consulta.hasNextPage ? <p role="status" className="w-full text-sm text-text-500">{`Mostrando ${ordenesRecibibles.ordenes.length} de ${ordenesRecibibles.total} órdenes.`}</p> : null}
+          <FormField label="Buscar orden" help="Por código">
+            <TextInput value={ordenesRecibibles.busqueda} onChange={(e) => ordenesRecibibles.setBusqueda(e.target.value)} placeholder="OC-0001" />
+          </FormField>
           <FormField label="Orden de compra" required>
-            <select value={newOrder} onChange={(e) => setNewOrder(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+            <select value={ordenElegida} onChange={(e) => setNewOrder(e.target.value)} required className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Seleccionar…</option>
-              {(orders.data?.items ?? []).filter((o) => ["APPROVED", "PARTIALLY_RECEIVED", "RECEIVED"].includes(o.status)).map((o) => (
+              {ordenesRecibibles.ordenes.map((o) => (
                 <option key={o.id} value={o.id}>{o.code}</option>
               ))}
             </select>
           </FormField>
+          {ordenesRecibibles.consulta.hasNextPage ? (
+            <AsyncButton variant="secondary" onClick={async () => { await ordenesRecibibles.consulta.fetchNextPage(); }}>
+              Cargar más órdenes
+            </AsyncButton>
+          ) : null}
           <AvisoDeAlmacenes consulta={warehouses} />
+          {warehouses.data && warehouses.data.items.length > 0 && almacenesActivos.length === 0 ? <p role="status" className="w-full text-sm text-text-500">Esta empresa no tiene almacenes activos.</p> : null}
           <FormField label="Almacén" required>
             <select value={almacenElegido} onChange={(e) => setNewWarehouse(e.target.value)} required className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Seleccionar…</option>
-              {(warehouses.data?.items ?? []).map((w) => (
+              {almacenesActivos.map((w) => (
                 <option key={w.id} value={w.id}>{w.code} · {w.name}</option>
               ))}
             </select>
@@ -391,38 +456,25 @@ export function RecepcionesPage(): React.JSX.Element {
               <FormField label="Observaciones">
                 <TextInput value={inspectionNotes} onChange={(e) => setInspectionNotes(e.target.value)} placeholder="Lo que se vio al abrir" />
               </FormField>
+              <SelectorDeHecho etiqueta="Packing list comparado" vacio="No comparado" si="Coincide" no="No coincide" valor={packingListMatch} alCambiar={setPackingListMatch} />
+              <SelectorDeHecho etiqueta="Factura comparada" vacio="No comparado" si="Coincide" no="No coincide" valor={invoiceMatch} alCambiar={setInvoiceMatch} />
+              <SelectorDeHecho etiqueta="Orden comparada" vacio="No comparado" si="Coincide" no="No coincide" valor={orderMatch} alCambiar={setOrderMatch} />
+              <SelectorDeHecho etiqueta="Documentación comparada" vacio="No comparado" si="Coincide" no="No coincide" valor={documentationMatch} alCambiar={setDocumentationMatch} />
               {puede("POST", `/purchasing/receipts/${d.id}/inspection`) ? (
                 <AsyncButton
                   variant="secondary"
                   onClick={() =>
                     runAction(d.id, "inspection", {
-                      packing_list_match: true,
-                      supplier_invoice_match: true,
-                      order_match: true,
-                      documentation_match: true,
+                      packing_list_match: hechoDeclarado(packingListMatch),
+                      supplier_invoice_match: hechoDeclarado(invoiceMatch),
+                      order_match: hechoDeclarado(orderMatch),
+                      documentation_match: hechoDeclarado(documentationMatch),
                       packages_received: packagesReceived === "" ? null : Number(packagesReceived),
                       notes: inspectionNotes || null,
                     })
                   }
                 >
-                  Registrar inspección conforme
-                </AsyncButton>
-              ) : null}
-              {puede("POST", `/purchasing/receipts/${d.id}/inspection`) ? (
-                <AsyncButton
-                  variant="secondary"
-                  onClick={() =>
-                    runAction(d.id, "inspection", {
-                      packing_list_match: false,
-                      supplier_invoice_match: false,
-                      order_match: false,
-                      documentation_match: false,
-                      packages_received: packagesReceived === "" ? null : Number(packagesReceived),
-                      notes: inspectionNotes || null,
-                    })
-                  }
-                >
-                  Registrar diferencias
+                  Registrar inspección
                 </AsyncButton>
               ) : null}
             </form>
@@ -463,11 +515,14 @@ export function RecepcionesPage(): React.JSX.Element {
               </FormField>
               <FormField label="Estado físico">
                 <select value={lineCondition} onChange={(e) => setLineCondition(e.target.value)} className="h-10 w-40 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                  <option value="">No observado</option>
                   <option value="BUENO">Bueno</option>
                   <option value="DAÑADO">Dañado</option>
                   <option value="PARCIAL">Parcialmente dañado</option>
                 </select>
               </FormField>
+              <SelectorDeHecho etiqueta="Identificación" vacio="No observada" si="Correcta" no="Incorrecta" valor={lineIdentification} alCambiar={setLineIdentification} />
+              <SelectorDeHecho etiqueta="Referencia" vacio="No observada" si="Correcta" no="Incorrecta" valor={lineReference} alCambiar={setLineReference} />
               <FormField label="Cantidad dañada">
                 <TextInput type="number" min="0" value={lineDamaged} onChange={(e) => setLineDamaged(e.target.value)} />
               </FormField>

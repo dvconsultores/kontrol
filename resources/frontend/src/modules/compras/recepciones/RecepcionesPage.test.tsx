@@ -36,6 +36,7 @@ interface Almacen {
   id: string;
   code: string;
   name: string;
+  status: string;
 }
 
 function servidor(total: number, fallaEnOffset?: number) {
@@ -59,7 +60,7 @@ function servidor(total: number, fallaEnOffset?: number) {
 
       const todos: Almacen[] = Array.from({ length: total }, (_, i) => {
         const n = i + 1;
-        return { id: `${empresa.id}-w${n}`, code: `A-${String(n).padStart(3, "0")}`, name: `Almacén ${n}` };
+        return { id: `${empresa.id}-w${n}`, code: `A-${String(n).padStart(3, "0")}`, name: `Almacén ${n}`, status: "ACTIVE" };
       });
       const items = todos.slice(offset, offset + limit);
       return Promise.resolve({ total, limit, offset, items });

@@ -195,6 +195,137 @@ test.describe("Spec 019 — recepción física", () => {
     expect(registradaB?.presentation_id).toBeNull();
   });
 
+  test("la recepción recorre el proceso completo desde el menú", async ({ page, request }) => {
+    test.setTimeout(120000);
+    const c = await ctx(request);
+    const m = await mundo(request, c, `${RUN}Z`);
+    const segundo = await post(request, c, "/maestros/catalogos/items", {
+      code: `P2-${RUN}Z`,
+      name: `Segundo ${RUN}Z`,
+      item_type: "PRODUCT",
+    });
+    const proveedor = await post(request, c, "/maestros/terceros", {
+      code: `PRV3-${RUN}Z`,
+      name: "Proveedor E2E",
+      roles: ["PROVEEDOR"],
+    });
+    const aprobar = async (
+      codigo: string,
+      lineas: Array<{ product_id: unknown; quantity_ordered: number; unit_price: number }>,
+    ) => {
+      const orden = await post(request, c, "/purchasing/orders", {
+        code: codigo,
+        supplier_id: proveedor.id,
+        currency: "VED",
+      });
+      const creadas: Array<Record<string, unknown>> = [];
+      for (const linea of lineas) {
+        creadas.push(
+          await post(request, c, `/purchasing/orders/${orden.id}/lines`, linea),
+        );
+      }
+      for (const target of ["SUBMITTED", "APPROVED"]) {
+        await post(request, c, `/purchasing/orders/${orden.id}/transition`, { target });
+      }
+      return { orden, creadas };
+    };
+    const buscada = await aprobar(`OC3-${RUN}Z`, [
+      { product_id: m.prod, quantity_ordered: 100, unit_price: 5 },
+      { product_id: segundo.id, quantity_ordered: 40, unit_price: 7 },
+    ]);
+    for (let i = 0; i < 51; i += 1) {
+      await aprobar(`OCX-${RUN}${i}`, [
+        { product_id: m.prod, quantity_ordered: 1, unit_price: 1 },
+      ]);
+    }
+    await uiLogin(page);
+    await irARecepciones(page);
+    await page.getByLabel(/^Buscar orden/).fill(`OC3-${RUN}Z`);
+    const selectorOrden = page.getByLabel(/^Orden de compra/);
+    await expect(selectorOrden.locator("option", { hasText: `OC3-${RUN}Z` })).toHaveCount(1, {
+      timeout: 15000,
+    });
+    await selectorOrden.selectOption(buscada.orden.id as string);
+    await page.getByLabel(/^Almacén/).selectOption(m.alm as string);
+    await page.getByLabel(/^Código/).first().fill(`REC-${RUN}Z`);
+    await page.getByRole("button", { name: "Crear" }).first().click();
+    await expect(
+      page.getByRole("heading", { name: `Inspección de REC-${RUN}Z` }),
+    ).toBeVisible({ timeout: 15000 });
+    const fila = page.getByRole("row").filter({ hasText: `REC-${RUN}Z` });
+    await expect(fila).toContainText(`OC3-${RUN}Z`);
+    await fila.getByRole("button", { name: "confirmar arribo" }).click();
+    await expect(fila).not.toContainText("sin confirmar", { timeout: 15000 });
+    await page.getByLabel(/^Packing list comparado/).selectOption("true");
+    await page.getByRole("button", { name: "Registrar inspección", exact: true }).click();
+    await expect(page.getByText(/inspeccionada el/)).toBeVisible({ timeout: 15000 });
+    const lista = await get(request, c, "/purchasing/receipts");
+    const recId = (
+      lista.items as Array<{ id: string; code: string }>
+    ).find((r) => r.code === `REC-${RUN}Z`)?.id as string;
+    const linea = page.getByLabel(/^Línea de la orden/);
+    await linea.selectOption(buscada.creadas[0].id as string);
+    await expect(page.getByLabel(/^Producto/)).toHaveValue(new RegExp(`^P-${RUN}Z`));
+    await page.getByLabel(/^Presentación/).selectOption(m.caja);
+    await page.getByLabel(/^Identificación/).selectOption("true");
+    await page.getByLabel(/^Referencia/).selectOption("false");
+    await page.getByLabel(/^Recibido/).fill("2");
+    await page.getByRole("button", { name: "Registrar", exact: true }).click();
+    await expect
+      .poll(
+        async () => {
+          const detalle = await get(request, c, `/purchasing/receipts/${recId}`);
+          return (detalle.lines as Array<unknown>).length;
+        },
+        { timeout: 15000 },
+      )
+      .toBe(1);
+    await linea.selectOption(buscada.creadas[1].id as string);
+    await expect(page.getByLabel(/^Producto/)).toHaveValue(new RegExp(`^P2-${RUN}Z`));
+    await page.getByLabel(/^Recibido/).fill("3");
+    await page.getByRole("button", { name: "Registrar", exact: true }).click();
+    await expect
+      .poll(
+        async () => {
+          const detalle = await get(request, c, `/purchasing/receipts/${recId}`);
+          return (detalle.lines as Array<unknown>).length;
+        },
+        { timeout: 15000 },
+      )
+      .toBe(2);
+    await fila.getByRole("button", { name: "confirmar", exact: true }).click();
+    await expect(fila).toContainText("Confirmada", { timeout: 15000 });
+    await fila.getByRole("button", { name: "conforme", exact: true }).click();
+    await fila.getByRole("button", { name: "aceptar" }).click();
+    await expect(fila).toContainText("Aceptada", { timeout: 15000 });
+    const detalle = await get(request, c, `/purchasing/receipts/${recId}`);
+    const lineas = detalle.lines as Array<{
+      order_line_id: string;
+      product_id: string;
+      identification_ok: boolean | null;
+      reference_ok: boolean | null;
+    }>;
+    expect(lineas).toHaveLength(2);
+    expect(lineas[0].product_id).toBe(m.prod);
+    expect(lineas[0].identification_ok).toBe(true);
+    expect(lineas[0].reference_ok).toBe(false);
+    expect(lineas[1].product_id).toBe(segundo.id);
+    expect(lineas[1].identification_ok).toBeNull();
+    expect(lineas[1].reference_ok).toBeNull();
+    const saldosProd = await get(request, c, `/inventory/balances?product_id=${m.prod}`);
+    const itemsProd = saldosProd.items as Array<{ warehouse_id: string; qty_on_hand: string }>;
+    const sumaProd = itemsProd
+      .filter((b) => b.warehouse_id === m.alm)
+      .reduce((acc, b) => acc + Number(b.qty_on_hand), 0);
+    expect(sumaProd).toBe(24);
+    const saldosSeg = await get(request, c, `/inventory/balances?product_id=${segundo.id}`);
+    const itemsSeg = saldosSeg.items as Array<{ warehouse_id: string; qty_on_hand: string }>;
+    const sumaSeg = itemsSeg
+      .filter((b) => b.warehouse_id === m.alm)
+      .reduce((acc, b) => acc + Number(b.qty_on_hand), 0);
+    expect(sumaSeg).toBe(3);
+  });
+
   test("dos cajas de doce entran al inventario como veinticuatro unidades", async ({ page, request }) => {
     const c = await ctx(request);
     const m = await mundo(request, c, `${RUN}A`);
@@ -218,7 +349,7 @@ test.describe("Spec 019 — recepción física", () => {
     await expect(fila).not.toContainText("sin confirmar", { timeout: 15000 });
     await fila.getByRole("button", { name: "confirmar", exact: true }).click();
     await expect(fila).toContainText("Confirmada", { timeout: 15000 });
-    await fila.getByRole("button", { name: "conforme" }).click();
+    await fila.getByRole("button", { name: "conforme", exact: true }).click();
     await fila.getByRole("button", { name: "aceptar" }).click();
     await expect(fila).toContainText("Aceptada", { timeout: 15000 });
 
@@ -251,13 +382,17 @@ test.describe("Spec 019 — recepción física", () => {
 
     await page.getByLabel(/Bultos contados/).fill("4");
     await page.getByLabel(/Observaciones/).fill("Una caja con el precinto forzado");
-    await page.getByRole("button", { name: "Registrar diferencias" }).click();
+    await page.getByLabel(/^Packing list comparado/).selectOption("false");
+    await page.getByLabel(/^Factura comparada/).selectOption("true");
+    await page.getByRole("button", { name: "Registrar inspección", exact: true }).click();
     await expect(page.getByText(/no coincide/).first()).toBeVisible({ timeout: 15000 });
 
     const detalle = await get(request, c, `/purchasing/receipts/${rec.id}`);
     expect(detalle.packages_received).toBe(4);
     expect(detalle.packages_declared).toBe(5);
     expect(detalle.packing_list_match).toBe(false);
+    expect(detalle.supplier_invoice_match).toBe(true);
+    expect(detalle.order_match).toBeNull();
     expect(detalle.inspection_notes).toBe("Una caja con el precinto forzado");
     expect(detalle.inspected_at).not.toBeNull();
   });

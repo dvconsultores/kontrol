@@ -101,6 +101,7 @@ export interface WarehouseSummary {
   id: string;
   code: string;
   name: string;
+  status?: string;
 }
 
 export interface AuditEvent {
@@ -493,6 +494,7 @@ export interface GoodsReceiptSummary {
   id: string;
   code: string;
   order_id: string;
+  order_code?: string | null;
   warehouse_id: string;
   status: string;
   /** Veredicto de conformidad de la etapa 7 del proceso. */
