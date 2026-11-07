@@ -586,7 +586,21 @@ describe("Recepciones · proceso", () => {
   });
 
   it("Q no conforme rechaza", async () => {
-    apiFetch.mockImplementation(servidor({ recepcion: { status: "CONFIRMED" } }));
+    apiFetch.mockImplementation(
+      servidor({
+        recepcion: {
+          status: "QUALITY_PENDING",
+          allowed_actions: {
+            confirm: false,
+            cancel: false,
+            send_to_quality: false,
+            record_quality: true,
+            accept: false,
+            close: false,
+          },
+        },
+      }),
+    );
     montar();
     const celda = await screen.findByText("REC-1");
     const fila = celda.closest("tr");

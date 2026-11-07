@@ -295,6 +295,8 @@ test.describe("Spec 019 — recepción física", () => {
       .toBe(2);
     await fila.getByRole("button", { name: "confirmar", exact: true }).click();
     await expect(fila).toContainText("Confirmada", { timeout: 15000 });
+    await fila.getByRole("button", { name: "enviar a calidad", exact: true }).click();
+    await expect(fila).toContainText("Pendiente de calidad", { timeout: 15000 });
     await fila.getByRole("button", { name: "conforme", exact: true }).click();
     await fila.getByRole("button", { name: "aceptar" }).click();
     await expect(fila).toContainText("Aceptada", { timeout: 15000 });
@@ -326,6 +328,107 @@ test.describe("Spec 019 — recepción física", () => {
     expect(sumaSeg).toBe(3);
   });
 
+  const recepcionEnBorrador = async (request: APIRequestContext, c: Ctx, marca: string, recibido: number, aceptado: number) => {
+    const m = await mundo(request, c, marca);
+    const rec = await post(request, c, "/purchasing/receipts", { code: `REC-${marca}`, order_id: m.orden, warehouse_id: m.alm });
+    const linea = await post(request, c, `/purchasing/receipts/${rec.id}/lines`, { order_line_id: m.linea, product_id: m.prod, quantity_received: recibido, quantity_accepted: aceptado, quantity_rejected: recibido - aceptado });
+    return { m, rec, linea };
+  };
+
+  const recorrerHastaAceptar = async (page: Page, marca: string, etiquetaFinal: string) => {
+    const fila = page.getByRole("row").filter({ hasText: `REC-${marca}` });
+    await fila.getByRole("button", { name: "confirmar", exact: true }).click();
+    await expect(fila).toContainText("Confirmada", { timeout: 15000 });
+    await fila.getByRole("button", { name: "enviar a calidad", exact: true }).click();
+    await expect(fila).toContainText("Pendiente de calidad", { timeout: 15000 });
+    await fila.getByRole("button", { name: "conforme", exact: true }).click();
+    await fila.getByRole("button", { name: "aceptar", exact: true }).click();
+    await expect(fila).toContainText(etiquetaFinal, { timeout: 15000 });
+    return fila;
+  };
+
+  const confirmarInventario = async (request: APIRequestContext, c: Ctx, recId: string, lineaId: string, recibido: string, aceptado: string) => {
+    await post(request, c, `/purchasing/receipts/${recId}/lines/${lineaId}/conteo`, { counted_base_quantity: recibido, difference_kinds: [] });
+    await post(request, c, `/purchasing/receipts/${recId}/confirmacion-inventario`, { decisions: [{ receipt_line_id: lineaId, target_state: "DISPONIBLE", base_quantity: aceptado }] });
+  };
+
+  test("la recepción aceptada del todo se cierra tras confirmar el inventario", async ({ page, request }) => {
+    const c = await ctx(request);
+    const { m, rec, linea } = await recepcionEnBorrador(request, c, `${RUN}E1`, 10, 10);
+    await uiLogin(page);
+    await irARecepciones(page);
+    await recorrerHastaAceptar(page, `${RUN}E1`, "Aceptada");
+    await confirmarInventario(request, c, String(rec.id), String(linea.id), "10", "10");
+    const saldosAntes = await get(request, c, `/inventory/balances?product_id=${m.prod}`);
+    await page.reload();
+    await irARecepciones(page);
+    const fila = page.getByRole("row").filter({ hasText: `REC-${RUN}E1` });
+    await expect(fila).toContainText("Aceptada", { timeout: 15000 });
+    await fila.getByRole("button", { name: "cerrar", exact: true }).click();
+    await expect(fila).toContainText("Cerrada", { timeout: 15000 });
+    const detalle = await get(request, c, `/purchasing/receipts/${rec.id}`);
+    expect(detalle.status).toBe("CLOSED");
+    const saldosDespues = await get(request, c, `/inventory/balances?product_id=${m.prod}`);
+    expect(saldosDespues.items).toEqual(saldosAntes.items);
+  });
+
+  test("la recepción parcial queda aceptada parcialmente y se cierra", async ({ page, request }) => {
+    const c = await ctx(request);
+    const { m, rec, linea } = await recepcionEnBorrador(request, c, `${RUN}E2`, 10, 7);
+    await uiLogin(page);
+    await irARecepciones(page);
+    await recorrerHastaAceptar(page, `${RUN}E2`, "Aceptada parcialmente");
+    await confirmarInventario(request, c, String(rec.id), String(linea.id), "10", "7");
+    await page.reload();
+    await irARecepciones(page);
+    const fila = page.getByRole("row").filter({ hasText: `REC-${RUN}E2` });
+    await expect(fila).toContainText("Aceptada parcialmente", { timeout: 15000 });
+    await fila.getByRole("button", { name: "cerrar", exact: true }).click();
+    await expect(fila).toContainText("Cerrada", { timeout: 15000 });
+    const detalle = await get(request, c, `/purchasing/receipts/${rec.id}`);
+    expect(detalle.status).toBe("CLOSED");
+    const saldos = await get(request, c, `/inventory/balances?product_id=${m.prod}`);
+    const items = saldos.items as Array<{ warehouse_id: string; qty_on_hand: string }>;
+    const total = items.filter((i) => i.warehouse_id === m.alm).reduce((acc, i) => acc + Number(i.qty_on_hand), 0);
+    expect(total).toBe(7);
+  });
+
+  test("la recepción rechazada se cierra sin inventario", async ({ page, request }) => {
+    const c = await ctx(request);
+    const { m, rec } = await recepcionEnBorrador(request, c, `${RUN}E3`, 10, 10);
+    await uiLogin(page);
+    await irARecepciones(page);
+    const fila = page.getByRole("row").filter({ hasText: `REC-${RUN}E3` });
+    await fila.getByRole("button", { name: "confirmar", exact: true }).click();
+    await expect(fila).toContainText("Confirmada", { timeout: 15000 });
+    await fila.getByRole("button", { name: "enviar a calidad", exact: true }).click();
+    await expect(fila).toContainText("Pendiente de calidad", { timeout: 15000 });
+    await fila.getByRole("button", { name: "no conforme", exact: true }).click();
+    await expect(fila).toContainText("Rechazada", { timeout: 15000 });
+    await fila.getByRole("button", { name: "cerrar", exact: true }).click();
+    await expect(fila).toContainText("Cerrada", { timeout: 15000 });
+    const detalle = await get(request, c, `/purchasing/receipts/${rec.id}`);
+    expect(detalle.status).toBe("CLOSED");
+    const saldos = await get(request, c, `/inventory/balances?product_id=${m.prod}`);
+    const items = saldos.items as Array<{ warehouse_id: string; qty_on_hand: string }>;
+    const total = items.filter((i) => i.warehouse_id === m.alm).reduce((acc, i) => acc + Number(i.qty_on_hand), 0);
+    expect(total).toBe(0);
+  });
+
+  test("un borrador se anula con su motivo", async ({ page, request }) => {
+    const c = await ctx(request);
+    const { rec } = await recepcionEnBorrador(request, c, `${RUN}E4`, 5, 5);
+    await uiLogin(page);
+    await irARecepciones(page);
+    const fila = page.getByRole("row").filter({ hasText: `REC-${RUN}E4` });
+    await fila.getByRole("button", { name: "detalle", exact: true }).click();
+    await page.getByLabel(/^Motivo de anulación/).fill("Creada por error");
+    await page.getByRole("button", { name: "Anular recepción", exact: true }).click();
+    await expect(fila).toContainText("Anulada", { timeout: 15000 });
+    const detalle = await get(request, c, `/purchasing/receipts/${rec.id}`);
+    expect(detalle.status).toBe("CANCELLED");
+  });
+
   test("dos cajas de doce entran al inventario como veinticuatro unidades", async ({ page, request }) => {
     const c = await ctx(request);
     const m = await mundo(request, c, `${RUN}A`);
@@ -349,6 +452,8 @@ test.describe("Spec 019 — recepción física", () => {
     await expect(fila).not.toContainText("sin confirmar", { timeout: 15000 });
     await fila.getByRole("button", { name: "confirmar", exact: true }).click();
     await expect(fila).toContainText("Confirmada", { timeout: 15000 });
+    await fila.getByRole("button", { name: "enviar a calidad", exact: true }).click();
+    await expect(fila).toContainText("Pendiente de calidad", { timeout: 15000 });
     await fila.getByRole("button", { name: "conforme", exact: true }).click();
     await fila.getByRole("button", { name: "aceptar" }).click();
     await expect(fila).toContainText("Aceptada", { timeout: 15000 });

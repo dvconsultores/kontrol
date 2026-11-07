@@ -67,6 +67,7 @@ async function recepcionAceptada(request: APIRequestContext, c: Ctx, marca: stri
     quantity_received: 100, quantity_accepted: 100, quantity_rejected: 0,
   });
   await post(request, c, `/purchasing/receipts/${rec.id}/confirm`, {});
+  await post(request, c, `/purchasing/receipts/${rec.id}/quality`, {});
   await post(request, c, `/purchasing/receipts/${rec.id}/quality`, { quality_status: "APPROVED" });
   await post(request, c, `/purchasing/receipts/${rec.id}/accept`, {});
   return { receipt: rec.id as string, code: rec.code as string, line: rl.id as string,

@@ -129,6 +129,7 @@ export function RecepcionesPage(): React.JSX.Element {
   const [invoiceMatch, setInvoiceMatch] = useState("");
   const [orderMatch, setOrderMatch] = useState("");
   const [documentationMatch, setDocumentationMatch] = useState("");
+  const [cancelReason, setCancelReason] = useState("");
 
   const query = useQuery({
     queryKey: ["compras", "recepciones"],
@@ -222,6 +223,7 @@ export function RecepcionesPage(): React.JSX.Element {
     setInvoiceMatch("");
     setOrderMatch("");
     setDocumentationMatch("");
+    setCancelReason("");
   };
 
   const createReceipt = async (): Promise<void> => {
@@ -265,6 +267,16 @@ export function RecepcionesPage(): React.JSX.Element {
     } catch (err) {
       fallo("No fue posible actualizar la recepción", err);
     }
+  };
+
+  const anular = async (id: string): Promise<void> => {
+    const motivo = cancelReason.trim();
+    if (!motivo) {
+      notify({ type: "error", title: "No fue posible anular la recepción", description: "Indique el motivo." });
+      return;
+    }
+    await runAction(id, "cancel", { reason: motivo });
+    setCancelReason("");
   };
 
   const addLine = async (): Promise<void> => {
@@ -342,24 +354,35 @@ export function RecepcionesPage(): React.JSX.Element {
                 confirmar arribo
               </AsyncButton>
             ) : null}
-            {r.status === "DRAFT" && puedeReceiptId("confirm") ? (
+            {/* Los botones salen de allowed_actions que publica el backend; el estado no decide. */}
+            {r.allowed_actions?.confirm && puedeReceiptId("confirm") ? (
               <AsyncButton size="sm" variant="secondary" onClick={() => runAction(r.id, "confirm")}>
                 confirmar
               </AsyncButton>
             ) : null}
-            {r.status === "CONFIRMED" && r.quality_status !== "APPROVED" && puedeReceiptId("quality") ? (
+            {r.allowed_actions?.send_to_quality && puedeReceiptId("quality") ? (
+              <AsyncButton size="sm" variant="secondary" onClick={() => runAction(r.id, "quality", {})}>
+                enviar a calidad
+              </AsyncButton>
+            ) : null}
+            {r.allowed_actions?.record_quality && puedeReceiptId("quality") ? (
               <AsyncButton size="sm" variant="secondary" onClick={() => runAction(r.id, "quality", { quality_status: "APPROVED" })}>
                 conforme
               </AsyncButton>
             ) : null}
-            {r.status === "CONFIRMED" && r.quality_status !== "APPROVED" && puedeReceiptId("quality") ? (
+            {r.allowed_actions?.record_quality && puedeReceiptId("quality") ? (
               <AsyncButton size="sm" variant="secondary" onClick={() => runAction(r.id, "quality", { quality_status: "REJECTED" })}>
                 no conforme
               </AsyncButton>
             ) : null}
-            {r.status === "CONFIRMED" && r.quality_status === "APPROVED" && puedeReceiptId("accept") ? (
+            {r.allowed_actions?.accept && puedeReceiptId("accept") ? (
               <AsyncButton size="sm" variant="primary" onClick={() => runAction(r.id, "accept")}>
                 aceptar
+              </AsyncButton>
+            ) : null}
+            {r.allowed_actions?.close && puedeReceiptId("close") ? (
+              <AsyncButton size="sm" variant="secondary" onClick={() => runAction(r.id, "close")}>
+                cerrar
               </AsyncButton>
             ) : null}
           </div>
@@ -480,6 +503,19 @@ export function RecepcionesPage(): React.JSX.Element {
             </form>
           </section>
 
+          {d.allowed_actions?.cancel && puede("POST", `/purchasing/receipts/${d.id}/cancel`) ? (
+            <section className="mt-4 rounded-lg border border-border-default bg-surface-0 p-4">
+              <h2 className="mb-2 text-base font-semibold text-text-900">Anulación</h2>
+              <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+                <FormField label="Motivo de anulación" required help="Solo un borrador se anula; el motivo queda en la auditoría">
+                  <TextInput value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} maxLength={255} />
+                </FormField>
+                <AsyncButton variant="secondary" onClick={() => anular(d.id)}>
+                  Anular recepción
+                </AsyncButton>
+              </form>
+            </section>
+          ) : null}
           <Autorizado operacion={["POST", `/purchasing/receipts/${d.id}/lines`]}>
           <section className="mt-4 rounded-lg border border-border-default bg-surface-0 p-4">
             <h2 className="mb-2 text-base font-semibold text-text-900">Recibir una línea</h2>

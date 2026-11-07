@@ -490,6 +490,16 @@ export interface SupplierInvoiceSummary {
   allowed_actions: AllowedActions;
 }
 
+/** Lo que la máquina de estados de la recepción permite hoy; el backend lo revalida (FR-004-031). */
+export interface ReceiptAllowedActions {
+  confirm: boolean;
+  cancel: boolean;
+  send_to_quality: boolean;
+  record_quality: boolean;
+  accept: boolean;
+  close: boolean;
+}
+
 export interface GoodsReceiptSummary {
   id: string;
   code: string;
@@ -509,6 +519,7 @@ export interface GoodsReceiptSummary {
   inspected_at?: string | null;
   /** Etapa 11: acta emitida. */
   record_issued_at?: string | null;
+  allowed_actions?: ReceiptAllowedActions;
 }
 
 /** Línea de recepción con su unidad y lo que se observó (Spec 019). */
