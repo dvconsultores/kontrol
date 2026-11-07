@@ -22,3 +22,7 @@ T042_REPRODUCED = 1. MIGRATION_ADDED = 0. CROSS_VERTICAL_SEMANTIC_CHANGE_REQUIRE
 T042, desde el menú: panel de bloqueo → «Ir a la lista» → lista con el contexto aplicado; «Quitar filtro» vuelve a la lista general. Probado en CIE-E2E-01 (hallazgos) y CIE-E2E-02 (actos).
 
 T043: `test_lc10_mas_de_cinco_pendientes`, con seis pendientes: muestra de 5, `pendientes` real, `total` igual y lista enlazada con el mismo total. Mutantes T01 a T05 muertos.
+
+## Pila de prueba de la dueña
+
+Relevada a `6fa6d4f`, puertos 18100 / 15273 / 18110, corrida `r20261107t030704p1043956nbac55d`, sin conexiones vivas que respetar. HUMO-UAT-01: 1/1. `/login` → 200; API sin sesión → 401. UAT_CREDENTIAL_HANDOFF = LOCAL_SECURE_FILE, permisos 600. OWNER_UAT_ACCESSIBLE = YES. OWNER_ACCEPTED = pendiente.
