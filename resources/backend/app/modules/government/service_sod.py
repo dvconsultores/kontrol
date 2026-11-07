@@ -86,6 +86,17 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "CTL10_RETIRAR": ("Retirar la política", "GOV_CLOSURE_POLICY_RETIRED", False),
         },
     },
+    "ORG-04": {
+        "nombre": "Ocupación de cargos",
+        "objeto": "GovernmentAssignment",
+        "objeto_nombre": "asignación",
+        "acciones": {
+            "ORG04_REGISTRAR": ("Registrar la asignación", "GOV_ASSIGNMENT_CREATED", True),
+            "ORG04_ACTIVAR": ("Activar la asignación", "GOV_ASSIGNMENT_ACTIVATED", False),
+            "ORG04_REVOCAR": ("Revocar la asignación", "GOV_ASSIGNMENT_REVOKED", False),
+            "ORG04_FINALIZAR": ("Finalizar la asignación", "GOV_ASSIGNMENT_FINISHED", False),
+        },
+    },
 }
 
 

@@ -33,3 +33,11 @@ Para: profesional identificado por el ente o el sponsor. Este paquete no valida 
 | 7 | Sin cambio | Se reponen los bloqueos con la regla concreta |
 
 PROFESSIONAL_VALIDATION_REQUIRED no equivale a decisión de la dueña. La identidad del profesional sigue sin designar (ítem 10 del checklist de freeze).
+
+## Adición de ORG-04 (2026-11-07)
+
+| Pregunta | Si la respuesta es sí | Si es no |
+|---|---|---|
+| ¿La «designación temporal» de la práctica municipal es una encargaduría (LEFP y LOPPM)? | Se mantiene bajo la figura ENCARGADURIA | Se añade una figura nueva sin cambiar el modelo de asignación |
+
+La respuesta no bloquea ORG-04: la figura existe y el acto soporte queda registrado.

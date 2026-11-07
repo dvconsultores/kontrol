@@ -2,9 +2,9 @@
 
 > Retrospectiva GOV-PRODUCT-COMPLETENESS-RETRO-01 · `develop` `0dbe632` · 2026-10-29. Actualizado por GOV-0-01 (2026-10-30), GOV-0-02 (2026-10-31), GOV-0-03 y GOV-DOC-02 (2026-11-01) GOV-DOC-04 y GOV-ORG-07 (2026-11-02) GOV-CTL-04 (2026-11-03), GOV-CTL-06, GOV-DOC-08 y GOV-CTL-01 (2026-11-04) GOV-TRE-01 (2026-11-05) y GOV-TRE-02 con T038 (2026-11-06).
 
-## Estado: 13 procesos listos para probar (2026-11-07)
+## Estado: 14 procesos listos para probar (2026-11-07)
 
-- `OWNER_UAT_READY` = 13 de 122 procesos (10,66 %);
+- `OWNER_UAT_READY` = 14 de 122 procesos (11,48 %);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
@@ -22,6 +22,7 @@
 | **TRE-01 Cuentas bancarias públicas** (GOV-TRE-001) | Menú › Gobierno · Tesorería › Cuentas bancarias y Bancos | [`specs/gov-tre-01-cuentas-bancarias/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-tre-01-cuentas-bancarias/evidence/OWNER_UAT_CARD.md) |
 | **TRE-02 Programación financiera y disponibilidad de caja** (GOV-TRE-002) | Menú › Gobierno · Tesorería › Programación financiera y Rubros de caja | [`specs/gov-tre-02-programacion-financiera/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-tre-02-programacion-financiera/evidence/OWNER_UAT_CARD.md) |
 | **CTL-10 Controles materiales que impiden cerrar ejercicio o proceso** (GOV-CTL-012) | Menú › Gobierno › Controles de cierre (y el panel de bloqueo en «Cerrar ejercicio» y «Cerrar programa») | [`specs/gov-ctl-10-controles-cierre/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-ctl-10-controles-cierre/evidence/OWNER_UAT_CARD.md) | GOV-CTL-10 |
+| **ORG-04 Delegaciones, suplencias, encargadurías y designaciones con acto** (GOV-ORG-004, GOV-ORG-009) | Menú › Gobierno › Ocupación de cargos (Asignaciones y Funcionarios desde esa pantalla) | [`specs/gov-org-04-ocupacion-cargos/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-org-04-ocupacion-cargos/evidence/OWNER_UAT_CARD.md) | GOV-ORG-04 |
 
 Los otros 109 procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
 

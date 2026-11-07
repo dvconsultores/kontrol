@@ -36,6 +36,8 @@ DETALLE_CIERRE: tuple[str, ...] = (
 )
 
 
+DETALLE_OCUPACION: tuple[str, ...] = ("acto_id", "acto_numero", "asunto", "campos", "cargo_codigo", "cargo_id", "cargo_origen_id", "codigo", "desde", "documento_enmascarado", "emisor_cargo_id", "estado", "figura", "fin_efectivo", "fundamento", "funcionario_codigo", "funcionario_id", "grupo", "hasta", "motivo", "nombre", "revocation_act_id", "status", "total", "version")
+
 DETALLE_ACTO: tuple[str, ...] = (
     "acto_referencia",
     "asunto",
@@ -171,6 +173,16 @@ _PARTE_A: tuple[AuditActionSpec, ...] = (
     _e("GOV_CLOSURE_POLICY_CONTROL_REMOVED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Control material retirado de la política de cierre"),
     _e("GOV_CLOSURE_POLICY_ACTIVATED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Política de controles de cierre activada"),
     _e("GOV_CLOSURE_POLICY_RETIRED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Política de controles de cierre retirada"),
+    _e("GOV_OFFICIAL_CREATED", "GovernmentOfficial", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Funcionario registrado"),
+    _e("GOV_OFFICIAL_UPDATED", "GovernmentOfficial", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Funcionario actualizado"),
+    _e("GOV_ASSIGNMENT_CREATED", "GovernmentAssignment", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Asignación de cargo registrada"),
+    _e("GOV_ASSIGNMENT_UPDATED", "GovernmentAssignment", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Asignación de cargo actualizada"),
+    _e("GOV_ASSIGNMENT_ACTIVATED", "GovernmentAssignment", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Asignación de cargo activada"),
+    _e("GOV_ASSIGNMENT_DISCARDED", "GovernmentAssignment", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Asignación de cargo descartada"),
+    _e("GOV_ASSIGNMENT_REVOKED", "GovernmentAssignment", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Asignación de cargo revocada"),
+    _e("GOV_ASSIGNMENT_FINISHED", "GovernmentAssignment", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Asignación de cargo finalizada"),
+    _e("GOV_ASSIGNMENT_AVOCATED", "GovernmentAssignment", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Avocación registrada"),
+    _e("GOV_ASSIGNMENTS_EXPORTED", "GovernmentAssignment", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Ocupación de cargos exportada"),
     _e("GOV_MATERIAL_CLOSE_ALLOWED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Cierre material autorizado por política de controles"),
     _e("GOV_MATERIAL_CLOSE_BLOCKED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "REJECTION", DETALLE_CIERRE, "Operación bloqueada por controles materiales de cierre"),
     _e("GOV_BANK_CREATED", "GovernmentBank", "government", "gov-tre-01", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("codigo", "nombre"), "Banco registrado en Tesorería de Gobierno"),

@@ -1280,7 +1280,7 @@ export function abreviarHuella(huella: string): string { return huella.length > 
 // CTL-01 · matriz de segregación de funciones (GOV-CTL-001)
 // ---------------------------------------------------------------------------
 
-export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01" | "TRE-02" | "CTL-10";
+export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01" | "TRE-02" | "CTL-10" | "ORG-04";
 export type EstadoReglaSod = "BORRADOR" | "VIGENTE" | "CERRADA";
 
 export interface AccionSod { codigo: string; etiqueta: string; crea_objeto: boolean; }
@@ -1321,7 +1321,7 @@ export interface DetalleConflictoSod {
 }
 
 export const ETIQUETAS_ESTADO_REGLA_SOD: Record<EstadoReglaSod, string> = { BORRADOR: "Borrador", VIGENTE: "Vigente", CERRADA: "Cerrada" };
-export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas", "TRE-02": "Programación financiera", "CTL-10": "Controles de cierre" };
+export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas", "TRE-02": "Programación financiera", "CTL-10": "Controles de cierre", "ORG-04": "Ocupación de cargos" };
 export const ETIQUETAS_HISTORIA_SOD: Record<string, string> = { CREADA: "Registrada", EDITADA: "Modificada", ACTIVADA: "Activada", CERRADA: "Cerrada" };
 
 export const POR_PAGINA_CONFLICTOS_SOD = 20;
@@ -1335,6 +1335,7 @@ export function rutaDeObjetoSod(tipo: string | null, id: string | null): string 
   if (tipo === "GovernmentBankAccount") return `/gobierno/tesoreria/cuentas/${id}`;
   if (tipo === "GovernmentCashProgram") return `/gobierno/tesoreria/programacion/${id}`;
   if (tipo === "GovernmentClosurePolicy") return `/gobierno/cierres/${id}`;
+  if (tipo === "GovernmentAssignment") return `/gobierno/ocupacion/asignaciones/${id}`;
   return null;
 }
 
@@ -1824,4 +1825,324 @@ export function consultaDeConflictosSod(
   if (paginacion.por_pagina !== undefined) qs.set("por_pagina", String(paginacion.por_pagina));
   const s = qs.toString();
   return s ? `?${s}` : "";
+}
+
+// ORG-04 · Ocupación de cargos (GOV-ORG-004, GOV-ORG-009)
+export type FiguraAsignacion = "TITULAR" | "ENCARGADURIA" | "SUPLENCIA" | "COMISION_SERVICIO" | "DELEGACION_ATRIBUCIONES" | "DELEGACION_FIRMA";
+export type EstadoAsignacion = "BORRADOR" | "ACTIVO" | "REVOCADO" | "FINALIZADO" | "DESCARTADO";
+export type SituacionAsignacion = "BORRADOR" | "DESCARTADA" | "FUTURA" | "VIGENTE" | "VENCIDA" | "REVOCADA" | "FINALIZADA" | "SIN_EFECTO";
+export type EstadoFuncionario = "ACTIVO" | "INACTIVO";
+export type TipoDocumentoFuncionario = "V" | "E" | "P";
+export type AccionCompetenciaOcupacion = "SOLICITAR" | "COMPROMETER" | "CAUSAR" | "ORDENAR_PAGO" | "PAGAR" | "REGISTRAR" | "CUSTODIAR" | "APROBAR" | "AUDITAR" | "FIRMAR";
+export type MateriaCompetenciaOcupacion = "PRESUPUESTO" | "CONTRATACIONES" | "TESORERIA" | "CONTABILIDAD" | "BIENES" | "EXPEDIENTE";
+
+export interface FuncionarioResumen {
+  id: string;
+  codigo: string;
+  nombre: string;
+  documento: string;
+  estado: EstadoFuncionario;
+  version: number;
+  creado_en: string;
+}
+
+export interface FuncionariosListado {
+  items: FuncionarioResumen[];
+  total: number;
+  pagina: number;
+  por_pagina: number;
+}
+
+export interface HistoriaOcupacion {
+  id: string;
+  tipo: string;
+  detalle: Record<string, unknown> | null;
+  actor: string | null;
+  creado_en: string;
+}
+
+export interface ReferenciaFuncionario {
+  id: string;
+  codigo: string;
+  nombre: string;
+  documento: string;
+}
+
+export interface ReferenciaCargoOcupacion {
+  id: string;
+  codigo: string;
+  nombre: string;
+  unidad_id: string;
+  unidad: string;
+  ejercicio: number;
+}
+
+export interface ReferenciaActoOcupacion {
+  id: string;
+  tipo: string;
+  numero: string;
+  fecha: string;
+  status: string;
+  fecha_eficacia: string | null;
+  medio: string | null;
+  emisor_cargo_id: string;
+  emisor_cargo: string;
+  funcionario: string;
+  asunto: string;
+}
+
+export interface CompetenciaOcupacion {
+  accion: AccionCompetenciaOcupacion;
+  materia: MateriaCompetenciaOcupacion;
+  tipo_limite: string;
+  monto: string | null;
+  moneda: string | null;
+}
+
+export interface AsignacionResumen {
+  id: string;
+  codigo: string;
+  figura: FiguraAsignacion;
+  figura_etiqueta: string;
+  funcionario: ReferenciaFuncionario;
+  cargo: ReferenciaCargoOcupacion;
+  cargo_origen: ReferenciaCargoOcupacion | null;
+  acto: ReferenciaActoOcupacion;
+  desde: string;
+  hasta: string | null;
+  fin_efectivo: string | null;
+  status: EstadoAsignacion;
+  situacion: SituacionAsignacion;
+  version: number;
+}
+
+export interface AvocacionOcupacion {
+  id: string;
+  asunto: string;
+  acto: ReferenciaActoOcupacion;
+  actor: string | null;
+  creado_en: string;
+}
+
+export interface AsignacionDetalle extends AsignacionResumen {
+  fundamento: string;
+  rendicion: string | null;
+  maxima_autoridad: boolean;
+  autorizacion_concejo: string | null;
+  declara_delegable: boolean;
+  acto_revocacion: ReferenciaActoOcupacion | null;
+  motivo_fin: string | null;
+  competencias: CompetenciaOcupacion[];
+  autoridad: CompetenciaOcupacion[];
+  ejerce: boolean;
+  registrada_por: string | null;
+  activada_por: string | null;
+  activada_en: string | null;
+  terminada_por: string | null;
+  terminada_en: string | null;
+  historia: HistoriaOcupacion[];
+  avocaciones: AvocacionOcupacion[];
+}
+
+export interface AsignacionesListado {
+  items: AsignacionResumen[];
+  total: number;
+  pagina: number;
+  por_pagina: number;
+  fecha: string;
+}
+
+export interface FuncionarioDetalle extends FuncionarioResumen {
+  historia: HistoriaOcupacion[];
+  asignaciones: AsignacionResumen[];
+}
+
+export interface OcupacionCargoFila {
+  cargo: ReferenciaCargoOcupacion;
+  titular: AsignacionResumen | null;
+  ejerce: AsignacionResumen | null;
+  vacante: boolean;
+  delegaciones: number;
+}
+
+export interface OcupacionListado {
+  ejercicio: number;
+  fecha: string;
+  items: OcupacionCargoFila[];
+  total: number;
+  pagina: number;
+  por_pagina: number;
+}
+
+export interface CargoOcupacion {
+  cargo: ReferenciaCargoOcupacion;
+  fecha: string;
+  titular: AsignacionResumen | null;
+  ejerce: AsignacionResumen | null;
+  vacante: boolean;
+  delegaciones: AsignacionResumen[];
+  competencias: CompetenciaOcupacion[];
+  historial: AsignacionResumen[];
+}
+
+export interface FiguraCatalogo {
+  codigo: string;
+  etiqueta: string;
+  grupo: string;
+  base_legal: string;
+  descripcion: string;
+}
+
+export interface InstrumentoCatalogo {
+  codigo: string;
+  etiqueta: string;
+}
+
+export interface CatalogoOcupacion {
+  figuras: FiguraCatalogo[];
+  instrumentos: InstrumentoCatalogo[];
+  situaciones: string[];
+}
+
+export interface OpcionFuncionario {
+  id: string;
+  codigo: string;
+  nombre: string;
+}
+
+export interface OpcionCargoOcupacion {
+  id: string;
+  codigo: string;
+  nombre: string;
+  unidad: string;
+  ejercicio: number;
+  competencias: CompetenciaOcupacion[];
+}
+
+export interface OpcionActoOcupacion {
+  id: string;
+  numero: string;
+  tipo: string;
+  fecha: string;
+  fecha_eficacia: string | null;
+  medio: string | null;
+  emisor_cargo_id: string;
+  emisor_cargo: string;
+  asunto: string;
+}
+
+export interface OpcionesOcupacion {
+  funcionarios: OpcionFuncionario[];
+  cargos: OpcionCargoOcupacion[];
+  actos: OpcionActoOcupacion[];
+}
+
+export interface FuncionarioEntrada {
+  nombre: string;
+  tipo_documento: TipoDocumentoFuncionario;
+  numero_documento: string;
+}
+
+export interface AsignacionEntrada {
+  funcionario_id: string;
+  cargo_id: string;
+  figura: FiguraAsignacion;
+  cargo_origen_id: string | null;
+  acto_id: string;
+  desde: string;
+  hasta: string | null;
+  fundamento: string;
+  rendicion: string | null;
+  maxima_autoridad: boolean;
+  autorizacion_concejo: string | null;
+  declara_delegable: boolean;
+  competencias: { accion: AccionCompetenciaOcupacion; materia: MateriaCompetenciaOcupacion }[];
+}
+
+export const CONSULTA_OCUPACION = [...CONSULTA_GOBIERNO, "ocupacion"] as const;
+export const POR_PAGINA_OCUPACION = 50;
+
+export const ETIQUETAS_SITUACION_ASIGNACION: Record<SituacionAsignacion, string> = {
+  BORRADOR: "Borrador",
+  DESCARTADA: "Descartada",
+  FUTURA: "Futura",
+  VIGENTE: "Vigente",
+  VENCIDA: "Vencida",
+  REVOCADA: "Revocada",
+  FINALIZADA: "Finalizada",
+  SIN_EFECTO: "Sin efecto",
+};
+
+export const ETIQUETAS_ESTADO_ASIGNACION: Record<EstadoAsignacion, string> = {
+  BORRADOR: "Borrador",
+  ACTIVO: "Activa",
+  REVOCADO: "Revocada",
+  FINALIZADO: "Finalizada",
+  DESCARTADO: "Descartada",
+};
+
+export const ETIQUETAS_ESTADO_FUNCIONARIO: Record<EstadoFuncionario, string> = {
+  ACTIVO: "Activo",
+  INACTIVO: "Inactivo",
+};
+
+export const ETIQUETAS_TIPO_DOCUMENTO_FUNCIONARIO: Record<TipoDocumentoFuncionario, string> = {
+  V: "Venezolano",
+  E: "Extranjero",
+  P: "Pasaporte",
+};
+
+export const ETIQUETAS_HISTORIA_OCUPACION: Record<string, string> = {
+  CREADO: "Registrado",
+  EDITADO: "Modificado",
+  CREADA: "Registrada",
+  EDITADA: "Modificada",
+  ACTIVADA: "Activada",
+  DESCARTADA: "Descartada",
+  REVOCADA: "Revocada",
+  FINALIZADA: "Finalizada",
+  AVOCADA: "Competencia avocada",
+};
+
+export function esDelegacion(figura: FiguraAsignacion): boolean {
+  return figura === "DELEGACION_ATRIBUCIONES" || figura === "DELEGACION_FIRMA";
+}
+
+export function exigeCargoOrigen(figura: FiguraAsignacion): boolean {
+  return figura === "SUPLENCIA" || figura === "COMISION_SERVICIO" || esDelegacion(figura);
+}
+
+export function exigeFechaFinal(figura: FiguraAsignacion): boolean {
+  return figura === "SUPLENCIA" || figura === "COMISION_SERVICIO";
+}
+
+export function consultaDeOcupacion(f: { ejercicio: number; fecha?: string; texto?: string; pagina?: number }): string {
+  const params = new URLSearchParams();
+  params.set("ejercicio", String(f.ejercicio));
+  if (f.fecha) params.set("fecha", f.fecha);
+  if (f.texto) params.set("texto", f.texto);
+  if (f.pagina && f.pagina > 1) params.set("pagina", String(f.pagina));
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export function consultaDeAsignaciones(f: { figura?: string; estado?: string; funcionario_id?: string; cargo_id?: string; fecha?: string; pagina?: number }): string {
+  const params = new URLSearchParams();
+  if (f.figura) params.set("figura", f.figura);
+  if (f.estado) params.set("estado", f.estado);
+  if (f.funcionario_id) params.set("funcionario_id", f.funcionario_id);
+  if (f.cargo_id) params.set("cargo_id", f.cargo_id);
+  if (f.fecha) params.set("fecha", f.fecha);
+  if (f.pagina && f.pagina > 1) params.set("pagina", String(f.pagina));
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export function consultaDeFuncionarios(f: { texto?: string; estado?: string; pagina?: number }): string {
+  const params = new URLSearchParams();
+  if (f.texto) params.set("texto", f.texto);
+  if (f.estado) params.set("estado", f.estado);
+  if (f.pagina && f.pagina > 1) params.set("pagina", String(f.pagina));
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
 }

@@ -1602,6 +1602,150 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/asignaciones",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ocupacion/asignaciones",
+      "capabilities": [
+        "gobierno_ocupacion:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/asignaciones.csv",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/asignaciones/{asignacion_id}",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/ocupacion/asignaciones/{asignacion_id}",
+      "capabilities": [
+        "gobierno_ocupacion:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ocupacion/asignaciones/{asignacion_id}/activar",
+      "capabilities": [
+        "gobierno_ocupacion:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ocupacion/asignaciones/{asignacion_id}/avocar",
+      "capabilities": [
+        "gobierno_ocupacion:revoke"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ocupacion/asignaciones/{asignacion_id}/descartar",
+      "capabilities": [
+        "gobierno_ocupacion:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ocupacion/asignaciones/{asignacion_id}/finalizar",
+      "capabilities": [
+        "gobierno_ocupacion:revoke"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ocupacion/asignaciones/{asignacion_id}/revocar",
+      "capabilities": [
+        "gobierno_ocupacion:revoke"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/cargos",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/cargos/{cargo_id}",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/catalogo",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/funcionarios",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ocupacion/funcionarios",
+      "capabilities": [
+        "gobierno_ocupacion:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/funcionarios/{funcionario_id}",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/ocupacion/funcionarios/{funcionario_id}",
+      "capabilities": [
+        "gobierno_ocupacion:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/opciones",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/paquetes",
       "capabilities": [
         "gobierno_paquetes:view"
@@ -5544,7 +5688,11 @@
     "gobierno_caja:activate",
     "gobierno_cierre:view",
     "gobierno_cierre:manage",
-    "gobierno_cierre:activate"
+    "gobierno_cierre:activate",
+    "gobierno_ocupacion:view",
+    "gobierno_ocupacion:manage",
+    "gobierno_ocupacion:activate",
+    "gobierno_ocupacion:revoke"
   ],
   "report_capabilities": {
     "executive_ventas": [
