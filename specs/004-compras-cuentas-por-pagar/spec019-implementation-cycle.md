@@ -92,6 +92,10 @@ Se reconcilian los FR-004-030..035 vigentes de la recepción y se añaden los pr
 | FR-019-012 | Un sobrante respecto a la orden se registra como hecho observado; su tratamiento es de 020 | 6, 8 |
 | FR-019-013 | Aceptar dos veces no duplica movimiento ni cantidad recibida | — |
 | FR-019-014 | Dos aceptaciones concurrentes sobre la misma línea de orden no pierden una acumulación | — |
+| FR-019-015 | El producto de una línea de recepción es el de su línea de orden; una contradicción se rechaza sin efectos | delta |
+| FR-019-016 | La línea se elige de la orden de la recepción con etiqueta humana y el producto se deriva | delta |
+| FR-019-017 | Una línea recibida del todo sigue siendo elegible | delta |
+| FR-019-018 | Cambiar de línea o de recepción vacía lo que deja de ser válido | delta |
 
 ---
 
@@ -239,3 +243,7 @@ BLOCKER 0 · CRITICAL 0 · CONTRADICTIONS 0 · ORPHAN REQUIREMENTS 0 · ORPHAN T
 ## Delta RECEPCION-ALMACEN-TEXTO-LIBRE (2026-11-07)
 
 El almacén de la recepción pasa de identificador escrito a selector de la empresa activa, sin cambio de API. Requisito FR-004-030, US-004-005. Autoridad: quien crea la recepción. Evidencia: `evidence/recepcion-almacen/`. Estado: `TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`.
+
+## Delta RECEPCION-LINEA-ORDEN-INTEGRIDAD (2026-11-07)
+
+La línea se elige de la orden de la recepción, el producto se deriva de ella y el backend rechaza la contradicción. Requisitos FR-019-015 a FR-019-018. Detalle: `spec019-receipt-line-integrity-delta.md`. Estado: `TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`; integridad `TECHNICAL_FIX_COMPLETE_LOCAL / POSTGRES_HTTP_E2E_PENDING`.

@@ -2569,3 +2569,16 @@ Hallazgos nuevos, sin corregir: KONTROL-PY-UPDATE-NO-OP (MEDIUM propuesta), DOC-
 | RECEPCION-LINEA-ORDEN-TEXTO-LIBRE (nueva) | OPEN · HIGH propuesta · 004/019: recibir una línea exige escribir su identificador; **bloquea la recepción por interfaz** |
 | IDENTIFICADORES-EN-TEXTO-LIBRE (nueva) | OPEN · POSSIBLE_DEFECT: Facturas en Devoluciones y Notas, Artículo en Listas de precio, Proveedor en Lotes, Producto en Valorización. Inventario en `FREE_TEXT_INTERNAL_ID_INVENTORY.md` |
 | RECEPCION-ALMACEN-INACTIVO-ACEPTADO (nueva) | OPEN · POSSIBLE_DEFECT: `create_receipt` no comprueba el estado del almacén; decide la Spec 008 |
+
+## Actualización 2026-11-07 (7) — línea de la orden e integridad línea-producto
+
+| Deuda | Estado |
+|---|---|
+| RECEPCION-LINEA-ORDEN-TEXTO-LIBRE | **`TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`**, sin publicar. Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/recepcion-linea-integridad/` |
+| RECEPCION-LINEA-PRODUCTO-INTEGRIDAD (nueva) | **`TECHNICAL_FIX_COMPLETE_LOCAL / POSTGRES_HTTP_E2E_PENDING`**, sin publicar. `add_receipt_line` aceptaba la línea de A con el producto B: inventario de B al costo de A. Rechazo 422 sin efectos |
+| CATALOGO-SELECTORES-PRIMERA-PAGINA (nueva) | OPEN · HIGH propuesta · 002: 14 pantallas piden `/maestros/catalogos/items?status=ACTIVE` sin paginar; el backend devuelve 20. Observado por lectura, sin reproducir |
+| ORDENES-SELECTOR-RECEPCION-PRIMERA-PAGINA (nueva) | OPEN · HIGH propuesta · 004: «Nueva recepción» elige entre las 20 órdenes más recientes de cualquier estado. Observado por lectura, sin reproducir |
+| TERCEROS-SELECTORES-PRIMERA-PAGINA (nueva) | OPEN · MEDIUM propuesta: selectores de clientes y proveedores con la misma forma. Sin reproducir ni clasificar |
+| RECEPCION-OBSERVACION-FIJA (nueva) | OPEN · POSSIBLE_DEFECT · 019: la pantalla envía `identification_ok` y `reference_ok` en `true` sin que nadie lo declare, y deja ese valor persistido y auditado |
+| RECEPCION-LINEA-PRODUCTO-HISTORICO (nueva) | OPEN · POSSIBLE_DEFECT: una línea contradictoria anterior al arreglo, en recepción abierta, aún se puede aceptar. Sin medir en datos reales; requiere autorización de la dueña |
+| RECEPCION-ETIQUETA-LINEAS-GEMELAS (nueva) | OPEN · LOW: dos líneas con el mismo producto y las mismas cantidades muestran la misma etiqueta |

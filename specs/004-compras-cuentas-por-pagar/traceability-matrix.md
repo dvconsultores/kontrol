@@ -233,3 +233,10 @@ encontró lo que las suites aisladas no podían ver.
 | IMP-021-061 · la 022 se revalida | — | — | salida: producto, almacén, base, estado, ubicación nula | ver convergencia | ✔ |
 
 **Cobertura: 100 %. Huérfanos: 0. OQ materiales: 0.**
+
+## Delta RECEPCION-LINEA-ORDEN-INTEGRIDAD (2026-11-07)
+
+| Requisito | Servicio | Frontend | Pruebas |
+|---|---|---|---|
+| FR-019-015 | `add_receipt_line` | `RecepcionesPage.tsx` | `test_recepcion_linea_integridad.py`, `test_spec019_receipt.py` |
+| FR-019-016 a FR-019-018 | Sin cambio | `RecepcionesPage.tsx` | `RecepcionesLinea.test.tsx`, `e2e/receipts.spec.ts` |

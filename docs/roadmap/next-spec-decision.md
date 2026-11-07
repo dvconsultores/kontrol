@@ -4263,3 +4263,7 @@ Detalle: `enterprise-baseline/ENTERPRISE_BASELINE_CURRENT.md` y `enterprise-base
 ## 2026-11-07 · Almacén de la recepción corregido en local
 
 `NEXT TECHNICAL CYCLE` de P2 = **RECEPCION-LINEA-ORDEN-TEXTO-LIBRE-01**. Cuando exista PostgreSQL, T061 va primero.
+
+## 2026-11-07 · Línea de la orden e integridad línea-producto corregidas en local
+
+`NEXT TECHNICAL CYCLE` de P2 = **CATALOGO-SELECTORES-PRIMERA-PAGINA-01**. Cuando exista PostgreSQL, T061 va primero.

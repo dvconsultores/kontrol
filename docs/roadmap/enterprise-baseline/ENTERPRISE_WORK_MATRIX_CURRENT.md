@@ -92,3 +92,20 @@ rol de plataforma (GOV-CTL-004) es de Gobierno.
 | T052-A1-CLI-AUDIT-TEST | 5 | 001 | T052 | Sí | No | No | Sí | Bajo | No | Política de reintentos |
 | RESTORE-LEDGER-RESET | 5 | 001 | Restauración | Sí | No | PostgreSQL | Sí | Medio | No | Mismo bloqueo |
 | T061 y certificación T052 | — | 001 | PostgreSQL | — | No | PostgreSQL | — | Alto | No | Sin entorno |
+
+## 9. Matriz de candidatos tras la línea de la orden (2026-11-07)
+
+| DEBT | PRIORITY | OWNER_SPEC | DEPENDENCIES | ROOT_CAUSE_PROVEN | OWNER_DECISION_REQUIRED | EXTERNAL_GATE | OVERLAP | PRODUCT_IMPACT | ELIGIBLE | WHY |
+|---|---|---|---|---|---|---|---|---|---|---|
+| CATALOGO-SELECTORES-PRIMERA-PAGINA | 1 | 002 | Patrón `listAllWarehouses` | Por demostrar en rojo | No | Solo E2E | Medio | Alto: un artículo fuera de los 20 primeros no se puede comprar, vender ni mover desde esos selectores | **Sí** | **SELECTED_NEXT_ENTERPRISE_TARGET** |
+| ORDENES-SELECTOR-RECEPCION-PRIMERA-PAGINA | 2 | 004 | Filtro por estado | Por demostrar en rojo | No | Solo E2E | Bajo | Alto: una orden antigua no se puede recibir | Sí | Corto, pero menor alcance que el catálogo |
+| RECEPCION-OBSERVACION-FIJA | 3 | 004/019 | Decisión de captura | Parcial | Posible | Solo E2E | Bajo | Medio | No todavía | Hay que definir cómo se declara |
+| TERCEROS-SELECTORES-PRIMERA-PAGINA | 3 | 002 | Patrón común | Sin medir | No | Solo E2E | Medio | Medio | No todavía | Depende de lo que salga del catálogo |
+| IDENTIFICADORES-EN-TEXTO-LIBRE | 4 | Varias | Una por campo | Parcial | No | Solo E2E | Medio | Medio | No todavía | Hay que clasificar cada campo |
+| KONTROL-PY-UPDATE-NO-OP | 4 | 052 | Ninguna | Sí | No | Docker para certificar | Bajo | Medio | Sí | No bloquea un proceso diario |
+| RECEPCION-LINEA-PRODUCTO-HISTORICO | 5 | 004 | Datos reales | No | Sí | Autorización de la dueña | Bajo | Bajo a medir | No | No se puede medir sin datos |
+| ALMACENES-LISTADO-PRIMERA-PAGINA | 5 | 008 | Paginación | Sí | Sí | No | Medio | Bajo | No | Exige decisión |
+| RECEPCION-ALMACEN-INACTIVO-ACEPTADO | 5 | 008/004 | Regla de negocio | Parcial | Sí | No | Bajo | Medio | No | Exige decisión |
+| T052-A1-CLI-AUDIT-TEST | 6 | 001 | T052 | Sí | No | No | Sí | Bajo | No | Política de reintentos |
+| RESTORE-LEDGER-RESET | 6 | 001 | Restauración | Sí | No | PostgreSQL | Sí | Medio | No | Mismo bloqueo |
+| T061 y certificación T052 | — | 001 | PostgreSQL | — | No | PostgreSQL | — | Alto | No | Sin entorno |

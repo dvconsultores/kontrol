@@ -10,3 +10,9 @@
 | Valorización | Producto | POSSIBLE_DEFECT | Opcional, «global si vacío» |
 
 Ninguno se corrigió en este ciclo.
+
+## Actualización 2026-11-07 (ciclo RECEPCION-LINEA-ORDEN-INTEGRIDAD-01)
+
+Recepciones · Línea de la orden: corregido en local. El resto sigue sin corregir y sin clasificar más allá de lo anterior.
+
+Identificador mostrado, no pedido: la columna «Orden» de la tabla de Recepciones enseña los ocho primeros caracteres de `order_id`. Es lectura, no bloquea operar, y queda como deuda de presentación.
