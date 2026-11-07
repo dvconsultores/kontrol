@@ -66,11 +66,12 @@ export interface WarehousePage {
  * admite (`limit` ≤ 100) hasta reunir `total`. No se pide un `limit` fuera de
  * contrato: el servidor lo rechaza con 422.
  */
-export async function listAllWarehouses(): Promise<WarehouseSummary[]> {
+export async function listAllWarehouses(companyId?: string): Promise<WarehouseSummary[]> {
+  const empresa = companyId ? `&company_id=${encodeURIComponent(companyId)}` : "";
   const todos: WarehouseSummary[] = [];
   for (let offset = 0; ; offset += TAMANO_MAXIMO_DE_PAGINA) {
     const pagina = await apiFetch<WarehousePage>(
-      `/organization/warehouses?limit=${TAMANO_MAXIMO_DE_PAGINA}&offset=${offset}`,
+      `/organization/warehouses?limit=${TAMANO_MAXIMO_DE_PAGINA}&offset=${offset}${empresa}`,
     );
     todos.push(...pagina.items);
     if (todos.length >= pagina.total || pagina.items.length === 0) return todos;

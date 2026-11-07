@@ -15,12 +15,9 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
+import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 
-interface WarehouseSummary {
-  id: string;
-  code: string;
-  name: string;
-}
 
 const columnHelper = createColumnHelper<InventoryAdjustment>();
 
@@ -44,12 +41,7 @@ export function AjustesPage(): React.JSX.Element {
     queryFn: () => apiFetch<PagedResult<InventoryAdjustment>>("/inventory/adjustments"),
     retry: false,
   });
-  const warehouses = useQuery({
-    queryKey: ["organizacion", "almacenes", companyId],
-    queryFn: () => apiFetch<{ items: WarehouseSummary[] }>(`/organization/warehouses?company_id=${companyId}`),
-    enabled: Boolean(companyId),
-    retry: false,
-  });
+  const warehouses = useAlmacenesDeEmpresa(companyId);
   const products = useQuery({
     queryKey: ["maestros", "productos"],
     queryFn: () => apiFetch<PagedResult<CatalogItemSummary>>(`/maestros/catalogos/items?status=ACTIVE`),
@@ -127,6 +119,7 @@ export function AjustesPage(): React.JSX.Element {
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Nuevo ajuste</h2>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
+          <AvisoDeAlmacenes consulta={warehouses} />
           <FormField label="Almacén" required>
             <select value={newWarehouse} onChange={(e) => setNewWarehouse(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Seleccionar…</option>

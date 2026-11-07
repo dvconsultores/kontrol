@@ -17,11 +17,13 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/api/client";
-import { listAllWarehouses } from "@/api/organization";
 import type { InventoryBalance, PutAwayLocation } from "@/api/types";
+import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
+import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 import { Autorizado } from "@/components/Autorizado";
 import { DataTable } from "@/components/DataTable";
 import { FormField } from "@/components/FormField";
@@ -40,12 +42,8 @@ export function PutAwayPage(): React.JSX.Element {
   const [destino, setDestino] = useState("");
   const [cantidad, setCantidad] = useState("");
 
-  const almacenes = useQuery({
-    queryKey: ["putaway", "almacenes"],
-    // El listado se pagina (`limit` ≤ 100): se recorren las páginas hasta
-    // reunir `total`, para que el selector no trunque en silencio.
-    queryFn: async () => ({ items: await listAllWarehouses() }),
-  });
+  const { activeCompany } = useCompany();
+  const almacenes = useAlmacenesDeEmpresa(activeCompany?.id ?? null);
 
   const pendientes = useQuery({
     queryKey: ["putaway", "pendientes", warehouseId],
@@ -138,6 +136,7 @@ export function PutAwayPage(): React.JSX.Element {
       />
 
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+        <AvisoDeAlmacenes consulta={almacenes} />
         <FormField label="Almacén" required>
           <select
             value={warehouseId}

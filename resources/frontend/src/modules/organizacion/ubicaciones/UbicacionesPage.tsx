@@ -15,8 +15,10 @@ import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { PageContent } from "@/layout/PageContent";
+import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
+import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 
-import type { Paged, Warehouse, WarehouseLocation } from "../almacenes/types";
+import type { Paged, WarehouseLocation } from "../almacenes/types";
 
 interface OrderedLocation {
   id: string;
@@ -33,12 +35,7 @@ export function UbicacionesPage(): React.JSX.Element {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"search" | "ordered">("search");
 
-  const warehouses = useQuery({
-    queryKey: ["organization", "warehouses", companyId],
-    queryFn: () => apiFetch<Paged<Warehouse>>(
-      `/organization/warehouses?company_id=${encodeURIComponent(companyId ?? "")}`),
-    enabled: Boolean(companyId), retry: false,
-  });
+  const warehouses = useAlmacenesDeEmpresa(companyId);
 
   const locations = useQuery({
     queryKey: ["organization", "locations", warehouseId, query],
@@ -84,6 +81,7 @@ export function UbicacionesPage(): React.JSX.Element {
       ) : (
         <section className="rounded-lg border border-border-default bg-surface-0 p-4">
           <div className="mb-3 flex flex-wrap items-end gap-3">
+            <AvisoDeAlmacenes consulta={warehouses} />
             <FormField label="Almacén">
               <select
                 value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}

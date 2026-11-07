@@ -32,13 +32,10 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
+import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
 
-interface WarehouseSummary {
-  id: string;
-  code: string;
-  name: string;
-}
 
 interface PresentationSummary {
   id: string;
@@ -120,12 +117,7 @@ export function OrdenesVentasPage(): React.JSX.Element {
     queryFn: () => apiFetch<PagedResult<CatalogItemSummary>>(`/maestros/catalogos/items?status=ACTIVE`),
     retry: false,
   });
-  const warehouses = useQuery({
-    queryKey: ["organizacion", "almacenes", companyId],
-    queryFn: () => apiFetch<{ items: WarehouseSummary[] }>(`/organization/warehouses?company_id=${companyId}`),
-    enabled: Boolean(companyId),
-    retry: false,
-  });
+  const warehouses = useAlmacenesDeEmpresa(companyId);
   const presentations = useQuery({
     queryKey: ["maestros", "presentaciones", lineProduct],
     queryFn: () => apiFetch<PresentationSummary[]>(`/maestros/productos/${lineProduct}/presentaciones`),
@@ -312,6 +304,7 @@ export function OrdenesVentasPage(): React.JSX.Element {
               ))}
             </select>
           </FormField>
+          <AvisoDeAlmacenes consulta={warehouses} />
           <FormField label="Almacén" help="Obligatorio para confirmar pedidos con inventario">
             <select value={newWarehouse} onChange={(e) => setNewWarehouse(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Sin almacén</option>

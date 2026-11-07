@@ -16,9 +16,11 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/api/client";
-import { listAllWarehouses } from "@/api/organization";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { useCompany } from "@/app/contexts/CompanyContext";
 import { Autorizado } from "@/components/Autorizado";
+import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
+import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 import type {
   PickingCandidate,
   PickingPlan,
@@ -60,15 +62,9 @@ export function PreparacionPage(): React.JSX.Element {
 
   // El almacenista trabaja en un almacén. Sin este filtro la cola mezcla los de
   // todos y deja de ser una cola de trabajo.
-  const almacenes = useQuery({
-    queryKey: ["picking", "almacenes"],
-    // Se pide hasta agotar `total` en vez de confiar en un tope. El tope
-    // anterior era 500 y el listado llegó a 564: los 64 últimos desaparecían
-    // del desplegable sin que nada lo dijera, y con ellos el almacén recién
-    // creado. Un selector que descarta opciones en silencio es peor que uno
-    // vacío, porque parece completo. El contrato admite `limit` ≤ 100.
-    queryFn: async () => ({ items: await listAllWarehouses() }),
-  });
+  // Conjunto completo: un selector que descarta opciones en silencio es peor que uno vacío.
+  const { activeCompany } = useCompany();
+  const almacenes = useAlmacenesDeEmpresa(activeCompany?.id ?? null);
 
   const cola = useQuery({
     queryKey: ["picking", "cola", almacen],
@@ -252,6 +248,7 @@ export function PreparacionPage(): React.JSX.Element {
       <section className="mb-4">
         <h2 className="mb-2 text-base font-semibold text-text-900">Cola</h2>
         <div className="mb-3">
+          <AvisoDeAlmacenes consulta={almacenes} />
           <FormField label="Almacén">
             <select
               value={almacen}

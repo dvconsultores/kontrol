@@ -14,12 +14,9 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
+import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 
-interface WarehouseSummary {
-  id: string;
-  code: string;
-  name: string;
-}
 
 const columnHelper = createColumnHelper<ProductSerial>();
 
@@ -50,12 +47,7 @@ export function SerialesPage(): React.JSX.Element {
     queryFn: () => apiFetch<PagedResult<CatalogItemSummary>>(`/maestros/catalogos/items?status=ACTIVE`),
     retry: false,
   });
-  const warehouses = useQuery({
-    queryKey: ["organizacion", "almacenes", companyId],
-    queryFn: () => apiFetch<{ items: WarehouseSummary[] }>(`/organization/warehouses?company_id=${companyId}`),
-    enabled: Boolean(companyId),
-    retry: false,
-  });
+  const warehouses = useAlmacenesDeEmpresa(companyId);
 
   const refresh = async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: ["inventario", "seriales"] });
@@ -121,6 +113,7 @@ export function SerialesPage(): React.JSX.Element {
           <FormField label="MAC">
             <TextInput value={newMac} onChange={(e) => setNewMac(e.target.value)} placeholder="Opcional" />
           </FormField>
+          <AvisoDeAlmacenes consulta={warehouses} />
           <FormField label="Almacén">
             <select value={newWarehouse} onChange={(e) => setNewWarehouse(e.target.value)} className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
               <option value="">Seleccionar…</option>
