@@ -164,6 +164,8 @@ export const router = createBrowserRouter([
           { path: "gobierno/notificaciones/:notificacionId", lazy: () => import("@/modules/gobierno/notificaciones/NotificacionPage").then((m) => ({ Component: m.NotificacionPage })) },
           { path: "gobierno/autoridad", lazy: () => import("@/modules/gobierno/autoridad/MatrizAutoridadPage").then((m) => ({ Component: m.MatrizAutoridadPage })) },
           { path: "gobierno/auditoria", lazy: () => import("@/modules/gobierno/auditoria/AuditoriaInstitucionalPage").then((m) => ({ Component: m.AuditoriaInstitucionalPage })) },
+          { path: "gobierno/bitacora", lazy: () => import("@/modules/gobierno/bitacora/BitacoraPage").then((m) => ({ Component: m.BitacoraPage })) },
+          { path: "gobierno/bitacora/:eventoId", lazy: () => import("@/modules/gobierno/bitacora/BitacoraEventoPage").then((m) => ({ Component: m.BitacoraEventoPage })) },
           { path: "gobierno/auditoria/muestras/:muestraId", lazy: () => import("@/modules/gobierno/auditoria/MuestraPage").then((m) => ({ Component: m.MuestraPage })) },
           { path: "gobierno/hallazgos", lazy: () => import("@/modules/gobierno/hallazgos/HallazgosPage").then((m) => ({ Component: m.HallazgosPage })) },
           { path: "gobierno/hallazgos/nuevo", lazy: () => import("@/modules/gobierno/hallazgos/RegistrarHallazgoPage").then((m) => ({ Component: m.RegistrarHallazgoPage })) },

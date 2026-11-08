@@ -11,6 +11,7 @@ from app.core import license as license_engine
 from app.core import security
 from app.core.database import get_db
 from app.core.errors import PermissionDeniedError
+from app.core.logging import contexto_tecnico_actual
 from app.modules.identity_access import mfa_policy
 from app.modules.identity_access import service as identity_service
 from app.modules.identity_access.models import Session as AuthSession
@@ -103,6 +104,10 @@ def get_current_auth(
         raise PermissionDeniedError(code="SESSION_REVOKED", message="La sesión fue revocada o expiró", status_code=401)
     if row.mfa_verified_at is None and mfa_policy.requires_mfa(mfa_policy.user_policy_class(db, user)):
         raise PermissionDeniedError(code="MFA_REQUIRED", message="Debe completar el segundo factor", status_code=401)
+
+    tecnico = contexto_tecnico_actual.get()
+    if tecnico is not None:
+        tecnico.session_id = str(row.id)
 
     return AuthContext(user=user, session=row)
 

@@ -13,6 +13,7 @@ PostgreSQL completo · SQLite completo · Alembic desde cero y desde la cabeza a
 | ORG-06 | PostgreSQL y SQLite completos sobre el árbol final | La última PG completa, sin `pg_dump` por error de montaje: 4654 pasan; 30 fallos de copias atribuidos al montaje y 1 por la carrera de CTL-10, ya corregida. Después, dirigido en PG 827/0. SQLite completa: 2793/0, anterior a la corrección de CTL-10 |
 | ORG-06 | Regresión de Gobierno, E2E canónica y controles de base tras la E2E | No ejecutados sobre ORG-06 |
 | ORG-06 | E2E en los tres navegadores sobre el árbol final | 27/27 antes de los últimos arreglos, que no tocan frontend salvo la fecha de una prueba; después, Chromium 3/3 |
+| CTL-02 | PostgreSQL y SQLite completos, regresión de Gobierno, E2E canónica, tres navegadores, mutaciones y controles de base tras la E2E | Dirigido en PG 1212/0, incluye núcleo de auditoría, autenticación, aislamiento y copias. Vitest 1430/1430. BIT-E2E-01 en Chromium con Axe a tres anchos. Sin mutaciones |
 
 ## Observaciones abiertas
 
@@ -22,3 +23,5 @@ PostgreSQL completo · SQLite completo · Alembic desde cero y desde la cabeza a
 | OBS-CTL10-CC01 | `test_cc01` falló 5 de 60 veces en `fba4a31`: CTL-10 se certificó con una carrera latente que daba 500. Corregida en ORG-06 con la prueba determinista `test_cc01b`. Conviene buscar el mismo patrón (índice único parcial sin captura de `IntegrityError` en la transición) en otras verticales | MEDIA |
 | OBS-E2E-FECHA-01 | Una E2E calculaba «ayer» con la fecha UTC y solo pasaba de madrugada. Corregida en ORG-06. `rates.spec.ts` y `receipts.spec.ts` (Enterprise, fuera de P1) usan un cálculo parecido, sin verificar si les afecta | BAJA |
 | OBS-QA-SONDA-01 | Las sondas de `test_pgs_26` compiten por `CREATE EXTENSION` en una base de QA recién creada. No ocurre dentro de la suite | BAJA |
+| OBS-AUDIT-403-01 | Los 403 por capacidad no generan evento, tampoco en la bitácora: registrarlos exige tocar la ruta común de permisos. Quedan registrados rechazos y denegaciones de negocio y de autenticación. Decidir si Gobierno los necesita | MEDIA |
+| OBS-BITACORA-RENDIMIENTO-01 | Los filtros por funcionario y unidad buscan en el JSON como texto, acotados por tenant y ente. Medir con volumen real antes de producción | BAJA |

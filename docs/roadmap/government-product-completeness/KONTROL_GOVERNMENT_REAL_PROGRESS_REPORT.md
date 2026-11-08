@@ -12,6 +12,8 @@
 
 **Actualización GOV-DOC-03 (2026-11-07): «Lapsos, suspensiones, subsanaciones y prórrogas» queda BLOQUEADO. Los lapsos de la LOPA corren sobre una solicitud o un expediente, y DOC-01 sigue bloqueado; además, el art. 42 exige el calendario de la Administración Pública, sin fuente ni responsable en KONTROL. Siguiente vertical: CTL-08.**
 
+**Actualización GOV-CTL-02 (2026-11-08): ya hay dieciséis procesos de Gobierno que puedes probar como usuaria; el nuevo es «Bitácora institucional append-only con actor, autoridad, unidad y correlación» (menú Gobierno › Bitácora institucional). Dice quién operó, a qué funcionario representaba y con qué autoridad, tal como era en el momento del evento. La certificación exhaustiva queda en `FINAL_GOVERNMENT_CERTIFICATION.md`.**
+
 **Actualización GOV-0-06 (2026-11-08): ya hay quince procesos de Gobierno que puedes probar como usuaria; el nuevo es «Vincular usuario con identidad, cargo, unidad y alcance; separación de roles» (menú Gobierno › Identidad institucional). Dice qué cuenta era qué funcionario, con qué cargo, unidad y autoridad en cualquier fecha. La certificación exhaustiva de esta vertical queda en `FINAL_GOVERNMENT_CERTIFICATION.md`, por directiva de la dueña.**
 
 **Actualización GOV-ORG-04 (2026-11-07): ya hay catorce procesos de Gobierno que puedes probar como usuaria; el nuevo es «Delegaciones, suplencias, encargadurías y designaciones con acto» (menú Gobierno › Ocupación de cargos). Dice quién ejerce cada cargo, bajo qué figura, por qué acto, emitido por quién, desde cuándo y hasta cuándo, y qué autoridad tiene a una fecha. Quien registra no activa. Con esto ORG-06 ya no está bloqueado por ORG-04.**
@@ -44,8 +46,8 @@ Esto no contradice informes anteriores: ninguno afirmó que Gobierno estuviera l
 | Indicador | Valor | Fórmula y denominador |
 |---|---|---|
 | **Technical Foundation Readiness** | **36,8 %** | 14 fundamentos COMPLETE ÷ 38 fundamentos aplicables (34,2 % = 13/38 en la retrospectiva; +F05 al cerrar el ciclo 07) |
-| **Functional Product Completeness** | **12,1 %** (12,14 %) | 155 compuertas en PASS ÷ 1 277 compuertas aplicables (ORG-01: 10/10; ORG-02: 11/11; ORG-03: 11/11; ORG-06: 10/10; ORG-07: 10/10; DOC-02: 11/11; DOC-04: 11/11; CTL-04: 10/10; CTL-06: 11/11; DOC-08: 11/11; CTL-01: 10/10; TRE-01: 10/10; TRE-02: 9/9; CTL-10: 9/9; ORG-04: 11/11; 0 en la retrospectiva) |
-| **Owner UAT Ready** | **12,3 %** (12,30 %) | 15 procesos listos para probar (ORG-01, ORG-02, ORG-03, ORG-04, ORG-06, ORG-07, DOC-02, DOC-04, CTL-04, CTL-06, DOC-08, CTL-01, TRE-01, TRE-02, CTL-10) ÷ 122 procesos requeridos |
+| **Functional Product Completeness** | **12,9 %** (12,92 %) | 165 compuertas en PASS ÷ 1 277 compuertas aplicables (ORG-01: 10/10; ORG-02: 11/11; ORG-03: 11/11; ORG-06: 10/10; ORG-07: 10/10; DOC-02: 11/11; DOC-04: 11/11; CTL-04: 10/10; CTL-06: 11/11; DOC-08: 11/11; CTL-01: 10/10; TRE-01: 10/10; TRE-02: 9/9; CTL-10: 9/9; ORG-04: 11/11; 0 en la retrospectiva) |
+| **Owner UAT Ready** | **13,1 %** (13,11 %) | 16 procesos listos para probar (ORG-01, ORG-02, ORG-03, ORG-04, ORG-06, ORG-07, DOC-02, DOC-04, CTL-02, CTL-04, CTL-06, DOC-08, CTL-01, TRE-01, TRE-02, CTL-10) ÷ 122 procesos requeridos |
 | **Owner Accepted** | **0,0 %** | 0 procesos aceptados por la dueña ÷ 122 |
 
 No hay redondeo al alza. Las cuatro cifras no se combinan.
@@ -64,12 +66,12 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 | Contabilidad pública | 8 | 0 | 0 | 0 | 3 | 5 | NO |
 | Bienes públicos / Activo fijo patrimonial | 11 | 0 | 0 | 0 | 5 | 6 | NO |
 | Expedientes y actos administrativos | 8 | 0 | 3 | 0 | 0 | 5 | NO |
-| Control interno, auditoría y rendición | 10 | 0 | 4 | 0 | 5 | 1 | NO |
+| Control interno, auditoría y rendición | 10 | 0 | 5 | 0 | 4 | 1 | NO |
 | Gobierno Digital: trámites e interoperabilidad | 3 | 0 | 0 | 0 | 0 | 3 | NO |
 | Gasto de personal e interfaz Atenea | 3 | 0 | 0 | 0 | 1 | 2 | NO |
 | Integraciones institucionales | 7 | 0 | 0 | 0 | 1 | 6 | NO |
 | Reportes y tableros institucionales | 11 | 0 | 0 | 0 | 6 | 5 | NO |
-| **Total** | **122** | **0** | **15** | **0** | **55** | **52** | **0 de 15** |
+| **Total** | **122** | **0** | **16** | **0** | **54** | **52** | **0 de 15** |
 
 (Errata corregida en GOV-DOC-04: la fila de Expedientes y el total no se habían actualizado con DOC-02.)
 
@@ -116,13 +118,13 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
   - los NOT_MEASURED.
 - Recuento: COMPLETE 14 · PARTIAL 12 · NOT_STARTED 7 · NOT_MEASURED 4 · BLOCKED 1.
 
-**B · Functional Product Completeness = 155 ÷ 1 277 = 12,14 %** (0 en la retrospectiva; +10 de ORG-01 con GOV-0-01, 2026-10-30; +11 de ORG-02 con GOV-0-02, 2026-10-31; +11 de ORG-03 con GOV-0-03 y +11 de DOC-02 con GOV-DOC-02, 2026-11-01; +11 de DOC-04 con GOV-DOC-04 y +10 de ORG-07 con GOV-ORG-07, 2026-11-02; +10 de CTL-04 con GOV-CTL-04, 2026-11-03; +11 de CTL-06 con GOV-CTL-06, +11 de DOC-08 con GOV-DOC-08 y +10 de CTL-01 con GOV-CTL-01, 2026-11-04). +11 de TRE-01 con GOV-TRE-01, 2026-11-05; −1 de TRE-01 por reclasificar sus reportes como NOT_APPLICABLE y +9 de TRE-02 con GOV-TRE-02 y T038, 2026-11-06; +9 de CTL-10 con GOV-CTL-10, 2026-11-07.
+**B · Functional Product Completeness = 165 ÷ 1 277 = 12,92 %** (0 en la retrospectiva; +10 de ORG-01 con GOV-0-01, 2026-10-30; +11 de ORG-02 con GOV-0-02, 2026-10-31; +11 de ORG-03 con GOV-0-03 y +11 de DOC-02 con GOV-DOC-02, 2026-11-01; +11 de DOC-04 con GOV-DOC-04 y +10 de ORG-07 con GOV-ORG-07, 2026-11-02; +10 de CTL-04 con GOV-CTL-04, 2026-11-03; +11 de CTL-06 con GOV-CTL-06, +11 de DOC-08 con GOV-DOC-08 y +10 de CTL-01 con GOV-CTL-01, 2026-11-04). +11 de TRE-01 con GOV-TRE-01, 2026-11-05; −1 de TRE-01 por reclasificar sus reportes como NOT_APPLICABLE y +9 de TRE-02 con GOV-TRE-02 y T038, 2026-11-06; +9 de CTL-10 con GOV-CTL-10, 2026-11-07.
 - Hay 122 procesos × 11 compuertas funcionales: backend, frontend, menú, proceso, campos, roles, documentos, reportes, auditoría, E2E y ficha de pantalla. Eso da 1 342.
 - Se restan 44 compuertas de documentos y 21 de reportes que no aplican: quedan 1 277 (GOV-CTL-10 reclasificó el reporte de CTL-10 como NOT_APPLICABLE, FR-025: GOV-CTL-012 no exige exportación; GOV-TRE-02 reclasificó los reportes de TRE-01 y TRE-02 como NOT_APPLICABLE: ningún requisito exige uno; por eso TRE-01 pasa de 11/11 a 10/10).
 - En PASS: las 10 compuertas aplicables de ORG-01 (reportes no aplica, justificado en su Spec) y las 11 de ORG-02, ORG-03, DOC-02 y DOC-04 (listado + CSV, documento obligatorio). Ninguna otra.
 - Aunque fuese mayor que 0, este porcentaje **no** dice que un módulo esté terminado: eso solo lo dice la tabla de módulos.
 
-**C · Owner UAT Ready = 15 ÷ 122 = 12,30 %** (ORG-01, ORG-02, ORG-03, ORG-04, ORG-06, ORG-07, DOC-02, DOC-04, CTL-04, CTL-06, DOC-08, CTL-01, TRE-01, TRE-02, CTL-10), y **Owner Accepted = 0 ÷ 122 = 0,0 %** (solo la dueña lo concede).
+**C · Owner UAT Ready = 16 ÷ 122 = 13,11 %** (ORG-01, ORG-02, ORG-03, ORG-04, ORG-06, ORG-07, DOC-02, DOC-04, CTL-02, CTL-04, CTL-06, DOC-08, CTL-01, TRE-01, TRE-02, CTL-10), y **Owner Accepted = 0 ÷ 122 = 0,0 %** (solo la dueña lo concede).
 
 ## Requisitos de Ingeniería (§38, §70)
 
@@ -130,7 +132,7 @@ No hay redondeo al alza. Las cuatro cifras no se combinan.
 
 | Tipo | N | Estado |
 |---|---|---|
-| Funcionales GOV-* | 153 | 152 en 122 procesos: 77 BLOCKED, 57 NOT_STARTED, 18 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -004, -005, -007, -008, -009, -010, GOV-DOC-003, -005, -010, GOV-CTL-001, -005, -008, -012, GOV-TRE-001, -002). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
+| Funcionales GOV-* | 153 | 152 en 122 procesos: 77 BLOCKED, 55 NOT_STARTED, 20 OWNER_UAT_READY (GOV-ORG-001, -002, -003, -004, -005, -007, -008, -009, -010, GOV-DOC-003, -005, -010, GOV-CTL-001, -002, -003, -005, -008, -012, GOV-TRE-001, -002). 1 (GOV-DIG-010, estándares de Infogobierno) es fundamento F21: NOT_MEASURED |
 | No funcionales RNF-GOV | 25 | 6 PASS en el núcleo (003, 006, 012, 015, 019, 025) · 11 PARTIAL · 4 NOT_MEASURED · 4 NOT_STARTED |
 | Aceptación E2E-01..08 | 8 | 6 FAIL. E2E-06 (hostil multi-ente) y E2E-08 (restauración) PARTIAL: solo el núcleo; el ente y los ledgers de Gobierno no existen |
 | Puertas del sponsor D-GOV-01..08 | 8 | 6 OPEN; D-GOV-01 CLOSED (Alcaldía del Municipio Naguanagua, Carabobo); D-GOV-07 SPONSOR_SCOPE_CLOSED (integrar con Atenea; contrato técnico ENGINEERING_PENDING) |

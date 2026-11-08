@@ -31,7 +31,9 @@ Llamadas secuenciales; todo el código lo propone DeepSeek salvo resolución mec
 
 | EDI-H semilla documental | ATTEMPT | flash | $0,000180 | Declara ImportDocument en la guarda N9. Bloques dictados. AUDIT_PASS |
 
+| EDI-I segunda fusión Alembic | ATTEMPT | flash | $0,000224 | `public-upstream` avanzó con CTL-02. AUDIT_PASS |
+
 ## Totales
 
-13 llamadas · $0,060653. Llamadas solo de pruebas: 2 (EDI-F, EDI-H). Reintentos: 6.
+14 llamadas · $0,060877. Llamadas solo de pruebas: 2 (EDI-F, EDI-H). Reintentos: 6.
 **Declaración:** EDI-C RETRY_2, EDI-D y su RETRY_1, EDI-E RETRY_2, EDI-G y su RETRY_1, y EDI-H llevan bloques dictados literalmente por Claude tras depurar; DeepSeek los transcribió. La resolución de conflictos de la fusión y las declaraciones de cabeza y contador las aplicó Claude como ajuste mecánico.

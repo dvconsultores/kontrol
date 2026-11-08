@@ -2432,3 +2432,108 @@ export function consultaDeVinculos(f: {
 export function consultaDeFecha(fecha?: string): string {
   return fecha ? `?fecha=${encodeURIComponent(fecha)}` : "";
 }
+
+export type BitacoraFiltros = {
+  resultados: Array<{ codigo: string; etiqueta: string }>;
+  acciones: Array<{ codigo: string; entidad: string; etiqueta: string; proceso: string }>;
+  funcionarios: Array<{ id: string; nombre: string }>;
+  unidades: Array<{ id: string; nombre: string }>;
+};
+
+export type BitacoraEvento = {
+  id: string;
+  fecha: string;
+  resultado: string;
+  accion: string;
+  accion_etiqueta: string;
+  proceso: string;
+  proceso_nombre: string;
+  usuario: string | null;
+  funcionario: string | null;
+  cargos: string[];
+  unidades: string[];
+  estado_contexto: string;
+  request_id: string | null;
+  motivo: string | null;
+};
+
+export type ContextoEvento = {
+  version: number;
+  estado: string;
+  fecha: string;
+  ente: { id: string; nombre: string } | null;
+  vinculo: { id: string; codigo: string } | null;
+  funcionario: { id: string; nombre: string } | null;
+  ocupaciones: Array<{
+    cargo_id: string;
+    cargo: string;
+    cargo_codigo: string;
+    unidad_id: string;
+    unidad: string;
+    figura: string;
+    figura_etiqueta: string;
+    ejerce: boolean;
+    autoridad: Array<{ accion: string; materia: string }>;
+  }>;
+  roles: Array<{ id: string; codigo: string; nombre: string }>;
+  categorias: string[];
+  tiene_autoridad: boolean;
+  motivo_sin_autoridad: string | null;
+};
+
+export type BitacoraEventoDetalle = BitacoraEvento & {
+  entidad: string;
+  entidad_id: string | null;
+  sesion_id: string | null;
+  ip: string | null;
+  detalle: Record<string, unknown>;
+  objeto: AuditoriaObjeto | null;
+  contexto: ContextoEvento | null;
+};
+
+export type BitacoraEventos = {
+  items: BitacoraEvento[];
+  total: number;
+  pagina: number;
+  por_pagina: number;
+};
+
+export const CONSULTA_BITACORA = [...CONSULTA_GOBIERNO, "bitacora"] as const;
+
+export const ETIQUETAS_RESULTADO_BITACORA: Record<string, string> = {
+  EXITO: "Éxito",
+  RECHAZO: "Rechazo",
+  DENEGACION: "Denegación",
+};
+
+export const ETIQUETAS_ESTADO_CONTEXTO: Record<string, string> = {
+  CON_IDENTIDAD: "Con identidad institucional",
+  SIN_VINCULO: "Sin vínculo vigente",
+  NO_APLICA: "No aplica",
+  ANTERIOR: "Evento anterior a la bitácora institucional",
+};
+
+export function consultaDeBitacora(f: {
+  desde?: string;
+  hasta?: string;
+  accion?: string;
+  usuario?: string;
+  funcionario_id?: string;
+  unidad_id?: string;
+  request_id?: string;
+  resultado?: string;
+  pagina?: number;
+}): string {
+  const qs = new URLSearchParams();
+  if (f.desde) qs.set("desde", f.desde);
+  if (f.hasta) qs.set("hasta", f.hasta);
+  if (f.accion) qs.set("accion", f.accion);
+  if (f.usuario) qs.set("usuario", f.usuario);
+  if (f.funcionario_id) qs.set("funcionario_id", f.funcionario_id);
+  if (f.unidad_id) qs.set("unidad_id", f.unidad_id);
+  if (f.request_id) qs.set("request_id", f.request_id);
+  if (f.resultado) qs.set("resultado", f.resultado);
+  if (f.pagina && f.pagina > 1) qs.set("pagina", String(f.pagina));
+  const s = qs.toString();
+  return s ? `?${s}` : "";
+}

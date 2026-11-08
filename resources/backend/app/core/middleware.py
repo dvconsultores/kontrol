@@ -15,7 +15,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from app.core import license as license_engine
-from app.core.logging import new_request_id, request_id_actual
+from app.core.logging import ContextoTecnico, contexto_tecnico_actual, new_request_id, request_id_actual
 
 WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
@@ -45,11 +45,15 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         request.state.request_id = new_request_id()
         request.state.start_time = __import__("time").time()
         token = request_id_actual.set(request.state.request_id)
+        token_tecnico = contexto_tecnico_actual.set(
+            ContextoTecnico(ip=request.client.host if request.client else None)
+        )
         try:
             response = await call_next(request)
             response.headers["X-Request-ID"] = request.state.request_id
         finally:
             request_id_actual.reset(token)
+            contexto_tecnico_actual.reset(token_tecnico)
         return response
 
 

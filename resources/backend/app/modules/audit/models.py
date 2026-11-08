@@ -54,6 +54,9 @@ class AuditEvent(UUIDMixin, TimestampMixin, Base):
     evidence: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
     ip: Mapped[str | None] = mapped_column(String(45), nullable=True)
     event_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    institutional_context: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON(none_as_null=True), nullable=True
+    )
 
 
 for _sentencia in AUDIT_IMMUTABLE_PG:
