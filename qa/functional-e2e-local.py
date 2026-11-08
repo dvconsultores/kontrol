@@ -89,7 +89,11 @@ def main() -> None:
 
     def _terceros():
         prov = _request("POST", "/maestros/terceros", h, {
-            "code": "PROV-QA-ALFA", "name": "PROVEEDOR QA ALFA, C.A.", "roles": ["PROVEEDOR"]})
+            "code": "PROV-QA-ALFA", "name": "PROVEEDOR QA ALFA, C.A.", "roles": ["PROVEEDOR"], "tax_id": "J-40000001-1"})
+        cuenta = _request("POST", f"/maestros/terceros/{prov['id']}/bank-accounts", h, {
+            "bank": "Banco QA", "account_number": "01020000000000000001"})
+        _request("POST", f"/maestros/terceros/{prov['id']}/bank-accounts/{cuenta['id']}/verify", h, {"evidence": "constancia QA"})
+        _request("POST", f"/maestros/terceros/{prov['id']}/roles/PROVEEDOR/approve", h)
         _request("POST", "/maestros/terceros", h, {
             "code": "PROV-QA-BETA", "name": "PROVEEDOR QA BETA, C.A.", "roles": ["PROVEEDOR"]})
         cli = _request("POST", "/maestros/terceros", h, {

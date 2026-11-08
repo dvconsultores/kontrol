@@ -13,7 +13,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, NotFoundError
-from app.modules.master_data.models import Party
+from app.modules.master_data.models import Party, Supplier
 from app.modules.purchasing import service as ap_service
 from app.modules.regulatory import service as regulatory_service
 from app.modules.sales import service as sales_service
@@ -55,6 +55,9 @@ def _tercero(
     )
     db.add(party)
     db.flush()
+    if "PROVEEDOR" in roles:
+        db.add(Supplier(party_id=str(party.id), approval_status="APPROVED"))
+        db.flush()
     return party
 
 

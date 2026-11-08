@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import ConflictError, NotFoundError
 from app.modules.inventory import service as inv_service
 from app.modules.inventory.models import InventoryBalance, InventoryMovement, MovementType
-from app.modules.master_data.models import CatalogItem, Party
+from app.modules.master_data.models import CatalogItem, Party, Supplier
 from app.modules.organization.models import Warehouse
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import OpenItem, SupplierInvoice
@@ -39,6 +39,8 @@ OTHER = EMPRESA_DOS
 def _make_party(db: Session, company: str = COMPANY, code: str = "SUP-1", name: str = "Proveedor SA") -> Party:
     party = Party(company_id=company, code=code, name=name, person_type="JURIDICA", tax_id=f"J-1234567-{abs(hash(code)) % 10}", roles=["PROVEEDOR"], status="ACTIVE")
     db.add(party)
+    db.flush()
+    db.add(Supplier(party_id=str(party.id), approval_status="APPROVED"))
     db.flush()
     return party
 

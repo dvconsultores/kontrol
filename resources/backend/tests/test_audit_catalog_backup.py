@@ -7,7 +7,7 @@ from app.shared.audit_catalog import CATALOG_VERSION, catalog
 
 def test_catb_01_catalog_version() -> None:
     """CATB-01: la versión del catálogo es la esperada."""
-    assert CATALOG_VERSION == "2026-11-07.2"
+    assert CATALOG_VERSION == "2026-11-08.1"
 
 
 @pytest.mark.parametrize(
@@ -92,5 +92,5 @@ def test_catb_02_entries(
 
 
 def test_catb_03_catalog_size() -> None:
-    """CATB-03: el catálogo tiene exactamente 338 entradas."""
-    assert len(catalog()) == 338
+    """CATB-03: el catálogo tiene exactamente 360 entradas."""
+    assert len(catalog()) == 360

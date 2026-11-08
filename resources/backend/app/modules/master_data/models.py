@@ -45,7 +45,7 @@ from app.shared.mixins import (
 # --------------------------------------------------------------------------- #
 # Terceros (Party + extensiones)
 # --------------------------------------------------------------------------- #
-class Party(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, StatusMixin, Base):
+class Party(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, StatusMixin, VersionMixin, Base):
     __tablename__ = "parties"
     __scope__ = Scope.COMPANY
 
@@ -60,7 +60,7 @@ class Party(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, NameMixin, Sta
     roles: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)  # cliente/proveedor/...
 
 
-class PartyAddress(UUIDMixin, TimestampMixin, Base):
+class PartyAddress(UUIDMixin, TimestampMixin, VersionMixin, Base):
     __tablename__ = "party_addresses"
     __scope__ = Scope.COMPANY
     __scope_authority__ = "party_id → parties"
@@ -78,7 +78,7 @@ class PartyAddress(UUIDMixin, TimestampMixin, Base):
     validity: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
 
 
-class PartyContact(UUIDMixin, TimestampMixin, Base):
+class PartyContact(UUIDMixin, TimestampMixin, VersionMixin, Base):
     __tablename__ = "party_contacts"
     __scope__ = Scope.COMPANY
     __scope_authority__ = "party_id → parties"
@@ -92,7 +92,7 @@ class PartyContact(UUIDMixin, TimestampMixin, Base):
     validity: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
 
 
-class PartyBankAccount(UUIDMixin, TimestampMixin, Base):
+class PartyBankAccount(UUIDMixin, TimestampMixin, VersionMixin, Base):
     __tablename__ = "party_bank_accounts"
     __scope__ = Scope.COMPANY
     __scope_authority__ = "party_id → parties"
@@ -105,9 +105,10 @@ class PartyBankAccount(UUIDMixin, TimestampMixin, Base):
     beneficiary: Mapped[str | None] = mapped_column(String(200), nullable=True)
     verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     evidence: Mapped[str | None] = mapped_column(Text, nullable=True)
+    validity: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
 
 
-class Customer(UUIDMixin, TimestampMixin, Base):
+class Customer(UUIDMixin, TimestampMixin, VersionMixin, Base):
     __tablename__ = "customers"
     __scope__ = Scope.COMPANY
     __scope_authority__ = "party_id → parties"
@@ -123,7 +124,7 @@ class Customer(UUIDMixin, TimestampMixin, Base):
     block_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
 
-class Supplier(UUIDMixin, TimestampMixin, Base):
+class Supplier(UUIDMixin, TimestampMixin, VersionMixin, Base):
     __tablename__ = "suppliers"
     __scope__ = Scope.COMPANY
     __scope_authority__ = "party_id → parties"
@@ -137,7 +138,7 @@ class Supplier(UUIDMixin, TimestampMixin, Base):
     withholding_profile: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
 
-class Carrier(UUIDMixin, TimestampMixin, Base):
+class Carrier(UUIDMixin, TimestampMixin, VersionMixin, Base):
     __tablename__ = "carriers"
     __scope__ = Scope.COMPANY
     __scope_authority__ = "party_id → parties"
@@ -148,7 +149,7 @@ class Carrier(UUIDMixin, TimestampMixin, Base):
     permits: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
 
 
-class Driver(UUIDMixin, TimestampMixin, Base):
+class Driver(UUIDMixin, TimestampMixin, VersionMixin, Base):
     __tablename__ = "drivers"
     __scope__ = Scope.COMPANY
     __scope_authority__ = "party_id → parties"

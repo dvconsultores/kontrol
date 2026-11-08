@@ -14,6 +14,7 @@ from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
 from app.core.errors import NotFoundError
 from app.modules.identity_access.models import User
+from app.modules.master_data import party_service
 from app.modules.master_data import service as master_service
 from app.modules.master_data.models import (
     AttributeDefinition,
@@ -34,55 +35,8 @@ router = APIRouter(prefix="/maestros", tags=["maestros"])
 # --------------------------------------------------------------------------- #
 # Schemas
 # --------------------------------------------------------------------------- #
-class PartyCreate(BaseModel):
-    code: str = Field(min_length=1, max_length=64)
-    name: str = Field(min_length=1, max_length=200)
-    person_type: str = "JURIDICA"
-    legal_name: str | None = None
-    trade_name: str | None = None
-    tax_id: str | None = None
-    economic_activity: str | None = None
-    roles: list[str] = Field(default_factory=lambda: ["CLIENTE"])
 
 
-class CustomerCreate(BaseModel):
-    salesperson: str | None = None
-    zone: str | None = None
-    credit_days: int = 0
-    credit_limit: float | None = None
-
-
-class SupplierCreate(BaseModel):
-    category: str | None = None
-    buyer: str | None = None
-    payment_term: str | None = None
-    default_currency: str = "VED"
-    withholding_profile: str | None = None
-
-
-class PartyAddressCreate(BaseModel):
-    address_type: str = "PRINCIPAL"
-    state: str | None = None
-    city: str | None = None
-    municipality: str | None = None
-    address: str = Field(min_length=1, max_length=1000)
-    is_fiscal: bool = False
-    is_delivery: bool = False
-
-
-class PartyContactCreate(BaseModel):
-    name: str | None = None
-    role: str | None = None
-    phone: str | None = None
-    email: str | None = None
-    preferred: bool = False
-
-
-class PartyBankCreate(BaseModel):
-    bank: str
-    account_type: str = "CORRIENTE"
-    currency: str = "VED"
-    account_number: str = Field(min_length=1, max_length=40)
 
 
 class ItemCreate(BaseModel):
@@ -178,18 +132,7 @@ class ProfileCreate(BaseModel):
 # Terceros
 # --------------------------------------------------------------------------- #
 def _party_dict(db: Session, party: Party) -> dict[str, Any]:
-    return {
-        "id": str(party.id),
-        "code": party.code,
-        "name": party.name,
-        "person_type": party.person_type,
-        "legal_name": party.legal_name,
-        "trade_name": party.trade_name,
-        "tax_id": party.tax_id,
-        "roles": party.roles,
-        "status": party.status,
-        "allowed_actions": master_service.party_allowed_actions(party),
-    }
+    return party_service.party_dict(party)
 
 
 @router.get("/terceros")
@@ -214,76 +157,6 @@ def list_parties(
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
     items = db.execute(query.order_by(Party.created_at).offset((page - 1) * page_size).limit(page_size)).scalars().all()
     return {"items": [_party_dict(db, p) for p in items], "total": total, "page": page, "page_size": page_size}
-
-
-@router.post("/terceros", dependencies=[Depends(require_write_allowed)])
-def create_party(
-    body: PartyCreate,
-    db: Session = Depends(get_db),
-    actor: User = Depends(require_permission("maestros", "create")),
-    ctx: CompanyContext = Depends(get_company_context),
-):
-    tax_id = master_service.validate_tax_id(body.tax_id, body.person_type) if body.tax_id else None
-    role = (body.roles or ["CLIENTE"])[0]
-    master_service.ensure_no_duplicate(db, company_id=ctx.company_id, tax_id=tax_id or "", role=role)
-    party = Party(
-        company_id=ctx.company_id,
-        code=body.code,
-        name=body.name,
-        person_type=body.person_type,
-        legal_name=body.legal_name,
-        trade_name=body.trade_name,
-        tax_id=tax_id,
-        economic_activity=body.economic_activity,
-        roles=body.roles,
-        status="ACTIVE",
-        created_by=str(actor.id),
-    )
-    db.add(party)
-    db.commit()
-    db.refresh(party)
-    return _party_dict(db, party)
-
-
-@router.get("/terceros/{party_id}")
-def get_party(party_id: str, db: Session = Depends(get_db), user: User = Depends(require_permission("maestros", "view")), ctx: CompanyContext = Depends(get_company_context)):
-    party = db.get(Party, party_id)
-    if not party or party.company_id != ctx.company_id:
-        raise NotFoundError(code="PARTY_NOT_FOUND", message="Tercero no encontrado")
-    return _party_dict(db, party)
-
-
-@router.post("/terceros/{party_id}/deactivate", dependencies=[Depends(require_write_allowed)])
-def deactivate_party(party_id: str, db: Session = Depends(get_db), actor: User = Depends(require_permission("maestros", "deactivate")), ctx: CompanyContext = Depends(get_company_context)):
-    party = db.get(Party, party_id)
-    # Esta ruta no comparaba la empresa: no es que usara el tenant, es que no
-    # acotaba en absoluto, y por eso el barrido de N2 no la vio.
-    if not party or party.company_id != ctx.company_id:
-        raise NotFoundError(code="PARTY_NOT_FOUND", message="Tercero no encontrado")
-    party.status = "INACTIVE"
-    db.commit()
-    return _party_dict(db, party)
-
-
-@router.post("/terceros/{party_id}/roles/{role}", dependencies=[Depends(require_write_allowed)])
-def add_party_role(
-    party_id: str,
-    role: str,
-    body: PartyCreate | CustomerCreate | SupplierCreate = None,  # type: ignore[assignment]
-    db: Session = Depends(get_db),
-    actor: User = Depends(require_permission("maestros", "edit")),
-    ctx: CompanyContext = Depends(get_company_context),
-):
-    """Agrega un rol a un tercero (cliente/proveedor/transportista/conductor)."""
-    party = db.get(Party, party_id)
-    if not party or party.company_id != ctx.company_id:
-        raise NotFoundError(code="PARTY_NOT_FOUND", message="Tercero no encontrado")
-    roles = set(party.roles or [])
-    roles.add(role.upper())
-    party.roles = sorted(roles)
-    db.commit()
-    db.refresh(party)
-    return _party_dict(db, party)
 
 
 # --------------------------------------------------------------------------- #

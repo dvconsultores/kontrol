@@ -437,4 +437,29 @@ _PARTE_B: tuple[AuditActionSpec, ...] = (
     _e("WITHHOLDING_TRANSITIONED", "Withholding", "purchasing", "004", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("target",), "Cambio de estado de retención"),
 )
 
-ENTRIES: tuple[AuditActionSpec, ...] = _PARTE_A + _PARTE_B
+_PARTE_TERCEROS: tuple[AuditActionSpec, ...] = (
+    _e("PARTY_CREATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("code", "economic_activity", "legal_name", "name", "nationality", "person_type", "residence", "roles", "status", "tax_id", "trade_name", "version"), "Tercero creado"),
+    _e("PARTY_UPDATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("code", "economic_activity", "legal_name", "name", "nationality", "person_type", "residence", "roles", "status", "tax_id", "trade_name", "version"), "Tercero actualizado"),
+    _e("PARTY_ROLE_ADDED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("role", "roles"), "Rol de tercero agregado"),
+    _e("PARTY_ROLE_REMOVED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("role", "roles"), "Rol de tercero retirado"),
+    _e("PARTY_ACTIVATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("code", "status", "version"), "Tercero activado"),
+    _e("PARTY_DEACTIVATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("code", "status", "version"), "Tercero desactivado"),
+    _e("PARTY_DELETED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("code", "status", "version"), "Tercero eliminado"),
+    _e("PARTY_ADDRESS_CREATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("address_id", "address_type", "city", "is_delivery", "is_fiscal", "state", "validity"), "Dirección de tercero creada"),
+    _e("PARTY_ADDRESS_UPDATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("address_id", "address_type", "city", "is_delivery", "is_fiscal", "state", "validity"), "Dirección de tercero actualizada"),
+    _e("PARTY_ADDRESS_DEACTIVATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("address_id", "address_type", "city", "is_delivery", "is_fiscal", "state", "validity"), "Dirección de tercero desactivada"),
+    _e("PARTY_CONTACT_CREATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("contact_id", "preferred", "role", "validity"), "Contacto de tercero creado"),
+    _e("PARTY_CONTACT_UPDATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("contact_id", "preferred", "role", "validity"), "Contacto de tercero actualizado"),
+    _e("PARTY_CONTACT_DEACTIVATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("contact_id", "preferred", "role", "validity"), "Contacto de tercero desactivado"),
+    _e("PARTY_BANK_ACCOUNT_CREATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("account_id", "account_last4", "account_type", "bank", "currency", "validity", "verified"), "Cuenta bancaria de tercero creada"),
+    _e("PARTY_BANK_ACCOUNT_UPDATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("account_id", "account_last4", "account_type", "bank", "currency", "validity", "verified"), "Cuenta bancaria de tercero actualizada"),
+    _e("PARTY_BANK_ACCOUNT_DEACTIVATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("account_id", "account_last4", "account_type", "bank", "currency", "validity", "verified"), "Cuenta bancaria de tercero desactivada"),
+    _e("PARTY_BANK_ACCOUNT_VERIFIED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("account_id", "account_last4", "account_type", "bank", "currency", "validity", "verified"), "Cuenta bancaria de tercero verificada"),
+    _e("CUSTOMER_UPDATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("blocked", "credit_days", "credit_limit", "payment_term", "price_list", "salesperson", "zone"), "Cliente actualizado"),
+    _e("SUPPLIER_UPDATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("buyer", "category", "default_currency", "payment_term", "withholding_profile"), "Proveedor actualizado"),
+    _e("SUPPLIER_APPROVAL_CHANGED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("approval_status", "missing"), "Aprobación de proveedor cambiada"),
+    _e("CARRIER_UPDATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("insurance", "permits", "registration"), "Transportista actualizado"),
+    _e("DRIVER_UPDATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("categories", "expiry", "license"), "Conductor actualizado"),
+)
+
+ENTRIES: tuple[AuditActionSpec, ...] = _PARTE_A + _PARTE_B + _PARTE_TERCEROS

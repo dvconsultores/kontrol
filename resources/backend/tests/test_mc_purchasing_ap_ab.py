@@ -7,15 +7,25 @@ solo aparece si alguien lo intenta a propósito.
 
 from __future__ import annotations
 
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 pytest_plugins = ("tests.conftest_multicompany",)
 
 
 # --------------------------------------------------------------- utilidades
 def _tercero(mundo, usuario, empresa, code):
-    return mundo.crear("/maestros/terceros", usuario, empresa,
-                       {"code": code, "name": f"Proveedor {code}", "roles": ["PROVEEDOR"]})
+    from app.modules.master_data.models import Supplier
+
+    party_id = mundo.crear("/maestros/terceros", usuario, empresa,
+                           {"code": code, "name": f"Proveedor {code}", "roles": ["PROVEEDOR"]})
+    db = mundo.factory()
+    try:
+        supplier = db.scalars(select(Supplier).where(Supplier.party_id == party_id)).one()
+        supplier.approval_status = "APPROVED"
+        db.commit()
+    finally:
+        db.close()
+    return party_id
 
 
 def _producto(mundo, usuario, empresa, code):

@@ -2855,10 +2855,178 @@
       "scope": "COMPANY"
     },
     {
+      "method": "DELETE",
+      "path": "/api/v1/maestros/terceros/{party_id}",
+      "capabilities": [
+        "maestros:deactivate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/maestros/terceros/{party_id}",
       "capabilities": [
         "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/maestros/terceros/{party_id}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/activate",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/terceros/{party_id}/addresses",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/addresses",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/maestros/terceros/{party_id}/addresses/{child_id}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/addresses/{child_id}/deactivate",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/terceros/{party_id}/audit",
+      "capabilities": [
+        "audit:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/terceros/{party_id}/bank-accounts",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/bank-accounts",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/maestros/terceros/{party_id}/bank-accounts/{child_id}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/bank-accounts/{child_id}/deactivate",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/bank-accounts/{child_id}/verify",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/terceros/{party_id}/carrier",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/maestros/terceros/{party_id}/carrier",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/terceros/{party_id}/contacts",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/contacts",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/maestros/terceros/{party_id}/contacts/{child_id}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/contacts/{child_id}/deactivate",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/terceros/{party_id}/customer",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/maestros/terceros/{party_id}/customer",
+      "capabilities": [
+        "maestros:edit"
       ],
       "scope": "COMPANY"
     },
@@ -2871,8 +3039,72 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/maestros/terceros/{party_id}/driver",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/maestros/terceros/{party_id}/driver",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/roles/PROVEEDOR/approve",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/roles/PROVEEDOR/reject",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maestros/terceros/{party_id}/roles/PROVEEDOR/resubmit",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/maestros/terceros/{party_id}/roles/{role}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/maestros/terceros/{party_id}/roles/{role}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maestros/terceros/{party_id}/supplier",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/maestros/terceros/{party_id}/supplier",
       "capabilities": [
         "maestros:edit"
       ],

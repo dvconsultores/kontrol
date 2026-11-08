@@ -103,10 +103,19 @@ def _auth() -> dict:
 
 
 def _make_party(h: dict, code: str) -> str:
+    rif = f"J-{sum(ord(c) * 7 ** i for i, c in enumerate(code)) % 100000000:08d}-1"
     r = _CLIENT.post("/api/v1/maestros/terceros", headers=h,
-                     json={"code": code, "name": f"Party {code}", "roles": ["PROVEEDOR", "CLIENTE"]})
+                     json={"code": code, "name": f"Party {code}", "roles": ["PROVEEDOR", "CLIENTE"], "tax_id": rif})
     assert r.status_code == 200, r.text
-    return r.json()["id"]
+    party_id = r.json()["id"]
+    base = f"/api/v1/maestros/terceros/{party_id}"
+    cuenta = _CLIENT.post(f"{base}/bank-accounts", headers=h, json={"bank": "Banco", "account_number": "01020000000000000001"})
+    assert cuenta.status_code == 200, cuenta.text
+    verificada = _CLIENT.post(f"{base}/bank-accounts/{cuenta.json()['id']}/verify", headers=h, json={"evidence": "constancia"})
+    assert verificada.status_code == 200, verificada.text
+    aprobada = _CLIENT.post(f"{base}/roles/PROVEEDOR/approve", headers=h)
+    assert aprobada.status_code == 200, aprobada.text
+    return party_id
 
 
 def _make_product(h: dict, code: str) -> str:

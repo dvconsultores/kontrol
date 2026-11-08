@@ -2078,8 +2078,116 @@
       "query": []
     },
     {
+      "method": "DELETE",
+      "path": "/maestros/terceros/{party_id}",
+      "query": []
+    },
+    {
       "method": "GET",
       "path": "/maestros/terceros/{party_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/maestros/terceros/{party_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/maestros/terceros/{party_id}/activate",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/maestros/terceros/{party_id}/addresses",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/maestros/terceros/{party_id}/addresses",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/maestros/terceros/{party_id}/addresses/{child_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/maestros/terceros/{party_id}/addresses/{child_id}/deactivate",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/maestros/terceros/{party_id}/audit",
+      "query": [
+        "page",
+        "page_size"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/maestros/terceros/{party_id}/bank-accounts",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/maestros/terceros/{party_id}/bank-accounts",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/maestros/terceros/{party_id}/bank-accounts/{child_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/maestros/terceros/{party_id}/bank-accounts/{child_id}/deactivate",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/maestros/terceros/{party_id}/bank-accounts/{child_id}/verify",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/maestros/terceros/{party_id}/carrier",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/maestros/terceros/{party_id}/carrier",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/maestros/terceros/{party_id}/contacts",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/maestros/terceros/{party_id}/contacts",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/maestros/terceros/{party_id}/contacts/{child_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/maestros/terceros/{party_id}/contacts/{child_id}/deactivate",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/maestros/terceros/{party_id}/customer",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/maestros/terceros/{party_id}/customer",
       "query": []
     },
     {
@@ -2088,8 +2196,48 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/maestros/terceros/{party_id}/driver",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/maestros/terceros/{party_id}/driver",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/maestros/terceros/{party_id}/roles/PROVEEDOR/approve",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/maestros/terceros/{party_id}/roles/PROVEEDOR/reject",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/maestros/terceros/{party_id}/roles/PROVEEDOR/resubmit",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/maestros/terceros/{party_id}/roles/{role}",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/maestros/terceros/{party_id}/roles/{role}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/maestros/terceros/{party_id}/supplier",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/maestros/terceros/{party_id}/supplier",
       "query": []
     },
     {

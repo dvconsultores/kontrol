@@ -14,7 +14,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
-from app.modules.master_data.models import Party
+from app.modules.master_data.models import Customer, Party, Supplier
 
 # --------------------------------------------------------------------------- #
 # Validadores
@@ -97,6 +97,24 @@ def require_eligible_party(db: Session, *, company_id: str, party_id: str, role:
     return party
 
 
+def require_supplier_approved(db: Session, *, party_id: str) -> None:
+    """Exige un proveedor aprobado para recibir pagos o anticipos."""
+    supplier = db.execute(
+        select(Supplier).where(Supplier.party_id == party_id)
+    ).scalars().first()
+    if supplier is None or supplier.approval_status != "APPROVED":
+        raise ConflictError(code="SUPPLIER_NOT_APPROVED", message="El proveedor no está aprobado para recibir pagos.")
+
+
+def require_customer_not_blocked(db: Session, *, party_id: str) -> None:
+    """Exige que el cliente no esté bloqueado para documentos nuevos de venta."""
+    customer = db.execute(
+        select(Customer).where(Customer.party_id == party_id)
+    ).scalars().first()
+    if customer is not None and customer.blocked:
+        raise ConflictError(code="CUSTOMER_BLOCKED", message="El cliente está bloqueado para nuevos documentos.")
+
+
 # --------------------------------------------------------------------------- #
 # allowed_actions
 # --------------------------------------------------------------------------- #
@@ -104,11 +122,11 @@ def party_allowed_actions(party: Party) -> dict[str, bool]:
     active = party.status == "ACTIVE"
     return {
         "view": True,
-        "edit": True,
+        "edit": active,
         "activate": not active,
         "deactivate": active,
-        "delete": False,  # los terceros con historia no se eliminan
-        "approve": True,
+        "delete": False,
+        "approve": False,
         "audit": True,
     }
 

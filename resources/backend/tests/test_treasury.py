@@ -16,7 +16,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, NotFoundError
-from app.modules.master_data.models import Party
+from app.modules.master_data.models import Party, Supplier
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import OpenItem, Payment
 from app.modules.treasury import service as treasury_service
@@ -51,6 +51,8 @@ def _make_party(db: Session, company: str = COMPANY, code: str = "PROV-1") -> Pa
     party = Party(company_id=company, code=code, name="Tercero SA", person_type="JURIDICA",
                   tax_id=f"J-{abs(hash(code)) % 100000000}-1", roles=["PROVEEDOR"], status="ACTIVE")
     db.add(party)
+    db.flush()
+    db.add(Supplier(party_id=str(party.id), approval_status="APPROVED"))
     db.flush()
     return party
 

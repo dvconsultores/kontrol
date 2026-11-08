@@ -201,6 +201,14 @@ def _require_party(db: Session, company_id: str, party_id: str, *, role: str, re
     master_service.require_eligible_party(db, company_id=company_id, party_id=party_id, role=role, require_active=require_active)
 
 
+def _require_supplier_approved(db: Session, party_id: str, direction: str) -> None:
+    if direction != "OUT":
+        return
+    from app.modules.master_data import service as master_service
+
+    master_service.require_supplier_approved(db, party_id=party_id)
+
+
 def _role_for_direction(direction: str) -> str:
     """OUT liquida con un proveedor (CxP); IN con un cliente (CxC)."""
     if direction == "OUT":
@@ -1622,6 +1630,7 @@ def register_payment(db: Session, *, company_id: str, party_id: str, amount: flo
                                   Payment.company_id == company_id)).scalars().first()
         if existing:
             return existing
+    _require_supplier_approved(db, party_id, direction)
     payment = Payment(company_id=company_id, party_id=party_id, direction=direction, currency=currency,
                       amount=amount, applied=0.0, status="DRAFT", created_by=actor, idempotency_key=idempotency_key)
     db.add(payment)
@@ -1637,6 +1646,8 @@ def register_payment(db: Session, *, company_id: str, party_id: str, amount: flo
 
 def transition_payment(db: Session, *, payment: Payment, target: str, actor: str | None = None) -> Payment:
     _assert_transition(payment.status, target, PAYMENT_TRANSITIONS, "el pago")
+    if target in ("APPROVED", "POSTED"):
+        _require_supplier_approved(db, payment.party_id, payment.direction)
     payment.status = target
     payment.updated_at = datetime.now(UTC)
     if target in ("APPROVED", "REJECTED"):
@@ -1766,6 +1777,7 @@ def register_advance(db: Session, *, company_id: str, party_id: str, amount: flo
     _require_party(db, company_id, party_id, role=_role_for_direction(direction), require_active=True)
     if amount <= 0:
         raise KontrolError(code="INVALID_AMOUNT", message="El monto del anticipo debe ser positivo", status_code=422)
+    _require_supplier_approved(db, party_id, direction)
     adv = Advance(company_id=company_id, party_id=party_id, direction=direction, currency=currency,
                   amount=amount, available=amount, status="ACTIVE", created_by=actor)
     db.add(adv)

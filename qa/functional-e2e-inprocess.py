@@ -157,7 +157,10 @@ def main() -> None:
     step("almacenes ALM-VAL-QA / ALM-CCS-QA", _almacenes)
 
     def _terceros():
-        prov = call("POST", "/maestros/terceros", {"code": "PROV-QA-ALFA", "name": "PROVEEDOR QA ALFA, C.A.", "roles": ["PROVEEDOR"]})
+        prov = call("POST", "/maestros/terceros", {"code": "PROV-QA-ALFA", "name": "PROVEEDOR QA ALFA, C.A.", "roles": ["PROVEEDOR"], "tax_id": "J-40000001-1"})
+        cuenta = call("POST", f"/maestros/terceros/{prov['id']}/bank-accounts", {"bank": "Banco QA", "account_number": "01020000000000000001"})
+        call("POST", f"/maestros/terceros/{prov['id']}/bank-accounts/{cuenta['id']}/verify", {"evidence": "constancia QA"})
+        call("POST", f"/maestros/terceros/{prov['id']}/roles/PROVEEDOR/approve")
         call("POST", "/maestros/terceros", {"code": "PROV-QA-BETA", "name": "PROVEEDOR QA BETA, C.A.", "roles": ["PROVEEDOR"]})
         cli = call("POST", "/maestros/terceros", {"code": "CLI-QA-ORION", "name": "CLIENTE QA ORION, C.A.", "roles": ["CLIENTE"]})
         call("POST", "/maestros/terceros", {"code": "CLI-QA-NOVA", "name": "CLIENTE QA NOVA, C.A.", "roles": ["CLIENTE"]})

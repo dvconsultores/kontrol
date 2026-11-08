@@ -203,6 +203,8 @@ def _require_customer(db: Session, company_id: str, customer_id: str, *, require
     from app.modules.master_data import service as master_service
 
     master_service.require_eligible_party(db, company_id=company_id, party_id=customer_id, role="CLIENTE", require_active=require_active)
+    if require_active:
+        master_service.require_customer_not_blocked(db, party_id=customer_id)
 
 
 def _require_item(db: Session, company_id: str, item_id: str) -> None:
