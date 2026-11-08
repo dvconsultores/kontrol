@@ -1124,6 +1124,30 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/bitacora",
+      "capabilities": [
+        "gobierno_auditoria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/bitacora/filtros",
+      "capabilities": [
+        "gobierno_auditoria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/bitacora/{evento_id}",
+      "capabilities": [
+        "gobierno_auditoria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/cierres/bloqueos",
       "capabilities": [
         "gobierno_cierre:view"

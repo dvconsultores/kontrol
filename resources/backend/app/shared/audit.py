@@ -11,14 +11,24 @@ petición en curso (FR-001-261) y frontera explícita para auditar rechazos
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.core.logging import request_id_actual
+from app.core.logging import contexto_tecnico_actual, request_id_actual
 from app.modules.audit.models import AuditEvent
 from app.shared.audit_catalog import validate_event
+
+ProveedorContexto = Callable[..., dict[str, Any] | None]
+_proveedor_contexto: ProveedorContexto | None = None
+
+
+def registrar_proveedor_contexto(proveedor: ProveedorContexto) -> None:
+    """Un módulo de producto aporta el contexto institucional sin que el núcleo lo conozca."""
+    global _proveedor_contexto
+    _proveedor_contexto = proveedor
 
 
 def _now() -> datetime:
@@ -66,6 +76,23 @@ def record_audit(
         evidence=evidence,
     )
 
+    contexto = None
+    if _proveedor_contexto is not None:
+        contexto = _proveedor_contexto(
+            db,
+            action=action,
+            entity_type=entity_type,
+            tenant_id=tenant_id,
+            company_id=company_id,
+            user_id=user_id,
+        )
+
+    if contexto is not None:
+        tecnico = contexto_tecnico_actual.get()
+        if tecnico is not None:
+            session_id = session_id or tecnico.session_id
+            ip = ip or tecnico.ip
+
     event = AuditEvent(
         action=action,
         entity_type=entity_type,
@@ -82,6 +109,7 @@ def record_audit(
         evidence=evidence,
         ip=ip,
         event_time=_now(),
+        institutional_context=contexto,
     )
     db.add(event)
     # No se hace commit aquí: la operación padre define la transacción.

@@ -27,6 +27,7 @@ from app.modules.government.api import router as government_router
 from app.modules.government.api_actos import router as government_acts_router
 from app.modules.government.api_auditoria import router as government_audit_router
 from app.modules.government.api_autoridad import router as government_authority_router
+from app.modules.government.api_bitacora import router as government_bitacora_router
 from app.modules.government.api_caja import router as government_caja_router
 from app.modules.government.api_cargos import router as government_positions_router
 from app.modules.government.api_cierres import router as government_cierres_router
@@ -38,6 +39,7 @@ from app.modules.government.api_notificaciones import router as government_notif
 from app.modules.government.api_ocupacion import router as government_ocupacion_router
 from app.modules.government.api_paquetes import router as government_audit_packages_router
 from app.modules.government.api_sod import router as government_sod_router
+from app.modules.government.contexto_auditoria import contexto_de_evento
 from app.modules.homologation.api import router as homologation_router
 from app.modules.identity_access.api import authority_router, roles_router, users_router
 from app.modules.identity_access.api import router as auth_router
@@ -58,6 +60,7 @@ from app.modules.sales.api import router as sales_router
 from app.modules.setup.api import router as setup_router
 from app.modules.system.api import router as system_router
 from app.modules.treasury.api import router as treasury_router
+from app.shared.audit import registrar_proveedor_contexto
 
 configure_logging()
 settings = get_settings()
@@ -73,6 +76,7 @@ async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app() -> FastAPI:
+    registrar_proveedor_contexto(contexto_de_evento)
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
@@ -139,6 +143,7 @@ def create_app() -> FastAPI:
     app.include_router(government_acts_router, prefix=prefix)
     app.include_router(government_authority_router, prefix=prefix)
     app.include_router(government_audit_router, prefix=prefix)
+    app.include_router(government_bitacora_router, prefix=prefix)
     app.include_router(government_findings_router, prefix=prefix)
     app.include_router(government_audit_packages_router, prefix=prefix)
     app.include_router(government_sod_router, prefix=prefix)

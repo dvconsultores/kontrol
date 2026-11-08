@@ -816,6 +816,32 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/bitacora",
+      "query": [
+        "accion",
+        "desde",
+        "funcionario_id",
+        "hasta",
+        "pagina",
+        "por_pagina",
+        "request_id",
+        "resultado",
+        "unidad_id",
+        "usuario"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/bitacora/filtros",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/bitacora/{evento_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/cierres/bloqueos",
       "query": [
         "accion_cierre",

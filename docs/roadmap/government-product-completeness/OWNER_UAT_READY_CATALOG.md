@@ -2,9 +2,9 @@
 
 > Retrospectiva GOV-PRODUCT-COMPLETENESS-RETRO-01 · `develop` `0dbe632` · 2026-10-29. Actualizado por GOV-0-01 (2026-10-30), GOV-0-02 (2026-10-31), GOV-0-03 y GOV-DOC-02 (2026-11-01) GOV-DOC-04 y GOV-ORG-07 (2026-11-02) GOV-CTL-04 (2026-11-03), GOV-CTL-06, GOV-DOC-08 y GOV-CTL-01 (2026-11-04) GOV-TRE-01 (2026-11-05) y GOV-TRE-02 con T038 (2026-11-06).
 
-## Estado: 15 procesos listos para probar (2026-11-08)
+## Estado: 16 procesos listos para probar (2026-11-08)
 
-- `OWNER_UAT_READY` = 15 de 122 procesos (12,30 %);
+- `OWNER_UAT_READY` = 16 de 122 procesos (13,11 %);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
@@ -24,6 +24,7 @@
 | **CTL-10 Controles materiales que impiden cerrar ejercicio o proceso** (GOV-CTL-012) | Menú › Gobierno › Controles de cierre (y el panel de bloqueo en «Cerrar ejercicio» y «Cerrar programa») | [`specs/gov-ctl-10-controles-cierre/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-ctl-10-controles-cierre/evidence/OWNER_UAT_CARD.md) | GOV-CTL-10 |
 | **ORG-04 Delegaciones, suplencias, encargadurías y designaciones con acto** (GOV-ORG-004, GOV-ORG-009) | Menú › Gobierno › Ocupación de cargos (Asignaciones y Funcionarios desde esa pantalla) | [`specs/gov-org-04-ocupacion-cargos/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-org-04-ocupacion-cargos/evidence/OWNER_UAT_CARD.md) | GOV-ORG-04 |
 | **ORG-06 Vincular usuario con identidad, cargo, unidad y alcance; separación de roles** (GOV-ORG-007, GOV-ORG-005) | Menú › Gobierno › Identidad institucional y Mi contexto institucional | [`specs/gov-0-06-identidad-usuarios/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-0-06-identidad-usuarios/evidence/OWNER_UAT_CARD.md) | GOV-0-06 |
+| **CTL-02 Bitácora institucional append-only con actor, autoridad, unidad y correlación** (GOV-CTL-002, GOV-CTL-003) | Menú › Gobierno › Bitácora institucional | [`specs/gov-ctl-02-bitacora-institucional/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-ctl-02-bitacora-institucional/evidence/OWNER_UAT_CARD.md) | GOV-CTL-02 |
 
 Los otros 109 procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
 

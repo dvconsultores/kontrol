@@ -11,6 +11,7 @@ import logging
 import sys
 import uuid
 from contextvars import ContextVar
+from dataclasses import dataclass
 from typing import Any
 
 from app.core.config import get_settings
@@ -62,6 +63,18 @@ def new_request_id() -> str:
 # Correlación de la petición en curso; GOV-CTL-003
 request_id_actual: ContextVar[str | None] = ContextVar(
     "kontrol_request_id", default=None
+)
+
+
+@dataclass
+class ContextoTecnico:
+    """Sesión e IP de la petición en curso. Es mutable a propósito: FastAPI ejecuta las dependencias síncronas en un hilo con una copia del contexto, y solo un objeto compartido llega de la autenticación al servicio."""
+    ip: str | None = None
+    session_id: str | None = None
+
+
+contexto_tecnico_actual: ContextVar[ContextoTecnico | None] = ContextVar(
+    "kontrol_contexto_tecnico", default=None
 )
 
 
