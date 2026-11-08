@@ -47,5 +47,5 @@ SUBTAREA NUEVA T007: NEW_ROOT_CAUSE=1 (OpenAPI: colision de nombres de esquema a
 T007 ATTEMPT enviado
 T007 ATTEMPT aplicado y verificado
 Convergencia: 0 hallazgos sobre FR-001..010, SC-001..002, OD-PROC02-01..09
-CIERRE: 21 llamadas productivas mas 1 sin respuesta por tiempo de espera; 3 de solo pruebas (T002t, T002t RETRY_1, T005t), una mas del limite, declarado
+CIERRE: 23 llamadas con respuesta mas 1 sin respuesta por tiempo de espera; 12 reintentos; 4 de solo pruebas (T002t, T002t RETRY_1, T005t, T006 RETRY_2), dos mas del limite MAX_TEST_ONLY_CALLS=2, declarado; coste DeepSeek aproximado 0,10 USD
 Aplicaciones mecanicas declaradas: ruff --fix (imports y formato), un bloque por lineas en T001, T004b y T006, retirada de marcadores y exceso de aplicacion por mis herramientas

@@ -7,4 +7,4 @@ EXECUTOR DEEPSEEK; MODEL deepseek-v4-pro; RETRY_MAX 2; SECURITY_SENSITIVE sí; l
 - [X] T003 Cliente, lista, formulario, menú y rutas
 - [X] T004 Ficha: composición, miembros, inhibiciones, historia
 - [X] T005 Vitest y E2E representativa
-- [ ] T006 Validación, UAT, matrices y cierre
+- [X] T006 Validación, UAT, matrices y cierre
