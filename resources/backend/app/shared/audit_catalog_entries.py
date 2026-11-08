@@ -507,6 +507,7 @@ _PARTE_IMPORTACIONES: tuple[AuditActionSpec, ...] = (
     _e("IMPORT_CORRECTION_RESOLVED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("correction_id", "status"), "Corrección resuelta"),
     _e("IMPORT_CORRECTION_CANCELLED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("correction_id", "status"), "Corrección cancelada"),
     _e("IMPORT_DISPATCH_CONFIRMED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("status", "dispatched_at"), "Despacho confirmado"),
+    _e("IMPORT_RECEIPT_CREATED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("receipt_id", "code", "warehouse_id"), "Recepción creada desde la importación"),
 )
 
 ENTRIES: tuple[AuditActionSpec, ...] = _PARTE_A + _PARTE_B + _PARTE_C + _PARTE_TERCEROS + _PARTE_IMPORTACIONES

@@ -402,3 +402,4 @@ Clave = (acción, entidad). Retención de todas las entradas: `PRESERVE_UNTIL_RE
 | 396 | `USER_CREATED` | `User` | identity_access | 001 | TENANT | SECURITY | BUSINESS_COMMIT | username | Usuario creado | ACTIVE | STATIC | — | sí |
 | 397 | `USER_SCOPE_CHANGED` | `UserRole` | identity_access | 001 | TENANT | AUTHORITY | BUSINESS_COMMIT | company_id, role_id, user_id | Alcance de usuario cambiado (migración) | ACTIVE | MIGRATION | alembic 0060_spec003_admin_split | sí |
 | 398 | `WITHHOLDING_TRANSITIONED` | `Withholding` | purchasing | 004 | COMPANY | FINANCIAL | BUSINESS_COMMIT | target | Cambio de estado de retención | ACTIVE | STATIC | — | sí |
+| 399 | `IMPORT_RECEIPT_CREATED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | code, receipt_id, warehouse_id | Recepción creada desde la importación | ACTIVE | STATIC | — | sí |

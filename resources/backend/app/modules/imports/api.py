@@ -18,8 +18,19 @@ from app.modules.identity_access.models import User
 from app.modules.imports import service
 from app.modules.imports.models import ImportFile
 from app.shared.audit_catalog import label_of, safe_details
+from app.shared.clock import InstanteDeEntrada
 
 router = APIRouter(prefix="/importaciones", tags=["importaciones"])
+
+
+class ReceiptBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    code: str = Field(min_length=1, max_length=64)
+    warehouse_id: str
+    packing_list_ref: str | None = Field(default=None, max_length=120)
+    supplier_invoice_ref: str | None = Field(default=None, max_length=120)
+    packages_declared: int | None = Field(default=None, ge=0)
+    unloading_scheduled_at: InstanteDeEntrada | None = None
 
 
 class CreateImportFileBody(BaseModel):
@@ -276,6 +287,33 @@ def add_tracking_event(
     db.commit()
     db.refresh(file)
     db.refresh(event)
+    return service.file_detail(db, file)
+
+
+@router.post("/{file_id}/receipts", dependencies=[Depends(require_write_allowed)])
+def create_receipt(
+    file_id: str,
+    body: ReceiptBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    receipt = service.create_file_receipt(
+        db,
+        file=file,
+        code=body.code,
+        warehouse_id=body.warehouse_id,
+        packing_list_ref=body.packing_list_ref,
+        supplier_invoice_ref=body.supplier_invoice_ref,
+        packages_declared=body.packages_declared,
+        unloading_scheduled_at=body.unloading_scheduled_at,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    db.refresh(receipt)
     return service.file_detail(db, file)
 
 

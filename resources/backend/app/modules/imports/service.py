@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -17,11 +17,22 @@ from app.modules.imports.models import (
     ImportFinancialLink,
     ImportTrackingEvent,
 )
+from app.modules.inventory import service as inv_service
+from app.modules.inventory.models import InventoryBalance, InventoryMovement
 from app.modules.master_data import party_service
 from app.modules.master_data import service as master_service
-from app.modules.master_data.models import Party
+from app.modules.master_data.models import CatalogItem, Party
+from app.modules.organization.models import Warehouse, WarehouseLocation
 from app.modules.purchasing import service as ap_service
-from app.modules.purchasing.models import Advance, Payment, PurchaseOrder
+from app.modules.purchasing.models import (
+    Advance,
+    GoodsReceipt,
+    GoodsReceiptLine,
+    Payment,
+    PurchaseOrder,
+    ReceiptConfirmation,
+    ReceiptIncident,
+)
 from app.shared.audit import record_audit
 from app.shared.clock import hoy_de_negocio
 
@@ -1092,6 +1103,7 @@ def allowed_actions(file: ImportFile) -> dict[str, bool]:
         "confirm_documents": file.status == "ORDERED",
         "confirm_dispatch": file.status == "DOCUMENTS_COMPLETE",
         "cancel": file.status in ("NEGOTIATING", "ORDERED", "DOCUMENTS_COMPLETE"),
+        "create_receipt": file.status == "DISPATCHED",
     }
 
 
@@ -1112,6 +1124,378 @@ def _party_name(db: Session, party_id: str | None) -> str | None:
         return None
     party = db.get(Party, party_id)
     return party.name if party else None
+
+
+def create_file_receipt(
+    db: Session,
+    *,
+    file: ImportFile,
+    code: str,
+    warehouse_id: str,
+    packing_list_ref: str | None,
+    supplier_invoice_ref: str | None,
+    packages_declared: int | None,
+    actor_id: str,
+    tenant_id: str,
+    unloading_scheduled_at: datetime | None = None,
+) -> GoodsReceipt:
+    if file.status != "DISPATCHED":
+        raise ConflictError("IMPORT_INVALID_STATE", message="El expediente no está despachado")
+    if file.order_id is None:
+        raise ConflictError("IMPORT_INVALID_STATE", message="El expediente no tiene una orden vinculada")
+    receipt = ap_service.create_receipt(
+        db,
+        company_id=file.company_id,
+        order_id=file.order_id,
+        code=code,
+        warehouse_id=warehouse_id,
+        packing_list_ref=packing_list_ref,
+        supplier_invoice_ref=supplier_invoice_ref,
+        packages_declared=packages_declared,
+        actor=actor_id,
+        unloading_scheduled_at=unloading_scheduled_at,
+    )
+    _audit(
+        db,
+        action="IMPORT_RECEIPT_CREATED",
+        file=file,
+        actor_id=actor_id,
+        tenant_id=tenant_id,
+        after={
+            "receipt_id": str(receipt.id),
+            "code": receipt.code,
+            "warehouse_id": str(receipt.warehouse_id),
+        },
+    )
+    return receipt
+
+
+def _logistics_detail(db: Session, file: ImportFile) -> dict[str, Any] | None:
+    if file.order_id is None or file.status == "CANCELLED":
+        return None
+
+    receipts = list(
+        db.scalars(
+            select(GoodsReceipt).where(
+                GoodsReceipt.order_id == file.order_id,
+                GoodsReceipt.company_id == file.company_id,
+            )
+        )
+    )
+    if not receipts:
+        return _logistics_payload(db, file, receipts, "NO_RECEIPT")
+
+    active_receipts = [receipt for receipt in receipts if receipt.status != "CANCELLED"]
+    if any(receipt.arrival_at is None for receipt in active_receipts):
+        return _logistics_payload(db, file, receipts, "AWAITING_ARRIVAL")
+
+    if any(
+        receipt.status not in ("ACCEPTED", "PARTIALLY_ACCEPTED", "CLOSED", "REJECTED")
+        for receipt in active_receipts
+    ):
+        return _logistics_payload(db, file, receipts, "RECEIVING")
+
+    receipt_ids = [receipt.id for receipt in receipts]
+    incidents = list(
+        db.scalars(
+            select(ReceiptIncident).where(ReceiptIncident.receipt_id.in_(receipt_ids))
+        )
+    ) if receipt_ids else []
+    if any(
+        incident.status not in ("RESUELTA", "ANULADA")
+        for incident in incidents
+    ):
+        return _logistics_payload(db, file, receipts, "INCIDENTS_OPEN")
+
+    confirmations = list(
+        db.scalars(
+            select(ReceiptConfirmation).where(
+                ReceiptConfirmation.receipt_id.in_(receipt_ids)
+            )
+        )
+    ) if receipt_ids else []
+    for receipt in active_receipts:
+        if receipt.status == "ACCEPTED" and receipt.confirmation_status != ap_service.CONFIRMATION_DONE:
+            return _logistics_payload(db, file, receipts, "PENDING_CONFIRMATION")
+
+    quantities = _logistics_quantities(db, file, receipts, confirmations)
+    if any(row["pending_putaway"] > Decimal("0") for row in quantities):
+        return _logistics_payload(db, file, receipts, "PENDING_PUTAWAY")
+
+    return _logistics_payload(db, file, receipts, "PUT_AWAY")
+
+
+def _logistics_payload(
+    db: Session,
+    file: ImportFile,
+    receipts: list[GoodsReceipt],
+    stage: str,
+) -> dict[str, Any]:
+    receipt_ids = [receipt.id for receipt in receipts]
+
+    incident_rows = list(
+        db.scalars(
+            select(ReceiptIncident).where(ReceiptIncident.receipt_id.in_(receipt_ids))
+        )
+    ) if receipt_ids else []
+
+    receipts_by_id: dict[Any, Any] = {receipt.id: receipt for receipt in receipts}
+    lines = list(
+        db.scalars(
+            select(GoodsReceiptLine).where(GoodsReceiptLine.receipt_id.in_(receipt_ids))
+        )
+    ) if receipt_ids else []
+    product_ids = list({line.product_id for line in lines if line.product_id is not None})
+    products_by_id: dict[Any, Any] = {
+        product.id: product
+        for product in db.scalars(select(CatalogItem).where(CatalogItem.id.in_(product_ids)))
+    } if product_ids else {}
+    warehouses = list(
+        db.scalars(select(Warehouse).where(Warehouse.id.in_([r.warehouse_id for r in receipts if r.warehouse_id is not None])))
+    )
+    warehouses_by_id: dict[Any, Any] = {warehouse.id: warehouse for warehouse in warehouses}
+
+    confirmations = list(
+        db.scalars(
+            select(ReceiptConfirmation).where(
+                ReceiptConfirmation.receipt_id.in_(receipt_ids)
+            )
+        )
+    ) if receipt_ids else []
+    quantities = _logistics_quantities(db, file, receipts, confirmations)
+
+    incidents = []
+    for incident in incident_rows:
+        receipt = receipts_by_id.get(incident.receipt_id)
+        line = next((item for item in lines if item.id == incident.receipt_line_id), None)
+        product_name = products_by_id[line.product_id].name if line and line.product_id and line.product_id in products_by_id else None
+        incidents.append({
+            "id": str(incident.id),
+            "code": incident.code,
+            "receipt_id": str(incident.receipt_id),
+            "receipt_code": receipt.code if receipt else None,
+            "incident_type": incident.incident_type,
+            "status": incident.status,
+            "affected_base_quantity": str(incident.affected_base_quantity) if incident.affected_base_quantity is not None else None,
+            "product_name": product_name,
+        })
+
+    return {
+        "stage": stage,
+        "receipts": [
+            {
+                "id": str(receipt.id),
+                "code": receipt.code,
+                "status": receipt.status,
+                "quality_status": receipt.quality_status,
+                "confirmation_status": receipt.confirmation_status,
+                "warehouse_id": str(receipt.warehouse_id) if receipt.warehouse_id else None,
+                "warehouse_name": warehouses_by_id[receipt.warehouse_id].name if receipt.warehouse_id in warehouses_by_id else None,
+                "arrival_at": receipt.arrival_at.isoformat() if receipt.arrival_at else None,
+                "packages_declared": receipt.packages_declared,
+                "packages_received": receipt.packages_received,
+                "record_issued_at": receipt.record_issued_at.isoformat() if receipt.record_issued_at else None,
+                "can_confirm_arrival": receipt.status in ("DRAFT", "CONFIRMED") and receipt.arrival_at is None,
+            }
+            for receipt in receipts
+        ],
+        "incidents": incidents,
+        "quantities": [
+            {
+                "receipt_code": row["receipt_code"],
+                "product_id": str(row["product_id"]),
+                "product_name": row["product_name"],
+                "received_base": str(row["received_base"]),
+                "confirmed_available": str(row["confirmed_available"]),
+                "rejected": str(row["rejected"]),
+                "located": str(row["located"]),
+                "pending_putaway": str(row["pending_putaway"]),
+            }
+            for row in quantities
+        ],
+        "putaway_pending": _putaway_pending(db, file, quantities),
+        "locations": _locations_detail(db, file, receipts),
+    }
+
+
+def _logistics_quantities(
+    db: Session,
+    file: ImportFile,
+    receipts: list[GoodsReceipt],
+    confirmations: list[ReceiptConfirmation],
+) -> list[dict[str, Any]]:
+    receipt_ids = [receipt.id for receipt in receipts]
+    lines = list(
+        db.scalars(
+            select(GoodsReceiptLine).where(GoodsReceiptLine.receipt_id.in_(receipt_ids))
+        )
+    ) if receipt_ids else []
+
+    movement_type = inv_service._get_movement_type_by_code_optional(db, file.company_id, "UBICACION")
+    movement_type_id = movement_type.id if movement_type else None
+    movements = list(
+        db.scalars(
+            select(InventoryMovement).where(
+                InventoryMovement.company_id == file.company_id,
+                InventoryMovement.document_ref.in_([receipt.code for receipt in receipts]),
+                InventoryMovement.status == "POSTED",
+                InventoryMovement.reversed_by_id.is_(None),
+                InventoryMovement.movement_type_id == movement_type_id,
+            )
+        )
+    ) if movement_type_id is not None else []
+
+    lines_by_receipt: dict[Any, list[GoodsReceiptLine]] = {}
+    for line in lines:
+        lines_by_receipt.setdefault(line.receipt_id, []).append(line)
+
+    confirmations_by_receipt_line: dict[Any, list[ReceiptConfirmation]] = {}
+    for confirmation in confirmations:
+        confirmations_by_receipt_line.setdefault(confirmation.receipt_line_id, []).append(confirmation)
+
+    movements_by_product: dict[str, list[InventoryMovement]] = {}
+    for movement in movements:
+        if movement.product_id is not None:
+            movements_by_product.setdefault(movement.product_id, []).append(movement)
+
+    product_ids = list({line.product_id for line in lines if line.product_id is not None})
+    products_by_id: dict[Any, Any] = {
+        product.id: product
+        for product in db.scalars(select(CatalogItem).where(CatalogItem.id.in_(product_ids)))
+    } if product_ids else {}
+
+    quantities: list[dict[str, Any]] = []
+    for receipt in receipts:
+        for line in lines_by_receipt.get(receipt.id, []):
+            if line.product_id is None:
+                continue
+            line_confirmations = confirmations_by_receipt_line.get(line.id, [])
+            confirmed_available = sum(
+                (confirmation.base_quantity or Decimal("0"))
+                for confirmation in line_confirmations
+                if confirmation.target_state == "DISPONIBLE"
+            )
+            rejected = sum(
+                (confirmation.base_quantity or Decimal("0"))
+                for confirmation in line_confirmations
+                if confirmation.target_state == "RECHAZADO"
+            )
+            located = sum(
+                (movement.base_quantity or Decimal("0"))
+                for movement in movements_by_product.get(line.product_id, [])
+            )
+            received_base = ap_service._base_recibida(line)
+            pending_putaway = max(confirmed_available - located, Decimal("0"))
+            product = products_by_id.get(line.product_id)
+            quantities.append({
+                "receipt_code": receipt.code,
+                "receipt_id": receipt.id,
+                "product_id": line.product_id,
+                "product_name": product.name if product else None,
+                "received_base": received_base,
+                "confirmed_available": confirmed_available,
+                "rejected": rejected,
+                "located": located,
+                "pending_putaway": pending_putaway,
+            })
+    return quantities
+
+
+def _putaway_pending(db: Session, file: ImportFile, quantities: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for row in quantities:
+        pending = row["pending_putaway"]
+        if pending <= Decimal("0"):
+            continue
+        balances = list(
+            db.scalars(
+                select(InventoryBalance).where(
+                    InventoryBalance.company_id == file.company_id,
+                    InventoryBalance.product_id == row["product_id"],
+                    InventoryBalance.qty_on_hand > 0,
+                    InventoryBalance.location_id.is_(None),
+                )
+            )
+        )
+        receipt = db.scalar(select(GoodsReceipt).where(GoodsReceipt.id == row["receipt_id"]))
+        if receipt is None or receipt.warehouse_id is None:
+            continue
+        for balance in balances:
+            if balance.warehouse_id != receipt.warehouse_id:
+                continue
+            if pending <= Decimal("0"):
+                break
+            base = balance.qty_on_hand or Decimal("0")
+            if base <= Decimal("0"):
+                continue
+            pending_base = min(pending, base)
+            product_name = row["product_name"]
+            result.append({
+                "receipt_code": row["receipt_code"],
+                "warehouse_id": str(receipt.warehouse_id),
+                "warehouse_name": row.get("warehouse_name"),
+                "product_id": str(row["product_id"]),
+                "product_name": product_name,
+                "state": balance.state,
+                "lot_id": str(balance.lot_id) if balance.lot_id else None,
+                "serial_id": str(balance.serial_id) if balance.serial_id else None,
+                "pending_base": str(pending_base),
+            })
+            pending -= pending_base
+    return result
+
+
+def _locations_detail(db: Session, file: ImportFile, receipts: list[GoodsReceipt]) -> list[dict[str, Any]]:
+    receipt_ids = [receipt.id for receipt in receipts]
+    lines = list(
+        db.scalars(
+            select(GoodsReceiptLine).where(GoodsReceiptLine.receipt_id.in_(receipt_ids))
+        )
+    ) if receipt_ids else []
+    product_ids = list({line.product_id for line in lines if line.product_id is not None})
+    if not product_ids:
+        return []
+    movement_type = inv_service._get_movement_type_by_code_optional(db, file.company_id, "UBICACION")
+    if movement_type is None:
+        return []
+    movements = list(
+        db.scalars(
+            select(InventoryMovement).where(
+                InventoryMovement.company_id == file.company_id,
+                InventoryMovement.movement_type_id == movement_type.id,
+                InventoryMovement.document_ref.in_([receipt.code for receipt in receipts]),
+                InventoryMovement.status == "POSTED",
+                InventoryMovement.reversed_by_id.is_(None),
+            )
+        )
+    )
+    if not movements:
+        return []
+    location_ids = [movement.target_location_id for movement in movements if movement.target_location_id is not None]
+    locations_by_id: dict[Any, Any] = {
+        location.id: location
+        for location in db.scalars(select(WarehouseLocation).where(WarehouseLocation.id.in_(location_ids)))
+    } if location_ids else {}
+    products_by_id: dict[Any, Any] = {
+        product.id: product
+        for product in db.scalars(select(CatalogItem).where(CatalogItem.id.in_(product_ids)))
+    }
+    grouped: dict[tuple[str, str], Decimal] = {}
+    for movement in movements:
+        if movement.product_id is None or movement.target_location_id is None:
+            continue
+        key = (movement.product_id, movement.target_location_id)
+        grouped[key] = grouped.get(key, Decimal("0")) + (movement.base_quantity or Decimal("0"))
+    result: list[dict[str, Any]] = []
+    for (product_id, location_id), quantity in grouped.items():
+        location = locations_by_id.get(location_id)
+        product = products_by_id.get(product_id)
+        result.append({
+            "product_name": product.name if product else None,
+            "location_label": (location.code + " - " + location.name) if (location and location.code and location.name) else (location.name if location else None),
+            "quantity": str(quantity),
+        })
+    return result
 
 
 def file_summary(db: Session, file: ImportFile) -> dict[str, Any]:
@@ -1143,6 +1527,7 @@ def file_summary(db: Session, file: ImportFile) -> dict[str, Any]:
 
 
 def file_detail(db: Session, file: ImportFile) -> dict[str, Any]:
+    logistics = _logistics_detail(db, file)
     result = file_summary(db, file)
     result.update(
         {
@@ -1163,10 +1548,27 @@ def file_detail(db: Session, file: ImportFile) -> dict[str, Any]:
             "corrections": _corrections_detail(db, file),
             "summary": _summary_detail(db, file),
             "allowed_actions": allowed_actions(file),
-            "next_action": next_action(file),
+            "next_action": _next_action_for_stage(logistics["stage"]) if file.status == "DISPATCHED" and logistics else next_action(file),
+            "logistics": logistics,
         }
     )
     return result
+
+
+def _next_action_for_stage(stage: str | None) -> str:
+    if stage == "NO_RECEIPT":
+        return "Registra la recepción de la mercancía."
+    if stage == "AWAITING_ARRIVAL":
+        return "Confirma el arribo de la mercancía."
+    if stage == "RECEIVING":
+        return "Completa la recepción física: líneas, inspección y aceptación."
+    if stage == "INCIDENTS_OPEN":
+        return "Resuelve las incidencias de recepción."
+    if stage == "PENDING_CONFIRMATION":
+        return "Cuenta y confirma el inventario recibido."
+    if stage == "PENDING_PUTAWAY":
+        return "Ubica la mercancía confirmada."
+    return "Mercancía recibida y ubicada. Queda pendiente el costo de importación."
 
 
 def _documents_detail(db: Session, file: ImportFile) -> list[dict[str, Any]]:
@@ -1336,6 +1738,10 @@ def _summary_detail(db: Session, file: ImportFile) -> dict[str, Any]:
     elif file.status == "DOCUMENTS_COMPLETE":
         if file.actual_departure_date is None:
             pending.append("Registre la fecha real de salida para confirmar el despacho.")
+    elif file.status == "DISPATCHED":
+        logistics = _logistics_detail(db, file)
+        if logistics is not None and logistics.get("stage") != "PUT_AWAY":
+            pending.append(_next_action_for_stage(logistics.get("stage")))
 
     documents = list(
         db.scalars(
