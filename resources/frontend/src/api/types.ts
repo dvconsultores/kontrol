@@ -165,6 +165,10 @@ export interface Party {
   roles: string[];
   status: string;
   allowed_actions: AllowedActions;
+  nationality: string | null;
+  residence: string | null;
+  economic_activity: string | null;
+  version: number;
 }
 
 export interface PagedResult<T> {

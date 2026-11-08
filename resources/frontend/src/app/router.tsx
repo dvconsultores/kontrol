@@ -59,6 +59,8 @@ export const router = createBrowserRouter([
           { path: "seguridad/mfa", lazy: () => import("@/modules/seguridad/mfa/MiMfaPage").then((m) => ({ Component: m.MiMfaPage })) },
           { path: "seguridad/mfa/alta", lazy: () => import("@/pages/MfaAltaPage").then((m) => ({ Component: m.MfaAltaPage })) },
           { path: "maestros/terceros", lazy: () => import("@/modules/maestros/terceros/TercerosPage").then((m) => ({ Component: m.TercerosPage })) },
+          { path: "maestros/terceros/nuevo", lazy: () => import("@/modules/maestros/terceros/TerceroNuevoPage").then((m) => ({ Component: m.TerceroNuevoPage })) },
+          { path: "maestros/terceros/:partyId", lazy: () => import("@/modules/maestros/terceros/TerceroDetallePage").then((m) => ({ Component: m.TerceroDetallePage })) },
           { path: "maestros/unidades", lazy: () => import("@/modules/maestros/unidades/UnidadesPage").then((m) => ({ Component: m.UnidadesPage })) },
           { path: "maestros/productos/:productId/presentaciones", lazy: () => import("@/modules/maestros/presentaciones/PresentacionesPage").then((m) => ({ Component: m.PresentacionesPage })) },
           { path: "maestros/perfiles", lazy: () => import("@/modules/maestros/perfiles/PerfilesFiscalesPage").then((m) => ({ Component: m.PerfilesFiscalesPage })) },

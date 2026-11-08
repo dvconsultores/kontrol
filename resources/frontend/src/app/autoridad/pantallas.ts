@@ -19,6 +19,8 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "seguridad/mfa": null,
   "seguridad/mfa/alta": null,
   "maestros/terceros": { capacidad: "maestros:view", alcance: "empresa" },
+  "maestros/terceros/nuevo": { capacidad: "maestros:create", alcance: "empresa" },
+  "maestros/terceros/:partyId": { capacidad: "maestros:view", alcance: "empresa" },
   "maestros/unidades": { capacidad: "maestros:view", alcance: "empresa" },
   "maestros/productos/:productId/presentaciones": { capacidad: "maestros:view", alcance: "empresa" },
   "maestros/perfiles": { capacidad: "maestros:view", alcance: "empresa" },
