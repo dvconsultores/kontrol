@@ -7,4 +7,4 @@ EXECUTOR DEEPSEEK; MODEL deepseek-v4-pro; RETRY_MAX 2; EGRESS_SAFE sí; SECURITY
 - [X] T003 Cliente, lista, ruta y menú
 - [X] T004 Detalle del evento
 - [X] T005 Pruebas Vitest y E2E representativa
-- [ ] T006 Validación, UAT, matrices y cierre
+- [X] T006 Validación, UAT, matrices y cierre

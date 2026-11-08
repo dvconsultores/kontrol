@@ -20,3 +20,6 @@ Llamada 7/12 · T003b ATTEMPT enviado
 T003b ATTEMPT: producto y selector AUDIT_PASS (Vitest 7/7); bloque de pruebas nuevas AUDIT_REJECT: inventa server.use y renderizarConCapacidades, .catch da verde falso; no aplicado
 Llamada 8/12 · T005 ATTEMPT enviado (pruebas 2/2)
 T005 ATTEMPT AUDIT_PASS: BIT-E2E-01 chromium 1/1 con axe; Vitest 8/8; API 5/5
+T005 sin mas llamadas. Validacion unica: backend dirigido PG 1212/0, Vitest 1430/1430, tsc, eslint, build, ruff, mypy 0 nuevos, OpenAPI 3 rutas nuevas 0 retiradas, migracion arriba-abajo-arriba
+Convergencia: 0 hallazgos. Relevo UAT a 0c0356b, humo 1/1
+CIERRE: 8 llamadas de 12; 2 de pruebas de 2; reintentos: T002 RETRY_1, T003 RETRY_1 y T003t; T003b producto con bloque de pruebas rechazado
