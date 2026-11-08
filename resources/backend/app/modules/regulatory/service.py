@@ -141,6 +141,10 @@ def create_vehicle(db: Session, *, company_id: str, plate: str, vehicle_type: st
                    capacity: float | None = None, owner_party_id: str | None = None,
                    documents: dict | None = None, actor: str | None = None) -> TransportVehicle:
     company_id = _company(company_id, obj="vehículo")
+    if owner_party_id is not None:
+        from app.modules.master_data import service as master_service
+
+        master_service.require_eligible_party(db, company_id=company_id, party_id=owner_party_id, role=None, require_active=True)
     v = TransportVehicle(company_id=company_id, plate=plate, vehicle_type=vehicle_type, capacity=capacity,
                          owner_party_id=owner_party_id, documents=json.dumps(documents or {}), status="ACTIVE",
                          created_by=actor)
@@ -152,6 +156,9 @@ def create_vehicle(db: Session, *, company_id: str, plate: str, vehicle_type: st
 def create_driver(db: Session, *, company_id: str, party_id: str, license: str | None = None,
                   documents: dict | None = None, actor: str | None = None) -> TransportDriver:
     company_id = _company(company_id, obj="conductor")
+    from app.modules.master_data import service as master_service
+
+    master_service.require_eligible_party(db, company_id=company_id, party_id=party_id, role=None, require_active=True)
     d = TransportDriver(company_id=company_id, party_id=party_id, license=license,
                         documents=json.dumps(documents or {}), status="ACTIVE", created_by=actor)
     db.add(d)

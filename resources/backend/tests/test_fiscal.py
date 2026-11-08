@@ -39,9 +39,9 @@ COMPANY = EMPRESA_UNO
 OTHER = EMPRESA_DOS
 
 
-def _make_party(db: Session, company: str = COMPANY, code: str = "CLI-1") -> Party:
+def _make_party(db: Session, company: str = COMPANY, code: str = "CLI-1", roles: list[str] | None = None) -> Party:
     party = Party(company_id=company, code=code, name="Cliente SA", person_type="JURIDICA",
-                  tax_id=f"J-{abs(hash(code)) % 100000000}-1", roles=["CLIENTE"], status="ACTIVE")
+                  tax_id=f"J-{abs(hash(code)) % 100000000}-1", roles=roles or ["CLIENTE"], status="ACTIVE")
     db.add(party)
     db.flush()
     return party
@@ -198,14 +198,22 @@ class TestRetenciones:
                                                rate=rate, concept="Retención IVA 3%")
 
     def test_calculate_withholding_creates_004(self, db_session) -> None:
-        party = _make_party(db_session)
+        party = _make_party(db_session, roles=["PROVEEDOR"])
         self._make_rule(db_session)
         w = fiscal_service.calculate_withholding(db_session, company_id=COMPANY, party_id=str(party.id),
                                                  tax_type="IVA", code="RT-IVA", base=1000.0, period="2026-01")
         assert w.status == "CALCULADA" and w.amount == 30.0 and w.rule_ref == "RT-IVA"
 
-    def test_withholding_cycle_and_certificate(self, db_session) -> None:
+    def test_calculate_withholding_exige_proveedor(self, db_session) -> None:
         party = _make_party(db_session)
+        self._make_rule(db_session)
+        with pytest.raises(ConflictError) as exc:
+            fiscal_service.calculate_withholding(db_session, company_id=COMPANY, party_id=str(party.id),
+                                                 tax_type="IVA", code="RT-IVA", base=1000.0)
+        assert exc.value.code == "PARTY_ROLE_REQUIRED"
+
+    def test_withholding_cycle_and_certificate(self, db_session) -> None:
+        party = _make_party(db_session, roles=["PROVEEDOR"])
         self._make_rule(db_session)
         w = fiscal_service.calculate_withholding(db_session, company_id=COMPANY, party_id=str(party.id),
                                                  tax_type="IVA", code="RT-IVA", base=1000.0)

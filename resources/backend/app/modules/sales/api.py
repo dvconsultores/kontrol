@@ -1333,7 +1333,7 @@ def create_withholding_suffered(body: WithholdingCreate, db: Session = Depends(g
     w = ap_service.create_withholding(db, company_id=ctx.company_id, party_id=body.party_id, tax_type=body.tax_type,
                                       rule_ref=body.rule_ref, base=body.base, rate_ref=body.rate_ref,
                                       amount=body.amount, period=body.period, source_event=body.source_event,
-                                      actor=str(actor.id))
+                                      actor=str(actor.id), party_role="CLIENTE")
     db.commit()
     db.refresh(w)
     return {"id": w.id, "party_id": w.party_id, "tax_type": w.tax_type, "amount": w.amount, "status": w.status}

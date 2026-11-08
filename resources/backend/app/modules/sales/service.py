@@ -199,6 +199,12 @@ def _require_party(db: Session, company_id: str, party_id: str) -> None:
         raise NotFoundError(code="PARTY_NOT_FOUND", message="Tercero no encontrado")
 
 
+def _require_customer(db: Session, company_id: str, customer_id: str, *, require_active: bool) -> None:
+    from app.modules.master_data import service as master_service
+
+    master_service.require_eligible_party(db, company_id=company_id, party_id=customer_id, role="CLIENTE", require_active=require_active)
+
+
 def _require_item(db: Session, company_id: str, item_id: str) -> None:
     """Valida que el artículo pertenezca a la empresa antes de persistir."""
     from app.modules.master_data.models import CatalogItem
@@ -254,7 +260,7 @@ def create_quote(db: Session, *, company_id: str, code: str, customer_id: str, p
     ciclo declarado, el estado inicial es el borrador.
     """
     company_id = _company(company_id, obj="cotización")
-    _require_party(db, company_id, customer_id)
+    _require_customer(db, company_id, customer_id, require_active=True)
     if price_list_id:
         from app.modules.commercial.models import PriceList
 
@@ -530,7 +536,7 @@ def convertir_en_pedido(db: Session, *, company_id: str, quote_id: str,
 def create_order(db: Session, *, company_id: str, code: str, customer_id: str, warehouse_id: str | None = None,
                  margin: float | None = None, currency: str = "VED", actor: str | None = None) -> SalesOrder:
     company_id = _company(company_id, obj="orden de venta")
-    _require_party(db, company_id, customer_id)
+    _require_customer(db, company_id, customer_id, require_active=True)
     if warehouse_id:
         _require_warehouse(db, company_id, warehouse_id)
     order = SalesOrder(company_id=company_id, code=code, customer_id=customer_id, warehouse_id=warehouse_id,
@@ -2564,7 +2570,7 @@ def order_dispatch_dict(db: Session, *, company_id: str, order_id: str) -> dict:
 def create_invoice(db: Session, *, company_id: str, customer_id: str, base_fiscal_currency: str = "VED",
                    actor: str | None = None, idempotency_key: str | None = None) -> SalesInvoice:
     company_id = _company(company_id, obj="factura de venta")
-    _require_party(db, company_id, customer_id)
+    _require_customer(db, company_id, customer_id, require_active=True)
     if idempotency_key:
         # Acotada por empresa: sin esto, A pedía una factura con una clave que B
         # ya había usado y recibía la factura fiscal de B, con su número y su
@@ -2669,7 +2675,7 @@ def create_credit_note(db: Session, *, company_id: str, customer_id: str, number
                        invoice_ref: str | None = None, currency: str = "VED",
                        actor: str | None = None) -> SalesCreditNote:
     company_id = _company(company_id, obj="nota de crédito")
-    _require_party(db, company_id, customer_id)
+    _require_customer(db, company_id, customer_id, require_active=False)
     if amount <= 0:
         raise KontrolError(code="INVALID_AMOUNT", message="El monto de la nota debe ser positivo", status_code=422)
     note = SalesCreditNote(company_id=company_id, customer_id=customer_id, invoice_ref=invoice_ref,
@@ -3010,7 +3016,7 @@ def create_debit_note(db: Session, *, company_id: str, customer_id: str, number:
                       invoice_ref: str | None = None, currency: str = "VED",
                       actor: str | None = None) -> SalesDebitNote:
     company_id = _company(company_id, obj="nota de débito")
-    _require_party(db, company_id, customer_id)
+    _require_customer(db, company_id, customer_id, require_active=False)
     if amount <= 0:
         raise KontrolError(code="INVALID_AMOUNT", message="El monto de la nota debe ser positivo", status_code=422)
     note = SalesDebitNote(company_id=company_id, customer_id=customer_id, invoice_ref=invoice_ref,

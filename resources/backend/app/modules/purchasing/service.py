@@ -195,12 +195,19 @@ def _company(company_id: str | None, *, obj: str) -> str:
 # --------------------------------------------------------------------------- #
 # Helpers de dominio
 # --------------------------------------------------------------------------- #
-def _require_party(db: Session, company_id: str, party_id: str) -> None:
-    from app.modules.master_data.models import Party
+def _require_party(db: Session, company_id: str, party_id: str, *, role: str, require_active: bool) -> None:
+    from app.modules.master_data import service as master_service
 
-    party = db.get(Party, party_id)
-    if not party or party.company_id != company_id:
-        raise NotFoundError(code="PARTY_NOT_FOUND", message="Tercero no encontrado")
+    master_service.require_eligible_party(db, company_id=company_id, party_id=party_id, role=role, require_active=require_active)
+
+
+def _role_for_direction(direction: str) -> str:
+    """OUT liquida con un proveedor (CxP); IN con un cliente (CxC)."""
+    if direction == "OUT":
+        return "PROVEEDOR"
+    if direction == "IN":
+        return "CLIENTE"
+    raise KontrolError(code="INVALID_DIRECTION", message="La dirección debe ser IN u OUT", status_code=422)
 
 
 def _require_product(db: Session, company_id: str, product_id: str) -> None:
@@ -320,7 +327,7 @@ def _requisition_context(db: Session, requisition: PurchaseRequisition) -> dict[
 def create_quote(db: Session, *, company_id: str, code: str, supplier_id: str, validity_until=None,
                  currency: str = "VED", terms: str | None = None, actor: str | None = None) -> SupplierQuote:
     company_id = _company(company_id, obj="cotización")
-    _require_party(db, company_id, supplier_id)
+    _require_party(db, company_id, supplier_id, role="PROVEEDOR", require_active=True)
     quote = SupplierQuote(company_id=company_id, code=code, supplier_id=supplier_id, validity_until=validity_until,
                           currency=currency, terms=terms, status="ACTIVE", created_by=actor)
     db.add(quote)
@@ -367,7 +374,7 @@ def add_quote_line(db: Session, *, company_id: str, quote_id: str, product_id: s
 def create_order(db: Session, *, company_id: str, code: str, supplier_id: str, terms: str | None = None,
                  expected_date=None, currency: str = "VED", actor: str | None = None) -> PurchaseOrder:
     company_id = _company(company_id, obj="orden")
-    _require_party(db, company_id, supplier_id)
+    _require_party(db, company_id, supplier_id, role="PROVEEDOR", require_active=True)
     order = PurchaseOrder(company_id=company_id, code=code, supplier_id=supplier_id, terms=terms,
                           expected_date=expected_date, currency=currency, status="DRAFT", created_by=actor)
     db.add(order)
@@ -1392,7 +1399,7 @@ def create_invoice(db: Session, *, company_id: str, supplier_id: str, invoice_nu
                    control_number: str | None = None, issue_date=None, currency: str = "VED",
                    actor: str | None = None, idempotency_key: str | None = None) -> SupplierInvoice:
     company_id = _company(company_id, obj="factura")
-    _require_party(db, company_id, supplier_id)
+    _require_party(db, company_id, supplier_id, role="PROVEEDOR", require_active=True)
     if idempotency_key:
         existing = db.execute(
             select(SupplierInvoice).where(SupplierInvoice.idempotency_key == idempotency_key,
@@ -1561,7 +1568,7 @@ def create_credit_note(db: Session, *, company_id: str, supplier_id: str, number
                        invoice_ref: str | None = None, currency: str = "VED",
                        actor: str | None = None) -> SupplierCreditNote:
     company_id = _company(company_id, obj="nota de crédito")
-    _require_party(db, company_id, supplier_id)
+    _require_party(db, company_id, supplier_id, role="PROVEEDOR", require_active=False)
     if amount <= 0:
         raise KontrolError(code="INVALID_AMOUNT", message="El monto de la nota debe ser positivo", status_code=422)
     note = SupplierCreditNote(company_id=company_id, supplier_id=supplier_id, invoice_ref=invoice_ref,
@@ -1604,7 +1611,7 @@ def register_payment(db: Session, *, company_id: str, party_id: str, amount: flo
                      instruments: list[dict] | None = None, actor: str | None = None,
                      idempotency_key: str | None = None, direction: str = "OUT") -> Payment:
     company_id = _company(company_id, obj="pago")
-    _require_party(db, company_id, party_id)
+    _require_party(db, company_id, party_id, role=_role_for_direction(direction), require_active=False)
     if amount <= 0:
         raise KontrolError(code="INVALID_AMOUNT", message="El monto del pago debe ser positivo", status_code=422)
     if idempotency_key:
@@ -1756,7 +1763,7 @@ def _sync_invoice_paid(db: Session, *, target_open_item_id: str) -> None:
 def register_advance(db: Session, *, company_id: str, party_id: str, amount: float, currency: str = "VED",
                      actor: str | None = None, direction: str = "OUT") -> Advance:
     company_id = _company(company_id, obj="anticipo")
-    _require_party(db, company_id, party_id)
+    _require_party(db, company_id, party_id, role=_role_for_direction(direction), require_active=True)
     if amount <= 0:
         raise KontrolError(code="INVALID_AMOUNT", message="El monto del anticipo debe ser positivo", status_code=422)
     adv = Advance(company_id=company_id, party_id=party_id, direction=direction, currency=currency,
@@ -1768,9 +1775,9 @@ def register_advance(db: Session, *, company_id: str, party_id: str, amount: flo
 
 def create_withholding(db: Session, *, company_id: str, party_id: str, tax_type: str, rule_ref: str | None,
                        base: float, rate_ref: str | None, amount: float, period: str | None = None,
-                       source_event: str | None = None, actor: str | None = None) -> Withholding:
+                       source_event: str | None = None, actor: str | None = None, party_role: str) -> Withholding:
     company_id = _company(company_id, obj="retención")
-    _require_party(db, company_id, party_id)
+    _require_party(db, company_id, party_id, role=party_role, require_active=False)
     withholding = Withholding(company_id=company_id, party_id=party_id, source_event=source_event, tax_type=tax_type,
                               rule_ref=rule_ref, base=base, rate_ref=rate_ref, amount=amount, period=period,
                               status="CALCULADA", created_by=actor)
@@ -1821,7 +1828,7 @@ def aging(db: Session, *, company_id: str, party_id: str | None = None, item_typ
 def create_schedule(db: Session, *, company_id: str, party_id: str, due_date, amount: float,
                     actor: str | None = None) -> PaymentSchedule:
     company_id = _company(company_id, obj="programación")
-    _require_party(db, company_id, party_id)
+    _require_party(db, company_id, party_id, role="PROVEEDOR", require_active=False)
     schedule = PaymentSchedule(company_id=company_id, party_id=party_id, due_date=due_date,
                                amount=amount, status="PENDING", created_by=actor)
     db.add(schedule)

@@ -13,7 +13,7 @@ import re
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.errors import ConflictError, KontrolError
+from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.master_data.models import Party
 
 # --------------------------------------------------------------------------- #
@@ -83,6 +83,18 @@ def ensure_no_duplicate(
             code="PARTY_DUPLICATE_TAX_ID",
             message=f"Ya existe un tercero con este RIF en el rol '{role}' para esta empresa.",
         )
+
+
+def require_eligible_party(db: Session, *, company_id: str, party_id: str, role: str | None, require_active: bool) -> Party:
+    """Autoridad única de elegibilidad del tercero para operaciones nuevas (delta terceros, Spec 002)."""
+    party = db.get(Party, party_id)
+    if party is None or party.company_id != company_id:
+        raise NotFoundError(code="PARTY_NOT_FOUND", message="Tercero no encontrado")
+    if role is not None and role.upper() not in {r.upper() for r in (party.roles or [])}:
+        raise ConflictError(code="PARTY_ROLE_REQUIRED", message=f"El tercero no tiene el rol {role.upper()}.")
+    if require_active and party.status != "ACTIVE":
+        raise ConflictError(code="PARTY_INACTIVE", message="El tercero no está activo.")
+    return party
 
 
 # --------------------------------------------------------------------------- #

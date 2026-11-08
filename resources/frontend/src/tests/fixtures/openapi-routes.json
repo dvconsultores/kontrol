@@ -2068,6 +2068,7 @@
         "page",
         "page_size",
         "q",
+        "role",
         "status"
       ]
     },

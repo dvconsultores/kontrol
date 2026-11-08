@@ -462,7 +462,7 @@ def calculate_withholding(db: Session, *, company_id: str, party_id: str, tax_ty
         amount = round(max(amount - float(rule.subtractor), 0.0), 2)
     return ap_service.create_withholding(db, company_id=company_id, party_id=party_id, tax_type=tax_type,
                                          rule_ref=code, base=base, rate_ref=str(rule.rate), amount=amount,
-                                         period=period, source_event=source_event, actor=actor)
+                                         period=period, source_event=source_event, actor=actor, party_role="PROVEEDOR")
 
 
 def transition_withholding(db: Session, *, company_id: str, withholding_id: str, target: str,

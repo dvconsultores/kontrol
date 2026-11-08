@@ -311,7 +311,8 @@ class TestRetencion:
         open_item = db_session.query(OpenItem).first()
         withholding = ap_service.create_withholding(db_session, company_id=COMPANY, party_id=invoice.supplier_id,
                                                     tax_type="ISLR", rule_ref="ISLR-RET-15", base=1000.0,
-                                                    rate_ref="RATE-15", amount=150.0, source_event=f"INVOICE:{invoice.id}")
+                                                    rate_ref="RATE-15", amount=150.0, source_event=f"INVOICE:{invoice.id}",
+                                                    party_role="PROVEEDOR")
         assert withholding.status == "CALCULADA"
         ap_service.transition_withholding(db_session, withholding=withholding, target="PRACTICADA")
         ap_service.apply_source(db_session, company_id=COMPANY, source_type="WITHHOLDING", source_id=str(withholding.id),

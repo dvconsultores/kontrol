@@ -6,7 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import String, cast, func, select
 from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
@@ -196,6 +196,7 @@ def _party_dict(db: Session, party: Party) -> dict[str, Any]:
 def list_parties(
     q: str = "",
     status: str | None = None,
+    role: str | None = Query(None, pattern=r"^[A-Za-z_]{1,32}$"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -208,6 +209,8 @@ def list_parties(
         query = query.where((Party.name.ilike(like)) | (Party.tax_id.ilike(like)) | (Party.code.ilike(like)))
     if status:
         query = query.where(Party.status == status)
+    if role:
+        query = query.where(func.upper(cast(Party.roles, String)).like(f'%"{role.upper()}"%'))
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
     items = db.execute(query.order_by(Party.created_at).offset((page - 1) * page_size).limit(page_size)).scalars().all()
     return {"items": [_party_dict(db, p) for p in items], "total": total, "page": page, "page_size": page_size}
