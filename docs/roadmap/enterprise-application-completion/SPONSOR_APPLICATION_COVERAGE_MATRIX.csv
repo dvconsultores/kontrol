@@ -1,0 +1,93 @@
+REQUIREMENT_ID,SPONSOR_MODULE,BUSINESS_PROCESS,USER_ROLE,MENU,SCREEN,BACKEND,DATABASE,API,PERMISSIONS,INTEGRATION,REPORT,AUDIT,STATUS,USER_CAN_EXECUTE_E2E,MISSING_PRODUCT,OWNER_UAT_READY
+VOL2-001,Inicio,Control,Todos,Dashboard,/,SI,SI,/reporting,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-002,Inicio,Control,Todos,Mis tareas,/tareas,SI,SI,/notificaciones,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-003,Inicio,Aprobaciones,Aprobador,Mis aprobaciones,/aprobaciones/bandeja,NO,NO,,SI,,,NO,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-004,Inicio,Control,Todos,Alertas,/alertas,SI,SI,/notificaciones,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-005,Inicio,Control,Todos,Vencimientos,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-006,Maestros/Organización,Incorporación,Admin empresa,Empresas,/organizacion/empresas,SI,SI,/organization,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-007,Maestros/Organización,Incorporación,Admin empresa,Sucursales,/organizacion/sucursales,SI,SI,/organization,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-008,Maestros/Organización,Incorporación,Admin empresa,Establecimientos,/organizacion/establecimientos,SI,SI,/organization,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-009,Maestros/Organización,Incorporación,Admin empresa,Almacenes,/organizacion/almacenes,SI,SI,/organization/warehouses,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-010,Maestros/Organización,Incorporación,Almacén,Ubicaciones,/organizacion/ubicaciones,SI,SI,/organization/locations,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-011,Maestros/Organización,Incorporación,Admin empresa,Centros de costo,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-012,Maestros/Organización,Incorporación,Admin empresa,Unidades de negocio,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-013,Maestros/Terceros,Mantenimiento de terceros,"Compras, Ventas","Clientes, Proveedores, Transportistas, Conductores",/maestros/terceros,SI,SI,/maestros/terceros,SI,"CxP, Ventas, Documentos",,SI,OWNER_UAT_READY,VERIFIED_IN_BROWSER,Aceptación de la dueña,YES
+VOL2-014,Maestros/Terceros,Mantenimiento de terceros,Ventas,Vendedores,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-015,Maestros/Terceros,Mantenimiento de terceros,Tesorería,Beneficiarios,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-016,Maestros/Terceros,Mantenimiento de terceros,"Compras, Ventas",Contactos y direcciones,/maestros/terceros/:partyId,SI,SI,/maestros/terceros,SI,"CxP, Ventas, Documentos",,SI,OWNER_UAT_READY,VERIFIED_IN_BROWSER,Aceptación de la dueña,YES
+VOL2-017,Maestros/Productos,Catálogo,Maestros,Productos,/maestros/productos,SI,SI,/maestros/catalogos,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-018,Maestros/Productos,Catálogo,Maestros,Servicios,/maestros/servicios,SI,SI,/maestros/catalogos,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-019,Maestros/Productos,Catálogo,Maestros,"Sectores, rubros, categorías, familias, líneas",/maestros/catalogos,SI,SI,/maestros/catalogos,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-020,Maestros/Productos,Catálogo,Maestros,Plantillas,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-021,Maestros/Productos,Catálogo,Maestros,Atributos,/maestros/atributos,NO,NO,,SI,,,NO,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-022,Maestros/Productos,Catálogo,Maestros,Marcas y modelos,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-023,Maestros/Productos,Catálogo,Maestros,Presentaciones,/maestros/productos/:productId/presentaciones,SI,SI,/maestros,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-024,Maestros/Productos,Catálogo,Maestros,Unidades,/maestros/unidades,SI,SI,/maestros,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-025,Maestros/Comercial,Comercial,Ventas,Listas y reglas de precios,/comercial/listas-precio,NO,NO,,SI,,,NO,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-026,Maestros/Comercial,Comercial,Ventas,Condiciones de pago,/comercial/condiciones-pago,NO,NO,,SI,,,NO,FRONTEND_SHELL,NOT_VERIFIED,Pantalla sin llamadas directas: revisar,NO
+VOL2-027,Maestros/Comercial,Comercial,Crédito,Crédito,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-028,Maestros/Comercial,Comercial,Ventas,Zonas y rutas,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-029,Maestros/Comercial,Comercial,Ventas,Comisiones,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-030,Maestros/Comercial,Comercial,Ventas,Descuentos,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-031,Maestros/Financiero,Tesorería,Tesorería,Monedas y tasas,/tesoreria/tasas,SI,SI,/treasury,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-032,Maestros/Financiero,Tesorería,Tesorería,"Bancos, cuentas, cajas, métodos",/tesoreria/maestros,SI,SI,/treasury,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-033,Maestros/Fiscal,Fiscal,Contador,Perfiles,/maestros/perfiles,SI,SI,/fiscal,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-034,Maestros/Fiscal,Fiscal,Contador,"IVA, retenciones, ISLR, IGTF",/fiscal/configuracion,SI,SI,/fiscal,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-035,Maestros/Fiscal,Fiscal,Contador,"Series, correlativos, lotes, imprentas",/fiscal/numeracion,SI,SI,/fiscal,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-036,Maestros/Fiscal,Fiscal,Contador,Plantillas fiscales,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-037,Maestros/Regulatorio,Regulación,Logística,"Organismos, tipos, registros",/regulatorio/organismos,SI,SI,/regulatory,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-038,Maestros/Regulatorio,Regulación,Logística,Vehículos y certificados,/regulatorio/vehiculos,SI,SI,/regulatory,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-039,Compras,Compras,Compras,Requisiciones,/compras/requisiciones,SI,SI,/purchasing/requisitions,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-040,Compras,Compras,Compras,Solicitudes y ofertas,/compras/cotizaciones,SI,SI,/purchasing/quotes,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-041,Compras,Compras,Compras,Comparación de ofertas,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-042,Compras,Compras,Compras,Órdenes,/compras/ordenes,SI,SI,/purchasing/orders,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-043,Compras,Recepción,Almacén,Recepciones,/compras/recepciones,SI,SI,/purchasing,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-044,Compras,Recepción,Almacén,Incidencias de recepción,/compras/incidencias,SI,SI,/purchasing,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-045,Compras,Compras,CxP,Facturas,/compras/facturas,NO,NO,,SI,,,NO,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-046,Compras,Compras,Compras,Devoluciones,/compras/devoluciones,SI,SI,/purchasing,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-047,Importaciones,Importación,Compras,"Expediente, negociación y documentación (IMP-06, 07, 08)",/compras/importaciones,SI,SI,/importaciones,SI,"Party, PurchaseOrder, Documentos 046, Auditoría",,SI,PARTIAL_PROCESS,VERIFIED_IN_BROWSER,"Tramo construido; faltan seguimiento, despacho, recepción y costos",YES
+VOL2-048,Importaciones,Importación,Compras,"Seguimiento, agente y despacho (IMP-09 a 12)",,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-049,Importaciones,Importación,Almacén,Enlace con recepción y ubicación,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-050,Importaciones,Costos,Costos,Gastos de importación (landed cost),,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-051,Ventas,Ventas,Ventas,Cotizaciones,/ventas/cotizaciones,SI,SI,/sales/quotes,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-052,Ventas,Ventas,Ventas,Pedidos y órdenes,/ventas/ordenes,SI,SI,/sales/orders,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-053,Ventas,Ventas,Crédito,Crédito,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-054,Ventas,Despacho,Almacén,Preparación,/ventas/preparacion,SI,SI,/sales,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-055,Ventas,Despacho,Logística,Despachos,/ventas/despacho,SI,SI,/sales,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-056,Ventas,Ventas,Ventas,Facturas,/ventas/facturas,SI,SI,/sales/invoices,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-057,Ventas,Ventas,Ventas,Devoluciones,/ventas/devoluciones,SI,SI,/sales,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-058,Ventas,Ventas,Ventas,Notas,/ventas/notas,SI,SI,/sales,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-059,Inventario,Inventario,Almacén,Existencias,/inventario/existencias,SI,SI,/inventory,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-060,Inventario,Inventario,Almacén,Kardex,/inventario/kardex,SI,SI,/inventory,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-061,Inventario,Inventario,Almacén,Reservas,/inventario/reservas,SI,SI,/inventory,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-062,Inventario,Despacho,Almacén,Picking,/ventas/preparacion,SI,SI,/sales,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-063,Inventario,Inventario,Almacén,Transferencias,/inventario/transferencias,SI,SI,/inventory,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-064,Inventario,Inventario,Almacén,Cargos y descargos,/inventario/movimientos,SI,SI,/inventory,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-065,Inventario,Inventario,Almacén,Ajustes,/inventario/ajustes,SI,SI,/inventory,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-066,Inventario,Inventario,Almacén,Conteos,/inventario/conteos,SI,SI,/inventory,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-067,Inventario,Costos,Costos,Costos,/inventario/valorizacion,SI,SI,/inventory,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-068,CxC,CxC,Cobranza,"Documentos, cobros, anticipos, aplicaciones",/ventas/cuentas-por-cobrar,SI,SI,/sales,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-069,CxC,CxC,Cobranza,Aging y cobranza,/ventas/estado-de-cuenta,SI,SI,/sales,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-070,CxP,CxP,CxP,"Documentos, pagos, anticipos, aplicaciones",/compras/cuentas-por-pagar,SI,SI,/purchasing/payments,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-071,CxP,CxP,CxP,Programación y aging,/compras/cuentas-por-pagar,SI,SI,/purchasing/payment-schedules,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-072,Tesorería,Tesorería,Tesorería,Caja y arqueos,/tesoreria/cajas,SI,SI,/treasury,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-073,Tesorería,Tesorería,Tesorería,"Bancos, ingresos, egresos",/tesoreria/ingresos-egresos,SI,SI,/treasury,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-074,Tesorería,Tesorería,Tesorería,Transferencias y depósitos,/tesoreria/transferencias,SI,SI,/treasury,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-075,Tesorería,Tesorería,Tesorería,Conciliaciones,/tesoreria/conciliacion,SI,SI,/treasury,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-076,Fiscal,Fiscal,Contador,Emisión,/fiscal/emision,SI,SI,/fiscal,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-077,Fiscal,Fiscal,Contador,Retenciones y comprobantes,/fiscal/retenciones,SI,SI,/fiscal,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-078,Fiscal,Fiscal,Contador,Libros y cierres,/fiscal/libros,SI,SI,/fiscal,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-079,Fiscal,Fiscal,Contador,Contingencia,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-080,Fiscal,Fiscal,Contador,Exportaciones,/fiscal/lotes-declaracion,SI,SI,/fiscal,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-081,Regulación,Regulación,Logística,Guías y permisos,/regulatorio/permisos,SI,SI,/regulatory,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-082,Regulación,Regulación,Logística,Validaciones y despachos regulados,/regulatorio/evaluacion,SI,SI,/regulatory,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-083,Regulación,Regulación,Logística,Vencimientos,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-084,Reportes,Reportes,Gerencia,"Ejecutivos, operativos, financieros, fiscales, regulatorios",/reportes/centro,SI,SI,/report,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-085,Reportes,Auditoría,Auditor,Auditoría,/reportes/auditoria,SI,SI,/audit,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
+VOL2-086,Aprobaciones,Aprobaciones,Aprobador,"Bandejas, excepciones y delegaciones",/aprobaciones/bandeja,NO,NO,,SI,,,NO,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-087,Seguridad,Seguridad,Admin,"Usuarios, roles, sesiones, MFA",/seguridad/usuarios,SI,SI,/users,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-088,Seguridad,Seguridad,Admin,Alcances,/seguridad/usuarios,SI,SI,/users,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-089,Auditoría,Auditoría,Auditor,"Timeline, datos, accesos, impresiones, exportaciones",/auditoria,SI,SI,/audit,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-090,Auditoría,Auditoría,Auditor,Incidentes,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-091,Documentos,Documentos,Todos,Biblioteca y tipos documentales,/documentos,SI,SI,/documentos,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
+VOL2-092,Configuración,Operación,Admin,"Correo, impresión, integraciones, almacenamiento, monitoreo, respaldos",/diagnostico,SI,SI,/system,SI,,,SI,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO

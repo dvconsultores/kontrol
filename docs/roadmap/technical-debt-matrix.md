@@ -2668,3 +2668,15 @@ Evidencia: `specs/002-maestros/spec002-terceros-selectores-delta.md` y `specs/00
 | FINAL_ENTERPRISE_CERTIFICATION (nueva) | OPEN · EXTERNAL_GATE: acumula T052, PostgreSQL, E2E completa, multinavegador, mutaciones, OpenAPI global, seguridad, accesibilidad, responsive, concurrencia, auditoría, regresión canónica, Government, escaneos históricos, SQLite y PostgreSQL completos, residuos y UAT |
 
 Evidencia: `specs/002-maestros/spec002-terceros-functional-completion-delta.md`.
+
+## Actualización 2026-11-08 (14) — entrega de Terceros y primer tramo de Importaciones
+
+| Deuda | Estado |
+|---|---|
+| PUBLICACION-DIVERGENCIA-GOVERNMENT | **CLOSED**: ORG-06 integrado en `develop`, una sola cabeza |
+| TERCEROS-E2E-PENDIENTE | Pasa en Chrome real sobre SQLite. Sigue pendiente en PostgreSQL y sin el caso de cambio de empresa |
+| B-030 Importaciones | **PARTIAL_PROCESS**: IMP-06, 07 y 08 operables; faltan seguimiento, despacho, recepción y costos |
+| IMPORTACIONES-CAMPOS-BLOQUEADOS (nueva) | OPEN · LOW · 018: con el expediente cerrado, INCOTERM y las áreas de texto están deshabilitados pero no lo parecen |
+| UAT-EN-SQLITE (nueva) | OPEN · EXTERNAL_GATE: la pila de prueba de la dueña usa SQLite y Vite, solo en el equipo de P2. La migración `0078` a `0080` sigue sin ejecutarse en PostgreSQL |
+
+Las deudas de Producto Nuevo y `TERCEROS-PROVEEDORES-HISTORICOS-SIN-APROBAR` siguen abiertas, sin cambios.
