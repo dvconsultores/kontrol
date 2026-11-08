@@ -5,7 +5,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
-import type { AgingResult, OpenItem, PagedResult, Party, PaymentSummary } from "@/api/types";
+import type { AgingResult, OpenItem, PaymentSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { DataTable } from "@/components/DataTable";
@@ -13,6 +13,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { SelectorDeTercero } from "@/modules/maestros/terceros/SelectorDeTercero";
 
 const columnHelper = createColumnHelper<OpenItem>();
 
@@ -31,11 +32,6 @@ export function CuentasPorPagarPage(): React.JSX.Element {
   const [appTarget, setAppTarget] = useState("");
   const [appAmount, setAppAmount] = useState("");
 
-  const suppliers = useQuery({
-    queryKey: ["maestros", "terceros"],
-    queryFn: () => apiFetch<PagedResult<Party>>("/maestros/terceros"),
-    retry: false,
-  });
   const openItems = useQuery({
     queryKey: ["compras", "open-items"],
     queryFn: () => apiFetch<{ items: OpenItem[] }>("/purchasing/open-items"),
@@ -160,12 +156,7 @@ export function CuentasPorPagarPage(): React.JSX.Element {
           <h2 className="mb-2 text-base font-semibold text-text-900">Registrar pago</h2>
           <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
             <FormField label="Proveedor" required>
-              <select value={newParty} onChange={(e) => setNewParty(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-                <option value="">Seleccionar…</option>
-                {(suppliers.data?.items ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>{c.code} · {c.name}</option>
-                ))}
-              </select>
+              <SelectorDeTercero value={newParty} onChange={setNewParty} role="PROVEEDOR" />
             </FormField>
             <FormField label="Monto (VED)" required>
               <TextInput type="number" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} placeholder="0,00" required />
@@ -180,12 +171,7 @@ export function CuentasPorPagarPage(): React.JSX.Element {
           <h2 className="mb-2 text-base font-semibold text-text-900">Anticipo a proveedor</h2>
           <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
             <FormField label="Proveedor" required>
-              <select value={advParty} onChange={(e) => setAdvParty(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-                <option value="">Seleccionar…</option>
-                {(suppliers.data?.items ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>{c.code} · {c.name}</option>
-                ))}
-              </select>
+              <SelectorDeTercero value={advParty} onChange={setAdvParty} role="PROVEEDOR" soloActivos />
             </FormField>
             <FormField label="Monto (VED)" required>
               <TextInput type="number" value={advAmount} onChange={(e) => setAdvAmount(e.target.value)} placeholder="0,00" required />
@@ -200,12 +186,7 @@ export function CuentasPorPagarPage(): React.JSX.Element {
           <h2 className="mb-2 text-base font-semibold text-text-900">Cronograma de pago</h2>
           <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
             <FormField label="Proveedor" required>
-              <select value={schedParty} onChange={(e) => setSchedParty(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-                <option value="">Seleccionar…</option>
-                {(suppliers.data?.items ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>{c.code} · {c.name}</option>
-                ))}
-              </select>
+              <SelectorDeTercero value={schedParty} onChange={setSchedParty} role="PROVEEDOR" />
             </FormField>
             <FormField label="Vence">
               <TextInput type="date" value={schedDue} onChange={(e) => setSchedDue(e.target.value)} />

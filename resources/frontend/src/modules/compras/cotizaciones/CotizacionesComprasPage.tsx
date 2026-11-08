@@ -4,7 +4,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
-import type { PagedResult, Party, SupplierQuoteSummary } from "@/api/types";
+import type { SupplierQuoteSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -13,6 +13,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { SelectorDeTercero } from "@/modules/maestros/terceros/SelectorDeTercero";
 import { SelectorDeArticulo } from "@/modules/maestros/catalogo/SelectorDeArticulo";
 
 const columnHelper = createColumnHelper<SupplierQuoteSummary>();
@@ -33,11 +34,6 @@ export function CotizacionesComprasPage(): React.JSX.Element {
   const query = useQuery({
     queryKey: ["compras", "cotizaciones"],
     queryFn: () => apiFetch<{ items: SupplierQuoteSummary[] }>("/purchasing/quotes"),
-    retry: false,
-  });
-  const suppliers = useQuery({
-    queryKey: ["maestros", "terceros"],
-    queryFn: () => apiFetch<PagedResult<Party>>("/maestros/terceros"),
     retry: false,
   });
 
@@ -105,12 +101,7 @@ export function CotizacionesComprasPage(): React.JSX.Element {
               <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="COT-0001" required />
             </FormField>
             <FormField label="Proveedor" required>
-              <select value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-                <option value="">Seleccionar…</option>
-                {(suppliers.data?.items ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-                ))}
-              </select>
+              <SelectorDeTercero value={newSupplier} onChange={setNewSupplier} role="PROVEEDOR" soloActivos />
             </FormField>
             <FormField label="Válida hasta">
               <TextInput type="date" value={newValidity} onChange={(e) => setNewValidity(e.target.value)} />

@@ -10,7 +10,7 @@ import { useState } from "react";
 import { NavLink } from "react-router";
 
 import { apiFetch } from "@/api/client";
-import type { PagedResult, Party, SalesQuoteSummary } from "@/api/types";
+import type { SalesQuoteSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -19,6 +19,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { SelectorDeTercero } from "@/modules/maestros/terceros/SelectorDeTercero";
 import { SelectorDeArticulo } from "@/modules/maestros/catalogo/SelectorDeArticulo";
 
 const columnHelper = createColumnHelper<SalesQuoteSummary>();
@@ -38,11 +39,6 @@ export function CotizacionesPage(): React.JSX.Element {
   const query = useQuery({
     queryKey: ["ventas", "cotizaciones"],
     queryFn: () => apiFetch<{ items: SalesQuoteSummary[] }>("/sales/quotes"),
-    retry: false,
-  });
-  const customers = useQuery({
-    queryKey: ["maestros", "terceros"],
-    queryFn: () => apiFetch<PagedResult<Party>>("/maestros/terceros"),
     retry: false,
   });
 
@@ -128,12 +124,7 @@ export function CotizacionesPage(): React.JSX.Element {
               <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="COT-0001" required />
             </FormField>
             <FormField label="Cliente" required>
-              <select value={newCustomer} onChange={(e) => setNewCustomer(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-                <option value="">Seleccionar…</option>
-                {(customers.data?.items ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>{c.code} · {c.name}</option>
-                ))}
-              </select>
+              <SelectorDeTercero value={newCustomer} onChange={setNewCustomer} role="CLIENTE" soloActivos />
             </FormField>
             <AsyncButton type="submit" variant="primary" onClick={createQuote}>Crear</AsyncButton>
           </form>

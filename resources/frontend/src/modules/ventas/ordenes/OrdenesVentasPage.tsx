@@ -16,7 +16,6 @@ import { ApiError, apiFetch } from "@/api/client";
 import type {
   InsufficientLine,
   PagedResult,
-  Party,
   ReservationPolicy,
   SalesOrderSummary,
 } from "@/api/types";
@@ -31,6 +30,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { SelectorDeTercero } from "@/modules/maestros/terceros/SelectorDeTercero";
 import { SelectorDeArticulo } from "@/modules/maestros/catalogo/SelectorDeArticulo";
 import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
 import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
@@ -105,11 +105,6 @@ export function OrdenesVentasPage(): React.JSX.Element {
   const query = useQuery({
     queryKey: ["ventas", "ordenes"],
     queryFn: () => apiFetch<PagedResult<SalesOrderSummary>>("/sales/orders"),
-    retry: false,
-  });
-  const customers = useQuery({
-    queryKey: ["maestros", "terceros"],
-    queryFn: () => apiFetch<PagedResult<Party>>("/maestros/terceros"),
     retry: false,
   });
   const warehouses = useAlmacenesDeEmpresa(companyId);
@@ -292,12 +287,7 @@ export function OrdenesVentasPage(): React.JSX.Element {
             <TextInput value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="Ej. ORD-001" required />
           </FormField>
           <FormField label="Cliente" required>
-            <select value={newCustomer} onChange={(e) => setNewCustomer(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(customers.data?.items ?? []).filter((c) => (c.roles ?? []).includes("CLIENTE")).map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <SelectorDeTercero value={newCustomer} onChange={setNewCustomer} role="CLIENTE" soloActivos />
           </FormField>
           <AvisoDeAlmacenes consulta={warehouses} />
           <FormField label="Almacén" help="Obligatorio para confirmar pedidos con inventario">

@@ -4,7 +4,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
-import type { Party, WithholdingRuleSummary, WithholdingSummary } from "@/api/types";
+import type { WithholdingRuleSummary, WithholdingSummary } from "@/api/types";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -15,6 +15,7 @@ import { MoneyInput } from "@/components/MoneyInput";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { SelectorDeTercero } from "@/modules/maestros/terceros/SelectorDeTercero";
 
 const columnHelper = createColumnHelper<WithholdingSummary>();
 
@@ -37,11 +38,6 @@ export function RetencionesPage(): React.JSX.Element {
   const withholdings = useQuery({
     queryKey: ["fiscal", "withholdings"],
     queryFn: () => apiFetch<{ items: WithholdingSummary[] }>("/fiscal/withholdings"),
-    retry: false,
-  });
-  const parties = useQuery({
-    queryKey: ["maestros", "terceros"],
-    queryFn: () => apiFetch<{ items: Party[] }>("/maestros/terceros"),
     retry: false,
   });
 
@@ -156,12 +152,7 @@ export function RetencionesPage(): React.JSX.Element {
           <h2 className="mb-2 text-base font-semibold text-text-900">Calcular retención</h2>
           <div className="grid gap-3">
             <FormField label="Tercero">
-              <select value={partyId} onChange={(e) => setPartyId(e.target.value)} className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-                <option value="">Seleccionar…</option>
-                {(parties.data?.items ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
+              <SelectorDeTercero value={partyId} onChange={setPartyId} role="PROVEEDOR" />
             </FormField>
             <FormField label="Base">
               <MoneyInput value={base} onChange={(e) => setBase(e.target.value)} />

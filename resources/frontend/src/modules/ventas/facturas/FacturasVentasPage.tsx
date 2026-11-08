@@ -4,7 +4,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
-import type { PagedResult, Party, SalesInvoiceSummary } from "@/api/types";
+import type { PagedResult, SalesInvoiceSummary } from "@/api/types";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -14,6 +14,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { SelectorDeTercero } from "@/modules/maestros/terceros/SelectorDeTercero";
 import { SelectorDeArticulo } from "@/modules/maestros/catalogo/SelectorDeArticulo";
 
 const columnHelper = createColumnHelper<SalesInvoiceSummary>();
@@ -32,11 +33,6 @@ export function FacturasVentasPage(): React.JSX.Element {
   const query = useQuery({
     queryKey: ["ventas", "facturas"],
     queryFn: () => apiFetch<PagedResult<SalesInvoiceSummary>>("/sales/invoices"),
-    retry: false,
-  });
-  const customers = useQuery({
-    queryKey: ["maestros", "terceros"],
-    queryFn: () => apiFetch<PagedResult<Party>>("/maestros/terceros"),
     retry: false,
   });
 
@@ -130,12 +126,7 @@ export function FacturasVentasPage(): React.JSX.Element {
           <h2 className="mb-2 text-base font-semibold text-text-900">Nueva factura</h2>
           <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
             <FormField label="Cliente" required>
-              <select value={newCustomer} onChange={(e) => setNewCustomer(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-                <option value="">Seleccionar…</option>
-                {(customers.data?.items ?? []).filter((c) => (c.roles ?? []).includes("CLIENTE")).map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <SelectorDeTercero value={newCustomer} onChange={setNewCustomer} role="CLIENTE" soloActivos />
             </FormField>
             <AsyncButton type="submit" variant="primary" onClick={createInvoice}>Crear</AsyncButton>
           </form>

@@ -28,6 +28,8 @@ export interface AsyncComboboxProps {
   resolveUrl?: string;
   /** Forma parte de todas las claves de consulta. */
   scopeKey?: string;
+  /** Parámetros adicionales de la búsqueda; forman parte de la clave. */
+  extraParams?: Readonly<Record<string, string>>;
 }
 
 interface ResolvedItem {
@@ -61,6 +63,7 @@ export function AsyncCombobox({
   "aria-describedby": describedBy,
   resolveUrl,
   scopeKey,
+  extraParams,
 }: AsyncComboboxProps): React.JSX.Element {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -112,6 +115,7 @@ export function AsyncCombobox({
       scopeKey ?? null,
       debounced,
       itemType ?? null,
+      extraParams ?? null,
     ],
     queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams({
@@ -121,6 +125,9 @@ export function AsyncCombobox({
       });
       if (itemType) {
         params.set("item_type", itemType);
+      }
+      for (const [nombre, valor] of Object.entries(extraParams ?? {})) {
+        params.set(nombre, valor);
       }
       return apiFetch<PagedResult<CatalogItemSearchResult>>(
         `${searchUrl}?${params.toString()}`,

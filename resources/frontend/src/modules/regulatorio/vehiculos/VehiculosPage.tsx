@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
-import type { Party, TransportDriverSummary, TransportVehicleSummary } from "@/api/types";
+import type { TransportDriverSummary, TransportVehicleSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -11,6 +11,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { SelectorDeTercero } from "@/modules/maestros/terceros/SelectorDeTercero";
 
 export function VehiculosPage(): React.JSX.Element {
   const queryClient = useQueryClient();
@@ -29,11 +30,6 @@ export function VehiculosPage(): React.JSX.Element {
   const drivers = useQuery({
     queryKey: ["regulatorio", "drivers"],
     queryFn: () => apiFetch<{ items: TransportDriverSummary[] }>("/regulatory/drivers"),
-    retry: false,
-  });
-  const parties = useQuery({
-    queryKey: ["maestros", "terceros"],
-    queryFn: () => apiFetch<{ items: Party[] }>("/maestros/terceros"),
     retry: false,
   });
 
@@ -108,10 +104,7 @@ export function VehiculosPage(): React.JSX.Element {
         {section("Registrar conductor", (
           <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
             <FormField label="Conductor">
-              <select value={partyId} onChange={(e) => setPartyId(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-                <option value="">Seleccionar…</option>
-                {(parties.data?.items ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              <SelectorDeTercero value={partyId} onChange={setPartyId} soloActivos />
             </FormField>
             <FormField label="Licencia">
               <TextInput value={license} onChange={(e) => setLicense(e.target.value)} placeholder="Opcional" />
