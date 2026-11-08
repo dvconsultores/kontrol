@@ -64,10 +64,38 @@ Registro de intentos: `evidence/catalogo-selectores/ATTEMPT_LOG.md`.
 
 ## Deuda que deja
 
-- `CATALOGO-SELECTOR-CACHE-EMPRESA-SIN-PRUEBA` (LOW): la empresa sí está en la clave de caché, pero ninguna prueba lo
-  demuestra (M4).
+- ~~`CATALOGO-SELECTOR-CACHE-EMPRESA-SIN-PRUEBA`~~: **cerrada** en la convergencia (M4 KILLED).
 - `ASYNC-COMBOBOX-REABRIR-TRAS-ESCAPE` (LOW): tras Escape, un clic sobre el campo, que conserva el foco, no reabre la
   lista. Hay que escribir o salir del campo.
 - `COMPRAS-DEVOLUCION-LINEA-SIN-VALIDAR-PRODUCTO` (MEDIUM propuesta, 004): `add_return_line` no valida el producto.
   Es un hallazgo lateral y no se absorbe en este delta.
 - `CATALOGO-SELECTORES-E2E-PENDIENTE`: la E2E se ejecutará en la próxima certificación con PostgreSQL.
+
+## Convergencia (CATALOGO-SELECTORES-CONVERGENCIA-02)
+
+La dueña no aceptó el cierre anterior: M4 era un mutante requerido y seguía vivo, y ProductoNuevoPage no tenía prueba
+directa. Este microciclo cerró los dos huecos sin tocar código de producto.
+
+| Gate | Resultado |
+|---|---|
+| `src/components/AsyncComboboxAislamiento.test.tsx` | 6 de 6. CACHE-01 a CACHE-06: misma búsqueda con otra empresa, reapertura, respuesta tardía de la empresa anterior, selección limpiada, resolución de id aislada y `SelectorDeArticulo` con la empresa activa. Las respuestas de la empresa nueva quedan pendientes, así que la caché antigua sería visible si existiera |
+| M4 (clave de búsqueda sin empresa) | Antes: S-04 en verde con y sin el mutante. Mutante: **ROJO** (CACHE-01, 02, 03 y 06). Restaurado: verde. **KILLED** |
+| M4b (clave de resolución sin empresa) | KILLED por CACHE-05 |
+| `src/modules/maestros/productos/ProductoNuevoPage.test.tsx` | 7 de 7, PN-01 a PN-07, con la página real sobre un data router: el Rubro se renderiza, busca `taxonomia/search` con `q`, `page=1` y `page_size=20` y sin `item_type`, muestra «R-01 · Alimentos» sin UUID, envía `category_id` en el POST, tolera errores y resultados vacíos, no resuelve ningún id y limpia el valor al reescribir |
+| Mutaciones | **23 de 23 muertas**, 0 equivalentes, 0 supervivientes requeridos |
+| Vitest | 1631 de 1631 en 144 ficheros, dos corridas seguidas, sin errores no controlados |
+| TSC · ESLint · build | RC 0 |
+| Backend · OpenAPI | Sin cambios (709 → 709) |
+
+Consumidores de `AsyncCombobox`: `SelectorDeArticulo` (14 pantallas) y el Rubro de `ProductoNuevoPage`. Government no lo
+consume. `ASYNC_COMBOBOX_SHARED_CONSUMERS_CERTIFIED = 1`.
+
+### Defecto preexistente descubierto (enrutado, no absorbido)
+
+`PREEXISTING_DEFECT`. No es una regresión del selector: el botón viene de `fb8ead1` (2026-10-27) y la guarda de `3183ab5`.
+
+- «Guardar producto» es un `AsyncButton type="submit" onClick={handleSubmit}` dentro de un `<form onSubmit={handleSubmit}>`, así que **envía dos POST**. Una sonda lo midió: 2 llamadas.
+- `POST /maestros/catalogos/items` no comprueba si el código ya existe, y `catalog_items` no tiene unicidad de `(company_id, code)`. Por lo tanto el asistente **crea dos productos con el mismo código**.
+- Después del alta, `UnsavedChangesGuard` sigue con `dirty=true` y bloquea el `navigate` al listado con «¿Descartar los cambios sin guardar?».
+
+La deuda queda en `docs/roadmap/technical-debt-matrix.md`, actualización (11).

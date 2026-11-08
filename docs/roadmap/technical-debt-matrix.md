@@ -2624,3 +2624,16 @@ Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/recepcion-functional-cl
 | TERCEROS-SELECTORES-PRIMERA-PAGINA | OPEN · MEDIUM propuesta, sin cambios: queda para el ciclo siguiente |
 
 Evidencia: `specs/002-maestros/evidence/catalogo-selectores/` y `specs/002-maestros/spec002-catalogo-selectores-delta.md`.
+
+## Actualización 2026-11-07 (11) — convergencia del selector de catálogo
+
+| Deuda | Estado |
+|---|---|
+| CATALOGO-SELECTORES-PRIMERA-PAGINA | **`FUNCTIONAL_PRODUCT_COMPLETE_LOCAL / EXTERNAL_CERTIFICATION_GATES_PENDING`**: 23 de 23 mutantes muertos, M4 incluido; ProductoNuevoPage con prueba directa. Pendiente solo la E2E con PostgreSQL |
+| CATALOGO-SELECTOR-CACHE-EMPRESA-SIN-PRUEBA | **CLOSED**: CACHE-01 a CACHE-06 matan M4 y M4b |
+| PRODUCTO-NUEVO-DOBLE-ENVIO (nueva) | OPEN · **HIGH** · 002: «Guardar producto» envía dos POST (`AsyncButton type="submit" onClick` más `form onSubmit`); medido con una sonda. Preexistente desde `fb8ead1` |
+| CATALOGO-CODIGO-SIN-UNICIDAD (nueva) | OPEN · **HIGH** · 002: `create_item` no comprueba el código duplicado y `catalog_items` no tiene `UNIQUE(company_id, code)`. Junto con la deuda anterior, crea artículos duplicados. Observado por lectura |
+| PRODUCTO-NUEVO-GUARDA-TRAS-GUARDAR (nueva) | OPEN · MEDIUM · 002: después de un alta correcta, `UnsavedChangesGuard` bloquea la navegación al listado |
+| ASYNC-COMBOBOX-REABRIR-TRAS-ESCAPE | OPEN · LOW, sin cambios |
+
+Evidencia: `specs/002-maestros/spec002-catalogo-selectores-delta.md` (Convergencia) y `evidence/catalogo-selectores/ATTEMPT_LOG.md`.
