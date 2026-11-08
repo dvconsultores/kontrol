@@ -29,12 +29,15 @@ from app.modules.government.models import (
     GovernmentClosurePolicy,
     GovernmentEntity,
     GovernmentFinding,
+    GovernmentIdentityPolicy,
     GovernmentNotification,
     GovernmentOfficial,
     GovernmentPosition,
+    GovernmentRoleCategory,
     GovernmentSoDRule,
     GovernmentStructure,
     GovernmentUnit,
+    GovernmentUserOfficialLink,
 )
 from app.modules.government.schemas_auditoria import (
     AuditoriaEventoResumen,
@@ -62,6 +65,7 @@ PROCESOS: list[tuple[str, str, str]] = [
     ("TRE-02", "Programación financiera", "gov-tre-02"),
     ("CTL-10", "Controles de cierre", "gov-ctl-10"),
     ("ORG-04", "Ocupación de cargos", "gov-org-04"),
+    ("ORG-06", "Identidad institucional", "gov-0-06"),
 ]
 _PROCESO_POR_OWNER_SPEC = {owner_spec: (codigo, nombre) for codigo, nombre, owner_spec in PROCESOS}
 _PROCESO_NOMBRE = {codigo: nombre for codigo, nombre, _ in PROCESOS}
@@ -361,6 +365,15 @@ def _objeto_desde_evento(db: Session, event: AuditEvent, ctx: CompanyContext) ->
     if event.entity_type == "GovernmentAssignment":
         asignacion = db.scalar(select(GovernmentAssignment).where(GovernmentAssignment.id == objeto_id, GovernmentAssignment.company_id == empresa))
         return None if asignacion is None else AuditoriaObjeto(tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/ocupacion/asignaciones/{objeto_id}", capacidad="gobierno_ocupacion:view")
+    if event.entity_type == "GovernmentUserOfficialLink":
+        vinculo = db.scalar(select(GovernmentUserOfficialLink).where(GovernmentUserOfficialLink.id == objeto_id, GovernmentUserOfficialLink.company_id == empresa))
+        return None if vinculo is None else AuditoriaObjeto(tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/identidad/vinculos/{objeto_id}", capacidad="gobierno_identidad:view")
+    if event.entity_type == "GovernmentRoleCategory":
+        categoria = db.scalar(select(GovernmentRoleCategory).where(GovernmentRoleCategory.id == objeto_id, GovernmentRoleCategory.company_id == empresa))
+        return None if categoria is None else AuditoriaObjeto(tipo=event.entity_type, id=objeto_id, ruta="/gobierno/identidad/categorias", capacidad="gobierno_identidad:view")
+    if event.entity_type == "GovernmentIdentityPolicy":
+        politica_identidad = db.scalar(select(GovernmentIdentityPolicy).where(GovernmentIdentityPolicy.id == objeto_id, GovernmentIdentityPolicy.company_id == empresa))
+        return None if politica_identidad is None else AuditoriaObjeto(tipo=event.entity_type, id=objeto_id, ruta="/gobierno/identidad/categorias", capacidad="gobierno_identidad:view")
     if event.entity_type == "GovernmentOfficial":
         funcionario = db.scalar(select(GovernmentOfficial).where(GovernmentOfficial.id == objeto_id, GovernmentOfficial.company_id == empresa))
         return None if funcionario is None else AuditoriaObjeto(tipo=event.entity_type, id=objeto_id, ruta="/gobierno/ocupacion/funcionarios", capacidad="gobierno_ocupacion:view")

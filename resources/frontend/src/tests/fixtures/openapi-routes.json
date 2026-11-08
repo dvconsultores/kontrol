@@ -1100,6 +1100,112 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/identidad/catalogo",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/identidad/categorias",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/identidad/categorias",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/identidad/categorias/{categoria_id}/retirar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/identidad/conflictos",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/identidad/mi-contexto",
+      "query": [
+        "fecha"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/identidad/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/identidad/politica",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/identidad/politica",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/identidad/vinculos",
+      "query": [
+        "estado",
+        "fecha",
+        "funcionario_id",
+        "pagina",
+        "por_pagina",
+        "usuario_id"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/identidad/vinculos",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/identidad/vinculos.csv",
+      "query": [
+        "estado",
+        "fecha",
+        "funcionario_id",
+        "usuario_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/identidad/vinculos/{vinculo_id}",
+      "query": [
+        "fecha"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/identidad/vinculos/{vinculo_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/identidad/vinculos/{vinculo_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/identidad/vinculos/{vinculo_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/identidad/vinculos/{vinculo_id}/descartar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/identidad/vinculos/{vinculo_id}/revocar",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/modulo",
       "query": []
     },

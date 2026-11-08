@@ -725,7 +725,14 @@ def activar(
         "GOV_CLOSURE_POLICY_ACTIVATED",
         {"codigo": politica.codigo, **detalle_auditoria},
     )
-    db.flush()
+    try:
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        raise ConflictError(
+            "GOV_CLOSURE_POLICY_ACTIVE_EXISTS",
+            "Ya hay una política vigente para esa acción de cierre",
+        ) from None
     return politica
 
 

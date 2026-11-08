@@ -49,7 +49,8 @@ init() {
 start() {
   ext_btree_gist
   init
-  "$PGBIN/pg_ctl" -D "$PGDATA" -o "-p $PGPORT -c listen_addresses=localhost -c timezone=UTC" -l "$LOG" start
+  # Un DROP SCHEMA del esquema completo toma unos 6300 bloqueos y hay pruebas que sueltan dos a la vez.
+  "$PGBIN/pg_ctl" -D "$PGDATA" -o "-p $PGPORT -c listen_addresses=localhost -c timezone=UTC -c max_locks_per_transaction=256" -l "$LOG" start
   sleep 2
   "$PGBIN/psql" -h localhost -p "$PGPORT" -U postgres -d postgres -q \
     -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='kontrol_migrator') THEN CREATE ROLE kontrol_migrator LOGIN PASSWORD 'qa'; END IF; END \$\$;" \

@@ -38,6 +38,7 @@ DETALLE_CIERRE: tuple[str, ...] = (
 
 DETALLE_OCUPACION: tuple[str, ...] = ("acto_id", "acto_numero", "asunto", "campos", "cargo_codigo", "cargo_id", "cargo_origen_id", "codigo", "desde", "documento_enmascarado", "emisor_cargo_id", "estado", "figura", "fin_efectivo", "fundamento", "funcionario_codigo", "funcionario_id", "grupo", "hasta", "motivo", "nombre", "revocation_act_id", "status", "total", "version")
 
+DETALLE_IDENTIDAD: tuple[str, ...] = ("accion", "actor_institucional", "campos", "categoria", "codigo", "correlacion", "cuenta", "desde", "estado", "exige_identidad", "fecha", "filtros", "fin_efectivo", "funcionario_codigo", "funcionario_id", "hasta", "motivo", "motivo_fin", "operacion", "regla_codigo", "role_id", "soporte", "status", "total", "user_id")
 DETALLE_ACTO: tuple[str, ...] = (
     "acto_referencia",
     "asunto",
@@ -184,6 +185,17 @@ _PARTE_A: tuple[AuditActionSpec, ...] = (
     _e("GOV_ASSIGNMENT_AVOCATED", "GovernmentAssignment", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Avocación registrada"),
     _e("GOV_ASSIGNMENTS_EXPORTED", "GovernmentAssignment", "government", "gov-org-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_OCUPACION, "Ocupación de cargos exportada"),
     _e("GOV_MATERIAL_CLOSE_ALLOWED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_CIERRE, "Cierre material autorizado por política de controles"),
+    _e("GOV_IDENTITY_LINK_CREATED", "GovernmentUserOfficialLink", "government", "gov-0-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_IDENTIDAD, "Vínculo cuenta-funcionario creado"),
+    _e("GOV_IDENTITY_LINK_UPDATED", "GovernmentUserOfficialLink", "government", "gov-0-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_IDENTIDAD, "Vínculo cuenta-funcionario actualizado"),
+    _e("GOV_IDENTITY_LINK_ACTIVATED", "GovernmentUserOfficialLink", "government", "gov-0-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_IDENTIDAD, "Vínculo cuenta-funcionario activado"),
+    _e("GOV_IDENTITY_LINK_DISCARDED", "GovernmentUserOfficialLink", "government", "gov-0-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_IDENTIDAD, "Vínculo cuenta-funcionario descartado"),
+    _e("GOV_IDENTITY_LINK_CLOSED", "GovernmentUserOfficialLink", "government", "gov-0-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_IDENTIDAD, "Vínculo cuenta-funcionario cerrado"),
+    _e("GOV_IDENTITY_LINK_REVOKED", "GovernmentUserOfficialLink", "government", "gov-0-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_IDENTIDAD, "Vínculo cuenta-funcionario revocado"),
+    _e("GOV_IDENTITY_LINKS_EXPORTED", "GovernmentUserOfficialLink", "government", "gov-0-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_IDENTIDAD, "Exportación de vínculos cuenta-funcionario"),
+    _e("GOV_ROLE_CATEGORY_ADDED", "GovernmentRoleCategory", "government", "gov-0-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_IDENTIDAD, "Categoría de rol agregada"),
+    _e("GOV_ROLE_CATEGORY_RETIRED", "GovernmentRoleCategory", "government", "gov-0-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_IDENTIDAD, "Categoría de rol retirada"),
+    _e("GOV_IDENTITY_POLICY_CHANGED", "GovernmentIdentityPolicy", "government", "gov-0-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", DETALLE_IDENTIDAD, "Política de identidad actualizada"),
+    _e("GOV_IDENTITY_GUARD_BLOCKED", "GovernmentIdentityPolicy", "government", "gov-0-06", "COMPANY", "SECURITY", "REJECTION", DETALLE_IDENTIDAD, "Acceso bloqueado por política de identidad"),
     _e("GOV_MATERIAL_CLOSE_BLOCKED", "GovernmentClosurePolicy", "government", "gov-ctl-10", "COMPANY", "SECURITY", "REJECTION", DETALLE_CIERRE, "Operación bloqueada por controles materiales de cierre"),
     _e("GOV_BANK_CREATED", "GovernmentBank", "government", "gov-tre-01", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("codigo", "nombre"), "Banco registrado en Tesorería de Gobierno"),
     _e("GOV_BANK_UPDATED", "GovernmentBank", "government", "gov-tre-01", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("campos", "codigo"), "Banco de Tesorería de Gobierno modificado"),

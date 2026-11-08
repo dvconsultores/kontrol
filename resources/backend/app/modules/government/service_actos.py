@@ -34,6 +34,7 @@ from app.modules.government.schemas_actos import (
 )
 from app.modules.government.service_autoridad import competencias_en_vigor
 from app.modules.government.service_estructura import _ente, _error_campo, _utc
+from app.modules.government.service_identidad import exigir_autoridad_funcional
 from app.modules.government.service_sod import evaluar_antes_de_actuar
 from app.modules.identity_access.models import User
 from app.shared.audit import record_audit
@@ -1023,6 +1024,13 @@ def emitir_acto(
         acto.competencia_materia,
     )
 
+    exigir_autoridad_funcional(
+        db,
+        ctx,
+        str(acto.cargo_id),
+        acto.competencia_accion,
+        acto.competencia_materia,
+    )
     evaluar_antes_de_actuar(db, ctx, "DOC02_EMITIR", "GovernmentAct", str(acto.id))
 
     if acto.caracter == "INTERNO":

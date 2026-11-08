@@ -1532,6 +1532,148 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/identidad/catalogo",
+      "capabilities": [
+        "gobierno_identidad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/identidad/categorias",
+      "capabilities": [
+        "gobierno_identidad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/identidad/categorias",
+      "capabilities": [
+        "gobierno_identidad:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/identidad/categorias/{categoria_id}/retirar",
+      "capabilities": [
+        "gobierno_identidad:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/identidad/conflictos",
+      "capabilities": [
+        "gobierno_identidad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/identidad/mi-contexto",
+      "capabilities": [],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/identidad/opciones",
+      "capabilities": [
+        "gobierno_identidad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/identidad/politica",
+      "capabilities": [
+        "gobierno_identidad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/identidad/politica",
+      "capabilities": [
+        "gobierno_identidad:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/identidad/vinculos",
+      "capabilities": [
+        "gobierno_identidad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/identidad/vinculos",
+      "capabilities": [
+        "gobierno_identidad:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/identidad/vinculos.csv",
+      "capabilities": [
+        "gobierno_identidad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/identidad/vinculos/{vinculo_id}",
+      "capabilities": [
+        "gobierno_identidad:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/identidad/vinculos/{vinculo_id}",
+      "capabilities": [
+        "gobierno_identidad:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/identidad/vinculos/{vinculo_id}/activar",
+      "capabilities": [
+        "gobierno_identidad:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/identidad/vinculos/{vinculo_id}/cerrar",
+      "capabilities": [
+        "gobierno_identidad:revoke"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/identidad/vinculos/{vinculo_id}/descartar",
+      "capabilities": [
+        "gobierno_identidad:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/identidad/vinculos/{vinculo_id}/revocar",
+      "capabilities": [
+        "gobierno_identidad:revoke"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/modulo",
       "capabilities": [],
       "scope": "GLOBAL"
@@ -5692,7 +5834,11 @@
     "gobierno_ocupacion:view",
     "gobierno_ocupacion:manage",
     "gobierno_ocupacion:activate",
-    "gobierno_ocupacion:revoke"
+    "gobierno_ocupacion:revoke",
+    "gobierno_identidad:view",
+    "gobierno_identidad:manage",
+    "gobierno_identidad:activate",
+    "gobierno_identidad:revoke"
   ],
   "report_capabilities": {
     "executive_ventas": [

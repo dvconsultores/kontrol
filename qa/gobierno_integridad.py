@@ -34,6 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gobierno_integridad_caja as caja  # noqa: E402
 import gobierno_integridad_cierres as cierres  # noqa: E402
 import gobierno_integridad_ctl as ctl  # noqa: E402
+import gobierno_integridad_identidad as identidad  # noqa: E402
 import gobierno_integridad_ocupacion as ocupacion  # noqa: E402
 import gobierno_integridad_org as org  # noqa: E402
 import gobierno_integridad_tre as tre  # noqa: E402
@@ -44,6 +45,7 @@ GRUPO_TRE = tre.GRUPO
 GRUPO_CAJA = caja.GRUPO
 GRUPO_CIERRES = cierres.GRUPO
 GRUPO_OCUPACION = ocupacion.GRUPO
+GRUPO_IDENTIDAD = identidad.GRUPO
 
 CLAVE_ORG = "ORG"
 CLAVE_CTL = "CTL"
@@ -51,6 +53,7 @@ CLAVE_TRE = "TRE"
 CLAVE_CAJA = "CAJA"
 CLAVE_CIERRES = "CIERRES"
 CLAVE_OCUPACION = "OCUPACION"
+CLAVE_IDENTIDAD = "IDENTIDAD"
 
 MODULOS_POR_CLAVE = {
     CLAVE_ORG: org,
@@ -59,6 +62,7 @@ MODULOS_POR_CLAVE = {
     CLAVE_CAJA: caja,
     CLAVE_CIERRES: cierres,
     CLAVE_OCUPACION: ocupacion,
+    CLAVE_IDENTIDAD: identidad,
 }
 
 
@@ -77,6 +81,7 @@ def controles() -> list[tuple[str, str, str, str]]:
         (GRUPO_CAJA, caja),
         (GRUPO_CIERRES, cierres),
         (GRUPO_OCUPACION, ocupacion),
+        (GRUPO_IDENTIDAD, identidad),
     ):
         for identificador, descripcion, sql in modulo.CHECKS:
             resultado.append((grupo, identificador, descripcion, sql))
