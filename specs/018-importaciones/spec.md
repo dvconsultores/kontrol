@@ -64,3 +64,12 @@ Seguimiento, agente, pagos desde el expediente, recepción y costos. La Spec no 
 - **FR-018-015** Correcciones con tipo, responsable, acción, evidencia, resolución y cierre.
 - **FR-018-016** Resumen: estado, qué falta, responsables, documentos, pagos y siguiente paso.
 - **FR-018-017** Búsqueda de órdenes en servidor, sin truncado.
+
+## Ciclo 3: del despacho a la ubicación
+
+- **FR-018-018** Desde un expediente despachado se crea una recepción sin elegir la orden. Almacén de otra empresa o inexistente: rechazado. Otro estado: `IMPORT_INVALID_STATE`.
+- **FR-018-019** El detalle entrega `logistics`, de solo lectura y calculado de 019 a 022, con etapa, recepciones, incidencias, cantidades, pendientes y ubicaciones.
+- **FR-018-020** El expediente no duplica líneas, incidencias, saldos ni asignaciones, ni reimplementa esos motores.
+- **FR-018-021** Las pantallas dueñas abren con la recepción elegida por `?recepcion=` y ofrecen volver con `?importacion=`.
+- **FR-018-022** El put-away desde el expediente llama a la ruta de 022 con `document_ref` igual al código de la recepción.
+

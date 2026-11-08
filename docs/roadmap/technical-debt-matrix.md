@@ -2687,6 +2687,9 @@ Las deudas de Producto Nuevo y `TERCEROS-PROVEEDORES-HISTORICOS-SIN-APROBAR` sig
 |---|---|
 | TERCEROS-VENDEDOR-BENEFICIARIO (nueva) | OPEN · 002: la Spec 002 los exige y no existen. `TERCEROS_CORE_CUSTOMER_SUPPLIER_COMPLETE = 1`, `TERCEROS_FULL_SPONSOR_COMPLETE = 0`. No se atiende ahora |
 | PROCESS_VIOLATION_04 | CLAUDE_DICTATED_SEMANTIC_CODE_TO_DEEPSEEK en el ciclo anterior. Desde ahora, 0 |
-| IMPORT-PRUEBAS-NEGATIVAS-CICLO2 (nueva) | OPEN · 018: cinco pruebas backend retiradas al agotar el cupo de pruebas (flujo, corrección a ORDERED, DISPATCHED no cancela, seguridad, órdenes elegibles). Verificadas con sonda temporal y en la E2E; reponer como primera tarea del ciclo 3 |
-| LAYOUT-CABECERA-390 (nueva) | OPEN · LOW · transversal: a 390 px el menú arranca plegado, pero la cabecera superior aún recorta «Salir» |
+| IMPORT-PRUEBAS-NEGATIVAS-CICLO2 | PAID · ciclo 3: repuestas las que protegen reglas vigentes; el flujo lo cubre la E2E |
+| LAYOUT-CABECERA-390 | PAID · ciclo 3: a 390 px se ocultan licencia y usuario; «Salir» queda visible |
 | TERCEROS-HISTORIAL-ID-CRUDO (nueva) | OPEN · LOW · 002: el historial de la ficha muestra `account_id` como UUID |
+| IMPORT-VITEST-RECEPCION (nueva) | OPEN · LOW · 018: sin prueba de componente de alta de recepción ni de ubicar; lo cubren backend y E2E. No entraron por el tope de llamadas |
+| IMPORT-PUTAWAY-ATRIBUCION (nueva) | OPEN · 018: lo ubicado desde el menú de Inventario sin `document_ref` no se atribuye al expediente. Decidir si es aceptable |
+

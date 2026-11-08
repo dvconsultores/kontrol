@@ -105,3 +105,41 @@ Sin código dictado: los briefs dan contratos e invariantes, y el código existe
 23 llamadas · $0,173646. Llamadas solo de pruebas: 2 de 2. Reintentos: 14. Sin llamadas en paralelo. Incluye IMP2-M, migración de fusión con PROC-02 de Government ($0,000212, AUDIT_PASS).
 
 **Declaración.** Todo el código de producto y de pruebas lo propuso DeepSeek. Claude hizo estos ajustes mecánicos: reponer una línea de apertura de lista borrada por un bloque, sustituir una clase de color inexistente por el token real, aplicar sin alterar en cuatro puntos el texto de IMP2-F RETRY_2 y en dos los de IMP2-C, retirar 5 pruebas rotas, y regenerar instantáneas y filas de catálogo. En RETRY_2 de IMP2-E y IMP2-H, el brief dio las líneas existentes que debían buscarse y describió el cierre a cambiar; no dictó cuerpos de función. Claude usó sondas temporales sin commitear, ya borradas: backend de reglas (`zz_sonda_ciclo2`) y copias de la E2E para recorrer el flujo en Chrome. Dos envíos no llegaron a DeepSeek por tamaño y no consumieron intento. El ciclo usó ocho subtareas: los rediseños se abrieron con causa nueva registrada.
+
+## Ciclo 3
+
+Tope: 12 llamadas. Diseño: las recepciones del expediente se derivan de `GoodsReceipt.order_id`, sin tablas ni migración.
+
+| Subtarea | Intento | Modelo | Coste | Resultado |
+|---|---|---|---|---|
+| IMP3-A integración backend | ATTEMPT | pro | $0,008252 | AUDIT_REJECT: sin rutas, sin pruebas, sin `create_file_receipt`, columnas inexistentes |
+| IMP3-A | RETRY_1 | pro | $0,013687 | Aplicado para medir |
+| IMP3-A | RETRY_1, auditoría | — | — | Claude insertó dos saltos de línea que faltaban tras aplicar. Sigue: pruebas con marcador suelto y duplicadas, auditoría con firma equivocada, `next_action` sin etapa, errores de tipos |
+| IMP3-A | RETRY_2 | pro | $0,006198 | AUDIT_REJECT: vallas sin rutas, sintaxis inválida en `after`, SEARCH vacío, bloque idéntico. **STOP** |
+
+### IMP3-B (rediseño tras STOP de IMP3-A)
+- NEW_ROOT_CAUSE: un brief con muchos retoques dispersos degrada el formato de respuesta. Claude quitó de las pruebas un marcador suelto y una copia idéntica de función
+- NEW_TECHNICAL_BOUNDARY: funciones completas por fichero, con formato de ejemplo por bloque
+| IMP3-B | ATTEMPT | pro | $0,005445 | 13 de 16 bloques aplicados; 3 sin coincidencia única |
+| IMP3-B | RETRY_1 | pro | $0,004403 | Aplicado para medir |
+| IMP3-B | RETRY_1, auditoría | — | — | 8 de 9 bloques aplicados. Mypy en 154. El bloque 5 no coincidía por una línea en blanco; medido con arreglo temporal: 14 de 15 pruebas |
+| IMP3-B | RETRY_2 | flash | $0,000486 | Aplicado |
+| IMP3-D frontend, enlaces y E2E | ATTEMPT | pro | $0,011400 | 23 de 26 bloques aplicados para medir |
+| IMP3-D | RETRY_1 | pro | $0,014559 | AUDIT_REJECT: rutas `modules/importaciones` inexistentes, pruebas vacías, `Number()` prohibido, `Autorizado` con rutas inexactas, bloque mal formado |
+| IMP3-D | RETRY_2 | pro | $0,007048 | Solo producto. Aplicado para medir. Claude retiró de la prueba el marcador suelto |
+
+### IMP3-E (rediseño tras STOP de IMP3-D)
+- NEW_ROOT_CAUSE: Claude recorrió el flujo en Chrome con una sonda temporal, ya retirada: nombres de campos en el alta de recepción, expediente con datos en caché al volver, enlace de incidencias solo para aceptadas, tipo compartido incompleto. El flujo completo pasó con esos arreglos temporales
+- NEW_TECHNICAL_BOUNDARY: esos defectos más las pruebas, con hechos medidos
+| IMP3-E | ATTEMPT | pro | $0,007846 | 6 de 11 bloques aplicados; pruebas Vitest con ruta y ayudantes inexistentes rechazadas |
+| IMP3-E | RETRY_1 | pro | $0,003291 | Tipos, `onClick`, tarjeta, selectores E2E y pruebas Vitest |
+| IMP3-E | RETRY_2 | pro | $0,001961 | **STOP: tope de 12 llamadas.** Aplicados la tarjeta y `.first()` (texto de DeepSeek, también en la segunda línea, porque un bloque iba a otra). Rechazadas 2 pruebas Vitest con ayudantes inexistentes; Claude retiró su andamiaje sin uso. Sus reglas quedan en backend (`extra=forbid`) y en la E2E |
+| Cierre | ajustes mecánicos | Claude | — | `API_URL` por la constante existente `API` en la E2E. Smoke temporal, sin commitear, en Chrome: Cargar más, vincular, desvincular, transportista y anular corrección, los cinco correctos |
+| Cierre | ajustes mecánicos | Claude | — | Import de tipo sin uso retirado y `onClick={ubicar}` en lugar de `void`, exigido por el tipo de `AsyncButton`. Sin cambio de comportamiento |
+
+## Totales del ciclo 3
+
+12 llamadas (tope 12) · $0,084576. Solo de pruebas: 0. Reintentos: 8. Sin paralelo.
+
+**Declaración.** El código de producto y pruebas lo propuso DeepSeek. Ajustes mecánicos de Claude: saltos de línea tras aplicar, marcadores sueltos y una copia idéntica de función en pruebas, retirar andamiaje sin uso, aplicar en dos líneas el mismo `.first()` de DeepSeek, `API_URL` por `API`, un import sin uso y `onClick={ubicar}`. Dos pruebas Vitest pedidas no entraron por agotarse el tope. Los briefs finales listaron etiquetas y pasos medidos en Chrome como hechos, sin cuerpos de función: es un caso límite que se declara. Sondas temporales en Chrome, sin commitear y borradas: recorrido del flujo y smoke del ciclo 2. Varios rechazos los causó un brief incompleto de Claude, como no incluir los contratos de componentes en IMP3-D.
+

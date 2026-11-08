@@ -38,4 +38,17 @@ Antes de pagar, apruebe al proveedor en Maestros → Terceros (RIF y cuenta banc
 13. En «Resumen», pulse «Confirmar despacho». El estado pasa a «Despachada», desaparece «Cancelar importación» y el historial muestra «Despacho confirmado».
 14. Reduzca la ventana al ancho de un teléfono y recargue: el menú arranca plegado y el expediente se lee sin desplazamiento lateral.
 
-**Aún no disponible:** arribo, recepción desde el expediente, diferencias, ubicación y costos de importación. El expediente no llega todavía al cierre de punta a punta.
+### Recibir y ubicar
+
+Necesita un almacén con una ubicación activa, en Organización.
+
+15. Tras despachar, en «Recepción» escriba un código, elija el almacén y pulse «Crear recepción». No pide la orden: es la del expediente. El resumen pasa a «Esperando arribo».
+16. En «Arribo» indique los bultos y confirme. Pasa a «En recepción».
+17. Pulse «Abrir recepción». Registre la línea y pulse confirmar, enviar a calidad, conforme y aceptar. Pulse «Volver al expediente».
+18. Pulse «Gestionar incidencias», registre un daño, escálelo y trátelo. Vuelva: la incidencia aparece en «Diferencias e inventario» y el expediente dice «Por confirmar inventario».
+19. Pulse «Confirmar inventario», registre el conteo y confirme. Vuelva: dice «Por ubicar».
+20. En «Ubicación», elija el destino y pulse «Ubicar». Dice «Recibida y ubicada», con la ubicación y la cantidad.
+
+**Límite:** un put-away hecho desde el menú de Inventario, sin pasar por el expediente, no se le atribuye.
+
+**Aún no disponible:** gastos y costo de importación; reporte formal de diferencias como documento; clasificación y zonas de almacén, pendientes de validar por el sponsor. Comparación completa con el documento del sponsor: pendiente.

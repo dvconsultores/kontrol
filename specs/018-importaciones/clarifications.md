@@ -17,3 +17,7 @@ Decisiones de diseño de Claude cuando la fuente no fija el detalle. Son reversi
 | CL-018-11 | ¿Una corrección abierta bloquea? | Bloquea confirmar la documentación; tras el despacho no revierte | «Documentación completa» es falso con una corrección abierta; el despacho físico ya ocurrió |
 | CL-018-12 | ¿El expediente crea pagos? | Sí, llamando a CxP, y vincula existentes; aprobar y ejecutar siguen en CxP | «Ejecutar anticipo o pago» sin segundo libro ni segunda puerta |
 | CL-018-13 | ¿Qué órdenes se ofrecen? | Búsqueda en servidor de aprobadas, mismo proveedor y moneda, no usadas | Elimina el límite de 100 |
+| CL-018-14 | ¿Cómo se liga la recepción al expediente? | Derivada de `GoodsReceipt.order_id`, sin clave nueva | La orden pertenece a un solo expediente |
+| CL-018-15 | ¿Corrección o incidencia? | `PRE_DISPATCH_CORRECTION` en `import_corrections`; `POST_ARRIVAL_RECEIPT_INCIDENT` en `ReceiptIncident`. Un mismo hecho no va a las dos | Documental y de proceso frente a mercancía recibida. Una corrección sigue pudiendo abrirse tras despachar por un documento, sin revertir el estado |
+| CL-018-16 | `PAYMENT_DRAFT_PERMISSION_CONTRACT` | `compras.create` crea el borrador; `compras.approve` hace la transición; sin ninguno de los dos, 403 | Crear no es aprobar ni ejecutar. Observar un borrador sin permiso de aprobación no es defecto. Protegido por prueba |
+

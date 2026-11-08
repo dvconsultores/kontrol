@@ -40,3 +40,8 @@ Spec 020 no sirve antes del arribo: `ReceiptIncident.receipt_id` es obligatorio.
 
 Consultar `compras:view`. Crear, editar, vincular, añadir y recibir `compras:create`. Validar, observar, confirmar y cancelar `compras:approve`.
 Registrar pago o anticipo y vincular: `compras:create`. Confirmar despacho y anular corrección: `compras:approve`.
+
+## Ciclo 3
+
+Sin tablas ni migración. `DISPATCHED` sigue siendo el último estado guardado. La continuidad la da `_logistics_detail`, y `next_action` depende de su etapa. Escrituras: una ruta propia, `POST /importaciones/{id}/receipts`; arribo y put-away van a sus dueñas, y lo demás se opera en las pantallas de 019, 020 y 021 con contexto de vuelta.
+
