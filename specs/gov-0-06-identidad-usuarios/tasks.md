@@ -17,4 +17,4 @@ EXECUTOR DEEPSEEK; MODEL deepseek-v4-pro salvo indicación; RETRY_MAX 2; EGRESS_
 - [X] T013 E2E por menú y axe
 - [X] T014 Control de integridad
 - [X] T015 Mutaciones M1..M20
-- [ ] T016 Certificación, UAT, matrices y cierre
+- [X] T016 Certificación, UAT, matrices y cierre
