@@ -2651,3 +2651,20 @@ Evidencia: `specs/002-maestros/spec002-catalogo-selectores-delta.md` (Convergenc
 | TERCEROS-E2E-PENDIENTE (nueva) | OPEN · EXTERNAL_GATE: E2E preparada, sin ejecutar; sin caso de cambio de empresa |
 
 Evidencia: `specs/002-maestros/spec002-terceros-selectores-delta.md` y `specs/002-maestros/evidence/terceros-selectores/`.
+
+## Actualización 2026-11-08 (13) — vertical funcional de terceros
+
+| Deuda | Estado |
+|---|---|
+| TERCEROS-MANTENIMIENTO-SIN-UI | **`FUNCTIONAL_PRODUCT_COMPLETE_LOCAL / EXTERNAL_CERTIFICATION_GATES_PENDING`** |
+| TERCEROS-SELECTORES-PRIMERA-PAGINA | Mismo estado: ya no la frena el mantenimiento |
+| TERCEROS-DESACTIVAR-CON-DOCUMENTOS | **CLOSED** en local: 409 con los documentos |
+| TERCEROS-ROLES-SIN-NORMALIZAR | **CLOSED** para altas nuevas: vocabulario y mayúsculas; lo histórico sigue en la deuda de escaneo |
+| TERCEROS-PROVEEDORES-HISTORICOS-SIN-APROBAR (nueva) | OPEN · **HIGH** · EXTERNAL_GATE: al desplegar, todo proveedor existente queda sin poder cobrar hasta aprobarlo. Hay que decidir con la dueña cómo se aprueban antes de publicar |
+| PUBLICACION-DIVERGENCIA-GOVERNMENT (nueva) | OPEN · **HIGH**: `public-upstream/develop` avanzó a `69c6b8a` con ORG-06 de P1. Hay conflictos en `test_audit_catalog_backup`, `test_installation_key_reference`, `test_migraciones_url_porcentaje` y `catalogo.md`, y dos `0077` que exigirán una migración de fusión |
+| FISCAL-SIN-SNAPSHOT-DE-TERCERO (nueva) | OPEN · MEDIUM · 007: los documentos guardan solo el id del tercero; editarlo cambia lo que se muestra en documentos históricos |
+| TERCEROS-RIF-INDICE-UNICO (nueva) | OPEN · EXTERNAL_GATE: índice parcial tras escanear duplicados con PostgreSQL; hoy lo protege solo la validación de aplicación, con carrera posible |
+| TERCEROS-E2E-PENDIENTE | OPEN · EXTERNAL_GATE: `terceros-mantenimiento.spec.ts` preparada; **sigue sin caso de cambio de empresa** en E2E |
+| FINAL_ENTERPRISE_CERTIFICATION (nueva) | OPEN · EXTERNAL_GATE: acumula T052, PostgreSQL, E2E completa, multinavegador, mutaciones, OpenAPI global, seguridad, accesibilidad, responsive, concurrencia, auditoría, regresión canónica, Government, escaneos históricos, SQLite y PostgreSQL completos, residuos y UAT |
+
+Evidencia: `specs/002-maestros/spec002-terceros-functional-completion-delta.md`.
