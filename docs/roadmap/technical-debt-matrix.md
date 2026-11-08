@@ -2637,3 +2637,17 @@ Evidencia: `specs/002-maestros/evidence/catalogo-selectores/` y `specs/002-maest
 | ASYNC-COMBOBOX-REABRIR-TRAS-ESCAPE | OPEN · LOW, sin cambios |
 
 Evidencia: `specs/002-maestros/spec002-catalogo-selectores-delta.md` (Convergencia) y `evidence/catalogo-selectores/ATTEMPT_LOG.md`.
+
+## Actualización 2026-11-08 (12) — selectores e integridad de terceros
+
+| Deuda | Estado |
+|---|---|
+| TERCEROS-SELECTORES-PRIMERA-PAGINA | **`PARTIAL`**, sin publicar: 14 selectores en 11 pantallas con `SelectorDeTercero`; rol y estado en backend. Certificado en local. No cierra por la deuda siguiente |
+| TERCEROS-MANTENIMIENTO-SIN-UI (nueva) | OPEN · **HIGH** · 002, preexistente: sin alta, roles, desactivación ni detalle en la interfaz; «Ver» sin ruta. La integridad nueva impide corregir un tercero con el rol equivocado desde la UI |
+| TERCEROS-ROLES-HISTORICOS-SIN-ESCANEAR (nueva) | OPEN · EXTERNAL_GATE · 002: escanear con PostgreSQL los terceros sin rol elegible antes de publicar la regla |
+| TERCEROS-ROLES-SIN-NORMALIZAR (nueva) | OPEN · LOW · 002: `POST /maestros/terceros` guarda los roles tal como llegan y sin validar el vocabulario; las comparaciones ya normalizan |
+| TERCEROS-DESACTIVAR-CON-DOCUMENTOS (nueva) | OPEN · MEDIUM · 002: EDGE-002-02 pide bloquear la desactivación con documentos activos; `deactivate_party` no comprueba nada |
+| TERCEROS-LOAD-ALL-ESTADO-REEMBOLSOS (nueva) | OPEN · LOW: bucle de `page_size=100`; sin truncado, deuda de escala |
+| TERCEROS-E2E-PENDIENTE (nueva) | OPEN · EXTERNAL_GATE: E2E preparada, sin ejecutar; sin caso de cambio de empresa |
+
+Evidencia: `specs/002-maestros/spec002-terceros-selectores-delta.md` y `specs/002-maestros/evidence/terceros-selectores/`.
