@@ -192,7 +192,7 @@ export function SeccionDatos({
         notify({
           type: "success",
           title: "Registro actualizado",
-          description: `${titulo} actualizado correctamente.`,
+          description: `Se actualizó en ${titulo}.`,
         });
         cerrar();
         void queryClient.invalidateQueries({ queryKey: ["maestros"] });
@@ -219,7 +219,7 @@ export function SeccionDatos({
       notify({
         type: "success",
         title: "Registro creado",
-        description: `${titulo} creado correctamente.`,
+        description: `Se guardó en ${titulo}.`,
       });
       cerrar();
       void queryClient.invalidateQueries({ queryKey: ["maestros"] });
@@ -239,7 +239,7 @@ export function SeccionDatos({
       notify({
         type: "success",
         title: "Registro desactivado",
-        description: `${titulo} desactivado correctamente.`,
+        description: `Se desactivó en ${titulo}.`,
       });
       void queryClient.invalidateQueries({ queryKey: ["maestros"] });
     } catch (error) {

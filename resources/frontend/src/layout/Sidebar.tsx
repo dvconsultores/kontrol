@@ -162,6 +162,7 @@ const navSections: NavSection[] = [
       { to: "/compras/requisiciones", label: "Requisiciones", icon: ClipboardList },
       { to: "/compras/cotizaciones", label: "Cotizaciones", icon: FileText },
       { to: "/compras/ordenes", label: "Órdenes", icon: ShoppingCart },
+      { to: "/compras/importaciones", label: "Importaciones", icon: Package },
       { to: "/compras/recepciones", label: "Recepciones", icon: Package },
       { to: "/compras/incidencias", label: "Incidencias", icon: Package },
       { to: "/compras/facturas", label: "Facturas", icon: Receipt },
