@@ -903,6 +903,100 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/contrataciones/comisiones",
+      "query": [
+        "pagina",
+        "por_pagina",
+        "q",
+        "situacion",
+        "status",
+        "tipo"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/comisiones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/comisiones/catalogo",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/comisiones/comisiones.csv",
+      "query": [
+        "q",
+        "situacion",
+        "status",
+        "tipo"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/comisiones/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}",
+      "query": [
+        "fecha"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}/descartar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}/inhibiciones",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}/inhibiciones/{inhibicion_id}/resolver",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}/miembros",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}/miembros/{miembro_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}/miembros/{miembro_id}/terminar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}/notificacion-snc",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/ente",
       "query": []
     },

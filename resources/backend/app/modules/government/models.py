@@ -842,7 +842,7 @@ for _sentencia in GOV_AUDIT_PACKAGE_VERIFICATIONS_IMMUTABLE_PG:
 ESTADOS_REGLA_SOD = ("BORRADOR", "VIGENTE", "CERRADA")
 ALCANCES_REGLA_SOD = ("MISMO_OBJETO",)
 MODOS_REGLA_SOD = ("BLOQUEAR",)
-PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06")
+PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06", "PROC-02")
 TIPOS_HISTORIA_SOD = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA")
 
 
@@ -1458,6 +1458,16 @@ TIPOS_HISTORIA_ASIGNACION = ("CREADA", "EDITADA", "ACTIVADA", "DESCARTADA", "REV
 
 ESTADOS_VINCULO = ("BORRADOR", "ACTIVO", "CERRADO", "REVOCADO", "DESCARTADO")
 TIPOS_HISTORIA_VINCULO = ("CREADO", "EDITADO", "ACTIVADO", "DESCARTADO", "CERRADO", "REVOCADO")
+
+ESTADOS_COMISION = ("BORRADOR", "VIGENTE", "CERRADA", "DESCARTADA")
+TIPOS_COMISION = ("PERMANENTE", "TEMPORAL")
+FUNCIONES_MIEMBRO_COMISION = ("MIEMBRO", "SECRETARIO")
+AREAS_COMISION = ("JURIDICA", "TECNICA", "ECONOMICO_FINANCIERA")
+CONDICIONES_MIEMBRO_COMISION = ("PRINCIPAL", "SUPLENTE")
+CAUSAS_FIN_MIEMBRO_COMISION = ("MUERTE_INCAPACIDAD", "DESPIDO_DESTITUCION", "RETIRO_RENUNCIA_REMOCION", "FIN_DESIGNACION")
+CAUSALES_INHIBICION = ("INTERES", "AMISTAD_ENEMISTAD", "INTERVENCION_PREVIA", "SERVICIO_SUBORDINACION")
+ESTADOS_INHIBICION = ("DECLARADA", "ACEPTADA", "RECHAZADA")
+TIPOS_HISTORIA_COMISION = ("CREADA", "EDITADA", "DESCARTADA", "ACTIVADA", "CERRADA", "SNC_NOTIFICADA", "MIEMBRO_ANADIDO", "MIEMBRO_RETIRADO", "MIEMBRO_TERMINADO", "INHIBICION_DECLARADA", "INHIBICION_RESUELTA")
 CATEGORIAS_SEPARACION = ("OPERATIVO", "APROBADOR", "CONTROL_INTERNO", "AUDITORIA", "ADMINISTRACION_TECNICA")
 ESTADOS_CATEGORIA_ROL = ("ACTIVA", "RETIRADA")
 TIPOS_HISTORIA_CATEGORIA = ("AGREGADA", "RETIRADA")
@@ -1587,6 +1597,125 @@ class GovernmentAssignmentHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Bas
     tipo: Mapped[str] = mapped_column(String(16), nullable=False)
     detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
+
+class GovernmentProcurementCommittee(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    __tablename__ = "gov_procurement_committees"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    tipo: Mapped[str] = mapped_column(String(16), nullable=False)
+    objeto: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    desde: Mapped[date] = mapped_column(Date, nullable=False)
+    hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    regla_version: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    snc_notificada_en: Mapped[date | None] = mapped_column(Date, nullable=True)
+    snc_referencia: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    fin_efectivo: Mapped[date | None] = mapped_column(Date, nullable=True)
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    activated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    closed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_committees_codigo"),
+        CheckConstraint(f"status IN ({en(ESTADOS_COMISION)})", name="status"),
+        CheckConstraint(f"tipo IN ({en(TIPOS_COMISION)})", name="tipo"),
+        CheckConstraint("version >= 1", name="version"),
+        CheckConstraint("hasta IS NULL OR hasta >= desde", name="vigencia"),
+        CheckConstraint("tipo <> 'TEMPORAL' OR status IN ('BORRADOR','DESCARTADA') OR hasta IS NOT NULL", name="temporal_con_fin"),
+        CheckConstraint("status IN ('BORRADOR','DESCARTADA') OR (act_id IS NOT NULL AND activated_at IS NOT NULL AND regla_version IS NOT NULL)", name="vigente_con_acto"),
+        CheckConstraint("status <> 'CERRADA' OR (fin_efectivo IS NOT NULL AND motivo_cierre IS NOT NULL)", name="cerrada_con_fin"),
+    )
+
+
+class GovernmentProcurementCommitteeMember(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_committee_members"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    committee_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committees.id"), nullable=False, index=True)
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
+    funcion: Mapped[str] = mapped_column(String(16), nullable=False)
+    area: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    condicion: Mapped[str] = mapped_column(String(16), nullable=False)
+    suplente_de_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_committee_members.id"), nullable=True)
+    desde: Mapped[date] = mapped_column(Date, nullable=False)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    certificacion_snc: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    fin_efectivo: Mapped[date | None] = mapped_column(Date, nullable=True)
+    causa_fin: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    motivo_fin: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ended_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"funcion IN ({en(FUNCIONES_MIEMBRO_COMISION)})", name="funcion"),
+        CheckConstraint(f"condicion IN ({en(CONDICIONES_MIEMBRO_COMISION)})", name="condicion"),
+        CheckConstraint(f"causa_fin IS NULL OR causa_fin IN ({en(CAUSAS_FIN_MIEMBRO_COMISION)})", name="causa_fin"),
+        CheckConstraint("(funcion = 'SECRETARIO' AND area IS NULL) OR (funcion = 'MIEMBRO' AND area IN ('JURIDICA', 'TECNICA', 'ECONOMICO_FINANCIERA'))", name="area"),
+        CheckConstraint("condicion = 'PRINCIPAL' OR funcion = 'SECRETARIO' OR suplente_de_id IS NOT NULL", name="suplente_de"),
+        CheckConstraint("fin_efectivo IS NULL OR fin_efectivo >= desde", name="fin_tras_inicio"),
+        CheckConstraint("(fin_efectivo IS NULL) = (causa_fin IS NULL)", name="fin_con_causa"),
+        Index("uq_gov_committee_member_official", "committee_id", "official_id", unique=True, postgresql_where=text("fin_efectivo IS NULL"), sqlite_where=text("fin_efectivo IS NULL")),
+        Index("uq_gov_committee_member_suplente", "suplente_de_id", unique=True, postgresql_where=text("fin_efectivo IS NULL AND suplente_de_id IS NOT NULL"), sqlite_where=text("fin_efectivo IS NULL AND suplente_de_id IS NOT NULL")),
+        Index("uq_gov_committee_secretario", "committee_id", "condicion", unique=True, postgresql_where=text("fin_efectivo IS NULL AND funcion = 'SECRETARIO'"), sqlite_where=text("fin_efectivo IS NULL AND funcion = 'SECRETARIO'")),
+    )
+
+
+class GovernmentProcurementCommitteeConflict(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    __tablename__ = "gov_procurement_committee_conflicts"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    committee_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committees.id"), nullable=False, index=True)
+    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committee_members.id"), nullable=False, index=True)
+    asunto: Mapped[str] = mapped_column(String(300), nullable=False)
+    causal: Mapped[str] = mapped_column(String(32), nullable=False)
+    descripcion: Mapped[str] = mapped_column(String(1000), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    soporte: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    estado: Mapped[str] = mapped_column(String(16), nullable=False, default="DECLARADA", server_default="DECLARADA")
+    motivo_resolucion: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    resuelta_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    resuelta_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"causal IN ({en(CAUSALES_INHIBICION)})", name="causal"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_INHIBICION)})", name="estado"),
+        CheckConstraint("version >= 1", name="version"),
+        CheckConstraint("estado = 'DECLARADA' OR (resuelta_por IS NOT NULL AND resuelta_en IS NOT NULL AND motivo_resolucion IS NOT NULL)", name="resuelta"),
+    )
+
+
+class GovernmentProcurementCommitteeHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_committee_history"
+    __scope__ = Scope.COMPANY
+
+    committee_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committees.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(24), nullable=False)
+    detalle: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_COMISION)})", name="tipo"),
+    )
+
+
+GOV_COMMITTEE_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_comision_historia_inmutable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_COMMITTEE_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_committee_history_no_update BEFORE UPDATE ON gov_procurement_committee_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_comision_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_committee_history_no_delete BEFORE DELETE ON gov_procurement_committee_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_comision_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_committee_history_no_truncate BEFORE TRUNCATE ON gov_procurement_committee_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_comision_historia_inmutable()",
+)
+
+for _sentencia in GOV_COMMITTEE_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentProcurementCommitteeHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
 
 class GovernmentUserOfficialLink(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
     """Vínculo entre una cuenta de usuario y un funcionario institucional (ORG-06, GOV-ORG-007)."""

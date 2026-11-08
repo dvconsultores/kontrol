@@ -33,6 +33,7 @@ from app.modules.government.models import (
     GovernmentNotification,
     GovernmentOfficial,
     GovernmentPosition,
+    GovernmentProcurementCommittee,
     GovernmentRoleCategory,
     GovernmentSoDRule,
     GovernmentStructure,
@@ -66,6 +67,7 @@ PROCESOS: list[tuple[str, str, str]] = [
     ("CTL-10", "Controles de cierre", "gov-ctl-10"),
     ("ORG-04", "Ocupación de cargos", "gov-org-04"),
     ("ORG-06", "Identidad institucional", "gov-0-06"),
+    ("PROC-02", "Comisiones de contrataciones", "gov-proc-02"),
 ]
 _PROCESO_POR_OWNER_SPEC = {owner_spec: (codigo, nombre) for codigo, nombre, owner_spec in PROCESOS}
 _PROCESO_NOMBRE = {codigo: nombre for codigo, nombre, _ in PROCESOS}
@@ -368,6 +370,16 @@ def _objeto_desde_evento(db: Session, event: AuditEvent, ctx: CompanyContext) ->
     if event.entity_type == "GovernmentUserOfficialLink":
         vinculo = db.scalar(select(GovernmentUserOfficialLink).where(GovernmentUserOfficialLink.id == objeto_id, GovernmentUserOfficialLink.company_id == empresa))
         return None if vinculo is None else AuditoriaObjeto(tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/identidad/vinculos/{objeto_id}", capacidad="gobierno_identidad:view")
+    if event.entity_type == "GovernmentProcurementCommittee":
+        comision = db.scalar(select(GovernmentProcurementCommittee).where(GovernmentProcurementCommittee.id == event.entity_id, GovernmentProcurementCommittee.company_id == empresa))
+        if comision is None:
+            return None
+        return AuditoriaObjeto(
+            tipo=event.entity_type,
+            id=objeto_id,
+            ruta=f"/gobierno/contrataciones/comisiones/{objeto_id}",
+            capacidad="gobierno_comisiones:view",
+        )
     if event.entity_type == "GovernmentRoleCategory":
         categoria = db.scalar(select(GovernmentRoleCategory).where(GovernmentRoleCategory.id == objeto_id, GovernmentRoleCategory.company_id == empresa))
         return None if categoria is None else AuditoriaObjeto(tipo=event.entity_type, id=objeto_id, ruta="/gobierno/identidad/categorias", capacidad="gobierno_identidad:view")

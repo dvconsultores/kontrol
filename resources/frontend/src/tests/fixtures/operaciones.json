@@ -1228,6 +1228,134 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/comisiones",
+      "capabilities": [
+        "gobierno_comisiones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/comisiones",
+      "capabilities": [
+        "gobierno_comisiones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/catalogo",
+      "capabilities": [
+        "gobierno_comisiones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/comisiones.csv",
+      "capabilities": [
+        "gobierno_comisiones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/opciones",
+      "capabilities": [
+        "gobierno_comisiones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}",
+      "capabilities": [
+        "gobierno_comisiones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}",
+      "capabilities": [
+        "gobierno_comisiones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}/activar",
+      "capabilities": [
+        "gobierno_comisiones:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}/cerrar",
+      "capabilities": [
+        "gobierno_comisiones:close"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}/descartar",
+      "capabilities": [
+        "gobierno_comisiones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}/inhibiciones",
+      "capabilities": [
+        "gobierno_comisiones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}/inhibiciones/{inhibicion_id}/resolver",
+      "capabilities": [
+        "gobierno_comisiones:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}/miembros",
+      "capabilities": [
+        "gobierno_comisiones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}/miembros/{miembro_id}",
+      "capabilities": [
+        "gobierno_comisiones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}/miembros/{miembro_id}/terminar",
+      "capabilities": [
+        "gobierno_comisiones:close"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}/notificacion-snc",
+      "capabilities": [
+        "gobierno_comisiones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/ente",
       "capabilities": [
         "gobierno_ente:view"
@@ -6294,7 +6422,11 @@
     "gobierno_identidad:view",
     "gobierno_identidad:manage",
     "gobierno_identidad:activate",
-    "gobierno_identidad:revoke"
+    "gobierno_identidad:revoke",
+    "gobierno_comisiones:view",
+    "gobierno_comisiones:manage",
+    "gobierno_comisiones:activate",
+    "gobierno_comisiones:close"
   ],
   "report_capabilities": {
     "executive_ventas": [

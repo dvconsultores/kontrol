@@ -102,6 +102,6 @@ Sin código dictado: los briefs dan contratos e invariantes, y el código existe
 
 ## Totales del ciclo 2
 
-22 llamadas · $0,173434. Llamadas solo de pruebas: 2 de 2. Reintentos: 14. Sin llamadas en paralelo.
+23 llamadas · $0,173646. Llamadas solo de pruebas: 2 de 2. Reintentos: 14. Sin llamadas en paralelo. Incluye IMP2-M, migración de fusión con PROC-02 de Government ($0,000212, AUDIT_PASS).
 
 **Declaración.** Todo el código de producto y de pruebas lo propuso DeepSeek. Claude hizo estos ajustes mecánicos: reponer una línea de apertura de lista borrada por un bloque, sustituir una clase de color inexistente por el token real, aplicar sin alterar en cuatro puntos el texto de IMP2-F RETRY_2 y en dos los de IMP2-C, retirar 5 pruebas rotas, y regenerar instantáneas y filas de catálogo. En RETRY_2 de IMP2-E y IMP2-H, el brief dio las líneas existentes que debían buscarse y describió el cierre a cambiar; no dictó cuerpos de función. Claude usó sondas temporales sin commitear, ya borradas: backend de reglas (`zz_sonda_ciclo2`) y copias de la E2E para recorrer el flujo en Chrome. Dos envíos no llegaron a DeepSeek por tamaño y no consumieron intento. El ciclo usó ocho subtareas: los rediseños se abrieron con causa nueva registrada.

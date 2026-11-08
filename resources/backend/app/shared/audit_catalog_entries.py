@@ -449,6 +449,23 @@ _PARTE_B: tuple[AuditActionSpec, ...] = (
     _e("WITHHOLDING_TRANSITIONED", "Withholding", "purchasing", "004", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("target",), "Cambio de estado de retención"),
 )
 
+DETALLE_COMISION: tuple[str, ...] = ("acto", "area", "asunto", "causa", "causal", "codigo", "condicion", "desde", "estado", "fecha", "filtros", "funcion", "funcionario", "hasta", "miembro", "motivo", "nombre", "referencia", "regla_version", "total", "version")
+
+_PARTE_C: tuple[AuditActionSpec, ...] = (
+    _e("GOV_COMMITTEE_CREATED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisión de contrataciones registrada"),
+    _e("GOV_COMMITTEE_UPDATED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisión de contrataciones editada"),
+    _e("GOV_COMMITTEE_DISCARDED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisión de contrataciones descartada"),
+    _e("GOV_COMMITTEE_ACTIVATED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisión de contrataciones activada"),
+    _e("GOV_COMMITTEE_CLOSED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisión de contrataciones cerrada"),
+    _e("GOV_COMMITTEE_SNC_NOTIFIED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Notificación al SNC registrada"),
+    _e("GOV_COMMITTEE_MEMBER_ADDED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Miembro de comisión añadido"),
+    _e("GOV_COMMITTEE_MEMBER_REMOVED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Miembro de comisión retirado del borrador"),
+    _e("GOV_COMMITTEE_MEMBER_ENDED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Miembro de comisión terminado"),
+    _e("GOV_COMMITTEE_CONFLICT_DECLARED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Inhibición declarada"),
+    _e("GOV_COMMITTEE_CONFLICT_RESOLVED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Inhibición resuelta"),
+    _e("GOV_COMMITTEES_EXPORTED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisiones de contrataciones exportadas"),
+)
+
 _PARTE_TERCEROS: tuple[AuditActionSpec, ...] = (
     _e("PARTY_CREATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("code", "economic_activity", "legal_name", "name", "nationality", "person_type", "residence", "roles", "status", "tax_id", "trade_name", "version"), "Tercero creado"),
     _e("PARTY_UPDATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("code", "economic_activity", "legal_name", "name", "nationality", "person_type", "residence", "roles", "status", "tax_id", "trade_name", "version"), "Tercero actualizado"),
@@ -492,4 +509,4 @@ _PARTE_IMPORTACIONES: tuple[AuditActionSpec, ...] = (
     _e("IMPORT_DISPATCH_CONFIRMED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("status", "dispatched_at"), "Despacho confirmado"),
 )
 
-ENTRIES: tuple[AuditActionSpec, ...] = _PARTE_A + _PARTE_B + _PARTE_TERCEROS + _PARTE_IMPORTACIONES
+ENTRIES: tuple[AuditActionSpec, ...] = _PARTE_A + _PARTE_B + _PARTE_C + _PARTE_TERCEROS + _PARTE_IMPORTACIONES
