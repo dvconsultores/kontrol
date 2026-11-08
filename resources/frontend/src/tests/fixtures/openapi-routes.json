@@ -1695,6 +1695,74 @@
     },
     {
       "method": "GET",
+      "path": "/importaciones",
+      "query": [
+        "page",
+        "page_size",
+        "q",
+        "status"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/importaciones/{file_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/importaciones/{file_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/importaciones/{file_id}/audit",
+      "query": [
+        "page",
+        "page_size"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/cancel",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/confirm-documents",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/documents",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/documents/{document_id}/observe",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/documents/{document_id}/receive",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/documents/{document_id}/validate",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/order",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/inventory/adjustments",
       "query": [
         "status"
@@ -2864,7 +2932,8 @@
         "page_size",
         "q",
         "receivable",
-        "status"
+        "status",
+        "supplier_id"
       ]
     },
     {

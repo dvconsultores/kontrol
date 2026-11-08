@@ -41,6 +41,7 @@ from app.modules.government.api_sod import router as government_sod_router
 from app.modules.homologation.api import router as homologation_router
 from app.modules.identity_access.api import authority_router, roles_router, users_router
 from app.modules.identity_access.api import router as auth_router
+from app.modules.imports.api import router as imports_router
 from app.modules.inventory.api import router as inventory_router
 from app.modules.licensing import reverification as license_reverification
 from app.modules.licensing import service as licensing_service
@@ -128,6 +129,7 @@ def create_app() -> FastAPI:
     app.include_router(uom_router, prefix=prefix)
     app.include_router(inventory_router, prefix=prefix)
     app.include_router(purchasing_router, prefix=prefix)
+    app.include_router(imports_router, prefix=prefix)
     app.include_router(sales_router, prefix=prefix)
     app.include_router(treasury_router, prefix=prefix)
     app.include_router(fiscal_router, prefix=prefix)

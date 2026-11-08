@@ -370,7 +370,7 @@ def add_quote_line(quote_id: str, body: QuoteLineCreate, db: Session = Depends(g
 # Órdenes de compra
 # --------------------------------------------------------------------------- #
 @router.get("/orders")
-def list_orders(status: str | None = None, q: str = "", receivable: bool = False,
+def list_orders(status: str | None = None, q: str = "", receivable: bool = False, supplier_id: str | None = None,
                 page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
                 db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(PurchaseOrder).where(PurchaseOrder.company_id == ctx.company_id)
@@ -378,6 +378,8 @@ def list_orders(status: str | None = None, q: str = "", receivable: bool = False
         query = query.where(PurchaseOrder.status == status)
     if q:
         query = query.where(PurchaseOrder.code.ilike(f"%{q}%"))
+    if supplier_id:
+        query = query.where(PurchaseOrder.supplier_id == supplier_id)
     if receivable:
         query = query.where(PurchaseOrder.status.in_(ap_service.RECEIVABLE_ORDER_STATUSES))
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0

@@ -2340,6 +2340,102 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/importaciones",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/importaciones/{file_id}",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/importaciones/{file_id}",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/importaciones/{file_id}/audit",
+      "capabilities": [
+        "audit:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/cancel",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/confirm-documents",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/documents",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/documents/{document_id}/observe",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/documents/{document_id}/receive",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/documents/{document_id}/validate",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/order",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/inventory/adjustments",
       "capabilities": [
         "inventario:view"

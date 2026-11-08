@@ -474,4 +474,14 @@ _PARTE_TERCEROS: tuple[AuditActionSpec, ...] = (
     _e("DRIVER_UPDATED", "Party", "master_data", "002", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("categories", "expiry", "license"), "Conductor actualizado"),
 )
 
-ENTRIES: tuple[AuditActionSpec, ...] = _PARTE_A + _PARTE_B + _PARTE_TERCEROS
+_PARTE_IMPORTACIONES: tuple[AuditActionSpec, ...] = (
+    _e("IMPORT_FILE_CREATED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("code", "currency", "status", "supplier_id"), "Importación creada"),
+    _e("IMPORT_FILE_UPDATED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("delivery_conditions", "expected_arrival_date", "expected_dispatch_date", "incoterm", "incoterm_place", "notes", "payment_conditions"), "Negociación de importación actualizada"),
+    _e("IMPORT_ORDER_LINKED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("order_id", "status"), "Orden vinculada a la importación"),
+    _e("IMPORT_DOCUMENT_ADDED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("document_id", "kind", "name", "required"), "Documento añadido a la importación"),
+    _e("IMPORT_DOCUMENT_CHANGED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("document_id", "kind", "reference", "status"), "Documento de importación actualizado"),
+    _e("IMPORT_DOCUMENTS_CONFIRMED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("status",), "Documentación de importación confirmada"),
+    _e("IMPORT_FILE_CANCELLED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("status",), "Importación cancelada"),
+)
+
+ENTRIES: tuple[AuditActionSpec, ...] = _PARTE_A + _PARTE_B + _PARTE_TERCEROS + _PARTE_IMPORTACIONES

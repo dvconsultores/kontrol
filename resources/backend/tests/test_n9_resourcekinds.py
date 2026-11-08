@@ -59,8 +59,8 @@ def test_el_registro_tiene_la_cardinalidad_esperada():
     El número es fijo a propósito: el registro está **cerrado**, y añadir un tipo
     sin semilla ni permiso declarado debe romper aquí y no en producción.
     """
-    assert len(RESOURCE_KINDS) == 30, (
-        f"se esperaban 30 tipos y hay {len(RESOURCE_KINDS)}: {sorted(RESOURCE_KINDS)}")
+    assert len(RESOURCE_KINDS) == 31, (
+        f"se esperaban 31 tipos y hay {len(RESOURCE_KINDS)}: {sorted(RESOURCE_KINDS)}")
     for exigido in ("Payment", "BankTransaction", "CashSession", "Reconciliation"):
         assert exigido in RESOURCE_KINDS, f"{exigido} sigue sin registrarse"
 
