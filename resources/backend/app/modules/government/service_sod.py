@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.company_context import CompanyContext
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.audit.models import AuditEvent
-from app.modules.government.models import GovernmentSoDRule, GovernmentSoDRuleHistory
+from app.modules.government.models import GovernmentSoDRule, GovernmentSoDRuleHistory, GovernmentUserOfficialLink
 from app.modules.government.service_auditoria import _instante, _usuarios_por_ids
 from app.modules.identity_access.models import User
 from app.shared.audit import record_audit, record_audit_after_rollback
@@ -97,6 +97,22 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "ORG04_FINALIZAR": ("Finalizar la asignación", "GOV_ASSIGNMENT_FINISHED", False),
         },
     },
+    "ORG-06": {
+        "nombre": "Identidad institucional",
+        "objeto": "GovernmentUserOfficialLink",
+        "objeto_nombre": "vínculo",
+        "acciones": {
+            "ORG06_REGISTRAR": ("Registrar el vínculo", "GOV_IDENTITY_LINK_CREATED", True),
+            "ORG06_ACTIVAR": ("Activar el vínculo", "GOV_IDENTITY_LINK_ACTIVATED", False),
+            "ORG06_CERRAR": ("Cerrar el vínculo", "GOV_IDENTITY_LINK_CLOSED", False),
+            "ORG06_REVOCAR": ("Revocar el vínculo", "GOV_IDENTITY_LINK_REVOKED", False),
+            "ORG06_CAT_OPERATIVO": ("Categoría operativa", "", False),
+            "ORG06_CAT_APROBADOR": ("Categoría aprobadora", "", False),
+            "ORG06_CAT_CONTROL_INTERNO": ("Categoría de control interno", "", False),
+            "ORG06_CAT_AUDITORIA": ("Categoría de auditoría", "", False),
+            "ORG06_CAT_ADMINISTRACION_TECNICA": ("Categoría de administración técnica", "", False),
+        },
+    },
 }
 
 
@@ -145,6 +161,11 @@ def _validar_par(proceso: str, accion_a: str, accion_b: str, bidireccional: bool
         raise _invalida("La acción A y la acción B deben ser distintas")
     if not bidireccional and acciones[accion_b][2]:
         raise _invalida("Una acción que crea el objeto no puede ser la acción B de una regla en un solo sentido")
+    if proceso == "ORG-06":
+        if not accion_a.startswith("ORG06_CAT_") or not accion_b.startswith("ORG06_CAT_"):
+            raise _invalida("Las acciones de ORG-06 deben ser categorías ORG06_CAT_*")
+        if accion_a.removeprefix("ORG06_CAT_") == accion_b.removeprefix("ORG06_CAT_"):
+            raise _invalida("Las categorías A y B deben ser distintas")
 
 
 def _regla_de_empresa(db: Session, ctx: CompanyContext, regla_id: str, bloquear: bool = False) -> GovernmentSoDRule:
@@ -477,6 +498,89 @@ def cerrar(db: Session, ctx: CompanyContext, regla_id: str, version: int | None,
     return regla
 
 
+def usuarios_equivalentes(db: Session, ctx: CompanyContext, user_id: str) -> set[str]:
+    if not user_id:
+        return set()
+    resultado = {user_id}
+    vinculos = db.execute(
+        select(GovernmentUserOfficialLink).where(
+            GovernmentUserOfficialLink.company_id == ctx.company_id,
+            GovernmentUserOfficialLink.status.in_(["ACTIVO", "CERRADO", "REVOCADO"]),
+        )
+    ).scalars().all()
+    por_usuario: dict[str, set[str]] = {}
+    por_funcionario: dict[str, set[str]] = {}
+    for vinculo in vinculos:
+        user_id_str = str(vinculo.user_id)
+        official_id_str = str(vinculo.official_id)
+        por_usuario.setdefault(user_id_str, set()).add(official_id_str)
+        por_funcionario.setdefault(official_id_str, set()).add(user_id_str)
+    pendientes = {user_id}
+    while pendientes:
+        actual = pendientes.pop()
+        for official_id in por_usuario.get(actual, set()):
+            for otro_usuario in por_funcionario.get(official_id, set()):
+                if otro_usuario not in resultado:
+                    resultado.add(otro_usuario)
+                    pendientes.add(otro_usuario)
+    return resultado
+
+
+def funcionarios_de_actor(db: Session, ctx: CompanyContext, user_id: str) -> set[str]:
+    """Devuelve los official_id de los enlaces activos/cerrados/revocados del actor."""
+    if not user_id:
+        return set()
+    user_ids = usuarios_equivalentes(db, ctx, user_id)
+    if not user_ids:
+        return set()
+    enlaces = (
+        db.query(GovernmentUserOfficialLink.official_id)
+        .filter(
+            GovernmentUserOfficialLink.company_id == ctx.company_id,
+            GovernmentUserOfficialLink.user_id.in_(user_ids),
+            GovernmentUserOfficialLink.status.in_(("ACTIVO", "CERRADO", "REVOCADO")),
+        )
+        .all()
+    )
+    return {str(enlace.official_id) for enlace in enlaces}
+
+
+def conflictos_de_categorias(
+    db: Session, ctx: CompanyContext, categorias: set[str], fecha: date
+) -> list[dict[str, Any]]:
+    if not categorias:
+        return []
+    reglas = db.execute(
+        select(GovernmentSoDRule).where(
+            GovernmentSoDRule.tenant_id == ctx.tenant_id,
+            GovernmentSoDRule.company_id == ctx.company_id,
+            GovernmentSoDRule.proceso == "ORG-06",
+            GovernmentSoDRule.estado == "VIGENTE",
+            GovernmentSoDRule.vigente_desde <= fecha,
+            (
+                (GovernmentSoDRule.vigente_hasta.is_(None))
+                | (GovernmentSoDRule.vigente_hasta >= fecha)
+            ),
+        )
+    ).scalars().all()
+    conflictos: list[dict[str, Any]] = []
+    for regla in reglas:
+        categoria_a = regla.accion_a.removeprefix("ORG06_CAT_")
+        categoria_b = regla.accion_b.removeprefix("ORG06_CAT_")
+        if categoria_a in categorias and categoria_b in categorias:
+            conflictos.append(
+                {
+                    "regla_id": str(regla.id),
+                    "regla_codigo": regla.codigo,
+                    "regla_nombre": regla.nombre,
+                    "regla_version": regla.version,
+                    "categoria_a": categoria_a,
+                    "categoria_b": categoria_b,
+                }
+            )
+    return conflictos
+
+
 def evaluar_antes_de_actuar(db: Session, ctx: CompanyContext, accion: str, objeto_tipo: str, objeto_id: str) -> None:
     """Guarda preventiva de segregación de funciones (CTL-01, spec §4.2).
 
@@ -489,6 +593,7 @@ def evaluar_antes_de_actuar(db: Session, ctx: CompanyContext, accion: str, objet
     if proceso is None:
         return
 
+    actores = usuarios_equivalentes(db, ctx, ctx.user_id)
     hoy = hoy_de_negocio()
     reglas = select(GovernmentSoDRule).where(
         GovernmentSoDRule.tenant_id == ctx.tenant_id,
@@ -510,7 +615,7 @@ def evaluar_antes_de_actuar(db: Session, ctx: CompanyContext, accion: str, objet
             select(AuditEvent)
             .where(
                 AuditEvent.company_id == ctx.company_id,
-                AuditEvent.user_id == ctx.user_id,
+                AuditEvent.user_id.in_(actores),
                 AuditEvent.entity_type == objeto_tipo,
                 AuditEvent.entity_id == objeto_id,
                 AuditEvent.action == evento_previa,

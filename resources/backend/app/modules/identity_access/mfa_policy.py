@@ -146,6 +146,9 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_ocupacion · activación y revocación de asignaciones de cargos (ORG-04)
         "gobierno_ocupacion:activate",
         "gobierno_ocupacion:revoke",
+        # gobierno_identidad · activación y revocación de vínculos y política (ORG-06).
+        "gobierno_identidad:activate",
+        "gobierno_identidad:revoke",
     }
 )
 
@@ -242,6 +245,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_ocupacion · consulta y registro de ocupación de cargos (ORG-04)
         "gobierno_ocupacion:view",
         "gobierno_ocupacion:manage",
+        # gobierno_identidad · consulta y registro de vínculos (ORG-06).
+        "gobierno_identidad:view",
+        "gobierno_identidad:manage",
     }
 )
 

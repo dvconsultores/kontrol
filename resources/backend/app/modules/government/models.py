@@ -842,7 +842,7 @@ for _sentencia in GOV_AUDIT_PACKAGE_VERIFICATIONS_IMMUTABLE_PG:
 ESTADOS_REGLA_SOD = ("BORRADOR", "VIGENTE", "CERRADA")
 ALCANCES_REGLA_SOD = ("MISMO_OBJETO",)
 MODOS_REGLA_SOD = ("BLOQUEAR",)
-PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04")
+PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06")
 TIPOS_HISTORIA_SOD = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA")
 
 
@@ -1456,6 +1456,14 @@ ESTADOS_ASIGNACION = ("BORRADOR", "ACTIVO", "REVOCADO", "FINALIZADO", "DESCARTAD
 TIPOS_HISTORIA_ASIGNACION = ("CREADA", "EDITADA", "ACTIVADA", "DESCARTADA", "REVOCADA", "FINALIZADA", "AVOCADA")
 
 
+ESTADOS_VINCULO = ("BORRADOR", "ACTIVO", "CERRADO", "REVOCADO", "DESCARTADO")
+TIPOS_HISTORIA_VINCULO = ("CREADO", "EDITADO", "ACTIVADO", "DESCARTADO", "CERRADO", "REVOCADO")
+CATEGORIAS_SEPARACION = ("OPERATIVO", "APROBADOR", "CONTROL_INTERNO", "AUDITORIA", "ADMINISTRACION_TECNICA")
+ESTADOS_CATEGORIA_ROL = ("ACTIVA", "RETIRADA")
+TIPOS_HISTORIA_CATEGORIA = ("AGREGADA", "RETIRADA")
+TIPOS_HISTORIA_POLITICA = ("CAMBIADA",)
+
+
 class GovernmentOfficial(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
     """Identidad institucional de la persona que ejerce un cargo (OD-ORG04-02); no es usuario ni ficha de empleado."""
     __tablename__ = "gov_officials"
@@ -1580,6 +1588,120 @@ class GovernmentAssignmentHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Bas
     detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
 
+class GovernmentUserOfficialLink(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Vínculo entre una cuenta de usuario y un funcionario institucional (ORG-06, GOV-ORG-007)."""
+    __tablename__ = "gov_user_official_links"
+    __scope__ = Scope.COMPANY
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_user_official_links_codigo"),
+        CheckConstraint(f"status IN ({en(ESTADOS_VINCULO)})", name="status"),
+        CheckConstraint("version >= 1", name="version"),
+        CheckConstraint("hasta IS NULL OR hasta >= desde", name="vigencia"),
+        CheckConstraint("fin_efectivo IS NULL OR fin_efectivo >= desde", name="fin_tras_inicio"),
+        CheckConstraint("status NOT IN ('CERRADO','REVOCADO') OR (fin_efectivo IS NOT NULL AND motivo_fin IS NOT NULL)", name="fin_con_motivo"),
+        CheckConstraint("status IN ('BORRADOR','DESCARTADO') OR activated_at IS NOT NULL", name="activado_fechado"),
+    )
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
+    desde: Mapped[date] = mapped_column(Date, nullable=False)
+    hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fin_efectivo: Mapped[date | None] = mapped_column(Date, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    motivo: Mapped[str] = mapped_column(String(500), nullable=False)
+    soporte: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    motivo_fin: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    activated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ended_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class GovernmentUserOfficialLinkHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de vínculos cuenta-funcionario (ORG-06)."""
+    __tablename__ = "gov_user_official_link_history"
+    __scope__ = Scope.COMPANY
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_VINCULO)})", name="tipo"),
+    )
+
+    link_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_user_official_links.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(16), nullable=False)
+    detalle: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
+class GovernmentRoleCategory(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Categoría de separación de un rol (ORG-06)."""
+    __tablename__ = "gov_role_categories"
+    __scope__ = Scope.COMPANY
+
+    __table_args__ = (
+        CheckConstraint(f"categoria IN ({en(CATEGORIAS_SEPARACION)})", name="categoria"),
+        CheckConstraint(f"status IN ({en(ESTADOS_CATEGORIA_ROL)})", name="status"),
+        CheckConstraint("version >= 1", name="version"),
+        CheckConstraint("hasta IS NULL OR hasta >= desde", name="vigencia"),
+        CheckConstraint("status <> 'RETIRADA' OR hasta IS NOT NULL", name="retirada_con_fin"),
+    )
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    role_id: Mapped[str] = mapped_column(String(36), ForeignKey("roles.id"), nullable=False, index=True)
+    categoria: Mapped[str] = mapped_column(String(32), nullable=False)
+    desde: Mapped[date] = mapped_column(Date, nullable=False)
+    hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="ACTIVA", server_default="ACTIVA")
+    motivo: Mapped[str] = mapped_column(String(500), nullable=False)
+
+
+class GovernmentRoleCategoryHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia de categorías de rol (ORG-06)."""
+    __tablename__ = "gov_role_category_history"
+    __scope__ = Scope.COMPANY
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_CATEGORIA)})", name="tipo"),
+    )
+
+    category_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_role_categories.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(16), nullable=False)
+    detalle: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
+class GovernmentIdentityPolicy(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Política de exigencia de identidad institucional (ORG-06)."""
+    __tablename__ = "gov_identity_policies"
+    __scope__ = Scope.COMPANY
+
+    __table_args__ = (
+        UniqueConstraint("company_id", name="uq_gov_identity_policies_company_id"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False)
+    exige_identidad: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    motivo: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
+class GovernmentIdentityPolicyHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia de cambios en la política de identidad (ORG-06)."""
+    __tablename__ = "gov_identity_policy_history"
+    __scope__ = Scope.COMPANY
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_POLITICA)})", name="tipo"),
+    )
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_identity_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(16), nullable=False)
+    detalle: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
 GOV_OFFICIAL_HISTORY_IMMUTABLE_PG = (
     "CREATE OR REPLACE FUNCTION kontrol_gov_funcionario_historia_inmutable() RETURNS TRIGGER AS $$ "
     "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_OFFICIAL_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
@@ -1653,3 +1775,73 @@ for _sentencia in GOV_ASSIGNMENT_COMPETENCIES_IMMUTABLE_PG:
 
 for _sentencia in GOV_ASSIGNMENTS_EXCLUSION_PG:
     event.listen(GovernmentAssignment.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+GOV_LINK_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_vinculo_historia_inmutable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_LINK_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_link_history_no_update BEFORE UPDATE ON gov_user_official_link_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_vinculo_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_link_history_no_delete BEFORE DELETE ON gov_user_official_link_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_vinculo_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_link_history_no_truncate BEFORE TRUNCATE ON gov_user_official_link_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_vinculo_historia_inmutable()",
+)
+
+GOV_ROLE_CATEGORY_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_categoria_historia_inmutable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_ROLE_CATEGORY_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_role_category_history_no_update BEFORE UPDATE ON gov_role_category_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_categoria_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_role_category_history_no_delete BEFORE DELETE ON gov_role_category_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_categoria_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_role_category_history_no_truncate BEFORE TRUNCATE ON gov_role_category_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_categoria_historia_inmutable()",
+)
+
+GOV_POLICY_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_politica_historia_inmutable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_POLICY_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_policy_history_no_update BEFORE UPDATE ON gov_identity_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_politica_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_policy_history_no_delete BEFORE DELETE ON gov_identity_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_politica_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_policy_history_no_truncate BEFORE TRUNCATE ON gov_identity_policy_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_politica_historia_inmutable()",
+)
+
+GOV_LINKS_NOT_DELETABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_vinculo_no_borrable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_LINK_NOT_DELETABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_links_no_delete BEFORE DELETE ON gov_user_official_links FOR EACH ROW EXECUTE FUNCTION kontrol_gov_vinculo_no_borrable()",
+    "CREATE TRIGGER trg_gov_links_no_truncate BEFORE TRUNCATE ON gov_user_official_links FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_vinculo_no_borrable()",
+)
+
+GOV_LINKS_NOT_EDITABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_vinculo_no_editable() RETURNS TRIGGER AS $$ "
+    "BEGIN IF OLD.status <> 'BORRADOR' AND (NEW.user_id IS DISTINCT FROM OLD.user_id OR NEW.official_id IS DISTINCT FROM OLD.official_id OR NEW.desde IS DISTINCT FROM OLD.desde OR NEW.codigo IS DISTINCT FROM OLD.codigo) THEN "
+    "RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_LINK_NOT_EDITABLE'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_links_no_editable BEFORE UPDATE ON gov_user_official_links FOR EACH ROW EXECUTE FUNCTION kontrol_gov_vinculo_no_editable()",
+)
+
+GOV_LINKS_EXCLUSION_PG = (
+    "CREATE EXTENSION IF NOT EXISTS btree_gist",
+    "ALTER TABLE gov_user_official_links ADD CONSTRAINT ex_gov_links_cuenta EXCLUDE USING gist (company_id WITH =, user_id WITH =, daterange(desde, COALESCE(fin_efectivo, hasta), '[]') WITH &&) WHERE (status = 'ACTIVO')",
+    "ALTER TABLE gov_user_official_links ADD CONSTRAINT ex_gov_links_funcionario EXCLUDE USING gist (company_id WITH =, official_id WITH =, daterange(desde, COALESCE(fin_efectivo, hasta), '[]') WITH &&) WHERE (status = 'ACTIVO')",
+)
+
+GOV_ROLE_CATEGORY_EXCLUSION_PG = (
+    "CREATE EXTENSION IF NOT EXISTS btree_gist",
+    "ALTER TABLE gov_role_categories ADD CONSTRAINT ex_gov_role_categories EXCLUDE USING gist (company_id WITH =, role_id WITH =, categoria WITH =, daterange(desde, hasta, '[]') WITH &&) WHERE (status = 'ACTIVA')",
+)
+
+for _sentencia in GOV_LINK_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentUserOfficialLinkHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_ROLE_CATEGORY_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentRoleCategoryHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_POLICY_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentIdentityPolicyHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_LINKS_NOT_DELETABLE_PG:
+    event.listen(GovernmentUserOfficialLink.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_LINKS_NOT_EDITABLE_PG:
+    event.listen(GovernmentUserOfficialLink.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_LINKS_EXCLUSION_PG:
+    event.listen(GovernmentUserOfficialLink.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_ROLE_CATEGORY_EXCLUSION_PG:
+    event.listen(GovernmentRoleCategory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

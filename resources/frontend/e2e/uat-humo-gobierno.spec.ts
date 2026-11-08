@@ -7,7 +7,7 @@ import { entrarComoUsuario, expect, sesionApi, test } from "./helpers/sesion";
  *
  * Existe para demostrar que un usuario sintético de consulta puede iniciar sesión, ver el menú
  * Gobierno y abrir por el menú las pantallas del módulo (Configuración del ente, Estructura
- * organizativa, Cargos y competencias, Ocupación de cargos, Actos administrativos, Notificaciones administrativas,
+ * organizativa, Cargos y competencias, Ocupación de cargos, Identidad institucional, Actos administrativos, Notificaciones administrativas,
  * Matriz de autoridad, Auditoría institucional, Hallazgos y acciones correctivas, Paquetes de
  * auditoría, Segregación de funciones, Cuentas bancarias, Bancos, Programación financiera y Rubros
  * de caja) sin tropezar con los estados de
@@ -24,6 +24,7 @@ const CAPACIDADES = [
   "gobierno_estructura:view",
   "gobierno_cargos:view",
   "gobierno_ocupacion:view",
+  "gobierno_identidad:view",
   "gobierno_actos:view",
   "gobierno_notificaciones:view",
   "gobierno_autoridad:view",
@@ -42,6 +43,7 @@ const PANTALLAS: ReadonlyArray<readonly [href: string, titulo: string]> = [
   ["/gobierno/estructura", "Estructura organizativa"],
   ["/gobierno/cargos", "Cargos y competencias"],
   ["/gobierno/ocupacion", "Ocupación de cargos"],
+  ["/gobierno/identidad", "Identidad institucional"],
   ["/gobierno/actos", "Actos administrativos"],
   ["/gobierno/notificaciones", "Notificaciones administrativas"],
   ["/gobierno/autoridad", "Matriz de autoridad"],

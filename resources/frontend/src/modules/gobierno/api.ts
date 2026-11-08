@@ -1280,7 +1280,7 @@ export function abreviarHuella(huella: string): string { return huella.length > 
 // CTL-01 · matriz de segregación de funciones (GOV-CTL-001)
 // ---------------------------------------------------------------------------
 
-export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01" | "TRE-02" | "CTL-10" | "ORG-04";
+export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01" | "TRE-02" | "CTL-10" | "ORG-04" | "ORG-06";
 export type EstadoReglaSod = "BORRADOR" | "VIGENTE" | "CERRADA";
 
 export interface AccionSod { codigo: string; etiqueta: string; crea_objeto: boolean; }
@@ -1321,7 +1321,7 @@ export interface DetalleConflictoSod {
 }
 
 export const ETIQUETAS_ESTADO_REGLA_SOD: Record<EstadoReglaSod, string> = { BORRADOR: "Borrador", VIGENTE: "Vigente", CERRADA: "Cerrada" };
-export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas", "TRE-02": "Programación financiera", "CTL-10": "Controles de cierre", "ORG-04": "Ocupación de cargos" };
+export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas", "TRE-02": "Programación financiera", "CTL-10": "Controles de cierre", "ORG-04": "Ocupación de cargos", "ORG-06": "Identidad institucional" };
 export const ETIQUETAS_HISTORIA_SOD: Record<string, string> = { CREADA: "Registrada", EDITADA: "Modificada", ACTIVADA: "Activada", CERRADA: "Cerrada" };
 
 export const POR_PAGINA_CONFLICTOS_SOD = 20;
@@ -1336,6 +1336,7 @@ export function rutaDeObjetoSod(tipo: string | null, id: string | null): string 
   if (tipo === "GovernmentCashProgram") return `/gobierno/tesoreria/programacion/${id}`;
   if (tipo === "GovernmentClosurePolicy") return `/gobierno/cierres/${id}`;
   if (tipo === "GovernmentAssignment") return `/gobierno/ocupacion/asignaciones/${id}`;
+  if (tipo === "GovernmentUserOfficialLink") return `/gobierno/identidad/vinculos/${id}`;
   return null;
 }
 
@@ -2145,4 +2146,289 @@ export function consultaDeFuncionarios(f: { texto?: string; estado?: string; pag
   if (f.pagina && f.pagina > 1) params.set("pagina", String(f.pagina));
   const qs = params.toString();
   return qs ? `?${qs}` : "";
+}
+
+// ORG-06 · Identidad institucional (GOV-ORG-007, GOV-ORG-005)
+
+export type EstadoVinculo = "BORRADOR" | "ACTIVO" | "CERRADO" | "REVOCADO" | "DESCARTADO";
+export type SituacionVinculo =
+  | "BORRADOR"
+  | "DESCARTADA"
+  | "FUTURA"
+  | "VIGENTE"
+  | "VENCIDA"
+  | "CERRADA"
+  | "REVOCADA";
+export type CategoriaSeparacion =
+  | "OPERATIVO"
+  | "APROBADOR"
+  | "CONTROL_INTERNO"
+  | "AUDITORIA"
+  | "ADMINISTRACION_TECNICA";
+export type MotivoSinAutoridad = "SIN_VINCULO" | "CUENTA_INACTIVA" | "FUNCIONARIO_INACTIVO" | "SIN_OCUPACION";
+
+export interface RefCuentaIdentidad {
+  id: string;
+  usuario: string;
+  estado: string;
+}
+
+export interface RefFuncionarioIdentidad {
+  id: string;
+  codigo: string;
+  nombre: string;
+  documento: string;
+}
+
+export interface HistoriaIdentidad {
+  id: string;
+  tipo: string;
+  detalle: string | number | boolean | null | unknown[] | Record<string, unknown>;
+  actor: string | null;
+  creado_en: string;
+}
+
+export interface CompetenciaIdentidad {
+  accion: string;
+  materia: string;
+  tipo_limite: string | null;
+  monto: string | null;
+  moneda: string | null;
+}
+
+export interface OcupacionInstitucional {
+  asignacion_id: string | null;
+  codigo: string;
+  figura: string;
+  figura_etiqueta: string;
+  cargo_id: string | null;
+  cargo: string;
+  cargo_codigo: string | null;
+  unidad_id: string | null;
+  unidad: string;
+  ejercicio: number;
+  ejerce: boolean;
+  situacion: string;
+  desde: string;
+  hasta: string | null;
+  autoridad: CompetenciaIdentidad[];
+  avocaciones: number;
+}
+
+export interface RolIdentidad {
+  id: string;
+  codigo: string;
+  nombre: string;
+}
+
+export interface ConflictoCategoria {
+  regla_codigo: string;
+  regla_nombre: string;
+  categoria_a: string;
+  categoria_b: string;
+}
+
+export interface ContextoInstitucional {
+  fecha: string;
+  es_historica: boolean;
+  ente: {
+    id: string;
+    nombre: string;
+  };
+  cuenta: RefCuentaIdentidad;
+  vinculo: {
+    id: string;
+    codigo: string;
+    situacion: SituacionVinculo;
+  } | null;
+  funcionario: RefFuncionarioIdentidad | null;
+  ocupaciones: OcupacionInstitucional[];
+  unidades: {
+    id: string;
+    nombre: string;
+  }[];
+  roles: RolIdentidad[];
+  categorias: string[];
+  conflictos: ConflictoCategoria[];
+  tiene_autoridad: boolean;
+  motivo_sin_autoridad: MotivoSinAutoridad | null;
+}
+
+export interface VinculoResumen {
+  id: string;
+  codigo: string;
+  cuenta: RefCuentaIdentidad;
+  funcionario: RefFuncionarioIdentidad;
+  desde: string;
+  hasta: string | null;
+  fin_efectivo: string | null;
+  status: EstadoVinculo;
+  situacion: SituacionVinculo;
+  version: number;
+}
+
+export interface VinculoDetalle extends VinculoResumen {
+  motivo: string;
+  soporte: string | null;
+  motivo_fin: string | null;
+  registrado_por: string | null;
+  activado_por: string | null;
+  activado_en: string | null;
+  terminado_por: string | null;
+  terminado_en: string | null;
+  historia: HistoriaIdentidad[];
+  contexto: ContextoInstitucional | null;
+}
+
+export interface VinculosListado {
+  items: VinculoResumen[];
+  total: number;
+  pagina: number;
+  por_pagina: number;
+  fecha: string;
+}
+
+export interface CategoriaRol {
+  id: string;
+  role_id: string;
+  rol_codigo: string;
+  rol_nombre: string;
+  categoria: CategoriaSeparacion;
+  categoria_etiqueta: string;
+  desde: string;
+  hasta: string | null;
+  status: string;
+  motivo: string;
+  version: number;
+}
+
+export interface CategoriasListado {
+  items: CategoriaRol[];
+  roles: RolIdentidad[];
+}
+
+export interface ConflictoVinculo {
+  vinculo_id: string;
+  codigo: string;
+  cuenta: RefCuentaIdentidad;
+  funcionario: RefFuncionarioIdentidad;
+  conflictos: ConflictoCategoria[];
+}
+
+export interface ConflictosIdentidad {
+  items: ConflictoVinculo[];
+}
+
+export interface PoliticaIdentidad {
+  exige_identidad: boolean;
+  version: number;
+  motivo: string | null;
+  historia: HistoriaIdentidad[];
+}
+
+export interface CategoriaCatalogo {
+  codigo: CategoriaSeparacion;
+  etiqueta: string;
+  descripcion: string;
+}
+
+export interface CatalogoIdentidad {
+  categorias: CategoriaCatalogo[];
+  situaciones: SituacionVinculo[];
+  estados: EstadoVinculo[];
+}
+
+export interface OpcionCuenta {
+  id: string;
+  usuario: string;
+  estado: string;
+  vinculada: boolean;
+}
+
+export interface OpcionFuncionarioIdentidad {
+  id: string;
+  codigo: string;
+  nombre: string;
+  documento: string;
+  vinculado: boolean;
+}
+
+export interface OpcionesIdentidad {
+  cuentas: OpcionCuenta[];
+  funcionarios: OpcionFuncionarioIdentidad[];
+}
+
+export interface VinculoEntrada {
+  user_id: string;
+  official_id: string;
+  desde: string;
+  hasta: string | null;
+  motivo: string;
+  soporte: string | null;
+}
+
+export const CONSULTA_IDENTIDAD = [...CONSULTA_GOBIERNO, "identidad"] as const;
+export const POR_PAGINA_IDENTIDAD = 50;
+
+export const ETIQUETAS_ESTADO_VINCULO: Record<EstadoVinculo, string> = {
+  BORRADOR: "Borrador",
+  ACTIVO: "Activo",
+  CERRADO: "Cerrado",
+  REVOCADO: "Revocado",
+  DESCARTADO: "Descartado",
+};
+
+export const ETIQUETAS_SITUACION_VINCULO: Record<SituacionVinculo, string> = {
+  BORRADOR: "Borrador",
+  DESCARTADA: "Descartada",
+  FUTURA: "Futura",
+  VIGENTE: "Vigente",
+  VENCIDA: "Vencida",
+  CERRADA: "Cerrada",
+  REVOCADA: "Revocada",
+};
+
+export const ETIQUETAS_CATEGORIA_SEPARACION: Record<CategoriaSeparacion, string> = {
+  OPERATIVO: "Operativo",
+  APROBADOR: "Aprobador",
+  CONTROL_INTERNO: "Control interno",
+  AUDITORIA: "Auditoría",
+  ADMINISTRACION_TECNICA: "Administración técnica",
+};
+
+export const ETIQUETAS_MOTIVO_SIN_AUTORIDAD: Record<MotivoSinAutoridad, string> = {
+  SIN_VINCULO: "La cuenta no tiene un vínculo institucional vigente",
+  CUENTA_INACTIVA: "La cuenta está inactiva",
+  FUNCIONARIO_INACTIVO: "El funcionario está inactivo",
+  SIN_OCUPACION: "El funcionario no ejerce ningún cargo en esa fecha",
+};
+
+export const ETIQUETAS_HISTORIA_VINCULO = {
+  CREADO: "Vínculo registrado",
+  EDITADO: "Borrador modificado",
+  ACTIVADO: "Vínculo activado",
+  DESCARTADO: "Borrador descartado",
+  CERRADO: "Vínculo cerrado",
+  REVOCADO: "Vínculo revocado",
+} as const;
+
+export function consultaDeVinculos(f: {
+  estado?: string;
+  usuario_id?: string;
+  funcionario_id?: string;
+  fecha?: string;
+  pagina?: number;
+}): string {
+  const params = new URLSearchParams();
+  if (f.estado) params.set("estado", f.estado);
+  if (f.usuario_id) params.set("usuario_id", f.usuario_id);
+  if (f.funcionario_id) params.set("funcionario_id", f.funcionario_id);
+  if (f.fecha) params.set("fecha", f.fecha);
+  if (f.pagina && f.pagina > 1) params.set("pagina", String(f.pagina));
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export function consultaDeFecha(fecha?: string): string {
+  return fecha ? `?fecha=${encodeURIComponent(fecha)}` : "";
 }

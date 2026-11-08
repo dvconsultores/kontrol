@@ -35,7 +35,11 @@ from app.modules.government.schemas_ocupacion import (
 )
 from app.modules.government.service_auditoria import _instante, _usuarios_por_ids  # noqa: F401
 from app.modules.government.service_autoridad import competencias_en_vigor
-from app.modules.government.service_sod import evaluar_antes_de_actuar  # noqa: F401
+from app.modules.government.service_sod import (  # noqa: F401
+    evaluar_antes_de_actuar,
+    funcionarios_de_actor,
+    usuarios_equivalentes,
+)
 from app.shared.audit import record_audit
 from app.shared.clock import hoy_de_negocio  # noqa: F401
 
@@ -874,7 +878,18 @@ def _como_datos(db: Session, ctx: CompanyContext, a: GovernmentAssignment) -> Si
     )
 
 
+def _exigir_no_autoridad_propia(db: Session, ctx: CompanyContext, official_id: str) -> None:
+    """Impide registrar o activar la ocupación del propio funcionario."""
+    if official_id in funcionarios_de_actor(db, ctx, str(ctx.user_id)):
+        raise KontrolError(
+            code="GOV_ASSIGNMENT_SELF_AUTHORITY",
+            message="Nadie registra ni activa la ocupación de su propio funcionario",
+            status_code=403,
+        )
+
+
 def crear(db: Session, ctx: CompanyContext, datos: AsignacionIn) -> GovernmentAssignment:
+    _exigir_no_autoridad_propia(db, ctx, str(datos.funcionario_id))
     filas = validar(db, ctx, datos)
     asignacion = GovernmentAssignment(
         company_id=ctx.company_id,
@@ -987,12 +1002,13 @@ def activar(db: Session, ctx: CompanyContext, asignacion_id: str, version: int |
     asignacion = _para_escribir(db, ctx, asignacion_id, version)
     _exigir_estado(asignacion, "BORRADOR")
 
-    if asignacion.created_by == ctx.user_id:
+    if asignacion.created_by in usuarios_equivalentes(db, ctx, str(ctx.user_id)):
         raise KontrolError(
             code="GOV_ASSIGNMENT_SELF_ACTIVATION",
             message="Quien registró la asignación no puede activarla: debe hacerlo otro usuario",
             status_code=403,
         )
+    _exigir_no_autoridad_propia(db, ctx, str(asignacion.official_id))
 
     _cargo_de_empresa(db, ctx, asignacion.position_id, bloquear=True)
     filas = validar(db, ctx, _como_datos(db, ctx, asignacion))
@@ -1480,6 +1496,25 @@ def _vigentes_en(
 def ocupacion_en(db: Session, ctx: CompanyContext, cargo_id: str, fecha: date) -> dict:
     ocupacion, _ = _vigentes_en(db, ctx, [cargo_id], fecha)
     return ocupacion.get(cargo_id, {"titular": None, "ejerce": None, "delegaciones": []})
+
+
+def ocupaciones_de_funcionario(db: Session, ctx: CompanyContext, official_id: str, fecha: date) -> list[dict]:
+    filas = db.scalars(
+        select(GovernmentAssignment)
+        .where(
+            GovernmentAssignment.company_id == ctx.company_id,
+            GovernmentAssignment.official_id == official_id,
+            GovernmentAssignment.status.in_(["ACTIVO", "REVOCADO", "FINALIZADO"]),
+            GovernmentAssignment.desde <= fecha,
+        )
+        .order_by(GovernmentAssignment.desde)
+    ).all()
+    resultado = []
+    for fila in filas:
+        detalle_ocupacion = detalle(db, ctx, str(fila.id), fecha)
+        if detalle_ocupacion.get("situacion") == "VIGENTE":
+            resultado.append(detalle_ocupacion)
+    return resultado
 
 
 def detalle(db: Session, ctx: CompanyContext, asignacion_id: str, fecha: date | None = None) -> dict:

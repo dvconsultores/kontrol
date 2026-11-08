@@ -211,3 +211,54 @@ def test_cc04_dos_ediciones_misma_version(mundo, gobierno):
     for r in resultados:
         if r.status_code == 409:
             assert r.json()["code"] == "GOV_CLOSURE_POLICY_STALE"
+
+
+def test_cc01b_activacion_que_pierde_la_carrera_da_409(mundo, gobierno, monkeypatch):
+    from sqlalchemy import text
+
+    from app.modules.government import service_cierres
+
+    accion = "ORG02_CERRAR_ESTRUCTURA"
+    p1 = _crear_politica_borrador_con_control(mundo, accion)
+    p2 = _crear_politica_borrador_con_control(mundo, accion)
+
+    original = service_cierres.evaluar_antes_de_actuar
+    usadas = []
+
+    def rival(db, *args, **kwargs):
+        if not usadas:
+            usadas.append(1)
+            with db.get_bind().connect() as c:
+                c.execute(
+                    text(
+                        "UPDATE gov_closure_policies SET estado = 'VIGENTE', "
+                        "activada_por = created_by, activada_en = now() WHERE id = :id"
+                    ),
+                    {"id": p2["id"]},
+                )
+                c.commit()
+        return original(db, *args, **kwargs)
+
+    monkeypatch.setattr(service_cierres, "evaluar_antes_de_actuar", rival)
+
+    r = mundo.client.post(
+        f"/api/v1{C}/politicas/{p1['id']}/activar",
+        headers=_cabeceras(mundo, "ua", mundo.company_a, p1["version"]),
+    )
+    assert r.status_code == 409, r.text
+    assert r.json()["code"] == "GOV_CLOSURE_POLICY_ACTIVE_EXISTS"
+    assert usadas == [1]
+
+    detalle = mundo.client.get(
+        f"/api/v1{C}/politicas/{p1['id']}",
+        headers=mundo.como("ua", mundo.company_a),
+    )
+    assert detalle.json()["estado"] == "BORRADOR"
+
+    for p in (p1, p2):
+        detalle = mundo.client.get(
+            f"/api/v1{C}/politicas/{p['id']}",
+            headers=mundo.como("ua", mundo.company_a),
+        )
+        if detalle.json()["estado"] != "BORRADOR":
+            retirar(mundo, detalle.json())

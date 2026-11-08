@@ -40,6 +40,7 @@ LECTURAS_SIN_CAPACIDAD: dict[str, tuple[str, str]] = {
     "/api/v1/tasks/{task_id}": ("SELF_SCOPED_DATA", "candidato o asignado, o tareas:view (CL-047-05)"),
     "/api/v1/tasks/priorities": ("COMPANY_REFERENCE_DATA", "catálogo de prioridades que necesita todo participante de una tarea"),
     "/api/v1/gobierno/modulo": ("AUTHENTICATED_GLOBAL_REFERENCE_DATA", "habilitación del módulo Gobierno por la licencia de la instalación (GOV-0-01)"),
+    "/api/v1/gobierno/identidad/mi-contexto": ("SELF_SCOPED_DATA", "contexto institucional propio: cuenta, funcionario, cargo y autoridad del usuario (GOV-ORG-007)"),
 }
 
 CAPACIDAD_FIJADA: dict[str, list[str]] = {
