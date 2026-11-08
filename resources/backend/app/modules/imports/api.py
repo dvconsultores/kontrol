@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Header, Query
 from pydantic import BaseModel, ConfigDict, Field
@@ -46,6 +47,12 @@ class UpdateImportFileBody(BaseModel):
     expected_dispatch_date: date | None = None
     expected_arrival_date: date | None = None
     notes: str | None = None
+    agent_party_id: str | None = None
+    carrier_party_id: str | None = None
+    transport_document: str | None = None
+    origin: str | None = None
+    destination: str | None = None
+    actual_departure_date: date | None = None
 
 
 class LinkOrderBody(BaseModel):
@@ -74,6 +81,51 @@ class ObserveDocumentBody(BaseModel):
 
 
 class CancelFileBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=1, max_length=255)
+
+
+class TrackingEventBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    milestone: str = Field(min_length=1, max_length=32)
+    occurred_on: date
+    location: str | None = Field(default=None, max_length=120)
+    notes: str | None = None
+
+
+class PaymentBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str = Field(pattern="^(PAYMENT|ADVANCE)$")
+    amount: Decimal = Field(gt=0, decimal_places=2)
+
+
+class FinancialLinkBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str = Field(pattern="^(PAYMENT|ADVANCE)$")
+    target_id: str
+
+
+class CorrectionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str = Field(min_length=1, max_length=32)
+    description: str = Field(min_length=1, max_length=1000)
+    action_required: str | None = None
+    responsible: str = Field(min_length=1, max_length=120)
+    document_id: str | None = None
+
+
+class ResolveCorrectionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    resolution: str = Field(min_length=1, max_length=1000)
+
+
+class CancelCorrectionBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     reason: str = Field(min_length=1, max_length=255)
@@ -133,6 +185,20 @@ def create_import_file(
     return service.file_detail(db, file)
 
 
+@router.get("/eligible-orders")
+def list_eligible_orders(
+    file_id: str = Query(...),
+    q: str | None = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    return service.eligible_orders(db, file=file, q=q, page=page, page_size=page_size)
+
+
 @router.get("/{file_id}")
 def get_import_file(
     file_id: str,
@@ -180,6 +246,218 @@ def link_order(
         db,
         file=file,
         order_id=body.order_id,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    return service.file_detail(db, file)
+
+
+@router.post("/{file_id}/tracking", dependencies=[Depends(require_write_allowed)])
+def add_tracking_event(
+    file_id: str,
+    body: TrackingEventBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    event = service.add_tracking_event(
+        db,
+        file=file,
+        milestone=body.milestone,
+        occurred_on=body.occurred_on,
+        location=body.location,
+        notes=body.notes,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    db.refresh(event)
+    return service.file_detail(db, file)
+
+
+@router.post("/{file_id}/payments", dependencies=[Depends(require_write_allowed)])
+def register_payment_or_advance(
+    file_id: str,
+    body: PaymentBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    link = service.register_payment_or_advance(
+        db,
+        file=file,
+        amount=body.amount,
+        kind=body.kind,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    db.refresh(link)
+    return service.file_detail(db, file)
+
+
+@router.post("/{file_id}/financial-links", dependencies=[Depends(require_write_allowed)])
+def link_existing_financial(
+    file_id: str,
+    body: FinancialLinkBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    link = service.link_existing_financial(
+        db,
+        file=file,
+        kind=body.kind,
+        target_id=body.target_id,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    db.refresh(link)
+    return service.file_detail(db, file)
+
+
+@router.delete(
+    "/{file_id}/financial-links/{link_id}",
+    dependencies=[Depends(require_write_allowed)],
+)
+def unlink_financial(
+    file_id: str,
+    link_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    link = service._get_financial_link(db, ctx.company_id, file, link_id)
+    service.unlink_financial(
+        db,
+        file=file,
+        link=link,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    return service.file_detail(db, file)
+
+
+@router.get("/{file_id}/financial-candidates")
+def list_financial_candidates(
+    file_id: str,
+    kind: str = Query(pattern="^(PAYMENT|ADVANCE)$"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    return service.financial_candidates(db, file=file, kind=kind, page=page, page_size=page_size)
+
+
+
+@router.post("/{file_id}/corrections", dependencies=[Depends(require_write_allowed)])
+def open_correction(
+    file_id: str,
+    body: CorrectionBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    correction = service.open_correction(
+        db,
+        file=file,
+        kind=body.kind,
+        description=body.description,
+        responsible=body.responsible,
+        document_id=body.document_id,
+        action_required=body.action_required,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    db.refresh(correction)
+    return service.file_detail(db, file)
+
+
+@router.post(
+    "/{file_id}/corrections/{correction_id}/resolve",
+    dependencies=[Depends(require_write_allowed)],
+)
+def resolve_correction(
+    file_id: str,
+    correction_id: str,
+    body: ResolveCorrectionBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    correction = service._get_correction(db, ctx.company_id, file, correction_id)
+    correction = service.resolve_correction(
+        db,
+        file=file,
+        correction=correction,
+        resolution=body.resolution,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    db.refresh(correction)
+    return service.file_detail(db, file)
+
+
+@router.post(
+    "/{file_id}/corrections/{correction_id}/cancel",
+    dependencies=[Depends(require_write_allowed)],
+)
+def cancel_correction(
+    file_id: str,
+    correction_id: str,
+    body: CancelCorrectionBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "approve")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    correction = service._get_correction(db, ctx.company_id, file, correction_id)
+    correction = service.cancel_correction(
+        db,
+        file=file,
+        correction=correction,
+        reason=body.reason,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    db.refresh(correction)
+    return service.file_detail(db, file)
+
+
+@router.post("/{file_id}/confirm-dispatch", dependencies=[Depends(require_write_allowed)])
+def confirm_dispatch(
+    file_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "approve")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    file = service.confirm_dispatch(
+        db,
+        file=file,
         actor_id=str(user.id),
         tenant_id=user.tenant_id,
     )

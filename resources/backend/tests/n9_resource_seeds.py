@@ -24,7 +24,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     from app.modules.approvals.models import ApprovalRequest
     from app.modules.government.models import GovernmentAct, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentNotification, GovernmentPosition, GovernmentStructure, GovernmentUnit
     from app.modules.homologation.models import HomologationRecord
-    from app.modules.imports.models import ImportDocument, ImportFile
+    from app.modules.imports.models import ImportCorrection, ImportDocument, ImportFile
     from app.modules.inventory.models import InventoryAdjustment, StockCount
     from app.modules.master_data.models import CatalogItem, Party
     from app.modules.organization.models import Company, Installation, Warehouse
@@ -211,6 +211,16 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         "ApprovalRequest": lambda: ApprovalRequest(
             company_id=empresa, process_type="PURCHASE_ORDER", document_type="PurchaseOrder",
             document_id=str(uuid.uuid4()), fingerprint=marca, status="PENDING"),
+        "ImportCorrection": lambda: ImportCorrection(
+            company_id=empresa,
+            file_id=_expediente(),
+            document_id=None,
+            kind="FALTANTE",
+            description="Falta documento de importación",
+            action_required="Adjuntar documento faltante",
+            responsible="PROVEEDOR",
+            status="OPEN",
+        ),
         "ImportDocument": lambda: ImportDocument(
             company_id=empresa, file_id=_expediente(), kind="PROFORMA_INVOICE",
             name="Factura proforma", required=True, status="PENDING"),

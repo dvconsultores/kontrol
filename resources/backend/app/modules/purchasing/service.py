@@ -1615,7 +1615,7 @@ def open_item_balance(item: OpenItem) -> Decimal:
     return _money(item.original) - _money(item.applied)
 
 
-def register_payment(db: Session, *, company_id: str, party_id: str, amount: float, currency: str = "VED",
+def register_payment(db: Session, *, company_id: str, party_id: str, amount: float | Decimal, currency: str = "VED",
                      instruments: list[dict] | None = None, actor: str | None = None,
                      idempotency_key: str | None = None, direction: str = "OUT") -> Payment:
     company_id = _company(company_id, obj="pago")
@@ -1771,7 +1771,7 @@ def _sync_invoice_paid(db: Session, *, target_open_item_id: str) -> None:
             invoice.updated_at = datetime.now(UTC)
 
 
-def register_advance(db: Session, *, company_id: str, party_id: str, amount: float, currency: str = "VED",
+def register_advance(db: Session, *, company_id: str, party_id: str, amount: float | Decimal, currency: str = "VED",
                      actor: str | None = None, direction: str = "OUT") -> Advance:
     company_id = _company(company_id, obj="anticipo")
     _require_party(db, company_id, party_id, role=_role_for_direction(direction), require_active=True)

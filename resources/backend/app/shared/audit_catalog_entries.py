@@ -482,6 +482,14 @@ _PARTE_IMPORTACIONES: tuple[AuditActionSpec, ...] = (
     _e("IMPORT_DOCUMENT_CHANGED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("document_id", "kind", "reference", "status"), "Documento de importación actualizado"),
     _e("IMPORT_DOCUMENTS_CONFIRMED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("status",), "Documentación de importación confirmada"),
     _e("IMPORT_FILE_CANCELLED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("status",), "Importación cancelada"),
+    _e("IMPORT_SHIPMENT_UPDATED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("agent_party_id", "carrier_party_id", "transport_document", "origin", "destination", "actual_departure_date"), "Embarque actualizado"),
+    _e("IMPORT_TRACKING_ADDED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("milestone", "occurred_on", "location", "notes"), "Hito de seguimiento registrado"),
+    _e("IMPORT_FINANCIAL_LINKED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("kind", "target_id"), "Documento financiero vinculado"),
+    _e("IMPORT_FINANCIAL_UNLINKED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("kind", "target_id"), "Documento financiero desvinculado"),
+    _e("IMPORT_CORRECTION_OPENED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("correction_id", "kind", "responsible", "status"), "Corrección abierta"),
+    _e("IMPORT_CORRECTION_RESOLVED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("correction_id", "status"), "Corrección resuelta"),
+    _e("IMPORT_CORRECTION_CANCELLED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("correction_id", "status"), "Corrección cancelada"),
+    _e("IMPORT_DISPATCH_CONFIRMED", "ImportFile", "imports", "018", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("status", "dispatched_at"), "Despacho confirmado"),
 )
 
 ENTRIES: tuple[AuditActionSpec, ...] = _PARTE_A + _PARTE_B + _PARTE_TERCEROS + _PARTE_IMPORTACIONES

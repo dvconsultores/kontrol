@@ -39,6 +39,8 @@ RESOURCE_KINDS: dict[str, ResourceKind] = {
                      "ApprovalRequest", "company_id", "aprobaciones:view", ("045",)),
         ResourceKind("ImportDocument", "app.modules.imports.models",
                      "ImportDocument", "company_id", "compras:view", ("018",)),
+        ResourceKind("ImportCorrection", "app.modules.imports.models",
+                     "ImportCorrection", "company_id", "compras:view", ("018",)),
         ResourceKind("PurchaseOrder", "app.modules.purchasing.models",
                      "PurchaseOrder", "company_id", "compras:view", ("017", "018")),
         ResourceKind("GoodsReceipt", "app.modules.purchasing.models",

@@ -382,3 +382,11 @@ Clave = (acción, entidad). Retención de todas las entradas: `PRESERVE_UNTIL_RE
 | 376 | `IMPORT_FILE_CREATED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | code, currency, status, supplier_id | Importación creada | ACTIVE | STATIC | — | sí |
 | 377 | `IMPORT_FILE_UPDATED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | delivery_conditions, expected_arrival_date, expected_dispatch_date, incoterm, incoterm_place, notes, payment_conditions | Negociación de importación actualizada | ACTIVE | STATIC | — | sí |
 | 378 | `IMPORT_ORDER_LINKED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | order_id, status | Orden vinculada a la importación | ACTIVE | STATIC | — | sí |
+| 379 | `IMPORT_SHIPMENT_UPDATED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | actual_departure_date, agent_party_id, carrier_party_id, destination, origin, transport_document | Embarque actualizado | ACTIVE | STATIC | — | sí |
+| 380 | `IMPORT_TRACKING_ADDED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | location, milestone, notes, occurred_on | Hito de seguimiento registrado | ACTIVE | STATIC | — | sí |
+| 381 | `IMPORT_FINANCIAL_LINKED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | kind, target_id | Documento financiero vinculado | ACTIVE | STATIC | — | sí |
+| 382 | `IMPORT_FINANCIAL_UNLINKED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | kind, target_id | Documento financiero desvinculado | ACTIVE | STATIC | — | sí |
+| 383 | `IMPORT_CORRECTION_OPENED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | correction_id, kind, responsible, status | Corrección abierta | ACTIVE | STATIC | — | sí |
+| 384 | `IMPORT_CORRECTION_RESOLVED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | correction_id, status | Corrección resuelta | ACTIVE | STATIC | — | sí |
+| 385 | `IMPORT_CORRECTION_CANCELLED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | correction_id, status | Corrección cancelada | ACTIVE | STATIC | — | sí |
+| 386 | `IMPORT_DISPATCH_CONFIRMED` | `ImportFile` | imports | 018 | COMPANY | OPERATIONAL | BUSINESS_COMMIT | dispatched_at, status | Despacho confirmado | ACTIVE | STATIC | — | sí |
