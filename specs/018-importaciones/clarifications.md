@@ -11,3 +11,9 @@ Decisiones de diseño de Claude cuando la fuente no fija el detalle. Son reversi
 | CL-018-05 | ¿Qué documentos son obligatorios? | Proforma, packing list y embarque; certificados añadibles | El DOCX dice «certificados o soportes requeridos»: dependen de la mercancía |
 | CL-018-06 | ¿Quién valida? | `compras:approve`, separado del alta `compras:create` | Control crítico «Control documental de importación» |
 | CL-018-07 | ¿INCOTERM? | Lista cerrada Incoterms 2020 | Evita texto libre en una condición contractual |
+| CL-018-08 | ¿La documentación precede al seguimiento? | No: conviven desde ORDERED | El DOCX los enumera, sin dependencia; el documento de embarque nace al embarcar. Corrige el ciclo 1 |
+| CL-018-09 | ¿Qué es un agente? | Un `Party` activo, sin rol nuevo | La Spec 002 no define el rol y el DOCX solo lo nombra en IMP-12 |
+| CL-018-10 | ¿Reutilizar `ReceiptIncident`? | No | Exige recepción; antes del arribo no existe |
+| CL-018-11 | ¿Una corrección abierta bloquea? | Bloquea confirmar la documentación; tras el despacho no revierte | «Documentación completa» es falso con una corrección abierta; el despacho físico ya ocurrió |
+| CL-018-12 | ¿El expediente crea pagos? | Sí, llamando a CxP, y vincula existentes; aprobar y ejecutar siguen en CxP | «Ejecutar anticipo o pago» sin segundo libro ni segunda puerta |
+| CL-018-13 | ¿Qué órdenes se ofrecen? | Búsqueda en servidor de aprobadas, mismo proveedor y moneda, no usadas | Elimina el límite de 100 |

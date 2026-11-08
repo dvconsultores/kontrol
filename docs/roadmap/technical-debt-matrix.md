@@ -2676,7 +2676,17 @@ Evidencia: `specs/002-maestros/spec002-terceros-functional-completion-delta.md`.
 | PUBLICACION-DIVERGENCIA-GOVERNMENT | **CLOSED**: ORG-06 integrado en `develop`, una sola cabeza |
 | TERCEROS-E2E-PENDIENTE | Pasa en Chrome real sobre SQLite. Sigue pendiente en PostgreSQL y sin el caso de cambio de empresa |
 | B-030 Importaciones | **PARTIAL_PROCESS**: IMP-06, 07 y 08 operables; faltan seguimiento, despacho, recepción y costos |
-| IMPORTACIONES-CAMPOS-BLOQUEADOS (nueva) | OPEN · LOW · 018: con el expediente cerrado, INCOTERM y las áreas de texto están deshabilitados pero no lo parecen |
+| IMPORTACIONES-CAMPOS-BLOQUEADOS | PAID · 018 ciclo 2: selects y áreas de texto deshabilitados con las clases visuales del campo |
 | UAT-EN-SQLITE (nueva) | OPEN · EXTERNAL_GATE: la pila de prueba de la dueña usa SQLite y Vite, solo en el equipo de P2. La migración `0078` a `0080` sigue sin ejecutarse en PostgreSQL |
 
 Las deudas de Producto Nuevo y `TERCEROS-PROVEEDORES-HISTORICOS-SIN-APROBAR` siguen abiertas, sin cambios.
+
+## Actualización 2026-11-08 (15) — correcciones de la dueña
+
+| Deuda | Estado |
+|---|---|
+| TERCEROS-VENDEDOR-BENEFICIARIO (nueva) | OPEN · 002: la Spec 002 los exige y no existen. `TERCEROS_CORE_CUSTOMER_SUPPLIER_COMPLETE = 1`, `TERCEROS_FULL_SPONSOR_COMPLETE = 0`. No se atiende ahora |
+| PROCESS_VIOLATION_04 | CLAUDE_DICTATED_SEMANTIC_CODE_TO_DEEPSEEK en el ciclo anterior. Desde ahora, 0 |
+| IMPORT-PRUEBAS-NEGATIVAS-CICLO2 (nueva) | OPEN · 018: cinco pruebas backend retiradas al agotar el cupo de pruebas (flujo, corrección a ORDERED, DISPATCHED no cancela, seguridad, órdenes elegibles). Verificadas con sonda temporal y en la E2E; reponer como primera tarea del ciclo 3 |
+| LAYOUT-CABECERA-390 (nueva) | OPEN · LOW · transversal: a 390 px el menú arranca plegado, pero la cabecera superior aún recorta «Salir» |
+| TERCEROS-HISTORIAL-ID-CRUDO (nueva) | OPEN · LOW · 002: el historial de la ficha muestra `account_id` como UUID |

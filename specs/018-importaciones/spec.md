@@ -20,10 +20,10 @@ Compras abre un **expediente de importación** por menú y lo lleva desde la neg
 | IMP-06 | Negociar precio, cantidad, tiempos, INCOTERM, pago, entrega | **018** | **Ciclo 1** |
 | IMP-07 | Emitir orden de compra | `/compras/ordenes`, vínculo en 018 | **Ciclo 1**: vínculo |
 | IMP-08 | Recibir y validar proforma, packing list, embarque, certificados | **018**, Spec 046 | **Ciclo 1** |
-| IMP-09 | Anticipo o pago al proveedor | CxP, puerta de proveedor | Ciclo 2: enlace desde el expediente |
-| IMP-10 | Seguimiento del embarque internacional | **018** | Ciclo 2 |
-| IMP-11 | Confirmar documentación completa y mercancía despachada | **018** | Documentación en ciclo 1; despacho en ciclo 2 |
-| IMP-12 | Gestionar faltantes o correcciones con proveedor o agente | **018** | Observación en ciclo 1; gestión con agente en ciclo 2 |
+| IMP-09 | Anticipo o pago al proveedor | CxP, puerta de proveedor | Hecho en ciclo 2 |
+| IMP-10 | Seguimiento del embarque internacional | **018** | Hecho en ciclo 2 |
+| IMP-11 | Confirmar documentación completa y mercancía despachada | **018** | Hecho en ciclo 2 |
+| IMP-12 | Gestionar faltantes o correcciones con proveedor o agente | **018** | Hecho en ciclo 2 |
 
 Recepción, confirmación de inventario y ubicación (DOCX §2, §3 y §4) ya existen en las Specs 019 a 022. La Spec 018 las **enlaza**, no las duplica: ciclo 3.
 
@@ -54,3 +54,13 @@ Recepción, confirmación de inventario y ubicación (DOCX §2, §3 y §4) ya ex
 ## Fuera de este ciclo
 
 Seguimiento, agente, pagos desde el expediente, recepción y costos. La Spec no se declara completa hasta cubrirlos.
+
+## Requisitos del ciclo 2
+
+- **FR-018-011** Vincular o registrar anticipo o pago desde el expediente y ver tipo, monto, moneda, estado y fecha. Un documento pertenece a un solo expediente.
+- **FR-018-012** Registrar datos de embarque e hitos con fecha, y verlos como línea de tiempo.
+- **FR-018-013** Designar agente y transportista desde Terceros.
+- **FR-018-014** Confirmar despacho con documentación completa y fecha de salida real.
+- **FR-018-015** Correcciones con tipo, responsable, acción, evidencia, resolución y cierre.
+- **FR-018-016** Resumen: estado, qué falta, responsables, documentos, pagos y siguiente paso.
+- **FR-018-017** Búsqueda de órdenes en servidor, sin truncado.

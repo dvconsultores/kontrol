@@ -46,7 +46,7 @@ VOL2-044,Compras,Recepción,Almacén,Incidencias de recepción,/compras/incidenc
 VOL2-045,Compras,Compras,CxP,Facturas,/compras/facturas,NO,NO,,SI,,,NO,FUNCTIONAL_SLICE_COMPLETE,E2E_SPEC_EXISTS_NOT_RUN_HERE,Sin validar por la dueña,NO
 VOL2-046,Compras,Compras,Compras,Devoluciones,/compras/devoluciones,SI,SI,/purchasing,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO
 VOL2-047,Importaciones,Importación,Compras,"Expediente, negociación y documentación (IMP-06, 07, 08)",/compras/importaciones,SI,SI,/importaciones,SI,"Party, PurchaseOrder, Documentos 046, Auditoría",,SI,PARTIAL_PROCESS,VERIFIED_IN_BROWSER,"Tramo construido; faltan seguimiento, despacho, recepción y costos",YES
-VOL2-048,Importaciones,Importación,Compras,"Seguimiento, agente y despacho (IMP-09 a 12)",,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
+VOL2-048,Importaciones,Importación,Compras,"Seguimiento, agente, despacho, anticipo o pago y correcciones (IMP-09 a 12)",/compras/importaciones/{id},SI,SI,/importaciones,SI,"Party, CxP, Documentos 046, Auditoría",,SI,PARTIAL_PROCESS,VERIFIED_IN_BROWSER,"Tramo construido en ciclo 2, verificado en Chrome sobre SQLite. Faltan arribo, recepción y costos en sus propias filas",YES
 VOL2-049,Importaciones,Importación,Almacén,Enlace con recepción y ubicación,,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
 VOL2-050,Importaciones,Costos,Costos,Gastos de importación (landed cost),,NO,NO,,NO,,,NO,NOT_STARTED,NOT_VERIFIED,Sin pantalla ni API,NO
 VOL2-051,Ventas,Ventas,Ventas,Cotizaciones,/ventas/cotizaciones,SI,SI,/sales/quotes,SI,,,SI,PARTIAL_PROCESS,NOT_VERIFIED,Sin E2E de usuario; alcance por confirmar,NO

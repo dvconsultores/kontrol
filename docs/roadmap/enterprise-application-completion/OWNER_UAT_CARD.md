@@ -25,4 +25,17 @@ Necesita un proveedor y una orden de compra aprobada de ese proveedor.
 5. En cada documento: escriba la referencia, pulse «Recibir», adjunte un PDF y pulse «Validar». Necesita un tipo documental que admita PDF, en Documentos → Tipos documentales.
 6. Pulse «Confirmar documentación». El estado pasa a «Documentación completa» y el historial lo muestra.
 
-**Aún no disponible:** seguimiento del embarque, agente, despacho, recepción desde el expediente y costos de importación.
+### Continuar la importación
+
+Antes de pagar, apruebe al proveedor en Maestros → Terceros (RIF y cuenta bancaria verificada). El expediente enlaza a su ficha si falta.
+
+7. En «Finanzas», elija «Anticipo», escriba un monto y pulse «Registrar». El anticipo aparece en la lista, y se aprueba o ejecuta en Cuentas por pagar.
+8. Intente registrar un pago con un proveedor sin aprobar. Debe rechazarlo y ofrecer «Ver proveedor».
+9. En «Seguimiento», designe un agente, escriba origen y destino y pulse «Guardar seguimiento». El resumen muestra al agente.
+10. Registre el hito «Salida» con su fecha. Aparece en la línea de tiempo y rellena la salida real.
+11. En «Correcciones», cree un faltante. Si estaba en «Documentación completa», el expediente vuelve a «Orden vinculada» y no deja confirmar hasta resolverlo.
+12. Escriba la resolución, pulse «Resolver» y vuelva a pulsar «Confirmar documentación».
+13. En «Resumen», pulse «Confirmar despacho». El estado pasa a «Despachada», desaparece «Cancelar importación» y el historial muestra «Despacho confirmado».
+14. Reduzca la ventana al ancho de un teléfono y recargue: el menú arranca plegado y el expediente se lee sin desplazamiento lateral.
+
+**Aún no disponible:** arribo, recepción desde el expediente, diferencias, ubicación y costos de importación. El expediente no llega todavía al cierre de punta a punta.
