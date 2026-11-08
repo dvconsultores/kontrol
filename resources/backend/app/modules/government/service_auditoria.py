@@ -34,6 +34,7 @@ from app.modules.government.models import (
     GovernmentOfficial,
     GovernmentPosition,
     GovernmentProcurementCommittee,
+    GovernmentProcurementFile,
     GovernmentRoleCategory,
     GovernmentSoDRule,
     GovernmentStructure,
@@ -68,6 +69,7 @@ PROCESOS: list[tuple[str, str, str]] = [
     ("ORG-04", "Ocupación de cargos", "gov-org-04"),
     ("ORG-06", "Identidad institucional", "gov-0-06"),
     ("PROC-02", "Comisiones de contrataciones", "gov-proc-02"),
+    ("PROC-03", "Expedientes de contratación", "gov-proc-03"),
 ]
 _PROCESO_POR_OWNER_SPEC = {owner_spec: (codigo, nombre) for codigo, nombre, owner_spec in PROCESOS}
 _PROCESO_NOMBRE = {codigo: nombre for codigo, nombre, _ in PROCESOS}
@@ -380,6 +382,22 @@ def _objeto_desde_evento(db: Session, event: AuditEvent, ctx: CompanyContext) ->
             ruta=f"/gobierno/contrataciones/comisiones/{objeto_id}",
             capacidad="gobierno_comisiones:view",
         )
+    if event.entity_type == "GovernmentProcurementFile":
+        expediente = db.scalar(
+            select(GovernmentProcurementFile).where(
+                GovernmentProcurementFile.id == objeto_id,
+                GovernmentProcurementFile.company_id == empresa,
+            )
+        )
+        if expediente is None:
+            return None
+        return AuditoriaObjeto(
+            tipo=event.entity_type,
+            id=objeto_id,
+            ruta=f"/gobierno/contrataciones/expedientes/{objeto_id}",
+            capacidad="gobierno_expedientes:view",
+        )
+
     if event.entity_type == "GovernmentRoleCategory":
         categoria = db.scalar(select(GovernmentRoleCategory).where(GovernmentRoleCategory.id == objeto_id, GovernmentRoleCategory.company_id == empresa))
         return None if categoria is None else AuditoriaObjeto(tipo=event.entity_type, id=objeto_id, ruta="/gobierno/identidad/categorias", capacidad="gobierno_identidad:view")

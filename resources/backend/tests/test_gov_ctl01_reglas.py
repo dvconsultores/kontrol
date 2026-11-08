@@ -102,7 +102,7 @@ def test_cr01_catalogo_acciones(mundo, gobierno):
     assert r.status_code == 200, r.text
     datos = r.json()
     procesos = datos["procesos"]
-    assert [p["proceso"] for p in procesos] == ["DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06", "PROC-02"], r.text
+    assert [p["proceso"] for p in procesos] == ["DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06", "PROC-02", "PROC-03"], r.text
 
     por_codigo = {p["proceso"]: p for p in procesos}
     assert len(por_codigo["DOC-02"]["acciones"]) == 7, r.text

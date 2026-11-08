@@ -152,6 +152,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_comisiones · activación y cierre de comisiones (PROC-02).
         "gobierno_comisiones:activate",
         "gobierno_comisiones:close",
+        # gobierno_expedientes · cierre del expediente (PROC-03).
+        "gobierno_expedientes:close",
     }
 )
 
@@ -254,6 +256,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_comisiones · consulta y registro de comisiones (PROC-02).
         "gobierno_comisiones:view",
         "gobierno_comisiones:manage",
+        # gobierno_expedientes · consulta y gestión del expediente (PROC-03).
+        "gobierno_expedientes:view",
+        "gobierno_expedientes:manage",
     }
 )
 

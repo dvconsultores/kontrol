@@ -1280,7 +1280,7 @@ export function abreviarHuella(huella: string): string { return huella.length > 
 // CTL-01 · matriz de segregación de funciones (GOV-CTL-001)
 // ---------------------------------------------------------------------------
 
-export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01" | "TRE-02" | "CTL-10" | "ORG-04" | "ORG-06" | "PROC-02";
+export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01" | "TRE-02" | "CTL-10" | "ORG-04" | "ORG-06" | "PROC-02" | "PROC-03";
 export type EstadoReglaSod = "BORRADOR" | "VIGENTE" | "CERRADA";
 
 export interface AccionSod { codigo: string; etiqueta: string; crea_objeto: boolean; }
@@ -1321,7 +1321,7 @@ export interface DetalleConflictoSod {
 }
 
 export const ETIQUETAS_ESTADO_REGLA_SOD: Record<EstadoReglaSod, string> = { BORRADOR: "Borrador", VIGENTE: "Vigente", CERRADA: "Cerrada" };
-export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas", "TRE-02": "Programación financiera", "CTL-10": "Controles de cierre", "ORG-04": "Ocupación de cargos", "ORG-06": "Identidad institucional", "PROC-02": "Comisiones de contrataciones" };
+export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas", "TRE-02": "Programación financiera", "CTL-10": "Controles de cierre", "ORG-04": "Ocupación de cargos", "ORG-06": "Identidad institucional", "PROC-02": "Comisiones de contrataciones", "PROC-03": "Expedientes de contratación" };
 export const ETIQUETAS_HISTORIA_SOD: Record<string, string> = { CREADA: "Registrada", EDITADA: "Modificada", ACTIVADA: "Activada", CERRADA: "Cerrada" };
 
 export const POR_PAGINA_CONFLICTOS_SOD = 20;
@@ -1338,6 +1338,7 @@ export function rutaDeObjetoSod(tipo: string | null, id: string | null): string 
   if (tipo === "GovernmentAssignment") return `/gobierno/ocupacion/asignaciones/${id}`;
   if (tipo === "GovernmentUserOfficialLink") return `/gobierno/identidad/vinculos/${id}`;
   if (tipo === "GovernmentProcurementCommittee") return `/gobierno/contrataciones/comisiones/${id}`;
+  if (tipo === "GovernmentProcurementFile") return `/gobierno/contrataciones/expedientes/${id}`;
   return null;
 }
 
@@ -2597,6 +2598,157 @@ export const ETIQUETAS_TIPO_COMISION: Record<string, string> = {
   PERMANENTE: "Permanente",
   TEMPORAL: "Temporal",
 };
+
+export const CONSULTA_EXPEDIENTES = [...CONSULTA_GOBIERNO, "expedientes"] as const;
+
+export function consultaDeExpedientes(f: {
+  q?: string;
+  status?: string;
+  unidad_id?: string;
+  responsable_id?: string;
+  modalidad?: string;
+  desde?: string;
+  hasta?: string;
+  pagina?: number;
+}): string {
+  const p = new URLSearchParams();
+  if (f.q) p.set("q", f.q);
+  if (f.status) p.set("status", f.status);
+  if (f.unidad_id) p.set("unidad_id", f.unidad_id);
+  if (f.responsable_id) p.set("responsable_id", f.responsable_id);
+  if (f.modalidad) p.set("modalidad", f.modalidad);
+  if (f.desde) p.set("desde", f.desde);
+  if (f.hasta) p.set("hasta", f.hasta);
+  if (f.pagina) p.set("pagina", String(f.pagina));
+  const qs = p.toString();
+  return `/gobierno/contrataciones/expedientes${qs ? `?${qs}` : ""}`;
+}
+
+export type ExpedienteEtiqueta = { codigo: string; etiqueta: string };
+export type ExpedienteClaseFolio = { codigo: string; etiqueta: string; fuente: string; grupo: string; condicional: boolean };
+export type ExpedienteCatalogo = {
+  tipos: ExpedienteEtiqueta[];
+  modalidades: ExpedienteEtiqueta[];
+  roles: ExpedienteEtiqueta[];
+  estados: ExpedienteEtiqueta[];
+  clases_evento: ExpedienteEtiqueta[];
+  clases_folio: ExpedienteClaseFolio[];
+  aviso_modalidad: string;
+  aviso_lapsos: string;
+};
+export type ExpedienteOpciones = {
+  funcionarios: { id: string; nombre: string; cargos: string[]; unidades: string[] }[];
+  unidades: { id: string; nombre: string }[];
+  comisiones: { id: string; codigo: string; nombre: string }[];
+  actos: { id: string; etiqueta: string }[];
+};
+export type ExpedienteHitoProximo = { nombre: string; fecha_prevista: string; fecha_superada: boolean };
+export type ExpedienteResumen = {
+  id: string;
+  numero: string;
+  objeto: string;
+  fecha_inicio: string;
+  tipo_contratacion: string;
+  tipo_etiqueta: string;
+  modalidad_declarada: string;
+  modalidad_etiqueta: string | null;
+  unidad_id: string;
+  unidad_nombre: string;
+  responsable: string;
+  comision: string | null;
+  status: string;
+  status_etiqueta: string;
+  proximo_hito: ExpedienteHitoProximo | null;
+  version: number;
+};
+export type ExpedientesListado = { items: ExpedienteResumen[]; total: number; pagina: number; por_pagina: number };
+export type ExpedienteResponsable = {
+  id: string;
+  funcionario_id: string;
+  rol: string;
+  rol_etiqueta: string;
+  nombre: string;
+  cargo: string;
+  unidad: string | null;
+  desde: string;
+  fin_efectivo: string | null;
+  motivo_fin: string | null;
+  vigente: boolean;
+};
+export type ExpedienteHito = {
+  id: string;
+  nombre: string;
+  fuente: string | null;
+  fecha_prevista: string;
+  fecha_real: string | null;
+  estado: string;
+  estado_etiqueta: string;
+  fecha_superada: boolean;
+  funcionario_id: string;
+  responsable: string;
+  motivo_no_aplica: string | null;
+};
+export type ExpedienteFolio = {
+  id: string;
+  numero: number;
+  clase: string;
+  clase_etiqueta: string;
+  tipo_etiqueta: string;
+  etiqueta: string;
+  documento_id: string | null;
+  acto_id: string | null;
+  version_numero: number | null;
+  fecha_documento: string | null;
+  fecha_incorporacion: string;
+  incorporado_por: string | null;
+  reservado: boolean;
+  motivo_reserva: string;
+  hito: string | null;
+};
+export type ExpedienteContenido = { clase: string; etiqueta: string; fuente: string; grupo: string; condicional: boolean; folios: number };
+export type ExpedienteDetalle = ExpedienteResumen & {
+  partes: string;
+  modalidad_fundamento: string;
+  modalidad_fuente: string;
+  comision_no_aplica_motivo: string;
+  cierre_motivo: string;
+  cierre_fecha: string | null;
+  comision_detalle: { id: string; codigo: string; nombre: string; situacion: string; situacion_etiqueta: string } | null;
+  responsables: ExpedienteResponsable[];
+  hitos: ExpedienteHito[];
+  folios: ExpedienteFolio[];
+  contenido: ExpedienteContenido[];
+  pendientes: { codigo: string; texto: string }[];
+  siguiente_accion: string | null;
+  ultima_actuacion: { fecha: string; titulo: string; clase_etiqueta: string } | null;
+  totales: { actuaciones: number; decisiones: number; folios: number; hitos: number };
+  creado_por: string | null;
+  creado_en: string;
+};
+export type ExpedienteEvento = {
+  id: string;
+  secuencia: number;
+  fecha: string;
+  clase: string;
+  clase_etiqueta: string;
+  titulo: string;
+  detalle: string;
+  resultado: string;
+  responsable: string;
+  acto_id: string | null;
+  acto_etiqueta: string | null;
+  folio_id: string | null;
+  folio_etiqueta: string | null;
+  hito_etiqueta: string | null;
+  estado_expediente: string;
+  estado_etiqueta: string;
+  actor: string | null;
+  registrado_en: string;
+  motivo: string | null;
+  rectifica_secuencia: number | null;
+  rectificada_por_secuencia: number | null;
+};
+export type ExpedienteCronologia = { items: ExpedienteEvento[]; total: number; pagina: number; por_pagina: number };
 
 export function consultaDeComisiones(f: {
   q?: string;

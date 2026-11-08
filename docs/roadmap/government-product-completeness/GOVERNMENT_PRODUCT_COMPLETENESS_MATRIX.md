@@ -52,7 +52,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 |---|---|---|---|---|---|---|---|---|---|---|
 | PROC-01 | Determinar la modalidad de selección y conservar la regla y las excepciones | P0 | Unidad contratante | GOV-PROC-001 GOV-PROC-002 GOV-PROC-016 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | — |
 | PROC-02 | Comisión de contrataciones (miembros, suplentes, impedimentos) | P0 | Máxima autoridad | GOV-PROC-003 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | COM-E2E-01, 02 + HUMO-UAT-01 | — |
-| PROC-03 | Expediente único de contratación con cronología y lapsos | P0 | Unidad contratante | GOV-PROC-004 GOV-PROC-014 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
+| PROC-03 | Expediente único de contratación con cronología y lapsos | P0 | Unidad contratante | GOV-PROC-004 GOV-PROC-014 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 | PROC-04 | Pliego, invitaciones, aclaratorias, prórrogas y avisos | P0 | Unidad contratante | GOV-PROC-005 GOV-PROC-015 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-03 | — | — |
 | PROC-05 | Oferentes y contratistas (RNC/SNC) | P0 | Unidad contratante | GOV-PROC-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-03 | — | Terceros/proveedores privados: otro contrato |
 | PROC-06 | Recepción y apertura de ofertas | P0 | Unidad contratante | GOV-PROC-007 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Cotizaciones de compras privadas: otro contrato |

@@ -33,7 +33,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | REQ-05 | GOV-REQ-010 | Requisiciones públicas | Unidad requirente | Cerrar o cancelar requisición liberando reservas | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
 | PROC-01 | GOV-PROC-001 GOV-PROC-002 GOV-PROC-016 | Contrataciones públicas / Li | Unidad contratante | Determinar la modalidad de selección y conservar la regla y las excepc | no | no | no | no | no | no | NOT_STARTED (bloqueado) | LEGAL_VALIDATION_REQUIRED N37 (clase C) |
 | PROC-02 | GOV-PROC-003 | Contrataciones públicas / Li | Máxima autoridad | Comisión de contrataciones (miembros, suplentes, impedimentos) | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | — |
-| PROC-03 | GOV-PROC-004 GOV-PROC-014 | Contrataciones públicas / Li | Unidad contratante | Expediente único de contratación con cronología y lapsos | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
+| PROC-03 | GOV-PROC-004 GOV-PROC-014 | Contrataciones públicas / Li | Unidad contratante | Expediente único de contratación con cronología y lapsos | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | PROC-04 | GOV-PROC-005 GOV-PROC-015 | Contrataciones públicas / Li | Unidad contratante | Pliego, invitaciones, aclaratorias, prórrogas y avisos | no | no | no | n/a | no | no | NOT_STARTED (bloqueado) | D-GOV-03 |
 | PROC-05 | GOV-PROC-006 | Contrataciones públicas / Li | Unidad contratante | Oferentes y contratistas (RNC/SNC) | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-03 |
 | PROC-06 | GOV-PROC-007 | Contrataciones públicas / Li | Unidad contratante | Recepción y apertura de ofertas | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
@@ -128,3 +128,25 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | REP-09 | IR §11/§12 | Reportes y tableros instituc | Control Interno | Rendición de cuentas por responsable y período | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | REP-10 | IR §11/§12 | Reportes y tableros instituc | Control Interno | Control interno: overrides, conflictos SoD, duplicados, hallazgos | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | REP-11 | IR §11/§12 | Reportes y tableros instituc | Unidad de trámites | Trámites: volumen, tiempos, subsanaciones y cuellos de botella | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-06 |
+
+## Métricas de pantallas (corrección de la dueña, 2026-11-09)
+
+Una ruta declarada no demuestra que la pantalla funcione. Una pantalla cuenta como verificada en navegador solo si frontend y backend reales funcionan juntos en un navegador.
+
+| Métrica | Valor | Nota |
+|---|---|---|
+| `DECLARED_GOVERNMENT_ROUTES` | 59 | Rutas `gobierno/` en `pantallas.ts` |
+| `BROWSER_VERIFIED_GOVERNMENT_SCREENS` | 8 medidas | PROC-02 y PROC-03 (4 cada uno). Las de los otros 16 procesos tienen E2E propia pero no se han medido con este criterio |
+| `OWNER_UAT_READY_SCREENS` | Sin medir por pantalla | Se publica por proceso: 18 |
+| `TOTAL_REQUIRED_SCREENS` | No se inventa | El sponsor no lo enumera |
+
+## PROC-02: clasificación corregida
+
+`PROC02_FUNCTIONAL_SLICE_COMPLETE = 1`; `OWNER_UAT_READY_PROC02 = YES`; `PROC02_FULL_BROWSER_ACTION_MATRIX_VERIFIED = NO`: descartar, retirar en borrador y designar con la comisión vigente no se ejercitaron por interfaz. No bloquea PROC-03.
+
+## PROC-03 en detalle
+
+| Requisito | Rol | Proceso | Superficie | Backend | BD | API | Permiso | Documentos | Auditoría | Navegador | UAT | Estado | Falta |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| GOV-PROC-004 | Unidad contratante | Expediente único | Listado, nuevo, ficha, editar | sí | 0080 | 16 rutas | `gobierno_expedientes` | Spec 046 y DOC-02, con folio | CTL-02, 13 eventos | sí, flujo principal | sí | OWNER_UAT_READY | Acciones auxiliares por interfaz; bitácora sin filtro por expediente |
+| GOV-PROC-014 | Unidad contratante | Hitos y lapsos | Hitos y lapsos, cronología | sí | 0080 | hitos | `gobierno_expedientes:manage` | Folio ligado a hito | CTL-02 | sí: crear y fecha real | sí | OWNER_UAT_READY | Cálculo de lapsos: bloqueado por calendario DOC-03 |

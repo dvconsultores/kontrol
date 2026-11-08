@@ -119,6 +119,7 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_ocupacion": ["view", "manage", "activate", "revoke"],
     "gobierno_identidad": ["view", "manage", "activate", "revoke"],
     "gobierno_comisiones": ["view", "manage", "activate", "close"],
+    "gobierno_expedientes": ["view", "manage", "close"],
 }
 
 

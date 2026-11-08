@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     """Crea una entidad del tipo pedido en esa empresa. Devuelve su id."""
     from app.modules.approvals.models import ApprovalRequest
-    from app.modules.government.models import GovernmentAct, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentNotification, GovernmentPosition, GovernmentStructure, GovernmentUnit
+    from app.modules.government.models import GovernmentAct, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentNotification, GovernmentPosition, GovernmentProcurementFile, GovernmentStructure, GovernmentUnit
     from app.modules.homologation.models import HomologationRecord
     from app.modules.inventory.models import InventoryAdjustment, StockCount
     from app.modules.master_data.models import CatalogItem, Party
@@ -100,6 +100,23 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
                                       nombre=f"Destinatario {marca}", identificacion="V-1234567",
                                       identificacion_clave="V1234567", domicilio="Domicilio de prueba",
                                       recursos="No proceden recursos", status="PENDIENTE", version=1)
+
+    def _expediente_de_empresa() -> GovernmentProcurementFile:
+        cargo = _cargo_de_empresa("X")
+        db.add(cargo)
+        db.flush()
+        unidad = db.get(GovernmentUnit, cargo.unit_id)
+        return GovernmentProcurementFile(
+            company_id=empresa,
+            numero=f"EX-{marca}"[:40],
+            fecha_inicio=datetime(2031, 1, 2, tzinfo=UTC).date(),
+            objeto=f"Objeto {marca}",
+            tipo_contratacion="BIENES",
+            unidad_id=str(unidad.id),
+            unidad_nombre=unidad.name,
+            status="ABIERTO",
+            version=1,
+        )
 
     def _accion_correctiva_de_empresa() -> GovernmentCorrectiveAction:
         cargo = _cargo_de_empresa("H")
@@ -262,6 +279,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         "GovernmentAct": _acto_de_empresa,
         "GovernmentNotification": _notificacion_de_empresa,
         "GovernmentCorrectiveAction": _accion_correctiva_de_empresa,
+        "GovernmentProcurementFile": _expediente_de_empresa,
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",
             warehouse_type="PHYSICAL", status="ACTIVE"),

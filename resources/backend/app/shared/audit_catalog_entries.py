@@ -442,6 +442,8 @@ _PARTE_B: tuple[AuditActionSpec, ...] = (
 
 DETALLE_COMISION: tuple[str, ...] = ("acto", "area", "asunto", "causa", "causal", "codigo", "condicion", "desde", "estado", "fecha", "filtros", "funcion", "funcionario", "hasta", "miembro", "motivo", "nombre", "referencia", "regla_version", "total", "version")
 
+DETALLE_EXPEDIENTE: tuple[str, ...] = ("acto", "clase", "comision", "estado", "fecha", "fecha_prevista", "fecha_real", "folio", "funcionario", "hito", "modalidad", "motivo", "numero", "resultado", "rol", "secuencia", "titulo", "version")
+
 _PARTE_C: tuple[AuditActionSpec, ...] = (
     _e("GOV_COMMITTEE_CREATED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisión de contrataciones registrada"),
     _e("GOV_COMMITTEE_UPDATED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisión de contrataciones editada"),
@@ -457,4 +459,20 @@ _PARTE_C: tuple[AuditActionSpec, ...] = (
     _e("GOV_COMMITTEES_EXPORTED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisiones de contrataciones exportadas"),
 )
 
-ENTRIES: tuple[AuditActionSpec, ...] = _PARTE_A + _PARTE_B + _PARTE_C
+_PARTE_D: tuple[AuditActionSpec, ...] = (
+    _e("GOV_PROCUREMENT_FILE_CREATED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Expediente de contratación creado"),
+    _e("GOV_PROCUREMENT_FILE_UPDATED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Expediente de contratación editado"),
+    _e("GOV_PROCUREMENT_FILE_DISCARDED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Expediente de contratación descartado"),
+    _e("GOV_PROCUREMENT_FILE_CLOSED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Expediente de contratación cerrado"),
+    _e("GOV_PROCUREMENT_FILE_RESPONSIBLE_ASSIGNED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Responsable del expediente asignado"),
+    _e("GOV_PROCUREMENT_FILE_RESPONSIBLE_ENDED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Responsable del expediente terminado"),
+    _e("GOV_PROCUREMENT_FILE_COMMISSION_LINKED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Comisión del expediente registrada"),
+    _e("GOV_PROCUREMENT_FILE_ACTION_RECORDED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Actuación registrada en el expediente"),
+    _e("GOV_PROCUREMENT_FILE_DECISION_RECORDED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Decisión registrada en el expediente"),
+    _e("GOV_PROCUREMENT_FILE_DOCUMENT_LINKED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Documento incorporado al expediente"),
+    _e("GOV_PROCUREMENT_FILE_ACT_LINKED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Acto incorporado al expediente"),
+    _e("GOV_PROCUREMENT_FILE_MILESTONE_CREATED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Hito del expediente creado"),
+    _e("GOV_PROCUREMENT_FILE_MILESTONE_UPDATED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Hito del expediente actualizado"),
+)
+
+ENTRIES: tuple[AuditActionSpec, ...] = _PARTE_A + _PARTE_B + _PARTE_C + _PARTE_D
