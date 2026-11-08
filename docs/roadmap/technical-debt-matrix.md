@@ -2612,3 +2612,15 @@ Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/recepcion-functional-co
 | RECEPCION-LINEAS-CONTRADICTORIAS-ACEPTADAS | OPEN · EXTERNAL_GATE: escaneo de solo lectura preparado, sin base disponible |
 
 Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/recepcion-functional-closure/`.
+
+## Actualización 2026-11-07 (10) — selectores de catálogo
+
+| Deuda | Estado |
+|---|---|
+| CATALOGO-SELECTORES-PRIMERA-PAGINA | **`TECHNICAL_FIX_COMPLETE_LOCAL / FULL_RUNTIME_E2E_PENDING`**, sin publicar: 14 pantallas con `SelectorDeArticulo` (búsqueda y paginación en servidor, etiqueta legible, empresa en la clave, PRODUCT en inventario) |
+| CATALOGO-SELECTOR-CACHE-EMPRESA-SIN-PRUEBA (nueva) | OPEN · LOW · 002: el mutante M4, que saca la empresa de la clave de caché, sobrevive; el código es correcto |
+| ASYNC-COMBOBOX-REABRIR-TRAS-ESCAPE (nueva) | OPEN · LOW · 002: tras Escape, un clic sobre el campo con foco no reabre la lista |
+| COMPRAS-DEVOLUCION-LINEA-SIN-VALIDAR-PRODUCTO (nueva) | OPEN · MEDIUM propuesta · 004: `add_return_line` no valida el producto. Observado por lectura, sin reproducir |
+| TERCEROS-SELECTORES-PRIMERA-PAGINA | OPEN · MEDIUM propuesta, sin cambios: queda para el ciclo siguiente |
+
+Evidencia: `specs/002-maestros/evidence/catalogo-selectores/` y `specs/002-maestros/spec002-catalogo-selectores-delta.md`.
