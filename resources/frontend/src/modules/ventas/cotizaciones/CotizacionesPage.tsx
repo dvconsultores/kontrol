@@ -10,7 +10,7 @@ import { useState } from "react";
 import { NavLink } from "react-router";
 
 import { apiFetch } from "@/api/client";
-import type { CatalogItemSummary, PagedResult, Party, SalesQuoteSummary } from "@/api/types";
+import type { PagedResult, Party, SalesQuoteSummary } from "@/api/types";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -19,6 +19,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { SelectorDeArticulo } from "@/modules/maestros/catalogo/SelectorDeArticulo";
 
 const columnHelper = createColumnHelper<SalesQuoteSummary>();
 
@@ -42,11 +43,6 @@ export function CotizacionesPage(): React.JSX.Element {
   const customers = useQuery({
     queryKey: ["maestros", "terceros"],
     queryFn: () => apiFetch<PagedResult<Party>>("/maestros/terceros"),
-    retry: false,
-  });
-  const products = useQuery({
-    queryKey: ["maestros", "productos"],
-    queryFn: () => apiFetch<PagedResult<CatalogItemSummary>>(`/maestros/catalogos/items?status=ACTIVE`),
     retry: false,
   });
 
@@ -157,12 +153,7 @@ export function CotizacionesPage(): React.JSX.Element {
               </select>
             </FormField>
             <FormField label="Producto" required>
-              <select value={lineProduct} onChange={(e) => setLineProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-                <option value="">Seleccionar…</option>
-                {(products.data?.items ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-                ))}
-              </select>
+              <SelectorDeArticulo value={lineProduct} onChange={setLineProduct} />
             </FormField>
             <FormField label="Cantidad" required>
               <TextInput type="number" value={lineQty} onChange={(e) => setLineQty(e.target.value)} placeholder="0" required />

@@ -4,7 +4,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
-import type { CatalogItemSummary, PagedResult, Reservation } from "@/api/types";
+import type { Reservation } from "@/api/types";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
@@ -16,6 +16,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { SelectorDeArticulo } from "@/modules/maestros/catalogo/SelectorDeArticulo";
 import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
 import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
@@ -45,11 +46,6 @@ export function ReservasPage(): React.JSX.Element {
   const query = useQuery({
     queryKey: ["inventario", "reservas", statusFilter],
     queryFn: () => apiFetch<{ items: Reservation[] }>(reservationsUrl),
-    retry: false,
-  });
-  const products = useQuery({
-    queryKey: ["maestros", "productos"],
-    queryFn: () => apiFetch<PagedResult<CatalogItemSummary>>(`/maestros/catalogos/items?status=ACTIVE`),
     retry: false,
   });
   const warehouses = useAlmacenesDeEmpresa(companyId);
@@ -143,12 +139,7 @@ export function ReservasPage(): React.JSX.Element {
           <h2 className="mb-2 text-base font-semibold text-text-900">Nueva reserva</h2>
           <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()}>
             <FormField label="Producto" required>
-              <select value={newProduct} onChange={(e) => setNewProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-                <option value="">Seleccionar…</option>
-                {(products.data?.items ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-                ))}
-              </select>
+              <SelectorDeArticulo value={newProduct} onChange={setNewProduct} itemType="PRODUCT" />
             </FormField>
             <AvisoDeAlmacenes consulta={warehouses} />
             <FormField label="Almacén" required>

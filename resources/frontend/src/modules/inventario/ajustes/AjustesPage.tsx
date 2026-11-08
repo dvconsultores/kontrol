@@ -4,7 +4,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
-import type { CatalogItemSummary, InventoryAdjustment, PagedResult } from "@/api/types";
+import type { InventoryAdjustment, PagedResult } from "@/api/types";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
@@ -15,6 +15,7 @@ import { FormField } from "@/components/FormField";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
+import { SelectorDeArticulo } from "@/modules/maestros/catalogo/SelectorDeArticulo";
 import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
 import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 
@@ -42,11 +43,6 @@ export function AjustesPage(): React.JSX.Element {
     retry: false,
   });
   const warehouses = useAlmacenesDeEmpresa(companyId);
-  const products = useQuery({
-    queryKey: ["maestros", "productos"],
-    queryFn: () => apiFetch<PagedResult<CatalogItemSummary>>(`/maestros/catalogos/items?status=ACTIVE`),
-    retry: false,
-  });
 
   const createAdjustment = async (): Promise<void> => {
     try {
@@ -129,12 +125,7 @@ export function AjustesPage(): React.JSX.Element {
             </select>
           </FormField>
           <FormField label="Producto" required>
-            <select value={newProduct} onChange={(e) => setNewProduct(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
-              <option value="">Seleccionar…</option>
-              {(products.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-              ))}
-            </select>
+            <SelectorDeArticulo value={newProduct} onChange={setNewProduct} itemType="PRODUCT" />
           </FormField>
           <FormField label="Cantidad (+/−)" required>
             <TextInput type="number" value={newQty} onChange={(e) => setNewQty(e.target.value)} placeholder="0" required />
