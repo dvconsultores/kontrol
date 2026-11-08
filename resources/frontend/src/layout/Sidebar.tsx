@@ -294,7 +294,12 @@ const navSections: NavSection[] = [
 ];
 
 export function Sidebar(): React.JSX.Element {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 767px)").matches,
+  );
   const autoridad = useAutoridad();
   const moduloGobierno = useModuloGobierno();
   // Una entrada se ve si su pantalla está permitida (registro único `pantallas.ts`, Spec 003). Mientras la autoridad carga, las entradas

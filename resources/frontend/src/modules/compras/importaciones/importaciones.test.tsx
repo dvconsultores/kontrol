@@ -54,12 +54,18 @@ const detalleNegociando = {
   supplier_name: "Proveedor Uno",
   order_id: null,
   order_code: null,
+  agent_party_id: null,
+  carrier_party_id: null,
+  transport_document: null,
+  origin: null,
+  destination: null,
   incoterm: "FOB",
   incoterm_place: "Puerto",
   payment_conditions: "30 días",
   delivery_conditions: "Entrega en puerto",
   expected_dispatch_date: null,
   expected_arrival_date: null,
+  actual_departure_date: null,
   notes: null,
   cancel_reason: null,
   next_action: "Completa la negociación o vincula la orden.",
@@ -68,9 +74,22 @@ const detalleNegociando = {
     link_order: true,
     add_document: false,
     confirm_documents: false,
+    confirm_dispatch: false,
     cancel: true,
   },
   documents: [],
+  tracking_events: [],
+  financial: [],
+  corrections: [],
+  summary: {
+    pending: [],
+    documents_validated: 0,
+    documents_required: 1,
+    open_corrections: 0,
+    financial_count: 0,
+    agent_name: null,
+    carrier_name: null,
+  },
   version: 2,
 };
 
@@ -167,7 +186,8 @@ describe("importaciones", () => {
   it("expediente: negocia, vincula y confirma", async () => {
     apiFetch.mockImplementation(async (path: string) => {
       if (path === "/importaciones/i-1") return detalleNegociando;
-      if (path.startsWith("/purchasing/orders")) return ordenesAprobadas;
+      if (path.startsWith("/importaciones/eligible-orders"))
+        return ordenesAprobadas;
       if (path.startsWith("/importaciones/i-1/audit")) return { items: [], total: 0 };
       throw new Error(`No mockeado: ${path}`);
     });
@@ -175,7 +195,7 @@ describe("importaciones", () => {
     const usuario = userEvent.setup();
     renderizar("/compras/importaciones/i-1");
 
-    await screen.findByText("En negociación");
+    await screen.findAllByText("En negociación");
     expect(screen.getByText("Completa la negociación o vincula la orden.")).toBeTruthy();
 
     const condicionesPago = screen.getByLabelText(/Condiciones de pago/i);
@@ -193,7 +213,10 @@ describe("importaciones", () => {
       });
     });
 
-    await usuario.selectOptions(screen.getByLabelText("Orden aprobada"), "o-1");
+    const combo = screen.getByRole("combobox", { name: "Orden aprobada" });
+    await usuario.click(combo);
+    await usuario.type(combo, "OC-001");
+    await usuario.click(screen.getByRole("option", { name: /OC-001/ }));
     await usuario.click(screen.getByRole("button", { name: "Vincular orden" }));
 
     await waitFor(() => {
@@ -206,7 +229,8 @@ describe("importaciones", () => {
   it("vincular sin negociación explica qué falta", async () => {
     apiFetch.mockImplementation(async (path: string) => {
       if (path === "/importaciones/i-1") return detalleNegociando;
-      if (path.startsWith("/purchasing/orders")) return ordenesAprobadas;
+      if (path.startsWith("/importaciones/eligible-orders"))
+        return ordenesAprobadas;
       if (path.startsWith("/importaciones/i-1/audit")) return { items: [], total: 0 };
       if (path.startsWith("/importaciones/i-1/order"))
         throw new ApiError(409, {
@@ -220,8 +244,11 @@ describe("importaciones", () => {
     const usuario = userEvent.setup();
     renderizar("/compras/importaciones/i-1");
 
-    await screen.findByText("En negociación");
-    await usuario.selectOptions(await screen.findByLabelText("Orden aprobada"), "o-1");
+    await screen.findAllByText("En negociación");
+    const combo = screen.getByRole("combobox", { name: "Orden aprobada" });
+    await usuario.click(combo);
+    await usuario.type(combo, "OC-001");
+    await usuario.click(screen.getByRole("option", { name: /OC-001/ }));
     await usuario.click(screen.getByRole("button", { name: "Vincular orden" }));
 
     const alerta = await screen.findByRole("alert");
@@ -267,10 +294,123 @@ describe("importaciones", () => {
     const usuario = userEvent.setup();
     renderizar("/compras/importaciones/i-1");
 
-    await screen.findByText("En negociación");
+    await screen.findAllByText("En negociación");
     await usuario.click(screen.getByRole("button", { name: "Confirmar documentación" }));
 
     expect(await screen.findByText(/Falta validar: Packing list/)).toBeTruthy();
+  });
+
+  it("resumen muestra pendientes y botón de confirmar despacho", async () => {
+    const detalleDocumentosCompletos = {
+      ...detalleNegociando,
+      status: "DOCUMENTS_COMPLETE" as const,
+      agent_party_id: null,
+      carrier_party_id: null,
+      transport_document: null,
+      origin: null,
+      destination: null,
+      actual_departure_date: null,
+      summary: {
+        pending: ["Registrar salida real"],
+        documents_validated: 1,
+        documents_required: 1,
+        open_corrections: 0,
+        financial_count: 1,
+        agent_name: null,
+        carrier_name: null,
+      },
+      tracking_events: [],
+      financial: [],
+      corrections: [],
+      allowed_actions: {
+        edit: true,
+        link_order: true,
+        add_document: false,
+        confirm_documents: false,
+        confirm_dispatch: true,
+        cancel: false,
+      },
+    };
+
+    apiFetch.mockImplementation(async (path: string) => {
+      if (path === "/importaciones/i-1") return detalleDocumentosCompletos;
+      if (path.startsWith("/importaciones/i-1/audit")) return { items: [], total: 0 };
+      if (path.startsWith("/importaciones/i-1/financial-candidates")) {
+        return { items: [], total: 0, page: 1, page_size: 20 };
+      }
+      throw new Error(`No mockeado: ${path}`);
+    });
+
+    renderizar("/compras/importaciones/i-1");
+
+    expect(await screen.findByText("Registrar salida real")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Confirmar despacho" }),
+    ).toBeVisible();
+  });
+
+  it("registrar pago con proveedor no aprobado muestra enlace al proveedor", async () => {
+    const detalleOrdenado = {
+      ...detalleNegociando,
+      status: "ORDERED" as const,
+      agent_party_id: null,
+      carrier_party_id: null,
+      transport_document: null,
+      origin: null,
+      destination: null,
+      actual_departure_date: null,
+      summary: {
+        pending: [],
+        documents_validated: 0,
+        documents_required: 1,
+        open_corrections: 0,
+        financial_count: 0,
+        agent_name: null,
+        carrier_name: null,
+      },
+      tracking_events: [],
+      financial: [],
+      corrections: [],
+      allowed_actions: {
+        edit: true,
+        link_order: true,
+        add_document: false,
+        confirm_documents: true,
+        confirm_dispatch: false,
+        cancel: true,
+      },
+    };
+
+    apiFetch.mockImplementation(async (path: string, options?: { method?: string; body?: unknown }) => {
+      if (path === "/importaciones/i-1") return detalleOrdenado;
+      if (path.startsWith("/importaciones/i-1/audit")) return { items: [], total: 0 };
+      if (path.startsWith("/importaciones/i-1/financial-candidates")) {
+        return { items: [], total: 0, page: 1, page_size: 20 };
+      }
+      if (path === "/importaciones/i-1/payments" && options?.method === "POST") {
+        throw new ApiError(409, {
+          code: "SUPPLIER_NOT_APPROVED",
+          message: "El proveedor no está aprobado.",
+          details: { supplier_id: "prov-1" },
+        });
+      }
+      throw new Error(`No mockeado: ${path}`);
+    });
+
+    renderizar("/compras/importaciones/i-1");
+
+    await screen.findByLabelText(/^Monto/);
+    await userEvent.type(screen.getByLabelText(/^Monto/), "100");
+    await userEvent.click(
+      screen.getByRole("button", { name: /^Registrar$/ }),
+    );
+
+    const alerta = await screen.findByRole("alert");
+    expect(alerta.textContent).toContain("El proveedor no está aprobado.");
+    expect(screen.getByRole("link", { name: "Ver proveedor" })).toHaveAttribute(
+      "href",
+      "/maestros/terceros/prov-1",
+    );
   });
 
   it("sin permiso oculta acciones", async () => {
@@ -283,7 +423,7 @@ describe("importaciones", () => {
 
     renderizar("/compras/importaciones/i-1");
 
-    await screen.findByText("En negociación");
+    await screen.findAllByText("En negociación");
     expect(screen.queryByRole("button", { name: "Guardar negociación" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Vincular orden" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Confirmar documentación" })).toBeNull();
@@ -306,7 +446,7 @@ describe("importaciones", () => {
     await usuario.click(screen.getByRole("button", { name: "Guardar" }));
 
     await waitFor(() => {
-      expect(screen.getByText("En negociación")).toBeTruthy();
+      expect(screen.getAllByText("En negociación").length).toBeGreaterThan(0);
     });
 
     const posts = llamadasDe("/importaciones", "POST");

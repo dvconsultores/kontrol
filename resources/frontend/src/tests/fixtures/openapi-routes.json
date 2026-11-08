@@ -1736,6 +1736,16 @@
     },
     {
       "method": "GET",
+      "path": "/importaciones/eligible-orders",
+      "query": [
+        "file_id",
+        "page",
+        "page_size",
+        "q"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/importaciones/{file_id}",
       "query": []
     },
@@ -1759,7 +1769,27 @@
     },
     {
       "method": "POST",
+      "path": "/importaciones/{file_id}/confirm-dispatch",
+      "query": []
+    },
+    {
+      "method": "POST",
       "path": "/importaciones/{file_id}/confirm-documents",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/corrections",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/corrections/{correction_id}/cancel",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/corrections/{correction_id}/resolve",
       "query": []
     },
     {
@@ -1783,8 +1813,37 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/importaciones/{file_id}/financial-candidates",
+      "query": [
+        "kind",
+        "page",
+        "page_size"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/financial-links",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/importaciones/{file_id}/financial-links/{link_id}",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/importaciones/{file_id}/order",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/payments",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/tracking",
       "query": []
     },
     {

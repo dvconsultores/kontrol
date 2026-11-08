@@ -16,6 +16,11 @@ import { AdjuntosPanel } from "@/modules/documentos/AdjuntosPanel";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { formatearInstante } from "@/lib/fecha-de-negocio";
+import { AsyncCombobox } from "@/components/AsyncCombobox";
+import { ImportacionResumen } from "./ImportacionResumen";
+import { ImportacionSeguimiento } from "./ImportacionSeguimiento";
+import { ImportacionFinanzas } from "./ImportacionFinanzas";
+import { ImportacionCorrecciones } from "./ImportacionCorrecciones";
 import {
   ESTADOS,
   ESTADOS_DOCUMENTO,
@@ -42,7 +47,7 @@ type Documento = {
   };
 };
 
-type DetalleImportacion = {
+export type DetalleImportacion = {
   id: string;
   code: string;
   status: EstadoImportacion;
@@ -60,11 +65,62 @@ type DetalleImportacion = {
   notes: string | null;
   cancel_reason: string | null;
   next_action: string | null;
+  agent_party_id: string | null;
+  carrier_party_id: string | null;
+  transport_document: string | null;
+  origin: string | null;
+  destination: string | null;
+  actual_departure_date: string | null;
+  summary: {
+    pending: string[];
+    missing?: string[];
+    documents_validated: number;
+    documents_required: number;
+    open_corrections: number;
+    financial_count: number;
+    agent_name: string | null;
+    carrier_name: string | null;
+  };
+  tracking_events: {
+    id: string;
+    milestone: "BOOKED" | "DEPARTED" | "IN_TRANSIT" | "TRANSSHIPMENT" | "DELAYED" | "OTHER";
+    occurred_on: string;
+    location: string | null;
+    notes: string | null;
+    username: string | null;
+  }[];
+  financial: {
+    id: string;
+    kind: "PAYMENT" | "ADVANCE";
+    amount: string;
+    currency: string;
+    status: string;
+    date: string;
+  }[];
+  corrections: {
+    id: string;
+    kind: "FALTANTE" | "CORRECCION_DOCUMENTAL";
+    document_id: string | null;
+    description: string;
+    action_required: string;
+    responsible: "PROVEEDOR" | "AGENTE" | "IMPORTACION";
+    responsible_name: string;
+    status: "OPEN" | "RESOLVED" | "CANCELLED";
+    resolution: string | null;
+    resolved_at: string | null;
+    version: number;
+    attachments: unknown[];
+    allowed_actions: {
+      resolve: boolean;
+      cancel: boolean;
+    };
+  }[];
   allowed_actions: {
     edit: boolean;
     link_order: boolean;
     add_document: boolean;
     confirm_documents: boolean;
+    confirm_dispatch: boolean;
     cancel: boolean;
   };
   documents: Documento[];
@@ -79,12 +135,6 @@ type EventoAuditoria = {
   username: string | null;
   reason: string | null;
   details: Record<string, unknown> | null;
-};
-
-type OrdenAprobada = {
-  id: string;
-  code: string;
-  currency: string;
 };
 
 type FormNegociacion = {
@@ -104,7 +154,6 @@ function Negociacion({
   detalle: DetalleImportacion;
   onCambios: () => void;
 }) {
-  const queryClient = useQueryClient();
   const { notify } = useNotifications();
   const [error, setError] = useState<string | null>(null);
   const [conflicto, setConflicto] = useState(false);
@@ -117,6 +166,11 @@ function Negociacion({
     expected_arrival_date: detalle.expected_arrival_date ?? "",
     notes: detalle.notes ?? "",
   }));
+
+  const editable =
+    detalle.status === "NEGOTIATING" || detalle.status === "ORDERED";
+  const disabledClases =
+    "disabled:cursor-not-allowed disabled:bg-surface-100 disabled:text-text-400";
 
   const dirty =
     form.incoterm !== (detalle.incoterm ?? "") ||
@@ -168,17 +222,18 @@ function Negociacion({
 
   return (
     <section
+      id="negociacion"
       key={detalle.version}
       className="rounded-lg border border-border-default bg-surface-0 p-6"
     >
-      <UnsavedChangesGuard hasUnsavedChanges={dirty && detalle.allowed_actions.edit} />
+      <UnsavedChangesGuard hasUnsavedChanges={dirty && editable} />
       <h2 className="mb-4 text-lg font-semibold text-text-900">Negociación</h2>
       <div className="grid gap-4 md:grid-cols-2">
         <FormField label="INCOTERM">
           <select
-            className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+            className={`h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900 ${disabledClases}`}
             value={form.incoterm}
-            disabled={!detalle.allowed_actions.edit}
+            disabled={!editable}
             onChange={(e) => setCampo("incoterm", e.target.value)}
           >
             <option value="">Sin definir</option>
@@ -192,24 +247,24 @@ function Negociacion({
         <FormField label="Lugar del INCOTERM">
           <TextInput
             value={form.incoterm_place}
-            disabled={!detalle.allowed_actions.edit}
+            disabled={!editable}
             onChange={(e) => setCampo("incoterm_place", e.target.value)}
           />
         </FormField>
       </div>
       <FormField label="Condiciones de pago">
         <textarea
-          className="min-h-20 w-full rounded-md border border-border-default bg-surface-0 px-3 py-2 text-sm text-text-900"
+          className={`min-h-20 w-full rounded-md border border-border-default bg-surface-0 px-3 py-2 text-sm text-text-900 ${disabledClases}`}
           value={form.payment_conditions}
-          disabled={!detalle.allowed_actions.edit}
+          disabled={!editable}
           onChange={(e) => setCampo("payment_conditions", e.target.value)}
         />
       </FormField>
       <FormField label="Condiciones de entrega">
         <textarea
-          className="min-h-20 w-full rounded-md border border-border-default bg-surface-0 px-3 py-2 text-sm text-text-900"
+          className={`min-h-20 w-full rounded-md border border-border-default bg-surface-0 px-3 py-2 text-sm text-text-900 ${disabledClases}`}
           value={form.delivery_conditions}
-          disabled={!detalle.allowed_actions.edit}
+          disabled={!editable}
           onChange={(e) => setCampo("delivery_conditions", e.target.value)}
         />
       </FormField>
@@ -218,7 +273,7 @@ function Negociacion({
           <TextInput
             type="date"
             value={form.expected_dispatch_date}
-            disabled={!detalle.allowed_actions.edit}
+            disabled={!editable}
             onChange={(e) => setCampo("expected_dispatch_date", e.target.value)}
           />
         </FormField>
@@ -226,16 +281,16 @@ function Negociacion({
           <TextInput
             type="date"
             value={form.expected_arrival_date}
-            disabled={!detalle.allowed_actions.edit}
+            disabled={!editable}
             onChange={(e) => setCampo("expected_arrival_date", e.target.value)}
           />
         </FormField>
       </div>
       <FormField label="Notas">
         <textarea
-          className="min-h-20 w-full rounded-md border border-border-default bg-surface-0 px-3 py-2 text-sm text-text-900"
+          className={`min-h-20 w-full rounded-md border border-border-default bg-surface-0 px-3 py-2 text-sm text-text-900 ${disabledClases}`}
           value={form.notes}
-          disabled={!detalle.allowed_actions.edit}
+          disabled={!editable}
           onChange={(e) => setCampo("notes", e.target.value)}
         />
       </FormField>
@@ -248,13 +303,13 @@ function Negociacion({
         <div className="mt-3">
           <Button
             variant="secondary"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ["importaciones"] })}
+            onClick={() => onCambios()}
           >
             Recargar
           </Button>
         </div>
       )}
-      {detalle.allowed_actions.edit && (
+      {editable && (
         <div className="mt-4">
           <Autorizado operacion={["PATCH", `/importaciones/${detalle.id}`]}>
             <AsyncButton disabled={!dirty} onClick={guardar}>
@@ -274,21 +329,9 @@ function VincularOrden({
   detalle: DetalleImportacion;
   onCambios: () => void;
 }) {
-  const [ordenId, setOrdenId] = useState("");
+  const { activeCompany } = useCompany();
+  const [ordenId, setOrdenId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const ordenes = useQuery({
-    queryKey: ["importaciones", "ordenes", detalle.supplier_id],
-    enabled: detalle.allowed_actions.link_order,
-    queryFn: () =>
-      apiFetch<PagedResult<OrdenAprobada>>(
-        `/purchasing/orders?status=APPROVED&supplier_id=${detalle.supplier_id}&page_size=100`,
-      ),
-  });
-
-  const ordenesMoneda = (ordenes.data?.items ?? []).filter(
-    (orden) => orden.currency === detalle.currency,
-  );
 
   const vincular = async () => {
     if (!ordenId) return;
@@ -317,7 +360,10 @@ function VincularOrden({
   };
 
   return (
-    <section className="rounded-lg border border-border-default bg-surface-0 p-6">
+    <section
+      id="orden"
+      className="rounded-lg border border-border-default bg-surface-0 p-6"
+    >
       <h2 className="mb-4 text-lg font-semibold text-text-900">Orden de compra</h2>
       {detalle.order_code ? (
         <div className="flex items-center gap-3">
@@ -329,43 +375,30 @@ function VincularOrden({
           </Link>
         </div>
       ) : detalle.allowed_actions.link_order ? (
-        <>
-          {ordenesMoneda.length === 0 ? (
-            <p>
-              Este proveedor no tiene órdenes aprobadas en esta moneda.{" "}
-              <Link to="/compras/ordenes">Ver órdenes</Link>
-            </p>
-          ) : (
-            <div className="flex items-end gap-3">
-              <FormField label="Orden aprobada">
-                <select
-                  aria-label="Orden aprobada"
-                  className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-                  value={ordenId}
-                  onChange={(e) => setOrdenId(e.target.value)}
-                >
-                  <option value="">Seleccionar…</option>
-                  {ordenesMoneda.map((orden) => (
-                    <option key={orden.id} value={orden.id}>
-                      {orden.code}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-              <Autorizado operacion={["POST", `/importaciones/${detalle.id}/order`]}>
-                <AsyncButton disabled={!ordenId} onClick={vincular}>
-                  Vincular orden
-                </AsyncButton>
-              </Autorizado>
-            </div>
-          )}
-          {error && (
-            <div role="alert" className="rounded-md border border-danger-100 bg-danger-100/40 p-3 text-sm text-danger-600">
-              {error}
-            </div>
-          )}
-        </>
+        <div className="space-y-3">
+          <FormField label="Orden aprobada">
+            <AsyncCombobox
+              value={ordenId}
+              onChange={(value) => setOrdenId(value)}
+              searchUrl="/importaciones/eligible-orders"
+              extraParams={{ file_id: detalle.id }}
+              scopeKey={activeCompany?.id ?? ""}
+              id="orden-aprobada"
+              placeholder="Buscar orden aprobada…"
+            />
+          </FormField>
+          <Autorizado operacion={["POST", `/importaciones/${detalle.id}/order`]}>
+            <AsyncButton disabled={!ordenId} onClick={vincular}>
+              Vincular orden
+            </AsyncButton>
+          </Autorizado>
+        </div>
       ) : null}
+      {error && (
+        <div role="alert" className="rounded-md border border-danger-100 bg-danger-100/40 p-3 text-sm text-danger-600">
+          {error}
+        </div>
+      )}
     </section>
   );
 }
@@ -377,6 +410,7 @@ function Documentos({
   detalle: DetalleImportacion;
   onCambios: () => void;
 }) {
+  const esCancelada = detalle.status === "CANCELLED";
   const [nombreCertificado, setNombreCertificado] = useState("");
   const [referencias, setReferencias] = useState<Record<string, string>>({});
   const [observaciones, setObservaciones] = useState<Record<string, string>>({});
@@ -448,8 +482,17 @@ function Documentos({
   };
 
   return (
-    <section className="rounded-lg border border-border-default bg-surface-0 p-6">
+    <section
+      id="documentacion"
+      className="rounded-lg border border-border-default bg-surface-0 p-6"
+    >
       <h2 className="mb-4 text-lg font-semibold text-text-900">Documentos</h2>
+      {esCancelada ? (
+        <p className="text-sm text-text-600">
+          La documentación no está disponible para una importación cancelada.
+        </p>
+      ) : (
+      <>
       <div className="space-y-4">
         {detalle.documents.map((documento) => {
           const errorDocumento = errores[documento.id];
@@ -580,6 +623,8 @@ function Documentos({
           {errorConfirmar}
         </div>
       )}
+      </>
+      )}
     </section>
   );
 }
@@ -592,7 +637,10 @@ function Historial({ id }: { id: string }) {
   });
 
   return (
-    <section className="rounded-lg border border-border-default bg-surface-0 p-6">
+    <section
+      id="historial"
+      className="rounded-lg border border-border-default bg-surface-0 p-6"
+    >
       <h2 className="mb-4 text-lg font-semibold text-text-900">Historial</h2>
       {data && data.items.length === 0 ? (
         <p>Sin eventos registrados.</p>
@@ -717,17 +765,24 @@ export function ImportacionDetallePage() {
           </div>
         )}
       </ConfirmationDialog>
+      <nav aria-label="Secciones del expediente" className="space-x-4">
+        <a href="#resumen" className="text-sm font-medium text-brand-600 hover:text-brand-700">Resumen</a>
+        <a href="#negociacion" className="text-sm font-medium text-brand-600 hover:text-brand-700">Negociación</a>
+        <a href="#orden" className="text-sm font-medium text-brand-600 hover:text-brand-700">Orden</a>
+        <a href="#documentacion" className="text-sm font-medium text-brand-600 hover:text-brand-700">Documentación</a>
+        <a href="#seguimiento" className="text-sm font-medium text-brand-600 hover:text-brand-700">Seguimiento</a>
+        <a href="#finanzas" className="text-sm font-medium text-brand-600 hover:text-brand-700">Finanzas</a>
+        <a href="#correcciones" className="text-sm font-medium text-brand-600 hover:text-brand-700">Correcciones</a>
+        <a href="#historial" className="text-sm font-medium text-brand-600 hover:text-brand-700">Historial</a>
+      </nav>
       <div className="space-y-6">
-        <section role="status" className="rounded-lg border border-border-default bg-surface-0 p-6">
-          <h2 className="mb-4 text-lg font-semibold text-text-900">Siguiente paso</h2>
-          <p>{detalle.next_action ?? "Sin siguiente acción."}</p>
-          {detalle.status === "CANCELLED" && detalle.cancel_reason && (
-            <p className="mt-2 text-sm text-text-600">Motivo: {detalle.cancel_reason}</p>
-          )}
-        </section>
+        <ImportacionResumen detalle={detalle} onCambios={invalidar} />
         <Negociacion detalle={detalle} onCambios={invalidar} />
         <VincularOrden key={`orden-${detalle.version}`} detalle={detalle} onCambios={invalidar} />
         <Documentos detalle={detalle} onCambios={invalidar} />
+        <ImportacionSeguimiento key={`seguimiento-${detalle.version}`} detalle={detalle} onCambios={invalidar} />
+        <ImportacionFinanzas detalle={detalle} onCambios={invalidar} />
+        <ImportacionCorrecciones detalle={detalle} onCambios={invalidar} />
         <Autorizado operacion={["GET", `/importaciones/${detalle.id}/audit`]}>
           <Historial id={detalle.id} />
         </Autorizado>

@@ -5,7 +5,7 @@ import { AsyncCombobox } from "@/components/AsyncCombobox";
 export interface SelectorDeTerceroProps {
   value: string;
   onChange: (id: string) => void;
-  role?: "CLIENTE" | "PROVEEDOR";
+  role?: "CLIENTE" | "PROVEEDOR" | "TRANSPORTISTA";
   soloActivos?: boolean;
   id?: string;
   "aria-describedby"?: string;

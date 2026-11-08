@@ -127,6 +127,7 @@ export function ImportacionesPage() {
           <option value="NEGOTIATING">En negociación</option>
           <option value="ORDERED">Orden vinculada</option>
           <option value="DOCUMENTS_COMPLETE">Documentación completa</option>
+          <option value="DISPATCHED">Despachada</option>
           <option value="CANCELLED">Cancelada</option>
         </select>
       </div>

@@ -2380,6 +2380,14 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/importaciones/eligible-orders",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/importaciones/{file_id}",
       "capabilities": [
         "compras:view"
@@ -2412,9 +2420,41 @@
     },
     {
       "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/confirm-dispatch",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
       "path": "/api/v1/importaciones/{file_id}/confirm-documents",
       "capabilities": [
         "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/corrections",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/corrections/{correction_id}/cancel",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/corrections/{correction_id}/resolve",
+      "capabilities": [
+        "compras:create"
       ],
       "scope": "COMPANY"
     },
@@ -2451,8 +2491,48 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/importaciones/{file_id}/financial-candidates",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/financial-links",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/importaciones/{file_id}/financial-links/{link_id}",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/importaciones/{file_id}/order",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/payments",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/tracking",
       "capabilities": [
         "compras:create"
       ],
