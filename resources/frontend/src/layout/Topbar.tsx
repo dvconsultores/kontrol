@@ -24,13 +24,13 @@ export function Topbar(): React.JSX.Element {
         {mode ? (
           <Link
             to="/mi-licencia"
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-text-500 hover:bg-surface-100"
+            className="hidden items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-text-500 hover:bg-surface-100 sm:inline-flex"
           >
             <Lock className="size-3.5" aria-hidden="true" />
             {mode.replaceAll("_", " ")}
           </Link>
         ) : null}
-        <div className="flex items-center gap-2">
+        <div className="hidden items-center gap-2 sm:flex">
           <UserIcon className="size-4 text-text-400" aria-hidden="true" />
           <span className="text-sm text-text-700">{user?.username}</span>
         </div>

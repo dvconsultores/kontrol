@@ -14,6 +14,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
+import { Link, useSearchParams } from "react-router";
 
 import { ApiError, apiFetch } from "@/api/client";
 import type {
@@ -62,7 +63,9 @@ export function ConfirmacionPage(): React.JSX.Element {
   const qc = useQueryClient();
   const { notify } = useNotifications();
   const { puede } = useAutoridad();
-  const [receiptId, setReceiptId] = useState("");
+  const [searchParams] = useSearchParams();
+  const [receiptId, setReceiptId] = useState(() => searchParams.get("recepcion") ?? "");
+  const importacion = searchParams.get("importacion");
   const [conteos, setConteos] = useState<Record<string, string>>({});
   const [diferencias, setDiferencias] = useState<Record<string, string[]>>({});
   const [destinos, setDestinos] = useState<Record<string, string>>({});
@@ -171,6 +174,16 @@ export function ConfirmacionPage(): React.JSX.Element {
 
   return (
     <PageContent>
+      {importacion ? (
+        <div className="mb-4">
+          <Link
+            to={`/compras/importaciones/${importacion}`}
+            className="text-sm font-medium text-brand-600 hover:text-brand-700"
+          >
+            Volver al expediente
+          </Link>
+        </div>
+      ) : null}
       <PageHeader
         title="Confirmación de inventario"
         description={

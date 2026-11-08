@@ -2,7 +2,7 @@ import { useState } from "react";
 import { AsyncButton } from "@/components/AsyncButton";
 import { Autorizado } from "@/components/Autorizado";
 import { apiFetch, ApiError } from "@/api/client";
-import { ESTADOS } from "./tipos";
+import { ESTADOS, ETAPAS_LOGISTICAS } from "./tipos";
 import type { DetalleImportacion } from "./ImportacionDetallePage";
 
 type Props = {
@@ -91,6 +91,12 @@ export function ImportacionResumen({ detalle, onCambios }: Props) {
           <dt className="text-sm text-text-600">Transportista</dt>
           <dd>{detalle.summary.carrier_name ?? "Sin designar"}</dd>
         </div>
+        {detalle.logistics ? (
+          <div>
+            <dt className="text-sm text-text-600">Etapa logística</dt>
+            <dd>{ETAPAS_LOGISTICAS[detalle.logistics.stage]}</dd>
+          </div>
+        ) : null}
       </dl>
 
       {detalle.allowed_actions.confirm_dispatch && (

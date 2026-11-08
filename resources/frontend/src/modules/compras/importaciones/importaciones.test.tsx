@@ -45,10 +45,12 @@ vi.mock("@/modules/maestros/terceros/SelectorDeTercero", () => ({
   ),
 }));
 
+
 const detalleNegociando = {
   id: "i-1",
   code: "IMP-001",
   status: "NEGOTIATING",
+  logistics: null,
   currency: "VED",
   supplier_id: "prov-1",
   supplier_name: "Proveedor Uno",
@@ -168,6 +170,7 @@ function renderizar(rutaInicial: string) {
     </QueryClientProvider>,
   );
 }
+
 
 function llamadasDe(path: string, method?: string) {
   return apiFetch.mock.calls.filter(([p, options]) => {

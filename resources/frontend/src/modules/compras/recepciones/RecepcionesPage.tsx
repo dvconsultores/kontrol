@@ -13,6 +13,7 @@
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useState } from "react";
+import { Link, useSearchParams } from "react-router";
 
 import { ApiError, apiFetch } from "@/api/client";
 import { Autorizado } from "@/components/Autorizado";
@@ -109,7 +110,9 @@ export function RecepcionesPage(): React.JSX.Element {
   const [newInvoice, setNewInvoice] = useState("");
   const [newPackages, setNewPackages] = useState("");
 
-  const [selected, setSelected] = useState<string>("");
+  const [searchParams] = useSearchParams();
+  const [selected, setSelected] = useState<string>(() => searchParams.get("recepcion") ?? "");
+  const importacion = searchParams.get("importacion");
   const [lineOrderLine, setLineOrderLine] = useState("");
   const [linePresentation, setLinePresentation] = useState("");
   const [lineReceived, setLineReceived] = useState("");
@@ -393,6 +396,16 @@ export function RecepcionesPage(): React.JSX.Element {
 
   return (
     <PageContent maxWidth="full">
+      {importacion ? (
+        <div className="mb-4">
+          <Link
+            to={`/compras/importaciones/${importacion}`}
+            className="text-sm font-medium text-brand-600 hover:text-brand-700"
+          >
+            Volver al expediente
+          </Link>
+        </div>
+      ) : null}
       <PageHeader
         title="Recepciones"
         description="Recepción física contra orden: arribo, bultos, comparación documental, inspección, lote, serial y vencimiento. La mercancía queda en el almacén; ubicarla es del put-away."

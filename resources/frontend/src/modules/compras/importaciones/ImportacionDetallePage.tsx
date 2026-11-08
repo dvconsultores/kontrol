@@ -21,111 +21,20 @@ import { ImportacionResumen } from "./ImportacionResumen";
 import { ImportacionSeguimiento } from "./ImportacionSeguimiento";
 import { ImportacionFinanzas } from "./ImportacionFinanzas";
 import { ImportacionCorrecciones } from "./ImportacionCorrecciones";
+import { ImportacionDiferencias } from "./ImportacionDiferencias";
+import { ImportacionRecepcion } from "./ImportacionRecepcion";
+import { ImportacionUbicacion } from "./ImportacionUbicacion";
 import {
   ESTADOS,
   ESTADOS_DOCUMENTO,
   INCOTERMS,
   importacionKey,
-  type EstadoDocumento,
-  type EstadoImportacion,
+  type Documento,
+  type DetalleImportacion,
 } from "./tipos";
 
-type Documento = {
-  id: string;
-  kind: string;
-  name: string;
-  required: boolean;
-  reference: string | null;
-  status: EstadoDocumento;
-  observation: string | null;
-  version: number;
-  attachments: unknown[];
-  allowed_actions: {
-    receive: boolean;
-    validate: boolean;
-    observe: boolean;
-  };
-};
 
-export type DetalleImportacion = {
-  id: string;
-  code: string;
-  status: EstadoImportacion;
-  currency: string;
-  supplier_id: string;
-  supplier_name: string;
-  order_id: string | null;
-  order_code: string | null;
-  incoterm: string | null;
-  incoterm_place: string | null;
-  payment_conditions: string | null;
-  delivery_conditions: string | null;
-  expected_dispatch_date: string | null;
-  expected_arrival_date: string | null;
-  notes: string | null;
-  cancel_reason: string | null;
-  next_action: string | null;
-  agent_party_id: string | null;
-  carrier_party_id: string | null;
-  transport_document: string | null;
-  origin: string | null;
-  destination: string | null;
-  actual_departure_date: string | null;
-  summary: {
-    pending: string[];
-    missing?: string[];
-    documents_validated: number;
-    documents_required: number;
-    open_corrections: number;
-    financial_count: number;
-    agent_name: string | null;
-    carrier_name: string | null;
-  };
-  tracking_events: {
-    id: string;
-    milestone: "BOOKED" | "DEPARTED" | "IN_TRANSIT" | "TRANSSHIPMENT" | "DELAYED" | "OTHER";
-    occurred_on: string;
-    location: string | null;
-    notes: string | null;
-    username: string | null;
-  }[];
-  financial: {
-    id: string;
-    kind: "PAYMENT" | "ADVANCE";
-    amount: string;
-    currency: string;
-    status: string;
-    date: string;
-  }[];
-  corrections: {
-    id: string;
-    kind: "FALTANTE" | "CORRECCION_DOCUMENTAL";
-    document_id: string | null;
-    description: string;
-    action_required: string;
-    responsible: "PROVEEDOR" | "AGENTE" | "IMPORTACION";
-    responsible_name: string;
-    status: "OPEN" | "RESOLVED" | "CANCELLED";
-    resolution: string | null;
-    resolved_at: string | null;
-    version: number;
-    attachments: unknown[];
-    allowed_actions: {
-      resolve: boolean;
-      cancel: boolean;
-    };
-  }[];
-  allowed_actions: {
-    edit: boolean;
-    link_order: boolean;
-    add_document: boolean;
-    confirm_documents: boolean;
-    confirm_dispatch: boolean;
-    cancel: boolean;
-  };
-  documents: Documento[];
-  version: number;
-};
+export type { DetalleImportacion } from "./tipos";
 
 type EventoAuditoria = {
   id: string;
@@ -674,6 +583,7 @@ export function ImportacionDetallePage() {
   const query = useQuery({
     queryKey: ["importaciones", importacionKey(companyId, importId ?? "")],
     queryFn: () => apiFetch<DetalleImportacion>(`/importaciones/${importId}`),
+    refetchOnMount: "always",
   });
 
   const invalidar = () => queryClient.invalidateQueries({ queryKey: ["importaciones"] });
@@ -773,6 +683,10 @@ export function ImportacionDetallePage() {
         <a href="#seguimiento" className="text-sm font-medium text-brand-600 hover:text-brand-700">Seguimiento</a>
         <a href="#finanzas" className="text-sm font-medium text-brand-600 hover:text-brand-700">Finanzas</a>
         <a href="#correcciones" className="text-sm font-medium text-brand-600 hover:text-brand-700">Correcciones</a>
+        <a href="#arribo" className="text-sm font-medium text-brand-600 hover:text-brand-700">Arribo</a>
+        <a href="#recepcion" className="text-sm font-medium text-brand-600 hover:text-brand-700">Recepción</a>
+        <a href="#diferencias" className="text-sm font-medium text-brand-600 hover:text-brand-700">Diferencias</a>
+        <a href="#ubicacion" className="text-sm font-medium text-brand-600 hover:text-brand-700">Ubicación</a>
         <a href="#historial" className="text-sm font-medium text-brand-600 hover:text-brand-700">Historial</a>
       </nav>
       <div className="space-y-6">
@@ -783,6 +697,13 @@ export function ImportacionDetallePage() {
         <ImportacionSeguimiento key={`seguimiento-${detalle.version}`} detalle={detalle} onCambios={invalidar} />
         <ImportacionFinanzas detalle={detalle} onCambios={invalidar} />
         <ImportacionCorrecciones detalle={detalle} onCambios={invalidar} />
+        {detalle.logistics && detalle.status === "DISPATCHED" ? (
+          <>
+            <ImportacionRecepcion detalle={detalle} onCambios={invalidar} />
+            <ImportacionDiferencias detalle={detalle} />
+            <ImportacionUbicacion detalle={detalle} onCambios={invalidar} />
+          </>
+        ) : null}
         <Autorizado operacion={["GET", `/importaciones/${detalle.id}/audit`]}>
           <Historial id={detalle.id} />
         </Autorizado>

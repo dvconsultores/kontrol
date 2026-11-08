@@ -1937,6 +1937,11 @@
     },
     {
       "method": "POST",
+      "path": "/importaciones/{file_id}/receipts",
+      "query": []
+    },
+    {
+      "method": "POST",
       "path": "/importaciones/{file_id}/tracking",
       "query": []
     },

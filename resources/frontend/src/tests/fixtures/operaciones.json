@@ -2660,6 +2660,14 @@
     },
     {
       "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/receipts",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
       "path": "/api/v1/importaciones/{file_id}/tracking",
       "capabilities": [
         "compras:create"

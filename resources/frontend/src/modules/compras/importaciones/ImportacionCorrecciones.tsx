@@ -128,7 +128,12 @@ export function ImportacionCorrecciones({ detalle, onCambios }: Props) {
       id="correcciones"
       className="rounded-lg border border-border-default bg-surface-0 p-6"
     >
-      <h2 className="mb-4 text-lg font-semibold text-text-900">Correcciones</h2>
+      <h2 className="mb-4 text-lg font-semibold text-text-900">Correcciones previas al despacho</h2>
+      {detalle.status === "DISPATCHED" ? (
+        <p className="mb-4 text-sm text-text-600">
+          Las diferencias de la mercancía recibida se gestionan en Diferencias.
+        </p>
+      ) : null}
 
       {esNegociando && (
         <p className="mb-4 text-sm text-text-600">

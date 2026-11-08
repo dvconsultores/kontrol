@@ -4,7 +4,7 @@ const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 
-test.setTimeout(180000);
+test.setTimeout(300000);
 test("expediente de importación de punta a punta", async ({ page }) => {
   const sufijo = Date.now().toString().slice(-8);
   const { token } = await sesionApi(USER, { tenant: TENANT });
@@ -233,8 +233,118 @@ test("expediente de importación de punta a punta", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Cancelar importación" }),
   ).not.toBeVisible();
-  await expect(page.getByText("Importación despachada.")).toBeVisible();
+  await expect(page.getByText("Registra la recepción de la mercancía.").first()).toBeVisible();
   await expect(page.getByText("Despacho confirmado").first()).toBeVisible();
+
+  const branchesRes = await fetch(`${API}/organization/branches`, {
+    headers: authHeaders(companyId),
+  });
+  const branchesData = await branchesRes.json();
+  const branches = Array.isArray(branchesData) ? branchesData : branchesData.items;
+  let branchId = branches?.[0]?.id;
+  if (!branchId) {
+    branchId = await post<{ id: string }>("/organization/branches", {
+      company_id: companyId,
+      code: `BR-${sufijo}`,
+      name: "Sucursal E2E",
+    }).then((r) => r.id);
+  }
+
+  const almacen = await post<{ id: string }>("/organization/warehouses", {
+    company_id: companyId,
+    branch_id: branchId,
+    code: `W-${sufijo}`,
+    name: "Almacén E2E",
+  }).then((r) => r.id);
+
+  await page.reload();
+  await expect(page.getByText("Registra la recepción de la mercancía.").first()).toBeVisible();
+
+  const ubicacion = await post<{ id: string; code: string }>("/organization/locations", {
+    warehouse_id: almacen,
+    code: `OK-${sufijo}`,
+    name: "Rack válido",
+    sequence: 1,
+  });
+
+  // 1. Crear recepción
+  await page.locator("#recepcion").getByLabel(/^Código/).fill(`REC-${sufijo}`);
+  await page.locator("#recepcion").getByLabel(/^Almacén/).selectOption(almacen);
+  await page.locator("#recepcion").getByRole("button", { name: "Crear recepción" }).click();
+  await expect(page.getByText("Esperando arribo")).toBeVisible();
+
+  // 2. Confirmar arribo
+  await page.locator("#arribo").getByLabel(/Bultos recibidos/).fill("10");
+  await page.locator("#arribo").getByRole("button", { name: `Confirmar arribo de REC-${sufijo}` }).click();
+  await expect(page.getByText("En recepción")).toBeVisible();
+
+  // 3. Abrir recepción y completar calidad
+  await page.getByRole("link", { name: `Abrir recepción REC-${sufijo}` }).click();
+  await page.getByRole("link", { name: "Volver al expediente" }).waitFor();
+  await page.getByLabel(/Línea de la orden/).selectOption({ index: 1 });
+  await page.getByLabel(/^Recibido/).fill("10");
+  await page.getByRole("button", { name: "Registrar", exact: true }).click();
+  const filaRecepcion = page.locator("tr", { hasText: `REC-${sufijo}` });
+  const confirmar = filaRecepcion.getByRole("button", { name: "confirmar", exact: true });
+  await confirmar.waitFor();
+  await confirmar.click();
+  await page.waitForLoadState("networkidle");
+  const enviarCalidad = filaRecepcion.getByRole("button", { name: "enviar a calidad", exact: true });
+  await enviarCalidad.waitFor();
+  await enviarCalidad.click();
+  await page.waitForLoadState("networkidle");
+  const conforme = filaRecepcion.getByRole("button", { name: "conforme", exact: true });
+  await conforme.waitFor();
+  await conforme.click();
+  await page.waitForLoadState("networkidle");
+  const aceptar = filaRecepcion.getByRole("button", { name: "aceptar", exact: true });
+  await aceptar.waitFor();
+  await aceptar.click();
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("link", { name: "Volver al expediente" }).click();
+
+  // 4. Gestionar incidencias
+  await page.getByRole("link", { name: `Gestionar incidencias de REC-${sufijo}` }).click();
+  await expect(page.getByRole("heading", { name: "Incidencias de recepción" })).toBeVisible();
+  await page.getByLabel(/^Código/).fill(`INC-${sufijo}`);
+  await page.getByLabel(/^Tipo/).selectOption("DANO");
+  await page.getByLabel(/Línea recibida/).selectOption({ index: 1 });
+  await page.getByLabel(/Cantidad afectada/).fill("3");
+  await page.getByRole("button", { name: "Registrar", exact: true }).click();
+  const filaIncidencia = page.locator("tr", { hasText: `INC-${sufijo}` });
+  await filaIncidencia.getByRole("button", { name: "escalar", exact: true }).click();
+  await expect(filaIncidencia.getByText("Escalada a Compras")).toBeVisible();
+  await filaIncidencia.getByRole("button", { name: "tratar", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel(/Tratamiento/).selectOption("RECLAMO_PROVEEDOR");
+  await dialog.getByLabel(/Motivo/).fill("Daño en transporte");
+  await dialog.getByRole("button", { name: "Registrar tratamiento" }).click();
+  await expect(filaIncidencia.getByText("Resuelta")).toBeVisible();
+  await page.getByRole("link", { name: "Volver al expediente" }).click();
+  await expect(page.locator("#diferencias").getByText(`INC-${sufijo}`).first()).toBeVisible();
+  await expect(page.getByText("Por confirmar inventario")).toBeVisible();
+
+  // 5. Confirmar inventario
+  await page.getByRole("link", { name: `Confirmar inventario de REC-${sufijo}` }).click();
+  await expect(page.getByRole("heading", { name: "Confirmación de inventario" })).toBeVisible();
+  await page.getByLabel(/Contado \(base\)/).fill("10");
+  await page.getByRole("button", { name: "Registrar conteo" }).click();
+  await expect(page.getByText("Faltan líneas por contar.")).toBeHidden();
+  await page.getByLabel(/Cantidad a confirmar/).fill("10");
+  await page.getByRole("button", { name: "Confirmar inventario" }).click();
+  await expect(page.getByRole("heading", { name: "Decisiones tomadas" })).toBeVisible();
+  await page.getByRole("link", { name: "Volver al expediente" }).click();
+  await expect(page.getByText("Por ubicar")).toBeVisible();
+
+  // 6. Ubicar mercancía
+  await page.locator("#ubicacion").getByLabel(/Ubicación de destino/).selectOption(ubicacion.id);
+  await page.locator("#ubicacion").getByRole("button", { name: /^Ubicar/ }).click();
+  await expect(page.getByText("Recibida y ubicada").first()).toBeVisible();
+  await expect(page.locator("#ubicacion").getByText(ubicacion.code)).toBeVisible();
+  await expect(page.getByText("Mercancía recibida y ubicada. Queda pendiente el costo de importación.").first()).toBeVisible();
+
+  // 7. Historial
+  await expect(page.getByText("Recepción creada desde la importación").first()).toBeVisible();
 
   await page.goto("/compras/importaciones");
   const fila = page
