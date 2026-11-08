@@ -1280,7 +1280,7 @@ export function abreviarHuella(huella: string): string { return huella.length > 
 // CTL-01 · matriz de segregación de funciones (GOV-CTL-001)
 // ---------------------------------------------------------------------------
 
-export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01" | "TRE-02" | "CTL-10" | "ORG-04" | "ORG-06";
+export type ProcesoSod = "DOC-02" | "CTL-06" | "TRE-01" | "TRE-02" | "CTL-10" | "ORG-04" | "ORG-06" | "PROC-02";
 export type EstadoReglaSod = "BORRADOR" | "VIGENTE" | "CERRADA";
 
 export interface AccionSod { codigo: string; etiqueta: string; crea_objeto: boolean; }
@@ -1321,7 +1321,7 @@ export interface DetalleConflictoSod {
 }
 
 export const ETIQUETAS_ESTADO_REGLA_SOD: Record<EstadoReglaSod, string> = { BORRADOR: "Borrador", VIGENTE: "Vigente", CERRADA: "Cerrada" };
-export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas", "TRE-02": "Programación financiera", "CTL-10": "Controles de cierre", "ORG-04": "Ocupación de cargos", "ORG-06": "Identidad institucional" };
+export const ETIQUETAS_PROCESO_SOD: Record<ProcesoSod, string> = { "DOC-02": "Actos administrativos", "CTL-06": "Hallazgos y acciones correctivas", "TRE-01": "Cuentas bancarias públicas", "TRE-02": "Programación financiera", "CTL-10": "Controles de cierre", "ORG-04": "Ocupación de cargos", "ORG-06": "Identidad institucional", "PROC-02": "Comisiones de contrataciones" };
 export const ETIQUETAS_HISTORIA_SOD: Record<string, string> = { CREADA: "Registrada", EDITADA: "Modificada", ACTIVADA: "Activada", CERRADA: "Cerrada" };
 
 export const POR_PAGINA_CONFLICTOS_SOD = 20;
@@ -1337,6 +1337,7 @@ export function rutaDeObjetoSod(tipo: string | null, id: string | null): string 
   if (tipo === "GovernmentClosurePolicy") return `/gobierno/cierres/${id}`;
   if (tipo === "GovernmentAssignment") return `/gobierno/ocupacion/asignaciones/${id}`;
   if (tipo === "GovernmentUserOfficialLink") return `/gobierno/identidad/vinculos/${id}`;
+  if (tipo === "GovernmentProcurementCommittee") return `/gobierno/contrataciones/comisiones/${id}`;
   return null;
 }
 
@@ -2431,6 +2432,187 @@ export function consultaDeVinculos(f: {
 
 export function consultaDeFecha(fecha?: string): string {
   return fecha ? `?fecha=${encodeURIComponent(fecha)}` : "";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Comisiones de contrataciones (PROC-02)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type EtiquetadoComision = {
+  codigo: string;
+  etiqueta: string;
+};
+
+export type ComisionCatalogo = {
+  tipos: EtiquetadoComision[];
+  funciones: EtiquetadoComision[];
+  areas: EtiquetadoComision[];
+  condiciones: EtiquetadoComision[];
+  causas_fin: EtiquetadoComision[];
+  causales: { codigo: string; etiqueta: string; fuente: string }[];
+  situaciones: EtiquetadoComision[];
+  regla_version: string;
+  fuente_regla: string;
+};
+
+export type ComisionOpciones = {
+  funcionarios: {
+    id: string;
+    nombre: string;
+    cargos: string[];
+    unidades: string[];
+  }[];
+  actos: {
+    id: string;
+    etiqueta: string;
+    medio: string | null;
+    fecha_eficacia: string | null;
+    emisor: string | null;
+  }[];
+};
+
+export type ComisionResumen = {
+  id: string;
+  codigo: string;
+  nombre: string;
+  tipo: string;
+  status: string;
+  situacion: string;
+  desde: string;
+  hasta: string | null;
+  acto: {
+    id: string;
+    etiqueta: string;
+    medio: string | null;
+    fecha_eficacia: string | null;
+    emisor: string | null;
+  } | null;
+  miembros_principales: number;
+  miembros_total: number;
+  version: number;
+};
+
+export type ComisionIn = {
+  nombre: string;
+  tipo: string;
+  objeto: string | null;
+  desde: string;
+  hasta: string | null;
+  acto_id: string | null;
+};
+
+export type MiembroComision = {
+  id: string;
+  funcionario: {
+    id: string;
+    nombre: string;
+    cargos: string[];
+    unidades: string[];
+  };
+  funcion: string;
+  area: string | null;
+  condicion: string;
+  suplente_de: string | null;
+  suplente_de_id: string | null;
+  desde: string;
+  fin_efectivo: string | null;
+  causa_fin: string | null;
+  motivo_fin: string | null;
+  acto: {
+    id: string;
+    etiqueta: string;
+    medio: string | null;
+    fecha_eficacia: string | null;
+    emisor: string | null;
+  } | null;
+  certificacion_snc: string | null;
+};
+
+export type InhibicionComision = {
+  id: string;
+  miembro_id: string;
+  miembro: string;
+  suplente: string | null;
+  asunto: string;
+  causal: string;
+  causal_etiqueta: string;
+  descripcion: string;
+  fecha: string;
+  soporte: string | null;
+  estado: string;
+  motivo_resolucion: string | null;
+  version: number;
+};
+
+export type HistoriaComision = {
+  tipo: string;
+  fecha: string;
+  usuario: string | null;
+  descripcion: string;
+};
+
+export type ComisionDetalle = ComisionResumen & {
+  objeto: string | null;
+  regla_version: string | null;
+  snc_notificada_en: string | null;
+  snc_referencia: string | null;
+  snc_pendiente: boolean;
+  motivo_cierre: string | null;
+  fin_efectivo: string | null;
+  fecha: string;
+  es_historica: boolean;
+  composicion: MiembroComision[];
+  miembros: MiembroComision[];
+  faltantes: string[];
+  inhibiciones: InhibicionComision[];
+  historia: HistoriaComision[];
+};
+
+export type ComisionesListado = {
+  items: ComisionResumen[];
+  total: number;
+  pagina: number;
+  por_pagina: number;
+};
+
+export const CONSULTA_COMISIONES = [...CONSULTA_GOBIERNO, "comisiones"] as const;
+
+export const ETIQUETAS_ESTADO_COMISION: Record<string, string> = {
+  BORRADOR: "En preparación",
+  VIGENTE: "Vigente",
+  CERRADA: "Cerrada",
+  DESCARTADA: "Descartada",
+};
+
+export const ETIQUETAS_SITUACION_COMISION: Record<string, string> = {
+  BORRADOR: "En preparación",
+  FUTURA: "Aún no inicia",
+  EN_VIGOR: "En vigor",
+  VENCIDA: "Vencida sin cerrar",
+  CERRADA: "Cerrada",
+  DESCARTADA: "Descartada",
+};
+
+export const ETIQUETAS_TIPO_COMISION: Record<string, string> = {
+  PERMANENTE: "Permanente",
+  TEMPORAL: "Temporal",
+};
+
+export function consultaDeComisiones(f: {
+  q?: string;
+  status?: string;
+  tipo?: string;
+  situacion?: string;
+  pagina?: number;
+}): string {
+  const p = new URLSearchParams();
+  if (f.q) p.set("q", f.q);
+  if (f.status) p.set("status", f.status);
+  if (f.tipo) p.set("tipo", f.tipo);
+  if (f.situacion) p.set("situacion", f.situacion);
+  if (f.pagina) p.set("pagina", String(f.pagina));
+  const s = p.toString();
+  return s ? `?${s}` : "";
 }
 
 export type BitacoraFiltros = {

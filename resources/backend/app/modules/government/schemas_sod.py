@@ -11,7 +11,7 @@ from pydantic import (
     model_validator,
 )
 
-ProcesoSod = Literal["DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06"]
+ProcesoSod = Literal["DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06", "PROC-02"]
 EstadoReglaSod = Literal["BORRADOR", "VIGENTE", "CERRADA"]
 
 

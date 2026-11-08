@@ -113,6 +113,16 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "ORG06_CAT_ADMINISTRACION_TECNICA": ("Categoría de administración técnica", "", False),
         },
     },
+    "PROC-02": {
+        "nombre": "Comisiones de contrataciones",
+        "objeto": "GovernmentProcurementCommittee",
+        "objeto_nombre": "comisión",
+        "acciones": {
+            "PROC02_REGISTRAR": ("Registrar la comisión", "GOV_COMMITTEE_CREATED", True),
+            "PROC02_ACTIVAR": ("Activar la comisión", "GOV_COMMITTEE_ACTIVATED", False),
+            "PROC02_CERRAR": ("Cerrar la comisión", "GOV_COMMITTEE_CLOSED", False),
+        },
+    },
 }
 
 

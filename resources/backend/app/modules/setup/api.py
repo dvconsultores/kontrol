@@ -118,6 +118,7 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     # ORG-04: ocupación de cargos (OD-ORG04-08).
     "gobierno_ocupacion": ["view", "manage", "activate", "revoke"],
     "gobierno_identidad": ["view", "manage", "activate", "revoke"],
+    "gobierno_comisiones": ["view", "manage", "activate", "close"],
 }
 
 

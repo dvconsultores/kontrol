@@ -149,6 +149,9 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_identidad · activación y revocación de vínculos y política (ORG-06).
         "gobierno_identidad:activate",
         "gobierno_identidad:revoke",
+        # gobierno_comisiones · activación y cierre de comisiones (PROC-02).
+        "gobierno_comisiones:activate",
+        "gobierno_comisiones:close",
     }
 )
 
@@ -248,6 +251,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_identidad · consulta y registro de vínculos (ORG-06).
         "gobierno_identidad:view",
         "gobierno_identidad:manage",
+        # gobierno_comisiones · consulta y registro de comisiones (PROC-02).
+        "gobierno_comisiones:view",
+        "gobierno_comisiones:manage",
     }
 )
 

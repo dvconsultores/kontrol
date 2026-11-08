@@ -13,6 +13,7 @@ import {
   FileCheck,
   FileDown,
   FileSearch,
+  Gavel,
   History,
   FileText,
   Grid3x3,
@@ -95,6 +96,18 @@ const navSections: NavSection[] = [
       { to: "/gobierno/paquetes", label: "Paquetes de auditoría", icon: Archive, modulo: "gobierno" },
       { to: "/gobierno/sod", label: "Segregación de funciones", icon: ShieldBan, modulo: "gobierno" },
       { to: "/gobierno/cierres", label: "Controles de cierre", icon: ShieldBan, modulo: "gobierno" },
+    ],
+  },
+  // Contrataciones (PROC-02): sección propia, también sujeta al módulo `gobierno`.
+  {
+    title: "Gobierno · Contrataciones",
+    items: [
+      {
+        to: "/gobierno/contrataciones/comisiones",
+        label: "Comisiones",
+        icon: Gavel,
+        modulo: "gobierno",
+      },
     ],
   },
   // Tesorería de Gobierno (TRE-01): sección propia, también sujeta al módulo `gobierno`.
