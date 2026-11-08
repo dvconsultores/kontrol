@@ -94,8 +94,8 @@ consume. `ASYNC_COMBOBOX_SHARED_CONSUMERS_CERTIFIED = 1`.
 
 `PREEXISTING_DEFECT`. No es una regresión del selector: el botón viene de `fb8ead1` (2026-10-27) y la guarda de `3183ab5`.
 
-- «Guardar producto» es un `AsyncButton type="submit" onClick={handleSubmit}` dentro de un `<form onSubmit={handleSubmit}>`, así que **envía dos POST**. Una sonda lo midió: 2 llamadas.
-- `POST /maestros/catalogos/items` no comprueba si el código ya existe, y `catalog_items` no tiene unicidad de `(company_id, code)`. Por lo tanto el asistente **crea dos productos con el mismo código**.
+- «Guardar producto» es un `AsyncButton type="submit" onClick={handleSubmit}` dentro de un `<form onSubmit={handleSubmit}>`. Una sonda midió **dos POST en jsdom**. En un navegador real, React podría deshabilitar el botón antes de la activación nativa y emitir uno solo, así que el doble envío está **sin demostrar en navegador**.
+- `POST /maestros/catalogos/items` no comprueba si el código ya existe, y `catalog_items` no tiene unicidad de `(company_id, code)`. Si el doble envío se confirma en un navegador, el asistente **crearía dos productos con el mismo código**.
 - Después del alta, `UnsavedChangesGuard` sigue con `dirty=true` y bloquea el `navigate` al listado con «¿Descartar los cambios sin guardar?».
 
 La deuda queda en `docs/roadmap/technical-debt-matrix.md`, actualización (11).

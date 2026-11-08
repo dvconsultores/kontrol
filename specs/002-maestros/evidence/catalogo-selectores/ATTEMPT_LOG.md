@@ -60,7 +60,7 @@ prueba directa. Los presupuestos de CAT-A, C, D y H siguen cerrados. Hay dos sub
 | CAT-J1 aislamiento de caché | ATTEMPT | pro | $0,005651 | AUDIT_REJECT: `children(value)` con tipo `ReactNode`, `vi.doMock`, espera de llamada trivial en CACHE-03 que dejaba vivir al mutante, MemoryRouter sobrante |
 | CAT-J1 | RETRY_1 | pro | $0,006509 | AUDIT_PASS; 6 de 6. M4 lo matan CACHE-01, 02, 03 y 06; M4b lo mata CACHE-05. El puente recortó solo la sección «intento anterior» del brief (desviación registrada) |
 | CAT-J2 ProductoNuevoPage | ATTEMPT | pro | $0,004676 | AUDIT_REJECT, 6 de 7 en rojo: `within` sin uso, etiqueta exacta «Código» (el brief de Claude no avisaba del « * (obligatorio)»), PN-02 tomaba la búsqueda q="" |
-| CAT-J2 | RETRY_1 | pro | $0,006131 | 4 de 7 en rojo. PN-02 seguía siendo un error de la prueba. PN-04, 06 y 07 destaparon un **defecto preexistente**: doble POST y navegación bloqueada |
+| CAT-J2 | RETRY_1 | pro | $0,006131 | 4 de 7 en rojo. PN-02 seguía siendo un error de la prueba. PN-04, 06 y 07 destaparon un **defecto preexistente**: navegación bloqueada tras guardar, y doble POST medido en jsdom pero sin demostrar en navegador |
 | CAT-J2 | RETRY_2 | pro | $0,003809 | AUDIT_REJECT: un SEARCH ambiguo (coincidía con PN-06 y PN-07) y `findPostCall` sin uso. STOP |
 | CAT-J2 | OWNER_EXCEPTION | pro | $0,004620 | Autorizada durante el ciclo («Una llamada extra»). Fichero completo; AUDIT_PASS; 7 de 7 |
 
