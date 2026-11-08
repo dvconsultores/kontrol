@@ -2692,4 +2692,3 @@ Las deudas de Producto Nuevo y `TERCEROS-PROVEEDORES-HISTORICOS-SIN-APROBAR` sig
 | TERCEROS-HISTORIAL-ID-CRUDO (nueva) | OPEN · LOW · 002: el historial de la ficha muestra `account_id` como UUID |
 | IMPORT-VITEST-RECEPCION (nueva) | OPEN · LOW · 018: sin prueba de componente de alta de recepción ni de ubicar; lo cubren backend y E2E. No entraron por el tope de llamadas |
 | IMPORT-PUTAWAY-ATRIBUCION (nueva) | OPEN · 018: lo ubicado desde el menú de Inventario sin `document_ref` no se atribuye al expediente. Decidir si es aceptable |
-

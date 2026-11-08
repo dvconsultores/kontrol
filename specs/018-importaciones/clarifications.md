@@ -20,4 +20,3 @@ Decisiones de diseño de Claude cuando la fuente no fija el detalle. Son reversi
 | CL-018-14 | ¿Cómo se liga la recepción al expediente? | Derivada de `GoodsReceipt.order_id`, sin clave nueva | La orden pertenece a un solo expediente |
 | CL-018-15 | ¿Corrección o incidencia? | `PRE_DISPATCH_CORRECTION` en `import_corrections`; `POST_ARRIVAL_RECEIPT_INCIDENT` en `ReceiptIncident`. Un mismo hecho no va a las dos | Documental y de proceso frente a mercancía recibida. Una corrección sigue pudiendo abrirse tras despachar por un documento, sin revertir el estado |
 | CL-018-16 | `PAYMENT_DRAFT_PERMISSION_CONTRACT` | `compras.create` crea el borrador; `compras.approve` hace la transición; sin ninguno de los dos, 403 | Crear no es aprobar ni ejecutar. Observar un borrador sin permiso de aprobación no es defecto. Protegido por prueba |
-

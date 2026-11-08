@@ -142,4 +142,3 @@ Tope: 12 llamadas. Diseño: las recepciones del expediente se derivan de `GoodsR
 12 llamadas (tope 12) · $0,084576. Solo de pruebas: 0. Reintentos: 8. Sin paralelo.
 
 **Declaración.** El código de producto y pruebas lo propuso DeepSeek. Ajustes mecánicos de Claude: saltos de línea tras aplicar, marcadores sueltos y una copia idéntica de función en pruebas, retirar andamiaje sin uso, aplicar en dos líneas el mismo `.first()` de DeepSeek, `API_URL` por `API`, un import sin uso y `onClick={ubicar}`. Dos pruebas Vitest pedidas no entraron por agotarse el tope. Los briefs finales listaron etiquetas y pasos medidos en Chrome como hechos, sin cuerpos de función: es un caso límite que se declara. Sondas temporales en Chrome, sin commitear y borradas: recorrido del flujo y smoke del ciclo 2. Varios rechazos los causó un brief incompleto de Claude, como no incluir los contratos de componentes en IMP3-D.
-

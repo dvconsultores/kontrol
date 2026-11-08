@@ -45,4 +45,3 @@ Citas literales del documento. Todas son `SOURCE_BACKED_PROCESS_STEP`. La column
 Es un cálculo sobre datos de sus dueñas, no un estado guardado: `NO_RECEIPT → AWAITING_ARRIVAL → RECEIVING → INCIDENTS_OPEN → PENDING_CONFIRMATION → PENDING_PUTAWAY → PUT_AWAY`. El estado del expediente permanece en `DISPATCHED`. Decisión derivada: añadir un estado guardado duplicaría lo que ya dicen la recepción y los saldos.
 
 Lo ubicado se atribuye a la recepción por `document_ref` igual a su código. Un put-away hecho desde el menú de Inventario sin esa referencia no cuenta para el expediente.
-
