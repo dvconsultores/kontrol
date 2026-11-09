@@ -842,7 +842,7 @@ for _sentencia in GOV_AUDIT_PACKAGE_VERIFICATIONS_IMMUTABLE_PG:
 ESTADOS_REGLA_SOD = ("BORRADOR", "VIGENTE", "CERRADA")
 ALCANCES_REGLA_SOD = ("MISMO_OBJETO",)
 MODOS_REGLA_SOD = ("BLOQUEAR",)
-PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06", "PROC-02")
+PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06", "PROC-02", "PROC-03")
 TIPOS_HISTORIA_SOD = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA")
 
 
@@ -1468,6 +1468,13 @@ CAUSAS_FIN_MIEMBRO_COMISION = ("MUERTE_INCAPACIDAD", "DESPIDO_DESTITUCION", "RET
 CAUSALES_INHIBICION = ("INTERES", "AMISTAD_ENEMISTAD", "INTERVENCION_PREVIA", "SERVICIO_SUBORDINACION")
 ESTADOS_INHIBICION = ("DECLARADA", "ACEPTADA", "RECHAZADA")
 TIPOS_HISTORIA_COMISION = ("CREADA", "EDITADA", "DESCARTADA", "ACTIVADA", "CERRADA", "SNC_NOTIFICADA", "MIEMBRO_ANADIDO", "MIEMBRO_RETIRADO", "MIEMBRO_TERMINADO", "INHIBICION_DECLARADA", "INHIBICION_RESUELTA")
+TIPOS_CONTRATACION = ("BIENES", "SERVICIOS", "OBRAS")
+MODALIDADES_DECLARADAS = ("CONCURSO_ABIERTO", "CONCURSO_CERRADO", "CONSULTA_PRECIOS", "CONTRATACION_DIRECTA")
+ESTADOS_EXPEDIENTE = ("ABIERTO", "CERRADO", "DESCARTADO")
+ROLES_RESPONSABLE_EXPEDIENTE = ("RESPONSABLE", "REQUIRENTE", "SUSTANCIACION", "CUSTODIA")
+ESTADOS_HITO = ("PREVISTO", "CUMPLIDO", "NO_APLICA")
+CLASES_FOLIO = ("SOLICITUD", "AUTORIZACION_INICIO", "PLIEGO", "ACTOS_MOTIVADOS", "LLAMADO_INVITACION", "MODIFICACIONES_PLIEGO", "ACTA_RECEPCION", "OFERTAS", "INFORME_RECOMENDACION", "ADJUDICACION", "NOTIFICACION", "CONTRATO", "OTRO_SELECCION", "GARANTIAS", "ACTAS_EJECUCION", "MODIFICACION_CONTRATO", "FORMULARIOS_PAGO", "APROBACIONES_PAGO", "PAGOS", "FINIQUITO", "LIBERACION_GARANTIAS", "EVALUACION_CONTRATISTA", "OTRO_ADMINISTRACION")
+CLASES_EVENTO_EXPEDIENTE = ("APERTURA", "DATOS", "RESPONSABLE", "COMISION", "ACTUACION", "DECISION", "DOCUMENTO", "ACTO", "HITO", "CIERRE", "DESCARTE")
 CATEGORIAS_SEPARACION = ("OPERATIVO", "APROBADOR", "CONTROL_INTERNO", "AUDITORIA", "ADMINISTRACION_TECNICA")
 ESTADOS_CATEGORIA_ROL = ("ACTIVA", "RETIRADA")
 TIPOS_HISTORIA_CATEGORIA = ("AGREGADA", "RETIRADA")
@@ -1716,6 +1723,211 @@ GOV_COMMITTEE_HISTORY_IMMUTABLE_PG = (
 
 for _sentencia in GOV_COMMITTEE_HISTORY_IMMUTABLE_PG:
     event.listen(GovernmentProcurementCommitteeHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+class GovernmentProcurementFile(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    __tablename__ = "gov_procurement_files"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    numero: Mapped[str] = mapped_column(String(40), nullable=False)
+    fecha_inicio: Mapped[date] = mapped_column(Date, nullable=False)
+    objeto: Mapped[str] = mapped_column(String(1000), nullable=False)
+    partes: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    tipo_contratacion: Mapped[str] = mapped_column(String(16), nullable=False)
+    modalidad_declarada: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    modalidad_fundamento: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    modalidad_fuente: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    unidad_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_units.id"), nullable=False, index=True)
+    unidad_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    committee_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_committees.id"), nullable=True, index=True)
+    comision_no_aplica_motivo: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="ABIERTO", server_default="ABIERTO")
+    cierre_fecha: Mapped[date | None] = mapped_column(Date, nullable=True)
+    cierre_motivo: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    closed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "numero", name="uq_gov_procurement_files_numero"),
+        CheckConstraint(f"status IN ({en(ESTADOS_EXPEDIENTE)})", name="status"),
+        CheckConstraint(f"tipo_contratacion IN ({en(TIPOS_CONTRATACION)})", name="tipo_contratacion"),
+        CheckConstraint(f"modalidad_declarada IS NULL OR modalidad_declarada IN ({en(MODALIDADES_DECLARADAS)})", name="modalidad"),
+        CheckConstraint("modalidad_declarada IS NULL OR modalidad_fundamento IS NOT NULL", name="modalidad_con_fundamento"),
+        CheckConstraint("committee_id IS NULL OR comision_no_aplica_motivo IS NULL", name="comision_o_motivo"),
+        CheckConstraint("status = 'ABIERTO' OR (cierre_fecha IS NOT NULL AND cierre_motivo IS NOT NULL)", name="cierre_con_motivo"),
+        CheckConstraint("version >= 1", name="version"),
+    )
+
+
+class GovernmentProcurementFileResponsible(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_file_responsibles"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
+    rol: Mapped[str] = mapped_column(String(16), nullable=False)
+    funcionario_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    cargo_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    unidad_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    desde: Mapped[date] = mapped_column(Date, nullable=False)
+    fin_efectivo: Mapped[date | None] = mapped_column(Date, nullable=True)
+    motivo_fin: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"rol IN ({en(ROLES_RESPONSABLE_EXPEDIENTE)})", name="rol"),
+        CheckConstraint("fin_efectivo IS NULL OR fin_efectivo >= desde", name="fin_tras_inicio"),
+        CheckConstraint("(fin_efectivo IS NULL) = (motivo_fin IS NULL)", name="fin_con_motivo"),
+        Index(
+            "uq_gov_file_responsible_vigente",
+            "file_id",
+            "official_id",
+            "rol",
+            unique=True,
+            postgresql_where=text("fin_efectivo IS NULL"),
+            sqlite_where=text("fin_efectivo IS NULL"),
+        ),
+        Index(
+            "uq_gov_file_principal_vigente",
+            "file_id",
+            unique=True,
+            postgresql_where=text("fin_efectivo IS NULL AND rol = 'RESPONSABLE'"),
+            sqlite_where=text("fin_efectivo IS NULL AND rol = 'RESPONSABLE'"),
+        ),
+    )
+
+
+class GovernmentProcurementFileMilestone(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_file_milestones"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    fuente: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    fecha_prevista: Mapped[date] = mapped_column(Date, nullable=False)
+    fecha_real: Mapped[date | None] = mapped_column(Date, nullable=True)
+    official_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=True)
+    responsable_etiqueta: Mapped[str | None] = mapped_column(String(400), nullable=True)
+    estado: Mapped[str] = mapped_column(String(16), nullable=False, default="PREVISTO", server_default="PREVISTO")
+    motivo_no_aplica: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"estado IN ({en(ESTADOS_HITO)})", name="estado"),
+        CheckConstraint("(estado = 'CUMPLIDO') = (fecha_real IS NOT NULL)", name="cumplido_con_fecha"),
+        CheckConstraint("(estado = 'NO_APLICA') = (motivo_no_aplica IS NOT NULL)", name="no_aplica_con_motivo"),
+    )
+
+
+class GovernmentProcurementFileFolio(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_file_folios"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    clase: Mapped[str] = mapped_column(String(24), nullable=False)
+    document_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True, index=True)
+    document_version_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=True)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True, index=True)
+    etiqueta: Mapped[str] = mapped_column(String(400), nullable=False)
+    tipo_etiqueta: Mapped[str] = mapped_column(String(120), nullable=False)
+    version_numero: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    fecha_documento: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fecha_incorporacion: Mapped[date] = mapped_column(Date, nullable=False)
+    reservado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    motivo_reserva: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    milestone_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_file_milestones.id"), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("file_id", "numero", name="uq_gov_file_folio_numero"),
+        CheckConstraint(f"clase IN ({en(CLASES_FOLIO)})", name="clase"),
+        CheckConstraint("numero >= 1", name="numero"),
+        CheckConstraint("(document_id IS NULL) <> (act_id IS NULL)", name="documento_o_acto"),
+        CheckConstraint("reservado = false OR motivo_reserva IS NOT NULL", name="reserva_con_motivo"),
+    )
+
+
+class GovernmentProcurementFileEvent(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_file_events"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    secuencia: Mapped[int] = mapped_column(Integer, nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    clase: Mapped[str] = mapped_column(String(16), nullable=False)
+    titulo: Mapped[str] = mapped_column(String(300), nullable=False)
+    detalle: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    resultado: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    official_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=True)
+    responsable_etiqueta: Mapped[str | None] = mapped_column(String(400), nullable=True)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    acto_etiqueta: Mapped[str | None] = mapped_column(String(400), nullable=True)
+    folio_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_file_folios.id"), nullable=True)
+    folio_etiqueta: Mapped[str | None] = mapped_column(String(400), nullable=True)
+    milestone_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_file_milestones.id"), nullable=True)
+    hito_etiqueta: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    estado_expediente: Mapped[str] = mapped_column(String(16), nullable=False)
+    rectifica_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_file_events.id"), nullable=True)
+    motivo: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("file_id", "secuencia", name="uq_gov_file_event_secuencia"),
+        CheckConstraint(f"clase IN ({en(CLASES_EVENTO_EXPEDIENTE)})", name="clase"),
+        CheckConstraint("clase <> 'DECISION' OR resultado IS NOT NULL", name="decision_con_resultado"),
+        CheckConstraint("rectifica_id IS NULL OR motivo IS NOT NULL", name="rectificacion_con_motivo"),
+    )
+
+
+_GOV_EXPEDIENTE_IMMUTABLE_DDL = (
+    """
+    CREATE OR REPLACE FUNCTION kontrol_gov_expediente_inmutable() RETURNS trigger AS $$
+    BEGIN
+        RAISE EXCEPTION 'GOV_PROCUREMENT_FILE_IMMUTABLE';
+    END;
+    $$ LANGUAGE plpgsql;
+    """,
+    """
+    CREATE TRIGGER trg_gov_file_folios_no_update BEFORE UPDATE ON gov_procurement_file_folios
+        FOR EACH ROW EXECUTE FUNCTION kontrol_gov_expediente_inmutable();
+    """,
+    """
+    CREATE TRIGGER trg_gov_file_folios_no_delete BEFORE DELETE ON gov_procurement_file_folios
+        FOR EACH ROW EXECUTE FUNCTION kontrol_gov_expediente_inmutable();
+    """,
+    """
+    CREATE TRIGGER trg_gov_file_folios_no_truncate BEFORE TRUNCATE ON gov_procurement_file_folios
+        FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_expediente_inmutable();
+    """,
+    """
+    CREATE TRIGGER trg_gov_file_events_no_update BEFORE UPDATE ON gov_procurement_file_events
+        FOR EACH ROW EXECUTE FUNCTION kontrol_gov_expediente_inmutable();
+    """,
+    """
+    CREATE TRIGGER trg_gov_file_events_no_delete BEFORE DELETE ON gov_procurement_file_events
+        FOR EACH ROW EXECUTE FUNCTION kontrol_gov_expediente_inmutable();
+    """,
+    """
+    CREATE TRIGGER trg_gov_file_events_no_truncate BEFORE TRUNCATE ON gov_procurement_file_events
+        FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_expediente_inmutable();
+    """,
+)
+
+for _indice, _sentencia in enumerate(_GOV_EXPEDIENTE_IMMUTABLE_DDL):
+    if _indice == 0 or 1 <= _indice <= 3:
+        event.listen(
+            GovernmentProcurementFileFolio.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+    if _indice == 0 or _indice >= 4:
+        event.listen(
+            GovernmentProcurementFileEvent.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+
 
 class GovernmentUserOfficialLink(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
     """Vínculo entre una cuenta de usuario y un funcionario institucional (ORG-06, GOV-ORG-007)."""

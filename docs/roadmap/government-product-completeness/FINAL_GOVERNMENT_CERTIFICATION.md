@@ -15,6 +15,7 @@ PostgreSQL completo · SQLite completo · Alembic desde cero y desde la cabeza a
 | ORG-06 | E2E en los tres navegadores sobre el árbol final | 27/27 antes de los últimos arreglos, que no tocan frontend salvo la fecha de una prueba; después, Chromium 3/3 |
 | CTL-02 | PostgreSQL y SQLite completos, regresión de Gobierno, E2E canónica, tres navegadores, mutaciones y controles de base tras la E2E | Dirigido en PG 1212/0, incluye núcleo de auditoría, autenticación, aislamiento y copias. Vitest 1430/1430. BIT-E2E-01 en Chromium con Axe a tres anchos. Sin mutaciones |
 | PROC-02 | PostgreSQL y SQLite completos, regresión de Gobierno, E2E canónica, tres navegadores, mutaciones, Axe en las pantallas, controles de base tras la E2E y runner de integridad con controles propios | Backend dirigido y E2E Chromium; ver el inventario de la vertical |
+| PROC-03 | PostgreSQL y SQLite completos, regresión de Gobierno, E2E canónica, tres navegadores, mutaciones, Axe en las pantallas, prueba de Vitest de las pantallas, controles de base tras la E2E, runner de integridad, y acciones no ejercitadas por interfaz (ver tarjeta) | Backend dirigido 1208/0 antes de la corrección final; dirigido posterior 172 pruebas con 1 fallo (OBS-N9-COLISION-01); E2E Chromium 2/2 |
 
 ## Observaciones abiertas
 
@@ -27,3 +28,6 @@ PostgreSQL completo · SQLite completo · Alembic desde cero y desde la cabeza a
 | OBS-AUDIT-403-01 | Los 403 por capacidad no generan evento, tampoco en la bitácora: registrarlos exige tocar la ruta común de permisos. Quedan registrados rechazos y denegaciones de negocio y de autenticación. Decidir si Gobierno los necesita | MEDIA |
 | OBS-BITACORA-RENDIMIENTO-01 | Los filtros por funcionario y unidad buscan en el JSON como texto, acotados por tenant y ente. Medir con volumen real antes de producción | BAJA |
 | OBS-UI-NOTIF-01 | Las notificaciones de la plataforma tapan los botones de la cabecera mientras se muestran, y una de empresa persiste. Afecta a las pantallas con acciones arriba a la derecha | BAJA |
+| OBS-N9-COLISION-01 | Cerrada en 12d7980: código único por kind; N9 en verde en PostgreSQL. | Cerrada |
+| OBS-UI-320-01 | Cerrada: defecto del armazón compartido, corregido; a 320 y 390 px con carga directa, sin desborde del documento y con menú en panel. Queda 1 px de desplazamiento interno en la ficha a 320 px. | Cerrada |
+| OBS-HUMO-EXP-01 | Cerrada en 12d7980: el humo publicado cubre Expedientes. | Cerrada |

@@ -14,6 +14,7 @@ import {
   FileDown,
   FileSearch,
   Gavel,
+  FolderOpen,
   History,
   FileText,
   Grid3x3,
@@ -57,7 +58,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NavLink } from "react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useModuloGobierno } from "@/modules/gobierno/api";
@@ -106,6 +107,12 @@ const navSections: NavSection[] = [
         to: "/gobierno/contrataciones/comisiones",
         label: "Comisiones",
         icon: Gavel,
+        modulo: "gobierno",
+      },
+      {
+        to: "/gobierno/contrataciones/expedientes",
+        label: "Expedientes",
+        icon: FolderOpen,
         modulo: "gobierno",
       },
     ],
@@ -306,13 +313,37 @@ const navSections: NavSection[] = [
   },
 ];
 
-export function Sidebar(): React.JSX.Element {
-  const [collapsed, setCollapsed] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(max-width: 767px)").matches,
-  );
+export interface SidebarProps {
+  /** Si se define, se llama al elegir una entrada (p. ej. cerrar el panel). */
+  onNavigated?: () => void;
+  /** Si se define, se muestra un control «Cerrar menú» en la cabecera. */
+  onClose?: () => void;
+  /** Si es `true`, el foco inicial se coloca en el panel al montar. */
+  autoFocus?: boolean;
+}
+
+export function Sidebar({ onNavigated, onClose, autoFocus }: SidebarProps = {}): React.JSX.Element {
+  const [collapsed, setCollapsed] = useState(false);
+  const asideRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!autoFocus) return;
+    // Coloca el foco en el panel para lectores de pantalla y navegación con
+    // teclado cuando el menú se abre como superposición.
+    asideRef.current?.focus();
+  }, [autoFocus]);
+
+  useEffect(() => {
+    if (!onClose) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
   const autoridad = useAutoridad();
   const moduloGobierno = useModuloGobierno();
   // Una entrada se ve si su pantalla está permitida (registro único `pantallas.ts`, Spec 003). Mientras la autoridad carga, las entradas
@@ -330,23 +361,39 @@ export function Sidebar(): React.JSX.Element {
 
   return (
     <aside
+      ref={asideRef}
+      tabIndex={autoFocus ? -1 : undefined}
       className={clsx(
-        "flex h-full flex-col border-r border-border-default bg-surface-0 transition-[width]",
+        "flex h-full flex-col border-r border-border-default bg-surface-0 transition-[width] outline-none",
         collapsed ? "w-16" : "w-64",
       )}
     >
       <div className="flex h-14 items-center justify-between border-b border-border-default px-4">
         {!collapsed ? <span className="text-lg font-bold text-brand-700">KONTROL</span> : null}
-        <button
-          type="button"
-          onClick={() => setCollapsed((v) => !v)}
-          aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
-          className="rounded p-1 text-text-500 hover:bg-surface-100"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-1">
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar menú"
+              className="rounded p-1 text-text-500 hover:bg-surface-100"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+            className="rounded p-1 text-text-500 hover:bg-surface-100"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
       </div>
       {/* Los títulos de sección usan text-500 (4,76:1 sobre blanco) y no
           text-400 (2,56:1): incumplían WCAG 2.2 AA en TODAS las páginas
@@ -366,6 +413,7 @@ export function Sidebar(): React.JSX.Element {
                   <NavLink
                     to={item.to}
                     title={item.label}
+                    onClick={onNavigated}
                     className={({ isActive }) =>
                       clsx(
                         "flex items-center gap-3 rounded-md px-2 py-2 text-sm",

@@ -5,6 +5,7 @@
  * que nadie vea accesos para los que no está autorizado.
  */
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -239,4 +240,24 @@ describe("Sidebar · Gobierno › Actos administrativos", () => {
     montar();
     expect(enlace("Auditoría institucional")).toBeNull();
   });
+});
+
+// Las pruebas existentes renderizan <Sidebar /> sin props: se añade cobertura
+// de las nuevas props sin tocar las existentes.
+it("sin props, el nav principal sigue presente", () => {
+  render(<MemoryRouter><Sidebar /></MemoryRouter>);
+  expect(screen.getByRole("navigation", { name: "Menú principal" })).toBeInTheDocument();
+});
+
+it("con onClose, muestra el control «Cerrar menú» y dispara el callback", async () => {
+  const onClose = vi.fn();
+  render(<MemoryRouter><Sidebar onClose={onClose} /></MemoryRouter>);
+  const cerrar = screen.getByRole("button", { name: "Cerrar menú" });
+  await userEvent.click(cerrar);
+  expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+it("sin autoFocus no añade tabIndex al aside", () => {
+  const { container } = render(<MemoryRouter><Sidebar /></MemoryRouter>);
+  expect(container.querySelector("aside")?.hasAttribute("tabindex")).toBe(false);
 });

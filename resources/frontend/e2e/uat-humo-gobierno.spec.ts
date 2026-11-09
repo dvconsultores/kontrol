@@ -36,6 +36,7 @@ const CAPACIDADES = [
   "gobierno_cierre:view",
   "gobierno_cuentas:view",
   "gobierno_caja:view",
+  "gobierno_expedientes:view",
   "documentos:view",
 ];
 
@@ -55,6 +56,7 @@ const PANTALLAS: ReadonlyArray<readonly [href: string, titulo: string]> = [
   ["/gobierno/sod", "Segregación de funciones"],
   ["/gobierno/cierres", "Controles de cierre"],
   ["/gobierno/contrataciones/comisiones", "Comisiones de contrataciones"],
+  ["/gobierno/contrataciones/expedientes", "Expedientes de contratación"],
   ["/gobierno/tesoreria/cuentas", "Cuentas bancarias"],
   ["/gobierno/tesoreria/bancos", "Bancos"],
   ["/gobierno/tesoreria/programacion", "Programación financiera"],

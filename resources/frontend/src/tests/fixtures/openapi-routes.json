@@ -997,6 +997,100 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/contrataciones/expedientes",
+      "query": [
+        "desde",
+        "hasta",
+        "modalidad",
+        "pagina",
+        "por_pagina",
+        "q",
+        "responsable_id",
+        "status",
+        "unidad_id"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/expedientes/catalogo",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/expedientes/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/actuaciones",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/comision",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/cronologia",
+      "query": [
+        "clases",
+        "pagina",
+        "por_pagina"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/descartar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/folios",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/hitos",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/hitos/{hito_id}/actualizar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/responsables",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/responsables/{responsable_id}/terminar",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/ente",
       "query": []
     },
