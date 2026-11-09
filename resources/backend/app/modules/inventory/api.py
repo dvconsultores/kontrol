@@ -21,7 +21,6 @@ from app.core.dependencies import get_current_user, require_permission, require_
 from app.core.errors import NotFoundError, PermissionDeniedError
 from app.modules.identity_access.models import User
 from app.modules.inventory import service as inv_service
-from app.modules.treasury.rates import moneda_funcional
 from app.modules.inventory.models import (
     CostingProfile,
     CostLayer,
@@ -38,6 +37,7 @@ from app.modules.inventory.models import (
     TransferLine,
 )
 from app.modules.master_data.models import CatalogItem
+from app.modules.treasury.rates import moneda_funcional
 
 router = APIRouter(prefix="/inventory", tags=["inventario"])
 

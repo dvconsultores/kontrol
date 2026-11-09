@@ -697,8 +697,30 @@ def test_sin_clasificar_y_version_obsoleta(mundo, reloj_mfa, rol_completo):
     assert r.json()["code"] == "IMPORT_EXPENSE_STALE"
 
 
-def test_aplicar_y_valoracion(mundo, reloj_mfa, rol_completo):
+@pytest.fixture(scope="module")
+def rol_inventario(mundo):
+    from app.modules.identity_access import service as identity_service
+
+    db = mundo.factory()
+    try:
+        rol = identity_service.create_role(
+            db,
+            tenant_id=mundo.tenant_id,
+            code=f"inv{uuid.uuid4().hex[:12]}",
+            name="Inventario Valoracion",
+            company_id=None,
+            permissions=["inventario:view"],
+            actor=mundo.admin_id,
+        )
+        db.commit()
+        return rol["id"]
+    finally:
+        db.close()
+
+
+def test_aplicar_y_valoracion(mundo, reloj_mfa, rol_completo, rol_inventario):
     cab, file_id, supplier_id = _hasta_despachado(mundo, reloj_mfa, rol_completo)
+    cab_inv = _operador(mundo, reloj_mfa, rol_inventario)
     _tasa(mundo, date(2025, 1, 1), "USD", "36.125")
 
     capa_a = _entrada(
@@ -764,7 +786,7 @@ def test_aplicar_y_valoracion(mundo, reloj_mfa, rol_completo):
 
     r = mundo.client.get(
         f"{API}/inventory/valuation",
-        headers=cab,
+        headers=cab_inv,
     )
     assert r.status_code == 200, r.text
     assert any(
