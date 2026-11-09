@@ -5,10 +5,10 @@ import type { Notification } from "@/app/contexts/NotificationContext";
 import { clsx } from "clsx";
 
 const styles: Record<Notification["type"], { icon: typeof Info; classes: string }> = {
-  success: { icon: CheckCircle2, classes: "border-success-100 bg-success-100/60 text-success-600" },
-  error: { icon: XCircle, classes: "border-danger-100 bg-danger-100/60 text-danger-600" },
-  warning: { icon: AlertCircle, classes: "border-warning-100 bg-warning-100/60 text-warning-600" },
-  info: { icon: Info, classes: "border-info-100 bg-info-100/60 text-info-600" },
+  success: { icon: CheckCircle2, classes: "border-success-100 bg-success-100 text-success-600" },
+  error: { icon: XCircle, classes: "border-danger-100 bg-danger-100 text-danger-600" },
+  warning: { icon: AlertCircle, classes: "border-warning-100 bg-warning-100 text-warning-600" },
+  info: { icon: Info, classes: "border-info-100 bg-info-100 text-info-600" },
 };
 
 export interface PersistentNotificationProps {

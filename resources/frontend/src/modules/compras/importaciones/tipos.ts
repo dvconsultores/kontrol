@@ -179,6 +179,84 @@ export type Documento = {
   };
 };
 
+export type GastoImportacion = {
+  id: string;
+  kind: string;
+  concept: string;
+  reference: string;
+  supplier_name: string | null;
+  invoice_number: string | null;
+  expense_date: string;
+  currency: string;
+  amount: string;
+  functional_amount: string;
+  status: "REGISTERED" | "VOIDED";
+  void_reason: string | null;
+  version: number;
+  username: string | null;
+  created_at: string | null;
+  rate: {
+    value: string;
+    source: string | null;
+    type: string | null;
+    date: string | null;
+    origin: string | null;
+    derivation: string | null;
+    identity: boolean;
+  };
+  document: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+  allowed_actions: {
+    void: boolean;
+  };
+};
+
+export type CapaDeCosto = {
+  receipt_code: string;
+  product_code: string | null;
+  product_name: string | null;
+  warehouse_name: string | null;
+  quantity_in: number;
+  quantity_remaining: number;
+  unit_cost: string;
+  currency: string;
+  landed_cost: string;
+  partially_consumed: boolean;
+};
+
+export type CandidatoFactura = {
+  id: string;
+  invoice_number: string;
+  supplier_name: string | null;
+  issue_date: string | null;
+  currency: string;
+  total: string;
+  tax_total: string;
+  assigned: string;
+  available: string;
+  status: string;
+};
+
+export type DetalleCostos = {
+  functional_currency: string;
+  can_register: boolean;
+  currencies: string[];
+  expenses: GastoImportacion[];
+  totals: {
+    count: number;
+    functional_total: string;
+    by_currency: Array<{ currency: string; amount: string }>;
+  };
+  layers: CapaDeCosto[];
+  goods_totals: Array<{ currency: string; amount: string }>;
+  application: {
+    status: string;
+  };
+};
+
 export type DetalleImportacion = {
   id: string;
   code: string;

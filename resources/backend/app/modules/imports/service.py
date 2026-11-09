@@ -531,6 +531,7 @@ def add_tracking_event(
         occurred_on=occurred_on,
         location=location.strip() if location else None,
         notes=notes.strip() if notes else None,
+        created_by=actor_id,
     )
     db.add(event)
     db.flush()
@@ -596,6 +597,7 @@ def register_payment_or_advance(
         file_id=file.id,
         kind=kind,
         target_id=str(target.id),
+        created_by=actor_id,
     )
     db.add(link)
     db.flush()
@@ -661,6 +663,7 @@ def link_existing_financial(
         file_id=file.id,
         kind=kind,
         target_id=target_id,
+        created_by=actor_id,
     )
     db.add(link)
     db.flush()
@@ -739,6 +742,7 @@ def open_correction(
         responsible=responsible,
         status="OPEN",
         version=1,
+        created_by=actor_id,
     )
     db.add(correction)
     db.flush()

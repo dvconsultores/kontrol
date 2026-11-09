@@ -38,6 +38,13 @@ test("expediente de importación de punta a punta", async ({ page }) => {
     return (await res.json()) as T;
   };
 
+  const monedasRes = await fetch(`${API}/treasury/currencies`, { headers: authHeaders(companyId) });
+  const monedasJson = (await monedasRes.json()) as { items?: Array<{ code: string }> } | Array<{ code: string }>;
+  const monedas = Array.isArray(monedasJson) ? monedasJson : (monedasJson.items ?? []);
+  if (!monedas.some((m) => m.code === "USD")) await post("/treasury/currencies", { code: "USD", name: "Dólar" });
+  const monedaGasto = `X${sufijo.slice(-5)}`;
+  await post("/treasury/currencies", { code: monedaGasto, name: "Moneda E2E" });
+
   const proveedor = await post<{ id: string }>("/maestros/terceros", {
     code: `PRV-${sufijo}`,
     name: `Proveedor Import ${sufijo}`,
@@ -54,7 +61,7 @@ test("expediente de importación de punta a punta", async ({ page }) => {
   const orden = await post<{ id: string }>("/purchasing/orders", {
     code: `OC-${sufijo}`,
     supplier_id: proveedor.id,
-    currency: "VED",
+    currency: "USD",
   });
 
   await post(`/purchasing/orders/${orden.id}/lines`, {
@@ -93,6 +100,7 @@ test("expediente de importación de punta a punta", async ({ page }) => {
   await combo.fill(`PRV-${sufijo}`);
   await page.getByRole("option", { name: new RegExp(`PRV-${sufijo}`) }).click();
 
+  await page.getByLabel(/^Moneda/).fill("USD");
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
 
   await expect(page).toHaveURL(/\/compras\/importaciones\/[0-9a-f-]{36}$/);
@@ -193,9 +201,9 @@ test("expediente de importación de punta a punta", async ({ page }) => {
   // Volver a importación
   await page.goto(expedienteUrl);
   await page.getByLabel("Tipo", { exact: true }).selectOption("ADVANCE");
-  await page.getByLabel(/^Monto/).fill("100");
+  await page.locator("#finanzas").getByLabel(/^Monto/).fill("100");
   await page.getByRole("button", { name: /^Registrar$/ }).click();
-  await expect(page.getByText(/Anticipo 100\.00 VED/).first()).toBeVisible();
+  await expect(page.getByText(/Anticipo 100\.00 USD/).first()).toBeVisible();
 
   // Designar agente y guardar seguimiento
   await page.getByLabel(/^Agente/).fill(`Agente ${sufijoAgente}`);
@@ -205,7 +213,7 @@ test("expediente de importación de punta a punta", async ({ page }) => {
 
   // Hito Salida con fecha 2026-11-01
   await page.getByLabel(/^Hito/).selectOption("DEPARTED");
-  await page.getByLabel(/^Fecha/).fill("2026-11-01");
+  await page.locator("#seguimiento").getByLabel(/^Fecha/).fill("2026-11-01");
   await page.getByRole("button", { name: "Registrar hito", exact: true }).click();
   await expect(
     page.getByRole("listitem").filter({ hasText: "2026-11-01" }).filter({ hasText: "Salida" })
@@ -345,6 +353,79 @@ test("expediente de importación de punta a punta", async ({ page }) => {
 
   // 7. Historial
   await expect(page.getByText("Recepción creada desde la importación").first()).toBeVisible();
+
+  const costos = page.locator("#costos");
+  await expect(page.getByRole("link", { name: "Costos", exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Costos", exact: true }).click();
+
+  await expect(costos.getByText("Distribución aún no disponible")).toBeVisible();
+  await expect(costos.getByText("Todavía no hay gastos registrados.")).toBeVisible();
+  await expect(page.getByRole("button", { name: /aplicar/i })).toHaveCount(0);
+  await expect(costos.getByText(`Artículo ${sufijo}`)).toBeVisible();
+  await expect(costos.getByText(`REC-${sufijo}`)).toBeVisible();
+  await expect(costos.getByText("5,00 USD")).toBeVisible();
+  await expect(costos.getByText("Mercancía según capas de costo")).toBeVisible();
+
+  const importId = new URL(expedienteUrl).pathname.split("/").pop()!;
+
+  const campoConcepto = costos.getByLabel(/^Concepto/);
+  await campoConcepto.fill("Flete internacional");
+  await page.getByLabel(/^Proveedor/).fill(`Proveedor Import ${sufijo}`);
+  await page.getByRole("option", { name: `Proveedor Import ${sufijo}` }).click();
+  await costos.getByLabel(/^Referencia/).fill(`FL-${sufijo}`);
+  await costos.getByLabel(/^Moneda/).selectOption(monedaGasto);
+  await costos.getByLabel(/^Fecha/).fill(new Date().toISOString().slice(0, 10));
+  await costos.getByLabel(/^Monto/).fill("1250,50");
+  await costos.getByRole("button", { name: "Registrar gasto" }).click();
+
+  await expect(page.getByText(/tasa/i).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Registrar tasa en Tesorería" })).toBeVisible();
+
+  const costosRespuesta = await fetch(`${API}/importaciones/${importId}/costs`, { headers: authHeaders(companyId) }).then((r) => r.json() as Promise<{ functional_currency: string }>);
+  const functionalCurrency = costosRespuesta.functional_currency;
+
+  const fnEnMaestro = await fetch(`${API}/treasury/currencies`, { headers: authHeaders(companyId) }).then((r) => r.json() as Promise<{ items?: Array<{ code: string }> } | Array<{ code: string }>>);
+  const lista = Array.isArray(fnEnMaestro) ? fnEnMaestro : (fnEnMaestro.items ?? []);
+  if (!lista.some((m) => m.code === functionalCurrency)) await post("/treasury/currencies", { code: functionalCurrency, name: functionalCurrency });
+  const fuente = await post<{ id: string }>("/treasury/rate-sources", { code: `FT-${sufijo}`, name: "Fuente E2E" });
+  await post("/treasury/exchange-rates/observations", {
+    base_currency: monedaGasto,
+    quote_currency: functionalCurrency,
+    source_id: fuente.id,
+    rate: "36.125",
+    effective_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+
+  await costos.getByRole("button", { name: "Registrar gasto" }).click();
+  await expect(costos.getByText("Gasto registrado.")).toBeVisible();
+  await expect(costos.getByText("Flete internacional")).toBeVisible();
+  await expect(costos.getByText(`1.250,50 ${monedaGasto}`).first()).toBeVisible();
+  await expect(costos.getByText(`1 ${monedaGasto} = 36,125 ${functionalCurrency}`)).toBeVisible();
+  await expect(costos.getByText(`45.174,31 ${functionalCurrency}`).first()).toBeVisible();
+  await expect(costos.getByText("Gastos registrados").locator("..").getByText("1", { exact: true })).toBeVisible();
+
+  await campoConcepto.fill("Gasto erróneo");
+  await page.getByLabel(/^Proveedor/).fill(`Proveedor Import ${sufijo}`);
+  await page.getByRole("option", { name: `Proveedor Import ${sufijo}` }).click();
+  await costos.getByLabel(/^Referencia/).fill(`ERR-${sufijo}`);
+  await costos.getByLabel(/^Moneda/).selectOption(functionalCurrency);
+  await costos.getByLabel(/^Fecha/).fill(new Date().toISOString().slice(0, 10));
+  await costos.getByLabel(/^Monto/).fill("100,10");
+  await costos.getByRole("button", { name: "Registrar gasto" }).click();
+  await expect(costos.getByText("Misma moneda, sin conversión")).toBeVisible();
+
+  await page.reload();
+  await costos.getByRole("button", { name: `Anular gasto ERR-${sufijo}` }).click();
+  await page.getByLabel("Motivo de anulación").fill("Error de captura");
+  await page.getByRole("dialog").getByRole("button", { name: "Anular gasto" }).click();
+  await expect(costos.getByText("Anulado · Motivo: Error de captura")).toBeVisible();
+  await expect(costos.getByText(`45.174,31 ${functionalCurrency}`).first()).toBeVisible();
+
+  await expect(costos).not.toContainText(/[0-9a-f]{8}-[0-9a-f]{4}-/);
+
+  await page.getByRole("link", { name: "Ver historial" }).click();
+  await expect(page.getByText("Gasto de importación registrado").first()).toBeVisible();
+  await expect(page.getByText("Gasto de importación anulado").first()).toBeVisible();
 
   await page.goto("/compras/importaciones");
   const fila = page

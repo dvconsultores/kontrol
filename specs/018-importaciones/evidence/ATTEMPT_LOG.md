@@ -142,3 +142,24 @@ Tope: 12 llamadas. Diseño: las recepciones del expediente se derivan de `GoodsR
 12 llamadas (tope 12) · $0,084576. Solo de pruebas: 0. Reintentos: 8. Sin paralelo.
 
 **Declaración.** El código de producto y pruebas lo propuso DeepSeek. Ajustes mecánicos de Claude: saltos de línea tras aplicar, marcadores sueltos y una copia idéntica de función en pruebas, retirar andamiaje sin uso, aplicar en dos líneas el mismo `.first()` de DeepSeek, `API_URL` por `API`, un import sin uso y `onClick={ubicar}`. Dos pruebas Vitest pedidas no entraron por agotarse el tope. Los briefs finales listaron etiquetas y pasos medidos en Chrome como hechos, sin cuerpos de función: es un caso límite que se declara. Sondas temporales en Chrome, sin commitear y borradas: recorrido del flujo y smoke del ciclo 2. Varios rechazos los causó un brief incompleto de Claude, como no incluir los contratos de componentes en IMP3-D.
+
+## Ciclo 4 · gastos (2026-11-09)
+
+12 llamadas (10 + 2 excepciones de la dueña). La llamada 12 cerró los defectos de compilación; la validación destapó que Importaciones no funcionaba sobre PostgreSQL y el ciclo paró.
+
+## Bloque IMP-PG-INTEGRITY-01 (2026-11-09)
+
+Todas con `deepseek-v4-pro`, sin paralelo.
+
+| Tarea | Ranura | Coste | Resultado |
+|---|---|---|---|
+| IMP-PG-A | ATTEMPT | $0,004288 | Migraciones y cabezas aceptadas. Prueba rechazada: nulos en columnas obligatorias y `raises(Exception)` |
+| IMP-PG-A | RETRY_1 (solo pruebas) | $0,004917 | Prueba aceptada, con ramas muertas que se retiran después |
+| IMP-PG-B | ATTEMPT | $0,005303 | 11 de 12 bloques aceptados. Rechazado el de ramas muertas (`...` en el SEARCH, por cómo se presentó el contexto) |
+| IMP-PG-B | RETRY_1 | $0,003473 | 5 de 6 aceptados. Rechazada la prueba de autor: `func`, `Integer` y `X-User-Id` inexistentes |
+| IMP-PG-C | ATTEMPT + RETRY_2 de la prueba | $0,006073 | 9 de 9 aceptados |
+| IMP-PG-D | ATTEMPT | $0,001251 | Prueba aceptada. **CSS rechazado:** dejaba visible la notificación más antigua. Presupuesto agotado: no se aplicó |
+
+**Totales:** 6 llamadas (tope 6) · $0,026305 · solo de pruebas: 1 · reintentos: 3.
+
+**Declaración.** Todo el código entregado lo propuso DeepSeek. Claude auditó, aplicó, renombró el fichero de la migración de gastos según su indicación, regeneró instantáneas y escribió esta documentación. **Desviación de §23:** para diagnosticar, Claude escribió en copias fuera del repositorio: mediciones de carga, una espera ampliada, una precarga de prueba y una copia de la E2E para móvil. Nada de eso se entregó, pero el encargo pedía diagnosticar leyendo y ejecutando.

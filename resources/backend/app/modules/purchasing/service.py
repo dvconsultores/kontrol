@@ -735,6 +735,9 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
         raise ConflictError(code="RECEIPT_EMPTY", message="Una recepción sin líneas no se acepta.")
     _requiere_almacen_operable(db.get(Warehouse, receipt.warehouse_id))
     _requiere_lineas_integras(db, receipt, lines)
+    order = db.get(PurchaseOrder, receipt.order_id)
+    if order is None:
+        raise NotFoundError(code="PURCHASE_ORDER_NOT_FOUND", message="Orden de compra no encontrada.")
     if sum(_dec(x.quantity_accepted) for x in lines) <= 0:
         raise ConflictError(code="RECEIPT_NOTHING_ACCEPTED",
                             message="No hay cantidad aceptada: la recepción se rechaza con el veredicto de calidad.")
@@ -770,7 +773,7 @@ def accept_receipt(db: Session, *, receipt: GoodsReceipt, actor: str | None = No
                 inv_service.record_movement(
                     db, company_id=receipt.company_id, warehouse_id=receipt.warehouse_id, product_id=line.product_id,
                     movement_type_id=str(mtype.id), quantity=float(line.quantity_accepted),
-                    unit_cost=order_line.unit_price if order_line else None, currency="VED",
+                    unit_cost=order_line.unit_price if order_line else None, currency=order.currency,
                     document_ref=f"RECEIPT:{receipt.id}", actor=actor,
                     presentation_id=line.presentation_id, location_id=None,
                     # `R-D0-10-4`: recibir no es liberar. La mercancía entra en

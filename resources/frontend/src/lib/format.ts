@@ -1,6 +1,6 @@
 /** Utilidades de formato (DOC-08 §9.3/9.4). */
-import { format as dfFormat } from "date-fns";
-import { es } from "date-fns/locale";
+import { format as dfFormat } from "date-fns/format";
+import { es } from "date-fns/locale/es";
 
 import { horaDeCaracasParaInput } from "./fecha-de-negocio";
 

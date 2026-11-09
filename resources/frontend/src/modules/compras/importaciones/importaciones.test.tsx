@@ -1,6 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+// Precarga los módulos de las rutas diferidas antes del primer test para que el
+// coste de transformarlos no compita con la espera por defecto de las pruebas.
+beforeAll(async () => {
+  await Promise.all([
+    import("./ImportacionesPage"),
+    import("./ImportacionNuevaPage"),
+    import("./ImportacionDetallePage"),
+  ]);
+});
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { ApiError } from "@/api/client";

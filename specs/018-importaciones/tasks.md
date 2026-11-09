@@ -10,4 +10,6 @@
 | T018-04c | Ciclo 2: E2E en Chrome | DEEPSEEK, ejecutada por Claude | Hecha: Chrome sobre SQLite |
 | T018-04d | Regresión de reglas del ciclo 2: corrección a ORDERED, DISPATCHED no cancela, permisos, órdenes sin truncar | DEEPSEEK | Hecha |
 | T018-05 | Ciclo 3: arribo, recepción, diferencias, confirmación y ubicación integrados con 019 a 022 | DEEPSEEK | Hecha: E2E en Chrome sobre SQLite |
-| T018-06 | Ciclo 4: gastos de importación con Spec 026 | — | Pendiente |
+| T018-06 | Ciclo 4: gastos de importación con Spec 026 | DEEPSEEK | Hecha: gastos. Chrome sobre PostgreSQL migrado |
+| T018-06b | Ciclo 4B: preview, distribución y aplicación de landed cost | — | Pendiente; decisiones resueltas en `IMPORT_COST_ALLOCATION_CONTRACT.md` |
+| T018-PG | IMP-PG-INTEGRITY-01: Importaciones sobre PostgreSQL migrado. Los ciclos 1 a 3 pasan de `BROWSER_VERIFIED_SQLITE_ONLY` a `POSTGRESQL_BROWSER_VERIFIED` | DEEPSEEK; auditoría y evidencia de Claude | Hecha: `spec018-pg-integrity-delta.md` |

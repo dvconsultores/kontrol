@@ -51,4 +51,15 @@ Necesita un almacén con una ubicación activa, en Organización.
 
 **Límite:** un put-away hecho desde el menú de Inventario, sin pasar por el expediente, no se le atribuye.
 
-**Aún no disponible:** gastos y costo de importación; reporte formal de diferencias como documento; clasificación y zonas de almacén, pendientes de validar por el sponsor. Comparación completa con el documento del sponsor: pendiente.
+### Costos de importación: gastos
+
+Necesita una tasa en Tesorería para la moneda del gasto, con fecha igual o anterior a la del gasto.
+
+21. En «Costos de importación», registre un gasto en una moneda sin tasa. Debe rechazarlo y ofrecer «Registrar tasa en Tesorería»; nunca asume tasa 1.
+22. Registre la tasa y repita. El gasto muestra la moneda, la tasa, su fuente y fecha, y el equivalente en moneda funcional. Ejemplo: `1.250,50 × 36,125 = 45.174,31`.
+23. Pulse «Anular gasto», escriba el motivo y confirme. Sigue en la lista como «Anulado» con su motivo, deja de sumar y el historial lo muestra.
+24. Compruebe «Capas de costo de esta importación»: el costo aparece en la moneda de la orden.
+
+**En teléfono:** cada acción deja una notificación que se cierra a mano. Hoy pueden tapar botones del pie: ciérrelas con su ✕.
+
+**Aún no disponible:** repartir los gastos entre productos y sumarlos al costo (ciclo 4B); reporte formal de diferencias como documento; clasificación y zonas de almacén, pendientes de validar por el sponsor. Comparación completa con el documento del sponsor: pendiente.

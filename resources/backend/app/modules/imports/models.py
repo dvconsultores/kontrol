@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     CheckConstraint,
     Date,
+    DateTime,
     ForeignKey,
     Index,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -127,3 +130,39 @@ class ImportDocument(UUIDMixin, TimestampMixin, VersionMixin, Base):
     reference: Mapped[str | None] = mapped_column(String(120), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
     observation: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+
+class ImportExpense(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    __tablename__ = "import_expenses"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(ForeignKey("import_files.id"), nullable=False, index=True)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    supplier_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
+    supplier_invoice_id: Mapped[str | None] = mapped_column(ForeignKey("supplier_invoices.id"), nullable=True, index=True)
+    reference: Mapped[str] = mapped_column(String(120), nullable=False)
+    concept: Mapped[str] = mapped_column(String(200), nullable=False)
+    expense_date: Mapped[date] = mapped_column(Date, nullable=False)
+    currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    functional_currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    functional_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    rate_snapshot_id: Mapped[str] = mapped_column(ForeignKey("treasury_rate_snapshots.id"), nullable=False)
+    import_document_id: Mapped[str | None] = mapped_column(ForeignKey("import_documents.id"), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="REGISTERED")
+    void_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    voided_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_import_expenses_amount_positive"),
+        CheckConstraint("status IN ('REGISTERED','VOIDED')", name="ck_import_expenses_status"),
+        CheckConstraint("kind IN ('DIRECT_IMPORT_EXPENSE','LINKED_SUPPLIER_INVOICE')", name="ck_import_expenses_kind"),
+        CheckConstraint(
+            "(kind = 'LINKED_SUPPLIER_INVOICE' AND supplier_invoice_id IS NOT NULL) OR "
+            "(kind = 'DIRECT_IMPORT_EXPENSE' AND supplier_invoice_id IS NULL)",
+            name="ck_import_expenses_invoice_kind",
+        ),
+        Index("ix_import_expenses_company_file", "company_id", "file_id"),
+    )

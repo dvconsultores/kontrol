@@ -194,12 +194,32 @@ def _crear_orden(
 
 
 def _adjuntar_documento(mundo, company_id, document_id):
-    from app.modules.documents.models import DocumentLink
+    from app.modules.documents.models import Document, DocumentLink, DocumentType
 
     db = mundo.factory()
     try:
+        tipo = db.scalar(
+            select(DocumentType).where(
+                DocumentType.company_id == company_id,
+                DocumentType.code == "IMPORT-ADJUNTO",
+            )
+        )
+        if tipo is None:
+            tipo = DocumentType(company_id=company_id, code="IMPORT-ADJUNTO", name="Adjunto de importación")
+            db.add(tipo)
+            db.flush()
+
+        doc = Document(
+            company_id=company_id,
+            document_type_id=tipo.id,
+            title="Documento adjunto",
+            status="ACTIVE",
+        )
+        db.add(doc)
+        db.flush()
+
         link = DocumentLink(
-            document_id=str(uuid.uuid4()),
+            document_id=str(doc.id),
             company_id=company_id,
             resource_type="ImportDocument",
             resource_id=document_id,
@@ -485,6 +505,109 @@ def test_negativo_correccion_abierta_vuelve_ordered(mundo, reloj_mfa, rol_comple
     assert r.json()["status"] == "ORDERED"
 
 
+def test_autor_registrado_en_seguimiento_y_correcciones(mundo, reloj_mfa, rol_completo):
+    from mfa_mundo import crear_usuario
+
+    from app.modules.imports.models import ImportCorrection, ImportFinancialLink, ImportTrackingEvent
+
+    nombre = f"imp{uuid.uuid4().hex[:12]}"
+    user_id = crear_usuario(mundo, nombre)
+    _dar(mundo, user_id, rol_completo, mundo.company_id)
+    cabeceras = _entrar(mundo, reloj_mfa, nombre)
+    cabeceras["X-Kontrol-Company"] = str(mundo.company_id)
+
+    supplier_id = _proveedor(mundo, cabeceras)
+    _aprobar_proveedor(mundo, supplier_id)
+    file_payload = _crear_expediente(mundo, cabeceras, supplier_id)
+    file_id = file_payload["id"]
+
+    r = mundo.client.post(
+        f"{API}/importaciones/{file_id}/order",
+        json={"order_id": _crear_orden(mundo, mundo.company_id, supplier_id, status="APPROVED")},
+        headers=cabeceras,
+    )
+    assert r.status_code == 200, r.text
+    documentos = r.json().get("documents", [])
+
+    for doc in documentos:
+        doc_id = doc["id"]
+        _adjuntar_documento(mundo, mundo.company_id, doc_id)
+        r = mundo.client.post(
+            f"{API}/importaciones/{file_id}/documents/{doc_id}/receive",
+            json={"reference": "REF"},
+            headers=cabeceras,
+        )
+        assert r.status_code == 200, r.text
+        r = mundo.client.post(
+            f"{API}/importaciones/{file_id}/documents/{doc_id}/validate",
+            headers=cabeceras,
+        )
+        assert r.status_code == 200, r.text
+
+    r = mundo.client.post(
+        f"{API}/importaciones/{file_id}/confirm-documents",
+        headers=cabeceras,
+    )
+    assert r.status_code == 200, r.text
+
+    r = mundo.client.post(
+        f"{API}/importaciones/{file_id}/corrections",
+        json={
+            "kind": "FALTANTE",
+            "description": "Falta documentación",
+            "action_required": "Adjuntar documento faltante",
+            "responsible": "PROVEEDOR",
+        },
+        headers=cabeceras,
+    )
+    assert r.status_code == 200, r.text
+
+    r = mundo.client.post(
+        f"{API}/importaciones/{file_id}/tracking",
+        json={"milestone": "DEPARTED", "occurred_on": "2026-11-01"},
+        headers=cabeceras,
+    )
+    assert r.status_code == 200, r.text
+
+    r = mundo.client.post(
+        f"{API}/importaciones/{file_id}/payments",
+        json={"kind": "PAYMENT", "amount": "1.00"},
+        headers=cabeceras,
+    )
+    assert r.status_code == 200, r.text
+
+    db = mundo.factory()
+    try:
+        eventos = db.scalars(
+            select(ImportTrackingEvent).where(ImportTrackingEvent.file_id == file_id)
+        ).all()
+        assert len(eventos) > 0
+        for evento in eventos:
+            assert evento.created_by == user_id
+
+        enlaces = db.scalars(
+            select(ImportFinancialLink).where(ImportFinancialLink.file_id == file_id)
+        ).all()
+        assert len(enlaces) > 0
+        for enlace in enlaces:
+            assert enlace.created_by == user_id
+
+        correcciones = db.scalars(
+            select(ImportCorrection).where(ImportCorrection.file_id == file_id)
+        ).all()
+        assert len(correcciones) > 0
+        for correccion in correcciones:
+            assert correccion.created_by == user_id
+    finally:
+        db.close()
+
+    r = mundo.client.get(f"{API}/importaciones/{file_id}", headers=cabeceras)
+    assert r.status_code == 200, r.text
+    payload = r.json()
+    textos = str(payload)
+    assert "desconocido" not in textos.lower()
+
+
 def test_eligible_orders(mundo, reloj_mfa, rol_completo):
     cabeceras = _operador(mundo, reloj_mfa, rol_completo)
     supplier_id = _proveedor(mundo, cabeceras)
@@ -661,6 +784,7 @@ def test_negativo_vincular_in(mundo, reloj_mfa, rol_completo):
 
 def test_negativo_company_isolation(mundo, reloj_mfa, rol_completo):
     from app.modules.imports.models import ImportFile
+    from app.modules.master_data.models import Party
     from app.modules.organization.models import Company
 
     db = mundo.factory()
@@ -668,10 +792,19 @@ def test_negativo_company_isolation(mundo, reloj_mfa, rol_completo):
         other_company_id = db.scalar(
             select(Company.id).where(Company.tenant_id == mundo.tenant_b_id)
         )
+        proveedor_externo = Party(
+            company_id=other_company_id,
+            code=f"PROV-{uuid.uuid4().hex[:8]}",
+            name="Proveedor externo",
+            person_type="JURIDICA",
+            roles=["SUPPLIER"],
+        )
+        db.add(proveedor_externo)
+        db.flush()
         file = ImportFile(
             company_id=other_company_id,
             code=f"IMP-{uuid.uuid4().hex[:12]}",
-            supplier_id=str(uuid.uuid4()),
+            supplier_id=str(proveedor_externo.id),
             currency="VED",
             status="NEGOTIATING",
         )

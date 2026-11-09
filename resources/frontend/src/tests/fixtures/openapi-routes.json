@@ -1981,6 +1981,11 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/importaciones/{file_id}/costs",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/importaciones/{file_id}/documents",
       "query": []
@@ -1998,6 +2003,25 @@
     {
       "method": "POST",
       "path": "/importaciones/{file_id}/documents/{document_id}/validate",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/importaciones/{file_id}/expense-invoice-candidates",
+      "query": [
+        "page",
+        "page_size",
+        "q"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/expenses",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/expenses/{expense_id}/void",
       "query": []
     },
     {

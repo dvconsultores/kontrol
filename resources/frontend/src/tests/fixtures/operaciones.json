@@ -2715,6 +2715,14 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/importaciones/{file_id}/costs",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/importaciones/{file_id}/documents",
       "capabilities": [
@@ -2743,6 +2751,30 @@
       "path": "/api/v1/importaciones/{file_id}/documents/{document_id}/validate",
       "capabilities": [
         "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/importaciones/{file_id}/expense-invoice-candidates",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/expenses",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/expenses/{expense_id}/void",
+      "capabilities": [
+        "compras:create"
       ],
       "scope": "COMPANY"
     },

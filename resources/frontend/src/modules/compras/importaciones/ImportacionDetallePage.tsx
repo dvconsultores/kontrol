@@ -24,6 +24,7 @@ import { ImportacionCorrecciones } from "./ImportacionCorrecciones";
 import { ImportacionDiferencias } from "./ImportacionDiferencias";
 import { ImportacionRecepcion } from "./ImportacionRecepcion";
 import { ImportacionUbicacion } from "./ImportacionUbicacion";
+import { ImportacionCostos } from "./ImportacionCostos";
 import {
   ESTADOS,
   ESTADOS_DOCUMENTO,
@@ -675,7 +676,7 @@ export function ImportacionDetallePage() {
           </div>
         )}
       </ConfirmationDialog>
-      <nav aria-label="Secciones del expediente" className="space-x-4">
+      <nav aria-label="Secciones del expediente" className="flex flex-wrap gap-x-4 gap-y-1">
         <a href="#resumen" className="text-sm font-medium text-brand-600 hover:text-brand-700">Resumen</a>
         <a href="#negociacion" className="text-sm font-medium text-brand-600 hover:text-brand-700">Negociación</a>
         <a href="#orden" className="text-sm font-medium text-brand-600 hover:text-brand-700">Orden</a>
@@ -687,6 +688,7 @@ export function ImportacionDetallePage() {
         <a href="#recepcion" className="text-sm font-medium text-brand-600 hover:text-brand-700">Recepción</a>
         <a href="#diferencias" className="text-sm font-medium text-brand-600 hover:text-brand-700">Diferencias</a>
         <a href="#ubicacion" className="text-sm font-medium text-brand-600 hover:text-brand-700">Ubicación</a>
+        <a href="#costos" className="text-sm font-medium text-brand-600 hover:text-brand-700">Costos</a>
         <a href="#historial" className="text-sm font-medium text-brand-600 hover:text-brand-700">Historial</a>
       </nav>
       <div className="space-y-6">
@@ -704,6 +706,10 @@ export function ImportacionDetallePage() {
             <ImportacionUbicacion detalle={detalle} onCambios={invalidar} />
           </>
         ) : null}
+        {detalle.order_id && detalle.status !== "CANCELLED" ? (
+          <ImportacionCostos detalle={detalle} onCambios={invalidar} />
+        ) : null}
+
         <Autorizado operacion={["GET", `/importaciones/${detalle.id}/audit`]}>
           <Historial id={detalle.id} />
         </Autorizado>

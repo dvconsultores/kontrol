@@ -20,14 +20,15 @@ Fuente: Volumen 2, menú y procesos, y DOCX de importación, contrastados con ro
 - Capacidades: 92
 - OWNER_UAT_READY: 2
 - FUNCTIONAL_SLICE_COMPLETE: 42
-- PARTIAL_PROCESS: 29
+- PARTIAL_PROCESS: 30
 - FRONTEND_SHELL: 1
 - BACKEND_ONLY: 0
-- NOT_STARTED: 18
-- SCREEN_SURFACE_COVERAGE: 74 de 92 (superficie, no requisitos)
+- NOT_STARTED: 17
+- SCREEN_SURFACE_COVERAGE: 75 de 92 (superficie, no requisitos)
 - GLOBAL_SPONSOR_REQUIREMENTS_COVERAGE: NOT_MEASURED_REQUIREMENT_BY_REQUIREMENT
 - Verificadas en navegador con evidencia vigente: 5 filas
-- OWNER_UAT_READY_MILESTONES: Terceros núcleo; Importaciones ciclo 1; Importaciones ciclos 2 y 3
+- OWNER_UAT_READY_MILESTONES: Terceros núcleo
+- Importaciones: los ciclos 1 a 3 se verificaron primero solo sobre SQLite (`BROWSER_VERIFIED_SQLITE_ONLY`). El 2026-11-09 se halló que no funcionaban sobre PostgreSQL migrado; reparados y revalidados como `POSTGRESQL_BROWSER_VERIFIED` en `specs/018-importaciones/evidence/pg-integrity/EVIDENCE.md`. No se vuelve a aceptar SQLite como prueba de funcionamiento
 
 ## Por módulo
 
@@ -42,7 +43,7 @@ Fuente: Volumen 2, menú y procesos, y DOCX de importación, contrastados con ro
 | Maestros/Fiscal | 4 | 0 | 1 | 2 | 1 |
 | Maestros/Regulatorio | 2 | 0 | 0 | 2 | 0 |
 | Compras | 8 | 0 | 5 | 2 | 1 |
-| Importaciones | 4 | 0 | 0 | 3 | 1 |
+| Importaciones | 4 | 0 | 0 | 4 | 0 |
 | Ventas | 8 | 0 | 5 | 2 | 1 |
 | Inventario | 9 | 0 | 5 | 4 | 0 |
 | CxC | 2 | 0 | 1 | 1 | 0 |
@@ -72,7 +73,6 @@ Fuente: Volumen 2, menú y procesos, y DOCX de importación, contrastados con ro
 - Maestros/Comercial: Descuentos
 - Maestros/Fiscal: Plantillas fiscales
 - Compras: Comparación de ofertas
-- Importaciones: Gastos de importación (landed cost)
 - Ventas: Crédito
 - Fiscal: Contingencia
 - Regulación: Vencimientos

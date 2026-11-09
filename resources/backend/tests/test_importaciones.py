@@ -173,12 +173,32 @@ def _crear_orden(
 
 
 def _adjuntar_documento(mundo, company_id, document_id):
-    from app.modules.documents.models import DocumentLink
+    from app.modules.documents.models import Document, DocumentLink, DocumentType
 
     db = mundo.factory()
     try:
+        tipo = db.scalar(
+            select(DocumentType).where(
+                DocumentType.company_id == company_id,
+                DocumentType.code == "IMPORT-ADJUNTO",
+            )
+        )
+        if tipo is None:
+            tipo = DocumentType(company_id=company_id, code="IMPORT-ADJUNTO", name="Adjunto de importación")
+            db.add(tipo)
+            db.flush()
+
+        doc = Document(
+            company_id=company_id,
+            document_type_id=tipo.id,
+            title="Documento adjunto",
+            status="ACTIVE",
+        )
+        db.add(doc)
+        db.flush()
+
         link = DocumentLink(
-            document_id=str(uuid.uuid4()),
+            document_id=str(doc.id),
             company_id=company_id,
             resource_type="ImportDocument",
             resource_id=document_id,
@@ -292,6 +312,7 @@ def test_flujo_de_importacion(mundo, reloj_mfa, rol_completo):
 
 def test_empresa_ajena_404(mundo, reloj_mfa, rol_completo):
     from app.modules.imports.models import ImportFile
+    from app.modules.master_data.models import Party
     from app.modules.organization.models import Company
 
     cabeceras = _operador(mundo, reloj_mfa, rol_completo)
@@ -302,10 +323,19 @@ def test_empresa_ajena_404(mundo, reloj_mfa, rol_completo):
             select(Company).where(Company.tenant_id == mundo.tenant_b_id)
         )
         assert empresa_b is not None
+        proveedor_externo = Party(
+            company_id=empresa_b.id,
+            code=f"PROV-{uuid.uuid4().hex[:8]}",
+            name="Proveedor externo",
+            person_type="JURIDICA",
+            roles=["SUPPLIER"],
+        )
+        db.add(proveedor_externo)
+        db.flush()
         file_externo = ImportFile(
             company_id=empresa_b.id,
             code=f"EXT-{uuid.uuid4().hex[:8]}",
-            supplier_id=str(uuid.uuid4()),
+            supplier_id=str(proveedor_externo.id),
             currency="VED",
             status="NEGOTIATING",
         )

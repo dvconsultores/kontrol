@@ -15,7 +15,7 @@ from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
 from app.modules.audit.models import AuditEvent
 from app.modules.identity_access.models import User
-from app.modules.imports import service
+from app.modules.imports import costs, service
 from app.modules.imports.models import ImportFile
 from app.shared.audit_catalog import label_of, safe_details
 from app.shared.clock import InstanteDeEntrada
@@ -638,6 +638,112 @@ def cancel_file(
     db.commit()
     db.refresh(file)
     return service.file_detail(db, file)
+
+
+@router.get("/{file_id}/costs")
+def import_costs_detail(
+    file_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    return costs.costs_detail(db, file)
+
+
+@router.get("/{file_id}/expense-invoice-candidates")
+def import_expense_invoice_candidates(
+    file_id: str,
+    q: str | None = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    return costs.invoice_candidates(
+        db,
+        file=file,
+        q=q,
+        page=page,
+        page_size=page_size,
+    )
+
+
+class RegisterExpenseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    kind: str
+    concept: str = Field(min_length=1, max_length=200)
+    expense_date: date | None = None
+    amount: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    currency: str | None = Field(None, min_length=3, max_length=8)
+    reference: str | None = Field(None, max_length=120)
+    supplier_id: str | None = None
+    supplier_invoice_id: str | None = None
+    import_document_id: str | None = None
+
+
+@router.post("/{file_id}/expenses", dependencies=[Depends(require_write_allowed)])
+def import_register_expense(
+    file_id: str,
+    body: RegisterExpenseBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    costs.register_expense(
+        db,
+        file=file,
+        kind=body.kind,
+        concept=body.concept,
+        expense_date=body.expense_date,
+        amount=body.amount,
+        currency=body.currency,
+        reference=body.reference,
+        supplier_id=body.supplier_id,
+        supplier_invoice_id=body.supplier_invoice_id,
+        import_document_id=body.import_document_id,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    return costs.costs_detail(db, file)
+
+
+class VoidExpenseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    version: int
+    reason: str = Field(min_length=1, max_length=255)
+
+
+@router.post(
+    "/{file_id}/expenses/{expense_id}/void",
+    dependencies=[Depends(require_write_allowed)],
+)
+def import_void_expense(
+    file_id: str,
+    expense_id: str,
+    body: VoidExpenseBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    costs.void_expense(
+        db,
+        file=file,
+        expense_id=expense_id,
+        version=body.version,
+        reason=body.reason,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    return costs.costs_detail(db, file)
 
 
 @router.get("/{file_id}/audit")
