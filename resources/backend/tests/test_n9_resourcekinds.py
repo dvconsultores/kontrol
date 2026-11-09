@@ -14,6 +14,7 @@ saltarlo lo escondería entre los que sí funcionan.
 
 from __future__ import annotations
 
+import hashlib
 import os
 
 import pytest
@@ -164,7 +165,12 @@ def test_ningun_tipo_cruza_la_frontera_entre_tenants(mundo, kind):
     finally:
         db.close()
 
-    tipo = _tipo_documental(mundo, "ua", mundo.company_a, f"N9T-{kind[:11]}")
+    # El código debe ser único por kind, determinista y caber en `code` (32).
+    # Se usa un hash estable del nombre del kind para evitar colisiones por
+    # truncamiento entre kinds distintos (p.ej. GovernmentPosition vs
+    # GovernmentProcurementFile).
+    sufijo = hashlib.sha1(kind.encode("utf-8")).hexdigest()[:8]
+    tipo = _tipo_documental(mundo, "ua", mundo.company_a, f"N9T-{sufijo}")
     doc_a = _documento(mundo, "ua", mundo.company_a, tipo, f"Documento {kind}")
     r = _vincular(mundo, "ua", mundo.company_a, doc_a, kind, recurso_c)
     assert r.status_code == 404, (

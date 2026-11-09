@@ -383,14 +383,16 @@ export function ExpedientePage() {
             </div>
             <div>
               <dt className="text-xs font-medium text-text-600">Próximo hito</dt>
-              <dd className="text-sm text-text-900">
-                {detalle.proximo_hito ? detalle.proximo_hito.nombre : "Sin próximo hito"}
-              </dd>
-              {detalle.proximo_hito && (
-                <dd className="text-xs text-text-600">
-                  {detalle.proximo_hito.fecha_prevista ? formatearFechaDeNegocio(detalle.proximo_hito.fecha_prevista) : "sin fecha"}
-                  {detalle.proximo_hito.fecha_superada ? " · Fecha prevista superada" : ""}
-                </dd>
+              {detalle.proximo_hito ? (
+                <>
+                  <dd className="text-sm text-text-900">{detalle.proximo_hito.nombre}</dd>
+                  <dd className="text-xs text-text-600">
+                    {detalle.proximo_hito.fecha_prevista ? formatearFechaDeNegocio(detalle.proximo_hito.fecha_prevista) : "sin fecha"}
+                    {detalle.proximo_hito.fecha_superada ? " · Fecha prevista superada" : ""}
+                  </dd>
+                </>
+              ) : (
+                <dd className="text-sm text-text-900">Sin próximo hito</dd>
               )}
             </div>
             <div>
@@ -501,7 +503,9 @@ export function ExpedientePage() {
                 <th className="px-2 py-1">Desde</th>
                 <th className="px-2 py-1">Hasta</th>
                 <th className="px-2 py-1">Motivo</th>
-                <th className="px-2 py-1"></th>
+                <th className="px-2 py-1">
+                  <span className="sr-only">Acciones</span>
+                </th>
               </tr>
             </thead>
             <tbody>
