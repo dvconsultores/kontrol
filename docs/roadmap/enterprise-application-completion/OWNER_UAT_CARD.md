@@ -2,7 +2,7 @@
 
 **Dirección:** http://127.0.0.1:5173, en el equipo de P2. **Acceso:** fichero local protegido, nunca en Git. **Datos:** sintéticos.
 
-**Límites conocidos:** la pila usa SQLite y Vite, no PostgreSQL ni el empaquetado de producción. Solo es accesible desde ese equipo. El bloqueo de pago a proveedores no aprobados afectará a los proveedores existentes cuando se despliegue: decisión pendiente.
+**Límites conocidos:** `UAT_DATABASE_ENGINE = PostgreSQL`, `UAT_SCHEMA_SOURCE = Alembic`, con Vite, no el empaquetado de producción. Al primer ingreso pide dar de alta la verificación en dos pasos. El menú también muestra Gobierno por la licencia de prueba; no forma parte de esta tarjeta. Solo es accesible desde ese equipo. El bloqueo de pago a proveedores no aprobados afectará a los proveedores existentes cuando se despliegue: decisión pendiente.
 
 ## Terceros (Maestros → Terceros)
 

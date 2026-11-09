@@ -42,6 +42,10 @@ Vector observado: `1.250,50 × 36,125 = 45.174,31`. Es evidencia, no está en el
 
 Corrida en Chrome sobre PostgreSQL a 390 y 320 px: PASS, con `scrollWidth == clientWidth` en las 7 pantallas medidas. **Se hizo con una copia de diagnóstico de la E2E**, no con la spec real, que usa el enlace del menú lateral y no cierra notificaciones. La copia abre el menú con su botón, cierra las notificaciones antes de cada clic y acota un selector. Prueba que el flujo es posible en un teléfono, no que sea cómodo.
 
+## UAT
+
+Pila local relevada a PostgreSQL 16.2, base nueva con esquema creado solo por Alembic hasta `0087_importaciones_gastos`. La E2E real pasó contra ella (46,7 s, 0 respuestas 500, capa en USD, autores registrados). Después se rehízo limpia para la dueña, y el primer ingreso pide el alta de verificación en dos pasos. La base SQLite anterior se conserva fuera de uso.
+
 ## Deuda abierta
 
 - **IMP-MOBILE-NOTIF-01:** cada acción deja una notificación persistente (FR-008). En teléfono, apiladas abajo, tapan los botones del pie hasta cerrarlas a mano. La corrección propuesta por DeepSeek dejaba visible la más antigua, no la más reciente, y se rechazó con el presupuesto agotado.
