@@ -36,6 +36,7 @@ PASOS Y RESULTADO ESPERADO:
   9. RECTIFICAR: pulse «Rectificar» en una actuación e indique el motivo. El registro original sigue, y ambos se señalan.
   10. CRONOLOGÍA: lea fecha, tipo, descripción, responsable, documento, resultado, actor y estado de cada registro.
   11. LISTADO: busque y filtre por estado, unidad, responsable, modalidad o fechas.
+  11b. TELÉFONO: reduzca la ventana bajo 768 px o use un teléfono. El menú se abre con el botón de la barra superior y el contenido usa todo el ancho.
   12. CERRAR: pulse «Cerrar expediente» con fecha y motivo. Queda «Solo consulta» y no se puede reabrir: ciérrelo solo en un expediente de prueba.
 
 NEGATIVAS:

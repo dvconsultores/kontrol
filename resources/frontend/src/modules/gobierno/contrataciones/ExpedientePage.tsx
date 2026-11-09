@@ -468,21 +468,23 @@ export function ExpedientePage() {
           </div>
           <div className="sm:col-span-2">
             <dt className="text-xs font-medium text-text-600">Modalidad declarada</dt>
-            {detalle.modalidad_declarada ? (
-              <dd className="text-sm text-text-900">
-                {detalle.modalidad_etiqueta} <span className="text-xs text-text-600">(Declarada)</span>
-                {detalle.modalidad_fundamento && (
-                  <div className="text-xs text-text-600">Fundamento: {detalle.modalidad_fundamento}</div>
-                )}
-                {detalle.modalidad_fuente && (
-                  <div className="text-xs text-text-600">Fuente: {detalle.modalidad_fuente}</div>
-                )}
-              </dd>
-            ) : (
-              <dd className="text-sm text-text-900">Sin declarar</dd>
-            )}
+            <dd className="text-sm text-text-900">
+              {detalle.modalidad_declarada ? (
+                <>
+                  {detalle.modalidad_etiqueta} <span className="text-xs text-text-600">(Declarada)</span>
+                  {detalle.modalidad_fundamento && (
+                    <span className="block text-xs text-text-600">Fundamento: {detalle.modalidad_fundamento}</span>
+                  )}
+                  {detalle.modalidad_fuente && (
+                    <span className="block text-xs text-text-600">Fuente: {detalle.modalidad_fuente}</span>
+                  )}
+                </>
+              ) : (
+                "Sin declarar"
+              )}
+            </dd>
             {catalogo?.aviso_modalidad && (
-              <p className="mt-1 text-xs text-text-600">{catalogo.aviso_modalidad}</p>
+              <dd className="mt-1 text-xs text-text-600">{catalogo.aviso_modalidad}</dd>
             )}
           </div>
         </dl>
@@ -492,7 +494,7 @@ export function ExpedientePage() {
         <h2 id="sec-responsables" className="text-lg font-semibold text-text-900">
           Responsables
         </h2>
-        <div className="mt-3 overflow-x-auto" tabIndex={0} role="region" aria-label="Responsables del expediente">
+        <div className="relative mt-3 overflow-x-auto" tabIndex={0} role="region" aria-label="Responsables del expediente">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs font-medium text-text-600">

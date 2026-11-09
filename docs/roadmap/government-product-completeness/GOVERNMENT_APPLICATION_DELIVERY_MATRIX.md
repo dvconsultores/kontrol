@@ -150,3 +150,8 @@ Una ruta declarada no demuestra que la pantalla funcione. Una pantalla cuenta co
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | GOV-PROC-004 | Unidad contratante | Expediente único | Listado, nuevo, ficha, editar | sí | 0080 | 16 rutas | `gobierno_expedientes` | Spec 046 y DOC-02, con folio | CTL-02, 13 eventos | sí, flujo principal | sí | OWNER_UAT_READY | Acciones auxiliares por interfaz; bitácora sin filtro por expediente |
 | GOV-PROC-014 | Unidad contratante | Hitos y lapsos | Hitos y lapsos, cronología | sí | 0080 | hitos | `gobierno_expedientes:manage` | Folio ligado a hito | CTL-02 | sí: crear y fecha real | sí | OWNER_UAT_READY | Cálculo de lapsos: bloqueado por calendario DOC-03 |
+
+## Actualización 2026-11-09
+
+`PROC03_FUNCTIONAL_SLICE_COMPLETE = 1`: ficha y lista verificadas también a 320 y 390 px, con Axe dirigido sin violaciones. PROC-06 **no** está entregado: su estado en esta matriz no cambia.
+
