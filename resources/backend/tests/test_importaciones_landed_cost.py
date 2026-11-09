@@ -2,7 +2,7 @@
 import os
 import threading
 import uuid
-from datetime import date
+from datetime import date, datetime, UTC
 from decimal import Decimal
 from uuid import uuid4
 
@@ -39,7 +39,8 @@ from app.modules.master_data.models import CatalogItem, UnitOfMeasure
 from app.modules.organization.models import Company
 from app.modules.purchasing.models import GoodsReceipt
 from app.modules.treasury import rates
-from app.modules.treasury.models import Currency, TreasuryRateSnapshot
+from app.modules.treasury.models import Currency, ExchangeRate, TreasuryRateSnapshot
+from app.shared.clock import zona_de_negocio
 
 pytest_plugins = ["mfa_apoyo"]
 
@@ -49,18 +50,51 @@ API = "/api/v1"
 def _tasa(mundo, fecha, code, rate, quote="VED"):
     with mundo.factory() as db:
         rates.asegurar_moneda_funcional(db, mundo.company_id, mundo.admin_id)
-        if rates.moneda_por_codigo(db, mundo.company_id, code) is None:
-            db.add(
-                Currency(
-                    company_id=mundo.company_id,
-                    code=code,
-                    name=code,
-                    status="ACTIVE",
-                    created_by=mundo.admin_id,
-                )
+        moneda_base = rates.moneda_por_codigo(db, mundo.company_id, code)
+        if moneda_base is None:
+            moneda_base = Currency(
+                company_id=mundo.company_id,
+                code=code,
+                name=code,
+                status="ACTIVE",
+                created_by=mundo.admin_id,
             )
+            db.add(moneda_base)
             db.flush()
-        rates.register_rate(
+        moneda_quote = rates.moneda_por_codigo(db, mundo.company_id, quote)
+        if moneda_quote is None:
+            moneda_quote = Currency(
+                company_id=mundo.company_id,
+                code=quote,
+                name=quote,
+                status="ACTIVE",
+                created_by=mundo.admin_id,
+            )
+            db.add(moneda_quote)
+            db.flush()
+
+        # La unicidad por empresa, monedas, rate_type y effective_at es real.
+        # El fixture `mundo` es de ámbito módulo: se comparte empresa entre
+        # escenarios. Si la observación ya existe, reutilizarla es correcto.
+        # `register_rate` y la unicidad comparan el instante normalizado a UTC
+        # (`rates._momento`): una fecha civil se guarda como las 00:00 de
+        # Caracas en UTC. La comprobación de existencia debe usar ese mismo
+        # instante, no la fecha civil.
+        momento = rates._momento(fecha)
+        existente = db.scalar(
+            select(ExchangeRate).where(
+                ExchangeRate.company_id == mundo.company_id,
+                ExchangeRate.base_currency_id == moneda_base.id,
+                ExchangeRate.quote_currency_id == moneda_quote.id,
+                ExchangeRate.rate_type == "REFERENCE",
+                ExchangeRate.effective_at == momento,
+            )
+        )
+        if existente is not None:
+            db.commit()
+            return existente
+
+        obs = rates.register_rate(
             db,
             company_id=mundo.company_id,
             base_code=code,
@@ -70,6 +104,7 @@ def _tasa(mundo, fecha, code, rate, quote="VED"):
             actor=mundo.admin_id,
         )
         db.commit()
+        return obs
 
 
 def _gasto(mundo, cabeceras, file_id, **campos):
@@ -90,6 +125,25 @@ def _gasto(mundo, cabeceras, file_id, **campos):
     )
 
 
+def _id_gasto(mundo, cabeceras, file_id, response):
+    """Devuelve el id del gasto recién registrado.
+
+    El contrato real de POST /expenses devuelve el detalle de costos del
+    expediente (igual que GET /costs), no el gasto. Localizamos el gasto por
+    su concept en la lista "expenses". El request del TestClient de Starlette
+    es un httpx.Request: no tiene .json, pero conserva el cuerpo enviado en
+    .content, que aquí es el JSON del gasto.
+    """
+    assert response.status_code == 200, response.text
+    detalle = response.json()
+    import json
+
+    request_payload = json.loads(response.request.content)
+    concept = request_payload["concept"]
+    gasto = next(e for e in detalle["expenses"] if e["concept"] == concept)
+    return gasto["id"]
+
+
 def _entrada(
     mundo,
     file_id,
@@ -99,10 +153,12 @@ def _entrada(
     currency,
     product_id=None,
     base_unit_id=None,
+    warehouse_id=None,
 ):
     with mundo.factory() as db:
         file = db.get(ImportFile, file_id)
-        warehouse_id = _almacen(mundo, mundo.company_id)
+        if warehouse_id is None:
+            warehouse_id = _almacen(mundo, mundo.company_id)
         receipt = GoodsReceipt(
             company_id=mundo.company_id,
             code=f"REC-{uuid4().hex[:8]}",
@@ -296,8 +352,7 @@ def test_value_con_residuo_y_aislamiento_de_lineas(mundo, reloj_mfa, rol_complet
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    assert r.status_code == 200, r.text
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
 
     _clasificar(mundo, cab, file_id, expense_id)
 
@@ -321,7 +376,7 @@ def test_value_con_residuo_y_aislamiento_de_lineas(mundo, reloj_mfa, rol_complet
         snapshots_despues = db.scalars(select(TreasuryRateSnapshot)).all()
         assert len(snapshots_antes) == len(snapshots_despues)
 
-    # Otra expediente de la misma empresa no contamina las líneas
+    # Otro expediente de la misma empresa no contamina las líneas
     cab2, file_id2, supplier_id2 = _hasta_despachado(mundo, reloj_mfa, rol_completo)
     _entrada(
         mundo,
@@ -339,7 +394,7 @@ def test_value_con_residuo_y_aislamiento_de_lineas(mundo, reloj_mfa, rol_complet
         supplier_id=supplier_id2,
         expense_date="2025-01-01",
     )
-    expense_id2 = r2.json()["id"]
+    expense_id2 = _id_gasto(mundo, cab, file_id2, r2)
     _clasificar(mundo, cab, file_id2, expense_id2)
 
     r = _previa(mundo, cab, file_id, expense_id, "VALUE")
@@ -404,7 +459,7 @@ def test_quantity_comparable_y_no_comparable(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     r = _previa(mundo, cab, file_id, expense_id, "QUANTITY")
@@ -445,6 +500,8 @@ def test_manual_validaciones_y_aplicacion(mundo, reloj_mfa, rol_completo):
         unit_cost="2.00",
         quantity=10,
         currency="USD",
+        product_id=capa_a["product_id"],
+        warehouse_id=capa_a["warehouse_id"],
     )
 
     r = _gasto(
@@ -456,7 +513,7 @@ def test_manual_validaciones_y_aplicacion(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     manuales_desbalanceados = {
@@ -542,8 +599,7 @@ def test_moneda_cruzada_y_rate_no_disponible(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-10",
     )
-    assert r.status_code == 200, r.text
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     r = _previa(mundo, cab, file_id, expense_id, "VALUE")
@@ -587,7 +643,7 @@ def test_moneda_cruzada_y_rate_no_disponible(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id2,
         expense_date="2025-01-10",
     )
-    expense_id2 = r.json()["id"]
+    expense_id2 = _id_gasto(mundo, cab, file_id2, r)
     _clasificar(mundo, cab, file_id2, expense_id2)
     r = _previa(mundo, cab, file_id2, expense_id2, "VALUE")
     assert r.status_code == 409, r.text
@@ -614,7 +670,7 @@ def test_sin_clasificar_y_version_obsoleta(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
 
     r = _previa(mundo, cab, file_id, expense_id, "VALUE")
     assert r.status_code == 200, r.text
@@ -658,6 +714,8 @@ def test_aplicar_y_valoracion(mundo, reloj_mfa, rol_completo):
         unit_cost="10.00",
         quantity=20,
         currency="USD",
+        product_id=capa_a["product_id"],
+        warehouse_id=capa_a["warehouse_id"],
     )
 
     product_id = capa_a["product_id"]
@@ -678,7 +736,7 @@ def test_aplicar_y_valoracion(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     r = _previa(mundo, cab, file_id, expense_id, "VALUE")
@@ -751,10 +809,14 @@ def test_salida_posterior_fifo_con_landed_cost(mundo, reloj_mfa, rol_completo):
         db.add(perfil)
         db.commit()
 
-    # Producto ajeno para verificar que no se altera su coste de salida
+    # Producto ajeno para verificar que no se altera su coste de salida.
+    # Debe vivir en OTRO expediente: si comparte expediente con la capa a la
+    # que luego aplicamos landed cost, el bloqueo DM-03 (capa consumida en el
+    # expediente) impide legítimamente la aplicación.
+    cab2, file_id2, supplier_id2 = _hasta_despachado(mundo, reloj_mfa, rol_completo)
     capa_otro = _entrada(
         mundo,
-        file_id,
+        file_id2,
         unit_cost="7.00",
         quantity=10,
         currency="USD",
@@ -773,7 +835,7 @@ def test_salida_posterior_fifo_con_landed_cost(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     r = _previa(mundo, cab, file_id, expense_id, "VALUE")
@@ -808,6 +870,8 @@ def test_average_sin_perfil_usando_entradas(mundo, reloj_mfa, rol_completo):
         unit_cost="20.00",
         quantity=10,
         currency="USD",
+        product_id=capa_a["product_id"],
+        warehouse_id=capa_a["warehouse_id"],
     )
     assert capa_a["product_id"] == capa_b["product_id"]
     product_id = capa_a["product_id"]
@@ -821,7 +885,7 @@ def test_average_sin_perfil_usando_entradas(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     manuales = {
@@ -860,7 +924,7 @@ def test_doble_aplicacion_y_duplicado_orm(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     r = _previa(mundo, cab, file_id, expense_id, "VALUE")
@@ -930,8 +994,14 @@ def test_concurrencia_una_sola_aplicacion(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
+
+    # Un preview_token real y vigente: sin él ambos hilos fallan por token
+    # obsoleto antes de competir por el lock de fila.
+    r = _previa(mundo, cab, file_id, expense_id, "VALUE")
+    assert r.status_code == 200, r.text
+    preview_token = r.json()["preview_token"]
 
     resultados = []
     barrier = threading.Barrier(2)
@@ -947,7 +1017,7 @@ def test_concurrencia_una_sola_aplicacion(mundo, reloj_mfa, rol_completo):
                 expense_id=expense_id,
                 criterion="VALUE",
                 manual_amounts=None,
-                preview_token=None,
+                preview_token=preview_token,
                 actor_id=mundo.admin_id,
                 tenant_id=mundo.tenant_id,
             )
@@ -999,7 +1069,7 @@ def test_capa_consumida_bloquea_aplicacion(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     r = _previa(mundo, cab, file_id, expense_id, "VALUE")
@@ -1044,7 +1114,7 @@ def test_reversion_y_bloqueos(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     r = _previa(mundo, cab, file_id, expense_id, "VALUE")
@@ -1150,7 +1220,7 @@ def test_permisos_solo_lectura(mundo, reloj_mfa, rol_completo, rol_solo_lectura)
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     cab_ro = _operador(mundo, reloj_mfa, rol_solo_lectura)
@@ -1221,7 +1291,7 @@ def test_aislamiento_empresa_y_expense_ajeno(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     # Expediente de otra empresa
@@ -1270,7 +1340,7 @@ def test_aislamiento_empresa_y_expense_ajeno(mundo, reloj_mfa, rol_completo):
         supplier_id=supplier_id2,
         expense_date="2025-01-01",
     )
-    expense_ajeno = r.json()["id"]
+    expense_ajeno = _id_gasto(mundo, cab, file_id2, r)
 
     r = _previa(mundo, cab, file_id, expense_ajeno, "VALUE")
     assert r.status_code == 404, r.text
@@ -1297,7 +1367,7 @@ def test_auditoria_clasificacion_aplicacion_y_reversion(mundo, reloj_mfa, rol_co
         supplier_id=supplier_id,
         expense_date="2025-01-01",
     )
-    expense_id = r.json()["id"]
+    expense_id = _id_gasto(mundo, cab, file_id, r)
     _clasificar(mundo, cab, file_id, expense_id)
 
     r = _previa(mundo, cab, file_id, expense_id, "VALUE")
