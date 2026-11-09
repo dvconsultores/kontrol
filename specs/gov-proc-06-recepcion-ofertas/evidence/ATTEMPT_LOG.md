@@ -27,3 +27,22 @@ PROC3-CIERRE-2 con PROC6-B6 enviado (llamada 10/10, ultima).
 Ultima llamada: PARTE 1 aplicada y verificada desde arbol limpio de HEAD: ficha sin desborde, Axe sin violaciones. PARTE 2 parcial: 2 bloques no coincidieron; quedan ctx, imports y pruebas; 0/4 pruebas de PROC-06.
 CIERRE: 10/10 llamadas (limite); 0 de solo pruebas; correcciones o reintentos: 6 (CIERRE R1, R2; B1 R1; B3; B4; B5, ultima). Objetivo <=4 incumplido; PROCESS_VIOLATION_P1_01 no repetida; P1_02 no repetida (encargos con errores crudos y contratos; contexto real de ficheros, sin sustituciones de logica, salvo nombres reales de columnas y rutas de import como contexto).
 Mecanico declarado: ruta anadida a bloques sin ruta; bloque de prueba de Sidebar anadido al final del fichero; ruff --fix.
+
+## Continuación PROC-06 (mandato con 8 llamadas, 1 de solo pruebas)
+Inventario y copia hechos. PROCESS_VIOLATION_P1_03 registrada. PUBLIC_UPSTREAM_REQUIRED=0. Un bloque sin ruta se rechaza; no se completa a mano.
+PROC6-A ATTEMPT enviado (llamada 1/8)
+PROC6-A ATTEMPT AUDIT_PASS: migracion arriba y abajo en PostgreSQL con tablas, 6 triggers, 2 permisos, CHECK ampliado; documents_for excluye sellados; PROC03_CERRAR restaurado. Mecanico: ruff --fix de orden de imports.
+PROC6-B ATTEMPT enviado (llamada 2/8, mixta: servicio, API y pruebas)
+PROC6-B ATTEMPT aplicado; AUDIT_REJECT: expediente no se crea (args), schema de respuesta, etiqueta sin archivo, decoradores y cuerpos de prueba. Diagnostico desechable: copia de la prueba y parche temporal de service_expedientes, restaurado por copia exacta; 5/15 con el parche.
+PROC6-B RETRY_1 enviado (llamada 3/8, mixta)
+PROC6-B RETRY_1 aplicado parcial; diagnostico desechable con parche restaurado: PROC-03 9/9 y 7/15 de PROC-06. PROC6-B RETRY_2 enviado (llamada 4/8, mixta). Ultimo reintento del bloque.
+PROC6-B RETRY_2 aplicado; bloque agotado. Producto: integridad y parametros corregidos. Diagnostico desechable: 10/15; defecto de producto NUEVO (NEW_ROOT_CAUSE): el listado rompe el esquema al devolver integridad_etiqueta; resto de la prueba.
+PROC6-C ATTEMPT enviado (llamada 5/8, mixta: defecto de listado, prueba, interfaz)
+PROC6-C ATTEMPT aplicado parcial: 3 bloques malformados rechazados, sin completar a mano. Pantalla escrita, no compila. PROC6-C RETRY_1 enviado (llamada 6/8, mixta)
+PROC6-C RETRY_1 aplicado parcial. PROC6-C RETRY_2 enviado (llamada 7/8, mixta). Mecanico: ruff --select I en app/main.py.
+PROC6-C RETRY_2 aplicado: backend 21/24 con PROC-03; tsc con 4 errores. Diagnosticos desechables en navegador (espec temporal fuera del repositorio y parche de alcance restaurado por copia exacta): recepcion rechazada por confidencial=false sin aviso visible.
+PROC6-D enviado (llamada 8/8, ultima, mixta). Un intento previo del puente no llamo a DeepSeek: el fichero del encargo no existia por un fallo de mi script.
+PROC6-D aplicado parcial (2 bloques no coincidieron). STOP: 8/8 llamadas. PROC-06 NO se publica.
+Estado medido: pruebas de PROC-06 12/15 y PROC-03 9/9 en PostgreSQL. Copia desechable que solo corrige defectos de la prueba: 14/15; el fallo restante es de la prueba (cabecera entera) y corta la comprobacion de folio y de puede_leer_archivo. Asi, con sello, /documentos/{id}, /descargar, /preview y /versiones dan 404 y no aparece en listado ni por recurso. Sin demostrar: descarga de version concreta (la prueba la condiciona), vinculos solo admite 404 o 405, folio 422 y paquete.
+Frontend: tsc y eslint fallan; tiene() sigue con alcance erroneo; casilla de confidencialidad sin corregir; E2E escrita, no compila, no ejecutada.
+Cierre: 8 llamadas; 4 reintentos (objetivo 3 incumplido); 0 de solo pruebas; aprox. 0,015 USD. Diagnosticos desechables: especificaciones temporales y parches temporales de producto, retirados y restaurados por copia exacta, sin publicar.
