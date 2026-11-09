@@ -18,6 +18,7 @@ import { Link, useSearchParams } from "react-router";
 import { ApiError, apiFetch } from "@/api/client";
 import { Autorizado } from "@/components/Autorizado";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { ReportesDeRecepcion } from "@/modules/compras/importaciones/ReporteDiferencias";
 import type {
   CatalogItemSummary,
   GoodsReceiptDetail,
@@ -623,6 +624,7 @@ export function RecepcionesPage(): React.JSX.Element {
             </div>
           </section>
           </Autorizado>
+          <ReportesDeRecepcion recepcionId={d.id} />
         </>
       ) : null}
     </PageContent>

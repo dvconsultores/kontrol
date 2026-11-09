@@ -10,21 +10,20 @@
 
 | Estado | Requisitos |
 |---|---|
-| COMPLETE | 19 |
+| COMPLETE | 20 |
 | PARTIAL | 8 |
 | EXISTS_NOT_REVALIDATED | 7 |
-| NOT_BUILT | 7 |
+| NOT_BUILT | 6 |
 | SPONSOR_VALIDATION_REQUIRED | 1 |
 | **Total** | **42** |
 
-La proporción no mide el avance real: las filas no pesan igual. Las brechas de mayor peso son el reporte formal y la clasificación con reubicación. Landed cost quedó entregado el 2026-11-09.
+La proporción no mide el avance real: las filas no pesan igual. La brecha de mayor peso es la clasificación con reubicación. Landed cost y el reporte formal de diferencias quedaron entregados el 2026-11-09.
 
 ## Orden propuesto de las brechas
 
-1. **Reporte formal de diferencias:** los datos existen; falta el documento.
-2. **Reubicar por error** y validación física de la ubicación.
-3. **Clasificación, zona y etiquetado:** exige atributos nuevos en el maestro y que el sponsor valide las zonas A a E.
-4. **Rotación y proyección** (IMP-02): pertenece a la Spec 015, no a la 018.
+1. **Reubicar por error** y validación física de la ubicación.
+2. **Clasificación, zona y etiquetado:** exige atributos nuevos en el maestro y que el sponsor valide las zonas A a E.
+3. **Rotación y proyección** (IMP-02): pertenece a la Spec 015, no a la 018.
 
 ## Matriz
 
@@ -55,7 +54,7 @@ La proporción no mide el avance real: las filas no pesan igual. Las brechas de 
 | §2 Zona temporal de recepción o validación | DOCX §2 | Recepción | Parcial | Parcial | SI | /inventory | inventario | Spec 022 | Fuera de la E2E | NO | NO | PARTIAL | Hay estado de inventario; no se designa una zona física |
 | §3 Conteo y comparación por SKU | DOCX §3 | Confirmación | /inventario/confirmacion | SI | SI | /purchasing/receipts/{id}/conciliacion | inventario | Spec 021 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | La columna Producto muestra un id recortado (IMP-CONFIRM-UUID-01) |
 | §3 Estados recibido, disponible, pendiente, bloqueado | DOCX §3 | Confirmación | /inventario/existencias | SI | SI | /inventory | inventario | Spec 021 | Otras suites | NO | NO | EXISTS_NOT_REVALIDATED |  |
-| §3 Reporte formal de diferencias | DOCX §3 | Confirmación | Ninguna | NO | Datos sí; documento no | Ninguna | — | — | Ninguna | NO | NO | NOT_BUILT | Los datos existen en incidencias y conciliación; no hay documento emitible |
+| §3 Reporte formal de diferencias | DOCX §3 | Confirmación | /compras/importaciones/{id}; /compras/recepciones | SI | SI | /importaciones/{id}/receipts/{id}/difference-report; /difference-reports/{id}/pdf | compras:view; emitir compras:create | Specs 019, 020, 021, 046 | 13 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Instantánea inmutable con revisiones; referencia interna, no folio legal; sin aprobación ni envío al proveedor |
 | §3 Tratamiento: ajuste, reclamo, investigación, cuarentena | DOCX §3 | Confirmación | /compras/incidencias | SI | SI | /purchasing/incidents | compras | Spec 020 | E2E recorre un tratamiento | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §3 Confirmar y liberar a almacenamiento | DOCX §3 | Confirmación | /inventario/confirmacion | SI | SI | /purchasing/receipts | inventario | Spec 021 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §4 Determinar zona de almacenamiento | DOCX §4 | Ubicación | Ninguna guiada | NO | Catálogo de zonas sí | Ninguna | — | — | Ninguna | NO | NO | NOT_BUILT | El usuario elige ubicación; nada propone ni determina la zona |

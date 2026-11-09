@@ -27,7 +27,7 @@ Fuente: Volumen 2, menú y procesos, y DOCX de importación, contrastados con ro
 - SCREEN_SURFACE_COVERAGE: 75 de 92 (superficie, no requisitos)
 - GLOBAL_SPONSOR_REQUIREMENTS_COVERAGE: NOT_MEASURED_REQUIREMENT_BY_REQUIREMENT
 - Verificadas en navegador con evidencia vigente: 5 filas
-- OWNER_UAT_READY_MILESTONES: Terceros núcleo; Importaciones base, gastos y landed cost, sobre PostgreSQL. Comparación completa: `specs/018-importaciones/IMPORT_FULL_SPONSOR_COMPLETENESS_MATRIX.md`
+- OWNER_UAT_READY_MILESTONES: Terceros núcleo; Importaciones base, gastos, landed cost y reporte formal de diferencias, sobre PostgreSQL. Comparación completa: `specs/018-importaciones/IMPORT_FULL_SPONSOR_COMPLETENESS_MATRIX.md`
 - Importaciones: los ciclos 1 a 3 se verificaron primero solo sobre SQLite (`BROWSER_VERIFIED_SQLITE_ONLY`). El 2026-11-09 se halló que no funcionaban sobre PostgreSQL migrado; reparados y revalidados como `POSTGRESQL_BROWSER_VERIFIED` en `specs/018-importaciones/evidence/pg-integrity/EVIDENCE.md`. No se vuelve a aceptar SQLite como prueba de funcionamiento
 
 ## Por módulo

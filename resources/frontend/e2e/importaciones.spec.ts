@@ -1,4 +1,5 @@
 import { expect, test, entrar, sesionApi } from "./helpers/sesion";
+import { readFile } from "node:fs/promises";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
@@ -340,6 +341,90 @@ test("expediente de importación de punta a punta", async ({ page }) => {
   await page.getByRole("link", { name: "Volver al expediente" }).click();
   await expect(page.locator("#diferencias").getByText(`INC-${sufijo}`).first()).toBeVisible();
   await expect(page.getByText("Por confirmar inventario")).toBeVisible();
+
+  // 4.5. Reporte formal de diferencias (R1 y R2)
+  const idExpediente = new URL(expedienteUrl).pathname.split("/").pop()!;
+  const seccionReporte = page.getByRole("region", { name: `Reporte formal de diferencias · REC-${sufijo}` });
+
+  const expedienteResp = await page.request.get(`${API}/importaciones/${idExpediente}`, {
+    headers: authHeaders(companyId),
+  });
+  expect(expedienteResp.ok()).toBeTruthy();
+  const expedienteJson = await expedienteResp.json();
+  const receiptId = expedienteJson.logistics.receipts.find(
+    (r: { code: string }) => r.code === `REC-${sufijo}`,
+  ).id;
+
+  await expect(seccionReporte).toContainText("Diferencias detectadas sin reporte");
+
+  await seccionReporte.getByRole("button", { name: "Emitir reporte formal" }).click();
+  await expect(seccionReporte).toContainText(/DIF-\d{6}-R1/);
+  await expect(seccionReporte).toContainText("Revisión 1");
+  await expect(seccionReporte).toContainText(`Emitido por ${USER}`);
+  await expect(seccionReporte).toContainText("Reporte emitido");
+
+  const textoR1 = await seccionReporte.textContent();
+  const referenciaR1 = textoR1!.match(/DIF-\d{6}-R1/)![0];
+
+  const descarga = page.waitForEvent("download");
+  await seccionReporte.getByRole("button", { name: "Descargar PDF" }).click();
+  const archivo = await descarga;
+  expect(archivo.suggestedFilename()).toMatch(/\.pdf$/);
+  expect(archivo.suggestedFilename()).toContain(referenciaR1);
+  const contenido = await readFile((await archivo.path())!);
+  expect(contenido.subarray(0, 5).toString()).toBe("%PDF-");
+
+  const respuestaInline = page.waitForResponse(
+    (r) => r.url().includes("/pdf?inline=true") && r.status() === 200,
+  );
+  const pestana = page.context().waitForEvent("page");
+  await seccionReporte.getByRole("button", { name: "Imprimir" }).click();
+  await respuestaInline;
+  const nueva = await pestana;
+  expect(nueva.url()).toMatch(/^blob:/);
+  await nueva.close();
+
+  const docResp = await post<{ id: string }>(`/purchasing/receipts/${receiptId}/incidencias`, {
+    code: `DOC-${sufijo}`,
+    incident_type: "DIFERENCIA_DOCUMENTAL",
+    description: "Packing list no coincide con la factura",
+  });
+  await post(`/purchasing/receipts/${receiptId}/incidencias/${docResp.id}/resolve`, {
+    resolution: "RECLAMO_PROVEEDOR",
+    reason: "Reclamo documental",
+  });
+
+  await page.reload();
+  await expect(seccionReporte).toContainText("Nueva revisión disponible");
+
+  await seccionReporte.getByRole("button", { name: "Emitir nueva revisión" }).click();
+  await expect(seccionReporte).toContainText(/DIF-\d{6}-R2/);
+
+  const textoR2 = await seccionReporte.textContent();
+  const referenciaR2 = textoR2!.match(/DIF-\d{6}-R2/)![0];
+  expect(referenciaR2.slice(0, 10)).toBe(referenciaR1.slice(0, 10));
+
+  const historial = seccionReporte.getByRole("list", { name: "Historial de revisiones" });
+  await expect(historial).toContainText(referenciaR2);
+  await expect(historial).toContainText(referenciaR1);
+  await expect(historial.getByRole("button", { name: `Descargar ${referenciaR2}` })).toBeVisible();
+  await expect(historial.getByRole("button", { name: `Descargar ${referenciaR1}` })).toBeVisible();
+
+  await page.goto(`/compras/recepciones?recepcion=${receiptId}&importacion=${idExpediente}`);
+  const seccionRecepcion = page.getByRole("region", { name: "Reporte formal de diferencias", exact: true });
+  await expect(seccionRecepcion).toContainText(`Abrir expediente IMP-${sufijo}`);
+  await expect(seccionRecepcion).toContainText(referenciaR1);
+  await expect(seccionRecepcion).toContainText(referenciaR2);
+
+  const listaReportes = seccionRecepcion.getByRole("list", { name: "Reportes de diferencias" });
+  await expect(listaReportes).toContainText(referenciaR1);
+  await expect(listaReportes).toContainText(referenciaR2);
+
+  await seccionRecepcion.getByRole("link", { name: `Abrir expediente IMP-${sufijo}` }).click();
+  await expect(page).toHaveURL(new RegExp(`/compras/importaciones/${idExpediente}`));
+  await expect(page.locator("#diferencias")).toContainText(`INC-${sufijo}`);
+
+  await expect(seccionReporte).not.toContainText(/[0-9a-f]{8}-[0-9a-f]{4}-/);
 
   // 5. Confirmar inventario
   await page.getByRole("link", { name: `Confirmar inventario de REC-${sufijo}` }).click();

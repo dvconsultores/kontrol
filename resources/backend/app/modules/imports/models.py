@@ -4,11 +4,13 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
+    BigInteger,
     CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
     Index,
+    Integer,
     Numeric,
     String,
     Text,
@@ -252,4 +254,147 @@ class ImportCostAllocation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
         ),
         Index("ix_import_cost_allocations_company", "company_id"),
         Index("ix_import_cost_allocations_application", "application_id"),
+    )
+
+
+class ImportDifferenceReport(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "import_difference_reports"
+    __scope__ = Scope.COMPANY
+
+    created_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    import_file_id: Mapped[str] = mapped_column(ForeignKey("import_files.id"), nullable=False, index=True)
+    receipt_id: Mapped[str] = mapped_column(ForeignKey("goods_receipts.id"), nullable=False, index=True)
+    chain_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    reference: Mapped[str] = mapped_column(String(32), nullable=False)
+    supersedes_id: Mapped[str | None] = mapped_column(
+        ForeignKey("import_difference_reports.id"), nullable=True
+    )
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    issued_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    issued_by_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    company_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    file_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    order_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    supplier_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    receipt_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    warehouse_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    line_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    incident_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    evidence_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    snapshot_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    storage_key: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    file_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    file_size: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    file_name: Mapped[str] = mapped_column(String(120), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "company_id",
+            "reference",
+            name="uq_import_difference_reports_company_reference",
+        ),
+        UniqueConstraint(
+            "company_id",
+            "chain_number",
+            "revision",
+            name="uq_import_difference_reports_chain_revision",
+        ),
+        UniqueConstraint(
+            "receipt_id",
+            "revision",
+            name="uq_import_difference_reports_receipt_revision",
+        ),
+        CheckConstraint("revision >= 1", name="revision_positive"),
+        CheckConstraint("chain_number >= 1", name="chain_positive"),
+        Index("ix_import_difference_reports_receipt", "receipt_id"),
+        Index("ix_import_difference_reports_file", "import_file_id"),
+    )
+
+
+class ImportDifferenceReportLine(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "import_difference_report_lines"
+    __scope__ = Scope.COMPANY
+
+    created_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    report_id: Mapped[str] = mapped_column(
+        ForeignKey("import_difference_reports.id"), nullable=False, index=True
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    receipt_line_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    product_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    product_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    presentation_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    base_uom: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    conversion_factor: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    ordered_base: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    received_base: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    counted_base: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    accepted_base: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    rejected_base: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    damaged_base: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    overage_base: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    difference_kinds: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    physical_condition: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    observation: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("report_id", "position", name="uq_import_difference_report_lines_position"),
+    )
+
+
+class ImportDifferenceReportIncident(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "import_difference_report_incidents"
+    __scope__ = Scope.COMPANY
+
+    created_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    report_id: Mapped[str] = mapped_column(
+        ForeignKey("import_difference_reports.id"), nullable=False, index=True
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    incident_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    code: Mapped[str] = mapped_column(String(64), nullable=False)
+    incident_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    receipt_line_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    product_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    affected_base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(24), nullable=False)
+    escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    escalated_by_name: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    escalation_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolution: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    resolution_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    authorization_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolved_by_name: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    registered_by_name: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("report_id", "position", name="uq_import_difference_report_incidents_position"),
+    )
+
+
+class ImportDifferenceReportEvidence(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "import_difference_report_evidence"
+    __scope__ = Scope.COMPANY
+
+    created_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    report_id: Mapped[str] = mapped_column(
+        ForeignKey("import_difference_reports.id"), nullable=False, index=True
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    resource_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    resource_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    document_title: Mapped[str] = mapped_column(String(200), nullable=False)
+    version_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    file_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("report_id", "position", name="uq_import_difference_report_evidence_position"),
     )

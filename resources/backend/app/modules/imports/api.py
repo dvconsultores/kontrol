@@ -6,6 +6,7 @@ from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Header, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import Session
@@ -15,7 +16,7 @@ from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
 from app.modules.audit.models import AuditEvent
 from app.modules.identity_access.models import User
-from app.modules.imports import costs, landed_cost, service
+from app.modules.imports import costs, difference_report, landed_cost, service
 from app.modules.imports.models import ImportFile
 from app.shared.audit_catalog import label_of, safe_details
 from app.shared.clock import InstanteDeEntrada
@@ -649,6 +650,120 @@ def import_costs_detail(
 ):
     file = service.get_file(db, ctx.company_id, file_id)
     return costs.costs_detail(db, file)
+
+
+class DifferenceReportBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expected_snapshot_hash: str | None = Field(default=None, max_length=64)
+
+
+@router.get("/{file_id}/receipts/{receipt_id}/difference-report")
+def receipt_difference_report_state(
+    file_id: str,
+    receipt_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    return difference_report.current_state(
+        db,
+        file=file,
+        receipt_id=receipt_id,
+        tenant_id=user.tenant_id,
+    )
+
+
+@router.post(
+    "/{file_id}/receipts/{receipt_id}/difference-report",
+    dependencies=[Depends(require_write_allowed)],
+)
+def issue_receipt_difference_report(
+    file_id: str,
+    receipt_id: str,
+    body: DifferenceReportBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(
+        db,
+        ctx.company_id,
+        file_id,
+        for_update=True,
+    )
+    report = difference_report.issue_report(
+        db,
+        file=file,
+        receipt_id=receipt_id,
+        expected_snapshot_hash=body.expected_snapshot_hash,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    return difference_report.report_detail(
+        db,
+        file=file,
+        report_id=str(report.id),
+    )
+
+
+@router.get("/{file_id}/difference-reports/{report_id}")
+def import_difference_report_detail(
+    file_id: str,
+    report_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    return difference_report.report_detail(db, file=file, report_id=report_id)
+
+
+@router.get("/{file_id}/difference-reports/{report_id}/pdf")
+def import_difference_report_pdf(
+    file_id: str,
+    report_id: str,
+    inline: bool = False,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    file_name, stream, file_size = difference_report.open_report_pdf(
+        db,
+        file=file,
+        report_id=report_id,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    disposition = f'{"inline" if inline else "attachment"}; filename="{file_name}"'
+    return StreamingResponse(
+        stream,
+        media_type="application/pdf",
+        headers={
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Disposition": disposition,
+            "Content-Length": str(file_size),
+        },
+    )
+
+
+@router.get("/receipt-difference-reports/{receipt_id}")
+def receipt_difference_reports(
+    receipt_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    return difference_report.reports_for_receipt(
+        db,
+        company_id=ctx.company_id,
+        receipt_id=receipt_id,
+    )
 
 
 @router.get("/{file_id}/expense-invoice-candidates")

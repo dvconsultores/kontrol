@@ -411,3 +411,90 @@ export type DetalleImportacion = {
   logistics: LogisticsDetalle | null;
   version: number;
 };
+
+export type EstadoDeReporte =
+  | "NO_DIFFERENCES"
+  | "DIFFERENCES_WITHOUT_REPORT"
+  | "REPORT_ISSUED"
+  | "NEW_REVISION_AVAILABLE";
+
+export interface ResumenReporteDiferencias {
+  id: string;
+  reference: string;
+  revision: number;
+  issued_at: string;
+  issued_by_name: string;
+  snapshot_hash: string;
+  supersedes_id: string | null;
+  file_name: string;
+  file_size: number;
+  is_latest: boolean;
+}
+
+export interface LineaDiferencia {
+  receipt_line_id: string;
+  product_code: string | null;
+  product_name: string | null;
+  presentation_code: string | null;
+  base_uom: string | null;
+  conversion_factor: string | null;
+  ordered_base: string | null;
+  received_base: string | null;
+  counted_base: string | null;
+  accepted_base: string | null;
+  rejected_base: string | null;
+  damaged_base: string | null;
+  overage_base: string | null;
+  difference_kinds: string | null;
+  physical_condition: string | null;
+  observation: string | null;
+}
+
+export interface IncidenciaDiferencia {
+  incident_id: string;
+  code: string;
+  incident_type: string;
+  receipt_line_id: string | null;
+  product_name: string | null;
+  affected_base_quantity: string | null;
+  description: string | null;
+  status: string;
+  escalated_at: string | null;
+  escalated_by_name: string | null;
+  escalation_notes: string | null;
+  resolution: string | null;
+  resolution_reason: string | null;
+  authorization_status: string;
+  resolved_at: string | null;
+  resolved_by_name: string | null;
+  registered_by_name: string | null;
+}
+
+export interface EvidenciaDiferencia {
+  resource_type: string;
+  resource_code: string;
+  document_title: string;
+  version_number: number | null;
+  file_name: string | null;
+  sha256: string | null;
+}
+
+export interface EstadoReporteDiferencias {
+  receipt_id: string;
+  receipt_code: string;
+  state: EstadoDeReporte;
+  has_differences: boolean;
+  current_snapshot_hash: string | null;
+  lines: LineaDiferencia[];
+  incidents: IncidenciaDiferencia[];
+  evidence: EvidenciaDiferencia[];
+  reports: ResumenReporteDiferencias[];
+}
+
+export interface ReportesDeRecepcionRespuesta {
+  receipt_id: string;
+  receipt_code: string;
+  import_file_id: string | null;
+  import_file_code: string | null;
+  reports: ResumenReporteDiferencias[];
+}

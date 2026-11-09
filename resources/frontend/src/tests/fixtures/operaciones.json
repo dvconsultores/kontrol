@@ -2676,6 +2676,14 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/importaciones/receipt-difference-reports/{receipt_id}",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/importaciones/{file_id}",
       "capabilities": [
         "compras:view"
@@ -2757,6 +2765,22 @@
     {
       "method": "GET",
       "path": "/api/v1/importaciones/{file_id}/costs",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/importaciones/{file_id}/difference-reports/{report_id}",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/importaciones/{file_id}/difference-reports/{report_id}/pdf",
       "capabilities": [
         "compras:view"
       ],
@@ -2885,6 +2909,22 @@
     {
       "method": "POST",
       "path": "/api/v1/importaciones/{file_id}/receipts",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/importaciones/{file_id}/receipts/{receipt_id}/difference-report",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/receipts/{receipt_id}/difference-report",
       "capabilities": [
         "compras:create"
       ],

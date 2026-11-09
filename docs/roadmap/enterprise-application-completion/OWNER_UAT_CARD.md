@@ -74,4 +74,18 @@ Necesita un expediente recibido, con capas de costo, y un gasto registrado.
 30. En «Historial de aplicación», pulse «Revertir aplicación», escriba el motivo y confirme. Queda «Revertido», el valor vuelve exactamente al anterior y el historial conserva ambas operaciones.
 31. Si alguna mercancía de ese expediente ya salió del inventario, la aplicación y la reversión se bloquean y lo explican: el costo no se aplica de forma retroactiva.
 
-**Aún no disponible:** reporte formal de diferencias como documento; clasificación y zonas de almacén, pendientes de validar por el sponsor. Comparación completa con el documento del sponsor: pendiente.
+### Reporte formal de diferencias
+
+Necesita una recepción del expediente con alguna diferencia: una incidencia registrada (paso 18) o una cantidad que no coincide.
+
+32. En «Diferencias e inventario», busque «Reporte formal de diferencias · REC-…» de esa recepción. Una recepción sin diferencias dice «Sin diferencias» y no deja emitir.
+33. Con diferencias, dice «Diferencias detectadas sin reporte». Pulse «Emitir reporte formal». Ve una referencia del tipo `DIF-000001-R1` (el número es correlativo por empresa), «Revisión 1», «Emitido por» con su nombre de usuario y el estado «Reporte emitido».
+34. Pulse «Descargar PDF»: se descarga un PDF con esa referencia en el nombre. Ábralo: trae la cabecera del expediente, las líneas con diferencia, las incidencias con su tratamiento y las evidencias.
+35. Pulse «Imprimir»: el PDF se abre en otra pestaña, listo para imprimir.
+36. Registre otra incidencia en esa recepción y vuelva al expediente: dice «Nueva revisión disponible». Pulse «Emitir nueva revisión». Sale `…-R2` con el mismo número. La R1 no cambia.
+37. En «Historial de revisiones» están R2 y R1, cada una con su botón de descarga.
+38. En Compras → Recepciones, abra esa recepción: «Reporte formal de diferencias» lista sus reportes, permite descargarlos y abre el expediente con «Abrir expediente IMP-…».
+
+**Límites:** la referencia es interna, no un folio legal. El reporte no se aprueba, no se firma y no se envía al proveedor. Un usuario sin permiso de crear en Compras lo consulta y lo descarga, pero no lo emite.
+
+**Aún no disponible:** reubicar por error y validación física de la ubicación (siguiente ciclo); clasificación y zonas de almacén, pendientes de validar por el sponsor. Comparación completa con el documento del sponsor: pendiente.

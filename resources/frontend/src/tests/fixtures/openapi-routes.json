@@ -1954,6 +1954,11 @@
     },
     {
       "method": "GET",
+      "path": "/importaciones/receipt-difference-reports/{receipt_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/importaciones/{file_id}",
       "query": []
     },
@@ -2009,6 +2014,18 @@
       "method": "GET",
       "path": "/importaciones/{file_id}/costs",
       "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/importaciones/{file_id}/difference-reports/{report_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/importaciones/{file_id}/difference-reports/{report_id}/pdf",
+      "query": [
+        "inline"
+      ]
     },
     {
       "method": "POST",
@@ -2096,6 +2113,16 @@
     {
       "method": "POST",
       "path": "/importaciones/{file_id}/receipts",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/importaciones/{file_id}/receipts/{receipt_id}/difference-report",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/receipts/{receipt_id}/difference-report",
       "query": []
     },
     {

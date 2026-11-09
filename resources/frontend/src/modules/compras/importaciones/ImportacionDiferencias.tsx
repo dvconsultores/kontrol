@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 
+import { ReporteDiferenciasRecepcion } from "./ReporteDiferencias";
 import { ESTADOS_INCIDENCIA, TIPOS_INCIDENCIA, type DetalleImportacion } from "./tipos";
 
 type Props = {
@@ -107,6 +108,11 @@ export function ImportacionDiferencias({ detalle }: Props): React.JSX.Element {
                   </Link>
                 ) : null}
               </div>
+              <ReporteDiferenciasRecepcion
+                importacionId={detalle.id}
+                recepcionId={recepcion.id}
+                recepcionCodigo={recepcion.code}
+              />
             </div>
           ))}
       </div>
