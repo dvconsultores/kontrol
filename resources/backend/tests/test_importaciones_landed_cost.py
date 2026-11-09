@@ -1,3 +1,4 @@
+# ruff: noqa: E402, F811, F401, I001
 import os
 import threading
 import uuid
@@ -24,7 +25,6 @@ from app.modules.imports import landed_cost
 from app.modules.imports.landed_cost import apply_allocation
 from app.modules.imports.models import (
     ImportCostApplication,
-    ImportExpense,
     ImportFile,
 )
 from app.modules.imports.service import get_file
@@ -38,8 +38,10 @@ from app.modules.inventory.models import (
 from app.modules.master_data.models import CatalogItem, UnitOfMeasure
 from app.modules.organization.models import Company
 from app.modules.purchasing.models import GoodsReceipt
-from app.modules.treasury import service as rates
+from app.modules.treasury import rates
 from app.modules.treasury.models import Currency, TreasuryRateSnapshot
+
+pytest_plugins = ["mfa_apoyo"]
 
 API = "/api/v1"
 
@@ -311,7 +313,7 @@ def test_value_con_residuo_y_aislamiento_de_lineas(mundo, reloj_mfa, rol_complet
     assert body["can_apply"] is True
     assert len(body["lines"]) == 3
     lineas = {line["layer_id"]: line["allocated_amount"] for line in body["lines"]}
-    for capa, esperado in zip(capas, ["1.67", "3.33", "5.00"]):
+    for capa, esperado in zip(capas, ["1.67", "3.33", "5.00"], strict=True):
         assert lineas[capa["layer_id"]] == esperado
     token = body["preview_token"]
 
@@ -413,7 +415,7 @@ def test_quantity_comparable_y_no_comparable(mundo, reloj_mfa, rol_completo):
     assert lineas[capa_b["layer_id"]] == "3.00"
 
     # Unidades no comparables
-    capa_c = _entrada(
+    _entrada(
         mundo,
         file_id,
         unit_cost="1.00",
@@ -523,7 +525,7 @@ def test_moneda_cruzada_y_rate_no_disponible(mundo, reloj_mfa, rol_completo):
     _tasa(mundo, date(2025, 1, 1), "EUR", "1.10", quote="USD")
     _tasa(mundo, date(2025, 6, 1), "EUR", "2.00", quote="USD")
 
-    capa = _entrada(
+    _entrada(
         mundo,
         file_id,
         unit_cost="10.00",

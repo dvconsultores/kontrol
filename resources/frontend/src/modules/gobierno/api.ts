@@ -2706,7 +2706,57 @@ export type ExpedienteFolio = {
   hito: string | null;
 };
 export type ExpedienteContenido = { clase: string; etiqueta: string; fuente: string; grupo: string; condicional: boolean; folios: number };
+export type OfertaResumen = {
+  id: string;
+  referencia: string;
+  oferente_nombre: string;
+  oferente_documento: string;
+  identidad_etiqueta: string;
+  representante: string | null;
+  tipo_sobre: string;
+  tipo_sobre_etiqueta: string;
+  canal: string;
+  canal_etiqueta: string;
+  recibida_en: string;
+  registrada_en: string;
+  receptor: string;
+  registrado_por: string | null;
+  confidencial: boolean;
+  confidencialidad_etiqueta: string;
+  fundamento_confidencialidad: string;
+  situacion: string;
+  situacion_etiqueta: string;
+  condicion_sobre: string | null;
+  documentos_total: number;
+  integridad: "VERIFICADA" | "ALTERADA" | "SIN_ARCHIVO";
+};
+
+export type OfertaDocumento = {
+  version_numero: number;
+  huella: string;
+  integridad: "VERIFICADA" | "ALTERADA" | "SIN_ARCHIVO";
+  documento_id: string | null;
+  titulo: string | null;
+};
+
+export type OfertaDetalle = OfertaResumen & {
+  documentos: OfertaDocumento[];
+};
+
+export type OfertasListado = {
+  items: OfertaResumen[];
+  total: number;
+  canales: { codigo: string; etiqueta: string }[];
+  tipos_sobre: { codigo: string; etiqueta: string }[];
+  recepcion_concluida_en: string | null;
+  aviso_identidad: string;
+  puede_recibir_sin_sello: boolean;
+};
+
 export type ExpedienteDetalle = ExpedienteResumen & {
+  ofertas_total: number;
+  ofertas_selladas: number;
+  recepcion_concluida_en: string | null;
   partes: string;
   modalidad_fundamento: string;
   modalidad_fuente: string;

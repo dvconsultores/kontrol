@@ -236,6 +236,29 @@ class DocumentVersion(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
         String(32), nullable=False, default="ACTIVE", server_default="ACTIVE")
 
 
+class DocumentSeal(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "document_seals"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False, index=True)
+    resource_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    resource_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    motivo: Mapped[str] = mapped_column(String(300), nullable=False)
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    released_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        Index(
+            "uq_document_seals_document_active",
+            "document_id",
+            unique=True,
+            postgresql_where=text("released_at IS NULL"),
+            sqlite_where=text("released_at IS NULL"),
+        ),
+    )
+
+
 class DocumentLink(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     """El vínculo con una entidad de cualquier dominio.
 

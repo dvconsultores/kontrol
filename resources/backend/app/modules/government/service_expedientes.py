@@ -18,6 +18,7 @@ from app.modules.government.models import (
     GovernmentProcurementFileFolio,
     GovernmentProcurementFileMilestone,
     GovernmentProcurementFileResponsible,
+    GovernmentProcurementOffer,
     GovernmentStructure,
     GovernmentUnit,
 )
@@ -74,6 +75,7 @@ _ETIQUETAS_EVENTO: dict[str, str] = {
     "HITO": "Hito",
     "CIERRE": "Cierre",
     "DESCARTE": "Descarte",
+    "OFERTA": "Oferta",
 }
 
 _SECCION_ORDEN = (
@@ -169,8 +171,11 @@ _AVISO_LAPSOS = (
 _CLAVES_AUDITORIA = frozenset(
     {
         "acto",
+        "canal",
         "clase",
         "comision",
+        "confidencial",
+        "documentos",
         "estado",
         "fecha",
         "fecha_prevista",
@@ -181,6 +186,7 @@ _CLAVES_AUDITORIA = frozenset(
         "modalidad",
         "motivo",
         "numero",
+        "referencia",
         "resultado",
         "rol",
         "secuencia",
@@ -838,6 +844,19 @@ def detalle(db: Session, ctx: CompanyContext, id: str) -> dict[str, Any]:
 
     pendientes: list[dict[str, str]] = []
     siguiente_accion: str | None = None
+    ofertas_total = db.scalar(
+        select(func.count(GovernmentProcurementOffer.id)).where(
+            GovernmentProcurementOffer.file_id == expediente.id,
+            GovernmentProcurementOffer.company_id == expediente.company_id,
+        )
+    ) or 0
+    ofertas_selladas = db.scalar(
+        select(func.count(GovernmentProcurementOffer.id)).where(
+            GovernmentProcurementOffer.file_id == expediente.id,
+            GovernmentProcurementOffer.company_id == expediente.company_id,
+            GovernmentProcurementOffer.confidencial.is_(True),
+        )
+    ) or 0
     if expediente.status == "ABIERTO":
         if not expediente.partes:
             pendientes.append(
@@ -908,6 +927,14 @@ def detalle(db: Session, ctx: CompanyContext, id: str) -> dict[str, Any]:
                     "codigo": "CONTENIDO_INICIO",
                     "texto": "Incorpore la autorización o acta de inicio",
                 }
+            )
+        if ofertas_total and expediente.status not in ("CERRADO", "DESCARTADO"):
+            pendientes.insert(
+                0,
+                {
+                    "codigo": "APERTURA_PENDIENTE",
+                    "texto": "Pendiente de apertura",
+                },
             )
         if pendientes:
             siguiente_accion = pendientes[0]["texto"]
@@ -1000,6 +1027,9 @@ def detalle(db: Session, ctx: CompanyContext, id: str) -> dict[str, Any]:
             "pendientes": pendientes,
             "siguiente_accion": siguiente_accion,
             "ultima_actuacion": ultima,
+            "ofertas_total": ofertas_total,
+            "ofertas_selladas": ofertas_selladas,
+            "recepcion_concluida_en": expediente.recepcion_concluida_en,
             "totales": {
                 "actuaciones": actuaciones,
                 "decisiones": decisiones,

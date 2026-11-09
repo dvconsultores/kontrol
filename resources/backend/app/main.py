@@ -39,6 +39,7 @@ from app.modules.government.api_hallazgos import router as government_findings_r
 from app.modules.government.api_identidad import router as government_identidad_router
 from app.modules.government.api_notificaciones import router as government_notifications_router
 from app.modules.government.api_ocupacion import router as government_ocupacion_router
+from app.modules.government.api_ofertas import router as government_offers_router
 from app.modules.government.api_paquetes import router as government_audit_packages_router
 from app.modules.government.api_sod import router as government_sod_router
 from app.modules.government.contexto_auditoria import contexto_de_evento
@@ -156,6 +157,7 @@ def create_app() -> FastAPI:
     app.include_router(government_bitacora_router, prefix=prefix)
     app.include_router(government_comisiones_router, prefix=prefix)
     app.include_router(government_expedientes_router, prefix=prefix)
+    app.include_router(government_offers_router, prefix=prefix)
     app.include_router(government_findings_router, prefix=prefix)
     app.include_router(government_audit_packages_router, prefix=prefix)
     app.include_router(government_sod_router, prefix=prefix)

@@ -259,6 +259,8 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_expedientes · consulta y gestión del expediente (PROC-03).
         "gobierno_expedientes:view",
         "gobierno_expedientes:manage",
+        "gobierno_ofertas:view",
+        "gobierno_ofertas:receive",
     }
 )
 

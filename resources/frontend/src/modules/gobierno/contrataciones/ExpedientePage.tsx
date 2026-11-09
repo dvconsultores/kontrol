@@ -36,6 +36,7 @@ import {
   PanelDescartar,
   type PanelExpediente,
 } from "./ExpedientePaneles";
+import { SeccionOfertas } from "./ExpedienteOfertas";
 
 type PanelAbierto =
   | "responsable"
@@ -718,6 +719,7 @@ export function ExpedientePage() {
         )}
       </section>
 
+      <SeccionOfertas detalle={detalle} opciones={opcionesQuery.data} activeCompanyId={activeCompanyId} />
       <section aria-labelledby="sec-hitos" className="mt-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id="sec-hitos" className="text-lg font-semibold text-text-900">Hitos y lapsos</h2>

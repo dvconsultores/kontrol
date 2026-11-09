@@ -1467,6 +1467,38 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/ofertas",
+      "capabilities": [
+        "gobierno_ofertas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/ofertas",
+      "capabilities": [
+        "gobierno_ofertas:receive"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/ofertas/concluir",
+      "capabilities": [
+        "gobierno_ofertas:receive"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/ofertas/{oferta_id}",
+      "capabilities": [
+        "gobierno_ofertas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/responsables",
       "capabilities": [
@@ -6629,7 +6661,9 @@
     "gobierno_comisiones:close",
     "gobierno_expedientes:view",
     "gobierno_expedientes:manage",
-    "gobierno_expedientes:close"
+    "gobierno_expedientes:close",
+    "gobierno_ofertas:view",
+    "gobierno_ofertas:receive"
   ],
   "report_capabilities": {
     "executive_ventas": [

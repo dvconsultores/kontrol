@@ -276,7 +276,7 @@ def incorporar_folio(db: Session, ctx: CompanyContext, expediente_id: str, versi
 
     if documento_id:
         doc = db.scalar(select(Document).where(Document.id == documento_id, Document.company_id == ctx.company_id))
-        if doc is None or doc.status not in ("DRAFT", "ACTIVE"):
+        if doc is None or doc.status not in ("DRAFT", "ACTIVE") or documentos.documento_sellado(db, documento_id):
             raise _err("documento_id", "El documento no existe en este ente")
         if doc.current_version_id is None:
             raise _err("documento_id", "El documento no tiene archivo")

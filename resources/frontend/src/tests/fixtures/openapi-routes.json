@@ -1080,6 +1080,26 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/ofertas",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/ofertas",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/ofertas/concluir",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/ofertas/{oferta_id}",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/gobierno/contrataciones/expedientes/{expediente_id}/responsables",
       "query": []
