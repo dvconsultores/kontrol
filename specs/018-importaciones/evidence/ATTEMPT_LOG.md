@@ -163,3 +163,20 @@ Todas con `deepseek-v4-pro`, sin paralelo.
 **Totales:** 6 llamadas (tope 6) · $0,026305 · solo de pruebas: 1 · reintentos: 3.
 
 **Declaración.** Todo el código entregado lo propuso DeepSeek. Claude auditó, aplicó, renombró el fichero de la migración de gastos según su indicación, regeneró instantáneas y escribió esta documentación. **Desviación de §23:** para diagnosticar, Claude escribió en copias fuera del repositorio: mediciones de carga, una espera ampliada, una precarga de prueba y una copia de la E2E para móvil. Nada de eso se entregó, pero el encargo pedía diagnosticar leyendo y ejecutando.
+
+## Ciclo 4B · landed cost (2026-11-09)
+
+Varios bloques. Todas las llamadas con `deepseek-v4-pro`.
+
+| Bloque | Llamadas | Resultado |
+|---|---|---|
+| Construcción 4B | 8 de 8 | Producto construido; E2E sin publicar |
+| Cierre real (1) | 2 de 2 | E2E del árbol real a 1280; prueba inválida |
+| Cierre real (2) | 2 de 2 | E2E a 390/320; prueba aún inválida |
+| Cierre financiero (1) | 1 de 2 | Propuesta rechazada; merge abortado |
+| Merge P1 | 2 de 2 | Merge con P1; arnés ejecuta; 15 fallos de preparación |
+| Arnés (1) | 2 de 2 | 1 de 16, sin avance |
+| Arnés (2) | 2 de 2 | 15 de 16; defecto real: id de fusión de 34 caracteres |
+| Publicación | 2 de 2 | 16 de 16, instalación limpia, E2E, publicado `7fa4a82` |
+
+**Declaración.** Todo el código, las pruebas y las migraciones los escribió DeepSeek. Claude diseñó, auditó, aplicó y certificó. Desviaciones declaradas: copias y pruebas temporales de diagnóstico fuera del repositorio en bloques anteriores; aplicación de anclas por contenido y añadido de rutas de fichero ausentes, sin cambiar texto; extracción literal de respuestas JSON o de fichero completo.

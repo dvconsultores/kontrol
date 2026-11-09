@@ -10,22 +10,21 @@
 
 | Estado | Requisitos |
 |---|---|
-| COMPLETE | 17 |
+| COMPLETE | 19 |
 | PARTIAL | 8 |
 | EXISTS_NOT_REVALIDATED | 7 |
-| NOT_BUILT | 9 |
+| NOT_BUILT | 7 |
 | SPONSOR_VALIDATION_REQUIRED | 1 |
 | **Total** | **42** |
 
-La proporción no mide el avance real: las filas no pesan igual. Las brechas de mayor peso son landed cost, clasificación con reubicación y el reporte formal.
+La proporción no mide el avance real: las filas no pesan igual. Las brechas de mayor peso son el reporte formal y la clasificación con reubicación. Landed cost quedó entregado el 2026-11-09.
 
 ## Orden propuesto de las brechas
 
-1. **Ciclo 4B:** distribución, preview y aplicación de landed cost. Decisiones ya resueltas.
-2. **Reporte formal de diferencias:** los datos existen; falta el documento.
-3. **Reubicar por error** y validación física de la ubicación.
-4. **Clasificación, zona y etiquetado:** exige atributos nuevos en el maestro y que el sponsor valide las zonas A a E.
-5. **Rotación y proyección** (IMP-02): pertenece a la Spec 015, no a la 018.
+1. **Reporte formal de diferencias:** los datos existen; falta el documento.
+2. **Reubicar por error** y validación física de la ubicación.
+3. **Clasificación, zona y etiquetado:** exige atributos nuevos en el maestro y que el sponsor valide las zonas A a E.
+4. **Rotación y proyección** (IMP-02): pertenece a la Spec 015, no a la 018.
 
 ## Matriz
 
@@ -45,8 +44,8 @@ La proporción no mide el avance real: las filas no pesan igual. Las brechas de 
 | IMP-11 Confirmar documentación y despacho | DOCX §1 | Importación | /compras/importaciones/{id} | SI | SI | /importaciones/{id}/confirm-dispatch | compras | — | E2E + pytest PG | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | IMP-12 Faltantes y correcciones | DOCX §1 | Importación | /compras/importaciones/{id} | SI | SI | /importaciones/{id}/corrections | compras | Documentos | E2E + pytest PG | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | Gastos de importación | B-032; orden de la dueña | Costos | /compras/importaciones/{id} | SI | SI | /importaciones/{id}/expenses, /costs | compras | Tesorería, Documentos | E2E + pytest PG | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Documento de soporte y factura vinculada: cubiertos por API, no en navegador |
-| Distribución y preview de landed cost | B-032; decisiones de la dueña | Costos | Ninguna | NO | NO | Ninguna | — | — | Ninguna | NO | NO | NOT_BUILT | Ciclo 4B |
-| Aplicación de landed cost a la capa | B-032; decisiones de la dueña | Costos | Ninguna | NO | Columna sin uso | Ninguna | — | Motor de costos | Ninguna | NO | NO | NOT_BUILT | Ciclo 4B. `_consume_cost` y `valuation` no leen `landed_cost` |
+| Distribución y preview de landed cost | B-032; decisiones de la dueña | Costos | /compras/importaciones/{id} | SI | SI | /allocation-preview | compras:view | Tesorería, Inventario | 16 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | VALUE en navegador; QUANTITY y MANUAL por API |
+| Aplicación de landed cost a la capa | B-032; decisiones de la dueña | Costos | /compras/importaciones/{id} | SI | SI | /apply; /cost-applications/{id}/reverse | compras:approve | Motor de costos (Spec 003), valoración | 16 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Salida posterior FIFO/AVERAGE usa el costo efectivo; doble aplicación bloqueada en base; consumo bloquea |
 | Moneda de la capa de costo | Documento Maestro | Costos | /compras/importaciones/{id} | SI | SI | /importaciones/{id}/costs | compras | Inventario | E2E: capa USD | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §2 Confirmar arribo | DOCX §2 | Recepción | /compras/importaciones/{id} | SI | SI | /purchasing/receipts/{id}/arrival | compras | Spec 019 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §2 Programar descarga | DOCX §2 | Recepción | /compras/recepciones | SI | SI | /purchasing/receipts | compras | Spec 019 | Fuera de la E2E | NO | NO | PARTIAL | El formulario del expediente no lo pide; está en Recepciones |

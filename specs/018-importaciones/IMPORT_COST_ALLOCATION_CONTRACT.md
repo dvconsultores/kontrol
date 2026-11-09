@@ -1,7 +1,7 @@
 # Contrato de gastos y distribución de costo de importación
 
 **Spec dueña:** 018 Importaciones, sobre la autoridad de costos de la Spec 003/026 (`CostLayer`, `CostingProfile`).
-**Estado:** gastos operables. Distribución y aplicación **sin construir**: decisiones resueltas por la dueña el 2026-11-09, se construyen en el ciclo 4B.
+**Estado:** gastos, distribución y aplicación entregados (ciclo 4B, 2026-11-09). Diseño técnico en `spec018-landed-cost-delta.md`.
 
 Clasificación usada:
 
@@ -36,12 +36,12 @@ Clasificación usada:
 | `ROUNDING_POLICY` | Conversión de moneda: definida arriba. Reparto: `LARGEST_REMAINDER` | `OWNER_PRODUCT_DECISION` DM-IMP-COST-02 |
 | `RESIDUAL_POLICY` | Mayor fracción residual; empate por orden o id estable de línea; `SUM(asignado) = gasto` | `OWNER_PRODUCT_DECISION` DM-IMP-COST-02 |
 | `TARGET_LINES` | Capas con `receipt_ref = RECEIPT:<id>` de las recepciones de la orden del expediente | `DERIVED_TECHNICAL_DECISION` |
-| `APPLICATION_STATUS` | Hoy siempre `DISTRIBUTION_NOT_AVAILABLE`. Nada escribe en `cost_layers.landed_cost` | Se sustituye en el ciclo 4B |
-| `APPLIED_AT`, `APPLIED_BY` | Sin uso hasta que exista aplicación | Ciclo 4B |
+| `APPLICATION_STATUS` | `APPLIED` o `REVERSED` por aplicación; doble aplicación vigente impedida por índice único parcial | `DERIVED_TECHNICAL_DECISION` |
+| `APPLIED_AT`, `APPLIED_BY` | Se registran al aplicar; también `REVERSED_AT`, `REVERSED_BY` y motivo | `DERIVED_TECHNICAL_DECISION` |
 | `REVERSIBILITY` | Gasto: se anula con motivo, sin borrarse. Aplicación: reversible solo si ninguna capa afectada se consumió y no hay dependencia posterior incompatible | Gasto `DERIVED_TECHNICAL_DECISION`; aplicación `OWNER_PRODUCT_DECISION` DM-IMP-COST-03 |
 | `AUDIT_EVENT` | `IMPORT_EXPENSE_REGISTERED`, `IMPORT_EXPENSE_VOIDED` | `DERIVED_TECHNICAL_DECISION` |
 
-Doble aplicación: **todavía no hay aplicación que duplicar**. Cuando exista, deberá impedirla una restricción de base de datos, no un botón.
+Doble aplicación: la impide un índice único parcial en base de datos, verificado también con dos aplicaciones concurrentes.
 
 ## Decisiones de la dueña
 
@@ -54,7 +54,7 @@ Todas `OWNER_PRODUCT_DECISION`, 2026-11-09. `MATERIAL_DECISION_REQUIRED = 0`. La
 | DM-IMP-COST-03 | RESOLVED | `BLOCK_RETROACTIVE_APPLICATION`: si alguna capa afectada tiene `quantity_remaining < quantity_in`, la aplicación se bloquea y se explica por qué. No se reescribe el costo de venta ni se crean variaciones ficticias. Reversión solo sin consumo y sin dependencia posterior incompatible |
 | DM-IMP-COST-04 | RESOLVED | Solo importes marcados de forma explícita como `CAPITALIZABLE` entran al landed cost. `TAX_CAPITALIZATION_DEFAULT = NONE`. Lo indeterminado no se aplica. Se convierte a la moneda de valoración con la tasa histórica válida y se incorpora a `CostLayer`, sin un segundo cálculo de costo de venta. Se conservan importe y moneda originales, tasa, importe de valoración, clasificación y trazabilidad |
 
-**Pendiente de diseño técnico en el ciclo 4B, no de decisión de negocio:** hoy `_consume_cost` y `valuation` no leen `landed_cost`, así que la integración con el motor existente debe resolverse allí sin duplicarlo.
+**Resuelto en el ciclo 4B:** `landed_cost` es el importe total de la capa; el motor existente (`_consume_cost`, `valuation`) usa el costo efectivo `unit_cost + landed_cost / quantity_in`, sin un segundo motor.
 
 ## Lo que ya existe
 

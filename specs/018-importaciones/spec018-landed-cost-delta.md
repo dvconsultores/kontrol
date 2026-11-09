@@ -125,3 +125,7 @@ Auditoría: `IMPORT_EXPENSE_CLASSIFIED`, `IMPORT_COST_APPLIED`, `IMPORT_COST_REV
 ## Fuera de alcance
 
 Reporte formal de diferencias, reubicación, clasificación por atributos, zonas A a E, etiquetado, `IMP-CONFIRM-UUID-01`, y convertir la valoración a una sola moneda.
+
+## Cierre
+
+Publicado en `7fa4a82`. Evidencia en `evidence/landed-cost/EVIDENCE.md`. `OWNER_ACCEPTED` lo concede solo la dueña.

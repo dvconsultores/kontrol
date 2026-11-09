@@ -60,6 +60,18 @@ Necesita una tasa en Tesorería para la moneda del gasto, con fecha igual o ante
 23. Pulse «Anular gasto», escriba el motivo y confirme. Sigue en la lista como «Anulado» con su motivo, deja de sumar y el historial lo muestra.
 24. Compruebe «Capas de costo de esta importación»: el costo aparece en la moneda de la orden.
 
-**En teléfono:** cada acción deja una notificación que se cierra a mano. Hoy pueden tapar botones del pie: ciérrelas con su ✕.
+**En teléfono:** cada acción deja una notificación que se cierra a mano con su ✕; solo se ve la más reciente.
 
-**Aún no disponible:** repartir los gastos entre productos y sumarlos al costo (ciclo 4B); reporte formal de diferencias como documento; clasificación y zonas de almacén, pendientes de validar por el sponsor. Comparación completa con el documento del sponsor: pendiente.
+### Costos de importación: repartir y aplicar al costo (landed cost)
+
+Necesita un expediente recibido, con capas de costo, y un gasto registrado.
+
+25. En la tarjeta del gasto, en «Clasificación del costo», elija «Capitalizable» y pulse «Guardar clasificación». Sin esa clasificación, la vista previa explica que no se puede aplicar.
+26. En «Criterio de reparto» elija «Por valor», «Por cantidad» o «Manual». No hay criterio marcado de antemano. En «Manual», escriba el importe de cada producto.
+27. Pulse «Generar vista previa». Ve «Vista previa: aún no se ha aplicado nada», la tabla por producto (base, participación, importe asignado, costo actual y costo resultante) y «El reparto cuadra exactamente». Si en «Manual» no cuadra, muestra la diferencia y no deja aplicar.
+28. Pulse «Aplicar costo», revise el resumen y pulse «Confirmar aplicación». El costo efectivo de la capa y su «Valor en inventario» suben; Inventario → Valorización también lo refleja.
+29. Intente aplicar de nuevo el mismo gasto: el sistema lo impide.
+30. En «Historial de aplicación», pulse «Revertir aplicación», escriba el motivo y confirme. Queda «Revertido», el valor vuelve exactamente al anterior y el historial conserva ambas operaciones.
+31. Si alguna mercancía de ese expediente ya salió del inventario, la aplicación y la reversión se bloquean y lo explican: el costo no se aplica de forma retroactiva.
+
+**Aún no disponible:** reporte formal de diferencias como documento; clasificación y zonas de almacén, pendientes de validar por el sponsor. Comparación completa con el documento del sponsor: pendiente.
