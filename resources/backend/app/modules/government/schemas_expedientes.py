@@ -281,7 +281,12 @@ class ExpedienteTotales(BaseModel):
     hitos: int
 
 
+
 class ExpedienteDetalle(ExpedienteResumen):
+    ofertas_total: int = 0
+    ofertas_selladas: int = 0
+    recepcion_concluida_en: datetime | None = None
+
     partes: str | None
     modalidad_fundamento: str | None
     modalidad_fuente: str | None

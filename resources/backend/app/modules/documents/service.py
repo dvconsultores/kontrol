@@ -29,6 +29,7 @@ from app.modules.documents import scanning
 from app.modules.documents.models import (
     Document,
     DocumentLink,
+    DocumentSeal,
     DocumentType,
     DocumentVersion,
     FileSecurityScan,
@@ -441,6 +442,16 @@ def freeze_links(db: Session, *, resource_type: str, resource_id: str,
     return frozen
 
 
+def documento_sellado(db: Session, document_id: str) -> bool:
+    seal = db.scalar(
+        select(DocumentSeal).where(
+            DocumentSeal.document_id == document_id,
+            DocumentSeal.released_at.is_(None),
+        )
+    )
+    return seal is not None
+
+
 def documents_for(db: Session, *, resource_type: str, resource_id: str,
                   company_ids: list[str]) -> list[tuple[Document, DocumentLink]]:
     """Documentos de una entidad. La consulta que usan todos los consumidores."""
@@ -452,7 +463,43 @@ def documents_for(db: Session, *, resource_type: str, resource_id: str,
                DocumentLink.resource_id == resource_id,
                Document.company_id.in_(company_ids))
         .order_by(DocumentLink.created_at)).all()
-    return [(d, link) for d, link in rows]
+    return [(d, link) for d, link in rows if not documento_sellado(db, str(d.id))]
+
+
+def verificar_integridad(db: Session, version: DocumentVersion) -> bool:
+    stored = db.get(StoredFile, version.stored_file_id)
+    if stored is None:
+        return False
+    storage = get_storage()
+    if not storage.exists(stored.storage_key):
+        return False
+    return storage.verify(stored.storage_key, stored.sha256)
+
+
+def sellar_documento(db: Session, *, document: Document, resource_type: str,
+                     resource_id: str, actor_id: str, motivo: str) -> DocumentSeal:
+    seal = DocumentSeal(
+        company_id=document.company_id,
+        document_id=document.id,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        motivo=motivo,
+        created_by=actor_id,
+    )
+    db.add(seal)
+    db.flush()
+    return seal
+
+
+def congelar_vinculo(db: Session, *, link: DocumentLink, version_id: str,
+                     actor: Any = None) -> None:
+    link.frozen_version_id = version_id
+    link.is_frozen = True
+    if actor is not None:
+        _audit(db, actor, "DOCUMENT_LINK_FROZEN", link.document_id,
+               after={"frozen_version_id": link.frozen_version_id},
+               company_id=link.company_id)
+    db.flush()
 
 
 def puede_leer_archivo(db: Session, document: Document, company_id: str, permissions: set[str]) -> bool:
@@ -465,6 +512,8 @@ def puede_leer_archivo(db: Session, document: Document, company_id: str, permiss
     (DOC-08), para que exportar no sea un atajo alrededor del control documental.
     """
     if document.company_id != company_id:
+        return False
+    if documento_sellado(db, str(document.id)):
         return False
     links = db.execute(select(DocumentLink).where(
         DocumentLink.document_id == document.id)).scalars().all()
@@ -530,6 +579,8 @@ def assert_deliverable(db: Session, version: DocumentVersion) -> StoredFile:
     el análisis lo haya declarado limpio. Nunca se entrega otro contenido en
     lugar del esperado (§119, §120).
     """
+    if documento_sellado(db, version.document_id):
+        raise NotFoundError(code="DOCUMENT_NOT_FOUND", message="Documento no encontrado")
     stored = db.get(StoredFile, version.stored_file_id)
     if stored is None:
         raise NotFoundError(code="DOCUMENT_NOT_FOUND", message="Documento no encontrado")
@@ -627,6 +678,8 @@ def purge_blockers(db: Session, version: DocumentVersion) -> list[str]:
     document = db.get(Document, version.document_id)
     if document is not None and document.current_version_id == str(version.id):
         blockers.append("Es la versión vigente del documento")
+    if document is not None and documento_sellado(db, str(document.id)):
+        blockers.append("Documento sellado")
     frozen = db.execute(select(func.count()).select_from(DocumentLink).where(
         DocumentLink.frozen_version_id == str(version.id))).scalar_one()
     if frozen:

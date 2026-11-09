@@ -31,6 +31,7 @@ from app.modules.documents.models import (
     Document,
     DocumentCategory,
     DocumentLink,
+    DocumentSeal,
     DocumentType,
     DocumentVersion,
     StoredFile,
@@ -69,6 +70,8 @@ def _get_document(db: Session, ctx: CompanyContext, document_id: str) -> Documen
     """Un documento de otra empresa se responde como inexistente (§44)."""
     document = db.get(Document, document_id)
     if document is None or document.company_id not in _alcance(ctx):
+        raise NotFoundError(code="DOCUMENT_NOT_FOUND", message="Documento no encontrado")
+    if service.documento_sellado(db, document_id):
         raise NotFoundError(code="DOCUMENT_NOT_FOUND", message="Documento no encontrado")
     return document
 
@@ -344,7 +347,12 @@ def list_documents(q: str | None = None, document_type_id: str | None = None,
     ctx: CompanyContext = Depends(get_company_context)):
     """Biblioteca paginada. **No abre ningún binario** (NFR-046-01)."""
     companies = _alcance(ctx)
-    query = select(Document).where(Document.company_id.in_(companies))
+    query = select(Document).where(
+        Document.company_id.in_(companies),
+        ~select(DocumentSeal.id)
+        .where(DocumentSeal.document_id == Document.id, DocumentSeal.released_at.is_(None))
+        .exists(),
+    )
     if document_type_id:
         query = query.where(Document.document_type_id == document_type_id)
     if status:
@@ -710,6 +718,8 @@ def delete_link(link_id: str, db: Session = Depends(get_db),
     ctx: CompanyContext = Depends(get_company_context)):
     link = db.get(DocumentLink, link_id)
     if link is None or link.company_id not in _alcance(ctx):
+        raise NotFoundError(code="DOCUMENT_NOT_FOUND", message="Vínculo no encontrado")
+    if service.documento_sellado(db, link.document_id):
         raise NotFoundError(code="DOCUMENT_NOT_FOUND", message="Vínculo no encontrado")
     _assert_resource_access(db, actor, ctx, link.resource_type, link.resource_id)
     try:
