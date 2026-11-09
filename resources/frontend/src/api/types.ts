@@ -426,6 +426,7 @@ export interface CostLayer {
   currency: string;
   fiscal_rate: number | null;
   landed_cost: number;
+  effective_unit_cost: number;
   status: string;
 }
 
@@ -451,8 +452,9 @@ export interface MovementType {
 }
 
 export interface ValuationResult {
-  valuation: number;
+  valuation: number | null;
   currency: string;
+  by_currency: Array<{ currency: string; valuation: number }>;
 }
 
 // ---------------------------------------------------------------------------

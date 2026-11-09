@@ -2715,6 +2715,14 @@
       "scope": "COMPANY"
     },
     {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/cost-applications/{application_id}/reverse",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/importaciones/{file_id}/costs",
       "capabilities": [
@@ -2767,6 +2775,30 @@
       "path": "/api/v1/importaciones/{file_id}/expenses",
       "capabilities": [
         "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/expenses/{expense_id}/allocation-preview",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/expenses/{expense_id}/apply",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/expenses/{expense_id}/classification",
+      "capabilities": [
+        "compras:approve"
       ],
       "scope": "COMPANY"
     },

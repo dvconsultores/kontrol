@@ -1981,6 +1981,11 @@
       "query": []
     },
     {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/cost-applications/{application_id}/reverse",
+      "query": []
+    },
+    {
       "method": "GET",
       "path": "/importaciones/{file_id}/costs",
       "query": []
@@ -2017,6 +2022,21 @@
     {
       "method": "POST",
       "path": "/importaciones/{file_id}/expenses",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/expenses/{expense_id}/allocation-preview",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/expenses/{expense_id}/apply",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/expenses/{expense_id}/classification",
       "query": []
     },
     {

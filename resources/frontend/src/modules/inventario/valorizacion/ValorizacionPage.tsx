@@ -67,6 +67,7 @@ export function ValorizacionPage(): React.JSX.Element {
     layerHelper.accessor("quantity_remaining", { header: "Cant. restante" }),
     layerHelper.accessor("unit_cost", { header: "Costo unit." }),
     layerHelper.accessor("landed_cost", { header: "Costo aterrizado" }),
+    layerHelper.accessor("effective_unit_cost", { header: "Costo efectivo" }),
     layerHelper.accessor("status", { header: "Estado" }),
   ];
 
@@ -88,9 +89,21 @@ export function ValorizacionPage(): React.JSX.Element {
       />
       <div className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <p className="text-sm text-text-500">Valor total del inventario</p>
-        <p className="text-2xl font-semibold text-text-900">
-          {valuation.data ? `${valuation.data.valuation.toFixed(2)} ${valuation.data.currency}` : "—"}
-        </p>
+        {valuation.data?.currency === "MIXED" ? (
+          <div className="space-y-1">
+            {valuation.data.by_currency.map((item) => (
+              <p key={item.currency} className="text-2xl font-semibold text-text-900">
+                {item.valuation.toFixed(2)} {item.currency}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="text-2xl font-semibold text-text-900">
+            {valuation.data?.valuation != null
+              ? `${valuation.data.valuation.toFixed(2)} ${valuation.data.currency}`
+              : "—"}
+          </p>
+        )}
       </div>
 
       <Autorizado operacion={["POST", "/inventory/costing-profiles"]}>

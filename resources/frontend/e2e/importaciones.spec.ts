@@ -88,6 +88,15 @@ test("expediente de importación de punta a punta", async ({ page }) => {
 
   await entrar(page, USER, { tenant: TENANT });
   await page.goto("/");
+  if (page.viewportSize() && page.viewportSize()!.width < 1024) {
+    await page.addLocatorHandler(
+      page.getByRole("button", { name: "Cerrar notificación" }).first(),
+      async (boton) => {
+        await boton.click();
+      },
+    );
+    await page.getByRole("button", { name: /abrir menú|menú/i }).click();
+  }
   await page.getByRole("link", { name: "Importaciones" }).click();
   await expect(
     page.getByRole("heading", { name: "Importaciones", exact: true }),
@@ -358,7 +367,6 @@ test("expediente de importación de punta a punta", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Costos", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Costos", exact: true }).click();
 
-  await expect(costos.getByText("Distribución aún no disponible")).toBeVisible();
   await expect(costos.getByText("Todavía no hay gastos registrados.")).toBeVisible();
   await expect(page.getByRole("button", { name: /aplicar/i })).toHaveCount(0);
   await expect(costos.getByText(`Artículo ${sufijo}`)).toBeVisible();
@@ -378,7 +386,7 @@ test("expediente de importación de punta a punta", async ({ page }) => {
   await costos.getByLabel(/^Monto/).fill("1250,50");
   await costos.getByRole("button", { name: "Registrar gasto" }).click();
 
-  await expect(page.getByText(/tasa/i).first()).toBeVisible();
+  await expect(page.locator("main").getByText(/tasa/i).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Registrar tasa en Tesorería" })).toBeVisible();
 
   const costosRespuesta = await fetch(`${API}/importaciones/${importId}/costs`, { headers: authHeaders(companyId) }).then((r) => r.json() as Promise<{ functional_currency: string }>);
@@ -423,7 +431,102 @@ test("expediente de importación de punta a punta", async ({ page }) => {
 
   await expect(costos).not.toContainText(/[0-9a-f]{8}-[0-9a-f]{4}-/);
 
-  await page.getByRole("link", { name: "Ver historial" }).click();
+  await post("/treasury/exchange-rates/observations", {
+    base_currency: "USD",
+    quote_currency: functionalCurrency,
+    source_id: fuente.id,
+    rate: "36.125",
+    effective_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+
+  const cerrarNotificacion = async () => {
+    const boton = page.getByRole("button", { name: "Cerrar notificación" });
+    if (await boton.count()) {
+      await boton.first().click();
+    }
+  };
+
+  await page.getByRole("button", { name: "Registrar gasto" }).click();
+  await campoConcepto.fill("Flete capitalizable");
+  await page.getByLabel(/^Proveedor/).fill(`Proveedor Import ${sufijo}`);
+  await page.getByRole("option", { name: `Proveedor Import ${sufijo}` }).click();
+  await costos.getByLabel(/^Referencia/).fill(`FC-${sufijo}`);
+  await costos.getByLabel(/^Moneda/).selectOption("USD");
+  await costos.getByLabel(/^Fecha/).fill(new Date().toISOString().slice(0, 10));
+  await costos.getByLabel(/^Monto/).fill("10,00");
+  await costos.getByRole("button", { name: "Registrar gasto" }).click();
+  await expect(costos.getByText("Flete capitalizable")).toBeVisible();
+
+  let tarjeta = costos.locator("li").filter({ hasText: "Flete capitalizable" });
+  await expect(tarjeta).toBeVisible();
+
+  await tarjeta.getByText("Por valor").click();
+  await tarjeta.getByRole("button", { name: "Generar vista previa" }).click();
+  await expect(tarjeta.getByText("El gasto no está clasificado como capitalizable.")).toBeVisible();
+  await expect(tarjeta.getByRole("button", { name: "Aplicar costo" })).toHaveCount(0);
+
+  await tarjeta.getByLabel(/^Clasificación del costo/).selectOption("CAPITALIZABLE");
+  await tarjeta.getByRole("button", { name: "Guardar clasificación" }).click();
+  await expect(tarjeta.getByLabel(/^Clasificación del costo/)).toHaveValue("CAPITALIZABLE");
+
+  await tarjeta.getByText("Por valor").click();
+  const previa = page.waitForResponse(
+    (r) => r.url().includes("/allocation-preview") && r.status() === 200,
+  );
+  await tarjeta.getByRole("button", { name: "Generar vista previa" }).click();
+  const tokenVistaPrevia = ((await (await previa).json()) as { preview_token: string }).preview_token;
+
+  await expect(tarjeta.getByText("Vista previa: aún no se ha aplicado nada")).toBeVisible();
+  await expect(tarjeta.getByText("El reparto cuadra exactamente")).toBeVisible();
+  await expect(costos.getByText("50,00 USD").first()).toBeVisible();
+
+  await cerrarNotificacion();
+  await tarjeta.getByRole("button", { name: "Aplicar costo" }).click();
+  const dialogoAplicar = page.getByRole("dialog");
+  await expect(dialogoAplicar.getByText("Flete capitalizable")).toBeVisible();
+  await expect(dialogoAplicar.getByText("10,00 USD").first()).toBeVisible();
+  await dialogoAplicar.getByRole("button", { name: "Confirmar aplicación" }).click();
+
+  await expect(tarjeta.getByText("Aplicado", { exact: true })).toBeVisible();
+  await expect(costos.getByText("6,000000 USD").first()).toBeVisible();
+  await expect(costos.getByText("60,00 USD").first()).toBeVisible();
+
+  const gastos = (await (
+    await fetch(`${API}/importaciones/${importId}/costs`, { headers: authHeaders(companyId) })
+  ).json()) as { expenses: Array<{ id: string; concept: string }> };
+  const gastoCapitalizable = gastos.expenses.find((item) => item.concept === "Flete capitalizable");
+  const reintento = await fetch(
+    `${API}/importaciones/${importId}/expenses/${gastoCapitalizable?.id}/apply`,
+    {
+      method: "POST",
+      headers: authHeaders(companyId),
+      body: JSON.stringify({ criterion: "VALUE", preview_token: tokenVistaPrevia }),
+    },
+  );
+  expect(reintento.status).toBe(409);
+  expect(((await reintento.json()) as { code: string }).code).toBe("IMPORT_COST_ALREADY_APPLIED");
+
+  await page.reload();
+  tarjeta = costos.locator("li").filter({ hasText: "Flete capitalizable" });
+  await expect(tarjeta).toBeVisible();
+  await expect(costos.getByText("60,00 USD").first()).toBeVisible();
+  const valoracion = (await (
+    await fetch(`${API}/inventory/valuation`, { headers: authHeaders(companyId) })
+  ).json()) as { by_currency: Array<{ currency: string }> };
+  expect(valoracion.by_currency.some((item) => item.currency === "USD")).toBeTruthy();
+
+  await cerrarNotificacion();
+  await tarjeta.getByRole("button", { name: "Revertir aplicación" }).click();
+  const dialogoRevertir = page.getByRole("dialog");
+  await dialogoRevertir.getByLabel("Motivo de reversión").fill("Prueba E2E");
+  await dialogoRevertir.getByRole("button", { name: "Confirmar reversión" }).click();
+  await expect(tarjeta.getByText("Revertido", { exact: true })).toBeVisible();
+  await expect(costos.getByText("50,00 USD").first()).toBeVisible();
+  await expect(tarjeta.getByText("Historial de aplicación")).toBeVisible();
+
+  await page.getByRole("link", { name: "Historial" }).click();
+  await expect(page.getByText("Gasto de importación aplicado a capas de costo").first()).toBeVisible();
+  await expect(page.getByText("Aplicación de gasto de importación revertida").first()).toBeVisible();
   await expect(page.getByText("Gasto de importación registrado").first()).toBeVisible();
   await expect(page.getByText("Gasto de importación anulado").first()).toBeVisible();
 

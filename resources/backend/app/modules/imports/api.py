@@ -15,7 +15,7 @@ from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
 from app.modules.audit.models import AuditEvent
 from app.modules.identity_access.models import User
-from app.modules.imports import costs, service
+from app.modules.imports import costs, landed_cost, service
 from app.modules.imports.models import ImportFile
 from app.shared.audit_catalog import label_of, safe_details
 from app.shared.clock import InstanteDeEntrada
@@ -717,6 +717,135 @@ class VoidExpenseBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
     version: int
     reason: str = Field(min_length=1, max_length=255)
+
+
+class ClassifyExpenseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    version: int
+    capitalization: str = Field(min_length=1, max_length=32)
+
+
+class AllocationPreviewBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    criterion: str = Field(min_length=1, max_length=16)
+    manual_amounts: dict[str, str] | None = None
+
+
+class ApplyAllocationBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    criterion: str = Field(min_length=1, max_length=16)
+    manual_amounts: dict[str, str] | None = None
+    preview_token: str = Field(min_length=1)
+
+
+class ReverseAllocationBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    version: int
+    reason: str = Field(min_length=1)
+
+
+@router.post(
+    "/{file_id}/expenses/{expense_id}/classification",
+    dependencies=[Depends(require_write_allowed)],
+)
+def import_classify_expense(
+    file_id: str,
+    expense_id: str,
+    body: ClassifyExpenseBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "approve")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    landed_cost.classify_expense(
+        db,
+        file=file,
+        expense_id=expense_id,
+        version=body.version,
+        capitalization=body.capitalization,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    return costs.costs_detail(db, file)
+
+
+@router.post(
+    "/{file_id}/expenses/{expense_id}/allocation-preview",
+    dependencies=[],
+)
+def import_allocation_preview(
+    file_id: str,
+    expense_id: str,
+    body: AllocationPreviewBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=False)
+    return landed_cost.preview_allocation(
+        db,
+        file=file,
+        expense_id=expense_id,
+        criterion=body.criterion,
+        manual_amounts=body.manual_amounts,
+    )
+
+
+@router.post(
+    "/{file_id}/expenses/{expense_id}/apply",
+    dependencies=[Depends(require_write_allowed)],
+)
+def import_apply_expense(
+    file_id: str,
+    expense_id: str,
+    body: ApplyAllocationBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "approve")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    landed_cost.apply_allocation(
+        db,
+        file=file,
+        expense_id=expense_id,
+        criterion=body.criterion,
+        manual_amounts=body.manual_amounts,
+        preview_token=body.preview_token,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    return costs.costs_detail(db, file)
+
+
+@router.post(
+    "/{file_id}/cost-applications/{application_id}/reverse",
+    dependencies=[Depends(require_write_allowed)],
+)
+def import_reverse_application(
+    file_id: str,
+    application_id: str,
+    body: ReverseAllocationBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "approve")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id, for_update=True)
+    landed_cost.reverse_application(
+        db,
+        file=file,
+        application_id=application_id,
+        version=body.version,
+        reason=body.reason,
+        actor_id=str(user.id),
+        tenant_id=user.tenant_id,
+    )
+    db.commit()
+    db.refresh(file)
+    return costs.costs_detail(db, file)
 
 
 @router.post(

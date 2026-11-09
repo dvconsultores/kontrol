@@ -179,6 +179,30 @@ export type Documento = {
   };
 };
 
+export type AplicacionCosto = {
+  id: string;
+  version: number;
+  status: "APPLIED" | "REVERSED";
+  criterion: string;
+  valuation_currency: string;
+  valuation_amount: string;
+  applied_at: string | null;
+  applied_by_name: string | null;
+  reversed_at: string | null;
+  reversed_by_name: string | null;
+  reversal_reason: string | null;
+  can_reverse: boolean;
+  allocations: Array<{
+    product_code: string | null;
+    product_name: string | null;
+    allocated_amount: string;
+    before_landed_cost: string;
+    after_landed_cost: string;
+    before_unit_cost: string;
+    after_unit_cost: string;
+  }>;
+};
+
 export type GastoImportacion = {
   id: string;
   kind: string;
@@ -195,6 +219,7 @@ export type GastoImportacion = {
   version: number;
   username: string | null;
   created_at: string | null;
+  capitalization: "UNDETERMINED" | "CAPITALIZABLE" | "NOT_CAPITALIZABLE";
   rate: {
     value: string;
     source: string | null;
@@ -211,10 +236,14 @@ export type GastoImportacion = {
   } | null;
   allowed_actions: {
     void: boolean;
+    classify: boolean;
+    apply: boolean;
   };
+  applications: AplicacionCosto[];
 };
 
 export type CapaDeCosto = {
+  layer_id: string;
   receipt_code: string;
   product_code: string | null;
   product_name: string | null;
@@ -224,6 +253,8 @@ export type CapaDeCosto = {
   unit_cost: string;
   currency: string;
   landed_cost: string;
+  effective_unit_cost: string;
+  value: string;
   partially_consumed: boolean;
 };
 
@@ -252,9 +283,51 @@ export type DetalleCostos = {
   };
   layers: CapaDeCosto[];
   goods_totals: Array<{ currency: string; amount: string }>;
-  application: {
-    status: string;
+  inventory_totals: Array<{ currency: string; amount: string }>;
+};
+
+export type LineaVistaPrevia = {
+  layer_id: string;
+  product_code: string | null;
+  product_name: string | null;
+  receipt_code: string | null;
+  base: string;
+  base_label: string;
+  participation: string;
+  exact_share: string;
+  allocated_amount: string;
+  residual_adjustment: string;
+  unit_cost: string;
+  before_landed_cost: string;
+  before_unit_cost: string;
+  after_landed_cost: string;
+  after_unit_cost: string;
+  consumed: boolean;
+};
+
+export type VistaPrevia = {
+  expense: {
+    id: string;
+    concept: string;
+    reference: string;
+    capitalization: string;
+    version: number;
+    currency: string;
+    amount: string;
+    rate_value: string;
+    rate_date: string | null;
+    rate_identity: boolean;
   };
+  criterion: string;
+  criterion_source_label: string;
+  valuation_currency: string;
+  valuation_amount: string;
+  distributed_total: string;
+  difference: string;
+  lines: LineaVistaPrevia[];
+  can_apply: boolean;
+  blocks: Array<{ code: string; message: string; difference?: string }>;
+  preview_token: string;
 };
 
 export type DetalleImportacion = {

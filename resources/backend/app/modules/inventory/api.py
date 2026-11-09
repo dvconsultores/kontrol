@@ -21,6 +21,7 @@ from app.core.dependencies import get_current_user, require_permission, require_
 from app.core.errors import NotFoundError, PermissionDeniedError
 from app.modules.identity_access.models import User
 from app.modules.inventory import service as inv_service
+from app.modules.treasury.rates import moneda_funcional
 from app.modules.inventory.models import (
     CostingProfile,
     CostLayer,
@@ -671,7 +672,8 @@ def list_cost_layers(product_id: str | None = None, warehouse_id: str | None = N
 def get_valuation(product_id: str | None = None, warehouse_id: str | None = None,
                   db: Session = Depends(get_db), user: User = Depends(require_permission("inventario", "view")), ctx: CompanyContext = Depends(get_company_context)):
     value = inv_service.valuation(db, company_id=ctx.company_id, product_id=product_id, warehouse_id=warehouse_id)
-    return {"valuation": value, "currency": "VED"}
+    by_currency = inv_service.valuation_by_currency(db, company_id=ctx.company_id, product_id=product_id, warehouse_id=warehouse_id)
+    return {"valuation": value, "currency": moneda_funcional(db, ctx.company_id), "by_currency": by_currency}
 
 
 @router.get("/costing-profiles")
@@ -836,7 +838,8 @@ def _adjustment_dict(a: InventoryAdjustment) -> dict:
 def _cost_layer_dict(c: CostLayer) -> dict:
     return {"id": c.id, "product_id": c.product_id, "warehouse_id": c.warehouse_id, "receipt_ref": c.receipt_ref,
             "quantity_in": c.quantity_in, "quantity_remaining": c.quantity_remaining, "unit_cost": c.unit_cost,
-            "currency": c.currency, "fiscal_rate": c.fiscal_rate, "landed_cost": c.landed_cost, "status": c.status}
+            "currency": c.currency, "fiscal_rate": c.fiscal_rate, "landed_cost": c.landed_cost, "status": c.status,
+            "effective_unit_cost": inv_service.effective_unit_cost(c)}
 
 
 def _costing_profile_dict(c: CostingProfile) -> dict:

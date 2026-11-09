@@ -10,6 +10,7 @@ import { FormField } from "@/components/FormField";
 import { TextInput } from "@/components/TextInput";
 import { SelectorDeTercero } from "@/modules/maestros/terceros/SelectorDeTercero";
 import { formatMoney, formatDate } from "@/lib/format";
+import { ImportacionLandedCost } from "./ImportacionLandedCost";
 import type {
   CandidatoFactura,
   CapaDeCosto,
@@ -35,11 +36,13 @@ function GastoCard({
   gasto,
   detalle,
   functionalCurrency,
+  capas,
   onCambios,
 }: {
   gasto: GastoImportacion;
   detalle: DetalleImportacion;
   functionalCurrency: string;
+  capas: CapaDeCosto[];
   onCambios: () => void;
 }): React.JSX.Element {
   const [dialogoAbierto, setDialogoAbierto] = useState(false);
@@ -157,6 +160,15 @@ function GastoCard({
         </div>
       </dl>
 
+      {!anulado ? (
+        <ImportacionLandedCost
+          gasto={gasto}
+          detalle={detalle}
+          capas={capas}
+          onCambios={onCambios}
+        />
+      ) : null}
+
       <ConfirmationDialog
         open={dialogoAbierto}
         title="Anular gasto"
@@ -222,6 +234,18 @@ function CapaCard({ capa }: { capa: CapaDeCosto }): React.JSX.Element {
           <dt className="text-text-600">Costo de importación aplicado</dt>
           <dd>
             {formatMoney(capa.landed_cost)} {capa.currency}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-text-600">Costo efectivo</dt>
+          <dd>
+            {formatMoney(capa.effective_unit_cost)} {capa.currency}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-text-600">Valor en inventario</dt>
+          <dd>
+            {formatMoney(capa.value)} {capa.currency}
           </dd>
         </div>
       </dl>
@@ -326,8 +350,6 @@ export function ImportacionCostos({ detalle, onCambios }: Props): React.JSX.Elem
     }
   }
 
-  const mostrarDistribucionPendiente = costos && !costosQuery.isError && costos.application.status === "DISTRIBUTION_NOT_AVAILABLE";
-
   return (
     <section id="costos" className="rounded-lg border border-border-default bg-surface-0 p-6">
       <h2 className="mb-4 text-lg font-semibold text-text-900">Costos de importación</h2>
@@ -385,6 +407,19 @@ export function ImportacionCostos({ detalle, onCambios }: Props): React.JSX.Elem
             <p className="text-sm text-text-600">Sin capas de costo todavía</p>
           )}
 
+          <h3 className="mb-2 mt-6 text-md font-semibold text-text-900">Valor en inventario</h3>
+          {costos.inventory_totals.length > 0 ? (
+            <ul className="text-sm">
+              {costos.inventory_totals.map((item) => (
+                <li key={item.currency}>
+                  {formatMoney(item.amount)} {item.currency}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-text-600">Sin valor en inventario</p>
+          )}
+
           <h3 className="mb-2 mt-6 text-md font-semibold text-text-900">Gastos</h3>
           {costos.expenses.length === 0 ? (
             <p className="text-sm text-text-600">Todavía no hay gastos registrados.</p>
@@ -396,6 +431,7 @@ export function ImportacionCostos({ detalle, onCambios }: Props): React.JSX.Elem
                   gasto={gasto}
                   detalle={detalle}
                   functionalCurrency={functionalCurrency}
+                  capas={costos.layers}
                   onCambios={onCambios}
                 />
               ))}
@@ -565,21 +601,6 @@ export function ImportacionCostos({ detalle, onCambios }: Props): React.JSX.Elem
         </>
       ) : null}
 
-      {mostrarDistribucionPendiente ? (
-        <div className="mt-6 rounded-md border border-border-default bg-surface-100 p-4">
-          <p>
-            <strong>Distribución aún no disponible</strong>
-          </p>
-          <p className="mt-2 text-sm">
-            Los gastos ya se registran, pero todavía no se pueden repartir entre los productos ni
-            sumar a su costo.
-          </p>
-          <p className="mt-3 text-sm text-text-700">Ninguna capa de costo se ha modificado.</p>
-          <a href="#historial" className="mt-2 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
-            Ver historial
-          </a>
-        </div>
-      ) : null}
     </section>
   );
 }

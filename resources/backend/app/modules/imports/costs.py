@@ -10,8 +10,14 @@ from sqlalchemy.orm import Session
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.identity_access.models import User
 from app.modules.imports import service
-from app.modules.imports.models import ImportExpense, ImportFile
+from app.modules.imports.models import (
+    ImportCostAllocation,
+    ImportCostApplication,
+    ImportExpense,
+    ImportFile,
+)
 from app.modules.inventory.models import CostLayer
+from app.modules.inventory.service import effective_unit_cost, layer_value
 from app.modules.master_data import party_service
 from app.modules.master_data.models import CatalogItem, Party
 from app.modules.organization.models import Warehouse
@@ -321,6 +327,17 @@ def void_expense(
             code="IMPORT_EXPENSE_INVALID_STATE",
             message="El gasto no se puede anular en su estado actual.",
         )
+    applied = db.scalar(
+        select(ImportCostApplication.id).where(
+            ImportCostApplication.expense_id == expense.id,
+            ImportCostApplication.status == "APPLIED",
+        )
+    )
+    if applied is not None:
+        raise ConflictError(
+            code="IMPORT_EXPENSE_APPLIED",
+            message="El gasto tiene una aplicación vigente. Reviértala antes de anularlo.",
+        )
     if not reason or not reason.strip():
         raise KontrolError(
             code="IMPORT_EXPENSE_REASON_REQUIRED",
@@ -415,6 +432,84 @@ def _tracking_expense_username(db: Session, user_id: str | None) -> str | None:
     return user.username if user is not None else None
 
 
+def _expense_application_detail(db: Session, expense: ImportExpense) -> tuple[dict, list[dict]]:
+    applications = db.scalars(
+        select(ImportCostApplication)
+        .where(
+            ImportCostApplication.expense_id == expense.id,
+            ImportCostApplication.company_id == expense.company_id,
+        )
+        .order_by(ImportCostApplication.applied_at.desc(), ImportCostApplication.created_at.desc())
+    ).all()
+
+    applied_exists = any(application.status == "APPLIED" for application in applications)
+    allowed_actions = {
+        "void": expense.status == "REGISTERED" and not applied_exists,
+        "classify": expense.status == "REGISTERED" and not applied_exists,
+        "apply": expense.status == "REGISTERED"
+        and expense.capitalization == "CAPITALIZABLE"
+        and not applied_exists,
+    }
+
+    application_payloads = []
+    for application in applications:
+        allocations = db.scalars(
+            select(ImportCostAllocation).where(
+                ImportCostAllocation.application_id == application.id
+            )
+        ).all()
+
+        can_reverse = application.status == "APPLIED" and all(
+            (layer := db.get(CostLayer, allocation.layer_id)) is not None
+            and _dec(layer.quantity_remaining) >= _dec(layer.quantity_in)
+            for allocation in allocations
+        )
+
+        application_payloads.append(
+            {
+                "id": str(application.id),
+                "version": application.version,
+                "status": application.status,
+                "criterion": application.criterion,
+                "valuation_currency": application.valuation_currency,
+                "valuation_amount": _money(application.valuation_amount),
+                "applied_at": application.applied_at.isoformat() if application.applied_at else None,
+                "applied_by_name": _tracking_expense_username(db, application.applied_by),
+                "reversed_at": application.reversed_at.isoformat() if application.reversed_at else None,
+                "reversed_by_name": _tracking_expense_username(db, application.reversed_by),
+                "reversal_reason": application.reversal_reason,
+                "can_reverse": can_reverse,
+                "allocations": [
+                    {
+                        "product_code": db.scalar(
+                            select(CatalogItem.code).where(CatalogItem.id == allocation.product_id)
+                        )
+                        if allocation.product_id
+                        else None,
+                        "product_name": db.scalar(
+                            select(CatalogItem.name).where(CatalogItem.id == allocation.product_id)
+                        )
+                        if allocation.product_id
+                        else None,
+                        "allocated_amount": _money(allocation.allocated_amount),
+                        "before_landed_cost": _money(allocation.before_landed_cost),
+                        "after_landed_cost": _money(allocation.after_landed_cost),
+                        "before_unit_cost": format(
+                            allocation.before_unit_cost.quantize(Decimal("0.000001")), "f"
+                        ),
+                        "after_unit_cost": format(
+                            allocation.after_unit_cost.quantize(Decimal("0.000001")), "f"
+                        ),
+                    }
+                    for allocation in sorted(
+                        allocations, key=lambda row: row.created_at or row.id
+                    )
+                ],
+            }
+        )
+    return allowed_actions, application_payloads
+
+
 def costs_detail(db: Session, file: ImportFile) -> dict[str, Any]:
     functional_currency = moneda_funcional(db, file.company_id)
 
@@ -443,6 +538,7 @@ def costs_detail(db: Session, file: ImportFile) -> dict[str, Any]:
 
     layers = []
     goods_totals: dict[str, Decimal] = {}
+    inventory_totals: dict[str, Decimal] = {}
     if receipt_refs:
         layers_rows = db.scalars(
             select(CostLayer).where(
@@ -456,6 +552,7 @@ def costs_detail(db: Session, file: ImportFile) -> dict[str, Any]:
             receipt = receipts_by_ref.get(layer.receipt_ref) if layer.receipt_ref else None
             layers.append(
                 {
+                    "layer_id": str(layer.id),
                     "receipt_code": receipt.code if receipt else None,
                     "product_code": catalog_item.code if catalog_item else None,
                     "product_name": catalog_item.name if catalog_item else None,
@@ -465,12 +562,18 @@ def costs_detail(db: Session, file: ImportFile) -> dict[str, Any]:
                     "unit_cost": _money(_dec(layer.unit_cost)),
                     "currency": layer.currency,
                     "landed_cost": _money(_dec(layer.landed_cost)),
+                    "effective_unit_cost": format(
+                        effective_unit_cost(layer).quantize(Decimal("0.000001")), "f"
+                    ),
+                    "value": _money(layer_value(layer)),
                     "partially_consumed": layer.quantity_remaining < layer.quantity_in,
                 }
             )
             key = layer.currency
-            amount = layer.quantity_in * _dec(layer.unit_cost)
-            goods_totals[key] = goods_totals.get(key, Decimal("0")) + amount
+            goods_totals[key] = goods_totals.get(key, Decimal("0")) + (
+                layer.quantity_in * _dec(layer.unit_cost)
+            )
+            inventory_totals[key] = inventory_totals.get(key, Decimal("0")) + layer_value(layer)
 
     expenses_rows = db.scalars(
         select(ImportExpense)
@@ -482,6 +585,7 @@ def costs_detail(db: Session, file: ImportFile) -> dict[str, Any]:
     ).all()
     expenses_detail = []
     for expense in expenses_rows:
+        allowed_actions, applications = _expense_application_detail(db, expense)
         snapshot = db.scalar(
             select(TreasuryRateSnapshot).where(TreasuryRateSnapshot.id == expense.rate_snapshot_id)
         )
@@ -514,6 +618,7 @@ def costs_detail(db: Session, file: ImportFile) -> dict[str, Any]:
                 "functional_amount": _money(expense.functional_amount),
                 "status": expense.status,
                 "void_reason": expense.void_reason,
+                "capitalization": expense.capitalization,
                 "version": expense.version,
                 "username": _tracking_expense_username(db, expense.created_by),
                 "created_at": expense.created_at.isoformat() if expense.created_at else None,
@@ -527,7 +632,8 @@ def costs_detail(db: Session, file: ImportFile) -> dict[str, Any]:
                     "identity": snapshot.rate_source == "SAME_CURRENCY_IDENTITY" if snapshot else False,
                 },
                 "document": document,
-                "allowed_actions": {"void": expense.status == "REGISTERED"},
+                "allowed_actions": allowed_actions,
+                "applications": applications,
             }
         )
 
@@ -556,7 +662,8 @@ def costs_detail(db: Session, file: ImportFile) -> dict[str, Any]:
             {"currency": key, "amount": _money(value)}
             for key, value in sorted(goods_totals.items())
         ],
-        "application": {
-            "status": "DISTRIBUTION_NOT_AVAILABLE",
-        },
+        "inventory_totals": [
+            {"currency": key, "amount": _money(value)}
+            for key, value in sorted(inventory_totals.items())
+        ],
     }

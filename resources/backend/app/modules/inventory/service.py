@@ -596,6 +596,26 @@ def _apply_cost_in(db: Session, *, company_id: str, product_id: str, warehouse_i
     return layer
 
 
+def effective_unit_cost(layer: CostLayer, landed_cost: Decimal | None = None) -> Decimal:
+    """Costo unitario efectivo de una capa, incorporando el landed cost."""
+    quantity_in = _dec(layer.quantity_in)
+    if quantity_in == 0:
+        return _dec(layer.unit_cost)
+    chosen_landed = _dec(layer.landed_cost) if landed_cost is None else _dec(landed_cost)
+    return _dec(layer.unit_cost) + chosen_landed / quantity_in
+
+
+def layer_value(layer: CostLayer) -> Decimal:
+    """Valor de la capa según cantidad remanente y costo efectivo."""
+    quantity_remaining = _dec(layer.quantity_remaining)
+    unit = _dec(layer.unit_cost)
+    landed = _dec(layer.landed_cost)
+    quantity_in = _dec(layer.quantity_in)
+    if quantity_in == 0:
+        return quantity_remaining * unit
+    return quantity_remaining * unit + landed * quantity_remaining / quantity_in
+
+
 def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id: str,
                   quantity: float | Decimal) -> Decimal | None:
     """Consume capas de costo (FIFO o promedio) y devuelve el costo unitario.
@@ -610,6 +630,7 @@ def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id
             .where(CostLayer.company_id == company_id, CostLayer.product_id == product_id,
                    CostLayer.warehouse_id == warehouse_id, CostLayer.quantity_remaining > 0)
             .order_by(CostLayer.created_at.asc())
+            .with_for_update()
         )
         .scalars()
         .all()
@@ -620,7 +641,7 @@ def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id
         total_cost = Decimal(0)
         for layer in layers:
             take = min(_dec(layer.quantity_remaining), remaining)
-            total_cost += take * _dec(layer.unit_cost or 0)
+            total_cost += take * effective_unit_cost(layer)
             layer.quantity_remaining = _dec(layer.quantity_remaining) - take
             remaining -= take
             if layer.quantity_remaining <= 0:
@@ -636,7 +657,7 @@ def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id
 
     # Promedio ponderado
     total_qty = sum((_dec(layer.quantity_remaining) for layer in layers), Decimal(0))
-    total_value = sum((_dec(layer.quantity_remaining) * _dec(layer.unit_cost or 0)
+    total_value = sum((_dec(layer.quantity_remaining) * effective_unit_cost(layer)
                        for layer in layers), Decimal(0))
     if total_qty <= 0:
         return None
@@ -649,7 +670,6 @@ def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id
     return average
 
 
-
 def valuation(db: Session, *, company_id: str, product_id: str | None = None, warehouse_id: str | None = None) -> float:
     """Valoración del inventario según capas (FR-003-081)."""
     query = select(CostLayer).where(CostLayer.company_id == company_id, CostLayer.quantity_remaining > 0)
@@ -658,8 +678,28 @@ def valuation(db: Session, *, company_id: str, product_id: str | None = None, wa
     if warehouse_id:
         query = query.where(CostLayer.warehouse_id == warehouse_id)
     layers = db.execute(query).scalars().all()
-    return float(sum((_dec(layer.quantity_remaining) * _dec(layer.unit_cost or 0)
-                      for layer in layers), Decimal(0)))
+    return float(sum((layer_value(layer) for layer in layers), Decimal(0)))
+
+
+def valuation_by_currency(
+    db: Session,
+    *,
+    company_id: str,
+    product_id: str | None = None,
+    warehouse_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Valoración del inventario por moneda, ordenada por moneda."""
+    query = select(CostLayer).where(CostLayer.company_id == company_id, CostLayer.quantity_remaining > 0)
+    if product_id:
+        query = query.where(CostLayer.product_id == product_id)
+    if warehouse_id:
+        query = query.where(CostLayer.warehouse_id == warehouse_id)
+    layers = db.execute(query).scalars().all()
+    grouped: dict[str, Decimal] = {}
+    for layer in layers:
+        currency = layer.currency
+        grouped[currency] = grouped.get(currency, Decimal("0")) + layer_value(layer)
+    return [{"currency": currency, "valuation": grouped[currency]} for currency in sorted(grouped)]
 
 
 # --------------------------------------------------------------------------- #

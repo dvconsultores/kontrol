@@ -207,8 +207,7 @@ def test_flujo_principal(mundo, reloj_mfa, rol_completo):
     assert rc["layers"][0]["partially_consumed"] is True
     assert rc["layers"][0]["landed_cost"] == "0.00"
     assert rc["goods_totals"] == [{"currency": "USD", "amount": "125.00"}]
-    assert rc["application"]["status"] == "DISTRIBUTION_NOT_AVAILABLE"
-    assert "pending_decisions" not in rc["application"]
+    assert "application" not in rc
     assert "allocation" not in rc
     assert "applied_at" not in rc
 

@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -150,6 +151,9 @@ class ImportExpense(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Bas
     functional_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     rate_snapshot_id: Mapped[str] = mapped_column(ForeignKey("treasury_rate_snapshots.id"), nullable=False)
     import_document_id: Mapped[str | None] = mapped_column(ForeignKey("import_documents.id"), nullable=True)
+    capitalization: Mapped[str] = mapped_column(
+        String(16), nullable=False, server_default="UNDETERMINED", default="UNDETERMINED"
+    )
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="REGISTERED")
     void_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -164,5 +168,88 @@ class ImportExpense(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Bas
             "(kind = 'DIRECT_IMPORT_EXPENSE' AND supplier_invoice_id IS NULL)",
             name="ck_import_expenses_invoice_kind",
         ),
+        CheckConstraint(
+            "capitalization IN ('CAPITALIZABLE','NOT_CAPITALIZABLE','UNDETERMINED')",
+            name="ck_import_expenses_capitalization",
+        ),
         Index("ix_import_expenses_company_file", "company_id", "file_id"),
+    )
+
+
+class ImportCostApplication(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    __tablename__ = "import_cost_applications"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(ForeignKey("import_files.id"), nullable=False, index=True)
+    expense_id: Mapped[str] = mapped_column(ForeignKey("import_expenses.id"), nullable=False, index=True)
+    criterion: Mapped[str] = mapped_column(String(16), nullable=False)
+    criterion_source: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="APPLIED")
+    origin_currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    origin_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    origin_rate_snapshot_id: Mapped[str] = mapped_column(ForeignKey("treasury_rate_snapshots.id"), nullable=False)
+    origin_rate_value: Mapped[Decimal] = mapped_column(Numeric(24, 12), nullable=False)
+    valuation_currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    valuation_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    valuation_rate_snapshot_id: Mapped[str | None] = mapped_column(
+        ForeignKey("treasury_rate_snapshots.id"), nullable=True
+    )
+    applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    applied_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    reversed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reversed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    reversal_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "criterion IN ('VALUE','QUANTITY','MANUAL')",
+            name="ck_import_cost_applications_criterion",
+        ),
+        CheckConstraint(
+            "status IN ('APPLIED','REVERSED')",
+            name="ck_import_cost_applications_status",
+        ),
+        Index(
+            "uq_import_cost_applications_applied",
+            "expense_id",
+            unique=True,
+            postgresql_where=text("status = 'APPLIED'"),
+            sqlite_where=text("status = 'APPLIED'"),
+        ),
+        Index("ix_import_cost_applications_company", "company_id"),
+        Index("ix_import_cost_applications_expense", "expense_id"),
+    )
+
+
+class ImportCostAllocation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "import_cost_allocations"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    application_id: Mapped[str] = mapped_column(
+        ForeignKey("import_cost_applications.id"), nullable=False, index=True
+    )
+    layer_id: Mapped[str] = mapped_column(ForeignKey("cost_layers.id"), nullable=False, index=True)
+    product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
+    allocation_base: Mapped[Decimal] = mapped_column(Numeric(24, 6), nullable=False)
+    participation: Mapped[Decimal] = mapped_column(Numeric(12, 8), nullable=False)
+    exact_share: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    rounded_share: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    residual_adjustment: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    allocated_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(8), nullable=False)
+    before_landed_cost: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    after_landed_cost: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    before_unit_cost: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    after_unit_cost: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "application_id",
+            "layer_id",
+            name="uq_import_cost_allocations_application_layer",
+        ),
+        Index("ix_import_cost_allocations_company", "company_id"),
+        Index("ix_import_cost_allocations_application", "application_id"),
     )

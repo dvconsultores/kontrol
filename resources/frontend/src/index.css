@@ -64,4 +64,8 @@ body {
     width: auto;
     max-height: 40vh;
   }
+
+  #notification-root > *:not(:last-child) {
+    display: none;
+  }
 }

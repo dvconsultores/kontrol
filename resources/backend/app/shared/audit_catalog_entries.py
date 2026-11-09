@@ -568,6 +568,53 @@ _PARTE_IMPORTACIONES: tuple[AuditActionSpec, ...] = (
         ),
         "Gasto de importación anulado",
     ),
+    _e(
+        "IMPORT_EXPENSE_CLASSIFIED",
+        "ImportFile",
+        "imports",
+        "018",
+        "COMPANY",
+        "OPERATIONAL",
+        "BUSINESS_COMMIT",
+        (
+            "capitalization",
+        ),
+        "Gasto de importación clasificado",
+    ),
+    _e(
+        "IMPORT_COST_APPLIED",
+        "ImportFile",
+        "imports",
+        "018",
+        "COMPANY",
+        "OPERATIONAL",
+        "BUSINESS_COMMIT",
+        (
+            "application_id",
+            "expense_id",
+            "criterion",
+            "valuation_amount",
+            "valuation_currency",
+            "lines",
+            "status",
+        ),
+        "Gasto de importación aplicado a capas de costo",
+    ),
+    _e(
+        "IMPORT_COST_REVERSED",
+        "ImportFile",
+        "imports",
+        "018",
+        "COMPANY",
+        "OPERATIONAL",
+        "BUSINESS_COMMIT",
+        (
+            "application_id",
+            "status",
+            "version",
+        ),
+        "Aplicación de gasto de importación revertida",
+    ),
 )
 
 ENTRIES: tuple[AuditActionSpec, ...] = _PARTE_A + _PARTE_B + _PARTE_C + _PARTE_D + _PARTE_TERCEROS + _PARTE_IMPORTACIONES
