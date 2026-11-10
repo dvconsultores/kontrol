@@ -158,6 +158,7 @@ const navSections: NavSection[] = [
       { to: "/maestros/unidades", label: "Unidades de medida", icon: Ruler },
       { to: "/maestros/atributos", label: "Atributos", icon: ClipboardList },
       { to: "/maestros/almacenamiento", label: "Almacenamiento", icon: Warehouse },
+      { to: "/maestros/planificacion", label: "Planificación de abastecimiento", icon: SlidersHorizontal },
       { to: "/maestros/perfiles", label: "Perfiles fiscales", icon: Percent },
     ],
   },

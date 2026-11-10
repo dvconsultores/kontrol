@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
     CheckConstraint,
     Date,
@@ -10,7 +11,6 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    JSON,
     Numeric,
     String,
     Text,
@@ -103,7 +103,8 @@ class StorageRule(UUIDMixin, TimestampMixin, VersionMixin, Base):
         CheckConstraint("(min_volume IS NULL AND max_volume IS NULL) OR volume_unit_id IS NOT NULL", name="volume_unit"),
         CheckConstraint(
             "taxonomy_id IS NOT NULL OR size_class_id IS NOT NULL OR condition_id IS NOT NULL OR "
-            "min_weight IS NOT NULL OR max_weight IS NOT NULL OR min_volume IS NOT NULL OR max_volume IS NOT NULL",
+            "min_weight IS NOT NULL OR max_weight IS NOT NULL OR min_volume IS NOT NULL OR max_volume IS NOT NULL "
+            "OR rotation_band_id IS NOT NULL",
             name="has_criterion",
         ),
         CheckConstraint("valid_to IS NULL OR valid_from IS NULL OR valid_to >= valid_from", name="validity_range"),
@@ -121,6 +122,7 @@ class StorageRule(UUIDMixin, TimestampMixin, VersionMixin, Base):
     taxonomy_id: Mapped[str | None] = mapped_column(ForeignKey("taxonomy_nodes.id"), nullable=True)
     size_class_id: Mapped[str | None] = mapped_column(ForeignKey("storage_size_classes.id"), nullable=True)
     condition_id: Mapped[str | None] = mapped_column(ForeignKey("storage_conditions.id"), nullable=True)
+    rotation_band_id: Mapped[str | None] = mapped_column(ForeignKey("rotation_bands.id"), nullable=True)
     min_weight: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     max_weight: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     weight_unit_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
@@ -180,6 +182,7 @@ class StorageClassification(UUIDMixin, TimestampMixin, Base):
     input_weight: Mapped[str | None] = mapped_column(String(64), nullable=True)
     input_volume: Mapped[str | None] = mapped_column(String(64), nullable=True)
     input_size_class: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    input_rotation_band: Mapped[str | None] = mapped_column(String(64), nullable=True)
     input_conditions: Mapped[list[Any]] = mapped_column(JSON, nullable=False)
     reasons: Mapped[list[Any]] = mapped_column(JSON, nullable=False)
     missing_criteria: Mapped[list[Any]] = mapped_column(JSON, nullable=False)

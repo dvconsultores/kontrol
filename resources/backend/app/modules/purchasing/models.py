@@ -48,6 +48,7 @@ class PurchaseRequisition(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, 
     requester_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     cost_center_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     need_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    warehouse_id: Mapped[str | None] = mapped_column(ForeignKey("warehouses.id"), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
     approval_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
 

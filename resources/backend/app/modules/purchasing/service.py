@@ -265,10 +265,16 @@ def payment_allowed_actions(payment: Payment) -> dict[str, bool]:
 # Requisición
 # --------------------------------------------------------------------------- #
 def create_requisition(db: Session, *, company_id: str, code: str, requester_id: str | None = None,
-                       cost_center_id: str | None = None, need_date=None, actor: str | None = None) -> PurchaseRequisition:
+                       cost_center_id: str | None = None, need_date=None, warehouse_id: str | None = None,
+                       actor: str | None = None) -> PurchaseRequisition:
     company_id = _company(company_id, obj="requisición")
+    if warehouse_id:
+        warehouse = db.get(Warehouse, warehouse_id)
+        if not warehouse or not warehouse_belongs_to(company_id, warehouse):
+            raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
     req = PurchaseRequisition(company_id=company_id, code=code, requester_id=requester_id,
-                              cost_center_id=cost_center_id, need_date=need_date, status="DRAFT", created_by=actor)
+                              cost_center_id=cost_center_id, need_date=need_date, warehouse_id=warehouse_id,
+                              status="DRAFT", created_by=actor)
     db.add(req)
     db.flush()
     return req

@@ -50,6 +50,7 @@ class RequisitionCreate(BaseModel):
     requester_id: str | None = None
     cost_center_id: str | None = None
     need_date: date | None = None
+    warehouse_id: str | None = None
 
 
 class RequisitionLineCreate(BaseModel):
@@ -294,7 +295,8 @@ def list_requisitions(status: str | None = None, page: int = Query(1, ge=1), pag
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
     items = db.execute(query.order_by(PurchaseRequisition.created_at.desc()).offset((page - 1) * page_size).limit(page_size)).scalars().all()
     return {"items": [{"id": r.id, "code": r.code, "requester_id": r.requester_id, "cost_center_id": r.cost_center_id,
-                       "need_date": r.need_date.isoformat() if r.need_date else None, "status": r.status} for r in items],
+                       "need_date": r.need_date.isoformat() if r.need_date else None, "status": r.status,
+                       "warehouse_id": r.warehouse_id} for r in items],
             "total": total, "page": page, "page_size": page_size}
 
 
@@ -302,10 +304,11 @@ def list_requisitions(status: str | None = None, page: int = Query(1, ge=1), pag
 def create_requisition(body: RequisitionCreate, db: Session = Depends(get_db),
                        actor: User = Depends(require_permission("compras", "create")), ctx: CompanyContext = Depends(get_company_context)):
     req = ap_service.create_requisition(db, company_id=ctx.company_id, code=body.code, requester_id=body.requester_id,
-                                        cost_center_id=body.cost_center_id, need_date=body.need_date, actor=str(actor.id))
+                                        cost_center_id=body.cost_center_id, need_date=body.need_date,
+                                        warehouse_id=body.warehouse_id, actor=str(actor.id))
     db.commit()
     db.refresh(req)
-    return {"id": req.id, "code": req.code, "status": req.status}
+    return {"id": req.id, "code": req.code, "status": req.status, "warehouse_id": req.warehouse_id}
 
 
 @router.post("/requisitions/{req_id}/lines", dependencies=[Depends(require_write_allowed)])

@@ -10,27 +10,32 @@
 
 | Estado | Requisitos |
 |---|---|
-| COMPLETE | 26 |
-| PARTIAL | 7 |
+| COMPLETE | 29 |
+| PARTIAL | 5 |
 | EXISTS_NOT_REVALIDATED | 7 |
-| NOT_BUILT | 1 |
+| NOT_BUILT | 0 |
 | SPONSOR_VALIDATION_REQUIRED | 1 |
 | **Total** | **42** |
 
-La proporción no mide el avance real: las filas no pesan igual. La brecha de mayor peso es la rotación (Spec 015), que deja PARCIAL la clasificación por tamaño, peso, rotación y volumen. La clasificación configurable, la zona y el etiquetado quedaron entregados el 2026-11-10; las zonas A a E siguen pendientes de validar por el sponsor.
+La proporción no mide el avance real: las filas no pesan igual. Hechos el 2026-11-10:
+- la clasificación configurable, la zona y el etiquetado;
+- la rotación y la proyección de la Spec 015, que completan la clasificación por tamaño, peso, rotación y volumen. Evidencia: `specs/015-planificacion-abastecimiento/evidence/EVIDENCE.md`.
+
+Las zonas A a E siguen pendientes de validar por el sponsor.
 
 ## Orden propuesto de las brechas
 
-1. **Rotación y proyección** (IMP-02 y el criterio de rotación de §4): pertenece a la Spec 015.
-2. **Validación del sponsor de las zonas A a E**: configurables hoy; falta su significado.
+1. **Validación del sponsor de las zonas A a E**: configurables hoy; falta su significado.
+2. **Detección automática de la necesidad** (IMP-01): el punto de reorden y la sugerencia se ven al planificar, pero no hay alerta.
+3. **Suministro abierto por almacén**: la orden de compra no tiene almacén, así que la planificación no lo descuenta.
 
 ## Matriz
 
 | SPONSOR_REQUIREMENT | SOURCE | BUSINESS_PROCESS | SCREEN | BACKEND | DATABASE | API | ROLE_PERMISSION | INTEGRATION | FUNCTIONAL_TEST | BROWSER_VERIFIED | OWNER_UAT_READY | STATUS | GAP |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| IMP-01 Detectar necesidad de reposición o compra | DOCX §1 | Importación | /inventario/existencias, /compras/requisiciones | Parcial | SI | /inventory, /purchasing | compras, inventario | Inventario | Sin prueba de este paso | NO | NO | PARTIAL | Sin detección: la necesidad la identifica una persona |
-| IMP-02 Revisar inventario disponible | DOCX §1 | Importación | /inventario/existencias | SI | SI | /inventory | inventario | Inventario | Fuera de la E2E | NO | NO | PARTIAL | Existencias se consultan; rotación y proyección abajo |
-| IMP-02 Rotación y proyección de demanda | DOCX §1; B-031 | Importación | Ninguna | NO | NO | Ninguna | — | — | Ninguna | NO | NO | NOT_BUILT | No existe cálculo ni pantalla. Dueño en backlog: Spec 015 |
+| IMP-01 Detectar necesidad de reposición o compra | DOCX §1; B-031 | Importación | /compras/requisiciones/{id} (panel de planificación) | Parcial | SI | /planning/plan, /planning/plans | compras | Inventario (ledger) | test_planning_engine; E2E planificacion.spec | POSTGRESQL_BROWSER_VERIFIED | SI | PARTIAL | El punto de reorden y la sugerencia se ven al planificar (Spec 015), pero no hay alerta automática: la necesidad la detecta una persona al consultar |
+| IMP-02 Revisar inventario disponible | DOCX §1 | Importación | /inventario/existencias; panel de planificación de la requisición | SI | SI | /inventory; /planning/plan | inventario, compras | Inventario | E2E planificacion.spec (existencia, reservado y disponible en el panel) | POSTGRESQL_BROWSER_VERIFIED | SI | COMPLETE | Existencia, reservado y disponible por almacén al planificar la compra (Spec 015) |
+| IMP-02 Rotación y proyección de demanda | DOCX §1; B-031 | Importación | Maestros → Planificación de abastecimiento; Compras → Requisiciones → detalle | SI | SI (0094) | /planning/* | maestros (configurar), compras (consultar y crear líneas) | Inventario (ledger), Spec 018, auditoría | test_planning_config, test_planning_engine (vectores Decimal), test_planning_requisition; Vitest; E2E planificacion.spec a 1280, 390 y 320 | POSTGRESQL_BROWSER_VERIFIED | SI | COMPLETE | Política versionada, demanda neta de devoluciones y reversos, media, proyección, seguridad, punto de reorden, rotación (velocidad y turnover) con bandas, sugerencia e instantánea inmutable por línea. Fuera de alcance declarado: suministro abierto por almacén y costo estimado |
 | IMP-03 Solicitud de compra | DOCX §1 | Importación | /compras/requisiciones | SI | SI | /purchasing | compras | Compras | Otras suites; fuera de la E2E de importación | NO | NO | EXISTS_NOT_REVALIDATED | Existe; no se revalidó en este bloque |
 | IMP-04 Aprobar según autoridad | DOCX §1 | Importación | Aprobaciones | SI | SI | /approvals | aprobaciones | Spec 045 | Otras suites | NO | NO | EXISTS_NOT_REVALIDATED | La E2E parte de una orden aprobada |
 | IMP-05 Seleccionar y confirmar proveedor | DOCX §1 | Importación | Maestros → Terceros | SI | SI | /parties | maestros | Terceros | E2E crea proveedor por API | NO | NO | EXISTS_NOT_REVALIDATED | Comparación de ofertas sin construir |
@@ -58,7 +63,7 @@ La proporción no mide el avance real: las filas no pesan igual. La brecha de ma
 | §3 Confirmar y liberar a almacenamiento | DOCX §3 | Confirmación | /inventario/confirmacion | SI | SI | /purchasing/receipts | inventario | Spec 021 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §4 Determinar zona de almacenamiento | DOCX §4 | Ubicación | Maestros → Almacenamiento; /compras/importaciones/{id} | SI | SI | /storage/rules; /storage/evaluate; /importaciones/{id}/storage/classify | maestros; inventario:create | Specs 008, 011, 022 | 15 escenarios del motor + 11 del expediente en PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Reglas configurables por empresa hacia una zona o un tipo de zona; prioridad y especificidad; ambigüedad y sin regla explícitos; la ubicación exacta la elige la persona |
 | §4 Clasificación por tipo y familia | DOCX §4 | Ubicación | Maestros → Almacenamiento (regla «Familia o categoría») | SI | SI | /storage/rules (taxonomy_id) | maestros | Taxonomía de maestros | Pruebas del motor (ancestros) | POSTGRESQL_VERIFIED | YES | COMPLETE | La regla casa con la categoría del producto o cualquiera de sus ancestros; el árbol lo define la empresa. En la E2E el criterio usado es la condición especial |
-| §4 Clasificación por tamaño, peso, rotación y volumen | DOCX §4 | Ubicación | Maestros → Almacenamiento (perfil y reglas) | SI | SI | /storage/profiles; /storage/rules | maestros | Unidades (Spec 011) | Pruebas del motor (10 kg = 10 000 g, unidad incompatible) | POSTGRESQL_VERIFIED | NO | PARTIAL | Tamaño (clases por empresa), peso y volumen con unidad gobernada: hechos. Rotación: NO, depende de la Spec 015 (no existe señal fiable) |
+| §4 Clasificación por tamaño, peso, rotación y volumen | DOCX §4 | Ubicación | Maestros → Almacenamiento (perfil y reglas) | SI | SI | /storage/profiles; /storage/rules | maestros | Unidades (Spec 011); Planificación (Spec 015) | Pruebas del motor (10 kg = 10 000 g, unidad incompatible); test_storage_rotation_band | POSTGRESQL_VERIFIED; regla con banda creada en Chrome (E2E planificacion.spec) | SI | COMPLETE | Los cuatro criterios son reales: tamaño por clases de la empresa; peso y volumen con unidad gobernada; rotación por la banda que calcula la Spec 015 sin recalcularla. La clasificación guarda la banda usada |
 | §4 Condiciones especiales | DOCX §4 | Ubicación | Maestros → Almacenamiento | SI | SI | /storage/conditions; /storage/profiles | maestros | — | E2E (condición → zona) + pruebas | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | La empresa define sus condiciones; ninguna fija en el código |
 | §4 Ubicación: zona, pasillo, rack, nivel, posición | DOCX §4 | Ubicación | /organizacion/ubicaciones; /compras/importaciones/{id} | SI | SI | /inventory/putaway | inventario | Spec 022 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §4 Zonas A a E | DOCX §4: «conviene validar» | Ubicación | Catálogo de zonas configurable | SI | SI | /organization | organization | — | Ninguna | NO | NO | SPONSOR_VALIDATION_REQUIRED | El sistema admite crearlas; la fuente pide validarlas para HJ y no hay reglas de rotación que las alimenten |

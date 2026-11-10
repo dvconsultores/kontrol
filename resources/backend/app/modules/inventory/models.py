@@ -75,6 +75,7 @@ class InventoryMovement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __scope__ = Scope.COMPANY
     __table_args__ = (
         Index("ix_inventory_movements_uom_id", "uom_id"),
+        Index("ix_inventory_movements_planning", "company_id", "warehouse_id", "product_id", "occurred_at"),
         # Un movimiento sin ninguno de los dos estados no dice de dónde salió ni
         # a dónde entró: es exactamente el vacío que esta Spec viene a cerrar.
         CheckConstraint("source_state IS NOT NULL OR target_state IS NOT NULL",
