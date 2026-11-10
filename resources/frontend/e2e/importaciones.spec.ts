@@ -442,8 +442,121 @@ test("expediente de importación de punta a punta", async ({ page }) => {
   await page.locator("#ubicacion").getByLabel(/Ubicación de destino/).selectOption(ubicacion.id);
   await page.locator("#ubicacion").getByRole("button", { name: /^Ubicar/ }).click();
   await expect(page.getByText("Recibida y ubicada").first()).toBeVisible();
-  await expect(page.locator("#ubicacion").getByText(ubicacion.code)).toBeVisible();
+  await expect(page.locator("#ubicacion").getByText(ubicacion.code).first()).toBeVisible();
   await expect(page.getByText("Mercancía recibida y ubicada. Queda pendiente el costo de importación.").first()).toBeVisible();
+
+  // 6.5. Validación física y reubicación por error (A → B)
+  const ubicacionB = await post<{ id: string; code: string }>("/organization/locations", {
+    warehouse_id: almacen,
+    code: `OKB-${sufijo}`,
+    name: "Rack B",
+    sequence: 2,
+  });
+  await page.reload();
+
+  const saldosAntesResponse = await fetch(
+    `${API}/inventory/balances?product_id=${articulo.id}&warehouse_id=${almacen}&page_size=100`,
+    { headers: authHeaders(companyId) },
+  );
+  expect(saldosAntesResponse.ok).toBeTruthy();
+  const saldosAntes = (await saldosAntesResponse.json()) as {
+    items: Array<{ location_id: string | null; state: string; qty_on_hand: number | string }>;
+  };
+  const saldoA_antes = Number(
+    saldosAntes.items.find((item) => item.location_id === ubicacion.id)?.qty_on_hand ?? 0,
+  );
+  const totalAntes = saldosAntes.items.reduce((acc, item) => acc + Number(item.qty_on_hand ?? 0), 0);
+  const estadosAntes = saldosAntes.items.map((item) => item.state);
+
+  const valoracionAntesResponse = await fetch(
+    `${API}/inventory/valuation?product_id=${articulo.id}&warehouse_id=${almacen}`,
+    { headers: authHeaders(companyId) },
+  );
+  expect(valoracionAntesResponse.ok).toBeTruthy();
+  const valoracionAntes = ((await valoracionAntesResponse.json()) as { valuation: number }).valuation;
+
+  const regionUbicacion = page.getByRole("region", { name: "Ubicación física" });
+  const filaA = regionUbicacion.getByRole("group", { name: `Artículo ${sufijo} en ${ubicacion.code}` });
+  await expect(filaA.getByText(`Ubicación registrada: ${ubicacion.code}`)).toBeVisible();
+  await expect(filaA.getByRole("status")).toHaveText("Sin validar");
+
+  // MATCH
+  await filaA.getByLabel(/Ubicación encontrada/).selectOption(ubicacion.id);
+  await filaA.getByRole("button", { name: "Validar ubicación física" }).click();
+  await expect(filaA.getByRole("status")).toHaveText("Coincide · Ubicación física validada");
+  const cerrarMatch = page.getByRole("button", { name: "Cerrar notificación" });
+  if (await cerrarMatch.count()) await cerrarMatch.first().click();
+
+  // MISMATCH
+  await filaA.getByLabel(/Ubicación encontrada/).selectOption(ubicacionB.id);
+  await filaA.getByRole("button", { name: "Validar ubicación física" }).click();
+  await expect(filaA.getByRole("status")).toContainText("No coincide");
+  await expect(filaA.getByText(`Registrada: ${ubicacion.code}`, { exact: true })).toBeVisible();
+  await expect(filaA.getByText(`Encontrada: ${ubicacionB.code}`, { exact: true })).toBeVisible();
+  const cerrarMismatch = page.getByRole("button", { name: "Cerrar notificación" });
+  if (await cerrarMismatch.count()) await cerrarMismatch.first().click();
+
+  const saldosMismatchResponse = await fetch(
+    `${API}/inventory/balances?product_id=${articulo.id}&warehouse_id=${almacen}&page_size=100`,
+    { headers: authHeaders(companyId) },
+  );
+  expect(saldosMismatchResponse.ok).toBeTruthy();
+  const saldosMismatch = (await saldosMismatchResponse.json()) as {
+    items: Array<{ location_id: string | null; state: string; qty_on_hand: number | string }>;
+  };
+  expect(
+    Number(saldosMismatch.items.find((item) => item.location_id === ubicacion.id)?.qty_on_hand ?? 0),
+  ).toBe(saldoA_antes);
+
+  // Reubicar por error
+  await filaA.getByRole("button", { name: "Reubicar por error" }).click();
+  const dialogo = page.getByRole("dialog");
+  await expect(dialogo.getByText(ubicacion.code)).toBeVisible();
+  await expect(dialogo.getByText(ubicacionB.code)).toBeVisible();
+  await dialogo.getByLabel(/^Motivo/).fill("Error de colocación E2E");
+  await dialogo.getByRole("button", { name: "Confirmar reubicación" }).click();
+  const cerrarReubicacion = page.getByRole("button", { name: "Cerrar notificación" });
+  if (await cerrarReubicacion.count()) await cerrarReubicacion.first().click();
+
+  const filaB = regionUbicacion.getByRole("group", { name: `Artículo ${sufijo} en ${ubicacionB.code}` });
+  await expect(filaB.getByText(`Ubicación registrada: ${ubicacionB.code}`)).toBeVisible();
+  await expect(
+    regionUbicacion.getByRole("group", { name: `Artículo ${sufijo} en ${ubicacion.code}` }),
+  ).toHaveCount(0);
+
+  const saldosDespuesResponse = await fetch(
+    `${API}/inventory/balances?product_id=${articulo.id}&warehouse_id=${almacen}&page_size=100`,
+    { headers: authHeaders(companyId) },
+  );
+  expect(saldosDespuesResponse.ok).toBeTruthy();
+  const saldosDespues = (await saldosDespuesResponse.json()) as {
+    items: Array<{ location_id: string | null; state: string; qty_on_hand: number | string }>;
+  };
+  expect(
+    Number(saldosDespues.items.find((item) => item.location_id === ubicacion.id)?.qty_on_hand ?? 0),
+  ).toBe(saldoA_antes - saldoA_antes);
+  expect(
+    Number(saldosDespues.items.find((item) => item.location_id === ubicacionB.id)?.qty_on_hand ?? 0),
+  ).toBe(saldoA_antes);
+  expect(saldosDespues.items.reduce((acc, item) => acc + Number(item.qty_on_hand ?? 0), 0)).toBe(totalAntes);
+  expect([...new Set(saldosDespues.items.map((item) => item.state))].sort()).toEqual([...new Set(estadosAntes)].sort());
+
+  const valoracionDespuesResponse = await fetch(
+    `${API}/inventory/valuation?product_id=${articulo.id}&warehouse_id=${almacen}`,
+    { headers: authHeaders(companyId) },
+  );
+  expect(valoracionDespuesResponse.ok).toBeTruthy();
+  const valoracionDespues = ((await valoracionDespuesResponse.json()) as { valuation: number }).valuation;
+  expect(valoracionDespues).toBeCloseTo(valoracionAntes, 2);
+
+  const historialFisico = regionUbicacion.getByRole("list", { name: "Historial de ubicación física" });
+  await expect(historialFisico).toContainText("Coincide");
+  await expect(historialFisico).toContainText("No coincide");
+  await expect(historialFisico).toContainText(`${ubicacion.code} → ${ubicacionB.code}`);
+  await expect(historialFisico).toContainText("Motivo: Error de colocación E2E");
+  await expect(historialFisico).not.toHaveText(/[0-9a-f]{8}-[0-9a-f]{4}-/);
+
+  await expect(page.locator("#ubicacion").getByText(ubicacionB.code).first()).toBeVisible();
 
   // 7. Historial
   await expect(page.getByText("Recepción creada desde la importación").first()).toBeVisible();

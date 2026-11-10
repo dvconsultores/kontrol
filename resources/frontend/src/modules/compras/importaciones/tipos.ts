@@ -498,3 +498,9 @@ export interface ReportesDeRecepcionRespuesta {
   import_file_code: string | null;
   reports: ResumenReporteDiferencias[];
 }
+
+export type UbicacionRef = { id: string; code: string; name: string | null; path: string };
+export type ReubicacionRegistrada = { movement_id: string; quantity: string; reason: string | null; relocated_at: string | null; relocated_by_name: string | null; source_location: UbicacionRef; target_location: UbicacionRef };
+export type ValidacionUbicacion = { id: string; result: "MATCH" | "MISMATCH"; status: "CONFIRMED" | "PENDING" | "RELOCATED" | "SUPERSEDED"; stale: boolean; warehouse_id: string; product_id: string; product_name: string | null; state: string; lot_id: string | null; serial_id: string | null; quantity: string; registered_location: UbicacionRef; observed_location: UbicacionRef; validated_at: string | null; validated_by_name: string | null; import_file_id: string | null; receipt_id: string | null; receipt_code: string | null; relocation: ReubicacionRegistrada | null };
+export type FilaUbicacionFisica = { receipt_id: string; receipt_code: string; warehouse_id: string; product_id: string; product_name: string | null; state: string; lot_id: string | null; serial_id: string | null; location: UbicacionRef; quantity: string; on_hand_at_location: string; last_validation: ValidacionUbicacion | null };
+export type UbicacionFisicaRespuesta = { rows: FilaUbicacionFisica[]; history: ValidacionUbicacion[]; locations_by_warehouse: Record<string, UbicacionRef[]> };

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.documents.models import DocumentLink
 from app.modules.identity_access.models import User
+from app.modules.imports import physical_locations
 from app.modules.imports.models import (
     ImportCorrection,
     ImportDocument,
@@ -1450,52 +1451,19 @@ def _putaway_pending(db: Session, file: ImportFile, quantities: list[dict[str, A
 
 
 def _locations_detail(db: Session, file: ImportFile, receipts: list[GoodsReceipt]) -> list[dict[str, Any]]:
-    receipt_ids = [receipt.id for receipt in receipts]
-    lines = list(
-        db.scalars(
-            select(GoodsReceiptLine).where(GoodsReceiptLine.receipt_id.in_(receipt_ids))
-        )
-    ) if receipt_ids else []
-    product_ids = list({line.product_id for line in lines if line.product_id is not None})
-    if not product_ids:
-        return []
-    movement_type = inv_service._get_movement_type_by_code_optional(db, file.company_id, "UBICACION")
-    if movement_type is None:
-        return []
-    movements = list(
-        db.scalars(
-            select(InventoryMovement).where(
-                InventoryMovement.company_id == file.company_id,
-                InventoryMovement.movement_type_id == movement_type.id,
-                InventoryMovement.document_ref.in_([receipt.code for receipt in receipts]),
-                InventoryMovement.status == "POSTED",
-                InventoryMovement.reversed_by_id.is_(None),
-            )
-        )
-    )
-    if not movements:
-        return []
-    location_ids = [movement.target_location_id for movement in movements if movement.target_location_id is not None]
-    locations_by_id: dict[Any, Any] = {
-        location.id: location
-        for location in db.scalars(select(WarehouseLocation).where(WarehouseLocation.id.in_(location_ids)))
-    } if location_ids else {}
-    products_by_id: dict[Any, Any] = {
-        product.id: product
-        for product in db.scalars(select(CatalogItem).where(CatalogItem.id.in_(product_ids)))
-    }
-    grouped: dict[tuple[str, str], Decimal] = {}
-    for movement in movements:
-        if movement.product_id is None or movement.target_location_id is None:
-            continue
-        key = (movement.product_id, movement.target_location_id)
-        grouped[key] = grouped.get(key, Decimal("0")) + (movement.base_quantity or Decimal("0"))
+    rows = physical_locations.attributed_rows(db, file, receipts)
+    grouped: dict[tuple[str, str], tuple[str, Decimal]] = {}
+    for row in rows:
+        key = (str(row["product_id"]), str(row["location"]["id"]))
+        if key not in grouped:
+            grouped[key] = (row["product_name"], Decimal("0"))
+        nombre, acumulado = grouped[key]
+        grouped[key] = (nombre, acumulado + Decimal(row["quantity"]))
     result: list[dict[str, Any]] = []
-    for (product_id, location_id), quantity in grouped.items():
-        location = locations_by_id.get(location_id)
-        product = products_by_id.get(product_id)
+    for (_product_id, location_id), (product_name, quantity) in grouped.items():
+        location = db.get(WarehouseLocation, location_id)
         result.append({
-            "product_name": product.name if product else None,
+            "product_name": product_name,
             "location_label": (location.code + " - " + location.name) if (location and location.code and location.name) else (location.name if location else None),
             "quantity": str(quantity),
         })

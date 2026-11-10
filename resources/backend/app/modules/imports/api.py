@@ -16,8 +16,9 @@ from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
 from app.modules.audit.models import AuditEvent
 from app.modules.identity_access.models import User
-from app.modules.imports import costs, difference_report, landed_cost, service
+from app.modules.imports import costs, difference_report, landed_cost, physical_locations, service
 from app.modules.imports.models import ImportFile
+from app.modules.inventory import location_validation
 from app.shared.audit_catalog import label_of, safe_details
 from app.shared.clock import InstanteDeEntrada
 
@@ -1048,3 +1049,52 @@ def import_file_audit(
             for e in items
         ],
     }
+
+
+class PhysicalValidationBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    receipt_id: str
+    product_id: str
+    registered_location_id: str
+    observed_location_id: str
+    quantity: Decimal
+    state: str = "DISPONIBLE"
+
+
+@router.get("/{file_id}/physical-locations")
+def get_physical_locations(
+    file_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    return physical_locations.file_physical_locations(db, file)
+
+
+@router.post(
+    "/{file_id}/physical-locations/validate",
+    dependencies=[Depends(require_write_allowed)],
+)
+def validate_physical_location(
+    file_id: str,
+    body: PhysicalValidationBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("inventario", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    validacion = physical_locations.validate_for_file(
+        db,
+        file=file,
+        receipt_id=body.receipt_id,
+        product_id=body.product_id,
+        state=body.state,
+        registered_location_id=body.registered_location_id,
+        observed_location_id=body.observed_location_id,
+        quantity=body.quantity,
+        actor_id=str(user.id),
+    )
+    db.commit()
+    return location_validation.validation_dict(db, validacion)

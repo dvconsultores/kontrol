@@ -88,4 +88,18 @@ Necesita una recepción del expediente con alguna diferencia: una incidencia reg
 
 **Límites:** la referencia es interna, no un folio legal. El reporte no se aprueba, no se firma y no se envía al proveedor. Un usuario sin permiso de crear en Compras lo consulta y lo descarga, pero no lo emite.
 
-**Aún no disponible:** reubicar por error y validación física de la ubicación (siguiente ciclo); clasificación y zonas de almacén, pendientes de validar por el sponsor. Comparación completa con el documento del sponsor: pendiente.
+### Validar la ubicación física y reubicar por error
+
+Necesita mercancía ya ubicada desde el expediente (paso 20) y otra ubicación activa del mismo almacén, creada en Organización. Hace falta un usuario con permiso de crear en Inventario: con permisos solo de Compras se ve la sección, pero no se valida ni se reubica.
+
+39. En «Ubicación», busque «Ubicación física». Cada fila muestra el producto, la recepción, el estado, la cantidad y «Ubicación registrada: A», con su ruta (almacén / zona / … / código). Sin validar, dice «Sin validar».
+40. En «Ubicación encontrada», elija la misma ubicación A y pulse «Validar ubicación física». Dice «Coincide · Ubicación física validada». No se mueve nada.
+41. Elija ahora la otra ubicación B y valide. Dice «No coincide», «Registrada: A» y «Encontrada: B». Todavía no se mueve nada: la validación solo deja constancia.
+42. Pulse «Reubicar por error». El diálogo muestra origen, destino, producto, cantidad y estado. Escriba el motivo (obligatorio) y pulse «Confirmar reubicación».
+43. La fila pasa a «Ubicación registrada: B», y la tabla de ubicaciones del expediente muestra B. En Inventario, A baja y B sube en la misma cantidad; el total, el estado y la valoración no cambian.
+44. En «Historial de ubicación física» están las dos validaciones (coincide y no coincide) y la reubicación A → B con fecha, usuario y motivo.
+45. Si la existencia en A cambió después de validar, la reubicación se rechaza y pide validar de nuevo.
+
+**Límites:** no hay escáner: la ubicación encontrada se elige de la lista de ubicaciones activas del almacén. La reubicación no cambia de almacén; para eso están las transferencias. Hoy no hay pantalla propia en Inventario: la función se usa desde el expediente.
+
+**Aún no disponible:** clasificación por tamaño, peso y rotación, zonas A a E (pendientes de validar por el sponsor) y etiquetado. Comparación completa con el documento del sponsor: pendiente.

@@ -2111,6 +2111,16 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/importaciones/{file_id}/physical-locations",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/physical-locations/validate",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/importaciones/{file_id}/receipts",
       "query": []
@@ -2212,6 +2222,25 @@
     {
       "method": "POST",
       "path": "/inventory/counts/{count_id}/transition",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/location-validations",
+      "query": [
+        "location_id",
+        "product_id",
+        "warehouse_id"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/location-validations",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/location-validations/{validation_id}/relocate",
       "query": []
     },
     {

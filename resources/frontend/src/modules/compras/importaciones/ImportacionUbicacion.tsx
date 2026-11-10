@@ -6,6 +6,7 @@ import { Autorizado } from "@/components/Autorizado";
 import { FormField } from "@/components/FormField";
 import { TextInput } from "@/components/TextInput";
 import type { DetalleImportacion, PutawayPendiente } from "./tipos";
+import { UbicacionFisica } from "./UbicacionFisica";
 
 type Props = {
   detalle: DetalleImportacion;
@@ -165,6 +166,8 @@ export function ImportacionUbicacion({ detalle, onCambios }: Props): React.JSX.E
       ) : (
         <p className="mb-6 text-sm text-text-600">Sin mercancía ubicada.</p>
       )}
+
+      <UbicacionFisica importacionId={detalle.id} onCambios={onCambios} />
 
       {pendientes.length === 0 ? (
         <p className="text-sm text-text-600">Sin mercancía pendiente de ubicar.</p>

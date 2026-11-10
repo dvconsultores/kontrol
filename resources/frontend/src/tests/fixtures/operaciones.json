@@ -2907,6 +2907,22 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/importaciones/{file_id}/physical-locations",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/physical-locations/validate",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/importaciones/{file_id}/receipts",
       "capabilities": [
@@ -3037,6 +3053,30 @@
       "path": "/api/v1/inventory/counts/{count_id}/transition",
       "capabilities": [
         "inventario:transition"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/location-validations",
+      "capabilities": [
+        "inventario:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/location-validations",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/location-validations/{validation_id}/relocate",
+      "capabilities": [
+        "inventario:create"
       ],
       "scope": "COMPANY"
     },

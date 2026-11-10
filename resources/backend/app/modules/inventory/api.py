@@ -20,6 +20,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission, require_write_allowed
 from app.core.errors import NotFoundError, PermissionDeniedError
 from app.modules.identity_access.models import User
+from app.modules.inventory import location_validation
 from app.modules.inventory import service as inv_service
 from app.modules.inventory.models import (
     CostingProfile,
@@ -366,6 +367,98 @@ def execute_putaway(body: PutAwayBody, db: Session = Depends(get_db),
             "target_location_id": movement.target_location_id,
             "base_quantity": str(movement.base_quantity),
             "merchandise_state": movement.target_state}
+
+
+class LocationValidationBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    warehouse_id: str
+    product_id: str
+    registered_location_id: str
+    observed_location_id: str
+    quantity: Decimal
+    state: str = "DISPONIBLE"
+    lot_id: str | None = None
+    serial_id: str | None = None
+
+
+class RelocationBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    quantity: Decimal
+    reason: str = Field(min_length=1, max_length=500)
+
+
+@router.post("/location-validations", dependencies=[Depends(require_write_allowed)])
+def create_location_validation(
+    body: LocationValidationBody,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission("inventario", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    """Registra la validación física de una mercancía ubicada."""
+    validacion = location_validation.validate_location(
+        db,
+        company_id=ctx.company_id,
+        warehouse_id=body.warehouse_id,
+        product_id=body.product_id,
+        registered_location_id=body.registered_location_id,
+        observed_location_id=body.observed_location_id,
+        quantity=body.quantity,
+        actor_id=str(actor.id),
+        state=body.state,
+        lot_id=body.lot_id,
+        serial_id=body.serial_id,
+    )
+    db.commit()
+    return location_validation.validation_dict(db, validacion)
+
+
+@router.get("/location-validations")
+def list_location_validations(
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("inventario", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+    warehouse_id: str | None = Query(default=None),
+    product_id: str | None = Query(default=None),
+    location_id: str | None = Query(default=None),
+):
+    validaciones = location_validation.list_validations(
+        db,
+        company_id=ctx.company_id,
+        warehouse_id=warehouse_id,
+        product_id=product_id,
+        location_id=location_id,
+    )
+    return {
+        "items": [
+            location_validation.validation_dict(db, v) for v in validaciones
+        ],
+        "total": len(validaciones),
+    }
+
+
+@router.post(
+    "/location-validations/{validation_id}/relocate",
+    dependencies=[Depends(require_write_allowed)],
+)
+def relocate_validation(
+    validation_id: str,
+    body: RelocationBody,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission("inventario", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    validacion = location_validation.relocate_by_error(
+        db,
+        company_id=ctx.company_id,
+        validation_id=validation_id,
+        quantity=body.quantity,
+        reason=body.reason,
+        actor_id=str(actor.id),
+    )
+    db.commit()
+    return location_validation.validation_dict(db, validacion)
 
 
 @router.post("/movements", dependencies=[Depends(require_write_allowed)])

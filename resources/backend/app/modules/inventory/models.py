@@ -400,6 +400,86 @@ class CostingProfile(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Versi
     effective_from: Mapped[date | None] = mapped_column(Date, nullable=True)
     effective_to: Mapped[date | None] = mapped_column(Date, nullable=True)
 
+class InventoryLocationValidation(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "inventory_location_validations"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="ck_inventory_location_validations_quantity"),
+        CheckConstraint(
+            "result IN ('MATCH', 'MISMATCH')",
+            name="ck_inventory_location_validations_result",
+        ),
+        CheckConstraint(
+            "status IN ('CONFIRMED', 'PENDING', 'RELOCATED', 'SUPERSEDED')",
+            name="ck_inventory_location_validations_status",
+        ),
+        CheckConstraint(
+            "(result = 'MATCH' AND registered_location_id = observed_location_id AND status = 'CONFIRMED') OR (result = 'MISMATCH' AND registered_location_id <> observed_location_id AND status IN ('PENDING', 'RELOCATED', 'SUPERSEDED'))",
+            name="ck_inventory_location_validations_coherence",
+        ),
+        CheckConstraint(
+            "(status = 'RELOCATED') = (movement_id IS NOT NULL)",
+            name="ck_inventory_location_validations_movement",
+        ),
+        Index(
+            "ix_inventory_location_validations_identity",
+            "company_id",
+            "warehouse_id",
+            "product_id",
+            "registered_location_id",
+        ),
+        Index("ix_inventory_location_validations_file", "import_file_id"),
+        UniqueConstraint("movement_id", name="uq_inventory_location_validations_movement"),
+    )
+
+    created_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    company_id: Mapped[str] = mapped_column(
+        ForeignKey("companies.id"), nullable=False, index=True
+    )
+    warehouse_id: Mapped[str] = mapped_column(
+        ForeignKey("warehouses.id"), nullable=False
+    )
+    product_id: Mapped[str] = mapped_column(
+        ForeignKey("catalog_items.id"), nullable=False
+    )
+    lot_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    serial_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    state: Mapped[str] = mapped_column(String(32), nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    registered_qty_snapshot: Mapped[Decimal] = mapped_column(
+        Numeric(18, 6), nullable=False
+    )
+    registered_location_id: Mapped[str] = mapped_column(
+        ForeignKey("warehouse_locations.id"), nullable=False
+    )
+    observed_location_id: Mapped[str] = mapped_column(
+        ForeignKey("warehouse_locations.id"), nullable=False
+    )
+    result: Mapped[str] = mapped_column(String(16), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    validated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    validated_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    import_file_id: Mapped[str | None] = mapped_column(
+        ForeignKey("import_files.id"), nullable=True
+    )
+    receipt_id: Mapped[str | None] = mapped_column(
+        ForeignKey("goods_receipts.id"), nullable=True
+    )
+    document_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    movement_id: Mapped[str | None] = mapped_column(
+        ForeignKey("inventory_movements.id"), nullable=True
+    )
+    relocated_quantity: Mapped[Decimal | None] = mapped_column(
+        Numeric(18, 6), nullable=True
+    )
+    relocation_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    relocated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    relocated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
 
 def as_dict(instance: Any) -> dict[str, Any]:
     return {c.name: getattr(instance, c.name) for c in instance.__table__.columns}

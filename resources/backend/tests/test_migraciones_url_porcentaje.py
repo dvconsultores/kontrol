@@ -31,7 +31,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 RAIZ = BACKEND.parents[1]
 PG = os.environ.get("KONTROL_TEST_DB_URL", "")
 #: Cabeza declarada del árbol del cliente y de la Central: una revisión nueva se declara aquí, no entra en silencio.
-CABEZA_CLIENTE = "0090_import_difference_report"
+CABEZA_CLIENTE = "0091_location_validations"
 CABEZA_CENTRAL = "0002_cla_sync_auth"
 #: Credenciales sintéticas, codificadas: `p@ss` → `p%40ss`, `p#ss` → `p%23ss`, `p%ss` → `p%25ss`.
 MATRIZ = {

@@ -67,6 +67,7 @@ BASE_MOVEMENT_TYPES: dict[str, tuple[str, str]] = {
     "REVERSO": ("Reverso de movimiento", "INTERNAL"),
     "RECLASIFICACION": ("Reclasificación de estado de mercancía", "INTERNAL"),
     "UBICACION": ("Colocación en ubicación (put-away)", "INTERNAL"),
+    "REUBICACION": ("Reubicación por error de ubicación", "INTERNAL"),
 }
 
 

@@ -10,20 +10,19 @@
 
 | Estado | Requisitos |
 |---|---|
-| COMPLETE | 20 |
-| PARTIAL | 8 |
+| COMPLETE | 22 |
+| PARTIAL | 7 |
 | EXISTS_NOT_REVALIDATED | 7 |
-| NOT_BUILT | 6 |
+| NOT_BUILT | 5 |
 | SPONSOR_VALIDATION_REQUIRED | 1 |
 | **Total** | **42** |
 
-La proporción no mide el avance real: las filas no pesan igual. La brecha de mayor peso es la clasificación con reubicación. Landed cost y el reporte formal de diferencias quedaron entregados el 2026-11-09.
+La proporción no mide el avance real: las filas no pesan igual. La brecha de mayor peso es la clasificación con zona y etiquetado. Landed cost, el reporte formal de diferencias, la validación física y la reubicación por error quedaron entregados el 2026-11-09.
 
 ## Orden propuesto de las brechas
 
-1. **Reubicar por error** y validación física de la ubicación.
-2. **Clasificación, zona y etiquetado:** exige atributos nuevos en el maestro y que el sponsor valide las zonas A a E.
-3. **Rotación y proyección** (IMP-02): pertenece a la Spec 015, no a la 018.
+1. **Clasificación, zona y etiquetado:** exige atributos nuevos en el maestro y que el sponsor valide las zonas A a E.
+2. **Rotación y proyección** (IMP-02): pertenece a la Spec 015, no a la 018.
 
 ## Matriz
 
@@ -65,8 +64,8 @@ La proporción no mide el avance real: las filas no pesan igual. La brecha de ma
 | §4 Zonas A a E | DOCX §4: «conviene validar» | Ubicación | Catálogo de zonas configurable | SI | SI | /organization | organization | — | Ninguna | NO | NO | SPONSOR_VALIDATION_REQUIRED | El sistema admite crearlas; la fuente pide validarlas para HJ y no hay reglas de rotación que las alimenten |
 | §4 Etiquetar o identificar | DOCX §4 | Ubicación | Ninguna | NO | NO | Ninguna | — | — | Ninguna | NO | NO | NOT_BUILT | «Cuando corresponda»: falta definir cuándo |
 | §4 Trasladar, colocar y registrar ubicación | DOCX §4 | Ubicación | /compras/importaciones/{id} | SI | SI | /inventory/putaway | inventario | Spec 022 | E2E: «Recibida y ubicada» | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
-| §4 Validar ubicación física contra registrada | DOCX §4 | Ubicación | Parcial | Parcial | SI | /inventory/putaway | inventario | Spec 022 | Fuera de la E2E | NO | NO | PARTIAL | «Confirmar ubicación» registra; no hay validación física independiente |
-| §4 Reubicar por error | DOCX §4 | Ubicación | Ninguna identificada | NO confirmado | Movimientos con origen | /inventory/transfers no cubre el caso comprobado | inventario | — | Ninguna | NO | NO | NOT_BUILT | No hay función de reubicar dentro del almacén; las transferencias son el único candidato y no se verificaron para esto |
+| §4 Validar ubicación física contra registrada | DOCX §4 | Ubicación | /compras/importaciones/{id} (Ubicación física) | SI | SI | /importaciones/{id}/physical-locations; /physical-locations/validate; /inventory/location-validations | ver compras:view; validar inventario:create | Specs 003, 008, 022 | 18 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Acto posterior e independiente del put-away; MATCH sin movimiento; MISMATCH sin mover; historial sin sobrescribir |
+| §4 Reubicar por error | DOCX §4 | Ubicación | /compras/importaciones/{id} (Ubicación física) | SI | SI | /inventory/location-validations/{id}/relocate | inventario:create | Specs 003, 022 | 18 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Movimiento `REUBICACION` A → B en el ledger único; costo, estado, reservas y almacén intactos; las transferencias se descartaron porque consumen capas y pasan por tránsito |
 | §4 Liberar para preparación y despacho | DOCX §4 | Ubicación | /compras/importaciones/{id} | SI | SI | /inventory/putaway | inventario | Ventas | E2E llega a ubicada; no recorre el despacho posterior | NO | NO | PARTIAL | Disponibilidad no verificada en un pedido |
 | Trazabilidad importación a ubicación final | DOCX, controles | Control | /compras/importaciones/{id} | SI | SI | /importaciones/{id} | compras | Specs 019 a 022 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | PARTIAL | IMPORT-PUTAWAY-ATRIBUCION: lo ubicado desde Inventario sin referencia no se atribuye al expediente |
 | Conteo independiente | DOCX, controles | Control | /inventario/confirmacion | Parcial | SI | /purchasing/receipts | inventario | Spec 021 | Otras suites | NO | NO | EXISTS_NOT_REVALIDATED | `confirmation_same_user_allowed` existe; no revalidado aquí |
