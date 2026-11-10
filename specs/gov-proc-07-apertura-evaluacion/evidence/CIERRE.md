@@ -40,3 +40,10 @@ Una apertura en el mismo minuto se rechazaba. Ahora se compara con el inicio de 
 ## DeepSeek
 
 5 llamadas a deepseek-v4-pro en los bloques G, H e I del 2026-11-10: G1, G2, H1, H2 e I1. Claude no escribió código del producto.
+
+## Publicación y UAT
+
+- Commit `4c4be3d` en `origin/develop`; `HEAD == origin/develop`.
+- Pila UAT de la dueña relevada de `7e7d70d` a `4c4be3d` (puertos 18100/15273/18110, PostgreSQL migrado con Alembic,
+  datos sintéticos). Humo HUMO-UAT-01: PASS. Sin sesión: `/login` 200; la ruta `/evaluacion` responde 401 (existe y exige sesión).
+- Tarjeta: `OWNER_UAT_CARD.md`. Matrices GOV-PROC-008/009 actualizadas. `OWNER_ACCEPTED = NO`.

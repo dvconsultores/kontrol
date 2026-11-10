@@ -56,7 +56,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | PROC-04 | Pliego, invitaciones, aclaratorias, prórrogas y avisos | P0 | Unidad contratante | GOV-PROC-005 GOV-PROC-015 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-03 | — | — |
 | PROC-05 | Oferentes y contratistas (RNC/SNC) | P0 | Unidad contratante | GOV-PROC-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-03 | — | Terceros/proveedores privados: otro contrato |
 | PROC-06 | Recepción y apertura de ofertas | P0 | Unidad contratante | GOV-PROC-007 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | Cotizaciones de compras privadas: otro contrato |
-| PROC-07 | Evaluación técnica, económica y legal con matriz bloqueada | P0 | Comisión | GOV-PROC-008 GOV-PROC-009 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
+| PROC-07 | Evaluación técnica, económica y legal con matriz bloqueada | P0 | Comisión | GOV-PROC-008 GOV-PROC-009 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | gobierno-evaluacion | — |
 | PROC-08 | Recomendación, decisión, adjudicación, desierta, anulación o rechazo | P0 | Máxima autoridad | GOV-PROC-010 GOV-PROC-011 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 | PROC-09 | Compromiso de responsabilidad social | P1 | Unidad contratante | GOV-PROC-012 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 | PROC-10 | Garantías y cauciones | P0 | Unidad contratante | GOV-PROC-013 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
