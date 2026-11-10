@@ -1435,6 +1435,38 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/decision",
+      "capabilities": [
+        "gobierno_decision:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/decision/decisiones",
+      "capabilities": [
+        "gobierno_decision:decide"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/decision/recomendaciones",
+      "capabilities": [
+        "gobierno_decision:recommend"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/decision/recomendaciones/{recomendacion_id}/informe",
+      "capabilities": [
+        "gobierno_decision:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/descartar",
       "capabilities": [
@@ -6971,7 +7003,10 @@
     "gobierno_evaluacion:view",
     "gobierno_evaluacion:criteria",
     "gobierno_evaluacion:open",
-    "gobierno_evaluacion:evaluate"
+    "gobierno_evaluacion:evaluate",
+    "gobierno_decision:view",
+    "gobierno_decision:recommend",
+    "gobierno_decision:decide"
   ],
   "report_capabilities": {
     "executive_ventas": [

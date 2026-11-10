@@ -1060,6 +1060,26 @@
       ]
     },
     {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/decision",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/decision/decisiones",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/decision/recomendaciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/decision/recomendaciones/{recomendacion_id}/informe",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/gobierno/contrataciones/expedientes/{expediente_id}/descartar",
       "query": []

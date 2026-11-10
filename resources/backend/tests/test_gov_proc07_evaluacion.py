@@ -341,7 +341,7 @@ def test_evaluacion_completa_con_resultados(mundo, gobierno, ocupacion):
     assert r.status_code == 200, r.text
     estado = r.json()
     assert estado["evaluacion_concluida_en"] is not None
-    assert "PROC-08" in estado["siguiente_accion"]
+    assert estado["siguiente_accion"] == "Preparar recomendación"
     assert "evaluacion_por_oferta" not in estado
 
     estado_str = json.dumps(estado, ensure_ascii=False).upper()

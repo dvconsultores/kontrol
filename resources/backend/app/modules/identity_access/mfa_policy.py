@@ -151,6 +151,7 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_identidad:revoke",
         # gobierno_comisiones · activación y cierre de comisiones (PROC-02).
         "gobierno_comisiones:activate",
+        "gobierno_decision:decide",
         "gobierno_comisiones:close",
         # gobierno_expedientes · cierre del expediente (PROC-03).
         "gobierno_expedientes:close",
@@ -265,6 +266,8 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_evaluacion:criteria",
         "gobierno_evaluacion:open",
         "gobierno_evaluacion:evaluate",
+        "gobierno_decision:view",
+        "gobierno_decision:recommend",
     }
 )
 
