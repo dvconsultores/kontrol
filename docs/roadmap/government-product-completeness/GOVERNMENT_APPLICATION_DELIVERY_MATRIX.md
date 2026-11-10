@@ -36,7 +36,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | PROC-03 | GOV-PROC-004 GOV-PROC-014 | Contrataciones públicas / Li | Unidad contratante | Expediente único de contratación con cronología y lapsos | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | PROC-04 | GOV-PROC-005 GOV-PROC-015 | Contrataciones públicas / Li | Unidad contratante | Pliego, invitaciones, aclaratorias, prórrogas y avisos | no | no | no | n/a | no | no | NOT_STARTED (bloqueado) | D-GOV-03 |
 | PROC-05 | GOV-PROC-006 | Contrataciones públicas / Li | Unidad contratante | Oferentes y contratistas (RNC/SNC) | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-03 |
-| PROC-06 | GOV-PROC-007 | Contrataciones públicas / Li | Unidad contratante | Recepción y apertura de ofertas | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
+| PROC-06 | GOV-PROC-007 | Contrataciones públicas / Li | Unidad contratante | Recepción y apertura de ofertas | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Apertura y levantamiento del sello: PROC-07 |
 | PROC-07 | GOV-PROC-008 GOV-PROC-009 | Contrataciones públicas / Li | Comisión | Evaluación técnica, económica y legal con matriz bloqueada | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Reporte propio: n/a (lo es la recomendación de PROC-08) |
 | PROC-08 | GOV-PROC-010 GOV-PROC-011 | Contrataciones públicas / Li | Máxima autoridad | Recomendación, decisión, adjudicación, desierta, anulación o rechazo | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Adjudicación parcial (OBS-PROC08-PARCIAL-01) y límites de monto (OBS-PROC08-MONTO-01) |
 | PROC-09 | GOV-PROC-012 | Contrataciones públicas / Li | Unidad contratante | Compromiso de responsabilidad social | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
@@ -172,3 +172,7 @@ Una ruta declarada no demuestra que la pantalla funcione. Una pantalla cuenta co
 | GOV-PROC-011 | Autoridad | Adjudicación, desierta, terminación, nulidad, rechazo | Formulario de decisión, notificación DOC-04 por oferente, historial | sí | 0094 | decisiones | `gobierno_decision:decide` | Acto DOC-02 emitido, particular, APROBAR/CONTRATACIONES | CTL-02 | sí: adjudicación; alternativos en PostgreSQL | sí | OWNER_UAT_READY | Adjudicación parcial (OBS-PROC08-PARCIAL-01); límites de monto (OBS-PROC08-MONTO-01) |
 
 `PROC08_FUNCTIONAL_SLICE_COMPLETE = 1`: verificado en Chromium a 1280, 390 y 320 px, con Axe dirigido en 4 puntos sin violaciones. `REPORT_GATE_PROC08 = PASS` (informe PDF de la recomendación). `OWNER_ACCEPTED = NO`.
+
+## PROC-06: deuda de matriz cerrada (2026-11-10)
+
+`OBS_MATRIZ_PROC06_01 = CLOSED`: la fila de PROC-06 (GOV-PROC-007) pasa a OWNER_UAT_READY con la evidencia publicada de su cierre (commit 7e7d70d: E2E `gobierno-ofertas` 3/3 en Chromium con Axe y 320/390/1280, backend PG 8/8 más regresión 277/277, migración 0088 arriba-abajo-arriba, tarjeta `OWNER_UAT_CARD.md`). Sin reconstruir ni volver a ejecutar PROC-06. `OWNER_ACCEPTED = NO`.
