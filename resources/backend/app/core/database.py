@@ -97,6 +97,7 @@ def init_models() -> None:
     import app.modules.master_data.models  # noqa: F401
     import app.modules.notifications.models  # noqa: F401
     import app.modules.organization.models  # noqa: F401
+    import app.modules.planning.models  # noqa: F401
     import app.modules.purchasing.models  # noqa: F401
     import app.modules.regulatory.models  # noqa: F401
     import app.modules.reporting.models  # noqa: F401

@@ -1,12 +1,15 @@
 /** Requisiciones — necesidades y aprobación (FR-004-001/002, WF-02). */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
+import { Link } from "react-router";
 
 import { apiFetch } from "@/api/client";
 import type { PagedResult, RequisitionSummary } from "@/api/types";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
+import { Autorizado } from "@/components/Autorizado";
+import { Button } from "@/components/Button";
 import { DataTable } from "@/components/DataTable";
 import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
@@ -36,6 +39,17 @@ export function RequisicionesPage(): React.JSX.Element {
     columnHelper.accessor("cost_center_id", { header: "Centro de costo" }),
     columnHelper.accessor("need_date", { header: "Necesidad" }),
     columnHelper.accessor("status", { header: "Estado" }),
+    columnHelper.display({
+      id: "ver",
+      header: "Ver",
+      cell: ({ row }) => (
+        <Link to={`/compras/requisiciones/${row.original.id}`}>
+          <Button variant="secondary" size="sm">
+            Ver
+          </Button>
+        </Link>
+      ),
+    }),
     columnHelper.display({
       id: "actions",
       header: "Acciones",
@@ -74,6 +88,13 @@ export function RequisicionesPage(): React.JSX.Element {
         title="Requisiciones"
         description="Necesidades de compra con líneas y aprobación."
         crumbs={[{ label: "Compras" }, { label: "Requisiciones" }]}
+        actions={
+          <Autorizado operacion={["POST", "/purchasing/requisitions"]}>
+            <Link to="/compras/requisiciones/nueva">
+              <Button>Nueva requisición</Button>
+            </Link>
+          </Autorizado>
+        }
       />
       <DataTable
         columns={columns}

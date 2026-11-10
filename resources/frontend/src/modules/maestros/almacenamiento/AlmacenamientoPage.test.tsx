@@ -64,6 +64,9 @@ function renderizar(ui: React.ReactElement) {
 
 function mockRespuestas() {
   apiFetch.mockImplementation((url: string) => {
+    if (url === "/planning/rotation-bands") {
+      return Promise.resolve({ items: [] });
+    }
     if (url === "/storage/conditions") {
       return Promise.resolve({ items: [] });
     }
@@ -127,6 +130,7 @@ describe("AlmacenamientoPage", () => {
   it("crear regla con destino 'Tipo de zona' envía target_zone_type_id", async () => {
     const user = userEvent.setup();
     apiFetch.mockImplementation((url: string) => {
+      if (url === "/planning/rotation-bands") return Promise.resolve({ items: [] });
       if (url === "/storage/conditions") return Promise.resolve({ items: [] });
       if (url === "/storage/size-classes") return Promise.resolve({ items: [] });
       if (url === "/storage/rules") return Promise.resolve({ items: [] });
@@ -157,10 +161,73 @@ describe("AlmacenamientoPage", () => {
     });
   });
 
+  it("crear regla con banda de rotación envía rotation_band_id y la lista la muestra", async () => {
+    const user = userEvent.setup();
+    apiFetch.mockImplementation((url: string) => {
+      if (url === "/planning/rotation-bands") {
+        return Promise.resolve({
+          items: [{ id: "band-1", code: "RAPIDA", name: "Rápida", metric: "DEMAND_VELOCITY", status: "ACTIVE" }],
+        });
+      }
+      if (url === "/storage/conditions") return Promise.resolve({ items: [] });
+      if (url === "/storage/size-classes") return Promise.resolve({ items: [] });
+      if (url === "/storage/rules") {
+        return Promise.resolve({
+          items: [
+            {
+              id: "rule-1",
+              code: "REGLA-01",
+              name: "Regla de fríos",
+              priority: 0,
+              status: "ACTIVE",
+              version: 1,
+              warehouse_id: null,
+              warehouse_code: null,
+              taxonomy_name: null,
+              size_class_name: null,
+              condition_name: null,
+              rotation_band_code: "RAPIDA",
+              min_weight: null,
+              max_weight: null,
+              weight_unit_symbol: null,
+              min_volume: null,
+              max_volume: null,
+              volume_unit_symbol: null,
+              target_label: "",
+              label_policy: "",
+            },
+          ],
+        });
+      }
+      if (url === "/organization/zone-types") return Promise.resolve([]);
+      if (url === "/maestros/unidades?dimension=MASA") return Promise.resolve({ items: [] });
+      if (url === "/maestros/unidades?dimension=PESO") return Promise.resolve({ items: [] });
+      if (url === "/maestros/unidades?dimension=VOLUMEN") return Promise.resolve({ items: [] });
+      return Promise.reject(new Error(`URL no mockeada: ${url}`));
+    });
+
+    renderizar(<AlmacenamientoPage />);
+    await screen.findByRole("heading", { name: "Reglas de almacenamiento" });
+    expect(await screen.findByText("Rotación: RAPIDA")).toBeInTheDocument();
+    await user.type(await screen.findByPlaceholderText("REGLA-01"), "REGLA-01");
+    await user.type(screen.getByPlaceholderText("Regla de fríos"), "Regla de fríos");
+    await user.selectOptions(screen.getByLabelText(/^Banda de rotación/), "band-1");
+    await user.click(screen.getByRole("button", { name: "Crear regla" }));
+    await waitFor(() => {
+      const llamada = apiFetch.mock.calls.find((c) => c[0] === "/storage/rules" && (c[1] as { method?: string } | undefined)?.method === "POST");
+      expect(llamada).toBeTruthy();
+      expect(llamada![1]).toMatchObject({
+        method: "POST",
+        body: expect.objectContaining({ rotation_band_id: "band-1" }),
+      });
+    });
+  });
+
   it("guardar política envía PUT con mode ENFORCED y on_no_rule BLOCK", async () => {
     const user = userEvent.setup();
     mockAlmacenes = [{ id: "w-1", code: "W1", name: "Almacén 1", status: "ACTIVE" }];
     apiFetch.mockImplementation((url: string) => {
+      if (url === "/planning/rotation-bands") return Promise.resolve({ items: [] });
       if (url === "/storage/conditions") return Promise.resolve({ items: [] });
       if (url === "/storage/size-classes") return Promise.resolve({ items: [] });
       if (url === "/storage/rules") return Promise.resolve({ items: [] });

@@ -116,6 +116,53 @@ Necesita un almacén con el tramo de zona declarado, al menos dos zonas (Organiz
 53. Elija la ubicación y pulse «Ubicar …». La mercancía queda en esa ubicación.
 54. Pruebe también una regla con «Etiquetado: No requerida» (se ubica sin etiqueta) y un producto sin regla aplicable: con «Bloquear la ubicación» no deja ubicar y lo explica; con «Permitir cualquier ubicación» muestra todas.
 
-**Límites:** la etiqueta es identificación interna, no fiscal, aduanera ni regulatoria. El sistema determina la zona; la ubicación exacta la elige usted. El put-away genérico de Inventario no aplica la política: hágalo desde el expediente. La rotación no clasifica todavía (depende de otra Spec). Las zonas A a E se pueden configurar, pero su significado debe validarlo el sponsor.
+**Límites:** la etiqueta es identificación interna, no fiscal, aduanera ni regulatoria. El sistema determina la zona; la ubicación exacta la elige usted. El put-away genérico de Inventario no aplica la política: hágalo desde el expediente. La rotación ya puede ser un criterio de la regla (ver «Planificación de abastecimiento», abajo). Las zonas A a E se pueden configurar, pero su significado debe validarlo el sponsor.
 
-**Aún no disponible:** clasificación por rotación (Spec 015). Comparación completa con el documento del sponsor: pendiente.
+**Aún no disponible:** comparación completa con el documento del sponsor.
+
+## Planificación de abastecimiento y requisición (Spec 015)
+
+Necesita:
+- un almacén;
+- un producto con existencia;
+- algo de demanda en los últimos días. Con la fuente «Salidas de inventario» basta una salida registrada; con «Ventas despachadas», despachos de venta confirmados.
+
+55. En Maestros → Planificación de abastecimiento, cree una política:
+    - código y nombre;
+    - Alcance: el almacén, o «Toda la empresa»;
+    - la fuente de demanda;
+    - Días de histórico, Días de horizonte y Plazo de reposición (no hay valores precargados);
+    - el stock de seguridad (sin stock, cantidad fija o días de demanda);
+    - la métrica de rotación.
+
+    Pulse «Crear política».
+56. Cree dos bandas de rotación de la misma métrica, por ejemplo:
+    - «Lenta»: Desde 0, Hasta 2;
+    - «Rápida»: Desde 2, Hasta vacío.
+
+    Una banda que se solape con otra se rechaza.
+57. En Compras → Requisiciones pulse «Nueva requisición», ponga un código, elija el almacén y pulse «Crear requisición». Se abre su detalle.
+58. En «Agregar línea» elija el producto. El panel «Planificación del producto» muestra:
+    - la política y su versión, y la ventana;
+    - la demanda neta, la media diaria y la proyección;
+    - el stock de seguridad y el punto de reorden;
+    - existencia, reservado y disponible;
+    - la cobertura y la banda de rotación;
+    - la cantidad sugerida.
+59. Pulse «Usar cantidad sugerida». La línea aparece con «Sugerencia aceptada», la cantidad en unidad base, la sugerida, la diferencia 0 y la política con su versión.
+60. Agregue otra línea escribiendo una cantidad propia en «Cantidad en unidad base» y pulse «Agregar con esta cantidad». La línea dice «Cantidad manual» y muestra la diferencia frente a la sugerencia.
+61. Vuelva a Maestros → Planificación, desactive y active la política (su versión sube). Reabra la requisición: las líneas ya guardadas conservan la versión con la que se calcularon. Las nuevas usan la versión actual.
+62. Si la política cambia mientras tiene el panel abierto en otra pestaña, al volver a ella el panel se recalcula con la versión nueva. Si aun así llega una sugerencia calculada con la versión anterior, el sistema la rechaza («La política cambió: revisa la nueva sugerencia») y no la guarda. Ese rechazo lo comprueban las pruebas automáticas, porque en la pantalla es difícil de provocar a mano.
+63. Sin política para el almacén, el panel dice que la cantidad se escribe a mano y la línea se guarda igual. Con un producto sin movimientos dice que no hay historia suficiente.
+64. En Maestros → Almacenamiento, en «Reglas de almacenamiento», elija una «Banda de rotación» en la regla. La lista muestra «Rotación: …».
+65. Al clasificar una recepción (pasos 50 a 53), un producto de esa banda va a la zona de la regla. Uno de otra banda no la usa. Uno sin política o sin historia aparece con el criterio «Banda de rotación» faltante.
+66. Un usuario con solo permiso de consulta de Compras ve el detalle y el panel, pero no puede agregar líneas.
+
+**Límites:**
+- El cálculo es la media de la ventana: sin estacionalidad, sin estadística avanzada y sin IA.
+- El suministro abierto por almacén no se descuenta, y el panel lo dice: las órdenes de compra no tienen almacén.
+- No hay costo estimado de la línea.
+- El plazo es por política, no por producto ni por proveedor.
+- La línea guarda la cantidad en unidad base.
+- Las líneas no se editan ni se borran desde esta pantalla.
+- La planificación se calcula al consultar; no hay alertas automáticas de reposición.

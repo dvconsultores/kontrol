@@ -54,6 +54,13 @@ interface PerfilAlmacenamiento {
   conditions: CondicionAlmacen[];
 }
 
+interface BandaRotacion {
+  id: string;
+  code: string;
+  name: string;
+  status: string;
+}
+
 interface ReglaAlmacenamiento {
   id: string;
   code: string;
@@ -66,6 +73,7 @@ interface ReglaAlmacenamiento {
   taxonomy_name: string | null;
   size_class_name: string | null;
   condition_name: string | null;
+  rotation_band_code: string | null;
   min_weight: string | null;
   max_weight: string | null;
   weight_unit_symbol: string | null;
@@ -190,6 +198,7 @@ export function AlmacenamientoPage(): React.JSX.Element {
   const [reglaTaxonomia, setReglaTaxonomia] = useState("");
   const [reglaClaseTamano, setReglaClaseTamano] = useState("");
   const [reglaCondicion, setReglaCondicion] = useState("");
+  const [reglaBanda, setReglaBanda] = useState("");
   const [reglaPesoMin, setReglaPesoMin] = useState("");
   const [reglaPesoMax, setReglaPesoMax] = useState("");
   const [reglaUnidadPeso, setReglaUnidadPeso] = useState("");
@@ -309,6 +318,15 @@ export function AlmacenamientoPage(): React.JSX.Element {
     ]);
   };
 
+  const bandasQuery = useQuery({
+    queryKey: ["planificacion", "bandas"],
+    queryFn: async () => {
+      const resp = await apiFetch<{ items: BandaRotacion[] }>("/planning/rotation-bands");
+      return resp.items ?? [];
+    },
+    retry: false,
+  });
+  const bandas = (bandasQuery.data ?? []).filter((b) => b.status === "ACTIVE");
   const condiciones = condicionesQuery.data ?? [];
   const clases = clasesQuery.data ?? [];
   const unidadesPeso = [...(unidadesMasaQuery.data ?? []), ...(unidadesPesoQuery.data ?? [])];
@@ -439,6 +457,7 @@ export function AlmacenamientoPage(): React.JSX.Element {
     if (reglaTaxonomia) body.taxonomy_id = reglaTaxonomia;
     if (reglaClaseTamano) body.size_class_id = reglaClaseTamano;
     if (reglaCondicion) body.condition_id = reglaCondicion;
+    if (reglaBanda) body.rotation_band_id = reglaBanda;
     if (reglaPesoMin) body.min_weight = reglaPesoMin;
     if (reglaPesoMax) body.max_weight = reglaPesoMax;
     if (reglaUnidadPeso) body.weight_unit_id = reglaUnidadPeso;
@@ -466,6 +485,7 @@ export function AlmacenamientoPage(): React.JSX.Element {
       setReglaTaxonomia("");
       setReglaClaseTamano("");
       setReglaCondicion("");
+      setReglaBanda("");
       setReglaPesoMin("");
       setReglaPesoMax("");
       setReglaUnidadPeso("");
@@ -712,6 +732,7 @@ export function AlmacenamientoPage(): React.JSX.Element {
                     r.taxonomy_name,
                     r.size_class_name,
                     r.condition_name,
+                    r.rotation_band_code ? `Rotación: ${r.rotation_band_code}` : null,
                     r.min_weight || r.max_weight ? `Peso: ${r.min_weight ?? "—"} a ${r.max_weight ?? "—"} ${r.weight_unit_symbol ?? ""}` : null,
                     r.min_volume || r.max_volume ? `Volumen: ${r.min_volume ?? "—"} a ${r.max_volume ?? "—"} ${r.volume_unit_symbol ?? ""}` : null,
                   ].filter(Boolean).join(", ");
@@ -798,6 +819,14 @@ export function AlmacenamientoPage(): React.JSX.Element {
                     <option value="">Sin condición</option>
                     {condiciones.filter((c) => c.status === "ACTIVE").map((c) => (
                       <option key={c.id} value={c.id}>{c.code} - {c.name}</option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label="Banda de rotación" help="La banda la calcula Planificación de abastecimiento; aquí solo se elige.">
+                  <select value={reglaBanda} onChange={(e) => setReglaBanda(e.target.value)} className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                    <option value="">Sin banda</option>
+                    {bandas.map((b) => (
+                      <option key={b.id} value={b.id}>{b.code} - {b.name}</option>
                     ))}
                   </select>
                 </FormField>

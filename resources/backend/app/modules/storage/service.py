@@ -1,4 +1,4 @@
-from datetime import date, datetime, UTC
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -9,10 +9,11 @@ from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.master_data.models import CatalogItem, TaxonomyNode, UnitOfMeasure
 from app.modules.master_data.uom import physical_factor
 from app.modules.organization.models import Warehouse, WarehouseZone, ZoneType
+from app.modules.planning.engine import compute_plan
+from app.modules.planning.models import RotationBand
+from app.modules.storage import models as storage_models
 from app.shared.audit import record_audit
 from app.shared.clock import hoy_de_negocio
-
-from app.modules.storage import models as storage_models
 
 
 def _warehouse(db: Session, company_id: str, warehouse_id: str) -> Warehouse:
@@ -451,6 +452,7 @@ def profile_dict(db: Session, profile: storage_models.ProductStorageProfile) -> 
 
 
 def get_profile(db: Session, company_id: str, item_id: str) -> dict[str, Any] | None:
+    _item(db, company_id, item_id)
     profile = db.scalars(
         select(storage_models.ProductStorageProfile)
         .where(storage_models.ProductStorageProfile.company_id == company_id)
@@ -495,6 +497,7 @@ def _validate_rule_data(
             "taxonomy_id",
             "size_class_id",
             "condition_id",
+            "rotation_band_id",
             "min_weight",
             "max_weight",
             "min_volume",
@@ -533,6 +536,10 @@ def _validate_rule_data(
         _size_class(db, company_id, data["size_class_id"])
     if data.get("condition_id") is not None:
         _condition(db, company_id, data["condition_id"])
+    if data.get("rotation_band_id") is not None:
+        band = db.get(RotationBand, data["rotation_band_id"])
+        if band is None or band.company_id != company_id:
+            raise NotFoundError(code="ROTATION_BAND_NOT_FOUND", message="Banda de rotación no encontrada")
 
     for prefix, unit_key, dimensions in (
         ("weight", "weight_unit_id", ("MASA", "PESO")),
@@ -588,6 +595,7 @@ def create_rule(
         taxonomy_id=data.get("taxonomy_id"),
         size_class_id=data.get("size_class_id"),
         condition_id=data.get("condition_id"),
+        rotation_band_id=data.get("rotation_band_id"),
         min_weight=data.get("min_weight"),
         max_weight=data.get("max_weight"),
         weight_unit_id=data.get("weight_unit_id"),
@@ -643,6 +651,7 @@ def update_rule(
         "taxonomy_id": rule.taxonomy_id,
         "size_class_id": rule.size_class_id,
         "condition_id": rule.condition_id,
+        "rotation_band_id": rule.rotation_band_id,
         "min_weight": rule.min_weight,
         "max_weight": rule.max_weight,
         "weight_unit_id": rule.weight_unit_id,
@@ -716,6 +725,10 @@ def rule_dict(db: Session, rule: storage_models.StorageRule) -> dict[str, Any]:
     if rule.condition_id is not None:
         condition = db.get(storage_models.StorageCondition, rule.condition_id)
         condition_name = condition.name if condition else None
+    rotation_band_code = None
+    if rule.rotation_band_id is not None:
+        band = db.get(RotationBand, rule.rotation_band_id)
+        rotation_band_code = band.code if band else None
     weight_unit_symbol = None
     if rule.weight_unit_id is not None:
         weight_unit = db.get(UnitOfMeasure, rule.weight_unit_id)
@@ -745,6 +758,8 @@ def rule_dict(db: Session, rule: storage_models.StorageRule) -> dict[str, Any]:
         "size_class_name": size_class_name,
         "condition_id": rule.condition_id,
         "condition_name": condition_name,
+        "rotation_band_id": rule.rotation_band_id,
+        "rotation_band_code": rotation_band_code,
         "min_weight": str(rule.min_weight) if rule.min_weight is not None else None,
         "max_weight": str(rule.max_weight) if rule.max_weight is not None else None,
         "weight_unit_id": rule.weight_unit_id,
@@ -952,6 +967,8 @@ def evaluate(
         vigentes.append(rule)
 
     matching: list[tuple[storage_models.StorageRule, list[str], int]] = []
+    rotation_info: dict[str, Any] | None = None
+    rotation_checked = False
     discarded: list[str] = []
     for rule in vigentes:
         reasons: list[str] = []
@@ -990,6 +1007,20 @@ def evaluate(
             else:
                 condition = db.get(storage_models.StorageCondition, rule.condition_id)
                 reasons.append(f"Condición {condition.name if condition else rule.condition_id}")
+        if rule.rotation_band_id is not None:
+            criteria_count += 1
+            if not rotation_checked:
+                rotation_checked = True
+                plan = compute_plan(db, company_id=company_id, warehouse_id=warehouse_id, product_id=item_id)
+                rotation_info = plan["rotation_band"] if plan["status"] == "OK" else None
+            if rotation_info is None:
+                missing_criteria.append("Banda de rotación")
+                ok = False
+            elif rotation_info["id"] != rule.rotation_band_id:
+                reasons.append(f"Banda de rotación: {rotation_info['code']}")
+                ok = False
+            else:
+                reasons.append(f"Banda de rotación: {rotation_info['code']}")
 
         def _check_measure(
             prefix: str,
@@ -998,8 +1029,9 @@ def evaluate(
             unit_id: str | None,
             profile_value: Decimal | None,
             profile_unit_id: str | None,
+            rule_reasons: list[str],
         ) -> bool:
-            nonlocal ok, missing_criteria, reasons, criteria_count
+            nonlocal ok, missing_criteria, criteria_count
             if min_val is None and max_val is None:
                 return True
             criteria_count += 1
@@ -1023,14 +1055,14 @@ def evaluate(
                 ok = False
                 return False
             if min_val is not None and converted < min_val:
-                reasons.append(f"{prefix.capitalize()} {converted} fuera de rango")
+                rule_reasons.append(f"{prefix.capitalize()} {converted} fuera de rango")
                 ok = False
                 return False
             if max_val is not None and converted > max_val:
-                reasons.append(f"{prefix.capitalize()} {converted} fuera de rango")
+                rule_reasons.append(f"{prefix.capitalize()} {converted} fuera de rango")
                 ok = False
                 return False
-            reasons.append(f"{prefix.capitalize()} {converted} {rule_unit.symbol}")
+            rule_reasons.append(f"{prefix.capitalize()} {converted} {rule_unit.symbol}")
             return True
 
         weight_ok = _check_measure(
@@ -1040,6 +1072,7 @@ def evaluate(
             rule.weight_unit_id,
             profile.weight_value if profile else None,
             profile.weight_unit_id if profile else None,
+            reasons,
         )
         volume_ok = _check_measure(
             "volumen",
@@ -1048,6 +1081,7 @@ def evaluate(
             rule.volume_unit_id,
             profile.volume_value if profile else None,
             profile.volume_unit_id if profile else None,
+            reasons,
         )
         if rule.target_zone_id is not None:
             zone_ids = _zone_ids_for_rule(db, rule, company_id, warehouse_id)
@@ -1077,7 +1111,7 @@ def evaluate(
             "reasons": ["No existe una regla de almacenamiento aplicable"] + discarded,
             "missing_criteria": list(dict.fromkeys(missing_criteria)),
             "candidate_rules": [],
-            "inputs": _inputs_dict(db, item, profile, profile_condition_names),
+            "inputs": {**_inputs_dict(db, item, profile, profile_condition_names), "rotation_band": rotation_info["code"] if rotation_info else None},
         }
 
     matching.sort(key=lambda x: (x[0].priority, -x[2], x[0].code))
@@ -1105,7 +1139,7 @@ def evaluate(
             "reasons": [f"Reglas en empate: {codes}"],
             "missing_criteria": list(dict.fromkeys(missing_criteria)),
             "candidate_rules": [rule.code for rule, _, _ in winners],
-            "inputs": _inputs_dict(db, item, profile, profile_condition_names),
+            "inputs": {**_inputs_dict(db, item, profile, profile_condition_names), "rotation_band": rotation_info["code"] if rotation_info else None},
         }
 
     winning_rule, winning_reasons, _ = winners[0]
@@ -1126,7 +1160,7 @@ def evaluate(
         "reasons": winning_reasons,
         "missing_criteria": list(dict.fromkeys(missing_criteria)),
         "candidate_rules": [rule.code for rule, _, _ in winners],
-        "inputs": _inputs_dict(db, item, profile, profile_condition_names),
+        "inputs": {**_inputs_dict(db, item, profile, profile_condition_names), "rotation_band": rotation_info["code"] if rotation_info else None},
     }
 
 
@@ -1224,6 +1258,7 @@ def classify(
         input_volume=evaluation["inputs"]["volume"],
         input_size_class=evaluation["inputs"]["size_class"],
         input_conditions=evaluation["inputs"]["conditions"],
+        input_rotation_band=evaluation["inputs"]["rotation_band"],
         reasons=evaluation["reasons"],
         missing_criteria=evaluation["missing_criteria"],
         candidate_rules=evaluation["candidate_rules"],

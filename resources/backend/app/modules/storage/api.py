@@ -9,10 +9,8 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission, require_write_allowed
-from app.core.errors import NotFoundError
+from app.core.dependencies import require_permission, require_write_allowed
 from app.modules.identity_access.models import User
-
 from app.modules.storage import service as storage_service
 
 router = APIRouter(prefix="/storage", tags=["almacenamiento"])
@@ -64,6 +62,7 @@ class RuleBody(BaseModel):
     taxonomy_id: str | None = None
     size_class_id: str | None = None
     condition_id: str | None = None
+    rotation_band_id: str | None = None
     min_weight: Decimal | None = None
     max_weight: Decimal | None = None
     weight_unit_id: str | None = None
@@ -88,6 +87,7 @@ class RulePatchBody(BaseModel):
     taxonomy_id: str | None = None
     size_class_id: str | None = None
     condition_id: str | None = None
+    rotation_band_id: str | None = None
     min_weight: Decimal | None = None
     max_weight: Decimal | None = None
     weight_unit_id: str | None = None
