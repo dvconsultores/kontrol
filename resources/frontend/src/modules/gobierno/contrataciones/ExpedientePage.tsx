@@ -39,6 +39,7 @@ import {
 import { SeccionOfertas } from "./ExpedienteOfertas";
 import { SeccionEvaluacion } from "./ExpedienteEvaluacion";
 import { SeccionDecision } from "./ExpedienteDecision";
+import { SeccionGarantias } from "./ExpedienteGarantias";
 
 type PanelAbierto =
   | "responsable"
@@ -724,6 +725,7 @@ export function ExpedientePage() {
       <SeccionOfertas detalle={detalle} opciones={opcionesQuery.data} activeCompanyId={activeCompanyId} />
       <SeccionEvaluacion detalle={detalle} activeCompanyId={activeCompanyId} />
       <SeccionDecision detalle={detalle} activeCompanyId={activeCompanyId} />
+      <SeccionGarantias detalle={detalle} activeCompanyId={activeCompanyId} />
       <section aria-labelledby="sec-hitos" className="mt-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id="sec-hitos" className="text-lg font-semibold text-text-900">Hitos y lapsos</h2>

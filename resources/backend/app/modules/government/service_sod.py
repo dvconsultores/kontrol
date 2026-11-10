@@ -136,6 +136,9 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "PROC03_RECOMENDAR": ("Emitir la recomendación de la Comisión", "GOV_PROCUREMENT_RECOMMENDATION_ISSUED", False),
             "PROC03_RESOLVER": ("Decidir el resultado del procedimiento", "GOV_PROCUREMENT_DECISION_ISSUED", False),
             "PROC03_CERRAR": ("Cerrar el expediente", "GOV_PROCUREMENT_FILE_CLOSED", False),
+            "PROC03_GARANTIA_REGISTRAR": ("Registrar o renovar una garantía", "GOV_GUARANTEE_REGISTERED", False),
+            "PROC03_GARANTIA_LIBERAR": ("Liberar una garantía", "GOV_GUARANTEE_RELEASED", False),
+            "PROC03_GARANTIA_EJECUTAR": ("Ejecutar una garantía", "GOV_GUARANTEE_EXECUTED", False),
         },
     },
 }

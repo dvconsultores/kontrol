@@ -1135,6 +1135,41 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/garantias",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/garantias",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/garantias/requisitos",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/garantias/{garantia_id}/ejecutar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/garantias/{garantia_id}/liberar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/garantias/{garantia_id}/renovar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/garantias/{garantia_id}/sustituir",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/gobierno/contrataciones/expedientes/{expediente_id}/hitos",
       "query": []
@@ -1172,6 +1207,16 @@
     {
       "method": "POST",
       "path": "/gobierno/contrataciones/expedientes/{expediente_id}/responsables/{responsable_id}/terminar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/garantias/emisores",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/garantias/emisores",
       "query": []
     },
     {

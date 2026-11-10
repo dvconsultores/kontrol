@@ -85,6 +85,7 @@ _ETIQUETAS_EVENTO: dict[str, str] = {
     "DESIERTA": "Declaratoria desierta",
     "TERMINACION": "Terminación",
     "NULIDAD": "Nulidad",
+    "GARANTIA": "Garantía",
 }
 
 _SECCION_ORDEN = (
@@ -216,6 +217,16 @@ _CLAVES_AUDITORIA = frozenset(
         "sustituye",
         "titulo",
         "version",
+        "emisor",
+        "garantia",
+        "moneda",
+        "monto",
+        "monto_ejecutado",
+        "precondicion",
+        "regla",
+        "requisito",
+        "tipo",
+        "vigente_hasta",
     }
 )
 
