@@ -2136,6 +2136,33 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/importaciones/{file_id}/storage",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/storage/classify",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/storage/labels",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/importaciones/{file_id}/storage/labels/{label_id}/pdf",
+      "query": [
+        "inline"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/importaciones/{file_id}/storage/putaway",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/importaciones/{file_id}/tracking",
       "query": []
@@ -4278,6 +4305,81 @@
     {
       "method": "GET",
       "path": "/setup/status",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/storage/conditions",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/storage/conditions",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/storage/conditions/{condition_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/storage/evaluate",
+      "query": [
+        "item_id",
+        "warehouse_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/storage/profiles/{item_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/storage/profiles/{item_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/storage/rules",
+      "query": [
+        "warehouse_id"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/storage/rules",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/storage/rules/{rule_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/storage/size-classes",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/storage/size-classes",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/storage/size-classes/{size_class_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/storage/warehouse-policies/{warehouse_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/storage/warehouse-policies/{warehouse_id}",
       "query": []
     },
     {

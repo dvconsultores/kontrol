@@ -28,6 +28,7 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "maestros/productos/nuevo": { capacidad: "maestros:view", alcance: "empresa" },
   "maestros/servicios": { capacidad: "maestros:view", alcance: "empresa" },
   "maestros/atributos": { capacidad: "maestros:view", alcance: "empresa" },
+  "maestros/almacenamiento": { capacidad: "maestros:view", alcance: "empresa" },
   "maestros/catalogos": { capacidad: "maestros:view", alcance: "empresa" },
   "inventario/existencias": { capacidad: "inventario:view", alcance: "empresa" },
   "inventario/confirmacion": { capacidad: "inventario:view", alcance: "empresa" },

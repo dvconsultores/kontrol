@@ -102,6 +102,7 @@ def init_models() -> None:
     import app.modules.reporting.models  # noqa: F401
     import app.modules.sales.models  # noqa: F401
     import app.modules.scheduler.models  # noqa: F401
+    import app.modules.storage.models  # noqa: F401
     import app.modules.system.models  # noqa: F401
     import app.modules.treasury.models  # noqa: F401
 

@@ -278,11 +278,43 @@ test("expediente de importación de punta a punta", async ({ page }) => {
   await page.reload();
   await expect(page.getByText("Registra la recepción de la mercancía.").first()).toBeVisible();
 
+  const niveles = await fetch(`${API}/organization/warehouses/${almacen}/structure-levels`, {
+    method: "PATCH",
+    headers: authHeaders(companyId),
+    body: JSON.stringify({ structure_levels: { zone: true } }),
+  });
+  expect(niveles.ok).toBeTruthy();
+
+  const tipoZona = await post<{ id: string }>("/organization/zone-types", {
+    company_id: companyId,
+    code: `TZ-${sufijo}`,
+    name: `Fríos ${sufijo}`,
+  });
+  const zona1 = await post<{ id: string; code: string }>(`/organization/warehouses/${almacen}/zones`, {
+    code: `Z1-${sufijo}`,
+    name: `Zona Fríos ${sufijo}`,
+    zone_type_id: tipoZona.id,
+    sequence: 1,
+  });
+  const zona2 = await post<{ id: string; code: string }>(`/organization/warehouses/${almacen}/zones`, {
+    code: `Z2-${sufijo}`,
+    name: `Zona General ${sufijo}`,
+    sequence: 2,
+  });
+
   const ubicacion = await post<{ id: string; code: string }>("/organization/locations", {
     warehouse_id: almacen,
     code: `OK-${sufijo}`,
     name: "Rack válido",
     sequence: 1,
+    zone_id: zona1.id,
+  });
+  const ubicacionZ2 = await post<{ id: string; code: string }>("/organization/locations", {
+    warehouse_id: almacen,
+    code: `Z2L-${sufijo}`,
+    name: "Rack general",
+    sequence: 2,
+    zone_id: zona2.id,
   });
 
   // 1. Crear recepción
@@ -439,8 +471,66 @@ test("expediente de importación de punta a punta", async ({ page }) => {
   await expect(page.getByText("Por ubicar")).toBeVisible();
 
   // 6. Ubicar mercancía
-  await page.locator("#ubicacion").getByLabel(/Ubicación de destino/).selectOption(ubicacion.id);
-  await page.locator("#ubicacion").getByRole("button", { name: /^Ubicar/ }).click();
+  await page.goto("/maestros/almacenamiento");
+  const condiciones = page.getByRole("region", { name: "Condiciones especiales" });
+  const perfil = page.getByRole("region", { name: "Perfil de almacenamiento del producto" });
+  const reglas = page.getByRole("region", { name: "Reglas de almacenamiento" });
+  const politica = page.getByRole("region", { name: "Política del almacén" });
+
+  await condiciones.getByLabel(/^Código/).fill(`FRA-${sufijo}`);
+  await condiciones.getByLabel(/^Nombre/).fill(`Frágil ${sufijo}`);
+  await condiciones.getByRole("button", { name: "Crear condición" }).click();
+  await expect(condiciones.getByText(`FRA-${sufijo}`)).toBeVisible();
+
+  await perfil.getByLabel(/^Producto/).fill(`ART-${sufijo}`);
+  await page.getByRole("listbox").getByRole("option", { name: new RegExp(`ART-${sufijo}`) }).click();
+  await perfil.getByLabel(`FRA-${sufijo} - Frágil ${sufijo}`).check();
+  await perfil.getByRole("button", { name: "Guardar perfil" }).click();
+  await expect(perfil.getByLabel(`FRA-${sufijo} - Frágil ${sufijo}`)).toBeChecked();
+
+  await reglas.getByLabel(/^Código/).fill(`REG-${sufijo}`);
+  await reglas.getByLabel(/^Nombre/).fill(`Regla fríos ${sufijo}`);
+  await reglas.getByLabel(/^Prioridad/).fill("1");
+  await reglas.getByLabel(/^Almacén/).selectOption(almacen);
+  await reglas.getByLabel(/^Tipo de destino/).selectOption("ZONE");
+  await reglas.getByLabel(/^Zona$/).selectOption(zona1.id);
+  await reglas.getByLabel(/^Condición especial/).selectOption({ label: `FRA-${sufijo} - Frágil ${sufijo}` });
+  await reglas.getByLabel(/^Etiquetado/).selectOption("REQUIRED");
+  await reglas.getByRole("button", { name: "Crear regla" }).click();
+  await expect(reglas.getByText(`REG-${sufijo}`)).toBeVisible();
+
+  await politica.getByLabel(/^Almacén de la política/).selectOption(almacen);
+  await politica.getByLabel(/^Clasificación/).selectOption("ENFORCED");
+  await politica.getByLabel(/^Sin regla aplicable/).selectOption("BLOCK");
+  await politica.getByRole("button", { name: "Guardar política" }).click();
+
+  await page.goto(expedienteUrl);
+  const clasificacion = page.getByRole("region", { name: "Clasificación de almacenamiento" });
+  const filaAlmacen = clasificacion.getByRole("group", { name: `Artículo ${sufijo} · REC-${sufijo}` });
+  await expect(filaAlmacen).toContainText("Sin clasificar");
+  await filaAlmacen.getByRole("button", { name: "Clasificar" }).click();
+  await expect(filaAlmacen).toContainText("Zona determinada:");
+  await expect(filaAlmacen).toContainText(`Zona Fríos ${sufijo}`);
+  await expect(filaAlmacen).toContainText(`REG-${sufijo}`);
+  await expect(filaAlmacen).toContainText("Etiqueta requerida");
+  await expect(filaAlmacen.getByRole("button", { name: `Ubicar Artículo ${sufijo}` })).toBeDisabled();
+  await expect(filaAlmacen.getByLabel(/^Ubicación de destino/).locator("option:not([value=''])")).toHaveCount(1);
+  await expect(filaAlmacen.getByLabel(/^Ubicación de destino/)).toContainText(ubicacion.code);
+  await expect(filaAlmacen.getByLabel(/^Ubicación de destino/)).not.toContainText(ubicacionZ2.code);
+
+  await filaAlmacen.getByRole("button", { name: "Generar etiqueta" }).click();
+  const botonDescargaEtq = filaAlmacen.getByRole("button", { name: /^Descargar ETQ-\d{6}$/ });
+  await expect(botonDescargaEtq).toBeVisible();
+  const descargaEtq = page.waitForEvent("download");
+  await botonDescargaEtq.click();
+  const archivoEtq = await descargaEtq;
+  expect(archivoEtq.suggestedFilename()).toMatch(/^ETQ-\d{6}\.pdf$/);
+  expect((await readFile((await archivoEtq.path())!)).subarray(0, 5).toString()).toBe("%PDF-");
+
+  await filaAlmacen.getByLabel(/^Ubicación de destino/).selectOption(ubicacion.id);
+  const botonUbicar = filaAlmacen.getByRole("button", { name: `Ubicar Artículo ${sufijo}` });
+  await expect(botonUbicar).toBeEnabled();
+  await botonUbicar.click();
   await expect(page.getByText("Recibida y ubicada").first()).toBeVisible();
   await expect(page.locator("#ubicacion").getByText(ubicacion.code).first()).toBeVisible();
   await expect(page.getByText("Mercancía recibida y ubicada. Queda pendiente el costo de importación.").first()).toBeVisible();

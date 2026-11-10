@@ -2947,6 +2947,46 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/importaciones/{file_id}/storage",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/storage/classify",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/storage/labels",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/importaciones/{file_id}/storage/labels/{label_id}/pdf",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/importaciones/{file_id}/storage/putaway",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/importaciones/{file_id}/tracking",
       "capabilities": [
@@ -5991,6 +6031,118 @@
       "path": "/api/v1/setup/status",
       "capabilities": [],
       "scope": "GLOBAL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/storage/conditions",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/storage/conditions",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/storage/conditions/{condition_id}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/storage/evaluate",
+      "capabilities": [
+        "inventario:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/storage/profiles/{item_id}",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/storage/profiles/{item_id}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/storage/rules",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/storage/rules",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/storage/rules/{rule_id}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/storage/size-classes",
+      "capabilities": [
+        "maestros:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/storage/size-classes",
+      "capabilities": [
+        "maestros:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/storage/size-classes/{size_class_id}",
+      "capabilities": [
+        "maestros:edit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/storage/warehouse-policies/{warehouse_id}",
+      "capabilities": [
+        "organization:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/storage/warehouse-policies/{warehouse_id}",
+      "capabilities": [
+        "organization:edit"
+      ],
+      "scope": "COMPANY"
     },
     {
       "method": "PUT",

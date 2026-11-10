@@ -14,11 +14,14 @@ from sqlalchemy.orm import Session
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
+from app.core.errors import NotFoundError
 from app.modules.audit.models import AuditEvent
 from app.modules.identity_access.models import User
-from app.modules.imports import costs, difference_report, landed_cost, physical_locations, service
+from app.modules.imports import costs, difference_report, landed_cost, physical_locations, service, storage_flow
 from app.modules.imports.models import ImportFile
 from app.modules.inventory import location_validation
+from app.modules.storage import models as storage_models
+from app.modules.storage import service as storage_service
 from app.shared.audit_catalog import label_of, safe_details
 from app.shared.clock import InstanteDeEntrada
 
@@ -1098,3 +1101,144 @@ def validate_physical_location(
     )
     db.commit()
     return location_validation.validation_dict(db, validacion)
+
+
+class StorageClassifyBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    receipt_id: str
+    product_id: str
+    state: str = "DISPONIBLE"
+
+
+class StorageLabelBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    classification_id: str
+
+
+class StoragePutawayBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    receipt_id: str
+    product_id: str
+    state: str = "DISPONIBLE"
+    target_location_id: str
+    quantity: Decimal
+
+
+@router.get("/{file_id}/storage")
+def import_file_storage_view(
+    file_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    return storage_flow.file_storage_view(db, file)
+
+
+@router.post("/{file_id}/storage/classify")
+def import_file_storage_classify(
+    file_id: str,
+    body: StorageClassifyBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("inventario", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+    _: None = Depends(require_write_allowed),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    classification = storage_flow.classify_for_file(
+        db,
+        file=file,
+        receipt_id=body.receipt_id,
+        product_id=body.product_id,
+        state=body.state,
+        actor_id=str(user.id),
+    )
+    db.commit()
+    return storage_service.classification_dict(db, classification)
+
+
+@router.post("/{file_id}/storage/labels")
+def import_file_storage_label(
+    file_id: str,
+    body: StorageLabelBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("inventario", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+    _: None = Depends(require_write_allowed),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    label = storage_flow.label_for_file(
+        db,
+        file=file,
+        classification_id=body.classification_id,
+        actor_id=str(user.id),
+    )
+    db.commit()
+    return storage_flow.labels.label_dict(label)
+
+
+@router.get("/{file_id}/storage/labels/{label_id}/pdf")
+def import_file_storage_label_pdf(
+    file_id: str,
+    label_id: str,
+    inline: bool = False,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    label = db.scalar(
+        select(storage_models.StorageLabel).where(
+            storage_models.StorageLabel.id == label_id,
+            storage_models.StorageLabel.company_id == ctx.company_id,
+        )
+    )
+    if label is None:
+        raise NotFoundError(code="STORAGE_LABEL_NOT_FOUND", message="Etiqueta no encontrada")
+    classification = db.get(storage_models.StorageClassification, label.classification_id)
+    if classification is None or classification.import_file_id != str(file.id):
+        raise NotFoundError(code="STORAGE_LABEL_NOT_FOUND", message="Etiqueta no encontrada")
+    file_name, stream, file_size = storage_flow.labels.open_label_pdf(
+        db, company_id=ctx.company_id, label_id=label_id
+    )
+    db.commit()
+    disposition = f'{"inline" if inline else "attachment"}; filename="{file_name}"'
+    return StreamingResponse(
+        stream,
+        media_type="application/pdf",
+        headers={
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Disposition": disposition,
+            "Content-Length": str(file_size),
+        },
+    )
+
+
+@router.post("/{file_id}/storage/putaway")
+def import_file_storage_putaway(
+    file_id: str,
+    body: StoragePutawayBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("inventario", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+    _: None = Depends(require_write_allowed),
+):
+    file = service.get_file(db, ctx.company_id, file_id)
+    movement = storage_flow.putaway_for_file(
+        db,
+        file=file,
+        receipt_id=body.receipt_id,
+        product_id=body.product_id,
+        state=body.state,
+        target_location_id=body.target_location_id,
+        quantity=body.quantity,
+        actor_id=str(user.id),
+    )
+    db.commit()
+    return {
+        "movement_id": str(movement.id),
+        "target_location_id": str(movement.target_location_id),
+        "base_quantity": str(movement.base_quantity),
+        "merchandise_state": movement.target_state,
+    }

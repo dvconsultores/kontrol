@@ -138,6 +138,7 @@ const pages = [
   "modules/seguridad/sesiones/SesionesPage.tsx",
   "modules/maestros/perfiles/PerfilesFiscalesPage.tsx",
   "modules/maestros/atributos/AtributosPage.tsx",
+  "modules/maestros/almacenamiento/AlmacenamientoPage.tsx",
   "modules/maestros/terceros/TercerosPage.tsx",
   "modules/ventas/ordenes/OrdenesVentasPage.tsx",
   "modules/ventas/facturas/FacturasVentasPage.tsx",

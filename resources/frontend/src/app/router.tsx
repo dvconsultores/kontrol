@@ -68,6 +68,7 @@ export const router = createBrowserRouter([
           { path: "maestros/productos/nuevo", lazy: () => import("@/modules/maestros/productos/ProductoNuevoPage").then((m) => ({ Component: m.ProductoNuevoPage })) },
           { path: "maestros/servicios", lazy: () => import("@/modules/maestros/servicios/ServiciosPage").then((m) => ({ Component: m.ServiciosPage })) },
           { path: "maestros/atributos", lazy: () => import("@/modules/maestros/atributos/AtributosPage").then((m) => ({ Component: m.AtributosPage })) },
+          { path: "maestros/almacenamiento", lazy: () => import("@/modules/maestros/almacenamiento/AlmacenamientoPage").then((m) => ({ Component: m.AlmacenamientoPage })) },
           { path: "maestros/catalogos", lazy: () => import("@/modules/maestros/catalogos/CatalogosPage").then((m) => ({ Component: m.CatalogosPage })) },
           { path: "inventario/existencias", lazy: () => import("@/modules/inventario/existencias/ExistenciasPage").then((m) => ({ Component: m.ExistenciasPage })) },
           { path: "inventario/confirmacion", lazy: () => import("@/modules/inventario/confirmacion/ConfirmacionPage").then((m) => ({ Component: m.ConfirmacionPage })) },

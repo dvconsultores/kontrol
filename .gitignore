@@ -26,6 +26,8 @@ volumes/
 data/
 !specs/**/wireframes/*.md
 !docs/**
+# `storage/` es para datos locales; el módulo de código de almacenamiento sí se versiona.
+!resources/backend/app/modules/storage/
 
 # Licencias y claves de instalación
 license-state/

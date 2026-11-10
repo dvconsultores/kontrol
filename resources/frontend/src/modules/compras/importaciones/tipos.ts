@@ -498,6 +498,71 @@ export interface ReportesDeRecepcionRespuesta {
   import_file_code: string | null;
   reports: ResumenReporteDiferencias[];
 }
+export type FilaAlmacenamiento = {
+  receipt_id: string;
+  receipt_code: string;
+  warehouse_id: string;
+  product_id: string;
+  product_name: string;
+  state: string;
+  pending_base: string | null;
+  policy: {
+    mode: string;
+    on_no_rule: string;
+    version: number | null;
+  };
+  profile: {
+    id: string | null;
+    item_id: string;
+    version: number | null;
+    weight_value: string | null;
+    weight_unit: { id: string; code: string; name: string; symbol: string } | null;
+    volume_value: string | null;
+    volume_unit: { id: string; code: string; name: string; symbol: string } | null;
+    size_class: { id: string; code: string; name: string } | null;
+    conditions: Array<{ id: string; code: string; name: string }>;
+  } | null;
+  classification: ClasificacionAlmacen | null;
+  labels: EtiquetaAlmacen[];
+  label_required: boolean;
+  candidates: CandidataUbicacion[];
+  can_putaway: boolean;
+  blocking_reason: string | null;
+};
+
+export type ClasificacionAlmacen = {
+  id: string;
+  result: string;
+  status: string;
+  rule_code: string;
+  rule_name: string;
+  label_policy: string;
+  target_label: string;
+  reasons: string[];
+  missing_criteria: string[];
+  stale: boolean;
+  classified_at: string | null;
+  classified_by_name: string | null;
+};
+
+export type EtiquetaAlmacen = {
+  id: string;
+  reference: string;
+  file_name: string;
+  generated_at: string | null;
+};
+
+export type CandidataUbicacion = {
+  id: string;
+  code: string;
+  name: string;
+  path: string;
+  zone_id: string;
+};
+
+export type AlmacenamientoRespuesta = {
+  rows: FilaAlmacenamiento[];
+};
 
 export type UbicacionRef = { id: string; code: string; name: string | null; path: string };
 export type ReubicacionRegistrada = { movement_id: string; quantity: string; reason: string | null; relocated_at: string | null; relocated_by_name: string | null; source_location: UbicacionRef; target_location: UbicacionRef };

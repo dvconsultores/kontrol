@@ -65,6 +65,7 @@ from app.modules.regulatory.api import router as regulatory_router
 from app.modules.reporting.api import router as reporting_router
 from app.modules.sales.api import router as sales_router
 from app.modules.setup.api import router as setup_router
+from app.modules.storage.api import router as storage_router
 from app.modules.system.api import router as system_router
 from app.modules.treasury.api import router as treasury_router
 from app.shared.audit import registrar_proveedor_contexto
@@ -136,6 +137,7 @@ def create_app() -> FastAPI:
     app.include_router(uom_router, prefix=prefix)
     app.include_router(inventory_router, prefix=prefix)
     app.include_router(purchasing_router, prefix=prefix)
+    app.include_router(storage_router, prefix=prefix)
     app.include_router(imports_router, prefix=prefix)
     app.include_router(sales_router, prefix=prefix)
     app.include_router(treasury_router, prefix=prefix)
