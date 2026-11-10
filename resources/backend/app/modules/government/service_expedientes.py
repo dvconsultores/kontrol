@@ -79,6 +79,12 @@ _ETIQUETAS_EVENTO: dict[str, str] = {
     "OFERTA": "Oferta",
     "APERTURA_OFERTA": "Apertura de ofertas",
     "EVALUACION": "Evaluación",
+    "RECOMENDACION": "Recomendación",
+    "RECHAZO_OFERTA": "Rechazo de oferta",
+    "ADJUDICACION": "Adjudicación",
+    "DESIERTA": "Declaratoria desierta",
+    "TERMINACION": "Terminación",
+    "NULIDAD": "Nulidad",
 }
 
 _SECCION_ORDEN = (
@@ -178,15 +184,18 @@ _CLAVES_AUDITORIA = frozenset(
         "aspecto",
         "asistentes",
         "canal",
+        "causal",
         "clase",
         "comision",
         "confidencial",
         "criterio",
+        "decision",
         "documentos",
         "estado",
         "fecha",
         "fecha_prevista",
         "fecha_real",
+        "firmantes",
         "folio",
         "funcionario",
         "hito",
@@ -196,11 +205,15 @@ _CLAVES_AUDITORIA = frozenset(
         "numero",
         "oferta",
         "ofertas",
+        "opciones",
         "quorum",
+        "recomendacion",
+        "rechazos",
         "referencia",
         "resultado",
         "rol",
         "secuencia",
+        "sustituye",
         "titulo",
         "version",
     }
@@ -974,7 +987,7 @@ def detalle(db: Session, ctx: CompanyContext, id: str) -> dict[str, Any]:
                     0,
                     {
                         "codigo": "RECOMENDACION_PENDIENTE",
-                        "texto": "Evaluación concluida: pendiente de recomendación",
+                        "texto": "Preparar recomendación",
                     },
                 )
         if pendientes:

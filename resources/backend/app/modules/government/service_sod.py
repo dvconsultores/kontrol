@@ -133,6 +133,8 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "PROC03_RECIBIR": ("Recibir una oferta", "GOV_PROCUREMENT_OFFER_RECEIVED", False),
             "PROC03_ABRIR": ("Abrir ofertas", "GOV_PROCUREMENT_OFFERS_OPENED", False),
             "PROC03_EVALUAR": ("Registrar un resultado de evaluación", "GOV_PROCUREMENT_EVAL_RESULT_RECORDED", False),
+            "PROC03_RECOMENDAR": ("Emitir la recomendación de la Comisión", "GOV_PROCUREMENT_RECOMMENDATION_ISSUED", False),
+            "PROC03_RESOLVER": ("Decidir el resultado del procedimiento", "GOV_PROCUREMENT_DECISION_ISSUED", False),
             "PROC03_CERRAR": ("Cerrar el expediente", "GOV_PROCUREMENT_FILE_CLOSED", False),
         },
     },

@@ -7,7 +7,8 @@ Llamadas secuenciales a `deepseek-v4-pro` con `stream=true`, cada una con su bri
 - Decisiones de la dueña durante el ciclo:
   - en la llamada 3, una tarea por llamada con tope de 14;
   - en la llamada 10, tope de 22 con aviso en la 18;
-  - en la llamada 22, 1 llamada extra: **23 en total**.
+  - en la llamada 22, 1 llamada extra;
+  - al cierre, 2 más: la fusión con PROC-08 y un defecto de aislamiento de `b40bbdc`. **25 en total**.
 
 **Reparto del trabajo:**
 - DeepSeek propuso todo el código, las pruebas, la migración y la configuración funcional.
@@ -41,8 +42,9 @@ Llamadas secuenciales a `deepseek-v4-pro` con `stream=true`, cada una con su bri
 | 22 | T015-F reintento 1 | 3312/2728 | $0,003814 | E2E PASS a 1280, 390 y 320. Introdujo, sin pedírselo, una aserción vacía (`expect(bandasRes)`) |
 | 23 | T015-F aserción (extra autorizada) | 259/57 | $0,000162 | AUDIT_PASS. E2E PASS a 1280, 390 y 320 |
 | 25 | Aislamiento de `GET /storage/profiles` (deuda de `b40bbdc`, extra autorizada) | 1373/838 | $0,001326 | AUDIT_PASS. Barrido de aislamiento verde en PostgreSQL |
+| 24 | Migración de fusión `0095_fusion_gov_planning` con PROC-08 de P1 y cabezas (extra autorizada) | 856/555 | $0,000855 | AUDIT_PASS. Alembic up/down/up en PostgreSQL con una sola cabeza |
 
-**Total:** 23 llamadas, $0,145677.
+**Total:** 25 llamadas, $0,147858. La 24 (fusión) y la 25 (aislamiento) las autorizó la dueña al cierre. La 25 se registra antes que la 24 porque se aplicó antes.
 
 **Rechazos:**
 - Completos: llamadas 1 y 3; esta última ignoró la tarea A.
@@ -56,3 +58,5 @@ Llamadas secuenciales a `deepseek-v4-pro` con `stream=true`, cada una con su bri
 **Implementado por Claude:** ninguna línea de producto, de pruebas ni de migración. Claude hizo dos operaciones mecánicas con herramienta:
 - `ruff --fix` sobre imports sin uso y su orden;
 - regeneración de las instantáneas del frontend con `qa/fixtures_de_frontend.py`.
+- quitar líneas en blanco finales en 5 ficheros (`git diff --check`);
+- resolución de los conflictos de la fusión con PROC-08 (contadores y cabezas tomados de P1, que DeepSeek apuntó después a `0095`).

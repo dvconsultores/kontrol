@@ -1474,7 +1474,15 @@ ESTADOS_EXPEDIENTE = ("ABIERTO", "CERRADO", "DESCARTADO")
 ROLES_RESPONSABLE_EXPEDIENTE = ("RESPONSABLE", "REQUIRENTE", "SUSTANCIACION", "CUSTODIA")
 ESTADOS_HITO = ("PREVISTO", "CUMPLIDO", "NO_APLICA")
 CLASES_FOLIO = ("SOLICITUD", "AUTORIZACION_INICIO", "PLIEGO", "ACTOS_MOTIVADOS", "LLAMADO_INVITACION", "MODIFICACIONES_PLIEGO", "ACTA_RECEPCION", "OFERTAS", "INFORME_RECOMENDACION", "ADJUDICACION", "NOTIFICACION", "CONTRATO", "OTRO_SELECCION", "GARANTIAS", "ACTAS_EJECUCION", "MODIFICACION_CONTRATO", "FORMULARIOS_PAGO", "APROBACIONES_PAGO", "PAGOS", "FINIQUITO", "LIBERACION_GARANTIAS", "EVALUACION_CONTRATISTA", "OTRO_ADMINISTRACION")
-CLASES_EVENTO_EXPEDIENTE = ("APERTURA", "DATOS", "RESPONSABLE", "COMISION", "ACTUACION", "DECISION", "DOCUMENTO", "ACTO", "HITO", "CIERRE", "DESCARTE", "OFERTA", "APERTURA_OFERTA", "EVALUACION")
+CLASES_EVENTO_EXPEDIENTE = ("APERTURA", "DATOS", "RESPONSABLE", "COMISION", "ACTUACION", "DECISION", "DOCUMENTO", "ACTO", "HITO", "CIERRE", "DESCARTE", "OFERTA", "APERTURA_OFERTA", "EVALUACION", "RECOMENDACION", "RECHAZO_OFERTA", "ADJUDICACION", "DESIERTA", "TERMINACION", "NULIDAD")
+
+ESTADOS_RECOMENDACION = ("EMITIDA", "SUSTITUIDA")
+RESULTADOS_RECOMENDACION = ("ADJUDICAR", "DECLARAR_DESIERTA", "TERMINAR")
+CAUSALES_DESIERTA = ("LCP113_1", "LCP113_2", "LCP113_3", "LCP113_4", "LCP113_5")  # LCP art. 113
+CAUSALES_RECHAZO = ("LCP76_1", "LCP76_2", "LCP76_3", "LCP76_4", "LCP76_5", "LCP76_6", "LCP76_7", "LCP76_8", "RLCP102_1", "RLCP102_2", "RLCP102_3", "RLCP102_4", "RLCP102_5", "RLCP102_6")  # LCP art. 76 num. 1-8; RLCP art. 102 num. 1-6
+RESULTADOS_DECISION = ("ADJUDICADA", "DESIERTA", "TERMINADA", "NULIDAD")  # LCP arts. 109, 113, 107, 112
+ESTADOS_DECISION = ("VIGENTE", "ANULADA", "SUSTITUIDA")
+CAUSALES_NULIDAD = ("INFORMACION_FALSA", "VIOLACION_LEGAL")  # LCP art. 112
 CATEGORIAS_SEPARACION = ("OPERATIVO", "APROBADOR", "CONTROL_INTERNO", "AUDITORIA", "ADMINISTRACION_TECNICA")
 ESTADOS_CATEGORIA_ROL = ("ACTIVA", "RETIRADA")
 TIPOS_HISTORIA_CATEGORIA = ("AGREGADA", "RETIRADA")
@@ -2307,6 +2315,363 @@ for _sentencia in _GOV_EVAL_CRITERIO_DDL[1:4]:
         _gov_eval_criterio_tabla,
         "after_create",
         DDL(_sentencia).execute_if(dialect="postgresql"),
+    )
+
+class GovernmentProcurementRecommendation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_recommendations"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    committee_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committees.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    estado: Mapped[str] = mapped_column(String(16), nullable=False, default="EMITIDA", server_default="EMITIDA")
+    resultado_recomendado: Mapped[str] = mapped_column(String(24), nullable=False)
+    causal_desierta: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    motivacion: Mapped[str] = mapped_column(Text, nullable=False)
+    examen_legal: Mapped[str] = mapped_column(Text, nullable=False)
+    examen_financiero: Mapped[str] = mapped_column(Text, nullable=False)
+    examen_tecnico: Mapped[str] = mapped_column(Text, nullable=False)
+    resultado_matriz: Mapped[str] = mapped_column(Text, nullable=False)
+    medidas_promocion: Mapped[str | None] = mapped_column(Text, nullable=True)
+    matrix_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_eval_matrices.id"), nullable=False, index=True)
+    matrix_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    evaluacion_concluida_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    informe_storage_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    informe_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    informe_tamano: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    informe_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    emitida_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    emitida_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    official_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=True, index=True)
+    sustituye_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_recommendations.id"), nullable=True, unique=True)
+    motivo_sustitucion: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    sustituida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            f"estado IN ({en(ESTADOS_RECOMENDACION)})",
+            name="ck_gov_procurement_recommendations_estado",
+        ),
+        CheckConstraint(
+            f"resultado_recomendado IN ({en(RESULTADOS_RECOMENDACION)})",
+            name="ck_gov_procurement_recommendations_resultado_recomendado",
+        ),
+        CheckConstraint(
+            "numero >= 1",
+            name="ck_gov_procurement_recommendations_numero",
+        ),
+        CheckConstraint(
+            "(causal_desierta IS NOT NULL) = (resultado_recomendado = 'DECLARAR_DESIERTA')",
+            name="ck_gov_procurement_recommendations_causal_desierta_presencia",
+        ),
+        CheckConstraint(
+            f"causal_desierta IS NULL OR causal_desierta IN ({en(CAUSALES_DESIERTA)})",
+            name="ck_gov_procurement_recommendations_causal_desierta_valor",
+        ),
+        CheckConstraint(
+            "(sustituye_id IS NULL) = (motivo_sustitucion IS NULL)",
+            name="ck_gov_procurement_recommendations_sustitucion",
+        ),
+        CheckConstraint(
+            "(estado = 'SUSTITUIDA') = (sustituida_en IS NOT NULL)",
+            name="ck_gov_procurement_recommendations_sustituida_en",
+        ),
+        CheckConstraint(
+            "matrix_version >= 1",
+            name="ck_gov_procurement_recommendations_matrix_version",
+        ),
+        UniqueConstraint("company_id", "file_id", "numero", name="uq_gov_procurement_recommendations_company_file_numero"),
+        Index(
+            "uq_gov_procurement_recommendations_vigente",
+            "file_id",
+            unique=True,
+            postgresql_where=text("estado = 'EMITIDA'"),
+            sqlite_where=text("estado = 'EMITIDA'"),
+        ),
+    )
+
+
+class GovernmentProcurementRecommendationSignatory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_recommendation_signatories"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    recommendation_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_recommendations.id"), nullable=False, index=True)
+    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committee_members.id"), nullable=False, index=True)
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
+    funcion: Mapped[str] = mapped_column(String(16), nullable=False)
+    condicion: Mapped[str] = mapped_column(String(16), nullable=False)
+    cuenta_voto: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("recommendation_id", "member_id", name="uq_gov_proc_rec_signatories_member"),
+    )
+
+
+class GovernmentProcurementRecommendationOption(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_recommendation_options"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    recommendation_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_recommendations.id"), nullable=False, index=True)
+    offer_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_offers.id"), nullable=False, index=True)
+    posicion: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "posicion BETWEEN 1 AND 3",
+            name="ck_gov_procurement_recommendation_options_posicion",
+        ),
+        UniqueConstraint("recommendation_id", "posicion", name="uq_gov_proc_rec_options_posicion"),
+        UniqueConstraint("recommendation_id", "offer_id", name="uq_gov_procurement_recommendation_options_recommendation_offer"),
+    )
+
+
+class GovernmentProcurementRecommendationRejection(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_recommendation_rejections"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    recommendation_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_recommendations.id"), nullable=False, index=True)
+    offer_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_offers.id"), nullable=False, index=True)
+    causal: Mapped[str] = mapped_column(String(16), nullable=False)
+    motivacion: Mapped[str] = mapped_column(Text, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            f"causal IN ({en(CAUSALES_RECHAZO)})",
+            name="ck_gov_procurement_recommendation_rejections_causal",
+        ),
+        UniqueConstraint("recommendation_id", "offer_id", name="uq_gov_proc_rec_rejections_offer"),
+    )
+
+
+class GovernmentProcurementDecision(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_decisions"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    recommendation_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_recommendations.id"), nullable=True, index=True)
+    resultado: Mapped[str] = mapped_column(String(16), nullable=False)
+    offer_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_offers.id"), nullable=True, index=True)
+    posicion: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    causal_desierta: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    causal_nulidad: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    anula_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_decisions.id"), nullable=True, index=True)
+    act_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=False, unique=True)
+    cargo_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False, index=True)
+    motivacion: Mapped[str] = mapped_column(Text, nullable=False)
+    decidida_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    decidida_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    official_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=True, index=True)
+    estado: Mapped[str] = mapped_column(String(16), nullable=False, default="VIGENTE", server_default="VIGENTE")
+    afectada_por_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("gov_procurement_decisions.id", deferrable=True, initially="DEFERRED"),
+        nullable=True,
+    )
+    afectada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            f"resultado IN ({en(RESULTADOS_DECISION)})",
+            name="ck_gov_procurement_decisions_resultado",
+        ),
+        CheckConstraint(
+            f"estado IN ({en(ESTADOS_DECISION)})",
+            name="ck_gov_procurement_decisions_estado",
+        ),
+        CheckConstraint(
+            "numero >= 1",
+            name="ck_gov_procurement_decisions_numero",
+        ),
+        CheckConstraint(
+            "(offer_id IS NOT NULL) = (resultado = 'ADJUDICADA')",
+            name="ck_gov_procurement_decisions_offer_presencia",
+        ),
+        CheckConstraint(
+            "(offer_id IS NULL) = (posicion IS NULL)",
+            name="ck_gov_procurement_decisions_posicion_presencia",
+        ),
+        CheckConstraint(
+            "posicion IS NULL OR posicion BETWEEN 1 AND 3",
+            name="ck_gov_procurement_decisions_posicion_valor",
+        ),
+        CheckConstraint(
+            "(causal_desierta IS NOT NULL) = (resultado = 'DESIERTA')",
+            name="ck_gov_procurement_decisions_causal_desierta_presencia",
+        ),
+        CheckConstraint(
+            f"causal_desierta IS NULL OR causal_desierta IN ({en(CAUSALES_DESIERTA)})",
+            name="ck_gov_procurement_decisions_causal_desierta_valor",
+        ),
+        CheckConstraint(
+            "(causal_nulidad IS NOT NULL) = (resultado = 'NULIDAD')",
+            name="ck_gov_procurement_decisions_causal_nulidad_presencia",
+        ),
+        CheckConstraint(
+            f"causal_nulidad IS NULL OR causal_nulidad IN ({en(CAUSALES_NULIDAD)})",
+            name="ck_gov_procurement_decisions_causal_nulidad_valor",
+        ),
+        CheckConstraint(
+            "(anula_id IS NOT NULL) = (resultado = 'NULIDAD')",
+            name="ck_gov_procurement_decisions_anula_presencia",
+        ),
+        CheckConstraint(
+            "resultado = 'NULIDAD' OR recommendation_id IS NOT NULL",
+            name="ck_gov_procurement_decisions_recommendation_presencia",
+        ),
+        CheckConstraint(
+            "(estado = 'VIGENTE') = (afectada_por_id IS NULL)",
+            name="ck_gov_procurement_decisions_afectada_por_presencia",
+        ),
+        CheckConstraint(
+            "(afectada_por_id IS NULL) = (afectada_en IS NULL)",
+            name="ck_gov_procurement_decisions_afectada_en_presencia",
+        ),
+        UniqueConstraint("company_id", "file_id", "numero", name="uq_gov_procurement_decisions_company_file_numero"),
+        Index(
+            "uq_gov_procurement_decisions_final",
+            "file_id",
+            unique=True,
+            postgresql_where=text("estado = 'VIGENTE' AND resultado <> 'NULIDAD'"),
+            sqlite_where=text("estado = 'VIGENTE' AND resultado <> 'NULIDAD'"),
+        ),
+    )
+
+
+_GOV_DECISION_IMMUTABLE_DDL = (
+    """
+    CREATE OR REPLACE FUNCTION kontrol_gov_decision_immutable()
+    RETURNS TRIGGER AS $$
+    BEGIN
+        RAISE EXCEPTION 'Los registros de recomendación y decisión son inmutables';
+    END;
+    $$ LANGUAGE plpgsql;
+    """,
+)
+
+_GOV_RECOMMENDATION_GUARD_DDL = (
+    """
+    CREATE OR REPLACE FUNCTION kontrol_gov_recommendation_guard()
+    RETURNS TRIGGER AS $$
+    BEGIN
+        IF TG_OP = 'DELETE' THEN
+            RAISE EXCEPTION 'Los registros de recomendación son inmutables';
+        END IF;
+        IF TG_OP = 'TRUNCATE' THEN
+            RAISE EXCEPTION 'Los registros de recomendación son inmutables';
+        END IF;
+        IF TG_OP = 'UPDATE' THEN
+            IF OLD.estado = 'EMITIDA' AND NEW.estado = 'SUSTITUIDA' AND NEW.sustituida_en IS NOT NULL
+               AND (to_jsonb(NEW) - 'estado' - 'sustituida_en' - 'updated_at') = (to_jsonb(OLD) - 'estado' - 'sustituida_en' - 'updated_at') THEN
+                RETURN NEW;
+            END IF;
+            RAISE EXCEPTION 'Los registros de recomendación son inmutables';
+        END IF;
+        RETURN NULL;
+    END;
+    $$ LANGUAGE plpgsql;
+    """,
+)
+
+_GOV_DECISION_GUARD_DDL = (
+    """
+    CREATE OR REPLACE FUNCTION kontrol_gov_decision_guard()
+    RETURNS TRIGGER AS $$
+    BEGIN
+        IF TG_OP = 'DELETE' THEN
+            RAISE EXCEPTION 'Los registros de decisión son inmutables';
+        END IF;
+        IF TG_OP = 'TRUNCATE' THEN
+            RAISE EXCEPTION 'Los registros de decisión son inmutables';
+        END IF;
+        IF TG_OP = 'UPDATE' THEN
+            IF OLD.estado = 'VIGENTE' AND NEW.estado IN ('ANULADA','SUSTITUIDA') AND NEW.afectada_por_id IS NOT NULL AND NEW.afectada_en IS NOT NULL
+               AND (to_jsonb(NEW) - 'estado' - 'afectada_por_id' - 'afectada_en' - 'updated_at') = (to_jsonb(OLD) - 'estado' - 'afectada_por_id' - 'afectada_en' - 'updated_at') THEN
+                RETURN NEW;
+            END IF;
+            RAISE EXCEPTION 'Los registros de decisión son inmutables';
+        END IF;
+        RETURN NULL;
+    END;
+    $$ LANGUAGE plpgsql;
+    """,
+)
+
+_gov_decision_immutable_modelos = (
+    GovernmentProcurementRecommendationSignatory,
+    GovernmentProcurementRecommendationOption,
+    GovernmentProcurementRecommendationRejection,
+)
+for _modelo_decision in _gov_decision_immutable_modelos:
+    _tabla = _modelo_decision.__table__
+    _nombre_corto = _modelo_decision.__tablename__.split("_", 2)[-1]
+    event.listen(
+        _tabla,
+        "after_create",
+        DDL(_GOV_DECISION_IMMUTABLE_DDL[0]).execute_if(dialect="postgresql"),
+    )
+    for _accion, _momento in (
+        ("update", "BEFORE UPDATE"),
+        ("delete", "BEFORE DELETE"),
+        ("truncate", "BEFORE TRUNCATE"),
+    ):
+        _trigger = f"""
+        CREATE TRIGGER trg_{_nombre_corto}_immutable_{_accion}
+        {_momento} ON {_modelo_decision.__tablename__}
+        FOR EACH {"ROW" if _accion != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_decision_immutable();
+        """
+        event.listen(
+            _tabla,
+            "after_create",
+            DDL(_trigger).execute_if(dialect="postgresql"),
+        )
+
+event.listen(
+    GovernmentProcurementRecommendation.__table__,
+    "after_create",
+    DDL(_GOV_RECOMMENDATION_GUARD_DDL[0]).execute_if(dialect="postgresql"),
+)
+for _accion, _momento in (
+    ("update", "BEFORE UPDATE"),
+    ("delete", "BEFORE DELETE"),
+    ("truncate", "BEFORE TRUNCATE"),
+):
+    _trigger = f"""
+    CREATE TRIGGER trg_gov_procurement_recommendations_guard_{_accion}
+    {_momento} ON gov_procurement_recommendations
+    FOR EACH {"ROW" if _accion != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_recommendation_guard();
+    """
+    event.listen(
+        GovernmentProcurementRecommendation.__table__,
+        "after_create",
+        DDL(_trigger).execute_if(dialect="postgresql"),
+    )
+
+event.listen(
+    GovernmentProcurementDecision.__table__,
+    "after_create",
+    DDL(_GOV_DECISION_GUARD_DDL[0]).execute_if(dialect="postgresql"),
+)
+for _accion, _momento in (
+    ("update", "BEFORE UPDATE"),
+    ("delete", "BEFORE DELETE"),
+    ("truncate", "BEFORE TRUNCATE"),
+):
+    _trigger = f"""
+    CREATE TRIGGER trg_gov_procurement_decisions_guard_{_accion}
+    {_momento} ON gov_procurement_decisions
+    FOR EACH {"ROW" if _accion != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_decision_guard();
+    """
+    event.listen(
+        GovernmentProcurementDecision.__table__,
+        "after_create",
+        DDL(_trigger).execute_if(dialect="postgresql"),
     )
 
 _gov_eval_immutable_modelos = (

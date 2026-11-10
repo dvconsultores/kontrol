@@ -454,7 +454,7 @@ _PARTE_B: tuple[AuditActionSpec, ...] = (
 
 DETALLE_COMISION: tuple[str, ...] = ("acto", "area", "asunto", "causa", "causal", "codigo", "condicion", "desde", "estado", "fecha", "filtros", "funcion", "funcionario", "hasta", "miembro", "motivo", "nombre", "referencia", "regla_version", "total", "version")
 
-DETALLE_EXPEDIENTE: tuple[str, ...] = ("acto", "apertura", "aspecto", "asistentes", "canal", "clase", "comision", "confidencial", "criterio", "documentos", "estado", "fecha", "fecha_prevista", "fecha_real", "folio", "funcionario", "hito", "matriz", "modalidad", "motivo", "numero", "oferta", "ofertas", "quorum", "referencia", "resultado", "rol", "secuencia", "titulo", "version")
+DETALLE_EXPEDIENTE: tuple[str, ...] = ("acto", "apertura", "aspecto", "asistentes", "canal", "causal", "clase", "comision", "confidencial", "criterio", "decision", "documentos", "estado", "fecha", "fecha_prevista", "fecha_real", "firmantes", "folio", "funcionario", "hito", "matriz", "modalidad", "motivo", "numero", "oferta", "ofertas", "opciones", "quorum", "recomendacion", "rechazos", "referencia", "resultado", "rol", "secuencia", "sustituye", "titulo", "version")
 
 _PARTE_C: tuple[AuditActionSpec, ...] = (
     _e("GOV_COMMITTEE_CREATED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisión de contrataciones registrada"),
@@ -495,6 +495,10 @@ _PARTE_D: tuple[AuditActionSpec, ...] = (
     _e("GOV_PROCUREMENT_EVAL_CONTRIBUTION_RECORDED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Aporte de evaluación registrado"),
     _e("GOV_PROCUREMENT_EVAL_RESULT_RECORDED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Resultado de evaluación registrado"),
     _e("GOV_PROCUREMENT_EVALUATION_CONCLUDED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Evaluación concluida"),
+    _e("GOV_PROCUREMENT_RECOMMENDATION_ISSUED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Recomendación emitida"),
+    _e("GOV_PROCUREMENT_RECOMMENDATION_SUPERSEDED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Recomendación sustituida"),
+    _e("GOV_PROCUREMENT_DECISION_ISSUED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Decisión del procedimiento emitida"),
+    _e("GOV_PROCUREMENT_DECISION_NULLIFIED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Decisión anulada"),
 )
 
 _PARTE_TERCEROS: tuple[AuditActionSpec, ...] = (

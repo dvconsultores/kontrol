@@ -846,7 +846,7 @@ test("PROC-07 · abrir y evaluar ofertas desde la ficha del expediente", async (
   await sec.getByRole("button", { name: "Confirmar conclusión" }).click();
   await expect(sec.getByText(/^Evaluación concluida ·/)).toBeVisible();
   await expect(
-    sec.getByRole("definition").filter({ hasText: /^Evaluación concluida: pendiente de recomendación \(PROC-08\)$/ }),
+    sec.getByRole("definition").filter({ hasText: /^Preparar recomendación$/ }),
   ).toBeVisible();
   await expect(sec.getByRole("button", { name: /^Registrar aporte de / })).toHaveCount(0);
   await expect(sec.getByRole("button", { name: /^Registrar resultado de la Comisión de / })).toHaveCount(0);

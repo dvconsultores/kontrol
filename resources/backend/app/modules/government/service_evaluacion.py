@@ -781,7 +781,7 @@ def _estado_evaluacion(db: Session, ctx: CompanyContext, expediente: GovernmentP
     elif expediente.evaluacion_concluida_en is None:
         siguiente_accion = "Concluya la evaluación"
     else:
-        siguiente_accion = "Evaluación concluida: pendiente de recomendación (PROC-08)"
+        siguiente_accion = "Preparar recomendación"
 
     return {
         "matriz": (

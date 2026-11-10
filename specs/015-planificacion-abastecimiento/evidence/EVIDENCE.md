@@ -97,3 +97,21 @@ Ejecutada sobre el PostgreSQL de QA con el analizador real, en dos tramos: la pr
 | `test_spec047_scheduler::test_el_tick…` | Manejadores de respaldo registrados por el entorno | Previa: falla igual en `HEAD` |
 
 **Ninguna falla de la suite PostgreSQL viene de la Spec 015.**
+
+## Integración con P1 (PROC-08)
+
+P1 publicó `570a033` y `4f069bc` durante el ciclo, con la migración `0094_gov_proc08_decision`. Esa migración cuelga de `0093_fusion_gov_storage`, como `0094_supply_planning`.
+
+Integración:
+- fusión sin rebase;
+- contadores y cabezas tomados de P1;
+- migración de fusión `0095_fusion_gov_planning` (llamada 24);
+- el catálogo de auditoría integrado mide 453 entradas.
+
+| Puerta tras la fusión | Resultado |
+|---|---|
+| Alembic sobre PostgreSQL nuevo: upgrade, downgrade a `0093_fusion_gov_storage`, upgrade | correcto; una cabeza (`0095_fusion_gov_planning`, mergepoint) |
+| Guardas de cabeza, catálogo, planificación, almacenamiento, compras y pruebas PROC-08 de P1 | PostgreSQL 140/140; SQLite 112 pasan y 28 omitidas |
+| Instantáneas del frontend regeneradas | idénticas a las fusionadas |
+| Frontend: lint, typecheck, Vitest | limpio, limpio, 1892/1892 |
+| E2E `planificacion.spec.ts` | PASS a 1280, 390 y 320 |
