@@ -261,6 +261,10 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_expedientes:manage",
         "gobierno_ofertas:view",
         "gobierno_ofertas:receive",
+        "gobierno_evaluacion:view",
+        "gobierno_evaluacion:criteria",
+        "gobierno_evaluacion:open",
+        "gobierno_evaluacion:evaluate",
     }
 )
 

@@ -94,6 +94,17 @@ def _integrity_for_offer(db: Session, offer: GovernmentProcurementOffer) -> str:
 
 def _serializar_oferta(db: Session, offer: GovernmentProcurementOffer,
                        *, ctx, con_documentos: bool = False) -> dict:
+    from app.modules.government.models import GovernmentProcurementOpeningOffer
+
+    abierta = (
+        db.query(GovernmentProcurementOpeningOffer)
+        .filter(
+            GovernmentProcurementOpeningOffer.company_id == ctx.company_id,
+            GovernmentProcurementOpeningOffer.offer_id == offer.id,
+        )
+        .one_or_none()
+        is not None
+    )
     data = {
         "id": offer.id,
         "referencia": _referencia(offer.numero),
@@ -110,10 +121,16 @@ def _serializar_oferta(db: Session, offer: GovernmentProcurementOffer,
         "receptor": offer.receptor_etiqueta,
         "registrado_por": _usuarios_por_ids(db, [offer.created_by], ctx.tenant_id).get(offer.created_by) if offer.created_by else None,
         "confidencial": offer.confidencial,
-        "confidencialidad_etiqueta": "Sellada hasta la apertura" if offer.confidencial else "Sin sello",
+        "confidencialidad_etiqueta": (
+            "Sello levantado en la apertura"
+            if offer.confidencial and abierta
+            else "Sellada hasta la apertura"
+            if offer.confidencial
+            else "Sin sello"
+        ),
         "fundamento_confidencialidad": offer.fundamento_confidencialidad,
-        "situacion": "PENDIENTE_APERTURA",
-        "situacion_etiqueta": "Pendiente de apertura",
+        "situacion": "ABIERTA" if abierta else "PENDIENTE_APERTURA",
+        "situacion_etiqueta": "Abierta" if abierta else "Pendiente de apertura",
         "condicion_sobre": offer.condicion_sobre,
         "documentos_total": db.scalar(
             select(func.count(GovernmentProcurementOfferDocument.id)).where(
@@ -136,7 +153,7 @@ def _serializar_oferta(db: Session, offer: GovernmentProcurementOffer,
                 "huella": row.sha256,
                 "integridad": _integrity_for_row(db, row),
             }
-            if offer.confidencial:
+            if documento_sellado(db, row.document_id):
                 item["documento_id"] = None
                 item["titulo"] = None
             else:

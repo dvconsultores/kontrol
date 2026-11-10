@@ -1443,6 +1443,78 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion",
+      "capabilities": [
+        "gobierno_evaluacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/aperturas",
+      "capabilities": [
+        "gobierno_evaluacion:open"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/aportes",
+      "capabilities": [
+        "gobierno_evaluacion:evaluate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/concluir",
+      "capabilities": [
+        "gobierno_evaluacion:evaluate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/matriz",
+      "capabilities": [
+        "gobierno_evaluacion:criteria"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/matriz/bloquear",
+      "capabilities": [
+        "gobierno_evaluacion:criteria"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/matriz/criterios",
+      "capabilities": [
+        "gobierno_evaluacion:criteria"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/matriz/criterios/{criterio_id}",
+      "capabilities": [
+        "gobierno_evaluacion:criteria"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/resultados",
+      "capabilities": [
+        "gobierno_evaluacion:evaluate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/folios",
       "capabilities": [
@@ -6743,7 +6815,11 @@
     "gobierno_expedientes:manage",
     "gobierno_expedientes:close",
     "gobierno_ofertas:view",
-    "gobierno_ofertas:receive"
+    "gobierno_ofertas:receive",
+    "gobierno_evaluacion:view",
+    "gobierno_evaluacion:criteria",
+    "gobierno_evaluacion:open",
+    "gobierno_evaluacion:evaluate"
   ],
   "report_capabilities": {
     "executive_ventas": [

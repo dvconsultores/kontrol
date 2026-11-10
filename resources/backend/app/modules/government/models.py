@@ -1474,7 +1474,7 @@ ESTADOS_EXPEDIENTE = ("ABIERTO", "CERRADO", "DESCARTADO")
 ROLES_RESPONSABLE_EXPEDIENTE = ("RESPONSABLE", "REQUIRENTE", "SUSTANCIACION", "CUSTODIA")
 ESTADOS_HITO = ("PREVISTO", "CUMPLIDO", "NO_APLICA")
 CLASES_FOLIO = ("SOLICITUD", "AUTORIZACION_INICIO", "PLIEGO", "ACTOS_MOTIVADOS", "LLAMADO_INVITACION", "MODIFICACIONES_PLIEGO", "ACTA_RECEPCION", "OFERTAS", "INFORME_RECOMENDACION", "ADJUDICACION", "NOTIFICACION", "CONTRATO", "OTRO_SELECCION", "GARANTIAS", "ACTAS_EJECUCION", "MODIFICACION_CONTRATO", "FORMULARIOS_PAGO", "APROBACIONES_PAGO", "PAGOS", "FINIQUITO", "LIBERACION_GARANTIAS", "EVALUACION_CONTRATISTA", "OTRO_ADMINISTRACION")
-CLASES_EVENTO_EXPEDIENTE = ("APERTURA", "DATOS", "RESPONSABLE", "COMISION", "ACTUACION", "DECISION", "DOCUMENTO", "ACTO", "HITO", "CIERRE", "DESCARTE", "OFERTA")
+CLASES_EVENTO_EXPEDIENTE = ("APERTURA", "DATOS", "RESPONSABLE", "COMISION", "ACTUACION", "DECISION", "DOCUMENTO", "ACTO", "HITO", "CIERRE", "DESCARTE", "OFERTA", "APERTURA_OFERTA", "EVALUACION")
 CATEGORIAS_SEPARACION = ("OPERATIVO", "APROBADOR", "CONTROL_INTERNO", "AUDITORIA", "ADMINISTRACION_TECNICA")
 ESTADOS_CATEGORIA_ROL = ("ACTIVA", "RETIRADA")
 TIPOS_HISTORIA_CATEGORIA = ("AGREGADA", "RETIRADA")
@@ -1748,6 +1748,8 @@ class GovernmentProcurementFile(UUIDMixin, TimestampMixin, CreatedByMixin, Versi
     closed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
     recepcion_concluida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     recepcion_concluida_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    evaluacion_concluida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    evaluacion_concluida_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
     __table_args__ = (
         UniqueConstraint("company_id", "numero", name="uq_gov_procurement_files_numero"),
@@ -2017,6 +2019,265 @@ class GovernmentProcurementOfferDocument(UUIDMixin, TimestampMixin, CreatedByMix
     )
 
 
+class GovernmentProcurementEvalMatrix(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    __tablename__ = "gov_procurement_eval_matrices"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    estado: Mapped[str] = mapped_column(String(16), nullable=False)
+    pliego_document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False, index=True)
+    pliego_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=False, index=True)
+    pliego_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    transcripcion: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    locked_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("estado IN ('BORRADOR', 'BLOQUEADA')", name="ck_gov_procurement_eval_matrices_estado"),
+        CheckConstraint("version >= 1", name="ck_gov_procurement_eval_matrices_version"),
+        UniqueConstraint("file_id", name="uq_gov_procurement_eval_matrices_file"),
+    )
+
+
+class GovernmentProcurementEvalCriterion(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_eval_criteria"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    matrix_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_eval_matrices.id"), nullable=False, index=True)
+    aspecto: Mapped[str] = mapped_column(String(16), nullable=False)
+    orden: Mapped[int] = mapped_column(Integer, nullable=False)
+    nombre: Mapped[str] = mapped_column(String(300), nullable=False)
+    descripcion: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    escala: Mapped[str] = mapped_column(String(16), nullable=False)
+    puntaje_maximo: Mapped[Decimal | None] = mapped_column(Numeric(9, 2), nullable=True)
+    ponderacion: Mapped[Decimal | None] = mapped_column(Numeric(7, 4), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "aspecto IN ('TECNICO', 'ECONOMICO', 'LEGAL')",
+            name="ck_gov_procurement_eval_criteria_aspecto",
+        ),
+        CheckConstraint("orden >= 1", name="ck_gov_procurement_eval_criteria_orden"),
+        CheckConstraint(
+            "escala IN ('PUNTAJE', 'CUMPLE')",
+            name="ck_gov_procurement_eval_criteria_escala",
+        ),
+        CheckConstraint(
+            "(escala = 'PUNTAJE' AND puntaje_maximo IS NOT NULL AND puntaje_maximo > 0) OR (escala = 'CUMPLE' AND puntaje_maximo IS NULL)",
+            name="ck_gov_procurement_eval_criteria_puntaje",
+        ),
+        CheckConstraint(
+            "ponderacion IS NULL OR ponderacion > 0",
+            name="ck_gov_procurement_eval_criteria_ponderacion",
+        ),
+        UniqueConstraint(
+            "matrix_id",
+            "aspecto",
+            "orden",
+            name="uq_gov_procurement_eval_criteria_aspecto_orden",
+        ),
+    )
+
+
+class GovernmentProcurementOpening(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_openings"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    committee_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committees.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    abierta_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    acta_document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False, index=True)
+    acta_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=False, index=True)
+    acta_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    observaciones: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    miembros_con_voto: Mapped[int] = mapped_column(Integer, nullable=False)
+    asistentes_con_voto: Mapped[int] = mapped_column(Integer, nullable=False)
+    quorum_requerido: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("numero >= 1", name="ck_gov_procurement_openings_numero"),
+        CheckConstraint("miembros_con_voto >= 1", name="ck_gov_procurement_openings_miembros_con_voto"),
+        CheckConstraint("asistentes_con_voto >= 1", name="ck_gov_procurement_openings_asistentes_con_voto"),
+        CheckConstraint("quorum_requerido >= 1", name="ck_gov_procurement_openings_quorum_requerido"),
+        UniqueConstraint("company_id", "file_id", "numero", name="uq_gov_procurement_openings_file_numero"),
+    )
+
+
+class GovernmentProcurementOpeningAttendee(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_opening_attendees"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    opening_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_openings.id"), nullable=False, index=True)
+    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committee_members.id"), nullable=False, index=True)
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
+    funcion: Mapped[str] = mapped_column(String(16), nullable=False)
+    condicion: Mapped[str] = mapped_column(String(16), nullable=False)
+    cuenta_voto: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "funcion IN ('MIEMBRO', 'SECRETARIO')",
+            name="ck_gov_procurement_opening_attendees_funcion",
+        ),
+        CheckConstraint(
+            "condicion IN ('PRINCIPAL', 'SUPLENTE')",
+            name="ck_gov_procurement_opening_attendees_condicion",
+        ),
+        UniqueConstraint("opening_id", "member_id", name="uq_gov_procurement_opening_attendees_member"),
+    )
+
+
+class GovernmentProcurementOpeningOffer(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_opening_offers"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    opening_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_openings.id"), nullable=False, index=True)
+    offer_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_offers.id"), nullable=False, index=True)
+
+    __table_args__ = (
+        UniqueConstraint("offer_id", name="uq_gov_procurement_opening_offers_offer"),
+    )
+
+
+class GovernmentProcurementEvalContribution(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_eval_contributions"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    offer_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_offers.id"), nullable=False, index=True)
+    criterion_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_eval_criteria.id"), nullable=False, index=True)
+    matrix_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_eval_matrices.id"), nullable=False, index=True)
+    matrix_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committee_members.id"), nullable=False, index=True)
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
+    puntaje: Mapped[Decimal | None] = mapped_column(Numeric(9, 2), nullable=True)
+    cumple: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    observacion: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    evidencia_document_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True, index=True)
+    evidencia_version_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=True, index=True)
+    reemplaza_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_eval_contributions.id"), nullable=True, index=True, unique=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "matrix_version >= 1",
+            name="ck_gov_procurement_eval_contributions_matrix_version",
+        ),
+        CheckConstraint(
+            "(puntaje IS NULL AND cumple IS NOT NULL) OR (puntaje IS NOT NULL AND cumple IS NULL)",
+            name="ck_gov_procurement_eval_contributions_valor",
+        ),
+        CheckConstraint(
+            "puntaje IS NULL OR puntaje >= 0",
+            name="ck_gov_procurement_eval_contributions_puntaje",
+        ),
+        Index(
+            "uq_gov_procurement_eval_contributions_raiz",
+            "company_id",
+            "offer_id",
+            "criterion_id",
+            "member_id",
+            unique=True,
+            postgresql_where=text("reemplaza_id IS NULL"),
+            sqlite_where=text("reemplaza_id IS NULL"),
+        ),
+    )
+
+
+class GovernmentProcurementEvalResult(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_procurement_eval_results"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    offer_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_offers.id"), nullable=False, index=True)
+    criterion_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_eval_criteria.id"), nullable=False, index=True)
+    matrix_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_eval_matrices.id"), nullable=False, index=True)
+    matrix_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committee_members.id"), nullable=False, index=True)
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
+    puntaje: Mapped[Decimal | None] = mapped_column(Numeric(9, 2), nullable=True)
+    cumple: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    observacion: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    evidencia_document_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True, index=True)
+    evidencia_version_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=True, index=True)
+    reemplaza_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_eval_results.id"), nullable=True, index=True, unique=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "matrix_version >= 1",
+            name="ck_gov_procurement_eval_results_matrix_version",
+        ),
+        CheckConstraint(
+            "(puntaje IS NULL AND cumple IS NOT NULL) OR (puntaje IS NOT NULL AND cumple IS NULL)",
+            name="ck_gov_procurement_eval_results_valor",
+        ),
+        CheckConstraint(
+            "puntaje IS NULL OR puntaje >= 0",
+            name="ck_gov_procurement_eval_results_puntaje",
+        ),
+        Index(
+            "uq_gov_procurement_eval_results_raiz",
+            "company_id",
+            "offer_id",
+            "criterion_id",
+            unique=True,
+            postgresql_where=text("reemplaza_id IS NULL"),
+            sqlite_where=text("reemplaza_id IS NULL"),
+        ),
+    )
+
+
+_GOV_EVAL_CRITERIO_DDL = (
+    """
+    CREATE OR REPLACE FUNCTION kontrol_gov_eval_criterio_bloqueado()
+    RETURNS trigger AS $$
+    DECLARE
+        v_estado varchar(16);
+    BEGIN
+        SELECT estado INTO v_estado
+        FROM gov_procurement_eval_matrices
+        WHERE id = COALESCE(NEW.matrix_id, OLD.matrix_id);
+        IF v_estado = 'BLOQUEADA' THEN
+            RAISE EXCEPTION 'La matriz está bloqueada';
+        END IF;
+        RETURN COALESCE(NEW, OLD);
+    END;
+    $$ LANGUAGE plpgsql;
+    """,
+    """
+    CREATE TRIGGER trg_gov_eval_criterio_bloqueado_insert
+    BEFORE INSERT ON gov_procurement_eval_criteria
+    FOR EACH ROW EXECUTE FUNCTION kontrol_gov_eval_criterio_bloqueado();
+    """,
+    """
+    CREATE TRIGGER trg_gov_eval_criterio_bloqueado_update
+    BEFORE UPDATE ON gov_procurement_eval_criteria
+    FOR EACH ROW EXECUTE FUNCTION kontrol_gov_eval_criterio_bloqueado();
+    """,
+    """
+    CREATE TRIGGER trg_gov_eval_criterio_bloqueado_delete
+    BEFORE DELETE ON gov_procurement_eval_criteria
+    FOR EACH ROW EXECUTE FUNCTION kontrol_gov_eval_criterio_bloqueado();
+    """,
+)
+
+_GOV_EVAL_IMMUTABLE_DDL = (
+    """
+    CREATE OR REPLACE FUNCTION kontrol_gov_eval_immutable()
+    RETURNS trigger AS $$
+    BEGIN
+        RAISE EXCEPTION 'Los registros de evaluación son inmutables';
+    END;
+    $$ LANGUAGE plpgsql;
+    """,
+)
+
+
 event.listen(
     GovernmentProcurementOffer.__table__,
     "after_create",
@@ -2034,6 +2295,50 @@ for _sentencia in _GOV_OFFER_IMMUTABLE_DDL[4:7]:
         "after_create",
         DDL(_sentencia).execute_if(dialect="postgresql"),
     )
+
+_gov_eval_criterio_tabla = GovernmentProcurementEvalCriterion.__table__
+event.listen(
+    _gov_eval_criterio_tabla,
+    "after_create",
+    DDL(_GOV_EVAL_CRITERIO_DDL[0]).execute_if(dialect="postgresql"),
+)
+for _sentencia in _GOV_EVAL_CRITERIO_DDL[1:4]:
+    event.listen(
+        _gov_eval_criterio_tabla,
+        "after_create",
+        DDL(_sentencia).execute_if(dialect="postgresql"),
+    )
+
+_gov_eval_immutable_modelos = (
+    GovernmentProcurementOpening,
+    GovernmentProcurementOpeningAttendee,
+    GovernmentProcurementOpeningOffer,
+    GovernmentProcurementEvalContribution,
+    GovernmentProcurementEvalResult,
+)
+for _modelo in _gov_eval_immutable_modelos:
+    _tabla = _modelo.__table__
+    _nombre_corto = _modelo.__tablename__.split("_", 2)[-1]
+    event.listen(
+        _tabla,
+        "after_create",
+        DDL(_GOV_EVAL_IMMUTABLE_DDL[0]).execute_if(dialect="postgresql"),
+    )
+    for _accion, _momento in (
+        ("update", "BEFORE UPDATE"),
+        ("delete", "BEFORE DELETE"),
+        ("truncate", "BEFORE TRUNCATE"),
+    ):
+        _trigger = f"""
+        CREATE TRIGGER trg_{_nombre_corto}_immutable_{_accion}
+        {_momento} ON {_modelo.__tablename__}
+        FOR EACH {"ROW" if _accion != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_eval_immutable();
+        """
+        event.listen(
+            _tabla,
+            "after_create",
+            DDL(_trigger).execute_if(dialect="postgresql"),
+        )
 
 
 class GovernmentUserOfficialLink(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):

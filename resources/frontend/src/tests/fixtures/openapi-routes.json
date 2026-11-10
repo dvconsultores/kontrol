@@ -1065,6 +1065,51 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/aperturas",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/aportes",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/concluir",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/matriz",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/matriz/bloquear",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/matriz/criterios",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/matriz/criterios/{criterio_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/evaluacion/resultados",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/gobierno/contrataciones/expedientes/{expediente_id}/folios",
       "query": []
