@@ -88,3 +88,7 @@ Todas llevan `created_by` no nulo y `company_id`, con restricciones CHECK de coh
 - Etiquetas regulatorias o GS1.
 - Drivers de impresora.
 - Aplicar la política en el put-away genérico de Inventario.
+
+## Cierre
+
+`CONVERGED` en el commit de cierre del ciclo en `develop`, tras la fusión ordinaria con PROC-07 (migración `0093_fusion_gov_storage`). Evidencia: `evidence/storage-classification/EVIDENCE.md`. Intentos: `evidence/storage-classification/ATTEMPT_LOG.md`. `ROTATION_CLASSIFICATION_COMPLETE = 0` (Spec 015). `SPONSOR_ZONE_A_E_VALIDATED = 0`. `OWNER_ACCEPTED` lo concede solo la dueña.

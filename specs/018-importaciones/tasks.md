@@ -14,4 +14,5 @@
 | T018-06b | Ciclo 4B: preview, distribución y aplicación de landed cost | DEEPSEEK; auditoría de Claude | Hecha: `spec018-landed-cost-delta.md`, evidencia en `evidence/landed-cost/` |
 | T018-07 | Reporte formal de diferencias: instantánea, PDF, revisiones y acceso desde Recepciones | DEEPSEEK; auditoría de Claude | Hecha: `spec018-difference-report-delta.md`, evidencia en `evidence/difference-report/` |
 | T018-08 | Validación física de ubicación y reubicación por error | DEEPSEEK; auditoría de Claude | Hecha: `spec018-relocation-delta.md`, evidencia en `evidence/relocation/` |
+| T018-09 | Clasificación de almacenamiento, zona y etiquetado (rotación pendiente de la Spec 015) | DEEPSEEK; auditoría de Claude | Hecha: `spec018-storage-classification-delta.md`, evidencia en `evidence/storage-classification/` |
 | T018-PG | IMP-PG-INTEGRITY-01: Importaciones sobre PostgreSQL migrado. Los ciclos 1 a 3 pasan de `BROWSER_VERIFIED_SQLITE_ONLY` a `POSTGRESQL_BROWSER_VERIFIED` | DEEPSEEK; auditoría y evidencia de Claude | Hecha: `spec018-pg-integrity-delta.md` |

@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { apiFetch } from "@/api/client";
+import { useCompany } from "@/app/contexts/CompanyContext";
+import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { Autorizado } from "@/components/Autorizado";
 import { AsyncButton } from "@/components/AsyncButton";
@@ -12,6 +14,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { AsyncCombobox } from "@/components/AsyncCombobox";
 import { SelectorDeArticulo } from "@/modules/maestros/catalogo/SelectorDeArticulo";
+import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 
 interface CondicionAlmacen {
   id: string;
@@ -245,14 +248,8 @@ export function AlmacenamientoPage(): React.JSX.Element {
     retry: false,
   });
 
-  const almacenesQuery = useQuery({
-    queryKey: ["organization", "warehouses", "ACTIVE"],
-    queryFn: async () => {
-      const resp = await apiFetch<{ items: AlmacenInfo[] }>("/organization/warehouses?status=ACTIVE");
-      return resp.items ?? [];
-    },
-    retry: false,
-  });
+  const { activeCompany } = useCompany();
+  const almacenesQuery = useAlmacenesDeEmpresa(activeCompany?.id ?? null);
 
   const zonasQuery = useQuery({
     queryKey: ["organization", "warehouses", reglaAlmacenId, "zones"],
@@ -316,7 +313,7 @@ export function AlmacenamientoPage(): React.JSX.Element {
   const clases = clasesQuery.data ?? [];
   const unidadesPeso = [...(unidadesMasaQuery.data ?? []), ...(unidadesPesoQuery.data ?? [])];
   const unidadesVolumen = unidadesVolumenQuery.data ?? [];
-  const almacenes = almacenesQuery.data ?? [];
+  const almacenes = (almacenesQuery.data?.items ?? []).filter((a) => a.status === "ACTIVE");
   const zonas = (zonasQuery.data ?? []).filter((z) => z.status === "ACTIVE");
   const tiposZona = (tiposZonaQuery.data ?? []).filter((t) => t.status === "ACTIVE");
   const reglas = reglasQuery.data ?? [];
@@ -753,6 +750,7 @@ export function AlmacenamientoPage(): React.JSX.Element {
                 <FormField label="Almacén">
                   <SelectAlmacen value={reglaAlmacenId} onChange={setReglaAlmacenId} almacenes={almacenes} />
                 </FormField>
+                <AvisoDeAlmacenes consulta={almacenesQuery} />
                 <FormField label="Tipo de destino" required>
                   <select value={reglaTipoDestino} onChange={(e) => setReglaTipoDestino(e.target.value as "ZONE" | "ZONE_TYPE")} className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
                     <option value="ZONE">Zona del almacén</option>
@@ -851,6 +849,7 @@ export function AlmacenamientoPage(): React.JSX.Element {
           <FormField label="Almacén de la política" required>
             <SelectAlmacen value={politicaAlmacenId} onChange={setPoliticaAlmacenId} almacenes={almacenes} placeholder="Selecciona un almacén" />
           </FormField>
+          <AvisoDeAlmacenes consulta={almacenesQuery} />
             <FormField label="Clasificación" required>
               <select value={politicaMode} onChange={(e) => setPoliticaMode(e.target.value)} disabled={!politicaAlmacenId || politicaCargadaId !== politicaAlmacenId} className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
                 {MODES.map((m) => (

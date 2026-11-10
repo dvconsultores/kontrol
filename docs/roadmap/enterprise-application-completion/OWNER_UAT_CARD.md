@@ -102,4 +102,20 @@ Necesita mercancía ya ubicada desde el expediente (paso 20) y otra ubicación a
 
 **Límites:** no hay escáner: la ubicación encontrada se elige de la lista de ubicaciones activas del almacén. La reubicación no cambia de almacén; para eso están las transferencias. Hoy no hay pantalla propia en Inventario: la función se usa desde el expediente.
 
-**Aún no disponible:** clasificación por tamaño, peso y rotación, zonas A a E (pendientes de validar por el sponsor) y etiquetado. Comparación completa con el documento del sponsor: pendiente.
+### Clasificación de almacenamiento, zona y etiqueta
+
+Necesita un almacén con el tramo de zona declarado, al menos dos zonas (Organización → Almacenes) con una ubicación activa en cada una, y una importación con mercancía confirmada y pendiente de ubicar (pasos 15 a 19).
+
+46. En Maestros → Almacenamiento, en «Condiciones especiales», cree una condición (por ejemplo, «Frágil»). En «Clases de tamaño» puede crear las clases que use la empresa.
+47. En «Perfil de almacenamiento del producto», elija el producto, marque la condición (y, si quiere, peso y volumen con su unidad, y la clase de tamaño) y pulse «Guardar perfil».
+48. En «Reglas de almacenamiento» cree una regla: código, nombre, prioridad 1, el almacén, «Tipo de destino: Zona del almacén», la zona, la condición especial y «Etiquetado: Requerida». Pulse «Crear regla».
+49. En «Política del almacén», elija el almacén, «Clasificación: Obligatoria» y «Sin regla aplicable: Bloquear la ubicación». Pulse «Guardar política».
+50. Abra la importación → «Ubicación» → «Clasificación de almacenamiento». La fila dice «Sin clasificar» y no deja ubicar. Pulse «Clasificar»: verá «Zona determinada: Zona …», la regla aplicada, las razones y «Etiqueta requerida».
+51. En «Ubicación de destino» solo aparecen las ubicaciones de esa zona. «Ubicar» sigue bloqueado hasta generar la etiqueta.
+52. Pulse «Generar etiqueta» y después «Descargar ETQ-…» o «Imprimir ETQ-…»: es un PDF interno con el producto, la cantidad, la recepción, el expediente, la zona y un QR.
+53. Elija la ubicación y pulse «Ubicar …». La mercancía queda en esa ubicación.
+54. Pruebe también una regla con «Etiquetado: No requerida» (se ubica sin etiqueta) y un producto sin regla aplicable: con «Bloquear la ubicación» no deja ubicar y lo explica; con «Permitir cualquier ubicación» muestra todas.
+
+**Límites:** la etiqueta es identificación interna, no fiscal, aduanera ni regulatoria. El sistema determina la zona; la ubicación exacta la elige usted. El put-away genérico de Inventario no aplica la política: hágalo desde el expediente. La rotación no clasifica todavía (depende de otra Spec). Las zonas A a E se pueden configurar, pero su significado debe validarlo el sponsor.
+
+**Aún no disponible:** clasificación por rotación (Spec 015). Comparación completa con el documento del sponsor: pendiente.

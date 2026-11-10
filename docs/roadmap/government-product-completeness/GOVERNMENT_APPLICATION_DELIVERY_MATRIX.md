@@ -37,7 +37,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | PROC-04 | GOV-PROC-005 GOV-PROC-015 | Contrataciones públicas / Li | Unidad contratante | Pliego, invitaciones, aclaratorias, prórrogas y avisos | no | no | no | n/a | no | no | NOT_STARTED (bloqueado) | D-GOV-03 |
 | PROC-05 | GOV-PROC-006 | Contrataciones públicas / Li | Unidad contratante | Oferentes y contratistas (RNC/SNC) | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-03 |
 | PROC-06 | GOV-PROC-007 | Contrataciones públicas / Li | Unidad contratante | Recepción y apertura de ofertas | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
-| PROC-07 | GOV-PROC-008 GOV-PROC-009 | Contrataciones públicas / Li | Comisión | Evaluación técnica, económica y legal con matriz bloqueada | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
+| PROC-07 | GOV-PROC-008 GOV-PROC-009 | Contrataciones públicas / Li | Comisión | Evaluación técnica, económica y legal con matriz bloqueada | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Reporte propio: n/a (lo es la recomendación de PROC-08) |
 | PROC-08 | GOV-PROC-010 GOV-PROC-011 | Contrataciones públicas / Li | Máxima autoridad | Recomendación, decisión, adjudicación, desierta, anulación o rechazo | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | PROC-09 | GOV-PROC-012 | Contrataciones públicas / Li | Unidad contratante | Compromiso de responsabilidad social | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
 | PROC-10 | GOV-PROC-013 | Contrataciones públicas / Li | Unidad contratante | Garantías y cauciones | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
@@ -155,3 +155,11 @@ Una ruta declarada no demuestra que la pantalla funcione. Una pantalla cuenta co
 
 `PROC03_FUNCTIONAL_SLICE_COMPLETE = 1`: ficha y lista verificadas también a 320 y 390 px, con Axe dirigido sin violaciones. PROC-06 **no** está entregado: su estado en esta matriz no cambia.
 
+## PROC-07 en detalle (2026-11-10, commit 4c4be3d)
+
+| Requisito | Rol | Proceso | Superficie | Backend | BD | API | Permiso | Documentos | Auditoría | Navegador | UAT | Estado | Falta |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| GOV-PROC-008 | Comisión | Apertura y evaluación | Sección «Apertura y evaluación» en la ficha | sí | 0092 | 9 rutas | `gobierno_evaluacion` view/open/evaluate | Acta en Documentos; sello levantado con traza | CTL-02, 8 eventos | sí, flujo completo | sí | OWNER_UAT_READY | — |
+| GOV-PROC-009 | Comisión | Matriz bloqueada | Matriz por aspecto, bloqueo | sí | 0092 | matriz, criterios, bloquear | `gobierno_evaluacion:criteria` | Pliego anclado con versión | CTL-02 | sí: bloqueo y rechazo posterior | sí | OWNER_UAT_READY | Sin cambio motivado (decisión de la dueña) |
+
+`PROC07_FUNCTIONAL_SLICE_COMPLETE = 1`: verificado en Chromium a 1280, 390 y 320 px, con Axe dirigido en 4 puntos sin violaciones. `OWNER_ACCEPTED = NO`. PROC-06 (GOV-PROC-007) se publicó en 7e7d70d, pero su fila sigue sin actualizar: es una deuda previa (OBS-MATRIZ-PROC06-01).

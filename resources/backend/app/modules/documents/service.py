@@ -44,7 +44,7 @@ from app.modules.documents.storage import (
     sanitize_filename,
 )
 from app.shared.audit import record_audit, record_audit_after_rollback
-from app.shared.clock import hoy_de_negocio
+from app.shared.clock import hoy_de_negocio, instante_actual
 
 #: Tamaño máximo global. Un tipo puede bajarlo, nunca subirlo por encima.
 GLOBAL_MAX_SIZE = 50 * 1024 * 1024
@@ -489,6 +489,38 @@ def sellar_documento(db: Session, *, document: Document, resource_type: str,
     db.add(seal)
     db.flush()
     return seal
+
+
+def liberar_sello(
+    db: Session,
+    *,
+    document_id: str,
+    actor_id: str,
+    motivo: str,
+    resource_type: str,
+    resource_id: str,
+) -> DocumentSeal:
+    sello = (
+        db.query(DocumentSeal)
+        .filter(
+            DocumentSeal.document_id == document_id,
+            DocumentSeal.released_at.is_(None),
+        )
+        .one_or_none()
+    )
+    if sello is None:
+        raise ConflictError(
+            code="DOCUMENT_NOT_SEALED",
+            message="El documento no está sellado",
+        )
+    sello.released_at = instante_actual()
+    sello.released_by = actor_id
+    sello.released_reason = motivo
+    sello.released_resource_type = resource_type
+    sello.released_resource_id = resource_id
+    db.add(sello)
+    db.flush()
+    return sello
 
 
 def congelar_vinculo(db: Session, *, link: DocumentLink, version_id: str,

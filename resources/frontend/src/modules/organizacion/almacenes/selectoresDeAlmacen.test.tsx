@@ -195,6 +195,7 @@ describe("selectores de almacén", () => {
     "inventario/seriales/SerialesPage.tsx", "inventario/movimientos/MovimientosPage.tsx",
     "ventas/ordenes/OrdenesVentasPage.tsx", "organizacion/ubicaciones/UbicacionesPage.tsx",
     "inventario/putaway/PutAwayPage.tsx", "ventas/preparacion/PreparacionPage.tsx",
+    "maestros/almacenamiento/AlmacenamientoPage.tsx",
   ])("%s usa la autoridad única", (ruta) => {
     const fuente = FUENTES[`/src/modules/${ruta}`];
     expect(fuente).toContain("useAlmacenesDeEmpresa(");

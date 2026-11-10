@@ -247,6 +247,9 @@ class DocumentSeal(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     motivo: Mapped[str] = mapped_column(String(300), nullable=False)
     released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     released_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    released_reason: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    released_resource_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    released_resource_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
     __table_args__ = (
         Index(

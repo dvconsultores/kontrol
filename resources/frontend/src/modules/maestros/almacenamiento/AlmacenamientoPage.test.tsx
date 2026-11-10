@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 let mockPuede = true;
 const apiFetch = vi.fn();
 const notify = vi.fn();
+let mockAlmacenes: Array<{ id: string; code: string; name: string; status: string }> = [];
 
 vi.mock("@/api/client", async (original) => ({
   ...(await original<typeof import("@/api/client")>()),
@@ -14,6 +15,19 @@ vi.mock("@/api/client", async (original) => ({
 
 vi.mock("@/app/contexts/NotificationContext", () => ({
   useNotifications: () => ({ notify, dismiss: vi.fn(), notifications: [] }),
+}));
+
+vi.mock("@/app/contexts/CompanyContext", () => ({
+  useCompany: () => ({ activeCompany: { id: "emp-1" } }),
+}));
+
+vi.mock("@/modules/organizacion/almacenes/useAlmacenesDeEmpresa", () => ({
+  useAlmacenesDeEmpresa: () => ({
+    data: { items: mockAlmacenes },
+    isSuccess: true,
+    isLoading: false,
+    isError: false,
+  }),
 }));
 
 vi.mock("@/app/autoridad/AutoridadContext", () => ({
@@ -57,9 +71,6 @@ function mockRespuestas() {
       return Promise.resolve({ items: [] });
     }
     if (url === "/storage/rules") {
-      return Promise.resolve({ items: [] });
-    }
-    if (url === "/organization/warehouses?status=ACTIVE") {
       return Promise.resolve({ items: [] });
     }
     if (url === "/organization/zone-types") {
@@ -119,7 +130,6 @@ describe("AlmacenamientoPage", () => {
       if (url === "/storage/conditions") return Promise.resolve({ items: [] });
       if (url === "/storage/size-classes") return Promise.resolve({ items: [] });
       if (url === "/storage/rules") return Promise.resolve({ items: [] });
-      if (url === "/organization/warehouses?status=ACTIVE") return Promise.resolve({ items: [] });
       if (url === "/organization/zone-types") {
         return Promise.resolve([{ id: "zt-1", code: "FRIO", name: "Frío", status: "ACTIVE" }]);
       }
@@ -137,7 +147,7 @@ describe("AlmacenamientoPage", () => {
     await user.selectOptions(screen.getByLabelText("Tipo de zona"), "zt-1");
     await user.click(screen.getByRole("button", { name: "Crear regla" }));
     await waitFor(() => {
-      const llamada = apiFetch.mock.calls.find((c) => c[0] === "/storage/rules");
+      const llamada = apiFetch.mock.calls.find((c) => c[0] === "/storage/rules" && (c[1] as { method?: string } | undefined)?.method === "POST");
       expect(llamada).toBeTruthy();
       expect(llamada![1]).toMatchObject({
         method: "POST",
@@ -149,13 +159,11 @@ describe("AlmacenamientoPage", () => {
 
   it("guardar política envía PUT con mode ENFORCED y on_no_rule BLOCK", async () => {
     const user = userEvent.setup();
+    mockAlmacenes = [{ id: "w-1", code: "W1", name: "Almacén 1", status: "ACTIVE" }];
     apiFetch.mockImplementation((url: string) => {
       if (url === "/storage/conditions") return Promise.resolve({ items: [] });
       if (url === "/storage/size-classes") return Promise.resolve({ items: [] });
       if (url === "/storage/rules") return Promise.resolve({ items: [] });
-      if (url === "/organization/warehouses?status=ACTIVE") {
-        return Promise.resolve({ items: [{ id: "w-1", code: "W1", name: "Almacén 1" }] });
-      }
       if (url === "/organization/zone-types") return Promise.resolve([]);
       if (url === "/maestros/unidades?dimension=MASA") return Promise.resolve({ items: [] });
       if (url === "/maestros/unidades?dimension=PESO") return Promise.resolve({ items: [] });
@@ -172,8 +180,12 @@ describe("AlmacenamientoPage", () => {
     await waitFor(() => {
       expect(apiFetch).toHaveBeenCalledWith("/storage/warehouse-policies/w-1");
     });
-    await user.selectOptions(screen.getByLabelText("Clasificación"), "ENFORCED");
-    await user.selectOptions(screen.getByLabelText("Sin regla aplicable"), "BLOCK");
+    const clasificacion = await screen.findByLabelText(/^Clasificación/);
+    await waitFor(() => expect(clasificacion).toBeEnabled());
+    await user.selectOptions(clasificacion, "ENFORCED");
+    const sinRegla = await screen.findByLabelText(/^Sin regla aplicable/);
+    await waitFor(() => expect(sinRegla).toBeEnabled());
+    await user.selectOptions(sinRegla, "BLOCK");
     await user.click(screen.getByRole("button", { name: "Guardar política" }));
     await waitFor(() => {
       expect(apiFetch).toHaveBeenCalledWith(

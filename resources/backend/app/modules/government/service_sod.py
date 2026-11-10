@@ -131,6 +131,8 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "PROC03_REGISTRAR": ("Registrar el expediente", "GOV_PROCUREMENT_FILE_CREATED", True),
             "PROC03_DECIDIR": ("Registrar una decisión", "GOV_PROCUREMENT_FILE_DECISION_RECORDED", False),
             "PROC03_RECIBIR": ("Recibir una oferta", "GOV_PROCUREMENT_OFFER_RECEIVED", False),
+            "PROC03_ABRIR": ("Abrir ofertas", "GOV_PROCUREMENT_OFFERS_OPENED", False),
+            "PROC03_EVALUAR": ("Registrar un resultado de evaluación", "GOV_PROCUREMENT_EVAL_RESULT_RECORDED", False),
             "PROC03_CERRAR": ("Cerrar el expediente", "GOV_PROCUREMENT_FILE_CLOSED", False),
         },
     },

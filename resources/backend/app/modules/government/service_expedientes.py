@@ -19,6 +19,7 @@ from app.modules.government.models import (
     GovernmentProcurementFileMilestone,
     GovernmentProcurementFileResponsible,
     GovernmentProcurementOffer,
+    GovernmentProcurementOpeningOffer,
     GovernmentStructure,
     GovernmentUnit,
 )
@@ -76,6 +77,8 @@ _ETIQUETAS_EVENTO: dict[str, str] = {
     "CIERRE": "Cierre",
     "DESCARTE": "Descarte",
     "OFERTA": "Oferta",
+    "APERTURA_OFERTA": "Apertura de ofertas",
+    "EVALUACION": "Evaluación",
 }
 
 _SECCION_ORDEN = (
@@ -171,10 +174,14 @@ _AVISO_LAPSOS = (
 _CLAVES_AUDITORIA = frozenset(
     {
         "acto",
+        "apertura",
+        "aspecto",
+        "asistentes",
         "canal",
         "clase",
         "comision",
         "confidencial",
+        "criterio",
         "documentos",
         "estado",
         "fecha",
@@ -183,9 +190,13 @@ _CLAVES_AUDITORIA = frozenset(
         "folio",
         "funcionario",
         "hito",
+        "matriz",
         "modalidad",
         "motivo",
         "numero",
+        "oferta",
+        "ofertas",
+        "quorum",
         "referencia",
         "resultado",
         "rol",
@@ -929,13 +940,43 @@ def detalle(db: Session, ctx: CompanyContext, id: str) -> dict[str, Any]:
                 }
             )
         if ofertas_total and expediente.status not in ("CERRADO", "DESCARTADO"):
-            pendientes.insert(
-                0,
-                {
-                    "codigo": "APERTURA_PENDIENTE",
-                    "texto": "Pendiente de apertura",
-                },
+            ofertas_abiertas = (
+                db.query(GovernmentProcurementOpeningOffer)
+                .filter(
+                    GovernmentProcurementOpeningOffer.company_id == ctx.company_id,
+                    GovernmentProcurementOpeningOffer.offer_id.in_(
+                        db.query(GovernmentProcurementOffer.id).filter(
+                            GovernmentProcurementOffer.company_id == ctx.company_id,
+                            GovernmentProcurementOffer.file_id == expediente.id,
+                        )
+                    ),
+                )
+                .count()
             )
+            if ofertas_abiertas == 0:
+                pendientes.insert(
+                    0,
+                    {
+                        "codigo": "APERTURA_PENDIENTE",
+                        "texto": "Pendiente de apertura",
+                    },
+                )
+            elif expediente.evaluacion_concluida_en is None:
+                pendientes.insert(
+                    0,
+                    {
+                        "codigo": "EVALUACION_PENDIENTE",
+                        "texto": "Evaluación de ofertas en curso",
+                    },
+                )
+            else:
+                pendientes.insert(
+                    0,
+                    {
+                        "codigo": "RECOMENDACION_PENDIENTE",
+                        "texto": "Evaluación concluida: pendiente de recomendación",
+                    },
+                )
         if pendientes:
             siguiente_accion = pendientes[0]["texto"]
         else:

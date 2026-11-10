@@ -10,19 +10,19 @@
 
 | Estado | Requisitos |
 |---|---|
-| COMPLETE | 22 |
+| COMPLETE | 26 |
 | PARTIAL | 7 |
 | EXISTS_NOT_REVALIDATED | 7 |
-| NOT_BUILT | 5 |
+| NOT_BUILT | 1 |
 | SPONSOR_VALIDATION_REQUIRED | 1 |
 | **Total** | **42** |
 
-La proporción no mide el avance real: las filas no pesan igual. La brecha de mayor peso es la clasificación con zona y etiquetado. Landed cost, el reporte formal de diferencias, la validación física y la reubicación por error quedaron entregados el 2026-11-09.
+La proporción no mide el avance real: las filas no pesan igual. La brecha de mayor peso es la rotación (Spec 015), que deja PARCIAL la clasificación por tamaño, peso, rotación y volumen. La clasificación configurable, la zona y el etiquetado quedaron entregados el 2026-11-10; las zonas A a E siguen pendientes de validar por el sponsor.
 
 ## Orden propuesto de las brechas
 
-1. **Clasificación, zona y etiquetado:** exige atributos nuevos en el maestro y que el sponsor valide las zonas A a E.
-2. **Rotación y proyección** (IMP-02): pertenece a la Spec 015, no a la 018.
+1. **Rotación y proyección** (IMP-02 y el criterio de rotación de §4): pertenece a la Spec 015.
+2. **Validación del sponsor de las zonas A a E**: configurables hoy; falta su significado.
 
 ## Matriz
 
@@ -56,13 +56,13 @@ La proporción no mide el avance real: las filas no pesan igual. La brecha de ma
 | §3 Reporte formal de diferencias | DOCX §3 | Confirmación | /compras/importaciones/{id}; /compras/recepciones | SI | SI | /importaciones/{id}/receipts/{id}/difference-report; /difference-reports/{id}/pdf | compras:view; emitir compras:create | Specs 019, 020, 021, 046 | 13 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Instantánea inmutable con revisiones; referencia interna, no folio legal; sin aprobación ni envío al proveedor |
 | §3 Tratamiento: ajuste, reclamo, investigación, cuarentena | DOCX §3 | Confirmación | /compras/incidencias | SI | SI | /purchasing/incidents | compras | Spec 020 | E2E recorre un tratamiento | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §3 Confirmar y liberar a almacenamiento | DOCX §3 | Confirmación | /inventario/confirmacion | SI | SI | /purchasing/receipts | inventario | Spec 021 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
-| §4 Determinar zona de almacenamiento | DOCX §4 | Ubicación | Ninguna guiada | NO | Catálogo de zonas sí | Ninguna | — | — | Ninguna | NO | NO | NOT_BUILT | El usuario elige ubicación; nada propone ni determina la zona |
-| §4 Clasificación por tipo y familia | DOCX §4 | Ubicación | Taxonomía de productos | Parcial | `category_id` | /master-data | maestros | Spec 022 | Ninguna | NO | NO | PARTIAL | Hay categoría; no interviene en la ubicación |
-| §4 Clasificación por tamaño, peso, rotación y volumen | DOCX §4 | Ubicación | Ninguna | NO | NO | Ninguna | — | — | Ninguna | NO | NO | NOT_BUILT | El maestro no guarda esos atributos. Ya bloquea peso y volumen en DM-IMP-COST-01 |
-| §4 Condiciones especiales | DOCX §4 | Ubicación | Ninguna | NO | NO | Ninguna | — | — | Ninguna | NO | NO | NOT_BUILT |  |
+| §4 Determinar zona de almacenamiento | DOCX §4 | Ubicación | Maestros → Almacenamiento; /compras/importaciones/{id} | SI | SI | /storage/rules; /storage/evaluate; /importaciones/{id}/storage/classify | maestros; inventario:create | Specs 008, 011, 022 | 15 escenarios del motor + 11 del expediente en PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Reglas configurables por empresa hacia una zona o un tipo de zona; prioridad y especificidad; ambigüedad y sin regla explícitos; la ubicación exacta la elige la persona |
+| §4 Clasificación por tipo y familia | DOCX §4 | Ubicación | Maestros → Almacenamiento (regla «Familia o categoría») | SI | SI | /storage/rules (taxonomy_id) | maestros | Taxonomía de maestros | Pruebas del motor (ancestros) | POSTGRESQL_VERIFIED | YES | COMPLETE | La regla casa con la categoría del producto o cualquiera de sus ancestros; el árbol lo define la empresa. En la E2E el criterio usado es la condición especial |
+| §4 Clasificación por tamaño, peso, rotación y volumen | DOCX §4 | Ubicación | Maestros → Almacenamiento (perfil y reglas) | SI | SI | /storage/profiles; /storage/rules | maestros | Unidades (Spec 011) | Pruebas del motor (10 kg = 10 000 g, unidad incompatible) | POSTGRESQL_VERIFIED | NO | PARTIAL | Tamaño (clases por empresa), peso y volumen con unidad gobernada: hechos. Rotación: NO, depende de la Spec 015 (no existe señal fiable) |
+| §4 Condiciones especiales | DOCX §4 | Ubicación | Maestros → Almacenamiento | SI | SI | /storage/conditions; /storage/profiles | maestros | — | E2E (condición → zona) + pruebas | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | La empresa define sus condiciones; ninguna fija en el código |
 | §4 Ubicación: zona, pasillo, rack, nivel, posición | DOCX §4 | Ubicación | /organizacion/ubicaciones; /compras/importaciones/{id} | SI | SI | /inventory/putaway | inventario | Spec 022 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §4 Zonas A a E | DOCX §4: «conviene validar» | Ubicación | Catálogo de zonas configurable | SI | SI | /organization | organization | — | Ninguna | NO | NO | SPONSOR_VALIDATION_REQUIRED | El sistema admite crearlas; la fuente pide validarlas para HJ y no hay reglas de rotación que las alimenten |
-| §4 Etiquetar o identificar | DOCX §4 | Ubicación | Ninguna | NO | NO | Ninguna | — | — | Ninguna | NO | NO | NOT_BUILT | «Cuando corresponda»: falta definir cuándo |
+| §4 Etiquetar o identificar | DOCX §4 | Ubicación | /compras/importaciones/{id} | SI | SI | /importaciones/{id}/storage/labels; /pdf | inventario:create; ver compras:view | Documentos 046 (almacenamiento) | E2E (generar, descargar PDF) + pruebas | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | «Cuando corresponda» = política de la regla (requerida, opcional, no requerida). Etiqueta operativa interna con QR, no regulatoria; con política obligatoria bloquea la ubicación hasta generarla |
 | §4 Trasladar, colocar y registrar ubicación | DOCX §4 | Ubicación | /compras/importaciones/{id} | SI | SI | /inventory/putaway | inventario | Spec 022 | E2E: «Recibida y ubicada» | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §4 Validar ubicación física contra registrada | DOCX §4 | Ubicación | /compras/importaciones/{id} (Ubicación física) | SI | SI | /importaciones/{id}/physical-locations; /physical-locations/validate; /inventory/location-validations | ver compras:view; validar inventario:create | Specs 003, 008, 022 | 18 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Acto posterior e independiente del put-away; MATCH sin movimiento; MISMATCH sin mover; historial sin sobrescribir |
 | §4 Reubicar por error | DOCX §4 | Ubicación | /compras/importaciones/{id} (Ubicación física) | SI | SI | /inventory/location-validations/{id}/relocate | inventario:create | Specs 003, 022 | 18 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Movimiento `REUBICACION` A → B en el ledger único; costo, estado, reservas y almacén intactos; las transferencias se descartaron porque consumen capas y pasan por tránsito |
