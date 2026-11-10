@@ -15,5 +15,5 @@ Todas las tareas: `RETRY_MAX: 2`, `EGRESS_SAFE: sí` (solo datos sintéticos, si
 ## Estado (2026-11-10)
 
 T1, T2 y T3 hechas; T4 consumida en el bloque 2 (defecto de producto `regla.forma` del formulario de requisito) y en el
-bloque 3 (apertura idempotente del historial en la E2E). T5 en curso: técnica cerrada (ver `evidence/CIERRE.md`); faltan push, UAT,
-tarjeta y matrices. T6: convergido, sin huecos (FR-001..FR-015 con implementación y prueba medidas).
+bloque 3 (apertura idempotente del historial en la E2E). T5 hecha: producto publicado en `1d45e49`, pila UAT en el commit,
+tarjeta y matrices (ver `evidence/CIERRE.md`). T6: convergido, sin huecos (FR-001..FR-015 con implementación y prueba medidas).

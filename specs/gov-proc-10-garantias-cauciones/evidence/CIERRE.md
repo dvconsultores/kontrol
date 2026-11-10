@@ -55,4 +55,8 @@ Negativas materiales, aislamiento, inmutabilidad en PostgreSQL, concurrencia for
 
 ## UAT
 
-Pendiente del push.
+Producto publicado en `1d45e49` (= origin/develop, avance rápido sobre `e22a394`). Pila de la dueña levantada en `1d45e49`
+(`wt-1d45e49`, puertos 18200/15373/18210): base migrada a `0096_gov_proc10_garantias` y sembrada; HUMO-UAT-01 PASS; `/login` 200;
+API de garantías sin sesión 401; la sección «Garantías y cauciones» se sirve. No existe una base `kuat`: la pila UAT usa una base
+de la corrida; la pila anterior (`570a033`, puerto 15273) solo tenía la siembra y el humo, y se conserva intacta hasta que la dueña
+decida retirarla. Tarjeta: `OWNER_UAT_CARD.md`.

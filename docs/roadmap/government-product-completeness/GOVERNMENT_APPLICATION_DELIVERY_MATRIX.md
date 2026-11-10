@@ -40,7 +40,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | PROC-07 | GOV-PROC-008 GOV-PROC-009 | Contrataciones públicas / Li | Comisión | Evaluación técnica, económica y legal con matriz bloqueada | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Reporte propio: n/a (lo es la recomendación de PROC-08) |
 | PROC-08 | GOV-PROC-010 GOV-PROC-011 | Contrataciones públicas / Li | Máxima autoridad | Recomendación, decisión, adjudicación, desierta, anulación o rechazo | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Adjudicación parcial (OBS-PROC08-PARCIAL-01) y límites de monto (OBS-PROC08-MONTO-01) |
 | PROC-09 | GOV-PROC-012 | Contrataciones públicas / Li | Unidad contratante | Compromiso de responsabilidad social | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
-| PROC-10 | GOV-PROC-013 | Contrataciones públicas / Li | Unidad contratante | Garantías y cauciones | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
+| PROC-10 | GOV-PROC-013 | Contrataciones públicas / Li | Unidad contratante | Garantías y cauciones | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Exigencias porcentuales NO_EVALUABLE sin base monetaria (OBS-PROC08-MONTO-01) |
 | PROC-11 | GOV-PROC-017 | Contrataciones públicas / Li | Control Interno | Conflictos SoD en contratación | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | PROC-12 | GOV-PROC-018 | Contrataciones públicas / Li | Control Interno | Trazabilidad completa de la compra pública (E2E-01) | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | CNT-01 | GOV-CNT-001 | Contratos públicos | Unidad contratante | Crear contrato u orden desde la adjudicación | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
@@ -176,3 +176,11 @@ Una ruta declarada no demuestra que la pantalla funcione. Una pantalla cuenta co
 ## PROC-06: deuda de matriz cerrada (2026-11-10)
 
 `OBS_MATRIZ_PROC06_01 = CLOSED`: la fila de PROC-06 (GOV-PROC-007) pasa a OWNER_UAT_READY con la evidencia publicada de su cierre (commit 7e7d70d: E2E `gobierno-ofertas` 3/3 en Chromium con Axe y 320/390/1280, backend PG 8/8 más regresión 277/277, migración 0088 arriba-abajo-arriba, tarjeta `OWNER_UAT_CARD.md`). Sin reconstruir ni volver a ejecutar PROC-06. `OWNER_ACCEPTED = NO`.
+
+## PROC-10 en detalle (2026-11-10, commit 1d45e49)
+
+| Requisito | Rol | Proceso | Superficie | Backend | BD | API | Permiso | Documentos | Auditoría | Navegador | UAT | Estado | Falta |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| GOV-PROC-013 | Unidad contratante y autoridad | Garantías: tipo, emisor, vigencia, monto, suficiencia, renovación, sustitución, liberación y ejecución | Sección «Garantías y cauciones» en la ficha | sí | 0096 | 7 rutas | `gobierno_garantias` view/manage/release/execute (release y execute con MFA) | Documento con versión fijada y huella; acto DOC-02 para liberar y ejecutar | CTL-02, 7 eventos; cronología clase GARANTIA | sí, flujo completo | sí | OWNER_UAT_READY | Exigencias porcentuales NO_EVALUABLE sin base monetaria (OBS-PROC08-MONTO-01) |
+
+`PROC10_FUNCTIONAL_SLICE_COMPLETE = 1`: verificado en Chromium a 1280, 390 y 320 px, con Axe dirigido en 6 puntos sin violaciones. `REPORT_GATE_PROC10 = NOT_APPLICABLE`. `OWNER_ACCEPTED = NO`.
