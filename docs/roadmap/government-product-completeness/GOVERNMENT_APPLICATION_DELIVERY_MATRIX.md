@@ -38,7 +38,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | PROC-05 | GOV-PROC-006 | Contrataciones públicas / Li | Unidad contratante | Oferentes y contratistas (RNC/SNC) | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-03 |
 | PROC-06 | GOV-PROC-007 | Contrataciones públicas / Li | Unidad contratante | Recepción y apertura de ofertas | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
 | PROC-07 | GOV-PROC-008 GOV-PROC-009 | Contrataciones públicas / Li | Comisión | Evaluación técnica, económica y legal con matriz bloqueada | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Reporte propio: n/a (lo es la recomendación de PROC-08) |
-| PROC-08 | GOV-PROC-010 GOV-PROC-011 | Contrataciones públicas / Li | Máxima autoridad | Recomendación, decisión, adjudicación, desierta, anulación o rechazo | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
+| PROC-08 | GOV-PROC-010 GOV-PROC-011 | Contrataciones públicas / Li | Máxima autoridad | Recomendación, decisión, adjudicación, desierta, anulación o rechazo | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Adjudicación parcial (OBS-PROC08-PARCIAL-01) y límites de monto (OBS-PROC08-MONTO-01) |
 | PROC-09 | GOV-PROC-012 | Contrataciones públicas / Li | Unidad contratante | Compromiso de responsabilidad social | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
 | PROC-10 | GOV-PROC-013 | Contrataciones públicas / Li | Unidad contratante | Garantías y cauciones | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | PROC-11 | GOV-PROC-017 | Contrataciones públicas / Li | Control Interno | Conflictos SoD en contratación | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
@@ -163,3 +163,12 @@ Una ruta declarada no demuestra que la pantalla funcione. Una pantalla cuenta co
 | GOV-PROC-009 | Comisión | Matriz bloqueada | Matriz por aspecto, bloqueo | sí | 0092 | matriz, criterios, bloquear | `gobierno_evaluacion:criteria` | Pliego anclado con versión | CTL-02 | sí: bloqueo y rechazo posterior | sí | OWNER_UAT_READY | Sin cambio motivado (decisión de la dueña) |
 
 `PROC07_FUNCTIONAL_SLICE_COMPLETE = 1`: verificado en Chromium a 1280, 390 y 320 px, con Axe dirigido en 4 puntos sin violaciones. `OWNER_ACCEPTED = NO`. PROC-06 (GOV-PROC-007) se publicó en 7e7d70d, pero su fila sigue sin actualizar: es una deuda previa (OBS-MATRIZ-PROC06-01).
+
+## PROC-08 en detalle (2026-11-10, commit 570a033)
+
+| Requisito | Rol | Proceso | Superficie | Backend | BD | API | Permiso | Documentos | Auditoría | Navegador | UAT | Estado | Falta |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| GOV-PROC-010 | Comisión y autoridad | Recomendación y decisión como actos separados | Sección «Recomendación y decisión» en la ficha | sí | 0094 | 4 rutas | `gobierno_decision` view/recommend/decide (decide con MFA) | Informe PDF de la recomendación con huella; acto DOC-02 | CTL-02, 4 eventos | sí, flujo completo | sí | OWNER_UAT_READY | — |
+| GOV-PROC-011 | Autoridad | Adjudicación, desierta, terminación, nulidad, rechazo | Formulario de decisión, notificación DOC-04 por oferente, historial | sí | 0094 | decisiones | `gobierno_decision:decide` | Acto DOC-02 emitido, particular, APROBAR/CONTRATACIONES | CTL-02 | sí: adjudicación; alternativos en PostgreSQL | sí | OWNER_UAT_READY | Adjudicación parcial (OBS-PROC08-PARCIAL-01); límites de monto (OBS-PROC08-MONTO-01) |
+
+`PROC08_FUNCTIONAL_SLICE_COMPLETE = 1`: verificado en Chromium a 1280, 390 y 320 px, con Axe dirigido en 4 puntos sin violaciones. `REPORT_GATE_PROC08 = PASS` (informe PDF de la recomendación). `OWNER_ACCEPTED = NO`.

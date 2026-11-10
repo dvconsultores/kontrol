@@ -11,3 +11,8 @@ Todas las tareas: `RETRY_MAX: 2`, `EGRESS_SAFE: sí` (solo datos sintéticos) y 
 | T5 | E2E principal de adjudicación (Chromium), con Axe y 390/320 | DEEPSEEK | no | `e2e/gobierno-decision.spec.ts` | E2E canónica | 1/1 |
 | T6 | Cierre: Alembic, regresiones, OpenAPI, fixtures, publicación, UAT, tarjeta y matrices | CLAUDE | — | — | — | `HEAD == origin`; pila UAT en el commit |
 | T7 | Converge | CLAUDE | — | — | — | Sin huecos |
+
+## Estado al cierre (2026-11-10)
+
+T1–T7 completadas. Producto publicado en `570a033`; evidencia en `evidence/CIERRE.md` y tarjeta de prueba en
+`evidence/OWNER_UAT_CARD.md`. Estado: OWNER_UAT_READY (OWNER_ACCEPTED pendiente de la dueña).
