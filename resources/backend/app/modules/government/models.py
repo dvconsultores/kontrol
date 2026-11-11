@@ -3210,6 +3210,199 @@ for _modelo_garantia in _gov_guarantee_immutable_modelos:
             DDL(_trigger).execute_if(dialect="postgresql"),
         )
 
+class GovernmentRenditionFile(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    __tablename__ = "gov_rendition_files"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    numero_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    anterior_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_rendition_files.id"), nullable=True)
+    denominacion: Mapped[str] = mapped_column(String(200), nullable=False)
+    ejercicio: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    periodo_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    periodo_hasta: Mapped[date] = mapped_column(Date, nullable=False)
+    fecha_corte: Mapped[date] = mapped_column(Date, nullable=False)
+    observaciones: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    assignment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_assignments.id"), nullable=False, index=True)
+    responsable: Mapped[dict] = mapped_column(JSON, nullable=False)
+    responsable_official_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    estado: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
+    formado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    formado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    snapshot: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    snapshot_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    informe_storage_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    informe_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    informe_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    participacion_fecha: Mapped[date | None] = mapped_column(Date, nullable=True)
+    participacion_oficio: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    participacion_registrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    participacion_registrada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    calificacion: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    calificacion_organo: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    calificacion_informe_numero: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    calificacion_informe_fecha: Mapped[date | None] = mapped_column(Date, nullable=True)
+    calificacion_fundamento: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    calificacion_registrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    calificacion_registrada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    fenecimiento_auto_numero: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    fenecimiento_auto_fecha: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fenecimiento_fundamento: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    fenecimiento_registrado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    fenecimiento_registrado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    sustitucion_motivo: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", "numero_version", name="uq_gov_rendition_files_company_code_version"),
+        CheckConstraint("numero_version >= 1", name="ck_gov_rendition_files_version_positive"),
+        CheckConstraint("periodo_desde <= periodo_hasta", name="ck_gov_rendition_files_period"),
+        CheckConstraint("fecha_corte >= periodo_desde AND fecha_corte <= periodo_hasta", name="ck_gov_rendition_files_corte"),
+        CheckConstraint("estado IN ('EN_FORMACION', 'FORMADA', 'PARTICIPADA', 'CALIFICADA', 'FENECIDA', 'SUSTITUIDA')", name="ck_gov_rendition_files_estado"),
+        CheckConstraint("estado = 'EN_FORMACION' OR (snapshot_sha256 IS NOT NULL AND informe_sha256 IS NOT NULL)", name="ck_gov_rendition_files_formada_hashes"),
+        CheckConstraint("(estado IN ('CALIFICADA', 'FENECIDA')) = (calificacion IS NOT NULL)", name="ck_gov_rendition_files_calificacion"),
+    )
+
+
+class GovernmentRenditionPiece(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    __tablename__ = "gov_rendition_pieces"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_rendition_files.id"), nullable=False, index=True)
+    audit_event_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    ordinal: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    fecha: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    proceso: Mapped[str] = mapped_column(String(16), nullable=False)
+    accion: Mapped[str] = mapped_column(String(80), nullable=False)
+    entidad: Mapped[str] = mapped_column(String(80), nullable=False)
+    entidad_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    referencia: Mapped[str] = mapped_column(String(300), nullable=False)
+    objeto: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    documentos: Mapped[list] = mapped_column(JSON, nullable=False)
+    huella: Mapped[str] = mapped_column(String(64), nullable=False)
+    incorporada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    incorporada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("file_id", "audit_event_id", name="uq_gov_rendition_pieces_file_event"),
+        UniqueConstraint("file_id", "ordinal", name="uq_gov_rendition_pieces_file_ordinal"),
+    )
+
+
+_GOV_RENDITION_FILE_IMMUTABLE = """
+CREATE OR REPLACE FUNCTION kontrol_gov_rendition_file_immutable()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        RAISE EXCEPTION 'Los expedientes de rendicion no se pueden eliminar';
+    ELSIF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION 'Los expedientes de rendicion no se pueden truncar';
+    ELSIF TG_OP = 'UPDATE' THEN
+        IF OLD.snapshot_sha256 IS NOT NULL THEN
+            IF NEW.snapshot::text IS DISTINCT FROM OLD.snapshot::text
+                OR NEW.snapshot_sha256 IS DISTINCT FROM OLD.snapshot_sha256
+                OR NEW.informe_storage_key IS DISTINCT FROM OLD.informe_storage_key
+                OR NEW.informe_sha256 IS DISTINCT FROM OLD.informe_sha256
+                OR NEW.informe_bytes IS DISTINCT FROM OLD.informe_bytes
+                OR NEW.denominacion IS DISTINCT FROM OLD.denominacion
+                OR NEW.ejercicio IS DISTINCT FROM OLD.ejercicio
+                OR NEW.periodo_desde IS DISTINCT FROM OLD.periodo_desde
+                OR NEW.periodo_hasta IS DISTINCT FROM OLD.periodo_hasta
+                OR NEW.fecha_corte IS DISTINCT FROM OLD.fecha_corte
+                OR NEW.observaciones IS DISTINCT FROM OLD.observaciones
+                OR NEW.assignment_id IS DISTINCT FROM OLD.assignment_id
+                OR NEW.responsable::text IS DISTINCT FROM OLD.responsable::text
+                OR NEW.responsable_official_id IS DISTINCT FROM OLD.responsable_official_id
+                OR NEW.codigo IS DISTINCT FROM OLD.codigo
+                OR NEW.numero_version IS DISTINCT FROM OLD.numero_version THEN
+                RAISE EXCEPTION 'No se pueden modificar campos congelados de un expediente formado';
+            END IF;
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+"""
+
+_GOV_RENDITION_PIECE_IMMUTABLE = """
+CREATE OR REPLACE FUNCTION kontrol_gov_rendition_piece_immutable()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_estado TEXT;
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION 'Las piezas de rendicion no se pueden truncar';
+    END IF;
+
+    SELECT estado INTO v_estado
+    FROM gov_rendition_files
+    WHERE id = COALESCE(OLD.file_id, NEW.file_id);
+
+    IF TG_OP = 'DELETE' THEN
+        IF v_estado IS DISTINCT FROM 'EN_FORMACION' THEN
+            RAISE EXCEPTION 'Solo se pueden eliminar piezas en formacion';
+        END IF;
+    ELSIF TG_OP = 'UPDATE' THEN
+        -- Solo se permite cambiar ordinal si el padre esta en EN_FORMACION
+        IF NEW.ordinal IS DISTINCT FROM OLD.ordinal THEN
+            IF v_estado IS DISTINCT FROM 'EN_FORMACION' THEN
+                RAISE EXCEPTION 'Solo se puede reordenar en formacion';
+            END IF;
+        ELSE
+            -- Cualquier otro cambio esta prohibido
+            RAISE EXCEPTION 'Las piezas de rendicion no se pueden actualizar';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+"""
+
+event.listen(
+    GovernmentRenditionFile.__table__,
+    "after_create",
+    DDL(_GOV_RENDITION_FILE_IMMUTABLE).execute_if(dialect="postgresql"),
+)
+
+for _rend_file_action, _rend_file_momento in (
+    ("update", "BEFORE UPDATE"),
+    ("delete", "BEFORE DELETE"),
+    ("truncate", "BEFORE TRUNCATE"),
+):
+    _rend_file_trigger = f"""
+    CREATE TRIGGER trg_gov_rendition_files_immutable_{_rend_file_action}
+    {_rend_file_momento} ON gov_rendition_files
+    FOR EACH {"ROW" if _rend_file_action != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_rendition_file_immutable();
+    """
+    event.listen(
+        GovernmentRenditionFile.__table__,
+        "after_create",
+        DDL(_rend_file_trigger).execute_if(dialect="postgresql"),
+    )
+
+event.listen(
+    GovernmentRenditionPiece.__table__,
+    "after_create",
+    DDL(_GOV_RENDITION_PIECE_IMMUTABLE).execute_if(dialect="postgresql"),
+)
+
+for _rend_piece_action, _rend_piece_momento in (
+    ("update", "BEFORE UPDATE"),
+    ("delete", "BEFORE DELETE"),
+    ("truncate", "BEFORE TRUNCATE"),
+):
+    _rend_piece_trigger = f"""
+    CREATE TRIGGER trg_gov_rendition_pieces_immutable_{_rend_piece_action}
+    {_rend_piece_momento} ON gov_rendition_pieces
+    FOR EACH {"ROW" if _rend_piece_action != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_rendition_piece_immutable();
+    """
+    event.listen(
+        GovernmentRenditionPiece.__table__,
+        "after_create",
+        DDL(_rend_piece_trigger).execute_if(dialect="postgresql"),
+    )
+
 event.listen(
     GovernmentGuaranteeInstrument.__table__,
     "after_create",

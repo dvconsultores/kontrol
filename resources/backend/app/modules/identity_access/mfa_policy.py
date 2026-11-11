@@ -154,6 +154,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_decision:decide",
         "gobierno_garantias:release",
         "gobierno_garantias:execute",
+        "gobierno_rendicion:form",
+        "gobierno_rendicion:qualify",
         "gobierno_comisiones:close",
         # gobierno_expedientes · cierre del expediente (PROC-03).
         "gobierno_expedientes:close",
@@ -272,6 +274,7 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_decision:recommend",
         "gobierno_garantias:view",
         "gobierno_garantias:manage",
+        "gobierno_rendicion:view",
     }
 )
 

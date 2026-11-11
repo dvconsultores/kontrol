@@ -72,6 +72,10 @@ const EXENTOS: Record<string, { motivo: string; uso?: RegExp }> = {
     motivo: "módulo de llamadas: la puerta va en las pantallas que lo usan",
     uso: /comercial\.(crear\w*|transicionarVersion)\(/,
   },
+  "modules/gobierno/rendicion/api.ts": {
+    motivo: "módulo de llamadas de CTL-05: la puerta va en las pantallas que lo usan",
+    uso: /\b(crearExpediente|actualizarExpediente|incorporarPieza|retirarPieza|formarCuenta|registrarParticipacion|registrarCalificacion|registrarFenecimiento|nuevaVersion)\(/,
+  },
   "api/mfa.ts": {
     motivo:
       "módulo de llamadas: el reinicio de MFA ajeno se condiciona en la pantalla de usuarios",

@@ -2424,6 +2424,150 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/rendicion/expedientes",
+      "capabilities": [
+        "gobierno_rendicion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/rendicion/expedientes",
+      "capabilities": [
+        "gobierno_rendicion:form"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}",
+      "capabilities": [
+        "gobierno_rendicion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}",
+      "capabilities": [
+        "gobierno_rendicion:form"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/calificacion",
+      "capabilities": [
+        "gobierno_rendicion:qualify"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/candidatas",
+      "capabilities": [
+        "gobierno_rendicion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/fenecimiento",
+      "capabilities": [
+        "gobierno_rendicion:qualify"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/formar",
+      "capabilities": [
+        "gobierno_rendicion:form"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/historial",
+      "capabilities": [
+        "gobierno_rendicion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/indice.csv",
+      "capabilities": [
+        "gobierno_rendicion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/integridad",
+      "capabilities": [
+        "gobierno_rendicion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/nueva-version",
+      "capabilities": [
+        "gobierno_rendicion:form"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/participacion",
+      "capabilities": [
+        "gobierno_rendicion:form"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/piezas",
+      "capabilities": [
+        "gobierno_rendicion:form"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/piezas/{pieza_id}",
+      "capabilities": [
+        "gobierno_rendicion:form"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/reporte",
+      "capabilities": [
+        "gobierno_rendicion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/rendicion/expedientes/{id}/reporte.pdf",
+      "capabilities": [
+        "gobierno_rendicion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/rendicion/opciones",
+      "capabilities": [
+        "gobierno_rendicion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/sod/acciones",
       "capabilities": [
         "gobierno_sod:view"
@@ -7210,7 +7354,10 @@
     "gobierno_garantias:view",
     "gobierno_garantias:manage",
     "gobierno_garantias:release",
-    "gobierno_garantias:execute"
+    "gobierno_garantias:execute",
+    "gobierno_rendicion:view",
+    "gobierno_rendicion:form",
+    "gobierno_rendicion:qualify"
   ],
   "report_capabilities": {
     "executive_ventas": [
