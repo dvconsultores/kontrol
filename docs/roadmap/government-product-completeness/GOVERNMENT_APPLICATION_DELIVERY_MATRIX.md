@@ -36,11 +36,11 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | PROC-03 | GOV-PROC-004 GOV-PROC-014 | Contrataciones públicas / Li | Unidad contratante | Expediente único de contratación con cronología y lapsos | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | PROC-04 | GOV-PROC-005 GOV-PROC-015 | Contrataciones públicas / Li | Unidad contratante | Pliego, invitaciones, aclaratorias, prórrogas y avisos | no | no | no | n/a | no | no | NOT_STARTED (bloqueado) | D-GOV-03 |
 | PROC-05 | GOV-PROC-006 | Contrataciones públicas / Li | Unidad contratante | Oferentes y contratistas (RNC/SNC) | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-03 |
-| PROC-06 | GOV-PROC-007 | Contrataciones públicas / Li | Unidad contratante | Recepción y apertura de ofertas | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
+| PROC-06 | GOV-PROC-007 | Contrataciones públicas / Li | Unidad contratante | Recepción y apertura de ofertas | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Apertura y levantamiento del sello: PROC-07 |
 | PROC-07 | GOV-PROC-008 GOV-PROC-009 | Contrataciones públicas / Li | Comisión | Evaluación técnica, económica y legal con matriz bloqueada | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Reporte propio: n/a (lo es la recomendación de PROC-08) |
 | PROC-08 | GOV-PROC-010 GOV-PROC-011 | Contrataciones públicas / Li | Máxima autoridad | Recomendación, decisión, adjudicación, desierta, anulación o rechazo | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Adjudicación parcial (OBS-PROC08-PARCIAL-01) y límites de monto (OBS-PROC08-MONTO-01) |
-| PROC-09 | GOV-PROC-012 | Contrataciones públicas / Li | Unidad contratante | Compromiso de responsabilidad social | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
-| PROC-10 | GOV-PROC-013 | Contrataciones públicas / Li | Unidad contratante | Garantías y cauciones | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
+| PROC-09 | GOV-PROC-012 | Contrataciones públicas / Li | Unidad contratante | Compromiso de responsabilidad social | no | no | no | n/a | no | no | NOT_STARTED (bloqueado) | LEGAL_VALIDATION_REQUIRED (U.T. N38 clase C; 3 % LCP 31 frente a 1-5 % RLCP 35); MATERIAL_DECISION_REQUIRED (monto de la oferta, OBS-PROC08-MONTO-01); dependencias PROC-04 y CNT-01 |
+| PROC-10 | GOV-PROC-013 | Contrataciones públicas / Li | Unidad contratante | Garantías y cauciones | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Exigencias porcentuales NO_EVALUABLE sin base monetaria (OBS-PROC08-MONTO-01) |
 | PROC-11 | GOV-PROC-017 | Contrataciones públicas / Li | Control Interno | Conflictos SoD en contratación | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | PROC-12 | GOV-PROC-018 | Contrataciones públicas / Li | Control Interno | Trazabilidad completa de la compra pública (E2E-01) | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | CNT-01 | GOV-CNT-001 | Contratos públicos | Unidad contratante | Crear contrato u orden desde la adjudicación | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
@@ -172,3 +172,27 @@ Una ruta declarada no demuestra que la pantalla funcione. Una pantalla cuenta co
 | GOV-PROC-011 | Autoridad | Adjudicación, desierta, terminación, nulidad, rechazo | Formulario de decisión, notificación DOC-04 por oferente, historial | sí | 0094 | decisiones | `gobierno_decision:decide` | Acto DOC-02 emitido, particular, APROBAR/CONTRATACIONES | CTL-02 | sí: adjudicación; alternativos en PostgreSQL | sí | OWNER_UAT_READY | Adjudicación parcial (OBS-PROC08-PARCIAL-01); límites de monto (OBS-PROC08-MONTO-01) |
 
 `PROC08_FUNCTIONAL_SLICE_COMPLETE = 1`: verificado en Chromium a 1280, 390 y 320 px, con Axe dirigido en 4 puntos sin violaciones. `REPORT_GATE_PROC08 = PASS` (informe PDF de la recomendación). `OWNER_ACCEPTED = NO`.
+
+## PROC-06: deuda de matriz cerrada (2026-11-10)
+
+`OBS_MATRIZ_PROC06_01 = CLOSED`: la fila de PROC-06 (GOV-PROC-007) pasa a OWNER_UAT_READY con la evidencia publicada de su cierre (commit 7e7d70d: E2E `gobierno-ofertas` 3/3 en Chromium con Axe y 320/390/1280, backend PG 8/8 más regresión 277/277, migración 0088 arriba-abajo-arriba, tarjeta `OWNER_UAT_CARD.md`). Sin reconstruir ni volver a ejecutar PROC-06. `OWNER_ACCEPTED = NO`.
+
+## PROC-10 en detalle (2026-11-10, commit 1d45e49)
+
+| Requisito | Rol | Proceso | Superficie | Backend | BD | API | Permiso | Documentos | Auditoría | Navegador | UAT | Estado | Falta |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| GOV-PROC-013 | Unidad contratante y autoridad | Garantías: tipo, emisor, vigencia, monto, suficiencia, renovación, sustitución, liberación y ejecución | Sección «Garantías y cauciones» en la ficha | sí | 0096 | 7 rutas | `gobierno_garantias` view/manage/release/execute (release y execute con MFA) | Documento con versión fijada y huella; acto DOC-02 para liberar y ejecutar | CTL-02, 7 eventos; cronología clase GARANTIA | sí, flujo completo | sí | OWNER_UAT_READY | Exigencias porcentuales NO_EVALUABLE sin base monetaria (OBS-PROC08-MONTO-01) |
+
+`PROC10_FUNCTIONAL_SLICE_COMPLETE = 1`: verificado en Chromium a 1280, 390 y 320 px, con Axe dirigido en 6 puntos sin violaciones. `REPORT_GATE_PROC10 = NOT_APPLICABLE`. `OWNER_ACCEPTED = NO`.
+
+## PROC-09: bloqueado en el gate (2026-11-11)
+
+GOV-PROC-012 queda BLOCKED antes de diseñar el producto (`specs/gov-proc-09-responsabilidad-social/`). La procedencia del
+compromiso es cuantitativa: «ofertas cuyo monto total, incluidos los tributos, superen las dos mil quinientas unidades tributarias
+(2.500 U.T.)» (LCP art. 31; RLCP art. 34). La oferta no registra monto (OBS-PROC08-MONTO-01), el valor de la U.T. no tiene fuente
+verificada (N38, clase C) y el porcentaje tiene un conflicto entre la LCP (3 %) y el RLCP (1 % a 5 %). Sin esos datos, el estado
+«aplica» sería inalcanzable: construirlo sería completitud falsa. Preguntas OQ-PROC09-01..04.
+
+Tampoco se tomaron: CNT-01 (GOV-CNT-001 exige objeto, monto, moneda, plazo, garantía y fuente presupuestaria; el monto y la
+autoridad presupuestaria no existen) ni PROC-11 (GOV-PROC-017 exige la cadena solicitante, evaluador, adjudicador, receptor y
+pagador; receptor y pagador de Gobierno aún no forman una cadena funcional).

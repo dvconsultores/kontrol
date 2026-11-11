@@ -1555,6 +1555,62 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/garantias",
+      "capabilities": [
+        "gobierno_garantias:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/garantias",
+      "capabilities": [
+        "gobierno_garantias:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/garantias/requisitos",
+      "capabilities": [
+        "gobierno_garantias:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/garantias/{garantia_id}/ejecutar",
+      "capabilities": [
+        "gobierno_garantias:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/garantias/{garantia_id}/liberar",
+      "capabilities": [
+        "gobierno_garantias:release"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/garantias/{garantia_id}/renovar",
+      "capabilities": [
+        "gobierno_garantias:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/garantias/{garantia_id}/sustituir",
+      "capabilities": [
+        "gobierno_garantias:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/hitos",
       "capabilities": [
@@ -1615,6 +1671,22 @@
       "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/responsables/{responsable_id}/terminar",
       "capabilities": [
         "gobierno_expedientes:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/garantias/emisores",
+      "capabilities": [
+        "gobierno_garantias:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/garantias/emisores",
+      "capabilities": [
+        "gobierno_garantias:manage"
       ],
       "scope": "COMPANY"
     },
@@ -7102,7 +7174,11 @@
     "gobierno_evaluacion:evaluate",
     "gobierno_decision:view",
     "gobierno_decision:recommend",
-    "gobierno_decision:decide"
+    "gobierno_decision:decide",
+    "gobierno_garantias:view",
+    "gobierno_garantias:manage",
+    "gobierno_garantias:release",
+    "gobierno_garantias:execute"
   ],
   "report_capabilities": {
     "executive_ventas": [

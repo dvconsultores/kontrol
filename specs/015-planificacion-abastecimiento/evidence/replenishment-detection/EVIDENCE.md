@@ -114,3 +114,15 @@ Una corrida de cada motor con el analizador real. Comparación con la línea bas
 **Después de la llamada 5**, en PostgreSQL: `test_backup_job_retencion.py` + `test_spec047_scheduler.py` + `test_planning_replenishment.py` dan 56/56. En SQLite, 40 pasan y 16 se omiten.
 
 **NEW_FAILURES = 0.**
+
+## Fusión con PROC-10 (P1)
+
+`origin/develop` avanzó a `d1d0a0a`, que trae `0096_gov_proc10_garantias`. La fusión ordinaria necesitó la migración vacía `0097_fusion_gov_replenishment` (llamada 6, excepción de la dueña).
+
+| Puerta | Resultado |
+|---|---|
+| `alembic heads` | una cabeza, `0097_fusion_gov_replenishment` (mergepoint) |
+| PostgreSQL nuevo | upgrade, downgrade a 0095, upgrade; `alembic check` sin deriva en las tablas de las dos ramas |
+| Regresión dirigida: reposición, planificación, planificador, copias, catálogo (462), guardas de cabeza y PROC-10 | SQLite 113 + 36 omitidas. PostgreSQL 143 pasan y 6 fallan, todas de `test_gov_proc10_garantias.py` («La fecha del acto no puede ser futura»). Esas 6 fallan igual sobre una copia limpia de `origin/develop`: son deuda previa de P1 y no se tocan |
+| ruff · lint · typecheck · Vitest | limpio · limpio · limpio · 1903/1903 |
+| E2E `reposicion.spec.ts` sobre el esquema fusionado | PASS |

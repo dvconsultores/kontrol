@@ -20,7 +20,10 @@ Llamadas a `deepseek-v4-pro` con `stream=true`, una cada vez y con su brief auto
 | 4 | Correcciones demostradas por la ejecución (regresión C1 + E2E + Vitest) | 1061/810 | $0,001166 | AUDIT_PASS. E2E PASS a 1280, 390 y 320 |
 | 5 | Orden del registro del planificador | 480/363 | $0,000525 | AUDIT_PASS. La suite completa reveló que `test_backup_job_retencion` exige que los tres manejadores de copias vayan al final del tick (el registro dice «el orden importa»); el manejador nuevo se movió antes de ellos |
 
-**Total:** 5 llamadas, $0,053252. Reintentos: ninguno. La 4 y la 5 traen causas nuevas, no repiten las anteriores.
+| 6 | OWNER_EXCEPTION: fusión de cabezas con PROC-10 (`origin/develop` d1d0a0a trajo `0096_gov_proc10_garantias`) — `deepseek-v4-flash` | 971/565 | $0,000294 | F1 (migración vacía `0097_fusion_gov_replenishment`) AUDIT_PASS. F2–F5 AUDIT_REJECT: sin SEARCH/REPLACE y con los marcadores de conflicto dentro del texto nuevo |
+| 6·R1 | Reintento 1 de F2–F5 (autorizado por la dueña) | 818/485 | $0,000250 | AUDIT_PASS. Se aplicó con coincidencia exacta de cada bloque de conflicto: las 3 guardas de cabeza pasan a 0097 y el catálogo a 462 |
+
+**Total:** 5 llamadas del presupuesto ($0,053252) + 1 de excepción de la dueña con 1 reintento ($0,000544) = $0,053796. La 4 y la 5 traen causas nuevas, no repiten las anteriores.
 
 **Errores de Claude:**
 - un fragmento de contexto cortado a media línea en el brief 1;

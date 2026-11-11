@@ -71,8 +71,8 @@ def test_mfa_g00_todo_permiso_esta_clasificado(sesion_de_prueba):
 def test_mfa_g00b_recuentos():
     """MFA-G00b: contadores exactos de las listas de clasificación."""
     assert len(PRIVILEGED_PERMISSIONS) == 18
-    assert len(SENSITIVE_PERMISSIONS) == 61
-    assert len(STANDARD_PERMISSIONS) == 69
+    assert len(SENSITIVE_PERMISSIONS) == 63
+    assert len(STANDARD_PERMISSIONS) == 71
 
 
 @pytest.mark.parametrize(

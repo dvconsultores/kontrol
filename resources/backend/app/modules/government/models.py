@@ -17,6 +17,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
 from app.core.scope import Scope
+from app.modules.government.garantias_reglas import ACCIONES_GARANTIA, ESTADOS_EMISOR, ESTADOS_GARANTIA, ETAPAS_GARANTIA, FORMAS_GARANTIA, ORIGENES_GARANTIA, PRECONDICIONES_LIBERACION, TIPOS_EMISOR, TIPOS_GARANTIA
 from app.shared.mixins import CreatedByMixin, TimestampMixin, UUIDMixin, VersionMixin, utcnow
 
 ESTADOS_ENTE = ("BORRADOR", "ACTIVO")
@@ -1474,7 +1475,7 @@ ESTADOS_EXPEDIENTE = ("ABIERTO", "CERRADO", "DESCARTADO")
 ROLES_RESPONSABLE_EXPEDIENTE = ("RESPONSABLE", "REQUIRENTE", "SUSTANCIACION", "CUSTODIA")
 ESTADOS_HITO = ("PREVISTO", "CUMPLIDO", "NO_APLICA")
 CLASES_FOLIO = ("SOLICITUD", "AUTORIZACION_INICIO", "PLIEGO", "ACTOS_MOTIVADOS", "LLAMADO_INVITACION", "MODIFICACIONES_PLIEGO", "ACTA_RECEPCION", "OFERTAS", "INFORME_RECOMENDACION", "ADJUDICACION", "NOTIFICACION", "CONTRATO", "OTRO_SELECCION", "GARANTIAS", "ACTAS_EJECUCION", "MODIFICACION_CONTRATO", "FORMULARIOS_PAGO", "APROBACIONES_PAGO", "PAGOS", "FINIQUITO", "LIBERACION_GARANTIAS", "EVALUACION_CONTRATISTA", "OTRO_ADMINISTRACION")
-CLASES_EVENTO_EXPEDIENTE = ("APERTURA", "DATOS", "RESPONSABLE", "COMISION", "ACTUACION", "DECISION", "DOCUMENTO", "ACTO", "HITO", "CIERRE", "DESCARTE", "OFERTA", "APERTURA_OFERTA", "EVALUACION", "RECOMENDACION", "RECHAZO_OFERTA", "ADJUDICACION", "DESIERTA", "TERMINACION", "NULIDAD")
+CLASES_EVENTO_EXPEDIENTE = ("APERTURA", "DATOS", "RESPONSABLE", "COMISION", "ACTUACION", "DECISION", "DOCUMENTO", "ACTO", "HITO", "CIERRE", "DESCARTE", "OFERTA", "APERTURA_OFERTA", "EVALUACION", "RECOMENDACION", "RECHAZO_OFERTA", "ADJUDICACION", "DESIERTA", "TERMINACION", "NULIDAD", "GARANTIA")
 
 ESTADOS_RECOMENDACION = ("EMITIDA", "SUSTITUIDA")
 RESULTADOS_RECOMENDACION = ("ADJUDICAR", "DECLARAR_DESIERTA", "TERMINAR")
@@ -2963,3 +2964,289 @@ for _sentencia in GOV_LINKS_EXCLUSION_PG:
 
 for _sentencia in GOV_ROLE_CATEGORY_EXCLUSION_PG:
     event.listen(GovernmentRoleCategory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+class GovernmentGuaranteeIssuer(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_guarantee_issuers"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(32), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    rif: Mapped[str] = mapped_column(String(20), nullable=False)
+    bank_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_banks.id"), nullable=True, index=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="ACTIVO", server_default="ACTIVO")
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_EMISOR)})", name="ck_gov_guarantee_issuers_tipo"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_EMISOR)})", name="ck_gov_guarantee_issuers_estado"),
+        CheckConstraint("(tipo = 'BANCO') = (bank_id IS NOT NULL)", name="ck_gov_guarantee_issuers_banco"),
+        UniqueConstraint("company_id", "rif", name="uq_gov_guarantee_issuers_company_rif"),
+    )
+
+
+class GovernmentGuaranteeRequirement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_guarantee_requirements"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    regla_codigo: Mapped[str] = mapped_column(String(40), nullable=False)
+    regla: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    tipo: Mapped[str] = mapped_column(String(32), nullable=False)
+    etapa: Mapped[str] = mapped_column(String(24), nullable=False)
+    nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    forma: Mapped[str] = mapped_column(String(16), nullable=False)
+    porcentaje: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    monto_fijo: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    moneda: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    vigencia_minima_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fundamento: Mapped[str] = mapped_column(String(1000), nullable=False)
+    document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False, index=True)
+    document_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=False, index=True)
+    version_numero: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    registrado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registrado_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    official_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=True, index=True)
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_GARANTIA)})", name="ck_gov_guarantee_requirements_tipo"),
+        CheckConstraint(f"etapa IN ({en(ETAPAS_GARANTIA)})", name="ck_gov_guarantee_requirements_etapa"),
+        CheckConstraint(f"forma IN ({en(FORMAS_GARANTIA)})", name="ck_gov_guarantee_requirements_forma"),
+        CheckConstraint("numero >= 1", name="ck_gov_guarantee_requirements_numero"),
+        CheckConstraint("(forma = 'PORCENTAJE') = (porcentaje IS NOT NULL)", name="ck_gov_guarantee_requirements_porcentaje_presencia"),
+        CheckConstraint("(forma = 'MONTO_FIJO') = (monto_fijo IS NOT NULL)", name="ck_gov_guarantee_requirements_monto_presencia"),
+        CheckConstraint("(forma = 'MONTO_FIJO') = (moneda IS NOT NULL)", name="ck_gov_guarantee_requirements_moneda_presencia"),
+        CheckConstraint("porcentaje IS NULL OR (porcentaje > 0 AND porcentaje <= 100)", name="ck_gov_guarantee_requirements_porcentaje_valor"),
+        CheckConstraint("monto_fijo IS NULL OR monto_fijo > 0", name="ck_gov_guarantee_requirements_monto_valor"),
+        CheckConstraint(f"moneda IS NULL OR moneda IN ({en(MONEDAS_LIMITE)})", name="ck_gov_guarantee_requirements_moneda_valor"),
+        CheckConstraint("tipo <> 'OTRA' OR nombre IS NOT NULL", name="ck_gov_guarantee_requirements_otra_nombre"),
+        UniqueConstraint("company_id", "file_id", "numero", name="uq_gov_guarantee_requirements_company_file_numero"),
+    )
+
+
+class GovernmentGuaranteeInstrument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_guarantee_instruments"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    requirement_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_guarantee_requirements.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(32), nullable=False)
+    etapa: Mapped[str] = mapped_column(String(24), nullable=False)
+    offer_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_offers.id"), nullable=False, index=True)
+    decision_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_decisions.id"), nullable=True, index=True)
+    issuer_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_guarantee_issuers.id"), nullable=False, index=True)
+    referencia_emisor: Mapped[str] = mapped_column(String(60), nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    fecha_emision: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date] = mapped_column(Date, nullable=False)
+    document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False, index=True)
+    document_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=False, index=True)
+    version_numero: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    observacion: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    origen: Mapped[str] = mapped_column(String(16), nullable=False, default="REGISTRO", server_default="REGISTRO")
+    antecesor_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_guarantee_instruments.id"), nullable=True, unique=True)
+    estado: Mapped[str] = mapped_column(String(16), nullable=False, default="REGISTRADA", server_default="REGISTRADA")
+    afectada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    registrada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registrada_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    official_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=True, index=True)
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_GARANTIA)})", name="ck_gov_guarantee_instruments_tipo"),
+        CheckConstraint(f"etapa IN ({en(ETAPAS_GARANTIA)})", name="ck_gov_guarantee_instruments_etapa"),
+        CheckConstraint(f"origen IN ({en(ORIGENES_GARANTIA)})", name="ck_gov_guarantee_instruments_origen"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_GARANTIA)})", name="ck_gov_guarantee_instruments_estado"),
+        CheckConstraint("numero >= 1", name="ck_gov_guarantee_instruments_numero"),
+        CheckConstraint("monto > 0", name="ck_gov_guarantee_instruments_monto"),
+        CheckConstraint(f"moneda IN ({en(MONEDAS_LIMITE)})", name="ck_gov_guarantee_instruments_moneda"),
+        CheckConstraint("vigente_desde <= vigente_hasta", name="ck_gov_guarantee_instruments_vigencia"),
+        CheckConstraint("fecha_emision <= vigente_hasta", name="ck_gov_guarantee_instruments_emision"),
+        CheckConstraint("(origen = 'REGISTRO') = (antecesor_id IS NULL)", name="ck_gov_guarantee_instruments_antecesor"),
+        CheckConstraint("(estado = 'REGISTRADA') = (afectada_en IS NULL)", name="ck_gov_guarantee_instruments_afectada"),
+        UniqueConstraint("company_id", "file_id", "numero", name="uq_gov_guarantee_instruments_company_file_numero"),
+        Index(
+            "uq_gov_guarantee_instruments_emisor_referencia",
+            "company_id",
+            "issuer_id",
+            "referencia_emisor",
+            unique=True,
+            postgresql_where=text("estado = 'REGISTRADA'"),
+            sqlite_where=text("estado = 'REGISTRADA'"),
+        ),
+    )
+
+
+class GovernmentGuaranteeEvent(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    __tablename__ = "gov_guarantee_events"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    instrument_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_guarantee_instruments.id"), nullable=False, index=True)
+    accion: Mapped[str] = mapped_column(String(16), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    motivo: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True, index=True)
+    cargo_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=True, index=True)
+    document_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True, index=True)
+    document_version_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=True)
+    version_numero: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    nuevo_instrument_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_guarantee_instruments.id"), nullable=True, index=True)
+    monto: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    moneda: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    precondicion: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    precondicion_detalle: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    registrada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registrada_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    official_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=True, index=True)
+
+    __table_args__ = (
+        CheckConstraint(f"accion IN ({en(ACCIONES_GARANTIA)})", name="ck_gov_guarantee_events_accion"),
+        CheckConstraint("(accion IN ('LIBERACION', 'EJECUCION')) = (act_id IS NOT NULL)", name="ck_gov_guarantee_events_acto"),
+        CheckConstraint("accion = 'REGISTRO' OR motivo IS NOT NULL", name="ck_gov_guarantee_events_motivo"),
+        CheckConstraint("(accion IN ('RENOVACION', 'SUSTITUCION')) = (nuevo_instrument_id IS NOT NULL)", name="ck_gov_guarantee_events_nuevo"),
+        CheckConstraint("(accion = 'EJECUCION') = (monto IS NOT NULL)", name="ck_gov_guarantee_events_monto_presencia"),
+        CheckConstraint("(monto IS NULL) = (moneda IS NULL)", name="ck_gov_guarantee_events_moneda_presencia"),
+        CheckConstraint("monto IS NULL OR monto > 0", name="ck_gov_guarantee_events_monto_valor"),
+        CheckConstraint("(accion = 'LIBERACION') = (precondicion IS NOT NULL)", name="ck_gov_guarantee_events_precondicion_presencia"),
+        CheckConstraint(f"precondicion IS NULL OR precondicion IN ({en(PRECONDICIONES_LIBERACION)})", name="ck_gov_guarantee_events_precondicion_valor"),
+        CheckConstraint("(document_id IS NULL) = (document_version_id IS NULL)", name="ck_gov_guarantee_events_documento"),
+        Index(
+            "uq_gov_guarantee_events_registro",
+            "instrument_id",
+            unique=True,
+            postgresql_where=text("accion = 'REGISTRO'"),
+            sqlite_where=text("accion = 'REGISTRO'"),
+        ),
+        Index(
+            "uq_gov_guarantee_events_final",
+            "instrument_id",
+            unique=True,
+            postgresql_where=text("accion <> 'REGISTRO'"),
+            sqlite_where=text("accion <> 'REGISTRO'"),
+        ),
+    )
+
+
+_GOV_GUARANTEE_IMMUTABLE_DDL = (
+    """
+    CREATE OR REPLACE FUNCTION kontrol_gov_guarantee_immutable()
+    RETURNS trigger AS $$
+    BEGIN
+        RAISE EXCEPTION 'Los requisitos y actuaciones de garantías son inmutables';
+    END;
+    $$ LANGUAGE plpgsql;
+    """,
+)
+
+_GOV_GUARANTEE_INSTRUMENT_GUARD_DDL = (
+    """
+    CREATE OR REPLACE FUNCTION kontrol_gov_guarantee_instrument_guard()
+    RETURNS trigger AS $$
+    BEGIN
+        IF TG_OP = 'DELETE' OR TG_OP = 'TRUNCATE' THEN
+            RAISE EXCEPTION 'Las garantías no se borran';
+        END IF;
+        IF TG_OP = 'UPDATE' THEN
+            IF OLD.estado = 'REGISTRADA'
+               AND NEW.estado IN ('RENOVADA', 'SUSTITUIDA', 'LIBERADA', 'EJECUTADA')
+               AND NEW.afectada_en IS NOT NULL
+               AND (to_jsonb(NEW) - 'estado' - 'afectada_en' - 'updated_at') = (to_jsonb(OLD) - 'estado' - 'afectada_en' - 'updated_at') THEN
+                RETURN NEW;
+            END IF;
+            RAISE EXCEPTION 'La garantía registrada solo cambia una vez a su estado final';
+        END IF;
+        RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    """,
+)
+
+_GOV_GUARANTEE_ISSUER_NO_DELETE_DDL = (
+    """
+    CREATE OR REPLACE FUNCTION kontrol_gov_guarantee_issuer_no_delete()
+    RETURNS trigger AS $$
+    BEGIN
+        RAISE EXCEPTION 'Los emisores de garantías no se borran';
+    END;
+    $$ LANGUAGE plpgsql;
+    """,
+)
+
+_gov_guarantee_immutable_modelos = (
+    GovernmentGuaranteeRequirement,
+    GovernmentGuaranteeEvent,
+)
+for _modelo_garantia in _gov_guarantee_immutable_modelos:
+    _tabla = _modelo_garantia.__table__
+    _nombre_corto = _modelo_garantia.__tablename__.split("_", 1)[-1]
+    event.listen(
+        _tabla,
+        "after_create",
+        DDL(_GOV_GUARANTEE_IMMUTABLE_DDL[0]).execute_if(dialect="postgresql"),
+    )
+    for _accion, _momento in (
+        ("update", "BEFORE UPDATE"),
+        ("delete", "BEFORE DELETE"),
+        ("truncate", "BEFORE TRUNCATE"),
+    ):
+        _trigger = f"""
+        CREATE TRIGGER trg_{_nombre_corto}_immutable_{_accion}
+        {_momento} ON {_modelo_garantia.__tablename__}
+        FOR EACH {"ROW" if _accion != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_guarantee_immutable();
+        """
+        event.listen(
+            _tabla,
+            "after_create",
+            DDL(_trigger).execute_if(dialect="postgresql"),
+        )
+
+event.listen(
+    GovernmentGuaranteeInstrument.__table__,
+    "after_create",
+    DDL(_GOV_GUARANTEE_INSTRUMENT_GUARD_DDL[0]).execute_if(dialect="postgresql"),
+)
+for _accion, _momento in (
+    ("update", "BEFORE UPDATE"),
+    ("delete", "BEFORE DELETE"),
+    ("truncate", "BEFORE TRUNCATE"),
+):
+    _trigger = f"""
+    CREATE TRIGGER trg_gov_guarantee_instruments_guard_{_accion}
+    {_momento} ON gov_guarantee_instruments
+    FOR EACH {"ROW" if _accion != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_guarantee_instrument_guard();
+    """
+    event.listen(
+        GovernmentGuaranteeInstrument.__table__,
+        "after_create",
+        DDL(_trigger).execute_if(dialect="postgresql"),
+    )
+
+event.listen(
+    GovernmentGuaranteeIssuer.__table__,
+    "after_create",
+    DDL(_GOV_GUARANTEE_ISSUER_NO_DELETE_DDL[0]).execute_if(dialect="postgresql"),
+)
+for _accion, _momento in (
+    ("delete", "BEFORE DELETE"),
+    ("truncate", "BEFORE TRUNCATE"),
+):
+    _trigger = f"""
+    CREATE TRIGGER trg_gov_guarantee_issuers_no_{_accion}
+    {_momento} ON gov_guarantee_issuers
+    FOR EACH {"ROW" if _accion != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_guarantee_issuer_no_delete();
+    """
+    event.listen(
+        GovernmentGuaranteeIssuer.__table__,
+        "after_create",
+        DDL(_trigger).execute_if(dialect="postgresql"),
+    )
