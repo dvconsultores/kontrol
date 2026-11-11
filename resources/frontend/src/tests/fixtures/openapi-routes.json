@@ -650,6 +650,84 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/actas-entrega/actas",
+      "query": [
+        "ambito",
+        "desde",
+        "estado",
+        "hasta",
+        "pagina",
+        "por_pagina",
+        "texto"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actas-entrega/actas",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actas-entrega/actas/{id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/actas-entrega/actas/{id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actas-entrega/actas/{id}/acta.pdf",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/actas-entrega/actas/{id}/anexos/{codigo}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actas-entrega/actas/{id}/anexos/{codigo}/vista",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actas-entrega/actas/{id}/historial",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actas-entrega/actas/{id}/integridad",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actas-entrega/actas/{id}/observaciones",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actas-entrega/actas/{id}/remision",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actas-entrega/actas/{id}/suscribir",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actas-entrega/actas/{id}/verificacion",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actas-entrega/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/actos",
       "query": [
         "anio"

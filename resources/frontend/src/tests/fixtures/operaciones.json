@@ -908,6 +908,118 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/actas",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actas-entrega/actas",
+      "capabilities": [
+        "gobierno_actas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/actas/{id}",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/actas-entrega/actas/{id}",
+      "capabilities": [
+        "gobierno_actas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/actas/{id}/acta.pdf",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/actas-entrega/actas/{id}/anexos/{codigo}",
+      "capabilities": [
+        "gobierno_actas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/actas/{id}/anexos/{codigo}/vista",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/actas/{id}/historial",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/actas/{id}/integridad",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actas-entrega/actas/{id}/observaciones",
+      "capabilities": [
+        "gobierno_actas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actas-entrega/actas/{id}/remision",
+      "capabilities": [
+        "gobierno_actas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actas-entrega/actas/{id}/suscribir",
+      "capabilities": [
+        "gobierno_actas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actas-entrega/actas/{id}/verificacion",
+      "capabilities": [
+        "gobierno_actas:verify"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/opciones",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/actos",
       "capabilities": [
         "gobierno_actos:view"
@@ -7381,7 +7493,10 @@
     "gobierno_garantias:execute",
     "gobierno_rendicion:view",
     "gobierno_rendicion:form",
-    "gobierno_rendicion:qualify"
+    "gobierno_rendicion:qualify",
+    "gobierno_actas:view",
+    "gobierno_actas:manage",
+    "gobierno_actas:verify"
   ],
   "report_capabilities": {
     "executive_ventas": [

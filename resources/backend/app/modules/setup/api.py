@@ -125,6 +125,7 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_decision": ["view", "recommend", "decide"],
     "gobierno_garantias": ["view", "manage", "release", "execute"],
     "gobierno_rendicion": ["view", "form", "qualify"],
+    "gobierno_actas": ["view", "manage", "verify"],
 }
 
 

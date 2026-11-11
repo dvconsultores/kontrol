@@ -40,8 +40,9 @@ Autoridad: `../PROGRAMAR_DESCARGA_AUTHORITY.md`. Delta: `../../spec018-unloading
 | E2E en Chrome sobre PostgreSQL con analizador real: `importaciones`, `receipts`, `conteo-independiente`, `inventory-confirmation` | 14/14 a 1280; `importaciones` también a 390 y 320 |
 | Vitest completo · typecheck · lint · build | 1922/1922 · limpio · limpio · correcto |
 | OpenAPI | Una ruta nueva (adición); las fixtures del frontend se regeneraron |
-| Suite completa de backend | ver «Cierre» |
+| Suite completa de backend en PostgreSQL, con analizador real | 5340 PASS y los 5 fallos de la línea base (`gobierno_integridad`, `n10`, `naive_datetime`, dos de `spec019_receipt`). NEW_FAILURES = 0 |
 
 ## Cierre
 
-Se completa con la suite completa.
+- **Fusión con CTL-09 de P1:** este ciclo no tiene migración, así que la cabeza es la de P1 (`0102_gov_ctl09_actas`, una sola). El catálogo queda en 486.
+- **Después de la fusión:** 96 PASS en las pruebas backend afectadas (catálogo, guardias de cabeza, descarga, conteo independiente, compras) y 443 PASS en Vitest de contratos.

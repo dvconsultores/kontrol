@@ -23,7 +23,7 @@ Encargo `SPEC018_PROGRAMAR_DESCARGA`, del 2026-11-11. Spec dueña del proceso: 0
 
 ## Estado
 
-CONVERGED el 2026-11-11. Implementado por DeepSeek y auditado por Claude: 3 llamadas y 2 reintentos, $0,013. Sin migración. Evidencia en `evidence/unloading-schedule/`.
+CONVERGED el 2026-11-11. Implementado por DeepSeek y auditado por Claude: 4 llamadas (la 4.ª, por la fusión) y 2 reintentos, $0,014. Sin migración. Evidencia en `evidence/unloading-schedule/`.
 
 ## Tareas
 

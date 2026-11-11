@@ -3443,3 +3443,244 @@ for _accion, _momento in (
         "after_create",
         DDL(_trigger).execute_if(dialect="postgresql"),
     )
+
+
+class GovernmentHandoverAct(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    __tablename__ = "gov_handover_acts"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    estado: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
+    ambito: Mapped[str] = mapped_column(String(10), nullable=False)
+    unit_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    assignment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_assignments.id"), nullable=False, index=True)
+    saliente: Mapped[dict] = mapped_column(JSON, nullable=False)
+    receptor_official_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    receptor_assignment_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    receptor: Mapped[dict] = mapped_column(JSON, nullable=False)
+    modalidad: Mapped[str] = mapped_column(String(24), nullable=False)
+    testigos: Mapped[list] = mapped_column(JSON, nullable=False)
+    auditor_official_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    motivo: Mapped[str] = mapped_column(String(1000), nullable=False)
+    fundamento: Mapped[str] = mapped_column(String(1000), nullable=False)
+    lugar: Mapped[str] = mapped_column(String(200), nullable=False)
+    fecha_corte: Mapped[date] = mapped_column(Date, nullable=False)
+    fecha_suscripcion: Mapped[date | None] = mapped_column(Date, nullable=True)
+    errores_deficiencias: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    suscrita_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    suscrita_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    snapshot: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    snapshot_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    informe_storage_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    informe_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    informe_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    remision_uai_fecha: Mapped[date | None] = mapped_column(Date, nullable=True)
+    remision_uai_registrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    verificacion_numero: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    verificacion_fecha: Mapped[date | None] = mapped_column(Date, nullable=True)
+    verificacion_resultado: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    verificacion_fundamento: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    verificada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    verificada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "assignment_id", name="uq_gov_handover_acts_company_assignment"),
+        CheckConstraint("estado IN ('BORRADOR', 'SUSCRITA', 'VERIFICADA')", name="ck_gov_handover_acts_estado"),
+        CheckConstraint("ambito IN ('ENTE', 'UNIDAD')", name="ck_gov_handover_acts_ambito"),
+        CheckConstraint("modalidad IN ('ENTREGA', 'LEVANTADA_POR_RECEPTOR')", name="ck_gov_handover_acts_modalidad"),
+        CheckConstraint("estado = 'BORRADOR' OR (snapshot_sha256 IS NOT NULL AND informe_sha256 IS NOT NULL)", name="ck_gov_handover_acts_suscrita_hashes"),
+        CheckConstraint("(estado = 'VERIFICADA') = (verificacion_resultado IS NOT NULL)", name="ck_gov_handover_acts_verificacion"),
+        CheckConstraint("verificacion_resultado IS NULL OR verificacion_resultado IN ('CONFORME', 'CON_OBSERVACIONES')", name="ck_gov_handover_acts_verificacion_resultado"),
+        CheckConstraint("modalidad <> 'LEVANTADA_POR_RECEPTOR' OR auditor_official_id IS NOT NULL", name="ck_gov_handover_acts_levantada_auditor"),
+    )
+
+
+class GovernmentHandoverAnnex(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    __tablename__ = "gov_handover_annexes"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    act_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_handover_acts.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(8), nullable=False)
+    titulo: Mapped[str] = mapped_column(String(200), nullable=False)
+    obligatorio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    generable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    incluir_generado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    documento_ids: Mapped[list] = mapped_column(JSON, nullable=False)
+    constancia: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    contenido: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    documentos: Mapped[list | None] = mapped_column(JSON, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("act_id", "codigo", name="uq_gov_handover_annexes_act_codigo"),
+        CheckConstraint("incluir_generado = false OR generable = true", name="ck_gov_handover_annexes_generable"),
+    )
+
+
+class GovernmentHandoverObservation(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    __tablename__ = "gov_handover_observations"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    act_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_handover_acts.id"), nullable=False, index=True)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    texto: Mapped[str] = mapped_column(String(2000), nullable=False)
+    registrada_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    registrada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+_GOV_HANDOVER_ACT_IMMUTABLE = """
+CREATE OR REPLACE FUNCTION kontrol_gov_handover_act_immutable()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        RAISE EXCEPTION 'Las actas de entrega no se pueden eliminar';
+    ELSIF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION 'Las actas de entrega no se pueden truncar';
+    ELSIF TG_OP = 'UPDATE' THEN
+        IF OLD.snapshot_sha256 IS NOT NULL THEN
+            IF NEW.motivo IS DISTINCT FROM OLD.motivo
+                OR NEW.fundamento IS DISTINCT FROM OLD.fundamento
+                OR NEW.lugar IS DISTINCT FROM OLD.lugar
+                OR NEW.fecha_corte IS DISTINCT FROM OLD.fecha_corte
+                OR NEW.saliente::text IS DISTINCT FROM OLD.saliente::text
+                OR NEW.receptor::text IS DISTINCT FROM OLD.receptor::text
+                OR NEW.testigos::text IS DISTINCT FROM OLD.testigos::text
+                OR NEW.modalidad IS DISTINCT FROM OLD.modalidad
+                OR NEW.assignment_id IS DISTINCT FROM OLD.assignment_id
+                OR NEW.receptor_official_id IS DISTINCT FROM OLD.receptor_official_id
+                OR NEW.auditor_official_id IS DISTINCT FROM OLD.auditor_official_id
+                OR NEW.snapshot::text IS DISTINCT FROM OLD.snapshot::text
+                OR NEW.snapshot_sha256 IS DISTINCT FROM OLD.snapshot_sha256
+                OR NEW.informe_storage_key IS DISTINCT FROM OLD.informe_storage_key
+                OR NEW.informe_sha256 IS DISTINCT FROM OLD.informe_sha256
+                OR NEW.informe_bytes IS DISTINCT FROM OLD.informe_bytes
+                OR NEW.fecha_suscripcion IS DISTINCT FROM OLD.fecha_suscripcion
+                OR NEW.errores_deficiencias IS DISTINCT FROM OLD.errores_deficiencias
+                OR NEW.codigo IS DISTINCT FROM OLD.codigo THEN
+                RAISE EXCEPTION 'No se pueden modificar campos congelados de un acta suscrita';
+            END IF;
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+"""
+
+_GOV_HANDOVER_ANNEX_IMMUTABLE = """
+CREATE OR REPLACE FUNCTION kontrol_gov_handover_annex_immutable()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_estado TEXT;
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION 'Los anexos de actas no se pueden truncar';
+    END IF;
+
+    SELECT estado INTO v_estado
+    FROM gov_handover_acts
+    WHERE id = COALESCE(OLD.act_id, NEW.act_id);
+
+    IF TG_OP = 'DELETE' THEN
+        IF v_estado IS DISTINCT FROM 'BORRADOR' THEN
+            RAISE EXCEPTION 'Solo se pueden eliminar anexos en borrador';
+        END IF;
+        RETURN OLD;
+    ELSIF TG_OP = 'UPDATE' THEN
+        IF v_estado IS DISTINCT FROM 'BORRADOR' THEN
+            RAISE EXCEPTION 'Los anexos no se pueden actualizar fuera de borrador';
+        END IF;
+        IF NEW.company_id IS DISTINCT FROM OLD.company_id
+            OR NEW.act_id IS DISTINCT FROM OLD.act_id
+            OR NEW.codigo IS DISTINCT FROM OLD.codigo THEN
+            RAISE EXCEPTION 'Los anexos no pueden cambiar de acta, empresa ni código';
+        END IF;
+        RETURN NEW;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+"""
+
+_GOV_HANDOVER_OBSERVATION_IMMUTABLE = """
+CREATE OR REPLACE FUNCTION kontrol_gov_handover_observation_immutable()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'UPDATE' THEN
+        RAISE EXCEPTION 'Las observaciones de actas no se pueden actualizar';
+    ELSIF TG_OP = 'DELETE' THEN
+        RAISE EXCEPTION 'Las observaciones de actas no se pueden eliminar';
+    ELSIF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION 'Las observaciones de actas no se pueden truncar';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+"""
+
+event.listen(
+    GovernmentHandoverAct.__table__,
+    "after_create",
+    DDL(_GOV_HANDOVER_ACT_IMMUTABLE).execute_if(dialect="postgresql"),
+)
+
+for _hand_act_action, _hand_act_momento in (
+    ("update", "BEFORE UPDATE"),
+    ("delete", "BEFORE DELETE"),
+    ("truncate", "BEFORE TRUNCATE"),
+):
+    _hand_act_trigger = f"""
+    CREATE TRIGGER trg_gov_handover_acts_immutable_{_hand_act_action}
+    {_hand_act_momento} ON gov_handover_acts
+    FOR EACH {"ROW" if _hand_act_action != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_handover_act_immutable();
+    """
+    event.listen(
+        GovernmentHandoverAct.__table__,
+        "after_create",
+        DDL(_hand_act_trigger).execute_if(dialect="postgresql"),
+    )
+
+event.listen(
+    GovernmentHandoverAnnex.__table__,
+    "after_create",
+    DDL(_GOV_HANDOVER_ANNEX_IMMUTABLE).execute_if(dialect="postgresql"),
+)
+
+for _hand_annex_action, _hand_annex_momento in (
+    ("update", "BEFORE UPDATE"),
+    ("delete", "BEFORE DELETE"),
+    ("truncate", "BEFORE TRUNCATE"),
+):
+    _hand_annex_trigger = f"""
+    CREATE TRIGGER trg_gov_handover_annexes_immutable_{_hand_annex_action}
+    {_hand_annex_momento} ON gov_handover_annexes
+    FOR EACH {"ROW" if _hand_annex_action != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_handover_annex_immutable();
+    """
+    event.listen(
+        GovernmentHandoverAnnex.__table__,
+        "after_create",
+        DDL(_hand_annex_trigger).execute_if(dialect="postgresql"),
+    )
+
+event.listen(
+    GovernmentHandoverObservation.__table__,
+    "after_create",
+    DDL(_GOV_HANDOVER_OBSERVATION_IMMUTABLE).execute_if(dialect="postgresql"),
+)
+
+for _hand_obs_action, _hand_obs_momento in (
+    ("update", "BEFORE UPDATE"),
+    ("delete", "BEFORE DELETE"),
+    ("truncate", "BEFORE TRUNCATE"),
+):
+    _hand_obs_trigger = f"""
+    CREATE TRIGGER trg_gov_handover_observations_immutable_{_hand_obs_action}
+    {_hand_obs_momento} ON gov_handover_observations
+    FOR EACH {"ROW" if _hand_obs_action != "truncate" else "STATEMENT"} EXECUTE FUNCTION kontrol_gov_handover_observation_immutable();
+    """
+    event.listen(
+        GovernmentHandoverObservation.__table__,
+        "after_create",
+        DDL(_hand_obs_trigger).execute_if(dialect="postgresql"),
+    )
