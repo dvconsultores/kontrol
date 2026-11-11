@@ -79,4 +79,15 @@
 - **Autoría:** todo el código y todas las pruebas son de DeepSeek.
 - **Incidente del puente:** ver DEEPSEEK_BRIDGE_INCIDENT_CTL05.md. Tres intentos no llegaron a DeepSeek y no consumieron llamadas.
 
-`OWNER_UAT_READY = YES · OWNER_UAT_ACCESSIBLE = YES (tras levantar la pila) · OWNER_ACCEPTED = NO`
+## Publicación y UAT
+
+- **Commits en `develop`:**
+  - `3853e19` (producto);
+  - `65ed840` (humo UAT: la capacidad `gobierno_rendicion:view` del usuario de consulta; el primer humo falló por esa omisión del encargo C12).
+- **Pila UAT `wt-65ed840`:**
+  - frontend http://localhost:15573/, backend en 18400, central en 18410;
+  - parada con el fichero `parar-65ed840`;
+  - HUMO-UAT-01 1/1 en verde, con «Expedientes de cuenta».
+- **Pilas UAT anteriores:** las de PROC-08 (15273), PROC-10 (15373) y CTL-03 (15473) se detuvieron al cerrarse la sesión anterior, no por este ciclo. Pueden relanzarse con sus scripts `lanzar_<hash>.sh`.
+
+`OWNER_UAT_READY = YES · OWNER_UAT_ACCESSIBLE = YES · OWNER_ACCEPTED = NO`
