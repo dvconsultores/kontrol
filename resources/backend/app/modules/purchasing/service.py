@@ -673,6 +673,32 @@ def confirmar_arribo(db: Session, *, company_id: str, receipt_id: str, arrival_a
     return receipt
 
 
+def programar_descarga(db: Session, *, company_id: str, receipt_id: str,
+                       unloading_scheduled_at: datetime | None,
+                       actor: str | None = None) -> GoodsReceipt:
+    """Etapa 2 del DOCX §2: programar la descarga y recepción.
+
+    Una recepción abierta puede fijar, cambiar o limpiar la fecha prevista
+    de descarga. El import file necesita esta acción para orquestar la logística.
+    """
+    receipt = db.execute(select(GoodsReceipt).where(GoodsReceipt.id == receipt_id)
+                         .with_for_update().execution_options(populate_existing=True)).scalars().first()
+    if receipt is None or str(receipt.company_id) != str(company_id):
+        raise NotFoundError(code="RECEIPT_NOT_FOUND", message="Recepción no encontrada")
+    if receipt.status not in ("DRAFT", "CONFIRMED"):
+        raise ConflictError(code="RECEIPT_NOT_OPEN",
+                            message="Solo una recepción abierta admite programar la descarga.")
+    anterior = receipt.unloading_scheduled_at
+    receipt.unloading_scheduled_at = unloading_scheduled_at
+    receipt.updated_at = datetime.now(UTC)
+    db.flush()
+    _audit(db, action="RECEIPT_UNLOADING_SCHEDULED", entity_type="GoodsReceipt",
+           entity_id=str(receipt.id), company_id=company_id, actor=actor,
+           before={"unloading_scheduled_at": anterior.isoformat() if anterior else None},
+           after={"unloading_scheduled_at": unloading_scheduled_at.isoformat() if unloading_scheduled_at else None})
+    return receipt
+
+
 def registrar_inspeccion(db: Session, *, company_id: str, receipt_id: str,
                          packing_list_match: bool | None = None, supplier_invoice_match: bool | None = None,
                          order_match: bool | None = None, documentation_match: bool | None = None,

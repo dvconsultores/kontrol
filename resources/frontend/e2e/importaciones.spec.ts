@@ -342,6 +342,7 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   // 1. Crear recepción
   await page.locator("#recepcion").getByLabel(/^Código/).fill(`REC-${sufijo}`);
   await page.locator("#recepcion").getByLabel(/^Almacén/).selectOption(almacen);
+  await page.locator("#recepcion").getByLabel(/^Descarga programada/).fill("2026-12-15T10:30");
   await page.locator("#recepcion").getByRole("button", { name: "Crear recepción" }).click();
   await expect(page.getByText("Esperando arribo")).toBeVisible();
 
@@ -350,9 +351,47 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   await page.locator("#arribo").getByRole("button", { name: `Confirmar arribo de REC-${sufijo}` }).click();
   await expect(page.getByText("En recepción")).toBeVisible();
 
+  // 2.5. Programar descarga
+  const tarjetaArribo = page.locator("#arribo");
+  await expect(tarjetaArribo).toContainText("Descarga programada:");
+  await tarjetaArribo.getByLabel(/Nueva descarga programada/).fill("2026-12-16T08:15");
+  await tarjetaArribo.getByRole("button", { name: `Programar descarga de REC-${sufijo}` }).click();
+
+  const idImport = new URL(page.url()).pathname.split("/").pop()!;
+  await expect
+    .poll(async () => {
+      const recDescarga = (await (
+        await fetch(`${API}/importaciones/${idImport}`, {
+          headers: authHeaders(companyId),
+        })
+      ).json()) as { logistics: { receipts: Array<{ code: string; unloading_scheduled_at: string | null }> } };
+      const recepcionDescarga = recDescarga.logistics.receipts.find((r) => r.code === `REC-${sufijo}`);
+      return recepcionDescarga?.unloading_scheduled_at
+        ? new Date(recepcionDescarga.unloading_scheduled_at).toISOString()
+        : null;
+    })
+    .toBe("2026-12-16T12:15:00.000Z");
+
+  await expect(tarjetaArribo).toContainText("16/12/2026");
+
+  const textoDescarga = await tarjetaArribo
+    .getByText(/Descarga programada:/)
+    .first()
+    .locator("..")
+    .innerText();
+  expect(textoDescarga).toContain("16/12/2026");
+  expect(textoDescarga).not.toContain("Sin programar");
+  await page.reload();
+  await expect(page.locator("#arribo")).toContainText(
+    textoDescarga.replace("Descarga programada:", "").trim()
+  );
+
   // 3. Abrir recepción y completar calidad
   await page.getByRole("link", { name: `Abrir recepción REC-${sufijo}` }).click();
   await page.getByRole("link", { name: "Volver al expediente" }).waitFor();
+  await expect(page.locator("tr", { hasText: `REC-${sufijo}` })).toContainText(
+    textoDescarga.replace("Descarga programada:", "").trim()
+  );
   await page.getByLabel(/Línea de la orden/).selectOption({ index: 1 });
   await page.getByLabel(/^Recibido/).fill("10");
   await page.getByRole("button", { name: "Registrar", exact: true }).click();

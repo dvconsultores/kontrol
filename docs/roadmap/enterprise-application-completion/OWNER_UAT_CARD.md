@@ -268,3 +268,19 @@ Necesita dos usuarios de la empresa: el suyo y un segundo usuario con permisos d
 **Límites:**
 - La regla solo separa a quien recibe de quien cuenta. Quien confirma puede ser cualquiera de los dos, porque así lo decidió usted.
 - Las recepciones ya confirmadas no se revisan cuando cambia la política.
+
+## Programar la descarga desde la importación (§2)
+
+Comprueba que la descarga se programa desde el propio expediente y que Recepciones ve exactamente la misma fecha.
+
+Necesita un expediente de importación ya despachado y con su orden, como en los pasos anteriores de esta tarjeta.
+
+102. En Compras → Importaciones, abra el expediente. En «Recepción», al crearla, rellene «Descarga programada» con una fecha y hora (hora de Caracas) y pulse «Crear recepción».
+103. En la sección «Arribo», la tarjeta de la recepción muestra «Descarga programada:» con la fecha y la hora que eligió, en formato legible.
+104. Confirme el arribo. Después, en «Nueva descarga programada», elija otra fecha y hora y pulse «Programar descarga de <código>». La tarjeta muestra la nueva programación. Si pulsa sin elegir fecha, aparece «Indique la fecha y la hora de la descarga.».
+105. Recargue la página: la programación sigue ahí.
+106. Pulse «Abrir recepción <código>». En Compras → Recepciones, la columna «Descarga programada» de esa recepción muestra exactamente la misma fecha y hora.
+107. Siga con la recepción como en los pasos anteriores. Cuando la recepción deja de estar abierta (enviada a calidad o aceptada), la acción de programar desaparece.
+
+**Límites:**
+- Se programa la fecha y la hora, que es lo que pide el proceso. No se registran muelle, ventana horaria ni responsable.

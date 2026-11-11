@@ -124,6 +124,13 @@ class ArrivalBody(BaseModel):
     packages_received: int | None = Field(default=None, ge=0)
 
 
+class UnloadingScheduleBody(BaseModel):
+    """Etapa 2: programar la descarga y recepción."""
+    model_config = ConfigDict(extra="forbid")
+
+    unloading_scheduled_at: InstanteDeEntrada | None = None
+
+
 class InspectionBody(BaseModel):
     """Etapas 4, 5 y 6: comparación, inspección visual y bultos contados."""
     model_config = ConfigDict(extra="forbid")
@@ -824,6 +831,20 @@ def confirm_arrival(receipt_id: str, body: ArrivalBody, db: Session = Depends(ge
     receipt = ap_service.confirmar_arribo(db, company_id=ctx.company_id, receipt_id=receipt_id,
                                           arrival_at=body.arrival_at, packages_received=body.packages_received,
                                           actor=str(actor.id))
+    db.commit()
+    db.refresh(receipt)
+    return _receipt_dict(db, receipt)
+
+
+@router.post("/receipts/{receipt_id}/unloading-schedule", dependencies=[Depends(require_write_allowed)])
+def schedule_unloading(receipt_id: str, body: UnloadingScheduleBody, db: Session = Depends(get_db),
+                       actor: User = Depends(require_permission("compras", "create")),
+                       ctx: CompanyContext = Depends(get_company_context)):
+    """Etapa 2: programar la descarga y recepción."""
+    _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    receipt = ap_service.programar_descarga(db, company_id=ctx.company_id, receipt_id=receipt_id,
+                                            unloading_scheduled_at=body.unloading_scheduled_at,
+                                            actor=str(actor.id))
     db.commit()
     db.refresh(receipt)
     return _receipt_dict(db, receipt)

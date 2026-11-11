@@ -3846,6 +3846,11 @@
       "query": []
     },
     {
+      "method": "POST",
+      "path": "/purchasing/receipts/{receipt_id}/unloading-schedule",
+      "query": []
+    },
+    {
       "method": "GET",
       "path": "/purchasing/requisitions",
       "query": [

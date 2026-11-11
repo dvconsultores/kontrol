@@ -337,6 +337,10 @@ export function RecepcionesPage(): React.JSX.Element {
         return `${r.packages_received ?? "?"} de ${r.packages_declared ?? "?"}`;
       },
     }),
+    columnHelper.accessor("unloading_scheduled_at", {
+      header: "Descarga programada",
+      cell: ({ getValue }) => (getValue() ? formatearInstante(getValue()) : "Sin programar"),
+    }),
     columnHelper.accessor("record_issued_at", {
       header: "Acta",
       cell: ({ getValue }) => fechaDeNegocioDeInstante(getValue()),

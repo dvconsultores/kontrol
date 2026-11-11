@@ -110,6 +110,8 @@ export type RecepcionLogistica = {
   packages_declared: number | null;
   packages_received: number | null;
   record_issued_at: string | null;
+  unloading_scheduled_at: string | null;
+  can_schedule_unloading: boolean;
   can_confirm_arrival: boolean;
 };
 

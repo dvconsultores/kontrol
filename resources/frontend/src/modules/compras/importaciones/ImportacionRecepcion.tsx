@@ -8,7 +8,7 @@ import { FormField } from "@/components/FormField";
 import { TextInput } from "@/components/TextInput";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
-import { formatearInstante } from "@/lib/fecha-de-negocio";
+import { formatearInstante, instanteDesdeHoraDeCaracas } from "@/lib/fecha-de-negocio";
 
 import { ESTADOS_CONFIRMACION, ESTADOS_RECEPCION, type DetalleImportacion } from "./tipos";
 
@@ -26,9 +26,12 @@ export function ImportacionRecepcion({ detalle, onCambios }: Props): React.JSX.E
   const [packingList, setPackingList] = useState("");
   const [factura, setFactura] = useState("");
   const [bultosDeclarados, setBultosDeclarados] = useState("");
+  const [descargaNueva, setDescargaNueva] = useState("");
   const [errorCrear, setErrorCrear] = useState<string | null>(null);
   const [bultosRecibidos, setBultosRecibidos] = useState<Record<string, string>>({});
   const [errorArribo, setErrorArribo] = useState<string | null>(null);
+  const [descargas, setDescargas] = useState<Record<string, string>>({});
+  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
 
   const recibidas = detalle.logistics?.receipts ?? [];
 
@@ -47,12 +50,14 @@ export function ImportacionRecepcion({ detalle, onCambios }: Props): React.JSX.E
           packing_list_ref: packingList.trim() || null,
           supplier_invoice_ref: factura.trim() || null,
           packages_declared: bultosDeclarados ? Number(bultosDeclarados) : null,
+          unloading_scheduled_at: descargaNueva ? instanteDesdeHoraDeCaracas(descargaNueva) : null,
         },
       });
       setCodigo("");
       setPackingList("");
       setFactura("");
       setBultosDeclarados("");
+      setDescargaNueva("");
       onCambios();
     } catch (err) {
       setErrorCrear(err instanceof Error ? err.message : "No se pudo crear la recepción");
@@ -75,6 +80,28 @@ export function ImportacionRecepcion({ detalle, onCambios }: Props): React.JSX.E
     }
   }
 
+  async function programarDescarga(recepcionId: string) {
+    setErrorDescarga(null);
+    const valor = descargas[recepcionId];
+    const instante = valor ? instanteDesdeHoraDeCaracas(valor) : null;
+    if (!valor || !instante) {
+      setErrorDescarga("Indique la fecha y la hora de la descarga.");
+      return;
+    }
+    try {
+      await apiFetch(`/purchasing/receipts/${recepcionId}/unloading-schedule`, {
+        method: "POST",
+        body: {
+          unloading_scheduled_at: instante,
+        },
+      });
+      setDescargas((prev) => ({ ...prev, [recepcionId]: "" }));
+      onCambios();
+    } catch (err) {
+      setErrorDescarga(err instanceof Error ? err.message : "No se pudo programar la descarga");
+    }
+  }
+
   return (
     <>
       <section id="arribo" className="mb-8">
@@ -86,6 +113,11 @@ export function ImportacionRecepcion({ detalle, onCambios }: Props): React.JSX.E
             {errorArribo ? (
               <div role="alert" className="rounded-md border border-danger-200 bg-danger-50 p-3 text-sm text-danger-700">
                 {errorArribo}
+              </div>
+            ) : null}
+            {errorDescarga ? (
+              <div role="alert" className="rounded-md border border-danger-200 bg-danger-50 p-3 text-sm text-danger-700">
+                {errorDescarga}
               </div>
             ) : null}
             {recibidas.map((recepcion) => (
@@ -101,6 +133,12 @@ export function ImportacionRecepcion({ detalle, onCambios }: Props): React.JSX.E
                   <div>
                     <span className="text-text-600">Bultos:</span>{" "}
                     {recepcion.packages_received ?? recepcion.packages_declared ?? "—"}
+                  </div>
+                  <div>
+                    <span className="text-text-600">Descarga programada:</span>{" "}
+                    {recepcion.unloading_scheduled_at
+                      ? formatearInstante(recepcion.unloading_scheduled_at)
+                      : "Sin programar"}
                   </div>
                 </div>
                 {recepcion.can_confirm_arrival ? (
@@ -121,6 +159,27 @@ export function ImportacionRecepcion({ detalle, onCambios }: Props): React.JSX.E
                         onClick={() => confirmarArribo(recepcion.id)}
                       >
                         Confirmar arribo de {recepcion.code}
+                      </AsyncButton>
+                    </div>
+                  </Autorizado>
+                ) : null}
+                {recepcion.can_schedule_unloading ? (
+                  <Autorizado operacion={["POST", `/purchasing/receipts/${recepcion.id}/unloading-schedule`]}>
+                    <div className="mt-4 flex items-end gap-3">
+                      <FormField label="Nueva descarga programada">
+                        <TextInput
+                          type="datetime-local"
+                          value={descargas[recepcion.id] ?? ""}
+                          onChange={(e) =>
+                            setDescargas((prev) => ({ ...prev, [recepcion.id]: e.target.value }))
+                          }
+                        />
+                      </FormField>
+                      <AsyncButton
+                        type="button"
+                        onClick={() => programarDescarga(recepcion.id)}
+                      >
+                        Programar descarga de {recepcion.code}
                       </AsyncButton>
                     </div>
                   </Autorizado>
@@ -200,6 +259,13 @@ export function ImportacionRecepcion({ detalle, onCambios }: Props): React.JSX.E
                       </option>
                     ))}
                   </select>
+                </FormField>
+                <FormField label="Descarga programada" help="Hora de Caracas">
+                  <TextInput
+                    type="datetime-local"
+                    value={descargaNueva}
+                    onChange={(e) => setDescargaNueva(e.target.value)}
+                  />
                 </FormField>
                 <FormField label="Packing list">
                   <TextInput

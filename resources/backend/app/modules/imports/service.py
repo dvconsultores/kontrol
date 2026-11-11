@@ -1301,6 +1301,8 @@ def _logistics_payload(
                 "packages_received": receipt.packages_received,
                 "record_issued_at": receipt.record_issued_at.isoformat() if receipt.record_issued_at else None,
                 "can_confirm_arrival": receipt.status in ("DRAFT", "CONFIRMED") and receipt.arrival_at is None,
+                "unloading_scheduled_at": receipt.unloading_scheduled_at.isoformat() if receipt.unloading_scheduled_at else None,
+                "can_schedule_unloading": receipt.status in ("DRAFT", "CONFIRMED"),
             }
             for receipt in receipts
         ],

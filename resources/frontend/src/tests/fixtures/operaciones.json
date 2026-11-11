@@ -5333,6 +5333,14 @@
       "scope": "COMPANY"
     },
     {
+      "method": "POST",
+      "path": "/api/v1/purchasing/receipts/{receipt_id}/unloading-schedule",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/purchasing/requisitions",
       "capabilities": [

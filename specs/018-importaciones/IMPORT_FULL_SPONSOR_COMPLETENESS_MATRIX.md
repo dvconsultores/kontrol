@@ -10,8 +10,8 @@
 
 | Estado | Requisitos |
 |---|---|
-| COMPLETE | 37 |
-| PARTIAL | 4 |
+| COMPLETE | 38 |
+| PARTIAL | 3 |
 | EXISTS_NOT_REVALIDATED | 0 |
 | NOT_BUILT | 0 |
 | SPONSOR_VALIDATION_REQUIRED | 1 |
@@ -25,6 +25,7 @@ La proporción no mide el avance real: las filas no pesan igual. Hechos el 2026-
 - el 2026-11-11, la revalidación de las seis filas EXISTS_NOT_REVALIDATED en Chrome sobre PostgreSQL: IMP-04, el acta y la autorización de ajustes quedan COMPLETE; los estados §3 y el conteo independiente quedan PARTIAL con su brecha exacta. Evidencia: `specs/018-importaciones/evidence/revalidation/EVIDENCE.md`;
 - el 2026-11-11, la selección y confirmación del proveedor (IMP-05): comparar ofertas, adjudicar con motivo y emitir la orden desde la cotización. Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/quote-award/EVIDENCE.md`.
 - el 2026-11-11, el conteo independiente en la recepción: quien recibe no cuenta, activo por defecto y desactivable de forma auditada (decisión de la dueña). Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/independent-count/EVIDENCE.md`.
+- el 2026-11-11, programar la descarga desde el expediente: se programa y se reprograma la descarga de la recepción, y Recepciones muestra el mismo valor. Evidencia: `specs/018-importaciones/evidence/unloading-schedule/EVIDENCE.md`.
 
 Las zonas A a E siguen pendientes de validar por el sponsor.
 
@@ -58,7 +59,7 @@ Las zonas A a E siguen pendientes de validar por el sponsor.
 | Aplicación de landed cost a la capa | B-032; decisiones de la dueña | Costos | /compras/importaciones/{id} | SI | SI | /apply; /cost-applications/{id}/reverse | compras:approve | Motor de costos (Spec 003), valoración | 16 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Salida posterior FIFO/AVERAGE usa el costo efectivo; doble aplicación bloqueada en base; consumo bloquea |
 | Moneda de la capa de costo | Documento Maestro | Costos | /compras/importaciones/{id} | SI | SI | /importaciones/{id}/costs | compras | Inventario | E2E: capa USD | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §2 Confirmar arribo | DOCX §2 | Recepción | /compras/importaciones/{id} | SI | SI | /purchasing/receipts/{id}/arrival | compras | Spec 019 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
-| §2 Programar descarga | DOCX §2 | Recepción | /compras/recepciones | SI | SI | /purchasing/receipts | compras | Spec 019 | Fuera de la E2E | NO | NO | PARTIAL | El formulario del expediente no lo pide; está en Recepciones |
+| §2 Programar descarga | DOCX §2 | Recepción | Compras → Importaciones → expediente (Arribo: «Programar descarga»; alta de la recepción); Compras → Recepciones (columna «Descarga programada») | SI | SI (sin migración: `unloading_scheduled_at`) | /purchasing/receipts/{id}/unloading-schedule; /importaciones/{id}/receipts | compras:create (programar); compras:view | Spec 019 (autoridad del dato) | test_spec019_unloading_schedule; E2E importaciones.spec (programar al crear, reprogramar, UTC sin desfase, persistencia, el mismo valor en Recepciones) | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Delta `spec018-unloading-schedule-delta.md`: Importaciones orquesta y Recepciones conserva la autoridad |
 | §2 Recibir, comparar e inspeccionar | DOCX §2 | Recepción | /compras/recepciones | SI | SI | /purchasing/receipts | compras | Spec 019 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §2 Registrar diferencias, evidencia y escalar | DOCX §2 | Recepción | /compras/incidencias | SI | SI | /purchasing/incidents | compras | Spec 020 | E2E: registrar, escalar y resolver | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Adjuntar evidencia no se recorre en la E2E |
 | §2 Acta o registro de recepción | DOCX §2 | Recepción | Compras → Recepciones (columna «Acta») | SI | SI | /purchasing/receipts | compras:quality | Spec 019 | Sonda Chrome/PostgreSQL 2026-11-11: tras aceptar, «Acta» muestra la fecha; `record_issued_at` y `record_issued_by` guardados | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | El acta es el registro fechado con responsable (Spec 019); no hay documento imprimible |
