@@ -14,18 +14,21 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import UTC, datetime, timedelta
-from decimal import Decimal
+from datetime import UTC, date, datetime, timedelta
+from decimal import ROUND_HALF_EVEN, Decimal
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, KontrolError, NotFoundError
+from app.core.integrity import es_violacion_unica
 from app.modules.approvals import integration as approvals_integration
 from app.modules.inventory import service as inv_service
 from app.modules.inventory import states as inv_states
 from app.modules.master_data import uom as uom_engine
+from app.modules.master_data.models import Party
 from app.modules.organization.models import Warehouse
 from app.modules.organization.service import warehouse_belongs_to
 from app.modules.purchasing.models import (
@@ -226,6 +229,135 @@ def _require_product(db: Session, company_id: str, product_id: str) -> None:
         raise NotFoundError(code="PRODUCT_NOT_FOUND", message="Producto no encontrado")
 
 
+def compare_quotes(db: Session, *, company_id: str, product_id: str) -> dict:
+    """Compara cotizaciones activas/adjudicadas/convertidas de un producto."""
+    _require_product(db, company_id, product_id)
+
+    stmt = (
+        select(QuoteLine, SupplierQuote, Party)
+        .join(SupplierQuote, QuoteLine.quote_id == SupplierQuote.id)
+        .join(Party, SupplierQuote.supplier_id == Party.id)
+        .where(
+            QuoteLine.product_id == product_id,
+            SupplierQuote.company_id == company_id,
+            SupplierQuote.status.in_(["ACTIVE", "AWARDED", "CONVERTED"]),
+        )
+    )
+    rows = db.execute(stmt).all()
+    items = []
+    for line, quote, party in rows:
+        qty = Decimal(str(line.quantity))
+        unit = Decimal(str(line.unit_price)).quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN)
+        line_amount = (qty * unit).quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN)
+        discount = Decimal(str(line.discount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN)
+        expired = _quote_expired(quote)
+        items.append({
+            "quote_id": quote.id,
+            "quote_code": quote.code,
+            "quote_status": quote.status,
+            "supplier_id": quote.supplier_id,
+            "supplier_name": party.name,
+            "currency": quote.currency,
+            "quantity": str(qty),
+            "unit_price": str(unit),
+            "discount": str(discount),
+            "line_amount": str(line_amount),
+            "delivery_days": line.delivery_days,
+            "validity_until": quote.validity_until.isoformat() if quote.validity_until else None,
+            "expired": expired,
+            "terms": quote.terms,
+            "can_award": quote.status == "ACTIVE" and not expired,
+        })
+
+    items.sort(key=lambda x: (
+        x["currency"],
+        Decimal(x["unit_price"]),
+        (x["delivery_days"] is None, x["delivery_days"] if x["delivery_days"] is not None else 0),
+        x["quote_code"],
+    ))
+    return {"product_id": product_id, "items": items}
+
+
+def award_quote(db: Session, *, company_id: str, quote_id: str, reason: str,
+                actor: str | None = None) -> SupplierQuote:
+    reason = reason.strip()
+    if not reason:
+        raise KontrolError(code="REASON_REQUIRED", message="El motivo de adjudicación es obligatorio", status_code=422)
+
+    quote = _lock_quote(db, company_id, quote_id)
+
+    if quote.status in ("AWARDED", "CONVERTED"):
+        raise ConflictError(code="QUOTE_ALREADY_AWARDED", message="La cotización ya fue adjudicada")
+    if quote.status != "ACTIVE":
+        raise ConflictError(code="QUOTE_NOT_AWARDABLE", message="La cotización no puede adjudicarse en su estado actual")
+    if _quote_expired(quote):
+        raise ConflictError(code="QUOTE_EXPIRED", message="La cotización venció y no puede adjudicarse")
+
+    lines = db.execute(select(QuoteLine).where(QuoteLine.quote_id == quote.id)).scalars().all()
+    if not lines:
+        raise ConflictError(code="QUOTE_EMPTY", message="Una cotización sin líneas no puede adjudicarse")
+
+    _require_party(db, company_id, quote.supplier_id, role="PROVEEDOR", require_active=True)
+
+    quote.status = "AWARDED"
+    quote.awarded_at = datetime.now(UTC)
+    quote.awarded_by = actor
+    quote.award_reason = reason
+    _audit(db, action="PURCHASE_QUOTE_AWARDED", entity_type="SupplierQuote",
+           entity_id=str(quote.id), company_id=company_id, actor=actor,
+           after={"status": quote.status, "supplier_id": quote.supplier_id, "reason": quote.award_reason})
+    db.flush()
+    return quote
+
+
+def order_from_quote(db: Session, *, company_id: str, quote_id: str, code: str,
+                     actor: str | None = None) -> tuple[PurchaseOrder, bool]:
+    code = code.strip()
+    if not code:
+        raise KontrolError(code="CODE_REQUIRED", message="El código es obligatorio", status_code=422)
+
+    quote = _lock_quote(db, company_id, quote_id)
+
+    existing = _existing_order_for_quote(db, str(quote.id))
+    if existing is not None:
+        return existing, False
+
+    if quote.status != "AWARDED":
+        raise ConflictError(code="QUOTE_NOT_AWARDED", message="Solo se puede convertir una cotización adjudicada")
+    if _quote_expired(quote):
+        raise ConflictError(code="QUOTE_EXPIRED", message="La cotización venció y no puede convertirse.")
+
+    lines = db.execute(select(QuoteLine).where(QuoteLine.quote_id == quote.id)).scalars().all()
+    if not lines:
+        raise ConflictError(code="QUOTE_EMPTY", message="Una cotización sin líneas no produce una orden")
+
+    try:
+        with db.begin_nested():
+            order = create_order(db, company_id=company_id, code=code, supplier_id=quote.supplier_id,
+                                 terms=quote.terms, currency=quote.currency, actor=actor)
+            order.quote_id = str(quote.id)
+            db.flush()
+    except IntegrityError as error:
+        if not es_violacion_unica(error, "uq_purchase_orders_quote_id"):
+            raise
+        existente = _existing_order_for_quote(db, str(quote.id))
+        if existente is None:
+            raise
+        return existente, False
+
+    for line in lines:
+        add_order_line(db, order_id=str(order.id), product_id=line.product_id,
+                       quantity_ordered=line.quantity, unit_price=line.unit_price,
+                       discount=line.discount, tax_ref=line.tax_ref, needs_inventory=True)
+
+    quote.status = "CONVERTED"
+    _audit(db, action="PURCHASE_QUOTE_CONVERTED", entity_type="SupplierQuote",
+           entity_id=str(quote.id), company_id=company_id, actor=actor,
+           after={"order_id": str(order.id), "status": quote.status})
+    db.flush()
+    return order, True
+
+
 def _require_order(db: Session, company_id: str, order_id: str) -> PurchaseOrder:
     order = db.get(PurchaseOrder, order_id)
     if not order or order.company_id != company_id:
@@ -356,6 +488,31 @@ def _require_quote(db: Session, company_id: str, quote_id: str) -> SupplierQuote
     return quote
 
 
+def _quote_expired(quote: SupplierQuote, hoy: date | None = None) -> bool:
+    """Nula significa **sin vencimiento**, no «vencida»."""
+    if quote.validity_until is None:
+        return False
+    return quote.validity_until < (hoy or hoy_de_negocio())
+
+
+def _lock_quote(db: Session, company_id: str, quote_id: str) -> SupplierQuote:
+    quote = db.execute(
+        select(SupplierQuote)
+        .where(SupplierQuote.id == quote_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).scalars().first()
+    if not quote or quote.company_id != company_id:
+        raise NotFoundError(code="QUOTE_NOT_FOUND", message="Cotización de compra no encontrada")
+    return quote
+
+
+def _existing_order_for_quote(db: Session, quote_id: str) -> PurchaseOrder | None:
+    return db.execute(
+        select(PurchaseOrder).where(PurchaseOrder.quote_id == quote_id)
+    ).scalars().first()
+
+
 def _require_receipt(db: Session, company_id: str, receipt_id: str) -> GoodsReceipt:
     receipt = db.get(GoodsReceipt, receipt_id)
     if not receipt or receipt.company_id != company_id:
@@ -396,7 +553,7 @@ def create_order(db: Session, *, company_id: str, code: str, supplier_id: str, t
     return order
 
 
-def add_order_line(db: Session, *, order_id: str, product_id: str, quantity_ordered: float, unit_price: float,
+def add_order_line(db: Session, *, order_id: str, product_id: str, quantity_ordered: float | Decimal, unit_price: float,
                    discount: float = 0.0, tax_ref: str | None = None, needs_inventory: bool = True,
                    snapshot: str | None = None) -> PurchaseOrderLine:
     if quantity_ordered <= 0:
@@ -1874,10 +2031,33 @@ def order_dict(db: Session, order: PurchaseOrder) -> dict:
     return {"id": order.id, "code": order.code, "supplier_id": order.supplier_id, "terms": order.terms,
             "expected_date": order.expected_date.isoformat() if order.expected_date else None,
             "currency": order.currency, "status": order.status, "approval_ref": order.approval_ref,
+            "quote_id": order.quote_id,
             "allowed_actions": order_allowed_actions(order),
             "lines": [{"id": line.id, "product_id": line.product_id, "quantity_ordered": line.quantity_ordered,
                        "quantity_received": line.quantity_received, "unit_price": line.unit_price,
                        "needs_inventory": line.needs_inventory} for line in lines]}
+
+
+def quote_dict(db: Session, quote: SupplierQuote) -> dict:
+    lines = db.execute(select(QuoteLine).where(QuoteLine.quote_id == quote.id)).scalars().all()
+    order = _existing_order_for_quote(db, str(quote.id))
+    party = db.get(Party, quote.supplier_id)
+    return {
+        "id": quote.id,
+        "code": quote.code,
+        "supplier_id": quote.supplier_id,
+        "supplier_name": party.name if party else None,
+        "currency": quote.currency,
+        "validity_until": quote.validity_until.isoformat() if quote.validity_until else None,
+        "status": quote.status,
+        "awarded_at": quote.awarded_at.isoformat() if quote.awarded_at else None,
+        "awarded_by": quote.awarded_by,
+        "award_reason": quote.award_reason,
+        "order_id": order.id if order else None,
+        "expired": _quote_expired(quote),
+        "line_count": len(lines),
+        "terms": quote.terms,
+    }
 
 
 def payment_dict(payment: Payment) -> dict:

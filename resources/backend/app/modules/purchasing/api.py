@@ -77,6 +77,14 @@ class QuoteLineCreate(BaseModel):
     tax_ref: str | None = None
 
 
+class AwardBody(BaseModel):
+    reason: str = Field(min_length=1, max_length=1000)
+
+
+class QuoteOrderBody(BaseModel):
+    code: str = Field(min_length=1, max_length=64)
+
+
 class OrderCreate(BaseModel):
     code: str = Field(min_length=1, max_length=64)
     supplier_id: str
@@ -335,15 +343,43 @@ def transition_requisition(req_id: str, body: TransitionBody, db: Session = Depe
 # --------------------------------------------------------------------------- #
 # Cotizaciones
 # --------------------------------------------------------------------------- #
+@router.get("/quotes/comparison")
+def compare_quotes(product_id: str = Query(...), db: Session = Depends(get_db),
+                   user: User = Depends(require_permission("compras", "view")),
+                   ctx: CompanyContext = Depends(get_company_context)):
+    return ap_service.compare_quotes(db, company_id=ctx.company_id, product_id=product_id)
+
+
 @router.get("/quotes")
 def list_quotes(supplier_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(require_permission("compras", "view")), ctx: CompanyContext = Depends(get_company_context)):
     query = select(SupplierQuote).where(SupplierQuote.company_id == ctx.company_id)
     if supplier_id:
         query = query.where(SupplierQuote.supplier_id == supplier_id)
     items = db.execute(query.order_by(SupplierQuote.created_at.desc())).scalars().all()
-    return {"items": [{"id": q.id, "code": q.code, "supplier_id": q.supplier_id, "currency": q.currency,
-                       "validity_until": q.validity_until.isoformat() if q.validity_until else None, "status": q.status} for q in items],
+    return {"items": [ap_service.quote_dict(db, q) for q in items],
             "total": len(items), "page": 1, "page_size": len(items) or 1}
+
+
+@router.post("/quotes/{quote_id}/award", dependencies=[Depends(require_write_allowed)])
+def award_quote(quote_id: str, body: AwardBody, db: Session = Depends(get_db),
+                actor: User = Depends(require_permission("compras", "approve")),
+                ctx: CompanyContext = Depends(get_company_context)):
+    quote = ap_service.award_quote(db, company_id=ctx.company_id, quote_id=quote_id,
+                                   reason=body.reason, actor=str(actor.id))
+    db.commit()
+    db.refresh(quote)
+    return ap_service.quote_dict(db, quote)
+
+
+@router.post("/quotes/{quote_id}/order", dependencies=[Depends(require_write_allowed)])
+def order_from_quote(quote_id: str, body: QuoteOrderBody, db: Session = Depends(get_db),
+                     actor: User = Depends(require_permission("compras", "create")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    order, created = ap_service.order_from_quote(db, company_id=ctx.company_id, quote_id=quote_id,
+                                                 code=body.code, actor=str(actor.id))
+    db.commit()
+    db.refresh(order)
+    return {"order": ap_service.order_dict(db, order), "created": created}
 
 
 @router.post("/quotes", dependencies=[Depends(require_write_allowed)])

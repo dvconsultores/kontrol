@@ -820,9 +820,40 @@ export interface SupplierQuoteSummary {
   id: string;
   code: string;
   supplier_id: string;
+  supplier_name: string | null;
   currency: string;
   validity_until: string | null;
   status: string;
+  awarded_at: string | null;
+  awarded_by: string | null;
+  award_reason: string | null;
+  order_id: string | null;
+  expired: boolean;
+  line_count: number;
+  terms: string | null;
+}
+
+export interface QuoteComparisonItem {
+  quote_id: string;
+  quote_code: string;
+  quote_status: string;
+  supplier_id: string;
+  supplier_name: string | null;
+  currency: string;
+  quantity: string;
+  unit_price: string;
+  discount: string;
+  line_amount: string;
+  delivery_days: number | null;
+  validity_until: string | null;
+  expired: boolean;
+  terms: string | null;
+  can_award: boolean;
+}
+
+export interface QuoteComparison {
+  product_id: string;
+  items: QuoteComparisonItem[];
 }
 
 export interface ShipmentSummary {

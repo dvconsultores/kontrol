@@ -387,6 +387,8 @@ _PARTE_B: tuple[AuditActionSpec, ...] = (
     _e("PICKING_PLAN_INVALIDATED", "PickList", "sales", "005", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("order_returned_to_queue", "status"), "Plan de picking invalidado", emission="DYNAMIC", emitted_by="sales/service.py:_cerrar_plan"),
     _e("PICK_RECORDED", "PickList", "sales", "005", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("difference", "discrepancy_kind", "line_id", "location_id", "picked_base_quantity", "planned_base_quantity"), "Extracción registrada"),
     _e("PURCHASE_ORDER_TRANSITIONED", "PurchaseOrder", "purchasing", "004", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("target",), "Cambio de estado de orden de compra"),
+    _e("PURCHASE_QUOTE_AWARDED", "SupplierQuote", "purchasing", "004", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("reason", "status", "supplier_id"), "Cotización de compra adjudicada"),
+    _e("PURCHASE_QUOTE_CONVERTED", "SupplierQuote", "purchasing", "004", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("order_id", "status"), "Cotización de compra convertida en orden"),
     _e("PURCHASE_REQUISITION_TRANSITIONED", "PurchaseRequisition", "purchasing", "004", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("target",), "Cambio de estado de requisición"),
     _e("RECEIPT_ACCEPTED", "GoodsReceipt", "purchasing", "004", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("arrival_at", "lines", "order_id", "packages_declared", "packages_received", "record_issued_at", "status", "warehouse_id"), "Recepción aceptada"),
     _e("RECEIPT_ARRIVAL_CONFIRMED", "GoodsReceipt", "purchasing", "004", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("arrival_at", "packages_declared", "packages_received"), "Arribo confirmado"),

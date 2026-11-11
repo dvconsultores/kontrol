@@ -86,6 +86,9 @@ class SupplierQuote(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     terms: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
+    awarded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    awarded_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    award_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class QuoteLine(UUIDMixin, TimestampMixin, Base):
@@ -116,6 +119,7 @@ class QuoteLine(UUIDMixin, TimestampMixin, Base):
 class PurchaseOrder(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     __tablename__ = "purchase_orders"
     __scope__ = Scope.COMPANY
+    __table_args__ = (Index("uq_purchase_orders_quote_id", "quote_id", unique=True),)
 
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
     supplier_id: Mapped[str] = mapped_column(ForeignKey("parties.id"), nullable=False, index=True)
@@ -124,6 +128,7 @@ class PurchaseOrder(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
     approval_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    quote_id: Mapped[str | None] = mapped_column(ForeignKey("supplier_quotes.id"), nullable=True)
 
 
 class PurchaseOrderLine(UUIDMixin, TimestampMixin, Base):

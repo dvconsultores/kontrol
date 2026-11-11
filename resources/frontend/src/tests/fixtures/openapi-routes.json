@@ -3607,8 +3607,25 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/purchasing/quotes/comparison",
+      "query": [
+        "product_id"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/purchasing/quotes/{quote_id}/award",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/purchasing/quotes/{quote_id}/lines",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/purchasing/quotes/{quote_id}/order",
       "query": []
     },
     {

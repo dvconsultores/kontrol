@@ -233,3 +233,21 @@ Necesita la importación de los pasos anteriores, con un gasto capitalizable apl
 - No se genera un asiento contable de costo de ventas: KONTROL todavía no tiene contabilidad general.
 - Los despachos hechos antes de este cambio siguen dentro de la valoración. Corregirlos es una reparación de datos que necesita la autorización de la dueña (deuda DISPATCH-COST-RELIEF-HISTORICO).
 - Lo que vuelve de una devolución como Disponible recupera el costo de su salida; lo que se reingresa como Rechazado no se valora (deuda RETURN-REJECTED-VALUATION).
+
+## Comparar ofertas y adjudicar el proveedor (IMP-05)
+
+Comprueba que el proveedor de una compra se elige entre ofertas comparadas y que la orden de compra sale de la oferta elegida, sin volver a escribirla.
+
+Necesita un artículo y dos proveedores activos, dados de alta en Maestros.
+
+90. En Compras → Cotizaciones, «Nueva cotización»: cree una cotización para cada proveedor (código, proveedor y, si quiere, «Válida hasta»).
+91. En «Agregar línea», añada a cada cotización el mismo artículo y la misma cantidad, con precios distintos; por ejemplo, 10 unidades a 12 y a 9,50.
+92. En «Comparar ofertas», elija ese artículo en «Artículo a comparar». Aparecen las dos ofertas ordenadas por precio, con el proveedor, la cantidad, el precio, el importe (primero 95.00 y después 120.00), la entrega y la vigencia. KONTROL no elige: solo compara.
+93. Pulse «Adjudicar» en la oferta elegida, escriba el motivo (por ejemplo, «Mejor precio») y confirme. En la tabla de cotizaciones esa queda «Adjudicada», y ya no se puede adjudicar otra vez. Sin motivo no se adjudica.
+94. En la cotización adjudicada pulse «Emitir orden». El código viene propuesto (OC-<código de la cotización>). Confirme y la cotización queda «Orden emitida».
+95. En Compras → Órdenes aparece la orden en borrador, con el proveedor, el precio y la cantidad de la oferta. Desde ahí sigue su camino normal: enviar, aprobar según los niveles (Aprobaciones → Mis aprobaciones) y recibir.
+
+**Límites:**
+- La cotización no queda ligada a la requisición de la que salió (deuda QUOTE-REQUISITION-LINK).
+- La tabla de Órdenes muestra todavía el identificador interno del proveedor y las acciones con su código («submit», «approve»; deuda ORDENES-UI-ETIQUETAS).
+- Una cotización vencida se puede comparar, pero no adjudicar.
