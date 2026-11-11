@@ -168,7 +168,7 @@
 |---|---|---|---|---|---|---|---|
 | CTL-01 Matriz SoD por proceso y detección previa | **SALIÓ DE ESTE CATÁLOGO** (GOV-CTL-01, 2026-11-04) | Todo el proceso: ver `OWNER_UAT_READY_CATALOG.md` | — | — | — | — |
 | CTL-02 Bitácora institucional append-only con actor, autoridad, unidad y correlación | **SALIÓ DE ESTE CATÁLOGO** (GOV-CTL-02, 2026-11-08) | Todo el proceso: ver `OWNER_UAT_READY_CATALOG.md` | — | — | — | — |
-| CTL-03 Administrador técnico sin autoridad funcional | NOT_STARTED (GOV-NORM-N40-01, 2026-11-07) | Nada en Gobierno. Existe un equivalente privado que **no** sirve tal cual: Separación ADMIN de 003 (sin rol de plataforma). | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (10 de 10) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-0, con DoD de producto completa (política §4) |
+| CTL-03 Administrador técnico sin autoridad funcional | **SALIÓ DE ESTE CATÁLOGO** (GOV-CTL-03, 2026-11-11) | Todo el proceso: ver `OWNER_UAT_READY_CATALOG.md` | — | — | — | — | — |
 | CTL-04 Consulta y muestreo read-only del auditor | **SALIÓ DE ESTE CATÁLOGO** (GOV-CTL-04, 2026-11-03) | Todo el proceso: ver `OWNER_UAT_READY_CATALOG.md` | — | — | — | — |
 | CTL-05 Expediente de cuenta y reportes de rendición | NOT_STARTED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-5, con DoD de producto completa (política §4) |
 | CTL-06 Hallazgos y planes de acción correctiva | **SALIÓ DE ESTE CATÁLOGO** (GOV-CTL-06, 2026-11-04) | Todo el proceso: ver `OWNER_UAT_READY_CATALOG.md` | — | — | — | — |
