@@ -367,6 +367,34 @@ class InventoryAdjustment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     conversion_factor_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     base_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     uom_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
+class DispatchCostRelief(UUIDMixin, TimestampMixin, Base):
+    """Alivio de costo del despacho (Spec 035): guarda la porción consumida.
+
+    Una fila por (línea de despacho, capa consumida). Es el testigo
+    reconstruible que permite reincorporar costo en una devolución.
+    """
+
+    __tablename__ = "dispatch_cost_reliefs"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("shipment_line_id", "cost_layer_id",
+                         name="uq_dispatch_relief_shipment_line_layer"),
+    )
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    shipment_id: Mapped[str] = mapped_column(ForeignKey("shipments.id"), nullable=False, index=True)
+    shipment_line_id: Mapped[str] = mapped_column(ForeignKey("shipment_lines.id"), nullable=False, index=True)
+    movement_id: Mapped[str] = mapped_column(ForeignKey("inventory_movements.id"), nullable=False)
+    cost_layer_id: Mapped[str] = mapped_column(ForeignKey("cost_layers.id"), nullable=False)
+    product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False, index=True)
+    warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False, index=True)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    effective_unit_cost: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    total_cost: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
+    method: Mapped[str] = mapped_column(String(32), nullable=False, default="AVERAGE")
+
+
 class CostLayer(UUIDMixin, TimestampMixin, Base):
     """Capa de costo (FR-003-080): recepción/producto/almacén, cantidades y costo."""
 

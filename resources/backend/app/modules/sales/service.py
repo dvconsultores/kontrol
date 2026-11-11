@@ -13,7 +13,7 @@ Invariantes (Constitución P4/P5/P8, DOC-01 §5, DOC-03 §12):
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
-from decimal import Decimal
+from decimal import ROUND_HALF_EVEN, Decimal
 from typing import Any
 
 from sqlalchemy import func, select
@@ -2457,6 +2457,9 @@ def confirm_shipment(db: Session, *, shipment: Shipment, actor: str | None = Non
         raise ConflictError(code="SHIPMENT_NOT_VALIDATED", message="El despacho requiere validación documental.")
     company_id = str(shipment.company_id)
     order = _lock_order(db, company_id, str(shipment.order_id))
+    db.refresh(shipment, with_for_update=True)
+    if shipment.dispatched_at is not None:
+        return shipment
     lines = db.execute(select(ShipmentLine).where(ShipmentLine.shipment_id == shipment.id)).scalars().all()
     if not lines:
         raise ConflictError(code="SHIPMENT_EMPTY", message="El despacho no tiene líneas.")
@@ -2468,18 +2471,38 @@ def confirm_shipment(db: Session, *, shipment: Shipment, actor: str | None = Non
     if plan is None or plan.consolidation_location_id is None:
         raise ConflictError(code="DISPATCH_WITHOUT_PREPARATION",
                             message="El pedido no tiene una preparación consolidada de la que salir.")
+    metodologia: str | None = None
+    divisa: str | None = None
+    total_despacho = Decimal(0)
+    costeado = False
     for line in lines:
         # En cantidad **base**: despachar dos cajas de doce saca veinticuatro
         # unidades, no dos. Y desde `PREPARADO` en el Área de Confirmación, que
         # es donde la Spec 032 dejó la mercancía: descontar de `DISPONIBLE`
         # tocaría una fila que ya no tiene esas unidades.
         salida = _dec(line.base_quantity if line.base_quantity is not None else line.quantity)
-        inv_service.reclassify(
+        movimiento = inv_service.reclassify(
             db, company_id=company_id, warehouse_id=str(shipment.origin_warehouse_id),
             product_id=str(line.product_id), source_state="PREPARADO", target_state="DESPACHADO",
             quantity=salida, location_id=str(plan.consolidation_location_id),
             lot_id=line.lot_id, serial_id=line.serial_id,
             document_ref=f"SHIPMENT:{shipment.id}", actor=actor)
+        total_linea, divisa_linea, metodo = inv_service.relieve_dispatch_cost(
+            db, company_id=company_id, warehouse_id=str(shipment.origin_warehouse_id),
+            product_id=str(line.product_id), quantity=salida, shipment_id=str(shipment.id),
+            shipment_line_id=str(line.id), movement=movimiento)
+        if metodologia is None:
+            metodologia = metodo
+        if divisa is None:
+            divisa = divisa_linea
+        if total_linea is not None:
+            total_despacho += total_linea
+            costeado = True
+        if salida and total_linea is not None:
+            movimiento.unit_cost = float((total_linea / salida).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_EVEN))
+            if divisa_linea:
+                movimiento.currency = divisa_linea
     # La salida física **consume** la reserva (R-D0-03-7): `FULFILLED`, no
     # `RELEASED`. Lo que salió no vuelve al disponible.
     for reservation in inv_service.order_reservations(db, company_id=shipment.company_id, order_id=str(order.id)):
@@ -2494,7 +2517,11 @@ def confirm_shipment(db: Session, *, shipment: Shipment, actor: str | None = Non
     order.updated_at = ahora
     db.flush()
     _audit(db, action="SHIPMENT_CONFIRMED", entity_type="Shipment", entity_id=str(shipment.id),
-           company_id=shipment.company_id, actor=actor, after={"order_id": str(order.id)})
+           company_id=shipment.company_id, actor=actor,
+           after={"order_id": str(order.id), "cost": {
+               "method": metodologia or "NONE",
+               "currency": divisa,
+               "total": str(total_despacho) if costeado else None}})
     return shipment
 
 
@@ -3611,6 +3638,12 @@ def reenter_return(db: Session, *, company_id: str, return_id: str,
             location_id=str(devolucion.location_id), lot_id=linea.lot_id,
             serial_id=linea.serial_id,
             document_ref=f"SALES_RETURN:{devolucion.id}", actor=actor)
+        if linea.disposition == "DISPONIBLE" and devolucion.shipment_id is not None:
+            inv_service.restore_return_cost(
+                db, company_id=company_id, warehouse_id=str(devolucion.warehouse_id),
+                product_id=str(linea.product_id), quantity=aceptada,
+                shipment_id=str(devolucion.shipment_id),
+                return_ref=f"SALES_RETURN:{devolucion.id}")
     ahora = datetime.now(UTC)
     devolucion.status = "CLOSED"
     devolucion.reentered_at = ahora

@@ -431,7 +431,7 @@ _PARTE_B: tuple[AuditActionSpec, ...] = (
     _e("SALES_RETURN_REJECTED", "SalesReturn", "sales", "005", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("reason",), "Devolución denegada", emission="DYNAMIC", emitted_by="sales/service.py:decide_return"),
     _e("SALES_RETURN_REENTERED", "SalesReturn", "sales", "005", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("lines",), "Devolución reingresada"),
     _e("SALES_RETURN_REQUESTED", "SalesReturn", "sales", "005", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("invoice_id", "lines", "reason"), "Devolución solicitada"),
-    _e("SHIPMENT_CONFIRMED", "Shipment", "sales", "005", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("order_id",), "Despacho confirmado"),
+    _e("SHIPMENT_CONFIRMED", "Shipment", "sales", "005", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("cost", "order_id"), "Despacho confirmado"),
     _e("SHIPMENT_VALIDATED", "Shipment", "sales", "005", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("confirmation_id", "invoice_id", "regulatory_status"), "Despacho validado"),
     _e("STRUCTURE_CHANGE_BLOCKED", "warehouse", "organization", "008-almacenes-fisicos", "COMPANY", "MASTER_DATA", "REJECTION", ("aisle", "level", "rack", "zone"), "Cambio de tramos bloqueado del almacén"),
     _e("STRUCTURE_LEVELS_CHANGED", "warehouse", "organization", "008-almacenes-fisicos", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("aisle", "level", "rack", "zone"), "Cambio de tramos de estructura del almacén"),

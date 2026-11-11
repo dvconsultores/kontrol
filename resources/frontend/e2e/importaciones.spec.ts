@@ -858,6 +858,39 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   await expect(page.getByText("Gasto de importación registrado").first()).toBeVisible();
   await expect(page.getByText("Gasto de importación anulado").first()).toBeVisible();
 
+  const previewReaplicar = (await (
+    await fetch(`${API}/importaciones/${importId}/expenses/${gastoCapitalizable?.id}/allocation-preview`, {
+      method: "POST",
+      headers: authHeaders(companyId),
+      body: JSON.stringify({ criterion: "VALUE" }),
+    })
+  ).json()) as { preview_token: string };
+  const reaplicar = await fetch(
+    `${API}/importaciones/${importId}/expenses/${gastoCapitalizable?.id}/apply`,
+    {
+      method: "POST",
+      headers: authHeaders(companyId),
+      body: JSON.stringify({ criterion: "VALUE", preview_token: previewReaplicar.preview_token }),
+    },
+  );
+  expect(reaplicar.ok).toBeTruthy();
+  const costosReaplicados = (await (
+    await fetch(`${API}/importaciones/${importId}/costs`, { headers: authHeaders(companyId) })
+  ).json()) as {
+    layers: Array<{
+      product_name: string;
+      effective_unit_cost: string;
+      value: string;
+      quantity_remaining: string;
+    }>;
+  };
+  const capaReaplicada = costosReaplicados.layers.find(
+    (item) => item.product_name === `Artículo ${sufijo}`,
+  );
+  expect(capaReaplicada).toBeTruthy();
+  expect(capaReaplicada!.effective_unit_cost).toBe("6.000000");
+  expect(capaReaplicada!.value).toBe("60.00");
+
   // 7. Saldos y valoración tras el put-away
   const c = await ctxVentas(request);
   expect(c.company).toBe(companyId);
@@ -893,6 +926,24 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
     `/inventory/valuation?product_id=${articulo.id}&warehouse_id=${almacen}`,
   )) as { valuation: number | string };
   const valoracionAntesNum = Number(valoracionPostPutaway.valuation ?? 0);
+
+  const costosAntesDespacho = (await (
+    await fetch(`${API}/importaciones/${importId}/costs`, { headers: authHeaders(companyId) })
+  ).json()) as {
+    layers: Array<{
+      product_name: string;
+      effective_unit_cost: string;
+      value: string;
+      quantity_remaining: string;
+    }>;
+  };
+  const capaAntesDespacho = costosAntesDespacho.layers.find(
+    (item) => item.product_name === `Artículo ${sufijo}`,
+  );
+  expect(capaAntesDespacho).toBeTruthy();
+  const efectivoAntes = Number(capaAntesDespacho!.effective_unit_cost);
+  const restanteAntes = Number(capaAntesDespacho!.quantity_remaining);
+  expect(restanteAntes).toBe(10);
 
   // 8. Configuración fiscal, cliente y área de consolidación
   const fiscal = await fiscalListo(request, c, m);
@@ -1037,8 +1088,50 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
     `/inventory/valuation?product_id=${articulo.id}&warehouse_id=${almacen}`,
   )) as { valuation: number | string };
   const valoracionDespuesNum = Number(valoracionTrasDespacho.valuation ?? 0);
-  // DISPATCH-COST-RELIEF (deuda abierta): la salida 035 no consume capas de costo; aquí solo se comprueba que el despacho no destruye la valoración.
-  expect(Math.abs(valoracionAntesNum - valoracionDespuesNum)).toBeLessThanOrEqual(0.01);
+  expect(valoracionDespuesNum).toBeCloseTo(valoracionAntesNum - 4 * efectivoAntes, 2);
+  expect(valoracionAntesNum - valoracionDespuesNum).toBeCloseTo(24, 2);
+
+  const costosDespuesDespacho = (await (
+    await fetch(`${API}/importaciones/${importId}/costs`, { headers: authHeaders(companyId) })
+  ).json()) as {
+    expenses: Array<{
+      concept: string;
+      applications: Array<{ id: string; version: number; status: string }>;
+    }>;
+    layers: Array<{
+      product_name: string;
+      value: string;
+      quantity_remaining: string;
+    }>;
+  };
+  const capaDespuesDespacho = costosDespuesDespacho.layers.find(
+    (item) => item.product_name === `Artículo ${sufijo}`,
+  );
+  expect(capaDespuesDespacho).toBeTruthy();
+  expect(Number(capaDespuesDespacho!.quantity_remaining)).toBe(restanteAntes - 4);
+  expect(capaDespuesDespacho!.value).toBe("36.00");
+
+  const gastoAplicado = costosDespuesDespacho.expenses.find(
+    (item) => item.concept === "Flete capitalizable",
+  );
+  const aplicacionAplicada = gastoAplicado?.applications.find(
+    (item) => item.status === "APPLIED",
+  );
+  expect(aplicacionAplicada).toBeTruthy();
+  const reversionBloqueada = await fetch(
+    `${API}/importaciones/${importId}/cost-applications/${aplicacionAplicada!.id}/reverse`,
+    {
+      method: "POST",
+      headers: authHeaders(companyId),
+      body: JSON.stringify({ version: aplicacionAplicada!.version, reason: "Reversión tras despacho E2E" }),
+    },
+  );
+  expect(reversionBloqueada.status).toBe(409);
+  expect(((await reversionBloqueada.json()) as { code: string }).code).toBe("IMPORT_COST_REVERSAL_BLOCKED");
+
+  await page.goto(expedienteUrl);
+  await page.getByRole("link", { name: "Costos", exact: true }).click();
+  await expect(page.locator("#costos").getByText("36,00 USD").first()).toBeVisible();
 
   // 15. N2: segundo pedido de 7 unidades no consigue reserva completa
   const pedido2 = await postV(request, c, "/sales/orders", {

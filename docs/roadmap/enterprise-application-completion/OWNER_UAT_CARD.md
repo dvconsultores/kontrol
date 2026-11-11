@@ -211,9 +211,25 @@ Necesita:
 80. En Ventas → Preparación de pedidos, el pedido aparece en la cola. Asigne la ubicación donde quedó la mercancía importada, recoja y consolide en el área de confirmación. La salida del picking queda registrada desde esa ubicación.
 81. Con el segundo usuario, en Ventas → Confirmación de pedido, confirme las cantidades.
 82. En Ventas → Facturación, solicite, genere y emita la factura.
-83. En Ventas → Despacho, el pedido aparece en «Pedidos por despachar». Indique destino y transporte, valide y confirme la salida. El pedido queda despachado.
+83. En Ventas → Despacho, el pedido aparece en «Pedidos por despachar». Indique destino y transporte, valide y confirme la salida. El pedido queda despachado y su costo sale del inventario (pasos 85 a 89).
 84. En el inventario del producto quedan como Disponible solo las unidades no vendidas; las despachadas figuran como «Despachado». Un pedido por más de lo que queda se rechaza con «No hay disponible suficiente para confirmar el pedido».
 
 **Límites:**
-- **Costo de la salida (deuda abierta DISPATCH-COST-RELIEF).** El despacho no descuenta el costo: la valoración del inventario incluye todavía lo despachado. Es una decisión pendiente de la dueña (método, costo de ventas y custodia de lo despachado).
 - La ubicación final de cada unidad importada no se atribuye al expediente (deuda IMPORT-PUTAWAY-ATRIBUCION, abierta).
+
+## El despacho descuenta el costo (DISPATCH-COST-RELIEF)
+
+Comprueba que lo despachado sale del valor del inventario, con su costo de importación incluido. No hace falta saber contabilidad: basta con comparar cuatro números antes y después del despacho.
+
+Necesita la importación de los pasos anteriores, con un gasto capitalizable aplicado (por ejemplo, un flete) y todavía sin despachar.
+
+85. En el expediente, pestaña «Costos», anote de la capa del artículo el costo unitario efectivo (el de compra más su parte del flete) y el valor. Ejemplo: 6,000000 USD y 60,00 USD, para 10 unidades.
+86. En Inventario → Valorización, anote la valoración total de la empresa. La pantalla no filtra por artículo, así que no haga otros movimientos de inventario mientras dure la prueba.
+87. Despache una parte siguiendo los pasos 79 a 83; por ejemplo, 4 unidades.
+88. Vuelva a la pestaña «Costos». El valor de la capa del artículo es ahora 36,00 USD: bajó exactamente lo despachado por el costo unitario efectivo (4 × 6 = 24), y lo que queda son 6 unidades. La valoración total del paso 86 baja lo mismo (24).
+89. En la misma pestaña, la aplicación del flete ya no se puede revertir: KONTROL no ofrece la acción o la rechaza. La mercancía ya se consumió en parte, y revertir cambiaría el costo de una salida pasada.
+
+**Límites:**
+- No se genera un asiento contable de costo de ventas: KONTROL todavía no tiene contabilidad general.
+- Los despachos hechos antes de este cambio siguen dentro de la valoración. Corregirlos es una reparación de datos que necesita la autorización de la dueña (deuda DISPATCH-COST-RELIEF-HISTORICO).
+- Lo que vuelve de una devolución como Disponible recupera el costo de su salida; lo que se reingresa como Rechazado no se valora (deuda RETURN-REJECTED-VALUATION).

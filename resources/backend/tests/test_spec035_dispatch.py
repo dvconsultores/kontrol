@@ -66,7 +66,8 @@ def _fiscal_listo(db, mundo):
     return {"series": str(serie.id), "batch": str(lote.id)}
 
 
-def _hasta_facturado(db, mundo, *, cantidad=10, precio="20.00", quantity=None, factor=None):
+def _hasta_facturado(db, mundo, *, cantidad=10, precio="20.00", quantity=None, factor=None,
+                     entradas: list[tuple[int, str | None]] | None = None):
     """Preparado, confirmado y facturado: lo que el despacho debe recibir."""
     marca = uuid4().hex[:8]
     f = _fiscal_listo(db, mundo)
@@ -74,11 +75,25 @@ def _hasta_facturado(db, mundo, *, cantidad=10, precio="20.00", quantity=None, f
     l1 = _ubicacion(db, mundo.company_a, mundo.warehouse_a, f"D1-{marca}", sequence=1)
     area = _ubicacion(db, mundo.company_a, mundo.warehouse_a, f"DC-{marca}", sequence=99)
     tipo = inv._get_movement_type_by_code(db, mundo.company_a, "ENTRADA_RECEPCION")
-    inv.record_movement(db, company_id=mundo.company_a, warehouse_id=mundo.warehouse_a,
-                        product_id=prod, movement_type_id=str(tipo.id), quantity=cantidad + 20,
-                        actor="qa")
+    if entradas is None:
+        inv.record_movement(db, company_id=mundo.company_a, warehouse_id=mundo.warehouse_a,
+                            product_id=prod, movement_type_id=str(tipo.id), quantity=cantidad + 20,
+                            actor="qa")
+        putaway_qty = cantidad + 20
+    else:
+        putaway_qty = 0
+        for qty, costo in entradas:
+            putaway_qty += qty
+            if costo is None:
+                inv.record_movement(db, company_id=mundo.company_a, warehouse_id=mundo.warehouse_a,
+                                    product_id=prod, movement_type_id=str(tipo.id), quantity=qty,
+                                    actor="qa")
+            else:
+                inv.record_movement(db, company_id=mundo.company_a, warehouse_id=mundo.warehouse_a,
+                                    product_id=prod, movement_type_id=str(tipo.id), quantity=qty,
+                                    unit_cost=Decimal(costo), currency="VED", actor="qa")
     inv.putaway(db, company_id=mundo.company_a, warehouse_id=mundo.warehouse_a, product_id=prod,
-                target_location_id=l1, quantity=cantidad + 20, actor="qa")
+                target_location_id=l1, quantity=putaway_qty, actor="qa")
 
     from app.modules.master_data.models import Party
 

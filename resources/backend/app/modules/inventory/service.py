@@ -15,7 +15,7 @@ Invariantes clave:
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
+from decimal import ROUND_HALF_EVEN, Decimal
 from typing import Any
 
 from sqlalchemy import func, select
@@ -29,6 +29,7 @@ from app.modules.inventory import states as state_authority
 from app.modules.inventory.models import (
     CostingProfile,
     CostLayer,
+    DispatchCostRelief,
     InventoryAdjustment,
     InventoryBalance,
     InventoryLot,
@@ -585,8 +586,8 @@ def _costing_method(db: Session, company_id: str, product_id: str) -> str:
 
 
 def _apply_cost_in(db: Session, *, company_id: str, product_id: str, warehouse_id: str,
-                   receipt_ref: str | None, quantity: float, unit_cost: float, currency: str,
-                   fiscal_rate: float | None) -> CostLayer:
+                   receipt_ref: str | None, quantity: float | Decimal, unit_cost: float | Decimal,
+                   currency: str, fiscal_rate: float | None) -> CostLayer:
     layer = CostLayer(
         company_id=company_id, product_id=product_id, warehouse_id=warehouse_id,
         receipt_ref=receipt_ref, quantity_in=quantity, quantity_remaining=quantity,
@@ -617,12 +618,12 @@ def layer_value(layer: CostLayer) -> Decimal:
     return quantity_remaining * unit + landed * quantity_remaining / quantity_in
 
 
-def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id: str,
-                  quantity: float | Decimal) -> Decimal | None:
-    """Consume capas de costo (FIFO o promedio) y devuelve el costo unitario.
+def _consume_cost_breakdown(db: Session, *, company_id: str, product_id: str, warehouse_id: str,
+                            quantity: float | Decimal) -> tuple[list[tuple[CostLayer, Decimal, Decimal]], str]:
+    """Consume capas de costo y devuelve desglose [(capa, tomado, costo_efectivo)].
 
-    Íntegramente en `Decimal`: desde la Spec 011 las cantidades son `NUMERIC` y
-    el costo también. Mezclar aquí un `float` reintroduciría `KQA-100`.
+    Comparte el algoritmo con `_consume_cost`; esa función conserva su firma y
+    comportamiento, esta expone el desglose para la instantánea del despacho.
     """
     method = _costing_method(db, company_id, product_id)
     layers = (
@@ -637,38 +638,121 @@ def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id
         .all()
     )
     demand = _dec(quantity)
+    if demand <= 0:
+        return [], method
+    if not layers:
+        if method == "FIFO":
+            raise ConflictError(code="NO_COST_LAYER",
+                                message="No hay capas de costo suficientes para valorar la salida.")
+        return [], method
+
+    currencies = {layer.currency for layer in layers}
+    if len(currencies) > 1:
+        raise ConflictError(code="COST_LAYER_CURRENCY_MIXED",
+                            message="La salida combina capas de costo en más de una moneda.")
+
+    breakdown: list[tuple[CostLayer, Decimal, Decimal]] = []
     remaining = demand
     if method == "FIFO":
-        total_cost = Decimal(0)
         for layer in layers:
+            if remaining <= 0:
+                break
             take = min(_dec(layer.quantity_remaining), remaining)
-            total_cost += take * effective_unit_cost(layer)
+            cost = effective_unit_cost(layer)
+            breakdown.append((layer, take, cost))
             layer.quantity_remaining = _dec(layer.quantity_remaining) - take
             remaining -= take
             if layer.quantity_remaining <= 0:
                 layer.status = "CLOSED"
-            if remaining <= 0:
-                break
         if remaining > 0:
             raise ConflictError(code="NO_COST_LAYER",
                                 message="No hay capas de costo suficientes para valorar la salida.")
-        if demand == 0:
-            return None
-        return _dec(total_cost / demand)
+        return breakdown, method
 
     # Promedio ponderado
     total_qty = sum((_dec(layer.quantity_remaining) for layer in layers), Decimal(0))
     total_value = sum((_dec(layer.quantity_remaining) * effective_unit_cost(layer)
                        for layer in layers), Decimal(0))
     if total_qty <= 0:
-        return None
+        return [], method
+    if total_qty < demand:
+        raise ConflictError(code="NO_COST_LAYER",
+                            message="No hay capas de costo suficientes para valorar la salida.")
     average = _dec(total_value / total_qty)
     for layer in layers:
         share = remaining * (_dec(layer.quantity_remaining) / total_qty)
-        layer.quantity_remaining = _dec(layer.quantity_remaining) - _dec(share)
+        take = _dec(share)
+        if take <= 0:
+            continue
+        breakdown.append((layer, take, average))
+        layer.quantity_remaining = _dec(layer.quantity_remaining) - take
         if layer.quantity_remaining <= 0:
             layer.status = "CLOSED"
-    return average
+    return breakdown, method
+
+
+def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id: str,
+                  quantity: float | Decimal) -> Decimal | None:
+    """Consume capas de costo (FIFO o promedio) y devuelve el costo unitario.
+
+    Íntegramente en `Decimal`: desde la Spec 011 las cantidades son `NUMERIC` y
+    el costo también. Mezclar aquí un `float` reintroduciría `KQA-100`.
+    """
+    breakdown, method = _consume_cost_breakdown(db, company_id=company_id, product_id=product_id,
+                                                warehouse_id=warehouse_id, quantity=quantity)
+    if not breakdown:
+        return None
+    total_cost = sum((take * cost for _layer, take, cost in breakdown), Decimal(0))
+    demand = _dec(quantity)
+    if demand <= 0:
+        return None
+    return _dec(total_cost / demand)
+
+
+def relieve_dispatch_cost(db: Session, *, company_id: str, warehouse_id: str, product_id: str,
+                          quantity: float | Decimal, shipment_id: str, shipment_line_id: str,
+                          movement: InventoryMovement) -> tuple[Decimal | None, str | None, str]:
+    """Descuenta capas de costo para un despacho y guarda la instantánea.
+
+    Devuelve (total, divisa, método) para el resumen de auditoría y el costo
+    unitario del movimiento.
+    """
+    breakdown, method = _consume_cost_breakdown(db, company_id=company_id, product_id=product_id,
+                                                warehouse_id=warehouse_id, quantity=quantity)
+    if not breakdown:
+        return None, None, method
+    currency = breakdown[0][0].currency
+    total = sum((take * cost for _layer, take, cost in breakdown), Decimal(0))
+    for layer, take, cost in breakdown:
+        db.add(DispatchCostRelief(
+            company_id=company_id, shipment_id=shipment_id, shipment_line_id=shipment_line_id,
+            movement_id=str(movement.id), cost_layer_id=str(layer.id), product_id=product_id,
+            warehouse_id=warehouse_id, quantity=take, effective_unit_cost=cost,
+            total_cost=take * cost, currency=currency, method=method))
+    return total, currency, method
+
+
+def restore_return_cost(db: Session, *, company_id: str, warehouse_id: str, product_id: str,
+                        quantity: float | Decimal, shipment_id: str,
+                        return_ref: str) -> CostLayer | None:
+    """Crea una capa de costo a partir de la instantánea de un despacho."""
+    filas = db.execute(
+        select(DispatchCostRelief).where(
+            DispatchCostRelief.company_id == company_id,
+            DispatchCostRelief.shipment_id == shipment_id,
+            DispatchCostRelief.product_id == product_id)
+    ).scalars().all()
+    if not filas:
+        return None
+    cantidad = sum((_dec(f.quantity) for f in filas), Decimal(0))
+    total = sum((_dec(f.total_cost) for f in filas), Decimal(0))
+    if cantidad <= 0:
+        return None
+    costo = (total / cantidad).quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN)
+    return _apply_cost_in(
+        db, company_id=company_id, product_id=product_id, warehouse_id=warehouse_id,
+        receipt_ref=return_ref, quantity=_dec(quantity), unit_cost=costo,
+        currency=filas[0].currency, fiscal_rate=None)
 
 
 def valuation(db: Session, *, company_id: str, product_id: str | None = None, warehouse_id: str | None = None) -> float:

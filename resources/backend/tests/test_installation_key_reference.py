@@ -169,7 +169,7 @@ def test_kr_18_19_la_columna_sigue_siendo_string_120_y_la_cabeza_de_alembic_no_c
     raiz = Path(__file__).resolve().parents[1]
     cfg = Config(str(raiz / "alembic.ini"))
     cfg.set_main_option("script_location", str(raiz / "alembic"))
-    assert ScriptDirectory.from_config(cfg).get_heads() == ["0097_fusion_gov_replenishment"]
+    assert ScriptDirectory.from_config(cfg).get_heads() == ["0098_dispatch_cost_relief"]
 
 
 # ----------------------------------------------------------------------------- KR-21 · el diagnóstico no expone la referencia
