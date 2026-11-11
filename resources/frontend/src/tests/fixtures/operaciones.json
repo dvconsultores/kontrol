@@ -1692,6 +1692,14 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/control/separacion",
+      "capabilities": [
+        "gobierno_auditoria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/ente",
       "capabilities": [
         "gobierno_ente:view"

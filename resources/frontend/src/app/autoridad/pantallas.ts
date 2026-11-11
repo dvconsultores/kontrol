@@ -131,6 +131,7 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "gobierno/autoridad": { capacidad: "gobierno_autoridad:view", alcance: "empresa" },
   "gobierno/auditoria": { capacidad: "gobierno_auditoria:view", alcance: "empresa" },
   "gobierno/bitacora": { capacidad: "gobierno_auditoria:view", alcance: "empresa" },
+  "gobierno/control/separacion": { capacidad: "gobierno_auditoria:view", alcance: "empresa" },
   "gobierno/bitacora/:eventoId": { capacidad: "gobierno_auditoria:view", alcance: "empresa" },
   "gobierno/contrataciones/comisiones": { capacidad: "gobierno_comisiones:view", alcance: "empresa" },
   "gobierno/contrataciones/comisiones/nueva": { capacidad: "gobierno_comisiones:manage", alcance: "empresa" },

@@ -96,7 +96,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | DOC-08 | GOV-DOC-010 | Expedientes y actos administ | Control Interno | Paquete de auditoría exportable | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | CTL-01 | GOV-CTL-001 | Control interno, auditoría y | Control Interno | Matriz SoD por proceso y detección previa | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | CTL-02 | GOV-CTL-002 GOV-CTL-003 | Control interno, auditoría y | Control Interno | Bitácora institucional append-only con actor, autoridad, unidad y corr | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
-| CTL-03 | GOV-CTL-004 | Control interno, auditoría y | Control Interno | Administrador técnico sin autoridad funcional | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
+| CTL-03 | GOV-CTL-004 | Control interno, auditoría y | Control Interno | Administrador técnico sin autoridad funcional | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Compromiso y pago no existen en Gobierno: el control es transversal |
 | CTL-04 | GOV-CTL-005 | Control interno, auditoría y | Auditor interno/externo | Consulta y muestreo read-only del auditor | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | CTL-05 | GOV-CTL-006 GOV-CTL-007 | Control interno, auditoría y | Control Interno | Expediente de cuenta y reportes de rendición | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | CTL-06 | GOV-CTL-008 | Control interno, auditoría y | Control Interno | Hallazgos y planes de acción correctiva | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
