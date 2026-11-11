@@ -488,6 +488,8 @@ export async function entrarComoUsuario(
   estado = leerEstado(tenant, usuario);
   estado.cookie = null;
   guardarEstado(tenant, usuario, estado);
+  // El navegador mantiene una sola cookie de refresco, así que solo el último usuario que entró puede recibirla.
+  enElNavegador.clear();
   enElNavegador.set(claveEstado(tenant, usuario), usuario);
 
   const refresco = page.waitForResponse((respuesta) => {

@@ -29,7 +29,7 @@ from app.modules.inventory import service as inv_service
 from app.modules.inventory import states as inv_states
 from app.modules.master_data import uom as uom_engine
 from app.modules.master_data.models import Party
-from app.modules.organization.models import Warehouse
+from app.modules.organization.models import Company, Warehouse
 from app.modules.organization.service import warehouse_belongs_to
 from app.modules.purchasing.models import (
     CONFIRMATION_TARGET_STATES,
@@ -1367,6 +1367,42 @@ def _base_recibida(line: GoodsReceiptLine) -> Decimal:
     return _dec(line.quantity_received)
 
 
+def _conteo_independiente_activo(db: Session, company_id: str) -> bool:
+    """El control está activo si la empresa no permite que la misma persona
+    registre/acepte y cuente una recepción (Spec 021, R-D0-10-9)."""
+    company = db.get(Company, company_id)
+    return bool(company is not None and not company.receipt_count_same_user_allowed)
+
+
+def _receptores(receipt: GoodsReceipt) -> set[str]:
+    return {str(user_id) for user_id in (receipt.created_by, receipt.record_issued_by)
+            if user_id is not None}
+
+
+def politica_de_conteo(db: Session, *, company_id: str) -> dict[str, Any]:
+    company = db.get(Company, company_id)
+    if company is None:
+        raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
+    return {"receipt_count_same_user_allowed": bool(company.receipt_count_same_user_allowed),
+            "independent_count_required": not company.receipt_count_same_user_allowed}
+
+
+def configurar_conteo(db: Session, *, company_id: str,
+                      receipt_count_same_user_allowed: bool,
+                      actor: str | None = None) -> dict[str, Any]:
+    company = db.get(Company, company_id)
+    if company is None:
+        raise NotFoundError(code="COMPANY_NOT_FOUND", message="Empresa no encontrada")
+    anterior = bool(company.receipt_count_same_user_allowed)
+    company.receipt_count_same_user_allowed = receipt_count_same_user_allowed
+    db.flush()
+    _audit(db, action="COMPANY_RECEIPT_COUNT_POLICY_CHANGED", entity_type="Company",
+           entity_id=str(company.id), company_id=company_id, actor=actor,
+           before={"receipt_count_same_user_allowed": anterior},
+           after={"receipt_count_same_user_allowed": bool(receipt_count_same_user_allowed)})
+    return politica_de_conteo(db, company_id=company_id)
+
+
 def registrar_conteo(db: Session, *, receipt: GoodsReceipt, line_id: str,
                      counted_base_quantity: Decimal | float | str,
                      difference_kinds: list[str] | None = None,
@@ -1377,9 +1413,21 @@ def registrar_conteo(db: Session, *, receipt: GoodsReceipt, line_id: str,
     no concilia nada: era el defecto que la Spec 019 cerró en el asiento y que
     aquí volvería por otra puerta.
     """
+    receipt = db.execute(
+        select(GoodsReceipt)
+        .where(GoodsReceipt.id == receipt.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).scalars().one()
     if receipt.confirmation_status == CONFIRMATION_DONE:
         raise ConflictError(code="ALREADY_CONFIRMED",
                             message="La recepción ya está confirmada; el conteo no se rehace.")
+    if _conteo_independiente_activo(db, receipt.company_id) and actor is not None \
+            and actor in _receptores(receipt):
+        raise ConflictError(
+            code="INDEPENDENT_COUNT_REQUIRED",
+            message="El conteo debe hacerlo una persona distinta de quien registró o aceptó la recepción.",
+            details={"rule": "RECEIVER_NOT_COUNTER"})
     line = _requiere_linea(db, receipt, line_id)
     contado = _dec(counted_base_quantity)
     if contado < 0:
@@ -1483,6 +1531,12 @@ def confirmar_inventario(db: Session, *, receipt: GoodsReceipt, decisiones: list
     Spec 023, que la valida contra la matriz de `ADR-D0-010` v2. Esta Spec decide
     qué debe ocurrir; aquella decide si puede ocurrir y lo materializa.
     """
+    receipt = db.execute(
+        select(GoodsReceipt)
+        .where(GoodsReceipt.id == receipt.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).scalars().one()
     if receipt.status not in ("ACCEPTED", "PARTIALLY_ACCEPTED"):
         raise ConflictError(
             code="RECEIPT_NOT_ACCEPTED",
@@ -1501,6 +1555,22 @@ def confirmar_inventario(db: Session, *, receipt: GoodsReceipt, decisiones: list
             message=("No se confirma con incidencias abiertas: "
                      f"{incidencias['unresolved']} sin resolver."),
             details={"unresolved": incidencias["unresolved"]})
+
+    if _conteo_independiente_activo(db, receipt.company_id):
+        receptores = _receptores(receipt)
+        for decision in decisiones:
+            line_id = str(decision.get("receipt_line_id") or "")
+            line = _requiere_linea(db, receipt, line_id)
+            if line.counted_base_quantity is None:
+                raise ConflictError(
+                    code="COUNT_REQUIRED_BEFORE_CONFIRMATION",
+                    message="Cada línea debe contarse antes de confirmar el inventario.",
+                    details={"receipt_line_id": str(line.id)})
+            if line.counted_by is not None and line.counted_by in receptores:
+                raise ConflictError(
+                    code="INDEPENDENT_COUNT_REQUIRED",
+                    message="El conteo debe hacerlo una persona distinta de quien registró o aceptó la recepción.",
+                    details={"rule": "RECEIVER_NOT_COUNTER", "receipt_line_id": str(line.id)})
 
     ya_confirmado = _confirmado_por_linea(db, receipt)
     por_linea: dict[str, Decimal] = {}

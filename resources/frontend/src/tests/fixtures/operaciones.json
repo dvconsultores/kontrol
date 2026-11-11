@@ -5246,6 +5246,22 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/purchasing/settings/receipt-count",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/purchasing/settings/receipt-count",
+      "capabilities": [
+        "compras:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/purchasing/supplier-invoices",
       "capabilities": [
         "compras:view"

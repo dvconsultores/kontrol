@@ -501,8 +501,11 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   // 5. Confirmar inventario
   await page.getByRole("link", { name: `Confirmar inventario de REC-${sufijo}` }).click();
   await expect(page.getByRole("heading", { name: "Confirmación de inventario" })).toBeVisible();
-  await page.getByLabel(/Contado \(base\)/).fill("10");
-  await page.getByRole("button", { name: "Registrar conteo" }).click();
+  const contadorImp = await verificadorDeEscenario(request, { headers: authHeaders(companyId) }, { usuario: `impc-${sufijo.toLowerCase()}`, empresas: [companyId] });
+  const concil = (await (await fetch(`${API}/purchasing/receipts/${receiptId}/conciliacion`, { headers: authHeaders(companyId) })).json()) as { items: Array<{ receipt_line_id: string }> };
+  const conteoImp = await fetch(`${API}/purchasing/receipts/${receiptId}/lines/${concil.items[0].receipt_line_id}/conteo`, { method: "POST", headers: { ...contadorImp.headers, "Content-Type": "application/json" }, body: JSON.stringify({ counted_base_quantity: "10", difference_kinds: [] }) });
+  expect(conteoImp.ok).toBeTruthy();
+  await page.reload();
   await expect(page.getByText("Faltan líneas por contar.")).toBeHidden();
   await page.getByLabel(/Cantidad a confirmar/).fill("10");
   await page.getByRole("button", { name: "Confirmar inventario" }).click();

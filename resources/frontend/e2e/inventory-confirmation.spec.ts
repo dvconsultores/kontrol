@@ -9,6 +9,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test";
 
 import { entrar, expect, sesionApi, test } from "./helpers/sesion";
+import { verificadorDeEscenario } from "./helpers/usuario";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
@@ -105,8 +106,10 @@ test.describe("Spec 021 — confirmación de inventario", () => {
       .toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Faltan líneas por contar.")).toBeVisible();
 
-    await page.getByLabel(/Contado \(base\)/).fill("100");
-    await page.getByRole("button", { name: "Registrar conteo" }).click();
+    const contador = await verificadorDeEscenario(request, c, { usuario: `invc-${RUN}a`, empresas: [c.company] });
+    await post(request, contador, `/purchasing/receipts/${m.receipt}/lines/${m.line}/conteo`, { counted_base_quantity: "100", difference_kinds: [] });
+    await page.reload();
+    await page.getByLabel(/Recepción aceptada/).selectOption(m.receipt);
     // Se comprueba el efecto, no el aviso: la tabla muestra lo contado y deja
     // de faltar por contar. Un toast puede desvanecerse; el estado, no.
     await expect(page.getByText("Faltan líneas por contar.")).toBeHidden({ timeout: 15_000 });
@@ -130,7 +133,8 @@ test.describe("Spec 021 — confirmación de inventario", () => {
   test("confirmar no ubica: el almacén se conoce y la ubicación sigue nula", async ({ request }) => {
     const c = await ctx(request);
     const m = await recepcionAceptada(request, c, `${RUN}B`);
-    await post(request, c, `/purchasing/receipts/${m.receipt}/lines/${m.line}/conteo`,
+    const contador = await verificadorDeEscenario(request, c, { usuario: `invc-${RUN}b`, empresas: [c.company] });
+    await post(request, contador, `/purchasing/receipts/${m.receipt}/lines/${m.line}/conteo`,
                { counted_base_quantity: "100", difference_kinds: [] });
     await post(request, c, `/purchasing/receipts/${m.receipt}/confirmacion-inventario`, {
       decisions: [{ receipt_line_id: m.line, target_state: "DISPONIBLE", base_quantity: "100" }],
@@ -145,7 +149,8 @@ test.describe("Spec 021 — confirmación de inventario", () => {
   test("el resultado mixto reparte y conserva el físico", async ({ request }) => {
     const c = await ctx(request);
     const m = await recepcionAceptada(request, c, `${RUN}C`);
-    await post(request, c, `/purchasing/receipts/${m.receipt}/lines/${m.line}/conteo`,
+    const contador = await verificadorDeEscenario(request, c, { usuario: `invc-${RUN}c`, empresas: [c.company] });
+    await post(request, contador, `/purchasing/receipts/${m.receipt}/lines/${m.line}/conteo`,
                { counted_base_quantity: "100", difference_kinds: ["CANTIDAD"] });
     await post(request, c, `/purchasing/receipts/${m.receipt}/confirmacion-inventario`, {
       decisions: [

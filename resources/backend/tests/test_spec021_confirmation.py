@@ -91,7 +91,7 @@ def test_el_movimiento_de_aceptacion_declara_su_destino(mundo):
 def test_el_conteo_se_registra_en_unidad_base_y_con_sus_diferencias(mundo):
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "CONT")
     r = mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-                   "ua", mundo.company_a,
+                   "uab", mundo.company_a,
                    {"counted_base_quantity": "97", "difference_kinds": ["CANTIDAD", "REFERENCIA"]})
     assert r.status_code == 200, r.text
 
@@ -106,7 +106,7 @@ def test_el_conteo_se_registra_en_unidad_base_y_con_sus_diferencias(mundo):
 def test_una_diferencia_inventada_no_entra(mundo):
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "DIFX")
     r = mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-                   "ua", mundo.company_a,
+                   "uab", mundo.company_a,
                    {"counted_base_quantity": "100", "difference_kinds": ["COLOR"]})
     assert r.status_code == 422, r.text
     assert r.json()["code"] == "COUNT_DIFFERENCE_KIND_UNKNOWN"
@@ -124,7 +124,7 @@ def test_el_conteo_de_una_linea_ajena_no_se_acepta(mundo):
     a = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "OWNA")
     b = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "OWNB")
     r = mundo.post(f"/purchasing/receipts/{a['receipt']}/lines/{b['line']}/conteo",
-                   "ua", mundo.company_a, {"counted_base_quantity": "10"})
+                   "uab", mundo.company_a, {"counted_base_quantity": "10"})
     assert r.status_code == 404, r.text
 
 
@@ -132,7 +132,7 @@ def test_el_conteo_de_una_linea_ajena_no_se_acepta(mundo):
 def test_recibido_a_disponible_libera_la_mercancia(mundo):
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "REL")
     mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-               "ua", mundo.company_a, {"counted_base_quantity": "100"})
+               "uab", mundo.company_a, {"counted_base_quantity": "100"})
     r = mundo.post(f"/purchasing/receipts/{m['receipt']}/confirmacion-inventario", "ua", mundo.company_a,
                    {"decisions": [{"receipt_line_id": m["line"], "target_state": "DISPONIBLE",
                                    "base_quantity": "100"}]})
@@ -145,7 +145,7 @@ def test_recibido_a_disponible_libera_la_mercancia(mundo):
 def test_recibido_a_rechazado_no_deja_nada_disponible(mundo):
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "REJ")
     mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-               "ua", mundo.company_a, {"counted_base_quantity": "100"})
+               "uab", mundo.company_a, {"counted_base_quantity": "100"})
     r = mundo.post(f"/purchasing/receipts/{m['receipt']}/confirmacion-inventario", "ua", mundo.company_a,
                    {"decisions": [{"receipt_line_id": m["line"], "target_state": "RECHAZADO",
                                    "base_quantity": "100", "reason": "No apto tras el conteo"}]})
@@ -159,7 +159,7 @@ def test_el_resultado_mixto_reparte_y_conserva_el_fisico(mundo):
     """Etapa 9: «diferenciar inventario». Noventa liberadas y diez rechazadas."""
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "MIX")
     mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-               "ua", mundo.company_a, {"counted_base_quantity": "100"})
+               "uab", mundo.company_a, {"counted_base_quantity": "100"})
     r = mundo.post(f"/purchasing/receipts/{m['receipt']}/confirmacion-inventario", "ua", mundo.company_a,
                    {"decisions": [
                        {"receipt_line_id": m["line"], "target_state": "DISPONIBLE",
@@ -176,7 +176,7 @@ def test_el_resultado_mixto_reparte_y_conserva_el_fisico(mundo):
 def test_no_se_puede_confirmar_mas_de_lo_recibido(mundo):
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "EXC")
     mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-               "ua", mundo.company_a, {"counted_base_quantity": "100"})
+               "uab", mundo.company_a, {"counted_base_quantity": "100"})
     r = mundo.post(f"/purchasing/receipts/{m['receipt']}/confirmacion-inventario", "ua", mundo.company_a,
                    {"decisions": [{"receipt_line_id": m["line"], "target_state": "DISPONIBLE",
                                    "base_quantity": "101"}]})
@@ -189,7 +189,7 @@ def test_un_destino_fuera_de_las_cuatro_transiciones_se_rechaza(mundo):
     """`R-D0-10-7` por partida doble: la 021 lo filtra y la 023 lo volvería a filtrar."""
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "DENY")
     mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-               "ua", mundo.company_a, {"counted_base_quantity": "100"})
+               "uab", mundo.company_a, {"counted_base_quantity": "100"})
     r = mundo.post(f"/purchasing/receipts/{m['receipt']}/confirmacion-inventario", "ua", mundo.company_a,
                    {"decisions": [{"receipt_line_id": m["line"], "target_state": "DESECHO",
                                    "base_quantity": "10", "reason": "x"}]})
@@ -211,7 +211,7 @@ def test_la_caja_por_doce_se_confirma_en_base(mundo):
 
     assert _saldos(mundo, mundo.company_a, prod) == {"RECIBIDO": Decimal("24")}, "dos cajas son 24"
     mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-               "ua", mundo.company_a, {"counted_base_quantity": "24"})
+               "uab", mundo.company_a, {"counted_base_quantity": "24"})
     r = mundo.post(f"/purchasing/receipts/{m['receipt']}/confirmacion-inventario", "ua", mundo.company_a,
                    {"decisions": [{"receipt_line_id": m["line"], "target_state": "DISPONIBLE",
                                    "base_quantity": "24"}]})
@@ -223,7 +223,7 @@ def test_la_caja_por_doce_se_confirma_en_base(mundo):
 def test_una_incidencia_abierta_impide_confirmar(mundo):
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "INCOPEN")
     mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-               "ua", mundo.company_a, {"counted_base_quantity": "95"})
+               "uab", mundo.company_a, {"counted_base_quantity": "95"})
     inc = mundo.post(f"/purchasing/receipts/{m['receipt']}/incidencias", "ua", mundo.company_a,
                      {"code": f"INC-{m['receipt'][:8]}", "incident_type": "FALTANTE",
                       "receipt_line_id": m["line"], "affected_base_quantity": "5",
@@ -241,7 +241,7 @@ def test_una_incidencia_abierta_impide_confirmar(mundo):
 def test_el_camino_feliz_no_necesita_ninguna_incidencia(mundo):
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "FELIZ")
     mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-               "ua", mundo.company_a, {"counted_base_quantity": "100"})
+               "uab", mundo.company_a, {"counted_base_quantity": "100"})
     r = mundo.post(f"/purchasing/receipts/{m['receipt']}/confirmacion-inventario", "ua", mundo.company_a,
                    {"decisions": [{"receipt_line_id": m["line"], "target_state": "DISPONIBLE",
                                    "base_quantity": "100"}]})
@@ -255,7 +255,7 @@ def test_el_camino_feliz_no_necesita_ninguna_incidencia(mundo):
 def test_confirmar_dos_veces_no_duplica_nada(mundo):
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "IDEM")
     mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-               "ua", mundo.company_a, {"counted_base_quantity": "100"})
+               "uab", mundo.company_a, {"counted_base_quantity": "100"})
     cuerpo = {"decisions": [{"receipt_line_id": m["line"], "target_state": "DISPONIBLE",
                              "base_quantity": "100"}]}
     assert mundo.post(f"/purchasing/receipts/{m['receipt']}/confirmacion-inventario",
@@ -276,7 +276,7 @@ def test_confirmar_no_ubica_nada(mundo):
     """Frontera con la Spec 022: confirmar no es colocar."""
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "NOLOC")
     mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo",
-               "ua", mundo.company_a, {"counted_base_quantity": "100"})
+               "uab", mundo.company_a, {"counted_base_quantity": "100"})
     mundo.post(f"/purchasing/receipts/{m['receipt']}/confirmacion-inventario", "ua", mundo.company_a,
                {"decisions": [{"receipt_line_id": m["line"], "target_state": "DISPONIBLE",
                                "base_quantity": "100"}]})
@@ -350,7 +350,7 @@ def test_iso_com_05_la_incidencia_ajena_no_se_enlaza(mundo):
     import uuid
 
     m = _recepcion_aceptada(mundo, "ua", mundo.company_a, mundo.warehouse_a, "ISOCOM5")
-    mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo", "ua",
+    mundo.post(f"/purchasing/receipts/{m['receipt']}/lines/{m['line']}/conteo", "uab",
                mundo.company_a, {"counted_base_quantity": "100"})
 
     mb = _recepcion_aceptada(mundo, "ub", mundo.company_b, mundo.warehouse_b, "ISOCOM5B")

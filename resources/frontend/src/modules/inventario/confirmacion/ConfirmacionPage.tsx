@@ -13,13 +13,14 @@
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
 import { ApiError, apiFetch } from "@/api/client";
 import type {
   GoodsReceiptSummary,
   ReceiptConfirmationRow,
+  ReceiptCountPolicy,
   ReceiptReconciliation,
   ReconciliationItem,
 } from "@/api/types";
@@ -71,11 +72,40 @@ export function ConfirmacionPage(): React.JSX.Element {
   const [destinos, setDestinos] = useState<Record<string, string>>({});
   const [cantidades, setCantidades] = useState<Record<string, string>>({});
   const [motivos, setMotivos] = useState<Record<string, string>>({});
+  const [politicaConteoLocal, setPoliticaConteoLocal] = useState(false);
 
   const recepciones = useQuery({
     queryKey: ["confirmacion", "recepciones"],
     queryFn: () => apiFetch<{ items: GoodsReceiptSummary[] }>("/purchasing/receipts"),
   });
+
+  const politicaConteo = useQuery({
+    queryKey: ["confirmacion", "politica-conteo"],
+    queryFn: () => apiFetch<ReceiptCountPolicy>("/purchasing/settings/receipt-count"),
+  });
+
+  useEffect(() => {
+    if (politicaConteo.data) {
+      setPoliticaConteoLocal(politicaConteo.data.receipt_count_same_user_allowed);
+    }
+  }, [politicaConteo.data]);
+
+  async function guardarPolitica(): Promise<void> {
+    try {
+      await apiFetch("/purchasing/settings/receipt-count", {
+        method: "PUT",
+        body: { receipt_count_same_user_allowed: politicaConteoLocal },
+      });
+      notify({ type: "success", title: "Política de conteo guardada" });
+      await qc.invalidateQueries({ queryKey: ["confirmacion", "politica-conteo"] });
+    } catch (e) {
+      notify({
+        type: "error",
+        title: "No se guardó la política",
+        description: e instanceof ApiError ? e.message : undefined,
+      });
+    }
+  }
 
   const conciliacion = useQuery({
     queryKey: ["confirmacion", "conciliacion", receiptId],
@@ -192,6 +222,38 @@ export function ConfirmacionPage(): React.JSX.Element {
         }
         crumbs={[{ label: "Inventario" }, { label: "Confirmación" }]}
       />
+
+      {politicaConteo.data?.independent_count_required ? (
+        <p role="note" className="mb-4 text-sm text-text-700">
+          Conteo independiente activo: quien registró o aceptó la recepción no puede contar sus
+          líneas; debe contarlas otra persona.
+        </p>
+      ) : (
+        <p role="note" className="mb-4 text-sm text-text-700">
+          Conteo independiente desactivado por la empresa: quien recibe puede contar.
+        </p>
+      )}
+
+      <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
+        <h2 className="mb-2 text-base font-semibold text-text-900">Política de conteo</h2>
+        <Autorizado operacion={["PUT", "/purchasing/settings/receipt-count"]}>
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="receipt-count-same-user"
+              checked={politicaConteoLocal}
+              onChange={(e) => setPoliticaConteoLocal(e.target.checked)}
+              className="h-4 w-4 rounded border-border-default text-brand-600 focus:ring-brand-500"
+            />
+            <label htmlFor="receipt-count-same-user" className="text-sm text-text-900">
+              Permitir que quien recibe cuente la mercancía
+            </label>
+            <AsyncButton onClick={guardarPolitica} variant="secondary">
+              Guardar política
+            </AsyncButton>
+          </div>
+        </Autorizado>
+      </section>
 
       <section className="mb-4 rounded-lg border border-border-default bg-surface-0 p-4">
         <FormField label="Recepción aceptada" required>
