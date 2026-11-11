@@ -3964,6 +3964,16 @@
     },
     {
       "method": "GET",
+      "path": "/purchasing/settings/receipt-count",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/purchasing/settings/receipt-count",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/purchasing/supplier-invoices",
       "query": [
         "page",

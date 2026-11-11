@@ -4,8 +4,8 @@ import sqlalchemy as sa
 
 from alembic import op
 
-down_revision = "0100_gov_ctl05_rendicion"
-revision = "0101_gov_ctl09_actas"
+down_revision = "0101_receipt_count_independence"
+revision = "0102_gov_ctl09_actas"
 
 
 def upgrade() -> None:

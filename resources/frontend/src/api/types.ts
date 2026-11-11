@@ -661,6 +661,11 @@ export interface ReceiptReconciliation {
   items: ReconciliationItem[];
 }
 
+export interface ReceiptCountPolicy {
+  receipt_count_same_user_allowed: boolean;
+  independent_count_required: boolean;
+}
+
 export interface ReceiptConfirmationRow {
   id: string;
   receipt_id: string;

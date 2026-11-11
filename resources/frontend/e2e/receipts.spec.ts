@@ -9,6 +9,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test";
 
 import { entrar, expect, sesionApi, test } from "./helpers/sesion";
+import { verificadorDeEscenario } from "./helpers/usuario";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
@@ -348,7 +349,8 @@ test.describe("Spec 019 — recepción física", () => {
   };
 
   const confirmarInventario = async (request: APIRequestContext, c: Ctx, recId: string, lineaId: string, recibido: string, aceptado: string) => {
-    await post(request, c, `/purchasing/receipts/${recId}/lines/${lineaId}/conteo`, { counted_base_quantity: recibido, difference_kinds: [] });
+    const contador = await verificadorDeEscenario(request, c, { usuario: `rc-${recId.slice(0, 8)}`, empresas: [c.company] });
+    await post(request, contador, `/purchasing/receipts/${recId}/lines/${lineaId}/conteo`, { counted_base_quantity: recibido, difference_kinds: [] });
     await post(request, c, `/purchasing/receipts/${recId}/confirmacion-inventario`, { decisions: [{ receipt_line_id: lineaId, target_state: "DISPONIBLE", base_quantity: aceptado }] });
   };
 

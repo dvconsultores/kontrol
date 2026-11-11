@@ -313,6 +313,7 @@ _PARTE_B: tuple[AuditActionSpec, ...] = (
     _e("BILLING_REQUESTED", "SalesOrder", "sales", "005", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("status",), "Facturación solicitada"),
     _e("BLOCK", "warehouse_location", "organization", "008-almacenes-fisicos", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("status",), "Bloqueo de ubicación", emission="DYNAMIC", emitted_by="organization/warehouse_api.py:_set_location_status"),
     _e("BULK_CREATE", "warehouse_location", "organization", "008-almacenes-fisicos", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("count",), "Alta masiva de ubicación"),
+    _e("COMPANY_RECEIPT_COUNT_POLICY_CHANGED", "Company", "purchasing", "021", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("receipt_count_same_user_allowed",), "Política de conteo independiente de la empresa modificada"),
     _e("COMPANY_RESERVATION_POLICY_CHANGED", "Company", "sales", "005", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("reservation_ttl_days",), "Política de reservas de la empresa modificada"),
     _e("CREATE", "location_type", "organization", "008-almacenes-fisicos", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("code",), "Alta de tipo de ubicación", emission="DYNAMIC", emitted_by="organization/warehouse_api.py:_catalog_create"),
     _e("CREATE", "presentation", "master_data", "011-unidades-presentaciones", "COMPANY", "MASTER_DATA", "BUSINESS_COMMIT", ("code",), "Alta de presentación"),

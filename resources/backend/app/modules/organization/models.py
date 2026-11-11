@@ -68,6 +68,12 @@ class Company(UUIDMixin, TimestampMixin, CreatedByMixin, StatusMixin, Base):
     #: conciencia, y la decisión queda auditada.
     confirmation_same_user_allowed: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false"))
+    #: ¿Puede la misma persona registrar/aceptar una recepción y contar sus líneas?
+    #: (`R-D0-10-9`, Spec 021). El defecto es `false` **a propósito**: «un control
+    #: cuyo valor por defecto lo anula no es un control». Una empresa pequeña puede
+    #: habilitarlo a conciencia, y la decisión queda auditada.
+    receipt_count_same_user_allowed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false"))
 
     tenant: Mapped[Tenant] = relationship(back_populates="companies")
     branches: Mapped[list[Branch]] = relationship(back_populates="company", cascade="all, delete-orphan")

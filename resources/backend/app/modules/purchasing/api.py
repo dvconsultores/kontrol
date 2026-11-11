@@ -635,6 +635,33 @@ def _confirmation_dict(x) -> dict:
             "created_at": x.created_at.isoformat() if x.created_at else None}
 
 
+class ReceiptCountPolicyBody(BaseModel):
+    """Lo único configurable del conteo independiente: si la misma persona
+    puede registrar/aceptar y contar una recepción. El defecto es `false`."""
+    model_config = ConfigDict(extra="forbid")
+
+    receipt_count_same_user_allowed: bool
+
+
+@router.get("/settings/receipt-count")
+def get_receipt_count_policy(db: Session = Depends(get_db),
+                             user: User = Depends(require_permission("compras", "view")),
+                             ctx: CompanyContext = Depends(get_company_context)):
+    return ap_service.politica_de_conteo(db, company_id=ctx.company_id)
+
+
+@router.put("/settings/receipt-count", dependencies=[Depends(require_write_allowed)])
+def put_receipt_count_policy(body: ReceiptCountPolicyBody, db: Session = Depends(get_db),
+                             actor: User = Depends(require_permission("compras", "approve")),
+                             ctx: CompanyContext = Depends(get_company_context)):
+    resultado = ap_service.configurar_conteo(
+        db, company_id=ctx.company_id,
+        receipt_count_same_user_allowed=body.receipt_count_same_user_allowed,
+        actor=str(actor.id))
+    db.commit()
+    return resultado
+
+
 @router.post("/receipts/{receipt_id}/lines/{line_id}/conteo",
              dependencies=[Depends(require_write_allowed)])
 def count_receipt_line(receipt_id: str, line_id: str, body: CountBody,

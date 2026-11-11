@@ -251,3 +251,20 @@ Necesita un artículo y dos proveedores activos, dados de alta en Maestros.
 - La cotización no queda ligada a la requisición de la que salió (deuda QUOTE-REQUISITION-LINK).
 - La tabla de Órdenes muestra todavía el identificador interno del proveedor y las acciones con su código («submit», «approve»; deuda ORDENES-UI-ETIQUETAS).
 - Una cotización vencida se puede comparar, pero no adjudicar.
+
+## Conteo independiente en la recepción (control crítico)
+
+Comprueba que lo recibido lo cuenta una persona distinta de quien lo recibió. Es la regla que usted decidió: quien registra o acepta una recepción no puede contarla. El control está activo por defecto, y la empresa puede desactivarlo de forma auditada.
+
+Necesita dos usuarios de la empresa: el suyo y un segundo usuario con permisos de inventario. Se crea en Seguridad → Usuarios si no lo tiene.
+
+96. Con su usuario, en Compras → Recepciones, registre una recepción de una orden aprobada y llévela hasta «Aceptada» (confirmar, enviar a calidad, conforme y aceptar).
+97. En Inventario → Confirmación, elija esa recepción. Arriba se lee: «Conteo independiente activo: quien registró o aceptó la recepción no puede contar sus líneas; debe contarlas otra persona.»
+98. Escriba la cantidad en «Contado (base)» y pulse «Registrar conteo». KONTROL lo rechaza con el mensaje «El conteo debe hacerlo una persona distinta de quien registró o aceptó la recepción.». La línea sigue «sin contar» y el inventario no cambia.
+99. Salga y entre con el segundo usuario. En Inventario → Confirmación, elija la misma recepción, registre el conteo (esta vez se acepta) y confirme la cantidad. Aparece «Decisiones tomadas» y la mercancía pasa a Disponible.
+100. En Seguridad → Auditoría, los eventos «Línea de recepción contada» e «Ingreso a inventario confirmado» de esa recepción tienen como usuario al segundo usuario.
+101. (Opcional) En Inventario → Confirmación, sección «Política de conteo», marque «Permitir que quien recibe cuente la mercancía» y pulse «Guardar política». El aviso cambia a «Conteo independiente desactivado por la empresa», y el cambio queda auditado con su valor anterior y el nuevo. Desmárquelo para volver a activar el control.
+
+**Límites:**
+- La regla solo separa a quien recibe de quien cuenta. Quien confirma puede ser cualquiera de los dos, porque así lo decidió usted.
+- Las recepciones ya confirmadas no se revisan cuando cambia la política.
