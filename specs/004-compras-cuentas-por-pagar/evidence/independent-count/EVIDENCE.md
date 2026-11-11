@@ -65,4 +65,9 @@ Ninguna nueva. No se absorbieron:
 
 ## Cierre
 
-Se completa con la suite completa.
+- **Fusión con CTL-05 de P1** (`a245de0`): la migración de este ciclo se reencadenó como `0101` detrás de `0100_gov_ctl05_rendicion`, con una llamada extra que autorizó la dueña. El catálogo queda en 476.
+- **Sobre el árbol fusionado:**
+  - suite completa de backend en PostgreSQL, con analizador real: 5334 PASS y los 5 fallos de la línea base (`gobierno_integridad`, `n10`, `naive_datetime` y dos de `spec019_receipt`). NEW_FAILURES = 0;
+  - Vitest 1922/1922; typecheck, lint y build limpios;
+  - E2E del ciclo 14/14.
+- **Publicado** en `7e53ca9`, con `HEAD == origin/develop`. La UAT `kuat` está en `0101`.
