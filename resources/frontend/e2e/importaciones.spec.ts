@@ -1,12 +1,34 @@
 import { expect, test, entrar, sesionApi } from "./helpers/sesion";
 import { readFile } from "node:fs/promises";
+import { ctx as ctxVentas, get as getV, marca, post as postV, postCrudo, type Ctx } from "./helpers/ventas";
+import { laReservaDe, reservasDePedido } from "./helpers/reservas";
+import { verificadorDeEscenario } from "./helpers/usuario";
+import { mundoN6 } from "./helpers/n6-mundo";
+import { type APIRequestContext } from "@playwright/test";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 
-test.setTimeout(300000);
-test("expediente de importación de punta a punta", async ({ page }) => {
+async function fiscalListo(request: APIRequestContext, c: Ctx, m: string) {
+  const admin = await sesionApi("admintenant", { tenant: TENANT });
+  const tenantCtx: Ctx = { ...c, token: admin.token, headers: { ...c.headers, Authorization: `Bearer ${admin.token}` } };
+  const fuente = await postV(request, tenantCtx, "/fiscal/legal-sources", {
+    authority: "SENIAT", source_type: "LEY", number: `LI-${m}`, effective_from: "2020-01-01",
+  });
+  await postV(request, tenantCtx, `/fiscal/legal-sources/${fuente.id}/activate`, {});
+  const serie = await postV(request, c, "/fiscal/number-series", {
+    document_type: "INVOICE", prefix: "I",
+  });
+  const desde = 100000 + Math.floor(Math.random() * 800000);
+  const lote = await postV(request, c, "/fiscal/control-batches", {
+    range_from: String(desde), range_to: String(desde + 49),
+  });
+  return { series: serie.id as string, batch: lote.id as string };
+}
+
+test.setTimeout(600000);
+test("expediente de importación de punta a punta", async ({ page, request }) => {
   const sufijo = Date.now().toString().slice(-8);
   const { token } = await sesionApi(USER, { tenant: TENANT });
 
@@ -458,6 +480,24 @@ test("expediente de importación de punta a punta", async ({ page }) => {
 
   await expect(seccionReporte).not.toContainText(/[0-9a-f]{8}-[0-9a-f]{4}-/);
 
+  // N1: antes de confirmar, la mercancía no confirmada no es vendible
+  const saldosNoConfirmadosResponse = await fetch(
+    `${API}/inventory/balances?product_id=${articulo.id}&warehouse_id=${almacen}&page_size=100`,
+    { headers: authHeaders(companyId) },
+  );
+  expect(saldosNoConfirmadosResponse.ok).toBeTruthy();
+  const saldosNoConfirmados = ((await saldosNoConfirmadosResponse.json()) as {
+    items: Array<{ qty_available: number | string; state: string; qty_on_hand: number | string }>;
+  }).items;
+  const qtyAvailableNoConfirmado = saldosNoConfirmados
+    .filter((item) => item.state === "DISPONIBLE")
+    .reduce((acc, item) => acc + Number(item.qty_available ?? 0), 0);
+  expect(qtyAvailableNoConfirmado).toBe(0);
+  const qtyOnHandRecibido = saldosNoConfirmados
+    .filter((item) => item.state === "RECIBIDO")
+    .reduce((acc, item) => acc + Number(item.qty_on_hand ?? 0), 0);
+  expect(qtyOnHandRecibido).toBe(10);
+
   // 5. Confirmar inventario
   await page.getByRole("link", { name: `Confirmar inventario de REC-${sufijo}` }).click();
   await expect(page.getByRole("heading", { name: "Confirmación de inventario" })).toBeVisible();
@@ -817,6 +857,226 @@ test("expediente de importación de punta a punta", async ({ page }) => {
   await expect(page.getByText("Aplicación de gasto de importación revertida").first()).toBeVisible();
   await expect(page.getByText("Gasto de importación registrado").first()).toBeVisible();
   await expect(page.getByText("Gasto de importación anulado").first()).toBeVisible();
+
+  // 7. Saldos y valoración tras el put-away
+  const c = await ctxVentas(request);
+  expect(c.company).toBe(companyId);
+  const m = marca();
+
+  const saldosPostPutawayResponse = await getV(
+    request,
+    c,
+    `/inventory/balances?product_id=${articulo.id}&warehouse_id=${almacen}&page_size=100`,
+  );
+  const saldosPostPutaway = saldosPostPutawayResponse.items as Array<{
+    warehouse_id: string;
+    location_id: string | null;
+    product_id: string;
+    state: string;
+    qty_on_hand: number | string;
+    qty_reserved: number | string;
+    qty_available: number | string;
+  }>;
+  const saldoUbicacionB = saldosPostPutaway.find(
+    (item) => item.location_id === ubicacionB.id,
+  );
+  expect(saldoUbicacionB).toBeTruthy();
+  expect(saldoUbicacionB!.state).toBe("DISPONIBLE");
+  const qtyAvailableAntes = saldosPostPutaway
+    .filter((item) => item.state === "DISPONIBLE")
+    .reduce((acc, item) => acc + Number(item.qty_available ?? 0), 0);
+  expect(qtyAvailableAntes).toBe(10);
+
+  const valoracionPostPutaway = (await getV(
+    request,
+    c,
+    `/inventory/valuation?product_id=${articulo.id}&warehouse_id=${almacen}`,
+  )) as { valuation: number | string };
+  const valoracionAntesNum = Number(valoracionPostPutaway.valuation ?? 0);
+
+  // 8. Configuración fiscal, cliente y área de consolidación
+  const fiscal = await fiscalListo(request, c, m);
+
+  const cliente = await postV(request, c, "/maestros/terceros", {
+    code: `CL-${m}`, name: `Cliente Import ${m}`, roles: ["CLIENTE"],
+  });
+
+  const areaConsolidacion = await postV(request, c, "/organization/locations", {
+    warehouse_id: almacen, code: `CONS-${m}`, name: "Área de Consolidación", sequence: 99,
+  });
+
+  // 9. Pedido de 4 unidades
+  const pedido = await postV(request, c, "/sales/orders", {
+    code: `OVI-${m}`, customer_id: cliente.id, currency: "VED", warehouse_id: almacen,
+  });
+  const lineaVenta = await postV(request, c, `/sales/orders/${pedido.id}/lines`, {
+    product_id: articulo.id, quantity: 4, unit_price: 25,
+  });
+
+  const emitido = await postV(request, c, `/sales/orders/${pedido.id}/submit`, {});
+  if (emitido.status !== "RELEASED") {
+    await postV(request, c, `/sales/orders/${pedido.id}/release`, {});
+  }
+
+  const reserva = await laReservaDe(request, c.headers, articulo.id);
+  expect(reserva.source_order_id).toBe(pedido.id);
+  expect(reserva.status).toBe("ACTIVE");
+  expect(Number(reserva.quantity)).toBe(4);
+
+  // 10. Picking con la ubicación B
+  const plan = await postV(request, c, "/sales/pick-lists", {
+    code: `PLI-${m}`, order_id: pedido.id, warehouse_id: almacen,
+  });
+  await postV(request, c, `/sales/picking/${plan.id}/asignaciones`, {
+    order_line_id: lineaVenta.id, location_id: ubicacionB.id, quantity: 4,
+  });
+
+  await postV(request, c, `/sales/picking/${plan.id}/confirmar`, {});
+  const prep = await getV(request, c, `/sales/picking/${plan.id}/preparacion`);
+  expect((prep.picking as Array<{ location_id: string; product_id: string }>).every((p) => p.location_id === ubicacionB.id && p.product_id === articulo.id)).toBe(true);
+  await postV(request, c, `/sales/picking/${plan.id}/recoger`, {
+    line_id: (prep.picking as Array<{ id: string }>)[0].id, quantity: 4,
+  });
+  await postV(request, c, `/sales/picking/${plan.id}/consolidar`, { location_id: areaConsolidacion.id });
+
+  const v = await verificadorDeEscenario(request, c, { usuario: `imp-${m.toLowerCase()}`, empresas: [c.company] });
+  await postV(request, v, `/sales/confirmacion/${pedido.id}`, {
+    lines: [{ order_line_id: lineaVenta.id, checked_base_quantity: 4 }],
+  });
+
+  // 11. Facturación
+  await postV(request, v, `/sales/facturacion/${pedido.id}/solicitar`, {});
+  const factura = await postV(request, c, `/sales/facturacion/${pedido.id}/generar`, {});
+  const emitida = await postV(request, c, `/sales/facturacion/${factura.id}/emitir`, {
+    series_id: fiscal.series, batch_id: fiscal.batch,
+  });
+  expect(emitida.status).toBe("EMITTED");
+
+  // 12. UI de despacho
+  await page.setViewportSize({ width: 1280, height: 844 });
+  await page.goto("/ventas/despacho");
+  await expect(page.getByRole("heading", { name: "Despacho" })).toBeVisible();
+  await expect(page.getByText("Pedidos por despachar")).toBeVisible();
+  await expect(page.getByText(pedido.code).first()).toBeVisible();
+
+  // 13. Shipments create/validate/confirm
+  const sh = await postV(request, c, "/sales/shipments", {
+    code: `DESP-${m}`, order_id: pedido.id,
+    destination: "Caracas", transport: "Transportista X",
+  });
+  expect(sh.lines.length).toBe(1);
+  expect(Number(sh.lines[0].base_quantity)).toBe(4);
+  expect(sh.origin_warehouse_id).toBe(almacen);
+
+  const validado = await postV(request, c, `/sales/shipments/${sh.id}/validate`, {});
+  expect(validado.status).toBe("READY");
+  expect(validado.regulatory_status).toBe("CLEARED");
+  expect(validado.invoice_id).toBeTruthy();
+
+  const salido = await postV(request, c, `/sales/shipments/${sh.id}/confirm`, {});
+  expect(salido.status).toBe("SHIPPED");
+  expect(salido.dispatched_at).toBeTruthy();
+  expect((await getV(request, c, `/sales/orders/${pedido.id}`)).status).toBe("SHIPPED");
+
+  // 14. Verificación posterior al despacho
+  const saldosTrasDespacho = (await getV(
+    request,
+    c,
+    `/inventory/balances?product_id=${articulo.id}&warehouse_id=${almacen}&page_size=100`,
+  )).items as Array<{
+    location_id: string | null;
+    state: string;
+    qty_on_hand: number | string;
+    qty_available: number | string;
+  }>;
+  const qtyOnHandPorEstado = (estado: string) =>
+    saldosTrasDespacho
+      .filter((item) => item.state === estado)
+      .reduce((acc, item) => acc + Number(item.qty_on_hand ?? 0), 0);
+  expect(qtyOnHandPorEstado("DISPONIBLE")).toBe(qtyAvailableAntes - 4);
+  expect(qtyOnHandPorEstado("PREPARADO")).toBe(0);
+  expect(qtyOnHandPorEstado("DESPACHADO")).toBe(4);
+
+  const reservasDespues = await reservasDePedido(request, c.headers, pedido.id);
+  expect(reservasDespues.filter((r) => r.status === "ACTIVE").length).toBe(0);
+
+  const movimientos = (await getV(
+    request,
+    c,
+    `/inventory/movements?product_id=${articulo.id}&warehouse_id=${almacen}&page_size=100`,
+  )).items as Array<{
+    id: string;
+    warehouse_id: string;
+    location_id: string | null;
+    product_id: string;
+    movement_type_id: string;
+    quantity: number | string;
+    unit_cost: number | string;
+    currency: string;
+    document_ref: string | null;
+    occurred_at: string;
+    status: string;
+  }>;
+  const movimientoSalida = movimientos.find(
+    (mov) =>
+      mov.document_ref === `SHIPMENT:${sh.id}` &&
+      Math.abs(Number(mov.quantity)) === 4,
+  );
+  expect(movimientoSalida).toBeTruthy();
+  expect(
+    movimientos.some(
+      (mov) =>
+        mov.document_ref === `PICKLIST:${plan.id}` &&
+        mov.location_id === ubicacionB.id,
+    ),
+  ).toBeTruthy();
+
+  const valoracionTrasDespacho = (await getV(
+    request,
+    c,
+    `/inventory/valuation?product_id=${articulo.id}&warehouse_id=${almacen}`,
+  )) as { valuation: number | string };
+  const valoracionDespuesNum = Number(valoracionTrasDespacho.valuation ?? 0);
+  // DISPATCH-COST-RELIEF (deuda abierta): la salida 035 no consume capas de costo; aquí solo se comprueba que el despacho no destruye la valoración.
+  expect(Math.abs(valoracionAntesNum - valoracionDespuesNum)).toBeLessThanOrEqual(0.01);
+
+  // 15. N2: segundo pedido de 7 unidades no consigue reserva completa
+  const pedido2 = await postV(request, c, "/sales/orders", {
+    code: `OVI2-${m}`, customer_id: cliente.id, currency: "VED", warehouse_id: almacen,
+  });
+  await postV(request, c, `/sales/orders/${pedido2.id}/lines`, {
+    product_id: articulo.id, quantity: 7, unit_price: 25,
+  });
+  const submitPedido2 = await postCrudo(request, c, `/sales/orders/${pedido2.id}/submit`, {});
+  expect(submitPedido2.status()).toBe(409);
+  expect((await submitPedido2.json()).code).toBe("INSUFFICIENT_AVAILABLE");
+
+  // 16. N3: aislamiento entre empresas
+  const hb = { ...c.headers, "X-Kontrol-Company": mundoN6().empresa_b };
+  const balancesB = await request.get(
+    `${API}/inventory/balances?product_id=${articulo.id}`,
+    { headers: hb },
+  );
+  if (balancesB.ok()) {
+    const bodyB = (await balancesB.json()) as { items: Array<unknown> };
+    expect(bodyB.items ?? []).toHaveLength(0);
+  } else {
+    expect([403, 404]).toContain(balancesB.status());
+  }
+
+  const pedidoB = await request.post(`${API}/sales/orders`, {
+    headers: hb,
+    data: { code: `OVB-${m}`, customer_id: cliente.id, currency: "VED", warehouse_id: almacen },
+  });
+  expect(pedidoB.status()).toBeGreaterThanOrEqual(400);
+
+  // 17. Responsive UI
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/ventas/despacho");
+  await expect(page.getByRole("heading", { name: "Despacho" })).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth))
+    .toBe(true);
 
   await page.goto("/compras/importaciones");
   const fila = page

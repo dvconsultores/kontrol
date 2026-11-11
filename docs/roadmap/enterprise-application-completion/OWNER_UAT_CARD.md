@@ -195,3 +195,25 @@ Necesita:
 - No se descuentan las compras en curso por almacén (la orden de compra no tiene almacén).
 - El aviso es una alerta: no crea tareas.
 - La etiqueta de severidad «Advertencia» del Centro de alertas tiene poco contraste. Es un defecto previo del componente de alertas, informado aparte.
+
+## De la importación al despacho (Spec 018 §4)
+
+Comprueba que la mercancía que entra por una importación sale por la cadena de ventas, sin ningún paso «Liberar» aparte. Una mercancía se puede vender cuando se confirma su inventario: queda en estado Disponible y el pedido liberado la reserva.
+
+Necesita:
+- un expediente de importación con su recepción, como en los pasos anteriores de esta tarjeta;
+- un segundo usuario que confirme el pedido, porque quien prepara no puede confirmar;
+- la serie fiscal y el lote de control de la empresa.
+
+77. Antes de confirmar el inventario de la recepción, lo recibido figura como «Recibido», con disponible para vender 0.
+78. Confirme el inventario y ubique la mercancía desde el expediente. Queda «Disponible» en la ubicación elegida.
+79. En Ventas → Órdenes, cree un pedido del mismo producto y almacén por una cantidad menor o igual a la importada y emítalo. Queda liberado y con su reserva.
+80. En Ventas → Preparación de pedidos, el pedido aparece en la cola. Asigne la ubicación donde quedó la mercancía importada, recoja y consolide en el área de confirmación. La salida del picking queda registrada desde esa ubicación.
+81. Con el segundo usuario, en Ventas → Confirmación de pedido, confirme las cantidades.
+82. En Ventas → Facturación, solicite, genere y emita la factura.
+83. En Ventas → Despacho, el pedido aparece en «Pedidos por despachar». Indique destino y transporte, valide y confirme la salida. El pedido queda despachado.
+84. En el inventario del producto quedan como Disponible solo las unidades no vendidas; las despachadas figuran como «Despachado». Un pedido por más de lo que queda se rechaza con «No hay disponible suficiente para confirmar el pedido».
+
+**Límites:**
+- **Costo de la salida (deuda abierta DISPATCH-COST-RELIEF).** El despacho no descuenta el costo: la valoración del inventario incluye todavía lo despachado. Es una decisión pendiente de la dueña (método, costo de ventas y custodia de lo despachado).
+- La ubicación final de cada unidad importada no se atribuye al expediente (deuda IMPORT-PUTAWAY-ATRIBUCION, abierta).

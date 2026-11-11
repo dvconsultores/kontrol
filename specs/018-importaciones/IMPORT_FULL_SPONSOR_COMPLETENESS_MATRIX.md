@@ -10,8 +10,8 @@
 
 | Estado | Requisitos |
 |---|---|
-| COMPLETE | 31 |
-| PARTIAL | 4 |
+| COMPLETE | 32 |
+| PARTIAL | 3 |
 | EXISTS_NOT_REVALIDATED | 6 |
 | NOT_BUILT | 0 |
 | SPONSOR_VALIDATION_REQUIRED | 1 |
@@ -20,7 +20,8 @@
 La proporción no mide el avance real: las filas no pesan igual. Hechos el 2026-11-10:
 - la clasificación configurable, la zona y el etiquetado;
 - la rotación y la proyección de la Spec 015, que completan la clasificación por tamaño, peso, rotación y volumen. Evidencia: `specs/015-planificacion-abastecimiento/evidence/EVIDENCE.md`;
-- la detección automática de la necesidad (IMP-01) y la revalidación de la solicitud de compra (IMP-03). Evidencia: `specs/015-planificacion-abastecimiento/evidence/replenishment-detection/EVIDENCE.md`.
+- la detección automática de la necesidad (IMP-01) y la revalidación de la solicitud de compra (IMP-03). Evidencia: `specs/015-planificacion-abastecimiento/evidence/replenishment-detection/EVIDENCE.md`;
+- el traspaso a preparación y despacho (§4 Liberar): la mercancía importada sale por la cadena comercial. Evidencia: `specs/018-importaciones/evidence/release-to-dispatch/EVIDENCE.md`.
 
 Las zonas A a E siguen pendientes de validar por el sponsor.
 
@@ -28,6 +29,7 @@ Las zonas A a E siguen pendientes de validar por el sponsor.
 
 1. **Validación del sponsor de las zonas A a E**: configurables hoy; falta su significado.
 2. **Suministro abierto por almacén**: la orden de compra no tiene almacén, así que la planificación no lo descuenta.
+3. **Costo de la salida (DISPATCH-COST-RELIEF)**: el despacho no consume capas de costo y lo despachado sigue en la valoración. Es una decisión material: método, costo de ventas y custodia de lo DESPACHADO.
 
 ## Matriz
 
@@ -71,7 +73,7 @@ Las zonas A a E siguen pendientes de validar por el sponsor.
 | §4 Trasladar, colocar y registrar ubicación | DOCX §4 | Ubicación | /compras/importaciones/{id} | SI | SI | /inventory/putaway | inventario | Spec 022 | E2E: «Recibida y ubicada» | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §4 Validar ubicación física contra registrada | DOCX §4 | Ubicación | /compras/importaciones/{id} (Ubicación física) | SI | SI | /importaciones/{id}/physical-locations; /physical-locations/validate; /inventory/location-validations | ver compras:view; validar inventario:create | Specs 003, 008, 022 | 18 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Acto posterior e independiente del put-away; MATCH sin movimiento; MISMATCH sin mover; historial sin sobrescribir |
 | §4 Reubicar por error | DOCX §4 | Ubicación | /compras/importaciones/{id} (Ubicación física) | SI | SI | /inventory/location-validations/{id}/relocate | inventario:create | Specs 003, 022 | 18 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Movimiento `REUBICACION` A → B en el ledger único; costo, estado, reservas y almacén intactos; las transferencias se descartaron porque consumen capas y pasan por tránsito |
-| §4 Liberar para preparación y despacho | DOCX §4 | Ubicación | /compras/importaciones/{id} | SI | SI | /inventory/putaway | inventario | Ventas | E2E llega a ubicada; no recorre el despacho posterior | NO | NO | PARTIAL | Disponibilidad no verificada en un pedido |
+| §4 Liberar para preparación y despacho | DOCX §4 | Ubicación → Ventas | /compras/importaciones/{id}; /ventas/preparacion; /ventas/despacho | SI | SI | /inventory/putaway; /sales/orders; /sales/pick-lists; /sales/picking; /sales/confirmacion; /sales/facturacion; /sales/shipments | inventario; ventas | Specs 021, 022, 023, 030–035 | E2E importaciones.spec: la mercancía importada, confirmada y ubicada se reserva, se prepara desde su ubicación, se confirma por un verificador, se factura y se despacha; RECIBIDO no se vende; pedido mayor que lo importado → 409 | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Sin estado de liberación nuevo: la vendibilidad es confirmación + estado DISPONIBLE + pedido RELEASED. Deuda abierta DISPATCH-COST-RELIEF: la salida no consume capas de costo |
 | Trazabilidad importación a ubicación final | DOCX, controles | Control | /compras/importaciones/{id} | SI | SI | /importaciones/{id} | compras | Specs 019 a 022 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | PARTIAL | IMPORT-PUTAWAY-ATRIBUCION: lo ubicado desde Inventario sin referencia no se atribuye al expediente |
 | Conteo independiente | DOCX, controles | Control | /inventario/confirmacion | Parcial | SI | /purchasing/receipts | inventario | Spec 021 | Otras suites | NO | NO | EXISTS_NOT_REVALIDATED | `confirmation_same_user_allowed` existe; no revalidado aquí |
 | Autorización de ajustes | DOCX, controles | Control | /compras/incidencias | SI | SI | /purchasing/incidents | compras | Spec 045 | Otras suites | NO | NO | EXISTS_NOT_REVALIDATED |  |
