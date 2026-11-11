@@ -37,6 +37,7 @@ const CAPACIDADES = [
   "gobierno_cuentas:view",
   "gobierno_caja:view",
   "gobierno_expedientes:view",
+  "gobierno_rendicion:view",
   "documentos:view",
 ];
 
