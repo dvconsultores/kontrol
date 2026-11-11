@@ -47,3 +47,21 @@ Las 6 rojas de la suite PG fallan igual, con salida idéntica salvo identificado
 - **OBS-CTL09-A11Y-01 (LOW):** los controles por anexo («Constancia (art. 19)», «Guardar constancia», «Guardar documentos») repiten nombre accesible en cada fila. Axe no lo marca como serio. Convendría el sufijo con el código del anexo.
 - **OBS-CTL09-PLAZOS-01:** sin plazos en días hábiles (arts. 13, 21 y 22) hasta que exista calendario oficial (DOC-03 BLOCKED).
 - **OBS-CTL09-ORCH-01:** 10 llamadas (tope 8). Las 2 extra las autorizó la dueña: K7, una variable sin uso, y K8, la colisión de migración con Spec 021 de P2. Ver `ATTEMPT_LOG.md`.
+
+## Integración y publicación
+
+- **P2 publicó Spec 021** (migración `0101_receipt_count_independence`) durante el ciclo. La fusión `6a47e6a` (sin rebase) renumera la migración de CTL-09 a `0102`, con cabeza única, y fija el catálogo en 485 entradas.
+- **Publicado:** `HEAD == origin/develop == 6a47e6a`.
+- **E2E canónica:** 464 passed / 12 failed / 16 did not run (6 workers, 0 reintentos).
+  - 9 rojas fallan igual en `2cc6a19` (cabeza publicada sin CTL-09).
+  - 3 (`gobierno-actos`, `planificacion`, `route-crawl`) pasan 9/9 aisladas en el árbol de CTL-09: inestabilidad por carga.
+  - Las 16 sin ejecutar pertenecen a grupos `serial` cortados por esas rojas.
+  - `NEW_E2E_FAILURES=0`.
+
+## UAT
+
+- **Pila de la dueña:** worktree `wt-6a47e6a` (commit publicado), frontend en http://localhost:15673/.
+  - HUMO-UAT-01 1/1, incluida «Actas de entrega».
+  - HTTP 200: `OWNER_UAT_READY` + `ACCESSIBLE`.
+- **Pila de CTL-05:** worktree `wt-65ed840`, relanzada en http://localhost:15573/, con HUMO-UAT-01 1/1.
+- El acceso se entrega por el canal habitual, no en este documento.
