@@ -3401,6 +3401,22 @@
     },
     {
       "method": "GET",
+      "path": "/planning/replenishment-needs",
+      "query": [
+        "page",
+        "page_size",
+        "q",
+        "status",
+        "warehouse_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/planning/replenishment-needs/{need_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/planning/requisitions/{requisition_id}",
       "query": []
     },

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 
 import { apiFetch } from "@/api/client";
 import { useCompany } from "@/app/contexts/CompanyContext";
@@ -13,8 +14,16 @@ import { PageContent } from "@/layout/PageContent";
 import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
 import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 
+type Need = {
+  id: string;
+  product: { id: string; code: string; name: string };
+  warehouse: { id: string; code: string; name: string };
+};
+
 export function RequisicionNuevaPage(): React.JSX.Element {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const necessityId = searchParams.get("necesidad");
   const { notify } = useNotifications();
   const { activeCompany } = useCompany();
 
@@ -26,11 +35,26 @@ export function RequisicionNuevaPage(): React.JSX.Element {
 
   const almacenesQuery = useAlmacenesDeEmpresa(activeCompany?.id ?? null);
 
+  const necesidadQuery = useQuery({
+    queryKey: ["planificacion", "necesidad", necessityId],
+    queryFn: () => apiFetch<Need>(`/planning/replenishment-needs/${necessityId}`),
+    enabled: Boolean(necessityId),
+    retry: false,
+  });
+
+  const need = necesidadQuery.data;
+
+  useEffect(() => {
+    if (need && !warehouseId) {
+      setWarehouseId(need.warehouse.id);
+    }
+  }, [need, warehouseId]);
+
   useEffect(() => {
     if (createdId) {
-      navigate(`/compras/requisiciones/${createdId}`);
+      navigate(`/compras/requisiciones/${createdId}${necessityId ? `?necesidad=${necessityId}` : ""}`);
     }
-  }, [createdId, navigate]);
+  }, [createdId, navigate, necessityId]);
 
   const guardar = async (): Promise<void> => {
     if (!code.trim() || !warehouseId) {
@@ -64,6 +88,12 @@ export function RequisicionNuevaPage(): React.JSX.Element {
           { label: "Nueva" },
         ]}
       />
+      {need ? (
+        <div role="status" className="mb-4">
+          Desde la necesidad de reposición de {need.product.code} · {need.product.name} en{" "}
+          {need.warehouse.code}.
+        </div>
+      ) : null}
       <form
         noValidate
         className="rounded-lg border border-border-default bg-surface-0 p-6"
@@ -95,7 +125,7 @@ export function RequisicionNuevaPage(): React.JSX.Element {
         ) : null}
         <div className="mt-6 flex justify-end">
           <Autorizado operacion={["POST", "/purchasing/requisitions"]}>
-          <AsyncButton onClick={guardar}>Crear requisición</AsyncButton>
+            <AsyncButton onClick={guardar}>Crear requisición</AsyncButton>
           </Autorizado>
         </div>
       </form>

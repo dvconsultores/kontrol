@@ -11,7 +11,7 @@ from app.modules.master_data import uom as uom_engine
 from app.modules.master_data.models import CatalogItem
 from app.modules.organization.models import Warehouse
 from app.modules.planning.engine import compute_plan
-from app.modules.planning.models import RequisitionLinePlan
+from app.modules.planning.models import ReplenishmentNeed, RequisitionLinePlan
 from app.modules.purchasing.models import PurchaseRequisition, RequisitionLine
 from app.shared.audit import record_audit
 
@@ -32,6 +32,7 @@ def add_planned_line(
     use_recommendation: bool,
     expected_policy_version: int | None,
     actor_id: str,
+    replenishment_need_id: str | None = None,
 ) -> tuple[RequisitionLine, RequisitionLinePlan]:
     req = db.get(PurchaseRequisition, requisition_id)
     if not req or req.company_id != company_id:
@@ -44,6 +45,17 @@ def add_planned_line(
             message="La requisición requiere almacén",
             status_code=422,
         )
+
+    if replenishment_need_id is not None:
+        need = db.get(ReplenishmentNeed, replenishment_need_id)
+        if need is None or need.company_id != company_id:
+            raise NotFoundError(code="REPLENISHMENT_NEED_NOT_FOUND", message="Necesidad no encontrada")
+        if need.warehouse_id != req.warehouse_id or need.product_id != product_id:
+            raise KontrolError(
+                code="REPLENISHMENT_NEED_MISMATCH",
+                message="La necesidad no corresponde a este almacén y producto",
+                status_code=422,
+            )
 
     plan = compute_plan(db, company_id=company_id, warehouse_id=req.warehouse_id, product_id=product_id)
 
@@ -153,6 +165,7 @@ def add_planned_line(
         accepted_recommendation=use_recommendation,
         calculated_at=_dt(plan["calculated_at"]),
         calculated_by=actor_id,
+    replenishment_need_id=replenishment_need_id,
     )
     db.add(line_plan)
     db.flush()
@@ -170,6 +183,7 @@ def add_planned_line(
             "policy_version": line_plan.policy_version,
             "recommended_quantity": str(recommended) if recommended is not None else None,
             "requested_base_quantity": str(base),
+            "replenishment_need_id": replenishment_need_id,
             "requisition_id": req.id,
             "status": plan["status"],
         },
@@ -231,6 +245,7 @@ def line_plan_dict(plan: RequisitionLinePlan) -> dict:
         "accepted_recommendation": plan.accepted_recommendation,
         "calculated_at": plan.calculated_at.isoformat(),
         "calculated_by": plan.calculated_by,
+        "replenishment_need_id": plan.replenishment_need_id,
     }
 
 

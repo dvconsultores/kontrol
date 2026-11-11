@@ -184,6 +184,7 @@ const navSections: NavSection[] = [
     title: "Compras",
     items: [
       { to: "/compras/requisiciones", label: "Requisiciones", icon: ClipboardList },
+      { to: "/compras/planificacion/necesidades", label: "Necesidades de reposición", icon: ListChecks },
       { to: "/compras/cotizaciones", label: "Cotizaciones", icon: FileText },
       { to: "/compras/ordenes", label: "Órdenes", icon: ShoppingCart },
       { to: "/compras/importaciones", label: "Importaciones", icon: Package },

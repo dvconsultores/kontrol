@@ -17,6 +17,7 @@ ROTATION_METRICS = ("DEMAND_VELOCITY", "TURNOVER")
 METHOD = "AVG_CALENDAR_WINDOW_V1"
 
 _POLICY_KEYS = (
+    "auto_replenishment_enabled",
     "code",
     "name",
     "warehouse_id",
@@ -125,6 +126,7 @@ def _as_int(value: object, code: str) -> int:
 
 def _policy_after(policy: planning_models.PlanningPolicy) -> dict[str, Any]:
     return {
+        "auto_replenishment_enabled": policy.auto_replenishment_enabled,
         "code": policy.code,
         "name": policy.name,
         "warehouse_id": policy.warehouse_id,
@@ -202,6 +204,7 @@ def create_policy(
         status=str(data.get("status", "ACTIVE")),
         valid_from=_as_date(data.get("valid_from")),
         valid_to=_as_date(data.get("valid_to")),
+        auto_replenishment_enabled=bool(data.get("auto_replenishment_enabled", False)),
         created_by=actor_id,
     )
     db.add(policy)
@@ -252,6 +255,7 @@ def update_policy(
         "rotation_metric": policy.rotation_metric,
         "status": policy.status,
         "valid_from": policy.valid_from,
+        "auto_replenishment_enabled": policy.auto_replenishment_enabled,
         "valid_to": policy.valid_to,
     }
     for key, value in data.items():
@@ -300,6 +304,7 @@ def update_policy(
     policy.status = str(merged["status"])
     policy.valid_from = _as_date(merged.get("valid_from"))
     policy.valid_to = _as_date(merged.get("valid_to"))
+    policy.auto_replenishment_enabled = bool(merged.get("auto_replenishment_enabled", False))
     policy.version += 1
     after = _policy_after(policy)
     record_audit(
@@ -346,6 +351,7 @@ def policy_dict(db: Session, policy: planning_models.PlanningPolicy) -> dict[str
         "rotation_metric": policy.rotation_metric,
         "status": policy.status,
         "valid_from": policy.valid_from.isoformat() if policy.valid_from else None,
+        "auto_replenishment_enabled": policy.auto_replenishment_enabled,
         "valid_to": policy.valid_to.isoformat() if policy.valid_to else None,
         "version": policy.version,
         "created_at": policy.created_at.isoformat() if policy.created_at else None,

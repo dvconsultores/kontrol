@@ -57,6 +57,8 @@ CATALOGOS: dict[str, dict[str, Plantilla]] = {
             "Revisar la aprobación vencida de {process_type} en el nivel {level_order}."),
         "approval.step_expired.alert": _p(
             "Aprobación de {process_type} vencida en el nivel {level_order}."),
+        "replenishment.need_detected.alert": _p(
+            "{product_code} · {product_name} requiere reposición en el almacén {warehouse_code}."),
         # -- efectos del planificador -----------------------------------------
         "task.reminder.notification": _p(
             "Tienes una tarea pendiente cuyo plazo está por vencer o ya venció."),

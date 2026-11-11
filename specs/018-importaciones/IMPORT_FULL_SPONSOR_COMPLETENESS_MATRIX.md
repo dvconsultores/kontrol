@@ -10,33 +10,33 @@
 
 | Estado | Requisitos |
 |---|---|
-| COMPLETE | 29 |
-| PARTIAL | 5 |
-| EXISTS_NOT_REVALIDATED | 7 |
+| COMPLETE | 31 |
+| PARTIAL | 4 |
+| EXISTS_NOT_REVALIDATED | 6 |
 | NOT_BUILT | 0 |
 | SPONSOR_VALIDATION_REQUIRED | 1 |
 | **Total** | **42** |
 
 La proporción no mide el avance real: las filas no pesan igual. Hechos el 2026-11-10:
 - la clasificación configurable, la zona y el etiquetado;
-- la rotación y la proyección de la Spec 015, que completan la clasificación por tamaño, peso, rotación y volumen. Evidencia: `specs/015-planificacion-abastecimiento/evidence/EVIDENCE.md`.
+- la rotación y la proyección de la Spec 015, que completan la clasificación por tamaño, peso, rotación y volumen. Evidencia: `specs/015-planificacion-abastecimiento/evidence/EVIDENCE.md`;
+- la detección automática de la necesidad (IMP-01) y la revalidación de la solicitud de compra (IMP-03). Evidencia: `specs/015-planificacion-abastecimiento/evidence/replenishment-detection/EVIDENCE.md`.
 
 Las zonas A a E siguen pendientes de validar por el sponsor.
 
 ## Orden propuesto de las brechas
 
 1. **Validación del sponsor de las zonas A a E**: configurables hoy; falta su significado.
-2. **Detección automática de la necesidad** (IMP-01): el punto de reorden y la sugerencia se ven al planificar, pero no hay alerta.
-3. **Suministro abierto por almacén**: la orden de compra no tiene almacén, así que la planificación no lo descuenta.
+2. **Suministro abierto por almacén**: la orden de compra no tiene almacén, así que la planificación no lo descuenta.
 
 ## Matriz
 
 | SPONSOR_REQUIREMENT | SOURCE | BUSINESS_PROCESS | SCREEN | BACKEND | DATABASE | API | ROLE_PERMISSION | INTEGRATION | FUNCTIONAL_TEST | BROWSER_VERIFIED | OWNER_UAT_READY | STATUS | GAP |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| IMP-01 Detectar necesidad de reposición o compra | DOCX §1; B-031 | Importación | /compras/requisiciones/{id} (panel de planificación) | Parcial | SI | /planning/plan, /planning/plans | compras | Inventario (ledger) | test_planning_engine; E2E planificacion.spec | POSTGRESQL_BROWSER_VERIFIED | SI | PARTIAL | El punto de reorden y la sugerencia se ven al planificar (Spec 015), pero no hay alerta automática: la necesidad la detecta una persona al consultar |
+| IMP-01 Detectar necesidad de reposición o compra | DOCX §1; B-031 | Importación | Centro de alertas → Compras → Necesidades de reposición (lista y detalle) | SI | SI (0096) | /planning/replenishment-needs; /alerts | compras (ver y crear), alertas:view | Planificador de plataforma (ADR-D0-015, manejador `planning_replenishment_detection`), Spec 047 (alerta), Inventario | test_planning_replenishment (detección, dedupe, resolución, episodios, concurrencia en PostgreSQL); Vitest; E2E reposicion.spec a 1280, 390 y 320 | POSTGRESQL_BROWSER_VERIFIED | SI | COMPLETE | Detección automática por el planificador con condición explicable (disponible ≤ punto de reorden y sugerencia > 0), alerta deduplicada que se resuelve sola, pantalla accionable y requisición con trazabilidad. Decisión humana: no crea compras |
 | IMP-02 Revisar inventario disponible | DOCX §1 | Importación | /inventario/existencias; panel de planificación de la requisición | SI | SI | /inventory; /planning/plan | inventario, compras | Inventario | E2E planificacion.spec (existencia, reservado y disponible en el panel) | POSTGRESQL_BROWSER_VERIFIED | SI | COMPLETE | Existencia, reservado y disponible por almacén al planificar la compra (Spec 015) |
 | IMP-02 Rotación y proyección de demanda | DOCX §1; B-031 | Importación | Maestros → Planificación de abastecimiento; Compras → Requisiciones → detalle | SI | SI (0094) | /planning/* | maestros (configurar), compras (consultar y crear líneas) | Inventario (ledger), Spec 018, auditoría | test_planning_config, test_planning_engine (vectores Decimal), test_planning_requisition; Vitest; E2E planificacion.spec a 1280, 390 y 320 | POSTGRESQL_BROWSER_VERIFIED | SI | COMPLETE | Política versionada, demanda neta de devoluciones y reversos, media, proyección, seguridad, punto de reorden, rotación (velocidad y turnover) con bandas, sugerencia e instantánea inmutable por línea. Fuera de alcance declarado: suministro abierto por almacén y costo estimado |
-| IMP-03 Solicitud de compra | DOCX §1 | Importación | /compras/requisiciones | SI | SI | /purchasing | compras | Compras | Otras suites; fuera de la E2E de importación | NO | NO | EXISTS_NOT_REVALIDATED | Existe; no se revalidó en este bloque |
+| IMP-03 Solicitud de compra | DOCX §1 | Importación | Compras → Requisiciones → Nueva y detalle | SI | SI | /purchasing/requisitions; /planning/requisitions | compras | Planificación (Spec 015) | test_planning_requisition; E2E planificacion.spec y reposicion.spec (crear, guardar línea, reabrir, persistencia) | POSTGRESQL_BROWSER_VERIFIED | SI | COMPLETE | Revalidada en Chrome sobre PostgreSQL migrado el 2026-11-10: alta, línea con instantánea, reapertura y vínculo con la necesidad |
 | IMP-04 Aprobar según autoridad | DOCX §1 | Importación | Aprobaciones | SI | SI | /approvals | aprobaciones | Spec 045 | Otras suites | NO | NO | EXISTS_NOT_REVALIDATED | La E2E parte de una orden aprobada |
 | IMP-05 Seleccionar y confirmar proveedor | DOCX §1 | Importación | Maestros → Terceros | SI | SI | /parties | maestros | Terceros | E2E crea proveedor por API | NO | NO | EXISTS_NOT_REVALIDATED | Comparación de ofertas sin construir |
 | IMP-06 Negociar condiciones | DOCX §1 | Importación | /compras/importaciones/{id} | SI | SI | /importaciones | compras | — | E2E + pytest PG | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Precio y cantidad viven en la orden |

@@ -39,6 +39,7 @@ class Origen:
 #: (FR-047-014, FR-047-032): coincide con el de `GET /approvals/requests/{id}`.
 ORIGENES: dict[str, Origen] = {
     "ApprovalRequest": Origen(route_key="approval_inbox", recurso="aprobaciones", accion="view"),
+    "ReplenishmentNeed": Origen(route_key="replenishment_need", recurso="compras", accion="view"),
 }
 
 CATEGORIA_RECORDATORIO = "task.reminder"

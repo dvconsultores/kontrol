@@ -4694,6 +4694,22 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/planning/replenishment-needs",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/planning/replenishment-needs/{need_id}",
+      "capabilities": [
+        "compras:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/planning/requisitions/{requisition_id}",
       "capabilities": [
         "compras:view"

@@ -302,6 +302,23 @@ def crear_alerta(db: Session, efecto: Efecto, actor: Actor = SISTEMA) -> tuple[A
     return a, True
 
 
+def resolver_alerta_de_sistema(db: Session, *, company_id: str, dedupe_key: str, momento: datetime) -> bool:
+    """La dueña del origen resolvió una alerta de sistema (sin regla). No borra."""
+    alerta = db.scalars(
+        select(Alert).where(
+            Alert.company_id == company_id,
+            Alert.dedupe_key == dedupe_key,
+            Alert.status == "ACTIVE",
+        )
+    ).first()
+    if alerta is None:
+        return False
+    alerta.status = "RESOLVED"
+    alerta.resolved_at = momento
+    db.flush()
+    return True
+
+
 def _evento(db: Session, tarea: Task, tipo: str, actor: Actor, *, desde: str | None = None,
             hacia: str | None = None, motivo: str | None = None, dedupe_key: str | None = None,
             momento: datetime | None = None) -> TaskEvent:

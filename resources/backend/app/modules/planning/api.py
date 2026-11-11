@@ -14,6 +14,7 @@ from app.core.dependencies import get_current_user, require_permission, require_
 from app.modules.identity_access.models import User
 from app.modules.inventory import models as inventory_models
 from app.modules.master_data.models import CatalogItem
+from app.modules.planning import replenishment
 from app.modules.planning import requisitions as planning_requisitions
 from app.modules.planning import service as planning_service
 from app.modules.planning.engine import compute_plan
@@ -23,6 +24,7 @@ router = APIRouter(prefix="/planning", tags=["planificacion"])
 
 class PolicyBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    auto_replenishment_enabled: bool = False
     code: str
     name: str
     warehouse_id: str | None = None
@@ -40,6 +42,7 @@ class PolicyBody(BaseModel):
 
 class PolicyPatchBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    auto_replenishment_enabled: bool | None = None
     expected_version: int
     code: str | None = None
     name: str | None = None
@@ -282,6 +285,7 @@ class PlannedLineBody(BaseModel):
     notes: str | None = None
     use_recommendation: bool = False
     expected_policy_version: int | None = None
+    replenishment_need_id: str | None = None
 
 
 @router.get("/requisitions/{requisition_id}")
@@ -306,6 +310,49 @@ def create_requisition_line(requisition_id: str, body: PlannedLineBody, db: Sess
         use_recommendation=body.use_recommendation,
         expected_policy_version=body.expected_policy_version,
         actor_id=str(actor.id),
+        replenishment_need_id=body.replenishment_need_id,
     )
     db.commit()
     return {"line_id": line.id, "plan": planning_requisitions.line_plan_dict(plan)}
+
+
+@router.get(
+    "/replenishment-needs",
+    response_model=dict,
+    summary="Listar necesidades de reposición",
+    description="Lista las necesidades de reposición de la empresa con filtros opcionales.",
+)
+def list_replenishment_needs(
+    status: str | None = Query(None, pattern="^(ACTIVE|RESOLVED)$"),
+    warehouse_id: str | None = None,
+    q: str | None = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=50),
+    db: Session = Depends(get_db),
+    ctx: CompanyContext = Depends(get_company_context),
+    _: User = Depends(require_permission("compras", "view")),
+) -> dict:
+    return replenishment.list_needs(
+        db,
+        company_id=ctx.company_id,
+        status=status,
+        warehouse_id=warehouse_id,
+        q=q,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.get(
+    "/replenishment-needs/{need_id}",
+    response_model=dict,
+    summary="Detalle de necesidad de reposición",
+    description="Muestra el detalle completo de una necesidad de reposición.",
+)
+def get_replenishment_need(
+    need_id: str,
+    db: Session = Depends(get_db),
+    ctx: CompanyContext = Depends(get_company_context),
+    _: User = Depends(require_permission("compras", "view")),
+) -> dict:
+    return replenishment.need_detail(db, company_id=ctx.company_id, need_id=need_id)

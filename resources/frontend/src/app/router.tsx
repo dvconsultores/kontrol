@@ -87,6 +87,8 @@ export const router = createBrowserRouter([
           { path: "compras/requisiciones", lazy: () => import("@/modules/compras/requisiciones/RequisicionesPage").then((m) => ({ Component: m.RequisicionesPage })) },
           { path: "compras/requisiciones/nueva", lazy: () => import("@/modules/compras/requisiciones/RequisicionNuevaPage").then((m) => ({ Component: m.RequisicionNuevaPage })) },
           { path: "compras/requisiciones/:requisitionId", lazy: () => import("@/modules/compras/requisiciones/RequisicionDetallePage").then((m) => ({ Component: m.RequisicionDetallePage })) },
+          { path: "compras/planificacion/necesidades", lazy: () => import("@/modules/compras/planificacion/NecesidadesPage").then((m) => ({ Component: m.NecesidadesPage })) },
+          { path: "compras/planificacion/necesidades/:needId", lazy: () => import("@/modules/compras/planificacion/NecesidadDetallePage").then((m) => ({ Component: m.NecesidadDetallePage })) },
           { path: "compras/cotizaciones", lazy: () => import("@/modules/compras/cotizaciones/CotizacionesComprasPage").then((m) => ({ Component: m.CotizacionesComprasPage })) },
           { path: "compras/ordenes", lazy: () => import("@/modules/compras/ordenes/OrdenesComprasPage").then((m) => ({ Component: m.OrdenesComprasPage })) },
           { path: "compras/recepciones", lazy: () => import("@/modules/compras/recepciones/RecepcionesPage").then((m) => ({ Component: m.RecepcionesPage })) },

@@ -21,3 +21,12 @@
 | T015-E | COMPLETE | 15 a 20 (E1 Maestros → Planificación, E2 requisición nueva y detalle, E3 banda en reglas) | Vitest 1892/1892 |
 | T015-F | COMPLETE | 21, 22, 23 | `e2e/planificacion.spec.ts` en Chrome sobre PostgreSQL a 1280, 390 y 320 |
 | T015-G | COMPLETE | Claude | `evidence/EVIDENCE.md`, `evidence/ATTEMPT_LOG.md` |
+
+## Delta: detección automática de reposición (2026-11-10)
+
+| ID | Tarea | EXECUTOR | MODEL | SECURITY_SENSITIVE | EGRESS_SAFE | RETRY_MAX | Estado |
+|---|---|---|---|---|---|---|---|
+| T015-RD-A | Dominio `ReplenishmentNeed`, migración 0096, servicio, manejador del planificador, alerta de sistema (Spec 047), API, trazabilidad, pruebas | DEEPSEEK | deepseek-v4-pro | SÍ (aislamiento y concurrencia fijados en el delta) | SÍ | 2 | COMPLETE (llamadas 1, 2, 3 y 4) |
+| T015-RD-B | Frontend: necesidades, detalle, requisición precargada, enlace de alerta, interruptor de detección, Vitest | DEEPSEEK | deepseek-v4-pro | NO | SÍ | 2 | COMPLETE (llamadas 2, 3 y 4) |
+| T015-RD-C | E2E canónica en Chrome sobre PostgreSQL, a 1280, 390 y 320 | DEEPSEEK | deepseek-v4-pro | NO | SÍ | 2 | COMPLETE (llamadas 3 y 4) |
+| T015-RD-D | Certificación, documentos y publicación | CLAUDE | n-a | NO | SÍ | 0 | ver `evidence/replenishment-detection/` |

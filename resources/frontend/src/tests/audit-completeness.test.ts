@@ -152,6 +152,8 @@ const pages = [
   "modules/compras/requisiciones/RequisicionesPage.tsx",
   "modules/compras/requisiciones/RequisicionNuevaPage.tsx",
   "modules/compras/requisiciones/RequisicionDetallePage.tsx",
+  "modules/compras/planificacion/NecesidadesPage.tsx",
+  "modules/compras/planificacion/NecesidadDetallePage.tsx",
   "modules/compras/cotizaciones/CotizacionesComprasPage.tsx",
   "modules/compras/facturas/FacturasProveedorPage.tsx",
   "modules/compras/devoluciones/DevolucionesComprasPage.tsx",

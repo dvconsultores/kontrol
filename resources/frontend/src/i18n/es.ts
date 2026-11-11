@@ -35,6 +35,7 @@ export const es = {
   "categoria.approval.step_expired": "Aprobación vencida",
   "categoria.task.reminder": "Recordatorio de tarea",
   "categoria.task.escalation": "Escalada de tarea",
+  "categoria.replenishment.need_detected": "Necesidad de reposición",
 
   // -- campana --------------------------------------------------------------------
   "campana.etiqueta": "Notificaciones sin leer: {count}",

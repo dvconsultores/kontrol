@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 
@@ -34,6 +34,7 @@ type Snapshot = {
   difference: string | null;
   accepted_recommendation: boolean;
   calculated_at: string | null;
+  replenishment_need_id: string | null;
 };
 
 type DetalleRequisicion = {
@@ -77,6 +78,14 @@ type Plan = {
   warehouse_code: string;
 };
 
+type Need = {
+  id: string;
+  product: { id: string; code: string; name: string };
+  warehouse: { id: string; code: string; name: string };
+  trigger: { recommended_quantity: string | null };
+  current: { recommended_quantity: string | null };
+};
+
 const columnHelper = createColumnHelper<Linea>();
 
 function formatearNumero(valor: string | null | undefined): string {
@@ -86,6 +95,8 @@ function formatearNumero(valor: string | null | undefined): string {
 
 export function RequisicionDetallePage(): React.JSX.Element {
   const { requisitionId } = useParams<{ requisitionId: string }>();
+  const [searchParams] = useSearchParams();
+  const necessityId = searchParams.get("necesidad");
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
   const { puede } = useAutoridad();
@@ -101,6 +112,26 @@ export function RequisicionDetallePage(): React.JSX.Element {
 
   const detalle = detalleQuery.data;
   const warehouseId = detalle?.warehouse_id ?? null;
+
+  const necesidadQuery = useQuery({
+    queryKey: ["planificacion", "necesidad", necessityId],
+    queryFn: () => apiFetch<Need>(`/planning/replenishment-needs/${necessityId}`),
+    enabled: Boolean(necessityId) && detalle?.status === "DRAFT" && Boolean(warehouseId),
+    retry: false,
+  });
+
+  const need = necesidadQuery.data;
+
+  useEffect(() => {
+    if (need && detalle?.warehouse_id === need.warehouse.id) {
+      if (!productoId) {
+        setProductoId(need.product.id);
+      }
+      if (!cantidadManual) {
+        setCantidadManual(need.current.recommended_quantity ?? need.trigger.recommended_quantity ?? "");
+      }
+    }
+  }, [need, detalle?.warehouse_id, productoId, cantidadManual]);
 
   const planQuery = useQuery({
     queryKey: ["planificacion", "plan", warehouseId, productoId],
@@ -139,6 +170,7 @@ export function RequisicionDetallePage(): React.JSX.Element {
           product_id: productoId,
           use_recommendation: true,
           expected_policy_version: plan?.policy?.version ?? null,
+          ...(necessityId ? { replenishment_need_id: necessityId } : {}),
         },
       });
       notify({ type: "success", title: "Línea agregada" });
@@ -163,6 +195,7 @@ export function RequisicionDetallePage(): React.JSX.Element {
           quantity: String(cantidad),
           use_recommendation: false,
           expected_policy_version: plan?.policy?.version ?? null,
+          ...(necessityId ? { replenishment_need_id: necessityId } : {}),
         },
       });
       notify({ type: "success", title: "Línea agregada" });
@@ -203,6 +236,18 @@ export function RequisicionDetallePage(): React.JSX.Element {
           : "Sin política",
     }),
     columnHelper.display({
+      id: "necesidad",
+      header: "Necesidad",
+      cell: ({ row }) =>
+        row.original.plan?.replenishment_need_id ? (
+          <Link to={`/compras/planificacion/necesidades/${row.original.plan.replenishment_need_id}`}>
+            Ver necesidad
+          </Link>
+        ) : (
+          "—"
+        ),
+    }),
+    columnHelper.display({
       id: "calculada",
       header: "Calculada",
       cell: ({ row }) => formatearNumero(row.original.plan?.calculated_at),
@@ -238,6 +283,13 @@ export function RequisicionDetallePage(): React.JSX.Element {
             <span>Almacén: {detalle.warehouse_code ?? "Sin almacén"}</span>
             <span>Necesidad: {detalle.need_date ?? "—"}</span>
           </div>
+
+          {need && detalle.warehouse_id === need.warehouse.id ? (
+            <div role="status" className="mb-4">
+              Línea para la necesidad de reposición de {need.product.code}. Puedes cambiar la
+              cantidad.
+            </div>
+          ) : null}
 
           <DataTable
             columns={columns}

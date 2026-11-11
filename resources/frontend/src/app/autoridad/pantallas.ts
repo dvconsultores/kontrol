@@ -47,6 +47,8 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "compras/requisiciones": { capacidad: "compras:view", alcance: "empresa" },
   "compras/requisiciones/nueva": { capacidad: "compras:create", alcance: "empresa" },
   "compras/requisiciones/:requisitionId": { capacidad: "compras:view", alcance: "empresa" },
+  "compras/planificacion/necesidades": { capacidad: "compras:view", alcance: "empresa" },
+  "compras/planificacion/necesidades/:needId": { capacidad: "compras:view", alcance: "empresa" },
   "compras/cotizaciones": { capacidad: "compras:view", alcance: "empresa" },
   "compras/ordenes": { capacidad: "compras:view", alcance: "empresa" },
   "compras/recepciones": { capacidad: "compras:view", alcance: "empresa" },

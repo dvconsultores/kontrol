@@ -165,4 +165,33 @@ Necesita:
 - El plazo es por política, no por producto ni por proveedor.
 - La línea guarda la cantidad en unidad base.
 - Las líneas no se editan ni se borran desde esta pantalla.
-- La planificación se calcula al consultar; no hay alertas automáticas de reposición.
+- La planificación se calcula al consultar; la detección automática de reposición se describe en la sección siguiente.
+
+## Detección automática de reposición (Spec 015)
+
+Detección automática, decisión humana: el sistema avisa, pero no crea requisiciones ni órdenes de compra.
+
+Necesita:
+- un almacén;
+- un producto con existencia y salidas registradas;
+- un paso del planificador del sistema. En producción lo lanza el temporizador del sistema. En esta UAT local **no hay temporizador**: cada paso se lanza a mano con `kontrol.py scheduler-tick` (lo hace P2 cuando la dueña lo pide). Donde abajo dice «tras el siguiente paso del planificador», hay que lanzarlo.
+
+67. En Maestros → Planificación de abastecimiento, cree una política para el almacén y marque «Detección automática de reposición». En una política existente, pulse «Activar detección». La columna «Detección» dice «Activa».
+68. Mientras el disponible esté por encima del punto de reorden, el planificador no crea nada.
+69. Registre salidas hasta que el disponible quede en el punto de reorden o por debajo. Tras el siguiente paso del planificador, en el Centro de alertas aparece «… requiere reposición en el almacén …». Aunque el planificador pase varias veces, la alerta es una sola.
+70. En la alerta, pulse «Abrir origen». Llega a la necesidad, que muestra:
+    - «Necesita reposición»;
+    - la frase «Se generó porque el disponible (X) era menor o igual que el punto de reorden (Y), con la política … vN»;
+    - la demanda, la proyección, el stock de seguridad, la existencia, la rotación y la cantidad sugerida;
+    - la situación actual.
+71. La lista completa está en Compras → Necesidades de reposición, con filtros por estado, almacén y producto.
+72. En la necesidad, pulse «Crear requisición». La nueva requisición llega con el almacén elegido. Póngale un código y pulse «Crear requisición». En el detalle, el producto y la cantidad sugerida vienen cargados: puede cambiar la cantidad y pulsar «Agregar con esta cantidad». La línea muestra «Ver necesidad».
+73. Vuelva a la necesidad: en «Requisiciones creadas desde esta necesidad» aparece la suya. La necesidad sigue activa, porque crear la requisición no repone el inventario.
+74. Registre una entrada que deje el disponible por encima del punto. Tras el siguiente paso del planificador, la necesidad dice «Resuelta: La condición dejó de cumplirse» y la alerta queda resuelta, sin borrarse.
+75. Si el disponible vuelve a caer, nace otra necesidad con otra alerta. La anterior queda en el historial como resuelta.
+76. Si apaga la detección de la política, sus necesidades activas se resuelven con «Se apagó la detección automática».
+
+**Límites:**
+- No se descuentan las compras en curso por almacén (la orden de compra no tiene almacén).
+- El aviso es una alerta: no crea tareas.
+- La etiqueta de severidad «Advertencia» del Centro de alertas tiene poco contraste. Es un defecto previo del componente de alertas, informado aparte.

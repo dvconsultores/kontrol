@@ -32,6 +32,7 @@ type Policy = {
   status: string;
   valid_from: string | null;
   valid_to: string | null;
+  auto_replenishment_enabled: boolean;
   version: number;
 };
 
@@ -120,6 +121,7 @@ export function PlanificacionPage(): React.JSX.Element {
   const [pMetrica, setPMetrica] = useState("DEMAND_VELOCITY");
   const [pDesde, setPDesde] = useState("");
   const [pHasta, setPHasta] = useState("");
+  const [pAuto, setPAuto] = useState(false);
 
   const [submittedBanda, setSubmittedBanda] = useState(false);
   const [bCode, setBCode] = useState("");
@@ -142,6 +144,7 @@ export function PlanificacionPage(): React.JSX.Element {
     setPMetrica("DEMAND_VELOCITY");
     setPDesde("");
     setPHasta("");
+    setPAuto(false);
     setSubmittedPolitica(false);
   };
 
@@ -181,6 +184,7 @@ export function PlanificacionPage(): React.JSX.Element {
           status: "ACTIVE",
           valid_from: pDesde || null,
           valid_to: pHasta || null,
+          auto_replenishment_enabled: pAuto,
         },
       });
       notify({ type: "success", title: "Política creada", description: `${pCode} · ${pName}` });
@@ -304,6 +308,11 @@ export function PlanificacionPage(): React.JSX.Element {
       cell: ({ row }) => etiqueta(row.original.rotation_metric, ROTATION_METRIC_LABEL),
     },
     {
+      id: "deteccion",
+      header: "Detección",
+      cell: ({ row }) => (row.original.auto_replenishment_enabled ? "Activa" : "Apagada"),
+    },
+    {
       id: "estado",
       header: "Estado",
       cell: ({ row }) => (row.original.status === "ACTIVE" ? "Activa" : "Inactiva"),
@@ -316,6 +325,7 @@ export function PlanificacionPage(): React.JSX.Element {
         const policy = row.original;
         if (!puede("PATCH", "/planning/policies/_")) return null;
         const activa = policy.status === "ACTIVE";
+        const auto = policy.auto_replenishment_enabled;
         return (
           <div className="flex justify-end gap-1">
             <AsyncButton
@@ -326,6 +336,23 @@ export function PlanificacionPage(): React.JSX.Element {
               onClick={() => cambiarEstadoPolitica(policy, activa ? "INACTIVE" : "ACTIVE")}
             >
               {activa ? "Desactivar" : "Activar"}
+            </AsyncButton>
+            <AsyncButton
+              variant="ghost"
+              size="sm"
+              aria-label={`${auto ? "Apagar" : "Activar"} detección ${policy.code}`}
+              title={auto ? "Apagar detección" : "Activar detección"}
+              onClick={() =>
+                apiFetch(`/planning/policies/${policy.id}`, {
+                  method: "PATCH",
+                  body: {
+                    expected_version: policy.version,
+                    auto_replenishment_enabled: !auto,
+                  },
+                }).then(() => queryClient.invalidateQueries({ queryKey: ["planificacion", "politicas"] }))
+              }
+            >
+              {auto ? "Apagar detección" : "Activar detección"}
             </AsyncButton>
           </div>
         );
@@ -500,6 +527,20 @@ export function PlanificacionPage(): React.JSX.Element {
                 <FormField label="Vigente hasta">
                   <TextInput type="date" value={pHasta} onChange={(e) => setPHasta(e.target.value)} />
                 </FormField>
+                <div>
+                  <label htmlFor="auto-replenishment" className="font-medium">
+                    Detección automática de reposición
+                  </label>
+                  <input
+                    id="auto-replenishment"
+                    type="checkbox"
+                    checked={pAuto}
+                    onChange={(e) => setPAuto(e.target.checked)}
+                  />
+                  <p className="text-sm">
+                    Avisa cuando el disponible llega al punto de reorden. No crea compras.
+                  </p>
+                </div>
                 <AsyncButton type="submit" variant="primary" onClick={crearPolitica}>
                   Crear política
                 </AsyncButton>

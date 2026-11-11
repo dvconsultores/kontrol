@@ -178,6 +178,10 @@ def test_el_tick_deja_registro_de_cada_manejador_y_el_de_la_045_deshabilitado(mu
         "task_reminders": ("047", "COMPLETED", "LATEST_WINDOW"),
         "task_escalations": ("047", "COMPLETED", "EFFECT_ONCE"),
         "notification_delivery": ("047", "COMPLETED", "DUE_RETRY"),
+        "installation_backup": ("001", "COMPLETED", "LATEST_WINDOW"),
+        "backup_retention": ("001", "COMPLETED", "OWNER_IDEMPOTENT"),
+        "backup_rpo_evaluation": ("001", "COMPLETED", "OWNER_IDEMPOTENT"),
+        "planning_replenishment_detection": ("015", "COMPLETED", "OWNER_IDEMPOTENT"),
     }
 
 

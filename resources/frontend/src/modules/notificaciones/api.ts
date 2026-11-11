@@ -144,6 +144,7 @@ export function textoDeMensaje(mensaje: Mensaje): string {
 
 const ENLACES: Record<string, { ruta: (enlace: Enlace) => string; permiso: string }> = {
   approval_inbox: { ruta: () => "/aprobaciones/bandeja", permiso: "aprobaciones:view" },
+  replenishment_need: { ruta: (enlace) => `/compras/planificacion/necesidades/${enlace.source_id}`, permiso: "compras:view" },
 };
 
 /** Adónde lleva el origen y qué permiso exige. `null` si la ruta no se conoce. */

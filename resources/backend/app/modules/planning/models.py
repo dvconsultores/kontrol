@@ -2,6 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Boolean,
     CheckConstraint,
@@ -13,6 +14,10 @@ from sqlalchemy import (
     Numeric,
     String,
     UniqueConstraint,
+    text,
+)
+from sqlalchemy import (
+    false as sa_false,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -52,6 +57,7 @@ class PlanningPolicy(UUIDMixin, TimestampMixin, VersionMixin, Base):
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="ACTIVE")
     valid_from: Mapped[date | None] = mapped_column(Date, nullable=True)
     valid_to: Mapped[date | None] = mapped_column(Date, nullable=True)
+    auto_replenishment_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_false())
 
 
 class RotationBand(UUIDMixin, TimestampMixin, VersionMixin, Base):
@@ -132,3 +138,60 @@ class RequisitionLinePlan(UUIDMixin, TimestampMixin, Base):
     accepted_recommendation: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     calculated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     calculated_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    replenishment_need_id: Mapped[str | None] = mapped_column(ForeignKey("replenishment_needs.id"), nullable=True, index=True)
+
+
+class ReplenishmentNeed(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "replenishment_needs"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        CheckConstraint("status IN ('ACTIVE', 'RESOLVED')", name="status"),
+        CheckConstraint("resolution_reason IS NULL OR resolution_reason IN ('CONDITION_CLEARED', 'PLAN_UNAVAILABLE', 'POLICY_DISABLED', 'PRODUCT_INACTIVE', 'WAREHOUSE_INACTIVE')", name="resolution_reason"),
+        CheckConstraint("(status = 'ACTIVE' AND resolved_at IS NULL AND resolution_reason IS NULL) OR (status = 'RESOLVED' AND resolved_at IS NOT NULL AND resolution_reason IS NOT NULL)", name="resolution_state"),
+        Index("uq_replenishment_needs_active", "company_id", "warehouse_id", "product_id", unique=True,
+              postgresql_where=text("status = 'ACTIVE'"), sqlite_where=text("status = 'ACTIVE'")),
+        Index("ix_replenishment_needs_company_status", "company_id", "status"),
+    )
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
+    product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
+
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="ACTIVE")
+    trigger_method: Mapped[str] = mapped_column(String(64), nullable=False)
+    triggered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolution_reason: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
+    trigger_policy_id: Mapped[str] = mapped_column(ForeignKey("planning_policies.id"), nullable=False)
+    trigger_policy_version: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    trigger_policy_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    trigger_available: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    trigger_on_hand: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    trigger_reserved: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    trigger_reorder_point: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    trigger_projected_demand: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    trigger_avg_daily_demand: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    trigger_safety_stock: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    trigger_recommended_quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    trigger_rotation_band_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    trigger_calculated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    trigger_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
+
+    last_evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    current_policy_version: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    current_available: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    current_reorder_point: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    current_projected_demand: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    current_recommended_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    current_rotation_band_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    alert_id: Mapped[str | None] = mapped_column(ForeignKey("alerts.id"), nullable=True)
+
+
+class ReplenishmentScanCursor(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "replenishment_scan_cursors"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (UniqueConstraint("company_id", name="uq_replenishment_scan_cursors_company"),)
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False)
+    last_key: Mapped[str | None] = mapped_column(String(80), nullable=True)

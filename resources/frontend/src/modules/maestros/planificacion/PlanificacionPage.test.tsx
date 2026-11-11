@@ -171,6 +171,7 @@ describe("PlanificacionPage", () => {
             status: "ACTIVE",
             valid_from: null,
             valid_to: null,
+            auto_replenishment_enabled: false,
           },
         }),
       );
