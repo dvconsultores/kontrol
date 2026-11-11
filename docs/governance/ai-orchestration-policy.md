@@ -142,6 +142,23 @@ y Claude reclasifica: dividir, subir a `deepseek-v4-pro` o implementar él. El e
 **una** llamada por encargo y no reintenta por su cuenta; el `MAX_RETRIES` del servidor MCP
 es otra cosa (reintentos de red de una misma llamada) y no cuenta como reintento de delegación.
 
+**Tope global por ciclo: 8 llamadas** (orden de la dueña, 2026-11-11, tras OBS-CTL05-ORCH-01).
+Son dos controles distintos y ambos se cumplen:
+
+- **Regla A:** como máximo 2 reintentos semánticos por subproblema real.
+- **Regla B:** como máximo **8 llamadas a DeepSeek en total por ciclo**. El objetivo normal es de 2 a 4.
+
+Una causa raíz nueva o una frontera técnica nueva justifican una subtarea, pero **no** reinician el contador
+global.
+
+Al llegar a 8 llamadas:
+- se hace un alto semántico, se diagnostica y se informa;
+- no se crean micro-subproblemas para obtener más llamadas;
+- superar 8 exige una decisión explícita de la dueña.
+
+Todo informe registra: `DEEPSEEK_CALL_1..N`, `TOTAL_CALLS`, `TOTAL_RETRIES`, `SUBPROBLEMS`,
+`MAX_RETRIES_SINGLE_SUBPROBLEM` y `GLOBAL_CAP_REACHED`.
+
 **Probar tras cada tarea.** Se ejecuta la prueba más pequeña que demuestra el cambio antes
 de seguir. Claude diseña las pruebas —qué, por qué, fixture, esperado, mutante que mata— y
 DeepSeek puede escribirlas; Claude verifica después que matan el defecto y busca verdes
