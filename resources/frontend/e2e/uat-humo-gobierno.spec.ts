@@ -38,6 +38,7 @@ const CAPACIDADES = [
   "gobierno_caja:view",
   "gobierno_expedientes:view",
   "gobierno_rendicion:view",
+  "gobierno_actas:view",
   "documentos:view",
 ];
 
@@ -54,6 +55,7 @@ const PANTALLAS: ReadonlyArray<readonly [href: string, titulo: string]> = [
   ["/gobierno/bitacora", "Bitácora institucional"],
   ["/gobierno/control/separacion", "Separación técnica y funcional"],
   ["/gobierno/rendicion", "Expedientes de cuenta"],
+  ["/gobierno/actas-entrega", "Actas de entrega"],
   ["/gobierno/hallazgos", "Hallazgos y acciones correctivas"],
   ["/gobierno/paquetes", "Paquetes de auditoría"],
   ["/gobierno/sod", "Segregación de funciones"],

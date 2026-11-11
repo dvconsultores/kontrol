@@ -24,6 +24,7 @@ from app.modules.commercial.api import router as commercial_router
 from app.modules.documents.api import router as documents_router
 from app.modules.fiscal.api import router as fiscal_router
 from app.modules.government.api import router as government_router
+from app.modules.government.api_actas import router as government_actas_router
 from app.modules.government.api_actos import router as government_acts_router
 from app.modules.government.api_auditoria import router as government_audit_router
 from app.modules.government.api_autoridad import router as government_authority_router
@@ -38,14 +39,14 @@ from app.modules.government.api_estructura import router as government_structure
 from app.modules.government.api_evaluacion import router as government_evaluacion_router
 from app.modules.government.api_expedientes import router as government_expedientes_router
 from app.modules.government.api_garantias import router as government_guarantees_router
-from app.modules.government.api_rendicion import router as government_rendicion_router
-from app.modules.government.api_separacion import router as government_separation_router
 from app.modules.government.api_hallazgos import router as government_findings_router
 from app.modules.government.api_identidad import router as government_identidad_router
 from app.modules.government.api_notificaciones import router as government_notifications_router
 from app.modules.government.api_ocupacion import router as government_ocupacion_router
 from app.modules.government.api_ofertas import router as government_offers_router
 from app.modules.government.api_paquetes import router as government_audit_packages_router
+from app.modules.government.api_rendicion import router as government_rendicion_router
+from app.modules.government.api_separacion import router as government_separation_router
 from app.modules.government.api_sod import router as government_sod_router
 from app.modules.government.contexto_auditoria import contexto_de_evento
 from app.modules.homologation.api import router as homologation_router
@@ -171,6 +172,7 @@ def create_app() -> FastAPI:
     app.include_router(government_decision_router, prefix=prefix)
     app.include_router(government_guarantees_router, prefix=prefix)
     app.include_router(government_rendicion_router, prefix=prefix)
+    app.include_router(government_actas_router, prefix=prefix)
     app.include_router(government_separation_router, prefix=prefix)
     app.include_router(government_findings_router, prefix=prefix)
     app.include_router(government_audit_packages_router, prefix=prefix)

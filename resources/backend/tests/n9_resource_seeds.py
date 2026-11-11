@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     """Crea una entidad del tipo pedido en esa empresa. Devuelve su id."""
     from app.modules.approvals.models import ApprovalRequest
-    from app.modules.government.models import GovernmentAct, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentNotification, GovernmentPosition, GovernmentProcurementFile, GovernmentStructure, GovernmentUnit
+    from app.modules.government.models import GovernmentAct, GovernmentAssignment, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentHandoverAct, GovernmentNotification, GovernmentOfficial, GovernmentPosition, GovernmentProcurementFile, GovernmentStructure, GovernmentUnit
     from app.modules.homologation.models import HomologationRecord
     from app.modules.imports.models import ImportCorrection, ImportDocument, ImportFile
     from app.modules.inventory.models import InventoryAdjustment, StockCount
@@ -141,6 +141,59 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
             cargo_denominacion=cargo.name, unidad_id=str(cargo.unit_id), unidad_nombre=unidad.name,
             ejercicio=2031, fecha_objetivo=datetime(2031, 12, 31, tzinfo=UTC).date(), porcentaje=0,
             estado="PENDIENTE")
+
+    def _acta_de_entrega_de_empresa() -> GovernmentHandoverAct:
+        cargo = _cargo_de_empresa("E")
+        db.add(cargo)
+        db.flush()
+        acto = _acto_de_empresa("D")
+        db.add(acto)
+        db.flush()
+        official = GovernmentOfficial(
+            company_id=empresa,
+            codigo=f"OF-{sufijo[:16]}",
+            nombre=f"Funcionario {marca}",
+            tipo_documento="V",
+            numero_documento=f"{uuid.uuid4().int % 10**8:08d}",
+            estado="ACTIVO",
+            version=1,
+        )
+        db.add(official)
+        db.flush()
+        assignment = GovernmentAssignment(
+            company_id=empresa,
+            codigo=f"AS-{sufijo[:16]}",
+            official_id=str(official.id),
+            position_id=str(cargo.id),
+            figura="TITULAR",
+            grupo="TITULARIDAD",
+            act_id=str(acto.id),
+            desde=datetime(2031, 1, 2, tzinfo=UTC).date(),
+            status="ACTIVO",
+            fundamento="Fundamento de prueba",
+            activated_at=datetime(2031, 1, 2, tzinfo=UTC),
+            version=1,
+        )
+        db.add(assignment)
+        db.flush()
+        return GovernmentHandoverAct(
+            company_id=empresa,
+            codigo=f"AE-{marca}"[:20],
+            estado="BORRADOR",
+            ambito="UNIDAD",
+            unit_id=cargo.unit_id,
+            assignment_id=str(assignment.id),
+            saliente={"funcionario": official.nombre},
+            receptor_official_id=str(official.id),
+            receptor={"funcionario": official.nombre},
+            modalidad="ENTREGA",
+            testigos=[],
+            motivo="Motivo de prueba",
+            fundamento="Fundamento de prueba",
+            lugar="Lugar",
+            fecha_corte=datetime(2031, 1, 3, tzinfo=UTC).date(),
+            version=1,
+        )
 
     def _party(rol: str) -> str:
         p = Party(company_id=empresa, code=f"{marca}-{rol}", name=f"Tercero {marca}",
@@ -300,6 +353,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         "GovernmentAct": _acto_de_empresa,
         "GovernmentNotification": _notificacion_de_empresa,
         "GovernmentCorrectiveAction": _accion_correctiva_de_empresa,
+        "GovernmentHandoverAct": _acta_de_entrega_de_empresa,
         "GovernmentProcurementFile": _expediente_de_empresa,
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",

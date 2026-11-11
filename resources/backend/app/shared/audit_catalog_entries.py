@@ -519,6 +519,15 @@ _PARTE_D: tuple[AuditActionSpec, ...] = (
     _e("GOV_RENDITION_FILE_VERSIONED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "numero_version", "motivo"), "Nueva versión del expediente de cuenta"),
     _e("GOV_RENDITION_FILE_EXPORTED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "formato"), "Expediente de cuenta exportado"),
     _e("GOV_RENDITION_FILE_VERIFIED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "estado"), "Integridad del expediente de cuenta verificada"),
+    _e("GOV_HANDOVER_ACT_CREATED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "ambito", "fecha_corte"), "Acta de entrega creada"),
+    _e("GOV_HANDOVER_ACT_UPDATED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo",), "Acta de entrega actualizada"),
+    _e("GOV_HANDOVER_ACT_ANNEX_RESOLVED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "anexo"), "Anexo de acta de entrega resuelto"),
+    _e("GOV_HANDOVER_ACT_SUBSCRIBED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "snapshot_sha256"), "Acta de entrega suscrita"),
+    _e("GOV_HANDOVER_ACT_REMITTED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "fecha"), "Acta de entrega remitida"),
+    _e("GOV_HANDOVER_ACT_OBSERVED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "fecha"), "Acta de entrega observada"),
+    _e("GOV_HANDOVER_ACT_VERIFIED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "resultado"), "Acta de entrega verificada"),
+    _e("GOV_HANDOVER_ACT_EXPORTED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "formato"), "Acta de entrega exportada"),
+    _e("GOV_HANDOVER_ACT_INTEGRITY_CHECKED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "estado"), "Integridad del acta de entrega verificada"),
 )
 
 _PARTE_TERCEROS: tuple[AuditActionSpec, ...] = (

@@ -466,6 +466,7 @@ class TestGovCtl04Auditoria:
             "PROC-02",
             "PROC-03",
             "CTL-05",
+            "CTL-09",
         ]
         acciones = {a["codigo"] for a in data["acciones"]}
         assert "GOV_POSITION_CREATED" in acciones
