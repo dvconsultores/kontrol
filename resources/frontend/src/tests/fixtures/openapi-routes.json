@@ -1756,6 +1756,111 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/rendicion/expedientes",
+      "query": [
+        "desde",
+        "estado",
+        "hasta",
+        "pagina",
+        "por_pagina",
+        "responsable",
+        "texto",
+        "unidad"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/rendicion/expedientes",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/rendicion/expedientes/{id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/rendicion/expedientes/{id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/rendicion/expedientes/{id}/calificacion",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/rendicion/expedientes/{id}/candidatas",
+      "query": [
+        "accion",
+        "pagina",
+        "por_pagina",
+        "proceso",
+        "texto"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/rendicion/expedientes/{id}/fenecimiento",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/rendicion/expedientes/{id}/formar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/rendicion/expedientes/{id}/historial",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/rendicion/expedientes/{id}/indice.csv",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/rendicion/expedientes/{id}/integridad",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/rendicion/expedientes/{id}/nueva-version",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/rendicion/expedientes/{id}/participacion",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/rendicion/expedientes/{id}/piezas",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/rendicion/expedientes/{id}/piezas/{pieza_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/rendicion/expedientes/{id}/reporte",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/rendicion/expedientes/{id}/reporte.pdf",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/rendicion/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/sod/acciones",
       "query": []
     },

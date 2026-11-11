@@ -70,6 +70,7 @@ PROCESOS: list[tuple[str, str, str]] = [
     ("ORG-06", "Identidad institucional", "gov-0-06"),
     ("PROC-02", "Comisiones de contrataciones", "gov-proc-02"),
     ("PROC-03", "Expedientes de contratación", "gov-proc-03"),
+    ("CTL-05", "Expedientes de cuenta", "gov-ctl-05"),
 ]
 _PROCESO_POR_OWNER_SPEC = {owner_spec: (codigo, nombre) for codigo, nombre, owner_spec in PROCESOS}
 _PROCESO_NOMBRE = {codigo: nombre for codigo, nombre, _ in PROCESOS}

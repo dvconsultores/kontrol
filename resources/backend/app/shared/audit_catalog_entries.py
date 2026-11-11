@@ -509,6 +509,17 @@ _PARTE_D: tuple[AuditActionSpec, ...] = (
     _e("GOV_GUARANTEE_RELEASED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Garantía liberada"),
     _e("GOV_GUARANTEE_EXECUTED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Garantía ejecutada"),
     _e("GOV_GUARANTEE_ISSUER_REGISTERED", "GovernmentGuaranteeIssuer", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("nombre", "rif", "tipo"), "Emisor de garantías registrado"),
+    _e("GOV_RENDITION_FILE_CREATED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "denominacion", "periodo_desde", "periodo_hasta"), "Expediente de cuenta creado"),
+    _e("GOV_RENDITION_FILE_UPDATED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "denominacion"), "Expediente de cuenta actualizado"),
+    _e("GOV_RENDITION_FILE_PIECE_ADDED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "evento_id"), "Pieza incorporada al expediente de cuenta"),
+    _e("GOV_RENDITION_FILE_PIECE_REMOVED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "evento_id"), "Pieza retirada del expediente de cuenta"),
+    _e("GOV_RENDITION_FILE_FORMED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "piezas", "snapshot_sha256"), "Expediente de cuenta formado"),
+    _e("GOV_RENDITION_FILE_PARTICIPATED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "oficio"), "Participación registrada al expediente de cuenta"),
+    _e("GOV_RENDITION_FILE_QUALIFIED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "resultado", "informe_numero"), "Expediente de cuenta calificado"),
+    _e("GOV_RENDITION_FILE_DISCHARGED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "auto_numero"), "Expediente de cuenta fenecido"),
+    _e("GOV_RENDITION_FILE_VERSIONED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "numero_version", "motivo"), "Nueva versión del expediente de cuenta"),
+    _e("GOV_RENDITION_FILE_EXPORTED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "formato"), "Expediente de cuenta exportado"),
+    _e("GOV_RENDITION_FILE_VERIFIED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "estado"), "Integridad del expediente de cuenta verificada"),
 )
 
 _PARTE_TERCEROS: tuple[AuditActionSpec, ...] = (

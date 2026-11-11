@@ -55,6 +55,7 @@ import {
   Wallet,
   Warehouse,
   CalendarRange,
+  FolderCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NavLink } from "react-router";
@@ -96,6 +97,7 @@ const navSections: NavSection[] = [
       { to: "/gobierno/control/separacion", label: "Separación técnica y funcional", icon: ShieldCheck, modulo: "gobierno" },
       { to: "/gobierno/hallazgos", label: "Hallazgos y acciones correctivas", icon: ClipboardCheck, modulo: "gobierno" },
       { to: "/gobierno/paquetes", label: "Paquetes de auditoría", icon: Archive, modulo: "gobierno" },
+      { to: "/gobierno/rendicion", label: "Expedientes de cuenta", icon: FolderCheck, modulo: "gobierno" },
       { to: "/gobierno/sod", label: "Segregación de funciones", icon: ShieldBan, modulo: "gobierno" },
       { to: "/gobierno/cierres", label: "Controles de cierre", icon: ShieldBan, modulo: "gobierno" },
     ],
