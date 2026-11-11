@@ -93,6 +93,7 @@ const navSections: NavSection[] = [
       { to: "/gobierno/autoridad", label: "Matriz de autoridad", icon: Grid3x3, modulo: "gobierno" },
       { to: "/gobierno/auditoria", label: "Auditoría institucional", icon: FileSearch, modulo: "gobierno" },
       { to: "/gobierno/bitacora", label: "Bitácora institucional", icon: History, modulo: "gobierno" },
+      { to: "/gobierno/control/separacion", label: "Separación técnica y funcional", icon: ShieldCheck, modulo: "gobierno" },
       { to: "/gobierno/hallazgos", label: "Hallazgos y acciones correctivas", icon: ClipboardCheck, modulo: "gobierno" },
       { to: "/gobierno/paquetes", label: "Paquetes de auditoría", icon: Archive, modulo: "gobierno" },
       { to: "/gobierno/sod", label: "Segregación de funciones", icon: ShieldBan, modulo: "gobierno" },

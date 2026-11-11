@@ -1221,6 +1221,11 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/control/separacion",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/ente",
       "query": []
     },

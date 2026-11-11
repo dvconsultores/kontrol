@@ -171,6 +171,7 @@ export const router = createBrowserRouter([
           { path: "gobierno/autoridad", lazy: () => import("@/modules/gobierno/autoridad/MatrizAutoridadPage").then((m) => ({ Component: m.MatrizAutoridadPage })) },
           { path: "gobierno/auditoria", lazy: () => import("@/modules/gobierno/auditoria/AuditoriaInstitucionalPage").then((m) => ({ Component: m.AuditoriaInstitucionalPage })) },
           { path: "gobierno/bitacora", lazy: () => import("@/modules/gobierno/bitacora/BitacoraPage").then((m) => ({ Component: m.BitacoraPage })) },
+          { path: "gobierno/control/separacion", lazy: () => import("@/modules/gobierno/control/SeparacionPage").then((m) => ({ Component: m.SeparacionPage })) },
           { path: "gobierno/bitacora/:eventoId", lazy: () => import("@/modules/gobierno/bitacora/BitacoraEventoPage").then((m) => ({ Component: m.BitacoraEventoPage })) },
           { path: "gobierno/contrataciones/comisiones/nueva", lazy: () => import("@/modules/gobierno/contrataciones/ComisionFormPage").then((m) => ({ Component: m.ComisionFormPage })) },
           { path: "gobierno/contrataciones/comisiones/:comisionId/editar", lazy: () => import("@/modules/gobierno/contrataciones/ComisionFormPage").then((m) => ({ Component: m.ComisionFormPage })) },
