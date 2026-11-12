@@ -171,6 +171,7 @@ export const router = createBrowserRouter([
           { path: "gobierno/autoridad", lazy: () => import("@/modules/gobierno/autoridad/MatrizAutoridadPage").then((m) => ({ Component: m.MatrizAutoridadPage })) },
           { path: "gobierno/auditoria", lazy: () => import("@/modules/gobierno/auditoria/AuditoriaInstitucionalPage").then((m) => ({ Component: m.AuditoriaInstitucionalPage })) },
           { path: "gobierno/bitacora", lazy: () => import("@/modules/gobierno/bitacora/BitacoraPage").then((m) => ({ Component: m.BitacoraPage })) },
+          { path: "gobierno/control-interno", lazy: () => import("@/modules/gobierno/control/ReporteControlInternoPage").then((m) => ({ Component: m.ReporteControlInternoPage })) },
           { path: "gobierno/control/separacion", lazy: () => import("@/modules/gobierno/control/SeparacionPage").then((m) => ({ Component: m.SeparacionPage })) },
           { path: "gobierno/rendicion", lazy: () => import("@/modules/gobierno/rendicion/ExpedientesCuentaPage").then((m) => ({ Component: m.ExpedientesCuentaPage })) },
           { path: "gobierno/rendicion/nuevo", lazy: () => import("@/modules/gobierno/rendicion/NuevoExpedienteCuentaPage").then((m) => ({ Component: m.NuevoExpedienteCuentaPage })) },

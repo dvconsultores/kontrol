@@ -53,6 +53,7 @@ const PANTALLAS: ReadonlyArray<readonly [href: string, titulo: string]> = [
   ["/gobierno/autoridad", "Matriz de autoridad"],
   ["/gobierno/auditoria", "Auditoría institucional"],
   ["/gobierno/bitacora", "Bitácora institucional"],
+  ["/gobierno/control-interno", "Reporte de control interno"],
   ["/gobierno/control/separacion", "Separación técnica y funcional"],
   ["/gobierno/rendicion", "Expedientes de cuenta"],
   ["/gobierno/actas-entrega", "Actas de entrega"],
