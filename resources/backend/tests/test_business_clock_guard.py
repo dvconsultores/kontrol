@@ -62,6 +62,43 @@ def test_la_logica_de_negocio_no_lee_el_reloj_del_proceso():
         "del proceso (Spec 001 · POLICY-CLOCK-LOCAL):\n  " + "\n  ".join(ofensas))
 
 
+#: Dónde viven los ayudantes que construyen cargas para la API.
+AMBITO_PRUEBAS = ("tests",)
+
+
+def _fechas_civiles_desde_un_instante(fichero: pathlib.Path) -> list[tuple[int, str]]:
+    """`datetime.now(tz).date()`: una fecha civil derivada de un instante.
+
+    Es correcta solo si el instante está en la zona de negocio; con `UTC` da el día
+    siguiente durante cuatro horas al día (OBS-PROC08-TZ-01: catorce pruebas de
+    PROC-08/PROC-10 fallaban entre las 20:00 y las 24:00 de Caracas).
+    """
+    arbol = ast.parse(fichero.read_text(encoding="utf-8"), filename=str(fichero))
+    encontradas: list[tuple[int, str]] = []
+    for nodo in ast.walk(arbol):
+        if not (isinstance(nodo, ast.Call) and isinstance(nodo.func, ast.Attribute)
+                and nodo.func.attr == "date"):
+            continue
+        objeto = nodo.func.value
+        if (isinstance(objeto, ast.Call) and isinstance(objeto.func, ast.Attribute)
+                and objeto.func.attr == "now"):
+            encontradas.append((nodo.lineno, "datetime.now(...).date()"))
+    return encontradas
+
+
+def test_los_ayudantes_de_prueba_no_derivan_la_fecha_civil_de_un_instante():
+    ofensas: list[str] = []
+    for carpeta in AMBITO_PRUEBAS:
+        for fichero in sorted((RAIZ / carpeta).rglob("*.py")):
+            relativo = fichero.relative_to(RAIZ).as_posix()
+            for linea, que in _fechas_civiles_desde_un_instante(fichero):
+                ofensas.append(f"{relativo}:{linea} usa {que}")
+
+    assert ofensas == [], (
+        "una fecha que viaja a la API es el día de negocio: "
+        "`app.shared.clock.hoy_de_negocio()` (OBS-PROC08-TZ-01):\n  " + "\n  ".join(ofensas))
+
+
 def test_el_ayudante_existe_y_es_la_unica_fuente():
     """Si alguien retira el ayudante, esto lo dice antes que veintiséis fallos sueltos."""
     from app.shared import clock

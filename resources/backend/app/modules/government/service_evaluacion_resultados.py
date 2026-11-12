@@ -18,6 +18,7 @@ from app.modules.government.service_evaluacion import _criterios, _doc_soporte, 
 from app.modules.government.service_expedientes import _auditar, _evento
 from app.modules.government.service_identidad import _funcionario_del_actor, _politica_de
 from app.modules.government.service_sod import evaluar_antes_de_actuar
+from app.modules.government.service_sod_funciones import verificar_antes_de_asumir_funcion
 from app.modules.identity_access.models import User
 from app.shared.clock import hoy_de_negocio, instante_actual
 
@@ -193,6 +194,9 @@ def registrar_aporte(db: Session, ctx: CompanyContext, user: User, expediente_id
     )
     miembro = _validar_miembro(db, ctx, expediente, miembro_id)
     _validar_identidad(db, ctx, expediente, miembro)
+    verificar_antes_de_asumir_funcion(
+        db, ctx, expediente, "EVALUADOR", user_ids=[ctx.user_id], official_ids=[miembro.official_id]
+    )
     _validar_escala(criterio, Decimal(str(puntaje)) if puntaje is not None else None, cumple)
 
     evidencia_document_id, evidencia_version_id = _validar_evidencia(db, ctx, expediente, evidencia_documento_id)

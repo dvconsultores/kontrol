@@ -2712,6 +2712,78 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/sod/funciones",
+      "capabilities": [
+        "gobierno_sod:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/sod/funciones/conflictos",
+      "capabilities": [
+        "gobierno_sod:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/sod/funciones/conflictos.csv",
+      "capabilities": [
+        "gobierno_sod:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/sod/funciones/expedientes/{expediente_id}",
+      "capabilities": [
+        "gobierno_expedientes:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/sod/funciones/reglas",
+      "capabilities": [
+        "gobierno_sod:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/sod/funciones/reglas",
+      "capabilities": [
+        "gobierno_sod:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/sod/funciones/reglas/{regla_id}",
+      "capabilities": [
+        "gobierno_sod:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/sod/funciones/reglas/{regla_id}/activar",
+      "capabilities": [
+        "gobierno_sod:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/sod/funciones/reglas/{regla_id}/cerrar",
+      "capabilities": [
+        "gobierno_sod:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/sod/reglas",
       "capabilities": [
         "gobierno_sod:view"

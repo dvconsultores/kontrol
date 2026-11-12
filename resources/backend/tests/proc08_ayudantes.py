@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
+from app.shared.clock import hoy_de_negocio
 from tests.org06_guarda import emitir
 from tests.test_gov_ctl06_hallazgos import _post
 from tests.test_gov_doc08_paquete import _doc_real
@@ -215,7 +216,7 @@ def acto_decision(mundo, cargo_id, caracter="PARTICULAR", emitido=True):
     cuerpo = {
         "tipo": "RESOLUCION",
         "numero": f"DA-{_codigo('A')}",
-        "fecha": datetime.now(UTC).date().isoformat(),
+        "fecha": hoy_de_negocio().isoformat(),
         "lugar": "Caracas",
         "cargo_id": cargo_id,
         "competencia": {"accion": "APROBAR", "materia": "CONTRATACIONES"},
@@ -256,7 +257,7 @@ def acto_de_otro_ente(mundo, ocupacion):
     cuerpo = {
         "tipo": "RESOLUCION",
         "numero": f"DA-{_codigo('A')}",
-        "fecha": datetime.now(UTC).date().isoformat(),
+        "fecha": hoy_de_negocio().isoformat(),
         "lugar": "Valencia",
         "cargo_id": cargo_id,
         "competencia": {"accion": "APROBAR", "materia": "PRESUPUESTO"},

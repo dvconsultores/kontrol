@@ -39,6 +39,7 @@ from app.modules.government.service_evaluacion import _miembros_comision, obtene
 from app.modules.government.service_expedientes import _abierto, _auditar, _cargar, _err, _evento, _para_escribir
 from app.modules.government.service_identidad import _funcionario_del_actor, _politica_de
 from app.modules.government.service_sod import evaluar_antes_de_actuar
+from app.modules.government.service_sod_funciones import verificar_antes_de_asumir_funcion
 from app.modules.identity_access.models import User
 from app.shared.clock import hoy_de_negocio, instante_actual
 
@@ -458,6 +459,7 @@ def obtener_estado_decision(
 ) -> dict[str, Any]:
     expediente = _cargar(db, ctx, expediente_id)
 
+    verificar_antes_de_asumir_funcion(db, ctx, expediente, "EVALUADOR", user_ids=[ctx.user_id])
     evaluacion = obtener_evaluacion(db, ctx, user, expediente_id)
     evaluacion_concluida_en = evaluacion.get("evaluacion_concluida_en")
 

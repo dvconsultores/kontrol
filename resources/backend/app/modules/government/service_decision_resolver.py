@@ -32,6 +32,7 @@ from app.modules.government.service_identidad import (
     exigir_autoridad_funcional,
 )
 from app.modules.government.service_sod import evaluar_antes_de_actuar
+from app.modules.government.service_sod_funciones import verificar_antes_de_asumir_funcion
 from app.modules.identity_access.models import User
 from app.shared.clock import hoy_de_negocio, instante_actual
 
@@ -120,6 +121,7 @@ def registrar_decision(
     _abierto(expediente)
     if expediente.evaluacion_concluida_en is None:
         raise ConflictError("GOV_DECISION_EVALUATION_PENDING", "La evaluación no ha concluido")
+    verificar_antes_de_asumir_funcion(db, ctx, expediente, "ADJUDICADOR", user_ids=[ctx.user_id])
 
     resultado = cuerpo.get("resultado")
     if resultado not in RESULTADOS_DECISION:

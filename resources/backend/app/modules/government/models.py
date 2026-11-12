@@ -921,6 +921,100 @@ for _sentencia in GOV_SOD_RULE_HISTORY_IMMUTABLE_PG:
     event.listen(GovernmentSoDRuleHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
 
 
+# PROC-11 · GOV-PROC-017: funciones incompatibles del procedimiento de contratación.
+FUNCIONES_PROCEDIMIENTO = ("SOLICITANTE", "RECEPTOR", "EVALUADOR", "ADJUDICADOR")
+TIPOS_HISTORIA_REGLA_FUNCION = ("CREADA", "ACTIVADA", "CERRADA")
+
+
+GOV_SOD_ROLE_RULES_NOT_DELETABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_sod_funcion_no_borrable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_SOD_ROLE_RULE_NOT_DELETABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_sod_role_rules_no_delete BEFORE DELETE ON gov_sod_role_rules FOR EACH ROW EXECUTE FUNCTION kontrol_gov_sod_funcion_no_borrable()",
+    "CREATE TRIGGER trg_gov_sod_role_rules_no_truncate BEFORE TRUNCATE ON gov_sod_role_rules FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_sod_funcion_no_borrable()",
+)
+
+GOV_SOD_ROLE_RULE_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_sod_funcion_historia_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_SOD_ROLE_RULE_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_sod_role_rule_history_no_update BEFORE UPDATE ON gov_sod_role_rule_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_sod_funcion_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_sod_role_rule_history_no_delete BEFORE DELETE ON gov_sod_role_rule_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_sod_funcion_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_sod_role_rule_history_no_truncate BEFORE TRUNCATE ON gov_sod_role_rule_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_sod_funcion_historia_inmutable()",
+)
+
+
+class GovernmentSoDRoleRule(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Par de funciones del procedimiento que no puede ejercer la misma persona (PROC-11, GOV-PROC-017)."""
+
+    __tablename__ = "gov_sod_role_rules"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    descripcion: Mapped[str] = mapped_column(Text, nullable=False)
+    proceso: Mapped[str] = mapped_column(String(10), nullable=False)
+    rol_a: Mapped[str] = mapped_column(String(16), nullable=False)
+    rol_b: Mapped[str] = mapped_column(String(16), nullable=False)
+    fundamento: Mapped[str] = mapped_column(String(1000), nullable=False)
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    activada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    activada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cerrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cerrada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_sod_role_rules_company_id_codigo"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_REGLA_SOD)})", name="estado"),
+        CheckConstraint("proceso = 'PROC-03'", name="proceso"),
+        CheckConstraint(f"rol_a IN ({en(FUNCIONES_PROCEDIMIENTO)})", name="rol_a"),
+        CheckConstraint(f"rol_b IN ({en(FUNCIONES_PROCEDIMIENTO)})", name="rol_b"),
+        CheckConstraint("rol_a <> rol_b", name="funciones_distintas"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+        CheckConstraint(
+            "estado <> 'VIGENTE' OR (activada_por IS NOT NULL AND activada_en IS NOT NULL)",
+            name="vigente_con_activacion",
+        ),
+        CheckConstraint(
+            "estado <> 'CERRADA' OR (cerrada_por IS NOT NULL AND cerrada_en IS NOT NULL AND motivo_cierre IS NOT NULL)",
+            name="cerrada_con_motivo",
+        ),
+        Index(
+            "uq_gov_sod_role_rules_par_vigente",
+            "company_id",
+            "rol_a",
+            "rol_b",
+            unique=True,
+            postgresql_where=text("estado = 'VIGENTE'"),
+            sqlite_where=text("estado = 'VIGENTE'"),
+        ),
+    )
+
+
+class GovernmentSoDRoleRuleHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de una regla de funciones incompatibles (PROC-11)."""
+
+    __tablename__ = "gov_sod_role_rule_history"
+    __scope__ = Scope.COMPANY
+
+    rule_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_sod_role_rules.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(10), nullable=False)
+    detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_REGLA_FUNCION)})", name="tipo"),
+    )
+
+
+for _sentencia in GOV_SOD_ROLE_RULES_NOT_DELETABLE_PG:
+    event.listen(GovernmentSoDRoleRule.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_SOD_ROLE_RULE_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentSoDRoleRuleHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
 ESTADOS_BANCO = ("ACTIVO", "INACTIVO")
 ESTADOS_CUENTA_BANCARIA = ("BORRADOR", "VIGENTE", "INACTIVA", "CERRADA")
 TIPOS_CUENTA_BANCARIA = ("CORRIENTE", "AHORRO")

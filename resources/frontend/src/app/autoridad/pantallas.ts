@@ -158,6 +158,7 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "gobierno/sod": { capacidad: "gobierno_sod:view", alcance: "empresa" },
   "gobierno/sod/nueva": { capacidad: "gobierno_sod:manage", alcance: "empresa" },
   "gobierno/sod/conflictos": { capacidad: "gobierno_sod:view", alcance: "empresa" },
+  "gobierno/sod/funciones": { capacidad: "gobierno_sod:view", alcance: "empresa" },
   "gobierno/sod/:reglaId": { capacidad: "gobierno_sod:view", alcance: "empresa" },
   "gobierno/cierres": { capacidad: "gobierno_cierre:view", alcance: "empresa" },
   "gobierno/cierres/nueva": { capacidad: "gobierno_cierre:manage", alcance: "empresa" },

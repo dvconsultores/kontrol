@@ -121,6 +121,12 @@ const navSections: NavSection[] = [
         icon: FolderOpen,
         modulo: "gobierno",
       },
+      {
+        to: "/gobierno/sod/funciones",
+        label: "Funciones incompatibles",
+        icon: ShieldAlert,
+        modulo: "gobierno",
+      },
     ],
   },
   // Tesorería de Gobierno (TRE-01): sección propia, también sujeta al módulo `gobierno`.

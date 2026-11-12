@@ -2,9 +2,9 @@
 
 > Retrospectiva GOV-PRODUCT-COMPLETENESS-RETRO-01 · `develop` `0dbe632` · 2026-10-29. Actualizado por GOV-0-01 (2026-10-30), GOV-0-02 (2026-10-31), GOV-0-03 y GOV-DOC-02 (2026-11-01) GOV-DOC-04 y GOV-ORG-07 (2026-11-02) GOV-CTL-04 (2026-11-03), GOV-CTL-06, GOV-DOC-08 y GOV-CTL-01 (2026-11-04) GOV-TRE-01 (2026-11-05) y GOV-TRE-02 con T038 (2026-11-06).
 
-## Estado: 18 procesos listos para probar (2026-11-09)
+## Estado: 27 procesos listos para probar (2026-11-12)
 
-- `OWNER_UAT_READY` = 18 de 122 procesos (14,75 %);
+- `OWNER_UAT_READY` = 27 de 122 procesos (22,13 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a PROC-11 (los ciclos PROC-06/07/08/10 están en la matriz y su tarjeta existe, pero su fila aquí sigue pendiente: OBS-MATRIZ-UAT-01);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
@@ -31,8 +31,9 @@
 | **REP-10 Reporte de control interno** (IR §12) | Menú › Gobierno › Reporte de control interno | [`specs/gov-rep-10-control-interno/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-rep-10-control-interno/evidence/OWNER_UAT_CARD.md) | GOV-REP-10 |
 | **PROC-02 Comisión de contrataciones (miembros, suplentes, impedimentos)** (GOV-PROC-003) | Menú › Gobierno · Contrataciones › Comisiones | [`specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md) | GOV-PROC-02 |
 | **PROC-03 Expediente único de contratación con cronología y lapsos** (GOV-PROC-004, GOV-PROC-014) | Menú › Gobierno · Contrataciones › Expedientes | [`specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md) |
+| **PROC-11 Funciones incompatibles en contratación** (GOV-PROC-017) | Menú › Gobierno · Contrataciones › Funciones incompatibles (y el bloque «Funciones incompatibles» en la ficha del expediente) | [`specs/gov-proc-11-sod-funciones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-11-sod-funciones/evidence/OWNER_UAT_CARD.md) | GOV-PROC-11 |
 
-Los otros 109 procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
+Los otros procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
 
 ## Fundamentos técnicos
 

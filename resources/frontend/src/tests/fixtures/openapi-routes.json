@@ -1974,6 +1974,63 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/sod/funciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/sod/funciones/conflictos",
+      "query": [
+        "desde",
+        "expediente_id",
+        "hasta",
+        "rol"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/sod/funciones/conflictos.csv",
+      "query": [
+        "desde",
+        "expediente_id",
+        "hasta",
+        "rol"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/sod/funciones/expedientes/{expediente_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/sod/funciones/reglas",
+      "query": [
+        "estado"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/sod/funciones/reglas",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/sod/funciones/reglas/{regla_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/sod/funciones/reglas/{regla_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/sod/funciones/reglas/{regla_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/sod/reglas",
       "query": [
         "estado",

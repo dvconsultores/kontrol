@@ -1358,6 +1358,71 @@ export function consultaDeReglasSod(filtros: { estado?: string; proceso?: string
   return s ? `?${s}` : "";
 }
 
+// PROC-11 · Funciones incompatibles del procedimiento de contratación (GOV-PROC-017)
+export type FuncionProcedimiento = "SOLICITANTE" | "RECEPTOR" | "EVALUADOR" | "ADJUDICADOR" | "PAGADOR";
+export type EstadoReglaFuncion = "BORRADOR" | "VIGENTE" | "CERRADA";
+
+export interface FuncionProcedimientoOut {
+  codigo: FuncionProcedimiento; etiqueta: string; fuente: string; disponible: boolean; requisito_habilitante: string | null;
+}
+
+export interface CatalogoFunciones { proceso: string; funciones: FuncionProcedimientoOut[]; }
+
+export interface ReglaFuncionResumen {
+  id: string; codigo: string; nombre: string; proceso: string; rol_a: FuncionProcedimiento; rol_a_etiqueta: string | null;
+  rol_b: FuncionProcedimiento; rol_b_etiqueta: string | null; vigente_desde: string; vigente_hasta: string | null;
+  estado: EstadoReglaFuncion; en_vigor: boolean; version: number;
+}
+
+export interface HistoriaReglaFuncion { tipo: string; detalle: Record<string, unknown> | null; en: string; }
+
+export interface ReglaFuncionDetalle extends ReglaFuncionResumen {
+  descripcion: string; fundamento: string; historia: HistoriaReglaFuncion[];
+}
+
+export interface ReglasFuncionListado { items: ReglaFuncionResumen[]; total: number; hoy: string; }
+
+export interface ReglaFuncionEntrada {
+  nombre: string; descripcion: string; rol_a: FuncionProcedimiento; rol_b: FuncionProcedimiento;
+  fundamento: string; vigente_desde: string; vigente_hasta: string | null;
+}
+
+export interface EvidenciaConflictoFuncion {
+  rol: FuncionProcedimiento; rol_etiqueta: string | null; registro: string; registro_id: string; fecha: string; etiqueta: string | null;
+}
+
+export interface ConflictoFuncion {
+  regla_id: string; regla_codigo: string; regla_nombre: string; regla_version: number;
+  rol_a: FuncionProcedimiento; rol_a_etiqueta: string | null; rol_b: FuncionProcedimiento; rol_b_etiqueta: string | null;
+  actor: string; actor_nombre: string | null; fecha: string; evidencia: EvidenciaConflictoFuncion[];
+  expediente_id: string; expediente_numero: string; expediente_objeto: string | null;
+}
+
+export interface ConflictosFuncionListado { items: ConflictoFuncion[]; total: number; desde: string; hasta: string; }
+
+/** `details` del 409 GOV_SOD_ROLE_CONFLICT que devuelven los servicios del procedimiento. */
+export interface DetalleConflictoFuncion {
+  regla_codigo: string; regla_version: number; funcion: FuncionProcedimiento; funcion_previa: FuncionProcedimiento;
+  registro_previo: string; registro_previo_id: string; expediente_id: string; expediente_numero: string; actor: string;
+}
+
+export const CONSULTA_SOD_FUNCIONES = [...CONSULTA_GOBIERNO, "sod", "funciones"] as const;
+
+/** Cadena de consulta de /gobierno/sod/funciones/conflictos (omite vacíos). */
+export function consultaDeConflictosFuncion(filtros: { desde?: string; hasta?: string; rol?: string; expediente_id?: string }): string {
+  const qs = new URLSearchParams();
+  const desde = valorDeConsulta(filtros.desde);
+  const hasta = valorDeConsulta(filtros.hasta);
+  const rol = valorDeConsulta(filtros.rol);
+  const expediente = valorDeConsulta(filtros.expediente_id);
+  if (desde) qs.set("desde", desde);
+  if (hasta) qs.set("hasta", hasta);
+  if (rol) qs.set("rol", rol);
+  if (expediente) qs.set("expediente_id", expediente);
+  const s = qs.toString();
+  return s ? `?${s}` : "";
+}
+
 // CTL-10 · Controles materiales de cierre (GOV-CTL-012)
 export type AccionCierre = "ORG02_CERRAR_ESTRUCTURA" | "TRE02_CERRAR_PROGRAMA";
 export type EstadoPoliticaCierre = "BORRADOR" | "VIGENTE" | "RETIRADA";
