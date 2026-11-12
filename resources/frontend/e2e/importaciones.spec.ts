@@ -396,6 +396,8 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   await page.getByLabel(/^Recibido/).fill("10");
   await page.getByRole("button", { name: "Registrar", exact: true }).click();
   const filaRecepcion = page.locator("tr", { hasText: `REC-${sufijo}` });
+  // Spec 018 §3: la condición del proceso se ve en Recepciones.
+  await expect(filaRecepcion).toContainText("Pendiente de validación");
   const confirmar = filaRecepcion.getByRole("button", { name: "confirmar", exact: true });
   await confirmar.waitFor();
   await confirmar.click();
@@ -423,6 +425,19 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   await page.getByLabel(/Cantidad afectada/).fill("3");
   await page.getByRole("button", { name: "Registrar", exact: true }).click();
   const filaIncidencia = page.locator("tr", { hasText: `INC-${sufijo}` });
+
+  // Spec 018 §3: con la incidencia abierta, el expediente muestra el bloqueo y
+  // lleva a la incidencia existente. Sin incidencia nueva ni pantalla nueva.
+  await page.goto(expedienteUrl);
+  const seccionRecepcionExpediente = page.locator("#recepcion");
+  await expect(seccionRecepcionExpediente).toContainText("Bloqueado por incidencia");
+  await expect(seccionRecepcionExpediente).toContainText("incidencias sin resolver");
+  await expect(
+    seccionRecepcionExpediente.getByRole("link", { name: "Ver la incidencia" }),
+  ).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "Incidencias de recepción" })).toBeVisible();
+
   await filaIncidencia.getByRole("button", { name: "escalar", exact: true }).click();
   await expect(filaIncidencia.getByText("Escalada a Compras")).toBeVisible();
   await filaIncidencia.getByRole("button", { name: "tratar", exact: true }).click();
@@ -434,6 +449,9 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   await page.getByRole("link", { name: "Volver al expediente" }).click();
   await expect(page.locator("#diferencias").getByText(`INC-${sufijo}`).first()).toBeVisible();
   await expect(page.getByText("Por confirmar inventario")).toBeVisible();
+  // Spec 018 §3: resuelta la incidencia, la condición se recalculó sola.
+  await expect(page.locator("#recepcion")).toContainText("Pendiente de validación");
+  await expect(page.locator("#recepcion")).not.toContainText("Bloqueado por incidencia");
 
   // 4.5. Reporte formal de diferencias (R1 y R2)
   const idExpediente = new URL(expedienteUrl).pathname.split("/").pop()!;
@@ -551,6 +569,8 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   await expect(page.getByRole("heading", { name: "Decisiones tomadas" })).toBeVisible();
   await page.getByRole("link", { name: "Volver al expediente" }).click();
   await expect(page.getByText("Por ubicar")).toBeVisible();
+  // Spec 018 §3: el proceso normal termina en «Recibido».
+  await expect(page.locator("#recepcion")).toContainText("Recibido");
 
   // 6. Ubicar mercancía
   await page.goto("/maestros/almacenamiento");
@@ -1234,4 +1254,17 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
     .filter({ hasText: `IMP-${sufijo}` })
     .filter({ hasText: `Proveedor Import ${sufijo}` });
   await expect(fila.first()).toBeVisible();
+
+  // Spec 018 §3 en el ancho mínimo soportado: la condición se lee sin desplazamiento lateral.
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto(expedienteUrl);
+  await expect(page.locator("#recepcion")).toContainText("Recibido");
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth))
+    .toBe(true);
+  await page.goto("/compras/recepciones");
+  await expect(page.locator("tr", { hasText: `REC-${sufijo}` })).toContainText("Recibido");
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth))
+    .toBe(true);
 });

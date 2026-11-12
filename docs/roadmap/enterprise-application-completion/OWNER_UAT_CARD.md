@@ -303,3 +303,27 @@ Necesita un expediente con la recepción confirmada en inventario, como en los p
 - Desde Inventario, la recepción de origen es opcional: si no se indica, el sistema no adivina de cuál vino la mercancía, porque el stock sin ubicar es intercambiable (decisión de la dueña).
 - El selector aparece solo para mercancía DISPONIBLE sin lote ni serial.
 - Las colocaciones anteriores a este cambio se reconstruyeron solo cuando el código de la recepción coincidía exactamente y sin ambigüedad (decisión de la dueña).
+
+## Condición del proceso de la recepción (§3)
+
+Comprueba que la recepción dice en qué punto del procedimiento está —pendiente de validación, bloqueada por una incidencia o recibida— y que Recepciones y el expediente dicen lo mismo. No es un estado del inventario: la mercancía no cambia de sitio ni de saldo por abrir una incidencia.
+
+Necesita un expediente de importación despachado, como en los pasos anteriores de esta tarjeta.
+
+115. En Compras → Importaciones, abra el expediente y cree la recepción. En la sección «Recepción» de la tarjeta de la recepción, «Condición del proceso» dice «Pendiente de validación».
+116. Pulse «Abrir recepción <código>». En Compras → Recepciones, la columna «Condición» de esa fila dice «Pendiente de validación».
+117. Reciba una línea y cuéntela (sin confirmar el inventario). La condición sigue en «Pendiente de validación»: contar no valida.
+118. Registre una incidencia sobre esa recepción (por ejemplo, un daño) y vuelva al expediente. «Condición del proceso» dice «Bloqueado por incidencia», explica que no se puede confirmar mientras haya incidencias sin resolver y ofrece «Ver la incidencia». En Compras → Recepciones la misma fila muestra el bloqueo.
+119. Intente confirmar el inventario. Debe impedirlo con el aviso de incidencias sin resolver.
+120. Abra la incidencia con «Ver la incidencia», trátela y resuélvala.
+121. Vuelva al expediente. La condición se recalculó sola a «Pendiente de validación»; no hay que pulsar nada más.
+122. Cuente y confirme el inventario.
+123. La condición pasa a «Recibido», en el expediente y en Compras → Recepciones.
+124. Recargue la página: la condición sigue igual, porque se calcula del estado real y no de la pantalla.
+125. (Opcional) Antes de confirmar, compruebe en Inventario → Existencias que la mercancía sigue en RECIBIDO: abrir y resolver la incidencia no movió stock ni valoración.
+
+**Límites:**
+- La condición es del proceso, no del inventario: no crea estados nuevos de mercancía ni toca capas de costo.
+- «Disponible» sigue siendo el estado DISPONIBLE de Inventario → Existencias, que aparece al confirmar.
+- Una recepción anulada o rechazada no muestra condición: se rige por su estado documental.
+- La condición no se guarda: se deriva de la recepción, su conteo, su confirmación y sus incidencias.

@@ -39,6 +39,7 @@ import { fechaDeNegocioDeInstante } from "@/lib/fecha-de-negocio";
 import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmacenes";
 import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 
+import { CondicionDelProceso } from "./CondicionDelProceso";
 import { useOrdenesRecibibles } from "./useOrdenesRecibibles";
 
 interface PresentationSummary {
@@ -323,6 +324,18 @@ export function RecepcionesPage(): React.JSX.Element {
     columnHelper.accessor("code", { header: "Código" }),
     columnHelper.accessor("order_code", { header: "Orden", cell: ({ getValue }) => getValue() ?? "—" }),
     columnHelper.accessor("status", { header: "Estado", cell: ({ getValue }) => ESTADOS[getValue()] ?? getValue() }),
+    // Spec 018 · §3: la condición del proceso, tal como la deriva el backend.
+    columnHelper.display({
+      id: "condicion",
+      header: "Condición",
+      cell: ({ row }) => (
+        <CondicionDelProceso
+          condicion={row.original.process_condition}
+          receiptId={row.original.id}
+          importacionId={importacion ?? undefined}
+        />
+      ),
+    }),
     columnHelper.accessor("quality_status", { header: "Conformidad" }),
     columnHelper.accessor("arrival_at", {
       header: "Arribo",
@@ -486,6 +499,14 @@ export function RecepcionesPage(): React.JSX.Element {
         <>
           <section className="mt-4 rounded-lg border border-border-default bg-surface-0 p-4">
             <h2 className="mb-2 text-base font-semibold text-text-900">Inspección de {d.code}</h2>
+            <div className="mb-3">
+              <p className="mb-1 text-sm font-medium text-text-800">Condición del proceso</p>
+              <CondicionDelProceso
+                condicion={d.process_condition}
+                receiptId={d.id}
+                importacionId={importacion ?? undefined}
+              />
+            </div>
             <p className="mb-3 text-sm text-text-500">
               Packing list {d.packing_list_ref ?? "—"}: {marca(d.packing_list_match)} · Factura {d.supplier_invoice_ref ?? "—"}: {marca(d.supplier_invoice_match)} · Orden: {marca(d.order_match)} · Documentación: {marca(d.documentation_match)}
               {d.inspected_at ? ` · inspeccionada el ${formatearInstante(d.inspected_at)}` : " · sin inspeccionar"}

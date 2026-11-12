@@ -7,6 +7,7 @@ import { Autorizado } from "@/components/Autorizado";
 import { FormField } from "@/components/FormField";
 import { TextInput } from "@/components/TextInput";
 import { useCompany } from "@/app/contexts/CompanyContext";
+import { CondicionDelProceso } from "@/modules/compras/recepciones/CondicionDelProceso";
 import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 import { formatearInstante, instanteDesdeHoraDeCaracas } from "@/lib/fecha-de-negocio";
 
@@ -213,6 +214,16 @@ export function ImportacionRecepcion({ detalle, onCambios }: Props): React.JSX.E
                     {recepcion.confirmation_status
                       ? ESTADOS_CONFIRMACION[recepcion.confirmation_status]
                       : "Pendiente"}
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <span className="text-sm text-text-600">Condición del proceso:</span>
+                  <div className="mt-1">
+                    <CondicionDelProceso
+                      condicion={recepcion.process_condition}
+                      receiptId={recepcion.id}
+                      importacionId={detalle.id}
+                    />
                   </div>
                 </div>
                 <Link

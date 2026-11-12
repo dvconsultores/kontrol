@@ -16,3 +16,4 @@
 | T018-08 | Validación física de ubicación y reubicación por error | DEEPSEEK; auditoría de Claude | Hecha: `spec018-relocation-delta.md`, evidencia en `evidence/relocation/` |
 | T018-09 | Clasificación de almacenamiento, zona y etiquetado (rotación pendiente de la Spec 015) | DEEPSEEK; auditoría de Claude | Hecha: `spec018-storage-classification-delta.md`, evidencia en `evidence/storage-classification/` |
 | T018-PG | IMP-PG-INTEGRITY-01: Importaciones sobre PostgreSQL migrado. Los ciclos 1 a 3 pasan de `BROWSER_VERIFIED_SQLITE_ONLY` a `POSTGRESQL_BROWSER_VERIFIED` | DEEPSEEK; auditoría y evidencia de Claude | Hecha: `spec018-pg-integrity-delta.md` |
+| T018-10 | Condición del proceso de recepción (§3): derivada, sin stock ni migración; Recepciones, expediente, pruebas, guardia y E2E | DEEPSEEK | Hecha: `spec018-process-condition-delta.md`, evidencia en `evidence/process-condition/` |
