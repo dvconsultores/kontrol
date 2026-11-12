@@ -3,9 +3,9 @@
 ```
 PRODUCT_STATUS=OWNER_UAT_READY  OWNER_UAT_ACCESSIBLE=YES  OWNER_ACCEPTED=NO
 MENÚ=Gobierno · Contrataciones › Funciones incompatibles (+ bloque en la ficha del expediente)
-MIGRACIÓN=1 (0103_gov_proc11_sod_funciones; cabeza única)
+MIGRACIÓN=1 (0104_gov_proc11_sod_funciones, reencadenada tras 0103_receipt_putaway_link; cabeza única)
 CAPACIDAD=gobierno_sod:view / manage / activate (ya existente de CTL-01; sin capacidad nueva)
-CATÁLOGO DE AUDITORÍA=487 -> 492 (5 acciones de PROC-11; versión 2026-11-12.1)
+CATÁLOGO DE AUDITORÍA=488 -> 493 (5 acciones de PROC-11; versión 2026-11-12.1)
 GOBIERNO=279/1275 compuertas · 27/122 OWNER_UAT_READY · 0 OWNER_ACCEPTED
 ```
 
@@ -62,7 +62,7 @@ motor existente.
 | ruff | limpio |
 | Vitest completo (Node 22) | 1953/1953 (175 ficheros; +11) |
 | tsc, eslint, build | verde |
-| Migración: fresh install → head, downgrade -1, upgrade | OK; `ALEMBIC_HEAD_COUNT=1` |
+| Migración: fresh install → head, downgrade -1, upgrade | OK; `ALEMBIC_HEAD_COUNT=1` sobre la cadena fusionada con Empresarial |
 | E2E PROC-11 (`gobierno-sod-funciones`, pila canónica con ClamAV real) | 1/1 |
 | E2E vecinas: CTL-01 (3), PROC-06 (1), PROC-07 (1), PROC-08 (1) | 6/6 |
 

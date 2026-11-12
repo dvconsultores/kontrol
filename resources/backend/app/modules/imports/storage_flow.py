@@ -15,6 +15,7 @@ from app.modules.imports.models import ImportFile
 from app.modules.inventory import location_validation
 from app.modules.inventory import service as inv_service
 from app.modules.organization.models import WarehouseLocation
+from app.modules.purchasing import service as ap_service
 from app.modules.storage import labels
 from app.modules.storage import models as storage_models
 from app.modules.storage import service as storage_service
@@ -321,7 +322,7 @@ def putaway_for_file(
                         message="Genere la etiqueta antes de ubicar",
                     )
 
-    return inv_service.putaway(
+    movement = inv_service.putaway(
         db,
         company_id=file.company_id,
         warehouse_id=str(receipt.warehouse_id),
@@ -332,3 +333,5 @@ def putaway_for_file(
         document_ref=receipt.code,
         actor=actor_id,
     )
+    ap_service.vincular_putaway(db, receipt=receipt, movement=movement, actor=actor_id)
+    return movement

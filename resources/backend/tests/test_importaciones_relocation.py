@@ -32,6 +32,7 @@ from app.modules.inventory.models import (
 )
 from app.modules.master_data.models import CatalogItem, Party
 from app.modules.organization.models import Company, Warehouse, WarehouseLocation
+from app.modules.purchasing import service as purchasing_service
 from app.modules.purchasing.models import (
     GoodsReceipt,
     GoodsReceiptLine,
@@ -170,7 +171,7 @@ def _ubicado(mundo, reloj_mfa, rol_completo, rol_almacen, cantidad=10) -> dict:
             document_ref=f"RECEIPT:{receipt.id}",
             actor=mundo.admin_id,
         )
-        inventory_service.putaway(
+        movimiento = inventory_service.putaway(
             db,
             company_id=mundo.company_id,
             warehouse_id=warehouse_id,
@@ -180,6 +181,7 @@ def _ubicado(mundo, reloj_mfa, rol_completo, rol_almacen, cantidad=10) -> dict:
             document_ref=receipt.code,
             actor=mundo.admin_id,
         )
+        purchasing_service.vincular_putaway(db, receipt=receipt, movement=movimiento, actor=mundo.admin_id)
         db.commit()
         return {
             "cab": cab,

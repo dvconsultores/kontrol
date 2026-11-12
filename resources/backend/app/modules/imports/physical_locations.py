@@ -16,7 +16,7 @@ from app.modules.inventory.models import (
 )
 from app.modules.master_data.models import CatalogItem
 from app.modules.organization.models import WarehouseLocation
-from app.modules.purchasing.models import GoodsReceipt
+from app.modules.purchasing.models import GoodsReceipt, ReceiptPutaway
 
 
 def file_receipts(db: Session, file: ImportFile) -> list[GoodsReceipt]:
@@ -35,41 +35,47 @@ def file_receipts(db: Session, file: ImportFile) -> list[GoodsReceipt]:
 def attributed_rows(
     db: Session, file: ImportFile, receipts: list[GoodsReceipt] | None = None
 ) -> list[dict[str, Any]]:
-    codes = {r.code: r for r in (receipts if receipts is not None else file_receipts(db, file))}
-    if not codes:
+    receipts = receipts if receipts is not None else file_receipts(db, file)
+    receipt_by_id = {str(r.id): r for r in receipts}
+    if not receipt_by_id:
         return []
 
-    ubicacion_tipo = inv_service._get_movement_type_by_code_optional(
-        db, file.company_id, "UBICACION"
-    )
-    reubicacion_tipo = inv_service._get_movement_type_by_code_optional(
-        db, file.company_id, "REUBICACION"
-    )
-    tipo_ids = [t.id for t in (ubicacion_tipo, reubicacion_tipo) if t is not None]
-    if not tipo_ids:
-        return []
-
-    movements = list(
-        db.scalars(
-            select(InventoryMovement).where(
-                InventoryMovement.company_id == file.company_id,
-                InventoryMovement.movement_type_id.in_(tipo_ids),
-                InventoryMovement.document_ref.in_(codes.keys()),
-                InventoryMovement.status == "POSTED",
-                InventoryMovement.reversed_by_id.is_(None),
-            )
-        ).all()
-    )
+    receipt_ids = list(receipt_by_id.keys())
+    putaway_links = list(db.scalars(
+        select(ReceiptPutaway).where(ReceiptPutaway.receipt_id.in_(receipt_ids))
+    ))
+    validation_links = list(db.scalars(
+        select(InventoryLocationValidation).where(
+            InventoryLocationValidation.receipt_id.in_(receipt_ids),
+            InventoryLocationValidation.movement_id.is_not(None),
+        )
+    ))
+    movement_ids = {str(link.movement_id) for link in putaway_links} | {
+        str(link.movement_id) for link in validation_links if link.movement_id
+    }
+    movements = list(db.scalars(
+        select(InventoryMovement).where(InventoryMovement.id.in_(movement_ids))
+    )) if movement_ids else []
     if not movements:
         return []
 
+    putaway_map = {str(link.movement_id): str(link.receipt_id) for link in putaway_links}
+    validation_map = {
+        str(link.movement_id): str(link.receipt_id)
+        for link in validation_links
+        if link.movement_id and link.receipt_id
+    }
+
     neto: dict[tuple[str, str, str, str | None, str], Decimal] = {}
     for movement in movements:
-        if movement.document_ref is None or movement.product_id is None:
+        if movement.product_id is None:
+            continue
+        receipt_id = putaway_map.get(str(movement.id)) or validation_map.get(str(movement.id))
+        if receipt_id is None:
             continue
         if movement.target_location_id is not None and movement.target_state is not None:
             clave = (
-                movement.document_ref,
+                receipt_id,
                 movement.warehouse_id,
                 movement.product_id,
                 movement.target_state,
@@ -82,7 +88,7 @@ def attributed_rows(
             )
         if movement.source_location_id is not None and movement.source_state is not None:
             clave = (
-                movement.document_ref,
+                receipt_id,
                 movement.warehouse_id,
                 movement.product_id,
                 movement.source_state,
@@ -106,8 +112,8 @@ def attributed_rows(
     for clave_neto, total in neto.items():
         if total <= 0:
             continue
-        receipt_code, warehouse_id, product_id, state, ubicacion_id = clave_neto
-        receipt = codes[receipt_code]
+        receipt_id, warehouse_id, product_id, state, ubicacion_id = clave_neto
+        receipt = receipt_by_id[receipt_id]
         product = products_by_id.get(product_id)
         saldo = db.scalars(
             select(InventoryBalance).where(

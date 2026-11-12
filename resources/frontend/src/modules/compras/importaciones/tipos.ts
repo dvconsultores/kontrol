@@ -155,6 +155,17 @@ export type UbicacionLogistica = {
   quantity: number | null;
 };
 
+export type TrazaUbicacion = {
+  receipt_code: string | null;
+  product_name: string | null;
+  warehouse_name: string | null;
+  from_location_label: string | null;
+  to_location_label: string | null;
+  base_quantity: string;
+  occurred_at: string;
+  actor_name: string | null;
+};
+
 export type LogisticsDetalle = {
   stage: EtapaLogistica;
   receipts: RecepcionLogistica[];
@@ -162,6 +173,7 @@ export type LogisticsDetalle = {
   quantities: CantidadLogistica[];
   putaway_pending: PutawayPendiente[];
   locations: UbicacionLogistica[];
+  putaway_trace: TrazaUbicacion[];
 };
 
 export type Documento = {

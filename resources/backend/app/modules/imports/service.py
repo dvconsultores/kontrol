@@ -18,8 +18,11 @@ from app.modules.imports.models import (
     ImportFinancialLink,
     ImportTrackingEvent,
 )
-from app.modules.inventory import service as inv_service
-from app.modules.inventory.models import InventoryBalance, InventoryMovement
+from app.modules.inventory.models import (
+    InventoryBalance,
+    InventoryLocationValidation,
+    InventoryMovement,
+)
 from app.modules.master_data import party_service
 from app.modules.master_data import service as master_service
 from app.modules.master_data.models import CatalogItem, Party
@@ -33,6 +36,7 @@ from app.modules.purchasing.models import (
     PurchaseOrder,
     ReceiptConfirmation,
     ReceiptIncident,
+    ReceiptPutaway,
 )
 from app.shared.audit import record_audit
 from app.shared.clock import hoy_de_negocio
@@ -1322,7 +1326,117 @@ def _logistics_payload(
         ],
         "putaway_pending": _putaway_pending(db, file, quantities),
         "locations": _locations_detail(db, file, receipts),
+        "putaway_trace": _putaway_trace(db, file, receipts),
     }
+
+
+def _putaway_trace(db: Session, file: ImportFile, receipts: list[GoodsReceipt]) -> list[dict[str, Any]]:
+    receipt_ids = [receipt.id for receipt in receipts]
+    if not receipt_ids:
+        return []
+
+    putaway_links = list(
+        db.execute(
+            select(ReceiptPutaway.receipt_id, ReceiptPutaway.movement_id, ReceiptPutaway.base_quantity)
+            .where(ReceiptPutaway.receipt_id.in_(receipt_ids))
+        ).all()
+    )
+    validation_links = list(
+        db.execute(
+            select(InventoryLocationValidation.receipt_id, InventoryLocationValidation.movement_id)
+            .where(
+                InventoryLocationValidation.receipt_id.in_(receipt_ids),
+                InventoryLocationValidation.movement_id.is_not(None),
+            )
+        ).all()
+    )
+
+    receipt_by_movement: dict[str, str] = {}
+    for receipt_id, movement_id, _base_quantity in putaway_links:
+        receipt_by_movement[str(movement_id)] = str(receipt_id)
+    for receipt_id, movement_id in validation_links:
+        receipt_by_movement[str(movement_id)] = str(receipt_id)
+
+    movement_ids = list(receipt_by_movement.keys())
+    if not movement_ids:
+        return []
+
+    movements = list(
+        db.scalars(
+            select(InventoryMovement)
+            .where(
+                InventoryMovement.id.in_(movement_ids),
+                InventoryMovement.status == "POSTED",
+                InventoryMovement.reversed_by_id.is_(None),
+            )
+            .order_by(InventoryMovement.occurred_at)
+        )
+    )
+
+    product_ids = list({movement.product_id for movement in movements if movement.product_id is not None})
+    warehouse_ids = list({movement.warehouse_id for movement in movements if movement.warehouse_id is not None})
+    location_ids = list({
+        location_id
+        for movement in movements
+        for location_id in (movement.source_location_id, movement.target_location_id)
+        if location_id is not None
+    })
+    user_ids = list({movement.created_by for movement in movements if movement.created_by is not None})
+
+    products_by_id = {
+        str(product.id): product
+        for product in db.scalars(select(CatalogItem).where(CatalogItem.id.in_(product_ids)))
+    } if product_ids else {}
+    warehouses_by_id = {
+        str(warehouse.id): warehouse
+        for warehouse in db.scalars(select(Warehouse).where(Warehouse.id.in_(warehouse_ids)))
+    } if warehouse_ids else {}
+    locations_by_id = {
+        str(location.id): location
+        for location in db.scalars(select(WarehouseLocation).where(WarehouseLocation.id.in_(location_ids)))
+    } if location_ids else {}
+    users_by_id = {
+        str(user.id): user
+        for user in db.scalars(select(User).where(User.id.in_(user_ids)))
+    } if user_ids else {}
+
+    base_quantity_by_movement = {
+        str(movement_id): Decimal(base_quantity or 0)
+        for _receipt_id, movement_id, base_quantity in putaway_links
+    }
+
+    items: list[dict[str, Any]] = []
+    for movement in movements:
+        product = products_by_id.get(str(movement.product_id)) if movement.product_id else None
+        warehouse = warehouses_by_id.get(str(movement.warehouse_id)) if movement.warehouse_id else None
+        source_location = locations_by_id.get(str(movement.source_location_id)) if movement.source_location_id else None
+        target_location = locations_by_id.get(str(movement.target_location_id)) if movement.target_location_id else None
+        created_by = users_by_id.get(movement.created_by) if movement.created_by else None
+
+        receipt_id = receipt_by_movement.get(str(movement.id))
+        receipt_code = next((receipt.code for receipt in receipts if str(receipt.id) == receipt_id), None)
+        base_quantity = base_quantity_by_movement.get(str(movement.id), movement.base_quantity or Decimal("0"))
+
+        items.append({
+            "receipt_code": receipt_code,
+            "product_name": product.name if product else None,
+            "warehouse_name": warehouse.name if warehouse else None,
+            "from_location_label": (
+                f"{source_location.code} - {source_location.name}"
+                if source_location
+                else None
+            ),
+            "to_location_label": (
+                f"{target_location.code} - {target_location.name}"
+                if target_location
+                else None
+            ),
+            "base_quantity": str(base_quantity),
+            "occurred_at": movement.occurred_at.isoformat(),
+            "actor_name": created_by.username if created_by else None,
+        })
+
+    return items
 
 
 def _logistics_quantities(
@@ -1338,19 +1452,23 @@ def _logistics_quantities(
         )
     ) if receipt_ids else []
 
-    movement_type = inv_service._get_movement_type_by_code_optional(db, file.company_id, "UBICACION")
-    movement_type_id = movement_type.id if movement_type else None
-    movements = list(
-        db.scalars(
-            select(InventoryMovement).where(
-                InventoryMovement.company_id == file.company_id,
-                InventoryMovement.document_ref.in_([receipt.code for receipt in receipts]),
+    links = list(
+        db.execute(
+            select(ReceiptPutaway.base_quantity, ReceiptPutaway.receipt_id, ReceiptPutaway.product_id)
+            .join(InventoryMovement, InventoryMovement.id == ReceiptPutaway.movement_id)
+            .where(
+                ReceiptPutaway.receipt_id.in_(receipt_ids),
                 InventoryMovement.status == "POSTED",
                 InventoryMovement.reversed_by_id.is_(None),
-                InventoryMovement.movement_type_id == movement_type_id,
+                InventoryMovement.target_state == "DISPONIBLE",
             )
-        )
-    ) if movement_type_id is not None else []
+        ).all()
+    ) if receipt_ids else []
+
+    links_by_key: dict[tuple[str, str], Decimal] = {}
+    for base_quantity, receipt_id, product_id in links:
+        key = (str(receipt_id), str(product_id))
+        links_by_key[key] = links_by_key.get(key, Decimal("0")) + Decimal(base_quantity or 0)
 
     lines_by_receipt: dict[Any, list[GoodsReceiptLine]] = {}
     for line in lines:
@@ -1360,10 +1478,6 @@ def _logistics_quantities(
     for confirmation in confirmations:
         confirmations_by_receipt_line.setdefault(confirmation.receipt_line_id, []).append(confirmation)
 
-    movements_by_product: dict[str, list[InventoryMovement]] = {}
-    for movement in movements:
-        if movement.product_id is not None:
-            movements_by_product.setdefault(movement.product_id, []).append(movement)
 
     product_ids = list({line.product_id for line in lines if line.product_id is not None})
     products_by_id: dict[Any, Any] = {
@@ -1387,10 +1501,7 @@ def _logistics_quantities(
                 for confirmation in line_confirmations
                 if confirmation.target_state == "RECHAZADO"
             )
-            located = sum(
-                (movement.base_quantity or Decimal("0"))
-                for movement in movements_by_product.get(line.product_id, [])
-            )
+            located = links_by_key.get((str(receipt.id), str(line.product_id)), Decimal("0"))
             received_base = ap_service._base_recibida(line)
             pending_putaway = max(confirmed_available - located, Decimal("0"))
             product = products_by_id.get(line.product_id)

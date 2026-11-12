@@ -617,6 +617,15 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   await expect(page.locator("#ubicacion").getByText(ubicacion.code).first()).toBeVisible();
   await expect(page.getByText("Mercancía recibida y ubicada. Queda pendiente el costo de importación.").first()).toBeVisible();
 
+  const traza = page.getByRole("region", { name: "Trazabilidad hasta la ubicación final" });
+  const primeraColocacion = traza.getByRole("row").filter({ hasText: `REC-${sufijo}` }).filter({ hasText: "Sin ubicar" });
+  await expect(primeraColocacion).toHaveCount(1);
+  await expect(primeraColocacion).toContainText(`Artículo ${sufijo}`);
+  await expect(primeraColocacion).toContainText(ubicacion.code);
+  await expect(primeraColocacion.getByRole("cell").nth(5)).toHaveText("10");
+  await expect(primeraColocacion.getByRole("cell").nth(6)).toHaveText(/\d{1,2}\/\d{1,2}\/\d{4}/);
+  await expect(primeraColocacion.getByRole("cell").nth(6)).not.toContainText("T");
+
   // 6.5. Validación física y reubicación por error (A → B)
   const ubicacionB = await post<{ id: string; code: string }>("/organization/locations", {
     warehouse_id: almacen,
@@ -692,6 +701,12 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
 
   const filaB = regionUbicacion.getByRole("group", { name: `Artículo ${sufijo} en ${ubicacionB.code}` });
   await expect(filaB.getByText(`Ubicación registrada: ${ubicacionB.code}`)).toBeVisible();
+
+  const reubicada = traza.getByRole("row").filter({ hasText: `REC-${sufijo}` }).filter({ hasText: ubicacionB.code });
+  await expect(reubicada).toHaveCount(1);
+  await expect(reubicada.getByRole("cell").nth(3)).toContainText(ubicacion.code);
+  await expect(reubicada.getByRole("cell").nth(4)).toContainText(ubicacionB.code);
+  await expect(traza.getByRole("row").filter({ hasText: `REC-${sufijo}` })).toHaveCount(2);
   await expect(
     regionUbicacion.getByRole("group", { name: `Artículo ${sufijo} en ${ubicacion.code}` }),
   ).toHaveCount(0);

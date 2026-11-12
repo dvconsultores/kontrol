@@ -18,7 +18,7 @@ from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_EVEN, Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -27,6 +27,7 @@ from app.core.integrity import es_violacion_unica
 from app.modules.approvals import integration as approvals_integration
 from app.modules.inventory import service as inv_service
 from app.modules.inventory import states as inv_states
+from app.modules.inventory.models import InventoryMovement
 from app.modules.master_data import uom as uom_engine
 from app.modules.master_data.models import Party
 from app.modules.organization.models import Company, Warehouse
@@ -54,6 +55,7 @@ from app.modules.purchasing.models import (
     QuoteLine,
     ReceiptConfirmation,
     ReceiptIncident,
+    ReceiptPutaway,
     RequisitionLine,
     SupplierCreditNote,
     SupplierInvoice,
@@ -697,6 +699,115 @@ def programar_descarga(db: Session, *, company_id: str, receipt_id: str,
            before={"unloading_scheduled_at": anterior.isoformat() if anterior else None},
            after={"unloading_scheduled_at": unloading_scheduled_at.isoformat() if unloading_scheduled_at else None})
     return receipt
+
+
+def vincular_putaway(db: Session, *, receipt: GoodsReceipt, movement: InventoryMovement,
+                     actor: str | None) -> ReceiptPutaway:
+    """Crea el vínculo estructurado recepción → movimiento de ubicación."""
+    link = ReceiptPutaway(
+        company_id=receipt.company_id,
+        receipt_id=str(receipt.id),
+        movement_id=str(movement.id),
+        product_id=movement.product_id,
+        warehouse_id=movement.warehouse_id,
+        base_quantity=movement.base_quantity,
+        created_by=actor,
+    )
+    db.add(link)
+    db.flush()
+    return link
+
+
+def pendiente_de_ubicar(db: Session, *, receipt: GoodsReceipt) -> dict[str, Decimal]:
+    """Cantidad disponible por producto que aún no tiene vínculo de ubicación."""
+    disponible = (
+        select(GoodsReceiptLine.product_id, func.sum(ReceiptConfirmation.base_quantity))
+        .join(
+            ReceiptConfirmation,
+            ReceiptConfirmation.receipt_line_id == GoodsReceiptLine.id,
+        )
+        .where(
+            ReceiptConfirmation.receipt_id == receipt.id,
+            ReceiptConfirmation.target_state == "DISPONIBLE",
+        )
+        .group_by(GoodsReceiptLine.product_id)
+    )
+    ubicado = (
+        select(ReceiptPutaway.product_id, func.sum(ReceiptPutaway.base_quantity))
+        .join(InventoryMovement, InventoryMovement.id == ReceiptPutaway.movement_id)
+        .where(
+            ReceiptPutaway.receipt_id == receipt.id,
+            InventoryMovement.target_state == "DISPONIBLE",
+        )
+        .group_by(ReceiptPutaway.product_id)
+    )
+    disponibles: dict[str, Decimal] = {str(pid): _dec(total or 0) for pid, total in db.execute(disponible).all()}
+    ubicados: dict[str, Decimal] = {str(pid): _dec(total or 0) for pid, total in db.execute(ubicado).all()}
+    pendientes: dict[str, Decimal] = {}
+    for product_id, total in disponibles.items():
+        pendiente = total - _dec(ubicados.get(product_id) or 0)
+        if pendiente > 0:
+            pendientes[product_id] = pendiente
+    return pendientes
+
+
+def recepciones_con_pendiente(db: Session, *, company_id: str, warehouse_id: str,
+                              product_id: str) -> list[dict[str, Any]]:
+    """Recepciones de la bodega que conservan pendiente de ubicación del producto."""
+    receipts = db.scalars(
+        select(GoodsReceipt).where(
+            GoodsReceipt.company_id == company_id,
+            GoodsReceipt.warehouse_id == warehouse_id,
+            GoodsReceipt.status == "ACCEPTED",
+        ).order_by(GoodsReceipt.code)
+    ).all()
+    resultado: list[dict[str, Any]] = []
+    for receipt in receipts:
+        pendientes = pendiente_de_ubicar(db, receipt=receipt)
+        if product_id in pendientes:
+            resultado.append({
+                "receipt_id": str(receipt.id),
+                "receipt_code": receipt.code,
+                "pending_base": str(pendientes[product_id]),
+            })
+    return resultado
+
+
+def ubicar_desde_recepcion(db: Session, *, company_id: str, receipt_id: str,
+                           product_id: str, target_location_id: str,
+                           quantity: Decimal, actor: str | None = None) -> InventoryMovement:
+    """Ubica mercancía desde una recepción usando el motor único de putaway."""
+    receipt = db.execute(select(GoodsReceipt).where(GoodsReceipt.id == receipt_id)
+                         .with_for_update().execution_options(populate_existing=True)).scalars().first()
+    if receipt is None or str(receipt.company_id) != str(company_id):
+        raise NotFoundError(code="RECEIPT_NOT_FOUND", message="Recepción no encontrada")
+    cantidad = _dec(quantity)
+    if cantidad <= 0:
+        raise KontrolError(code="INVALID_QUANTITY", message="Cantidad no válida", status_code=422)
+    pending = pendiente_de_ubicar(db, receipt=receipt).get(product_id, Decimal("0"))
+    if cantidad > pending:
+        raise ConflictError(
+            code="PUTAWAY_EXCEEDS_RECEIPT_PENDING",
+            message="La recepción no tiene tanta mercancía pendiente de ubicar.",
+            details={"pending": str(pending), "requested": str(cantidad)},
+        )
+    movement = inv_service.putaway(
+        db,
+        company_id=company_id,
+        warehouse_id=str(receipt.warehouse_id),
+        product_id=product_id,
+        target_location_id=target_location_id,
+        quantity=cantidad,
+        state="DISPONIBLE",
+        document_ref=receipt.code,
+        actor=actor,
+    )
+    vincular_putaway(db, receipt=receipt, movement=movement, actor=actor)
+    _audit(db, action="RECEIPT_PUTAWAY_ATTRIBUTED", entity_type="GoodsReceipt",
+           entity_id=str(receipt.id), company_id=company_id, actor=actor,
+           after={"movement_id": str(movement.id), "product_id": product_id,
+                  "base_quantity": str(cantidad), "target_location_id": target_location_id})
+    return movement
 
 
 def registrar_inspeccion(db: Session, *, company_id: str, receipt_id: str,

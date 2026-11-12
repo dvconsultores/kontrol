@@ -12,6 +12,7 @@ import { type APIRequestContext, type Page } from "@playwright/test";
 import { expect, test, entrar, sesionApi } from "./helpers/sesion";
 
 import { laReservaDe, reservasDeProducto } from "./helpers/reservas";
+import { verificadorDeEscenario } from "./helpers/usuario";
 
 const TENANT = process.env.KONTROL_E2E_TENANT ?? "DEMO";
 const USER = process.env.KONTROL_E2E_USER ?? "admin";
@@ -185,6 +186,140 @@ async function irAPutAway(page: Page): Promise<void> {
 }
 
 test.describe("Spec 022 — put-away", () => {
+  test("desde Inventario se puede indicar la recepción de origen", async ({ request, page }) => {
+    const c = await ctx(request);
+    const m = marca();
+
+    const propio = (await post(request, c, "/organization/warehouses", {
+      company_id: c.company,
+      code: `WR-${m}`,
+      name: `Almacén ${m}`,
+      warehouse_type: "PHYSICAL",
+      status: "ACTIVE",
+    })) as { id: string };
+
+    const location = (await post(request, c, "/organization/locations", {
+      warehouse_id: propio.id,
+      code: `OKR-${m}`,
+      name: "Rack recepción",
+      sequence: 1,
+    })) as { id: string };
+
+    const supplier = (await post(request, c, "/maestros/terceros", {
+      code: `PRR-${m}`,
+      name: `Proveedor ${m}`,
+      roles: ["PROVEEDOR"],
+    })) as { id: string };
+
+    const product = (await post(request, c, "/maestros/catalogos/items", {
+      code: `AR-${m}`,
+      name: `Artículo ${m}`,
+      item_type: "PRODUCT",
+    })) as { id: string };
+
+    const order = (await post(request, c, "/purchasing/orders", {
+      code: `ORR-${m}`,
+      supplier_id: supplier.id,
+      currency: "VED",
+    })) as { id: string };
+
+    const orderLine = (await post(request, c, `/purchasing/orders/${order.id}/lines`, {
+      product_id: product.id,
+      quantity_ordered: 100,
+      unit_price: 1,
+    })) as { id: string };
+
+    await post(request, c, `/purchasing/orders/${order.id}/transition`, {
+      target: "SUBMITTED",
+    });
+    await post(request, c, `/purchasing/orders/${order.id}/transition`, {
+      target: "APPROVED",
+    });
+
+    const receipt = (await post(request, c, "/purchasing/receipts", {
+      code: `RR-${m}`,
+      order_id: order.id,
+      warehouse_id: propio.id,
+    })) as { id: string };
+
+    const receiptLine = (await post(request, c, `/purchasing/receipts/${receipt.id}/lines`, {
+      order_line_id: orderLine.id,
+      product_id: product.id,
+      quantity_received: 50,
+      quantity_accepted: 50,
+      quantity_rejected: 0,
+    })) as { id: string };
+
+    await post(request, c, `/purchasing/receipts/${receipt.id}/confirm`, {});
+    await post(request, c, `/purchasing/receipts/${receipt.id}/quality`, {});
+    await post(request, c, `/purchasing/receipts/${receipt.id}/quality`, { quality_status: "APPROVED" });
+    await post(request, c, `/purchasing/receipts/${receipt.id}/accept`, {});
+
+    const contador = await verificadorDeEscenario(
+      request,
+      { headers: c.headers },
+      { usuario: `pr-${m.toLowerCase()}`, empresas: [c.company] },
+    );
+
+    const conteo = await request.post(
+      `${API}/purchasing/receipts/${receipt.id}/lines/${receiptLine.id}/conteo`,
+      {
+        headers: contador.headers,
+        data: { counted_base_quantity: "50", difference_kinds: [] },
+      },
+    );
+    expect(conteo.ok(), `${conteo.status()} ${await conteo.text()}`).toBeTruthy();
+
+    await post(request, c, `/purchasing/receipts/${receipt.id}/confirmacion-inventario`, {
+      decisions: [
+        {
+          receipt_line_id: receiptLine.id,
+          target_state: "DISPONIBLE",
+          base_quantity: "50",
+        },
+      ],
+    });
+
+    await uiLogin(page);
+    await irAPutAway(page);
+    await page.getByLabel(/Almacén/).selectOption(propio.id);
+    const fila = page.getByRole("row").filter({ hasText: product.id.slice(0, 8) });
+    await expect(fila).toHaveCount(1, { timeout: 15_000 });
+    await fila.getByRole("button", { name: "Elegir ubicación" }).click();
+    const origen = page.getByLabel(/Recepción de origen/);
+    await expect(origen).toHaveValue("");
+    await expect(origen.locator("option").filter({ hasText: `RR-${m} · pendiente 50` })).toHaveCount(1);
+    await origen.selectOption({ label: `RR-${m} · pendiente 50` });
+    await page.getByLabel(/Ubicación de destino/).selectOption(location.id);
+    await page.getByLabel(/Cantidad/).fill("20");
+    await page.getByRole("button", { name: "Confirmar ubicación" }).click();
+    await expect(page.getByText("Mercancía ubicada desde la recepción")).toBeVisible();
+
+    const pendientes = await get(
+      request,
+      c,
+      `/inventory/putaway/recepciones?warehouse_id=${propio.id}&product_id=${product.id}`,
+    ) as { items: Array<{ receipt_code: string; pending_base: string }> };
+    expect(pendientes.items[0].receipt_code).toBe(`RR-${m}`);
+    expect(Number(pendientes.items[0].pending_base)).toBe(30);
+
+    const s = await saldos(request, c, product.id);
+    expect(s[`${location.id}|DISPONIBLE`]).toBe(20);
+    expect(s["SIN_UBICAR|DISPONIBLE"]).toBe(30);
+
+    const excedente = await request.post(`${API}/inventory/putaway/desde-recepcion`, {
+      headers: c.headers,
+      data: {
+        receipt_id: receipt.id,
+        product_id: product.id,
+        target_location_id: location.id,
+        quantity: "31",
+      },
+    });
+    expect(excedente.status()).toBe(409);
+    const excedenteBody = await excedente.json();
+    expect(excedenteBody.code).toBe("PUTAWAY_EXCEEDS_RECEIPT_PENDING");
+  });
   // ------------------------------------------------------------- camino feliz
   test("el operario ubica la mercancía y el dominio lo confirma", async ({ page, request }) => {
     const c = await ctx(request);
