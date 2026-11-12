@@ -49,6 +49,7 @@
 
 ## Cierre
 
+- **Publicación.** `3f7d00e` en `develop`, con `HEAD_EQUALS_ORIGIN_DEVELOP=1`. Entrada `7fcb491`; sin fusión necesaria.
 - **Sin migración.** `ALEMBIC_HEAD_COUNT=1` (`0103_receipt_putaway_link`), sin cambios de esquema.
 - **Superficies.** Recepciones (fila y ficha) y expediente consumen el mismo cálculo del backend; React muestra el texto humano que publica la API.
 - **Stock intacto.** Las pruebas comprueban que abrir y resolver la incidencia no cambia los saldos ni crea estados de mercancía nuevos.
