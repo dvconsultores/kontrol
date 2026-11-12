@@ -1299,6 +1299,22 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/control-interno/reporte",
+      "query": [
+        "desde",
+        "hasta"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/control-interno/reporte.csv",
+      "query": [
+        "desde",
+        "hasta"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/control/separacion",
       "query": []
     },

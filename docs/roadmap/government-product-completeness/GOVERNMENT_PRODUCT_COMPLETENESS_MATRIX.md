@@ -200,7 +200,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | REP-07 | Contabilidad: balance, diario, mayor, auxiliares y cierres | P1 | Contabilidad | IR §11/§12 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-04 | — | — |
 | REP-08 | Bienes públicos: inventario, custodios, ubicaciones, diferencias y desincorporaciones | P1 | Bienes/Patrimonio | IR §11/§12 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-05 | — | — |
 | REP-09 | Rendición de cuentas por responsable y período | P1 | Control Interno | IR §11/§12 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
-| REP-10 | Control interno: overrides, conflictos SoD, duplicados, hallazgos | P1 | Control Interno | IR §11/§12 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
+| REP-10 | Control interno: overrides, conflictos SoD, duplicados, hallazgos | P1 | Control Interno | IR §11/§12 | ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | gobierno-control-interno + HUMO-UAT-01 | — |
 | REP-11 | Trámites: volumen, tiempos, subsanaciones y cuellos de botella | P1 | Unidad de trámites | IR §11/§12 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-06 | — | — |
 
 ## Matriz E2E de producto (§65)

@@ -126,7 +126,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | REP-07 | IR §11/§12 | Reportes y tableros instituc | Contabilidad | Contabilidad: balance, diario, mayor, auxiliares y cierres | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-04 |
 | REP-08 | IR §11/§12 | Reportes y tableros instituc | Bienes/Patrimonio | Bienes públicos: inventario, custodios, ubicaciones, diferencias y des | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-05 |
 | REP-09 | IR §11/§12 | Reportes y tableros instituc | Control Interno | Rendición de cuentas por responsable y período | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
-| REP-10 | IR §11/§12 | Reportes y tableros instituc | Control Interno | Control interno: overrides, conflictos SoD, duplicados, hallazgos | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
+| REP-10 | IR §11/§12 | Reportes y tableros instituc | Control Interno | Control interno: overrides, conflictos SoD, duplicados, hallazgos | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Overrides no aplican (CTL-01 solo bloquea); duplicados sin fuente hasta TRE-03/TRE-04 |
 | REP-11 | IR §11/§12 | Reportes y tableros instituc | Unidad de trámites | Trámites: volumen, tiempos, subsanaciones y cuellos de botella | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-06 |
 
 ## Métricas de pantallas (corrección de la dueña, 2026-11-09)

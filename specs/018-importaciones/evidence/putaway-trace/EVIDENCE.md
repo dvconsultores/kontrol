@@ -47,6 +47,16 @@
 | OpenAPI | 2 rutas nuevas en Inventario (adición). Las fixtures del frontend se regeneraron |
 | Suite completa de backend en PostgreSQL, con analizador real | 5343 PASS, 18 skip y 19 fallos. 14 de ellos son de Gobierno (`gov_proc08`, `gov_proc10`): «la fecha del acto no puede ser futura», porque `tests/proc08_ayudantes.py` usa `datetime.now(UTC).date()` y la suite pasó por las 20:00–24:00 de Caracas, cuando la fecha UTC ya es la del día siguiente. Al repetirlos a las 00:16 de Caracas: 14 PASS. Los 5 restantes son la línea base (`gobierno_integridad`, `n10`, `naive_datetime` y dos de `spec019_receipt`). NEW_FAILURES = 0 |
 
+## Cierre
+
+- **Fusión con REP-10 de P1.** Fusión ordinaria. P1 no trae migración, así que la cabeza es `0103_receipt_putaway_link`, una sola.
+- **Catálogo.** Cada rama añadía una acción, y el fusionado tiene 488 entradas, medidas. Este ciclo aporta `RECEIPT_PUTAWAY_ATTRIBUTED`.
+- **Fixtures.** Las auto-fusionadas coinciden byte a byte con la regeneración.
+- **Después de la fusión:**
+  - 112 PASS en PostgreSQL (catálogo, guardias de cabeza, vínculo, backfill, frontera de la 021 y REP-10);
+  - Vitest 1942/1942;
+  - typecheck, lint y build limpios.
+
 ## Deudas que deja (no absorbidas)
 
 - **E2E-PUTAWAY-NAV-MOBILE.** `e2e/putaway.spec.ts`, ayudante `irAPutAway`: navega pulsando el menú lateral, que está plegado a 390 y 320. Es previa a este ciclo y no es un fallo del producto: entrando por URL, la pantalla funciona y pasa Axe.

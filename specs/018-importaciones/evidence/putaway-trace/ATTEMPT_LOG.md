@@ -19,10 +19,12 @@
 
 | DEEPSEEK_CALL_11 | C·A11Y (`OWNER_EXCEPTION` 3) | 381/79 | $0,000234 | AUDIT_PASS. Axe a 390 y 320 encontró un nodo grave nuevo de este ciclo (`scrollable-region-focusable` en el contenedor de la tabla de trazabilidad). Se le aplicó el patrón del repositorio (`tabIndex={0} role="region" aria-label`). Tras el cambio quedan solo los nodos previos de A11Y-IMPORT-SCROLL-REGIONS |
 
+| DEEPSEEK_CALL_12 | MERGE. Integración con REP-10 de P1 (frontera nueva: fusión; `OWNER_EXCEPTION` 4) | 212/90 | $0,000171 | AUDIT_PASS. Las dos ramas añadían una acción de auditoría y ponían el recuento en 487; fusionado, el catálogo tiene 488 (medido), y la prueba pasa a 488 |
+
 ```text
-TOTAL_CALLS=11 (8 del tope + 3 OWNER_EXCEPTION)  TOTAL_RETRIES=6  SUBPROBLEMS=6 (A, A2, A3, B, C, D)
-MAX_RETRIES_SINGLE_SUBPROBLEM=3 (C, dos de ellos con OWNER_EXCEPTION)  GLOBAL_CAP_REACHED=1  OWNER_EXCEPTION=3
-TOTAL_COST=$0,059126
+TOTAL_CALLS=12 (8 del tope + 4 OWNER_EXCEPTION)  TOTAL_RETRIES=6  SUBPROBLEMS=7 (A, A2, A3, B, C, D, MERGE)
+MAX_RETRIES_SINGLE_SUBPROBLEM=3 (C, dos de ellos con OWNER_EXCEPTION)  GLOBAL_CAP_REACHED=1  OWNER_EXCEPTION=4
+TOTAL_COST=$0,059297
 ```
 
 **Causas raíz del proceso:**
