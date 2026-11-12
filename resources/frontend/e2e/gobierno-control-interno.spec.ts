@@ -237,6 +237,8 @@ test.describe("Reporte de control interno", () => {
     for (const ancho of [390, 320]) {
       await page.setViewportSize({ width: ancho, height: 800 });
       await page.goto("/gobierno/control-interno");
+      await expect(page.getByRole("heading", { level: 1, name: "Reporte de control interno" })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 2, name: "Conflictos de segregación de funciones" })).toBeVisible();
       const sinDesbordamiento = await page.evaluate(
         (w) => document.documentElement.scrollWidth <= w + 1,
         ancho,
