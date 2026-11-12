@@ -12,4 +12,4 @@ Tope global del ciclo: 8 llamadas (política §6). Reintentos: 2 por subproblema
 | T006 ✔ | C3 corrección combinada (D1..D4 backend, T1..T3 pruebas, F1..F5 frontend) | DEEPSEEK | deepseek-v4-pro | no | sí | 2 | los cuatro ficheros | PG, vitest | 19/21 aplicados |
 | T007 ✔ | R3 E2E de usuario + P1/P2 | DEEPSEEK | deepseek-v4-pro | no | sí | 2 | e2e/gobierno-control-interno.spec.ts, pruebas | qa/e2e-run.py | Aplicado; E1..E4 y F6 → C4 |
 | T008 ✔ | C4/C5 (reintentos 1 y 2 del subproblema E2E/pantalla), C6 y C7 (9/8 y 10/8, autorizadas por la dueña) | DEEPSEEK | deepseek-v4-pro / v4-flash | no | sí | 2 | pantalla, prueba de pantalla, E2E, prueba backend | tsc, eslint, vitest, PG, E2E | Todo verde |
-| T009 | Integración: suite PG completa, E2E, commit, push, UAT, tarjeta y matrices | CLAUDE | n-a | no | n-a | 0 | specs/.../evidence, docs/roadmap | suites | HEAD == origin/develop |
+| T009 ✔ | Integración: suite PG completa, E2E, commit, push, UAT, tarjeta y matrices | CLAUDE | n-a | no | n-a | 0 | specs/.../evidence, docs/roadmap | suites | HEAD == origin/develop |
