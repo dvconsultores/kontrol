@@ -10,8 +10,8 @@
 
 | Estado | Requisitos |
 |---|---|
-| COMPLETE | 38 |
-| PARTIAL | 3 |
+| COMPLETE | 39 |
+| PARTIAL | 2 |
 | EXISTS_NOT_REVALIDATED | 0 |
 | NOT_BUILT | 0 |
 | SPONSOR_VALIDATION_REQUIRED | 1 |
@@ -26,6 +26,7 @@ La proporción no mide el avance real: las filas no pesan igual. Hechos el 2026-
 - el 2026-11-11, la selección y confirmación del proveedor (IMP-05): comparar ofertas, adjudicar con motivo y emitir la orden desde la cotización. Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/quote-award/EVIDENCE.md`.
 - el 2026-11-11, el conteo independiente en la recepción: quien recibe no cuenta, activo por defecto y desactivable de forma auditada (decisión de la dueña). Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/independent-count/EVIDENCE.md`.
 - el 2026-11-11, programar la descarga desde el expediente: se programa y se reprograma la descarga de la recepción, y Recepciones muestra el mismo valor. Evidencia: `specs/018-importaciones/evidence/unloading-schedule/EVIDENCE.md`.
+- el 2026-11-11, la trazabilidad hasta la ubicación final: un vínculo estructurado recepción → movimiento de ubicación (migración 0103, con backfill exacto autorizado), la tabla de trazabilidad del expediente y la recepción de origen opcional en Inventario → Put-away. Evidencia: `specs/018-importaciones/evidence/putaway-trace/EVIDENCE.md`. Las decisiones de los estados §3 (condición del proceso) y de la zona temporal (registrar la ubicación) están tomadas, pero sin construir (`specs/018-importaciones/evidence/SPEC018_REMAINING_DECISIONS.md`).
 
 Las zonas A a E siguen pendientes de validar por el sponsor.
 
@@ -35,7 +36,8 @@ Las zonas A a E siguen pendientes de validar por el sponsor.
 2. **Suministro abierto por almacén**: la orden de compra no tiene almacén, así que la planificación no lo descuenta.
 3. ~~**Costo de la salida (DISPATCH-COST-RELIEF)**~~: resuelta el 2026-11-11 (delta `specs/005-ventas-cuentas-por-cobrar/spec035-dispatch-cost-relief-delta.md`). El despacho consume las capas con el perfil vigente, landed cost incluido, y lo despachado sale de la valoración. Quedan abiertas DISPATCH-COST-RELIEF-HISTORICO y RETURN-REJECTED-VALUATION. No cambia el recuento: es una deuda transversal de costo, no una fila de la matriz.
 4. ~~**Conteo independiente**~~: resuelto el 2026-11-11 (receptor ≠ contador, decisión de la dueña; evidencia `specs/004-compras-cuentas-por-pagar/evidence/independent-count/`).
-5. **Estados «pendiente de validación» y «bloqueado por incidencia»**: requiere revisar la decisión de la Spec 020 de no tocar el inventario; también alimenta la zona D.
+5. **Estados «pendiente de validación» y «bloqueado por incidencia»**: decidido el 2026-11-11 como condición del proceso (opción A), sin tocar el stock. La decisión de la Spec 020 se mantiene. Queda por construir.
+6. **Zona temporal (§2)**: decidido el 2026-11-11 registrar la ubicación temporal sin mover lo recibido. Queda por construir.
 
 ## Matriz
 
@@ -80,6 +82,6 @@ Las zonas A a E siguen pendientes de validar por el sponsor.
 | §4 Validar ubicación física contra registrada | DOCX §4 | Ubicación | /compras/importaciones/{id} (Ubicación física) | SI | SI | /importaciones/{id}/physical-locations; /physical-locations/validate; /inventory/location-validations | ver compras:view; validar inventario:create | Specs 003, 008, 022 | 18 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Acto posterior e independiente del put-away; MATCH sin movimiento; MISMATCH sin mover; historial sin sobrescribir |
 | §4 Reubicar por error | DOCX §4 | Ubicación | /compras/importaciones/{id} (Ubicación física) | SI | SI | /inventory/location-validations/{id}/relocate | inventario:create | Specs 003, 022 | 18 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Movimiento `REUBICACION` A → B en el ledger único; costo, estado, reservas y almacén intactos; las transferencias se descartaron porque consumen capas y pasan por tránsito |
 | §4 Liberar para preparación y despacho | DOCX §4 | Ubicación → Ventas | /compras/importaciones/{id}; /ventas/preparacion; /ventas/despacho | SI | SI | /inventory/putaway; /sales/orders; /sales/pick-lists; /sales/picking; /sales/confirmacion; /sales/facturacion; /sales/shipments | inventario; ventas | Specs 021, 022, 023, 030–035 | E2E importaciones.spec: la mercancía importada, confirmada y ubicada se reserva, se prepara desde su ubicación, se confirma por un verificador, se factura y se despacha; RECIBIDO no se vende; pedido mayor que lo importado → 409 | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Sin estado de liberación nuevo: la vendibilidad es confirmación + estado DISPONIBLE + pedido RELEASED. DISPATCH-COST-RELIEF resuelta el 2026-11-11: la E2E comprueba que la valoración baja exactamente lo consumido, landed cost incluido |
-| Trazabilidad importación a ubicación final | DOCX, controles | Control | /compras/importaciones/{id} | SI | SI | /importaciones/{id} | compras | Specs 019 a 022 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | PARTIAL | IMPORT-PUTAWAY-ATRIBUCION: lo ubicado desde Inventario sin referencia no se atribuye al expediente |
+| Trazabilidad importación a ubicación final | DOCX, controles | Control | /compras/importaciones/{id} («Trazabilidad hasta la ubicación final»); Inventario → Put-away («Recepción de origen») | SI | SI (0103, `receipt_putaways` con backfill exacto) | /importaciones/{id}; /inventory/putaway/recepciones; /inventory/putaway/desde-recepcion | compras:view (expediente); inventario:view e inventario:create (put-away) | Specs 019 (vínculo), 022 (motor y rutas), 021 (frontera) | test_receipt_putaway_link, test_receipt_putaway_backfill, test_importaciones_relocation, test_importaciones_storage; E2E importaciones.spec (colocación y reubicación en la trazabilidad) y putaway.spec (recepción de origen, pendiente rebajado y 409) | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Resuelta el 2026-11-11 (delta `specs/018-importaciones/spec018-putaway-trace-delta.md`). El vínculo es estructurado y ya no por texto. Desde Inventario, la recepción es opcional por decisión de la dueña: sin indicarla, no se atribuye. IMPORT-PUTAWAY-ATRIBUCION cerrada |
 | Conteo independiente | DOCX, controles | Control | Inventario → Confirmación (aviso y «Política de conteo») | SI | SI (0101) | /purchasing/receipts/{id}/lines/{id}/conteo; /confirmacion-inventario; /purchasing/settings/receipt-count | inventario:confirm; compras:approve (política) | Spec 021 | test_spec021_independent_count; E2E conteo-independiente.spec (quien recibe no cuenta, 409; otro usuario cuenta y confirma; bitácora con autores) | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Decisión de la dueña 2026-11-11: receptor ≠ contador, activo por defecto y desactivable auditado (`specs/004-compras-cuentas-por-pagar/spec021-independent-count-delta.md`) |
 | Autorización de ajustes | DOCX, controles | Control | Compras → Incidencias; Aprobaciones → Mis aprobaciones | SI | SI | /purchasing/incidents; /approvals | compras:quality; aprobaciones | Spec 045 | Sonda Chrome/PostgreSQL 2026-11-11: «Ajuste autorizado» → Pendiente de autorización → bandeja Aprobar → Resuelta | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Exige una política RECEIPT_INCIDENT activa: sin ella el ajuste no pide autorización (configuración de la empresa) |

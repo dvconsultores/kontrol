@@ -3657,8 +3657,24 @@
       "scope": "COMPANY"
     },
     {
+      "method": "POST",
+      "path": "/api/v1/inventory/putaway/desde-recepcion",
+      "capabilities": [
+        "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/inventory/putaway/pendientes",
+      "capabilities": [
+        "inventario:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inventory/putaway/recepciones",
       "capabilities": [
         "inventario:view"
       ],

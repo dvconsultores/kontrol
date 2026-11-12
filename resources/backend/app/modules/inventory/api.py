@@ -38,6 +38,7 @@ from app.modules.inventory.models import (
     TransferLine,
 )
 from app.modules.master_data.models import CatalogItem
+from app.modules.purchasing import service as ap_service
 from app.modules.treasury.rates import moneda_funcional
 
 router = APIRouter(prefix="/inventory", tags=["inventario"])
@@ -367,6 +368,60 @@ def execute_putaway(body: PutAwayBody, db: Session = Depends(get_db),
             "target_location_id": movement.target_location_id,
             "base_quantity": str(movement.base_quantity),
             "merchandise_state": movement.target_state}
+
+
+class ReceiptPutawayBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    receipt_id: str
+    product_id: str
+    target_location_id: str
+    quantity: Decimal = Field(gt=0)
+
+
+@router.get("/putaway/recepciones")
+def list_receipts_pending_putaway(
+    warehouse_id: str = Query(...),
+    product_id: str = Query(...),
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission("inventario", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    """Recepciones con mercancía pendiente de ubicar para un producto."""
+    return {
+        "items": ap_service.recepciones_con_pendiente(
+            db,
+            company_id=ctx.company_id,
+            warehouse_id=warehouse_id,
+            product_id=product_id,
+        )
+    }
+
+
+@router.post("/putaway/desde-recepcion", dependencies=[Depends(require_write_allowed)])
+def execute_putaway_from_receipt(
+    body: ReceiptPutawayBody,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission("inventario", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    """Ubica mercancía de una recepción y crea el vínculo de trazabilidad."""
+    movement = ap_service.ubicar_desde_recepcion(
+        db,
+        company_id=ctx.company_id,
+        receipt_id=body.receipt_id,
+        product_id=body.product_id,
+        target_location_id=body.target_location_id,
+        quantity=body.quantity,
+        actor=str(actor.id),
+    )
+    db.commit()
+    return {
+        "movement_id": str(movement.id),
+        "receipt_id": body.receipt_id,
+        "product_id": body.product_id,
+        "target_location_id": body.target_location_id,
+        "base_quantity": str(movement.base_quantity),
+    }
 
 
 class LocationValidationBody(BaseModel):

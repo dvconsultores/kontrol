@@ -2641,9 +2641,22 @@
       "query": []
     },
     {
+      "method": "POST",
+      "path": "/inventory/putaway/desde-recepcion",
+      "query": []
+    },
+    {
       "method": "GET",
       "path": "/inventory/putaway/pendientes",
       "query": [
+        "warehouse_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/putaway/recepciones",
+      "query": [
+        "product_id",
         "warehouse_id"
       ]
     },

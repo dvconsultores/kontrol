@@ -31,6 +31,12 @@ import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { PageContent } from "@/layout/PageContent";
 
+type RecepcionPendiente = {
+  receipt_id: string;
+  receipt_code: string;
+  pending_base: string;
+};
+
 const columnas = createColumnHelper<InventoryBalance>();
 
 export function PutAwayPage(): React.JSX.Element {
@@ -41,9 +47,15 @@ export function PutAwayPage(): React.JSX.Element {
   const [seleccion, setSeleccion] = useState<InventoryBalance | null>(null);
   const [destino, setDestino] = useState("");
   const [cantidad, setCantidad] = useState("");
+  const [recepcionId, setRecepcionId] = useState("");
 
   const { activeCompany } = useCompany();
   const almacenes = useAlmacenesDeEmpresa(activeCompany?.id ?? null);
+  const admiteRecepcion =
+    seleccion !== null &&
+    seleccion.state === "DISPONIBLE" &&
+    !seleccion.lot_id &&
+    !seleccion.serial_id;
 
   const pendientes = useQuery({
     queryKey: ["putaway", "pendientes", warehouseId],
@@ -62,28 +74,57 @@ export function PutAwayPage(): React.JSX.Element {
     enabled: Boolean(warehouseId),
   });
 
+  const recepciones = useQuery({
+    queryKey: ["putaway", "recepciones", seleccion?.warehouse_id, seleccion?.product_id],
+    queryFn: () => {
+      const warehouse = seleccion?.warehouse_id;
+      const product = seleccion?.product_id;
+      if (!warehouse || !product) {
+        return Promise.resolve({ items: [] as RecepcionPendiente[] });
+      }
+      return apiFetch<{ items: RecepcionPendiente[] }>(
+        `/inventory/putaway/recepciones?warehouse_id=${warehouse}&product_id=${product}`,
+      );
+    },
+    enabled: admiteRecepcion,
+  });
+
   async function ubicar(): Promise<void> {
     if (!seleccion || !destino) {
       notify({ type: "error", title: "Elija la mercancía y la ubicación de destino" });
       return;
     }
     try {
-      await apiFetch("/inventory/putaway", {
-        method: "POST",
-        body: {
-          product_id: seleccion.product_id,
-          warehouse_id: seleccion.warehouse_id,
-          target_location_id: destino,
-          quantity: cantidad || seleccion.qty_on_hand,
-          state: seleccion.state,
-          lot_id: seleccion.lot_id,
-          serial_id: seleccion.serial_id,
-        },
-      });
-      notify({ type: "success", title: "Mercancía ubicada" });
+      if (recepcionId) {
+        await apiFetch("/inventory/putaway/desde-recepcion", {
+          method: "POST",
+          body: {
+            receipt_id: recepcionId,
+            product_id: seleccion.product_id,
+            target_location_id: destino,
+            quantity: cantidad || seleccion.qty_on_hand,
+          },
+        });
+        notify({ type: "success", title: "Mercancía ubicada desde la recepción" });
+      } else {
+        await apiFetch("/inventory/putaway", {
+          method: "POST",
+          body: {
+            product_id: seleccion.product_id,
+            warehouse_id: seleccion.warehouse_id,
+            target_location_id: destino,
+            quantity: cantidad || seleccion.qty_on_hand,
+            state: seleccion.state,
+            lot_id: seleccion.lot_id,
+            serial_id: seleccion.serial_id,
+          },
+        });
+        notify({ type: "success", title: "Mercancía ubicada" });
+      }
       setSeleccion(null);
       setDestino("");
       setCantidad("");
+      setRecepcionId("");
       await qc.invalidateQueries({ queryKey: ["putaway"] });
     } catch (e) {
       notify({
@@ -115,6 +156,7 @@ export function PutAwayPage(): React.JSX.Element {
             onClick={() => {
               setSeleccion(c.row.original);
               setCantidad(String(c.row.original.qty_on_hand));
+              setRecepcionId("");
             }}
             className="text-sm font-medium text-primary-700 underline"
           >
@@ -144,6 +186,7 @@ export function PutAwayPage(): React.JSX.Element {
               setWarehouseId(e.target.value);
               setSeleccion(null);
               setDestino("");
+              setRecepcionId("");
             }}
             className="h-10 w-64 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
           >
@@ -172,6 +215,25 @@ export function PutAwayPage(): React.JSX.Element {
             {seleccion.qty_on_hand} en estado <strong>{seleccion.state}</strong>, sin ubicar.
           </p>
           <div className="flex flex-wrap items-end gap-3">
+            {admiteRecepcion ? (
+              <FormField
+                label="Recepción de origen"
+                help="Opcional: liga la ubicación a la recepción para su trazabilidad"
+              >
+                <select
+                  value={recepcionId}
+                  onChange={(e) => setRecepcionId(e.target.value)}
+                  className="h-10 w-72 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
+                >
+                  <option value="">Sin recepción</option>
+                  {(recepciones.data?.items ?? []).map((r) => (
+                    <option key={r.receipt_id} value={r.receipt_id}>
+                      {`${r.receipt_code} · pendiente ${Number(r.pending_base)}`}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            ) : null}
             <FormField label="Ubicación de destino" required help="Del mismo almacén">
               <select
                 value={destino}

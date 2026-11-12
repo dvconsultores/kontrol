@@ -424,6 +424,21 @@ class ReceiptConfirmation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
+class ReceiptPutaway(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Vínculo estructurado recepción → movimiento de ubicación (Spec 018, IMPORT-PUTAWAY-ATRIBUCION)."""
+
+    __tablename__ = "receipt_putaways"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (UniqueConstraint("movement_id", name="uq_receipt_putaways_movement"),)
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    receipt_id: Mapped[str] = mapped_column(ForeignKey("goods_receipts.id"), nullable=False, index=True)
+    movement_id: Mapped[str] = mapped_column(ForeignKey("inventory_movements.id"), nullable=False)
+    product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
+    warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
+    base_quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+
+
 class SupplierInvoice(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "supplier_invoices"
     __scope__ = Scope.COMPANY

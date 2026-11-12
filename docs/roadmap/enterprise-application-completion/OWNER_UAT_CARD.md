@@ -284,3 +284,22 @@ Necesita un expediente de importación ya despachado y con su orden, como en los
 
 **Límites:**
 - Se programa la fecha y la hora, que es lo que pide el proceso. No se registran muelle, ventana horaria ni responsable.
+
+## Trazabilidad de la importación hasta la ubicación final
+
+Comprueba que el expediente sabe dónde quedó cada unidad recibida y por qué camino llegó: recepción, colocación y reubicación, con fecha y usuario.
+
+Necesita un expediente con la recepción confirmada en inventario, como en los pasos anteriores de esta tarjeta.
+
+108. En el expediente, sección «Ubicación», ubique la mercancía con «Clasificación de almacenamiento» (pulse «Ubicar Artículo …»).
+109. En la misma sección, «Trazabilidad hasta la ubicación final» muestra una fila con la recepción, el producto, el almacén, «Sin ubicar» en «Desde», la ubicación elegida en «Hacia», la cantidad, la fecha y la hora legibles y su usuario.
+110. En «Ubicación física», valide la ubicación contra otra distinta y pulse «Reubicar por error» con un motivo. La tabla de trazabilidad añade una segunda fila de la ubicación anterior a la nueva. Las dos filas siguen ahí al recargar.
+111. Con otra recepción confirmada y aún sin ubicar, abra Inventario → Put-away, elija el almacén y pulse «Elegir ubicación» en la fila del producto.
+112. Aparece «Recepción de origen» con «Sin recepción» seleccionado y una opción «<código> · pendiente <cantidad>». Elija la recepción, la ubicación de destino y una cantidad menor que la pendiente, y pulse «Confirmar ubicación»: aparece «Mercancía ubicada desde la recepción».
+113. Vuelva a «Elegir ubicación» en la misma fila: la opción de la recepción muestra ahora el pendiente rebajado en lo que ubicó.
+114. Si ubica sin elegir recepción («Sin recepción»), la mercancía se coloca igual, pero no se atribuye a ninguna recepción y su pendiente no cambia.
+
+**Límites:**
+- Desde Inventario, la recepción de origen es opcional: si no se indica, el sistema no adivina de cuál vino la mercancía, porque el stock sin ubicar es intercambiable (decisión de la dueña).
+- El selector aparece solo para mercancía DISPONIBLE sin lote ni serial.
+- Las colocaciones anteriores a este cambio se reconstruyeron solo cuando el código de la recepción coincidía exactamente y sin ambigüedad (decisión de la dueña).
