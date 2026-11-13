@@ -184,7 +184,7 @@ export function RecepcionesPage(): React.JSX.Element {
     return producto ? `${producto.code} · ${producto.name}` : "Producto sin identificar";
   };
   const etiquetaDeLinea = (linea: PurchaseOrderLine): string =>
-    `${nombreDeProducto(linea.product_id)} — pedido ${Number(linea.quantity_ordered)}, recibido ${Number(linea.quantity_received)}, pendiente ${pendienteDeLinea(linea)}`;
+    `${nombreDeProducto(linea.product_id)} — pedido ${Number(linea.quantity_ordered)}, recibido ${Number(linea.quantity_received)}, pendiente ${pendienteDeLinea(linea)}${linea.destination_warehouse ? `, destino ${linea.destination_warehouse.code}` : ""}`;
 
   const warehouses = useAlmacenesDeEmpresa(activeCompany?.id ?? null);
   // Una selección que ya no está en la lista, por ejemplo de otra empresa, no se envía.

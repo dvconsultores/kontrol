@@ -6,6 +6,7 @@ import { useState } from "react";
 import { apiFetch } from "@/api/client";
 import type { PagedResult, PurchaseOrderSummary } from "@/api/types";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
+import { useCompany } from "@/app/contexts/CompanyContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { AsyncButton } from "@/components/AsyncButton";
 import { Autorizado } from "@/components/Autorizado";
@@ -16,6 +17,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { SelectorDeTercero } from "@/modules/maestros/terceros/SelectorDeTercero";
 import { SelectorDeArticulo } from "@/modules/maestros/catalogo/SelectorDeArticulo";
+import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
+import { LineasDeOrden } from "./LineasDeOrden";
 
 const columnHelper = createColumnHelper<PurchaseOrderSummary>();
 
@@ -23,6 +26,9 @@ export function OrdenesComprasPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
   const { puede } = useAutoridad();
+  const { activeCompany } = useCompany();
+  const warehouses = useAlmacenesDeEmpresa(activeCompany?.id ?? null);
+  const almacenesActivos = (warehouses.data?.items ?? []).filter((w) => w.status === "ACTIVE");
 
   const [newCode, setNewCode] = useState("");
   const [newSupplier, setNewSupplier] = useState("");
@@ -30,6 +36,8 @@ export function OrdenesComprasPage(): React.JSX.Element {
   const [lineProduct, setLineProduct] = useState("");
   const [lineQty, setLineQty] = useState("");
   const [linePrice, setLinePrice] = useState("");
+  const [lineWarehouse, setLineWarehouse] = useState("");
+  const [ordenVista, setOrdenVista] = useState("");
 
   const query = useQuery({
     queryKey: ["compras", "ordenes"],
@@ -59,15 +67,22 @@ export function OrdenesComprasPage(): React.JSX.Element {
 
   const addLine = async (): Promise<void> => {
     if (!lineOrder || !lineProduct) return;
+    if (!lineWarehouse) {
+      notify({ type: "error", title: "Falta el almacén destino", description: "Elija el almacén destino" });
+      return;
+    }
     try {
       await apiFetch(`/purchasing/orders/${lineOrder}/lines`, {
         method: "POST",
-        body: { product_id: lineProduct, quantity_ordered: Number(lineQty) || 0, unit_price: Number(linePrice) || 0, discount: 0, needs_inventory: true },
+        body: { product_id: lineProduct, quantity_ordered: Number(lineQty) || 0, unit_price: Number(linePrice) || 0, discount: 0, needs_inventory: true, destination_warehouse_id: lineWarehouse },
       });
       notify({ type: "success", title: "Línea agregada", description: `Orden ${lineOrder}` });
       setLineProduct("");
       setLineQty("");
       setLinePrice("");
+      setLineWarehouse("");
+      setOrdenVista(lineOrder);
+      void queryClient.invalidateQueries({ queryKey: ["compras", "orden", lineOrder] });
       refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : "No fue posible agregar la línea";
@@ -100,6 +115,14 @@ export function OrdenesComprasPage(): React.JSX.Element {
         ];
         return (
           <div className="flex justify-end gap-1">
+            <button
+              type="button"
+              className="rounded-md border border-border-default px-2 py-1 text-xs text-text-900"
+              aria-label={`Ver líneas de ${row.original.code}`}
+              onClick={() => setOrdenVista(row.original.id)}
+            >
+              líneas
+            </button>
             {transitions
               .filter(([key]) => a[key] && puede("POST", `/purchasing/orders/${row.original.id}/transition`))
               .map(([key, target]) => (
@@ -157,6 +180,14 @@ export function OrdenesComprasPage(): React.JSX.Element {
             <FormField label="Precio" required>
               <TextInput type="number" value={linePrice} onChange={(e) => setLinePrice(e.target.value)} placeholder="0,00" required />
             </FormField>
+            <FormField label="Almacén destino" required>
+              <select value={lineWarehouse} onChange={(e) => setLineWarehouse(e.target.value)} className="h-10 w-56 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
+                <option value="">Seleccionar…</option>
+                {almacenesActivos.map((w) => (
+                  <option key={w.id} value={w.id}>{w.code} · {w.name}</option>
+                ))}
+              </select>
+            </FormField>
             <AsyncButton type="submit" variant="secondary" onClick={addLine}>Agregar</AsyncButton>
           </form>
         </section>
@@ -171,6 +202,12 @@ export function OrdenesComprasPage(): React.JSX.Element {
         emptyTitle="Sin órdenes"
         emptyDescription="Aún no hay órdenes de compra registradas."
       />
+
+      {ordenVista ? (
+        <div className="mt-4">
+          <LineasDeOrden orderId={ordenVista} onCambios={refresh} />
+        </div>
+      ) : null}
     </PageContent>
   );
 }

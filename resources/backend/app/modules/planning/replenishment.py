@@ -43,12 +43,12 @@ def _decimal(value: Any) -> Decimal | None:
 def condition_met(plan: dict) -> bool:
     if plan.get("status") != "OK":
         return False
-    available = _decimal(plan.get("available"))
+    projected = _decimal(plan.get("projected_available"))
     reorder_point = _decimal(plan.get("reorder_point"))
     recommended_quantity = _decimal(plan.get("recommended_quantity"))
-    if available is None or reorder_point is None or recommended_quantity is None:
+    if projected is None or reorder_point is None or recommended_quantity is None:
         return False
-    return available <= reorder_point and recommended_quantity > 0
+    return projected <= reorder_point and recommended_quantity > 0
 
 
 @dataclass
@@ -188,6 +188,8 @@ def _evaluate_one(
                 trigger_avg_daily_demand=_decimal(plan["avg_daily_demand"]),
                 trigger_safety_stock=_decimal(plan["safety_stock"]),
                 trigger_recommended_quantity=_decimal(plan["recommended_quantity"]),
+                trigger_open_supply=_decimal(plan.get("open_supply")),
+                trigger_projected_available=_decimal(plan.get("projected_available")),
                 trigger_rotation_band_code=plan["rotation_band"]["code"] if plan.get("rotation_band") else None,
                 trigger_calculated_at=datetime.fromisoformat(plan["calculated_at"]),
                 trigger_snapshot=plan,
@@ -196,6 +198,8 @@ def _evaluate_one(
                 current_reorder_point=_decimal(plan["reorder_point"]),
                 current_projected_demand=_decimal(plan["projected_demand"]),
                 current_recommended_quantity=_decimal(plan["recommended_quantity"]),
+                current_open_supply=_decimal(plan.get("open_supply")),
+                current_projected_available=_decimal(plan.get("projected_available")),
                 current_rotation_band_code=plan["rotation_band"]["code"] if plan.get("rotation_band") else None,
             )
             try:
@@ -233,6 +237,8 @@ def _evaluate_one(
         active.current_reorder_point = _decimal(plan["reorder_point"])
         active.current_projected_demand = _decimal(plan["projected_demand"])
         active.current_recommended_quantity = _decimal(plan["recommended_quantity"])
+        active.current_open_supply = _decimal(plan.get("open_supply"))
+        active.current_projected_available = _decimal(plan.get("projected_available"))
         active.current_rotation_band_code = plan["rotation_band"]["code"] if plan.get("rotation_band") else None
         _ensure_alert(db, active, company_id, correlation_id)
         db.commit()
@@ -245,6 +251,8 @@ def _evaluate_one(
         active.current_reorder_point = _decimal(plan.get("reorder_point"))
         active.current_projected_demand = _decimal(plan.get("projected_demand"))
         active.current_recommended_quantity = _decimal(plan.get("recommended_quantity"))
+        active.current_open_supply = _decimal(plan.get("open_supply"))
+        active.current_projected_available = _decimal(plan.get("projected_available"))
         active.current_rotation_band_code = plan["rotation_band"]["code"] if plan.get("rotation_band") else None
         reason = "CONDITION_CLEARED" if plan.get("status") == "OK" else "PLAN_UNAVAILABLE"
         _resolve(db, active, reason, now)
@@ -461,6 +469,8 @@ def _need_trigger_dict(need: ReplenishmentNeed) -> dict[str, Any]:
         "avg_daily_demand": _d(need.trigger_avg_daily_demand),
         "safety_stock": _d(need.trigger_safety_stock),
         "recommended_quantity": _d(need.trigger_recommended_quantity),
+        "open_supply": _d(need.trigger_open_supply),
+        "projected_available": _d(need.trigger_projected_available),
         "rotation_band_code": need.trigger_rotation_band_code,
         "calculated_at": need.trigger_calculated_at.isoformat() if need.trigger_calculated_at else None,
     }
@@ -478,6 +488,8 @@ def _need_current_dict(need: ReplenishmentNeed) -> dict[str, Any]:
         "reorder_point": _d(need.current_reorder_point),
         "projected_demand": _d(need.current_projected_demand),
         "recommended_quantity": _d(need.current_recommended_quantity),
+        "open_supply": _d(need.current_open_supply),
+        "projected_available": _d(need.current_projected_available),
         "rotation_band_code": need.current_rotation_band_code,
     }
 

@@ -94,6 +94,11 @@ class OrderCreate(BaseModel):
     currency: str = "VED"
 
 
+class OrderLineDestinationBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    warehouse_id: str = Field(min_length=1, max_length=36)
+
+
 class OrderLineCreate(BaseModel):
     product_id: str
     quantity_ordered: float = Field(gt=0)
@@ -102,6 +107,7 @@ class OrderLineCreate(BaseModel):
     tax_ref: str | None = None
     needs_inventory: bool = True
     snapshot: str | None = None
+    destination_warehouse_id: str | None = Field(default=None, max_length=36)
 
 
 class ReceiptCreate(BaseModel):
@@ -466,10 +472,32 @@ def add_order_line(order_id: str, body: OrderLineCreate, db: Session = Depends(g
     line = ap_service.add_order_line(db, order_id=str(order.id), product_id=body.product_id,
                                      quantity_ordered=body.quantity_ordered, unit_price=body.unit_price,
                                      discount=body.discount, tax_ref=body.tax_ref, needs_inventory=body.needs_inventory,
-                                     snapshot=body.snapshot)
+                                     snapshot=body.snapshot, destination_warehouse_id=body.destination_warehouse_id)
     db.commit()
     db.refresh(line)
     return {"id": line.id, "product_id": line.product_id, "quantity_ordered": line.quantity_ordered}
+
+
+@router.post("/orders/{order_id}/lines/{line_id}/destination", dependencies=[Depends(require_write_allowed)])
+def set_order_line_destination(
+    order_id: str,
+    line_id: str,
+    body: OrderLineDestinationBody,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission("compras", "create")),
+    ctx: CompanyContext = Depends(get_company_context),
+):
+    order = ap_service.fijar_destino_de_linea(
+        db,
+        company_id=ctx.company_id,
+        order_id=order_id,
+        line_id=line_id,
+        warehouse_id=body.warehouse_id,
+        actor=str(actor.id),
+    )
+    db.commit()
+    db.refresh(order)
+    return ap_service.order_dict(db, order)
 
 
 @router.post("/orders/{order_id}/transition", dependencies=[Depends(require_write_allowed)])

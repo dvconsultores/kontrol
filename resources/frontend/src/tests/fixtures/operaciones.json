@@ -5430,6 +5430,14 @@
     },
     {
       "method": "POST",
+      "path": "/api/v1/purchasing/orders/{order_id}/lines/{line_id}/destination",
+      "capabilities": [
+        "compras:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
       "path": "/api/v1/purchasing/orders/{order_id}/transition",
       "capabilities": [
         "compras:approve"

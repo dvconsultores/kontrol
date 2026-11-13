@@ -35,7 +35,7 @@ Las zonas A a E siguen pendientes de validar por el sponsor.
 ## Orden propuesto de las brechas
 
 1. **Validación del sponsor de las zonas A a E**: configurables hoy; falta su significado.
-2. **Suministro abierto por almacén**: la orden de compra no tiene almacén, así que la planificación no lo descuenta.
+2. ~~**Suministro abierto por almacén**~~: resuelto el 2026-11-13 en la Spec 015 (delta `specs/015-planificacion-abastecimiento/spec015-open-supply-by-warehouse-delta.md`). El almacén destino vive en la línea de la orden (decisión de la dueña) y la planificación descuenta lo pedido y no recibido. No cambia el recuento: no es una fila de la matriz.
 3. ~~**Costo de la salida (DISPATCH-COST-RELIEF)**~~: resuelta el 2026-11-11 (delta `specs/005-ventas-cuentas-por-cobrar/spec035-dispatch-cost-relief-delta.md`). El despacho consume las capas con el perfil vigente, landed cost incluido, y lo despachado sale de la valoración. Quedan abiertas DISPATCH-COST-RELIEF-HISTORICO y RETURN-REJECTED-VALUATION. No cambia el recuento: es una deuda transversal de costo, no una fila de la matriz.
 4. ~~**Conteo independiente**~~: resuelto el 2026-11-11 (receptor ≠ contador, decisión de la dueña; evidencia `specs/004-compras-cuentas-por-pagar/evidence/independent-count/`).
 5. ~~**Estados «pendiente de validación» y «bloqueado por incidencia»**~~: resueltos el 2026-11-12 (delta `specs/018-importaciones/spec018-process-condition-delta.md`) como condición derivada del proceso, visible en Recepciones y en el expediente, sin tocar el stock. La decisión de la Spec 020 se mantiene.

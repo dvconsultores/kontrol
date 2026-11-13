@@ -8,8 +8,8 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision = "0106_gov_bud01_ejercicio"
-down_revision = "0105_receipt_temporary_zone"
+revision = "0107_gov_bud01_ejercicio"
+down_revision = "0106_open_supply_by_warehouse"
 branch_labels = None
 depends_on = None
 

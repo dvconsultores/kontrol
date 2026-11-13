@@ -135,7 +135,10 @@ class PurchaseOrderLine(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "purchase_order_lines"
     __scope__ = Scope.COMPANY
     __scope_authority__ = "order_id → purchase_orders"
-    __table_args__ = (Index("ix_purchase_order_lines_uom_id", "uom_id"),)
+    __table_args__ = (
+        Index("ix_purchase_order_lines_uom_id", "uom_id"),
+        Index("ix_purchase_order_lines_destination_warehouse_id_product_id", "destination_warehouse_id", "product_id"),
+    )
 
     order_id: Mapped[str] = mapped_column(ForeignKey("purchase_orders.id"), nullable=False, index=True)
     product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
@@ -146,6 +149,8 @@ class PurchaseOrderLine(UUIDMixin, TimestampMixin, Base):
     tax_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
     needs_inventory: Mapped[bool] = mapped_column(nullable=False, default=True)
     snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)  # copia histórica JSON (P4/P8)
+    # --- Spec 015: almacén destino de la línea (autoridad del suministro abierto) ---
+    destination_warehouse_id: Mapped[str | None] = mapped_column(ForeignKey("warehouses.id"), nullable=True)
 
 
 # --------------------------------------------------------------------------- #
