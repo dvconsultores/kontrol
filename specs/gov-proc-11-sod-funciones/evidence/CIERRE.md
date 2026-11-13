@@ -60,7 +60,7 @@ motor existente.
 | Backend PROC-11 (PG): 12 pruebas | 12/12 |
 | Guardas de reloj, catálogo de auditoría, fixtures y contratos de ruta | PASS |
 | ruff | limpio |
-| Vitest completo (Node 22) | 1953/1953 (175 ficheros; +11) |
+| Vitest completo (Node 22) | 1957/1957 (176 ficheros; +11 de PROC-11) |
 | tsc, eslint, build | verde |
 | Migración: fresh install → head, downgrade -1, upgrade | OK; `ALEMBIC_HEAD_COUNT=1` sobre la cadena fusionada con Empresarial |
 | E2E PROC-11 (`gobierno-sod-funciones`, pila canónica con ClamAV real) | 1/1 (y repetida tras la fusión) |
@@ -75,9 +75,9 @@ ficheros con rojas se ejecutó en los dos árboles y se restaron las listas:
 | Concepto | Valor |
 |---|---|
 | `BASELINE_FAILURES` (mismo conjunto de ficheros, HEAD de entrada `bedcc63`) | 75 |
-| `FINAL_FAILURES` (suite completa PG, árbol final fusionado) | 75 |
+| `FINAL_FAILURES` (suite completa PG, árbol final con las dos fusiones) | 75 (+4 errores de orden que pasan aislados) |
 | `NEW_BACKEND_FAILURES` | **0** |
-| `NEW_FRONTEND_FAILURES` | **0** (1953/1953) |
+| `NEW_FRONTEND_FAILURES` | **0** (1957/1957) |
 | `NEW_E2E_FAILURES` | **0** (14/14 tras la fusión) |
 
 Dos rojas **sí** eran mías y se corrigieron en el ciclo:
@@ -110,9 +110,11 @@ aislados y son de orden, no de código.
 
 ## Suite completa
 
-Una sola corrida de la suite completa de PostgreSQL sobre el árbol final **ya fusionado con `origin/develop`**
-(`7fcb491`), con el rol de prueba habilitado para crear bases y sin procesos concurrentes: **75 rojas**, exactamente las
-mismas que el árbol de entrada en este entorno. Ninguna es de este ciclo.
+Una sola corrida de la suite completa de PostgreSQL sobre el árbol final **con las dos fusiones de `origin/develop`**
+(`4a5efc9`), con el rol de prueba habilitado para crear bases y sin procesos concurrentes: **75 rojas estables**,
+exactamente las mismas que el árbol de entrada en este entorno, más **4 errores de orden** al crear bases en lote
+(`test_e2e_base_ciclo`, `test_spec002_migration_0058`, `test_uom_backfill`, `test_warehouse_migration_0018`) que pasan
+los cuatro cuando se ejecutan aislados (4/4). Ninguna es de este ciclo.
 
 | Grupo | Nº | Causa |
 |---|---|---|
