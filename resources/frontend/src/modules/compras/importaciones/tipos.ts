@@ -1,3 +1,5 @@
+import type { ReceiptProcessCondition } from "@/api/types";
+
 export type EstadoImportacion =
   | "NEGOTIATING"
   | "ORDERED"
@@ -104,6 +106,9 @@ export type RecepcionLogistica = {
   status: EstadoRecepcion;
   quality_status: string | null;
   confirmation_status: EstadoConfirmacion | null;
+  /** Spec 018 · §3: condición del proceso, derivada por el backend. Nula si el
+   *  documento terminó fuera del flujo normal. */
+  process_condition: ReceiptProcessCondition | null;
   warehouse_id: string | null;
   warehouse_name: string | null;
   arrival_at: string | null;

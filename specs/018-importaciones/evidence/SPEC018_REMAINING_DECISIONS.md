@@ -2,6 +2,8 @@
 
 Encargo del 2026-11-11. HEAD `3cf7ed0`; cabeza Alembic `0102_gov_ctl09_actas`. La matriz está en 38 de 42 COMPLETE.
 
+> Actualización del 2026-11-12: los estados §3 quedaron construidos como condición del proceso (`../spec018-process-condition-delta.md`). La matriz está en 40 de 42 COMPLETE, con la zona temporal y las zonas A–E como filas que quedan.
+
 **Fuentes leídas:**
 - el DOCX de importación, entero: §2 («Colocar la mercancía temporalmente en zona de recepción o validación»), §3 («Diferenciar inventario: recibido; disponible; pendiente de validación; bloqueado por incidencia»), §4 y «Zonas preliminares que conviene validar para HJ»;
 - las Specs 019, 020 y 021 (`spec021-implementation-cycle.md`, que da la etapa 9 por cubierta con el «resultado mixto por línea»);
@@ -32,11 +34,11 @@ MIGRATION_REQUIRED=1 (una tabla de vínculos, dueña Recepciones, como receipt_c
 
 - **Qué dice el documento:** el DOCX dice «Diferenciar **inventario**», en sentido literal.
 - **Qué decidió la 020:** que la incidencia no toque el inventario. La 021 dio la etapa 9 por cubierta con DISPONIBLE, RECHAZADO y CUARENTENA.
-- **Qué falta hoy:** ningún proceso produce PENDIENTE_CONFIRMACION ni BLOQUEADO. Una incidencia abierta ya impide confirmar (`INCIDENTS_UNRESOLVED`), pero el estado no lo muestra.
-- **Opción A:** condición del proceso, visible en la recepción y en el expediente, sin tocar el stock.
-- **Opción B:** estado físico de inventario (RECIBIDO → BLOQUEADO al abrir una incidencia y vuelta al cerrarla). Revierte la decisión de la 020.
-- **Opción C:** no construir más.
-- `MATERIAL_DECISION_REQUIRED_STATES = 1`: la letra del documento («inventario») y la decisión de la 020 chocan.
+- **Qué falta hoy:** nada. Construido el 2026-11-12 como condición del proceso (`../spec018-process-condition-delta.md`, evidencia en `process-condition/`): se deriva de la recepción, su confirmación y sus incidencias vivas, y se ve en Recepciones y en el expediente. Una incidencia abierta impide confirmar (`INCIDENTS_UNRESOLVED`) y ahora además se muestra como «Bloqueado por incidencia».
+- **Opción A:** condición del proceso, visible en la recepción y en el expediente, sin tocar el stock. **Elegida y construida.**
+- **Opción B:** estado físico de inventario (RECIBIDO → BLOQUEADO al abrir una incidencia y vuelta al cerrarla). Revierte la decisión de la 020. Descartada.
+- **Opción C:** no construir más. Descartada.
+- `MATERIAL_DECISION_REQUIRED_STATES = 0 (resuelta: opción A, construida)`.
 
 ## C. Zona temporal
 
@@ -73,16 +75,16 @@ Esta fila sigue en SPONSOR_VALIDATION_REQUIRED hasta que valide el sponsor.
 |---|---|---|
 | B. Trazabilidad: alcance | «Recepción opcional en Inventario» | Construida. El expediente liga siempre la recepción. Inventario → Put-away ofrece «Recepción de origen» como dato opcional |
 | B. Trazabilidad: histórico | «Reconstruir por coincidencia exacta» | Backfill en `0103`, solo con coincidencia exacta (regla en `../spec018-putaway-trace-delta.md`, PT-02) |
-| A. Estados §3 | «Condición del proceso» (opción A) | Desbloqueada y sin construir. Se mostrará la condición en la recepción y el expediente, sin tocar el stock; la decisión de la Spec 020 se mantiene |
+| A. Estados §3 | «Condición del proceso» (opción A) | Construida el 2026-11-12 (`../spec018-process-condition-delta.md`). La condición se ve en la recepción y en el expediente, sin tocar el stock; la decisión de la Spec 020 se mantiene |
 | C. Zona temporal | «Registrar la ubicación temporal» (sin mover lo recibido) | Desbloqueada y sin construir. No cambia el flujo de saldos de las Specs 019, 021 y 022 |
 | D. Zonas A a E | Sin decisión del sponsor | Sigue en SPONSOR_VALIDATION_REQUIRED (opción A recomendada) |
 
 ```text
 MATERIAL_DECISION_REQUIRED_PUTAWAY=0 (resuelta)
-MATERIAL_DECISION_REQUIRED_STATES=0 (resuelta: opción A; pendiente de construir)
+MATERIAL_DECISION_REQUIRED_STATES=0 (resuelta y construida: opción A)
 MATERIAL_DECISION_REQUIRED_TEMP_ZONE=0 (resuelta: registrar; pendiente de construir)
 SPONSOR_VALIDATION_REQUIRED_ZONES_A_E=1
-SELECTED_ROW=Trazabilidad importación a ubicación final
+SELECTED_ROW=Condición del proceso de recepción (§3)
 ```
 
 **Cambio de arquitectura durante la integración.** El diseño inicial puso las rutas en Compras. La guardia aprobada de la Spec 021 (`test_no_existe_endpoint_de_put_away_en_compras`) lo detectó, y las rutas se movieron a Inventario: `/inventory/putaway/recepciones` y `/inventory/putaway/desde-recepcion`. El vínculo y su servicio siguen siendo de Recepciones. La guardia no se tocó.

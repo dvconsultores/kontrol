@@ -377,6 +377,8 @@ COUNT_DIFFERENCE_KINDS = ("CANTIDAD", "SKU", "PRESENTACION", "REFERENCIA", "UNID
 #: Ciclo de la confirmación de inventario. Dos estados y no más: o la recepción
 #: está conciliada y confirmada, o no lo está.
 CONFIRMATION_STATUSES = ("PENDIENTE", "CONFIRMADA")
+CONFIRMATION_PENDING = "PENDIENTE"
+CONFIRMATION_DONE = "CONFIRMADA"
 
 #: Destinos que la confirmación puede pedir. Son exactamente los de las cuatro
 #: transiciones que `ADR-D0-010` v2 autoriza a la Spec 021, y el motor de la

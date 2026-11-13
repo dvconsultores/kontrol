@@ -506,6 +506,22 @@ export interface ReceiptAllowedActions {
   close: boolean;
 }
 
+/** Condición del proceso de la recepción (Spec 018 · §3). No es un estado del
+ *  inventario: la calcula el backend a partir de la recepción, su confirmación
+ *  y las incidencias vivas, y llega con su texto humano ya resuelto. */
+export type ReceiptProcessConditionCode =
+  | "RECIBIDO"
+  | "PENDIENTE_DE_VALIDACION"
+  | "BLOQUEADO_POR_INCIDENCIA";
+
+export interface ReceiptProcessCondition {
+  code: ReceiptProcessConditionCode;
+  label: string;
+  blocking_incidents: number;
+  incidents: Array<{ id: string; code: string }>;
+  reason: string | null;
+}
+
 export interface GoodsReceiptSummary {
   id: string;
   code: string;
@@ -525,6 +541,9 @@ export interface GoodsReceiptSummary {
   inspected_at?: string | null;
   /** Etapa 11: acta emitida. */
   record_issued_at?: string | null;
+  /** Spec 018 · §3: condición del proceso, derivada en el backend. Nula cuando
+   *  el documento terminó fuera del flujo normal (anulada o rechazada). */
+  process_condition?: ReceiptProcessCondition | null;
   allowed_actions?: ReceiptAllowedActions;
 }
 

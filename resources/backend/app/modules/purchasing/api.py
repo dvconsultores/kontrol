@@ -20,6 +20,7 @@ from app.core.database import get_db
 from app.core.dependencies import require_permission, require_write_allowed
 from app.core.errors import NotFoundError
 from app.modules.identity_access.models import User
+from app.modules.purchasing import process_condition
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import (
     GoodsReceipt,
@@ -512,6 +513,7 @@ def _receipt_dict(db: Session, receipt) -> dict:
     return {"id": receipt.id, "code": receipt.code, "order_id": receipt.order_id,
             "warehouse_id": receipt.warehouse_id, "status": receipt.status,
             "quality_status": receipt.quality_status,
+            "process_condition": process_condition.condicion_de_recepcion(db, receipt),
             # Etapas 1 y 2: arribo confirmado y descarga programada.
             "arrival_at": receipt.arrival_at.isoformat() if receipt.arrival_at else None,
             "arrival_confirmed_by": receipt.arrival_confirmed_by,
@@ -546,9 +548,12 @@ def list_receipts(status: str | None = None, db: Session = Depends(get_db), user
         PurchaseOrder.company_id == ctx.company_id,
         PurchaseOrder.id.in_([r.order_id for r in items]))).all()
     codigos = {str(fila.id): fila.code for fila in filas}
+    condiciones = process_condition.condiciones_por_recepcion(db, items)
     return {"items": [{"id": r.id, "code": r.code, "order_id": r.order_id,
                        "order_code": codigos.get(str(r.order_id)), "warehouse_id": r.warehouse_id,
                        "status": r.status, "quality_status": r.quality_status,
+                       "confirmation_status": r.confirmation_status,
+                       "process_condition": condiciones.get(str(r.id)),
                        "arrival_at": r.arrival_at.isoformat() if r.arrival_at else None,
                        "unloading_scheduled_at": r.unloading_scheduled_at.isoformat()
                        if r.unloading_scheduled_at else None,

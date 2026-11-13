@@ -10,8 +10,8 @@
 
 | Estado | Requisitos |
 |---|---|
-| COMPLETE | 39 |
-| PARTIAL | 2 |
+| COMPLETE | 40 |
+| PARTIAL | 1 |
 | EXISTS_NOT_REVALIDATED | 0 |
 | NOT_BUILT | 0 |
 | SPONSOR_VALIDATION_REQUIRED | 1 |
@@ -26,7 +26,8 @@ La proporción no mide el avance real: las filas no pesan igual. Hechos el 2026-
 - el 2026-11-11, la selección y confirmación del proveedor (IMP-05): comparar ofertas, adjudicar con motivo y emitir la orden desde la cotización. Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/quote-award/EVIDENCE.md`.
 - el 2026-11-11, el conteo independiente en la recepción: quien recibe no cuenta, activo por defecto y desactivable de forma auditada (decisión de la dueña). Evidencia: `specs/004-compras-cuentas-por-pagar/evidence/independent-count/EVIDENCE.md`.
 - el 2026-11-11, programar la descarga desde el expediente: se programa y se reprograma la descarga de la recepción, y Recepciones muestra el mismo valor. Evidencia: `specs/018-importaciones/evidence/unloading-schedule/EVIDENCE.md`.
-- el 2026-11-11, la trazabilidad hasta la ubicación final: un vínculo estructurado recepción → movimiento de ubicación (migración 0103, con backfill exacto autorizado), la tabla de trazabilidad del expediente y la recepción de origen opcional en Inventario → Put-away. Evidencia: `specs/018-importaciones/evidence/putaway-trace/EVIDENCE.md`. Las decisiones de los estados §3 (condición del proceso) y de la zona temporal (registrar la ubicación) están tomadas, pero sin construir (`specs/018-importaciones/evidence/SPEC018_REMAINING_DECISIONS.md`).
+- el 2026-11-11, la trazabilidad hasta la ubicación final: un vínculo estructurado recepción → movimiento de ubicación (migración 0103, con backfill exacto autorizado), la tabla de trazabilidad del expediente y la recepción de origen opcional en Inventario → Put-away. Evidencia: `specs/018-importaciones/evidence/putaway-trace/EVIDENCE.md`.
+- el 2026-11-12, la condición del proceso de recepción (§3): «Recibido», «Pendiente de validación» y «Bloqueado por incidencia» derivados del estado real, visibles en Recepciones y en el expediente, sin tocar el stock ni el inventario y sin migración. Evidencia: `specs/018-importaciones/evidence/process-condition/EVIDENCE.md`. La decisión de la zona temporal (registrar la ubicación) está tomada y sigue sin construir (`specs/018-importaciones/evidence/SPEC018_REMAINING_DECISIONS.md`).
 
 Las zonas A a E siguen pendientes de validar por el sponsor.
 
@@ -36,7 +37,7 @@ Las zonas A a E siguen pendientes de validar por el sponsor.
 2. **Suministro abierto por almacén**: la orden de compra no tiene almacén, así que la planificación no lo descuenta.
 3. ~~**Costo de la salida (DISPATCH-COST-RELIEF)**~~: resuelta el 2026-11-11 (delta `specs/005-ventas-cuentas-por-cobrar/spec035-dispatch-cost-relief-delta.md`). El despacho consume las capas con el perfil vigente, landed cost incluido, y lo despachado sale de la valoración. Quedan abiertas DISPATCH-COST-RELIEF-HISTORICO y RETURN-REJECTED-VALUATION. No cambia el recuento: es una deuda transversal de costo, no una fila de la matriz.
 4. ~~**Conteo independiente**~~: resuelto el 2026-11-11 (receptor ≠ contador, decisión de la dueña; evidencia `specs/004-compras-cuentas-por-pagar/evidence/independent-count/`).
-5. **Estados «pendiente de validación» y «bloqueado por incidencia»**: decidido el 2026-11-11 como condición del proceso (opción A), sin tocar el stock. La decisión de la Spec 020 se mantiene. Queda por construir.
+5. ~~**Estados «pendiente de validación» y «bloqueado por incidencia»**~~: resueltos el 2026-11-12 (delta `specs/018-importaciones/spec018-process-condition-delta.md`) como condición derivada del proceso, visible en Recepciones y en el expediente, sin tocar el stock. La decisión de la Spec 020 se mantiene.
 6. **Zona temporal (§2)**: decidido el 2026-11-11 registrar la ubicación temporal sin mover lo recibido. Queda por construir.
 
 ## Matriz
@@ -67,7 +68,7 @@ Las zonas A a E siguen pendientes de validar por el sponsor.
 | §2 Acta o registro de recepción | DOCX §2 | Recepción | Compras → Recepciones (columna «Acta») | SI | SI | /purchasing/receipts | compras:quality | Spec 019 | Sonda Chrome/PostgreSQL 2026-11-11: tras aceptar, «Acta» muestra la fecha; `record_issued_at` y `record_issued_by` guardados | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | El acta es el registro fechado con responsable (Spec 019); no hay documento imprimible |
 | §2 Zona temporal de recepción o validación | DOCX §2 | Recepción | Parcial | Parcial | SI | /inventory | inventario | Spec 022 | Fuera de la E2E | NO | NO | PARTIAL | Hay estado de inventario; no se designa una zona física |
 | §3 Conteo y comparación por SKU | DOCX §3 | Confirmación | /inventario/confirmacion | SI | SI | /purchasing/receipts/{id}/conciliacion | inventario | Spec 021 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | La columna Producto muestra un id recortado (IMP-CONFIRM-UUID-01) |
-| §3 Estados recibido, disponible, pendiente, bloqueado | DOCX §3 | Confirmación | Inventario → Existencias | SI | SI | /inventory | inventario | Spec 021 | Sonda Chrome/PostgreSQL 2026-11-11: RECIBIDO antes de confirmar, DISPONIBLE después | POSTGRESQL_BROWSER_VERIFIED | NO | PARTIAL | EXACT_FUNCTIONAL_GAP: «pendiente de validación» (PENDIENTE_CONFIRMACION) y «bloqueado por incidencia» (BLOQUEADO) no los produce ningún proceso; las aristas INCIDENT_OPEN/CLOSE (Spec 020) existen sin uso porque la Spec 020 decidió no tocar inventario. Dependencia: revisar esa decisión |
+| §3 Estados recibido, disponible, pendiente, bloqueado | DOCX §3 | Confirmación | Compras → Recepciones; Compras → Importaciones → expediente | SI | SI | /purchasing/receipts; /purchasing/receipts/{id}; /importaciones/{id} (`logistics.receipts[].process_condition`) | compras:view | Specs 019, 020, 021 | test_spec018_process_condition (11 escenarios PostgreSQL), guardia test_spec018_process_condition_architecture, Vitest CondicionDelProceso, E2E importaciones.spec | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Condición del proceso derivada el 2026-11-12 (delta `spec018-process-condition-delta.md`): recibido, pendiente de validación y bloqueado por incidencia, en Recepciones y en el expediente. No toca stock, capas ni la máquina del inventario; sin migración. «Disponible» sigue siendo el estado DISPONIBLE de la Spec 021 en Inventario → Existencias |
 | §3 Reporte formal de diferencias | DOCX §3 | Confirmación | /compras/importaciones/{id}; /compras/recepciones | SI | SI | /importaciones/{id}/receipts/{id}/difference-report; /difference-reports/{id}/pdf | compras:view; emitir compras:create | Specs 019, 020, 021, 046 | 13 escenarios PostgreSQL + E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE | Instantánea inmutable con revisiones; referencia interna, no folio legal; sin aprobación ni envío al proveedor |
 | §3 Tratamiento: ajuste, reclamo, investigación, cuarentena | DOCX §3 | Confirmación | /compras/incidencias | SI | SI | /purchasing/incidents | compras | Spec 020 | E2E recorre un tratamiento | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |
 | §3 Confirmar y liberar a almacenamiento | DOCX §3 | Confirmación | /inventario/confirmacion | SI | SI | /purchasing/receipts | inventario | Spec 021 | E2E | POSTGRESQL_BROWSER_VERIFIED | YES | COMPLETE |  |

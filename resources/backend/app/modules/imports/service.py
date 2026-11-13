@@ -27,6 +27,7 @@ from app.modules.master_data import party_service
 from app.modules.master_data import service as master_service
 from app.modules.master_data.models import CatalogItem, Party
 from app.modules.organization.models import Warehouse, WarehouseLocation
+from app.modules.purchasing import process_condition
 from app.modules.purchasing import service as ap_service
 from app.modules.purchasing.models import (
     Advance,
@@ -1272,6 +1273,7 @@ def _logistics_payload(
         )
     ) if receipt_ids else []
     quantities = _logistics_quantities(db, file, receipts, confirmations)
+    condiciones = process_condition.condiciones_por_recepcion(db, receipts)
 
     incidents = []
     for incident in incident_rows:
@@ -1298,6 +1300,7 @@ def _logistics_payload(
                 "status": receipt.status,
                 "quality_status": receipt.quality_status,
                 "confirmation_status": receipt.confirmation_status,
+                "process_condition": condiciones.get(str(receipt.id)),
                 "warehouse_id": str(receipt.warehouse_id) if receipt.warehouse_id else None,
                 "warehouse_name": warehouses_by_id[receipt.warehouse_id].name if receipt.warehouse_id in warehouses_by_id else None,
                 "arrival_at": receipt.arrival_at.isoformat() if receipt.arrival_at else None,

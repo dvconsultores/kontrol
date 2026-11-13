@@ -33,6 +33,8 @@ from app.modules.master_data.models import Party
 from app.modules.organization.models import Company, Warehouse
 from app.modules.organization.service import warehouse_belongs_to
 from app.modules.purchasing.models import (
+    CONFIRMATION_DONE,
+    CONFIRMATION_PENDING,
     CONFIRMATION_TARGET_STATES,
     COUNT_DIFFERENCE_KINDS,
     INCIDENT_RESOLUTION_APPROVED,
@@ -1482,10 +1484,6 @@ def _sync_order_status(db: Session, order_id: str) -> None:
 #
 # Lo que esta Spec **no** hace: no resuelve incidencias (es de la 020), no mueve
 # saldos por su cuenta (es de la 023) y no ubica nada (es de la 022).
-
-CONFIRMATION_PENDING = "PENDIENTE"
-CONFIRMATION_DONE = "CONFIRMADA"
-
 
 def _requiere_linea(db: Session, receipt: GoodsReceipt, line_id: str) -> GoodsReceiptLine:
     """La línea debe ser de esta recepción. Un id ajeno no abre nada."""
