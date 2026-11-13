@@ -157,6 +157,7 @@ _PARTE_A: tuple[AuditActionSpec, ...] = (
     _e("GOV_FINDING_RETURNED", "GovernmentFinding", "government", "gov-ctl-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "estado"), "Hallazgo devuelto a remediación"),
     _e("GOV_FINDINGS_EXPORTED", "GovernmentFinding", "government", "gov-ctl-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("filas", "filtros"), "Plan de acciones correctivas exportado"),
     _e("GOV_INTERNAL_CONTROL_REPORT_EXPORTED", "GovernmentEntity", "government", "gov-rep-10", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("filas", "filtros"), "Reporte de control interno exportado"),
+    _e("GOV_PROCUREMENT_REPORT_EXPORTED", "GovernmentProcurementFile", "government", "gov-rep-03", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("filas", "filtros"), "Reporte de contrataciones exportado"),
     _e("GOV_AUDIT_PACKAGE_GENERATED", "GovernmentAuditPackage", "government", "gov-doc-08", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "documentos_excluidos", "documentos_incluidos", "eventos", "hallazgos", "huella_manifiesto", "huella_paquete", "muestra_codigo", "tamano_bytes"), "Paquete de auditoría generado"),
     _e("GOV_AUDIT_PACKAGE_DOWNLOADED", "GovernmentAuditPackage", "government", "gov-doc-08", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("archivo", "codigo"), "Paquete de auditoría descargado"),
     _e("GOV_AUDIT_PACKAGE_VERIFIED", "GovernmentAuditPackage", "government", "gov-doc-08", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "huella_archivo", "identico", "resultado"), "Paquete de auditoría verificado íntegro"),

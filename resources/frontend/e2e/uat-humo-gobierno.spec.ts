@@ -63,6 +63,8 @@ const PANTALLAS: ReadonlyArray<readonly [href: string, titulo: string]> = [
   ["/gobierno/cierres", "Controles de cierre"],
   ["/gobierno/contrataciones/comisiones", "Comisiones de contrataciones"],
   ["/gobierno/contrataciones/expedientes", "Expedientes de contratación"],
+  ["/gobierno/contrataciones/reporte", "Reporte de contrataciones"],
+  ["/gobierno/sod/funciones", "Funciones incompatibles"],
   ["/gobierno/tesoreria/cuentas", "Cuentas bancarias"],
   ["/gobierno/tesoreria/bancos", "Bancos"],
   ["/gobierno/tesoreria/programacion", "Programación financiera"],

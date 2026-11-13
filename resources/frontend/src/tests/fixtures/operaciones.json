@@ -1804,6 +1804,22 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/reporte",
+      "capabilities": [
+        "gobierno_expedientes:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/reporte.csv",
+      "capabilities": [
+        "gobierno_expedientes:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/control-interno/reporte",
       "capabilities": [
         "gobierno_auditoria:view"

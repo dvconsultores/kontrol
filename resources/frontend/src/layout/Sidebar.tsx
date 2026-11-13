@@ -127,6 +127,12 @@ const navSections: NavSection[] = [
         icon: ShieldAlert,
         modulo: "gobierno",
       },
+      {
+        to: "/gobierno/contrataciones/reporte",
+        label: "Reporte de contrataciones",
+        icon: BarChart3,
+        modulo: "gobierno",
+      },
     ],
   },
   // Tesorería de Gobierno (TRE-01): sección propia, también sujeta al módulo `gobierno`.
