@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     """Crea una entidad del tipo pedido en esa empresa. Devuelve su id."""
     from app.modules.approvals.models import ApprovalRequest
-    from app.modules.government.models import GovernmentAct, GovernmentAssignment, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentHandoverAct, GovernmentNotification, GovernmentOfficial, GovernmentPosition, GovernmentProcurementFile, GovernmentStructure, GovernmentUnit
+    from app.modules.government.models import GovernmentAct, GovernmentAssignment, GovernmentBudgetYear, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentHandoverAct, GovernmentNotification, GovernmentOfficial, GovernmentPosition, GovernmentProcurementFile, GovernmentStructure, GovernmentUnit
     from app.modules.homologation.models import HomologationRecord
     from app.modules.imports.models import ImportCorrection, ImportDocument, ImportFile
     from app.modules.inventory.models import InventoryAdjustment, StockCount
@@ -141,6 +141,28 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
             cargo_denominacion=cargo.name, unidad_id=str(cargo.unit_id), unidad_nombre=unidad.name,
             ejercicio=2031, fecha_objetivo=datetime(2031, 12, 31, tzinfo=UTC).date(), porcentaje=0,
             estado="PENDIENTE")
+
+    def _ejercicio_de_empresa() -> GovernmentBudgetYear:
+        from sqlalchemy import select
+
+        empresa_db = db.get(Company, empresa)
+        if not empresa_db:
+            raise ValueError(f"No existe Company {empresa}")
+        anios_usados = db.execute(
+            select(GovernmentBudgetYear.anio).where(GovernmentBudgetYear.company_id == empresa)
+        ).scalars().all()
+        usados = set(anios_usados)
+        libre = next((a for a in range(2000, 2101) if a not in usados), None)
+        if libre is None:
+            raise ValueError(f"No hay año libre para empresa {empresa}")
+        return GovernmentBudgetYear(
+            tenant_id=empresa_db.tenant_id,
+            company_id=empresa,
+            anio=libre,
+            moneda_funcional="VED",
+            estado="BORRADOR",
+            version=1,
+        )
 
     def _acta_de_entrega_de_empresa() -> GovernmentHandoverAct:
         cargo = _cargo_de_empresa("E")
@@ -354,6 +376,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         "GovernmentNotification": _notificacion_de_empresa,
         "GovernmentCorrectiveAction": _accion_correctiva_de_empresa,
         "GovernmentHandoverAct": _acta_de_entrega_de_empresa,
+        "GovernmentBudgetYear": _ejercicio_de_empresa,
         "GovernmentProcurementFile": _expediente_de_empresa,
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",

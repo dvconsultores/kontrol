@@ -146,6 +146,8 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "gobierno/contrataciones/comisiones/:comisionId/editar": { capacidad: "gobierno_comisiones:manage", alcance: "empresa" },
   "gobierno/contrataciones/expedientes": { capacidad: "gobierno_expedientes:view", alcance: "empresa" },
   "gobierno/contrataciones/reporte": { capacidad: "gobierno_expedientes:view", alcance: "empresa" },
+  "gobierno/presupuesto/ejercicios": { capacidad: "gobierno_presupuesto:view", alcance: "empresa" },
+  "gobierno/presupuesto/ejercicios/:ejercicioId": { capacidad: "gobierno_presupuesto:view", alcance: "empresa" },
   "gobierno/contrataciones/expedientes/nuevo": { capacidad: "gobierno_expedientes:manage", alcance: "empresa" },
   "gobierno/contrataciones/expedientes/:expedienteId": { capacidad: "gobierno_expedientes:view", alcance: "empresa" },
   "gobierno/contrataciones/expedientes/:expedienteId/editar": { capacidad: "gobierno_expedientes:manage", alcance: "empresa" },

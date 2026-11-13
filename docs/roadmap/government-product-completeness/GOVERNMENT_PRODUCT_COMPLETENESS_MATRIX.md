@@ -22,8 +22,8 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 
 | Id | Proceso | Prio. | Actor principal | Requisitos | Compuertas | PASS | Estado real | Bloqueos | E2E | Equivalente privado (no cuenta) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| BUD-01 | Ejercicio económico-financiero | P0 | Planificación/Presupuesto | GOV-BUD-001 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-02; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C); LEGAL_VALIDATION_REQUIRED N10 (clase C) | — | — |
-| BUD-02 | Clasificador presupuestario versionado | P0 | Planificación/Presupuesto | GOV-BUD-002 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-02; LEGAL_VALIDATION_REQUIRED N10 (clase C) | — | — |
+| BUD-01 | Ejercicio económico-financiero | P0 | Planificación/Presupuesto | GOV-BUD-001 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | gobierno-presupuesto + HUMO-UAT-01 | — |
+| BUD-02 | Clasificador presupuestario versionado | P0 | Planificación/Presupuesto | GOV-BUD-002 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✗ ✓ ✓ ✓ | 10/11 | NOT_STARTED (parcial) | REPORTS: sin exportación (decisión de la dueña) | gobierno-presupuesto + HUMO-UAT-01 | — |
 | BUD-03 | Plan, programas, proyectos, metas físicas e indicadores | P0 | Planificación/Presupuesto | GOV-BUD-003 GOV-BUD-004 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | BLOCKED | D-GOV-02; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C) | — | — |
 | BUD-04 | Fuentes de financiamiento y restricciones | P0 | Planificación/Presupuesto | GOV-BUD-005 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-02; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C) | — | — |
 | BUD-05 | Formulación: anteproyecto, proyecto y presupuesto aprobado con su acto | P0 | Planificación/Presupuesto | GOV-BUD-006 GOV-BUD-007 GOV-BUD-008 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | D-GOV-02; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C); LEGAL_VALIDATION_REQUIRED N37 (clase C) | — | — |

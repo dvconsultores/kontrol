@@ -141,6 +141,9 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_cuentas:activate",
         # gobierno_caja · activación y cierre de programas de programación financiera (TRE-02)
         "gobierno_caja:activate",
+        # gobierno_presupuesto · aprobación y cierre de ejercicios presupuestarios (BUD-01/02)
+        "gobierno_presupuesto:approve",
+        "gobierno_presupuesto:close",
         # gobierno_cierre · activación y retiro de políticas de cierre (CTL-10)
         "gobierno_cierre:activate",
         # gobierno_ocupacion · activación y revocación de asignaciones de cargos (ORG-04)
@@ -251,6 +254,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_caja · consulta y gestión de rubros y programas de programación financiera (TRE-02)
         "gobierno_caja:view",
         "gobierno_caja:manage",
+        # gobierno_presupuesto · consulta y gestión de ejercicios presupuestarios (BUD-01/02)
+        "gobierno_presupuesto:view",
+        "gobierno_presupuesto:manage",
         # gobierno_cierre · consulta y gestión de políticas de cierre (CTL-10)
         "gobierno_cierre:view",
         "gobierno_cierre:manage",

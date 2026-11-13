@@ -135,6 +135,17 @@ const navSections: NavSection[] = [
       },
     ],
   },
+  {
+    title: "Gobierno · Presupuesto",
+    items: [
+      {
+        to: "/gobierno/presupuesto/ejercicios",
+        label: "Ejercicios presupuestarios",
+        icon: Landmark,
+        modulo: "gobierno",
+      },
+    ],
+  },
   // Tesorería de Gobierno (TRE-01): sección propia, también sujeta al módulo `gobierno`.
   {
     title: "Gobierno · Tesorería",

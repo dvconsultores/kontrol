@@ -1015,6 +1015,222 @@ for _sentencia in GOV_SOD_ROLE_RULE_HISTORY_IMMUTABLE_PG:
     event.listen(GovernmentSoDRoleRuleHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
 
 
+# BUD-01/BUD-02 · ejercicio presupuestario, programa, clasificador y su historia (GOV-BUD-01/02).
+ESTADOS_EJERCICIO_PRESUPUESTARIO = ("BORRADOR", "APROBADO", "RECONDUCIDO", "CERRADO")
+TIPOS_FUNDAMENTO_PRESUPUESTARIO = ("ORDENANZA", "RECONDUCCION")
+TIPOS_PARTIDA_CLASIFICADOR = ("RECURSO", "EGRESO")
+TIPOS_HISTORIA_EJERCICIO = (
+    "CREADO", "NIVELES_CONFIGURADOS", "CATEGORIA_CREADA", "CATEGORIA_MODIFICADA", "CATEGORIA_ELIMINADA",
+    "CLASIFICADOR_REGISTRADO", "PROCEDENCIA_MODIFICADA", "PARTIDA_CREADA", "PARTIDA_ELIMINADA",
+    "PARTIDAS_IMPORTADAS", "APROBADO", "RECONDUCIDO", "CERRADO", "PRECOMPROMISO_CAMBIADO",
+)
+
+
+GOV_BUDGET_YEARS_NOT_DELETABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_presupuesto_no_borrable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_YEAR_NOT_DELETABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_years_no_delete BEFORE DELETE ON gov_budget_years FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_no_borrable()",
+    "CREATE TRIGGER trg_gov_budget_years_no_truncate BEFORE TRUNCATE ON gov_budget_years FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_no_borrable()",
+)
+
+GOV_BUDGET_FOUNDATIONS_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_presupuesto_fundamento_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_FOUNDATION_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_year_foundations_no_update BEFORE UPDATE ON gov_budget_year_foundations FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_fundamento_inmutable()",
+    "CREATE TRIGGER trg_gov_budget_year_foundations_no_delete BEFORE DELETE ON gov_budget_year_foundations FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_fundamento_inmutable()",
+    "CREATE TRIGGER trg_gov_budget_year_foundations_no_truncate BEFORE TRUNCATE ON gov_budget_year_foundations FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_fundamento_inmutable()",
+)
+
+GOV_BUDGET_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_presupuesto_historia_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_year_history_no_update BEFORE UPDATE ON gov_budget_year_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_budget_year_history_no_delete BEFORE DELETE ON gov_budget_year_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_budget_year_history_no_truncate BEFORE TRUNCATE ON gov_budget_year_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+)
+
+GOV_BUDGET_LEVELS_FROZEN_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio() RETURNS TRIGGER AS $$ DECLARE v varchar; BEGIN IF TG_OP = 'DELETE' THEN v := OLD.year_id; ELSE v := NEW.year_id; END IF; IF (SELECT estado FROM gov_budget_years WHERE id = v) <> 'BORRADOR' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_YEAR_FROZEN', DETAIL = TG_TABLE_NAME; END IF; IF TG_OP = 'DELETE' THEN RETURN OLD; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_program_levels_frozen BEFORE INSERT OR UPDATE OR DELETE ON gov_budget_program_levels FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio()",
+)
+
+GOV_BUDGET_CATEGORIES_FROZEN_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio() RETURNS TRIGGER AS $$ DECLARE v varchar; BEGIN IF TG_OP = 'DELETE' THEN v := OLD.year_id; ELSE v := NEW.year_id; END IF; IF (SELECT estado FROM gov_budget_years WHERE id = v) <> 'BORRADOR' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_YEAR_FROZEN', DETAIL = TG_TABLE_NAME; END IF; IF TG_OP = 'DELETE' THEN RETURN OLD; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_categories_frozen BEFORE INSERT OR UPDATE OR DELETE ON gov_budget_categories FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio()",
+)
+
+GOV_BUDGET_CLASSIFIERS_FROZEN_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio() RETURNS TRIGGER AS $$ DECLARE v varchar; BEGIN IF TG_OP = 'DELETE' THEN v := OLD.year_id; ELSE v := NEW.year_id; END IF; IF (SELECT estado FROM gov_budget_years WHERE id = v) <> 'BORRADOR' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_YEAR_FROZEN', DETAIL = TG_TABLE_NAME; END IF; IF TG_OP = 'DELETE' THEN RETURN OLD; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_classifiers_frozen BEFORE INSERT OR UPDATE OR DELETE ON gov_budget_classifiers FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio()",
+)
+
+GOV_BUDGET_ITEMS_FROZEN_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_presupuesto_congelado_por_clasificador() RETURNS TRIGGER AS $$ DECLARE v_clasificador varchar; BEGIN IF TG_OP = 'DELETE' THEN v_clasificador := OLD.classifier_id; ELSE v_clasificador := NEW.classifier_id; END IF; IF (SELECT y.estado FROM gov_budget_years y JOIN gov_budget_classifiers gc ON gc.year_id = y.id WHERE gc.id = v_clasificador) <> 'BORRADOR' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_YEAR_FROZEN', DETAIL = TG_TABLE_NAME; END IF; IF TG_OP = 'DELETE' THEN RETURN OLD; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_classifier_items_frozen BEFORE INSERT OR UPDATE OR DELETE ON gov_budget_classifier_items FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_congelado_por_clasificador()",
+)
+
+
+class GovernmentBudgetYear(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Ejercicio presupuestario de un ente (BUD-01, GOV-BUD-01)."""
+
+    __tablename__ = "gov_budget_years"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    anio: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    moneda_funcional: Mapped[str] = mapped_column(String(3), nullable=False)
+    estado: Mapped[str] = mapped_column(String(12), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    precompromiso_activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    precompromiso_desde: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fijado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    fijado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cerrado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cerrado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "anio", name="uq_gov_budget_years_company_id_anio"),
+        CheckConstraint("anio BETWEEN 2000 AND 2100", name="anio"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_EJERCICIO_PRESUPUESTARIO)})", name="estado"),
+        CheckConstraint("length(moneda_funcional) = 3", name="moneda"),
+        CheckConstraint("estado = 'BORRADOR' OR (fijado_por IS NOT NULL AND fijado_en IS NOT NULL)", name="fijado"),
+        CheckConstraint("estado <> 'CERRADO' OR (cerrado_por IS NOT NULL AND cerrado_en IS NOT NULL)", name="cerrado"),
+    )
+
+
+class GovernmentBudgetYearFoundation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Fundamento jurídico inmodificable de un ejercicio presupuestario (BUD-01)."""
+
+    __tablename__ = "gov_budget_year_foundations"
+    __scope__ = Scope.COMPANY
+
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(12), nullable=False)
+    referencia: Mapped[str] = mapped_column(String(300), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    documento_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False, index=True)
+    documento_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    huella: Mapped[str] = mapped_column(String(64), nullable=False)
+    fotografia: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_FUNDAMENTO_PRESUPUESTARIO)})", name="tipo"),
+    )
+
+
+class GovernmentBudgetProgramLevel(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Nivel programático configurado para un ejercicio presupuestario (BUD-01)."""
+
+    __tablename__ = "gov_budget_program_levels"
+    __scope__ = Scope.COMPANY
+
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    orden: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    nombre: Mapped[str] = mapped_column(String(80), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("year_id", "orden", name="uq_gov_budget_program_levels_year_id_orden"),
+        UniqueConstraint("year_id", "nombre", name="uq_gov_budget_program_levels_year_id_nombre"),
+        CheckConstraint("orden BETWEEN 1 AND 8", name="orden"),
+    )
+
+
+class GovernmentBudgetCategory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Categoría programática de un ejercicio presupuestario (BUD-01)."""
+
+    __tablename__ = "gov_budget_categories"
+    __scope__ = Scope.COMPANY
+
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    level_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_program_levels.id"), nullable=False, index=True)
+    parent_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_budget_categories.id"), nullable=True, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    codigo_completo: Mapped[str] = mapped_column(String(200), nullable=False)
+    denominacion: Mapped[str] = mapped_column(String(300), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("year_id", "codigo_completo", name="uq_gov_budget_categories_year_id_codigo_completo"),
+    )
+
+
+class GovernmentBudgetClassifier(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Clasificador presupuestario versionado de un ejercicio (BUD-02, GOV-BUD-02)."""
+
+    __tablename__ = "gov_budget_classifiers"
+    __scope__ = Scope.COMPANY
+
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False, unique=True, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    edicion: Mapped[str] = mapped_column(String(200), nullable=False)
+    fecha_edicion: Mapped[date | None] = mapped_column(Date, nullable=True)
+    procedencia: Mapped[str] = mapped_column(String(1000), nullable=False)
+    documento_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True, index=True)
+    documento_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+class GovernmentBudgetClassifierItem(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Partida presupuestaria del clasificador versionado (BUD-02)."""
+
+    __tablename__ = "gov_budget_classifier_items"
+    __scope__ = Scope.COMPANY
+
+    classifier_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_classifiers.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(8), nullable=False)
+    codigo: Mapped[str] = mapped_column(String(40), nullable=False)
+    denominacion: Mapped[str] = mapped_column(String(300), nullable=False)
+    nivel: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    parent_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_budget_classifier_items.id"), nullable=True, index=True)
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("classifier_id", "tipo", "codigo", name="uq_gov_budget_classifier_items_classifier_id_tipo_codigo"),
+        CheckConstraint(f"tipo IN ({en(TIPOS_PARTIDA_CLASIFICADOR)})", name="tipo"),
+        CheckConstraint("nivel BETWEEN 1 AND 12", name="nivel"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+    )
+
+
+class GovernmentBudgetYearHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de un ejercicio presupuestario (BUD-01)."""
+
+    __tablename__ = "gov_budget_year_history"
+    __scope__ = Scope.COMPANY
+
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(40), nullable=False)
+    detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"tipo IN ({en(TIPOS_HISTORIA_EJERCICIO)})", name="tipo"),
+    )
+
+
+for _sentencia in GOV_BUDGET_YEARS_NOT_DELETABLE_PG:
+    event.listen(GovernmentBudgetYear.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_BUDGET_FOUNDATIONS_IMMUTABLE_PG:
+    event.listen(GovernmentBudgetYearFoundation.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_BUDGET_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentBudgetYearHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_BUDGET_LEVELS_FROZEN_PG:
+    event.listen(GovernmentBudgetProgramLevel.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_BUDGET_CATEGORIES_FROZEN_PG:
+    event.listen(GovernmentBudgetCategory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_BUDGET_CLASSIFIERS_FROZEN_PG:
+    event.listen(GovernmentBudgetClassifier.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_BUDGET_ITEMS_FROZEN_PG:
+    event.listen(GovernmentBudgetClassifierItem.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
 ESTADOS_BANCO = ("ACTIVO", "INACTIVO")
 ESTADOS_CUENTA_BANCARIA = ("BORRADOR", "VIGENTE", "INACTIVA", "CERRADA")
 TIPOS_CUENTA_BANCARIA = ("CORRIENTE", "AHORRO")

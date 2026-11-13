@@ -22,7 +22,7 @@
 
 | Proceso | Estado | Qué funciona | Qué no funciona | Compuerta que falta | Severidad | Dependencias | Siguiente remediación |
 |---|---|---|---|---|---|---|---|
-| BUD-01 Ejercicio económico-financiero | BLOCKED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (10 de 10) | HIGH | D-GOV-02; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C); LEGAL_VALIDATION_REQUIRED N10 (clase C) | GOV-1, con DoD de producto completa (política §4) |
+| BUD-01 Ejercicio económico-financiero | **SALIÓ DE ESTE CATÁLOGO** (GOV-BUD-01/02, 2026-11-13) | Ver `OWNER_UAT_READY_CATALOG.md` | — | — | — | — | — |
 | BUD-02 Clasificador presupuestario versionado | BLOCKED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | D-GOV-02; LEGAL_VALIDATION_REQUIRED N10 (clase C) | GOV-1, con DoD de producto completa (política §4) |
 | BUD-03 Plan, programas, proyectos, metas físicas e indicadores | BLOCKED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (10 de 10) | HIGH | D-GOV-02; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C) | GOV-1, con DoD de producto completa (política §4) |
 | BUD-04 Fuentes de financiamiento y restricciones | BLOCKED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | D-GOV-02; LEGAL_VALIDATION_REQUIRED N07 (clase C); LEGAL_VALIDATION_REQUIRED N08 (clase C) | GOV-1, con DoD de producto completa (política §4) |

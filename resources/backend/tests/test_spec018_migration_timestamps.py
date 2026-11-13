@@ -17,7 +17,7 @@ pytestmark = pytest.mark.skipif(
 
 BACKEND = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend")
 CABEZA_PUBLICA = "0084_fusion_importaciones_proc03"
-CABEZA_FINAL = "0106_open_supply_by_warehouse"
+CABEZA_FINAL = "0107_gov_bud01_ejercicio"
 
 
 def _postgres_admin_url():

@@ -25,6 +25,7 @@ from app.modules.government.models import (
     GovernmentAuditSample,
     GovernmentAuditSampleItem,
     GovernmentBankAccount,
+    GovernmentBudgetYear,
     GovernmentCashProgram,
     GovernmentClosurePolicy,
     GovernmentEntity,
@@ -367,6 +368,16 @@ def _objeto_desde_evento(db: Session, event: AuditEvent, ctx: CompanyContext) ->
         )
         return None if programa is None else AuditoriaObjeto(
             tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/tesoreria/programacion/{objeto_id}", capacidad="gobierno_caja:view"
+        )
+    if event.entity_type == "GovernmentBudgetYear":
+        ejercicio = db.scalar(
+            select(GovernmentBudgetYear).where(
+                GovernmentBudgetYear.id == objeto_id,
+                GovernmentBudgetYear.company_id == empresa,
+            )
+        )
+        return None if ejercicio is None else AuditoriaObjeto(
+            tipo=event.entity_type, id=objeto_id, ruta=f"/gobierno/presupuesto/ejercicios/{objeto_id}", capacidad="gobierno_presupuesto:view"
         )
     if event.entity_type == "GovernmentAssignment":
         asignacion = db.scalar(select(GovernmentAssignment).where(GovernmentAssignment.id == objeto_id, GovernmentAssignment.company_id == empresa))
