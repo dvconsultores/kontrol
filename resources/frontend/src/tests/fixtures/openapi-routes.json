@@ -1866,6 +1866,89 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/aprobar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/categorias",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/categorias/{categoria_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/categorias/{categoria_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/clasificador",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/clasificador/importar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/clasificador/partidas",
+      "query": [
+        "q",
+        "tipo"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/clasificador/partidas",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/clasificador/partidas/{partida_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/niveles",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/precompromiso",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/reconducir",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/rendicion/expedientes",
       "query": [
         "desde",
