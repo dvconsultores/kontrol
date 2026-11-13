@@ -30,7 +30,7 @@ from app.modules.inventory import states as inv_states
 from app.modules.inventory.models import InventoryMovement
 from app.modules.master_data import uom as uom_engine
 from app.modules.master_data.models import Party
-from app.modules.organization.models import Company, Warehouse
+from app.modules.organization.models import Company, Warehouse, WarehouseLocation
 from app.modules.organization.service import warehouse_belongs_to
 from app.modules.purchasing.models import (
     CONFIRMATION_DONE,
@@ -700,6 +700,122 @@ def programar_descarga(db: Session, *, company_id: str, receipt_id: str,
            entity_id=str(receipt.id), company_id=company_id, actor=actor,
            before={"unloading_scheduled_at": anterior.isoformat() if anterior else None},
            after={"unloading_scheduled_at": unloading_scheduled_at.isoformat() if unloading_scheduled_at else None})
+    return receipt
+
+
+ZONA_TEMPORAL_ABIERTA = ("DRAFT", "CONFIRMED", "QUALITY_PENDING", "ACCEPTED", "PARTIALLY_ACCEPTED")
+
+
+def _etiqueta_de_zona(location: WarehouseLocation) -> str:
+    """Etiqueta legible de una zona temporal."""
+    return f"{location.code} - {location.name}" if location.name else location.code
+
+
+def zona_temporal_editable(receipt: GoodsReceipt) -> bool:
+    """Indica si la zona temporal todavía puede modificarse en esta recepción."""
+    return receipt.status in ZONA_TEMPORAL_ABIERTA and receipt.confirmation_status == "PENDIENTE"
+
+
+def zonas_temporales(db: Session, receipts: Sequence[GoodsReceipt]) -> dict[str, dict[str, str]]:
+    """Obtiene la zona temporal registrada para las recepciones indicadas."""
+    ids = [str(receipt.temporary_location_id) for receipt in receipts if receipt.temporary_location_id is not None]
+    if not ids:
+        return {}
+    locations = db.execute(select(WarehouseLocation).where(WarehouseLocation.id.in_(ids))).scalars().all()
+    by_id = {str(loc.id): loc for loc in locations}
+    result: dict[str, dict[str, str]] = {}
+    for receipt in receipts:
+        if receipt.temporary_location_id is not None:
+            loc = by_id.get(str(receipt.temporary_location_id))
+            if loc is not None:
+                result[str(receipt.id)] = {"id": str(loc.id), "label": _etiqueta_de_zona(loc)}
+    return result
+
+
+def opciones_de_zona_temporal(db: Session, *, company_id: str, receipt: GoodsReceipt) -> list[dict[str, str]]:
+    """Lista las zonas temporales disponibles para una recepción."""
+    locations = (
+        db.execute(
+            select(WarehouseLocation)
+            .where(
+                WarehouseLocation.company_id == company_id,
+                WarehouseLocation.warehouse_id == receipt.warehouse_id,
+                WarehouseLocation.status == "ACTIVE",
+            )
+            .order_by(WarehouseLocation.sequence, WarehouseLocation.code)
+        )
+        .scalars()
+        .all()
+    )
+    return [{"id": str(loc.id), "label": _etiqueta_de_zona(loc)} for loc in locations]
+
+
+def registrar_zona_temporal(
+    db: Session, *, company_id: str, receipt_id: str, location_id: str, actor: str | None = None
+) -> GoodsReceipt:
+    """Registra o cambia la zona temporal de una recepción abierta.
+
+    Es una referencia de procedimiento: nunca genera movimientos de inventario
+    ni afecta saldos, costos o guardado en estantería.
+    """
+    receipt = (
+        db.execute(
+            select(GoodsReceipt)
+            .where(GoodsReceipt.id == receipt_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        .scalars()
+        .first()
+    )
+    if receipt is None or str(receipt.company_id) != str(company_id):
+        raise NotFoundError(code="RECEIPT_NOT_FOUND", message="Recepción no encontrada")
+    if not zona_temporal_editable(receipt):
+        raise ConflictError(
+            code="RECEIPT_TEMPORARY_LOCATION_CLOSED",
+            message="La zona temporal ya no se puede cambiar: la recepción terminó su validación.",
+        )
+    location = (
+        db.execute(
+            select(WarehouseLocation).where(
+                WarehouseLocation.id == location_id, WarehouseLocation.company_id == company_id
+            )
+        )
+        .scalars()
+        .first()
+    )
+    if location is None:
+        raise NotFoundError(code="LOCATION_NOT_FOUND", message="La ubicación no existe en esta empresa")
+    if str(location.warehouse_id) != str(receipt.warehouse_id):
+        raise ConflictError(
+            code="LOCATION_OTHER_WAREHOUSE", message="La zona temporal debe estar en el almacén de la recepción."
+        )
+    if location.status != "ACTIVE":
+        raise ConflictError(
+            code="LOCATION_NOT_ELIGIBLE", message=f"La ubicación no está activa (estado {location.status})."
+        )
+    if str(receipt.temporary_location_id or "") == str(location.id):
+        return receipt
+
+    anterior_id = str(receipt.temporary_location_id) if receipt.temporary_location_id else None
+    anterior_label = None
+    if anterior_id:
+        anterior_location = db.get(WarehouseLocation, anterior_id)
+        if anterior_location is not None:
+            anterior_label = _etiqueta_de_zona(anterior_location)
+    receipt.temporary_location_id = str(location.id)
+    receipt.updated_at = datetime.now(UTC)
+    db.flush()
+    _audit(
+        db,
+        action="RECEIPT_TEMPORARY_LOCATION_SET",
+        entity_type="GoodsReceipt",
+        entity_id=str(receipt.id),
+        company_id=company_id,
+        actor=actor,
+        before={"temporary_location_id": anterior_id, "temporary_location_label": anterior_label},
+        after={"temporary_location_id": str(location.id), "temporary_location_label": _etiqueta_de_zona(location)},
+    )
     return receipt
 
 

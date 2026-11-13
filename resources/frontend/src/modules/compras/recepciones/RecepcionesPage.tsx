@@ -40,6 +40,7 @@ import { AvisoDeAlmacenes } from "@/modules/organizacion/almacenes/AvisoDeAlmace
 import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 
 import { CondicionDelProceso } from "./CondicionDelProceso";
+import { ZonaTemporal } from "./ZonaTemporal";
 import { useOrdenesRecibibles } from "./useOrdenesRecibibles";
 
 interface PresentationSummary {
@@ -354,6 +355,10 @@ export function RecepcionesPage(): React.JSX.Element {
       header: "Descarga programada",
       cell: ({ getValue }) => (getValue() ? formatearInstante(getValue()) : "Sin programar"),
     }),
+    columnHelper.accessor("temporary_location_label", {
+      header: "Zona temporal",
+      cell: ({ getValue }) => getValue() ?? "Sin registrar",
+    }),
     columnHelper.accessor("record_issued_at", {
       header: "Acta",
       cell: ({ getValue }) => fechaDeNegocioDeInstante(getValue()),
@@ -506,6 +511,13 @@ export function RecepcionesPage(): React.JSX.Element {
                 receiptId={d.id}
                 importacionId={importacion ?? undefined}
               />
+            </div>
+            <div className="mb-3">
+              <p className="mb-1 text-sm font-medium text-text-800">Zona temporal</p>
+              <p className="text-sm text-text-700">{d.temporary_location?.label ?? "Sin registrar"}</p>
+              {d.can_set_temporary_location ? (
+                <ZonaTemporal receiptId={d.id} codigo={d.code} onGuardada={refresh} />
+              ) : null}
             </div>
             <p className="mb-3 text-sm text-text-500">
               Packing list {d.packing_list_ref ?? "—"}: {marca(d.packing_list_match)} · Factura {d.supplier_invoice_ref ?? "—"}: {marca(d.supplier_invoice_match)} · Orden: {marca(d.order_match)} · Documentación: {marca(d.documentation_match)}

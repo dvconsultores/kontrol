@@ -125,6 +125,13 @@ class ArrivalBody(BaseModel):
     packages_received: int | None = Field(default=None, ge=0)
 
 
+class TemporaryZoneBody(BaseModel):
+    """Etapa 2 (§2): zona temporal de recepción o validación."""
+    model_config = ConfigDict(extra="forbid")
+
+    temporary_location_id: str = Field(min_length=1, max_length=36)
+
+
 class UnloadingScheduleBody(BaseModel):
     """Etapa 2: programar la descarga y recepción."""
     model_config = ConfigDict(extra="forbid")
@@ -535,6 +542,8 @@ def _receipt_dict(db: Session, receipt) -> dict:
             "record_issued_at": receipt.record_issued_at.isoformat() if receipt.record_issued_at else None,
             "record_issued_by": receipt.record_issued_by,
             "allowed_actions": ap_service.receipt_allowed_actions(receipt),
+            "temporary_location": ap_service.zonas_temporales(db, [receipt]).get(str(receipt.id)),
+            "can_set_temporary_location": ap_service.zona_temporal_editable(receipt),
             "lines": [_receipt_line_dict(x) for x in lines]}
 
 
@@ -549,6 +558,7 @@ def list_receipts(status: str | None = None, db: Session = Depends(get_db), user
         PurchaseOrder.id.in_([r.order_id for r in items]))).all()
     codigos = {str(fila.id): fila.code for fila in filas}
     condiciones = process_condition.condiciones_por_recepcion(db, items)
+    zonas = ap_service.zonas_temporales(db, items)
     return {"items": [{"id": r.id, "code": r.code, "order_id": r.order_id,
                        "order_code": codigos.get(str(r.order_id)), "warehouse_id": r.warehouse_id,
                        "status": r.status, "quality_status": r.quality_status,
@@ -558,6 +568,7 @@ def list_receipts(status: str | None = None, db: Session = Depends(get_db), user
                        "unloading_scheduled_at": r.unloading_scheduled_at.isoformat()
                        if r.unloading_scheduled_at else None,
                        "packages_declared": r.packages_declared, "packages_received": r.packages_received,
+                       "temporary_location_label": (zonas.get(str(r.id)) or {}).get("label"),
                        "inspected_at": r.inspected_at.isoformat() if r.inspected_at else None,
                        "record_issued_at": r.record_issued_at.isoformat() if r.record_issued_at else None,
                        "allowed_actions": ap_service.receipt_allowed_actions(r)}
@@ -850,6 +861,36 @@ def schedule_unloading(receipt_id: str, body: UnloadingScheduleBody, db: Session
     receipt = ap_service.programar_descarga(db, company_id=ctx.company_id, receipt_id=receipt_id,
                                             unloading_scheduled_at=body.unloading_scheduled_at,
                                             actor=str(actor.id))
+    db.commit()
+    db.refresh(receipt)
+    return _receipt_dict(db, receipt)
+
+
+@router.get("/receipts/{receipt_id}/temporary-zone/options")
+def temporary_zone_options(
+    receipt_id: str,
+    ctx: CompanyContext = Depends(get_company_context),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("compras", "view")),
+):
+    """Opciones de zona temporal para una recepción."""
+    receipt = _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    return {"items": ap_service.opciones_de_zona_temporal(db, company_id=ctx.company_id, receipt=receipt)}
+
+
+@router.post("/receipts/{receipt_id}/temporary-zone", dependencies=[Depends(require_write_allowed)])
+def set_temporary_zone(
+    receipt_id: str,
+    body: TemporaryZoneBody,
+    ctx: CompanyContext = Depends(get_company_context),
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_permission("compras", "create")),
+):
+    """Registra o cambia la zona temporal de una recepción."""
+    _owned(db, GoodsReceipt, receipt_id, ctx.company_id, "RECEIPT_NOT_FOUND", "Recepción no encontrada")
+    receipt = ap_service.registrar_zona_temporal(
+        db, company_id=ctx.company_id, receipt_id=receipt_id, location_id=body.temporary_location_id, actor=str(actor.id)
+    )
     db.commit()
     db.refresh(receipt)
     return _receipt_dict(db, receipt)

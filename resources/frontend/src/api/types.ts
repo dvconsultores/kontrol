@@ -534,6 +534,8 @@ export interface GoodsReceiptSummary {
   /** Etapas 1 y 2: arribo confirmado y descarga programada. */
   arrival_at?: string | null;
   unloading_scheduled_at?: string | null;
+  /** Spec 018 · §2: zona temporal de recepción o validación (referencia, no movimiento). */
+  temporary_location_label?: string | null;
   /** Etapa 6: bultos declarados por el documento y contados en el muelle. */
   packages_declared?: number | null;
   packages_received?: number | null;
@@ -642,6 +644,8 @@ export interface GoodsReceiptDetail extends GoodsReceiptSummary {
   inspection_notes: string | null;
   record_issued_by: string | null;
   lines: GoodsReceiptLine[];
+  temporary_location: { id: string; label: string } | null;
+  can_set_temporary_location: boolean;
 }
 
 /** Spec 021: dimensión distinta del `status`. Aceptada no es confirmada. */

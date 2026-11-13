@@ -386,6 +386,22 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
     textoDescarga.replace("Descarga programada:", "").trim()
   );
 
+  // 2.6. Zona temporal (§2): referencia, no movimiento
+  const muelle = await post<{ id: string; code: string }>("/organization/locations", { warehouse_id: almacen, code: `MUE-${sufijo}`, name: "Muelle de recepción", sequence: 8 });
+  const validacion = await post<{ id: string; code: string }>("/organization/locations", { warehouse_id: almacen, code: `VAL-${sufijo}`, name: "Zona de validación", sequence: 9 });
+  const movimientosAntes = (await (await fetch(`${API}/inventory/movements?product_id=${articulo.id}&page_size=100`, { headers: authHeaders(companyId) })).json()) as { items: unknown[] };
+  await page.reload();
+  const tarjetaZona = page.locator("#arribo");
+  await expect(tarjetaZona).toContainText("Zona temporal:");
+  await expect(tarjetaZona).toContainText("Sin registrar");
+  await tarjetaZona.getByLabel(`Zona temporal de REC-${sufijo}`).selectOption({ label: `${muelle.code} - Muelle de recepción` });
+  await tarjetaZona.getByRole("button", { name: `Registrar zona temporal de REC-${sufijo}` }).click();
+  await expect(tarjetaZona).toContainText(`${muelle.code} - Muelle de recepción`);
+  await page.reload();
+  await expect(page.locator("#arribo")).toContainText(`${muelle.code} - Muelle de recepción`);
+  const movimientosDespues = (await (await fetch(`${API}/inventory/movements?product_id=${articulo.id}&page_size=100`, { headers: authHeaders(companyId) })).json()) as { items: unknown[] };
+  expect(movimientosDespues.items.length).toBe(movimientosAntes.items.length);
+
   // 3. Abrir recepción y completar calidad
   await page.getByRole("link", { name: `Abrir recepción REC-${sufijo}` }).click();
   await page.getByRole("link", { name: "Volver al expediente" }).waitFor();
@@ -398,6 +414,10 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   const filaRecepcion = page.locator("tr", { hasText: `REC-${sufijo}` });
   // Spec 018 §3: la condición del proceso se ve en Recepciones.
   await expect(filaRecepcion).toContainText("Pendiente de validación");
+  await expect(filaRecepcion).toContainText(`${muelle.code} - Muelle de recepción`);
+  await page.getByLabel(`Zona temporal de REC-${sufijo}`).selectOption({ label: `${validacion.code} - Zona de validación` });
+  await page.getByRole("button", { name: `Registrar zona temporal de REC-${sufijo}` }).click();
+  await expect(filaRecepcion).toContainText(`${validacion.code} - Zona de validación`);
   const confirmar = filaRecepcion.getByRole("button", { name: "confirmar", exact: true });
   await confirmar.waitFor();
   await confirmar.click();
@@ -645,6 +665,11 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   await expect(primeraColocacion.getByRole("cell").nth(5)).toHaveText("10");
   await expect(primeraColocacion.getByRole("cell").nth(6)).toHaveText(/\d{1,2}\/\d{1,2}\/\d{4}/);
   await expect(primeraColocacion.getByRole("cell").nth(6)).not.toContainText("T");
+  // La zona temporal se conserva y es distinta de la ubicación final
+  await expect(page.locator("#arribo")).toContainText(`${validacion.code} - Zona de validación`);
+  await expect(page.locator("#arribo").getByRole("button", { name: `Registrar zona temporal de REC-${sufijo}` })).toHaveCount(0);
+  await expect(primeraColocacion).toContainText(ubicacion.code);
+  await expect(primeraColocacion).not.toContainText(validacion.code);
 
   // 6.5. Validación física y reubicación por error (A → B)
   const ubicacionB = await post<{ id: string; code: string }>("/organization/locations", {

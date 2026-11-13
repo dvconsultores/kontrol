@@ -3,6 +3,8 @@
 Encargo del 2026-11-11. HEAD `3cf7ed0`; cabeza Alembic `0102_gov_ctl09_actas`. La matriz está en 38 de 42 COMPLETE.
 
 > Actualización del 2026-11-12: los estados §3 quedaron construidos como condición del proceso (`../spec018-process-condition-delta.md`). La matriz está en 40 de 42 COMPLETE, con la zona temporal y las zonas A–E como filas que quedan.
+>
+> Actualización del 2026-11-12 (cierre): la zona temporal quedó construida (`../spec018-temporary-zone-delta.md`). La matriz está en 41 de 42 COMPLETE, y solo quedan las zonas A–E, pendientes del sponsor.
 
 **Fuentes leídas:**
 - el DOCX de importación, entero: §2 («Colocar la mercancía temporalmente en zona de recepción o validación»), §3 («Diferenciar inventario: recibido; disponible; pendiente de validación; bloqueado por incidencia»), §4 y «Zonas preliminares que conviene validar para HJ»;
@@ -76,13 +78,13 @@ Esta fila sigue en SPONSOR_VALIDATION_REQUIRED hasta que valide el sponsor.
 | B. Trazabilidad: alcance | «Recepción opcional en Inventario» | Construida. El expediente liga siempre la recepción. Inventario → Put-away ofrece «Recepción de origen» como dato opcional |
 | B. Trazabilidad: histórico | «Reconstruir por coincidencia exacta» | Backfill en `0103`, solo con coincidencia exacta (regla en `../spec018-putaway-trace-delta.md`, PT-02) |
 | A. Estados §3 | «Condición del proceso» (opción A) | Construida el 2026-11-12 (`../spec018-process-condition-delta.md`). La condición se ve en la recepción y en el expediente, sin tocar el stock; la decisión de la Spec 020 se mantiene |
-| C. Zona temporal | «Registrar la ubicación temporal» (sin mover lo recibido) | Desbloqueada y sin construir. No cambia el flujo de saldos de las Specs 019, 021 y 022 |
+| C. Zona temporal | «Registrar la ubicación temporal» (sin mover lo recibido) | Construida el 2026-11-12 (`0104`). No cambia el flujo de saldos de las Specs 019, 021 y 022 |
 | D. Zonas A a E | Sin decisión del sponsor | Sigue en SPONSOR_VALIDATION_REQUIRED (opción A recomendada) |
 
 ```text
 MATERIAL_DECISION_REQUIRED_PUTAWAY=0 (resuelta)
 MATERIAL_DECISION_REQUIRED_STATES=0 (resuelta y construida: opción A)
-MATERIAL_DECISION_REQUIRED_TEMP_ZONE=0 (resuelta: registrar; pendiente de construir)
+MATERIAL_DECISION_REQUIRED_TEMP_ZONE=0 (resuelta: registrar; construida el 2026-11-12)
 SPONSOR_VALIDATION_REQUIRED_ZONES_A_E=1
 SELECTED_ROW=Condición del proceso de recepción (§3)
 ```

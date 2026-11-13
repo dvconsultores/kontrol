@@ -3954,6 +3954,16 @@
     },
     {
       "method": "POST",
+      "path": "/purchasing/receipts/{receipt_id}/temporary-zone",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/purchasing/receipts/{receipt_id}/temporary-zone/options",
+      "query": []
+    },
+    {
+      "method": "POST",
       "path": "/purchasing/receipts/{receipt_id}/unloading-schedule",
       "query": []
     },

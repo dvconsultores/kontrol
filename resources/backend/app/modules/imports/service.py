@@ -1291,6 +1291,8 @@ def _logistics_payload(
             "product_name": product_name,
         })
 
+    zonas_temporales = ap_service.zonas_temporales(db, receipts)
+
     return {
         "stage": stage,
         "receipts": [
@@ -1310,6 +1312,8 @@ def _logistics_payload(
                 "can_confirm_arrival": receipt.status in ("DRAFT", "CONFIRMED") and receipt.arrival_at is None,
                 "unloading_scheduled_at": receipt.unloading_scheduled_at.isoformat() if receipt.unloading_scheduled_at else None,
                 "can_schedule_unloading": receipt.status in ("DRAFT", "CONFIRMED"),
+                "temporary_location_label": (zonas_temporales.get(str(receipt.id)) or {}).get("label"),
+                "can_set_temporary_location": ap_service.zona_temporal_editable(receipt),
             }
             for receipt in receipts
         ],

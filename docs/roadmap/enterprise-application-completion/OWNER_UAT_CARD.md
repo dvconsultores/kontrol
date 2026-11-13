@@ -327,3 +327,25 @@ Necesita un expediente de importación despachado, como en los pasos anteriores 
 - «Disponible» sigue siendo el estado DISPONIBLE de Inventario → Existencias, que aparece al confirmar.
 - Una recepción anulada o rechazada no muestra condición: se rige por su estado documental.
 - La condición no se guarda: se deriva de la recepción, su conteo, su confirmación y sus incidencias.
+
+## Zona temporal de recepción o validación (§2)
+
+Comprueba que se registra dónde queda la mercancía mientras se recibe y valida, que se ve igual en Recepciones y en el expediente, y que hacerlo no mueve inventario.
+
+Necesita:
+- dos ubicaciones activas del almacén de la recepción, creadas en Organización → Ubicaciones, por ejemplo «Muelle de recepción» y «Zona de validación»;
+- un expediente con su recepción creada, como en los pasos anteriores de esta tarjeta.
+
+126. En el expediente, sección «Arribo», la tarjeta de la recepción dice «Zona temporal: Sin registrar».
+127. En «Zona temporal de <código>», elija «Muelle de recepción» y pulse «Registrar zona temporal de <código>». La tarjeta muestra la zona elegida. Si pulsa sin elegir, aparece «Elija la zona temporal.».
+128. Recargue la página: la zona sigue ahí.
+129. Antes y después del paso 127, Inventario → Existencias y Movimientos de ese producto muestran lo mismo: registrar la zona no movió nada.
+130. Pulse «Abrir recepción <código>». En Compras → Recepciones, la columna «Zona temporal» muestra la misma zona. En el detalle, cámbiela a «Zona de validación»: la columna se actualiza.
+131. Vuelva al expediente: la tarjeta muestra «Zona de validación».
+132. Siga con la recepción, el conteo y la confirmación del inventario como en los pasos anteriores. Al confirmar, la zona temporal sigue visible, pero ya no se puede cambiar (desaparece «Registrar zona temporal de <código>»).
+133. Ubique la mercancía (sección «Ubicación»). «Trazabilidad hasta la ubicación final» muestra la ubicación final, y la zona temporal sigue aparte, en la tarjeta de la recepción: son dos datos distintos.
+
+**Límites:**
+- La zona temporal es una referencia: no crea movimientos, no cambia saldos ni costo y no cuenta como put-away.
+- Vale cualquier ubicación activa del almacén de la recepción. Las zonas A a E siguen pendientes de validar por el sponsor y no se usan aquí.
+- Cada cambio queda en la bitácora con la zona anterior y la nueva. No se puede vaciar.

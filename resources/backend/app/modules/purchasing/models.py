@@ -186,6 +186,8 @@ class GoodsReceipt(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, Base):
 
     # --- Etapa 2: programar descarga y recepción ---
     unloading_scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # --- Etapa 2 (§2): zona temporal de recepción o validación. Referencia, no movimiento ---
+    temporary_location_id: Mapped[str | None] = mapped_column(ForeignKey("warehouse_locations.id"), nullable=True)
 
     # --- Etapa 4: comparar lo recibido contra las cuatro fuentes del DOCX. Se
     # guarda la referencia **y** el resultado: saber que se comparó y no contra
