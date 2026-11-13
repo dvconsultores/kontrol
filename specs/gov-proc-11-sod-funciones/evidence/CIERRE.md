@@ -63,8 +63,9 @@ motor existente.
 | Vitest completo (Node 22) | 1953/1953 (175 ficheros; +11) |
 | tsc, eslint, build | verde |
 | Migración: fresh install → head, downgrade -1, upgrade | OK; `ALEMBIC_HEAD_COUNT=1` sobre la cadena fusionada con Empresarial |
-| E2E PROC-11 (`gobierno-sod-funciones`, pila canónica con ClamAV real) | 1/1 |
+| E2E PROC-11 (`gobierno-sod-funciones`, pila canónica con ClamAV real) | 1/1 (y repetida tras la fusión) |
 | E2E vecinas: CTL-01 (3), PROC-06 (1), PROC-07 (1), PROC-08 (1) | 6/6 |
+| E2E de la fusión: PROC-11 + CTL-01 + put-away (Spec 018, P2) | 14/14 |
 
 ## Baseline y fallos nuevos
 
@@ -74,10 +75,10 @@ ficheros con rojas se ejecutó en los dos árboles y se restaron las listas:
 | Concepto | Valor |
 |---|---|
 | `BASELINE_FAILURES` (mismo conjunto de ficheros, HEAD de entrada `bedcc63`) | 75 |
-| `FINAL_FAILURES` (suite completa PG, árbol final) | 77 |
+| `FINAL_FAILURES` (suite completa PG, árbol final fusionado) | 75 |
 | `NEW_BACKEND_FAILURES` | **0** |
 | `NEW_FRONTEND_FAILURES` | **0** (1953/1953) |
-| `NEW_E2E_FAILURES` | **0** (7/7) |
+| `NEW_E2E_FAILURES` | **0** (14/14 tras la fusión) |
 
 Dos rojas **sí** eran mías y se corrigieron en el ciclo:
 
@@ -104,6 +105,27 @@ aislados y son de orden, no de código.
 - Se mantienen: `PROC09_STATUS=BLOCKED`, `OBS-PROC08-MONTO-01`, `OBS-PROC08-PARCIAL-01`, `OBS-CTL09-PLAZOS-01`,
   `OBS-CTL09-A11Y-01`, `OBS-REP10-HALLAZGOS-01`. **OBS-PROC08-TZ-01 = CLOSED_TEST_INFRA** (ver
   `OBS_PROC08_TZ_01_PREFLIGHT.md`).
+- **OBS-MATRIZ-UAT-01 (nueva, LOW):** el catálogo de UAT no listaba las tarjetas de PROC-06/07/08/10 aunque la matriz ya
+  las cuenta; se dejó constancia en su cabecera. No afecta al producto.
+
+## Suite completa
+
+Una sola corrida de la suite completa de PostgreSQL sobre el árbol final **ya fusionado con `origin/develop`**
+(`7fcb491`), con el rol de prueba habilitado para crear bases y sin procesos concurrentes: **75 rojas**, exactamente las
+mismas que el árbol de entrada en este entorno. Ninguna es de este ciclo.
+
+| Grupo | Nº | Causa |
+|---|---|---|
+| `test_backup_create_pg`, `test_backup_restore_pg` | 30 | `pg_dump`/`pg_restore` no están en el PATH de esta máquina |
+| `test_documents`, `test_documents_security` | 35 | el flujo documental de esas pruebas depende del almacenamiento y del analizador de la pila; idénticas en `bedcc63` |
+| `test_spec019_receipt`, `test_n9_integrity`, `test_pg_harness_lifecycle`, `test_naive_datetime_input`, `test_imagen_backend_mime`, `test_document_upload_connection_boundary` | 8 | línea base conocida del proyecto en este entorno |
+| `test_n10_convergence` (deriva ORM↔base de `import_*`) | 1 | preexistente de Empresarial |
+| `test_gobierno_integridad_runner` | 1 | un control devuelve −5; se ejecutó en el worktree de `bedcc63` y falla idénticamente |
+
+En corridas anteriores de este mismo ciclo aparecieron además dos errores de orden (creación de bases en lote) que pasan
+aislados y una roja de guardas de ruta (`iso`/`n10`) que sí era de este ciclo: el catálogo `GET /gobierno/sod/funciones`
+no declaraba empresa. Se corrigió exigiendo `CompanyContext`, como el resto de las lecturas de Gobierno.
+
 - **OBS-MATRIZ-UAT-01 (nueva, LOW):** el catálogo de UAT no listaba las tarjetas de PROC-06/07/08/10 aunque la matriz ya
   las cuenta; se dejó constancia en su cabecera. No afecta al producto.
 
