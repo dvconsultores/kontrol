@@ -45,7 +45,7 @@
 | ruff · mypy | limpio · 51 (línea base; sin errores nuevos) |
 | OpenAPI | 2 rutas nuevas (adición). Las fixtures se regeneraron |
 | Fusión con PROC-11 de P1 (`279d6c8`) | Una sola cabeza, `0105_receipt_temporary_zone`, detrás de `0104_gov_proc11_sod_funciones`. La migración pasa ida, vuelta e ida en una base nueva. Guardias de cabeza, catálogo (494), zona temporal, arquitectura 019 y 021, `n10` y PROC-11: 100 PASS más la línea base de `n10`. ruff limpio. Vitest 1960/1960, typecheck, lint y build correctos |
-| Suite completa de backend en PostgreSQL (una vez), con analizador real | 5382 PASS, 18 skip y 19 fallos. 14 son de Gobierno (`gov_proc08`, `gov_proc10`): «la fecha del acto no puede ser futura», porque `tests/proc08_ayudantes.py` usa `datetime.now(UTC).date()` y la suite terminó en la ventana de 20:00 a 24:00 de Caracas (GOV-TEST-UTC-DATE, la misma firma del cierre del put-away). Los 5 restantes son la línea base (`gobierno_integridad`, `n10`, `naive_datetime` y dos de `spec019_receipt`). `NEW_FAILURES=0` |
+| Suite completa de backend en PostgreSQL (una vez), con analizador real | 5382 PASS, 18 skip y 19 fallos. 14 son de Gobierno (`gov_proc08`, `gov_proc10`): «la fecha del acto no puede ser futura», porque `tests/proc08_ayudantes.py` usa `datetime.now(UTC).date()` y la suite terminó en la ventana de 20:00 a 24:00 de Caracas (GOV-TEST-UTC-DATE, la misma firma del cierre del put-away). Repetidos solos a las 00:00 de Caracas del 2026-11-13: 14 PASS. Los 5 restantes son la línea base (`gobierno_integridad`, `n10`, `naive_datetime` y dos de `spec019_receipt`). `NEW_FAILURES=0` |
 
 ## Deudas (no absorbidas)
 
