@@ -393,4 +393,33 @@ describe("Requisiciones", () => {
     await screen.findByText("Requisición REQ-1");
     expect(screen.queryByText("Agregar línea")).not.toBeInTheDocument();
   });
+
+  it("9 · Detalle: el plan explica lo que está en recepción", async () => {
+    const planConRecepcion = {
+      ...planOK,
+      open_supply_available: true,
+      open_supply: "4.000000",
+      received_unconfirmed: "3.000000",
+      projected_available: "14.000000",
+    };
+    apiFetch.mockImplementation((url: string) => {
+      if (url === "/planning/requisitions/req-1") {
+        return Promise.resolve({ ...detalleBase });
+      }
+      if (url === "/planning/plan?warehouse_id=wh-1&product_id=p-1") {
+        return Promise.resolve(planConRecepcion);
+      }
+      return Promise.resolve({ items: [] });
+    });
+
+    renderizar("/compras/requisiciones/req-1");
+
+    await screen.findByText("Requisición REQ-1");
+    await userEvent.type(screen.getByTestId("selector-articulo"), "p-1");
+
+    expect(await screen.findByText("En recepción (pendiente de confirmar)")).toBeInTheDocument();
+    expect(await screen.findByText("Disponible proyectado")).toBeInTheDocument();
+    expect(screen.getByText("3.000000")).toBeInTheDocument();
+    expect(screen.getByText("14.000000")).toBeInTheDocument();
+  });
 });

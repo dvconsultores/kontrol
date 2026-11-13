@@ -372,6 +372,36 @@ describe("Necesidades de reposición", () => {
     expect(screen.getByText("10.250000")).toBeTruthy();
   });
 
+  it("8 detalle: muestra lo recibido pendiente de confirmar", async () => {
+    const detalleConRecepcion = {
+      ...needBase,
+      trigger: {
+        ...needBase.trigger,
+        open_supply: "6.100000",
+        received_unconfirmed: "1.750000",
+        projected_available: "9.900000",
+      },
+      current: {
+        ...needBase.current,
+        open_supply: "4.200000",
+        received_unconfirmed: "0.500000",
+        projected_available: "8.800000",
+      },
+    };
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/planning/replenishment-needs/need-1")) {
+        return Promise.resolve(detalleConRecepcion);
+      }
+      return Promise.reject(new Error("no mock"));
+    });
+
+    renderizar("/compras/planificacion/necesidades/need-1");
+
+    expect((await screen.findAllByText("En recepción (pendiente de confirmar)")).length).toBe(2);
+    expect(screen.getByText("1.750000")).toBeTruthy();
+    expect(screen.getByText("0.500000")).toBeTruthy();
+  });
+
   it("6 notificaciones: destinoDeEnlace para replenishment_need", async () => {
     const { destinoDeEnlace } = await import("@/modules/notificaciones/api");
     const destino = destinoDeEnlace({

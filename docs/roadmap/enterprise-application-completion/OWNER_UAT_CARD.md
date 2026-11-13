@@ -374,5 +374,43 @@ Necesita:
 - Solo cuentan las órdenes aprobadas o parcialmente recibidas, y solo las líneas de inventario que tienen almacén destino.
 - Las órdenes anteriores a este cambio no tienen destino y no cuentan hasta que se les fije (si aún son editables).
 - El destino se puede cambiar mientras la orden está en borrador, enviada o aprobada y la línea no tiene recepciones. Cada cambio queda en la bitácora.
-- Lo aceptado pero aún sin confirmar (estado RECIBIDO) ya no es suministro abierto y todavía no es disponible: la necesidad puede verlo como faltante hasta la confirmación del inventario (deuda RECEIVED-UNCONFIRMED-PROJECTION).
+- Lo aceptado pero aún sin confirmar ya no es suministro abierto y todavía no es disponible. Desde el paso 144 la planificación lo cuenta aparte, como «En recepción (pendiente de confirmar)».
 - Una recepción rechazada no descuenta: lo no aceptado sigue pendiente mientras la orden no se cierre.
+
+## En recepción, pendiente de confirmar (planificación de reposición)
+
+Comprueba que lo aceptado en una recepción y aún sin confirmar cuenta en la planificación como un componente propio. No vuelve a pedirse, no se cuenta dos veces y no se llama stock hasta que el inventario lo confirma.
+
+Necesita:
+- lo mismo que los pasos 134 a 143;
+- una orden aprobada con destino «Central» que no cubra toda la necesidad (por ejemplo 4 unidades);
+- una segunda persona con permiso para contar la recepción.
+
+144. Abra el detalle de la necesidad activa de «Central». «Situación actual» muestra:
+     - «Disponible»;
+     - «Suministro abierto» (4);
+     - «En recepción (pendiente de confirmar)»: 0;
+     - «Disponible proyectado» (disponible + 4).
+
+     Anote la cantidad sugerida.
+145. Reciba 3 en una recepción de «Central», apruebe la calidad y acéptela.
+146. Espere al planificador. En el detalle:
+     - «Suministro abierto» baja a 1;
+     - «En recepción (pendiente de confirmar)» sube a 3;
+     - «Disponible» no cambia;
+     - «Disponible proyectado» y la cantidad sugerida no cambian;
+     - sigue habiendo una sola necesidad.
+147. En Compras → Requisiciones, abra una requisición de «Central» y elija el producto. El plan muestra «Suministro abierto», «En recepción (pendiente de confirmar)» y «Disponible proyectado» con los mismos valores.
+148. En Inventario → Existencias, las 3 unidades aparecen en el estado «RECIBIDO», no como disponibles para la venta.
+149. Que la segunda persona cuente la línea. Después, en Inventario → Confirmación de inventario, elija la recepción y confirme las 3.
+150. Espere al planificador. En el detalle:
+     - «En recepción (pendiente de confirmar)» vuelve a 0;
+     - «Disponible» sube en 3;
+     - «Disponible proyectado» y la cantidad sugerida siguen iguales: las unidades no se cuentan dos veces.
+151. Una recepción en «Norte» no cambia nada de «Central», y una de «Central» no cambia nada de «Norte».
+
+**Límites:**
+- Cuenta lo **aceptado** de las recepciones aceptadas cuya confirmación de inventario sigue pendiente, en el almacén de la recepción. Lo rechazado no cuenta.
+- La confirmación es de una sola vez por recepción. Lo que no se decide al confirmar (ni liberado ni rechazado) deja de contar como pendiente. Queda como deuda de la Spec 021 (RECEIPT-CONFIRMATION-RESIDUE).
+- Es una proyección: no crea movimientos, no cambia saldos, costo ni ubicación.
+- Las necesidades de antes de este cambio muestran 0 en «En recepción (pendiente de confirmar)», porque su cálculo no lo incluía.

@@ -68,6 +68,8 @@ type Plan = {
   available: string | null;
   open_supply_available: boolean;
   open_supply?: string | null;
+  received_unconfirmed?: string | null;
+  projected_available?: string | null;
   rotation_metric: string | null;
   demand_velocity: string | null;
   turnover: string | null;
@@ -408,6 +410,14 @@ export function RequisicionDetallePage(): React.JSX.Element {
                             <div>
                               <dt className="font-medium">Suministro abierto</dt>
                               <dd>{plan.open_supply_available ? formatearNumero(plan.open_supply) : "No disponible"}</dd>
+                            </div>
+                            <div>
+                              <dt className="font-medium">En recepción (pendiente de confirmar)</dt>
+                              <dd>{plan.open_supply_available ? formatearNumero(plan.received_unconfirmed) : "No disponible"}</dd>
+                            </div>
+                            <div>
+                              <dt className="font-medium">Disponible proyectado</dt>
+                              <dd>{plan.open_supply_available ? formatearNumero(plan.projected_available) : "No disponible"}</dd>
                             </div>
                           </dl>
                           <div className="mt-3 font-semibold">
