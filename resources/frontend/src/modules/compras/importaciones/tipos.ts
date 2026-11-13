@@ -117,6 +117,8 @@ export type RecepcionLogistica = {
   record_issued_at: string | null;
   unloading_scheduled_at: string | null;
   can_schedule_unloading: boolean;
+  temporary_location_label: string | null;
+  can_set_temporary_location: boolean;
   can_confirm_arrival: boolean;
 };
 

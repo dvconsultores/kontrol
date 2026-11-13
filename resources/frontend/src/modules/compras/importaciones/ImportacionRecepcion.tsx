@@ -8,6 +8,7 @@ import { FormField } from "@/components/FormField";
 import { TextInput } from "@/components/TextInput";
 import { useCompany } from "@/app/contexts/CompanyContext";
 import { CondicionDelProceso } from "@/modules/compras/recepciones/CondicionDelProceso";
+import { ZonaTemporal } from "@/modules/compras/recepciones/ZonaTemporal";
 import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmacenesDeEmpresa";
 import { formatearInstante, instanteDesdeHoraDeCaracas } from "@/lib/fecha-de-negocio";
 
@@ -136,6 +137,10 @@ export function ImportacionRecepcion({ detalle, onCambios }: Props): React.JSX.E
                     {recepcion.packages_received ?? recepcion.packages_declared ?? "—"}
                   </div>
                   <div>
+                    <span className="text-text-600">Zona temporal:</span>{" "}
+                    {recepcion.temporary_location_label ?? "Sin registrar"}
+                  </div>
+                  <div>
                     <span className="text-text-600">Descarga programada:</span>{" "}
                     {recepcion.unloading_scheduled_at
                       ? formatearInstante(recepcion.unloading_scheduled_at)
@@ -184,6 +189,9 @@ export function ImportacionRecepcion({ detalle, onCambios }: Props): React.JSX.E
                       </AsyncButton>
                     </div>
                   </Autorizado>
+                ) : null}
+                {recepcion.can_set_temporary_location ? (
+                  <ZonaTemporal receiptId={recepcion.id} codigo={recepcion.code} onGuardada={onCambios} />
                 ) : null}
               </div>
             ))}
