@@ -10,7 +10,7 @@
 |---|---|
 | TECHNICAL_FOUNDATION_STATUS | COMPLETE: derivado sin migración. `purchasing/open_supply.py` es la autoridad única: `recibido_sin_confirmar` para un lote y `en_camino` para el suministro abierto y lo recibido en una sola sentencia |
 | FUNCTIONAL_PRODUCT_STATUS | COMPLETE: la planificación cuenta lo aceptado y pendiente de confirmar en el almacén de la recepción, sin pedirlo de nuevo ni contarlo dos veces. Se ve en la necesidad y en el plan de la requisición |
-| OWNER_READINESS_STATUS | Pasos 144 a 151 de la tarjeta. `OWNER_ACCEPTED`: NO |
+| OWNER_READINESS_STATUS | Pasos 144 a 151 de la tarjeta. La UAT local (`kuat`) se migró a `0107` (la cabeza de P1 tras la fusión) y tiene el backend y el frontend arriba. Humo autenticado: `recibido-sin-confirmar.spec.ts` contra la UAT, 1/1. `OWNER_ACCEPTED`: NO |
 
 ## Puertas de completitud
 
