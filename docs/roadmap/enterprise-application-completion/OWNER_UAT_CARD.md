@@ -349,3 +349,30 @@ Necesita:
 - La zona temporal es una referencia: no crea movimientos, no cambia saldos ni costo y no cuenta como put-away.
 - Vale cualquier ubicación activa del almacén de la recepción. Las zonas A a E siguen pendientes de validar por el sponsor y no se usan aquí.
 - Cada cambio queda en la bitácora con la zona anterior y la nueva. No se puede vaciar.
+
+## Suministro abierto por almacén (planificación de reposición)
+
+Comprueba que la planificación descuenta lo ya pedido para un almacén y aún no recibido, y que no vuelve a sugerir esas unidades.
+
+Necesita:
+- dos almacenes activos (por ejemplo «Central» y «Norte»);
+- un producto con una política de reposición activa en «Central», con la detección automática encendida (Maestros → Planificación de abastecimiento);
+- un proveedor activo.
+
+134. Deje el disponible del producto en «Central» por debajo del punto de reorden y espere al planificador. En Compras → Necesidades de reposición aparece la necesidad. Su detalle muestra, en «Por qué se generó», «Suministro abierto: 0» y «Disponible proyectado», igual al disponible.
+135. Cree la requisición desde la necesidad («Crear requisición»). Después, cree la cotización, adjudíquela y emita la orden (Compras → Cotizaciones).
+136. En Compras → Órdenes, pulse «líneas» en la orden. La línea dice «Sin almacén destino: no cuenta en la planificación». Elija «Central» en «Almacén destino de <producto>» y pulse «Fijar destino de <producto>»: la línea muestra «Central».
+137. Al agregar una línea nueva a una orden, el formulario exige «Almacén destino». Sin él, no se agrega y avisa «Falta el almacén destino».
+138. Envíe y apruebe la orden. En sus líneas, «Pendiente para la planificación» muestra la cantidad pedida.
+139. Espere al planificador. La necesidad queda «Resuelta», y en «Situación actual» se ven el suministro abierto y el disponible proyectado (disponible + suministro abierto). No aparece una necesidad nueva por las mismas unidades.
+140. Intente recibir esa línea en una recepción de «Norte». Se rechaza con «Esta línea de la orden va a otro almacén; recíbala en una recepción de su almacén destino.». Anule esa recepción.
+141. Reciba una parte en «Central» (por ejemplo 5 de 12) y acéptela. «Pendiente para la planificación» baja a lo que falta (7).
+142. Cierre la orden (pasa a «CLOSED»). El pendiente queda en 0. Si el disponible sigue bajo el punto de reorden, el planificador abre una necesidad nueva, cuyo detalle muestra «Suministro abierto: 0».
+143. Antes y después de los pasos 136, 138 y 139, Inventario → Existencias y Movimientos muestran lo mismo: el suministro abierto no mueve inventario ni costo.
+
+**Límites:**
+- Solo cuentan las órdenes aprobadas o parcialmente recibidas, y solo las líneas de inventario que tienen almacén destino.
+- Las órdenes anteriores a este cambio no tienen destino y no cuentan hasta que se les fije (si aún son editables).
+- El destino se puede cambiar mientras la orden está en borrador, enviada o aprobada y la línea no tiene recepciones. Cada cambio queda en la bitácora.
+- Lo aceptado pero aún sin confirmar (estado RECIBIDO) ya no es suministro abierto y todavía no es disponible: la necesidad puede verlo como faltante hasta la confirmación del inventario (deuda RECEIVED-UNCONFIRMED-PROJECTION).
+- Una recepción rechazada no descuenta: lo no aceptado sigue pendiente mientras la orden no se cierre.

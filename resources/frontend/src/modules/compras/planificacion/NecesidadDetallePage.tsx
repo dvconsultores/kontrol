@@ -31,6 +31,8 @@ type Need = {
     avg_daily_demand: string | null;
     safety_stock: string | null;
     recommended_quantity: string | null;
+    open_supply?: string | null;
+    projected_available?: string | null;
     rotation_band_code: string | null;
     calculated_at: string | null;
   };
@@ -40,6 +42,8 @@ type Need = {
     reorder_point: string | null;
     projected_demand: string | null;
     recommended_quantity: string | null;
+    open_supply?: string | null;
+    projected_available?: string | null;
     rotation_band_code: string | null;
   };
   alert_id: string | null;
@@ -165,6 +169,14 @@ export function NecesidadDetallePage(): React.JSX.Element {
             <dd>{formatear(need.trigger.available)}</dd>
           </div>
           <div>
+            <dt className="font-medium">Suministro abierto</dt>
+            <dd>{formatear(need.trigger.open_supply)}</dd>
+          </div>
+          <div>
+            <dt className="font-medium">Disponible proyectado</dt>
+            <dd>{formatear(need.trigger.projected_available)}</dd>
+          </div>
+          <div>
             <dt className="font-medium">Punto de reorden</dt>
             <dd>{formatear(need.trigger.reorder_point)}</dd>
           </div>
@@ -185,6 +197,14 @@ export function NecesidadDetallePage(): React.JSX.Element {
           <div>
             <dt className="font-medium">Disponible</dt>
             <dd>{formatear(need.current.available)}</dd>
+          </div>
+          <div>
+            <dt className="font-medium">Suministro abierto</dt>
+            <dd>{formatear(need.current.open_supply)}</dd>
+          </div>
+          <div>
+            <dt className="font-medium">Disponible proyectado</dt>
+            <dd>{formatear(need.current.projected_available)}</dd>
           </div>
           <div>
             <dt className="font-medium">Punto de reorden</dt>

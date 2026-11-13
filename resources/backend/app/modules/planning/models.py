@@ -174,6 +174,8 @@ class ReplenishmentNeed(UUIDMixin, TimestampMixin, Base):
     trigger_avg_daily_demand: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     trigger_safety_stock: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     trigger_recommended_quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    trigger_open_supply: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    trigger_projected_available: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     trigger_rotation_band_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     trigger_calculated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     trigger_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
@@ -184,6 +186,8 @@ class ReplenishmentNeed(UUIDMixin, TimestampMixin, Base):
     current_reorder_point: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     current_projected_demand: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     current_recommended_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    current_open_supply: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    current_projected_available: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     current_rotation_band_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     alert_id: Mapped[str | None] = mapped_column(ForeignKey("alerts.id"), nullable=True)
 

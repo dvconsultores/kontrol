@@ -3854,6 +3854,11 @@
     },
     {
       "method": "POST",
+      "path": "/purchasing/orders/{order_id}/lines/{line_id}/destination",
+      "query": []
+    },
+    {
+      "method": "POST",
       "path": "/purchasing/orders/{order_id}/transition",
       "query": []
     },

@@ -341,6 +341,37 @@ describe("Necesidades de reposición", () => {
     });
   });
 
+  it("7 detalle: muestra suministro abierto y disponible proyectado", async () => {
+    const detalleConSuministro = {
+      ...needBase,
+      trigger: {
+        ...needBase.trigger,
+        open_supply: "5.500000",
+        projected_available: "12.500000",
+      },
+      current: {
+        ...needBase.current,
+        open_supply: "3.250000",
+        projected_available: "10.250000",
+      },
+    };
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/planning/replenishment-needs/need-1")) {
+        return Promise.resolve(detalleConSuministro);
+      }
+      return Promise.reject(new Error("no mock"));
+    });
+
+    renderizar("/compras/planificacion/necesidades/need-1");
+
+    expect((await screen.findAllByText("Suministro abierto")).length).toBe(2);
+    expect(screen.getAllByText("Disponible proyectado").length).toBe(2);
+    expect(screen.getByText("5.500000")).toBeTruthy();
+    expect(screen.getByText("12.500000")).toBeTruthy();
+    expect(screen.getByText("3.250000")).toBeTruthy();
+    expect(screen.getByText("10.250000")).toBeTruthy();
+  });
+
   it("6 notificaciones: destinoDeEnlace para replenishment_need", async () => {
     const { destinoDeEnlace } = await import("@/modules/notificaciones/api");
     const destino = destinoDeEnlace({

@@ -67,6 +67,7 @@ type Plan = {
   reserved: string | null;
   available: string | null;
   open_supply_available: boolean;
+  open_supply?: string | null;
   rotation_metric: string | null;
   demand_velocity: string | null;
   turnover: string | null;
@@ -406,7 +407,7 @@ export function RequisicionDetallePage(): React.JSX.Element {
                             </div>
                             <div>
                               <dt className="font-medium">Suministro abierto</dt>
-                              <dd>{plan.open_supply_available ? "Disponible" : "No disponible"}</dd>
+                              <dd>{plan.open_supply_available ? formatearNumero(plan.open_supply) : "No disponible"}</dd>
                             </div>
                           </dl>
                           <div className="mt-3 font-semibold">

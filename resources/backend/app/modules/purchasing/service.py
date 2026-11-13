@@ -66,6 +66,7 @@ from app.modules.purchasing.models import (
     TripleMatch,
     Withholding,
 )
+from app.modules.purchasing.open_supply import cantidad_abierta
 from app.shared import audit as audit_service
 from app.shared.clock import hoy_de_negocio
 
@@ -557,21 +558,108 @@ def create_order(db: Session, *, company_id: str, code: str, supplier_id: str, t
     return order
 
 
+def _destino_de_linea(db: Session, company_id: str, warehouse_id: str) -> Warehouse:
+    warehouse = db.get(Warehouse, warehouse_id)
+    if warehouse is None or not warehouse_belongs_to(company_id, warehouse):
+        raise NotFoundError(code="WAREHOUSE_NOT_FOUND", message="Almacén no encontrado")
+    if warehouse.status != "ACTIVE":
+        raise ConflictError(code="WAREHOUSE_NOT_ELIGIBLE", message="El almacén destino no está activo.")
+    return warehouse
+
+
 def add_order_line(db: Session, *, order_id: str, product_id: str, quantity_ordered: float | Decimal, unit_price: float,
                    discount: float = 0.0, tax_ref: str | None = None, needs_inventory: bool = True,
-                   snapshot: str | None = None) -> PurchaseOrderLine:
+                   snapshot: str | None = None, destination_warehouse_id: str | None = None) -> PurchaseOrderLine:
     if quantity_ordered <= 0:
         raise KontrolError(code="INVALID_QUANTITY", message="La cantidad ordenada debe ser positiva", status_code=422)
     order = db.get(PurchaseOrder, order_id)
     if order is None:
         raise NotFoundError(code="ORDER_NOT_FOUND", message="Orden no encontrada")
     _require_product(db, order.company_id, product_id)
+    if destination_warehouse_id:
+        _destino_de_linea(db, order.company_id, destination_warehouse_id)
     line = PurchaseOrderLine(order_id=order_id, product_id=product_id, quantity_ordered=quantity_ordered,
                              quantity_received=0.0, unit_price=unit_price, discount=discount, tax_ref=tax_ref,
-                             needs_inventory=needs_inventory, snapshot=snapshot)
+                             needs_inventory=needs_inventory, snapshot=snapshot,
+                             destination_warehouse_id=destination_warehouse_id or None)
     db.add(line)
     db.flush()
     return line
+
+
+ORDER_LINE_DESTINATION_OPEN = ("DRAFT", "SUBMITTED", "APPROVED")
+
+
+def destino_editable(db: Session, order: PurchaseOrder, line: PurchaseOrderLine) -> bool:
+    if order.status not in ORDER_LINE_DESTINATION_OPEN:
+        return False
+    exists_receipt_line = db.execute(
+        select(GoodsReceiptLine.id)
+        .join(GoodsReceipt, GoodsReceipt.id == GoodsReceiptLine.receipt_id)
+        .where(
+            GoodsReceiptLine.order_line_id == line.id,
+            GoodsReceipt.status != "CANCELLED",
+        )
+        .limit(1)
+    ).first()
+    return exists_receipt_line is None
+
+
+def fijar_destino_de_linea(
+    db: Session,
+    *,
+    company_id: str,
+    order_id: str,
+    line_id: str,
+    warehouse_id: str,
+    actor: str | None = None,
+) -> PurchaseOrder:
+    order = db.execute(
+        select(PurchaseOrder)
+        .where(PurchaseOrder.id == order_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).scalars().first()
+    if order is None or order.company_id != company_id:
+        raise NotFoundError(code="ORDER_NOT_FOUND", message="Orden de compra no encontrada")
+
+    line = db.get(PurchaseOrderLine, line_id)
+    if line is None or str(line.order_id) != str(order.id):
+        raise NotFoundError(code="PURCHASE_ORDER_LINE_NOT_FOUND", message="Línea de orden no encontrada")
+
+    if not destino_editable(db, order, line):
+        raise ConflictError(
+            code="ORDER_LINE_DESTINATION_LOCKED",
+            message="El almacén destino ya no se puede cambiar: la orden avanzó o la línea ya tiene recepciones.",
+        )
+
+    warehouse = _destino_de_linea(db, company_id, warehouse_id)
+    if str(line.destination_warehouse_id or "") == str(warehouse.id):
+        return order
+
+    previous = db.get(Warehouse, line.destination_warehouse_id) if line.destination_warehouse_id else None
+    line.destination_warehouse_id = str(warehouse.id)
+    line.updated_at = datetime.now(UTC)
+    db.flush()
+
+    _audit(
+        db,
+        action="PURCHASE_ORDER_LINE_DESTINATION_SET",
+        entity_type="PurchaseOrderLine",
+        entity_id=str(line.id),
+        company_id=company_id,
+        actor=actor,
+        before={
+            "destination_warehouse_id": str(previous.id) if previous else None,
+            "destination_warehouse_code": previous.code if previous else None,
+        },
+        after={
+            "destination_warehouse_id": str(warehouse.id),
+            "destination_warehouse_code": warehouse.code,
+        },
+    )
+
+    return order
 
 
 def transition_order(db: Session, *, order: PurchaseOrder, target: str, actor: str | None = None,
@@ -1064,6 +1152,9 @@ def add_receipt_line(db: Session, *, company_id: str, receipt_id: str, order_lin
         # Aceptar toma el costo de la línea y mete inventario del producto; si difieren, el costo y la cantidad recibida quedan sobre otro producto.
         raise KontrolError(code="RECEIPT_LINE_PRODUCT_MISMATCH",
                            message="El producto no corresponde a la línea de la orden.", status_code=422)
+    # Decisión de la dueña (Spec 015, suministro abierto): una línea con destino solo se recibe en su almacén.
+    if order_line.destination_warehouse_id and str(order_line.destination_warehouse_id) != str(receipt.warehouse_id):
+        raise ConflictError(code="RECEIPT_LINE_OTHER_WAREHOUSE", message="Esta línea de la orden va a otro almacén; recíbala en una recepción de su almacén destino.")
 
     unidad = _unidad_recibida(db, product_id=product_id, presentation_id=presentation_id,
                               cantidades={"received": quantity_received, "accepted": quantity_accepted,
@@ -2349,6 +2440,13 @@ def invoice_dict(invoice: SupplierInvoice) -> dict:
 
 def order_dict(db: Session, order: PurchaseOrder) -> dict:
     lines = db.execute(select(PurchaseOrderLine).where(PurchaseOrderLine.order_id == order.id)).scalars().all()
+    warehouse_ids = {line.destination_warehouse_id for line in lines if line.destination_warehouse_id}
+    warehouses = {}
+    if warehouse_ids:
+        warehouses = {
+            str(w.id): w
+            for w in db.execute(select(Warehouse).where(Warehouse.id.in_(warehouse_ids))).scalars().all()
+        }
     return {"id": order.id, "code": order.code, "supplier_id": order.supplier_id, "terms": order.terms,
             "expected_date": order.expected_date.isoformat() if order.expected_date else None,
             "currency": order.currency, "status": order.status, "approval_ref": order.approval_ref,
@@ -2356,7 +2454,10 @@ def order_dict(db: Session, order: PurchaseOrder) -> dict:
             "allowed_actions": order_allowed_actions(order),
             "lines": [{"id": line.id, "product_id": line.product_id, "quantity_ordered": line.quantity_ordered,
                        "quantity_received": line.quantity_received, "unit_price": line.unit_price,
-                       "needs_inventory": line.needs_inventory} for line in lines]}
+                       "needs_inventory": line.needs_inventory,
+                       "destination_warehouse": {"id": str(w.id), "code": w.code, "name": w.name} if (w := warehouses.get(str(line.destination_warehouse_id))) else None,
+                       "open_quantity": format(cantidad_abierta(line, order.status).quantize(Decimal("0.000001")), "f"),
+                       "can_set_destination": destino_editable(db, order, line)} for line in lines]}
 
 
 def quote_dict(db: Session, quote: SupplierQuote) -> dict:

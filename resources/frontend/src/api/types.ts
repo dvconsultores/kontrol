@@ -467,6 +467,9 @@ export interface PurchaseOrderLine {
   quantity_received: number;
   unit_price: number;
   needs_inventory: boolean;
+  destination_warehouse?: { id: string; code: string; name: string } | null;
+  open_quantity?: string;
+  can_set_destination?: boolean;
 }
 
 export interface PurchaseOrderSummary {
