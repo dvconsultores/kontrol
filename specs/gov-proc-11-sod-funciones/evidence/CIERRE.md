@@ -1,7 +1,7 @@
 # CIERRE · PROC-11 «Funciones incompatibles en contratación» (GOV-PROC-017)
 
 ```
-PRODUCT_STATUS=OWNER_UAT_READY  OWNER_UAT_ACCESSIBLE=YES  OWNER_ACCEPTED=NO
+PRODUCT_STATUS=OWNER_UAT_READY  OWNER_UAT_ACCESSIBLE=NO(esta máquina, sin Docker)  OWNER_ACCEPTED=NO
 MENÚ=Gobierno · Contrataciones › Funciones incompatibles (+ bloque en la ficha del expediente)
 MIGRACIÓN=1 (0104_gov_proc11_sod_funciones, reencadenada tras 0103_receipt_putaway_link; cabeza única)
 CAPACIDAD=gobierno_sod:view / manage / activate (ya existente de CTL-01; sin capacidad nueva)
@@ -93,6 +93,19 @@ Rojas preexistentes que **no** son de este ciclo (idénticas en el árbol de ent
 las tablas `import_*` que arrastra Empresarial. Los errores de creación de base de datos eran del entorno de prueba (rol sin
 `CREATEDB`) y desaparecieron al concederlo; los dos que quedaron como *error* en lugar de *fallo* en una migración pasan
 aislados y son de orden, no de código.
+
+## Pila de UAT
+
+El producto se recorrió de punta a punta sobre la **pila canónica** (`qa/e2e-run.py --con-analizador`: PostgreSQL
+migrado a la cabeza, siembra completa, backend real, Vite y ClamAV real) con la E2E de PROC-11, que crea la matriz,
+la activa, ve el conflicto previo, comprueba el bloqueo y mide 1280/390/320 con Axe. Esa corrida pasa y se repitió
+después de cada fusión.
+
+**No queda una pila encendida para que la dueña entre desde esta máquina**: la pila de UAT del producto se levanta con
+`compose.yaml` y aquí no hay Docker (`docker` no está instalado). La tarjeta `OWNER_UAT_CARD.md` tiene los pasos
+exactos para hacerlo en la máquina de la dueña; en cuanto haya Docker, `bash scripts/setup.sh` deja la pila con la base
+migrada y la licencia de prueba. Por eso `OWNER_UAT_ACCESSIBLE=NO` en este entorno y no se declara accesible lo que no
+se puede abrir.
 
 ## Observaciones abiertas
 
