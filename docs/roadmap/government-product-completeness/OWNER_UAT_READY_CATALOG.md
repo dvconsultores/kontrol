@@ -4,7 +4,7 @@
 
 ## Estado: 27 procesos listos para probar (2026-11-12)
 
-- `OWNER_UAT_READY` = 28 de 122 procesos (22,95 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a REP-03 (los ciclos PROC-06/07/08/10 están en la matriz y su tarjeta existe, pero su fila aquí sigue pendiente: OBS-MATRIZ-UAT-01);
+- `OWNER_UAT_READY` = 29 de 122 procesos (23,77 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a BUD-01 (los ciclos PROC-06/07/08/10 están en la matriz y su tarjeta existe, pero su fila aquí sigue pendiente: OBS-MATRIZ-UAT-01);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
@@ -30,6 +30,7 @@
 | **CTL-09 Actas de entrega por cambio de responsable o autoridad** (GOV-CTL-011) | Menú › Gobierno › Actas de entrega | [`specs/gov-ctl-09-actas-de-entrega/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-ctl-09-actas-de-entrega/evidence/OWNER_UAT_CARD.md) | GOV-CTL-09 |
 | **REP-10 Reporte de control interno** (IR §12) | Menú › Gobierno › Reporte de control interno | [`specs/gov-rep-10-control-interno/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-rep-10-control-interno/evidence/OWNER_UAT_CARD.md) | GOV-REP-10 |
 | **REP-03 Reporte de contrataciones** (IR §12) | Menú › Gobierno · Contrataciones › Reporte de contrataciones | [`specs/gov-rep-03-contrataciones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-rep-03-contrataciones/evidence/OWNER_UAT_CARD.md) | GOV-REP-03 |
+| **BUD-01 Ejercicio presupuestario** (GOV-BUD-001; BUD-02 parcial 10/11) | Menú › Gobierno · Presupuesto › Ejercicios presupuestarios | [`specs/gov-bud-01-02-ejercicio-clasificador/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-bud-01-02-ejercicio-clasificador/evidence/OWNER_UAT_CARD.md) | GOV-BUD-01/02 |
 | **PROC-02 Comisión de contrataciones (miembros, suplentes, impedimentos)** (GOV-PROC-003) | Menú › Gobierno · Contrataciones › Comisiones | [`specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md) | GOV-PROC-02 |
 | **PROC-03 Expediente único de contratación con cronología y lapsos** (GOV-PROC-004, GOV-PROC-014) | Menú › Gobierno · Contrataciones › Expedientes | [`specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md) |
 | **PROC-11 Funciones incompatibles en contratación** (GOV-PROC-017) | Menú › Gobierno · Contrataciones › Funciones incompatibles (y el bloque «Funciones incompatibles» en la ficha del expediente) | [`specs/gov-proc-11-sod-funciones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-11-sod-funciones/evidence/OWNER_UAT_CARD.md) | GOV-PROC-11 |
