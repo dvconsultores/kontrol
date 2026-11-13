@@ -10,7 +10,7 @@
 |---|---|
 | TECHNICAL_FOUNDATION_STATUS | COMPLETE: `purchase_order_lines.destination_warehouse_id` (migración `0106`) y una sola autoridad, `purchasing/open_supply.py` |
 | FUNCTIONAL_PRODUCT_STATUS | COMPLETE: la planificación descuenta lo pedido y no recibido por almacén. Se ve en la necesidad, la requisición, las órdenes y las recepciones |
-| OWNER_READINESS_STATUS | Pasos 134 a 143 de la tarjeta. `OWNER_ACCEPTED`: NO |
+| OWNER_READINESS_STATUS | Pasos 134 a 143 de la tarjeta. La UAT local (`kuat`) está en `0106`, con el backend y el frontend arriba. Humo autenticado: `suministro-abierto.spec.ts` contra la UAT, 1/1. `OWNER_ACCEPTED`: NO |
 
 ## Puertas de completitud
 
