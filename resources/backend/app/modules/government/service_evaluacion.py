@@ -35,6 +35,7 @@ from app.modules.government.service_expedientes import (
 )
 from app.modules.government.service_identidad import _funcionario_del_actor, _politica_de
 from app.modules.government.service_sod import evaluar_antes_de_actuar
+from app.modules.government.service_sod_funciones import verificar_antes_de_asumir_funcion
 from app.modules.identity_access.models import User
 from app.shared.clock import hoy_de_negocio, instante_actual
 
@@ -357,6 +358,14 @@ def abrir_ofertas(db: Session, ctx: CompanyContext, user: User, expediente_id: s
     for mid in miembro_ids:
         if mid not in por_id:
             raise _err("asistentes", "El asistente no pertenece a la comisión")
+    verificar_antes_de_asumir_funcion(
+        db,
+        ctx,
+        expediente,
+        "EVALUADOR",
+        user_ids=[ctx.user_id],
+        official_ids=[por_id[mid].official_id for mid in miembro_ids],
+    )
     principales = [m for m in miembros if m.funcion == "MIEMBRO" and m.condicion == "PRINCIPAL"]
     suplentes = [m for m in miembros if m.funcion == "MIEMBRO" and m.condicion == "SUPLENTE"]
     asistentes_con_voto = 0

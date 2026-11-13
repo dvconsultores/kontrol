@@ -15,7 +15,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
 
-CATALOG_VERSION = "2026-11-08.1"
+CATALOG_VERSION = "2026-11-12.1"
 RETENTION_PRESERVE = "PRESERVE_UNTIL_RETENTION_POLICY_RATIFIED"
 SCOPES = frozenset({"COMPANY", "TENANT"})
 SECURITY_CLASSES = frozenset(

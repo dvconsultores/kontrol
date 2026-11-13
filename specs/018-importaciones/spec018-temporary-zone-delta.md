@@ -64,7 +64,8 @@ El sistema registra **dónde está** la mercancía de una recepción mientras se
 ```text
 ROUTES_ALLOWED=POST /purchasing/receipts/{receipt_id}/temporary-zone; GET /purchasing/receipts/{receipt_id}/temporary-zone/options
 ROUTES_FORBIDDEN=cualquier escritura de la zona temporal bajo /importaciones; cualquier ruta con put-away|putaway|ubicacion|/locations en purchasing/api.py
-MIGRATION_REQUIRED=1 (0104_receipt_temporary_zone: una columna nullable y su FK; sin backfill)
+MIGRATION_REQUIRED=1 (0105_receipt_temporary_zone: una columna nullable y su FK; sin backfill)
+ALEMBIC=0105_receipt_temporary_zone detrás de 0104_gov_proc11_sod_funciones (P1, publicada); nació como 0104 y se reencadenó en la fusión, sin cambiar su cuerpo
 ```
 
 ## Constitution gate
@@ -80,7 +81,7 @@ MATERIAL_DECISION_REQUIRED=0  CONSTITUTION_GATE=PASS
 | Tarea | EXECUTOR | MODEL | SECURITY_SENSITIVE | EGRESS_SAFE | RETRY_MAX | FILES | TEST | DONE_WHEN |
 |---|---|---|---|---|---|---|---|---|
 | T018-TZ-0 Autoridad, delta y diseño | CLAUDE | n-a | NO | n-a | n-a | este documento | — | gate PASS |
-| T018-TZ-A Backend: migración 0104, modelo, servicio, API, proyección, catálogo, guardias y pruebas | DEEPSEEK | deepseek-v4-pro | NO | YES | 2 | `alembic/versions/0104_receipt_temporary_zone.py`, `purchasing/{models,service,api}.py`, `imports/service.py`, catálogo, guardias de cabeza, `tests/test_spec018_temporary_zone.py` | pytest en PostgreSQL | TZ-01 a TZ-14 |
+| T018-TZ-A Backend: migración 0105, modelo, servicio, API, proyección, catálogo, guardias y pruebas | DEEPSEEK | deepseek-v4-pro | NO | YES | 2 | `alembic/versions/0105_receipt_temporary_zone.py`, `purchasing/{models,service,api}.py`, `imports/service.py`, catálogo, guardias de cabeza, `tests/test_spec018_temporary_zone.py` | pytest en PostgreSQL | TZ-01 a TZ-14 |
 | T018-TZ-B Pantallas y E2E | DEEPSEEK | deepseek-v4-pro | NO | YES | 2 | `RecepcionesPage.tsx`, `ImportacionRecepcion.tsx`, tipos, `e2e/importaciones.spec.ts` | E2E en Chrome sobre PostgreSQL | 1280, 390 y 320; Axe sin faltas graves nuevas |
 | T018-TZ-C Evidencia, matriz y tarjeta de UAT | CLAUDE | n-a | NO | n-a | n-a | documentos | — | matriz recontada |
 

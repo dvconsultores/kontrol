@@ -1,4 +1,4 @@
-"""0104_receipt_temporary_zone
+"""0105_receipt_temporary_zone
 
 Spec 018 §2; nullable reference; no backfill.
 """
@@ -6,8 +6,8 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision = "0104_receipt_temporary_zone"
-down_revision = "0103_receipt_putaway_link"
+revision = "0105_receipt_temporary_zone"
+down_revision = "0104_gov_proc11_sod_funciones"
 branch_labels = None
 depends_on = None
 

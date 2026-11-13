@@ -198,6 +198,7 @@ export const router = createBrowserRouter([
           { path: "gobierno/sod", lazy: () => import("@/modules/gobierno/sod/ReglasSodPage").then((m) => ({ Component: m.ReglasSodPage })) },
           { path: "gobierno/sod/nueva", lazy: () => import("@/modules/gobierno/sod/NuevaReglaSodPage").then((m) => ({ Component: m.NuevaReglaSodPage })) },
           { path: "gobierno/sod/conflictos", lazy: () => import("@/modules/gobierno/sod/ConflictosSodPage").then((m) => ({ Component: m.ConflictosSodPage })) },
+          { path: "gobierno/sod/funciones", lazy: () => import("@/modules/gobierno/sod/FuncionesSodPage").then((m) => ({ Component: m.FuncionesSodPage })) },
           { path: "gobierno/sod/:reglaId", lazy: () => import("@/modules/gobierno/sod/ReglaSodPage").then((m) => ({ Component: m.ReglaSodPage })) },
           { path: "gobierno/cierres", lazy: () => import("@/modules/gobierno/cierres/PoliticasPage").then((m) => ({ Component: m.PoliticasPage })) },
           { path: "gobierno/cierres/nueva", lazy: () => import("@/modules/gobierno/cierres/NuevaPoliticaPage").then((m) => ({ Component: m.NuevaPoliticaPage })) },

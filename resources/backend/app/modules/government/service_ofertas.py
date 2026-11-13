@@ -37,6 +37,7 @@ from app.modules.government.service_expedientes import (
     _texto_responsable,
 )
 from app.modules.government.service_sod import evaluar_antes_de_actuar
+from app.modules.government.service_sod_funciones import verificar_antes_de_asumir_funcion
 from app.modules.identity_access.models import User
 
 _CARACAS = ZoneInfo("America/Caracas")
@@ -323,6 +324,14 @@ def recibir_oferta(db: Session, ctx: CompanyContext, expediente_id: str,
         )
 
     oficial = _funcionario(db, ctx, entrada.funcionario_id, "funcionario_id")
+    verificar_antes_de_asumir_funcion(
+        db,
+        ctx,
+        expediente,
+        "RECEPTOR",
+        user_ids=[ctx.user_id],
+        official_ids=[oficial.id],
+    )
     nombre_funcionario, cargo, unidad = _etiqueta_funcionario(db, ctx, oficial, recibida_caracas.date())
     receptor = _texto_responsable(nombre_funcionario, cargo, unidad)
 

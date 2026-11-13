@@ -10,7 +10,11 @@ from app.core.company_context import CompanyContext
 from app.core.errors import ConflictError, NotFoundError
 from app.modules.documents import service as documentos
 from app.modules.documents.models import Document, DocumentType, DocumentVersion
-from app.modules.government.models import GovernmentProcurementCommittee, GovernmentProcurementFile
+from app.modules.government.models import (
+    GovernmentProcurementCommittee,
+    GovernmentProcurementCommitteeMember,
+    GovernmentProcurementFile,
+)
 from app.modules.government.models import GovernmentProcurementFileEvent as Event
 from app.modules.government.models import GovernmentProcurementFileFolio as Folio
 from app.modules.government.models import GovernmentProcurementFileMilestone as Hito
@@ -32,6 +36,7 @@ from app.modules.government.service_expedientes import (
     detalle,
 )
 from app.modules.government.service_sod import evaluar_antes_de_actuar
+from app.modules.government.service_sod_funciones import verificar_antes_de_asumir_funcion
 from app.modules.identity_access.models import User
 from app.shared.clock import hoy_de_negocio
 
@@ -127,6 +132,8 @@ def asignar_responsable(db: Session, ctx: CompanyContext, expediente_id: str, ve
             raise ConflictError("GOV_PROCUREMENT_FILE_RESPONSABLE_DUPLICADO", "El funcionario ya está vigente en ese rol")
         if rol == "RESPONSABLE" and r.rol == "RESPONSABLE":
             raise ConflictError("GOV_PROCUREMENT_FILE_PRINCIPAL_VIGENTE", "Termine primero al responsable vigente")
+    if rol == "REQUIRENTE":
+        verificar_antes_de_asumir_funcion(db, ctx, f, "SOLICITANTE", official_ids=[oficial.id])
     nombre, cargo, unidad_txt = _etiqueta_funcionario(db, ctx, oficial, desde)
     fila = Resp(file_id=f.id, company_id=ctx.company_id, official_id=str(oficial.id), funcionario_nombre=nombre, cargo_nombre=cargo, unidad_nombre=unidad_txt, rol=rol, desde=desde, created_by=ctx.user_id)
     db.add(fila)
@@ -177,6 +184,15 @@ def registrar_comision(db: Session, ctx: CompanyContext, expediente_id: str, ver
         motivo = _motivo(datos)
     codigo = getattr(c, "codigo", "") if c else ""
     nombre = getattr(c, "nombre", "") if c else ""
+    if c:
+        miembros = db.execute(
+            select(GovernmentProcurementCommitteeMember.official_id).where(
+                GovernmentProcurementCommitteeMember.company_id == ctx.company_id,
+                GovernmentProcurementCommitteeMember.committee_id == c.id,
+                GovernmentProcurementCommitteeMember.fin_efectivo.is_(None),
+            )
+        ).scalars().all()
+        verificar_antes_de_asumir_funcion(db, ctx, f, "EVALUADOR", official_ids=miembros)
     if c:
         f.committee_id = str(c.id)
         f.comision_no_aplica_motivo = None

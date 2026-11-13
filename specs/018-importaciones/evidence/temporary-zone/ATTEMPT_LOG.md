@@ -11,10 +11,11 @@
 | DEEPSEEK_CALL_3 | B. Pantallas y E2E | 3320/3854 | $0,004797 | AUDIT_PASS de 10 bloques. Rechazados: `ZonaTemporal.tsx` importaba por defecto `AsyncButton` y `FormField`, que solo tienen exportación con nombre, y la E2E venía con sangría ajena |
 | DEEPSEEK_CALL_4 | B·R1 | 1905/1561 | $0,002187 | AUDIT_PASS. Al medir aparecieron 3 fallos de Vitest: la guardia `gate-coverage` (el componente escribe sin puerta propia) y dos pruebas que cambiaban el `select` antes de que llegaran las opciones |
 | DEEPSEEK_CALL_5 | B·R2 | 2483/1690 | $0,002550 | AUDIT_PASS. El componente lleva su propia puerta `Autorizado` y las pantallas dejan de envolverlo. Vitest 1949/1949 |
+| DEEPSEEK_CALL_6 | E. Topología Alembic tras la fusión con PROC-11 de P1 | 900/496 | $0,000823 | AUDIT_PASS de 5 bloques. P1 publicó `0104_gov_proc11_sod_funciones` desde `0103`. La migración de este ciclo, sin publicar, se reencadena como `0105_receipt_temporary_zone` detrás de la de P1, con el cuerpo intacto; las guardias de cabeza pasan a 0105 y el catálogo a 494 (493 de P1 + 1). Una sola cabeza; ida, vuelta e ida en PostgreSQL; 100 PASS más la línea base de `n10` |
 
 ```text
-TOTAL_CALLS=5  TOTAL_RETRIES=3  SUBPROBLEMS=2 (A, B)  MAX_RETRIES_SINGLE_SUBPROBLEM=2 (B)
-GLOBAL_CAP_REACHED=0  OWNER_EXCEPTION=0  TOTAL_COST=$0,021964
+TOTAL_CALLS=6  TOTAL_RETRIES=3  SUBPROBLEMS=3 (A, B, E)  MAX_RETRIES_SINGLE_SUBPROBLEM=2 (B)
+GLOBAL_CAP_REACHED=0  OWNER_EXCEPTION=0  TOTAL_COST=$0,022787
 ```
 
 **Implementado por Claude:** ninguna línea de producto, prueba, E2E ni migración. Claude hizo:
@@ -23,6 +24,7 @@ GLOBAL_CAP_REACHED=0  OWNER_EXCEPTION=0  TOTAL_COST=$0,021964
 - las mutaciones de control, restauradas byte a byte;
 - las sondas de Axe y de humo de UAT, fuera del repositorio;
 - la regeneración mecánica de las fixtures;
+- en la fusión, la resolución de Git de las 4 guardias en conflicto con la versión publicada de P1 (`--theirs`), y el `git mv` de `0104_…` a `0105_…`; el cambio de su contenido lo hizo DeepSeek (llamada 6);
 - los documentos.
 
 **Confirmaciones operativas (ALLOW o SKIP):**

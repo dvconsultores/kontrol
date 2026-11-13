@@ -78,7 +78,7 @@ Esta fila sigue en SPONSOR_VALIDATION_REQUIRED hasta que valide el sponsor.
 | B. Trazabilidad: alcance | «Recepción opcional en Inventario» | Construida. El expediente liga siempre la recepción. Inventario → Put-away ofrece «Recepción de origen» como dato opcional |
 | B. Trazabilidad: histórico | «Reconstruir por coincidencia exacta» | Backfill en `0103`, solo con coincidencia exacta (regla en `../spec018-putaway-trace-delta.md`, PT-02) |
 | A. Estados §3 | «Condición del proceso» (opción A) | Construida el 2026-11-12 (`../spec018-process-condition-delta.md`). La condición se ve en la recepción y en el expediente, sin tocar el stock; la decisión de la Spec 020 se mantiene |
-| C. Zona temporal | «Registrar la ubicación temporal» (sin mover lo recibido) | Construida el 2026-11-12 (`0104`). No cambia el flujo de saldos de las Specs 019, 021 y 022 |
+| C. Zona temporal | «Registrar la ubicación temporal» (sin mover lo recibido) | Construida el 2026-11-12 (`0105`). No cambia el flujo de saldos de las Specs 019, 021 y 022 |
 | D. Zonas A a E | Sin decisión del sponsor | Sigue en SPONSOR_VALIDATION_REQUIRED (opción A recomendada) |
 
 ```text
