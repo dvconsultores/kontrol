@@ -1772,6 +1772,14 @@
     },
     {
       "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/ofertas/{oferta_id}/montos",
+      "capabilities": [
+        "gobierno_ofertas:amount"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
       "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/responsables",
       "capabilities": [
         "gobierno_expedientes:manage"
@@ -1831,6 +1839,22 @@
       "path": "/api/v1/gobierno/control-interno/reporte.csv",
       "capabilities": [
         "gobierno_auditoria:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/control/alertas",
+      "capabilities": [
+        "gobierno_alertas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/control/alertas/revisiones",
+      "capabilities": [
+        "gobierno_alertas:review"
       ],
       "scope": "COMPANY"
     },
@@ -7948,6 +7972,7 @@
     "gobierno_expedientes:close",
     "gobierno_ofertas:view",
     "gobierno_ofertas:receive",
+    "gobierno_ofertas:amount",
     "gobierno_evaluacion:view",
     "gobierno_evaluacion:criteria",
     "gobierno_evaluacion:open",
@@ -7964,7 +7989,9 @@
     "gobierno_rendicion:qualify",
     "gobierno_actas:view",
     "gobierno_actas:manage",
-    "gobierno_actas:verify"
+    "gobierno_actas:verify",
+    "gobierno_alertas:view",
+    "gobierno_alertas:review"
   ],
   "report_capabilities": {
     "executive_ventas": [

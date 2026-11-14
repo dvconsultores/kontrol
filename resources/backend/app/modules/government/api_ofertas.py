@@ -4,11 +4,12 @@ from sqlalchemy.orm import Session
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import require_module, require_permission, require_write_allowed
-from app.modules.government import service_ofertas
+from app.modules.government import service_ofertas, service_ofertas_montos
 from app.modules.government.api import _version
 from app.modules.government.schemas_ofertas import (
     ConcluirRecepcionEntrada,
     ConcluirRecepcionOut,
+    MontoEntrada,
     OfertaDetalle,
     OfertaEntrada,
     OfertasLista,
@@ -84,3 +85,24 @@ def post_concluir(
     resultado = service_ofertas.concluir_recepcion(db, ctx, expediente_id, _version(if_match), datos.motivo)
     db.commit()
     return resultado
+
+
+@router.post(
+    "/{expediente_id}/ofertas/{oferta_id}/montos",
+    response_model=OfertaDetalle,
+    status_code=201,
+    dependencies=[Depends(require_write_allowed)],
+)
+def post_monto(
+    expediente_id: str,
+    oferta_id: str,
+    entrada: MontoEntrada,
+    if_match: str | None = Header(default=None, alias="If-Match"),
+    db: Session = Depends(get_db),
+    _user: User = Depends(require_permission("gobierno_ofertas", "amount")),
+    ctx: CompanyContext = Depends(get_company_context),
+    _modulo: None = Depends(require_module("gobierno")),
+):
+    service_ofertas_montos.declarar_monto(db, ctx, expediente_id, oferta_id, entrada, _version(if_match))
+    db.commit()
+    return service_ofertas.detalle_oferta(db, ctx, expediente_id, oferta_id)

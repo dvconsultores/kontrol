@@ -39,6 +39,7 @@ from app.modules.government.models import (
     GovernmentProcurementDecision,
     GovernmentProcurementFile,
     GovernmentProcurementOffer,
+    GovernmentProcurementOfferAmount,
 )
 from app.modules.government.service_actos import _autoridad_valida
 from app.modules.government.service_auditoria import _usuarios_por_ids
@@ -500,7 +501,24 @@ def _criterio_emisor(regla: dict[str, Any], emisor: GovernmentGuaranteeIssuer) -
     }
 
 
-def _criterio_moneda(requisito: GovernmentGuaranteeRequirement, instrumento: GovernmentGuaranteeInstrument) -> dict[str, str]:
+def _monto_oferta(db: Session, instrumento: GovernmentGuaranteeInstrument) -> GovernmentProcurementOfferAmount | None:
+    """Monto vigente declarado en la oferta de la garantía (OMA-10); None si no hay."""
+    return db.scalar(
+        select(GovernmentProcurementOfferAmount)
+        .where(
+            GovernmentProcurementOfferAmount.company_id == instrumento.company_id,
+            GovernmentProcurementOfferAmount.offer_id == instrumento.offer_id,
+        )
+        .order_by(GovernmentProcurementOfferAmount.version.desc())
+        .limit(1)
+    )
+
+
+def _criterio_moneda(
+    requisito: GovernmentGuaranteeRequirement,
+    instrumento: GovernmentGuaranteeInstrument,
+    monto_oferta: GovernmentProcurementOfferAmount | None,
+) -> dict[str, str]:
     if requisito.moneda:
         if instrumento.moneda == requisito.moneda:
             return {"criterio": "Moneda", "resultado": "CUMPLE", "detalle": f"Coincide con {requisito.moneda}"}
@@ -508,6 +526,18 @@ def _criterio_moneda(requisito: GovernmentGuaranteeRequirement, instrumento: Gov
             "criterio": "Moneda",
             "resultado": "NO_CUMPLE",
             "detalle": f"Se exige {requisito.moneda}",
+        }
+    if requisito.forma == "PORCENTAJE" and (requisito.regla or {}).get("base") == "MONTO_OFERTA" and monto_oferta is not None:
+        if instrumento.moneda == monto_oferta.moneda:
+            return {
+                "criterio": "Moneda",
+                "resultado": "CUMPLE",
+                "detalle": f"Coincide con la moneda de la oferta ({monto_oferta.moneda})",
+            }
+        return {
+            "criterio": "Moneda",
+            "resultado": "NO_EVALUABLE",
+            "detalle": f"La oferta está en {monto_oferta.moneda}; no se convierte moneda",
         }
     return {
         "criterio": "Moneda",
@@ -517,7 +547,9 @@ def _criterio_moneda(requisito: GovernmentGuaranteeRequirement, instrumento: Gov
 
 
 def _criterio_monto(
-    requisito: GovernmentGuaranteeRequirement, instrumento: GovernmentGuaranteeInstrument
+    requisito: GovernmentGuaranteeRequirement,
+    instrumento: GovernmentGuaranteeInstrument,
+    monto_oferta: GovernmentProcurementOfferAmount | None,
 ) -> dict[str, str]:
     regla = requisito.regla or {}
     if requisito.forma == "MONTO_FIJO":
@@ -537,6 +569,45 @@ def _criterio_monto(
             "detalle": f"{instrumento.monto} {instrumento.moneda} no cubre lo exigido ({requisito.monto_fijo} {requisito.moneda})",
         }
     base = regla.get("base")
+    if base == "MONTO_OFERTA" and requisito.porcentaje is not None:
+        if monto_oferta is None:
+            return {
+                "criterio": "Monto",
+                "resultado": "NO_EVALUABLE",
+                "detalle": "BASE_MONETARIA_NO_DISPONIBLE: la oferta no tiene monto declarado",
+            }
+        if instrumento.moneda != monto_oferta.moneda:
+            return {
+                "criterio": "Monto",
+                "resultado": "NO_EVALUABLE",
+                "detalle": f"La garantía está en {instrumento.moneda} y la oferta en {monto_oferta.moneda}; no se convierte moneda",
+            }
+        pct = requisito.porcentaje
+        total = monto_oferta.total_con_tributos
+        neto = monto_oferta.monto_sin_iva
+        if total >= neto:
+            etiqueta_mayor, mayor = "el total con tributos", total
+            etiqueta_menor, menor = "el monto sin IVA", neto
+        else:
+            etiqueta_mayor, mayor = "el monto sin IVA", neto
+            etiqueta_menor, menor = "el total con tributos", total
+        if instrumento.monto * 100 >= pct * mayor:
+            return {
+                "criterio": "Monto",
+                "resultado": "CUMPLE",
+                "detalle": f"{instrumento.monto} {instrumento.moneda} cubre el {pct} % de la oferta sobre el total con tributos ({total}) y sobre el monto sin IVA ({neto})",
+            }
+        if not (instrumento.monto * 100 >= pct * menor):
+            return {
+                "criterio": "Monto",
+                "resultado": "NO_CUMPLE",
+                "detalle": f"{instrumento.monto} {instrumento.moneda} no cubre el {pct} % de la oferta ni sobre el monto sin IVA ({neto}) ni sobre el total con tributos ({total})",
+            }
+        return {
+            "criterio": "Monto",
+            "resultado": "NO_EVALUABLE",
+            "detalle": f"{instrumento.monto} {instrumento.moneda} cubre el {pct} % sobre {etiqueta_menor} ({menor}) pero no sobre {etiqueta_mayor} ({mayor}); la regla no precisa la base (RLCP art. 135)",
+        }
     disponible = base_disponible(base)
     if disponible is None:
         texto_base = BASES_GARANTIA.get(base or "", "la base de cálculo")
@@ -608,12 +679,13 @@ def _criterios(
     doc: Document | None,
     version: DocumentVersion | None,
     hoy: date,
+    monto_oferta: GovernmentProcurementOfferAmount | None,
 ) -> list[dict[str, str]]:
     return [
         _criterio_documento(doc, version),
         _criterio_emisor(requisito.regla or {}, emisor),
-        _criterio_moneda(requisito, instrumento),
-        _criterio_monto(requisito, instrumento),
+        _criterio_moneda(requisito, instrumento, monto_oferta),
+        _criterio_monto(requisito, instrumento, monto_oferta),
         _criterio_vigencia_minima(requisito, instrumento),
         _criterio_vigente_a_la_fecha(instrumento, hoy),
     ]
@@ -718,7 +790,7 @@ def _instrumento_salida(
 ) -> dict[str, Any]:
     doc = db.get(Document, instrumento.document_id)
     version = db.get(DocumentVersion, instrumento.document_version_id)
-    criterios = _criterios(requisito, instrumento, emisor, doc, version, hoy)
+    criterios = _criterios(requisito, instrumento, emisor, doc, version, hoy, _monto_oferta(db, instrumento))
     suficiencia, etiqueta_suficiencia = _suficiencia(criterios)
     estado_vigencia, etiqueta_vigencia = _vigencia(instrumento, hoy)
     dias = (instrumento.vigente_hasta - hoy).days
@@ -938,7 +1010,7 @@ def obtener_estado_garantias(
             continue
         doc_fijado = db.get(Document, instrumento.document_id)
         version_fijada = db.get(DocumentVersion, instrumento.document_version_id)
-        criterios = _criterios(requisito, instrumento, emisor, doc_fijado, version_fijada, hoy)
+        criterios = _criterios(requisito, instrumento, emisor, doc_fijado, version_fijada, hoy, _monto_oferta(db, instrumento))
         suficiencia, _ = _suficiencia(criterios)
         if suficiencia == "SUFICIENTE":
             resumen["suficientes"] += 1

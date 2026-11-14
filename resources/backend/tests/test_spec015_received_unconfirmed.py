@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.errors import KontrolError
 from app.modules.inventory.models import InventoryBalance, InventoryMovement
 from app.modules.master_data.models import Party, Supplier
 from app.modules.organization.models import Company, Warehouse
@@ -229,13 +230,24 @@ def test_confirmacion_con_rechazo(mundo):
     assert plan["received_unconfirmed"] == "0.000000"
 
 
-def test_confirmacion_que_no_decide_todo_no_queda_pendiente(mundo):
+def test_confirmacion_que_no_decide_todo_se_rechaza(mundo):
     wh = _almacen(mundo)
     prod = _producto(mundo)
     supplier_id = _proveedor(mundo)
     order_id, [line_id] = _orden(mundo, supplier_id, [(prod, 100, wh, True)])
     receipt_id, receipt_line_id = _recibir(mundo, order_id, line_id, prod, wh, 60, 60, 0)
-    _confirmar(mundo, receipt_id, [(receipt_line_id, "DISPONIBLE", Decimal("40"))])
+
+    with pytest.raises(KontrolError) as exc:
+        _confirmar(mundo, receipt_id, [(receipt_line_id, "DISPONIBLE", Decimal("40"))])
+    assert exc.value.code == "RECEIPT_CONFIRMATION_INCOMPLETE"
+
+    plan = _plan(mundo, wh, prod)
+    assert plan["available"] == "0.000000"
+    assert plan["open_supply"] == "40.000000"
+    assert plan["received_unconfirmed"] == "60.000000"
+
+    _confirmar(mundo, receipt_id, [(receipt_line_id, "DISPONIBLE", Decimal("40")),
+                                   (receipt_line_id, "RECHAZADO", Decimal("20"))])
 
     plan = _plan(mundo, wh, prod)
     assert plan["available"] == "40.000000"

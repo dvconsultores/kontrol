@@ -25,7 +25,7 @@ CONSTITUTION_GATE=PASS
 | PDD-B05-06 | Un rechazo por validación (422) no cambia el estado y no se audita: no hay requisito que pida registrar intentos. CTL-01 sí lo hace porque su norma lo exige |
 | PDD-B05-07 | La vigencia de fuentes y partidas está dentro del año por construcción (BUD-02/04), así que un crédito del año siempre la cumple |
 
-## Modelo (fichero `0109_gov_bud05_presupuesto_aprobado.py`, revisión `0109_gov_bud05_aprobado` (≤ 32 caracteres por `alembic_version`), `down_revision = "0108_gov_bud03_04_plan_fuentes"`)
+## Modelo (fichero `0111_gov_bud05_presupuesto_aprobado.py`, revisión `0111_gov_bud05_aprobado` (≤ 32 caracteres por `alembic_version`), `down_revision = "0110_gov_proc06_monto_oferta"`: reencadenada tras las migraciones 0109/0110 que P2 publicó durante el ciclo)
 
 Todas las tablas llevan `id`, timestamps, `created_by`, `year_id` (FK gov_budget_years, índice) y `company_id` (FK companies, índice).
 

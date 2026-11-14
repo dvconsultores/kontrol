@@ -57,6 +57,7 @@ import {
   Warehouse,
   CalendarRange,
   FolderCheck,
+  TriangleAlert,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NavLink } from "react-router";
@@ -97,6 +98,7 @@ const navSections: NavSection[] = [
       { to: "/gobierno/bitacora", label: "Bitácora institucional", icon: History, modulo: "gobierno" },
       { to: "/gobierno/control-interno", label: "Reporte de control interno", icon: BarChart3, modulo: "gobierno" },
       { to: "/gobierno/control/separacion", label: "Separación técnica y funcional", icon: ShieldCheck, modulo: "gobierno" },
+      { to: "/gobierno/control/alertas", label: "Alertas de operaciones atípicas", icon: TriangleAlert, modulo: "gobierno" },
       { to: "/gobierno/hallazgos", label: "Hallazgos y acciones correctivas", icon: ClipboardCheck, modulo: "gobierno" },
       { to: "/gobierno/paquetes", label: "Paquetes de auditoría", icon: Archive, modulo: "gobierno" },
       { to: "/gobierno/rendicion", label: "Expedientes de cuenta", icon: FolderCheck, modulo: "gobierno" },

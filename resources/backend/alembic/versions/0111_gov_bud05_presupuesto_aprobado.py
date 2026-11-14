@@ -6,8 +6,8 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision = "0109_gov_bud05_aprobado"
-down_revision = "0108_gov_bud03_04_plan_fuentes"
+revision = "0111_gov_bud05_aprobado"
+down_revision = "0110_gov_proc06_monto_oferta"
 branch_labels = None
 depends_on = None
 

@@ -29,7 +29,7 @@ from app.modules.inventory import service as inv_service
 from app.modules.inventory import states as inv_states
 from app.modules.inventory.models import InventoryMovement
 from app.modules.master_data import uom as uom_engine
-from app.modules.master_data.models import Party
+from app.modules.master_data.models import CatalogItem, Party
 from app.modules.organization.models import Company, Warehouse, WarehouseLocation
 from app.modules.organization.service import warehouse_belongs_to
 from app.modules.purchasing.models import (
@@ -1709,6 +1709,18 @@ def _base_recibida(line: GoodsReceiptLine) -> Decimal:
     return _dec(line.quantity_received)
 
 
+def _base_aceptada(db: Session, line: GoodsReceiptLine) -> Decimal:
+    """Lo que la aceptación (Spec 019) asentó en RECIBIDO para esta línea."""
+    if not line.order_line_id:
+        return Decimal(0)
+    order_line = db.get(PurchaseOrderLine, line.order_line_id)
+    if order_line is None or not order_line.needs_inventory:
+        return Decimal(0)
+    if line.base_quantity_accepted is not None:
+        return _dec(line.base_quantity_accepted)
+    return _dec(line.quantity_accepted)
+
+
 def _conteo_independiente_activo(db: Session, company_id: str) -> bool:
     """El control está activo si la empresa no permite que la misma persona
     registre/acepte y cuente una recepción (Spec 021, R-D0-10-9)."""
@@ -1817,6 +1829,8 @@ def resultado_de_conciliacion(db: Session, *, company_id: str, receipt: GoodsRec
         recibido = _base_recibida(line)
         contado = _dec(line.counted_base_quantity) if line.counted_base_quantity is not None else None
         ya = confirmadas.get(str(line.id), Decimal(0))
+        aceptado = _base_aceptada(db, line)
+        producto = db.get(CatalogItem, line.product_id)
         items.append({
             "receipt_line_id": str(line.id),
             "product_id": line.product_id,
@@ -1830,6 +1844,10 @@ def resultado_de_conciliacion(db: Session, *, company_id: str, receipt: GoodsRec
             if line.count_difference_kinds else [],
             "already_confirmed_base": str(ya),
             "pending_base": str(recibido - ya),
+            "product_code": producto.code if producto else None,
+            "product_name": producto.name if producto else None,
+            "base_quantity_accepted": str(aceptado),
+            "pending_decision_base": str(aceptado - ya),
         })
 
     sin_contar = [x for x in items if not x["counted"]]
@@ -1861,13 +1879,69 @@ def _confirmado_por_linea(db: Session, receipt: GoodsReceipt) -> dict[str, Decim
     return acumulado
 
 
+def validar_completitud_de_confirmacion(db: Session, *, receipt: GoodsReceipt,
+                                        decisiones: list[dict[str, Any]]) -> None:
+    """Valida que las decisiones cubran el 100 % de lo aceptado, sin mutar nada."""
+    lineas = db.execute(
+        select(GoodsReceiptLine)
+        .where(GoodsReceiptLine.receipt_id == str(receipt.id))
+        .order_by(GoodsReceiptLine.id)
+    ).scalars().all()
+
+    decidido: dict[str, Decimal] = {}
+    for decision in decisiones:
+        line = _requiere_linea(db, receipt, str(decision.get("receipt_line_id") or ""))
+        destino = str(decision.get("target_state") or "")
+        cantidad = _dec(decision.get("base_quantity") or 0)
+
+        if destino not in CONFIRMATION_TARGET_STATES:
+            raise KontrolError(
+                code="CONFIRMATION_TARGET_UNKNOWN", status_code=422,
+                message=f"La confirmación no decide el destino «{destino}».",
+                details={"allowed": list(CONFIRMATION_TARGET_STATES)})
+        if cantidad <= 0:
+            raise KontrolError(code="INVALID_QUANTITY", status_code=422,
+                               message="Cada decisión mueve una cantidad mayor que cero.")
+        decidido[str(line.id)] = decidido.get(str(line.id), Decimal(0)) + cantidad
+
+    aceptado = {str(linea.id): _base_aceptada(db, linea) for linea in lineas}
+
+    for line_id, total in decidido.items():
+        if total > aceptado[line_id]:
+            raise ConflictError(
+                code="CONFIRMED_EXCEEDS_RECEIVED",
+                message=(f"La línea tiene {aceptado[line_id]} aceptadas pendientes de confirmar "
+                         f"y se pretende decidir {total}."),
+                details={"receipt_line_id": line_id,
+                         "base_accepted": str(aceptado[line_id]),
+                         "base_decided": str(total)})
+
+    pendientes: list[dict[str, str | None]] = []
+    for linea in lineas:
+        line_id = str(linea.id)
+        if decidido.get(line_id, Decimal(0)) < aceptado[line_id]:
+            producto = db.get(CatalogItem, linea.product_id)
+            pendientes.append({
+                "receipt_line_id": line_id,
+                "product_code": producto.code if producto else None,
+                "base_accepted": str(aceptado[line_id]),
+                "base_decided": str(decidido.get(line_id, Decimal(0))),
+                "base_pending": str(aceptado[line_id] - decidido.get(line_id, Decimal(0))),
+            })
+    if pendientes:
+        raise KontrolError(
+            code="RECEIPT_CONFIRMATION_INCOMPLETE", status_code=422,
+            message="Debe decidirse la totalidad de la cantidad aceptada antes de confirmar el inventario.",
+            details={"lines": pendientes})
+
+
 def confirmar_inventario(db: Session, *, receipt: GoodsReceipt, decisiones: list[dict[str, Any]],
                          actor: str | None = None) -> dict[str, Any]:
     """Etapas 13 y 14: «una vez conciliado, confirmar inventario» y liberar el lote.
 
-    Cada decisión dice qué cantidad base de qué línea pasa de qué estado a cuál.
-    Una línea puede producir varias —noventa liberadas y diez rechazadas—: la
-    etapa 9 lo exige y un solo campo por línea no podría representarlo.
+    Decide el 100 % de lo aceptado o no muta nada. Cada decisión dice qué cantidad
+    base de qué línea pasa de qué estado a cuál y la validación previa garantiza
+    que la suma de todas cubre exactamente lo aceptado en RECIBIDO.
 
     La transición **no se ejecuta aquí**: se solicita al motor canónico de la
     Spec 023, que la valida contra la matriz de `ADR-D0-010` v2. Esta Spec decide
@@ -1914,8 +1988,8 @@ def confirmar_inventario(db: Session, *, receipt: GoodsReceipt, decisiones: list
                     message="El conteo debe hacerlo una persona distinta de quien registró o aceptó la recepción.",
                     details={"rule": "RECEIVER_NOT_COUNTER", "receipt_line_id": str(line.id)})
 
-    ya_confirmado = _confirmado_por_linea(db, receipt)
-    por_linea: dict[str, Decimal] = {}
+    validar_completitud_de_confirmacion(db, receipt=receipt, decisiones=decisiones)
+
     resultados: list[dict[str, Any]] = []
 
     for decision in decisiones:
@@ -1928,28 +2002,6 @@ def confirmar_inventario(db: Session, *, receipt: GoodsReceipt, decisiones: list
         destino = str(decision.get("target_state") or "")
         cantidad = _dec(decision.get("base_quantity") or 0)
         motivo = decision.get("reason")
-
-        if destino not in CONFIRMATION_TARGET_STATES:
-            raise KontrolError(
-                code="CONFIRMATION_TARGET_UNKNOWN", status_code=422,
-                message=f"La confirmación no decide el destino «{destino}».",
-                details={"allowed": list(CONFIRMATION_TARGET_STATES)})
-        if cantidad <= 0:
-            raise KontrolError(code="INVALID_QUANTITY", status_code=422,
-                               message="Cada decisión mueve una cantidad mayor que cero.")
-
-        # La invariante de cantidad: entre todo lo ya confirmado y lo que se
-        # pide ahora no se puede superar lo que bajó del camión.
-        recibido = _base_recibida(line)
-        acumulado = ya_confirmado.get(str(line.id), Decimal(0)) + por_linea.get(str(line.id), Decimal(0))
-        if acumulado + cantidad > recibido:
-            raise ConflictError(
-                code="CONFIRMED_EXCEEDS_RECEIVED",
-                message=(f"La línea recibió {recibido} y se pretende confirmar "
-                         f"{acumulado + cantidad}."),
-                details={"receipt_line_id": str(line.id), "base_received": str(recibido),
-                         "already_confirmed": str(acumulado), "requested": str(cantidad)})
-        por_linea[str(line.id)] = por_linea.get(str(line.id), Decimal(0)) + cantidad
 
         movimiento = inv_service.reclassify(
             db, company_id=receipt.company_id, warehouse_id=receipt.warehouse_id,

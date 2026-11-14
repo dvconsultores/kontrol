@@ -6,6 +6,7 @@ import csv
 import io
 from collections import Counter, defaultdict
 from datetime import date
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
@@ -18,6 +19,7 @@ from app.modules.government.models import (
     GovernmentProcurementFile,
     GovernmentProcurementFileMilestone,
     GovernmentProcurementOffer,
+    GovernmentProcurementOfferAmount,
 )
 from app.modules.government.service_expedientes import (
     _ETIQUETAS_MODALIDAD,
@@ -38,9 +40,8 @@ _ETIQUETAS_RESULTADO = {
     "NULIDAD": "Nulidad",
     "SIN_DECISION": "Sin decisión",
 }
-_MONTO_NO_DISPONIBLE = (
-    "No disponible: las ofertas y las decisiones no registran monto (OBS-PROC08-MONTO-01)."
-)
+_MONTO_NO_DECLARADO = "No declarado: ninguna oferta adjudicada del periodo tiene monto declarado."
+_MONTO_NOTA = "Monto declarado en las ofertas adjudicadas vigentes del periodo. No se convierte ni se suma entre monedas."
 
 
 def _inicio_periodo(hoy: date) -> date:
@@ -263,7 +264,51 @@ def _reporte_consolidado(
         "hitos": hitos_con_desviacion[:50],
     }
 
-    monto = {"disponible": False, "motivo": _MONTO_NO_DISPONIBLE}
+    vigentes: dict[str, GovernmentProcurementOfferAmount] = {}
+    if adjudicaciones_por_oferta:
+        filas_montos = db.scalars(
+            select(GovernmentProcurementOfferAmount).where(
+                GovernmentProcurementOfferAmount.company_id == ctx.company_id,
+                GovernmentProcurementOfferAmount.offer_id.in_(adjudicaciones_por_oferta),
+            )
+        ).all()
+        for fila_monto in filas_montos:
+            oferta_id = str(fila_monto.offer_id)
+            actual = vigentes.get(oferta_id)
+            if actual is None or fila_monto.version > actual.version:
+                vigentes[oferta_id] = fila_monto
+
+    acumulado: dict[str, dict[str, Any]] = {}
+    for vigente in vigentes.values():
+        moneda = vigente.moneda
+        if moneda not in acumulado:
+            acumulado[moneda] = {
+                "total_con_tributos": Decimal("0"),
+                "monto_sin_iva": Decimal("0"),
+                "adjudicaciones": 0,
+            }
+        acumulado[moneda]["total_con_tributos"] += vigente.total_con_tributos
+        acumulado[moneda]["monto_sin_iva"] += vigente.monto_sin_iva
+        acumulado[moneda]["adjudicaciones"] += 1
+
+    con_monto = len(vigentes)
+    sin_monto = len(adjudicaciones_por_oferta) - con_monto
+    monto = {
+        "disponible": con_monto > 0,
+        "motivo": None if con_monto > 0 else _MONTO_NO_DECLARADO,
+        "nota": _MONTO_NOTA,
+        "por_moneda": [
+            {
+                "moneda": m,
+                "total_con_tributos": f"{v['total_con_tributos']:.2f}",
+                "monto_sin_iva": f"{v['monto_sin_iva']:.2f}",
+                "adjudicaciones": v["adjudicaciones"],
+            }
+            for m, v in sorted(acumulado.items())
+        ],
+        "adjudicaciones_con_monto": con_monto,
+        "adjudicaciones_sin_monto": sin_monto,
+    }
 
     return {
         "todos_proveedores": proveedores,
@@ -374,8 +419,22 @@ def exportar_csv(db: Session, ctx: CompanyContext, *, desde: date | None, hasta:
     )
     filas_datos += len(consolidado["todos_hitos"])
 
-    writer.writerow(["Monto", consolidado["monto"]["motivo"]])
-    filas_datos += 1
+    monto = consolidado["monto"]
+    if monto["disponible"]:
+        _escribir_filas(
+            writer,
+            "Monto declarado de las ofertas adjudicadas",
+            ["Moneda", "Total con tributos", "Monto sin IVA", "Adjudicaciones"],
+            [
+                [f["moneda"], f["total_con_tributos"], f["monto_sin_iva"], f["adjudicaciones"]]
+                for f in monto["por_moneda"]
+            ],
+        )
+        writer.writerow(["Adjudicaciones sin monto declarado", monto["adjudicaciones_sin_monto"]])
+        filas_datos += len(monto["por_moneda"]) + 1
+    else:
+        writer.writerow(["Monto", monto["motivo"]])
+        filas_datos += 1
 
     contenido = salida.getvalue().encode("utf-8")
 

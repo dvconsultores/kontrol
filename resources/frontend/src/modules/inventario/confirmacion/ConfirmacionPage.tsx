@@ -43,11 +43,21 @@ const DIFERENCIAS = [
   { value: "UNIDAD_MEDIDA", label: "Unidad de medida" },
 ];
 
-/** Los dos únicos destinos que la confirmación puede pedir. */
-const DESTINOS = [
-  { value: "DISPONIBLE", label: "Liberar a disponible", requiereMotivo: false },
-  { value: "RECHAZADO", label: "Rechazar", requiereMotivo: true },
-];
+/**
+ * Los dos únicos destinos que la confirmación puede pedir: DISPONIBLE y
+ * RECHAZADO. No se muestran en un select porque confirmar reparte cada línea
+ * entre ambos; el contrato no autoriza ninguno más y el motor rechazaría
+ * cualquier otro.
+ */
+
+function cantidad(valor: string | undefined): number {
+  const n = Number(valor);
+  return Number.isNaN(n) || valor === "" ? 0 : n;
+}
+
+function formatear(n: number): string {
+  return String(Math.round(n * 1e6) / 1e6);
+}
 
 const columnas = createColumnHelper<ReconciliationItem>();
 
@@ -69,8 +79,8 @@ export function ConfirmacionPage(): React.JSX.Element {
   const importacion = searchParams.get("importacion");
   const [conteos, setConteos] = useState<Record<string, string>>({});
   const [diferencias, setDiferencias] = useState<Record<string, string[]>>({});
-  const [destinos, setDestinos] = useState<Record<string, string>>({});
-  const [cantidades, setCantidades] = useState<Record<string, string>>({});
+  const [aDisponible, setADisponible] = useState<Record<string, string>>({});
+  const [rechazadas, setRechazadas] = useState<Record<string, string>>({});
   const [motivos, setMotivos] = useState<Record<string, string>>({});
   const [politicaConteoLocal, setPoliticaConteoLocal] = useState(false);
 
@@ -149,13 +159,33 @@ export function ConfirmacionPage(): React.JSX.Element {
 
   async function confirmar(): Promise<void> {
     const decisions = (conciliacion.data?.items ?? [])
-      .filter((x) => Number(cantidades[x.receipt_line_id] ?? 0) > 0)
-      .map((x) => ({
-        receipt_line_id: x.receipt_line_id,
-        target_state: destinos[x.receipt_line_id] ?? "DISPONIBLE",
-        base_quantity: cantidades[x.receipt_line_id],
-        reason: motivos[x.receipt_line_id] || null,
-      }));
+      .filter((x) => Number(x.base_quantity_accepted ?? 0) > 0)
+      .flatMap((x) => {
+        const decisiones: Array<{
+          receipt_line_id: string;
+          target_state: "DISPONIBLE" | "RECHAZADO";
+          base_quantity: string;
+          reason?: string | null;
+        }> = [];
+        const disp = cantidad(aDisponible[x.receipt_line_id]);
+        const rech = cantidad(rechazadas[x.receipt_line_id]);
+        if (disp > 0) {
+          decisiones.push({
+            receipt_line_id: x.receipt_line_id,
+            target_state: "DISPONIBLE",
+            base_quantity: aDisponible[x.receipt_line_id],
+          });
+        }
+        if (rech > 0) {
+          decisiones.push({
+            receipt_line_id: x.receipt_line_id,
+            target_state: "RECHAZADO",
+            base_quantity: rechazadas[x.receipt_line_id],
+            reason: motivos[x.receipt_line_id],
+          });
+        }
+        return decisiones;
+      });
     if (decisions.length === 0) {
       notify({ type: "error", title: "Indique al menos una cantidad a confirmar" });
       return;
@@ -166,7 +196,8 @@ export function ConfirmacionPage(): React.JSX.Element {
         body: { decisions },
       });
       notify({ type: "success", title: "Inventario confirmado" });
-      setCantidades({});
+      setADisponible({});
+      setRechazadas({});
       setMotivos({});
       await qc.invalidateQueries({ queryKey: ["confirmacion"] });
     } catch (e) {
@@ -179,11 +210,22 @@ export function ConfirmacionPage(): React.JSX.Element {
   }
 
   const cols = [
-    columnas.accessor("product_id", {
+    columnas.accessor("product_code", {
       header: "Producto",
-      cell: (c) => <span className="font-mono text-xs">{c.getValue().slice(0, 8)}…</span>,
+      cell: (c) => {
+        const codigo = c.row.original.product_code;
+        const nombre = c.row.original.product_name;
+        if (!codigo && !nombre) return <span>—</span>;
+        return (
+          <span>
+            {codigo}
+            {nombre ? ` · ${nombre}` : ""}
+          </span>
+        );
+      },
     }),
     columnas.accessor("base_quantity_received", { header: "Recibido (base)" }),
+    columnas.accessor("base_quantity_accepted", { header: "Aceptado (base)" }),
     columnas.accessor("counted_base_quantity", {
       header: "Contado",
       cell: (c) => c.getValue() ?? <span className="text-text-500">sin contar</span>,
@@ -196,11 +238,24 @@ export function ConfirmacionPage(): React.JSX.Element {
       header: "Contra lo recibido",
       cell: (c) => <Veredicto valor={c.getValue()} />,
     }),
-    columnas.accessor("pending_base", { header: "Pendiente" }),
+    columnas.accessor("pending_decision_base", { header: "Pendiente por decidir" }),
   ];
 
   const listo = conciliacion.data?.ready_for_confirmation ?? false;
   const yaConfirmada = conciliacion.data?.confirmation_status === "CONFIRMADA";
+
+  const repartoCompleto = (conciliacion.data?.items ?? [])
+    .filter((x) => Number(x.base_quantity_accepted ?? 0) > 0)
+    .every((x) => {
+      const aceptado = Number(x.base_quantity_accepted);
+      const disp = cantidad(aDisponible[x.receipt_line_id]);
+      const rech = cantidad(rechazadas[x.receipt_line_id]);
+      const pendiente = Math.round((aceptado - disp - rech) * 1e6) / 1e6;
+      const motivoOk = rech > 0
+        ? (motivos[x.receipt_line_id] ?? "").trim() !== ""
+        : true;
+      return disp >= 0 && rech >= 0 && pendiente === 0 && motivoOk;
+    });
 
   return (
     <PageContent>
@@ -361,40 +416,68 @@ export function ConfirmacionPage(): React.JSX.Element {
                     </AsyncButton>
                   ) : null}
 
-                  <FormField label="Destino">
-                    <select
-                      value={destinos[x.receipt_line_id] ?? "DISPONIBLE"}
-                      onChange={(e) =>
-                        setDestinos({ ...destinos, [x.receipt_line_id]: e.target.value })
-                      }
-                      className="h-10 w-48 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900"
-                    >
-                      {DESTINOS.map((d) => (
-                        <option key={d.value} value={d.value}>
-                          {d.label}
-                        </option>
-                      ))}
-                    </select>
-                  </FormField>
-                  <FormField label="Cantidad a confirmar" help="En unidad base">
-                    <TextInput
-                      value={cantidades[x.receipt_line_id] ?? ""}
-                      onChange={(e) =>
-                        setCantidades({ ...cantidades, [x.receipt_line_id]: e.target.value })
-                      }
-                      placeholder={x.pending_base}
-                    />
-                  </FormField>
-                  {(destinos[x.receipt_line_id] ?? "DISPONIBLE") === "RECHAZADO" ? (
-                    <FormField label="Motivo del rechazo" required>
-                      <TextInput
-                        value={motivos[x.receipt_line_id] ?? ""}
-                        onChange={(e) =>
-                          setMotivos({ ...motivos, [x.receipt_line_id]: e.target.value })
-                        }
-                      />
-                    </FormField>
-                  ) : null}
+                  {(() => {
+                    const aceptado = Number(x.base_quantity_accepted ?? 0);
+                    if (aceptado <= 0) {
+                      return (
+                        <p className="text-sm text-text-500">Sin cantidad aceptada que decidir.</p>
+                      );
+                    }
+                    const disp = cantidad(aDisponible[x.receipt_line_id]);
+                    const rech = cantidad(rechazadas[x.receipt_line_id]);
+                    const pendiente =
+                      Math.round((aceptado - disp - rech) * 1e6) / 1e6;
+                    return (
+                      <>
+                        <p>Cantidad aceptada: {formatear(aceptado)}</p>
+                        <FormField label="A disponible" help="En unidad base">
+                          <TextInput
+                            value={aDisponible[x.receipt_line_id] ?? ""}
+                            onChange={(e) =>
+                              setADisponible({
+                                ...aDisponible,
+                                [x.receipt_line_id]: e.target.value,
+                              })
+                            }
+                            placeholder={x.pending_decision_base}
+                          />
+                        </FormField>
+                        <FormField label="Rechazada" help="En unidad base">
+                          <TextInput
+                            value={rechazadas[x.receipt_line_id] ?? ""}
+                            onChange={(e) =>
+                              setRechazadas({
+                                ...rechazadas,
+                                [x.receipt_line_id]: e.target.value,
+                              })
+                            }
+                          />
+                        </FormField>
+                        {rech > 0 ? (
+                          <FormField label="Motivo del rechazo" required>
+                            <TextInput
+                              value={motivos[x.receipt_line_id] ?? ""}
+                              onChange={(e) =>
+                                setMotivos({
+                                  ...motivos,
+                                  [x.receipt_line_id]: e.target.value,
+                                })
+                              }
+                            />
+                          </FormField>
+                        ) : null}
+                        {pendiente >= 0 ? (
+                          <p role="status">
+                            Pendiente por decidir: {formatear(pendiente)}
+                          </p>
+                        ) : (
+                          <p role="alert" className="text-sm text-danger-600">
+                            Excede lo aceptado en {formatear(-pendiente)}.
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               ))}
               <Autorizado
@@ -403,10 +486,15 @@ export function ConfirmacionPage(): React.JSX.Element {
                   `/purchasing/receipts/${receiptId}/confirmacion-inventario`,
                 ]}
               >
-                <AsyncButton onClick={confirmar} disabled={!listo}>
+                <AsyncButton onClick={confirmar} disabled={!listo || !repartoCompleto}>
                   Confirmar inventario
                 </AsyncButton>
               </Autorizado>
+              {listo && !repartoCompleto ? (
+                <p role="status" className="mt-2 text-sm text-text-700">
+                  Decida la totalidad de lo aceptado de cada línea antes de confirmar.
+                </p>
+              ) : null}
             </section>
           ) : null}
 

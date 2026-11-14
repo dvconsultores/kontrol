@@ -68,10 +68,10 @@ def test_rc01_estructura_y_periodo_por_defecto(mundo, gobierno, ocupacion):
     }
     assert data["periodo"]["desde"] == f"{hoy_de_negocio().year}-01-01"
     assert data["periodo"]["hasta"] == hoy_de_negocio().isoformat()
-    assert data["monto"] == {
-        "disponible": False,
-        "motivo": "No disponible: las ofertas y las decisiones no registran monto (OBS-PROC08-MONTO-01).",
-    }
+    assert data["monto"]["disponible"] is False
+    assert data["monto"]["motivo"] == "No declarado: ninguna oferta adjudicada del periodo tiene monto declarado."
+    assert data["monto"]["por_moneda"] == []
+    assert data["monto"]["adjudicaciones_con_monto"] == 0
     assert [m["codigo"] for m in data["por_modalidad"]] == ["CONCURSO_ABIERTO", "CONCURSO_CERRADO", "CONSULTA_PRECIOS", "CONTRATACION_DIRECTA", None]
     assert [e["codigo"] for e in data["por_estado"]] == ["ABIERTO", "CERRADO", "DESCARTADO"]
     assert [t["codigo"] for t in data["por_tipo"]] == ["BIENES", "SERVICIOS", "OBRAS"]
