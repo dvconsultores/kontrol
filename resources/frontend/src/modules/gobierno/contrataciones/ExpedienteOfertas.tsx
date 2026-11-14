@@ -21,6 +21,7 @@ import {
   type ExpedienteDetalle,
   type ExpedienteOpciones,
 } from "../api";
+import { OfertaMonto, type MontoOferta, type SoporteMonto } from "./OfertaMonto";
 
 type OfertaResumen = {
   id: string;
@@ -45,6 +46,10 @@ type OfertaResumen = {
   condicion_sobre: string | null;
   documentos_total: number;
   integridad: "VERIFICADA" | "ALTERADA" | "SIN_ARCHIVO";
+  monto_estado: string;
+  monto_estado_etiqueta: string;
+  monto: MontoOferta | null;
+  monto_bloqueo: string | null;
 };
 
 type OfertaDetalle = OfertaResumen & {
@@ -55,6 +60,8 @@ type OfertaDetalle = OfertaResumen & {
     documento_id: string | null;
     titulo: string | null;
   }[];
+  montos_historial: MontoOferta[];
+  soportes_monto: SoporteMonto[];
 };
 
 type OfertasListado = {
@@ -89,10 +96,12 @@ function TarjetaOferta({
   oferta,
   expedienteId,
   activeCompanyId,
+  version,
 }: {
   oferta: OfertaResumen;
   expedienteId: string;
   activeCompanyId: string | null;
+  version: number;
 }) {
   const [abierta, setAbierta] = useState(false);
   const detalleQuery = useQuery({
@@ -179,6 +188,14 @@ function TarjetaOferta({
           <dt className="text-xs font-medium text-text-600">Documentos</dt>
           <dd className="text-sm text-text-900">{oferta.documentos_total}</dd>
         </div>
+        <div className="min-w-0 break-words">
+          <dt className="text-xs font-medium text-text-600">Monto</dt>
+          <dd className="text-sm text-text-900">
+            {oferta.monto
+              ? `${oferta.monto.total_con_tributos} ${oferta.monto.moneda} (total con tributos)`
+              : oferta.monto_estado_etiqueta}
+          </dd>
+        </div>
       </dl>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
@@ -233,6 +250,12 @@ function TarjetaOferta({
               </li>
             ))}
           </ul>
+          <OfertaMonto
+            oferta={detalleQuery.data}
+            expedienteId={expedienteId}
+            version={version}
+            activeCompanyId={activeCompanyId}
+          />
         </div>
       )}
     </li>
@@ -774,6 +797,7 @@ export function SeccionOfertas({
                   oferta={oferta}
                   expedienteId={detalle.id}
                   activeCompanyId={activeCompanyId}
+                  version={detalle.version}
                 />
               ))}
             </ul>

@@ -26,6 +26,8 @@ type Oferta = {
   oferente: string;
   documento: string;
   rechazada: boolean;
+  monto: { moneda: string; total_con_tributos: string } | null;
+  monto_estado_etiqueta: string;
 };
 type Firmante = {
   member_id: string;
@@ -513,6 +515,7 @@ export function SeccionDecision({
               <th className="py-1 pr-3 font-medium">Oferta</th>
               <th className="py-1 pr-3 font-medium">Oferente</th>
               <th className="py-1 pr-3 font-medium">Documento</th>
+              <th className="py-1 pr-3 font-medium">Monto declarado</th>
               <th className="py-1 font-medium">Estado</th>
             </tr>
           </thead>
@@ -522,6 +525,11 @@ export function SeccionDecision({
                 <td className="py-1 pr-3">{oferta.oferta}</td>
                 <td className="py-1 pr-3">{oferta.oferente}</td>
                 <td className="py-1 pr-3">{oferta.documento}</td>
+                <td className="py-1 pr-3">
+                  {oferta.monto
+                    ? `${oferta.monto.total_con_tributos} ${oferta.monto.moneda}`
+                    : oferta.monto_estado_etiqueta}
+                </td>
                 <td className="py-1">{oferta.rechazada ? "Rechazada" : ""}</td>
               </tr>
             ))}

@@ -529,6 +529,8 @@ _PARTE_D: tuple[AuditActionSpec, ...] = (
     _e("GOV_PROCUREMENT_FILE_MILESTONE_UPDATED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Hito del expediente actualizado"),
     _e("GOV_PROCUREMENT_OFFER_RECEIVED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Oferta recibida"),
     _e("GOV_PROCUREMENT_OFFER_RECEPTION_CONCLUDED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Recepción de ofertas concluida"),
+    _e("GOV_PROCUREMENT_OFFER_AMOUNT_DECLARED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Monto de la oferta declarado"),
+    _e("GOV_PROCUREMENT_OFFER_AMOUNT_CORRECTED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Monto de la oferta corregido"),
     _e("GOV_PROCUREMENT_EVAL_MATRIX_CREATED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Matriz de evaluación creada"),
     _e("GOV_PROCUREMENT_EVAL_CRITERION_ADDED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Criterio de evaluación agregado"),
     _e("GOV_PROCUREMENT_EVAL_CRITERION_REMOVED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Criterio de evaluación removido"),

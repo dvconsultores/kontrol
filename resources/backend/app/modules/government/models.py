@@ -4161,3 +4161,48 @@ class GovernmentAtypicalAlertReview(UUIDMixin, TimestampMixin, CreatedByMixin, B
 
 for _sentencia in GOV_ATYPICAL_ALERT_REVIEWS_IMMUTABLE_PG:
     event.listen(GovernmentAtypicalAlertReview.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+SOPORTES_MONTO_OFERTA = ("DOCUMENTO_OFERTA", "ACTA_APERTURA")
+GOV_OFFER_AMOUNTS_IMMUTABLE_PG: tuple[str, ...] = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_offer_amount_inmutable() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'GOV_OFFER_AMOUNT_IMMUTABLE' USING ERRCODE = 'P0001', DETAIL = TG_OP; END; $$",
+    "CREATE TRIGGER trg_gov_procurement_offer_amounts_no_update BEFORE UPDATE ON gov_procurement_offer_amounts FOR EACH ROW EXECUTE FUNCTION kontrol_gov_offer_amount_inmutable()",
+    "CREATE TRIGGER trg_gov_procurement_offer_amounts_no_delete BEFORE DELETE ON gov_procurement_offer_amounts FOR EACH ROW EXECUTE FUNCTION kontrol_gov_offer_amount_inmutable()",
+    "CREATE TRIGGER trg_gov_procurement_offer_amounts_no_truncate BEFORE TRUNCATE ON gov_procurement_offer_amounts FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_offer_amount_inmutable()",
+)
+
+
+class GovernmentProcurementOfferAmount(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Monto declarado en una oferta recibida (PROC-06, OMA); de solo inserción y versionado."""
+
+    __tablename__ = "gov_procurement_offer_amounts"
+    __scope__ = Scope.COMPANY
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    offer_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_offers.id"), nullable=False, index=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    monto_sin_iva: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    tributos: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    total_con_tributos: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    soporte_tipo: Mapped[str] = mapped_column(String(16), nullable=False)
+    soporte_document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False)
+    soporte_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=False)
+    soporte_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    motivo: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    reemplaza_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_offer_amounts.id"), nullable=True)
+    registrada_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    registrada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    __table_args__ = (
+        UniqueConstraint("company_id", "offer_id", "version", name="uq_gov_procurement_offer_amounts_version"),
+        UniqueConstraint("reemplaza_id", name="uq_gov_procurement_offer_amounts_reemplaza"),
+        CheckConstraint("version >= 1", name="version"),
+        CheckConstraint(f"moneda IN ({en(MONEDAS_LIMITE)})", name="moneda"),
+        CheckConstraint("monto_sin_iva >= 0", name="monto_sin_iva"),
+        CheckConstraint("tributos >= 0", name="tributos"),
+        CheckConstraint("total_con_tributos > 0", name="total_con_tributos"),
+        CheckConstraint(f"soporte_tipo IN ({en(SOPORTES_MONTO_OFERTA)})", name="soporte_tipo"),
+        CheckConstraint("(version = 1 AND reemplaza_id IS NULL AND motivo IS NULL) OR (version > 1 AND reemplaza_id IS NOT NULL AND motivo IS NOT NULL AND length(motivo) >= 10)", name="correccion"),
+    )
+
+
+for _sentencia in GOV_OFFER_AMOUNTS_IMMUTABLE_PG:
+    event.listen(GovernmentProcurementOfferAmount.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

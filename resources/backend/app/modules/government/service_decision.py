@@ -38,6 +38,7 @@ from app.modules.government.service_auditoria import _usuarios_por_ids
 from app.modules.government.service_evaluacion import _miembros_comision, obtener_evaluacion
 from app.modules.government.service_expedientes import _abierto, _auditar, _cargar, _err, _evento, _para_escribir
 from app.modules.government.service_identidad import _funcionario_del_actor, _politica_de
+from app.modules.government.service_ofertas_montos import resumen_monto
 from app.modules.government.service_sod import evaluar_antes_de_actuar
 from app.modules.government.service_sod_funciones import verificar_antes_de_asumir_funcion
 from app.modules.identity_access.models import User
@@ -527,16 +528,20 @@ def obtener_estado_decision(
             .all()
         }
 
-    ofertas = [
-        {
-            "id": o.id,
-            "oferta": f"O-{o.numero:02d}",
-            "oferente": o.oferente_nombre,
-            "documento": o.oferente_documento,
-            "rechazada": o.id in rechazadas_ids,
-        }
-        for o in ofertas_abiertas
-    ]
+    ofertas: list[dict[str, Any]] = []
+    for o in ofertas_abiertas:
+        resumen = resumen_monto(db, ctx, o, abierta=True)
+        ofertas.append(
+            {
+                "id": o.id,
+                "oferta": f"O-{o.numero:02d}",
+                "oferente": o.oferente_nombre,
+                "documento": o.oferente_documento,
+                "rechazada": o.id in rechazadas_ids,
+                "monto": resumen["monto"],
+                "monto_estado_etiqueta": resumen["monto_estado_etiqueta"],
+            }
+        )
 
     if evaluacion_concluida_en is None:
         siguiente_accion = "Concluir la evaluación (PROC-07)"

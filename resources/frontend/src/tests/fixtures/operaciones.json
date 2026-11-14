@@ -1772,6 +1772,14 @@
     },
     {
       "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/ofertas/{oferta_id}/montos",
+      "capabilities": [
+        "gobierno_ofertas:amount"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
       "path": "/api/v1/gobierno/contrataciones/expedientes/{expediente_id}/responsables",
       "capabilities": [
         "gobierno_expedientes:manage"
@@ -7892,6 +7900,7 @@
     "gobierno_expedientes:close",
     "gobierno_ofertas:view",
     "gobierno_ofertas:receive",
+    "gobierno_ofertas:amount",
     "gobierno_evaluacion:view",
     "gobierno_evaluacion:criteria",
     "gobierno_evaluacion:open",

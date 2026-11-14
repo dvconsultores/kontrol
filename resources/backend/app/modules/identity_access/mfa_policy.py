@@ -135,6 +135,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_hallazgos:verify",
         # gobierno_alertas · revisión de alertas de operaciones atípicas por Control Interno (CTL-07, OD-CTL07-08)
         "gobierno_alertas:review",
+        # gobierno_ofertas · declaración y corrección del monto de la oferta (PROC-06, OMA)
+        "gobierno_ofertas:amount",
         # gobierno_paquetes · generación de paquetes de auditoría exportables (DOC-08, OD-DOC08-04)
         "gobierno_paquetes:generate",
         # gobierno_sod · activación y cierre de reglas de segregación de funciones (CTL-01, OD-CTL01-04)

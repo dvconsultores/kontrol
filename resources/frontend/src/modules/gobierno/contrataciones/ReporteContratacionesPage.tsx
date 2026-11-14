@@ -84,7 +84,19 @@ type Reporte = {
     vencidos: number;
     hitos: HitoDesviacion[];
   };
-  monto: { disponible: boolean; motivo: string };
+  monto: {
+    disponible: boolean;
+    motivo: string | null;
+    nota: string;
+    por_moneda: {
+      moneda: string;
+      total_con_tributos: string;
+      monto_sin_iva: string;
+      adjudicaciones: number;
+    }[];
+    adjudicaciones_con_monto: number;
+    adjudicaciones_sin_monto: number;
+  };
 };
 
 function formatearDias(valor: number | null): string {
@@ -548,7 +560,53 @@ export function ReporteContratacionesPage() {
         <h2 id="sec-monto" className="mb-4 text-lg font-semibold text-text-900">
           Monto
         </h2>
-        <p className="text-sm text-text-800">{datos.monto.motivo}</p>
+        {datos.monto.disponible ? (
+          <>
+            <div
+              className="overflow-x-auto"
+              tabIndex={0}
+              role="region"
+              aria-label="Monto declarado por moneda"
+            >
+              <table className="min-w-full text-sm text-text-900">
+                <thead>
+                  <tr className="text-left text-xs text-text-600">
+                    <th className="py-1 pr-3 font-medium">Moneda</th>
+                    <th className="py-1 pr-3 font-medium">
+                      Total con tributos
+                    </th>
+                    <th className="py-1 pr-3 font-medium">Monto sin IVA</th>
+                    <th className="py-1 font-medium">Adjudicaciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {datos.monto.por_moneda.map((fila) => (
+                    <tr
+                      key={fila.moneda}
+                      className="border-t border-border-subtle"
+                    >
+                      <td className="py-1 pr-3">{fila.moneda}</td>
+                      <td className="py-1 pr-3">
+                        {fila.total_con_tributos} {fila.moneda}
+                      </td>
+                      <td className="py-1 pr-3">
+                        {fila.monto_sin_iva} {fila.moneda}
+                      </td>
+                      <td className="py-1">{fila.adjudicaciones}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-sm text-text-800">
+              Adjudicaciones sin monto declarado:{" "}
+              {datos.monto.adjudicaciones_sin_monto}
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-text-800">{datos.monto.motivo}</p>
+        )}
+        <p className="mt-2 text-xs text-text-600">{datos.monto.nota}</p>
       </section>
 
       <p className="mt-8 text-sm text-text-600">

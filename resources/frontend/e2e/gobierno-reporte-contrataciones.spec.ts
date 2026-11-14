@@ -143,7 +143,7 @@ test.describe("Reporte de contrataciones", () => {
 
     await expect(page.getByRole("heading", { level: 2, name: "Monto" })).toBeVisible();
     await expect(
-      page.getByText("No disponible: las ofertas y las decisiones no registran monto"),
+      page.getByText("No declarado: ninguna oferta adjudicada del periodo tiene monto declarado."),
     ).toBeVisible();
 
     const [download] = await Promise.all([

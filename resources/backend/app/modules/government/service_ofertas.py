@@ -36,6 +36,7 @@ from app.modules.government.service_expedientes import (
     _para_escribir,
     _texto_responsable,
 )
+from app.modules.government.service_ofertas_montos import detalle_monto, resumen_monto
 from app.modules.government.service_sod import evaluar_antes_de_actuar
 from app.modules.government.service_sod_funciones import verificar_antes_de_asumir_funcion
 from app.modules.identity_access.models import User
@@ -141,6 +142,7 @@ def _serializar_oferta(db: Session, offer: GovernmentProcurementOffer,
         ) or 0,
         "integridad": _integrity_for_offer(db, offer),
     }
+    data.update(resumen_monto(db, ctx, offer, abierta=abierta))
     if con_documentos:
         documentos = []
         for row in db.scalars(
@@ -163,6 +165,7 @@ def _serializar_oferta(db: Session, offer: GovernmentProcurementOffer,
                 item["titulo"] = doc.title if doc else None
             documentos.append(item)
         data["documentos"] = documentos
+        data.update(detalle_monto(db, ctx, offer, abierta=abierta))
     return data
 
 

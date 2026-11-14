@@ -38,9 +38,9 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | PROC-05 | GOV-PROC-006 | Contrataciones públicas / Li | Unidad contratante | Oferentes y contratistas (RNC/SNC) | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-03 |
 | PROC-06 | GOV-PROC-007 | Contrataciones públicas / Li | Unidad contratante | Recepción y apertura de ofertas | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Apertura y levantamiento del sello: PROC-07 |
 | PROC-07 | GOV-PROC-008 GOV-PROC-009 | Contrataciones públicas / Li | Comisión | Evaluación técnica, económica y legal con matriz bloqueada | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Reporte propio: n/a (lo es la recomendación de PROC-08) |
-| PROC-08 | GOV-PROC-010 GOV-PROC-011 | Contrataciones públicas / Li | Máxima autoridad | Recomendación, decisión, adjudicación, desierta, anulación o rechazo | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Adjudicación parcial (OBS-PROC08-PARCIAL-01) y límites de monto (OBS-PROC08-MONTO-01) |
-| PROC-09 | GOV-PROC-012 | Contrataciones públicas / Li | Unidad contratante | Compromiso de responsabilidad social | no | no | no | n/a | no | no | NOT_STARTED (bloqueado) | LEGAL_VALIDATION_REQUIRED (U.T. N38 clase C; 3 % LCP 31 frente a 1-5 % RLCP 35); MATERIAL_DECISION_REQUIRED (monto de la oferta, OBS-PROC08-MONTO-01); dependencias PROC-04 y CNT-01 |
-| PROC-10 | GOV-PROC-013 | Contrataciones públicas / Li | Unidad contratante | Garantías y cauciones | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Exigencias porcentuales NO_EVALUABLE sin base monetaria (OBS-PROC08-MONTO-01) |
+| PROC-08 | GOV-PROC-010 GOV-PROC-011 | Contrataciones públicas / Li | Máxima autoridad | Recomendación, decisión, adjudicación, desierta, anulación o rechazo | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Adjudicación parcial (OBS-PROC08-PARCIAL-01) y límites de monto: la oferta ya registra monto (OMA), falta la regla de comparación (OQ-OMA-01) |
+| PROC-09 | GOV-PROC-012 | Contrataciones públicas / Li | Unidad contratante | Compromiso de responsabilidad social | no | no | no | n/a | no | no | NOT_STARTED (bloqueado) | LEGAL_VALIDATION_REQUIRED (U.T. N38 clase C; 3 % LCP 31 frente a 1-5 % RLCP 35); monto de la oferta registrado desde 2026-11-14 (OQ-PROC09-01 = A, delta OMA de PROC-06); MATERIAL_DECISION_REQUIRED (OQ-PROC09-04); dependencias PROC-04 y CNT-01 |
+| PROC-10 | GOV-PROC-013 | Contrataciones públicas / Li | Unidad contratante | Garantías y cauciones | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Mantenimiento como % de la oferta evaluable con el monto declarado (OMA), por bandas hasta precisar la base (OQ-OMA-02); las demás bases porcentuales siguen NO_EVALUABLE |
 | PROC-11 | GOV-PROC-017 | Contrataciones públicas / Li | Control Interno | Conflictos SoD en contratación | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Matriz de funciones, detección y bloqueo (specs/gov-proc-11-sod-funciones) |
 | PROC-12 | GOV-PROC-018 | Contrataciones públicas / Li | Control Interno | Trazabilidad completa de la compra pública (E2E-01) | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | CNT-01 | GOV-CNT-001 | Contratos públicos | Unidad contratante | Crear contrato u orden desde la adjudicación | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
@@ -119,7 +119,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | INT-07 | IR §11/§12 | Integraciones institucionale | Integración | Firma electrónica: proveedor o certificado homologado | no | no | no | n/a | no | no | NOT_STARTED (bloqueado) | D-GOV-08 |
 | REP-01 | IR §11/§12 | Reportes y tableros instituc | Planificación/Presupuesto | Ejecución presupuestaria (aprobado, modificado, comprometido, causado, | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-02 |
 | REP-02 | IR §11/§12 | Reportes y tableros instituc | Planificación/Presupuesto | Plan vs presupuesto vs ejecución físico-financiera | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-02 |
-| REP-03 | IR §11/§12 | Reportes y tableros instituc | Unidad contratante | Contrataciones por modalidad, estado, unidad, proveedor, monto y tiemp | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Monto no disponible: las ofertas no registran monto (OBS-PROC08-MONTO-01) |
+| REP-03 | IR §11/§12 | Reportes y tableros instituc | Unidad contratante | Contrataciones por modalidad, estado, unidad, proveedor, monto y tiemp | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Monto declarado de las ofertas adjudicadas, por moneda (OMA, 2026-11-14) |
 | REP-04 | IR §11/§12 | Reportes y tableros instituc | Administrador de contrato | Contratos: comprometido, ejecutado, pagado, garantías y vencimientos | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | REP-05 | IR §11/§12 | Reportes y tableros instituc | Tesorería | Obligaciones causadas pendientes de orden o pago | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | REP-06 | IR §11/§12 | Reportes y tableros instituc | Tesorería | Tesorería: disponibilidad, pagos, conciliaciones y partidas en tránsit | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
@@ -169,7 +169,7 @@ Una ruta declarada no demuestra que la pantalla funcione. Una pantalla cuenta co
 | Requisito | Rol | Proceso | Superficie | Backend | BD | API | Permiso | Documentos | Auditoría | Navegador | UAT | Estado | Falta |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | GOV-PROC-010 | Comisión y autoridad | Recomendación y decisión como actos separados | Sección «Recomendación y decisión» en la ficha | sí | 0094 | 4 rutas | `gobierno_decision` view/recommend/decide (decide con MFA) | Informe PDF de la recomendación con huella; acto DOC-02 | CTL-02, 4 eventos | sí, flujo completo | sí | OWNER_UAT_READY | — |
-| GOV-PROC-011 | Autoridad | Adjudicación, desierta, terminación, nulidad, rechazo | Formulario de decisión, notificación DOC-04 por oferente, historial | sí | 0094 | decisiones | `gobierno_decision:decide` | Acto DOC-02 emitido, particular, APROBAR/CONTRATACIONES | CTL-02 | sí: adjudicación; alternativos en PostgreSQL | sí | OWNER_UAT_READY | Adjudicación parcial (OBS-PROC08-PARCIAL-01); límites de monto (OBS-PROC08-MONTO-01) |
+| GOV-PROC-011 | Autoridad | Adjudicación, desierta, terminación, nulidad, rechazo | Formulario de decisión, notificación DOC-04 por oferente, historial | sí | 0094 | decisiones | `gobierno_decision:decide` | Acto DOC-02 emitido, particular, APROBAR/CONTRATACIONES | CTL-02 | sí: adjudicación; alternativos en PostgreSQL | sí | OWNER_UAT_READY | Adjudicación parcial (OBS-PROC08-PARCIAL-01); límites de monto: la oferta ya registra monto (OMA), falta la regla de comparación (OQ-OMA-01) |
 
 `PROC08_FUNCTIONAL_SLICE_COMPLETE = 1`: verificado en Chromium a 1280, 390 y 320 px, con Axe dirigido en 4 puntos sin violaciones. `REPORT_GATE_PROC08 = PASS` (informe PDF de la recomendación). `OWNER_ACCEPTED = NO`.
 
@@ -181,7 +181,7 @@ Una ruta declarada no demuestra que la pantalla funcione. Una pantalla cuenta co
 
 | Requisito | Rol | Proceso | Superficie | Backend | BD | API | Permiso | Documentos | Auditoría | Navegador | UAT | Estado | Falta |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| GOV-PROC-013 | Unidad contratante y autoridad | Garantías: tipo, emisor, vigencia, monto, suficiencia, renovación, sustitución, liberación y ejecución | Sección «Garantías y cauciones» en la ficha | sí | 0096 | 7 rutas | `gobierno_garantias` view/manage/release/execute (release y execute con MFA) | Documento con versión fijada y huella; acto DOC-02 para liberar y ejecutar | CTL-02, 7 eventos; cronología clase GARANTIA | sí, flujo completo | sí | OWNER_UAT_READY | Exigencias porcentuales NO_EVALUABLE sin base monetaria (OBS-PROC08-MONTO-01) |
+| GOV-PROC-013 | Unidad contratante y autoridad | Garantías: tipo, emisor, vigencia, monto, suficiencia, renovación, sustitución, liberación y ejecución | Sección «Garantías y cauciones» en la ficha | sí | 0096 | 7 rutas | `gobierno_garantias` view/manage/release/execute (release y execute con MFA) | Documento con versión fijada y huella; acto DOC-02 para liberar y ejecutar | CTL-02, 7 eventos; cronología clase GARANTIA | sí, flujo completo | sí | OWNER_UAT_READY | Mantenimiento como % de la oferta evaluable con el monto declarado (OMA), por bandas hasta precisar la base (OQ-OMA-02); las demás bases porcentuales siguen NO_EVALUABLE |
 
 `PROC10_FUNCTIONAL_SLICE_COMPLETE = 1`: verificado en Chromium a 1280, 390 y 320 px, con Axe dirigido en 6 puntos sin violaciones. `REPORT_GATE_PROC10 = NOT_APPLICABLE`. `OWNER_ACCEPTED = NO`.
 
@@ -189,7 +189,7 @@ Una ruta declarada no demuestra que la pantalla funcione. Una pantalla cuenta co
 
 GOV-PROC-012 queda BLOCKED antes de diseñar el producto (`specs/gov-proc-09-responsabilidad-social/`). La procedencia del
 compromiso es cuantitativa: «ofertas cuyo monto total, incluidos los tributos, superen las dos mil quinientas unidades tributarias
-(2.500 U.T.)» (LCP art. 31; RLCP art. 34). La oferta no registra monto (OBS-PROC08-MONTO-01), el valor de la U.T. no tiene fuente
+(2.500 U.T.)» (LCP art. 31; RLCP art. 34). La oferta ya registra su monto declarado (OMA, 2026-11-14), pero el valor de la U.T. no tiene fuente
 verificada (N38, clase C) y el porcentaje tiene un conflicto entre la LCP (3 %) y el RLCP (1 % a 5 %). Sin esos datos, el estado
 «aplica» sería inalcanzable: construirlo sería completitud falsa. Preguntas OQ-PROC09-01..04.
 

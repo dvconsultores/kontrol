@@ -147,6 +147,10 @@ function crearDatosBase() {
     monto: {
       disponible: false,
       motivo: "Módulo de montos no disponible",
+      nota: "Nota de monto",
+      por_moneda: [],
+      adjudicaciones_con_monto: 0,
+      adjudicaciones_sin_monto: 0,
     },
   };
 }
@@ -230,6 +234,39 @@ describe("ReporteContratacionesPage", () => {
 
     expect(
       await screen.findByText("Módulo de montos no disponible"),
+    ).toBeInTheDocument();
+  });
+
+  it("muestra el monto declarado por moneda", async () => {
+    const datos = {
+      ...crearDatosBase(),
+      monto: {
+      disponible: true,
+      motivo: null,
+      nota: "Nota de monto",
+      por_moneda: [
+        {
+          moneda: "VES",
+          total_con_tributos: "1160.00",
+          monto_sin_iva: "1000.00",
+          adjudicaciones: 1,
+        },
+      ],
+      adjudicaciones_con_monto: 1,
+      adjudicaciones_sin_monto: 2,
+      },
+    };
+    apiFetchMock.mockResolvedValue(datos);
+    renderPagina();
+
+    expect(
+      await screen.findByRole("region", {
+        name: "Monto declarado por moneda",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("1160.00 VES")).toBeInTheDocument();
+    expect(
+      screen.getByText("Adjudicaciones sin monto declarado: 2"),
     ).toBeInTheDocument();
   });
 

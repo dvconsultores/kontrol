@@ -93,4 +93,4 @@ def test_catb_02_entries(
 
 def test_catb_03_catalog_size() -> None:
     """CATB-03: el catálogo tiene exactamente 524 entradas."""
-    assert len(catalog()) == 524
+    assert len(catalog()) == 526

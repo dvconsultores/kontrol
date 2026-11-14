@@ -1279,6 +1279,11 @@
     },
     {
       "method": "POST",
+      "path": "/gobierno/contrataciones/expedientes/{expediente_id}/ofertas/{oferta_id}/montos",
+      "query": []
+    },
+    {
+      "method": "POST",
       "path": "/gobierno/contrataciones/expedientes/{expediente_id}/responsables",
       "query": []
     },
