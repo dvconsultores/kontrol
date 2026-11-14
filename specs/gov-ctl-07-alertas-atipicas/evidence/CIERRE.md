@@ -60,3 +60,11 @@
 `CLAUDE_SEMANTIC_CODE_WRITTEN=0 CLAUDE_SEMANTIC_TESTS_WRITTEN=0 CLAUDE_SEMANTIC_MIGRATION_WRITTEN=0 CLAUDE_SEMANTIC_QA_WRITTEN=0`
 
 `OWNER_ACCEPTED`: NO.
+
+## UAT de P2 (pila propia; la de P1 no se tocó)
+
+- **Commit publicado:** `434de13`, igual a `origin/develop`.
+- **Base de datos:** la base UAT `kuat` se migró de `0108` a `0109_gov_ctl07_alertas`, que ya es la cabeza.
+- **Servicios:** backend en `127.0.0.1:8000` (`/docs` responde 200) y web en `127.0.0.1:5173` (responde 200).
+- **Humo autenticado** a las 07:31 de Caracas: `gobierno-alertas.spec.ts` contra la UAT, con un usuario real, MFA y la base `kuat`, pasó (1 prueba en 40,6 s).
+- **Tarjeta de la dueña:** `OWNER_UAT_CARD.md`. `OWNER_UAT_ACCESSIBLE=YES`.
