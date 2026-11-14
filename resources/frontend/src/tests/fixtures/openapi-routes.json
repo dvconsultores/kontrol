@@ -2018,6 +2018,51 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/creditos",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/creditos/{credito_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/creditos/{credito_id}",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/existencias-tesoro",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/existencias-tesoro",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/ingresos",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/ingresos/{ingreso_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/ingresos/{ingreso_id}",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/gobierno/presupuesto/ejercicios/{year_id}/reconducir",
       "query": []

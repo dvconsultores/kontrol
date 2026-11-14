@@ -1026,6 +1026,8 @@ TIPOS_HISTORIA_EJERCICIO = (
     "PLAN_REGISTRADO", "OBJETIVO_CREADO", "OBJETIVO_MODIFICADO", "OBJETIVO_ELIMINADO",
     "CATEGORIA_VINCULADA", "META_CREADA", "META_MODIFICADA", "META_ELIMINADA", "FUENTE_CREADA",
     "FUENTE_MODIFICADA", "FUENTE_ELIMINADA", "RESTRICCION_AGREGADA", "RESTRICCION_ELIMINADA",
+    "INGRESO_REGISTRADO", "INGRESO_MODIFICADO", "INGRESO_ELIMINADO",
+    "CREDITO_REGISTRADO", "CREDITO_MODIFICADO", "CREDITO_ELIMINADO", "EXISTENCIAS_REGISTRADAS", "EXISTENCIAS_ELIMINADAS",
 )
 
 
@@ -1361,6 +1363,86 @@ for _sentencia in GOV_BUDGET_FUNDING_SOURCES_FROZEN_PG:
 
 for _sentencia in GOV_BUDGET_FUNDING_RESTRICTIONS_FROZEN_PG:
     event.listen(GovernmentBudgetFundingRestriction.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+class GovernmentBudgetIncomeEstimate(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Estimación de ingresos del presupuesto aprobado (BUD-05)."""
+
+    __tablename__ = "gov_budget_income_estimates"
+    __scope__ = Scope.COMPANY
+
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    item_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_classifier_items.id"), nullable=False, index=True)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    __table_args__ = (
+        UniqueConstraint("year_id", "item_id", name="uq_gov_budget_income_estimates_year_id_item_id"),
+        CheckConstraint("monto > 0", name="monto"),
+    )
+
+
+class GovernmentBudgetCredit(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Crédito presupuestario del presupuesto aprobado (BUD-05)."""
+
+    __tablename__ = "gov_budget_credits"
+    __scope__ = Scope.COMPANY
+
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    category_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_categories.id"), nullable=False, index=True)
+    item_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_classifier_items.id"), nullable=False, index=True)
+    source_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_funding_sources.id"), nullable=False, index=True)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    __table_args__ = (
+        UniqueConstraint("year_id", "category_id", "item_id", "source_id", name="uq_gov_budget_credits_year_id_category_id_item_id_source_id"),
+        CheckConstraint("monto > 0", name="monto"),
+    )
+
+
+class GovernmentBudgetTreasuryHoldings(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Existencias del Tesoro no comprometidas del presupuesto aprobado (BUD-05)."""
+
+    __tablename__ = "gov_budget_treasury_holdings"
+    __scope__ = Scope.COMPANY
+
+    year_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("gov_budget_years.id"),
+        nullable=False,
+        index=True,
+        unique=True,
+    )
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    fecha_corte: Mapped[date] = mapped_column(Date, nullable=False)
+    documento_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False, index=True)
+    documento_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    __table_args__ = (CheckConstraint("monto > 0", name="monto"),)
+
+
+GOV_BUDGET_INCOME_ESTIMATES_FROZEN_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio() RETURNS TRIGGER AS $$ DECLARE v varchar; BEGIN IF TG_OP = 'DELETE' THEN v := OLD.year_id; ELSE v := NEW.year_id; END IF; IF (SELECT estado FROM gov_budget_years WHERE id = v) <> 'BORRADOR' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_YEAR_FROZEN', DETAIL = TG_TABLE_NAME; END IF; IF TG_OP = 'DELETE' THEN RETURN OLD; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_income_estimates_frozen BEFORE INSERT OR UPDATE OR DELETE ON gov_budget_income_estimates FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio()",
+)
+
+GOV_BUDGET_CREDITS_FROZEN_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio() RETURNS TRIGGER AS $$ DECLARE v varchar; BEGIN IF TG_OP = 'DELETE' THEN v := OLD.year_id; ELSE v := NEW.year_id; END IF; IF (SELECT estado FROM gov_budget_years WHERE id = v) <> 'BORRADOR' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_YEAR_FROZEN', DETAIL = TG_TABLE_NAME; END IF; IF TG_OP = 'DELETE' THEN RETURN OLD; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_credits_frozen BEFORE INSERT OR UPDATE OR DELETE ON gov_budget_credits FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio()",
+)
+
+GOV_BUDGET_TREASURY_HOLDINGS_FROZEN_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio() RETURNS TRIGGER AS $$ DECLARE v varchar; BEGIN IF TG_OP = 'DELETE' THEN v := OLD.year_id; ELSE v := NEW.year_id; END IF; IF (SELECT estado FROM gov_budget_years WHERE id = v) <> 'BORRADOR' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_YEAR_FROZEN', DETAIL = TG_TABLE_NAME; END IF; IF TG_OP = 'DELETE' THEN RETURN OLD; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_treasury_holdings_frozen BEFORE INSERT OR UPDATE OR DELETE ON gov_budget_treasury_holdings FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_congelado_por_ejercicio()",
+)
+
+for _sentencia in GOV_BUDGET_INCOME_ESTIMATES_FROZEN_PG:
+    event.listen(GovernmentBudgetIncomeEstimate.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_BUDGET_CREDITS_FROZEN_PG:
+    event.listen(GovernmentBudgetCredit.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_BUDGET_TREASURY_HOLDINGS_FROZEN_PG:
+    event.listen(GovernmentBudgetTreasuryHoldings.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
 
 
 ESTADOS_BANCO = ("ACTIVO", "INACTIVO")

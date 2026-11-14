@@ -169,6 +169,51 @@ export interface FuentesVista {
 export type FuenteFinanciamiento = FuentesVista["items"][number];
 export type RestriccionUso = FuenteFinanciamiento["restricciones"][number];
 
+export interface PresupuestoAprobadoVista {
+  version: number;
+  congelado: boolean;
+  moneda: string;
+  ingresos: {
+    id: string;
+    partida: { id: string; codigo: string; denominacion: string };
+    monto: string;
+  }[];
+  creditos: {
+    id: string;
+    categoria: { id: string; codigo_completo: string; denominacion: string };
+    unidad: { id: string; codigo: string; nombre: string } | null;
+    partida: { id: string; codigo: string; denominacion: string };
+    fuente: { id: string; codigo: string; denominacion: string };
+    monto: string;
+  }[];
+  existencias_tesoro: {
+    monto: string;
+    fecha_corte: string;
+    documento_id: string;
+    documento_sha256: string;
+  } | null;
+  totales: {
+    ingresos: string;
+    creditos: string;
+    existencias: string;
+    holgura_tesoro: string;
+    disponible: string;
+    diferencia: string;
+    cuadra: boolean;
+  };
+  opciones: {
+    categorias: { id: string; codigo_completo: string; denominacion: string }[];
+    partidas_egreso: { id: string; codigo: string; denominacion: string }[];
+    partidas_recurso: { id: string; codigo: string; denominacion: string }[];
+    fuentes: {
+      id: string;
+      codigo: string;
+      denominacion: string;
+      partidas_permitidas: string[] | null;
+    }[];
+  };
+}
+
 export const ETIQUETAS_ESTADO_EJERCICIO: Record<EstadoEjercicio, string> = {
   BORRADOR: "Borrador",
   APROBADO: "Aprobado",
@@ -191,6 +236,14 @@ export const ETIQUETAS_HISTORIA_EJERCICIO: Record<string, string> = {
   RECONDUCIDO: "Reconducido",
   CERRADO: "Cerrado",
   PRECOMPROMISO_CAMBIADO: "Precompromiso modificado",
+  INGRESO_REGISTRADO: "Ingreso estimado registrado",
+  INGRESO_MODIFICADO: "Ingreso estimado modificado",
+  INGRESO_ELIMINADO: "Ingreso estimado eliminado",
+  CREDITO_REGISTRADO: "Crédito registrado",
+  CREDITO_MODIFICADO: "Crédito modificado",
+  CREDITO_ELIMINADO: "Crédito eliminado",
+  EXISTENCIAS_REGISTRADAS: "Existencias del Tesoro declaradas",
+  EXISTENCIAS_ELIMINADAS: "Existencias del Tesoro retiradas",
 };
 
 export const ETIQUETAS_TIPO_PARTIDA: Record<"RECURSO" | "EGRESO", string> = {

@@ -18,6 +18,7 @@ import { ClasificadorEjercicio } from "./ClasificadorEjercicio";
 import { AccionesEjercicio } from "./AccionesEjercicio";
 import { PlanEjercicio } from "./PlanEjercicio";
 import { FuentesEjercicio } from "./FuentesEjercicio";
+import { PresupuestoAprobadoEjercicio } from "./PresupuestoAprobadoEjercicio";
 import {
   CONSULTA_PRESUPUESTO,
   ETIQUETAS_ESTADO_EJERCICIO,
@@ -330,6 +331,12 @@ export function EjercicioPresupuestarioPage() {
       />
 
       <FuentesEjercicio
+        detalle={detalle}
+        puedeGestionar={puedeGestionar}
+        escribirBloque={escribirBloque}
+        erroresServidor={erroresServidor}
+      />
+      <PresupuestoAprobadoEjercicio
         detalle={detalle}
         puedeGestionar={puedeGestionar}
         escribirBloque={escribirBloque}

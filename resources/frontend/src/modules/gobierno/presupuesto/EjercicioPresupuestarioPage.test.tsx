@@ -118,6 +118,34 @@ function responderConDetalle(detalle: unknown) {
     if (ruta === "/gobierno/presupuesto/ejercicios/e1") {
       return detalle;
     }
+    if (
+      ruta ===
+      "/gobierno/presupuesto/ejercicios/e1/presupuesto-aprobado"
+    ) {
+      return {
+        version: 3,
+        congelado: false,
+        moneda: "VED",
+        ingresos: [],
+        creditos: [],
+        existencias_tesoro: null,
+        totales: {
+          ingresos: "0.00",
+          creditos: "0.00",
+          existencias: "0.00",
+          holgura_tesoro: "0.00",
+          disponible: "0.00",
+          diferencia: "0.00",
+          cuadra: true,
+        },
+        opciones: {
+          categorias: [],
+          partidas_egreso: [],
+          partidas_recurso: [],
+          fuentes: [],
+        },
+      };
+    }
     if (ruta === "/gobierno/presupuesto/ejercicios/e1/plan") {
       return {
         version: 3,
@@ -254,6 +282,34 @@ describe("EjercicioPresupuestarioPage", () => {
     apiFetchMock.mockImplementation(async (ruta: string) => {
       if (ruta === "/gobierno/presupuesto/ejercicios/e1") {
         return detalleBase;
+      }
+      if (
+        ruta ===
+        "/gobierno/presupuesto/ejercicios/e1/presupuesto-aprobado"
+      ) {
+        return {
+          version: 3,
+          congelado: false,
+          moneda: "VED",
+          ingresos: [],
+          creditos: [],
+          existencias_tesoro: null,
+          totales: {
+            ingresos: "0.00",
+            creditos: "0.00",
+            existencias: "0.00",
+            holgura_tesoro: "0.00",
+            disponible: "0.00",
+            diferencia: "0.00",
+            cuadra: true,
+          },
+          opciones: {
+            categorias: [],
+            partidas_egreso: [],
+            partidas_recurso: [],
+            fuentes: [],
+          },
+        };
       }
       if (ruta === "/gobierno/presupuesto/ejercicios/e1/plan") {
         return {
