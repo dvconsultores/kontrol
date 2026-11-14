@@ -214,6 +214,18 @@ export interface PresupuestoAprobadoVista {
   };
 }
 
+export interface RefEtiqueta { id: string; etiqueta: string }
+export interface DisponibilidadVista { anio: number; estado: EstadoEjercicio; moneda: string; certificable: boolean;
+  items: { credito_id: string; categoria: RefEtiqueta; unidad: RefEtiqueta | null; partida: RefEtiqueta; fuente: RefEtiqueta; credito: string; certificado: string; disponible: string }[];
+  totales: { credito: string; certificado: string; disponible: string };
+  filtros: { categorias: RefEtiqueta[]; unidades: RefEtiqueta[]; partidas: RefEtiqueta[]; fuentes: RefEtiqueta[] };
+  firmantes: { cargo_id: string; etiqueta: string; unidad: string }[]; expedientes: RefEtiqueta[] }
+export interface Certificacion { id: string; codigo: string; estado: "VIGENTE" | "ANULADA"; fecha: string; emitida_en: string; monto: string; saldo_antes: string;
+  saldo_despues: string; moneda: string; concepto: string; expediente_id: string | null; expediente_referencia: string; credito_id: string; categoria: string;
+  unidad: string | null; partida: string; fuente: string; firmante_cargo: string; firmante_unidad: string; firmante_funcionario: string | null; emitida_por: string;
+  huella: string; documento_nombre: string; documento_sha256: string; anulada_en: string | null; anulada_por: string | null; motivo_anulacion: string | null }
+export interface CertificacionesVista { items: Certificacion[] }
+
 export const ETIQUETAS_ESTADO_EJERCICIO: Record<EstadoEjercicio, string> = {
   BORRADOR: "Borrador",
   APROBADO: "Aprobado",
@@ -244,6 +256,8 @@ export const ETIQUETAS_HISTORIA_EJERCICIO: Record<string, string> = {
   CREDITO_ELIMINADO: "Crédito eliminado",
   EXISTENCIAS_REGISTRADAS: "Existencias del Tesoro declaradas",
   EXISTENCIAS_ELIMINADAS: "Existencias del Tesoro retiradas",
+  CERTIFICACION_EMITIDA: "Certificación de disponibilidad emitida",
+  CERTIFICACION_ANULADA: "Certificación de disponibilidad anulada",
 };
 
 export const ETIQUETAS_TIPO_PARTIDA: Record<"RECURSO" | "EGRESO", string> = {

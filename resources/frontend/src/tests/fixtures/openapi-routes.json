@@ -1928,6 +1928,31 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/certificaciones",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/certificaciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/certificaciones/{certificacion_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/certificaciones/{certificacion_id}/anular",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/certificaciones/{certificacion_id}/documento",
+      "query": []
+    },
+    {
       "method": "PUT",
       "path": "/gobierno/presupuesto/ejercicios/{year_id}/clasificador",
       "query": []
@@ -1954,6 +1979,16 @@
       "method": "DELETE",
       "path": "/gobierno/presupuesto/ejercicios/{year_id}/clasificador/partidas/{partida_id}",
       "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/disponibilidad",
+      "query": [
+        "categoria_id",
+        "fuente_id",
+        "partida_id",
+        "unidad_id"
+      ]
     },
     {
       "method": "GET",
