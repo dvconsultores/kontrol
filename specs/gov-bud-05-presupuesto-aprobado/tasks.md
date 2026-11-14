@@ -14,4 +14,4 @@ Tope: 8 llamadas (objetivo 3–5), máximo 2 reintentos por subproblema real, ag
 
 ## Estado (2026-11-14)
 
-T001–T006 ✔ (llamadas y reintentos en `evidence/ATTEMPT_LOG.md`). T007 en curso: suite PG completa, publicación y UAT.
+T001–T006 ✔ (llamadas y reintentos en `evidence/ATTEMPT_LOG.md`). T007 ✔ (evidencia en `evidence/CIERRE.md`).
