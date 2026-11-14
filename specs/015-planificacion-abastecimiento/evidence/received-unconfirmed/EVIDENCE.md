@@ -49,8 +49,8 @@
 
 ## Deudas (no absorbidas)
 
-- **RECEIPT-CONFIRMATION-RESIDUE (Spec 021).** La confirmación es de una sola vez por recepción. Lo aceptado que no se libera ni se rechaza queda en `RECIBIDO` en una recepción CONFIRMADA y ya no puede confirmarse. La planificación no lo cuenta como pendiente.
-- **E2E-INVCONF-ORDER-DEPENDENCY.** `inventory-confirmation.spec.ts` toma el primer almacén de la lista. Si se ejecuta la primera sobre una base efímera recién sembrada, todavía no hay almacenes y falla. En su orden habitual pasa (51/51). Es anterior a este ciclo.
+- ~~**RECEIPT-CONFIRMATION-RESIDUE (Spec 021).**~~ Pagada el 2026-11-13 en `specs/004-compras-cuentas-por-pagar/spec021-confirmation-completeness-delta.md`: la confirmación debe decidir el 100 % de lo aceptado o no muta nada.
+- ~~**E2E-INVCONF-ORDER-DEPENDENCY.**~~ Pagada en el mismo ciclo (solo el arnés).
 - **REQUISITION-PLAN-SNAPSHOT.** La instantánea guardada del plan de una línea de requisición (`requisition_line_plans`) no guarda lo recibido sin confirmar ni el proyectado. La pantalla lo explica con el plan en vivo. Persistirlo exigiría migración y no se necesitaba.
 - **Pendientes de ciclos anteriores:** ORDENES-UI-ETIQUETAS, AXE-BUTTON-BUSY-TRANSITION y las zonas A–E.
 - **GOV-TEST-UTC-DATE.** Es externa a P2 y no es puerta de este producto.

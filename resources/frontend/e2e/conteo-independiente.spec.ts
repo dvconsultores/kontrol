@@ -190,7 +190,7 @@ test.describe("Spec T021-IC — conteo independiente", () => {
       timeout: 15_000,
     });
 
-    await page.getByLabel(/Cantidad a confirmar/).fill("20");
+    await page.getByLabel(/A disponible/).fill("20");
     await page.getByRole("button", { name: "Confirmar inventario" }).click();
     await expect(
       page.getByRole("heading", { name: "Decisiones tomadas" }),

@@ -322,7 +322,7 @@ test("recibido sin confirmar: la recepción pendiente cuenta en la proyección s
   await expect(page.getByRole("heading", { name: "Confirmación de inventario" })).toBeVisible();
   await page.getByLabel(/Recepción aceptada/).selectOption(rec.id);
   await expect(page.getByText("Faltan líneas por contar.")).toBeHidden({ timeout: 15_000 });
-  await page.getByLabel(/Cantidad a confirmar/).fill("3");
+  await page.getByLabel(/A disponible/).fill("3");
   await page.getByRole("button", { name: "Confirmar inventario" }).click();
   await expect(page.getByRole("heading", { name: "Decisiones tomadas" })).toBeVisible({ timeout: 15_000 });
 

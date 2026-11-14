@@ -584,7 +584,7 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   expect(conteoImp.ok).toBeTruthy();
   await page.reload();
   await expect(page.getByText("Faltan líneas por contar.")).toBeHidden();
-  await page.getByLabel(/Cantidad a confirmar/).fill("10");
+  await page.getByLabel(/A disponible/).fill("10");
   await page.getByRole("button", { name: "Confirmar inventario" }).click();
   await expect(page.getByRole("heading", { name: "Decisiones tomadas" })).toBeVisible();
   await page.getByRole("link", { name: "Volver al expediente" }).click();

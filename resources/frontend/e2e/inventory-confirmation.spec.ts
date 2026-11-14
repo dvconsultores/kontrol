@@ -43,7 +43,21 @@ async function get(request: APIRequestContext, c: Ctx, ruta: string) {
 /** Deja una recepción aceptada, con su mercancía en `RECIBIDO`. */
 async function recepcionAceptada(request: APIRequestContext, c: Ctx, marca: string) {
   const almacenes = await get(request, c, "/organization/warehouses");
-  const almacen = (almacenes.items ?? almacenes)[0].id as string;
+  let almacen = ((almacenes.items ?? almacenes)[0]?.id as string | undefined) ?? "";
+  if (!almacen) {
+    const sucursal = await post(request, c, "/organization/branches", {
+      company_id: c.company,
+      code: `S-${marca}`,
+      name: "Sucursal E2E",
+    });
+    const creado = await post(request, c, "/organization/warehouses", {
+      company_id: c.company,
+      branch_id: sucursal.id,
+      code: `W-${marca}`,
+      name: "Almacén E2E",
+    });
+    almacen = creado.id as string;
+  }
   const prov = await post(request, c, "/maestros/terceros", {
     code: `PRV-${marca}`, name: "Proveedor E2E", person_type: "JURIDICA",
     roles: ["PROVEEDOR"], status: "ACTIVE",
@@ -114,7 +128,7 @@ test.describe("Spec 021 — confirmación de inventario", () => {
     // de faltar por contar. Un toast puede desvanecerse; el estado, no.
     await expect(page.getByText("Faltan líneas por contar.")).toBeHidden({ timeout: 15_000 });
 
-    await page.getByLabel(/Cantidad a confirmar/).fill("100");
+    await page.getByLabel(/A disponible/).fill("100");
     await page.getByRole("button", { name: "Confirmar inventario" }).click();
     await expect(page.getByRole("heading", { name: "Decisiones tomadas" }))
       .toBeVisible({ timeout: 15_000 });

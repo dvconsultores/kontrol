@@ -411,6 +411,30 @@ Necesita:
 
 **Límites:**
 - Cuenta lo **aceptado** de las recepciones aceptadas cuya confirmación de inventario sigue pendiente, en el almacén de la recepción. Lo rechazado no cuenta.
-- La confirmación es de una sola vez por recepción. Lo que no se decide al confirmar (ni liberado ni rechazado) deja de contar como pendiente. Queda como deuda de la Spec 021 (RECEIPT-CONFIRMATION-RESIDUE).
+- La confirmación es de una sola vez por recepción y, desde la sección siguiente, debe decidir el 100 % de lo aceptado: ya no puede quedar un residuo sin decidir.
 - Es una proyección: no crea movimientos, no cambia saldos, costo ni ubicación.
 - Las necesidades de antes de este cambio muestran 0 en «En recepción (pendiente de confirmar)», porque su cálculo no lo incluía.
+
+## Confirmación completa: sin cantidades huérfanas (Spec 021)
+
+Necesita:
+- una recepción aceptada de 100 unidades recibidas, con 80 aceptadas y 20 rechazadas en la aceptación;
+- una segunda persona que cuente la línea.
+
+152. Que la segunda persona cuente la línea (100). En Inventario → Confirmación de inventario, elija la recepción. Cada línea muestra:
+     - el producto por código y nombre, sin identificadores internos;
+     - «Aceptado (base)»: 80;
+     - «Pendiente por decidir»: 80.
+153. Escriba 50 en «A disponible» y 10 en «Rechazada», con un motivo. La pantalla dice «Pendiente por decidir: 20» y el botón «Confirmar inventario» queda deshabilitado.
+154. Escriba 70 y 20. La pantalla dice «Excede lo aceptado en 10.» y el botón sigue deshabilitado.
+155. Aunque alguien intente confirmar 50 + 10 por otra vía, el sistema lo rechaza con «Debe decidirse la totalidad de la cantidad aceptada antes de confirmar el inventario.». Compruebe en Inventario → Existencias que siguen 80 en «RECIBIDO» y que la recepción sigue pendiente de confirmar.
+156. Escriba 60 y 20, con el motivo. La pantalla dice «Pendiente por decidir: 0». Confirme. Aparecen las «Decisiones tomadas».
+157. En Inventario → Existencias: 60 en «DISPONIBLE», 20 en «RECHAZADO» y nada en «RECIBIDO».
+158. En la planificación de reposición del almacén y el producto: «En recepción (pendiente de confirmar)» es 0, «Disponible» es 60 y el «Disponible proyectado» es la suma de disponible, suministro abierto y en recepción, sin contar nada dos veces.
+159. La recepción ya no se puede volver a confirmar.
+
+**Límites:**
+- La confirmación sigue siendo de una sola vez: no hay confirmaciones parciales, segundas confirmaciones ni reapertura.
+- Una línea sin cantidad aceptada (todo rechazado en la aceptación, o sin inventario) no pide decisión.
+- Las cantidades se deciden en unidad base: dos cajas de 12 son 24.
+

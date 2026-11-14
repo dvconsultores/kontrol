@@ -662,6 +662,8 @@ export interface GoodsReceiptConfirmationFields {
 export interface ReconciliationItem {
   receipt_line_id: string;
   product_id: string;
+  product_code: string | null;
+  product_name: string | null;
   base_quantity_received: string;
   base_quantity_ordered: string | null;
   counted_base_quantity: string | null;
@@ -671,6 +673,8 @@ export interface ReconciliationItem {
   difference_kinds: string[];
   already_confirmed_base: string;
   pending_base: string;
+  base_quantity_accepted: string;
+  pending_decision_base: string;
 }
 
 export interface ReceiptReconciliation {
