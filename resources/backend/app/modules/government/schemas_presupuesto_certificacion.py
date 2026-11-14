@@ -45,12 +45,14 @@ class CreditoDisponibleOut(BaseModel):
     fuente: RefOut
     credito: Decimal
     certificado: Decimal
+    comprometido: Decimal
     disponible: Decimal
 
 
 class TotalesDisponibilidadOut(BaseModel):
     credito: Decimal
     certificado: Decimal
+    comprometido: Decimal
     disponible: Decimal
 
 
@@ -91,6 +93,9 @@ class CertificacionOut(BaseModel):
     fecha: date
     emitida_en: datetime
     monto: Decimal
+    consumido: Decimal
+    remanente: Decimal
+    situacion: str
     saldo_antes: Decimal
     saldo_despues: Decimal
     moneda: str

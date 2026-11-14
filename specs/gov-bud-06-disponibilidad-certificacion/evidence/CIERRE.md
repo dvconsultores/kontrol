@@ -56,4 +56,4 @@ PDD-B06-01..07, en el plan:
 ## Pendiente
 
 - OBS-BUD34-E2E-PARALELO: plan-fuentes con 409 bajo 4 workers. Es anterior a este ciclo.
-- Siguiente en la cadena: BUD-07 (modificaciones presupuestarias) o BUD-08 (compromiso), que consume las certificaciones VIGENTES.
+- Siguiente en la cadena: BUD-08 (compromiso; BUD-07 es precompromiso o reserva y BUD-10 son las modificaciones), que consume las certificaciones VIGENTES.

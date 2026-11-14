@@ -1982,6 +1982,36 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/compromisos",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/compromisos",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/compromisos/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/compromisos/{compromiso_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/compromisos/{compromiso_id}/anular",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/compromisos/{compromiso_id}/documento",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/presupuesto/ejercicios/{year_id}/disponibilidad",
       "query": [
         "categoria_id",

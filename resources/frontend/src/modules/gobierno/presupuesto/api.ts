@@ -216,15 +216,45 @@ export interface PresupuestoAprobadoVista {
 
 export interface RefEtiqueta { id: string; etiqueta: string }
 export interface DisponibilidadVista { anio: number; estado: EstadoEjercicio; moneda: string; certificable: boolean;
-  items: { credito_id: string; categoria: RefEtiqueta; unidad: RefEtiqueta | null; partida: RefEtiqueta; fuente: RefEtiqueta; credito: string; certificado: string; disponible: string }[];
-  totales: { credito: string; certificado: string; disponible: string };
+  items: { credito_id: string; categoria: RefEtiqueta; unidad: RefEtiqueta | null; partida: RefEtiqueta; fuente: RefEtiqueta; credito: string; certificado: string; comprometido: string; disponible: string }[];
+  totales: { credito: string; certificado: string; comprometido: string; disponible: string };
   filtros: { categorias: RefEtiqueta[]; unidades: RefEtiqueta[]; partidas: RefEtiqueta[]; fuentes: RefEtiqueta[] };
   firmantes: { cargo_id: string; etiqueta: string; unidad: string }[]; expedientes: RefEtiqueta[] }
-export interface Certificacion { id: string; codigo: string; estado: "VIGENTE" | "ANULADA"; fecha: string; emitida_en: string; monto: string; saldo_antes: string;
+export interface Certificacion { id: string; codigo: string; estado: "VIGENTE" | "ANULADA"; fecha: string; emitida_en: string; monto: string; consumido: string; remanente: string; situacion: SituacionCertificado; saldo_antes: string;
   saldo_despues: string; moneda: string; concepto: string; expediente_id: string | null; expediente_referencia: string; credito_id: string; categoria: string;
   unidad: string | null; partida: string; fuente: string; firmante_cargo: string; firmante_unidad: string; firmante_funcionario: string | null; emitida_por: string;
   huella: string; documento_nombre: string; documento_sha256: string; anulada_en: string | null; anulada_por: string | null; motivo_anulacion: string | null }
 export interface CertificacionesVista { items: Certificacion[] }
+
+export type SituacionCertificado = "DISPONIBLE" | "PARCIALMENTE_CONSUMIDA" | "AGOTADA" | "ANULADA";
+
+export const ETIQUETAS_SITUACION_CERTIFICADO: Record<SituacionCertificado, string> = {
+  DISPONIBLE: "Disponible",
+  PARCIALMENTE_CONSUMIDA: "Parcialmente consumida",
+  AGOTADA: "Agotada",
+  ANULADA: "Anulada",
+};
+
+export interface CertificadoOpcion { certificado_id: string; codigo: string; credito_id: string; categoria: string; unidad: string | null; partida: string;
+  fuente: string; expediente_id: string | null; expediente_referencia: string; monto: string; consumido: string; remanente: string;
+  situacion: SituacionCertificado; etiqueta: string }
+
+export interface AutoridadOpcion { cargo_id: string; etiqueta: string; unidad: string; limite_tipo: "SIN_LIMITE" | "MONTO"; limite_monto: string | null;
+  limite_moneda: string | null; limite: string }
+
+export interface OpcionesCompromisoVista { anio: number; estado: EstadoEjercicio; moneda: string; comprometible: boolean;
+  certificados: CertificadoOpcion[]; autoridades: AutoridadOpcion[]; soportes: RefEtiqueta[] }
+
+export interface LineaCompromiso { linea: number; certificado_id: string; certificado_codigo: string; credito_id: string; categoria: string;
+  unidad: string | null; partida: string; fuente: string; monto: string }
+
+export interface Compromiso { id: string; codigo: string; estado: "VIGENTE" | "ANULADO"; fecha: string; emitido_en: string; total: string; moneda: string;
+  concepto: string; expediente_id: string | null; expediente_referencia: string; autoridad_cargo: string; autoridad_unidad: string;
+  autoridad_funcionario: string | null; limite: string; soporte_documento_id: string; soporte: string; soporte_sha256: string; emitido_por: string;
+  huella: string; documento_nombre: string; documento_sha256: string; anulado_en: string | null; anulado_por: string | null;
+  motivo_anulacion: string | null; lineas: LineaCompromiso[] }
+
+export interface CompromisosVista { items: Compromiso[] }
 
 export const ETIQUETAS_ESTADO_EJERCICIO: Record<EstadoEjercicio, string> = {
   BORRADOR: "Borrador",
@@ -258,6 +288,8 @@ export const ETIQUETAS_HISTORIA_EJERCICIO: Record<string, string> = {
   EXISTENCIAS_ELIMINADAS: "Existencias del Tesoro retiradas",
   CERTIFICACION_EMITIDA: "Certificación de disponibilidad emitida",
   CERTIFICACION_ANULADA: "Certificación de disponibilidad anulada",
+  COMPROMISO_REGISTRADO: "Compromiso presupuestario registrado",
+  COMPROMISO_ANULADO: "Compromiso presupuestario anulado",
 };
 
 export const ETIQUETAS_TIPO_PARTIDA: Record<"RECURSO" | "EGRESO", string> = {

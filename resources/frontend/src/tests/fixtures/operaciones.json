@@ -2744,6 +2744,54 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/compromisos",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/compromisos",
+      "capabilities": [
+        "gobierno_presupuesto:commit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/compromisos/opciones",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/compromisos/{compromiso_id}",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/compromisos/{compromiso_id}/anular",
+      "capabilities": [
+        "gobierno_presupuesto:commit"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/compromisos/{compromiso_id}/documento",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/disponibilidad",
       "capabilities": [
         "gobierno_presupuesto:view"
@@ -8001,6 +8049,7 @@
     "gobierno_presupuesto:approve",
     "gobierno_presupuesto:close",
     "gobierno_presupuesto:certify",
+    "gobierno_presupuesto:commit",
     "gobierno_cierre:view",
     "gobierno_cierre:manage",
     "gobierno_cierre:activate",

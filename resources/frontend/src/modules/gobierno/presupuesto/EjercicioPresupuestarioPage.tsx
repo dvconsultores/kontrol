@@ -20,6 +20,7 @@ import { PlanEjercicio } from "./PlanEjercicio";
 import { FuentesEjercicio } from "./FuentesEjercicio";
 import { PresupuestoAprobadoEjercicio } from "./PresupuestoAprobadoEjercicio";
 import { DisponibilidadEjercicio } from "./DisponibilidadEjercicio";
+import { CompromisosEjercicio } from "./CompromisosEjercicio";
 import {
   CONSULTA_PRESUPUESTO,
   ETIQUETAS_ESTADO_EJERCICIO,
@@ -51,6 +52,7 @@ export function EjercicioPresupuestarioPage() {
   const puedeAprobar = tiene("gobierno_presupuesto:approve", "empresa");
   const puedeCerrar = tiene("gobierno_presupuesto:close", "empresa");
   const puedeCertificar = tiene("gobierno_presupuesto:certify", "empresa");
+  const puedeComprometer = tiene("gobierno_presupuesto:commit", "empresa");
 
   const [erroresServidor, setErroresServidor] = useState<Record<string, string[]>>({});
   const [alerta, setAlerta] = useState<string | null>(null);
@@ -348,6 +350,14 @@ export function EjercicioPresupuestarioPage() {
         <DisponibilidadEjercicio
           detalle={detalle}
           puedeCertificar={puedeCertificar}
+          escribirBloque={escribirBloque}
+          erroresServidor={erroresServidor}
+        />
+      ) : null}
+      {detalle.estado !== "BORRADOR" ? (
+        <CompromisosEjercicio
+          detalle={detalle}
+          puedeComprometer={puedeComprometer}
           escribirBloque={escribirBloque}
           erroresServidor={erroresServidor}
         />

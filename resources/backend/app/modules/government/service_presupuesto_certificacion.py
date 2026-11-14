@@ -20,6 +20,8 @@ from app.modules.government.models import (
     GovernmentBudgetCategory,
     GovernmentBudgetCertificate,
     GovernmentBudgetClassifierItem,
+    GovernmentBudgetCommitment,
+    GovernmentBudgetCommitmentLine,
     GovernmentBudgetCredit,
     GovernmentBudgetFundingSource,
     GovernmentOfficial,
@@ -56,17 +58,157 @@ def _monto_es(monto: Decimal | str) -> str:
     return f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-def disponible_de_credito(db: Session, credito: GovernmentBudgetCredit) -> Decimal:
-    """Disponibilidad certificable = crédito aprobado − certificaciones vigentes. Cuando existan, BUD-10 sumará \
-modificaciones netas y BUD-08 restará compromisos aquí, sin tocar certificados emitidos."""
+def situacion_de_certificado(estado: str, monto: Decimal, consumido: Decimal) -> str:
+    if estado != "VIGENTE":
+        return "ANULADA"
+    if consumido == 0:
+        return "DISPONIBLE"
+    if consumido >= monto:
+        return "AGOTADA"
+    return "PARCIALMENTE_CONSUMIDA"
+
+
+def disponible_por_formula(credito: Decimal, certificado_vigente: Decimal, consumido_vigente: Decimal, comprometido: Decimal) -> Decimal:
+    """DISPONIBLE = CRÉDITO − Σ REMANENTE de CDP vigentes − Σ COMPROMISOS vigentes (BUD-08). El remanente es certificado − consumido:
+    convertir una CDP en compromiso no reduce dos veces."""
+    return credito - (certificado_vigente - consumido_vigente) - comprometido
+
+
+def _consumido_por_certificado(db: Session, year_id: str) -> dict[str, Decimal]:
+    filas = db.execute(
+        select(
+            GovernmentBudgetCommitmentLine.certificate_id,
+            func.sum(GovernmentBudgetCommitmentLine.monto),
+        )
+        .select_from(GovernmentBudgetCommitmentLine)
+        .join(
+            GovernmentBudgetCommitment,
+            GovernmentBudgetCommitment.id == GovernmentBudgetCommitmentLine.commitment_id,
+        )
+        .where(
+            GovernmentBudgetCommitmentLine.year_id == year_id,
+            GovernmentBudgetCommitment.estado == "VIGENTE",
+        )
+        .group_by(GovernmentBudgetCommitmentLine.certificate_id)
+    ).all()
+    return {str(certificate_id): Decimal(str(monto or 0)) for certificate_id, monto in filas if certificate_id is not None}
+
+
+def consumido_de_certificado(db: Session, certificado: GovernmentBudgetCertificate) -> Decimal:
     resultado = db.execute(
-        select(func.coalesce(func.sum(GovernmentBudgetCertificate.monto), 0)).where(
-            GovernmentBudgetCertificate.credit_id == credito.id,
-            GovernmentBudgetCertificate.estado == "VIGENTE",
+        select(func.coalesce(func.sum(GovernmentBudgetCommitmentLine.monto), 0))
+        .select_from(GovernmentBudgetCommitmentLine)
+        .join(
+            GovernmentBudgetCommitment,
+            GovernmentBudgetCommitment.id == GovernmentBudgetCommitmentLine.commitment_id,
+        )
+        .where(
+            GovernmentBudgetCommitmentLine.certificate_id == certificado.id,
+            GovernmentBudgetCommitment.estado == "VIGENTE",
         )
     ).scalar_one_or_none()
-    vigente = Decimal(str(resultado or 0))
-    return credito.monto - vigente
+    return Decimal(str(resultado or 0))
+
+
+def _comprometido_por_credito(db: Session, year_id: str) -> dict[str, Decimal]:
+    filas = db.execute(
+        select(
+            GovernmentBudgetCommitmentLine.credit_id,
+            func.sum(GovernmentBudgetCommitmentLine.monto),
+        )
+        .select_from(GovernmentBudgetCommitmentLine)
+        .join(
+            GovernmentBudgetCommitment,
+            GovernmentBudgetCommitment.id == GovernmentBudgetCommitmentLine.commitment_id,
+        )
+        .where(
+            GovernmentBudgetCommitmentLine.year_id == year_id,
+            GovernmentBudgetCommitment.estado == "VIGENTE",
+        )
+        .group_by(GovernmentBudgetCommitmentLine.credit_id)
+    ).all()
+    return {str(credit_id): Decimal(str(monto or 0)) for credit_id, monto in filas if credit_id is not None}
+
+
+def _consumido_vigente_por_credito(db: Session, year_id: str) -> dict[str, Decimal]:
+    filas = db.execute(
+        select(
+            GovernmentBudgetCommitmentLine.credit_id,
+            func.sum(GovernmentBudgetCommitmentLine.monto),
+        )
+        .select_from(GovernmentBudgetCommitmentLine)
+        .join(
+            GovernmentBudgetCommitment,
+            GovernmentBudgetCommitment.id == GovernmentBudgetCommitmentLine.commitment_id,
+        )
+        .join(
+            GovernmentBudgetCertificate,
+            GovernmentBudgetCertificate.id == GovernmentBudgetCommitmentLine.certificate_id,
+        )
+        .where(
+            GovernmentBudgetCommitmentLine.year_id == year_id,
+            GovernmentBudgetCommitment.estado == "VIGENTE",
+            GovernmentBudgetCertificate.estado == "VIGENTE",
+        )
+        .group_by(GovernmentBudgetCommitmentLine.credit_id)
+    ).all()
+    return {str(credit_id): Decimal(str(monto or 0)) for credit_id, monto in filas if credit_id is not None}
+
+
+def disponible_de_credito(db: Session, credito: GovernmentBudgetCredit) -> Decimal:
+    """DISPONIBLE = CRÉDITO − Σ REMANENTE de CDP vigentes − Σ COMPROMISOS vigentes (BUD-08). El remanente es certificado − consumido:
+    convertir una CDP en compromiso no reduce dos veces."""
+    certificado_vigente = Decimal(
+        str(
+            db.execute(
+                select(func.coalesce(func.sum(GovernmentBudgetCertificate.monto), 0)).where(
+                    GovernmentBudgetCertificate.credit_id == credito.id,
+                    GovernmentBudgetCertificate.estado == "VIGENTE",
+                )
+            ).scalar_one_or_none()
+            or 0
+        )
+    )
+    consumido_vigente = Decimal(
+        str(
+            db.execute(
+                select(func.coalesce(func.sum(GovernmentBudgetCommitmentLine.monto), 0))
+                .select_from(GovernmentBudgetCommitmentLine)
+                .join(
+                    GovernmentBudgetCommitment,
+                    GovernmentBudgetCommitment.id == GovernmentBudgetCommitmentLine.commitment_id,
+                )
+                .join(
+                    GovernmentBudgetCertificate,
+                    GovernmentBudgetCertificate.id == GovernmentBudgetCommitmentLine.certificate_id,
+                )
+                .where(
+                    GovernmentBudgetCommitmentLine.credit_id == credito.id,
+                    GovernmentBudgetCommitment.estado == "VIGENTE",
+                    GovernmentBudgetCertificate.estado == "VIGENTE",
+                )
+            ).scalar_one_or_none()
+            or 0
+        )
+    )
+    comprometido = Decimal(
+        str(
+            db.execute(
+                select(func.coalesce(func.sum(GovernmentBudgetCommitmentLine.monto), 0))
+                .select_from(GovernmentBudgetCommitmentLine)
+                .join(
+                    GovernmentBudgetCommitment,
+                    GovernmentBudgetCommitment.id == GovernmentBudgetCommitmentLine.commitment_id,
+                )
+                .where(
+                    GovernmentBudgetCommitmentLine.credit_id == credito.id,
+                    GovernmentBudgetCommitment.estado == "VIGENTE",
+                )
+            ).scalar_one_or_none()
+            or 0
+        )
+    )
+    return disponible_por_formula(credito.monto, certificado_vigente, consumido_vigente, comprometido)
 
 
 def _vigentes_por_credito(db: Session, year_id: str) -> dict[str, Decimal]:
@@ -187,7 +329,7 @@ def _render_pdf(snapshot: dict[str, Any], huella: str, emitida_en: datetime) -> 
     return buffer.getvalue()
 
 
-def _salida(c: GovernmentBudgetCertificate, username_emitida: str | None = None, username_anulada: str | None = None) -> dict[str, Any]:
+def _salida(c: GovernmentBudgetCertificate, username_emitida: str | None = None, username_anulada: str | None = None, consumido: Decimal = Decimal("0.00")) -> dict[str, Any]:
     snapshot = c.snapshot or {}
     credito = snapshot.get("credito", {})
     firmante = snapshot.get("firmante", {})
@@ -198,6 +340,9 @@ def _salida(c: GovernmentBudgetCertificate, username_emitida: str | None = None,
         "fecha": c.fecha,
         "emitida_en": c.emitida_en,
         "monto": c.monto,
+        "consumido": consumido,
+        "remanente": (c.monto - consumido) if c.estado == "VIGENTE" else Decimal("0.00"),
+        "situacion": situacion_de_certificado(c.estado, c.monto, consumido),
         "saldo_antes": c.saldo_antes,
         "saldo_despues": c.saldo_despues,
         "moneda": c.moneda,
@@ -222,14 +367,16 @@ def _salida(c: GovernmentBudgetCertificate, username_emitida: str | None = None,
     }
 
 
-def _salida_con_usuarios(db: Session, c: GovernmentBudgetCertificate, tenant_id: str) -> dict[str, Any]:
+def _salida_con_usuarios(db: Session, c: GovernmentBudgetCertificate, tenant_id: str, consumido: Decimal | None = None) -> dict[str, Any]:
+    if consumido is None:
+        consumido = consumido_de_certificado(db, c)
     ids: list[str] = []
     if c.emitida_por:
         ids.append(c.emitida_por)
     if c.anulada_por:
         ids.append(c.anulada_por)
     usuarios = _usuarios_por_ids(db, ids, tenant_id) if ids else {}
-    return _salida(c, usuarios.get(c.emitida_por) if c.emitida_por else None, usuarios.get(c.anulada_por) if c.anulada_por else None)
+    return _salida(c, usuarios.get(c.emitida_por) if c.emitida_por else None, usuarios.get(c.anulada_por) if c.anulada_por else None, consumido)
 
 
 def disponibilidad(db: Session, ctx: CompanyContext, year_id: str, filtros: dict[str, str | None]) -> dict[str, Any]:
@@ -242,6 +389,8 @@ def disponibilidad(db: Session, ctx: CompanyContext, year_id: str, filtros: dict
     ).scalars().all()
 
     vigentes = _vigentes_por_credito(db, str(ejercicio.id))
+    comprometidos = _comprometido_por_credito(db, str(ejercicio.id))
+    consumidos = _consumido_vigente_por_credito(db, str(ejercicio.id))
 
     categorias = {str(c.id): c for c in db.execute(select(GovernmentBudgetCategory).where(GovernmentBudgetCategory.id.in_([cr.category_id for cr in creditos]))).scalars().all()}
     items = {str(i.id): i for i in db.execute(select(GovernmentBudgetClassifierItem).where(GovernmentBudgetClassifierItem.id.in_([cr.item_id for cr in creditos]))).scalars().all()}
@@ -258,7 +407,9 @@ def disponibilidad(db: Session, ctx: CompanyContext, year_id: str, filtros: dict
         partida = items.get(str(cr.item_id))
         fuente = fuentes.get(str(cr.source_id))
         certificado = vigentes.get(str(cr.id), Decimal("0.00"))
-        disponible = cr.monto - certificado
+        comprometido = comprometidos.get(str(cr.id), Decimal("0.00"))
+        consumido = consumidos.get(str(cr.id), Decimal("0.00"))
+        disponible = disponible_por_formula(cr.monto, certificado, consumido, comprometido)
         crudos.append(
             {
                 "credito_id": str(cr.id),
@@ -268,6 +419,7 @@ def disponibilidad(db: Session, ctx: CompanyContext, year_id: str, filtros: dict
                 "fuente": {"id": str(fuente.id), "etiqueta": _etiqueta(fuente.codigo, fuente.denominacion)} if fuente else None,
                 "credito": cr.monto,
                 "certificado": certificado,
+                "comprometido": comprometido,
                 "disponible": disponible,
             }
         )
@@ -295,6 +447,7 @@ def disponibilidad(db: Session, ctx: CompanyContext, year_id: str, filtros: dict
     totales = {
         "credito": sum((item["credito"] for item in filtrados), Decimal("0.00")),
         "certificado": sum((item["certificado"] for item in filtrados), Decimal("0.00")),
+        "comprometido": sum((item["comprometido"] for item in filtrados), Decimal("0.00")),
         "disponible": sum((item["disponible"] for item in filtrados), Decimal("0.00")),
     }
 
@@ -369,7 +522,8 @@ def listar(db: Session, ctx: CompanyContext, year_id: str) -> dict[str, Any]:
         )
         .order_by(GovernmentBudgetCertificate.numero.desc())
     ).scalars().all()
-    return {"items": [_salida_con_usuarios(db, c, ctx.tenant_id) for c in certificaciones]}
+    consumidos = _consumido_por_certificado(db, str(ejercicio.id))
+    return {"items": [_salida_con_usuarios(db, c, ctx.tenant_id, consumidos.get(str(c.id), Decimal("0.00"))) for c in certificaciones]}
 
 
 def detalle(db: Session, ctx: CompanyContext, year_id: str, certificacion_id: str) -> dict[str, Any]:
@@ -645,6 +799,14 @@ def anular(db: Session, ctx: CompanyContext, user: User, year_id: str, certifica
 
     if c.estado != "VIGENTE":
         raise ConflictError("GOV_BUDGET_CERTIFICATE_NOT_ACTIVE", "La certificación ya está anulada")
+
+    consumido = consumido_de_certificado(db, c)
+    if consumido > 0:
+        raise ConflictError(
+            "GOV_BUDGET_CERTIFICATE_IN_USE",
+            f"La certificación {c.codigo} tiene compromisos vigentes por {_monto_es(consumido)}: anule primero esos compromisos",
+            details={"consumido": str(consumido)},
+        )
 
     motivo = (cuerpo.get("motivo") or "").strip()
     if len(motivo) < 10 or len(motivo) > 500:
