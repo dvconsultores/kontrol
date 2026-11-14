@@ -290,6 +290,13 @@ def eliminar_fuente(
     _exigir_borrador(ejercicio)
     fuente = _obtener_fuente(db, str(ejercicio.id), ctx.company_id, fuente_id)
 
+    from app.modules.government import service_presupuesto_aprobado
+
+    if service_presupuesto_aprobado.en_uso_fuente(db, str(fuente.id)):
+        raise ConflictError(
+            "GOV_BUDGET_FUNDING_SOURCE_IN_USE",
+            "La fuente tiene créditos presupuestarios y no se puede eliminar",
+        )
     db.execute(
         delete(GovernmentBudgetFundingRestriction).where(
             GovernmentBudgetFundingRestriction.source_id == fuente.id,
@@ -335,6 +342,10 @@ def agregar_restriccion(
         partidas=partidas,
     )
     db.add(restriccion)
+    db.flush()
+    from app.modules.government import service_presupuesto_aprobado
+
+    service_presupuesto_aprobado.verificar_fuente(db, ejercicio, str(fuente.id))
     _cambiar_ejercicio(ejercicio)
     db.flush()
     _historia(
@@ -378,6 +389,10 @@ def eliminar_restriccion(
         raise _restriccion_no_encontrada()
 
     db.delete(restriccion)
+    db.flush()
+    from app.modules.government import service_presupuesto_aprobado
+
+    service_presupuesto_aprobado.verificar_fuente(db, ejercicio, str(fuente.id))
     _cambiar_ejercicio(ejercicio)
     db.flush()
     _historia(

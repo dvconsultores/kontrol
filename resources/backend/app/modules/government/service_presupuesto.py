@@ -296,7 +296,7 @@ def _fotografia(db: Session, ejercicio: GovernmentBudgetYear) -> dict[str, Any]:
             "documento_sha256": clasificador.documento_sha256,
             "partidas": partidas,
         }
-    from app.modules.government import service_presupuesto_fuentes, service_presupuesto_plan
+    from app.modules.government import service_presupuesto_aprobado, service_presupuesto_fuentes, service_presupuesto_plan
 
     return {
         "anio": ejercicio.anio,
@@ -313,6 +313,7 @@ def _fotografia(db: Session, ejercicio: GovernmentBudgetYear) -> dict[str, Any]:
         "clasificador": clasificador_foto,
         "plan": service_presupuesto_plan.fotografia_plan(db, ejercicio),
         "fuentes": service_presupuesto_fuentes.fotografia_fuentes(db, ejercicio),
+        "presupuesto_aprobado": service_presupuesto_aprobado.fotografia_presupuesto(db, ejercicio),
     }
 
 
@@ -696,6 +697,13 @@ def eliminar_categoria(
             "GOV_BUDGET_CATEGORY_HAS_CHILDREN",
             "La categoría tiene dependientes y no se puede eliminar",
         )
+    from app.modules.government import service_presupuesto_aprobado
+
+    if service_presupuesto_aprobado.en_uso_categoria(db, str(categoria.id)):
+        raise ConflictError(
+            "GOV_BUDGET_CATEGORY_IN_USE",
+            "La categoría tiene créditos presupuestarios y no se puede eliminar",
+        )
     db.delete(categoria)
     ejercicio.version += 1
     db.flush()
@@ -1011,6 +1019,13 @@ def eliminar_partida(
             "GOV_BUDGET_ITEM_HAS_CHILDREN",
             "La partida tiene partidas hijas y no se puede eliminar",
         )
+    from app.modules.government import service_presupuesto_aprobado
+
+    if service_presupuesto_aprobado.en_uso_partida(db, str(partida.id)):
+        raise ConflictError(
+            "GOV_BUDGET_ITEM_IN_USE",
+            "La partida tiene créditos o estimaciones de ingresos y no se puede eliminar",
+        )
     db.delete(partida)
     ejercicio.version += 1
     db.flush()
@@ -1180,6 +1195,9 @@ def _fijar(
     fecha: date,
     documento_id: str,
 ) -> dict[str, Any]:
+    from app.modules.government import service_presupuesto_aprobado
+
+    service_presupuesto_aprobado.verificar_para_fijar(db, ejercicio)
     documento, sha = _documento_valido(db, ctx, ejercicio, documento_id, "documento_id")
     fotografia = _fotografia(db, ejercicio)
     huella = _huella(fotografia)

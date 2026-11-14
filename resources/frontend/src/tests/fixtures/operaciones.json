@@ -2831,6 +2831,78 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/creditos",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/creditos/{credito_id}",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/creditos/{credito_id}",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/existencias-tesoro",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/existencias-tesoro",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/ingresos",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/ingresos/{ingreso_id}",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/presupuesto-aprobado/ingresos/{ingreso_id}",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/reconducir",
       "capabilities": [
