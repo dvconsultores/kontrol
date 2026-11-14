@@ -118,6 +118,25 @@ function responderConDetalle(detalle: unknown) {
     if (ruta === "/gobierno/presupuesto/ejercicios/e1") {
       return detalle;
     }
+    if (ruta === "/gobierno/presupuesto/ejercicios/e1/plan") {
+      return {
+        version: 3,
+        congelado: false,
+        plan: null,
+        objetivos: [],
+        vinculos: [],
+        metas: [],
+        unidades_disponibles: [],
+        estructura_organizativa: null,
+      };
+    }
+    if (ruta === "/gobierno/presupuesto/ejercicios/e1/fuentes") {
+      return {
+        version: 3,
+        congelado: false,
+        items: [],
+      };
+    }
     if (ruta.includes("/clasificador/partidas")) {
       return { items: [], total: 0 };
     }
@@ -235,6 +254,25 @@ describe("EjercicioPresupuestarioPage", () => {
     apiFetchMock.mockImplementation(async (ruta: string) => {
       if (ruta === "/gobierno/presupuesto/ejercicios/e1") {
         return detalleBase;
+      }
+      if (ruta === "/gobierno/presupuesto/ejercicios/e1/plan") {
+        return {
+          version: 3,
+          congelado: false,
+          plan: null,
+          objetivos: [],
+          vinculos: [],
+          metas: [],
+          unidades_disponibles: [],
+          estructura_organizativa: null,
+        };
+      }
+      if (ruta === "/gobierno/presupuesto/ejercicios/e1/fuentes") {
+        return {
+          version: 3,
+          congelado: false,
+          items: [],
+        };
       }
       if (ruta.endsWith("/e1/categorias")) {
         if (primera) {

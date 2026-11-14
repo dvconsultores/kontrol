@@ -1900,6 +1900,11 @@
       "query": []
     },
     {
+      "method": "PUT",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/categorias/{categoria_id}/vinculo",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/gobierno/presupuesto/ejercicios/{year_id}/cerrar",
       "query": []
@@ -1933,8 +1938,78 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/fuentes",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/fuentes",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/fuentes/{fuente_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/fuentes/{fuente_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/fuentes/{fuente_id}/restricciones",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/fuentes/{fuente_id}/restricciones/{restriccion_id}",
+      "query": []
+    },
+    {
       "method": "PUT",
       "path": "/gobierno/presupuesto/ejercicios/{year_id}/niveles",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/plan",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/plan",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/plan/metas",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/plan/metas/{meta_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/plan/metas/{meta_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/plan/objetivos",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/plan/objetivos/{objetivo_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/plan/objetivos/{objetivo_id}",
       "query": []
     },
     {

@@ -2623,6 +2623,14 @@
       "scope": "COMPANY"
     },
     {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/categorias/{categoria_id}/vinculo",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/cerrar",
       "capabilities": [
@@ -2671,8 +2679,120 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/fuentes",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/fuentes",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/fuentes/{fuente_id}",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/fuentes/{fuente_id}",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/fuentes/{fuente_id}/restricciones",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/fuentes/{fuente_id}/restricciones/{restriccion_id}",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "PUT",
       "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/niveles",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/plan",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/plan",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/plan/metas",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/plan/metas/{meta_id}",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/plan/metas/{meta_id}",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/plan/objetivos",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/plan/objetivos/{objetivo_id}",
+      "capabilities": [
+        "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/plan/objetivos/{objetivo_id}",
       "capabilities": [
         "gobierno_presupuesto:manage"
       ],

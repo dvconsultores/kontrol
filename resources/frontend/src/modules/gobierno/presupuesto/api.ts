@@ -82,10 +82,92 @@ export type EscribirEjercicio = (
   body?: unknown,
 ) => Promise<EjercicioDetalle>;
 
+export type EscribirBloque = <T>(
+  ruta: string,
+  method: "PUT" | "POST" | "PATCH" | "DELETE",
+  body?: unknown,
+) => Promise<T>;
+
 export type ImportarPartidas = (archivo: File) => Promise<EjercicioDetalle>;
 
 export const CONSULTA_PRESUPUESTO = ["gobierno", "presupuesto"] as const;
 export const RUTA_EJERCICIOS = "/gobierno/presupuesto/ejercicios";
+
+export interface PlanVista {
+  version: number;
+  congelado: boolean;
+  plan: {
+    denominacion: string;
+    documento_id: string | null;
+    documento_sha256: string | null;
+  } | null;
+  objetivos: {
+    id: string;
+    codigo: string;
+    descripcion: string;
+  }[];
+  vinculos: {
+    categoria_id: string;
+    codigo_completo: string;
+    denominacion: string;
+    unidad: {
+      id: string;
+      codigo: string;
+      nombre: string;
+    } | null;
+    objetivo: {
+      id: string;
+      codigo: string;
+    } | null;
+  }[];
+  metas: {
+    id: string;
+    categoria_id: string;
+    codigo_completo: string;
+    descripcion: string;
+    unidad_medida: string;
+    cantidad: string;
+    indicador: string;
+    formula: string | null;
+  }[];
+  unidades_disponibles: {
+    id: string;
+    codigo: string;
+    nombre: string;
+  }[];
+  estructura_organizativa: {
+    estado: string;
+  } | null;
+}
+
+export type ObjetivoPlan = PlanVista["objetivos"][number];
+export type VinculoCategoria = PlanVista["vinculos"][number];
+export type MetaFisica = PlanVista["metas"][number];
+export type UnidadDisponible = PlanVista["unidades_disponibles"][number];
+
+export interface FuentesVista {
+  version: number;
+  congelado: boolean;
+  items: {
+    id: string;
+    codigo: string;
+    denominacion: string;
+    procedencia: string;
+    documento_id: string | null;
+    documento_sha256: string | null;
+    vigente_desde: string | null;
+    vigente_hasta: string | null;
+    restricciones: {
+      id: string;
+      descripcion: string;
+      fundamento: string;
+      partidas: string[];
+    }[];
+  }[];
+}
+
+export type FuenteFinanciamiento = FuentesVista["items"][number];
+export type RestriccionUso = FuenteFinanciamiento["restricciones"][number];
 
 export const ETIQUETAS_ESTADO_EJERCICIO: Record<EstadoEjercicio, string> = {
   BORRADOR: "Borrador",
