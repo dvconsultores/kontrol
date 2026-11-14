@@ -11,3 +11,7 @@ Tope: 8 llamadas (objetivo 3-5), 2 reintentos por causa real, agrupadas por fron
 | T005 | C4 frontend: PlanEjercicio, FuentesEjercicio, integración en el detalle y Vitest | DEEPSEEK | deepseek-v4-pro | no | sí | 2 | src/modules/gobierno/presupuesto/* | tsc, eslint, vitest | verde |
 | T006 | C5 E2E | DEEPSEEK | deepseek-v4-pro | no | sí | 2 | e2e/gobierno-presupuesto-plan-fuentes.spec.ts | E2E sin reintentos | AC-08 |
 | T007 | Integración, suites una vez, publicación, UAT, matrices, cierre | CLAUDE | n-a | no | n-a | 0 | evidence, docs | suites, humo | HEAD == origin/develop |
+
+## Estado (2026-11-14)
+
+T001–T007 ✔. Evidencia en `evidence/CIERRE.md`; llamadas e intentos en `evidence/ATTEMPT_LOG.md`.
