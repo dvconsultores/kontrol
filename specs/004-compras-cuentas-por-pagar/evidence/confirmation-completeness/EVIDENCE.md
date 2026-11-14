@@ -10,7 +10,7 @@
 |---|---|
 | TECHNICAL_FOUNDATION_STATUS | COMPLETE: una sola validación de servicio de la Spec 021 (`validar_completitud_de_confirmacion`) antes de cualquier mutación, con la autoridad de lo aceptado en `_base_aceptada`. Sin migración |
 | FUNCTIONAL_PRODUCT_STATUS | COMPLETE: la confirmación decide el 100 % de lo aceptado o no hace nada. La pantalla reparte cada línea entre disponible y rechazada y muestra lo pendiente por decidir |
-| OWNER_READINESS_STATUS | Pasos 152 a 159 de la tarjeta. `OWNER_ACCEPTED`: NO |
+| OWNER_READINESS_STATUS | Pasos 152 a 159 de la tarjeta. La UAT local (`kuat`) se migró a `0108` (la cabeza de P1 tras la fusión con BUD-03/04) y tiene el backend y el frontend arriba. Humo autenticado: `confirmacion-completa.spec.ts` contra la UAT, 1/1 (23:12, Caracas), con el residuo rechazado y el reparto completo confirmado. `OWNER_ACCEPTED`: NO |
 
 ## Puertas de completitud
 
@@ -46,6 +46,7 @@
 | Regresión E2E de Compras e Inventario (15 specs) | 53/53 a 1280, con las 2 specs corregidas en B·R2 |
 | ruff · mypy | Limpio · 157, igual que HEAD |
 | OpenAPI | Sin cambios: fixtures regeneradas, 0 diferencias |
+| Reconciliación con P1 (`f100c34`, BUD-03/04 con la migración `0108`) | Fusión ordinaria sin conflictos; P1 no toca ningún fichero del ciclo. Una sola cabeza (`0108`); fixtures regeneradas con 0 diferencias. Sobre el árbol fusionado: confirmación completa, arquitectura de la 021, recibido sin confirmar, `gov_bud03_04`, el runner de Gobierno, `n10` y las marcas de tiempo de las migraciones de la 018 dan 54 PASS. El único fallo es `n10`, con las 6 diferencias de la línea base. Ruff limpio, typecheck limpio y `ConfirmacionPage` 5/5 |
 | Suite completa de backend en PostgreSQL (una vez, con ClamAV) | **Entrada** (`5b7e1b9`, base `ktestbase`, de 18:52 a 20:56 en Caracas): 5453 PASS, 19 SKIP, 4 FAIL (`n10` y `naive_datetime`, con `spec019_receipt` ×2) → `ENTRY_PG_FAILURES=4`. **Final** (árbol del ciclo, `ktest`, de 20:56 a 22:56): 5465 PASS, 18 SKIP, 5 FAIL. Son 12 PASS más, las 12 pruebas nuevas. Los 4 fallos de la entrada se repiten y el quinto es `gobierno_integridad_runner` (OC20 = −15). Atribución: el código de entrada falla sobre `ktest` y el del ciclo pasa sobre `ktestbase`. La causa eran 5 esquemas `t_*` huérfanos del arnés en `ktest`, de corridas interrumpidas: OC20 cuenta disparadores en toda la base, 5 × 3 = 15 de más. Se soltaron en la base de QA y la prueba pasó 3/3 a las 23:03, dentro de la franja. `FINAL_PG_FAILURES=4` (efectivos, el mismo conjunto que la entrada) · `NEW_BACKEND_FAILURES=0` · `OBS_PG_HARNESS_ORPHAN_SCHEMAS=5` |
 | GOV-TEST-UTC-DATE | La suite final y la repetición de Gobierno corrieron dentro de la franja de 20:00 a 24:00. Gobierno no tuvo ningún fallo atribuible a la fecha: `GOV_TEST_UTC_DATE=PASS_IN_WINDOW`. No es puerta |
 
