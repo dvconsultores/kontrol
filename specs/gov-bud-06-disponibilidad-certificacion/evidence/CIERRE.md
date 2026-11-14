@@ -1,7 +1,7 @@
 # CIERRE · BUD-06 disponibilidad y certificación presupuestaria (2026-11-14)
 
 ```text
-ENTRY=1c66b6c  CODE=commit de este cierre (sin merge: origin/develop no avanzó)
+ENTRY=1c66b6c  CODE=86165ed (sin merge: origin/develop no avanzó)
 ALEMBIC: 0111_gov_bud05_aprobado -> 0112_gov_bud06_certificacion   ALEMBIC_HEAD_COUNT=1
 BUD-06=OWNER_UAT_READY (10/10, REPORTING NOT_APPLICABLE)   GOV-BUD-009 PASS · GOV-BUD-010 PASS
 CANONICAL_GATE_UNIVERSE=1342 (antes y después)   N/A 70 -> 71 (REPORTS de BUD-06)   APLICABLES 1272 -> 1271   GATES_REMOVED=0
@@ -35,6 +35,13 @@ CLAUDE_SEMANTIC_*_WRITTEN=0   SNAT_TOUCHED=0  PRODUCTION_TOUCHED=0  SECRET_EXPOS
 - spec019 ×2.
 
 NEW_BACKEND_FAILURES=0.
+
+## UAT
+
+- Pila sin Docker desde el HEAD publicado 86165ed: frontend en el puerto 16273 (backend 19100, central 19110). PILA UAT LISTA; HTTP 200.
+- Humo UAT HUMO-UAT-01: 1/1. OWNER_UAT_ACCESSIBLE=YES.
+- Siguen vivas las pilas 15873, 15973, 16073 y 16173.
+- Credenciales: no se registran.
 
 ## Decisiones de diseño (Claude)
 
