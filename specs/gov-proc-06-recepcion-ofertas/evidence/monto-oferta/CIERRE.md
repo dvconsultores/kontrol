@@ -68,3 +68,11 @@ El ciclo cierra una dependencia de dominio, la del monto, dentro de PROC-06. No 
 `CLAUDE_SEMANTIC_CODE_WRITTEN=0 CLAUDE_SEMANTIC_TESTS_WRITTEN=0 CLAUDE_SEMANTIC_MIGRATION_WRITTEN=0 CLAUDE_SEMANTIC_QA_WRITTEN=0`
 
 `OWNER_ACCEPTED`: NO.
+
+## UAT de P2 (pila propia; la de P1 no se tocó)
+
+- **Commit publicado:** `a7740c6`, igual a `origin/develop`.
+- **Base de datos:** la base UAT `kuat` se migró de `0109` a `0110_gov_proc06_monto_oferta`, que ya es la cabeza.
+- **Servicios:** backend en `127.0.0.1:8000` (`/docs` responde 200) y web en `127.0.0.1:5173` (responde 200).
+- **Humo autenticado** a las 11:01 de Caracas: `gobierno-monto-oferta.spec.ts` contra la UAT, con un usuario real, MFA y la base `kuat`, pasó (1 prueba en 1,6 min).
+- **Tarjeta de la dueña:** `OWNER_UAT_CARD.md`. `OWNER_UAT_ACCESSIBLE=YES`.
