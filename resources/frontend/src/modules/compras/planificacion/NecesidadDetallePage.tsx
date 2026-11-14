@@ -32,6 +32,7 @@ type Need = {
     safety_stock: string | null;
     recommended_quantity: string | null;
     open_supply?: string | null;
+    received_unconfirmed?: string | null;
     projected_available?: string | null;
     rotation_band_code: string | null;
     calculated_at: string | null;
@@ -43,6 +44,7 @@ type Need = {
     projected_demand: string | null;
     recommended_quantity: string | null;
     open_supply?: string | null;
+    received_unconfirmed?: string | null;
     projected_available?: string | null;
     rotation_band_code: string | null;
   };
@@ -173,6 +175,10 @@ export function NecesidadDetallePage(): React.JSX.Element {
             <dd>{formatear(need.trigger.open_supply)}</dd>
           </div>
           <div>
+            <dt className="font-medium">En recepción (pendiente de confirmar)</dt>
+            <dd>{formatear(need.trigger.received_unconfirmed)}</dd>
+          </div>
+          <div>
             <dt className="font-medium">Disponible proyectado</dt>
             <dd>{formatear(need.trigger.projected_available)}</dd>
           </div>
@@ -201,6 +207,10 @@ export function NecesidadDetallePage(): React.JSX.Element {
           <div>
             <dt className="font-medium">Suministro abierto</dt>
             <dd>{formatear(need.current.open_supply)}</dd>
+          </div>
+          <div>
+            <dt className="font-medium">En recepción (pendiente de confirmar)</dt>
+            <dd>{formatear(need.current.received_unconfirmed)}</dd>
           </div>
           <div>
             <dt className="font-medium">Disponible proyectado</dt>

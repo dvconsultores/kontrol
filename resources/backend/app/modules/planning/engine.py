@@ -12,7 +12,7 @@ from app.modules.inventory import service as inventory_service
 from app.modules.master_data.models import CatalogItem
 from app.modules.planning import service as planning_service
 from app.modules.planning.models import PlanningPolicy, RotationBand
-from app.modules.purchasing.open_supply import suministro_abierto
+from app.modules.purchasing.open_supply import en_camino
 from app.shared.clock import ahora_de_negocio, hoy_de_negocio, inicio_del_dia_de_negocio
 
 _Q = Decimal("0.000001")
@@ -79,13 +79,17 @@ def compute_plan(
         reserved_decimal = Decimal(str(balance_anchor.qty_reserved))
     available_decimal = on_hand_decimal - reserved_decimal
 
-    open_supply_decimal = suministro_abierto(
+    en_camino_result = en_camino(
         db,
         company_id=company_id,
         warehouse_id=warehouse_id,
         product_ids=[product_id],
-    ).get(product_id, Decimal("0"))
-    projected_available_decimal = available_decimal + open_supply_decimal
+    ).get(product_id)
+    open_supply_decimal = en_camino_result.open_supply if en_camino_result else Decimal("0")
+    received_unconfirmed_decimal = (
+        en_camino_result.received_unconfirmed if en_camino_result else Decimal("0")
+    )
+    projected_available_decimal = available_decimal + open_supply_decimal + received_unconfirmed_decimal
 
     result_base: dict[str, Any] = {
         "status": "OK",
@@ -116,6 +120,7 @@ def compute_plan(
         "reserved": _q(reserved_decimal),
         "available": _q(available_decimal),
         "open_supply": _q(open_supply_decimal),
+        "received_unconfirmed": _q(received_unconfirmed_decimal),
         "open_supply_available": True,
         "projected_available": _q(projected_available_decimal),
         "rotation_metric": None,

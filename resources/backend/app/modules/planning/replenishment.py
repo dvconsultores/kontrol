@@ -451,11 +451,27 @@ def evaluate_replenishment_needs(
     return result
 
 
+def _recibido_sin_confirmar_derivado(
+    projected: Decimal | None,
+    available: Decimal | None,
+    open_supply: Decimal | None,
+) -> Decimal | None:
+    if projected is None or available is None or open_supply is None:
+        return None
+    return projected - available - open_supply
+
+
 def _need_trigger_dict(need: ReplenishmentNeed) -> dict[str, Any]:
     def _d(value: Decimal | None) -> str | None:
         if value is None:
             return None
         return format(value.quantize(Decimal("0.000001")), "f")
+
+    received_unconfirmed = _recibido_sin_confirmar_derivado(
+        need.trigger_projected_available,
+        need.trigger_available,
+        need.trigger_open_supply,
+    )
 
     return {
         "policy_id": need.trigger_policy_id,
@@ -470,6 +486,7 @@ def _need_trigger_dict(need: ReplenishmentNeed) -> dict[str, Any]:
         "safety_stock": _d(need.trigger_safety_stock),
         "recommended_quantity": _d(need.trigger_recommended_quantity),
         "open_supply": _d(need.trigger_open_supply),
+        "received_unconfirmed": _d(received_unconfirmed),
         "projected_available": _d(need.trigger_projected_available),
         "rotation_band_code": need.trigger_rotation_band_code,
         "calculated_at": need.trigger_calculated_at.isoformat() if need.trigger_calculated_at else None,
@@ -482,6 +499,12 @@ def _need_current_dict(need: ReplenishmentNeed) -> dict[str, Any]:
             return None
         return format(value.quantize(Decimal("0.000001")), "f")
 
+    received_unconfirmed = _recibido_sin_confirmar_derivado(
+        need.current_projected_available,
+        need.current_available,
+        need.current_open_supply,
+    )
+
     return {
         "policy_version": need.current_policy_version,
         "available": _d(need.current_available),
@@ -489,6 +512,7 @@ def _need_current_dict(need: ReplenishmentNeed) -> dict[str, Any]:
         "projected_demand": _d(need.current_projected_demand),
         "recommended_quantity": _d(need.current_recommended_quantity),
         "open_supply": _d(need.current_open_supply),
+        "received_unconfirmed": _d(received_unconfirmed),
         "projected_available": _d(need.current_projected_available),
         "rotation_band_code": need.current_rotation_band_code,
     }

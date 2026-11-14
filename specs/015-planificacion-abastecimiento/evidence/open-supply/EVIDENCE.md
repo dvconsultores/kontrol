@@ -49,6 +49,6 @@
 
 ## Deudas (no absorbidas)
 
-- **RECEIVED-UNCONFIRMED-PROJECTION.** Lo aceptado y aún sin confirmar (estado RECIBIDO) ya no es suministro abierto y todavía no es disponible. Es un hueco transitorio, anterior a este ciclo.
+- ~~**RECEIVED-UNCONFIRMED-PROJECTION.**~~ Pagada el 2026-11-13 en `../received-unconfirmed/` (`spec015-received-unconfirmed-projection-delta.md`).
 - **QUOTE-REQUISITION-LINK.** No hacía falta, porque la dueña eligió el destino en la línea: `OPEN_SUPPLY_REQUIRES_QUOTE_REQUISITION_LINK=0`.
 - **ORDENES-UI-ETIQUETAS.** La tabla de órdenes sigue mostrando el id del proveedor. Es previo a este ciclo y no se absorbe; el panel nuevo no muestra UUID.
