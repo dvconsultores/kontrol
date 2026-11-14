@@ -3,11 +3,12 @@
 **Tope:** 8 llamadas, con un objetivo de 3–5. La dueña lo amplió durante el ciclo, solo para este ciclo:
 - a 10: «Ampliar a 10»;
 - a 11: «Llamada 11, reintento 3»;
-- a 12: «Llamada 12».
+- a 12: «Llamada 12»;
+- a 13: «Llamada 13», para la integración con P2.
 
 **Modelo:** deepseek-v4-pro, con stream y sin sesión.
 
-**Uso:** 12 llamadas. Una fue un timeout del transporte, sin respuesta. Las otras 11 suman 48 592 tokens de entrada y 62 151 de salida, USD 0,0751.
+**Uso:** 13 llamadas. Una fue un timeout del transporte, sin respuesta. Las otras 12 suman 49 393 tokens de entrada y 62 489 de salida, USD 0,0757.
 
 | # | Encargo | Frontera | Entrada/salida | USD | Auditoría | Qué se halló al medir |
 |---|---|---|---|---|---|---|
@@ -23,6 +24,7 @@
 | 10 | C10 | E2E (reintento 2) | 1687/1348 | 0,0019 | PASS | Medido: getByLabel exacto, por el asterisco aria-hidden de FormField |
 | 11 | C11 | Localizadores de la E2E (reintento 3, autorizado) | 702/580 | 0,0008 | PASS | Medido: GOV_BUDGET_YEAR_INCOMPLETE. La siembra del clasificador iba sin documento, **por error del encargo de Claude** (`documento_id: null`) |
 | 12 | C12 | Siembra del clasificador (autorizado) | 582/422 | 0,0006 | PASS | E2E 1/1, y 6/6 con las tres E2E de presupuesto y `--repeat-each=2 --workers=4` |
+| 13 | C13 | Integración con P2 (autorizado): migración reencadenada como 0111 tras 0110 y fijaciones (catálogo 534) | 801/338 | 0,0006 | PASS | Alembic con una cabeza; pruebas tras el merge verdes, salvo la línea base. Antes, Claude tomó con git el lado propio (`--ours`) de las 4 fijaciones en conflicto y movió el fichero con `git mv`, sin escribir contenido |
 
 ## Errores de diseño atribuibles a Claude
 
