@@ -1836,6 +1836,22 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/control/alertas",
+      "capabilities": [
+        "gobierno_alertas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/control/alertas/revisiones",
+      "capabilities": [
+        "gobierno_alertas:review"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/control/separacion",
       "capabilities": [
         "gobierno_auditoria:view"
@@ -7892,7 +7908,9 @@
     "gobierno_rendicion:qualify",
     "gobierno_actas:view",
     "gobierno_actas:manage",
-    "gobierno_actas:verify"
+    "gobierno_actas:verify",
+    "gobierno_alertas:view",
+    "gobierno_alertas:review"
   ],
   "report_capabilities": {
     "executive_ventas": [

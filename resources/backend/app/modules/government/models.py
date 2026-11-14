@@ -4126,3 +4126,38 @@ for _hand_obs_action, _hand_obs_momento in (
         "after_create",
         DDL(_hand_obs_trigger).execute_if(dialect="postgresql"),
     )
+
+
+TIPOS_ALERTA_ATIPICA = ("DUPLICIDAD", "PROVEEDOR_RELACIONADO", "AUTOAPROBACION", "FRACCIONAMIENTO", "OVERRIDE_FRECUENTE")
+RESULTADOS_REVISION_ALERTA = ("SIN_OBSERVACION", "REQUIERE_SEGUIMIENTO")
+GOV_ATYPICAL_ALERT_REVIEWS_IMMUTABLE_PG: tuple[str, ...] = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_atypical_alert_review_inmutable() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'GOV_ATYPICAL_ALERT_REVIEW_IMMUTABLE' USING ERRCODE = 'P0001', DETAIL = TG_OP; END; $$",
+    "CREATE TRIGGER trg_gov_atypical_alert_reviews_no_update BEFORE UPDATE ON gov_atypical_alert_reviews FOR EACH ROW EXECUTE FUNCTION kontrol_gov_atypical_alert_review_inmutable()",
+    "CREATE TRIGGER trg_gov_atypical_alert_reviews_no_delete BEFORE DELETE ON gov_atypical_alert_reviews FOR EACH ROW EXECUTE FUNCTION kontrol_gov_atypical_alert_review_inmutable()",
+    "CREATE TRIGGER trg_gov_atypical_alert_reviews_no_truncate BEFORE TRUNCATE ON gov_atypical_alert_reviews FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_atypical_alert_review_inmutable()",
+)
+
+
+class GovernmentAtypicalAlertReview(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Revisión de Control Interno de una alerta de operación atípica (CTL-07); única e inmutable."""
+
+    __tablename__ = "gov_atypical_alert_reviews"
+    __scope__ = Scope.COMPANY
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    clave: Mapped[str] = mapped_column(String(200), nullable=False)
+    tipo: Mapped[str] = mapped_column(String(24), nullable=False)
+    resultado: Mapped[str] = mapped_column(String(24), nullable=False)
+    observacion: Mapped[str] = mapped_column(Text, nullable=False)
+    resumen: Mapped[str] = mapped_column(String(1000), nullable=False)
+    revisada_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    revisada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    __table_args__ = (
+        UniqueConstraint("company_id", "clave", name="uq_gov_atypical_alert_reviews_clave"),
+        CheckConstraint(f"tipo IN ({en(TIPOS_ALERTA_ATIPICA)})", name="tipo"),
+        CheckConstraint(f"resultado IN ({en(RESULTADOS_REVISION_ALERTA)})", name="resultado"),
+        CheckConstraint("length(observacion) >= 10", name="observacion"),
+    )
+
+
+for _sentencia in GOV_ATYPICAL_ALERT_REVIEWS_IMMUTABLE_PG:
+    event.listen(GovernmentAtypicalAlertReview.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

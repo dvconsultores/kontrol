@@ -133,6 +133,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_notificaciones:record",
         # gobierno_hallazgos · verificación y cierre de hallazgos por Control Interno (CTL-06, OD-CTL06-02)
         "gobierno_hallazgos:verify",
+        # gobierno_alertas · revisión de alertas de operaciones atípicas por Control Interno (CTL-07, OD-CTL07-08)
+        "gobierno_alertas:review",
         # gobierno_paquetes · generación de paquetes de auditoría exportables (DOC-08, OD-DOC08-04)
         "gobierno_paquetes:generate",
         # gobierno_sod · activación y cierre de reglas de segregación de funciones (CTL-01, OD-CTL01-04)
@@ -284,6 +286,7 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_garantias:manage",
         "gobierno_rendicion:view",
         "gobierno_actas:view",
+        "gobierno_alertas:view",
     }
 )
 

@@ -1331,6 +1331,19 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/control/alertas",
+      "query": [
+        "estado",
+        "tipo"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/control/alertas/revisiones",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/control/separacion",
       "query": []
     },

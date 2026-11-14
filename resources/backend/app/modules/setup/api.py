@@ -128,6 +128,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_garantias": ["view", "manage", "release", "execute"],
     "gobierno_rendicion": ["view", "form", "qualify"],
     "gobierno_actas": ["view", "manage", "verify"],
+    # CTL-07: alertas de operaciones atípicas y su revisión por Control Interno (OD-CTL07-08).
+    "gobierno_alertas": ["view", "review"],
 }
 
 

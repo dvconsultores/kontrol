@@ -133,6 +133,7 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "gobierno/bitacora": { capacidad: "gobierno_auditoria:view", alcance: "empresa" },
   "gobierno/control-interno": { capacidad: "gobierno_auditoria:view", alcance: "empresa" },
   "gobierno/control/separacion": { capacidad: "gobierno_auditoria:view", alcance: "empresa" },
+  "gobierno/control/alertas": { capacidad: "gobierno_alertas:view", alcance: "empresa" },
   "gobierno/rendicion": { capacidad: "gobierno_rendicion:view", alcance: "empresa" },
   "gobierno/rendicion/:expedienteId": { capacidad: "gobierno_rendicion:view", alcance: "empresa" },
   "gobierno/rendicion/nuevo": { capacidad: "gobierno_rendicion:form", alcance: "empresa" },

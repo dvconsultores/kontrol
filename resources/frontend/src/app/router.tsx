@@ -173,6 +173,7 @@ export const router = createBrowserRouter([
           { path: "gobierno/bitacora", lazy: () => import("@/modules/gobierno/bitacora/BitacoraPage").then((m) => ({ Component: m.BitacoraPage })) },
           { path: "gobierno/control-interno", lazy: () => import("@/modules/gobierno/control/ReporteControlInternoPage").then((m) => ({ Component: m.ReporteControlInternoPage })) },
           { path: "gobierno/control/separacion", lazy: () => import("@/modules/gobierno/control/SeparacionPage").then((m) => ({ Component: m.SeparacionPage })) },
+          { path: "gobierno/control/alertas", lazy: () => import("@/modules/gobierno/control/AlertasAtipicasPage").then((m) => ({ Component: m.AlertasAtipicasPage })) },
           { path: "gobierno/rendicion", lazy: () => import("@/modules/gobierno/rendicion/ExpedientesCuentaPage").then((m) => ({ Component: m.ExpedientesCuentaPage })) },
           { path: "gobierno/rendicion/nuevo", lazy: () => import("@/modules/gobierno/rendicion/NuevoExpedienteCuentaPage").then((m) => ({ Component: m.NuevoExpedienteCuentaPage })) },
           { path: "gobierno/rendicion/:expedienteId", lazy: () => import("@/modules/gobierno/rendicion/ExpedienteCuentaPage").then((m) => ({ Component: m.ExpedienteCuentaPage })) },

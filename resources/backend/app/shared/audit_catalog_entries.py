@@ -146,6 +146,7 @@ _PARTE_A: tuple[AuditActionSpec, ...] = (
     _e("GOV_ACT_REVOKED", "GovernmentAct", "government", "gov-doc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_ACTO, "Revocación del acto registrada"),
     _e("GOV_AUDIT_SAMPLE_CREATED", "GovernmentAuditSample", "government", "gov-ctl-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "filtros", "metodo", "poblacion", "semilla", "tamano"), "Muestra de auditoría registrada"),
     _e("GOV_AUDIT_SAMPLE_EXPORTED", "GovernmentAuditSample", "government", "gov-ctl-04", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "tamano"), "Muestra de auditoría exportada"),
+    _e("GOV_ATYPICAL_ALERT_REVIEWED", "GovernmentAtypicalAlertReview", "government", "gov-ctl-07", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("clave", "resultado", "tipo"), "Alerta de operación atípica revisada"),
     _e("GOV_FINDING_CREATED", "GovernmentFinding", "government", "gov-ctl-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "muestra_id", "origen", "partidas", "riesgo"), "Hallazgo registrado"),
     _e("GOV_FINDING_RECOMMENDATION_ADDED", "GovernmentFinding", "government", "gov-ctl-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "orden", "recomendacion_id"), "Recomendación añadida al hallazgo"),
     _e("GOV_CORRECTIVE_ACTION_ADDED", "GovernmentFinding", "government", "gov-ctl-06", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("accion_id", "cargo_id", "codigo", "fecha_objetivo"), "Acción correctiva añadida"),
