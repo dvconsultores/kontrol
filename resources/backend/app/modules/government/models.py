@@ -1028,6 +1028,7 @@ TIPOS_HISTORIA_EJERCICIO = (
     "FUENTE_MODIFICADA", "FUENTE_ELIMINADA", "RESTRICCION_AGREGADA", "RESTRICCION_ELIMINADA",
     "INGRESO_REGISTRADO", "INGRESO_MODIFICADO", "INGRESO_ELIMINADO",
     "CREDITO_REGISTRADO", "CREDITO_MODIFICADO", "CREDITO_ELIMINADO", "EXISTENCIAS_REGISTRADAS", "EXISTENCIAS_ELIMINADAS",
+    "CERTIFICACION_EMITIDA", "CERTIFICACION_ANULADA",
 )
 
 
@@ -1443,6 +1444,67 @@ for _sentencia in GOV_BUDGET_CREDITS_FROZEN_PG:
 
 for _sentencia in GOV_BUDGET_TREASURY_HOLDINGS_FROZEN_PG:
     event.listen(GovernmentBudgetTreasuryHoldings.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+ESTADOS_CERTIFICACION = ("VIGENTE", "ANULADA")
+
+
+class GovernmentBudgetCertificate(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Certificación de disponibilidad presupuestaria (BUD-06)."""
+
+    __tablename__ = "gov_budget_certificates"
+    __scope__ = Scope.COMPANY
+
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    credit_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_credits.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="VIGENTE", server_default="VIGENTE")
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    saldo_antes: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    saldo_despues: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    concepto: Mapped[str] = mapped_column(String(500), nullable=False)
+    expediente_referencia: Mapped[str] = mapped_column(String(120), nullable=False)
+    procurement_file_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=True, index=True)
+    firmante_cargo_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False, index=True)
+    firmante_cargo_codigo: Mapped[str] = mapped_column(String(30), nullable=False)
+    firmante_cargo_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    firmante_unidad: Mapped[str] = mapped_column(String(250), nullable=False)
+    firmante_funcionario_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    firmante_funcionario_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    emitida_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    emitida_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    huella: Mapped[str] = mapped_column(String(64), nullable=False)
+    documento_storage_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    documento_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    documento_tamano: Mapped[int] = mapped_column(Integer, nullable=False)
+    documento_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    anulada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    anulada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("year_id", "numero", name="uq_gov_budget_certificates_year_id_numero"),
+        UniqueConstraint("company_id", "codigo", name="uq_gov_budget_certificates_company_id_codigo"),
+        CheckConstraint("estado IN ('VIGENTE', 'ANULADA')", name="estado"),
+        CheckConstraint("monto > 0", name="monto"),
+        CheckConstraint("saldo_antes >= monto AND saldo_despues = saldo_antes - monto", name="saldos"),
+        CheckConstraint("(estado = 'VIGENTE' AND anulada_por IS NULL AND anulada_en IS NULL AND motivo_anulacion IS NULL) OR (estado = 'ANULADA' AND anulada_por IS NOT NULL AND anulada_en IS NOT NULL AND motivo_anulacion IS NOT NULL)", name="anulacion"),
+    )
+
+
+GOV_BUDGET_CERTIFICATES_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_certificado_inmutable() RETURNS TRIGGER AS $$ BEGIN IF TG_OP = 'DELETE' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_CERTIFICATE_IMMUTABLE', DETAIL = TG_OP; END IF; IF OLD.estado <> 'VIGENTE' OR NEW.estado <> 'ANULADA' OR NEW.year_id IS DISTINCT FROM OLD.year_id OR NEW.company_id IS DISTINCT FROM OLD.company_id OR NEW.credit_id IS DISTINCT FROM OLD.credit_id OR NEW.numero IS DISTINCT FROM OLD.numero OR NEW.codigo IS DISTINCT FROM OLD.codigo OR NEW.monto IS DISTINCT FROM OLD.monto OR NEW.saldo_antes IS DISTINCT FROM OLD.saldo_antes OR NEW.saldo_despues IS DISTINCT FROM OLD.saldo_despues OR NEW.moneda IS DISTINCT FROM OLD.moneda OR NEW.fecha IS DISTINCT FROM OLD.fecha OR NEW.concepto IS DISTINCT FROM OLD.concepto OR NEW.expediente_referencia IS DISTINCT FROM OLD.expediente_referencia OR NEW.procurement_file_id IS DISTINCT FROM OLD.procurement_file_id OR NEW.firmante_cargo_id IS DISTINCT FROM OLD.firmante_cargo_id OR NEW.emitida_por IS DISTINCT FROM OLD.emitida_por OR NEW.emitida_en IS DISTINCT FROM OLD.emitida_en OR NEW.huella IS DISTINCT FROM OLD.huella OR NEW.documento_sha256 IS DISTINCT FROM OLD.documento_sha256 OR NEW.documento_storage_key IS DISTINCT FROM OLD.documento_storage_key THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_CERTIFICATE_IMMUTABLE', DETAIL = TG_OP; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_certificates_inmutable BEFORE UPDATE OR DELETE ON gov_budget_certificates FOR EACH ROW EXECUTE FUNCTION kontrol_gov_certificado_inmutable()",
+    "CREATE TRIGGER trg_gov_budget_certificates_no_truncate BEFORE TRUNCATE ON gov_budget_certificates FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+)
+
+for _sentencia in GOV_BUDGET_CERTIFICATES_IMMUTABLE_PG:
+    event.listen(GovernmentBudgetCertificate.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
 
 
 ESTADOS_BANCO = ("ACTIVO", "INACTIVO")

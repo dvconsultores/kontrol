@@ -148,6 +148,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_presupuesto · aprobación y cierre de ejercicios presupuestarios (BUD-01/02)
         "gobierno_presupuesto:approve",
         "gobierno_presupuesto:close",
+        # BUD-06 · emitir y anular certificaciones de disponibilidad
+        "gobierno_presupuesto:certify",
         # gobierno_cierre · activación y retiro de políticas de cierre (CTL-10)
         "gobierno_cierre:activate",
         # gobierno_ocupacion · activación y revocación de asignaciones de cargos (ORG-04)

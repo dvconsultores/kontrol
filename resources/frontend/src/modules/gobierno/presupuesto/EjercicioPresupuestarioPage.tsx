@@ -19,6 +19,7 @@ import { AccionesEjercicio } from "./AccionesEjercicio";
 import { PlanEjercicio } from "./PlanEjercicio";
 import { FuentesEjercicio } from "./FuentesEjercicio";
 import { PresupuestoAprobadoEjercicio } from "./PresupuestoAprobadoEjercicio";
+import { DisponibilidadEjercicio } from "./DisponibilidadEjercicio";
 import {
   CONSULTA_PRESUPUESTO,
   ETIQUETAS_ESTADO_EJERCICIO,
@@ -49,6 +50,7 @@ export function EjercicioPresupuestarioPage() {
   const puedeGestionar = tiene("gobierno_presupuesto:manage", "empresa");
   const puedeAprobar = tiene("gobierno_presupuesto:approve", "empresa");
   const puedeCerrar = tiene("gobierno_presupuesto:close", "empresa");
+  const puedeCertificar = tiene("gobierno_presupuesto:certify", "empresa");
 
   const [erroresServidor, setErroresServidor] = useState<Record<string, string[]>>({});
   const [alerta, setAlerta] = useState<string | null>(null);
@@ -342,6 +344,14 @@ export function EjercicioPresupuestarioPage() {
         escribirBloque={escribirBloque}
         erroresServidor={erroresServidor}
       />
+      {detalle.estado !== "BORRADOR" ? (
+        <DisponibilidadEjercicio
+          detalle={detalle}
+          puedeCertificar={puedeCertificar}
+          escribirBloque={escribirBloque}
+          erroresServidor={erroresServidor}
+        />
+      ) : null}
 
       <AccionesEjercicio
         detalle={detalle}

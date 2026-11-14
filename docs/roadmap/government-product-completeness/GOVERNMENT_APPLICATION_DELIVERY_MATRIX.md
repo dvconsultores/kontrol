@@ -18,7 +18,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | BUD-03 | GOV-BUD-003 GOV-BUD-004 | Presupuesto público (Budget  | Planificación/Presupuesto | Plan, programas, proyectos, metas físicas e indicadores | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | BUD-04 | GOV-BUD-005 | Presupuesto público (Budget  | Planificación/Presupuesto | Fuentes de financiamiento y restricciones | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | BUD-05 | GOV-BUD-006 GOV-BUD-007 GOV-BUD-008 | Presupuesto público (Budget  | Planificación/Presupuesto | Formulación: anteproyecto, proyecto y presupuesto aprobado con su acto | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY (aprobado; formulación LATER_PHASE por D-GOV-02 A) | — |
-| BUD-06 | GOV-BUD-009 GOV-BUD-010 | Presupuesto público (Budget  | Planificación/Presupuesto | Disponibilidad y certificación de disponibilidad | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
+| BUD-06 | GOV-BUD-009 GOV-BUD-010 | Presupuesto público (Budget  | Planificación/Presupuesto | Disponibilidad y certificación de disponibilidad | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | BUD-07 | GOV-BUD-011 | Presupuesto público (Budget  | Planificación/Presupuesto | Precompromiso / reserva | no | no | no | no | no | no | NOT_STARTED (bloqueado) | LEGAL_VALIDATION_REQUIRED N37 (clase C) |
 | BUD-08 | GOV-BUD-012 | Presupuesto público (Budget  | Planificación/Presupuesto | Compromiso presupuestario | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | BUD-09 | GOV-BUD-013 | Presupuesto público (Budget  | Planificación/Presupuesto | Causado / devengado | no | no | no | no | no | no | NOT_STARTED (bloqueado) | LEGAL_VALIDATION_REQUIRED N36 (clase C) |
