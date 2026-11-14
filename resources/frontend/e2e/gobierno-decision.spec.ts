@@ -12,6 +12,7 @@ import {
   cerrarNotificaciones,
   crearTipoDocumental,
   crearUsuario,
+  declararMontoApi,
   enteActivo,
   entrarEnGobierno,
   estructuraVigenteApi,
@@ -274,6 +275,7 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
     "gobierno_expedientes:manage",
     "gobierno_ofertas:view",
     "gobierno_ofertas:receive",
+    "gobierno_ofertas:amount",
     "gobierno_evaluacion:view",
     "gobierno_evaluacion:criteria",
     "gobierno_evaluacion:open",
@@ -688,6 +690,19 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
     }
   }
 
+  await declararMontoApi(request, mundo.headers, expediente.id, oferta.id, expediente.version, {
+    moneda: "USD",
+    monto_sin_iva: "43103.46",
+    tributos: "6896.55",
+    total_con_tributos: "50000.01",
+  });
+  const expedienteReloadMonto = await request.get(
+    `${API}/gobierno/contrataciones/expedientes/${expediente.id}`,
+    { headers: mundo.headers },
+  );
+  expect(expedienteReloadMonto.status(), await expedienteReloadMonto.text()).toBe(200);
+  expediente = (await expedienteReloadMonto.json()) as Expediente;
+
   const concluirEvaluacionResp = await request.post(
     `${API}/gobierno/contrataciones/expedientes/${expediente.id}/evaluacion/concluir`,
     {
@@ -704,12 +719,30 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
   expect(expedienteReloadEvaluacion.status(), await expedienteReloadEvaluacion.text()).toBe(200);
   expediente = (await expedienteReloadEvaluacion.json()) as Expediente;
 
-  const actoDecision = await actoDecisionEmitidoApi(
+  const actoInsuficiente = await actoDecisionEmitidoApi(
     request,
     mundo.headers,
     mundo.companyId,
     tipo.id,
     emisor.id,
+    hoy,
+  );
+  const cargoSinLimite = await cargoVigenteApi(
+    request,
+    mundo.headers,
+    mundo.companyId,
+    tipo.id,
+    ANIO,
+    estructura.despId,
+    `CS-${Date.now()}`,
+    { tipo_limite: "SIN_LIMITE" },
+  );
+  const actoDecision = await actoDecisionEmitidoApi(
+    request,
+    mundo.headers,
+    mundo.companyId,
+    tipo.id,
+    cargoSinLimite.id,
     hoy,
   );
 
@@ -786,11 +819,38 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
   const download = await downloadPromise;
   expect(download.suggestedFilename().endsWith(".pdf")).toBe(true);
 
-  await sec.locator("#acto-decision").selectOption(actoDecision.id);
+  // 1. Autoridad insuficiente: el panel lo anticipa y el backend bloquea.
+  await sec.locator("#acto-decision").selectOption(actoInsuficiente.id);
   await sec.getByRole("radio", { name: "Adjudicada", exact: true }).check();
   await expect(sec.locator("#oferta-decision")).toHaveValue(oferta.id);
+  const panelLimite = sec.getByRole("region", { name: "Control del límite de autoridad" });
+  await expect(panelLimite).toBeVisible();
+  await expect(panelLimite.getByText("50000.01", { exact: true })).toBeVisible();
+  await expect(panelLimite.getByText("USD", { exact: true })).toBeVisible();
+  await expect(panelLimite.getByText("50000.00 USD", { exact: true })).toBeVisible();
+  await expect(panelLimite.getByText("Excede el límite", { exact: true })).toBeVisible();
+  const axePanelLimite = await new AxeBuilder({ page }).include('[aria-labelledby="control-limite-titulo"]').analyze();
+  expect(axePanelLimite.violations).toEqual([]);
   await sec.locator("#motivacion-decision").fill("Motivación de la decisión de adjudicación");
+  await sec.getByRole("button", { name: "Registrar decisión", exact: true }).click();
+  const postBloqueadaPromise = page.waitForResponse(
+    (r) => r.request().method() === "POST" && new URL(r.url()).pathname.endsWith("/decision/decisiones"),
+  );
+  await sec.getByRole("button", { name: "Confirmar decisión", exact: true }).click();
+  const postBloqueada = await postBloqueadaPromise;
+  expect(postBloqueada.status()).toBe(409);
+  expect(((await postBloqueada.json()) as { code: string }).code).toBe("GOV_DECISION_AUTHORITY_AMOUNT_EXCEEDED");
+  await expect(sec.getByRole("alert")).toContainText("excede el límite de aprobación");
+  await expect(sec.getByText("DEC-01", { exact: true })).toHaveCount(0);
+  await sec
+    .getByRole("button", { name: "Confirmar decisión", exact: true })
+    .locator("..")
+    .getByRole("button", { name: "Cancelar", exact: true })
+    .click();
 
+  // 2. Autoridad suficiente (sin límite): ahora sí se adjudica.
+  await sec.locator("#acto-decision").selectOption(actoDecision.id);
+  await expect(panelLimite.getByText("Sin límite", { exact: true })).toHaveCount(2);
   await sec.getByRole("button", { name: "Registrar decisión", exact: true }).click();
 
   const axeConfirmacionDecision = new AxeBuilder({ page }).include('[aria-labelledby="sec-decision"]');

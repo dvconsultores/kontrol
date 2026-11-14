@@ -25,6 +25,7 @@ from app.modules.government.service_decision import (
     _evento,
     obtener_estado_decision,
 )
+from app.modules.government.service_decision_limite import exigir_limite
 from app.modules.government.service_expedientes import _abierto, _err, _para_escribir
 from app.modules.government.service_identidad import (
     _funcionario_del_actor,
@@ -264,6 +265,7 @@ def registrar_decision(
                 field_errors={"oferta_id": ["Debe adjudicarse la opción en el orden permitido"]},
             )
         posicion = opcion.posicion
+        exigir_limite(db, ctx, str(expediente.id), acto, str(oferta_id))
 
     elif resultado == "DESIERTA":
         if vigente_rec is None:

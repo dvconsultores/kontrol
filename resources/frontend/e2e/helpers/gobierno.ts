@@ -288,6 +288,7 @@ export async function cargoVigenteApi(
   ejercicio: number,
   unidadId: string,
   codigo: string,
+  limite: LimiteCompetenciaE2E = { tipo_limite: "MONTO", monto: "50000.00", moneda: "USD" },
 ): Promise<{ id: string; version: number }> {
   const cargoResp = await request.post(`${API}/gobierno/estructuras/${ejercicio}/cargos`, {
     headers,
@@ -308,9 +309,7 @@ export async function cargoVigenteApi(
       data: {
         accion: "APROBAR",
         materia: "CONTRATACIONES",
-        tipo_limite: "MONTO",
-        monto: "50000.00",
-        moneda: "USD",
+        ...limite,
       },
     },
   );
@@ -334,4 +333,40 @@ export async function cargoVigenteApi(
   expect(activarResp.status(), await activarResp.text()).toBe(200);
 
   return { id: cargo.id, version: 3 };
+}
+
+export type LimiteCompetenciaE2E =
+  | { tipo_limite: "SIN_LIMITE" }
+  | { tipo_limite: "MONTO"; monto: string; moneda: "VES" | "USD" | "EUR" };
+
+export async function declararMontoApi(
+  request: APIRequestContext,
+  headers: Record<string, string>,
+  expedienteId: string,
+  ofertaId: string,
+  version: number,
+  monto: { moneda: "VES" | "USD" | "EUR"; monto_sin_iva: string; tributos: string; total_con_tributos: string },
+): Promise<void> {
+  const detalleResp = await request.get(
+    `${API}/gobierno/contrataciones/expedientes/${expedienteId}/ofertas/${ofertaId}`,
+    { headers },
+  );
+  expect(detalleResp.status(), await detalleResp.text()).toBe(200);
+  const detalle = (await detalleResp.json()) as { soportes_monto: Array<{ tipo: string; documento_id: string }> };
+  const soporte = detalle.soportes_monto.find((s) => s.tipo === "DOCUMENTO_OFERTA");
+  expect(soporte, "La oferta debe tener un documento soporte").toBeTruthy();
+  const montoResp = await request.post(
+    `${API}/gobierno/contrataciones/expedientes/${expedienteId}/ofertas/${ofertaId}/montos`,
+    {
+      headers: { ...headers, "If-Match": String(version) },
+      data: {
+        ...monto,
+        soporte_tipo: "DOCUMENTO_OFERTA",
+        soporte_documento_id: soporte!.documento_id,
+        motivo: null,
+        version_anterior: null,
+      },
+    },
+  );
+  expect(montoResp.status(), await montoResp.text()).toBe(201);
 }

@@ -542,6 +542,7 @@ _PARTE_D: tuple[AuditActionSpec, ...] = (
     _e("GOV_PROCUREMENT_RECOMMENDATION_ISSUED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Recomendación emitida"),
     _e("GOV_PROCUREMENT_RECOMMENDATION_SUPERSEDED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Recomendación sustituida"),
     _e("GOV_PROCUREMENT_DECISION_ISSUED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Decisión del procedimiento emitida"),
+    _e("GOV_PROCUREMENT_DECISION_AUTHORITY_BLOCKED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "SECURITY", "REJECTION", DETALLE_EXPEDIENTE, "Adjudicación bloqueada por el límite de la autoridad"),
     _e("GOV_PROCUREMENT_DECISION_NULLIFIED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Decisión anulada"),
     _e("GOV_GUARANTEE_REQUIREMENT_REGISTERED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Requisito de garantía registrado"),
     _e("GOV_GUARANTEE_REGISTERED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Garantía registrada"),

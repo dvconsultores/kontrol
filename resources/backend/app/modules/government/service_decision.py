@@ -35,6 +35,7 @@ from app.modules.government.models import (
 )
 from app.modules.government.schemas_notificaciones import clave_identificacion
 from app.modules.government.service_auditoria import _usuarios_por_ids
+from app.modules.government.service_decision_limite import evaluar_limite, limite_del_acto
 from app.modules.government.service_evaluacion import _miembros_comision, obtener_evaluacion
 from app.modules.government.service_expedientes import _abierto, _auditar, _cargar, _err, _evento, _para_escribir
 from app.modules.government.service_identidad import _funcionario_del_actor, _politica_de
@@ -185,6 +186,16 @@ def _parte_decision(db: Session, ctx: CompanyContext, expediente: GovernmentProc
         .all()
     )
     actos_con_decision = {d.act_id for d in decisiones}
+    ofertas_expediente = list(
+        db.scalars(
+            select(GovernmentProcurementOffer)
+            .where(
+                GovernmentProcurementOffer.company_id == ctx.company_id,
+                GovernmentProcurementOffer.file_id == expediente.id,
+            )
+            .order_by(GovernmentProcurementOffer.numero)
+        )
+    )
     for acto in actos:
         if acto.id in actos_con_decision:
             continue
@@ -195,6 +206,8 @@ def _parte_decision(db: Session, ctx: CompanyContext, expediente: GovernmentProc
                 "numero": acto.numero,
                 "fecha": acto.fecha,
                 "asunto": acto.asunto,
+                "limite": limite_del_acto(db, ctx, acto),
+                "control_monto": [evaluar_limite(db, ctx, acto, oferta) for oferta in ofertas_expediente],
             }
         )
 

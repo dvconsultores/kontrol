@@ -12,6 +12,7 @@ import {
   cerrarNotificaciones,
   crearTipoDocumental,
   crearUsuario,
+  declararMontoApi,
   enteActivo,
   entrarEnGobierno,
   estructuraVigenteApi,
@@ -274,6 +275,7 @@ test("PROC-10 · registrar, renovar y liberar garantías desde la ficha del expe
     "gobierno_expedientes:manage",
     "gobierno_ofertas:view",
     "gobierno_ofertas:receive",
+    "gobierno_ofertas:amount",
     "gobierno_evaluacion:view",
     "gobierno_evaluacion:criteria",
     "gobierno_evaluacion:open",
@@ -691,6 +693,19 @@ test("PROC-10 · registrar, renovar y liberar garantías desde la ficha del expe
       expediente = (await expedienteReloadResultado.json()) as Expediente;
     }
   }
+
+  await declararMontoApi(request, mundo.headers, expediente.id, oferta.id, expediente.version, {
+    moneda: "USD",
+    monto_sin_iva: "10000.00",
+    tributos: "1600.00",
+    total_con_tributos: "11600.00",
+  });
+  const expedienteReloadMonto = await request.get(
+    `${API}/gobierno/contrataciones/expedientes/${expediente.id}`,
+    { headers: mundo.headers },
+  );
+  expect(expedienteReloadMonto.status(), await expedienteReloadMonto.text()).toBe(200);
+  expediente = (await expedienteReloadMonto.json()) as Expediente;
 
   const concluirEvaluacionResp = await request.post(
     `${API}/gobierno/contrataciones/expedientes/${expediente.id}/evaluacion/concluir`,

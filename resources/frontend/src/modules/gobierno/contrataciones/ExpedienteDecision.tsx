@@ -11,6 +11,7 @@ import { FormField } from "@/components/FormField";
 import { LoadingState } from "@/components/LoadingState";
 import { formatearFechaDeNegocio, formatearInstante } from "@/lib/fecha-de-negocio";
 import { CONSULTA_EXPEDIENTES, type ExpedienteDetalle } from "../api";
+import { ControlLimiteAutoridad, type ControlMonto, type LimiteAutoridad } from "./ControlLimiteAutoridad";
 
 type CatalogoItem = { codigo: string; etiqueta: string };
 type Miembro = {
@@ -83,6 +84,8 @@ type ActoElegible = {
   numero: string;
   fecha: string;
   asunto: string;
+  limite: LimiteAutoridad;
+  control_monto: ControlMonto[];
 };
 type ActoDecision = {
   id: string | null;
@@ -419,6 +422,12 @@ export function SeccionDecision({
       return siguiente ?? null;
     }
     return recomendacionVigente.opciones[0];
+  })();
+
+  const controlLimite = (() => {
+    if (!actoId || !opcionPropuesta) return null;
+    const actoElegido = estado.actos_elegibles.find((a) => a.id === actoId);
+    return actoElegido?.control_monto.find((c) => c.offer_id === opcionPropuesta.offer_id) ?? null;
   })();
 
   const historial: { fecha: string | null; texto: string }[] = [];
@@ -1229,6 +1238,10 @@ export function SeccionDecision({
                 </p>
               )}
             </FormField>
+          ) : null}
+
+          {resultadoDecision === "ADJUDICADA" && controlLimite ? (
+            <ControlLimiteAutoridad control={controlLimite} />
           ) : null}
 
           {resultadoDecision === "DESIERTA" ? (
