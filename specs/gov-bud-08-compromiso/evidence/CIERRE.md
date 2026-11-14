@@ -1,7 +1,7 @@
 # CIERRE · BUD-08 compromiso presupuestario (2026-11-15)
 
 ```text
-ENTRY=efcf4b2  CODE=(este commit; sin merge: origin/develop no avanzó)
+ENTRY=efcf4b2  CODE=6da5b20 (sin merge: origin/develop no avanzó)
 ALEMBIC: 0112_gov_bud06_certificacion -> 0113_gov_bud08_compromiso   ALEMBIC_HEAD_COUNT=1
 BUD-08=OWNER_UAT_READY (10/10, REPORTING NOT_APPLICABLE)   GOV-BUD-012 PASS
 CANONICAL_GATE_UNIVERSE=1342   N/A 71 -> 72   APLICABLES 1271 -> 1270   GATES_REMOVED=0
@@ -43,7 +43,10 @@ CLAUDE_SEMANTIC_*_WRITTEN=0   SNAT_TOUCHED=0  PRODUCTION_TOUCHED=0  SECRET_EXPOS
 
 ## UAT
 
-Se completa tras la publicación (ver la sección añadida abajo).
+- Pila sin Docker desde el HEAD publicado 6da5b20: frontend en el puerto 16373 (backend 19200, central 19210). PILA UAT LISTA; HTTP 200.
+- Humo UAT HUMO-UAT-01: 1/1. OWNER_UAT_ACCESSIBLE=YES.
+- Siguen vivas las pilas 15873, 15973, 16073, 16173 y 16273.
+- Credenciales: no se registran.
 
 ## Observaciones abiertas
 
