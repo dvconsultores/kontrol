@@ -16,12 +16,15 @@ import { AdjuntosPanel } from "@/modules/documentos/AdjuntosPanel";
 import { EstructuraEjercicio } from "./EstructuraEjercicio";
 import { ClasificadorEjercicio } from "./ClasificadorEjercicio";
 import { AccionesEjercicio } from "./AccionesEjercicio";
+import { PlanEjercicio } from "./PlanEjercicio";
+import { FuentesEjercicio } from "./FuentesEjercicio";
 import {
   CONSULTA_PRESUPUESTO,
   ETIQUETAS_ESTADO_EJERCICIO,
   ETIQUETAS_HISTORIA_EJERCICIO,
   RUTA_EJERCICIOS,
   type EjercicioDetalle,
+  type EscribirBloque,
   type EscribirEjercicio,
   type ImportarPartidas,
 } from "./api";
@@ -91,6 +94,30 @@ export function EjercicioPresupuestarioPage() {
       setErroresServidor({});
       setAlerta(null);
       return nuevoDetalle;
+    } catch (e) {
+      manejarError(e);
+      throw e;
+    }
+  };
+
+  const escribirBloque: EscribirBloque = async <T,>(
+    ruta: string,
+    method: "PUT" | "POST" | "PATCH" | "DELETE",
+    body?: unknown,
+  ): Promise<T> => {
+    try {
+      const resultado = await apiFetch<T>(
+        `${RUTA_EJERCICIOS}/${ejercicioId}${ruta}`,
+        {
+          method,
+          body: body as Record<string, unknown> | undefined,
+          ifMatch: String(consultaDetalle.data?.version),
+        },
+      );
+      void queryClient.invalidateQueries({ queryKey: [...CONSULTA_PRESUPUESTO] });
+      setErroresServidor({});
+      setAlerta(null);
+      return resultado;
     } catch (e) {
       manejarError(e);
       throw e;
@@ -292,6 +319,20 @@ export function EjercicioPresupuestarioPage() {
         puedeGestionar={puedeGestionar}
         escribir={escribir}
         importar={importar}
+        erroresServidor={erroresServidor}
+      />
+
+      <PlanEjercicio
+        detalle={detalle}
+        puedeGestionar={puedeGestionar}
+        escribirBloque={escribirBloque}
+        erroresServidor={erroresServidor}
+      />
+
+      <FuentesEjercicio
+        detalle={detalle}
+        puedeGestionar={puedeGestionar}
+        escribirBloque={escribirBloque}
         erroresServidor={erroresServidor}
       />
 

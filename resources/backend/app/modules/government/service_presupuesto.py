@@ -296,6 +296,8 @@ def _fotografia(db: Session, ejercicio: GovernmentBudgetYear) -> dict[str, Any]:
             "documento_sha256": clasificador.documento_sha256,
             "partidas": partidas,
         }
+    from app.modules.government import service_presupuesto_fuentes, service_presupuesto_plan
+
     return {
         "anio": ejercicio.anio,
         "moneda_funcional": ejercicio.moneda_funcional,
@@ -309,6 +311,8 @@ def _fotografia(db: Session, ejercicio: GovernmentBudgetYear) -> dict[str, Any]:
             for categoria in categorias
         ],
         "clasificador": clasificador_foto,
+        "plan": service_presupuesto_plan.fotografia_plan(db, ejercicio),
+        "fuentes": service_presupuesto_fuentes.fotografia_fuentes(db, ejercicio),
     }
 
 
