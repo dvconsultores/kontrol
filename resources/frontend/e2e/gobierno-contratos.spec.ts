@@ -319,6 +319,9 @@ test("CNT-01 · contrato u orden desde la adjudicación: recorrido, negativas, a
     "gobierno_contratos:formalize",
     "gobierno_contratos:assign_supervisor",
     "gobierno_ocupacion:activate",
+    "gobierno_contratos:execute",
+    "gobierno_identidad:view",
+    "gobierno_identidad:manage",
     "gobierno_auditoria:view",
     "gobierno_presupuesto:view",
     "gobierno_presupuesto:manage",
@@ -1423,6 +1426,265 @@ test("CNT-01 · contrato u orden desde la adjudicación: recorrido, negativas, a
   const accesibilidadSup = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   const violacionesGravesSup = accesibilidadSup.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
   expect(violacionesGravesSup).toEqual([]);
+
+  // ===== CNT-03 · Ejecución del contrato (E2E del sponsor) =====
+  type EjecucionE2E = {
+    hitos: { id: string; descripcion: string }[];
+    recepciones: { id: string; referencia: string }[];
+  };
+
+  const supervisorAna = await crearUsuario(
+    request,
+    admin.headers,
+    ["organization:view", "gobierno_contratos:view", "gobierno_contratos:execute"],
+    mundo.companyId
+  );
+  const activadorIdentidad = await crearUsuario(
+    request,
+    admin.headers,
+    ["organization:view", "gobierno_identidad:view", "gobierno_identidad:activate"],
+    mundo.companyId
+  );
+
+  const meResp = await request.get(`${API}/auth/me`, { headers: supervisorAna.headers });
+  const supervisorUserId = ((await meResp.json()) as { user: { id: string } }).user.id;
+
+  const vinculoResp = await request.post(`${API}/gobierno/identidad/vinculos`, {
+    headers: mundo.headers,
+    data: {
+      user_id: supervisorUserId,
+      official_id: anaSup.id,
+      desde: hoy,
+      hasta: null,
+      motivo: "Cuenta institucional de la supervisora (CNT-03)",
+      soporte: null
+    }
+  });
+  expect(vinculoResp.status()).toBe(201);
+  const vinculo = (await vinculoResp.json()) as { id: string; version: number };
+  const activaResp = await request.post(`${API}/gobierno/identidad/vinculos/${vinculo.id}/activar`, {
+    headers: { ...activadorIdentidad.headers, "If-Match": `"${vinculo.version}"` },
+    data: {}
+  });
+  expect(activaResp.status()).toBe(200);
+
+  for (let i = 0; i < 10; i++) {
+    await adjuntarDocumentoApi(
+      request,
+      mundo.headers,
+      mundo.companyId,
+      tipo.id,
+      "GovernmentProcurementFile",
+      expediente.id
+    );
+  }
+
+  const docsResp = await request.get(`${API}/documentos/por-recurso/GovernmentProcurementFile/${expediente.id}`, {
+    headers: mundo.headers
+  });
+  const docsLista = (await docsResp.json()) as { id: string; titulo: string }[];
+  const docs = docsLista.slice(-10).map((d) => d.id);
+
+  await entrarEnGobierno(page, supervisorAna.username, mundo.codigo, "/gobierno/contratos");
+  await cerrarNotificaciones(page);
+  await page.getByRole("link", { name: new RegExp(codigoContrato!) }).click();
+  await page.waitForURL(/\/gobierno\/contratos\/[^/]+$/);
+  await page.getByRole("link", { name: "Ejecución del contrato" }).click();
+  await page.waitForURL(/\/ejecucion$/);
+
+  await expect(page.getByRole("heading", { name: "Resumen de la ejecución" })).toBeVisible();
+  const seccionResumen = page.locator('section[aria-labelledby="resumen"]');
+  await expect(seccionResumen).toContainText("Ana Supervisora");
+  await expect(seccionResumen).toContainText("50000.00");
+
+  const confirmarDialogo = async (sufijo: string, statusTexto: string, callback: () => Promise<void>): Promise<void> => {
+    await callback();
+    await Promise.all([
+      page.waitForResponse(
+        (r) => r.request().method() === "POST" && new URL(r.url()).pathname.endsWith(sufijo)
+      ),
+      page.getByRole("dialog").getByRole("button", { name: "Confirmar", exact: true }).click()
+    ]);
+    await expect(page.getByRole("status").filter({ hasText: statusTexto })).toBeVisible();
+  };
+
+  // 3 · Inicio
+  await confirmarDialogo("/ejecucion/inicio", "Inicio de la ejecución registrado.", async () => {
+    await page.fill("#inicio-fecha", hoy);
+    await page.selectOption("#inicio-documento", docs[0]);
+    await page.getByRole("button", { name: "Registrar inicio" }).click();
+  });
+
+  // 4 · Hito
+  await confirmarDialogo("/ejecucion/hitos", "Hito registrado.", async () => {
+    await page.fill("#hito-descripcion", "Entrega del lote 1");
+    await page.fill("#hito-fecha", hoy);
+    await page.fill("#hito-monto", "20000.00");
+    await page.getByRole("button", { name: "Registrar hito" }).click();
+  });
+  await expect(page.locator('section[aria-labelledby="hitos"]')).toContainText("HIT-01");
+
+  // 5 · Entregable
+  let ejecucionResp = await request.get(`${API}/gobierno/contratos/${contratoId}/ejecucion`, {
+    headers: mundo.headers
+  });
+  let ejecucion = (await ejecucionResp.json()) as EjecucionE2E;
+  const hitoId = ejecucion.hitos[0].id;
+
+  await confirmarDialogo("/ejecucion/entregables", "Entregable registrado.", async () => {
+    await page.fill("#entregable-descripcion", "Informe del lote 1");
+    await page.fill("#entregable-vencimiento", hoy);
+    await page.selectOption("#entregable-hito", hitoId);
+    await page.getByRole("button", { name: "Registrar entregable" }).click();
+  });
+
+  // 6 · Entrega y conformidad
+  const seccionEntregables = page.locator('section[aria-labelledby="entregables"]');
+  await seccionEntregables.getByRole("button", { name: "Registrar entrega", exact: true }).first().click();
+  await confirmarDialogo("/entregas", "Entrega registrada.", async () => {
+    await page.fill("#entrega-fecha", hoy);
+    await page.selectOption("#entrega-evidencia", docs[1]);
+    await seccionEntregables.getByRole("button", { name: "Registrar entrega", exact: true }).last().click();
+  });
+  await confirmarDialogo("/revision", "Entrega conformada.", async () => {
+    await seccionEntregables.getByRole("button", { name: "Conformar", exact: true }).click();
+    await seccionEntregables.getByRole("button", { name: "Confirmar revisión" }).click();
+  });
+
+  // 7 · Valuación
+  await confirmarDialogo("/ejecucion/valuaciones", "Valuación presentada.", async () => {
+    await page.selectOption("#valuacion-hito", hitoId);
+    await page.fill("#valuacion-desde", hoy);
+    await page.fill("#valuacion-hasta", hoy);
+    await page.fill("#valuacion-fecha", hoy);
+    await page.fill("#valuacion-monto", "15000.00");
+    await page.selectOption("#valuacion-soporte", docs[2]);
+    await page.getByRole("button", { name: "Presentar valuación" }).click();
+  });
+  await confirmarDialogo("/resolucion", "Valuación conformada.", async () => {
+    await page.locator('section[aria-labelledby="valuaciones"]').getByRole("button", { name: "Conformar", exact: true }).click();
+    await page.locator('section[aria-labelledby="valuaciones"]').getByRole("button", { name: "Confirmar resolución" }).click();
+  });
+
+  // 8 · Saldo
+  await expect(seccionResumen).toContainText("35000.00");
+  await expect(seccionResumen).toContainText("15000.00");
+
+  // 9 · Recepción parcial
+  await confirmarDialogo("/ejecucion/recepciones", "Recepción registrada.", async () => {
+    await page.selectOption("#recepcion-tipo", "PARCIAL");
+    await page.fill("#recepcion-fecha", hoy);
+    await page.selectOption("#recepcion-documento", docs[3]);
+    await page.getByRole("checkbox", { name: /HIT-01/ }).check();
+    await page.getByRole("button", { name: "Registrar recepción" }).click();
+  });
+  await expect(page.locator('section[aria-labelledby="recepciones"]')).toContainText("REC-01");
+
+  // 10 · Factura
+  ejecucionResp = await request.get(`${API}/gobierno/contratos/${contratoId}/ejecucion`, {
+    headers: mundo.headers
+  });
+  ejecucion = (await ejecucionResp.json()) as EjecucionE2E;
+  const recepcionId = ejecucion.recepciones[0].id;
+
+  await confirmarDialogo("/ejecucion/facturas", "Factura vinculada.", async () => {
+    await page.fill("#factura-numero", "F-0001");
+    await page.fill("#factura-fecha", hoy);
+    await page.fill("#factura-monto", "15000.00");
+    await page.selectOption("#factura-hito", hitoId);
+    await page.selectOption("#factura-recepcion", recepcionId);
+    await page.fill("#factura-conformidad", hoy);
+    await page.selectOption("#factura-soporte", docs[4]);
+    await page.getByRole("button", { name: "Vincular factura" }).click();
+  });
+  await expect(page.locator('section[aria-labelledby="facturas"]')).toContainText("FAC-01");
+
+  // 11 · Negativa por API (sin conformidad de recepción)
+  const hitoNuevoResp = await request.post(`${API}/gobierno/contratos/${contratoId}/ejecucion/hitos`, {
+    headers: supervisorAna.headers,
+    data: {
+      descripcion: "Hito sin recepción",
+      fecha_prevista: hoy,
+      monto_previsto: null,
+      porcentaje_previsto: null,
+      obligatorio: false
+    }
+  });
+  const hitoNuevoJson = (await hitoNuevoResp.json()) as EjecucionE2E;
+  expect(hitoNuevoResp.status(), await hitoNuevoResp.text()).toBe(201);
+  const hitoNuevoId = hitoNuevoJson.hitos.find((h) => h.descripcion === "Hito sin recepción")?.id ?? "";
+  const facturaInvalidaResp = await request.post(
+    `${API}/gobierno/contratos/${contratoId}/ejecucion/facturas`,
+    {
+      headers: supervisorAna.headers,
+      data: {
+        numero_documento: "F-SIN-RECEPCION",
+        fecha: hoy,
+        monto: "1.00",
+        hito_id: hitoNuevoId,
+        recepcion_id: recepcionId,
+        documento_id: docs[5],
+        fecha_conformidad: hoy
+      }
+    }
+  );
+  expect(facturaInvalidaResp.status()).toBe(422);
+  expect(((await facturaInvalidaResp.json()) as { code: string }).code).toBe(
+    "GOV_CONTRACT_EXEC_RECEIPT_INVALID"
+  );
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Resumen de la ejecución" })).toBeVisible();
+
+  // 12-13 · Recepción definitiva
+  const seccionRecepciones = page.locator('section[aria-labelledby="recepciones"]');
+  await confirmarDialogo("/ejecucion/recepciones", "Recepción registrada.", async () => {
+    await page.selectOption("#recepcion-tipo", "DEFINITIVA");
+    await page.fill("#recepcion-fecha", hoy);
+    await page.selectOption("#recepcion-documento", docs[6]);
+    await page.getByRole("button", { name: "Registrar recepción" }).click();
+  });
+  await expect(seccionRecepciones).toContainText(/definitiva/i);
+
+  // 14 · Cierre
+  await confirmarDialogo("/ejecucion/cierre", "Ejecución cerrada.", async () => {
+    await page.fill("#cierre-fecha", hoy);
+    await page.selectOption("#cierre-documento", docs[7]);
+    await page.selectOption("#cierre-evaluacion", docs[8]);
+    await page.getByRole("button", { name: "Cerrar ejecución" }).click();
+  });
+  await expect(seccionResumen).toContainText("Cerrada");
+
+  // 15 · Historia
+  await expect(page.locator('section[aria-labelledby="cronologia"]')).toContainText("HIT-01");
+  await expect(page.locator('section[aria-labelledby="cronologia"]')).toContainText("VAL-01");
+  await expect(page.locator('section[aria-labelledby="cronologia"]')).toContainText("REC-01");
+  await expect(page.locator('section[aria-labelledby="cronologia"]')).toContainText("FAC-01");
+
+  // 16 · Auditoría por API
+  for (const accion of ["GOV_CONTRACT_EXEC_CLOSED", "GOV_CONTRACT_EXEC_INVOICE_LINKED"]) {
+    const bitacoraResp = await request.get(`${API}/gobierno/bitacora?accion=${accion}`, {
+      headers: mundo.headers
+    });
+    expect(bitacoraResp.status()).toBe(200);
+    const bitacora = (await bitacoraResp.json()) as { total: number };
+    expect(bitacora.total).toBeGreaterThanOrEqual(1);
+  }
+
+  // CSV
+  const csvResp = await request.get(`${API}/gobierno/contratos/${contratoId}/ejecucion/reporte.csv`, {
+    headers: mundo.headers
+  });
+  expect(csvResp.status()).toBe(200);
+  expect(await csvResp.text()).toMatch(/^fecha,tipo,referencia,titulo,monto,moneda,estado/);
+
+  // Axe en ejecución a 1280
+  const axeResults = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  const violationsSeriousCritical = axeResults.violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical"
+  );
+  expect(violationsSeriousCritical).toEqual([]);
 
   for (const ancho of [1280, 390, 320]) {
     await page.setViewportSize({ width: ancho, height: 800 });

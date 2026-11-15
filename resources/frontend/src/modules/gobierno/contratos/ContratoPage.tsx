@@ -791,6 +791,13 @@ export function ContratoPage() {
         </section>
       ) : null}
       {contrato.estado === "FORMALIZADO" ? <SupervisionContrato contratoId={contrato.id} /> : null}
+      {contrato.estado === "FORMALIZADO" ? (
+        <p className="mb-6">
+          <Link className="text-brand-700 underline" to={`/gobierno/contratos/${contrato.id}/ejecucion`}>
+            Ejecución del contrato
+          </Link>
+        </p>
+      ) : null}
 
       {contrato.estado === "BORRADOR" && !permisos.gestionar ? (
         <section aria-labelledby="vinculaciones-titulo" className="mb-6">

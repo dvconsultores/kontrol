@@ -862,6 +862,7 @@ class TestGovCnt01Contratos:
             "manage",
             "formalize",
             "assign_supervisor",
+            "execute",
         ]
 
         cuenta_con_permisos(mundo, "cnt_lector", [("gobierno_contratos", "view")])

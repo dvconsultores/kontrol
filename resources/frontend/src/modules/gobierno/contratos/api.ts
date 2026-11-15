@@ -349,3 +349,25 @@ export interface OpcionesSupervision {
     fecha_eficacia: string | null;
   }[];
 }
+
+export type FlujoEjecucion = "OBRAS" | "BIENES_SERVICIOS";
+export interface DocumentoRef { id: string; titulo: string }
+export interface ActuacionEjecucion { id: string; fecha: string; observacion: string | null; supervisor: string; documento: DocumentoRef }
+export interface CierreEjecucion extends ActuacionEjecucion { aprobador_tipo: "COMISION" | "UNIDAD_CONTRATANTE"; aprobador_nombre: string; evaluacion: DocumentoRef }
+export interface HitoEjecucion { id: string; referencia: string; descripcion: string; fecha_prevista: string; monto_previsto: string | null; porcentaje_previsto: string | null; obligatorio: boolean; estado: "VIGENTE" | "ANULADO"; cumplido: boolean; recepcion: string | null; valuado_conformado: string; facturado: string; motivo_anulacion: string | null }
+export interface EntregaEjecucion { id: string; referencia: string; fecha_entrega: string; documento: DocumentoRef; estado: "ENTREGADA" | "CONFORME" | "RECHAZADA"; fecha_revision: string | null; observacion_revision: string | null; supervisor: string | null }
+export interface EntregableEjecucion { id: string; referencia: string; hito_id: string | null; hito: string | null; descripcion: string; fecha_vencimiento: string; obligatorio: boolean; estado: "VIGENTE" | "ANULADO"; situacion: "PENDIENTE" | "ENTREGADO" | "CONFORME" | "RECHAZADO"; entregas: EntregaEjecucion[]; motivo_anulacion: string | null }
+export interface ValuacionEjecucion { id: string; referencia: string; hito_id: string; hito: string; periodo_desde: string; periodo_hasta: string; fecha: string; monto: string; moneda: string; estado: "PRESENTADA" | "CONFORMADA" | "REPARADA" | "ANULADA"; estado_etiqueta: string; fecha_conformidad: string | null; acumulado: string | null; reparos: string | null; supervisor: string | null; documento: DocumentoRef; motivo_anulacion: string | null }
+export interface RecepcionEjecucion { id: string; referencia: string; tipo: "PARCIAL" | "PROVISIONAL" | "DEFINITIVA"; tipo_etiqueta: string; fecha: string; hitos: string[]; hito_ids: string[]; supervisor: string; representante: string | null; fin_garantia: string | null; documento: DocumentoRef; observacion: string | null; estado: "CONFORME" | "ANULADA"; motivo_anulacion: string | null }
+export interface FacturaEjecucion { id: string; referencia: string; numero_documento: string; fecha: string; monto: string; moneda: string; hito_id: string; hito: string; recepcion_id: string; recepcion: string; fecha_conformidad: string; supervisor: string; documento: DocumentoRef; estado: "CONFORME" | "ANULADA"; motivo_anulacion: string | null }
+export interface EventoEjecucion { fecha: string; tipo: string; referencia: string; titulo: string; monto: string | null; moneda: string | null; estado: string }
+export interface EjecucionContrato {
+  contrato: { id: string; codigo: string | null; objeto: string; contratista: string; estado: string; tipo_contratacion: string; flujo: FlujoEjecucion; moneda: string; expediente_id: string };
+  terminos: { monto_original: string; monto_efectivo: string; moneda: string; fecha_inicio: string | null; fecha_fin: string | null; fuente: string };
+  resumen: { estado_ejecucion: string; estado_etiqueta: string; valuado_conformado: string; valuado_presentado: string; saldo: string; facturado: string; hitos_total: number; hitos_cumplidos: number; entregables_pendientes: number; supervisor: { asignacion_id: string; referencia: string; nombre: string; cargo: string } | null };
+  inicio: ActuacionEjecucion | null; terminacion: ActuacionEjecucion | null; cierre: CierreEjecucion | null;
+  hitos: HitoEjecucion[]; entregables: EntregableEjecucion[]; valuaciones: ValuacionEjecucion[]; recepciones: RecepcionEjecucion[]; facturas: FacturaEjecucion[]; cronologia: EventoEjecucion[];
+  acciones: { iniciar: boolean; registrar: boolean; registrar_hechos: boolean; terminar: boolean; recepcion_parcial: boolean; recepcion_provisional: boolean; recepcion_definitiva: boolean; cerrar: boolean };
+  soy_supervisor: boolean;
+}
+export interface OpcionesEjecucion { hoy: string; documentos: { id: string; titulo: string; version: string }[]; representantes: { id: string; codigo: string; nombre: string }[] }

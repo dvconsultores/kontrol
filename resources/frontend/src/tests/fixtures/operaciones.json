@@ -1868,6 +1868,158 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/cierre",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/entregables",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/entregables/{entregable_id}/anular",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/entregables/{entregable_id}/entregas",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/entregas/{entrega_id}/revision",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/facturas",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/facturas/{factura_id}/anular",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/hitos",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/hitos/{hito_id}/anular",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/inicio",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/opciones",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/recepciones",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/recepciones/{recepcion_id}/anular",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/reporte.csv",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/terminacion",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/valuaciones",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/valuaciones/{valuacion_id}/anular",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/ejecucion/valuaciones/{valuacion_id}/resolucion",
+      "capabilities": [
+        "gobierno_contratos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/contratos/{contrato_id}/expediente",
       "capabilities": [
         "gobierno_contratos:view"
@@ -8369,7 +8521,8 @@
     "gobierno_contratos:view",
     "gobierno_contratos:manage",
     "gobierno_contratos:formalize",
-    "gobierno_contratos:assign_supervisor"
+    "gobierno_contratos:assign_supervisor",
+    "gobierno_contratos:execute"
   ],
   "report_capabilities": {
     "executive_ventas": [

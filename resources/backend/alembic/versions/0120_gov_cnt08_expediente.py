@@ -1,7 +1,7 @@
 """CNT-08: paquete exportable y verificaciones del expediente contractual (GOV-CNT-009).
 
-Revision ID: 0119_gov_cnt08_expediente
-Revises: 0118_gov_cnt02_modificaciones
+Revision ID: 0120_gov_cnt08_expediente
+Revises: 0119_gov_cnt03_ejecucion
 """
 
 from __future__ import annotations
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision = "0119_gov_cnt08_expediente"
-down_revision = "0118_gov_cnt02_modificaciones"
+revision = "0120_gov_cnt08_expediente"
+down_revision = "0119_gov_cnt03_ejecucion"
 branch_labels = None
 depends_on = None
 

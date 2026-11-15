@@ -1348,6 +1348,101 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/cierre",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/entregables",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/entregables/{entregable_id}/anular",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/entregables/{entregable_id}/entregas",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/entregas/{entrega_id}/revision",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/facturas",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/facturas/{factura_id}/anular",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/hitos",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/hitos/{hito_id}/anular",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/inicio",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/opciones",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/recepciones",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/recepciones/{recepcion_id}/anular",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/reporte.csv",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/terminacion",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/valuaciones",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/valuaciones/{valuacion_id}/anular",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/ejecucion/valuaciones/{valuacion_id}/resolucion",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/contratos/{contrato_id}/expediente",
       "query": []
     },

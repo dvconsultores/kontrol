@@ -518,6 +518,7 @@ DETALLE_EXPEDIENTE: tuple[str, ...] = ("acto", "apertura", "aspecto", "asistente
 DETALLE_CONTRATO: tuple[str, ...] = ("campos", "causal", "certificados", "codigo", "contrato", "decision", "expediente", "firmante_cargo", "garantias", "huella", "oferta", "tipo")
 DETALLE_MODIFICACION_CONTRATO: tuple[str, ...] = ("campos", "causal", "certificados", "codigo", "contrato", "firmante_cargo", "huella", "modificacion", "tipo")
 DETALLE_SUPERVISOR: tuple[str, ...] = ("acto", "cargo", "causal", "contrato", "designacion", "desde", "motivo", "supervisor", "sustituye", "unidad")
+DETALLE_EJECUCION: tuple[str, ...] = ("acumulado", "aprobador", "causal", "contrato", "documento", "entregable", "factura", "fecha", "hito", "moneda", "monto", "motivo", "recepcion", "resultado", "supervisor", "tipo", "valuacion")
 
 _PARTE_C: tuple[AuditActionSpec, ...] = (
     _e("GOV_COMMITTEE_CREATED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisión de contrataciones registrada"),
@@ -588,6 +589,24 @@ _PARTE_D: tuple[AuditActionSpec, ...] = (
     _e("GOV_CONTRACT_DOSSIER_PACKAGE_DOWNLOADED", "GovernmentContractDossierPackage", "government", "gov-cnt-08", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "contrato"), "Paquete del expediente contractual descargado"),
     _e("GOV_CONTRACT_DOSSIER_PACKAGE_VERIFIED", "GovernmentContractDossierPackage", "government", "gov-cnt-08", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "huella_archivo", "identico", "resultado"), "Paquete del expediente contractual verificado"),
     _e("GOV_CONTRACT_DOSSIER_PACKAGE_VERIFICATION_FAILED", "GovernmentContractDossierPackage", "government", "gov-cnt-08", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "huella_archivo", "motivos", "resultado"), "Verificación del paquete del expediente contractual fallida"),
+    _e("GOV_CONTRACT_EXEC_STARTED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Inicio de la ejecución del contrato registrado"),
+    _e("GOV_CONTRACT_EXEC_MILESTONE_CREATED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Hito del contrato registrado"),
+    _e("GOV_CONTRACT_EXEC_MILESTONE_CANCELLED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Hito del contrato anulado"),
+    _e("GOV_CONTRACT_EXEC_DELIVERABLE_CREATED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Entregable del contrato registrado"),
+    _e("GOV_CONTRACT_EXEC_DELIVERABLE_CANCELLED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Entregable del contrato anulado"),
+    _e("GOV_CONTRACT_EXEC_DELIVERABLE_SUBMITTED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Entrega de un entregable registrada"),
+    _e("GOV_CONTRACT_EXEC_DELIVERABLE_REVIEWED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Entrega revisada por el supervisor"),
+    _e("GOV_CONTRACT_EXEC_VALUATION_PRESENTED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Valuación presentada"),
+    _e("GOV_CONTRACT_EXEC_VALUATION_CONFORMED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Valuación conformada por el supervisor"),
+    _e("GOV_CONTRACT_EXEC_VALUATION_OBJECTED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Valuación reparada por el supervisor"),
+    _e("GOV_CONTRACT_EXEC_VALUATION_CANCELLED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Valuación anulada"),
+    _e("GOV_CONTRACT_EXEC_WORKS_COMPLETED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Acta de terminación de la obra registrada"),
+    _e("GOV_CONTRACT_EXEC_RECEIPT_RECORDED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Recepción del contrato registrada"),
+    _e("GOV_CONTRACT_EXEC_RECEIPT_CANCELLED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Recepción del contrato anulada"),
+    _e("GOV_CONTRACT_EXEC_INVOICE_LINKED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Factura vinculada a hito y recepción conforme"),
+    _e("GOV_CONTRACT_EXEC_INVOICE_CANCELLED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Factura vinculada anulada"),
+    _e("GOV_CONTRACT_EXEC_CLOSED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Cierre operativo de la ejecución del contrato"),
+    _e("GOV_CONTRACT_EXEC_BLOCKED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "SECURITY", "REJECTION", DETALLE_EJECUCION, "Actuación de ejecución del contrato bloqueada"),
     _e("GOV_RENDITION_FILE_CREATED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "denominacion", "periodo_desde", "periodo_hasta"), "Expediente de cuenta creado"),
     _e("GOV_RENDITION_FILE_UPDATED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "denominacion"), "Expediente de cuenta actualizado"),
     _e("GOV_RENDITION_FILE_PIECE_ADDED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "evento_id"), "Pieza incorporada al expediente de cuenta"),
