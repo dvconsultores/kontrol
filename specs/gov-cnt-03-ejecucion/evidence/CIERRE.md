@@ -58,4 +58,8 @@ Además dejaron de fallar 31 casos de entorno de la línea base: backup y restor
 
 ## UAT
 
-Pila local desde el SHA publicado: se registra al levantarla (ver abajo).
+Pila UAT local levantada desde b98d4e6 en el worktree wt-b98d4e6:
+- frontend 16773, backend 19600, autoridad central 19610;
+- humo HUMO-UAT-01: 1/1 → OWNER_UAT_READY y ACCESSIBLE en esta estación.
+
+La UAT remota para el sponsor sigue BLOCKED_BY_INFRASTRUCTURE (runbook docs/governance/uat-viva-sponsor-runbook.md).
