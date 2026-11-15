@@ -4,6 +4,13 @@ on:
   push:
     branches:
       - develop
+  workflow_dispatch:
+    inputs:
+      simulate_candidate_failure:
+        description: 'Prueba obligatoria: candidato fallido; green debe seguir atendiendo'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -92,7 +99,7 @@ jobs:
     concurrency:
       group: kontrol-uat-deploy
       cancel-in-progress: false
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
@@ -113,6 +120,7 @@ jobs:
           UAT_IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
           UAT_RELEASE_SHA: ${{ needs.build.outputs.release_sha }}
           KONTROL_IMAGE_REGISTRY: ${{ secrets.DOCKER_USERNAME }}
+          UAT_SIMULATE_CANDIDATE_FAILURE: ${{ github.event_name == 'workflow_dispatch' && inputs.simulate_candidate_failure && '1' || '0' }}
           UAT_REPORT_DIR: ${{ runner.temp }}/kontrol-uat-deploy
 
       - name: Subir informe de despliegue
@@ -124,3 +132,4 @@ jobs:
           path: |
             ${{ runner.temp }}/kontrol-uat-deploy/manifest.json
             ${{ runner.temp }}/kontrol-uat-deploy/deployments.tsv
+            ${{ runner.temp }}/kontrol-uat-deploy/*.sanitized.log
