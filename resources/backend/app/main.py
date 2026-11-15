@@ -41,6 +41,7 @@ from app.modules.government.api_cuentas import router as government_cuentas_rout
 from app.modules.government.api_decision import router as government_decision_router
 from app.modules.government.api_estructura import router as government_structure_router
 from app.modules.government.api_evaluacion import router as government_evaluacion_router
+from app.modules.government.api_expediente_contractual import router as government_contract_dossier_router
 from app.modules.government.api_expedientes import router as government_expedientes_router
 from app.modules.government.api_garantias import router as government_guarantees_router
 from app.modules.government.api_hallazgos import router as government_findings_router
@@ -203,6 +204,7 @@ def create_app() -> FastAPI:
     app.include_router(government_contracts_router, prefix=prefix)
     app.include_router(government_contract_amendments_router, prefix=prefix)
     app.include_router(government_contract_supervision_router, prefix=prefix)
+    app.include_router(government_contract_dossier_router, prefix=prefix)
     app.include_router(government_cuentas_router, prefix=prefix)
     app.include_router(government_caja_router, prefix=prefix)
     app.include_router(government_cierres_router, prefix=prefix)

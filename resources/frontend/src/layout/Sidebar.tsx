@@ -147,6 +147,12 @@ const navSections: NavSection[] = [
         icon: FileSignature,
         modulo: "gobierno",
       },
+      {
+        to: "/gobierno/expedientes-contractuales",
+        label: "Expedientes contractuales",
+        icon: Archive,
+        modulo: "gobierno",
+      },
     ],
   },
   {

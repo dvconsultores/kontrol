@@ -205,6 +205,8 @@ export const router = createBrowserRouter([
           { path: "gobierno/contratos/:contratoId", lazy: () => import("@/modules/gobierno/contratos/ContratoPage").then((m) => ({ Component: m.ContratoPage })) },
           { path: "gobierno/contratos/:contratoId/modificaciones", lazy: () => import("@/modules/gobierno/contratos/ContratoModificacionesPage").then((m) => ({ Component: m.ContratoModificacionesPage })) },
           { path: "gobierno/contratos/:contratoId/modificaciones/:modificacionId", lazy: () => import("@/modules/gobierno/contratos/ModificacionPage").then((m) => ({ Component: m.ModificacionPage })) },
+          { path: "gobierno/expedientes-contractuales", lazy: () => import("@/modules/gobierno/expedientes-contractuales/ExpedientesContractualesPage").then((m) => ({ Component: m.ExpedientesContractualesPage })) },
+          { path: "gobierno/contratos/:contratoId/expediente", lazy: () => import("@/modules/gobierno/expedientes-contractuales/ExpedienteContractualPage").then((m) => ({ Component: m.ExpedienteContractualPage })) },
           { path: "gobierno/presupuesto/ejercicios", lazy: () => import("@/modules/gobierno/presupuesto/EjerciciosPresupuestariosPage").then((m) => ({ Component: m.EjerciciosPresupuestariosPage })) },
           { path: "gobierno/presupuesto/ejercicios/:ejercicioId", lazy: () => import("@/modules/gobierno/presupuesto/EjercicioPresupuestarioPage").then((m) => ({ Component: m.EjercicioPresupuestarioPage })) },
           { path: "gobierno/sod/:reglaId", lazy: () => import("@/modules/gobierno/sod/ReglaSodPage").then((m) => ({ Component: m.ReglaSodPage })) },

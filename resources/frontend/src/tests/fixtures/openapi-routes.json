@@ -1347,6 +1347,48 @@
       "query": []
     },
     {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/expediente",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/expediente/auditoria",
+      "query": [
+        "limit",
+        "offset"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/expediente/cronologia",
+      "query": [
+        "desde",
+        "hasta",
+        "limit",
+        "offset",
+        "proceso"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/expediente/integridad",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/expediente/paquetes",
+      "query": [
+        "limit",
+        "offset"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/expediente/paquetes",
+      "query": []
+    },
+    {
       "method": "POST",
       "path": "/gobierno/contratos/{contrato_id}/formalizar",
       "query": []
@@ -1589,6 +1631,32 @@
     {
       "method": "GET",
       "path": "/gobierno/estructuras/{ejercicio}/unidades/{unidad_id}/versiones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/expedientes-contractuales",
+      "query": [
+        "codigo",
+        "contratista",
+        "desde",
+        "expediente",
+        "hasta",
+        "limit",
+        "offset",
+        "supervisor",
+        "tipo",
+        "vigencia"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/expedientes-contractuales/paquetes/verificar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/expedientes-contractuales/paquetes/{paquete_id}/descargar",
       "query": []
     },
     {

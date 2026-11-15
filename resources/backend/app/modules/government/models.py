@@ -4955,3 +4955,85 @@ GOV_CONTRACT_SUPERVISORS_GUARD_PG = (
 
 for _sentencia in GOV_CONTRACT_SUPERVISORS_GUARD_PG:
     event.listen(GovernmentContractSupervisorAssignment.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+GOV_CONTRACT_DOSSIER_PACKAGES_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_contract_dossier_package_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_DOSSIER_PACKAGE_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_contract_dossier_packages_no_update BEFORE UPDATE ON gov_contract_dossier_packages FOR EACH ROW EXECUTE FUNCTION kontrol_gov_contract_dossier_package_inmutable()",
+    "CREATE TRIGGER trg_gov_contract_dossier_packages_no_delete BEFORE DELETE ON gov_contract_dossier_packages FOR EACH ROW EXECUTE FUNCTION kontrol_gov_contract_dossier_package_inmutable()",
+    "CREATE TRIGGER trg_gov_contract_dossier_packages_no_truncate BEFORE TRUNCATE ON gov_contract_dossier_packages FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_contract_dossier_package_inmutable()",
+)
+
+GOV_CONTRACT_DOSSIER_PACKAGE_VERIFICATIONS_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_contract_dossier_package_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_DOSSIER_PACKAGE_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_contract_dossier_package_verifications_no_update BEFORE UPDATE ON gov_contract_dossier_package_verifications FOR EACH ROW EXECUTE FUNCTION kontrol_gov_contract_dossier_package_inmutable()",
+    "CREATE TRIGGER trg_gov_contract_dossier_package_verifications_no_delete BEFORE DELETE ON gov_contract_dossier_package_verifications FOR EACH ROW EXECUTE FUNCTION kontrol_gov_contract_dossier_package_inmutable()",
+    "CREATE TRIGGER trg_gov_contract_dossier_package_verifications_no_truncate BEFORE TRUNCATE ON gov_contract_dossier_package_verifications FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_contract_dossier_package_inmutable()",
+)
+
+
+class GovernmentContractDossierPackage(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Paquete exportable del expediente contractual (CNT-08, GOV-CNT-009); inmutable."""
+
+    __tablename__ = "gov_contract_dossier_packages"
+    __scope__ = Scope.COMPANY
+
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    numero_generacion: Mapped[int] = mapped_column(Integer, nullable=False)
+    proposito: Mapped[str] = mapped_column(Text, nullable=False)
+    version_manifiesto: Mapped[int] = mapped_column(Integer, nullable=False)
+    corte: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    huella_manifiesto: Mapped[str] = mapped_column(String(64), nullable=False)
+    huella_paquete: Mapped[str] = mapped_column(String(64), nullable=False)
+    bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    clave_almacenamiento: Mapped[str] = mapped_column(String(255), nullable=False)
+    nombre_archivo: Mapped[str] = mapped_column(String(80), nullable=False)
+    eventos: Mapped[int] = mapped_column(Integer, nullable=False)
+    documentos_incluidos: Mapped[int] = mapped_column(Integer, nullable=False)
+    documentos_excluidos: Mapped[int] = mapped_column(Integer, nullable=False)
+    archivos: Mapped[int] = mapped_column(Integer, nullable=False)
+    manifiesto: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    idempotency_key: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_contract_dossier_packages_company_id_codigo"),
+        UniqueConstraint("contract_id", "numero_generacion", name="uq_gov_contract_dossier_packages_contract_id_numero_generacion"),
+        UniqueConstraint("company_id", "idempotency_key", name="uq_gov_contract_dossier_packages_company_id_idempotency_key"),
+        UniqueConstraint("clave_almacenamiento", name="uq_gov_contract_dossier_packages_clave_almacenamiento"),
+        CheckConstraint("length(huella_manifiesto) = 64 AND length(huella_paquete) = 64", name="huellas"),
+        CheckConstraint("bytes > 0", name="bytes"),
+        CheckConstraint("eventos >= 0 AND documentos_incluidos >= 0 AND documentos_excluidos >= 0 AND archivos >= 0", name="contadores"),
+        CheckConstraint("numero_generacion >= 1", name="numero_generacion"),
+        CheckConstraint("version_manifiesto = 1", name="version_manifiesto"),
+    )
+
+
+class GovernmentContractDossierPackageVerification(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Verificación de integridad de una copia de un paquete del expediente contractual (CNT-08); inmutable."""
+
+    __tablename__ = "gov_contract_dossier_package_verifications"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    package_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contract_dossier_packages.id"), nullable=False, index=True)
+    resultado: Mapped[str] = mapped_column(String(20), nullable=False)
+    motivos: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False)
+    huella_archivo: Mapped[str] = mapped_column(String(64), nullable=False)
+    bytes_archivo: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    identico: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(f"resultado IN ({en(RESULTADOS_VERIFICACION_PAQUETE)})", name="resultado"),
+        CheckConstraint("length(huella_archivo) = 64", name="huella_archivo"),
+        CheckConstraint("bytes_archivo >= 0", name="bytes_archivo"),
+    )
+
+
+for _sentencia in GOV_CONTRACT_DOSSIER_PACKAGES_IMMUTABLE_PG:
+    event.listen(GovernmentContractDossierPackage.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_CONTRACT_DOSSIER_PACKAGE_VERIFICATIONS_IMMUTABLE_PG:
+    event.listen(GovernmentContractDossierPackageVerification.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
