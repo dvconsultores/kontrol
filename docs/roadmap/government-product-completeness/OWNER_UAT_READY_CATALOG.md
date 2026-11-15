@@ -4,7 +4,7 @@
 
 ## Estado: 27 procesos listos para probar (2026-11-12)
 
-- `OWNER_UAT_READY` = 37 de 122 procesos (30,33 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a BUD-06, BUD-08, CTL-07 y CNT-01 (los ciclos PROC-06/07/08/10 están en la matriz y su tarjeta existe, pero su fila aquí sigue pendiente: OBS-MATRIZ-UAT-01);
+- `OWNER_UAT_READY` = 38 de 122 procesos (31,15 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a BUD-06, BUD-08, TRE-09, CTL-07 y CNT-01 (los ciclos PROC-06/07/08/10 están en la matriz y su tarjeta existe, pero su fila aquí sigue pendiente: OBS-MATRIZ-UAT-01);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
@@ -36,6 +36,7 @@
 | **CTL-07 Alertas de operaciones atípicas** (GOV-CTL-009) | Menú › Gobierno › Alertas de operaciones atípicas | [`specs/gov-ctl-07-alertas-atipicas/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-ctl-07-alertas-atipicas/evidence/OWNER_UAT_CARD.md) | GOV-CTL-07 |
 | **BUD-06 Disponibilidad y certificación presupuestaria** (GOV-BUD-009, GOV-BUD-010) | Menú › Gobierno · Presupuesto › Ejercicios presupuestarios › (ejercicio aprobado) › «Disponibilidad y certificaciones» | [`specs/gov-bud-06-disponibilidad-certificacion/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-bud-06-disponibilidad-certificacion/evidence/OWNER_UAT_CARD.md) | GOV-BUD-06 |
 | **BUD-08 Compromiso presupuestario** (GOV-BUD-012) | Menú › Gobierno · Presupuesto › Ejercicios presupuestarios › (ejercicio aprobado) › «Compromisos» | [`specs/gov-bud-08-compromiso/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-bud-08-compromiso/evidence/OWNER_UAT_CARD.md) | GOV-BUD-08 |
+| **TRE-09 Tasas oficiales BCV** (GOV-TRE-011) | Menú › Gobierno · Tesorería › Tasas oficiales (consumidor: Presupuesto › ejercicio › «Compromisos») | [`specs/gov-tre-09-tasas-bcv/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-tre-09-tasas-bcv/evidence/OWNER_UAT_CARD.md) | GOV-TRE-09 |
 | **CNT-01 Contrato u orden derivada de la adjudicación** (GOV-CNT-001) | Menú › Gobierno · Contrataciones › Expedientes › (expediente adjudicado) › «Recomendación y decisión» › «Crear contrato u orden»; consulta en Menú › Gobierno · Contratos › Contratos y órdenes | [`specs/gov-cnt-01-contrato-orden/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-cnt-01-contrato-orden/evidence/OWNER_UAT_CARD.md) | GOV-CNT-01 |
 | **PROC-02 Comisión de contrataciones (miembros, suplentes, impedimentos)** (GOV-PROC-003) | Menú › Gobierno · Contrataciones › Comisiones | [`specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md) | GOV-PROC-02 |
 | **PROC-03 Expediente único de contratación con cronología y lapsos** (GOV-PROC-004, GOV-PROC-014) | Menú › Gobierno · Contrataciones › Expedientes | [`specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md) |

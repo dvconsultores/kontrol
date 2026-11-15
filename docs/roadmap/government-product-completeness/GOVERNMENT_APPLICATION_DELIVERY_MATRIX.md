@@ -65,7 +65,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | TRE-06 | GOV-TRE-007 | Tesorería pública | Tesorería | Conciliación bancaria | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | TRE-07 | GOV-TRE-008 | Tesorería pública | Tesorería | Anulación y reverso de pago | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | TRE-08 | GOV-TRE-009 | Tesorería pública | Tesorería | Fondos y cajas autorizadas: reposición, rendición y arqueo | no | no | no | no | no | no | NOT_STARTED (bloqueado) | DOMAIN_DEPENDENCY: TRE-03/TRE-04 (orden de pago), BUD (compromiso y causado), ORG-06 (funcionario responsable) |
-| TRE-09 | GOV-TRE-011 | Tesorería pública | Tesorería | Provenance de tasas BCV | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
+| TRE-09 | GOV-TRE-011 | Tesorería pública | Tesorería | Provenance de tasas BCV | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | TRE-10 | GOV-TRE-012 | Tesorería pública | Control Interno | Trazabilidad del pago hasta presupuesto y contrato | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | ACC-01 | GOV-ACC-002 GOV-ACC-012 | Contabilidad pública | Contabilidad | Plan de cuentas, mapeos presupuesto-contabilidad e historial de reglas | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-04; LEGAL_VALIDATION_REQUIRED N36 (clase C) |
 | ACC-02 | GOV-ACC-001 GOV-ACC-003 GOV-ACC-004 GOV-ACC-005 | Contabilidad pública | Contabilidad | Asientos de doble partida automáticos y manuales; momentos contables;  | no | no | no | no | no | no | NOT_STARTED (bloqueado) | D-GOV-04; LEGAL_VALIDATION_REQUIRED N36 (clase C) |

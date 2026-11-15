@@ -32,6 +32,7 @@ from app.modules.government.models import (
     GovernmentStructure,
     GovernmentUnit,
 )
+from app.modules.government.monedas import canonical_currency
 from app.modules.government.service_actos import _autoridad_valida
 from app.modules.government.service_auditoria import _usuarios_por_ids
 from app.modules.government.service_autoridad import competencias_en_vigor
@@ -55,6 +56,7 @@ from app.modules.government.service_presupuesto_certificacion import (
     situacion_de_certificado,
 )
 from app.modules.government.service_sod import funcionarios_de_actor, usuarios_equivalentes
+from app.modules.government.service_tasas import verificar_limite
 from app.modules.identity_access.models import User
 from app.modules.organization.models import Company
 from app.shared.audit import record_audit_after_rollback
@@ -117,6 +119,23 @@ def _render_pdf_compromiso(snapshot: dict[str, Any], huella: str, emitido_en: da
     expediente = snapshot.get("expediente", {})
     soporte = snapshot.get("soporte", {})
 
+    conversion = autoridad.get("conversion") or None
+    filas_conversion: list[tuple[str, Any]] = []
+    if conversion:
+        filas_conversion.append(
+            (
+                "Comparación del límite",
+                f"{conversion.get('moneda_operacion', '')} frente a {conversion.get('moneda_limite', '')} en VES: {conversion.get('total_ves', '')} ≤ {conversion.get('limite_ves', '')}",
+            )
+        )
+        for t in conversion.get("tasas", []):
+            filas_conversion.append(
+                (
+                    f"Tasa oficial {t.get('moneda', '')}",
+                    f"1 {t.get('moneda', '')} = {t.get('valor', '')} VES · {t.get('fuente', '')} · fecha efectiva {t.get('fecha_efectiva', '')} · versión {t.get('version', '')} · {t.get('fuente_referencia', '')}",
+                )
+            )
+
     story.append(
         pair_table(
             [
@@ -133,6 +152,7 @@ def _render_pdf_compromiso(snapshot: dict[str, Any], huella: str, emitido_en: da
                 ("Unidad de la autoridad", autoridad.get("unidad", "")),
                 ("Funcionario", autoridad.get("funcionario", "")),
                 ("Límite de la autoridad", autoridad.get("limite", "")),
+                *filas_conversion,
                 ("Soporte", soporte.get("etiqueta", "")),
                 ("Huella del soporte", soporte.get("sha256", "")),
                 ("Emitido en", emitido_en.isoformat()),
@@ -190,6 +210,64 @@ def _render_pdf_compromiso(snapshot: dict[str, Any], huella: str, emitido_en: da
 
     doc.build(story)
     return buffer.getvalue()
+
+
+def verificacion_limite(
+    db: Session,
+    ctx: CompanyContext,
+    year_id: str,
+    cargo_id: str,
+    total: Decimal,
+) -> dict[str, Any]:
+    ejercicio = _ejercicio_de_empresa(db, ctx, year_id)
+    hoy = hoy_de_negocio()
+    cargo = db.execute(
+        select(GovernmentPosition).where(
+            GovernmentPosition.id == cargo_id,
+            GovernmentPosition.company_id == ctx.company_id,
+        )
+    ).scalar_one_or_none()
+    comp = None
+    if cargo:
+        competencias = competencias_en_vigor(db, cargo, hoy)
+        comp = next(
+            (c for c in competencias if c["accion"] == "COMPROMETER" and c["materia"] == "PRESUPUESTO"),
+            None,
+        )
+    if not cargo or comp is None:
+        mensaje = "El cargo no tiene hoy la competencia COMPROMETER en materia de PRESUPUESTO"
+        raise KontrolError(
+            code="GOV_BUDGET_COMMITMENT_AUTHORITY_INVALID",
+            message=mensaje,
+            field_errors={"autoridad_cargo_id": [mensaje]},
+            status_code=422,
+        )
+    if comp.get("tipo_limite") != "MONTO":
+        return {
+            "cargo_id": cargo_id,
+            "limite_tipo": "SIN_LIMITE",
+            "limite": "Sin límite",
+            "verificacion": None,
+        }
+    monto = Decimal(str(comp.get("monto", 0)))
+    moneda = comp.get("moneda") or ""
+    verificacion = verificar_limite(
+        db,
+        ctx,
+        ejercicio.moneda_funcional or "",
+        total,
+        monto,
+        moneda,
+        hoy,
+        bloquear=False,
+        exigir=False,
+    )
+    return {
+        "cargo_id": cargo_id,
+        "limite_tipo": "MONTO",
+        "limite": f"{_monto_es(monto)} {moneda}",
+        "verificacion": verificacion,
+    }
 
 
 def _salida_compromiso(db: Session, ctx: CompanyContext, k: GovernmentBudgetCommitment) -> dict[str, Any]:
@@ -251,6 +329,7 @@ def _salida_compromiso(db: Session, ctx: CompanyContext, k: GovernmentBudgetComm
         "autoridad_unidad": autoridad.get("unidad", "") or k.autoridad_unidad or "",
         "autoridad_funcionario": autoridad.get("funcionario") or k.autoridad_funcionario_nombre or None,
         "limite": autoridad.get("limite", ""),
+        "conversion": autoridad.get("conversion"),
         "soporte_documento_id": k.soporte_documento_id,
         "soporte": soporte.get("etiqueta", ""),
         "soporte_sha256": k.soporte_sha256,
@@ -389,7 +468,7 @@ def opciones(db: Session, ctx: CompanyContext, year_id: str) -> dict[str, Any]:
     return {
         "anio": ejercicio.anio,
         "estado": ejercicio.estado,
-        "moneda": ejercicio.moneda_funcional,
+        "moneda": canonical_currency(ejercicio.moneda_funcional),
         "comprometible": comprometible,
         "certificados": certificados_salida,
         "autoridades": autoridades,
@@ -568,6 +647,7 @@ def emitir(db: Session, ctx: CompanyContext, user: User, year_id: str, cuerpo: d
         )
     exigir_autoridad_funcional(db, ctx, str(cargo.id), "COMPROMETER", "PRESUPUESTO")
 
+    conversion: dict[str, Any] | None = None
     limite_tipo = comp.get("tipo_limite")
     limite_monto = None
     limite_moneda = None
@@ -576,24 +656,38 @@ def emitir(db: Session, ctx: CompanyContext, user: User, year_id: str, cuerpo: d
         limite_monto = Decimal(str(comp.get("monto", 0)))
         limite_moneda = comp.get("moneda") or ""
         limite = f"{_monto_es(limite_monto)} {limite_moneda}"
-        if limite_moneda != ejercicio.moneda_funcional:
-            mensaje = f"El límite de la autoridad está en {limite_moneda} y el compromiso en {ejercicio.moneda_funcional}: no se convierte. Use una autoridad con límite en {ejercicio.moneda_funcional} o sin límite."
-            raise KontrolError(
-                code="GOV_BUDGET_COMMITMENT_AUTHORITY_CURRENCY_MISMATCH",
-                message=mensaje,
-                details={"total": str(total), "moneda": ejercicio.moneda_funcional or "", "limite": str(limite_monto), "moneda_limite": limite_moneda},
-                field_errors={"autoridad_cargo_id": [mensaje]},
-                status_code=422,
-            )
-        if total > limite_monto:
-            mensaje = f"El total {total} {ejercicio.moneda_funcional} excede el límite de {_etiqueta(cargo.code, cargo.name)} ({limite_monto} {limite_moneda})"
+        verificacion = verificar_limite(
+            db,
+            ctx,
+            ejercicio.moneda_funcional or "",
+            total,
+            limite_monto,
+            limite_moneda,
+            hoy,
+            bloquear=True,
+            exigir=True,
+        )
+        if not verificacion["dentro_del_limite"]:
+            moneda_canonica = canonical_currency(ejercicio.moneda_funcional)
+            mensaje = f"El total {total} {moneda_canonica} excede el límite de {_etiqueta(cargo.code, cargo.name)} ({limite_monto} {canonical_currency(limite_moneda)})"
+            details: dict[str, Any] = {
+                "total": str(total),
+                "moneda": moneda_canonica,
+                "limite": str(limite_monto),
+                "moneda_limite": canonical_currency(limite_moneda),
+            }
+            if verificacion["requiere_conversion"]:
+                mensaje += f" (con la tasa oficial BCV: {verificacion['total_ves']} VES frente a {verificacion['limite_ves']} VES)"
+                details["conversion"] = verificacion
             raise KontrolError(
                 code="GOV_BUDGET_COMMITMENT_AUTHORITY_AMOUNT_EXCEEDED",
                 message=mensaje,
-                details={"total": str(total), "moneda": ejercicio.moneda_funcional or "", "limite": str(limite_monto), "moneda_limite": limite_moneda},
+                details=details,
                 field_errors={"autoridad_cargo_id": [mensaje]},
                 status_code=422,
             )
+        if verificacion["requiere_conversion"]:
+            conversion = verificacion
     else:
         limite = "Sin límite"
 
@@ -647,7 +741,7 @@ def emitir(db: Session, ctx: CompanyContext, user: User, year_id: str, cuerpo: d
         "codigo": codigo,
         "ente": ente,
         "anio": ejercicio.anio,
-        "moneda": ejercicio.moneda_funcional or "",
+        "moneda": canonical_currency(ejercicio.moneda_funcional),
         "fecha": hoy.isoformat(),
         "concepto": concepto,
         "total": str(total),
@@ -664,6 +758,7 @@ def emitir(db: Session, ctx: CompanyContext, user: User, year_id: str, cuerpo: d
             "limite_monto": str(limite_monto) if limite_monto is not None else None,
             "limite_moneda": limite_moneda,
             "limite": limite,
+            "conversion": conversion,
         },
         "soporte": {
             "documento_id": str(documento.id),
@@ -705,7 +800,7 @@ def emitir(db: Session, ctx: CompanyContext, user: User, year_id: str, cuerpo: d
         numero=numero,
         codigo=codigo,
         estado="VIGENTE",
-        moneda=ejercicio.moneda_funcional or "",
+        moneda=canonical_currency(ejercicio.moneda_funcional),
         fecha=hoy,
         concepto=concepto,
         expediente_referencia=expediente_referencia,

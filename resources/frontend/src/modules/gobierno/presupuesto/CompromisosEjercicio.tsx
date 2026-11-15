@@ -7,6 +7,8 @@ import { Button } from "@/components/Button";
 import { FormField } from "@/components/FormField";
 import { TextInput } from "@/components/TextInput";
 import { formatMoney } from "@/lib/format";
+import { formatearFechaDeNegocio } from "@/lib/fecha-de-negocio";
+import { formatearDecimal } from "@/modules/gobierno/tesoreria/tasas/api";
 import {
   CONSULTA_PRESUPUESTO,
   type Compromiso,
@@ -14,6 +16,8 @@ import {
   type EjercicioDetalle,
   type EscribirBloque,
   type OpcionesCompromisoVista,
+  type VerificacionLimite,
+  type ConversionLimite,
 } from "./api";
 
 interface CompromisosEjercicioProps {
@@ -44,6 +48,49 @@ const aCentimos = (texto: string): bigint | null => {
   return enteroCentimos + decimalCentimos;
 };
 
+function BloqueConversion({
+  conversion,
+}: {
+  conversion: ConversionLimite;
+}): React.JSX.Element {
+  if (conversion.resultado === "SIN_TASA") {
+    return (
+      <div role="group" aria-label="Verificación del límite con tasa oficial">
+        <p role="alert">
+          {`No hay tasa oficial BCV aprobada aplicable al ${formatearFechaDeNegocio(conversion.fecha)} para ${conversion.monedas_sin_tasa.join(", ")}: el compromiso no podrá registrarse hasta que Tesorería apruebe la tasa.`}
+        </p>
+      </div>
+    );
+  }
+
+  if (conversion.requiere_conversion) {
+    return (
+      <div role="group" aria-label="Verificación del límite con tasa oficial">
+        <p>{`Moneda de operación: ${conversion.moneda_operacion}`}</p>
+        <p>{`Moneda del límite: ${conversion.moneda_limite}`}</p>
+        {conversion.tasas.map((t) => (
+          <div key={t.tasa_id}>
+            <p>{`Tasa oficial utilizada: 1 ${t.moneda} = ${formatearDecimal(t.valor, 8)} VES`}</p>
+            <p>{`Fecha de la tasa: ${formatearFechaDeNegocio(t.fecha_efectiva)}`}</p>
+            <p>{`Fuente: ${t.fuente} · ${t.fuente_referencia}`}</p>
+          </div>
+        ))}
+        <p>
+          {`Resultado de la comparación: ${conversion.dentro_del_limite ? "dentro del límite" : "excede el límite"} (${formatearDecimal(conversion.total_ves ?? "0", 2)} VES ${conversion.dentro_del_limite ? "≤" : ">"} ${formatearDecimal(conversion.limite_ves ?? "0", 2)} VES)`}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div role="group" aria-label="Verificación del límite con tasa oficial">
+      <p>
+        {`Misma moneda (${conversion.moneda_operacion}): comparación directa · ${conversion.dentro_del_limite ? "dentro del límite" : "excede el límite"}`}
+      </p>
+    </div>
+  );
+}
+
 export function CompromisosEjercicio({
   detalle,
   puedeComprometer,
@@ -59,6 +106,17 @@ export function CompromisosEjercicio({
   const [soporteId, setSoporteId] = useState("");
   const [motivos, setMotivos] = useState<Record<string, string>>({});
   const [ultimo, setUltimo] = useState<Compromiso | null>(null);
+
+  const totalCentimos = lineas.reduce<bigint | null>((acumulado, linea) => {
+    const centimos = aCentimos(linea.monto);
+    if (centimos === null || acumulado === null) return null;
+    return acumulado + centimos;
+  }, 0n);
+
+  const totalTexto =
+    totalCentimos === null
+      ? "0.00"
+      : `${String(totalCentimos / 100n)}.${String(totalCentimos % 100n).padStart(2, "0")}`;
 
   const opcionesQuery = useQuery({
     queryKey: [...CONSULTA_PRESUPUESTO, "compromisos-opciones", detalle.id],
@@ -78,6 +136,29 @@ export function CompromisosEjercicio({
     retry: false,
   });
 
+  const autoridadSeleccionada = opcionesQuery.data?.autoridades.find(
+    (a) => a.cargo_id === autoridadId,
+  );
+
+  const verificacionQuery = useQuery({
+    queryKey: [
+      ...CONSULTA_PRESUPUESTO,
+      "verificacion-limite",
+      detalle.id,
+      autoridadId,
+      totalTexto,
+    ],
+    queryFn: () =>
+      apiFetch<VerificacionLimite>(
+        `/gobierno/presupuesto/ejercicios/${detalle.id}/compromisos/verificacion-limite?autoridad_cargo_id=${encodeURIComponent(autoridadId)}&total=${totalTexto}`,
+      ),
+    enabled:
+      autoridadSeleccionada?.limite_tipo === "MONTO" &&
+      totalCentimos !== null &&
+      totalCentimos > 0n,
+    retry: false,
+  });
+
   if (opcionesQuery.isLoading || compromisosQuery.isLoading) {
     return <p>Cargando compromisos…</p>;
   }
@@ -93,16 +174,6 @@ export function CompromisosEjercicio({
     puedeComprometer &&
     (detalle.estado === "APROBADO" || detalle.estado === "RECONDUCIDO");
 
-  const totalCentimos = lineas.reduce<bigint | null>((acumulado, linea) => {
-    const centimos = aCentimos(linea.monto);
-    if (centimos === null || acumulado === null) return null;
-    return acumulado + centimos;
-  }, 0n);
-
-  const totalTexto =
-    totalCentimos === null
-      ? "0.00"
-      : `${String(totalCentimos / 100n)}.${String(totalCentimos % 100n).padStart(2, "0")}`;
 
   const submitCompromiso = async () => {
     try {
@@ -277,6 +348,9 @@ export function CompromisosEjercicio({
                   </select>
                 )}
               </FormField>
+              {verificacionQuery.data?.verificacion ? (
+                <BloqueConversion conversion={verificacionQuery.data.verificacion} />
+              ) : null}
 
               <FormField label="Soporte documental" required error={errorDe(erroresServidor, "soporte_documento_id")}>
                 {opciones.soportes.length === 0 ? (
@@ -308,6 +382,9 @@ export function CompromisosEjercicio({
               Compromiso {ultimo.codigo} registrado por{" "}
               {formatMoney(ultimo.total)} {ultimo.moneda}.
             </p>
+          ) : null}
+          {ultimo?.conversion ? (
+            <BloqueConversion conversion={ultimo.conversion} />
           ) : null}
         </>
       ) : null}
@@ -357,6 +434,17 @@ export function CompromisosEjercicio({
                   <td>
                     {k.autoridad_cargo}
                     {k.autoridad_funcionario ? ` · ${k.autoridad_funcionario}` : ""}
+                    {k.conversion && k.conversion.tasas.length > 0 ? (
+                      <>
+                        <br />
+                        {`Tasa BCV: ${k.conversion.tasas
+                          .map(
+                            (t) =>
+                              `1 ${t.moneda} = ${formatearDecimal(t.valor, 8)} VES (${formatearFechaDeNegocio(t.fecha_efectiva)})`,
+                          )
+                          .join("; ")}`}
+                      </>
+                    ) : null}
                   </td>
                   <td>{k.soporte}</td>
                   <td>

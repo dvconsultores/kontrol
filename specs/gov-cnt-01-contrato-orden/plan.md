@@ -44,9 +44,9 @@ En ninguno de los dos casos se detiene el ciclo.
 | OD-CNT01-08 | La fecha de formalización es `hoy_de_negocio()` (Caracas): con ella se evalúan la competencia y el límite del firmante, igual que en BUD-06 |
 | OD-CNT01-09 | No hay constancia PDF interna (opcional en el encargo §34). La autoridad es el documento firmado, que se abre con el módulo de documentos |
 
-## Modelo de datos (migración `0114_gov_cnt01_contratos`)
+## Modelo de datos (migración `0115_gov_cnt01_contratos`)
 
-> Reencadenada en la integración: P1 publicó `0113_gov_bud08_compromiso` durante el ciclo. La migración se renombró a `0114_gov_cnt01_contratos` con `down_revision = 0113_gov_bud08_compromiso`, sin cambiar su contenido; ALEMBIC_HEAD_COUNT=1.
+> Reencadenada dos veces en la integración, sin cambiar su contenido. P1 publicó `0113_gov_bud08_compromiso` y después `0114_gov_tre09_tasas` durante el ciclo, y la migración pasó de 0113 a 0114 y luego a `0115_gov_cnt01_contratos`, con `down_revision = 0114_gov_tre09_tasas`. ALEMBIC_HEAD_COUNT=1. El downgrade de permisos se corrigió en la llamada 10 para igualarlo a 0112 y 0113.
 
 ### `gov_contracts`
 

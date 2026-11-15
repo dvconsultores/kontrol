@@ -30,6 +30,7 @@ from app.modules.government.models import (
     GovernmentStructure,
     GovernmentUnit,
 )
+from app.modules.government.monedas import canonical_currency
 from app.modules.government.service_actos import _autoridad_valida
 from app.modules.government.service_auditoria import _usuarios_por_ids
 from app.modules.government.service_autoridad import competencias_en_vigor
@@ -494,7 +495,7 @@ def disponibilidad(db: Session, ctx: CompanyContext, year_id: str, filtros: dict
     return {
         "anio": ejercicio.anio,
         "estado": ejercicio.estado,
-        "moneda": ejercicio.moneda_funcional,
+        "moneda": canonical_currency(ejercicio.moneda_funcional),
         "certificable": ejercicio.estado in ("APROBADO", "RECONDUCIDO") and hoy.year == ejercicio.anio,
         "items": filtrados,
         "totales": totales,
@@ -662,7 +663,7 @@ def emitir(db: Session, ctx: CompanyContext, user: User, year_id: str, cuerpo: d
         "codigo": codigo,
         "ente": ente,
         "anio": ejercicio.anio,
-        "moneda": ejercicio.moneda_funcional or "",
+        "moneda": canonical_currency(ejercicio.moneda_funcional),
         "fecha": hoy.isoformat(),
         "concepto": concepto,
         "monto": str(monto),
@@ -724,7 +725,7 @@ def emitir(db: Session, ctx: CompanyContext, user: User, year_id: str, cuerpo: d
         monto=monto,
         saldo_antes=saldo_antes,
         saldo_despues=saldo_despues,
-        moneda=ejercicio.moneda_funcional or "",
+        moneda=canonical_currency(ejercicio.moneda_funcional),
         fecha=hoy,
         concepto=concepto,
         expediente_referencia=referencia,

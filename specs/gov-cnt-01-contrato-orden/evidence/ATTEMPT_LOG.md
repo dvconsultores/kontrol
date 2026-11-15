@@ -4,7 +4,8 @@
 - **Antes de cada llamada:** `EGRESS_CHECK: ENV_FILES=0 SECRETS=0 PROD_URLS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_PII=0 REAL_PAYROLL=0 BANK_DATA=0`.
   - Las coincidencias de «Secret» en el brief E eran «Secretaria de la Comisión»: falsos positivos revisados.
 - **Topes:** 8 llamadas por ciclo como máximo y 2 reintentos por subproblema.
-  - La dueña autorizó **una llamada extra** el 2026-11-14 para dos guardas de Vitest (`OWNER_EXCEPTION_USED=1`).
+  - La dueña autorizó **una llamada extra** el 2026-11-14 para dos guardas de Vitest y la regresión de PROC-08 (llamada 9).
+  - El 2026-11-15 autorizó **otra** para el downgrade de la migración (llamada 10). `OWNER_EXCEPTION_USED=2`.
 
 | Llamada | Subproblema | Tokens (entrada/salida) | Coste | Resultado |
 |---|---|---|---|---|
@@ -17,6 +18,7 @@
 | 7 | D·R1 (6 ediciones) + T006 E2E (con 3 anexos de patrones) | 14662/14983 | $0,019413 | D: **AUDIT_PASS** (typecheck, lint y Vitest). T006: **REJECT** en la sonda; ver la tabla siguiente |
 | 8 | E·R1 + D·R2 + T003b (año sin UUID) | 4495/4914 | $0,006231 | **AUDIT_PASS**: 40 bloques exactos; E2E en verde a la primera, con 0 reintentos; typecheck, lint y Vitest en verde |
 | 9 | Excepción de la dueña: G1 `pantallas.ts` (2 rutas), G2 QC-02 (nombres literales) y G3 regresión E2E de PROC-08 (el párrafo retirado se sustituye por el encabezado del panel) | 1099/490 | $0,000904 | **AUDIT_PASS**: 3 bloques exactos; Vitest 2044/2044, typecheck, lint y build en verde; E2E de decisión y contratos 2/2 |
+| 10 | 2.ª excepción de la dueña: H1, simetría del downgrade de permisos de la migración. Antes solo borraba la asignación a FUNCIONAL_COMPLETO; ahora borra todas, como 0112 y 0113. Lo destapó el downgrade de la UAT al reencadenar tras TRE-09 | 828/358 | $0,000672 | **AUDIT_PASS**: 1 bloque exacto; ruff limpio; up/down/up en PG con un rol extra |
 
 **Sonda E2E de Claude (temporal y retirada).** Antes de la llamada 8, Claude ejecutó la E2E de DeepSeek y aplicó correcciones mínimas *temporales* para descubrir todos los fallos de una vez. Después restauró los ficheros exactos de DeepSeek, verificados por huella.
 
@@ -33,9 +35,9 @@
 | Selectores con varias coincidencias | Modo estricto de Playwright | E2E |
 
 ```text
-DEEPSEEK_CALLS=9 (8 + 1 excepción de la dueña)  GLOBAL_CALL_HARD_CAP=8  GLOBAL_CAP_REACHED=1  OWNER_EXCEPTION_USED=1
+DEEPSEEK_CALLS=10 (8 + 2 excepciones de la dueña)  GLOBAL_CALL_HARD_CAP=8  GLOBAL_CAP_REACHED=1  OWNER_EXCEPTION_USED=2
 DEEPSEEK_RETRIES=6 (B·R1, B·R2, C·R1, D·R1, D·R2, E·R1)  MAX_RETRIES_SINGLE_SUBPROBLEM=2 (T003 y T005)
-COSTE_TOTAL=$0,092031 (8 llamadas: $0,091127 + llamada 9: $0,000904)
+COSTE_TOTAL=$0,092703 (8 llamadas: $0,091127 + llamada 9: $0,000904 + llamada 10: $0,000672)
 ```
 
 **Mutaciones** (`service_contratos.py`). La huella se restauró igual: `9202e61ccd0d`. Las pruebas son posteriores a K1, pero las anclas mutadas no cambian.

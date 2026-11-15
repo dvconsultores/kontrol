@@ -92,7 +92,7 @@ Traza requisito → módulo → proceso → backend → pantalla → campo → r
 | GOV-TRE-008 | P0 | N05,N06,N21 | TRE-07 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Registrar anulaciones/reversos de pago sin borrar la transaccion original. |
 | GOV-TRE-009 | P0 | N04,N05,N20,N23 | TRE-08 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Controlar fondos/cajas autorizadas, responsables, reposicion, rendicion y arqueos cuando aplique. |
 | GOV-TRE-010 | P0 | N20,N23 | TRE-04 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Bloquear pagos duplicados por mismo documento/beneficiario/importe bajo reglas de idempotencia y alertas. |
-| GOV-TRE-011 | P1 | N39,N03,N06 | TRE-09 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | NOT_STARTED | Conservar provenance de tasas BCV cuando una operacion autorizada requiera conversion monetaria. |
+| GOV-TRE-011 | P1 | N39,N03,N06 | TRE-09 | PASS | PASS | PASS | NOT_APPLICABLE | PASS | PASS | OWNER_UAT_READY | Conservar provenance de tasas BCV cuando una operacion autorizada requiera conversion monetaria. |
 | GOV-TRE-012 | P0 | N03,N05,N06,N21 | TRE-10 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Producir trazabilidad pago -> orden -> causado -> compromiso -> presupuesto -> contrato/requisicion. |
 | GOV-ACC-001 | P0 | N03,N06,N35,N36 | ACC-02 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Implementar ledger contable de doble partida separado del ledger presupuestario pero reconciliable transaccionalmente. |
 | GOV-ACC-002 | P0 | N03,N06,N35,N36 | ACC-01 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Versionar plan de cuentas y mapeos presupuesto- contabilidad por ejercicio/ente. |

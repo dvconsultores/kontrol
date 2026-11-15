@@ -410,7 +410,7 @@ def test_vectores_g_h_i_limite(mundo, gobierno, ocupacion):
 
     r = _comprometer(mundo, s, [{"certificado_id": cdp["id"], "monto": "10.00"}], cargo=s["otra_moneda"])
     assert r.status_code == 422
-    assert r.json()["code"] == "GOV_BUDGET_COMMITMENT_AUTHORITY_CURRENCY_MISMATCH"
+    assert r.json()["code"] == "GOV_OFFICIAL_RATE_REQUIRED"
 
     r = _comprometer(mundo, s, [{"certificado_id": cdp["id"], "monto": "10.00"}], cargo=s["firmante"])
     assert r.status_code == 422

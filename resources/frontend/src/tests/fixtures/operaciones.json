@@ -2824,6 +2824,14 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/compromisos/verificacion-limite",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/compromisos/{compromiso_id}",
       "capabilities": [
         "gobierno_presupuesto:view"
@@ -3595,6 +3603,54 @@
       "path": "/api/v1/gobierno/tesoreria/rubros/{rubro_id}",
       "capabilities": [
         "gobierno_caja:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/tasas",
+      "capabilities": [
+        "gobierno_tasas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/tasas",
+      "capabilities": [
+        "gobierno_tasas:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/tasas/{tasa_id}",
+      "capabilities": [
+        "gobierno_tasas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/tasas/{tasa_id}/anular",
+      "capabilities": [
+        "gobierno_tasas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/tasas/{tasa_id}/aprobar",
+      "capabilities": [
+        "gobierno_tasas:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/tasas/{tasa_id}/correccion",
+      "capabilities": [
+        "gobierno_tasas:manage"
       ],
       "scope": "COMPANY"
     },
@@ -8100,6 +8156,9 @@
     "gobierno_caja:view",
     "gobierno_caja:manage",
     "gobierno_caja:activate",
+    "gobierno_tasas:view",
+    "gobierno_tasas:manage",
+    "gobierno_tasas:approve",
     "gobierno_presupuesto:view",
     "gobierno_presupuesto:manage",
     "gobierno_presupuesto:approve",

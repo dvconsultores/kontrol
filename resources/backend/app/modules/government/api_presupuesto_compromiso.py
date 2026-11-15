@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, status
+from decimal import Decimal
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -16,6 +18,7 @@ from app.modules.government.schemas_presupuesto_compromiso import (
     CompromisoOut,
     CompromisosVista,
     OpcionesCompromisoVista,
+    VerificacionLimiteOut,
 )
 from app.modules.identity_access.models import User
 
@@ -48,6 +51,24 @@ def listar_compromisos(
     _modulo: None = Depends(require_module("gobierno")),
 ):
     return service_presupuesto_compromiso.listar(db, ctx, year_id)
+
+
+@router.get(
+    "/{year_id}/compromisos/verificacion-limite",
+    response_model=VerificacionLimiteOut,
+)
+def verificacion_limite(
+    year_id: str,
+    autoridad_cargo_id: str = Query(max_length=36),
+    total: Decimal = Query(gt=0, max_digits=18, decimal_places=2),
+    db: Session = Depends(get_db),
+    ctx: CompanyContext = Depends(get_company_context),
+    user: User = Depends(require_permission("gobierno_presupuesto", "view")),
+    _modulo: None = Depends(require_module("gobierno")),
+):
+    return service_presupuesto_compromiso.verificacion_limite(
+        db, ctx, year_id, autoridad_cargo_id, total
+    )
 
 
 @router.get(
