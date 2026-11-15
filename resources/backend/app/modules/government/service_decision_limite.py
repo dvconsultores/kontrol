@@ -27,6 +27,7 @@ ESTADOS_LIMITE: dict[str, str] = {
     "DENTRO_LIMITE": "Dentro del límite",
     "SIN_LIMITE": "Sin límite",
     "EXCEDE_LIMITE": "Excede el límite",
+    "MONEDA_DISTINTA": "No comparable por moneda",
     "SIN_TASA": "Sin tasa oficial aprobada",
     "MONTO_NO_DECLARADO": "Monto no declarado",
     "SIN_COMPETENCIA": "Sin competencia vigente",
