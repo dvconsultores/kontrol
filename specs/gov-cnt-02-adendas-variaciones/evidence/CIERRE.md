@@ -49,3 +49,10 @@ Incluye además el cierre de OBS-CNT01-BUD08-01 y OBS-CNT01-TRE09-01 (delta `spe
 ## DeepSeek
 
 14 llamadas a deepseek-v4-pro, con 6 extra autorizadas por la dueña. 5 reintentos semánticos y un coste de $0,144272. Detalle en ATTEMPT_LOG.md.
+
+## UAT
+
+- Pila nueva desde el SHA publicado `ff309b3`: base `kuat` rehecha solo con Alembic, en la cabeza `0118_gov_cnt02_modificaciones`, y sembrada con datos sintéticos. Frontend en http://localhost:5173/ y backend en 8000.
+- Humo `gobierno-contratos-modificaciones.spec.ts` contra esa pila: 1/1 (3,8 min). OWNER_UAT_ACCESSIBLE=YES.
+- Las credenciales están fuera de Git, en un fichero local con permisos 600, y no se registran aquí.
+- Aceptación de la dueña (OWNER_ACCEPTED): NO, pendiente.
