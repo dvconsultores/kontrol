@@ -4844,3 +4844,114 @@ for _sentencia in GOV_CONTRACT_AMENDMENTS_GUARD_PG:
 
 for _sentencia in GOV_CONTRACT_AMENDMENT_ALLOCATIONS_GUARD_PG:
     event.listen(GovernmentContractAmendmentAllocation.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+ESTADOS_SUPERVISOR_CONTRATO = ("VIGENTE", "SUSTITUIDA")
+
+
+class GovernmentContractSupervisorAssignment(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Supervisor o responsable designado de un contrato formalizado (CNT-04, GOV-CNT-004; LCP art. 136)."""
+
+    __tablename__ = "gov_contract_supervisors"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    estado: Mapped[str] = mapped_column(String(12), nullable=False, default="VIGENTE", server_default="VIGENTE")
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False)
+    assignment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_assignments.id"), nullable=False)
+    position_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False)
+    unit_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_units.id"), nullable=False)
+    act_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=False, index=True)
+    funcionario_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    funcionario_documento: Mapped[str] = mapped_column(String(40), nullable=False)
+    figura: Mapped[str] = mapped_column(String(24), nullable=False)
+    cargo_codigo: Mapped[str] = mapped_column(String(30), nullable=False)
+    cargo_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    unidad_nombre: Mapped[str] = mapped_column(String(250), nullable=False)
+    acto_etiqueta: Mapped[str] = mapped_column(String(400), nullable=False)
+    acto_emisor_cargo: Mapped[str] = mapped_column(String(200), nullable=False)
+    desde: Mapped[date] = mapped_column(Date, nullable=False)
+    hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    motivo: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    sustituye_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_contract_supervisors.id"), nullable=True)
+    sustituida_por_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_contract_supervisors.id", deferrable=True, initially="DEFERRED"), nullable=True)
+    registrado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registrado_por: Mapped[str] = mapped_column(String(36), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("contract_id", "numero", name="uq_gov_contract_supervisors_numero"),
+        Index(
+            "uq_gov_contract_supervisors_vigente",
+            "contract_id",
+            unique=True,
+            postgresql_where=text("estado = 'VIGENTE'"),
+            sqlite_where=text("estado = 'VIGENTE'"),
+        ),
+        CheckConstraint(f"estado IN ({en(ESTADOS_SUPERVISOR_CONTRATO)})", name="estado"),
+        CheckConstraint("numero >= 1", name="numero"),
+        CheckConstraint("hasta IS NULL OR hasta >= desde", name="vigencia"),
+        CheckConstraint("(estado = 'VIGENTE') = (hasta IS NULL AND sustituida_por_id IS NULL)", name="vigente_abierta"),
+        CheckConstraint("sustituye_id IS NULL OR motivo IS NOT NULL", name="sustitucion_motivada"),
+    )
+
+
+GOV_CONTRACT_SUPERVISORS_GUARD_PG = (
+    """
+    CREATE OR REPLACE FUNCTION kontrol_gov_contract_supervisor_guard()
+    RETURNS trigger AS $$
+    BEGIN
+        IF TG_OP IN ('DELETE','TRUNCATE') THEN
+            RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_SUPERVISOR_IMMUTABLE', DETAIL = TG_OP;
+        END IF;
+        IF TG_OP = 'UPDATE' THEN
+            IF OLD.estado = 'VIGENTE' AND NEW.estado = 'SUSTITUIDA'
+               AND NEW.hasta IS NOT NULL AND NEW.sustituida_por_id IS NOT NULL
+               AND OLD.company_id IS NOT DISTINCT FROM NEW.company_id
+               AND OLD.contract_id IS NOT DISTINCT FROM NEW.contract_id
+               AND OLD.numero IS NOT DISTINCT FROM NEW.numero
+               AND OLD.official_id IS NOT DISTINCT FROM NEW.official_id
+               AND OLD.assignment_id IS NOT DISTINCT FROM NEW.assignment_id
+               AND OLD.position_id IS NOT DISTINCT FROM NEW.position_id
+               AND OLD.unit_id IS NOT DISTINCT FROM NEW.unit_id
+               AND OLD.act_id IS NOT DISTINCT FROM NEW.act_id
+               AND OLD.funcionario_nombre IS NOT DISTINCT FROM NEW.funcionario_nombre
+               AND OLD.funcionario_documento IS NOT DISTINCT FROM NEW.funcionario_documento
+               AND OLD.figura IS NOT DISTINCT FROM NEW.figura
+               AND OLD.cargo_codigo IS NOT DISTINCT FROM NEW.cargo_codigo
+               AND OLD.cargo_nombre IS NOT DISTINCT FROM NEW.cargo_nombre
+               AND OLD.unidad_nombre IS NOT DISTINCT FROM NEW.unidad_nombre
+               AND OLD.acto_etiqueta IS NOT DISTINCT FROM NEW.acto_etiqueta
+               AND OLD.acto_emisor_cargo IS NOT DISTINCT FROM NEW.acto_emisor_cargo
+               AND OLD.desde IS NOT DISTINCT FROM NEW.desde
+               AND OLD.motivo IS NOT DISTINCT FROM NEW.motivo
+               AND OLD.sustituye_id IS NOT DISTINCT FROM NEW.sustituye_id
+               AND OLD.registrado_en IS NOT DISTINCT FROM NEW.registrado_en
+               AND OLD.registrado_por IS NOT DISTINCT FROM NEW.registrado_por
+               AND OLD.created_at IS NOT DISTINCT FROM NEW.created_at
+               AND OLD.created_by IS NOT DISTINCT FROM NEW.created_by
+            THEN
+                RETURN NEW;
+            ELSE
+                RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_SUPERVISOR_IMMUTABLE', DETAIL = TG_OP;
+            END IF;
+        END IF;
+        RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    """,
+    """
+    CREATE OR REPLACE TRIGGER trg_gov_contract_supervisors_guard
+    BEFORE UPDATE OR DELETE ON gov_contract_supervisors
+    FOR EACH ROW EXECUTE FUNCTION kontrol_gov_contract_supervisor_guard();
+    """,
+    """
+    CREATE OR REPLACE TRIGGER trg_gov_contract_supervisors_no_truncate
+    BEFORE TRUNCATE ON gov_contract_supervisors
+    FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_contract_supervisor_guard();
+    """,
+)
+
+for _sentencia in GOV_CONTRACT_SUPERVISORS_GUARD_PG:
+    event.listen(GovernmentContractSupervisorAssignment.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

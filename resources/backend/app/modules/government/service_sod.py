@@ -143,6 +143,8 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "PROC03_CONTRATO_FORMALIZAR": ("Formalizar el contrato u orden", "GOV_CONTRACT_FORMALIZED", False),
             "PROC03_MODIFICACION_PREPARAR": ("Preparar una modificación del contrato", "GOV_CONTRACT_AMENDMENT_DRAFT_CREATED", False),
             "PROC03_MODIFICACION_FORMALIZAR": ("Formalizar una modificación del contrato", "GOV_CONTRACT_AMENDMENT_FORMALIZED", False),
+            "PROC03_SUPERVISOR_DESIGNAR": ("Designar al supervisor del contrato", "GOV_CONTRACT_SUPERVISOR_ASSIGNED", False),
+            "PROC03_SUPERVISOR_SUSTITUIR": ("Sustituir al supervisor del contrato", "GOV_CONTRACT_SUPERVISOR_REPLACED", False),
         },
     },
 }

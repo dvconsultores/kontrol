@@ -19,7 +19,7 @@ import {
   prepararMundo,
 } from "./helpers/gobierno";
 
-test.setTimeout(480_000);
+test.setTimeout(720_000);
 
 type ActoEmitido = {
   id: string;
@@ -317,6 +317,9 @@ test("CNT-01 · contrato u orden desde la adjudicación: recorrido, negativas, a
     "gobierno_contratos:view",
     "gobierno_contratos:manage",
     "gobierno_contratos:formalize",
+    "gobierno_contratos:assign_supervisor",
+    "gobierno_ocupacion:activate",
+    "gobierno_auditoria:view",
     "gobierno_presupuesto:view",
     "gobierno_presupuesto:manage",
     "gobierno_presupuesto:approve",
@@ -1271,6 +1274,155 @@ test("CNT-01 · contrato u orden desde la adjudicación: recorrido, negativas, a
   const contratoApi = (await contratoApiResp.json()) as { estado: string; huella: string };
   expect(contratoApi.estado).toBe("FORMALIZADO");
   expect(contratoApi.huella).toMatch(/^[a-f0-9]{64}$/);
+
+  const activadorOcupacion = await crearUsuario(
+    request,
+    admin.headers,
+    ["organization:view", "gobierno_ocupacion:view", "gobierno_ocupacion:activate"],
+    mundo.companyId,
+  );
+  const cargoSupA = await cargoVigenteApi(
+    request,
+    mundo.headers,
+    mundo.companyId,
+    tipo.id,
+    ANIO,
+    estructura.despId,
+    `CSA-${Date.now()}`,
+  );
+  const cargoSupB = await cargoVigenteApi(
+    request,
+    mundo.headers,
+    mundo.companyId,
+    tipo.id,
+    ANIO,
+    estructura.despId,
+    `CSB-${Date.now()}`,
+  );
+  const anaSup = await crearFuncionario(request, mundo.headers, "Ana Supervisora");
+  const brunoSup = await crearFuncionario(request, mundo.headers, "Bruno Inspector");
+
+  async function asignarTitular(funcionarioId: string, cargoId: string): Promise<string> {
+    const resp = await request.post(`${API}/gobierno/ocupacion/asignaciones`, {
+      headers: mundo.headers,
+      data: {
+        funcionario_id: funcionarioId,
+        cargo_id: cargoId,
+        figura: "TITULAR",
+        acto_id: acto.id,
+        desde: hoy,
+        fundamento: "Designación de prueba CNT-04",
+        cargo_origen_id: null,
+        hasta: null,
+        rendicion: null,
+        maxima_autoridad: false,
+        autorizacion_concejo: null,
+        declara_delegable: false,
+        competencias: [],
+      },
+    });
+    expect(resp.status(), await resp.text()).toBe(201);
+    const json: { id: string; version: number } = await resp.json();
+    const actResp = await request.post(`${API}/gobierno/ocupacion/asignaciones/${json.id}/activar`, {
+      headers: { ...activadorOcupacion.headers, "If-Match": `"${json.version}"` },
+      data: {},
+    });
+    expect(actResp.status(), await actResp.text()).toBe(200);
+    return json.id;
+  }
+
+  const asignacionAna = await asignarTitular(anaSup.id, cargoSupA.id);
+  await asignarTitular(brunoSup.id, cargoSupB.id);
+  const actoSupA = await actoEmitidoApi(request, mundo.headers, mundo.companyId, tipo.id, cargoSinLimite.id, hoy);
+  const actoSupB = await actoEmitidoApi(request, mundo.headers, mundo.companyId, tipo.id, cargoSinLimite.id, hoy);
+  const actoSupC = await actoEmitidoApi(request, mundo.headers, mundo.companyId, tipo.id, cargoSinLimite.id, hoy);
+
+  await page.reload();
+  const seccionSup = page.locator("section").filter({
+    has: page.getByRole("heading", { name: "Supervisor / responsable del contrato", exact: true }),
+  });
+  await expect(seccionSup.getByText("Sin supervisor designado")).toBeVisible();
+
+  await seccionSup.getByRole("button", { name: "Nueva designación", exact: true }).click();
+  await page.waitForResponse((r) => r.request().method() === "GET" && new URL(r.url()).pathname.endsWith("/supervision/opciones"));
+  await seccionSup.getByRole("combobox", { name: "Funcionario (obligatorio)", exact: true }).selectOption(anaSup.id);
+  await expect(seccionSup.getByText(/^Cargo: Cargo CSA-/)).toBeVisible();
+  await seccionSup.getByRole("combobox", { name: "Acto de designación (obligatorio)", exact: true }).selectOption(actoSupA.id);
+  await seccionSup.getByRole("button", { name: "Formalizar designación", exact: true }).click();
+  const dialogoSup = page.getByRole("dialog");
+  await Promise.all([
+    page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname.endsWith("/supervision/designaciones")),
+    dialogoSup.getByRole("button", { name: "Formalizar", exact: true }).click(),
+  ]);
+  await expect(seccionSup.getByRole("status")).toContainText("Designación SUP-01 registrada.");
+  await expect(seccionSup).toContainText("Ana Supervisora");
+  await expect(page.getByRole("region", { name: "Historial de supervisores" })).toContainText("SUP-01");
+
+  const fechaProgramada = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Caracas" }).format(
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  );
+  await seccionSup.getByRole("button", { name: "Sustituir supervisor", exact: true }).click();
+  await page.fill("#supervision-desde", fechaProgramada);
+  await page.waitForResponse(
+    (r) => r.request().method() === "GET" && new URL(r.url()).pathname.endsWith("/supervision/opciones") && r.url().includes(`fecha=${fechaProgramada}`),
+  );
+  await page.getByRole("combobox", { name: "Funcionario (obligatorio)", exact: true }).selectOption(brunoSup.id);
+  await page.getByRole("combobox", { name: "Acto de designación (obligatorio)", exact: true }).selectOption(actoSupB.id);
+  await page.getByRole("textbox", { name: "Motivo del cambio (obligatorio)", exact: true }).fill("Traslado de la supervisora");
+  await seccionSup.getByRole("button", { name: "Formalizar designación", exact: true }).click();
+  await Promise.all([
+    page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname.endsWith("/supervision/designaciones")),
+    dialogoSup.getByRole("button", { name: "Formalizar", exact: true }).click(),
+  ]);
+  await expect(seccionSup.getByRole("status")).toContainText("Designación SUP-02 registrada.");
+  await expect(seccionSup.getByRole("heading", { name: "Designación programada", exact: true })).toBeVisible();
+  await expect(seccionSup).toContainText("Bruno Inspector");
+  await expect(page.getByRole("region", { name: "Historial de supervisores" })).toContainText("En ejercicio · Sustituida");
+  await expect(page.getByRole("region", { name: "Historial de supervisores" })).toContainText("Programada · Vigente");
+
+  const supHoyResp = await request.get(`${API}/gobierno/contratos/${contratoId}/supervision/en?fecha=${hoy}`, { headers: mundo.headers });
+  expect(supHoyResp.status()).toBe(200);
+  expect((await supHoyResp.json()).supervisor.referencia).toBe("SUP-01");
+  const supFutResp = await request.get(`${API}/gobierno/contratos/${contratoId}/supervision/en?fecha=${fechaProgramada}`, { headers: mundo.headers });
+  expect(supFutResp.status()).toBe(200);
+  expect((await supFutResp.json()).supervisor.referencia).toBe("SUP-02");
+  const supResp = await request.get(`${API}/gobierno/contratos/${contratoId}/supervision`, { headers: mundo.headers });
+  expect(supResp.status()).toBe(200);
+  const supervision = (await supResp.json()) as { ultima_id: string | null; programada: { id: string } | null };
+  expect(supervision.ultima_id).toBe(supervision.programada?.id);
+
+  const fechaConcurrente = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Caracas" }).format(
+    new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+  );
+  const cuerpoConcurrente = {
+    funcionario_id: anaSup.id,
+    asignacion_id: asignacionAna,
+    acto_id: actoSupC.id,
+    desde: fechaConcurrente,
+    motivo: "Prueba de concurrencia",
+    sustituye_id: supervision.ultima_id,
+  };
+  const urlDesignacion = `${API}/gobierno/contratos/${contratoId}/supervision/designaciones`;
+  const [r1, r2] = await Promise.all([
+    request.post(urlDesignacion, { headers: mundo.headers, data: cuerpoConcurrente }),
+    request.post(urlDesignacion, { headers: mundo.headers, data: cuerpoConcurrente }),
+  ]);
+  expect([r1.status(), r2.status()].sort()).toEqual([201, 409]);
+
+  const auditoriaAsignada = await request.get(`${API}/gobierno/bitacora?accion=GOV_CONTRACT_SUPERVISOR_ASSIGNED`, { headers: mundo.headers });
+  expect(auditoriaAsignada.status()).toBe(200);
+  const asignadaTotal = ((await auditoriaAsignada.json()) as { total: number }).total;
+  expect(asignadaTotal).toBeGreaterThanOrEqual(1);
+  const auditoriaSustituida = await request.get(`${API}/gobierno/bitacora?accion=GOV_CONTRACT_SUPERVISOR_REPLACED`, { headers: mundo.headers });
+  expect(auditoriaSustituida.status()).toBe(200);
+  const sustituidaTotal = ((await auditoriaSustituida.json()) as { total: number }).total;
+  expect(sustituidaTotal).toBeGreaterThanOrEqual(1);
+
+  await page.reload();
+  await expect(seccionSup.getByRole("heading", { name: "Designación programada", exact: true })).toBeVisible();
+  const accesibilidadSup = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  const violacionesGravesSup = accesibilidadSup.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+  expect(violacionesGravesSup).toEqual([]);
 
   for (const ancho of [1280, 390, 320]) {
     await page.setViewportSize({ width: ancho, height: 800 });

@@ -1,0 +1,26 @@
+# Backend 8000, clamd 3310 y PostgreSQL no se publican; solo 80/443 en el proxy.
+
+{
+	email {$UAT_ACME_EMAIL}
+}
+
+{$UAT_DOMAIN} {
+	encode gzip
+
+	handle /api/v1/* {
+		reverse_proxy kontrol-api:8000 {
+			header_up X-Forwarded-Proto https
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	handle {
+		reverse_proxy kontrol-web:80 {
+			header_up X-Forwarded-Proto https
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	header Strict-Transport-Security "max-age=31536000"
+	header -Server
+}

@@ -39,7 +39,7 @@ Las OQ abiertas (OQ-CNT02-01..03, OBS-CNT02-LIBERACION-01) aplican la opción m�
 | OD-CNT02-06 | El borrador se puede descartar con DELETE físico de sus filas BORRADOR y de sus asignaciones. La guarda PG solo lo permite en estado BORRADOR. |
 | OD-CNT02-07 | Las pantallas son dos y nuevas: `ContratoModificacionesPage` (historia y estado efectivo) y `ModificacionPage` (borrador y ficha formalizada). `ContratoPage` solo recibe el enlace, las condiciones vigentes y la conversión del firmante (H06), para no solaparse con CNT-04 de P1. |
 
-## Modelo de datos (migración `0117_gov_cnt02_modificaciones`, `down_revision = 0116_gov_proc08_conversion`)
+## Modelo de datos (migración `0118_gov_cnt02_modificaciones`, `down_revision = 0116_gov_proc08_conversion`)
 
 ### `gov_contract_amendments` · `GovernmentContractAmendment`
 

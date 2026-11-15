@@ -176,6 +176,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_expedientes:close",
         # gobierno_contratos · formalización del contrato u orden (CNT-01).
         "gobierno_contratos:formalize",
+        # gobierno_contratos · designación del supervisor del contrato (CNT-04).
+        "gobierno_contratos:assign_supervisor",
     }
 )
 
