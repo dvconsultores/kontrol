@@ -134,7 +134,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_alertas": ["view", "review"],
     # CNT-01: contrato u orden desde la adjudicación; formalize es SENSITIVE y pide MFA (GOV-CNT-001).
     # CNT-04: assign_supervisor es SENSITIVE y pide MFA (GOV-CNT-004).
-    "gobierno_contratos": ["view", "manage", "formalize", "assign_supervisor"],
+    # CNT-03: execute registra la ejecución del contrato; es SENSITIVE y pide MFA (GOV-CNT-003, GOV-CNT-007).
+    "gobierno_contratos": ["view", "manage", "formalize", "assign_supervisor", "execute"],
 }
 
 

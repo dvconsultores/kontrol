@@ -4806,3 +4806,458 @@ GOV_CONTRACT_SUPERVISORS_GUARD_PG = (
 
 for _sentencia in GOV_CONTRACT_SUPERVISORS_GUARD_PG:
     event.listen(GovernmentContractSupervisorAssignment.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+# ---------------------------------------------------------------------------
+# CNT-03 (GOV-CNT-003 + GOV-CNT-007): ejecución del contrato.
+# ---------------------------------------------------------------------------
+
+TIPOS_ACTUACION_EJECUCION = ("INICIO", "TERMINACION", "CIERRE")
+APROBADORES_CIERRE = ("COMISION", "UNIDAD_CONTRATANTE")
+ESTADOS_ELEMENTO_EJECUCION = ("VIGENTE", "ANULADO")
+ESTADOS_ENTREGA = ("ENTREGADA", "CONFORME", "RECHAZADA")
+ESTADOS_VALUACION = ("PRESENTADA", "CONFORMADA", "REPARADA", "ANULADA")
+TIPOS_RECEPCION_CONTRATO = ("PARCIAL", "PROVISIONAL", "DEFINITIVA")
+ESTADOS_DOCUMENTO_EJECUCION = ("CONFORME", "ANULADA")
+
+
+class GovernmentContractExecutionAct(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Actuación de ejecución del contrato: inicio, terminación o cierre (CNT-03, GOV-CNT-003; LCP arts. 127, 147 y 151)."""
+
+    __tablename__ = "gov_contract_execution_acts"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(12), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    observacion: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    supervisor_assignment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contract_supervisors.id"), nullable=False)
+    supervisor_official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False)
+    supervisor_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False)
+    document_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=False)
+    documento_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    documento_titulo: Mapped[str] = mapped_column(String(300), nullable=False)
+    aprobacion_document_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True)
+    aprobacion_document_version_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=True)
+    aprobacion_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    aprobacion_titulo: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    evaluacion_document_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True)
+    evaluacion_document_version_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=True)
+    evaluacion_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    evaluacion_titulo: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    aprobador_tipo: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    aprobador_nombre: Mapped[str | None] = mapped_column(String(250), nullable=True)
+    registrado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registrado_por: Mapped[str] = mapped_column(String(36), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("contract_id", "tipo", name="uq_gov_contract_execution_acts_tipo"),
+        CheckConstraint(f"tipo IN ({en(TIPOS_ACTUACION_EJECUCION)})", name="tipo"),
+        CheckConstraint(
+            f"aprobador_tipo IS NULL OR aprobador_tipo IN ({en(APROBADORES_CIERRE)})", name="aprobador"
+        ),
+        CheckConstraint(
+            "(tipo = 'CIERRE') = (aprobacion_document_id IS NOT NULL AND evaluacion_document_id IS NOT NULL "
+            "AND aprobador_tipo IS NOT NULL AND aprobador_nombre IS NOT NULL)",
+            name="cierre_completo",
+        ),
+        CheckConstraint(
+            "aprobacion_document_id IS NULL OR aprobacion_document_id <> evaluacion_document_id",
+            name="cierre_documentos_distintos",
+        ),
+    )
+
+
+class GovernmentContractMilestone(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Hito de la ejecución del contrato (CNT-03, GOV-CNT-003)."""
+
+    __tablename__ = "gov_contract_milestones"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    descripcion: Mapped[str] = mapped_column(String(500), nullable=False)
+    fecha_prevista: Mapped[date] = mapped_column(Date, nullable=False)
+    monto_previsto: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    porcentaje_previsto: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    obligatorio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="VIGENTE", server_default="VIGENTE")
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    anulado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    anulado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    registrado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registrado_por: Mapped[str] = mapped_column(String(36), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("contract_id", "numero", name="uq_gov_contract_milestones_numero"),
+        CheckConstraint("numero >= 1", name="numero"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_ELEMENTO_EJECUCION)})", name="estado"),
+        CheckConstraint("monto_previsto IS NULL OR monto_previsto > 0", name="monto"),
+        CheckConstraint(
+            "porcentaje_previsto IS NULL OR (porcentaje_previsto > 0 AND porcentaje_previsto <= 100)",
+            name="porcentaje",
+        ),
+        CheckConstraint(
+            "(estado = 'ANULADO') = (motivo_anulacion IS NOT NULL AND anulado_en IS NOT NULL)",
+            name="anulacion_motivada",
+        ),
+    )
+
+
+class GovernmentContractDeliverable(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Entregable de un hito del contrato (CNT-03, GOV-CNT-003)."""
+
+    __tablename__ = "gov_contract_deliverables"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    milestone_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("gov_contract_milestones.id"), nullable=True, index=True
+    )
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    descripcion: Mapped[str] = mapped_column(String(500), nullable=False)
+    fecha_vencimiento: Mapped[date] = mapped_column(Date, nullable=False)
+    obligatorio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="VIGENTE", server_default="VIGENTE")
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    anulado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    anulado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    registrado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registrado_por: Mapped[str] = mapped_column(String(36), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("contract_id", "numero", name="uq_gov_contract_deliverables_numero"),
+        CheckConstraint("numero >= 1", name="numero"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_ELEMENTO_EJECUCION)})", name="estado"),
+        CheckConstraint(
+            "(estado = 'ANULADO') = (motivo_anulacion IS NOT NULL AND anulado_en IS NOT NULL)",
+            name="anulacion_motivada",
+        ),
+    )
+
+
+class GovernmentContractDeliverableSubmission(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Entrega de un entregable del contrato (CNT-03, GOV-CNT-003)."""
+
+    __tablename__ = "gov_contract_deliverable_submissions"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    deliverable_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("gov_contract_deliverables.id"), nullable=False, index=True
+    )
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    fecha_entrega: Mapped[date] = mapped_column(Date, nullable=False)
+    document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False)
+    document_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=False)
+    documento_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    documento_titulo: Mapped[str] = mapped_column(String(300), nullable=False)
+    observacion_entrega: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="ENTREGADA", server_default="ENTREGADA")
+    fecha_revision: Mapped[date | None] = mapped_column(Date, nullable=True)
+    observacion_revision: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    supervisor_assignment_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("gov_contract_supervisors.id"), nullable=True
+    )
+    supervisor_official_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=True)
+    supervisor_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    revisado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revisado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    registrado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registrado_por: Mapped[str] = mapped_column(String(36), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("deliverable_id", "numero", name="uq_gov_contract_submissions_numero"),
+        Index(
+            "uq_gov_contract_submissions_abierta",
+            "deliverable_id",
+            unique=True,
+            postgresql_where=text("estado = 'ENTREGADA'"),
+            sqlite_where=text("estado = 'ENTREGADA'"),
+        ),
+        Index(
+            "uq_gov_contract_submissions_conforme",
+            "deliverable_id",
+            unique=True,
+            postgresql_where=text("estado = 'CONFORME'"),
+            sqlite_where=text("estado = 'CONFORME'"),
+        ),
+        CheckConstraint(f"estado IN ({en(ESTADOS_ENTREGA)})", name="estado"),
+        CheckConstraint("numero >= 1", name="numero"),
+        CheckConstraint(
+            "(estado = 'ENTREGADA') = (fecha_revision IS NULL AND supervisor_assignment_id IS NULL AND revisado_en IS NULL)",
+            name="revision",
+        ),
+        CheckConstraint("estado <> 'RECHAZADA' OR observacion_revision IS NOT NULL", name="rechazo_motivado"),
+        CheckConstraint("fecha_revision IS NULL OR fecha_revision >= fecha_entrega", name="fechas"),
+    )
+
+
+class GovernmentContractValuation(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Valuación de obra o de servicios del contrato (CNT-03, GOV-CNT-003; LCP arts. 142-143)."""
+
+    __tablename__ = "gov_contract_valuations"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    milestone_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("gov_contract_milestones.id"), nullable=False, index=True
+    )
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    periodo_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    periodo_hasta: Mapped[date] = mapped_column(Date, nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False)
+    document_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=False)
+    documento_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    documento_titulo: Mapped[str] = mapped_column(String(300), nullable=False)
+    estado: Mapped[str] = mapped_column(String(12), nullable=False, default="PRESENTADA", server_default="PRESENTADA")
+    fecha_conformidad: Mapped[date | None] = mapped_column(Date, nullable=True)
+    acumulado: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    reparos: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    supervisor_assignment_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("gov_contract_supervisors.id"), nullable=True
+    )
+    supervisor_official_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=True)
+    supervisor_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    resuelto_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resuelto_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    registrado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registrado_por: Mapped[str] = mapped_column(String(36), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("contract_id", "numero", name="uq_gov_contract_valuations_numero"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_VALUACION)})", name="estado"),
+        CheckConstraint("numero >= 1", name="numero"),
+        CheckConstraint("monto > 0", name="monto"),
+        CheckConstraint("length(moneda) = 3", name="moneda"),
+        CheckConstraint("periodo_desde <= periodo_hasta AND periodo_hasta <= fecha", name="periodo"),
+        CheckConstraint(
+            "estado <> 'PRESENTADA' OR (fecha_conformidad IS NULL AND supervisor_assignment_id IS NULL)",
+            name="presentada",
+        ),
+        CheckConstraint(
+            "estado <> 'CONFORMADA' OR (fecha_conformidad IS NOT NULL AND acumulado IS NOT NULL "
+            "AND supervisor_assignment_id IS NOT NULL)",
+            name="conformada",
+        ),
+        CheckConstraint(
+            "estado <> 'REPARADA' OR (reparos IS NOT NULL AND fecha_conformidad IS NOT NULL "
+            "AND supervisor_assignment_id IS NOT NULL)",
+            name="reparada",
+        ),
+        CheckConstraint("estado <> 'ANULADA' OR motivo_anulacion IS NOT NULL", name="anulada"),
+        CheckConstraint("fecha_conformidad IS NULL OR fecha_conformidad >= fecha", name="conformidad"),
+    )
+
+
+class GovernmentContractReceipt(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Recepción parcial, provisional o definitiva del contrato (CNT-03, GOV-CNT-003; LCP arts. 146-150)."""
+
+    __tablename__ = "gov_contract_receipts"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    tipo: Mapped[str] = mapped_column(String(12), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False)
+    document_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=False)
+    documento_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    documento_titulo: Mapped[str] = mapped_column(String(300), nullable=False)
+    observacion: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    supervisor_assignment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contract_supervisors.id"), nullable=False)
+    supervisor_official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False)
+    supervisor_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    representante_cargo_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=True)
+    representante_cargo_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    fin_garantia: Mapped[date | None] = mapped_column(Date, nullable=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="CONFORME", server_default="CONFORME")
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    anulado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    anulado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    registrado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registrado_por: Mapped[str] = mapped_column(String(36), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("contract_id", "numero", name="uq_gov_contract_receipts_numero"),
+        Index(
+            "uq_gov_contract_receipts_definitiva",
+            "contract_id",
+            unique=True,
+            postgresql_where=text("tipo = 'DEFINITIVA' AND estado = 'CONFORME'"),
+            sqlite_where=text("tipo = 'DEFINITIVA' AND estado = 'CONFORME'"),
+        ),
+        Index(
+            "uq_gov_contract_receipts_provisional",
+            "contract_id",
+            unique=True,
+            postgresql_where=text("tipo = 'PROVISIONAL' AND estado = 'CONFORME'"),
+            sqlite_where=text("tipo = 'PROVISIONAL' AND estado = 'CONFORME'"),
+        ),
+        CheckConstraint(f"tipo IN ({en(TIPOS_RECEPCION_CONTRATO)})", name="tipo"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_DOCUMENTO_EJECUCION)})", name="estado"),
+        CheckConstraint("numero >= 1", name="numero"),
+        CheckConstraint("(tipo = 'PROVISIONAL') = (fin_garantia IS NOT NULL)", name="garantia"),
+        CheckConstraint("fin_garantia IS NULL OR fin_garantia >= fecha", name="garantia_fecha"),
+        CheckConstraint(
+            "(representante_cargo_id IS NULL) = (representante_cargo_nombre IS NULL)", name="representante"
+        ),
+        CheckConstraint(
+            "(estado = 'ANULADA') = (motivo_anulacion IS NOT NULL AND anulado_en IS NOT NULL)",
+            name="anulacion_motivada",
+        ),
+    )
+
+
+class GovernmentContractReceiptMilestone(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Hitos asociados a una recepción del contrato (CNT-03, GOV-CNT-003)."""
+
+    __tablename__ = "gov_contract_receipt_milestones"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    receipt_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contract_receipts.id"), nullable=False, index=True)
+    milestone_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("gov_contract_milestones.id"), nullable=False, index=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint("receipt_id", "milestone_id", name="uq_gov_contract_receipt_milestones"),
+    )
+
+
+class GovernmentContractInvoice(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Factura vinculada a un hito y a una recepción conforme del contrato (CNT-03, GOV-CNT-007; LCP art. 141; RLCP art. 177)."""
+
+    __tablename__ = "gov_contract_invoices"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    numero_documento: Mapped[str] = mapped_column(String(40), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    milestone_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("gov_contract_milestones.id"), nullable=False, index=True
+    )
+    receipt_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contract_receipts.id"), nullable=False, index=True)
+    document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False)
+    document_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=False)
+    documento_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    documento_titulo: Mapped[str] = mapped_column(String(300), nullable=False)
+    fecha_conformidad: Mapped[date] = mapped_column(Date, nullable=False)
+    supervisor_assignment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contract_supervisors.id"), nullable=False)
+    supervisor_official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False)
+    supervisor_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="CONFORME", server_default="CONFORME")
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    anulado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    anulado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    registrado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registrado_por: Mapped[str] = mapped_column(String(36), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("contract_id", "numero", name="uq_gov_contract_invoices_numero"),
+        Index(
+            "uq_gov_contract_invoices_documento",
+            "contract_id",
+            "numero_documento",
+            unique=True,
+            postgresql_where=text("estado = 'CONFORME'"),
+            sqlite_where=text("estado = 'CONFORME'"),
+        ),
+        CheckConstraint(f"estado IN ({en(ESTADOS_DOCUMENTO_EJECUCION)})", name="estado"),
+        CheckConstraint("numero >= 1", name="numero"),
+        CheckConstraint("monto > 0", name="monto"),
+        CheckConstraint("length(moneda) = 3", name="moneda"),
+        CheckConstraint("fecha_conformidad >= fecha", name="conformidad"),
+        CheckConstraint(
+            "(estado = 'ANULADA') = (motivo_anulacion IS NOT NULL AND anulado_en IS NOT NULL)",
+            name="anulacion_motivada",
+        ),
+    )
+
+
+GOV_CONTRACT_EXEC_GUARD_FUNCION_PG = """
+CREATE OR REPLACE FUNCTION kontrol_gov_contract_exec_guard()
+RETURNS trigger AS $$
+BEGIN
+    IF TG_OP IN ('DELETE','TRUNCATE') THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_EXEC_IMMUTABLE', DETAIL = TG_TABLE_NAME || ' ' || TG_OP;
+    END IF;
+    IF TG_NARGS = 3
+       AND (to_jsonb(OLD) ->> 'estado') = TG_ARGV[0]
+       AND (to_jsonb(NEW) ->> 'estado') = ANY (string_to_array(TG_ARGV[1], ','))
+       AND (to_jsonb(OLD) - string_to_array(TG_ARGV[2], ',')) = (to_jsonb(NEW) - string_to_array(TG_ARGV[2], ','))
+    THEN
+        RETURN NEW;
+    END IF;
+    RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_EXEC_IMMUTABLE', DETAIL = TG_TABLE_NAME || ' ' || TG_OP;
+END;
+$$ LANGUAGE plpgsql;
+"""
+
+GOV_CONTRACT_EXEC_GUARDS: tuple[tuple[str, str], ...] = (
+    ("gov_contract_execution_acts", ""),
+    ("gov_contract_milestones", "'VIGENTE', 'ANULADO', 'estado,motivo_anulacion,anulado_en,anulado_por,version,updated_at'"),
+    ("gov_contract_deliverables", "'VIGENTE', 'ANULADO', 'estado,motivo_anulacion,anulado_en,anulado_por,version,updated_at'"),
+    (
+        "gov_contract_deliverable_submissions",
+        "'ENTREGADA', 'CONFORME,RECHAZADA', 'estado,fecha_revision,observacion_revision,supervisor_assignment_id,supervisor_official_id,supervisor_nombre,revisado_en,revisado_por,version,updated_at'",
+    ),
+    (
+        "gov_contract_valuations",
+        "'PRESENTADA', 'CONFORMADA,REPARADA,ANULADA', 'estado,fecha_conformidad,acumulado,reparos,motivo_anulacion,supervisor_assignment_id,supervisor_official_id,supervisor_nombre,resuelto_en,resuelto_por,version,updated_at'",
+    ),
+    ("gov_contract_receipts", "'CONFORME', 'ANULADA', 'estado,motivo_anulacion,anulado_en,anulado_por,version,updated_at'"),
+    ("gov_contract_receipt_milestones", ""),
+    ("gov_contract_invoices", "'CONFORME', 'ANULADA', 'estado,motivo_anulacion,anulado_en,anulado_por,version,updated_at'"),
+)
+
+
+def gov_contract_exec_guard_ddl(tabla: str, argumentos: str) -> tuple[str, str]:
+    """Devuelve los dos triggers de inmutabilidad de la ejecución del contrato para una tabla."""
+    return (
+        f"CREATE OR REPLACE TRIGGER trg_{tabla}_guard BEFORE UPDATE OR DELETE ON {tabla} "
+        f"FOR EACH ROW EXECUTE FUNCTION kontrol_gov_contract_exec_guard({argumentos});",
+        f"CREATE OR REPLACE TRIGGER trg_{tabla}_no_truncate BEFORE TRUNCATE ON {tabla} "
+        f"FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_contract_exec_guard();",
+    )
+
+
+GOV_CONTRACT_EXEC_CLASES = (
+    GovernmentContractExecutionAct,
+    GovernmentContractMilestone,
+    GovernmentContractDeliverable,
+    GovernmentContractDeliverableSubmission,
+    GovernmentContractValuation,
+    GovernmentContractReceipt,
+    GovernmentContractReceiptMilestone,
+    GovernmentContractInvoice,
+)
+
+for _clase_ejecucion, (_tabla_ejecucion, _argumentos_ejecucion) in zip(
+    GOV_CONTRACT_EXEC_CLASES, GOV_CONTRACT_EXEC_GUARDS, strict=True
+):
+    event.listen(
+        _clase_ejecucion.__table__,
+        "after_create",
+        DDL(GOV_CONTRACT_EXEC_GUARD_FUNCION_PG).execute_if(dialect="postgresql"),
+    )
+    for _sentencia in gov_contract_exec_guard_ddl(_tabla_ejecucion, _argumentos_ejecucion):
+        event.listen(
+            _clase_ejecucion.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql")
+        )

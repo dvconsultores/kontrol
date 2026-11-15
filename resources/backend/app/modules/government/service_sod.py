@@ -143,6 +143,11 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "PROC03_CONTRATO_FORMALIZAR": ("Formalizar el contrato u orden", "GOV_CONTRACT_FORMALIZED", False),
             "PROC03_SUPERVISOR_DESIGNAR": ("Designar al supervisor del contrato", "GOV_CONTRACT_SUPERVISOR_ASSIGNED", False),
             "PROC03_SUPERVISOR_SUSTITUIR": ("Sustituir al supervisor del contrato", "GOV_CONTRACT_SUPERVISOR_REPLACED", False),
+            "PROC03_EJEC_INICIAR": ("Registrar el inicio de la ejecución", "GOV_CONTRACT_EXEC_STARTED", False),
+            "PROC03_EJEC_CONFORMAR": ("Conformar una valuación o entrega", "GOV_CONTRACT_EXEC_VALUATION_CONFORMED", False),
+            "PROC03_EJEC_RECIBIR": ("Registrar una recepción del contrato", "GOV_CONTRACT_EXEC_RECEIPT_RECORDED", False),
+            "PROC03_EJEC_FACTURA": ("Conformar una factura del contrato", "GOV_CONTRACT_EXEC_INVOICE_LINKED", False),
+            "PROC03_EJEC_CERRAR": ("Cerrar la ejecución del contrato", "GOV_CONTRACT_EXEC_CLOSED", False),
         },
     },
 }
