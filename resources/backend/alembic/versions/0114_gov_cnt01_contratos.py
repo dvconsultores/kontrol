@@ -247,9 +247,6 @@ END; $$ LANGUAGE plpgsql""")
 def downgrade() -> None:
     bind = op.get_bind()
 
-    funcional = bind.execute(
-        sa.text("SELECT id FROM roles WHERE code = 'FUNCIONAL_COMPLETO' AND company_id IS NULL LIMIT 1")
-    ).fetchone()
     for recurso, acciones in PERMISOS.items():
         for accion in acciones:
             fila = bind.execute(
@@ -259,11 +256,7 @@ def downgrade() -> None:
             if not fila:
                 continue
             permiso = fila[0]
-            if funcional:
-                bind.execute(
-                    sa.text("DELETE FROM role_permissions WHERE role_id = :rol AND permission_id = :p"),
-                    {"rol": funcional[0], "p": permiso},
-                )
+            bind.execute(sa.text("DELETE FROM role_permissions WHERE permission_id = :p"), {"p": permiso})
             bind.execute(sa.text("DELETE FROM permissions WHERE id = :id"), {"id": permiso})
 
     if bind.dialect.name == "postgresql":
