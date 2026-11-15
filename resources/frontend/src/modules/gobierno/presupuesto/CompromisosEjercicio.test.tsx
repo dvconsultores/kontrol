@@ -45,6 +45,7 @@ import type {
   CompromisosVista,
   EjercicioDetalle,
   OpcionesCompromisoVista,
+  VerificacionLimite,
 } from "./api";
 
 const detalleBase: EjercicioDetalle = {
@@ -151,6 +152,7 @@ const compromisosBase: CompromisosVista = {
       anulado_en: null,
       anulado_por: null,
       motivo_anulacion: null,
+      conversion: null,
       lineas: [
         {
           linea: 1,
@@ -174,14 +176,19 @@ function renderizar({
   opciones = opcionesBase,
   compromisos = compromisosBase,
   puedeComprometer = true,
+  verificacion,
 }: {
   detalle?: EjercicioDetalle;
   escribirBloque?: ReturnType<typeof vi.fn>;
   opciones?: OpcionesCompromisoVista;
   compromisos?: CompromisosVista;
   puedeComprometer?: boolean;
+  verificacion?: VerificacionLimite;
 }) {
   apiFetchMock.mockImplementation((ruta: string) => {
+    if (ruta.includes("/compromisos/verificacion-limite") && verificacion) {
+      return Promise.resolve(verificacion);
+    }
     if (
       ruta === `/gobierno/presupuesto/ejercicios/${detalle.id}/compromisos/opciones`
     ) {
@@ -408,5 +415,135 @@ describe("CompromisosEjercicio", () => {
 
     expect(screen.queryByRole("button", { name: "Registrar compromiso" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Anular CP-2027-0001" })).not.toBeInTheDocument();
+  });
+
+  it("muestra la tasa oficial utilizada al comprometer con verificación de monto", async () => {
+    const opciones: OpcionesCompromisoVista = {
+      ...opcionesBase,
+      autoridades: [
+        {
+          cargo_id: "car5",
+          etiqueta: "C-05 · Director de Finanzas",
+          unidad: "DESP · Despacho",
+          limite_tipo: "MONTO",
+          limite_monto: "500.00",
+          limite_moneda: "USD",
+          limite: "500,00 USD",
+        },
+      ],
+    };
+
+    renderizar({
+      opciones,
+      verificacion: {
+        cargo_id: "car5",
+        limite_tipo: "MONTO",
+        limite: "500,00 USD",
+        verificacion: {
+          requiere_conversion: true,
+          moneda_operacion: "VES",
+          moneda_limite: "USD",
+          fecha: "2026-11-05",
+          tasas: [
+            {
+              tasa_id: "x",
+              moneda: "USD",
+              moneda_cotizacion: "VES",
+              fecha_efectiva: "2026-11-05",
+              valor: "900.000000000000",
+              fuente: "BCV",
+              fuente_referencia: "BCV · referencia",
+              version: 1,
+              evidencia_sha256: null,
+            },
+          ],
+          total: "450000.00",
+          limite: "500.00",
+          total_ves: "450000.00",
+          limite_ves: "450000.00",
+          dentro_del_limite: true,
+          resultado: "DENTRO_DEL_LIMITE",
+          monedas_sin_tasa: [],
+        },
+      },
+    });
+
+    const user = userEvent.setup();
+    await screen.findByRole("combobox", { name: "Autoridad que compromete (cargo) (obligatorio)" });
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Certificación de la imputación 1 (obligatorio)" }),
+      "cert1",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Monto de la imputación 1 (obligatorio)" }),
+      "450000,00",
+    );
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Autoridad que compromete (cargo) (obligatorio)" }),
+      "car5",
+    );
+
+    expect(
+      await screen.findByText("Tasa oficial utilizada: 1 USD = 900,00000000 VES"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Fecha de la tasa: 05/11/2026")).toBeInTheDocument();
+  });
+
+  it("muestra alerta cuando no hay tasa oficial BCV aprobada", async () => {
+    const opciones: OpcionesCompromisoVista = {
+      ...opcionesBase,
+      autoridades: [
+        {
+          cargo_id: "car5",
+          etiqueta: "C-05 · Director de Finanzas",
+          unidad: "DESP · Despacho",
+          limite_tipo: "MONTO",
+          limite_monto: "500.00",
+          limite_moneda: "USD",
+          limite: "500,00 USD",
+        },
+      ],
+    };
+
+    renderizar({
+      opciones,
+      verificacion: {
+        cargo_id: "car5",
+        limite_tipo: "MONTO",
+        limite: "500,00 USD",
+        verificacion: {
+          requiere_conversion: true,
+          moneda_operacion: "VES",
+          moneda_limite: "USD",
+          fecha: "2026-11-05",
+          tasas: [],
+          total: "450000.00",
+          limite: "500.00",
+          total_ves: null,
+          limite_ves: null,
+          dentro_del_limite: false,
+          resultado: "SIN_TASA",
+          monedas_sin_tasa: ["USD"],
+        },
+      },
+    });
+
+    const user = userEvent.setup();
+    await screen.findByRole("combobox", { name: "Autoridad que compromete (cargo) (obligatorio)" });
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Certificación de la imputación 1 (obligatorio)" }),
+      "cert1",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Monto de la imputación 1 (obligatorio)" }),
+      "450000,00",
+    );
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Autoridad que compromete (cargo) (obligatorio)" }),
+      "car5",
+    );
+
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("No hay tasa oficial BCV aprobada");
   });
 });

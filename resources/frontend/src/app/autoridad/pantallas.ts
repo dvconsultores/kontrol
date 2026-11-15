@@ -190,6 +190,7 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "gobierno/tesoreria/programacion/nuevo": { capacidad: "gobierno_caja:manage", alcance: "empresa" },
   "gobierno/tesoreria/programacion/:programaId": { capacidad: "gobierno_caja:view", alcance: "empresa" },
   "gobierno/tesoreria/rubros": { capacidad: "gobierno_caja:view", alcance: "empresa" },
+  "gobierno/tesoreria/tasas": { capacidad: "gobierno_tasas:view", alcance: "empresa" },
   "comercial/condiciones-pago": { capacidad: "comercial:view", alcance: "empresa" },
   "comercial/listas-precio": { capacidad: "comercial:view", alcance: "empresa" },
   "auditoria": { capacidad: "audit:view", alcance: "global" },

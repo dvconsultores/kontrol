@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     """Crea una entidad del tipo pedido en esa empresa. Devuelve su id."""
     from app.modules.approvals.models import ApprovalRequest
-    from app.modules.government.models import GovernmentAct, GovernmentAssignment, GovernmentBudgetYear, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentHandoverAct, GovernmentNotification, GovernmentOfficial, GovernmentPosition, GovernmentProcurementFile, GovernmentStructure, GovernmentUnit
+    from app.modules.government.models import GovernmentAct, GovernmentAssignment, GovernmentBudgetYear, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentHandoverAct, GovernmentNotification, GovernmentOfficial, GovernmentOfficialExchangeRate, GovernmentPosition, GovernmentProcurementFile, GovernmentStructure, GovernmentUnit
     from app.modules.homologation.models import HomologationRecord
     from app.modules.imports.models import ImportCorrection, ImportDocument, ImportFile
     from app.modules.inventory.models import InventoryAdjustment, StockCount
@@ -162,6 +162,37 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
             moneda_funcional="VED",
             estado="BORRADOR",
             version=1,
+        )
+
+    def _tasa_de_empresa() -> GovernmentOfficialExchangeRate:
+        from datetime import date, timedelta
+        from decimal import Decimal
+
+        from sqlalchemy import select
+
+        usadas = db.execute(
+            select(GovernmentOfficialExchangeRate.fecha_efectiva).where(
+                GovernmentOfficialExchangeRate.company_id == empresa,
+                GovernmentOfficialExchangeRate.moneda == "USD",
+            )
+        ).scalars().all()
+        usadas_set = set(usadas)
+        fecha = next(
+            (date(2030, 1, 1) + timedelta(days=n) for n in range(0, 3650) if date(2030, 1, 1) + timedelta(days=n) not in usadas_set),
+            None,
+        )
+        if fecha is None:
+            raise ValueError(f"No hay fecha libre para empresa {empresa}")
+        return GovernmentOfficialExchangeRate(
+            company_id=empresa,
+            moneda="USD",
+            fecha_efectiva=fecha,
+            valor=Decimal("1"),
+            fuente_referencia=f"Referencia oficial {marca}",
+            estado="BORRADOR",
+            version=1,
+            capturada_por="00000000-0000-0000-0000-000000000000",
+            capturada_en=ahora,
         )
 
     def _acta_de_entrega_de_empresa() -> GovernmentHandoverAct:
@@ -377,6 +408,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         "GovernmentCorrectiveAction": _accion_correctiva_de_empresa,
         "GovernmentHandoverAct": _acta_de_entrega_de_empresa,
         "GovernmentBudgetYear": _ejercicio_de_empresa,
+        "GovernmentOfficialExchangeRate": _tasa_de_empresa,
         "GovernmentProcurementFile": _expediente_de_empresa,
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",

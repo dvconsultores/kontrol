@@ -26,6 +26,7 @@ from app.modules.government.models import (
     GovernmentBudgetYearFoundation,
     GovernmentBudgetYearHistory,
 )
+from app.modules.government.monedas import canonical_currency
 from app.modules.organization.models import Company
 from app.shared.audit import record_audit
 from app.shared.clock import hoy_de_negocio
@@ -371,7 +372,7 @@ def crear(db: Session, ctx: CompanyContext, anio: int) -> dict[str, Any]:
         tenant_id=ctx.tenant_id,
         company_id=ctx.company_id,
         anio=anio,
-        moneda_funcional=empresa.functional_currency,
+        moneda_funcional=canonical_currency(empresa.functional_currency),
         estado="BORRADOR",
         precompromiso_activo=False,
         version=1,

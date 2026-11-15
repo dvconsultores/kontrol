@@ -1595,6 +1595,78 @@ GOV_BUDGET_COMMITMENTS_IMMUTABLE_PG = (
     "CREATE TRIGGER trg_gov_budget_commitments_no_truncate BEFORE TRUNCATE ON gov_budget_commitments FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
 )
 
+ESTADOS_TASA = ("BORRADOR", "APROBADA", "SUSTITUIDA", "ANULADA")
+MONEDAS_TASA = ("USD", "EUR")
+
+
+class GovernmentOfficialExchangeRate(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Tasa oficial BCV de Gobierno (TRE-09, GOV-TRE-011; N39)."""
+
+    __tablename__ = "gov_official_exchange_rates"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    moneda_cotizacion: Mapped[str] = mapped_column(String(3), nullable=False, default="VES", server_default="VES")
+    fecha_efectiva: Mapped[date] = mapped_column(Date, nullable=False)
+    valor: Mapped[Decimal] = mapped_column(Numeric(28, 12), nullable=False)
+    fuente: Mapped[str] = mapped_column(String(10), nullable=False, default="BCV", server_default="BCV")
+    fuente_referencia: Mapped[str] = mapped_column(String(300), nullable=False)
+    publicada_en: Mapped[date | None] = mapped_column(Date, nullable=True)
+    estado: Mapped[str] = mapped_column(String(12), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    sustituye_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_official_exchange_rates.id"), nullable=True, index=True)
+    motivo_correccion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    capturada_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    capturada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    aprobada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    aprobada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    evidencia_documento_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True, index=True)
+    evidencia_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    sustituida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    anulada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    anulada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"moneda IN ({en(MONEDAS_TASA)})", name="moneda"),
+        CheckConstraint("moneda_cotizacion = 'VES'", name="cotizacion"),
+        CheckConstraint("fuente = 'BCV'", name="fuente"),
+        CheckConstraint("valor > 0", name="valor"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_TASA)})", name="estado"),
+        CheckConstraint("version >= 1", name="version"),
+        CheckConstraint("publicada_en IS NULL OR publicada_en <= fecha_efectiva", name="publicacion"),
+        CheckConstraint("(sustituye_id IS NULL) = (motivo_correccion IS NULL)", name="correccion"),
+        CheckConstraint(
+            "(estado = 'BORRADOR' AND aprobada_por IS NULL AND aprobada_en IS NULL AND evidencia_documento_id IS NULL AND evidencia_sha256 IS NULL) OR "
+            "(estado IN ('APROBADA', 'SUSTITUIDA') AND aprobada_por IS NOT NULL AND aprobada_en IS NOT NULL AND evidencia_documento_id IS NOT NULL AND evidencia_sha256 IS NOT NULL) OR "
+            "estado = 'ANULADA'",
+            name="aprobacion",
+        ),
+        CheckConstraint("(estado = 'SUSTITUIDA') = (sustituida_en IS NOT NULL)", name="sustitucion"),
+        CheckConstraint(
+            "(estado = 'ANULADA' AND anulada_por IS NOT NULL AND anulada_en IS NOT NULL AND motivo_anulacion IS NOT NULL) OR "
+            "(estado <> 'ANULADA' AND anulada_por IS NULL AND anulada_en IS NULL AND motivo_anulacion IS NULL)",
+            name="anulacion",
+        ),
+        Index("ix_gov_official_exchange_rates_clave", "company_id", "moneda", "fecha_efectiva"),
+        Index("uq_gov_official_exchange_rates_aprobada", "company_id", "moneda", "fecha_efectiva", unique=True,
+              postgresql_where=text("estado = 'APROBADA'"), sqlite_where=text("estado = 'APROBADA'")),
+        Index("uq_gov_official_exchange_rates_borrador", "company_id", "moneda", "fecha_efectiva", unique=True,
+              postgresql_where=text("estado = 'BORRADOR'"), sqlite_where=text("estado = 'BORRADOR'")),
+    )
+
+
+GOV_OFFICIAL_RATES_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_tasa_oficial_inmutable() RETURNS TRIGGER AS $$ BEGIN IF TG_OP = 'DELETE' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_OFFICIAL_RATE_IMMUTABLE', DETAIL = TG_OP; END IF; IF NEW.company_id IS DISTINCT FROM OLD.company_id OR NEW.moneda IS DISTINCT FROM OLD.moneda OR NEW.moneda_cotizacion IS DISTINCT FROM OLD.moneda_cotizacion OR NEW.fecha_efectiva IS DISTINCT FROM OLD.fecha_efectiva OR NEW.valor IS DISTINCT FROM OLD.valor OR NEW.fuente IS DISTINCT FROM OLD.fuente OR NEW.fuente_referencia IS DISTINCT FROM OLD.fuente_referencia OR NEW.publicada_en IS DISTINCT FROM OLD.publicada_en OR NEW.version IS DISTINCT FROM OLD.version OR NEW.sustituye_id IS DISTINCT FROM OLD.sustituye_id OR NEW.motivo_correccion IS DISTINCT FROM OLD.motivo_correccion OR NEW.capturada_por IS DISTINCT FROM OLD.capturada_por OR NEW.capturada_en IS DISTINCT FROM OLD.capturada_en OR NOT ((OLD.estado = 'BORRADOR' AND NEW.estado IN ('APROBADA', 'ANULADA')) OR (OLD.estado = 'APROBADA' AND NEW.estado IN ('SUSTITUIDA', 'ANULADA'))) OR (OLD.estado <> 'BORRADOR' AND (NEW.aprobada_por IS DISTINCT FROM OLD.aprobada_por OR NEW.aprobada_en IS DISTINCT FROM OLD.aprobada_en OR NEW.evidencia_documento_id IS DISTINCT FROM OLD.evidencia_documento_id OR NEW.evidencia_sha256 IS DISTINCT FROM OLD.evidencia_sha256)) THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_OFFICIAL_RATE_IMMUTABLE', DETAIL = TG_OP; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_official_exchange_rates_inmutable BEFORE UPDATE OR DELETE ON gov_official_exchange_rates FOR EACH ROW EXECUTE FUNCTION kontrol_gov_tasa_oficial_inmutable()",
+    "CREATE TRIGGER trg_gov_official_exchange_rates_no_truncate BEFORE TRUNCATE ON gov_official_exchange_rates FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+)
+
+for _sentencia in GOV_OFFICIAL_RATES_IMMUTABLE_PG:
+    event.listen(GovernmentOfficialExchangeRate.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
 GOV_BUDGET_COMMITMENT_LINES_IMMUTABLE_PG = (
     "CREATE OR REPLACE FUNCTION kontrol_gov_compromiso_linea_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_COMMITMENT_LINE_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
     "CREATE TRIGGER trg_gov_budget_commitment_lines_inmutable BEFORE UPDATE OR DELETE ON gov_budget_commitment_lines FOR EACH ROW EXECUTE FUNCTION kontrol_gov_compromiso_linea_inmutable()",

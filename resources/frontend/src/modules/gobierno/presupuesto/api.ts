@@ -248,11 +248,45 @@ export interface OpcionesCompromisoVista { anio: number; estado: EstadoEjercicio
 export interface LineaCompromiso { linea: number; certificado_id: string; certificado_codigo: string; credito_id: string; categoria: string;
   unidad: string | null; partida: string; fuente: string; monto: string }
 
+export interface TasaUsada {
+  tasa_id: string;
+  moneda: string;
+  moneda_cotizacion: string;
+  fecha_efectiva: string;
+  valor: string;
+  fuente: string;
+  fuente_referencia: string;
+  version: number;
+  evidencia_sha256: string | null;
+}
+
+export interface ConversionLimite {
+  requiere_conversion: boolean;
+  moneda_operacion: string;
+  moneda_limite: string;
+  fecha: string;
+  tasas: TasaUsada[];
+  total: string;
+  limite: string;
+  total_ves: string | null;
+  limite_ves: string | null;
+  dentro_del_limite: boolean;
+  resultado: "DENTRO_DEL_LIMITE" | "EXCEDE_LIMITE" | "SIN_TASA";
+  monedas_sin_tasa: string[];
+}
+
+export interface VerificacionLimite {
+  cargo_id: string;
+  limite_tipo: string;
+  limite: string;
+  verificacion: ConversionLimite | null;
+}
+
 export interface Compromiso { id: string; codigo: string; estado: "VIGENTE" | "ANULADO"; fecha: string; emitido_en: string; total: string; moneda: string;
   concepto: string; expediente_id: string | null; expediente_referencia: string; autoridad_cargo: string; autoridad_unidad: string;
   autoridad_funcionario: string | null; limite: string; soporte_documento_id: string; soporte: string; soporte_sha256: string; emitido_por: string;
   huella: string; documento_nombre: string; documento_sha256: string; anulado_en: string | null; anulado_por: string | null;
-  motivo_anulacion: string | null; lineas: LineaCompromiso[] }
+  motivo_anulacion: string | null; lineas: LineaCompromiso[]; conversion: ConversionLimite | null }
 
 export interface CompromisosVista { items: Compromiso[] }
 

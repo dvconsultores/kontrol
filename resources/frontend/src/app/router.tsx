@@ -230,6 +230,7 @@ export const router = createBrowserRouter([
           { path: "gobierno/tesoreria/programacion/nuevo", lazy: () => import("@/modules/gobierno/tesoreria/programacion/NuevoProgramaPage").then((m) => ({ Component: m.NuevoProgramaPage })) },
           { path: "gobierno/tesoreria/programacion/:programaId", lazy: () => import("@/modules/gobierno/tesoreria/programacion/ProgramaPage").then((m) => ({ Component: m.ProgramaPage })) },
           { path: "gobierno/tesoreria/rubros", lazy: () => import("@/modules/gobierno/tesoreria/programacion/RubrosPage").then((m) => ({ Component: m.RubrosPage })) },
+          { path: "gobierno/tesoreria/tasas", lazy: () => import("@/modules/gobierno/tesoreria/tasas/TasasOficialesPage").then((m) => ({ Component: m.TasasOficialesPage })) },
           { path: "comercial/condiciones-pago", lazy: () => import("@/modules/comercial/CondicionesPagoPage").then((m) => ({ Component: m.CondicionesPagoPage })) },
           { path: "comercial/listas-precio", lazy: () => import("@/modules/comercial/ListasPrecioPage").then((m) => ({ Component: m.ListasPrecioPage })) },
           { path: "auditoria", lazy: () => import("@/pages/AuditoriaPage").then((m) => ({ Component: m.AuditoriaPage })) },

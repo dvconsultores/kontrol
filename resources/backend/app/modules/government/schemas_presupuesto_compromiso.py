@@ -80,6 +80,40 @@ class LineaCompromisoOut(BaseModel):
     monto: Decimal
 
 
+class TasaUsadaOut(BaseModel):
+    tasa_id: str
+    moneda: str
+    moneda_cotizacion: str
+    fecha_efectiva: str
+    valor: str
+    fuente: str
+    fuente_referencia: str
+    version: int
+    evidencia_sha256: str | None
+
+
+class ConversionLimiteOut(BaseModel):
+    requiere_conversion: bool
+    moneda_operacion: str
+    moneda_limite: str
+    fecha: str
+    tasas: list[TasaUsadaOut]
+    total: str
+    limite: str
+    total_ves: str | None
+    limite_ves: str | None
+    dentro_del_limite: bool
+    resultado: str
+    monedas_sin_tasa: list[str]
+
+
+class VerificacionLimiteOut(BaseModel):
+    cargo_id: str
+    limite_tipo: str
+    limite: str
+    verificacion: ConversionLimiteOut | None
+
+
 class CompromisoOut(BaseModel):
     id: str
     codigo: str
@@ -95,6 +129,7 @@ class CompromisoOut(BaseModel):
     autoridad_unidad: str
     autoridad_funcionario: str | None
     limite: str
+    conversion: ConversionLimiteOut | None = None
     soporte_documento_id: str
     soporte: str
     soporte_sha256: str

@@ -156,6 +156,7 @@ const navSections: NavSection[] = [
       { to: "/gobierno/tesoreria/bancos", label: "Bancos", icon: Building2, modulo: "gobierno" },
       { to: "/gobierno/tesoreria/programacion", label: "Programación financiera", icon: CalendarRange, modulo: "gobierno" },
       { to: "/gobierno/tesoreria/rubros", label: "Rubros de caja", icon: Tags, modulo: "gobierno" },
+      { to: "/gobierno/tesoreria/tasas", label: "Tasas oficiales", icon: Repeat, modulo: "gobierno" },
     ],
   },
   {

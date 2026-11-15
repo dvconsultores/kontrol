@@ -113,6 +113,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_cuentas": ["view", "manage", "activate"],
     # TRE-02: programación financiera (OD-TRE02-04).
     "gobierno_caja": ["view", "manage", "activate"],
+    # TRE-09: tasas oficiales BCV con procedencia y doble control (GOV-TRE-011).
+    "gobierno_tasas": ["view", "manage", "approve"],
     # BUD-01/02: ejercicio y clasificador (D-GOV-02); BUD-06: certificaciones de disponibilidad.
     "gobierno_presupuesto": ["view", "manage", "approve", "close", "certify", "commit"],
     # CTL-10: controles materiales de cierre (OD-CTL10-04).

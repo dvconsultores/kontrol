@@ -1997,6 +1997,14 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/compromisos/verificacion-limite",
+      "query": [
+        "autoridad_cargo_id",
+        "total"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/presupuesto/ejercicios/{year_id}/compromisos/{compromiso_id}",
       "query": []
     },
@@ -2538,6 +2546,41 @@
     {
       "method": "PATCH",
       "path": "/gobierno/tesoreria/rubros/{rubro_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/tasas",
+      "query": [
+        "desde",
+        "estado",
+        "hasta",
+        "moneda"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/tasas",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/tasas/{tasa_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/tasas/{tasa_id}/anular",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/tasas/{tasa_id}/aprobar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/tasas/{tasa_id}/correccion",
       "query": []
     },
     {
