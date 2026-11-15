@@ -29,7 +29,7 @@ el encargo fija la RUTA B. `P1_TOUCH_CNT01=0`.
 ## Constitution Gate
 
 BLOCKER=0 · CRITICAL=0 · CONTRADICTIONS=0 · OWNER_CONFLICT=0 · MATERIAL_OQ=0 · UNKNOWN=0. Las reglas monetarias (fórmula, escala, redondeo,
-fecha y error) están fijadas por TRE-09 y por el encargo. La migración 0115 solo añade una columna nula; no hay backfill.
+fecha y error) están fijadas por TRE-09 y por el encargo. La migración 0116 (reencadenada tras 0115_gov_cnt01_contratos de P2) solo añade una columna nula; no hay backfill.
 
 ## Plan y tareas
 

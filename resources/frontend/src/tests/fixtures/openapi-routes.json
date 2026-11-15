@@ -1320,6 +1320,44 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/contratos",
+      "query": [
+        "estado",
+        "tipo"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/contratos/{contrato_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/contratos/{contrato_id}/cobertura",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/formalizar",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/contratos/{contrato_id}/garantias",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/control-interno/reporte",
       "query": [
         "desde",

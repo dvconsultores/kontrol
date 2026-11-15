@@ -1005,7 +1005,5 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
   expect(overflow320Final).toBe(true);
   await page.setViewportSize({ width: 1280, height: 720 });
 
-  await expect(
-    secReload.getByText("El contrato derivado se gestiona en CNT-01; esta sección no lo crea.", { exact: true }),
-  ).toBeVisible();
+  await expect(secReload.getByRole("heading", { name: "Contrato u orden", exact: true })).toBeVisible();
 });

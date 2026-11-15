@@ -39,15 +39,42 @@ CODIGOS_BLOQUEO: dict[str, str] = {
 }
 
 
-def competencia_aprobar_contrataciones(
-    db: Session, company_id: str, cargo: GovernmentPosition | None, fecha: date
+def competencia_en_vigor(
+    db: Session, cargo: GovernmentPosition | None, fecha: date, accion: str, materia: str
 ) -> dict[str, Any] | None:
     if cargo is None:
         return None
     for competencia in competencias_en_vigor(db, cargo, fecha):
-        if competencia["accion"] == "APROBAR" and competencia["materia"] == "CONTRATACIONES":
+        if competencia["accion"] == accion and competencia["materia"] == materia:
             return competencia
     return None
+
+
+def competencia_aprobar_contrataciones(
+    db: Session, company_id: str, cargo: GovernmentPosition | None, fecha: date
+) -> dict[str, Any] | None:
+    return competencia_en_vigor(db, cargo, fecha, "APROBAR", "CONTRATACIONES")
+
+
+def clasificar_monto(
+    tipo_limite: str | None,
+    monto_limite: str | None,
+    moneda_limite: str | None,
+    monto: Decimal | None,
+    moneda: str | None,
+) -> str:
+    """Regla AAL (OQ-OMA-01): compara un monto con el límite de una competencia, sin convertir monedas."""
+    if tipo_limite is None:
+        return "SIN_COMPETENCIA"
+    if tipo_limite == "SIN_LIMITE":
+        return "SIN_LIMITE"
+    if monto is None:
+        return "MONTO_NO_DECLARADO"
+    if moneda != moneda_limite:
+        return "MONEDA_DISTINTA"
+    if Decimal(monto) > Decimal(str(monto_limite)):
+        return "EXCEDE_LIMITE"
+    return "DENTRO_LIMITE"
 
 
 def _cargo_del_acto(db: Session, company_id: str, acto: GovernmentAct) -> GovernmentPosition | None:
@@ -71,6 +98,32 @@ def _monto_vigente(
         .order_by(GovernmentProcurementOfferAmount.version.desc())
         .limit(1)
     )
+
+
+def limite_de_competencia(cargo: GovernmentPosition | None, comp: dict[str, Any] | None) -> dict[str, Any]:
+    if comp is None:
+        return {
+            "cargo": cargo.name if cargo else None,
+            "tipo_limite": None,
+            "monto": None,
+            "moneda": None,
+            "etiqueta": "Sin competencia vigente",
+        }
+    if comp["tipo_limite"] == "SIN_LIMITE":
+        return {
+            "cargo": cargo.name if cargo else None,
+            "tipo_limite": "SIN_LIMITE",
+            "monto": None,
+            "moneda": None,
+            "etiqueta": "Sin límite",
+        }
+    return {
+        "cargo": cargo.name if cargo else None,
+        "tipo_limite": "MONTO",
+        "monto": _texto(Decimal(str(comp["monto"]))),
+        "moneda": comp["moneda"],
+        "etiqueta": f"{_texto(Decimal(str(comp['monto'])))} {comp['moneda']}",
+    }
 
 
 def limite_del_acto(db: Session, ctx: CompanyContext, acto: GovernmentAct) -> dict[str, Any]:

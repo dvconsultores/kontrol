@@ -174,6 +174,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_comisiones:close",
         # gobierno_expedientes · cierre del expediente (PROC-03).
         "gobierno_expedientes:close",
+        # gobierno_contratos · formalización del contrato u orden (CNT-01).
+        "gobierno_contratos:formalize",
     }
 )
 
@@ -298,6 +300,8 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_rendicion:view",
         "gobierno_actas:view",
         "gobierno_alertas:view",
+        "gobierno_contratos:view",
+        "gobierno_contratos:manage",
     }
 )
 

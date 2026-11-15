@@ -132,6 +132,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_actas": ["view", "manage", "verify"],
     # CTL-07: alertas de operaciones atípicas y su revisión por Control Interno (OD-CTL07-08).
     "gobierno_alertas": ["view", "review"],
+    # CNT-01: contrato u orden desde la adjudicación; formalize es SENSITIVE y pide MFA (GOV-CNT-001).
+    "gobierno_contratos": ["view", "manage", "formalize"],
 }
 
 

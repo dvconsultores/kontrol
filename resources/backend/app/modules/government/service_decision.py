@@ -20,6 +20,7 @@ from app.core.errors import ConflictError, KontrolError, NotFoundError, Permissi
 from app.modules.documents.storage import generate_storage_key, get_storage
 from app.modules.government.models import (
     GovernmentAct,
+    GovernmentContract,
     GovernmentNotification,
     GovernmentOfficial,
     GovernmentPosition,
@@ -115,6 +116,22 @@ def _text(value: str) -> str:
         .replace(">", "&gt;")
         .replace('"', "&quot;")
     )
+
+
+def _contrato_de_decision(db: Session, ctx: CompanyContext, decision_id: str) -> dict[str, Any] | None:
+    contrato = db.scalar(
+        select(GovernmentContract).where(
+            GovernmentContract.company_id == ctx.company_id,
+            GovernmentContract.decision_id == decision_id,
+        )
+    )
+    if contrato is None:
+        return None
+    return {
+        "id": contrato.id,
+        "identificacion": contrato.codigo or f"Borrador · {contrato.expediente_numero} · {contrato.decision_referencia}",
+        "estado": contrato.estado,
+    }
 
 
 def _parte_decision(db: Session, ctx: CompanyContext, expediente: GovernmentProcurementFile) -> dict[str, Any]:
@@ -283,6 +300,7 @@ def _parte_decision(db: Session, ctx: CompanyContext, expediente: GovernmentProc
         decision_vigente_payload = {
             "id": decision_vigente.id,
             "referencia": f"DEC-{decision_vigente.numero:02d}",
+            "contrato": _contrato_de_decision(db, ctx, str(decision_vigente.id)),
             "resultado": decision_vigente.resultado,
             "resultado_etiqueta": RESULTADOS_DECISION.get(
                 decision_vigente.resultado, decision_vigente.resultado
