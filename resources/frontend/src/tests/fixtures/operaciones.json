@@ -1884,6 +1884,62 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/modificaciones",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/modificaciones",
+      "capabilities": [
+        "gobierno_contratos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/modificaciones/{modificacion_id}",
+      "capabilities": [
+        "gobierno_contratos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/modificaciones/{modificacion_id}",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/modificaciones/{modificacion_id}",
+      "capabilities": [
+        "gobierno_contratos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/modificaciones/{modificacion_id}/cobertura",
+      "capabilities": [
+        "gobierno_contratos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/modificaciones/{modificacion_id}/formalizar",
+      "capabilities": [
+        "gobierno_contratos:formalize"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/control-interno/reporte",
       "capabilities": [
         "gobierno_auditoria:view"

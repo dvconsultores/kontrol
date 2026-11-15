@@ -1358,6 +1358,43 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/modificaciones",
+      "query": [
+        "fecha"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/modificaciones",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/contratos/{contrato_id}/modificaciones/{modificacion_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/modificaciones/{modificacion_id}",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/contratos/{contrato_id}/modificaciones/{modificacion_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/contratos/{contrato_id}/modificaciones/{modificacion_id}/cobertura",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/modificaciones/{modificacion_id}/formalizar",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/control-interno/reporte",
       "query": [
         "desde",

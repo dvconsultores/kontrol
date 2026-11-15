@@ -4,7 +4,7 @@
 
 ## Estado: 27 procesos listos para probar (2026-11-12)
 
-- `OWNER_UAT_READY` = 38 de 122 procesos (31,15 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a BUD-06, BUD-08, TRE-09, CTL-07 y CNT-01 (las filas de PROC-03/06/07/08/10 se añadieron el 2026-11-15: OBS-MATRIZ-UAT-01 y OBS-CAT-NOTREADY-01 cerradas);
+- `OWNER_UAT_READY` = 39 de 122 procesos (31,97 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a BUD-06, BUD-08, TRE-09, CTL-07, CNT-01 y CNT-02 (las filas de PROC-03/06/07/08/10 se añadieron el 2026-11-15: OBS-MATRIZ-UAT-01 y OBS-CAT-NOTREADY-01 cerradas);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
@@ -38,6 +38,7 @@
 | **BUD-08 Compromiso presupuestario** (GOV-BUD-012) | Menú › Gobierno · Presupuesto › Ejercicios presupuestarios › (ejercicio aprobado) › «Compromisos» | [`specs/gov-bud-08-compromiso/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-bud-08-compromiso/evidence/OWNER_UAT_CARD.md) | GOV-BUD-08 |
 | **TRE-09 Tasas oficiales BCV** (GOV-TRE-011) | Menú › Gobierno · Tesorería › Tasas oficiales (consumidores: Presupuesto › ejercicio › «Compromisos» y Contrataciones › expediente › «Recomendación y decisión») | [`specs/gov-tre-09-tasas-bcv/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-tre-09-tasas-bcv/evidence/OWNER_UAT_CARD.md) | GOV-TRE-09 |
 | **CNT-01 Contrato u orden derivada de la adjudicación** (GOV-CNT-001) | Menú › Gobierno · Contrataciones › Expedientes › (expediente adjudicado) › «Recomendación y decisión» › «Crear contrato u orden»; consulta en Menú › Gobierno · Contratos › Contratos y órdenes | [`specs/gov-cnt-01-contrato-orden/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-cnt-01-contrato-orden/evidence/OWNER_UAT_CARD.md) | GOV-CNT-01 |
+| **CNT-02 Adendas, prórrogas, modificaciones y variaciones** (GOV-CNT-002) | Menú › Gobierno · Contratos › Contratos y órdenes › (contrato formalizado) › «Modificaciones (n)» | [`specs/gov-cnt-02-adendas-variaciones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-cnt-02-adendas-variaciones/evidence/OWNER_UAT_CARD.md) | GOV-CNT-02 |
 | **PROC-02 Comisión de contrataciones (miembros, suplentes, impedimentos)** (GOV-PROC-003) | Menú › Gobierno · Contrataciones › Comisiones | [`specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md) | GOV-PROC-02 |
 | **PROC-03 Expediente único de contratación con cronología y lapsos** (GOV-PROC-004, GOV-PROC-014) | Menú › Gobierno · Contrataciones › Expedientes | [`specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md) |
 | **PROC-11 Funciones incompatibles en contratación** (GOV-PROC-017) | Menú › Gobierno · Contrataciones › Funciones incompatibles (y el bloque «Funciones incompatibles» en la ficha del expediente) | [`specs/gov-proc-11-sod-funciones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-11-sod-funciones/evidence/OWNER_UAT_CARD.md) | GOV-PROC-11 |

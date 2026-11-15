@@ -698,8 +698,8 @@ class TestGovCnt01Contratos:
             {"firmante_cargo_id": firmante_eur},
             version=contrato["version"],
         )
-        assert r.status_code == 409
-        assert r.json()["code"] == "GOV_CONTRACT_SIGNER_CURRENCY_MISMATCH"
+        assert r.status_code == 422
+        assert r.json()["code"] == "GOV_OFFICIAL_RATE_REQUIRED"
 
         cdp_eur = _cdp(mundo, ocupacion, "50000.00", moneda="EUR", expediente_id=prep["exp"]["id"])
         r = _put(
