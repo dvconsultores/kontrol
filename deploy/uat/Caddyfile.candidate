@@ -1,0 +1,9 @@
+# Solo loopback para validar el candidato; nunca se expone.
+:80 {
+	handle /api/v1/* {
+		reverse_proxy backend:8000
+	}
+	handle {
+		reverse_proxy frontend:80
+	}
+}

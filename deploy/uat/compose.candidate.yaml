@@ -1,0 +1,130 @@
+# Pila candidata efímera para validar una versión contra una restauración temporal del respaldo de green.
+# Se destruye siempre al terminar. No toca la base ni los volúmenes del sponsor
+# (el de respaldos se monta en solo lectura).
+
+name: kontrol-cand
+
+x-backend-env: &backend-env
+  KONTROL_ENVIRONMENT: "uat"
+  KONTROL_DB_URL: "postgresql+psycopg2://kontrol:${UAT_CAND_DB_PASSWORD:?}@db:5432/kontrol_cand"
+  KONTROL_SECRET_KEY: "${KONTROL_SECRET_KEY:?}"
+  KONTROL_MFA_KEYS: "${KONTROL_MFA_KEYS:?}"
+  KONTROL_COOKIE_SECURE: "true"
+  KONTROL_CORS_ORIGINS: "${KONTROL_CORS_ORIGINS:?}"
+  KONTROL_LICENSE_PUBLIC_KEY_PEM: "${KONTROL_LICENSE_PUBLIC_KEY_PEM:-}"
+  KONTROL_LICENSE_PUBLIC_KEY_KID: "${KONTROL_LICENSE_PUBLIC_KEY_KID:-}"
+  KONTROL_INSTALLATION_VOLUME_PATH: "/data/license-state"
+  KONTROL_STORAGE_PATH: "/data/storage"
+  KONTROL_BACKUP_PATH: "/data/backups"
+  KONTROL_LOG_JSON: "true"
+  KONTROL_DOCUMENT_SCANNER: "clamd"
+  KONTROL_CLAMD_HOST: "clamd"
+  KONTROL_CLAMD_PORT: "3310"
+  TZ: "${KONTROL_TZ:-America/Caracas}"
+
+services:
+  db:
+    image: postgres:18.6
+    container_name: kontrol-cand-db
+    environment:
+      POSTGRES_USER: kontrol
+      POSTGRES_PASSWORD: "${UAT_CAND_DB_PASSWORD:?}"
+      POSTGRES_DB: kontrol_cand
+    volumes:
+      - kontrol-cand-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kontrol -d kontrol_cand"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  restore:
+    image: "${KONTROL_IMAGE_REGISTRY:?}/kontrol-backend:${UAT_GREEN_TAG:?}"
+    container_name: kontrol-cand-restore
+    profiles: ["restore"]
+    entrypoint: ["python", "-m", "app.ops.backup"]
+    environment:
+      <<: *backend-env
+      KONTROL_BACKUP_KEY: "${KONTROL_BACKUP_KEY:?}"
+    volumes:
+      - kontrol-cand-storage:/data/storage
+      - kontrol-cand-license-state:/data/license-state
+      - uat-backups:/data/backups:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    image: "${KONTROL_IMAGE_REGISTRY:?}/kontrol-backend:${UAT_IMAGE_TAG:?}"
+    container_name: kontrol-cand-api
+    environment:
+      <<: *backend-env
+      KONTROL_IMAGE_TAG: "${UAT_IMAGE_TAG:?}"
+    volumes:
+      - kontrol-cand-storage:/data/storage
+      - kontrol-cand-license-state:/data/license-state
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      db:
+        condition: service_healthy
+      clamd:
+        condition: service_started
+
+  frontend:
+    image: "${KONTROL_IMAGE_REGISTRY:?}/kontrol-frontend:${UAT_IMAGE_TAG:?}"
+    container_name: kontrol-cand-web
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      backend:
+        condition: service_started
+
+  clamd:
+    image: "${KONTROL_IMAGE_REGISTRY:?}/kontrol-clamd:${UAT_IMAGE_TAG:?}"
+    container_name: kontrol-cand-clamd
+    environment:
+      CLAMAV_NO_FRESHCLAMD: "false"
+    volumes:
+      - kontrol-cand-clamav-db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "printf 'zPING\\0' | nc -w 5 127.0.0.1 3310 | grep -q PONG"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+
+  proxy:
+    image: caddy:2.8.4
+    container_name: kontrol-cand-proxy
+    ports:
+      - "127.0.0.1:${UAT_CANDIDATE_PORT:-18081}:80"
+    volumes:
+      - ./Caddyfile.candidate:/etc/caddy/Caddyfile:ro
+    depends_on:
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_started
+
+volumes:
+  kontrol-cand-pgdata:
+    name: kontrol-cand-pgdata
+  kontrol-cand-storage:
+    name: kontrol-cand-storage
+  kontrol-cand-license-state:
+    name: kontrol-cand-license-state
+  kontrol-cand-clamav-db:
+    name: kontrol-cand-clamav-db
+  uat-backups:
+    external: true
+    name: kontrol_kontrol-backups
