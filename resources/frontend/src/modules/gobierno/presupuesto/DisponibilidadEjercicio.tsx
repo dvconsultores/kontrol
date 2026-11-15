@@ -9,6 +9,7 @@ import { TextInput } from "@/components/TextInput";
 import { formatMoney } from "@/lib/format";
 import {
   CONSULTA_PRESUPUESTO,
+  ETIQUETAS_SITUACION_CERTIFICADO,
   type Certificacion,
   type CertificacionesVista,
   type DisponibilidadVista,
@@ -202,6 +203,7 @@ export function DisponibilidadEjercicio({
                 <th>Fuente</th>
                 <th>Crédito</th>
                 <th>Certificado</th>
+                <th>Comprometido</th>
                 <th>Disponible</th>
               </tr>
             </thead>
@@ -214,6 +216,7 @@ export function DisponibilidadEjercicio({
                   <td>{item.fuente.etiqueta}</td>
                   <td>{formatMoney(item.credito)} {vista.moneda}</td>
                   <td>{formatMoney(item.certificado)} {vista.moneda}</td>
+                  <td>{formatMoney(item.comprometido)} {vista.moneda}</td>
                   <td>{formatMoney(item.disponible)} {vista.moneda}</td>
                 </tr>
               ))}
@@ -223,6 +226,7 @@ export function DisponibilidadEjercicio({
                 <td colSpan={4}>Totales</td>
                 <td>{formatMoney(vista.totales.credito)} {vista.moneda}</td>
                 <td>{formatMoney(vista.totales.certificado)} {vista.moneda}</td>
+                <td>{formatMoney(vista.totales.comprometido)} {vista.moneda}</td>
                 <td>{formatMoney(vista.totales.disponible)} {vista.moneda}</td>
               </tr>
             </tfoot>
@@ -349,6 +353,8 @@ export function DisponibilidadEjercicio({
                 <th>Crédito</th>
                 <th>Expediente</th>
                 <th>Monto</th>
+                <th>Consumido</th>
+                <th>Remanente</th>
                 <th>Saldo antes</th>
                 <th>Saldo después</th>
                 <th>Firmante</th>
@@ -364,6 +370,8 @@ export function DisponibilidadEjercicio({
                   <td>{`${c.categoria} | ${c.partida} | ${c.fuente}`}</td>
                   <td>{c.expediente_referencia}</td>
                   <td>{formatMoney(c.monto)} {c.moneda}</td>
+                  <td>{formatMoney(c.consumido)} {c.moneda}</td>
+                  <td>{formatMoney(c.remanente)} {c.moneda}</td>
                   <td>{formatMoney(c.saldo_antes)} {c.moneda}</td>
                   <td>{formatMoney(c.saldo_despues)} {c.moneda}</td>
                   <td>
@@ -372,7 +380,7 @@ export function DisponibilidadEjercicio({
                   </td>
                   <td>
                     {c.estado === "VIGENTE"
-                      ? "Vigente"
+                      ? `Vigente · ${ETIQUETAS_SITUACION_CERTIFICADO[c.situacion]}`
                       : `Anulada: ${c.motivo_anulacion ?? ""}`}
                   </td>
                   <td>
@@ -387,7 +395,9 @@ export function DisponibilidadEjercicio({
                     >
                       {`Descargar ${c.codigo}`}
                     </Button>
-                    {c.estado === "VIGENTE" && puedeAnularVigentes ? (
+                    {c.estado === "VIGENTE" &&
+                    c.situacion === "DISPONIBLE" &&
+                    puedeAnularVigentes ? (
                       <>
                         <TextInput
                           aria-label={`Motivo de anulación de ${c.codigo}`}
@@ -414,6 +424,10 @@ export function DisponibilidadEjercicio({
                           }}
                         />
                       </>
+                    ) : null}
+                    {c.estado === "VIGENTE" &&
+                    c.situacion !== "DISPONIBLE" ? (
+                      <span>Con compromisos vigentes</span>
                     ) : null}
                   </td>
                 </tr>

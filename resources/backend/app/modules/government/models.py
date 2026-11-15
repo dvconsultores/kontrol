@@ -1029,6 +1029,7 @@ TIPOS_HISTORIA_EJERCICIO = (
     "INGRESO_REGISTRADO", "INGRESO_MODIFICADO", "INGRESO_ELIMINADO",
     "CREDITO_REGISTRADO", "CREDITO_MODIFICADO", "CREDITO_ELIMINADO", "EXISTENCIAS_REGISTRADAS", "EXISTENCIAS_ELIMINADAS",
     "CERTIFICACION_EMITIDA", "CERTIFICACION_ANULADA",
+    "COMPROMISO_REGISTRADO", "COMPROMISO_ANULADO",
 )
 
 
@@ -1505,6 +1506,106 @@ GOV_BUDGET_CERTIFICATES_IMMUTABLE_PG = (
 
 for _sentencia in GOV_BUDGET_CERTIFICATES_IMMUTABLE_PG:
     event.listen(GovernmentBudgetCertificate.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+ESTADOS_COMPROMISO = ("VIGENTE", "ANULADO")
+
+
+class GovernmentBudgetCommitment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Compromiso presupuestario (BUD-08, GOV-BUD-012)."""
+
+    __tablename__ = "gov_budget_commitments"
+    __scope__ = Scope.COMPANY
+
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="VIGENTE", server_default="VIGENTE")
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    concepto: Mapped[str] = mapped_column(String(500), nullable=False)
+    expediente_referencia: Mapped[str] = mapped_column(String(120), nullable=False)
+    procurement_file_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=True, index=True)
+    autoridad_cargo_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False, index=True)
+    autoridad_cargo_codigo: Mapped[str] = mapped_column(String(30), nullable=False)
+    autoridad_cargo_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    autoridad_unidad: Mapped[str] = mapped_column(String(250), nullable=False)
+    autoridad_funcionario_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    autoridad_funcionario_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    limite_tipo: Mapped[str] = mapped_column(String(12), nullable=False)
+    limite_monto: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    limite_moneda: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    soporte_documento_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False, index=True)
+    soporte_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    emitido_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    emitido_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    huella: Mapped[str] = mapped_column(String(64), nullable=False)
+    documento_storage_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    documento_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    documento_tamano: Mapped[int] = mapped_column(Integer, nullable=False)
+    documento_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    anulado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    anulado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("year_id", "numero", name="uq_gov_budget_commitments_year_id_numero"),
+        UniqueConstraint("company_id", "codigo", name="uq_gov_budget_commitments_company_id_codigo"),
+        CheckConstraint("estado IN ('VIGENTE', 'ANULADO')", name="estado"),
+        CheckConstraint(
+            "(limite_tipo = 'SIN_LIMITE' AND limite_monto IS NULL AND limite_moneda IS NULL) OR "
+            "(limite_tipo = 'MONTO' AND limite_monto > 0 AND limite_moneda IS NOT NULL)",
+            name="limite",
+        ),
+        CheckConstraint(
+            "(estado = 'VIGENTE' AND anulado_por IS NULL AND anulado_en IS NULL AND motivo_anulacion IS NULL) OR "
+            "(estado = 'ANULADO' AND anulado_por IS NOT NULL AND anulado_en IS NOT NULL AND motivo_anulacion IS NOT NULL)",
+            name="anulacion",
+        ),
+    )
+
+
+class GovernmentBudgetCommitmentLine(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Imputación de un compromiso a una certificación (BUD-08)."""
+
+    __tablename__ = "gov_budget_commitment_lines"
+    __scope__ = Scope.COMPANY
+
+    commitment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_commitments.id"), nullable=False, index=True)
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    certificate_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_certificates.id"), nullable=False, index=True)
+    credit_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_credits.id"), nullable=False, index=True)
+    linea: Mapped[int] = mapped_column(Integer, nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("commitment_id", "certificate_id", name="uq_gov_budget_commitment_lines_commitment_id_certificate_id"),
+        UniqueConstraint("commitment_id", "linea", name="uq_gov_budget_commitment_lines_commitment_id_linea"),
+        CheckConstraint("monto > 0", name="monto"),
+        CheckConstraint("linea BETWEEN 1 AND 20", name="linea"),
+    )
+
+
+GOV_BUDGET_COMMITMENTS_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_compromiso_inmutable() RETURNS TRIGGER AS $$ BEGIN IF TG_OP = 'DELETE' THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_COMMITMENT_IMMUTABLE', DETAIL = TG_OP; END IF; IF OLD.estado <> 'VIGENTE' OR NEW.estado <> 'ANULADO' OR NEW.year_id IS DISTINCT FROM OLD.year_id OR NEW.company_id IS DISTINCT FROM OLD.company_id OR NEW.numero IS DISTINCT FROM OLD.numero OR NEW.codigo IS DISTINCT FROM OLD.codigo OR NEW.moneda IS DISTINCT FROM OLD.moneda OR NEW.fecha IS DISTINCT FROM OLD.fecha OR NEW.concepto IS DISTINCT FROM OLD.concepto OR NEW.expediente_referencia IS DISTINCT FROM OLD.expediente_referencia OR NEW.procurement_file_id IS DISTINCT FROM OLD.procurement_file_id OR NEW.autoridad_cargo_id IS DISTINCT FROM OLD.autoridad_cargo_id OR NEW.limite_tipo IS DISTINCT FROM OLD.limite_tipo OR NEW.limite_monto IS DISTINCT FROM OLD.limite_monto OR NEW.limite_moneda IS DISTINCT FROM OLD.limite_moneda OR NEW.soporte_documento_id IS DISTINCT FROM OLD.soporte_documento_id OR NEW.soporte_sha256 IS DISTINCT FROM OLD.soporte_sha256 OR NEW.emitido_por IS DISTINCT FROM OLD.emitido_por OR NEW.emitido_en IS DISTINCT FROM OLD.emitido_en OR NEW.huella IS DISTINCT FROM OLD.huella OR NEW.documento_sha256 IS DISTINCT FROM OLD.documento_sha256 OR NEW.documento_storage_key IS DISTINCT FROM OLD.documento_storage_key THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_COMMITMENT_IMMUTABLE', DETAIL = TG_OP; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_commitments_inmutable BEFORE UPDATE OR DELETE ON gov_budget_commitments FOR EACH ROW EXECUTE FUNCTION kontrol_gov_compromiso_inmutable()",
+    "CREATE TRIGGER trg_gov_budget_commitments_no_truncate BEFORE TRUNCATE ON gov_budget_commitments FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+)
+
+GOV_BUDGET_COMMITMENT_LINES_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_compromiso_linea_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_COMMITMENT_LINE_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_budget_commitment_lines_inmutable BEFORE UPDATE OR DELETE ON gov_budget_commitment_lines FOR EACH ROW EXECUTE FUNCTION kontrol_gov_compromiso_linea_inmutable()",
+    "CREATE TRIGGER trg_gov_budget_commitment_lines_no_truncate BEFORE TRUNCATE ON gov_budget_commitment_lines FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+)
+
+for _sentencia in GOV_BUDGET_COMMITMENTS_IMMUTABLE_PG:
+    event.listen(GovernmentBudgetCommitment.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_BUDGET_COMMITMENT_LINES_IMMUTABLE_PG:
+    event.listen(GovernmentBudgetCommitmentLine.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
 
 
 ESTADOS_BANCO = ("ACTIVO", "INACTIVO")
