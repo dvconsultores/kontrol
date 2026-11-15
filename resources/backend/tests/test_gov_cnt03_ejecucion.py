@@ -20,7 +20,8 @@ from tests.org06_ayudantes import cuerpo_vinculo, vinculo_activo
 from tests.org06_guarda import cuenta_con_permisos
 from tests.proc08_ayudantes import cargo_contrataciones
 from tests.test_gov_bud01_ejercicio import ONLY_PG
-from tests.test_gov_cnt01_contratos import C
+from tests.test_gov_cnt01_contratos import C, _cargo_firmante
+from tests.test_gov_cnt02_modificaciones import FIN, _formalizar_m, _nueva, _patch_m
 from tests.test_gov_cnt04_supervisor import _acto_designante, _designar, _formalizado, _supervisor
 from tests.test_gov_ctl01_reglas import cerrar_regla, eventos, regla_vigente
 from tests.test_gov_ctl06_hallazgos import _post
@@ -1254,3 +1255,38 @@ def test_reporte_csv(mundo, gobierno, ocupacion):
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/csv")
     assert r.text.splitlines()[0] == "fecha,tipo,referencia,titulo,monto,moneda,estado"
+
+
+@ONLY_PG
+def test_terminos_efectivos_con_prorroga_cnt02(mundo, gobierno, ocupacion):
+    datos = _listo(mundo, ocupacion)
+    cid, exp = datos["cid"], datos["exp"]
+    r = _nueva(mundo, cid, "PRORROGA")
+    assert r.status_code == 201, r.text
+    b = r.json()
+    doc_id = _d(mundo, exp, "doc-prorroga")
+    r = _patch_m(
+        mundo,
+        cid,
+        b["id"],
+        {
+            "fecha_instrumento": HOY.isoformat(),
+            "vigente_desde": HOY.isoformat(),
+            "motivo": "Solicitud justificada del contratista",
+            "referencia_instrumento": "INSTR-MOD-01",
+            "documento_id": doc_id,
+            "nueva_fecha_fin": (FIN + timedelta(days=30)).isoformat(),
+        },
+        b["version"],
+    )
+    assert r.status_code == 200, r.text
+    firmante = _cargo_firmante(mundo, ocupacion, "SIN_LIMITE")
+    r = _formalizar_m(mundo, cid, b["id"], firmante, r.json()["version"])
+    assert r.status_code == 200, r.text
+    r = mundo.get(f"{C}/{cid}{E}", datos["usuario"], mundo.company_a)
+    assert r.status_code == 200, r.text
+    terminos = r.json()["terminos"]
+    assert terminos["fecha_fin"] == (FIN + timedelta(days=30)).isoformat()
+    assert terminos["fuente"] == "CNT02_MODIFICACION"
+    assert terminos["modificacion"] is not None
+    assert terminos["monto_original"] == "50000.00"

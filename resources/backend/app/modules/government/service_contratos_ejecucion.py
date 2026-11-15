@@ -31,6 +31,7 @@ from app.modules.government.models import (
     GovernmentProcurementFile,
 )
 from app.modules.government.service_actos import _autoridad_valida
+from app.modules.government.service_contratos_modificaciones import _formalizadas, _vigente_a
 from app.modules.government.service_contratos_supervision import supervisor_en, supervisor_vigente
 from app.modules.government.service_expedientes import _evento
 from app.modules.government.service_identidad import _funcionario_del_actor
@@ -64,16 +65,20 @@ def _inv(campo: str, mensaje: str, code: str) -> KontrolError:
     )
 
 
-def terminos_efectivos(contrato: GovernmentContract) -> dict[str, Any]:
-    # Frontera con CNT-02 (P2): cuando haya adendas formalizadas, esta función
-    # devolverá el monto y el plazo efectivos; CNT-02 debe tomar FOR UPDATE de
-    # gov_contracts al formalizar.
+def terminos_efectivos(
+    db: Session, contrato: GovernmentContract, fecha: date | None = None
+) -> dict[str, Any]:
+    """Proyección CNT-01 + adendas CNT-02 formalizadas vigentes a la fecha."""
+    fecha = fecha or hoy_de_negocio()
+    proy = _vigente_a(contrato, _formalizadas(db, str(contrato.id)), fecha)
     return {
-        "monto": Decimal(contrato.monto),
+        "monto": Decimal(proy["monto"]),
         "moneda": contrato.moneda,
         "fecha_inicio": contrato.fecha_inicio,
-        "fecha_fin": contrato.fecha_fin,
-        "fuente": "CNT01_ORIGINAL",
+        "fecha_fin": date.fromisoformat(proy["fecha_fin"]) if proy["fecha_fin"] else None,
+        "fuente": "CNT02_MODIFICACION" if proy["modificacion_codigo"] else "CNT01_ORIGINAL",
+        "modificacion": proy["modificacion_codigo"],
+        "monto_original": Decimal(contrato.monto),
     }
 
 
@@ -425,7 +430,7 @@ def iniciar(db: Session, ctx: CompanyContext, contrato_id: str, cuerpo: dict[str
     if "INICIO" in actos:
         raise ConflictError("GOV_CONTRACT_EXEC_ALREADY_STARTED", "El inicio de la ejecución ya está registrado")
     fecha: date = cuerpo["fecha"]
-    terminos = terminos_efectivos(contrato)
+    terminos = terminos_efectivos(db, contrato, fecha)
     formalizacion = contrato.fecha_formalizacion
     if formalizacion is None:
         raise ConflictError(
@@ -509,7 +514,7 @@ def crear_hito(db: Session, ctx: CompanyContext, contrato_id: str, cuerpo: dict[
             "La fecha prevista debe ser igual o posterior a la formalización del contrato",
             "GOV_CONTRACT_EXEC_DATE_INVALID",
         )
-    terminos = terminos_efectivos(contrato)
+    terminos = terminos_efectivos(db, contrato)
     monto_previsto = cuerpo.get("monto_previsto")
     porcentaje_previsto = cuerpo.get("porcentaje_previsto")
     consulta_vigentes = select(GovernmentContractMilestone).where(
@@ -930,7 +935,7 @@ def presentar_valuacion(
         )
     _fecha_hecho(fecha, actos, "fecha")
     monto = Decimal(cuerpo["monto"])
-    terminos = terminos_efectivos(contrato)
+    terminos = terminos_efectivos(db, contrato, fecha)
     comprometido = _suma(
         db,
         GovernmentContractValuation.monto,
@@ -1024,7 +1029,7 @@ def resolver_valuacion(
     evaluar_antes_de_actuar(db, ctx, "PROC03_EJEC_CONFORMAR", ENTIDAD, str(contrato.file_id))
     acumulado: Decimal | None = None
     if resultado == "CONFORMADA":
-        terminos = terminos_efectivos(contrato)
+        terminos = terminos_efectivos(db, contrato, fecha_conformidad)
         conformado = _suma(
             db,
             GovernmentContractValuation.monto,
@@ -1290,7 +1295,7 @@ def registrar_recepcion(
                 "Faltan entregables conformes",
                 details={"pendientes": pend},
             )
-        terminos = terminos_efectivos(contrato)
+        terminos = terminos_efectivos(db, contrato, fecha)
         conformado = _suma(
             db,
             GovernmentContractValuation.monto,
@@ -1769,7 +1774,7 @@ def ejecucion(db: Session, ctx: CompanyContext, contrato_id: str) -> dict[str, A
     expediente = _expediente(db, ctx, contrato)
     actos = _actos(db, str(contrato.id))
     flujo = _flujo(expediente)
-    terminos = terminos_efectivos(contrato)
+    terminos = terminos_efectivos(db, contrato)
     cumplidos = _cumplidos(db, contrato_id)
 
     valuado_conformado = _suma(
@@ -1843,12 +1848,13 @@ def ejecucion(db: Session, ctx: CompanyContext, contrato_id: str) -> dict[str, A
             "expediente_id": str(contrato.file_id),
         },
         "terminos": {
-            "monto_original": _t(Decimal(contrato.monto)),
+            "monto_original": _t(terminos["monto_original"]),
             "monto_efectivo": _t(terminos["monto"]),
             "moneda": terminos["moneda"],
             "fecha_inicio": terminos["fecha_inicio"].isoformat() if terminos["fecha_inicio"] else None,
             "fecha_fin": terminos["fecha_fin"].isoformat() if terminos["fecha_fin"] else None,
             "fuente": terminos["fuente"],
+            "modificacion": terminos["modificacion"],
         },
         "resumen": {
             "estado_ejecucion": estado_ejecucion,
