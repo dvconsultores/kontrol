@@ -2061,7 +2061,7 @@ ESTADOS_EXPEDIENTE = ("ABIERTO", "CERRADO", "DESCARTADO")
 ROLES_RESPONSABLE_EXPEDIENTE = ("RESPONSABLE", "REQUIRENTE", "SUSTANCIACION", "CUSTODIA")
 ESTADOS_HITO = ("PREVISTO", "CUMPLIDO", "NO_APLICA")
 CLASES_FOLIO = ("SOLICITUD", "AUTORIZACION_INICIO", "PLIEGO", "ACTOS_MOTIVADOS", "LLAMADO_INVITACION", "MODIFICACIONES_PLIEGO", "ACTA_RECEPCION", "OFERTAS", "INFORME_RECOMENDACION", "ADJUDICACION", "NOTIFICACION", "CONTRATO", "OTRO_SELECCION", "GARANTIAS", "ACTAS_EJECUCION", "MODIFICACION_CONTRATO", "FORMULARIOS_PAGO", "APROBACIONES_PAGO", "PAGOS", "FINIQUITO", "LIBERACION_GARANTIAS", "EVALUACION_CONTRATISTA", "OTRO_ADMINISTRACION")
-CLASES_EVENTO_EXPEDIENTE = ("APERTURA", "DATOS", "RESPONSABLE", "COMISION", "ACTUACION", "DECISION", "DOCUMENTO", "ACTO", "HITO", "CIERRE", "DESCARTE", "OFERTA", "APERTURA_OFERTA", "EVALUACION", "RECOMENDACION", "RECHAZO_OFERTA", "ADJUDICACION", "DESIERTA", "TERMINACION", "NULIDAD", "GARANTIA")
+CLASES_EVENTO_EXPEDIENTE = ("APERTURA", "DATOS", "RESPONSABLE", "COMISION", "ACTUACION", "DECISION", "DOCUMENTO", "ACTO", "HITO", "CIERRE", "DESCARTE", "OFERTA", "APERTURA_OFERTA", "EVALUACION", "RECOMENDACION", "RECHAZO_OFERTA", "ADJUDICACION", "DESIERTA", "TERMINACION", "NULIDAD", "GARANTIA", "CONTRATO")
 
 ESTADOS_RECOMENDACION = ("EMITIDA", "SUSTITUIDA")
 RESULTADOS_RECOMENDACION = ("ADJUDICAR", "DECLARAR_DESIERTA", "TERMINAR")
@@ -4350,3 +4350,174 @@ class GovernmentProcurementOfferAmount(UUIDMixin, TimestampMixin, CreatedByMixin
 
 for _sentencia in GOV_OFFER_AMOUNTS_IMMUTABLE_PG:
     event.listen(GovernmentProcurementOfferAmount.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+# CNT-01 · Contrato u orden derivada de la adjudicación (GOV-CNT-001).
+
+TIPOS_INSTRUMENTO_CONTRATO = ("CONTRATO", "ORDEN_COMPRA", "ORDEN_SERVICIO")  # LCP art. 6, num. 32
+ESTADOS_CONTRATO = ("BORRADOR", "FORMALIZADO")
+PREFIJOS_INSTRUMENTO_CONTRATO: dict[str, str] = {"CONTRATO": "CT", "ORDEN_COMPRA": "OC", "ORDEN_SERVICIO": "OS"}
+
+class GovernmentContract(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Contrato u orden de compra o de servicio derivada de una adjudicación (CNT-01)."""
+    __tablename__ = "gov_contracts"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    decision_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_decisions.id"), nullable=False)
+    offer_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_offers.id"), nullable=False, index=True)
+    act_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=False)
+    amount_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_offer_amounts.id"), nullable=False)
+    estado: Mapped[str] = mapped_column(String(12), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    tipo: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    codigo: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    numero: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    anio: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    expediente_numero: Mapped[str] = mapped_column(String(40), nullable=False)
+    objeto: Mapped[str] = mapped_column(String(1000), nullable=False)
+    descripcion_complementaria: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    decision_referencia: Mapped[str] = mapped_column(String(10), nullable=False)
+    decision_fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    acto_etiqueta: Mapped[str] = mapped_column(String(400), nullable=False)
+    oferta_referencia: Mapped[str] = mapped_column(String(12), nullable=False)
+    contratista_nombre: Mapped[str] = mapped_column(String(300), nullable=False)
+    contratista_documento: Mapped[str] = mapped_column(String(40), nullable=False)
+    contratista_representante: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    fecha_inicio: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fecha_fin: Mapped[date | None] = mapped_column(Date, nullable=True)
+    referencia_instrumento: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    document_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True)
+    document_version_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=True)
+    documento_version_numero: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    documento_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    documento_titulo: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    firmante_cargo_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=True)
+    firmante_cargo_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    firmante_funcionario_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    fecha_formalizacion: Mapped[date | None] = mapped_column(Date, nullable=True)
+    formalizado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    formalizado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    huella: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_contracts_company_codigo"),
+        UniqueConstraint("decision_id", name="uq_gov_contracts_decision"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_CONTRATO)})", name="estado"),
+        CheckConstraint(f"tipo IS NULL OR tipo IN ({en(TIPOS_INSTRUMENTO_CONTRATO)})", name="tipo"),
+        CheckConstraint("monto > 0", name="monto"),
+        CheckConstraint("length(moneda) = 3", name="moneda"),
+        CheckConstraint("numero IS NULL OR numero >= 1", name="numero"),
+        CheckConstraint("fecha_fin IS NULL OR fecha_inicio IS NULL OR fecha_fin >= fecha_inicio", name="plazo"),
+        CheckConstraint(
+            "(estado = 'BORRADOR' AND codigo IS NULL AND numero IS NULL AND anio IS NULL AND fecha_formalizacion IS NULL AND formalizado_en IS NULL AND formalizado_por IS NULL AND snapshot IS NULL AND huella IS NULL) OR (estado = 'FORMALIZADO' AND tipo IS NOT NULL AND codigo IS NOT NULL AND numero IS NOT NULL AND anio IS NOT NULL AND fecha_inicio IS NOT NULL AND fecha_fin IS NOT NULL AND referencia_instrumento IS NOT NULL AND document_id IS NOT NULL AND document_version_id IS NOT NULL AND documento_sha256 IS NOT NULL AND firmante_cargo_id IS NOT NULL AND fecha_formalizacion IS NOT NULL AND formalizado_en IS NOT NULL AND formalizado_por IS NOT NULL AND snapshot IS NOT NULL AND huella IS NOT NULL)",
+            name="completitud",
+        ),
+    )
+
+
+class GovernmentContractBudgetAllocation(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Porción de una certificación de disponibilidad (BUD-06) asignada a un contrato (CNT-01). No consume la CDP."""
+    __tablename__ = "gov_contract_budget_allocations"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    certificate_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_certificates.id"), nullable=False, index=True)
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False)
+    certificado_codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("contract_id", "certificate_id", name="uq_gov_contract_budget_allocations_certificado"),
+        CheckConstraint("monto > 0", name="monto"),
+    )
+
+
+class GovernmentContractGuarantee(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Garantía de PROC-10 vinculada a un contrato (CNT-01). No duplica la garantía."""
+    __tablename__ = "gov_contract_guarantees"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    instrument_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_guarantee_instruments.id"), nullable=False, index=True)
+    garantia_referencia: Mapped[str] = mapped_column(String(20), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("contract_id", "instrument_id", name="uq_gov_contract_guarantees_instrumento"),
+    )
+
+
+GOV_CONTRACTS_GUARD_PG = (
+    """CREATE OR REPLACE FUNCTION kontrol_gov_contract_guard() RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'DELETE' OR TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF OLD.estado = 'FORMALIZADO' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF NEW.company_id IS DISTINCT FROM OLD.company_id
+        OR NEW.file_id IS DISTINCT FROM OLD.file_id
+        OR NEW.decision_id IS DISTINCT FROM OLD.decision_id
+        OR NEW.offer_id IS DISTINCT FROM OLD.offer_id
+        OR NEW.act_id IS DISTINCT FROM OLD.act_id
+        OR NEW.amount_id IS DISTINCT FROM OLD.amount_id
+        OR NEW.expediente_numero IS DISTINCT FROM OLD.expediente_numero
+        OR NEW.objeto IS DISTINCT FROM OLD.objeto
+        OR NEW.decision_referencia IS DISTINCT FROM OLD.decision_referencia
+        OR NEW.oferta_referencia IS DISTINCT FROM OLD.oferta_referencia
+        OR NEW.contratista_nombre IS DISTINCT FROM OLD.contratista_nombre
+        OR NEW.contratista_documento IS DISTINCT FROM OLD.contratista_documento
+        OR NEW.monto IS DISTINCT FROM OLD.monto
+        OR NEW.moneda IS DISTINCT FROM OLD.moneda THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    RETURN NEW;
+END; $$ LANGUAGE plpgsql""",
+    "CREATE TRIGGER trg_gov_contracts_guard BEFORE UPDATE OR DELETE ON gov_contracts FOR EACH ROW EXECUTE FUNCTION kontrol_gov_contract_guard()",
+    "CREATE TRIGGER trg_gov_contracts_no_truncate BEFORE TRUNCATE ON gov_contracts FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_contract_guard()",
+)
+
+GOV_CONTRACT_LINKS_GUARD_FN_PG = """CREATE OR REPLACE FUNCTION kontrol_gov_contract_link_guard() RETURNS TRIGGER AS $$
+DECLARE
+    v_estado text;
+BEGIN
+    IF TG_OP = 'TRUNCATE' OR TG_OP = 'UPDATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    SELECT estado INTO v_estado FROM gov_contracts WHERE id = (CASE WHEN TG_OP = 'DELETE' THEN OLD.contract_id ELSE NEW.contract_id END);
+    IF v_estado = 'FORMALIZADO' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    END IF;
+    RETURN NEW;
+END; $$ LANGUAGE plpgsql"""
+
+GOV_CONTRACT_BUDGET_ALLOCATIONS_GUARD_PG = (
+    GOV_CONTRACT_LINKS_GUARD_FN_PG,
+    "CREATE TRIGGER trg_gov_contract_budget_allocations_guard BEFORE INSERT OR UPDATE OR DELETE ON gov_contract_budget_allocations FOR EACH ROW EXECUTE FUNCTION kontrol_gov_contract_link_guard()",
+    "CREATE TRIGGER trg_gov_contract_budget_allocations_no_truncate BEFORE TRUNCATE ON gov_contract_budget_allocations FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_contract_link_guard()",
+)
+
+GOV_CONTRACT_GUARANTEES_GUARD_PG = (
+    GOV_CONTRACT_LINKS_GUARD_FN_PG,
+    "CREATE TRIGGER trg_gov_contract_guarantees_guard BEFORE INSERT OR UPDATE OR DELETE ON gov_contract_guarantees FOR EACH ROW EXECUTE FUNCTION kontrol_gov_contract_link_guard()",
+    "CREATE TRIGGER trg_gov_contract_guarantees_no_truncate BEFORE TRUNCATE ON gov_contract_guarantees FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_contract_link_guard()",
+)
+
+for _sentencia in GOV_CONTRACTS_GUARD_PG:
+    event.listen(GovernmentContract.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_CONTRACT_BUDGET_ALLOCATIONS_GUARD_PG:
+    event.listen(GovernmentContractBudgetAllocation.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+for _sentencia in GOV_CONTRACT_GUARANTEES_GUARD_PG:
+    event.listen(GovernmentContractGuarantee.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

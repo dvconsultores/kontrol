@@ -1828,6 +1828,62 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/contratos",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos",
+      "capabilities": [
+        "gobierno_contratos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}",
+      "capabilities": [
+        "gobierno_contratos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/cobertura",
+      "capabilities": [
+        "gobierno_contratos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/formalizar",
+      "capabilities": [
+        "gobierno_contratos:formalize"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/garantias",
+      "capabilities": [
+        "gobierno_contratos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/control-interno/reporte",
       "capabilities": [
         "gobierno_auditoria:view"
@@ -8040,7 +8096,10 @@
     "gobierno_actas:manage",
     "gobierno_actas:verify",
     "gobierno_alertas:view",
-    "gobierno_alertas:review"
+    "gobierno_alertas:review",
+    "gobierno_contratos:view",
+    "gobierno_contratos:manage",
+    "gobierno_contratos:formalize"
   ],
   "report_capabilities": {
     "executive_ventas": [

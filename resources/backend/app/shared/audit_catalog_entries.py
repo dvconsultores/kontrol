@@ -508,6 +508,8 @@ DETALLE_COMISION: tuple[str, ...] = ("acto", "area", "asunto", "causa", "causal"
 
 DETALLE_EXPEDIENTE: tuple[str, ...] = ("acto", "apertura", "aspecto", "asistentes", "canal", "causal", "clase", "comision", "confidencial", "criterio", "decision", "documentos", "emisor", "estado", "fecha", "fecha_prevista", "fecha_real", "firmantes", "folio", "funcionario", "garantia", "hito", "matriz", "modalidad", "moneda", "monto", "monto_ejecutado", "motivo", "numero", "oferta", "ofertas", "opciones", "precondicion", "quorum", "recomendacion", "rechazos", "referencia", "regla", "requisito", "resultado", "rol", "secuencia", "sustituye", "tipo", "titulo", "version", "vigente_hasta")
 
+DETALLE_CONTRATO: tuple[str, ...] = ("campos", "causal", "certificados", "codigo", "contrato", "decision", "expediente", "firmante_cargo", "garantias", "huella", "oferta", "tipo")
+
 _PARTE_C: tuple[AuditActionSpec, ...] = (
     _e("GOV_COMMITTEE_CREATED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisión de contrataciones registrada"),
     _e("GOV_COMMITTEE_UPDATED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisión de contrataciones editada"),
@@ -561,6 +563,10 @@ _PARTE_D: tuple[AuditActionSpec, ...] = (
     _e("GOV_GUARANTEE_RELEASED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Garantía liberada"),
     _e("GOV_GUARANTEE_EXECUTED", "GovernmentProcurementFile", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EXPEDIENTE, "Garantía ejecutada"),
     _e("GOV_GUARANTEE_ISSUER_REGISTERED", "GovernmentGuaranteeIssuer", "government", "gov-proc-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("nombre", "rif", "tipo"), "Emisor de garantías registrado"),
+    _e("GOV_CONTRACT_DRAFT_CREATED", "GovernmentProcurementFile", "government", "gov-cnt-01", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_CONTRATO, "Borrador de contrato u orden creado"),
+    _e("GOV_CONTRACT_DRAFT_UPDATED", "GovernmentProcurementFile", "government", "gov-cnt-01", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_CONTRATO, "Borrador de contrato u orden modificado"),
+    _e("GOV_CONTRACT_FORMALIZED", "GovernmentProcurementFile", "government", "gov-cnt-01", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_CONTRATO, "Contrato u orden formalizado"),
+    _e("GOV_CONTRACT_SIGNER_BLOCKED", "GovernmentProcurementFile", "government", "gov-cnt-01", "COMPANY", "SECURITY", "REJECTION", DETALLE_CONTRATO, "Formalización bloqueada por la autoridad del firmante"),
     _e("GOV_RENDITION_FILE_CREATED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "denominacion", "periodo_desde", "periodo_hasta"), "Expediente de cuenta creado"),
     _e("GOV_RENDITION_FILE_UPDATED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "denominacion"), "Expediente de cuenta actualizado"),
     _e("GOV_RENDITION_FILE_PIECE_ADDED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "evento_id"), "Pieza incorporada al expediente de cuenta"),

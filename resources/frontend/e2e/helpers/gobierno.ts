@@ -84,6 +84,7 @@ export async function crearUsuario(
 export async function prepararMundo(
   request: APIRequestContext,
   capacidades: string[],
+  monedaFuncional?: string,
 ): Promise<{ companyId: string; codigo: string; username: string; headers: Record<string, string> }> {
   const admin = await sesionApi("admintenant", { tenant: TENANT });
 
@@ -93,6 +94,7 @@ export async function prepararMundo(
       code: `GOV${marca()}`.toUpperCase().slice(0, 20),
       legal_name: `Ente de prueba ${marca()}`,
       rif: "G-20000000-0",
+      ...(monedaFuncional ? { functional_currency: monedaFuncional } : {}),
     },
   });
   expect(es2xx(companyResp.status()), await companyResp.text()).toBe(true);
@@ -289,6 +291,7 @@ export async function cargoVigenteApi(
   unidadId: string,
   codigo: string,
   limite: LimiteCompetenciaE2E = { tipo_limite: "MONTO", monto: "50000.00", moneda: "USD" },
+  accion: "APROBAR" | "FIRMAR" = "APROBAR",
 ): Promise<{ id: string; version: number }> {
   const cargoResp = await request.post(`${API}/gobierno/estructuras/${ejercicio}/cargos`, {
     headers,
@@ -307,7 +310,7 @@ export async function cargoVigenteApi(
     {
       headers: { ...headers, "If-Match": '"1"' },
       data: {
-        accion: "APROBAR",
+        accion,
         materia: "CONTRATACIONES",
         ...limite,
       },

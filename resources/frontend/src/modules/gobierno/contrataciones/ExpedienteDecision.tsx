@@ -12,6 +12,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { formatearFechaDeNegocio, formatearInstante } from "@/lib/fecha-de-negocio";
 import { CONSULTA_EXPEDIENTES, type ExpedienteDetalle } from "../api";
 import { ControlLimiteAutoridad, type ControlMonto, type LimiteAutoridad } from "./ControlLimiteAutoridad";
+import { CrearContratoDesdeDecision } from "../contratos/CrearContratoDesdeDecision";
 
 type CatalogoItem = { codigo: string; etiqueta: string };
 type Miembro = {
@@ -97,6 +98,7 @@ type ActoDecision = {
 type Decision = {
   id: string;
   referencia: string;
+  contrato?: { id: string; identificacion: string; estado: string } | null;
   resultado: string;
   resultado_etiqueta: string;
   estado: string;
@@ -1434,9 +1436,15 @@ export function SeccionDecision({
         )}
       </div>
 
-      <p className="mt-3 text-sm text-text-600">
-        El contrato derivado se gestiona en CNT-01; esta sección no lo crea.
-      </p>
+      {decisionVigente && decisionVigente.resultado === "ADJUDICADA" ? (
+        <div className="mt-4 rounded-lg border border-border-subtle bg-white p-4">
+          <CrearContratoDesdeDecision
+            expedienteId={detalle.id}
+            contrato={decisionVigente.contrato ?? null}
+            onCreado={() => void queryClient.invalidateQueries({ queryKey: [...CONSULTA_EXPEDIENTES, activeCompanyId] })}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

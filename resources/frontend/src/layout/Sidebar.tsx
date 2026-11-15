@@ -137,6 +137,18 @@ const navSections: NavSection[] = [
       },
     ],
   },
+  // Contratos públicos (CNT-01): instrumentos derivados de la adjudicación.
+  {
+    title: "Gobierno · Contratos",
+    items: [
+      {
+        to: "/gobierno/contratos",
+        label: "Contratos y órdenes",
+        icon: FileSignature,
+        modulo: "gobierno",
+      },
+    ],
+  },
   {
     title: "Gobierno · Presupuesto",
     items: [
