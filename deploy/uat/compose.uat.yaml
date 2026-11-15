@@ -1,0 +1,38 @@
+# Override de UAT viva para el sponsor.
+# La base de datos es externa y persistente; este compose nunca la recrea.
+# Uso: docker compose -f compose.yaml -f deploy/uat/compose.uat.yaml --profile proxy ...
+
+services:
+  backend:
+    environment:
+      KONTROL_ENVIRONMENT: "uat"
+      KONTROL_CORS_ORIGINS: "${KONTROL_CORS_ORIGINS:?KONTROL_CORS_ORIGINS es obligatoria en UAT}"
+      KONTROL_LICENSE_PUBLIC_KEY_KID: "${KONTROL_LICENSE_PUBLIC_KEY_KID:-}"
+
+  proxy:
+    image: caddy:2.8.4
+    container_name: kontrol-proxy
+    restart: unless-stopped
+    profiles:
+      - proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/uat/Caddyfile:/etc/caddy/Caddyfile:ro
+      - kontrol-caddy-data:/data
+      - kontrol-caddy-config:/config
+    environment:
+      UAT_DOMAIN: "${UAT_DOMAIN:?UAT_DOMAIN es obligatoria}"
+      UAT_ACME_EMAIL: "${UAT_ACME_EMAIL:?UAT_ACME_EMAIL es obligatoria}"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - kontrol-net
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+volumes:
+  kontrol-caddy-data:
+  kontrol-caddy-config:
