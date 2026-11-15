@@ -141,6 +141,8 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "PROC03_GARANTIA_EJECUTAR": ("Ejecutar una garantía", "GOV_GUARANTEE_EXECUTED", False),
             "PROC03_CONTRATO_PREPARAR": ("Preparar el contrato u orden", "GOV_CONTRACT_DRAFT_CREATED", False),
             "PROC03_CONTRATO_FORMALIZAR": ("Formalizar el contrato u orden", "GOV_CONTRACT_FORMALIZED", False),
+            "PROC03_SUPERVISOR_DESIGNAR": ("Designar al supervisor del contrato", "GOV_CONTRACT_SUPERVISOR_ASSIGNED", False),
+            "PROC03_SUPERVISOR_SUSTITUIR": ("Sustituir al supervisor del contrato", "GOV_CONTRACT_SUPERVISOR_REPLACED", False),
         },
     },
 }

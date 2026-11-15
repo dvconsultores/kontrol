@@ -129,3 +129,67 @@ export const TIPOS_INSTRUMENTO: { codigo: TipoInstrumento; etiqueta: string }[] 
 export function rutaContrato(id: string): string {
   return `/gobierno/contratos/${id}`;
 }
+
+export interface DesignacionSupervisor {
+  id: string;
+  referencia: string;
+  situacion: "EN_EJERCICIO" | "PROGRAMADA" | "CONCLUIDA";
+  situacion_etiqueta: string;
+  numero: number;
+  estado: "VIGENTE" | "SUSTITUIDA";
+  estado_etiqueta: string;
+  funcionario: { id: string; nombre: string; documento: string };
+  asignacion_id: string;
+  figura: string;
+  figura_etiqueta: string;
+  cargo: { id: string; codigo: string; nombre: string };
+  unidad: { id: string; nombre: string };
+  acto: { id: string; etiqueta: string; emisor_cargo: string };
+  desde: string;
+  hasta: string | null;
+  motivo: string | null;
+  sustituye: string | null;
+  registrado_en: string;
+}
+
+export interface Supervision {
+  contrato: {
+    id: string;
+    codigo: string | null;
+    estado: string;
+    fecha_formalizacion: string | null;
+    fecha_fin: string | null;
+  };
+  vigente: DesignacionSupervisor | null;
+  programada: DesignacionSupervisor | null;
+  ultima_id: string | null;
+  historia: DesignacionSupervisor[];
+  puede_designar: boolean;
+}
+
+export interface OpcionSupervisorFuncionario {
+  id: string;
+  nombre: string;
+  documento: string;
+  ocupaciones: {
+    asignacion_id: string;
+    figura_etiqueta: string;
+    cargo_id: string;
+    cargo: string;
+    unidad_id: string | null;
+    unidad: string | null;
+  }[];
+}
+
+export interface OpcionesSupervision {
+  fecha: string;
+  vigente_id: string | null;
+  funcionarios: OpcionSupervisorFuncionario[];
+  actos: {
+    id: string;
+    etiqueta: string;
+    emisor_cargo: string;
+    fecha: string;
+    fecha_eficacia: string | null;
+  }[];
+}

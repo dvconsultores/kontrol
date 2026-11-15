@@ -67,7 +67,7 @@ Traza requisito → módulo → proceso → backend → pantalla → campo → r
 | GOV-CNT-001 | P0 | N11,N12,N03 | CNT-01 | PASS | PASS | PASS | NOT_APPLICABLE | PASS | PASS | OWNER_UAT_READY | Crear contrato/orden derivada de adjudicacion aprobada, preservando objeto, monto, moneda, plazo, garantia y fuente presupuestaria. |
 | GOV-CNT-002 | P0 | N11,N12,N20 | CNT-02 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Versionar adendas, prorrogas, modificaciones y variaciones sin sobrescribir el texto/condiciones originales. |
 | GOV-CNT-003 | P0 | N11,N12,N20 | CNT-03 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Controlar inicio, hitos, entregables, valuaciones, actas, recepciones parciales/definitivas y cierre. |
-| GOV-CNT-004 | P0 | N11,N20 | CNT-04 | FAIL | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | NOT_STARTED | Registrar supervisor/responsable del contrato y sus cambios con acto de designacion. |
+| GOV-CNT-004 | P0 | N11,N20 | CNT-04 | PASS | PASS | PASS | NOT_APPLICABLE | PASS | PASS | OWNER_UAT_READY | Registrar supervisor/responsable del contrato y sus cambios con acto de designacion. |
 | GOV-CNT-005 | P0 | N03,N11,N20 | CNT-05 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | NOT_STARTED | Bloquear pagos por encima del monto contractual/disponibilidad sin modificacion legalmente aprobada. |
 | GOV-CNT-006 | P0 | N11,N12,N38 | CNT-06 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Controlar penalidades, retenciones, anticipos, amortizaciones y garantias como componentes parametrizados del contrato. |
 | GOV-CNT-007 | P0 | N11,N03,N06 | CNT-03 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Relacionar cada factura/cuenta de cobro con recepcion conforme y hito contractual aplicable. |

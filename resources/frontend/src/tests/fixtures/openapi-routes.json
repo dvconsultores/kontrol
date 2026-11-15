@@ -1358,6 +1358,30 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/supervision",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/supervision/designaciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/supervision/en",
+      "query": [
+        "fecha"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/supervision/opciones",
+      "query": [
+        "fecha"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/control-interno/reporte",
       "query": [
         "desde",
