@@ -189,6 +189,7 @@ _CLAVES_AUDITORIA = frozenset(
         "clase",
         "comision",
         "confidencial",
+        "conversion",
         "criterio",
         "decision",
         "documentos",

@@ -4,7 +4,7 @@
 
 ## Estado: 27 procesos listos para probar (2026-11-12)
 
-- `OWNER_UAT_READY` = 37 de 122 procesos (30,33 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a BUD-06, BUD-08, TRE-09 y CTL-07 (los ciclos PROC-06/07/08/10 están en la matriz y su tarjeta existe, pero su fila aquí sigue pendiente: OBS-MATRIZ-UAT-01);
+- `OWNER_UAT_READY` = 37 de 122 procesos (30,33 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a BUD-06, BUD-08, TRE-09 y CTL-07 (las filas de PROC-03/06/07/08/10 se añadieron el 2026-11-15: OBS-MATRIZ-UAT-01 y OBS-CAT-NOTREADY-01 cerradas);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
@@ -36,10 +36,15 @@
 | **CTL-07 Alertas de operaciones atípicas** (GOV-CTL-009) | Menú › Gobierno › Alertas de operaciones atípicas | [`specs/gov-ctl-07-alertas-atipicas/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-ctl-07-alertas-atipicas/evidence/OWNER_UAT_CARD.md) | GOV-CTL-07 |
 | **BUD-06 Disponibilidad y certificación presupuestaria** (GOV-BUD-009, GOV-BUD-010) | Menú › Gobierno · Presupuesto › Ejercicios presupuestarios › (ejercicio aprobado) › «Disponibilidad y certificaciones» | [`specs/gov-bud-06-disponibilidad-certificacion/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-bud-06-disponibilidad-certificacion/evidence/OWNER_UAT_CARD.md) | GOV-BUD-06 |
 | **BUD-08 Compromiso presupuestario** (GOV-BUD-012) | Menú › Gobierno · Presupuesto › Ejercicios presupuestarios › (ejercicio aprobado) › «Compromisos» | [`specs/gov-bud-08-compromiso/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-bud-08-compromiso/evidence/OWNER_UAT_CARD.md) | GOV-BUD-08 |
-| **TRE-09 Tasas oficiales BCV** (GOV-TRE-011) | Menú › Gobierno · Tesorería › Tasas oficiales (consumidor: Presupuesto › ejercicio › «Compromisos») | [`specs/gov-tre-09-tasas-bcv/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-tre-09-tasas-bcv/evidence/OWNER_UAT_CARD.md) | GOV-TRE-09 |
+| **TRE-09 Tasas oficiales BCV** (GOV-TRE-011) | Menú › Gobierno · Tesorería › Tasas oficiales (consumidores: Presupuesto › ejercicio › «Compromisos» y Contrataciones › expediente › «Recomendación y decisión») | [`specs/gov-tre-09-tasas-bcv/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-tre-09-tasas-bcv/evidence/OWNER_UAT_CARD.md) | GOV-TRE-09 |
 | **PROC-02 Comisión de contrataciones (miembros, suplentes, impedimentos)** (GOV-PROC-003) | Menú › Gobierno · Contrataciones › Comisiones | [`specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md) | GOV-PROC-02 |
 | **PROC-03 Expediente único de contratación con cronología y lapsos** (GOV-PROC-004, GOV-PROC-014) | Menú › Gobierno · Contrataciones › Expedientes | [`specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md) |
 | **PROC-11 Funciones incompatibles en contratación** (GOV-PROC-017) | Menú › Gobierno · Contrataciones › Funciones incompatibles (y el bloque «Funciones incompatibles» en la ficha del expediente) | [`specs/gov-proc-11-sod-funciones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-11-sod-funciones/evidence/OWNER_UAT_CARD.md) | GOV-PROC-11 |
+| **PROC-03 Expediente único de contratación** (GOV-PROC-003) | Menú › Gobierno · Contrataciones › Expedientes | [`specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md) | GOV-PROC-03 |
+| **PROC-06 Recepción de ofertas** (GOV-PROC-006) | Menú › Gobierno · Contrataciones › Expedientes › (expediente) › «Ofertas» | [`specs/gov-proc-06-recepcion-ofertas/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-06-recepcion-ofertas/evidence/OWNER_UAT_CARD.md) | GOV-PROC-06 |
+| **PROC-07 Apertura y evaluación** (GOV-PROC-007, GOV-PROC-008) | Menú › Gobierno · Contrataciones › Expedientes › (expediente) › «Apertura y evaluación» | [`specs/gov-proc-07-apertura-evaluacion/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-07-apertura-evaluacion/evidence/OWNER_UAT_CARD.md) | GOV-PROC-07 |
+| **PROC-08 Recomendación y decisión (límite de autoridad multimoneda con la tasa oficial TRE-09 desde 2026-11-15)** (GOV-PROC-009, GOV-PROC-010) | Menú › Gobierno · Contrataciones › Expedientes › (expediente) › «Recomendación y decisión» | [`specs/gov-proc-08-recomendacion-decision/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-08-recomendacion-decision/evidence/OWNER_UAT_CARD.md) | GOV-PROC-08 + delta X08 |
+| **PROC-10 Garantías y cauciones** (GOV-PROC-012) | Menú › Gobierno · Contrataciones › Expedientes › (expediente) › «Garantías y cauciones» | [`specs/gov-proc-10-garantias-cauciones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-10-garantias-cauciones/evidence/OWNER_UAT_CARD.md) | GOV-PROC-10 |
 
 Los otros procesos siguen fuera del catálogo; ninguno se subió parcial (política §7). La retrospectiva del 2026-10-29 lo dejaba VACÍO y señalaba ORG-01 como primer candidato natural (IR §14).
 

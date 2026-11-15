@@ -170,6 +170,7 @@ def _parte_decision(db: Session, ctx: CompanyContext, expediente: GovernmentProc
                 "motivacion": d.motivacion,
                 "decidida_en": d.decidida_en,
                 "decidida_por": usuario.username if usuario else None,
+                "conversion": d.conversion_autoridad,
             }
         )
 

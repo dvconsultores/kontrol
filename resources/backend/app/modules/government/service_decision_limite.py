@@ -20,20 +20,21 @@ from app.modules.government.models import (
 )
 from app.modules.government.service_autoridad import competencias_en_vigor
 from app.modules.government.service_ofertas_montos import _texto
+from app.modules.government.service_tasas import verificar_limite
 from app.shared.audit import record_audit_after_rollback
 
 ESTADOS_LIMITE: dict[str, str] = {
     "DENTRO_LIMITE": "Dentro del límite",
     "SIN_LIMITE": "Sin límite",
     "EXCEDE_LIMITE": "Excede el límite",
-    "MONEDA_DISTINTA": "No comparable por moneda",
+    "SIN_TASA": "Sin tasa oficial aprobada",
     "MONTO_NO_DECLARADO": "Monto no declarado",
     "SIN_COMPETENCIA": "Sin competencia vigente",
 }
 
 CODIGOS_BLOQUEO: dict[str, str] = {
     "EXCEDE_LIMITE": "GOV_DECISION_AUTHORITY_AMOUNT_EXCEEDED",
-    "MONEDA_DISTINTA": "GOV_DECISION_AUTHORITY_CURRENCY_MISMATCH",
+    "SIN_TASA": "GOV_OFFICIAL_RATE_REQUIRED",
     "MONTO_NO_DECLARADO": "GOV_DECISION_OFFER_AMOUNT_REQUIRED",
 }
 
@@ -103,7 +104,12 @@ def limite_del_acto(db: Session, ctx: CompanyContext, acto: GovernmentAct) -> di
 
 
 def evaluar_limite(
-    db: Session, ctx: CompanyContext, acto: GovernmentAct, oferta: GovernmentProcurementOffer
+    db: Session,
+    ctx: CompanyContext,
+    acto: GovernmentAct,
+    oferta: GovernmentProcurementOffer,
+    *,
+    bloquear: bool = False,
 ) -> dict[str, Any]:
     limite = limite_del_acto(db, ctx, acto)
     cargo_texto = limite["cargo"] or "el cargo del acto"
@@ -117,32 +123,54 @@ def evaluar_limite(
         else None
     )
 
+    conversion: dict[str, Any] | None = None
+    monedas_sin_tasa: list[str] = []
+
     if limite["tipo_limite"] is None:
         estado = "SIN_COMPETENCIA"
     elif limite["tipo_limite"] == "SIN_LIMITE":
         estado = "SIN_LIMITE"
     elif fila is None:
         estado = "MONTO_NO_DECLARADO"
-    elif fila.moneda != limite["moneda"]:
-        estado = "MONEDA_DISTINTA"
-    elif Decimal(fila.total_con_tributos) > Decimal(limite["monto"]):
-        estado = "EXCEDE_LIMITE"
     else:
-        estado = "DENTRO_LIMITE"
+        conv = verificar_limite(
+            db,
+            ctx,
+            fila.moneda,
+            Decimal(fila.total_con_tributos),
+            Decimal(limite["monto"]),
+            limite["moneda"],
+            acto.fecha,
+            bloquear=bloquear,
+            exigir=False,
+        )
+        if conv["resultado"] == "SIN_TASA":
+            estado = "SIN_TASA"
+            monedas_sin_tasa = conv["monedas_sin_tasa"]
+        elif conv["resultado"] == "EXCEDE_LIMITE":
+            estado = "EXCEDE_LIMITE"
+        else:
+            estado = "DENTRO_LIMITE"
+        conversion = conv if conv["requiere_conversion"] and conv["resultado"] != "SIN_TASA" else None
 
     total = monto_oferta["total_con_tributos"] if monto_oferta else None
     moneda = monto_oferta["moneda"] if monto_oferta else None
     lim = limite["monto"]
     mon_l = limite["moneda"]
+    fecha_txt = acto.fecha.strftime("%d/%m/%Y")
 
-    if estado == "DENTRO_LIMITE":
+    if estado == "DENTRO_LIMITE" and conversion is None:
         mensaje = f"El total declarado de la oferta ({total} {moneda}) está dentro del límite de aprobación de {cargo_texto} ({lim} {mon_l})."
+    elif estado == "DENTRO_LIMITE" and conversion is not None:
+        mensaje = f"El total declarado de la oferta ({total} {moneda}) equivale a {conversion['total_ves']} VES y está dentro del límite de aprobación de {cargo_texto} ({lim} {mon_l}, equivalente a {conversion['limite_ves']} VES) con la tasa oficial BCV aplicable al {fecha_txt}."
     elif estado == "SIN_LIMITE":
         mensaje = f"{cargo_texto} aprueba contrataciones sin límite de monto."
-    elif estado == "EXCEDE_LIMITE":
+    elif estado == "EXCEDE_LIMITE" and conversion is None:
         mensaje = f"El total declarado de la oferta ({total} {moneda}) excede el límite de aprobación de {cargo_texto} ({lim} {mon_l}). Use el acto de una autoridad con límite suficiente."
-    elif estado == "MONEDA_DISTINTA":
-        mensaje = f"No puede verificarse el límite de esta autoridad porque la oferta y el límite están expresados en monedas diferentes. La oferta está en {moneda} y el límite de {cargo_texto} es {lim} {mon_l}. Use una autoridad con límite en {moneda} o sin límite."
+    elif estado == "EXCEDE_LIMITE" and conversion is not None:
+        mensaje = f"El total declarado de la oferta ({total} {moneda}) equivale a {conversion['total_ves']} VES y excede el límite de aprobación de {cargo_texto} ({lim} {mon_l}, equivalente a {conversion['limite_ves']} VES) con la tasa oficial BCV aplicable al {fecha_txt}. Use el acto de una autoridad con límite suficiente."
+    elif estado == "SIN_TASA":
+        mensaje = f"No hay tasa oficial BCV aprobada aplicable al {fecha_txt} para {', '.join(monedas_sin_tasa)}: la oferta está en {moneda} y el límite de {cargo_texto} es {lim} {mon_l}. Registre y apruebe la tasa en Tesorería → Tasas oficiales."
     elif estado == "MONTO_NO_DECLARADO":
         mensaje = f"La oferta no tiene monto declarado y {cargo_texto} tiene un límite de aprobación de {lim} {mon_l}. Sin el monto no puede verificarse el límite: use una autoridad sin límite."
     else:
@@ -158,12 +186,14 @@ def evaluar_limite(
         "cargo": limite["cargo"],
         "limite": limite,
         "monto_oferta": monto_oferta,
+        "conversion": conversion,
+        "monedas_sin_tasa": monedas_sin_tasa if estado == "SIN_TASA" else [],
     }
 
 
 def exigir_limite(
     db: Session, ctx: CompanyContext, expediente_id: str, acto: GovernmentAct, oferta_id: str
-) -> None:
+) -> dict[str, Any] | None:
     oferta = db.scalar(
         select(GovernmentProcurementOffer).where(
             GovernmentProcurementOffer.id == oferta_id,
@@ -190,9 +220,9 @@ def exigir_limite(
             .with_for_update()
         ).scalar_one_or_none()
 
-    ev = evaluar_limite(db, ctx, acto, oferta)
+    ev = evaluar_limite(db, ctx, acto, oferta, bloquear=True)
     if ev["permite"]:
-        return
+        return ev["conversion"]
 
     if ev["estado"] == "SIN_COMPETENCIA":
         raise KontrolError(
@@ -231,4 +261,42 @@ def exigir_limite(
         },
     )
 
-    raise ConflictError(codigo, ev["mensaje"], details=details)
+    if ev["estado"] == "SIN_TASA":
+        from app.modules.government.monedas import canonical_currency
+
+        raise KontrolError(
+            code="GOV_OFFICIAL_RATE_REQUIRED",
+            message=ev["mensaje"],
+            status_code=422,
+            details={
+                **details,
+                "moneda_operacion": canonical_currency(ev["monto_oferta"]["moneda"]) if ev["monto_oferta"] else None,
+                "moneda_limite": canonical_currency(ev["limite"]["moneda"]),
+                "fecha": acto.fecha.isoformat(),
+                "monedas_sin_tasa": ev["monedas_sin_tasa"],
+            },
+        )
+
+    raise ConflictError(
+        codigo,
+        ev["mensaje"],
+        details={**details, "conversion": ev["conversion"]},
+    )
+
+
+def resumen_conversion(conv: dict[str, Any] | None) -> dict[str, Any] | None:
+    if conv is None:
+        return None
+    return {
+        "moneda_operacion": conv["moneda_operacion"],
+        "moneda_limite": conv["moneda_limite"],
+        "fecha": conv["fecha"],
+        "tasas": [
+            {
+                "tasa_id": t["tasa_id"],
+                "moneda": t["moneda"],
+                "version": t["version"],
+            }
+            for t in conv["tasas"]
+        ],
+    }

@@ -180,8 +180,8 @@ def test_misma_moneda_compara_el_total(mundo, gobierno, ocupacion, total, neto, 
         assert _decisiones(mundo, exp["id"]) == 1
 
 
-def test_moneda_distinta_bloquea_sin_convertir(mundo, gobierno, ocupacion):
-    """Bloquea una adjudicación cuando la oferta y el límite están en monedas distintas."""
+def test_moneda_distinta_sin_tasa_bloquea(mundo, gobierno, ocupacion):
+    """Sin tasa oficial aprobada, monedas distintas bloquean la adjudicación (TRE-09)."""
     exp, ofertas, rec_id = _preparar(mundo, ocupacion)
     _insertar_monto(mundo, ofertas[0]["id"], "43103.45", "6896.55", "50000.00", moneda="USD")
     cargo = _cargo_con_limite(mundo, ocupacion, "50000.00", "EUR")
@@ -189,14 +189,13 @@ def test_moneda_distinta_bloquea_sin_convertir(mundo, gobierno, ocupacion):
 
     r = _adjudicar(mundo, exp["id"], rec_id, acto["id"], ofertas[0]["id"])
 
-    assert r.status_code == 409
+    assert r.status_code == 422
     cuerpo = r.json()
-    assert cuerpo["code"] == "GOV_DECISION_AUTHORITY_CURRENCY_MISMATCH"
-    assert cuerpo["message"].startswith(
-        "No puede verificarse el límite de esta autoridad porque la oferta y el límite están expresados en monedas diferentes."
-    )
-    assert cuerpo["details"]["moneda"] == "USD"
+    assert cuerpo["code"] == "GOV_OFFICIAL_RATE_REQUIRED"
+    assert "Tasas oficiales" in cuerpo["message"]
+    assert cuerpo["details"]["moneda_operacion"] == "USD"
     assert cuerpo["details"]["moneda_limite"] == "EUR"
+    assert cuerpo["details"]["monedas_sin_tasa"] == ["USD", "EUR"]
     assert _decisiones(mundo, exp["id"]) == 0
 
 
@@ -315,8 +314,8 @@ def test_vista_previa_por_acto_y_oferta(mundo, gobierno, ocupacion):
     assert control_usd[ofertas[1]["id"]]["monto_oferta"] is None
 
     control_eur = {c["offer_id"]: c for c in actos[acto_eur["id"]]["control_monto"]}
-    assert control_eur[ofertas[0]["id"]]["estado"] == "MONEDA_DISTINTA"
-    assert control_eur[ofertas[0]["id"]]["estado_etiqueta"] == "No comparable por moneda"
+    assert control_eur[ofertas[0]["id"]]["estado"] == "SIN_TASA"
+    assert control_eur[ofertas[0]["id"]]["estado_etiqueta"] == "Sin tasa oficial aprobada"
 
     control_sin = {c["offer_id"]: c for c in actos[acto_sin["id"]]["control_monto"]}
     assert actos[acto_sin["id"]]["limite"]["etiqueta"] == "Sin límite"

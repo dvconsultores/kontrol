@@ -11,7 +11,8 @@ import { FormField } from "@/components/FormField";
 import { LoadingState } from "@/components/LoadingState";
 import { formatearFechaDeNegocio, formatearInstante } from "@/lib/fecha-de-negocio";
 import { CONSULTA_EXPEDIENTES, type ExpedienteDetalle } from "../api";
-import { ControlLimiteAutoridad, type ControlMonto, type LimiteAutoridad } from "./ControlLimiteAutoridad";
+import { ControlLimiteAutoridad, ConversionAutoridad, type ControlMonto, type LimiteAutoridad } from "./ControlLimiteAutoridad";
+import type { ConversionLimite } from "../presupuesto/api";
 
 type CatalogoItem = { codigo: string; etiqueta: string };
 type Miembro = {
@@ -114,6 +115,7 @@ type Decision = {
   motivacion: string;
   decidida_en: string | null;
   decidida_por: string | null;
+  conversion: ConversionLimite | null;
 };
 type Notificacion = {
   offer_id: string;
@@ -1149,6 +1151,12 @@ export function SeccionDecision({
                   </dd>
                 </div>
               </dl>
+              {decision.conversion ? (
+                <ConversionAutoridad
+                  conversion={decision.conversion}
+                  titulo={`Conversión de autoridad de ${decision.referencia}`}
+                />
+              ) : null}
             </div>
           ))}
         </div>

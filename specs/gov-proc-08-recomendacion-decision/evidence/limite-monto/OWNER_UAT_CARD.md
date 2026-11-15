@@ -30,7 +30,7 @@
 
 ## Límites declarados (no son fallos)
 
-- **Sin conversión de moneda.** Para eso hace falta una autoridad de tasas con procedencia verificable (TRE-09 todavía no existe).
+- ~~**Sin conversión de moneda.**~~ Sustituido el 2026-11-15 por el delta X08: con monedas distintas se convierte con la tasa oficial de TRE-09 (ver `../proc08-tre09-multimoneda/OWNER_UAT_CARD.md`). El paso 7 de esta tarjeta ahora muestra «Sin tasa oficial aprobada» si no hay tasa.
 - **Adjudicación parcial:** no existe (OBS-PROC08-PARCIAL-01).
 - **Base de la garantía de mantenimiento:** sigue abierta (OQ-OMA-02, jurídica).
 - **PROC-09:** sigue bloqueado.

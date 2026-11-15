@@ -25,7 +25,7 @@ from app.modules.government.service_decision import (
     _evento,
     obtener_estado_decision,
 )
-from app.modules.government.service_decision_limite import exigir_limite
+from app.modules.government.service_decision_limite import exigir_limite, resumen_conversion
 from app.modules.government.service_expedientes import _abierto, _err, _para_escribir
 from app.modules.government.service_identidad import (
     _funcionario_del_actor,
@@ -229,6 +229,7 @@ def registrar_decision(
     causal_desierta: str | None = None
     causal_nulidad: str | None = None
     anula_id: str | None = None
+    conversion: dict[str, Any] | None = None
 
     if resultado == "ADJUDICADA":
         if vigente_rec is None:
@@ -265,7 +266,7 @@ def registrar_decision(
                 field_errors={"oferta_id": ["Debe adjudicarse la opción en el orden permitido"]},
             )
         posicion = opcion.posicion
-        exigir_limite(db, ctx, str(expediente.id), acto, str(oferta_id))
+        conversion = exigir_limite(db, ctx, str(expediente.id), acto, str(oferta_id))
 
     elif resultado == "DESIERTA":
         if vigente_rec is None:
@@ -365,6 +366,7 @@ def registrar_decision(
         decidida_en=ahora,
         decidida_por=str(user.id),
         official_id=funcionario_actor,
+        conversion_autoridad=conversion,
         estado="VIGENTE",
     )
     db.add(decision)
@@ -444,6 +446,7 @@ def registrar_decision(
                 "causal": causal_desierta,
                 "acto": acto.numero,
                 "recomendacion": ref_rec,
+                "conversion": resumen_conversion(conversion),
             },
             motivo=motivacion,
         )

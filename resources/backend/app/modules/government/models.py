@@ -3229,6 +3229,7 @@ class GovernmentProcurementDecision(UUIDMixin, TimestampMixin, CreatedByMixin, B
     decidida_por: Mapped[str] = mapped_column(String(36), nullable=False)
     official_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=True, index=True)
     estado: Mapped[str] = mapped_column(String(16), nullable=False, default="VIGENTE", server_default="VIGENTE")
+    conversion_autoridad: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     afectada_por_id: Mapped[str | None] = mapped_column(
         String(36),
         ForeignKey("gov_procurement_decisions.id", deferrable=True, initially="DEFERRED"),

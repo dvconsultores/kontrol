@@ -290,6 +290,8 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
     "documentos:download",
     "documentos:link",
     "documentos:upload",
+    "gobierno_tasas:view",
+    "gobierno_tasas:manage",
   ]);
 
   const tipo = await crearTipoDocumental(request, mundo.headers, mundo.companyId);
@@ -746,6 +748,47 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
     hoy,
   );
 
+  const aprobadorTasas = await crearUsuario(request, admin.headers, ["organization:view", "gobierno_tasas:view", "gobierno_tasas:approve", "documentos:view"], mundo.companyId);
+
+  const tasaResp = await request.post(`${API}/gobierno/tesoreria/tasas`, {
+    headers: mundo.headers,
+    data: {
+      moneda: "USD",
+      fecha_efectiva: hoy,
+      valor: "900.50",
+      fuente_referencia: "BCV · tipo de cambio oficial de referencia",
+    },
+  });
+  expect(tasaResp.status()).toBe(201);
+  const tasa = (await tasaResp.json()) as { id: string; estado: string };
+  await adjuntarDocumentoApi(request, mundo.headers, mundo.companyId, tipo.id, "GovernmentOfficialExchangeRate", tasa.id);
+  const aprobarTasaResp = await request.post(`${API}/gobierno/tesoreria/tasas/${tasa.id}/aprobar`, {
+    headers: aprobadorTasas.headers,
+    data: {},
+  });
+  expect(aprobarTasaResp.status()).toBe(200);
+  const tasaAprobada = (await aprobarTasaResp.json()) as { estado: string };
+  expect(tasaAprobada.estado).toBe("APROBADA");
+
+  const cargoVesBajo = await cargoVigenteApi(request, mundo.headers, mundo.companyId, tipo.id, ANIO, estructura.despId, `CVB-${Date.now()}`, {
+    tipo_limite: "MONTO",
+    monto: "45000000.00",
+    moneda: "VES",
+  });
+  const cargoVesAlto = await cargoVigenteApi(request, mundo.headers, mundo.companyId, tipo.id, ANIO, estructura.despId, `CVA-${Date.now()}`, {
+    tipo_limite: "MONTO",
+    monto: "45100000.00",
+    moneda: "VES",
+  });
+  const cargoEur = await cargoVigenteApi(request, mundo.headers, mundo.companyId, tipo.id, ANIO, estructura.despId, `CEU-${Date.now()}`, {
+    tipo_limite: "MONTO",
+    monto: "60000.00",
+    moneda: "EUR",
+  });
+  const actoVesBajo = await actoDecisionEmitidoApi(request, mundo.headers, mundo.companyId, tipo.id, cargoVesBajo.id, hoy);
+  const actoVesAlto = await actoDecisionEmitidoApi(request, mundo.headers, mundo.companyId, tipo.id, cargoVesAlto.id, hoy);
+  const actoEur = await actoDecisionEmitidoApi(request, mundo.headers, mundo.companyId, tipo.id, cargoEur.id, hoy);
+
   await entrarEnGobierno(page, mundo.username, mundo.codigo, "/gobierno/contrataciones/expedientes");
   await cerrarNotificaciones(page);
 
@@ -848,9 +891,44 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
     .getByRole("button", { name: "Cancelar", exact: true })
     .click();
 
-  // 2. Autoridad suficiente (sin límite): ahora sí se adjudica.
+  // 1b. Límite en EUR sin tasa oficial EUR: el panel lo anticipa y el backend bloquea.
+  await sec.locator("#acto-decision").selectOption(actoEur.id);
+  await expect(panelLimite.getByText("Sin tasa oficial aprobada", { exact: true })).toBeVisible();
+  await expect(panelLimite.getByRole("heading", { name: "Tasa oficial BCV utilizada" })).toHaveCount(0);
+  await sec.getByRole("button", { name: "Registrar decisión", exact: true }).click();
+  const postSinTasaPromise = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname.endsWith("/decision/decisiones"));
+  await sec.getByRole("button", { name: "Confirmar decisión", exact: true }).click();
+  const postSinTasa = await postSinTasaPromise;
+  expect(postSinTasa.status()).toBe(422);
+  const postSinTasaBody = (await postSinTasa.json()) as { code: string };
+  expect(postSinTasaBody.code).toBe("GOV_OFFICIAL_RATE_REQUIRED");
+  await expect(sec.getByRole("alert")).toContainText("Tasas oficiales");
+  await expect(sec.getByText("DEC-01", { exact: true })).toHaveCount(0);
+  await sec.getByRole("button", { name: "Confirmar decisión", exact: true }).locator("..").getByRole("button", { name: "Cancelar", exact: true }).click();
+
+  // 1c. Límite en VES con tasa oficial: equivalente insuficiente.
+  await sec.locator("#acto-decision").selectOption(actoVesBajo.id);
+  await expect(panelLimite.getByRole("heading", { name: "Tasa oficial BCV utilizada", exact: true })).toBeVisible();
+  await expect(panelLimite).toContainText("1 USD = ");
+  await expect(panelLimite).toContainText("BCV · tipo de cambio oficial de referencia");
+  await expect(panelLimite.getByText("Excede el límite", { exact: true })).toBeVisible();
+  const axePanelVes = await new AxeBuilder({ page }).include('[aria-labelledby="control-limite-titulo"]').analyze();
+  expect(axePanelVes.violations).toEqual([]);
+  await sec.getByRole("button", { name: "Registrar decisión", exact: true }).click();
+  const postVesBajoPromise = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname.endsWith("/decision/decisiones"));
+  await sec.getByRole("button", { name: "Confirmar decisión", exact: true }).click();
+  const postVesBajo = await postVesBajoPromise;
+  expect(postVesBajo.status()).toBe(409);
+  const postVesBajoBody = (await postVesBajo.json()) as { code: string };
+  expect(postVesBajoBody.code).toBe("GOV_DECISION_AUTHORITY_AMOUNT_EXCEEDED");
+  await sec.getByRole("button", { name: "Confirmar decisión", exact: true }).locator("..").getByRole("button", { name: "Cancelar", exact: true }).click();
+
+  // 2. Autoridad sin límite y autoridad con límite en VES y tasa suficiente: se adjudica con la segunda.
   await sec.locator("#acto-decision").selectOption(actoDecision.id);
   await expect(panelLimite.getByText("Sin límite", { exact: true })).toHaveCount(2);
+  await sec.locator("#acto-decision").selectOption(actoVesAlto.id);
+  await expect(panelLimite.getByText("Dentro del límite", { exact: true })).toBeVisible();
+  await expect(panelLimite.getByRole("heading", { name: "Tasa oficial BCV utilizada", exact: true })).toBeVisible();
   await sec.getByRole("button", { name: "Registrar decisión", exact: true }).click();
 
   const axeConfirmacionDecision = new AxeBuilder({ page }).include('[aria-labelledby="sec-decision"]');
@@ -878,7 +956,12 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
 
   await expect(sec.getByText("DEC-01", { exact: true }).first()).toBeVisible();
   await expect(sec.getByText("Adjudicada", { exact: true }).first()).toBeVisible();
-  await expect(sec.getByRole("link", { name: new RegExp(actoDecision.numero) })).toBeVisible();
+  await expect(sec.getByRole("link", { name: new RegExp(actoVesAlto.numero) })).toBeVisible();
+  await expect(sec.getByRole("heading", { name: "Conversión de autoridad de DEC-01", exact: true })).toBeVisible();
+  const estadoDecisionResp = await request.get(`${API}/gobierno/contrataciones/expedientes/${expediente.id}/decision`, { headers: mundo.headers });
+  expect(estadoDecisionResp.status()).toBe(200);
+  const estadoDecision = (await estadoDecisionResp.json()) as { decisiones: Array<{ conversion: { tasas: Array<{ tasa_id: string }> } | null }> };
+  expect(estadoDecision.decisiones[0].conversion?.tasas[0].tasa_id).toBe(tasa.id);
   await expect(sec.getByText("Sin notificación", { exact: true })).toHaveCount(2);
   await expect(
     sec.getByText("El registro de notificaciones se hace en el acto administrativo (DOC-04).", { exact: false }),
@@ -887,7 +970,7 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
   const notificacionResp = await request.post(`${API}/gobierno/notificaciones`, {
     headers: mundo.headers,
     data: {
-      acto_id: actoDecision.id,
+      acto_id: actoVesAlto.id,
       tipo_persona: "JURIDICA",
       nombre: "Constructora Andina",
       identificacion: "J-12345678-9",
@@ -904,6 +987,7 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
 
   await expect(secReload.getByText("REC-01", { exact: true }).first()).toBeVisible();
   await expect(secReload.getByText("DEC-01", { exact: true })).toBeVisible();
+  await expect(secReload.getByRole("heading", { name: "Conversión de autoridad de DEC-01", exact: true })).toBeVisible();
 
   const axeFinal = new AxeBuilder({ page }).include('[aria-labelledby="sec-decision"]');
   const axeResultFinal = await axeFinal.analyze();
