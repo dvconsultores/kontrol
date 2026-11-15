@@ -67,4 +67,7 @@ El firmante de CNT-01 sigue bloqueando cuando las monedas son distintas: es una 
 
 ## UAT
 
-Pendiente de registrar tras la publicación (pila nueva en 16573).
+- La pila sin Docker se levantó desde el HEAD publicado 81f0d7c, con el árbol integrado con CNT-01: frontend en 16573, backend en 19400 y central en 19410. PILA UAT LISTA.
+- El humo HUMO-UAT-01 pasó 1/1. OWNER_UAT_ACCESSIBLE=YES.
+- Siguen vivas las pilas 15873 a 16473. La pila de P2 (8000/5173) no se tocó.
+- Tarjeta: `OWNER_UAT_CARD.md`. Las credenciales no se registran.
