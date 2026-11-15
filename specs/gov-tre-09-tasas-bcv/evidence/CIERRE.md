@@ -1,7 +1,7 @@
 # CIERRE · TRE-09 provenance de tasas BCV (2026-11-15)
 
 ```text
-ENTRY=91e0fce  CODE=<ver commit de publicación> (sin merge: origin/develop no avanzó)
+ENTRY=91e0fce  CODE=05d3ea7 (sin merge: origin/develop no avanzó)
 ALEMBIC: 0113_gov_bud08_compromiso -> 0114_gov_tre09_tasas   ALEMBIC_HEAD_COUNT=1
 TRE-09=OWNER_UAT_READY (10/10, REPORTING NOT_APPLICABLE)   GOV-TRE-011 PASS
 CANONICAL_GATE_UNIVERSE=1342   N/A 72   APLICABLES 1270   GATES_REMOVED=0
@@ -43,7 +43,10 @@ BUD07/09/10/11/12_IMPLEMENTED=0  CLAUDE_SEMANTIC_*_WRITTEN=0  SNAT_TOUCHED=0  PR
 
 ## UAT
 
-Pendiente de registrar tras la publicación (ver la sección UAT añadida en el commit de documentación).
+- Pila sin Docker desde el HEAD publicado 05d3ea7: frontend en el puerto 16473 (backend 19300, central 19310). PILA UAT LISTA; HTTP 200.
+- Humo UAT HUMO-UAT-01, que ya incluye la pantalla Tasas oficiales: 1/1. OWNER_UAT_ACCESSIBLE=YES.
+- Siguen vivas las pilas 15873, 15973, 16073, 16173, 16273 y 16373. La pila de P2 no se tocó.
+- Credenciales: no se registran.
 
 ## Observaciones abiertas
 
