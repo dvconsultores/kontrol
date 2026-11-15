@@ -7,7 +7,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -23,10 +23,14 @@ from app.modules.government.models import (
     GovernmentAct,
     GovernmentBudgetCertificate,
     GovernmentBudgetClassifierItem,
+    GovernmentBudgetCommitment,
+    GovernmentBudgetCommitmentLine,
     GovernmentBudgetCredit,
     GovernmentBudgetFundingSource,
     GovernmentBudgetYear,
     GovernmentContract,
+    GovernmentContractAmendment,
+    GovernmentContractAmendmentAllocation,
     GovernmentContractBudgetAllocation,
     GovernmentContractGuarantee,
     GovernmentGuaranteeInstrument,
@@ -35,13 +39,14 @@ from app.modules.government.models import (
     GovernmentPosition,
     GovernmentProcurementFile,
     GovernmentProcurementOffer,
+    GovernmentProcurementOfferAmount,
     GovernmentStructure,
 )
+from app.modules.government.monedas import canonical_currency
 from app.modules.government.service_actos import _autoridad_valida
 from app.modules.government.service_decision_limite import (
     ESTADOS_LIMITE,
     _monto_vigente,
-    clasificar_monto,
     competencia_en_vigor,
     limite_de_competencia,
 )
@@ -49,6 +54,7 @@ from app.modules.government.service_decision_resolver import _decision_vigente
 from app.modules.government.service_expedientes import _abierto, _evento
 from app.modules.government.service_identidad import _funcionario_del_actor, exigir_autoridad_funcional
 from app.modules.government.service_sod import evaluar_antes_de_actuar
+from app.modules.government.service_tasas import verificar_limite
 from app.shared.audit import record_audit, record_audit_after_rollback
 from app.shared.clock import hoy_de_negocio, instante_actual
 
@@ -62,7 +68,10 @@ ETIQUETA_TIPO_INSTRUMENTO = {
 EJERCICIOS_VIGENTES = ("APROBADO", "RECONDUCIDO")
 CODIGOS_FIRMANTE = {
     "EXCEDE_LIMITE": "GOV_CONTRACT_SIGNER_AMOUNT_EXCEEDED",
-    "MONEDA_DISTINTA": "GOV_CONTRACT_SIGNER_CURRENCY_MISMATCH",
+}
+CODIGOS_COMPROMISO = {
+    "EXCEDE": "GOV_CONTRACT_COMMITMENT_EXCEEDS_AMOUNT",
+    "NO_COMPARABLE": "GOV_CONTRACT_COMMITMENT_NOT_COMPARABLE",
 }
 BLOQUEO_CODIGO = 7012001
 
@@ -174,22 +183,77 @@ def _etiqueta_credito(db: Session, cert: GovernmentBudgetCertificate) -> tuple[s
     return partida, fuente
 
 
-def _asignado_formalizado(db: Session, cert_id: str, excluir_contrato_id: str) -> Decimal:
-    total = db.scalar(
+def equivalentes_moneda(moneda: str | None) -> tuple[str, ...]:
+    canónica = canonical_currency(moneda)
+    if canónica == "VES":
+        return ("VES", "VED")
+    return (canónica,)
+
+
+def reclamado_formalizado(db: Session, cert_id: str, excluir_contrato_id: str | None) -> Decimal:
+    total_contratos = db.scalar(
         select(func.coalesce(func.sum(GovernmentContractBudgetAllocation.monto), Decimal("0"))).join(
             GovernmentContract,
             GovernmentContract.id == GovernmentContractBudgetAllocation.contract_id,
         ).where(
             GovernmentContractBudgetAllocation.certificate_id == cert_id,
             GovernmentContract.estado == "FORMALIZADO",
-            GovernmentContract.id != excluir_contrato_id,
+            *(
+                (GovernmentContract.id != excluir_contrato_id,)
+                if excluir_contrato_id is not None
+                else ()
+            ),
+        )
+    )
+    query_amendments = (
+        select(func.coalesce(func.sum(GovernmentContractAmendmentAllocation.monto), Decimal("0")))
+        .join(
+            GovernmentContractAmendment,
+            GovernmentContractAmendment.id == GovernmentContractAmendmentAllocation.amendment_id,
+        )
+        .where(
+            GovernmentContractAmendmentAllocation.certificate_id == cert_id,
+            GovernmentContractAmendment.estado == "FORMALIZADA",
+        )
+    )
+    if excluir_contrato_id is not None:
+        query_amendments = query_amendments.where(
+            GovernmentContractAmendmentAllocation.contract_id != excluir_contrato_id
+        )
+    total_amendments = db.scalar(query_amendments)
+    return Decimal(total_contratos or Decimal("0")) + Decimal(total_amendments or Decimal("0"))
+
+
+def comprometido_ajeno(db: Session, cert_id: str, file_id: str) -> Decimal:
+    total = db.scalar(
+        select(func.coalesce(func.sum(GovernmentBudgetCommitmentLine.monto), Decimal("0")))
+        .join(
+            GovernmentBudgetCommitment,
+            GovernmentBudgetCommitment.id == GovernmentBudgetCommitmentLine.commitment_id,
+        )
+        .where(
+            GovernmentBudgetCommitmentLine.certificate_id == cert_id,
+            GovernmentBudgetCommitment.estado == "VIGENTE",
+            or_(
+                GovernmentBudgetCommitment.procurement_file_id.is_(None),
+                GovernmentBudgetCommitment.procurement_file_id != file_id,
+            ),
         )
     )
     return Decimal(total or Decimal("0"))
 
 
-def _saldo_libre(db: Session, cert: GovernmentBudgetCertificate, excluir_contrato_id: str) -> Decimal:
-    return Decimal(cert.monto) - _asignado_formalizado(db, str(cert.id), excluir_contrato_id)
+def saldo_libre(
+    db: Session,
+    cert: GovernmentBudgetCertificate,
+    file_id: str,
+    excluir_contrato_id: str | None,
+) -> Decimal:
+    return (
+        Decimal(cert.monto)
+        - reclamado_formalizado(db, str(cert.id), excluir_contrato_id)
+        - comprometido_ajeno(db, str(cert.id), file_id)
+    )
 
 
 def _motivo_certificado(
@@ -199,14 +263,80 @@ def _motivo_certificado(
         return "La certificación no existe en este ente"
     if cert.estado != "VIGENTE":
         return f"La certificación {cert.codigo} está anulada"
-    if cert.moneda != c.moneda:
-        return f"La certificación {cert.codigo} está en {cert.moneda} y el contrato en {c.moneda}: no se convierten monedas"
+    if canonical_currency(cert.moneda) != canonical_currency(c.moneda):
+        return (
+            f"La certificación {cert.codigo} está en {canonical_currency(cert.moneda)} "
+            f"y el contrato en {canonical_currency(c.moneda)}: no se convierten monedas"
+        )
     anio = db.get(GovernmentBudgetYear, cert.year_id)
     if anio is None or anio.estado not in EJERCICIOS_VIGENTES:
         return f"El ejercicio de la certificación {cert.codigo} no está aprobado"
     if cert.procurement_file_id is not None and cert.procurement_file_id != c.file_id:
         return f"La certificación {cert.codigo} corresponde a otro expediente"
     return None
+
+
+def compromisos_del_expediente(db: Session, company_id: str, file_id: str) -> dict[str, Decimal]:
+    filas = db.execute(
+        select(
+            GovernmentBudgetCommitment.moneda,
+            func.coalesce(func.sum(GovernmentBudgetCommitmentLine.monto), Decimal("0")),
+        )
+        .join(
+            GovernmentBudgetCommitmentLine,
+            GovernmentBudgetCommitmentLine.commitment_id == GovernmentBudgetCommitment.id,
+        )
+        .where(
+            GovernmentBudgetCommitment.company_id == company_id,
+            GovernmentBudgetCommitment.procurement_file_id == file_id,
+            GovernmentBudgetCommitment.estado == "VIGENTE",
+        )
+        .group_by(GovernmentBudgetCommitment.moneda)
+    ).all()
+    acumulado: dict[str, Decimal] = {}
+    for moneda, monto in filas:
+        clave = canonical_currency(moneda)
+        acumulado[clave] = acumulado.get(clave, Decimal("0")) + Decimal(monto or Decimal("0"))
+    return acumulado
+
+
+def control_compromisos(
+    db: Session,
+    company_id: str,
+    file_id: str,
+    monto: Decimal,
+    moneda: str,
+) -> dict[str, Any]:
+    canon = canonical_currency(moneda)
+    por = compromisos_del_expediente(db, company_id, file_id)
+    total = por.get(canon, Decimal("0"))
+    otras = sorted(m for m, v in por.items() if m != canon and v > 0)
+    if otras:
+        estado = "NO_COMPARABLE"
+        mensaje = (
+            f"El expediente tiene compromisos presupuestarios en {', '.join(otras)} "
+            f"y el contrato está en {canon}: no se comparan importes en monedas distintas"
+        )
+    elif total > Decimal(monto):
+        estado = "EXCEDE"
+        mensaje = (
+            f"Los compromisos presupuestarios vigentes del expediente ({_t(total)} {canon}) "
+            f"superan el monto del contrato ({_t(Decimal(monto))} {canon}). "
+            "Ajuste primero el compromiso en Presupuesto → Compromisos"
+        )
+    else:
+        estado = "DENTRO"
+        mensaje = (
+            f"Los compromisos presupuestarios vigentes del expediente suman "
+            f"{_t(total)} {canon}, dentro del monto del contrato"
+        )
+    return {
+        "total": _t(total),
+        "moneda": canon,
+        "estado": estado,
+        "permite": estado == "DENTRO",
+        "mensaje": mensaje,
+    }
 
 
 def _documento_valido(
@@ -308,7 +438,7 @@ def _certificados_elegibles(db: Session, ctx: CompanyContext, c: GovernmentContr
         .where(
             GovernmentBudgetCertificate.company_id == ctx.company_id,
             GovernmentBudgetCertificate.estado == "VIGENTE",
-            GovernmentBudgetCertificate.moneda == c.moneda,
+            GovernmentBudgetCertificate.moneda.in_(equivalentes_moneda(c.moneda)),
         )
         .order_by(GovernmentBudgetCertificate.codigo)
     ).all()
@@ -316,7 +446,7 @@ def _certificados_elegibles(db: Session, ctx: CompanyContext, c: GovernmentContr
     for cert in certs:
         if _motivo_certificado(db, ctx, c, cert) is not None:
             continue
-        saldo = _saldo_libre(db, cert, str(c.id))
+        saldo = saldo_libre(db, cert, c.file_id, str(c.id))
         if saldo <= 0:
             continue
         partida, fuente = _etiqueta_credito(db, cert)
@@ -389,41 +519,117 @@ def _documentos_elegibles(db: Session, ctx: CompanyContext, c: GovernmentContrac
     return items
 
 
-def _mensaje_firmante(estado: str, cargo_nombre: str, c: GovernmentContract, limite: dict[str, Any]) -> str:
-    m = _t(Decimal(c.monto))
-    mon = c.moneda
+def _mensaje_firmante(
+    estado: str,
+    cargo_nombre: str,
+    monto: Decimal,
+    moneda: str,
+    limite: dict[str, Any],
+    conversion: dict[str, Any] | None,
+    monedas_sin_tasa: list[str],
+    fecha: date,
+    sujeto: str,
+) -> str:
+    m = _t(Decimal(monto))
+    mon = moneda
     lim = limite["monto"]
     mon_l = limite["moneda"]
-    if estado == "DENTRO_LIMITE":
-        return f"El monto del contrato ({m} {mon}) está dentro del límite de firma de {cargo_nombre} ({lim} {mon_l})."
+    f = fecha.strftime("%d/%m/%Y")
+    if estado == "DENTRO_LIMITE" and conversion is None:
+        return f"{sujeto} ({m} {mon}) está dentro del límite de firma de {cargo_nombre} ({lim} {mon_l})."
+    if estado == "DENTRO_LIMITE" and conversion is not None:
+        return (
+            f"{sujeto} ({m} {mon}) equivale a {conversion['total_ves']} VES y está dentro del límite de firma "
+            f"de {cargo_nombre} ({lim} {mon_l}, equivalente a {conversion['limite_ves']} VES) "
+            f"con la tasa oficial BCV aplicable al {f}."
+        )
     if estado == "SIN_LIMITE":
         return f"{cargo_nombre} firma contrataciones sin límite de monto."
-    if estado == "EXCEDE_LIMITE":
-        return f"El monto del contrato ({m} {mon}) excede el límite de firma de {cargo_nombre} ({lim} {mon_l}). Elija un firmante con límite suficiente."
-    if estado == "MONEDA_DISTINTA":
-        return f"No puede verificarse el límite de este firmante porque el contrato y el límite están expresados en monedas diferentes. El contrato está en {mon} y el límite de {cargo_nombre} es {lim} {mon_l}. Elija un firmante con límite en {mon} o sin límite."
+    if estado == "EXCEDE_LIMITE" and conversion is None:
+        return f"{sujeto} ({m} {mon}) excede el límite de firma de {cargo_nombre} ({lim} {mon_l}). Elija un firmante con límite suficiente."
+    if estado == "EXCEDE_LIMITE" and conversion is not None:
+        return (
+            f"{sujeto} ({m} {mon}) equivale a {conversion['total_ves']} VES y excede el límite de firma "
+            f"de {cargo_nombre} ({lim} {mon_l}, equivalente a {conversion['limite_ves']} VES) "
+            f"con la tasa oficial BCV aplicable al {f}. Elija un firmante con límite suficiente."
+        )
+    if estado == "SIN_TASA":
+        return (
+            f"No hay tasa oficial BCV aprobada aplicable al {f} para {', '.join(monedas_sin_tasa)}: "
+            f"{sujeto.lower()} está en {mon} y el límite de {cargo_nombre} es {lim} {mon_l}. "
+            "Registre y apruebe la tasa en Tesorería → Tasas oficiales."
+        )
     return f"{cargo_nombre} no tiene hoy la competencia Firmar sobre Contrataciones."
 
 
-def _control_firmante(
-    db: Session, c: GovernmentContract, cargo: GovernmentPosition, fecha: date
-) -> tuple[dict[str, Any], dict[str, Any]]:
+def control_firmante(
+    db: Session,
+    ctx: CompanyContext,
+    cargo: GovernmentPosition,
+    monto: Decimal,
+    moneda: str,
+    fecha: date,
+    *,
+    bloquear: bool,
+    sujeto: str = "El monto del contrato",
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any] | None]:
     comp = competencia_en_vigor(db, cargo, fecha, "FIRMAR", "CONTRATACIONES")
     limite = limite_de_competencia(cargo, comp)
-    estado = clasificar_monto(
-        limite["tipo_limite"],
-        limite["monto"],
-        limite["moneda"],
-        Decimal(c.monto),
-        c.moneda,
-    )
+    canon = canonical_currency(moneda)
+    conversion: dict[str, Any] | None = None
+    monedas_sin_tasa: list[str] = []
+    if limite["tipo_limite"] is None:
+        estado = "SIN_COMPETENCIA"
+    elif limite["tipo_limite"] == "SIN_LIMITE":
+        estado = "SIN_LIMITE"
+    else:
+        v = verificar_limite(
+            db,
+            ctx,
+            canon,
+            Decimal(monto),
+            Decimal(str(limite["monto"])),
+            str(limite["moneda"]),
+            fecha,
+            bloquear=bloquear,
+            exigir=False,
+        )
+        if v["resultado"] == "SIN_TASA":
+            estado = "SIN_TASA"
+            monedas_sin_tasa = list(v["monedas_sin_tasa"])
+        elif v["dentro_del_limite"]:
+            estado = "DENTRO_LIMITE"
+        else:
+            estado = "EXCEDE_LIMITE"
+        if v["requiere_conversion"] and estado != "SIN_TASA":
+            conversion = {
+                "moneda_operacion": v["moneda_operacion"],
+                "moneda_limite": v["moneda_limite"],
+                "fecha": v["fecha"],
+                "tasas": v["tasas"],
+                "total_ves": v["total_ves"],
+                "limite_ves": v["limite_ves"],
+                "resultado": estado,
+            }
     control = {
         "estado": estado,
         "estado_etiqueta": ESTADOS_LIMITE[estado],
         "permite": estado in ("DENTRO_LIMITE", "SIN_LIMITE"),
-        "mensaje": _mensaje_firmante(estado, cargo.name, c, limite),
+        "mensaje": _mensaje_firmante(
+            estado,
+            cargo.name,
+            Decimal(monto),
+            canon,
+            limite,
+            conversion,
+            monedas_sin_tasa,
+            fecha,
+            sujeto,
+        ),
+        "conversion": conversion,
+        "monedas_sin_tasa": monedas_sin_tasa,
     }
-    return limite, control
+    return limite, control, conversion
 
 
 def _firmantes(db: Session, ctx: CompanyContext, c: GovernmentContract) -> list[dict[str, Any]]:
@@ -438,7 +644,15 @@ def _firmantes(db: Session, ctx: CompanyContext, c: GovernmentContract) -> list[
         comp = competencia_en_vigor(db, cargo, hoy, "FIRMAR", "CONTRATACIONES")
         if comp is None:
             continue
-        limite, control = _control_firmante(db, c, cargo, hoy)
+        limite, control, _ = control_firmante(
+            db,
+            ctx,
+            cargo,
+            Decimal(c.monto),
+            c.moneda,
+            hoy,
+            bloquear=False,
+        )
         items.append({"cargo_id": cargo.id, "cargo": cargo.name, "limite": limite, "control": control})
     return items
 
@@ -457,8 +671,61 @@ def _pendientes(db: Session, c: GovernmentContract) -> list[str]:
         pendientes.append("Adjunte el instrumento contractual firmado")
     cobertura = _cobertura(db, c)
     if not cobertura["completa"]:
-        pendientes.append(f"Falta cubrir {cobertura['faltante']} {c.moneda} con certificaciones de disponibilidad")
+        pendientes.append(
+            f"Falta cubrir {cobertura['faltante']} {canonical_currency(c.moneda)} "
+            "con certificaciones de disponibilidad"
+        )
+    cc = control_compromisos(db, c.company_id, c.file_id, Decimal(c.monto), c.moneda)
+    if not cc["permite"]:
+        pendientes.append(cc["mensaje"])
     return pendientes
+
+
+def _resumen_modificaciones(db: Session, c: GovernmentContract) -> dict[str, Any]:
+    formalizadas = list(
+        db.scalars(
+            select(GovernmentContractAmendment)
+            .where(
+                GovernmentContractAmendment.contract_id == c.id,
+                GovernmentContractAmendment.estado == "FORMALIZADA",
+            )
+            .order_by(GovernmentContractAmendment.numero.asc())
+        ).all()
+    )
+    borrador = db.scalar(
+        select(GovernmentContractAmendment).where(
+            GovernmentContractAmendment.contract_id == c.id,
+            GovernmentContractAmendment.estado == "BORRADOR",
+        )
+    )
+    hoy = hoy_de_negocio()
+    vigente = None
+    for modificacion in reversed(formalizadas):
+        if modificacion.vigente_desde is not None and modificacion.vigente_desde <= hoy:
+            vigente = modificacion
+            break
+    vigente_monto: str
+    vigente_fecha_fin: str | None
+    vigente_codigo: str | None
+    if vigente is not None:
+        assert vigente.monto_nuevo is not None
+        assert vigente.fecha_fin_nueva is not None
+        vigente_monto = _t(Decimal(vigente.monto_nuevo))
+        vigente_fecha_fin = vigente.fecha_fin_nueva.isoformat()
+        vigente_codigo = vigente.codigo
+    else:
+        vigente_monto = _t(Decimal(c.monto))
+        vigente_fecha_fin = c.fecha_fin.isoformat() if c.fecha_fin else None
+        vigente_codigo = None
+    return {
+        "cantidad": len(formalizadas),
+        "borrador_id": borrador.id if borrador else None,
+        "vigente": {
+            "monto": vigente_monto,
+            "fecha_fin": vigente_fecha_fin,
+            "codigo": vigente_codigo,
+        },
+    }
 
 
 def ficha(db: Session, ctx: CompanyContext, contrato_id: str) -> dict[str, Any]:
@@ -476,7 +743,12 @@ def ficha(db: Session, ctx: CompanyContext, contrato_id: str) -> dict[str, Any]:
         }
     firmante = None
     if c.estado == "FORMALIZADO":
-        firmante = {"cargo": c.firmante_cargo_nombre, "funcionario": c.firmante_funcionario_nombre}
+        firmante = {
+            "cargo": c.firmante_cargo_nombre,
+            "funcionario": c.firmante_funcionario_nombre,
+            "conversion": ((c.snapshot or {}).get("firmante") or {}).get("conversion"),
+        }
+    fila_monto = db.get(GovernmentProcurementOfferAmount, c.amount_id)
     return {
         "id": c.id,
         "version": c.version,
@@ -503,17 +775,20 @@ def ficha(db: Session, ctx: CompanyContext, contrato_id: str) -> dict[str, Any]:
         "objeto": c.objeto,
         "descripcion_complementaria": c.descripcion_complementaria,
         "monto": _t(Decimal(c.monto)),
-        "moneda": c.moneda,
+        "moneda": canonical_currency(c.moneda),
+        "moneda_oferta": fila_monto.moneda if fila_monto else None,
         "fecha_inicio": c.fecha_inicio.isoformat() if c.fecha_inicio else None,
         "fecha_fin": c.fecha_fin.isoformat() if c.fecha_fin else None,
         "referencia_instrumento": c.referencia_instrumento,
         "documento": documento,
         "cobertura": cobertura,
+        "compromisos": control_compromisos(db, c.company_id, c.file_id, Decimal(c.monto), c.moneda),
         "garantias": _garantias(db, c),
         "firmante": firmante,
         "fecha_formalizacion": c.fecha_formalizacion.isoformat() if c.fecha_formalizacion else None,
         "formalizado_en": c.formalizado_en.isoformat() if c.formalizado_en else None,
         "huella": c.huella,
+        "modificaciones": _resumen_modificaciones(db, c) if c.estado == "FORMALIZADO" else None,
         "opciones": (
             {
                 "certificados_elegibles": _certificados_elegibles(db, ctx, c),
@@ -551,7 +826,7 @@ def listar(db: Session, ctx: CompanyContext, estado: str | None, tipo: str | Non
                 "decision_referencia": c.decision_referencia,
                 "contratista_nombre": c.contratista_nombre,
                 "monto": _t(Decimal(c.monto)),
-                "moneda": c.moneda,
+                "moneda": canonical_currency(c.moneda),
                 "fecha_inicio": c.fecha_inicio,
                 "fecha_fin": c.fecha_fin,
             }
@@ -618,7 +893,7 @@ def crear(db: Session, ctx: CompanyContext, user: Any, cuerpo: dict[str, Any]) -
         contratista_documento=oferta.oferente_documento,
         contratista_representante=oferta.representante,
         monto=fila.total_con_tributos,
-        moneda=fila.moneda,
+        moneda=canonical_currency(fila.moneda),
         created_by=ctx.user_id,
     )
     db.add(c)
@@ -735,7 +1010,7 @@ def actualizar_cobertura(
         if motivo:
             raise _inv("asignaciones", motivo, code="GOV_CONTRACT_CERTIFICATE_INVALID")
         assert cert is not None
-        saldo = _saldo_libre(db, cert, str(c.id))
+        saldo = saldo_libre(db, cert, c.file_id, str(c.id))
         if monto > saldo:
             raise _inv(
                 "asignaciones",
@@ -767,7 +1042,7 @@ def actualizar_cobertura(
                 year_id=cert.year_id,
                 certificado_codigo=cert.codigo,
                 monto=monto,
-                moneda=cert.moneda,
+                moneda=canonical_currency(cert.moneda),
                 created_by=ctx.user_id,
             )
         )
@@ -858,7 +1133,7 @@ def formalizar(
         fila is None
         or fila.id != c.amount_id
         or Decimal(fila.total_con_tributos) != Decimal(c.monto)
-        or fila.moneda != c.moneda
+        or canonical_currency(fila.moneda) != canonical_currency(c.moneda)
     ):
         raise ConflictError(
             "GOV_CONTRACT_SOURCE_CHANGED",
@@ -922,7 +1197,7 @@ def formalizar(
             motivo = _motivo_certificado(db, ctx, c, cert)
             if motivo:
                 raise ConflictError("GOV_CONTRACT_CERTIFICATE_NOT_ACTIVE", motivo)
-            saldo = _saldo_libre(db, cert, str(c.id))
+            saldo = saldo_libre(db, cert, c.file_id, str(c.id))
             if Decimal(asig.monto) > saldo:
                 raise ConflictError(
                     "GOV_CONTRACT_CERTIFICATE_OVERALLOCATED",
@@ -932,8 +1207,15 @@ def formalizar(
     if total != Decimal(c.monto):
         raise ConflictError(
             "GOV_CONTRACT_COVERAGE_INSUFFICIENT",
-            f"La cobertura presupuestaria ({_t(total)} {c.moneda}) no es igual al monto del contrato ({_t(Decimal(c.monto))} {c.moneda})",
-            details={"cubierto": _t(total), "monto": _t(Decimal(c.monto)), "moneda": c.moneda},
+            f"La cobertura presupuestaria ({_t(total)} {canonical_currency(c.moneda)}) no es igual al monto del contrato ({_t(Decimal(c.monto))} {canonical_currency(c.moneda)})",
+            details={"cubierto": _t(total), "monto": _t(Decimal(c.monto)), "moneda": canonical_currency(c.moneda)},
+        )
+    cc = control_compromisos(db, ctx.company_id, c.file_id, Decimal(c.monto), c.moneda)
+    if not cc["permite"]:
+        raise ConflictError(
+            CODIGOS_COMPROMISO[cc["estado"]],
+            cc["mensaje"],
+            details={"comprometido": cc["total"], "monto": _t(Decimal(c.monto)), "moneda": cc["moneda"]},
         )
     for vinculo in db.scalars(
         select(GovernmentContractGuarantee).where(GovernmentContractGuarantee.contract_id == c.id)
@@ -968,13 +1250,25 @@ def formalizar(
             code="GOV_CONTRACT_SIGNER_INVALID",
         )
     exigir_autoridad_funcional(db, ctx, str(cargo.id), "FIRMAR", "CONTRATACIONES")
-    limite, control = _control_firmante(db, c, cargo, hoy)
+    limite, control, conversion = control_firmante(
+        db,
+        ctx,
+        cargo,
+        Decimal(c.monto),
+        c.moneda,
+        hoy,
+        bloquear=True,
+    )
     if not control["permite"]:
-        codigo = CODIGOS_FIRMANTE.get(control["estado"], "GOV_CONTRACT_SIGNER_INVALID")
+        codigo = (
+            "GOV_OFFICIAL_RATE_REQUIRED"
+            if control["estado"] == "SIN_TASA"
+            else CODIGOS_FIRMANTE.get(control["estado"], "GOV_CONTRACT_SIGNER_INVALID")
+        )
         mensaje = control["mensaje"]
         details = {
             "monto": _t(Decimal(c.monto)),
-            "moneda": c.moneda,
+            "moneda": canonical_currency(c.moneda),
             "limite": limite["monto"],
             "moneda_limite": limite["moneda"],
             "cargo": cargo.name,
@@ -989,7 +1283,21 @@ def formalizar(
             user_id=ctx.user_id,
             after={"contrato": _identificacion(c), "firmante_cargo": cargo.name, "causal": codigo},
         )
-        raise ConflictError(codigo, mensaje, details=details)
+        if control["estado"] == "SIN_TASA":
+            raise KontrolError(
+                code="GOV_OFFICIAL_RATE_REQUIRED",
+                message=mensaje,
+                status_code=422,
+                details={
+                    **details,
+                    "moneda_operacion": canonical_currency(c.moneda),
+                    "moneda_limite": canonical_currency(limite["moneda"]),
+                    "fecha": hoy.isoformat(),
+                    "monedas_sin_tasa": control["monedas_sin_tasa"],
+                },
+                field_errors={"firmante_cargo_id": [mensaje]},
+            )
+        raise ConflictError(codigo, mensaje, details={**details, "conversion": conversion})
     evaluar_antes_de_actuar(db, ctx, "PROC03_CONTRATO_FORMALIZAR", ENTIDAD, str(c.file_id))
     if db.get_bind().dialect.name == "postgresql":
         db.execute(select(func.pg_advisory_xact_lock(BLOQUEO_CODIGO, func.hashtext(str(ctx.company_id)))))
@@ -1027,7 +1335,8 @@ def formalizar(
         },
         "descripcion_complementaria": c.descripcion_complementaria,
         "monto": _t(Decimal(c.monto)),
-        "moneda": c.moneda,
+        "moneda": canonical_currency(c.moneda),
+        "moneda_oferta": fila.moneda,
         "plazo": {
             "inicio": fecha_inicio.isoformat(),
             "fin": fecha_fin.isoformat(),
@@ -1064,6 +1373,7 @@ def formalizar(
             "cargo": cargo.name,
             "funcionario": nombre_funcionario,
             "limite": limite["etiqueta"],
+            "conversion": conversion,
         },
         "fecha_formalizacion": hoy.isoformat(),
     }

@@ -516,6 +516,7 @@ DETALLE_COMISION: tuple[str, ...] = ("acto", "area", "asunto", "causa", "causal"
 DETALLE_EXPEDIENTE: tuple[str, ...] = ("acto", "apertura", "aspecto", "asistentes", "canal", "causal", "clase", "comision", "confidencial", "conversion", "criterio", "decision", "documentos", "emisor", "estado", "fecha", "fecha_prevista", "fecha_real", "firmantes", "folio", "funcionario", "garantia", "hito", "matriz", "modalidad", "moneda", "monto", "monto_ejecutado", "motivo", "numero", "oferta", "ofertas", "opciones", "precondicion", "quorum", "recomendacion", "rechazos", "referencia", "regla", "requisito", "resultado", "rol", "secuencia", "sustituye", "tipo", "titulo", "version", "vigente_hasta")
 
 DETALLE_CONTRATO: tuple[str, ...] = ("campos", "causal", "certificados", "codigo", "contrato", "decision", "expediente", "firmante_cargo", "garantias", "huella", "oferta", "tipo")
+DETALLE_MODIFICACION_CONTRATO: tuple[str, ...] = ("campos", "causal", "certificados", "codigo", "contrato", "firmante_cargo", "huella", "modificacion", "tipo")
 DETALLE_SUPERVISOR: tuple[str, ...] = ("acto", "cargo", "causal", "contrato", "designacion", "desde", "motivo", "supervisor", "sustituye", "unidad")
 DETALLE_EJECUCION: tuple[str, ...] = ("acumulado", "aprobador", "causal", "contrato", "documento", "entregable", "factura", "fecha", "hito", "moneda", "monto", "motivo", "recepcion", "resultado", "supervisor", "tipo", "valuacion")
 
@@ -576,6 +577,11 @@ _PARTE_D: tuple[AuditActionSpec, ...] = (
     _e("GOV_CONTRACT_DRAFT_UPDATED", "GovernmentProcurementFile", "government", "gov-cnt-01", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_CONTRATO, "Borrador de contrato u orden modificado"),
     _e("GOV_CONTRACT_FORMALIZED", "GovernmentProcurementFile", "government", "gov-cnt-01", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_CONTRATO, "Contrato u orden formalizado"),
     _e("GOV_CONTRACT_SIGNER_BLOCKED", "GovernmentProcurementFile", "government", "gov-cnt-01", "COMPANY", "SECURITY", "REJECTION", DETALLE_CONTRATO, "Formalización bloqueada por la autoridad del firmante"),
+    _e("GOV_CONTRACT_AMENDMENT_DRAFT_CREATED", "GovernmentProcurementFile", "government", "gov-cnt-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_MODIFICACION_CONTRATO, "Borrador de modificación de contrato creado"),
+    _e("GOV_CONTRACT_AMENDMENT_DRAFT_UPDATED", "GovernmentProcurementFile", "government", "gov-cnt-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_MODIFICACION_CONTRATO, "Borrador de modificación de contrato modificado"),
+    _e("GOV_CONTRACT_AMENDMENT_DRAFT_DISCARDED", "GovernmentProcurementFile", "government", "gov-cnt-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_MODIFICACION_CONTRATO, "Borrador de modificación de contrato descartado"),
+    _e("GOV_CONTRACT_AMENDMENT_FORMALIZED", "GovernmentProcurementFile", "government", "gov-cnt-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_MODIFICACION_CONTRATO, "Modificación de contrato formalizada"),
+    _e("GOV_CONTRACT_AMENDMENT_SIGNER_BLOCKED", "GovernmentProcurementFile", "government", "gov-cnt-02", "COMPANY", "SECURITY", "REJECTION", DETALLE_MODIFICACION_CONTRATO, "Formalización de la modificación bloqueada por la autoridad del firmante"),
     _e("GOV_CONTRACT_SUPERVISOR_ASSIGNED", "GovernmentProcurementFile", "government", "gov-cnt-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_SUPERVISOR, "Supervisor del contrato designado"),
     _e("GOV_CONTRACT_SUPERVISOR_REPLACED", "GovernmentProcurementFile", "government", "gov-cnt-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_SUPERVISOR, "Supervisor del contrato sustituido"),
     _e("GOV_CONTRACT_SUPERVISOR_BLOCKED", "GovernmentProcurementFile", "government", "gov-cnt-04", "COMPANY", "SECURITY", "REJECTION", DETALLE_SUPERVISOR, "Designación del supervisor bloqueada"),

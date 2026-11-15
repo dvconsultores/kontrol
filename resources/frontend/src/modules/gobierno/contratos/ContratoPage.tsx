@@ -14,7 +14,7 @@ import { PageContent } from "@/layout/PageContent";
 import { ErrorDeCarga } from "@/modules/gobierno/ocupacion/ErrorDeCarga";
 import { formatearFechaDeNegocio, formatearInstante } from "@/lib/fecha-de-negocio";
 import { CONSULTA_EXPEDIENTES } from "@/modules/gobierno/api";
-import { CONSULTA_CONTRATOS, TIPOS_INSTRUMENTO, type Contrato, type FirmanteOpcion } from "./api";
+import { CONSULTA_CONTRATOS, TIPOS_INSTRUMENTO, rutaModificaciones, type Contrato, type FirmanteOpcion } from "./api";
 import { SupervisionContrato } from "./SupervisionContrato";
 
 interface ParcheContrato {
@@ -613,7 +613,7 @@ export function ContratoPage() {
               <ConfirmationDialog
                 open={modalFormalizar}
                 title="Formalizar el contrato u orden"
-                description="Se congelarán los datos, la cobertura, las garantías y el documento. Después no podrá modificarse desde aquí (las adendas son de CNT-02)."
+                description="Se congelarán los datos, la cobertura, las garantías y el documento. Después no podrá modificarse desde aquí: las adendas y prórrogas se registran en Modificaciones."
                 confirmLabel="Formalizar"
                 cancelLabel="Cancelar"
                 onConfirm={async () => {
@@ -674,6 +674,12 @@ export function ContratoPage() {
                 {contrato.firmante
                   ? `${contrato.firmante.cargo}${contrato.firmante.funcionario ? ` · ${contrato.firmante.funcionario}` : ""}`
                   : "—"}
+                {contrato.firmante?.conversion ? (
+                  <span className="mt-1 block text-text-600">
+                    Límite verificado con tasa oficial BCV: {contrato.firmante.conversion.total_ves ?? "—"} VES frente a{" "}
+                    {contrato.firmante.conversion.limite_ves ?? "—"} VES
+                  </span>
+                ) : null}
               </dd>
             </div>
             <div>
@@ -757,9 +763,26 @@ export function ContratoPage() {
             <p className="mt-2 text-sm text-text-600">Sin garantías vinculadas.</p>
           )}
 
+          {contrato.modificaciones ? (
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold text-text-900">Condiciones vigentes</h3>
+              <p className="mt-1 text-sm text-text-600">
+                Monto vigente: {contrato.modificaciones.vigente.monto} {contrato.moneda}
+                {contrato.modificaciones.vigente.fecha_fin
+                  ? ` · fin del plazo ${formatearFechaDeNegocio(contrato.modificaciones.vigente.fecha_fin)}`
+                  : ""}
+                {contrato.modificaciones.vigente.codigo
+                  ? ` · según ${contrato.modificaciones.vigente.codigo}`
+                  : ""}
+              </p>
+              <Link className="mt-2 inline-block text-sm text-brand-700 underline" to={rutaModificaciones(contrato.id)}>
+                Modificaciones ({contrato.modificaciones.cantidad})
+              </Link>
+            </div>
+          ) : null}
           <p className="mt-3 text-sm text-text-600">
-            Las adendas, prórrogas y variaciones se registrarán como documentos nuevos (CNT-02): este registro no se
-            modifica.
+            Las adendas, prórrogas, modificaciones y variaciones se registran como instrumentos nuevos en
+            Modificaciones: este registro no se modifica.
           </p>
         </section>
       ) : null}

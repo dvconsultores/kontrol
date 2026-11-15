@@ -7,8 +7,8 @@ import uuid
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0118_gov_cnt03_ejecucion"
-down_revision = "0117_gov_cnt04_supervisor"
+revision = "0119_gov_cnt03_ejecucion"
+down_revision = "0118_gov_cnt02_modificaciones"
 branch_labels = None
 depends_on = None
 
