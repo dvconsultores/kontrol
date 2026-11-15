@@ -7,8 +7,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { apiFetch } from "@/api/client";
-import type { LicenseStatus } from "@/api/types";
+import { ApiError, apiFetch } from "@/api/client";
+import type { InstallationRequest, LicenseStatus } from "@/api/types";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { PERMISO_DE_LICENCIA } from "@/app/contexts/LicenseContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
@@ -21,11 +21,25 @@ import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { formatearFechaDeInstante } from "@/lib/fecha-de-negocio";
+import {
+  descargarTexto,
+  nombreDeArchivoDeSolicitud,
+  serializarSolicitud,
+  validarSolicitud,
+} from "@/lib/solicitud-de-activacion";
+
+const MENSAJE_SESION =
+  "La sesión venció. Inicie sesión nuevamente para obtener la solicitud de activación.";
+const MENSAJE_PERMISO =
+  "No tiene permiso para consultar la solicitud de activación. Se requiere license:view.";
+const MENSAJE_RED =
+  "No fue posible conectar con KONTROL para obtener la solicitud de activación.";
 
 export function MiLicenciaPage(): React.JSX.Element {
   const { notify } = useNotifications();
   const { tiene } = useAutoridad();
   const [proofRef, setProofRef] = useState("");
+  const [solicitudEnCurso, setSolicitudEnCurso] = useState<"descarga" | "copia" | null>(null);
 
   const permitido = tiene(PERMISO_DE_LICENCIA, "global");
   const query = useQuery({
@@ -47,6 +61,89 @@ export function MiLicenciaPage(): React.JSX.Element {
     });
     setProofRef("");
     await query.refetch();
+  };
+
+  const obtenerSolicitud = async (accion: "descarga" | "copia"): Promise<void> => {
+    setSolicitudEnCurso(accion);
+    try {
+      let solicitada: unknown;
+      try {
+        solicitada = await apiFetch<unknown>("/license/installation-request");
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          notify({ type: "error", title: "Solicitud de activación", description: MENSAJE_SESION });
+          return;
+        }
+        if (error instanceof ApiError && error.status === 403) {
+          notify({ type: "error", title: "Solicitud de activación", description: MENSAJE_PERMISO });
+          return;
+        }
+        if (error instanceof ApiError) {
+          notify({
+            type: "error",
+            title: "Solicitud de activación",
+            description: "No fue posible obtener la solicitud de activación.",
+          });
+          return;
+        }
+        notify({ type: "error", title: "Solicitud de activación", description: MENSAJE_RED });
+        return;
+      }
+
+      let solicitud: InstallationRequest;
+      try {
+        solicitud = validarSolicitud(solicitada);
+      } catch {
+        notify({
+          type: "error",
+          title: "Solicitud de activación",
+          description:
+            "La solicitud de activación recibida no es válida (INVALID_INSTALLATION_REQUEST).",
+        });
+        return;
+      }
+
+      const serializada = serializarSolicitud(solicitud);
+      if (accion === "descarga") {
+        try {
+          descargarTexto(serializada, nombreDeArchivoDeSolicitud(solicitud.installation_id));
+        } catch {
+          notify({
+            type: "error",
+            title: "Solicitud de activación",
+            description: "No fue posible descargar la solicitud de activación.",
+          });
+          return;
+        }
+        notify({
+          type: "success",
+          title: "Solicitud descargada",
+          description: "Entregue el archivo al propietario de KONTROL por un canal controlado.",
+        });
+        return;
+      }
+
+      try {
+        if (!navigator.clipboard) {
+          throw new Error("clipboard no disponible");
+        }
+        await navigator.clipboard.writeText(serializada);
+      } catch {
+        notify({
+          type: "error",
+          title: "Solicitud de activación",
+          description: "No fue posible copiar la solicitud al portapapeles.",
+        });
+        return;
+      }
+      notify({
+        type: "success",
+        title: "Solicitud copiada",
+        description: "Pegue la solicitud en el canal controlado acordado con el propietario de KONTROL.",
+      });
+    } finally {
+      setSolicitudEnCurso(null);
+    }
   };
 
   if (!permitido) {
@@ -98,6 +195,40 @@ export function MiLicenciaPage(): React.JSX.Element {
           </p>
         </div>
       </div>
+
+      {license.mode === "PENDING" && (
+        <section
+          aria-labelledby="solicitud-activacion"
+          className="mt-6 rounded-lg border border-border-default bg-surface-0 p-6"
+        >
+          <h2 id="solicitud-activacion" className="text-base font-semibold text-text-900">
+            Solicitud de activación
+          </h2>
+          <p className="mt-1 text-sm text-text-500">
+            La solicitud contiene la identidad pública de esta instalación, necesaria para
+            registrarla y emitir la licencia. Entréguela al propietario de KONTROL por un canal
+            controlado.
+          </p>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <AsyncButton
+              onClick={() => obtenerSolicitud("descarga")}
+              loadingText="Descargando…"
+              disabled={solicitudEnCurso !== null}
+              className="w-full sm:w-auto"
+            >
+              Descargar solicitud
+            </AsyncButton>
+            <AsyncButton
+              onClick={() => obtenerSolicitud("copia")}
+              loadingText="Copiando…"
+              disabled={solicitudEnCurso !== null}
+              className="w-full sm:w-auto"
+            >
+              Copiar solicitud
+            </AsyncButton>
+          </div>
+        </section>
+      )}
 
       <section className="mt-6 rounded-lg border border-border-default bg-surface-0 p-6">
         <h2 className="text-base font-semibold text-text-900">Renovación anual</h2>

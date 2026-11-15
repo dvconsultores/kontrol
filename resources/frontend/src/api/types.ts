@@ -25,6 +25,15 @@ export interface LicensePublicStatus {
   license_url: string;
 }
 
+/** Contrato de `GET /license/installation-request`: solo identidad pública. */
+export interface InstallationRequest {
+  installation_id: string;
+  public_key: string;
+  version: string;
+  nonce: string;
+  requested_at: string;
+}
+
 export interface UserInfo {
   id: string;
   username: string;

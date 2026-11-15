@@ -9,6 +9,7 @@
  * ya no publica la versión. El usuario sin permiso lo fabrica `qa/rol_sin_permiso.py` en la
  * base de la corrida.
  */
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { type Page } from "@playwright/test";
@@ -190,5 +191,47 @@ test.describe("Licencia · frontera de lectura", () => {
     expect(pedidas.some((p) => p.endsWith("/license/status"))).toBeTruthy();
     expect(pedidas.some((p) => p.endsWith("/license/detail"))).toBeFalsy();
     await expect(page.getByRole("status")).toHaveCount(0);
+  });
+
+  test("E2E-LIC-11 · en PENDING, Mi licencia descarga la solicitud de activación con la identidad pública", async ({ page }) => {
+    await entrar(page, "admin");
+    await page.route("**/api/v1/license/detail", async (route) => {
+      const real = await route.fetch();
+      const cuerpo = (await real.json()) as Record<string, unknown>;
+      await route.fulfill({ response: real, json: { ...cuerpo, mode: "PENDING" } });
+    });
+
+    await page.goto("/mi-licencia");
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Solicitud de activación" }),
+    ).toBeVisible({ timeout: 15_000 });
+
+    const [descarga, respuesta] = await Promise.all([
+      page.waitForEvent("download"),
+      page.waitForResponse((r) => new URL(r.url()).pathname.endsWith("/license/installation-request")),
+      page.getByRole("button", { name: "Descargar solicitud", exact: true }).click(),
+    ]);
+
+    expect(respuesta.status()).toBe(200);
+    const cuerpo = (await respuesta.json()) as Record<string, unknown>;
+    expect(typeof cuerpo.installation_id).toBe("string");
+    expect(String(cuerpo.installation_id)).toMatch(/^KTL-/);
+    expect(typeof cuerpo.public_key).toBe("string");
+    expect(String(cuerpo.public_key).trim()).not.toBe("");
+
+    expect(descarga.suggestedFilename()).toBe(
+      `kontrol-installation-request-${String(cuerpo.installation_id).replace(/[^A-Za-z0-9._-]/g, "_")}.json`,
+    );
+
+    const ruta = await descarga.path();
+    if (!ruta) throw new Error("descarga sin fichero");
+    const contenido = readFileSync(ruta, "utf8");
+    expect(JSON.parse(contenido)).toEqual(cuerpo);
+    expect(contenido.endsWith("\n")).toBe(true);
+    expect(contenido).not.toMatch(/PRIVATE KEY/i);
+
+    await expect(
+      page.getByRole("status").filter({ hasText: "Solicitud descargada" }),
+    ).toBeVisible({ timeout: 15_000 });
   });
 });
