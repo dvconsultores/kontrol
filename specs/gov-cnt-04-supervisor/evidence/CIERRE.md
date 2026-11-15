@@ -47,4 +47,7 @@
 
 ## UAT
 
-Pendiente de levantar desde el SHA publicado. Se anota en el commit de registro.
+- Pila nueva desde el SHA publicado 5828ec2 (worktree wt-5828ec2): frontend http://localhost:16673/, backend 19500, central 19510.
+- Humo HUMO-UAT-01: 1/1. OWNER_UAT_ACCESSIBLE=YES.
+- Credenciales: fuera de Git, en un fichero local con permisos 600. No se registran aquí.
+- La dueña acepta (OWNER_ACCEPTED): NO, pendiente.
