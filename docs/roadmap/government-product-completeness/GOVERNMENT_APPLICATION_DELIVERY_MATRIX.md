@@ -43,7 +43,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | PROC-10 | GOV-PROC-013 | Contrataciones públicas / Li | Unidad contratante | Garantías y cauciones | sí | sí | sí | n/a | sí | sí | OWNER_UAT_READY | Mantenimiento como % de la oferta evaluable con el monto declarado (OMA), por bandas hasta precisar la base (OQ-OMA-02); las demás bases porcentuales siguen NO_EVALUABLE |
 | PROC-11 | GOV-PROC-017 | Contrataciones públicas / Li | Control Interno | Conflictos SoD en contratación | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | Matriz de funciones, detección y bloqueo (specs/gov-proc-11-sod-funciones) |
 | PROC-12 | GOV-PROC-018 | Contrataciones públicas / Li | Control Interno | Trazabilidad completa de la compra pública (E2E-01) | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
-| CNT-01 | GOV-CNT-001 | Contratos públicos | Unidad contratante | Crear contrato u orden desde la adjudicación | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
+| CNT-01 | GOV-CNT-001 | Contratos públicos | Unidad contratante | Crear contrato u orden desde la adjudicación | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | CNT-02 | GOV-CNT-002 | Contratos públicos | Unidad contratante | Adendas, prórrogas y variaciones versionadas | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | CNT-03 | GOV-CNT-003 GOV-CNT-007 | Contratos públicos | Administrador/Supervisor de contrato | Ejecución: hitos, entregables, valuaciones, recepciones y cierre; fact | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | CNT-04 | GOV-CNT-004 | Contratos públicos | Máxima autoridad | Designación del supervisor del contrato | no | no | no | n/a | no | no | NOT_STARTED | Todo el proceso |
