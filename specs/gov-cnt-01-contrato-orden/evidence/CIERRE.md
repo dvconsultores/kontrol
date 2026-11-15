@@ -36,7 +36,8 @@ CLAUDE_SEMANTIC_*_WRITTEN=0   SNAT_TOUCHED=0  PRODUCTION_TOUCHED=0  SECRET_EXPOS
 
 - Pila de P2: backend en 8000 y web en 5173.
 - La base `kuat` no pudo bajar de la 0114 local a la 0113, porque los eventos CONTRATO del humo violan el CHECK antiguo. Los downgrades hermanos (0088, 0092, 0094 y 0096) tampoco purgan eventos. Se reconstruyó con `rehacer_pg.sh` (esquema solo con Alembic y datos sintéticos) en la cabeza 0115.
-- Humo `gobierno-contratos.spec.ts` contra la UAT: ver `UAT_SMOKE`.
+- `kuat` en 0115_gov_cnt01_contratos, con ALEMBIC_RC=0 y SEED_RC=0. Licencia VALID. HTTP 200 en `/docs` y en la web.
+- Humo `gobierno-contratos.spec.ts` contra la UAT: 1/1 en 3,4 min (desde 644650a). OWNER_UAT_ACCESSIBLE=YES.
 - Credenciales: no se registran.
 - Tarjeta: `OWNER_UAT_CARD.md` (14 pasos).
 
