@@ -17,3 +17,17 @@ Primera aplicación de la norma permanente `docs/governance/product-completeness
 | Catálogo de no listos (122) | `GOVERNMENT_NOT_READY_CATALOG.md` |
 
 Los CSV son la fuente legible por máquina; los `.md` homónimos se generan a partir de ellos. Las herramientas de medición son de Claude y viven en su espacio temporal, sin versionarse. Para regenerar: introspección de OpenAPI y SQLAlchemy, lectura del menú y del router, y extracción de la IR con `pdftotext -layout`.
+
+## Rebaseline 02 (GOV-ROADMAP-REBASELINE-02, 2026-11-16)
+
+| Entregable | Fichero |
+|---|---|
+| Rebaseline del roadmap: resultado, cadena, D-GOV, mapa de autoridades y siguiente trabajo | `GOVERNMENT_ROADMAP_REBASELINE_02.md` |
+| Reauditoría de los 48 BLOCKED | `GOVERNMENT_BLOCKED_REAUDIT.md` · `.csv` |
+| Reauditoría de los 30 NOT_STARTED (con DAG) | `GOVERNMENT_NOT_STARTED_REAUDIT.md` · `.csv` |
+| Política de parametrización (cero hardcode institucional) | `GOVERNMENT_PARAMETERIZATION_POLICY.md` |
+| Motor de procesos (baseline) | `GOVERNMENT_PROCESS_ENGINE_BASELINE.md` |
+| Motor normativo (baseline) | `GOVERNMENT_NORMATIVE_ENGINE_BASELINE.md` |
+| Modelo de configuración por tenant | `GOVERNMENT_TENANT_CONFIGURATION_MODEL.md` |
+
+La matriz canónica gana las columnas de la rebaseline (`REBASELINE_02_STATUS`, estados por dimensión, impactos, `HARDCODE_AUDIT` y `DAG_LEVEL`); las columnas históricas se conservan. El mapa completo de autoridades está en `GOVERNMENT_ROADMAP_REBASELINE_02.md` §1.

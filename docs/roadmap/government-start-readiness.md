@@ -62,7 +62,7 @@ Requisitos no funcionales de Gobierno (Ingeniería de Requerimientos §10, OFFIC
 | Vigencia verificada (G.O. 7.018/2026, 6.699/2022, Decreto 2.174, SUDEBIP 43.077) | NOT_STARTED |
 | Clase C (N07–N10, N14–N17, N36, N37, N38, N40) con pin oficial | **FAIL** (12 de 40) |
 | Normativa del piloto (D-GOV-01 CLOSED: Naguanagua) | PARTIAL: investigación N37 en curso |
-| Edición ONAPRE/ONCOP del ejercicio (D-GOV-02/04) | BLOCKED (sponsor) |
+| Edición ONAPRE/ONCOP del ejercicio (D-GOV-04 (D-GOV-02 CLOSED 2026-11-13)) | BLOCKED (sponsor) |
 | SNC / SUDEBIP (D-GOV-03/05) | BLOCKED (sponsor) |
 | Retenciones del pagador público (N38) | BLOCKED: clase C, cruce con 039–043 (BLOCKED_BY_LEGAL_VALIDATION) |
 | Trámites tras G.O. 7.018/2026 (D-GOV-06) | BLOCKED (sponsor) |
