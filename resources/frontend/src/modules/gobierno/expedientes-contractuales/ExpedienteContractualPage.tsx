@@ -14,7 +14,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { PageHeader } from "@/components/PageHeader";
 import { PageContent } from "@/layout/PageContent";
 import { ErrorDeCarga } from "@/modules/gobierno/ocupacion/ErrorDeCarga";
-import { formatearFechaDeNegocio } from "@/lib/fecha-de-negocio";
+import { formatearFechaDeNegocio, formatearInstante } from "@/lib/fecha-de-negocio";
 import {
   CONSULTA_EXPEDIENTES,
   ETIQUETAS_ESTADO_DOCUMENTO,
@@ -253,7 +253,7 @@ function Origen({ expediente }: { expediente: Expediente }) {
             <div><dt className="inline font-medium text-text-600">Referencia: </dt><dd className="inline text-text-900">{o.oferta.referencia}</dd></div>
             <div><dt className="inline font-medium text-text-600">Oferente: </dt><dd className="inline text-text-900">{o.oferta.oferente}</dd></div>
             <div><dt className="inline font-medium text-text-600">Documento: </dt><dd className="inline text-text-900">{o.oferta.documento}</dd></div>
-            <div><dt className="inline font-medium text-text-600">Recibida: </dt><dd className="inline text-text-900">{formatearFechaDeNegocio(o.oferta.recibida_en)}</dd></div>
+            <div><dt className="inline font-medium text-text-600">Recibida: </dt><dd className="inline text-text-900">{formatearInstante(o.oferta.recibida_en)}</dd></div>
           </dl>
         </div>
       </div>
@@ -927,7 +927,7 @@ function Cronologia({ contratoId }: { contratoId: string }) {
                     <td className="py-2 pr-3 text-text-900">{evento.orden}</td>
                     <td className="py-2 pr-3 text-text-900">
                       {formatearFechaDeNegocio(evento.fecha)}
-                      <span className="block text-xs text-text-600">Registro: {formatearFechaDeNegocio(evento.fecha_registro)}</span>
+                      <span className="block text-xs text-text-600">Registro: {formatearInstante(evento.fecha_registro)}</span>
                     </td>
                     <td className="py-2 pr-3 text-text-900">{evento.tipo_etiqueta}</td>
                     <td className="py-2 pr-3 text-text-900">{evento.proceso}</td>
@@ -995,7 +995,7 @@ function Auditoria({ contratoId, expediente }: { contratoId: string; expediente:
               <tbody>
                 {consulta.data.items.map((evento) => (
                   <tr key={evento.id} className="border-b border-border-subtle">
-                    <td className="py-2 pr-3 text-text-900">{formatearFechaDeNegocio(evento.fecha)}</td>
+                    <td className="py-2 pr-3 text-text-900">{formatearInstante(evento.fecha)}</td>
                     <td className="py-2 pr-3 text-text-900">{evento.accion_etiqueta}</td>
                     <td className="py-2 pr-3 text-text-900">{evento.proceso_nombre}</td>
                     <td className="py-2 pr-3 text-text-900">{evento.usuario}</td>
@@ -1215,14 +1215,14 @@ function Exportaciones({
                     {paquetes.data.items.map((paquete) => (
                       <tr key={paquete.id} className="border-b border-border-subtle">
                         <td className="py-2 pr-3 text-text-900">{paquete.codigo}</td>
-                        <td className="py-2 pr-3 text-text-900">{formatearFechaDeNegocio(paquete.generado_en)}</td>
+                        <td className="py-2 pr-3 text-text-900">{formatearInstante(paquete.generado_en)}</td>
                         <td className="py-2 pr-3 text-text-900">{paquete.generado_por}</td>
                         <td className="py-2 pr-3 text-text-900">{paquete.documentos_incluidos}/{paquete.documentos_excluidos}</td>
                         <td className="py-2 pr-3 text-text-900">{paquete.eventos}</td>
                         <td className="py-2 pr-3 text-text-900" title={paquete.huella_paquete}>{abreviarHuella(paquete.huella_paquete)}</td>
                         <td className="py-2 pr-3 text-text-900">
                           {paquete.ultima_verificacion
-                            ? `${ETIQUETAS_VERIFICACION[paquete.ultima_verificacion.resultado] ?? paquete.ultima_verificacion.resultado} · ${formatearFechaDeNegocio(paquete.ultima_verificacion.verificado_en)}`
+                            ? `${ETIQUETAS_VERIFICACION[paquete.ultima_verificacion.resultado] ?? paquete.ultima_verificacion.resultado} · ${formatearInstante(paquete.ultima_verificacion.verificado_en)}`
                             : "—"}
                         </td>
                         <td className="py-2 pr-3">

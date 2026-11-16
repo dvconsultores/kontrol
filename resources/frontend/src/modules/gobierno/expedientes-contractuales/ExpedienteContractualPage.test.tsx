@@ -4,7 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ExpedienteContractualPage } from "./ExpedienteContractualPage";
-import type { Expediente } from "./api";
+import type { Expediente, PaqueteExpediente } from "./api";
+import { formatearInstante } from "@/lib/fecha-de-negocio";
 
 const apiFetchMock = vi.fn();
 const descargarArchivoMock = vi.fn();
@@ -80,7 +81,7 @@ function expediente(over: Partial<Expediente> = {}): Expediente {
         referencia: "OF-2026-0001",
         oferente: "Constructora Andina",
         documento: "1790012345001",
-        recibida_en: "2025-11-15",
+        recibida_en: "2025-11-15T14:30:00Z",
       },
     },
     adjudicacion: {
@@ -396,5 +397,44 @@ describe("ExpedienteContractualPage", () => {
     expect(
       apiFetchMock.mock.calls.some(([ruta]) => String(ruta).includes("/expediente/auditoria")),
     ).toBe(false);
+  });
+
+  it("los instantes se muestran con fecha y hora, nunca como «—»", async () => {
+    const PAQ: PaqueteExpediente = {
+      id: "p1",
+      codigo: "EC-2026-0001",
+      numero_generacion: 1,
+      proposito: "Control fiscal",
+      generado_en: "2026-02-15T09:00:00Z",
+      generado_por: "auditor",
+      corte: "2026-02-15T09:00:00Z",
+      eventos: 3,
+      documentos_incluidos: 1,
+      documentos_excluidos: 1,
+      archivos: 8,
+      bytes: 1024,
+      huella_paquete: "aaaabbbbccccdddd",
+      huella_manifiesto: "eeeeffff00001111",
+      nombre_archivo: "EC-2026-0001.zip",
+      ultima_verificacion: { resultado: "VALIDO", verificado_en: "2026-02-15T10:00:00Z" },
+    };
+
+    apiFetchMock.mockImplementation((ruta: string) => {
+      if (String(ruta).endsWith("/expediente")) {
+        return Promise.resolve({ ...expediente(), permisos: { auditoria: false, ver_paquetes: true, generar_paquete: false } });
+      }
+      if (String(ruta).includes("/expediente/paquetes")) {
+        return Promise.resolve({ items: [PAQ], total: 1 });
+      }
+      return Promise.resolve({ items: [], total: 0, limit: 50, offset: 0, procesos: [] });
+    });
+
+    renderConProvider();
+    await screen.findByRole("heading", { name: "Expediente contractual · CT-2026-0001" });
+
+    expect(screen.getByText(formatearInstante("2025-11-15T14:30:00Z"))).toBeInTheDocument();
+    expect(await screen.findByText(formatearInstante("2026-02-15T09:00:00Z"))).toBeInTheDocument();
+    expect(screen.getByText(`Válido · ${formatearInstante("2026-02-15T10:00:00Z")}`)).toBeInTheDocument();
+    expect(screen.queryByText("Válido · —")).toBeNull();
   });
 });

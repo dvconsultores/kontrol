@@ -27,9 +27,11 @@
 | Mutaciones | 6/6 muertas (M1–M6) |
 | PG completa sobre el árbol final convergido (`eba13d5d`) | 5658 pruebas: 5636 pasan, 18 se saltan y 4 fallan. Las 4 son de la línea base: `n10` por `import_*.created_by`, `naive_datetime` y `spec019` ×2. **NEW_BACKEND_FAILURES=0** |
 | Alembic (ida, vuelta a 0119 e ida) | OK; `heads` = `0120_gov_cnt08_expediente` |
-| Vitest completo | 200 ficheros, 2124/2124 |
+| Vitest completo | 200 ficheros, 2125/2125 (tras T006e) |
 | typecheck, lint y build | OK |
 | E2E final (expediente, contratos con CNT-03/04, modificaciones y catálogo de auditoría) | 8 pasan y 1 falla: AUDIT-E2E-05, preexistente (abajo). Recorrido del sponsor a 1280/390/320 y Axe sin «serious» nuevos |
+| E2E canónica del expediente tras T006e/T007e | 1/1 (3,1 min) |
+| Humo de la UAT (pila nueva, `kuat`) | 1/1 (3,1 min). El primer humo destapó cinco instantes pintados como «—» («Recibida», «Registro», fecha de auditoría, «Generado» y «Válido · —»); se corrigieron en T006e |
 | Catálogo de auditoría | 578 (+4: paquete GENERATED, DOWNLOADED, VERIFIED y VERIFICATION_FAILED) |
 
 ## Deudas no absorbidas
@@ -48,7 +50,7 @@
 
 ## DeepSeek
 
-Ver `ATTEMPT_LOG.md`: 22 llamadas (`deepseek-v4-pro`), 12 reintentos semánticos y un coste de $0,155096. La dueña amplió el tope cinco veces (OWNER_EXCEPTION_USED=5). Claude no escribió producto, pruebas, E2E ni migración, salvo las tres correcciones documentadas.
+Ver `ATTEMPT_LOG.md`: 24 llamadas (`deepseek-v4-pro`), 12 reintentos semánticos y un coste de $0,157961. La dueña amplió el tope seis veces (OWNER_EXCEPTION_USED=6). Claude no escribió producto, pruebas, E2E ni migración, salvo las tres correcciones documentadas.
 
 ## Estado
 
